@@ -161,6 +161,25 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
   } = {};
 
   public constructor() {
+    /**
+     * Trigger shape validations if the form gets updated
+     * This is how we can throw run-time errors
+     */
+    this.formValueChange.pipe(takeUntil(this.destroy$$)).subscribe((v) => {
+      if (this.formShape()) {
+        validateShape(v, this.formShape() as DeepRequired<T>);
+      }
+    });
+
+    /**
+     * Mark all the fields as touched when the form is submitted
+     */
+    this.ngForm.ngSubmit.subscribe(() => {
+      this.ngForm.form.markAllAsTouched();
+    });
+  }
+
+  public ngAfterViewInit(): void {
     // When the validation config changes
     // Listen to changes of the left-side of the config and trigger the updateValueAndValidity
     // function on the dependant controls or groups at the right-side of the config
@@ -193,23 +212,6 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
         })
       )
       .subscribe();
-
-    /**
-     * Trigger shape validations if the form gets updated
-     * This is how we can throw run-time errors
-     */
-    this.formValueChange.pipe(takeUntil(this.destroy$$)).subscribe((v) => {
-      if (this.formShape()) {
-        validateShape(v, this.formShape() as DeepRequired<T>);
-      }
-    });
-
-    /**
-     * Mark all the fields as touched when the form is submitted
-     */
-    this.ngForm.ngSubmit.subscribe(() => {
-      this.ngForm.form.markAllAsTouched();
-    });
   }
 
   /**
