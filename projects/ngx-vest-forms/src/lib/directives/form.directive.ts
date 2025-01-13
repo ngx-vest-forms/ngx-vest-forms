@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Directive, inject, input, OnDestroy, Output } from '@angular/core';
+import { Directive, inject, input, OnDestroy, Output, AfterViewInit } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import {
   AsyncValidatorFn,
@@ -42,7 +42,7 @@ import { ValidationOptions } from './validation-options';
   selector: 'form[scVestForm]',
   standalone: true,
 })
-export class FormDirective<T extends Record<string, any>> implements OnDestroy {
+export class FormDirective<T extends Record<string, any>> implements OnDestroy, AfterViewInit {
   public readonly ngForm = inject(NgForm, { self: true, optional: false });
 
   /**
@@ -167,7 +167,7 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
     }>
   > = {};
 
-  public constructor() {
+  public ngAfterViewInit() {
     // When the validation config changes
     // Listen to changes of the left-side of the config and trigger the updateValueAndValidity
     toObservable(this.validationConfig)
