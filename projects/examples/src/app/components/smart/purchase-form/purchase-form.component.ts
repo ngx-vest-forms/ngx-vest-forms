@@ -64,30 +64,28 @@ export class PurchaseFormComponent {
   constructor() {
     const firstName = computed(() => this.formValue().firstName);
     const lastName = computed(() => this.formValue().lastName);
-    effect(
-      () => {
-        // If the first name is Brecht, update the gender to male
-        if (firstName() === 'Brecht') {
-          this.formValue.update((val) => ({
-            ...val,
-            gender: 'male',
-          }));
-        }
 
-        // If the first name is Brecht and the last name is Billiet, set the age and passwords
-        if (firstName() === 'Brecht' && lastName() === 'Billiet') {
-          this.formValue.update((val) => ({
-            ...val,
-            age: 35,
-            passwords: {
-              password: 'Test1234',
-              confirmPassword: 'Test12345',
-            },
-          }));
-        }
-      },
-      { allowSignalWrites: true },
-    );
+    effect(() => {
+      // If the first name is Brecht, update the gender to male
+      if (firstName() === 'Brecht') {
+        this.formValue.update((val) => ({
+          ...val,
+          gender: 'male',
+        }));
+      }
+
+      // If the first name is Brecht and the last name is Billiet, set the age and passwords
+      if (firstName() === 'Brecht' && lastName() === 'Billiet') {
+        this.formValue.update((val) => ({
+          ...val,
+          age: 35,
+          passwords: {
+            password: 'Test1234',
+            confirmPassword: 'Test12345',
+          },
+        }));
+      }
+    });
 
     // When firstName is Luke, fetch luke skywalker and update the form value
     toObservable(firstName)

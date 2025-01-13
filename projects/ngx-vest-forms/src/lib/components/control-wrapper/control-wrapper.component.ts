@@ -10,7 +10,15 @@ import {
 } from '@angular/core';
 
 import { AbstractControl, NgModel, NgModelGroup } from '@angular/forms';
-import { mergeWith, of, Subject, switchMap, takeUntil } from 'rxjs';
+import {
+  catchError,
+  EMPTY,
+  merge,
+  retry,
+  Subject,
+  switchMap,
+  takeUntil,
+} from 'rxjs';
 import { FormDirective } from '../../directives/form.directive';
 
 @Component({
@@ -58,14 +66,15 @@ export class ControlWrapperComponent implements AfterViewInit, OnDestroy {
   }
 
   public ngAfterViewInit(): void {
-    // Wait until the form is idle
-    // Then, listen to all events of the ngModelGroup or ngModel
-    // and mark the component and its ancestors as dirty
-    // This allows us to use the OnPush ChangeDetection Strategy
+    // Create a safe stream combining form events
+    const controlEvents$ = this.control?.events || EMPTY;
+    const groupEvents$ = this.ngModelGroup?.control?.events || EMPTY;
+
     this.formDirective.idle$
       .pipe(
-        switchMap(() => this.ngModelGroup?.control?.events || of(null)),
-        mergeWith(this.control?.events || of(null)),
+        switchMap(() => merge(controlEvents$, groupEvents$)),
+        retry(3), // Retry if we hit any undefined values
+        catchError(() => EMPTY), // Fallback if retries fail
         takeUntil(this.destroy$$),
       )
       .subscribe(() => {

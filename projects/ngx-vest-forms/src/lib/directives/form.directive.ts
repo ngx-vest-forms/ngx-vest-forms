@@ -10,6 +10,7 @@ import {
   ValueChangeEvent,
 } from '@angular/forms';
 import {
+  catchError,
   debounceTime,
   distinctUntilChanged,
   filter,
@@ -17,6 +18,7 @@ import {
   Observable,
   of,
   ReplaySubject,
+  retry,
   startWith,
   Subject,
   switchMap,
@@ -165,7 +167,6 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
   public constructor() {
     // When the validation config changes
     // Listen to changes of the left-side of the config and trigger the updateValueAndValidity
-    // function on the dependant controls or groups at the right-side of the config
     toObservable(this.validationConfig)
       .pipe(
         filter((conf) => !!conf),
@@ -173,25 +174,44 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
           if (!conf) {
             return of(null);
           }
-          const streams = Object.keys(conf).map((key) => {
-            return this.ngForm?.form.get(key)?.valueChanges.pipe(
-              // Wait until something is pending
-              switchMap(() => this.pending$),
-              // Wait until the form is not pending anymore
-              switchMap(() => this.idle$),
-              map(() => this.ngForm?.form.get(key)?.value),
-              takeUntil(this.destroy$$),
-              tap(() => {
-                conf[key]?.forEach((path: string) => {
-                  this.ngForm?.form.get(path)?.updateValueAndValidity({
-                    onlySelf: true,
-                    emitEvent: true,
+          const streams = Object.keys(conf)
+            .map((key) => {
+              const control = this.ngForm?.form.get(key);
+              // Only create stream if control exists
+              if (!control) {
+                return null;
+              }
+              return control.valueChanges.pipe(
+                // Wait until something is pending
+                switchMap(() => this.pending$),
+                // Wait until the form is not pending anymore
+                switchMap(() => this.idle$),
+                map(() => control.value),
+                takeUntil(this.destroy$$),
+                tap(() => {
+                  conf[key]?.forEach((path: string) => {
+                    const dependentControl = this.ngForm?.form.get(path);
+                    if (dependentControl) {
+                      dependentControl.updateValueAndValidity({
+                        onlySelf: true,
+                        emitEvent: true,
+                      });
+                    }
                   });
-                });
-              }),
-            );
-          });
-          return zip(streams);
+                }),
+              );
+            })
+            .filter((stream): stream is Observable<any> => stream !== null); // Filter out null streams
+
+          // If no valid streams, return empty observable
+          if (streams.length === 0) {
+            return of(null);
+          }
+
+          return zip(streams).pipe(
+            retry(3), // Retry if we hit any undefined values
+            catchError(() => of(null)), // Fallback if retries fail
+          );
         }),
       )
       .subscribe();
