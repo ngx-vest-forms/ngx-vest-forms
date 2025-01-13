@@ -5,18 +5,19 @@
   "author": "Brecht Billiet",
   "description": "Opinionated template-driven forms library for Angular",
   "peerDependencies": {
-    "@angular/core": ">=18.0.0",
-    "@angular/common": ">=18.0.0",
-    "rxjs": ">=7.8.0",
-    "vest": ">=5.2.8"
+    "@angular/core": "^19.0.0",
+    "@angular/common": "^19.0.0",
+    "rxjs": "^7.8.1",
+    "vest": "^5.2.8"
   },
   "dependencies": {
-    "tslib": "^2.3.0"
+    "tslib": "^2.8.1"
   },
   "keywords": [
     "Angular",
     "Forms",
-    "Signals"
+    "Signals",
+    "Vestjs"
   ],
   "repository": "https://github.com/simplifiedcourses/ngx-vest-forms",
   "sideEffects": false
