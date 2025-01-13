@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
-import { PurchaseFormComponent } from './components/smart/purchase-form/purchase-form.component';
 
 @Component({
   selector: 'app-root',

@@ -1,4 +1,5 @@
 import { Directive, inject, input, OnDestroy, Output } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import {
   AsyncValidatorFn,
   NgForm,
@@ -24,7 +25,6 @@ import {
   zip,
 } from 'rxjs';
 import { StaticSuite } from 'vest';
-import { toObservable } from '@angular/core/rxjs-interop';
 import { DeepRequired } from '../utils/deep-required';
 import {
   cloneDeep,
@@ -78,14 +78,14 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
    * @param v
    */
   public readonly validationConfig = input<{ [key: string]: string[] } | null>(
-    null
+    null,
   );
 
   private readonly pending$ = this.ngForm.form.events.pipe(
     filter((v) => v instanceof StatusChangeEvent),
     map((v) => (v as StatusChangeEvent).status),
     filter((v) => v === 'PENDING'),
-    distinctUntilChanged()
+    distinctUntilChanged(),
   );
 
   /**
@@ -97,7 +97,7 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
     filter((v) => v instanceof StatusChangeEvent),
     map((v) => (v as StatusChangeEvent).status),
     filter((v) => v !== 'PENDING'),
-    distinctUntilChanged()
+    distinctUntilChanged(),
   );
 
   /**
@@ -108,7 +108,7 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
   @Output() public readonly formValueChange = this.ngForm.form.events.pipe(
     filter((v) => v instanceof ValueChangeEvent),
     map((v) => (v as ValueChangeEvent<any>).value),
-    map(() => mergeValuesAndRawValues<T>(this.ngForm.form))
+    map(() => mergeValuesAndRawValues<T>(this.ngForm.form)),
   );
 
   /**
@@ -119,7 +119,7 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
     filter((v) => v instanceof StatusChangeEvent),
     map((v) => (v as StatusChangeEvent).status),
     filter((v) => v !== 'PENDING'),
-    map(() => getAllFormErrors(this.ngForm.form))
+    map(() => getAllFormErrors(this.ngForm.form)),
   );
 
   /**
@@ -129,7 +129,7 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
     filter((v) => v instanceof PristineChangeEvent),
     map((v) => !(v as PristineChangeEvent).pristine),
     startWith(this.ngForm.form.dirty),
-    distinctUntilChanged()
+    distinctUntilChanged(),
   );
   private readonly destroy$$ = new Subject<void>();
 
@@ -138,7 +138,7 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
    */
   private readonly statusChanges$ = this.ngForm.form.statusChanges.pipe(
     startWith(this.ngForm.form.status),
-    distinctUntilChanged()
+    distinctUntilChanged(),
   );
 
   /**
@@ -147,7 +147,7 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
   @Output() public readonly validChange = this.statusChanges$.pipe(
     filter((e) => e === 'VALID' || e === 'INVALID'),
     map((v) => v === 'VALID'),
-    distinctUntilChanged()
+    distinctUntilChanged(),
   );
 
   /**
@@ -186,11 +186,11 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
                     emitEvent: true,
                   });
                 });
-              })
+              }),
             );
           });
           return zip(streams);
-        })
+        }),
       )
       .subscribe();
 
@@ -219,7 +219,10 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
    * @param validationOptions
    * @returns an asynchronous validator function
    */
-  public createAsyncValidator(field: string, validationOptions: ValidationOptions): AsyncValidatorFn {
+  public createAsyncValidator(
+    field: string,
+    validationOptions: ValidationOptions,
+  ): AsyncValidatorFn {
     if (!this.suite()) {
       return () => of(null);
     }
@@ -235,7 +238,7 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
         };
         this.formValueCache[field].debounced = this.formValueCache[
           field
-          ].sub$$!.pipe(debounceTime(validationOptions.debounceTime));
+        ].sub$$!.pipe(debounceTime(validationOptions.debounceTime));
       }
       // Next the latest model in the cache for a certain field
       this.formValueCache[field].sub$$!.next(mod);
@@ -252,7 +255,7 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
             });
           }) as Observable<ValidationErrors | null>;
         }),
-        takeUntil(this.destroy$$)
+        takeUntil(this.destroy$$),
       );
     };
   }

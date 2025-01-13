@@ -1,15 +1,15 @@
-import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
 import { Component, computed, signal } from '@angular/core';
-import { vestForms } from '../exports';
+import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
 import { expect, userEvent, waitFor, within } from '@storybook/test';
+import { vestForms } from '../exports';
 
+import { JsonPipe } from '@angular/common';
 import {
   FormModel,
   formShape,
   formValidationSuite,
   selectors,
 } from './simple-form';
-import { JsonPipe } from '@angular/common';
 
 @Component({
   template: `
@@ -167,16 +167,16 @@ export const ShouldShowErrorsOnSubmit: StoryObj = {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByTestId(selectors.btnSubmit));
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperFirstName)
+      canvas.getByTestId(selectors.scControlWrapperFirstName),
     ).toHaveTextContent('First name is required');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperLastName)
+      canvas.getByTestId(selectors.scControlWrapperLastName),
     ).toHaveTextContent('Last name is required');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperPassword)
+      canvas.getByTestId(selectors.scControlWrapperPassword),
     ).toHaveTextContent('Password is required');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
+      canvas.getByTestId(selectors.scControlWrapperConfirmPassword),
     ).not.toHaveTextContent('Confirm password is required');
   },
 };
@@ -190,13 +190,13 @@ export const ShouldHideErrorsWhenValid: StoryObj = {
     await userEvent.type(canvas.getByTestId(selectors.inputLastName), 'last');
     await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'pass');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperFirstName)
+      canvas.getByTestId(selectors.scControlWrapperFirstName),
     ).not.toHaveTextContent('First name is required');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperLastName)
+      canvas.getByTestId(selectors.scControlWrapperLastName),
     ).not.toHaveTextContent('Last name is required');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperPassword)
+      canvas.getByTestId(selectors.scControlWrapperPassword),
     ).not.toHaveTextContent('Password is required');
   },
 };
@@ -206,19 +206,19 @@ export const ShouldShowErrorsOnBlur: StoryObj = {
     await userEvent.click(canvas.getByTestId(selectors.inputFirstName));
     canvas.getByTestId(selectors.inputFirstName).blur();
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperFirstName)
+      canvas.getByTestId(selectors.scControlWrapperFirstName),
     ).toHaveTextContent('First name is required');
 
     await userEvent.click(canvas.getByTestId(selectors.inputLastName));
     canvas.getByTestId(selectors.inputLastName).blur();
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperLastName)
+      canvas.getByTestId(selectors.scControlWrapperLastName),
     ).toHaveTextContent('Last name is required');
 
     await userEvent.click(canvas.getByTestId(selectors.inputPassword));
     canvas.getByTestId(selectors.inputPassword).blur();
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperPassword)
+      canvas.getByTestId(selectors.scControlWrapperPassword),
     ).toHaveTextContent('Password is required');
   },
 };
@@ -229,13 +229,13 @@ export const ShouldValidateOnGroups: StoryObj = {
     await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'first');
     await userEvent.type(
       canvas.getByTestId(selectors.inputConfirmPassword),
-      'second'
+      'second',
     );
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperPasswords)
+      canvas.getByTestId(selectors.scControlWrapperPasswords),
     ).toHaveTextContent('Passwords do not match');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperPasswords)
+      canvas.getByTestId(selectors.scControlWrapperPasswords),
     ).toHaveClass('sc-control-wrapper--invalid');
   },
 };
@@ -245,10 +245,10 @@ export const ShouldHaveCorrectStatussesAndFormValueInitially: StoryObj = {
     const canvas = within(canvasElement);
     await waitFor(() => {
       expect(canvas.getByTestId(selectors.preFormValid)).toHaveTextContent(
-        'false'
+        'false',
       );
       expect(canvas.getByTestId(selectors.preFormDirty)).toHaveTextContent(
-        'false'
+        'false',
       );
       const expectedContent = {
         passwords: {
@@ -258,8 +258,8 @@ export const ShouldHaveCorrectStatussesAndFormValueInitially: StoryObj = {
       };
       expect(
         JSON.stringify(
-          JSON.parse(canvas.getByTestId(selectors.preFormValue).innerHTML)
-        )
+          JSON.parse(canvas.getByTestId(selectors.preFormValue).innerHTML),
+        ),
       ).toEqual(JSON.stringify(expectedContent));
       const expectedErrors = {
         firstName: ['First name is required'],
@@ -268,8 +268,8 @@ export const ShouldHaveCorrectStatussesAndFormValueInitially: StoryObj = {
       };
       expect(
         JSON.stringify(
-          JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)
-        )
+          JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML),
+        ),
       ).toEqual(JSON.stringify(expectedErrors));
     });
   },
@@ -281,10 +281,10 @@ export const ShouldHaveCorrectStatussesAndOnFormUpdate: StoryObj = {
     await userEvent.type(canvas.getByTestId(selectors.inputFirstName), 'f');
     await waitFor(() => {
       expect(canvas.getByTestId(selectors.preFormValid)).toHaveTextContent(
-        'false'
+        'false',
       );
       expect(canvas.getByTestId(selectors.preFormDirty)).toHaveTextContent(
-        'true'
+        'true',
       );
       const expectedContent = {
         firstName: 'f',
@@ -295,8 +295,8 @@ export const ShouldHaveCorrectStatussesAndOnFormUpdate: StoryObj = {
       };
       expect(
         JSON.stringify(
-          JSON.parse(canvas.getByTestId(selectors.preFormValue).innerHTML)
-        )
+          JSON.parse(canvas.getByTestId(selectors.preFormValue).innerHTML),
+        ),
       ).toEqual(JSON.stringify(expectedContent));
       const expectedErrors = {
         lastName: ['Last name is required'],
@@ -304,22 +304,22 @@ export const ShouldHaveCorrectStatussesAndOnFormUpdate: StoryObj = {
       };
       expect(
         JSON.stringify(
-          JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)
-        )
+          JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML),
+        ),
       ).toEqual(JSON.stringify(expectedErrors));
     });
     await userEvent.type(canvas.getByTestId(selectors.inputLastName), 'l');
     await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'p');
     await userEvent.type(
       canvas.getByTestId(selectors.inputConfirmPassword),
-      'p'
+      'p',
     );
     await waitFor(() => {
       expect(canvas.getByTestId(selectors.preFormValid)).toHaveTextContent(
-        'true'
+        'true',
       );
       expect(canvas.getByTestId(selectors.preFormDirty)).toHaveTextContent(
-        'true'
+        'true',
       );
       const expectedContent = {
         firstName: 'f',
@@ -331,13 +331,13 @@ export const ShouldHaveCorrectStatussesAndOnFormUpdate: StoryObj = {
       };
       expect(
         JSON.stringify(
-          JSON.parse(canvas.getByTestId(selectors.preFormValue).innerHTML)
-        )
+          JSON.parse(canvas.getByTestId(selectors.preFormValue).innerHTML),
+        ),
       ).toEqual(JSON.stringify(expectedContent));
       expect(
         JSON.stringify(
-          JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)
-        )
+          JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML),
+        ),
       ).toEqual(JSON.stringify({}));
     });
   },
@@ -348,11 +348,11 @@ export const ShouldValidateOnRootForm: StoryObj = {
     const canvas = within(canvasElement);
     await userEvent.type(
       canvas.getByTestId(selectors.inputFirstName),
-      'Brecht'
+      'Brecht',
     );
     await userEvent.type(
       canvas.getByTestId(selectors.inputLastName),
-      'Billiet'
+      'Billiet',
     );
     await userEvent.type(canvas.getByTestId(selectors.inputPassword), '1234');
     const expectedErrors = {
@@ -360,14 +360,14 @@ export const ShouldValidateOnRootForm: StoryObj = {
     };
     await expect(
       JSON.stringify(
-        JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)
-      )
+        JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML),
+      ),
     ).toEqual(JSON.stringify(expectedErrors));
     await userEvent.type(canvas.getByTestId(selectors.inputPassword), '5');
     await expect(
       JSON.stringify(
-        JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)
-      )
+        JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML),
+      ),
     ).toEqual(JSON.stringify({}));
   },
 };

@@ -19,7 +19,7 @@ export class ShapeMismatchError extends Error {
  */
 export function validateShape(
   formVal: Record<string, any>,
-  shape: Record<string, any>
+  shape: Record<string, any>,
 ): void {
   // Only execute in dev mode
   if (isDevMode()) {
@@ -40,7 +40,7 @@ export function validateShape(
 function validateFormValue(
   formValue: Record<string, any>,
   shape: Record<string, any>,
-  path: string = ''
+  path: string = '',
 ): string[] {
   const errors: string[] = [];
   for (const key in formValue) {
@@ -62,7 +62,11 @@ function validateFormValue(
           errors.push(`[ngModelGroup] Mismatch: '${newPath}'`);
         }
         errors.push(
-          ...validateFormValue(formValue[key], shape[keyToCompareWith], newPath)
+          ...validateFormValue(
+            formValue[key],
+            shape[keyToCompareWith],
+            newPath,
+          ),
         );
       } else if ((shape ? !(key in shape) : true) && isNaN(parseFloat(key))) {
         errors.push(`[ngModel] Mismatch '${newPath}'`);

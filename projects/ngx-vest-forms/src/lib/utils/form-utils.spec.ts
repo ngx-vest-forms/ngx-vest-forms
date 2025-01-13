@@ -1,14 +1,6 @@
-import {
-  EmailValidator,
-  FormArray,
-  FormControl,
-  FormGroup,
-  RequiredValidator,
-  Validators,
-} from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import {
   cloneDeep,
-  getAllFormErrors,
   getFormControlField,
   getFormGroupField,
   mergeValuesAndRawValues,
@@ -30,7 +22,7 @@ describe('getFormControlField function', () => {
       }),
     });
     expect(getFormControlField(form, form.get('personal')!.get('name')!)).toBe(
-      'personal.name'
+      'personal.name',
     );
   });
 });
@@ -54,7 +46,7 @@ describe('getFormGroupField function', () => {
       }),
     });
     expect(getFormGroupField(form, form.get('personal')!.get('contact')!)).toBe(
-      'personal.contact'
+      'personal.contact',
     );
   });
 });

@@ -65,7 +65,7 @@ export class ControlWrapperComponent implements AfterViewInit, OnDestroy {
       .pipe(
         switchMap(() => this.ngModelGroup?.control?.events || of(null)),
         mergeWith(this.control?.events || of(null)),
-        takeUntil(this.destroy$$)
+        takeUntil(this.destroy$$),
       )
       .subscribe(() => {
         this.cdRef.markForCheck();

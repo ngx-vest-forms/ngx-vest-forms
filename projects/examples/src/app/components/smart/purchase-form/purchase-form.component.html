@@ -75,7 +75,7 @@
   (validChange)="formValid.set($event)"
   (errorsChange)="errors.set($event)"
   (formValueChange)="setFormValue($event)"
-  [validationOptions]="{debounceTime: 300}"
+  [validationOptions]="{ debounceTime: 300 }"
 >
   <fieldset [disabled]="vm.loading">
     <h1 class="text-4xl">Purchase form</h1>
@@ -85,7 +85,7 @@
         <input
           placeholder="Type user id"
           type="text"
-          [validationOptions]="{debounceTime: 500}"
+          [validationOptions]="{ debounceTime: 500 }"
           [ngModel]="vm.formValue.userId"
           name="userId"
         />

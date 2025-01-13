@@ -1,14 +1,14 @@
-import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
+import { JsonPipe } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
-import { vestForms } from '../exports';
+import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
 import { expect, userEvent, waitFor, within } from '@storybook/test';
+import { vestForms } from '../exports';
 import {
   FormModel,
   formShape,
   formValidationSuite,
   selectors,
 } from './simple-form';
-import { JsonPipe } from '@angular/common';
 
 @Component({
   template: `
@@ -175,29 +175,29 @@ export const ShouldRetriggerByValidationConfig: StoryObj = {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByTestId(selectors.btnSubmit));
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperFirstName)
+      canvas.getByTestId(selectors.scControlWrapperFirstName),
     ).toHaveTextContent('First name is required');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperLastName)
+      canvas.getByTestId(selectors.scControlWrapperLastName),
     ).toHaveTextContent('Last name is required');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperPassword)
+      canvas.getByTestId(selectors.scControlWrapperPassword),
     ).toHaveTextContent('Password is required');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
+      canvas.getByTestId(selectors.scControlWrapperConfirmPassword),
     ).not.toHaveTextContent('Confirm password is required');
     await userEvent.click(canvas.getByTestId(selectors.inputConfirmPassword));
     await canvas.getByTestId(selectors.inputConfirmPassword).blur();
     await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'f');
     await waitFor(() => {
       expect(
-        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
+        canvas.getByTestId(selectors.scControlWrapperConfirmPassword),
       ).toHaveTextContent('Confirm password is required');
     });
     await userEvent.clear(canvas.getByTestId(selectors.inputPassword));
     await waitFor(() => {
       expect(
-        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
+        canvas.getByTestId(selectors.scControlWrapperConfirmPassword),
       ).not.toHaveTextContent('Confirm password is required');
     });
   },
@@ -208,48 +208,48 @@ export const ShouldReactToDynamicValidationConfig: StoryObj = {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByTestId(selectors.btnSubmit));
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperFirstName)
+      canvas.getByTestId(selectors.scControlWrapperFirstName),
     ).toHaveTextContent('First name is required');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperLastName)
+      canvas.getByTestId(selectors.scControlWrapperLastName),
     ).toHaveTextContent('Last name is required');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperPassword)
+      canvas.getByTestId(selectors.scControlWrapperPassword),
     ).toHaveTextContent('Password is required');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
+      canvas.getByTestId(selectors.scControlWrapperConfirmPassword),
     ).not.toHaveTextContent('Confirm password is required');
     await userEvent.click(canvas.getByTestId(selectors.inputConfirmPassword));
     await canvas.getByTestId(selectors.inputConfirmPassword).blur();
     await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'f');
     await waitFor(() => {
       expect(
-        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
+        canvas.getByTestId(selectors.scControlWrapperConfirmPassword),
       ).toHaveTextContent('Confirm password is required');
     });
     await userEvent.clear(canvas.getByTestId(selectors.inputPassword));
     await waitFor(() => {
       expect(
-        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
+        canvas.getByTestId(selectors.scControlWrapperConfirmPassword),
       ).not.toHaveTextContent('Confirm password is required');
     });
     await userEvent.click(
-      canvas.getByTestId(selectors.btnToggleValidationConfig)
+      canvas.getByTestId(selectors.btnToggleValidationConfig),
     );
     await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'f');
     await waitFor(() => {
       expect(
-        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
+        canvas.getByTestId(selectors.scControlWrapperConfirmPassword),
       ).not.toHaveTextContent('Confirm password is required');
     });
     await userEvent.clear(canvas.getByTestId(selectors.inputPassword));
     await userEvent.click(
-      canvas.getByTestId(selectors.btnToggleValidationConfig)
+      canvas.getByTestId(selectors.btnToggleValidationConfig),
     );
     await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'f');
     await waitFor(() => {
       expect(
-        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
+        canvas.getByTestId(selectors.scControlWrapperConfirmPassword),
       ).toHaveTextContent('Confirm password is required');
     });
   },

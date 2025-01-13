@@ -5,11 +5,11 @@ import {
   NgForm,
   NgModelGroup,
 } from '@angular/forms';
-import { ValidateRootFormDirective } from './directives/validate-root-form.directive';
 import { ControlWrapperComponent } from './components/control-wrapper/control-wrapper.component';
-import { FormDirective } from './directives/form.directive';
-import { FormModelDirective } from './directives/form-model.directive';
 import { FormModelGroupDirective } from './directives/form-model-group.directive';
+import { FormModelDirective } from './directives/form-model.directive';
+import { FormDirective } from './directives/form.directive';
+import { ValidateRootFormDirective } from './directives/validate-root-form.directive';
 
 /**
  * This is borrowed from  [https://github.com/wardbell/ngc-validate/blob/main/src/app/core/form-container-view-provider.ts](https://github.com/wardbell/ngc-validate/blob/main/src/app/core/form-container-view-provider.ts)

@@ -1,9 +1,9 @@
+import { ROOT_FORM } from 'ngx-vest-forms';
 import { each, enforce, omitWhen, only, staticSuite, test } from 'vest';
 import {
   BusinessHourFormModel,
   BusinessHoursFormModel,
 } from '../models/business-hours-form.model';
-import { ROOT_FORM } from 'ngx-vest-forms';
 
 export const businessHoursSuite = staticSuite(
   (model: BusinessHoursFormModel, field?: string) => {
@@ -23,27 +23,27 @@ export const businessHoursSuite = staticSuite(
         'There should be no overlap between business hours',
         () => {
           enforce(
-            areBusinessHoursValid(values as BusinessHourFormModel[])
+            areBusinessHoursValid(values as BusinessHourFormModel[]),
           ).isTruthy();
-        }
+        },
       );
     });
     each(values, (businessHour, index) => {
       validateBusinessHourModel(
         `businessHours.values.${index}`,
-        model.businessHours?.values?.[index]
+        model.businessHours?.values?.[index],
       );
     });
     validateBusinessHourModel(
       'businessHours.addValue',
-      model.businessHours?.addValue
+      model.businessHours?.addValue,
     );
-  }
+  },
 );
 
 function validateBusinessHourModel(
   field: string,
-  model?: BusinessHourFormModel
+  model?: BusinessHourFormModel,
 ) {
   test(`${field}.to`, 'Required', () => {
     enforce(model?.to).isNotBlank();
@@ -69,12 +69,12 @@ function validateBusinessHourModel(
         const to = `${toFirst}:${toSecond}`;
         enforce(isFromEarlierThanTo(from, to)).isTruthy();
       });
-    }
+    },
   );
 }
 
 function areBusinessHoursValid(
-  businessHours?: BusinessHourFormModel[]
+  businessHours?: BusinessHourFormModel[],
 ): boolean {
   if (!businessHours) {
     return false;

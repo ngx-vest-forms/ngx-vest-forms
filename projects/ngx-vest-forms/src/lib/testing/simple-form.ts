@@ -1,7 +1,7 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { ROOT_FORM } from '../constants';
 import { DeepPartial } from '../utils/deep-partial';
 import { DeepRequired } from '../utils/deep-required';
-import { ROOT_FORM } from '../constants';
 
 export type FormModel = DeepPartial<{
   firstName: string;
@@ -30,7 +30,7 @@ export const formValidationSuite = staticSuite(
       enforce(
         model.firstName === 'Brecht' &&
           model.lastName === 'Billiet' &&
-          model.passwords?.password === '1234'
+          model.passwords?.password === '1234',
       ).isFalsy();
     });
 
@@ -53,12 +53,12 @@ export const formValidationSuite = staticSuite(
       () => {
         test('passwords', 'Passwords do not match', () => {
           enforce(model.passwords?.confirmPassword).equals(
-            model.passwords?.password
+            model.passwords?.password,
           );
         });
-      }
+      },
     );
-  }
+  },
 );
 
 export const selectors = {

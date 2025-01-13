@@ -50,13 +50,13 @@ describe('validateShape function', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(ShapeMismatchError);
       expect((error as ShapeMismatchError).message).toContain(
-        `[ngModelGroup] Mismatch: 'addresss'`
+        `[ngModelGroup] Mismatch: 'addresss'`,
       );
       expect((error as ShapeMismatchError).message).toContain(
-        `[ngModel] Mismatch 'addresss.city'`
+        `[ngModel] Mismatch 'addresss.city'`,
       );
       expect((error as ShapeMismatchError).message).toContain(
-        `[ngModel] Mismatch 'addresss.zip'`
+        `[ngModel] Mismatch 'addresss.zip'`,
       );
     }
   });
@@ -91,7 +91,7 @@ describe('validateShape function', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(ShapeMismatchError);
       expect((error as ShapeMismatchError).message).toContain(
-        "[ngModelGroup] Mismatch: 'contact'"
+        "[ngModelGroup] Mismatch: 'contact'",
       );
     }
   });

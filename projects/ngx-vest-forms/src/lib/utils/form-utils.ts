@@ -8,7 +8,7 @@ import { ROOT_FORM } from '../constants';
  */
 function getControlPath(
   formGroup: FormGroup,
-  control: AbstractControl
+  control: AbstractControl,
 ): string {
   for (const key in formGroup.controls) {
     if (formGroup.controls.hasOwnProperty(key)) {
@@ -56,7 +56,7 @@ function getGroupPath(formGroup: FormGroup, control: AbstractControl): string {
  */
 export function getFormControlField(
   rootForm: FormGroup,
-  control: AbstractControl
+  control: AbstractControl,
 ): string {
   return getControlPath(rootForm, control);
 }
@@ -68,7 +68,7 @@ export function getFormControlField(
  */
 export function getFormGroupField(
   rootForm: FormGroup,
-  control: AbstractControl
+  control: AbstractControl,
 ): string {
   return getGroupPath(rootForm, control);
 }
@@ -175,7 +175,7 @@ export function set(obj: object, path: string, value: any): void {
  * @param form
  */
 export function getAllFormErrors(
-  form?: AbstractControl
+  form?: AbstractControl,
 ): Record<string, string> {
   const errors: Record<string, string> = {};
   if (!form) {

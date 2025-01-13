@@ -1,31 +1,31 @@
-import { ValidateRootFormDirective, vestForms } from 'ngx-vest-forms';
-import { Component, computed, effect, inject, signal } from '@angular/core';
 import { JsonPipe } from '@angular/common';
-import { AddressComponent } from '../../ui/address/address.component';
-import { PhonenumbersComponent } from '../../ui/phonenumbers/phonenumbers.component';
-import { LukeService } from '../../../luke.service';
-import { SwapiService } from '../../../swapi.service';
-import { ProductService } from '../../../product.service';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { ValidateRootFormDirective, vestForms } from 'ngx-vest-forms';
+import { debounceTime, filter, switchMap } from 'rxjs';
+import { LukeService } from '../../../luke.service';
+import { AddressModel } from '../../../models/address.model';
 import {
   PurchaseFormModel,
   purchaseFormShape,
 } from '../../../models/purchase-form.model';
+import { ProductService } from '../../../product.service';
+import { SwapiService } from '../../../swapi.service';
 import { createPurchaseValidationSuite } from '../../../validations/purchase.validations';
-import { AddressModel } from '../../../models/address.model';
-import { debounceTime, filter, switchMap } from 'rxjs';
+import { AddressComponent } from '../../ui/address/address.component';
+import { PhonenumbersComponent } from '../../ui/phonenumbers/phonenumbers.component';
 
 @Component({
-    selector: 'sc-purchase-form',
-    imports: [
-        JsonPipe,
-        vestForms,
-        AddressComponent,
-        PhonenumbersComponent,
-        ValidateRootFormDirective,
-    ],
-    templateUrl: './purchase-form.component.html',
-    styleUrls: ['./purchase-form.component.scss']
+  selector: 'sc-purchase-form',
+  imports: [
+    JsonPipe,
+    vestForms,
+    AddressComponent,
+    PhonenumbersComponent,
+    ValidateRootFormDirective,
+  ],
+  templateUrl: './purchase-form.component.html',
+  styleUrls: ['./purchase-form.component.scss'],
 })
 export class PurchaseFormComponent {
   private readonly lukeService = inject(LukeService);
@@ -88,7 +88,7 @@ export class PurchaseFormComponent {
           }));
         }
       },
-      { allowSignalWrites: true }
+      { allowSignalWrites: true },
     );
 
     // When firstName is Luke, fetch luke skywalker and update the form value
@@ -96,7 +96,7 @@ export class PurchaseFormComponent {
       .pipe(
         debounceTime(1000),
         filter((v) => v === 'Luke'),
-        switchMap(() => this.lukeService.getLuke())
+        switchMap(() => this.lukeService.getLuke()),
       )
       .subscribe((luke) => {
         this.formValue.update((v) => ({ ...v, ...luke }));

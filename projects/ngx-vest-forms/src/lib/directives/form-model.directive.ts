@@ -5,9 +5,9 @@ import {
   NG_ASYNC_VALIDATORS,
   ValidationErrors,
 } from '@angular/forms';
-import { FormDirective } from './form.directive';
 import { Observable } from 'rxjs';
 import { getFormControlField } from '../utils/form-utils';
+import { FormDirective } from './form.directive';
 import { ValidationOptions } from './validation-options';
 
 /**
@@ -30,12 +30,13 @@ export class FormModelDirective implements AsyncValidator {
   private readonly formDirective = inject(FormDirective);
 
   public validate(
-    control: AbstractControl
+    control: AbstractControl,
   ): Observable<ValidationErrors | null> {
     const { ngForm, suite, formValue } = this.formDirective;
     const field = getFormControlField(ngForm.control, control);
-    return this.formDirective.createAsyncValidator(field, this.validationOptions())(
-      control.getRawValue()
-    ) as Observable<ValidationErrors | null>;
+    return this.formDirective.createAsyncValidator(
+      field,
+      this.validationOptions(),
+    )(control.getRawValue()) as Observable<ValidationErrors | null>;
   }
 }

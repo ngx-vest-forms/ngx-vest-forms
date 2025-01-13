@@ -1,10 +1,10 @@
+import { ROOT_FORM } from 'ngx-vest-forms';
+import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 import { PurchaseFormModel } from '../models/purchase-form.model';
+import { SwapiService } from '../swapi.service';
 import { addressValidations } from './address.validations';
 import { phonenumberValidations } from './phonenumber.validations';
-import { SwapiService } from '../swapi.service';
-import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
-import { ROOT_FORM } from 'ngx-vest-forms';
 
 export const createPurchaseValidationSuite = (swapiService: SwapiService) => {
   return staticSuite((model: PurchaseFormModel, field?: string) => {
@@ -15,7 +15,7 @@ export const createPurchaseValidationSuite = (swapiService: SwapiService) => {
       enforce(
         model.firstName === 'Brecht' &&
           model.lastName === 'Billiet' &&
-          model.age === 30
+          model.age === 30,
       ).isFalsy();
     });
 
@@ -24,10 +24,10 @@ export const createPurchaseValidationSuite = (swapiService: SwapiService) => {
         await lastValueFrom(
           swapiService
             .searchUserById(model.userId as string)
-            .pipe(takeUntil(fromEvent(signal, 'abort')))
+            .pipe(takeUntil(fromEvent(signal, 'abort'))),
         ).then(
           () => Promise.reject(),
-          () => Promise.resolve()
+          () => Promise.resolve(),
         );
       });
     });
@@ -55,7 +55,7 @@ export const createPurchaseValidationSuite = (swapiService: SwapiService) => {
         'If gender is other, you have to specify the gender',
         () => {
           enforce(model.genderOther).isNotBlank();
-        }
+        },
       );
     });
     test('productId', 'Product is required', () => {
@@ -63,21 +63,21 @@ export const createPurchaseValidationSuite = (swapiService: SwapiService) => {
     });
     addressValidations(
       model.addresses?.billingAddress,
-      'addresses.billingAddress'
+      'addresses.billingAddress',
     );
     omitWhen(
       !model.addresses?.shippingAddressDifferentFromBillingAddress,
       () => {
         addressValidations(
           model.addresses?.shippingAddress,
-          'addresses.shippingAddress'
+          'addresses.shippingAddress',
         );
         test('addresses', 'The addresses appear to be the same', () => {
           enforce(JSON.stringify(model.addresses?.billingAddress)).notEquals(
-            JSON.stringify(model.addresses?.shippingAddress)
+            JSON.stringify(model.addresses?.shippingAddress),
           );
         });
-      }
+      },
     );
     test('passwords.password', 'Password is not filled in', () => {
       enforce(model.passwords?.password).isNotBlank();
@@ -88,7 +88,7 @@ export const createPurchaseValidationSuite = (swapiService: SwapiService) => {
         'Confirm password is not filled in',
         () => {
           enforce(model.passwords?.confirmPassword).isNotBlank();
-        }
+        },
       );
     });
     omitWhen(
@@ -96,10 +96,10 @@ export const createPurchaseValidationSuite = (swapiService: SwapiService) => {
       () => {
         test('passwords', 'Passwords do not match', () => {
           enforce(model.passwords?.confirmPassword).equals(
-            model.passwords?.password
+            model.passwords?.password,
           );
         });
-      }
+      },
     );
     phonenumberValidations(model?.phonenumbers, 'phonenumbers');
   });

@@ -1,5 +1,6 @@
-import { Component, Input } from '@angular/core';
 import { CommonModule, KeyValuePipe } from '@angular/common';
+import { Component, Input } from '@angular/core';
+import { NgModelGroup } from '@angular/forms';
 import {
   arrayToObject,
   DeepPartial,
@@ -8,14 +9,13 @@ import {
 } from 'ngx-vest-forms';
 import { BusinessHourFormModel } from '../../../models/business-hours-form.model';
 import { BusinessHourComponent } from '../business-hour/business-hour.component';
-import { NgModelGroup } from '@angular/forms';
 
 @Component({
-    selector: 'sc-business-hours',
-    imports: [CommonModule, vestForms, KeyValuePipe, BusinessHourComponent],
-    templateUrl: './business-hours.component.html',
-    styleUrls: ['./business-hours.component.scss'],
-    viewProviders: [vestFormsViewProviders]
+  selector: 'sc-business-hours',
+  imports: [CommonModule, vestForms, KeyValuePipe, BusinessHourComponent],
+  templateUrl: './business-hours.component.html',
+  styleUrls: ['./business-hours.component.scss'],
+  viewProviders: [vestFormsViewProviders],
 })
 export class BusinessHoursComponent {
   @Input() public businessHoursModel?: DeepPartial<{
@@ -42,7 +42,7 @@ export class BusinessHoursComponent {
       return;
     }
     const businessHours = Object.values(this.businessHoursModel.values).filter(
-      (v, index) => index !== Number(key)
+      (v, index) => index !== Number(key),
     );
     this.businessHoursModel.values = arrayToObject(businessHours);
   }
