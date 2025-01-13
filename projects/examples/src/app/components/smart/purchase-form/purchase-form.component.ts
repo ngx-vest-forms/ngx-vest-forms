@@ -16,17 +16,16 @@ import { AddressModel } from '../../../models/address.model';
 import { debounceTime, filter, switchMap } from 'rxjs';
 
 @Component({
-  selector: 'sc-purchase-form',
-  standalone: true,
-  imports: [
-    JsonPipe,
-    vestForms,
-    AddressComponent,
-    PhonenumbersComponent,
-    ValidateRootFormDirective,
-  ],
-  templateUrl: './purchase-form.component.html',
-  styleUrls: ['./purchase-form.component.scss'],
+    selector: 'sc-purchase-form',
+    imports: [
+        JsonPipe,
+        vestForms,
+        AddressComponent,
+        PhonenumbersComponent,
+        ValidateRootFormDirective,
+    ],
+    templateUrl: './purchase-form.component.html',
+    styleUrls: ['./purchase-form.component.scss']
 })
 export class PurchaseFormComponent {
   private readonly lukeService = inject(LukeService);

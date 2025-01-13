@@ -7,12 +7,11 @@ import {
 } from 'ngx-vest-forms';
 
 @Component({
-  selector: 'sc-phonenumbers',
-  standalone: true,
-  imports: [CommonModule, vestForms, KeyValuePipe],
-  templateUrl: './phonenumbers.component.html',
-  styleUrls: ['./phonenumbers.component.scss'],
-  viewProviders: [vestFormsViewProviders],
+    selector: 'sc-phonenumbers',
+    imports: [CommonModule, vestForms, KeyValuePipe],
+    templateUrl: './phonenumbers.component.html',
+    styleUrls: ['./phonenumbers.component.scss'],
+    viewProviders: [vestFormsViewProviders]
 })
 export class PhonenumbersComponent {
   @Input() public values: { [key: string]: string } = {};
