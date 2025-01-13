@@ -9,7 +9,7 @@
     "components": [
         {
             "name": "FormDirectiveDemoComponent",
-            "id": "component-FormDirectiveDemoComponent-b16fb1594732bbd254505886d953516e1dd831bd67d0b91a1fe99fa89e623ca7312b749d12d8da94aee0713736d5919136f7434ceb78eaca4706f0eb4f0e8b63",
+            "id": "component-FormDirectiveDemoComponent-5b96cc93aaa2ee7714af423ccdf3a18fceb37c6d7e318c1db183182afed845538f5d5525e9d5612a70e50b9d5900515f93bb79ed51c051b5f0c69a6e4f23ae15",
             "file": "projects/ngx-vest-forms/src/lib/testing/simple-form-with-validation-config.stories.ts",
             "encapsulation": [],
             "entryComponents": [],
@@ -31,9 +31,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 120,
+                    "line": 118,
                     "modifierKind": [
                         124,
                         148
@@ -45,9 +46,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 119,
+                    "line": 117,
                     "modifierKind": [
                         124,
                         148
@@ -59,9 +61,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 118,
+                    "line": 116,
                     "modifierKind": [
                         124,
                         148
@@ -73,9 +76,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 121,
+                    "line": 119,
                     "modifierKind": [
                         124,
                         148
@@ -87,9 +91,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 122,
+                    "line": 120,
                     "modifierKind": [
                         124,
                         148
@@ -101,9 +106,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "any",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 123,
+                    "line": 121,
                     "modifierKind": [
                         124
                     ]
@@ -114,9 +120,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 127,
+                    "line": 125,
                     "modifierKind": [
                         123,
                         148
@@ -130,7 +137,7 @@
                     "optional": false,
                     "returnType": "void",
                     "typeParameters": [],
-                    "line": 154,
+                    "line": 152,
                     "deprecated": false,
                     "deprecationMessage": "",
                     "modifierKind": [
@@ -150,7 +157,7 @@
                     "optional": false,
                     "returnType": "void",
                     "typeParameters": [],
-                    "line": 150,
+                    "line": 148,
                     "deprecated": false,
                     "deprecationMessage": "",
                     "modifierKind": [
@@ -174,7 +181,7 @@
                     "optional": false,
                     "returnType": "void",
                     "typeParameters": [],
-                    "line": 135,
+                    "line": 133,
                     "deprecated": false,
                     "deprecationMessage": "",
                     "modifierKind": [
@@ -186,7 +193,7 @@
             "deprecationMessage": "",
             "hostBindings": [],
             "hostListeners": [],
-            "standalone": true,
+            "standalone": false,
             "imports": [
                 {
                     "name": "vestForms"
@@ -199,7 +206,7 @@
             "description": "",
             "rawdescription": "\n",
             "type": "component",
-            "sourceCode": "import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';\nimport { Component, computed, signal } from '@angular/core';\nimport { vestForms } from '../exports';\nimport { getByText, userEvent, waitFor, within } from '@storybook/test';\nimport { expect } from '@storybook/jest';\nimport {\n  FormModel,\n  formShape,\n  formValidationSuite,\n  selectors,\n} from './simple-form';\nimport { JsonPipe } from '@angular/common';\n\n@Component({\n  template: `\n    <form\n      class=\"p-4\"\n      scVestForm\n      (ngSubmit)=\"onSubmit()\"\n      [formValue]=\"formValue()\"\n      [validateRootForm]=\"true\"\n      [formShape]=\"shape\"\n      [validationConfig]=\"validationConfig\"\n      [suite]=\"suite\"\n      (validChange)=\"formValid.set($event)\"\n      (errorsChange)=\"errors.set($event)\"\n      (formValueChange)=\"setFormValue($event)\"\n    >\n      <fieldset>\n        <div\n          class=\"w-full\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__first-name\"\n        >\n          <label>\n            <span>First name</span>\n            <input\n              placeholder=\"Type your first name\"\n              data-testid=\"input__first-name\"\n              type=\"text\"\n              [ngModel]=\"vm.formValue.firstName\"\n              name=\"firstName\"\n            />\n          </label>\n        </div>\n        <div\n          class=\"w-full\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__last-name\"\n        >\n          <label>\n            <span>Last name</span>\n            <input\n              placeholder=\"Type your last name\"\n              data-testid=\"input__last-name\"\n              type=\"text\"\n              [ngModel]=\"vm.formValue.lastName\"\n              name=\"lastName\"\n            />\n          </label>\n        </div>\n        <div\n          class=\"sm:col-span-2\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__passwords\"\n          ngModelGroup=\"passwords\"\n        >\n          <div class=\"grid gap-4 sm:grid-cols-2 sm:gap-6\">\n            <div\n              class=\"w-full\"\n              sc-control-wrapper\n              data-testid=\"sc-control-wrapper__password\"\n            >\n              <label>\n                <span>Password</span>\n                <input\n                  placeholder=\"Type password\"\n                  type=\"password\"\n                  data-testid=\"input__password\"\n                  [ngModel]=\"vm.formValue.passwords?.password\"\n                  name=\"password\"\n                />\n              </label>\n            </div>\n            <div\n              class=\"w-full\"\n              sc-control-wrapper\n              data-testid=\"sc-control-wrapper__confirm-password\"\n            >\n              <label>\n                <span>Confirm</span>\n                <input\n                  placeholder=\"Confirm password\"\n                  type=\"password\"\n                  data-testid=\"input__confirm-password\"\n                  [ngModel]=\"vm.formValue.passwords?.confirmPassword\"\n                  name=\"confirmPassword\"\n                />\n              </label>\n            </div>\n          </div>\n        </div>\n        <button\n          data-testid=\"btn__toggle-validation-config\"\n          (click)=\"toggle()\"\n          type=\"button\"\n        >\n          Toggle validation config\n        </button>\n        <button data-testid=\"btn__submit\" type=\"submit\">Submit</button>\n      </fieldset>\n    </form>\n  `,\n  imports: [vestForms, JsonPipe],\n  standalone: true,\n})\nexport class FormDirectiveDemoComponent {\n  protected readonly formValue = signal<FormModel>({});\n  protected readonly formValid = signal<boolean>(false);\n  protected readonly errors = signal<Record<string, string>>({});\n  protected readonly shape = formShape;\n  protected readonly suite = formValidationSuite;\n  protected validationConfig: any = {\n    firstName: ['lastName'],\n    'passwords.password': ['passwords.confirmPassword'],\n  };\n  private readonly viewModel = computed(() => {\n    return {\n      formValue: this.formValue(),\n      errors: this.errors(),\n      formValid: this.formValid(),\n    };\n  });\n\n  protected toggle(): void {\n    if (this.validationConfig['passwords.password']) {\n      this.validationConfig = { firstName: ['lastName'] };\n    } else {\n      this.validationConfig = {\n        firstName: ['lastName'],\n        'passwords.password': ['passwords.confirmPassword'],\n      };\n    }\n  }\n\n  protected get vm() {\n    return this.viewModel();\n  }\n\n  protected setFormValue(v: FormModel): void {\n    this.formValue.set(v);\n  }\n\n  protected onSubmit(): void {\n    if (this.formValid()) {\n      console.log(this.formValue());\n    }\n  }\n}\n\nconst meta: Meta<FormDirectiveDemoComponent> = {\n  title: 'simple form with validation config',\n  component: FormDirectiveDemoComponent,\n  parameters: {\n    // More on how to position stories at: https://storybook.js.org/docs/configure/story-layout\n    layout: 'fullscreen',\n  },\n};\n\nexport default meta;\nexport const Primary: StoryObj = {\n  decorators: [componentWrapperDecorator(FormDirectiveDemoComponent)],\n};\n\nexport const ShouldRetriggerByValidationConfig: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.click(canvas.getByTestId(selectors.btnSubmit));\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperFirstName)\n    ).toHaveTextContent('First name is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperLastName)\n    ).toHaveTextContent('Last name is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperPassword)\n    ).toHaveTextContent('Password is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperConfirmPassword)\n    ).not.toHaveTextContent('Confirm password is required');\n    await userEvent.click(canvas.getByTestId(selectors.inputConfirmPassword));\n    await canvas.getByTestId(selectors.inputConfirmPassword).blur();\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'f');\n    await waitFor(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)\n      ).toHaveTextContent('Confirm password is required');\n    });\n    await userEvent.clear(canvas.getByTestId(selectors.inputPassword));\n    await waitFor(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)\n      ).not.toHaveTextContent('Confirm password is required');\n    });\n  },\n};\n\nexport const ShouldReactToDynamicValidationConfig: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.click(canvas.getByTestId(selectors.btnSubmit));\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperFirstName)\n    ).toHaveTextContent('First name is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperLastName)\n    ).toHaveTextContent('Last name is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperPassword)\n    ).toHaveTextContent('Password is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperConfirmPassword)\n    ).not.toHaveTextContent('Confirm password is required');\n    await userEvent.click(canvas.getByTestId(selectors.inputConfirmPassword));\n    await canvas.getByTestId(selectors.inputConfirmPassword).blur();\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'f');\n    await waitFor(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)\n      ).toHaveTextContent('Confirm password is required');\n    });\n    await userEvent.clear(canvas.getByTestId(selectors.inputPassword));\n    await waitFor(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)\n      ).not.toHaveTextContent('Confirm password is required');\n    });\n    await userEvent.click(\n      canvas.getByTestId(selectors.btnToggleValidationConfig)\n    );\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'f');\n    await waitFor(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)\n      ).not.toHaveTextContent('Confirm password is required');\n    });\n    await userEvent.clear(canvas.getByTestId(selectors.inputPassword));\n    await userEvent.click(\n      canvas.getByTestId(selectors.btnToggleValidationConfig)\n    );\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'f');\n    await waitFor(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)\n      ).toHaveTextContent('Confirm password is required');\n    });\n  },\n};\n",
+            "sourceCode": "import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';\nimport { Component, computed, signal } from '@angular/core';\nimport { vestForms } from '../exports';\nimport { expect, userEvent, waitFor, within } from '@storybook/test';\nimport {\n  FormModel,\n  formShape,\n  formValidationSuite,\n  selectors,\n} from './simple-form';\nimport { JsonPipe } from '@angular/common';\n\n@Component({\n  template: `\n    <form\n      class=\"p-4\"\n      scVestForm\n      (ngSubmit)=\"onSubmit()\"\n      [formValue]=\"formValue()\"\n      [validateRootForm]=\"true\"\n      [formShape]=\"shape\"\n      [validationConfig]=\"validationConfig\"\n      [suite]=\"suite\"\n      (validChange)=\"formValid.set($event)\"\n      (errorsChange)=\"errors.set($event)\"\n      (formValueChange)=\"setFormValue($event)\"\n    >\n      <fieldset>\n        <div\n          class=\"w-full\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__first-name\"\n        >\n          <label>\n            <span>First name</span>\n            <input\n              placeholder=\"Type your first name\"\n              data-testid=\"input__first-name\"\n              type=\"text\"\n              [ngModel]=\"vm.formValue.firstName\"\n              name=\"firstName\"\n            />\n          </label>\n        </div>\n        <div\n          class=\"w-full\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__last-name\"\n        >\n          <label>\n            <span>Last name</span>\n            <input\n              placeholder=\"Type your last name\"\n              data-testid=\"input__last-name\"\n              type=\"text\"\n              [ngModel]=\"vm.formValue.lastName\"\n              name=\"lastName\"\n            />\n          </label>\n        </div>\n        <div\n          class=\"sm:col-span-2\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__passwords\"\n          ngModelGroup=\"passwords\"\n        >\n          <div class=\"grid gap-4 sm:grid-cols-2 sm:gap-6\">\n            <div\n              class=\"w-full\"\n              sc-control-wrapper\n              data-testid=\"sc-control-wrapper__password\"\n            >\n              <label>\n                <span>Password</span>\n                <input\n                  placeholder=\"Type password\"\n                  type=\"password\"\n                  data-testid=\"input__password\"\n                  [ngModel]=\"vm.formValue.passwords?.password\"\n                  name=\"password\"\n                />\n              </label>\n            </div>\n            <div\n              class=\"w-full\"\n              sc-control-wrapper\n              data-testid=\"sc-control-wrapper__confirm-password\"\n            >\n              <label>\n                <span>Confirm</span>\n                <input\n                  placeholder=\"Confirm password\"\n                  type=\"password\"\n                  data-testid=\"input__confirm-password\"\n                  [ngModel]=\"vm.formValue.passwords?.confirmPassword\"\n                  name=\"confirmPassword\"\n                />\n              </label>\n            </div>\n          </div>\n        </div>\n        <button\n          data-testid=\"btn__toggle-validation-config\"\n          (click)=\"toggle()\"\n          type=\"button\"\n        >\n          Toggle validation config\n        </button>\n        <button data-testid=\"btn__submit\" type=\"submit\">Submit</button>\n      </fieldset>\n    </form>\n  `,\n  imports: [vestForms, JsonPipe],\n})\nexport class FormDirectiveDemoComponent {\n  protected readonly formValue = signal<FormModel>({});\n  protected readonly formValid = signal<boolean>(false);\n  protected readonly errors = signal<Record<string, string>>({});\n  protected readonly shape = formShape;\n  protected readonly suite = formValidationSuite;\n  protected validationConfig: any = {\n    firstName: ['lastName'],\n    'passwords.password': ['passwords.confirmPassword'],\n  };\n  private readonly viewModel = computed(() => {\n    return {\n      formValue: this.formValue(),\n      errors: this.errors(),\n      formValid: this.formValid(),\n    };\n  });\n\n  protected toggle(): void {\n    if (this.validationConfig['passwords.password']) {\n      this.validationConfig = { firstName: ['lastName'] };\n    } else {\n      this.validationConfig = {\n        firstName: ['lastName'],\n        'passwords.password': ['passwords.confirmPassword'],\n      };\n    }\n  }\n\n  protected get vm() {\n    return this.viewModel();\n  }\n\n  protected setFormValue(v: FormModel): void {\n    this.formValue.set(v);\n  }\n\n  protected onSubmit(): void {\n    if (this.formValid()) {\n      console.log(this.formValue());\n    }\n  }\n}\n\nconst meta: Meta<FormDirectiveDemoComponent> = {\n  title: 'simple form with validation config',\n  component: FormDirectiveDemoComponent,\n  parameters: {\n    // More on how to position stories at: https://storybook.js.org/docs/configure/story-layout\n    layout: 'fullscreen',\n  },\n};\n\nexport default meta;\nexport const Primary: StoryObj = {\n  decorators: [componentWrapperDecorator(FormDirectiveDemoComponent)],\n};\n\nexport const ShouldRetriggerByValidationConfig: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.click(canvas.getByTestId(selectors.btnSubmit));\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperFirstName)\n    ).toHaveTextContent('First name is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperLastName)\n    ).toHaveTextContent('Last name is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperPassword)\n    ).toHaveTextContent('Password is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperConfirmPassword)\n    ).not.toHaveTextContent('Confirm password is required');\n    await userEvent.click(canvas.getByTestId(selectors.inputConfirmPassword));\n    await canvas.getByTestId(selectors.inputConfirmPassword).blur();\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'f');\n    await waitFor(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)\n      ).toHaveTextContent('Confirm password is required');\n    });\n    await userEvent.clear(canvas.getByTestId(selectors.inputPassword));\n    await waitFor(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)\n      ).not.toHaveTextContent('Confirm password is required');\n    });\n  },\n};\n\nexport const ShouldReactToDynamicValidationConfig: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.click(canvas.getByTestId(selectors.btnSubmit));\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperFirstName)\n    ).toHaveTextContent('First name is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperLastName)\n    ).toHaveTextContent('Last name is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperPassword)\n    ).toHaveTextContent('Password is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperConfirmPassword)\n    ).not.toHaveTextContent('Confirm password is required');\n    await userEvent.click(canvas.getByTestId(selectors.inputConfirmPassword));\n    await canvas.getByTestId(selectors.inputConfirmPassword).blur();\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'f');\n    await waitFor(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)\n      ).toHaveTextContent('Confirm password is required');\n    });\n    await userEvent.clear(canvas.getByTestId(selectors.inputPassword));\n    await waitFor(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)\n      ).not.toHaveTextContent('Confirm password is required');\n    });\n    await userEvent.click(\n      canvas.getByTestId(selectors.btnToggleValidationConfig)\n    );\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'f');\n    await waitFor(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)\n      ).not.toHaveTextContent('Confirm password is required');\n    });\n    await userEvent.clear(canvas.getByTestId(selectors.inputPassword));\n    await userEvent.click(\n      canvas.getByTestId(selectors.btnToggleValidationConfig)\n    );\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'f');\n    await waitFor(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)\n      ).toHaveTextContent('Confirm password is required');\n    });\n  },\n};\n",
             "assetsDirs": [],
             "styleUrlsData": "",
             "stylesData": "",
@@ -211,14 +218,14 @@
                         "name": "vm",
                         "type": "",
                         "returnType": "",
-                        "line": 146
+                        "line": 144
                     }
                 }
             }
         },
         {
             "name": "FormDirectiveDemoComponent",
-            "id": "component-FormDirectiveDemoComponent-9b8351448201162c276fbc477f3237182784f34ca07b86e812ac9b415e5d2b31abf143fd719a40ee379a7e4873bafcbedc99e0493b1d390d3caa4bdad2340158-1",
+            "id": "component-FormDirectiveDemoComponent-956bcf425d7b026e30c357b28f6c5714d1d2397443f2a9bbe5ab680e93ca12bf64d7366c93d07115e366008eff2fa346ddd95af2849f87f3d30e5a7903030fe6-1",
             "file": "projects/ngx-vest-forms/src/lib/testing/simple-form-with-validation-options.stories.ts",
             "encapsulation": [],
             "entryComponents": [],
@@ -227,7 +234,7 @@
             "providers": [],
             "styleUrls": [],
             "styles": [],
-            "template": "<form\n  class=\"p-4\"\n  scVestForm\n  (ngSubmit)=\"onSubmit()\"\n  [formValue]=\"formValue()\"\n  [validateRootForm]=\"true\"\n  [formShape]=\"shape\"\n  [suite]=\"suite\"\n  (validChange)=\"formValid.set($event)\"\n  (errorsChange)=\"errors.set($event)\"\n  (formValueChange)=\"setFormValue($event)\"\n  [validationOptions]=\"{ debounceTime: 500 }\"\n>\n  <fieldset>\n    <div\n      class=\"w-full\"\n      sc-control-wrapper\n      data-testid=\"sc-control-wrapper__first-name\"\n    >\n      <label>\n        <span>First name</span>\n        <input\n          placeholder=\"Type your first name\"\n          data-testid=\"input__first-name\"\n          type=\"text\"\n          [ngModel]=\"vm.formValue.firstName\"\n          name=\"firstName\"\n          [validationOptions]=\"{ debounceTime: 500 }\"\n        />\n      </label>\n    </div>\n    <div\n      class=\"w-full\"\n      sc-control-wrapper\n      data-testid=\"sc-control-wrapper__last-name\"\n    >\n      <label>\n        <span>Last name</span>\n        <input\n          placeholder=\"Type your last name\"\n          data-testid=\"input__last-name\"\n          type=\"text\"\n          [ngModel]=\"vm.formValue.lastName\"\n          name=\"lastName\"\n        />\n      </label>\n    </div>\n    <div\n      class=\"sm:col-span-2\"\n      sc-control-wrapper\n      data-testid=\"sc-control-wrapper__passwords\"\n      ngModelGroup=\"passwords\"\n      [validationOptions]=\"{ debounceTime: 900 }\"\n    >\n      <div class=\"grid gap-4 sm:grid-cols-2 sm:gap-6\">\n        <div\n          class=\"w-full\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__password\"\n        >\n          <label>\n            <span>Password</span>\n            <input\n              placeholder=\"Type password\"\n              type=\"password\"\n              data-testid=\"input__password\"\n              [ngModel]=\"vm.formValue.passwords?.password\"\n              name=\"password\"\n            />\n          </label>\n        </div>\n        <div\n          class=\"w-full\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__confirm-password\"\n        >\n          <label>\n            <span>Confirm</span>\n            <input\n              placeholder=\"Confirm password\"\n              type=\"password\"\n              data-testid=\"input__confirm-password\"\n              [ngModel]=\"vm.formValue.passwords?.confirmPassword\"\n              name=\"confirmPassword\"\n            />\n          </label>\n        </div>\n      </div>\n    </div>\n    <button data-testid=\"btn__submit\" type=\"submit\">Submit</button>\n  </fieldset>\n  <pre data-testId=\"pre__form-errors\">\n    {{ vm.errors | json }}\n  </pre>\n</form>\n\n",
+            "template": "<form\n  class=\"p-4\"\n  scVestForm\n  (ngSubmit)=\"onSubmit()\"\n  [formValue]=\"formValue()\"\n  [validateRootForm]=\"true\"\n  [formShape]=\"shape\"\n  [suite]=\"suite\"\n  (validChange)=\"formValid.set($event)\"\n  (errorsChange)=\"errors.set($event)\"\n  (formValueChange)=\"setFormValue($event)\"\n  [validationOptions]=\"{ debounceTime: 500 }\"\n>\n  <fieldset>\n    <div\n      class=\"w-full\"\n      sc-control-wrapper\n      data-testid=\"sc-control-wrapper__first-name\"\n    >\n      <label>\n        <span>First name</span>\n        <input\n          placeholder=\"Type your first name\"\n          data-testid=\"input__first-name\"\n          type=\"text\"\n          [ngModel]=\"vm.formValue.firstName\"\n          name=\"firstName\"\n          [validationOptions]=\"{ debounceTime: 500 }\"\n        />\n      </label>\n    </div>\n    <div\n      class=\"w-full\"\n      sc-control-wrapper\n      data-testid=\"sc-control-wrapper__last-name\"\n    >\n      <label>\n        <span>Last name</span>\n        <input\n          placeholder=\"Type your last name\"\n          data-testid=\"input__last-name\"\n          type=\"text\"\n          [ngModel]=\"vm.formValue.lastName\"\n          name=\"lastName\"\n        />\n      </label>\n    </div>\n    <div\n      class=\"sm:col-span-2\"\n      sc-control-wrapper\n      data-testid=\"sc-control-wrapper__passwords\"\n      ngModelGroup=\"passwords\"\n      [validationOptions]=\"{ debounceTime: 900 }\"\n    >\n      <div class=\"grid gap-4 sm:grid-cols-2 sm:gap-6\">\n        <div\n          class=\"w-full\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__password\"\n        >\n          <label>\n            <span>Password</span>\n            <input\n              placeholder=\"Type password\"\n              type=\"password\"\n              data-testid=\"input__password\"\n              [ngModel]=\"vm.formValue.passwords?.password\"\n              name=\"password\"\n            />\n          </label>\n        </div>\n        <div\n          class=\"w-full\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__confirm-password\"\n        >\n          <label>\n            <span>Confirm</span>\n            <input\n              placeholder=\"Confirm password\"\n              type=\"password\"\n              data-testid=\"input__confirm-password\"\n              [ngModel]=\"vm.formValue.passwords?.confirmPassword\"\n              name=\"confirmPassword\"\n            />\n          </label>\n        </div>\n      </div>\n    </div>\n    <button data-testid=\"btn__submit\" type=\"submit\">Submit</button>\n  </fieldset>\n  <pre data-testId=\"pre__form-errors\">\n    {{ vm.errors | json }}\n  </pre\n  >\n</form>\n",
             "templateUrl": [],
             "viewProviders": [],
             "hostDirectives": [],
@@ -240,9 +247,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 119,
+                    "line": 117,
                     "modifierKind": [
                         124,
                         148
@@ -254,9 +262,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 118,
+                    "line": 116,
                     "modifierKind": [
                         124,
                         148
@@ -268,9 +277,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 117,
+                    "line": 115,
                     "modifierKind": [
                         124,
                         148
@@ -282,9 +292,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 120,
+                    "line": 118,
                     "modifierKind": [
                         124,
                         148
@@ -296,9 +307,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 121,
+                    "line": 119,
                     "modifierKind": [
                         124,
                         148
@@ -310,9 +322,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 122,
+                    "line": 120,
                     "modifierKind": [
                         123,
                         148
@@ -326,7 +339,7 @@
                     "optional": false,
                     "returnType": "void",
                     "typeParameters": [],
-                    "line": 138,
+                    "line": 136,
                     "deprecated": false,
                     "deprecationMessage": "",
                     "modifierKind": [
@@ -346,7 +359,7 @@
                     "optional": false,
                     "returnType": "void",
                     "typeParameters": [],
-                    "line": 134,
+                    "line": 132,
                     "deprecated": false,
                     "deprecationMessage": "",
                     "modifierKind": [
@@ -369,7 +382,7 @@
             "deprecationMessage": "",
             "hostBindings": [],
             "hostListeners": [],
-            "standalone": true,
+            "standalone": false,
             "imports": [
                 {
                     "name": "vestForms"
@@ -382,7 +395,7 @@
             "description": "",
             "rawdescription": "\n",
             "type": "component",
-            "sourceCode": "import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';\nimport { Component, computed, signal } from '@angular/core';\nimport { vestForms } from '../exports';\nimport { getByText, userEvent, waitFor, within } from '@storybook/test';\nimport { expect } from '@storybook/jest';\nimport {\n  FormModel,\n  formShape,\n  formValidationSuite,\n  selectors,\n} from './simple-form';\nimport { JsonPipe } from '@angular/common';\n\n@Component({\n  template: `\n    <form\n      class=\"p-4\"\n      scVestForm\n      (ngSubmit)=\"onSubmit()\"\n      [formValue]=\"formValue()\"\n      [validateRootForm]=\"true\"\n      [formShape]=\"shape\"\n      [suite]=\"suite\"\n      (validChange)=\"formValid.set($event)\"\n      (errorsChange)=\"errors.set($event)\"\n      (formValueChange)=\"setFormValue($event)\"\n      [validationOptions]=\"{ debounceTime: 500 }\"\n    >\n      <fieldset>\n        <div\n          class=\"w-full\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__first-name\"\n        >\n          <label>\n            <span>First name</span>\n            <input\n              placeholder=\"Type your first name\"\n              data-testid=\"input__first-name\"\n              type=\"text\"\n              [ngModel]=\"vm.formValue.firstName\"\n              name=\"firstName\"\n              [validationOptions]=\"{ debounceTime: 500 }\"\n            />\n          </label>\n        </div>\n        <div\n          class=\"w-full\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__last-name\"\n        >\n          <label>\n            <span>Last name</span>\n            <input\n              placeholder=\"Type your last name\"\n              data-testid=\"input__last-name\"\n              type=\"text\"\n              [ngModel]=\"vm.formValue.lastName\"\n              name=\"lastName\"\n            />\n          </label>\n        </div>\n        <div\n          class=\"sm:col-span-2\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__passwords\"\n          ngModelGroup=\"passwords\"\n          [validationOptions]=\"{ debounceTime: 900 }\"\n        >\n          <div class=\"grid gap-4 sm:grid-cols-2 sm:gap-6\">\n            <div\n              class=\"w-full\"\n              sc-control-wrapper\n              data-testid=\"sc-control-wrapper__password\"\n            >\n              <label>\n                <span>Password</span>\n                <input\n                  placeholder=\"Type password\"\n                  type=\"password\"\n                  data-testid=\"input__password\"\n                  [ngModel]=\"vm.formValue.passwords?.password\"\n                  name=\"password\"\n                />\n              </label>\n            </div>\n            <div\n              class=\"w-full\"\n              sc-control-wrapper\n              data-testid=\"sc-control-wrapper__confirm-password\"\n            >\n              <label>\n                <span>Confirm</span>\n                <input\n                  placeholder=\"Confirm password\"\n                  type=\"password\"\n                  data-testid=\"input__confirm-password\"\n                  [ngModel]=\"vm.formValue.passwords?.confirmPassword\"\n                  name=\"confirmPassword\"\n                />\n              </label>\n            </div>\n          </div>\n        </div>\n        <button data-testid=\"btn__submit\" type=\"submit\">Submit</button>\n      </fieldset>\n      <pre data-testId=\"pre__form-errors\">\n        {{ vm.errors | json }}\n      </pre>\n    </form>\n\n  `,\n  imports: [vestForms, JsonPipe],\n  standalone: true,\n})\nexport class FormDirectiveDemoComponent {\n  protected readonly formValue = signal<FormModel>({});\n  protected readonly formValid = signal<boolean>(false);\n  protected readonly errors = signal<Record<string, string>>({});\n  protected readonly shape = formShape;\n  protected readonly suite = formValidationSuite;\n  private readonly viewModel = computed(() => {\n    return {\n      formValue: this.formValue(),\n      errors: this.errors(),\n      formValid: this.formValid(),\n    };\n  });\n\n  protected get vm() {\n    return this.viewModel();\n  }\n\n  protected setFormValue(v: FormModel): void {\n    this.formValue.set(v);\n  }\n\n  protected onSubmit(): void {\n    if (this.formValid()) {\n      console.log(this.formValue());\n    }\n  }\n}\n\nconst meta: Meta<FormDirectiveDemoComponent> = {\n  title: 'simple form with validation options',\n  component: FormDirectiveDemoComponent,\n  parameters: {\n    // More on how to position stories at: https://storybook.js.org/docs/configure/story-layout\n    layout: 'fullscreen',\n  },\n};\n\nexport default meta;\nexport const Primary: StoryObj = {\n  decorators: [componentWrapperDecorator(FormDirectiveDemoComponent)],\n};\n\nexport const ShouldShowFirstnameRequiredAfterDelayForNgModel: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.click(canvas.getByTestId(selectors.inputFirstName));\n    canvas.getByTestId(selectors.inputFirstName).blur();\n\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperFirstName)\n    ).not.toHaveTextContent('First name is required');\n\n    setTimeout(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperFirstName)\n      ).toHaveTextContent('First name is required');\n    }, 550)\n  },\n};\n\nexport const ShouldShowPasswordConfirmationAfterDelayForNgModelGroup: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'first');\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputConfirmPassword),\n      'second'\n    , { delay: 500});\n    await userEvent.click(canvas.getByTestId(selectors.inputConfirmPassword));\n    await canvas.getByTestId(selectors.inputConfirmPassword).blur();\n\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperPasswords)\n    ).not.toHaveTextContent('Passwords do not match');\n\n    setTimeout(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperPasswords)\n      ).toHaveTextContent('Passwords do not match');\n    }, 1000)\n  },\n};\n\n\nexport const ShouldValidateOnRootFormAfterDelay: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputFirstName),\n      'Brecht'\n    );\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputLastName),\n      'Billiet'\n    );\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), '1234');\n\n    await expect(\n      JSON.stringify(\n        JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n      )\n    ).toEqual(JSON.stringify({}))\n\n    const expectedErrors = {\n      rootForm: ['Brecht his pass is not 1234'],\n    };\n\n    setTimeout(() => {\n      expect(\n        JSON.stringify(\n          JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n        )\n      ).toEqual(JSON.stringify(expectedErrors));\n    }, 550)\n  },\n};\n",
+            "sourceCode": "import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';\nimport { Component, computed, signal } from '@angular/core';\nimport { vestForms } from '../exports';\nimport { expect, userEvent, within } from '@storybook/test';\nimport {\n  FormModel,\n  formShape,\n  formValidationSuite,\n  selectors,\n} from './simple-form';\nimport { JsonPipe } from '@angular/common';\n\n@Component({\n  template: `\n    <form\n      class=\"p-4\"\n      scVestForm\n      (ngSubmit)=\"onSubmit()\"\n      [formValue]=\"formValue()\"\n      [validateRootForm]=\"true\"\n      [formShape]=\"shape\"\n      [suite]=\"suite\"\n      (validChange)=\"formValid.set($event)\"\n      (errorsChange)=\"errors.set($event)\"\n      (formValueChange)=\"setFormValue($event)\"\n      [validationOptions]=\"{ debounceTime: 500 }\"\n    >\n      <fieldset>\n        <div\n          class=\"w-full\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__first-name\"\n        >\n          <label>\n            <span>First name</span>\n            <input\n              placeholder=\"Type your first name\"\n              data-testid=\"input__first-name\"\n              type=\"text\"\n              [ngModel]=\"vm.formValue.firstName\"\n              name=\"firstName\"\n              [validationOptions]=\"{ debounceTime: 500 }\"\n            />\n          </label>\n        </div>\n        <div\n          class=\"w-full\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__last-name\"\n        >\n          <label>\n            <span>Last name</span>\n            <input\n              placeholder=\"Type your last name\"\n              data-testid=\"input__last-name\"\n              type=\"text\"\n              [ngModel]=\"vm.formValue.lastName\"\n              name=\"lastName\"\n            />\n          </label>\n        </div>\n        <div\n          class=\"sm:col-span-2\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__passwords\"\n          ngModelGroup=\"passwords\"\n          [validationOptions]=\"{ debounceTime: 900 }\"\n        >\n          <div class=\"grid gap-4 sm:grid-cols-2 sm:gap-6\">\n            <div\n              class=\"w-full\"\n              sc-control-wrapper\n              data-testid=\"sc-control-wrapper__password\"\n            >\n              <label>\n                <span>Password</span>\n                <input\n                  placeholder=\"Type password\"\n                  type=\"password\"\n                  data-testid=\"input__password\"\n                  [ngModel]=\"vm.formValue.passwords?.password\"\n                  name=\"password\"\n                />\n              </label>\n            </div>\n            <div\n              class=\"w-full\"\n              sc-control-wrapper\n              data-testid=\"sc-control-wrapper__confirm-password\"\n            >\n              <label>\n                <span>Confirm</span>\n                <input\n                  placeholder=\"Confirm password\"\n                  type=\"password\"\n                  data-testid=\"input__confirm-password\"\n                  [ngModel]=\"vm.formValue.passwords?.confirmPassword\"\n                  name=\"confirmPassword\"\n                />\n              </label>\n            </div>\n          </div>\n        </div>\n        <button data-testid=\"btn__submit\" type=\"submit\">Submit</button>\n      </fieldset>\n      <pre data-testId=\"pre__form-errors\">\n        {{ vm.errors | json }}\n      </pre\n      >\n    </form>\n  `,\n  imports: [vestForms, JsonPipe],\n})\nexport class FormDirectiveDemoComponent {\n  protected readonly formValue = signal<FormModel>({});\n  protected readonly formValid = signal<boolean>(false);\n  protected readonly errors = signal<Record<string, string>>({});\n  protected readonly shape = formShape;\n  protected readonly suite = formValidationSuite;\n  private readonly viewModel = computed(() => {\n    return {\n      formValue: this.formValue(),\n      errors: this.errors(),\n      formValid: this.formValid(),\n    };\n  });\n\n  protected get vm() {\n    return this.viewModel();\n  }\n\n  protected setFormValue(v: FormModel): void {\n    this.formValue.set(v);\n  }\n\n  protected onSubmit(): void {\n    if (this.formValid()) {\n      console.log(this.formValue());\n    }\n  }\n}\n\nconst meta: Meta<FormDirectiveDemoComponent> = {\n  title: 'simple form with validation options',\n  component: FormDirectiveDemoComponent,\n  parameters: {\n    // More on how to position stories at: https://storybook.js.org/docs/configure/story-layout\n    layout: 'fullscreen',\n  },\n};\n\nexport default meta;\nexport const Primary: StoryObj = {\n  decorators: [componentWrapperDecorator(FormDirectiveDemoComponent)],\n};\n\nexport const ShouldShowFirstnameRequiredAfterDelayForNgModel: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.click(canvas.getByTestId(selectors.inputFirstName));\n    canvas.getByTestId(selectors.inputFirstName).blur();\n\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperFirstName)\n    ).not.toHaveTextContent('First name is required');\n\n    setTimeout(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperFirstName)\n      ).toHaveTextContent('First name is required');\n    }, 550);\n  },\n};\n\nexport const ShouldShowPasswordConfirmationAfterDelayForNgModelGroup: StoryObj =\n  {\n    play: async ({ canvasElement }) => {\n      const canvas = within(canvasElement);\n      await userEvent.type(\n        canvas.getByTestId(selectors.inputPassword),\n        'first'\n      );\n      await userEvent.type(\n        canvas.getByTestId(selectors.inputConfirmPassword),\n        'second',\n        { delay: 500 }\n      );\n      await userEvent.click(canvas.getByTestId(selectors.inputConfirmPassword));\n      await canvas.getByTestId(selectors.inputConfirmPassword).blur();\n\n      await expect(\n        canvas.getByTestId(selectors.scControlWrapperPasswords)\n      ).not.toHaveTextContent('Passwords do not match');\n\n      setTimeout(() => {\n        expect(\n          canvas.getByTestId(selectors.scControlWrapperPasswords)\n        ).toHaveTextContent('Passwords do not match');\n      }, 1000);\n    },\n  };\n\nexport const ShouldValidateOnRootFormAfterDelay: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputFirstName),\n      'Brecht'\n    );\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputLastName),\n      'Billiet'\n    );\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), '1234');\n\n    await expect(\n      JSON.stringify(\n        JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n      )\n    ).toEqual(JSON.stringify({}));\n\n    const expectedErrors = {\n      rootForm: ['Brecht his pass is not 1234'],\n    };\n\n    setTimeout(() => {\n      expect(\n        JSON.stringify(\n          JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n        )\n      ).toEqual(JSON.stringify(expectedErrors));\n    }, 550);\n  },\n};\n",
             "assetsDirs": [],
             "styleUrlsData": "",
             "stylesData": "",
@@ -394,7 +407,7 @@
                         "name": "vm",
                         "type": "",
                         "returnType": "",
-                        "line": 130
+                        "line": 128
                     }
                 }
             },
@@ -404,7 +417,7 @@
         },
         {
             "name": "FormDirectiveDemoComponent",
-            "id": "component-FormDirectiveDemoComponent-58eca0b64ef9bb0c2272137c0f04b8d830b142cd8b0c7a4ca692db235afc77339703770ab02be2d3243851e9fecdaff81a8374c772788e7c19755da03a0c16e0-2",
+            "id": "component-FormDirectiveDemoComponent-c4fcc33f66fbd88622fac079905fafe3dd7151bc92f455f11590a5f8b849e4bc7037e9cfca4d0a064c8e480ddb5b6b28e96262c3384b1836483222ef8109232a-2",
             "file": "projects/ngx-vest-forms/src/lib/testing/simple-form.stories.ts",
             "encapsulation": [],
             "entryComponents": [],
@@ -426,9 +439,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 124,
+                    "line": 123,
                     "modifierKind": [
                         124,
                         148
@@ -440,9 +454,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 123,
+                    "line": 122,
                     "modifierKind": [
                         124,
                         148
@@ -454,9 +469,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 122,
+                    "line": 121,
                     "modifierKind": [
                         124,
                         148
@@ -468,9 +484,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 121,
+                    "line": 120,
                     "modifierKind": [
                         124,
                         148
@@ -482,9 +499,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 125,
+                    "line": 124,
                     "modifierKind": [
                         124,
                         148
@@ -496,9 +514,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 126,
+                    "line": 125,
                     "modifierKind": [
                         124,
                         148
@@ -510,9 +529,10 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "",
+                    "indexKey": "",
                     "optional": false,
                     "description": "",
-                    "line": 127,
+                    "line": 126,
                     "modifierKind": [
                         123,
                         148
@@ -526,7 +546,7 @@
                     "optional": false,
                     "returnType": "void",
                     "typeParameters": [],
-                    "line": 144,
+                    "line": 143,
                     "deprecated": false,
                     "deprecationMessage": "",
                     "modifierKind": [
@@ -546,7 +566,7 @@
                     "optional": false,
                     "returnType": "void",
                     "typeParameters": [],
-                    "line": 140,
+                    "line": 139,
                     "deprecated": false,
                     "deprecationMessage": "",
                     "modifierKind": [
@@ -569,7 +589,7 @@
             "deprecationMessage": "",
             "hostBindings": [],
             "hostListeners": [],
-            "standalone": true,
+            "standalone": false,
             "imports": [
                 {
                     "name": "vestForms"
@@ -582,7 +602,7 @@
             "description": "",
             "rawdescription": "\n",
             "type": "component",
-            "sourceCode": "import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';\nimport { Component, computed, signal } from '@angular/core';\nimport { vestForms } from '../exports';\nimport { userEvent, waitFor, within } from '@storybook/test';\nimport { expect } from '@storybook/jest';\nimport {\n  FormModel,\n  formShape,\n  formValidationSuite,\n  selectors,\n} from './simple-form';\nimport { JsonPipe } from '@angular/common';\n\n@Component({\n  template: `\n    <form\n      class=\"p-4\"\n      scVestForm\n      (ngSubmit)=\"onSubmit()\"\n      [formValue]=\"formValue()\"\n      [validateRootForm]=\"true\"\n      [formShape]=\"shape\"\n      [suite]=\"suite\"\n      (dirtyChange)=\"formDirty.set($event)\"\n      (validChange)=\"formValid.set($event)\"\n      (errorsChange)=\"errors.set($event)\"\n      (formValueChange)=\"setFormValue($event)\"\n    >\n      <fieldset>\n        <div\n          class=\"w-full\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__first-name\"\n        >\n          <label>\n            <span>First name</span>\n            <input\n              placeholder=\"Type your first name\"\n              data-testid=\"input__first-name\"\n              type=\"text\"\n              [ngModel]=\"vm.formValue.firstName\"\n              name=\"firstName\"\n            />\n          </label>\n        </div>\n        <div\n          class=\"w-full\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__last-name\"\n        >\n          <label>\n            <span>Last name</span>\n            <input\n              placeholder=\"Type your last name\"\n              data-testid=\"input__last-name\"\n              type=\"text\"\n              [ngModel]=\"vm.formValue.lastName\"\n              name=\"lastName\"\n            />\n          </label>\n        </div>\n        <div\n          class=\"sm:col-span-2\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__passwords\"\n          ngModelGroup=\"passwords\"\n        >\n          <div class=\"grid gap-4 sm:grid-cols-2 sm:gap-6\">\n            <div\n              class=\"w-full\"\n              sc-control-wrapper\n              data-testid=\"sc-control-wrapper__password\"\n            >\n              <label>\n                <span>Password</span>\n                <input\n                  placeholder=\"Type password\"\n                  type=\"password\"\n                  data-testid=\"input__password\"\n                  [ngModel]=\"vm.formValue.passwords?.password\"\n                  name=\"password\"\n                />\n              </label>\n            </div>\n            <div\n              class=\"w-full\"\n              sc-control-wrapper\n              data-testid=\"sc-control-wrapper__confirm-password\"\n            >\n              <label>\n                <span>Confirm</span>\n                <input\n                  placeholder=\"Confirm password\"\n                  type=\"password\"\n                  data-testid=\"input__confirm-password\"\n                  [ngModel]=\"vm.formValue.passwords?.confirmPassword\"\n                  name=\"confirmPassword\"\n                />\n              </label>\n            </div>\n          </div>\n        </div>\n        <button data-testid=\"btn__submit\" type=\"submit\">Submit</button>\n      </fieldset>\n      <pre data-testId=\"pre__form-value\">\n        {{ vm.formValue | json }}\n      </pre\n      >\n      <pre data-testId=\"pre__form-errors\">\n        {{ vm.errors | json }}\n      </pre\n      >\n      <pre data-testId=\"pre__form-valid\">{{ vm.formValid }}</pre>\n      <pre data-testId=\"pre__form-dirty\">{{ vm.formDirty }}</pre>\n    </form>\n  `,\n  imports: [vestForms, JsonPipe],\n  standalone: true,\n})\nexport class FormDirectiveDemoComponent {\n  protected readonly formValue = signal<FormModel>({});\n  protected readonly formValid = signal<boolean | null>(null);\n  protected readonly formDirty = signal<boolean | null>(null);\n  protected readonly errors = signal<Record<string, string>>({});\n  protected readonly shape = formShape;\n  protected readonly suite = formValidationSuite;\n  private readonly viewModel = computed(() => {\n    return {\n      formValue: this.formValue(),\n      errors: this.errors(),\n      formValid: this.formValid(),\n      formDirty: this.formDirty(),\n    };\n  });\n\n  protected get vm() {\n    return this.viewModel();\n  }\n\n  protected setFormValue(v: FormModel): void {\n    this.formValue.set(v);\n  }\n\n  protected onSubmit(): void {\n    if (this.formValid()) {\n      console.log(this.formValue());\n    }\n  }\n}\n\nconst meta: Meta<FormDirectiveDemoComponent> = {\n  title: 'simple form',\n  component: FormDirectiveDemoComponent,\n  parameters: {\n    // More on how to position stories at: https://storybook.js.org/docs/configure/story-layout\n    layout: 'fullscreen',\n  },\n};\n\nexport default meta;\n\nexport const Primary: StoryObj = {\n  decorators: [componentWrapperDecorator(FormDirectiveDemoComponent)],\n};\n\nexport const ShouldShowErrorsOnSubmit: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.click(canvas.getByTestId(selectors.btnSubmit));\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperFirstName)\n    ).toHaveTextContent('First name is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperLastName)\n    ).toHaveTextContent('Last name is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperPassword)\n    ).toHaveTextContent('Password is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperConfirmPassword)\n    ).not.toHaveTextContent('Confirm password is required');\n  },\n};\n\nexport const ShouldHideErrorsWhenValid: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.click(canvas.getByTestId(selectors.btnSubmit));\n\n    await userEvent.type(canvas.getByTestId(selectors.inputFirstName), 'first');\n    await userEvent.type(canvas.getByTestId(selectors.inputLastName), 'last');\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'pass');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperFirstName)\n    ).not.toHaveTextContent('First name is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperLastName)\n    ).not.toHaveTextContent('Last name is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperPassword)\n    ).not.toHaveTextContent('Password is required');\n  },\n};\nexport const ShouldShowErrorsOnBlur: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.click(canvas.getByTestId(selectors.inputFirstName));\n    canvas.getByTestId(selectors.inputFirstName).blur();\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperFirstName)\n    ).toHaveTextContent('First name is required');\n\n    await userEvent.click(canvas.getByTestId(selectors.inputLastName));\n    canvas.getByTestId(selectors.inputLastName).blur();\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperLastName)\n    ).toHaveTextContent('Last name is required');\n\n    await userEvent.click(canvas.getByTestId(selectors.inputPassword));\n    canvas.getByTestId(selectors.inputPassword).blur();\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperPassword)\n    ).toHaveTextContent('Password is required');\n  },\n};\n\nexport const ShouldValidateOnGroups: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'first');\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputConfirmPassword),\n      'second'\n    );\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperPasswords)\n    ).toHaveTextContent('Passwords do not match');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperPasswords)\n    ).toHaveClass('sc-control-wrapper--invalid');\n  },\n};\n\nexport const ShouldHaveCorrectStatussesAndFormValueInitially: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await waitFor(() => {\n      expect(canvas.getByTestId(selectors.preFormValid)).toHaveTextContent(\n        'false'\n      );\n      expect(canvas.getByTestId(selectors.preFormDirty)).toHaveTextContent(\n        'false'\n      );\n      const expectedContent = {\n        passwords: {\n          password: null,\n          confirmPassword: null,\n        },\n      };\n      expect(\n        JSON.stringify(\n          JSON.parse(canvas.getByTestId(selectors.preFormValue).innerHTML)\n        )\n      ).toEqual(JSON.stringify(expectedContent));\n      const expectedErrors = {\n        firstName: ['First name is required'],\n        lastName: ['Last name is required'],\n        'passwords.password': ['Password is required'],\n      };\n      expect(\n        JSON.stringify(\n          JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n        )\n      ).toEqual(JSON.stringify(expectedErrors));\n    });\n  },\n};\n\nexport const ShouldHaveCorrectStatussesAndOnFormUpdate: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.type(canvas.getByTestId(selectors.inputFirstName), 'f');\n    await waitFor(() => {\n      expect(canvas.getByTestId(selectors.preFormValid)).toHaveTextContent(\n        'false'\n      );\n      expect(canvas.getByTestId(selectors.preFormDirty)).toHaveTextContent(\n        'true'\n      );\n      const expectedContent = {\n        firstName: 'f',\n        passwords: {\n          password: null,\n          confirmPassword: null,\n        },\n      };\n      expect(\n        JSON.stringify(\n          JSON.parse(canvas.getByTestId(selectors.preFormValue).innerHTML)\n        )\n      ).toEqual(JSON.stringify(expectedContent));\n      const expectedErrors = {\n        lastName: ['Last name is required'],\n        'passwords.password': ['Password is required'],\n      };\n      expect(\n        JSON.stringify(\n          JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n        )\n      ).toEqual(JSON.stringify(expectedErrors));\n    });\n    await userEvent.type(canvas.getByTestId(selectors.inputLastName), 'l');\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'p');\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputConfirmPassword),\n      'p'\n    );\n    await waitFor(() => {\n      expect(canvas.getByTestId(selectors.preFormValid)).toHaveTextContent(\n        'true'\n      );\n      expect(canvas.getByTestId(selectors.preFormDirty)).toHaveTextContent(\n        'true'\n      );\n      const expectedContent = {\n        firstName: 'f',\n        lastName: 'l',\n        passwords: {\n          password: 'p',\n          confirmPassword: 'p',\n        },\n      };\n      expect(\n        JSON.stringify(\n          JSON.parse(canvas.getByTestId(selectors.preFormValue).innerHTML)\n        )\n      ).toEqual(JSON.stringify(expectedContent));\n      expect(\n        JSON.stringify(\n          JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n        )\n      ).toEqual(JSON.stringify({}));\n    });\n  },\n};\n\nexport const ShouldValidateOnRootForm: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputFirstName),\n      'Brecht'\n    );\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputLastName),\n      'Billiet'\n    );\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), '1234');\n    const expectedErrors = {\n      rootForm: ['Brecht his pass is not 1234'],\n    };\n    await expect(\n      JSON.stringify(\n        JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n      )\n    ).toEqual(JSON.stringify(expectedErrors));\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), '5');\n    await expect(\n      JSON.stringify(\n        JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n      )\n    ).toEqual(JSON.stringify({}));\n  },\n};\n",
+            "sourceCode": "import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';\nimport { Component, computed, signal } from '@angular/core';\nimport { vestForms } from '../exports';\nimport { expect, userEvent, waitFor, within } from '@storybook/test';\n\nimport {\n  FormModel,\n  formShape,\n  formValidationSuite,\n  selectors,\n} from './simple-form';\nimport { JsonPipe } from '@angular/common';\n\n@Component({\n  template: `\n    <form\n      class=\"p-4\"\n      scVestForm\n      (ngSubmit)=\"onSubmit()\"\n      [formValue]=\"formValue()\"\n      [validateRootForm]=\"true\"\n      [formShape]=\"shape\"\n      [suite]=\"suite\"\n      (dirtyChange)=\"formDirty.set($event)\"\n      (validChange)=\"formValid.set($event)\"\n      (errorsChange)=\"errors.set($event)\"\n      (formValueChange)=\"setFormValue($event)\"\n    >\n      <fieldset>\n        <div\n          class=\"w-full\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__first-name\"\n        >\n          <label>\n            <span>First name</span>\n            <input\n              placeholder=\"Type your first name\"\n              data-testid=\"input__first-name\"\n              type=\"text\"\n              [ngModel]=\"vm.formValue.firstName\"\n              name=\"firstName\"\n            />\n          </label>\n        </div>\n        <div\n          class=\"w-full\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__last-name\"\n        >\n          <label>\n            <span>Last name</span>\n            <input\n              placeholder=\"Type your last name\"\n              data-testid=\"input__last-name\"\n              type=\"text\"\n              [ngModel]=\"vm.formValue.lastName\"\n              name=\"lastName\"\n            />\n          </label>\n        </div>\n        <div\n          class=\"sm:col-span-2\"\n          sc-control-wrapper\n          data-testid=\"sc-control-wrapper__passwords\"\n          ngModelGroup=\"passwords\"\n        >\n          <div class=\"grid gap-4 sm:grid-cols-2 sm:gap-6\">\n            <div\n              class=\"w-full\"\n              sc-control-wrapper\n              data-testid=\"sc-control-wrapper__password\"\n            >\n              <label>\n                <span>Password</span>\n                <input\n                  placeholder=\"Type password\"\n                  type=\"password\"\n                  data-testid=\"input__password\"\n                  [ngModel]=\"vm.formValue.passwords?.password\"\n                  name=\"password\"\n                />\n              </label>\n            </div>\n            <div\n              class=\"w-full\"\n              sc-control-wrapper\n              data-testid=\"sc-control-wrapper__confirm-password\"\n            >\n              <label>\n                <span>Confirm</span>\n                <input\n                  placeholder=\"Confirm password\"\n                  type=\"password\"\n                  data-testid=\"input__confirm-password\"\n                  [ngModel]=\"vm.formValue.passwords?.confirmPassword\"\n                  name=\"confirmPassword\"\n                />\n              </label>\n            </div>\n          </div>\n        </div>\n        <button data-testid=\"btn__submit\" type=\"submit\">Submit</button>\n      </fieldset>\n      <pre data-testId=\"pre__form-value\">\n        {{ vm.formValue | json }}\n      </pre\n      >\n      <pre data-testId=\"pre__form-errors\">\n        {{ vm.errors | json }}\n      </pre\n      >\n      <pre data-testId=\"pre__form-valid\">{{ vm.formValid }}</pre>\n      <pre data-testId=\"pre__form-dirty\">{{ vm.formDirty }}</pre>\n    </form>\n  `,\n  imports: [vestForms, JsonPipe],\n})\nexport class FormDirectiveDemoComponent {\n  protected readonly formValue = signal<FormModel>({});\n  protected readonly formValid = signal<boolean | null>(null);\n  protected readonly formDirty = signal<boolean | null>(null);\n  protected readonly errors = signal<Record<string, string>>({});\n  protected readonly shape = formShape;\n  protected readonly suite = formValidationSuite;\n  private readonly viewModel = computed(() => {\n    return {\n      formValue: this.formValue(),\n      errors: this.errors(),\n      formValid: this.formValid(),\n      formDirty: this.formDirty(),\n    };\n  });\n\n  protected get vm() {\n    return this.viewModel();\n  }\n\n  protected setFormValue(v: FormModel): void {\n    this.formValue.set(v);\n  }\n\n  protected onSubmit(): void {\n    if (this.formValid()) {\n      console.log(this.formValue());\n    }\n  }\n}\n\nconst meta: Meta<FormDirectiveDemoComponent> = {\n  title: 'simple form',\n  component: FormDirectiveDemoComponent,\n  parameters: {\n    // More on how to position stories at: https://storybook.js.org/docs/configure/story-layout\n    layout: 'fullscreen',\n  },\n};\n\nexport default meta;\n\nexport const Primary: StoryObj = {\n  decorators: [componentWrapperDecorator(FormDirectiveDemoComponent)],\n};\n\nexport const ShouldShowErrorsOnSubmit: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.click(canvas.getByTestId(selectors.btnSubmit));\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperFirstName)\n    ).toHaveTextContent('First name is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperLastName)\n    ).toHaveTextContent('Last name is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperPassword)\n    ).toHaveTextContent('Password is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperConfirmPassword)\n    ).not.toHaveTextContent('Confirm password is required');\n  },\n};\n\nexport const ShouldHideErrorsWhenValid: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.click(canvas.getByTestId(selectors.btnSubmit));\n\n    await userEvent.type(canvas.getByTestId(selectors.inputFirstName), 'first');\n    await userEvent.type(canvas.getByTestId(selectors.inputLastName), 'last');\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'pass');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperFirstName)\n    ).not.toHaveTextContent('First name is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperLastName)\n    ).not.toHaveTextContent('Last name is required');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperPassword)\n    ).not.toHaveTextContent('Password is required');\n  },\n};\nexport const ShouldShowErrorsOnBlur: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.click(canvas.getByTestId(selectors.inputFirstName));\n    canvas.getByTestId(selectors.inputFirstName).blur();\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperFirstName)\n    ).toHaveTextContent('First name is required');\n\n    await userEvent.click(canvas.getByTestId(selectors.inputLastName));\n    canvas.getByTestId(selectors.inputLastName).blur();\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperLastName)\n    ).toHaveTextContent('Last name is required');\n\n    await userEvent.click(canvas.getByTestId(selectors.inputPassword));\n    canvas.getByTestId(selectors.inputPassword).blur();\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperPassword)\n    ).toHaveTextContent('Password is required');\n  },\n};\n\nexport const ShouldValidateOnGroups: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'first');\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputConfirmPassword),\n      'second'\n    );\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperPasswords)\n    ).toHaveTextContent('Passwords do not match');\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperPasswords)\n    ).toHaveClass('sc-control-wrapper--invalid');\n  },\n};\n\nexport const ShouldHaveCorrectStatussesAndFormValueInitially: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await waitFor(() => {\n      expect(canvas.getByTestId(selectors.preFormValid)).toHaveTextContent(\n        'false'\n      );\n      expect(canvas.getByTestId(selectors.preFormDirty)).toHaveTextContent(\n        'false'\n      );\n      const expectedContent = {\n        passwords: {\n          password: null,\n          confirmPassword: null,\n        },\n      };\n      expect(\n        JSON.stringify(\n          JSON.parse(canvas.getByTestId(selectors.preFormValue).innerHTML)\n        )\n      ).toEqual(JSON.stringify(expectedContent));\n      const expectedErrors = {\n        firstName: ['First name is required'],\n        lastName: ['Last name is required'],\n        'passwords.password': ['Password is required'],\n      };\n      expect(\n        JSON.stringify(\n          JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n        )\n      ).toEqual(JSON.stringify(expectedErrors));\n    });\n  },\n};\n\nexport const ShouldHaveCorrectStatussesAndOnFormUpdate: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.type(canvas.getByTestId(selectors.inputFirstName), 'f');\n    await waitFor(() => {\n      expect(canvas.getByTestId(selectors.preFormValid)).toHaveTextContent(\n        'false'\n      );\n      expect(canvas.getByTestId(selectors.preFormDirty)).toHaveTextContent(\n        'true'\n      );\n      const expectedContent = {\n        firstName: 'f',\n        passwords: {\n          password: null,\n          confirmPassword: null,\n        },\n      };\n      expect(\n        JSON.stringify(\n          JSON.parse(canvas.getByTestId(selectors.preFormValue).innerHTML)\n        )\n      ).toEqual(JSON.stringify(expectedContent));\n      const expectedErrors = {\n        lastName: ['Last name is required'],\n        'passwords.password': ['Password is required'],\n      };\n      expect(\n        JSON.stringify(\n          JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n        )\n      ).toEqual(JSON.stringify(expectedErrors));\n    });\n    await userEvent.type(canvas.getByTestId(selectors.inputLastName), 'l');\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'p');\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputConfirmPassword),\n      'p'\n    );\n    await waitFor(() => {\n      expect(canvas.getByTestId(selectors.preFormValid)).toHaveTextContent(\n        'true'\n      );\n      expect(canvas.getByTestId(selectors.preFormDirty)).toHaveTextContent(\n        'true'\n      );\n      const expectedContent = {\n        firstName: 'f',\n        lastName: 'l',\n        passwords: {\n          password: 'p',\n          confirmPassword: 'p',\n        },\n      };\n      expect(\n        JSON.stringify(\n          JSON.parse(canvas.getByTestId(selectors.preFormValue).innerHTML)\n        )\n      ).toEqual(JSON.stringify(expectedContent));\n      expect(\n        JSON.stringify(\n          JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n        )\n      ).toEqual(JSON.stringify({}));\n    });\n  },\n};\n\nexport const ShouldValidateOnRootForm: StoryObj = {\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputFirstName),\n      'Brecht'\n    );\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputLastName),\n      'Billiet'\n    );\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), '1234');\n    const expectedErrors = {\n      rootForm: ['Brecht his pass is not 1234'],\n    };\n    await expect(\n      JSON.stringify(\n        JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n      )\n    ).toEqual(JSON.stringify(expectedErrors));\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), '5');\n    await expect(\n      JSON.stringify(\n        JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n      )\n    ).toEqual(JSON.stringify({}));\n  },\n};\n",
             "assetsDirs": [],
             "styleUrlsData": "",
             "stylesData": "",
@@ -594,7 +614,7 @@
                         "name": "vm",
                         "type": "",
                         "returnType": "",
-                        "line": 136
+                        "line": 135
                     }
                 }
             },
@@ -644,7 +664,7 @@
                 "deprecated": false,
                 "deprecationMessage": "",
                 "type": "Preview",
-                "defaultValue": "{\n  parameters: {\n    controls: {\n      matchers: {\n        color: /(background|color)$/i,\n        date: /Date$/i,\n      },\n    },\n  },\n}"
+                "defaultValue": "{\n  parameters: {\n    controls: {\n      matchers: {\n        color: /(background|color)$/i,\n        date: /Date$/i,\n      },\n    },\n  },\n\n  tags: ['autodocs']\n}"
             },
             {
                 "name": "Primary",
@@ -754,7 +774,7 @@
                 "deprecated": false,
                 "deprecationMessage": "",
                 "type": "StoryObj",
-                "defaultValue": "{\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.click(canvas.getByTestId(selectors.inputFirstName));\n    canvas.getByTestId(selectors.inputFirstName).blur();\n\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperFirstName)\n    ).not.toHaveTextContent('First name is required');\n\n    setTimeout(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperFirstName)\n      ).toHaveTextContent('First name is required');\n    }, 550)\n  },\n}"
+                "defaultValue": "{\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.click(canvas.getByTestId(selectors.inputFirstName));\n    canvas.getByTestId(selectors.inputFirstName).blur();\n\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperFirstName)\n    ).not.toHaveTextContent('First name is required');\n\n    setTimeout(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperFirstName)\n      ).toHaveTextContent('First name is required');\n    }, 550);\n  },\n}"
             },
             {
                 "name": "ShouldShowPasswordConfirmationAfterDelayForNgModelGroup",
@@ -764,7 +784,7 @@
                 "deprecated": false,
                 "deprecationMessage": "",
                 "type": "StoryObj",
-                "defaultValue": "{\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'first');\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputConfirmPassword),\n      'second'\n    , { delay: 500});\n    await userEvent.click(canvas.getByTestId(selectors.inputConfirmPassword));\n    await canvas.getByTestId(selectors.inputConfirmPassword).blur();\n\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperPasswords)\n    ).not.toHaveTextContent('Passwords do not match');\n\n    setTimeout(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperPasswords)\n      ).toHaveTextContent('Passwords do not match');\n    }, 1000)\n  },\n}"
+                "defaultValue": "{\n    play: async ({ canvasElement }) => {\n      const canvas = within(canvasElement);\n      await userEvent.type(\n        canvas.getByTestId(selectors.inputPassword),\n        'first'\n      );\n      await userEvent.type(\n        canvas.getByTestId(selectors.inputConfirmPassword),\n        'second',\n        { delay: 500 }\n      );\n      await userEvent.click(canvas.getByTestId(selectors.inputConfirmPassword));\n      await canvas.getByTestId(selectors.inputConfirmPassword).blur();\n\n      await expect(\n        canvas.getByTestId(selectors.scControlWrapperPasswords)\n      ).not.toHaveTextContent('Passwords do not match');\n\n      setTimeout(() => {\n        expect(\n          canvas.getByTestId(selectors.scControlWrapperPasswords)\n        ).toHaveTextContent('Passwords do not match');\n      }, 1000);\n    },\n  }"
             },
             {
                 "name": "ShouldValidateOnGroups",
@@ -794,7 +814,7 @@
                 "deprecated": false,
                 "deprecationMessage": "",
                 "type": "StoryObj",
-                "defaultValue": "{\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputFirstName),\n      'Brecht'\n    );\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputLastName),\n      'Billiet'\n    );\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), '1234');\n\n    await expect(\n      JSON.stringify(\n        JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n      )\n    ).toEqual(JSON.stringify({}))\n\n    const expectedErrors = {\n      rootForm: ['Brecht his pass is not 1234'],\n    };\n\n    setTimeout(() => {\n      expect(\n        JSON.stringify(\n          JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n        )\n      ).toEqual(JSON.stringify(expectedErrors));\n    }, 550)\n  },\n}"
+                "defaultValue": "{\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputFirstName),\n      'Brecht'\n    );\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputLastName),\n      'Billiet'\n    );\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), '1234');\n\n    await expect(\n      JSON.stringify(\n        JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n      )\n    ).toEqual(JSON.stringify({}));\n\n    const expectedErrors = {\n      rootForm: ['Brecht his pass is not 1234'],\n    };\n\n    setTimeout(() => {\n      expect(\n        JSON.stringify(\n          JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n        )\n      ).toEqual(JSON.stringify(expectedErrors));\n    }, 550);\n  },\n}"
             }
         ],
         "functions": [],
@@ -872,7 +892,7 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "StoryObj",
-                    "defaultValue": "{\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.click(canvas.getByTestId(selectors.inputFirstName));\n    canvas.getByTestId(selectors.inputFirstName).blur();\n\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperFirstName)\n    ).not.toHaveTextContent('First name is required');\n\n    setTimeout(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperFirstName)\n      ).toHaveTextContent('First name is required');\n    }, 550)\n  },\n}"
+                    "defaultValue": "{\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.click(canvas.getByTestId(selectors.inputFirstName));\n    canvas.getByTestId(selectors.inputFirstName).blur();\n\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperFirstName)\n    ).not.toHaveTextContent('First name is required');\n\n    setTimeout(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperFirstName)\n      ).toHaveTextContent('First name is required');\n    }, 550);\n  },\n}"
                 },
                 {
                     "name": "ShouldShowPasswordConfirmationAfterDelayForNgModelGroup",
@@ -882,7 +902,7 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "StoryObj",
-                    "defaultValue": "{\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'first');\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputConfirmPassword),\n      'second'\n    , { delay: 500});\n    await userEvent.click(canvas.getByTestId(selectors.inputConfirmPassword));\n    await canvas.getByTestId(selectors.inputConfirmPassword).blur();\n\n    await expect(\n      canvas.getByTestId(selectors.scControlWrapperPasswords)\n    ).not.toHaveTextContent('Passwords do not match');\n\n    setTimeout(() => {\n      expect(\n        canvas.getByTestId(selectors.scControlWrapperPasswords)\n      ).toHaveTextContent('Passwords do not match');\n    }, 1000)\n  },\n}"
+                    "defaultValue": "{\n    play: async ({ canvasElement }) => {\n      const canvas = within(canvasElement);\n      await userEvent.type(\n        canvas.getByTestId(selectors.inputPassword),\n        'first'\n      );\n      await userEvent.type(\n        canvas.getByTestId(selectors.inputConfirmPassword),\n        'second',\n        { delay: 500 }\n      );\n      await userEvent.click(canvas.getByTestId(selectors.inputConfirmPassword));\n      await canvas.getByTestId(selectors.inputConfirmPassword).blur();\n\n      await expect(\n        canvas.getByTestId(selectors.scControlWrapperPasswords)\n      ).not.toHaveTextContent('Passwords do not match');\n\n      setTimeout(() => {\n        expect(\n          canvas.getByTestId(selectors.scControlWrapperPasswords)\n        ).toHaveTextContent('Passwords do not match');\n      }, 1000);\n    },\n  }"
                 },
                 {
                     "name": "ShouldValidateOnRootFormAfterDelay",
@@ -892,7 +912,7 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "StoryObj",
-                    "defaultValue": "{\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputFirstName),\n      'Brecht'\n    );\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputLastName),\n      'Billiet'\n    );\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), '1234');\n\n    await expect(\n      JSON.stringify(\n        JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n      )\n    ).toEqual(JSON.stringify({}))\n\n    const expectedErrors = {\n      rootForm: ['Brecht his pass is not 1234'],\n    };\n\n    setTimeout(() => {\n      expect(\n        JSON.stringify(\n          JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n        )\n      ).toEqual(JSON.stringify(expectedErrors));\n    }, 550)\n  },\n}"
+                    "defaultValue": "{\n  play: async ({ canvasElement }) => {\n    const canvas = within(canvasElement);\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputFirstName),\n      'Brecht'\n    );\n    await userEvent.type(\n      canvas.getByTestId(selectors.inputLastName),\n      'Billiet'\n    );\n    await userEvent.type(canvas.getByTestId(selectors.inputPassword), '1234');\n\n    await expect(\n      JSON.stringify(\n        JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n      )\n    ).toEqual(JSON.stringify({}));\n\n    const expectedErrors = {\n      rootForm: ['Brecht his pass is not 1234'],\n    };\n\n    setTimeout(() => {\n      expect(\n        JSON.stringify(\n          JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)\n        )\n      ).toEqual(JSON.stringify(expectedErrors));\n    }, 550);\n  },\n}"
                 }
             ],
             "projects/ngx-vest-forms/src/lib/testing/simple-form.stories.ts": [
@@ -996,7 +1016,7 @@
                     "deprecated": false,
                     "deprecationMessage": "",
                     "type": "Preview",
-                    "defaultValue": "{\n  parameters: {\n    controls: {\n      matchers: {\n        color: /(background|color)$/i,\n        date: /Date$/i,\n      },\n    },\n  },\n}"
+                    "defaultValue": "{\n  parameters: {\n    controls: {\n      matchers: {\n        color: /(background|color)$/i,\n        date: /Date$/i,\n      },\n    },\n  },\n\n  tags: ['autodocs']\n}"
                 }
             ]
         },

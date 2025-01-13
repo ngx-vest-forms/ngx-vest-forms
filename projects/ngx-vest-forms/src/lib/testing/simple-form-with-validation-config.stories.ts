@@ -1,8 +1,7 @@
 import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
 import { Component, computed, signal } from '@angular/core';
 import { vestForms } from '../exports';
-import { getByText, userEvent, waitFor, within } from '@storybook/test';
-import { expect } from '@storybook/jest';
+import { expect, userEvent, waitFor, within } from '@storybook/test';
 import {
   FormModel,
   formShape,
@@ -12,7 +11,7 @@ import {
 import { JsonPipe } from '@angular/common';
 
 @Component({
-    template: `
+  template: `
     <form
       class="p-4"
       scVestForm
@@ -111,7 +110,7 @@ import { JsonPipe } from '@angular/common';
       </fieldset>
     </form>
   `,
-    imports: [vestForms, JsonPipe]
+  imports: [vestForms, JsonPipe],
 })
 export class FormDirectiveDemoComponent {
   protected readonly formValue = signal<FormModel>({});
