@@ -3,7 +3,7 @@ import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
 export type BusinessHoursFormModel = DeepPartial<{
   businessHours: {
     addValue: BusinessHourFormModel;
-    values: { [key: string]: BusinessHourFormModel };
+    values: Record<string, BusinessHourFormModel>;
   };
 }>;
 

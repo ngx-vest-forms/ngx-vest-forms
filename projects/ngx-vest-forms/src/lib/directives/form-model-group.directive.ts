@@ -15,6 +15,7 @@ import { ValidationOptions } from './validation-options';
  * It will use a vest suite behind the scenes
  */
 @Directive({
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector: '[ngModelGroup]',
   standalone: true,
   providers: [

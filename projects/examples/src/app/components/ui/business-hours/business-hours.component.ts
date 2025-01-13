@@ -20,9 +20,7 @@ import { BusinessHourComponent } from '../business-hour/business-hour.component'
 export class BusinessHoursComponent {
   @Input() public businessHoursModel?: DeepPartial<{
     addValue: BusinessHourFormModel;
-    values: {
-      [key: string]: BusinessHourFormModel;
-    };
+    values: Record<string, BusinessHourFormModel>;
   }> = {};
 
   public addBusinessHour(group: NgModelGroup): void {

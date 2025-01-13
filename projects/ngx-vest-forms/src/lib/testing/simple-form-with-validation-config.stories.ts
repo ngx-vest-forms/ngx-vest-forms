@@ -1,4 +1,4 @@
-import { JsonPipe } from '@angular/common';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Component, computed, signal } from '@angular/core';
 import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
 import { expect, userEvent, waitFor, within } from '@storybook/test';
@@ -110,7 +110,7 @@ import {
       </fieldset>
     </form>
   `,
-  imports: [vestForms, JsonPipe],
+  imports: [vestForms],
 })
 export class FormDirectiveDemoComponent {
   protected readonly formValue = signal<FormModel>({});

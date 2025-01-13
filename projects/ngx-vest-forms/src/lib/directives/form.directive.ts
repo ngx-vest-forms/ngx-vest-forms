@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Directive, inject, input, OnDestroy, Output } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import {
@@ -77,7 +78,7 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
    *
    * @param v
    */
-  public readonly validationConfig = input<{ [key: string]: string[] } | null>(
+  public readonly validationConfig = input<Record<string, string[]> | null>(
     null,
   );
 
@@ -153,12 +154,13 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
   /**
    * Used to debounce formValues to make sure vest isn't triggered all the time
    */
-  private readonly formValueCache: {
-    [field: string]: Partial<{
+  private readonly formValueCache: Record<
+    string,
+    Partial<{
       sub$$: ReplaySubject<unknown>;
       debounced: Observable<any>;
-    }>;
-  } = {};
+    }>
+  > = {};
 
   public constructor() {
     // When the validation config changes
@@ -179,7 +181,7 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
               switchMap(() => this.idle$),
               map(() => this.ngForm?.form.get(key)?.value),
               takeUntil(this.destroy$$),
-              tap((v) => {
+              tap(() => {
                 conf[key]?.forEach((path: string) => {
                   this.ngForm?.form.get(path)?.updateValueAndValidity({
                     onlySelf: true,

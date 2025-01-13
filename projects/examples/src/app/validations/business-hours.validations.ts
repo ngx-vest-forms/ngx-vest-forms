@@ -109,15 +109,6 @@ function areBusinessHoursValid(
   );
 }
 
-function timeStrToMinutes(time?: string): number {
-  if (!time) {
-    return 0;
-  }
-  const hours = Number(time?.slice(0, 2));
-  const minutes = Number(time?.slice(2, 4));
-  return hours * 60 + minutes;
-}
-
 function isValidTime(time?: string): boolean {
   let valid = false;
   if (time?.length === 4) {
@@ -140,8 +131,8 @@ function isFromEarlierThanTo(from?: string, to?: string) {
     return false;
   }
   // Split the "from" and "to" strings into hours and minutes
-  let [fromHours, fromMinutes] = from.split(':').map(Number);
-  let [toHours, toMinutes] = to.split(':').map(Number);
+  const [fromHours, fromMinutes] = from.split(':').map(Number);
+  const [toHours, toMinutes] = to.split(':').map(Number);
 
   // Check if the "from" time is earlier than the "to" time
   if (fromHours < toHours) {

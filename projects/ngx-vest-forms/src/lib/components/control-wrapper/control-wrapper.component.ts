@@ -14,6 +14,7 @@ import { mergeWith, of, Subject, switchMap, takeUntil } from 'rxjs';
 import { FormDirective } from '../../directives/form.directive';
 
 @Component({
+  // eslint-disable-next-line @angular-eslint/component-selector
   selector: '[sc-control-wrapper]',
   standalone: true,
   templateUrl: './control-wrapper.component.html',

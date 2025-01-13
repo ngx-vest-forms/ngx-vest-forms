@@ -15,6 +15,7 @@ import { ValidationOptions } from './validation-options';
  * It will use a vest suite behind the scenes
  */
 @Directive({
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector: '[ngModel]',
   standalone: true,
   providers: [
@@ -32,7 +33,7 @@ export class FormModelDirective implements AsyncValidator {
   public validate(
     control: AbstractControl,
   ): Observable<ValidationErrors | null> {
-    const { ngForm, suite, formValue } = this.formDirective;
+    const { ngForm } = this.formDirective;
     const field = getFormControlField(ngForm.control, control);
     return this.formDirective.createAsyncValidator(
       field,

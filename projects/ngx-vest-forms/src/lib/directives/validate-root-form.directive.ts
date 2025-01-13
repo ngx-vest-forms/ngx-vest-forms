@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Directive, input, OnDestroy } from '@angular/core';
 import {
   AbstractControl,
@@ -21,6 +22,7 @@ import { cloneDeep, set } from '../utils/form-utils';
 import { ValidationOptions } from './validation-options';
 
 @Directive({
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector: 'form[validateRootForm][formValue][suite]',
   standalone: true,
   providers: [
@@ -51,12 +53,13 @@ export class ValidateRootFormDirective<T> implements AsyncValidator, OnDestroy {
   /**
    * Used to debounce formValues to make sure vest isn't triggered all the time
    */
-  private readonly formValueCache: {
-    [field: string]: Partial<{
+  private readonly formValueCache: Record<
+    string,
+    Partial<{
       sub$$: ReplaySubject<unknown>;
       debounced: Observable<any>;
-    }>;
-  } = {};
+    }>
+  > = {};
 
   public validate(
     control: AbstractControl<any, any>,

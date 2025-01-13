@@ -27,11 +27,18 @@
         "storybook": {
           "builder": "@storybook/angular:start-storybook",
           "options": {
-            "styles": ["projects/ngx-vest-forms/.storybook/styles.scss"],
+            "styles": [
+              "projects/ngx-vest-forms/.storybook/styles.scss"
+            ],
             "configDir": "projects/ngx-vest-forms/.storybook",
             "browserTarget": "ngx-vest-forms:build",
             "compodoc": true,
-            "compodocArgs": ["-e", "json", "-d", "projects/ngx-vest-forms"],
+            "compodocArgs": [
+              "-e",
+              "json",
+              "-d",
+              "projects/ngx-vest-forms"
+            ],
             "port": 6006
           }
         },
@@ -41,8 +48,23 @@
             "configDir": "projects/ngx-vest-forms/.storybook",
             "browserTarget": "ngx-vest-forms:build",
             "compodoc": true,
-            "compodocArgs": ["-e", "json", "-d", "projects/ngx-vest-forms"],
+            "compodocArgs": [
+              "-e",
+              "json",
+              "-d",
+              "projects/ngx-vest-forms"
+            ],
             "outputDir": "dist/storybook/ngx-vest-forms"
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/ngx-vest-forms/**/*.ts",
+              "projects/ngx-vest-forms/**/*.html"
+            ],
+            "eslintConfig": "projects/ngx-vest-forms/eslint.config.js"
           }
         }
       }
@@ -65,14 +87,18 @@
               "base": "dist/examples"
             },
             "index": "projects/examples/src/index.html",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "tsConfig": "projects/examples/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
               "projects/examples/src/favicon.ico",
               "projects/examples/src/assets"
             ],
-            "styles": ["projects/examples/src/styles.scss"],
+            "styles": [
+              "projects/examples/src/styles.scss"
+            ],
             "scripts": [],
             "browser": "projects/examples/src/main.ts"
           },
@@ -117,6 +143,16 @@
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
             "buildTarget": "examples:build"
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/examples/**/*.ts",
+              "projects/examples/**/*.html"
+            ],
+            "eslintConfig": "projects/examples/eslint.config.js"
           }
         }
       }

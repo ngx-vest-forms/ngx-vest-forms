@@ -55,9 +55,7 @@ export class PurchaseFormComponent {
     };
   });
 
-  protected readonly validationConfig: {
-    [key: string]: string[];
-  } = {
+  protected readonly validationConfig: Record<string, string[]> = {
     age: ['emergencyContact'],
     'passwords.password': ['passwords.confirmPassword'],
     gender: ['genderOther'],

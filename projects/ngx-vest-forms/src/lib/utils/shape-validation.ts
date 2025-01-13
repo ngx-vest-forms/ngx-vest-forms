@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { isDevMode } from '@angular/core';
 
 /**
@@ -40,7 +41,7 @@ export function validateShape(
 function validateFormValue(
   formValue: Record<string, any>,
   shape: Record<string, any>,
-  path: string = '',
+  path = '',
 ): string[] {
   const errors: string[] = [];
   for (const key in formValue) {

@@ -14,7 +14,7 @@ import {
   viewProviders: [vestFormsViewProviders],
 })
 export class PhonenumbersComponent {
-  @Input() public values: { [key: string]: string } = {};
+  @Input() public values: Record<string, string> = {};
   public addValue = '';
 
   public addPhonenumber(): void {

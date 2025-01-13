@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 
 @Component({
-  selector: 'app-root',
+  selector: 'sc-root',
   imports: [RouterLink, RouterOutlet],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],

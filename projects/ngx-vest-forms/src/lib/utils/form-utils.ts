@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
 import { ROOT_FORM } from '../constants';
 
@@ -11,7 +12,7 @@ function getControlPath(
   control: AbstractControl,
 ): string {
   for (const key in formGroup.controls) {
-    if (formGroup.controls.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(formGroup.controls, key)) {
       const ctrl = formGroup.get(key);
       if (ctrl instanceof FormGroup) {
         const path = getControlPath(ctrl, control);
@@ -33,7 +34,7 @@ function getControlPath(
  */
 function getGroupPath(formGroup: FormGroup, control: AbstractControl): string {
   for (const key in formGroup.controls) {
-    if (formGroup.controls.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(formGroup.controls, key)) {
       const ctrl = formGroup.get(key);
       if (ctrl === control) {
         return key;
@@ -107,6 +108,7 @@ export function mergeValuesAndRawValues<T>(form: FormGroup): T {
   return value;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type Primitive = undefined | null | boolean | string | number | Function;
 
 function isPrimitive(value: any): value is Primitive {
@@ -139,7 +141,7 @@ export function cloneDeep<T>(obj: T): T {
   if (obj instanceof Object) {
     const clonedObj: any = {};
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
         clonedObj[key] = cloneDeep((obj as any)[key]);
       }
     }
