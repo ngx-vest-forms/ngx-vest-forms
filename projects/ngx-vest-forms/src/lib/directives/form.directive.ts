@@ -148,7 +148,10 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
    * Triggered When the form becomes valid but waits until the form is idle
    */
   @Output() public readonly validChange = this.statusChanges$.pipe(
-    filter((e) => e === 'VALID' || e === 'INVALID'),
+    filter(
+      (validationState) =>
+        validationState === 'VALID' || validationState === 'INVALID',
+    ),
     map((v) => v === 'VALID'),
     distinctUntilChanged(),
   );
@@ -169,12 +172,12 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
     // Listen to changes of the left-side of the config and trigger the updateValueAndValidity
     toObservable(this.validationConfig)
       .pipe(
-        filter((conf) => !!conf),
-        switchMap((conf) => {
-          if (!conf) {
+        filter((config) => !!config),
+        switchMap((config) => {
+          if (!config) {
             return of(null);
           }
-          const streams = Object.keys(conf)
+          const streams = Object.keys(config)
             .map((key) => {
               const control = this.ngForm?.form.get(key);
               // Only create stream if control exists
@@ -189,7 +192,7 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
                 map(() => control.value),
                 takeUntil(this.destroy$$),
                 tap(() => {
-                  conf[key]?.forEach((path: string) => {
+                  for (const path of config[key]!) {
                     const dependentControl = this.ngForm?.form.get(path);
                     if (dependentControl) {
                       dependentControl.updateValueAndValidity({
@@ -197,7 +200,7 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
                         emitEvent: true,
                       });
                     }
-                  });
+                  }
                 }),
               );
             })
@@ -252,8 +255,8 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
       if (!this.formValue()) {
         return of(null);
       }
-      const mod = cloneDeep(this.formValue() as T);
-      set(mod as object, field, value); // Update the property with path
+      const module_ = cloneDeep(this.formValue() as T);
+      set(module_ as object, field, value); // Update the property with path
       if (!this.formValueCache[field]) {
         this.formValueCache[field] = {
           sub$$: new ReplaySubject(1), // Keep track of the last model
@@ -263,14 +266,14 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
         ].sub$$!.pipe(debounceTime(validationOptions.debounceTime));
       }
       // Next the latest model in the cache for a certain field
-      this.formValueCache[field].sub$$!.next(mod);
+      this.formValueCache[field].sub$$!.next(module_);
 
       return this.formValueCache[field].debounced!.pipe(
         // When debounced, take the latest value and perform the asynchronous vest validation
         take(1),
         switchMap(() => {
           return new Observable((observer) => {
-            this.suite()!(mod, field).done((result) => {
+            this.suite()!(module_, field).done((result) => {
               const errors = result.getErrors()[field];
               observer.next(errors ? { error: errors[0], errors } : null);
               observer.complete();

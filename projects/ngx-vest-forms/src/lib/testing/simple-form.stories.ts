@@ -123,6 +123,7 @@ export class FormDirectiveDemoComponent {
   protected readonly errors = signal<Record<string, string>>({});
   protected readonly shape = formShape;
   protected readonly suite = formValidationSuite;
+
   private readonly viewModel = computed(() => {
     return {
       formValue: this.formValue(),

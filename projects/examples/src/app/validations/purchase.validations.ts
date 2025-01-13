@@ -25,10 +25,9 @@ export const createPurchaseValidationSuite = (swapiService: SwapiService) => {
           swapiService
             .searchUserById(model.userId as string)
             .pipe(takeUntil(fromEvent(signal, 'abort'))),
-        ).then(
-          () => Promise.reject(),
-          () => Promise.resolve(),
-        );
+        ).then(() => {
+          throw undefined;
+        });
       });
     });
 

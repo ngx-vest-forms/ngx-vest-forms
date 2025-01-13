@@ -19,13 +19,13 @@ export class ShapeMismatchError extends Error {
  * @param shape
  */
 export function validateShape(
-  formVal: Record<string, any>,
+  formValue: Record<string, any>,
   shape: Record<string, any>,
 ): void {
   // Only execute in dev mode
   if (isDevMode()) {
-    const errors = validateFormValue(formVal, shape);
-    if (errors.length) {
+    const errors = validateFormValue(formValue, shape);
+    if (errors.length > 0) {
       throw new ShapeMismatchError(errors);
     }
   }
@@ -50,7 +50,7 @@ function validateFormValue(
       // This means that we always need to provide one record in the shape of our form array
       // so every time reset the key to '0' when the key is a number and is bigger than 0
       let keyToCompareWith = key;
-      if (parseFloat(key) > 0) {
+      if (Number.parseFloat(key) > 0) {
         keyToCompareWith = '0';
       }
       const newPath = path ? `${path}.${key}` : key;
@@ -58,7 +58,7 @@ function validateFormValue(
         if (
           (typeof shape[keyToCompareWith] !== 'object' ||
             shape[keyToCompareWith] === null) &&
-          isNaN(parseFloat(key))
+          Number.isNaN(Number.parseFloat(key))
         ) {
           errors.push(`[ngModelGroup] Mismatch: '${newPath}'`);
         }
@@ -69,7 +69,10 @@ function validateFormValue(
             newPath,
           ),
         );
-      } else if ((shape ? !(key in shape) : true) && isNaN(parseFloat(key))) {
+      } else if (
+        (shape ? !(key in shape) : true) &&
+        Number.isNaN(Number.parseFloat(key))
+      ) {
         errors.push(`[ngModel] Mismatch '${newPath}'`);
       }
     }

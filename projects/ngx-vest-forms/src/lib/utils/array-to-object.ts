@@ -1,3 +1,3 @@
-export function arrayToObject<T>(arr: T[]): Record<number, T> {
-  return arr.reduce((acc, value, index) => ({ ...acc, [index]: value }), {});
+export function arrayToObject<T>(array: T[]): Record<number, T> {
+  return Object.fromEntries(array.map((value, index) => [index, value]));
 }

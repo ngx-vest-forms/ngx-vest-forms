@@ -68,16 +68,16 @@ export class PurchaseFormComponent {
     effect(() => {
       // If the first name is Brecht, update the gender to male
       if (firstName() === 'Brecht') {
-        this.formValue.update((val) => ({
-          ...val,
+        this.formValue.update((value) => ({
+          ...value,
           gender: 'male',
         }));
       }
 
       // If the first name is Brecht and the last name is Billiet, set the age and passwords
       if (firstName() === 'Brecht' && lastName() === 'Billiet') {
-        this.formValue.update((val) => ({
-          ...val,
+        this.formValue.update((value) => ({
+          ...value,
           age: 35,
           passwords: {
             password: 'Test1234',

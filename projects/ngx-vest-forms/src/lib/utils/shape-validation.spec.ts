@@ -7,7 +7,7 @@ describe('validateShape function', () => {
       age: 30,
       address: {
         city: 'New York',
-        zip: 12345,
+        zip: 12_345,
       },
     };
 
@@ -31,7 +31,7 @@ describe('validateShape function', () => {
       age: 30,
       addresss: {
         city: 'New York',
-        zip: 12345,
+        zip: 12_345,
       },
     };
 
@@ -67,7 +67,7 @@ describe('validateShape function', () => {
       age: 30,
       address: {
         city: 'New York',
-        zip: 12345,
+        zip: 12_345,
       },
     };
 

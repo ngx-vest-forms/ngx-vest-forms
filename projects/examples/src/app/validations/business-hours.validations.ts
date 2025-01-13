@@ -79,9 +79,9 @@ function areBusinessHoursValid(
   if (!businessHours) {
     return false;
   }
-  for (let i = 0; i < businessHours.length - 1; i++) {
-    const currentHour = businessHours[i];
-    const nextHour = businessHours[i + 1];
+  for (let index = 0; index < businessHours.length - 1; index++) {
+    const currentHour = businessHours[index];
+    const nextHour = businessHours[index + 1];
 
     if (
       !isValidTime(currentHour.from) ||
@@ -101,12 +101,12 @@ function areBusinessHoursValid(
     }
   }
 
-  const lastHour = businessHours[businessHours.length - 1];
-  return (
-    isValidTime(lastHour.from) &&
-    isValidTime(lastHour.to) &&
-    isFromEarlierThanTo(lastHour.from, lastHour.to)
-  );
+  const lastHour = businessHours.at(-1);
+  return lastHour
+    ? isValidTime(lastHour.from) &&
+        isValidTime(lastHour.to) &&
+        isFromEarlierThanTo(lastHour.from, lastHour.to)
+    : false;
 }
 
 function isValidTime(time?: string): boolean {

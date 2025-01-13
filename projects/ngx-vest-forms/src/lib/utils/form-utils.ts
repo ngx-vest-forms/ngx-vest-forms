@@ -88,7 +88,7 @@ export function mergeValuesAndRawValues<T>(form: FormGroup): T {
 
   // Recursive function to merge rawValue into value
   function mergeRecursive(target: any, source: any) {
-    Object.keys(source).forEach((key) => {
+    for (const key of Object.keys(source)) {
       if (target[key] === undefined) {
         // If the key is not in the target, add it directly (for disabled fields)
         target[key] = source[key];
@@ -101,7 +101,7 @@ export function mergeValuesAndRawValues<T>(form: FormGroup): T {
         mergeRecursive(target[key], source[key]);
       }
       // If the target already has the key with a primitive value, it's left as is to maintain references
-    });
+    }
   }
 
   mergeRecursive(value, rawValue);
@@ -121,31 +121,31 @@ function isPrimitive(value: any): value is Primitive {
  * Performs a deep-clone of an object
  * @param obj
  */
-export function cloneDeep<T>(obj: T): T {
+export function cloneDeep<T>(object: T): T {
   // Handle primitives (null, undefined, boolean, string, number, function)
-  if (isPrimitive(obj)) {
-    return obj;
+  if (isPrimitive(object)) {
+    return object;
   }
 
   // Handle Date
-  if (obj instanceof Date) {
-    return new Date(obj.getTime()) as any as T;
+  if (object instanceof Date) {
+    return new Date(object.getTime()) as any as T;
   }
 
   // Handle Array
-  if (Array.isArray(obj)) {
-    return obj.map((item) => cloneDeep(item)) as any as T;
+  if (Array.isArray(object)) {
+    return object.map((item) => cloneDeep(item)) as any as T;
   }
 
   // Handle Object
-  if (obj instanceof Object) {
-    const clonedObj: any = {};
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        clonedObj[key] = cloneDeep((obj as any)[key]);
+  if (object instanceof Object) {
+    const clonedObject: any = {};
+    for (const key in object) {
+      if (Object.prototype.hasOwnProperty.call(object, key)) {
+        clonedObject[key] = cloneDeep((object as any)[key]);
       }
     }
-    return clonedObj as T;
+    return clonedObject as T;
   }
 
   throw new Error("Unable to copy object! Its type isn't supported.");
@@ -157,18 +157,19 @@ export function cloneDeep<T>(obj: T): T {
  * @param path
  * @param value
  */
-export function set(obj: object, path: string, value: any): void {
+export function set(object: object, path: string, value: any): void {
   const keys = path.split('.');
-  let current: any = obj;
+  let current: any = object;
 
-  for (let i = 0; i < keys.length - 1; i++) {
-    const key = keys[i];
+  for (let index = 0; index < keys.length - 1; index++) {
+    const key = keys[index];
     if (!current[key]) {
       current[key] = {};
     }
     current = current[key];
   }
 
+  // eslint-disable-next-line unicorn/prefer-at
   current[keys[keys.length - 1]] = value;
 }
 
@@ -186,23 +187,23 @@ export function getAllFormErrors(
 
   function collect(control: AbstractControl, path: string): void {
     if (control instanceof FormGroup || control instanceof FormArray) {
-      Object.keys(control.controls).forEach((key) => {
+      for (const key of Object.keys(control.controls)) {
         const childControl = control.get(key);
         const controlPath = path ? `${path}.${key}` : key;
         if (path && control.errors && control.enabled) {
-          Object.keys(control.errors).forEach((errorKey) => {
+          for (const errorKey of Object.keys(control.errors)) {
             errors[path] = control.errors![errorKey];
-          });
+          }
         }
         if (childControl) {
           collect(childControl, controlPath);
         }
-      });
+      }
     } else {
       if (control.errors && control.enabled) {
-        Object.keys(control.errors).forEach((errorKey) => {
+        for (const errorKey of Object.keys(control.errors)) {
           errors[path] = control.errors![errorKey];
-        });
+        }
       }
     }
   }

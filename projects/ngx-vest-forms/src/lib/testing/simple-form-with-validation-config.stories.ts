@@ -131,14 +131,12 @@ export class FormDirectiveDemoComponent {
   });
 
   protected toggle(): void {
-    if (this.validationConfig['passwords.password']) {
-      this.validationConfig = { firstName: ['lastName'] };
-    } else {
-      this.validationConfig = {
-        firstName: ['lastName'],
-        'passwords.password': ['passwords.confirmPassword'],
-      };
-    }
+    this.validationConfig = this.validationConfig['passwords.password']
+      ? { firstName: ['lastName'] }
+      : {
+          firstName: ['lastName'],
+          'passwords.password': ['passwords.confirmPassword'],
+        };
   }
 
   protected get vm() {

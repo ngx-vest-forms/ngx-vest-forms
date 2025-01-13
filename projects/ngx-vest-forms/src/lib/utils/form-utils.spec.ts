@@ -58,7 +58,7 @@ describe('mergeValuesAndRawValues function', () => {
       age: new FormControl(30),
       address: new FormGroup({
         city: new FormControl('New York'),
-        zip: new FormControl(12345),
+        zip: new FormControl(12_345),
       }),
     });
     form.get('name')!.disable(); // Simulate a disabled field
@@ -68,7 +68,7 @@ describe('mergeValuesAndRawValues function', () => {
       age: 30,
       address: {
         city: 'New York',
-        zip: 12345,
+        zip: 12_345,
       },
     });
   });
@@ -81,7 +81,7 @@ describe('cloneDeep function', () => {
       age: 30,
       address: {
         city: 'New York',
-        zip: 12345,
+        zip: 12_345,
       },
     };
     const cloned = cloneDeep(original);
@@ -92,9 +92,9 @@ describe('cloneDeep function', () => {
 
 describe('set function', () => {
   it('should set a value in an object at the correct path', () => {
-    const obj = {};
-    set(obj, 'address.city', 'New York');
-    expect(obj).toEqual({
+    const object = {};
+    set(object, 'address.city', 'New York');
+    expect(object).toEqual({
       address: {
         city: 'New York',
       },
