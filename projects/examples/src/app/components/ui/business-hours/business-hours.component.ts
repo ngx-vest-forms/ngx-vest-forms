@@ -1,4 +1,4 @@
-import { CommonModule, KeyValuePipe } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { NgModelGroup } from '@angular/forms';
 import {
@@ -12,7 +12,7 @@ import { BusinessHourComponent } from '../business-hour/business-hour.component'
 
 @Component({
   selector: 'sc-business-hours',
-  imports: [CommonModule, vestForms, KeyValuePipe, BusinessHourComponent],
+  imports: [vestForms, KeyValuePipe, BusinessHourComponent],
   templateUrl: './business-hours.component.html',
   styleUrls: ['./business-hours.component.scss'],
   viewProviders: [vestFormsViewProviders],
