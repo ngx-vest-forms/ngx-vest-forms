@@ -15,6 +15,7 @@
     "format": "prettier --write \"projects/**/*.{ts,js,json,css,scss,html}\"",
     "lint": "ng lint",
     "semantic-release": "semantic-release",
+    "storybook": "ng run ngx-vest-forms:storybook",
     "storybook:build": "npx ng run ngx-vest-forms:build-storybook",
     "storybook:preview": "http-server dist/storybook/ngx-vest-forms --port 6006 --silent",
     "storybook:test:ci": "npx run-p --race storybook:test storybook:preview",
