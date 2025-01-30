@@ -39,6 +39,7 @@ export class PurchaseFormComponent {
   protected readonly suite = createPurchaseValidationSuite(this.swapiService);
   private readonly shippingAddress = signal<AddressModel>({});
   protected readonly shape = purchaseFormShape;
+
   private readonly viewModel = computed(() => {
     return {
       formValue: this.formValue(),

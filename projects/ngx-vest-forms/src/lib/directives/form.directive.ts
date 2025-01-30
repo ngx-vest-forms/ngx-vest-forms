@@ -1,5 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Directive, inject, input, OnDestroy, Output, AfterViewInit } from '@angular/core';
+import {
+  AfterViewInit,
+  Directive,
+  inject,
+  input,
+  OnDestroy,
+  Output,
+} from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import {
   AsyncValidatorFn,
@@ -42,7 +49,9 @@ import { ValidationOptions } from './validation-options';
   selector: 'form[scVestForm]',
   standalone: true,
 })
-export class FormDirective<T extends Record<string, any>> implements OnDestroy, AfterViewInit {
+export class FormDirective<T extends Record<string, any>>
+  implements OnDestroy, AfterViewInit
+{
   public readonly ngForm = inject(NgForm, { self: true, optional: false });
 
   /**
