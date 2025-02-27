@@ -80,6 +80,7 @@
     "postcss": "^8.5.3",
     "prettier": "^3.5.2",
     "prettier-plugin-organize-imports": "^4.1.0",
+    "prettier-plugin-tailwindcss": "^0.6.11",
     "semantic-release": "^24.2.3",
     "semantic-release-cli": "^5.4.6",
     "storybook": "^8.5.3",

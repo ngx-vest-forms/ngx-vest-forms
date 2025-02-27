@@ -1,10 +1,10 @@
 <div
-  class="sm:col-span-2 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
+  class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800 sm:col-span-2"
 >
   <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">
     Example: complex form with comples validations and conditionals
   </h3>
-  <ul class="text-md list-disc ml-4">
+  <ul class="text-md ml-4 list-disc">
     <li>Show validation errors on blur</li>
     <li>Show validation errors on submit</li>
     <li>When first name is <strong>Brecht</strong>: Set gender to male</li>
@@ -56,7 +56,7 @@
 
 @if (vm.errors['rootForm']) {
   <div
-    class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
+    class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-800 dark:bg-gray-800 dark:text-red-400"
     role="alert"
   >
     {{ vm.errors['rootForm'] }}
@@ -141,7 +141,7 @@
       </sc-phonenumbers>
     </div>
     <div
-      class="sm:col-span-2 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
+      class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800 sm:col-span-2"
     >
       <div class="" sc-control-wrapper>
         <span>Gender</span>
