@@ -63,7 +63,7 @@
     "@tailwindcss/forms": "^0.5.10",
     "@types/jest": "^29.5.14",
     "angular-eslint": "19.3.0",
-    "autoprefixer": "^10.4.20",
+    "autoprefixer": "^10.4.21",
     "concurrently": "^9.1.2",
     "copyfiles": "^2.4.1",
     "eslint": "^9.21.0",
@@ -78,7 +78,7 @@
     "npm-run-all": "^4.1.5",
     "playwright": "^1.50.1",
     "postcss": "^8.5.3",
-    "prettier": "^3.5.2",
+    "prettier": "^3.5.3",
     "prettier-plugin-organize-imports": "^4.1.0",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "semantic-release": "^24.2.3",
@@ -86,8 +86,8 @@
     "storybook": "^8.6.4",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.8.2",
-    "typescript-eslint": "8.26.0",
-    "wait-on": "^8.0.2"
+    "typescript-eslint": "8.27.0",
+    "wait-on": "^8.0.3"
   },
   "repository": {
     "type": "git",
