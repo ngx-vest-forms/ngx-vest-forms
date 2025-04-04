@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "ng": "ng",
-    "start": "ng dev",
+    "start": "ng dev examples",
     "api": "json-server projects/examples/src/backend/db.json",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
