@@ -53,7 +53,7 @@
               "projects/ngx-vest-forms/**/*.ts",
               "projects/ngx-vest-forms/**/*.html"
             ],
-            "eslintConfig": "projects/ngx-vest-forms/eslint.config.js"
+            "eslintConfig": "projects/ngx-vest-forms/eslint.config.mjs"
           }
         }
       }
@@ -137,7 +137,7 @@
               "projects/examples/**/*.ts",
               "projects/examples/**/*.html"
             ],
-            "eslintConfig": "projects/examples/eslint.config.js"
+            "eslintConfig": "projects/examples/eslint.config.mjs"
           }
         }
       }

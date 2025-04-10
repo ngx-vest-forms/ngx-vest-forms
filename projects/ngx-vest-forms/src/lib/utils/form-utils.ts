@@ -129,7 +129,7 @@ export function cloneDeep<T>(object: T): T {
 
   // Handle Date
   if (object instanceof Date) {
-    return new Date(object.getTime()) as any as T;
+    return new Date(object) as any as T;
   }
 
   // Handle Array
