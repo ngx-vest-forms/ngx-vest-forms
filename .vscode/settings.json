@@ -1,4 +1,38 @@
 {
+  /// =========================================================================
+  /// Import
+  /// =========================================================================
+  "javascript.suggest.autoImports": true,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "typescript.suggest.autoImports": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "never", /// This is handled by Prettier imports
+    "source.fixAll.eslint": "explicit", // Run ESLint fix on save
+    "source.fixAll.stylelint": "explicit", // Run Stylelint fix on save
+    "source.fixAll": "never", // Disable generic fixAll to be more specific
+    "source.addMissingImports": "explicit"
+  },
+
+  /// =========================================================================
+  /// ESLINT
+  /// =========================================================================
+  "eslint.run": "onSave",
+  // Limit ESLint validation to only the file types we're actually using
+  "eslint.validate": ["javascript", "typescript", "html"],
+  /// =========================================================================
+  /// FORMATTING
+  /// =========================================================================
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true, // Enable format on save for better developer experience
+  "prettier.requireConfig": true,
+  "javascript.format.enable": false,
+  "typescript.format.enable": false,
+  "json.format.enable": false,
+
+  /// =========================================================================
+  /// GITHUB COPILOT
+  /// =========================================================================
   "github.copilot.chat.codeGeneration.useInstructionFiles": true,
   "github.copilot.chat.codeGeneration.instructions": [
     {
@@ -10,4 +44,12 @@
       "file": ".github/instructions/copilot.instructions.md"
     },
   ],
+  "github.copilot.chat.testGeneration.instructions": [
+    {
+      "file": ".github/instructions/copilot-test.instructions.md"
+    },
+  ],
+  // ANGULAR
+  "angular.forceStrictTemplates": true,
+
 }
