@@ -1,3 +1,4 @@
+import { test } from "vitest";
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 import { ROOT_FORM } from '../constants';
 import { DeepPartial } from '../utils/deep-partial';

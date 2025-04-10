@@ -139,6 +139,9 @@
             ],
             "eslintConfig": "projects/examples/eslint.config.mjs"
           }
+        },
+        "test": {
+          "builder": "@analogjs/vitest-angular:test"
         }
       }
     }
