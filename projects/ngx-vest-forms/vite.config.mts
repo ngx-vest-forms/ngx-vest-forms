@@ -8,10 +8,15 @@ export default defineConfig(({ mode }) => ({
   plugins: [angular(), viteTsConfigPaths()],
   test: {
     globals: true,
-    environment: 'jsdom',
-    include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     setupFiles: ['src/test-setup.ts'],
+    include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
+    browser: {
+      enabled: true,
+      provider: 'playwright',
+      headless: true, // Set to true in CI
+      name: 'chromium',
+    },
   },
   define: {
     'import.meta.vitest': mode !== 'production',

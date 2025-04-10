@@ -8,7 +8,8 @@
       "vitest/importMeta",
       "vite/client",
       "node",
-      "vitest"
+      "vitest",
+      "@vitest/browser/providers/playwright",
     ]
   },
   "include": [
