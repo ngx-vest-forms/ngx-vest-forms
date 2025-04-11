@@ -1,5 +1,5 @@
 import { JsonPipe } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, Inject, signal } from '@angular/core';
 import {
   ROOT_FORM,
   ValidateRootFormDirective,
@@ -22,6 +22,7 @@ import { BusinessHoursComponent } from '../../ui/business-hours/business-hours.c
   ],
   templateUrl: './business-hours-form.component.html',
   styleUrls: ['./business-hours-form.component.scss'],
+  providers: [{ provide: ROOT_FORM, useValue: 'businessHoursRootForm' }],
 })
 export class BusinessHoursFormComponent {
   protected readonly formValue = signal<BusinessHoursFormModel>({});
@@ -29,5 +30,5 @@ export class BusinessHoursFormComponent {
   protected readonly errors = signal<Record<string, string>>({});
   protected readonly suite = businessHoursSuite;
   protected readonly shape = businessHoursFormShape;
-  protected readonly ROOT_FORM = ROOT_FORM;
+  protected readonly ROOT_FORM = Inject(ROOT_FORM);
 }

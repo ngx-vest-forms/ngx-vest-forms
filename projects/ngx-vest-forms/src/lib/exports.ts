@@ -11,6 +11,8 @@ import { FormModelDirective } from './directives/form-model.directive';
 import { FormDirective } from './directives/form.directive';
 import { ValidateRootFormDirective } from './directives/validate-root-form.directive';
 
+// Re-export utility functions
+
 /**
  * This is borrowed from  [https://github.com/wardbell/ngc-validate/blob/main/src/app/core/form-container-view-provider.ts](https://github.com/wardbell/ngc-validate/blob/main/src/app/core/form-container-view-provider.ts)
  * Thank you so much Ward Bell for your effort!:
@@ -76,3 +78,5 @@ export const vestForms = [
   FormModelDirective,
   FormModelGroupDirective,
 ] as const;
+
+export { injectRootFormKey } from './utils/form-token';

@@ -1,6 +1,5 @@
-import { test } from "vitest";
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
-import { ROOT_FORM } from '../constants';
+import { enforce, omitWhen, only, staticSuite } from 'vest';
+import { test } from 'vitest';
 import { DeepPartial } from '../utils/deep-partial';
 import { DeepRequired } from '../utils/deep-required';
 
@@ -27,7 +26,7 @@ export const formValidationSuite = staticSuite(
     if (field) {
       only(field);
     }
-    test(ROOT_FORM, 'Brecht his pass is not 1234', () => {
+    test(this.rootForm, 'Brecht his pass is not 1234', () => {
       enforce(
         model.firstName === 'Brecht' &&
           model.lastName === 'Billiet' &&

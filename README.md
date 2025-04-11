@@ -21,12 +21,13 @@ npm i ngx-vest-forms
 
 Let's start by explaining how to create a simple form.
 I want a form with a form group called `general` info that has 2 properties:
+
 - `firstName`
 - `lastName`
 
 We need to import the `vestForms` const in the imports section of the `@Component` decorator.
 Now we can apply the `scVestForm` directive to the `form` tag and listen to the `formValueChange` output to feed our signal.
-In the form we create a form group for `generalInfo`  with the `ngModelGroup` directive.
+In the form we create a form group for `generalInfo` with the `ngModelGroup` directive.
 And we crate 2 inputs with the `name` attribute and the `[ngModel]` input.
 **Do note that we are not using the banana in the box syntax but only tha square brackets, resulting in a unidirectional dataflow**
 
@@ -38,24 +39,34 @@ type MyFormModel = DeepPartial<{
   generalInfo: {
     firstName: string;
     lastName: string;
-  }
-}>
+  };
+}>;
 
 @Component({
   imports: [vestForms],
   template: `
-<form scVestForm 
+    <form
+      scVestForm
       (formValueChange)="formValue.set($event)"
-      (ngSubmit)="onSubmit()">
+      (ngSubmit)="onSubmit()"
+    >
       <div ngModelGroup="generalInfo">
         <label>First name</label>
-        <input type="text" name="firstName" [ngModel]="formValue().generalInformation?.firstName"/>
-      
+        <input
+          type="text"
+          name="firstName"
+          [ngModel]="formValue().generalInformation?.firstName"
+        />
+
         <label>Last name</label>
-        <input type="text" name="lastName" [ngModel]="formValue().generalInformation?.lastName"/>
+        <input
+          type="text"
+          name="lastName"
+          [ngModel]="formValue().generalInformation?.lastName"
+        />
       </div>
-</form>
-  `
+    </form>
+  `,
 })
 export class MyComponent {
   // This signal will hold the state of our form
@@ -72,13 +83,14 @@ The object that will be fed in the `formValue` signal will look like this:
 formValue = {
   generalInfo: {
     firstName: '',
-    lastName: ''
-  }
-}
+    lastName: '',
+  },
+};
 ```
 
 The ngForm will contain automatically created FormGroups and FormControls.
 This does not have anything to do with this package. It's just Angular:
+
 ```typescript
 form = {
   controls: {
@@ -94,12 +106,12 @@ form = {
 
 The `scVestForm` directive offers some basic outputs for us though:
 
-| Output               | Description                                                                                                                             | 
-|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| formValueChange<T>   | Emits when the form value changes. But debounces<br/> the events since template-driven forms are created by the<br/>framework over time | 
-| dirtyChange<boolean> | Emits when the dirty state of the form changes                                                                                          | 
-| validChange<boolean> | Emits when the form becomes dirty or pristine                                                                                           | 
-| errorsChange         | Emits an entire list of the form and all its form groups and controls                                                                   | 
+| Output               | Description                                                                                                                             |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| formValueChange<T>   | Emits when the form value changes. But debounces<br/> the events since template-driven forms are created by the<br/>framework over time |
+| dirtyChange<boolean> | Emits when the dirty state of the form changes                                                                                          |
+| validChange<boolean> | Emits when the form becomes dirty or pristine                                                                                           |
+| errorsChange         | Emits an entire list of the form and all its form groups and controls                                                                   |
 
 ### Avoiding typo's
 
@@ -114,33 +126,42 @@ type MyFormModel = DeepPartial<{
   generalInfo: {
     firstName: string;
     lastName: string;
-  }
-}>
+  };
+}>;
 
 export const myFormModelShape: DeepRequired<MyFormModel> = {
   generalInfo: {
     firstName: '',
-    lastName: '' 
-  }
+    lastName: '',
+  },
 };
 
 @Component({
   imports: [vestForms],
   template: `
-<form scVestForm 
+    <form
+      scVestForm
       [formShape]="shape"
       (formValueChange)="formValue.set($event)"
-      (ngSubmit)="onSubmit()">
-      
+      (ngSubmit)="onSubmit()"
+    >
       <div ngModelGroup="generalInfo">
         <label>First name</label>
-        <input type="text" name="firstName" [ngModel]="formValue().generalInformation?.firstName"/>
-      
+        <input
+          type="text"
+          name="firstName"
+          [ngModel]="formValue().generalInformation?.firstName"
+        />
+
         <label>Last name</label>
-        <input type="text" name="lastName" [ngModel]="formValue().generalInformation?.lastName"/>
+        <input
+          type="text"
+          name="lastName"
+          [ngModel]="formValue().generalInformation?.lastName"
+        />
       </div>
-</form>
-  `
+    </form>
+  `,
 })
 export class MyComponent {
   protected readonly formValue = signal<MyFormModel>({});
@@ -179,7 +200,7 @@ Error: Shape mismatch:
 
 ### Conditional fields
 
-What if we want to remove a form control or form group? With reactive forms that would require a lot of work 
+What if we want to remove a form control or form group? With reactive forms that would require a lot of work
 but since Template driven forms do all the hard work for us, we can simply create a computed signal for that and
 bind that in the template. Having logic in the template is considered a bad practice, so we can do all
 the calculations in our class.
@@ -189,11 +210,19 @@ Let's hide `lastName` if `firstName` is not filled in:
 ```html
 <div ngModelGroup="generalInfo">
   <label>First name</label>
-  <input type="text" name="firstName" [ngModel]="formValue().generalInformation?.firstName"/>
-  
+  <input
+    type="text"
+    name="firstName"
+    [ngModel]="formValue().generalInformation?.firstName"
+  />
+
   @if(lastNameAvailable()){
-    <label>Last name</label>
-    <input type="text" name="lastName" [ngModel]="formValue().generalInformation?.lastName"/>
+  <label>Last name</label>
+  <input
+    type="text"
+    name="lastName"
+    [ngModel]="formValue().generalInformation?.lastName"
+  />
   }
 </div>
 ```
@@ -201,7 +230,7 @@ Let's hide `lastName` if `firstName` is not filled in:
 ```typescript
 class MyComponent {
   ...
-  protected readonly lastNameAvailable = 
+  protected readonly lastNameAvailable =
     computed(() => !!this.formValue().generalInformation?.firstName);
 }
 ```
@@ -211,13 +240,21 @@ This also works for a form group:
 
 ```html
 @if(showGeneralInfo()){
-  <div ngModelGroup="generalInfo">
-    <label>First name</label>
-    <input type="text" name="firstName" [ngModel]="formValue().generalInformation?.firstName"/>
-    
-    <label>Last name</label>
-    <input type="text" name="lastName" [ngModel]="formValue().generalInformation?.lastName"/>
-  </div>
+<div ngModelGroup="generalInfo">
+  <label>First name</label>
+  <input
+    type="text"
+    name="firstName"
+    [ngModel]="formValue().generalInformation?.firstName"
+  />
+
+  <label>Last name</label>
+  <input
+    type="text"
+    name="lastName"
+    [ngModel]="formValue().generalInformation?.lastName"
+  />
+</div>
 }
 ```
 
@@ -227,16 +264,21 @@ To achieve reactive disabling, we just have to take advantage of computed signal
 
 ```typescript
 class MyComponent {
-  protected readonly lastNameDisabled = 
-    computed(() => !this.formValue().generalInformation?.firstName);
+  protected readonly lastNameDisabled = computed(
+    () => !this.formValue().generalInformation?.firstName,
+  );
 }
 ```
 
 We can bind the computed signal to the `disabled` directive of Angular.
+
 ```html
-<input type="text" name="lastName" 
-       [disabled]="lastNameDisabled()" 
-       [ngModel]="formValue().generalInformation?.lastName"/>
+<input
+  type="text"
+  name="lastName"
+  [disabled]="lastNameDisabled()"
+  [ngModel]="formValue().generalInformation?.lastName"
+/>
 ```
 
 ### Validations
@@ -247,13 +289,15 @@ You can use it on the backend/frontend/Angular/react etc...
 
 We use vest because it introduces the concept of vest suites. These are suites that kind of look like unit-tests
 but that are highly flexible:
-* [X] Write validations on forms
-* [X] Write validations on form groups
-* [X] Write validations on form controls
-* [X] Composable/reuse-able different validation suites
-* [X] Write conditional validations
+
+- [x] Write validations on forms
+- [x] Write validations on form groups
+- [x] Write validations on form controls
+- [x] Composable/reuse-able different validation suites
+- [x] Write conditional validations
 
 This is how you write a simple Vest suite:
+
 ```typescript
 import { enforce, only, staticSuite, test } from 'vest';
 import { MyFormModel } from '../models/my-form.model'
@@ -291,21 +335,23 @@ class MyComponent {
 ```
 
 ```html
-
-<form scVestForm
-      [formShape]="shape"
-      [formValue]="formValue"
-      [suite]="suite"
-      (formValueChange)="formValue.set($event)"
-      (ngSubmit)="onSubmit()">
+<form
+  scVestForm
+  [formShape]="shape"
+  [formValue]="formValue"
+  [suite]="suite"
+  (formValueChange)="formValue.set($event)"
+  (ngSubmit)="onSubmit()"
+>
   ...
 </form>
 ```
 
-That's it. Validations are completely wired now. Because ngx-vest-forms will hook into the 
+That's it. Validations are completely wired now. Because ngx-vest-forms will hook into the
 `[ngModel]` and `ngModelGroup` attributes, and create ngValidators automatically.
 
-It goes like this: 
+It goes like this:
+
 - Control gets created, Angular recognizes the `ngModel` and `ngModelGroup` directives
 - These directives implement `AsyncValidator` and will connect to a vest suite
 - User types into control
@@ -314,7 +360,7 @@ It goes like this:
 - Vest returns the errors
 - @simpilfied/forms puts those errors on the angular form control
 
-This means that `valid`, `invalid`, `errors`,  `statusChanges` etc will keep on working
+This means that `valid`, `invalid`, `errors`, `statusChanges` etc will keep on working
 just like it would with a regular angular form.
 
 #### Showing validation errors
@@ -323,10 +369,12 @@ Now we want to show the validation errors in a consistent way.
 For that we have provided the `sc-control-wrapper` attribute component.
 
 You can use it on:
+
 - elements that hold `ngModelGroup`
 - elements that have an `ngModel` (or form control) inside of them.
 
 This will show errors automatically on:
+
 - form submit
 - blur
 
@@ -351,12 +399,13 @@ Let's update our form:
 ```
 
 This is the only thing we need to do to create a form that is completely wired with vest.
-* [x] Automatic creation of form controls and form groups
-* [x] Automatic connection to vest suites
-* [x] Automatic typo validation
-* [x] Automatic adding of css error classes and showing validation messages
-  * [x] On blur
-  * [x] On submit
+
+- [x] Automatic creation of form controls and form groups
+- [x] Automatic connection to vest suites
+- [x] Automatic typo validation
+- [x] Automatic adding of css error classes and showing validation messages
+  - [x] On blur
+  - [x] On submit
 
 ### Conditional validations
 
@@ -381,9 +430,9 @@ omitWhen((model.age || 0) >= 18, () => {
 You can put those validations on every field that you want. On form group fields and on form control fields.
 Check this interesting example below:
 
-* [x] Password is always required
-* [x] Confirm password is only required when there is a password
-* [x] The passwords should match, but only when they are both filled in
+- [x] Password is always required
+- [x] Confirm password is only required when there is a password
+- [x] The passwords should match, but only when they are both filled in
 
 ```typescript
 test('passwords.password', 'Password is not filled in', () => {
@@ -394,11 +443,16 @@ omitWhen(!model.passwords?.password, () => {
     enforce(model.passwords?.confirmPassword).isNotBlank();
   });
 });
-omitWhen(!model.passwords?.password || !model.passwords?.confirmPassword, () => {
-  test('passwords', 'Passwords do not match', () => {
-    enforce(model.passwords?.confirmPassword).equals(model.passwords?.password);
-  });
-});
+omitWhen(
+  !model.passwords?.password || !model.passwords?.confirmPassword,
+  () => {
+    test('passwords', 'Passwords do not match', () => {
+      enforce(model.passwords?.confirmPassword).equals(
+        model.passwords?.password,
+      );
+    });
+  },
+);
 ```
 
 Forget about manually adding, removing validators on reactive forms and not being able to
@@ -414,7 +468,10 @@ This is quite straightforward with Vest.
 Let's take this simple function that validates an address:
 
 ```typescript
-export function addressValidations(model: AddressModel | undefined, field: string): void {
+export function addressValidations(
+  model: AddressModel | undefined,
+  field: string,
+): void {
   test(`${field}.street`, 'Street is required', () => {
     enforce(model?.street).isNotBlank();
   });
@@ -444,9 +501,15 @@ export const mySuite = staticSuite(
     if (field) {
       only(field);
     }
-    addressValidations(model.addresses?.billingAddress, 'addresses.billingAddress');
-    addressValidations(model.addresses?.shippingAddress, 'addresses.shippingAddress');
-  }
+    addressValidations(
+      model.addresses?.billingAddress,
+      'addresses.billingAddress',
+    );
+    addressValidations(
+      model.addresses?.shippingAddress,
+      'addresses.shippingAddress',
+    );
+  },
 );
 ```
 
@@ -460,59 +523,54 @@ Checkbox is checked. But if it is checked, all fields are required.
 And if both addresses are filled in, they should be different.
 
 This gives us validation on:
-* [x] The addresses form field (they can't be equal)
-* [x] The shipping Address field (only required when checkbox is checked)
-* [x] validation on all the address fields (street, number, etc) on both addresses
+
+- [x] The addresses form field (they can't be equal)
+- [x] The shipping Address field (only required when checkbox is checked)
+- [x] validation on all the address fields (street, number, etc) on both addresses
 
 ```typescript
-addressValidations(
-  model.addresses?.billingAddress,
-  'addresses.billingAddress'
-);
-omitWhen(
-  !model.addresses?.shippingAddressDifferentFromBillingAddress,
-  () => {
-    addressValidations(
-      model.addresses?.shippingAddress,
-      'addresses.shippingAddress'
+addressValidations(model.addresses?.billingAddress, 'addresses.billingAddress');
+omitWhen(!model.addresses?.shippingAddressDifferentFromBillingAddress, () => {
+  addressValidations(
+    model.addresses?.shippingAddress,
+    'addresses.shippingAddress',
+  );
+  test('addresses', 'The addresses appear to be the same', () => {
+    enforce(JSON.stringify(model.addresses?.billingAddress)).notEquals(
+      JSON.stringify(model.addresses?.shippingAddress),
     );
-    test('addresses', 'The addresses appear to be the same', () => {
-      enforce(JSON.stringify(model.addresses?.billingAddress)).notEquals(
-        JSON.stringify(model.addresses?.shippingAddress)
-      );
-    });
-  }
-);
+  });
+});
 ```
 
 ### Validation options
 
-The validation is triggered immediately when the input on the formModel changes.  
+The validation is triggered immediately when the input on the formModel changes.
 In some cases you want to debounce the input (e.g. if you make an api call in the validation suite).
 
-You can configure additional `validationOptions` at various levels like `form`, `ngModelGroup` or `ngModel`. 
+You can configure additional `validationOptions` at various levels like `form`, `ngModelGroup` or `ngModel`.
 
 ```html
-
-<form scVestForm
-      ...
-      [validationOptions]="{ debounceTime: 0 }">
-    ...
-    <div sc-control-wrapper>
-        <label>UserId</label>
-        <input type="text" name="userId" [ngModel]="formValue().userId?"
-               [validationOptions]="{ debounceTime: 300 }"/>
-    </div>
-    ...
+<form scVestForm ... [validationOptions]="{ debounceTime: 0 }">
+  ...
+  <div sc-control-wrapper>
+    <label>UserId</label>
+    <input
+      type="text"
+      name="userId"
+      [ngModel]="formValue().userId?"
+      [validationOptions]="{ debounceTime: 300 }"
+    />
+  </div>
+  ...
 </form>
 ```
-
 
 ### Validations on the root form
 
 When we want to validate multiple fields that are depending on each other,
 it is a best practice to wrap them in a parent form group.
-If `password`  and `confirmPassword` have to be equal the validation should not happen on
+If `password` and `confirmPassword` have to be equal the validation should not happen on
 `password` nor on `confirmPassword`, it should happen on `passwords`:
 
 ```typescript
@@ -520,8 +578,8 @@ const form = {
   // validation happens here
   passwords: {
     password: '',
-    confirmPassword: ''
-  }
+    confirmPassword: '',
+  },
 };
 ```
 
@@ -531,16 +589,19 @@ Use the `errorsChange` output to keep the errors as state in a signal that we ca
 wherever we want.
 
 ```html
-{{ errors()?.['rootForm'] }} <!-- render the errors on the rootForm -->
-{{ errors() }} <!-- render all the errors -->
-<form scVestForm 
-      [formValue]="formValue()"
-      [validateRootForm]="true"
-      [formShape]="shape"
-      [suite]="suite"
-      (errorsChange)="errors.set($event)"
-      ...>
-</form>
+{{ errors()?.['rootForm'] }}
+<!-- render the errors on the rootForm -->
+{{ errors() }}
+<!-- render all the errors -->
+<form
+  scVestForm
+  [formValue]="formValue()"
+  [validateRootForm]="true"
+  [formShape]="shape"
+  [suite]="suite"
+  (errorsChange)="errors.set($event)"
+  ...
+></form>
 ```
 
 ```typescript
@@ -548,7 +609,7 @@ export class MyformComponent {
   protected readonly formValue = signal<MyFormModel>({});
   protected readonly suite = myFormModelSuite;
   // Keep the errors in state
-  protected readonly errors = signal<Record<string, string>>({ });
+  protected readonly errors = signal<Record<string, string>>({});
 }
 ```
 
@@ -558,17 +619,63 @@ also create an ngValidator on root level, that listens to the ROOT_FORM field.
 To make this work we need to use the field in the vest suite like this:
 
 ```typescript
-import { ROOT_FORM } from 'ngx-vest-forms';
+import { ROOT_FORM } from 'ngx-vest-forms;
 
 test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
   enforce(
-    model.firstName === 'Brecht' && 
-    model.lastName === 'Billiet' && 
+    model.firstName === 'Brecht' &&
+    model.lastName === 'Billiet' &&
     model.age === 30).isFalsy();
 });
 ```
 
+#### Customizing the ROOT_FORM key
 
+By default, the root form errors use the key 'rootForm'. If you want to use a different key for your application, you can override the `ROOT_FORM` injection token:
+
+```typescript
+// In your AppModule or any other module
+import { ROOT_FORM } from 'ngx-vest-forms';
+
+@NgModule({
+  // ...
+  providers: [{ provide: ROOT_FORM, useValue: 'myCustomFormName' }],
+})
+export class AppModule {}
+
+// Or in a component
+@Component({
+  // ...
+  providers: [{ provide: ROOT_FORM, useValue: 'myCustomFormName' }],
+})
+export class MyComponent {}
+```
+
+When overriding the `ROOT_FORM` token, you need to use the same key in your validation suite:
+
+```typescript
+import { inject } from '@angular/core';
+import { ROOT_FORM, injectRootFormKey } from 'ngx-vest-forms;
+
+// In a component where you create the validation suite
+const rootFormKey = injectRootFormKey(); // Uses the inject() function under the hood
+
+test(rootFormKey, 'Form has errors', () => {
+  // your validation logic
+});
+```
+
+The library provides a utility function `injectRootFormKey()` that you can use to get the current root form key value, which will respect any overrides you've provided through dependency injection:
+
+```typescript
+import { injectRootFormKey } from 'ngx-vest-forms;
+
+// In a component or service
+const formKey = injectRootFormKey(); // Uses the inject() function to get the current value
+const errors = getAllFormErrors(myForm, formKey);
+```
+
+This utility function works both within and outside of injection contexts, with a fallback value for when it's used outside of an injection context.
 
 ### Validation of dependant controls and or groups
 
@@ -580,7 +687,6 @@ consistency.
 
 Here's how you can handle validation dependencies with ngx-vest-forms and vest.js:
 
-
 Use Vest to create a suite where you define the conditional validations.
 For example, the `confirmPassword` field should only be validated when the `password` field is not empty.
 Additionally, you need to ensure that both fields match.
@@ -589,27 +695,29 @@ Additionally, you need to ensure that both fields match.
 import { enforce, omitWhen, staticSuite, test } from 'vest';
 import { MyFormModel } from '../models/my-form.model';
 
-export const myFormModelSuite = staticSuite((model: MyFormModel, field?: string) => {
+export const myFormModelSuite = staticSuite(
+  (model: MyFormModel, field?: string) => {
     if (field) {
-        only(field);
+      only(field);
     }
 
     test('password', 'Password is required', () => {
-        enforce(model.password).isNotBlank();
+      enforce(model.password).isNotBlank();
     });
 
     omitWhen(!model.password, () => {
-        test('confirmPassword', 'Confirm password is required', () => {
-            enforce(model.confirmPassword).isNotBlank();
-        });
+      test('confirmPassword', 'Confirm password is required', () => {
+        enforce(model.confirmPassword).isNotBlank();
+      });
     });
 
     omitWhen(!model.password || !model.confirmPassword, () => {
-        test('passwords', 'Passwords do not match', () => {
-            enforce(model.confirmPassword).equals(model.password);
-        });
+      test('passwords', 'Passwords do not match', () => {
+        enforce(model.confirmPassword).equals(model.password);
+      });
     });
-});
+  },
+);
 ```
 
 Creating a validation config.
@@ -620,30 +728,34 @@ protected validationConfig = {
     password: ['passwords.confirmPassword']
 }
 ```
+
 Here we see that when password changes, it needs to update the field `passwords.confirmPassword`.
 This validationConfig is completely dynamic, and can also be used for form arrays.
 
 ```html
+<form scVestForm ... [validationConfig]="validationConfig">
+  <div ngModelGroup="passwords">
+    <label>Password</label>
+    <input
+      type="password"
+      name="password"
+      [ngModel]="formValue().passwords?.password"
+    />
 
-<form scVestForm
-      ...
-      [validationConfig]="validationConfig">
-    <div ngModelGroup="passwords">
-        <label>Password</label>
-        <input type="password" name="password" [ngModel]="formValue().passwords?.password"/>
-
-        <label>Confirm Password</label>
-        <input type="password" name="confirmPassword" [ngModel]="formValue().passwords?.confirmPassword"/>
-    </div>
+    <label>Confirm Password</label>
+    <input
+      type="password"
+      name="confirmPassword"
+      [ngModel]="formValue().passwords?.confirmPassword"
+    />
+  </div>
 </form>
 ```
-
 
 #### Form array validations
 
 An example can be found [in this simplified courses article](https://blog.simplified.courses/template-driven-forms-with-form-arrays/)
 There is also a complex example of form arrays with complex validations in the examples.
-
 
 ### Child form components
 
@@ -666,7 +778,9 @@ export class AddressComponent {
 ```
 
 # Examples
+
 to check the examples, clone this repo and run:
+
 ```shell
 npm i
 npm start
@@ -676,12 +790,12 @@ There is an example of a complex form with a lot of conditionals and specifics,
 and there is an example of a form array with complex validations that is used to
 create a form to add business hours. A free tutorial will follow soon.
 
-
 You can check the examples in the github repo [here](https://github.com/simplifiedcourses/ngx-vest-forms/blob/master/projects/examples).
-[Here](https://stackblitz.com/~/github.com/simplifiedcourses/ngx-vest-forms-stackblitz){:target="_blank"} is a stackblitz example for you.
+[Here](https://stackblitz.com/~/github.com/simplifiedcourses/ngx-vest-forms-stackblitz){:target="\_blank"} is a stackblitz example for you.
 It's filled with form complexities and also contains form array logic.
 
 ## Want to learn more?
+
 [![course.jpeg](course.jpeg)](https://www.simplified.courses/complex-angular-template-driven-forms)
 
 [This course](https://www.simplified.courses/complex-angular-template-driven-forms) teaches you to become a form expert in no time.

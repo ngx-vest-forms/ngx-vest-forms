@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
-import { ROOT_FORM } from '../constants';
+import { injectRootFormKey } from './form-token';
 
 /**
  * Recursively calculates the path of a form control
@@ -175,15 +175,20 @@ export function set(object: object, path: string, value: any): void {
 
 /**
  * Traverses the form and returns the errors by path
- * @param form
+ * @param form The form to get errors from
+ * @param rootFormKey Optional custom root form key, if not provided uses the injected ROOT_FORM value
  */
 export function getAllFormErrors(
   form?: AbstractControl,
+  rootFormKey?: string,
 ): Record<string, string> {
   const errors: Record<string, string> = {};
   if (!form) {
     return errors;
   }
+
+  // Get the root form key using the utility function if not provided
+  const formKey = rootFormKey ?? injectRootFormKey();
 
   function collect(control: AbstractControl, path: string): void {
     if (control instanceof FormGroup || control instanceof FormArray) {
@@ -210,7 +215,7 @@ export function getAllFormErrors(
 
   collect(form, '');
   if (form.errors && form.errors!['errors']) {
-    errors[ROOT_FORM] = form.errors && form.errors!['errors'];
+    errors[formKey] = form.errors && form.errors!['errors'];
   }
 
   return errors;

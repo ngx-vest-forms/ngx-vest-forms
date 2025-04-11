@@ -2,11 +2,11 @@
   "name": "ngx-vest-forms",
   "version": "0.0.0",
   "license": "MIT",
-  "author": "Brecht Billiet",
+  "author": "Brecht Billiet, Arjen Althoff",
   "description": "Opinionated template-driven forms library for Angular",
   "peerDependencies": {
-    "@angular/core": "^19.0.0",
-    "@angular/common": "^19.0.0",
+    "@angular/core": "^19.2.0",
+    "@angular/common": "^19.2.0",
     "rxjs": "^7.8.1",
     "vest": "^5.2.8"
   },

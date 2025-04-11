@@ -1,7 +1,11 @@
 import { JsonPipe } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { ValidateRootFormDirective, vestForms } from 'ngx-vest-forms';
+import {
+  ROOT_FORM,
+  ValidateRootFormDirective,
+  vestForms,
+} from 'ngx-vest-forms';
 import { debounceTime, filter, switchMap } from 'rxjs';
 import { LukeService } from '../../../luke.service';
 import { AddressModel } from '../../../models/address.model';
@@ -26,11 +30,13 @@ import { PhonenumbersComponent } from '../../ui/phonenumbers/phonenumbers.compon
   ],
   templateUrl: './purchase-form.component.html',
   styleUrls: ['./purchase-form.component.scss'],
+  providers: [{ provide: ROOT_FORM, useValue: 'purchaseFormRoot' }],
 })
 export class PurchaseFormComponent {
   private readonly lukeService = inject(LukeService);
   private readonly swapiService = inject(SwapiService);
   private readonly productService = inject(ProductService);
+  private readonly rootForm = inject(ROOT_FORM);
   public readonly products = toSignal(this.productService.getAll());
   protected readonly formValue = signal<PurchaseFormModel>({});
   protected readonly formValid = signal<boolean>(false);
@@ -98,6 +104,8 @@ export class PurchaseFormComponent {
       .subscribe((luke) => {
         this.formValue.update((v) => ({ ...v, ...luke }));
       });
+
+    console.log('Root form identifier:', this.rootForm);
   }
 
   protected setFormValue(v: PurchaseFormModel): void {

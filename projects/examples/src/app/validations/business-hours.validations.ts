@@ -1,5 +1,4 @@
-import { test } from "vitest";
-import { ROOT_FORM } from 'ngx-vest-forms';
+import { injectRootFormKey } from 'ngx-vest-forms';
 import { each, enforce, omitWhen, only, staticSuite, test } from 'vest';
 import {
   BusinessHourFormModel,
@@ -15,9 +14,13 @@ export const businessHoursSuite = staticSuite(
       ? Object.values(model.businessHours.values)
       : [];
 
-    test(ROOT_FORM, 'You should have at least one business hour', () => {
-      enforce((values?.length || 0) > 0).isTruthy();
-    });
+    test(
+      injectRootFormKey(),
+      'You should have at least one business hour',
+      () => {
+        enforce((values?.length || 0) > 0).isTruthy();
+      },
+    );
     omitWhen(values?.length < 2, () => {
       test(
         `businessHours.values`,

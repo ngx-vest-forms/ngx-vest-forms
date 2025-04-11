@@ -13,6 +13,7 @@ export { vestForms, vestFormsViewProviders } from './lib/exports';
 export { arrayToObject } from './lib/utils/array-to-object';
 export { DeepPartial } from './lib/utils/deep-partial';
 export { DeepRequired } from './lib/utils/deep-required';
+export { injectRootFormKey } from './lib/utils/form-token';
 export {
   cloneDeep,
   getAllFormErrors,

@@ -1,5 +1,4 @@
-import { test } from "vitest";
-import { ROOT_FORM } from 'ngx-vest-forms';
+import { injectRootFormKey } from 'ngx-vest-forms';
 import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 import { PurchaseFormModel } from '../models/purchase-form.model';
@@ -12,7 +11,7 @@ export const createPurchaseValidationSuite = (swapiService: SwapiService) => {
     if (field) {
       only(field);
     }
-    test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
+    test(injectRootFormKey(), 'Brecht is not 30 anymore', () => {
       enforce(
         model.firstName === 'Brecht' &&
           model.lastName === 'Billiet' &&
