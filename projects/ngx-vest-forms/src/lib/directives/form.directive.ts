@@ -1,13 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  AfterViewInit,
-  Directive,
-  inject,
-  input,
-  OnDestroy,
-  Output,
-} from '@angular/core';
-import { toObservable } from '@angular/core/rxjs-interop';
+import { DestroyRef, Directive, inject, input, Output } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import {
   AsyncValidatorFn,
   NgForm,
@@ -27,10 +20,8 @@ import {
   ReplaySubject,
   retry,
   startWith,
-  Subject,
   switchMap,
   take,
-  takeUntil,
   tap,
   zip,
 } from 'rxjs';
@@ -49,9 +40,8 @@ import { ValidationOptions } from './validation-options';
   selector: 'form[scVestForm]',
   standalone: true,
 })
-export class FormDirective<T extends Record<string, any>>
-  implements OnDestroy, AfterViewInit
-{
+export class FormDirective<T extends Record<string, any>> {
+  #destroyRef = inject(DestroyRef);
   public readonly ngForm = inject(NgForm, { self: true, optional: false });
 
   /**
@@ -143,7 +133,6 @@ export class FormDirective<T extends Record<string, any>>
     startWith(this.ngForm.form.dirty),
     distinctUntilChanged(),
   );
-  private readonly destroy$$ = new Subject<void>();
 
   /**
    * Fired when the status of the root form changes.
@@ -176,9 +165,8 @@ export class FormDirective<T extends Record<string, any>>
     }>
   > = {};
 
-  public ngAfterViewInit() {
-    // When the validation config changes
-    // Listen to changes of the left-side of the config and trigger the updateValueAndValidity
+  afterRender() {
+    // Ensure toObservable is used within an injection context
     toObservable(this.validationConfig)
       .pipe(
         filter((config) => !!config),
@@ -199,7 +187,6 @@ export class FormDirective<T extends Record<string, any>>
                 // Wait until the form is not pending anymore
                 switchMap(() => this.idle$),
                 map(() => control.value),
-                takeUntil(this.destroy$$),
                 tap(() => {
                   for (const path of config[key]!) {
                     const dependentControl = this.ngForm?.form.get(path);
@@ -211,6 +198,7 @@ export class FormDirective<T extends Record<string, any>>
                     }
                   }
                 }),
+                takeUntilDestroyed(this.#destroyRef),
               );
             })
             .filter((stream): stream is Observable<any> => stream !== null); // Filter out null streams
@@ -225,25 +213,25 @@ export class FormDirective<T extends Record<string, any>>
             catchError(() => of(null)), // Fallback if retries fail
           );
         }),
+        takeUntilDestroyed(this.#destroyRef),
       )
       .subscribe();
 
-    /**
-     * Trigger shape validations if the form gets updated
-     * This is how we can throw run-time errors
-     */
-    this.formValueChange.pipe(takeUntil(this.destroy$$)).subscribe((v) => {
-      if (this.formShape()) {
-        validateShape(v, this.formShape() as DeepRequired<T>);
-      }
-    });
+    // Trigger shape validations if the form gets updated
+    this.formValueChange
+      .pipe(takeUntilDestroyed(this.#destroyRef))
+      .subscribe((v) => {
+        if (this.formShape()) {
+          validateShape(v, this.formShape() as DeepRequired<T>);
+        }
+      });
 
-    /**
-     * Mark all the fields as touched when the form is submitted
-     */
-    this.ngForm.ngSubmit.subscribe(() => {
-      this.ngForm.form.markAllAsTouched();
-    });
+    // Mark all the fields as touched when the form is submitted
+    this.ngForm.ngSubmit
+      .pipe(takeUntilDestroyed(this.#destroyRef))
+      .subscribe(() => {
+        this.ngForm.form.markAllAsTouched();
+      });
   }
 
   /**
@@ -289,12 +277,7 @@ export class FormDirective<T extends Record<string, any>>
             });
           }) as Observable<ValidationErrors | null>;
         }),
-        takeUntil(this.destroy$$),
       );
     };
-  }
-
-  public ngOnDestroy(): void {
-    this.destroy$$.next();
   }
 }

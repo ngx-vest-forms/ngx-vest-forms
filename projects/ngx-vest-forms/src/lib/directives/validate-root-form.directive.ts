@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Directive, input, OnDestroy } from '@angular/core';
+import { DestroyRef, Directive, inject, input } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   AsyncValidator,
@@ -12,10 +13,8 @@ import {
   Observable,
   of,
   ReplaySubject,
-  Subject,
   switchMap,
   take,
-  takeUntil,
 } from 'rxjs';
 import { StaticSuite } from 'vest';
 import { cloneDeep, set } from '../utils/form-utils';
@@ -33,9 +32,9 @@ import { ValidationOptions } from './validation-options';
     },
   ],
 })
-export class ValidateRootFormDirective<T> implements AsyncValidator, OnDestroy {
+export class ValidateRootFormDirective<T> implements AsyncValidator {
   public validationOptions = input<ValidationOptions>({ debounceTime: 0 });
-  private readonly destroy$$ = new Subject<void>();
+  #destroyRef = inject(DestroyRef);
 
   public readonly formValue = input<T | null>(null);
   public readonly suite = input<StaticSuite<
@@ -109,12 +108,8 @@ export class ValidateRootFormDirective<T> implements AsyncValidator, OnDestroy {
             });
           }) as Observable<ValidationErrors | null>;
         }),
-        takeUntil(this.destroy$$),
+        takeUntilDestroyed(this.#destroyRef),
       );
     };
-  }
-
-  public ngOnDestroy(): void {
-    this.destroy$$.next();
   }
 }
