@@ -25,9 +25,19 @@ import { ROOT_FORM } from '../constants';
  */
 export function injectRootFormKey(fallback = 'rootForm'): string {
   try {
-    return inject(ROOT_FORM, { optional: true }) ?? fallback;
+    const rootFormKey = inject(ROOT_FORM, { optional: true });
+    if (!rootFormKey) {
+      console.warn(
+        'ROOT_FORM token not found in DI context. Using fallback value:',
+        fallback,
+      );
+    }
+    return rootFormKey ?? fallback;
   } catch {
-    // Return fallback if called outside of injection context
+    console.warn(
+      'injectRootFormKey called outside of injection context. Using fallback value:',
+      fallback,
+    );
     return fallback;
   }
 }
