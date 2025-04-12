@@ -24,20 +24,23 @@ import { ROOT_FORM } from '../constants';
  * @returns The current ROOT_FORM token value or the fallback
  */
 export function injectRootFormKey(fallback = 'rootForm'): string {
+  // Store the provided fallback to ensure it's used consistently
+  const userFallback = fallback;
+
   try {
     const rootFormKey = inject(ROOT_FORM, { optional: true });
     if (!rootFormKey) {
       console.warn(
         'ROOT_FORM token not found in DI context. Using fallback value:',
-        fallback,
+        userFallback,
       );
     }
-    return rootFormKey ?? fallback;
+    return rootFormKey ?? userFallback;
   } catch {
     console.warn(
       'injectRootFormKey called outside of injection context. Using fallback value:',
-      fallback,
+      userFallback,
     );
-    return fallback;
+    return userFallback;
   }
 }

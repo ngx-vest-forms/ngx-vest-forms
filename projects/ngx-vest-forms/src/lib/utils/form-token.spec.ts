@@ -24,7 +24,7 @@ describe('injectRootFormKey', () => {
     expect(result).toBe(rootFormValue);
   });
 
-  it('should return the fallback value when ROOT_FORM token is not provided', () => {
+  it('should return the fallback value when ROOT_FORM token is null', () => {
     TestBed.configureTestingModule({
       providers: [{ provide: ROOT_FORM, useValue: null }],
     });
@@ -70,15 +70,18 @@ describe('injectRootFormKey', () => {
 
   it('should allow a custom fallback value', () => {
     const customFallback = 'customFallback';
+    const consoleWarnSpy = vi
+      .spyOn(console, 'warn')
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      .mockImplementation(() => {});
 
-    TestBed.configureTestingModule({
-      providers: [], // Ensure we have an empty provider set
-    });
+    // Call directly outside of DI context with custom fallback
+    const result = injectRootFormKey(customFallback);
 
-    let result: string;
-    TestBed.runInInjectionContext(() => {
-      result = injectRootFormKey(customFallback);
-    });
-    expect(result!).toEqual(customFallback);
+    expect(result).toBe(customFallback);
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      'injectRootFormKey called outside of injection context. Using fallback value:',
+      customFallback,
+    );
   });
 });
