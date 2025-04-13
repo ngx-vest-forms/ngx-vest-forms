@@ -1,6 +1,5 @@
 import { setCompodocJson } from '@storybook/addon-docs/angular';
 import type { Preview } from '@storybook/angular';
-import 'zone.js';
 import documentJson from '../documentation.json';
 
 setCompodocJson(documentJson);
@@ -14,7 +13,6 @@ const preview: Preview = {
       },
     },
   },
-
   tags: ['autodocs'],
 };
 

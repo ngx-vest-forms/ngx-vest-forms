@@ -3,8 +3,8 @@ import { StorybookConfigVite } from '@storybook/builder-vite';
 import { UserConfig } from 'vite';
 
 const config: StorybookConfig & StorybookConfigVite = {
+  framework: '@storybook/angular',
   stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
-
   addons: [
     '@storybook/addon-links',
     '@storybook/addon-essentials',
@@ -12,13 +12,7 @@ const config: StorybookConfig & StorybookConfigVite = {
     '@storybook/addon-interactions',
     '@storybook/addon-coverage',
   ],
-
-  framework: {
-    name: '@storybook/angular',
-    options: {},
-  },
-
-  docs: { autodocs: true },
+  // docs: { autodocs: true },
   core: {
     builder: {
       name: '@storybook/builder-vite',
@@ -41,14 +35,12 @@ const config: StorybookConfig & StorybookConfigVite = {
           '@angular/compiler',
           '@storybook/blocks',
           'tslib',
-          '@storybook/addon-links',
-          '@storybook/addon-essentials',
-          '@chromatic-com/storybook',
-          '@storybook/addon-interactions',
-          '@storybook/addon-coverage',
         ],
       },
-      plugins: [angular({ jit: true, tsconfig: './.storybook/tsconfig.json' })],
+      plugins: [
+        angular({ jit: true, tsconfig: './.storybook/tsconfig.json' }),
+        // viteTsConfigPaths(),
+      ],
       define: {
         STORYBOOK_ANGULAR_OPTIONS: JSON.stringify({
           experimentalZoneless: false,
@@ -57,3 +49,5 @@ const config: StorybookConfig & StorybookConfigVite = {
     });
   },
 };
+
+export default config;
