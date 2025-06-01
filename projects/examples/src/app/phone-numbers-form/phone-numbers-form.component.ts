@@ -1,12 +1,12 @@
 import { Component, signal } from '@angular/core';
-import { injectRootFormKey, vestForms } from 'ngx-vest-forms';
+import { injectRootFormKey, ngxVestForms } from 'ngx-vest-forms';
 import { PhoneNumbersComponent } from '../ui/phone-numbers/phone-numbers.component';
 import { createPhoneNumbersValidationSuite } from './phone-numbers-form.validations';
 
 @Component({
-  selector: 'sc-phone-numbers-form',
+  selector: 'ngx-phone-numbers-form',
   standalone: true,
-  imports: [vestForms, PhoneNumbersComponent],
+  imports: [ngxVestForms, PhoneNumbersComponent],
   templateUrl: './phone-numbers-form.component.html',
 })
 export class PhoneNumbersFormComponent {
@@ -19,7 +19,7 @@ export class PhoneNumbersFormComponent {
   );
 
   // Provide a reactive signal for initial form values.
-  // Use an empty object for phoneNumbers to match the expected type for sc-phone-numbers.
+  // Use an empty object for phoneNumbers to match the expected type for ngx-phone-numbers.
   protected readonly initialValue = signal({ phoneNumbers: {} });
 
   // Called on form submit. The form directive handles validation and error display.

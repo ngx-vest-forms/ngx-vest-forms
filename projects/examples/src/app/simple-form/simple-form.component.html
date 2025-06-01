@@ -2,14 +2,14 @@
 <!-- Demonstrates a single required field with Vest validation and accessible error display -->
 <h2 class="mb-4 text-2xl font-bold">Simple Form Example</h2>
 <form
-  scVestForm
+  ngxVestForm
   [vestSuite]="suite"
   [(formValue)]="formValue"
   (ngSubmit)="save()"
   autocomplete="off"
 >
   <!-- Example: errorDisplayMode usage (on-blur-or-submit is default, but can be set explicitly) -->
-  <div scControlWrapper errorDisplayMode="on-blur-or-submit">
+  <div ngxControlWrapper errorDisplayMode="on-blur-or-submit">
     <label for="email" class="mb-1 block font-medium">Email</label>
     <input
       id="email"
@@ -23,7 +23,7 @@
   </div>
 
   <!-- Example: errorDisplayMode with updateOn: 'submit' (errors only show after submit) -->
-  <div scControlWrapper errorDisplayMode="on-blur-or-submit">
+  <div ngxControlWrapper errorDisplayMode="on-blur-or-submit">
     <label for="email2" class="mb-1 block font-medium"
       >Email (updateOn: submit)</label
     >

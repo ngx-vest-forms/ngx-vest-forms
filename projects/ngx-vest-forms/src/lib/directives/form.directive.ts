@@ -87,9 +87,9 @@ export type FormState<TModel> = {
 };
 
 @Directive({
-  selector: 'form[scVestForm]',
+  selector: 'form[ngxVestForm]',
   hostDirectives: [ValidateRootFormDirective],
-  exportAs: 'scVestForm',
+  exportAs: 'ngxVestForm',
 })
 export class FormDirective<
   TSchema extends SchemaDefinition | null = null,

@@ -1,6 +1,6 @@
 import { JsonPipe } from '@angular/common';
 import { Component, signal } from '@angular/core';
-import { vestForms } from 'ngx-vest-forms';
+import { ngxVestForms } from 'ngx-vest-forms';
 import { z } from 'zod';
 import { BusinessHoursComponent } from '../ui/business-hours/business-hours.component';
 
@@ -17,8 +17,8 @@ const businessHoursZodSchema = z.object({
 type BusinessHoursZodType = z.infer<typeof businessHoursZodSchema>;
 
 @Component({
-  selector: 'sc-business-hours-form-zod',
-  imports: [JsonPipe, vestForms, BusinessHoursComponent],
+  selector: 'ngx-business-hours-form-zod',
+  imports: [JsonPipe, ngxVestForms, BusinessHoursComponent],
   styleUrl: './business-hours-form.component.scss',
   template: `
     <div
@@ -55,14 +55,14 @@ type BusinessHoursZodType = z.infer<typeof businessHoursZodSchema>;
 
     <form
       class="mt-8"
-      scVestForm
+      ngxVestForm
       [formValue]="formValue()"
       [formSchema]="businessHoursZodSchema"
     >
       <fieldset>
-        <sc-business-hours
+        <ngx-business-hours
           [businessHoursModel]="formValue().businessHours"
-        ></sc-business-hours>
+        ></ngx-business-hours>
       </fieldset>
     </form>
     <br />

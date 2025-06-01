@@ -6,7 +6,11 @@ import {
   output,
 } from '@angular/core';
 import { NgModelGroup } from '@angular/forms';
-import { DeepPartial, vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
+import {
+  DeepPartial,
+  ngxVestForms,
+  ngxVestFormsViewProviders,
+} from 'ngx-vest-forms';
 import {
   BusinessHoursData,
   PartialBusinessHour,
@@ -14,11 +18,11 @@ import {
 import { BusinessHourComponent } from '../business-hour/business-hour.component';
 
 @Component({
-  selector: 'sc-business-hours',
-  imports: [vestForms, KeyValuePipe, BusinessHourComponent],
+  selector: 'ngx-business-hours',
+  imports: [ngxVestForms, KeyValuePipe, BusinessHourComponent],
   templateUrl: './business-hours.component.html',
   styleUrls: ['./business-hours.component.scss'],
-  viewProviders: [vestFormsViewProviders],
+  viewProviders: [ngxVestFormsViewProviders],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BusinessHoursComponent {

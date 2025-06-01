@@ -1,11 +1,11 @@
-<div ngModelGroup="businessHours" scControlWrapper>
-  <div ngModelGroup="values" scControlWrapper>
+<div ngModelGroup="businessHours" ngxControlWrapper>
+  <div ngModelGroup="values" ngxControlWrapper>
     @for (item of businessHoursModel().values | keyvalue; track item.key) {
-      <div scControlWrapper [ngModelGroup]="item.key">
+      <div ngxControlWrapper [ngModelGroup]="item.key">
         <div class="flex items-start">
-          <sc-business-hour
+          <ngx-business-hour
             [businessHour]="item.value ?? {}"
-          ></sc-business-hour>
+          ></ngx-business-hour>
           <button
             class="ml-4 mt-1.5"
             type="button"
@@ -18,11 +18,11 @@
     }
   </div>
   <hr class="mb-4 mt-4" />
-  <div scControlWrapper ngModelGroup="addValue" #group="ngModelGroup">
+  <div ngxControlWrapper ngModelGroup="addValue" #group="ngModelGroup">
     <div class="flex items-start">
-      <sc-business-hour
+      <ngx-business-hour
         [businessHour]="businessHoursModel().addValue ?? {}"
-      ></sc-business-hour>
+      ></ngx-business-hour>
       <button
         class="ml-4 mt-1.5"
         type="button"

@@ -2,16 +2,16 @@ import { KeyValuePipe } from '@angular/common';
 import { Component, model } from '@angular/core';
 import {
   arrayToObject,
-  vestForms,
-  vestFormsViewProviders,
+  ngxVestForms,
+  ngxVestFormsViewProviders,
 } from 'ngx-vest-forms';
 
 @Component({
-  selector: 'sc-phone-numbers',
-  imports: [vestForms, KeyValuePipe],
+  selector: 'ngx-phone-numbers',
+  imports: [ngxVestForms, KeyValuePipe],
   templateUrl: './phone-numbers.component.html',
   styleUrls: ['./phone-numbers.component.scss'],
-  viewProviders: [vestFormsViewProviders],
+  viewProviders: [ngxVestFormsViewProviders],
 })
 export class PhoneNumbersComponent {
   // Signal for the phone numbers array, enables idiomatic two-way binding with [(values)]

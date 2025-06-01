@@ -1,11 +1,11 @@
 import { Component, signal } from '@angular/core';
-import { vestForms } from 'ngx-vest-forms';
+import { ngxVestForms } from 'ngx-vest-forms';
 import { createSimpleFormValidationSuite } from './simple-form.validations';
 
 @Component({
-  selector: 'sc-simple-form',
+  selector: 'ngx-simple-form',
   standalone: true,
-  imports: [vestForms],
+  imports: [ngxVestForms],
   templateUrl: './simple-form.component.html',
   styleUrl: './simple-form.component.scss',
 })

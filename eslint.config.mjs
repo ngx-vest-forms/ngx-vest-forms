@@ -22,7 +22,7 @@ export default defineConfig([
         'error',
         {
           type: 'attribute',
-          prefix: 'sc',
+          prefix: 'ngx',
           style: 'camelCase',
         },
       ],
@@ -30,7 +30,7 @@ export default defineConfig([
         'error',
         {
           type: 'element',
-          prefix: 'sc',
+          prefix: 'ngx',
           style: 'kebab-case',
         },
       ],

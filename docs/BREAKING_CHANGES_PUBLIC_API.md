@@ -106,7 +106,7 @@ This document lists all **public API breaking changes** in recent versions of `n
 - **Before:**
   ```html
   <form
-    scVestForm
+    ngxVestForm
     [formValue]="formValue()"
     (formValueChange)="formValue.set($event)"
   >
@@ -115,11 +115,11 @@ This document lists all **public API breaking changes** in recent versions of `n
   ```
 - **After:**
   ```html
-  <form scVestForm [(formValue)]="formValue">...</form>
+  <form ngxVestForm [(formValue)]="formValue">...</form>
   ```
 - If you use a signal store (e.g., NgRx SignalStore):
   ```html
-  <form scVestForm [(formValue)]="store.formValue">...</form>
+  <form ngxVestForm [(formValue)]="store.formValue">...</form>
   ```
 - No need to manually handle value change events or update your signal/store in the template.
 
@@ -221,7 +221,7 @@ const errors = vestForm.formState().errors;
   Or, for a single control wrapper instance:
 
   ```html
-  <div scControlWrapper errorDisplayMode="on-blur">
+  <div ngxControlWrapper errorDisplayMode="on-blur">
     <input ... />
   </div>
   ```
@@ -238,7 +238,7 @@ const errors = vestForm.formState().errors;
 
 ### What changed?
 
-- The default value for the `[validateRootForm]` input on the `scVestForm` directive is now `true`.
+- The default value for the `[validateRootForm]` input on the `ngxVestForm` directive is now `true`.
 
 ### Why?
 
@@ -273,9 +273,9 @@ const errors = vestForm.formState().errors;
 
 #### Comparison Table
 
-| Old Pattern (Deprecated)                        | New Pattern (Recommended)                                               |
-| ----------------------------------------------- | ----------------------------------------------------------------------- |
-| `<form scVestForm [formShape]="modelTemplate">` | `<form scVestForm [formSchema]="modelToStandardSchema(modelTemplate)">` |
+| Old Pattern (Deprecated)                         | New Pattern (Recommended)                                                |
+| ------------------------------------------------ | ------------------------------------------------------------------------ |
+| `<form ngxVestForm [formShape]="modelTemplate">` | `<form ngxVestForm [formSchema]="modelToStandardSchema(modelTemplate)">` |
 
 ---
 
@@ -315,7 +315,7 @@ const errors = vestForm.formState().errors;
 
 ### What changed?
 
-- The `[formValue]` and `[formSchema]` inputs for the `scVestForm` directive are now explicitly documented as **optional**.
+- The `[formValue]` and `[formSchema]` inputs for the `ngxVestForm` directive are now explicitly documented as **optional**.
 
 ### Why?
 
@@ -375,8 +375,8 @@ const errors = vestForm.formState().errors;
 
 ### What changed?
 
-- The attribute selector for the control wrapper component has changed from `[sc-control-wrapper]` to `[scControlWrapper]`.
-- An element selector `sc-control-wrapper` has been added.
+- The attribute selector for the control wrapper component has changed from `[ngx-control-wrapper]` to `[ngxControlWrapper]`.
+- An element selector `ngx-control-wrapper` has been added.
 
 ### Why?
 
@@ -385,8 +385,8 @@ const errors = vestForm.formState().errors;
 
 ### Migration
 
-- Update your templates to use the new camelCase version: `[scControlWrapper]`.
-- You can now optionally use the element selector `<sc-control-wrapper>` instead of the attribute selector on a `div` or other container element.
+- Update your templates to use the new camelCase version: `[ngxControlWrapper]`.
+- You can now optionally use the element selector `<ngx-control-wrapper>` instead of the attribute selector on a `div` or other container element.
 
 ---
 
@@ -580,7 +580,7 @@ export class NewCustomField {
 
 ### What changed?
 
-- The `sc-control-wrapper` component now supports a configurable error display mode, allowing you to control when errors are shown (on blur, on submit, or both).
+- The `ngx-control-wrapper` component now supports a configurable error display mode, allowing you to control when errors are shown (on blur, on submit, or both).
 - You can set the default globally using the `CONTROL_WRAPPER_ERROR_DISPLAY` injection token, or override per instance using the `errorDisplayMode` input.
 
 ### Why?
@@ -616,11 +616,11 @@ export class NewCustomField {
 
 - The new `FormControlStateDirective` (`scFormControlState`) is now available as a standalone directive.
 - This directive provides a reactive signal (`controlState`) with the current state of the nearest `NgModel` or `NgModelGroup`.
-- It is used internally by `scControlWrapper`, but you can apply it directly to build your own custom form field wrappers or advanced UI.
+- It is used internally by `ngxControlWrapper`, but you can apply it directly to build your own custom form field wrappers or advanced UI.
 
 ### Why?
 
-- Enables advanced use cases and custom form field implementations without relying on the default `scControlWrapper`.
+- Enables advanced use cases and custom form field implementations without relying on the default `ngxControlWrapper`.
 - Provides a clean, idiomatic Angular API for accessing control state (valid, errors, pending, etc.) as a signal.
 
 ### How to use
@@ -719,7 +719,7 @@ export class CustomFieldComponent {
 This approach gives you total flexibility to:
 
 - Create custom form field UIs that match your design system
-- Implement specialized validation behaviors not provided by the default `scControlWrapper`
+- Implement specialized validation behaviors not provided by the default `ngxControlWrapper`
 - Add animations, tooltips, or other UI features to your form fields
 - Create field types specialized for different data types (date pickers, number inputs, etc.)
 

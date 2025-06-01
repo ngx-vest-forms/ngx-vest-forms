@@ -90,7 +90,7 @@ Creates a StandardSchemaV1-compatible schema from a simple object template. This
 ```typescript
 import { modelToStandardSchema } from 'ngx-vest-forms';
 import { Component, signal } from '@angular/core';
-import { vestForms } from 'ngx-vest-forms';
+import { ngxVestForms } from 'ngx-vest-forms';
 
 // Define a template with the desired structure
 const userTemplate = {
@@ -105,9 +105,9 @@ const userSchema = modelToStandardSchema(userTemplate);
 // Use with a form
 @Component({
   selector: 'app-user-form',
-  imports: [vestForms],
+  imports: [ngxVestForms],
   template: `
-    <form scVestForm [formSchema]="userSchema" [(formValue)]="userData">
+    <form ngxVestForm [formSchema]="userSchema" [(formValue)]="userData">
       <input name="name" ngModel />
       <input name="email" type="email" ngModel />
       <input name="age" type="number" ngModel />
@@ -188,7 +188,7 @@ Zod is a TypeScript-first schema validation library that integrates seamlessly w
 
 ```typescript
 import { Component, signal } from '@angular/core';
-import { vestForms } from 'ngx-vest-forms';
+import { ngxVestForms } from 'ngx-vest-forms';
 import { z } from 'zod';
 import { create, test, enforce } from 'vest';
 
@@ -230,10 +230,10 @@ const userValidation = create((data: UserZodType = {}) => {
 // Use in component
 @Component({
   selector: 'app-user-form-zod',
-  imports: [vestForms],
+  imports: [ngxVestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [formSchema]="userZodSchema"
       [vestSuite]="userValidation"
       [(formValue)]="formValue"
@@ -272,7 +272,7 @@ Valibot is a modular and type-safe schema library:
 
 ```typescript
 import { Component, signal } from '@angular/core';
-import { vestForms } from 'ngx-vest-forms';
+import { ngxVestForms } from 'ngx-vest-forms';
 import * as v from 'valibot';
 import { create, test, enforce } from 'vest';
 
@@ -312,10 +312,10 @@ const userValidation = create((data: UserValibotType = {}) => {
 // Use in component
 @Component({
   selector: 'app-user-form-valibot',
-  imports: [vestForms],
+  imports: [ngxVestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [formSchema]="userValibotSchema"
       [vestSuite]="userValidation"
       [(formValue)]="formValue"
@@ -359,7 +359,7 @@ ArkType provides highly optimized runtime validation:
 
 ```typescript
 import { Component, signal } from '@angular/core';
-import { vestForms } from 'ngx-vest-forms';
+import { ngxVestForms } from 'ngx-vest-forms';
 import { type } from 'arktype';
 import { create, test, enforce } from 'vest';
 
@@ -399,10 +399,10 @@ const userValidation = create((data: UserArkTypeType = {}) => {
 // Use in component
 @Component({
   selector: 'app-user-form-arktype',
-  imports: [vestForms],
+  imports: [ngxVestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [formSchema]="userArkTypeSchema"
       [vestSuite]="userValidation"
       [(formValue)]="formValue"
@@ -446,7 +446,7 @@ When working with complex nested structures, schema adapters help maintain type 
 
 ```typescript
 import { Component, signal } from '@angular/core';
-import { vestForms } from 'ngx-vest-forms';
+import { ngxVestForms } from 'ngx-vest-forms';
 import { z } from 'zod';
 import { create, test, enforce, group } from 'vest';
 
@@ -500,10 +500,10 @@ const businessHoursValidation = create((data: BusinessHoursZodType = {}) => {
 
 @Component({
   selector: 'app-business-hours-form',
-  imports: [vestForms],
+  imports: [ngxVestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [formSchema]="businessHoursZodSchema"
       [vestSuite]="businessHoursValidation"
       [(formValue)]="formValue"
@@ -555,20 +555,20 @@ The `formState()` signal provided by ngx-vest-forms is fully type-safe when used
 ```typescript
 import { Component, viewChild, signal } from '@angular/core';
 import {
-  vestForms,
+  ngxVestForms,
   FormDirective,
   modelToStandardSchema,
 } from 'ngx-vest-forms';
 
 @Component({
   selector: 'app-user-form',
-  imports: [vestForms],
+  imports: [ngxVestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [formSchema]="userSchema"
       [(formValue)]="userData"
-      #userForm="scVestForm"
+      #userForm="ngxVestForm"
     >
       <!-- Access values via formState().value -->
       <div>
@@ -638,7 +638,7 @@ When using Zod or other schema libraries, formState().value maintains proper typ
 
 ```typescript
 import { Component, viewChild, signal } from '@angular/core';
-import { vestForms, FormDirective } from 'ngx-vest-forms';
+import { ngxVestForms, FormDirective } from 'ngx-vest-forms';
 import { z } from 'zod';
 
 // Define Zod schema
@@ -652,13 +652,13 @@ type User = z.infer<typeof userSchema>;
 
 @Component({
   selector: 'app-user-form',
-  imports: [vestForms],
+  imports: [ngxVestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [formSchema]="userSchema"
       [(formValue)]="userData"
-      #userForm="scVestForm"
+      #userForm="ngxVestForm"
     >
       <!-- Form fields using formState().value -->
       <input name="name" [ngModel]="userForm.formState().value?.name" />
@@ -703,7 +703,7 @@ While schema libraries like Zod provide validation rules, Vest excels at busines
 
 ```typescript
 import { Component, signal } from '@angular/core';
-import { vestForms } from 'ngx-vest-forms';
+import { ngxVestForms } from 'ngx-vest-forms';
 import { z } from 'zod';
 import { staticSuite, test, enforce, only } from 'vest';
 
@@ -737,10 +737,10 @@ const userValidation = staticSuite(
 // Use both in your component:
 @Component({
   selector: 'app-user-form',
-  imports: [vestForms],
+  imports: [ngxVestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [formSchema]="userSchema"
       [vestSuite]="userValidation"
       [(formValue)]="userData"
@@ -819,9 +819,13 @@ If you're migrating from basic forms to schema adapters, here's a step-by-step a
 
    ```html
    <!-- Before -->
-   <form scVestForm [(formValue)]="userData">
+   <form ngxVestForm [(formValue)]="userData">
      <!-- After -->
-     <form scVestForm [formSchema]="userSchema" [(formValue)]="userData"></form>
+     <form
+       ngxVestForm
+       [formSchema]="userSchema"
+       [(formValue)]="userData"
+     ></form>
    </form>
    ```
 

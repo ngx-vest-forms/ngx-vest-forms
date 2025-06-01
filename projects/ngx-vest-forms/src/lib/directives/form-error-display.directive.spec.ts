@@ -38,7 +38,7 @@ describe('FormErrorDisplayDirective', () => {
       imports: [FormsModule, FormErrorDisplayDirective],
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [vestSuite]="suite"
           [formValue]="formValue"
           (formValueChange)="formValue = $event"
@@ -79,7 +79,7 @@ describe('FormErrorDisplayDirective', () => {
       imports: [FormsModule, FormErrorDisplayDirective],
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [vestSuite]="suite"
           [formValue]="formValue"
           (formValueChange)="formValue = $event"
@@ -120,7 +120,7 @@ describe('FormErrorDisplayDirective', () => {
       imports: [FormsModule, FormErrorDisplayDirective],
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [vestSuite]="suite"
           [formValue]="formValue"
           (formValueChange)="formValue = $event"
@@ -171,7 +171,7 @@ describe('FormErrorDisplayDirective', () => {
       imports: [FormsModule, FormErrorDisplayDirective],
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [vestSuite]="suite"
           [formValue]="formValue"
           (formValueChange)="formValue = $event"
@@ -217,7 +217,7 @@ describe('FormErrorDisplayDirective', () => {
       imports: [FormsModule, FormErrorDisplayDirective],
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [vestSuite]="suite"
           [formValue]="formValue"
           (formValueChange)="formValue = $event"
@@ -249,7 +249,7 @@ describe('FormErrorDisplayDirective', () => {
       imports: [FormsModule, FormErrorDisplayDirective],
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [vestSuite]="suite"
           [formValue]="formValue"
           (formValueChange)="formValue = $event"
@@ -280,7 +280,7 @@ describe('FormErrorDisplayDirective', () => {
       imports: [FormsModule, FormErrorDisplayDirective],
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [vestSuite]="suite"
           [formValue]="formValue"
           (formValueChange)="formValue = $event"
@@ -342,7 +342,7 @@ describe('FormErrorDisplayDirective', () => {
       imports: [FormsModule, FormErrorDisplayDirective],
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [vestSuite]="suite"
           [formValue]="formValue"
           (formValueChange)="formValue = $event"
@@ -391,7 +391,7 @@ describe('FormErrorDisplayDirective', () => {
       imports: [FormsModule, FormErrorDisplayDirective],
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [vestSuite]="suite"
           [formValue]="formValue"
           (formValueChange)="formValue = $event"
@@ -432,7 +432,7 @@ describe('FormErrorDisplayDirective', () => {
       imports: [FormsModule, FormErrorDisplayDirective],
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [vestSuite]="suite"
           [formValue]="formValue"
           (formValueChange)="formValue = $event"
@@ -475,7 +475,7 @@ describe('FormErrorDisplayDirective', () => {
       imports: [FormsModule, FormErrorDisplayDirective],
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [vestSuite]="suite"
           [formValue]="formValue"
           (formValueChange)="formValue = $event"

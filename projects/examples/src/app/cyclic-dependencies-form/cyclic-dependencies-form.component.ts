@@ -1,12 +1,12 @@
 import { JsonPipe } from '@angular/common';
 import { Component, signal } from '@angular/core';
-import { VestSuite, vestForms } from 'ngx-vest-forms';
+import { VestSuite, ngxVestForms } from 'ngx-vest-forms';
 import { CyclicFormModel } from './cyclic-dependencies-form.model';
 import { createCyclicDependencyFormValidationSuite } from './cyclic.validations';
 
 @Component({
-  selector: 'sc-cyclic-dependencies-form',
-  imports: [vestForms, JsonPipe],
+  selector: 'ngx-cyclic-dependencies-form',
+  imports: [ngxVestForms, JsonPipe],
   templateUrl: './cyclic-dependencies-form.component.html',
   styles: `
     :host {

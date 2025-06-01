@@ -14,7 +14,7 @@ This document lists **internal breaking changes and improvements** to `ngx-vest-
 - **Path Utilities Implementation:** Enhanced field path utilities for robust, type-safe nested form value access.
 - **Configuration System Overhaul:** Improved error display mode configuration with global and per-instance settings via injection tokens.
 - **Modern Angular Migration:** Full adoption of Angular 16+ standalone components, signals, and new control flow syntax.
-- **FormControlStateDirective Implementation:** Added standalone directive for signal-based control state tracking used internally by `scControlWrapper`.
+- **FormControlStateDirective Implementation:** Added standalone directive for signal-based control state tracking used internally by `ngxControlWrapper`.
 - **UpdateOn-Aware Error Display:** FormErrorDisplayDirective now respects ngModelOptions.updateOn values for better validation timing.
 - **Schema Template Extraction:** Completed `extractTemplateFromSchema` function for runtime schema validation and mismatch detection.
 

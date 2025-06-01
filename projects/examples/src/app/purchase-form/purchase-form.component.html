@@ -81,13 +81,13 @@
   ngx-vest-forms Example: Purchase Form
 
   Using the recommended two-way binding with Angular's model() API.
-  <form scVestForm [(formValue)]="formValue"> ... </form>
+  <form ngxVestForm [(formValue)]="formValue"> ... </form>
 -->
 
 <form
   class="mt-8"
-  scVestForm
-  #vestForm="scVestForm"
+  ngxVestForm
+  #vestForm="ngxVestForm"
   (ngSubmit)="onSubmit()"
   [formSchema]="purchaseFormSchema"
   [(formValue)]="purchaseFormModel"
@@ -126,7 +126,7 @@
       </div>
     }
 
-    <div class="sm:col-span-2" scControlWrapper>
+    <div class="sm:col-span-2" ngxControlWrapper>
       <label>
         <span>User id</span>
         <input
@@ -138,7 +138,7 @@
         />
       </label>
     </div>
-    <div class="w-full" scControlWrapper #firstNameWrapper>
+    <div class="w-full" ngxControlWrapper #firstNameWrapper>
       <label>
         <span>First name</span>
         <input
@@ -163,7 +163,7 @@
         {{ firstNameControl.errors | json }}
       </div>
     </div>
-    <div class="w-full" scControlWrapper>
+    <div class="w-full" ngxControlWrapper>
       <label>
         <span>Last name</span>
         <input
@@ -174,7 +174,7 @@
         />
       </label>
     </div>
-    <div class="w-full" scControlWrapper>
+    <div class="w-full" ngxControlWrapper>
       <label>
         <span>Age</span>
         <input
@@ -185,7 +185,7 @@
         />
       </label>
     </div>
-    <div class="w-full" scControlWrapper>
+    <div class="w-full" ngxControlWrapper>
       <label>
         <span>Emergency contact</span>
         <input
@@ -197,13 +197,13 @@
         />
       </label>
     </div>
-    <div class="sm:col-span-2" scControlWrapper ngModelGroup="phoneNumbers">
-      <sc-phone-numbers [values]="vm.formValue().phoneNumbers.values" />
+    <div class="sm:col-span-2" ngxControlWrapper ngModelGroup="phoneNumbers">
+      <ngx-phone-numbers [values]="vm.formValue().phoneNumbers.values" />
     </div>
     <div
       class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800 sm:col-span-2"
     >
-      <div class="" scControlWrapper>
+      <div class="" ngxControlWrapper>
         <span>Gender</span>
         <div class="flex">
           <div class="radio-button mr-4">
@@ -239,7 +239,7 @@
         </div>
       </div>
       @if (vm.showGenderOther) {
-        <div class="sm:col-span-2" scControlWrapper>
+        <div class="sm:col-span-2" ngxControlWrapper>
           <label>
             <span>Specify gender</span>
             <input
@@ -252,9 +252,9 @@
       }
     </div>
 
-    <div class="sm:col-span-2" scControlWrapper ngModelGroup="passwords">
+    <div class="sm:col-span-2" ngxControlWrapper ngModelGroup="passwords">
       <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
-        <div class="w-full" scControlWrapper>
+        <div class="w-full" ngxControlWrapper>
           <label>
             <span>Password</span>
             <input
@@ -272,7 +272,7 @@
             <div>Dirty: {{ passwordControl.dirty }}</div>
           </div>
         </div>
-        <div class="w-full" scControlWrapper>
+        <div class="w-full" ngxControlWrapper>
           <label>
             <span>Confirm</span>
             <input
@@ -292,7 +292,7 @@
         </div>
       </div>
     </div>
-    <div class="sm:col-span-2" scControlWrapper>
+    <div class="sm:col-span-2" ngxControlWrapper>
       <label>
         <span>Product</span>
         <select name="productId" [ngModel]="vm.formValue().productId">
@@ -302,14 +302,14 @@
         </select>
       </label>
     </div>
-    <div class="sm:col-span-2" scControlWrapper ngModelGroup="addresses">
-      <div scControlWrapper ngModelGroup="billingAddress">
+    <div class="sm:col-span-2" ngxControlWrapper ngModelGroup="addresses">
+      <div ngxControlWrapper ngModelGroup="billingAddress">
         <h3 class="text-2xl">Billing address</h3>
-        <sc-address
+        <ngx-address
           [address]="vm.formValue().addresses.billingAddress"
-        ></sc-address>
+        ></ngx-address>
       </div>
-      <label scControlWrapper>
+      <label ngxControlWrapper>
         <span>Shipping address is different from billing address</span>
         <input
           type="checkbox"
@@ -320,9 +320,9 @@
         />
       </label>
       @if (vm.showShippingAddress) {
-        <div scControlWrapper ngModelGroup="shippingAddress">
+        <div ngxControlWrapper ngModelGroup="shippingAddress">
           <h3 class="text-2xl">Shipping Address</h3>
-          <sc-address [address]="vm.shippingAddress"></sc-address>
+          <ngx-address [address]="vm.shippingAddress"></ngx-address>
         </div>
       }
     </div>
@@ -443,7 +443,7 @@
     </div>
 
     <!-- Example: errorDisplayMode usage (explicitly set to on-submit) -->
-    <div scControlWrapper errorDisplayMode="on-submit">
+    <div ngxControlWrapper errorDisplayMode="on-submit">
       <label for="userId" class="mb-1 block font-medium"
         >User ID (on-submit)</label
       >
@@ -461,7 +461,7 @@
       -->
     </div>
     <!-- Example: errorDisplayMode with updateOn: 'submit' (errors only show after submit) -->
-    <div scControlWrapper errorDisplayMode="on-blur-or-submit">
+    <div ngxControlWrapper errorDisplayMode="on-blur-or-submit">
       <label for="email3" class="mb-1 block font-medium"
         >Email (updateOn: submit)</label
       >

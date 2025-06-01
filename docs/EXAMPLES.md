@@ -37,7 +37,7 @@ A curated set of examples demonstrating best practices and advanced features of 
 **Location:** `src/app/simple-form/`
 
 - Shows a basic form group with two fields (`firstName`, `lastName`).
-- Demonstrates minimal setup with `scVestForm`, `[vestSuite]`, and `[formSchema]`.
+- Demonstrates minimal setup with `ngxVestForm`, `[vestSuite]`, and `[formSchema]`.
 - Uses the new `formState` API for value and error access.
 - **Recommended for:** New users, onboarding, and as a starting template.
 
@@ -47,9 +47,9 @@ A curated set of examples demonstrating best practices and advanced features of 
 
 **Location:** `src/app/phone-numbers-form/`
 
-- Demonstrates a minimal form array pattern using a custom component (`sc-phone-numbers`).
+- Demonstrates a minimal form array pattern using a custom component (`ngx-phone-numbers`).
 - Uses signals and two-way binding for array values.
-- Error display is handled by `scControlWrapper`.
+- Error display is handled by `ngxControlWrapper`.
 - **Recommended for:** Learning dynamic arrays and signal-based patterns.
 
 ---

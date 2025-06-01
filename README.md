@@ -11,7 +11,7 @@
 - **Form-Compatible Types:** Built-in utility types like `FormCompatibleDeepRequired<T>` solve Date/string mismatches in form initialization.
 - **Signals & Reactivity:** All form state (value, errors, validity, pending, etc.) is exposed as signals for easy, reactive UI updates.
 - **Powerful Validations:** Use Vest.js for declarative, composable, and async validation logic.
-- **Accessible by Default:** Built-in error display, ARIA roles, and keyboard support via `<sc-control-wrapper>`.
+- **Accessible by Default:** Built-in error display, ARIA roles, and keyboard support via `<ngx-control-wrapper>`.
 - **Modern Angular:** Designed for Angular 17+ standalone components, signals, and new control flow (`@if`, `@for`).
 
 ---
@@ -51,25 +51,25 @@ const userSuite = staticSuite((data = {}, field?: string) => {
 
 ```typescript
 import { Component } from '@angular/core';
-import { vestForms } from 'ngx-vest-forms';
+import { ngxVestForms } from 'ngx-vest-forms';
 
 @Component({
   standalone: true,
-  imports: [vestForms],
+  imports: [ngxVestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [vestSuite]="suite"
       [(formValue)]="model"
       [formSchema]="schema"
-      #vestForm="scVestForm"
+      #vestForm="ngxVestForm"
     >
-      <sc-control-wrapper>
+      <ngx-control-wrapper>
         <label>Name: <input name="name" [(ngModel)]="model().name" /></label>
-      </sc-control-wrapper>
-      <sc-control-wrapper>
+      </ngx-control-wrapper>
+      <ngx-control-wrapper>
         <label>Email: <input name="email" [(ngModel)]="model().email" /></label>
-      </sc-control-wrapper>
+      </ngx-control-wrapper>
       <button
         type="submit"
         [disabled]="
@@ -92,7 +92,7 @@ export class UserFormComponent {
 
 ## Best Practices (v2+)
 
-- **Always use `<sc-control-wrapper>` or `[scControlWrapper]`** for every input or group. This handles error display, accessibility, and pending state automatically.
+- **Always use `<ngx-control-wrapper>` or `[ngxControlWrapper]`** for every input or group. This handles error display, accessibility, and pending state automatically.
 - **Error display modes are now: 'on-blur', 'on-submit', 'on-blur-or-submit'** (was: 'touch', 'submit', 'touchOrSubmit').
 - **Error display logic is now aware of the control's `ngModelOptions.updateOn` value** for correct timing. If `updateOn: 'submit'`, errors only show after submit, regardless of display mode.
 - **Warning:** If you set `errorDisplayMode` to `'on-blur'` or `'on-blur-or-submit'` but use `ngModelOptions.updateOn: 'submit'`, errors will only show after submit. A warning is logged in development mode to help you catch this configuration issue.
@@ -113,7 +113,7 @@ export class UserFormComponent {
 
 ```typescript
 import { Component, signal } from '@angular/core';
-import { vestForms, modelToStandardSchema } from 'ngx-vest-forms';
+import { ngxVestForms, modelToStandardSchema } from 'ngx-vest-forms';
 import { staticSuite, test, enforce } from 'vest';
 
 const purchaseTemplate = {
@@ -131,26 +131,26 @@ const purchaseSuite = staticSuite((data = {}, field?: string) => {
 
 @Component({
   standalone: true,
-  imports: [vestForms],
+  imports: [ngxVestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [vestSuite]="suite"
       [(formValue)]="model"
       [formSchema]="schema"
-      #vestForm="scVestForm"
+      #vestForm="ngxVestForm"
     >
-      <sc-control-wrapper>
+      <ngx-control-wrapper>
         <label
           >Amount: <input name="amount" [(ngModel)]="model().amount"
         /></label>
-      </sc-control-wrapper>
-      <sc-control-wrapper>
+      </ngx-control-wrapper>
+      <ngx-control-wrapper>
         <label
           >Description:
           <input name="description" [(ngModel)]="model().description"
         /></label>
-      </sc-control-wrapper>
+      </ngx-control-wrapper>
       <button
         type="submit"
         [disabled]="
@@ -218,7 +218,7 @@ For internal (library developer) breaking changes and architectural notes, see [
 ```typescript
 import { modelToStandardSchema } from 'ngx-vest-forms';
 import { Component, signal } from '@angular/core';
-import { vestForms } from 'ngx-vest-forms';
+import { ngxVestForms } from 'ngx-vest-forms';
 
 // Simple object template approach
 const userTemplate = {
@@ -231,13 +231,13 @@ const userSchema = modelToStandardSchema(userTemplate);
 
 @Component({
   standalone: true,
-  imports: [vestForms],
+  imports: [ngxVestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [formSchema]="userSchema"
       [(formValue)]="userData"
-      #userForm="scVestForm"
+      #userForm="ngxVestForm"
     >
       <!-- Access values via formState().value -->
       <input name="name" [ngModel]="userForm.formState().value?.name" />
@@ -307,7 +307,7 @@ Starting with v2+, `ngx-vest-forms` supports two-way binding for form values usi
 
 ```html
 <form
-  scVestForm
+  ngxVestForm
   [formValue]="formValue()"
   (formValueChange)="formValue.set($event)"
 >
@@ -318,13 +318,13 @@ Starting with v2+, `ngx-vest-forms` supports two-way binding for form values usi
 **After (Recommended):**
 
 ```html
-<form scVestForm [(formValue)]="formValue">...</form>
+<form ngxVestForm [(formValue)]="formValue">...</form>
 ```
 
 If you use a signal store (e.g., NgRx SignalStore), you can bind the store's signal directly:
 
 ```html
-<form scVestForm [(formValue)]="store.formValue">...</form>
+<form ngxVestForm [(formValue)]="store.formValue">...</form>
 ```
 
 **Migration steps:**
@@ -356,7 +356,7 @@ Suppose you want a form with a form group called `generalInfo` that has 2 proper
 - `firstName`
 - `lastName`
 
-Import the `vestForms` const in the imports section of the `@Component` decorator. Apply the `scVestForm` directive to the `form` tag, and provide the Vest validation suite using the `[vestSuite]` input.
+Import the `ngxVestForms` const in the imports section of the `@Component` decorator. Apply the `ngxVestForm` directive to the `form` tag, and provide the Vest validation suite using the `[vestSuite]` input.
 
 Optionally, you can provide an initial value using `[formValue]` and a schema for type-safety using `[formSchema]`.
 
@@ -364,7 +364,7 @@ In the form, create a form group for `generalInfo` with the `ngModelGroup` direc
 
 ````typescript
 import {
-  vestForms,
+  ngxVestForms,
   DeepPartial,
   VestSuite,
   FormDirective,
@@ -564,11 +564,11 @@ const mySuite = staticSuite((model = {}) => {
 
 @Component({
   selector: 'app-my-component',
-  imports: [vestForms],
+  imports: [ngxVestForms],
   template: `
     <form
-      scVestForm
-      #vestForm="scVestForm"
+      ngxVestForm
+      #vestForm="ngxVestForm"
       [vestSuite]="mySuite"
       [formValue]="formValue()"
     >
@@ -627,7 +627,7 @@ export class MyComponent {
 
 **Note:** Template-driven forms are deep partial, so always use the `?` operator in your templates when accessing nested properties.
 
-The `scVestForm` directive manages the form's state and validation based on the `[vestSuite]` and the `ngModel` bindings within the form.
+The `ngxVestForm` directive manages the form's state and validation based on the `[vestSuite]` and the `ngModel` bindings within the form.
 
 #### Why use `formState`?
 
@@ -661,7 +661,7 @@ If you want to keep an external signal, state management store, or parent compon
 
 ```html
 <form
-  scVestForm
+  ngxVestForm
   [formValue]="externalSignal()"
   (formValueChange)="externalSignal.set($event)"
   [formSchema]="modelTemplate"
@@ -682,7 +682,7 @@ If you need to perform side effects (e.g., autosave, analytics, conditional logi
 
 ```html
 <form
-  scVestForm
+  ngxVestForm
   (formValueChange)="onFormValueChanged($event)"
   [formSchema]="modelTemplate"
   [vestSuite]="suite"
@@ -739,7 +739,7 @@ To mitigate this, `ngx-vest-forms` allows you to provide an optional `[formSchem
 
 ```typescript
 import { z } from 'zod'; // Example using Zod
-import { vestForms, DeepPartial } from 'ngx-vest-forms';
+import { ngxVestForms, DeepPartial } from 'ngx-vest-forms';
 
 // Define your form model type
 type MyFormModel = DeepPartial<{
@@ -763,13 +763,13 @@ export const myFormSchema = z.object({
 @Component({
   selector: 'app-my-component',
 
-  imports: [vestForms],
+  imports: [ngxVestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [vestSuite]="suite"
       [formSchema]="schema"
-      #vestForm="scVestForm"
+      #vestForm="ngxVestForm"
     >
       <!-- ... form controls ... -->
     </form>
@@ -993,13 +993,13 @@ This syntax should be self-explanatory and the entire enforcements guidelines ca
 
 > Always use `staticSuite` for form validation suites, unless you have a very specific need for stateless or parallel validation.
 
-Now let's connect this to our form. The primary way to do this is by binding your suite function to the `[vestSuite]` input on the `scVestForm` directive:
+Now let's connect this to our form. The primary way to do this is by binding your suite function to the `[vestSuite]` input on the `ngxVestForm` directive:
 
 ```html
 <form
-  scVestForm
+  ngxVestForm
   [vestSuite]="suite"
-  #vestForm="scVestForm"
+  #vestForm="ngxVestForm"
   (ngSubmit)="onSubmit()"
 >
   <!-- ... form controls ... -->
@@ -1027,7 +1027,7 @@ export class MyComponent {
 
 That's it. Validations are completely wired now. `ngx-vest-forms` handles the connection internally using several directives:
 
-- `scVestForm`: The main directive on the `<form>` tag.
+- `ngxVestForm`: The main directive on the `<form>` tag.
 - `FormModelDirective`: Attaches to elements with `[ngModel]` and `[name]`.
 - `FormModelGroupDirective`: Attaches to elements with `[ngModelGroup]`.
 
@@ -1036,8 +1036,8 @@ These directives automatically implement Angular's `AsyncValidator` interface an
 It goes like this:
 
 - Control gets created, Angular recognizes the `ngModel` and `ngModelGroup` directives.
-- `ngx-vest-forms` directives (`FormModelDirective`, `FormModelGroupDirective`) attach and register themselves with the main `scVestForm` directive.
-- These directives implement `AsyncValidator` and connect to the `[vestSuite]` provided to `scVestForm`.
+- `ngx-vest-forms` directives (`FormModelDirective`, `FormModelGroupDirective`) attach and register themselves with the main `ngxVestForm` directive.
+- These directives implement `AsyncValidator` and connect to the `[vestSuite]` provided to `ngxVestForm`.
 - User types into a control.
 - Angular triggers the `validate` method on the corresponding `ngx-vest-forms` directive.
 - The directive calls the Vest suite, passing the current form model and the specific field being validated (`only(field)`).
@@ -1049,13 +1049,13 @@ This means that standard Angular form properties and signals like `valid`, `inva
 #### Showing validation errors
 
 Now we want to show the validation errors in a consistent way.
-For that we have provided the `sc-control-wrapper` element component and the `[scControlWrapper]` attribute directive.
+For that we have provided the `ngx-control-wrapper` element component and the `[ngxControlWrapper]` attribute directive.
 
 You can use them on:
 
-- elements that hold `ngModelGroup` (use the attribute `[scControlWrapper]`)
-- elements that have an `ngModel` (or form control) inside of them (use the attribute `[scControlWrapper]`)
-- As a standalone element wrapping your control (`<sc-control-wrapper>...</sc-control-wrapper>`)
+- elements that hold `ngModelGroup` (use the attribute `[ngxControlWrapper]`)
+- elements that have an `ngModel` (or form control) inside of them (use the attribute `[ngxControlWrapper]`)
+- As a standalone element wrapping your control (`<ngx-control-wrapper>...</ngx-control-wrapper>`)
 
 This will show errors automatically when:
 
@@ -1066,7 +1066,7 @@ This will show errors automatically when:
 
 #### Building Custom Form Fields with FormControlStateDirective
 
-For advanced use cases where you need complete control over form field UI/UX, you can use the `scFormControlState` directive to build your own custom form field components. The `sc-control-wrapper` component uses this directive internally, but you can use it directly for custom implementations.
+For advanced use cases where you need complete control over form field UI/UX, you can use the `scFormControlState` directive to build your own custom form field components. The `ngx-control-wrapper` component uses this directive internally, but you can use it directly for custom implementations.
 
 The `FormControlStateDirective` provides a reactive signal (`controlState`) with the current state of the nearest `NgModel` or `NgModelGroup`, allowing you to build custom UI components with full access to control state.
 
@@ -1135,8 +1135,8 @@ See the [complete documentation](docs/form-control-state-directive.md) for more 
 Let's update our form (using the attribute selector):
 
 ```html
-<div ngModelGroup="generalInfo" scControlWrapper>
-  <div scControlWrapper>
+<div ngModelGroup="generalInfo" ngxControlWrapper>
+  <div ngxControlWrapper>
     <label>First name</label>
     <input
       type="text"
@@ -1145,7 +1145,7 @@ Let's update our form (using the attribute selector):
     />
   </div>
 
-  <div scControlWrapper>
+  <div ngxControlWrapper>
     <label>Last name</label>
     <input
       type="text"
@@ -1159,24 +1159,24 @@ Let's update our form (using the attribute selector):
 Or using the element selector:
 
 ```html
-<div ngModelGroup="generalInfo" scControlWrapper>
-  <sc-control-wrapper>
+<div ngModelGroup="generalInfo" ngxControlWrapper>
+  <ngx-control-wrapper>
     <label>First name</label>
     <input
       type="text"
       name="firstName"
       [ngModel]="formValue().generalInfo?.firstName"
     />
-  </sc-control-wrapper>
+  </ngx-control-wrapper>
 
-  <sc-control-wrapper>
+  <ngx-control-wrapper>
     <label>Last name</label>
     <input
       type="text"
       name="lastName"
       [ngModel]="formValue().generalInfo?.lastName"
     />
-  </sc-control-wrapper>
+  </ngx-control-wrapper>
 </div>
 ```
 
@@ -1189,7 +1189,7 @@ This is the only thing we need to do to create a form that is completely wired w
   - [x] On touch
   - [x] On submit
 
-> **Note:** While `sc-control-wrapper` simplifies displaying errors for individual controls (removing the need to access `vestForm.errors()` directly in the template for that specific control), you will still typically need the `#vestForm="scVestForm"` template reference variable and the corresponding `viewChild` in your component. This reference is necessary for interacting with the **overall form's state**, such as:
+> **Note:** While `ngx-control-wrapper` simplifies displaying errors for individual controls (removing the need to access `vestForm.errors()` directly in the template for that specific control), you will still typically need the `#vestForm="ngxVestForm"` template reference variable and the corresponding `viewChild` in your component. This reference is necessary for interacting with the **overall form's state**, such as:
 >
 > - Disabling the submit button based on overall validity (`[disabled]="vestForm.isInvalid()"`)
 > - Accessing the complete form value (`this.vestForm().formValueChange()`) or validity (`this.vestForm().isInvalid()`) in your component logic (e.g., within `onSubmit`).
@@ -1363,10 +1363,10 @@ If you need to **disable** root-level validation (e.g., for performance reasons 
 
 ```html
 <form
-  scVestForm
+  ngxVestForm
   [vestSuite]="suite"
   [validateRootForm]="false" <!-- Disable root validation -->
-  #vestForm="scVestForm"
+  #vestForm="ngxVestForm"
 >
   <!-- ... -->
 </form>
@@ -1436,10 +1436,10 @@ export class MyComponent {
 
 ```html
 <form
-  scVestForm
+  ngxVestForm
   [vestSuite]="suite"
   [validationConfig]="validationConfig"
-  #vestForm="scVestForm"
+  #vestForm="ngxVestForm"
 >
   <div ngModelGroup="passwords">
     <label>Password:</label>
@@ -1486,7 +1486,7 @@ You can use these utilities to read or update deeply nested values in your form,
 
 ```typescript
 import { Component, computed, Signal, viewChild } from '@angular/core';
-import { vestForms, FormDirective, VestSuite } from 'ngx-vest-forms';
+import { ngxVestForms, FormDirective, VestSuite } from 'ngx-vest-forms';
 import { getValueAtPath, setValueAtPath } from 'ngx-vest-forms';
 
 type Address = { street: string; city: string };
@@ -1503,15 +1503,15 @@ const exampleSuite: VestSuite<ExampleFormModel> = (
 };
 
 @Component({
-  selector: 'sc-field-path-form-example',
+  selector: 'ngx-field-path-form-example',
   standalone: true,
-  imports: [vestForms],
+  imports: [ngxVestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [vestSuite]="suite"
       [formValue]="initialValue"
-      #vestForm="scVestForm"
+      #vestForm="ngxVestForm"
     >
       <div ngModelGroup="generalInfo">
         <label>First Name: <input name="firstName" ngModel /></label>
@@ -1603,19 +1603,19 @@ For a detailed guide and examples on using `ngx-vest-forms` with Form Arrays, pl
 
 ### Error Display Configuration for Control Wrapper
 
-The `sc-control-wrapper` component and `[scControlWrapper]` directive now support configurable error display behavior. You can control when errors are shown (on touch, on submit, or both) globally or per instance.
+The `ngx-control-wrapper` component and `[ngxControlWrapper]` directive now support configurable error display behavior. You can control when errors are shown (on touch, on submit, or both) globally or per instance.
 
 #### Per-Instance Configuration
 
 Use the `errorDisplayMode` input to override the error display mode for a specific control wrapper:
 
 ```html
-<sc-control-wrapper errorDisplayMode="on-submit">
+<ngx-control-wrapper errorDisplayMode="on-submit">
   <input name="email" [ngModel]="formValue().email" />
-</sc-control-wrapper>
+</ngx-control-wrapper>
 
 <!-- Or with the attribute selector -->
-<div scControlWrapper errorDisplayMode="on-submit">
+<div ngxControlWrapper errorDisplayMode="on-submit">
   <input name="email" [ngModel]="formValue().email" />
 </div>
 ```
@@ -1652,7 +1652,7 @@ You can easily create derived state based on the form's signals using Angular's 
 
 ```typescript
 import { Component, inject, viewChild, computed, Signal } from '@angular/core';
-import { FormDirective, vestForms, VestSuite } from 'ngx-vest-forms';
+import { FormDirective, ngxVestForms, VestSuite } from 'ngx-vest-forms';
 // ... other imports
 
 type MyForm = {
@@ -1663,9 +1663,9 @@ declare const mySuite: VestSuite<MyForm>;
 @Component({
   // ... component metadata
   standalone: true,
-  imports: [vestForms],
+  imports: [ngxVestForms],
   template: `
-    <form scVestForm #vestForm="scVestForm" [vestSuite]="mySuite">
+    <form ngxVestForm #vestForm="ngxVestForm" [vestSuite]="mySuite">
       <!-- Form fields -->
       <button type="submit" [disabled]="isSubmitDisabled()">Submit</button>
       @if (showWarning()) {
@@ -1706,7 +1706,7 @@ import {
   computed,
 } from '@angular/core';
 import { linkedSignal } from '@angular/cdk/signals'; // Import from CDK or implement your own
-import { FormDirective, vestForms, VestSuite } from 'ngx-vest-forms';
+import { FormDirective, ngxVestForms, VestSuite } from 'ngx-vest-forms';
 import { SomeStoreService } from './some-store.service'; // Example service
 
 type UserProfile = { name: string; email: string };
@@ -1715,12 +1715,12 @@ declare const userProfileSuite: VestSuite<UserProfile>;
 @Component({
   // ... component metadata
   standalone: true,
-  imports: [vestForms],
+  imports: [ngxVestForms],
   template: `
     <!-- Bind the linked signal's value to [formValue] -->
     <form
-      scVestForm
-      #vestForm="scVestForm"
+      ngxVestForm
+      #vestForm="ngxVestForm"
       [vestSuite]="userProfileSuite"
       [formValue]="formDataSource()"
     >
@@ -1794,12 +1794,12 @@ import { AddressInputComponent } from './address-input.component';
 // ...
 @Component({
   // ...
-  imports: [vestForms, AddressInputComponent],
+  imports: [ngxVestForms, AddressInputComponent],
   template: `
-    <form scVestForm [vestSuite]="suite">
+    <form ngxVestForm [vestSuite]="suite">
       <div ngModelGroup="billingAddress">
         <!-- Bind parent signal to the model() input of the child -->
-        <sc-address-input [(address)]="billingAddressSignal" />
+        <ngx-address-input [(address)]="billingAddressSignal" />
       </div>
     </form>
   `,
@@ -1813,11 +1813,11 @@ export class ParentFormComponent {
 import { NgModelGroup } from '@angular/forms'; // Needed if using ngModelGroup inside
 // ...
 @Component({
-  selector: 'sc-address-input',
+  selector: 'ngx-address-input',
   standalone: true,
-  imports: [vestForms], // If using ngx-vest-forms directives inside
+  imports: [ngxVestForms], // If using ngx-vest-forms directives inside
   // Required if using ngModelGroup/ngModel inside this component's template
-  viewProviders: [vestFormsViewProviders],
+  viewProviders: [ngxVestFormsViewProviders],
   template: `
     <!-- No ngModelGroup needed here if parent provides it -->
     <label>Street: <input name="street" ngModel /></label>
@@ -1831,7 +1831,7 @@ export class AddressInputComponent {
 }
 ```
 
-This pattern allows creating reusable form sections as components with clean two-way binding APIs, while still leveraging `ngx-vest-forms` and TDF internally. Remember to include `vestFormsViewProviders` in the child component if it uses `ngModel`/`ngModelGroup`.
+This pattern allows creating reusable form sections as components with clean two-way binding APIs, while still leveraging `ngx-vest-forms` and TDF internally. Remember to include `ngxVestFormsViewProviders` in the child component if it uses `ngModel`/`ngModelGroup`.
 
 ## Examples
 

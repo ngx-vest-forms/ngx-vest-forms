@@ -14,7 +14,7 @@ import type { InferSchemaType, VestSuite } from 'ngx-vest-forms';
 import {
   injectRootFormKey,
   modelToStandardSchema,
-  vestForms,
+  ngxVestForms,
 } from 'ngx-vest-forms';
 import { FormDirective } from 'projects/ngx-vest-forms/src/public-api';
 import { debounceTime, filter, finalize, switchMap } from 'rxjs';
@@ -34,8 +34,8 @@ const purchaseFormSchema = modelToStandardSchema(initialPurchaseFormData);
 type PurchaseFormModel = InferSchemaType<typeof purchaseFormSchema>;
 
 @Component({
-  selector: 'sc-purchase-form',
-  imports: [JsonPipe, vestForms, AddressComponent, PhoneNumbersComponent],
+  selector: 'ngx-purchase-form',
+  imports: [JsonPipe, ngxVestForms, AddressComponent, PhoneNumbersComponent],
   templateUrl: './purchase-form.component.html',
   styleUrls: ['./purchase-form.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

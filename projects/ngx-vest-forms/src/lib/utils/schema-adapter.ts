@@ -125,7 +125,7 @@ export function isStandardSchema<T = unknown>(
  * /// Use with ngx-vest-forms
  * @Component({
  *   template: `
- *     <form scVestForm [formSchema]="userSchema">
+ *     <form ngxVestForm [formSchema]="userSchema">
  *       <input name="name" ngModel required>
  *       <input name="email" type="email" ngModel required>
  *       <input name="age" type="number" ngModel>

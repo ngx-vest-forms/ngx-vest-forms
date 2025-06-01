@@ -64,7 +64,7 @@ function _formViewProviderFactory(ngForm: NgForm, ngModelGroup: NgModelGroup) {
 /**
  * The providers we need in every child component that holds an ngModelGroup
  */
-export const vestFormsViewProviders = [
+export const ngxVestFormsViewProviders = [
   { provide: ControlContainer, useExisting: NgForm },
   formViewProvider, // very important if we want nested components with ngModelGroup
 ];
@@ -72,7 +72,7 @@ export const vestFormsViewProviders = [
 /**
  * Exports all the stuff we need to use the template driven forms
  */
-export const vestForms = [
+export const ngxVestForms = [
   ValidateRootFormDirective,
   ControlWrapperComponent,
   FormDirective,

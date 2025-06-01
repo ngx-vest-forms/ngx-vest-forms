@@ -12,7 +12,7 @@ import {
   FormDirective,
   injectRootFormKey,
   modelToStandardSchema,
-  vestForms,
+  ngxVestForms,
 } from 'ngx-vest-forms';
 import { BusinessHoursComponent } from '../ui/business-hours/business-hours.component';
 import {
@@ -31,8 +31,8 @@ const businessHoursFormSchema = modelToStandardSchema(
 type BusinessHoursFormType = InferSchemaType<typeof businessHoursFormSchema>;
 
 @Component({
-  selector: 'sc-business-hours-form',
-  imports: [JsonPipe, vestForms, BusinessHoursComponent],
+  selector: 'ngx-business-hours-form',
+  imports: [JsonPipe, ngxVestForms, BusinessHoursComponent],
   templateUrl: './business-hours-form.component.html',
   styleUrls: ['./business-hours-form.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

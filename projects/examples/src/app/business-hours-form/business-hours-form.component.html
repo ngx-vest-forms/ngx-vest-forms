@@ -23,18 +23,18 @@
 
 <form
   class="mt-8"
-  scVestForm
-  #vestForm="scVestForm"
+  ngxVestForm
+  #vestForm="ngxVestForm"
   [(formValue)]="formValue"
   [formSchema]="businessHoursFormSchema"
   [vestSuite]="businessHoursFormValidations"
 >
   <fieldset>
-    <sc-business-hours
+    <ngx-business-hours
       [businessHoursModel]="businessHoursModel"
       (add)="onAddBusinessHour($event)"
       (remove)="onRemoveBusinessHour($event)"
-    ></sc-business-hours>
+    ></ngx-business-hours>
   </fieldset>
   <!--
     Root form errors are displayed below. This is an advanced pattern for cross-field or form-wide errors.

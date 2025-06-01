@@ -5,7 +5,7 @@ import { FormErrorDisplayDirective } from '../../directives/form-error-display.d
  * Accessible ControlWrapperComponent
  *
  * Usage:
- *   - Wrap any form element with `sc-control-wrapper` that contains an `ngModel` or `ngModelGroup`.
+ *   - Wrap any form element with `ngx-control-wrapper` that contains an `ngModel` or `ngModelGroup`.
  *   - Errors and warnings are shown when the control is invalid and touched, after form submit, or both, depending on the error display mode.
  *   - Pending state is shown with a spinner and aria-busy when async validation is running.
  *   - No manual error/warning/pending signal management is needed in your form components.
@@ -16,7 +16,7 @@ import { FormErrorDisplayDirective } from '../../directives/form-error-display.d
  *   - Possible values: 'touch' | 'submit' | 'touchOrSubmit' (default: 'touchOrSubmit')
  *
  * Example (per instance):
- *   <div scControlWrapper errorDisplayMode="submit">
+ *   <div ngxControlWrapper errorDisplayMode="submit">
  *     <label>
  *       <span>First name</span>
  *       <input type="text" name="firstName" [ngModel]="formValue().firstName" />
@@ -24,9 +24,9 @@ import { FormErrorDisplayDirective } from '../../directives/form-error-display.d
  *   </div>
  *
  * Example (with warnings and pending):
- *   <sc-control-wrapper>
+ *   <ngx-control-wrapper>
  *     <input name="username" ngModel />
- *   </sc-control-wrapper>
+ *   </ngx-control-wrapper>
  *   <!-- If async validation is running, a spinner and 'Validating…' will be shown. -->
  *   <!-- If Vest warnings are present, they will be shown below errors. -->
  *
@@ -46,13 +46,13 @@ import { FormErrorDisplayDirective } from '../../directives/form-error-display.d
  *   - Do not manually display errors for individual fields; rely on this wrapper.
  */
 @Component({
-  selector: 'sc-control-wrapper, [sc-control-wrapper], [scControlWrapper]',
+  selector: 'ngx-control-wrapper, [ngxControlWrapper]',
   templateUrl: './control-wrapper.component.html',
   styleUrls: ['./control-wrapper.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    class: 'sc-control-wrapper',
-    ['class.sc-control-wrapper--invalid']: 'errorDisplay.shouldShowErrors()',
+    class: 'ngx-control-wrapper',
+    ['class.ngx-control-wrapper--invalid']: 'errorDisplay.shouldShowErrors()',
   },
   hostDirectives: [FormErrorDisplayDirective],
 })

@@ -59,20 +59,20 @@ const suiteWithWarning = staticSuite(
   ],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [vestSuite]="suite()"
       [(formValue)]="formValue"
-      #vestForm="scVestForm"
+      #vestForm="ngxVestForm"
     >
-      <sc-control-wrapper>
+      <ngx-control-wrapper>
         <label for="field1">Field 1</label>
         <input id="field1" name="field1" [ngModel]="formValue().field1" />
-      </sc-control-wrapper>
+      </ngx-control-wrapper>
 
-      <sc-control-wrapper errorDisplayMode="submit">
+      <ngx-control-wrapper errorDisplayMode="submit">
         <label for="field2">Field 2 (Submit Only)</label>
         <input id="field2" name="field2" [ngModel]="formValue().field2" />
-      </sc-control-wrapper>
+      </ngx-control-wrapper>
       <button type="submit">Submit</button>
     </form>
   `,
@@ -106,7 +106,7 @@ describe('ControlWrapperComponent', () => {
     it('should display errors when field is invalid and touched (default mode)', async () => {
       await render(TestHostComponent);
       const inputField1 = screen.getByRole('textbox', { name: 'Field 1' });
-      const wrapperField1 = inputField1.closest('sc-control-wrapper');
+      const wrapperField1 = inputField1.closest('ngx-control-wrapper');
       if (!(wrapperField1 instanceof HTMLElement))
         throw new Error('Wrapper not found');
 
@@ -129,7 +129,7 @@ describe('ControlWrapperComponent', () => {
       });
 
       const inputField1 = screen.getByRole('textbox', { name: 'Field 1' });
-      const wrapperField1 = inputField1.closest('sc-control-wrapper');
+      const wrapperField1 = inputField1.closest('ngx-control-wrapper');
       if (!(wrapperField1 instanceof HTMLElement))
         throw new Error('Wrapper not found');
 
@@ -152,7 +152,7 @@ describe('ControlWrapperComponent', () => {
     it('should not display errors for untouched fields in default mode', async () => {
       const { fixture } = await render(TestHostComponent);
       const inputField1 = screen.getByRole('textbox', { name: 'Field 1' });
-      const wrapperField1 = inputField1.closest('sc-control-wrapper');
+      const wrapperField1 = inputField1.closest('ngx-control-wrapper');
       if (!(wrapperField1 instanceof HTMLElement))
         throw new Error('Wrapper not found');
 
@@ -172,7 +172,7 @@ describe('ControlWrapperComponent', () => {
     it('should display errors after form submission even if not touched', async () => {
       const { fixture } = await render(TestHostComponent);
       const inputField1 = screen.getByRole('textbox', { name: 'Field 1' });
-      const wrapperField1 = inputField1.closest('sc-control-wrapper');
+      const wrapperField1 = inputField1.closest('ngx-control-wrapper');
       if (!(wrapperField1 instanceof HTMLElement))
         throw new Error('Wrapper not found');
 
@@ -205,16 +205,16 @@ describe('ControlWrapperComponent', () => {
         ],
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [vestSuite]="suite"
             [formValue]="formValue()"
             (formValueChange)="formValue.set($event)"
-            #vestForm="scVestForm"
+            #vestForm="ngxVestForm"
           >
-            <sc-control-wrapper>
+            <ngx-control-wrapper>
               <label for="field1">Field 1</label>
               <input id="field1" name="field1" [ngModel]="formValue().field1" />
-            </sc-control-wrapper>
+            </ngx-control-wrapper>
           </form>
         `,
       })
@@ -225,7 +225,7 @@ describe('ControlWrapperComponent', () => {
 
       await render(LegacyHostComponent);
       const inputField1 = screen.getByRole('textbox', { name: 'Field 1' });
-      const wrapperField1 = inputField1.closest('sc-control-wrapper');
+      const wrapperField1 = inputField1.closest('ngx-control-wrapper');
       if (!(wrapperField1 instanceof HTMLElement))
         throw new Error('Wrapper not found');
 
@@ -248,20 +248,20 @@ describe('ControlWrapperComponent', () => {
         ],
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [vestSuite]="suite"
             [formValue]="formValue()"
             (formValueChange)="formValue.set($event)"
-            #vestForm="scVestForm"
+            #vestForm="ngxVestForm"
           >
-            <sc-control-wrapper>
+            <ngx-control-wrapper>
               <label for="field1">Field 1</label>
               <input
                 id="field1"
                 name="field1"
                 [(ngModel)]="formValue().field1"
               />
-            </sc-control-wrapper>
+            </ngx-control-wrapper>
           </form>
         `,
       })
@@ -272,7 +272,7 @@ describe('ControlWrapperComponent', () => {
 
       await render(TwoWayHostComponent);
       const inputField1 = screen.getByRole('textbox', { name: 'Field 1' });
-      const wrapperField1 = inputField1.closest('sc-control-wrapper');
+      const wrapperField1 = inputField1.closest('ngx-control-wrapper');
       if (!(wrapperField1 instanceof HTMLElement))
         throw new Error('Wrapper not found');
 
@@ -291,7 +291,7 @@ describe('ControlWrapperComponent', () => {
       const inputField2 = screen.getByRole('textbox', {
         name: 'Field 2 (Submit Only)',
       });
-      const wrapperField2 = inputField2.closest('sc-control-wrapper');
+      const wrapperField2 = inputField2.closest('ngx-control-wrapper');
       if (!(wrapperField2 instanceof HTMLElement))
         throw new Error('Wrapper not found');
 
@@ -325,7 +325,7 @@ describe('ControlWrapperComponent', () => {
       });
 
       const inputField1 = screen.getByRole('textbox', { name: 'Field 1' });
-      const wrapperField1 = inputField1.closest('sc-control-wrapper');
+      const wrapperField1 = inputField1.closest('ngx-control-wrapper');
       if (!(wrapperField1 instanceof HTMLElement))
         throw new Error('Wrapper not found');
 
@@ -347,23 +347,23 @@ describe('ControlWrapperComponent', () => {
   });
 
   describe('CSS Classes and ARIA Attributes', () => {
-    it('should apply "sc-control-wrapper--invalid" class when errors are shown', async () => {
+    it('should apply "ngx-control-wrapper--invalid" class when errors are shown', async () => {
       await render(TestHostComponent);
       const inputField1 = screen.getByRole('textbox', { name: 'Field 1' });
-      const wrapperField1 = inputField1.closest('sc-control-wrapper');
+      const wrapperField1 = inputField1.closest('ngx-control-wrapper');
       if (!(wrapperField1 instanceof HTMLElement))
         throw new Error('Wrapper not found');
 
       await userEvent.clear(inputField1);
       await userEvent.tab();
 
-      expect(wrapperField1).toHaveClass('sc-control-wrapper--invalid');
+      expect(wrapperField1).toHaveClass('ngx-control-wrapper--invalid');
     });
 
-    it('should not apply "sc-control-wrapper--invalid" class when errors are present but not shown', async () => {
+    it('should not apply "ngx-control-wrapper--invalid" class when errors are present but not shown', async () => {
       const { fixture } = await render(TestHostComponent);
       const inputField1 = screen.getByRole('textbox', { name: 'Field 1' });
-      const wrapperField1 = inputField1.closest('sc-control-wrapper');
+      const wrapperField1 = inputField1.closest('ngx-control-wrapper');
       if (!(wrapperField1 instanceof HTMLElement))
         throw new Error('Wrapper not found');
 
@@ -372,13 +372,13 @@ describe('ControlWrapperComponent', () => {
         field1: '',
       }));
 
-      expect(wrapperField1).not.toHaveClass('sc-control-wrapper--invalid');
+      expect(wrapperField1).not.toHaveClass('ngx-control-wrapper--invalid');
     });
 
     it('should associate error messages with controls via aria-describedby', async () => {
       await render(TestHostComponent);
       const inputField1 = screen.getByRole('textbox', { name: 'Field 1' });
-      const wrapperField1 = inputField1.closest('sc-control-wrapper');
+      const wrapperField1 = inputField1.closest('ngx-control-wrapper');
       if (!(wrapperField1 instanceof HTMLElement))
         throw new Error('Wrapper not found');
 
@@ -420,7 +420,7 @@ describe('ControlWrapperComponent', () => {
       });
 
       const inputField1 = screen.getByRole('textbox', { name: 'Field 1' });
-      const wrapperField1 = inputField1.closest('sc-control-wrapper');
+      const wrapperField1 = inputField1.closest('ngx-control-wrapper');
       if (!(wrapperField1 instanceof HTMLElement))
         throw new Error('Wrapper not found');
 

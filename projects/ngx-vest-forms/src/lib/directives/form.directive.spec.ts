@@ -10,7 +10,7 @@ import { render, screen } from '@testing-library/angular';
 import { userEvent } from '@vitest/browser/context';
 import { enforce, only, staticSuite, test as vestTest } from 'vest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { vestForms } from '../exports';
+import { ngxVestForms } from '../exports';
 import { FormCompatibleDeepRequired } from '../utils/deep-required';
 import { FormDirective } from './form.directive';
 import { ValidationOptions } from './validation-options';
@@ -79,15 +79,15 @@ function expectValidationState(
 
 // Test component that uses FormDirective with proper unidirectional flow
 @Component({
-  imports: [vestForms, FormsModule],
+  imports: [ngxVestForms, FormsModule],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [vestSuite]="vestSuite"
       [(formValue)]="formValue"
       [validationOptions]="validationOptions"
       [validationConfig]="validationConfig"
-      #vestForm="scVestForm"
+      #vestForm="ngxVestForm"
     >
       <label for="email">Email</label>
       <input
@@ -154,14 +154,14 @@ class TestFormComponent {
 
 // Component for testing async validation with Resource API
 @Component({
-  imports: [vestForms, FormsModule],
+  imports: [ngxVestForms, FormsModule],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [vestSuite]="asyncVestSuite"
       [(formValue)]="formValue"
       [validationOptions]="validationOptions"
-      #vestForm="scVestForm"
+      #vestForm="ngxVestForm"
     >
       <label for="username">Username</label>
       <input
@@ -225,15 +225,15 @@ type EventFormModel = {
  * with actual Date fields to show form initialization compatibility
  */
 @Component({
-  selector: 'sc-date-form',
-  imports: [FormsModule, vestForms],
+  selector: 'ngx-date-form',
+  imports: [FormsModule, ngxVestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [vestSuite]="dateVestSuite"
       [(formValue)]="formValue"
       [validationOptions]="validationOptions"
-      #vestForm="scVestForm"
+      #vestForm="ngxVestForm"
     >
       <label for="title">Event Title</label>
       <input
@@ -882,13 +882,13 @@ describe('FormDirective', () => {
     it('should maintain formState.value during async validation', async () => {
       // Component with async validation
       @Component({
-        imports: [vestForms, FormsModule],
+        imports: [ngxVestForms, FormsModule],
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [vestSuite]="asyncSuite"
             [(formValue)]="formValue"
-            #vestForm="scVestForm"
+            #vestForm="ngxVestForm"
           >
             <label for="email">Email</label>
             <input id="email" name="email" [ngModel]="formValue().email" />
@@ -935,13 +935,13 @@ describe('FormDirective', () => {
 
     it('should handle null formValue in formState', async () => {
       @Component({
-        imports: [vestForms, FormsModule],
+        imports: [ngxVestForms, FormsModule],
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [vestSuite]="vestSuite"
             [(formValue)]="formValue"
-            #vestForm="scVestForm"
+            #vestForm="ngxVestForm"
           >
             <input name="test" ngModel />
           </form>
@@ -967,13 +967,13 @@ describe('FormDirective', () => {
 
     it('should preserve formState.value type safety with complex objects', async () => {
       @Component({
-        imports: [vestForms, FormsModule],
+        imports: [ngxVestForms, FormsModule],
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [vestSuite]="vestSuite"
             [(formValue)]="formValue"
-            #vestForm="scVestForm"
+            #vestForm="ngxVestForm"
           >
             <input name="user.name" [ngModel]="formValue().user?.name" />
             <input
@@ -1070,7 +1070,8 @@ describe('FormDirective', () => {
 
       // Should show partial validation success
       const formState = componentInstance.vestForm()?.formState();
-      const formValue = formState?.value as FormCompatibleDeepRequired<EventFormModel>;
+      const formValue =
+        formState?.value as FormCompatibleDeepRequired<EventFormModel>;
       expect(formValue.title).toBe('Tech Conference');
       expect(formValue.startDate).toBe('2024-12-01');
       expect(formValue.details.category).toBe('Technology');
@@ -1129,7 +1130,8 @@ describe('FormDirective', () => {
       await applicationReference.whenStable();
 
       const formState = componentInstance.vestForm()?.formState();
-      const formValue = formState?.value as FormCompatibleDeepRequired<EventFormModel>;
+      const formValue =
+        formState?.value as FormCompatibleDeepRequired<EventFormModel>;
 
       // Verify Date objects are properly set
       expect(formValue.title).toBe('Conference 2024');
@@ -1137,9 +1139,7 @@ describe('FormDirective', () => {
       expect(formValue.endDate).toBeInstanceOf(Date);
       expect(formValue.details.createdAt).toBeInstanceOf(Date);
       expect(formValue.details.category).toBe('Technology');
-      expect(formValue.details.metadata.lastUpdated).toBeInstanceOf(
-        Date,
-      );
+      expect(formValue.details.metadata.lastUpdated).toBeInstanceOf(Date);
 
       // Verify the form becomes valid with complete data
       vi.advanceTimersByTime(50);
@@ -1184,7 +1184,8 @@ describe('FormDirective', () => {
       const formState = componentInstance.vestForm()?.formState();
 
       // Verify mixed types are handled correctly
-      const typedFormValue = formState?.value as FormCompatibleDeepRequired<EventFormModel>;
+      const typedFormValue =
+        formState?.value as FormCompatibleDeepRequired<EventFormModel>;
       expect(typedFormValue.startDate).toBeInstanceOf(Date);
       expect(typeof typedFormValue.endDate).toBe('string');
       expect(typedFormValue.details.metadata.lastUpdated).toBeInstanceOf(Date);

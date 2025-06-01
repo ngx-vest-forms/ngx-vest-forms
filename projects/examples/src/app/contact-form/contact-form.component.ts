@@ -1,5 +1,5 @@
 import { Component, signal } from '@angular/core';
-import { vestForms } from 'ngx-vest-forms';
+import { ngxVestForms } from 'ngx-vest-forms';
 import { enforce, staticSuite, test } from 'vest';
 
 type ContactForm = {
@@ -18,28 +18,28 @@ const contactFormSuite = staticSuite((data = {}) => {
 });
 
 @Component({
-  selector: 'sc-contact-form',
-  imports: [vestForms],
+  selector: 'ngx-contact-form',
+  imports: [ngxVestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [vestSuite]="suite"
       [(formValue)]="formValue"
       validateRootForm="false"
-      #vestForm="scVestForm"
+      #vestForm="ngxVestForm"
     >
-      <sc-control-wrapper>
+      <ngx-control-wrapper>
         <label>
           Name:
           <input name="name" ngModel />
         </label>
-      </sc-control-wrapper>
-      <sc-control-wrapper>
+      </ngx-control-wrapper>
+      <ngx-control-wrapper>
         <label>
           Email:
           <input name="email" ngModel />
         </label>
-      </sc-control-wrapper>
+      </ngx-control-wrapper>
       <button type="submit">Submit</button>
     </form>
   `,

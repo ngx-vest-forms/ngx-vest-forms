@@ -102,7 +102,7 @@ export function getInitialFormControlState(): FormControlState {
  * See also: FormErrorDisplayDirective for built-in display logic with configurable error visibility modes.
  */
 @Directive({
-  selector: '[scFormControlState]',
+  selector: '[ngxFormControlState]',
   exportAs: 'formControlState',
 })
 export class FormControlStateDirective {

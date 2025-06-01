@@ -64,7 +64,7 @@ import { FormControlStateDirective } from './form-control-state.directive';
  * See also: FormControlStateDirective for just the raw form state without display opinions.
  */
 @Directive({
-  selector: '[scFormErrorDisplay]',
+  selector: '[ngxFormErrorDisplay]',
   exportAs: 'formErrorDisplay',
   hostDirectives: [FormControlStateDirective],
 })

@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/angular';
 import { userEvent } from '@vitest/browser/context';
 import { enforce, only, staticSuite, test, warn } from 'vest';
 import { describe, expect, it } from 'vitest';
-import { vestForms } from '../exports';
+import { ngxVestForms } from '../exports';
 import { FormControlStateDirective } from './form-control-state.directive';
 
 // Vest suite for errors and warnings
@@ -29,9 +29,9 @@ describe('FormControlStateDirective', () => {
   describe('Core Functionality', () => {
     it('should extract raw form control state for NgModel', async () => {
       @Component({
-        imports: [vestForms, FormsModule, FormControlStateDirective],
+        imports: [ngxVestForms, FormsModule, FormControlStateDirective],
         template: `
-          <form scVestForm [vestSuite]="suite" [(formValue)]="formValue">
+          <form ngxVestForm [vestSuite]="suite" [(formValue)]="formValue">
             <div scFormControlState #state="formControlState">
               <label for="test-input">Test Input</label>
               <input
@@ -81,9 +81,9 @@ describe('FormControlStateDirective', () => {
 
     it('should extract errorMessages and warningMessages from Vest validation', async () => {
       @Component({
-        imports: [vestForms, FormsModule, FormControlStateDirective],
+        imports: [ngxVestForms, FormsModule, FormControlStateDirective],
         template: `
-          <form scVestForm [vestSuite]="suite" [(formValue)]="formValue">
+          <form ngxVestForm [vestSuite]="suite" [(formValue)]="formValue">
             <div scFormControlState #state="formControlState">
               <label for="test-input">Test Input</label>
               <input id="test-input" name="test" [ngModel]="formValue().test" />
@@ -121,9 +121,9 @@ describe('FormControlStateDirective', () => {
 
     it('should show errors when field is empty and touched', async () => {
       @Component({
-        imports: [vestForms, FormsModule, FormControlStateDirective],
+        imports: [ngxVestForms, FormsModule, FormControlStateDirective],
         template: `
-          <form scVestForm [vestSuite]="suite" [(formValue)]="formValue">
+          <form ngxVestForm [vestSuite]="suite" [(formValue)]="formValue">
             <div scFormControlState #state="formControlState">
               <label for="test-input">Test Input</label>
               <input id="test-input" name="test" [ngModel]="formValue().test" />
@@ -170,9 +170,9 @@ describe('FormControlStateDirective', () => {
       );
 
       @Component({
-        imports: [vestForms, FormsModule, FormControlStateDirective],
+        imports: [ngxVestForms, FormsModule, FormControlStateDirective],
         template: `
-          <form scVestForm [vestSuite]="suite" [(formValue)]="formValue">
+          <form ngxVestForm [vestSuite]="suite" [(formValue)]="formValue">
             <div scFormControlState #state="formControlState">
               <label for="test-input">Test Input</label>
               <input
@@ -244,9 +244,9 @@ describe('FormControlStateDirective', () => {
 
     it('should handle null form values gracefully', async () => {
       @Component({
-        imports: [vestForms, FormsModule, FormControlStateDirective],
+        imports: [ngxVestForms, FormsModule, FormControlStateDirective],
         template: `
-          <form scVestForm [vestSuite]="suite" [formValue]="nullValue">
+          <form ngxVestForm [vestSuite]="suite" [formValue]="nullValue">
             <div scFormControlState #state="formControlState">
               <input name="test" ngModel data-testid="input" />
               <div data-testid="status">
@@ -270,10 +270,10 @@ describe('FormControlStateDirective', () => {
   describe('Host Directive Usage', () => {
     it('should work as hostDirective in a custom component', async () => {
       @Component({
-        imports: [vestForms, FormsModule],
+        imports: [ngxVestForms, FormsModule],
         hostDirectives: [FormControlStateDirective],
         template: `
-          <form scVestForm [vestSuite]="suite" [(formValue)]="formValue">
+          <form ngxVestForm [vestSuite]="suite" [(formValue)]="formValue">
             <label for="username-input">Username</label>
             <input
               id="username-input"
@@ -325,9 +325,9 @@ describe('FormControlStateDirective', () => {
   describe('Vest Integration', () => {
     it('should show Vest warnings when present', async () => {
       @Component({
-        imports: [vestForms, FormsModule, FormControlStateDirective],
+        imports: [ngxVestForms, FormsModule, FormControlStateDirective],
         template: `
-          <form scVestForm [vestSuite]="suite" [(formValue)]="formValue">
+          <form ngxVestForm [vestSuite]="suite" [(formValue)]="formValue">
             <div scFormControlState #state="formControlState">
               <label for="test-input">Test Input</label>
               <input id="test-input" name="test" [ngModel]="formValue().test" />
@@ -386,9 +386,9 @@ describe('FormControlStateDirective', () => {
       );
 
       @Component({
-        imports: [vestForms, FormsModule, FormControlStateDirective],
+        imports: [ngxVestForms, FormsModule, FormControlStateDirective],
         template: `
-          <form scVestForm [vestSuite]="suite" [(formValue)]="formValue">
+          <form ngxVestForm [vestSuite]="suite" [(formValue)]="formValue">
             <div scFormControlState #state="formControlState">
               <label for="test-input">Test Input</label>
               <input id="test-input" name="test" [ngModel]="formValue().test" />

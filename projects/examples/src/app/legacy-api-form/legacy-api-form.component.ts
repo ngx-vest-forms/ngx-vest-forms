@@ -1,11 +1,11 @@
 // Legacy API Example: Demonstrates deprecated v1 API usage for ngx-vest-forms
 // - Uses [formValue] and (formValueChange) instead of [(formValue)]
 // - Uses deprecated signals (isValid, errors, etc.)
-// - Manually displays errors (no <sc-control-wrapper>)
+// - Manually displays errors (no <ngx-control-wrapper>)
 // - For demonstration and migration guidance only
 
 import { Component, signal } from '@angular/core';
-import { vestForms } from 'ngx-vest-forms';
+import { ngxVestForms } from 'ngx-vest-forms';
 import { enforce, only, staticSuite, test } from 'vest';
 
 type LegacyFormModel = { username: string; password: string };
@@ -24,9 +24,9 @@ const legacySuite = staticSuite(
 );
 
 @Component({
-  selector: 'sc-legacy-api-form',
+  selector: 'ngx-legacy-api-form',
   standalone: true,
-  imports: [vestForms],
+  imports: [ngxVestForms],
   templateUrl: './legacy-api-form.component.html',
   styleUrl: './legacy-api-form.component.scss',
 })

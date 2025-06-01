@@ -12,8 +12,8 @@ export { ValidateRootFormDirective } from './lib/directives/validate-root-form.d
 export { ValidationOptions } from './lib/directives/validation-options';
 export {
   injectRootFormKey,
-  vestForms,
-  vestFormsViewProviders,
+  ngxVestForms,
+  ngxVestFormsViewProviders,
 } from './lib/exports';
 
 export { arrayToObject } from './lib/utils/array-to-object';

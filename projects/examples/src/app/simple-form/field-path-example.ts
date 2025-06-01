@@ -3,8 +3,8 @@ import { Component, computed, Signal, signal, viewChild } from '@angular/core';
 import {
   FormDirective,
   getValueAtPath,
+  ngxVestForms,
   setValueAtPath,
-  vestForms,
   VestSuite,
 } from 'ngx-vest-forms';
 import { enforce, only, staticSuite, test } from 'vest';
@@ -30,15 +30,15 @@ const exampleSuite: VestSuite<ExampleFormModel> = staticSuite(
 );
 
 @Component({
-  selector: 'sc-field-path-form-example',
+  selector: 'ngx-field-path-form-example',
   standalone: true,
-  imports: [vestForms, JsonPipe],
+  imports: [ngxVestForms, JsonPipe],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [vestSuite]="suite"
       [(formValue)]="formValue"
-      #vestForm="scVestForm"
+      #vestForm="ngxVestForm"
     >
       <div ngModelGroup="generalInfo">
         <label>First Name: <input name="firstName" ngModel /></label>
