@@ -1,6 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
 /* Add application styles & imports to this file! */
-/* Add application styles & imports to this file! */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -21,7 +20,7 @@ fieldset {
     @apply mb-2 block text-sm font-medium text-gray-900 dark:text-white;
   }
 
-  .sc-control-wrapper {
+  .scControlWrapper {
     select,
     input[type='text'],
     input[type='number'],

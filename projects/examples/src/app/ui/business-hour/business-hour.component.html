@@ -1,0 +1,24 @@
+<div scControlWrapper>
+  <label>
+    <span class="mr-4">From</span>
+    <input
+      mask="00:00"
+      placeholder="00:00"
+      type="text"
+      [ngModel]="businessHour().from"
+      name="from"
+    />
+  </label>
+</div>
+<div scControlWrapper class="ml-4">
+  <label>
+    <span class="mr-4">To</span>
+    <input
+      mask="00:00"
+      placeholder="00:00"
+      type="text"
+      [ngModel]="businessHour().to"
+      name="to"
+    />
+  </label>
+</div>

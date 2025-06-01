@@ -1,0 +1,28 @@
+<!-- Minimal form array example: phone-numbers-form.component.html -->
+<div class="mx-auto mt-10 max-w-md rounded bg-white p-6 shadow">
+  <h2 class="mb-4 text-2xl font-bold">Phone Numbers Form Example</h2>
+  <form
+    scVestForm
+    [vestSuite]="suite"
+    [(formValue)]="initialValue"
+    (ngSubmit)="save()"
+  >
+    <div scControlWrapper>
+      <!--
+        sc-phone-numbers is a form array component using signals and [(values)] for two-way binding.
+        We use initialValue() because initialValue is a signal created with model().
+        This ensures changes in the child update the parent reactively.
+
+        Accessibility:
+        - The component should ensure each input has a label and id for screen readers.
+        - Error display is handled by scControlWrapper, so no manual error markup is needed here.
+      -->
+      <sc-phone-numbers
+        [(values)]="initialValue().phoneNumbers"
+      ></sc-phone-numbers>
+    </div>
+    <button type="submit" class="mt-4 rounded bg-blue-600 px-4 py-2 text-white">
+      Save
+    </button>
+  </form>
+</div>

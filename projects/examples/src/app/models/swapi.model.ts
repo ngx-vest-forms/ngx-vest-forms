@@ -1,4 +1,4 @@
-export interface SwapiResponse {
+export type SwapiResponse = {
   name: string;
   height: string;
   mass: string;
@@ -15,6 +15,6 @@ export interface SwapiResponse {
   created: string;
   edited: string;
   url: string;
-}
+};
 
 export type Gender = 'male' | 'female' | 'other';

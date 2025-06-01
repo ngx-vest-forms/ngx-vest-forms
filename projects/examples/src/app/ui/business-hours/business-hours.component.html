@@ -1,0 +1,36 @@
+<div ngModelGroup="businessHours" scControlWrapper>
+  <div ngModelGroup="values" scControlWrapper>
+    @for (item of businessHoursModel().values | keyvalue; track item.key) {
+      <div scControlWrapper [ngModelGroup]="item.key">
+        <div class="flex items-start">
+          <sc-business-hour
+            [businessHour]="item.value ?? {}"
+          ></sc-business-hour>
+          <button
+            class="ml-4 mt-1.5"
+            type="button"
+            (click)="removeBusinessHour(item.key)"
+          >
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+  <hr class="mb-4 mt-4" />
+  <div scControlWrapper ngModelGroup="addValue" #group="ngModelGroup">
+    <div class="flex items-start">
+      <sc-business-hour
+        [businessHour]="businessHoursModel().addValue ?? {}"
+      ></sc-business-hour>
+      <button
+        class="ml-4 mt-1.5"
+        type="button"
+        [disabled]="group.invalid || group.pending"
+        (click)="addBusinessHour(group)"
+      >
+        <i class="fa-solid fa-plus"></i>
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,41 @@
+<div>
+  <span class="mb-1 block font-medium">Phone Numbers</span>
+  <div ngModelGroup="values">
+    @for (item of values() | keyvalue; track item.key) {
+      <div scControlWrapper>
+        <div class="relative">
+          <input
+            type="text"
+            name="{{ item.key }}"
+            [ngModel]="values()[item.key]"
+            placeholder="Type phone number"
+          />
+          <button
+            type="button"
+            (click)="removePhoneNumber(item.key)"
+            class="absolute bottom-0.5 end-0.5 rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          >
+            Remove
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+  <div scControlWrapper>
+    <div class="relative">
+      <input
+        type="text"
+        [(ngModel)]="addValue"
+        name="addValue"
+        placeholder="Type phone number"
+      />
+      <button
+        type="button"
+        (click)="addPhoneNumber()"
+        class="absolute bottom-0.5 end-0.5 rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+      >
+        Add
+      </button>
+    </div>
+  </div>
+</div>
