@@ -6,6 +6,8 @@ import {
   NgModelGroup,
 } from '@angular/forms';
 import { ControlWrapperComponent } from './components/control-wrapper/control-wrapper.component';
+import { FormControlStateDirective } from './directives/form-control-state.directive';
+import { FormErrorDisplayDirective } from './directives/form-error-display.directive';
 import { FormModelGroupDirective } from './directives/form-model-group.directive';
 import { FormModelDirective } from './directives/form-model.directive';
 import { FormDirective } from './directives/form.directive';
@@ -77,6 +79,17 @@ export const vestForms = [
   FormsModule,
   FormModelDirective,
   FormModelGroupDirective,
+  FormControlStateDirective,
+  FormErrorDisplayDirective,
 ] as const;
 
+export {
+  CONTROL_WRAPPER_ERROR_DISPLAY,
+  ErrorDisplayMode,
+} from './components/control-wrapper/control-wrapper.config';
+export {
+  FormControlState,
+  getInitialFormControlState,
+} from './directives/form-control-state.directive';
+export { FormState } from './directives/form.directive';
 export { injectRootFormKey } from './utils/form-token';
