@@ -24,28 +24,6 @@
           },
           "defaultConfiguration": "production"
         },
-        "storybook": {
-          "builder": "@storybook/angular:start-storybook",
-          "options": {
-            "styles": ["projects/ngx-vest-forms/.storybook/styles.scss"],
-            "configDir": "projects/ngx-vest-forms/.storybook",
-            "browserTarget": "ngx-vest-forms:build",
-            "compodoc": true,
-            "compodocArgs": ["-e", "json", "-d", "projects/ngx-vest-forms"],
-            "port": 6006
-          }
-        },
-        "build-storybook": {
-          "builder": "@storybook/angular:build-storybook",
-          "options": {
-            "configDir": "projects/ngx-vest-forms/.storybook",
-            "styles": ["projects/ngx-vest-forms/.storybook/styles.scss"],
-            "browserTarget": "ngx-vest-forms:build",
-            "compodoc": true,
-            "compodocArgs": ["-e", "json", "-d", "projects/ngx-vest-forms"],
-            "outputDir": "dist/storybook/ngx-vest-forms"
-          }
-        },
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
@@ -76,7 +54,6 @@
               "base": "dist/examples"
             },
             "index": "projects/examples/src/index.html",
-            "polyfills": ["zone.js"],
             "tsConfig": "projects/examples/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [

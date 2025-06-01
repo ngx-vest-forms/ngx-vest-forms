@@ -28,6 +28,27 @@
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,
-    "strictTemplates": true
+    "strictTemplates": true,
+    "typeCheckHostBindings": true,
+    "extendedDiagnostics": {
+      "checks": {
+        "invalidBananaInBox": "error",
+        "controlFlowPreventingContentProjection": "error",
+        "unusedStandaloneImports": "error",
+        "nullishCoalescingNotNullable": "error",
+        "optionalChainNotNullable": "error",
+        "missingControlFlowDirective": "error",
+        "textAttributeNotBinding": "error",
+        "missingNgForOfLet": "error",
+        "missingStructuralDirective": "error",
+        "suffixNotSupported": "error",
+        "interpolatedSignalNotInvoked": "error",
+        "uninvokedFunctionInEventBinding": "error",
+        "unusedLetDeclaration": "error",
+        "skipHydrationNotStatic": "error",
+        "unparenthesizedNullishCoalescing": "error",
+        "uninvokedTrackFunction": "error"
+      }
+    }
   }
 }

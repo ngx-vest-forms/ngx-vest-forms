@@ -43,3 +43,4 @@ Thumbs.db
 
 *storybook.log
 **/node_modules/
+**/__screenshots__/

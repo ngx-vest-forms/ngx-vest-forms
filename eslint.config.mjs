@@ -1,4 +1,5 @@
 import eslint from '@eslint/js';
+import vitest from '@vitest/eslint-plugin';
 import angular from 'angular-eslint';
 import eslintPluginUnicorn from 'eslint-plugin-unicorn';
 import { defineConfig } from 'eslint/config';
@@ -34,6 +35,11 @@ export default defineConfig([
         },
       ],
       '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/explicit-member-accessibility': [
+        'error',
+        { accessibility: 'no-public' },
+      ],
+      '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
       'unicorn/no-null': 'off',
       'unicorn/consistent-function-scoping': 'off',
       'unicorn/no-abbr': 'off',
@@ -56,6 +62,11 @@ export default defineConfig([
     rules: {
       // Add any specific rules for HTML templates if needed
     },
+  },
+  /// Vitest
+  {
+    files: ['projects/**/*.spect.ts'], // or any other pattern
+    ...vitest.configs.recommended,
   },
 
   // General improvements
