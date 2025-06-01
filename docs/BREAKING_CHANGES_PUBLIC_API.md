@@ -406,11 +406,161 @@ const errors = vestForm.formState().errors;
 
 ---
 
-## 13. New Schema Adapter and Standard Schema Integration
+## 13. New Composition API: FormErrorDisplayDirective and FormControlStateDirective
 
 ### What changed?
 
-- The new `modelToStandardSchema` utility now produces schemas compatible with the [Standard Schema](https://standardschema.dev/) specification.
+- **NEW**: `FormControlStateDirective` - Provides raw form control state (errors, warnings, pending, etc.) without display opinions
+- **NEW**: `FormErrorDisplayDirective` - Extends `FormControlStateDirective` with configurable error display behavior
+- Both directives support Angular's `hostDirectives` composition pattern for building custom form components
+- Template reference variables via `exportAs` for direct access in templates
+
+### Why?
+
+- Enables developers to build custom form field wrappers while leveraging the library's validation logic
+- Embraces Angular's modern composition API over inheritance patterns
+- Provides granular control over when and how validation messages are displayed
+- Separates data concerns (FormControlStateDirective) from display concerns (FormErrorDisplayDirective)
+
+### Usage Patterns
+
+#### 1. Building Custom Form Components with hostDirectives
+
+```typescript
+@Component({
+  selector: 'my-custom-field',
+  template: `
+    <label>{{ label }}</label>
+    <input [name]="name" ngModel />
+
+    @if (errorDisplay.shouldShowErrors()) {
+      <div class="errors">
+        @for (error of errorDisplay.errors(); track error) {
+          <div class="error">{{ error }}</div>
+        }
+      </div>
+    }
+
+    @if (errorDisplay.isPending()) {
+      <span class="spinner">Validating...</span>
+    }
+  `,
+  hostDirectives: [FormErrorDisplayDirective], // Composition over inheritance
+})
+export class MyCustomFieldComponent {
+  readonly errorDisplay = inject(FormErrorDisplayDirective);
+
+  @Input() label!: string;
+  @Input() name!: string;
+}
+```
+
+#### 2. Direct Template Usage with Template Reference Variables
+
+```html
+<!-- Using FormErrorDisplayDirective directly -->
+<div
+  scFormErrorDisplay
+  #display="formErrorDisplay"
+  errorDisplayMode="on-blur-or-submit"
+>
+  <input type="email" name="email" ngModel />
+
+  @if (display.shouldShowErrors()) {
+  <div class="errors">
+    @for (error of display.errors(); track error) {
+    <div class="error">{{ error }}</div>
+    }
+  </div>
+  } @if (display.warnings().length > 0) {
+  <div class="warnings">
+    @for (warning of display.warnings(); track warning) {
+    <div class="warning">{{ warning }}</div>
+    }
+  </div>
+  }
+</div>
+
+<!-- Using just FormControlStateDirective for raw data -->
+<div scFormControlState #state="formControlState">
+  <input type="text" name="username" ngModel />
+
+  <!-- Custom display logic -->
+  @if (state.controlState()?.isInvalid && state.errorMessages().length > 0) {
+  <div class="custom-error-display">
+    Custom validation feedback: {{ state.errorMessages()[0] }}
+  </div>
+  }
+</div>
+```
+
+#### 3. Available Signals and Methods
+
+**FormControlStateDirective provides:**
+
+- `controlState()` - Angular form control state (touched, dirty, valid, etc.)
+- `errorMessages()` - Array of error messages from Vest validation
+- `warningMessages()` - Array of warning messages from Vest validation
+- `hasPendingValidation()` - Boolean indicating async validation in progress
+- `updateOn()` - The ngModelOptions.updateOn value ('change', 'blur', 'submit')
+
+**FormErrorDisplayDirective adds:**
+
+- `shouldShowErrors()` - Smart logic for when to display errors based on display mode
+- `errors()` - Filtered error messages (hides during pending validation)
+- `warnings()` - Filtered warning messages (hides during pending validation)
+- `isPending()` - Simplified pending state check
+- `formSubmitted()` - Boolean indicating if the form has been submitted
+- `errorDisplayMode` input - Configure when errors show ('on-blur', 'on-submit', 'on-blur-or-submit')
+
+### Migration
+
+- **No breaking changes** - These are new additions that supplement existing functionality
+- Replace custom form control state tracking with these standardized directives
+- Use `hostDirectives` pattern for new custom form components
+- Leverage template reference variables for simpler template access
+
+#### Before (Custom Implementation)
+
+```typescript
+@Component({
+  template: `
+    <!-- Manual error handling -->
+    @if (control?.invalid && (control?.touched || formSubmitted)) {
+      <div>{{ getErrorMessage() }}</div>
+    }
+  `,
+})
+export class OldCustomField {
+  @ViewChild(NgModel) control?: NgModel;
+  formSubmitted = false;
+
+  getErrorMessage() {
+    // Custom error extraction logic
+  }
+}
+```
+
+#### After (Using New Directives)
+
+```typescript
+@Component({
+  template: `
+    <!-- Declarative error handling -->
+    @if (errorDisplay.shouldShowErrors()) {
+      <div>{{ errorDisplay.errors()[0] }}</div>
+    }
+  `,
+  hostDirectives: [FormErrorDisplayDirective],
+})
+export class NewCustomField {
+  readonly errorDisplay = inject(FormErrorDisplayDirective);
+  // No manual state tracking needed!
+}
+```
+
+---
+
 - The internal schema-adapter is designed to work with any Standard Schema v1 compatible library, including Zod, ArkType, and Valibot.
 
 ### Why?
