@@ -1,9 +1,11 @@
 /**
- * Validation Options
+ * Configuration options for validation behavior.
  */
-export interface ValidationOptions {
+export type ValidationOptions = {
   /**
-   * debounceTime for the next validation
+   * Debounce time in milliseconds before triggering validation
+   * after a value change.
+   * @default 0
    */
   debounceTime: number;
-}
+};
