@@ -1,11 +1,11 @@
-import { describe, expect, it } from "vitest";
 import { FormControl, FormGroup } from '@angular/forms';
+import { describe, expect, it } from 'vitest';
 import {
   cloneDeep,
   getFormControlField,
   getFormGroupField,
   mergeValuesAndRawValues,
-  set,
+  setValueAtPath,
 } from './form-utils';
 
 describe('getFormControlField function', () => {
@@ -94,7 +94,7 @@ describe('cloneDeep function', () => {
 describe('set function', () => {
   it('should set a value in an object at the correct path', () => {
     const object = {};
-    set(object, 'address.city', 'New York');
+    setValueAtPath(object, 'address.city', 'New York');
     expect(object).toEqual({
       address: {
         city: 'New York',

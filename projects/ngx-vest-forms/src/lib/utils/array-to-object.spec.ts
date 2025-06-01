@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { arrayToObject } from './array-to-object';
 
 describe('arrayToObject', () => {

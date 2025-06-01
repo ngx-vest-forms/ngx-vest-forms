@@ -9,7 +9,7 @@
       "vite/client",
       "node",
       "vitest",
-      "@vitest/browser/providers/playwright",
+      "@vitest/browser/providers/playwright"
     ]
   },
   "include": [
