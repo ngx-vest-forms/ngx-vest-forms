@@ -43,4 +43,4 @@ This document lists **internal breaking changes and improvements** to `ngx-vest-
 
 - [Public API Migration Guide](./BREAKING_CHANGES_PUBLIC_API.md) - User-facing changes and migration steps
 - [Standard Schema documentation](https://standardschema.dev/) - Schema specification details
-- [FormControlStateDirective documentation](./docs/form-control-state-directive.md) - Directive usage and API
+- [FormControlStateDirective documentation](./form-control-state-directive.md) - Directive usage and API

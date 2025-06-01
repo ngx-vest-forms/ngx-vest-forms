@@ -269,7 +269,7 @@ const errors = vestForm.formState().errors;
 ### Migration
 
 - Update your forms to use `[formSchema]` and `modelToStandardSchema` instead of `[formShape]`.
-- For detailed migration examples and comprehensive schema adapter usage, see [Schema Adapters Documentation](docs/schema-adapters.md).
+- For detailed migration examples and comprehensive schema adapter usage, see [Schema Adapters Documentation](./schema-adapters.md).
 
 #### Comparison Table
 
@@ -573,7 +573,7 @@ This approach gives you total flexibility to:
 - Add animations, tooltips, or other UI features to your form fields
 - Create field types specialized for different data types (date pickers, number inputs, etc.)
 
-- See the documentation in `docs/form-control-state-directive.md` for more details and advanced usage.
+- See the documentation in `./form-control-state-directive.md` for more details and advanced usage.
 
 ---
 

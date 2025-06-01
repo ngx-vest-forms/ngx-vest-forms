@@ -174,7 +174,7 @@ export class PurchaseFormComponent {
 
 ## Migration & Breaking Changes
 
-See [`BREAKING_CHANGES_PUBLIC_API.md`](./BREAKING_CHANGES_PUBLIC_API.md) for a full migration guide and details on all breaking changes in v2+.
+See [`BREAKING_CHANGES_PUBLIC_API.md`](./docs/BREAKING_CHANGES_PUBLIC_API.md) for a full migration guide and details on all breaking changes in v2+.
 
 **Notable:**
 
@@ -187,13 +187,13 @@ See [`BREAKING_CHANGES_PUBLIC_API.md`](./BREAKING_CHANGES_PUBLIC_API.md) for a f
 - [Vest.js Documentation](https://vestjs.dev)
 - [Angular Signals](https://angular.dev/reference/signals)
 - [Zod](https://zod.dev/), [ArkType](https://arktype.io/), [Valibot](https://valibot.dev/)
-- [ngx-vest-forms Examples](./EXAMPLES.md)
+- [ngx-vest-forms Examples](./docs/EXAMPLES.md)
 
 ---
 
 ## Contributing & Internal Changes
 
-For internal (library developer) breaking changes and architectural notes, see [`BREAKING_CHANGES_INTERNAL.md`](./BREAKING_CHANGES_INTERNAL.md).
+For internal (library developer) breaking changes and architectural notes, see [`BREAKING_CHANGES_INTERNAL.md`](./docs/BREAKING_CHANGES_INTERNAL.md).
 
 ## Schema Adapters for Type Safety and Validation
 
@@ -287,7 +287,7 @@ For complete examples and advanced usage including Valibot and ArkType, see:
 
 ## Example Gallery Navigation
 
-See [`EXAMPLES.md`](./EXAMPLES.md) for a curated, progressive list of examples from basic to advanced, including dynamic fields and schema-driven validation.
+See [`EXAMPLES.md`](./docs/EXAMPLES.md) for a curated, progressive list of examples from basic to advanced, including dynamic fields and schema-driven validation.
 
 **New Example:**
 
