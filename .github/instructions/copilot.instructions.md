@@ -3,7 +3,7 @@
 ## Technologies Used
 
 - **TypeScript ^5.8**: With strict typing.
-- **Angular ^19**: The primary frontend framework.
+- **Angular ^20**: The primary frontend framework.
 - **Vest**: For form validation. -- [vestjs](https://vestjs.dev/)
 - **Vitest**: For unit testing.
 - **Storybook**: For integration/component testing.
@@ -80,7 +80,7 @@
 
 - Use `inject()` for dependency injection instead of `constructor()` for cleaner and more testable code.
 - Prefer **signals** over traditional observables for state management and reactivity.
-- Leverage the new control flow syntax: `@if`, `@for`, and `@defer` for more readable templates.
+- Use the new control flow syntax: `@if`, `@for`, and `@defer` for more readable templates.
 - Replace `@Input()` and `@Output()` with **signal inputs** (`input()`) and **signal outputs** (`output()`) for better type safety and reactivity.
 - Use `input()`, `output()`, and `model()` for component interactions, including two-way binding.
 - Replace `@ViewChild()` and `@ContentChild()` with `viewChild()` and `contentChild()` for querying elements in a signal-based manner.
