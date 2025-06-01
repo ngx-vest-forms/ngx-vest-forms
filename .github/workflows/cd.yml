@@ -1,33 +1,64 @@
 name: CD
+
 on:
   push:
     branches:
       - master
+
+# Permissions needed for semantic-release
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
 jobs:
   cd:
-    concurrency: ci-${{ github.ref }}
+    concurrency:
+      group: cd-${{ github.ref }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout ✅
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Setup 🏗
-        uses: actions/setup-node@v2
+          fetch-depth: 0  # Needed for semantic-release
+
+      - name: Setup Node.js 🏗
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
-      - name: Install ⚙️
-        run: npm ci
-      - name: Playwright install
-        run: npx playwright install
-      - name: Build 🛠
+
+      - name: Install dependencies ⚙️
+        run: npm ci --prefer-offline
+
+      - name: Cache Playwright browsers 🎭
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: ${{ runner.os }}-playwright-
+
+      - name: Install Playwright browsers 🎭
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps
+
+      - name: Install Playwright deps only 🎭
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps
+      - name: Build project 🛠
         run: npm run build:ci
-      - name: Lint 📝
+
+      - name: Lint code 📝
         run: npm run lint
-      - name: Test 📋
+
+      - name: Run tests 📋
         run: npm run test:ci
-      - name: Publish 📢
+
+      - name: Publish package 📢
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}

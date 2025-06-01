@@ -1,26 +1,51 @@
 name: CI
+
 on:
   pull_request:
     branches:
       - master
+
+# Limit permissions for security
+permissions:
+  contents: read
+
 jobs:
   ci:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout ✅
-        uses: actions/checkout@v2
-      - name: Setup 🏗
-        uses: actions/setup-node@v2
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 🏗
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
-      - name: Install ⚙️
-        run: npm ci
-      - name: Playwright install
-        run: npx playwright install
-      - name: Lint 📝
+
+      - name: Install dependencies ⚙️
+        run: npm ci --prefer-offline
+
+      - name: Cache Playwright browsers 🎭
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: ${{ runner.os }}-playwright-
+
+      - name: Install Playwright browsers 🎭
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps
+
+      - name: Install Playwright deps only 🎭
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps
+      - name: Lint code 📝
         run: npm run lint
-      - name: Build 🛠
+
+      - name: Build project 🛠
         run: npm run build:ci
-      - name: Test 📋
+
+      - name: Run tests 📋
         run: npm run test:ci
