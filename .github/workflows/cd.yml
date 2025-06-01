@@ -15,7 +15,7 @@ jobs:
       - name: Setup 🏗
         uses: actions/setup-node@v2
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
       - name: Install ⚙️
         run: npm ci
@@ -23,6 +23,8 @@ jobs:
         run: npx playwright install
       - name: Build 🛠
         run: npm run build:ci
+      - name: Lint 📝
+        run: npm run lint
       - name: Test 📋
         run: npm run test:ci
       - name: Publish 📢

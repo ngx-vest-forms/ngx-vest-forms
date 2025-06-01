@@ -12,12 +12,14 @@ jobs:
       - name: Setup 🏗
         uses: actions/setup-node@v2
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
       - name: Install ⚙️
         run: npm ci
       - name: Playwright install
         run: npx playwright install
+      - name: Lint 📝
+        run: npm run lint
       - name: Build 🛠
         run: npm run build:ci
       - name: Test 📋
