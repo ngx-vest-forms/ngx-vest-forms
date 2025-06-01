@@ -16,8 +16,7 @@
     "format": "prettier --write \"projects/**/*.{ts,js,json,css,scss,html}\"",
     "lint": "ng lint",
     "semantic-release": "semantic-release",
-    "test:ci": "npm run test:lib",
-    "test:lib": "vitest --config projects/ngx-vest-forms/vite.config.mts",
+    "test:ci": "vitest run --coverage --reporter=junit --outputFile.junit=test-results.xml",
     "test": "vitest",
     "prepare": "husky",
     "postbuild:lib": "copyfiles README.md dist/ngx-vest-forms"

@@ -49,3 +49,23 @@ jobs:
 
       - name: Run tests 📋
         run: npm run test:ci
+        env:
+          CI: true
+          NODE_ENV: test
+
+      - name: Upload coverage reports 📊
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            projects/ngx-vest-forms/coverage/
+            test-results.xml
+          retention-days: 30
+
+      - name: Upload test results 🧪
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results.xml
