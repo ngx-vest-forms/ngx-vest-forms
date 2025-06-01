@@ -1,74 +1,61 @@
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  ContentChild,
-  DestroyRef,
-  HostBinding,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { FormErrorDisplayDirective } from '../../directives/form-error-display.directive';
 
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AbstractControl, NgModel, NgModelGroup } from '@angular/forms';
-import { catchError, EMPTY, merge, retry, Subject, switchMap } from 'rxjs';
-import { FormDirective } from '../../directives/form.directive';
-
+/**
+ * Accessible ControlWrapperComponent
+ *
+ * Usage:
+ *   - Wrap any form element with `sc-control-wrapper` that contains an `ngModel` or `ngModelGroup`.
+ *   - Errors and warnings are shown when the control is invalid and touched, after form submit, or both, depending on the error display mode.
+ *   - Pending state is shown with a spinner and aria-busy when async validation is running.
+ *   - No manual error/warning/pending signal management is needed in your form components.
+ *
+ * Error & Warning Display Behavior:
+ *   - The error display mode can be configured globally using the CONTROL_WRAPPER_ERROR_DISPLAY injection token,
+ *     or per instance using the `errorDisplayMode` input.
+ *   - Possible values: 'touch' | 'submit' | 'touchOrSubmit' (default: 'touchOrSubmit')
+ *
+ * Example (per instance):
+ *   <div scControlWrapper errorDisplayMode="submit">
+ *     <label>
+ *       <span>First name</span>
+ *       <input type="text" name="firstName" [ngModel]="formValue().firstName" />
+ *     </label>
+ *   </div>
+ *
+ * Example (with warnings and pending):
+ *   <sc-control-wrapper>
+ *     <input name="username" ngModel />
+ *   </sc-control-wrapper>
+ *   <!-- If async validation is running, a spinner and 'Validating…' will be shown. -->
+ *   <!-- If Vest warnings are present, they will be shown below errors. -->
+ *
+ * Example (global config):
+ *   import { provide } from '@angular/core';
+ *   import { CONTROL_WRAPPER_ERROR_DISPLAY } from 'ngx-vest-forms';
+ *
+ *   @Component({
+ *     providers: [
+ *       provide(CONTROL_WRAPPER_ERROR_DISPLAY, { useValue: 'submit' })
+ *     ]
+ *   })
+ *   export class MyComponent {}
+ *
+ * Best Practices:
+ *   - Use for every input or group in your forms.
+ *   - Do not manually display errors for individual fields; rely on this wrapper.
+ */
 @Component({
-  // eslint-disable-next-line @angular-eslint/component-selector
-  selector: '[sc-control-wrapper]',
-  standalone: true,
+  selector: 'sc-control-wrapper, [sc-control-wrapper], [scControlWrapper]',
   templateUrl: './control-wrapper.component.html',
   styleUrls: ['./control-wrapper.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    class: 'sc-control-wrapper',
+    ['class.sc-control-wrapper--invalid']: 'errorDisplay.shouldShowErrors()',
+  },
+  hostDirectives: [FormErrorDisplayDirective],
 })
 export class ControlWrapperComponent {
-  readonly #destroyRef = inject(DestroyRef);
-
-  @ContentChild(NgModel) public ngModel?: NgModel; // Optional ngModel
-  public readonly ngModelGroup: NgModelGroup | null = inject(NgModelGroup, {
-    optional: true,
-    self: true,
-  });
-  private readonly destroy$$ = new Subject<void>();
-  private readonly cdRef = inject(ChangeDetectorRef);
-  private readonly formDirective = inject(FormDirective);
-  // Cache the previous error to avoid 'flickering'
-  private previousError?: string[];
-
-  @HostBinding('class.sc-control-wrapper--invalid')
-  public get invalid() {
-    return this.control?.touched && this.errors;
-  }
-
-  public get errors(): string[] | undefined {
-    if (this.control?.pending) {
-      return this.previousError;
-    } else {
-      this.previousError = this.control?.errors?.['errors'];
-    }
-    return this.control?.errors?.['errors'];
-  }
-
-  private get control(): AbstractControl | undefined {
-    return this.ngModelGroup
-      ? this.ngModelGroup.control
-      : this.ngModel?.control;
-  }
-
-  public afterRender(): void {
-    // Create a safe stream combining form events
-    const controlEvents$ = this.control?.events || EMPTY;
-    const groupEvents$ = this.ngModelGroup?.control?.events || EMPTY;
-
-    this.formDirective.idle$
-      .pipe(
-        switchMap(() => merge(controlEvents$, groupEvents$)),
-        retry(3), // Retry if we hit any undefined values
-        catchError(() => EMPTY), // Fallback if retries fail
-        takeUntilDestroyed(this.#destroyRef),
-      )
-      .subscribe(() => {
-        this.cdRef.markForCheck();
-      });
-  }
+  protected readonly errorDisplay = inject(FormErrorDisplayDirective);
 }

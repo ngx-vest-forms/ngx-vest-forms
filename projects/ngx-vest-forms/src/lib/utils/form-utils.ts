@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
-import { injectRootFormKey } from './form-token';
+import { stringifyFieldPath } from './field-path.utils';
+import { injectRootFormKey, InjectRootFormKeyOptions } from './form-token';
 
 /**
  * Recursively calculates the path of a form control
@@ -120,6 +121,8 @@ function isPrimitive(value: any): value is Primitive {
 /**
  * Performs a deep-clone of an object
  * @param obj
+ *
+ * @deprecated Use official ES {@link [structuredClone](https://developer.mozilla.org/en-US/docs/Web/API/Window/structuredClone)} instead
  */
 export function cloneDeep<T>(object: T): T {
   // Handle primitives (null, undefined, boolean, string, number, function)
@@ -152,12 +155,13 @@ export function cloneDeep<T>(object: T): T {
 }
 
 /**
+ *
  * Sets a value in an object in the correct path
  * @param obj
  * @param path
  * @param value
  */
-export function set(object: object, path: string, value: any): void {
+export function setValueAtPath(object: object, path: string, value: any): void {
   const keys = path.split('.');
   let current: any = object;
 
@@ -174,48 +178,64 @@ export function set(object: object, path: string, value: any): void {
 }
 
 /**
- * Traverses the form and returns the errors by path
+ * Traverses the form and returns the errors by path (dot/bracket notation).
+ * Uses field-path.utils for robust path handling (arrays, nested, etc).
+ *
  * @param form The form to get errors from
- * @param rootFormKey Optional custom root form key, if not provided uses the injected ROOT_FORM value
+ * @param options Optional configuration, including an `injector` instance for `injectRootFormKey`.
  */
 export function getAllFormErrors(
   form?: AbstractControl,
-  rootFormKey?: string,
-): Record<string, string> {
-  const errors: Record<string, string> = {};
+  options?: InjectRootFormKeyOptions,
+): Record<string, string[]> {
+  const errors: Record<string, string[]> = {};
   if (!form) {
     return errors;
   }
 
   // Get the root form key using the utility function if not provided
-  const formKey = rootFormKey ?? injectRootFormKey();
+  const formKey = injectRootFormKey('rootForm', options);
 
-  function collect(control: AbstractControl, path: string): void {
+  function collect(control: AbstractControl, pathParts: (string | number)[]) {
     if (control instanceof FormGroup || control instanceof FormArray) {
       for (const key of Object.keys(control.controls)) {
         const childControl = control.get(key);
-        const controlPath = path ? `${path}.${key}` : key;
-        if (path && control.errors && control.enabled) {
-          for (const errorKey of Object.keys(control.errors)) {
-            errors[path] = control.errors![errorKey];
-          }
-        }
+        const nextPath = [
+          ...pathParts,
+          Number.isNaN(Number(key)) ? key : Number(key),
+        ];
         if (childControl) {
-          collect(childControl, controlPath);
+          collect(childControl, nextPath);
         }
       }
-    } else {
-      if (control.errors && control.enabled) {
-        for (const errorKey of Object.keys(control.errors)) {
-          errors[path] = control.errors![errorKey];
-        }
+    }
+    if (control.errors && control.enabled) {
+      // Only add if there are errors for this control
+      if (control.errors['errors'] && Array.isArray(control.errors['errors'])) {
+        const pathString =
+          pathParts.length > 0 ? stringifyFieldPath(pathParts) : formKey;
+        errors[pathString] = control.errors['errors'];
+      }
+      // Optionally, add warnings if present
+      if (
+        control.errors['warnings'] &&
+        Array.isArray(control.errors['warnings'])
+      ) {
+        const pathString =
+          pathParts.length > 0 ? stringifyFieldPath(pathParts) : formKey;
+        // Attach warnings as a property on the error array (non-enumerable)
+        (errors[pathString] as any).warnings = control.errors['warnings'];
       }
     }
   }
 
-  collect(form, '');
-  if (form.errors && form.errors!['errors']) {
-    errors[formKey] = form.errors && form.errors!['errors'];
+  collect(form, []);
+  // Also check root form errors
+  if (form.errors && form.errors['errors']) {
+    errors[formKey] = form.errors['errors'];
+    if (form.errors['warnings']) {
+      (errors[formKey] as any).warnings = form.errors['warnings'];
+    }
   }
 
   return errors;
