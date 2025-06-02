@@ -430,6 +430,12 @@ describe('FormDirective', () => {
       expect(formDirective?.formState()).toBeDefined();
     });
 
+    it('should automatically add the novalidate attribute to the form', async () => {
+      await render(TestFormComponent);
+      const form = screen.getByRole('form');
+      expect(form).toHaveAttribute('novalidate');
+    });
+
     it('should sync form values with model() two-way binding - Resource API enhanced', async () => {
       const { fixture } = await render(TestFormComponent);
       const applicationReference =

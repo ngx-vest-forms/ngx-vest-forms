@@ -86,10 +86,24 @@ export type FormState<TModel> = {
   idle: boolean;
 };
 
+/**
+ * Directive that integrates Vest validation with Angular forms.
+ * This directive is used to create a reactive form that can validate its fields
+ * using a Vest suite, and it provides a structured way to manage form state and validation.
+ *
+ * Defaults to `novalidate` attribute to prevent default HTML5 validation.
+ * The validation should be handled by the Vest suite defined in the `vestSuite` input.
+ *
+ * @template TSchema The schema definition for the form, if any.
+ * @template TModel The type of the model represented by the form.
+ */
 @Directive({
   selector: 'form[ngxVestForm]',
   hostDirectives: [ValidateRootFormDirective],
   exportAs: 'ngxVestForm',
+  host: {
+    '[attr.novalidate]': '""',
+  },
 })
 export class FormDirective<
   TSchema extends SchemaDefinition | null = null,
