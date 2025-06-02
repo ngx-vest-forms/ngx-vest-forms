@@ -13,6 +13,40 @@
 - **Powerful Validations:** Use Vest.js for declarative, composable, and async validation logic.
 - **Accessible by Default:** Built-in error display, ARIA roles, and keyboard support via `<ngx-control-wrapper>`.
 - **Modern Angular:** Designed for Angular 17+ standalone components, signals, and new control flow (`@if`, `@for`).
+- **Native HTML5 validation is disabled:** The `novalidate` attribute is automatically added to all forms using `ngxVestForm`, so all validation is handled by VestJS and Angular, not the browser. See details below.
+
+---
+
+## Native HTML5 Validation is Disabled (`novalidate`)
+
+When you use `ngxVestForm`, the `novalidate` attribute is **automatically added** to your `<form>`. This disables the browser's built-in HTML5 validation UI and ensures that **all validation is handled by VestJS** and your Angular logic.
+
+**Why?**
+
+- **Consistency:** VestJS provides a single source of truth for validation logic and error messages, ensuring a consistent user experience across browsers.
+- **No Double Validation:** Disabling native validation prevents redundant or conflicting error messages from the browser.
+- **Full Control:** VestJS supports complex, conditional, and cross-field validations that native HTML5 cannot handle.
+
+**How?**
+
+- You do **not** need to add `novalidate` manually. The directive does this for you:
+
+  ```html
+  <form ngxVestForm ...>
+    <!-- ... -->
+  </form>
+  ```
+
+  Renders as:
+
+  ```html
+  <form ngxvestform="" novalidate>
+    <!-- ... -->
+  </form>
+  ```
+
+**Best Practice:**
+Define all validation rules (e.g., required, min/max, pattern) in your VestJS suite. Do **not** rely on native HTML5 validation attributes, as they will be ignored by the browser when `novalidate` is present.
 
 ---
 
@@ -32,8 +66,8 @@ npm i ngx-vest-forms
 import { signal } from '@angular/core';
 import { modelToStandardSchema } from 'ngx-vest-forms';
 
-const userTemplate = { name: '', email: '' };
-const userSchema = modelToStandardSchema(userTemplate); // Or use Zod/ArkType/Valibot
+const userModel = { name: '', email: '' };
+const userSchema = modelToStandardSchema(userModel); // Or use Zod/ArkType/Valibot
 ```
 
 ### 2. Create a Vest Validation Suite
@@ -82,7 +116,7 @@ import { ngxVestForms } from 'ngx-vest-forms';
   `,
 })
 export class UserFormComponent {
-  protected readonly model = signal(userTemplate);
+  protected readonly model = signal(userModel);
   protected readonly schema = userSchema;
   protected readonly suite = userSuite;
 }
@@ -1705,7 +1739,7 @@ import {
   WritableSignal,
   computed,
 } from '@angular/core';
-import { linkedSignal } from '@angular/cdk/signals'; // Import from CDK or implement your own
+import { linkedSignal } from '@angular/core';
 import { FormDirective, ngxVestForms, VestSuite } from 'ngx-vest-forms';
 import { SomeStoreService } from './some-store.service'; // Example service
 
@@ -1778,7 +1812,7 @@ export class UserProfileComponent {
 **Key Considerations for `linkedSignal` Pattern:**
 
 - **Complexity:** Adds significant complexity compared to just setting `[formValue]` once.
-- **`linkedSignal` Source:** You'll need to import `linkedSignal` (e.g., from `@angular/cdk/signals` when available, or implement a similar utility).
+- **`linkedSignal` Source:** You'll need to import `linkedSignal` (e.g., from `@angular/core` when available, or implement a similar utility).
 - **Reset Logic:** Carefully define the `computation` logic to handle how changes from the `source` affect the form's data (reset, merge, etc.).
 - **Immutability:** Ensure you are setting _copies_ of objects to `linkedSignal` and potentially within the `computation` to avoid unintended side effects.
 
@@ -1873,3 +1907,5 @@ You might want to set `[validateRootForm]` to `false` in these situations:
 - **Legacy or simple forms:** If your form setup predates root-level validation or is very simple, you may not want to introduce extra validation logic.
 
 See the [Validations on the root form](#validations-on-the-root-form) section for more details.
+
+---
