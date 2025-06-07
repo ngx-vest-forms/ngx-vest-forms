@@ -7,9 +7,8 @@ import angular from '@analogjs/vite-plugin-angular';
 export default defineProject(({ mode }) => ({
   plugins: [angular(), viteTsConfigPaths()],
   test: {
-    name: 'ngx-vest-forms',
+    name: 'examples',
     globals: true,
-    setupFiles: ['./src/test-setup.ts'],
     include: ['./src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: [
       '**/node_modules/**',

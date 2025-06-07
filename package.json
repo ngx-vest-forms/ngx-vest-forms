@@ -24,6 +24,7 @@
   "private": false,
   "dependencies": {
     "@angular/animations": "20.0.1",
+    "@angular/cdk": "^20.0.1",
     "@angular/common": "20.0.1",
     "@angular/compiler": "20.0.1",
     "@angular/core": "20.0.1",
