@@ -36,6 +36,72 @@
         }
       }
     },
+    "ngx-vest-forms-control-wrapper": {
+      "projectType": "library",
+      "root": "projects/ngx-vest-forms/control-wrapper",
+      "sourceRoot": "projects/ngx-vest-forms/control-wrapper/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/ngx-vest-forms/control-wrapper/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/ngx-vest-forms/control-wrapper/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/ngx-vest-forms/control-wrapper/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/ngx-vest-forms/control-wrapper/**/*.ts",
+              "projects/ngx-vest-forms/control-wrapper/**/*.html"
+            ],
+            "eslintConfig": "projects/ngx-vest-forms/eslint.config.mjs"
+          }
+        }
+      }
+    },
+    "ngx-vest-forms-schemas": {
+      "projectType": "library",
+      "root": "projects/ngx-vest-forms/schemas",
+      "sourceRoot": "projects/ngx-vest-forms/schemas/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/ngx-vest-forms/schemas/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/ngx-vest-forms/schemas/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/ngx-vest-forms/schemas/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/ngx-vest-forms/schemas/**/*.ts",
+              "projects/ngx-vest-forms/schemas/**/*.html"
+            ],
+            "eslintConfig": "projects/ngx-vest-forms/eslint.config.mjs"
+          }
+        }
+      }
+    },
     "examples": {
       "projectType": "application",
       "schematics": {

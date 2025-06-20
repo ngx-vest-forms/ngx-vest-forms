@@ -10,9 +10,9 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NgForm } from '@angular/forms';
 import { of } from 'rxjs';
 import {
-  CONTROL_WRAPPER_ERROR_DISPLAY,
+  ERROR_DISPLAY_MODE_DEFAULT,
   ErrorDisplayMode,
-} from '../components/control-wrapper/control-wrapper.config';
+} from '../config/error-display.config';
 import { FormControlStateDirective } from './form-control-state.directive';
 
 /**
@@ -35,7 +35,7 @@ import { FormControlStateDirective } from './form-control-state.directive';
  *
  * Basic Usage:
  * ```html
- * <div scFormErrorDisplay #display="formErrorDisplay" errorDisplayMode="on-submit">
+ * <div ngxFormErrorDisplay #display="formErrorDisplay" errorDisplayMode="on-submit">
  *   <input type="text" name="email" ngModel />
  *
  *   @if (display.shouldShowErrors()) {
@@ -74,7 +74,7 @@ export class FormErrorDisplayDirective {
 
   // Configuration for when to display errors
   readonly errorDisplayMode = input<ErrorDisplayMode>(
-    inject(CONTROL_WRAPPER_ERROR_DISPLAY),
+    inject(ERROR_DISPLAY_MODE_DEFAULT),
   );
 
   // Access the underlying form control state and its derived signals

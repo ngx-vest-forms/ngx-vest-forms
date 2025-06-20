@@ -5,7 +5,6 @@ import {
   NgForm,
   NgModelGroup,
 } from '@angular/forms';
-import { ControlWrapperComponent } from './components/control-wrapper/control-wrapper.component';
 import { FormControlStateDirective } from './directives/form-control-state.directive';
 import { FormErrorDisplayDirective } from './directives/form-error-display.directive';
 import { FormModelGroupDirective } from './directives/form-model-group.directive';
@@ -71,22 +70,20 @@ export const ngxVestFormsViewProviders = [
 
 /**
  * Exports all the stuff we need to use the template driven forms
+ *
+ * ValidateRootFormDirective is included for manual cross-field validation
+ * when needed alongside the main form directives.
  */
 export const ngxVestForms = [
-  ValidateRootFormDirective,
-  ControlWrapperComponent,
   FormDirective,
   FormsModule,
   FormModelDirective,
   FormModelGroupDirective,
   FormControlStateDirective,
   FormErrorDisplayDirective,
+  ValidateRootFormDirective,
 ] as const;
 
-export {
-  CONTROL_WRAPPER_ERROR_DISPLAY,
-  ErrorDisplayMode,
-} from './components/control-wrapper/control-wrapper.config';
 export {
   FormControlState,
   getInitialFormControlState,

@@ -21,7 +21,26 @@
     "useDefineForClassFields": false,
     "lib": ["ES2022", "dom"],
     "paths": {
-      "ngx-vest-forms": ["dist/ngx-vest-forms"]
+      "ngx-vest-forms": [
+        "dist/ngx-vest-forms",
+        "projects/ngx-vest-forms/src/public-api.ts"
+      ],
+      "ngx-vest-forms/*": [
+        "dist/ngx-vest-forms/*",
+        "projects/ngx-vest-forms/*/public-api.ts"
+      ],
+      "ngx-vest-forms/smart-state": [
+        "dist/ngx-vest-forms/smart-state",
+        "projects/ngx-vest-forms/smart-state/public-api.ts"
+      ],
+      "ngx-vest-forms/control-wrapper": [
+        "dist/ngx-vest-forms/control-wrapper",
+        "projects/ngx-vest-forms/control-wrapper/public-api.ts"
+      ],
+      "ngx-vest-forms/schemas": [
+        "dist/ngx-vest-forms/schemas",
+        "projects/ngx-vest-forms/schemas/public-api.ts"
+      ]
     }
   },
   "angularCompilerOptions": {

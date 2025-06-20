@@ -2,7 +2,6 @@
  * Public API Surface of ngx-vest-forms
  */
 
-export { ControlWrapperComponent } from './lib/components/control-wrapper/control-wrapper.component';
 export { FormControlStateDirective } from './lib/directives/form-control-state.directive';
 export { FormErrorDisplayDirective } from './lib/directives/form-error-display.directive';
 export { FormModelGroupDirective } from './lib/directives/form-model-group.directive';
@@ -30,21 +29,11 @@ export {
   mergeValuesAndRawValues,
   setValueAtPath as set,
 } from './lib/utils/form-utils';
-export {
-  InferSchemaType,
-  SchemaDefinition,
-  extractTemplateFromSchema,
-  isStandardSchema,
-  modelToStandardSchema,
-  shapeToSchema,
-} from './lib/utils/schema-adapter';
+
 export { FieldKey, VestSuite } from './lib/utils/validation-suite';
 
 export {
-  ModelTemplateMismatchError,
-  ShapeMismatchError,
-  validateModelTemplate,
-  validateShape,
-} from './lib/utils/shape-validation';
-
+  ERROR_DISPLAY_MODE_DEFAULT,
+  ErrorDisplayMode,
+} from './lib/config/error-display.config';
 export * from './lib/utils/field-path.utils';

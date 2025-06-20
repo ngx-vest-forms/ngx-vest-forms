@@ -50,7 +50,7 @@ export function getInitialFormControlState(): FormControlState {
 }
 
 /**
- * Directive: scFormControlState
+ * Directive: ngxFormControlState
  *
  * Provides reactive signals for accessing the core state of Angular form controls and Vest validation results.
  * This directive focuses on WHAT data is available from form controls, without opinions on WHEN or HOW to display it.
@@ -72,7 +72,7 @@ export function getInitialFormControlState(): FormControlState {
  *
  * Basic usage:
  * ```html
- * <div scFormControlState #state="formControlState">
+ * <div ngxFormControlState #state="formControlState">
  *   <input type="text" name="username" ngModel />
  *
  *   @if (state.controlState().isTouched && state.errorMessages().length) {

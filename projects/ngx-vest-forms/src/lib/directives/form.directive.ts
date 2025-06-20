@@ -7,12 +7,7 @@ import {
   Injector,
   input,
   isDevMode,
-  linkedSignal,
   model,
-  resource,
-  runInInjectionContext,
-  signal,
-  WritableSignal,
 } from '@angular/core';
 import {
   takeUntilDestroyed,
@@ -39,6 +34,7 @@ import {
   of,
   ReplaySubject,
   retry,
+  share,
   startWith,
   switchMap,
   take,
@@ -55,10 +51,9 @@ import {
   extractTemplateFromSchema,
   InferSchemaType,
   SchemaDefinition,
-} from '../utils/schema-adapter';
+} from 'ngx-vest-forms/schemas';
 import { validateModelTemplate } from '../utils/shape-validation';
 import { VestSuite } from '../utils/validation-suite';
-import { ValidateRootFormDirective } from './validate-root-form.directive';
 import { ValidationOptions } from './validation-options';
 
 /**
@@ -68,8 +63,16 @@ import { ValidationOptions } from './validation-options';
 export type FormState<TModel> = {
   /** The current value of the form */
   value: TModel | null;
-  /** Current validation errors */
+  /** Current validation errors for specific fields */
   errors: Record<string, string[]>;
+  /** Current validation warnings for specific fields */
+  warnings: Record<string, string[]>;
+  /** Root-level form issues */
+  root?: {
+    errors?: string[];
+    warnings?: string[];
+    internalError?: string;
+  } | null;
   /** Current validation status */
   status: 'VALID' | 'INVALID' | 'PENDING' | 'DISABLED';
   /** Whether the form has been modified */
@@ -99,7 +102,6 @@ export type FormState<TModel> = {
  */
 @Directive({
   selector: 'form[ngxVestForm]',
-  hostDirectives: [ValidateRootFormDirective],
   exportAs: 'ngxVestForm',
   host: {
     '[attr.novalidate]': '""',
@@ -165,19 +167,14 @@ export class FormDirective<
   });
 
   /**
-   * Resource-based field validator cache for performance optimization
-   * Maps field names to their validation resources and model signals
+   * Simple validator cache for field validators using toObservable + RxJS pattern
+   * Maps field names to their validation observables with shared debounced streams
    */
   readonly #fieldValidatorCache = new Map<
     string,
     {
-      modelSignal: WritableSignal<TModel>;
-      validationResource: ReturnType<
-        typeof resource<
-          ValidationErrors | null,
-          { model: TModel; field: string }
-        >
-      >;
+      stream$: Observable<ValidationErrors | null>;
+      modelChanges$: ReplaySubject<TModel>;
     }
   >();
 
@@ -230,36 +227,74 @@ export class FormDirective<
     return status !== 'PENDING' && status !== 'DISABLED';
   });
 
-  readonly #errors = computed(() => {
-    return getAllFormErrors(this.ngForm.form, { injector: this.#injector });
+  readonly #fieldErrorsAndWarnings = computed(() => {
+    return getAllFormErrors(this.ngForm.form);
   });
 
-  /// --- MODERN SIGNAL API USAGE ---
-  readonly #syncedFormValue = linkedSignal(() => {
-    const formValue = this.#formValueSignal();
-
-    if (isDevMode()) {
-      this.#logFormValueChanges(formValue);
+  readonly #rootErrorsAndWarnings = computed<{
+    errors?: string[];
+    warnings?: string[];
+    internalError?: string;
+  } | null>(() => {
+    const rootNGErrors = this.ngForm.form.errors;
+    if (!rootNGErrors) {
+      return null;
     }
-
-    return formValue;
+    const rootState: {
+      errors?: string[];
+      warnings?: string[];
+      internalError?: string;
+    } = {};
+    if (rootNGErrors['errors'] && Array.isArray(rootNGErrors['errors'])) {
+      rootState.errors = rootNGErrors['errors'];
+    }
+    if (rootNGErrors['warnings'] && Array.isArray(rootNGErrors['warnings'])) {
+      rootState.warnings = rootNGErrors['warnings'];
+    }
+    if (
+      rootNGErrors['vestInternalError'] &&
+      typeof rootNGErrors['vestInternalError'] === 'string'
+    ) {
+      rootState.internalError = rootNGErrors['vestInternalError'];
+    }
+    return Object.keys(rootState).length > 0 ? rootState : null;
   });
 
   /// --- PUBLIC API: CURRENT FORM STATE ---
-  readonly formState = computed<FormState<TModel>>(
-    () =>
-      ({
-        value: this.#formValueSignal() ?? null,
-        errors: this.#errors() ?? {},
-        status: this.#statusSignal() ?? 'VALID',
-        dirty: this.#dirtySignal() ?? false,
-        valid: this.#isValid(),
-        invalid: this.#isInvalid(),
-        pending: this.#isPending(),
-        disabled: this.#isDisabled(),
-        idle: this.#isIdle(),
-      }) satisfies FormState<TModel>,
-  );
+  readonly formState = computed<FormState<TModel>>(() => {
+    const allFieldMessages = this.#fieldErrorsAndWarnings() ?? {};
+    const fieldErrors: Record<string, string[]> = {};
+    const fieldWarnings: Record<string, string[]> = {};
+
+    for (const key in allFieldMessages) {
+      if (Object.prototype.hasOwnProperty.call(allFieldMessages, key)) {
+        // The errors array is the primary value
+        fieldErrors[key] = allFieldMessages[key];
+        // Warnings are attached as a property on the error array by getAllFormErrors
+        const warningsProperty = Object.getOwnPropertyDescriptor(
+          allFieldMessages[key],
+          'warnings',
+        );
+        if (warningsProperty && Array.isArray(warningsProperty.value)) {
+          fieldWarnings[key] = warningsProperty.value;
+        }
+      }
+    }
+
+    return {
+      value: this.#formValueSignal() ?? null,
+      errors: fieldErrors,
+      warnings: fieldWarnings,
+      root: this.#rootErrorsAndWarnings(),
+      status: this.#statusSignal() ?? 'VALID',
+      dirty: this.#dirtySignal() ?? false,
+      valid: this.#isValid(),
+      invalid: this.#isInvalid(),
+      pending: this.#isPending(),
+      disabled: this.#isDisabled(),
+      idle: this.#isIdle(),
+    } satisfies FormState<TModel>;
+  });
 
   /// --- DEPRECATED PUBLIC API ---
   readonly isValid = this.#isValid;
@@ -269,46 +304,17 @@ export class FormDirective<
   readonly isIdle = this.#isIdle;
   readonly dirtyChange = this.#dirtySignal;
   readonly validChange = computed(() => this.#statusSignal() === 'VALID');
-  readonly errors = this.#errors;
+  readonly errors = computed(() => this.formState().errors); // Update deprecated errors to reflect new structure
 
   /// --- EFFECTS ---
   // eslint-disable-next-line no-unused-private-class-members -- This is a private effect
   readonly #formValueSyncEffect = effect(() => {
-    const currentValue = this.#syncedFormValue();
+    const currentValue = this.#formValueSignal();
 
     if (isDevMode()) {
-      let loggableValue = currentValue;
-      if (
-        currentValue !== null &&
-        currentValue !== undefined &&
-        typeof currentValue === 'object' &&
-        !(currentValue instanceof Date) &&
-        !Array.isArray(currentValue)
-      ) {
-        try {
-          loggableValue = structuredClone(currentValue);
-        } catch {
-          // If cloning fails, log the original value
-        }
-      }
-      console.log(
-        '[FormDirective] #syncedFormValue changed, setting formValue with:',
-        loggableValue,
-      );
-
-      if (
-        currentValue !== null &&
-        currentValue !== undefined &&
-        typeof currentValue === 'object' &&
-        !(currentValue instanceof Date) &&
-        !Array.isArray(currentValue) &&
-        Object.keys(currentValue).length === 0
-      ) {
-        console.warn(
-          '[FormDirective] #formValueSignal is an empty object {}. This will be emitted via formValueChange.',
-        );
-      }
+      this.#logFormValueChanges(currentValue);
     }
+
     // Coalesce undefined to null because formValue model is TModel | null
     this.formValue.set(currentValue === undefined ? null : currentValue);
   });
@@ -464,217 +470,106 @@ export class FormDirective<
   }
 
   /**
-   * Creates a field validator using Resource API with automatic loading states and abort handling
-   * Replaces Observable-based validation for better performance and state management
+   * Creates a field validator using toObservable + RxJS pattern for streaming validation
+   * Replaces complex resource-based validation with simpler, more efficient approach
    */
   #createFieldValidator(
     field: string,
     suite: VestSuite<TModel>,
     validationOptions: ValidationOptions,
   ): AsyncValidatorFn {
+    // Check if we already have a cached validator for this field
     let fieldValidatorContext = this.#fieldValidatorCache.get(field);
 
     if (!fieldValidatorContext) {
-      fieldValidatorContext = runInInjectionContext(this.#injector, () => {
-        const modelSignal = signal<TModel>(this.#getCurrentModel());
+      // Create a shared validation stream for this field
+      const fieldModelChanges$ = new ReplaySubject<TModel>(1);
 
-        const validationResourceInstance = resource({
-          params: () => ({ model: modelSignal(), field }),
-          loader: async ({
-            params: { model: currentModel, field: currentField },
-            abortSignal,
-          }) => {
-            return new Promise<ValidationErrors | null>((resolve, reject) => {
-              if (abortSignal.aborted) {
-                return reject(
-                  new DOMException(
-                    'Validation aborted (pre-execution)',
-                    'AbortError',
-                  ),
-                );
-              }
+      const fieldValidator$ = fieldModelChanges$.pipe(
+        debounceTime(validationOptions.debounceTime),
+        distinctUntilChanged(),
+        switchMap(
+          (model) =>
+            new Observable<ValidationErrors | null>((observer) => {
+              try {
+                suite(model, field).done(
+                  (result: SuiteResult<string, string>) => {
+                    const errors = result.getErrors()[field];
+                    const warnings = result.getWarnings()[field];
 
-              const debounceMs = validationOptions.debounceTime;
-              let timeoutId: ReturnType<typeof setTimeout> | undefined;
-
-              const executeValidation = () => {
-                if (abortSignal.aborted) {
-                  return reject(
-                    new DOMException(
-                      'Validation aborted (pre-suite call)',
-                      'AbortError',
-                    ),
-                  );
-                }
-                try {
-                  suite(currentModel, currentField).done(
-                    (result: SuiteResult<string, string>) => {
-                      if (abortSignal.aborted) {
-                        return reject(
-                          new DOMException(
-                            'Validation aborted (post-suite call)',
-                            'AbortError',
-                          ),
-                        );
+                    let validationOutput: ValidationErrors | null = null;
+                    if (
+                      (errors && errors.length > 0) ||
+                      (warnings && warnings.length > 0)
+                    ) {
+                      validationOutput = {};
+                      if (errors && errors.length > 0) {
+                        validationOutput['errors'] = errors;
                       }
-                      const errors = result.getErrors()[currentField];
-                      const warnings = result.getWarnings()[currentField];
-                      let validationOutput: ValidationErrors | null = null;
-                      if (
-                        (errors && errors.length > 0) ||
-                        (warnings && warnings.length > 0)
-                      ) {
-                        validationOutput = {};
-                        if (errors && errors.length > 0)
-                          validationOutput['errors'] = errors;
-                        if (warnings && warnings.length > 0)
-                          validationOutput['warnings'] = warnings;
+                      if (warnings && warnings.length > 0) {
+                        validationOutput['warnings'] = warnings;
                       }
-                      resolve(validationOutput);
-                    },
-                  );
-                } catch (error) {
-                  // Catches synchronous errors from suite() or done() callback
-                  if (abortSignal.aborted) {
-                    reject(
-                      new DOMException(
-                        'Validation aborted (during suite execution/callback)',
-                        'AbortError',
-                      ),
-                    );
-                  } else {
-                    if (isDevMode()) {
-                      console.error(
-                        `[FormDirective] Synchronous error during Vest suite execution for field '${currentField}':`,
-                        error,
-                      );
                     }
-                    reject({
-                      // Reject to put resource in 'hasError' state
-                      vestInternalError: `Vest suite execution failed for field '${currentField}'.`,
-                      originalError:
-                        error instanceof Error ? error.message : String(error),
-                    });
-                  }
-                }
-              };
 
-              if (debounceMs > 0) {
-                timeoutId = setTimeout(executeValidation, debounceMs);
-                abortSignal.addEventListener('abort', () => {
-                  if (timeoutId) clearTimeout(timeoutId);
-                  reject(
-                    new DOMException(
-                      'Validation aborted (debounce period)',
-                      'AbortError',
-                    ),
+                    observer.next(validationOutput);
+                    observer.complete();
+                  },
+                );
+              } catch (error) {
+                if (isDevMode()) {
+                  console.error(
+                    `[FormDirective] Error during Vest suite execution for field '${field}':`,
+                    error,
                   );
+                }
+                observer.next({
+                  vestInternalError: `Vest suite execution failed for field '${field}'.`,
+                  originalError:
+                    error instanceof Error ? error.message : String(error),
                 });
-              } else {
-                executeValidation();
+                observer.complete();
               }
-            });
-          },
-        });
-        return { modelSignal, validationResource: validationResourceInstance };
-      });
+            }),
+        ),
+        catchError((error) => {
+          if (isDevMode()) {
+            console.error(
+              `[FormDirective] Validation stream error for field '${field}':`,
+              error,
+            );
+          }
+          return of({
+            vestInternalError: `Validation failed for field '${field}'.`,
+            originalError:
+              error instanceof Error ? error.message : String(error),
+          });
+        }),
+        share(), // Share the stream among multiple subscribers
+        takeUntilDestroyed(this.#destroyRef),
+      );
+
+      // Cache the stream and subject
+      fieldValidatorContext = {
+        stream$: fieldValidator$,
+        modelChanges$: fieldModelChanges$,
+      };
       this.#fieldValidatorCache.set(field, fieldValidatorContext);
+
       if (isDevMode()) {
         console.log(
-          `[FormDirective] Created Resource-based validator for field '${field}' (debounce: ${validationOptions.debounceTime}ms)`,
+          `[FormDirective] Created streaming validator for field '${field}' (debounce: ${validationOptions.debounceTime}ms)`,
         );
       }
     }
 
-    const currentValidatorContextFromCache = fieldValidatorContext;
-
     return (control: AbstractControl) => {
       const modelSnapshot = structuredClone(this.#getCurrentModel());
       setValueAtPath(modelSnapshot as object, field, control.value);
-      currentValidatorContextFromCache.modelSignal.set(modelSnapshot as TModel);
 
-      return runInInjectionContext(this.#injector, () => {
-        const PENDING_VALIDATION_MARKER =
-          '__NG_VALIDATOR_PENDING_INTERNAL_MARKER__' as const;
-        type PendingMarkerType = typeof PENDING_VALIDATION_MARKER;
+      // Trigger validation with the new model
+      fieldValidatorContext.modelChanges$.next(modelSnapshot as TModel);
 
-        const resourceSignalReference =
-          currentValidatorContextFromCache.validationResource;
-
-        const validationResultComputed = computed<
-          ValidationErrors | null | PendingMarkerType
-        >(() => {
-          const currentStatus = resourceSignalReference.status();
-          const currentValueSignal = resourceSignalReference.value;
-          const currentErrorSignal = resourceSignalReference.error;
-
-          switch (currentStatus) {
-            case 'loading':
-            case 'reloading': {
-              return PENDING_VALIDATION_MARKER;
-            }
-            case 'resolved': {
-              return currentValueSignal() ?? null;
-            }
-            case 'error': {
-              const errorData = currentErrorSignal();
-              if (
-                errorData instanceof DOMException &&
-                errorData.name === 'AbortError'
-              ) {
-                return null;
-              }
-              if (isDevMode()) {
-                console.error(
-                  `[FormDirective] Validation resource encountered an error for field '${field}':`,
-                  errorData,
-                );
-              }
-              if (typeof errorData === 'object' && errorData !== null) {
-                return errorData as ValidationErrors;
-              }
-              return {
-                vestInternalError: `Validation failed for field '${field}'. Error: ${String(errorData)}`,
-              };
-            }
-            case 'idle': {
-              return null;
-            }
-            case 'local': {
-              return currentValueSignal() ?? null;
-            }
-            default: {
-              if (isDevMode()) {
-                console.warn(
-                  '[FormDirective] Encountered an unhandled resource status:',
-                  currentStatus,
-                );
-              }
-              return null;
-            }
-          }
-        });
-
-        return toObservable(validationResultComputed, {
-          injector: this.#injector,
-        }).pipe(
-          filter(
-            (result): result is ValidationErrors | null =>
-              result !== PENDING_VALIDATION_MARKER,
-          ),
-          distinctUntilChanged((previousResult, currentResult) => {
-            if (previousResult === currentResult) return true;
-            if (!previousResult || !currentResult) return false;
-            try {
-              return (
-                JSON.stringify(previousResult) === JSON.stringify(currentResult)
-              );
-            } catch {
-              return false;
-            }
-          }),
-        );
-      });
+      return fieldValidatorContext.stream$;
     };
   }
 
