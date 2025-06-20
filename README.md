@@ -14,6 +14,149 @@
 - **Accessible by Default:** Built-in error display, ARIA roles, and keyboard support via `<ngx-control-wrapper>`.
 - **Modern Angular:** Designed for Angular 17+ standalone components, signals, and new control flow (`@if`, `@for`).
 - **Native HTML5 validation is disabled:** The `novalidate` attribute is automatically added to all forms using `ngxVestForm`, so all validation is handled by VestJS and Angular, not the browser. See details below.
+- **Advanced Features Available:** Optional smart state management and UI helper components (like Control Wrapper) available as secondary entry points.
+
+---
+
+## UI Helper: Control Wrapper (Optional)
+
+For streamlined error display and accessibility in your forms, `ngx-vest-forms` offers the `NgxControlWrapper` as an **optional secondary entry point**. This component simplifies wrapping your form inputs to automatically handle error messages and ARIA attributes.
+
+### Control Wrapper: Installation and Usage
+
+The `NgxControlWrapper` is available from `ngx-vest-forms/control-wrapper`:
+
+```typescript
+// Import from the control-wrapper secondary entry point
+import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
+
+@Component({
+  standalone: true,
+  imports: [
+    ngxVestForms, // Core directive
+    NgxControlWrapper, // The wrapper component
+    // ... other imports
+  ],
+  template: `
+    <form ngxVestForm [vestSuite]="mySuite" [(formValue)]="model">
+      <ngx-control-wrapper>
+        <label for="username">Username:</label>
+        <input id="username" name="username" ngModel />
+      </ngx-control-wrapper>
+      <button type="submit">Submit</button>
+    </form>
+  `,
+})
+export class MyFormComponent {
+  // ...
+}
+```
+
+**📖 [Complete Control Wrapper Documentation](./projects/ngx-vest-forms/control-wrapper/README.md)** - Detailed guide on usage, configuration, and customization.
+
+---
+
+## Advanced Features: Smart State Management (Optional)
+
+For complex applications that need intelligent data merging, conflict resolution, and external data synchronization, `ngx-vest-forms` provides advanced smart state management as an **optional secondary entry point**.
+
+### When You Need Smart State Management
+
+- **User profiles** that might be updated by admins while users edit
+- **Collaborative editing** with real-time synchronization
+- **Long-running forms** where external data changes during editing
+- **Mobile/offline apps** that sync when connectivity returns
+
+### Installation and Usage
+
+Smart state management is available as a separate entry point to keep the core library lightweight:
+
+```typescript
+// Import from the smart-state secondary entry point
+import { ngxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state';
+
+@Component({
+  imports: [ngxVestForms, ngxVestFormsSmartStateDirective],
+  template: `
+    <form
+      ngxVestForm
+      ngxSmartStateExtension
+      [vestSuite]="userSuite"
+      [(formValue)]="userProfile"
+      [externalData]="externalUserData()"
+      [smartStateOptions]="smartOptions"
+      #form="ngxVestForm"
+    >
+      <!-- Your form fields -->
+    </form>
+  `,
+})
+export class UserProfileComponent {
+  userProfile = signal<UserProfile | null>(null);
+  externalUserData = signal<UserProfile | null>(null);
+
+  // Smart state options - automatically handles intelligent merging
+  smartOptions: SmartStateOptions<UserProfile> = {
+    mergeStrategy: 'smart',
+    preserveFields: ['firstName', 'email'], // Preserve user edits on these fields
+    conflictResolution: true,
+  };
+
+  async refreshUserData() {
+    const userData = await this.userService.getUser();
+    this.externalUserData.set(userData);
+    // Smart state automatically handles intelligent merging
+  }
+}
+```
+
+**📖 [Complete Smart State Documentation](./projects/ngx-vest-forms/smart-state/README.md)** - Comprehensive guide with advanced patterns, conflict resolution strategies, and real-world examples.
+
+---
+
+## Schema Utilities: Type Safety & Validation (Optional)
+
+For enhanced type safety and schema-based validation, `ngx-vest-forms` provides powerful schema utilities as an **optional secondary entry point**. These utilities work with popular schema libraries like Zod, Valibot, and ArkType, or simple object templates.
+
+### Schema Utilities: Installation and Usage
+
+Schema utilities are available from `ngx-vest-forms/schemas`:
+
+```typescript
+// Import from the schemas secondary entry point
+import {
+  modelToStandardSchema,
+  InferSchemaType,
+  SchemaDefinition,
+} from 'ngx-vest-forms/schemas';
+
+const userTemplate = {
+  name: '',
+  email: '',
+  age: 0,
+};
+
+const userSchema = modelToStandardSchema(userTemplate);
+type User = InferSchemaType<typeof userSchema>;
+
+@Component({
+  standalone: true,
+  imports: [ngxVestForms],
+  template: `
+    <form ngxVestForm [formSchema]="userSchema" [(formValue)]="userData">
+      <input name="name" ngModel placeholder="Name" />
+      <input name="email" type="email" ngModel placeholder="Email" />
+      <input name="age" type="number" ngModel placeholder="Age" />
+    </form>
+  `,
+})
+export class UserFormComponent {
+  protected readonly userSchema = userSchema;
+  protected readonly userData = signal<User>(userTemplate);
+}
+```
+
+**📖 [Complete Schema Utilities Documentation](./projects/ngx-vest-forms/schemas/README.md)** - Comprehensive guide with examples for Zod, Valibot, ArkType, and object templates.
 
 ---
 
@@ -37,13 +180,15 @@ When you use `ngxVestForm`, the `novalidate` attribute is **automatically added*
   </form>
   ```
 
-  Renders as:
+`````
 
-  ```html
-  <form ngxvestform="" novalidate>
-    <!-- ... -->
-  </form>
-  ```
+Renders as:
+
+```html
+<form ngxvestform="" novalidate>
+  <!-- ... -->
+</form>
+```
 
 **Best Practice:**
 Define all validation rules (e.g., required, min/max, pattern) in your VestJS suite. Do **not** rely on native HTML5 validation attributes, as they will be ignored by the browser when `novalidate` is present.
@@ -140,6 +285,130 @@ export class UserFormComponent {
 - **Remove all deprecated patterns** (old signals, `[formShape]`, manual error markup, etc.).
 - **Keep validation suites in separate files** for clarity and reusability.
 - \*\*Document unique capabilities in each example.
+
+---
+
+## Root-Level Form Validation with `validateRootForm`
+
+The `[validateRootForm]` directive, when applied to your `<form ngxVestForm ...>`, enables validations that pertain to the form as a whole, rather than individual fields. This is useful for scenarios requiring cross-field validation or conditions that depend on multiple form values.
+
+By default, `[validateRootForm]` is `true`. If you do not need root-level validation, you can set it to `false`:
+`<form ngxVestForm [vestSuite]="mySuite" [(formValue)]="model" [validateRootForm]="false">`.
+
+### How it Works
+
+1.  **Define Root Validations in Your Vest Suite:**
+    In your Vest suite, you target these form-level validations using a special key. By default, this key is `'rootForm'`. You can customize this key by providing a different value for the `ROOT_FORM` injection token. The `injectRootFormKey()` utility function can be used to access the current root form key if needed.
+
+    ```typescript
+    // my-suite.ts
+    import { staticSuite, test, enforce, only, injectRootFormKey } from 'vest';
+
+    export const mySuite = staticSuite(
+      (data: MyFormModel = {}, field?: string) => {
+        const rootFormKey = injectRootFormKey(); // Defaults to 'rootForm'
+        only(field); // Important for performance
+
+        test('name', 'Name is required.', () => {
+          enforce(data.name).isNotEmpty();
+        });
+
+        test('email', 'A valid email is required.', () => {
+          enforce(data.email).isEmail();
+        });
+
+        // Example Root Validation
+        test(rootFormKey, 'Either a name or an email must be provided.', () => {
+          enforce(data.name || data.email).isTruthy();
+        });
+
+        test(rootFormKey, 'If age is under 18, consent must be given.', () => {
+          omitWhen(!data.age || data.age >= 18, () => {
+            enforce(data.consent).isTruthy();
+          });
+        });
+      },
+    );
+    ```
+
+2.  **Accessing Root Issues:**
+    Root-level errors, warnings, and internal Vest suite errors (if any occur during root validation) are exposed through the `formState().root` signal on the `ngxVestForm` directive.
+
+    ```typescript
+    // my-component.ts
+    import { Component, viewChild, signal } from '@angular/core';
+    import { FormDirective, FormState } from 'ngx-vest-forms';
+    import { mySuite } from './my-suite';
+
+    @Component({
+      // ...
+    })
+    export class MyFormComponent {
+      protected readonly suite = mySuite;
+      protected model = signal({
+        name: '',
+        email: '',
+        age: null,
+        consent: false,
+      });
+      protected vestForm = viewChild.required(FormDirective<typeof this.model>);
+
+      // Access root issues:
+      // const formState = this.vestForm().formState();
+      // const rootIssues = formState.root;
+      // const rootErrors = rootIssues?.errors;
+      // const rootWarnings = rootIssues?.warnings;
+      // const internalError = rootIssues?.internalError;
+    }
+    ```
+
+    In your template:
+
+    ```html
+    <form
+      ngxVestForm
+      #formRef="ngxVestForm"
+      [vestSuite]="suite"
+      [(formValue)]="model"
+    >
+      <!-- fields -->
+
+      @if (formRef.formState().root?.errors; as rootErrors) {
+      <div class="text-red-500">
+        <h4>Form Errors:</h4>
+        <ul>
+          @for (error of rootErrors; track error) {
+          <li>{{ error }}</li>
+          }
+        </ul>
+      </div>
+      } @if (formRef.formState().root?.warnings; as rootWarnings) {
+      <div class="text-yellow-500">
+        <h4>Form Warnings:</h4>
+        <ul>
+          @for (warning of rootWarnings; track warning) {
+          <li>{{ warning }}</li>
+          }
+        </ul>
+      </div>
+      } @if (formRef.formState().root?.internalError; as internalError) {
+      <div class="text-red-700">
+        <p>
+          A system error occurred during form validation: {{ internalError }}
+        </p>
+      </div>
+      }
+    </form>
+    ```
+
+### When to Use `validateRootForm`
+
+- **Cross-Field Dependencies:** When the validity of one field depends on another (e.g., "password" and "confirm password" must match, but this is often better handled at the field level for `confirmPassword` with `equals(data.password)`). A better root example: "If 'country' is 'USA', 'state' is required."
+- **Conditional Form-Wide Rules:** "If 'subscribeToNewsletter' is true, then 'email' must be provided and valid." (Though 'email' validation itself is a field validation, the _requirement_ based on another field can be a root validation).
+- **Overall Form State Checks:** "At least one contact method (phone or email) must be provided."
+- **Business Rules Involving Multiple Fields:** "If 'userType' is 'admin', then 'department' cannot be 'support'."
+
+The `validateRootForm` directive and the corresponding `formState().root` provide a structured way to handle these complex, form-wide validation scenarios.
 
 ---
 
@@ -309,6 +578,7 @@ For complete examples and advanced usage including Valibot and ArkType, see:
 
 - [Business Hours Form with Zod](projects/examples/src/app/business-hours-form/business-hours-form.zod-example.ts)
 - [Schema Adapters Documentation](docs/schema-adapters.md) - **Comprehensive guide with all schema libraries, migration patterns, and best practices**
+- [Smart State Management Documentation](docs/smart-state-management.md) - **Complete guide to intelligent form state merging, conflict resolution, and external data integration**
 
 ### Resources
 
@@ -406,86 +676,6 @@ import {
 import { suite, test, enforce } from 'vest';
 import { Component, viewChild, computed, Signal } from '@angular/core';
 
-## Advanced Utilities and Type Safety
-
-### Custom Async Validators with Vest
-
-`ngx-vest-forms` provides a static utility for integrating Vest validation into custom Angular async validators, useful for standalone controls or reactive forms:
-
-#### `FormDirective.createVestAsyncValidator`
-
-This static method allows you to create an Angular `AsyncValidatorFn` using a Vest suite. It is especially useful for custom controls or when integrating Vest validation into reactive forms.
-
-**Example:**
-
-```typescript
-import { FormDirective } from 'ngx-vest-forms';
-import { suite, test, enforce } from 'vest';
-import { FormControl } from '@angular/forms';
-
-const usernameSuite = suite((model = {}, field) => {
-  test('username', 'Username is required', () => {
-    enforce(model.username).isNotEmpty();
-  });
-  test('username', 'Username must be at least 3 chars', () => {
-    enforce(model.username).longerThanOrEquals(3);
-  });
-});
-
-const usernameControl = new FormControl('', {
-  asyncValidators: [
-    FormDirective.createVestAsyncValidator(
-      usernameSuite,
-      'username',
-      () => ({ username: usernameControl.value }),
-      300 // debounce ms
-    )
-  ]
-});
-````
-
-### Field Path Utilities
-
-For advanced scenarios, you can manipulate deeply nested form values and errors using field-path utilities:
-
-- `getValueAtPath(obj, path)` – Safely get a value at a deep path (e.g., `'addresses[1].city'`).
-- `setValueAtPath(obj, path, value)` – Set a value at a deep path, creating objects/arrays as needed.
-- `parseFieldPath(path)` – Convert a string path like `'addresses[1].city'` to an array: `['addresses', 1, 'city']`.
-- `stringifyFieldPath(pathArray)` – Convert a path array back to a string.
-
-**Example:**
-
-```typescript
-import {
-  getValueAtPath,
-  setValueAtPath,
-  parseFieldPath,
-  stringifyFieldPath,
-} from 'ngx-vest-forms';
-
-const formValue = {
-  addresses: [
-    { street: 'Main St', city: 'Springfield' },
-    { street: 'Second St', city: 'Shelbyville' },
-  ],
-};
-const street = getValueAtPath(formValue, 'addresses[1].street'); // 'Second St'
-setValueAtPath(formValue, 'addresses[0].city', 'Capital City');
-const pathArray = parseFieldPath('addresses[0].street'); // ['addresses', 0, 'street']
-const pathString = stringifyFieldPath(['addresses', 1, 'city']); // 'addresses[1].city'
-```
-
-### Type Utility: DeepPartial
-
-`DeepPartial<T>` is a utility type for making all properties of a type (including nested ones) optional. This is useful for template-driven forms, where not all fields may be present at all times.
-
-> **Recommendation:** For robust type safety and advanced type utilities, we recommend using [`ts-essentials`](https://github.com/ts-essentials/ts-essentials) in your project. `ts-essentials` provides a well-tested, comprehensive `DeepPartial` and many other helpful types.
-
-**Example:**
-
-```typescript
-import type { DeepPartial } from 'ngx-vest-forms';
-
 type MyFormModel = DeepPartial<{
   generalInfo: {
     firstName: string;
@@ -495,95 +685,6 @@ type MyFormModel = DeepPartial<{
     street: string;
     city: string;
   }>;
-}>;
-```
-
-### Type Utility: FormCompatibleDeepRequired
-
-`FormCompatibleDeepRequired<T>` is a specialized utility type that solves the Date/string type mismatch issue when initializing forms with Date properties. This type makes all properties required (like `DeepRequired<T>`) but specifically allows `string` values for `Date` properties to accommodate form initialization patterns.
-
-**Problem it solves:**
-
-- Model interfaces use `Date` types for semantic correctness
-- UI libraries (like PrimeNG p-calendar) require empty string `''` for placeholder display
-- This creates a `Date !== string` type mismatch during form initialization
-
-**When to use:**
-
-- ✅ Your model contains `Date` properties that need form initialization
-- ✅ You want all form fields to be required (no optional properties)
-- ✅ Working with UI libraries that require empty strings for date inputs
-- ✅ You need type safety while maintaining Date/string flexibility
-
-**When NOT to use:**
-
-- ❌ No Date properties in your model → Use regular `DeepRequired<T>`
-- ❌ Want to preserve optional properties → Use custom approach
-- ❌ API contracts require strict Date types → Use transform functions
-
-**Example:**
-
-```typescript
-import type { FormCompatibleDeepRequired } from 'ngx-vest-forms';
-
-interface UserModel {
-  id?: number;
-  name?: string;
-  birthDate?: Date;
-  profile?: {
-    createdAt?: Date;
-    isActive?: boolean;
-  };
-}
-
-// Transform to form-compatible type
-type UserFormType = FormCompatibleDeepRequired<UserModel>;
-// Result: {
-//   id: number;
-//   name: string;
-//   birthDate: Date | string;    // ← Only Date gets union treatment
-//   profile: {
-//     createdAt: Date | string;  // ← Works recursively
-//     isActive: boolean;         // ← Other types unchanged
-//   };
-// }
-
-// Now you can safely initialize with empty strings for dates:
-const formData: UserFormType = {
-  id: 0,
-  name: '',
-  birthDate: '', // ✅ Valid: string allowed for Date properties
-  profile: {
-    createdAt: '', // ✅ Valid: works recursively
-    isActive: false,
-  },
-};
-
-// Also allows actual Date objects:
-const formDataWithDates: UserFormType = {
-  id: 1,
-  name: 'John',
-  birthDate: new Date(), // ✅ Still valid
-  profile: {
-    createdAt: new Date(), // ✅ Still valid
-    isActive: true,
-  },
-};
-```
-
-**Comparison with alternatives:**
-
-| Type Utility                    | Makes Required | Date/String Union | Use Case                             |
-| ------------------------------- | -------------- | ----------------- | ------------------------------------ |
-| `DeepPartial<T>`                | ❌             | ❌                | Form models with optional fields     |
-| `DeepRequired<T>`               | ✅             | ❌                | Required fields, no Date properties  |
-| `FormCompatibleDeepRequired<T>` | ✅             | ✅                | Required fields WITH Date properties |
-
-```typescript
-generalInfo: {
-firstName: string;
-lastName: string;
-};
 }>;
 
 
@@ -679,7 +780,7 @@ The `ngxVestForm` directive manages the form's state and validation based on the
 
 #### Important: `(formValueChange)` is **not** deprecated
 
-The `(formValueChange)` output is the only supported and correct way for the form to notify the parent of value changes. The parent must update its signal/state in response to this event. The form directive never mutates or owns the value; it is always controlled by the parent. See the next section for usage and best practices.
+The `(formValueChange)` output is the only supported and correct way for the form to notify the parent of form value changes. The parent must update its signal/state in response to this event. The form directive never mutates or owns the value; it is always controlled by the parent. See the next section for usage and best practices.
 
 ---
 
@@ -745,12 +846,12 @@ If you want to programmatically reset or re-initialize the form from outside, yo
 
 #### Summary Table
 
-| Use Case                              | Use `(formValueChange)`? | Example Purpose     |
-| ------------------------------------- | :----------------------: | ------------------- |
-| Sync with external signal/store       |            ✅            | Two-way binding     |
-| Autosave/side effects on value change |            ✅            | Autosave, analytics |
-| Error display/validation only         |            ❌            | Not needed          |
-| Simple, self-contained form           |            ❌            | Not needed          |
+| Use Case                              | Use          |
+| ------------------------------------- | ------------ |
+| Sync with external signal/store       |            ✅            |
+| Autosave/side effects on value change |            ✅            |
+| Error display/validation only         |            ❌            |
+| Simple, self-contained form           |            ❌            |
 
 **Documentation Note:**
 Use `(formValueChange)` only when you need to synchronize form value externally or trigger side effects. For error display and validation, rely on the `formState` signal.
@@ -824,52 +925,6 @@ By providing the `[formSchema]`, you gain:
 **Note:** The `[formShape]` input mentioned in previous versions has been deprecated and should be replaced with `[formSchema]`. Use `[formSchema]` for defining the schema of your form.
 
 Making a typo in the name attribute or an `ngModelGroup` attribute might still lead to runtime issues where parts of the form data don't match your expected model, but the schema helps ensure the _overall structure_ and _types_ are consistent within your TypeScript code.
-
-For example, if you typed `fistName` instead of `firstName` in your template:
-
-```html
-<input name="fistName" [ngModel]="formValue()?.generalInfo?.fistName" />
-```
-
-While the schema enforces `firstName` in your TypeScript, this typo would mean the value entered in this input wouldn't be correctly placed in your `formValue` signal under the `firstName` property. Providing the schema primarily aids compile-time safety within your component class and suite definitions.
-
-### Conditional fields
-
-What if we want to remove a form control or form group? With reactive forms that would require a lot of work
-but since Template driven forms do all the hard work for us, we can simply create a computed signal for that and
-bind that in the template. Having logic in the template is considered a bad practice, so we can do all
-the calculations in our class.
-
-Let's hide `lastName` if `firstName` is not filled in:
-
-```html
-<div ngModelGroup="generalInfo">
-  <label>First name</label>
-  <input
-    type="text"
-    name="firstName"
-    [ngModel]="formValue()?.generalInfo?.firstName"
-  />
-
-  @if(lastNameAvailable()){
-  <label>Last name</label>
-  <input
-    type="text"
-    name="lastName"
-    [ngModel]="formValue()?.generalInfo?.lastName"
-  />
-  }
-</div>
-```
-
-```typescript
-// Add these computed signals to your MyComponent class
-export class MyComponent {
-  // ... existing properties like vestForm, suite ...
-
-  // Access form value directly from the directive's signal
-  private formValue = computed(() => this.vestForm().formValueChange());
-
   protected readonly lastNameAvailable = computed(
     () => !!this.formValue()?.generalInfo?.firstName,
   );
@@ -886,14 +941,14 @@ This also works for a form group:
   <input
     type="text"
     name="firstName"
-    [ngModel]="formValue()?.generalInfo?.firstName"
+    [ngModel]="formValue().generalInfo?.firstName"
   />
 
   <label>Last name</label>
   <input
     type="text"
     name="lastName"
-    [ngModel]="formValue()?.generalInfo?.lastName"
+    [ngModel]="formValue().generalInfo?.lastName"
   />
 </div>
 }
@@ -1100,14 +1155,14 @@ This will show errors automatically when:
 
 #### Building Custom Form Fields with FormControlStateDirective
 
-For advanced use cases where you need complete control over form field UI/UX, you can use the `scFormControlState` directive to build your own custom form field components. The `ngx-control-wrapper` component uses this directive internally, but you can use it directly for custom implementations.
+For advanced use cases where you need complete control over form field UI/UX, you can use the `ngxFormControlState` directive to build your own custom form field components. The `ngx-control-wrapper` component uses this directive internally, but you can use it directly for custom implementations.
 
 The `FormControlStateDirective` provides a reactive signal (`controlState`) with the current state of the nearest `NgModel` or `NgModelGroup`, allowing you to build custom UI components with full access to control state.
 
 **Basic Usage:**
 
 ```html
-<div scFormControlState #state="formControlState">
+<div ngxFormControlState #state="formControlState">
   <label>
     <span>Email</span>
     <input type="email" name="email" ngModel />
@@ -1486,426 +1541,4 @@ export class MyComponent {
 ```
 
 Now, when the user types in the `password` field, both `passwords.password` and `passwords.confirmPassword` tests in the Vest suite will be triggered, ensuring the validation state stays consistent.
-
-## Field Path Utilities
-
-`ngx-vest-forms` provides utility functions for working with deep/nested field paths in form models. These are especially useful for advanced scenarios, such as dynamic forms, custom error display, or when you need to programmatically access or update deeply nested values.
-
-**When to use:**
-
-- Accessing or updating values at a dynamic or deeply nested path in your form model.
-- Building custom form controls or wrappers that need to work with arbitrary field paths.
-- Implementing custom error display or logic that requires field path manipulation.
-
-**How to use:**
-
-Import the utilities from `ngx-vest-forms/utils/field-path.utils`:
-
-```typescript
-import {
-  getValueAtPath,
-  setValueAtPath,
-  parseFieldPath,
-  stringifyFieldPath,
-} from 'ngx-vest-forms';
-```
-
-### Practical Example: Using Field Path Utilities in a Real Form with Signals and Modern Angular Control Flow
-
-You can use these utilities to read or update deeply nested values in your form, or to access errors at a dynamic path. This is especially useful for dynamic forms, custom wrappers, or programmatic updates. The example below demonstrates:
-
-- Using signals and `computed` for reactive access to nested values and errors
-- The new Angular control flow syntax (`@if`, `@for`)
-- Programmatic updates to nested values using `setValueAtPath`
-
-```typescript
-import { Component, computed, Signal, viewChild } from '@angular/core';
-import { ngxVestForms, FormDirective, VestSuite } from 'ngx-vest-forms';
-import { getValueAtPath, setValueAtPath } from 'ngx-vest-forms';
-
-type Address = { street: string; city: string };
-type ExampleFormModel = {
-  generalInfo: { firstName: string; lastName: string };
-  addresses: Address[];
-};
-
-const exampleSuite: VestSuite<ExampleFormModel> = (
-  data = {},
-  field?: string,
-) => {
-  // ... your Vest validation logic ...
-};
-
-@Component({
-  selector: 'ngx-field-path-form-example',
-  standalone: true,
-  imports: [ngxVestForms],
-  template: `
-    <form
-      ngxVestForm
-      [vestSuite]="suite"
-      [formValue]="initialValue"
-      #vestForm="ngxVestForm"
-    >
-      <div ngModelGroup="generalInfo">
-        <label>First Name: <input name="firstName" ngModel /></label>
-        <label>Last Name: <input name="lastName" ngModel /></label>
-      </div>
-      <div ngModelGroup="addresses">
-        @for (i of [0, 1]; track i) {
-          <div ngModelGroup="{{ i }}">
-            <label>Street: <input name="street" ngModel /></label>
-            <label>City: <input name="city" ngModel /></label>
-          </div>
-        }
-      </div>
-      <button type="button" (click)="setSecondStreet()">
-        Set 2nd Street to 'Updated St'
-      </button>
-      <pre>Form Value: {{ vestForm.formState().value | json }}</pre>
-      <pre>Errors: {{ vestForm.formState().errors | json }}</pre>
-      <div>
-        <strong>Second Street (signal):</strong> {{ secondStreetSignal() }}
-      </div>
-      <div>
-        <strong>Address[0] City Errors (signal):</strong>
-        @if (address0CityErrorsSignal()) {
-          <span>
-            @for (err of address0CityErrorsSignal(); track err) {
-              <span>{{ err }}</span>
-            }
-          </span>
-        }
-      </div>
-    </form>
-  `,
-})
-export class FieldPathExampleComponent {
-  protected readonly suite = exampleSuite;
-  protected readonly initialValue: ExampleFormModel = {
-    generalInfo: { firstName: 'Alice', lastName: 'Smith' },
-    addresses: [
-      { street: 'Main St', city: 'Springfield' },
-      { street: 'Second St', city: 'Shelbyville' },
-    ],
-  };
-  protected readonly vestForm = viewChild.required(
-    FormDirective<ExampleFormModel>,
-  );
-
-  // Signal for the nested value
-  readonly secondStreetSignal: Signal<string | undefined> = computed(() =>
-    getValueAtPath(this.vestForm().formState().value, 'addresses[1].street'),
-  );
-
-  // Signal for the nested errors
-  readonly address0CityErrorsSignal: Signal<string[] | undefined> = computed(
-    () =>
-      getValueAtPath(this.vestForm().formState().errors, 'addresses[0].city'),
-  );
-
-  setSecondStreet(): void {
-    const value = { ...this.vestForm().formState().value };
-    setValueAtPath(value, 'addresses[1].street', 'Updated St');
-    this.vestForm().setFormValue(value);
-  }
-}
-```
-
-This pattern allows you to:
-
-- Read or update any nested value in your form model using a string path (e.g., `'addresses[1].street'`).
-- Access errors for a specific field path, which is useful for custom error display or dynamic forms.
-- Programmatically update form values at any depth, which is useful for custom controls, wizards, or patching data.
-
-See [`projects/examples/src/app/simple-form/field-path-example.ts`](projects/examples/src/app/simple-form/field-path-example.ts) for a full, working example.
-
-**Why:**
-
-- These utilities ensure robust, type-safe access to deeply nested fields, especially in dynamic or array-based forms.
-- They help avoid manual string manipulation and reduce bugs when working with complex form models.
-
-See [`projects/examples/src/app/simple-form/field-path-example.ts`](projects/examples/src/app/simple-form/field-path-example.ts) for a full example.
-
-## Form Arrays
-
-`ngx-vest-forms` supports `FormArray` scenarios, often used for dynamic lists of inputs. While the core concepts remain the same (using `ngModel`, `ngModelGroup`, and a Vest suite), structuring the suite and template requires careful handling of indices.
-
-For a detailed guide and examples on using `ngx-vest-forms` with Form Arrays, please refer to this dedicated blog post:
-
-- [Handling Form Arrays with ngx-vest-forms](https://blog.simplified.courses/handling-form-arrays-with-ngx-vest-forms/) (Replace with actual link if available, otherwise remove link)
-
-### Error Display Configuration for Control Wrapper
-
-The `ngx-control-wrapper` component and `[ngxControlWrapper]` directive now support configurable error display behavior. You can control when errors are shown (on touch, on submit, or both) globally or per instance.
-
-#### Per-Instance Configuration
-
-Use the `errorDisplayMode` input to override the error display mode for a specific control wrapper:
-
-```html
-<ngx-control-wrapper errorDisplayMode="on-submit">
-  <input name="email" [ngModel]="formValue().email" />
-</ngx-control-wrapper>
-
-<!-- Or with the attribute selector -->
-<div ngxControlWrapper errorDisplayMode="on-submit">
-  <input name="email" [ngModel]="formValue().email" />
-</div>
-```
-
-Possible values:
-
-- `'on-blur'`: Show errors only when the control is touched.
-- `'on-submit'`: Show errors only after the form is submitted.
-- `'on-blur-or-submit'`: Show errors when touched OR after submit (_default_).
-
-#### Global Configuration
-
-You can set the default error display mode for all control wrappers in your app by providing the `CONTROL_WRAPPER_ERROR_DISPLAY` injection token:
-
-```typescript
-import { provide } from '@angular/core';
-import { CONTROL_WRAPPER_ERROR_DISPLAY } from 'ngx-vest-forms';
-
-@NgModule({
-  providers: [
-    provide(CONTROL_WRAPPER_ERROR_DISPLAY, { useValue: 'on-submit' }),
-  ],
-})
-export class AppModule {}
-```
-
-The per-instance input always takes precedence over the global config.
-
-## Advanced Usage
-
-### Using `computed()` with Form State
-
-You can easily create derived state based on the form's signals using Angular's `computed()` function. Inject the `FormDirective` instance using `viewChild` and access its signals:
-
-```typescript
-import { Component, inject, viewChild, computed, Signal } from '@angular/core';
-import { FormDirective, ngxVestForms, VestSuite } from 'ngx-vest-forms';
-// ... other imports
-
-type MyForm = {
-  /* ... */
-};
-declare const mySuite: VestSuite<MyForm>;
-
-@Component({
-  // ... component metadata
-  standalone: true,
-  imports: [ngxVestForms],
-  template: `
-    <form ngxVestForm #vestForm="ngxVestForm" [vestSuite]="mySuite">
-      <!-- Form fields -->
-      <button type="submit" [disabled]="isSubmitDisabled()">Submit</button>
-      @if (showWarning()) {
-        <div>Please double-check your entries.</div>
-      }
-    </form>
-  `,
-})
-export class MyAdvancedComponent {
-  protected readonly vestForm = viewChild.required(FormDirective<MyForm>);
-  protected readonly mySuite = mySuite;
-
-  // Example: Disable submit button if form is invalid or pending
-  protected readonly isSubmitDisabled: Signal<boolean> = computed(() => {
-    return !this.vestForm().isValid() || this.vestForm().isPending();
-  });
-
-  // Example: Show a warning if the form is dirty but invalid
-  protected readonly showWarning: Signal<boolean> = computed(() => {
-    return this.vestForm().dirtyChange() && !this.vestForm().isValid();
-  });
-}
-```
-
-### Integrating with External Signal State (`linkedSignal`)
-
-If your initial form data comes from another signal (e.g., from a state management store or an API call), you might want the form to react to changes in that source signal while still allowing local edits. Angular's `linkedSignal` can be a pattern for this, although it adds complexity.
-
-**Note:** This is an advanced pattern. Carefully consider if the complexity is necessary for your use case. The standard `[formValue]` input often suffices for setting initial data.
-
-```typescript
-import {
-  Component,
-  inject,
-  signal,
-  Signal,
-  WritableSignal,
-  computed,
-} from '@angular/core';
-import { linkedSignal } from '@angular/core';
-import { FormDirective, ngxVestForms, VestSuite } from 'ngx-vest-forms';
-import { SomeStoreService } from './some-store.service'; // Example service
-
-type UserProfile = { name: string; email: string };
-declare const userProfileSuite: VestSuite<UserProfile>;
-
-@Component({
-  // ... component metadata
-  standalone: true,
-  imports: [ngxVestForms],
-  template: `
-    <!-- Bind the linked signal's value to [formValue] -->
-    <form
-      ngxVestForm
-      #vestForm="ngxVestForm"
-      [vestSuite]="userProfileSuite"
-      [formValue]="formDataSource()"
-    >
-      <label>Name: <input name="name" ngModel /></label>
-      <label>Email: <input name="email" type="email" ngModel /></label>
-      <button type="button" (click)="resetToStore()">Reset to Store</button>
-      <button type="submit" [disabled]="!vestForm().isValid()">Save</button>
-    </form>
-  `,
-})
-export class UserProfileComponent {
-  private readonly store = inject(SomeStoreService); // Assume returns Signal<UserProfile | null>
-  protected readonly vestForm = viewChild.required(FormDirective<UserProfile>);
-  protected readonly userProfileSuite = userProfileSuite;
-
-  // Signal containing the source data from the store
-  private readonly userFromStore: Signal<UserProfile | null> =
-    this.store.currentUserProfile;
-
-  // linkedSignal manages the data passed to the form
-  protected formDataSource: WritableSignal<UserProfile | null> = linkedSignal({
-    // Source signal to link to
-    source: this.userFromStore,
-    // Logic to compute the value based on the source and previous state
-    computation: (storeData, previous) => {
-      // Simple strategy: If store data changes, reset the form to store data.
-      // Otherwise, keep the current local form state.
-      // More complex merging logic might be needed depending on requirements.
-      if (storeData !== previous?.source) {
-        console.log('Source changed, resetting formDataSource to:', storeData);
-        return storeData ? { ...storeData } : null; // Return a copy
-      }
-      // If source hasn't changed, keep the potentially modified value from the form
-      return previous?.value ?? null;
-    },
-  });
-
-  // Method to explicitly reset the linked signal (and thus the form) to the store value
-  resetToStore(): void {
-    const storeValue = this.userFromStore();
-    console.log('Manual reset to store value:', storeValue);
-    this.formDataSource.set(storeValue ? { ...storeValue } : null); // Set a copy
-  }
-
-  save(): void {
-    if (this.vestForm().isValid()) {
-      const currentFormValue = this.vestForm().formValueChange();
-      console.log('Saving:', currentFormValue);
-      // this.store.updateUserProfile(currentFormValue);
-    }
-  }
-}
-```
-
-**Key Considerations for `linkedSignal` Pattern:**
-
-- **Complexity:** Adds significant complexity compared to just setting `[formValue]` once.
-- **`linkedSignal` Source:** You'll need to import `linkedSignal` (e.g., from `@angular/core` when available, or implement a similar utility).
-- **Reset Logic:** Carefully define the `computation` logic to handle how changes from the `source` affect the form's data (reset, merge, etc.).
-- **Immutability:** Ensure you are setting _copies_ of objects to `linkedSignal` and potentially within the `computation` to avoid unintended side effects.
-
-### Using `model()` Inputs in Wrapper Components
-
-Angular's `model()` signal input is useful for creating two-way bindings on component inputs. While you **cannot** use `model()` directly on standard HTML form elements (`<input>`, `<select>`) managed by `ngx-vest-forms` (as they rely on `ngModel`), you **can** use `model()` on your own wrapper components that might _contain_ parts of a form.
-
-**Example:** Imagine a custom `address-input.component` that uses `model()` for its `address` input. Inside that component's template, you would still use `ngModel` on the actual `<input>` fields for street, city, etc., potentially within an `ngModelGroup`. The parent component using `address-input` would bind using `[(address)]="parentSignal"`.
-
-```typescript
-// ---- Parent Component ----
-import { AddressInputComponent } from './address-input.component';
-// ...
-@Component({
-  // ...
-  imports: [ngxVestForms, AddressInputComponent],
-  template: `
-    <form ngxVestForm [vestSuite]="suite">
-      <div ngModelGroup="billingAddress">
-        <!-- Bind parent signal to the model() input of the child -->
-        <ngx-address-input [(address)]="billingAddressSignal" />
-      </div>
-    </form>
-  `,
-})
-export class ParentFormComponent {
-  protected billingAddressSignal = signal<Address | null>(null);
-  // ... suite, etc.
-}
-
-// ---- Child AddressInputComponent ----
-import { NgModelGroup } from '@angular/forms'; // Needed if using ngModelGroup inside
-// ...
-@Component({
-  selector: 'ngx-address-input',
-  standalone: true,
-  imports: [ngxVestForms], // If using ngx-vest-forms directives inside
-  // Required if using ngModelGroup/ngModel inside this component's template
-  viewProviders: [ngxVestFormsViewProviders],
-  template: `
-    <!-- No ngModelGroup needed here if parent provides it -->
-    <label>Street: <input name="street" ngModel /></label>
-    <label>City: <input name="city" ngModel /></label>
-    <!-- ... other address fields with ngModel -->
-  `,
-})
-export class AddressInputComponent {
-  // Use model() for the component's input
-  readonly address = model<Address | null>(null);
-}
-```
-
-This pattern allows creating reusable form sections as components with clean two-way binding APIs, while still leveraging `ngx-vest-forms` and TDF internally. Remember to include `ngxVestFormsViewProviders` in the child component if it uses `ngModel`/`ngModelGroup`.
-
-## Examples
-
-to check the examples, clone this repo and run:
-
-```shell
-npm i
-npm start
-```
-
-There is an example of a complex form with a lot of conditionals and specifics,
-and there is an example of a form array with complex validations that is used to
-create a form to add business hours. A free tutorial will follow soon.
-
-You can check the examples in the github repo [here](https://github.com/simplifiedcourses/ngx-vest-forms/blob/master/projects/examples).
-[Here](https://stackblitz.com/~/github.com/simplifiedcourses/ngx-vest-forms-stackblitz){:target="\_blank"} is a stackblitz example for you.
-It's filled with form complexities and also contains form array logic.
-
-## Want to learn more?
-
-[![course.jpeg](course.jpeg)](https://www.simplified.courses/complex-angular-template-driven-forms)
-
-[This course](https://www.simplified.courses/complex-angular-template-driven-forms) teaches you to become a form expert in no time.
-
----
-
-## Breaking Changes
-
-### Root Form Validation Default
-
-- The default for `[validateRootForm]` is now `true`.
-- If you do not want root-level validation, set `[validateRootForm]="false"` on your form.
-
-#### When should you set `[validateRootForm]` to `false`?
-
-You might want to set `[validateRootForm]` to `false` in these situations:
-
-- **Performance optimization:** If root-level validation is expensive and not always needed, you may want to disable it by default and only enable it when required.
-- **Legacy or simple forms:** If your form setup predates root-level validation or is very simple, you may not want to introduce extra validation logic.
-
-See the [Validations on the root form](#validations-on-the-root-form) section for more details.
-
----
+`````
