@@ -1,4 +1,3 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */ /// Allow any for generic validation types
 import { StaticSuite } from 'vest';
 
@@ -19,7 +18,7 @@ export type FieldKey<T> = keyof T | (string & {});
  * - Simplifies the API by hiding complex generic parameters
  * - Ensures type safety between your form model and validation suite
  * - Makes autocomplete and type checking more accurate in your IDE
- * 
+ *
  * The `string & {}` technique is used to allow both model property keys and arbitrary strings,
  * which is useful for handling cyclic dependencies and nested field paths.
  *

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
 import { stringifyFieldPath } from './field-path.utils';
-import { injectRootFormKey, InjectRootFormKeyOptions } from './form-token';
 
 /**
  * Recursively calculates the path of a form control
@@ -182,21 +181,34 @@ export function setValueAtPath(object: object, path: string, value: any): void {
  * Uses field-path.utils for robust path handling (arrays, nested, etc).
  *
  * @param form The form to get errors from
- * @param options Optional configuration, including an `injector` instance for `injectRootFormKey`.
  */
 export function getAllFormErrors(
   form?: AbstractControl,
-  options?: InjectRootFormKeyOptions,
 ): Record<string, string[]> {
   const errors: Record<string, string[]> = {};
   if (!form) {
     return errors;
   }
 
-  // Get the root form key using the utility function if not provided
-  const formKey = injectRootFormKey('rootForm', options);
-
   function collect(control: AbstractControl, pathParts: (string | number)[]) {
+    // Skip processing the root form itself here, as its errors are handled directly in FormDirective
+    if (pathParts.length === 0 && control === form) {
+      // Instead, iterate its children if it's a group/array
+      if (control instanceof FormGroup || control instanceof FormArray) {
+        for (const key of Object.keys(control.controls)) {
+          const childControl = control.get(key);
+          const nextPath = [
+            // ...pathParts, // pathParts is empty here
+            Number.isNaN(Number(key)) ? key : Number(key),
+          ];
+          if (childControl) {
+            collect(childControl, nextPath);
+          }
+        }
+      }
+      return; // Stop processing for the root form itself at this level
+    }
+
     if (control instanceof FormGroup || control instanceof FormArray) {
       for (const key of Object.keys(control.controls)) {
         const childControl = control.get(key);
@@ -209,11 +221,12 @@ export function getAllFormErrors(
         }
       }
     }
+
+    // Process errors for actual child controls (not the root form itself)
     if (control.errors && control.enabled) {
-      // Only add if there are errors for this control
+      const pathString = stringifyFieldPath(pathParts); // pathParts will not be empty here
+
       if (control.errors['errors'] && Array.isArray(control.errors['errors'])) {
-        const pathString =
-          pathParts.length > 0 ? stringifyFieldPath(pathParts) : formKey;
         errors[pathString] = control.errors['errors'];
       }
       // Optionally, add warnings if present
@@ -221,22 +234,24 @@ export function getAllFormErrors(
         control.errors['warnings'] &&
         Array.isArray(control.errors['warnings'])
       ) {
-        const pathString =
-          pathParts.length > 0 ? stringifyFieldPath(pathParts) : formKey;
         // Attach warnings as a property on the error array (non-enumerable)
-        (errors[pathString] as any).warnings = control.errors['warnings'];
+        // This is still done here for field-specific warnings, but not for root warnings.
+        if (!errors[pathString]) {
+          errors[pathString] = []; // Ensure array exists if only warnings are present
+        }
+        Object.defineProperty(errors[pathString], 'warnings', {
+          value: control.errors['warnings'],
+          enumerable: false, // Keep it non-enumerable as per previous behavior for field warnings
+          configurable: true,
+          writable: true,
+        });
       }
     }
   }
 
   collect(form, []);
-  // Also check root form errors
-  if (form.errors && form.errors['errors']) {
-    errors[formKey] = form.errors['errors'];
-    if (form.errors['warnings']) {
-      (errors[formKey] as any).warnings = form.errors['warnings'];
-    }
-  }
+  // Root form errors (form.errors) are no longer processed here.
+  // They are handled directly in FormDirective to populate formState.root.
 
   return errors;
 }
