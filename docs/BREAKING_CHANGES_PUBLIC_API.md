@@ -6,14 +6,63 @@ This document lists all **public API breaking changes** in recent versions of `n
 
 ## Quick Overview of Major Changes
 
-| Change                          | Version | Impact    | Migration Required                    |
-| ------------------------------- | ------- | --------- | ------------------------------------- |
-| Smart State Modularization      | v2.1+   | 🟡 Medium | Only if using smart state features    |
-| Control Wrapper Modularization  | v2.2+   | 🟢 Low    | Only if using NgxControlWrapper       |
-| Schema Utilities Modularization | v2.3+   | 🟢 Low    | Only if using schema utilities        |
-| Component Renaming              | v2.2+   | 🟢 Low    | Only if using ControlWrapperComponent |
+| Change                          | Version | Impact    | Migration Required                     |
+| ------------------------------- | ------- | --------- | -------------------------------------- |
+| validateRootForm Default Value  | v2.x+   | 🟢 Low    | Update forms that need root validation |
+| Smart State Modularization      | v2.1+   | 🟡 Medium | Only if using smart state features     |
+| Control Wrapper Modularization  | v2.2+   | 🟢 Low    | Only if using NgxControlWrapper        |
+| Schema Utilities Modularization | v2.3+   | 🟢 Low    | Only if using schema utilities         |
+| Component Renaming              | v2.2+   | 🟢 Low    | Only if using ControlWrapperComponent  |
 
 **📊 Bundle Impact:** Core users get up to 44% smaller bundle size.
+
+---
+
+## validateRootForm Default Value Change (v2.x+)
+
+**What changed?**
+
+The default value of `[validateRootForm]` has been changed from `true` to `false` to prevent circular dependency issues and improve the developer experience.
+
+**Why the change?**
+
+- **Prevents circular dependencies:** Eliminates common `NG0200` errors that occurred when both `FormDirective` and `ValidateRootFormDirective` tried to inject each other
+- **Better performance:** Most simple forms don't need root-level validation, so disabling it by default improves performance
+- **Explicit intent:** Developers who need cross-field validation must explicitly opt-in, making the intent clearer
+- **Improved developer experience:** Reduces setup complexity for basic forms
+
+**Migration Required:**
+
+If your forms rely on root-level (cross-field) validation, you must explicitly enable it:
+
+### Before (default was true):
+
+```html
+<form ngxVestForm [vestSuite]="suite" [(formValue)]="model">
+  <!-- Root validation was enabled by default -->
+</form>
+```
+
+### After (v2.x+ default is false):
+
+```html
+<form
+  ngxVestForm
+  [vestSuite]="suite"
+  [(formValue)]="model"
+  [validateRootForm]="true"
+>
+  <!-- Must explicitly enable root validation -->
+</form>
+```
+
+**Impact:**
+
+- 🟢 **Low impact:** Only affects forms that need cross-field validation
+- 🚀 **Performance improvement:** Better performance for simple forms
+- 🛡️ **Stability improvement:** Prevents circular dependency errors
+
+**Bundle Impact:** No impact on bundle size - this is a behavioral change only.
 
 ---
 

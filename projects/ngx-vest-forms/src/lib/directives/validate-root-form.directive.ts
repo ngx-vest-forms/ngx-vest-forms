@@ -1,4 +1,5 @@
 import {
+  booleanAttribute,
   DestroyRef,
   Directive,
   inject,
@@ -7,7 +8,13 @@ import {
   runInInjectionContext,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NG_ASYNC_VALIDATORS, NgForm, ValidationErrors } from '@angular/forms';
+import {
+  AbstractControl,
+  AsyncValidator,
+  NG_ASYNC_VALIDATORS,
+  ValidationErrors,
+} from '@angular/forms';
+import { SchemaDefinition } from 'ngx-vest-forms/schemas';
 import {
   catchError,
   debounceTime,
@@ -21,8 +28,6 @@ import {
 } from 'rxjs';
 import { SuiteResult } from 'vest';
 import { injectRootFormKey } from '../utils/form-token';
-import { mergeValuesAndRawValues } from '../utils/form-utils';
-import { SchemaDefinition } from 'ngx-vest-forms/schemas';
 import { VestSuite } from '../utils/validation-suite';
 import { FormDirective } from './form.directive';
 import type { ValidationOptions } from './validation-options';
@@ -45,6 +50,9 @@ import type { ValidationOptions } from './validation-options';
  * </form>
  * ```
  *
+ * Note: Root validation is disabled by default to prevent circular dependencies
+ * and improve performance. Enable it explicitly when you need cross-field validation.
+ *
  * The directive provides:
  * - Root-level validation for cross-field validation
  * - Integration with Angular's form validation system
@@ -61,9 +69,8 @@ import type { ValidationOptions } from './validation-options';
     },
   ],
 })
-export class ValidateRootFormDirective {
+export class ValidateRootFormDirective implements AsyncValidator {
   // Modern Angular 20 injection patterns - avoiding circular dependency
-  readonly #ngForm = inject(NgForm, { optional: true });
   readonly #injector = inject(Injector);
   readonly #destroyRef = inject(DestroyRef);
   readonly #rootFormKey = injectRootFormKey();
@@ -72,7 +79,9 @@ export class ValidateRootFormDirective {
   readonly validationOptions = input<ValidationOptions>({ debounceTime: 0 });
 
   // Input to control whether root validation should run
-  readonly validateRootForm = input<boolean>(true);
+  readonly validateRootForm = input(false, {
+    transform: booleanAttribute,
+  });
 
   // Cache for validation stream to avoid recreating it
   #validationStream?: Observable<ValidationErrors | null>;
@@ -110,17 +119,8 @@ export class ValidateRootFormDirective {
   }
 
   /**
-   * Get current form model/value - with null safety
-   */
-  #getCurrentModel(): unknown {
-    if (!this.#ngForm?.form) {
-      return null;
-    }
-    return mergeValuesAndRawValues(this.#ngForm.form);
-  }
-
-  /**
    * Create validation stream for root form validation using modern Angular 20 patterns
+   * This maintains the same core logic as v1 but with modern reactive patterns
    */
   #createValidationStream(): Observable<ValidationErrors | null> {
     if (!this.#modelChanges) {
@@ -128,7 +128,7 @@ export class ValidateRootFormDirective {
     }
 
     const options = this.validationOptions();
-    const rootFormKey = this.#rootFormKey; // Use the injected key
+    const rootFormKey = this.#rootFormKey; // Use the injected key (same as v1 'rootForm')
 
     return this.#modelChanges.pipe(
       debounceTime(options.debounceTime),
@@ -142,24 +142,30 @@ export class ValidateRootFormDirective {
 
         return new Observable<ValidationErrors | null>((observer) => {
           try {
+            // Call vest suite with model and rootFormKey - same as v1 pattern
             suite(model, rootFormKey).done(
-              // Use the injected key
               (result: SuiteResult<string, string>) => {
-                const errors = result.getErrors()[rootFormKey]; // Use the injected key
-                const warnings = result.getWarnings()[rootFormKey]; // Use the injected key
+                const errors = result.getErrors()[rootFormKey];
+                const warnings = result.getWarnings()[rootFormKey];
 
+                // Return validation errors in the same format as v1
+                // v1 returned { error: errors[0], errors } for compatibility
                 let validationOutput: ValidationErrors | null = null;
-                if (
-                  (errors && errors.length > 0) ||
-                  (warnings && warnings.length > 0)
-                ) {
-                  validationOutput = {};
-                  if (errors && errors.length > 0) {
-                    validationOutput['errors'] = errors;
-                  }
+                if (errors && errors.length > 0) {
+                  validationOutput = {
+                    error: errors[0], // Primary error message (v1 compatibility)
+                    errors: errors, // All error messages
+                  };
+
+                  // Add warnings if present
                   if (warnings && warnings.length > 0) {
                     validationOutput['warnings'] = warnings;
                   }
+                } else if (warnings && warnings.length > 0) {
+                  // Only warnings, no errors
+                  validationOutput = {
+                    warnings: warnings,
+                  };
                 }
 
                 observer.next(validationOutput);
@@ -167,6 +173,7 @@ export class ValidateRootFormDirective {
               },
             );
           } catch (error) {
+            // Handle vest suite execution errors
             observer.next({
               vestInternalError: `Vest suite execution failed for root form validation.`,
               originalError:
@@ -186,8 +193,9 @@ export class ValidateRootFormDirective {
 
   /**
    * Implements Angular's AsyncValidator interface for root form validation
+   * This method is called by Angular's form validation system
    */
-  validate(): Observable<ValidationErrors | null> {
+  validate(control: AbstractControl): Observable<ValidationErrors | null> {
     // If root validation is disabled, return null (no validation)
     if (!this.validateRootForm()) {
       return of(null);
@@ -198,8 +206,8 @@ export class ValidateRootFormDirective {
       this.#validationStream = this.#createValidationStream();
     }
 
-    // Get current model and trigger validation
-    const currentModel = this.#getCurrentModel();
+    // Get current model from the form control and trigger validation
+    const currentModel = control.getRawValue();
     this.#modelChanges?.next(currentModel);
 
     return this.#validationStream.pipe(take(1));

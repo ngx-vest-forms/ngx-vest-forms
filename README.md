@@ -281,7 +281,7 @@ export class UserFormComponent {
 - **Use signals and `computed()`** for all form state and derived UI logic.
 - **Use the new Angular control flow** (`@if`, `@for`, `@defer`) in templates.
 - **Never manually display field errors**—let the control wrapper handle it.
-- **Use `[validateRootForm]="false"` only if you do not want root-level (cross-field) validation.**
+- **Use `[validateRootForm]="true"` when you need root-level (cross-field) validation.**
 - **Provide a `[formSchema]`** for type safety and IDE support, especially for complex/nested forms.
 - **Use `[validationConfig]`** for cross-field dependencies (e.g., confirm password, cyclic dependencies).
 - **Remove all deprecated patterns** (old signals, `[formShape]`, manual error markup, etc.).
@@ -294,8 +294,8 @@ export class UserFormComponent {
 
 The `[validateRootForm]` directive, when applied to your `<form ngxVestForm ...>`, enables validations that pertain to the form as a whole, rather than individual fields. This is useful for scenarios requiring cross-field validation or conditions that depend on multiple form values.
 
-By default, `[validateRootForm]` is `true`. If you do not need root-level validation, you can set it to `false`:
-`<form ngxVestForm [vestSuite]="mySuite" [(formValue)]="model" [validateRootForm]="false">`.
+By default, `[validateRootForm]` is `false`. If you need root-level validation, you can set it to `true`:
+`<form ngxVestForm [vestSuite]="mySuite" [(formValue)]="model" [validateRootForm]="true">`.
 
 ### How it Works
 
