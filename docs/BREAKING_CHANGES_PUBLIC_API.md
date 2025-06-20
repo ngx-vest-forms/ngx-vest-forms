@@ -1,6 +1,19 @@
 # ngx-vest-forms Breaking Changes: Public API Migration Guide
 
+> 📋 **Quick Start:** Looking for a streamlined migration guide? Check our [**v2 Migration Guide**](./MIGRATION_GUIDE_V2.md) for a complete step-by-step walkthrough.
+
 This document lists all **public API breaking changes** in recent versions of `ngx-vest-forms` (v2+), with migration steps and rationale. It is intended for developers upgrading from v1. For internal/architectural changes, see `BREAKING_CHANGES_INTERNAL.md`.
+
+## Quick Overview of Major Changes
+
+| Change                          | Version | Impact    | Migration Required                    |
+| ------------------------------- | ------- | --------- | ------------------------------------- |
+| Smart State Modularization      | v2.1+   | 🟡 Medium | Only if using smart state features    |
+| Control Wrapper Modularization  | v2.2+   | 🟢 Low    | Only if using NgxControlWrapper       |
+| Schema Utilities Modularization | v2.3+   | 🟢 Low    | Only if using schema utilities        |
+| Component Renaming              | v2.2+   | 🟢 Low    | Only if using ControlWrapperComponent |
+
+**📊 Bundle Impact:** Core users get up to 44% smaller bundle size.
 
 ---
 
@@ -346,15 +359,28 @@ Optional smart state management capabilities that intelligently handle external 
 
 ---
 
-## Table of Contents
+## Navigation
 
-- [ngx-vest-forms Breaking Changes: Public API Migration Guide](#ngx-vest-forms-breaking-changes-public-api-migration-guide)
-  - [Smart State Management Modularization (v2.1+)](#smart-state-management-modularization-v21)
-    - [Before (v2.0):](#before-v20)
-    - [After (v2.1+):](#after-v21)
-  - [Control Wrapper Modularization (v2.2+)](#control-wrapper-modularization-v22)
-    - [Before (v2.1 and earlier):](#before-v21-and-earlier)
-    - [After (v2.2+):](#after-v22)
+### 🔄 Modularization Changes (v2.1+)
+
+- [Smart State Management Modularization](#smart-state-management-modularization-v21)
+- [Control Wrapper Modularization](#control-wrapper-modularization-v22)
+- [Schema Utilities Modularization](#schema-utilities-modularization-v23)
+- [Component Naming Changes](#component-naming-controlwrappercomponent--ngxcontrolwrapper-v22)
+
+### 🆕 New Features & API Changes
+
+- [Smart State Management Features](#smart-state-management-v2x)
+- [Two-way Binding with model()](#1-two-way-binding-with-model-for-formvalue)
+- [Unified formState Signal](#2-unified-formstate-signal-and-deprecation-of-old-api)
+- [Error Display Improvements](#3-error-display-behavior-now-shown-on-blur-and-submit)
+- [Root Form Validation Changes](#4-root-form-validation-default)
+
+### 📚 Related Documentation
+
+- [Migration Guide](./MIGRATION_GUIDE_V2.md) - Step-by-step migration instructions
+- [Changes Overview](./CHANGES_OVERVIEW.md) - High-level summary of changes
+- [Internal Changes](./BREAKING_CHANGES_INTERNAL.md) - For contributors
   - [Schema Utilities Modularization (v2.3+)](#schema-utilities-modularization-v23)
     - [Before (v2.2 and earlier):](#before-v22-and-earlier-1)
     - [After (v2.3+):](#after-v23)
@@ -1174,11 +1200,3 @@ This approach gives you total flexibility to:
 | `'submit'`                   | `'on-submit'`         | No change (except name)                            |
 | `'touchOrSubmit'`            | `'on-blur-or-submit'` | No change (except name)                            |
 | (any) + `updateOn: 'submit'` | (any)                 | Errors only shown after submit, regardless of mode |
-
----
-
-## References
-
-- See the [README.md](README.md) for migration guides and more details on each breaking change.
-- For further help, check the [examples](projects/examples) directory or open an issue on GitHub.
-- [Introducing ngx-vest-forms: Simplify Complex Angular Form](https://blog.simplified.courses/introducing-ngx-vest-forms/)

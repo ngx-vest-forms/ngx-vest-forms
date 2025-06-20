@@ -23,9 +23,9 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
  *       <input type="text" name="firstName" [ngModel]="formValue().firstName" />
  *     </label>
  *   </div>
- *   // To customize errorDisplayMode for this instance, you would typically apply
- *   // FormErrorDisplayDirective with its input directly if not using ControlWrapper, or rely on global config.
- *   // ControlWrapper itself doesn't re-expose errorDisplayMode as an input; it uses the one from FormErrorDisplayDirective.
+ *   /// To customize errorDisplayMode for this instance, you would typically apply
+ *   /// FormErrorDisplayDirective with its input directly if not using ControlWrapper, or rely on global config.
+ *   /// ControlWrapper itself doesn't re-expose errorDisplayMode as an input; it uses the one from FormErrorDisplayDirective.
  *
  * Example (with warnings and pending):
  *   <ngx-control-wrapper>
@@ -54,17 +54,11 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
   templateUrl: './control-wrapper.component.html',
   styleUrls: ['./control-wrapper.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: true, // Ensuring it's standalone
-  imports: [], // FormErrorDisplayDirective is a hostDirective, no need to import it here for the component itself
   host: {
     class: 'ngx-control-wrapper',
     // Accessing errorDisplay properties through the injected FormErrorDisplayDirective
     '[class.ngx-control-wrapper--invalid]': 'errorDisplay.shouldShowErrors()',
   },
-  // FormErrorDisplayDirective is now a host directive applied here.
-  // It needs to be imported from 'ngx-vest-forms' in the context where this component is used, if not already available.
-  // However, for the component definition itself, if FormErrorDisplayDirective is also standalone and exported by ngx-vest-forms,
-  // it will be resolved. Let's assume FormErrorDisplayDirective is correctly exported by the core.
   hostDirectives: [
     {
       directive: FormErrorDisplayDirective,
