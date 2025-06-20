@@ -11,7 +11,7 @@ export default defineConfig([
         'error',
         {
           type: 'attribute',
-          prefix: 'ngx',
+          prefix: ['ngx', 'sc'],
           style: 'camelCase',
         },
       ],
@@ -19,7 +19,7 @@ export default defineConfig([
         'error',
         {
           type: 'element',
-          prefix: 'ngx',
+          prefix: ['ngx', 'sc'],
           style: 'kebab-case',
         },
       ],
