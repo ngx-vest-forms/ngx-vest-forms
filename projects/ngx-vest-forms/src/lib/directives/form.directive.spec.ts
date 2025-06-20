@@ -1,3 +1,4 @@
+import { JsonPipe } from '@angular/common';
 import {
   ApplicationRef,
   Component,
@@ -11,6 +12,7 @@ import { userEvent } from '@vitest/browser/context';
 import { enforce, only, staticSuite, test as vestTest } from 'vest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ngxVestForms } from '../exports';
+
 import { FormCompatibleDeepRequired } from '../utils/deep-required';
 import { FormDirective } from './form.directive';
 import { ValidationOptions } from './validation-options';
@@ -49,7 +51,11 @@ function expectValidationState(
     valid?: boolean;
     invalid?: boolean;
     pending?: boolean;
-    hasErrors?: boolean;
+    hasErrors?: boolean; // General check for any errors
+    hasRootErrors?: boolean; // Check for root errors
+    hasFieldErrors?: boolean; // Check for field-specific errors
+    hasRootWarnings?: boolean; // Check for root warnings
+    hasFieldWarnings?: boolean; // Check for field-specific warnings
   },
 ) {
   if (!formDirective) {
@@ -70,10 +76,38 @@ function expectValidationState(
   if (expected.pending !== undefined) {
     expect(formState.pending).toBe(expected.pending);
   }
+
+  // Updated error and warning checks
   if (expected.hasErrors !== undefined) {
-    const hasErrors =
+    const fieldErrors =
       formState.errors && Object.keys(formState.errors).length > 0;
-    expect(hasErrors).toBe(expected.hasErrors);
+    const rootErrors =
+      formState.root?.errors && formState.root.errors.length > 0;
+    const rootInternalError = !!formState.root?.internalError;
+    expect(fieldErrors || rootErrors || rootInternalError).toBe(
+      expected.hasErrors,
+    );
+  }
+  if (expected.hasRootErrors !== undefined) {
+    const rootErrors =
+      formState.root?.errors && formState.root.errors.length > 0;
+    const rootInternalError = !!formState.root?.internalError;
+    expect(rootErrors || rootInternalError).toBe(expected.hasRootErrors);
+  }
+  if (expected.hasFieldErrors !== undefined) {
+    const fieldErrors =
+      formState.errors && Object.keys(formState.errors).length > 0;
+    expect(fieldErrors).toBe(expected.hasFieldErrors);
+  }
+  if (expected.hasRootWarnings !== undefined) {
+    const rootWarnings =
+      formState.root?.warnings && formState.root.warnings.length > 0;
+    expect(rootWarnings).toBe(expected.hasRootWarnings);
+  }
+  if (expected.hasFieldWarnings !== undefined) {
+    const fieldWarnings =
+      formState.warnings && Object.keys(formState.warnings).length > 0;
+    expect(fieldWarnings).toBe(expected.hasFieldWarnings);
   }
 }
 
@@ -114,6 +148,18 @@ function expectValidationState(
       <div data-testid="form-valid">{{ vestForm.formState().valid }}</div>
       <div data-testid="form-dirty">{{ vestForm.formState().dirty }}</div>
       <div data-testid="form-pending">{{ vestForm.formState().pending }}</div>
+      <div data-testid="form-root-errors">
+        {{ vestForm.formState().root?.errors | json }}
+      </div>
+      <div data-testid="form-root-warnings">
+        {{ vestForm.formState().root?.warnings | json }}
+      </div>
+      <div data-testid="form-field-errors">
+        {{ vestForm.formState().errors | json }}
+      </div>
+      <div data-testid="form-field-warnings">
+        {{ vestForm.formState().warnings | json }}
+      </div>
     </form>
   `,
 })
@@ -173,6 +219,12 @@ class TestFormComponent {
 
       <div data-testid="form-pending">{{ vestForm.formState().pending }}</div>
       <div data-testid="form-status">{{ vestForm.formState().status }}</div>
+      <div data-testid="form-root-errors">
+        {{ vestForm.formState().root?.errors | json }}
+      </div>
+      <div data-testid="form-field-errors">
+        {{ vestForm.formState().errors | json }}
+      </div>
     </form>
   `,
 })
@@ -226,7 +278,7 @@ type EventFormModel = {
  */
 @Component({
   selector: 'ngx-date-form',
-  imports: [FormsModule, ngxVestForms],
+  imports: [FormsModule, ngxVestForms, JsonPipe],
   template: `
     <form
       ngxVestForm
@@ -299,6 +351,14 @@ type EventFormModel = {
       <div data-testid="form-pending">{{ vestForm.formState().pending }}</div>
       <div data-testid="form-errors">
         {{ vestForm.formState().errors | json }}
+      </div>
+      <div data-testid="form-warnings">
+        {{ vestForm.formState().warnings | json }}
+      </div>
+      <div data-testid="form-root-issues">
+        Root Errors: {{ vestForm.formState().root?.errors | json }} Root
+        Warnings: {{ vestForm.formState().root?.warnings | json }} Root
+        Internal: {{ vestForm.formState().root?.internalError }}
       </div>
     </form>
   `,

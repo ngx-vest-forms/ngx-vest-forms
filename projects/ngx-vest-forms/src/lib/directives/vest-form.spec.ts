@@ -6,14 +6,14 @@ import { describe, it } from 'vitest';
  * This file is for scenarios that combine multiple features, advanced validation, or integration with other directives/components.
  *
  * Test progression:
- * 1. Recommended: schema-adapter, root form validation, cyclic dependencies with validationConfig
+ * 1. Recommended: schemas (ngx-vest-forms/schemas), root form validation, cyclic dependencies with validationConfig
  * 2. Intermediate: error display integration, async validation, custom error display modes
  * 3. Advanced: deeply nested groups, cross-field validation, dynamic validationConfig, custom schema adapters
  * 4. Very advanced: integration with custom components, accessibility checks, performance under stress, edge-case flows
  */
 
 describe('ngxVestForm (FormDirective) - Advanced Integration', () => {
-  it('should work with a schema-adapter and validate types correctly', async () => {
+  it('should work with schemas (ngx-vest-forms/schemas) and validate types correctly', async () => {
     // TODO: Implement test
   });
 

@@ -3,8 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { render, screen } from '@testing-library/angular';
 import { userEvent } from '@vitest/browser/context';
 import { enforce, only, staticSuite, test, warn } from 'vest';
-import { describe, it, vi } from 'vitest';
-import { FormErrorDisplayDirective } from './form-error-display.directive';
+import { describe, expect, it, vi } from 'vitest';
+import { ngxVestForms } from '../exports';
 
 // Vest suite for errors and warnings
 const vestSuite = staticSuite(
@@ -35,7 +35,7 @@ describe('FormErrorDisplayDirective', () => {
   it('should show Vest errors only on blur when errorDisplayMode is "on-blur"', async () => {
     @Component({
       standalone: true,
-      imports: [FormsModule, FormErrorDisplayDirective],
+      imports: [...ngxVestForms],
       template: `
         <form
           ngxVestForm
@@ -44,7 +44,7 @@ describe('FormErrorDisplayDirective', () => {
           (formValueChange)="formValue = $event"
         >
           <div
-            scFormErrorDisplay
+            ngxFormErrorDisplay
             #display="formErrorDisplay"
             errorDisplayMode="on-blur"
           >
@@ -76,7 +76,7 @@ describe('FormErrorDisplayDirective', () => {
   it('should show Vest errors only on submit when errorDisplayMode is "on-submit"', async () => {
     @Component({
       standalone: true,
-      imports: [FormsModule, FormErrorDisplayDirective],
+      imports: [...ngxVestForms],
       template: `
         <form
           ngxVestForm
@@ -85,7 +85,7 @@ describe('FormErrorDisplayDirective', () => {
           (formValueChange)="formValue = $event"
         >
           <div
-            scFormErrorDisplay
+            ngxFormErrorDisplay
             #display="formErrorDisplay"
             errorDisplayMode="on-submit"
           >
@@ -117,7 +117,7 @@ describe('FormErrorDisplayDirective', () => {
   it('should show Vest errors after blur or submit when errorDisplayMode is "on-blur-or-submit"', async () => {
     @Component({
       standalone: true,
-      imports: [FormsModule, FormErrorDisplayDirective],
+      imports: [...ngxVestForms],
       template: `
         <form
           ngxVestForm
@@ -126,7 +126,7 @@ describe('FormErrorDisplayDirective', () => {
           (formValueChange)="formValue = $event"
         >
           <div
-            scFormErrorDisplay
+            ngxFormErrorDisplay
             #display="formErrorDisplay"
             errorDisplayMode="on-blur-or-submit"
           >
@@ -168,7 +168,7 @@ describe('FormErrorDisplayDirective', () => {
   it('should not show errors while validation is pending', async () => {
     @Component({
       standalone: true,
-      imports: [FormsModule, FormErrorDisplayDirective],
+      imports: [...ngxVestForms],
       template: `
         <form
           ngxVestForm
@@ -177,7 +177,7 @@ describe('FormErrorDisplayDirective', () => {
           (formValueChange)="formValue = $event"
         >
           <div
-            scFormErrorDisplay
+            ngxFormErrorDisplay
             #display="formErrorDisplay"
             errorDisplayMode="on-blur"
           >
@@ -214,7 +214,7 @@ describe('FormErrorDisplayDirective', () => {
   it('should expose Vest errors and warnings signals', async () => {
     @Component({
       standalone: true,
-      imports: [FormsModule, FormErrorDisplayDirective],
+      imports: [...ngxVestForms],
       template: `
         <form
           ngxVestForm
@@ -222,7 +222,7 @@ describe('FormErrorDisplayDirective', () => {
           [formValue]="formValue"
           (formValueChange)="formValue = $event"
         >
-          <div scFormErrorDisplay #display="formErrorDisplay">
+          <div ngxFormErrorDisplay #display="formErrorDisplay">
             <label for="email">Email</label>
             <input id="email" name="email" [ngModel]="formValue.email" />
             <div data-testid="errors">{{ display.errors().join(',') }}</div>
@@ -246,7 +246,7 @@ describe('FormErrorDisplayDirective', () => {
   it('should show Vest warnings when present', async () => {
     @Component({
       standalone: true,
-      imports: [FormsModule, FormErrorDisplayDirective],
+      imports: [...ngxVestForms],
       template: `
         <form
           ngxVestForm
@@ -254,7 +254,7 @@ describe('FormErrorDisplayDirective', () => {
           [formValue]="formValue"
           (formValueChange)="formValue = $event"
         >
-          <div scFormErrorDisplay #display="formErrorDisplay">
+          <div ngxFormErrorDisplay #display="formErrorDisplay">
             <label for="email">Email</label>
             <input id="email" name="email" [ngModel]="formValue.email" />
             <div data-testid="errors">{{ display.errors().join(',') }}</div>
@@ -277,7 +277,7 @@ describe('FormErrorDisplayDirective', () => {
   it('should set formSubmitted after submit event', async () => {
     @Component({
       standalone: true,
-      imports: [FormsModule, FormErrorDisplayDirective],
+      imports: [...ngxVestForms],
       template: `
         <form
           ngxVestForm
@@ -287,7 +287,7 @@ describe('FormErrorDisplayDirective', () => {
           #ngForm="ngForm"
         >
           <div
-            scFormErrorDisplay
+            ngxFormErrorDisplay
             #display="formErrorDisplay"
             errorDisplayMode="on-submit"
           >
@@ -315,7 +315,7 @@ describe('FormErrorDisplayDirective', () => {
     @Component({
       standalone: true,
       imports: [FormsModule],
-      hostDirectives: [FormErrorDisplayDirective],
+      imports: [...ngxVestForms],
       template: `
         <label for="username">Username</label>
         <input id="username" name="username" [ngModel]="formValue.username" />
@@ -339,7 +339,7 @@ describe('FormErrorDisplayDirective', () => {
   it('should associate error messages with input using aria-describedby', async () => {
     @Component({
       standalone: true,
-      imports: [FormsModule, FormErrorDisplayDirective],
+      imports: [...ngxVestForms],
       template: `
         <form
           ngxVestForm
@@ -347,7 +347,7 @@ describe('FormErrorDisplayDirective', () => {
           [formValue]="formValue"
           (formValueChange)="formValue = $event"
         >
-          <div scFormErrorDisplay #display="formErrorDisplay">
+          <div ngxFormErrorDisplay #display="formErrorDisplay">
             <label for="email">Email</label>
             <input
               id="email"
@@ -388,7 +388,7 @@ describe('FormErrorDisplayDirective', () => {
     });
     @Component({
       standalone: true,
-      imports: [FormsModule, FormErrorDisplayDirective],
+      imports: [...ngxVestForms],
       template: `
         <form
           ngxVestForm
@@ -396,7 +396,7 @@ describe('FormErrorDisplayDirective', () => {
           [formValue]="formValue"
           (formValueChange)="formValue = $event"
         >
-          <div scFormErrorDisplay #display="formErrorDisplay">
+          <div ngxFormErrorDisplay #display="formErrorDisplay">
             <label for="email">Email</label>
             <input id="email" name="email" [ngModel]="formValue.email" />
             @if (display.shouldShowErrors()) {
@@ -429,7 +429,7 @@ describe('FormErrorDisplayDirective', () => {
     });
     @Component({
       standalone: true,
-      imports: [FormsModule, FormErrorDisplayDirective],
+      imports: [...ngxVestForms],
       template: `
         <form
           ngxVestForm
@@ -437,7 +437,7 @@ describe('FormErrorDisplayDirective', () => {
           [formValue]="formValue"
           (formValueChange)="formValue = $event"
         >
-          <div scFormErrorDisplay #display="formErrorDisplay">
+          <div ngxFormErrorDisplay #display="formErrorDisplay">
             <label for="email">Email</label>
             <input id="email" name="email" [ngModel]="formValue.email" />
             @if (display.isPending()) {
@@ -472,7 +472,7 @@ describe('FormErrorDisplayDirective', () => {
     });
     @Component({
       standalone: true,
-      imports: [FormsModule, FormErrorDisplayDirective],
+      imports: [...ngxVestForms],
       template: `
         <form
           ngxVestForm
@@ -481,7 +481,7 @@ describe('FormErrorDisplayDirective', () => {
           (formValueChange)="formValue = $event"
         >
           <div
-            scFormErrorDisplay
+            ngxFormErrorDisplay
             #display="formErrorDisplay"
             errorDisplayMode="on-blur"
           >

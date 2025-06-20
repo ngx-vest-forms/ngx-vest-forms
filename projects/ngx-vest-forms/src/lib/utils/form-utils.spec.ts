@@ -22,9 +22,15 @@ describe('getFormControlField function', () => {
         name: new FormControl('John'),
       }),
     });
-    expect(getFormControlField(form, form.get('personal')!.get('name')!)).toBe(
-      'personal.name',
-    );
+    const personalGroup = form.get('personal');
+    expect(personalGroup).not.toBeNull();
+    if (personalGroup) {
+      const nameControl = personalGroup.get('name');
+      expect(nameControl).not.toBeNull();
+      if (nameControl) {
+        expect(getFormControlField(form, nameControl)).toBe('personal.name');
+      }
+    }
   });
 });
 
@@ -46,9 +52,15 @@ describe('getFormGroupField function', () => {
         }),
       }),
     });
-    expect(getFormGroupField(form, form.get('personal')!.get('contact')!)).toBe(
-      'personal.contact',
-    );
+    const personalGroup = form.get('personal');
+    expect(personalGroup).not.toBeNull();
+    if (personalGroup) {
+      const contactGroup = personalGroup.get('contact');
+      expect(contactGroup).not.toBeNull();
+      if (contactGroup) {
+        expect(getFormGroupField(form, contactGroup)).toBe('personal.contact');
+      }
+    }
   });
 });
 
@@ -62,7 +74,11 @@ describe('mergeValuesAndRawValues function', () => {
         zip: new FormControl(12_345),
       }),
     });
-    form.get('name')!.disable(); // Simulate a disabled field
+    const nameControl = form.get('name');
+    expect(nameControl).not.toBeNull();
+    if (nameControl) {
+      nameControl.disable(); // Simulate a disabled field
+    }
     const mergedValues = mergeValuesAndRawValues(form);
     expect(mergedValues).toEqual({
       name: 'John',

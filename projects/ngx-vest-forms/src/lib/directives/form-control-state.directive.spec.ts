@@ -1,5 +1,4 @@
-import { Component, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, inject, signal } from '@angular/core';
 import { render, screen } from '@testing-library/angular';
 import { userEvent } from '@vitest/browser/context';
 import { enforce, only, staticSuite, test, warn } from 'vest';
@@ -29,10 +28,10 @@ describe('FormControlStateDirective', () => {
   describe('Core Functionality', () => {
     it('should extract raw form control state for NgModel', async () => {
       @Component({
-        imports: [ngxVestForms, FormsModule, FormControlStateDirective],
+        imports: [...ngxVestForms],
         template: `
           <form ngxVestForm [vestSuite]="suite" [(formValue)]="formValue">
-            <div scFormControlState #state="formControlState">
+            <div ngxFormControlState #state="formControlState">
               <label for="test-input">Test Input</label>
               <input
                 id="test-input"
@@ -81,10 +80,10 @@ describe('FormControlStateDirective', () => {
 
     it('should extract errorMessages and warningMessages from Vest validation', async () => {
       @Component({
-        imports: [ngxVestForms, FormsModule, FormControlStateDirective],
+        imports: [...ngxVestForms],
         template: `
           <form ngxVestForm [vestSuite]="suite" [(formValue)]="formValue">
-            <div scFormControlState #state="formControlState">
+            <div ngxFormControlState #state="formControlState">
               <label for="test-input">Test Input</label>
               <input id="test-input" name="test" [ngModel]="formValue().test" />
               <div data-testid="errors">
@@ -121,10 +120,10 @@ describe('FormControlStateDirective', () => {
 
     it('should show errors when field is empty and touched', async () => {
       @Component({
-        imports: [ngxVestForms, FormsModule, FormControlStateDirective],
+        imports: [...ngxVestForms],
         template: `
           <form ngxVestForm [vestSuite]="suite" [(formValue)]="formValue">
-            <div scFormControlState #state="formControlState">
+            <div ngxFormControlState #state="formControlState">
               <label for="test-input">Test Input</label>
               <input id="test-input" name="test" [ngModel]="formValue().test" />
               <div data-testid="errors">
@@ -170,10 +169,10 @@ describe('FormControlStateDirective', () => {
       );
 
       @Component({
-        imports: [ngxVestForms, FormsModule, FormControlStateDirective],
+        imports: [...ngxVestForms],
         template: `
           <form ngxVestForm [vestSuite]="suite" [(formValue)]="formValue">
-            <div scFormControlState #state="formControlState">
+            <div ngxFormControlState #state="formControlState">
               <label for="test-input">Test Input</label>
               <input
                 id="test-input"
@@ -221,9 +220,9 @@ describe('FormControlStateDirective', () => {
   describe('Edge Cases', () => {
     it('should handle missing/undefined controls gracefully', async () => {
       @Component({
-        imports: [FormControlStateDirective],
+        imports: [...ngxVestForms],
         template: `
-          <div scFormControlState #state="formControlState">
+          <div ngxFormControlState #state="formControlState">
             <div data-testid="status">
               {{ state.controlState().status || 'no-status' }}
             </div>
@@ -244,10 +243,10 @@ describe('FormControlStateDirective', () => {
 
     it('should handle null form values gracefully', async () => {
       @Component({
-        imports: [ngxVestForms, FormsModule, FormControlStateDirective],
+        imports: [...ngxVestForms],
         template: `
           <form ngxVestForm [vestSuite]="suite" [formValue]="nullValue">
-            <div scFormControlState #state="formControlState">
+            <div ngxFormControlState #state="formControlState">
               <input name="test" ngModel data-testid="input" />
               <div data-testid="status">
                 {{ state.controlState().status || 'no-status' }}
@@ -270,8 +269,8 @@ describe('FormControlStateDirective', () => {
   describe('Host Directive Usage', () => {
     it('should work as hostDirective in a custom component', async () => {
       @Component({
-        imports: [ngxVestForms, FormsModule],
-        hostDirectives: [FormControlStateDirective],
+        imports: [...ngxVestForms],
+        imports: [...ngxVestForms],
         template: `
           <form ngxVestForm [vestSuite]="suite" [(formValue)]="formValue">
             <label for="username-input">Username</label>
@@ -300,7 +299,9 @@ describe('FormControlStateDirective', () => {
           },
         );
 
-        constructor(public formControlState: FormControlStateDirective) {}
+        constructor() {
+          inject(FormControlStateDirective);
+        }
       }
 
       const { fixture } = await render(HostDirectiveComponent);
@@ -325,10 +326,10 @@ describe('FormControlStateDirective', () => {
   describe('Vest Integration', () => {
     it('should show Vest warnings when present', async () => {
       @Component({
-        imports: [ngxVestForms, FormsModule, FormControlStateDirective],
+        imports: [...ngxVestForms],
         template: `
           <form ngxVestForm [vestSuite]="suite" [(formValue)]="formValue">
-            <div scFormControlState #state="formControlState">
+            <div ngxFormControlState #state="formControlState">
               <label for="test-input">Test Input</label>
               <input id="test-input" name="test" [ngModel]="formValue().test" />
               <div data-testid="warnings">
@@ -386,10 +387,10 @@ describe('FormControlStateDirective', () => {
       );
 
       @Component({
-        imports: [ngxVestForms, FormsModule, FormControlStateDirective],
+        imports: [...ngxVestForms],
         template: `
           <form ngxVestForm [vestSuite]="suite" [(formValue)]="formValue">
-            <div scFormControlState #state="formControlState">
+            <div ngxFormControlState #state="formControlState">
               <label for="test-input">Test Input</label>
               <input id="test-input" name="test" [ngModel]="formValue().test" />
               <div data-testid="error-count">
