@@ -1,9 +1,5 @@
-import {
-  DeepPartial,
-  DeepRequired,
-  InferSchemaType,
-  modelToStandardSchema,
-} from 'ngx-vest-forms';
+import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
+import { InferSchemaType, modelToStandardSchema } from 'ngx-vest-forms/schemas';
 
 // --- Business Hour (Nested Model) ---
 

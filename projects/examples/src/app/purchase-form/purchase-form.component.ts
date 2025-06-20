@@ -10,12 +10,10 @@ import {
   viewChild,
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import type { InferSchemaType, VestSuite } from 'ngx-vest-forms';
-import {
-  injectRootFormKey,
-  modelToStandardSchema,
-  ngxVestForms,
-} from 'ngx-vest-forms';
+import type { VestSuite } from 'ngx-vest-forms';
+import { injectRootFormKey, ngxVestForms } from 'ngx-vest-forms';
+import type { InferSchemaType } from 'ngx-vest-forms/schemas';
+import { modelToStandardSchema } from 'ngx-vest-forms/schemas';
 import { FormDirective } from 'projects/ngx-vest-forms/src/public-api';
 import { debounceTime, filter, finalize, switchMap } from 'rxjs';
 import { LukeService } from '../services/luke.service';

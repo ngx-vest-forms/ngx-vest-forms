@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { ngxVestForms } from 'ngx-vest-forms';
+import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 import { enforce, staticSuite, test } from 'vest';
 
 type ContactForm = {
@@ -19,13 +20,13 @@ const contactFormSuite = staticSuite((data = {}) => {
 
 @Component({
   selector: 'ngx-contact-form',
-  imports: [ngxVestForms],
+  imports: [ngxVestForms, NgxControlWrapper],
   template: `
     <form
       ngxVestForm
       [vestSuite]="suite"
       [(formValue)]="formValue"
-      validateRootForm="false"
+      [validateRootForm]="false"
       #vestForm="ngxVestForm"
     >
       <ngx-control-wrapper>

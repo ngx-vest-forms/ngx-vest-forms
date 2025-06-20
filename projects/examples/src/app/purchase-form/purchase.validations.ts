@@ -1,4 +1,4 @@
-import { InferSchemaType, modelToStandardSchema } from 'ngx-vest-forms';
+import { InferSchemaType, modelToStandardSchema } from 'ngx-vest-forms/schemas';
 import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
 import {
   enforce,
