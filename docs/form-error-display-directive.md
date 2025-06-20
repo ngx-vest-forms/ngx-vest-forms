@@ -1,4 +1,4 @@
-# FormErrorDisplayDirective (`scFormErrorDisplay`)
+# FormErrorDisplayDirective (`ngxFormErrorDisplay`)
 
 A directive that extends `FormControlStateDirective` with built-in validation display behavior.
 
@@ -69,7 +69,7 @@ Choose this directive when:
 ## Basic Example
 
 ```html
-<div scFormErrorDisplay #display="formErrorDisplay" errorDisplayMode="submit">
+<div ngxFormErrorDisplay #display="formErrorDisplay" errorDisplayMode="submit">
   <input name="username" ngModel />
 
   @if (display.isPending()) {
@@ -105,9 +105,9 @@ export class AppComponent {}
 - `FormControlStateDirective` provides the data (WHAT) - raw form state and parsed messages
 - `FormErrorDisplayDirective` adds display behavior (WHEN) - timing and filtering of messages
 
-The directive uses Angular's `hostDirectives` feature to compose functionality, so every `scFormErrorDisplay` automatically includes the functionality of `scFormControlState`.
+The directive uses Angular's `hostDirectives` feature to compose functionality, so every `ngxFormErrorDisplay` automatically includes the functionality of `ngxFormControlState`.
 
 ## See Also
 
 - [FormControlStateDirective](./form-control-state-directive.md) for accessing just the raw form state
-- [ControlWrapperComponent](../src/lib/components/control-wrapper/control-wrapper.component.ts) which uses this directive internally
+- [NgxControlWrapper](../src/lib/components/control-wrapper/control-wrapper.component.ts) which uses this directive internally

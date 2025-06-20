@@ -4,9 +4,365 @@ This document lists all **public API breaking changes** in recent versions of `n
 
 ---
 
+## Smart State Management Modularization (v2.1+)
+
+**What changed?**
+
+Smart state management features have been moved to a **secondary entry point** to keep the core library lightweight. This is a **breaking change** if you were using smart state features.
+
+**Why the change?**
+
+- **Smaller core bundle:** Users who don't need advanced smart state features get a smaller core bundle
+- **Optional complexity:** Advanced features are now clearly opt-in
+- **Better separation of concerns:** Core form logic is separated from advanced state management
+- **Future extensibility:** Enables other advanced features to be modularized similarly
+
+**Migration Required:**
+
+If you were using smart state management features (introduced in v2.0), you must update your imports and component setup:
+
+### Before (v2.0):
+
+```typescript
+// All features available from main entry point
+import { ngxVestForms, SmartStateOptions } from 'ngx-vest-forms';
+
+@Component({
+  imports: [ngxVestForms],
+  template: `
+    <form
+      ngxVestForm
+      [vestSuite]="suite"
+      [(formValue)]="model"
+      [externalData]="external()"
+      [smartStateOptions]="options()"
+    >
+      <!-- form fields -->
+    </form>
+  `
+})
+```
+
+### After (v2.1+):
+
+```typescript
+// Smart state features require separate import
+import { ngxVestForms } from 'ngx-vest-forms';
+import { ngxVestFormsSmartStateDirective, SmartStateOptions } from 'ngx-vest-forms/smart-state';
+
+@Component({
+  imports: [ngxVestForms, ngxVestFormsSmartStateDirective],
+  template: `
+    <form
+      ngxVestForm
+      ngxSmartStateExtension
+      [vestSuite]="suite"
+      [(formValue)]="model"
+      [externalData]="external()"
+      [smartStateOptions]="options()"
+    >
+      <!-- form fields -->
+    </form>
+  `
+})
+```
+
+**Key Changes:**
+
+1. **Import:** Smart state types and directives must be imported from `ngx-vest-forms/smart-state`
+2. **Component Imports:** Add `ngxVestFormsSmartStateDirective` to your component's `imports` array
+3. **Template:** Add `ngxSmartStateExtension` directive to your form element
+4. **Bundle Impact:** Core users get ~30% smaller bundle, smart state users have minimal overhead
+
+**If you're not using smart state features:** No changes required. Your existing code continues to work unchanged.
+
+**Documentation:** See [Smart State Management Guide](smart-state-management.md) for complete usage examples and patterns.
+
+---
+
+## Control Wrapper Modularization (v2.2+)
+
+**What changed?**
+
+The `NgxControlWrapper` and its related configuration (`ERROR_DISPLAY_MODE_DEFAULT`, `ErrorDisplayMode`) have been moved to a **new secondary entry point**: `ngx-vest-forms/control-wrapper`. The configuration token `CONTROL_WRAPPER_ERROR_DISPLAY` has been renamed to `ERROR_DISPLAY_MODE_DEFAULT` and is now exported from the core `ngx-vest-forms` package, while the `NgxControlWrapper` itself is in the new entry point.
+
+**Why the change?**
+
+- **Smaller core bundle:** Users who build their own UI for error display or don't need the provided wrapper won't include its code in their main bundle.
+- **Optional UI Helpers:** The `NgxControlWrapper` is a UI helper, and making it optional aligns with the goal of keeping the core library focused on form logic and validation.
+- **Clearer Separation:** Separates core validation logic, advanced state features, and UI utilities into distinct, opt-in modules.
+
+**Migration Required:**
+
+If you were using `NgxControlWrapper` or the `CONTROL_WRAPPER_ERROR_DISPLAY` token:
+
+### Before (v2.1 and earlier):
+
+```typescript
+// NgxControlWrapper and its config were part of the core or directly accessible
+import {
+  ngxVestForms,
+  NgxControlWrapper,
+  CONTROL_WRAPPER_ERROR_DISPLAY,
+  ErrorDisplayMode,
+} from 'ngx-vest-forms';
+
+@Component({
+  imports: [ngxVestForms, NgxControlWrapper],
+  // ...
+})
+export class MyFormComponent {}
+
+// Provider example
+providers: [
+  {
+    provide: CONTROL_WRAPPER_ERROR_DISPLAY,
+    useValue: 'on-blur' as ErrorDisplayMode,
+  },
+];
+```
+
+### After (v2.2+):
+
+```typescript
+// NgxControlWrapper is imported from its own entry point
+// ERROR_DISPLAY_MODE_DEFAULT (renamed) and ErrorDisplayMode type are from the core
+import {
+  ngxVestForms,
+  ERROR_DISPLAY_MODE_DEFAULT,
+  ErrorDisplayMode,
+} from 'ngx-vest-forms';
+import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
+
+@Component({
+  imports: [ngxVestForms, NgxControlWrapper],
+  // ...
+})
+export class MyFormComponent {}
+
+// Provider example (token renamed, type from core)
+providers: [
+  {
+    provide: ERROR_DISPLAY_MODE_DEFAULT,
+    useValue: 'on-blur' as ErrorDisplayMode,
+  },
+];
+```
+
+**Key Changes:**
+
+1.  **`NgxControlWrapper` Import:** Import `NgxControlWrapper` from `ngx-vest-forms/control-wrapper`.
+2.  **Component Imports Array:** Ensure `NgxControlWrapper` is added to your Angular component's `imports` array if used in the template.
+3.  **Configuration Token Renamed:** The injection token `CONTROL_WRAPPER_ERROR_DISPLAY` is now `ERROR_DISPLAY_MODE_DEFAULT`.
+4.  **Token and Type Import:** `ERROR_DISPLAY_MODE_DEFAULT` and the `ErrorDisplayMode` type are now imported from the core `ngx-vest-forms` package.
+5.  **Bundle Impact:** Users not importing `NgxControlWrapper` will see a slightly smaller bundle. Users of the wrapper will have a new, small, separate chunk for it.
+
+**If you're not using `NgxControlWrapper` or its global configuration:** No changes are required regarding this specific modularization.
+
+**Documentation:** See the [Control Wrapper Guide](../../projects/ngx-vest-forms/control-wrapper/README.md) for complete usage examples and patterns.
+
+---
+
+## Schema Utilities Modularization (v2.3+)
+
+**What changed?**
+
+Schema utilities and types (`SchemaDefinition`, `InferSchemaType`, `modelToStandardSchema`, `extractTemplateFromSchema`, `isStandardSchema`, `shapeToSchema`) have been moved to a **new secondary entry point**: `ngx-vest-forms/schemas`. This is a **breaking change** if you were importing these utilities from the main `ngx-vest-forms` package.
+
+**Why the change?**
+
+- **Smaller core bundle:** Users who don't need schema integration get a smaller core bundle
+- **Optional complexity:** Schema utilities are now clearly opt-in for enhanced type safety
+- **Better separation of concerns:** Core form logic is separated from schema integration features
+- **Modular architecture:** Follows the same pattern as other optional features (smart-state, control-wrapper)
+
+**Migration Required:**
+
+If you were using schema utilities from the main package:
+
+### Before (v2.2 and earlier):
+
+```typescript
+// Schema utilities were part of the core package
+import {
+  ngxVestForms,
+  modelToStandardSchema,
+  SchemaDefinition,
+  InferSchemaType,
+} from 'ngx-vest-forms';
+
+const userSchema = modelToStandardSchema(userTemplate);
+```
+
+### After (v2.3+):
+
+```typescript
+// Schema utilities are imported from their own entry point
+import { ngxVestForms } from 'ngx-vest-forms';
+import {
+  modelToStandardSchema,
+  SchemaDefinition,
+  InferSchemaType,
+} from 'ngx-vest-forms/schemas';
+
+const userSchema = modelToStandardSchema(userTemplate);
+```
+
+**Key Changes:**
+
+1. **Import Location:** All schema utilities must be imported from `ngx-vest-forms/schemas`
+2. **Core Package:** The core `ngx-vest-forms` package no longer exports schema utilities
+3. **Bundle Impact:** Users not using schemas get a smaller core bundle
+4. **Functionality:** All schema utilities work exactly the same, only the import location has changed
+
+**If you're not using schema utilities:** No changes required. Your existing code continues to work unchanged.
+
+**Documentation:** See the [Schema Utilities Guide](../../projects/ngx-vest-forms/schemas/README.md) for complete usage examples and patterns.
+
+---
+
+## Component Naming: ControlWrapperComponent → NgxControlWrapper (v2.2+)
+
+**What changed?**
+
+The control wrapper component has been renamed from `ControlWrapperComponent` to `NgxControlWrapper` to follow Angular naming conventions and provide a clearer, more consistent API.
+
+**Why the change?**
+
+- **Angular Conventions:** Follows standard Angular naming patterns for standalone components
+- **Clarity:** The `NgxControlWrapper` name clearly indicates this is an ngx-vest-forms component
+- **Consistency:** Aligns with the `<ngx-control-wrapper>` element selector
+- **API Improvement:** Provides a more intuitive import and usage experience
+
+**Migration Required:**
+
+### Before (v2.1 and earlier):
+
+```typescript
+import { ControlWrapperComponent } from 'ngx-vest-forms/control-wrapper';
+
+@Component({
+  imports: [ngxVestForms, ControlWrapperComponent],
+  // ...
+})
+```
+
+### After (v2.2+):
+
+```typescript
+import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
+
+@Component({
+  imports: [ngxVestForms, NgxControlWrapper],
+  // ...
+})
+```
+
+**Key Changes:**
+
+1. **Import Name:** Change `ControlWrapperComponent` to `NgxControlWrapper` in imports
+2. **Component Imports Array:** Update the component's `imports` array to use `NgxControlWrapper`
+3. **Template Usage:** Template usage remains the same (`<ngx-control-wrapper>` or `[ngxControlWrapper]`)
+
+**Template usage unchanged:**
+
+```html
+<!-- These selectors remain the same -->
+<ngx-control-wrapper>
+  <input name="field" ngModel />
+</ngx-control-wrapper>
+
+<!-- or -->
+<div ngxControlWrapper>
+  <input name="field" ngModel />
+</div>
+```
+
+---
+
+## New Features (Non-Breaking)
+
+### Smart State Management (v2.x+)
+
+**What's new?**
+
+Optional smart state management capabilities that intelligently handle external data updates, conflict resolution, and state merging using Angular's `linkedSignal` feature.
+
+**Note:** As of v2.1+, these features require importing from the secondary entry point `ngx-vest-forms/smart-state` (see migration section above).
+
+**Key Benefits:**
+
+- Prevents data loss when external data updates while users are editing
+- Handles real-time collaborative updates automatically
+- Reduces complexity with built-in merge strategies and conflict resolution
+- Improves user experience with clear conflict feedback
+
+**New Inputs:**
+
+- `[externalData]` - External data source for smart merging
+- `[smartStateOptions]` - Configuration for merge strategies and conflict resolution
+
+**New API Methods:**
+
+- `conflictState()` - Signal indicating conflict status and details
+- `acceptExternalChanges()` - Resolve conflicts by accepting external data
+- `keepLocalChanges()` - Resolve conflicts by keeping user edits
+
+**Example:**
+
+```typescript
+// Before: Simple form (still works)
+<form ngxVestForm [vestSuite]="suite" [(formValue)]="userProfile">
+  <!-- form fields -->
+</form>
+
+// After: With smart state management (optional)
+<form
+  ngxVestForm
+  [vestSuite]="suite"
+  [(formValue)]="userProfile"
+  [externalData]="externalUserData()"
+  [smartStateOptions]="{
+    mergeStrategy: 'smart',
+    preserveFields: ['email', 'preferences.theme']
+  }"
+  #form="ngxVestForm"
+>
+  <!-- form fields -->
+
+  @if (form.conflictState().hasConflict) {
+    <div class="conflict-banner">
+      <p>Data conflict detected!</p>
+      <button (click)="form.acceptExternalChanges()">Accept Changes</button>
+      <button (click)="form.keepLocalChanges()">Keep My Changes</button>
+    </div>
+  }
+</form>
+```
+
+**Migration:** No migration needed. Existing forms continue to work without changes. Smart state features are purely additive and opt-in.
+
+**Documentation:** See [Smart State Management Guide](smart-state-management.md) for complete usage examples and patterns.
+
+---
+
 ## Table of Contents
 
 - [ngx-vest-forms Breaking Changes: Public API Migration Guide](#ngx-vest-forms-breaking-changes-public-api-migration-guide)
+  - [Smart State Management Modularization (v2.1+)](#smart-state-management-modularization-v21)
+    - [Before (v2.0):](#before-v20)
+    - [After (v2.1+):](#after-v21)
+  - [Control Wrapper Modularization (v2.2+)](#control-wrapper-modularization-v22)
+    - [Before (v2.1 and earlier):](#before-v21-and-earlier)
+    - [After (v2.2+):](#after-v22)
+  - [Schema Utilities Modularization (v2.3+)](#schema-utilities-modularization-v23)
+    - [Before (v2.2 and earlier):](#before-v22-and-earlier-1)
+    - [After (v2.3+):](#after-v23)
+  - [Component Naming: ControlWrapperComponent → NgxControlWrapper (v2.2+)](#component-naming-controlwrappercomponent--ngxcontrolwrapper-v22)
+    - [Before (v2.1 and earlier):](#before-v21-and-earlier-2)
+    - [After (v2.2+):](#after-v22-1)
+  - [New Features (Non-Breaking)](#new-features-non-breaking)
+    - [Smart State Management (v2.x+)](#smart-state-management-v2x)
   - [Table of Contents](#table-of-contents)
   - [1. Two-way Binding with `model()` for `[formValue]`](#1-two-way-binding-with-model-for-formvalue)
     - [What changed?](#what-changed)
@@ -63,27 +419,35 @@ This document lists all **public API breaking changes** in recent versions of `n
     - [What changed?](#what-changed-11)
     - [Why?](#why-11)
     - [Migration](#migration-11)
-  - [13. New Schema Adapter and Standard Schema Integration](#13-new-schema-adapter-and-standard-schema-integration)
+  - [13. New Composition API: FormErrorDisplayDirective and FormControlStateDirective](#13-new-composition-api-formerrordisplaydirective-and-formcontrolstatedirective)
     - [What changed?](#what-changed-12)
     - [Why?](#why-12)
+    - [Usage Patterns](#usage-patterns)
+      - [1. Building Custom Form Components with hostDirectives](#1-building-custom-form-components-with-hostdirectives)
+      - [2. Direct Template Usage with Template Reference Variables](#2-direct-template-usage-with-template-reference-variables)
+      - [3. Available Signals and Methods](#3-available-signals-and-methods)
     - [Migration](#migration-12)
-  - [14. Configurable Error Display Mode in Control Wrapper](#14-configurable-error-display-mode-in-control-wrapper)
-    - [What changed?](#what-changed-13)
+      - [Before (Custom Implementation)](#before-custom-implementation)
+      - [After (Using New Directives)](#after-using-new-directives)
     - [Why?](#why-13)
     - [Migration](#migration-13)
-  - [15. Field Path Utilities (New)](#15-field-path-utilities-new)
-    - [What changed?](#what-changed-14)
+  - [14. Configurable Error Display Mode in Control Wrapper](#14-configurable-error-display-mode-in-control-wrapper)
+    - [What changed?](#what-changed-13)
     - [Why?](#why-14)
     - [Migration](#migration-14)
+  - [15. Field Path Utilities (New)](#15-field-path-utilities-new)
+    - [What changed?](#what-changed-14)
+    - [Why?](#why-15)
+    - [Migration](#migration-15)
   - [16. FormControlStateDirective: Build Your Own Custom Form Field](#16-formcontrolstatedirective-build-your-own-custom-form-field)
     - [What changed?](#what-changed-15)
-    - [Why?](#why-15)
+    - [Why?](#why-16)
     - [How to use](#how-to-use)
       - [Building Custom Form Fields](#building-custom-form-fields)
   - [17. Error Display Modes Renamed and Now UpdateOn-Aware](#17-error-display-modes-renamed-and-now-updateon-aware)
     - [What changed?](#what-changed-16)
-    - [Why?](#why-16)
-    - [Migration](#migration-15)
+    - [Why?](#why-17)
+    - [Migration](#migration-16)
       - [Comparison Table](#comparison-table-5)
   - [References](#references)
 
@@ -135,55 +499,105 @@ This document lists all **public API breaking changes** in recent versions of `n
 
 ### What changed?
 
-- The new `formState` signal is now the recommended and unified way to access all form state in `ngx-vest-forms` (value, errors, validity, pending, etc.).
+- The new `formState` signal is now the recommended and unified way to access all form state in `ngx-vest-forms` (value, errors, warnings, root-level issues, validity, pending, etc.).
 - The old signals (`errors`, `isValid`, `isInvalid`, `isPending`, `isDisabled`, `isIdle`) are **deprecated** and will be removed in a future release.
+- Field-specific errors are now in `formState().errors`.
+- Field-specific warnings are now in `formState().warnings`.
+- Root-level issues (errors, warnings, or internal suite errors for form-wide validations) are now in `formState().root` which has the shape `{ errors?: string[]; warnings?: string[]; internalError?: string; } | null`.
 
 ### Why?
 
-- To simplify the API, improve type safety, and provide a single source of truth for all form state.
+- To simplify the API, improve type safety, and provide a single source of truth for all form state, clearly distinguishing between field-specific and root-level issues.
 - This change aligns with modern Angular and signals best practices, and makes it easier to reason about form state in your components and templates.
 
 ### Migration
 
 - Replace all usages of the old signals with the new `formState` API.
-- Remove usage of the deprecated signals in your components and templates.
+- Update access to errors and warnings to use the new structure.
+- If you were using `viewChild` or `contentChild` with the directive, ensure you are using the signal-based versions (`viewChild()`, `contentChild()`).
 
 #### Comparison Table
 
-| Old Pattern (Deprecated) | New Pattern (Recommended)       |
-| ------------------------ | ------------------------------- |
-| `vestForm.errors()`      | `vestForm.formState().errors`   |
-| `vestForm.isValid()`     | `vestForm.formState().valid`    |
-| `vestForm.isPending()`   | `vestForm.formState().pending`  |
-| `vestForm.isDisabled()`  | `vestForm.formState().disabled` |
-| `vestForm.isIdle()`      | `vestForm.formState().idle`     |
+| Old Pattern (Deprecated) | New Pattern (Recommended)                        |
+| ------------------------ | ------------------------------------------------ |
+| `vestForm.errors()`      | `vestForm.formState().errors` (field errors)     |
+|                          | `vestForm.formState().warnings` (field warnings) |
+|                          | `vestForm.formState().root` (root issues)        |
+| `vestForm.isValid()`     | `vestForm.formState().valid`                     |
+| `vestForm.isPending()`   | `vestForm.formState().pending`                   |
+| `vestForm.isDisabled()`  | `vestForm.formState().disabled`                  |
+| `vestForm.isIdle()`      | `vestForm.formState().idle`                      |
 
 #### Example
 
 ```typescript
 // Old
 const valid = vestForm.isValid();
-const errors = vestForm.errors();
+const fieldErrors = vestForm.errors(); // Previously mixed field and potentially root errors
 
 // New
-const value = vestForm.formState().value;
-const valid = vestForm.formState().valid;
-const errors = vestForm.formState().errors;
+const formState = vestForm.formState();
+const value = formState.value;
+const valid = formState.valid;
+const fieldErrors = formState.errors; // Only field-specific errors
+const fieldWarnings = formState.warnings; // Field-specific warnings
+const rootIssues = formState.root; // { errors?: [], warnings?: [], internalError?: string }
 ```
 
 ```html
 <!-- Old -->
 @if (vestForm.errors()?.fieldName as errors) {
 <ul>
-  @for (error of errors; track error) { ... }
+  @for (error of errors; track error) {
+  <!-- ... -->
+  }
 </ul>
 }
 
-<!-- New -->
-@if (vestForm.formState().errors?.fieldName as errors) {
+<!-- New for Field Errors -->
+@if (vestForm.formState().errors?.fieldName; as fieldErrors) {
 <ul>
-  @for (error of errors; track error) { ... }
+  @for (error of fieldErrors; track error) {
+  <!-- ... -->
+  }
 </ul>
+}
+<!-- New for Field Warnings -->
+@if (vestForm.formState().warnings?.fieldName; as fieldWarnings) {
+<ul>
+  @for (warning of fieldWarnings; track warning) {
+  <!-- ... -->
+  }
+</ul>
+}
+
+<!-- New for Root Errors -->
+@if (vestForm.formState().root?.errors; as rootErrors) {
+<div class="form-root-errors">
+  <h4>Form Errors:</h4>
+  <ul>
+    @for (error of rootErrors; track error) {
+    <li>{{ error }}</li>
+    }
+  </ul>
+</div>
+}
+<!-- New for Root Warnings -->
+@if (vestForm.formState().root?.warnings; as rootWarnings) {
+<div class="form-root-warnings">
+  <h4>Form Warnings:</h4>
+  <ul>
+    @for (warning of rootWarnings; track warning) {
+    <li>{{ warning }}</li>
+    }
+  </ul>
+</div>
+}
+<!-- New for Root Internal Error -->
+@if (vestForm.formState().root?.internalError; as internalError) {
+<div class="form-root-internal-error">
+  <p>A system error occurred: {{ internalError }}</p>
+</div>
 }
 ```
 
@@ -355,7 +769,7 @@ const errors = vestForm.formState().errors;
 
 ### Why?
 
-- To align the internal structure used by `FormDirective` with the expectations of `ControlWrapperComponent`.
+- To align the internal structure used by `FormDirective` with the expectations of `NgxControlWrapper`.
 - To provide a more standard and flexible array format for error messages, making it easier to display multiple distinct errors for a single field if needed.
 
 ### Migration
@@ -482,7 +896,7 @@ export class MyCustomFieldComponent {
 </div>
 
 <!-- Using just FormControlStateDirective for raw data -->
-<div scFormControlState #state="formControlState">
+<div ngxFormControlState #state="formControlState">
   <input type="text" name="username" ngModel />
 
   <!-- Custom display logic -->
@@ -614,7 +1028,7 @@ export class NewCustomField {
 
 ### What changed?
 
-- The new `FormControlStateDirective` (`scFormControlState`) is now available as a standalone directive.
+- The new `FormControlStateDirective` (`ngxFormControlState`) is now available as a standalone directive.
 - This directive provides a reactive signal (`controlState`) with the current state of the nearest `NgModel` or `NgModelGroup`.
 - It is used internally by `ngxControlWrapper`, but you can apply it directly to build your own custom form field wrappers or advanced UI.
 
@@ -626,8 +1040,8 @@ export class NewCustomField {
 ### How to use
 
 ```html
-<!-- Example: Custom form field using scFormControlState -->
-<div scFormControlState #state="formControlState">
+<!-- Example: Custom form field using ngxFormControlState -->
+<div ngxFormControlState #state="formControlState">
   <input name="email" ngModel />
   @if (state.controlState().isInvalid) {
   <span class="text-red-600">Invalid!</span>

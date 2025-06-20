@@ -2,8 +2,8 @@
 
 ngx-vest-forms provides two complementary directives for handling form validation state:
 
-1. **`FormControlStateDirective` (`scFormControlState`)**: Provides the raw state and parsed validation messages
-2. **`FormErrorDisplayDirective` (`scFormErrorDisplay`)**: Adds display behavior on top of the state
+1. **`FormControlStateDirective` (`ngxFormControlState`)**: Provides the raw state and parsed validation messages
+2. **`FormErrorDisplayDirective` (`ngxFormErrorDisplay`)**: Adds display behavior on top of the state
 
 This approach gives you flexibility to choose either the low-level state access or the higher-level display logic, depending on your needs.
 
@@ -22,7 +22,7 @@ Use these as `hostDirectives` for maximum flexibility and composability in your 
 export class MyCustomFieldComponent { ... }
 ```
 
-## FormControlStateDirective (`scFormControlState`)
+## FormControlStateDirective (`ngxFormControlState`)
 
 A directive that provides reactive signals for the state of Angular form controls and parsed Vest validation messages.
 
@@ -56,7 +56,7 @@ This directive focuses exclusively on **WHAT** data is available from form contr
 ### Basic Example
 
 ```html
-<div scFormControlState #state="formControlState">
+<div ngxFormControlState #state="formControlState">
   <input name="email" ngModel />
 
   <!-- Custom error display logic -->
@@ -70,7 +70,7 @@ This directive focuses exclusively on **WHAT** data is available from form contr
 </div>
 ```
 
-## FormErrorDisplayDirective (`scFormErrorDisplay`)
+## FormErrorDisplayDirective (`ngxFormErrorDisplay`)
 
 A directive that builds on `FormControlStateDirective` to add display behavior for validation messages.
 
@@ -103,7 +103,7 @@ This directive handles **WHEN** to show validation messages based on configurabl
 ### Basic Example
 
 ```html
-<div scFormErrorDisplay #display="formErrorDisplay" errorDisplayMode="submit">
+<div ngxFormErrorDisplay #display="formErrorDisplay" errorDisplayMode="submit">
   <input name="username" ngModel />
 
   <!-- Errors show only after form submission -->
