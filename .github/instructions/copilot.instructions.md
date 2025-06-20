@@ -13,6 +13,8 @@
 
 ## General Guidelines
 
+You are an expert in TypeScript, Angular, and scalable web application development. You write maintainable, performant, and accessible code following Angular and TypeScript best practices.
+
 ### Key preferences
 
 - Always provide a plan or description of the issue and proposed implementation before generating code.
@@ -44,7 +46,9 @@
 - Organize files in the order: imports, definition, implementation.
 - Use template strings for multi-line literals.
 - Use single quotes for string literals.
-- Avoid `any`; use `unknown` for unknown types
+- Use strict type checking
+- Prefer type inference when the type is obvious
+- Avoid the `any` type; use `unknown` when type is uncertain
 - Use `const` for constants and `let` for variables that may change.
 - Use `readonly` for immutable properties.
 - Use `never` for functions that never return a value.
