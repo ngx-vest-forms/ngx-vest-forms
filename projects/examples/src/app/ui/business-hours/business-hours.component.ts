@@ -14,7 +14,7 @@ import {
 import {
   BusinessHoursData,
   PartialBusinessHour,
-} from '../../business-hours-form/business-hours-form.model';
+} from '../../02-standard-forms/business-hours-form/business-hours-form.model';
 import { BusinessHourComponent } from '../business-hour/business-hour.component';
 
 @Component({

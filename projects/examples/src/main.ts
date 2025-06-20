@@ -12,45 +12,58 @@ import { AppComponent } from './app/app.component';
 const appRoutes: Routes = [
   {
     path: '',
-    redirectTo: 'purchase',
+    redirectTo: 'contact',
     pathMatch: 'full',
   },
   {
+    path: 'contact',
+    loadComponent: () =>
+      import(
+        './app/01-getting-started/contact-form/contact-form.component'
+      ).then((m) => m.ContactFormComponent),
+  },
+  /*
+  {
     path: 'purchase',
     loadComponent: () =>
-      import('./app/purchase-form/purchase-form.component').then(
+      import('./app/05-complex-integrations/purchase-form/purchase-form.component').then(
         (m) => m.PurchaseFormComponent,
       ),
   },
   {
     path: 'business-hours',
     loadComponent: () =>
-      import('./app/business-hours-form/business-hours-form.component').then(
+      import('./app/02-standard-forms/business-hours-form/business-hours-form.component').then(
         (m) => m.BusinessHoursFormComponent,
       ),
   },
+  */
+  /*
   {
     path: 'business-hours-zod',
     loadComponent: () =>
-      import('./app/business-hours-form/business-hours-form.zod-example').then(
+      import('./app/02-standard-forms/business-hours-form/business-hours-form.zod-example').then(
         (m) => m.BusinessHoursFormZodExampleComponent,
       ),
   },
   {
     path: 'contact-form',
     loadComponent: () =>
-      import('./app/contact-form/contact-form.component').then(
+      import('./app/01-getting-started/contact-form/contact-form.component').then(
         (m) => m.ContactFormComponent,
       ),
   },
+  */
+  /*
   {
     path: 'cyclic-dependencies-form',
     loadComponent: () =>
       import(
-        './app/cyclic-dependencies-form/cyclic-dependencies-form.component'
+        './app/backup-old-examples/cyclic-dependencies-form/cyclic-dependencies-form.component'
       ).then((m) => m.CyclicDependenciesFormComponent),
     title: 'Cyclic Dependencies Form Example',
   },
+  */
 ];
 bootstrapApplication(AppComponent, {
   providers: [

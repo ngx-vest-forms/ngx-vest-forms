@@ -26,7 +26,6 @@ const contactFormSuite = staticSuite((data = {}) => {
       ngxVestForm
       [vestSuite]="suite"
       [(formValue)]="formValue"
-      [validateRootForm]="false"
       #vestForm="ngxVestForm"
     >
       <ngx-control-wrapper>

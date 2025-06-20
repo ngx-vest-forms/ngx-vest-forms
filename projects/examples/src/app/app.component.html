@@ -1,13 +1,270 @@
-<ul class="ml-4 mt-4 underline">
-  <li><a routerLink="purchase">Purchase form</a></li>
-  <li><a routerLink="business-hours">Business hours form</a></li>
-  <li><a routerLink="business-hours-zod">Business hours Zod example</a></li>
-  <li><a routerLink="simple-form">Simple form (minimal)</a></li>
-  <li><a routerLink="phone-numbers-form">Phone numbers form array</a></li>
-  <li>
-    <a routerLink="contact-form">Contact form (field-level validation only)</a>
-  </li>
-  <li><a routerLink="cyclic-dependencies-form">Cyclic Dependencies Form</a></li>
-</ul>
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="container mx-auto px-4 py-8">
+    <header class="mb-8 text-center">
+      <h1 class="mb-4 text-4xl font-bold text-gray-900 dark:text-white">
+        ngx-vest-forms v2 Examples
+      </h1>
+      <p class="text-lg text-gray-600 dark:text-gray-400">
+        Progressive examples from simple to advanced form implementations
+      </p>
+    </header>
 
-<router-outlet />
+    <nav class="mb-8 rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+      <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
+        Quick Navigation
+      </h2>
+      <div class="grid grid-cols-1 gap-4 text-sm md:grid-cols-2 lg:grid-cols-3">
+        <div>
+          <h3 class="mb-2 font-medium text-green-600 dark:text-green-400">
+            🚀 Getting Started
+          </h3>
+          <ul class="space-y-1">
+            <li>
+              <a href="#simple-form" class="text-blue-600 hover:underline"
+                >Simple Form</a
+              >
+            </li>
+            <li>
+              <a href="#contact-form" class="text-blue-600 hover:underline"
+                >Contact Form</a
+              >
+            </li>
+            <li>
+              <a href="#registration-form" class="text-blue-600 hover:underline"
+                >Registration Form</a
+              >
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="mb-2 font-medium text-blue-600 dark:text-blue-400">
+            📋 Standard Forms
+          </h3>
+          <ul class="space-y-1">
+            <li>
+              <a href="#profile-form" class="text-blue-600 hover:underline"
+                >Profile Form</a
+              >
+            </li>
+            <li>
+              <a
+                href="#business-hours-form"
+                class="text-blue-600 hover:underline"
+                >Business Hours</a
+              >
+            </li>
+            <li>
+              <a href="#survey-form" class="text-blue-600 hover:underline"
+                >Survey Form</a
+              >
+            </li>
+            <li>
+              <a
+                href="#async-validation-form"
+                class="text-blue-600 hover:underline"
+                >Async Validation</a
+              >
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="mb-2 font-medium text-purple-600 dark:text-purple-400">
+            🔧 Schema Integration
+          </h3>
+          <ul class="space-y-1">
+            <li>
+              <a href="#zod-schema-form" class="text-blue-600 hover:underline"
+                >Zod Schema</a
+              >
+            </li>
+            <li><span class="text-gray-400">Valibot (Coming)</span></li>
+            <li><span class="text-gray-400">ArkType (Coming)</span></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="mb-2 font-medium text-orange-600 dark:text-orange-400">
+            🧠 Advanced State
+          </h3>
+          <ul class="space-y-1">
+            <li>
+              <a
+                href="#smart-profile-form"
+                class="text-blue-600 hover:underline"
+                >Smart Profile</a
+              >
+            </li>
+            <li>
+              <a
+                href="#phone-numbers-form"
+                class="text-blue-600 hover:underline"
+                >Phone Numbers</a
+              >
+            </li>
+            <li>
+              <span class="text-gray-400">Real-time Collab (Coming)</span>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="mb-2 font-medium text-red-600 dark:text-red-400">
+            ⚡ Complex Integration
+          </h3>
+          <ul class="space-y-1">
+            <li>
+              <a href="#purchase-form" class="text-blue-600 hover:underline"
+                >Purchase Form</a
+              >
+            </li>
+            <li>
+              <a href="#wizard-form" class="text-blue-600 hover:underline"
+                >Wizard Form</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main class="space-y-12">
+      <!-- Tier 1: Getting Started -->
+      <section>
+        <h2
+          class="mb-6 flex items-center text-2xl font-bold text-gray-900 dark:text-white"
+        >
+          <span
+            class="me-2 rounded bg-green-100 px-2.5 py-0.5 text-sm font-medium text-green-800 dark:bg-green-900 dark:text-green-300"
+          >
+            Tier 1
+          </span>
+          🚀 Getting Started
+        </h2>
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+          <div id="simple-form">
+            <ngx-simple-form></ngx-simple-form>
+          </div>
+          <div id="contact-form">
+            <ngx-contact-form></ngx-contact-form>
+          </div>
+          <div id="registration-form">
+            <ngx-registration-form></ngx-registration-form>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tier 2: Standard Forms -->
+      <section>
+        <h2
+          class="mb-6 flex items-center text-2xl font-bold text-gray-900 dark:text-white"
+        >
+          <span
+            class="me-2 rounded bg-blue-100 px-2.5 py-0.5 text-sm font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+          >
+            Tier 2
+          </span>
+          📋 Standard Forms
+        </h2>
+        <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <div id="profile-form" class="xl:col-span-2">
+            <ngx-profile-form></ngx-profile-form>
+          </div>
+          <div id="business-hours-form">
+            <ngx-business-hours-form></ngx-business-hours-form>
+          </div>
+          <div id="survey-form">
+            <ngx-survey-form></ngx-survey-form>
+          </div>
+          <div id="async-validation-form" class="xl:col-span-2">
+            <ngx-async-validation-form></ngx-async-validation-form>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tier 3: Schema Integration -->
+      <section>
+        <h2
+          class="mb-6 flex items-center text-2xl font-bold text-gray-900 dark:text-white"
+        >
+          <span
+            class="me-2 rounded bg-purple-100 px-2.5 py-0.5 text-sm font-medium text-purple-800 dark:bg-purple-900 dark:text-purple-300"
+          >
+            Tier 3
+          </span>
+          🔧 Schema Integration
+        </h2>
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div id="zod-schema-form" class="lg:col-span-2">
+            <ngx-zod-schema-form></ngx-zod-schema-form>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tier 4: Advanced State Management -->
+      <section>
+        <h2
+          class="mb-6 flex items-center text-2xl font-bold text-gray-900 dark:text-white"
+        >
+          <span
+            class="me-2 rounded bg-orange-100 px-2.5 py-0.5 text-sm font-medium text-orange-800 dark:bg-orange-900 dark:text-orange-300"
+          >
+            Tier 4
+          </span>
+          🧠 Advanced State Management
+        </h2>
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <!-- <div id="smart-profile-form" class="lg:col-span-2">
+            <ngx-smart-profile-page></ngx-smart-profile-page>
+          </div>
+          <div id="phone-numbers-form">
+            <ngx-phone-numbers-form></ngx-phone-numbers-form>
+          </div> -->
+        </div>
+      </section>
+
+      <!-- Tier 5: Complex Integrations -->
+      <section>
+        <h2
+          class="mb-6 flex items-center text-2xl font-bold text-gray-900 dark:text-white"
+        >
+          <span
+            class="me-2 rounded bg-red-100 px-2.5 py-0.5 text-sm font-medium text-red-800 dark:bg-red-900 dark:text-red-300"
+          >
+            Tier 5
+          </span>
+          ⚡ Complex Integrations
+        </h2>
+        <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <!-- <div id="purchase-form" class="xl:col-span-2">
+            <ngx-purchase-form></ngx-purchase-form>
+          </div> -->
+          <div id="wizard-form" class="xl:col-span-2">
+            <ngx-wizard-form></ngx-wizard-form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="mt-16 text-center text-gray-600 dark:text-gray-400">
+      <p class="mb-4">
+        <strong>ngx-vest-forms v2</strong> - Modular, Type-safe, Progressive
+        Enhancement
+      </p>
+      <div class="flex justify-center space-x-6 text-sm">
+        <a
+          href="https://github.com/simplifiedcourses/ngx-vest-forms"
+          class="hover:text-blue-600"
+        >
+          📚 Documentation
+        </a>
+        <a
+          href="https://github.com/simplifiedcourses/ngx-vest-forms"
+          class="hover:text-blue-600"
+        >
+          🐛 GitHub
+        </a>
+        <a href="https://vestjs.dev" class="hover:text-blue-600">
+          🛡️ Vest.js
+        </a>
+      </div>
+    </footer>
+  </div>
+</div>

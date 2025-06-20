@@ -22,7 +22,9 @@ export const userProfileSuite = staticSuite(
     });
 
     test('email', 'A valid email is required.', () => {
-      enforce(data.email).isNotEmpty().isEmail();
+      enforce(data.email)
+        .isNotEmpty()
+        .matches(/^[^@]+@[^@]+\.[^@]+$/);
     });
 
     test('bio', 'Bio must not exceed 500 characters.', () => {

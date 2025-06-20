@@ -8,14 +8,10 @@ import {
   viewChild,
 } from '@angular/core';
 import type { VestSuite } from 'ngx-vest-forms';
-import {
-  FormDirective,
-  injectRootFormKey,
-  ngxVestForms,
-} from 'ngx-vest-forms';
+import { FormDirective, injectRootFormKey, ngxVestForms } from 'ngx-vest-forms';
 import type { InferSchemaType } from 'ngx-vest-forms/schemas';
 import { modelToStandardSchema } from 'ngx-vest-forms/schemas';
-import { BusinessHoursComponent } from '../ui/business-hours/business-hours.component';
+import { BusinessHoursComponent } from '../../ui/business-hours/business-hours.component';
 import {
   initialBusinessHourEntry,
   initialBusinessHoursFormData,
