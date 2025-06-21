@@ -7,8 +7,8 @@ import {
 } from '@angular/forms';
 import { Observable, from, of } from 'rxjs';
 import { getFormControlField } from '../utils/form-utils';
-import { FormDirective } from './form.directive';
-import { ValidationOptions } from './validation-options';
+import { NgxFormDirective } from './form.directive';
+import { NgxValidationOptions } from './validation-options';
 
 /**
  * Hooks into the ngModel selector and triggers an asynchronous validation for a form model
@@ -20,23 +20,23 @@ import { ValidationOptions } from './validation-options';
   providers: [
     {
       provide: NG_ASYNC_VALIDATORS,
-      useExisting: FormModelDirective,
+      useExisting: NgxFormModelDirective,
       multi: true,
     },
   ],
 })
-export class FormModelDirective implements AsyncValidator {
-  validationOptions = input<ValidationOptions>({ debounceTime: 0 });
+export class NgxFormModelDirective implements AsyncValidator {
+  validationOptions = input<NgxValidationOptions>({ debounceTime: 0 });
   /**
    * Reference to the form that needs to be validated
    */
-  private readonly formDirective = inject(FormDirective);
+  private readonly formDirective = inject(NgxFormDirective);
 
   validate(control: AbstractControl): Observable<ValidationErrors | null> {
     // Add null check for control
     if (!control) {
       console.warn(
-        '[ngx-vest-forms] Validate called with null control in FormModelDirective.',
+        '[ngx-vest-forms] Validate called with null control in NgxFormModelDirective.',
       );
       return of(null);
     }
@@ -46,7 +46,7 @@ export class FormModelDirective implements AsyncValidator {
 
     if (!field) {
       console.error(
-        '[ngx-vest-forms] Could not determine field name for validation in FormModelDirective.',
+        '[ngx-vest-forms] Could not determine field name for validation in NgxFormModelDirective.',
       );
       return of(null);
     }

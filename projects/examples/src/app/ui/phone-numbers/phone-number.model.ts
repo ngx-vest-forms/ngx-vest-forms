@@ -1,4 +1,4 @@
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
+import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
 
 /**
  * Defines the complete structure for phone number data.
@@ -15,7 +15,7 @@ type BasePhoneNumberModel = {
 
 /**
  * Represents potentially incomplete phone number data.
- * Uses `DeepPartial` to make all properties of `BasePhoneNumberModel` optional.
+ * Uses `NgxDeepPartial` to make all properties of `BasePhoneNumberModel` optional.
  *
  * Rationale:
  * This is the primary type used when interacting with phone number data in forms.
@@ -25,7 +25,7 @@ type BasePhoneNumberModel = {
  * - Form Models: `this.form.createControlGroup(validations).setModel(somePhoneNumbers as PhoneNumberModel);`
  * - Nested within other models: `phoneNumbers: PhoneNumberModel;`
  */
-export type PhoneNumberModel = DeepPartial<BasePhoneNumberModel>;
+export type PhoneNumberModel = NgxDeepPartial<BasePhoneNumberModel>;
 
 /**
  * Provides a default, empty template for phone number data.
@@ -39,7 +39,7 @@ export type PhoneNumberModel = DeepPartial<BasePhoneNumberModel>;
  * - Initializing Form State: `phoneNumbers: { ...initialPhoneNumberState }`
  * - Default Values in nested structures.
  */
-export const initialPhoneNumberState: DeepRequired<BasePhoneNumberModel> = {
+export const initialPhoneNumberState: NgxDeepRequired<BasePhoneNumberModel> = {
   addValue: '',
   values: {
     '0': '',

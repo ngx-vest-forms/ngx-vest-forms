@@ -10,16 +10,16 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NgForm } from '@angular/forms';
 import { of } from 'rxjs';
 import {
-  ERROR_DISPLAY_MODE_DEFAULT,
-  ErrorDisplayMode,
+  NGX_ERROR_DISPLAY_MODE_DEFAULT,
+  NgxErrorDisplayMode,
 } from '../config/error-display.config';
-import { FormControlStateDirective } from './form-control-state.directive';
+import { NgxFormControlStateDirective } from './form-control-state.directive';
 
 /**
- * FormErrorDisplayDirective
+ * NgxFormErrorDisplayDirective
  *
- * Extends FormControlStateDirective with error/warning display behavior and opinions about WHEN to show validation messages.
- * While FormControlStateDirective provides the raw data, this directive adds display logic like "show errors after blur, submit, or both".
+ * Extends NgxFormControlStateDirective with error/warning display behavior and opinions about WHEN to show validation messages.
+ * While NgxFormControlStateDirective provides the raw data, this directive adds display logic like "show errors after blur, submit, or both".
  *
  * Key Benefits:
  * - Adds configurable error display modes ('on-blur', 'on-submit', 'on-blur-or-submit')
@@ -56,25 +56,25 @@ import { FormControlStateDirective } from './form-control-state.directive';
  * ```typescript
  * @Component({
  *   ...,
- *   hostDirectives: [FormErrorDisplayDirective],
+ *   hostDirectives: [NgxFormErrorDisplayDirective],
  * })
  * export class MyCustomFieldComponent { ... }
  * ```
  *
- * See also: FormControlStateDirective for just the raw form state without display opinions.
+ * See also: NgxFormControlStateDirective for just the raw form state without display opinions.
  */
 @Directive({
   selector: '[ngxFormErrorDisplay]',
   exportAs: 'formErrorDisplay',
-  hostDirectives: [FormControlStateDirective],
+  hostDirectives: [NgxFormControlStateDirective],
 })
-export class FormErrorDisplayDirective {
+export class NgxFormErrorDisplayDirective {
   readonly #ngForm = inject(NgForm, { optional: true });
-  readonly #formControlState = inject(FormControlStateDirective);
+  readonly #formControlState = inject(NgxFormControlStateDirective);
 
   // Configuration for when to display errors
-  readonly errorDisplayMode = input<ErrorDisplayMode>(
-    inject(ERROR_DISPLAY_MODE_DEFAULT),
+  readonly errorDisplayMode = input<NgxErrorDisplayMode>(
+    inject(NGX_ERROR_DISPLAY_MODE_DEFAULT),
   );
 
   // Access the underlying form control state and its derived signals

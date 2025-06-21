@@ -19,7 +19,7 @@ import { map, startWith, switchMap } from 'rxjs/operators';
  * Contains only the raw state properties directly from the Angular form system.
  * For derived/processed properties like errorMessages, use the separate signals.
  */
-export type FormControlState = {
+export type NgxFormControlState = {
   status: string | null | undefined;
   isValid: boolean | null | undefined;
   isInvalid: boolean | null | undefined;
@@ -35,7 +35,7 @@ export type FormControlState = {
  * Creates an initial blank state for a form control.
  * This is used as the default value before a real control is connected.
  */
-export function getInitialFormControlState(): FormControlState {
+export function getInitialNgxFormControlState(): NgxFormControlState {
   return {
     status: undefined,
     isValid: undefined,
@@ -56,7 +56,7 @@ export function getInitialFormControlState(): FormControlState {
  * This directive focuses on WHAT data is available from form controls, without opinions on WHEN or HOW to display it.
  *
  * Use this directive when you need raw form state and parsed error messages, but want complete control over
- * display logic. For built-in display behavior (like showing errors on touch/submit), use FormErrorDisplayDirective instead.
+ * display logic. For built-in display behavior (like showing errors on touch/submit), use NgxFormErrorDisplayDirective instead.
  *
  * Key features:
  * - Creates a reactive bridge between Angular's form system and the signals API
@@ -94,18 +94,18 @@ export function getInitialFormControlState(): FormControlState {
  * ```typescript
  * @Component({
  *   ...,
- *   hostDirectives: [FormControlStateDirective],
+ *   hostDirectives: [NgxFormControlStateDirective],
  * })
  * export class MyCustomFieldComponent { ... }
  * ```
  *
- * See also: FormErrorDisplayDirective for built-in display logic with configurable error visibility modes.
+ * See also: NgxFormErrorDisplayDirective for built-in display logic with configurable error visibility modes.
  */
 @Directive({
   selector: '[ngxFormControlState]',
   exportAs: 'formControlState',
 })
-export class FormControlStateDirective {
+export class NgxFormControlStateDirective {
   /**
    * Signal for the nearest NgModel or NgModelGroup in content or host.
    * Returns the active AbstractControlDirective or null if not found.
@@ -162,10 +162,10 @@ export class FormControlStateDirective {
             })),
           );
         }
-        return of(getInitialFormControlState());
+        return of(getInitialNgxFormControlState());
       }),
     ),
-    { initialValue: getInitialFormControlState() },
+    { initialValue: getInitialNgxFormControlState() },
   );
 
   /**
@@ -196,7 +196,7 @@ export class FormControlStateDirective {
 
       // Add control reference for advanced use cases
       controlRef: control,
-    } as FormControlState & {
+    } as NgxFormControlState & {
       hasErrors: boolean;
       isValidTouched: boolean;
       isInvalidTouched: boolean;

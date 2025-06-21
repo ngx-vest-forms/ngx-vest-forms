@@ -4,10 +4,10 @@ import * as v from 'valibot';
 import { beforeEach, describe, expect, expectTypeOf, it } from 'vitest'; // Added beforeEach and expectTypeOf
 import { z } from 'zod';
 import {
-  extractTemplateFromSchema,
   InferSchemaType,
   isStandardSchema,
-  modelToStandardSchema,
+  ngxExtractTemplateFromSchema,
+  ngxModelToStandardSchema,
 } from './schema-adapter';
 
 // --- Test Data ---
@@ -46,12 +46,12 @@ const customModelTemplate = {
 };
 
 // Wrapped Custom Model Template
-// Use the adjusted return type from modelToStandardSchema
+// Use the adjusted return type from ngxModelToStandardSchema
 const wrappedModelTemplateSchema: StandardSchemaV1<
   typeof customModelTemplate,
   typeof customModelTemplate
 > & { _shape: typeof customModelTemplate } = // Corrected property name to _shape
-  modelToStandardSchema(customModelTemplate);
+  ngxModelToStandardSchema(customModelTemplate);
 
 // Plain Object
 const plainObject = { id: 1, value: 'test' };
@@ -95,7 +95,7 @@ describe('Schema Adapter Utilities', () => {
     });
   });
 
-  describe('modelToStandardSchema', () => {
+  describe('ngxModelToStandardSchema', () => {
     // Use the adjusted type including _shape
     let schema: StandardSchemaV1<
       typeof customModelTemplate,
@@ -106,7 +106,7 @@ describe('Schema Adapter Utilities', () => {
 
     beforeEach(() => {
       // Re-create the schema before each test to ensure isolation
-      schema = modelToStandardSchema(customModelTemplate);
+      schema = ngxModelToStandardSchema(customModelTemplate);
     });
 
     it('should wrap a custom model template into a StandardSchemaV1 structure', () => {
@@ -295,8 +295,8 @@ describe('Schema Adapter Utilities', () => {
   });
 });
 
-describe('extractTemplateFromSchema', () => {
-  it('should extract template from schemas created with modelToStandardSchema', () => {
+describe('ngxExtractTemplateFromSchema', () => {
+  it('should extract template from schemas created with ngxModelToStandardSchema', () => {
     const template = {
       name: '',
       email: '',
@@ -308,8 +308,8 @@ describe('extractTemplateFromSchema', () => {
       },
     };
 
-    const schema = modelToStandardSchema(template);
-    const extractedTemplate = extractTemplateFromSchema(schema);
+    const schema = ngxModelToStandardSchema(template);
+    const extractedTemplate = ngxExtractTemplateFromSchema(schema);
 
     expect(extractedTemplate).toEqual(template);
     expect(extractedTemplate).toBe(template); // Should be the exact same reference
@@ -321,7 +321,7 @@ describe('extractTemplateFromSchema', () => {
       age: z.number(),
     });
 
-    const extractedTemplate = extractTemplateFromSchema(zodSchema);
+    const extractedTemplate = ngxExtractTemplateFromSchema(zodSchema);
     expect(extractedTemplate).toBeNull();
   });
 
@@ -331,20 +331,20 @@ describe('extractTemplateFromSchema', () => {
       isActive: v.boolean(),
     });
 
-    const extractedTemplate = extractTemplateFromSchema(valibotSchema);
+    const extractedTemplate = ngxExtractTemplateFromSchema(valibotSchema);
     expect(extractedTemplate).toBeNull();
   });
 
   it('should return null for null or undefined schemas', () => {
-    expect(extractTemplateFromSchema(null)).toBeNull();
+    expect(ngxExtractTemplateFromSchema(null)).toBeNull();
     // eslint-disable-next-line unicorn/no-useless-undefined
-    expect(extractTemplateFromSchema(undefined)).toBeNull();
+    expect(ngxExtractTemplateFromSchema(undefined)).toBeNull();
   });
 
   it('should return null for plain objects', () => {
     const plainObject = { name: 'test', age: 25 };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const extractedTemplate = extractTemplateFromSchema(plainObject as any);
+    const extractedTemplate = ngxExtractTemplateFromSchema(plainObject as any);
     expect(extractedTemplate).toBeNull();
   });
 
@@ -367,8 +367,8 @@ describe('extractTemplateFromSchema', () => {
       },
     };
 
-    const schema = modelToStandardSchema(complexTemplate);
-    const extractedTemplate = extractTemplateFromSchema(schema);
+    const schema = ngxModelToStandardSchema(complexTemplate);
+    const extractedTemplate = ngxExtractTemplateFromSchema(schema);
 
     expect(extractedTemplate).toEqual(complexTemplate);
     expect(extractedTemplate?.user?.profile?.firstName).toBe('');
@@ -383,8 +383,8 @@ describe('extractTemplateFromSchema', () => {
       isActive: false,
     };
 
-    const schema = modelToStandardSchema(template);
-    const extractedTemplate = extractTemplateFromSchema(schema);
+    const schema = ngxModelToStandardSchema(template);
+    const extractedTemplate = ngxExtractTemplateFromSchema(schema);
 
     // TypeScript should infer the correct type
     if (extractedTemplate) {

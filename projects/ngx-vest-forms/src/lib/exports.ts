@@ -5,12 +5,12 @@ import {
   NgForm,
   NgModelGroup,
 } from '@angular/forms';
-import { FormControlStateDirective } from './directives/form-control-state.directive';
-import { FormErrorDisplayDirective } from './directives/form-error-display.directive';
-import { FormModelGroupDirective } from './directives/form-model-group.directive';
-import { FormModelDirective } from './directives/form-model.directive';
-import { FormDirective } from './directives/form.directive';
-import { ValidateRootFormDirective } from './directives/validate-root-form.directive';
+import { NgxFormControlStateDirective } from './directives/form-control-state.directive';
+import { NgxFormErrorDisplayDirective } from './directives/form-error-display.directive';
+import { NgxFormModelGroupDirective } from './directives/form-model-group.directive';
+import { NgxFormModelDirective } from './directives/form-model.directive';
+import { NgxFormDirective } from './directives/form.directive';
+import { NgxValidateRootFormDirective } from './directives/validate-root-form.directive';
 
 // Re-export utility functions
 
@@ -71,22 +71,32 @@ export const ngxVestFormsViewProviders = [
 /**
  * Exports all the stuff we need to use the template driven forms
  *
- * ValidateRootFormDirective is included for manual cross-field validation
+ * NgxValidateRootFormDirective is included for manual cross-field validation
  * when needed alongside the main form directives.
  */
 export const ngxVestForms = [
-  FormDirective,
+  NgxFormDirective,
   FormsModule,
-  FormModelDirective,
-  FormModelGroupDirective,
-  FormControlStateDirective,
-  FormErrorDisplayDirective,
-  ValidateRootFormDirective,
+  NgxFormModelDirective,
+  NgxFormModelGroupDirective,
+  NgxFormControlStateDirective,
+  NgxFormErrorDisplayDirective,
+  NgxValidateRootFormDirective,
 ] as const;
 
 export {
-  FormControlState,
-  getInitialFormControlState,
+  getInitialNgxFormControlState,
+  NgxFormControlState,
 } from './directives/form-control-state.directive';
-export { FormState } from './directives/form.directive';
-export { injectRootFormKey } from './utils/form-token';
+export { NgxFormState } from './directives/form.directive';
+export { injectNgxRootFormKey } from './utils/form-token';
+
+// Export utility types
+export { NgxValidationOptions } from './directives/validation-options';
+export { NgxDeepPartial } from './utils/deep-partial';
+export {
+  NgxDeepRequired,
+  NgxFormCompatibleDeepRequired,
+} from './utils/deep-required';
+export { NgxInjectRootFormKeyOptions } from './utils/form-token';
+export { NgxFieldKey, NgxVestSuite } from './utils/validation-suite';

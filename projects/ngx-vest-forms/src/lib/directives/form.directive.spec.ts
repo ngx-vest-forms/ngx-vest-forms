@@ -13,16 +13,15 @@ import { enforce, only, staticSuite, test as vestTest } from 'vest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ngxVestForms } from '../exports';
 
-import { FormCompatibleDeepRequired } from '../utils/deep-required';
-import { FormDirective } from './form.directive';
-import { ValidationOptions } from './validation-options';
+import { NgxFormDirective } from './form.directive';
+import { NgxValidationOptions } from './validation-options';
 
 /**
  * Enhanced helper function for zoneless Angular validation completion
  * Uses ApplicationRef.whenStable() instead of zone-dependent code
  */
 async function waitForValidationCompletion(
-  formDirective: FormDirective | undefined,
+  formDirective: NgxFormDirective | undefined,
   applicationReference?: ApplicationRef,
 ): Promise<void> {
   if (!formDirective) return;
@@ -45,7 +44,7 @@ async function waitForValidationCompletion(
  * Enhanced expectations for Resource-based validation
  */
 function expectValidationState(
-  formDirective: FormDirective | undefined,
+  formDirective: NgxFormDirective | undefined,
   expected: {
     status?: string;
     valid?: boolean;
@@ -59,7 +58,7 @@ function expectValidationState(
   },
 ) {
   if (!formDirective) {
-    throw new Error('FormDirective is not available');
+    throw new Error('NgxFormDirective is not available');
   }
 
   const formState = formDirective.formState();
@@ -111,7 +110,7 @@ function expectValidationState(
   }
 }
 
-// Test component that uses FormDirective with proper unidirectional flow
+// Test component that uses NgxFormDirective with proper unidirectional flow
 @Component({
   imports: [ngxVestForms, FormsModule],
   template: `
@@ -164,14 +163,14 @@ function expectValidationState(
   `,
 })
 class TestFormComponent {
-  readonly vestForm = viewChild<FormDirective>('vestForm');
+  readonly vestForm = viewChild<NgxFormDirective>('vestForm');
   formValue: WritableSignal<{ email: string; password: string } | null> =
     signal({
       email: '',
       password: '',
     });
 
-  validationOptions: ValidationOptions = { debounceTime: 50 }; // Reduced for testing
+  validationOptions: NgxValidationOptions = { debounceTime: 50 }; // Reduced for testing
   validationConfig: Record<string, string[]> | null = null;
 
   vestSuite = staticSuite(
@@ -229,10 +228,10 @@ class TestFormComponent {
   `,
 })
 class AsyncValidationComponent {
-  readonly vestForm = viewChild<FormDirective>('vestForm');
+  readonly vestForm = viewChild<NgxFormDirective>('vestForm');
 
   formValue = signal({ username: '' });
-  validationOptions: ValidationOptions = { debounceTime: 100 }; // Realistic debounce for testing
+  validationOptions: NgxValidationOptions = { debounceTime: 100 }; // Realistic debounce for testing
 
   // Mock async validation suite with controlled timing
   asyncVestSuite = staticSuite(
@@ -364,7 +363,7 @@ type EventFormModel = {
   `,
 })
 class DateFormComponent {
-  readonly vestForm = viewChild<FormDirective>('vestForm');
+  readonly vestForm = viewChild<NgxFormDirective>('vestForm');
 
   // Use FormCompatibleDeepRequired to make all fields required and Date fields compatible with strings
   formValue = signal<FormCompatibleDeepRequired<EventFormModel>>({
@@ -381,7 +380,7 @@ class DateFormComponent {
     },
   } satisfies FormCompatibleDeepRequired<EventFormModel>); // Type assertion to work around TS strictness
 
-  validationOptions: ValidationOptions = { debounceTime: 50 };
+  validationOptions: NgxValidationOptions = { debounceTime: 50 };
 
   dateVestSuite = staticSuite(
     (
@@ -469,7 +468,7 @@ class DateFormComponent {
   }
 }
 
-describe('FormDirective', () => {
+describe('NgxFormDirective', () => {
   // Setup and cleanup for fake timers
   beforeEach(() => {
     vi.useFakeTimers();
@@ -915,7 +914,7 @@ describe('FormDirective', () => {
     });
   });
 
-  describe('FormState Value Edge Cases', () => {
+  describe('NgxFormState Value Edge Cases', () => {
     it('should handle rapid value changes in formState.value', async () => {
       const { fixture } = await render(TestFormComponent);
       const applicationReference =
@@ -963,7 +962,7 @@ describe('FormDirective', () => {
       })
       class AsyncValidationComponent {
         formValue = signal({ email: '' });
-        readonly vestForm = viewChild<FormDirective>('vestForm');
+        readonly vestForm = viewChild<NgxFormDirective>('vestForm');
 
         asyncSuite = staticSuite((data: { email: string }, field?: string) => {
           only(field);
@@ -1016,7 +1015,7 @@ describe('FormDirective', () => {
       class NullFormValueComponent {
         formValue = signal(null);
         vestSuite = staticSuite(vi.fn());
-        readonly vestForm = viewChild<FormDirective>('vestForm');
+        readonly vestForm = viewChild<NgxFormDirective>('vestForm');
       }
 
       const { fixture } = await render(NullFormValueComponent);
@@ -1058,7 +1057,7 @@ describe('FormDirective', () => {
           metadata: { created: new Date() },
         });
         vestSuite = staticSuite(vi.fn());
-        readonly vestForm = viewChild<FormDirective>('vestForm');
+        readonly vestForm = viewChild<NgxFormDirective>('vestForm');
       }
 
       const { fixture } = await render(ComplexFormComponent);

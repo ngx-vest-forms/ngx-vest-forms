@@ -25,6 +25,11 @@ import {
   ValueChangeEvent,
 } from '@angular/forms';
 import {
+  InferSchemaType,
+  ngxExtractTemplateFromSchema,
+  SchemaDefinition,
+} from 'ngx-vest-forms/schemas';
+import {
   catchError,
   debounceTime,
   distinctUntilChanged,
@@ -47,20 +52,15 @@ import {
   mergeValuesAndRawValues,
   setValueAtPath,
 } from '../utils/form-utils';
-import {
-  extractTemplateFromSchema,
-  InferSchemaType,
-  SchemaDefinition,
-} from 'ngx-vest-forms/schemas';
 import { validateModelTemplate } from '../utils/shape-validation';
-import { VestSuite } from '../utils/validation-suite';
-import { ValidationOptions } from './validation-options';
+import { NgxVestSuite } from '../utils/validation-suite';
+import { NgxValidationOptions } from './validation-options';
 
 /**
  * Type representing the complete state of a form
  * @template TModel The type of the form model/value
  */
-export type FormState<TModel> = {
+export type NgxFormState<TModel> = {
   /** The current value of the form */
   value: TModel | null;
   /** Current validation errors for specific fields */
@@ -107,7 +107,7 @@ export type FormState<TModel> = {
     '[attr.novalidate]': '""',
   },
 })
-export class FormDirective<
+export class NgxFormDirective<
   TSchema extends SchemaDefinition | null = null,
   TModel = TSchema extends SchemaDefinition
     ? InferSchemaType<TSchema>
@@ -120,9 +120,9 @@ export class FormDirective<
 
   readonly formValue = model<TModel | null>(null);
   readonly formSchema = input<TSchema | null>(null);
-  readonly vestSuite = input<VestSuite<TModel> | null>(null);
+  readonly vestSuite = input<NgxVestSuite<TModel> | null>(null);
   readonly validationConfig = input<Record<string, string[]> | null>(null);
-  readonly validationOptions = input<ValidationOptions>({ debounceTime: 0 });
+  readonly validationOptions = input<NgxValidationOptions>({ debounceTime: 0 });
 
   /// --- INTERNAL STATE ---
   readonly #validationContext = computed(() => {
@@ -146,7 +146,7 @@ export class FormDirective<
     const schema = this.formSchema();
     if (!schema) return null;
 
-    return extractTemplateFromSchema(schema);
+    return ngxExtractTemplateFromSchema(schema);
   });
 
   /**
@@ -261,7 +261,7 @@ export class FormDirective<
   });
 
   /// --- PUBLIC API: CURRENT FORM STATE ---
-  readonly formState = computed<FormState<TModel>>(() => {
+  readonly formState = computed<NgxFormState<TModel>>(() => {
     const allFieldMessages = this.#fieldErrorsAndWarnings() ?? {};
     const fieldErrors: Record<string, string[]> = {};
     const fieldWarnings: Record<string, string[]> = {};
@@ -293,7 +293,7 @@ export class FormDirective<
       pending: this.#isPending(),
       disabled: this.#isDisabled(),
       idle: this.#isIdle(),
-    } satisfies FormState<TModel>;
+    } satisfies NgxFormState<TModel>;
   });
 
   /// --- DEPRECATED PUBLIC API ---
@@ -357,7 +357,7 @@ export class FormDirective<
       }
     }
     console.log(
-      '[FormDirective] #formValueSignal changed. Current value:',
+      '[NgxFormDirective] #formValueSignal changed. Current value:',
       logValue,
     );
 
@@ -371,7 +371,7 @@ export class FormDirective<
       Object.keys(value).length === 0
     ) {
       console.warn(
-        '[FormDirective] #formValueSignal is an empty object {}. This will be emitted via formValueChange.',
+        '[NgxFormDirective] #formValueSignal is an empty object {}. This will be emitted via formValueChange.',
       );
     }
   }
@@ -454,7 +454,7 @@ export class FormDirective<
 
   createAsyncValidator(
     field: string,
-    validationOptions: ValidationOptions,
+    validationOptions: NgxValidationOptions,
   ): AsyncValidatorFn {
     const context = this.#validationContext();
 
@@ -475,8 +475,8 @@ export class FormDirective<
    */
   #createFieldValidator(
     field: string,
-    suite: VestSuite<TModel>,
-    validationOptions: ValidationOptions,
+    suite: NgxVestSuite<TModel>,
+    validationOptions: NgxValidationOptions,
   ): AsyncValidatorFn {
     // Check if we already have a cached validator for this field
     let fieldValidatorContext = this.#fieldValidatorCache.get(field);
@@ -518,7 +518,7 @@ export class FormDirective<
               } catch (error) {
                 if (isDevMode()) {
                   console.error(
-                    `[FormDirective] Error during Vest suite execution for field '${field}':`,
+                    `[NgxFormDirective] Error during Vest suite execution for field '${field}':`,
                     error,
                   );
                 }
@@ -534,7 +534,7 @@ export class FormDirective<
         catchError((error) => {
           if (isDevMode()) {
             console.error(
-              `[FormDirective] Validation stream error for field '${field}':`,
+              `[NgxFormDirective] Validation stream error for field '${field}':`,
               error,
             );
           }
@@ -557,7 +557,7 @@ export class FormDirective<
 
       if (isDevMode()) {
         console.log(
-          `[FormDirective] Created streaming validator for field '${field}' (debounce: ${validationOptions.debounceTime}ms)`,
+          `[NgxFormDirective] Created streaming validator for field '${field}' (debounce: ${validationOptions.debounceTime}ms)`,
         );
       }
     }
@@ -580,14 +580,14 @@ export class FormDirective<
   #clearValidatorCache(): void {
     if (isDevMode()) {
       console.log(
-        `[FormDirective] Clearing validator cache with ${this.#fieldValidatorCache.size} cached validators`,
+        `[NgxFormDirective] Clearing validator cache with ${this.#fieldValidatorCache.size} cached validators`,
       );
     }
     this.#fieldValidatorCache.clear();
   }
 
   static createVestAsyncValidator<M = unknown>(
-    suite: VestSuite<M>,
+    suite: NgxVestSuite<M>,
     field: string,
     getModel: () => M,
     debounceTimeMs = 300,

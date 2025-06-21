@@ -5,8 +5,8 @@
 export {
   InferSchemaType,
   SchemaDefinition,
-  extractTemplateFromSchema,
   isStandardSchema,
-  modelToStandardSchema,
+  ngxExtractTemplateFromSchema,
+  ngxModelToStandardSchema,
   shapeToSchema,
 } from './src/lib/schema-adapter';

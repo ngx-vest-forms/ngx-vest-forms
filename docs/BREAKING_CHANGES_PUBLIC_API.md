@@ -12,6 +12,7 @@ This document lists all **public API breaking changes** in recent versions of `n
 | Smart State Modularization      | v2.1+   | 🟡 Medium | Only if using smart state features     |
 | Control Wrapper Modularization  | v2.2+   | 🟢 Low    | Only if using NgxControlWrapper        |
 | Schema Utilities Modularization | v2.3+   | 🟢 Low    | Only if using schema utilities         |
+| NGX Naming Convention Update    | v2.4+   | 🟡 Medium | Update directive/type imports          |
 | Component Renaming              | v2.2+   | 🟢 Low    | Only if using ControlWrapperComponent  |
 
 **📊 Bundle Impact:** Core users get up to 44% smaller bundle size.
@@ -26,7 +27,7 @@ The default value of `[validateRootForm]` has been changed from `true` to `false
 
 **Why the change?**
 
-- **Prevents circular dependencies:** Eliminates common `NG0200` errors that occurred when both `FormDirective` and `ValidateRootFormDirective` tried to inject each other
+- **Prevents circular dependencies:** Eliminates common `NG0200` errors that occurred when both `NgxFormDirective` and `NgxValidateRootFormDirective` tried to inject each other
 - **Better performance:** Most simple forms don't need root-level validation, so disabling it by default improves performance
 - **Explicit intent:** Developers who need cross-field validation must explicitly opt-in, making the intent clearer
 - **Improved developer experience:** Reduces setup complexity for basic forms
@@ -110,10 +111,10 @@ import { ngxVestForms, SmartStateOptions } from 'ngx-vest-forms';
 ```typescript
 // Smart state features require separate import
 import { ngxVestForms } from 'ngx-vest-forms';
-import { ngxVestFormsSmartStateDirective, SmartStateOptions } from 'ngx-vest-forms/smart-state';
+import { NgxVestFormsSmartStateDirective, SmartStateOptions } from 'ngx-vest-forms/smart-state';
 
 @Component({
-  imports: [ngxVestForms, ngxVestFormsSmartStateDirective],
+  imports: [ngxVestForms, NgxVestFormsSmartStateDirective],
   template: `
     <form
       ngxVestForm
@@ -132,7 +133,7 @@ import { ngxVestFormsSmartStateDirective, SmartStateOptions } from 'ngx-vest-for
 **Key Changes:**
 
 1. **Import:** Smart state types and directives must be imported from `ngx-vest-forms/smart-state`
-2. **Component Imports:** Add `ngxVestFormsSmartStateDirective` to your component's `imports` array
+2. **Component Imports:** Add `NgxVestFormsSmartStateDirective` to your component's `imports` array
 3. **Template:** Add `ngxSmartStateExtension` directive to your form element
 4. **Bundle Impact:** Core users get ~30% smaller bundle, smart state users have minimal overhead
 
@@ -146,7 +147,7 @@ import { ngxVestFormsSmartStateDirective, SmartStateOptions } from 'ngx-vest-for
 
 **What changed?**
 
-The `NgxControlWrapper` and its related configuration (`ERROR_DISPLAY_MODE_DEFAULT`, `ErrorDisplayMode`) have been moved to a **new secondary entry point**: `ngx-vest-forms/control-wrapper`. The configuration token `CONTROL_WRAPPER_ERROR_DISPLAY` has been renamed to `ERROR_DISPLAY_MODE_DEFAULT` and is now exported from the core `ngx-vest-forms` package, while the `NgxControlWrapper` itself is in the new entry point.
+The `NgxControlWrapper` and its related configuration (`NGX_ERROR_DISPLAY_MODE_DEFAULT`, `NgxErrorDisplayMode`) have been moved to a **new secondary entry point**: `ngx-vest-forms/control-wrapper`. The configuration token `CONTROL_WRAPPER_ERROR_DISPLAY` has been renamed to `NGX_ERROR_DISPLAY_MODE_DEFAULT` and is now exported from the core `ngx-vest-forms` package, while the `NgxControlWrapper` itself is in the new entry point.
 
 **Why the change?**
 
@@ -166,7 +167,7 @@ import {
   ngxVestForms,
   NgxControlWrapper,
   CONTROL_WRAPPER_ERROR_DISPLAY,
-  ErrorDisplayMode,
+  NgxErrorDisplayMode,
 } from 'ngx-vest-forms';
 
 @Component({
@@ -179,7 +180,7 @@ export class MyFormComponent {}
 providers: [
   {
     provide: CONTROL_WRAPPER_ERROR_DISPLAY,
-    useValue: 'on-blur' as ErrorDisplayMode,
+    useValue: 'on-blur' as NgxErrorDisplayMode,
   },
 ];
 ```
@@ -188,11 +189,11 @@ providers: [
 
 ```typescript
 // NgxControlWrapper is imported from its own entry point
-// ERROR_DISPLAY_MODE_DEFAULT (renamed) and ErrorDisplayMode type are from the core
+// NGX_ERROR_DISPLAY_MODE_DEFAULT (renamed) and NgxErrorDisplayMode type are from the core
 import {
   ngxVestForms,
-  ERROR_DISPLAY_MODE_DEFAULT,
-  ErrorDisplayMode,
+  NGX_ERROR_DISPLAY_MODE_DEFAULT,
+  NgxErrorDisplayMode,
 } from 'ngx-vest-forms';
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 
@@ -205,8 +206,8 @@ export class MyFormComponent {}
 // Provider example (token renamed, type from core)
 providers: [
   {
-    provide: ERROR_DISPLAY_MODE_DEFAULT,
-    useValue: 'on-blur' as ErrorDisplayMode,
+    provide: NGX_ERROR_DISPLAY_MODE_DEFAULT,
+    useValue: 'on-blur' as NgxErrorDisplayMode,
   },
 ];
 ```
@@ -215,8 +216,8 @@ providers: [
 
 1.  **`NgxControlWrapper` Import:** Import `NgxControlWrapper` from `ngx-vest-forms/control-wrapper`.
 2.  **Component Imports Array:** Ensure `NgxControlWrapper` is added to your Angular component's `imports` array if used in the template.
-3.  **Configuration Token Renamed:** The injection token `CONTROL_WRAPPER_ERROR_DISPLAY` is now `ERROR_DISPLAY_MODE_DEFAULT`.
-4.  **Token and Type Import:** `ERROR_DISPLAY_MODE_DEFAULT` and the `ErrorDisplayMode` type are now imported from the core `ngx-vest-forms` package.
+3.  **Configuration Token Renamed:** The injection token `CONTROL_WRAPPER_ERROR_DISPLAY` is now `NGX_ERROR_DISPLAY_MODE_DEFAULT`.
+4.  **Token and Type Import:** `NGX_ERROR_DISPLAY_MODE_DEFAULT` and the `NgxErrorDisplayMode` type are now imported from the core `ngx-vest-forms` package.
 5.  **Bundle Impact:** Users not importing `NgxControlWrapper` will see a slightly smaller bundle. Users of the wrapper will have a new, small, separate chunk for it.
 
 **If you're not using `NgxControlWrapper` or its global configuration:** No changes are required regarding this specific modularization.
@@ -229,7 +230,7 @@ providers: [
 
 **What changed?**
 
-Schema utilities and types (`SchemaDefinition`, `InferSchemaType`, `modelToStandardSchema`, `extractTemplateFromSchema`, `isStandardSchema`, `shapeToSchema`) have been moved to a **new secondary entry point**: `ngx-vest-forms/schemas`. This is a **breaking change** if you were importing these utilities from the main `ngx-vest-forms` package.
+Schema utilities and types (`SchemaDefinition`, `InferSchemaType`, `ngxModelToStandardSchema`, `ngxExtractTemplateFromSchema`, `isStandardSchema`, `shapeToSchema`) have been moved to a **new secondary entry point**: `ngx-vest-forms/schemas`. This is a **breaking change** if you were importing these utilities from the main `ngx-vest-forms` package.
 
 **Why the change?**
 
@@ -248,12 +249,12 @@ If you were using schema utilities from the main package:
 // Schema utilities were part of the core package
 import {
   ngxVestForms,
-  modelToStandardSchema,
+  ngxModelToStandardSchema,
   SchemaDefinition,
   InferSchemaType,
 } from 'ngx-vest-forms';
 
-const userSchema = modelToStandardSchema(userTemplate);
+const userSchema = ngxModelToStandardSchema(userTemplate);
 ```
 
 ### After (v2.3+):
@@ -262,12 +263,12 @@ const userSchema = modelToStandardSchema(userTemplate);
 // Schema utilities are imported from their own entry point
 import { ngxVestForms } from 'ngx-vest-forms';
 import {
-  modelToStandardSchema,
+  ngxModelToStandardSchema,
   SchemaDefinition,
   InferSchemaType,
 } from 'ngx-vest-forms/schemas';
 
-const userSchema = modelToStandardSchema(userTemplate);
+const userSchema = ngxModelToStandardSchema(userTemplate);
 ```
 
 **Key Changes:**
@@ -280,6 +281,106 @@ const userSchema = modelToStandardSchema(userTemplate);
 **If you're not using schema utilities:** No changes required. Your existing code continues to work unchanged.
 
 **Documentation:** See the [Schema Utilities Guide](../../projects/ngx-vest-forms/schemas/README.md) for complete usage examples and patterns.
+
+---
+
+## NGX Naming Convention Update (v2.2+)
+
+**What changed?**
+
+All public API elements (directives, types, tokens, functions) have been updated to use a consistent NGX prefix to follow Angular naming conventions and avoid naming conflicts.
+
+**Why the change?**
+
+- **Angular Conventions:** Follows standard Angular naming patterns for third-party libraries
+- **Clarity:** The `Ngx` prefix clearly indicates these are ngx-vest-forms components/types
+- **Avoid Conflicts:** Prevents naming conflicts with other libraries or application code
+- **Consistency:** Aligns with widely adopted Angular ecosystem naming practices
+
+**Migration Required:**
+
+All public API elements must be updated to use the new NGX-prefixed names:
+
+| Category             | Old Name (v2.1-)                | New Name (v2.2+                    |
+| -------------------- | ------------------------------- | ---------------------------------- |
+| **Directives**       | `FormDirective`                 | `NgxFormDirective`                 |
+|                      | `FormErrorDisplayDirective`     | `NgxFormErrorDisplayDirective`     |
+|                      | `FormModelDirective`            | `NgxFormModelDirective`            |
+|                      | `FormModelGroupDirective`       | `NgxFormModelGroupDirective`       |
+|                      | `FormControlStateDirective`     | `NgxFormControlStateDirective`     |
+|                      | `ValidateRootFormDirective`     | `NgxValidateRootFormDirective`     |
+| **Types**            | `FormState<T>`                  | `NgxFormState<T>`                  |
+|                      | `ValidationOptions`             | `NgxValidationOptions`             |
+|                      | `FormControlState`              | `NgxFormControlState`              |
+|                      | `ErrorDisplayMode`              | `NgxErrorDisplayMode`              |
+|                      | `NgxDeepPartial<T>`             | `NgxDeepPartial<T>`                |
+|                      | `NgxDeepRequired<T>`            | `NgxDeepRequired<T>`               |
+|                      | `FormCompatibleDeepRequired<T>` | `NgxFormCompatibleDeepRequired<T>` |
+|                      | `FieldKey<T>`                   | `NgxFieldKey<T>`                   |
+|                      | `NgxVestSuite<T>`               | `NgxVestSuite<T>`                  |
+|                      | `InjectRootFormKeyOptions`      | `NgxInjectRootFormKeyOptions`      |
+| **Tokens/Functions** | `ERROR_DISPLAY_MODE_DEFAULT`    | `NGX_ERROR_DISPLAY_MODE_DEFAULT`   |
+|                      | `ROOT_FORM`                     | `NGX_ROOT_FORM`                    |
+|                      | `injectRootFormKey()`           | `injectNgxRootFormKey()`           |
+
+### Migration Steps
+
+1. **Update all imports** to use the new NGX-prefixed names
+2. **Update type annotations** in component and service files
+3. **Update provider configurations** to use new token names
+4. **Update function calls** to use new function names
+
+### Example Migration
+
+**Before (v2.1-):**
+
+```typescript
+import {
+  FormDirective,
+  FormState,
+  ValidationOptions,
+  ERROR_DISPLAY_MODE_DEFAULT,
+} from 'ngx-vest-forms';
+
+@Component({
+  imports: [FormDirective],
+  providers: [{ provide: ERROR_DISPLAY_MODE_DEFAULT, useValue: 'on-submit' }],
+})
+export class MyComponent {
+  formState: FormState<UserModel>;
+  options: ValidationOptions = { debounceTime: 300 };
+}
+```
+
+**After (v2.2+):**
+
+```typescript
+import {
+  NgxFormDirective,
+  NgxFormState,
+  NgxValidationOptions,
+  NGX_ERROR_DISPLAY_MODE_DEFAULT,
+} from 'ngx-vest-forms';
+
+@Component({
+  imports: [NgxFormDirective],
+  providers: [
+    { provide: NGX_ERROR_DISPLAY_MODE_DEFAULT, useValue: 'on-submit' },
+  ],
+})
+export class MyComponent {
+  formState: NgxFormState<UserModel>;
+  options: NgxValidationOptions = { debounceTime: 300 };
+}
+```
+
+**Impact:**
+
+- 🟢 **Low impact:** Mostly import and type annotation changes
+- 🔧 **Easy migration:** Can be largely automated with find/replace
+- 📦 **No bundle impact:** Pure naming changes, no functional differences
+
+**Documentation:** See [v2 Migration Guide](./MIGRATION_GUIDE_V2.md) for detailed migration instructions and automated scripts.
 
 ---
 
@@ -494,7 +595,7 @@ Optional smart state management capabilities that intelligently handle external 
     - [What changed?](#what-changed-11)
     - [Why?](#why-11)
     - [Migration](#migration-11)
-  - [13. New Composition API: FormErrorDisplayDirective and FormControlStateDirective](#13-new-composition-api-formerrordisplaydirective-and-formcontrolstatedirective)
+  - [13. New Composition API: NgxFormErrorDisplayDirective and NgxFormControlStateDirective](#13-new-composition-api-formerrordisplaydirective-and-formcontrolstatedirective)
     - [What changed?](#what-changed-12)
     - [Why?](#why-12)
     - [Usage Patterns](#usage-patterns)
@@ -514,7 +615,7 @@ Optional smart state management capabilities that intelligently handle external 
     - [What changed?](#what-changed-14)
     - [Why?](#why-15)
     - [Migration](#migration-15)
-  - [16. FormControlStateDirective: Build Your Own Custom Form Field](#16-formcontrolstatedirective-build-your-own-custom-form-field)
+  - [16. NgxFormControlStateDirective: Build Your Own Custom Form Field](#16-formcontrolstatedirective-build-your-own-custom-form-field)
     - [What changed?](#what-changed-15)
     - [Why?](#why-16)
     - [How to use](#how-to-use)
@@ -749,22 +850,22 @@ const rootIssues = formState.root; // { errors?: [], warnings?: [], internalErro
 
 ### What changed?
 
-- The `[formShape]` input is deprecated. Use `[formSchema]` with `modelToStandardSchema` instead.
+- The `[formShape]` input is deprecated. Use `[formSchema]` with `ngxModelToStandardSchema` instead.
 
 ### Why?
 
-- The new `[formSchema]` input and `modelToStandardSchema` utility provide a more robust and type-safe way to validate form models and catch typos in `name` and `ngModelGroup` attributes.
+- The new `[formSchema]` input and `ngxModelToStandardSchema` utility provide a more robust and type-safe way to validate form models and catch typos in `name` and `ngModelGroup` attributes.
 
 ### Migration
 
-- Update your forms to use `[formSchema]` and `modelToStandardSchema` instead of `[formShape]`.
+- Update your forms to use `[formSchema]` and `ngxModelToStandardSchema` instead of `[formShape]`.
 - For detailed migration examples and comprehensive schema adapter usage, see [Schema Adapters Documentation](./schema-adapters.md).
 
 #### Comparison Table
 
-| Old Pattern (Deprecated)                         | New Pattern (Recommended)                                                |
-| ------------------------------------------------ | ------------------------------------------------------------------------ |
-| `<form ngxVestForm [formShape]="modelTemplate">` | `<form ngxVestForm [formSchema]="modelToStandardSchema(modelTemplate)">` |
+| Old Pattern (Deprecated)                         | New Pattern (Recommended)                                                   |
+| ------------------------------------------------ | --------------------------------------------------------------------------- |
+| `<form ngxVestForm [formShape]="modelTemplate">` | `<form ngxVestForm [formSchema]="ngxModelToStandardSchema(modelTemplate)">` |
 
 ---
 
@@ -772,7 +873,7 @@ const rootIssues = formState.root; // { errors?: [], warnings?: [], internalErro
 
 ### What changed?
 
-- The root form errors use the key `'rootForm'` by default. You can now override this by providing the `ROOT_FORM` injection token.
+- The root form errors use the key `'rootForm'` by default. You can now override this by providing the `NGX_ROOT_FORM` injection token.
 
 ### Why?
 
@@ -780,7 +881,7 @@ const rootIssues = formState.root; // { errors?: [], warnings?: [], internalErro
 
 ### Migration
 
-- If you override the `ROOT_FORM` token, you must use the same key in your validation suite and when accessing root form errors.
+- If you override the `NGX_ROOT_FORM` token, you must use the same key in your validation suite and when accessing root form errors.
 
 ---
 
@@ -844,7 +945,7 @@ const rootIssues = formState.root; // { errors?: [], warnings?: [], internalErro
 
 ### Why?
 
-- To align the internal structure used by `FormDirective` with the expectations of `NgxControlWrapper`.
+- To align the internal structure used by `NgxFormDirective` with the expectations of `NgxControlWrapper`.
 - To provide a more standard and flexible array format for error messages, making it easier to display multiple distinct errors for a single field if needed.
 
 ### Migration
@@ -895,12 +996,12 @@ const rootIssues = formState.root; // { errors?: [], warnings?: [], internalErro
 
 ---
 
-## 13. New Composition API: FormErrorDisplayDirective and FormControlStateDirective
+## 13. New Composition API: NgxFormErrorDisplayDirective and NgxFormControlStateDirective
 
 ### What changed?
 
-- **NEW**: `FormControlStateDirective` - Provides raw form control state (errors, warnings, pending, etc.) without display opinions
-- **NEW**: `FormErrorDisplayDirective` - Extends `FormControlStateDirective` with configurable error display behavior
+- **NEW**: `NgxFormControlStateDirective` - Provides raw form control state (errors, warnings, pending, etc.) without display opinions
+- **NEW**: `NgxFormErrorDisplayDirective` - Extends `NgxFormControlStateDirective` with configurable error display behavior
 - Both directives support Angular's `hostDirectives` composition pattern for building custom form components
 - Template reference variables via `exportAs` for direct access in templates
 
@@ -909,7 +1010,7 @@ const rootIssues = formState.root; // { errors?: [], warnings?: [], internalErro
 - Enables developers to build custom form field wrappers while leveraging the library's validation logic
 - Embraces Angular's modern composition API over inheritance patterns
 - Provides granular control over when and how validation messages are displayed
-- Separates data concerns (FormControlStateDirective) from display concerns (FormErrorDisplayDirective)
+- Separates data concerns (NgxFormControlStateDirective) from display concerns (NgxFormErrorDisplayDirective)
 
 ### Usage Patterns
 
@@ -934,10 +1035,10 @@ const rootIssues = formState.root; // { errors?: [], warnings?: [], internalErro
       <span class="spinner">Validating...</span>
     }
   `,
-  hostDirectives: [FormErrorDisplayDirective], // Composition over inheritance
+  hostDirectives: [NgxFormErrorDisplayDirective], // Composition over inheritance
 })
 export class MyCustomFieldComponent {
-  readonly errorDisplay = inject(FormErrorDisplayDirective);
+  readonly errorDisplay = inject(NgxFormErrorDisplayDirective);
 
   @Input() label!: string;
   @Input() name!: string;
@@ -947,7 +1048,7 @@ export class MyCustomFieldComponent {
 #### 2. Direct Template Usage with Template Reference Variables
 
 ```html
-<!-- Using FormErrorDisplayDirective directly -->
+<!-- Using NgxFormErrorDisplayDirective directly -->
 <div
   scFormErrorDisplay
   #display="formErrorDisplay"
@@ -970,7 +1071,7 @@ export class MyCustomFieldComponent {
   }
 </div>
 
-<!-- Using just FormControlStateDirective for raw data -->
+<!-- Using just NgxFormControlStateDirective for raw data -->
 <div ngxFormControlState #state="formControlState">
   <input type="text" name="username" ngModel />
 
@@ -985,7 +1086,7 @@ export class MyCustomFieldComponent {
 
 #### 3. Available Signals and Methods
 
-**FormControlStateDirective provides:**
+**NgxFormControlStateDirective provides:**
 
 - `controlState()` - Angular form control state (touched, dirty, valid, etc.)
 - `errorMessages()` - Array of error messages from Vest validation
@@ -993,7 +1094,7 @@ export class MyCustomFieldComponent {
 - `hasPendingValidation()` - Boolean indicating async validation in progress
 - `updateOn()` - The ngModelOptions.updateOn value ('change', 'blur', 'submit')
 
-**FormErrorDisplayDirective adds:**
+**NgxFormErrorDisplayDirective adds:**
 
 - `shouldShowErrors()` - Smart logic for when to display errors based on display mode
 - `errors()` - Filtered error messages (hides during pending validation)
@@ -1040,10 +1141,10 @@ export class OldCustomField {
       <div>{{ errorDisplay.errors()[0] }}</div>
     }
   `,
-  hostDirectives: [FormErrorDisplayDirective],
+  hostDirectives: [NgxFormErrorDisplayDirective],
 })
 export class NewCustomField {
-  readonly errorDisplay = inject(FormErrorDisplayDirective);
+  readonly errorDisplay = inject(NgxFormErrorDisplayDirective);
   // No manual state tracking needed!
 }
 ```
@@ -1060,7 +1161,7 @@ export class NewCustomField {
 ### Migration
 
 - You can now use Zod, ArkType, or Valibot schemas directly with `ngx-vest-forms` for type-safe, runtime-validated forms.
-- The `modelToStandardSchema` helper is still available for basic type inference, but it only checks that the value is a non-null object and does not perform deep validation.
+- The `ngxModelToStandardSchema` helper is still available for basic type inference, but it only checks that the value is a non-null object and does not perform deep validation.
 - For production-grade validation, migrate to a Standard Schema compatible library and pass its schema to `[formSchema]`.
 
 ---
@@ -1099,11 +1200,11 @@ export class NewCustomField {
 
 ---
 
-## 16. FormControlStateDirective: Build Your Own Custom Form Field
+## 16. NgxFormControlStateDirective: Build Your Own Custom Form Field
 
 ### What changed?
 
-- The new `FormControlStateDirective` (`ngxFormControlState`) is now available as a standalone directive.
+- The new `NgxFormControlStateDirective` (`ngxFormControlState`) is now available as a standalone directive.
 - This directive provides a reactive signal (`controlState`) with the current state of the nearest `NgModel` or `NgModelGroup`.
 - It is used internally by `ngxControlWrapper`, but you can apply it directly to build your own custom form field wrappers or advanced UI.
 
@@ -1126,13 +1227,13 @@ export class NewCustomField {
 
 #### Building Custom Form Fields
 
-For more advanced use cases, you can create your own custom form field components using the `FormControlStateDirective`. This allows you to build custom UI components that reactively display control state while maintaining full control over styling and behavior.
+For more advanced use cases, you can create your own custom form field components using the `NgxFormControlStateDirective`. This allows you to build custom UI components that reactively display control state while maintaining full control over styling and behavior.
 
 Here's an example of creating a custom form field component:
 
 ```typescript
 import { Component, inject, computed } from '@angular/core';
-import { FormControlStateDirective } from 'ngx-vest-forms';
+import { NgxFormControlStateDirective } from 'ngx-vest-forms';
 
 @Component({
   selector: 'app-custom-field',
@@ -1174,11 +1275,11 @@ import { FormControlStateDirective } from 'ngx-vest-forms';
       }
     `,
   ],
-  hostDirectives: [FormControlStateDirective],
+  hostDirectives: [NgxFormControlStateDirective],
 })
 export class CustomFieldComponent {
   // Inject the directive to access the control state
-  private readonly formControlState = inject(FormControlStateDirective);
+  private readonly formControlState = inject(NgxFormControlStateDirective);
 
   // Create computed signals based on the control state
   protected readonly invalid = computed(

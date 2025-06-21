@@ -23,15 +23,15 @@ const vestSuite = staticSuite(
 );
 
 /**
- * Tests for FormErrorDisplayDirective
+ * Tests for NgxFormErrorDisplayDirective
  * - shouldShowErrors logic for all error display modes (on-blur, on-submit, on-blur-or-submit)
  * - Errors are not shown while validation is pending
  * - errors and warnings signals filter out messages during pending validation
  * - formSubmitted signal is set after form submit event
- * - Works as a host directive and composes with FormControlStateDirective
+ * - Works as a host directive and composes with NgxFormControlStateDirective
  * - Accessibility: error messages are available for screen readers when visible
  */
-describe('FormErrorDisplayDirective', () => {
+describe('NgxFormErrorDisplayDirective', () => {
   it('should show Vest errors only on blur when errorDisplayMode is "on-blur"', async () => {
     @Component({
       standalone: true,

@@ -8,7 +8,7 @@ import type { StandardSchemaV1 } from '@standard-schema/spec';
  *
  * @description
  * This type works with schema libraries that implement the Standard Schema spec,
- * including Zod, Valibot, ArkType, or schemas created with `modelToStandardSchema`.
+ * including Zod, Valibot, ArkType, or schemas created with `ngxModelToStandardSchema`.
  *
  * **Why use this type?**
  * - Provides a consistent interface for different schema libraries
@@ -22,7 +22,7 @@ import type { StandardSchemaV1 } from '@standard-schema/spec';
  * const mySchema: SchemaDefinition<User> = z.object({...});
  *
  * /// Or with the built-in utility
- * const mySchema: SchemaDefinition<User> = modelToStandardSchema({...});
+ * const mySchema: SchemaDefinition<User> = ngxModelToStandardSchema({...});
  * ```
  *
  * @template T The output type that the schema validates to
@@ -120,7 +120,7 @@ export function isStandardSchema<T = unknown>(
  * };
  *
  * /// Create a StandardSchema from the template
- * const userSchema = modelToStandardSchema(userTemplate);
+ * const userSchema = ngxModelToStandardSchema(userTemplate);
  *
  * /// Use with ngx-vest-forms
  * @Component({
@@ -141,7 +141,7 @@ export function isStandardSchema<T = unknown>(
  * @param modelTemplate - The plain object template representing the data structure
  * @returns A StandardSchemaV1-compatible schema that performs basic validation
  */
-export function modelToStandardSchema<T extends object>(
+export function ngxModelToStandardSchema<T extends object>(
   modelTemplate: T, /// Template is mainly for type inference here
 ): StandardSchemaV1<T, T> & { _shape: T } {
   return {
@@ -184,18 +184,18 @@ export function modelToStandardSchema<T extends object>(
 }
 
 /**
- * @deprecated Use `modelToStandardSchema` instead.
+ * @deprecated Use `ngxModelToStandardSchema` instead.
  *
- * Alias for `modelToStandardSchema` - converts a plain object into a StandardSchemaV1-compatible schema.
+ * Alias for `ngxModelToStandardSchema` - converts a plain object into a StandardSchemaV1-compatible schema.
  */
-export const shapeToSchema = modelToStandardSchema;
+export const shapeToSchema = ngxModelToStandardSchema;
 
 /**
  * Extracts a plain object template from a StandardSchemaV1-compatible schema.
  *
  * @description
  * This function attempts to extract a template/shape from a schema, primarily
- * for schemas created with `modelToStandardSchema` which store the original
+ * for schemas created with `ngxModelToStandardSchema` which store the original
  * template as the `_shape` property. For other schema types (Zod, Valibot, ArkType),
  * this function returns null since they don't contain extractable plain object templates.
  *
@@ -205,40 +205,40 @@ export const shapeToSchema = modelToStandardSchema;
  * - Schema introspection: Access the original template from schema definitions
  *
  * **How it works:**
- * - Checks if the schema has a `_shape` property (from `modelToStandardSchema`)
+ * - Checks if the schema has a `_shape` property (from `ngxModelToStandardSchema`)
  * - Returns the extracted template if found, or null otherwise
- * - Used internally by FormDirective for runtime form structure validation
+ * - Used internally by NgxFormDirective for runtime form structure validation
  *
  * **Limitations:**
- * - Only works with schemas created via `modelToStandardSchema`
+ * - Only works with schemas created via `ngxModelToStandardSchema`
  * - Returns null for third-party schema libraries (Zod, Valibot, ArkType)
  * - Does not perform any validation, only template extraction
  *
  * @example
  * ```typescript
- * /// Create a schema with modelToStandardSchema
+ * /// Create a schema with ngxModelToStandardSchema
  * const userTemplate = { name: '', email: '', age: 0 };
- * const userSchema = modelToStandardSchema(userTemplate);
+ * const userSchema = ngxModelToStandardSchema(userTemplate);
  *
  * /// Extract the template back from the schema
- * const extractedTemplate = extractTemplateFromSchema(userSchema);
+ * const extractedTemplate = ngxExtractTemplateFromSchema(userSchema);
  * /// extractedTemplate = { name: '', email: '', age: 0 }
  *
  * /// For third-party schemas, returns null
  * const zodSchema = z.object({ name: z.string() });
- * const noTemplate = extractTemplateFromSchema(zodSchema);
+ * const noTemplate = ngxExtractTemplateFromSchema(zodSchema);
  * /// noTemplate = null
  * ```
  *
  * @param schema - The StandardSchemaV1-compatible schema to extract the template from
  * @returns The extracted template object, or null if no template can be extracted
  */
-export function extractTemplateFromSchema<T = any>(
+export function ngxExtractTemplateFromSchema<T = any>(
   schema: SchemaDefinition<T> | null | undefined,
 ): T | null {
   if (!schema) return null;
 
-  // Check if this is a schema created with modelToStandardSchema
+  // Check if this is a schema created with ngxModelToStandardSchema
   // which stores the original template as _shape
   if ('_shape' in schema && typeof schema._shape === 'object') {
     return schema._shape as T;

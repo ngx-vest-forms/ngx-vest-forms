@@ -1,7 +1,7 @@
 /**
  * Configuration options for validation behavior.
  */
-export type ValidationOptions = {
+export type NgxValidationOptions = {
   /**
    * Debounce time in milliseconds before triggering validation
    * after a value change.

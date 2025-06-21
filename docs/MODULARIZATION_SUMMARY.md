@@ -30,7 +30,7 @@ The `ngx-vest-forms` library has been successfully modularized into multiple sec
 ### ✅ Schema Utilities (`ngx-vest-forms/schemas`)
 
 - **Location**: `/projects/ngx-vest-forms/schemas/`
-- **Includes**: `modelToStandardSchema`, `SchemaDefinition`, schema adapters
+- **Includes**: `ngxModelToStandardSchema`, `SchemaDefinition`, schema adapters
 - **Entry Point**: `ngx-vest-forms/schemas`
 - **Usage**: Optional for schema-based validation approaches
 
@@ -63,12 +63,12 @@ All secondary entry points build successfully:
 // Before
 import { SmartFormState } from 'ngx-vest-forms';
 import { ControlWrapperComponent } from 'ngx-vest-forms';
-import { modelToStandardSchema } from 'ngx-vest-forms';
+import { ngxModelToStandardSchema } from 'ngx-vest-forms';
 
 // After
 import { SmartFormState } from 'ngx-vest-forms/smart-state';
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
-import { modelToStandardSchema } from 'ngx-vest-forms/schemas';
+import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
 ```
 
 ### Component Renaming
@@ -82,9 +82,9 @@ import { modelToStandardSchema } from 'ngx-vest-forms/schemas';
 ```typescript
 // Core functionality remains the same
 import {
-  FormDirective,
-  FormControlStateDirective,
-  FormErrorDisplayDirective,
+  NgxFormDirective,
+  NgxFormControlStateDirective,
+  NgxFormErrorDisplayDirective,
 } from 'ngx-vest-forms';
 ```
 
@@ -111,7 +111,7 @@ import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 ```typescript
 // If using schema utilities
 import {
-  modelToStandardSchema,
+  ngxModelToStandardSchema,
   SchemaDefinition,
 } from 'ngx-vest-forms/schemas';
 ```

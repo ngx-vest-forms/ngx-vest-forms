@@ -1,5 +1,8 @@
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
-import { InferSchemaType, modelToStandardSchema } from 'ngx-vest-forms/schemas';
+import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
+import {
+  InferSchemaType,
+  ngxModelToStandardSchema,
+} from 'ngx-vest-forms/schemas';
 
 // --- Business Hour (Nested Model) ---
 
@@ -14,11 +17,11 @@ type BaseBusinessHourFormModel = {
 
 /**
  * Represents a potentially incomplete business hour entry.
- * Uses `DeepPartial` for flexibility in forms.
+ * Uses `NgxDeepPartial` for flexibility in forms.
  *
  * @usage Primarily nested within `BaseBusinessHoursFormModel` and `PartialBusinessHoursForm`.
  */
-export type PartialBusinessHour = DeepPartial<BaseBusinessHourFormModel>;
+export type PartialBusinessHour = NgxDeepPartial<BaseBusinessHourFormModel>;
 
 /**
  * Provides a default, empty template for a single business hour entry.
@@ -26,7 +29,7 @@ export type PartialBusinessHour = DeepPartial<BaseBusinessHourFormModel>;
  *
  * @usage Used to initialize entries within `initialBusinessHoursFormData`.
  */
-export const initialBusinessHourEntry: DeepRequired<BaseBusinessHourFormModel> =
+export const initialBusinessHourEntry: NgxDeepRequired<BaseBusinessHourFormModel> =
   {
     from: '00:00',
     to: '00:00',
@@ -52,13 +55,14 @@ export type BusinessHoursData = BaseBusinessHoursFormModel['businessHours'];
 
 /**
  * Represents potentially incomplete business hours form data.
- * Uses `DeepPartial` for flexibility in the main form model.
+ * Uses `NgxDeepPartial` for flexibility in the main form model.
  *
  * @usage
  * - Form Models: `this.form.setModel(someData as PartialBusinessHoursForm);`
  * - Validation Arguments: `function validations(model: PartialBusinessHoursForm | undefined): void { ... }`
  */
-export type PartialBusinessHoursForm = DeepPartial<BaseBusinessHoursFormModel>;
+export type PartialBusinessHoursForm =
+  NgxDeepPartial<BaseBusinessHoursFormModel>;
 
 /**
  * Provides a default, empty template for the business hours form data.
@@ -70,7 +74,7 @@ export type PartialBusinessHoursForm = DeepPartial<BaseBusinessHoursFormModel>;
  * @usage
  * - Initializing Form State: `this.form.setModel({ ...initialBusinessHoursFormData });`
  */
-export const initialBusinessHoursFormData: DeepRequired<BaseBusinessHoursFormModel> =
+export const initialBusinessHoursFormData: NgxDeepRequired<BaseBusinessHoursFormModel> =
   {
     businessHours: {
       addValue: { ...initialBusinessHourEntry }, // Use renamed nested initial state constant
@@ -85,7 +89,7 @@ export const initialBusinessHoursFormData: DeepRequired<BaseBusinessHoursFormMod
 /**
  * Defines the Vest schema based on the initial form data structure.
  */
-export const businessHoursSchema = modelToStandardSchema(
+export const businessHoursSchema = ngxModelToStandardSchema(
   initialBusinessHoursFormData,
 );
 

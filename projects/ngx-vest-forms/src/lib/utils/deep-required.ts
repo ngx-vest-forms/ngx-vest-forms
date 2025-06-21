@@ -2,12 +2,12 @@
  * Sometimes we want to make every property of a type
  * required, but also child properties recursively
  */
-export type DeepRequired<T> = {
-  [K in keyof T]-?: T[K] extends object ? DeepRequired<T[K]> : T[K];
+export type NgxDeepRequired<T> = {
+  [K in keyof T]-?: T[K] extends object ? NgxDeepRequired<T[K]> : T[K];
 };
 
 /**
- * A specialized version of DeepRequired that handles form compatibility issues,
+ * A specialized version of NgxDeepRequired that handles form compatibility issues,
  * specifically the Date/string type mismatch that occurs in form initialization.
  *
  * **Problem this solves:**
@@ -66,15 +66,15 @@ export type DeepRequired<T> = {
  *
  * @template T The type to make form-compatible with required properties
  * @since 18.1.0
- * @see {@link DeepRequired} For the base deep required functionality without form compatibility
+ * @see {@link NgxDeepRequired} For the base deep required functionality without form compatibility
  * @see {@link https://github.com/simplifiedcourses/ngx-vest-forms/issues/12 | Issue #12}
  */
-export type FormCompatibleDeepRequired<T> = {
+export type NgxFormCompatibleDeepRequired<T> = {
   [K in keyof T]-?: T[K] extends Date | undefined
     ? Date | string // Date properties (including optional ones) get the union treatment
     : T[K] extends Date
       ? Date | string // Non-optional Date properties also get the union treatment
       : T[K] extends object | undefined
-        ? FormCompatibleDeepRequired<NonNullable<T[K]>> // Recursively apply to nested objects, removing undefined
+        ? NgxFormCompatibleDeepRequired<NonNullable<T[K]>> // Recursively apply to nested objects, removing undefined
         : T[K]; // All other types remain unchanged
 };

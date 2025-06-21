@@ -4,7 +4,7 @@ Current ngx-vest-forms Architecture
 The project is built around template-driven forms with Angular signals for reactive state management. Key characteristics:
 
 Uses NgForm, NgModel, and NgModelGroup from Angular's template-driven forms
-Provides signal-based reactive state via FormDirective.formState()
+Provides signal-based reactive state via NgxFormDirective.formState()
 Integrates Vest.js validation suites with Angular's AsyncValidator interface
 Uses model() for two-way binding with [(formValue)]
 Signal Forms Compatibility Analysis

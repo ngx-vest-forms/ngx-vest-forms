@@ -28,11 +28,11 @@ Import schema utilities from the dedicated entry point:
 
 ```typescript
 import {
-  modelToStandardSchema,
+  ngxModelToStandardSchema,
   InferSchemaType,
   SchemaDefinition,
-  extractTemplateFromSchema,
-  isStandardSchema
+  ngxExtractTemplateFromSchema,
+  isStandardSchema,
 } from 'ngx-vest-forms/schemas';
 ```
 
@@ -42,7 +42,7 @@ import {
 
 #### `SchemaDefinition<T>`
 
-Represents a StandardSchemaV1-compatible schema definition that works with Zod, Valibot, ArkType, or schemas created with `modelToStandardSchema`.
+Represents a StandardSchemaV1-compatible schema definition that works with Zod, Valibot, ArkType, or schemas created with `ngxModelToStandardSchema`.
 
 #### `InferSchemaType<T>`
 
@@ -50,7 +50,7 @@ Infers the output type from a StandardSchemaV1 definition, allowing you to deriv
 
 ### Functions
 
-#### `modelToStandardSchema<T>(template: T)`
+#### `ngxModelToStandardSchema<T>(template: T)`
 
 Creates a StandardSchemaV1-compatible schema from a plain object template with minimal runtime validation.
 
@@ -59,10 +59,10 @@ const userTemplate = {
   name: '',
   email: '',
   age: 0,
-  isActive: false
+  isActive: false,
 };
 
-const userSchema = modelToStandardSchema(userTemplate);
+const userSchema = ngxModelToStandardSchema(userTemplate);
 // Now userSchema is StandardSchemaV1-compatible with full type inference
 ```
 
@@ -76,18 +76,18 @@ if (isStandardSchema(someValue)) {
 }
 ```
 
-#### `extractTemplateFromSchema<T>(schema: SchemaDefinition<T>)`
+#### `ngxExtractTemplateFromSchema<T>(schema: SchemaDefinition<T>)`
 
-Extracts a plain object template from schemas created with `modelToStandardSchema`. Returns `null` for third-party schemas.
+Extracts a plain object template from schemas created with `ngxModelToStandardSchema`. Returns `null` for third-party schemas.
 
 ```typescript
-const template = extractTemplateFromSchema(userSchema);
+const template = ngxExtractTemplateFromSchema(userSchema);
 // Returns the original template object or null
 ```
 
 #### `shapeToSchema<T>(template: T)` ⚠️ Deprecated
 
-Alias for `modelToStandardSchema`. Use `modelToStandardSchema` instead.
+Alias for `ngxModelToStandardSchema`. Use `ngxModelToStandardSchema` instead.
 
 ## Examples
 
@@ -96,15 +96,18 @@ Alias for `modelToStandardSchema`. Use `modelToStandardSchema` instead.
 ```typescript
 import { Component, signal } from '@angular/core';
 import { ngxVestForms } from 'ngx-vest-forms';
-import { modelToStandardSchema, InferSchemaType } from 'ngx-vest-forms/schemas';
+import {
+  ngxModelToStandardSchema,
+  InferSchemaType,
+} from 'ngx-vest-forms/schemas';
 
 const userTemplate = {
   name: '',
   email: '',
-  age: 0
+  age: 0,
 };
 
-const userSchema = modelToStandardSchema(userTemplate);
+const userSchema = ngxModelToStandardSchema(userTemplate);
 type User = InferSchemaType<typeof userSchema>;
 
 @Component({
@@ -112,11 +115,11 @@ type User = InferSchemaType<typeof userSchema>;
   imports: [ngxVestForms],
   template: `
     <form ngxVestForm [formSchema]="userSchema" [(formValue)]="userData">
-      <input name="name" ngModel placeholder="Name">
-      <input name="email" type="email" ngModel placeholder="Email">
-      <input name="age" type="number" ngModel placeholder="Age">
+      <input name="name" ngModel placeholder="Name" />
+      <input name="email" type="email" ngModel placeholder="Email" />
+      <input name="age" type="number" ngModel placeholder="Age" />
     </form>
-  `
+  `,
 })
 export class UserFormComponent {
   protected readonly userSchema = userSchema;
@@ -133,7 +136,7 @@ import { InferSchemaType } from 'ngx-vest-forms/schemas';
 const userSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email format'),
-  age: z.number().min(0).max(120)
+  age: z.number().min(0).max(120),
 });
 
 type User = InferSchemaType<typeof userSchema>;
@@ -143,7 +146,7 @@ type User = InferSchemaType<typeof userSchema>;
     <form ngxVestForm [formSchema]="userSchema" [(formValue)]="userData">
       <!-- form fields -->
     </form>
-  `
+  `,
 })
 export class UserFormComponent {
   protected readonly userSchema = userSchema;
@@ -160,7 +163,7 @@ import { InferSchemaType } from 'ngx-vest-forms/schemas';
 const userSchema = v.object({
   name: v.pipe(v.string(), v.minLength(2)),
   email: v.pipe(v.string(), v.email()),
-  age: v.pipe(v.number(), v.minValue(0), v.maxValue(120))
+  age: v.pipe(v.number(), v.minValue(0), v.maxValue(120)),
 });
 
 type User = InferSchemaType<typeof userSchema>;
@@ -175,7 +178,7 @@ import { InferSchemaType } from 'ngx-vest-forms/schemas';
 const userSchema = type({
   name: 'string>1',
   email: 'string.email',
-  age: 'number>=0'
+  age: 'number>=0',
 });
 
 type User = InferSchemaType<typeof userSchema>;
@@ -185,7 +188,7 @@ type User = InferSchemaType<typeof userSchema>;
 
 ### Zero Dependencies
 
-- `modelToStandardSchema` requires no external schema libraries
+- `ngxModelToStandardSchema` requires no external schema libraries
 - Works with plain TypeScript objects for simple use cases
 
 ### Flexible Integration
@@ -206,7 +209,7 @@ type User = InferSchemaType<typeof userSchema>;
 ## Best Practices
 
 1. **Use schemas for complex forms**: For simple forms, plain object models may be sufficient
-2. **Prefer established libraries**: Zod, Valibot, and ArkType offer more validation features than `modelToStandardSchema`
+2. **Prefer established libraries**: Zod, Valibot, and ArkType offer more validation features than `ngxModelToStandardSchema`
 3. **Share schemas**: Use the same schemas for frontend forms and backend validation
 4. **Type inference**: Leverage `InferSchemaType` to derive types from schemas rather than defining them separately
 
@@ -216,10 +219,13 @@ If you were previously importing schema utilities from the core `ngx-vest-forms`
 
 ```typescript
 // Before
-import { modelToStandardSchema, InferSchemaType } from 'ngx-vest-forms';
+import { ngxModelToStandardSchema, InferSchemaType } from 'ngx-vest-forms';
 
 // After
-import { modelToStandardSchema, InferSchemaType } from 'ngx-vest-forms/schemas';
+import {
+  ngxModelToStandardSchema,
+  InferSchemaType,
+} from 'ngx-vest-forms/schemas';
 ```
 
 ## Related Documentation

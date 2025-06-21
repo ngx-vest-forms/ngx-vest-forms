@@ -8,7 +8,7 @@ import {
  * Utility class for smart state management operations.
  * This provides pure functions for conflict detection, state merging, and field comparison.
  *
- * Note: Smart state management is already integrated into FormDirective.
+ * Note: Smart state management is already integrated into NgxFormDirective.
  * This utility class provides helper functions for advanced use cases and testing.
  *
  * @template TModel The type of the form model/value

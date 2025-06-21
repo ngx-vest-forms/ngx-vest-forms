@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 // Imports will be updated to point to the core library 'ngx-vest-forms'
-import { FormErrorDisplayDirective } from 'ngx-vest-forms';
+import { NgxFormErrorDisplayDirective } from 'ngx-vest-forms';
 
 /**
  * Accessible NgxControlWrapper
@@ -12,8 +12,8 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
  *   - No manual error/warning/pending signal management is needed in your form components.
  *
  * Error & Warning Display Behavior:
- *   - The error display mode can be configured globally using the ERROR_DISPLAY_MODE_DEFAULT injection token (imported from 'ngx-vest-forms'),
- *     or per instance using the `errorDisplayMode` input on FormErrorDisplayDirective (which this component uses as a hostDirective).
+ *   - The error display mode can be configured globally using the NGX_ERROR_DISPLAY_MODE_DEFAULT injection token (imported from 'ngx-vest-forms'),
+ *     or per instance using the `errorDisplayMode` input on NgxFormErrorDisplayDirective (which this component uses as a hostDirective).
  *   - Possible values: 'on-blur' | 'on-submit' | 'on-blur-or-submit' (default: 'on-blur-or-submit')
  *
  * Example (per instance):
@@ -24,8 +24,8 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
  *     </label>
  *   </div>
  *   /// To customize errorDisplayMode for this instance, you would typically apply
- *   /// FormErrorDisplayDirective with its input directly if not using ControlWrapper, or rely on global config.
- *   /// ControlWrapper itself doesn't re-expose errorDisplayMode as an input; it uses the one from FormErrorDisplayDirective.
+ *   /// NgxFormErrorDisplayDirective with its input directly if not using ControlWrapper, or rely on global config.
+ *   /// ControlWrapper itself doesn't re-expose errorDisplayMode as an input; it uses the one from NgxFormErrorDisplayDirective.
  *
  * Example (with warnings and pending):
  *   <ngx-control-wrapper>
@@ -36,11 +36,11 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
  *
  * Example (global config):
  *   import { provide } from '@angular/core';
- *   import { ERROR_DISPLAY_MODE_DEFAULT } from 'ngx-vest-forms'; // Import from core
+ *   import { NGX_ERROR_DISPLAY_MODE_DEFAULT } from 'ngx-vest-forms'; // Import from core
  *
  *   @Component({
  *     providers: [
- *       provide(ERROR_DISPLAY_MODE_DEFAULT, { useValue: 'submit' })
+ *       provide(NGX_ERROR_DISPLAY_MODE_DEFAULT, { useValue: 'submit' })
  *     ]
  *   })
  *   export class MyComponent {}
@@ -56,19 +56,19 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'ngx-control-wrapper',
-    // Accessing errorDisplay properties through the injected FormErrorDisplayDirective
+    // Accessing errorDisplay properties through the injected NgxFormErrorDisplayDirective
     '[class.ngx-control-wrapper--invalid]': 'errorDisplay.shouldShowErrors()',
   },
   hostDirectives: [
     {
-      directive: FormErrorDisplayDirective,
+      directive: NgxFormErrorDisplayDirective,
       // inputs: ['errorDisplayMode'], // ControlWrapper doesn't re-expose this; it uses the directive's own input
     },
   ],
 })
 export class NgxControlWrapper {
-  // Injects the instance of FormErrorDisplayDirective that is applied via hostDirectives
-  protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
+  // Injects the instance of NgxFormErrorDisplayDirective that is applied via hostDirectives
+  protected readonly errorDisplay = inject(NgxFormErrorDisplayDirective, {
     self: true,
   });
 }

@@ -103,17 +103,17 @@ The `errorDisplayMode` respects the `updateOn` setting of the `NgModel` directiv
 
 ### Global Configuration
 
-You can set the default `errorDisplayMode` for all `NgxControlWrapper` instances in your application by providing the `ERROR_DISPLAY_MODE_DEFAULT` injection token.
+You can set the default `errorDisplayMode` for all `NgxControlWrapper` instances in your application by providing the `NGX_ERROR_DISPLAY_MODE_DEFAULT` injection token.
 
 ```typescript
 import { ApplicationConfig } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
-import { ERROR_DISPLAY_MODE_DEFAULT } from 'ngx-vest-forms'; // Core library export
+import { NGX_ERROR_DISPLAY_MODE_DEFAULT } from 'ngx-vest-forms'; // Core library export
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideHttpClient(),
-    { provide: ERROR_DISPLAY_MODE_DEFAULT, useValue: 'on-blur' }, // Set default to 'on-blur'
+    { provide: NGX_ERROR_DISPLAY_MODE_DEFAULT, useValue: 'on-blur' }, // Set default to 'on-blur'
   ],
 };
 ```
@@ -157,19 +157,19 @@ The `NgxControlWrapper` exposes a `isPending` signal that indicates if an asynch
 
 ## Advanced Usage: Composition with Custom Form Fields
 
-The `NgxControlWrapper` is built upon `FormErrorDisplayDirective`, which itself uses `FormControlStateDirective`. These directives can be composed into your own custom form field components using Angular's `hostDirectives` feature. This allows you to leverage the error display and state management logic of `ngx-vest-forms` while creating bespoke UI components.
+The `NgxControlWrapper` is built upon `NgxFormErrorDisplayDirective`, which itself uses `NgxFormControlStateDirective`. These directives can be composed into your own custom form field components using Angular's `hostDirectives` feature. This allows you to leverage the error display and state management logic of `ngx-vest-forms` while creating bespoke UI components.
 
-Refer to the documentation for `FormErrorDisplayDirective` and `FormControlStateDirective` for more details on building custom form field components.
+Refer to the documentation for `NgxFormErrorDisplayDirective` and `NgxFormControlStateDirective` for more details on building custom form field components.
 
 ## Relationship to Core Directives
 
-- **`ngxVestForm` (FormDirective):** Manages the overall form state, validation suite execution, and communication with VestJS.
+- **`ngxVestForm` (NgxFormDirective):** Manages the overall form state, validation suite execution, and communication with VestJS.
 - **`NgModel` / `NgModelGroup`:** Angular directives that bind form controls to your data model.
-- **`FormControlStateDirective`:** Provides signals for the raw state of an `NgModel` or `NgModelGroup` (errors, warnings, pending, touched, etc.).
-- **`FormErrorDisplayDirective`:** Extends `FormControlStateDirective` with logic for _when_ to display errors based on `errorDisplayMode` and form submission status.
-- **`NgxControlWrapper`:** A presentational component that uses `FormErrorDisplayDirective` (via `hostDirectives`) to display errors and manage ARIA attributes for a wrapped control. It provides the default HTML structure for error messages.
+- **`NgxFormControlStateDirective`:** Provides signals for the raw state of an `NgModel` or `NgModelGroup` (errors, warnings, pending, touched, etc.).
+- **`NgxFormErrorDisplayDirective`:** Extends `NgxFormControlStateDirective` with logic for _when_ to display errors based on `errorDisplayMode` and form submission status.
+- **`NgxControlWrapper`:** A presentational component that uses `NgxFormErrorDisplayDirective` (via `hostDirectives`) to display errors and manage ARIA attributes for a wrapped control. It provides the default HTML structure for error messages.
 
 By separating these concerns, `ngx-vest-forms` offers flexibility:
 
 - Use `NgxControlWrapper` for quick, standard error display.
-- Use `FormErrorDisplayDirective` or `FormControlStateDirective` with `hostDirectives` to build custom form field components with full control over the markup and behavior, while still benefiting from the underlying state management and error display logic.
+- Use `NgxFormErrorDisplayDirective` or `NgxFormControlStateDirective` with `hostDirectives` to build custom form field components with full control over the markup and behavior, while still benefiting from the underlying state management and error display logic.

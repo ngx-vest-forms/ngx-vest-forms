@@ -1,7 +1,7 @@
 import { describe, it } from 'vitest';
 
 /**
- * Advanced/integration/multi-feature tests for ngxVestForm (FormDirective)
+ * Advanced/integration/multi-feature tests for ngxVestForm (NgxFormDirective)
  *
  * This file is for scenarios that combine multiple features, advanced validation, or integration with other directives/components.
  *
@@ -12,7 +12,7 @@ import { describe, it } from 'vitest';
  * 4. Very advanced: integration with custom components, accessibility checks, performance under stress, edge-case flows
  */
 
-describe('ngxVestForm (FormDirective) - Advanced Integration', () => {
+describe('ngxVestForm (NgxFormDirective) - Advanced Integration', () => {
   it('should work with schemas (ngx-vest-forms/schemas) and validate types correctly', async () => {
     // TODO: Implement test
   });

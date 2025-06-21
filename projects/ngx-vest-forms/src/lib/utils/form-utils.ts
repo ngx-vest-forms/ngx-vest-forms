@@ -191,7 +191,7 @@ export function getAllFormErrors(
   }
 
   function collect(control: AbstractControl, pathParts: (string | number)[]) {
-    // Skip processing the root form itself here, as its errors are handled directly in FormDirective
+    // Skip processing the root form itself here, as its errors are handled directly in NgxFormDirective
     if (pathParts.length === 0 && control === form) {
       // Instead, iterate its children if it's a group/array
       if (control instanceof FormGroup || control instanceof FormArray) {
@@ -251,7 +251,7 @@ export function getAllFormErrors(
 
   collect(form, []);
   // Root form errors (form.errors) are no longer processed here.
-  // They are handled directly in FormDirective to populate formState.root.
+  // They are handled directly in NgxFormDirective to populate formState.root.
 
   return errors;
 }

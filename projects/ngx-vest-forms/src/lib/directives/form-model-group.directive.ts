@@ -7,8 +7,8 @@ import {
 } from '@angular/forms';
 import { Observable, from, of } from 'rxjs'; // Import 'from' and 'of'
 import { getFormGroupField } from '../utils/form-utils';
-import { FormDirective } from './form.directive';
-import { ValidationOptions } from './validation-options';
+import { NgxFormDirective } from './form.directive';
+import { NgxValidationOptions } from './validation-options';
 
 /**
  * Hooks into the ngModelGroup selector and triggers an asynchronous validation for a form group
@@ -20,20 +20,20 @@ import { ValidationOptions } from './validation-options';
   providers: [
     {
       provide: NG_ASYNC_VALIDATORS,
-      useExisting: FormModelGroupDirective,
+      useExisting: NgxFormModelGroupDirective,
       multi: true,
     },
   ],
 })
-export class FormModelGroupDirective implements AsyncValidator {
-  validationOptions = input<ValidationOptions>({ debounceTime: 0 });
-  private readonly formDirective = inject(FormDirective);
+export class NgxFormModelGroupDirective implements AsyncValidator {
+  validationOptions = input<NgxValidationOptions>({ debounceTime: 0 });
+  private readonly formDirective = inject(NgxFormDirective);
 
   validate(control: AbstractControl): Observable<ValidationErrors | null> {
     // Add null check for control
     if (!control) {
       console.warn(
-        '[ngx-vest-forms] Validate called with null control in FormModelGroupDirective.',
+        '[ngx-vest-forms] Validate called with null control in NgxFormModelGroupDirective.',
       );
       return of(null); // Or handle as appropriate
     }
@@ -44,7 +44,7 @@ export class FormModelGroupDirective implements AsyncValidator {
     // Add check for field
     if (!field) {
       console.error(
-        '[ngx-vest-forms] Could not determine field name for validation in FormModelGroupDirective.',
+        '[ngx-vest-forms] Could not determine field name for validation in NgxFormModelGroupDirective.',
       );
       return of(null);
     }

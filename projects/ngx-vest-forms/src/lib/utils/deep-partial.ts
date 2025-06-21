@@ -3,12 +3,12 @@
  * partial, recursively. Why? Because template-driven forms are
  * deep partial, since they get created by the DOM
  */
-export type DeepPartial<T> = {
+export type NgxDeepPartial<T> = {
   [P in keyof T]?: T[P] extends (infer U)[]
-    ? DeepPartial<U>[]
+    ? NgxDeepPartial<U>[]
     : T[P] extends readonly (infer U)[]
-      ? readonly DeepPartial<U>[]
+      ? readonly NgxDeepPartial<U>[]
       : T[P] extends object
-        ? DeepPartial<T[P]>
+        ? NgxDeepPartial<T[P]>
         : T[P];
 };

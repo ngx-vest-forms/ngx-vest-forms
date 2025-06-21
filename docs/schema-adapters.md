@@ -39,16 +39,16 @@ const userSchema: SchemaDefinition<User> = z.object({
 // Now userSchema can be used with [formSchema]
 ```
 
-### `VestSuite<T>`
+### `NgxVestSuite<T>`
 
 A type that represents a Vest validation suite compatible with your schema.
 
 ```typescript
-import { VestSuite } from 'ngx-vest-forms';
+import { NgxVestSuite } from 'ngx-vest-forms';
 import { create, test, enforce } from 'vest';
 
 // Define the suite with proper typing
-const userValidation: VestSuite<User> = create((data: User = {}) => {
+const userValidation: NgxVestSuite<User> = create((data: User = {}) => {
   test('name', 'Name is required', () => {
     enforce(data.name).isNotBlank();
   });
@@ -83,12 +83,12 @@ type User = InferSchemaType<typeof userSchema>;
 
 ## Utility Functions
 
-### `modelToStandardSchema<T>`
+### `ngxModelToStandardSchema<T>`
 
 Creates a StandardSchemaV1-compatible schema from a simple object template. This is the simplest way to get schema-like benefits without external dependencies.
 
 ```typescript
-import { modelToStandardSchema } from 'ngx-vest-forms';
+import { ngxModelToStandardSchema } from 'ngx-vest-forms';
 import { Component, signal } from '@angular/core';
 import { ngxVestForms } from 'ngx-vest-forms';
 
@@ -100,7 +100,7 @@ const userTemplate = {
 };
 
 // Create a schema from the template
-const userSchema = modelToStandardSchema(userTemplate);
+const userSchema = ngxModelToStandardSchema(userTemplate);
 
 // Use with a form
 @Component({
@@ -136,37 +136,37 @@ function processSchema(schema: unknown) {
 }
 ```
 
-### `extractTemplateFromSchema<T>`
+### `ngxExtractTemplateFromSchema<T>`
 
-Extracts a plain object template from a StandardSchemaV1-compatible schema. This function is primarily used internally by the FormDirective for runtime form structure validation, but can also be useful for advanced scenarios where you need to introspect schema templates.
+Extracts a plain object template from a StandardSchemaV1-compatible schema. This function is primarily used internally by the NgxFormDirective for runtime form structure validation, but can also be useful for advanced scenarios where you need to introspect schema templates.
 
 ```typescript
 import {
-  modelToStandardSchema,
-  extractTemplateFromSchema,
+  ngxModelToStandardSchema,
+  ngxExtractTemplateFromSchema,
 } from 'ngx-vest-forms';
 import { z } from 'zod';
 
-// Create a schema with modelToStandardSchema
+// Create a schema with ngxModelToStandardSchema
 const userTemplate = { name: '', email: '', age: 0 };
-const userSchema = modelToStandardSchema(userTemplate);
+const userSchema = ngxModelToStandardSchema(userTemplate);
 
 // Extract the template back from the schema
-const extractedTemplate = extractTemplateFromSchema(userSchema);
+const extractedTemplate = ngxExtractTemplateFromSchema(userSchema);
 // extractedTemplate = { name: '', email: '', age: 0 }
 
 // For third-party schemas (Zod, Valibot, ArkType), returns null
 const zodSchema = z.object({ name: z.string() });
-const noTemplate = extractTemplateFromSchema(zodSchema);
+const noTemplate = ngxExtractTemplateFromSchema(zodSchema);
 // noTemplate = null
 ```
 
 **Key Features:**
 
-- **Runtime validation support**: Enables the FormDirective to validate form structure against schema templates
+- **Runtime validation support**: Enables the NgxFormDirective to validate form structure against schema templates
 - **Development aid**: Helps catch typos in `ngModel` and `ngModelGroup` names during development
-- **Schema introspection**: Allows access to the original template from schemas created with `modelToStandardSchema`
-- **Selective extraction**: Only works with schemas created via `modelToStandardSchema`; returns `null` for other schema types
+- **Schema introspection**: Allows access to the original template from schemas created with `ngxModelToStandardSchema`
+- **Selective extraction**: Only works with schemas created via `ngxModelToStandardSchema`; returns `null` for other schema types
 
 **When to use:**
 
@@ -176,7 +176,7 @@ const noTemplate = extractTemplateFromSchema(zodSchema);
 
 **Limitations:**
 
-- Only extracts templates from schemas created with `modelToStandardSchema`
+- Only extracts templates from schemas created with `ngxModelToStandardSchema`
 - Returns `null` for third-party schema libraries (Zod, Valibot, ArkType)
 - Does not perform validation, only template extraction
 
@@ -550,14 +550,14 @@ export class BusinessHoursFormZodComponent {
 
 The `formState()` signal provided by ngx-vest-forms is fully type-safe when used with schema adapters. This section demonstrates how to access form values using `formState().value` in a type-safe manner.
 
-### Basic Example with modelToStandardSchema
+### Basic Example with ngxModelToStandardSchema
 
 ```typescript
 import { Component, viewChild, signal } from '@angular/core';
 import {
   ngxVestForms,
-  FormDirective,
-  modelToStandardSchema,
+  NgxFormDirective,
+  ngxModelToStandardSchema,
 } from 'ngx-vest-forms';
 
 @Component({
@@ -614,11 +614,11 @@ export class UserFormComponent {
     email: '',
   };
 
-  protected readonly userSchema = modelToStandardSchema(this.userTemplate);
+  protected readonly userSchema = ngxModelToStandardSchema(this.userTemplate);
   protected readonly userData = signal(this.userTemplate);
 
   // For programmatic access to form directive
-  protected readonly userFormDirective = viewChild.required(FormDirective);
+  protected readonly userFormDirective = viewChild.required(NgxFormDirective);
 
   protected submit(): void {
     // Access the current form value in a type-safe way
@@ -638,7 +638,7 @@ When using Zod or other schema libraries, formState().value maintains proper typ
 
 ```typescript
 import { Component, viewChild, signal } from '@angular/core';
-import { ngxVestForms, FormDirective } from 'ngx-vest-forms';
+import { ngxVestForms, NgxFormDirective } from 'ngx-vest-forms';
 import { z } from 'zod';
 
 // Define Zod schema
@@ -676,7 +676,7 @@ export class UserFormComponent {
   });
 
   protected readonly userFormDirective = viewChild.required(
-    FormDirective<typeof userSchema, User>,
+    NgxFormDirective<typeof userSchema, User>,
   );
 
   // Now formState().value is fully typed as User
@@ -769,7 +769,7 @@ export class UserFormComponent {
    - **Zod**: Full-featured, robust validation with excellent TypeScript support
    - **Valibot**: Lighter alternative to Zod with modular design
    - **ArkType**: Performance-focused validation with TypeScript-first approach
-   - **modelToStandardSchema**: Simplest option for basic type safety without external dependencies
+   - **ngxModelToStandardSchema**: Simplest option for basic type safety without external dependencies
 
 2. **Separate concerns**:
 
@@ -795,7 +795,7 @@ export class UserFormComponent {
 
 6. **Always check formState().valid** before submitting data to ensure data integrity
 
-7. **Use viewChild with proper generic types** for better type inference when accessing FormDirective programmatically
+7. **Use viewChild with proper generic types** for better type inference when accessing NgxFormDirective programmatically
 
 ## Migration Guide
 
@@ -803,7 +803,7 @@ export class UserFormComponent {
 
 If you're migrating from basic forms to schema adapters, here's a step-by-step approach:
 
-1. **Start with modelToStandardSchema** for minimal changes:
+1. **Start with ngxModelToStandardSchema** for minimal changes:
 
    ```typescript
    // Before
@@ -811,7 +811,7 @@ If you're migrating from basic forms to schema adapters, here's a step-by-step a
 
    // After
    userTemplate = { name: '', email: '' };
-   userSchema = modelToStandardSchema(this.userTemplate);
+   userSchema = ngxModelToStandardSchema(this.userTemplate);
    userData = signal(this.userTemplate);
    ```
 

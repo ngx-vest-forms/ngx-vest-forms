@@ -14,7 +14,7 @@ const defaultCyclicFormData: CyclicFormModel = {
  * Creates a validation suite for the CyclicFormModel
  * Demonstrates handling cyclic dependencies between form fields
  *
- * @returns A VestSuite configured for CyclicFormModel
+ * @returns A NgxVestSuite configured for CyclicFormModel
  */
 export const createCyclicDependencyFormValidationSuite = () =>
   staticSuite(

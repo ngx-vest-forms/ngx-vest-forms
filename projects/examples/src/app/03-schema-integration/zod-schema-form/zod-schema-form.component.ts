@@ -4,7 +4,7 @@ import { ngxVestForms } from 'ngx-vest-forms';
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 // Note: Zod integration example - requires zod to be installed
 // import { z } from 'zod';
-// import { InferSchemaType, modelToStandardSchema } from 'ngx-vest-forms/schemas';
+// import { InferSchemaType, ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
 
 // Placeholder type until Zod is properly integrated
 type UserProfile = {

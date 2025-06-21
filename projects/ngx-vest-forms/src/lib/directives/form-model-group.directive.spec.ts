@@ -1,9 +1,9 @@
 import { describe, it } from 'vitest';
 // import { render } from '@testing-library/angular';
-// import { FormModelGroupDirective } from './form-model-group.directive';
+// import { NgxFormModelGroupDirective } from './form-model-group.directive';
 
 /**
- * Tests for FormModelGroupDirective
+ * Tests for NgxFormModelGroupDirective
  * - Registers as async validator for ngModelGroup
  * - Calls Vest suite for group-level validation
  * - Handles missing/null control gracefully
@@ -11,7 +11,7 @@ import { describe, it } from 'vitest';
  * - Returns correct validation errors for group
  * - Respects validationOptions input
  */
-describe('FormModelGroupDirective', () => {
+describe('NgxFormModelGroupDirective', () => {
   it('should register as async validator for ngModelGroup', async () => {
     // TODO: Implement test
   });

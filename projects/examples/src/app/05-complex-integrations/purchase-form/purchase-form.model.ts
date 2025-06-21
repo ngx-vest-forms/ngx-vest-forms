@@ -1,4 +1,4 @@
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
+import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
 import { AddressModel, initialAddressForm } from '../ui/address/address.model';
 import {
   PhoneNumberModel,
@@ -38,7 +38,7 @@ type BasePurchaseFormModel = {
 
 /**
  * Represents potentially incomplete purchase form data.
- * Uses `DeepPartial` to make all properties of `BasePurchaseFormModel` optional.
+ * Uses `NgxDeepPartial` to make all properties of `BasePurchaseFormModel` optional.
  *
  * Rationale:
  * This is the primary type used when interacting with the purchase form data.
@@ -48,7 +48,7 @@ type BasePurchaseFormModel = {
  * - Form Models: `this.form.setModel(somePurchaseData as PurchaseFormModel);`
  * - Validation Arguments: `function validations(model: PurchaseFormModel | undefined): void { ... }`
  */
-export type PurchaseFormModel = DeepPartial<BasePurchaseFormModel>;
+export type PurchaseFormModel = NgxDeepPartial<BasePurchaseFormModel>;
 
 /**
  * Provides a default, empty template for the purchase form data.
@@ -61,7 +61,7 @@ export type PurchaseFormModel = DeepPartial<BasePurchaseFormModel>;
  * @usage
  * - Initializing Form State: `this.form.setModel({ ...initialPurchaseFormData });`
  */
-export const initialPurchaseFormData: DeepRequired<BasePurchaseFormModel> = {
+export const initialPurchaseFormData: NgxDeepRequired<BasePurchaseFormModel> = {
   userId: '',
   firstName: '',
   lastName: '',

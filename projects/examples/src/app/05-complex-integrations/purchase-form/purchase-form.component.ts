@@ -10,11 +10,11 @@ import {
   viewChild,
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import type { VestSuite } from 'ngx-vest-forms';
-import { injectRootFormKey, ngxVestForms } from 'ngx-vest-forms';
+import type { NgxVestSuite } from 'ngx-vest-forms';
+import { injectNgxRootFormKey, ngxVestForms } from 'ngx-vest-forms';
 import type { InferSchemaType } from 'ngx-vest-forms/schemas';
-import { modelToStandardSchema } from 'ngx-vest-forms/schemas';
-import { FormDirective } from 'projects/ngx-vest-forms/src/public-api';
+import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
+import { NgxFormDirective } from 'projects/ngx-vest-forms/src/public-api';
 import { debounceTime, filter, finalize, switchMap } from 'rxjs';
 import { LukeService } from '../services/luke.service';
 import { ProductService } from '../services/product.service';
@@ -26,7 +26,7 @@ import { initialPurchaseFormData } from './purchase-form.model';
 import { createPurchaseValidationSuite } from './purchase.validations';
 
 // Create a schema for the purchase form
-const purchaseFormSchema = modelToStandardSchema(initialPurchaseFormData);
+const purchaseFormSchema = ngxModelToStandardSchema(initialPurchaseFormData);
 
 // Infer the type for the purchase form from the schema
 type PurchaseFormModel = InferSchemaType<typeof purchaseFormSchema>;
@@ -52,7 +52,7 @@ export class PurchaseFormComponent {
   #lukeService = inject(LukeService);
   #swapiService = inject(SwapiService);
   #productService = inject(ProductService);
-  readonly rootFormKey = injectRootFormKey();
+  readonly rootFormKey = injectNgxRootFormKey();
   readonly products = toSignal(this.#productService.getAll());
 
   /**
@@ -68,13 +68,14 @@ export class PurchaseFormComponent {
   protected readonly loading = signal<boolean>(false);
 
   // Define the view child for the vestForm directive
-  protected readonly vestForm = viewChild.required<FormDirective>('vestForm');
+  protected readonly vestForm =
+    viewChild.required<NgxFormDirective>('vestForm');
 
-  // Use the VestSuite type alias for consistency
+  // Use the NgxVestSuite type alias for consistency
   /**
    * The Vest validation suite for the purchase form.
    */
-  protected readonly purchaseFormSuite: VestSuite<PurchaseFormModel> =
+  protected readonly purchaseFormSuite: NgxVestSuite<PurchaseFormModel> =
     createPurchaseValidationSuite(this.rootFormKey, this.#swapiService);
 
   // Provide the wrapped model template to the 'formSchema' input

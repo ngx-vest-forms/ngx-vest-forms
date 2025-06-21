@@ -13,7 +13,7 @@ import type {
   selector: '[ngxSmartStateExtension]',
   standalone: true,
 })
-export class ngxVestFormsSmartStateDirective<TModel> {
+export class NgxVestFormsSmartStateDirective<TModel> {
   @Input() externalData: TModel | null = null;
   @Input() smartStateOptions: SmartStateOptions<TModel> = {};
   @Input() formValue: TModel | null = null;

@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ngxVestFormsSmartStateDirective } from './smart-state-extension.directive';
+import { NgxVestFormsSmartStateDirective } from './smart-state-extension.directive';
 
-describe('ngxVestFormsSmartStateDirective', () => {
+describe('NgxVestFormsSmartStateDirective', () => {
   @Component({
     template: `<form
       ngxSmartStateExtension
@@ -17,19 +17,19 @@ describe('ngxVestFormsSmartStateDirective', () => {
   }
 
   let fixture: ComponentFixture<TestHostComponent>;
-  let directive: ngxVestFormsSmartStateDirective<Record<string, unknown>>;
+  let directive: NgxVestFormsSmartStateDirective<Record<string, unknown>>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [ngxVestFormsSmartStateDirective],
+      imports: [NgxVestFormsSmartStateDirective],
       declarations: [TestHostComponent],
     });
     fixture = TestBed.createComponent(TestHostComponent);
     fixture.detectChanges();
     const form = fixture.nativeElement.querySelector('form');
     directive = form.__ngContext__.find(
-      (d: unknown) => d instanceof ngxVestFormsSmartStateDirective,
-    ) as ngxVestFormsSmartStateDirective<Record<string, unknown>>;
+      (d: unknown) => d instanceof NgxVestFormsSmartStateDirective,
+    ) as NgxVestFormsSmartStateDirective<Record<string, unknown>>;
   });
 
   it('should create the directive', () => {

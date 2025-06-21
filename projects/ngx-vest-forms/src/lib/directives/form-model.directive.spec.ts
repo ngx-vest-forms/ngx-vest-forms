@@ -1,9 +1,9 @@
 import { describe, it } from 'vitest';
 // import { render } from '@testing-library/angular';
-// import { FormModelDirective } from './form-model.directive';
+// import { NgxFormModelDirective } from './form-model.directive';
 
 /**
- * Tests for FormModelDirective
+ * Tests for NgxFormModelDirective
  * - Registers as async validator for ngModel
  * - Calls Vest suite for field-level validation
  * - Handles missing/null control gracefully
@@ -11,7 +11,7 @@ import { describe, it } from 'vitest';
  * - Returns correct validation errors for field
  * - Respects validationOptions input
  */
-describe('FormModelDirective', () => {
+describe('NgxFormModelDirective', () => {
   it('should register as async validator for ngModel', async () => {
     // TODO: Implement test
   });

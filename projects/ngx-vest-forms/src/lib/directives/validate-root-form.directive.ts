@@ -27,17 +27,17 @@ import {
   take,
 } from 'rxjs';
 import { SuiteResult } from 'vest';
-import { injectRootFormKey } from '../utils/form-token';
-import { VestSuite } from '../utils/validation-suite';
-import { FormDirective } from './form.directive';
-import type { ValidationOptions } from './validation-options';
+import { injectNgxRootFormKey } from '../utils/form-token';
+import { NgxVestSuite } from '../utils/validation-suite';
+import { NgxFormDirective } from './form.directive';
+import type { NgxValidationOptions } from './validation-options';
 
 /**
  * Directive for adding root form validation using Vest validation suites.
  *
  * This directive provides specialized root-level validation that can validate
  * cross-field dependencies and form-wide rules. It works independently of
- * FormDirective to avoid circular dependencies.
+ * NgxFormDirective to avoid circular dependencies.
  *
  * ## Usage
  * ```html
@@ -64,19 +64,19 @@ import type { ValidationOptions } from './validation-options';
   providers: [
     {
       provide: NG_ASYNC_VALIDATORS,
-      useExisting: ValidateRootFormDirective,
+      useExisting: NgxValidateRootFormDirective,
       multi: true,
     },
   ],
 })
-export class ValidateRootFormDirective implements AsyncValidator {
+export class NgxValidateRootFormDirective implements AsyncValidator {
   // Modern Angular 20 injection patterns - avoiding circular dependency
   readonly #injector = inject(Injector);
   readonly #destroyRef = inject(DestroyRef);
-  readonly #rootFormKey = injectRootFormKey();
+  readonly #rootFormKey = injectNgxRootFormKey();
 
   // Validation options for root-level validation
-  readonly validationOptions = input<ValidationOptions>({ debounceTime: 0 });
+  readonly validationOptions = input<NgxValidationOptions>({ debounceTime: 0 });
 
   // Input to control whether root validation should run
   readonly validateRootForm = input(false, {
@@ -88,15 +88,18 @@ export class ValidateRootFormDirective implements AsyncValidator {
   #modelChanges?: ReplaySubject<unknown>;
 
   /**
-   * Get the FormDirective instance using modern Angular 20 injection patterns
+   * Get the NgxFormDirective instance using modern Angular 20 injection patterns
    */
-  #getFormDirective(): FormDirective<SchemaDefinition | null, unknown> | null {
+  #getFormDirective(): NgxFormDirective<
+    SchemaDefinition | null,
+    unknown
+  > | null {
     try {
       // Use runInInjectionContext for dynamic provider access
       return runInInjectionContext(this.#injector, () => {
-        // Try to get FormDirective from the current injector hierarchy
-        // Using FormDirective<any, any> to satisfy generic constraints for now
-        return inject(FormDirective, { optional: true }) as FormDirective<
+        // Try to get NgxFormDirective from the current injector hierarchy
+        // Using NgxFormDirective<any, any> to satisfy generic constraints for now
+        return inject(NgxFormDirective, { optional: true }) as NgxFormDirective<
           SchemaDefinition | null,
           unknown
         > | null;
@@ -109,7 +112,7 @@ export class ValidateRootFormDirective implements AsyncValidator {
   /**
    * Get the vest suite using modern provider resolution
    */
-  #getVestSuite(): VestSuite | null {
+  #getVestSuite(): NgxVestSuite | null {
     try {
       const formDirective = this.#getFormDirective();
       return formDirective?.vestSuite?.() || null;

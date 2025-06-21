@@ -7,10 +7,14 @@ import {
   model,
   viewChild,
 } from '@angular/core';
-import type { VestSuite } from 'ngx-vest-forms';
-import { FormDirective, injectRootFormKey, ngxVestForms } from 'ngx-vest-forms';
+import type { NgxVestSuite } from 'ngx-vest-forms';
+import {
+  injectNgxRootFormKey,
+  NgxFormDirective,
+  ngxVestForms,
+} from 'ngx-vest-forms';
 import type { InferSchemaType } from 'ngx-vest-forms/schemas';
-import { modelToStandardSchema } from 'ngx-vest-forms/schemas';
+import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
 import { BusinessHoursComponent } from '../../ui/business-hours/business-hours.component';
 import {
   initialBusinessHourEntry,
@@ -20,7 +24,7 @@ import {
 import { createBusinessHoursSuite } from './business-hours.validations';
 
 // Create a schema for the business hours form using the modern schema-first approach
-const businessHoursFormSchema = modelToStandardSchema(
+const businessHoursFormSchema = ngxModelToStandardSchema(
   initialBusinessHoursFormData,
 );
 
@@ -39,7 +43,7 @@ export class BusinessHoursFormComponent {
    * The initial value for the business hours form.
    */
   readonly initialBusinessHoursFormData = initialBusinessHoursFormData;
-  readonly rootFormKey = injectRootFormKey();
+  readonly rootFormKey = injectNgxRootFormKey();
 
   /**
    * The form value signal, bound to the form using model() for two-way binding.
@@ -53,14 +57,14 @@ export class BusinessHoursFormComponent {
    * Define the view child for the vestForm directive.
    */
   protected readonly vestForm =
-    viewChild.required<FormDirective<typeof businessHoursFormSchema>>(
+    viewChild.required<NgxFormDirective<typeof businessHoursFormSchema>>(
       'vestForm',
     );
 
   /**
    * The Vest validation suite for the business hours form.
    */
-  protected readonly businessHoursFormValidations: VestSuite<BusinessHoursFormType> =
+  protected readonly businessHoursFormValidations: NgxVestSuite<BusinessHoursFormType> =
     createBusinessHoursSuite(this.rootFormKey);
 
   /**

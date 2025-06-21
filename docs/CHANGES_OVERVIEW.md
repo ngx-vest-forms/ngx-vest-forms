@@ -59,7 +59,7 @@ Check your imports for these patterns:
 // ❌ These need to be updated
 import { SmartStateOptions } from 'ngx-vest-forms';
 import { NgxControlWrapper } from 'ngx-vest-forms';
-import { modelToStandardSchema } from 'ngx-vest-forms';
+import { ngxModelToStandardSchema } from 'ngx-vest-forms';
 ```
 
 ### Step 2: Update Imports
@@ -70,7 +70,7 @@ Replace with modular imports:
 // ✅ Updated imports
 import { SmartStateOptions } from 'ngx-vest-forms/smart-state';
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
-import { modelToStandardSchema } from 'ngx-vest-forms/schemas';
+import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
 ```
 
 ### Step 3: Update Component Imports
@@ -81,7 +81,7 @@ Add new directive imports to your components:
 @Component({
   imports: [
     ngxVestForms,
-    ngxVestFormsSmartStateDirective, // If using smart state
+    NgxVestFormsSmartStateDirective, // If using smart state
     NgxControlWrapper, // If using control wrapper
   ],
   // ...
@@ -150,7 +150,7 @@ Core only:           ~25KB (-44%)
 import { CONTROL_WRAPPER_ERROR_DISPLAY } from 'ngx-vest-forms';
 
 // After
-import { ERROR_DISPLAY_MODE_DEFAULT } from 'ngx-vest-forms';
+import { NGX_ERROR_DISPLAY_MODE_DEFAULT } from 'ngx-vest-forms';
 ```
 
 ## Recommended Upgrade Path

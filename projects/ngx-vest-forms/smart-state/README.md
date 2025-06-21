@@ -18,7 +18,7 @@ Smart state management is available as a separate entry point:
 
 ```typescript
 import {
-  ngxVestFormsSmartStateDirective,
+  NgxVestFormsSmartStateDirective,
   SmartStateExtension,
   SmartStateOptions,
 } from 'ngx-vest-forms/smart-state';
@@ -31,10 +31,10 @@ import {
 ```typescript
 import { Component, signal } from '@angular/core';
 import { ngxVestForms } from 'ngx-vest-forms';
-import { ngxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state';
+import { NgxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state';
 
 @Component({
-  imports: [ngxVestForms, ngxVestFormsSmartStateDirective],
+  imports: [ngxVestForms, NgxVestFormsSmartStateDirective],
   template: `
     <form
       ngxVestForm
@@ -348,12 +348,12 @@ You can access the smart state extension programmatically:
 
 ```typescript
 import { Component, viewChild } from '@angular/core'; // Added viewChild import
-import { ngxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state'; // Assuming this is the correct path
+import { NgxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state'; // Assuming this is the correct path
 
 export class MyComponent {
   // Use viewChild() signal query
   smartStateDirective = viewChild.required(
-    ngxVestFormsSmartStateDirective<MyModel>,
+    NgxVestFormsSmartStateDirective<MyModel>,
   );
 
   checkConflicts() {
@@ -464,7 +464,7 @@ If you're currently using basic form functionality and need smart state manageme
 
 // After (with smart state)
 @Component({
-  imports: [ngxVestForms, ngxVestFormsSmartStateDirective],
+  imports: [ngxVestForms, NgxVestFormsSmartStateDirective],
   template: `
     <form
       ngxVestForm

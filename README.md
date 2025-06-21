@@ -3,6 +3,8 @@
 > 🚨 **Upgrading to v2?** See our [**Migration Guide**](./docs/MIGRATION_GUIDE_V2.md) for step-by-step instructions and breaking changes overview.
 >
 > 📋 **New to v2?** Check the [**Changes Overview**](./docs/CHANGES_OVERVIEW.md) to understand what's new and improved.
+>
+> ⚠️ **NGX Naming Convention (v2.2+):** All public API elements now use NGX prefixes (e.g., `NgxFormDirective`, `NgxFormState`). See the [migration guide](./docs/MIGRATION_GUIDE_V2.md#ngx-naming-convention-update-v22) for migration steps.
 
 ## Modern, Type-Safe, Zero-Boilerplate Angular Forms with Vest
 
@@ -77,10 +79,10 @@ Smart state management is available as a separate entry point to keep the core l
 
 ```typescript
 // Import from the smart-state secondary entry point
-import { ngxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state';
+import { NgxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state';
 
 @Component({
-  imports: [ngxVestForms, ngxVestFormsSmartStateDirective],
+  imports: [ngxVestForms, NgxVestFormsSmartStateDirective],
   template: `
     <form
       ngxVestForm
@@ -129,7 +131,7 @@ Schema utilities are available from `ngx-vest-forms/schemas`:
 ```typescript
 // Import from the schemas secondary entry point
 import {
-  modelToStandardSchema,
+  ngxModelToStandardSchema,
   InferSchemaType,
   SchemaDefinition,
 } from 'ngx-vest-forms/schemas';
@@ -140,7 +142,7 @@ const userTemplate = {
   age: 0,
 };
 
-const userSchema = modelToStandardSchema(userTemplate);
+const userSchema = ngxModelToStandardSchema(userTemplate);
 type User = InferSchemaType<typeof userSchema>;
 
 @Component({
@@ -211,10 +213,10 @@ npm i ngx-vest-forms
 
 ```typescript
 import { signal } from '@angular/core';
-import { modelToStandardSchema } from 'ngx-vest-forms';
+import { ngxModelToStandardSchema } from 'ngx-vest-forms';
 
 const userModel = { name: '', email: '' };
-const userSchema = modelToStandardSchema(userModel); // Or use Zod/ArkType/Valibot
+const userSchema = ngxModelToStandardSchema(userModel); // Or use Zod/ArkType/Valibot
 ```
 
 ### 2. Create a Vest Validation Suite
@@ -300,15 +302,21 @@ By default, `[validateRootForm]` is `false`. If you need root-level validation, 
 ### How it Works
 
 1.  **Define Root Validations in Your Vest Suite:**
-    In your Vest suite, you target these form-level validations using a special key. By default, this key is `'rootForm'`. You can customize this key by providing a different value for the `ROOT_FORM` injection token. The `injectRootFormKey()` utility function can be used to access the current root form key if needed.
+    In your Vest suite, you target these form-level validations using a special key. By default, this key is `'rootForm'`. You can customize this key by providing a different value for the `NGX_ROOT_FORM` injection token. The `injectNgxRootFormKey()` utility function can be used to access the current root form key if needed.
 
     ```typescript
     // my-suite.ts
-    import { staticSuite, test, enforce, only, injectRootFormKey } from 'vest';
+    import {
+      staticSuite,
+      test,
+      enforce,
+      only,
+      injectNgxRootFormKey,
+    } from 'vest';
 
     export const mySuite = staticSuite(
       (data: MyFormModel = {}, field?: string) => {
-        const rootFormKey = injectRootFormKey(); // Defaults to 'rootForm'
+        const rootFormKey = injectNgxRootFormKey(); // Defaults to 'rootForm'
         only(field); // Important for performance
 
         test('name', 'Name is required.', () => {
@@ -339,7 +347,7 @@ By default, `[validateRootForm]` is `false`. If you need root-level validation, 
     ```typescript
     // my-component.ts
     import { Component, viewChild, signal } from '@angular/core';
-    import { FormDirective, FormState } from 'ngx-vest-forms';
+    import { NgxFormDirective, NgxFormState } from 'ngx-vest-forms';
     import { mySuite } from './my-suite';
 
     @Component({
@@ -353,7 +361,9 @@ By default, `[validateRootForm]` is `false`. If you need root-level validation, 
         age: null,
         consent: false,
       });
-      protected vestForm = viewChild.required(FormDirective<typeof this.model>);
+      protected vestForm = viewChild.required(
+        NgxFormDirective<typeof this.model>,
+      );
 
       // Access root issues:
       // const formState = this.vestForm().formState();
@@ -418,14 +428,14 @@ The `validateRootForm` directive and the corresponding `formState().root` provid
 
 ```typescript
 import { Component, signal } from '@angular/core';
-import { ngxVestForms, modelToStandardSchema } from 'ngx-vest-forms';
+import { ngxVestForms, ngxModelToStandardSchema } from 'ngx-vest-forms';
 import { staticSuite, test, enforce } from 'vest';
 
 const purchaseTemplate = {
   amount: null,
   description: '',
 };
-const purchaseSchema = modelToStandardSchema(purchaseTemplate);
+const purchaseSchema = ngxModelToStandardSchema(purchaseTemplate);
 const purchaseSuite = staticSuite((data = {}, field?: string) => {
   test('amount', 'Amount is required', () => enforce(data.amount).isNotEmpty());
   test('description', 'Description is required', () =>

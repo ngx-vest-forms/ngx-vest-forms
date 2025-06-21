@@ -1,7 +1,7 @@
 import { describe, expectTypeOf, test } from 'vitest';
-import { DeepRequired, FormCompatibleDeepRequired } from './deep-required';
+import { NgxDeepRequired } from './deep-required';
 
-describe('DeepRequired', () => {
+describe('NgxDeepRequired', () => {
   test('should make all properties required', () => {
     type TestType = {
       a?: string;
@@ -12,7 +12,7 @@ describe('DeepRequired', () => {
       };
     };
 
-    type Result = DeepRequired<TestType>;
+    type Result = NgxDeepRequired<TestType>;
 
     expectTypeOf<Result>().toEqualTypeOf<{
       a: string;
@@ -35,7 +35,7 @@ describe('DeepRequired', () => {
       };
     };
 
-    type Result = DeepRequired<TestType>;
+    type Result = NgxDeepRequired<TestType>;
 
     expectTypeOf<Result>().toEqualTypeOf<{
       level1: {
@@ -49,8 +49,8 @@ describe('DeepRequired', () => {
   });
 });
 
-describe('FormCompatibleDeepRequired', () => {
-  test('should make all properties required like DeepRequired', () => {
+describe('NgxFormCompatibleDeepRequired', () => {
+  test('should make all properties required like NgxDeepRequired', () => {
     type TestType = {
       a?: string;
       b?: number;

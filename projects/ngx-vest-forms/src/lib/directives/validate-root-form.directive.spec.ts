@@ -4,9 +4,9 @@ import { render } from '@testing-library/angular';
 import { userEvent } from '@vitest/browser/context';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ngxVestForms } from '../exports';
-import { injectRootFormKey, ROOT_FORM } from '../utils/form-token';
-import type { VestSuite } from '../utils/validation-suite';
-import type { ValidationOptions } from './validation-options';
+import { injectNgxRootFormKey, NGX_ROOT_FORM } from '../utils/form-token';
+import type { NgxVestSuite } from '../utils/validation-suite';
+import type { NgxValidationOptions } from './validation-options';
 
 // Test validation suite
 // const createTestValidationSuite = staticSuite(
@@ -38,7 +38,7 @@ import type { ValidationOptions } from './validation-options';
 //     });
 
 //     // Use the injected root form key for root-level tests
-//     const rootFormKey = injectRootFormKey() ?? ROOT_FORM;
+//     const rootFormKey = injectNgxRootFormKey() ?? NGX_ROOT_FORM;
 
 //     test(rootFormKey, 'Form level validation failed', () => {
 //       // Cross-field validation example
@@ -99,8 +99,8 @@ class DefaultValidationComponent {
     password: string;
     confirmPassword: string;
   }> = signal({ email: '', password: '', confirmPassword: '' });
-  vestSuite = signal<VestSuite | null>(null);
-  validationOptions = signal<ValidationOptions>({ debounceTime: 0 });
+  vestSuite = signal<NgxVestSuite | null>(null);
+  validationOptions = signal<NgxValidationOptions>({ debounceTime: 0 });
   form = viewChild<NgForm>('form');
 
   updateEmail(value: string) {
@@ -162,8 +162,8 @@ class ExplicitTrueValidationComponent {
     password: string;
     confirmPassword: string;
   }> = signal({ email: '', password: '', confirmPassword: '' });
-  vestSuite = signal<VestSuite | null>(null);
-  validationOptions = signal<ValidationOptions>({ debounceTime: 0 });
+  vestSuite = signal<NgxVestSuite | null>(null);
+  validationOptions = signal<NgxValidationOptions>({ debounceTime: 0 });
   form = viewChild<NgForm>('form');
 
   updateEmail(value: string) {
@@ -225,8 +225,8 @@ class ExplicitFalseValidationComponent {
     password: string;
     confirmPassword: string;
   }> = signal({ email: '', password: '', confirmPassword: '' });
-  vestSuite = signal<VestSuite | null>(null);
-  validationOptions = signal<ValidationOptions>({ debounceTime: 0 });
+  vestSuite = signal<NgxVestSuite | null>(null);
+  validationOptions = signal<NgxValidationOptions>({ debounceTime: 0 });
   form = viewChild<NgForm>('form');
 
   updateEmail(value: string) {
@@ -243,7 +243,7 @@ class ExplicitFalseValidationComponent {
 }
 
 /**
- * Comprehensive tests for ValidateRootFormDirective
+ * Comprehensive tests for NgxValidateRootFormDirective
  *
  * Tests cover:
  * - Default behavior (validateRootForm not explicitly set - defaults to false)
@@ -258,7 +258,7 @@ class ExplicitFalseValidationComponent {
  * - Integration with NgForm and form value extraction
  */
 
-describe('ValidateRootFormDirective - Default Behavior (defaults to false)', () => {
+describe('NgxValidateRootFormDirective - Default Behavior (defaults to false)', () => {
   let component: DefaultValidationComponent;
   let fixture: {
     componentInstance: DefaultValidationComponent;
@@ -278,9 +278,9 @@ describe('ValidateRootFormDirective - Default Behavior (defaults to false)', () 
     getByLabelText = renderResult.getByLabelText;
   });
 
-  it('should disable root validation by default and NOT use injected ROOT_FORM key', async () => {
+  it('should disable root validation by default and NOT use injected NGX_ROOT_FORM key', async () => {
     // Arrange
-    const rootFormKey = injectRootFormKey() ?? ROOT_FORM;
+    const rootFormKey = injectNgxRootFormKey() ?? NGX_ROOT_FORM;
     const mockSuite = vi.fn().mockImplementation(() => ({
       done: vi
         .fn()
@@ -299,7 +299,7 @@ describe('ValidateRootFormDirective - Default Behavior (defaults to false)', () 
         ),
     }));
 
-    component.vestSuite.set(mockSuite as VestSuite);
+    component.vestSuite.set(mockSuite as NgxVestSuite);
     component.formData.update(
       (data: { email: string; password: string; confirmPassword: string }) => ({
         ...data,
@@ -323,7 +323,7 @@ describe('ValidateRootFormDirective - Default Behavior (defaults to false)', () 
 
   it('should NOT handle root validation errors and warnings when using default behavior (disabled)', async () => {
     // Arrange
-    const rootFormKey = injectRootFormKey() ?? ROOT_FORM;
+    const rootFormKey = injectNgxRootFormKey() ?? NGX_ROOT_FORM;
     const failingSuite = vi.fn().mockReturnValue({
       done: vi
         .fn()
@@ -345,7 +345,7 @@ describe('ValidateRootFormDirective - Default Behavior (defaults to false)', () 
         ),
     });
 
-    component.vestSuite.set(failingSuite as VestSuite);
+    component.vestSuite.set(failingSuite as NgxVestSuite);
     component.formData.update(
       (data: { email: string; password: string; confirmPassword: string }) => ({
         ...data,
@@ -368,7 +368,7 @@ describe('ValidateRootFormDirective - Default Behavior (defaults to false)', () 
   });
 });
 
-describe('ValidateRootFormDirective - Explicitly Set to True', () => {
+describe('NgxValidateRootFormDirective - Explicitly Set to True', () => {
   let component: ExplicitTrueValidationComponent;
   let fixture: {
     componentInstance: ExplicitTrueValidationComponent;
@@ -388,9 +388,9 @@ describe('ValidateRootFormDirective - Explicitly Set to True', () => {
     getByLabelText = renderResult.getByLabelText;
   });
 
-  it('should enable root validation and use injected ROOT_FORM key when validateRootForm is explicitly set to true', async () => {
+  it('should enable root validation and use injected NGX_ROOT_FORM key when validateRootForm is explicitly set to true', async () => {
     // Arrange
-    const rootFormKey = injectRootFormKey() ?? ROOT_FORM;
+    const rootFormKey = injectNgxRootFormKey() ?? NGX_ROOT_FORM;
     const mockSuite = vi.fn().mockImplementation(() => ({
       done: vi
         .fn()
@@ -409,7 +409,7 @@ describe('ValidateRootFormDirective - Explicitly Set to True', () => {
         ),
     }));
 
-    component.vestSuite.set(mockSuite as VestSuite);
+    component.vestSuite.set(mockSuite as NgxVestSuite);
     component.formData.update(
       (data: { email: string; password: string; confirmPassword: string }) => ({
         ...data,
@@ -443,9 +443,9 @@ describe('ValidateRootFormDirective - Explicitly Set to True', () => {
     expect(rootFormCall[1]).toBe(rootFormKey);
   });
 
-  it('should respect debouncing when explicitly set to true and use injected ROOT_FORM key', async () => {
+  it('should respect debouncing when explicitly set to true and use injected NGX_ROOT_FORM key', async () => {
     // Arrange
-    const rootFormKey = injectRootFormKey() ?? ROOT_FORM;
+    const rootFormKey = injectNgxRootFormKey() ?? NGX_ROOT_FORM;
     const mockSuite = vi.fn().mockReturnValue({
       done: vi
         .fn()
@@ -463,7 +463,7 @@ describe('ValidateRootFormDirective - Explicitly Set to True', () => {
         ),
     });
 
-    component.vestSuite.set(mockSuite as VestSuite);
+    component.vestSuite.set(mockSuite as NgxVestSuite);
     component.validationOptions.set({ debounceTime: 200 });
 
     const emailInput = getByLabelText('Email') as HTMLInputElement;
@@ -502,7 +502,7 @@ describe('ValidateRootFormDirective - Explicitly Set to True', () => {
   });
 });
 
-describe('ValidateRootFormDirective - Explicitly Set to False', () => {
+describe('NgxValidateRootFormDirective - Explicitly Set to False', () => {
   let component: ExplicitFalseValidationComponent;
   let fixture: {
     componentInstance: ExplicitFalseValidationComponent;
@@ -522,9 +522,9 @@ describe('ValidateRootFormDirective - Explicitly Set to False', () => {
     getByLabelText = renderResult.getByLabelText;
   });
 
-  it('should disable root validation when validateRootForm is explicitly set to false, regardless of ROOT_FORM key', async () => {
+  it('should disable root validation when validateRootForm is explicitly set to false, regardless of NGX_ROOT_FORM key', async () => {
     // Arrange
-    const rootFormKey = injectRootFormKey() ?? ROOT_FORM;
+    const rootFormKey = injectNgxRootFormKey() ?? NGX_ROOT_FORM;
     const mockSuite = vi.fn().mockReturnValue({
       done: vi
         .fn()
@@ -544,7 +544,7 @@ describe('ValidateRootFormDirective - Explicitly Set to False', () => {
         ),
     });
 
-    component.vestSuite.set(mockSuite as VestSuite);
+    component.vestSuite.set(mockSuite as NgxVestSuite);
 
     // Act - trigger form changes
     const emailInput = getByLabelText('Email') as HTMLInputElement;
@@ -572,7 +572,7 @@ describe('ValidateRootFormDirective - Explicitly Set to False', () => {
   });
 });
 
-describe('ValidateRootFormDirective - General Functionality', () => {
+describe('NgxValidateRootFormDirective - General Functionality', () => {
   let component: DefaultValidationComponent;
   let fixture: {
     componentInstance: DefaultValidationComponent;
@@ -605,13 +605,17 @@ describe('ValidateRootFormDirective - General Functionality', () => {
             }) => void,
           ) =>
             callback({
-              getErrors: () => ({ [injectRootFormKey() ?? ROOT_FORM]: null }),
-              getWarnings: () => ({ [injectRootFormKey() ?? ROOT_FORM]: null }),
+              getErrors: () => ({
+                [injectNgxRootFormKey() ?? NGX_ROOT_FORM]: null,
+              }),
+              getWarnings: () => ({
+                [injectNgxRootFormKey() ?? NGX_ROOT_FORM]: null,
+              }),
             }),
         ),
     });
 
-    component.vestSuite.set(mockSuite as VestSuite);
+    component.vestSuite.set(mockSuite as NgxVestSuite);
 
     // Set empty values and ensure form controls are updated
     component.formData.set({ email: '', password: '', confirmPassword: '' });
@@ -652,13 +656,17 @@ describe('ValidateRootFormDirective - General Functionality', () => {
             }) => void,
           ) =>
             callback({
-              getErrors: () => ({ [injectRootFormKey() ?? ROOT_FORM]: null }),
-              getWarnings: () => ({ [injectRootFormKey() ?? ROOT_FORM]: null }),
+              getErrors: () => ({
+                [injectNgxRootFormKey() ?? NGX_ROOT_FORM]: null,
+              }),
+              getWarnings: () => ({
+                [injectNgxRootFormKey() ?? NGX_ROOT_FORM]: null,
+              }),
             }),
         ),
     });
 
-    component.vestSuite.set(mockSuite as VestSuite);
+    component.vestSuite.set(mockSuite as NgxVestSuite);
 
     // Act - trigger validation
     const emailInput = getByLabelText('Email') as HTMLInputElement;

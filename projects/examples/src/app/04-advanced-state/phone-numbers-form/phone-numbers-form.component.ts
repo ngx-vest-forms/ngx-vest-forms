@@ -1,5 +1,5 @@
 import { Component, signal } from '@angular/core';
-import { injectRootFormKey, ngxVestForms } from 'ngx-vest-forms';
+import { injectNgxRootFormKey, ngxVestForms } from 'ngx-vest-forms';
 import { PhoneNumbersComponent } from '../ui/phone-numbers/phone-numbers.component';
 import { createPhoneNumbersValidationSuite } from './phone-numbers-form.validations';
 
@@ -11,7 +11,7 @@ import { createPhoneNumbersValidationSuite } from './phone-numbers-form.validati
 })
 export class PhoneNumbersFormComponent {
   // Inject the root form key using DI
-  protected readonly rootFormKey = injectRootFormKey();
+  protected readonly rootFormKey = injectNgxRootFormKey();
 
   // Create the validation suite with the injected root form key
   protected readonly suite = createPhoneNumbersValidationSuite(

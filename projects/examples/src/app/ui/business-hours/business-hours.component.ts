@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { NgModelGroup } from '@angular/forms';
 import {
-  DeepPartial,
+  NgxDeepPartial,
   ngxVestForms,
   ngxVestFormsViewProviders,
 } from 'ngx-vest-forms';
@@ -26,7 +26,7 @@ import { BusinessHourComponent } from '../business-hour/business-hour.component'
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BusinessHoursComponent {
-  readonly businessHoursModel = input<DeepPartial<BusinessHoursData>>({});
+  readonly businessHoursModel = input<NgxDeepPartial<BusinessHoursData>>({});
   readonly add = output<PartialBusinessHour | undefined>();
   readonly remove = output<string>();
 

@@ -9,21 +9,21 @@ import { InjectionToken } from '@angular/core';
  * ```typescript
  * // In your module or component providers:
  * providers: [
- *   { provide: ROOT_FORM, useValue: 'myCustomFormName' }
+ *   { provide: NGX_ROOT_FORM, useValue: 'myCustomFormName' }
  * ]
  * ```
  *
  * @default 'rootForm'
  */
-export const ROOT_FORM = new InjectionToken<string>('ROOT_FORM', {
+export const NGX_ROOT_FORM = new InjectionToken<string>('NGX_ROOT_FORM', {
   providedIn: 'root',
   factory: () => 'rootForm',
 });
 
 /**
- * Options for `injectRootFormKey`.
+ * Options for `injectNgxRootFormKey`.
  */
-export type InjectRootFormKeyOptions = {
+export type NgxInjectRootFormKeyOptions = {
   /**
    * Optional injector instance to use. If provided, `runInInjectionContext` will be used.
    * If not provided, the function will attempt to use the current injection context.
@@ -32,7 +32,7 @@ export type InjectRootFormKeyOptions = {
 };
 
 /**
- * Injects the current value of the ROOT_FORM token.
+ * Injects the current value of the NGX_ROOT_FORM token.
  * Useful for accessing the key used for root-level validation errors
  * within components or services, respecting any custom value provided
  * via dependency injection.
@@ -46,25 +46,25 @@ export type InjectRootFormKeyOptions = {
  * @example
  * ```typescript
  * /// In a component (uses current injection context)
- * const formKey = injectRootFormKey();
+ * const formKey = injectNgxRootFormKey();
  *
  * /// With explicit fallback (uses current injection context)
- * const formKey = injectRootFormKey('customFallback');
+ * const formKey = injectNgxRootFormKey('customFallback');
  *
  * /// With a specific injector
  * const injector = inject(Injector);
- * const formKey = injectRootFormKey('customFallback', { injector });
+ * const formKey = injectNgxRootFormKey('customFallback', { injector });
  * ```
  *
  * @param fallback - Optional fallback value to use if the token is not available or
  *                   when called outside of injection context.
  * @param options - Optional configuration, including an `injector` instance.
- * @returns The current ROOT_FORM token value or the fallback.
+ * @returns The current NGX_ROOT_FORM token value or the fallback.
  *
  */
-export function injectRootFormKey(
+export function injectNgxRootFormKey(
   fallback = 'rootForm',
-  options?: InjectRootFormKeyOptions,
+  options?: NgxInjectRootFormKeyOptions,
 ): string {
   const userFallback = fallback;
   const injector = options?.injector;
@@ -72,10 +72,10 @@ export function injectRootFormKey(
   if (injector) {
     // Run within the provided injector context
     return runInInjectionContext(injector, () => {
-      const rootFormKey = inject(ROOT_FORM, { optional: true });
+      const rootFormKey = inject(NGX_ROOT_FORM, { optional: true });
       if (!rootFormKey) {
         console.warn(
-          'ROOT_FORM token not found using provided injector. Using fallback value:',
+          'NGX_ROOT_FORM token not found using provided injector. Using fallback value:',
           userFallback,
         );
       }
@@ -84,17 +84,17 @@ export function injectRootFormKey(
   } else {
     // Attempt to run in the current injection context
     try {
-      const rootFormKey = inject(ROOT_FORM, { optional: true });
+      const rootFormKey = inject(NGX_ROOT_FORM, { optional: true });
       if (!rootFormKey) {
         console.warn(
-          'ROOT_FORM token not found in current DI context. Using fallback value:',
+          'NGX_ROOT_FORM token not found in current DI context. Using fallback value:',
           userFallback,
         );
       }
       return rootFormKey ?? userFallback;
     } catch {
       console.warn(
-        'injectRootFormKey called outside of injection context and no injector provided. Using fallback value:',
+        'injectNgxRootFormKey called outside of injection context and no injector provided. Using fallback value:',
         userFallback,
       );
       return userFallback;

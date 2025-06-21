@@ -5,7 +5,7 @@ import { StaticSuite } from 'vest';
  * FieldKey<T> gives you autocompletion for known keys of T,
  * but also allows any string (for dynamic/nested/cyclic field names).
  */
-export type FieldKey<T> = keyof T | (string & {});
+export type NgxFieldKey<T> = keyof T | (string & {});
 
 /**
  * Represents a Vest validation suite for use with ngx-vest-forms.
@@ -26,9 +26,9 @@ export type FieldKey<T> = keyof T | (string & {});
  * ```typescript
  * /// Create a validation suite using Vest
  * import { create, test, enforce } from 'vest';
- * import { VestSuite } from './validation-suite';
+ * import { NgxVestSuite } from './validation-suite';
  *
- * const userValidation: VestSuite<UserModel> = create((model, field) => {
+ * const userValidation: NgxVestSuite<UserModel> = create((model, field) => {
  *   only(field);
  *
  *   test('name', 'Name is required', () => {
@@ -43,8 +43,8 @@ export type FieldKey<T> = keyof T | (string & {});
  *
  * @template T The model type that the validation suite operates on
  */
-export type VestSuite<T = any> = StaticSuite<
+export type NgxVestSuite<T = any> = StaticSuite<
   string,
   string,
-  (model: T, field?: FieldKey<T>) => void
+  (model: T, field?: NgxFieldKey<T>) => void
 >;

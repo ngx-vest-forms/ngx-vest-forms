@@ -1,4 +1,4 @@
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
+import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
 
 /**
  * Defines the complete structure of an address with all properties required.
@@ -20,12 +20,12 @@ type BaseAddressModel = {
 
 /**
  * Represents a potentially incomplete address object.
- * Uses `DeepPartial` to make all properties of `BaseAddressModel` optional.
+ * Uses `NgxDeepPartial` to make all properties of `BaseAddressModel` optional.
  *
  * Rationale:
  * This is the primary type used when interacting with address data in components
  * and forms. Real-world data (e.g., from API responses, user input) is often
- * incomplete. Using `DeepPartial` provides type safety, allowing the compiler
+ * incomplete. Using `NgxDeepPartial` provides type safety, allowing the compiler
  * to catch potential errors if you try to use a property that might not exist,
  * without needing excessive null/undefined checks in your component logic.
  *
@@ -34,7 +34,7 @@ type BaseAddressModel = {
  * - Form Models: `this.form.createControlGroup(validations).setModel(someAddress as AddressModel);`
  * - Validation Arguments: `function validations(model: AddressModel | undefined): void { ... }`
  */
-export type AddressModel = DeepPartial<BaseAddressModel>;
+export type AddressModel = NgxDeepPartial<BaseAddressModel>;
 
 /**
  * Provides a default, empty template for an address object.
@@ -52,7 +52,7 @@ export type AddressModel = DeepPartial<BaseAddressModel>;
  * - Initializing Form State: `this.form.createControlGroup(validations).setModel({ ...addressModelTemplate });`
  * - Default Values: `@Input() address: AddressModel = { ...addressModelTemplate };`
  */
-export const initialAddressForm: DeepRequired<BaseAddressModel> = {
+export const initialAddressForm: NgxDeepRequired<BaseAddressModel> = {
   street: '',
   number: '',
   city: '',

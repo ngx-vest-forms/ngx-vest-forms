@@ -1,9 +1,9 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { injectRootFormKey, ROOT_FORM } from './form-token';
+import { injectNgxRootFormKey, NGX_ROOT_FORM } from './form-token';
 
-describe('injectRootFormKey', () => {
+describe('injectNgxRootFormKey', () => {
   const fallbackValue = 'rootForm';
 
   beforeEach(() => {
@@ -14,37 +14,37 @@ describe('injectRootFormKey', () => {
     vi.restoreAllMocks();
   });
 
-  it('should return the ROOT_FORM token value when available', () => {
+  it('should return the NGX_ROOT_FORM token value when available', () => {
     const rootFormValue = 'testForm';
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        { provide: ROOT_FORM, useValue: rootFormValue },
+        { provide: NGX_ROOT_FORM, useValue: rootFormValue },
       ],
     });
 
-    const result = TestBed.runInInjectionContext(() => injectRootFormKey());
+    const result = TestBed.runInInjectionContext(() => injectNgxRootFormKey());
     expect(result).toBe(rootFormValue);
   });
 
-  it('should return the fallback value when ROOT_FORM token is null', () => {
+  it('should return the fallback value when NGX_ROOT_FORM token is null', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        { provide: ROOT_FORM, useValue: null },
+        { provide: NGX_ROOT_FORM, useValue: null },
       ],
     });
 
-    const result = TestBed.runInInjectionContext(() => injectRootFormKey());
+    const result = TestBed.runInInjectionContext(() => injectNgxRootFormKey());
     expect(result).toBe(fallbackValue);
   });
 
   it('should return the fallback value when called outside of DI context', () => {
-    const result = injectRootFormKey();
+    const result = injectNgxRootFormKey();
     expect(result).toBe(fallbackValue);
   });
 
-  it('should log a warning when ROOT_FORM token is not found', () => {
+  it('should log a warning when NGX_ROOT_FORM token is not found', () => {
     const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
       // Intentionally left empty as no operation is needed here
     });
@@ -52,14 +52,14 @@ describe('injectRootFormKey', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        { provide: ROOT_FORM, useValue: null },
+        { provide: NGX_ROOT_FORM, useValue: null },
       ],
     });
 
-    TestBed.runInInjectionContext(() => injectRootFormKey());
+    TestBed.runInInjectionContext(() => injectNgxRootFormKey());
 
     expect(consoleWarnSpy).toHaveBeenCalledWith(
-      'ROOT_FORM token not found in current DI context. Using fallback value:',
+      'NGX_ROOT_FORM token not found in current DI context. Using fallback value:',
       fallbackValue,
     );
   });
@@ -69,10 +69,10 @@ describe('injectRootFormKey', () => {
       // No operation needed here
     });
 
-    injectRootFormKey();
+    injectNgxRootFormKey();
 
     expect(consoleWarnSpy).toHaveBeenCalledWith(
-      'injectRootFormKey called outside of injection context and no injector provided. Using fallback value:',
+      'injectNgxRootFormKey called outside of injection context and no injector provided. Using fallback value:',
       fallbackValue,
     );
   });
@@ -85,11 +85,11 @@ describe('injectRootFormKey', () => {
       .mockImplementation(() => {});
 
     // Call directly outside of DI context with custom fallback
-    const result = injectRootFormKey(customFallback);
+    const result = injectNgxRootFormKey(customFallback);
 
     expect(result).toBe(customFallback);
     expect(consoleWarnSpy).toHaveBeenCalledWith(
-      'injectRootFormKey called outside of injection context and no injector provided. Using fallback value:',
+      'injectNgxRootFormKey called outside of injection context and no injector provided. Using fallback value:',
       customFallback,
     );
   });

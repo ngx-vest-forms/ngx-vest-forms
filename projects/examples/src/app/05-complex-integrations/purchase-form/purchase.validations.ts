@@ -1,4 +1,7 @@
-import { InferSchemaType, modelToStandardSchema } from 'ngx-vest-forms/schemas';
+import {
+  InferSchemaType,
+  ngxModelToStandardSchema,
+} from 'ngx-vest-forms/schemas';
 import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
 import {
   enforce,
@@ -16,7 +19,7 @@ import { initialPurchaseFormData } from './purchase-form.model';
 
 // Define the inferred type directly from the model template, without assigning a runtime variable
 type PurchaseFormType = InferSchemaType<
-  ReturnType<typeof modelToStandardSchema<typeof initialPurchaseFormData>>
+  ReturnType<typeof ngxModelToStandardSchema<typeof initialPurchaseFormData>>
 >;
 
 // Define the type for the validation callback function

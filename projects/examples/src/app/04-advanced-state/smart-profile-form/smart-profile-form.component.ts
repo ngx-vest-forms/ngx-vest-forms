@@ -6,9 +6,9 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { FormDirective, FormState, ngxVestForms } from 'ngx-vest-forms';
+import { NgxFormDirective, NgxFormState, ngxVestForms } from 'ngx-vest-forms';
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
-import { ngxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state';
+import { NgxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state';
 
 import { initialUserProfile, UserProfile } from './user-profile.model';
 import { userProfileSuite } from './user-profile.validations';
@@ -21,7 +21,7 @@ import { userProfileSuite } from './user-profile.validations';
     JsonPipe,
     ngxVestForms,
     NgxControlWrapper,
-    ngxVestFormsSmartStateDirective, // Corrected directive name
+    NgxVestFormsSmartStateDirective, // Corrected directive name
   ],
   templateUrl: './smart-profile-form.component.html',
   styleUrl: './smart-profile-form.component.scss',
@@ -33,7 +33,7 @@ export class SmartProfileFormComponent {
   readonly userProfile = signal<UserProfile>({ ...initialUserProfile });
   readonly externalUserData = signal<UserProfile>({ ...initialUserProfile });
 
-  protected profileFormDirective = viewChild.required(FormDirective);
+  protected profileFormDirective = viewChild.required(NgxFormDirective);
 
   readonly smartOptions = {
     mergeStrategy: 'smart',
@@ -75,7 +75,7 @@ export class SmartProfileFormComponent {
     }, 500);
   }
 
-  onSubmit(formState: FormState<UserProfile>): void {
+  onSubmit(formState: NgxFormState<UserProfile>): void {
     console.log(
       'Form Submitted. Valid:',
       formState.valid,

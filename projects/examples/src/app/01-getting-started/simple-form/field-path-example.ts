@@ -1,11 +1,11 @@
 import { JsonPipe } from '@angular/common';
 import { Component, computed, Signal, signal, viewChild } from '@angular/core';
 import {
-  FormDirective,
   getValueAtPath,
+  NgxFormDirective,
   ngxVestForms,
+  NgxVestSuite,
   setValueAtPath,
-  VestSuite,
 } from 'ngx-vest-forms';
 import { enforce, only, staticSuite, test } from 'vest';
 
@@ -17,7 +17,7 @@ type ExampleFormModel = {
 };
 
 // --- Vest Suite for the Example ---
-const exampleSuite: VestSuite<ExampleFormModel> = staticSuite(
+const exampleSuite: NgxVestSuite<ExampleFormModel> = staticSuite(
   (data = {}, field?: string) => {
     only(field);
     test('generalInfo.firstName', 'First name is required', () => {
@@ -83,7 +83,7 @@ export class FieldPathExampleComponent {
     ],
   });
   protected readonly vestForm = viewChild.required(
-    FormDirective<ExampleFormModel>,
+    NgxFormDirective<ExampleFormModel>,
   );
 
   // Signal for the number of addresses (defensive for undefined)

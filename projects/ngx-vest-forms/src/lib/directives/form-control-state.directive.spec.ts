@@ -4,7 +4,7 @@ import { userEvent } from '@vitest/browser/context';
 import { enforce, only, staticSuite, test, warn } from 'vest';
 import { describe, expect, it } from 'vitest';
 import { ngxVestForms } from '../exports';
-import { FormControlStateDirective } from './form-control-state.directive';
+import { NgxFormControlStateDirective } from './form-control-state.directive';
 
 // Vest suite for errors and warnings
 const vestSuite = staticSuite(
@@ -24,7 +24,7 @@ const vestSuite = staticSuite(
   },
 );
 
-describe('FormControlStateDirective', () => {
+describe('NgxFormControlStateDirective', () => {
   describe('Core Functionality', () => {
     it('should extract raw form control state for NgModel', async () => {
       @Component({
@@ -300,7 +300,7 @@ describe('FormControlStateDirective', () => {
         );
 
         constructor() {
-          inject(FormControlStateDirective);
+          inject(NgxFormControlStateDirective);
         }
       }
 

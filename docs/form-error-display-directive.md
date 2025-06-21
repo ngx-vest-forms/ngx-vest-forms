@@ -1,10 +1,10 @@
-# FormErrorDisplayDirective (`ngxFormErrorDisplay`)
+# NgxFormErrorDisplayDirective (`ngxFormErrorDisplay`)
 
-A directive that extends `FormControlStateDirective` with built-in validation display behavior.
+A directive that extends `NgxFormControlStateDirective` with built-in validation display behavior.
 
 ## Purpose
 
-This directive handles **WHEN** to show validation messages based on configurable display modes. It builds on the data provided by `FormControlStateDirective` and adds logic for when validation messages should appear.
+This directive handles **WHEN** to show validation messages based on configurable display modes. It builds on the data provided by `NgxFormControlStateDirective` and adds logic for when validation messages should appear.
 
 ## Key Benefits
 
@@ -15,7 +15,7 @@ This directive handles **WHEN** to show validation messages based on configurabl
 
 ## Composition & hostDirectives
 
-Both `FormControlStateDirective` and `FormErrorDisplayDirective` are designed to be used as `hostDirectives` in your own components or directives. This approach embraces Angular's composition API, allowing you to add form state and validation logic declaratively and without inheritance.
+Both `NgxFormControlStateDirective` and `NgxFormErrorDisplayDirective` are designed to be used as `hostDirectives` in your own components or directives. This approach embraces Angular's composition API, allowing you to add form state and validation logic declaratively and without inheritance.
 
 **Recommended:**
 Use these as `hostDirectives` for maximum flexibility and composability in your custom form controls and wrappers.
@@ -23,7 +23,7 @@ Use these as `hostDirectives` for maximum flexibility and composability in your 
 ```typescript
 @Component({
   // ...
-  hostDirectives: [FormErrorDisplayDirective], // or FormControlStateDirective
+  hostDirectives: [NgxFormErrorDisplayDirective], // or NgxFormControlStateDirective
 })
 export class MyCustomFieldComponent { ... }
 ```
@@ -100,14 +100,14 @@ import { CONTROL_WRAPPER_ERROR_DISPLAY } from 'ngx-vest-forms';
 export class AppComponent {}
 ```
 
-## Relationship with FormControlStateDirective
+## Relationship with NgxFormControlStateDirective
 
-- `FormControlStateDirective` provides the data (WHAT) - raw form state and parsed messages
-- `FormErrorDisplayDirective` adds display behavior (WHEN) - timing and filtering of messages
+- `NgxFormControlStateDirective` provides the data (WHAT) - raw form state and parsed messages
+- `NgxFormErrorDisplayDirective` adds display behavior (WHEN) - timing and filtering of messages
 
 The directive uses Angular's `hostDirectives` feature to compose functionality, so every `ngxFormErrorDisplay` automatically includes the functionality of `ngxFormControlState`.
 
 ## See Also
 
-- [FormControlStateDirective](./form-control-state-directive.md) for accessing just the raw form state
+- [NgxFormControlStateDirective](./form-control-state-directive.md) for accessing just the raw form state
 - [NgxControlWrapper](../src/lib/components/control-wrapper/control-wrapper.component.ts) which uses this directive internally

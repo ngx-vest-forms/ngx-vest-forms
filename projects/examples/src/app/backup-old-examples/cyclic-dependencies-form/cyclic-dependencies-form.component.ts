@@ -1,6 +1,6 @@
 import { JsonPipe } from '@angular/common';
 import { Component, signal } from '@angular/core';
-import { VestSuite, ngxVestForms } from 'ngx-vest-forms';
+import { NgxVestSuite, ngxVestForms } from 'ngx-vest-forms';
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 import { CyclicFormModel } from './cyclic-dependencies-form.model';
 import { createCyclicDependencyFormValidationSuite } from './cyclic.validations';
@@ -26,7 +26,7 @@ export class CyclicDependenciesFormComponent {
     description: ['amount'],
   };
 
-  protected vestSuite: VestSuite<CyclicFormModel> =
+  protected vestSuite: NgxVestSuite<CyclicFormModel> =
     createCyclicDependencyFormValidationSuite();
 
   protected save(value: CyclicFormModel) {
