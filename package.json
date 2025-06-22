@@ -52,6 +52,7 @@
     "@vitest/browser": "~3.2.4",
     "@vitest/coverage-v8": "3.2.4",
     "@vitest/eslint-plugin": "^1.2.7",
+    "@vitest/ui": "^3.2.4",
     "angular-eslint": "20.1.1",
     "arktype": "^2.1.20",
     "autoprefixer": "^10.4.21",
