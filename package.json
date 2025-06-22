@@ -36,8 +36,8 @@
     "vest": "^5.4.6"
   },
   "devDependencies": {
-    "@analogjs/vite-plugin-angular": "^1.17.1",
-    "@analogjs/vitest-angular": "^1.17.1",
+    "@analogjs/vite-plugin-angular": "^1.18.0",
+    "@analogjs/vitest-angular": "^1.18.0",
     "@angular-devkit/build-angular": "20.0.3",
     "@angular/cli": "20.0.3",
     "@angular/compiler-cli": "20.0.4",
@@ -49,9 +49,9 @@
     "@testing-library/angular": "^17.4.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
-    "@vitest/browser": "~3.2.2",
-    "@vitest/coverage-v8": "3.2.2",
-    "@vitest/eslint-plugin": "^1.2.1",
+    "@vitest/browser": "~3.2.4",
+    "@vitest/coverage-v8": "3.2.4",
+    "@vitest/eslint-plugin": "^1.2.7",
     "angular-eslint": "20.1.1",
     "arktype": "^2.1.20",
     "autoprefixer": "^10.4.21",
@@ -78,7 +78,7 @@
     "typescript-eslint": "8.33.1",
     "valibot": "^1.1.0",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.2.2",
+    "vitest": "^3.2.4",
     "wait-on": "^8.0.3",
     "zod": "^3.25.56"
   },
