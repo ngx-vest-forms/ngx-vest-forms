@@ -56,11 +56,11 @@ import { modelToStandardSchema } from 'ngx-vest-forms/schemas';
 
 ## Complete Migration Tables
 
-### 🏗️ **Naming Convention Updates (v2.4+)**
+### 🏗️ **Naming Convention Updates (v2)**
 
 All public API elements now follow consistent NGX prefixing:
 
-| **Category**          | **v1/v2.3 Name**             | **v2.4+ Name**                   | **Migration Required** |
+| **Category**          | **v1 Name**                  | **v2 Name**                      | **Migration Required** |
 | --------------------- | ---------------------------- | -------------------------------- | ---------------------- |
 | **Directive Classes** | `FormErrorDisplayDirective`  | `NgxFormErrorDisplayDirective`   | Update imports         |
 |                       | `FormModelGroupDirective`    | `NgxFormModelGroupDirective`     | Update imports         |
@@ -74,35 +74,37 @@ All public API elements now follow consistent NGX prefixing:
 
 ### 📦 **Modularization Changes**
 
-| **Feature**         | **v1 Import**                                              | **v2+ Import**                                                                 | **Bundle Impact** |
-| ------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------ | ----------------- |
-| **Core Forms**      | `import { vestForms } from 'ngx-vest-forms'`               | `import { ngxVestForms } from 'ngx-vest-forms'`                                | -44% bundle size  |
-| **Control Wrapper** | `import { ControlWrapperComponent } from 'ngx-vest-forms'` | `import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper'`           | Optional +5KB     |
-| **Smart State**     | _Not available in v1_                                      | `import { NgxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state'` | Optional +10KB    |
-| **Schema Utils**    | _Limited in v1_                                            | `import { modelToStandardSchema } from 'ngx-vest-forms/schemas'`               | Optional +7KB     |
+| **Feature**         | **v1 Import**                                                            | **v2 Import**                                                                  | **Bundle Impact** |
+| ------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------ | ----------------- |
+| **Core Forms**      | `import { vestForms } from 'ngx-vest-forms'`                             | `import { ngxVestForms } from 'ngx-vest-forms'`                                | Smaller bundle    |
+| **Control Wrapper** | `import { vestForms } from 'ngx-vest-forms'` (with `sc-control-wrapper`) | `import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper'`           | Optional module   |
+| **Smart State**     | _Not available in v1_                                                    | `import { NgxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state'` | Optional module   |
+| **Schema Utils**    | _Limited in v1_                                                          | `import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas'`            | Optional module   |
+| **Smart State**     | _Not available in v1_                                                    | `import { NgxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state'` | Optional +10KB    |
+| **Schema Utils**    | _Limited in v1_                                                          | `import { modelToStandardSchema } from 'ngx-vest-forms/schemas'`               | Optional +7KB     |
 
 ### 🔧 **Behavioral Changes**
 
-| **Feature**          | **v1 Behavior** | **v2+ Behavior**     | **Migration**                             |
-| -------------------- | --------------- | -------------------- | ----------------------------------------- |
-| **validateRootForm** | Default: `true` | Default: `false`     | Add `[validateRootForm]="true"` if needed |
-| **Error Display**    | Always included | Optional module      | Import from `control-wrapper` if used     |
-| **Schema Support**   | Basic           | Full Standard Schema | Import from `schemas` if used             |
+| **Feature**          | **v1 Behavior**  | **v2 Behavior**      | **Migration**                         |
+| -------------------- | ---------------- | -------------------- | ------------------------------------- |
+| **validateRootForm** | Default: `false` | Default: `false`     | No change - same default behavior     |
+| **Error Display**    | Always included  | Optional module      | Import from `control-wrapper` if used |
+| **Schema Support**   | Basic            | Full Standard Schema | Import from `schemas` if used         |
 
 ---
 
 ## Quick Overview of Major Changes
 
-| Change                          | Version   | Impact     | Migration Required                      |
-| ------------------------------- | --------- | ---------- | --------------------------------------- |
-| validateRootForm Default Value  | v2.x+     | 🟢 Low     | Update forms that need root validation  |
-| Smart State Modularization      | v2.1+     | 🟡 Medium  | Only if using smart state features      |
-| Control Wrapper Modularization  | v2.2+     | 🟢 Low     | Only if using NgxControlWrapper         |
-| Schema Utilities Modularization | v2.3+     | 🟢 Low     | Only if using schema utilities          |
-| Component Renaming              | v2.2+     | 🟢 Low     | Only if using ControlWrapperComponent   |
-| **NGX Naming Convention**       | **v2.2+** | **🟢 Low** | **Update all public API imports/usage** |
+| Change                          | Version | Impact       | Migration Required                      |
+| ------------------------------- | ------- | ------------ | --------------------------------------- |
+| Directive and API Naming        | v2      | � Medium     | Update directive names and syntax       |
+| Smart State Modularization      | v2      | 🟡 Medium    | Only if using smart state features      |
+| Control Wrapper Modularization  | v2      | 🟢 Low       | Only if using NgxControlWrapper         |
+| Schema Utilities Modularization | v2      | 🟢 Low       | Only if using schema utilities          |
+| Control Wrapper Component       | v2      | 🟢 Low       | Only if using sc-control-wrapper in v1  |
+| **NGX Naming Convention**       | **v2**  | **� Medium** | **Update all public API imports/usage** |
 
-**📊 Bundle Impact:** Core users get up to 44% smaller bundle size.
+**📊 Bundle Impact:** Core users get a smaller bundle size with modularized optional features.
 
 ---
 
@@ -138,15 +140,15 @@ export class LoginForm {
 #### Before (v1):
 
 ```typescript
-import { vestForms, ControlWrapperComponent } from 'ngx-vest-forms';
+import { vestForms } from 'ngx-vest-forms';
 
 @Component({
-  imports: [vestForms, ControlWrapperComponent],
+  imports: [vestForms],
   template: `
     <form scVestForm [suite]="suite" (formValueChange)="model.set($event)">
-      <div sc-control-wrapper>
+      <sc-control-wrapper>
         <input name="email" [ngModel]="model().email" />
-      </div>
+      </sc-control-wrapper>
     </form>
   `
 })
@@ -172,22 +174,23 @@ import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 
 ### ⚡ **For Smart State Users**
 
-#### Before (v2.0):
+Smart state management is a **new feature in v2**. If you want to add smart state capabilities to existing v1 forms:
+
+#### v1 Form (Without Smart State):
 
 ```typescript
-import { ngxVestForms, SmartStateOptions } from 'ngx-vest-forms';
+import { vestForms } from 'ngx-vest-forms';
 
 @Component({
-  imports: [ngxVestForms],
+  imports: [vestForms],
   template: `
-    <form ngxVestForm [vestSuite]="suite" [(formValue)]="model"
-          [externalData]="external()" [smartStateOptions]="options">
+    <form scVestForm [suite]="suite" [formValue]="model()" (formValueChange)="model.set($event)">
     </form>
   `
 })
 ```
 
-#### After (v2.1+):
+#### v2 Form (With Smart State):
 
 ```typescript
 import { ngxVestForms } from 'ngx-vest-forms';
@@ -206,7 +209,7 @@ import { NgxVestFormsSmartStateDirective, SmartStateOptions } from 'ngx-vest-for
 
 ### 🔧 **For Configuration Token Users**
 
-#### Before (v2.3):
+#### Before (v1 Configuration):
 
 ```typescript
 import { ERROR_DISPLAY_MODE_DEFAULT, ErrorDisplayMode } from 'ngx-vest-forms';
@@ -221,7 +224,7 @@ import { ERROR_DISPLAY_MODE_DEFAULT, ErrorDisplayMode } from 'ngx-vest-forms';
 })
 ```
 
-#### After (v2.4+):
+#### After (v2 Configuration):
 
 ```typescript
 import { NGX_ERROR_DISPLAY_MODE_DEFAULT, NgxErrorDisplayMode } from 'ngx-vest-forms';
@@ -238,7 +241,7 @@ import { NGX_ERROR_DISPLAY_MODE_DEFAULT, NgxErrorDisplayMode } from 'ngx-vest-fo
 
 ### 📋 **For Schema Users**
 
-#### Before (v2.2):
+#### Before (v1 Schema):
 
 ```typescript
 import {
@@ -251,7 +254,7 @@ const schema = modelToStandardSchema(template);
 type User = InferSchemaType<typeof schema>;
 ```
 
-#### After (v2.3+):
+#### After (v2 Schema):
 
 ```typescript
 import { ngxVestForms } from 'ngx-vest-forms';
@@ -263,7 +266,7 @@ type User = InferSchemaType<typeof schema>;
 
 ---
 
-## NGX Naming Convention Update (v2.2+)
+## NGX Naming Convention Update (v2)
 
 **What changed?**
 
@@ -282,7 +285,7 @@ Update all imports and usage of public API elements to use the new NGX-prefixed 
 
 ### Directive and Component Names
 
-| Old Name (v2.1-)            | New Name (v2.2+)               | Migration Required                      |
+| Old Name (v1)               | New Name (v2)                  | Migration Required                      |
 | --------------------------- | ------------------------------ | --------------------------------------- |
 | `FormDirective`             | `NgxFormDirective`             | Update imports and component references |
 | `FormErrorDisplayDirective` | `NgxFormErrorDisplayDirective` | Update imports and directive usage      |
@@ -293,7 +296,7 @@ Update all imports and usage of public API elements to use the new NGX-prefixed 
 
 ### Type Names
 
-| Old Name (v2.1-)                | New Name (v2.2+)                   | Migration Required                  |
+| Old Name (v1)                   | New Name (v2)                      | Migration Required                  |
 | ------------------------------- | ---------------------------------- | ----------------------------------- |
 | `FormState<T>`                  | `NgxFormState<T>`                  | Update type annotations and imports |
 | `ValidationOptions`             | `NgxValidationOptions`             | Update type annotations and imports |
@@ -308,7 +311,7 @@ Update all imports and usage of public API elements to use the new NGX-prefixed 
 
 ### Token and Function Names
 
-| Old Name (v2.1-)             | New Name (v2.2+)                 | Migration Required             |
+| Old Name (v1)                | New Name (v2)                    | Migration Required             |
 | ---------------------------- | -------------------------------- | ------------------------------ |
 | `ERROR_DISPLAY_MODE_DEFAULT` | `NGX_ERROR_DISPLAY_MODE_DEFAULT` | Update provider configurations |
 | `ROOT_FORM`                  | `NGX_ROOT_FORM`                  | Update provider configurations |

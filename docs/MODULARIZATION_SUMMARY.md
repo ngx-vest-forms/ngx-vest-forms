@@ -60,20 +60,21 @@ All secondary entry points build successfully:
 ### Import Path Changes
 
 ```typescript
-// Before
+// Before (v1 had sc-control-wrapper included in vestForms)
+import { vestForms } from 'ngx-vest-forms'; // included sc-control-wrapper
 import { SmartFormState } from 'ngx-vest-forms';
-import { ControlWrapperComponent } from 'ngx-vest-forms';
 import { ngxModelToStandardSchema } from 'ngx-vest-forms';
 
-// After
-import { SmartFormState } from 'ngx-vest-forms/smart-state';
+// After (v2 with modular imports)
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
+import { SmartFormState } from 'ngx-vest-forms/smart-state';
 import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
 ```
 
 ### Component Renaming
 
-- `ControlWrapperComponent` → `NgxControlWrapper`
+- `sc-control-wrapper` selector → `ngx-control-wrapper` selector
+- Component class: `NgxControlWrapper` (now requires explicit import)
 
 ## Migration Guide
 

@@ -122,20 +122,20 @@ Core only:           ~25KB (-44%)
 
 ## Breaking Changes Summary
 
-### v2.1: Smart State Modularization
+### Smart State Modularization
 
 - **What**: Smart state moved to `ngx-vest-forms/smart-state`
-- **Impact**: Only affects users of smart state features
+- **Impact**: Only affects users of smart state features (new in v2)
 - **Migration**: Update imports and add directive
 
-### v2.2: Control Wrapper Modularization
+### Control Wrapper Modularization
 
 - **What**: `NgxControlWrapper` moved to `ngx-vest-forms/control-wrapper`
 - **Impact**: Only affects users of the control wrapper
 - **Migration**: Update imports, rename component
 - **Bonus**: Configuration token renamed for clarity
 
-### v2.3: Schema Utilities Modularization
+### Schema Utilities Modularization
 
 - **What**: Schema utilities moved to `ngx-vest-forms/schemas`
 - **Impact**: Only affects users of schema features
@@ -157,7 +157,7 @@ import { NGX_ERROR_DISPLAY_MODE_DEFAULT } from 'ngx-vest-forms';
 
 ### For Basic Users
 
-1. Update to v2.x
+1. Update to v2
 2. Test existing functionality
 3. Enjoy smaller bundle size
 

@@ -1,14 +1,12 @@
 # ngx-vest-forms
 
-> 🚨 **Upgrading to v2?** See our [**Migration Guide**](./docs/MIGRATION_GUIDE_V2.md) for step-by-step instructions and breaking changes overview.
->
-> 📋 **New to v2?** Check the [**Changes Overview**](./docs/CHANGES_OVERVIEW.md) to understand what's new and improved.
->
-> ⚠️ **NGX Naming Convention (v2.2+):** All public API elements now use NGX prefixes (e.g., `NgxFormDirective`, `NgxFormState`). See the [migration guide](./docs/MIGRATION_GUIDE_V2.md#ngx-naming-convention-update-v22) for migration steps.
+> 🚨 **Upgrading to v2?** See our [**Migration Guide**](./docs/MIGRATION_GUIDE_V2.md) for step-by-step instructions and a [**Breaking Changes Overview**](./docs/BREAKING_CHANGES_PUBLIC_API.md).
 
-## Modern, Type-Safe, Zero-Boilerplate Angular Forms with Vest
+`ngx-vest-forms` is a lightweight, modern adapter for Angular Template Driven Forms and [Vest](https://vestjs.dev). It enables unidirectional, type-safe, and reactive forms with minimal code, leveraging Angular signals, standalone components, and the latest best practices.
 
-`ngx-vest-forms` is a lightweight, modern (lightweight) adapter for Angular Template Driven Forms and [vestjs](https://vestjs.dev). It enables unidirectional, type-safe, and reactive forms with minimal code, leveraging Angular signals, standalone components, and the latest best practices.
+## What is ngx-vest-forms?
+
+It's a small library that bridges the gap between declarative Vest validation suites and Angular's template-driven forms. It automatically handles validation, state tracking (value, errors, validity, pending), and error display, exposing everything as reactive signals.
 
 **Key Features:**
 
@@ -19,18 +17,111 @@
 - **Powerful Validations:** Use Vest.js for declarative, composable, and async validation logic.
 - **Accessible by Default:** Built-in error display, ARIA roles, and keyboard support via `<ngx-control-wrapper>`.
 - **Modern Angular:** Designed for Angular 17+ standalone components, signals, and new control flow (`@if`, `@for`).
-- **Native HTML5 validation is disabled:** The `novalidate` attribute is automatically added to all forms using `ngxVestForm`, so all validation is handled by VestJS and Angular, not the browser. See details below.
-- **Advanced Features Available:** Optional smart state management and UI helper components (like Control Wrapper) available as secondary entry points.
+- **Native HTML5 validation is disabled:** The `novalidate` attribute is automatically added to all forms using `ngxVestForm`, so all validation is handled by VestJS and Angular, not the browser.
+- **Advanced Features Available:** Optional smart state management and UI helper components available as secondary entry points.
+
+## Why and When to Use It
+
+Use `ngx-vest-forms` when you want to:
+
+- **Eliminate Boilerplate:** Stop writing manual validation logic, state tracking, and error handling in your components. Just use `ngModel` and connect a Vest suite.
+- **Embrace Type Safety:** Use schemas (Zod, ArkType, Valibot, or a simple template) to get compile-time safety and powerful type inference for your form models.
+- **Build Reactive UIs:** All form and control states are signals, making it trivial to build dynamic, performant UIs with Angular's new control flow (`@if`, `@for`).
+- **Decouple Validation from Components:** Keep your validation logic pure, reusable, and separate from your UI components.
+- **Adopt Modern Angular:** The library is built for Angular 17+ and embraces standalone components, signals, and composition over inheritance.
 
 ---
 
-## UI Helper: Control Wrapper (Optional)
+## Installation
 
-For streamlined error display and accessibility in your forms, `ngx-vest-forms` offers the `NgxControlWrapper` as an **optional secondary entry point**. This component simplifies wrapping your form inputs to automatically handle error messages and ARIA attributes.
+```sh
+npm i ngx-vest-forms vest
+```
 
-### Control Wrapper: Installation and Usage
+## Core Features & Quick Start
 
-The `NgxControlWrapper` is available from `ngx-vest-forms/control-wrapper`:
+The core of the library is the `ngxVestForm` directive, which automatically links your form with a Vest validation suite.
+
+### 1. Define Your Model and (Optional) Schema
+
+```typescript
+// user.model.ts
+import { signal } from '@angular/core';
+
+// A simple object template is enough for type inference
+const userModel = { name: '', email: '' };
+
+// Optionally, create a schema for more robust validation and type generation
+import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
+const userSchema = ngxModelToStandardSchema(userModel);
+```
+
+### 2. Create a Vest Validation Suite
+
+```typescript
+// user.validations.ts
+import { staticSuite, test, enforce } from 'vest';
+
+export const userValidations = staticSuite((data = {}, field?: string) => {
+  // The `only` function from Vest is used internally to optimize validation runs
+  test('name', 'Name is required', () => enforce(data.name).isNotEmpty());
+  test('email', 'A valid email is required', () =>
+    enforce(data.email).isEmail(),
+  );
+});
+```
+
+### 3. Use in a Standalone Angular Component
+
+```typescript
+// user-form.component.ts
+import { Component, signal } from '@angular/core';
+import { ngxVestForms } from 'ngx-vest-forms';
+import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper'; // UI Helper
+import { userModel } from './user.model';
+import { userValidations } from './user.validations';
+
+@Component({
+  standalone: true,
+  imports: [ngxVestForms, NgxControlWrapper],
+  template: `
+    <form ngxVestForm [vestSuite]="suite" [(formValue)]="model">
+      <ngx-control-wrapper>
+        <label for="name">Name</label>
+        <input id="name" name="name" [ngModel]="model().name" />
+      </ngx-control-wrapper>
+
+      <ngx-control-wrapper>
+        <label for="email">Email</label>
+        <input id="email" name="email" [ngModel]="model().email" type="email" />
+      </ngx-control-wrapper>
+    </form>
+  `,
+})
+export class UserFormComponent {
+  protected readonly model = signal(userModel);
+  protected readonly suite = userValidations;
+}
+```
+
+---
+
+## Building Form Fields & Displaying Errors
+
+A key part of any forms library is how it handles UI, particularly error messages. `ngx-vest-forms` provides two powerful approaches: a convenient pre-built wrapper and a composable directive for building your own custom form fields.
+
+### 1. The Easy Way: `NgxControlWrapper`
+
+For maximum convenience, the library includes `NgxControlWrapper`, an optional UI helper that handles everything you need for a form field:
+
+- A container for your `<label>` and control (`<input>`, `<select>`, etc.).
+- Automatic error message display with smooth animations.
+- Pending (async validation) indicator.
+- Accessibility (ARIA attributes) baked in.
+
+**Installation & Usage:**
+
+The `NgxControlWrapper` is available from a secondary entry point to keep the core bundle small.
 
 ```typescript
 // Import from the control-wrapper secondary entry point
@@ -38,131 +129,307 @@ import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 
 @Component({
   standalone: true,
-  imports: [
-    ngxVestForms, // Core directive
-    NgxControlWrapper, // The wrapper component
-    // ... other imports
-  ],
+  imports: [ngxVestForms, NgxControlWrapper],
+  // ...
+})
+export class MyFormComponent {}
+```
+
+**📖 [Complete Control Wrapper Documentation](./projects/ngx-vest-forms/control-wrapper/README.md)**
+
+### 2. The Flexible Way: Build Your Own with `NgxFormErrorDisplayDirective`
+
+For complete control over your form field's markup and behavior, you can easily create your own wrapper component. This is the recommended approach for building a reusable component library.
+
+The `NgxFormErrorDisplayDirective` provides all the necessary logic and state signals. You can use it as a `hostDirective` to instantly power your custom component.
+
+**Why build your own?**
+
+- **Full Design Control:** Match your application's specific design system.
+- **Reusable Logic:** Create a standardized form field component for your entire application.
+- **Composition:** Add any other directives or behaviors you need.
+
+**Example Custom Field Component:**
+
+```typescript
+// my-form-field.component.ts
+import { Component, inject } from '@angular/core';
+import { NgxFormErrorDisplayDirective } from 'ngx-vest-forms';
+
+@Component({
+  selector: 'my-form-field',
+  standalone: true,
+  hostDirectives: [NgxFormErrorDisplayDirective],
   template: `
-    <form ngxVestForm [vestSuite]="mySuite" [(formValue)]="model">
-      <ngx-control-wrapper>
-        <label for="username">Username:</label>
-        <input id="username" name="username" ngModel />
-      </ngx-control-wrapper>
-      <button type="submit">Submit</button>
-    </form>
+    <ng-content />
+
+    @if (formErrorDisplay.isPending()) {
+      <div class="spinner">Validating...</div>
+    } @else if (formErrorDisplay.shouldShowErrors()) {
+      <div class="errors">
+        @for (error of formErrorDisplay.errors(); track error) {
+          <div class="error-message">{{ error }}</div>
+        }
+      </div>
+    }
+  `,
+  styles: `
+    :host {
+      display: block;
+      margin-bottom: 1rem;
+    }
+    .error-message {
+      color: red;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
   `,
 })
-export class MyFormComponent {
-  // ...
+export class MyFormFieldComponent {
+  // Inject the directive to access its API
+  protected readonly formErrorDisplay = inject(NgxFormErrorDisplayDirective, {
+    self: true,
+  });
 }
 ```
 
-**📖 [Complete Control Wrapper Documentation](./projects/ngx-vest-forms/control-wrapper/README.md)** - Detailed guide on usage, configuration, and customization.
+**Usage in a Form:**
+
+```html
+<!-- In your form component's template -->
+<form ngxVestForm [vestSuite]="suite" [(formValue)]="model">
+  <my-form-field>
+    <label for="name">Name</label>
+    <input id="name" name="name" [ngModel]="model().name" />
+  </my-form-field>
+  <!-- ... other fields ... -->
+</form>
+```
 
 ---
 
-## Advanced Features: Smart State Management (Optional)
+## Advanced Features
 
-For complex applications that need intelligent data merging, conflict resolution, and external data synchronization, `ngx-vest-forms` provides advanced smart state management as an **optional secondary entry point**.
+Beyond the basics, `ngx-vest-forms` offers powerful, optional modules for advanced scenarios. These are available as secondary entry points to keep the core library lean.
 
-### When You Need Smart State Management
+### Smart State Management
 
-- **User profiles** that might be updated by admins while users edit
-- **Collaborative editing** with real-time synchronization
-- **Long-running forms** where external data changes during editing
-- **Mobile/offline apps** that sync when connectivity returns
+For complex applications that need intelligent data merging, conflict resolution, and external data synchronization, `ngx-vest-forms` provides advanced smart state management.
 
-### Installation and Usage
+**When to Use It:**
 
-Smart state management is available as a separate entry point to keep the core library lightweight:
+- **User profiles** that might be updated by admins while users are editing.
+- **Collaborative editing** with real-time synchronization.
+- **Long-running forms** where external data changes during editing.
+- **Mobile/offline apps** that sync when connectivity returns.
+
+**Installation & Usage:**
+
+Smart state management is available from `ngx-vest-forms/smart-state`:
 
 ```typescript
 // Import from the smart-state secondary entry point
 import { NgxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state';
 
 @Component({
+  standalone: true,
   imports: [ngxVestForms, NgxVestFormsSmartStateDirective],
-  template: `
-    <form
-      ngxVestForm
-      ngxSmartStateExtension
-      [vestSuite]="userSuite"
-      [(formValue)]="userProfile"
-      [externalData]="externalUserData()"
-      [smartStateOptions]="smartOptions"
-      #form="ngxVestForm"
-    >
-      <!-- Your form fields -->
-    </form>
-  `,
+  // ...
 })
 export class UserProfileComponent {
-  userProfile = signal<UserProfile | null>(null);
-  externalUserData = signal<UserProfile | null>(null);
-
-  // Smart state options - automatically handles intelligent merging
-  smartOptions: SmartStateOptions<UserProfile> = {
-    mergeStrategy: 'smart',
-    preserveFields: ['firstName', 'email'], // Preserve user edits on these fields
-    conflictResolution: true,
-  };
-
-  async refreshUserData() {
-    const userData = await this.userService.getUser();
-    this.externalUserData.set(userData);
-    // Smart state automatically handles intelligent merging
-  }
+  // ...
 }
 ```
 
-**📖 [Complete Smart State Documentation](./projects/ngx-vest-forms/smart-state/README.md)** - Comprehensive guide with advanced patterns, conflict resolution strategies, and real-world examples.
+**📖 [Complete Smart State Documentation](./docs/smart-state-management.md)**
 
----
+### Schema Utilities for Type Safety
 
-## Schema Utilities: Type Safety & Validation (Optional)
+For enhanced type safety and schema-driven validation, `ngx-vest-forms` provides powerful schema utilities. These work with popular schema libraries like Zod, Valibot, and ArkType, or even simple object templates.
 
-For enhanced type safety and schema-based validation, `ngx-vest-forms` provides powerful schema utilities as an **optional secondary entry point**. These utilities work with popular schema libraries like Zod, Valibot, and ArkType, or simple object templates.
+**Why Use Schemas?**
 
-### Schema Utilities: Installation and Usage
+- **Compile-Time Safety:** Catch typos and incorrect data structures at build time.
+- **Powerful Type Inference:** Get full autocompletion and type checking for your form models.
+- **Single Source of Truth:** Define your data shape once and reuse it across your application.
+
+**Installation & Usage:**
 
 Schema utilities are available from `ngx-vest-forms/schemas`:
 
 ```typescript
 // Import from the schemas secondary entry point
-import {
-  ngxModelToStandardSchema,
-  InferSchemaType,
-  SchemaDefinition,
-} from 'ngx-vest-forms/schemas';
+import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
+import type { InferSchemaType } from 'ngx-vest-forms/schemas';
 
-const userTemplate = {
-  name: '',
-  email: '',
-  age: 0,
-};
-
+// 1. With object template
+const userTemplate = { name: '', age: 0 };
 const userSchema = ngxModelToStandardSchema(userTemplate);
 type User = InferSchemaType<typeof userSchema>;
 
+// 2. With Zod
+import { z } from 'zod';
+const zodSchema = z.object({
+  name: z.string().min(1),
+  age: z.number().min(0),
+});
+const userSchemaFromZod = ngxModelToStandardSchema(zodSchema);
+
+// 3. With Valibot
+import * as v from 'valibot';
+const valibotSchema = v.object({
+  name: v.pipe(v.string(), v.minLength(1)),
+  age: v.pipe(v.number(), v.minValue(0)),
+});
+const userSchemaFromValibot = ngxModelToStandardSchema(valibotSchema);
+
 @Component({
-  standalone: true,
-  imports: [ngxVestForms],
   template: `
-    <form ngxVestForm [formSchema]="userSchema" [(formValue)]="userData">
-      <input name="name" ngModel placeholder="Name" />
-      <input name="email" type="email" ngModel placeholder="Email" />
-      <input name="age" type="number" ngModel placeholder="Age" />
+    <form
+      ngxVestForm
+      [vestSuite]="suite"
+      [formSchema]="userSchema"
+      [(formValue)]="userData"
+    >
+      <ngx-control-wrapper>
+        <label for="name">Name</label>
+        <input id="name" name="name" [ngModel]="userData().name" />
+      </ngx-control-wrapper>
+
+      <ngx-control-wrapper>
+        <label for="age">Age</label>
+        <input id="age" name="age" type="number" [ngModel]="userData().age" />
+      </ngx-control-wrapper>
     </form>
   `,
 })
 export class UserFormComponent {
   protected readonly userSchema = userSchema;
   protected readonly userData = signal<User>(userTemplate);
+  protected readonly suite = userValidations;
 }
 ```
 
-**📖 [Complete Schema Utilities Documentation](./projects/ngx-vest-forms/schemas/README.md)** - Comprehensive guide with examples for Zod, Valibot, ArkType, and object templates.
+**📖 [Complete Schema Utilities Documentation](./projects/ngx-vest-forms/schemas/README.md)**
+
+---
+
+## Best Practices
+
+- **Use Wrappers:** Always use `<ngx-control-wrapper>` or a custom-built equivalent for every input. This handles error display, accessibility, and pending state automatically.
+
+- **Unidirectional Data Flow for Controls:** Use `[ngModel]` for individual controls to ensure data flows one way from your model to the view. The `ngxVestForm` directive will handle updating the model signal internally.
+
+- **Two-Way Binding for the Form:** Use `[(formValue)]` on the `<form>` element for convenient two-way binding with your form's model signal.
+
+- **Use Signals:** Leverage signals and `computed()` for all form state and derived UI logic.
+
+- **Modern Control Flow:** Use the new Angular control flow (`@if`, `@for`, `@defer`) in templates for better performance and readability.
+
+- **Separate Validation Logic:** Keep validation suites in separate `*.validations.ts` files for clarity, reusability, and separation of concerns.
+
+- **Provide a Schema:** Use `[formSchema]` for type safety and IDE support, especially for complex or nested forms.
+
+- **Handle Cross-Field Validation:**
+
+  - Use `[validateRootForm]="true"` for root-level (cross-field) validation.
+  - Use `[validationConfig]` for more complex cross-field dependencies (e.g., confirm password, cyclic dependencies).
+
+- **Understand Error Display:**
+
+  - The available `errorDisplayMode`s are: `'on-blur'`, `'on-submit'`, and `'on-blur-or-submit'` (default).
+  - Error display logic respects a control's `ngModelOptions.updateOn` value. If `updateOn: 'submit'`, errors will only show after form submission, regardless of the display mode. A warning is logged in development to help catch this.
+
+- **Remove Deprecated Patterns:** Avoid using old patterns like `[formShape]`, manual error markup, or deprecated signal APIs.
+
+- **Never manually display field errors:** Let the control wrapper handle error display automatically.
+
+---
+
+## Root-Level Form Validation with `validateRootForm`
+
+The `[validateRootForm]` directive enables validations that pertain to the form as a whole, rather than individual fields. This is useful for scenarios requiring cross-field validation or conditions that depend on multiple form values.
+
+By default, `[validateRootForm]` is `false`. To enable it, set it to `true`:
+
+```html
+<form
+  ngxVestForm
+  [vestSuite]="mySuite"
+  [(formValue)]="model"
+  [validateRootForm]="true"
+>
+  <!-- form fields -->
+</form>
+```
+
+### How it Works
+
+1. **Define Root Validations in Your Vest Suite:**
+   In your Vest suite, you target these form-level validations using a special key. By default, this key is `'rootForm'`. You can customize this key by providing a different value for the `NGX_ROOT_FORM` injection token. The `injectNgxRootFormKey()` utility function can be used to access the current root form key if needed.
+
+   ```typescript
+   // my-suite.ts
+   import { staticSuite, test, enforce, only } from 'vest';
+   import { injectNgxRootFormKey } from 'ngx-vest-forms';
+
+   export const mySuite = staticSuite(
+     (data: MyFormModel = {}, field?: string) => {
+       only(field);
+
+       // Regular field validations
+       test('email', 'Email is required', () =>
+         enforce(data.email).isNotEmpty(),
+       );
+       test('phone', 'Phone is required', () =>
+         enforce(data.phone).isNotEmpty(),
+       );
+
+       // Root-level validation
+       const rootFormKey = injectNgxRootFormKey(); // Defaults to 'rootForm'
+       test(rootFormKey, 'At least one contact method required', () => {
+         enforce(data.email || data.phone).isTruthy();
+       });
+     },
+   );
+   ```
+
+2. **Accessing Root Issues:**
+   Root-level errors, warnings, and internal Vest suite errors are exposed through the `formState().root` signal on the `ngxVestForm` directive.
+
+   ```typescript
+   // my-component.ts
+   import { Component, viewChild, signal } from '@angular/core';
+   import { NgxFormDirective } from 'ngx-vest-forms';
+   import { mySuite } from './my-suite';
+
+   @Component({
+     template: `
+       <form ngxVestForm #vestForm="ngxVestForm" [validateRootForm]="true">
+         <!-- form fields -->
+
+         @if (vestForm.formState().root?.errors.length) {
+           <div class="form-errors" role="alert">
+             @for (error of vestForm.formState().root.errors; track error) {
+               <div class="error">{{ error }}</div>
+             }
+           </div>
+         }
+       </form>
+     `,
+   })
+   export class MyFormComponent {
+     protected readonly suite = mySuite;
+     protected readonly model = signal({ email: '', phone: '' });
+   }
+   ```
+
+### When to Use `validateRootForm`
+
+- **Cross-Field Dependencies:** When the validity of one field depends on another (e.g., "If 'country' is 'USA', 'state' is required.")
+- **Conditional Form-Wide Rules:** "If 'subscribeToNewsletter' is true, then 'email' must be provided and valid."
+- **Overall Form State Checks:** "At least one contact method (phone or email) must be provided."
+- **Business Rules Involving Multiple Fields:** "If 'userType' is 'admin', then 'department' cannot be 'support'."
 
 ---
 
@@ -178,13 +445,13 @@ When you use `ngxVestForm`, the `novalidate` attribute is **automatically added*
 
 **How?**
 
-- You do **not** need to add `novalidate` manually. The directive does this for you:
+You do **not** need to add `novalidate` manually. The directive does this for you:
 
-  ```html
-  <form ngxVestForm ...>
-    <!-- ... -->
-  </form>
-  ```
+```html
+<form ngxVestForm [vestSuite]="mySuite" [(formValue)]="model">
+  <!-- ... -->
+</form>
+```
 
 Renders as:
 
@@ -196,294 +463,6 @@ Renders as:
 
 **Best Practice:**
 Define all validation rules (e.g., required, min/max, pattern) in your VestJS suite. Do **not** rely on native HTML5 validation attributes, as they will be ignored by the browser when `novalidate` is present.
-
----
-
-## Installation
-
-```sh
-npm i ngx-vest-forms
-```
-
----
-
-## Quick Start: Idiomatic Usage
-
-### 1. Define Your Model and (Optional) Schema
-
-```typescript
-import { signal } from '@angular/core';
-import { ngxModelToStandardSchema } from 'ngx-vest-forms';
-
-const userModel = { name: '', email: '' };
-const userSchema = ngxModelToStandardSchema(userModel); // Or use Zod/ArkType/Valibot
-```
-
-### 2. Create a Vest Validation Suite
-
-```typescript
-import { staticSuite, test, enforce } from 'vest';
-
-const userSuite = staticSuite((data = {}, field?: string) => {
-  test('name', 'Name is required', () => enforce(data.name).isNotEmpty());
-  test('email', 'Email is required', () => enforce(data.email).isNotEmpty());
-});
-```
-
-### 3. Use in a Standalone Angular Component
-
-```typescript
-import { Component } from '@angular/core';
-import { ngxVestForms } from 'ngx-vest-forms';
-
-@Component({
-  standalone: true,
-  imports: [ngxVestForms],
-  template: `
-    <form
-      ngxVestForm
-      [vestSuite]="suite"
-      [(formValue)]="model"
-      [formSchema]="schema"
-      #vestForm="ngxVestForm"
-    >
-      <ngx-control-wrapper>
-        <label>Name: <input name="name" [(ngModel)]="model().name" /></label>
-      </ngx-control-wrapper>
-      <ngx-control-wrapper>
-        <label>Email: <input name="email" [(ngModel)]="model().email" /></label>
-      </ngx-control-wrapper>
-      <button
-        type="submit"
-        [disabled]="
-          vestForm.formState().pending || vestForm.formState().invalid
-        "
-      >
-        Submit
-      </button>
-    </form>
-  `,
-})
-export class UserFormComponent {
-  protected readonly model = signal(userModel);
-  protected readonly schema = userSchema;
-  protected readonly suite = userSuite;
-}
-```
-
----
-
-## Best Practices (v2+)
-
-- **Always use `<ngx-control-wrapper>` or `[ngxControlWrapper]`** for every input or group. This handles error display, accessibility, and pending state automatically.
-- **Error display modes are now: 'on-blur', 'on-submit', 'on-blur-or-submit'** (was: 'touch', 'submit', 'touchOrSubmit').
-- **Error display logic is now aware of the control's `ngModelOptions.updateOn` value** for correct timing. If `updateOn: 'submit'`, errors only show after submit, regardless of display mode.
-- **Warning:** If you set `errorDisplayMode` to `'on-blur'` or `'on-blur-or-submit'` but use `ngModelOptions.updateOn: 'submit'`, errors will only show after submit. A warning is logged in development mode to help you catch this configuration issue.
-- **Use `[(formValue)]` two-way binding** for your form model (a signal or store property). Remove all `[formValue]`/`(formValueChange)` patterns unless you need unidirectional data flow.
-- **Use signals and `computed()`** for all form state and derived UI logic.
-- **Use the new Angular control flow** (`@if`, `@for`, `@defer`) in templates.
-- **Never manually display field errors**—let the control wrapper handle it.
-- **Use `[validateRootForm]="true"` when you need root-level (cross-field) validation.**
-- **Provide a `[formSchema]`** for type safety and IDE support, especially for complex/nested forms.
-- **Use `[validationConfig]`** for cross-field dependencies (e.g., confirm password, cyclic dependencies).
-- **Remove all deprecated patterns** (old signals, `[formShape]`, manual error markup, etc.).
-- **Keep validation suites in separate files** for clarity and reusability.
-- \*\*Document unique capabilities in each example.
-
----
-
-## Root-Level Form Validation with `validateRootForm`
-
-The `[validateRootForm]` directive, when applied to your `<form ngxVestForm ...>`, enables validations that pertain to the form as a whole, rather than individual fields. This is useful for scenarios requiring cross-field validation or conditions that depend on multiple form values.
-
-By default, `[validateRootForm]` is `false`. If you need root-level validation, you can set it to `true`:
-`<form ngxVestForm [vestSuite]="mySuite" [(formValue)]="model" [validateRootForm]="true">`.
-
-### How it Works
-
-1.  **Define Root Validations in Your Vest Suite:**
-    In your Vest suite, you target these form-level validations using a special key. By default, this key is `'rootForm'`. You can customize this key by providing a different value for the `NGX_ROOT_FORM` injection token. The `injectNgxRootFormKey()` utility function can be used to access the current root form key if needed.
-
-    ```typescript
-    // my-suite.ts
-    import {
-      staticSuite,
-      test,
-      enforce,
-      only,
-      injectNgxRootFormKey,
-    } from 'vest';
-
-    export const mySuite = staticSuite(
-      (data: MyFormModel = {}, field?: string) => {
-        const rootFormKey = injectNgxRootFormKey(); // Defaults to 'rootForm'
-        only(field); // Important for performance
-
-        test('name', 'Name is required.', () => {
-          enforce(data.name).isNotEmpty();
-        });
-
-        test('email', 'A valid email is required.', () => {
-          enforce(data.email).isEmail();
-        });
-
-        // Example Root Validation
-        test(rootFormKey, 'Either a name or an email must be provided.', () => {
-          enforce(data.name || data.email).isTruthy();
-        });
-
-        test(rootFormKey, 'If age is under 18, consent must be given.', () => {
-          omitWhen(!data.age || data.age >= 18, () => {
-            enforce(data.consent).isTruthy();
-          });
-        });
-      },
-    );
-    ```
-
-2.  **Accessing Root Issues:**
-    Root-level errors, warnings, and internal Vest suite errors (if any occur during root validation) are exposed through the `formState().root` signal on the `ngxVestForm` directive.
-
-    ```typescript
-    // my-component.ts
-    import { Component, viewChild, signal } from '@angular/core';
-    import { NgxFormDirective, NgxFormState } from 'ngx-vest-forms';
-    import { mySuite } from './my-suite';
-
-    @Component({
-      // ...
-    })
-    export class MyFormComponent {
-      protected readonly suite = mySuite;
-      protected model = signal({
-        name: '',
-        email: '',
-        age: null,
-        consent: false,
-      });
-      protected vestForm = viewChild.required(
-        NgxFormDirective<typeof this.model>,
-      );
-
-      // Access root issues:
-      // const formState = this.vestForm().formState();
-      // const rootIssues = formState.root;
-      // const rootErrors = rootIssues?.errors;
-      // const rootWarnings = rootIssues?.warnings;
-      // const internalError = rootIssues?.internalError;
-    }
-    ```
-
-    In your template:
-
-    ```html
-    <form
-      ngxVestForm
-      #formRef="ngxVestForm"
-      [vestSuite]="suite"
-      [(formValue)]="model"
-    >
-      <!-- fields -->
-
-      @if (formRef.formState().root?.errors; as rootErrors) {
-      <div class="text-red-500">
-        <h4>Form Errors:</h4>
-        <ul>
-          @for (error of rootErrors; track error) {
-          <li>{{ error }}</li>
-          }
-        </ul>
-      </div>
-      } @if (formRef.formState().root?.warnings; as rootWarnings) {
-      <div class="text-yellow-500">
-        <h4>Form Warnings:</h4>
-        <ul>
-          @for (warning of rootWarnings; track warning) {
-          <li>{{ warning }}</li>
-          }
-        </ul>
-      </div>
-      } @if (formRef.formState().root?.internalError; as internalError) {
-      <div class="text-red-700">
-        <p>
-          A system error occurred during form validation: {{ internalError }}
-        </p>
-      </div>
-      }
-    </form>
-    ```
-
-### When to Use `validateRootForm`
-
-- **Cross-Field Dependencies:** When the validity of one field depends on another (e.g., "password" and "confirm password" must match, but this is often better handled at the field level for `confirmPassword` with `equals(data.password)`. A better root example: "If 'country' is 'USA', 'state' is required."
-- **Conditional Form-Wide Rules:** "If 'subscribeToNewsletter' is true, then 'email' must be provided and valid." (Though 'email' validation itself is a field validation, the _requirement_ based on another field can be a root validation).
-- **Overall Form State Checks:** "At least one contact method (phone or email) must be provided."
-- **Business Rules Involving Multiple Fields:** "If 'userType' is 'admin', then 'department' cannot be 'support'."
-
-The `validateRootForm` directive and the corresponding `formState().root` provide a structured way to handle these complex, form-wide validation scenarios.
-
----
-
-## Example: Advanced Form with Schema and Cross-Field Validation
-
-```typescript
-import { Component, signal } from '@angular/core';
-import { ngxVestForms, ngxModelToStandardSchema } from 'ngx-vest-forms';
-import { staticSuite, test, enforce } from 'vest';
-
-const purchaseTemplate = {
-  amount: null,
-  description: '',
-};
-const purchaseSchema = ngxModelToStandardSchema(purchaseTemplate);
-const purchaseSuite = staticSuite((data = {}, field?: string) => {
-  test('amount', 'Amount is required', () => enforce(data.amount).isNotEmpty());
-  test('description', 'Description is required', () =>
-    enforce(data.description).isNotEmpty(),
-  );
-  // Cross-field: amount required if description is not empty, etc.
-});
-
-@Component({
-  standalone: true,
-  imports: [ngxVestForms],
-  template: `
-    <form
-      ngxVestForm
-      [vestSuite]="suite"
-      [(formValue)]="model"
-      [formSchema]="schema"
-      #vestForm="ngxVestForm"
-    >
-      <ngx-control-wrapper>
-        <label
-          >Amount: <input name="amount" [(ngModel)]="model().amount"
-        /></label>
-      </ngx-control-wrapper>
-      <ngx-control-wrapper>
-        <label
-          >Description:
-          <input name="description" [(ngModel)]="model().description"
-        /></label>
-      </ngx-control-wrapper>
-      <button
-        type="submit"
-        [disabled]="
-          vestForm.formState().pending || vestForm.formState().invalid
-        "
-      >
-        Submit
-      </button>
-      <pre>{{ vestForm.formState() | json }}</pre>
-    </form>
-  `,
-})
-export class PurchaseFormComponent {
-  protected readonly model = signal(purchaseTemplate);
-  protected readonly schema = purchaseSchema;
-  protected readonly suite = purchaseSuite;
-}
-```
 
 ---
 
@@ -507,7 +486,7 @@ export class PurchaseFormComponent {
 
 | Your Situation                | Recommended Reading                                                                                                                   |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 🆕 **New to ngx-vest-forms**  | Start with [Installation](#installation) and [Quick Start](#quick-start-idiomatic-usage)                                              |
+| 🆕 **New to ngx-vest-forms**  | Start with [Installation](#installation) and [Quick Start](#core-features--quick-start)                                               |
 | ⬆️ **Upgrading from v1.x**    | [Migration Guide](./docs/MIGRATION_GUIDE_V2.md) → [Changes Overview](./docs/CHANGES_OVERVIEW.md)                                      |
 | 🔧 **Need advanced features** | [Smart State Guide](./docs/smart-state-management.md) or [Control Wrapper Guide](./projects/ngx-vest-forms/control-wrapper/README.md) |
 | 📊 **Want type safety**       | [Schema Utilities Guide](./projects/ngx-vest-forms/schemas/README.md)                                                                 |
