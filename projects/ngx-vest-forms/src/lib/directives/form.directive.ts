@@ -1,4 +1,5 @@
 import {
+  afterRenderEffect,
   computed,
   DestroyRef,
   Directive,
@@ -8,6 +9,7 @@ import {
   input,
   isDevMode,
   model,
+  untracked,
 } from '@angular/core';
 import {
   takeUntilDestroyed,
@@ -307,12 +309,15 @@ export class NgxFormDirective<
   readonly errors = computed(() => this.formState().errors); // Update deprecated errors to reflect new structure
 
   /// --- EFFECTS ---
+  // Form value synchronization effect - syncs internal form value with external model
+  // This is a legitimate use case for effect() as it's a side effect (updating the model signal)
   // eslint-disable-next-line no-unused-private-class-members -- This is a private effect
   readonly #formValueSyncEffect = effect(() => {
     const currentValue = this.#formValueSignal();
 
+    // Use untracked for logging to avoid creating unnecessary dependencies
     if (isDevMode()) {
-      this.#logFormValueChanges(currentValue);
+      untracked(() => this.#logFormValueChanges(currentValue));
     }
 
     // Coalesce undefined to null because formValue model is TModel | null
@@ -320,20 +325,40 @@ export class NgxFormDirective<
   });
 
   /**
-   * Cleanup effect to clear validator cache when the directive is destroyed.
+   * Enhanced cleanup effect using proper effect cleanup patterns
+   * This ensures validator cache is cleared appropriately
    */
   // eslint-disable-next-line no-unused-private-class-members
   readonly #cleanupEffect = effect((onCleanup) => {
-    this.#validationContext(); // Ensure effect re-runs if context changes
+    // Track validation context to re-run when it changes
+    const context = this.#validationContext();
+
     onCleanup(() => {
+      if (isDevMode()) {
+        console.log(
+          '[NgxFormDirective] Cleaning up validator cache due to context change or directive destruction',
+        );
+      }
       this.#clearValidatorCache();
     });
   });
 
   constructor() {
-    // Moved from afterEveryRender for one-time setup
+    // Setup validation configuration streams
     this.#setupValidationConfigStreams();
     this.#setupFormSubmitListener();
+
+    // Use afterRenderEffect for DOM-dependent initialization
+    // This ensures the form is fully rendered before we start validation setup
+    afterRenderEffect(() => {
+      // Ensure form is properly initialized after render
+      if (this.ngForm.form && isDevMode()) {
+        console.log('[NgxFormDirective] Form initialized after render', {
+          status: this.ngForm.form.status,
+          hasControls: Object.keys(this.ngForm.form.controls).length > 0,
+        });
+      }
+    });
   }
 
   // afterEveryRender() hook removed as setup logic is now in constructor
@@ -511,16 +536,29 @@ export class NgxFormDirective<
                       }
                     }
 
+                    // Use untracked for debug logging to avoid creating dependencies
+                    if (isDevMode()) {
+                      untracked(() => {
+                        console.log(
+                          `[NgxFormDirective] Field '${field}' validation result:`,
+                          { errors, warnings, validationOutput },
+                        );
+                      });
+                    }
+
                     observer.next(validationOutput);
                     observer.complete();
                   },
                 );
               } catch (error) {
+                // Use untracked for error logging to avoid creating dependencies
                 if (isDevMode()) {
-                  console.error(
-                    `[NgxFormDirective] Error during Vest suite execution for field '${field}':`,
-                    error,
-                  );
+                  untracked(() => {
+                    console.error(
+                      `[NgxFormDirective] Error during Vest suite execution for field '${field}':`,
+                      error,
+                    );
+                  });
                 }
                 observer.next({
                   vestInternalError: `Vest suite execution failed for field '${field}'.`,
@@ -533,10 +571,12 @@ export class NgxFormDirective<
         ),
         catchError((error) => {
           if (isDevMode()) {
-            console.error(
-              `[NgxFormDirective] Validation stream error for field '${field}':`,
-              error,
-            );
+            untracked(() => {
+              console.error(
+                `[NgxFormDirective] Validation stream error for field '${field}':`,
+                error,
+              );
+            });
           }
           return of({
             vestInternalError: `Validation failed for field '${field}'.`,
@@ -569,7 +609,8 @@ export class NgxFormDirective<
       // Trigger validation with the new model
       fieldValidatorContext.modelChanges$.next(modelSnapshot as TModel);
 
-      return fieldValidatorContext.stream$;
+      // Return the stream and ensure it completes properly using take(1)
+      return fieldValidatorContext.stream$.pipe(take(1));
     };
   }
 

@@ -12,16 +12,17 @@ import {
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import type { NgxVestSuite } from 'ngx-vest-forms';
 import { injectNgxRootFormKey, ngxVestForms } from 'ngx-vest-forms';
+import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 import type { InferSchemaType } from 'ngx-vest-forms/schemas';
 import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
 import { NgxFormDirective } from 'projects/ngx-vest-forms/src/public-api';
 import { debounceTime, filter, finalize, switchMap } from 'rxjs';
-import { LukeService } from '../services/luke.service';
-import { ProductService } from '../services/product.service';
-import { SwapiService } from '../services/swapi.service';
-import { AddressComponent } from '../ui/address/address.component';
-import { AddressModel } from '../ui/address/address.model';
-import { PhoneNumbersComponent } from '../ui/phone-numbers/phone-numbers.component';
+import { LukeService } from '../../services/luke.service';
+import { ProductService } from '../../services/product.service';
+import { SwapiService } from '../../services/swapi.service';
+import { AddressComponent } from '../../ui/address/address.component';
+import { AddressModel } from '../../ui/address/address.model';
+import { PhoneNumbersComponent } from '../../ui/phone-numbers/phone-numbers.component';
 import { initialPurchaseFormData } from './purchase-form.model';
 import { createPurchaseValidationSuite } from './purchase.validations';
 
@@ -33,7 +34,13 @@ type PurchaseFormModel = InferSchemaType<typeof purchaseFormSchema>;
 
 @Component({
   selector: 'ngx-purchase-form',
-  imports: [JsonPipe, ngxVestForms, AddressComponent, PhoneNumbersComponent],
+  imports: [
+    JsonPipe,
+    ngxVestForms,
+    AddressComponent,
+    PhoneNumbersComponent,
+    NgxControlWrapper,
+  ],
   templateUrl: './purchase-form.component.html',
   styleUrls: ['./purchase-form.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

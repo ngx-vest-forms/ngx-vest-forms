@@ -126,30 +126,28 @@
       </div>
     }
 
-    <div class="sm:col-span-2" ngxControlWrapper>
-      <label>
-        <span>User id</span>
-        <input
-          placeholder="Type user id"
-          type="text"
-          [validationOptions]="{ debounceTime: 500 }"
-          [ngModel]="vm.formValue().userId"
-          name="userId"
-        />
-      </label>
-    </div>
-    <div class="w-full" ngxControlWrapper #firstNameWrapper>
-      <label>
-        <span>First name</span>
-        <input
-          placeholder="Type your first name"
-          type="text"
-          [ngModel]="vm.formValue().firstName"
-          name="firstName"
-          #firstNameControl="ngModel"
-        />
-      </label>
-    </div>
+    <ngx-control-wrapper class="sm:col-span-2">
+      <label for="userId">User id</label>
+      <input
+        id="userId"
+        placeholder="Type user id"
+        type="text"
+        [validationOptions]="{ debounceTime: 500 }"
+        [ngModel]="vm.formValue().userId"
+        name="userId"
+      />
+    </ngx-control-wrapper>
+    <ngx-control-wrapper class="w-full" #firstNameWrapper>
+      <label for="firstName">First name</label>
+      <input
+        id="firstName"
+        placeholder="Type your first name"
+        type="text"
+        [ngModel]="vm.formValue().firstName"
+        name="firstName"
+        #firstNameControl="ngModel"
+      />
+    </ngx-control-wrapper>
 
     <!-- Debug for firstName control -->
     <div class="mt-1 bg-gray-100 p-1 text-xs">
@@ -163,47 +161,44 @@
         {{ firstNameControl.errors | json }}
       </div>
     </div>
-    <div class="w-full" ngxControlWrapper>
-      <label>
-        <span>Last name</span>
-        <input
-          placeholder="Type your last name"
-          type="text"
-          [ngModel]="vm.formValue().lastName"
-          name="lastName"
-        />
-      </label>
-    </div>
-    <div class="w-full" ngxControlWrapper>
-      <label>
-        <span>Age</span>
-        <input
-          placeholder="Choose your age"
-          type="number"
-          [ngModel]="vm.formValue().age"
-          name="age"
-        />
-      </label>
-    </div>
-    <div class="w-full" ngxControlWrapper>
-      <label>
-        <span>Emergency contact</span>
-        <input
-          placeholder="Type your emergency contact"
-          type="text"
-          [disabled]="vm.emergencyContactDisabled"
-          [ngModel]="vm.formValue().emergencyContact"
-          name="emergencyContact"
-        />
-      </label>
-    </div>
-    <div class="sm:col-span-2" ngxControlWrapper ngModelGroup="phoneNumbers">
+    <ngx-control-wrapper class="w-full">
+      <label for="lastName">Last name</label>
+      <input
+        id="lastName"
+        placeholder="Type your last name"
+        type="text"
+        [ngModel]="vm.formValue().lastName"
+        name="lastName"
+      />
+    </ngx-control-wrapper>
+    <ngx-control-wrapper class="w-full">
+      <label for="age">Age</label>
+      <input
+        id="age"
+        placeholder="Choose your age"
+        type="number"
+        [ngModel]="vm.formValue().age"
+        name="age"
+      />
+    </ngx-control-wrapper>
+    <ngx-control-wrapper class="w-full">
+      <label for="emergencyContact">Emergency contact</label>
+      <input
+        id="emergencyContact"
+        placeholder="Type your emergency contact"
+        type="text"
+        [disabled]="vm.emergencyContactDisabled"
+        [ngModel]="vm.formValue().emergencyContact"
+        name="emergencyContact"
+      />
+    </ngx-control-wrapper>
+    <ngx-control-wrapper class="sm:col-span-2" ngModelGroup="phoneNumbers">
       <ngx-phone-numbers [values]="vm.formValue().phoneNumbers.values" />
-    </div>
+    </ngx-control-wrapper>
     <div
       class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800 sm:col-span-2"
     >
-      <div class="" ngxControlWrapper>
+      <ngx-control-wrapper>
         <span>Gender</span>
         <div class="flex">
           <div class="radio-button mr-4">
@@ -237,95 +232,98 @@
             <label for="gender-other">Other</label>
           </div>
         </div>
-      </div>
+      </ngx-control-wrapper>
       @if (vm.showGenderOther) {
-        <div class="sm:col-span-2" ngxControlWrapper>
-          <label>
-            <span>Specify gender</span>
-            <input
-              type="text"
-              [ngModel]="vm.formValue().genderOther"
-              name="genderOther"
-            />
-          </label>
-        </div>
+        <ngx-control-wrapper class="sm:col-span-2">
+          <label for="genderOther">Specify gender</label>
+          <input
+            id="genderOther"
+            type="text"
+            [ngModel]="vm.formValue().genderOther"
+            name="genderOther"
+          />
+        </ngx-control-wrapper>
       }
     </div>
 
-    <div class="sm:col-span-2" ngxControlWrapper ngModelGroup="passwords">
+    <ngx-control-wrapper class="sm:col-span-2" ngModelGroup="passwords">
       <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
-        <div class="w-full" ngxControlWrapper>
-          <label>
-            <span>Password</span>
-            <input
-              placeholder="Type password"
-              type="password"
-              [ngModel]="vm.formValue().passwords.password"
-              name="password"
-              #passwordControl="ngModel"
-            />
-          </label>
+        <ngx-control-wrapper class="w-full">
+          <label for="password">Password</label>
+          <input
+            id="password"
+            placeholder="Type password"
+            type="password"
+            [ngModel]="vm.formValue().passwords.password"
+            name="password"
+            #passwordControl="ngModel"
+          />
           <!-- Debug for password control -->
           <div class="mt-1 bg-gray-100 p-1 text-xs">
             <div>Valid: {{ passwordControl.valid }}</div>
             <div>Touched: {{ passwordControl.touched }}</div>
             <div>Dirty: {{ passwordControl.dirty }}</div>
           </div>
-        </div>
-        <div class="w-full" ngxControlWrapper>
-          <label>
-            <span>Confirm</span>
-            <input
-              placeholder="Confirm password"
-              type="password"
-              [ngModel]="vm.formValue().passwords.confirmPassword"
-              name="confirmPassword"
-              #confirmPasswordControl="ngModel"
-            />
-          </label>
+        </ngx-control-wrapper>
+        <ngx-control-wrapper class="w-full">
+          <label for="confirmPassword">Confirm</label>
+          <input
+            id="confirmPassword"
+            placeholder="Confirm password"
+            type="password"
+            [ngModel]="vm.formValue().passwords.confirmPassword"
+            name="confirmPassword"
+            #confirmPasswordControl="ngModel"
+          />
           <!-- Debug for confirm password control -->
           <div class="mt-1 bg-gray-100 p-1 text-xs">
             <div>Valid: {{ confirmPasswordControl.valid }}</div>
             <div>Touched: {{ confirmPasswordControl.touched }}</div>
             <div>Dirty: {{ confirmPasswordControl.dirty }}</div>
           </div>
-        </div>
+        </ngx-control-wrapper>
       </div>
-    </div>
-    <div class="sm:col-span-2" ngxControlWrapper>
-      <label>
-        <span>Product</span>
-        <select name="productId" [ngModel]="vm.formValue().productId">
-          @for (product of products(); track product.id) {
-            <option [value]="product.id">{{ product.name }}</option>
-          }
-        </select>
-      </label>
-    </div>
-    <div class="sm:col-span-2" ngxControlWrapper ngModelGroup="addresses">
-      <div ngxControlWrapper ngModelGroup="billingAddress">
+    </ngx-control-wrapper>
+    <ngx-control-wrapper class="sm:col-span-2">
+      <label for="productId">Product</label>
+      <select
+        id="productId"
+        name="productId"
+        [ngModel]="vm.formValue().productId"
+      >
+        @for (product of products(); track product.id) {
+          <option [value]="product.id">{{ product.name }}</option>
+        }
+      </select>
+    </ngx-control-wrapper>
+    <ngx-control-wrapper class="sm:col-span-2" ngModelGroup="addresses">
+      <ngx-control-wrapper ngModelGroup="billingAddress">
         <h3 class="text-2xl">Billing address</h3>
         <ngx-address
           [address]="vm.formValue().addresses.billingAddress"
         ></ngx-address>
-      </div>
-      <label ngxControlWrapper>
-        <span>Shipping address is different from billing address</span>
-        <input
-          type="checkbox"
-          [ngModel]="
-            vm.formValue().addresses.shippingAddressDifferentFromBillingAddress
-          "
-          name="shippingAddressDifferentFromBillingAddress"
-        />
-      </label>
+      </ngx-control-wrapper>
+      <ngx-control-wrapper>
+        <label for="shippingAddressDifferentFromBillingAddress">
+          <input
+            id="shippingAddressDifferentFromBillingAddress"
+            type="checkbox"
+            [ngModel]="
+              vm.formValue().addresses
+                .shippingAddressDifferentFromBillingAddress
+            "
+            name="shippingAddressDifferentFromBillingAddress"
+          />
+          <span>Shipping address is different from billing address</span>
+        </label>
+      </ngx-control-wrapper>
       @if (vm.showShippingAddress) {
-        <div ngxControlWrapper ngModelGroup="shippingAddress">
+        <ngx-control-wrapper ngModelGroup="shippingAddress">
           <h3 class="text-2xl">Shipping Address</h3>
           <ngx-address [address]="vm.shippingAddress"></ngx-address>
-        </div>
+        </ngx-control-wrapper>
       }
-    </div>
+    </ngx-control-wrapper>
     <div class="flex gap-4">
       <button type="button" (click)="resetForm()">Reset</button>
       <button type="submit" [disabled]="!vestForm.formState().valid">

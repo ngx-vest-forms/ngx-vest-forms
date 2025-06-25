@@ -13,7 +13,7 @@ export class SimpleFormComponent {
   /**
    * Signal holding the form value. Used for two-way binding with [(formValue)].
    */
-  protected readonly formValue = signal({ email: '' });
+  protected readonly formValue = signal({ email: '', email2: '' });
 
   /**
    * Vest validation suite for the form.

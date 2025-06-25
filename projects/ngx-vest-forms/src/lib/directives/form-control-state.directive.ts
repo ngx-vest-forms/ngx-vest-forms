@@ -3,7 +3,9 @@ import {
   Signal,
   computed,
   contentChild,
+  effect,
   inject,
+  signal,
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import {
@@ -11,7 +13,7 @@ import {
   NgModel,
   NgModelGroup,
 } from '@angular/forms';
-import { of } from 'rxjs';
+import { merge, of } from 'rxjs';
 import { map, startWith, switchMap } from 'rxjs/operators';
 
 /**
@@ -140,61 +142,122 @@ export class NgxFormControlStateDirective {
   );
 
   /**
-   * Raw control state using toSignal for Observable -> Signal conversion
-   * This provides the foundation for the enhanced linkedSignal state
+   * Signal to track touched/dirty state separately since these don't emit through observables
    */
-  readonly #rawControlState = toSignal(
+  readonly #interactionState = signal({
+    isTouched: false,
+    isDirty: false,
+  });
+
+  constructor() {
+    // Effect to track touched/dirty state changes that Angular doesn't emit through observables
+    // Use a more robust approach with timer to ensure we capture all state changes
+    effect((onCleanup) => {
+      const control = this.#activeControl();
+      if (control) {
+        // Check state immediately
+        this.#interactionState.set({
+          isTouched: control.touched ?? false,
+          isDirty: control.dirty ?? false,
+        });
+
+        // Set up periodic checking to catch state changes that don't emit through observables
+        const intervalId = setInterval(() => {
+          const currentTouched = control.touched ?? false;
+          const currentDirty = control.dirty ?? false;
+          const currentState = this.#interactionState();
+
+          if (
+            currentTouched !== currentState.isTouched ||
+            currentDirty !== currentState.isDirty
+          ) {
+            this.#interactionState.set({
+              isTouched: currentTouched,
+              isDirty: currentDirty,
+            });
+          }
+        }, 50); // Check every 50ms
+
+        onCleanup(() => clearInterval(intervalId));
+      }
+    });
+  }
+
+  /**
+   * Enhanced control state using toSignal for reactive state management
+   *
+   * Angular v20 best practice: Use toSignal with proper observable streams
+   * for zoneless compatibility and optimal performance
+   */
+  readonly #controlStateSignal = toSignal(
     toObservable(this.#activeControl).pipe(
       switchMap((control) => {
-        if (control && control.statusChanges) {
-          return control.statusChanges.pipe(
-            startWith(control.status),
-            map(() => ({
-              status: control.status,
-              isValid: control.valid,
-              isInvalid: control.invalid,
-              isPending: control.pending,
-              isDisabled: control.disabled,
-              isTouched: control.touched,
-              isDirty: control.dirty,
-              isPristine: control.pristine,
-              errors: control.errors,
-            })),
+        if (control) {
+          // Combine multiple event streams to capture all state changes
+          const statusChanges$ = control.statusChanges || of(control.status);
+          const valueChanges$ = control.valueChanges || of(control.value);
+
+          return merge(statusChanges$, valueChanges$).pipe(
+            startWith(null), // Emit initial state immediately
+            map(() => this.#extractControlState(control)),
           );
         }
         return of(getInitialNgxFormControlState());
       }),
     ),
-    { initialValue: getInitialNgxFormControlState() },
+    {
+      initialValue: getInitialNgxFormControlState(),
+      requireSync: false, // Zoneless compatibility
+    },
   );
 
   /**
-   * Enhanced control state using computed for reactive state synchronization
+   * Extract control state - centralized for consistency
+   */
+  #extractControlState(control: AbstractControlDirective): NgxFormControlState {
+    return {
+      status: control.status,
+      isValid: control.valid,
+      isInvalid: control.invalid,
+      isPending: control.pending,
+      isDisabled: control.disabled,
+      isTouched: control.touched,
+      isDirty: control.dirty,
+      isPristine: control.pristine,
+      errors: control.errors,
+    };
+  }
+
+  /**
+   * Main control state computed signal - simplified and more reliable
    *
-   * Key improvements:
-   * - Uses computed for simpler, more reliable reactivity
-   * - Provides enhanced state properties for common use cases
-   * - Better timing and elimination of race conditions
-   * - Cleaner dependency tracking
+   * Angular v20 best practice: Use computed for derived state
    */
   readonly controlState = computed(() => {
-    const rawState = this.#rawControlState();
+    const baseState = this.#controlStateSignal();
+    const interactionState = this.#interactionState();
     const control = this.#activeControl();
 
-    // Enhanced state with additional derived properties
+    // Merge base state with more up-to-date interaction state
+    const mergedState = {
+      ...baseState,
+      isTouched: interactionState.isTouched || baseState.isTouched,
+      isDirty: interactionState.isDirty || baseState.isDirty,
+      isPristine: !(interactionState.isDirty || baseState.isDirty),
+    };
+
+    // Enhanced state with derived properties
     const hasErrors = !!(
-      rawState.errors && Object.keys(rawState.errors).length > 0
+      mergedState.errors && Object.keys(mergedState.errors).length > 0
     );
 
     return {
-      ...rawState,
-      // Add computed properties that depend on multiple state aspects
+      ...mergedState,
       hasErrors,
-      isValidTouched: rawState.isValid && rawState.isTouched,
-      isInvalidTouched: rawState.isInvalid && rawState.isTouched,
-      shouldShowErrors: (rawState.isInvalid && rawState.isTouched) || false,
-
-      // Add control reference for advanced use cases
+      isValidTouched: mergedState.isValid && mergedState.isTouched,
+      isInvalidTouched: mergedState.isInvalid && mergedState.isTouched,
+      shouldShowErrors:
+        (mergedState.isInvalid && mergedState.isTouched) || false,
       controlRef: control,
     } as NgxFormControlState & {
       hasErrors: boolean;
@@ -212,18 +275,38 @@ export class NgxFormControlStateDirective {
    * - Uses computed for purely derived state (no internal state to maintain)
    * - Better timing and elimination of race conditions
    * - More efficient updates when only errors change
+   * - Improved extraction of multiple Vest error messages
    */
   readonly errorMessages = computed(() => {
     const state = this.controlState();
 
-    // Extract Vest-specific error messages
-    const vestErrors = state.errors?.['errors'];
-    if (Array.isArray(vestErrors)) {
-      return vestErrors;
+    if (!state.errors) {
+      return [];
     }
 
-    // Fallback to standard Angular error messages
-    if (state.errors && Object.keys(state.errors).length > 0) {
+    // Extract Vest-specific error messages - check all possible locations
+    const allErrors: string[] = [];
+
+    // 1. Direct errors array property
+    const vestErrors = state.errors['errors'];
+    if (Array.isArray(vestErrors)) {
+      allErrors.push(...vestErrors);
+    }
+
+    // 2. Check for multiple field-specific error arrays (in case Vest structures differently)
+    for (const [key, value] of Object.entries(state.errors)) {
+      if (key !== 'errors' && key !== 'warnings' && Array.isArray(value)) {
+        allErrors.push(...value);
+      }
+    }
+
+    // 3. If we found Vest errors, return them
+    if (allErrors.length > 0) {
+      return allErrors;
+    }
+
+    // 4. Fallback to standard Angular error messages
+    if (Object.keys(state.errors).length > 0) {
       return Object.keys(state.errors).map((key) => {
         const errorValue = state.errors?.[key];
         return typeof errorValue === 'string' ? errorValue : `${key} error`;
@@ -240,10 +323,38 @@ export class NgxFormControlStateDirective {
   readonly warningMessages = computed(() => {
     const state = this.controlState();
 
-    // Extract Vest-specific warning messages
-    const vestWarnings = state.errors?.['warnings'];
-    if (Array.isArray(vestWarnings)) {
-      return vestWarnings;
+    // Extract Vest-specific warning messages from multiple possible locations
+    // 1. Direct warnings property
+    const directWarnings = state.errors?.['warnings'];
+    if (Array.isArray(directWarnings)) {
+      return directWarnings;
+    }
+
+    // 2. Warnings attached to error arrays (non-enumerable)
+    const errorsArray = state.errors?.['errors'];
+    if (Array.isArray(errorsArray)) {
+      const warningsProperty = Object.getOwnPropertyDescriptor(
+        errorsArray,
+        'warnings',
+      );
+      if (warningsProperty && Array.isArray(warningsProperty.value)) {
+        return warningsProperty.value;
+      }
+    }
+
+    // 3. Check if there's an empty errors array but with warnings attached
+    if (state.errors && Object.keys(state.errors).length > 0) {
+      for (const value of Object.values(state.errors)) {
+        if (Array.isArray(value)) {
+          const warningsProperty = Object.getOwnPropertyDescriptor(
+            value,
+            'warnings',
+          );
+          if (warningsProperty && Array.isArray(warningsProperty.value)) {
+            return warningsProperty.value;
+          }
+        }
+      }
     }
 
     return [];

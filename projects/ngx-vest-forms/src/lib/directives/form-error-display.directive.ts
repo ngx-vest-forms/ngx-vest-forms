@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NgForm } from '@angular/forms';
-import { of } from 'rxjs';
+import { map, of, startWith } from 'rxjs';
 import {
   NGX_ERROR_DISPLAY_MODE_DEFAULT,
   NgxErrorDisplayMode,
@@ -86,7 +86,10 @@ export class NgxFormErrorDisplayDirective {
 
   // Signal that becomes true after the form is submitted
   readonly formSubmitted = toSignal(
-    this.#ngForm?.ngSubmit?.asObservable() ?? of(false),
+    this.#ngForm?.ngSubmit?.asObservable()?.pipe(
+      map(() => true),
+      startWith(false),
+    ) ?? of(false),
     { initialValue: false },
   );
 
