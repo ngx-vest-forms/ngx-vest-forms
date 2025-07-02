@@ -1,4 +1,4 @@
-import { staticSuite, only, test, enforce, warn } from 'vest';
+import { enforce, only, staticSuite, test, warn } from 'vest';
 
 // Test validation suite
 export const createTestValidationSuite = staticSuite(

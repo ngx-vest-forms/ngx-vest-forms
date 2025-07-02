@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { ApplicationRef, Component, inject, Signal, viewChild } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
-import { FormsModule, NgModel, NgModelGroup } from '@angular/forms';
-import { describe, expect, test } from 'vitest';
-import { render, screen } from '@testing-library/angular';
-import {
-  NgxFormControlStateDirective,
-  getInitialNgxFormControlState,
-} from './form-control-state.directive';
-import { userEvent } from '@vitest/browser/context';
 import { JsonPipe } from '@angular/common';
+import { ApplicationRef, Component, inject } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+import { render, screen } from '@testing-library/angular';
+import { userEvent } from '@vitest/browser/context';
+import { describe, expect, test } from 'vitest';
+import {
+  getInitialNgxFormControlState,
+  NgxFormControlStateDirective,
+} from './form-control-state.directive';
 
 /**
  * A component with no form control, used to test the directive's behavior in isolation.
@@ -21,8 +21,12 @@ import { JsonPipe } from '@angular/common';
       <span data-testid="is-valid">{{ state.isValid() }}</span>
       <span data-testid="is-touched">{{ state.isTouched() }}</span>
       <span data-testid="has-errors">{{ state.hasErrors() }}</span>
-      <span data-testid="error-messages">{{ state.errorMessages().join(',') }}</span>
-      <span data-testid="warning-messages">{{ state.warningMessages().join(',') }}</span>
+      <span data-testid="error-messages">{{
+        state.errorMessages().join(',')
+      }}</span>
+      <span data-testid="warning-messages">{{
+        state.warningMessages().join(',')
+      }}</span>
     </div>
   `,
   imports: [NgxFormControlStateDirective],
@@ -42,7 +46,9 @@ class NoControlComponent {
       <span data-testid="is-valid">{{ state.isValid() }}</span>
       <span data-testid="is-touched">{{ state.isTouched() }}</span>
       <span data-testid="has-errors">{{ state.hasErrors() }}</span>
-      <span data-testid="error-messages">{{ state.errorMessages().join(',') }}</span>
+      <span data-testid="error-messages">{{
+        state.errorMessages().join(',')
+      }}</span>
     </div>
   `,
   standalone: true,
@@ -65,7 +71,9 @@ class ContentNgModelComponent {
         </div>
         <span data-testid="is-valid">{{ state.isValid() }}</span>
         <span data-testid="has-errors">{{ state.hasErrors() }}</span>
-        <span data-testid="error-messages">{{ state.errorMessages() | json }}</span>
+        <span data-testid="error-messages">{{
+          state.errorMessages() | json
+        }}</span>
       </div>
     </form>
   `,
