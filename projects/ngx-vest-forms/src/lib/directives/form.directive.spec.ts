@@ -10,7 +10,7 @@ import { FormsModule } from '@angular/forms';
 import { render, screen } from '@testing-library/angular';
 import { userEvent } from '@vitest/browser/context';
 import { enforce, only, staticSuite, test as vestTest } from 'vest';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
 import { ngxVestForms } from '../exports';
 import { NgxFormCompatibleDeepRequired } from '../utils/deep-required';
 
@@ -572,5 +572,40 @@ describe('NgxFormDirective', () => {
         'test@example.com',
       );
     });
+  });
+
+  // ==============================================================================
+  // ESSENTIAL DIRECTIVE-LEVEL TESTS
+  // ==============================================================================
+
+  describe('Core Input Handling', () => {
+    test.todo('should handle vestSuite input changes correctly');
+    test.todo('should handle validationConfig input changes');
+    test.todo('should handle validationOptions input changes');
+    test.todo('should handle null/undefined vestSuite gracefully');
+  });
+
+  describe('Form Value Synchronization', () => {
+    test.todo('should sync form values with model() two-way binding');
+    test.todo('should handle nested object form values');
+    test.todo('should handle null/undefined form values gracefully');
+  });
+
+  describe('Validation Integration', () => {
+    test.todo('should create field validators when vest suite is provided');
+    test.todo('should handle Vest suite execution errors gracefully');
+    test.todo('should cache field validators to avoid recreation');
+    test.todo('should clean up validation streams on destroy');
+  });
+
+  describe('Signal Management', () => {
+    test.todo('should update formState signals when form status changes');
+    test.todo('should update formState signals when form value changes');
+    test.todo('should dispose of reactive signals properly on destroy');
+  });
+
+  describe('Host Attributes', () => {
+    test.todo('should set novalidate attribute on form element');
+    test.todo('should prevent default HTML5 validation');
   });
 });

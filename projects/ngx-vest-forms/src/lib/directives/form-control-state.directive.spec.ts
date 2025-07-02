@@ -363,4 +363,38 @@ describe('NgxFormControlStateDirective', () => {
       },
     );
   });
+
+  // ==============================================================================
+  // ESSENTIAL DIRECTIVE-LEVEL TESTS
+  // ==============================================================================
+
+  describe('Control State Tracking', () => {
+    test.todo('should track control validity state changes');
+    test.todo('should track control touched state changes');
+    test.todo('should track control dirty state changes');
+    test.todo('should track control pending state changes');
+  });
+
+  describe('Error Message Processing', () => {
+    test.todo('should extract error messages from Vest validation results');
+    test.todo('should extract warning messages from Vest validation results');
+    test.todo('should handle empty or null validation results');
+  });
+
+  describe('Control Association', () => {
+    test.todo('should prefer host NgModel over content NgModel');
+    test.todo('should handle dynamic control addition/removal');
+    test.todo('should warn when no control is found');
+  });
+
+  describe('Signal Reactivity', () => {
+    test.todo('should update signals when control state changes');
+    test.todo('should update signals when validation results change');
+    test.todo('should maintain signal consistency during updates');
+  });
+
+  describe('Memory Management', () => {
+    test.todo('should clean up subscriptions on destroy');
+    test.todo('should dispose of signal observers correctly');
+  });
 });

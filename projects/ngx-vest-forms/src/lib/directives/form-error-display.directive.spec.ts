@@ -442,4 +442,45 @@ describe('NgxFormErrorDisplayDirective', () => {
   // TODO: Add test for error display with different updateOn modes
   // WHAT: Test error display timing with updateOn: 'change', 'blur', 'submit'
   // WHY: Ensures directive respects ngModelOptions.updateOn correctly
+
+  // ==============================================================================
+  // ADDITIONAL TEST SCAFFOLDING - Edge Cases and Error Scenarios
+  // ==============================================================================
+
+  // ==============================================================================
+  // ESSENTIAL DIRECTIVE-LEVEL TESTS
+  // ==============================================================================
+
+  describe('Error Display Mode Handling', () => {
+    it.todo('should handle malformed errorDisplayMode values gracefully');
+    it.todo('should handle rapid mode changes without memory leaks');
+  });
+
+  describe('Form Integration', () => {
+    it.todo(
+      'should work correctly when NgForm is not available (optional injection)',
+    );
+    it.todo(
+      'should handle cases where formSubmitted signal emits multiple times',
+    );
+  });
+
+  describe('Validation State Processing', () => {
+    it.todo('should handle async validation state changes correctly');
+    it.todo(
+      'should properly filter pending validation messages to prevent flickering',
+    );
+    it.todo('should handle cases where Vest suite returns empty results');
+  });
+
+  describe('Host Directive Usage', () => {
+    it.todo('should work as host directive with proper input forwarding');
+    it.todo(
+      'should properly expose all inherited properties from NgxFormControlStateDirective',
+    );
+  });
+
+  describe('Cleanup', () => {
+    it.todo('should properly clean up effect when component is destroyed');
+  });
 });

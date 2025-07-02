@@ -1,34 +1,51 @@
-import { describe, it } from 'vitest';
-// import { render } from '@testing-library/angular';
-// import { NgxFormModelDirective } from './form-model.directive';
+import { describe, test } from 'vitest';
 
 /**
  * Tests for NgxFormModelDirective
- * - Registers as async validator for ngModel
- * - Calls Vest suite for field-level validation
- * - Handles missing/null control gracefully
- * - Converts Promise to Observable if needed
- * - Returns correct validation errors for field
- * - Respects validationOptions input
+ *
+ * WHAT: Tests directive-specific behaviors that are not covered by E2E/integration tests
+ * WHY: Focus on edge cases, error handling, and Angular-specific integration points
+ *
+ * NOTE: Full integration scenarios are covered by:
+ * - E2E tests (Playwright)
+ * - Integration examples in projects/examples (profile-form, survey-form, etc.)
+ * - Component tests in consuming applications
+ *
+ * This test suite focuses on directive-level concerns only.
  */
 describe('NgxFormModelDirective', () => {
-  it('should register as async validator for ngModel', async () => {
-    // TODO: Implement test
+  describe('Dependency Injection & Provider Resolution', () => {
+    test.todo(
+      'should handle cases where NgxFormDirective is not available in DI context',
+    );
+    test.todo('should gracefully handle missing required providers');
   });
 
-  it('should call Vest suite for field-level validation', async () => {
-    // TODO: Implement test
+  describe('AsyncValidator Interface Implementation', () => {
+    test.todo('should properly register as async validator for ngModel');
+    test.todo(
+      'should convert Promise validation results to Observable correctly',
+    );
+    test.todo('should return null when validation passes');
+    test.todo('should return ValidationErrors object when validation fails');
   });
 
-  it('should handle missing/null control gracefully', async () => {
-    // TODO: Implement test
+  describe('Field Name Resolution', () => {
+    test.todo(
+      'should determine correct field name from ngModel name attribute',
+    );
+    test.todo('should handle cases where field name cannot be resolved');
+    test.todo('should handle nested field paths correctly');
   });
 
-  it('should convert Promise to Observable if needed', async () => {
-    // TODO: Implement test
+  describe('Vest Suite Integration', () => {
+    test.todo('should handle Vest suite execution errors gracefully');
+    test.todo('should handle cases where Vest suite is undefined');
+    test.todo('should pass correct field context to Vest suite');
   });
 
-  it('should respect validationOptions input', async () => {
-    // TODO: Implement test
+  describe('Lifecycle & Cleanup', () => {
+    test.todo('should clean up subscriptions on component destruction');
+    test.todo('should properly dispose of validation streams');
   });
 });

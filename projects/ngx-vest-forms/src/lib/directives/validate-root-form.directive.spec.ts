@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { render, screen } from '@testing-library/angular';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, test } from 'vitest';
 import { NgxFormDirective } from './form.directive';
 import { NgxValidateRootFormDirective } from './validate-root-form.directive';
 import type { NgxValidationOptions } from './validation-options';
@@ -381,5 +381,32 @@ describe('NgxValidateRootFormDirective', () => {
         // Test validation during form submission lifecycle
       },
     );
+  });
+
+  // ==============================================================================
+  // ESSENTIAL DIRECTIVE-LEVEL TESTS
+  // ==============================================================================
+
+  describe('Error Handling', () => {
+    test.todo(
+      'should handle malformed validateRootForm attribute values gracefully',
+    );
+    test.todo('should work correctly when NgxFormDirective is not available');
+    test.todo('should handle cases where Vest suite execution throws errors');
+  });
+
+  describe('Validation Stream Management', () => {
+    test.todo(
+      'should properly clean up validation stream on component destruction',
+    );
+    test.todo('should handle cases where validation stream creation fails');
+    test.todo(
+      'should maintain validation stream sharing across multiple calls',
+    );
+  });
+
+  describe('AsyncValidator Interface', () => {
+    test.todo('should properly implement AsyncValidator interface contract');
+    test.todo('should handle provider resolution errors gracefully');
   });
 });
