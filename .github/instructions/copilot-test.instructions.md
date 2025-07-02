@@ -7,6 +7,8 @@ applyTo: "projects/**/*.{spec,test}.{ts,tsx,js,jsx}"
 ## General Guidelines
 - Write all tests in TypeScript.
 - Use Vitest as the test runner.
+- Make sure to properly use ngx-vest-forms functionality in tests.
+- Do not make up tests for non-existent APIs or features.
 - Prefer user-facing behavior over implementation details.
 - Use strict typing and modern Angular best practices.
 - Prefer fakes over mocks.
