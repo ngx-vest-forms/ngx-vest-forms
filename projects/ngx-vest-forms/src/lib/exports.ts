@@ -73,10 +73,14 @@ export const ngxVestFormsViewProviders = [
  *
  * NgxValidateRootFormDirective is included for manual cross-field validation
  * when needed alongside the main form directives.
+ *
+ * __N.B.__:
+ * - This _also_ includes Angular's FormsModule, which is required for
+ * template-driven forms to work properly.
  */
 export const ngxVestForms = [
-  NgxFormDirective,
   FormsModule,
+  NgxFormDirective,
   NgxFormModelDirective,
   NgxFormModelGroupDirective,
   NgxFormControlStateDirective,
