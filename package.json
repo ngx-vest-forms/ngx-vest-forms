@@ -80,7 +80,7 @@
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.4",
     "wait-on": "^8.0.3",
-    "zod": "^3.25.67"
+    "zod": "^3.25.69"
   },
   "repository": {
     "type": "git",
