@@ -14,6 +14,10 @@ applyTo: "projects/**/*.{spec,test}.{ts,tsx,js,jsx}"
 - Prefer fakes over mocks.
 - Always await `TestBed.inject(ApplicationRef).whenStable()` for async Angular tests.
 - Write tests for actual, user-visible behavior only. Do not invent tests for APIs or code that do not exist.
+- Always start with analysis of the current code and, documentation, and intent.
+  - Based on that scaffold the tests and add pseudo-code/docs for the expected behavior, with WHAT and WHY.
+  - Start with the happy and simple paths, then add edge cases and error handling.
+  - Start with `test.todo()` or `test.fixme()` for complex tests that need more time to implement.
 
 ## Unit Testing (Vitest Node)
 - Use for pure functions, utilities, and services without Angular dependencies.
