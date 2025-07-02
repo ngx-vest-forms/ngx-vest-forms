@@ -39,14 +39,14 @@ export type NgxFormControlState = {
  */
 export function getInitialNgxFormControlState(): NgxFormControlState {
   return {
-    status: undefined,
-    isValid: undefined,
-    isInvalid: undefined,
-    isPending: undefined,
-    isDisabled: undefined,
-    isTouched: undefined,
-    isDirty: undefined,
-    isPristine: undefined,
+    status: 'INVALID',
+    isValid: false,
+    isInvalid: true,
+    isPending: false,
+    isDisabled: false,
+    isTouched: false,
+    isDirty: false,
+    isPristine: true,
     errors: null,
   };
 }
@@ -309,7 +309,7 @@ export class NgxFormControlStateDirective {
     if (Object.keys(state.errors).length > 0) {
       return Object.keys(state.errors).map((key) => {
         const errorValue = state.errors?.[key];
-        return typeof errorValue === 'string' ? errorValue : `${key} error`;
+        return typeof errorValue === 'string' ? errorValue : key;
       });
     }
 
