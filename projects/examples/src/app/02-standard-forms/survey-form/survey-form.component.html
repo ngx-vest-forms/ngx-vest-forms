@@ -155,27 +155,36 @@
 
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
           <ngx-control-wrapper>
-            <label
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Overall Rating (1-10) *
-              <div class="mt-2 flex items-center space-x-2">
+            <fieldset class="border-0 p-0">
+              <legend
+                class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Overall Rating (1-10) *
+              </legend>
+              <div class="flex items-center space-x-2">
                 @for (rating of ratingScale; track rating) {
-                  <button
-                    type="button"
-                    (click)="setOverallRating(rating)"
-                    [class]="
-                      formValue().overallRating === rating
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    "
-                    class="h-8 w-8 rounded text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {{ rating }}
-                  </button>
+                  <label class="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="overallRating"
+                      [value]="rating"
+                      ngModel
+                      class="sr-only"
+                    />
+                    <span
+                      [class]="
+                        formValue().overallRating === rating
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      "
+                      class="inline-flex h-8 w-8 items-center justify-center rounded text-sm font-medium focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500"
+                    >
+                      {{ rating }}
+                    </span>
+                  </label>
                 }
               </div>
-            </label>
+            </fieldset>
           </ngx-control-wrapper>
 
           <ngx-control-wrapper>
