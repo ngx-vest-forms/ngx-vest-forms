@@ -106,6 +106,7 @@ export function getInitialNgxFormControlState(): NgxFormControlState {
 @Directive({
   selector: '[ngxFormControlState]',
   exportAs: 'formControlState',
+  standalone: true,
 })
 export class NgxFormControlStateDirective {
   /**
@@ -229,6 +230,28 @@ export class NgxFormControlStateDirective {
   }
 
   /**
+   * Flattens a nested Angular errors object into a simple array of error keys.
+   * @param errors The Angular errors object.
+   * @returns A flat array of error keys (e.g., ['required', 'minlength']).
+   */
+  #flattenAngularErrors(errors: Record<string, unknown>): string[] {
+    const result: string[] = [];
+    for (const key of Object.keys(errors)) {
+      const value = errors[key];
+      // If the value is an object, it's a nested error from a child control/group.
+      if (typeof value === 'object' && value !== null) {
+        result.push(
+          ...this.#flattenAngularErrors(value as Record<string, unknown>),
+        );
+      } else {
+        // Otherwise, the key itself is the error name.
+        result.push(key);
+      }
+    }
+    return result;
+  }
+
+  /**
    * Main control state computed signal - simplified and more reliable
    *
    * Angular v20 best practice: Use computed for derived state
@@ -305,12 +328,9 @@ export class NgxFormControlStateDirective {
       return allErrors;
     }
 
-    // 4. Fallback to standard Angular error messages
+    // 4. Fallback to standard Angular error messages, now with flattening
     if (Object.keys(state.errors).length > 0) {
-      return Object.keys(state.errors).map((key) => {
-        const errorValue = state.errors?.[key];
-        return typeof errorValue === 'string' ? errorValue : key;
-      });
+      return this.#flattenAngularErrors(state.errors);
     }
 
     return [];
