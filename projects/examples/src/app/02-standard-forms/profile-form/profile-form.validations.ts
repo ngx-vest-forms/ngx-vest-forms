@@ -94,7 +94,7 @@ export const createProfileValidationSuite = () =>
         enforce(data.phone).isNotEmpty();
       });
       test('phone', 'Phone number must be valid', () => {
-        enforce(data.phone).matches(/^[\+]?[1-9][\d]{0,15}$/);
+        enforce(data.phone).matches(/^[+]?[1-9][\d]{0,15}$/);
       });
 
       test('dateOfBirth', 'Date of birth is required', () => {
