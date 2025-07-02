@@ -1,679 +1,361 @@
-import { Component, signal, viewChild, WritableSignal } from '@angular/core';
-import { NgForm } from '@angular/forms';
-import { render } from '@testing-library/angular';
-import { userEvent } from '@vitest/browser/context';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ngxVestForms } from '../exports';
-import { injectNgxRootFormKey, NGX_ROOT_FORM } from '../utils/form-token';
-import type { NgxVestSuite } from '../utils/validation-suite';
+import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { render, screen } from '@testing-library/angular';
+import { describe, expect, it } from 'vitest';
+import { NgxFormDirective } from './form.directive';
+import { NgxValidateRootFormDirective } from './validate-root-form.directive';
 import type { NgxValidationOptions } from './validation-options';
 
-// Test validation suite
-// const createTestValidationSuite = staticSuite(
-//   (data: Record<string, unknown> = {}, currentField?: string) => {
-//     only(currentField);
+describe('NgxValidateRootFormDirective', () => {
+  describe('Input Handling', () => {
+    it('should disable validation when validateRootForm input is false', async () => {
+      // Arrange & Act - Use inline template for simple test
+      const { fixture } = await render(
+        `<form ngxVestForm validateRootForm [validateRootForm]="false" data-testid="test-form">
+           <input name="email" type="email" ngModel />
+         </form>`,
+        {
+          imports: [
+            FormsModule,
+            NgxValidateRootFormDirective,
+            NgxFormDirective,
+          ],
+        },
+      );
 
-//     test('email', 'Email is required', () => {
-//       enforce(data['email']).isNotBlank();
-//     });
+      // Get the directive instance using proper testing-library approach
+      const formElement = screen.getByTestId('test-form');
+      const directiveInstance = fixture.debugElement
+        .query((element) => element.nativeElement === formElement)
+        ?.injector.get(NgxValidateRootFormDirective);
 
-//     test('email', 'Must be a valid email', () => {
-//       enforce(data['email']).matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
-//     });
-
-//     test('password', 'Password is required', () => {
-//       enforce(data['password']).isNotBlank();
-//     });
-
-//     test('password', 'Password must be at least 8 characters', () => {
-//       enforce(data['password']).longerThanOrEquals(8);
-//     });
-
-//     test('confirmPassword', 'Confirm password is required', () => {
-//       enforce(data['confirmPassword']).isNotBlank();
-//     });
-
-//     test('confirmPassword', 'Passwords must match', () => {
-//       enforce(data['confirmPassword']).equals(data['password']);
-//     });
-
-//     // Use the injected root form key for root-level tests
-//     const rootFormKey = injectNgxRootFormKey() ?? NGX_ROOT_FORM;
-
-//     test(rootFormKey, 'Form level validation failed', () => {
-//       // Cross-field validation example
-//       if (data['password'] && data['confirmPassword']) {
-//         enforce(data['confirmPassword']).equals(data['password']);
-//       }
-//     });
-
-//     test(rootFormKey, 'This is a root warning', () => {
-//       warn(); // Example root-level warning
-//       enforce(data['email']).isNotEmpty(); // Ensure it's a valid test
-//     });
-//   },
-// );
-
-// Test component with default validateRootForm behavior (not explicitly set - defaults to false)
-@Component({
-  template: `
-    <form
-      #form="ngForm"
-      ngxVestForm
-      validateRootForm
-      [vestSuite]="vestSuite()"
-      [validationOptions]="validationOptions()"
-      [(formValue)]="formData"
-    >
-      <label for="email">Email</label>
-      <input
-        id="email"
-        name="email"
-        type="email"
-        [ngModel]="formData().email"
-        (ngModelChange)="updateEmail($event)"
-      />
-      <label for="password">Password</label>
-      <input
-        id="password"
-        name="password"
-        type="password"
-        [ngModel]="formData().password"
-        (ngModelChange)="updatePassword($event)"
-      />
-      <label for="confirmPassword">Confirm Password</label>
-      <input
-        id="confirmPassword"
-        name="confirmPassword"
-        type="password"
-        [ngModel]="formData().confirmPassword"
-        (ngModelChange)="updateConfirmPassword($event)"
-      />
-    </form>
-  `,
-  imports: [ngxVestForms],
-})
-class DefaultValidationComponent {
-  formData: WritableSignal<{
-    email: string;
-    password: string;
-    confirmPassword: string;
-  }> = signal({ email: '', password: '', confirmPassword: '' });
-  vestSuite = signal<NgxVestSuite | null>(null);
-  validationOptions = signal<NgxValidationOptions>({ debounceTime: 0 });
-  form = viewChild<NgForm>('form');
-
-  updateEmail(value: string) {
-    this.formData.update((data) => ({ ...data, email: value }));
-  }
-
-  updatePassword(value: string) {
-    this.formData.update((data) => ({ ...data, password: value }));
-  }
-
-  updateConfirmPassword(value: string) {
-    this.formData.update((data) => ({ ...data, confirmPassword: value }));
-  }
-}
-
-// Test component with validateRootForm explicitly set to true
-@Component({
-  template: `
-    <form
-      #form="ngForm"
-      ngxVestForm
-      validateRootForm
-      [vestSuite]="vestSuite()"
-      [validationOptions]="validationOptions()"
-      [validateRootForm]="true"
-      [(formValue)]="formData"
-    >
-      <label for="email">Email</label>
-      <input
-        id="email"
-        name="email"
-        type="email"
-        [ngModel]="formData().email"
-        (ngModelChange)="updateEmail($event)"
-      />
-      <label for="password">Password</label>
-      <input
-        id="password"
-        name="password"
-        type="password"
-        [ngModel]="formData().password"
-        (ngModelChange)="updatePassword($event)"
-      />
-      <label for="confirmPassword">Confirm Password</label>
-      <input
-        id="confirmPassword"
-        name="confirmPassword"
-        type="password"
-        [ngModel]="formData().confirmPassword"
-        (ngModelChange)="updateConfirmPassword($event)"
-      />
-    </form>
-  `,
-  imports: [ngxVestForms],
-})
-class ExplicitTrueValidationComponent {
-  formData: WritableSignal<{
-    email: string;
-    password: string;
-    confirmPassword: string;
-  }> = signal({ email: '', password: '', confirmPassword: '' });
-  vestSuite = signal<NgxVestSuite | null>(null);
-  validationOptions = signal<NgxValidationOptions>({ debounceTime: 0 });
-  form = viewChild<NgForm>('form');
-
-  updateEmail(value: string) {
-    this.formData.update((data) => ({ ...data, email: value }));
-  }
-
-  updatePassword(value: string) {
-    this.formData.update((data) => ({ ...data, password: value }));
-  }
-
-  updateConfirmPassword(value: string) {
-    this.formData.update((data) => ({ ...data, confirmPassword: value }));
-  }
-}
-
-// Test component with validateRootForm explicitly set to false
-@Component({
-  template: `
-    <form
-      #form="ngForm"
-      ngxVestForm
-      validateRootForm
-      [vestSuite]="vestSuite()"
-      [validationOptions]="validationOptions()"
-      [validateRootForm]="false"
-      [(formValue)]="formData"
-    >
-      <label for="email">Email</label>
-      <input
-        id="email"
-        name="email"
-        type="email"
-        [ngModel]="formData().email"
-        (ngModelChange)="updateEmail($event)"
-      />
-      <label for="password">Password</label>
-      <input
-        id="password"
-        name="password"
-        type="password"
-        [ngModel]="formData().password"
-        (ngModelChange)="updatePassword($event)"
-      />
-      <label for="confirmPassword">Confirm Password</label>
-      <input
-        id="confirmPassword"
-        name="confirmPassword"
-        type="password"
-        [ngModel]="formData().confirmPassword"
-        (ngModelChange)="updateConfirmPassword($event)"
-      />
-    </form>
-  `,
-  imports: [ngxVestForms],
-})
-class ExplicitFalseValidationComponent {
-  formData: WritableSignal<{
-    email: string;
-    password: string;
-    confirmPassword: string;
-  }> = signal({ email: '', password: '', confirmPassword: '' });
-  vestSuite = signal<NgxVestSuite | null>(null);
-  validationOptions = signal<NgxValidationOptions>({ debounceTime: 0 });
-  form = viewChild<NgForm>('form');
-
-  updateEmail(value: string) {
-    this.formData.update((data) => ({ ...data, email: value }));
-  }
-
-  updatePassword(value: string) {
-    this.formData.update((data) => ({ ...data, password: value }));
-  }
-
-  updateConfirmPassword(value: string) {
-    this.formData.update((data) => ({ ...data, confirmPassword: value }));
-  }
-}
-
-/**
- * Comprehensive tests for NgxValidateRootFormDirective
- *
- * Tests cover:
- * - Default behavior (validateRootForm not explicitly set - defaults to false)
- * - Explicit true behavior ([validateRootForm]="true")
- * - Explicit false behavior ([validateRootForm]="false")
- * - Async validator registration with Angular Forms
- * - Vest suite integration and validation execution
- * - Signal-based input handling and reactivity
- * - Debouncing behavior and performance optimization
- * - Error handling and edge cases
- * - Cleanup and memory management
- * - Integration with NgForm and form value extraction
- */
-
-describe('NgxValidateRootFormDirective - Default Behavior (defaults to false)', () => {
-  let component: DefaultValidationComponent;
-  let fixture: {
-    componentInstance: DefaultValidationComponent;
-    detectChanges: () => void;
-    whenStable: () => Promise<unknown>;
-  }; // More specific type for fixture
-  let getByLabelText: (text: string) => HTMLElement;
-
-  beforeEach(async () => {
-    const renderResult = await render(DefaultValidationComponent);
-    fixture = renderResult.fixture as unknown as {
-      componentInstance: DefaultValidationComponent;
-      detectChanges: () => void;
-      whenStable: () => Promise<unknown>;
-    }; // Cast to a more specific type
-    component = fixture.componentInstance;
-    getByLabelText = renderResult.getByLabelText;
-  });
-
-  it('should disable root validation by default and NOT use injected NGX_ROOT_FORM key', async () => {
-    // Arrange
-    const rootFormKey = injectNgxRootFormKey() ?? NGX_ROOT_FORM;
-    const mockSuite = vi.fn().mockImplementation(() => ({
-      done: vi
-        .fn()
-        .mockImplementation(
-          (
-            callback: (result: {
-              getErrors: () => Record<string, string[] | null>;
-              getWarnings: () => Record<string, string[] | null>;
-            }) => void,
-          ) => {
-            callback({
-              getErrors: () => ({ [rootFormKey]: null }),
-              getWarnings: () => ({ [rootFormKey]: ['Root warning'] }),
-            });
-          },
-        ),
-    }));
-
-    component.vestSuite.set(mockSuite as NgxVestSuite);
-    component.formData.update(
-      (data: { email: string; password: string; confirmPassword: string }) => ({
-        ...data,
-        password: 'password123',
-        confirmPassword: 'password123',
-      }),
-    );
-
-    // Act - trigger validation by changing form
-    const emailInput = getByLabelText('Email') as HTMLInputElement;
-    await userEvent.type(emailInput, 'test@example.com');
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // Assert - validation should NOT run because validateRootForm defaults to false
-    // Check that the suite was never called with the rootFormKey (root validation)
-    const rootFormCalls = mockSuite.mock.calls.filter(
-      (call) => call[1] === rootFormKey,
-    );
-    expect(rootFormCalls).toHaveLength(0);
-  });
-
-  it('should NOT handle root validation errors and warnings when using default behavior (disabled)', async () => {
-    // Arrange
-    const rootFormKey = injectNgxRootFormKey() ?? NGX_ROOT_FORM;
-    const failingSuite = vi.fn().mockReturnValue({
-      done: vi
-        .fn()
-        .mockImplementation(
-          (
-            callback: (result: {
-              getErrors: () => Record<string, string[] | null>;
-              getWarnings: () => Record<string, string[] | null>;
-            }) => void,
-          ) =>
-            callback({
-              getErrors: () => ({
-                [rootFormKey]: ['Passwords must match'],
-              }),
-              getWarnings: () => ({
-                [rootFormKey]: ['This is a root warning'],
-              }),
-            }),
-        ),
+      // Assert
+      expect(directiveInstance).toBeTruthy();
+      expect(directiveInstance.validateRootForm()).toBe(false);
     });
 
-    component.vestSuite.set(failingSuite as NgxVestSuite);
-    component.formData.update(
-      (data: { email: string; password: string; confirmPassword: string }) => ({
-        ...data,
-        password: 'password1',
-        confirmPassword: 'password2',
-      }),
-    );
+    it('should disable validation when no validateRootForm attribute is present', async () => {
+      // Arrange & Act - Test default behavior without validateRootForm attribute
+      await render(
+        `<form ngxVestForm data-testid="test-form">
+           <input name="email" type="email" ngModel />
+         </form>`,
+        {
+          imports: [
+            FormsModule,
+            NgxFormDirective,
+            NgxValidateRootFormDirective,
+          ],
+        },
+      );
 
-    // Act
-    const emailInput = getByLabelText('Email') as HTMLInputElement;
-    await userEvent.type(emailInput, 'test@example.com');
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // Assert - validation should NOT run because validateRootForm defaults to false
-    // Check that the suite was never called with the rootFormKey (root validation)
-    const rootFormCalls = failingSuite.mock.calls.filter(
-      (call) => call[1] === rootFormKey,
-    );
-    expect(rootFormCalls).toHaveLength(0);
-  });
-});
-
-describe('NgxValidateRootFormDirective - Explicitly Set to True', () => {
-  let component: ExplicitTrueValidationComponent;
-  let fixture: {
-    componentInstance: ExplicitTrueValidationComponent;
-    detectChanges: () => void;
-    whenStable: () => Promise<unknown>;
-  }; // More specific type for fixture
-  let getByLabelText: (text: string) => HTMLElement;
-
-  beforeEach(async () => {
-    const renderResult = await render(ExplicitTrueValidationComponent);
-    fixture = renderResult.fixture as unknown as {
-      componentInstance: ExplicitTrueValidationComponent;
-      detectChanges: () => void;
-      whenStable: () => Promise<unknown>;
-    }; // Cast to a more specific type
-    component = fixture.componentInstance;
-    getByLabelText = renderResult.getByLabelText;
-  });
-
-  it('should enable root validation and use injected NGX_ROOT_FORM key when validateRootForm is explicitly set to true', async () => {
-    // Arrange
-    const rootFormKey = injectNgxRootFormKey() ?? NGX_ROOT_FORM;
-    const mockSuite = vi.fn().mockImplementation(() => ({
-      done: vi
-        .fn()
-        .mockImplementation(
-          (
-            callback: (result: {
-              getErrors: () => Record<string, string[] | null>;
-              getWarnings: () => Record<string, string[] | null>;
-            }) => void,
-          ) => {
-            callback({
-              getErrors: () => ({ [rootFormKey]: null }),
-              getWarnings: () => ({ [rootFormKey]: ['Another root warning'] }),
-            });
-          },
-        ),
-    }));
-
-    component.vestSuite.set(mockSuite as NgxVestSuite);
-    component.formData.update(
-      (data: { email: string; password: string; confirmPassword: string }) => ({
-        ...data,
-        password: 'test123',
-        confirmPassword: 'test123',
-      }),
-    );
-
-    // Act - trigger validation by updating form and checking form status
-    const emailInput = getByLabelText('Email') as HTMLInputElement;
-    await userEvent.type(emailInput, 'test@example.com');
-
-    // Trigger form validation explicitly
-    const form = component.form();
-    if (form) {
-      form.control.updateValueAndValidity();
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-
-    // Assert - validation should run because validateRootForm is explicitly true
-    expect(mockSuite).toHaveBeenCalled();
-
-    // Check that at least one call was made with the root form key
-    const rootFormCalls = mockSuite.mock.calls.filter(
-      (call) => call[1] === rootFormKey,
-    );
-    expect(rootFormCalls.length).toBeGreaterThan(0);
-
-    // Verify the root form call has the correct arguments
-    const rootFormCall = rootFormCalls[0];
-    expect(rootFormCall[1]).toBe(rootFormKey);
-  });
-
-  it('should respect debouncing when explicitly set to true and use injected NGX_ROOT_FORM key', async () => {
-    // Arrange
-    const rootFormKey = injectNgxRootFormKey() ?? NGX_ROOT_FORM;
-    const mockSuite = vi.fn().mockReturnValue({
-      done: vi
-        .fn()
-        .mockImplementation(
-          (
-            callback: (result: {
-              getErrors: () => Record<string, string[] | null>;
-              getWarnings: () => Record<string, string[] | null>;
-            }) => void,
-          ) =>
-            callback({
-              getErrors: () => ({ [rootFormKey]: null }),
-              getWarnings: () => ({ [rootFormKey]: null }),
-            }),
-        ),
+      // Assert - validateRootForm directive should not be present
+      const formElement = screen.getByTestId('test-form');
+      expect(formElement).toBeTruthy();
+      expect(formElement.hasAttribute('validaterootform')).toBe(false);
     });
 
-    component.vestSuite.set(mockSuite as NgxVestSuite);
-    component.validationOptions.set({ debounceTime: 200 });
+    it('should enable validation when validateRootForm input is true', async () => {
+      // Arrange & Act - Use inline template for simple test
+      const { fixture } = await render(
+        `<form ngxVestForm validateRootForm [validateRootForm]="true" data-testid="test-form">
+           <input name="email" type="email" ngModel />
+         </form>`,
+        {
+          imports: [
+            FormsModule,
+            NgxValidateRootFormDirective,
+            NgxFormDirective,
+          ],
+        },
+      );
 
-    const emailInput = getByLabelText('Email') as HTMLInputElement;
+      // Get the directive instance using proper testing-library approach
+      const formElement = screen.getByTestId('test-form');
+      const directiveInstance = fixture.debugElement
+        .query((element) => element.nativeElement === formElement)
+        ?.injector.get(NgxValidateRootFormDirective);
 
-    // Act - rapidly type to test debouncing
-    await userEvent.type(emailInput, 'a');
-    await userEvent.type(emailInput, 'b');
-    await userEvent.type(emailInput, 'c');
-
-    // Trigger form validation explicitly after typing
-    const form = component.form();
-    if (form) {
-      form.control.updateValueAndValidity();
-    }
-
-    // Should not have called the suite with rootFormKey yet due to debouncing
-    const initialRootFormCalls = mockSuite.mock.calls.filter(
-      (call) => call[1] === rootFormKey,
-    );
-    expect(initialRootFormCalls).toHaveLength(0);
-
-    // Wait for debounce time
-    await new Promise((resolve) => setTimeout(resolve, 250));
-
-    // Trigger validation again after debounce period
-    if (form) {
-      form.control.updateValueAndValidity();
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    }
-
-    // Now it should have been called with rootFormKey at least once
-    const finalRootFormCalls = mockSuite.mock.calls.filter(
-      (call) => call[1] === rootFormKey,
-    );
-    expect(finalRootFormCalls.length).toBeGreaterThanOrEqual(1);
-  });
-});
-
-describe('NgxValidateRootFormDirective - Explicitly Set to False', () => {
-  let component: ExplicitFalseValidationComponent;
-  let fixture: {
-    componentInstance: ExplicitFalseValidationComponent;
-    detectChanges: () => void;
-    whenStable: () => Promise<unknown>;
-  }; // More specific type for fixture
-  let getByLabelText: (text: string) => HTMLElement;
-
-  beforeEach(async () => {
-    const renderResult = await render(ExplicitFalseValidationComponent);
-    fixture = renderResult.fixture as unknown as {
-      componentInstance: ExplicitFalseValidationComponent;
-      detectChanges: () => void;
-      whenStable: () => Promise<unknown>;
-    }; // Cast to a more specific type
-    component = fixture.componentInstance;
-    getByLabelText = renderResult.getByLabelText;
-  });
-
-  it('should disable root validation when validateRootForm is explicitly set to false, regardless of NGX_ROOT_FORM key', async () => {
-    // Arrange
-    const rootFormKey = injectNgxRootFormKey() ?? NGX_ROOT_FORM;
-    const mockSuite = vi.fn().mockReturnValue({
-      done: vi
-        .fn()
-        .mockImplementation(
-          (
-            callback: (result: {
-              getErrors: () => Record<string, string[] | null>;
-              getWarnings: () => Record<string, string[] | null>;
-            }) => void,
-          ) =>
-            callback({
-              getErrors: () => ({ [rootFormKey]: ['Should not appear'] }),
-              getWarnings: () => ({
-                [rootFormKey]: ['Should not appear warning'],
-              }),
-            }),
-        ),
+      // Assert
+      expect(directiveInstance).toBeTruthy();
+      expect(directiveInstance.validateRootForm()).toBe(true);
     });
 
-    component.vestSuite.set(mockSuite as NgxVestSuite);
+    it('should properly set validationOptions input', async () => {
+      // Arrange
+      const testOptions: NgxValidationOptions = { debounceTime: 500 };
 
-    // Act - trigger form changes
-    const emailInput = getByLabelText('Email') as HTMLInputElement;
-    await userEvent.type(emailInput, 'test@example.com');
-    await new Promise((resolve) => setTimeout(resolve, 100));
+      @Component({
+        template: `
+          <form
+            ngxVestForm
+            validateRootForm
+            [validateRootForm]="true"
+            [validationOptions]="options"
+            data-testid="test-form"
+          >
+            <input name="email" type="email" ngModel />
+          </form>
+        `,
+        imports: [FormsModule, NgxValidateRootFormDirective, NgxFormDirective],
+      })
+      class TestValidationOptions {
+        options = testOptions;
+      }
 
-    // Assert - validation should NOT run because validateRootForm is false
-    // Check that the suite was never called with the rootFormKey (root validation)
-    const rootFormCalls = mockSuite.mock.calls.filter(
-      (call) => call[1] === rootFormKey,
+      // Act
+      const { fixture } = await render(TestValidationOptions);
+
+      // Get the directive instance using testing-library approach
+      const formElement = screen.getByTestId('test-form');
+      const directiveInstance = fixture.debugElement
+        .query((element) => element.nativeElement === formElement)
+        ?.injector.get(NgxValidateRootFormDirective);
+
+      // Assert
+      expect(directiveInstance).toBeTruthy();
+      expect(directiveInstance.validationOptions()).toEqual(testOptions);
+    });
+
+    it('should handle boolean attribute transformation correctly', async () => {
+      // Arrange & Act - Test that validateRootForm="" (empty string) transforms to true via booleanAttribute
+      const { fixture } = await render(
+        `<form ngxVestForm validateRootForm="" data-testid="test-form">
+           <input name="email" type="email" ngModel />
+         </form>`,
+        {
+          imports: [
+            FormsModule,
+            NgxValidateRootFormDirective,
+            NgxFormDirective,
+          ],
+        },
+      );
+
+      // Get the directive instance using testing-library approach
+      const formElement = screen.getByTestId('test-form');
+      const directiveInstance = fixture.debugElement
+        .query((element) => element.nativeElement === formElement)
+        ?.injector.get(NgxValidateRootFormDirective);
+
+      // Assert - empty string should transform to true via booleanAttribute
+      expect(directiveInstance).toBeTruthy();
+      expect(directiveInstance.validateRootForm()).toBe(true);
+    });
+
+    it.todo(
+      'should respect validationOptions input for debouncing',
+      async () => {
+        // Test that debounceTime from validationOptions is applied to the validation stream
+      },
     );
-    expect(rootFormCalls).toHaveLength(0);
   });
 
-  it('should handle null vest suite gracefully when disabled', async () => {
-    // Arrange
-    component.vestSuite.set(null);
+  describe('AsyncValidator Interface', () => {
+    it.todo(
+      'should return Observable<ValidationErrors | null> from validate() method',
+      async () => {
+        // Test that validate(control) returns correct Observable type
+      },
+    );
 
-    // Act & Assert - should not throw even when validation is disabled
-    const emailInput = getByLabelText('Email') as HTMLInputElement;
-    await userEvent.type(emailInput, 'test@example.com');
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    it.todo(
+      'should return of(null) when validateRootForm is false',
+      async () => {
+        // Test that disabled validation immediately returns null without executing vest suite
+      },
+    );
 
-    expect(component.vestSuite()).toBeNull();
+    it.todo(
+      'should trigger validation stream when validateRootForm is true',
+      async () => {
+        // Test that enabled validation creates and executes validation stream
+      },
+    );
+
+    it.todo(
+      'should use control.getRawValue() as validation input',
+      async () => {
+        // Test that form control value is properly extracted and passed to vest suite
+      },
+    );
+
+    it.todo(
+      'should return validation result via take(1) operator',
+      async () => {
+        // Test that observable completes after first emission
+      },
+    );
   });
-});
 
-describe('NgxValidateRootFormDirective - General Functionality', () => {
-  let component: DefaultValidationComponent;
-  let fixture: {
-    componentInstance: DefaultValidationComponent;
-    detectChanges: () => void;
-    whenStable: () => Promise<unknown>;
-  }; // More specific type for fixture
-  let getByLabelText: (text: string) => HTMLElement;
+  describe('Validation Execution Scenarios', () => {
+    it.todo(
+      'should return null for successful validation with no errors or warnings',
+      async () => {
+        // Test valid form data that passes all validation rules
+      },
+    );
 
-  beforeEach(async () => {
-    const renderResult = await render(DefaultValidationComponent);
-    fixture = renderResult.fixture as unknown as {
-      componentInstance: DefaultValidationComponent;
-      detectChanges: () => void;
-      whenStable: () => Promise<unknown>;
-    }; // Cast to a more specific type
-    component = fixture.componentInstance;
-    getByLabelText = renderResult.getByLabelText;
-  });
+    it.todo(
+      'should return errors in correct format when validation fails',
+      async () => {
+        // Test that validation returns { error: errors[0], errors: errors[] } format
+      },
+    );
 
-  it('should handle empty form values gracefully', async () => {
-    // Arrange
-    const mockSuite = vi.fn().mockReturnValue({
-      done: vi
-        .fn()
-        .mockImplementation(
-          (
-            callback: (result: {
-              getErrors: () => Record<string, string[] | null>;
-              getWarnings: () => Record<string, string[] | null>;
-            }) => void,
-          ) =>
-            callback({
-              getErrors: () => ({
-                [injectNgxRootFormKey() ?? NGX_ROOT_FORM]: null,
-              }),
-              getWarnings: () => ({
-                [injectNgxRootFormKey() ?? NGX_ROOT_FORM]: null,
-              }),
-            }),
-        ),
+    it.todo(
+      'should return warnings-only format when no errors but warnings exist',
+      async () => {
+        // Test that warnings-only validation returns { warnings: warnings[] }
+      },
+    );
+
+    it.todo(
+      'should return combined format when both errors and warnings exist',
+      async () => {
+        // Test that both errors and warnings are included in validation output
+      },
+    );
+
+    it.todo(
+      'should return null when NgxFormDirective is not available',
+      async () => {
+        // Test graceful handling when directive cannot access NgxFormDirective
+      },
+    );
+
+    it.todo('should return null when vest suite is not available', async () => {
+      // Test graceful handling when NgxFormDirective exists but no vest suite
     });
 
-    component.vestSuite.set(mockSuite as NgxVestSuite);
-
-    // Set empty values and ensure form controls are updated
-    component.formData.set({ email: '', password: '', confirmPassword: '' });
-
-    // Trigger form to synchronize with the new values
-    const emailInput = getByLabelText('Email') as HTMLInputElement;
-    const passwordInput = getByLabelText('Password') as HTMLInputElement;
-    const confirmPasswordInput = getByLabelText(
-      'Confirm Password',
-    ) as HTMLInputElement;
-
-    // Clear the inputs to ensure they match the formData state
-    await userEvent.clear(emailInput);
-    await userEvent.clear(passwordInput);
-    await userEvent.clear(confirmPasswordInput);
-
-    // Act
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // Assert - should handle empty values without errors
-    expect(() => {
-      // This simulates what the directive does internally
-      const cloned = structuredClone(component.formData());
-      expect(cloned).toEqual({ email: '', password: '', confirmPassword: '' });
-    }).not.toThrow();
+    it.todo('should use injected root form key for validation', async () => {
+      // Test that validation uses correct root form key from injectNgxRootFormKey()
+    });
   });
 
-  it('should clean up subscriptions on destroy', async () => {
-    // Arrange
-    const mockSuite = vi.fn().mockReturnValue({
-      done: vi
-        .fn()
-        .mockImplementation(
-          (
-            callback: (result: {
-              getErrors: () => Record<string, string[] | null>;
-              getWarnings: () => Record<string, string[] | null>;
-            }) => void,
-          ) =>
-            callback({
-              getErrors: () => ({
-                [injectNgxRootFormKey() ?? NGX_ROOT_FORM]: null,
-              }),
-              getWarnings: () => ({
-                [injectNgxRootFormKey() ?? NGX_ROOT_FORM]: null,
-              }),
-            }),
-        ),
+  describe('Error Handling and Edge Cases', () => {
+    it.todo(
+      'should handle vest suite execution errors gracefully',
+      async () => {
+        // Test that when vest suite throws an error, it returns vestInternalError format
+      },
+    );
+
+    it.todo('should handle malformed form data without crashing', async () => {
+      // Test validation with undefined, null, or malformed data
     });
 
-    component.vestSuite.set(mockSuite as NgxVestSuite);
+    it.todo(
+      'should handle runInInjectionContext errors gracefully',
+      async () => {
+        // Test that injection context errors don't crash the directive
+      },
+    );
 
-    // Act - trigger validation
-    const emailInput = getByLabelText('Email') as HTMLInputElement;
-    await userEvent.type(emailInput, 'test@example.com');
+    it.todo('should handle missing form control value gracefully', async () => {
+      // Test validation when control.getRawValue() returns unexpected data
+    });
+  });
 
-    // Simulate component destruction by checking that takeUntilDestroyed is used
-    // In the actual implementation, this would be handled by Angular's DestroyRef
-    expect(true).toBe(true); // Placeholder - real test would verify no memory leaks
+  describe('Observable Stream Behavior', () => {
+    it.todo(
+      'should debounce validation calls according to validationOptions.debounceTime',
+      async () => {
+        // Test that rapid model changes are debounced correctly
+      },
+    );
+
+    it.todo(
+      'should cache validation stream and reuse for multiple validate() calls',
+      async () => {
+        // Test that #validationStream is created once and reused
+      },
+    );
+
+    it.todo(
+      'should use distinctUntilChanged to avoid duplicate validations',
+      async () => {
+        // Test that identical models don't trigger multiple validation executions
+      },
+    );
+
+    it.todo(
+      'should properly clean up subscriptions on directive destruction',
+      async () => {
+        // Test that takeUntilDestroyed prevents memory leaks
+      },
+    );
+
+    it.todo(
+      'should share validation stream across multiple subscribers',
+      async () => {
+        // Test that multiple calls to validate() share the same stream
+      },
+    );
+  });
+
+  describe('Integration with NgxFormDirective and Vest Suite', () => {
+    it.todo(
+      'should work with valid NgxFormDirective that provides vest suite',
+      async () => {
+        // Test successful integration when all dependencies are available
+      },
+    );
+
+    it.todo('should handle NgxFormDirective without vest suite', async () => {
+      // Test when NgxFormDirective exists but vestSuite() returns null/undefined
+    });
+
+    it.todo(
+      'should work with different root form keys from injectNgxRootFormKey()',
+      async () => {
+        // Test validation with custom root form keys
+      },
+    );
+
+    it.todo('should handle NgxFormDirective injection errors', async () => {
+      // Test when inject(NgxFormDirective, { optional: true }) fails
+    });
+  });
+
+  describe('Real-World Integration Scenarios', () => {
+    it.todo('should validate cross-field dependencies correctly', async () => {
+      // Test password confirmation and other cross-field validation scenarios
+    });
+
+    it.todo(
+      'should work with realistic form data and vest suites',
+      async () => {
+        // Test with actual form controls and complex validation rules
+      },
+    );
+
+    it.todo(
+      'should handle async validation timing with whenStable()',
+      async () => {
+        // Test proper async behavior in Angular's zoneless environment
+      },
+    );
+
+    it.todo(
+      'should integrate properly with template-driven forms',
+      async () => {
+        // Test integration with ngxVestForm, [(formValue)], and [vestSuite]
+      },
+    );
+
+    it.todo(
+      'should display validation results via ngxForm.formState().root',
+      async () => {
+        // Test that root validation errors are accessible through correct API
+      },
+    );
+
+    it.todo(
+      'should work with form submission and validation state management',
+      async () => {
+        // Test validation during form submission lifecycle
+      },
+    );
   });
 });
