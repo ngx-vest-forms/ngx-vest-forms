@@ -1,5 +1,5 @@
 ---
-applyTo: "libs/**/*.{spec,test}.{ts,tsx,js,jsx}"
+applyTo: "projects/**/*.{spec,test}.{ts,tsx,js,jsx}"
 ---
 
 # Unit and Component Test Instructions (Angular + Vitest)
@@ -11,6 +11,7 @@ applyTo: "libs/**/*.{spec,test}.{ts,tsx,js,jsx}"
 - Use strict typing and modern Angular best practices.
 - Prefer fakes over mocks.
 - Always await `TestBed.inject(ApplicationRef).whenStable()` for async Angular tests.
+- Write tests for actual, user-visible behavior only. Do not invent tests for APIs or code that do not exist.
 
 ## Unit Testing (Vitest Node)
 - Use for pure functions, utilities, and services without Angular dependencies.
@@ -22,16 +23,27 @@ applyTo: "libs/**/*.{spec,test}.{ts,tsx,js,jsx}"
 - Minimize the number of test doubles per test; only mock at the boundary of the SUT.
 
 ## Component Testing (Vitest Browser + Angular Testing Library)
-- Use Vitest browser UI and Angular Testing Library for all component tests.
+- Use Vitest Browser UI for all component tests whenever possible.
 - Always use `render()` from Angular Testing Library.
 - Use role-based queries (`getByRole`, `findByRole`, etc.) for DOM assertions.
 - Use the `on` property in `render()` to test outputs (signal outputs, EventEmitters, etc.).
 - For user interactions, prefer `userEvent` from `@vitest/browser/context` over `@testing-library/user-event`.
 - For signal inputs/models, set values via `componentInputs` in `render()`.
-- Prefer fakes for service dependencies; use Angular’s DI to provide them.
+- Prefer fakes for service dependencies; use Angular's DI to provide them.
 - Always test user-facing behavior, not implementation details.
 - For async operations, always `await TestBed.inject(ApplicationRef).whenStable()` after triggering effects/signals.
 - Assert error paths and loading states, not just happy paths.
+- When creating a Test Component, use Template Driven Forms.
+- Use ngx-vest-forms for the test component's form logic.
+
+### Testing Library Best Practices
+- **Avoid Implementation Details**: Never access `fixture.debugElement`, `injector.get()`, or internal component/directive properties in tests.
+- **Use DOM-Focused Assertions**: Test what users see and interact with, not internal state or method return values.
+- **Prefer `screen` Queries**: Use `screen.getByTestId()`, `screen.getByRole()`, etc. instead of fixture debugging.
+- **Use Vitest Browser Assertions**: Prefer `await expect.element(element).toHaveAttribute()` over direct DOM property checks for better retry-ability.
+- **Add Test IDs Strategically**: Use `data-testid` attributes for reliable element querying, especially for form elements and containers.
+- **Test Attribute Behavior**: Verify directive behavior through DOM attributes (e.g., `toHaveAttribute('validateRootForm', 'false')`) rather than directive properties.
+- **Focus on User Experience**: Test form validation states (`toBeValid()`, `toBeInvalid()`), element visibility (`toBeInTheDocument()`), and accessibility attributes.
 
 ## Testing Strategies & Tips
 
