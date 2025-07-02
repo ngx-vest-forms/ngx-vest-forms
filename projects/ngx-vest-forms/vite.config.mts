@@ -9,8 +9,8 @@ export default defineProject(({ mode }) => ({
   test: {
     name: 'ngx-vest-forms',
     globals: true,
-    setupFiles: ['./src/test-setup.ts'],
-    include: ['./src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    setupFiles: ['./test-setup.ts'],
+    include: ['./**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
