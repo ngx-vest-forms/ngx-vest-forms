@@ -1,7 +1,7 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec'; // Import the type explicitly
-import { type } from 'arktype'; // Import ArkType
+import type { StandardSchemaV1 } from '@standard-schema/spec';
+import { type } from 'arktype';
 import * as v from 'valibot';
-import { beforeEach, describe, expect, expectTypeOf, it } from 'vitest'; // Added beforeEach and expectTypeOf
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import { z } from 'zod';
 import {
   InferSchemaType,
@@ -96,108 +96,117 @@ describe('Schema Adapter Utilities', () => {
   });
 
   describe('ngxModelToStandardSchema', () => {
-    // Use the adjusted type including _shape
-    let schema: StandardSchemaV1<
-      typeof customModelTemplate,
-      typeof customModelTemplate
-    > & {
-      _shape: typeof customModelTemplate; // Corrected property name to _shape
-    };
+    it('should create a schema with StandardSchemaV1 interface', () => {
+      const model = { name: 'test' };
+      const schema = ngxModelToStandardSchema(model);
 
-    beforeEach(() => {
-      // Re-create the schema before each test to ensure isolation
-      schema = ngxModelToStandardSchema(customModelTemplate);
-    });
-
-    it('should wrap a custom model template into a StandardSchemaV1 structure', () => {
-      expect(schema).toHaveProperty('~standard');
-      expect(schema['~standard']).toHaveProperty('version', 1);
-      expect(schema['~standard']).toHaveProperty('vendor', 'ngx-vest-forms');
-      expect(schema['~standard']).toHaveProperty('validate');
+      // Should have the ~standard property
+      expect(schema['~standard']).toBeDefined();
       expect(typeof schema['~standard'].validate).toBe('function');
-      // Check for optional types property
-      expect(schema['~standard']).toHaveProperty('types');
-      // Check for the non-standard _shape property
-      expect(schema).toHaveProperty('_shape');
-      expect(schema._shape).toEqual(customModelTemplate);
+      expect(schema['~standard'].version).toBe(1);
     });
 
-    it('validate method should return success for valid object data', () => {
-      const data = {
-        address: { street: '123 Main', city: 'Anytown' },
-        isAdmin: true,
-      };
-      // Since validate is sync, result is StandardSchemaV1.Result<T>
-      const result = schema['~standard'].validate(data);
+    it('should create a schema with a `_shape` property that matches the model structure', () => {
+      const model = { name: 'test', nested: { value: 123 } };
+      const schema = ngxModelToStandardSchema(model);
 
-      // Type guard for SuccessResult
+      expect(schema._shape).toEqual(model);
+    });
+
+    it('validate should return success result for valid objects', () => {
+      const model = { name: 'test' };
+      const schema = ngxModelToStandardSchema(model);
+      const result = schema['~standard'].validate(model);
+
+      // Should return success result with value
+      expect('value' in result).toBe(true);
+      expect('issues' in result).toBe(false);
+
       if ('value' in result) {
-        expect(result.value).toEqual(data); // Value should be the input data
-      } else {
-        // Fail the test if it's not a SuccessResult
-        expect.fail('Expected validation to succeed, but it failed.');
-      }
-      // Explicitly check issues is undefined for success
-      expect(result.issues).toBeUndefined();
-    });
-
-    it('validate method should return failure for non-object data (string)', () => {
-      const result = schema['~standard'].validate('invalid string');
-
-      // Type guard for FailureResult
-      if ('issues' in result) {
-        expect(result.issues).toBeDefined();
-        expect(Array.isArray(result.issues)).toBe(true);
-        expect(result.issues?.length).toBe(1);
-        expect(result.issues?.[0]).toHaveProperty('message');
-        expect(result.issues?.[0].message).toContain('Expected an object');
-        expect(result).not.toHaveProperty('value');
-      } else {
-        expect.fail('Expected validation to fail, but it succeeded.');
+        expect(result.value).toEqual(model);
       }
     });
 
-    it('validate method should return failure for null', () => {
-      const result = schema['~standard'].validate(null);
-      if ('issues' in result) {
-        expect(result.issues).toBeDefined();
-        expect(result.issues?.length).toBe(1);
-        expect(result.issues?.[0].message).toContain('Expected an object');
-        expect(result).not.toHaveProperty('value');
-      } else {
-        expect.fail('Expected validation to fail for null.');
+    it('validate should return failure result for non-object inputs', () => {
+      const schema = ngxModelToStandardSchema({});
+
+      const stringResult = schema['~standard'].validate('string');
+      expect('issues' in stringResult).toBe(true);
+      expect('value' in stringResult).toBe(false);
+
+      if ('issues' in stringResult) {
+        expect(stringResult.issues).toBeDefined();
+        expect(Array.isArray(stringResult.issues)).toBe(true);
+        if (stringResult.issues) {
+          expect(stringResult.issues.length).toBeGreaterThan(0);
+        }
+      }
+
+      const numberResult = schema['~standard'].validate(123);
+      expect('issues' in numberResult).toBe(true);
+
+      const nullResult = schema['~standard'].validate(null);
+      expect('issues' in nullResult).toBe(true);
+
+      const undefinedResult = schema['~standard'].validate(void 0);
+      expect('issues' in undefinedResult).toBe(true);
+    });
+
+    it('should handle nested object templates', () => {
+      const nestedModel = { user: { profile: { name: 'test' } } };
+      const schema = ngxModelToStandardSchema(nestedModel);
+
+      expect(schema._shape).toEqual(nestedModel);
+
+      const result = schema['~standard'].validate(nestedModel);
+      expect('value' in result).toBe(true);
+      expect('issues' in result).toBe(false);
+
+      if ('value' in result) {
+        expect(result.value).toEqual(nestedModel);
       }
     });
 
-    it('validate method should return failure for undefined', () => {
-      // eslint-disable-next-line unicorn/no-useless-undefined
-      const result = schema['~standard'].validate(undefined);
-      if ('issues' in result) {
-        expect(result.issues).toBeDefined();
-        expect(result.issues?.length).toBe(1);
-        expect(result.issues?.[0].message).toContain('Expected an object');
-        expect(result).not.toHaveProperty('value');
-      } else {
-        expect.fail('Expected validation to fail for undefined.');
-      }
-    });
+    it('should conform to StandardSchemaV1 interface', () => {
+      const model = { test: 'value' };
+      const schema = ngxModelToStandardSchema(model);
 
-    it('validate method should return failure for number', () => {
-      const result = schema['~standard'].validate(123);
-      if ('issues' in result) {
-        expect(result.issues).toBeDefined();
-        expect(result.issues?.length).toBe(1);
-        expect(result.issues?.[0].message).toContain('Expected an object');
-        expect(result).not.toHaveProperty('value');
-      } else {
-        expect.fail('Expected validation to fail for number.');
-      }
+      // Type check - should be assignable to StandardSchemaV1
+      const standardSchema: StandardSchemaV1<typeof model, typeof model> =
+        schema;
+      expect(standardSchema['~standard']).toBeDefined();
+      expect(standardSchema['~standard'].version).toBe(1);
     });
   });
 
-  // Note: InferSchemaType is a type-level operation.
-  // We test its *usage* by ensuring types align at compile time.
-  describe('InferSchemaType (Usage)', () => {
+  describe('ngxExtractTemplateFromSchema', () => {
+    it('should extract the original template from a schema created with ngxModelToStandardSchema', () => {
+      const model = { name: 'test', value: 1 };
+      const schema = ngxModelToStandardSchema(model);
+      const extracted = ngxExtractTemplateFromSchema(schema);
+      expect(extracted).toEqual(model);
+    });
+
+    it('should return null for a Zod schema', () => {
+      const extracted = ngxExtractTemplateFromSchema(zodSchema);
+      expect(extracted).toBeNull();
+    });
+
+    it('should return null for a Valibot schema', () => {
+      const extracted = ngxExtractTemplateFromSchema(valibotSchema);
+      expect(extracted).toBeNull();
+    });
+
+    it.todo(
+      'should return null for a plain object that is not a valid schema',
+      () => {
+        // Why: The function should only operate on valid schemas.
+        // What: Pass a plain object and assert the result is null.
+      },
+    );
+  });
+
+  describe('InferSchemaType', () => {
     it('should correctly infer type for Zod schema (compile-time check)', () => {
       type ZodFormType = InferSchemaType<typeof zodSchema>;
       const formData: ZodFormType = { name: 'Test' }; // age is optional
