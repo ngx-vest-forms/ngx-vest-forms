@@ -31,6 +31,7 @@ import {
   `,
   imports: [NgxFormControlStateDirective],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 class NoControlComponent {
   // This component is intentionally empty to test directive isolation.
 }

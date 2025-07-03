@@ -1,6 +1,7 @@
 import { ApplicationRef } from '@angular/core';
 import { render, screen } from '@testing-library/angular';
 import { userEvent } from '@vitest/browser/context';
+import { enforce, only, staticSuite, test as vestTest } from 'vest';
 import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
 
 import { AsyncValidationComponent } from './__tests__/components/async-validation.component';
@@ -10,9 +11,75 @@ import { waitForValidationCompletion } from './__tests__/helpers/validation-test
 import { strictEmailValidations } from './__tests__/validations/test-form.validations';
 
 /**
- * Legacy validation state helper has been replaced with DOM-based assertions
- * and moved to validation-testing.helpers.ts if needed
+ * @deprecated Use DOM-based assertions instead
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function expectValidationState(
+  formDirective: NgxFormDirective | undefined,
+  expected: {
+    status?: string;
+    valid?: boolean;
+    invalid?: boolean;
+    pending?: boolean;
+    hasErrors?: boolean; // General check for any errors
+    hasRootErrors?: boolean; // Check for root errors
+    hasFieldErrors?: boolean; // Check for field-specific errors
+    hasRootWarnings?: boolean; // Check for root warnings
+    hasFieldWarnings?: boolean; // Check for field-specific warnings
+  },
+) {
+  if (!formDirective) {
+    throw new Error('NgxFormDirective is not available');
+  }
+
+  const formState = formDirective.formState();
+
+  if (expected.status !== undefined) {
+    expect(formState.status).toBe(expected.status);
+  }
+  if (expected.valid !== undefined) {
+    expect(formState.valid).toBe(expected.valid);
+  }
+  if (expected.invalid !== undefined) {
+    expect(formState.invalid).toBe(expected.invalid);
+  }
+  if (expected.pending !== undefined) {
+    expect(formState.pending).toBe(expected.pending);
+  }
+
+  // Updated error and warning checks
+  if (expected.hasErrors !== undefined) {
+    const fieldErrors =
+      formState.errors && Object.keys(formState.errors).length > 0;
+    const rootErrors =
+      formState.root?.errors && formState.root.errors.length > 0;
+    const rootInternalError = !!formState.root?.internalError;
+    expect(fieldErrors || rootErrors || rootInternalError).toBe(
+      expected.hasErrors,
+    );
+  }
+  if (expected.hasRootErrors !== undefined) {
+    const rootErrors =
+      formState.root?.errors && formState.root.errors.length > 0;
+    const rootInternalError = !!formState.root?.internalError;
+    expect(rootErrors || rootInternalError).toBe(expected.hasRootErrors);
+  }
+  if (expected.hasFieldErrors !== undefined) {
+    const fieldErrors =
+      formState.errors && Object.keys(formState.errors).length > 0;
+    expect(fieldErrors).toBe(expected.hasFieldErrors);
+  }
+  if (expected.hasRootWarnings !== undefined) {
+    const rootWarnings =
+      formState.root?.warnings && formState.root.warnings.length > 0;
+    expect(rootWarnings).toBe(expected.hasRootWarnings);
+  }
+  if (expected.hasFieldWarnings !== undefined) {
+    const fieldWarnings =
+      formState.warnings && Object.keys(formState.warnings).length > 0;
+    expect(fieldWarnings).toBe(expected.hasFieldWarnings);
+  }
+}
 
 describe('NgxFormDirective', () => {
   // Enhanced setup for Angular testing compatibility

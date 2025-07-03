@@ -326,12 +326,22 @@ export class NgxFormDirective<
 
   /**
    * Enhanced cleanup effect using proper effect cleanup patterns
-   * This ensures validator cache is cleared appropriately
+   * This ensures validator cache is cleared when validation context changes
    */
   // eslint-disable-next-line no-unused-private-class-members
   readonly #cleanupEffect = effect((onCleanup) => {
     // Track validation context to re-run when it changes
     const context = this.#validationContext();
+
+    // Log context changes in dev mode to help with debugging
+    if (isDevMode()) {
+      console.log('[NgxFormDirective] Validation context changed', {
+        isValidationReady: context.isValidationReady,
+        debounceTime: context.debounceTime,
+        hasSuite: !!context.suite,
+        hasConfig: !!context.config,
+      });
+    }
 
     onCleanup(() => {
       if (isDevMode()) {
