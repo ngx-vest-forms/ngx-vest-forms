@@ -10,10 +10,13 @@ export default defineProject(({ mode }) => ({
     name: 'ngx-vest-forms',
     globals: true,
     setupFiles: ['./test-setup.ts'],
-    include: ['./**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    include: [
+      './**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', // Include all test files in all secondary entrypoints
+    ],
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
+      './src/**', // Explicitly exclude the old src directory
       '**/.{idea,git,cache,output,temp}/**',
       '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*',
     ],

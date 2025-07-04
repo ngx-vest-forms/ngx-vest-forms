@@ -36,6 +36,39 @@
         }
       }
     },
+    "ngx-vest-forms-core": {
+      "projectType": "library",
+      "root": "projects/ngx-vest-forms/core",
+      "sourceRoot": "projects/ngx-vest-forms/core/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/ngx-vest-forms/core/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/ngx-vest-forms/core/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/ngx-vest-forms/core/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/ngx-vest-forms/core/**/*.ts",
+              "projects/ngx-vest-forms/core/**/*.html"
+            ],
+            "eslintConfig": "projects/ngx-vest-forms/eslint.config.mjs"
+          }
+        }
+      }
+    },
     "ngx-vest-forms-control-wrapper": {
       "projectType": "library",
       "root": "projects/ngx-vest-forms/control-wrapper",
