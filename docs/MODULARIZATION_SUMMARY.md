@@ -6,12 +6,13 @@ The `ngx-vest-forms` library has been successfully modularized into multiple sec
 
 ## Completed Modularization
 
-### ✅ Core Library (`ngx-vest-forms`)
+### ✅ Core Library (`ngx-vest-forms/core`)
 
-- **Location**: `/projects/ngx-vest-forms/src/`
+- **Location**: `/projects/ngx-vest-forms/core/`
 - **Includes**: Essential form validation directives, utilities, and core functionality
-- **Entry Point**: `ngx-vest-forms`
+- **Entry Point**: `ngx-vest-forms/core`
 - **Size**: Lightweight and minimal dependencies
+- **Note**: The main package (`ngx-vest-forms`) re-exports everything from core for backward compatibility
 
 ### ✅ Smart State (`ngx-vest-forms/smart-state`)
 

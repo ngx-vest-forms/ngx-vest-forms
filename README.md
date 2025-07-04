@@ -38,6 +38,37 @@ Use `ngx-vest-forms` when you want to:
 npm i ngx-vest-forms vest
 ```
 
+## Modular Architecture & Tree-shaking
+
+`ngx-vest-forms` v2 features a modular architecture with multiple entry points for optimal bundle size:
+
+### Available Entry Points
+
+| Entry Point                      | Purpose                                 | When to Use                             |
+| -------------------------------- | --------------------------------------- | --------------------------------------- |
+| `ngx-vest-forms`                 | Main package (re-exports core)          | Default usage, backward compatibility   |
+| `ngx-vest-forms/core`            | Core form functionality                 | Explicit core imports, same bundle size |
+| `ngx-vest-forms/schemas`         | Schema adapters (Zod, Valibot, ArkType) | When using schema validation            |
+| `ngx-vest-forms/smart-state`     | Advanced state management               | Complex form state scenarios            |
+| `ngx-vest-forms/control-wrapper` | UI helper components                    | Custom form controls                    |
+
+### Import Examples
+
+```typescript
+// Main package (includes everything from core)
+import { ngxVestForms, NgxFormDirective } from 'ngx-vest-forms';
+
+// Core entry point (same functionality and bundle size)
+import { ngxVestForms, NgxFormDirective } from 'ngx-vest-forms/core';
+
+// Modular imports for specific features
+import { zodAdapter } from 'ngx-vest-forms/schemas';
+import { NgxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state';
+import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
+```
+
+**Note**: Both `ngx-vest-forms` and `ngx-vest-forms/core` have identical bundle sizes since the main package simply re-exports from core. Use either based on your preference for import clarity.
+
 ## Core Features & Quick Start
 
 The core of the library is the `ngxVestForm` directive, which automatically links your form with a Vest validation suite.
@@ -76,7 +107,7 @@ export const userValidations = staticSuite((data = {}, field?: string) => {
 ```typescript
 // user-form.component.ts
 import { Component, signal } from '@angular/core';
-import { ngxVestForms } from 'ngx-vest-forms';
+import { ngxVestForms } from 'ngx-vest-forms/core'; // Optimized import
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper'; // UI Helper
 import { userModel } from './user.model';
 import { userValidations } from './user.validations';
@@ -331,12 +362,10 @@ export class UserFormComponent {
 - **Provide a Schema:** Use `[formSchema]` for type safety and IDE support, especially for complex or nested forms.
 
 - **Handle Cross-Field Validation:**
-
   - Use `[validateRootForm]="true"` for root-level (cross-field) validation.
   - Use `[validationConfig]` for more complex cross-field dependencies (e.g., confirm password, cyclic dependencies).
 
 - **Understand Error Display:**
-
   - The available `errorDisplayMode`s are: `'on-blur'`, `'on-submit'`, and `'on-blur-or-submit'` (default).
   - Error display logic respects a control's `ngModelOptions.updateOn` value. If `updateOn: 'submit'`, errors will only show after form submission, regardless of the display mode. A warning is logged in development to help catch this.
 

@@ -13,12 +13,56 @@ This document lists all **public API breaking changes** when upgrading from v1 t
 | Two-way Binding with model() | v2      | 🟡 Medium | Update form binding syntax        |
 | Unified formState Signal     | v2      | 🟡 Medium | Update state access patterns      |
 | Error Display Behavior       | v2      | 🟢 Low    | Minimal impact, improved UX       |
+| Modular Architecture (NEW)   | v2      | 🟢 Low    | Optional tree-shaking benefits    |
 
-**📊 Bundle Impact:** Core users get a smaller bundle size. New features are modular and opt-in.
+**📊 Bundle Impact:** New features are modular and opt-in.
+**🌳 Tree-shaking:** Both `ngx-vest-forms` and `ngx-vest-forms/core` have identical bundle sizes since the main package re-exports from core.
 
 ---
 
-## 1. Directive and API Naming Changes (v1 → v2)
+## 1. Modular Architecture (NEW in v2)
+
+**What's new?**
+
+v2 introduces a modular architecture with multiple entry points for better organization and optional features.
+
+**Available Entry Points:**
+
+| Entry Point                      | Content                                 | Bundle Size  |
+| -------------------------------- | --------------------------------------- | ------------ |
+| `ngx-vest-forms`                 | Main package (re-exports core)          | Same as core |
+| `ngx-vest-forms/core`            | Core form functionality                 | Same as main |
+| `ngx-vest-forms/schemas`         | Schema adapters (Zod, Valibot, ArkType) | Additional   |
+| `ngx-vest-forms/smart-state`     | Advanced state management               | Additional   |
+| `ngx-vest-forms/control-wrapper` | UI helper components                    | Additional   |
+
+**Import Examples:**
+
+```typescript
+// Both approaches have identical bundle sizes
+import { ngxVestForms } from 'ngx-vest-forms'; // Main package
+import { ngxVestForms } from 'ngx-vest-forms/core'; // Core entry point
+
+// Optional features (only when needed)
+import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
+import { zodAdapter } from 'ngx-vest-forms/schemas';
+import { NgxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state';
+```
+
+**Migration Required:**
+
+**No migration required** - v1 imports continue to work. This is a new organizational feature.
+
+**Benefits:**
+
+- ✅ **Optional features** - only import what you need
+- ✅ **Clear separation** - core vs advanced features
+- ✅ **Better organization** - related functionality grouped together
+- ✅ **Backward compatibility** - existing imports unchanged
+
+---
+
+## 2. Directive and API Naming Changes (v1 → v2)
 
 **What changed?**
 
@@ -67,7 +111,7 @@ All directive names and selectors have been updated to use the `ngx` prefix inst
 
 ---
 
-## 2. Control Wrapper Component Updates (v1 → v2)
+## 3. Control Wrapper Component Updates (v1 → v2)
 
 **What changed?**
 
@@ -114,7 +158,7 @@ import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 
 ---
 
-## 3. Two-way Binding with model() (v1 → v2)
+## 4. Two-way Binding with model() (v1 → v2)
 
 **What changed?**
 
@@ -155,7 +199,7 @@ The `[formValue]` input and `(formValueChange)` output pattern is replaced by a 
 
 ---
 
-## 4. Unified formState Signal (v1 → v2)
+## 5. Unified formState Signal (v1 → v2)
 
 **What changed?**
 
@@ -191,7 +235,7 @@ const pending = formState.pending;
 
 ---
 
-## 5. Error Display Behavior Improvements (v1 → v2)
+## 6. Error Display Behavior Improvements (v1 → v2)
 
 **What changed?**
 
@@ -218,69 +262,6 @@ providers: [{ provide: NGX_ERROR_DISPLAY_MODE_DEFAULT, useValue: 'on-blur' }];
 <ngx-control-wrapper errorDisplayMode="on-blur">
   <input name="field" ngModel />
 </ngx-control-wrapper>
-```
-
----
-
-## New Features in v2 (Non-Breaking)
-
-These features are **additive** and don't require migration from v1:
-
-### Smart State Management
-
-Optional smart state management for handling external data updates and conflict resolution.
-
-```html
-<!-- v1 forms continue to work unchanged -->
-<form ngxVestForm [vestSuite]="suite" [(formValue)]="userProfile">
-  <!-- form fields -->
-</form>
-
-<!-- v2: Optional smart state features -->
-<form
-  ngxVestForm
-  ngxSmartStateExtension
-  [vestSuite]="suite"
-  [(formValue)]="userProfile"
-  [externalData]="externalData()"
-  [smartStateOptions]="{ mergeStrategy: 'smart' }"
->
-  <!-- form fields -->
-</form>
-```
-
-### Schema Integration
-
-Enhanced schema support with multiple schema libraries:
-
-```typescript
-import { NgxVestForms } from 'ngx-vest-forms';
-import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
-
-// Use with Zod, ArkType, Valibot, or simple models
-const schema = ngxModelToStandardSchema(userTemplate);
-```
-
-### Advanced Composition APIs
-
-New directives for building custom form components:
-
-```typescript
-@Component({
-  hostDirectives: [NgxFormErrorDisplayDirective],
-  template: `
-    @if (errorDisplay.shouldShowErrors()) {
-      <div class="errors">
-        @for (error of errorDisplay.errors(); track error) {
-          <div>{{ error }}</div>
-        }
-      </div>
-    }
-  `,
-})
-export class CustomFieldComponent {
-  readonly errorDisplay = inject(NgxFormErrorDisplayDirective);
-}
 ```
 
 ---
