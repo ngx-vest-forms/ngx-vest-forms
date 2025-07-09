@@ -2,18 +2,52 @@
 applyTo: "**"
 ---
 
+
 # GitHub Copilot Instructions
+
+## Project-Specific Instructions
+
+This repository includes detailed, authoritative instructions for key workflows and conventions. **Always consult these files for specifics before generating or editing code or tests:**
+
+- **Commit messages:** `.github/instructions/commit.instructions.md` — Conventional Commits requirements, structure, and examples.
+- **Vitest unit/component tests:** `.github/instructions/vitest-test.instructions.md` — Angular+Vitest test structure, best practices, and testing-library usage.
+- **Playwright E2E tests:** `.github/instructions/playwright.instructions.md` — Playwright test conventions, locator/step/assertion patterns, and file organization.
+- **Angular LLM guidelines:**
+  - [angular.dev/llms.txt](https://angular.dev/llms.txt) — Concise Angular LLM prompt guidelines.
+  - [angular.dev/llms-full.txt](https://angular.dev/llms-full.txt) — Full Angular LLM prompt guidelines.
+
+Summaries and cross-references are included in relevant sections below, but the full details and up-to-date rules are always in these files.
 
 ## Technologies Used
 
 - **TypeScript ^5.8**: With strict typing.
 - **Angular ^20**: The primary frontend framework.
+- **ngx-vest-forms**: The core library being developed.
 - **Vest**: For form validation. -- [vestjs](https://vestjs.dev/)
 - **Vitest**: For unit testing.
-- **Storybook**: For integration/component testing.
 - **Playwright**: For end-to-end testing.
 - **MSW**: For writing mock handlers.
 - **Tailwind CSS ^4.x**: For styling.
+
+## Project Overview & Architecture
+
+`ngx-vest-forms` is a lightweight adapter for Angular Template Driven Forms that uses [Vest](https://vestjs.dev) for validation. It is built for modern Angular (20+) and leverages signals, standalone components, and a modular architecture.
+
+### Modular Architecture
+
+The library is split into multiple entry points to allow for tree-shaking and optional features. When working on the library, be mindful of which entry point the code belongs to:
+
+-   **`ngx-vest-forms/core`**: The essential functionality. Contains the main `ngxVestForm` directive.
+-   **`ngx-vest-forms/control-wrapper`**: Contains the `NgxControlWrapper` UI helper component for displaying errors and pending states.
+-   **`ngx-vest-forms/schemas`**: Contains adapters for schema libraries like Zod, Valibot, and ArkType.
+-   **`ngx-vest-forms/smart-state`**: Contains advanced directives for complex state management scenarios.
+
+### Developer Workflow
+
+-   **Run the example app**: `npm start` (runs `ng dev examples`)
+-   **Run unit tests**: `npm test` (runs `vitest`)
+-   **Build the library**: `npm run build:lib` (runs `ng build ngx-vest-forms`)
+-   **Build all**: `npm run build:ci` (builds the library and example app)
 
 ## General Guidelines
 
@@ -149,28 +183,25 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Focus on optimizing Web Vitals like LCP, INP, and CLS.
 - Make sure components are Zoneless compatible.
 
-## Forms and Validation
+## Forms and Validation with ngx-vest-forms
 
-### Forms Guidelines
+This project uses `ngx-vest-forms`, which integrates **Vest** for validation with Angular's **Template-Driven Forms**.
 
-- Use **Template Driven Forms**.
-- Prefer `autocomplete="off"` for all fields.
-- Use **[ngx-vest-forms](https://github.com/simplifiedcourses/ngx-vest-forms)** as form library.
-- Use **[vestjs](https://vestjs.dev/)** for validations.
+### Core Pattern
 
-### VestJS Validation
+The main pattern involves three parts:
+1.  A component with a model `signal()`.
+2.  A Vest validation suite defined in a separate `*.validations.ts` file.
+3.  An HTML template connecting them with the `ngxVestForm` directive.
 
-#### Core Concepts
+-   Use `[(formValue)]` on the `<form>` element for two-way binding to the model signal.
+-   Use `[vestSuite]` to provide the validation suite.
+-   Use `[ngModel]` (one-way binding) for individual form controls.
+-   Wrap form fields in `<ngx-control-wrapper>` (from `ngx-vest-forms/control-wrapper`) to automatically handle error display and pending states.
 
-- Create validation suites using `create()` or `staticSuite()` from Vest, with `staticSuite()` preferred for field-specific validation optimization.
-- Understand that Vest maintains its own suite-state which is merged between validation runs.
-- Always implement the `only(field)` pattern in suites to optimize performance by only validating the specified field when appropriate.
-- Create validation suites outside of feature code to maintain separation of concerns.
-- Organize validation structure to mirror your form structure for better clarity.
-- Structure validation suites as self-contained units that receive data and return validation results.
+### Example Implementation
 
-#### Example Basic Pattern
-
+**1. Validation Suite (`user.validations.ts`)**
 ```typescript
 import { create, enforce, only, test } from 'vest';
 
@@ -191,48 +222,52 @@ const suite = staticSuite((data = {}, currentField) => {
 });
 ```
 
-#### Advanced Features
+**2. Component (`user-form.component.ts`)**
+```typescript
+import { Component, signal } from '@angular/core';
+import { ngxVestForms } from 'ngx-vest-forms/core';
+import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
+import { userValidations } from './user.validations';
 
-- Use `omitWhen()` for conditional validations that skip tests based on specific conditions.
-- Implement `warn()` for non-blocking validation messages that don't prevent form submission.
-- Support asynchronous validations with Promises or async/await syntax.
-- Create composable validation functions to reuse validation logic across different forms.
-- Implement cross-field validations with proper field relationships.
-- Use `group()` to organize validations into logical groups for better structure and conditional skipping.
+@Component({
+  standalone: true,
+  imports: [ngxVestForms, NgxControlWrapper],
+  template: `
+    <form ngxVestForm [vestSuite]="suite" [(formValue)]="model">
+      <ngx-control-wrapper>
+        <label for="name">Name</label>
+        <input id="name" name="name" [ngModel]="model().name" />
+      </ngx-control-wrapper>
 
-#### Integration with Angular and ngx-vest-forms
+      <ngx-control-wrapper>
+        <label for="email">Email</label>
+        <input id="email" name="email" [ngModel]="model().email" type="email" />
+      </ngx-control-wrapper>
+    </form>
+  `,
+})
+export class UserFormComponent {
+  protected readonly model = signal({ name: '', email: '' });
+  protected readonly suite = userValidations;
+}
+```
 
-- Connect validation suites to forms using the appropriate binding mechanism in ngx-vest-forms.
-- Implement form-level validations when needed for cross-field validation scenarios.
-- Use the appropriate error handling mechanisms to display validation messages to users.
-- Implement proper validation timing with debouncing for fields that trigger expensive validation operations.
-- Configure validation to run on appropriate form events (input, change, blur) based on user experience needs.
+### Best Practices
 
-#### Best Practices
+-   Keep validation logic in `*.validations.ts` files, separate from components.
+-   Use the `NgxControlWrapper` or build a custom equivalent using `NgxFormErrorDisplayDirective` for consistent error handling.
+-   Use the most specific entry point possible (e.g., `import { ngxVestForms } from 'ngx-vest-forms/core'`) to aid tree-shaking.
+-   For type-safety, use the optional schema adapters from `ngx-vest-forms/schemas`.
 
-- Keep validation logic separate from UI components for better maintainability.
-- Ensure validation error messages are clear, concise, and actionable for users.
-- Create reusable validation functions for common patterns like email, phone numbers, etc.
-- Consider internationalization needs when designing error messages.
-- Use proper typing with TypeScript to ensure type safety in validation rules.
-- Structure validations to optimize for both developer experience and performance.
 
 ## HTML and CSS
 
 ### HTML Guidelines
 
 - Follow the [Web Platform Baseline](https://web.dev/baseline) >= 2022.
-- Use semantic HTML elements for better accessibility and SEO.
-- Utilize new HTML features like:
-  - **`<dialog>`**: For modal dialogs.
-  - **`<details>` and `<summary>`**: For collapsible content.
-  - **`<input type="color">`**: For color pickers.
-  - **`<input type="date">`**: For date pickers.
-  - **`<input type="range">`**: For sliders.
-  - **`<output>`**: For displaying calculation results.
-  - **`<progress>` and `<meter>`**: For progress indicators.
-  - **`<picture>`**: For responsive images.
-  - **`popover`**: For pop-up elements.
+- Use semantic HTML elements (e.g., `<form>`, `<label>`, `<fieldset>`, `<legend>`, `<button>`, `<nav>`, `<main>`, `<section>`, `<article>`, `<aside>`, `<table>`, headings) as the foundation for accessibility and SEO.
+- Utilize new HTML features like `<dialog>`, `<details>`, `<summary>`, `<input type="color">`, `<input type="date">`, `<input type="range">`, `<output>`, `<progress>`, `<meter>`, `<picture>`, and `popover` for modern UI patterns.
+- Reference the Accessibility section for ARIA and focus management best practices.
 
 #### Example
 
@@ -337,112 +372,66 @@ html {
 </div>
 ```
 
-## Accessibility and Performance
 
-### Accessibility Standards
+## Accessibility
 
-#### Core Principles
+### Principles
 
-- Follow the **WCAG 2.1 AA** standard as a minimum requirement.
-- Design with an "accessibility-first" approach, not as an afterthought.
-- Test with actual screen readers (VoiceOver, NVDA, JAWS) regularly.
+- Follow **WCAG 2.1 AA** as a minimum standard.
+- Use an accessibility-first approach, not as an afterthought.
+- Test with screen readers (VoiceOver, NVDA, JAWS) and keyboard navigation.
+- Ensure all interactive elements are keyboard accessible and have visible focus indicators.
 - Include people with disabilities in user testing where possible.
-- Ensure the application is fully keyboard navigable without requiring a mouse.
 
-#### Semantic HTML and ARIA Usage
+### Semantic HTML & ARIA
 
-- Use semantic HTML elements as the foundation for accessibility.
-  - Use `<button>` for clickable actions, not `<div>` with click handlers.
-  - Use `<a>` for navigation links, not `<span>` or other elements.
-  - Use heading elements (`<h1>` through `<h6>`) in a logical hierarchy.
-  - Use `<nav>`, `<main>`, `<article>`, `<section>`, `<aside>`, and other semantic elements appropriately.
-  - Use `<table>` for tabular data with proper `<th>`, `<caption>`, etc.
-  - Use `<form>`, `<fieldset>`, and `<legend>` for form organization.
+- Use semantic HTML elements for structure and meaning (see HTML Guidelines).
+- Use ARIA attributes only when native HTML is insufficient:
+  - `aria-label`, `aria-labelledby`, `aria-describedby` for descriptions.
+  - `aria-live` for dynamic content updates.
+  - `aria-expanded`, `aria-controls` for disclosure widgets.
+  - `aria-hidden="true"` for decorative elements.
+  - `aria-current` for current navigation items.
+  - `role="button"` for non-button elements that function as buttons.
+  - `role="alert"` or `aria-atomic="true"` with `aria-live="polite"` for status messages.
+  - `role="navigation"`, `role="main"`, `role="search"` for page structure.
+  - Prefer native HTML over ARIA roles; "First Rule of ARIA": don't use ARIA if HTML can do the job.
 
-- Use ARIA attributes only when necessary to supplement HTML semantics.
-  - Use `aria-label`, `aria-labelledby`, and `aria-describedby` to provide descriptions for elements.
-  - Use `aria-live` regions for dynamic content updates with appropriate politeness levels.
-  - Use `aria-expanded` and `aria-controls` for disclosure widgets.
-  - Use `aria-hidden="true"` to hide purely decorative content from screen readers.
-  - Use `aria-current` for indicating current items in navigation.
-  - Use `aria-atomic` and `aria-relevant` to control how updates to live regions are announced.
-  - Prefer native HTML semantics over ARIA roles when possible.
-  - Follow the "First Rule of ARIA": Don't use ARIA if HTML can do the job.
+### Focus & Navigation
 
-#### Focus Management
-
-- Ensure visible focus indicators for all interactive elements.
-  - Never use `outline: none` without providing an alternative focus style.
-  - Consider high contrast mode users when designing focus indicators.
-- Manage focus programmatically when needed:
-  - Move focus to modal dialogs when opened.
-  - Return focus to triggering element when closed.
-  - Use focus trapping in modals and drawers.
-- Implement logical tab order that follows visual layout.
-  - Avoid arbitrary tabindex values greater than 0.
-  - Use `tabindex="-1"` for elements that should be programmatically focusable but not in tab order.
+- Ensure visible focus for all interactive elements (never remove outlines without alternatives).
+- Manage focus programmatically for dialogs and modals (focus trap, return focus on close).
+- Use logical tab order; avoid `tabindex` > 0, use `tabindex="-1"` for programmatic focus only.
 - Provide skip links to bypass repetitive navigation.
+- Ensure all interactive elements are keyboard accessible.
+- Use CSS to style focus states clearly and consistently.
 
-#### Form Accessibility
+### Forms
 
-- Associate labels with form controls using `<label for="id">` or aria-labelledby.
-- Group related form controls with `<fieldset>` and `<legend>`.
-- Provide clear error messages that:
-  - Are announced to screen readers when they appear.
-  - Are visually connected to the relevant form field.
-  - Explain how to fix the error, not just that an error exists.
-- Ensure form validation errors are accessible using `aria-invalid` and `aria-describedby`.
-- Use appropriate input types (`email`, `tel`, `number`, etc.) for better mobile experiences.
+- Associate labels with controls using `<label for="id">` or `aria-labelledby`.
+- Group related controls with `<fieldset>` and `<legend>`.
+- Provide clear, actionable error messages, visually and for screen readers.
+- Use `aria-invalid` and `aria-describedby` for error states.
+- Use appropriate input types for better mobile and accessibility support.
 
-#### Color and Visual Design
+### Visual & Media
 
-- Maintain sufficient color contrast (minimum 4.5:1 for normal text, 3:1 for large text).
-  - Test with contrast checker tools during development.
-  - Consider different lighting conditions and monitor calibrations.
-- Never rely on color alone to convey information.
-  - Add icons, patterns, or text labels along with color cues.
-  - Ensure the application works in grayscale.
-- Support different text sizes and zoom levels up to 200% without loss of functionality.
-- Provide sufficient spacing between interactive elements for motor control impairments.
-- Ensure the application is usable with Windows High Contrast Mode.
-- Consider reduced motion preferences with `prefers-reduced-motion` media query.
+- Maintain color contrast (≥4.5:1 normal text, 3:1 large text).
+- Never rely on color alone for information; use icons/text as well.
+- Support text zoom up to 200% and sufficient spacing for motor impairments.
+- Provide descriptive alt text for images; use empty alt for decorative images.
+- Provide captions/transcripts for audio/video; ensure media controls are keyboard accessible.
+- Avoid auto-play media or provide controls to stop it.
 
-#### Media Accessibility
+### Dynamic Content
 
-- Provide descriptive alt text for all informative images.
-  - Use empty alt attributes (`alt=""`) for purely decorative images.
-  - Make alt text contextually appropriate and concise.
-- Provide captions and transcripts for audio/video content.
-- Ensure media controls are keyboard accessible.
-- Avoid auto-playing media or provide easy controls to stop it.
+- Announce dynamic content changes with ARIA live regions.
+- Ensure custom widgets follow WAI-ARIA patterns and are fully keyboard accessible.
 
-#### Dynamic Content and Interactions
+### Testing
 
-- Announce dynamic content changes using ARIA live regions.
-- Provide sufficient timing for interactions and allow users to extend time limits.
-- Ensure complex widgets follow WAI-ARIA design patterns and authoring practices.
-- Make all custom components fully keyboard accessible.
-- Test custom interactions with screen readers to ensure they announce appropriately.
-
-#### Testing and Validation
-
-- Use automated testing tools like axe-core or Lighthouse as a first pass.
-- Perform manual keyboard navigation testing for all features.
-- Test with screen readers on multiple platforms.
-- Include users with disabilities in usability testing when possible.
-- Create and maintain accessibility test plans as part of regular QA processes.
-
-### Performance Guidelines
-
-- Optimize images with `NgOptimizedImage` or modern formats like WebP and AVIF.
-- Minimize the use of heavy animations; prefer CSS transitions.
-- Use view transitions for smoother page transitions between routes.
-- Implement lazy loading for below-the-fold content.
-- Monitor Core Web Vitals (LCP, FID/INP, CLS) and optimize accordingly.
-- Implement performance budgets for critical resources.
-- Use WebWorkers for CPU-intensive tasks to keep the main thread free.
-- Optimize JavaScript execution and minimize main thread blocking time.
-- Implement appropriate caching strategies for static assets.
+- Use automated tools (axe-core, Lighthouse) and manual keyboard/screen reader testing.
+- Maintain accessibility test plans as part of QA.
 
 ## Tools and Resources
 
@@ -450,82 +439,36 @@ html {
 - Use [CSS Tricks](https://css-tricks.com/) for design patterns and tips.
 - Use [Web.dev](https://web.dev/) for performance and accessibility audits.
 
+
 ## Testing
 
-### General Guidelines
+> **Note:**
+> - For Vitest unit/component tests, follow `.github/instructions/vitest-test.instructions.md`
+> - For Playwright E2E tests, follow `.github/instructions/playwright.instructions.md`
 
-- Ensure all new features have corresponding tests.
-- Maintain high code coverage with **Vitest**.
-- Follow the Arrange-Act-Assert pattern for tests.
+### Unit & Component Testing (Vitest)
 
-### Unit Testing
+All unit and component tests must follow `.github/instructions/vitest-test.instructions.md`. Do not duplicate or invent test patterns—always defer to the referenced file.
 
-- Use **Vitest** for unit testing.
-- Prefer the new **Vitest Browser UI** for unit tests/component tests to ensure components behave as expected
-- Write tests in the Arrange-Act-Assert pattern for clarity and maintainability.
-- Use `describe` blocks to group related tests and improve readability.
-- Mock external dependencies using `vi.mock()` to isolate the unit under test.
-- Use `beforeEach` and `afterEach` hooks to set up and clean up test environments.
-- Leverage `test.concurrent` for running independent tests in parallel to speed up execution.
-- Use `expect` matchers for clear and expressive assertions.
-- Enable code coverage with `--coverage` to ensure all critical paths are tested.
-- Use snapshot testing for components with stable outputs.
-- Test DOM interactions with `@testing-library/dom` for browser-like behavior.
-- Use `vi.spyOn()` to track calls to specific functions or methods.
-- Prefer mocking browser APIs (e.g., fetch, localStorage) with **MSW** or `vi.fn()` for consistency.
-- Run tests in headless mode for CI pipelines and Browser UI for debugging.
+### End-to-End Testing (Playwright)
 
-### Integration Testing
+All E2E tests must follow `.github/instructions/playwright.instructions.md`. Do not duplicate or invent E2E test patterns—always defer to the referenced file.
 
-- Use **Storybook Interaction Tests** to test component interactions in isolation.
-- Ensure integration tests cover all critical paths and edge cases.
-- Use **Storybook** to document components and their states.
-- Use **Storybook Addons** for accessibility checks and visual regression testing.
 
-### End-to-End Testing
 
-- Use **Playwright** version 1.51 or higher for end-to-end testing.
-- Automate E2E tests to validate application flows.
-- Use the new Aria snapshot testing with Playwright.
-- Ensure tests cover critical user journeys and edge cases.
-- Use **MSW** to mock API responses in E2E tests.
 
-## Accessibility and Performance
-
-### Accessibility Standards
-
-- Use appropriate ARIA attributes.
-  - Use ARIA attributes to enhance accessibility for dynamic content and complex UI components.
-  - Use `aria-label`, `aria-labelledby`, and `aria-describedby` for providing descriptive information.
-  - Use `aria-live` to notify users of content changes.
-  - Use `aria-expanded` and `aria-controls` for collapsible elements.
-  - Use `aria-hidden="true"` to hide decorative elements from screen readers.
-  - Use `role="button"` for elements that function as buttons but are not native button elements.
-  - Use `role="alert"` or `aria-atomic="true"` with `aria-live="polite"` for important status messages.
-  - Use `role="navigation"` to identify navigation sections.
-  - Use `role="main"` to identify the main content area of a page.
-  - Use `role="search"` to identify search functionality.
-- Ensure all interactive elements are keyboard accessible.
-  - Use the `tabindex` attribute to control the focus order.
-  - Ensure that all interactive elements can be accessed using the keyboard.
-  - Implement skip links to bypass repetitive navigation.
-- Maintain proper color contrast ratios.
-  - Use a color contrast analyzer to ensure sufficient contrast between text and background colors.
-  - Aim for a contrast ratio of at least 4.5:1 for normal text and 3:1 for large text.
-- Implement proper focus management.
-  - Ensure that focus is always visible and follows a logical order.
-  - Use CSS to style the focus state of interactive elements.
-  - Manage focus when opening dialogs or modal windows.
-- Provide alt text for images.
-  - Use descriptive alt text for all images to provide context for users who cannot see them.
-  - Ensure that alt text is concise and accurately describes the image content.
-- Use ARIA attributes only when necessary; prefer semantic HTML.
-
-### Performance Guidelines
+## Performance
 
 - Optimize images with `NgOptimizedImage` or modern formats like WebP and AVIF.
-- Minimize the use of heavy animations; prefer CSS transitions.
-- Use view transitions for smoother animations.
+- Minimize heavy animations; prefer CSS transitions and view transitions.
+- Use lazy loading for below-the-fold content.
+- Monitor and optimize Core Web Vitals (LCP, INP, CLS).
+- Use web workers for CPU-intensive tasks.
+- Implement appropriate caching for static assets.
+
+## Commits
+
+All commit messages must follow the Conventional Commits specification as described in [.github/instructions/commit.instructions.md](./instructions/commit.instructions.md). This includes type/scope/description structure, imperative mood, and concise summaries. See the file for full details and examples.
 
 ## Security Practices
 
@@ -549,8 +492,3 @@ html {
 - Document public APIs thoroughly.
 - Provide usage examples for components and services.
 
-## Tools and Resources
-
-- Use tools like [Can I Use](https://caniuse.com/) to check browser support.
-- Use [CSS Tricks](https://css-tricks.com/) for design patterns and tips.
-- Use [Web.dev](https://web.dev/) for performance and accessibility audits.

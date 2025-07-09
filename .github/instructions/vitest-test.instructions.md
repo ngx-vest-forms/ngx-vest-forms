@@ -19,6 +19,20 @@ applyTo: "projects/**/*.{spec,test}.{ts,tsx,js,jsx}"
   - Start with the happy and simple paths, then add edge cases and error handling.
   - Start with `test.todo()` or `test.fixme()` for complex tests that need more time to implement.
 
+## Test Organization & Structure
+
+### File Organization
+- Use `describe` blocks to group related tests and improve readability.
+- Follow the Arrange-Act-Assert pattern for clarity and maintainability.
+- Use `beforeEach` and `afterEach` hooks to set up and clean up test environments.
+- Leverage `test.concurrent` for running independent tests in parallel to speed up execution.
+
+### Test Coverage
+- Ensure all new features have corresponding tests.
+- Maintain high code coverage with **Vitest**.
+- Enable code coverage with `--coverage` to ensure all critical paths are tested.
+- Assert error paths and loading states, not just happy paths.
+
 ## Unit Testing (Vitest Node)
 - Use for pure functions, utilities, and services without Angular dependencies.
 - No Angular TestBed or DOM required.
@@ -38,16 +52,68 @@ applyTo: "projects/**/*.{spec,test}.{ts,tsx,js,jsx}"
 - Prefer fakes for service dependencies; use Angular's DI to provide them.
 - Always test user-facing behavior, not implementation details.
 - For async operations, always `await TestBed.inject(ApplicationRef).whenStable()` after triggering effects/signals.
-- Assert error paths and loading states, not just happy paths.
 - When creating a Test Component, use Template Driven Forms.
 - Use ngx-vest-forms for the test component's form logic.
+- Run tests in headless mode for CI pipelines and Browser UI for debugging.
+
+### ngx-vest-forms Component Testing Patterns
+
+When testing components that use ngx-vest-forms, follow these patterns:
+
+```typescript
+import { render, screen } from '@testing-library/angular';
+import { userEvent } from '@vitest/browser/context';
+import { Component, signal } from '@angular/core';
+import { ngxVestForms } from 'ngx-vest-forms/core';
+import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
+import { staticSuite, test, enforce } from 'vest';
+
+// Example validation suite for testing
+const testSuite = staticSuite((data = {}, field) => {
+  test('email', 'Email is required', () => {
+    enforce(data.email).isNotEmpty();
+  });
+});
+
+@Component({
+  standalone: true,
+  imports: [ngxVestForms, NgxControlWrapper],
+  template: `
+    <form ngxVestForm [vestSuite]="suite" [(formValue)]="model">
+      <ngx-control-wrapper>
+        <label for="email">Email</label>
+        <input id="email" name="email" [ngModel]="model().email" />
+      </ngx-control-wrapper>
+    </form>
+  `,
+})
+class TestComponent {
+  model = signal({ email: '' });
+  suite = testSuite;
+}
+
+describe('ngx-vest-forms integration', () => {
+  it('should validate form fields and show errors', async () => {
+    // Arrange
+    await render(TestComponent);
+    const emailInput = screen.getByRole('textbox', { name: /email/i });
+
+    // Act - trigger validation by focusing and blurring
+    await userEvent.click(emailInput);
+    await userEvent.tab(); // blur the field
+
+    // Assert - check for validation error
+    await expect.element(screen.getByText('Email is required')).toBeInTheDocument();
+  });
+});
+```
 
 ### Testing Library Best Practices
 - **Avoid Implementation Details**: Never access `fixture.debugElement`, `injector.get()`, or internal component/directive properties in tests.
 - **Use DOM-Focused Assertions**: Test what users see and interact with, not internal state or method return values.
-- **Prefer `screen` Queries**: Use `screen.getByTestId()`, `screen.getByRole()`, etc. instead of fixture debugging.
+- **Prefer Accessible Queries**: Use `screen.getByRole()`, `screen.getByLabelText()`, `screen.getByText()` for better accessibility testing. Fall back to `screen.getByTestId()` when semantic queries aren't sufficient.
 - **Use Vitest Browser Assertions**: Prefer `await expect.element(element).toHaveAttribute()` over direct DOM property checks for better retry-ability.
-- **Add Test IDs Strategically**: Use `data-testid` attributes for reliable element querying, especially for form elements and containers.
+- **Add Test IDs Sparingly**: Use `data-testid` attributes only when semantic queries (role, label, text) aren't sufficient for reliable element querying.
 - **Test Attribute Behavior**: Verify directive behavior through DOM attributes (e.g., `toHaveAttribute('validateRootForm', 'false')`) rather than directive properties.
 - **Focus on User Experience**: Test form validation states (`toBeValid()`, `toBeInvalid()`), element visibility (`toBeInTheDocument()`), and accessibility attributes.
 
