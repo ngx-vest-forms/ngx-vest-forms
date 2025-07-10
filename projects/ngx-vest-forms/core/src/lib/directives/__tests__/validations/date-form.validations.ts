@@ -70,5 +70,13 @@ export const dateFormValidations = staticSuite(
     vestTest('details.category', 'Category is required', () => {
       enforce(actualData.details.category).isNotEmpty();
     });
+
+    vestTest('details.metadata.lastUpdated', 'Last updated is required', () => {
+      if (typeof actualData.details.metadata.lastUpdated === 'string') {
+        enforce(actualData.details.metadata.lastUpdated).isNotEmpty();
+      } else {
+        enforce(actualData.details.metadata.lastUpdated).isNotEmpty();
+      }
+    });
   },
 );

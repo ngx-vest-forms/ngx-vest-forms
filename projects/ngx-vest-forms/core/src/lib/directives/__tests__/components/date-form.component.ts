@@ -18,9 +18,9 @@ import { dateFormValidations } from '../validations/date-form.validations';
   template: `
     <form
       ngxVestForm
-      [vestSuite]="dateVestSuite"
+      [vestSuite]="dateVestSuite()"
       [(formValue)]="formValue"
-      [validationOptions]="validationOptions"
+      [validationOptions]="validationOptions()"
       #vestForm="ngxVestForm"
     >
       <label for="title">Event Title</label>
@@ -73,7 +73,7 @@ import { dateFormValidations } from '../validations/date-form.validations';
         <input
           id="lastUpdated"
           name="details.metadata.lastUpdated"
-          type
+          type="datetime-local"
           [ngModel]="formValue().details.metadata.lastUpdated"
         />
       </fieldset>
@@ -117,10 +117,10 @@ export class DateFormComponent {
     },
   } satisfies NgxFormCompatibleDeepRequired<EventFormModel>); // Type assertion to work around TS strictness
 
-  validationOptions: NgxValidationOptions = { debounceTime: 50 };
+  validationOptions = signal<NgxValidationOptions>({ debounceTime: 50 });
 
   // Use the extracted date form validation suite
-  dateVestSuite = dateFormValidations;
+  dateVestSuite = signal(dateFormValidations);
 
   // Method to demonstrate setting actual Date objects
   setActualDates(): void {

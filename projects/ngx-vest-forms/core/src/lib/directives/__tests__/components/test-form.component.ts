@@ -11,10 +11,10 @@ import { testFormValidations } from '../validations/test-form.validations';
   template: `
     <form
       ngxVestForm
-      [vestSuite]="vestSuite"
+      [vestSuite]="vestSuite()"
       [(formValue)]="formValue"
-      [validationOptions]="validationOptions"
-      [validationConfig]="validationConfig"
+      [validationOptions]="validationOptions()"
+      [validationConfig]="validationConfig()"
       #vestForm="ngxVestForm"
     >
       <label for="email">Email</label>
@@ -61,8 +61,8 @@ export class TestFormComponent {
     password: '',
   });
 
-  validationOptions: NgxValidationOptions = { debounceTime: 50 }; // Reduced for testing
-  validationConfig: Record<string, string[]> | null = null;
+  validationOptions = signal<NgxValidationOptions>({ debounceTime: 50 }); // Reduced for testing
+  validationConfig = signal<Record<string, string[]> | null>(null);
 
-  vestSuite = testFormValidations;
+  vestSuite = signal(testFormValidations);
 }

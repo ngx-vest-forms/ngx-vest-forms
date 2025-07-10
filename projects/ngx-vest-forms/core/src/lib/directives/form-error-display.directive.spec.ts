@@ -200,7 +200,12 @@ describe('NgxFormErrorDisplayDirective', () => {
       standalone: true,
       imports: [...ngxVestForms],
       template: `
-        <form ngxVestForm [vestSuite]="suite" [(formValue)]="formValue">
+        <form
+          ngxVestForm
+          [vestSuite]="suite"
+          [(formValue)]="formValue"
+          [validationOptions]="validationOptions"
+        >
           <div ngxFormErrorDisplay #display="formErrorDisplay">
             <label for="email">Email</label>
             <input id="email" name="email" [ngModel]="formValue.email" />
@@ -217,6 +222,7 @@ describe('NgxFormErrorDisplayDirective', () => {
     class PendingComponent {
       formValue = { email: '' };
       suite = vestSuite;
+      validationOptions = { debounceTime: 100 }; // Add debounce to create pending state
     }
     await render(PendingComponent);
 

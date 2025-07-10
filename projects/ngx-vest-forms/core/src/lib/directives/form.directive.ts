@@ -1,5 +1,5 @@
 import {
-  afterRenderEffect,
+  afterNextRender,
   computed,
   DestroyRef,
   Directive,
@@ -21,10 +21,7 @@ import {
   AsyncValidatorFn,
   FormControlStatus,
   NgForm,
-  PristineChangeEvent,
-  StatusChangeEvent,
   ValidationErrors,
-  ValueChangeEvent,
 } from '@angular/forms';
 import {
   InferSchemaType,
@@ -113,7 +110,7 @@ export class NgxFormDirective<
   TSchema extends SchemaDefinition | null = null,
   TModel = TSchema extends SchemaDefinition
     ? InferSchemaType<TSchema>
-    : unknown,
+    : Record<string, unknown>,
 > {
   /// --- DEPENDENCY INJECTION ---
   readonly #destroyRef = inject(DestroyRef);
@@ -124,7 +121,17 @@ export class NgxFormDirective<
   readonly formSchema = input<TSchema | null>(null);
   readonly vestSuite = input<NgxVestSuite<TModel> | null>(null);
   readonly validationConfig = input<Record<string, string[]> | null>(null);
-  readonly validationOptions = input<NgxValidationOptions>({ debounceTime: 0 });
+  readonly validationOptions = input(
+    { debounceTime: 0 } satisfies NgxValidationOptions,
+    {
+      transform: (
+        value: NgxValidationOptions | undefined,
+      ): NgxValidationOptions => ({
+        debounceTime: 0,
+        ...value,
+      }),
+    },
+  );
 
   /// --- INTERNAL STATE ---
   readonly #validationContext = computed(() => {
@@ -169,7 +176,7 @@ export class NgxFormDirective<
   });
 
   /**
-   * Simple validator cache for field validators using toObservable + RxJS pattern
+   * Simple validator cache for field validators using RxJS pattern
    * Maps field names to their validation observables with shared debounced streams
    */
   readonly #fieldValidatorCache = new Map<
@@ -181,42 +188,31 @@ export class NgxFormDirective<
   >();
 
   /// --- INTERNAL BASE SIGNALS ---
-  readonly #statusSignal = toSignal<FormControlStatus>(
-    this.ngForm.form.events.pipe(
-      filter(
-        (event): event is StatusChangeEvent =>
-          event instanceof StatusChangeEvent,
-      ),
-      map((event) => event.status),
-      startWith(this.ngForm.form.status),
-      distinctUntilChanged(),
-    ),
-    { injector: this.#injector },
+  readonly #statusSignal = toSignal(
+    this.ngForm.form.statusChanges.pipe(startWith(this.ngForm.form.status)),
+    {
+      injector: this.#injector,
+      initialValue: this.ngForm.form.status as FormControlStatus,
+    },
   );
 
-  readonly #formValueSignal = toSignal<TModel | null>(
-    this.ngForm.form.events.pipe(
-      filter(
-        (event): event is ValueChangeEvent<TModel> =>
-          event instanceof ValueChangeEvent,
-      ),
+  readonly #formValueSignal = toSignal(
+    this.ngForm.form.valueChanges.pipe(
+      startWith(this.ngForm.form.value),
       map(() => mergeValuesAndRawValues<TModel>(this.ngForm.form)),
-      startWith(mergeValuesAndRawValues<TModel>(this.ngForm.form)),
     ),
-    { injector: this.#injector },
+    {
+      injector: this.#injector,
+      initialValue: mergeValuesAndRawValues<TModel>(this.ngForm.form),
+    },
   );
 
-  readonly #dirtySignal = toSignal<boolean>(
-    this.ngForm.form.events.pipe(
-      filter(
-        (event): event is PristineChangeEvent =>
-          event instanceof PristineChangeEvent,
-      ),
-      map((event) => !event.pristine),
-      startWith(this.ngForm.form.dirty),
-      distinctUntilChanged(),
+  readonly #dirtySignal = toSignal(
+    this.ngForm.form.statusChanges.pipe(
+      startWith(this.ngForm.form.status),
+      map(() => this.ngForm.form.dirty),
     ),
-    { injector: this.#injector },
+    { injector: this.#injector, initialValue: this.ngForm.form.dirty },
   );
 
   /// --- DERIVED STATUS SIGNALS ---
@@ -229,9 +225,25 @@ export class NgxFormDirective<
     return status !== 'PENDING' && status !== 'DISABLED';
   });
 
-  readonly #fieldErrorsAndWarnings = computed(() => {
-    return getAllFormErrors(this.ngForm.form);
-  });
+  readonly #fieldErrorsAndWarnings = toSignal(
+    this.ngForm.form.statusChanges.pipe(
+      startWith(this.ngForm.form.status),
+      map(() => {
+        try {
+          return getAllFormErrors(this.ngForm.form);
+        } catch (error) {
+          if (isDevMode()) {
+            console.error(
+              '[NgxFormDirective] Error getting form errors:',
+              error,
+            );
+          }
+          return {};
+        }
+      }),
+    ),
+    { injector: this.#injector, initialValue: {} },
+  );
 
   readonly #rootErrorsAndWarnings = computed<{
     errors?: string[];
@@ -268,18 +280,14 @@ export class NgxFormDirective<
     const fieldErrors: Record<string, string[]> = {};
     const fieldWarnings: Record<string, string[]> = {};
 
-    for (const key in allFieldMessages) {
-      if (Object.prototype.hasOwnProperty.call(allFieldMessages, key)) {
-        // The errors array is the primary value
-        fieldErrors[key] = allFieldMessages[key];
-        // Warnings are attached as a property on the error array by getAllFormErrors
-        const warningsProperty = Object.getOwnPropertyDescriptor(
-          allFieldMessages[key],
-          'warnings',
-        );
-        if (warningsProperty && Array.isArray(warningsProperty.value)) {
-          fieldWarnings[key] = warningsProperty.value;
-        }
+    // Modern approach using for...of for better performance and readability
+    for (const [key, messages] of Object.entries(allFieldMessages)) {
+      fieldErrors[key] = messages;
+      // Extract warnings using more efficient property access
+      const warnings = (messages as string[] & { warnings?: string[] })
+        .warnings;
+      if (Array.isArray(warnings)) {
+        fieldWarnings[key] = warnings;
       }
     }
 
@@ -324,29 +332,62 @@ export class NgxFormDirective<
     this.formValue.set(currentValue === undefined ? null : currentValue);
   });
 
+  // Track previous validation context for comparison
+  #previousValidationContext: {
+    suite: NgxVestSuite<TModel> | null;
+    options: NgxValidationOptions;
+    config: Record<string, string[]> | null;
+    isValidationReady: boolean;
+    debounceTime: number;
+  } | null = null;
+
   /**
-   * Enhanced cleanup effect using proper effect cleanup patterns
+   * Enhanced validation context tracking effect
    * This ensures validator cache is cleared when validation context changes
    */
-  // eslint-disable-next-line no-unused-private-class-members
-  readonly #cleanupEffect = effect((onCleanup) => {
+  // eslint-disable-next-line no-unused-private-class-members -- This is a private effect
+  readonly #validationContextEffect = effect((onCleanup) => {
     // Track validation context to re-run when it changes
     const context = this.#validationContext();
 
     // Log context changes in dev mode to help with debugging
     if (isDevMode()) {
-      console.log('[NgxFormDirective] Validation context changed', {
-        isValidationReady: context.isValidationReady,
-        debounceTime: context.debounceTime,
-        hasSuite: !!context.suite,
-        hasConfig: !!context.config,
+      untracked(() => {
+        console.log('[NgxFormDirective] Validation context changed', {
+          isValidationReady: context.isValidationReady,
+          debounceTime: context.debounceTime,
+          hasSuite: !!context.suite,
+          hasConfig: !!context.config,
+        });
       });
     }
+
+    // Only clear cache if this is not the initial run and context actually changed
+    if (
+      this.#previousValidationContext &&
+      (this.#previousValidationContext.debounceTime !== context.debounceTime ||
+        this.#previousValidationContext.suite !== context.suite ||
+        this.#previousValidationContext.config !== context.config)
+    ) {
+      untracked(() => {
+        if (this.#fieldValidatorCache.size > 0) {
+          if (isDevMode()) {
+            console.log(
+              '[NgxFormDirective] Clearing validator cache due to context change',
+            );
+          }
+          this.#clearValidatorCache();
+        }
+      });
+    }
+
+    // Store current context for next comparison
+    this.#previousValidationContext = context;
 
     onCleanup(() => {
       if (isDevMode()) {
         console.log(
-          '[NgxFormDirective] Cleaning up validator cache due to context change or directive destruction',
+          '[NgxFormDirective] Cleaning up validator cache due to effect cleanup',
         );
       }
       this.#clearValidatorCache();
@@ -358,9 +399,9 @@ export class NgxFormDirective<
     this.#setupValidationConfigStreams();
     this.#setupFormSubmitListener();
 
-    // Use afterRenderEffect for DOM-dependent initialization
+    // Use afterNextRender for better zoneless compatibility
     // This ensures the form is fully rendered before we start validation setup
-    afterRenderEffect(() => {
+    afterNextRender(() => {
       // Ensure form is properly initialized after render
       if (this.ngForm.form && isDevMode()) {
         console.log('[NgxFormDirective] Form initialized after render', {
@@ -368,6 +409,16 @@ export class NgxFormDirective<
           hasControls: Object.keys(this.ngForm.form.controls).length > 0,
         });
       }
+    });
+
+    // Setup automatic cleanup when directive is destroyed
+    this.#destroyRef.onDestroy(() => {
+      if (isDevMode()) {
+        console.log(
+          '[NgxFormDirective] Cleaning up validator cache on destroy',
+        );
+      }
+      this.#clearValidatorCache();
     });
   }
 
@@ -532,19 +583,13 @@ export class NgxFormDirective<
                     const errors = result.getErrors()[field];
                     const warnings = result.getWarnings()[field];
 
-                    let validationOutput: ValidationErrors | null = null;
-                    if (
-                      (errors && errors.length > 0) ||
-                      (warnings && warnings.length > 0)
-                    ) {
-                      validationOutput = {};
-                      if (errors && errors.length > 0) {
-                        validationOutput['errors'] = errors;
-                      }
-                      if (warnings && warnings.length > 0) {
-                        validationOutput['warnings'] = warnings;
-                      }
-                    }
+                    const validationOutput: ValidationErrors | null =
+                      errors?.length || warnings?.length
+                        ? {
+                            ...(errors?.length && { errors }),
+                            ...(warnings?.length && { warnings }),
+                          }
+                        : null;
 
                     // Use untracked for debug logging to avoid creating dependencies
                     if (isDevMode()) {
@@ -637,7 +682,7 @@ export class NgxFormDirective<
     this.#fieldValidatorCache.clear();
   }
 
-  static createVestAsyncValidator<M = unknown>(
+  static createVestAsyncValidator<M = Record<string, unknown>>(
     suite: NgxVestSuite<M>,
     field: string,
     getModel: () => M,
@@ -658,19 +703,16 @@ export class NgxFormDirective<
                   (result: SuiteResult<string, string>) => {
                     const errors = result.getErrors()[field];
                     const warnings = result.getWarnings()[field];
-                    if (
-                      (errors && errors.length > 0) ||
-                      (warnings && warnings.length > 0)
-                    ) {
-                      observer.next({
-                        ...(errors && errors.length > 0 ? { errors } : {}),
-                        ...(warnings && warnings.length > 0
-                          ? { warnings }
-                          : {}),
-                      });
-                    } else {
-                      observer.next(null);
-                    }
+
+                    const validationResult =
+                      errors?.length || warnings?.length
+                        ? {
+                            ...(errors?.length && { errors }),
+                            ...(warnings?.length && { warnings }),
+                          }
+                        : null;
+
+                    observer.next(validationResult);
                     observer.complete();
                   },
                 );
