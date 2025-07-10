@@ -1,7 +1,7 @@
 ---
+description: 'Copilot instructions for the ngx-vest-forms project'
 applyTo: "**"
 ---
-
 
 # GitHub Copilot Instructions
 
@@ -69,6 +69,19 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Optimize for understanding, not purity. If a "clean" approach makes code harder to understand, it's not actually clean.
 - Value domain clarity over technical elegance. Code that clearly expresses business concepts is more valuable than code that demonstrates technical prowess
 - Embrace tradeoffs knowingly. Sometimes, performance matters more than purity. Sometimes, shipping quickly matters more than perfect abstractions. Make these tradeoffs consciously.
+
+## Code Reference / Context7
+- Always use the context7 MCP to reference documentation for libraries like
+ - `/angular/angular`
+ - `/mswjs/msw`
+ - `/microsoft/playwright`
+ - `/testing-library/angular-testing-library`
+ - `/context7/tailwindcss`
+ - `/microsoft/typescript`
+ - `/ealush/vest`
+ - `/vitest-dev/vitest`
+- Always use 5000 tokens.
+- Only search three times maximum for any specific piece of documentation.
 
 ## TypeScript
 

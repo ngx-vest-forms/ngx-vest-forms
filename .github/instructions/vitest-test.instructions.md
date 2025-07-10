@@ -18,6 +18,11 @@ applyTo: "projects/**/*.{spec,test}.{ts,tsx,js,jsx}"
   - Based on that scaffold the tests and add pseudo-code/docs for the expected behavior, with WHAT and WHY.
   - Start with the happy and simple paths, then add edge cases and error handling.
   - Start with `test.todo()` or `test.fixme()` for complex tests that need more time to implement.
+- To run tests, prefer using the `#runTests` with the `#VSCodeAPI`
+  - If that does not work, use the command line:
+    ```bash
+    npx vitest run --coverage
+    ```
 
 ## Test Organization & Structure
 
@@ -133,60 +138,8 @@ describe('ngx-vest-forms integration', () => {
 - For components using `httpResource`, always test loading, error, and success states.
 - Use MSW for browser-based integration/component tests if mocking at the network level.
 
-### NgRx Signals
-- Create the store in tests using `runInInjectionContext` (for pure logic) or `TestBed` (for Angular-dependent stores):
-  - For stores with Angular dependencies:
-    ```typescript
-    let store: ReturnType<typeof myStore>;
-    beforeEach(() => {
-      TestBed.configureTestingModule({
-         providers: [provideZonelessChangeDetection()]
-      });
-      store = TestBed.runInInjectionContext(myStore);
-    });
-    ```
-- Mock store dependencies (e.g., services) using `vi.fn()` or fakes. Provide them via Angular's DI if needed.
-- For async store methods or effects, always `await TestBed.inject(ApplicationRef).whenStable()` before assertions.
-- Test selectors and computed signals by reading their values and asserting expected state.
-- Test store methods (actions) by invoking them and asserting state changes and side effects.
-- Always test both happy paths and error/edge cases.
-- Use `expect.poll` for polling assertions when testing async state or effects.
-- Do not test private implementation details or internal state—focus on observable state and outputs.
-- Achieve high coverage by testing all selectors, methods, and error handling paths. Test both the initial state and all state transitions, including error and loading states.
-- Example:
-  ```typescript
-  import { runInInjectionContext } from '@angular/core';
-  import { describe, it, expect, beforeEach } from 'vitest';
-  import { myStore } from './my.store';
-
-  describe('myStore', () => {
-    let store: ReturnType<typeof myStore>;
-    beforeEach(() => {
-      store = runInInjectionContext(myStore);
-    });
-
-    it('should have initial state', () => {
-      expect(store.count()).toBe(0);
-    });
-
-    it('should increment count', () => {
-      store.increment();
-      expect(store.count()).toBe(1);
-    });
-  });
-  ```
-
 ### Async/Signals
 - Use `expect.poll()` for polling async signal values.
 - Always await `whenStable()` after triggering async changes.
-
-## Using MSW
-- Use MSW for all HTTP/network requests in tests (Vitest, Storybook, Playwright).
-- Define reusable handlers per domain or feature. These are often placed in a shared location like `libs/shared/test/msw` or project-specific testing utilities.
-- For Vitest Browser UI, use the custom `test` fixture from `@expo/shared-test-msw` (e.g., a file named `msw-vitest.ts`).
-  - This fixture is expected to be part of your shared testing infrastructure, typically located in a path like `projects/ngx-vest-forms/src/lib/testing/msw-vitest.ts` or a similar workspace-level shared directory. It encapsulates MSW server setup and teardown per test.
-- Use the `worker` fixture (often provided by or used within the custom `test` fixture) to manage handlers per test.
-- For Playwright, integrate MSW handlers in your test setup/fixtures.
-- Always test both success and error states for API calls.
 
 
