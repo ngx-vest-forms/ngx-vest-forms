@@ -2,9 +2,15 @@ import { JsonPipe } from '@angular/common';
 import { Component, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ngxVestForms } from '../../../exports';
+import { NgxVestSuite } from '../../../utils/validation-suite';
 import { NgxFormDirective } from '../../form.directive';
 import { NgxValidationOptions } from '../../validation-options';
 import { testFormValidations } from '../validations/test-form.validations';
+
+type TestFormModel = {
+  email: string;
+  password: string;
+};
 
 @Component({
   imports: [ngxVestForms, FormsModule, JsonPipe],
@@ -55,8 +61,9 @@ import { testFormValidations } from '../validations/test-form.validations';
   `,
 })
 export class TestFormComponent {
-  readonly vestForm = viewChild<NgxFormDirective>('vestForm');
-  formValue = signal({
+  readonly vestForm =
+    viewChild<NgxFormDirective<null, TestFormModel>>('vestForm');
+  formValue = signal<TestFormModel>({
     email: '',
     password: '',
   });
@@ -64,5 +71,5 @@ export class TestFormComponent {
   validationOptions = signal<NgxValidationOptions>({ debounceTime: 50 }); // Reduced for testing
   validationConfig = signal<Record<string, string[]> | null>(null);
 
-  vestSuite = signal(testFormValidations);
+  vestSuite = signal(testFormValidations as NgxVestSuite<TestFormModel>);
 }
