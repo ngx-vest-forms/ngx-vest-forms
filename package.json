@@ -38,6 +38,7 @@
     "@analogjs/vite-plugin-angular": "^1.19.1",
     "@analogjs/vitest-angular": "^1.19.1",
     "@angular-devkit/build-angular": "20.1.0",
+    "@angular/animations": "^20.1.0",
     "@angular/build": "20.1.0",
     "@angular/cli": "20.1.0",
     "@angular/compiler-cli": "20.1.0",
@@ -58,7 +59,7 @@
     "autoprefixer": "^10.4.21",
     "concurrently": "^9.2.0",
     "copyfiles": "^2.4.1",
-    "eslint": "^9.30.1",
+    "eslint": "^9.31.0",
     "eslint-plugin-unicorn": "~59.0.1",
     "http-server": "^14.1.1",
     "husky": "^9.1.7",
@@ -67,12 +68,12 @@
     "ng-packagr": "20.1.0",
     "ngx-mask": "^19.0.7",
     "npm-run-all": "^4.1.5",
-    "playwright": "^1.53.2",
+    "playwright": "^1.54.1",
     "postcss": "^8.5.6",
     "prettier": "^3.6.2",
     "prettier-plugin-organize-imports": "^4.1.0",
-    "prettier-plugin-tailwindcss": "^0.6.13",
-    "semantic-release": "^24.2.6",
+    "prettier-plugin-tailwindcss": "^0.6.14",
+    "semantic-release": "^24.2.7",
     "semantic-release-cli": "^5.4.6",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.8.3",
@@ -82,6 +83,9 @@
     "vitest": "^3.2.4",
     "wait-on": "^8.0.3",
     "zod": "^3.25.69"
+  },
+  "overrides": {
+    "vite": "npm:rolldown-vite@latest"
   },
   "repository": {
     "type": "git",
