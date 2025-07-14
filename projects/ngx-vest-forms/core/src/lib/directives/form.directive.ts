@@ -328,8 +328,44 @@ export class NgxFormDirective<
       untracked(() => this.#logFormValueChanges(currentValue));
     }
 
-    // Coalesce undefined to null because formValue model is TModel | null
-    this.formValue.set(currentValue === undefined ? null : currentValue);
+    // Only sync from form to model when we have an actual form value AND the form has controls
+    // This prevents overriding the initial model value with an empty form value on initialization
+    if (
+      currentValue !== undefined &&
+      this.ngForm?.form &&
+      Object.keys(this.ngForm.form.controls).length > 0
+    ) {
+      this.formValue.set(currentValue);
+    }
+  });
+
+  // Model-to-form synchronization effect - syncs external model changes to the Angular form
+  // This handles initial model values and programmatic model updates
+  // eslint-disable-next-line no-unused-private-class-members -- This is a private effect
+  readonly #modelToFormSyncEffect = effect(() => {
+    const modelValue = this.formValue();
+
+    // Skip sync if model is null/undefined or if form is not yet initialized
+    if (!modelValue || !this.ngForm?.form) {
+      return;
+    }
+
+    // Get current form value to avoid unnecessary patches
+    const currentFormValue = this.ngForm.form.value;
+
+    // Only patch if values are different (avoid circular updates)
+    if (JSON.stringify(currentFormValue) !== JSON.stringify(modelValue)) {
+      // Use untracked to avoid creating dependencies on form state changes
+      untracked(() => {
+        if (isDevMode()) {
+          console.log('[NgxFormDirective] Syncing model to form:', {
+            modelValue,
+            currentFormValue,
+          });
+        }
+        this.ngForm.form.patchValue(modelValue, { emitEvent: false });
+      });
+    }
   });
 
   // Track previous validation context for comparison

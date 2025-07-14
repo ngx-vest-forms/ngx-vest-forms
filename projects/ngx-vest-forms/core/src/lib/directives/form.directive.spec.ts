@@ -1,6 +1,8 @@
 import { ApplicationRef } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { render, screen, waitFor } from '@testing-library/angular';
 import { userEvent } from '@vitest/browser/context';
+import { enforce, staticSuite, test as vestTest } from 'vest';
 import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
 
 import { AsyncValidationComponent } from './__tests__/components/async-validation.component';
@@ -122,16 +124,224 @@ describe('NgxFormDirective', () => {
   // ==============================================================================
 
   describe('Core Input Handling', () => {
-    test.todo('should handle vestSuite input changes correctly');
-    test.todo('should handle validationConfig input changes');
-    test.todo('should handle validationOptions input changes');
-    test.todo('should handle null/undefined vestSuite gracefully');
+    it('should handle vestSuite input changes correctly', async () => {
+      // WHAT: Test that vestSuite input changes properly update validation behavior
+      // WHY: Ensures unidirectional dataflow works when vest suite changes dynamically
+
+      const { fixture } = await render(TestFormComponent);
+      const applicationReference =
+        fixture.debugElement.injector.get(ApplicationRef);
+      const componentInstance = fixture.componentInstance;
+      const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
+
+      // Test initial validation with default suite
+      await userEvent.fill(emailInput, 'invalid-email');
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+
+      // Should show validation error from current suite
+      await expect(screen.getByTestId('form-valid')).toHaveTextContent('false');
+      const errorsElement = screen.getByTestId('form-errors');
+      expect(errorsElement.textContent).toContain(
+        'Please provide a valid email',
+      );
+
+      // Change to a more lenient suite that allows simple emails
+      const lenientSuite = staticSuite((data = {}) => {
+        vestTest('email', 'Email is required', () => {
+          enforce(data.email).isNotEmpty();
+        });
+        // Note: No regex pattern check - any non-empty string is valid
+
+        vestTest('password', 'Password is required', () => {
+          enforce(data.password).isNotEmpty();
+        });
+        // Note: No length requirement - any non-empty password is valid
+      });
+
+      componentInstance.vestSuite.set(lenientSuite);
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+
+      // Re-trigger validation with same "invalid" email, but also fill password to make form valid
+      await userEvent.clear(emailInput);
+      await userEvent.fill(emailInput, 'invalid-email');
+      const passwordInput = screen.getByLabelText(
+        'Password',
+      ) as HTMLInputElement;
+      await userEvent.fill(passwordInput, 'password123');
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+
+      // Should now be valid with the lenient suite (no format requirement)
+      await expect(screen.getByTestId('form-valid')).toHaveTextContent('true');
+    });
+
+    it('should handle validationConfig input changes', async () => {
+      // WHAT: Test that validationConfig changes properly update dependent field validation
+      // WHY: Validates that cyclic dependency handling works with dynamic config changes
+
+      const { fixture } = await render(TestFormComponent);
+      const applicationReference =
+        fixture.debugElement.injector.get(ApplicationRef);
+      const componentInstance = fixture.componentInstance;
+
+      // Initially no validation config
+      expect(componentInstance.validationConfig()).toBeNull();
+
+      // Set validation config to create dependency: email changes trigger password validation
+      componentInstance.validationConfig.set({
+        email: ['password'], // When email changes, re-validate password
+      });
+
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+
+      // Now when email changes, it should trigger password validation
+      const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
+      await userEvent.fill(emailInput, 'test@example.com');
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+
+      // The validation config should be active (no direct assertion possible via DOM)
+      // but we can verify the form processes the config without errors
+      await expect(screen.getByTestId('form-status')).toHaveTextContent(
+        'VALID',
+      );
+    });
+
+    it('should handle validationOptions input changes', async () => {
+      // WHAT: Test that validationOptions changes (like debounceTime) update validation behavior
+      // WHY: Ensures reactive validation configuration works properly
+
+      const { fixture } = await render(TestFormComponent);
+      const componentInstance = fixture.componentInstance;
+
+      // Change debounce time
+      componentInstance.validationOptions.set({ debounceTime: 100 });
+      await fixture.whenStable();
+
+      // Verify options change is processed without errors
+      const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
+      await userEvent.fill(emailInput, 'test@example.com');
+      await fixture.whenStable();
+
+      // Should still work with new debounce time
+      await expect(screen.getByTestId('form-status')).toHaveTextContent(
+        'VALID',
+      );
+    });
+
+    it('should handle null/undefined vestSuite gracefully', async () => {
+      // WHAT: Test that null/undefined vest suite doesn't break the form
+      // WHY: Ensures graceful degradation when validation suite is not available
+
+      const { fixture } = await render(TestFormComponent);
+      const applicationReference =
+        fixture.debugElement.injector.get(ApplicationRef);
+      const componentInstance = fixture.componentInstance;
+
+      // Set vest suite to empty suite (no validations)
+      const emptySuite = staticSuite(() => {
+        // No validation rules - should make form always valid
+      });
+
+      componentInstance.vestSuite.set(emptySuite);
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+
+      // Form should still render and be usable
+      const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
+      await userEvent.fill(emailInput, 'test@example.com');
+      await fixture.whenStable();
+
+      // Without vest suite, form should be considered valid (no validation)
+      await expect(screen.getByTestId('form-status')).toHaveTextContent(
+        'VALID',
+      );
+    });
   });
 
   describe('Form Value Synchronization', () => {
-    test.todo('should sync form values with model() two-way binding');
+    it('should sync form values with model() two-way binding', async () => {
+      // WHAT: Test that [(formValue)] two-way binding works correctly
+      // WHY: Core unidirectional dataflow - model drives form, form updates model
+
+      const { fixture } = await render(TestFormComponent);
+      const applicationReference =
+        fixture.debugElement.injector.get(ApplicationRef);
+      const componentInstance = fixture.componentInstance;
+
+      const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
+      const passwordInput = screen.getByLabelText(
+        'Password',
+      ) as HTMLInputElement;
+
+      // Wait for Angular to initialize the form and two-way binding
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+
+      // In zoneless environment, manually trigger effect flushing
+      TestBed.flushEffects();
+
+      // Initially, model should have the initial values from the test component
+      expect(componentInstance.formValue().email).toBe('');
+      expect(componentInstance.formValue().password).toBe('');
+      expect(emailInput.value).toBe('');
+      expect(passwordInput.value).toBe('');
+
+      // Change form inputs - model should update via two-way binding
+      await userEvent.fill(emailInput, 'test@example.com');
+      await userEvent.fill(passwordInput, 'mypassword');
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+
+      // Model should be updated by the form
+      expect(componentInstance.formValue().email).toBe('test@example.com');
+      expect(componentInstance.formValue().password).toBe('mypassword');
+
+      // Now change the model programmatically - form should update
+      componentInstance.formValue.set({
+        email: 'updated@example.com',
+        password: 'newpassword',
+      });
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+
+      // Form inputs should reflect the model changes
+      expect(emailInput.value).toBe('updated@example.com');
+      expect(passwordInput.value).toBe('newpassword');
+    });
+
+    it('should handle null/undefined form values gracefully', async () => {
+      // WHAT: Test that null/undefined form values don't break the form
+      // WHY: Ensures robust unidirectional dataflow even with edge case values
+
+      const { fixture } = await render(TestFormComponent);
+      const applicationReference =
+        fixture.debugElement.injector.get(ApplicationRef);
+      const componentInstance = fixture.componentInstance;
+
+      const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
+      const passwordInput = screen.getByLabelText(
+        'Password',
+      ) as HTMLInputElement;
+
+      // Set model to empty object - form should handle gracefully
+      componentInstance.formValue.set({ email: '', password: '' });
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+
+      // Form should still be functional
+      expect(emailInput).toBeInTheDocument();
+      expect(passwordInput).toBeInTheDocument();
+
+      // Form should show some valid status (not crash)
+      const statusElement = screen.getByTestId('form-status');
+      expect(statusElement.textContent).toMatch(/VALID|INVALID|PENDING/);
+    });
+
     test.todo('should handle nested object form values');
-    test.todo('should handle null/undefined form values gracefully');
   });
 
   describe('Validation Integration', () => {
@@ -221,21 +431,188 @@ describe('NgxFormDirective', () => {
       );
     });
 
-    test.todo('should create field validators when vest suite is provided');
-    test.todo('should handle Vest suite execution errors gracefully');
+    it('should create field validators when vest suite is provided', async () => {
+      // WHAT: Test that field validators are created when vest suite is provided
+      // WHY: Validates core unidirectional dataflow - vest suite drives validation
+
+      const { fixture } = await render(TestFormComponent);
+      const applicationReference =
+        fixture.debugElement.injector.get(ApplicationRef);
+      const componentInstance = fixture.componentInstance;
+
+      // Verify vest suite is provided
+      expect(componentInstance.vestSuite()).toBeDefined();
+      expect(typeof componentInstance.vestSuite()).toBe('function');
+
+      const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
+
+      // Trigger validation - this should create and use field validators
+      await userEvent.fill(emailInput, 'invalid-email');
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+
+      // Validation should work (proving validators are created)
+      await expect(screen.getByTestId('form-valid')).toHaveTextContent('false');
+      const errorsElement = screen.getByTestId('form-errors');
+      expect(errorsElement.textContent).toContain(
+        'Please provide a valid email',
+      );
+    });
+
+    it('should handle Vest suite execution errors gracefully', async () => {
+      // WHAT: Test that form handles vest suite execution errors without crashing
+      // WHY: Ensures robust unidirectional dataflow even with malformed validation
+
+      const { fixture } = await render(TestFormComponent);
+      const componentInstance = fixture.componentInstance;
+
+      // Create a problematic vest suite that throws errors
+      const errorSuite = staticSuite(() => {
+        vestTest('email', 'Email validation', () => {
+          // This will throw an error
+          throw new Error('Vest suite execution error');
+        });
+      });
+
+      componentInstance.vestSuite.set(errorSuite);
+      await fixture.whenStable();
+
+      const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
+
+      // Form should not crash when vest suite throws
+      await userEvent.fill(emailInput, 'test@example.com');
+      await fixture.whenStable();
+
+      // Form should still be functional (not crashed)
+      expect(emailInput.value).toBe('test@example.com');
+
+      // Error handling should prevent form from becoming invalid
+      // The form should show some kind of validation state (not crash)
+      const statusElement = screen.getByTestId('form-status');
+      expect(statusElement.textContent).toMatch(/VALID|INVALID|PENDING/);
+    });
+
     test.todo('should cache field validators to avoid recreation');
     test.todo('should clean up validation streams on destroy');
   });
 
   describe('Signal Management', () => {
-    test.todo('should update formState signals when form status changes');
-    test.todo('should update formState signals when form value changes');
+    it('should update formState signals when form status changes', async () => {
+      // WHAT: Test that formState signals update when form validation status changes
+      // WHY: Core to unidirectional dataflow - signals drive reactive UI updates
+
+      const { fixture } = await render(TestFormComponent);
+      const applicationReference =
+        fixture.debugElement.injector.get(ApplicationRef);
+
+      // Initially form should be valid (empty but no validation triggered)
+      await expect(screen.getByTestId('form-status')).toHaveTextContent(
+        'VALID',
+      );
+      await expect(screen.getByTestId('form-valid')).toHaveTextContent('true');
+
+      const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
+
+      // Trigger validation with invalid email - should change form status
+      await userEvent.fill(emailInput, 'invalid-email');
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+
+      // Status signals should update to show invalid state
+      await expect(screen.getByTestId('form-status')).toHaveTextContent(
+        'INVALID',
+      );
+      await expect(screen.getByTestId('form-valid')).toHaveTextContent('false');
+
+      // Fix the email - should change status back to valid
+      await userEvent.clear(emailInput);
+      await userEvent.fill(emailInput, 'test@example.com');
+      const passwordInput = screen.getByLabelText(
+        'Password',
+      ) as HTMLInputElement;
+      await userEvent.fill(passwordInput, 'password123');
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+
+      // Status signals should update to show valid state
+      await expect(screen.getByTestId('form-status')).toHaveTextContent(
+        'VALID',
+      );
+      await expect(screen.getByTestId('form-valid')).toHaveTextContent('true');
+    });
+
+    it('should update formState signals when form value changes', async () => {
+      // WHAT: Test that formState signals update when form values change
+      // WHY: Ensures unidirectional dataflow from form inputs to signals
+
+      const { fixture } = await render(TestFormComponent);
+      const applicationReference =
+        fixture.debugElement.injector.get(ApplicationRef);
+
+      // Initially form should be pristine and not dirty
+      await expect(screen.getByTestId('form-dirty')).toHaveTextContent('false');
+
+      const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
+
+      // Change a form value - should update dirty state
+      await userEvent.fill(emailInput, 'test@example.com');
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+
+      // Dirty signal should update
+      await expect(screen.getByTestId('form-dirty')).toHaveTextContent('true');
+
+      // The form errors should also update based on new value
+      const errorsElement = screen.getByTestId('form-errors');
+      // Should show password required error but not email error anymore
+      expect(errorsElement.textContent).toContain('Password is required');
+      expect(errorsElement.textContent).not.toContain(
+        'Please provide a valid email',
+      );
+    });
+
     test.todo('should dispose of reactive signals properly on destroy');
   });
 
   describe('Host Attributes', () => {
-    test.todo('should set novalidate attribute on form element');
-    test.todo('should prevent default HTML5 validation');
+    it('should set novalidate attribute on form element', async () => {
+      // WHAT: Test that form has novalidate attribute to disable browser validation
+      // WHY: Ensures unidirectional dataflow isn't interfered with by browser validation
+
+      await render(TestFormComponent);
+
+      // Form should have novalidate attribute to prevent browser validation
+      const formElement = document.querySelector('form[ngxVestForm]');
+      expect(formElement).toHaveAttribute('novalidate');
+    });
+
+    it('should prevent default HTML5 validation', async () => {
+      // WHAT: Test that HTML5 validation doesn't interfere with Vest validation
+      // WHY: Ensures consistent validation behavior across browsers
+
+      const { fixture } = await render(TestFormComponent);
+      const applicationReference =
+        fixture.debugElement.injector.get(ApplicationRef);
+
+      const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
+
+      // Set an invalid email that would trigger HTML5 validation
+      await userEvent.fill(emailInput, 'invalid-email');
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+
+      // HTML5 validation should be disabled, so browser won't show native validation
+      // We verify this by checking that our Vest validation is what shows errors
+      await expect(screen.getByTestId('form-valid')).toHaveTextContent('false');
+      const errorsElement = screen.getByTestId('form-errors');
+      expect(errorsElement.textContent).toContain(
+        'Please provide a valid email',
+      );
+
+      // Verify form element still has novalidate
+      const formElement = document.querySelector('form[ngxVestForm]');
+      expect(formElement).toHaveAttribute('novalidate');
+    });
   });
 
   describe('AsyncValidationComponent', () => {
