@@ -88,9 +88,9 @@ export class BusinessHoursFormComponent {
     };
   });
 
-  get businessHoursModel() {
-    return this.viewModel().businessHoursModel;
-  }
+  protected readonly businessHoursModel = computed(
+    () => this.viewModel().businessHoursModel,
+  );
 
   onAddBusinessHour(hour: PartialBusinessHour | undefined) {
     if (!hour) return;

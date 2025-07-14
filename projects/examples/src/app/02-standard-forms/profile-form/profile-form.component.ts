@@ -72,6 +72,7 @@ export class ProfileFormComponent {
       push: false,
     },
     bio: '',
+    website: '',
   });
 
   /**

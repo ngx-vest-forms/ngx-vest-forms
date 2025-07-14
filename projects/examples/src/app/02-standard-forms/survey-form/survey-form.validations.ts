@@ -1,3 +1,4 @@
+import type { NgxFieldKey, NgxVestSuite } from 'ngx-vest-forms';
 import { enforce, only, staticSuite, test } from 'vest';
 
 /**
@@ -40,10 +41,13 @@ const defaultSurveyFormData: SurveyFormData = {
  *
  * @returns A Vest validation suite for the survey form
  */
-export const createSurveyValidationSuite = () =>
+export const createSurveyValidationSuite = (): NgxVestSuite<SurveyFormData> =>
   staticSuite(
-    (data: SurveyFormData = defaultSurveyFormData, currentField?: string) => {
-      only(currentField);
+    (
+      data: SurveyFormData = defaultSurveyFormData,
+      field?: NgxFieldKey<SurveyFormData>,
+    ) => {
+      only(field);
 
       // Basic Information
       test('name', 'Name is required', () => {

@@ -1,5 +1,9 @@
 import { provideHttpClient } from '@angular/common/http';
-import { provideZonelessChangeDetection } from '@angular/core';
+import '@angular/compiler'; // Import for JIT compiler support
+import {
+  importProvidersFrom,
+  provideZonelessChangeDetection,
+} from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import {
   provideRouter,
@@ -68,6 +72,7 @@ const appRoutes: Routes = [
 bootstrapApplication(AppComponent, {
   providers: [
     provideZonelessChangeDetection(),
+    importProvidersFrom(),
     provideHttpClient(),
     provideEnvironmentNgxMask({ validation: false }),
     provideRouter(appRoutes, withEnabledBlockingInitialNavigation()),

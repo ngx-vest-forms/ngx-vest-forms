@@ -260,7 +260,11 @@
             ></textarea>
           </label>
           <div class="mt-1 text-xs text-gray-500">
-            {{ formValue().bio.length }}/500 characters
+            @if (formValue().bio) {
+              {{ formValue().bio.length }}/500 characters
+            } @else {
+              0/500 characters
+            }
           </div>
         </ngx-control-wrapper>
 

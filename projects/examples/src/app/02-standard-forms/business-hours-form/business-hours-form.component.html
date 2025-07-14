@@ -31,7 +31,7 @@
 >
   <fieldset>
     <ngx-business-hours
-      [businessHoursModel]="businessHoursModel"
+      [businessHoursModel]="businessHoursModel()"
       (add)="onAddBusinessHour($event)"
       (remove)="onRemoveBusinessHour($event)"
     ></ngx-business-hours>

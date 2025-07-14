@@ -1,3 +1,4 @@
+import type { NgxFieldKey, NgxVestSuite } from 'ngx-vest-forms';
 import { enforce, only, staticSuite, test } from 'vest';
 
 /**
@@ -63,10 +64,13 @@ const defaultProfileFormData: ProfileFormData = {
  *
  * @returns A Vest validation suite for the profile form
  */
-export const createProfileValidationSuite = () =>
+export const createProfileValidationSuite = (): NgxVestSuite<ProfileFormData> =>
   staticSuite(
-    (data: ProfileFormData = defaultProfileFormData, currentField?: string) => {
-      only(currentField);
+    (
+      data: ProfileFormData = defaultProfileFormData,
+      field?: NgxFieldKey<ProfileFormData>,
+    ) => {
+      only(field);
 
       // Personal Information
       test('firstName', 'First name is required', () => {

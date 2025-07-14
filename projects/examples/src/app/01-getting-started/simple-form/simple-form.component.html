@@ -1,48 +1,51 @@
-<!-- Minimal example: simple-form.component.html -->
-<!-- Demonstrates a single required field with Vest validation and accessible error display -->
-<h2 class="mb-4 text-2xl font-bold">Simple Form Example</h2>
-<form
-  ngxVestForm
-  [vestSuite]="suite"
-  [(formValue)]="formValue"
-  (ngSubmit)="save()"
-  autocomplete="off"
+<div
+  class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800"
 >
-  <!-- Example: errorDisplayMode usage (on-blur-or-submit is default, but can be set explicitly) -->
-  <div ngxControlWrapper errorDisplayMode="on-blur-or-submit">
-    <label for="email" class="mb-1 block font-medium">Email</label>
-    <input
-      id="email"
-      name="email"
-      type="email"
-      autocomplete="off"
-      class="w-full rounded border px-3 py-2"
-      ngModel
-      required
-    />
-  </div>
+  <!-- Minimal example: simple-form.component.html -->
+  <!-- Demonstrates a single required field with Vest validation and accessible error display -->
+  <h2 class="mb-4 text-2xl font-bold">Simple Form Example</h2>
+  <form
+    ngxVestForm
+    [vestSuite]="suite"
+    [(formValue)]="formValue"
+    (ngSubmit)="save()"
+    autocomplete="off"
+  >
+    <!-- Example: errorDisplayMode usage (on-blur-or-submit is default, but can be set explicitly) -->
+    <div ngxControlWrapper errorDisplayMode="on-blur-or-submit">
+      <label for="email" class="mb-1 block font-medium">Email</label>
+      <input
+        id="email"
+        name="email"
+        type="email"
+        autocomplete="off"
+        class="w-full rounded border px-3 py-2"
+        ngModel
+        required
+      />
+    </div>
 
-  <!-- Example: errorDisplayMode with updateOn: 'submit' (errors only show after submit) -->
-  <div ngxControlWrapper errorDisplayMode="on-blur-or-submit">
-    <label for="email2" class="mb-1 block font-medium"
-      >Email (updateOn: submit)</label
-    >
-    <input
-      id="email2"
-      name="email2"
-      type="email"
-      autocomplete="off"
-      class="w-full rounded border px-3 py-2"
-      ngModel
-      required
-      [ngModelOptions]="{ updateOn: 'submit' }"
-    />
-    <!--
+    <!-- Example: errorDisplayMode with updateOn: 'submit' (errors only show after submit) -->
+    <div ngxControlWrapper errorDisplayMode="on-blur-or-submit">
+      <label for="email2" class="mb-1 block font-medium"
+        >Email (updateOn: submit)</label
+      >
+      <input
+        id="email2"
+        name="email2"
+        type="email"
+        autocomplete="off"
+        class="w-full rounded border px-3 py-2"
+        ngModel
+        required
+        [ngModelOptions]="{ updateOn: 'submit' }"
+      />
+      <!--
       With updateOn: 'submit', errors for this field will only appear after the form is submitted,
       regardless of the errorDisplayMode setting.
-    -->
-  </div>
-  <button type="submit" class="mt-4 rounded bg-blue-600 px-4 py-2 text-white">
-    Submit
-  </button>
-</form>
+    --></div>
+    <button type="submit" class="mt-4 rounded bg-blue-600 px-4 py-2 text-white">
+      Submit
+    </button>
+  </form>
+</div>
