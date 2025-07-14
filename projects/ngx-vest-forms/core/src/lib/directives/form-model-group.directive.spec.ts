@@ -1,4 +1,82 @@
-import { describe, test } from 'vitest';
+import { JsonPipe } from '@angular/common';
+import { ApplicationRef, Component, signal, viewChild } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+import { render, screen } from '@testing-library/angular';
+import { userEvent } from '@vitest/browser/context';
+import { enforce, staticSuite, test as vestTest } from 'vest';
+import { describe, expect, test } from 'vitest';
+
+import { ngxVestForms } from '../exports';
+import { NgxVestSuite } from '../utils/validation-suite';
+import { NgxFormDirective } from './form.directive';
+
+// Test validation suite for model groups
+const addressFormSuite = staticSuite((data = {}) => {
+  vestTest('address.street', 'Street is required', () => {
+    enforce(data.address?.street).isNotEmpty();
+  });
+
+  vestTest('address.city', 'City is required', () => {
+    enforce(data.address?.city).isNotEmpty();
+  });
+});
+
+type AddressFormModel = {
+  address: {
+    street: string;
+    city: string;
+  };
+};
+
+@Component({
+  imports: [ngxVestForms, FormsModule, JsonPipe],
+  template: `
+    <form
+      ngxVestForm
+      [vestSuite]="suite"
+      [(formValue)]="model"
+      #vestForm="ngxVestForm"
+    >
+      <div ngModelGroup="address" data-testid="address-group">
+        <label for="street">Street</label>
+        <input
+          id="street"
+          name="street"
+          [ngModel]="model().address?.street"
+          data-testid="street-input"
+        />
+
+        <label for="city">City</label>
+        <input
+          id="city"
+          name="city"
+          [ngModel]="model().address?.city"
+          data-testid="city-input"
+        />
+      </div>
+
+      <!-- Display form state for testing -->
+      <div data-testid="form-status">{{ vestForm.formState().status }}</div>
+      <div data-testid="form-errors">
+        {{ vestForm.formState().errors | json }}
+      </div>
+    </form>
+  `,
+})
+class TestGroupComponent {
+  readonly vestForm =
+    viewChild<NgxFormDirective<null, AddressFormModel>>('vestForm');
+
+  model = signal<AddressFormModel>({
+    address: {
+      street: '',
+      city: '',
+    },
+  });
+
+  suite = addressFormSuite as NgxVestSuite<AddressFormModel>;
+}
 
 /**
  * Tests for NgxFormModelGroupDirective
@@ -14,38 +92,99 @@ import { describe, test } from 'vitest';
  * This test suite focuses on directive-level concerns only.
  */
 describe('NgxFormModelGroupDirective', () => {
-  describe('Dependency Injection & Provider Resolution', () => {
-    test.todo(
-      'should handle cases where NgxFormDirective is not available in DI context',
-    );
-    test.todo('should gracefully handle missing required providers');
-  });
+  describe('Template-Driven Form Integration', () => {
+    test('should properly register as async validator for ngModelGroup', async () => {
+      await render(TestGroupComponent);
 
-  describe('AsyncValidator Interface Implementation', () => {
-    test.todo('should properly register as async validator for ngModelGroup');
-    test.todo(
-      'should convert Promise validation results to Observable correctly',
-    );
-    test.todo('should return null when validation passes');
-    test.todo('should return ValidationErrors object when validation fails');
-  });
+      // Verify the form renders correctly with ngModelGroup
+      expect(screen.getByTestId('address-group')).toBeInTheDocument();
+      expect(screen.getByTestId('street-input')).toBeInTheDocument();
+      expect(screen.getByTestId('city-input')).toBeInTheDocument();
 
-  describe('Field Name Resolution', () => {
-    test.todo(
-      'should determine correct group name from ngModelGroup attribute',
-    );
-    test.todo('should handle cases where group name cannot be resolved');
-    test.todo('should handle nested group paths correctly');
-  });
+      // Initial form should be valid (empty validation)
+      await expect
+        .element(screen.getByTestId('form-status'))
+        .toHaveTextContent('VALID');
+    });
 
-  describe('Vest Suite Integration', () => {
-    test.todo('should handle Vest suite execution errors gracefully');
-    test.todo('should handle cases where Vest suite is undefined');
-    test.todo('should pass correct field context to Vest suite');
-  });
+    test('should validate nested form group fields correctly', async () => {
+      await render(TestGroupComponent);
 
-  describe('Lifecycle & Cleanup', () => {
-    test.todo('should clean up subscriptions on component destruction');
-    test.todo('should properly dispose of validation streams');
+      const streetInput = screen.getByTestId('street-input');
+      const cityInput = screen.getByTestId('city-input');
+
+      // Trigger validation by interacting with fields
+      await userEvent.click(streetInput);
+      await userEvent.tab(); // blur to trigger validation
+
+      await userEvent.click(cityInput);
+      await userEvent.tab(); // blur to trigger validation
+
+      // Wait for Angular to stabilize
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      // Check that validation errors appear for the nested group fields
+      const formErrors = screen.getByTestId('form-errors');
+      await expect.element(formErrors).toHaveTextContent(/Street is required/);
+      await expect.element(formErrors).toHaveTextContent(/City is required/);
+    });
+
+    test('should clear validation errors when fields are filled', async () => {
+      await render(TestGroupComponent);
+
+      const streetInput = screen.getByTestId('street-input');
+      const cityInput = screen.getByTestId('city-input');
+
+      // First trigger validation errors
+      await userEvent.click(streetInput);
+      await userEvent.tab();
+      await userEvent.click(cityInput);
+      await userEvent.tab();
+
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      // Verify errors exist
+      const formErrors = screen.getByTestId('form-errors');
+      await expect.element(formErrors).toHaveTextContent(/Street is required/);
+
+      // Fill in the fields
+      await userEvent.clear(streetInput);
+      await userEvent.type(streetInput, '123 Main St');
+      await userEvent.clear(cityInput);
+      await userEvent.type(cityInput, 'Anytown');
+
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      // Verify errors are cleared
+      await expect
+        .element(formErrors)
+        .not.toHaveTextContent(/Street is required/);
+      await expect
+        .element(formErrors)
+        .not.toHaveTextContent(/City is required/);
+      await expect
+        .element(screen.getByTestId('form-status'))
+        .toHaveTextContent('VALID');
+    });
+
+    test('should handle form group path resolution correctly', async () => {
+      await render(TestGroupComponent);
+
+      const streetInput = screen.getByTestId('street-input');
+
+      // Fill only street field
+      await userEvent.clear(streetInput);
+      await userEvent.type(streetInput, '123 Main St');
+      await userEvent.tab();
+
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      // Should still have error for city but not for street
+      const formErrors = screen.getByTestId('form-errors');
+      await expect
+        .element(formErrors)
+        .not.toHaveTextContent(/Street is required/);
+      await expect.element(formErrors).toHaveTextContent(/City is required/);
+    });
   });
 });
