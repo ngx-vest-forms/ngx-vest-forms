@@ -1,5 +1,5 @@
 <div
-  class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800 sm:col-span-2"
+  class="w-full rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800"
 >
   <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">
     Example: form array with complex validations
@@ -19,51 +19,50 @@
     <li>The same should apply for edit</li>
     <li>If more than 1 business hour is added, there should be no overlap</li>
   </ul>
+  <form
+    class="mt-8"
+    ngxVestForm
+    #vestForm="ngxVestForm"
+    [(formValue)]="formValue"
+    [formSchema]="businessHoursFormSchema"
+    [vestSuite]="businessHoursFormValidations"
+  >
+    <fieldset>
+      <ngx-business-hours
+        [businessHoursModel]="businessHoursModel()"
+        (add)="onAddBusinessHour($event)"
+        (remove)="onRemoveBusinessHour($event)"
+      ></ngx-business-hours>
+    </fieldset>
+    <!--
+      Root form errors are displayed below. This is an advanced pattern for cross-field or form-wide errors.
+      See ngx-vest-forms docs for details on root-level validation.
+    -->
+    <h4 class="mb-2 mt-6 text-lg font-semibold text-red-700">
+      Form-wide (root) errors
+    </h4>
+    <p class="mb-2 text-sm text-red-600">
+      These errors are not tied to a single field, but to the overall form state
+      (e.g., overlap, missing entries).
+    </p>
+    @if (
+      vestForm.formState().errors[rootFormKey] &&
+      vestForm.formState().errors[rootFormKey].length
+    ) {
+      <ul class="alert">
+        @for (error of vestForm.formState().errors[rootFormKey]; track error) {
+          <li>{{ error }}</li>
+        }
+      </ul>
+    }
+  </form>
+  <br />
+  <h3>The value of the form</h3>
+  <pre id="json-data">
+    {{ vestForm.formState().value | json }}
+  </pre>
+
+  <pre id="json-errors">
+    {{ vestForm.formState().errors | json }}
+  </pre>
 </div>
-
-<form
-  class="mt-8"
-  ngxVestForm
-  #vestForm="ngxVestForm"
-  [(formValue)]="formValue"
-  [formSchema]="businessHoursFormSchema"
-  [vestSuite]="businessHoursFormValidations"
->
-  <fieldset>
-    <ngx-business-hours
-      [businessHoursModel]="businessHoursModel()"
-      (add)="onAddBusinessHour($event)"
-      (remove)="onRemoveBusinessHour($event)"
-    ></ngx-business-hours>
-  </fieldset>
-  <!--
-    Root form errors are displayed below. This is an advanced pattern for cross-field or form-wide errors.
-    See ngx-vest-forms docs for details on root-level validation.
-  -->
-  <h4 class="mb-2 mt-6 text-lg font-semibold text-red-700">
-    Form-wide (root) errors
-  </h4>
-  <p class="mb-2 text-sm text-red-600">
-    These errors are not tied to a single field, but to the overall form state
-    (e.g., overlap, missing entries).
-  </p>
-  @if (
-    vestForm.formState().errors[rootFormKey] &&
-    vestForm.formState().errors[rootFormKey].length
-  ) {
-    <ul class="alert">
-      @for (error of vestForm.formState().errors[rootFormKey]; track error) {
-        <li>{{ error }}</li>
-      }
-    </ul>
-  }
-</form>
-<br />
-<h3>The value of the form</h3>
-<pre id="json-data">
-  {{ vestForm.formState().value | json }}
-</pre>
-
-<pre id="json-errors">
-  {{ vestForm.formState().errors | json }}
-</pre>
