@@ -2,7 +2,17 @@
 
 > 🚨 **Upgrading to v2?** See our [**Migration Guide**](./docs/MIGRATION_GUIDE_V2.md) for step-by-step instructions and a [**Breaking Changes Overview**](./docs/BREAKING_CHANGES_PUBLIC_API.md).
 
-`ngx-vest-forms` is a lightweight, modern adapter for Angular Template Driven Forms and [Vest](https://vestjs.dev). It enables unidirectional, type-safe, and reactive forms with minimal code, leveraging Angular signals, standalone components, and the latest best practices.
+---
+
+## 🚀 What's New in v2?
+
+- **Modular architecture:** Import only what you need for smaller bundles.
+- **Unified NGX naming:** All public APIs use the `Ngx` prefix for clarity and Angular convention.
+- **Tree-shaking:** Optional features (smart state, schemas, control wrapper) are now secondary entry points.
+- **Unified form state:** All form state (value, errors, validity, pending) is exposed via a single signal.
+- **Improved error display:** Errors show on blur or submit by default, with configurable modes.
+- **Accessibility:** ARIA roles, keyboard support, and error display are built-in.
+- **Migration is easy:** Most users need zero code changes—see the [Migration Guide](./docs/MIGRATION_GUIDE_V2.md).
 
 ## What is ngx-vest-forms?
 
@@ -166,7 +176,7 @@ import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 export class MyFormComponent {}
 ```
 
-**📖 [Complete Control Wrapper Documentation](./projects/ngx-vest-forms/control-wrapper/README.md)**
+**📖 [Complete Control Wrapper & Advanced Directives Documentation](./projects/ngx-vest-forms/control-wrapper/README.md)**
 
 ### 2. The Flexible Way: Build Your Own with `NgxFormErrorDisplayDirective`
 
@@ -239,6 +249,76 @@ export class MyFormFieldComponent {
 
 ---
 
+## Building Your Own Custom Control Wrapper
+
+You are not limited to the default `<ngx-control-wrapper>` component. For full design control, you can use the `NgxFormErrorDisplayDirective` directly to build your own custom wrapper component. This is ideal if you want to match your application's design system or use a different CSS framework (e.g., not Tailwind CSS).
+
+### Example: Custom Control Wrapper Component
+
+```typescript
+import { Component, inject } from '@angular/core';
+import { NgxFormErrorDisplayDirective } from 'ngx-vest-forms';
+
+@Component({
+  selector: 'custom-control-wrapper',
+  standalone: true,
+  hostDirectives: [NgxFormErrorDisplayDirective],
+  template: `
+    <ng-content />
+    @if (formErrorDisplay.isPending()) {
+      <div class="my-spinner">Validating...</div>
+    } @else if (formErrorDisplay.shouldShowErrors()) {
+      <div class="my-errors">
+        @for (error of formErrorDisplay.errors(); track error) {
+          <div class="my-error-message">{{ error }}</div>
+        }
+      </div>
+    }
+  `,
+  styles: `
+    :host {
+      display: block;
+      margin-bottom: 1rem;
+    }
+    .my-error-message {
+      color: #d32f2f;
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+    .my-spinner {
+      color: #1976d2;
+      font-size: 0.9rem;
+    }
+    .my-errors {
+      margin-top: 0.25rem;
+    }
+  `,
+})
+export class CustomControlWrapperComponent {
+  protected readonly formErrorDisplay = inject(NgxFormErrorDisplayDirective, {
+    self: true,
+  });
+}
+```
+
+**Usage in a Form:**
+
+```html
+<form ngxVestForm [vestSuite]="suite" [(formValue)]="model">
+  <custom-control-wrapper>
+    <label for="name">Name</label>
+    <input id="name" name="name" [ngModel]="model().name" />
+  </custom-control-wrapper>
+  <!-- ... other fields ... -->
+</form>
+```
+
+**Tip:** You can style `.my-error-message`, `.my-spinner`, and `.my-errors` however you like. This approach works with any CSS framework or custom styles.
+
+For more details, see the [Advanced Directives Documentation](./projects/ngx-vest-forms/control-wrapper/README.md).
+
+---
+
 ## Advanced Features
 
 Beyond the basics, `ngx-vest-forms` offers powerful, optional modules for advanced scenarios. These are available as secondary entry points to keep the core library lean.
@@ -265,83 +345,61 @@ import { NgxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state';
 @Component({
   standalone: true,
   imports: [ngxVestForms, NgxVestFormsSmartStateDirective],
-  // ...
+  template: `
+    <form ngxVestForm [(formValue)]="model" ngxVestFormsSmartState>
+      <!-- fields -->
+    </form>
+  `,
 })
-export class UserProfileComponent {
-  // ...
+export class AdvancedFormComponent {
+  protected readonly model = signal({ ... });
 }
 ```
 
-**📖 [Complete Smart State Documentation](./docs/smart-state-management.md)**
+**📖 [Smart State Management Documentation](./projects/ngx-vest-forms/smart-state/README.md)**
 
 ### Schema Utilities for Type Safety
 
-For enhanced type safety and schema-driven validation, `ngx-vest-forms` provides powerful schema utilities. These work with popular schema libraries like Zod, Valibot, and ArkType, or even simple object templates.
+**Recommended:** For type safety and schema-driven validation, use [Zod](https://zod.dev/), [Valibot](https://valibot.dev/), or [ArkType](https://arktype.io/). These libraries follow the [Standard Schema](https://standardschema.dev/) initiative and provide robust, interoperable schemas for your forms.
 
-**Why Use Schemas?**
+- **Zod**: Popular, expressive, and TypeScript-first schema library.
+- **Valibot**: Lightweight, fast, and modern schema validation.
+- **ArkType**: Advanced type-level schema validation and inference.
 
-- **Compile-Time Safety:** Catch typos and incorrect data structures at build time.
-- **Powerful Type Inference:** Get full autocompletion and type checking for your form models.
-- **Single Source of Truth:** Define your data shape once and reuse it across your application.
-
-**Installation & Usage:**
-
-Schema utilities are available from `ngx-vest-forms/schemas`:
+**Example Usage:**
 
 ```typescript
-// Import from the schemas secondary entry point
-import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
-import type { InferSchemaType } from 'ngx-vest-forms/schemas';
-
-// 1. With object template
-const userTemplate = { name: '', age: 0 };
-const userSchema = ngxModelToStandardSchema(userTemplate);
-type User = InferSchemaType<typeof userSchema>;
-
-// 2. With Zod
 import { z } from 'zod';
-const zodSchema = z.object({
-  name: z.string().min(1),
-  age: z.number().min(0),
-});
-const userSchemaFromZod = ngxModelToStandardSchema(zodSchema);
-
-// 3. With Valibot
-import * as v from 'valibot';
-const valibotSchema = v.object({
-  name: v.pipe(v.string(), v.minLength(1)),
-  age: v.pipe(v.number(), v.minValue(0)),
-});
-const userSchemaFromValibot = ngxModelToStandardSchema(valibotSchema);
+const userSchema = z.object({ name: z.string(), email: z.string().email() });
+type User = z.infer<typeof userSchema>;
 
 @Component({
   template: `
-    <form
-      ngxVestForm
-      [vestSuite]="suite"
-      [formSchema]="userSchema"
-      [(formValue)]="userData"
-    >
-      <ngx-control-wrapper>
-        <label for="name">Name</label>
-        <input id="name" name="name" [ngModel]="userData().name" />
-      </ngx-control-wrapper>
-
-      <ngx-control-wrapper>
-        <label for="age">Age</label>
-        <input id="age" name="age" type="number" [ngModel]="userData().age" />
-      </ngx-control-wrapper>
+    <form ngxVestForm [formSchema]="userSchema" [(formValue)]="userData">
+      <!-- form fields -->
     </form>
   `,
 })
 export class UserFormComponent {
   protected readonly userSchema = userSchema;
-  protected readonly userData = signal<User>(userTemplate);
-  protected readonly suite = userValidations;
+  protected readonly userData = signal<User>({ name: '', email: '' });
 }
 ```
 
-**📖 [Complete Schema Utilities Documentation](./projects/ngx-vest-forms/schemas/README.md)**
+**Fallback:** If you have legacy models or custom requirements, use `modelToStandardSchema` to generate a schema from a plain object template.
+
+```typescript
+import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
+const userTemplate = { name: '', age: 0 };
+const userSchema = ngxModelToStandardSchema(userTemplate);
+type User = InferSchemaType<typeof userSchema>;
+```
+
+**API Reference & Migration Guidance:**
+
+- Prefer Zod, Valibot, or ArkType for new and migrated forms.
+- Use `modelToStandardSchema` only for legacy or custom scenarios.
+- See the [schemas README](./projects/ngx-vest-forms/schemas/README.md) for details and migration notes.
 
 ---
 
@@ -497,33 +555,167 @@ Define all validation rules (e.g., required, min/max, pattern) in your VestJS su
 
 ## Migration & Documentation Resources
 
-### v2 Migration Resources
+- 📋 **[v2 Migration Guide](./docs/MIGRATION_GUIDE_V2.md)** - Step-by-step migration instructions
+- ⚠️ **[Breaking Changes (Public API)](./docs/BREAKING_CHANGES_PUBLIC_API.md)** - All breaking changes
+- 🏗️ **[Breaking Changes (Internal)](./docs/BREAKING_CHANGES_INTERNAL.md)** - For contributors/maintainers
+- 📝 **[Changes Overview](./docs/CHANGES_OVERVIEW.md)** - High-level summary
 
-- 📋 **[v2 Migration Guide](./docs/MIGRATION_GUIDE_V2.md)** - Complete step-by-step migration instructions
-- 📝 **[Changes Overview](./docs/CHANGES_OVERVIEW.md)** - High-level summary of what's new and changed
-- ⚠️ **[Breaking Changes (Public API)](./docs/BREAKING_CHANGES_PUBLIC_API.md)** - Detailed breaking changes documentation
-- 🏗️ **[Breaking Changes (Internal)](./docs/BREAKING_CHANGES_INTERNAL.md)** - For library contributors and maintainers
+---
 
-### Feature Documentation
+## Migrating from v1?
 
-- 🧠 **[Smart State Management](./docs/smart-state-management.md)** - Advanced state management with conflict resolution
-- 🎨 **[Control Wrapper Guide](./projects/ngx-vest-forms/control-wrapper/README.md)** - UI wrapper component documentation
-- 📊 **[Schema Utilities](./projects/ngx-vest-forms/schemas/README.md)** - Type safety with schema libraries
-- 💡 **[Examples Collection](./docs/EXAMPLES.md)** - Comprehensive examples from basic to advanced
+If you're upgrading from ngx-vest-forms v1, see the [Migration Guide](./docs/MIGRATION_GUIDE_V2.md) and [Breaking Changes Overview](./docs/BREAKING_CHANGES_PUBLIC_API.md) for step-by-step instructions, API changes, and troubleshooting tips. Most users need zero code changes, but see the guides for schema utilities, error object migration, and advanced features.
 
-### Quick Start Based on Your Needs
+## Common Pitfalls & Troubleshooting
 
-| Your Situation                | Recommended Reading                                                                                                                   |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 🆕 **New to ngx-vest-forms**  | Start with [Installation](#installation) and [Quick Start](#core-features--quick-start)                                               |
-| ⬆️ **Upgrading from v1.x**    | [Migration Guide](./docs/MIGRATION_GUIDE_V2.md) → [Changes Overview](./docs/CHANGES_OVERVIEW.md)                                      |
-| 🔧 **Need advanced features** | [Smart State Guide](./docs/smart-state-management.md) or [Control Wrapper Guide](./projects/ngx-vest-forms/control-wrapper/README.md) |
-| 📊 **Want type safety**       | [Schema Utilities Guide](./projects/ngx-vest-forms/schemas/README.md)                                                                 |
-| 🚀 **Ready to build**         | [Examples Collection](./docs/EXAMPLES.md)                                                                                             |
+- **Type Errors:** Update all imports and type references to use the new NGX-prefixed APIs.
+- **Error Display Issues:** v2 errors are arrays, not strings. Update your error display logic to handle multiple errors per field.
+- **Import Errors:** Optional features (schemas, smart state, control wrapper) are now secondary entry points—update your imports accordingly.
+- **Deprecated APIs:** Legacy signals and old error config are removed. Use the new unified APIs and configuration system.
+- **Schema Migration:** If you used `validateShape`, migrate to `modelToStandardSchema` or a schema adapter (see below).
 
-### Support
+## Migration from Core
+
+If you were previously using shape validation in v1:
+
+```typescript
+// Before (v1)
+import { validateShape } from 'ngx-vest-forms';
+validateShape(formValue, shape);
+
+// After (v2)
+import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
+const schema = ngxModelToStandardSchema(shape);
+// Use schema for validation, type inference, etc.
+```
+
+## Real-World Schema Adapter Example (Zod)
+
+```typescript
+import { z } from 'zod';
+import { zodAdapter } from 'ngx-vest-forms/schemas';
+
+const userSchema = z.object({ name: z.string(), email: z.string().email() });
+const standardSchema = zodAdapter(userSchema);
+```
+
+---
+
+## Real-World Examples
+
+### Basic Form
+
+```typescript
+// user-form.component.ts
+import { Component, signal } from '@angular/core';
+import { ngxVestForms } from 'ngx-vest-forms/core';
+import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
+import { userModel } from './user.model';
+import { userValidations } from './user.validations';
+
+@Component({
+  standalone: true,
+  imports: [ngxVestForms, NgxControlWrapper],
+  template: `
+    <form ngxVestForm [vestSuite]="suite" [(formValue)]="model">
+      <ngx-control-wrapper>
+        <label for="name">Name</label>
+        <input id="name" name="name" [ngModel]="model().name" />
+      </ngx-control-wrapper>
+
+      <ngx-control-wrapper>
+        <label for="email">Email</label>
+        <input id="email" name="email" [ngModel]="model().email" type="email" />
+      </ngx-control-wrapper>
+    </form>
+  `,
+})
+export class UserFormComponent {
+  protected readonly model = signal(userModel);
+  protected readonly suite = userValidations;
+}
+```
+
+### Advanced: Smart State
+
+```typescript
+import { NgxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state';
+@Component({
+  standalone: true,
+  imports: [ngxVestForms, NgxVestFormsSmartStateDirective],
+  template: `
+    <form ngxVestForm [(formValue)]="model" ngxVestFormsSmartState>
+      <!-- fields -->
+    </form>
+  `,
+})
+export class AdvancedFormComponent {
+  protected readonly model = signal({ ... });
+}
+```
+
+### Schema Integration
+
+```typescript
+import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
+const userSchema = ngxModelToStandardSchema({ name: '', age: 0 });
+type User = InferSchemaType<typeof userSchema>;
+```
+
+---
+
+## Error Display Modes & Accessibility
+
+- **Error display modes:** `'on-blur'`, `'on-submit'`, `'on-blur-or-submit'` (default). Configure globally or per control wrapper.
+- **Accessibility:** All wrappers/components use ARIA roles, keyboard navigation, and visible focus indicators. Error messages are announced for screen readers.
+
+---
+
+## Troubleshooting & FAQ
+
+**Q: Why aren't my errors showing?**
+
+- Check your error display mode (`errorDisplayMode`). Default is `'on-blur-or-submit'`.
+- If using `ngModelOptions.updateOn: 'submit'`, errors only show after submit.
+
+**Q: How do I migrate from v1?**
+
+- See the [Migration Guide](./docs/MIGRATION_GUIDE_V2.md). Most users only need to update imports and selectors.
+
+**Q: Can I use my own form field components?**
+
+- Yes! Use `NgxFormErrorDisplayDirective` as a host directive for custom wrappers.
+
+**Q: How do I enable root-level (cross-field) validation?**
+
+- Add `[validateRootForm]="true"` to your form and use the root key in your Vest suite.
+
+**Q: How do I get type safety for my form model?**
+
+- Use schema utilities (`ngxModelToStandardSchema`, Zod, Valibot, ArkType) for compile-time safety and IDE inference.
+
+---
+
+## Migration & Documentation Quick Links
+
+- 📋 **[v2 Migration Guide](./docs/MIGRATION_GUIDE_V2.md)** - Step-by-step migration instructions
+- ⚠️ **[Breaking Changes (Public API)](./docs/BREAKING_CHANGES_PUBLIC_API.md)** - All breaking changes
+- 🏗️ **[Breaking Changes (Internal)](./docs/BREAKING_CHANGES_INTERNAL.md)** - For contributors/maintainers
+
+---
+
+## Support
 
 - 🐛 **Issues**: [GitHub Issues](https://github.com/simplifiedcourses/ngx-vest-forms/issues)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/simplifiedcourses/ngx-vest-forms/discussions)
 - 📚 **Documentation**: All guides linked above
 - 💡 **Examples**: Working examples in [projects/examples/](./projects/examples/)
+
+---
+
+## 📚 Feature Documentation & Further Reading
+
+- **Examples Gallery:** [projects/examples/README.md](./projects/examples/README.md) — Progressive, real-world examples from basic to advanced.
+- **Control Wrapper Guide:** [projects/ngx-vest-forms/control-wrapper/README.md](./projects/ngx-vest-forms/control-wrapper/README.md) — Error display, accessibility, and UI abstraction.
+- **Schema Utilities Guide:** [projects/ngx-vest-forms/schemas/README.md](./projects/ngx-vest-forms/schemas/README.md) — Type safety, schema integration, and API reference.
+- **Smart State Management:** [projects/ngx-vest-forms/smart-state/README.md](./projects/ngx-vest-forms/smart-state/README.md) — Advanced state management, conflict resolution, and external data sync.

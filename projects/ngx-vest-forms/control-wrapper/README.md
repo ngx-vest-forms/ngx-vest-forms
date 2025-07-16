@@ -173,3 +173,46 @@ By separating these concerns, `ngx-vest-forms` offers flexibility:
 
 - Use `NgxControlWrapper` for quick, standard error display.
 - Use `NgxFormErrorDisplayDirective` or `NgxFormControlStateDirective` with `hostDirectives` to build custom form field components with full control over the markup and behavior, while still benefiting from the underlying state management and error display logic.
+
+## Migration Notes
+
+- **Upgrading from v1:** The error display logic has changed in v2. Use `<ngx-control-wrapper>` for automatic error and pending state display. See the [Migration Guide](../../../../docs/MIGRATION_GUIDE_V2.md).
+- **Error Object Structure:** Errors are now arrays (`Record<string, string[]>`). Update your error display templates accordingly.
+- **See Also:** [Migration Guide](../../../../docs/MIGRATION_GUIDE_V2.md), [Breaking Changes Overview](../../../../docs/BREAKING_CHANGES_PUBLIC_API.md)
+
+## Common Pitfalls & Troubleshooting
+
+- **Missing Wrapper:** If errors are not shown, ensure form fields are wrapped in `<ngx-control-wrapper>`.
+- **Error Display Issues:** Update your templates to handle array-based errors.
+- **Import Errors:** Import from `ngx-vest-forms/control-wrapper`, not the core package.
+- **Styling Issues:** Use Tailwind or modern CSS for consistent error styling.
+
+## Form Validation Directives
+
+### NgxFormControlStateDirective (`ngxFormControlState`)
+
+A directive that provides reactive signals for the state of Angular form controls and parsed Vest validation messages.
+
+#### Key Features:
+
+- **Reactive State Signals:** Exposes `errors`, `pending`, `touched`, and `dirty` states as signals.
+- **Vest Integration:** Parses and provides Vest validation messages reactively.
+- **Touch and Dirty Management:** Automatically marks controls as touched or dirty based on user interaction.
+
+#### Usage
+
+Typically used internally by `NgxFormErrorDisplayDirective` and `NgxControlWrapper`. Not meant for direct use in templates.
+
+### NgxFormErrorDisplayDirective (`ngxFormErrorDisplay`)
+
+A directive that builds on `NgxFormControlStateDirective` to add display behavior for validation messages.
+
+#### Key Features:
+
+- **Automatic Error Display:** Shows validation errors from Vest suites without manual template logic.
+- **Configurable Display Logic:** Control when errors are displayed (on blur, on submit, or both) via `errorDisplayMode`.
+- **Accessibility:** Adds appropriate ARIA attributes to the input field.
+
+#### Usage
+
+Automatically used by `NgxControlWrapper`. Typically, you would use `<ngx-control-wrapper>` in your templates, which internally uses this directive to display errors.

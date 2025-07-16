@@ -479,30 +479,19 @@ If you're currently using basic form functionality and need smart state manageme
 })
 ```
 
-## Best Practices
+## Migration Notes
 
-1. **Start Simple**: Begin with basic merge strategies and add complexity as needed
-2. **Test Conflict Scenarios**: Always test your conflict resolution logic with realistic data
-3. **Use Preserve Fields Wisely**: Only preserve fields that users actively edit
-4. **Handle Edge Cases**: Consider null/undefined values in your merge logic
-5. **Monitor Performance**: Use browser dev tools to monitor smart state operations
-6. **Provide User Feedback**: Always inform users when conflicts are detected and resolved
+- **Upgrading from v1:** Smart state management is new in v2. To upgrade, import `NgxVestFormsSmartStateDirective` and follow the [Migration Guide](../../../../docs/MIGRATION_GUIDE_V2.md).
+- **Error Object Structure:** v2 errors are arrays (`Record<string, string[]>`). Update your error display logic if migrating from v1.
+- **See Also:** [Migration Guide](../../../../docs/MIGRATION_GUIDE_V2.md), [Breaking Changes Overview](../../../../docs/BREAKING_CHANGES_PUBLIC_API.md)
 
-## Troubleshooting
+## Common Pitfalls & Troubleshooting
 
-### Common Issues
-
-**Q: Smart state isn't merging data**
-A: Ensure `externalData` signal is properly updated and `mergeStrategy` is set to `'smart'`.
-
-**Q: User changes are being overwritten**
-A: Add the affected fields to `preserveFields` array.
-
-**Q: Conflicts not detected**
-A: Enable `conflictResolution: true` and ensure both local and external data have changed.
-
-**Q: Performance issues**
-A: Reduce the number of `preserveFields` and consider disabling conflict resolution for simple use cases.
+- **Merge Strategy Confusion:** Choose the right `mergeStrategy` for your use case (`replace`, `preserve`, or `smart`).
+- **Missing preserveFields:** If user changes are overwritten, add affected fields to `preserveFields`.
+- **Conflict Detection:** Enable `conflictResolution: true` and ensure both local and external data have changed.
+- **Type Errors:** Ensure your options and models are fully typed for best results.
+- **Import Errors:** Import smart state features from `ngx-vest-forms/smart-state`, not the core package.
 
 ## Examples
 

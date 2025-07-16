@@ -2,6 +2,47 @@
 
 **Schema utilities for ngx-vest-forms** - Type-safe schema integration with popular validation libraries.
 
+## Recommended Schema Libraries
+
+We recommend using [Zod](https://zod.dev/), [Valibot](https://valibot.dev/), or [ArkType](https://arktype.io/) for schema validation and type safety. These libraries follow the [Standard Schema](https://standardschema.dev/) initiative for interoperability and best practices.
+
+- **Zod**: Popular, expressive, and TypeScript-first schema library.
+- **Valibot**: Lightweight, fast, and modern schema validation.
+- **ArkType**: Advanced type-level schema validation and inference.
+
+**Example Usage:**
+
+```typescript
+import { z } from 'zod';
+const userSchema = z.object({ name: z.string(), email: z.string().email() });
+type User = z.infer<typeof userSchema>;
+
+@Component({
+  template: `
+    <form ngxVestForm [formSchema]="userSchema" [(formValue)]="userData">
+      <!-- form fields -->
+    </form>
+  `,
+})
+export class UserFormComponent {
+  protected readonly userSchema = userSchema;
+  protected readonly userData = signal<User>({ name: '', email: '' });
+}
+```
+
+## Custom Solution: modelToStandardSchema
+
+If you have legacy models or custom requirements, you can use `modelToStandardSchema` to generate a schema from a plain object template. This is best used as a fallback when standard schema libraries are not suitable.
+
+**Example Usage:**
+
+```typescript
+import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
+const userTemplate = { name: '', age: 0 };
+const userSchema = ngxModelToStandardSchema(userTemplate);
+type User = InferSchemaType<typeof userSchema>;
+```
+
 ## Overview
 
 The `ngx-vest-forms/schemas` entry point provides powerful schema utilities that enhance your forms with robust type safety and runtime validation. This secondary entry point keeps the core library lean while offering advanced schema integration capabilities for users who need them.
@@ -115,9 +156,19 @@ type User = InferSchemaType<typeof userSchema>;
   imports: [ngxVestForms],
   template: `
     <form ngxVestForm [formSchema]="userSchema" [(formValue)]="userData">
-      <input name="name" ngModel placeholder="Name" />
-      <input name="email" type="email" ngModel placeholder="Email" />
-      <input name="age" type="number" ngModel placeholder="Age" />
+      <input name="name" [ngModel]="userData().name" placeholder="Name" />
+      <input
+        name="email"
+        type="email"
+        [ngModel]="userData().email"
+        placeholder="Email"
+      />
+      <input
+        name="age"
+        type="number"
+        [ngModel]="userData().age"
+        placeholder="Age"
+      />
     </form>
   `,
 })
@@ -138,7 +189,6 @@ const userSchema = z.object({
   email: z.string().email('Invalid email format'),
   age: z.number().min(0).max(120),
 });
-
 type User = InferSchemaType<typeof userSchema>;
 
 @Component({
@@ -215,18 +265,58 @@ type User = InferSchemaType<typeof userSchema>;
 
 ## Migration from Core
 
-If you were previously importing schema utilities from the core `ngx-vest-forms` package:
+If you were previously using `[formShape]` and `validateShape` in v1:
 
 ```typescript
-// Before
-import { ngxModelToStandardSchema, InferSchemaType } from 'ngx-vest-forms';
+// Before (v1)
+import { vestForms, validateShape } from 'ngx-vest-forms';
+export const myFormModelShape: DeepRequired<MyFormModel> = { ... };
 
-// After
-import {
-  ngxModelToStandardSchema,
-  InferSchemaType,
-} from 'ngx-vest-forms/schemas';
+@Component({
+  imports: [vestForms],
+  template: `
+    <form scVestForm [formShape]="shape" ...>
+      <!-- ... -->
+    </form>
+  `
+})
+export class MyComponent {
+  protected readonly formValue = signal<MyFormModel>({});
+  protected readonly shape = myFormModelShape;
+  // validateShape(this.formValue(), this.shape) in dev mode
+}
+
+// After (v2)
+import { ngxVestForms } from 'ngx-vest-forms/core';
+import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
+const schema = ngxModelToStandardSchema(myFormModelShape);
+
+@Component({
+  imports: [ngxVestForms],
+  template: `
+    <form ngxVestForm [formSchema]="schema" ...>
+      <!-- ... -->
+    </form>
+  `
+})
+export class MyComponent {
+  protected readonly formValue = signal<MyFormModel>({});
+  protected readonly schema = schema;
+}
 ```
+
+## Migration Notes
+
+- **Prefer Standard Schema Libraries:** If migrating from v1 or another validation system, switch to Zod, Valibot, or ArkType for best results and future compatibility.
+- **Legacy Migration:** Use `modelToStandardSchema` only if you cannot migrate to a standard schema library.
+- **See Also:** [Migration Guide](../../../../docs/MIGRATION_GUIDE_V2.md), [Breaking Changes Overview](../../../../docs/BREAKING_CHANGES_PUBLIC_API.md)
+
+## Common Pitfalls & Troubleshooting
+
+- **Type Inference Issues:** Ensure your schema is StandardSchemaV1-compatible for best type inference. Use `InferSchemaType` for derived types.
+- **Runtime Validation Errors:** If you see unexpected validation failures, check that your schema matches your form model structure.
+- **Import Errors:** Always import schema utilities from `ngx-vest-forms/schemas`, not the core package.
+- **Deprecated API:** Do not use `shapeToSchema`; use `ngxModelToStandardSchema` instead.
 
 ## Related Documentation
 

@@ -1,25 +1,44 @@
 # ngx-vest-forms Breaking Changes: Internal/Architectural
 
-This document lists **internal breaking changes and improvements** to `ngx-vest-forms` for contributors and maintainers. For user-facing public API changes and migration guides, see `BREAKING_CHANGES_PUBLIC_API.md`.
+---
+
+## Internal Changes Summary
+
+| Change                        | v1 Pattern/Behavior                          | v2 Pattern/Behavior                                     | Impact/Reason                                     |
+| ----------------------------- | -------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------- |
+| NGX Naming Convention         | Non-prefixed (FormDirective, ROOT_FORM, etc) | Consistent NGX prefix (NgxFormDirective, NGX_ROOT_FORM) | Avoids conflicts, aligns with Angular conventions |
+| Modular Architecture          | Monolithic, all features bundled             | Modular entry points (core, control-wrapper, schemas)   | Tree-shaking, smaller bundles, better structure   |
+| Unified formState signal      | Multiple signals/outputs (validChange, etc)  | Single formState signal for all state                   | Easier state management, less duplication         |
+| Error object arrays           | Errors as strings                            | Errors as arrays, path utilities                        | Multi-error support, better Angular alignment     |
+| Standard Schema support       | Basic, limited                               | Adapters for Zod, ArkType, Valibot                      | Schema validation, type safety                    |
+| Improved runtime validation   | Basic, limited                               | Better DX for model/template mismatches                 | Developer experience                              |
+| Selector modernization        | scVestForm, sc-control-wrapper               | ngxVestForm, ngx-control-wrapper                        | Angular convention compliance                     |
+| Path utilities                | Basic                                        | Robust, type-safe nested value access                   | Reliability, maintainability                      |
+| Error display config overhaul | Hardcoded, limited                           | Global/per-instance settings via tokens                 | Flexible error display                            |
+| Modern Angular migration      | Angular 15-17, legacy APIs                   | Standalone components, signals, new control flow        | Performance, maintainability                      |
+| NgxFormControlStateDirective  | Not available                                | Signal-based control state tracking                     | Internal state management                         |
+| UpdateOn-aware error display  | Not available                                | Validation timing respects ngModelOptions               | Accurate validation timing                        |
+| Schema template extraction    | Not available                                | Runtime schema validation/mismatch detection            | DX, reliability                                   |
+| Unified build output          | Local dist folders per entry point           | All entry points build to main dist directory           | Build system simplification                       |
 
 ---
 
 ## Internal Improvements and Rationale
 
-- **NGX Naming Convention Implementation:** All public API elements (directives, types, tokens, functions) have been updated to use a consistent NGX prefix to follow Angular naming conventions and avoid naming conflicts.
-- **Modular Architecture with Core Entry Point:** Restructured the library into a modular architecture with `core` as a secondary entry point, enabling tree-shaking and smaller bundle sizes while maintaining backward compatibility through the main package.
-- **Form State Management Refactor:** Unified all form state (value, errors, validity, pending, etc.) into a single `formState` signal, reducing duplication and improving maintainability.
-- **Error Object Structure Modernization:** Migrated from joined strings to arrays for better Angular alignment and easier multi-error handling.
-- **Standard Schema v1 Adoption:** Schema adapters now support Zod, ArkType, Valibot, and other Standard Schema compatible libraries.
-- **Runtime Validation Enhancement:** Improved error handling for model/template mismatches with better developer experience.
-- **Selector Modernization:** Updated control wrapper selector to camelCase for Angular convention compliance.
-- **Path Utilities Implementation:** Enhanced field path utilities for robust, type-safe nested form value access.
-- **Configuration System Overhaul:** Improved error display mode configuration with global and per-instance settings via injection tokens.
-- **Modern Angular Migration:** Full adoption of Angular 16+ standalone components, signals, and new control flow syntax.
-- **NgxFormControlStateDirective Implementation:** Added standalone directive for signal-based control state tracking used internally by `ngxControlWrapper`.
-- **UpdateOn-Aware Error Display:** NgxFormErrorDisplayDirective now respects ngModelOptions.updateOn values for better validation timing.
-- **Schema Template Extraction:** Completed `ngxExtractTemplateFromSchema` function for runtime schema validation and mismatch detection.
-- **Secondary Entry Point Build Optimization:** All secondary entry points (core, schemas, smart-state, control-wrapper) now correctly build to the main dist directory without creating local dist folders.
+- **NGX Naming Convention Implementation:** All public API elements now use NGX prefixing for clarity and to avoid naming conflicts, replacing v1's non-prefixed names.
+- **Modular Architecture:** v2 splits the library into multiple entry points (core, control-wrapper, schemas, smart-state), enabling tree-shaking and smaller bundles. v1 was monolithic.
+- **Form State Management Refactor:** v2 unifies all form state into a single `formState` signal, replacing v1's multiple outputs/signals.
+- **Error Object Structure Modernization:** v2 uses arrays and path utilities for errors, supporting multi-error scenarios and better Angular alignment.
+- **Schema Adapters:** v2 introduces adapters for Zod, ArkType, Valibot, supporting Standard Schema v1. v1 had only basic schema support.
+- **Runtime Validation Enhancement:** v2 improves error handling for model/template mismatches, providing better developer experience.
+- **Selector Modernization:** v2 updates selectors to camelCase and NGX prefix for Angular convention compliance.
+- **Path Utilities Implementation:** v2 enhances field path utilities for robust, type-safe nested form value access.
+- **Configuration System Overhaul:** v2 improves error display mode configuration with global and per-instance settings via injection tokens.
+- **Modern Angular Migration:** v2 fully adopts Angular 19+ standalone components, signals, and new control flow syntax.
+- **NgxFormControlStateDirective Implementation:** v2 adds a directive for signal-based control state tracking, used internally by control wrapper.
+- **UpdateOn-Aware Error Display:** v2 respects ngModelOptions.updateOn for validation timing.
+- **Schema Template Extraction:** v2 adds runtime schema validation and mismatch detection.
+- **Unified Build Output:** v2 builds all entry points to the main dist directory, simplifying the build system.
 
 ---
 
@@ -65,12 +84,27 @@ ngx-vest-forms/
 
 ## Migration for Contributors
 
-- **Naming Conventions:** All directive classes, types, and tokens now use NGX prefixing - update internal references and tests accordingly.
-- **Architecture:** Review the new `formState`-centric architecture and update internal utilities and tests.
-- **Error Handling:** Use the new array-based error object structure and field path utilities in all internal code.
-- **Schema Support:** Prefer Standard Schema adapters for new schema-related features.
-- **Documentation:** Update all documentation and examples to reflect new selectors, error display modes, and modern Angular APIs.
-- **Testing:** Update custom wrappers, tests, and internal utilities to use new mode names and validation logic.
+- **Naming Conventions:** Update all directive classes, types, and tokens to NGX prefix in internal code/tests
+- **Architecture:** Review the new `formState`-centric architecture and update internal utilities and tests
+- **Error Handling:** Use the new array-based error object structure and field path utilities in all internal code
+- **Schema Support:** Prefer Standard Schema adapters for new schema-related features
+- **Documentation:** Update all documentation and examples to reflect new selectors, error display modes, and modern Angular APIs
+- **Testing:** Update custom wrappers, tests, and internal utilities to use new mode names and validation logic
+- **Error Object Migration:** Refactor any custom error display logic and test utilities to handle arrays of errors per field (not just strings)
+- **Custom Wrapper Migration:** If you built custom form field wrappers, update them to support the new error object structure and error display configuration
+
+---
+
+## For Maintainers: Migration Checklist
+
+- [ ] Update all directive, type, and token names to NGX prefix in internal code/tests
+- [ ] Refactor utilities and tests to use unified formState signal
+- [ ] Use array-based error objects and new path utilities
+- [ ] Prefer Standard Schema adapters for new schema features
+- [ ] Update documentation/examples to reflect new selectors and error display modes
+- [ ] Ensure build/test scripts use new modular structure
+- [ ] Test secondary entry points for correct build output
+- [ ] Review and update custom wrappers and validation logic for new error display timing
 
 ---
 
