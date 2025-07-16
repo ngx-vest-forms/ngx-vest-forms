@@ -8,10 +8,9 @@ import { enforce, only, staticSuite, test } from 'vest';
  */
 type SimpleFormData = {
   email: string;
-  email2: string;
 };
 
-const defaultSimpleFormData: SimpleFormData = { email: '', email2: '' };
+const defaultSimpleFormData: SimpleFormData = { email: '' };
 
 /**
  * Creates a validation suite for the simple form
@@ -32,13 +31,6 @@ export const createSimpleFormValidationSuite =
         });
         test('email', 'Email must be a valid email address', () => {
           enforce(data.email).matches(/^[^@]+@[^@]+\.[^@]+$/);
-        });
-
-        test('email2', 'Email is required', () => {
-          enforce(data.email2).isNotEmpty();
-        });
-        test('email2', 'Email must be a valid email address', () => {
-          enforce(data.email2).matches(/^[^@]+@[^@]+\.[^@]+$/);
         });
       },
     );

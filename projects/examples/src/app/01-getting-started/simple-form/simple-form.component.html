@@ -1,8 +1,6 @@
 <div
-  class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800"
+  class="w-full rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800"
 >
-  <!-- Minimal example: simple-form.component.html -->
-  <!-- Demonstrates a single required field with Vest validation and accessible error display -->
   <h2 class="mb-4 text-2xl font-bold">Simple Form Example</h2>
   <form
     ngxVestForm
@@ -10,41 +8,37 @@
     [(formValue)]="formValue"
     (ngSubmit)="save()"
     autocomplete="off"
+    class="space-y-6"
   >
-    <!-- Example: errorDisplayMode usage (on-blur-or-submit is default, but can be set explicitly) -->
-    <div ngxControlWrapper errorDisplayMode="on-blur-or-submit">
-      <label for="email" class="mb-1 block font-medium">Email</label>
+    <div
+      ngxControlWrapper
+      errorDisplayMode="on-blur-or-submit"
+      class="space-y-1"
+    >
+      <label
+        for="email"
+        class="block font-medium text-gray-700 dark:text-gray-200"
+        >Email</label
+      >
       <input
         id="email"
         name="email"
         type="email"
         autocomplete="off"
-        class="w-full rounded border px-3 py-2"
+        class="w-full rounded border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-white"
         ngModel
         required
+        aria-describedby="email-help"
+        aria-invalid="false"
       />
-    </div>
-
-    <!-- Example: errorDisplayMode with updateOn: 'submit' (errors only show after submit) -->
-    <div ngxControlWrapper errorDisplayMode="on-blur-or-submit">
-      <label for="email2" class="mb-1 block font-medium"
-        >Email (updateOn: submit)</label
+      <span id="email-help" class="text-xs text-gray-500"
+        >Enter a valid email address.</span
       >
-      <input
-        id="email2"
-        name="email2"
-        type="email"
-        autocomplete="off"
-        class="w-full rounded border px-3 py-2"
-        ngModel
-        required
-        [ngModelOptions]="{ updateOn: 'submit' }"
-      />
-      <!--
-      With updateOn: 'submit', errors for this field will only appear after the form is submitted,
-      regardless of the errorDisplayMode setting.
-    --></div>
-    <button type="submit" class="mt-4 rounded bg-blue-600 px-4 py-2 text-white">
+    </div>
+    <button
+      type="submit"
+      class="mt-4 w-full rounded bg-blue-600 px-4 py-2 font-semibold text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
       Submit
     </button>
   </form>
