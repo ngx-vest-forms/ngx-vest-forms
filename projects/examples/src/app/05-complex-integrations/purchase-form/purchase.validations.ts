@@ -12,9 +12,9 @@ import {
   SuiteResult,
   test,
 } from 'vest';
-import { SwapiService } from '../services/swapi.service';
-import { addressValidations } from '../ui/address/address.validations';
-import { phoneNumberValidations } from '../ui/phone-numbers/phone-number.validations';
+import { SwapiService } from '../../services/swapi.service';
+import { addressValidations } from '../../ui/address/address.validations';
+import { phoneNumberValidations } from '../../ui/phone-numbers/phone-number.validations';
 import { initialPurchaseFormData } from './purchase-form.model';
 
 // Define the inferred type directly from the model template, without assigning a runtime variable

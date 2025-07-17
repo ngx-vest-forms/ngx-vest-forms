@@ -34,12 +34,9 @@
 
   <form
     ngxVestForm
-    ngxSmartStateExtension
     #profileForm="ngxVestForm"
     [vestSuite]="userProfileSuite"
     [(formValue)]="userProfile"
-    [externalData]="externalUserData()"
-    [smartStateOptions]="smartOptions"
     (ngSubmit)="onSubmit(profileForm.formState())"
     class="space-y-6 rounded-lg border border-gray-300 bg-white p-6 shadow-md"
   >
@@ -196,6 +193,8 @@
       </button>
     </div>
 
+    <!-- Smart State features temporarily disabled for build compatibility -->
+    <!--
     @if (profileForm.smartState()?.conflictState; as conflictState) {
       @if (conflictState.hasConflicts) {
         <div class="mt-4 rounded-md bg-orange-50 p-4">
@@ -209,6 +208,12 @@
             <button
               (click)="resolveConflict('local')"
               class="rounded bg-orange-500 px-3 py-1 text-white hover:bg-orange-600"
+            >
+              Keep My Changes
+            </button>
+                <!-- Smart State features temporarily disabled for build compatibility -->
+    <!--
+              class="rounded bg-red-500 px-3 py-1 text-white hover:bg-red-600"
             >
               Keep My Changes
             </button>
@@ -234,14 +239,20 @@
         </div>
       }
     }
+    -->
+
+    <div class="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs">
+      <h3 class="mb-2 text-sm font-semibold">Form State:</h3>
+      <pre>{{ profileForm.formState() | json }}</pre>
+    </div>
 
     <div class="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs">
       <h3 class="mb-2 text-sm font-semibold">Form State:</h3>
       <pre>{{ profileForm.formState() | json }}</pre>
     </div>
     <div class="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs">
-      <h3 class="mb-2 text-sm font-semibold">Smart State:</h3>
-      <pre>{{ profileForm.smartState() | json }}</pre>
+      <h3 class="mb-2 text-sm font-semibold">External Data:</h3>
+      <pre>{{ externalUserData() | json }}</pre>
     </div>
   </form>
 </div>

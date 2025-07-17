@@ -1,68 +1,58 @@
-<div
-  class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800 sm:col-span-2"
->
-  <section>
-    <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">
-      Example: complex form with complex validations and conditionals
-    </h3>
-    <ul class="text-md ml-4 list-disc">
-      <li>Show validation errors on blur</li>
-      <li>Show validation errors on submit</li>
-      <li>When first name is <strong>Brecht</strong>: Set gender to male</li>
-      <li>
-        When first name is <strong>Brecht</strong> and last name is
-        <strong>Billiet</strong>: Set age and passwords
-      </li>
-      <li>
-        When first name is <strong>Luke</strong>: Fetch
-        <strong>Luke Skywalker from the swapi api</strong>
-      </li>
-      <li>When age is below 18, make Emergency contact required</li>
-      <li>When age is of legal age, disable Emergency contact</li>
-      <li>There should be at least one phone number</li>
-      <li>Phone numbers should not be empty</li>
-      <li>When gender is <strong>other</strong>, show Specify gender</li>
-      <li>
-        When gender is <strong>other</strong>, make Specify gender required
-      </li>
-      <li>Password is required</li>
-      <li>Confirm password is only required when password is filled in</li>
-      <li>Passwords should match, but only check if both are filled in</li>
-      <li>Billing address is required</li>
-      <li>
-        Show shipping address only when needed (otherwise remove from DOM)
-      </li>
-      <li>
-        If shipping address is different from billing address, make it required
-      </li>
-      <li>
-        If shipping address is different from billing address, make sure they
-        are not the same
-      </li>
-      <li>
-        When providing shipping address and toggling the checkbox back and
-        forth, make sure the state is kept
-      </li>
-      <li>
-        When clicking the Fetch data button, load data, disable the form, and
-        patch and re-enable the form
-      </li>
-      <li>When the user id is taken, perform async validation</li>
-      <li>
-        Try to set the firstName to Brecht lastName to Billiet, Now change the
-        age to 30. It shows how we can do validations on the root
-      </li>
-    </ul>
-    <button class="mt-6" (click)="fetchData()">Fetch data</button>
-    <br />
-  </section>
-  <section>
-    <h3>The value of the form</h3>
-    <pre id="json-data">
+<section>
+  <ul class="text-md ml-4 list-disc">
+    <li>Show validation errors on blur</li>
+    <li>Show validation errors on submit</li>
+    <li>When first name is <strong>Brecht</strong>: Set gender to male</li>
+    <li>
+      When first name is <strong>Brecht</strong> and last name is
+      <strong>Billiet</strong>: Set age and passwords
+    </li>
+    <li>
+      When first name is <strong>Luke</strong>: Fetch
+      <strong>Luke Skywalker from the swapi api</strong>
+    </li>
+    <li>When age is below 18, make Emergency contact required</li>
+    <li>When age is of legal age, disable Emergency contact</li>
+    <li>There should be at least one phone number</li>
+    <li>Phone numbers should not be empty</li>
+    <li>When gender is <strong>other</strong>, show Specify gender</li>
+    <li>When gender is <strong>other</strong>, make Specify gender required</li>
+    <li>Password is required</li>
+    <li>Confirm password is only required when password is filled in</li>
+    <li>Passwords should match, but only check if both are filled in</li>
+    <li>Billing address is required</li>
+    <li>Show shipping address only when needed (otherwise remove from DOM)</li>
+    <li>
+      If shipping address is different from billing address, make it required
+    </li>
+    <li>
+      If shipping address is different from billing address, make sure they are
+      not the same
+    </li>
+    <li>
+      When providing shipping address and toggling the checkbox back and forth,
+      make sure the state is kept
+    </li>
+    <li>
+      When clicking the Fetch data button, load data, disable the form, and
+      patch and re-enable the form
+    </li>
+    <li>When the user id is taken, perform async validation</li>
+    <li>
+      Try to set the firstName to Brecht lastName to Billiet, Now change the age
+      to 30. It shows how we can do validations on the root
+    </li>
+  </ul>
+  <button class="mt-6" (click)="fetchData()">Fetch data</button>
+  <br />
+</section>
+<section>
+  <h3>The value of the form</h3>
+  <pre id="json-data">
       {{ vm.formValue() | json }}
-    </pre>
-  </section>
-</div>
+    </pre
+  >
+</section>
 
 @if (vm.errors[rootFormKey]) {
   <div
@@ -96,8 +86,6 @@
   [vestSuite]="purchaseFormSuite"
 >
   <fieldset [disabled]="vm.loading">
-    <h1 class="text-4xl">Purchase form</h1>
-
     <!-- Debug section for form state -->
     <div class="mb-4 border border-blue-300 bg-blue-50 p-2">
       <div>

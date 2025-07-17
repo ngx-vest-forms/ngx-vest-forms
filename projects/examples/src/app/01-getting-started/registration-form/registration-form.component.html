@@ -1,128 +1,108 @@
-<div
-  class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800"
->
-  <section>
-    <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">
-      Registration Form Example
-    </h3>
-    <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">
-      Demonstrates password confirmation validation, terms checkbox, and
-      cross-field validation patterns.
-    </p>
+<section>
+  <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">
+    Demonstrates password confirmation validation, terms checkbox, and
+    cross-field validation patterns.
+  </p>
 
-    <form
-      ngxVestForm
-      [vestSuite]="suite"
-      [(formValue)]="formValue"
-      (ngSubmit)="onSubmit()"
-      #vestForm="ngxVestForm"
-      class="space-y-6"
-    >
-      <!-- Email Field -->
-      <ngx-control-wrapper>
-        <label
-          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
-          Email Address
-          <input
-            type="email"
-            name="email"
-            ngModel
-            autocomplete="email"
-            placeholder="Enter your email"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-          />
-        </label>
-      </ngx-control-wrapper>
+  <form
+    ngxVestForm
+    [vestSuite]="suite"
+    [(formValue)]="formValue"
+    (ngSubmit)="onSubmit()"
+    #vestForm="ngxVestForm"
+    class="space-y-6"
+  >
+    <!-- Email Field -->
+    <ngx-control-wrapper>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        Email Address
+        <input
+          type="email"
+          name="email"
+          ngModel
+          autocomplete="email"
+          placeholder="Enter your email"
+          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+        />
+      </label>
+    </ngx-control-wrapper>
 
-      <!-- Password Field -->
-      <ngx-control-wrapper>
-        <label
-          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
-          Password
-          <input
-            type="password"
-            name="password"
-            ngModel
-            autocomplete="new-password"
-            placeholder="Enter your password"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-          />
-        </label>
-        <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-          Password must be at least 8 characters with uppercase letter and
-          number
-        </div>
-      </ngx-control-wrapper>
-
-      <!-- Confirm Password Field -->
-      <ngx-control-wrapper>
-        <label
-          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
-          Confirm Password
-          <input
-            type="password"
-            name="confirmPassword"
-            ngModel
-            autocomplete="new-password"
-            placeholder="Confirm your password"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-          />
-        </label>
-      </ngx-control-wrapper>
-
-      <!-- Terms and Conditions -->
-      <ngx-control-wrapper>
-        <label class="flex items-center">
-          <input
-            type="checkbox"
-            name="agreeToTerms"
-            ngModel
-            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
-          />
-          <span class="ms-2 text-sm text-gray-700 dark:text-gray-300">
-            I agree to the
-            <a
-              href="#"
-              class="text-blue-600 hover:underline dark:text-blue-400"
-            >
-              Terms and Conditions
-            </a>
-            and
-            <a
-              href="#"
-              class="text-blue-600 hover:underline dark:text-blue-400"
-            >
-              Privacy Policy
-            </a>
-          </span>
-        </label>
-      </ngx-control-wrapper>
-
-      <!-- Submit Button -->
-      <div class="pt-4">
-        <button
-          type="submit"
-          [disabled]="!vestForm.isValid()"
-          class="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-800"
-        >
-          Create Account
-        </button>
+    <!-- Password Field -->
+    <ngx-control-wrapper>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        Password
+        <input
+          type="password"
+          name="password"
+          ngModel
+          autocomplete="new-password"
+          placeholder="Enter your password"
+          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+        />
+      </label>
+      <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+        Password must be at least 8 characters with uppercase letter and number
       </div>
+    </ngx-control-wrapper>
 
-      <!-- Form State Debug (Development Only) -->
-      <div class="mt-6 rounded-md bg-gray-50 p-4 dark:bg-gray-900">
-        <h4 class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-          Form State
-        </h4>
-        <div class="text-xs">
-          <div>Valid: {{ vestForm.isValid() }}</div>
-          <div>Errors: {{ vestForm.errors | json }}</div>
-          <div>Value: {{ formValue() | json }}</div>
-        </div>
+    <!-- Confirm Password Field -->
+    <ngx-control-wrapper>
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        Confirm Password
+        <input
+          type="password"
+          name="confirmPassword"
+          ngModel
+          autocomplete="new-password"
+          placeholder="Confirm your password"
+          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+        />
+      </label>
+    </ngx-control-wrapper>
+
+    <!-- Terms and Conditions -->
+    <ngx-control-wrapper>
+      <label class="flex items-center">
+        <input
+          type="checkbox"
+          name="agreeToTerms"
+          ngModel
+          class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+        />
+        <span class="ms-2 text-sm text-gray-700 dark:text-gray-300">
+          I agree to the
+          <a href="#" class="text-blue-600 hover:underline dark:text-blue-400">
+            Terms and Conditions
+          </a>
+          and
+          <a href="#" class="text-blue-600 hover:underline dark:text-blue-400">
+            Privacy Policy
+          </a>
+        </span>
+      </label>
+    </ngx-control-wrapper>
+
+    <!-- Submit Button -->
+    <div class="pt-4">
+      <button
+        type="submit"
+        [disabled]="!vestForm.isValid()"
+        class="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-800"
+      >
+        Create Account
+      </button>
+    </div>
+
+    <!-- Form State Debug (Development Only) -->
+    <div class="mt-6 rounded-md bg-gray-50 p-4 dark:bg-gray-900">
+      <h4 class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+        Form State
+      </h4>
+      <div class="text-xs">
+        <div>Valid: {{ vestForm.isValid() }}</div>
+        <div>Errors: {{ vestForm.errors | json }}</div>
+        <div>Value: {{ formValue() | json }}</div>
       </div>
-    </form>
-  </section>
-</div>
+    </div>
+  </form>
+</section>

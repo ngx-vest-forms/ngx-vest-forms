@@ -67,6 +67,30 @@ export const appRoutes: Routes = [
     title: 'Zod Schema Form',
   },
   {
+    path: 'phone-numbers-form',
+    loadComponent: () =>
+      import(
+        './04-advanced-state/phone-numbers-form/phone-numbers-form.component'
+      ).then((m) => m.PhoneNumbersFormComponent),
+    title: 'Phone Numbers Form',
+  },
+  {
+    path: 'smart-profile-form',
+    loadComponent: () =>
+      import(
+        './04-advanced-state/smart-profile-form/smart-profile-form.component'
+      ).then((m) => m.SmartProfileFormComponent),
+    title: 'Smart Profile Form',
+  },
+  {
+    path: 'purchase-form',
+    loadComponent: () =>
+      import(
+        './05-complex-integrations/purchase-form/purchase-form.component'
+      ).then((m) => m.PurchaseFormComponent),
+    title: 'Purchase Form',
+  },
+  {
     path: 'wizard-form',
     loadComponent: () =>
       import(

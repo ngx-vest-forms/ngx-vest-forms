@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { injectNgxRootFormKey, ngxVestForms } from 'ngx-vest-forms';
-import { PhoneNumbersComponent } from '../ui/phone-numbers/phone-numbers.component';
+import { PhoneNumbersComponent } from '../../ui/phone-numbers/phone-numbers.component';
 import { createPhoneNumbersValidationSuite } from './phone-numbers-form.validations';
 
 @Component({

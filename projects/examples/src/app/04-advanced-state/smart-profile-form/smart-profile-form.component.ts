@@ -8,7 +8,6 @@ import {
 import { FormsModule } from '@angular/forms';
 import { NgxFormDirective, NgxFormState, ngxVestForms } from 'ngx-vest-forms';
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
-import { NgxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state';
 
 import { initialUserProfile, UserProfile } from './user-profile.model';
 import { userProfileSuite } from './user-profile.validations';
@@ -16,13 +15,7 @@ import { userProfileSuite } from './user-profile.validations';
 @Component({
   selector: 'ngx-smart-profile-page', // Updated selector to ngx- prefix
   standalone: true,
-  imports: [
-    FormsModule,
-    JsonPipe,
-    ngxVestForms,
-    NgxControlWrapper,
-    NgxVestFormsSmartStateDirective, // Corrected directive name
-  ],
+  imports: [FormsModule, JsonPipe, ngxVestForms, NgxControlWrapper],
   templateUrl: './smart-profile-form.component.html',
   styleUrl: './smart-profile-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,7 +29,7 @@ export class SmartProfileFormComponent {
   protected profileFormDirective = viewChild.required(NgxFormDirective);
 
   readonly smartOptions = {
-    mergeStrategy: 'smart',
+    mergeStrategy: 'smart' as const,
     preserveFields: ['bio', 'notificationPreferences.sms'],
     conflictResolution: true,
     onConflict: (
@@ -135,6 +128,27 @@ export class SmartProfileFormComponent {
   }
 
   // --- Smart State Resolution Handlers ---
+  resetForm(): void {
+    this.resetFormToInitial();
+  }
+
+  resolveConflict(strategy: 'local' | 'external' | 'merge-review'): void {
+    switch (strategy) {
+      case 'local': {
+        this.resolveWithLocal();
+        break;
+      }
+      case 'external': {
+        this.resolveWithExternal();
+        break;
+      }
+      case 'merge-review': {
+        this.resolveWithCustomMerge();
+        break;
+      }
+    }
+  }
+
   resolveWithLocal(): void {
     console.log(
       'Conflict resolved: User chose LOCAL data. Form reflects current edits.',

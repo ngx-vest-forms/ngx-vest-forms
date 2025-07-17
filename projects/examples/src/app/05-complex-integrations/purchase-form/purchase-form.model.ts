@@ -1,9 +1,12 @@
 import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
-import { AddressModel, initialAddressForm } from '../ui/address/address.model';
+import {
+  AddressModel,
+  initialAddressForm,
+} from '../../ui/address/address.model';
 import {
   PhoneNumberModel,
   initialPhoneNumberState,
-} from '../ui/phone-numbers/phone-number.model';
+} from '../../ui/phone-numbers/phone-number.model';
 
 /**
  * Defines the complete structure for the purchase form data.

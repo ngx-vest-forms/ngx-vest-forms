@@ -1,410 +1,403 @@
-<div
-  class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800"
->
-  <section>
-    <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">
-      Profile Form Example
-    </h3>
-    <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">
-      Comprehensive form with nested objects, various input types, conditional
-      validation, and file upload.
-    </p>
+<section>
+  <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">
+    Comprehensive form with nested objects, various input types, conditional
+    validation, and file upload.
+  </p>
 
-    <form
-      ngxVestForm
-      [vestSuite]="suite"
-      [(formValue)]="formValue"
-      (ngSubmit)="onSubmit()"
-      #vestForm="ngxVestForm"
-      class="space-y-6"
-    >
-      <!-- Personal Information Section -->
-      <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-600">
-        <h4 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
-          Personal Information
-        </h4>
+  <form
+    ngxVestForm
+    [vestSuite]="suite"
+    [(formValue)]="formValue"
+    (ngSubmit)="onSubmit()"
+    #vestForm="ngxVestForm"
+    class="space-y-6"
+  >
+    <!-- Personal Information Section -->
+    <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-600">
+      <h4 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+        Personal Information
+      </h4>
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <!-- First Name -->
-          <ngx-control-wrapper>
-            <label
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              First Name *
-              <input
-                type="text"
-                name="firstName"
-                ngModel
-                placeholder="Enter your first name"
-                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-            </label>
-          </ngx-control-wrapper>
-
-          <!-- Last Name -->
-          <ngx-control-wrapper>
-            <label
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Last Name *
-              <input
-                type="text"
-                name="lastName"
-                ngModel
-                placeholder="Enter your last name"
-                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-            </label>
-          </ngx-control-wrapper>
-        </div>
-
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <!-- Email -->
-          <ngx-control-wrapper>
-            <label
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Email Address *
-              <input
-                type="email"
-                name="email"
-                ngModel
-                autocomplete="email"
-                placeholder="Enter your email"
-                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-            </label>
-          </ngx-control-wrapper>
-
-          <!-- Phone -->
-          <ngx-control-wrapper>
-            <label
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Phone Number *
-              <input
-                type="tel"
-                name="phone"
-                ngModel
-                autocomplete="tel"
-                placeholder="Enter your phone number"
-                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-            </label>
-          </ngx-control-wrapper>
-        </div>
-
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <!-- Date of Birth -->
-          <ngx-control-wrapper>
-            <label
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Date of Birth *
-              <input
-                type="date"
-                name="dateOfBirth"
-                ngModel
-                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-            </label>
-          </ngx-control-wrapper>
-
-          <!-- Gender -->
-          <ngx-control-wrapper>
-            <label
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Gender *
-              <select
-                name="gender"
-                ngModel
-                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              >
-                @for (option of genderOptions; track option.value) {
-                  <option [value]="option.value">{{ option.label }}</option>
-                }
-              </select>
-            </label>
-          </ngx-control-wrapper>
-        </div>
-
-        <!-- Gender Other (Conditional) -->
-        @if (formValue().gender === 'other') {
-          <ngx-control-wrapper>
-            <label
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Please Specify *
-              <input
-                type="text"
-                name="genderOther"
-                ngModel
-                placeholder="Please specify your gender"
-                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-            </label>
-          </ngx-control-wrapper>
-        }
-      </div>
-
-      <!-- Address Section -->
-      <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-600">
-        <h4 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
-          Address
-        </h4>
-
-        <!-- Street Address -->
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <!-- First Name -->
         <ngx-control-wrapper>
           <label
             class="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Street Address *
+            First Name *
             <input
               type="text"
-              name="address.street"
+              name="firstName"
               ngModel
-              placeholder="Enter your street address"
+              placeholder="Enter your first name"
               class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             />
           </label>
         </ngx-control-wrapper>
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <!-- City -->
-          <ngx-control-wrapper>
-            <label
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              City *
-              <input
-                type="text"
-                name="address.city"
-                ngModel
-                placeholder="City"
-                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-            </label>
-          </ngx-control-wrapper>
-
-          <!-- State -->
-          <ngx-control-wrapper>
-            <label
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              State *
-              <input
-                type="text"
-                name="address.state"
-                ngModel
-                placeholder="State"
-                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-            </label>
-          </ngx-control-wrapper>
-
-          <!-- ZIP Code -->
-          <ngx-control-wrapper>
-            <label
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              ZIP Code *
-              <input
-                type="text"
-                name="address.zipCode"
-                ngModel
-                placeholder="ZIP Code"
-                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-            </label>
-          </ngx-control-wrapper>
-        </div>
-
-        <!-- Country -->
+        <!-- Last Name -->
         <ngx-control-wrapper>
           <label
             class="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Country *
+            Last Name *
+            <input
+              type="text"
+              name="lastName"
+              ngModel
+              placeholder="Enter your last name"
+              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            />
+          </label>
+        </ngx-control-wrapper>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <!-- Email -->
+        <ngx-control-wrapper>
+          <label
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Email Address *
+            <input
+              type="email"
+              name="email"
+              ngModel
+              autocomplete="email"
+              placeholder="Enter your email"
+              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            />
+          </label>
+        </ngx-control-wrapper>
+
+        <!-- Phone -->
+        <ngx-control-wrapper>
+          <label
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Phone Number *
+            <input
+              type="tel"
+              name="phone"
+              ngModel
+              autocomplete="tel"
+              placeholder="Enter your phone number"
+              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            />
+          </label>
+        </ngx-control-wrapper>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <!-- Date of Birth -->
+        <ngx-control-wrapper>
+          <label
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Date of Birth *
+            <input
+              type="date"
+              name="dateOfBirth"
+              ngModel
+              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            />
+          </label>
+        </ngx-control-wrapper>
+
+        <!-- Gender -->
+        <ngx-control-wrapper>
+          <label
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Gender *
             <select
-              name="address.country"
+              name="gender"
               ngModel
               class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             >
-              @for (country of countries; track country.value) {
-                <option [value]="country.value">{{ country.label }}</option>
+              @for (option of genderOptions; track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
               }
             </select>
           </label>
         </ngx-control-wrapper>
       </div>
 
-      <!-- Bio and Website Section -->
-      <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-600">
-        <h4 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
-          About You
-        </h4>
-
-        <!-- Bio -->
+      <!-- Gender Other (Conditional) -->
+      @if (formValue().gender === 'other') {
         <ngx-control-wrapper>
           <label
             class="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Bio *
-            <textarea
-              name="bio"
+            Please Specify *
+            <input
+              type="text"
+              name="genderOther"
               ngModel
-              rows="4"
-              placeholder="Tell us about yourself (minimum 10 characters)"
+              placeholder="Please specify your gender"
               class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            ></textarea>
+            />
           </label>
-          <div class="mt-1 text-xs text-gray-500">
-            @if (formValue().bio) {
-              {{ formValue().bio.length }}/500 characters
-            } @else {
-              0/500 characters
-            }
-          </div>
+        </ngx-control-wrapper>
+      }
+    </div>
+
+    <!-- Address Section -->
+    <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-600">
+      <h4 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+        Address
+      </h4>
+
+      <!-- Street Address -->
+      <ngx-control-wrapper>
+        <label
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Street Address *
+          <input
+            type="text"
+            name="address.street"
+            ngModel
+            placeholder="Enter your street address"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+          />
+        </label>
+      </ngx-control-wrapper>
+
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <!-- City -->
+        <ngx-control-wrapper>
+          <label
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            City *
+            <input
+              type="text"
+              name="address.city"
+              ngModel
+              placeholder="City"
+              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            />
+          </label>
         </ngx-control-wrapper>
 
-        <!-- Website -->
+        <!-- State -->
         <ngx-control-wrapper>
           <label
             class="block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Website (Optional)
+            State *
             <input
-              type="url"
-              name="website"
+              type="text"
+              name="address.state"
               ngModel
-              placeholder="https://your-website.com"
+              placeholder="State"
+              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            />
+          </label>
+        </ngx-control-wrapper>
+
+        <!-- ZIP Code -->
+        <ngx-control-wrapper>
+          <label
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            ZIP Code *
+            <input
+              type="text"
+              name="address.zipCode"
+              ngModel
+              placeholder="ZIP Code"
               class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             />
           </label>
         </ngx-control-wrapper>
       </div>
 
-      <!-- Preferences Section -->
-      <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-600">
-        <h4 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
-          Preferences
-        </h4>
+      <!-- Country -->
+      <ngx-control-wrapper>
+        <label
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Country *
+          <select
+            name="address.country"
+            ngModel
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+          >
+            @for (country of countries; track country.value) {
+              <option [value]="country.value">{{ country.label }}</option>
+            }
+          </select>
+        </label>
+      </ngx-control-wrapper>
+    </div>
 
-        <!-- Newsletter -->
+    <!-- Bio and Website Section -->
+    <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-600">
+      <h4 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+        About You
+      </h4>
+
+      <!-- Bio -->
+      <ngx-control-wrapper>
+        <label
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Bio *
+          <textarea
+            name="bio"
+            ngModel
+            rows="4"
+            placeholder="Tell us about yourself (minimum 10 characters)"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+          ></textarea>
+        </label>
+        <div class="mt-1 text-xs text-gray-500">
+          @if (formValue().bio) {
+            {{ formValue().bio.length }}/500 characters
+          } @else {
+            0/500 characters
+          }
+        </div>
+      </ngx-control-wrapper>
+
+      <!-- Website -->
+      <ngx-control-wrapper>
+        <label
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Website (Optional)
+          <input
+            type="url"
+            name="website"
+            ngModel
+            placeholder="https://your-website.com"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+          />
+        </label>
+      </ngx-control-wrapper>
+    </div>
+
+    <!-- Preferences Section -->
+    <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-600">
+      <h4 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+        Preferences
+      </h4>
+
+      <!-- Newsletter -->
+      <ngx-control-wrapper>
+        <label class="flex items-center">
+          <input
+            type="checkbox"
+            name="newsletter"
+            ngModel
+            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+          />
+          <span class="ms-2 text-sm text-gray-700 dark:text-gray-300">
+            Subscribe to our newsletter
+          </span>
+        </label>
+      </ngx-control-wrapper>
+
+      <!-- Notifications -->
+      <div class="mt-4">
+        <span
+          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Notification Preferences
+        </span>
+
         <ngx-control-wrapper>
-          <label class="flex items-center">
+          <label class="mb-2 flex items-center">
             <input
               type="checkbox"
-              name="newsletter"
+              name="notifications.email"
               ngModel
               class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
             />
             <span class="ms-2 text-sm text-gray-700 dark:text-gray-300">
-              Subscribe to our newsletter
+              Email notifications
             </span>
           </label>
         </ngx-control-wrapper>
 
-        <!-- Notifications -->
-        <div class="mt-4">
-          <span
-            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Notification Preferences
-          </span>
-
-          <ngx-control-wrapper>
-            <label class="mb-2 flex items-center">
-              <input
-                type="checkbox"
-                name="notifications.email"
-                ngModel
-                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
-              />
-              <span class="ms-2 text-sm text-gray-700 dark:text-gray-300">
-                Email notifications
-              </span>
-            </label>
-          </ngx-control-wrapper>
-
-          <ngx-control-wrapper>
-            <label class="mb-2 flex items-center">
-              <input
-                type="checkbox"
-                name="notifications.sms"
-                ngModel
-                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
-              />
-              <span class="ms-2 text-sm text-gray-700 dark:text-gray-300">
-                SMS notifications
-              </span>
-            </label>
-          </ngx-control-wrapper>
-
-          <ngx-control-wrapper>
-            <label class="flex items-center">
-              <input
-                type="checkbox"
-                name="notifications.push"
-                ngModel
-                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
-              />
-              <span class="ms-2 text-sm text-gray-700 dark:text-gray-300">
-                Push notifications
-              </span>
-            </label>
-          </ngx-control-wrapper>
-        </div>
-      </div>
-
-      <!-- Profile Picture Section -->
-      <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-600">
-        <h4 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
-          Profile Picture
-        </h4>
+        <ngx-control-wrapper>
+          <label class="mb-2 flex items-center">
+            <input
+              type="checkbox"
+              name="notifications.sms"
+              ngModel
+              class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+            />
+            <span class="ms-2 text-sm text-gray-700 dark:text-gray-300">
+              SMS notifications
+            </span>
+          </label>
+        </ngx-control-wrapper>
 
         <ngx-control-wrapper>
-          <label
-            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Choose Profile Picture (Optional)
+          <label class="flex items-center">
             <input
-              type="file"
-              accept="image/*"
-              (change)="onFileSelected($event)"
-              class="mt-1 block w-full text-sm text-gray-500 file:me-4 file:rounded-md file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-100 dark:text-gray-400 dark:file:bg-blue-900 dark:file:text-blue-300"
+              type="checkbox"
+              name="notifications.push"
+              ngModel
+              class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
             />
+            <span class="ms-2 text-sm text-gray-700 dark:text-gray-300">
+              Push notifications
+            </span>
           </label>
-          @if (formValue().profilePicture) {
-            <div class="mt-2 text-xs text-green-600 dark:text-green-400">
-              Selected: {{ formValue().profilePicture?.name }}
-            </div>
-          }
         </ngx-control-wrapper>
       </div>
+    </div>
 
-      <!-- Submit Button -->
-      <div class="pt-4">
-        <button
-          type="submit"
-          [disabled]="!vestForm.isValid()"
-          class="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-800"
+    <!-- Profile Picture Section -->
+    <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-600">
+      <h4 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+        Profile Picture
+      </h4>
+
+      <ngx-control-wrapper>
+        <label
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
-          Save Profile
-        </button>
-      </div>
+          Choose Profile Picture (Optional)
+          <input
+            type="file"
+            accept="image/*"
+            (change)="onFileSelected($event)"
+            class="mt-1 block w-full text-sm text-gray-500 file:me-4 file:rounded-md file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-100 dark:text-gray-400 dark:file:bg-blue-900 dark:file:text-blue-300"
+          />
+        </label>
+        @if (formValue().profilePicture) {
+          <div class="mt-2 text-xs text-green-600 dark:text-green-400">
+            Selected: {{ formValue().profilePicture?.name }}
+          </div>
+        }
+      </ngx-control-wrapper>
+    </div>
 
-      <!-- Form State Debug (Development Only) -->
-      <div class="mt-6 rounded-md bg-gray-50 p-4 dark:bg-gray-900">
-        <h4 class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-          Form State
-        </h4>
-        <div class="text-xs">
-          <div>Valid: {{ vestForm.isValid() }}</div>
-          <div>Errors: {{ vestForm.errors | json }}</div>
-        </div>
+    <!-- Submit Button -->
+    <div class="pt-4">
+      <button
+        type="submit"
+        [disabled]="!vestForm.isValid()"
+        class="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-800"
+      >
+        Save Profile
+      </button>
+    </div>
+
+    <!-- Form State Debug (Development Only) -->
+    <div class="mt-6 rounded-md bg-gray-50 p-4 dark:bg-gray-900">
+      <h4 class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+        Form State
+      </h4>
+      <div class="text-xs">
+        <div>Valid: {{ vestForm.isValid() }}</div>
+        <div>Errors: {{ vestForm.errors | json }}</div>
       </div>
-    </form>
-  </section>
-</div>
+    </div>
+  </form>
+</section>
