@@ -2,6 +2,7 @@ import { JsonPipe } from '@angular/common';
 import { Component, signal } from '@angular/core';
 import { ngxVestForms } from 'ngx-vest-forms';
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
+import { NgxFormState } from 'ngx-vest-forms/core';
 import { createProfileValidationSuite } from './profile-form.validations';
 
 type Address = {
@@ -105,8 +106,13 @@ export class ProfileFormComponent {
   /**
    * Called on form submit.
    */
-  protected onSubmit(): void {
+  protected save(formState: NgxFormState<ProfileForm>): void {
+    if (!formState.valid) {
+      alert('Please fix validation errors before saving.');
+      return;
+    }
     const formData = this.formValue();
+
     alert('Profile saved successfully!');
     console.log('Profile data:', formData);
   }

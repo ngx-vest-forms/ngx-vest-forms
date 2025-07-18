@@ -8,7 +8,7 @@
     ngxVestForm
     [vestSuite]="suite"
     [(formValue)]="formValue"
-    (ngSubmit)="onSubmit()"
+    (ngSubmit)="save(vestForm.formState())"
     #vestForm="ngxVestForm"
     class="simple-form"
   >
