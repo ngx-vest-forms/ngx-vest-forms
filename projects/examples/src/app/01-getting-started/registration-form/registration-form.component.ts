@@ -1,4 +1,3 @@
-import { JsonPipe } from '@angular/common';
 import { Component, signal } from '@angular/core';
 import { ngxVestForms } from 'ngx-vest-forms';
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
@@ -13,7 +12,7 @@ type RegistrationForm = {
 
 @Component({
   selector: 'ngx-registration-form',
-  imports: [ngxVestForms, NgxControlWrapper, JsonPipe],
+  imports: [ngxVestForms, NgxControlWrapper],
   templateUrl: './registration-form.component.html',
   styleUrl: './registration-form.component.scss',
 })

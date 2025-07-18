@@ -1,5 +1,9 @@
-<section>
-  <ul class="text-md ml-4 list-disc">
+<section class="form-section">
+  <div class="form-section-description">
+    This complex purchase form demonstrates advanced form validation patterns
+    and dynamic behavior:
+  </div>
+  <ul class="info-box-list">
     <li>Show validation errors on blur</li>
     <li>Show validation errors on submit</li>
     <li>When first name is <strong>Brecht</strong>: Set gender to male</li>
@@ -43,15 +47,13 @@
       to 30. It shows how we can do validations on the root
     </li>
   </ul>
-  <button class="mt-6" (click)="fetchData()">Fetch data</button>
-  <br />
+  <button class="form-submit" (click)="fetchData()">Fetch data</button>
 </section>
-<section>
-  <h3>The value of the form</h3>
-  <pre id="json-data">
-      {{ vm.formValue() | json }}
-    </pre
-  >
+<section class="form-section">
+  <h3 class="form-section-title">The value of the form</h3>
+  <pre id="json-data" class="json-display">
+    {{ vm.formValue() | json }}
+  </pre>
 </section>
 
 @if (vm.errors[rootFormKey]) {
@@ -75,7 +77,7 @@
 -->
 
 <form
-  class="mt-8"
+  class="form-container"
   ngxVestForm
   #vestForm="ngxVestForm"
   (ngSubmit)="onSubmit()"
@@ -87,109 +89,119 @@
 >
   <fieldset [disabled]="vm.loading">
     <!-- Debug section for form state -->
-    <div class="mb-4 border border-blue-300 bg-blue-50 p-2">
+    <div class="debug-box">
       <div>
-        <span class="mr-2 font-semibold">Form Valid:</span>
+        <span class="font-semibold">Form Valid:</span>
         {{ vestForm.formState().valid }}
       </div>
       <div>
-        <span class="mr-2 font-semibold">Form Pending: </span>
+        <span class="font-semibold">Form Pending: </span>
         {{ vestForm.formState().pending }}
       </div>
       <div>
-        <span class="mr-2 font-semibold">Form Dirty: </span>
+        <span class="font-semibold">Form Dirty: </span>
         {{ vestForm.formState().dirty }}
       </div>
       <div>
-        <span class="mr-2 font-semibold">Form Status: </span>
+        <span class="font-semibold">Form Status: </span>
         {{ vestForm.formState().status }}
       </div>
     </div>
 
     @if (vestForm.formState().dirty && !vestForm.formState().valid) {
-      <div class="mb-4 rounded border border-red-300 bg-red-50 p-3">
-        <h4 class="font-semibold text-red-700">
+      <div class="error-box">
+        <h4 class="form-section-title">
           Please fix the form errors before submitting
         </h4>
       </div>
     }
 
-    <ngx-control-wrapper class="sm:col-span-2">
-      <label for="userId">User id</label>
-      <input
-        id="userId"
-        placeholder="Type user id"
-        type="text"
-        [validationOptions]="{ debounceTime: 500 }"
-        [ngModel]="vm.formValue().userId"
-        name="userId"
-      />
-    </ngx-control-wrapper>
-    <ngx-control-wrapper class="w-full" #firstNameWrapper>
-      <label for="firstName">First name</label>
-      <input
-        id="firstName"
-        placeholder="Type your first name"
-        type="text"
-        [ngModel]="vm.formValue().firstName"
-        name="firstName"
-        #firstNameControl="ngModel"
-      />
-    </ngx-control-wrapper>
+    <section class="form-section">
+      <h2 class="form-section-title">Personal Information</h2>
 
-    <!-- Debug for firstName control -->
-    <div class="mt-1 bg-gray-100 p-1 text-xs">
-      <div>
-        <span class="font-bold">Control state:</span> Valid:
-        {{ firstNameControl.valid }}, Touched: {{ firstNameControl.touched }},
-        Dirty: {{ firstNameControl.dirty }}
+      <ngx-control-wrapper class="form-group">
+        <label for="userId">User id</label>
+        <input
+          id="userId"
+          placeholder="Type user id"
+          type="text"
+          [validationOptions]="{ debounceTime: 500 }"
+          [ngModel]="vm.formValue().userId"
+          name="userId"
+        />
+      </ngx-control-wrapper>
+
+      <ngx-control-wrapper class="form-group" #firstNameWrapper>
+        <label for="firstName">First name</label>
+        <input
+          id="firstName"
+          placeholder="Type your first name"
+          type="text"
+          [ngModel]="vm.formValue().firstName"
+          name="firstName"
+          #firstNameControl="ngModel"
+        />
+      </ngx-control-wrapper>
+
+      <!-- Debug for firstName control -->
+      <div class="debug-info">
+        <div>
+          <span class="font-semibold">Control state:</span> Valid:
+          {{ firstNameControl.valid }}, Touched: {{ firstNameControl.touched }},
+          Dirty: {{ firstNameControl.dirty }}
+        </div>
+        <div>
+          <span class="font-semibold">Control errors:</span>
+          {{ firstNameControl.errors | json }}
+        </div>
       </div>
-      <div>
-        <span class="font-bold">Control errors:</span>
-        {{ firstNameControl.errors | json }}
-      </div>
-    </div>
-    <ngx-control-wrapper class="w-full">
-      <label for="lastName">Last name</label>
-      <input
-        id="lastName"
-        placeholder="Type your last name"
-        type="text"
-        [ngModel]="vm.formValue().lastName"
-        name="lastName"
-      />
-    </ngx-control-wrapper>
-    <ngx-control-wrapper class="w-full">
-      <label for="age">Age</label>
-      <input
-        id="age"
-        placeholder="Choose your age"
-        type="number"
-        [ngModel]="vm.formValue().age"
-        name="age"
-      />
-    </ngx-control-wrapper>
-    <ngx-control-wrapper class="w-full">
-      <label for="emergencyContact">Emergency contact</label>
-      <input
-        id="emergencyContact"
-        placeholder="Type your emergency contact"
-        type="text"
-        [disabled]="vm.emergencyContactDisabled"
-        [ngModel]="vm.formValue().emergencyContact"
-        name="emergencyContact"
-      />
-    </ngx-control-wrapper>
-    <ngx-control-wrapper class="sm:col-span-2" ngModelGroup="phoneNumbers">
-      <ngx-phone-numbers [values]="vm.formValue().phoneNumbers.values" />
-    </ngx-control-wrapper>
-    <div
-      class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800 sm:col-span-2"
-    >
-      <ngx-control-wrapper>
+
+      <ngx-control-wrapper class="form-group">
+        <label for="lastName">Last name</label>
+        <input
+          id="lastName"
+          placeholder="Type your last name"
+          type="text"
+          [ngModel]="vm.formValue().lastName"
+          name="lastName"
+        />
+      </ngx-control-wrapper>
+
+      <ngx-control-wrapper class="form-group">
+        <label for="age">Age</label>
+        <input
+          id="age"
+          placeholder="Choose your age"
+          type="number"
+          [ngModel]="vm.formValue().age"
+          name="age"
+        />
+      </ngx-control-wrapper>
+
+      <ngx-control-wrapper class="form-group">
+        <label for="emergencyContact">Emergency contact</label>
+        <input
+          id="emergencyContact"
+          placeholder="Type your emergency contact"
+          type="text"
+          [disabled]="vm.emergencyContactDisabled"
+          [ngModel]="vm.formValue().emergencyContact"
+          name="emergencyContact"
+        />
+      </ngx-control-wrapper>
+    </section>
+
+    <section class="form-section">
+      <ngx-control-wrapper class="form-group" ngModelGroup="phoneNumbers">
+        <ngx-phone-numbers [values]="vm.formValue().phoneNumbers.values" />
+      </ngx-control-wrapper>
+    </section>
+    <section class="form-section">
+      <h2 class="form-section-title">Gender</h2>
+      <ngx-control-wrapper class="form-group">
         <span>Gender</span>
-        <div class="flex">
-          <div class="radio-button mr-4">
+        <div class="radio-group">
+          <div class="radio-button">
             <input
               id="gender-male"
               type="radio"
@@ -199,7 +211,7 @@
             />
             <label for="gender-male">Male</label>
           </div>
-          <div class="radio-button mr-4">
+          <div class="radio-button">
             <input
               id="gender-female"
               type="radio"
@@ -209,7 +221,7 @@
             />
             <label for="gender-female">Female</label>
           </div>
-          <div class="radio-button mr-4">
+          <div class="radio-button">
             <input
               id="gender-other"
               type="radio"
@@ -222,7 +234,7 @@
         </div>
       </ngx-control-wrapper>
       @if (vm.showGenderOther) {
-        <ngx-control-wrapper class="sm:col-span-2">
+        <ngx-control-wrapper class="form-group">
           <label for="genderOther">Specify gender</label>
           <input
             id="genderOther"
@@ -232,245 +244,222 @@
           />
         </ngx-control-wrapper>
       }
-    </div>
+    </section>
 
-    <ngx-control-wrapper class="sm:col-span-2" ngModelGroup="passwords">
-      <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
-        <ngx-control-wrapper class="w-full">
-          <label for="password">Password</label>
-          <input
-            id="password"
-            placeholder="Type password"
-            type="password"
-            [ngModel]="vm.formValue().passwords.password"
-            name="password"
-            #passwordControl="ngModel"
-          />
-          <!-- Debug for password control -->
-          <div class="mt-1 bg-gray-100 p-1 text-xs">
-            <div>Valid: {{ passwordControl.valid }}</div>
-            <div>Touched: {{ passwordControl.touched }}</div>
-            <div>Dirty: {{ passwordControl.dirty }}</div>
-          </div>
-        </ngx-control-wrapper>
-        <ngx-control-wrapper class="w-full">
-          <label for="confirmPassword">Confirm</label>
-          <input
-            id="confirmPassword"
-            placeholder="Confirm password"
-            type="password"
-            [ngModel]="vm.formValue().passwords.confirmPassword"
-            name="confirmPassword"
-            #confirmPasswordControl="ngModel"
-          />
-          <!-- Debug for confirm password control -->
-          <div class="mt-1 bg-gray-100 p-1 text-xs">
-            <div>Valid: {{ confirmPasswordControl.valid }}</div>
-            <div>Touched: {{ confirmPasswordControl.touched }}</div>
-            <div>Dirty: {{ confirmPasswordControl.dirty }}</div>
-          </div>
-        </ngx-control-wrapper>
-      </div>
-    </ngx-control-wrapper>
-    <ngx-control-wrapper class="sm:col-span-2">
-      <label for="productId">Product</label>
-      <select
-        id="productId"
-        name="productId"
-        [ngModel]="vm.formValue().productId"
-      >
-        @for (product of products(); track product.id) {
-          <option [value]="product.id">{{ product.name }}</option>
-        }
-      </select>
-    </ngx-control-wrapper>
-    <ngx-control-wrapper class="sm:col-span-2" ngModelGroup="addresses">
-      <ngx-control-wrapper ngModelGroup="billingAddress">
-        <h3 class="text-2xl">Billing address</h3>
-        <ngx-address
-          [address]="vm.formValue().addresses.billingAddress"
-        ></ngx-address>
+    <section class="form-section">
+      <h2 class="form-section-title">Password</h2>
+      <ngx-control-wrapper class="form-group" ngModelGroup="passwords">
+        <div class="form-row">
+          <ngx-control-wrapper class="form-group">
+            <label for="password">Password</label>
+            <input
+              id="password"
+              placeholder="Type password"
+              type="password"
+              [ngModel]="vm.formValue().passwords.password"
+              name="password"
+              #passwordControl="ngModel"
+            />
+            <!-- Debug for password control -->
+            <div class="debug-info">
+              <div>Valid: {{ passwordControl.valid }}</div>
+              <div>Touched: {{ passwordControl.touched }}</div>
+              <div>Dirty: {{ passwordControl.dirty }}</div>
+            </div>
+          </ngx-control-wrapper>
+
+          <ngx-control-wrapper class="form-group">
+            <label for="confirmPassword">Confirm</label>
+            <input
+              id="confirmPassword"
+              placeholder="Confirm password"
+              type="password"
+              [ngModel]="vm.formValue().passwords.confirmPassword"
+              name="confirmPassword"
+              #confirmPasswordControl="ngModel"
+            />
+            <!-- Debug for confirm password control -->
+            <div class="debug-info">
+              <div>Valid: {{ confirmPasswordControl.valid }}</div>
+              <div>Touched: {{ confirmPasswordControl.touched }}</div>
+              <div>Dirty: {{ confirmPasswordControl.dirty }}</div>
+            </div>
+          </ngx-control-wrapper>
+        </div>
       </ngx-control-wrapper>
-      <ngx-control-wrapper>
-        <label for="shippingAddressDifferentFromBillingAddress">
-          <input
-            id="shippingAddressDifferentFromBillingAddress"
-            type="checkbox"
-            [ngModel]="
-              vm.formValue().addresses
-                .shippingAddressDifferentFromBillingAddress
-            "
-            name="shippingAddressDifferentFromBillingAddress"
-          />
-          <span>Shipping address is different from billing address</span>
-        </label>
+    </section>
+
+    <section class="form-section">
+      <h2 class="form-section-title">Product Selection</h2>
+      <ngx-control-wrapper class="form-group">
+        <label for="productId">Product</label>
+        <select
+          id="productId"
+          name="productId"
+          [ngModel]="vm.formValue().productId"
+        >
+          @for (product of products(); track product.id) {
+            <option [value]="product.id">{{ product.name }}</option>
+          }
+        </select>
       </ngx-control-wrapper>
-      @if (vm.showShippingAddress) {
-        <ngx-control-wrapper ngModelGroup="shippingAddress">
-          <h3 class="text-2xl">Shipping Address</h3>
-          <ngx-address [address]="vm.shippingAddress"></ngx-address>
+    </section>
+    <section class="form-section">
+      <h2 class="form-section-title">Addresses</h2>
+      <ngx-control-wrapper class="form-group" ngModelGroup="addresses">
+        <ngx-control-wrapper ngModelGroup="billingAddress">
+          <h3 class="form-subsection-title">Billing address</h3>
+          <ngx-address
+            [address]="vm.formValue().addresses.billingAddress"
+          ></ngx-address>
         </ngx-control-wrapper>
-      }
-    </ngx-control-wrapper>
-    <div class="flex gap-4">
-      <button type="button" (click)="resetForm()">Reset</button>
-      <button type="submit" [disabled]="!vestForm.formState().valid">
-        Submit
-      </button>
-    </div>
 
-    <!-- Additional debug section for control wrappers -->
-    <div class="mt-4 border border-orange-300 bg-orange-50 p-4">
-      <h3 class="font-bold">Debug - Control Wrapper Info:</h3>
-      <p class="text-sm">
-        Default error display mode: touchOrSubmit (show errors when control is
-        touched OR form is submitted)
-      </p>
-      <p class="text-sm">
-        If controls are marked as touched but errors aren't showing, check the
-        error structure in vestSuite.
-      </p>
+        <ngx-control-wrapper class="form-group">
+          <label for="shippingAddressDifferentFromBillingAddress">
+            <input
+              id="shippingAddressDifferentFromBillingAddress"
+              type="checkbox"
+              [ngModel]="
+                vm.formValue().addresses
+                  .shippingAddressDifferentFromBillingAddress
+              "
+              name="shippingAddressDifferentFromBillingAddress"
+            />
+            <span>Shipping address is different from billing address</span>
+          </label>
+        </ngx-control-wrapper>
 
-      <!-- Direct Angular validation check -->
-      <div class="mt-2">
-        <h4 class="font-semibold">Manual Error Display (Angular):</h4>
-        @if (firstNameControl.touched && firstNameControl.errors?.['errors']) {
-          <div class="text-sm text-red-600">
-            @for (error of firstNameControl.errors?.['errors']; track error) {
-              <div>{{ error }}</div>
-            }
-          </div>
+        @if (vm.showShippingAddress) {
+          <ngx-control-wrapper ngModelGroup="shippingAddress">
+            <h3 class="form-subsection-title">Shipping Address</h3>
+            <ngx-address [address]="vm.shippingAddress"></ngx-address>
+          </ngx-control-wrapper>
         }
+      </ngx-control-wrapper>
+    </section>
+
+    <section class="form-section">
+      <div class="form-actions">
+        <button type="button" (click)="resetForm()">Reset</button>
+        <button type="submit" [disabled]="!vestForm.formState().valid">
+          Submit
+        </button>
       </div>
-
-      <!-- Form State Summary -->
-      <div class="mt-2">
-        <h4 class="font-semibold">Form State Summary:</h4>
-        <div class="grid grid-cols-2 gap-2 text-sm">
-          <div>Valid: {{ vestForm.formState().valid }}</div>
-          <div>Invalid: {{ vestForm.formState().invalid }}</div>
-          <div>Dirty: {{ vestForm.formState().dirty }}</div>
-          <div>Pending: {{ vestForm.formState().pending }}</div>
-          <div>Status: {{ vestForm.formState().status }}</div>
-          <div>Idle: {{ vestForm.formState().idle }}</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="mt-4 border border-blue-500 bg-blue-50 p-4">
-      <h3 class="font-bold">Form State API Demo:</h3>
-      <div class="mt-2 grid grid-cols-2 gap-2 text-sm">
-        <div>
-          <span class="font-medium">Valid:</span>
-          {{ vestForm.formState().valid }}
-        </div>
-        <div>
-          <span class="font-medium">Invalid:</span>
-          {{ vestForm.formState().invalid }}
-        </div>
-        <div>
-          <span class="font-medium">Dirty:</span>
-          {{ vestForm.formState().dirty }}
-        </div>
-        <div>
-          <span class="font-medium">Pending:</span>
-          {{ vestForm.formState().pending }}
-        </div>
-        <div>
-          <span class="font-medium">Status:</span>
-          {{ vestForm.formState().status }}
-        </div>
-        <div>
-          <span class="font-medium">Idle:</span> {{ vestForm.formState().idle }}
-        </div>
-      </div>
-      <p class="mt-2 text-xs text-blue-700">
-        The formState() API provides a unified way to access all form state
-        values.
-      </p>
-    </div>
-
-    <!-- Additional debug section for control wrappers -->
-    <div class="mt-4 border border-orange-300 bg-orange-50 p-4">
-      <h3 class="font-bold">Debug - Control Wrapper Info:</h3>
-      <p class="text-sm">
-        Default error display mode: touchOrSubmit (show errors when control is
-        touched OR form is submitted)
-      </p>
-      <p class="text-sm">
-        If controls are marked as touched but errors aren't showing, check the
-        error structure in vestSuite.
-      </p>
-
-      <!-- Direct Angular validation check -->
-      <div class="mt-2">
-        <h4 class="font-semibold">Manual Error Display (Angular):</h4>
-        @if (firstNameControl.touched && firstNameControl.errors?.['errors']) {
-          <div class="text-sm text-red-600">
-            @for (error of firstNameControl.errors?.['errors']; track error) {
-              <div>{{ error }}</div>
-            }
-          </div>
-        }
-      </div>
-
-      <!-- Form State Summary -->
-      <div class="mt-2">
-        <h4 class="font-semibold">Form State Summary:</h4>
-        <div class="grid grid-cols-2 gap-2 text-sm">
-          <div>Valid: {{ vestForm.formState().valid }}</div>
-          <div>Invalid: {{ vestForm.formState().invalid }}</div>
-          <div>Dirty: {{ vestForm.formState().dirty }}</div>
-          <div>Pending: {{ vestForm.formState().pending }}</div>
-          <div>Status: {{ vestForm.formState().status }}</div>
-          <div>Idle: {{ vestForm.formState().idle }}</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Example: errorDisplayMode usage (explicitly set to on-submit) -->
-    <div ngxControlWrapper errorDisplayMode="on-submit">
-      <label for="userId" class="mb-1 block font-medium"
-        >User ID (on-submit)</label
-      >
-      <input
-        id="userId"
-        name="userId"
-        type="text"
-        autocomplete="off"
-        class="w-full rounded border px-3 py-2"
-        ngModel
-        required
-      />
-      <!--
-        With errorDisplayMode="on-submit", errors for this field will only appear after the form is submitted.
-      -->
-    </div>
-    <!-- Example: errorDisplayMode with updateOn: 'submit' (errors only show after submit) -->
-    <div ngxControlWrapper errorDisplayMode="on-blur-or-submit">
-      <label for="email3" class="mb-1 block font-medium"
-        >Email (updateOn: submit)</label
-      >
-      <input
-        id="email3"
-        name="email3"
-        type="email"
-        autocomplete="off"
-        class="w-full rounded border px-3 py-2"
-        ngModel
-        required
-        [ngModelOptions]="{ updateOn: 'submit' }"
-      />
-      <!--
-        With updateOn: 'submit', errors for this field will only appear after the form is submitted,
-        regardless of the errorDisplayMode setting.
-      -->
-    </div>
+    </section>
   </fieldset>
 </form>
 
-<hr />
-<h3>The value of the form</h3>
-<pre id="json-data">
-  {{ vm.formValue() | json }}
-</pre>
+<section class="form-section">
+  <h2 class="form-section-title">Debug Information</h2>
+
+  <!-- Control Wrapper Info -->
+  <div class="debug-box">
+    <h3 class="font-semibold">Control Wrapper Info:</h3>
+    <p class="text-sm">
+      Default error display mode: touchOrSubmit (show errors when control is
+      touched OR form is submitted)
+    </p>
+    <p class="text-sm">
+      If controls are marked as touched but errors aren't showing, check the
+      error structure in vestSuite.
+    </p>
+
+    <!-- Direct Angular validation check -->
+    <div class="mt-2">
+      <h4 class="font-semibold">Manual Error Display (Angular):</h4>
+      @if (firstNameControl.touched && firstNameControl.errors?.['errors']) {
+        <div class="text-sm text-red-600">
+          @for (error of firstNameControl.errors?.['errors']; track error) {
+            <div>{{ error }}</div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Form State Summary -->
+    <div class="mt-2">
+      <h4 class="font-semibold">Form State Summary:</h4>
+      <div class="debug-grid">
+        <div>Valid: {{ vestForm.formState().valid }}</div>
+        <div>Invalid: {{ vestForm.formState().invalid }}</div>
+        <div>Dirty: {{ vestForm.formState().dirty }}</div>
+        <div>Pending: {{ vestForm.formState().pending }}</div>
+        <div>Status: {{ vestForm.formState().status }}</div>
+        <div>Idle: {{ vestForm.formState().idle }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <h3 class="font-semibold">Form State API Demo:</h3>
+    <div class="debug-grid">
+      <div>
+        <span class="font-medium">Valid:</span>
+        {{ vestForm.formState().valid }}
+      </div>
+      <div>
+        <span class="font-medium">Invalid:</span>
+        {{ vestForm.formState().invalid }}
+      </div>
+      <div>
+        <span class="font-medium">Dirty:</span>
+        {{ vestForm.formState().dirty }}
+      </div>
+      <div>
+        <span class="font-medium">Pending:</span>
+        {{ vestForm.formState().pending }}
+      </div>
+      <div>
+        <span class="font-medium">Status:</span>
+        {{ vestForm.formState().status }}
+      </div>
+      <div>
+        <span class="font-medium">Idle:</span> {{ vestForm.formState().idle }}
+      </div>
+    </div>
+    <p class="form-section-description">
+      The formState() API provides a unified way to access all form state
+      values.
+    </p>
+  </div>
+
+  <!-- Example: errorDisplayMode usage (explicitly set to on-submit) -->
+  <div ngxControlWrapper errorDisplayMode="on-submit" class="form-group">
+    <label for="userId" class="form-label">User ID (on-submit)</label>
+    <input
+      id="userId"
+      name="userId"
+      type="text"
+      autocomplete="off"
+      class="form-input"
+      ngModel
+      required
+    />
+    <!--
+      With errorDisplayMode="on-submit", errors for this field will only appear after the form is submitted.
+    -->
+  </div>
+
+  <!-- Example: errorDisplayMode with updateOn: 'submit' (errors only show after submit) -->
+  <div
+    ngxControlWrapper
+    errorDisplayMode="on-blur-or-submit"
+    class="form-group"
+  >
+    <label for="email3" class="form-label">Email (updateOn: submit)</label>
+    <input
+      id="email3"
+      name="email3"
+      type="email"
+      autocomplete="off"
+      class="form-input"
+      ngModel
+      required
+      [ngModelOptions]="{ updateOn: 'submit' }"
+    />
+    <!--
+      With updateOn: 'submit', errors for this field will only appear after the form is submitted,
+      regardless of the errorDisplayMode setting.
+    -->
+  </div>
+</section>

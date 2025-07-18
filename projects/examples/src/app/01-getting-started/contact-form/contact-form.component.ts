@@ -21,69 +21,72 @@ const contactFormSuite = staticSuite((data = {}) => {
 @Component({
   selector: 'ngx-contact-form',
   imports: [ngxVestForms, NgxControlWrapper],
+  styleUrls: ['./contact-form.component.scss'],
   template: `
+    <div class="info-box">
+      <h4 class="info-box-title">ℹ️ Why use simple <code>ngModel</code>?</h4>
+      <p class="info-box-text">
+        This form uses the simple <code>ngModel</code> syntax for all controls.
+        This approach provides automatic two-way binding between the form
+        controls and the model signal, with minimal boilerplate.
+        <code>ngx-vest-forms</code>
+        handles all value syncing, error display, and validation logic. Use
+        <code>[ngModel]</code> only if you need explicit control over the data
+        flow or are working with computed values.
+      </p>
+    </div>
+
     <form
       ngxVestForm
       [vestSuite]="suite"
       [(formValue)]="formValue"
       #vestForm="ngxVestForm"
       autocomplete="off"
-      class="space-y-6"
+      class="form"
     >
-      <ngx-control-wrapper
-        errorDisplayMode="on-blur-or-submit"
-        class="space-y-1"
-      >
-        <label
-          for="name"
-          class="block font-medium text-gray-700 dark:text-gray-200"
-          >Name</label
+      <section class="form-section">
+        <ngx-control-wrapper
+          errorDisplayMode="on-blur-or-submit"
+          class="form-group"
         >
-        <input
-          id="name"
-          name="name"
-          type="text"
-          autocomplete="off"
-          class="w-full rounded border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-white"
-          ngModel
-          required
-          aria-describedby="name-help"
-          aria-invalid="false"
-        />
-        <span id="name-help" class="text-xs text-gray-500"
-          >Enter your full name.</span
+          <label for="name" class="form-label">Name</label>
+          <input
+            id="name"
+            name="name"
+            type="text"
+            autocomplete="off"
+            class="form-input"
+            ngModel
+            required
+            aria-describedby="name-help"
+            aria-invalid="false"
+          />
+          <span id="name-help" class="form-help">Enter your full name.</span>
+        </ngx-control-wrapper>
+
+        <ngx-control-wrapper
+          errorDisplayMode="on-blur-or-submit"
+          class="form-group"
         >
-      </ngx-control-wrapper>
-      <ngx-control-wrapper
-        errorDisplayMode="on-blur-or-submit"
-        class="space-y-1"
-      >
-        <label
-          for="email"
-          class="block font-medium text-gray-700 dark:text-gray-200"
-          >Email</label
-        >
-        <input
-          id="email"
-          name="email"
-          type="email"
-          autocomplete="off"
-          class="w-full rounded border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-white"
-          ngModel
-          required
-          aria-describedby="email-help"
-          aria-invalid="false"
-        />
-        <span id="email-help" class="text-xs text-gray-500"
-          >Enter a valid email address.</span
-        >
-      </ngx-control-wrapper>
-      <button
-        type="submit"
-        class="mt-4 w-full rounded bg-blue-600 px-4 py-2 font-semibold text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        Submit
-      </button>
+          <label for="email" class="form-label">Email</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autocomplete="off"
+            class="form-input"
+            ngModel
+            required
+            aria-describedby="email-help"
+            aria-invalid="false"
+          />
+          <span id="email-help" class="form-help"
+            >Enter a valid email address.</span
+          >
+        </ngx-control-wrapper>
+
+        <button type="submit" class="form-submit">Submit</button>
+      </section>
     </form>
   `,
 })

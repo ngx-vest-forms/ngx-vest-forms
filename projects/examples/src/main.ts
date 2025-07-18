@@ -7,6 +7,7 @@ import {
 import { bootstrapApplication } from '@angular/platform-browser';
 import {
   provideRouter,
+  withComponentInputBinding,
   withEnabledBlockingInitialNavigation,
 } from '@angular/router';
 import { provideEnvironmentNgxMask } from 'ngx-mask';
@@ -19,6 +20,10 @@ bootstrapApplication(AppComponent, {
     importProvidersFrom(),
     provideHttpClient(),
     provideEnvironmentNgxMask({ validation: false }),
-    provideRouter(appRoutes, withEnabledBlockingInitialNavigation()),
+    provideRouter(
+      appRoutes,
+      withEnabledBlockingInitialNavigation(),
+      withComponentInputBinding(),
+    ),
   ],
 });

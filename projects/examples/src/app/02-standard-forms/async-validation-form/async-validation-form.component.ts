@@ -11,87 +11,82 @@ type AsyncValidationForm = {
 @Component({
   selector: 'ngx-async-validation-form',
   imports: [ngxVestForms, NgxControlWrapper],
+  styleUrls: ['./async-validation-form.component.scss'],
   template: `
-    <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">
-      Demonstrates server-side validation with debounced async checks for
-      username availability and email uniqueness.
-    </p>
+    <section class="form-section">
+      <div class="form-section-description">
+        Demonstrates server-side validation with debounced async checks for
+        username availability and email uniqueness.
+      </div>
 
-    <div class="mb-6 rounded border border-blue-300 bg-blue-50 p-4">
-      <h4 class="font-medium text-blue-800">🔄 Implementation Needed</h4>
-      <p class="mt-1 text-sm text-blue-700">
-        This example will demonstrate async validation features:
-      </p>
-      <ul class="ml-4 mt-2 list-disc text-sm text-blue-700">
-        <li>Debounced username availability checking</li>
-        <li>Email uniqueness validation against server</li>
-        <li>Website URL validation with actual HTTP checks</li>
-        <li>Loading states and error handling</li>
-        <li>Proper async validation patterns with Vest</li>
-      </ul>
-    </div>
+      <div class="info-box">
+        <h4 class="info-box-title">🔄 Implementation Needed</h4>
+        <p class="info-box-text">
+          This example will demonstrate async validation features:
+        </p>
+        <ul class="info-box-list">
+          <li>Debounced username availability checking</li>
+          <li>Email uniqueness validation against server</li>
+          <li>Website URL validation with actual HTTP checks</li>
+          <li>Loading states and error handling</li>
+          <li>Proper async validation patterns with Vest</li>
+        </ul>
+      </div>
+    </section>
 
     <form
       ngxVestForm
       [(formValue)]="formValue"
       (ngSubmit)="onSubmit()"
       #vestForm="ngxVestForm"
-      class="space-y-4"
+      class="form"
     >
-      <ngx-control-wrapper>
-        <label class="block text-sm font-medium">
-          Username *
+      <section class="form-section">
+        <ngx-control-wrapper class="form-group">
+          <label for="username" class="form-label"> Username * </label>
           <input
+            id="username"
             type="text"
             name="username"
             ngModel
             placeholder="Enter unique username"
-            class="mt-1 block w-full rounded border px-3 py-2"
+            class="form-input"
           />
-        </label>
-        <div class="mt-1 text-xs text-gray-500">
-          Will check availability on server
-        </div>
-      </ngx-control-wrapper>
+          <div class="form-help">Will check availability on server</div>
+        </ngx-control-wrapper>
 
-      <ngx-control-wrapper>
-        <label class="block text-sm font-medium">
-          Email *
+        <ngx-control-wrapper class="form-group">
+          <label for="email" class="form-label"> Email * </label>
           <input
+            id="email"
             type="email"
             name="email"
             ngModel
             placeholder="Enter unique email"
-            class="mt-1 block w-full rounded border px-3 py-2"
+            class="form-input"
           />
-        </label>
-        <div class="mt-1 text-xs text-gray-500">
-          Will verify email is not already registered
-        </div>
-      </ngx-control-wrapper>
+          <div class="form-help">
+            Will verify email is not already registered
+          </div>
+        </ngx-control-wrapper>
 
-      <ngx-control-wrapper>
-        <label class="block text-sm font-medium">
-          Website
+        <ngx-control-wrapper class="form-group">
+          <label for="website" class="form-label"> Website </label>
           <input
+            id="website"
             type="url"
             name="website"
             ngModel
             placeholder="https://your-website.com"
-            class="mt-1 block w-full rounded border px-3 py-2"
+            class="form-input"
           />
-        </label>
-        <div class="mt-1 text-xs text-gray-500">
-          Will check if URL is reachable
-        </div>
-      </ngx-control-wrapper>
+          <div class="form-help">Will check if URL is reachable</div>
+        </ngx-control-wrapper>
 
-      <button
-        type="submit"
-        class="w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-      >
-        Register (Async Validation)
-      </button>
+        <button type="submit" class="form-submit">
+          Register (Async Validation)
+        </button>
+      </section>
     </form>
   `,
 })

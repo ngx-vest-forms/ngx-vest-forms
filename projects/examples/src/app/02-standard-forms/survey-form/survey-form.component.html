@@ -1,5 +1,5 @@
 <section>
-  <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">
+  <p class="form-help">
     Complex survey with conditional validation, dynamic sections, rating scales,
     and business logic.
   </p>
@@ -10,7 +10,7 @@
     [(formValue)]="formValue"
     (ngSubmit)="onSubmit()"
     #vestForm="ngxVestForm"
-    class="space-y-6"
+    class="simple-form"
   >
     <!-- Basic Information -->
     <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-600">
@@ -19,41 +19,35 @@
       </h4>
 
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <ngx-control-wrapper>
-          <label
-            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
+        <ngx-control-wrapper class="form-group">
+          <label class="form-label">
             Name *
             <input
               type="text"
               name="name"
               ngModel
               placeholder="Enter your name"
-              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              class="form-input"
             />
           </label>
         </ngx-control-wrapper>
 
-        <ngx-control-wrapper>
-          <label
-            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
+        <ngx-control-wrapper class="form-group">
+          <label class="form-label">
             Email *
             <input
               type="email"
               name="email"
               ngModel
               placeholder="Enter your email"
-              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              class="form-input"
             />
           </label>
         </ngx-control-wrapper>
       </div>
 
-      <ngx-control-wrapper>
-        <label
-          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
+      <ngx-control-wrapper class="form-group">
+        <label class="form-label">
           Age *
           <input
             type="number"
@@ -62,7 +56,7 @@
             min="13"
             max="120"
             placeholder="Enter your age"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            class="form-input"
           />
         </label>
       </ngx-control-wrapper>
@@ -92,9 +86,7 @@
       @if (showProductQuestions()) {
         <div class="mt-4 space-y-4 border-l-4 border-blue-200 pl-4">
           <ngx-control-wrapper>
-            <label
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
+            <label class="form-label">
               Product Rating (1-10) *
               <input
                 type="range"
@@ -226,30 +218,22 @@
       @if (showComplaintSection()) {
         <div class="mt-4 space-y-4 border-l-4 border-red-200 pl-4">
           <ngx-control-wrapper>
-            <label
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
+            <label class="form-label">
               Please describe your complaint *
               <textarea
                 name="complaintDescription"
                 ngModel
                 rows="3"
                 placeholder="Describe your issue in detail"
-                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                class="form-textarea"
               ></textarea>
             </label>
           </ngx-control-wrapper>
 
           <ngx-control-wrapper>
-            <label
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
+            <label class="form-label">
               Urgency Level *
-              <select
-                name="complaintUrgency"
-                ngModel
-                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              >
+              <select name="complaintUrgency" ngModel class="form-select">
                 <option value="">Select urgency level</option>
                 @for (option of urgencyOptions; track option.value) {
                   <option [value]="option.value">{{ option.label }}</option>
@@ -268,15 +252,9 @@
       </h4>
 
       <ngx-control-wrapper>
-        <label
-          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
+        <label class="form-label">
           Preferred Contact Method *
-          <select
-            name="preferredContact"
-            ngModel
-            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-          >
+          <select name="preferredContact" ngModel class="form-select">
             @for (option of contactOptions; track option.value) {
               <option [value]="option.value">{{ option.label }}</option>
             }
@@ -287,16 +265,14 @@
       <!-- Conditional Phone Number -->
       @if (showPhoneNumber()) {
         <ngx-control-wrapper>
-          <label
-            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
+          <label class="form-label">
             Phone Number *
             <input
               type="tel"
               name="phoneNumber"
               ngModel
               placeholder="Enter your phone number"
-              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              class="form-input"
             />
           </label>
         </ngx-control-wrapper>
@@ -310,16 +286,14 @@
       </h4>
 
       <ngx-control-wrapper>
-        <label
-          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
+        <label class="form-label">
           Suggestions or Comments *
           <textarea
             name="suggestions"
             ngModel
             rows="4"
             placeholder="Please share any suggestions or additional feedback"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            class="form-textarea"
           ></textarea>
         </label>
       </ngx-control-wrapper>
@@ -341,12 +315,7 @@
 
     <!-- Submit Button -->
     <div class="pt-4">
-      <button
-        type="submit"
-        class="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
-      >
-        Submit Survey
-      </button>
+      <button type="submit" class="form-submit">Submit Survey</button>
     </div>
   </form>
 </section>

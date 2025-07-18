@@ -1,5 +1,18 @@
 <section>
-  <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">
+  <div class="info-box">
+    <h4 class="info-box-title">ℹ️ Why use simple <code>ngModel</code>?</h4>
+    <p class="info-box-text">
+      This form uses the simple <code>ngModel</code> syntax for all controls.
+      This approach provides automatic two-way binding between the form controls
+      and the model signal, with minimal boilerplate.
+      <code>ngx-vest-forms</code> handles all value syncing, error display, and
+      validation logic. Use <code>[ngModel]</code>
+      only if you need explicit control over the data flow or are working with
+      computed values.
+    </p>
+  </div>
+
+  <p class="form-help">
     Demonstrates password confirmation validation, terms checkbox, and
     cross-field validation patterns.
   </p>
@@ -10,11 +23,11 @@
     [(formValue)]="formValue"
     (ngSubmit)="onSubmit()"
     #vestForm="ngxVestForm"
-    class="space-y-6"
+    class="simple-form"
   >
     <!-- Email Field -->
-    <ngx-control-wrapper>
-      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+    <ngx-control-wrapper class="form-group">
+      <label class="form-label">
         Email Address
         <input
           type="email"
@@ -22,14 +35,14 @@
           ngModel
           autocomplete="email"
           placeholder="Enter your email"
-          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+          class="form-input"
         />
       </label>
     </ngx-control-wrapper>
 
     <!-- Password Field -->
-    <ngx-control-wrapper>
-      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+    <ngx-control-wrapper class="form-group">
+      <label class="form-label">
         Password
         <input
           type="password"
@@ -37,17 +50,17 @@
           ngModel
           autocomplete="new-password"
           placeholder="Enter your password"
-          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+          class="form-input"
         />
       </label>
-      <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+      <div class="form-help">
         Password must be at least 8 characters with uppercase letter and number
       </div>
     </ngx-control-wrapper>
 
     <!-- Confirm Password Field -->
-    <ngx-control-wrapper>
-      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+    <ngx-control-wrapper class="form-group">
+      <label class="form-label">
         Confirm Password
         <input
           type="password"
@@ -55,13 +68,13 @@
           ngModel
           autocomplete="new-password"
           placeholder="Confirm your password"
-          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+          class="form-input"
         />
       </label>
     </ngx-control-wrapper>
 
     <!-- Terms and Conditions -->
-    <ngx-control-wrapper>
+    <ngx-control-wrapper class="form-group">
       <label class="flex items-center">
         <input
           type="checkbox"
@@ -82,27 +95,6 @@
       </label>
     </ngx-control-wrapper>
 
-    <!-- Submit Button -->
-    <div class="pt-4">
-      <button
-        type="submit"
-        [disabled]="!vestForm.isValid()"
-        class="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-gray-800"
-      >
-        Create Account
-      </button>
-    </div>
-
-    <!-- Form State Debug (Development Only) -->
-    <div class="mt-6 rounded-md bg-gray-50 p-4 dark:bg-gray-900">
-      <h4 class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-        Form State
-      </h4>
-      <div class="text-xs">
-        <div>Valid: {{ vestForm.isValid() }}</div>
-        <div>Errors: {{ vestForm.errors | json }}</div>
-        <div>Value: {{ formValue() | json }}</div>
-      </div>
-    </div>
+    <button type="submit" class="form-submit">Register</button>
   </form>
 </section>

@@ -1,5 +1,5 @@
 <section>
-  <ul class="text-md ml-4 list-disc">
+  <ul class="form-help">
     <li>Always show an error if there is no business hour added</li>
     <li>From field is required</li>
     <li>To field is required</li>
@@ -15,7 +15,7 @@
     <li>If more than 1 business hour is added, there should be no overlap</li>
   </ul>
   <form
-    class="mt-8"
+    class="simple-form"
     ngxVestForm
     #vestForm="ngxVestForm"
     [(formValue)]="formValue"
@@ -50,6 +50,7 @@
         }
       </ul>
     }
+    <button type="submit" class="form-submit">Save Business Hours</button>
   </form>
   <br />
   <h3>The value of the form</h3>
