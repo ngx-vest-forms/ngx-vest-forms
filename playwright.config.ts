@@ -4,7 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
 // - Uses a dedicated dev server on port 4201 to avoid conflicts with a running local server.
 // - Tests use baseURL, so page.goto('/route') works consistently.
 
-const PORT = Number(process.env.PORT ?? 4201);
+const PORT = Number(process.env.PORT ?? 4200);
 const HOST = process.env.HOST ?? 'localhost';
 const BASE_URL = process.env.BASE_URL ?? `http://${HOST}:${PORT}`;
 
@@ -24,7 +24,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npm run start -- --port ${PORT}`,
+    command: `npm run start`,
     url: BASE_URL,
     reuseExistingServer: true,
     stdout: 'pipe',

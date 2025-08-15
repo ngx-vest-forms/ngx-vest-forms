@@ -21,8 +21,8 @@
     "lib": ["ES2022", "dom"],
     "paths": {
       "ngx-vest-forms": [
-        "dist/ngx-vest-forms",
-        "projects/ngx-vest-forms/public-api.ts"
+        "projects/ngx-vest-forms/public-api.ts",
+        "dist/ngx-vest-forms"
       ],
       "ngx-vest-forms/*": [
         "projects/ngx-vest-forms/*/src/public-api.ts",
@@ -30,16 +30,16 @@
         "dist/ngx-vest-forms/*"
       ],
       "ngx-vest-forms/smart-state": [
-        "dist/ngx-vest-forms/smart-state",
-        "projects/ngx-vest-forms/smart-state/public-api.ts"
+        "projects/ngx-vest-forms/smart-state/public-api.ts",
+        "dist/ngx-vest-forms/smart-state"
       ],
       "ngx-vest-forms/control-wrapper": [
-        "dist/ngx-vest-forms/control-wrapper",
-        "projects/ngx-vest-forms/control-wrapper/public-api.ts"
+        "projects/ngx-vest-forms/control-wrapper/public-api.ts",
+        "dist/ngx-vest-forms/control-wrapper"
       ],
       "ngx-vest-forms/schemas": [
-        "dist/ngx-vest-forms/schemas",
-        "projects/ngx-vest-forms/schemas/public-api.ts"
+        "projects/ngx-vest-forms/schemas/public-api.ts",
+        "dist/ngx-vest-forms/schemas"
       ]
     }
   },
