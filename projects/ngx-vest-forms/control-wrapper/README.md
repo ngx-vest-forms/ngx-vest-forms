@@ -28,7 +28,6 @@ The `NgxControlWrapper` is available as a **secondary entry point** to keep the 
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 
 @Component({
-  standalone: true,
   imports: [
     // ... other Angular modules
     ngxVestForms, // Core directive

@@ -244,7 +244,7 @@ import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 import { userValidations } from './user.validations';
 
 @Component({
-  standalone: true,
+
   imports: [ngxVestForms, NgxControlWrapper],
   template: `
     <form ngxVestForm [vestSuite]="suite" [(formValue)]="model">

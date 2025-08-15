@@ -99,9 +99,9 @@ const userSuite = staticSuite((data: Partial<User> = {}, field?: string) => {
 
 @Component({
   template: `
-    <form ngxVestForm
-          [vestSuite]="userSuite"     <!-- Interactive validation -->
-          [formSchema]="userSchema"   <!-- Submit validation -->
+    <form ngxVestFormWithSchema
+          [vestSuite]="userSuite"     <!-- Interactive validation (Vest) -->
+          [formSchema]="userSchema"   <!-- Submit validation (Schema) -->
           [(formValue)]="userData"
           (ngSubmit)="save()">
 
@@ -177,7 +177,7 @@ The core of the library is the `ngxVestForm` directive, which automatically link
 
 ### Automatic Submit-time Schema Validation
 
-Bind any supported schema via `[formSchema]` (Zod, Valibot, ArkType, or a template converted with `ngxModelToStandardSchema`) and the directive will automatically run a `safeParse` when the form is submitted. Failed issues are merged into the Angular form errors:
+Bind any supported schema via `[formSchema]` (Zod, Valibot, ArkType, or a template converted with `ngxModelToStandardSchema`). You can attach it either via the convenient `ngxVestFormWithSchema` wrapper from `ngx-vest-forms/schemas` or by adding `ngxSchemaValidation` alongside `ngxVestForm`/`ngxVestFormCore`. On submit, the library runs a `safeParse` and exposes results separately:
 
 - `errors`: flattened unique list including existing Vest validation messages plus schema messages
 - `schemaErrors`: dedicated array with `<path>: <message>` entries
@@ -224,15 +224,20 @@ export const userValidations = staticSuite((data = {}, field?: string) => {
 // user-form.component.ts
 import { Component, signal } from '@angular/core';
 import { ngxVestForms } from 'ngx-vest-forms/core'; // Optimized import
+import { NgxVestFormWithSchemaDirective } from 'ngx-vest-forms/schemas';
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper'; // UI Helper
 import { userModel } from './user.model';
 import { userValidations } from './user.validations';
 
 @Component({
-  standalone: true,
-  imports: [ngxVestForms, NgxControlWrapper],
+  imports: [ngxVestForms, NgxControlWrapper, NgxVestFormWithSchemaDirective],
   template: `
-    <form ngxVestForm [vestSuite]="suite" [(formValue)]="model">
+    <form
+      ngxVestFormWithSchema
+      [vestSuite]="suite"
+      [formSchema]="userSchema"
+      [(formValue)]="model"
+    >
       <ngx-control-wrapper>
         <label for="name">Name</label>
         <input id="name" name="name" [ngModel]="model().name" />
@@ -324,7 +329,6 @@ The `NgxControlWrapper` is available from a secondary entry point to keep the co
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 
 @Component({
-  standalone: true,
   imports: [ngxVestForms, NgxControlWrapper],
   // ...
 })
@@ -354,7 +358,7 @@ import { NgxFormErrorDisplayDirective } from 'ngx-vest-forms';
 
 @Component({
   selector: 'my-form-field',
-  standalone: true,
+
   hostDirectives: [NgxFormErrorDisplayDirective],
   template: `
     <ng-content />
@@ -416,7 +420,7 @@ import { NgxFormErrorDisplayDirective } from 'ngx-vest-forms';
 
 @Component({
   selector: 'custom-control-wrapper',
-  standalone: true,
+
   hostDirectives: [NgxFormErrorDisplayDirective],
   template: `
     <ng-content />
@@ -498,7 +502,7 @@ Smart state management is available from `ngx-vest-forms/smart-state`:
 import { NgxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state';
 
 @Component({
-  standalone: true,
+
   imports: [ngxVestForms, NgxVestFormsSmartStateDirective],
   template: `
     <form ngxVestForm [(formValue)]="model" ngxVestFormsSmartState>
@@ -619,7 +623,6 @@ import { userModel } from './user.model';
 import { userValidations } from './user.validations';
 
 @Component({
-  standalone: true,
   imports: [ngxVestForms, NgxControlWrapper],
   template: `
     <form ngxVestForm [vestSuite]="suite" [(formValue)]="model">
@@ -646,7 +649,7 @@ export class UserFormComponent {
 ```typescript
 import { NgxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state';
 @Component({
-  standalone: true,
+
   imports: [ngxVestForms, NgxVestFormsSmartStateDirective],
   template: `
     <form ngxVestForm [(formValue)]="model" ngxVestFormsSmartState>
@@ -665,6 +668,19 @@ export class AdvancedFormComponent {
 import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
 const userSchema = ngxModelToStandardSchema({ name: '', age: 0 });
 type User = InferSchemaType<typeof userSchema>;
+```
+
+Use with the convenient wrapper:
+
+```html
+<form
+  ngxVestFormWithSchema
+  [vestSuite]="suite"
+  [formSchema]="userSchema"
+  [(formValue)]="model"
+>
+  <!-- fields -->
+</form>
 ```
 
 ---

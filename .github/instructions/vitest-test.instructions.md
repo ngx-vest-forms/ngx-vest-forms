@@ -81,7 +81,7 @@ const testSuite = staticSuite((data = {}, field) => {
 });
 
 @Component({
-  standalone: true,
+
   imports: [ngxVestForms, NgxControlWrapper],
   template: `
     <form ngxVestForm [vestSuite]="suite" [(formValue)]="model">

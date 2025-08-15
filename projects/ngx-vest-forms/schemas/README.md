@@ -20,11 +20,12 @@
 
 ### **Complete Example: Vest.js + Schema Working Together**
 
-```typescript
+````typescript
 import { z } from 'zod';
 import { staticSuite, test, enforce, only } from 'vest';
 import { Component, signal } from '@angular/core';
-import { ngxVestForms } from 'ngx-vest-forms';
+import { ngxVestForms } from 'ngx-vest-forms/core';
+import { NgxVestFormWithSchemaDirective } from 'ngx-vest-forms/schemas';
 
 // Schema for type safety and submit validation
 const userSchema = z.object({
@@ -50,11 +51,11 @@ const userSuite = staticSuite((data: Partial<User> = {}, field?: string) => {
 });
 
 @Component({
-  imports: [ngxVestForms],
+  imports: [ngxVestForms, NgxVestFormWithSchemaDirective],
   template: `
-    <form ngxVestForm
-          [vestSuite]="userSuite"     <!-- Interactive validation -->
-          [formSchema]="userSchema"   <!-- Submit validation -->
+    <form ngxVestFormWithSchema
+          [vestSuite]="userSuite"     <!-- Interactive validation (Vest) -->
+          [formSchema]="userSchema"   <!-- Submit validation (Schema) -->
           [(formValue)]="userData"
           (ngSubmit)="save()"
           #vestForm="ngxVestForm">
@@ -110,7 +111,30 @@ export class UserFormComponent {
     }
   }
 }
+### Alternative: Compose Manually
+
+If you prefer to keep explicit control, you can attach `ngxVestForm` (or `ngxVestFormCore`) and the schema directive directly:
+
+```html
+<form ngxVestForm [vestSuite]="suite" [(formValue)]="model" ngxSchemaValidation [formSchema]="schema">
+  ...
+</form>
+````
+
+Import in your component:
+
+```ts
+import { ngxVestForms } from 'ngx-vest-forms/core';
+import { NgxSchemaValidationDirective } from 'ngx-vest-forms/schemas';
+
+@Component({
+  imports: [ngxVestForms, NgxSchemaValidationDirective],
+  template: `...`,
+})
+export class MyCmp {}
 ```
+
+````
 
 **Key Benefits:**
 
@@ -145,7 +169,7 @@ Choose any library that implements the Standard Schema specification:
 
 ### Submit-time Validation Lifecycle
 
-When a schema is provided via `[formSchema]`, the `NgxFormDirective` automatically performs schema validation **on form submit** (first and every subsequent submit). The result is exposed separately from Vest field validation under `formState().schema`:
+When a schema is provided via `[formSchema]` (either with the wrapper or the schema directive), schema validation runs **on form submit**. The result is exposed separately from Vest field validation under `formState().schema`:
 
 ```typescript
 const state = vestForm.formState();
@@ -153,7 +177,7 @@ if (state.schema?.hasRun && state.schema.success === false) {
   // Handle schema validation errors
   console.log('Schema issues:', state.schema.issues);
 }
-```
+````
 
 ### Why Separate from Vest Validation?
 
