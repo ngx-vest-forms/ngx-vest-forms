@@ -152,8 +152,7 @@ export class NgxFormCoreDirective<TModel = Record<string, unknown>> {
       const hasControls = Object.keys(this.ngForm.form.controls).length > 0;
       if (hasControls) {
         this.formValue.set(raw);
-        if (isDevMode() && raw && typeof raw === 'object') {
-          // lightweight debug hint
+        if (isDevMode()) {
           console.debug('[NgxFormCoreDirective] form -> model', raw);
         }
       }

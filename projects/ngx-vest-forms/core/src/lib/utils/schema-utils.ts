@@ -12,7 +12,9 @@ export type SchemaParseResult = {
  * Extracts a model template from a schema-like object created by ngxModelToStandardSchema.
  * Returns null for schemas that do not expose a `_shape` property.
  */
-export function extractTemplateFromSchema<T = unknown>(schema: unknown): T | null {
+export function extractTemplateFromSchema<T = unknown>(
+  schema: unknown,
+): T | null {
   const candidate = schema as { _shape?: unknown } | null;
   if (schema && typeof schema === 'object' && candidate?._shape) {
     return candidate._shape as T;
@@ -24,15 +26,21 @@ export function extractTemplateFromSchema<T = unknown>(schema: unknown): T | nul
  * Safely parse data using either a runtime schema with safeParse or a StandardSchemaV1 via ~standard.validate.
  * Falls back to success when schema type is not recognized.
  */
-export function safeParseWithAnySchema(schema: unknown, data: unknown): SchemaParseResult {
+export function safeParseWithAnySchema(
+  schema: unknown,
+  data: unknown,
+): SchemaParseResult {
   // Runtime schema with safeParse
   if (
     schema &&
     typeof schema === 'object' &&
-    typeof (schema as { safeParse?: (d: unknown) => unknown }).safeParse === 'function'
+    typeof (schema as { safeParse?: (d: unknown) => unknown }).safeParse ===
+      'function'
   ) {
     try {
-      const result = (schema as { safeParse: (d: unknown) => unknown }).safeParse(data) as
+      const result = (
+        schema as { safeParse: (d: unknown) => unknown }
+      ).safeParse(data) as
         | {
             success: boolean;
             issues?: { path?: string; message?: string }[];
@@ -80,9 +88,13 @@ export function safeParseWithAnySchema(schema: unknown, data: unknown): SchemaPa
       }
       const issues = (
         out && 'issues' in out
-          ? ((out as { issues?: { path?: string; message?: string }[] }).issues ?? [])
+          ? ((out as { issues?: { path?: string; message?: string }[] })
+              .issues ?? [])
           : []
-  ).map((issue) => ({ path: issue?.path, message: issue?.message ?? 'Invalid' }));
+      ).map((issue) => ({
+        path: issue?.path,
+        message: issue?.message ?? 'Invalid',
+      }));
       return { success: false, issues, meta: { vendor: std.vendor } };
     } catch (error) {
       if (isDevMode()) {

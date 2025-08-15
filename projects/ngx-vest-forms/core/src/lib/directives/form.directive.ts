@@ -48,14 +48,14 @@ import {
   mergeValuesAndRawValues,
   setValueAtPath,
 } from '../utils/form-utils';
-import { validateModelTemplate } from '../utils/shape-validation';
-import { NgxVestSuite } from '../utils/validation-suite';
-import { NgxFormCoreDirective } from './form-core.directive';
-import { NgxValidationOptions } from './validation-options';
 import {
   extractTemplateFromSchema,
   safeParseWithAnySchema,
 } from '../utils/schema-utils';
+import { validateModelTemplate } from '../utils/shape-validation';
+import { NgxVestSuite } from '../utils/validation-suite';
+import { NgxFormCoreDirective } from './form-core.directive';
+import { NgxValidationOptions } from './validation-options';
 
 // Helper to resolve the model type from either a StandardSchema or an NgxRuntimeSchema
 type ModelFromSchema<S> = S extends SchemaDefinition

@@ -1,4 +1,4 @@
-import { Directive, inject, input } from '@angular/core';
+import { Directive, inject, input, isDevMode } from '@angular/core';
 import {
   AbstractControl,
   AsyncValidator,
@@ -42,18 +42,22 @@ export class NgxFormModelDirective implements AsyncValidator {
   validate(control: AbstractControl): Observable<ValidationErrors | null> {
     // Add null check for control
     if (!control) {
-      console.debug(
-        '[ngx-vest-forms] Validate called with null control in NgxFormModelDirective.',
-      );
+      if (isDevMode()) {
+        console.debug(
+          '[ngx-vest-forms] Validate called with null control in NgxFormModelDirective.',
+        );
+      }
       return of(null);
     }
 
     // If there is no parent NgxFormDirective, skip validation gracefully
     const context = this.fullForm ?? this.coreForm;
     if (!context) {
-      console.debug(
-        '[ngx-vest-forms] ngModel used outside of ngxVestForm; skipping validation.',
-      );
+      if (isDevMode()) {
+        console.debug(
+          '[ngx-vest-forms] ngModel used outside of ngxVestForm; skipping validation.',
+        );
+      }
       return of(null);
     }
 
@@ -61,9 +65,11 @@ export class NgxFormModelDirective implements AsyncValidator {
     const field = getFormControlField(ngForm.control, control);
 
     if (!field) {
-      console.debug(
-        '[ngx-vest-forms] Could not determine field name for validation in NgxFormModelDirective (skipping).',
-      );
+      if (isDevMode()) {
+        console.debug(
+          '[ngx-vest-forms] Could not determine field name for validation in NgxFormModelDirective (skipping).',
+        );
+      }
       return of(null);
     }
 
@@ -77,15 +83,19 @@ export class NgxFormModelDirective implements AsyncValidator {
     if (validationResult instanceof Observable) {
       return validationResult;
     } else if (validationResult instanceof Promise) {
-      console.debug(
-        '[ngx-vest-forms] Async validator returned a Promise. Converting to Observable.',
-      );
+      if (isDevMode()) {
+        console.debug(
+          '[ngx-vest-forms] Async validator returned a Promise. Converting to Observable.',
+        );
+      }
       return from(validationResult);
     } else {
-      console.error(
-        '[ngx-vest-forms] Async validator returned an unexpected type:',
-        validationResult,
-      );
+      if (isDevMode()) {
+        console.error(
+          '[ngx-vest-forms] Async validator returned an unexpected type:',
+          validationResult,
+        );
+      }
       return of(null);
     }
   }
