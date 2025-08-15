@@ -2,6 +2,7 @@
  * Public API Surface of ngx-vest-forms/schemas
  */
 
+export { NgxVestFormWithSchemaDirective } from './src/lib/form-with-schema.directive';
 export {
   fromArkType,
   fromValibot,
@@ -26,3 +27,4 @@ export {
   ngxModelToStandardSchema,
   shapeToSchema,
 } from './src/lib/schema-adapter';
+export { NgxSchemaValidationDirective } from './src/lib/schema-validation.directive';

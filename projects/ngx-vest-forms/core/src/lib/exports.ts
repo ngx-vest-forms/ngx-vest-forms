@@ -1,4 +1,4 @@
-import { Optional, Provider } from '@angular/core';
+import { Optional, Provider, forwardRef } from '@angular/core';
 import {
   ControlContainer,
   FormsModule,
@@ -81,7 +81,7 @@ export const ngxVestFormsViewProviders = [
  */
 export const ngxVestForms = [
   FormsModule,
-  NgxFormDirective,
+  forwardRef(() => NgxFormDirective),
   NgxFormModelDirective,
   NgxFormModelGroupDirective,
   NgxFormControlStateDirective,
@@ -99,12 +99,12 @@ export const ngxVestFormsCore = [
   // Include field and group validator directives so core-only usage
   // still gets Vest validation on ngModel and ngModelGroup.
   NgxFormModelDirective,
-  NgxFormModelGroupDirective,
+  forwardRef(() => NgxFormModelGroupDirective),
 ] as const;
 
 export {
-  getInitialNgxFormControlState,
   NgxFormControlState,
+  getInitialNgxFormControlState,
 } from './directives/form-control-state.directive';
 export { NgxFormCoreDirective } from './directives/form-core.directive';
 export { NgxFormState } from './directives/form.directive';

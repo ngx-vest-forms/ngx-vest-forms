@@ -28,6 +28,10 @@ import type {
   SchemaDefinition,
 } from 'ngx-vest-forms/schemas';
 import {
+  ngxExtractTemplateFromSchema,
+  toAnyRuntimeSchema,
+} from 'ngx-vest-forms/schemas';
+import {
   catchError,
   debounceTime,
   filter,
@@ -48,10 +52,6 @@ import {
   mergeValuesAndRawValues,
   setValueAtPath,
 } from '../utils/form-utils';
-import {
-  extractTemplateFromSchema,
-  safeParseWithAnySchema,
-} from '../utils/schema-utils';
 import { validateModelTemplate } from '../utils/shape-validation';
 import { NgxVestSuite } from '../utils/validation-suite';
 import { NgxFormCoreDirective } from './form-core.directive';
@@ -204,7 +204,7 @@ export class NgxFormDirective<
     const schema = this.formSchema();
     if (!schema) return null;
     // Attempt extraction (returns null for non-ngxModel-based schemas)
-    return extractTemplateFromSchema(schema);
+    return ngxExtractTemplateFromSchema(schema);
   });
 
   /**
@@ -441,15 +441,14 @@ export class NgxFormDirective<
         if (!schemaCandidate) return;
         try {
           const currentModel = this.#getCurrentModel();
-          const result = safeParseWithAnySchema(schemaCandidate, currentModel);
+          const result =
+            toAnyRuntimeSchema(schemaCandidate).safeParse(currentModel);
           if (result.success === false) {
             const issues: { path?: string; message: string }[] =
-              result.issues.map(
-                (issue: { path?: string; message: string }) => ({
-                  path: issue.path,
-                  message: issue.message,
-                }),
-              );
+              result.issues.map((issue) => ({
+                path: issue.path,
+                message: issue.message,
+              }));
             const errorMap: Record<string, readonly string[]> = {};
             for (const issue of issues) {
               const key = issue.path || '_root';
@@ -465,7 +464,9 @@ export class NgxFormDirective<
               console.warn(
                 '[ngx-vest-forms][NgxFormDirective] schema safeParse failed',
                 {
-                  vendor: result.meta?.['vendor'],
+                  vendor: (
+                    result.meta as Record<string, unknown> | undefined
+                  )?.['vendor'],
                   issues: result.issues,
                 },
               );
