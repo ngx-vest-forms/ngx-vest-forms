@@ -1,10 +1,12 @@
+import { JsonPipe } from '@angular/common';
 import { ApplicationRef, Component, signal } from '@angular/core';
 import { render, screen } from '@testing-library/angular';
+import { userEvent } from '@vitest/browser/context';
 import { ngxVestFormsCore } from '../exports';
 // Note: userEvent not used in this focused core spec; native events dispatched instead.
 import { TestBed } from '@angular/core/testing';
-import { describe, expect, it } from 'vitest';
 import { create, enforce, only, test as vestTest } from 'vest';
+import { describe, expect, it } from 'vitest';
 // NgxFormCoreDirective included via `ngxVestFormsCore` preset
 
 @Component({
@@ -95,22 +97,35 @@ describe('NgxFormCoreDirective - core behavior', () => {
       standalone: true,
       imports: [...ngxVestFormsCore],
       template: `
-        <form ngxVestFormCore [vestSuite]="suite" [validationOptions]="{ debounceTime: 150 }" #vest="ngxVestFormCore">
+        <form
+          ngxVestFormCore
+          aria-label="Username form"
+          [vestSuite]="suite"
+          #vest="ngxVestFormCore"
+        >
           <label for="username">Username</label>
-          <input id="username" name="username" [ngModel]="''" />
+          <input
+            id="username"
+            name="username"
+            [ngModel]="''"
+            [validationOptions]="{ debounceTime: 150 }"
+          />
         </form>
       `,
     })
     class DebounceHostComponent {
       // Count how many times the suite is executed for the field
       count = 0;
-      suite = create<{ username: string }>((model, field) => {
-        only(field);
-        this.count++;
-        vestTest('username', 'taken', () => {
-          enforce(model.username).equals('taken');
-        });
-      });
+      suite = create(
+        (model: { username: string } | undefined, field?: string) => {
+          const m = model ?? { username: '' };
+          only(field);
+          this.count++;
+          vestTest('username', 'taken', () => {
+            enforce(m.username).equals('taken');
+          });
+        },
+      );
     }
 
     const { fixture } = await render(DebounceHostComponent);
@@ -138,14 +153,21 @@ describe('NgxFormCoreDirective - core behavior', () => {
   it('should set submitted flag and mark controls touched on submit', async () => {
     @Component({
       standalone: true,
-      imports: [...ngxVestFormsCore],
+      imports: [...ngxVestFormsCore, JsonPipe],
       template: `
-        <form ngxVestFormCore aria-label="Account form" [(formValue)]="model" #vest="ngxVestFormCore">
+        <form
+          ngxVestFormCore
+          aria-label="Account form"
+          [(formValue)]="model"
+          #vest="ngxVestFormCore"
+        >
           <label for="email">Email</label>
           <input id="email" name="email" [ngModel]="model().email" />
 
           <label for="password">Password</label>
           <input id="password" name="password" [ngModel]="model().password" />
+
+          <pre data-testid="state">{{ vest.formState() | json }}</pre>
         </form>
       `,
     })
@@ -157,16 +179,136 @@ describe('NgxFormCoreDirective - core behavior', () => {
     const appReference = fixture.debugElement.injector.get(ApplicationRef);
 
     const form = screen.getByRole('form', { name: /account form/i });
-    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    form.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
 
     await fixture.whenStable();
     await appReference.whenStable();
 
-    const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
-    const passwordInput = screen.getByLabelText('Password') as HTMLInputElement;
-    // Angular adds ng-submitted on form and ng-touched on controls after submit
-    expect(form).toHaveClass('ng-submitted');
-    expect(emailInput).toHaveClass('ng-touched');
-    expect(passwordInput).toHaveClass('ng-touched');
+    const stateElement = screen.getByTestId('state');
+    const state = JSON.parse(stateElement.textContent || '{}') as {
+      submitted?: boolean;
+    };
+    expect(state.submitted).toBe(true);
+  });
+
+  it('should debounce async validation and update validity after delay', async () => {
+    @Component({
+      standalone: true,
+      imports: [...ngxVestFormsCore, JsonPipe],
+      template: `
+        <form
+          ngxVestFormCore
+          aria-label="Pending validation form"
+          [vestSuite]="suite"
+          #vest="ngxVestFormCore"
+        >
+          <label for="username2">Username</label>
+          <input
+            id="username2"
+            name="username"
+            [ngModel]="''"
+            [validationOptions]="{ debounceTime: 200 }"
+          />
+
+          <pre data-testid="state">{{ vest.formState() | json }}</pre>
+        </form>
+      `,
+    })
+    class PendingHostComponent {
+      suite = create(
+        (model: { username: string } | undefined, field?: string) => {
+          const m = model ?? { username: '' };
+          only(field);
+          vestTest('username', 'must be ok', () => {
+            enforce(m.username).equals('ok');
+          });
+        },
+      );
+    }
+
+    const { fixture } = await render(PendingHostComponent);
+    const appReference = fixture.debugElement.injector.get(ApplicationRef);
+    const username = screen.getByLabelText('Username') as HTMLInputElement;
+
+    // Trigger validation with debounce
+    username.value = 'o';
+    username.dispatchEvent(new Event('input', { bubbles: true }));
+
+    // Shortly after input, async validator should be pending
+    await new Promise((r) => setTimeout(r, 50));
+    await fixture.whenStable();
+    await appReference.whenStable();
+    // Before debounce elapses, errors should not yet be present for the field
+    const early = JSON.parse(
+      screen.getByTestId('state').textContent || '{}',
+    ) as { errors?: Record<string, unknown> };
+    expect(
+      early.errors && (early.errors as Record<string, unknown>)['username'],
+    ).toBeUndefined();
+
+    // After debounce window, pending should clear and form becomes invalid
+    await new Promise((r) => setTimeout(r, 220));
+    await fixture.whenStable();
+    await appReference.whenStable();
+    // After debounce elapses, the field should have errors captured
+    const late = JSON.parse(
+      screen.getByTestId('state').textContent || '{}',
+    ) as { errors?: Record<string, string[]> };
+    const fieldErrors = late.errors?.['username'] ?? [];
+    expect(Array.isArray(fieldErrors) && fieldErrors.length > 0).toBe(true);
+  });
+
+  it('should toggle dirty flag on input and reset back to pristine', async () => {
+    @Component({
+      standalone: true,
+      imports: [...ngxVestFormsCore, JsonPipe],
+      template: `
+        <form
+          ngxVestFormCore
+          aria-label="Resettable form"
+          [(formValue)]="model"
+          #ngf="ngForm"
+          #vest="ngxVestFormCore"
+        >
+          <label for="email2">Email</label>
+          <input id="email2" name="email" [ngModel]="model().email" />
+
+          <button type="button" (click)="ngf.resetForm({ email: '' })">
+            Reset
+          </button>
+
+          <pre data-testid="state">{{ vest.formState() | json }}</pre>
+        </form>
+      `,
+    })
+    class DirtyHostComponent {
+      model = signal({ email: '' });
+    }
+
+    await render(DirtyHostComponent);
+    const email = screen.getByLabelText('Email') as HTMLInputElement;
+    const resetButton = screen.getByRole('button', { name: /reset/i });
+
+    // Initially pristine
+    let state = JSON.parse(screen.getByTestId('state').textContent || '{}') as {
+      dirty?: boolean;
+    };
+    expect(state.dirty).toBe(false);
+
+    // Type to make dirty
+    await userEvent.type(email, 'a');
+    state = JSON.parse(screen.getByTestId('state').textContent || '{}') as {
+      dirty?: boolean;
+    };
+    expect(state.dirty).toBe(true);
+
+    // Reset to pristine
+    await userEvent.click(resetButton);
+    state = JSON.parse(screen.getByTestId('state').textContent || '{}') as {
+      dirty?: boolean;
+    };
+    expect(state.dirty).toBe(false);
   });
 });

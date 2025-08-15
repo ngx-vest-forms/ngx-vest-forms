@@ -28,7 +28,7 @@ describe('schema-utils', () => {
       const out = safeParseWithAnySchema(runtimeSchema, { email: 'a' });
       expect(out.success).toBe(true);
       expect(out.issues.length).toBe(0);
-      expect(out.meta?.vendor).toBe('rt');
+      expect(out.meta?.['vendor']).toBe('rt');
     });
 
     it('should use runtime safeParse and map issues on failure', () => {
@@ -57,7 +57,7 @@ describe('schema-utils', () => {
       const out = safeParseWithAnySchema(standardSchema, { email: 'a' });
       expect(out.success).toBe(true);
       expect(out.issues.length).toBe(0);
-      expect(out.meta?.vendor).toBe('std');
+      expect(out.meta?.['vendor']).toBe('std');
     });
 
     it('should use ~standard.validate and map issues on failure', () => {
@@ -75,7 +75,7 @@ describe('schema-utils', () => {
       const out = safeParseWithAnySchema(standardSchema, { email: 'x' });
       expect(out.success).toBe(false);
       expect(out.issues.length).toBe(2);
-      expect(out.meta?.vendor).toBe('std');
+      expect(out.meta?.['vendor']).toBe('std');
     });
 
     it('should return success for unknown/unsupported schema types', () => {

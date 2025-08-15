@@ -1,9 +1,11 @@
-import { ApplicationRef } from '@angular/core';
+import { JsonPipe } from '@angular/common';
+import { ApplicationRef, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { render, screen, waitFor } from '@testing-library/angular';
 import { userEvent } from '@vitest/browser/context';
 import { enforce, staticSuite, test as vestTest } from 'vest';
 import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
+import { ngxVestForms } from '../exports';
 
 import { AsyncValidationComponent } from './__tests__/components/async-validation.component';
 import { DateFormComponent } from './__tests__/components/date-form.component';
@@ -494,6 +496,132 @@ describe('NgxFormDirective', () => {
 
     test.todo('should cache field validators to avoid recreation');
     test.todo('should clean up validation streams on destroy');
+  });
+
+  describe('Advanced Full Directive Behavior', () => {
+    it('should derive firstInvalidField from Vest field errors after submit', async () => {
+      const lenientSuite = staticSuite((data = {}, field?: string) => {
+        // Only validate current field for efficiency
+        // Email invalid unless contains '@'
+        vestTest('email', 'Please provide a valid email', () => {
+          if (field === 'email') {
+            enforce(String(data['email'] ?? '')).matches(/@/);
+          }
+        });
+        // Password ok
+      });
+
+      // Local host that surfaces firstInvalidField
+      @Component({
+        standalone: true,
+        imports: [ngxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [vestSuite]="suite"
+            [(formValue)]="model"
+            #vest="ngxVestForm"
+          >
+            <label for="email-fi">Email</label>
+            <input id="email-fi" name="email" [ngModel]="model().email" />
+
+            <label for="password-fi">Password</label>
+            <input
+              id="password-fi"
+              name="password"
+              [ngModel]="model().password"
+            />
+
+            <button type="submit">Submit</button>
+
+            <div data-testid="first-invalid">
+              {{ vest.formState().firstInvalidField }}
+            </div>
+          </form>
+        `,
+      })
+      class FirstInvalidHostComponent {
+        suite = lenientSuite;
+        model = signal({ email: '', password: '' });
+      }
+
+      const { fixture } = await render(FirstInvalidHostComponent);
+      const appReference = fixture.debugElement.injector.get(ApplicationRef);
+
+      // Trigger validation by submitting
+      await userEvent.click(screen.getByRole('button', { name: /submit/i }));
+      await fixture.whenStable();
+      await appReference.whenStable();
+
+      // With empty email, firstInvalidField should be 'email'
+      await expect(screen.getByTestId('first-invalid')).toHaveTextContent(
+        'email',
+      );
+    });
+
+    it('should map schema issues into schema.errorMap on submit', async () => {
+      // Runtime schema with safeParse that fails on password
+      const failingRuntimeSchema = {
+        safeParse: (data: { email?: string; password?: string }) => {
+          const issues: { path?: string; message: string }[] = [];
+          if (!data.password || data.password.length < 4) {
+            issues.push({ path: 'password', message: 'Password too short' });
+          }
+          return issues.length > 0
+            ? { success: false as const, issues, meta: { vendor: 'test' } }
+            : { success: true as const, output: data };
+        },
+      } as const;
+
+      @Component({
+        standalone: true,
+        imports: [ngxVestForms, JsonPipe],
+        template: `
+          <form
+            ngxVestForm
+            [vestSuite]="suite"
+            [formSchema]="schema"
+            [(formValue)]="model"
+            #vest="ngxVestForm"
+          >
+            <label for="email-se">Email</label>
+            <input id="email-se" name="email" [ngModel]="model().email" />
+
+            <label for="password-se">Password</label>
+            <input
+              id="password-se"
+              name="password"
+              [ngModel]="model().password"
+            />
+
+            <button type="submit">Submit</button>
+
+            <div data-testid="schema-error-map">
+              {{ vest.formState().schema?.errorMap | json }}
+            </div>
+          </form>
+        `,
+      })
+      class SchemaErrorHostComponent {
+        suite = staticSuite(() => {
+          // no field errors; rely on schema
+        });
+        schema = failingRuntimeSchema;
+        model = signal({ email: 'x@y.z', password: '' });
+      }
+
+      const { fixture } = await render(SchemaErrorHostComponent);
+      const appReference = fixture.debugElement.injector.get(ApplicationRef);
+
+      await userEvent.click(screen.getByRole('button', { name: /submit/i }));
+      await fixture.whenStable();
+      await appReference.whenStable();
+
+      // errorMap should contain password with our message
+      const errorMap = screen.getByTestId('schema-error-map');
+      await expect(errorMap).toHaveTextContent('password');
+      await expect(errorMap).toHaveTextContent('Password too short');
+    });
   });
 
   describe('Signal Management', () => {
