@@ -8,3 +8,9 @@ This is the **core entry point** for ngx-vest-forms. It provides the essential f
 ---
 
 **Note:** Most users should import from `ngx-vest-forms` or `ngx-vest-forms/core` for core features. Use secondary entry points for advanced features (schemas, smart state, control wrapper).
+
+Dev-time template checks with `_shape`:
+
+- If you wrap a plain object using `ngxModelToStandardSchema`, the schema includes a private `_shape` copy of the template. In development, the form directive can leverage this to detect typos in `ngModel`/`ngModelGroup` names.
+- Standard Schema libraries (Zod, Valibot, ArkType) don’t include `_shape`; submit-time validation is unaffected.
+- See `ngx-vest-forms/schemas` README for details and v1 migration notes.

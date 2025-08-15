@@ -21,6 +21,7 @@ type TestFormModel = {
       [(formValue)]="formValue"
       [validationOptions]="validationOptions()"
       [validationConfig]="validationConfig()"
+      [formSchema]="formSchema()"
       #vestForm="ngxVestForm"
     >
       <label for="email">Email</label>
@@ -72,4 +73,6 @@ export class TestFormComponent {
   validationConfig = signal<Record<string, string[]> | null>(null);
 
   vestSuite = signal(testFormValidations as NgxVestSuite<TestFormModel>);
+  // Optional schema for submit-time validation tests
+  formSchema = signal<null | { parse: (data: unknown) => TestFormModel }>(null);
 }

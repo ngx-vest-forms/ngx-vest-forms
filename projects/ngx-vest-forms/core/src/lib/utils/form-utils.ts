@@ -11,20 +11,44 @@ function getControlPath(
   formGroup: FormGroup,
   control: AbstractControl,
 ): string {
+  // First attempt: depth-first traversal from provided root
   for (const key in formGroup.controls) {
     if (Object.prototype.hasOwnProperty.call(formGroup.controls, key)) {
-      const ctrl = formGroup.get(key);
-      if (ctrl instanceof FormGroup) {
-        const path = getControlPath(ctrl, control);
-        if (path) {
-          return key + '.' + path;
-        }
-      } else if (ctrl === control) {
+      const child = formGroup.get(key);
+      if (child === control) {
         return key;
+      }
+      if (child instanceof FormGroup || child instanceof FormArray) {
+        const subPath = getControlPath(child as FormGroup, control);
+        if (subPath) {
+          return `${key}.${subPath}`;
+        }
       }
     }
   }
-  return '';
+
+  // Fallback: try to ascend the parent chain when control.parent is available
+  // and reconstruct the path relative to the nearest ancestor in the provided root
+  let current: AbstractControl | null | undefined = control;
+  const segments: string[] = [];
+  while (current && (current as any).parent) {
+    const parent: any = (current as any).parent;
+    if (!parent?.controls) break;
+    for (const key of Object.keys(parent.controls)) {
+      if (parent.controls[key] === current) {
+        segments.unshift(key);
+        break;
+      }
+    }
+    current = parent;
+    if (current === formGroup) {
+      return segments.join('.');
+    }
+  }
+
+  // Last resort: try control.name if available
+  const name: string | undefined = (control as any).name as any;
+  return name ?? '';
 }
 
 /**

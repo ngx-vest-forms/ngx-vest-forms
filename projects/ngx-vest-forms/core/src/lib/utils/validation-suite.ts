@@ -1,11 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */ /// Allow any for generic validation types
 import { StaticSuite } from 'vest';
 
 /**
- * FieldKey<T> gives you autocompletion for known keys of T,
+ * FieldKey<T> gives you autocompletion for known string keys of T,
  * but also allows any string (for dynamic/nested/cyclic field names).
+ *
+ * Note: Use only string keys to avoid widening to number/symbol when T=any.
  */
-export type NgxFieldKey<T> = keyof T | (string & {});
+export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
 
 /**
  * Represents a Vest validation suite for use with ngx-vest-forms.
@@ -42,9 +43,30 @@ export type NgxFieldKey<T> = keyof T | (string & {});
  * ```
  *
  * @template T The model type that the validation suite operates on
+ *
+ * Type design notes:
+ * - Default generic is `unknown` (safer than `any`) to enforce explicit typing at the edges.
+ * - Uses a “bivariant method parameter” trick to make NgxVestSuite<Specific> assignable
+ *   to NgxVestSuite<unknown> in Angular templates without `$any()` casts. This preserves
+ *   template ergonomics while keeping implementation sites strictly typed.
+ * - Field parameter is a plain `string` (not `keyof T`) to avoid variance and union-widening
+ *   issues in template type checking. IDEs still provide property-name hints via context.
+ *
+ * Safety:
+ * - The bivariant callback is only used for the suite’s parameter type. Return type remains
+ *   fully typed. Internally, we cast at invocation sites where we control `T`, ensuring safety.
  */
-export type NgxVestSuite<T = any> = StaticSuite<
+// Bivariant function type trick for better assignment compatibility in TS
+// Allows NgxVestSuite<Specific> to be assignable to NgxVestSuite<any>
+// without leaking $any() casts into consumer templates.
+type NgxSuiteCallback<T> = {
+  // Method syntax yields bivariant parameters under strictFunctionTypes
+  // Use plain string for field to avoid keyof variance issues in templates
+  bivarianceHack(model: T, field?: string): void;
+}['bivarianceHack'];
+
+export type NgxVestSuite<T = unknown> = StaticSuite<
   string,
   string,
-  (model: T, field?: NgxFieldKey<T>) => void
+  NgxSuiteCallback<T>
 >;

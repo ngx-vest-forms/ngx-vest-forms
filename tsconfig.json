@@ -50,22 +50,22 @@
     "typeCheckHostBindings": true,
     "extendedDiagnostics": {
       "checks": {
-        "invalidBananaInBox": "error",
         "controlFlowPreventingContentProjection": "error",
-        "unusedStandaloneImports": "error",
-        "nullishCoalescingNotNullable": "error",
-        "optionalChainNotNullable": "error",
+        "interpolatedSignalNotInvoked": "error",
+        "invalidBananaInBox": "error",
         "missingControlFlowDirective": "error",
-        "textAttributeNotBinding": "error",
         "missingNgForOfLet": "error",
         "missingStructuralDirective": "error",
-        "suffixNotSupported": "error",
-        "interpolatedSignalNotInvoked": "error",
-        "uninvokedFunctionInEventBinding": "error",
-        "unusedLetDeclaration": "error",
+        "nullishCoalescingNotNullable": "error",
+        "optionalChainNotNullable": "error",
         "skipHydrationNotStatic": "error",
+        "suffixNotSupported": "error",
+        "textAttributeNotBinding": "error",
+        "uninvokedFunctionInEventBinding": "error",
+        "uninvokedTrackFunction": "error",
         "unparenthesizedNullishCoalescing": "error",
-        "uninvokedTrackFunction": "error"
+        "unusedLetDeclaration": "error",
+        "unusedStandaloneImports": "error"
       }
     }
   }

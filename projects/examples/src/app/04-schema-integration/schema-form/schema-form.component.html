@@ -1,0 +1,131 @@
+<section class="form-section">
+  @if (description()) {
+    <div class="form-section-description">
+      {{ description() }}
+    </div>
+  }
+  @if (infoBlock()) {
+    <div class="info-box">
+      <h4 class="info-box-title">ℹ️ Info</h4>
+      <!-- Trusted HTML: infoBlock() must come from a static, framework-owned source. -->
+      <!-- Never pass user-generated HTML here; sanitize or strip tags first if dynamic. -->
+      <div class="info-box-text" [innerHTML]="infoBlock()"></div>
+    </div>
+  }
+</section>
+<form
+  ngxVestForm
+  [formSchema]="formSchema()"
+  [(formValue)]="formValue"
+  (ngSubmit)="save()"
+  [vestSuite]="suite"
+  #vestForm="ngxVestForm"
+  class="form"
+>
+  <section class="form-section">
+    <h4 class="form-section-title">Personal Information</h4>
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <ngx-control-wrapper class="form-group">
+        <label for="firstName" class="form-label">First Name *</label>
+        <input
+          id="firstName"
+          type="text"
+          name="firstName"
+          ngModel
+          placeholder="Enter first name"
+          class="form-input"
+        />
+      </ngx-control-wrapper>
+      <ngx-control-wrapper class="form-group">
+        <label for="lastName" class="form-label">Last Name *</label>
+        <input
+          id="lastName"
+          type="text"
+          name="lastName"
+          ngModel
+          placeholder="Enter last name"
+          class="form-input"
+        />
+      </ngx-control-wrapper>
+    </div>
+    <ngx-control-wrapper class="form-group">
+      <label for="email" class="form-label">Email *</label>
+      <input
+        id="email"
+        type="email"
+        name="email"
+        ngModel
+        placeholder="Enter email address"
+        class="form-input"
+      />
+    </ngx-control-wrapper>
+    <ngx-control-wrapper class="form-group">
+      <label for="dateOfBirth" class="form-label">Date of Birth *</label>
+      <input
+        id="dateOfBirth"
+        type="date"
+        name="dateOfBirth"
+        ngModel
+        class="form-input"
+      />
+    </ngx-control-wrapper>
+  </section>
+  <section class="form-section">
+    <ngx-control-wrapper class="form-group">
+      <label for="bio" class="form-label">Bio *</label>
+      <textarea
+        id="bio"
+        name="bio"
+        ngModel
+        rows="3"
+        placeholder="Tell us about yourself (10-500 characters)"
+        class="form-textarea"
+      ></textarea>
+    </ngx-control-wrapper>
+  </section>
+  <section class="form-section">
+    <h4 class="form-section-title">Preferences</h4>
+    <ngx-control-wrapper class="form-group">
+      <label class="form-label flex items-center">
+        <input
+          type="checkbox"
+          name="newsletter"
+          ngModel
+          class="form-checkbox"
+        />
+        <span class="ms-2">Subscribe to newsletter</span>
+      </label>
+    </ngx-control-wrapper>
+    <div class="form-group">
+      <span class="form-label">Notifications</span>
+      <div class="space-y-2">
+        <ngx-control-wrapper class="form-group">
+          <label class="form-label flex items-center">
+            <input
+              type="checkbox"
+              name="notificationsEmail"
+              ngModel
+              class="form-checkbox"
+            />
+            <span class="ms-2">Email notifications</span>
+          </label>
+        </ngx-control-wrapper>
+        <ngx-control-wrapper class="form-group">
+          <label class="form-label flex items-center">
+            <input
+              type="checkbox"
+              name="notificationsSms"
+              ngModel
+              class="form-checkbox"
+            />
+            <span class="ms-2">SMS notifications</span>
+          </label>
+        </ngx-control-wrapper>
+      </div>
+    </div>
+  </section>
+  <button type="submit" class="form-submit">Save Profile</button>
+  <section class="form-section">
+    <div class="form-help">Form Value: {{ formValue() | json }}</div>
+  </section>
+</form>

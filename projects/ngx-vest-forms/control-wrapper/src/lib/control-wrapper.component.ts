@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-// Imports will be updated to point to the core library 'ngx-vest-forms'
-import { NgxFormErrorDisplayDirective } from 'ngx-vest-forms';
+// Import from the core entry point to avoid cross-entrypoint source imports that break ng-packagr
+import { NgxFormErrorDisplayDirective } from 'ngx-vest-forms/core';
 
 /**
  * Accessible NgxControlWrapper
@@ -62,7 +62,8 @@ import { NgxFormErrorDisplayDirective } from 'ngx-vest-forms';
   hostDirectives: [
     {
       directive: NgxFormErrorDisplayDirective,
-      // inputs: ['errorDisplayMode'], // ControlWrapper doesn't re-expose this; it uses the directive's own input
+      // Re-expose the directive input for convenience on the wrapper component
+      inputs: ['errorDisplayMode'],
     },
   ],
 })

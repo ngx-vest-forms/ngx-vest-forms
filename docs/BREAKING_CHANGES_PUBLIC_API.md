@@ -6,19 +6,20 @@ This document lists all **public API breaking changes** when upgrading from v1 t
 
 ## Quick Overview of Major Changes
 
-| Change                       | v1 Pattern/Behavior                          | v2 Pattern/Behavior                           | Migration Required                          |
-| ---------------------------- | -------------------------------------------- | --------------------------------------------- | ------------------------------------------- |
-| Directive and API Naming     | `scVestForm`, `sc-control-wrapper`,          | `ngxVestForm`, `ngx-control-wrapper`,         | Update directive names and syntax           |
-|                              | `FormDirective`, `ValidationOptions`         | `NgxFormDirective`, `NgxValidationOptions`    |                                             |
-| Control Wrapper Component    | Always included, attribute selector          | Optional import, component selector           | Update import and usage patterns            |
-| Two-way Binding with model() | `[formValue]` + `(formValueChange)`          | `[(formValue)]` (banana-in-a-box)             | Update form binding syntax                  |
-| Unified formState Signal     | Multiple outputs/signals                     | Single `formState` signal                     | Update state access patterns                |
-| Error Display Behavior       | Errors shown on blur only                    | Errors shown on blur or submit                | Minimal impact, improved UX                 |
-| Modular Architecture         | Monolithic, all features bundled             | Modular entry points, tree-shaking            | Optional tree-shaking benefits              |
-| Schema Support               | Basic, limited                               | Full adapters for Zod, ArkType, Valibot       | Update imports if using schemas             |
-| Smart State                  | Not available                                | New feature, opt-in                           | Optional, new usage                         |
-| Error Object Structure       | Errors as strings (`Record<string, string>`) | Errors as arrays (`Record<string, string[]>`) | Update error display logic to handle arrays |
-| Deprecated APIs Removed      | Legacy signals, old error config, etc.       | Not available in v2                           | Remove usage, migrate to new APIs           |
+| Change                        | v1 Pattern/Behavior                          | v2 Pattern/Behavior                                        | Migration Required                          |
+| ----------------------------- | -------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------- |
+| Directive and API Naming      | `scVestForm`, `sc-control-wrapper`,          | `ngxVestForm`, `ngx-control-wrapper`,                      | Update directive names and syntax           |
+|                               | `FormDirective`, `ValidationOptions`         | `NgxFormDirective`, `NgxValidationOptions`                 |                                             |
+| Control Wrapper Component     | Always included, attribute selector          | Optional import, component selector                        | Update import and usage patterns            |
+| Two-way Binding with model()  | `[formValue]` + `(formValueChange)`          | `[(formValue)]` (banana-in-a-box)                          | Update form binding syntax                  |
+| Unified formState Signal      | Multiple outputs/signals                     | Single `formState` signal                                  | Update state access patterns                |
+| Error Display Behavior        | Errors shown on blur only                    | Errors shown on blur or submit                             | Minimal impact, improved UX                 |
+| Submit-time Schema Validation | Manual (custom submit handlers in examples)  | Automatic safeParse on submit when `[formSchema]` provided | Remove custom handlers/error list component |
+| Modular Architecture          | Monolithic, all features bundled             | Modular entry points, tree-shaking                         | Optional tree-shaking benefits              |
+| Schema Support                | Basic, limited                               | Full adapters for Zod, ArkType, Valibot                    | Update imports if using schemas             |
+| Smart State                   | Not available                                | New feature, opt-in                                        | Optional, new usage                         |
+| Error Object Structure        | Errors as strings (`Record<string, string>`) | Errors as arrays (`Record<string, string[]>`)              | Update error display logic to handle arrays |
+| Deprecated APIs Removed       | Legacy signals, old error config, etc.       | Not available in v2                                        | Remove usage, migrate to new APIs           |
 
 **Bundle Impact:** v2 is modular and opt-in. Core and main entry points have identical bundle sizes; optional features add only what you use.
 
@@ -155,7 +156,26 @@ export class UserFormComponent {
 
 ---
 
-## 8. Smart State
+## 8. Automatic Submit-time Schema Validation (NEW)
+
+**Previous (v1 / early v2 examples):** Manual schema parsing (e.g. calling `safeParse` in a `(formSubmit)` handler) and rendering a custom `SchemaErrorListComponent`.
+
+**v2 Final:** When `[formSchema]` is supplied, `NgxFormDirective` automatically performs a schema `safeParse` on submit. Failed issues are merged into the underlying Angular form errors object:
+
+- `errors`: flattened unique list including existing Vest errors plus schema messages
+- `schemaErrors`: dedicated array of deduplicated schema issue messages in the form `<path>: <message>`
+
+**Migration Steps:**
+
+1. Remove manual `(formSubmit)` handlers whose only purpose was schema validation.
+2. Delete custom schema error list components; reuse your existing error UI or read `ngForm.form.errors.schemaErrors` for advanced displays.
+3. Keep using Vest for interactive field-level validation; schema runs only once on submit.
+
+**Rationale:** Eliminates redundancy, ensures consistent aggregation of validation feedback, and simplifies example boilerplate.
+
+---
+
+## 9. Smart State
 
 **v1:** Not available.
 **v2:** New feature, opt-in via `smart-state` entry point.
@@ -179,6 +199,7 @@ export class UserFormComponent {
 - [ ] Use unified `formState()` signal for all form state access
 - [ ] Review error display behavior and configure as needed
 - [ ] (Optional) Use smart state and schema integration for advanced features
+- [ ] Remove manual schema safeParse handlers; rely on automatic submit-time validation
 
 ---
 

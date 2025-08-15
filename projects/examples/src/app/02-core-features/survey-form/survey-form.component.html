@@ -1,0 +1,335 @@
+<section>
+  <div class="prose mb-4 max-w-none">
+    <h2>Survey Form</h2>
+    <p>
+      Purpose: Complex survey with conditional validation, dynamic sections, and
+      rating scales. Illustrates computed signals and conditionally rendered
+      groups with modern Angular control flow.
+    </p>
+    <p class="text-sm">
+      See:
+      <a
+        href="https://github.com/simplifiedcourses/ngx-vest-forms"
+        target="_blank"
+        >README</a
+      >
+      · <a href="https://vestjs.dev" target="_blank">Vest Docs</a>
+    </p>
+  </div>
+  <p class="form-help">
+    Complex survey with conditional validation, dynamic sections, rating scales,
+    and business logic.
+  </p>
+
+  <form
+    ngxVestForm
+    [vestSuite]="suite"
+    [(formValue)]="formValue"
+    (ngSubmit)="onSubmit()"
+    #vestForm="ngxVestForm"
+    class="simple-form"
+  >
+    <!-- Basic Information -->
+    <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-600">
+      <h4 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+        Basic Information
+      </h4>
+
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <ngx-control-wrapper class="form-group">
+          <label class="form-label">
+            Name *
+            <input
+              type="text"
+              name="name"
+              ngModel
+              placeholder="Enter your name"
+              class="form-input"
+            />
+          </label>
+        </ngx-control-wrapper>
+
+        <ngx-control-wrapper class="form-group">
+          <label class="form-label">
+            Email *
+            <input
+              type="email"
+              name="email"
+              ngModel
+              placeholder="Enter your email"
+              class="form-input"
+            />
+          </label>
+        </ngx-control-wrapper>
+      </div>
+
+      <ngx-control-wrapper class="form-group">
+        <label class="form-label">
+          Age *
+          <input
+            type="number"
+            name="age"
+            ngModel
+            min="13"
+            max="120"
+            placeholder="Enter your age"
+            class="form-input"
+          />
+        </label>
+      </ngx-control-wrapper>
+    </div>
+
+    <!-- Product Usage -->
+    <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-600">
+      <h4 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+        Product Experience
+      </h4>
+
+      <ngx-control-wrapper>
+        <label class="flex items-center">
+          <input
+            type="checkbox"
+            name="usesProduct"
+            ngModel
+            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+          />
+          <span class="ms-2 text-sm text-gray-700 dark:text-gray-300">
+            I currently use this product
+          </span>
+        </label>
+      </ngx-control-wrapper>
+
+      <!-- Conditional Product Questions -->
+      @if (showProductQuestions()) {
+        <div class="mt-4 space-y-4 border-l-4 border-blue-200 pl-4">
+          <ngx-control-wrapper>
+            <label class="form-label">
+              Product Rating (1-10) *
+              <input
+                type="range"
+                name="productRating"
+                ngModel
+                min="1"
+                max="10"
+                class="mt-1 block w-full"
+              />
+            </label>
+            <div class="mt-1 text-xs text-gray-500">
+              Current rating: {{ formValue().productRating || 'Not rated' }}
+            </div>
+          </ngx-control-wrapper>
+
+          <div>
+            <span
+              class="mb-3 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Which features do you value most? *
+            </span>
+            <div class="grid grid-cols-2 gap-2">
+              @for (feature of productFeatures; track feature.value) {
+                <ngx-control-wrapper>
+                  <label class="flex items-center">
+                    <input
+                      type="checkbox"
+                      [checked]="isFeatureSelected(feature.value)"
+                      (change)="
+                        onFeatureChange(feature.value, isChecked($event))
+                      "
+                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span class="ms-2 text-sm">{{ feature.label }}</span>
+                  </label>
+                </ngx-control-wrapper>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Overall Experience -->
+    <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-600">
+      <h4 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+        Overall Experience
+      </h4>
+
+      <div class="space-y-6">
+        <ngx-control-wrapper>
+          <fieldset class="border-0 p-0">
+            <legend
+              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Overall Rating (1-10) *
+            </legend>
+            <div class="flex items-center space-x-2">
+              @for (rating of ratingScale; track rating) {
+                <label class="cursor-pointer">
+                  <input
+                    type="radio"
+                    name="overallRating"
+                    [value]="rating"
+                    ngModel
+                    class="sr-only"
+                  />
+                  <span
+                    [class]="
+                      formValue().overallRating === rating
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    "
+                    class="inline-flex h-8 w-8 items-center justify-center rounded text-sm font-medium focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500"
+                  >
+                    {{ rating }}
+                  </span>
+                </label>
+              }
+            </div>
+          </fieldset>
+        </ngx-control-wrapper>
+
+        <ngx-control-wrapper>
+          <fieldset class="border-0 p-0">
+            <legend
+              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Recommendation Likelihood (0-10) *
+            </legend>
+            <input
+              type="range"
+              name="recommendationLikelihood"
+              ngModel
+              min="0"
+              max="10"
+              step="1"
+              class="w-full accent-blue-600"
+            />
+          </fieldset>
+        </ngx-control-wrapper>
+      </div>
+    </div>
+
+    <!-- Complaint Section -->
+    <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-600">
+      <h4 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+        Feedback & Issues
+      </h4>
+
+      <ngx-control-wrapper>
+        <label class="flex items-center">
+          <input
+            type="checkbox"
+            name="hasComplaint"
+            ngModel
+            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+          />
+          <span class="ms-2 text-sm text-gray-700 dark:text-gray-300">
+            I have a complaint or issue to report
+          </span>
+        </label>
+      </ngx-control-wrapper>
+
+      <!-- Conditional Complaint Section -->
+      @if (showComplaintSection()) {
+        <div class="mt-4 space-y-4 border-l-4 border-red-200 pl-4">
+          <ngx-control-wrapper>
+            <label class="form-label">
+              Please describe your complaint *
+              <textarea
+                name="complaintDescription"
+                ngModel
+                rows="3"
+                placeholder="Describe your issue in detail"
+                class="form-textarea"
+              ></textarea>
+            </label>
+          </ngx-control-wrapper>
+
+          <ngx-control-wrapper>
+            <label class="form-label">
+              Urgency Level *
+              <select name="complaintUrgency" ngModel class="form-select">
+                <option value="">Select urgency level</option>
+                @for (option of urgencyOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </label>
+          </ngx-control-wrapper>
+        </div>
+      }
+    </div>
+
+    <!-- Contact Preferences -->
+    <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-600">
+      <h4 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+        Contact Preferences
+      </h4>
+
+      <ngx-control-wrapper>
+        <label class="form-label">
+          Preferred Contact Method *
+          <select name="preferredContact" ngModel class="form-select">
+            @for (option of contactOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </label>
+      </ngx-control-wrapper>
+
+      <!-- Conditional Phone Number -->
+      @if (showPhoneNumber()) {
+        <ngx-control-wrapper>
+          <label class="form-label">
+            Phone Number *
+            <input
+              type="tel"
+              name="phoneNumber"
+              ngModel
+              placeholder="Enter your phone number"
+              class="form-input"
+            />
+          </label>
+        </ngx-control-wrapper>
+      }
+    </div>
+
+    <!-- Additional Feedback -->
+    <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-600">
+      <h4 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+        Additional Feedback
+      </h4>
+
+      <ngx-control-wrapper>
+        <label class="form-label">
+          Suggestions or Comments *
+          <textarea
+            name="suggestions"
+            ngModel
+            rows="4"
+            placeholder="Please share any suggestions or additional feedback"
+            class="form-textarea"
+          ></textarea>
+        </label>
+      </ngx-control-wrapper>
+
+      <ngx-control-wrapper>
+        <label class="mt-4 flex items-center">
+          <input
+            type="checkbox"
+            name="allowFollowUp"
+            ngModel
+            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+          />
+          <span class="ms-2 text-sm text-gray-700 dark:text-gray-300">
+            I allow follow-up contact regarding this survey
+          </span>
+        </label>
+      </ngx-control-wrapper>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="pt-4">
+      <button type="submit" class="form-submit">Submit Survey</button>
+    </div>
+  </form>
+</section>

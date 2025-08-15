@@ -3,5 +3,6 @@
     "lib": {
       "entryFile": "public-api.ts"
     }
-  }
+  },
+  "sideEffects": false
 }

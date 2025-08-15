@@ -214,7 +214,7 @@ modelToStandardSchema(formValue, shape);
 - v2 supports Zod, ArkType, and Valibot schemas for advanced type inference and validation.
 - For custom logic, migrate your shape validation to use the new utility or a schema adapter:
 
-**Example: Using Zod Adapter**
+#### Example: Using Zod Adapter
 
 ```typescript
 import { z } from 'zod';
@@ -311,6 +311,56 @@ export class UserFormComponent {
 const errors = vestForm.formState().errors; // Record<string, string[]>
 ```
 
+### 6c. Schema Validation State Separation (Breaking)
+
+In earlier v2 previews, failed schema issues were merged into `formState().root.errors` as flattened strings (e.g. `email: Invalid email`). Final v2 separates schema validation into a dedicated `formState().schema` object for clarity and stronger typing.
+
+New additions to `NgxFormState`:
+
+```txt
+submitted: boolean;              // true after first submit attempt
+errorCount: number;              // Vest-only errors (fields + root)
+warningCount: number;            // Vest-only warnings
+firstInvalidField?: string|null; // First field with a Vest error, else first schema issue path
+schema?: {                       // Present only when [formSchema] is provided
+  hasRun: boolean;               // false until first submit
+  success: boolean | null;       // null pre-run
+  issues: { path?: string; message: string }[]; // Failure issues only
+  errorMap: Record<string, string[]>;          // Grouped by path ("_root" for issues without a path)
+};
+```
+
+Access pattern:
+
+```typescript
+const state = vestForm.formState();
+if (state.schema?.issues.length) {
+  // show schema issues
+}
+```
+
+Migration from merged root errors:
+
+| Previous (preview)                            | Now                                                                |
+| --------------------------------------------- | ------------------------------------------------------------------ |
+| `state.root?.errors` contained schema strings | `state.schema?.issues` holds structured issues                     |
+| `ngForm.form.errors.schemaErrors`             | Deprecated: read `state.schema?.issues` / `state.schema?.errorMap` |
+
+If you previously concatenated root + schema errors for a summary banner, update as:
+
+```typescript
+const summary = [
+  ...(state.root?.errors ?? []),
+  ...(state.schema?.issues.map((issue) =>
+    issue.path ? `${issue.path}: ${issue.message}` : issue.message,
+  ) ?? []),
+];
+```
+
+Rationale: Separation preserves structure (path/message), avoids accidental double counting, and keeps Vest vs schema concerns distinct.
+
+````
+
 **Migration Tip:** Update your error display logic to handle arrays of errors per field.
 
 ### 6b. Smart State Migration (Advanced)
@@ -320,7 +370,7 @@ const errors = vestForm.formState().errors; // Record<string, string[]>
 ```typescript
 import { NgxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state';
 // ...use as needed, see Smart State Management Guide...
-```
+````
 
 ---
 

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { NgxMaskDirective } from 'ngx-mask';
 import { ngxVestForms, ngxVestFormsViewProviders } from 'ngx-vest-forms';
-import { PartialBusinessHour } from '../../02-standard-forms/business-hours-form/business-hours-form.model';
+import { PartialBusinessHour } from '../../02-core-features/business-hours-form/business-hours-form.model';
 
 @Component({
   selector: 'ngx-business-hour',

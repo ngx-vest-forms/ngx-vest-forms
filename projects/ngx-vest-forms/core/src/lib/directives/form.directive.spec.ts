@@ -615,6 +615,242 @@ describe('NgxFormDirective', () => {
     });
   });
 
+  describe('Automatic Schema Validation (Submit)', () => {
+    it('should populate formState().schema with issues but not merge into root errors on submit when schema fails', async () => {
+      const { fixture } = await render(TestFormComponent);
+      const componentInstance = fixture.componentInstance;
+      const applicationReference =
+        fixture.debugElement.injector.get(ApplicationRef);
+      // Provide a StandardSchemaV1-like object with validate() returning issues
+      componentInstance.formSchema.set(null); // ensure previous value cleared
+      const standardSchema = {
+        ['~standard']: {
+          version: 1,
+          vendor: 'test',
+          validate: (data: unknown) => {
+            const formData =
+              (data as { email?: string; password?: string }) || {};
+            const issues: { path: string[]; message: string }[] = [];
+            if (!formData.email || !formData.email.includes('@')) {
+              issues.push({ path: ['email'], message: 'Invalid email' });
+            }
+            if (!formData.password || formData.password.length < 10) {
+              issues.push({
+                path: ['password'],
+                message: 'Password too short',
+              });
+            }
+            return issues.length > 0 ? { issues } : { value: formData };
+          },
+        },
+      } as const;
+      (
+        componentInstance as unknown as {
+          formSchema: { set: (v: unknown) => void };
+        }
+      ).formSchema.set(standardSchema);
+
+      // Ensure model has invalid values by interacting with inputs (validators run on value changes)
+      const emailInput1 = screen.getByLabelText('Email') as HTMLInputElement;
+      const passwordInput1 = screen.getByLabelText(
+        'Password',
+      ) as HTMLInputElement;
+      await userEvent.clear(emailInput1);
+      await userEvent.type(emailInput1, 'invalid');
+      await userEvent.clear(passwordInput1);
+      await userEvent.type(passwordInput1, 'short');
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+
+      // Ensure directive has received schema input (schema present but not run yet)
+      await waitFor(
+        () => {
+          const hasRun = componentInstance.vestForm()?.formState()
+            .schema?.hasRun;
+          expect(hasRun).toBe(false);
+        },
+        { timeout: 2000 },
+      );
+
+      // Submit the form using requestSubmit to reliably trigger native submit
+      const formElement = document.querySelector(
+        'form[ngxVestForm]',
+      ) as HTMLFormElement;
+      formElement.requestSubmit();
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+
+      const vestFormDirective = componentInstance.vestForm();
+      expect(vestFormDirective).toBeTruthy();
+      // Ensure submitted flag is set before asserting schema
+      TestBed.flushEffects();
+      await waitFor(
+        () => {
+          expect(vestFormDirective?.formState().submitted ?? false).toBe(true);
+        },
+        { timeout: 2000 },
+      );
+      // Poll until schema issues appear
+      await waitFor(
+        () => {
+          const state = vestFormDirective?.formState();
+          const joined = (
+            state?.schema?.issues
+              .map((issue) => `${issue.path}: ${issue.message}`)
+              .join('|') || ''
+          ).toString();
+          expect(joined).toContain('email: Invalid email');
+          expect(joined).toContain('password: Password too short');
+        },
+        { timeout: 2000 },
+      );
+      // Root errors should NOT contain schema messages now
+      const rootErrors = vestFormDirective?.formState().root?.errors || [];
+      expect(rootErrors.join('|')).not.toContain('email: Invalid email');
+    });
+
+    it('should set submitted flag and expose schema failure without counting schema issues in errorCount', async () => {
+      const { fixture } = await render(TestFormComponent);
+      const instance = fixture.componentInstance;
+      const applicationReference =
+        fixture.debugElement.injector.get(ApplicationRef);
+      const failing = {
+        ['~standard']: {
+          version: 1,
+          vendor: 'test',
+          validate: (data: unknown) => {
+            const formData =
+              (data as { email?: string; password?: string }) || {};
+            const issues: { path: string[]; message: string }[] = [];
+            if (!formData.email || !formData.email.includes('@')) {
+              issues.push({ path: ['email'], message: 'Invalid email' });
+            }
+            if (!formData.password || formData.password.length < 10) {
+              issues.push({ path: ['password'], message: 'Too short' });
+            }
+            return issues.length > 0 ? { issues } : { value: formData };
+          },
+        },
+      } as const;
+      (
+        instance as unknown as { formSchema: { set: (v: unknown) => void } }
+      ).formSchema.set(failing);
+      instance.formValue.set({ email: 'x', password: 'y' });
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+
+      // Ensure directive has received schema input before submit
+      await waitFor(
+        () => {
+          const hasRun = instance.vestForm()?.formState().schema?.hasRun;
+          expect(hasRun).toBe(false);
+        },
+        { timeout: 2000 },
+      );
+      // Trigger validators via user interactions to ensure Vest errors are present
+      const emailInput2 = screen.getByLabelText('Email') as HTMLInputElement;
+      const passwordInput2 = screen.getByLabelText(
+        'Password',
+      ) as HTMLInputElement;
+      await userEvent.clear(emailInput2);
+      await userEvent.type(emailInput2, 'x');
+      await userEvent.clear(passwordInput2);
+      await userEvent.type(passwordInput2, 'y');
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+      // Trigger validators via user interactions to ensure Vest errors are present
+      const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
+      const passwordInput = screen.getByLabelText(
+        'Password',
+      ) as HTMLInputElement;
+      await userEvent.clear(emailInput);
+      await userEvent.type(emailInput, 'x');
+      await userEvent.clear(passwordInput);
+      await userEvent.type(passwordInput, 'y');
+      await fixture.whenStable();
+      const formElement2 = document.querySelector(
+        'form[ngxVestForm]',
+      ) as HTMLFormElement;
+      formElement2.requestSubmit();
+      await fixture.whenStable();
+      await applicationReference.whenStable();
+      const directive = instance.vestForm();
+      expect(directive).toBeTruthy();
+      TestBed.flushEffects();
+      await waitFor(
+        () => {
+          expect(directive ? directive.formState().submitted : false).toBe(
+            true,
+          );
+        },
+        { timeout: 2000 },
+      );
+      // Wait until schema has run and issues populated
+      await waitFor(
+        () => {
+          const count = directive
+            ? (directive.formState().schema?.issues.length ?? 0)
+            : 0;
+          expect(count).toBe(2);
+        },
+        { timeout: 2000 },
+      );
+      if (!directive) {
+        throw new Error('Directive not found');
+      }
+      const state = directive.formState();
+      expect(state.submitted).toBe(true);
+      expect(state.schema?.success).toBe(false);
+      expect(state.schema?.issues.length).toBe(2);
+      // errorCount includes only Vest errors (email + password from suite) and excludes schema issues duplication
+      await expect
+        .poll(() => (directive ? directive.formState().errorCount : 0))
+        .toBe(2);
+      // firstInvalidField falls back to first schema issue path
+      expect(state.firstInvalidField).toBe('email');
+    });
+
+    it('should record schema success and clear previous failure', async () => {
+      const { fixture } = await render(TestFormComponent);
+      const instance = fixture.componentInstance;
+      // First failing
+      const failing = {
+        safeParse: () => ({
+          success: false as const,
+          issues: [{ path: 'email', message: 'Bad' }],
+        }),
+      } as const;
+      (
+        instance as unknown as { formSchema: { set: (v: unknown) => void } }
+      ).formSchema.set(failing);
+      instance.formValue.set({ email: 'x', password: 'yyyyyyyyyy' });
+      await fixture.whenStable();
+      const submitButton = screen.getByRole('button', { name: 'Submit' });
+      await userEvent.click(submitButton);
+      await fixture.whenStable();
+      // Now success schema
+      const succeeding = {
+        ['~standard']: {
+          version: 1,
+          vendor: 'test',
+          validate: () => ({ value: instance.formValue() }),
+        },
+      } as const;
+      (
+        instance as unknown as { formSchema: { set: (v: unknown) => void } }
+      ).formSchema.set(succeeding);
+      await userEvent.click(submitButton);
+      await fixture.whenStable();
+      const directive = instance.vestForm();
+      expect(directive).toBeTruthy();
+      const state = directive ? directive.formState() : undefined;
+      expect(state).toBeTruthy();
+      if (!state) return;
+      expect(state.schema?.success).toBe(true);
+      expect(state.schema?.issues.length).toBe(0);
+    });
+  });
+
   describe('AsyncValidationComponent', () => {
     it('should show pending state during async validation and error for taken username', async () => {
       const { fixture } = await render(AsyncValidationComponent);

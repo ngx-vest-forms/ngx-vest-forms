@@ -1,0 +1,117 @@
+<section>
+  <div class="prose mb-4 max-w-none">
+    <h2>Registration Form</h2>
+    <p>
+      Purpose: Show password confirmation, checkbox handling, and cross-field
+      validation with Vest. Uses <code>NgxControlWrapper</code> for consistent
+      error display.
+    </p>
+    <p class="text-sm">
+      See:
+      <a
+        href="https://github.com/simplifiedcourses/ngx-vest-forms"
+        target="_blank"
+        >README</a
+      >
+      · <a href="https://vestjs.dev" target="_blank">Vest Docs</a>
+    </p>
+  </div>
+  <div class="info-box">
+    <h4 class="info-box-title">ℹ️ Why use simple <code>ngModel</code>?</h4>
+    <p class="info-box-text">
+      This form uses the simple <code>ngModel</code> syntax for all controls.
+      This approach provides automatic two-way binding between the form controls
+      and the model signal, with minimal boilerplate.
+      <code>ngx-vest-forms</code> handles all value syncing, error display, and
+      validation logic. Use <code>[ngModel]</code>
+      only if you need explicit control over the data flow or are working with
+      computed values.
+    </p>
+  </div>
+
+  <p class="form-help">
+    Demonstrates password confirmation validation, terms checkbox, and
+    cross-field validation patterns.
+  </p>
+
+  <form
+    ngxVestForm
+    [vestSuite]="suite"
+    [(formValue)]="formValue"
+    (ngSubmit)="onSubmit()"
+    #vestForm="ngxVestForm"
+    class="simple-form"
+  >
+    <!-- Email Field -->
+    <ngx-control-wrapper class="form-group">
+      <label class="form-label">
+        Email Address
+        <input
+          type="email"
+          name="email"
+          ngModel
+          autocomplete="email"
+          placeholder="Enter your email"
+          class="form-input"
+        />
+      </label>
+    </ngx-control-wrapper>
+
+    <!-- Password Field -->
+    <ngx-control-wrapper class="form-group">
+      <label class="form-label">
+        Password
+        <input
+          type="password"
+          name="password"
+          ngModel
+          autocomplete="new-password"
+          placeholder="Enter your password"
+          class="form-input"
+        />
+      </label>
+      <div class="form-help">
+        Password must be at least 8 characters with uppercase letter and number
+      </div>
+    </ngx-control-wrapper>
+
+    <!-- Confirm Password Field -->
+    <ngx-control-wrapper class="form-group">
+      <label class="form-label">
+        Confirm Password
+        <input
+          type="password"
+          name="confirmPassword"
+          ngModel
+          autocomplete="new-password"
+          placeholder="Confirm your password"
+          class="form-input"
+        />
+      </label>
+    </ngx-control-wrapper>
+
+    <!-- Terms and Conditions -->
+    <ngx-control-wrapper class="form-group">
+      <label class="flex items-center">
+        <input
+          type="checkbox"
+          name="agreeToTerms"
+          ngModel
+          class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+        />
+        <span class="ms-2 text-sm text-gray-700 dark:text-gray-300">
+          I agree to the
+          <a href="#" class="text-blue-600 hover:underline dark:text-blue-400">
+            Terms and Conditions
+          </a>
+          and
+          <a href="#" class="text-blue-600 hover:underline dark:text-blue-400">
+            Privacy Policy
+          </a>
+        </span>
+      </label>
+    </ngx-control-wrapper>
+
+    <button type="submit" class="form-submit">Register</button>
+  </form>
+</section>

@@ -118,7 +118,7 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 
 ### Core Concepts
 
-- Use **Angular 19** or higher for all projects.
+- Use **Angular 20** or higher for all projects.
 - Adopt **Standalone Components** to eliminate the need for NgModules.
   - Avoid manually adding `standalone: true` for components, directives, and pipes, as this is the default in Angular 19.
 - Set `ChangeDetectionStrategy.OnPush` by default to optimize performance.
@@ -210,6 +210,7 @@ The main pattern involves three parts:
 -   Use `[(formValue)]` on the `<form>` element for two-way binding to the model signal.
 -   Use `[vestSuite]` to provide the validation suite.
 -   Use `[ngModel]` (one-way binding) for individual form controls.
+    - Do NOT use `ngModel` for two-way binding.
 -   Wrap form fields in `<ngx-control-wrapper>` (from `ngx-vest-forms/control-wrapper`) to automatically handle error display and pending states.
 
 ### Example Implementation

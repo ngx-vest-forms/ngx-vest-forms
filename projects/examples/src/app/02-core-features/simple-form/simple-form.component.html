@@ -1,0 +1,47 @@
+<div class="info-box">
+  <h4 class="info-box-title">ℹ️ Why use simple <code>ngModel</code>?</h4>
+  <p class="info-box-text">
+    This form uses the simple <code>ngModel</code> syntax for all controls. This
+    approach provides automatic two-way binding between the form controls and
+    the model signal, with minimal boilerplate.
+    <code>ngx-vest-forms</code> handles all value syncing, error display, and
+    validation logic. Use <code>[ngModel]</code> only if you need explicit
+    control over the data flow or are working with computed values.
+  </p>
+</div>
+<form
+  ngxVestForm
+  #vestForm="ngxVestForm"
+  [vestSuite]="suite"
+  [(formValue)]="formValue"
+  (ngSubmit)="save()"
+  autocomplete="off"
+  class="simple-form"
+>
+  <div
+    ngxControlWrapper
+    errorDisplayMode="on-blur-or-submit"
+    class="form-group"
+  >
+    <label for="email" class="form-label">Email</label>
+    <input
+      id="email"
+      name="email"
+      type="email"
+      autocomplete="off"
+      class="form-input"
+      ngModel
+      required
+      aria-describedby="email-help"
+      aria-invalid="false"
+    />
+    <span id="email-help" class="form-help">Enter a valid email address.</span>
+  </div>
+  <button
+    type="submit"
+    class="form-submit"
+    [disabled]="!vestForm.formState().valid"
+  >
+    Submit
+  </button>
+</form>

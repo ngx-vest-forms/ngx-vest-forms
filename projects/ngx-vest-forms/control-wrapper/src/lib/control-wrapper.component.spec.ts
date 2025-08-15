@@ -2,7 +2,8 @@ import { ApplicationRef, Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { render, screen, waitFor } from '@testing-library/angular';
 import { userEvent } from '@vitest/browser/context';
-import { ngxVestForms } from 'ngx-vest-forms';
+// Import from source exports to avoid dynamic import issues during Vitest browser runs
+import { ngxVestForms } from 'ngx-vest-forms/core';
 import { enforce, staticSuite, test as vestTest } from 'vest';
 import { describe, expect, it, test } from 'vitest';
 import { NgxControlWrapper } from './control-wrapper.component';

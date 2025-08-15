@@ -141,46 +141,36 @@ export function isStandardSchema<T = unknown>(
  * @param modelTemplate - The plain object template representing the data structure
  * @returns A StandardSchemaV1-compatible schema that performs basic validation
  */
-export function ngxModelToStandardSchema<T extends object>(
-  modelTemplate: T, /// Template is mainly for type inference here
+export function ngxModelToStandardSchema<T extends Record<string, unknown>>(
+  model: T,
 ): StandardSchemaV1<T, T> & { _shape: T } {
   return {
-    /// The '~standard' property holds the spec implementation.
-    '~standard': {
+    ['~standard']: {
       version: 1,
-      vendor: 'ngx-vest-forms',
-      /// Optional: Explicitly declare types for tools that might use them.
-      /// The `as T` assertion is necessary because `modelTemplate` is a value, not a type.
-      types: { input: {} as T, output: {} as T },
-      /**
-       * Validates if the value is a non-null object.
-       *
-       * @param value The value to validate
-       * @returns Success result with the value if valid, or failure result with issues if invalid
-       */
-      /// Use StandardSchemaV1.Result and StandardSchemaV1.Issue for types
-      validate(value: unknown): StandardSchemaV1.Result<T> {
-        if (typeof value === 'object' && value !== null) {
-          /// Basic check passes, return success with the value cast to T.
-          /// This assumes the input structurally matches T for type safety downstream.
-          return { value: value as T }; /// SuccessResult structure
-        } else {
-          /// Basic check fails, return failure with a standard issue object.
-          const issue: StandardSchemaV1.Issue = {
-            /// Use StandardSchemaV1.Issue
-            message: `Expected an object, but received ${typeof value}`,
-            /// path: [], /// Path could be added if validation was deeper
+      validate: (data: unknown) => {
+        const isObject =
+          typeof data === 'object' && data !== null && !Array.isArray(data);
+        if (!isObject) {
+          return {
+            // Minimal failure shape compatible with StandardSchemaV1
+            issues: [
+              {
+                path: '',
+                message: 'Expected an object',
+              },
+            ],
           };
-          return { issues: [issue] }; /// FailureResult structure
         }
-        /// This implementation is synchronous, so no Promise is returned.
+
+        return { value: data as T };
       },
+      vendor: 'ngx-model',
     },
-    /// Add the original template as a non-standard property for potential reference,
-    /// although it's not part of the Standard Schema spec itself.
-    /// Using underscore prefix to denote non-standard. Kept as _shape for backward compatibility.
-    _shape: modelTemplate,
-  };
+    // Preserve original template for dev-time extraction/migration from v1
+    _shape: model,
+    // Retain spreading of model keys for backward-compatibility (no runtime reliance)
+    ...model,
+  } as unknown as StandardSchemaV1<T, T> & { _shape: T };
 }
 
 /**

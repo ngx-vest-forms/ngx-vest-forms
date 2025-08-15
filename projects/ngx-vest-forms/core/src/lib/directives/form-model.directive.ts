@@ -29,14 +29,26 @@ export class NgxFormModelDirective implements AsyncValidator {
   validationOptions = input<NgxValidationOptions>({ debounceTime: 0 });
   /**
    * Reference to the form that needs to be validated
+   * Injected optionally so that using ngModel outside of an ngxVestForm
+   * does not crash the application. In that case, validation becomes a no-op.
    */
-  private readonly formDirective = inject(NgxFormDirective);
+  private readonly formDirective = inject(NgxFormDirective, {
+    optional: true,
+  });
 
   validate(control: AbstractControl): Observable<ValidationErrors | null> {
     // Add null check for control
     if (!control) {
-      console.warn(
+      console.debug(
         '[ngx-vest-forms] Validate called with null control in NgxFormModelDirective.',
+      );
+      return of(null);
+    }
+
+    // If there is no parent NgxFormDirective, skip validation gracefully
+    if (!this.formDirective) {
+      console.debug(
+        '[ngx-vest-forms] ngModel used outside of ngxVestForm; skipping validation.',
       );
       return of(null);
     }
@@ -45,8 +57,8 @@ export class NgxFormModelDirective implements AsyncValidator {
     const field = getFormControlField(ngForm.control, control);
 
     if (!field) {
-      console.error(
-        '[ngx-vest-forms] Could not determine field name for validation in NgxFormModelDirective.',
+      console.debug(
+        '[ngx-vest-forms] Could not determine field name for validation in NgxFormModelDirective (skipping).',
       );
       return of(null);
     }
@@ -61,7 +73,7 @@ export class NgxFormModelDirective implements AsyncValidator {
     if (validationResult instanceof Observable) {
       return validationResult;
     } else if (validationResult instanceof Promise) {
-      console.warn(
+      console.debug(
         '[ngx-vest-forms] Async validator returned a Promise. Converting to Observable.',
       );
       return from(validationResult);

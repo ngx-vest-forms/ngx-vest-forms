@@ -115,7 +115,9 @@ export class NgxValidateRootFormDirective implements AsyncValidator {
   #getVestSuite(): NgxVestSuite | null {
     try {
       const formDirective = this.#getFormDirective();
-      return formDirective?.vestSuite?.() || null;
+      // The form directive's vestSuite input is intentionally typed lax at the boundary.
+      // Cast to NgxVestSuite here – root validator invokes it only.
+      return (formDirective?.vestSuite?.() as NgxVestSuite | null) || null;
     } catch {
       return null;
     }

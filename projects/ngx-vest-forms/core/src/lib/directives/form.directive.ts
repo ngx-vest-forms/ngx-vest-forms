@@ -9,6 +9,7 @@ import {
   input,
   isDevMode,
   model,
+  signal,
   untracked,
 } from '@angular/core';
 import {
@@ -25,8 +26,11 @@ import {
 } from '@angular/forms';
 import {
   InferSchemaType,
+  isStandardSchema,
   ngxExtractTemplateFromSchema,
   SchemaDefinition,
+  toAnyRuntimeSchema,
+  type NgxRuntimeSchema,
 } from 'ngx-vest-forms/schemas';
 import {
   catchError,
@@ -86,6 +90,21 @@ export type NgxFormState<TModel> = {
   disabled: boolean;
   /** Whether the form is idle (not validating) */
   idle: boolean;
+  /** True after the first submit attempt (successful or not) */
+  submitted: boolean;
+  /** Total count of Vest (field + root) errors (excludes schema issues) */
+  errorCount: number;
+  /** Total count of Vest warnings */
+  warningCount: number;
+  /** First invalid field key (field error takes precedence, then first schema issue with path) */
+  firstInvalidField?: string | null;
+  /** Optional schema validation result (present only when a schema is provided) */
+  schema?: {
+    hasRun: boolean;
+    success: boolean | null;
+    issues: readonly { path?: string; message: string }[];
+    errorMap: Readonly<Record<string, readonly string[]>>;
+  };
 };
 
 /**
@@ -107,19 +126,31 @@ export type NgxFormState<TModel> = {
   },
 })
 export class NgxFormDirective<
-  TSchema extends SchemaDefinition | null = null,
+  TSchema extends SchemaDefinition | NgxRuntimeSchema<unknown> | null = null,
   TModel = TSchema extends SchemaDefinition
     ? InferSchemaType<TSchema>
     : Record<string, unknown>,
 > {
+  // INTERNAL SCHEMA STATE (separate from Vest errors)
+  readonly #schemaState = signal<{
+    hasRun: boolean;
+    success: boolean | null;
+    issues: { path?: string; message: string }[];
+    errorMap: Record<string, readonly string[]>;
+  } | null>(null);
+  readonly #submitted = signal(false);
   /// --- DEPENDENCY INJECTION ---
   readonly #destroyRef = inject(DestroyRef);
   readonly #injector = inject(Injector);
   readonly ngForm = inject(NgForm, { self: true, optional: false });
 
   readonly formValue = model<TModel | null>(null);
-  readonly formSchema = input<TSchema | null>(null);
-  readonly vestSuite = input<NgxVestSuite<TModel> | null>(null);
+  // Accept both StandardSchema and NgxRuntimeSchema at the boundary
+  readonly formSchema = input<
+    SchemaDefinition | NgxRuntimeSchema<unknown> | null
+  >(null);
+  // Accept any suite at the boundary for template ergonomics. We narrow at call sites.
+  readonly vestSuite = input<unknown | null>(null);
   readonly validationConfig = input<Record<string, string[]> | null>(null);
   readonly validationOptions = input(
     { debounceTime: 0 } satisfies NgxValidationOptions,
@@ -154,8 +185,11 @@ export class NgxFormDirective<
   readonly #schemaTemplate = computed(() => {
     const schema = this.formSchema();
     if (!schema) return null;
-
-    return ngxExtractTemplateFromSchema(schema);
+    // Extract template only for StandardSchema-based schemas (ngxModelToStandardSchema)
+    if (isStandardSchema(schema)) {
+      return ngxExtractTemplateFromSchema(schema);
+    }
+    return null;
   });
 
   /**
@@ -291,6 +325,33 @@ export class NgxFormDirective<
       }
     }
 
+    // Aggregate counts (Vest only, exclude schema)
+    const vestRootErrors = this.#rootErrorsAndWarnings()?.errors?.length ?? 0;
+    const fieldErrorCount = Object.values(fieldErrors).reduce(
+      (accumulator, array) => accumulator + array.length,
+      0,
+    );
+    const vestWarningCount =
+      (this.#rootErrorsAndWarnings()?.warnings?.length ?? 0) +
+      Object.values(fieldWarnings).reduce(
+        (accumulator, array) => accumulator + array.length,
+        0,
+      );
+
+    // Determine first invalid field
+    let firstInvalidField: string | null = null;
+    for (const key of Object.keys(fieldErrors)) {
+      if (fieldErrors[key]?.length) {
+        firstInvalidField = key;
+        break;
+      }
+    }
+    if (!firstInvalidField) {
+      const schemaIssues = this.#schemaState()?.issues || [];
+      const firstSchemaPath = schemaIssues.find((issue) => issue.path)?.path;
+      firstInvalidField = firstSchemaPath ?? null;
+    }
+
     return {
       value: this.#formValueSignal() ?? null,
       errors: fieldErrors,
@@ -303,6 +364,30 @@ export class NgxFormDirective<
       pending: this.#isPending(),
       disabled: this.#isDisabled(),
       idle: this.#isIdle(),
+      submitted: this.#submitted(),
+      errorCount: vestRootErrors + fieldErrorCount,
+      warningCount: vestWarningCount,
+      firstInvalidField,
+      schema: (() => {
+        const currentSchemaState = this.#schemaState();
+        if (currentSchemaState) {
+          return {
+            hasRun: currentSchemaState.hasRun,
+            success: currentSchemaState.success,
+            issues: currentSchemaState.issues,
+            errorMap: currentSchemaState.errorMap,
+          } as const;
+        }
+        if (this.formSchema()) {
+          return {
+            hasRun: false,
+            success: null,
+            issues: [],
+            errorMap: {},
+          } as const;
+        }
+        return;
+      })(),
     } satisfies NgxFormState<TModel>;
   });
 
@@ -370,7 +455,7 @@ export class NgxFormDirective<
 
   // Track previous validation context for comparison
   #previousValidationContext: {
-    suite: NgxVestSuite<TModel> | null;
+    suite: unknown | null;
     options: NgxValidationOptions;
     config: Record<string, string[]> | null;
     isValidationReady: boolean;
@@ -512,7 +597,66 @@ export class NgxFormDirective<
     this.ngForm.ngSubmit
       .pipe(takeUntilDestroyed(this.#destroyRef))
       .subscribe(() => {
+        this.#submitted.set(true);
         this.ngForm.form.markAllAsTouched();
+        const schemaCandidate = this.formSchema();
+        if (!schemaCandidate) return;
+        try {
+          const runtime = toAnyRuntimeSchema(schemaCandidate);
+          const currentModel = this.#getCurrentModel();
+          const result = runtime.safeParse(currentModel);
+          if (result.success === false) {
+            const issues: { path?: string; message: string }[] =
+              result.issues.map(
+                (issue: { path?: string; message: string }) => ({
+                  path: issue.path,
+                  message: issue.message,
+                }),
+              );
+            const errorMap: Record<string, readonly string[]> = {};
+            for (const issue of issues) {
+              const key = issue.path || '_root';
+              errorMap[key] = [...(errorMap[key] || []), issue.message];
+            }
+            this.#schemaState.set({
+              hasRun: true,
+              success: false,
+              issues,
+              errorMap,
+            });
+            if (isDevMode()) {
+              console.warn(
+                '[ngx-vest-forms][NgxFormDirective] schema safeParse failed',
+                {
+                  vendor: result.meta?.['vendor'],
+                  issues: result.issues,
+                },
+              );
+            }
+          } else {
+            this.#schemaState.set({
+              hasRun: true,
+              success: true,
+              issues: [],
+              errorMap: {},
+            });
+          }
+        } catch (error) {
+          if (isDevMode()) {
+            console.error(
+              '[ngx-vest-forms][NgxFormDirective] error during automatic schema validation',
+              error,
+            );
+          }
+          this.#schemaState.set({
+            hasRun: true,
+            success: false,
+            issues: [{ message: 'Unexpected schema validation error' }],
+            errorMap: { _root: ['Unexpected schema validation error'] },
+          });
+        } finally {
+          this.ngForm.form.updateValueAndValidity({ emitEvent: true });
+        }
       });
   }
 
@@ -584,7 +728,12 @@ export class NgxFormDirective<
       return () => of(null);
     }
 
-    return this.#createFieldValidator(field, context.suite, validationOptions);
+    // Cast the suite to the current model type when invoking
+    return this.#createFieldValidator(
+      field,
+      context.suite as NgxVestSuite<TModel>,
+      validationOptions,
+    );
   }
 
   #getCurrentModel(): TModel {

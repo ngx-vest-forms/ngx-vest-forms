@@ -6,32 +6,42 @@ This directory contains a comprehensive set of examples demonstrating the ngx-ve
 
 ```
 examples/src/app/
-├── 01-getting-started/          # Tier 1: Basic examples
-│   ├── simple-form/             # ✅ Single field validation
-│   ├── contact-form/            # ✅ Control wrapper usage
-│   └── registration-form/       # ✅ Cross-field validation
-├── 02-standard-forms/           # Tier 2: Common patterns
-│   ├── profile-form/            # ✅ Comprehensive form
-│   ├── business-hours-form/     # ✅ Complex nested data
-│   ├── survey-form/             # ✅ Conditional validation
-│   └── async-validation-form/   # 🚧 Server-side validation
-├── 03-schema-integration/       # Tier 3: Type-safe schemas
-│   ├── zod-schema-form/         # 🚧 Zod integration
-│   ├── valibot-schema-form/     # 📋 Planned
-│   └── arktype-schema-form/     # 📋 Planned
-├── 04-advanced-state/           # Tier 4: State management
-│   ├── smart-profile-form/      # ✅ Smart state extension
-│   ├── phone-numbers-form/      # ✅ Dynamic arrays
-│   └── realtime-collab-form/    # 📋 Planned
-├── 05-complex-integrations/     # Tier 5: Advanced patterns
-│   ├── purchase-form/           # ✅ Migration showcase
-│   └── wizard-form/             # ✅ Multi-step workflow
-└── backup-old-examples/         # 📦 Legacy examples
+├── 01-fundamentals/              # Tier 1: Basics
+│   └── minimal-form/             # ✅ Absolute minimum: form + vest validation
+├── 02-core-features/             # Tier 2: Core patterns
+│   ├── simple-form/              # ✅ Single field validation
+│   ├── contact-form/             # ✅ Control wrapper usage
+│   ├── registration-form/        # ✅ Cross-field validation
+│   ├── profile-form/             # ✅ Comprehensive form
+│   ├── business-hours-form/      # ✅ Complex nested data
+│   ├── survey-form/              # ✅ Conditional validation
+│   └── async-validation-form/    # ✅ Debounced async checks
+├── 03-control-wrapper/           # Tier 3: Wrapper-based UX
+│   ├── control-wrapper-basics/   # ✅ Simple form with wrapper
+│   └── registration-with-wrapper/# ✅ Registration with wrapper
+├── 04-schema-integration/        # Tier 4: Type-safe schemas
+│   ├── zod-schema-form/          # ✅ Zod integration
+│   ├── valibot-schema-form/      # ✅ Valibot integration
+│   ├── arktype-schema-form/      # ✅ ArkType integration
+│   ├── custom-schema-form/       # ✅ Custom adapter
+│   └── migration-example/        # ✅ v1→v2 migration showcase
+├── 05-smart-state/               # Tier 5: Smart state
+│   ├── basic-smart-state/        # ✅ Minimal smart state
+│   ├── smart-profile-form/       # ✅ External data sync
+│   ├── phone-numbers-form/       # ✅ Dynamic arrays
+│   └── realtime-sync/            # ✅ Collaboration-ready pattern
+├── 06-advanced-patterns/         # Tier 6: Advanced patterns
+│   ├── purchase-form/            # ✅ Migration showcase
+│   ├── wizard-form/              # ✅ Multi-step workflow
+│   ├── nested-arrays/            # ✅ Deep nested arrays
+│   ├── dynamic-forms/            # ✅ Runtime field generation
+│   └── custom-wrapper/           # ✅ Custom error display
+└── backup-old-examples/          # 📦 Legacy examples
 ```
 
 ## 🎯 Learning Progression
 
-### Tier 1: Getting Started (3 examples)
+### Tier 1: Fundamentals
 
 Perfect for new users learning the basics:
 
@@ -39,37 +49,41 @@ Perfect for new users learning the basics:
 2. **Contact Form** - Multi-field form with NgxControlWrapper
 3. **Registration Form** - Password confirmation and terms validation
 
-### Tier 2: Standard Forms (4 examples)
+### Tier 2: Core Features
 
 Common real-world form patterns:
 
-4. **Profile Form** - Comprehensive form with nested objects, file upload, various input types
-5. **Business Hours Form** - Complex nested structures and dynamic arrays
-6. **Survey Form** - Conditional validation, dynamic sections, rating scales
-7. **Async Validation Form** - Server-side validation with debounced checks
+1. **Profile Form** - Comprehensive form with nested objects, file upload, various input types
+1. **Business Hours Form** - Complex nested structures and dynamic arrays
+1. **Survey Form** - Conditional validation, dynamic sections, rating scales
+1. **Async Validation Form** - Server-side validation with debounced checks
 
-### Tier 3: Schema Integration (3 examples)
+### Tier 3: Control Wrapper
+
+Dedicated examples showing how `<ngx-control-wrapper>` reduces boilerplate and standardizes error/pending UI across fields.
+
+### Tier 4: Schema Integration
 
 Type-safe forms with popular schema libraries:
 
-8. **Zod Schema Form** - Type inference and validation with Zod
-9. **Valibot Schema Form** - Alternative schema library demonstration
-10. **ArkType Schema Form** - ArkType integration example
+1. **Zod Schema Form** - Type inference and validation with Zod
+1. **Valibot Schema Form** - Alternative schema library demonstration
+1. **ArkType Schema Form** - ArkType integration example
 
-### Tier 4: Advanced State Management (3 examples)
+### Tier 5: Smart State
 
 Complex state scenarios:
 
-11. **Smart Profile Form** - External data sync with conflict resolution
-12. **Phone Numbers Form** - Dynamic array manipulation
-13. **Real-time Collaboration Form** - Multi-user editing (planned)
+1. **Smart Profile Form** - External data sync with conflict resolution
+1. **Phone Numbers Form** - Dynamic array manipulation
+1. **Real-time Collaboration Form** - Multi-user editing (planned)
 
-### Tier 5: Complex Integrations (2 examples)
+### Tier 6: Advanced Patterns
 
 Production-ready scenarios:
 
-14. **Purchase Form** - Migration showcase with all features
-15. **Wizard Form** - Multi-step workflow with navigation
+1. **Purchase Form** - Migration showcase with all features
+1. **Wizard Form** - Multi-step workflow with navigation
 
 ## 🚀 Getting Started
 

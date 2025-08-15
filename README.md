@@ -30,23 +30,115 @@ It's a small library that bridges the gap between declarative Vest validation su
 - **Native HTML5 validation is disabled:** The `novalidate` attribute is automatically added to all forms using `ngxVestForm`, so all validation is handled by VestJS and Angular, not the browser.
 - **Advanced Features Available:** Optional smart state management and UI helper components available as secondary entry points.
 
-## Why and When to Use It
+## Why Use Vest.js?
 
-Use `ngx-vest-forms` when you want to:
+**Vest.js** is a modern, framework-agnostic validation library designed for field-level, incremental, and interactive form validation. It excels at:
 
-- **Eliminate Boilerplate:** Stop writing manual validation logic, state tracking, and error handling in your components. Just use `ngModel` and connect a Vest suite.
-- **Embrace Type Safety:** Use schemas (Zod, ArkType, Valibot, or a simple template) to get compile-time safety and powerful type inference for your form models.
-- **Build Reactive UIs:** All form and control states are signals, making it trivial to build dynamic, performant UIs with Angular's new control flow (`@if`, `@for`).
-- **Decouple Validation from Components:** Keep your validation logic pure, reusable, and separate from your UI components.
-- **Adopt Modern Angular:** The library is built for Angular 17+ and embraces standalone components, signals, and composition over inheritance.
+- **Field-level validation:** Only validates fields that change, providing instant feedback and optimal UX.
+- **Separation of concerns:** Keeps validation logic separate from UI and business logic for maintainability and reusability.
+- **Declarative syntax:** Easy-to-read, unit-test-like validation suites.
+- **Framework agnostic:** Works with any UI framework, including Angular, React, Vue, and more.
+- **State management:** Manages validation state internally, so you don’t have to.
+
+**Learn more:** [Vest vs. the Rest](https://vestjs.dev/docs/vest_vs_the_rest)
 
 ---
+
+## 🎯 Dual Validation Strategy: Vest.js + Standard Schema
+
+`ngx-vest-forms` supports **both** Vest.js and Standard Schema validation working together for the best user experience and data integrity:
+
+### **Interactive Field Validation** (Vest.js)
+
+- **When**: As users type/interact with fields
+- **Purpose**: Immediate feedback for better UX
+- **What**: Field-level validation, async validation, conditional logic
+- **Performance**: Incremental, optimized for user interaction
+
+### **Submit-time Structure Validation** (Standard Schema)
+
+- **When**: Automatically on form submit
+- **Purpose**: Complete data structure and domain validation
+- **What**: Type safety, shape validation, business rules
+- **Performance**: Single validation pass for complete data
+
+### **Why Both?**
+
+| Aspect          | Vest.js (Interactive) | Schema (Submit-time) |
+| --------------- | --------------------- | -------------------- |
+| **Timing**      | As user types         | On form submit       |
+| **Scope**       | Individual fields     | Complete object      |
+| **Purpose**     | UX feedback           | Data integrity       |
+| **Performance** | Incremental           | Single pass          |
+| **State**       | `formState().errors`  | `formState().schema` |
+
+### **Example: Best of Both Worlds**
+
+````typescript
+import { z } from 'zod';
+import { staticSuite, test, enforce, only } from 'vest';
+
+// Schema for type safety and submit validation
+const userSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email()
+});
+type User = z.infer<typeof userSchema>;
+
+// Vest suite for interactive field validation
+const userSuite = staticSuite((data: Partial<User> = {}, field?: string) => {
+  only(field); // Optimize: only validate the changed field
+
+  test('name', 'Name is required', () => {
+    enforce(data.name).isNotEmpty();
+  });
+  test('email', 'Please enter a valid email', () => {
+    enforce(data.email).matches(/^[^@]+@[^@]+\.[^@]+$/);
+  });
+});
+
+@Component({
+  template: `
+    <form ngxVestForm
+          [vestSuite]="userSuite"     <!-- Interactive validation -->
+          [formSchema]="userSchema"   <!-- Submit validation -->
+          [(formValue)]="userData"
+          (ngSubmit)="save()">
+
+      <!-- Immediate feedback as user types -->
+      <input name="name" [ngModel]="userData().name">
+      @if (vestForm.formState().errors.name) {
+        <span class="field-error">{{ vestForm.formState().errors.name[0] }}</span>
+      }
+
+      <!-- Complete validation on submit -->
+      @if (vestForm.formState().schema?.success === false) {
+        <div class="submit-errors">
+          @for (issue of vestForm.formState().schema.issues; track issue.message) {
+            <p>{{ issue.message }}</p>
+          }
+        </div>
+      }
+    </form>
+  `
+
+**Key Benefits:**
+
+- ✅ **Best UX**: Immediate field feedback + comprehensive submit validation
+
+- ✅ **Performance**: Incremental validation + single final check
+
+- ✅ **Type Safety**: Full TypeScript inference from schemas
+
+- ✅ **Separation**: No duplicate validation logic or conflicting state
+
+**Reference:** [Vest vs. the Rest](https://vestjs.dev/docs/vest_vs_the_rest) | [Standard Schema Specification](https://standardschema.dev/)
 
 ## Installation
 
 ```sh
 npm i ngx-vest-forms vest
-```
+````
 
 ## Modular Architecture & Tree-shaking
 
@@ -82,6 +174,20 @@ import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 ## Core Features & Quick Start
 
 The core of the library is the `ngxVestForm` directive, which automatically links your form with a Vest validation suite.
+
+### Automatic Submit-time Schema Validation
+
+Bind any supported schema via `[formSchema]` (Zod, Valibot, ArkType, or a template converted with `ngxModelToStandardSchema`) and the directive will automatically run a `safeParse` when the form is submitted. Failed issues are merged into the Angular form errors:
+
+- `errors`: flattened unique list including existing Vest validation messages plus schema messages
+- `schemaErrors`: dedicated array with `<path>: <message>` entries
+
+This keeps interactive typing fast (Vest handles per-field) while guaranteeing full-object integrity at submission without extra boilerplate. Remove manual `(ngSubmit)` handlers previously used just for schema parsing.
+
+Note on `_shape` (dev-time aid):
+
+- When you create a schema using `ngxModelToStandardSchema`, the original template is preserved as `_shape`. In development, the directive can use this to detect typos in `ngModel`/`ngModelGroup` names early.
+- Third-party Standard Schema libraries (Zod, Valibot, ArkType) do not include `_shape`, and that’s fine—submit-time validation works the same.
 
 ### 1. Define Your Model and (Optional) Schema
 
@@ -144,6 +250,55 @@ export class UserFormComponent {
   protected readonly suite = userValidations;
 }
 ```
+
+### Recommended Binding Pattern: `[ngModel]` (One-Way) vs `ngModel` (Two-Way Attribute)
+
+> ✅ **Recommendation:** Use the one-way form of the binding (`[ngModel]="model().field"`) for every control inside a `ngxVestForm`. Avoid the bare `ngModel` attribute unless you explicitly want an initially empty control.
+
+`ngx-vest-forms` already provides a single outbound synchronization channel through `[(formValue)]="model"`. Using the implicit two‑way `ngModel` binding duplicates responsibilities (the control tries to push into the model while the form directive is also managing writes) and can introduce subtle race conditions or transient states. A one‑way `[ngModel]` binding keeps data flow unidirectional:
+
+1. Model signal (source of truth) → control initial value via `[ngModel]`
+2. User edits control → Angular form updates internal `NgForm` → `ngxVestForm` effect merges & emits → updates external `model` signal through `[(formValue)]`
+
+With the bare `ngModel` attribute (no square brackets), Angular sets up a separate two‑way binding. This results in:
+
+- Redundant writes (control value tries to update the model while the directive is also syncing)
+- Harder debugging of timing issues in async validation
+- Missing initial hydration if you rely only on the model signal's pre-populated value (a bare `ngModel` without a bound value starts as an empty string)
+
+#### Side-by-Side Example
+
+```html
+<!-- Recommended (one-way inbound) -->
+<input name="email" [ngModel]="model().email" />
+
+<!-- Fallback (implicit two-way) -->
+<input name="email" ngModel />
+```
+
+#### Pre-populated Value Behavior
+
+| Pattern     | Model initialized to `preset@example.com` | Input initial value  |
+| ----------- | ----------------------------------------- | -------------------- |
+| `[ngModel]` | Yes (hydrated from model)                 | `preset@example.com` |
+| `ngModel`   | Not bound → starts empty                  | `` (empty string)    |
+
+#### Why This Matters
+
+- **Single Source of Truth:** Only the form directive mutates the external model, simplifying mental model.
+- **Consistency With Signals:** Signals work best with clear directional flow; `[ngModel]` preserves this.
+- **Lower Risk of Glitches:** Eliminates duplicate change notifications that can briefly show stale validation state.
+- **Deterministic Initial State:** Ensures pre-populated edit forms render existing data immediately.
+
+#### When Is Bare `ngModel` Acceptable?
+
+Only when you explicitly want a blank control regardless of an existing model value (rare) or in quick prototypes. Even then, migrating to `[ngModel]` later is trivial.
+
+#### Test Coverage
+
+The library’s test suite includes a targeted pair of tests verifying both behaviors (hydration vs empty) so we don’t need to duplicate every scenario across both binding styles.
+
+> ℹ️ This recommendation aligns with the library’s goal of **unidirectional data flow**: external model → controls; user interaction → internal form → external model (single path outward).
 
 ---
 
@@ -400,156 +555,6 @@ type User = InferSchemaType<typeof userSchema>;
 - Prefer Zod, Valibot, or ArkType for new and migrated forms.
 - Use `modelToStandardSchema` only for legacy or custom scenarios.
 - See the [schemas README](./projects/ngx-vest-forms/schemas/README.md) for details and migration notes.
-
----
-
-## Best Practices
-
-- **Use Wrappers:** Always use `<ngx-control-wrapper>` or a custom-built equivalent for every input. This handles error display, accessibility, and pending state automatically.
-
-- **Unidirectional Data Flow for Controls:** Use `[ngModel]` for individual controls to ensure data flows one way from your model to the view. The `ngxVestForm` directive will handle updating the model signal internally.
-
-- **Two-Way Binding for the Form:** Use `[(formValue)]` on the `<form>` element for convenient two-way binding with your form's model signal.
-
-- **Use Signals:** Leverage signals and `computed()` for all form state and derived UI logic.
-
-- **Modern Control Flow:** Use the new Angular control flow (`@if`, `@for`, `@defer`) in templates for better performance and readability.
-
-- **Separate Validation Logic:** Keep validation suites in separate `*.validations.ts` files for clarity, reusability, and separation of concerns.
-
-- **Provide a Schema:** Use `[formSchema]` for type safety and IDE support, especially for complex or nested forms.
-
-- **Handle Cross-Field Validation:**
-  - Use `[validateRootForm]="true"` for root-level (cross-field) validation.
-  - Use `[validationConfig]` for more complex cross-field dependencies (e.g., confirm password, cyclic dependencies).
-
-- **Understand Error Display:**
-  - The available `errorDisplayMode`s are: `'on-blur'`, `'on-submit'`, and `'on-blur-or-submit'` (default).
-  - Error display logic respects a control's `ngModelOptions.updateOn` value. If `updateOn: 'submit'`, errors will only show after form submission, regardless of the display mode. A warning is logged in development to help catch this.
-
-- **Remove Deprecated Patterns:** Avoid using old patterns like `[formShape]`, manual error markup, or deprecated signal APIs.
-
-- **Never manually display field errors:** Let the control wrapper handle error display automatically.
-
----
-
-## Root-Level Form Validation with `validateRootForm`
-
-The `[validateRootForm]` directive enables validations that pertain to the form as a whole, rather than individual fields. This is useful for scenarios requiring cross-field validation or conditions that depend on multiple form values.
-
-By default, `[validateRootForm]` is `false`. To enable it, set it to `true`:
-
-```html
-<form
-  ngxVestForm
-  [vestSuite]="mySuite"
-  [(formValue)]="model"
-  [validateRootForm]="true"
->
-  <!-- form fields -->
-</form>
-```
-
-### How it Works
-
-1. **Define Root Validations in Your Vest Suite:**
-   In your Vest suite, you target these form-level validations using a special key. By default, this key is `'rootForm'`. You can customize this key by providing a different value for the `NGX_ROOT_FORM` injection token. The `injectNgxRootFormKey()` utility function can be used to access the current root form key if needed.
-
-   ```typescript
-   // my-suite.ts
-   import { staticSuite, test, enforce, only } from 'vest';
-   import { injectNgxRootFormKey } from 'ngx-vest-forms';
-
-   export const mySuite = staticSuite(
-     (data: MyFormModel = {}, field?: string) => {
-       only(field);
-
-       // Regular field validations
-       test('email', 'Email is required', () =>
-         enforce(data.email).isNotEmpty(),
-       );
-       test('phone', 'Phone is required', () =>
-         enforce(data.phone).isNotEmpty(),
-       );
-
-       // Root-level validation
-       const rootFormKey = injectNgxRootFormKey(); // Defaults to 'rootForm'
-       test(rootFormKey, 'At least one contact method required', () => {
-         enforce(data.email || data.phone).isTruthy();
-       });
-     },
-   );
-   ```
-
-2. **Accessing Root Issues:**
-   Root-level errors, warnings, and internal Vest suite errors are exposed through the `formState().root` signal on the `ngxVestForm` directive.
-
-   ```typescript
-   // my-component.ts
-   import { Component, viewChild, signal } from '@angular/core';
-   import { NgxFormDirective } from 'ngx-vest-forms';
-   import { mySuite } from './my-suite';
-
-   @Component({
-     template: `
-       <form ngxVestForm #vestForm="ngxVestForm" [validateRootForm]="true">
-         <!-- form fields -->
-
-         @if (vestForm.formState().root?.errors.length) {
-           <div class="form-errors" role="alert">
-             @for (error of vestForm.formState().root.errors; track error) {
-               <div class="error">{{ error }}</div>
-             }
-           </div>
-         }
-       </form>
-     `,
-   })
-   export class MyFormComponent {
-     protected readonly suite = mySuite;
-     protected readonly model = signal({ email: '', phone: '' });
-   }
-   ```
-
-### When to Use `validateRootForm`
-
-- **Cross-Field Dependencies:** When the validity of one field depends on another (e.g., "If 'country' is 'USA', 'state' is required.")
-- **Conditional Form-Wide Rules:** "If 'subscribeToNewsletter' is true, then 'email' must be provided and valid."
-- **Overall Form State Checks:** "At least one contact method (phone or email) must be provided."
-- **Business Rules Involving Multiple Fields:** "If 'userType' is 'admin', then 'department' cannot be 'support'."
-
----
-
-## Native HTML5 Validation is Disabled (`novalidate`)
-
-When you use `ngxVestForm`, the `novalidate` attribute is **automatically added** to your `<form>`. This disables the browser's built-in HTML5 validation UI and ensures that **all validation is handled by VestJS** and your Angular logic.
-
-**Why?**
-
-- **Consistency:** VestJS provides a single source of truth for validation logic and error messages, ensuring a consistent user experience across browsers.
-- **No Double Validation:** Disabling native validation prevents redundant or conflicting error messages from the browser.
-- **Full Control:** VestJS supports complex, conditional, and cross-field validations that native HTML5 cannot handle.
-
-**How?**
-
-You do **not** need to add `novalidate` manually. The directive does this for you:
-
-```html
-<form ngxVestForm [vestSuite]="mySuite" [(formValue)]="model">
-  <!-- ... -->
-</form>
-```
-
-Renders as:
-
-```html
-<form ngxvestform="" novalidate>
-  <!-- ... -->
-</form>
-```
-
-**Best Practice:**
-Define all validation rules (e.g., required, min/max, pattern) in your VestJS suite. Do **not** rely on native HTML5 validation attributes, as they will be ignored by the browser when `novalidate` is present.
 
 ---
 
