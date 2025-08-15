@@ -12,7 +12,6 @@ type UserProfile = {
 
 describe('NgxVestFormsSmartStateDirective', () => {
   @Component({
-    standalone: true,
     imports: [NgxVestFormsSmartStateDirective],
     template: `<form
       ngxSmartStateExtension

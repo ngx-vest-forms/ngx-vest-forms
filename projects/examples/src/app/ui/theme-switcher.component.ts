@@ -2,7 +2,7 @@ import { Component, signal } from '@angular/core';
 
 @Component({
   selector: 'ngx-theme-switcher',
-  standalone: true,
+
   imports: [], // No need for CommonModule with @if
   template: `
     <button

@@ -26,7 +26,7 @@ export type ZodUserProfile = z.infer<typeof zodUserProfileSchema>;
  */
 @Component({
   selector: 'ngx-zod-schema-form',
-  standalone: true,
+
   imports: [SchemaFormComponent],
   template: `
     <section class="prose mb-4 max-w-none">

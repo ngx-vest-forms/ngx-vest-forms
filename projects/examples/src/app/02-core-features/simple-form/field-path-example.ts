@@ -31,7 +31,7 @@ const exampleSuite: NgxVestSuite<ExampleFormModel> = staticSuite(
 
 @Component({
   selector: 'ngx-field-path-form-example',
-  standalone: true,
+
   imports: [ngxVestForms, JsonPipe],
   template: `
     <form

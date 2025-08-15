@@ -513,7 +513,6 @@ describe('NgxFormDirective', () => {
 
       // Local host that surfaces firstInvalidField
       @Component({
-        standalone: true,
         imports: [ngxVestForms],
         template: `
           <form
@@ -574,7 +573,6 @@ describe('NgxFormDirective', () => {
       } as const;
 
       @Component({
-        standalone: true,
         imports: [ngxVestForms, JsonPipe],
         template: `
           <form

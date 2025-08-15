@@ -53,7 +53,6 @@ describe('NgxFormErrorDisplayDirective', () => {
 
   it('should show Vest errors only on blur when errorDisplayMode is "on-blur"', async () => {
     @Component({
-      standalone: true,
       imports: [...ngxVestForms],
       template: `
         <form
@@ -95,7 +94,6 @@ describe('NgxFormErrorDisplayDirective', () => {
 
   it('should show Vest errors only on submit when errorDisplayMode is "on-submit"', async () => {
     @Component({
-      standalone: true,
       imports: [...ngxVestForms],
       template: `
         <form
@@ -137,7 +135,6 @@ describe('NgxFormErrorDisplayDirective', () => {
 
   it('should show Vest errors after blur or submit when errorDisplayMode is "on-blur-or-submit"', async () => {
     @Component({
-      standalone: true,
       imports: [...ngxVestForms],
       template: `
         <form
@@ -197,7 +194,6 @@ describe('NgxFormErrorDisplayDirective', () => {
 
   it('should hide errors while validation is pending', async () => {
     @Component({
-      standalone: true,
       imports: [...ngxVestForms],
       template: `
         <form ngxVestForm [vestSuite]="suite" [(formValue)]="formValue">
@@ -241,7 +237,6 @@ describe('NgxFormErrorDisplayDirective', () => {
 
   it('should expose errors and warnings from Vest validation', async () => {
     @Component({
-      standalone: true,
       imports: [...ngxVestForms],
       template: `
         <form ngxVestForm [vestSuite]="suite" [(formValue)]="formValue">
@@ -285,7 +280,6 @@ describe('NgxFormErrorDisplayDirective', () => {
 
   it('should set formSubmitted after submit event', async () => {
     @Component({
-      standalone: true,
       imports: [...ngxVestForms],
       template: `
         <form
@@ -395,7 +389,6 @@ describe('NgxFormErrorDisplayDirective', () => {
       /* mock */
     });
     @Component({
-      standalone: true,
       imports: [...ngxVestForms],
       template: `
         <form

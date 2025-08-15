@@ -11,7 +11,6 @@ import type {
  */
 @Directive({
   selector: '[ngxSmartStateExtension]',
-  standalone: true,
 })
 export class NgxVestFormsSmartStateDirective<TModel> {
   @Input() externalData: TModel | null = null;

@@ -10,7 +10,6 @@ import { describe, expect, it } from 'vitest';
 // NgxFormCoreDirective included via `ngxVestFormsCore` preset
 
 @Component({
-  standalone: true,
   imports: [...ngxVestFormsCore],
   template: `
     <form ngxVestFormCore [(formValue)]="model" #vest="ngxVestFormCore">
@@ -94,7 +93,6 @@ describe('NgxFormCoreDirective - core behavior', () => {
 
   it('should debounce async validation and produce a single result', async () => {
     @Component({
-      standalone: true,
       imports: [...ngxVestFormsCore],
       template: `
         <form
@@ -152,7 +150,6 @@ describe('NgxFormCoreDirective - core behavior', () => {
 
   it('should set submitted flag and mark controls touched on submit', async () => {
     @Component({
-      standalone: true,
       imports: [...ngxVestFormsCore, JsonPipe],
       template: `
         <form
@@ -195,7 +192,6 @@ describe('NgxFormCoreDirective - core behavior', () => {
 
   it('should debounce async validation and update validity after delay', async () => {
     @Component({
-      standalone: true,
       imports: [...ngxVestFormsCore, JsonPipe],
       template: `
         <form
@@ -262,7 +258,6 @@ describe('NgxFormCoreDirective - core behavior', () => {
 
   it('should toggle dirty flag on input and reset back to pristine', async () => {
     @Component({
-      standalone: true,
       imports: [...ngxVestFormsCore, JsonPipe],
       template: `
         <form

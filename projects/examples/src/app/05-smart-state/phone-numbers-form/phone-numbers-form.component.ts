@@ -5,7 +5,7 @@ import { createPhoneNumbersValidationSuite } from './phone-numbers-form.validati
 
 @Component({
   selector: 'ngx-phone-numbers-form',
-  standalone: true,
+
   imports: [ngxVestForms, PhoneNumbersComponent],
   templateUrl: './phone-numbers-form.component.html',
 })

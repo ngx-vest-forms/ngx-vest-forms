@@ -15,7 +15,7 @@ import { userProfileSuite } from './user-profile.validations';
 
 @Component({
   selector: 'ngx-smart-profile-page', // Updated selector to ngx- prefix
-  standalone: true,
+
   imports: [FormsModule, JsonPipe, ngxVestForms, NgxControlWrapper],
   templateUrl: './smart-profile-form.component.html',
   styleUrl: './smart-profile-form.component.scss',

@@ -19,7 +19,6 @@ import {
  * A component with no form control, used to test the directive's behavior in isolation.
  */
 @Component({
-  standalone: true,
   template: `
     <div ngxFormControlState #state="formControlState">
       <span data-testid="is-valid">{{ state.isValid() }}</span>
@@ -56,7 +55,7 @@ class NoControlComponent {
       }}</span>
     </div>
   `,
-  standalone: true,
+
   imports: [FormsModule, NgxFormControlStateDirective],
 })
 class ContentNgModelComponent {
@@ -82,7 +81,7 @@ class ContentNgModelComponent {
       </div>
     </form>
   `,
-  standalone: true,
+
   imports: [FormsModule, NgxFormControlStateDirective, JsonPipe],
 })
 class TestNgModelGroupComponent {
@@ -100,7 +99,7 @@ class TestNgModelGroupComponent {
     <span data-testid="has-errors">{{ hasErrors() }}</span>
     <span data-testid="error-messages">{{ errorMessages() | json }}</span>
   `,
-  standalone: true,
+
   hostDirectives: [NgxFormControlStateDirective],
   imports: [JsonPipe],
 })
@@ -128,7 +127,7 @@ class SimpleHostTestComponent {
       type="text"
     />
   `,
-  standalone: true,
+
   hostDirectives: [NgxFormControlStateDirective],
   providers: [
     {
@@ -175,7 +174,7 @@ class HostInputComponent implements ControlValueAccessor {
       <span data-testid="host-rendered">Host component rendered</span>
     </form>
   `,
-  standalone: true,
+
   imports: [FormsModule, HostInputComponent],
 })
 class TestHostDirectiveWrapperComponent {

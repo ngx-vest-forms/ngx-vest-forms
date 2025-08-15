@@ -106,7 +106,6 @@ export function getInitialNgxFormControlState(): NgxFormControlState {
 @Directive({
   selector: '[ngxFormControlState]',
   exportAs: 'formControlState',
-  standalone: true,
 })
 export class NgxFormControlStateDirective {
   /**

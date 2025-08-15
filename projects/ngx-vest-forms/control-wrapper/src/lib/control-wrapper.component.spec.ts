@@ -29,7 +29,6 @@ const testSuite = staticSuite((data = {}) => {
 
 // Test component with NgxControlWrapper
 @Component({
-  standalone: true,
   imports: [NgxControlWrapper, ngxVestForms, FormsModule],
   template: `
     <form ngxVestForm [vestSuite]="suite" [(formValue)]="model">
@@ -52,7 +51,6 @@ class TestFormComponent {
 
 // Test component for async validation
 @Component({
-  standalone: true,
   imports: [NgxControlWrapper, ngxVestForms, FormsModule],
   template: `
     <form ngxVestForm [vestSuite]="suite" [(formValue)]="model">
@@ -82,7 +80,6 @@ class AsyncTestComponent {
 
 // Test component using directive attribute syntax
 @Component({
-  standalone: true,
   imports: [NgxControlWrapper, ngxVestForms, FormsModule],
   template: `
     <form ngxVestForm [vestSuite]="suite" [(formValue)]="model">
@@ -391,7 +388,6 @@ describe('NgxControlWrapper', () => {
 
     it('should handle complex nested content', async () => {
       @Component({
-        standalone: true,
         imports: [NgxControlWrapper, ngxVestForms, FormsModule],
         template: `
           <form ngxVestForm [vestSuite]="suite" [(formValue)]="model">
@@ -478,7 +474,6 @@ describe('NgxControlWrapper', () => {
   describe('Edge Cases', () => {
     it('should handle empty form gracefully', async () => {
       @Component({
-        standalone: true,
         imports: [NgxControlWrapper],
         template: `
           <ngx-control-wrapper>
@@ -505,7 +500,6 @@ describe('NgxControlWrapper', () => {
 
     it('should handle multiple form controls in one wrapper', async () => {
       @Component({
-        standalone: true,
         imports: [NgxControlWrapper, ngxVestForms, FormsModule],
         template: `
           <form ngxVestForm [vestSuite]="suite" [(formValue)]="model">

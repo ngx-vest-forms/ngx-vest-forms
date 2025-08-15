@@ -8,7 +8,7 @@ import { createSimpleFormValidationSuite } from './simple-form.validations';
 
 @Component({
   selector: 'ngx-simple-form',
-  standalone: true,
+
   imports: [FormsModule, NgxFormCoreDirective, NgxFormModelDirective],
   templateUrl: './simple-form.component.html',
   styleUrl: './simple-form.component.scss',

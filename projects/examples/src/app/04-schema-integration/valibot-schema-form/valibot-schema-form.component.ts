@@ -20,7 +20,7 @@ export type ValibotUserProfile = v.InferOutput<typeof valibotUserProfileSchema>;
 
 @Component({
   selector: 'ngx-valibot-schema-form',
-  standalone: true,
+
   imports: [SchemaFormComponent],
   template: `
     <section class="prose mb-4 max-w-none">

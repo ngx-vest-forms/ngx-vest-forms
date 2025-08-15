@@ -27,7 +27,7 @@ export type ArkTypeUserProfile = {
 
 @Component({
   selector: 'ngx-arktype-schema-form',
-  standalone: true,
+
   imports: [SchemaFormComponent],
   template: `
     <section class="prose mb-4 max-w-none">
