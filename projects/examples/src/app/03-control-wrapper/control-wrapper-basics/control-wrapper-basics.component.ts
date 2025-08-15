@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import type { NgxVestSuite } from 'ngx-vest-forms';
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
-import { ngxVestForms } from 'ngx-vest-forms/core';
+import { NgxFormCoreDirective } from 'ngx-vest-forms/core';
 import { createSimpleFormValidationSuite } from '../../02-core-features/simple-form/simple-form.validations';
 
 @Component({
   selector: 'ngx-control-wrapper-basics',
-  imports: [ngxVestForms, NgxControlWrapper],
+  imports: [FormsModule, NgxFormCoreDirective, NgxControlWrapper],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section>
@@ -34,7 +35,7 @@ import { createSimpleFormValidationSuite } from '../../02-core-features/simple-f
       </div>
 
       <form
-        ngxVestForm
+        ngxVestFormCore
         [vestSuite]="suite"
         [(formValue)]="model"
         autocomplete="off"

@@ -22,11 +22,11 @@
   </p>
 
   <form
-    ngxVestForm
+    ngxVestFormCore
     [vestSuite]="suite"
     [(formValue)]="formValue"
-    (ngSubmit)="save(vestForm.formState())"
-    #vestForm="ngxVestForm"
+    (ngSubmit)="save(vestForm.formState().valid)"
+    #vestForm="ngxVestFormCore"
     class="simple-form"
   >
     <!-- Personal Information Section -->
@@ -35,7 +35,7 @@
 
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <!-- First Name -->
-        <ngx-control-wrapper class="form-group">
+        <div class="form-group">
           <label class="form-label">
             First Name *
             <input
@@ -44,12 +44,25 @@
               ngModel
               placeholder="Enter your first name"
               class="form-input"
+              [attr.aria-invalid]="
+                (vestForm.formState().errors['firstName']?.length || 0) > 0
+                  ? 'true'
+                  : 'false'
+              "
             />
           </label>
-        </ngx-control-wrapper>
+          <ul class="form-errors" aria-live="polite">
+            @for (
+              msg of vestForm.formState().errors['firstName'] || [];
+              track msg
+            ) {
+              <li class="text-red-600">{{ msg }}</li>
+            }
+          </ul>
+        </div>
 
         <!-- Last Name -->
-        <ngx-control-wrapper class="form-group">
+        <div class="form-group">
           <label class="form-label">
             Last Name *
             <input
@@ -58,14 +71,27 @@
               ngModel
               placeholder="Enter your last name"
               class="form-input"
+              [attr.aria-invalid]="
+                (vestForm.formState().errors['lastName']?.length || 0) > 0
+                  ? 'true'
+                  : 'false'
+              "
             />
           </label>
-        </ngx-control-wrapper>
+          <ul class="form-errors" aria-live="polite">
+            @for (
+              msg of vestForm.formState().errors['lastName'] || [];
+              track msg
+            ) {
+              <li class="text-red-600">{{ msg }}</li>
+            }
+          </ul>
+        </div>
       </div>
 
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <!-- Email -->
-        <ngx-control-wrapper class="form-group">
+        <div class="form-group">
           <label class="form-label">
             Email *
             <input
@@ -74,12 +100,25 @@
               ngModel
               placeholder="Enter your email"
               class="form-input"
+              [attr.aria-invalid]="
+                (vestForm.formState().errors['email']?.length || 0) > 0
+                  ? 'true'
+                  : 'false'
+              "
             />
           </label>
-        </ngx-control-wrapper>
+          <ul class="form-errors" aria-live="polite">
+            @for (
+              msg of vestForm.formState().errors['email'] || [];
+              track msg
+            ) {
+              <li class="text-red-600">{{ msg }}</li>
+            }
+          </ul>
+        </div>
 
         <!-- Phone -->
-        <ngx-control-wrapper class="form-group">
+        <div class="form-group">
           <label class="form-label">
             Phone Number *
             <input
@@ -88,22 +127,35 @@
               ngModel
               placeholder="Enter your phone number"
               class="form-input"
+              [attr.aria-invalid]="
+                (vestForm.formState().errors['phone']?.length || 0) > 0
+                  ? 'true'
+                  : 'false'
+              "
             />
           </label>
-        </ngx-control-wrapper>
+          <ul class="form-errors" aria-live="polite">
+            @for (
+              msg of vestForm.formState().errors['phone'] || [];
+              track msg
+            ) {
+              <li class="text-red-600">{{ msg }}</li>
+            }
+          </ul>
+        </div>
       </div>
 
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <!-- Date of Birth -->
-        <ngx-control-wrapper class="form-group">
+        <div class="form-group">
           <label class="form-label">
             Date of Birth *
             <input type="date" name="dateOfBirth" ngModel class="form-input" />
           </label>
-        </ngx-control-wrapper>
+        </div>
 
         <!-- Gender -->
-        <ngx-control-wrapper class="form-group">
+        <div class="form-group">
           <label class="form-label">
             Gender *
             <select name="gender" ngModel class="form-select">
@@ -112,12 +164,12 @@
               }
             </select>
           </label>
-        </ngx-control-wrapper>
+        </div>
       </div>
 
       <!-- Gender Other (Conditional) -->
       @if (formValue().gender === 'other') {
-        <ngx-control-wrapper class="form-group">
+        <div class="form-group">
           <label class="form-label">
             Please Specify *
             <input
@@ -128,7 +180,7 @@
               class="form-input"
             />
           </label>
-        </ngx-control-wrapper>
+        </div>
       }
     </div>
 
@@ -137,7 +189,7 @@
       <h4 class="form-section-title">Address</h4>
 
       <!-- Street Address -->
-      <ngx-control-wrapper class="form-group">
+      <div class="form-group">
         <label class="form-label">
           Street Address *
           <input
@@ -148,11 +200,11 @@
             class="form-input"
           />
         </label>
-      </ngx-control-wrapper>
+      </div>
 
       <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
         <!-- City -->
-        <ngx-control-wrapper class="form-group">
+        <div class="form-group">
           <label class="form-label">
             City *
             <input
@@ -163,10 +215,10 @@
               class="form-input"
             />
           </label>
-        </ngx-control-wrapper>
+        </div>
 
         <!-- State -->
-        <ngx-control-wrapper class="form-group">
+        <div class="form-group">
           <label class="form-label">
             State *
             <input
@@ -177,10 +229,10 @@
               class="form-input"
             />
           </label>
-        </ngx-control-wrapper>
+        </div>
 
         <!-- ZIP Code -->
-        <ngx-control-wrapper class="form-group">
+        <div class="form-group">
           <label class="form-label">
             ZIP Code *
             <input
@@ -191,11 +243,11 @@
               class="form-input"
             />
           </label>
-        </ngx-control-wrapper>
+        </div>
       </div>
 
       <!-- Country -->
-      <ngx-control-wrapper class="form-group">
+      <div class="form-group">
         <label class="form-label">
           Country *
           <select name="address.country" ngModel class="form-select">
@@ -204,7 +256,7 @@
             }
           </select>
         </label>
-      </ngx-control-wrapper>
+      </div>
     </div>
 
     <!-- Bio and Website Section -->
@@ -212,7 +264,7 @@
       <h4 class="form-section-title">About You</h4>
 
       <!-- Bio -->
-      <ngx-control-wrapper class="form-group">
+      <div class="form-group">
         <label class="form-label">
           Bio *
           <textarea
@@ -230,10 +282,10 @@
             0/500 characters
           }
         </div>
-      </ngx-control-wrapper>
+      </div>
 
       <!-- Website -->
-      <ngx-control-wrapper class="form-group">
+      <div class="form-group">
         <label class="form-label">
           Website (Optional)
           <input
@@ -244,7 +296,7 @@
             class="form-input"
           />
         </label>
-      </ngx-control-wrapper>
+      </div>
     </div>
 
     <!-- Preferences Section -->
@@ -252,7 +304,7 @@
       <h4 class="form-section-title">Preferences</h4>
 
       <!-- Newsletter -->
-      <ngx-control-wrapper class="form-group">
+      <div class="form-group">
         <label class="form-label flex items-center">
           <input
             type="checkbox"
@@ -262,13 +314,13 @@
           />
           <span class="ms-2"> Subscribe to our newsletter </span>
         </label>
-      </ngx-control-wrapper>
+      </div>
 
       <!-- Notifications -->
       <div class="form-group">
         <span class="form-label"> Notification Preferences </span>
 
-        <ngx-control-wrapper class="form-group">
+        <div class="form-group">
           <label class="form-label flex items-center">
             <input
               type="checkbox"
@@ -278,9 +330,9 @@
             />
             <span class="ms-2"> Email notifications </span>
           </label>
-        </ngx-control-wrapper>
+        </div>
 
-        <ngx-control-wrapper class="form-group">
+        <div class="form-group">
           <label class="form-label flex items-center">
             <input
               type="checkbox"
@@ -290,9 +342,9 @@
             />
             <span class="ms-2"> SMS notifications </span>
           </label>
-        </ngx-control-wrapper>
+        </div>
 
-        <ngx-control-wrapper class="form-group">
+        <div class="form-group">
           <label class="form-label flex items-center">
             <input
               type="checkbox"
@@ -302,7 +354,7 @@
             />
             <span class="ms-2"> Push notifications </span>
           </label>
-        </ngx-control-wrapper>
+        </div>
       </div>
     </div>
 
@@ -310,7 +362,7 @@
     <div class="form-section">
       <h4 class="form-section-title">Profile Picture</h4>
 
-      <ngx-control-wrapper class="form-group">
+      <div class="form-group">
         <label class="form-label">
           Choose Profile Picture (Optional)
           <input
@@ -325,7 +377,7 @@
             Selected: {{ formValue().profilePicture?.name }}
           </div>
         }
-      </ngx-control-wrapper>
+      </div>
     </div>
 
     <!-- Submit Button -->
@@ -335,8 +387,8 @@
     <div class="form-section">
       <h4 class="form-section-title">Form State</h4>
       <div class="form-help">
-        <div>Valid: {{ vestForm.isValid() }}</div>
-        <div>Errors: {{ vestForm.errors | json }}</div>
+        <div>Valid: {{ vestForm.formState().valid }}</div>
+        <div>Errors: {{ vestForm.formState().errors | json }}</div>
       </div>
     </div>
   </form>

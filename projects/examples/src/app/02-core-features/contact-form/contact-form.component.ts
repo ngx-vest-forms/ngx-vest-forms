@@ -1,6 +1,9 @@
 import { Component, signal } from '@angular/core';
-import { ngxVestForms } from 'ngx-vest-forms';
-import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
+import { FormsModule } from '@angular/forms';
+import {
+  NgxFormCoreDirective,
+  NgxFormModelDirective,
+} from 'ngx-vest-forms/core';
 import { enforce, staticSuite, test } from 'vest';
 
 type ContactForm = {
@@ -20,7 +23,7 @@ const contactFormSuite = staticSuite((data = {}) => {
 
 @Component({
   selector: 'ngx-contact-form',
-  imports: [ngxVestForms, NgxControlWrapper],
+  imports: [FormsModule, NgxFormCoreDirective, NgxFormModelDirective],
   styleUrls: ['./contact-form.component.scss'],
   template: `
     <section class="prose mb-4 max-w-none">
@@ -54,18 +57,15 @@ const contactFormSuite = staticSuite((data = {}) => {
     </div>
 
     <form
-      ngxVestForm
+      ngxVestFormCore
       [vestSuite]="suite"
       [(formValue)]="formValue"
-      #vestForm="ngxVestForm"
+      #vestForm="ngxVestFormCore"
       autocomplete="off"
       class="form"
     >
       <section class="form-section">
-        <ngx-control-wrapper
-          errorDisplayMode="on-blur-or-submit"
-          class="form-group"
-        >
+        <div class="form-group">
           <label for="name" class="form-label">Name</label>
           <input
             id="name"
@@ -76,15 +76,21 @@ const contactFormSuite = staticSuite((data = {}) => {
             ngModel
             required
             aria-describedby="name-help"
-            aria-invalid="false"
+            [attr.aria-invalid]="
+              (vestForm.formState().errors['name']?.length || 0) > 0
+                ? 'true'
+                : 'false'
+            "
           />
           <span id="name-help" class="form-help">Enter your full name.</span>
-        </ngx-control-wrapper>
+          <ul class="form-errors" aria-live="polite">
+            @for (msg of vestForm.formState().errors['name'] || []; track msg) {
+              <li class="text-red-600">{{ msg }}</li>
+            }
+          </ul>
+        </div>
 
-        <ngx-control-wrapper
-          errorDisplayMode="on-blur-or-submit"
-          class="form-group"
-        >
+        <div class="form-group">
           <label for="email" class="form-label">Email</label>
           <input
             id="email"
@@ -95,12 +101,24 @@ const contactFormSuite = staticSuite((data = {}) => {
             ngModel
             required
             aria-describedby="email-help"
-            aria-invalid="false"
+            [attr.aria-invalid]="
+              (vestForm.formState().errors['email']?.length || 0) > 0
+                ? 'true'
+                : 'false'
+            "
           />
           <span id="email-help" class="form-help"
             >Enter a valid email address.</span
           >
-        </ngx-control-wrapper>
+          <ul class="form-errors" aria-live="polite">
+            @for (
+              msg of vestForm.formState().errors['email'] || [];
+              track msg
+            ) {
+              <li class="text-red-600">{{ msg }}</li>
+            }
+          </ul>
+        </div>
 
         <button type="submit" class="form-submit">Submit</button>
       </section>

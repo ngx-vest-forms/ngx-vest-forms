@@ -6,6 +6,7 @@ import {
   NgModelGroup,
 } from '@angular/forms';
 import { NgxFormControlStateDirective } from './directives/form-control-state.directive';
+import { NgxFormCoreDirective } from './directives/form-core.directive';
 import { NgxFormErrorDisplayDirective } from './directives/form-error-display.directive';
 import { NgxFormModelGroupDirective } from './directives/form-model-group.directive';
 import { NgxFormModelDirective } from './directives/form-model.directive';
@@ -88,10 +89,24 @@ export const ngxVestForms = [
   NgxValidateRootFormDirective,
 ] as const;
 
+/**
+ * Minimal preset exporting only the core directive and Angular FormsModule.
+ * Useful when you want the lightest setup.
+ */
+export const ngxVestFormsCore = [
+  FormsModule,
+  NgxFormCoreDirective,
+  // Include field and group validator directives so core-only usage
+  // still gets Vest validation on ngModel and ngModelGroup.
+  NgxFormModelDirective,
+  NgxFormModelGroupDirective,
+] as const;
+
 export {
   getInitialNgxFormControlState,
   NgxFormControlState,
 } from './directives/form-control-state.directive';
+export { NgxFormCoreDirective } from './directives/form-core.directive';
 export { NgxFormState } from './directives/form.directive';
 export { injectNgxRootFormKey } from './utils/form-token';
 

@@ -6,6 +6,11 @@ import angular from '@analogjs/vite-plugin-angular';
 
 export default defineProject(({ mode }) => ({
   plugins: [angular(), viteTsConfigPaths()],
+  server: {
+    hmr: {
+      overlay: false,
+    },
+  },
   test: {
     name: 'examples',
     globals: true,
@@ -21,6 +26,25 @@ export default defineProject(({ mode }) => ({
       provider: 'playwright',
       headless: true,
       instances: [{ browser: 'chromium' }],
+      scripts: [
+        {
+          id: 'disable-vite-error-overlay.js',
+          content: `
+            try {
+              const style = document.createElement('style');
+              style.textContent = 'vite-error-overlay { display: none !important; pointer-events: none !important; }';
+              document.head.appendChild(style);
+              const overlay = document.querySelector('vite-error-overlay');
+              if (overlay && overlay.style) {
+                overlay.style.display = 'none';
+                overlay.style.pointerEvents = 'none';
+              }
+            } catch (e) {
+              // ignore
+            }
+          `,
+        },
+      ],
     },
     // Optimize for CI performance
     maxConcurrency: process.env['CI'] ? 1 : 5,

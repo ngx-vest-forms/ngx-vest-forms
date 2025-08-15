@@ -38,6 +38,17 @@ import { ngxVestForms } from 'ngx-vest-forms';
 })
 ```
 
+If you prefer the lightest setup (minimal directive only), you can opt into the core preset:
+
+```typescript
+import { ngxVestFormsCore } from 'ngx-vest-forms/core';
+
+@Component({
+  imports: [ngxVestFormsCore],
+  // ...
+})
+```
+
 ### ✅ Step 3: Update Advanced Features (If Used)
 
 #### v1 Advanced Imports Example

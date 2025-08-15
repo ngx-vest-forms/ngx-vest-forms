@@ -22,11 +22,12 @@
     "paths": {
       "ngx-vest-forms": [
         "dist/ngx-vest-forms",
-        "projects/ngx-vest-forms/src/public-api.ts"
+        "projects/ngx-vest-forms/public-api.ts"
       ],
       "ngx-vest-forms/*": [
-        "dist/ngx-vest-forms/*",
-        "projects/ngx-vest-forms/*/public-api.ts"
+        "projects/ngx-vest-forms/*/src/public-api.ts",
+        "projects/ngx-vest-forms/*/public-api.ts",
+        "dist/ngx-vest-forms/*"
       ],
       "ngx-vest-forms/smart-state": [
         "dist/ngx-vest-forms/smart-state",

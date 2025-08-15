@@ -1,6 +1,9 @@
 import { Component, isDevMode, signal } from '@angular/core';
-import { ngxVestForms } from 'ngx-vest-forms';
-import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
+import { FormsModule } from '@angular/forms';
+import {
+  NgxFormCoreDirective,
+  NgxFormModelDirective,
+} from 'ngx-vest-forms/core';
 import { createRegistrationValidationSuite } from './registration-form.validations';
 
 type RegistrationForm = {
@@ -12,7 +15,7 @@ type RegistrationForm = {
 
 @Component({
   selector: 'ngx-registration-form',
-  imports: [ngxVestForms, NgxControlWrapper],
+  imports: [FormsModule, NgxFormCoreDirective, NgxFormModelDirective],
   templateUrl: './registration-form.component.html',
   styleUrl: './registration-form.component.scss',
 })

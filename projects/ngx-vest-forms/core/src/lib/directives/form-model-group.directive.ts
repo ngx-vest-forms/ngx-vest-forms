@@ -7,6 +7,7 @@ import {
 } from '@angular/forms';
 import { Observable, from, of } from 'rxjs'; // Import 'from' and 'of'
 import { getFormGroupField } from '../utils/form-utils';
+import { NgxFormCoreDirective } from './form-core.directive';
 import { NgxFormDirective } from './form.directive';
 import { NgxValidationOptions } from './validation-options';
 
@@ -28,7 +29,10 @@ import { NgxValidationOptions } from './validation-options';
 export class NgxFormModelGroupDirective implements AsyncValidator {
   validationOptions = input<NgxValidationOptions>({ debounceTime: 0 });
   // Inject optionally to prevent runtime DI errors when used outside a ngxVestForm context
-  private readonly formDirective = inject(NgxFormDirective, {
+  private readonly fullFormDirective = inject(NgxFormDirective, {
+    optional: true,
+  });
+  private readonly coreFormDirective = inject(NgxFormCoreDirective, {
     optional: true,
   });
 
@@ -41,15 +45,18 @@ export class NgxFormModelGroupDirective implements AsyncValidator {
       return of(null); // Or handle as appropriate
     }
 
-    // If there is no parent NgxFormDirective, skip validation gracefully
-    if (!this.formDirective) {
+    // Resolve context: prefer full directive if present, else core
+    const formContext = this.fullFormDirective ?? this.coreFormDirective;
+
+    // If there is no parent ngxVestForm context, skip validation gracefully
+    if (!formContext) {
       console.debug(
         '[ngx-vest-forms] ngModelGroup used outside of ngxVestForm; skipping validation.',
       );
       return of(null);
     }
 
-    const { ngForm } = this.formDirective;
+    const { ngForm } = formContext;
     const field = getFormGroupField(ngForm.control, control);
 
     // Add check for field
@@ -60,7 +67,7 @@ export class NgxFormModelGroupDirective implements AsyncValidator {
       return of(null);
     }
 
-    const asyncValidator = this.formDirective.createAsyncValidator(
+    const asyncValidator = formContext.createAsyncValidator(
       field,
       this.validationOptions(),
     );

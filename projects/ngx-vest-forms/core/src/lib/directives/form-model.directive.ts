@@ -7,6 +7,7 @@ import {
 } from '@angular/forms';
 import { Observable, from, of } from 'rxjs';
 import { getFormControlField } from '../utils/form-utils';
+import { NgxFormCoreDirective } from './form-core.directive';
 import { NgxFormDirective } from './form.directive';
 import { NgxValidationOptions } from './validation-options';
 
@@ -32,8 +33,10 @@ export class NgxFormModelDirective implements AsyncValidator {
    * Injected optionally so that using ngModel outside of an ngxVestForm
    * does not crash the application. In that case, validation becomes a no-op.
    */
-  private readonly formDirective = inject(NgxFormDirective, {
+  private readonly fullForm = inject(NgxFormDirective, { optional: true });
+  private readonly coreForm = inject(NgxFormCoreDirective, {
     optional: true,
+    host: true,
   });
 
   validate(control: AbstractControl): Observable<ValidationErrors | null> {
@@ -46,14 +49,15 @@ export class NgxFormModelDirective implements AsyncValidator {
     }
 
     // If there is no parent NgxFormDirective, skip validation gracefully
-    if (!this.formDirective) {
+    const context = this.fullForm ?? this.coreForm;
+    if (!context) {
       console.debug(
         '[ngx-vest-forms] ngModel used outside of ngxVestForm; skipping validation.',
       );
       return of(null);
     }
 
-    const { ngForm } = this.formDirective;
+    const { ngForm } = context;
     const field = getFormControlField(ngForm.control, control);
 
     if (!field) {
@@ -63,7 +67,7 @@ export class NgxFormModelDirective implements AsyncValidator {
       return of(null);
     }
 
-    const asyncValidator = this.formDirective.createAsyncValidator(
+    const asyncValidator = context.createAsyncValidator(
       field,
       this.validationOptions(),
     );

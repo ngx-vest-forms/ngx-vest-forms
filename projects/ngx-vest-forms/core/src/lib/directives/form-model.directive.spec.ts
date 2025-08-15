@@ -1,7 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { render, screen } from '@testing-library/angular';
 import { userEvent } from '@vitest/browser/context';
-import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 import { enforce, staticSuite, test as vestTest } from 'vest';
 import { afterEach, describe, expect, it, test, vi } from 'vitest';
 import { ngxVestForms } from '../../public-api';
@@ -39,7 +38,7 @@ import { ngxVestForms } from '../../public-api';
       <div data-testid="form-valid">{{ vestForm.formState().valid }}</div>
     </form>
   `,
-  imports: [ngxVestForms, NgxControlWrapper],
+  imports: [ngxVestForms],
 })
 class HostComponent {
   model = signal<{ email: string; password: string }>({

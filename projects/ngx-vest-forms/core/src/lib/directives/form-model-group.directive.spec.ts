@@ -7,12 +7,12 @@ import { userEvent } from '@vitest/browser/context';
 import { enforce, staticSuite, test as vestTest } from 'vest';
 import { describe, expect, test } from 'vitest';
 
-import { ngxVestForms } from '../exports';
-import { NgxVestSuite } from '../utils/validation-suite';
-import { NgxFormDirective } from './form.directive';
+import { NgxFormCoreDirective } from './form-core.directive';
+import { NgxFormModelGroupDirective } from './form-model-group.directive';
+import { NgxFormModelDirective } from './form-model.directive';
 
 // Test validation suite for model groups
-const addressFormSuite = staticSuite((data = {}) => {
+const addressFormSuite = staticSuite((data: Partial<AddressFormModel> = {}) => {
   vestTest('address.street', 'Street is required', () => {
     enforce(data.address?.street).isNotEmpty();
   });
@@ -30,13 +30,19 @@ type AddressFormModel = {
 };
 
 @Component({
-  imports: [ngxVestForms, FormsModule, JsonPipe],
+  imports: [
+    FormsModule,
+    NgxFormCoreDirective,
+    NgxFormModelDirective,
+    NgxFormModelGroupDirective,
+    JsonPipe,
+  ],
   template: `
     <form
-      ngxVestForm
+      ngxVestFormCore
       [vestSuite]="suite"
       [(formValue)]="model"
-      #vestForm="ngxVestForm"
+      #vestForm="ngxVestFormCore"
     >
       <div ngModelGroup="address" data-testid="address-group">
         <label for="street">Street</label>
@@ -57,7 +63,7 @@ type AddressFormModel = {
       </div>
 
       <!-- Display form state for testing -->
-      <div data-testid="form-status">{{ vestForm.formState().status }}</div>
+      <div data-testid="form-valid">{{ vestForm.formState().valid }}</div>
       <div data-testid="form-errors">
         {{ vestForm.formState().errors | json }}
       </div>
@@ -65,8 +71,7 @@ type AddressFormModel = {
   `,
 })
 class TestGroupComponent {
-  readonly vestForm =
-    viewChild<NgxFormDirective<null, AddressFormModel>>('vestForm');
+  readonly vestForm = viewChild.required<NgxFormCoreDirective>('vestForm');
 
   model = signal<AddressFormModel>({
     address: {
@@ -75,7 +80,7 @@ class TestGroupComponent {
     },
   });
 
-  suite = addressFormSuite as NgxVestSuite<AddressFormModel>;
+  suite = addressFormSuite;
 }
 
 /**
@@ -103,8 +108,8 @@ describe('NgxFormModelGroupDirective', () => {
 
       // Initial form should be valid (empty validation)
       await expect
-        .element(screen.getByTestId('form-status'))
-        .toHaveTextContent('VALID');
+        .element(screen.getByTestId('form-valid'))
+        .toHaveTextContent('true');
     });
 
     test('should validate nested form group fields correctly', async () => {
@@ -163,8 +168,8 @@ describe('NgxFormModelGroupDirective', () => {
         .element(formErrors)
         .not.toHaveTextContent(/City is required/);
       await expect
-        .element(screen.getByTestId('form-status'))
-        .toHaveTextContent('VALID');
+        .element(screen.getByTestId('form-valid'))
+        .toHaveTextContent('true');
     });
 
     test('should handle form group path resolution correctly', async () => {

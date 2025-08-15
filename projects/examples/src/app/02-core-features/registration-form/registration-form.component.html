@@ -35,63 +35,93 @@
   </p>
 
   <form
-    ngxVestForm
+    ngxVestFormCore
     [vestSuite]="suite"
     [(formValue)]="formValue"
     (ngSubmit)="onSubmit()"
-    #vestForm="ngxVestForm"
+    #vestForm="ngxVestFormCore"
     class="simple-form"
   >
     <!-- Email Field -->
-    <ngx-control-wrapper class="form-group">
-      <label class="form-label">
-        Email Address
-        <input
-          type="email"
-          name="email"
-          ngModel
-          autocomplete="email"
-          placeholder="Enter your email"
-          class="form-input"
-        />
-      </label>
-    </ngx-control-wrapper>
+    <div class="form-group">
+      <label class="form-label" for="email">Email Address</label>
+      <input
+        id="email"
+        type="email"
+        name="email"
+        ngModel
+        autocomplete="email"
+        placeholder="Enter your email"
+        class="form-input"
+        [attr.aria-invalid]="
+          (vestForm.formState().errors['email']?.length || 0) > 0
+            ? 'true'
+            : 'false'
+        "
+      />
+      <ul class="form-errors" aria-live="polite">
+        @for (msg of vestForm.formState().errors['email'] || []; track msg) {
+          <li class="text-red-600">{{ msg }}</li>
+        }
+      </ul>
+    </div>
 
     <!-- Password Field -->
-    <ngx-control-wrapper class="form-group">
-      <label class="form-label">
-        Password
-        <input
-          type="password"
-          name="password"
-          ngModel
-          autocomplete="new-password"
-          placeholder="Enter your password"
-          class="form-input"
-        />
-      </label>
+    <div class="form-group">
+      <label class="form-label" for="password">Password</label>
+      <input
+        id="password"
+        type="password"
+        name="password"
+        ngModel
+        autocomplete="new-password"
+        placeholder="Enter your password"
+        class="form-input"
+        [attr.aria-invalid]="
+          (vestForm.formState().errors['password']?.length || 0) > 0
+            ? 'true'
+            : 'false'
+        "
+      />
       <div class="form-help">
         Password must be at least 8 characters with uppercase letter and number
       </div>
-    </ngx-control-wrapper>
+      <ul class="form-errors" aria-live="polite">
+        @for (msg of vestForm.formState().errors['password'] || []; track msg) {
+          <li class="text-red-600">{{ msg }}</li>
+        }
+      </ul>
+    </div>
 
     <!-- Confirm Password Field -->
-    <ngx-control-wrapper class="form-group">
-      <label class="form-label">
-        Confirm Password
-        <input
-          type="password"
-          name="confirmPassword"
-          ngModel
-          autocomplete="new-password"
-          placeholder="Confirm your password"
-          class="form-input"
-        />
-      </label>
-    </ngx-control-wrapper>
+    <div class="form-group">
+      <label class="form-label" for="confirmPassword">Confirm Password</label>
+      <input
+        id="confirmPassword"
+        type="password"
+        name="confirmPassword"
+        ngModel
+        autocomplete="new-password"
+        placeholder="Confirm your password"
+        class="form-input"
+        [attr.aria-invalid]="
+          (vestForm.formState().errors['confirmPassword']?.length || 0) > 0
+            ? 'true'
+            : 'false'
+        "
+      />
+      <ul class="form-errors" aria-live="polite">
+        @for (
+          msg of vestForm.formState().errors['confirmPassword'] || [];
+          track msg
+        ) {
+          <li class="text-red-600">{{ msg }}</li>
+        }
+      </ul>
+    </div>
 
     <!-- Terms and Conditions -->
-    <ngx-control-wrapper class="form-group">
+    <div class="form-group">
       <label class="flex items-center">
         <input
           type="checkbox"
@@ -110,7 +140,15 @@
           </a>
         </span>
       </label>
-    </ngx-control-wrapper>
+      <ul class="form-errors" aria-live="polite">
+        @for (
+          msg of vestForm.formState().errors['agreeToTerms'] || [];
+          track msg
+        ) {
+          <li class="text-red-600">{{ msg }}</li>
+        }
+      </ul>
+    </div>
 
     <button type="submit" class="form-submit">Register</button>
   </form>

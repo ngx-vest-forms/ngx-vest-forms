@@ -1,7 +1,12 @@
 import { ApplicationRef } from '@angular/core';
 import { render } from '@testing-library/angular';
 import { userEvent } from '@vitest/browser/context';
+// Import directly from source to avoid secondary entrypoint resolution issues in Vitest
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
+import { ngxModelToStandardSchema } from '../../../../schemas/src/lib/schema-adapter';
+import * as shapeValidation from '../utils/shape-validation';
+import { TestFormComponent } from './__tests__/components/test-form.component';
 
 // Hoisted mock: replace validateModelTemplate with a vi.fn to allow call count assertions in Vitest Browser
 vi.mock('../utils/shape-validation', async () => {
@@ -13,11 +18,6 @@ vi.mock('../utils/shape-validation', async () => {
     validateModelTemplate: vi.fn(actual.validateModelTemplate),
   };
 });
-
-import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
-import { z } from 'zod';
-import * as shapeValidation from '../utils/shape-validation';
-import { TestFormComponent } from './__tests__/components/test-form.component';
 
 describe('NgxFormDirective - schema template extraction', () => {
   beforeEach(() => {

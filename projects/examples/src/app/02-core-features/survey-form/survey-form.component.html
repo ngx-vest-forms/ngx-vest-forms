@@ -22,11 +22,11 @@
   </p>
 
   <form
-    ngxVestForm
+    ngxVestFormCore
     [vestSuite]="suite"
     [(formValue)]="formValue"
     (ngSubmit)="onSubmit()"
-    #vestForm="ngxVestForm"
+    #vestForm="ngxVestFormCore"
     class="simple-form"
   >
     <!-- Basic Information -->
@@ -36,7 +36,7 @@
       </h4>
 
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <ngx-control-wrapper class="form-group">
+        <div class="form-group">
           <label class="form-label">
             Name *
             <input
@@ -47,9 +47,9 @@
               class="form-input"
             />
           </label>
-        </ngx-control-wrapper>
+        </div>
 
-        <ngx-control-wrapper class="form-group">
+        <div class="form-group">
           <label class="form-label">
             Email *
             <input
@@ -60,10 +60,10 @@
               class="form-input"
             />
           </label>
-        </ngx-control-wrapper>
+        </div>
       </div>
 
-      <ngx-control-wrapper class="form-group">
+      <div class="form-group">
         <label class="form-label">
           Age *
           <input
@@ -76,7 +76,7 @@
             class="form-input"
           />
         </label>
-      </ngx-control-wrapper>
+      </div>
     </div>
 
     <!-- Product Usage -->
@@ -85,7 +85,7 @@
         Product Experience
       </h4>
 
-      <ngx-control-wrapper>
+      <div>
         <label class="flex items-center">
           <input
             type="checkbox"
@@ -97,12 +97,12 @@
             I currently use this product
           </span>
         </label>
-      </ngx-control-wrapper>
+      </div>
 
       <!-- Conditional Product Questions -->
       @if (showProductQuestions()) {
         <div class="mt-4 space-y-4 border-l-4 border-blue-200 pl-4">
-          <ngx-control-wrapper>
+          <div>
             <label class="form-label">
               Product Rating (1-10) *
               <input
@@ -117,7 +117,7 @@
             <div class="mt-1 text-xs text-gray-500">
               Current rating: {{ formValue().productRating || 'Not rated' }}
             </div>
-          </ngx-control-wrapper>
+          </div>
 
           <div>
             <span
@@ -127,7 +127,7 @@
             </span>
             <div class="grid grid-cols-2 gap-2">
               @for (feature of productFeatures; track feature.value) {
-                <ngx-control-wrapper>
+                <div>
                   <label class="flex items-center">
                     <input
                       type="checkbox"
@@ -139,7 +139,7 @@
                     />
                     <span class="ms-2 text-sm">{{ feature.label }}</span>
                   </label>
-                </ngx-control-wrapper>
+                </div>
               }
             </div>
           </div>
@@ -154,7 +154,7 @@
       </h4>
 
       <div class="space-y-6">
-        <ngx-control-wrapper>
+        <div>
           <fieldset class="border-0 p-0">
             <legend
               class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
@@ -185,9 +185,9 @@
               }
             </div>
           </fieldset>
-        </ngx-control-wrapper>
+        </div>
 
-        <ngx-control-wrapper>
+        <div>
           <fieldset class="border-0 p-0">
             <legend
               class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
@@ -204,7 +204,7 @@
               class="w-full accent-blue-600"
             />
           </fieldset>
-        </ngx-control-wrapper>
+        </div>
       </div>
     </div>
 
@@ -214,7 +214,7 @@
         Feedback & Issues
       </h4>
 
-      <ngx-control-wrapper>
+      <div>
         <label class="flex items-center">
           <input
             type="checkbox"
@@ -226,12 +226,12 @@
             I have a complaint or issue to report
           </span>
         </label>
-      </ngx-control-wrapper>
+      </div>
 
       <!-- Conditional Complaint Section -->
       @if (showComplaintSection()) {
         <div class="mt-4 space-y-4 border-l-4 border-red-200 pl-4">
-          <ngx-control-wrapper>
+          <div>
             <label class="form-label">
               Please describe your complaint *
               <textarea
@@ -242,9 +242,9 @@
                 class="form-textarea"
               ></textarea>
             </label>
-          </ngx-control-wrapper>
+          </div>
 
-          <ngx-control-wrapper>
+          <div>
             <label class="form-label">
               Urgency Level *
               <select name="complaintUrgency" ngModel class="form-select">
@@ -254,7 +254,7 @@
                 }
               </select>
             </label>
-          </ngx-control-wrapper>
+          </div>
         </div>
       }
     </div>
@@ -265,7 +265,7 @@
         Contact Preferences
       </h4>
 
-      <ngx-control-wrapper>
+      <div>
         <label class="form-label">
           Preferred Contact Method *
           <select name="preferredContact" ngModel class="form-select">
@@ -274,11 +274,11 @@
             }
           </select>
         </label>
-      </ngx-control-wrapper>
+      </div>
 
       <!-- Conditional Phone Number -->
       @if (showPhoneNumber()) {
-        <ngx-control-wrapper>
+        <div>
           <label class="form-label">
             Phone Number *
             <input
@@ -289,7 +289,7 @@
               class="form-input"
             />
           </label>
-        </ngx-control-wrapper>
+        </div>
       }
     </div>
 
@@ -299,7 +299,7 @@
         Additional Feedback
       </h4>
 
-      <ngx-control-wrapper>
+      <div>
         <label class="form-label">
           Suggestions or Comments *
           <textarea
@@ -310,9 +310,9 @@
             class="form-textarea"
           ></textarea>
         </label>
-      </ngx-control-wrapper>
+      </div>
 
-      <ngx-control-wrapper>
+      <div>
         <label class="mt-4 flex items-center">
           <input
             type="checkbox"
@@ -324,7 +324,7 @@
             I allow follow-up contact regarding this survey
           </span>
         </label>
-      </ngx-control-wrapper>
+      </div>
     </div>
 
     <!-- Submit Button -->

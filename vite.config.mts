@@ -2,6 +2,12 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  // Disable Vite's error overlay so it doesn't block interactions in browser tests
+  server: {
+    hmr: {
+      overlay: false,
+    },
+  },
   test: {
     // Define projects explicitly to avoid non-project files
     projects: ['projects/ngx-vest-forms', 'projects/examples'],

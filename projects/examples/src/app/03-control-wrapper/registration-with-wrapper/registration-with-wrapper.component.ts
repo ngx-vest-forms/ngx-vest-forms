@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
-import { ngxVestForms } from 'ngx-vest-forms/core';
+import { NgxFormCoreDirective } from 'ngx-vest-forms/core';
 import {
   createRegistrationValidationSuite,
   RegistrationFormData,
@@ -8,7 +9,7 @@ import {
 
 @Component({
   selector: 'ngx-registration-with-wrapper',
-  imports: [ngxVestForms, NgxControlWrapper],
+  imports: [FormsModule, NgxFormCoreDirective, NgxControlWrapper],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section>
@@ -36,7 +37,7 @@ import {
       </div>
 
       <form
-        ngxVestForm
+        ngxVestFormCore
         [vestSuite]="suite"
         [(formValue)]="model"
         autocomplete="off"

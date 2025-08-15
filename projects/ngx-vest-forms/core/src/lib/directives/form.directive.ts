@@ -8,9 +8,7 @@ import {
   Injector,
   input,
   isDevMode,
-  model,
   signal,
-  untracked,
 } from '@angular/core';
 import {
   takeUntilDestroyed,
@@ -24,25 +22,20 @@ import {
   NgForm,
   ValidationErrors,
 } from '@angular/forms';
-import {
+import type {
   InferSchemaType,
-  isStandardSchema,
-  ngxExtractTemplateFromSchema,
+  NgxRuntimeSchema,
   SchemaDefinition,
-  toAnyRuntimeSchema,
-  type NgxRuntimeSchema,
 } from 'ngx-vest-forms/schemas';
 import {
   catchError,
   debounceTime,
-  distinctUntilChanged,
   filter,
   map,
   Observable,
   of,
   ReplaySubject,
   retry,
-  share,
   startWith,
   switchMap,
   take,
@@ -57,7 +50,105 @@ import {
 } from '../utils/form-utils';
 import { validateModelTemplate } from '../utils/shape-validation';
 import { NgxVestSuite } from '../utils/validation-suite';
+import { NgxFormCoreDirective } from './form-core.directive';
 import { NgxValidationOptions } from './validation-options';
+
+// Helper to resolve the model type from either a StandardSchema or an NgxRuntimeSchema
+type ModelFromSchema<S> = S extends SchemaDefinition
+  ? InferSchemaType<S>
+  : S extends NgxRuntimeSchema<infer R>
+    ? R
+    : Record<string, unknown>;
+
+// --- Minimal local schema helpers (avoid runtime dependency on schemas entrypoint) ---
+function extractTemplateFromSchema<T = unknown>(schema: unknown): T | null {
+  const candidate = schema as { _shape?: unknown } | null;
+  if (schema && typeof schema === 'object' && candidate?._shape) {
+    return candidate._shape as T;
+  }
+  return null;
+}
+
+function safeParseWithAnySchema(
+  schema: unknown,
+  data: unknown,
+): {
+  success: boolean;
+  issues: { path?: string; message: string }[];
+  meta?: Record<string, unknown>;
+} {
+  // Runtime schema with safeParse
+  if (
+    schema &&
+    typeof schema === 'object' &&
+    typeof (schema as { safeParse?: (d: unknown) => unknown }).safeParse ===
+      'function'
+  ) {
+    try {
+      const result = (
+        schema as { safeParse: (d: unknown) => unknown }
+      ).safeParse(data) as
+        | {
+            success: boolean;
+            issues?: { path?: string; message?: string }[];
+            meta?: Record<string, unknown>;
+          }
+        | undefined;
+      const mappedIssues = (result?.issues ?? []).map((issue) => ({
+        path: issue?.path,
+        message: issue?.message ?? 'Invalid',
+      }));
+      return {
+        success: !!result?.success,
+        issues: mappedIssues,
+        meta: result?.meta,
+      };
+    } catch {
+      return { success: false, issues: [{ message: 'Schema error' }] };
+    }
+  }
+  // StandardSchemaV1: use ~standard.validate
+  if (
+    schema &&
+    typeof schema === 'object' &&
+    (
+      schema as {
+        ['~standard']?: { vendor?: string; validate?: (d: unknown) => unknown };
+      }
+    )['~standard'] &&
+    typeof (
+      schema as { ['~standard']: { validate?: (d: unknown) => unknown } }
+    )['~standard'].validate === 'function'
+  ) {
+    try {
+      const std = (
+        schema as {
+          ['~standard']: { vendor?: string; validate: (d: unknown) => unknown };
+        }
+      )['~standard'];
+      const out = std.validate(data) as
+        | { value?: unknown }
+        | { issues?: { path?: string; message?: string }[] }
+        | undefined;
+      if (out && 'value' in out) {
+        return { success: true, issues: [], meta: { vendor: std.vendor } };
+      }
+      const issues = (
+        out && 'issues' in out
+          ? ((out as { issues?: { path?: string; message?: string }[] })
+              .issues ?? [])
+          : []
+      ).map((issue: { path?: string; message?: string }) => ({
+        path: issue?.path,
+        message: issue?.message ?? 'Invalid',
+      }));
+      return { success: false, issues, meta: { vendor: std.vendor } };
+    } catch {
+      return { success: false, issues: [{ message: 'Schema error' }] };
+    }
+  }
+  return { success: true, issues: [] };
+}
 
 /**
  * Type representing the complete state of a form
@@ -67,7 +158,7 @@ export type NgxFormState<TModel> = {
   /** The current value of the form */
   value: TModel | null;
   /** Current validation errors for specific fields */
-  errors: Record<string, string[]>;
+  errors: Partial<Record<string, string[]>>;
   /** Current validation warnings for specific fields */
   warnings: Record<string, string[]>;
   /** Root-level form issues */
@@ -108,12 +199,38 @@ export type NgxFormState<TModel> = {
 };
 
 /**
- * Directive that integrates Vest validation with Angular forms.
- * This directive is used to create a reactive form that can validate its fields
- * using a Vest suite, and it provides a structured way to manage form state and validation.
+ * Full-featured directive that composes the minimal core and adds advanced
+ * capabilities like root issues, schema validation, metadata, and compat APIs.
  *
- * Defaults to `novalidate` attribute to prevent default HTML5 validation.
- * The validation should be handled by the Vest suite defined in the `vestSuite` input.
+ * What it does
+ * - Extends {@link NgxFormCoreDirective} via hostDirectives.
+ * - Aggregates field errors/warnings and root issues.
+ * - Optionally validates with a schema (StandardSchema or runtime schema).
+ * - Exposes a richer `formState` with status, counts, firstInvalidField, etc.
+ *
+ * When to use it
+ * - Use when you need schema validation, root-level aggregation, or advanced
+ *   state metadata beyond the minimal core.
+ * - For simple forms, prefer `ngxVestFormCore` for smaller surface/perf.
+ *
+ * Usage notes
+ * - Bind model with `[(formValue)]` on the form. The full directive bridges
+ *   this to the core to avoid two-way binding target mismatches.
+ * - You can still use the control-wrapper UI helpers with either core or full.
+ *
+ * Example
+ * ```html
+ * <form ngxVestForm [vestSuite]="suite" [(formValue)]="model" #vest="ngxVestForm">
+ *   <input name="email" ngModel required />
+ *   @if ((vest.formState().errors['email'] || []).length) {
+ *     <ul>
+ *       @for (e of vest.formState().errors['email'] || []; track e) {
+ *         <li>{{ e }}</li>
+ *       }
+ *     </ul>
+ *   }
+ * </form>
+ * ```
  *
  * @template TSchema The schema definition for the form, if any.
  * @template TModel The type of the model represented by the form.
@@ -124,13 +241,24 @@ export type NgxFormState<TModel> = {
   host: {
     '[attr.novalidate]': '""',
   },
+  hostDirectives: [
+    {
+      directive: NgxFormCoreDirective,
+      inputs: ['vestSuite', 'validationOptions', 'formValue'],
+      outputs: ['formValueChange'],
+    },
+  ],
 })
 export class NgxFormDirective<
   TSchema extends SchemaDefinition | NgxRuntimeSchema<unknown> | null = null,
-  TModel = TSchema extends SchemaDefinition
-    ? InferSchemaType<TSchema>
-    : Record<string, unknown>,
+  TModel = ModelFromSchema<NonNullable<TSchema>>,
 > {
+  // Compose the minimal core and extend it with advanced features
+  readonly #core = inject(NgxFormCoreDirective, { host: true });
+  // Forward core inputs for host-dependent directives (e.g., root validator)
+  // Expose as-is so callers can read the signal inputs via .()
+  readonly vestSuite = this.#core.vestSuite;
+  readonly validationOptions = this.#core.validationOptions;
   // INTERNAL SCHEMA STATE (separate from Vest errors)
   readonly #schemaState = signal<{
     hasRun: boolean;
@@ -144,40 +272,14 @@ export class NgxFormDirective<
   readonly #injector = inject(Injector);
   readonly ngForm = inject(NgForm, { self: true, optional: false });
 
-  readonly formValue = model<TModel | null>(null);
+  // formValue two-way binding is provided by the core directive via hostDirectives
   // Accept both StandardSchema and NgxRuntimeSchema at the boundary
   readonly formSchema = input<
     SchemaDefinition | NgxRuntimeSchema<unknown> | null
   >(null);
-  // Accept any suite at the boundary for template ergonomics. We narrow at call sites.
-  readonly vestSuite = input<unknown | null>(null);
   readonly validationConfig = input<Record<string, string[]> | null>(null);
-  readonly validationOptions = input(
-    { debounceTime: 0 } satisfies NgxValidationOptions,
-    {
-      transform: (
-        value: NgxValidationOptions | undefined,
-      ): NgxValidationOptions => ({
-        debounceTime: 0,
-        ...value,
-      }),
-    },
-  );
 
   /// --- INTERNAL STATE ---
-  readonly #validationContext = computed(() => {
-    const suite = this.vestSuite();
-    const options = this.validationOptions();
-    const config = this.validationConfig();
-
-    return {
-      suite,
-      options,
-      config,
-      isValidationReady: !!suite,
-      debounceTime: options.debounceTime,
-    };
-  });
 
   /**
    * Extract template from schema for runtime validation
@@ -185,11 +287,8 @@ export class NgxFormDirective<
   readonly #schemaTemplate = computed(() => {
     const schema = this.formSchema();
     if (!schema) return null;
-    // Extract template only for StandardSchema-based schemas (ngxModelToStandardSchema)
-    if (isStandardSchema(schema)) {
-      return ngxExtractTemplateFromSchema(schema);
-    }
-    return null;
+    // Attempt extraction (returns null for non-ngxModel-based schemas)
+    return extractTemplateFromSchema(schema);
   });
 
   /**
@@ -200,7 +299,7 @@ export class NgxFormDirective<
   // eslint-disable-next-line no-unused-private-class-members -- This is a private effect
   readonly #schemaValidationEffect = effect(() => {
     const template = this.#schemaTemplate();
-    const formValue = this.#formValueSignal();
+    const formValue = this.#core.formState().value;
 
     if (template && formValue) {
       // The validateModelTemplate function will throw ModelTemplateMismatchError in dev mode
@@ -209,17 +308,7 @@ export class NgxFormDirective<
     }
   });
 
-  /**
-   * Simple validator cache for field validators using RxJS pattern
-   * Maps field names to their validation observables with shared debounced streams
-   */
-  readonly #fieldValidatorCache = new Map<
-    string,
-    {
-      stream$: Observable<ValidationErrors | null>;
-      modelChanges$: ReplaySubject<TModel>;
-    }
-  >();
+  // Removed per-field validator cache; validation is delegated to core
 
   /// --- INTERNAL BASE SIGNALS ---
   readonly #statusSignal = toSignal(
@@ -230,28 +319,9 @@ export class NgxFormDirective<
     },
   );
 
-  readonly #formValueSignal = toSignal(
-    this.ngForm.form.valueChanges.pipe(
-      startWith(this.ngForm.form.value),
-      map(() => mergeValuesAndRawValues<TModel>(this.ngForm.form)),
-    ),
-    {
-      injector: this.#injector,
-      initialValue: mergeValuesAndRawValues<TModel>(this.ngForm.form),
-    },
-  );
-
-  readonly #dirtySignal = toSignal(
-    this.ngForm.form.statusChanges.pipe(
-      startWith(this.ngForm.form.status),
-      map(() => this.ngForm.form.dirty),
-    ),
-    { injector: this.#injector, initialValue: this.ngForm.form.dirty },
-  );
+  // Dirty, valid and submitted flags are available via core state
 
   /// --- DERIVED STATUS SIGNALS ---
-  readonly #isValid = computed(() => this.#statusSignal() === 'VALID');
-  readonly #isInvalid = computed(() => this.#statusSignal() === 'INVALID');
   readonly #isPending = computed(() => this.#statusSignal() === 'PENDING');
   readonly #isDisabled = computed(() => this.#statusSignal() === 'DISABLED');
   readonly #isIdle = computed(() => {
@@ -309,7 +379,12 @@ export class NgxFormDirective<
   });
 
   /// --- PUBLIC API: CURRENT FORM STATE ---
+  /**
+   * Rich reactive form state including field and root issues, schema results,
+   * and derived metadata (status, counts, firstInvalidField, etc.).
+   */
   readonly formState = computed<NgxFormState<TModel>>(() => {
+    const base = this.#core.formState();
     const allFieldMessages = this.#fieldErrorsAndWarnings() ?? {};
     const fieldErrors: Record<string, string[]> = {};
     const fieldWarnings: Record<string, string[]> = {};
@@ -353,18 +428,18 @@ export class NgxFormDirective<
     }
 
     return {
-      value: this.#formValueSignal() ?? null,
+      value: base.value ?? null,
       errors: fieldErrors,
       warnings: fieldWarnings,
       root: this.#rootErrorsAndWarnings(),
       status: this.#statusSignal() ?? 'VALID',
-      dirty: this.#dirtySignal() ?? false,
-      valid: this.#isValid(),
-      invalid: this.#isInvalid(),
+      dirty: base.dirty,
+      valid: base.valid,
+      invalid: !base.valid,
       pending: this.#isPending(),
       disabled: this.#isDisabled(),
       idle: this.#isIdle(),
-      submitted: this.#submitted(),
+      submitted: base.submitted,
       errorCount: vestRootErrors + fieldErrorCount,
       warningCount: vestWarningCount,
       firstInvalidField,
@@ -392,128 +467,16 @@ export class NgxFormDirective<
   });
 
   /// --- DEPRECATED PUBLIC API ---
-  readonly isValid = this.#isValid;
-  readonly isInvalid = this.#isInvalid;
+  readonly isValid = computed(() => this.formState().valid);
+  readonly isInvalid = computed(() => this.formState().invalid);
   readonly isPending = this.#isPending;
   readonly isDisabled = this.#isDisabled;
   readonly isIdle = this.#isIdle;
-  readonly dirtyChange = this.#dirtySignal;
-  readonly validChange = computed(() => this.#statusSignal() === 'VALID');
+  readonly dirtyChange = computed(() => this.formState().dirty);
+  readonly validChange = computed(() => this.formState().valid);
   readonly errors = computed(() => this.formState().errors); // Update deprecated errors to reflect new structure
 
-  /// --- EFFECTS ---
-  // Form value synchronization effect - syncs internal form value with external model
-  // This is a legitimate use case for effect() as it's a side effect (updating the model signal)
-  // eslint-disable-next-line no-unused-private-class-members -- This is a private effect
-  readonly #formValueSyncEffect = effect(() => {
-    const currentValue = this.#formValueSignal();
-
-    // Use untracked for logging to avoid creating unnecessary dependencies
-    if (isDevMode()) {
-      untracked(() => this.#logFormValueChanges(currentValue));
-    }
-
-    // Only sync from form to model when we have an actual form value AND the form has controls
-    // This prevents overriding the initial model value with an empty form value on initialization
-    if (
-      currentValue !== undefined &&
-      this.ngForm?.form &&
-      Object.keys(this.ngForm.form.controls).length > 0
-    ) {
-      this.formValue.set(currentValue);
-    }
-  });
-
-  // Model-to-form synchronization effect - syncs external model changes to the Angular form
-  // This handles initial model values and programmatic model updates
-  // eslint-disable-next-line no-unused-private-class-members -- This is a private effect
-  readonly #modelToFormSyncEffect = effect(() => {
-    const modelValue = this.formValue();
-
-    // Skip sync if model is null/undefined or if form is not yet initialized
-    if (!modelValue || !this.ngForm?.form) {
-      return;
-    }
-
-    // Get current form value to avoid unnecessary patches
-    const currentFormValue = this.ngForm.form.value;
-
-    // Only patch if values are different (avoid circular updates)
-    if (JSON.stringify(currentFormValue) !== JSON.stringify(modelValue)) {
-      // Use untracked to avoid creating dependencies on form state changes
-      untracked(() => {
-        if (isDevMode()) {
-          console.log('[NgxFormDirective] Syncing model to form:', {
-            modelValue,
-            currentFormValue,
-          });
-        }
-        this.ngForm.form.patchValue(modelValue, { emitEvent: false });
-      });
-    }
-  });
-
-  // Track previous validation context for comparison
-  #previousValidationContext: {
-    suite: unknown | null;
-    options: NgxValidationOptions;
-    config: Record<string, string[]> | null;
-    isValidationReady: boolean;
-    debounceTime: number;
-  } | null = null;
-
-  /**
-   * Enhanced validation context tracking effect
-   * This ensures validator cache is cleared when validation context changes
-   */
-  // eslint-disable-next-line no-unused-private-class-members -- This is a private effect
-  readonly #validationContextEffect = effect((onCleanup) => {
-    // Track validation context to re-run when it changes
-    const context = this.#validationContext();
-
-    // Log context changes in dev mode to help with debugging
-    if (isDevMode()) {
-      untracked(() => {
-        console.log('[NgxFormDirective] Validation context changed', {
-          isValidationReady: context.isValidationReady,
-          debounceTime: context.debounceTime,
-          hasSuite: !!context.suite,
-          hasConfig: !!context.config,
-        });
-      });
-    }
-
-    // Only clear cache if this is not the initial run and context actually changed
-    if (
-      this.#previousValidationContext &&
-      (this.#previousValidationContext.debounceTime !== context.debounceTime ||
-        this.#previousValidationContext.suite !== context.suite ||
-        this.#previousValidationContext.config !== context.config)
-    ) {
-      untracked(() => {
-        if (this.#fieldValidatorCache.size > 0) {
-          if (isDevMode()) {
-            console.log(
-              '[NgxFormDirective] Clearing validator cache due to context change',
-            );
-          }
-          this.#clearValidatorCache();
-        }
-      });
-    }
-
-    // Store current context for next comparison
-    this.#previousValidationContext = context;
-
-    onCleanup(() => {
-      if (isDevMode()) {
-        console.log(
-          '[NgxFormDirective] Cleaning up validator cache due to effect cleanup',
-        );
-      }
-      this.#clearValidatorCache();
-    });
-  });
+  // no additional bridging effects required; core handles [(formValue)]
 
   constructor() {
     // Setup validation configuration streams
@@ -534,54 +497,13 @@ export class NgxFormDirective<
 
     // Setup automatic cleanup when directive is destroyed
     this.#destroyRef.onDestroy(() => {
-      if (isDevMode()) {
-        console.log(
-          '[NgxFormDirective] Cleaning up validator cache on destroy',
-        );
-      }
-      this.#clearValidatorCache();
+      // core handles cleanup
     });
   }
 
   // afterEveryRender() hook removed as setup logic is now in constructor
 
-  #logFormValueChanges(value: TModel | null | undefined): void {
-    if (!isDevMode()) return;
-
-    let logValue = value;
-    /// Attempt to clone for safer logging of objects in dev mode
-    if (
-      value !== null &&
-      value !== undefined &&
-      typeof value === 'object' &&
-      !((value as object) instanceof Date) &&
-      !Array.isArray(value)
-    ) {
-      try {
-        logValue = structuredClone(value);
-      } catch {
-        /// If cloning fails, log the original value
-      }
-    }
-    console.log(
-      '[NgxFormDirective] #formValueSignal changed. Current value:',
-      logValue,
-    );
-
-    /// Dev-mode warning if the value is an empty object
-    if (
-      value !== null &&
-      value !== undefined &&
-      typeof value === 'object' &&
-      !((value as object) instanceof Date) &&
-      !Array.isArray(value) &&
-      Object.keys(value).length === 0
-    ) {
-      console.warn(
-        '[NgxFormDirective] #formValueSignal is an empty object {}. This will be emitted via formValueChange.',
-      );
-    }
-  }
+  // Removed dev-only form value change logger from full directive
 
   #setupValidationConfigStreams(): void {
     toObservable(this.validationConfig)
@@ -602,9 +524,8 @@ export class NgxFormDirective<
         const schemaCandidate = this.formSchema();
         if (!schemaCandidate) return;
         try {
-          const runtime = toAnyRuntimeSchema(schemaCandidate);
           const currentModel = this.#getCurrentModel();
-          const result = runtime.safeParse(currentModel);
+          const result = safeParseWithAnySchema(schemaCandidate, currentModel);
           if (result.success === false) {
             const issues: { path?: string; message: string }[] =
               result.issues.map(
@@ -718,22 +639,19 @@ export class NgxFormDirective<
     }
   }
 
+  /**
+   * Delegated factory for a per-field async validator backed by Vest.
+   *
+   * Notes
+   * - This simply forwards to the core directive’s implementation.
+   * - See {@link NgxFormCoreDirective.createAsyncValidator} for details.
+   */
   createAsyncValidator(
     field: string,
     validationOptions: NgxValidationOptions,
   ): AsyncValidatorFn {
-    const context = this.#validationContext();
-
-    if (!context.isValidationReady || !context.suite) {
-      return () => of(null);
-    }
-
-    // Cast the suite to the current model type when invoking
-    return this.#createFieldValidator(
-      field,
-      context.suite as NgxVestSuite<TModel>,
-      validationOptions,
-    );
+    // Delegate to core for minimal, reliable async validation
+    return this.#core.createAsyncValidator(field, validationOptions);
   }
 
   #getCurrentModel(): TModel {
@@ -744,128 +662,13 @@ export class NgxFormDirective<
    * Creates a field validator using toObservable + RxJS pattern for streaming validation
    * Replaces complex resource-based validation with simpler, more efficient approach
    */
-  #createFieldValidator(
-    field: string,
-    suite: NgxVestSuite<TModel>,
-    validationOptions: NgxValidationOptions,
-  ): AsyncValidatorFn {
-    // Check if we already have a cached validator for this field
-    let fieldValidatorContext = this.#fieldValidatorCache.get(field);
-
-    if (!fieldValidatorContext) {
-      // Create a shared validation stream for this field
-      const fieldModelChanges$ = new ReplaySubject<TModel>(1);
-
-      const fieldValidator$ = fieldModelChanges$.pipe(
-        debounceTime(validationOptions.debounceTime),
-        distinctUntilChanged(),
-        switchMap(
-          (model) =>
-            new Observable<ValidationErrors | null>((observer) => {
-              try {
-                suite(model, field).done(
-                  (result: SuiteResult<string, string>) => {
-                    const errors = result.getErrors()[field];
-                    const warnings = result.getWarnings()[field];
-
-                    const validationOutput: ValidationErrors | null =
-                      errors?.length || warnings?.length
-                        ? {
-                            ...(errors?.length && { errors }),
-                            ...(warnings?.length && { warnings }),
-                          }
-                        : null;
-
-                    // Use untracked for debug logging to avoid creating dependencies
-                    if (isDevMode()) {
-                      untracked(() => {
-                        console.log(
-                          `[NgxFormDirective] Field '${field}' validation result:`,
-                          { errors, warnings, validationOutput },
-                        );
-                      });
-                    }
-
-                    observer.next(validationOutput);
-                    observer.complete();
-                  },
-                );
-              } catch (error) {
-                // Use untracked for error logging to avoid creating dependencies
-                if (isDevMode()) {
-                  untracked(() => {
-                    console.error(
-                      `[NgxFormDirective] Error during Vest suite execution for field '${field}':`,
-                      error,
-                    );
-                  });
-                }
-                observer.next({
-                  vestInternalError: `Vest suite execution failed for field '${field}'.`,
-                  originalError:
-                    error instanceof Error ? error.message : String(error),
-                });
-                observer.complete();
-              }
-            }),
-        ),
-        catchError((error) => {
-          if (isDevMode()) {
-            untracked(() => {
-              console.error(
-                `[NgxFormDirective] Validation stream error for field '${field}':`,
-                error,
-              );
-            });
-          }
-          return of({
-            vestInternalError: `Validation failed for field '${field}'.`,
-            originalError:
-              error instanceof Error ? error.message : String(error),
-          });
-        }),
-        share(), // Share the stream among multiple subscribers
-        takeUntilDestroyed(this.#destroyRef),
-      );
-
-      // Cache the stream and subject
-      fieldValidatorContext = {
-        stream$: fieldValidator$,
-        modelChanges$: fieldModelChanges$,
-      };
-      this.#fieldValidatorCache.set(field, fieldValidatorContext);
-
-      if (isDevMode()) {
-        console.log(
-          `[NgxFormDirective] Created streaming validator for field '${field}' (debounce: ${validationOptions.debounceTime}ms)`,
-        );
-      }
-    }
-
-    return (control: AbstractControl) => {
-      const modelSnapshot = structuredClone(this.#getCurrentModel());
-      setValueAtPath(modelSnapshot as object, field, control.value);
-
-      // Trigger validation with the new model
-      fieldValidatorContext.modelChanges$.next(modelSnapshot as TModel);
-
-      // Return the stream and ensure it completes properly using take(1)
-      return fieldValidatorContext.stream$.pipe(take(1));
-    };
-  }
+  // Advanced streaming validator removed; core handles async validation
 
   /**
    * Clears the validator cache to prevent memory leaks
    * Called automatically when the component is destroyed
    */
-  #clearValidatorCache(): void {
-    if (isDevMode()) {
-      console.log(
-        `[NgxFormDirective] Clearing validator cache with ${this.#fieldValidatorCache.size} cached validators`,
-      );
-    }
-    this.#fieldValidatorCache.clear();
-  }
+  // No per-field validator cache in full directive anymore
 
   static createVestAsyncValidator<M = Record<string, unknown>>(
     suite: NgxVestSuite<M>,

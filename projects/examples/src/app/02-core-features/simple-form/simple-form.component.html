@@ -10,19 +10,15 @@
   </p>
 </div>
 <form
-  ngxVestForm
-  #vestForm="ngxVestForm"
+  ngxVestFormCore
+  #vestForm="ngxVestFormCore"
   [vestSuite]="suite"
   [(formValue)]="formValue"
   (ngSubmit)="save()"
   autocomplete="off"
   class="simple-form"
 >
-  <div
-    ngxControlWrapper
-    errorDisplayMode="on-blur-or-submit"
-    class="form-group"
-  >
+  <div class="form-group">
     <label for="email" class="form-label">Email</label>
     <input
       id="email"
@@ -33,9 +29,18 @@
       ngModel
       required
       aria-describedby="email-help"
-      aria-invalid="false"
+      [attr.aria-invalid]="
+        (vestForm.formState().errors['email']?.length || 0) > 0
+          ? 'true'
+          : 'false'
+      "
     />
     <span id="email-help" class="form-help">Enter a valid email address.</span>
+    <ul class="form-errors" aria-live="polite">
+      @for (msg of vestForm.formState().errors['email'] || []; track msg) {
+        <li class="text-red-600">{{ msg }}</li>
+      }
+    </ul>
   </div>
   <button
     type="submit"

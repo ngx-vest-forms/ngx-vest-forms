@@ -116,17 +116,26 @@ function validateModelTemplateStructure(
   const valueFields = new Set(Object.keys(formValue));
   const templateFields = new Set(Object.keys(modelTemplate));
 
+  // Heuristic: if the template at this path looks like a record (e.g. keys are numeric strings),
+  // allow additional keys in the value without treating them as template mismatches.
+  const isNumericKey = (k: string) => /^\d+$/.test(k);
+  const templateLooksLikeRecord =
+    templateFields.size > 0 &&
+    [...templateFields].every((k) => isNumericKey(k));
+
   // Check for fields in value that don't exist in template (potential typos in templates)
-  const missingInTemplate = [...valueFields].filter(
-    (field) => !templateFields.has(field),
-  );
-  if (missingInTemplate.length > 0) {
-    for (const field of missingInTemplate) {
-      const fieldPath = path ? `${path}.${field}` : field;
-      if (typeof formValue[field] === 'object' && formValue[field] !== null) {
-        errors.push(`[ngModelGroup] Mismatch: '${fieldPath}'`);
-      } else {
-        errors.push(`[ngModel] Mismatch '${fieldPath}'`);
+  if (!templateLooksLikeRecord) {
+    const missingInTemplate = [...valueFields].filter(
+      (field) => !templateFields.has(field),
+    );
+    if (missingInTemplate.length > 0) {
+      for (const field of missingInTemplate) {
+        const fieldPath = path ? `${path}.${field}` : field;
+        if (typeof formValue[field] === 'object' && formValue[field] !== null) {
+          errors.push(`[ngModelGroup] Mismatch: '${fieldPath}'`);
+        } else {
+          errors.push(`[ngModel] Mismatch '${fieldPath}'`);
+        }
       }
     }
   }

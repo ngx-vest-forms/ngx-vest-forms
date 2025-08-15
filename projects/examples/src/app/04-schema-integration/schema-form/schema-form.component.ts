@@ -4,6 +4,7 @@ import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 // Use main entry (re-export) to avoid deep path that may not exist pre-build
 import { ngxVestForms } from 'ngx-vest-forms';
 import type { NgxRuntimeSchema } from 'ngx-vest-forms/schemas';
+import type { SchemaFormModel } from './schema-form.validations';
 import { schemaFormSuite } from './schema-form.validations';
 
 @Component({
@@ -12,11 +13,11 @@ import { schemaFormSuite } from './schema-form.validations';
   templateUrl: './schema-form.component.html',
   imports: [ngxVestForms, NgxControlWrapper, JsonPipe],
 })
-export class SchemaFormComponent<T = unknown> {
+export class SchemaFormComponent {
   // Schema is passed through to the underlying directive; validation happens automatically on submit.
-  formSchema = input<NgxRuntimeSchema<T> | null>(null);
+  formSchema = input<NgxRuntimeSchema<SchemaFormModel> | null>(null);
   // Two-way bound form data model.
-  formValue = model<T>({} as T);
+  formValue = model<SchemaFormModel>({});
   title = input('');
   description = input('');
   infoBlock = input<string | null>(null);

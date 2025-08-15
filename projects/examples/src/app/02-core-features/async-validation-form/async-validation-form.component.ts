@@ -1,6 +1,9 @@
 import { Component, signal } from '@angular/core';
-import { ngxVestForms } from 'ngx-vest-forms';
-import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
+import { FormsModule } from '@angular/forms';
+import {
+  NgxFormCoreDirective,
+  NgxFormModelDirective,
+} from 'ngx-vest-forms/core';
 
 type AsyncValidationForm = {
   username: string;
@@ -10,7 +13,7 @@ type AsyncValidationForm = {
 
 @Component({
   selector: 'ngx-async-validation-form',
-  imports: [ngxVestForms, NgxControlWrapper],
+  imports: [FormsModule, NgxFormCoreDirective, NgxFormModelDirective],
   styleUrls: ['./async-validation-form.component.scss'],
   template: `
     <section class="form-section">
@@ -51,14 +54,14 @@ type AsyncValidationForm = {
     </section>
 
     <form
-      ngxVestForm
+      ngxVestFormCore
       [(formValue)]="formValue"
       (ngSubmit)="onSubmit()"
-      #vestForm="ngxVestForm"
+      #vestForm="ngxVestFormCore"
       class="form"
     >
       <section class="form-section">
-        <ngx-control-wrapper class="form-group">
+        <div class="form-group">
           <label for="username" class="form-label"> Username * </label>
           <input
             id="username"
@@ -69,9 +72,9 @@ type AsyncValidationForm = {
             class="form-input"
           />
           <div class="form-help">Will check availability on server</div>
-        </ngx-control-wrapper>
+        </div>
 
-        <ngx-control-wrapper class="form-group">
+        <div class="form-group">
           <label for="email" class="form-label"> Email * </label>
           <input
             id="email"
@@ -84,9 +87,9 @@ type AsyncValidationForm = {
           <div class="form-help">
             Will verify email is not already registered
           </div>
-        </ngx-control-wrapper>
+        </div>
 
-        <ngx-control-wrapper class="form-group">
+        <div class="form-group">
           <label for="website" class="form-label"> Website </label>
           <input
             id="website"
@@ -97,7 +100,7 @@ type AsyncValidationForm = {
             class="form-input"
           />
           <div class="form-help">Will check if URL is reachable</div>
-        </ngx-control-wrapper>
+        </div>
 
         <button type="submit" class="form-submit">
           Register (Async Validation)

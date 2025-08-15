@@ -1,11 +1,15 @@
 import { Component, signal, viewChild } from '@angular/core';
-import { NgxFormDirective, ngxVestForms } from 'ngx-vest-forms';
+import { FormsModule } from '@angular/forms';
+import {
+  NgxFormCoreDirective,
+  NgxFormModelDirective,
+} from 'ngx-vest-forms/core';
 import { createSimpleFormValidationSuite } from './simple-form.validations';
 
 @Component({
   selector: 'ngx-simple-form',
   standalone: true,
-  imports: [ngxVestForms],
+  imports: [FormsModule, NgxFormCoreDirective, NgxFormModelDirective],
   templateUrl: './simple-form.component.html',
   styleUrl: './simple-form.component.scss',
 })
@@ -24,7 +28,7 @@ export class SimpleFormComponent {
    * Called on form submit. The form directive handles validation and error display.
    */
   protected readonly vestForm =
-    viewChild.required<NgxFormDirective>('vestForm');
+    viewChild.required<NgxFormCoreDirective>('vestForm');
 
   save(): void {
     const valid = this.vestForm()?.formState().valid ?? false;

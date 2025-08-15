@@ -1,6 +1,6 @@
 import { Component, computed, isDevMode, signal } from '@angular/core';
-import { ngxVestForms } from 'ngx-vest-forms';
-import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
+import { FormsModule } from '@angular/forms';
+import { NgxFormCoreDirective } from 'ngx-vest-forms/core';
 import { createSurveyValidationSuite } from './survey-form.validations';
 
 type SurveyForm = {
@@ -34,7 +34,7 @@ type SurveyForm = {
 
 @Component({
   selector: 'ngx-survey-form',
-  imports: [ngxVestForms, NgxControlWrapper],
+  imports: [FormsModule, NgxFormCoreDirective],
   templateUrl: './survey-form.component.html',
   styleUrl: './survey-form.component.scss',
 })

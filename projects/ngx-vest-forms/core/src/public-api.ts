@@ -3,6 +3,7 @@
  */
 
 export { NgxFormControlStateDirective } from './lib/directives/form-control-state.directive';
+export { NgxFormCoreDirective } from './lib/directives/form-core.directive';
 export { NgxFormErrorDisplayDirective } from './lib/directives/form-error-display.directive';
 export { NgxFormModelGroupDirective } from './lib/directives/form-model-group.directive';
 export { NgxFormModelDirective } from './lib/directives/form-model.directive';
@@ -24,6 +25,7 @@ export {
   getInitialNgxFormControlState,
   injectNgxRootFormKey,
   ngxVestForms,
+  ngxVestFormsCore,
   ngxVestFormsViewProviders,
 } from './lib/exports';
 
