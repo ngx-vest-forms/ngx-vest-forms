@@ -52,6 +52,10 @@ import { validateModelTemplate } from '../utils/shape-validation';
 import { NgxVestSuite } from '../utils/validation-suite';
 import { NgxFormCoreDirective } from './form-core.directive';
 import { NgxValidationOptions } from './validation-options';
+import {
+  extractTemplateFromSchema,
+  safeParseWithAnySchema,
+} from '../utils/schema-utils';
 
 // Helper to resolve the model type from either a StandardSchema or an NgxRuntimeSchema
 type ModelFromSchema<S> = S extends SchemaDefinition
@@ -60,95 +64,7 @@ type ModelFromSchema<S> = S extends SchemaDefinition
     ? R
     : Record<string, unknown>;
 
-// --- Minimal local schema helpers (avoid runtime dependency on schemas entrypoint) ---
-function extractTemplateFromSchema<T = unknown>(schema: unknown): T | null {
-  const candidate = schema as { _shape?: unknown } | null;
-  if (schema && typeof schema === 'object' && candidate?._shape) {
-    return candidate._shape as T;
-  }
-  return null;
-}
-
-function safeParseWithAnySchema(
-  schema: unknown,
-  data: unknown,
-): {
-  success: boolean;
-  issues: { path?: string; message: string }[];
-  meta?: Record<string, unknown>;
-} {
-  // Runtime schema with safeParse
-  if (
-    schema &&
-    typeof schema === 'object' &&
-    typeof (schema as { safeParse?: (d: unknown) => unknown }).safeParse ===
-      'function'
-  ) {
-    try {
-      const result = (
-        schema as { safeParse: (d: unknown) => unknown }
-      ).safeParse(data) as
-        | {
-            success: boolean;
-            issues?: { path?: string; message?: string }[];
-            meta?: Record<string, unknown>;
-          }
-        | undefined;
-      const mappedIssues = (result?.issues ?? []).map((issue) => ({
-        path: issue?.path,
-        message: issue?.message ?? 'Invalid',
-      }));
-      return {
-        success: !!result?.success,
-        issues: mappedIssues,
-        meta: result?.meta,
-      };
-    } catch {
-      return { success: false, issues: [{ message: 'Schema error' }] };
-    }
-  }
-  // StandardSchemaV1: use ~standard.validate
-  if (
-    schema &&
-    typeof schema === 'object' &&
-    (
-      schema as {
-        ['~standard']?: { vendor?: string; validate?: (d: unknown) => unknown };
-      }
-    )['~standard'] &&
-    typeof (
-      schema as { ['~standard']: { validate?: (d: unknown) => unknown } }
-    )['~standard'].validate === 'function'
-  ) {
-    try {
-      const std = (
-        schema as {
-          ['~standard']: { vendor?: string; validate: (d: unknown) => unknown };
-        }
-      )['~standard'];
-      const out = std.validate(data) as
-        | { value?: unknown }
-        | { issues?: { path?: string; message?: string }[] }
-        | undefined;
-      if (out && 'value' in out) {
-        return { success: true, issues: [], meta: { vendor: std.vendor } };
-      }
-      const issues = (
-        out && 'issues' in out
-          ? ((out as { issues?: { path?: string; message?: string }[] })
-              .issues ?? [])
-          : []
-      ).map((issue: { path?: string; message?: string }) => ({
-        path: issue?.path,
-        message: issue?.message ?? 'Invalid',
-      }));
-      return { success: false, issues, meta: { vendor: std.vendor } };
-    } catch {
-      return { success: false, issues: [{ message: 'Schema error' }] };
-    }
-  }
-  return { success: true, issues: [] };
-}
+// --- Minimal local schema helpers moved to ../utils/schema-utils ---
 
 /**
  * Type representing the complete state of a form

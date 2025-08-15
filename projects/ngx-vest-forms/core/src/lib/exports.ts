@@ -119,3 +119,9 @@ export {
 } from './utils/deep-required';
 export { NgxInjectRootFormKeyOptions } from './utils/form-token';
 export { NgxFieldKey, NgxVestSuite } from './utils/validation-suite';
+export {
+  extractTemplateFromSchema,
+  safeParseWithAnySchema,
+  type SchemaIssue,
+  type SchemaParseResult,
+} from './utils/schema-utils';
