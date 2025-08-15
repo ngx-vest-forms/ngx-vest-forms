@@ -51,7 +51,9 @@ src/app/
 
 ### 01-fundamentals
 
-#### minimal-form
+> **Note**: This section intentionally does NOT use `<ngx-control-wrapper>` to show manual error handling and core concepts.
+
+#### minimal-form ✅ EXISTING
 
 - **Purpose**: Show absolute minimum ngx-vest-forms setup
 - **Features**:
@@ -60,57 +62,71 @@ src/app/
   - Signal-based model
   - Vest suite integration
 
-#### basic-validation
+#### basic-validation 🔴 MISSING
 
 - **Purpose**: Demonstrate validation patterns
 - **Features**:
-  - Multiple field types
-  - Different validation rules
-  - Manual error display
+  - Multiple field types (text, email, number, select)
+  - Different validation rules (required, length, format)
+  - Manual error display with conditional rendering
   - Field-specific validation (`only()`)
+  - Show touched/dirty state handling
+  - Demonstrate custom error messages
 
-#### field-states
+#### field-states 🔴 MISSING
 
-- **Purpose**: Show form control states
+- **Purpose**: Show form control states without wrapper
 - **Features**:
   - Display touched/untouched states
   - Show dirty/pristine states
   - Valid/invalid indicators
   - Pending state during async validation
+  - Visual state indicators (CSS classes)
+  - Manual state management patterns
 
 ### 02-core-features
 
-#### simple-form (MIGRATION)
+> **Note**: This section also does NOT use `<ngx-control-wrapper>` to maintain clear progression and demonstrate manual patterns before introducing wrapper convenience.
+
+#### simple-form 🔴 NEEDS MIGRATION
 
 - **Current**: Uses bare `ngModel`
 - **Migration**:
-  - Switch to `[ngModel]`
-  - Add `<ngx-control-wrapper>`
-  - Keep as simple introduction
+  - Switch to `[ngModel]` pattern
+  - Keep manual error display (no wrapper)
+  - Demonstrate proper field binding
+  - Add `isDevMode()` guards for console.log
+  - Add `ChangeDetectionStrategy.OnPush`
 
-#### contact-form (ENHANCEMENT)
+#### contact-form 🔴 NEEDS ENHANCEMENT
 
 - **Current**: Basic contact form
 - **Enhancement**:
-  - Add `<ngx-control-wrapper>` for all fields
-  - Add proper validation messages
+  - Manual error display patterns
   - Show accessibility features
+  - Demonstrate field validation states
+  - Add proper ARIA associations
+  - Wrap console.log with `isDevMode()`
 
-#### registration-form (ENHANCEMENT)
+#### registration-form 🔴 NEEDS ENHANCEMENT
 
 - **Current**: Basic registration
 - **Enhancement**:
   - Add password confirmation (cross-field)
   - Use `[validateRootForm]="true"`
-  - Add `<ngx-control-wrapper>`
+  - Manual cross-field error display
+  - Show validation timing patterns
+  - Add accessibility improvements
 
-#### async-validation (ENHANCEMENT)
+#### async-validation 🔴 NEEDS ENHANCEMENT
 
 - **Current**: Async validation example
 - **Enhancement**:
-  - Show pending state in wrapper
-  - Add loading indicators
-  - Demonstrate debouncing
+  - Manual pending state display
+  - Add loading indicators without wrapper
+  - Demonstrate debouncing manually
+  - Show error recovery patterns
+  - Add proper ARIA live regions
 
 ### 03-schema-integration
 
@@ -353,31 +369,356 @@ interface Subtask {
    - E2E tests for user workflows
    - Performance benchmarks
 
-## Migration Path for Existing Forms
+## Specific Form Improvements Needed
 
-### Phase 1: Add Control Wrapper
+### High Priority Migrations 🔴
 
-- All existing forms get `<ngx-control-wrapper>`
-- Update to use `[ngModel]` pattern
-- Maintain current functionality
+#### 01-fundamentals/basic-validation (CREATE NEW)
 
-### Phase 2: Add Schemas
+```typescript
+// Multiple field types with manual error display
+interface ValidationFormModel {
+  name: string;
+  email: string;
+  age: number;
+  country: string;
+  terms: boolean;
+}
+```
 
-- Add type-safe schemas where applicable
-- Demonstrate schema + Vest validation
-- Show type inference benefits
+- **Features**:
+  - Text, email, number, select, checkbox inputs
+  - Manual error display with `@if` conditions
+  - Field-specific validation with `only()`
+  - Custom error messages per field
+  - Touched/dirty state handling
+  - No control wrapper usage
 
-### Phase 3: Advanced Features
+#### 01-fundamentals/field-states (CREATE NEW)
 
-- Add smart state to suitable forms
-- Implement progressive enhancement
-- Add accessibility improvements
+```typescript
+// Show all form control states manually
+interface StateFormModel {
+  username: string;
+  email: string;
+}
+```
 
-### Phase 4: New Examples
+- **Features**:
+  - Visual indicators for touched/untouched
+  - Dirty/pristine state display
+  - Valid/invalid visual feedback
+  - Pending state during async validation
+  - CSS classes for each state
+  - State change logging (with isDevMode())
 
-- Build the new advanced examples
-- Focus on real-world scenarios
-- Showcase all library features
+#### 02-core-features/simple-form (MIGRATE EXISTING)
+
+- **Current Issues**: Uses two-way `[(ngModel)]`
+- **Required Changes**:
+  - Switch to one-way `[ngModel]` binding
+  - Add `changeDetection: ChangeDetectionStrategy.OnPush`
+  - Wrap console.log with `isDevMode()`
+  - Keep manual error display (no wrapper)
+  - Add accessibility labels
+
+#### 02-core-features/contact-form (ENHANCE EXISTING)
+
+- **Current Issues**: Basic implementation
+- **Required Changes**:
+  - Add manual error display patterns
+  - Implement proper ARIA associations
+  - Show field validation states
+  - Add accessibility features
+  - Wrap console.log with `isDevMode()`
+
+#### 02-core-features/registration-form (ENHANCE EXISTING)
+
+- **Current Issues**: Missing cross-field validation
+- **Required Changes**:
+  - Add password confirmation field
+  - Implement cross-field validation
+  - Use `[validateRootForm]="true"`
+  - Manual cross-field error display
+  - Add accessibility improvements
+
+#### 02-core-features/async-validation (ENHANCE EXISTING)
+
+- **Current Issues**: Basic async example
+- **Required Changes**:
+  - Manual pending state display
+  - Loading indicators without wrapper
+  - Manual debouncing implementation
+  - Error recovery patterns
+  - ARIA live regions for status updates
+
+### Medium Priority Enhancements 🟡
+
+#### 03-schema-integration (ENHANCE ALL)
+
+All schema examples need:
+
+- Universal `<ngx-control-wrapper>` adoption
+- Combined Vest + Schema validation demos
+- Type inference showcases
+- Error categorization examples
+
+#### 04-smart-state/realtime-sync (CREATE NEW)
+
+```typescript
+// Real-time collaboration form
+interface CollaborativeFormModel {
+  title: string;
+  content: string;
+  collaborators: string[];
+}
+```
+
+- **Features**:
+  - WebSocket integration simulation
+  - Optimistic updates
+  - Conflict resolution UI
+  - Zod schema for type safety
+  - `<ngx-control-wrapper>` for errors
+
+#### 05-advanced-patterns/dynamic-forms (CREATE NEW)
+
+```typescript
+// Runtime field generation
+interface DynamicField {
+  id: string;
+  type: 'text' | 'email' | 'number' | 'select';
+  label: string;
+  required: boolean;
+  options?: string[];
+}
+```
+
+- **Features**:
+  - Add/remove fields at runtime
+  - Dynamic validation rules
+  - Schema adaptation
+  - State preservation
+
+#### 05-advanced-patterns/custom-wrapper (CREATE NEW)
+
+```typescript
+// Custom error display component
+@Component({
+  selector: 'app-custom-error-display',
+  hostDirectives: [NgxFormErrorDisplayDirective],
+  template: `
+    <div class="custom-error-container" [class.has-errors]="hasErrors()">
+      <ng-content></ng-content>
+      <div class="error-messages" [@slideIn]="hasErrors()">
+        @for (error of errors(); track error.message) {
+          <div class="error-item">{{ error.message }}</div>
+        }
+      </div>
+    </div>
+  `
+})
+```
+
+- **Features**:
+  - Use `NgxFormErrorDisplayDirective`
+  - Custom styling (non-Tailwind)
+  - Animations on error appearance
+  - Custom error formatting
+
+### Low Priority Additions 🟢
+
+#### 06-real-world/project-management (CREATE NEW)
+
+- **Purpose**: Ultimate nested form showcase
+- **Features**: As specified in detailed requirements
+- **Scope**: 4-level deep nested arrays with full CRUD
+
+## Console Logging Cleanup Required
+
+### Files needing `isDevMode()` guards:
+
+- `business-hours-form.component.ts`
+- `purchase-form.component.ts`
+- `smart-profile-form.component.ts`
+- `survey-form.component.ts`
+- `profile-form.component.ts`
+- `registration-form.component.ts`
+
+### Pattern to implement:
+
+```typescript
+import { isDevMode } from '@angular/core';
+
+// Replace console.log with:
+if (isDevMode()) {
+  console.log('[FormComponent]', message, data);
+}
+
+// Keep console.error without guards:
+console.error('[FormComponent] Critical error:', error);
+```
+
+## Control Wrapper Migration Checklist
+
+### ✅ Already using control wrapper:
+
+- `03-control-wrapper/` examples
+- `04-schema-integration/` examples
+- `05-smart-state/` examples (partial)
+
+### 🔴 Need control wrapper migration:
+
+- `05-advanced-patterns/` examples
+- `06-real-world/` examples
+- New examples being created
+
+### ❌ Should NOT use control wrapper:
+
+- `01-fundamentals/` examples
+- `02-core-features/` examples
+
+## Accessibility Improvements Needed
+
+### Global Requirements:
+
+1. **Label Association**: All inputs must have proper `<label for="id">` or `aria-labelledby`
+2. **Error Announcement**: Use `aria-live="polite"` for validation errors
+3. **Focus Management**: Logical tab order and visible focus indicators
+4. **ARIA Attributes**: Use `aria-invalid`, `aria-describedby` for validation states
+
+### Specific Examples Needing ARIA:
+
+- `registration-form`: Cross-field validation announcements
+- `async-validation`: Pending state announcements
+- `business-hours-form`: Complex nested form navigation
+- `survey-form`: Dynamic field announcements
+
+## Type Safety Enhancements
+
+### Strengthen vestSuite Input Typing:
+
+```typescript
+// Current (form.directive.ts)
+readonly vestSuite = input<unknown | null>(null);
+
+// Proposed
+readonly vestSuite = input<NgxVestSuite<TModel> | null>(null);
+```
+
+### Add Generic Constraints:
+
+```typescript
+// Prevent any leakage in templates
+export type NgxVestSuite<T = any> = {
+  (data?: Partial<T>, field?: string): SuiteResult;
+  readonly [IS_VEST_SUITE]: true;
+};
+```
+
+## Performance Optimizations
+
+### Add to Components:
+
+```typescript
+@Component({
+  // ...existing config
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+```
+
+### Add trackBy Functions:
+
+```typescript
+// For array iterations
+protected trackByIndex = (index: number): number => index;
+protected trackById = (index: number, item: { id: string }): string => item.id;
+```
+
+### Defer Non-Critical Sections:
+
+```html
+@defer (on viewport) {
+<app-advanced-form-section />
+} @placeholder {
+<div class="skeleton-loader"></div>
+}
+```
+
+## Testing Requirements
+
+### Missing Test Coverage:
+
+1. **Playwright E2E**: Schema form validation (`[formSchema]` + `[vestSuite]`)
+2. **Unit Tests**: Suite casting boundaries and root validator behavior
+3. **Visual Regression**: Control wrapper states
+4. **Accessibility**: Screen reader announcements
+
+### Test File Structure:
+
+```
+tests/
+├── e2e/
+│   ├── schema-integration.spec.ts
+│   ├── control-wrapper.spec.ts
+│   └── accessibility.spec.ts
+├── unit/
+│   ├── form-directive.spec.ts
+│   └── validation-suite.spec.ts
+└── visual/
+    └── control-wrapper-states.spec.ts
+```
+
+## Development Implementation Strategy
+
+### Phase 1: Foundation Examples (High Priority) 🔴
+
+Complete the fundamental building blocks:
+
+1. **Create missing 01-fundamentals examples**:
+   - `basic-validation`: Multiple field types with manual error handling
+   - `field-states`: Visual state indicators without wrapper
+
+2. **Migrate 02-core-features to modern patterns**:
+   - Convert all to use `[ngModel]` (one-way binding)
+   - Add `ChangeDetectionStrategy.OnPush`
+   - Implement manual error display patterns
+   - Add `isDevMode()` guards for console logging
+
+3. **Clean up existing examples**:
+   - Wrap all console.log statements with `isDevMode()`
+   - Add proper accessibility attributes
+   - Ensure consistent error handling patterns
+
+### Phase 2: Schema Integration Enhancement (Medium Priority) 🟡
+
+Enhance schema examples to showcase full potential:
+
+1. **Update all schema examples**:
+   - Ensure universal `<ngx-control-wrapper>` usage
+   - Demonstrate combined Vest + Schema validation
+   - Show type inference benefits
+   - Add error categorization examples
+
+2. **Create new advanced examples**:
+   - `realtime-sync`: Real-time collaboration form
+   - `dynamic-forms`: Runtime field generation
+   - `custom-wrapper`: Custom error display component
+
+### Phase 3: Advanced Patterns (Low Priority) 🟢
+
+Build comprehensive real-world examples:
+
+1. **Complete nested arrays showcase**:
+   - 4-level deep project management form
+   - Full CRUD operations at each level
+   - Smart state integration
+   - Performance optimizations
+
+2. **Add testing infrastructure**:
+   - E2E tests for schema integration
+   - Accessibility audit tests
+   - Performance benchmarks
 
 ## Success Metrics
 
@@ -399,48 +740,13 @@ interface Subtask {
    - No feature overload
    - Practical examples
 
-## Recommended Improvements (from recent review)
-
-- Types & API ergonomics
-  - Keep public directive inputs accepting unknown | null where it improves DX; narrow internally at use sites with safe casts.
-  - Prefer string-only field keys in Vest suites; document NgxFieldKey constraints in validations.
-  - Consider exporting a minimal helper type for suite callbacks to guide users in custom suites.
-
-- Control Wrapper DX
-  - Now that `errorDisplayMode` is re-exposed via hostDirectives, showcase per-field overrides in examples.
-  - Add a short README snippet for `NgxControlWrapper` inputs and recommended error patterns.
-
-- Schema integration
-  - Provide a small helper to adapt StandardSchema to runtime schema and vice versa for docs/examples.
-  - Ensure template extraction runs only in dev mode and behind isStandardSchema guards (already done); add tests.
-
-- Logging & dev hygiene
-  - Wrap non-critical console logs in `isDevMode()` across examples (progress ongoing; verify all examples).
-  - Keep critical errors as `console.error` without guards.
-
-- Tests
-  - Add focused unit tests around suite casting boundaries and root validator behavior.
-  - Add Playwright smoke test for a schema form to validate `[formSchema]` + `[vestSuite]` bindings.
-
-- Accessibility
-  - Ensure all example forms associate labels with inputs and use role-based semantics in complex controls.
-  - Add aria-live region for form-level error summary example.
-
-- Documentation
-  - Expand JSDoc around NgxVestSuite bivariant callback rationale with a one-paragraph summary in core README.
-  - Add examples showing `[validateRootForm]` usage for cross-field validation.
-
-- Performance
-  - Defer non-critical example sections with `@defer` where appropriate.
-  - Audit bundle warnings in examples and trim dependencies where possible.
-
 4. **Performance**
    - Fast initial load
    - Smooth interactions
    - Efficient validation
    - Optimized bundles
 
-## Code Quality Improvements
+## Library Code Quality Improvements
 
 ### Type Safety Enhancements
 
