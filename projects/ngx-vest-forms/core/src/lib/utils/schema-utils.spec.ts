@@ -21,7 +21,7 @@ describe('schema-utils', () => {
   });
 
   describe('safeParseWithAnySchema', () => {
-  it('should use runtime safeParse and succeed', () => {
+    it('should use runtime safeParse and succeed', () => {
       const runtimeSchema = {
         safeParse: () => ({ success: true, meta: { vendor: 'rt' } }),
       } as const;
@@ -31,7 +31,7 @@ describe('schema-utils', () => {
       expect(out.meta?.vendor).toBe('rt');
     });
 
-  it('should use runtime safeParse and map issues on failure', () => {
+    it('should use runtime safeParse and map issues on failure', () => {
       const runtimeSchema = {
         safeParse: () => ({
           success: false,
@@ -48,10 +48,10 @@ describe('schema-utils', () => {
     });
 
     it('should use ~standard.validate and succeed', () => {
-    const standardSchema = {
+      const standardSchema = {
         ['~standard']: {
           vendor: 'std',
-      validate: (data: unknown) => ({ value: data }),
+          validate: (data: unknown) => ({ value: data }),
         },
       } as const;
       const out = safeParseWithAnySchema(standardSchema, { email: 'a' });
@@ -61,17 +61,17 @@ describe('schema-utils', () => {
     });
 
     it('should use ~standard.validate and map issues on failure', () => {
-    const standardSchema = {
+      const standardSchema = {
         ['~standard']: {
           vendor: 'std',
-      validate: () => ({
+          validate: () => ({
             issues: [
               { path: 'email', message: 'Invalid' },
               { path: 'password', message: 'Too short' },
             ],
           }),
         },
-    } as const;
+      } as const;
       const out = safeParseWithAnySchema(standardSchema, { email: 'x' });
       expect(out.success).toBe(false);
       expect(out.issues.length).toBe(2);

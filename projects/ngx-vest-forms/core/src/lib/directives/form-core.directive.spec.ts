@@ -4,6 +4,7 @@ import { ngxVestFormsCore } from '../exports';
 // Note: userEvent not used in this focused core spec; native events dispatched instead.
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
+import { create, enforce, only, test as vestTest } from 'vest';
 // NgxFormCoreDirective included via `ngxVestFormsCore` preset
 
 @Component({
@@ -87,5 +88,85 @@ describe('NgxFormCoreDirective - core behavior', () => {
 
     expect(emailInput.value).toBe('');
     expect(passwordInput.value).toBe('');
+  });
+
+  it('should debounce async validation and produce a single result', async () => {
+    @Component({
+      standalone: true,
+      imports: [...ngxVestFormsCore],
+      template: `
+        <form ngxVestFormCore [vestSuite]="suite" [validationOptions]="{ debounceTime: 150 }" #vest="ngxVestFormCore">
+          <label for="username">Username</label>
+          <input id="username" name="username" [ngModel]="''" />
+        </form>
+      `,
+    })
+    class DebounceHostComponent {
+      // Count how many times the suite is executed for the field
+      count = 0;
+      suite = create<{ username: string }>((model, field) => {
+        only(field);
+        this.count++;
+        vestTest('username', 'taken', () => {
+          enforce(model.username).equals('taken');
+        });
+      });
+    }
+
+    const { fixture } = await render(DebounceHostComponent);
+    const appReference = fixture.debugElement.injector.get(ApplicationRef);
+    const username = screen.getByLabelText('Username') as HTMLInputElement;
+
+    // Type quickly multiple times within debounce window
+    username.value = 't';
+    username.dispatchEvent(new Event('input', { bubbles: true }));
+    username.value = 'ta';
+    username.dispatchEvent(new Event('input', { bubbles: true }));
+    username.value = 'tak';
+    username.dispatchEvent(new Event('input', { bubbles: true }));
+
+    // Wait for debounce window to elapse
+    await new Promise((r) => setTimeout(r, 200));
+    await fixture.whenStable();
+    await appReference.whenStable();
+
+    // Suite should have run once due to debounce
+    const instance = fixture.componentInstance as DebounceHostComponent;
+    expect(instance.count).toBe(1);
+  });
+
+  it('should set submitted flag and mark controls touched on submit', async () => {
+    @Component({
+      standalone: true,
+      imports: [...ngxVestFormsCore],
+      template: `
+        <form ngxVestFormCore aria-label="Account form" [(formValue)]="model" #vest="ngxVestFormCore">
+          <label for="email">Email</label>
+          <input id="email" name="email" [ngModel]="model().email" />
+
+          <label for="password">Password</label>
+          <input id="password" name="password" [ngModel]="model().password" />
+        </form>
+      `,
+    })
+    class SubmitHostComponent {
+      model = signal({ email: '', password: '' });
+    }
+
+    const { fixture } = await render(SubmitHostComponent);
+    const appReference = fixture.debugElement.injector.get(ApplicationRef);
+
+    const form = screen.getByRole('form', { name: /account form/i });
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+
+    await fixture.whenStable();
+    await appReference.whenStable();
+
+    const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
+    const passwordInput = screen.getByLabelText('Password') as HTMLInputElement;
+    // Angular adds ng-submitted on form and ng-touched on controls after submit
+    expect(form).toHaveClass('ng-submitted');
+    expect(emailInput).toHaveClass('ng-touched');
+    expect(passwordInput).toHaveClass('ng-touched');
   });
 });
