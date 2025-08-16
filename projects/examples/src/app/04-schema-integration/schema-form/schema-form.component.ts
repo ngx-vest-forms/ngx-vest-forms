@@ -1,5 +1,5 @@
 import { JsonPipe } from '@angular/common';
-import { Component, input, model } from '@angular/core';
+import { Component, input, model, viewChild } from '@angular/core';
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 // Use main entry (re-export) to avoid deep path that may not exist pre-build
 import { ngxVestForms } from 'ngx-vest-forms';
@@ -20,6 +20,8 @@ import { schemaFormSuite } from './schema-form.validations';
   ],
 })
 export class SchemaFormComponent {
+  // Access the wrapper directive instance via template ref `#vestForm="ngxVestForm"`
+  readonly vestForm = viewChild<NgxVestFormWithSchemaDirective>('vestForm');
   // Schema is passed through to the underlying directive; validation happens automatically on submit.
   formSchema = input<NgxRuntimeSchema<SchemaFormModel> | null>(null);
   // Two-way bound form data model.
@@ -41,17 +43,7 @@ export class SchemaFormComponent {
   protected save(): void {
     // Guard: only show success when Vest + schema validation both succeed.
     // (The directive already ran schema safeParse during submit.)
-    const formElement = (document.activeElement?.closest('form') ??
-      document.querySelector('form[ngxVestForm]')) as HTMLFormElement | null;
-    type MaybeDirective = {
-      formState: () => { valid: boolean; schema?: { success: boolean | null } };
-    };
-    const directiveInstance: MaybeDirective | undefined =
-      (formElement &&
-        (formElement as unknown as { __ngxVestFormDirective?: MaybeDirective })
-          .__ngxVestFormDirective) ||
-      undefined;
-    const state = directiveInstance?.formState();
+    const state = this.vestForm()?.formState();
     if (state && (!state.valid || state.schema?.success === false)) return; // Do not alert on invalid submit
     alert('Profile submitted');
   }

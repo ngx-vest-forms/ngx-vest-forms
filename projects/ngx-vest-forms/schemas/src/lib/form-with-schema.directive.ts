@@ -7,7 +7,11 @@ import {
   isDevMode,
 } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { getAllFormErrors, NgxFormCoreDirective } from 'ngx-vest-forms/core';
+import {
+  getAllFormErrors,
+  NGX_SCHEMA_STATE,
+  NgxFormCoreDirective,
+} from 'ngx-vest-forms/core';
 import { catchError, EMPTY, map, merge, Observable, retry, tap } from 'rxjs';
 import { NgxSchemaValidationDirective } from './schema-validation.directive';
 
@@ -43,6 +47,8 @@ export class NgxVestFormWithSchemaDirective {
   // Host services
   readonly #core = inject(NgxFormCoreDirective, { host: true });
   readonly #ngForm = inject(NgForm, { host: true });
+  // Optional schema state provided by NgxSchemaValidationDirective
+  readonly #schemaState = inject(NGX_SCHEMA_STATE, { optional: true });
 
   // Optional dependent field validation config to match full directive API
   readonly validationConfig = input<Record<string, string[]> | null>(null);
@@ -122,6 +128,7 @@ export class NgxVestFormWithSchemaDirective {
       }
     }
 
+    const schema = this.#schemaState?.() ?? null;
     return {
       value: base.value,
       errors: fieldErrors,
@@ -134,6 +141,7 @@ export class NgxVestFormWithSchemaDirective {
       disabled: isDisabled,
       idle: isIdle,
       submitted: base.submitted,
+      schema: schema,
       errorCount: Object.values(fieldErrors).reduce(
         (a, b) => a + (b?.length ?? 0),
         0,

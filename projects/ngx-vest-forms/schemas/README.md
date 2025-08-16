@@ -134,14 +134,26 @@ import { NgxSchemaValidationDirective } from 'ngx-vest-forms/schemas';
 export class MyCmp {}
 ```
 
-````
-
 **Key Benefits:**
 
 - ✅ **Best UX**: Immediate field feedback + comprehensive submit validation
 - ✅ **Performance**: Incremental validation + single final check
 - ✅ **Type Safety**: Full TypeScript inference from schemas
 - ✅ **Separation**: No duplicate validation logic or conflicting state
+
+## Wrapper vs. Manual Composition
+
+You can attach schema validation in two ways:
+
+- Wrapper: `<form ngxVestFormWithSchema ...>`
+  - Pros: One import, exportAs `ngxVestForm`, exposes `formState().schema` along with the usual state.
+  - Use when you want schema submit validation plus core features without wiring multiple directives.
+
+- Manual: `<form ngxVestForm ... ngxSchemaValidation [formSchema]="...">`
+  - Pros: Explicit composition; use when you already import `ngxVestForms` and just want to add schema validation.
+  - Export: read schema state via the main export (`#vestForm="ngxVestForm"`), under `vestForm.formState().schema`.
+
+Both approaches are equivalent at runtime; choose based on DX preference.
 
 ## What is Standard Schema?
 
@@ -177,7 +189,7 @@ if (state.schema?.hasRun && state.schema.success === false) {
   // Handle schema validation errors
   console.log('Schema issues:', state.schema.issues);
 }
-````
+```
 
 ### Why Separate from Vest Validation?
 

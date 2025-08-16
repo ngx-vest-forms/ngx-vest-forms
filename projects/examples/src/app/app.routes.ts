@@ -83,6 +83,14 @@ export const appRoutes: Routes = [
     title: 'Registration (Control Wrapper)',
   },
   {
+    path: 'schema-form',
+    loadComponent: () =>
+      import('./04-schema-integration/schema-form/schema-form.component').then(
+        (m) => m.SchemaFormComponent,
+      ),
+    title: 'Schema Form (Wrapper)',
+  },
+  {
     path: 'zod-schema-form',
     loadComponent: () =>
       import(

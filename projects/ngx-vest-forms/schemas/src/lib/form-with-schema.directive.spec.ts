@@ -61,6 +61,7 @@ const suite = staticSuite((data: Partial<Model> = {}) => {
         {{ vestForm.formState().firstInvalidField }}
       </div>
       <pre data-testid="errors">{{ vestForm.formState().errors | json }}</pre>
+      <pre data-testid="schema">{{ vestForm.formState().schema | json }}</pre>
     </form>
   `,
 })
@@ -155,5 +156,47 @@ describe('NgxVestFormWithSchemaDirective (wrapper)', () => {
       .element(screen.getByTestId('errors'))
       .toHaveTextContent('Passwords must match email');
     await expect(screen.getByTestId('valid')).toHaveTextContent('false');
+  });
+
+  it('runs schema validation on submit and exposes result via formState().schema', async () => {
+    const { fixture } = await render(WrapperHostComponent);
+    const appReference = fixture.debugElement.injector.get(ApplicationRef);
+
+    // Provide a runtime-like schema with safeParse that fails
+    const failing = {
+      safeParse: () => ({
+        success: false,
+        issues: [
+          { path: 'email', message: 'Invalid email' },
+          { path: '', message: 'Generic failure' },
+        ],
+      }),
+    } as const;
+
+    fixture.componentInstance.schema.set(failing);
+    await fixture.whenStable();
+    await appReference.whenStable();
+
+    // Submit
+    const submit = screen.getByRole('button', { name: /submit/i });
+    await userEvent.click(submit);
+    await fixture.whenStable();
+    await appReference.whenStable();
+
+    // Assert schema state via JSON
+    const parsed = JSON.parse(
+      screen.getByTestId('schema').textContent || 'null',
+    ) as {
+      hasRun?: boolean;
+      success?: boolean | null;
+      issues?: { path?: string; message: string }[];
+      errorMap?: Record<string, string[]>;
+    } | null;
+
+    expect(parsed?.hasRun).toBe(true);
+    expect(parsed?.success).toBe(false);
+    expect(
+      parsed?.issues?.some((issue) => issue.message === 'Invalid email'),
+    ).toBe(true);
   });
 });
