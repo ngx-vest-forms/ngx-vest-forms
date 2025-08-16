@@ -26,7 +26,7 @@ It's a small library that bridges the gap between declarative Vest validation su
 - **Signals & Reactivity:** All form state (value, errors, validity, pending, etc.) is exposed as signals for easy, reactive UI updates.
 - **Powerful Validations:** Use Vest.js for declarative, composable, and async validation logic.
 - **Accessible by Default:** Built-in error display, ARIA roles, and keyboard support via `<ngx-control-wrapper>`.
-- **Modern Angular:** Designed for Angular 17+ standalone components, signals, and new control flow (`@if`, `@for`).
+- **Modern Angular:** Designed for Angular 19+ standalone components, signals, zoneless.
 - **Native HTML5 validation is disabled:** The `novalidate` attribute is automatically added to all forms using `ngxVestForm`, so all validation is handled by VestJS and Angular, not the browser.
 - **Advanced Features Available:** Optional smart state management and UI helper components available as secondary entry points.
 
@@ -146,13 +146,13 @@ npm i ngx-vest-forms vest
 
 ### Available Entry Points
 
-| Entry Point                      | Purpose                                 | When to Use                             |
-| -------------------------------- | --------------------------------------- | --------------------------------------- |
-| `ngx-vest-forms`                 | Main package (re-exports core)          | Default usage, backward compatibility   |
-| `ngx-vest-forms/core`            | Core form functionality only            | Minimal bundle, Vest validation only    |
-| `ngx-vest-forms/schemas`         | Schema validation + wrapper directive   | Type-safe validation with Zod/Valibot   |
-| `ngx-vest-forms/smart-state`     | Advanced state management               | Complex form state scenarios            |
-| `ngx-vest-forms/control-wrapper` | UI helper components                    | Custom form controls                    |
+| Entry Point                      | Purpose                               | When to Use                                 |
+| -------------------------------- | ------------------------------------- | ------------------------------------------- |
+| `ngx-vest-forms`                 | Main package (re-exports core)        | Default usage, backward compatibility       |
+| `ngx-vest-forms/core`            | Core form functionality only          | Minimal bundle, Vest validation only        |
+| `ngx-vest-forms/schemas`         | Schema validation + wrapper directive | Type-safe validation with Zod/Valibot       |
+| `ngx-vest-forms/smart-state`     | Advanced state management             | Complex form state scenarios                |
+| `ngx-vest-forms/control-wrapper` | UI helper components                  | Custom form control (`ngx-control-wrapper`) |
 
 ### Import Examples
 
@@ -175,7 +175,7 @@ import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 
 The v2 refactor implements a clean, modular architecture:
 
-```text
+```mermaid
 ngx-vest-forms/core (no schema knowledge)
          ↑
          │ depends on

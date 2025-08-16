@@ -36,13 +36,18 @@ const suite = staticSuite((data = {}, field?: string) => {
 @Component({
   imports: [ngxVestForms],
   template: `
-    <form ngxVestForm [vestSuite]="suite" [(formValue)]="model" #form="ngxVestForm">
-      <input name="email" [ngModel]="model().email">
+    <form
+      ngxVestForm
+      [vestSuite]="suite"
+      [(formValue)]="model"
+      #form="ngxVestForm"
+    >
+      <input name="email" [ngModel]="model().email" />
       @if (form.formState().errors['email']) {
         <span>{{ form.formState().errors['email'][0] }}</span>
       }
     </form>
-  `
+  `,
 })
 export class SimpleFormComponent {
   protected readonly model = signal({ email: '' });
