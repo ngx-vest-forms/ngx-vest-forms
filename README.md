@@ -149,8 +149,8 @@ npm i ngx-vest-forms vest
 | Entry Point                      | Purpose                                 | When to Use                             |
 | -------------------------------- | --------------------------------------- | --------------------------------------- |
 | `ngx-vest-forms`                 | Main package (re-exports core)          | Default usage, backward compatibility   |
-| `ngx-vest-forms/core`            | Core form functionality                 | Explicit core imports, same bundle size |
-| `ngx-vest-forms/schemas`         | Schema adapters (Zod, Valibot, ArkType) | When using schema validation            |
+| `ngx-vest-forms/core`            | Core form functionality only            | Minimal bundle, Vest validation only    |
+| `ngx-vest-forms/schemas`         | Schema validation + wrapper directive   | Type-safe validation with Zod/Valibot   |
 | `ngx-vest-forms/smart-state`     | Advanced state management               | Complex form state scenarios            |
 | `ngx-vest-forms/control-wrapper` | UI helper components                    | Custom form controls                    |
 
@@ -171,23 +171,89 @@ import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 
 **Note**: Both `ngx-vest-forms` and `ngx-vest-forms/core` have identical bundle sizes since the main package simply re-exports from core. Use either based on your preference for import clarity.
 
+## v2 Architecture: Clean Separation
+
+The v2 refactor implements a clean, modular architecture:
+
+```text
+ngx-vest-forms/core (no schema knowledge)
+         ↑
+         │ depends on
+         │
+ngx-vest-forms/schemas (extends core with schema features)
+```
+
+### Design Principles
+
+1. **Core is minimal** - Only essential Vest validation, no schema logic
+2. **Features are optional** - Schema, UI components, and smart state are separate packages
+3. **No circular dependencies** - Clean unidirectional dependencies
+4. **Tree-shakeable** - Unused features don't increase bundle size
+5. **Composable** - Mix and match features as needed
+
+### How It Works
+
+- The core `NgxFormDirective` has no knowledge of schemas
+- The schemas package provides:
+  - `NgxSchemaValidationDirective` - Adds schema validation to any form with core
+  - `NgxVestFormWithSchemaDirective` - Convenient wrapper combining both
+- Each package can evolve independently
+- Users only pay for what they use
+
 ## Core Features & Quick Start
 
 The core of the library is the `ngxVestForm` directive, which automatically links your form with a Vest validation suite.
 
 ### Automatic Submit-time Schema Validation
 
-Bind any supported schema via `[formSchema]` (Zod, Valibot, ArkType, or a template converted with `ngxModelToStandardSchema`). You can attach it either via the convenient `ngxVestFormWithSchema` wrapper from `ngx-vest-forms/schemas` or by adding `ngxSchemaValidation` alongside `ngxVestForm`/`ngxVestFormCore`. On submit, the library runs a `safeParse` and exposes results separately:
+Schema validation is now provided through the `schemas` secondary entry point, keeping the core bundle lean. You have two options:
 
-- `errors`: flattened unique list including existing Vest validation messages plus schema messages
-- `schemaErrors`: dedicated array with `<path>: <message>` entries
+**Option 1: Convenient Wrapper (Recommended)**
+Use `ngxVestFormWithSchema` from `ngx-vest-forms/schemas` for a single-directive solution:
 
-This keeps interactive typing fast (Vest handles per-field) while guaranteeing full-object integrity at submission without extra boilerplate. Remove manual `(ngSubmit)` handlers previously used just for schema parsing.
+```typescript
+import { NgxVestFormWithSchemaDirective } from 'ngx-vest-forms/schemas';
 
-Note on `_shape` (dev-time aid):
+@Component({
+  imports: [NgxVestFormWithSchemaDirective, NgxControlWrapper],
+  template: `
+    <form ngxVestFormWithSchema
+          [vestSuite]="suite"
+          [formSchema]="schema"
+          [(formValue)]="model"
+          #vestForm="ngxVestForm">
+      <!-- form fields -->
+    </form>
+  `
+})
+```
 
-- When you create a schema using `ngxModelToStandardSchema`, the original template is preserved as `_shape`. In development, the directive can use this to detect typos in `ngModel`/`ngModelGroup` names early.
-- Third-party Standard Schema libraries (Zod, Valibot, ArkType) do not include `_shape`, and that’s fine—submit-time validation works the same.
+**Option 2: Manual Composition**
+Attach `NgxSchemaValidationDirective` alongside `ngxVestForm` or `ngxVestFormCore`:
+
+```typescript
+import { ngxVestForms } from 'ngx-vest-forms/core';
+import { NgxSchemaValidationDirective } from 'ngx-vest-forms/schemas';
+
+@Component({
+  imports: [ngxVestForms, NgxSchemaValidationDirective],
+  template: `
+    <form ngxVestForm
+          [vestSuite]="suite"
+          ngxSchemaValidation
+          [formSchema]="schema"
+          [(formValue)]="model">
+      <!-- form fields -->
+    </form>
+  `
+})
+```
+
+Both approaches provide:
+
+- Automatic schema validation on form submit
+- Results exposed via `formState().schema` with `success`, `issues`, and `errorMap`
+- No manual `(ngSubmit)` handlers needed for schema parsing
 
 ### 1. Define Your Model and (Optional) Schema
 

@@ -155,6 +155,21 @@ You can attach schema validation in two ways:
 
 Both approaches are equivalent at runtime; choose based on DX preference.
 
+## Architecture Notes
+
+The schemas package is completely independent from core:
+
+- **Core has no schema knowledge** - The core directive focuses solely on Vest validation
+- **Schemas extends core** - The schema directives inject and enhance the core directive
+- **No circular dependencies** - Clean unidirectional dependency (schemas → core)
+- **Tree-shakeable** - Only include schema validation when you explicitly import it
+
+This separation ensures:
+
+- Smaller bundles for users who only need Vest validation
+- Clear separation of concerns between interactive and structural validation
+- Ability to evolve schema support independently from core functionality
+
 ## What is Standard Schema?
 
 [Standard Schema](https://standardschema.dev/) is a common interface designed by the creators of Zod, Valibot, and ArkType to enable interoperability between different validation libraries. It provides a unified way for tools and frameworks to accept user-defined validators without writing custom adapters for each library.
