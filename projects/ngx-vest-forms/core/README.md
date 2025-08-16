@@ -1,3 +1,32 @@
+### Configuring defaults (DI providers)
+
+Use provider helpers to configure core defaults hierarchically (app, route, or component):
+
+```ts
+import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import {
+  provideNgxVestFormsCore,
+  withRootFormKey,
+  withErrorDisplayMode,
+} from 'ngx-vest-forms/core';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideZoneChangeDetection({ eventCoalescing: true }),
+
+    // One-shot configuration
+    ...provideNgxVestFormsCore({
+      rootFormKey: 'form',
+      errorDisplayMode: 'on-blur-or-submit',
+    }),
+
+    // Or granular helpers
+    withRootFormKey('form'),
+    withErrorDisplayMode('on-submit'),
+  ],
+};
+```
+
 # ngx-vest-forms/core
 
 **Core form validation functionality** - The minimal, essential features for Vest.js integration with Angular template-driven forms.
@@ -19,6 +48,8 @@ Features available in separate packages:
 - **Schema validation** → `ngx-vest-forms/schemas`
 - **UI components** → `ngx-vest-forms/control-wrapper`
 - **Smart state** → `ngx-vest-forms/smart-state`
+
+> **Why separate?** This keeps core minimal while allowing teams to choose their own UI approach. Use the building blocks (`NgxFormErrorDisplayDirective`) to create custom form fields, or import the ready-made `NgxControlWrapper` for rapid development.
 
 ## Quick Start
 

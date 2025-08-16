@@ -44,6 +44,12 @@ export {
   NgxErrorDisplayMode,
 } from './lib/config/error-display.config';
 export {
+  provideNgxVestForms,
+  provideNgxVestFormsCore,
+  withErrorDisplayMode,
+  withRootFormKey,
+} from './lib/providers';
+export {
   NGX_SCHEMA_STATE,
   type NgxSchemaValidationState,
 } from './lib/tokens/schema-state.token';

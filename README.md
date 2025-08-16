@@ -1,6 +1,16 @@
 # ngx-vest-forms
 
-> 🚨 **Upgrading to v2?** See our [**Migration Guide**](./docs/MIGRATION_GUIDE_V2.md) for step-by-step instructions and a [**Breaking Changes Overview**](./docs/BREAKING_CHANGES_PUBLIC_API.md).
+> 🚨 **Upgrading to v2?** See our [**Migration Guide**](./docs/MIGRATION_GUIDE_V2.md) for step-by-step instructions and a [\*\*Bre### Available Entry Points
+
+| Entry Point                      | Purpose                               | When to Use                                |
+| -------------------------------- | ------------------------------------- | ------------------------------------------ |
+| `ngx-vest-forms`                 | Main package (re-exports core)        | Default usage, backward compatibility      |
+| `ngx-vest-forms/core`            | Core form functionality only          | Minimal bundle, Vest validation only       |
+| `ngx-vest-forms/schemas`         | Schema validation + wrapper directive | Type-safe validation with Zod/Valibot      |
+| `ngx-vest-forms/control-wrapper` | UI helper components                  | Ready-made form controls (Tailwind-styled) |
+| `ngx-vest-forms/smart-state`     | Advanced state management             | Complex form state scenarios               |
+
+> 🚨 **Upgrading to v2?** See our [**Migration Guide**](./docs/MIGRATION_GUIDE_V2.md) for step-by-step instructions and a [\*\*Breaking Cha
 
 ---
 
@@ -197,8 +207,23 @@ ngx-vest-forms/schemas (extends core with schema features)
 - The schemas package provides:
   - `NgxSchemaValidationDirective` - Adds schema validation to any form with core
   - `NgxVestFormWithSchemaDirective` - Convenient wrapper combining both
+- The control-wrapper package provides ready-made UI components (Tailwind-based)
 - Each package can evolve independently
 - Users only pay for what they use
+
+### Why Separate Packages?
+
+**Core** - Pure validation logic, no UI opinions
+**Control-wrapper** - Optional UI components with Tailwind styling
+**Schemas** - Optional type-safe schema validation
+**Smart-state** - Optional advanced state management
+
+This separation allows:
+
+- **Custom design systems** to use core building blocks with their own UI
+- **Rapid development teams** to use ready-made components
+- **Minimal bundles** for teams that only need core validation
+- **Flexible styling** - not locked into Tailwind CSS
 
 ## Core Features & Quick Start
 
@@ -756,9 +781,118 @@ Use with the convenient wrapper:
 - **Error display modes:** `'on-blur'`, `'on-submit'`, `'on-blur-or-submit'` (default). Configure globally or per control wrapper.
 - **Accessibility:** All wrappers/components use ARIA roles, keyboard navigation, and visible focus indicators. Error messages are announced for screen readers.
 
+### Configure defaults (DI providers)
+
+Configure core defaults at app/route/component level using provider helpers from `ngx-vest-forms/core`:
+
+```ts
+import { ApplicationConfig } from '@angular/core';
+import {
+  provideNgxVestFormsCore,
+  withRootFormKey,
+  withErrorDisplayMode,
+} from 'ngx-vest-forms/core';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    ...provideNgxVestFormsCore({
+      rootFormKey: 'form',
+      errorDisplayMode: 'on-blur-or-submit',
+    }),
+    // Or granular
+    withRootFormKey('form'),
+    withErrorDisplayMode('on-submit'),
+  ],
+};
+```
+
+---
+
+## ⚠️ Critical: Form Control Names
+
+> **Required:** The `name` attribute on form controls MUST match the property name in your model signal.
+
+```html
+<!-- ✅ CORRECT - name matches model property -->
+<input name="email" [ngModel]="model().email" />
+
+<!-- ❌ WRONG - name doesn't match model property -->
+<input name="user_email" [ngModel]="model().email" />
+```
+
+### Technical Requirements
+
+**Technical Reason:**
+
+- **Vest validates** against your model property names (`email`)
+- **Angular registers controls** using the `name` attribute (`user_email`)
+- **The library maps validation errors** between Vest results and Angular form controls
+- **Mismatches prevent** validation errors from displaying correctly
+
+### Symptoms of Name Mismatch
+
+- ✅ Validation runs (you can see it in Vest suite execution)
+- ❌ Errors don't appear in the UI
+- ❌ Form value has unexpected property names
+- ❌ Type safety breaks between form and model
+- ❌ Schema validation fails to map correctly
+
+### Special Cases
+
+**Nested Objects with `ngModelGroup`:**
+
+```html
+<div ngModelGroup="address">
+  <!-- name must match the nested property path -->
+  <input name="street" [ngModel]="model().address.street" />
+  <input name="city" [ngModel]="model().address.city" />
+</div>
+```
+
+**Dynamic Forms/Arrays:**
+
+```html
+<div *ngFor="let item of items; let i = index">
+  <!-- Use computed property paths for dynamic forms -->
+  <input [name]="'items.' + i + '.value'" [ngModel]="item.value" />
+</div>
+```
+
+**With Schema Validation:**
+When using schemas (`ngxVestFormWithSchema`), the schema property names, Vest suite field names, and HTML `name` attributes must all align:
+
+```typescript
+// Schema defines structure
+const schema = z.object({
+  userEmail: z.string().email(), // ← This name
+});
+
+// Vest suite validates same field names
+const suite = staticSuite((data, field) => {
+  test('userEmail', 'Invalid email', () => {
+    // ← Same name
+    enforce(data.userEmail)
+      .isNotEmpty()
+      .matches(/^[^@]+@[^@]/);
+  });
+});
+```
+
+```html
+<!-- HTML name attribute matches both -->
+<input name="userEmail" [ngModel]="model().userEmail" />
+```
+
 ---
 
 ## Troubleshooting & FAQ
+
+**Q: Why aren't my validation errors showing in the UI?**
+
+- **First, check the `name` attribute:** Ensure `name="fieldName"` matches your model property exactly (`[ngModel]="model().fieldName"`)
+- Check your error display mode (`errorDisplayMode`). Default is `'on-blur-or-submit'`.
+- If using `ngModelOptions.updateOn: 'submit'`, errors only show after submit.
+- Verify your Vest suite is running by adding `console.log` in the test functions.
 
 **Q: Why aren't my errors showing?**
 
