@@ -14,7 +14,6 @@ import {
   NG_ASYNC_VALIDATORS,
   ValidationErrors,
 } from '@angular/forms';
-import { SchemaDefinition } from 'ngx-vest-forms/schemas';
 import {
   catchError,
   debounceTime,
@@ -90,19 +89,15 @@ export class NgxValidateRootFormDirective implements AsyncValidator {
   /**
    * Get the NgxFormDirective instance using modern Angular 20 injection patterns
    */
-  #getFormDirective(): NgxFormDirective<
-    SchemaDefinition | null,
-    unknown
-  > | null {
+  #getFormDirective(): NgxFormDirective<unknown> | null {
     try {
       // Use runInInjectionContext for dynamic provider access
       return runInInjectionContext(this.#injector, () => {
         // Try to get NgxFormDirective from the current injector hierarchy
         // Using NgxFormDirective<any, any> to satisfy generic constraints for now
-        return inject(NgxFormDirective, { optional: true }) as NgxFormDirective<
-          SchemaDefinition | null,
-          unknown
-        > | null;
+        return inject(NgxFormDirective, {
+          optional: true,
+        }) as NgxFormDirective<unknown> | null;
       });
     } catch {
       return null;

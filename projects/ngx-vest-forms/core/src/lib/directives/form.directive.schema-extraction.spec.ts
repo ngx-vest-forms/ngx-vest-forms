@@ -4,18 +4,18 @@ import { userEvent } from '@vitest/browser/context';
 // Import directly from source to avoid secondary entrypoint resolution issues in Vitest
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+import * as schemaAdapter from '../../../../schemas/src/lib/schema-adapter';
 import { ngxModelToStandardSchema } from '../../../../schemas/src/lib/schema-adapter';
-import * as shapeValidation from '../utils/shape-validation';
 import { TestFormComponent } from './__tests__/components/test-form.component';
 
 // Hoisted mock: replace validateModelTemplate with a vi.fn to allow call count assertions in Vitest Browser
-vi.mock('../utils/shape-validation', async () => {
+vi.mock('../../../../schemas/src/lib/schema-adapter', async () => {
   const actual = await vi.importActual<
-    typeof import('../utils/shape-validation')
-  >('../utils/shape-validation');
+    typeof import('../../../../schemas/src/lib/schema-adapter')
+  >('../../../../schemas/src/lib/schema-adapter');
   return {
     ...actual,
-    validateModelTemplate: vi.fn(actual.validateModelTemplate),
+    ngxExtractTemplateFromSchema: vi.fn(actual.ngxExtractTemplateFromSchema),
   };
 });
 
@@ -30,9 +30,10 @@ describe('NgxFormDirective - schema template extraction', () => {
   });
 
   it('should call validateModelTemplate when schema has _shape (ngxModelToStandardSchema)', async () => {
-    const spy = shapeValidation.validateModelTemplate as unknown as ReturnType<
-      typeof vi.fn
-    >;
+    const spy =
+      schemaAdapter.ngxExtractTemplateFromSchema as unknown as ReturnType<
+        typeof vi.fn
+      >;
 
     const { fixture } = await render(TestFormComponent);
     const appReference = fixture.debugElement.injector.get(ApplicationRef);
@@ -63,9 +64,10 @@ describe('NgxFormDirective - schema template extraction', () => {
   });
 
   it('should NOT call validateModelTemplate for Zod/standard schemas without _shape', async () => {
-    const spy = shapeValidation.validateModelTemplate as unknown as ReturnType<
-      typeof vi.fn
-    >;
+    const spy =
+      schemaAdapter.ngxExtractTemplateFromSchema as unknown as ReturnType<
+        typeof vi.fn
+      >;
 
     const { fixture } = await render(TestFormComponent);
     const appReference = fixture.debugElement.injector.get(ApplicationRef);

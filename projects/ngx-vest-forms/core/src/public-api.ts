@@ -43,4 +43,8 @@ export {
   NGX_ERROR_DISPLAY_MODE_DEFAULT,
   NgxErrorDisplayMode,
 } from './lib/config/error-display.config';
+export {
+  NGX_SCHEMA_STATE,
+  type NgxSchemaValidationState,
+} from './lib/tokens/schema-state.token';
 export * from './lib/utils/field-path.utils';

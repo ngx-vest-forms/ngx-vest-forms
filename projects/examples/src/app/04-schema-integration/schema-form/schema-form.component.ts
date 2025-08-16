@@ -4,6 +4,7 @@ import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 // Use main entry (re-export) to avoid deep path that may not exist pre-build
 import { ngxVestForms } from 'ngx-vest-forms';
 import type { NgxRuntimeSchema } from 'ngx-vest-forms/schemas';
+import { NgxVestFormWithSchemaDirective } from 'ngx-vest-forms/schemas';
 import type { SchemaFormModel } from './schema-form.validations';
 import { schemaFormSuite } from './schema-form.validations';
 
@@ -11,7 +12,12 @@ import { schemaFormSuite } from './schema-form.validations';
   selector: 'ngx-schema-form',
   styleUrls: ['./schema-form.component.scss'],
   templateUrl: './schema-form.component.html',
-  imports: [ngxVestForms, NgxControlWrapper, JsonPipe],
+  imports: [
+    ngxVestForms,
+    NgxVestFormWithSchemaDirective,
+    NgxControlWrapper,
+    JsonPipe,
+  ],
 })
 export class SchemaFormComponent {
   // Schema is passed through to the underlying directive; validation happens automatically on submit.

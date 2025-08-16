@@ -3,12 +3,10 @@ import {
   computed,
   DestroyRef,
   Directive,
-  effect,
   inject,
   Injector,
   input,
   isDevMode,
-  signal,
 } from '@angular/core';
 import {
   takeUntilDestroyed,
@@ -22,15 +20,6 @@ import {
   NgForm,
   ValidationErrors,
 } from '@angular/forms';
-import type {
-  InferSchemaType,
-  NgxRuntimeSchema,
-  SchemaDefinition,
-} from 'ngx-vest-forms/schemas';
-import {
-  ngxExtractTemplateFromSchema,
-  toAnyRuntimeSchema,
-} from 'ngx-vest-forms/schemas';
 import {
   catchError,
   debounceTime,
@@ -47,22 +36,17 @@ import {
   zip,
 } from 'rxjs';
 import { SuiteResult } from 'vest';
+import { getAllFormErrors, setValueAtPath } from '../utils/form-utils';
+// shape-validation is schema-specific; full directive no longer performs schema checks
 import {
-  getAllFormErrors,
-  mergeValuesAndRawValues,
-  setValueAtPath,
-} from '../utils/form-utils';
-import { validateModelTemplate } from '../utils/shape-validation';
+  NGX_SCHEMA_STATE,
+  NgxSchemaValidationState,
+} from '../tokens/schema-state.token';
 import { NgxVestSuite } from '../utils/validation-suite';
 import { NgxFormCoreDirective } from './form-core.directive';
 import { NgxValidationOptions } from './validation-options';
 
-// Helper to resolve the model type from either a StandardSchema or an NgxRuntimeSchema
-type ModelFromSchema<S> = S extends SchemaDefinition
-  ? InferSchemaType<S>
-  : S extends NgxRuntimeSchema<infer R>
-    ? R
-    : Record<string, unknown>;
+// Model typing is schema-agnostic in core/full directive; callers can narrow externally
 
 // --- Minimal local schema helpers moved to ../utils/schema-utils ---
 
@@ -166,8 +150,8 @@ export type NgxFormState<TModel> = {
   ],
 })
 export class NgxFormDirective<
-  TSchema extends SchemaDefinition | NgxRuntimeSchema<unknown> | null = null,
-  TModel = ModelFromSchema<NonNullable<TSchema>>,
+  // Schema is handled by the schemas entrypoint; keep model generic for callers
+  TModel = Record<string, unknown>,
 > {
   // Compose the minimal core and extend it with advanced features
   readonly #core = inject(NgxFormCoreDirective, { host: true });
@@ -175,54 +159,20 @@ export class NgxFormDirective<
   // Expose as-is so callers can read the signal inputs via .()
   readonly vestSuite = this.#core.vestSuite;
   readonly validationOptions = this.#core.validationOptions;
-  // INTERNAL SCHEMA STATE (separate from Vest errors)
-  readonly #schemaState = signal<{
-    hasRun: boolean;
-    success: boolean | null;
-    issues: { path?: string; message: string }[];
-    errorMap: Record<string, readonly string[]>;
-  } | null>(null);
-  readonly #submitted = signal(false);
+  // submitted state is tracked in core; full directive doesn't duplicate it
   /// --- DEPENDENCY INJECTION ---
   readonly #destroyRef = inject(DestroyRef);
   readonly #injector = inject(Injector);
   readonly ngForm = inject(NgForm, { self: true, optional: false });
+  // Optional schema state accessor provided by schemas entrypoint wrapper
+  readonly #schemaState = inject(NGX_SCHEMA_STATE, { optional: true });
 
   // formValue two-way binding is provided by the core directive via hostDirectives
-  // Accept both StandardSchema and NgxRuntimeSchema at the boundary
-  readonly formSchema = input<
-    SchemaDefinition | NgxRuntimeSchema<unknown> | null
-  >(null);
   readonly validationConfig = input<Record<string, string[]> | null>(null);
 
   /// --- INTERNAL STATE ---
 
-  /**
-   * Extract template from schema for runtime validation
-   */
-  readonly #schemaTemplate = computed(() => {
-    const schema = this.formSchema();
-    if (!schema) return null;
-    // Attempt extraction (returns null for non-ngxModel-based schemas)
-    return ngxExtractTemplateFromSchema(schema);
-  });
-
-  /**
-   * Runtime schema-based validation effect
-   * Validates form structure against extracted schema template to catch typos
-   * This replaces the deprecated formShape functionality
-   */
-  // eslint-disable-next-line no-unused-private-class-members -- This is a private effect
-  readonly #schemaValidationEffect = effect(() => {
-    const template = this.#schemaTemplate();
-    const formValue = this.#core.formState().value;
-
-    if (template && formValue) {
-      // The validateModelTemplate function will throw ModelTemplateMismatchError in dev mode
-      // to help developers catch typos in ngModel/ngModelGroup names
-      validateModelTemplate(formValue, template);
-    }
-  });
+  // Schema extraction/validation moved to schemas entrypoint
 
   // Removed per-field validator cache; validation is delegated to core
 
@@ -329,7 +279,7 @@ export class NgxFormDirective<
         0,
       );
 
-    // Determine first invalid field
+    // Determine first invalid field (vest field errors only; schema handled externally)
     let firstInvalidField: string | null = null;
     for (const key of Object.keys(fieldErrors)) {
       if (fieldErrors[key]?.length) {
@@ -337,12 +287,8 @@ export class NgxFormDirective<
         break;
       }
     }
-    if (!firstInvalidField) {
-      const schemaIssues = this.#schemaState()?.issues || [];
-      const firstSchemaPath = schemaIssues.find((issue) => issue.path)?.path;
-      firstInvalidField = firstSchemaPath ?? null;
-    }
 
+    const schemaState = this.#schemaState ? this.#schemaState() : null;
     return {
       value: base.value ?? null,
       errors: fieldErrors,
@@ -359,26 +305,9 @@ export class NgxFormDirective<
       errorCount: vestRootErrors + fieldErrorCount,
       warningCount: vestWarningCount,
       firstInvalidField,
-      schema: (() => {
-        const currentSchemaState = this.#schemaState();
-        if (currentSchemaState) {
-          return {
-            hasRun: currentSchemaState.hasRun,
-            success: currentSchemaState.success,
-            issues: currentSchemaState.issues,
-            errorMap: currentSchemaState.errorMap,
-          } as const;
-        }
-        if (this.formSchema()) {
-          return {
-            hasRun: false,
-            success: null,
-            issues: [],
-            errorMap: {},
-          } as const;
-        }
-        return;
-      })(),
+      schema: (schemaState ?? undefined) as
+        | Exclude<NgxSchemaValidationState, null>
+        | undefined,
     } satisfies NgxFormState<TModel>;
   });
 
@@ -397,7 +326,7 @@ export class NgxFormDirective<
   constructor() {
     // Setup validation configuration streams
     this.#setupValidationConfigStreams();
-    this.#setupFormSubmitListener();
+    // Schema submit listener moved to schemas entrypoint
 
     // Use afterNextRender for better zoneless compatibility
     // This ensures the form is fully rendered before we start validation setup
@@ -431,72 +360,7 @@ export class NgxFormDirective<
       .subscribe();
   }
 
-  #setupFormSubmitListener(): void {
-    this.ngForm.ngSubmit
-      .pipe(takeUntilDestroyed(this.#destroyRef))
-      .subscribe(() => {
-        this.#submitted.set(true);
-        this.ngForm.form.markAllAsTouched();
-        const schemaCandidate = this.formSchema();
-        if (!schemaCandidate) return;
-        try {
-          const currentModel = this.#getCurrentModel();
-          const result =
-            toAnyRuntimeSchema(schemaCandidate).safeParse(currentModel);
-          if (result.success === false) {
-            const issues: { path?: string; message: string }[] =
-              result.issues.map((issue) => ({
-                path: issue.path,
-                message: issue.message,
-              }));
-            const errorMap: Record<string, readonly string[]> = {};
-            for (const issue of issues) {
-              const key = issue.path || '_root';
-              errorMap[key] = [...(errorMap[key] || []), issue.message];
-            }
-            this.#schemaState.set({
-              hasRun: true,
-              success: false,
-              issues,
-              errorMap,
-            });
-            if (isDevMode()) {
-              console.warn(
-                '[ngx-vest-forms][NgxFormDirective] schema safeParse failed',
-                {
-                  vendor: (
-                    result.meta as Record<string, unknown> | undefined
-                  )?.['vendor'],
-                  issues: result.issues,
-                },
-              );
-            }
-          } else {
-            this.#schemaState.set({
-              hasRun: true,
-              success: true,
-              issues: [],
-              errorMap: {},
-            });
-          }
-        } catch (error) {
-          if (isDevMode()) {
-            console.error(
-              '[ngx-vest-forms][NgxFormDirective] error during automatic schema validation',
-              error,
-            );
-          }
-          this.#schemaState.set({
-            hasRun: true,
-            success: false,
-            issues: [{ message: 'Unexpected schema validation error' }],
-            errorMap: { _root: ['Unexpected schema validation error'] },
-          });
-        } finally {
-          this.ngForm.form.updateValueAndValidity({ emitEvent: true });
-        }
-      });
-  }
+  // submit listener is intentionally absent here
 
   #createDependencyStreams(
     config: Record<string, string[]>,
@@ -571,9 +435,7 @@ export class NgxFormDirective<
     return this.#core.createAsyncValidator(field, validationOptions);
   }
 
-  #getCurrentModel(): TModel {
-    return mergeValuesAndRawValues<TModel>(this.ngForm.form);
-  }
+  // current model retrieval is available in the core directive
 
   /**
    * Creates a field validator using toObservable + RxJS pattern for streaming validation

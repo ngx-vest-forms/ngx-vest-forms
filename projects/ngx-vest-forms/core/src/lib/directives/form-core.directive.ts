@@ -110,6 +110,12 @@ export class NgxFormCoreDirective<TModel = Record<string, unknown>> {
 
   // Internal state
   #submitted = false;
+  /**
+   * Baseline snapshot of the form's raw value used to compute a robust
+   * dirty state that survives programmatic resets. We refresh this snapshot
+   * whenever the underlying Angular form becomes pristine.
+   */
+  #baseline: TModel | null = null;
 
   // Signals from Angular forms
   // Track Angular form status as a signal for `valid` derivation.
@@ -139,7 +145,27 @@ export class NgxFormCoreDirective<TModel = Record<string, unknown>> {
     value: this.formValue() ?? null,
     errors: this.#errors(),
     valid: this.#status() === 'VALID',
-    dirty: this.ngForm.form.dirty,
+    // Compute dirty by comparing current raw value with the pristine baseline.
+    // This makes dirty flip to false immediately after ngForm.resetForm().
+    dirty: (() => {
+      // Create/refresh baseline lazily if missing
+      const current = mergeValuesAndRawValues<TModel>(this.ngForm.form);
+      if (this.#baseline == null) {
+        try {
+          this.#baseline = structuredClone(current);
+        } catch {
+          // Fallback shallow clone if structuredClone isn't available
+          this.#baseline = { ...(current as object) } as unknown as TModel;
+        }
+        return false;
+      }
+      try {
+        return JSON.stringify(current) !== JSON.stringify(this.#baseline);
+      } catch {
+        // As a last resort, fall back to Angular's dirty flag
+        return this.ngForm.form.dirty;
+      }
+    })(),
     submitted: this.#submitted,
   }));
 
@@ -154,6 +180,15 @@ export class NgxFormCoreDirective<TModel = Record<string, unknown>> {
         this.formValue.set(raw);
         if (isDevMode()) {
           console.debug('[NgxFormCoreDirective] form -> model', raw);
+        }
+      }
+      // When the Angular form becomes pristine (e.g., via resetForm),
+      // refresh the baseline so computed dirty becomes false immediately.
+      if (!this.ngForm.form.dirty) {
+        try {
+          this.#baseline = structuredClone(raw);
+        } catch {
+          this.#baseline = { ...(raw as object) } as unknown as TModel;
         }
       }
     });

@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { NgxFormCoreDirective } from 'ngx-vest-forms/core';
+import { NGX_SCHEMA_STATE, NgxFormCoreDirective } from 'ngx-vest-forms/core';
 import { toAnyRuntimeSchema } from './runtime-adapters';
 import type { NgxRuntimeSchema } from './runtime-schema';
 import {
@@ -36,6 +36,13 @@ export type SchemaValidationState = {
 @Directive({
   selector: 'form[ngxVestForm][formSchema], form[ngxVestFormCore][formSchema]',
   exportAs: 'ngxSchemaValidation',
+  providers: [
+    {
+      provide: NGX_SCHEMA_STATE,
+      useFactory: (directive: NgxSchemaValidationDirective) => directive.schema,
+      deps: [NgxSchemaValidationDirective],
+    },
+  ],
 })
 export class NgxSchemaValidationDirective {
   // Host directives / services
@@ -56,6 +63,10 @@ export class NgxSchemaValidationDirective {
   readonly #templateConformance = effect(() => {
     const schema = this.formSchema();
     if (!schema) return;
+    // Only attempt extraction for schemas created with ngxModelToStandardSchema
+    // which carry the `_shape` marker. Skip for Zod/Valibot/etc. to avoid
+    // unnecessary work and to align with test expectations.
+    if (!('_shape' in (schema as object))) return;
     const template = ngxExtractTemplateFromSchema(schema as SchemaDefinition);
     const value = this.#core.formState().value;
     if (!template || !value) return;

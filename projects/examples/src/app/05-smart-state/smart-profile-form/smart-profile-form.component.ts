@@ -73,18 +73,14 @@ export class SmartProfileFormComponent {
     }, 500);
   }
 
-  onSubmit(formState: NgxFormState<UserProfile>): void {
+  onSubmit(formState: NgxFormState<Record<string, unknown>>): void {
+    const value = formState.value as UserProfile | null;
     if (isDevMode()) {
-      console.log(
-        'Form Submitted. Valid:',
-        formState.valid,
-        'Value:',
-        formState.value,
-      );
+      console.log('Form Submitted. Valid:', formState.valid, 'Value:', value);
     }
-    if (formState.valid && formState.value) {
+    if (formState.valid && value) {
       alert('Profile saved successfully! (Check console for data)');
-      this.externalUserData.set({ ...formState.value });
+      this.externalUserData.set({ ...value });
     } else {
       alert('Form is invalid. Please check errors.');
       console.error('Form errors:', formState.errors);

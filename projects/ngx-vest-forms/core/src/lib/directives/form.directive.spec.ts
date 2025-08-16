@@ -3,6 +3,7 @@ import { ApplicationRef, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { render, screen, waitFor } from '@testing-library/angular';
 import { userEvent } from '@vitest/browser/context';
+import { NgxSchemaValidationDirective } from 'ngx-vest-forms/schemas';
 import { enforce, staticSuite, test as vestTest } from 'vest';
 import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
 import { ngxVestForms } from '../exports';
@@ -573,7 +574,7 @@ describe('NgxFormDirective', () => {
       } as const;
 
       @Component({
-        imports: [ngxVestForms, JsonPipe],
+        imports: [ngxVestForms, JsonPipe, NgxSchemaValidationDirective],
         template: `
           <form
             ngxVestForm
@@ -822,7 +823,10 @@ describe('NgxFormDirective', () => {
           const state = vestFormDirective?.formState();
           const joined = (
             state?.schema?.issues
-              .map((issue) => `${issue.path}: ${issue.message}`)
+              .map(
+                (issue: { path?: string; message: string }) =>
+                  `${issue.path}: ${issue.message}`,
+              )
               .join('|') || ''
           ).toString();
           expect(joined).toContain('email: Invalid email');

@@ -13,7 +13,10 @@ import {
   ngxVestForms,
 } from 'ngx-vest-forms';
 import type { InferSchemaType } from 'ngx-vest-forms/schemas';
-import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
+import {
+  ngxModelToStandardSchema,
+  NgxVestFormWithSchemaDirective,
+} from 'ngx-vest-forms/schemas';
 import { BusinessHoursComponent } from '../../ui/business-hours/business-hours.component';
 import {
   initialBusinessHourEntry,
@@ -32,7 +35,12 @@ type BusinessHoursFormType = InferSchemaType<typeof businessHoursFormSchema>;
 
 @Component({
   selector: 'ngx-business-hours-form',
-  imports: [JsonPipe, ngxVestForms, BusinessHoursComponent],
+  imports: [
+    JsonPipe,
+    ngxVestForms,
+    NgxVestFormWithSchemaDirective,
+    BusinessHoursComponent,
+  ],
   templateUrl: './business-hours-form.component.html',
   styleUrls: ['./business-hours-form.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,9 +64,7 @@ export class BusinessHoursFormComponent {
    * Define the view child for the vestForm directive.
    */
   protected readonly vestForm =
-    viewChild.required<NgxFormDirective<typeof businessHoursFormSchema>>(
-      'vestForm',
-    );
+    viewChild.required<NgxFormDirective>('vestForm');
 
   /**
    * The Vest validation suite for the business hours form.

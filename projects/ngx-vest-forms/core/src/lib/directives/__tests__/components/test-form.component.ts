@@ -1,6 +1,11 @@
 import { JsonPipe } from '@angular/common';
 import { Component, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import type {
+  NgxRuntimeSchema,
+  SchemaDefinition,
+} from 'ngx-vest-forms/schemas';
+import { NgxSchemaValidationDirective } from 'ngx-vest-forms/schemas';
 import { ngxVestForms } from '../../../exports';
 import { NgxVestSuite } from '../../../utils/validation-suite';
 import { NgxFormDirective } from '../../form.directive';
@@ -13,7 +18,7 @@ type TestFormModel = {
 };
 
 @Component({
-  imports: [ngxVestForms, FormsModule, JsonPipe],
+  imports: [ngxVestForms, FormsModule, JsonPipe, NgxSchemaValidationDirective],
   template: `
     <form
       ngxVestForm
@@ -62,8 +67,7 @@ type TestFormModel = {
   `,
 })
 export class TestFormComponent {
-  readonly vestForm =
-    viewChild<NgxFormDirective<null, TestFormModel>>('vestForm');
+  readonly vestForm = viewChild<NgxFormDirective<TestFormModel>>('vestForm');
   formValue = signal<TestFormModel>({
     email: '',
     password: '',
@@ -74,5 +78,8 @@ export class TestFormComponent {
 
   vestSuite = signal(testFormValidations as NgxVestSuite<TestFormModel>);
   // Optional schema for submit-time validation tests
-  formSchema = signal<null | { parse: (data: unknown) => TestFormModel }>(null);
+  // Accept either a standard SchemaDefinition or a runtime schema with safeParse
+  formSchema = signal<
+    SchemaDefinition | NgxRuntimeSchema<TestFormModel> | null
+  >(null);
 }

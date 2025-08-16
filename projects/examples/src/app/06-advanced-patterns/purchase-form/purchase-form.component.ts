@@ -16,7 +16,10 @@ import { injectNgxRootFormKey, ngxVestForms } from 'ngx-vest-forms';
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 import { NgxFormDirective } from 'ngx-vest-forms/core';
 import type { InferSchemaType } from 'ngx-vest-forms/schemas';
-import { ngxModelToStandardSchema } from 'ngx-vest-forms/schemas';
+import {
+  ngxModelToStandardSchema,
+  NgxVestFormWithSchemaDirective,
+} from 'ngx-vest-forms/schemas';
 import { debounceTime, filter, finalize, switchMap } from 'rxjs';
 import { LukeService } from '../../services/luke.service';
 import { ProductService } from '../../services/product.service';
@@ -41,6 +44,7 @@ type PurchaseFormModel = InferSchemaType<typeof purchaseFormSchema>;
     AddressComponent,
     PhoneNumbersComponent,
     NgxControlWrapper,
+    NgxVestFormWithSchemaDirective,
   ],
   templateUrl: './purchase-form.component.html',
   styleUrls: ['./purchase-form.component.scss'],

@@ -33,7 +33,7 @@
   </ul>
   <form
     class="simple-form"
-    ngxVestForm
+    ngxVestFormWithSchema
     #vestForm="ngxVestForm"
     [(formValue)]="formValue"
     [formSchema]="businessHoursFormSchema"
@@ -57,10 +57,10 @@
       These errors are not tied to a single field, but to the overall form state
       (e.g., overlap, missing entries).
     </p>
-    @if (vestForm.formState().errors[rootFormKey]?.length) {
+    @if ((vestForm.formState().errors[rootFormKey] || []).length > 0) {
       <ul class="alert">
         @for (
-          error of vestForm.formState().errors[rootFormKey] ?? [];
+          error of vestForm.formState().errors[rootFormKey] || [];
           track error
         ) {
           <li>{{ error }}</li>
