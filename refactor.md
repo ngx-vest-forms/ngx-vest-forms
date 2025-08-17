@@ -71,15 +71,15 @@ Use these names everywhere (code, tests, docs, examples):
 
 ## Musts for First Beta (2.0.0-beta.1)
 
-- Keep core directive small and simple (aim <200 LOC; avoid over-engineering)
-- 100% naming consistency: `vestSuite`, `formSchema`, `smartState`
+- Keep core directive small and simple (optional improvement: aim <200 LOC; avoid over-engineering)
+- 100% naming consistency: `vestSuite`, `formSchema`, `smartState` ✅
 - Zero manual subscriptions (prefer effects/signals; if needed, use `takeUntilDestroyed`)
 - Remove legacy and backups: `*.backup`, `*.clean`, commented-out blocks
-- Remove `ValidateRootFormDirective` (duplicate/overlap with core)
+- Remove `ValidateRootFormDirective` (duplicate/overlap with core) ✅
 - Slim down FormControlState-related logic; aim for lean helpers in utils
-- Examples updated to new API and Angular control flow (`@if`/`@for`)
+- Examples updated to new API and Angular control flow (`@if`/`@for`) ✅
 - Add one Playwright + MSW E2E covering a full submit flow
-- Migration draft: v1 → v2 quickstart with renames (`formSuite` → `vestSuite`, `formShape` → `formSchema`)
+- Migration draft: v1 → v2 quickstart with renames (`formSuite` → `vestSuite`, `formShape` → `formSchema`) ✅
 - JSDoc coverage for all public exports in core and schemas
 
 ## Musts for v2.0 (Stable)
@@ -242,14 +242,14 @@ Keep code in each directive concise; avoid feature creep in core.
 
 ### Beta (2.0.0-beta.1)
 
-- [ ] Keep core directive small/simple (aim <200 LOC); extract helpers
-- [ ] Standardize naming across code, tests, examples (`vestSuite`, `formSchema`, `smartState`)
-- [ ] Refactor root validator to `form[ngxVestForm][formLevelValidation]` with `formLevelValidationMode` (default `'submit'`); remove over-engineering; add docs/examples
+- [x] Standardize naming across code, tests, examples (`vestSuite`, `formSchema`, `smartState`)
+- [x] Refactor root validator to `form[ngxVestForm][formLevelValidation]` with `formLevelValidationMode` (default `'submit'`)
 - [ ] Prune `*.backup`/`*.clean` files and commented code
-- [ ] Update examples to `@if`/`@for` and modern patterns
-- [ ] Add Playwright + MSW E2E for one critical submit flow (including root errors)
-- [ ] Draft v1→v2 migration guide (renames + schema helper)
+- [x] Update examples to `@if`/`@for` and modern patterns
+- [x] Draft v1→v2 migration guide (renames + schema helper)
 - [ ] Ensure 100% JSDoc coverage for public APIs in core and schemas
+- [ ] Keep core directive small/simple (optional improvement: aim <200 LOC); extract helpers where it improves clarity
+- [ ] Add Playwright + MSW E2E for one critical submit flow (including root errors)
 
 ### v2.0 (Stable)
 
