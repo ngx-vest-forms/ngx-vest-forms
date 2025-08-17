@@ -1,8 +1,9 @@
 import { enforce, only, staticSuite, test, warn } from 'vest';
+import { NgxVestSuite } from '../utils/validation-suite';
 
 // Test validation suite
-export const createTestValidationSuite = staticSuite(
-  (data: Record<string, unknown> = {}, currentField?: string) => {
+export const createTestValidationSuite: NgxVestSuite<Record<string, unknown>> =
+  staticSuite((data: Record<string, unknown> = {}, currentField?: string) => {
     only(currentField);
 
     test('email', 'Email is required', () => {
@@ -43,5 +44,4 @@ export const createTestValidationSuite = staticSuite(
       warn(); // Example root-level warning
       enforce(data['email']).isNotEmpty(); // Ensure it's a valid test
     });
-  },
-);
+  });

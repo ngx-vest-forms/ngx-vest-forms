@@ -569,6 +569,110 @@ For more details, see the [Advanced Directives Documentation](./projects/ngx-ves
 
 ---
 
+## Form-Level (Cross-Field) Validation
+
+For validation that depends on multiple fields or involves form-wide business rules, `ngx-vest-forms` provides opt-in form-level validation.
+
+### When to Use It
+
+- **Password confirmation**: Ensuring password and confirm password fields match
+- **Cross-field dependencies**: At least one contact method (email or phone) required
+- **Business rules**: Form-wide constraints like minimum order amounts
+- **Submit-gated validation**: Rules that should only run after the user attempts to submit
+
+### Basic Usage
+
+Form-level validation requires two things:
+
+1. Add `formLevelValidation` attribute to enable the feature
+2. Provide a dedicated `[formLevelSuite]` for your cross-field validation rules
+
+```typescript
+// form-level.validations.ts
+import { staticSuite, test, enforce } from 'vest';
+import { NGX_ROOT_FORM } from 'ngx-vest-forms/core';
+
+export const formLevelValidations = staticSuite((data = {}) => {
+  test(NGX_ROOT_FORM, 'Passwords must match', () => {
+    enforce(data.confirmPassword).equals(data.password);
+  });
+
+  test(NGX_ROOT_FORM, 'At least one contact method required', () => {
+    enforce(data.email || data.phone).isTruthy();
+  });
+});
+```
+
+```html
+<form
+  ngxVestForm
+  [vestSuite]="fieldSuite"           <!-- Field-level validation -->
+  formLevelValidation                <!-- Enable form-level validation -->
+  [formLevelSuite]="formLevelSuite"  <!-- Form-level validation suite -->
+  [(formValue)]="model"
+  #form="ngxVestForm"
+>
+  <input name="password" [ngModel]="model().password" />
+  <input name="confirmPassword" [ngModel]="model().confirmPassword" />
+
+  <!-- Display form-level errors -->
+  @if (form.formState().root?.errors?.length) {
+    <div class="form-level-errors">
+      @for (error of form.formState().root.errors; track error) {
+        <p class="error">{{ error }}</p>
+      }
+    </div>
+  }
+</form>
+```
+
+### Validation Modes
+
+Form-level validation supports two modes:
+
+- **Submit mode** (default): Validation runs only after the first form submission
+- **Live mode**: Validation runs in real-time as users interact with the form
+
+```html
+<!-- Submit mode (default) - better UX for complex validation -->
+<form ngxVestForm formLevelValidation [formLevelSuite]="suite">
+  <!-- Live mode - immediate feedback -->
+  <form
+    ngxVestForm
+    formLevelValidation
+    [formLevelValidationMode]="'live'"
+    [formLevelSuite]="suite"
+  ></form>
+</form>
+```
+
+### Migration from v1
+
+If you're upgrading from v1, the API has changed significantly for better clarity and performance:
+
+```html
+<!-- v1 (old) -->
+<form
+  scVestForm
+  [suite]="suite"
+  [validateRootForm]="true"
+  (errorsChange)="errors.set($event)"
+>
+  <!-- v2 (new) -->
+  <form
+    ngxVestForm
+    [vestSuite]="fieldSuite"
+    formLevelValidation
+    [formLevelSuite]="formLevelSuite"
+    #form="ngxVestForm"
+  ></form>
+</form>
+```
+
+For complete migration details, see the [Migration Guide](./docs/MIGRATION_GUIDE_V2.md#6-root-level-cross-field-validation--breaking).
+
+---
+
 ## Advanced Features
 
 Beyond the basics, `ngx-vest-forms` offers powerful, optional modules for advanced scenarios. These are available as secondary entry points to keep the core library lean.
@@ -907,9 +1011,9 @@ const suite = staticSuite((data, field) => {
 
 - Yes! Use `NgxFormErrorDisplayDirective` as a host directive for custom wrappers.
 
-**Q: How do I enable root-level (cross-field) validation?**
+**Q: How do I enable form-level (cross-field) validation?**
 
-- Add `[validateRootForm]="true"` to your form and use the root key in your Vest suite.
+- Add `formLevelValidation` to your form and provide a dedicated `[formLevelSuite]`. Use `NGX_ROOT_FORM` in your Vest suite for the root form key.
 
 **Q: How do I get type safety for my form model?**
 

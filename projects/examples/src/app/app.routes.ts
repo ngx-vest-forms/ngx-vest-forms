@@ -59,6 +59,22 @@ export const appRoutes: Routes = [
     title: 'Survey Form',
   },
   {
+    path: 'root-validation-form',
+    loadComponent: () =>
+      import(
+        './02-core-features/root-validation-form/root-validation-form.component'
+      ).then((m) => m.RootValidationFormComponent),
+    title: 'Root Validation Form',
+  },
+  {
+    path: 'root-validation-live-form',
+    loadComponent: () =>
+      import(
+        './02-core-features/root-validation-live-form/root-validation-live-form.component'
+      ).then((m) => m.RootValidationLiveFormComponent),
+    title: 'Root Validation (Live Mode)',
+  },
+  {
     path: 'async-validation-form',
     loadComponent: () =>
       import(

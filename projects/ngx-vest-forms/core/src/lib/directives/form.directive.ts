@@ -146,6 +146,9 @@ export class NgxFormDirective<
     warnings?: string[];
     internalError?: string;
   } | null>(() => {
+    // Tie to form status so this recomputes whenever validation runs
+    // (statusChanges already tracks both sync and async validator updates)
+    this.#statusSignal();
     const rootNGErrors = this.#core.ngForm.form.errors;
     if (!rootNGErrors) {
       return null;

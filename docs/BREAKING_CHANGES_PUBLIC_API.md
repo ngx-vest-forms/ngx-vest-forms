@@ -6,20 +6,21 @@ This document lists all **public API breaking changes** when upgrading from v1 t
 
 ## Quick Overview of Major Changes
 
-| Change                        | v1 Pattern/Behavior                          | v2 Pattern/Behavior                                        | Migration Required                          |
-| ----------------------------- | -------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------- |
-| Directive and API Naming      | `scVestForm`, `sc-control-wrapper`,          | `ngxVestForm`, `ngx-control-wrapper`,                      | Update directive names and syntax           |
-|                               | `FormDirective`, `ValidationOptions`         | `NgxFormDirective`, `NgxValidationOptions`                 |                                             |
-| Control Wrapper Component     | Always included, attribute selector          | Optional import, component selector                        | Update import and usage patterns            |
-| Two-way Binding with model()  | `[formValue]` + `(formValueChange)`          | `[(formValue)]` (banana-in-a-box)                          | Update form binding syntax                  |
-| Unified formState Signal      | Multiple outputs/signals                     | Single `formState` signal                                  | Update state access patterns                |
-| Error Display Behavior        | Errors shown on blur only                    | Errors shown on blur or submit                             | Minimal impact, improved UX                 |
-| Submit-time Schema Validation | Manual (custom submit handlers in examples)  | Automatic safeParse on submit when `[formSchema]` provided | Remove custom handlers/error list component |
-| Modular Architecture          | Monolithic, all features bundled             | Modular entry points, tree-shaking                         | Optional tree-shaking benefits              |
-| Schema Support                | Basic, limited                               | Full adapters for Zod, ArkType, Valibot                    | Update imports if using schemas             |
-| Smart State                   | Not available                                | New feature, opt-in                                        | Optional, new usage                         |
-| Error Object Structure        | Errors as strings (`Record<string, string>`) | Errors as arrays (`Record<string, string[]>`)              | Update error display logic to handle arrays |
-| Deprecated APIs Removed       | Legacy signals, old error config, etc.       | Not available in v2                                        | Remove usage, migrate to new APIs           |
+| Change                        | v1 Pattern/Behavior                          | v2 Pattern/Behavior                                                      | Migration Required                          |
+| ----------------------------- | -------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------- |
+| Directive and API Naming      | `scVestForm`, `sc-control-wrapper`,          | `ngxVestForm`, `ngx-control-wrapper`,                                    | Update directive names and syntax           |
+|                               | `FormDirective`, `ValidationOptions`         | `NgxFormDirective`, `NgxValidationOptions`                               |                                             |
+| Control Wrapper Component     | Always included, attribute selector          | Optional import, component selector                                      | Update import and usage patterns            |
+| Two-way Binding with model()  | `[formValue]` + `(formValueChange)`          | `[(formValue)]` (banana-in-a-box)                                        | Update form binding syntax                  |
+| Unified formState Signal      | Multiple outputs/signals                     | Single `formState` signal                                                | Update state access patterns                |
+| Form-level (root) validation  | `[validateRootForm]` with `[suite]`          | `formLevelValidation` + `[formLevelSuite]` (+ `formLevelValidationMode`) | Update inputs and provide root suite        |
+| Error Display Behavior        | Errors shown on blur only                    | Errors shown on blur or submit                                           | Minimal impact, improved UX                 |
+| Submit-time Schema Validation | Manual (custom submit handlers in examples)  | Automatic safeParse on submit when `[formSchema]` provided               | Remove custom handlers/error list component |
+| Modular Architecture          | Monolithic, all features bundled             | Modular entry points, tree-shaking                                       | Optional tree-shaking benefits              |
+| Schema Support                | Basic, limited                               | Full adapters for Zod, ArkType, Valibot                                  | Update imports if using schemas             |
+| Smart State                   | Not available                                | New feature, opt-in                                                      | Optional, new usage                         |
+| Error Object Structure        | Errors as strings (`Record<string, string>`) | Errors as arrays (`Record<string, string[]>`)                            | Update error display logic to handle arrays |
+| Deprecated APIs Removed       | Legacy signals, old error config, etc.       | Not available in v2                                                      | Remove usage, migrate to new APIs           |
 
 **Bundle Impact:** v2 is modular and opt-in. Core and main entry points have identical bundle sizes; optional features add only what you use.
 
@@ -188,6 +189,89 @@ export class UserFormComponent {
 
 ---
 
+## 10. Form-level (root) validation (Breaking)
+
+**v1:** Root validation enabled via `[validateRootForm]` attribute and shared the same `[suite]` input. Used `ROOT_FORM` constant in Vest suites. Errors were consumed via `(errorsChange)` output or by reading the underlying Angular form.
+
+**v2:** Form-level (root) validation is opt-in and completely decoupled from field-level validation. Enable with `formLevelValidation` attribute and provide a dedicated `[formLevelSuite]` input. Choose when it runs via `[formLevelValidationMode]` (`'submit' | 'live'`, default `'submit'`). Uses `NGX_ROOT_FORM` constant and simplified error shape (arrays only).
+
+| v1 Pattern                                       | v2 Pattern                                                             |
+| ------------------------------------------------ | ---------------------------------------------------------------------- |
+| `[validateRootForm]="true"` + shared `[suite]`   | `formLevelValidation` + dedicated `[formLevelSuite]`                   |
+| `ROOT_FORM` constant in Vest suite               | `NGX_ROOT_FORM` constant in Vest suite                                 |
+| `(errorsChange)` output to read root errors      | `form.formState().root?.errors` to read root errors                    |
+| —                                                | `[formLevelValidationMode]` ('submit' or 'live'; default 'submit')     |
+| Mixed error shape: `{ error, errors, warnings }` | Simplified: `{ errors?: string[]; warnings?: string[] }` (arrays only) |
+
+Before (v1):
+
+```html
+<form
+  scVestForm
+  [suite]="suite"
+  [validateRootForm]="true"
+  (errorsChange)="errors.set($event)"
+>
+  <!-- Display root errors -->
+  {{ errors()?.['rootForm'] }}
+</form>
+```
+
+```typescript
+import { ROOT_FORM } from 'ngx-vest-forms';
+
+export const suite = staticSuite((model, field) => {
+  test(ROOT_FORM, 'Passwords must match', () => {
+    enforce(model.confirmPassword).equals(model.password);
+  });
+});
+```
+
+After (v2):
+
+```html
+<form
+  ngxVestForm
+  [vestSuite]="fieldSuite"
+  formLevelValidation
+  [formLevelSuite]="rootSuite"
+  #form="ngxVestForm"
+>
+  <!-- Display root errors -->
+  @if (form.formState().root?.errors?.length) {
+  <div>{{ form.formState().root?.errors?.[0] }}</div>
+  }
+</form>
+```
+
+```typescript
+import { NGX_ROOT_FORM } from 'ngx-vest-forms';
+
+export const rootSuite = staticSuite((model) => {
+  test(NGX_ROOT_FORM, 'Passwords must match', () => {
+    enforce(model.confirmPassword).equals(model.password);
+  });
+});
+```
+
+**Key Breaking Changes:**
+
+1. **Directive Name**: `[validateRootForm]` → `formLevelValidation` (boolean attribute)
+2. **Suite Input**: Must provide dedicated `[formLevelSuite]` (no fallback to shared suite)
+3. **Constants**: `ROOT_FORM` → `NGX_ROOT_FORM`
+4. **Error Reading**: `(errorsChange)` → `form.formState().root?.errors`
+5. **Error Shape**: Simplified to arrays only (`{ errors?: string[]; warnings?: string[] }`)
+6. **Timing Control**: New `[formLevelValidationMode]` for submit vs live validation
+
+**Migration tips:**
+
+- **Minimal migration**: Reuse one suite for both levels: `[vestSuite]="suite"` and `[formLevelSuite]="suite"`
+- **Dedicated suites**: Split concerns: `[vestSuite]="fieldSuite"` and `[formLevelSuite]="rootSuite"`
+- **Submit mode** (default): Cross-field validation only runs after first submit
+- **Live mode**: Set `[formLevelValidationMode]="'live'"` for immediate cross-field validation
+- **Constants**: Update import: `ROOT_FORM` → `NGX_ROOT_FORM`
+- **Error display**: Replace `(errorsChange)` with template reference and `form.formState().root?.errors`
+
 ## Migration Checklist
 
 - [ ] Update directive names: `scVestForm` → `ngxVestForm`
@@ -200,6 +284,7 @@ export class UserFormComponent {
 - [ ] Review error display behavior and configure as needed
 - [ ] (Optional) Use smart state and schema integration for advanced features
 - [ ] Remove manual schema safeParse handlers; rely on automatic submit-time validation
+- [ ] Cross-field validation: `[validateRootForm]` → `formLevelValidation` and add `[formLevelSuite]` (plus optional `[formLevelValidationMode]`).
 
 ---
 
@@ -207,7 +292,7 @@ export class UserFormComponent {
 
 - **Type Errors:** Update type names and imports to NGX-prefixed versions.
 - **Import Errors:** Ensure optional features are imported from their respective entry points.
-- **validateRootForm Issues:** Ensure `[validateRootForm]="true"` is set for cross-field validation.
+- **Form-level validation not running:** Ensure `formLevelValidation` is present and `[formLevelSuite]` is provided. In `'submit'` mode it runs after first submit; use `'live'` to validate on change.
 - **Error Object Migration:** v2 errors are arrays, not strings. Update your error display logic to handle multiple errors per field.
 - **Deprecated API Removal:** If you used legacy signals or old error config, migrate to the new unified APIs and configuration system.
 - **General Tips:** Run `npx tsc --noEmit` to check for type errors after migration. Use the automated migration script for large codebases.

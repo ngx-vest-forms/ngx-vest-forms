@@ -142,6 +142,9 @@ describe('NgxControlWrapper', () => {
       await userEvent.tab(); // blur the field
 
       await fixture.whenStable();
+      // Ensure Angular app is fully stable before assertions (mirrors other tests)
+      const appReference = fixture.debugElement.injector.get(ApplicationRef);
+      await appReference.whenStable();
 
       // Should show validation errors (behavior from NgxFormErrorDisplayDirective)
       await waitFor(

@@ -188,6 +188,131 @@ Or per control:
 <ngx-control-wrapper errorDisplayMode="on-blur">...</ngx-control-wrapper>
 ```
 
+### 6. Root-level (cross-field) validation — Breaking
+
+In v1, enabling root validation was done via a dedicated input and the same `[suite]` binding, often combined with the `ROOT_FORM` key inside the Vest suite and `(errorsChange)` to read errors.
+
+Before (v1):
+
+```html
+<form
+  scVestForm
+  [suite]="suite"
+  [validateRootForm]="true"
+  (errorsChange)="errors.set($event)"
+>
+  <!-- Display root errors -->
+  {{ errors()?.['rootForm'] }}
+</form>
+```
+
+```ts
+import { ROOT_FORM } from 'ngx-vest-forms';
+import { enforce, only, staticSuite, test } from 'vest';
+
+export const suite = staticSuite((model, field?: string) => {
+  if (field) only(field);
+
+  // Field-level validations
+  test('password', 'Password is required', () => {
+    enforce(model.password).isNotEmpty();
+  });
+
+  test('confirmPassword', 'Confirm password is required', () => {
+    enforce(model.confirmPassword).isNotEmpty();
+  });
+
+  // Root-level validation
+  test(ROOT_FORM, 'Passwords do not match', () => {
+    enforce(model.confirmPassword).equals(model.password);
+  });
+});
+```
+
+After (v2): Cross-field/root validation is opt-in, decoupled from the core directive, and uses distinct inputs to avoid collisions and circular DI.
+
+```html
+<form
+  ngxVestForm
+  [vestSuite]="fieldSuite"
+  formLevelValidation
+  [formLevelValidationMode]="'submit'"
+  [formLevelSuite]="rootSuite"
+  [(formValue)]="model"
+  #form="ngxVestForm"
+>
+  <!-- Display root errors -->
+  @if (form.formState().root?.errors?.length) {
+  <div class="error">{{ form.formState().root?.errors?.[0] }}</div>
+  }
+</form>
+```
+
+```ts
+import { NGX_ROOT_FORM, injectNgxRootFormKey } from 'ngx-vest-forms';
+import { enforce, only, staticSuite, test } from 'vest';
+
+// Option A: Dedicated field-level suite
+export const fieldSuite = staticSuite((model, field?: string) => {
+  if (field) only(field);
+
+  test('password', 'Password is required', () => {
+    enforce(model.password).isNotEmpty();
+  });
+
+  test('confirmPassword', 'Confirm password is required', () => {
+    enforce(model.confirmPassword).isNotEmpty();
+  });
+});
+
+// Option B: Dedicated root-level suite using exported constant
+export const rootSuite = staticSuite((model) => {
+  test(NGX_ROOT_FORM, 'Passwords do not match', () => {
+    enforce(model.confirmPassword).equals(model.password);
+  });
+});
+
+// Option C: Root suite using injected key (advanced)
+export const rootSuiteWithInjection = staticSuite((model, _field, ctx) => {
+  const ROOT = injectNgxRootFormKey();
+  test(ROOT, 'Passwords do not match', () => {
+    enforce(model.confirmPassword).equals(model.password);
+  });
+});
+```
+
+**Key changes and rationale:**
+
+- **Directive**: `[validateRootForm]` → `formLevelValidation` (boolean attribute)
+- **Suite Input**: Root suite must be provided explicitly via `[formLevelSuite]` (no implicit fallback to `[vestSuite]`)
+- **Constants**: `ROOT_FORM` → `NGX_ROOT_FORM`
+- **Error Reading**: `(errorsChange)` → `form.formState().root?.errors`
+- **Validation Mode**: New `[formLevelValidationMode]`: `'submit'` (default) vs `'live'`
+- **Error Shape**: Simplified to arrays only: `{ errors?: string[]; warnings?: string[] }`
+
+**Minimal migration path:**
+
+If you used one suite for both field-level and root-level rules in v1, you can reuse it for both:
+
+```html
+<form
+  ngxVestForm
+  [vestSuite]="suite"
+  formLevelValidation
+  [formLevelSuite]="suite"
+></form>
+```
+
+**When to use which suite input:**
+
+- `[vestSuite]` is for per-field validations (interactive, as users type)
+- `formLevelValidation` + `[formLevelSuite]` is for cross-field/form-wide rules and submit-gated checks
+
+**Validation timing:**
+
+- **Submit mode** (default): Cross-field validation only runs after first form submission
+- **Live mode**: Set `[formLevelValidationMode]="'live'"` for immediate cross-field validation
+
 ## Migration from Core
 
 If you were previously using shape validation in v1:
@@ -203,7 +328,7 @@ const schema = ngxModelToStandardSchema(shape);
 // Use schema for validation, type inference, etc.
 ```
 
-### 6. Update Schema Utilities (if used)
+### 7. Update Schema Utilities (if used)
 
 **v1:**
 
@@ -312,7 +437,7 @@ export class UserFormComponent {
 - Use `modelToStandardSchema` only for legacy or custom scenarios.
 - See the [schemas README](../../projects/ngx-vest-forms/schemas/README.md) for details and migration notes.
 
-### 6a. Error Object Structure Change
+### 7a. Error Object Structure Change
 
 **v1:** Errors were strings (e.g., `errors: Record<string, string>`)
 
@@ -322,7 +447,7 @@ export class UserFormComponent {
 const errors = vestForm.formState().errors; // Record<string, string[]>
 ```
 
-### 6c. Schema Validation State Separation (Breaking)
+### 7c. Schema Validation State Separation (Breaking)
 
 In earlier v2 previews, failed schema issues were merged into `formState().root.errors` as flattened strings (e.g. `email: Invalid email`). Final v2 separates schema validation into a dedicated `formState().schema` object for clarity and stronger typing.
 
@@ -370,18 +495,16 @@ const summary = [
 
 Rationale: Separation preserves structure (path/message), avoids accidental double counting, and keeps Vest vs schema concerns distinct.
 
-````
-
 **Migration Tip:** Update your error display logic to handle arrays of errors per field.
 
-### 6b. Smart State Migration (Advanced)
+### 7b. Smart State Migration (Advanced)
 
 **v2:** For complex forms needing external sync or conflict resolution:
 
 ```typescript
 import { NgxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state';
 // ...use as needed, see Smart State Management Guide...
-````
+```
 
 ---
 
@@ -412,7 +535,7 @@ echo "Please review the changes and test your application."
 
 - **Type Errors:** Update type names and imports to NGX-prefixed versions.
 - **Import Errors:** Ensure optional features are imported from their respective entry points.
-- **validateRootForm Issues:** Ensure `[validateRootForm]="true"` is set for cross-field validation.
+- **Form-level validation not running:** Ensure `formLevelValidation` is present and `[formLevelSuite]` is provided. In `'submit'` mode, it only runs after the first submit; use `[formLevelValidationMode]="'live'"` for live checks.
 - **General Tips:** Run `npx tsc --noEmit` to check for type errors after migration. Use the automated migration script for large codebases.
 
 ---

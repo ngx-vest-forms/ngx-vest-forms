@@ -8,10 +8,10 @@ import {
 import { NgxFormControlStateDirective } from './directives/form-control-state.directive';
 import { NgxFormCoreDirective } from './directives/form-core.directive';
 import { NgxFormErrorDisplayDirective } from './directives/form-error-display.directive';
+import { NgxFormLevelValidationDirective } from './directives/form-level-validation.directive';
 import { NgxFormModelGroupDirective } from './directives/form-model-group.directive';
 import { NgxFormModelDirective } from './directives/form-model.directive';
 import { NgxFormDirective } from './directives/form.directive';
-import { NgxValidateRootFormDirective } from './directives/validate-root-form.directive';
 
 // Re-export utility functions
 
@@ -72,7 +72,7 @@ export const ngxVestFormsViewProviders = [
 /**
  * Exports all the stuff we need to use the template driven forms
  *
- * NgxValidateRootFormDirective is included for manual cross-field validation
+ * NgxFormLevelValidationDirective is included for opt-in form-level validation
  * when needed alongside the main form directives.
  *
  * __N.B.__:
@@ -86,7 +86,7 @@ export const ngxVestForms = [
   NgxFormModelGroupDirective,
   NgxFormControlStateDirective,
   NgxFormErrorDisplayDirective,
-  NgxValidateRootFormDirective,
+  NgxFormLevelValidationDirective,
 ] as const;
 
 /**
@@ -107,6 +107,7 @@ export {
   getInitialNgxFormControlState,
 } from './directives/form-control-state.directive';
 export { NgxFormCoreDirective } from './directives/form-core.directive';
+export { NgxFormLevelValidationDirective } from './directives/form-level-validation.directive';
 export { NgxFormState } from './directives/form.directive';
 export { injectNgxRootFormKey } from './utils/form-token';
 

@@ -11,7 +11,6 @@ export {
   NgxFormDirective,
   NgxFormState,
 } from './lib/directives/form.directive';
-export { NgxValidateRootFormDirective } from './lib/directives/validate-root-form.directive';
 
 export {
   NgxDeepPartial,
@@ -19,6 +18,7 @@ export {
   NgxFieldKey,
   NgxFormCompatibleDeepRequired,
   NgxFormControlState,
+  NgxFormLevelValidationDirective,
   NgxInjectRootFormKeyOptions,
   NgxValidationOptions,
   NgxVestSuite,

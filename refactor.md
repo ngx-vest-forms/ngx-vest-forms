@@ -26,14 +26,14 @@ Use these names everywhere (code, tests, docs, examples):
   - `[(formValue)]` – Two-way binding of the whole model
   - `[formSchema]` – Schema input (runtime or adapter)
   - `[smartState]` – Smart-state config
-  - `[validateRoot]` – Enable root-level (cross-field) validation
-  - `[validateRootMode]` – `'submit' | 'live'` (default `'submit'`)
+  - `[formLevelValidation]` – Enable cross-field/root validation
+  - `[formLevelValidationMode]` – `'submit' | 'live'` (default `'submit'`)
   - `[enableDebug]`, `[enablePerformanceTracking]` – Dev-only flags
 - Directives (selectors)
   - `form[ngxVestForm]` – Core form directive
   - `form[ngxVestForm][formSchema]` – Schema feature directive
   - `form[ngxVestForm][smartState]` – Smart-state feature directive
-  - `form[ngxVestForm][validateRoot]` – Root validation directive (opt-in)
+  - `form[ngxVestForm][formLevelValidation]` – Cross-field/root validation directive (opt-in)
   - `form[ngxVestForm][enableDebug]` – Debug/logging feature directive
   - `form[ngxVestFormEnhanced]` – Composition wrapper (optional)
 - Data and errors
@@ -137,10 +137,10 @@ projects/ngx-vest-forms/
   - No extra runtime coupling to core beyond `hostDirectives`
 - Smart state (`form[ngxVestForm][smartState]`)
   - Optional external sync + conflict resolution; separate entry point
-- Root validation (`form[ngxVestForm][validateRoot]`)
+- Cross-field validation (`form[ngxVestForm][formLevelValidation]`)
   - AsyncValidator on the form root; opt-in
-  - Modes: `validateRootMode = 'submit' | 'live'` (default `'submit'`)
-  - Calls `vestSuite(model, ROOT_FORM)`; maps messages to Angular `ValidationErrors` and `_root` in `errorMap`
+  - Modes: `formLevelValidationMode = 'submit' | 'live'` (default `'submit'`)
+  - Calls `vestSuite(model, NGX_ROOT_FORM)`; maps messages to Angular `ValidationErrors` and `_root` in `errorMap`
   - No manual subscriptions; single-run per validation request
 - Debug (`form[ngxVestForm][enableDebug]`)
   - Dev-only logging/perf tracking; fully tree-shakeable
@@ -150,7 +150,7 @@ Keep code in each directive concise; avoid feature creep in core.
 ## Breaking Changes & Cleanup (Allowed in v2)
 
 - Rename everywhere: `formSuite` → `vestSuite`; `formShape` → `formSchema`
-- Refactor/rename root validator: `ValidateRootFormDirective` → simple opt-in root validation directive (`form[ngxVestForm][validateRoot]`) with `validateRootMode` and no manual subscriptions
+- Refactor/rename root validator: `ValidateRootFormDirective` → simple opt-in cross-field validation directive (`form[ngxVestForm][formLevelValidation]`) with `formLevelValidationMode` and no manual subscriptions
 - Reduce/simplify FormControlState; move helpers to utils; avoid duplicate state
 - Remove `*.backup`, `*.clean`, and commented-out code
 - Replace `HostBinding`/`HostListener` with host metadata
@@ -234,6 +234,9 @@ Keep code in each directive concise; avoid feature creep in core.
 - Replace `formSuite` with `vestSuite`; replace `formShape` with `formSchema` (or migrate via `v1-migration.ts`)
 - Update templates to modern control flow and signals-based patterns
 - Verify `name` attributes match `[ngModel]` property paths
+- Form-level validation (root): `[validateRootForm]` → `formLevelValidation` and add `[formLevelSuite]` (plus optional `[formLevelValidationMode]`).
+  - Reuse one suite for both: `<form ngxVestForm [vestSuite]="suite" formLevelValidation [formLevelSuite]="suite">`.
+  - Or split suites: `<form ngxVestForm [vestSuite]="fieldSuite" formLevelValidation [formLevelSuite]="rootSuite">`.
 
 ## Actionable Task Lists
 
@@ -241,7 +244,7 @@ Keep code in each directive concise; avoid feature creep in core.
 
 - [ ] Keep core directive small/simple (aim <200 LOC); extract helpers
 - [ ] Standardize naming across code, tests, examples (`vestSuite`, `formSchema`, `smartState`)
-- [ ] Refactor root validator to `form[ngxVestForm][validateRoot]` with `validateRootMode` (default `'submit'`); remove over-engineering; add docs/examples
+- [ ] Refactor root validator to `form[ngxVestForm][formLevelValidation]` with `formLevelValidationMode` (default `'submit'`); remove over-engineering; add docs/examples
 - [ ] Prune `*.backup`/`*.clean` files and commented code
 - [ ] Update examples to `@if`/`@for` and modern patterns
 - [ ] Add Playwright + MSW E2E for one critical submit flow (including root errors)

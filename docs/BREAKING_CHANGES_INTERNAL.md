@@ -4,22 +4,23 @@
 
 ## Internal Changes Summary
 
-| Change                        | v1 Pattern/Behavior                          | v2 Pattern/Behavior                                     | Impact/Reason                                     |
-| ----------------------------- | -------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------- |
-| NGX Naming Convention         | Non-prefixed (FormDirective, ROOT_FORM, etc) | Consistent NGX prefix (NgxFormDirective, NGX_ROOT_FORM) | Avoids conflicts, aligns with Angular conventions |
-| Modular Architecture          | Monolithic, all features bundled             | Modular entry points (core, control-wrapper, schemas)   | Tree-shaking, smaller bundles, better structure   |
-| Unified formState signal      | Multiple signals/outputs (validChange, etc)  | Single formState signal for all state                   | Easier state management, less duplication         |
-| Error object arrays           | Errors as strings                            | Errors as arrays, path utilities                        | Multi-error support, better Angular alignment     |
-| Standard Schema support       | Basic, limited                               | Adapters for Zod, ArkType, Valibot                      | Schema validation, type safety                    |
-| Improved runtime validation   | Basic, limited                               | Better DX for model/template mismatches                 | Developer experience                              |
-| Selector modernization        | scVestForm, sc-control-wrapper               | ngxVestForm, ngx-control-wrapper                        | Angular convention compliance                     |
-| Path utilities                | Basic                                        | Robust, type-safe nested value access                   | Reliability, maintainability                      |
-| Error display config overhaul | Hardcoded, limited                           | Global/per-instance settings via tokens                 | Flexible error display                            |
-| Modern Angular migration      | Angular 15-17, legacy APIs                   | Standalone components, signals, new control flow        | Performance, maintainability                      |
-| NgxFormControlStateDirective  | Not available                                | Signal-based control state tracking                     | Internal state management                         |
-| UpdateOn-aware error display  | Not available                                | Validation timing respects ngModelOptions               | Accurate validation timing                        |
-| Schema template extraction    | Not available                                | Runtime schema validation/mismatch detection            | DX, reliability                                   |
-| Unified build output          | Local dist folders per entry point           | All entry points build to main dist directory           | Build system simplification                       |
+| Change                         | v1 Pattern/Behavior                          | v2 Pattern/Behavior                                     | Impact/Reason                                     |
+| ------------------------------ | -------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------- |
+| NGX Naming Convention          | Non-prefixed (FormDirective, ROOT_FORM, etc) | Consistent NGX prefix (NgxFormDirective, NGX_ROOT_FORM) | Avoids conflicts, aligns with Angular conventions |
+| Modular Architecture           | Monolithic, all features bundled             | Modular entry points (core, control-wrapper, schemas)   | Tree-shaking, smaller bundles, better structure   |
+| Unified formState signal       | Multiple signals/outputs (validChange, etc)  | Single formState signal for all state                   | Easier state management, less duplication         |
+| Error object arrays            | Errors as strings                            | Errors as arrays, path utilities                        | Multi-error support, better Angular alignment     |
+| Standard Schema support        | Basic, limited                               | Adapters for Zod, ArkType, Valibot                      | Schema validation, type safety                    |
+| Improved runtime validation    | Basic, limited                               | Better DX for model/template mismatches                 | Developer experience                              |
+| Selector modernization         | scVestForm, sc-control-wrapper               | ngxVestForm, ngx-control-wrapper                        | Angular convention compliance                     |
+| Path utilities                 | Basic                                        | Robust, type-safe nested value access                   | Reliability, maintainability                      |
+| Error display config overhaul  | Hardcoded, limited                           | Global/per-instance settings via tokens                 | Flexible error display                            |
+| Modern Angular migration       | Angular 15-17, legacy APIs                   | Standalone components, signals, new control flow        | Performance, maintainability                      |
+| NgxFormControlStateDirective   | Not available                                | Signal-based control state tracking                     | Internal state management                         |
+| UpdateOn-aware error display   | Not available                                | Validation timing respects ngModelOptions               | Accurate validation timing                        |
+| Schema template extraction     | Not available                                | Runtime schema validation/mismatch detection            | DX, reliability                                   |
+| Form-level validation refactor | ValidateRootFormDirective, complex state     | NgxFormLevelValidationDirective, signal-based state     | Cleaner API, no DI cycles, better performance     |
+| Unified build output           | Local dist folders per entry point           | All entry points build to main dist directory           | Build system simplification                       |
 
 ---
 
@@ -38,6 +39,7 @@
 - **NgxFormControlStateDirective Implementation:** v2 adds a directive for signal-based control state tracking, used internally by control wrapper.
 - **UpdateOn-Aware Error Display:** v2 respects ngModelOptions.updateOn for validation timing.
 - **Schema Template Extraction:** v2 adds runtime schema validation and mismatch detection.
+- **Form-Level Validation Refactor:** v2 completely rewrites root form validation from `NgxValidateRootFormDirective` to `NgxFormLevelValidationDirective` with cleaner API, signal-based state management, simplified error shape, and elimination of circular DI dependencies.
 - **Unified Build Output:** v2 builds all entry points to the main dist directory, simplifying the build system.
 
 ---
