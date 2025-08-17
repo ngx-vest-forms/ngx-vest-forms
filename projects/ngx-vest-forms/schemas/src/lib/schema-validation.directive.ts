@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { NGX_SCHEMA_STATE, NgxFormCoreDirective } from 'ngx-vest-forms/core';
+import { toStandardSchemaViaRegistry } from './adapter-registry';
 import { toAnyRuntimeSchema } from './runtime-adapters';
 import type { NgxRuntimeSchema } from './runtime-schema';
 import {
@@ -134,7 +135,12 @@ export class NgxSchemaValidationDirective {
       const candidate = this.formSchema();
       if (!candidate) return;
       try {
-        const runtime = toAnyRuntimeSchema(candidate);
+        const standard = toStandardSchemaViaRegistry(candidate);
+        const runtime = standard
+          ? ({
+              ...toAnyRuntimeSchema(standard),
+            } as NgxRuntimeSchema<unknown>)
+          : toAnyRuntimeSchema(candidate);
         const currentModel = this.#core.formState().value;
         const result = runtime.safeParse(currentModel);
         if (result.success === false) {

@@ -2,11 +2,19 @@
  * Public API Surface of ngx-vest-forms/schemas
  */
 
+export {
+  clearCustomAdapters,
+  registerSchemaAdapter,
+  toStandardSchemaViaRegistry,
+} from './src/lib/adapter-registry';
+export type { SchemaAdapter } from './src/lib/adapters/schema-adapter.interface';
 export { NgxVestFormWithSchemaDirective } from './src/lib/form-with-schema.directive';
 export {
   fromArkType,
   fromValibot,
   fromZod,
+  // DX alias: clearer name for normalization utility
+  toAnyRuntimeSchema as normalizeToRuntimeSchema,
   toAnyRuntimeSchema,
   type ThirdPartyRuntimeAdapters,
 } from './src/lib/runtime-adapters';

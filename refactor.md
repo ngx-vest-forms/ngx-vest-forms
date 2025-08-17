@@ -1,23 +1,13 @@
 # NgxVestForms v2 Architecture: Progressive Enhancement Strategy
 
-## Overview & Core Philosophy
-
 Start simple, enhance progressively. Deliver a minimal, fast core that covers 80% of use cases and add advanced features via opt-in directives. Favor composition over configuration.
 
 - Angular 20.1+ first-class, signals-centric, zoneless-compatible
-- Template-Driven Forms (TDF) first, no UI opinions in core
-- Pay-per-feature: separate, tree-shakeable entry points
 
 ## Entry Points (Final, 4 total)
 
-- ngx-vest-forms/core – Core directives and utilities
-- ngx-vest-forms/control-wrapper – Optional UI helper component
 - ngx-vest-forms/schemas – Runtime schema validation helpers
 - ngx-vest-forms/smart-state – External state sync for complex scenarios
-
-Why 4: clean separation of concerns, styling independence, flexible adoption.
-
-## Naming & API Conventions (Authoritative)
 
 Use these names everywhere (code, tests, docs, examples):
 
@@ -36,21 +26,13 @@ Use these names everywhere (code, tests, docs, examples):
   - `form[ngxVestForm][formLevelValidation]` – Cross-field/root validation directive (opt-in)
   - `form[ngxVestForm][enableDebug]` – Debug/logging feature directive
   - `form[ngxVestFormEnhanced]` – Composition wrapper (optional)
-- Data and errors
-  - Error map: `Record<string, string[]>`; root-level errors under `_root`
-  - Model signal variable name: `model`
 - Files
   - kebab-case for file names, types over interfaces where possible
-  - One directive per file; keep directives concise and focused
 
 ## API & DX Principles (Minimal Boilerplate)
 
-- Simplicity first: one directive (`ngxVestForm`) connects `[(formValue)]` and `[vestSuite]` with minimal template code.
-- Abstract complexity: library handles touch/dirty tracking, debouncing, and error mapping; users wire inputs/labels.
 - Predictable, explicit inputs: no hidden magic; all features opt-in via additional inputs (`[formSchema]`, `[smartState]`, `[enableDebug]`).
 - Ergonomic defaults: sane defaults for debounce, submit handling, and error aggregation.
-- Consistent names and shapes: `Record<string, string[]>` error maps, `_root` for form-level errors.
-- Example-first docs: every public API must have a short example.
 
 ## Documentation & JSDoc Standards
 
@@ -79,7 +61,7 @@ Use these names everywhere (code, tests, docs, examples):
 - Slim down FormControlState-related logic; aim for lean helpers in utils
 - Examples updated to new API and Angular control flow (`@if`/`@for`) ✅
 - Add one Playwright + MSW E2E covering a full submit flow
-- Migration draft: v1 → v2 quickstart with renames (`formSuite` → `vestSuite`, `formShape` → `formSchema`) ✅
+- Migration draft: v1 → v2 quickstart with renames (`formSuite` → `vestSuite`, `formShape` → `formSchema`)
 - JSDoc coverage for all public exports in core and schemas
 
 ## Musts for v2.0 (Stable)
@@ -181,7 +163,7 @@ Keep code in each directive concise; avoid feature creep in core.
   - Prefer `userEvent` from `@vitest/browser/context`
   - Use modern Angular test APIs; always await `ApplicationRef.whenStable()` in async tests
   - Root validation tests: assert form becomes INVALID when `_root` errors exist; verify `_root` messages render
-- E2E: Playwright ≥1.51 + MSW
+- E2E: Playwright ≥1.51
   - Follow `.github/instructions/playwright.instructions.md`
   - Role-based locators, `test.step()` grouping, web-first assertions
   - Block submit when root errors exist; show root error summary
@@ -244,12 +226,12 @@ Keep code in each directive concise; avoid feature creep in core.
 
 - [x] Standardize naming across code, tests, examples (`vestSuite`, `formSchema`, `smartState`)
 - [x] Refactor root validator to `form[ngxVestForm][formLevelValidation]` with `formLevelValidationMode` (default `'submit'`)
-- [ ] Prune `*.backup`/`*.clean` files and commented code
+- [x] Prune `*.backup`/`*.clean` files and commented code
 - [x] Update examples to `@if`/`@for` and modern patterns
 - [x] Draft v1→v2 migration guide (renames + schema helper)
+- [ ] Add Playwright + MSW E2E for one critical submit flow (including root errors)
 - [ ] Ensure 100% JSDoc coverage for public APIs in core and schemas
 - [ ] Keep core directive small/simple (optional improvement: aim <200 LOC); extract helpers where it improves clarity
-- [ ] Add Playwright + MSW E2E for one critical submit flow (including root errors)
 
 ### v2.0 (Stable)
 
@@ -275,3 +257,46 @@ Keep code in each directive concise; avoid feature creep in core.
 - Prefer composition via `hostDirectives`; avoid abstract base directives
 - Optimize for developer understanding and minimal boilerplate
 - Document common paths; keep edge cases out of core
+
+## Testing Artifacts Policy
+
+- Keep Vitest textual snapshots committed in `__snapshots__/`.
+- Ignore Playwright outputs and heavy artifacts in git: `playwright-report/`, `test-results/`, and any `__screenshots__/` directories.
+- Avoid committing backup/legacy files: `*.backup`, `*.clean`, and `**/backup-old-examples/`.
+
+## Schema Module Architecture (v2)
+
+### Adapter Pattern Implementation
+
+- Implement individual adapters for each schema library (Zod, Valibot, ArkType, Yup)
+- Each adapter implements `SchemaAdapter` interface with:
+  - `vendor`: string identifier
+  - `isSupported(schema)`: detection logic
+  - `toStandardSchema(schema)`: conversion to Standard Schema v1
+- Use adapter registry pattern for extensibility and tree-shaking
+
+### Standard Schema Compliance
+
+- Fully implement Standard Schema v1 specification
+- Libraries with native support (Zod 3.24+, Valibot 1.0+, ArkType 2.0+): direct pass-through
+- Legacy libraries: provide conversion adapters
+- Custom `ngxModelToStandardSchema`: refactor as adapter
+
+### File Structure
+
+```text
+schemas/
+├── src/
+│   ├── adapters/
+│   │   ├── base.adapter.ts         # SchemaAdapter interface
+│   │   ├── zod.adapter.ts
+│   │   ├── valibot.adapter.ts
+│   │   ├── arktype.adapter.ts
+│   │   ├── yup.adapter.ts
+│   │   ├── custom-model.adapter.ts # ngxModelToStandardSchema
+│   │   └── index.ts                # Tree-shakeable exports
+│   ├── adapter-registry.ts         # Central registry
+│   ├── runtime-schema.ts           # Runtime normalization only
+│   ├── schema-validation.directive.ts
+│   └── standard-schema.types.ts    # Standard Schema v1 types
+```

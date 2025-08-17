@@ -1,4 +1,15 @@
-# See http://help.github.com/ignore-files/ for more about ignoring files.
+# See http://help.github.com/ignore-fil# System Files
+.DS_Store
+Thumbs.db
+
+# Backup and legacy files
+# (recursive to catch nested examples/backups)
+*.backup
+*.clean
+*.old
+*.bak
+**/backup-old-examples/
+**/*backup*/
 
 # Compiled output
 /dist
@@ -7,7 +18,7 @@
 /bazel-out
 
 # Node
-/node_modules
+**/node_modules
 npm-debug.log
 yarn-error.log
 
@@ -33,6 +44,8 @@ yarn-error.log
 .sass-cache/
 /connect.lock
 /coverage
+/playwright-report/
+/test-results/
 /libpeerconnection.log
 testem.log
 /typings
@@ -41,6 +54,13 @@ testem.log
 .DS_Store
 Thumbs.db
 
-*storybook.log
-**/node_modules/
+# Backup files
+*.backup
+*.clean
+**/backup-old-examples/
+
+# Test artifact screenshots (not used by Vitest snapshots)
 **/__screenshots__/
+
+# Keep Vitest snapshots tracked (do NOT ignore __snapshots__)
+# __snapshots__
