@@ -1,42 +1,82 @@
-<div>
-  <span class="mb-1 block font-medium">Phone Numbers</span>
-  <div ngModelGroup="values">
-    @for (item of values() | keyvalue; track item.key) {
-      <div ngxControlWrapper>
-        <div class="relative">
+<form
+  ngxVestForm
+  [vestSuite]="suite"
+  [(formValue)]="model"
+  #vestForm="ngxVestForm"
+>
+  <div class="space-y-4">
+    <!-- Input section to add new phone number -->
+    <div>
+      <label
+        for="add-phone-input"
+        class="mb-2 block text-sm font-medium text-gray-700"
+      >
+        Add Phone Number
+      </label>
+      <ngx-control-wrapper>
+        <div class="flex gap-2">
           <input
+            id="add-phone-input"
             type="text"
-            name="{{ item.key }}"
-            [ngModel]="values()[item.key]"
-            placeholder="Type phone number"
+            name="addValue"
+            [ngModel]="model().addValue"
+            (keydown)="onKeyDown($event)"
+            placeholder="Enter phone number (e.g., +1-555-123-4567)"
+            class="flex-1 rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
           <button
             type="button"
-            (click)="removePhoneNumber(item.key)"
-            class="absolute bottom-0.5 end-0.5 rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+            (click)="addPhoneNumber()"
+            [disabled]="
+              !model().addValue?.trim() ||
+              vestForm.formState().errors['addValue']
+            "
+            class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-gray-400"
           >
-            Remove
+            Add
           </button>
         </div>
-      </div>
-    }
-  </div>
-  <div ngxControlWrapper>
-    <div class="relative">
-      <input
-        type="text"
-        [ngModel]="addValue"
-        name="_addValue"
-        [ngModelOptions]="{ standalone: true }"
-        placeholder="Type phone number"
-      />
-      <button
-        type="button"
-        (click)="addPhoneNumber()"
-        class="absolute bottom-0.5 end-0.5 rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-      >
-        Add
-      </button>
+      </ngx-control-wrapper>
+    </div>
+
+    <!-- List of existing phone numbers -->
+    <div ngModelGroup="values">
+      <h3 class="mb-3 text-sm font-medium text-gray-700">
+        Phone Numbers ({{ phoneNumbersCount() }})
+      </h3>
+
+      <ul class="space-y-2">
+        @for (item of phoneNumbersList() | keyvalue; track item.key) {
+          <li
+            class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3"
+          >
+            <!-- Display the phone number (not a form input) -->
+            <span class="flex-1 font-mono text-sm text-gray-800">
+              {{ item.value }}
+            </span>
+            <!-- Hidden form input for data binding -->
+            <input type="hidden" [name]="item.key" [ngModel]="item.value" />
+            <!-- Remove button -->
+            <button
+              type="button"
+              (click)="removePhoneNumber(item.key)"
+              class="ml-3 rounded-md bg-red-100 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              [attr.aria-label]="'Remove phone number ' + item.value"
+            >
+              Remove
+            </button>
+          </li>
+        } @empty {
+          <li
+            class="rounded-lg border-2 border-dashed border-gray-300 px-6 py-4 text-center"
+          >
+            <p class="text-sm text-gray-500">No phone numbers added yet.</p>
+            <p class="mt-1 text-xs text-gray-400">
+              Add a phone number above to get started.
+            </p>
+          </li>
+        }
+      </ul>
     </div>
   </div>
-</div>
+</form>

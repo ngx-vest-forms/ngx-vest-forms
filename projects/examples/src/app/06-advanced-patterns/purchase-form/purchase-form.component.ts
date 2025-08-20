@@ -26,7 +26,6 @@ import { ProductService } from '../../services/product.service';
 import { SwapiService } from '../../services/swapi.service';
 import { AddressComponent } from '../../ui/address/address.component';
 import { AddressModel } from '../../ui/address/address.model';
-import { PhoneNumbersComponent } from '../../ui/phone-numbers/phone-numbers.component';
 import { initialPurchaseFormData } from './purchase-form.model';
 import { createPurchaseValidationSuite } from './purchase.validations';
 
@@ -42,7 +41,6 @@ type PurchaseFormModel = InferSchemaType<typeof purchaseFormSchema>;
     JsonPipe,
     ngxVestForms,
     AddressComponent,
-    PhoneNumbersComponent,
     NgxControlWrapper,
     NgxVestFormWithSchemaDirective,
   ],
@@ -89,6 +87,14 @@ export class PurchaseFormComponent {
    */
   protected readonly purchaseFormSuite: NgxVestSuite<PurchaseFormModel> =
     createPurchaseValidationSuite(this.rootFormKey, this.#swapiService);
+
+  // Helper to get phone numbers with proper typing
+  protected getPhoneNumbers(): Record<string, string> {
+    return (this.vm.formValue().phoneNumbers?.values || {}) as Record<
+      string,
+      string
+    >;
+  }
 
   // Provide the wrapped model template to the 'formSchema' input
   /**

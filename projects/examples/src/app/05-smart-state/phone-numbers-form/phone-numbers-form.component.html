@@ -1,9 +1,9 @@
 <!-- Minimal form array example: phone-numbers-form.component.html -->
 <section class="prose mb-4 max-w-none">
-  <h2>Phone Numbers</h2>
   <p>
-    Purpose: Demonstrate array-like editing with a reusable UI component, root
-    errors, and minimal boilerplate.
+    Purpose: Demonstrate array-like editing with proper ngx-vest-forms patterns,
+    including duplicate validation, proper form structure, and &#64;empty state
+    handling.
   </p>
   <p class="text-sm">
     See:
@@ -15,27 +15,14 @@
     · <a href="https://vestjs.dev" target="_blank">Vest Docs</a>
   </p>
 </section>
-<form
-  ngxVestForm
-  [vestSuite]="suite"
-  [(formValue)]="initialValue"
-  (ngSubmit)="save()"
->
-  <div ngxControlWrapper>
-    <!--
-      ngx-phone-numbers is a form array component using signals and [(values)] for two-way binding.
-      We use initialValue() because initialValue is a signal created with model().
-      This ensures changes in the child update the parent reactively.
 
-      Accessibility:
-      - The component should ensure each input has a label and id for screen readers.
-      - Error display is handled by ngxControlWrapper, so no manual error markup is needed here.
-    -->
-    <ngx-phone-numbers
-      [(values)]="initialValue().phoneNumbers"
-    ></ngx-phone-numbers>
-  </div>
-  <button type="submit" class="mt-4 rounded bg-blue-600 px-4 py-2 text-white">
-    Save
-  </button>
-</form>
+<!-- The phone numbers component now handles its own form logic -->
+<ngx-phone-numbers></ngx-phone-numbers>
+
+<button
+  type="button"
+  (click)="save()"
+  class="mt-4 rounded bg-blue-600 px-4 py-2 text-white"
+>
+  Save Phone Numbers
+</button>

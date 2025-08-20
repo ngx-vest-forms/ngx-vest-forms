@@ -22,8 +22,8 @@ type BasePhoneNumberModel = {
  * It provides type safety for potentially incomplete data during form input.
  *
  * @usage
- * - Form Models: `this.form.createControlGroup(validations).setModel(somePhoneNumbers as PhoneNumberModel);`
- * - Nested within other models: `phoneNumbers: PhoneNumberModel;`
+ * - Form Models: `model = signal<PhoneNumberModel>({ addValue: '', values: {} })`
+ * - Template bindings: `[ngModel]="model().addValue"`
  */
 export type PhoneNumberModel = NgxDeepPartial<BasePhoneNumberModel>;
 
@@ -36,12 +36,10 @@ export type PhoneNumberModel = NgxDeepPartial<BasePhoneNumberModel>;
  * preventing runtime errors related to missing properties.
  *
  * @usage
- * - Initializing Form State: `phoneNumbers: { ...initialPhoneNumberState }`
+ * - Initializing Form State: `model = signal<PhoneNumberModel>({ ...initialPhoneNumberState })`
  * - Default Values in nested structures.
  */
 export const initialPhoneNumberState: NgxDeepRequired<BasePhoneNumberModel> = {
   addValue: '',
-  values: {
-    '0': '',
-  },
+  values: {},
 };
