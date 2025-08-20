@@ -233,23 +233,39 @@ Keep code in each directive concise; avoid feature creep in core.
 - [ ] Ensure 100% JSDoc coverage for public APIs in core and schemas
 - [ ] Keep core directive small/simple (optional improvement: aim <200 LOC); extract helpers where it improves clarity
 
+### Beta (2.0.0-beta.2)
+
+- [ ] Upgrade Tailwind CSS to latest version v4
+- [ ] Make ngx-control-wrapper tailwind agnostic and use css custom properties instead
+  - [ ] Update styles to use custom properties
+  - [ ] Remove any tailwind-specific classes
+  - [ ] Ensure compatibility with existing tailwind styles (allow Tailwind variables/css custom properties to be used)
+  - [ ] Document the migration process for existing styles
+  - [ ] Create a set of utility classes for common styles (if needed)
+
+### Beta (2.0.0-beta.3)
+
+- [ ] Add more advanced nested array validation examples
+  - [ ] A TodoList with subtasks, with nested array of items (or something similar)
+- [ ] Improve error messaging and handling for nested structures
+
 ### v2.0 (Stable)
 
-- [ ] Raise test coverage to ≥95% across all entry points
-- [ ] Benchmark bundle sizes and document results (core, core+schemas)
-- [ ] Finalize migration guide with troubleshooting
-- [ ] Draft documentation site (concepts, API, recipes, migration)
 - [ ] Simplify FormControlState; move logic to utils; avoid leaky abstractions
+- [ ] Raise test coverage to ≥95% across all entry points
+- [ ] Finalize migration guide with troubleshooting
 - [ ] Finalize root validation API/modes and examples; add advanced tests
+- [ ] Benchmark bundle sizes and document results (core, core+schemas)
 
 ### v2.1+
 
+- [ ] Draft documentation site (concepts, API, recipes, migration)
 - [ ] Dev-only Debug directive (separate, tree-shakeable)
 - [ ] FormArray/dynamic structure improvements
 - [ ] Validation dependencies feature
 - [ ] Additional schema adapters (Yup/Joi) + adapter guide
 - [ ] ESLint rule: validate `name` vs `[ngModel]` path (with autofix)
-- [ ] Interactive docs playground
+  - [ ] Other ESLint rules if applicable
 
 ## Final Notes
 

@@ -1,3 +1,39 @@
+# ngx-vest-forms Examples - Testing Results & Todo
+
+## ✅ COMPLETED - Phone Numbers Form
+
+**Status:** FULLY WORKING ✅
+**Location:** `/phone-numbers-form`
+**Issues Fixed:**
+
+1. ✅ Fixed TypeScript errors (duplicate method, null reference)
+2. ✅ Fixed template error: "Cannot read properties of null (reading 'length')"
+3. ✅ Fixed two-way binding issue by using separate `model()` for phoneNumbers
+4. ✅ Phone numbers now display properly when added
+5. ✅ Remove functionality works correctly
+6. ✅ Multiple phone numbers can be added and managed
+7. ✅ Form submission works with alert confirmation
+8. ✅ Proper styling with Tailwind CSS
+
+**Architecture:**
+
+- Uses ngx-vest-forms v2 patterns correctly
+- Separate `model()` for proper two-way binding `[(values)]="phoneNumbers"`
+- `arrayToObject` utility converts arrays to Record<string,string> for template-driven forms
+- `KeyValuePipe` enables iteration over Record objects in templates
+- `effect()` syncs between parent form and child component models
+
+**Manual Testing Results:**
+
+- ✅ Add phone numbers: Working perfectly
+- ✅ Display phone numbers: Shows all added numbers in styled input fields
+- ✅ Remove phone numbers: Each entry has working Remove button
+- ✅ Empty state: "No phone numbers added yet." message when empty
+- ✅ Form submission: Save button triggers alert
+- ✅ Input clearing: Add input field clears after successful addition
+
+---
+
 # ngx-vest-forms Examples Structure & Requirements
 
 ## Folder Organization
@@ -826,3 +862,64 @@ Build comprehensive real-world examples:
 - [ ] Use deferred loading for large form sections
 - [ ] Implement partial hydration for SSR forms
 - [ ] Adopt new Angular compiler optimizations
+
+## Manual Testing Results (Playwright Browser Testing)
+
+### ✅ **Working Forms**
+
+#### 1. Minimal Form
+
+- **Status**: ✅ **WORKING** - Pristine, minimal example
+- **Behavior**: Single name field, basic validation works correctly
+
+#### 2. Simple Form
+
+- **Status**: ✅ **WORKING** - Good foundation with some patterns to improve
+- **Behavior**: Name and email validation working correctly
+- **Suggestions**: Could follow ngx-vest-forms v2 [ngModel] patterns better
+
+#### 3. Contact Form
+
+- **Status**: ✅ **WORKING** - Advanced validation showcase
+- **Behavior**: Multi-field validation, async validation working correctly
+- **Notes**: Good example of comprehensive form validation
+
+#### 4. Registration Form
+
+- **Status**: ✅ **WORKING** - Complex validation example
+- **Behavior**: Cross-field validation, password confirmation working correctly
+
+#### 5. Zod Schema Form
+
+- **Status**: ✅ **WORKING** - Schema integration example
+- **Behavior**: Type-safe validation with Zod schema working correctly
+- **Notes**: Demonstrates ngx-vest-forms + schema library integration
+
+#### 6. Smart Profile Form
+
+- **Status**: ✅ **WORKING** - External data sync example
+- **Behavior**: Profile form with external data sync working correctly
+- **Notes**: Good example of smart state with external API integration
+
+### ❌ **Fixed Forms**
+
+#### 7. Phone Numbers Form (Smart State) - **FIXED**
+
+- **Previous Status**: ❌ **CRITICAL ERROR** - `TypeError: Cannot convert undefined or null to object at Object.values`
+- **Current Status**: ✅ **FULLY FIXED** - Complete todo-list functionality working
+- **Fix Applied**:
+  - Fixed duplicate `updateAddValue()` method (TypeScript compilation error resolved)
+  - Updated PhoneNumbersComponent with proper null checks in addPhoneNumber() method
+  - Converted addValue to signal with updateAddValue() method for proper v2 patterns
+  - Updated HTML template to use [ngModel] instead of [(ngModel)] one-way binding
+  - Improved template with proper styling, empty state message, and clean layout
+  - Added console logging for debugging phone number additions
+- **Behavior After Fix**:
+  - Add button successfully clears input field and stores data in model
+  - Phone numbers display in a list with individual Remove buttons (todo-list style)
+  - Empty state shows "No phone numbers added yet" message when list is empty
+  - Each phone number can be individually edited and removed
+  - Input validation prevents adding empty phone numbers
+  - Clean, accessible UI with proper Tailwind styling
+- **Pattern**: Fully follows ngx-vest-forms v2 patterns with [ngModel] and signals
+- **Result**: Form now works exactly like a todo list for managing phone numbers
