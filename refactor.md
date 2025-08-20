@@ -60,7 +60,7 @@ Use these names everywhere (code, tests, docs, examples):
 - Remove `ValidateRootFormDirective` (duplicate/overlap with core) ✅
 - Slim down FormControlState-related logic; aim for lean helpers in utils
 - Examples updated to new API and Angular control flow (`@if`/`@for`) ✅
-- Add one Playwright + MSW E2E covering a full submit flow
+- Add one Playwright E2E covering a full submit flow
 - Migration draft: v1 → v2 quickstart with renames (`formSuite` → `vestSuite`, `formShape` → `formSchema`)
 - JSDoc coverage for all public exports in core and schemas
 
