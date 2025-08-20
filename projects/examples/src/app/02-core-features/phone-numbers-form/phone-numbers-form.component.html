@@ -1,0 +1,28 @@
+<!-- Minimal form array example: phone-numbers-form.component.html -->
+<section class="prose mb-4 max-w-none">
+  <p>
+    Purpose: Demonstrate array-like editing with proper ngx-vest-forms patterns,
+    including duplicate validation, proper form structure, and &#64;empty state
+    handling.
+  </p>
+  <p class="text-sm">
+    See:
+    <a
+      href="https://github.com/simplifiedcourses/ngx-vest-forms"
+      target="_blank"
+      >README</a
+    >
+    · <a href="https://vestjs.dev" target="_blank">Vest Docs</a>
+  </p>
+</section>
+
+<!-- The phone numbers component now handles its own form logic -->
+<ngx-phone-numbers></ngx-phone-numbers>
+
+<button
+  type="button"
+  (click)="save()"
+  class="mt-4 rounded bg-blue-600 px-4 py-2 text-white"
+>
+  Save Phone Numbers
+</button>

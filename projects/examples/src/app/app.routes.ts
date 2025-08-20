@@ -134,7 +134,7 @@ export const appRoutes: Routes = [
     path: 'phone-numbers-form',
     loadComponent: () =>
       import(
-        './05-smart-state/phone-numbers-form/phone-numbers-form.component'
+        './02-core-features/phone-numbers-form/phone-numbers-form.component'
       ).then((m) => m.PhoneNumbersFormComponent),
     title: 'Phone Numbers Form',
   },
