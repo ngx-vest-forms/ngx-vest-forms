@@ -220,6 +220,38 @@ Keep code in each directive concise; avoid feature creep in core.
   - Reuse one suite for both: `<form ngxVestForm [vestSuite]="suite" formLevelValidation [formLevelSuite]="suite">`.
   - Or split suites: `<form ngxVestForm [vestSuite]="fieldSuite" formLevelValidation [formLevelSuite]="rootSuite">`.
 
+## Examples Strategy
+
+See [examples-todo.md](./examples-todo.md) for comprehensive analysis of current examples and missing functionality.
+
+**Current Status:** 27 examples across 6 categories with 85% core coverage but missing foundational patterns.
+
+**Priority for Beta/Stable Release:**
+
+- **Phase 1 (Beta 1-2)**: Foundation examples
+  - Manual error display patterns (no wrapper dependencies)
+  - Field state visualization and management
+  - v2 pattern migration for existing examples
+  - Core validation fundamentals
+
+- **Phase 2 (Beta 3-RC)**: Core feature examples
+  - Form-level validation dedicated showcase
+  - Array utilities (`arrayToObject`/`objectToArray`) demonstration
+  - Wrapper display modes and customization
+  - Example reorganization (move real-world forms to proper categories)
+
+- **Phase 3 (Post-2.0)**: Advanced patterns and real-world business forms
+  - Complex enterprise applications (Employee Onboarding, E-commerce, etc.)
+  - Performance optimization showcases
+  - Advanced smart state patterns
+  - Deep nesting and dynamic form generation
+
+**Critical Missing Examples (15 total):**
+
+- 4 Foundation Level (basic-validation, field-states, form-level-validation, array-utilities)
+- 4 Feature Level (error-display-modes, custom-wrapper, combined-validation, conflict-resolution)
+- 7 Advanced Level (real-time collaboration, deep nesting, enterprise forms)
+
 ## Actionable Task Lists
 
 ### Beta (2.0.0-beta.1)
@@ -232,9 +264,19 @@ Keep code in each directive concise; avoid feature creep in core.
 - [ ] Add Playwright + MSW E2E for one critical submit flow (including root errors)
 - [ ] Ensure 100% JSDoc coverage for public APIs in core and schemas
 - [ ] Keep core directive small/simple (optional improvement: aim <200 LOC); extract helpers where it improves clarity
+- [ ] **Examples Phase 1 Foundation** (from examples-todo.md):
+  - [ ] Create `01-fundamentals/basic-validation` - Manual error patterns without wrapper
+  - [ ] Create `01-fundamentals/field-states` - Visual state demonstration
+  - [ ] Migrate existing `simple-form` to v2 patterns (`[ngModel]`, `isDevMode()`)
+  - [ ] Add accessibility improvements to all existing examples
 
 ### Beta (2.0.0-beta.2)
 
+- [ ] **Examples Phase 2 Core Features** (from examples-todo.md):
+  - [ ] Create `02-core-features/form-level-validation` - Dedicated cross-field validation showcase
+  - [ ] Create `02-core-features/array-utilities` - `arrayToObject`/`objectToArray` demonstration
+  - [ ] Create `03-control-wrapper/error-display-modes` - Different wrapper display configurations
+  - [ ] Reorganize examples: Move business-hours, profile, survey to `06-real-world/`
 - [ ] Upgrade Tailwind CSS to latest version v4
 - [ ] Make ngx-control-wrapper tailwind agnostic and use css custom properties instead
   - [ ] Update styles to use custom properties
@@ -245,6 +287,10 @@ Keep code in each directive concise; avoid feature creep in core.
 
 ### Beta (2.0.0-beta.3)
 
+- [ ] **Examples Phase 3 Advanced Foundation** (from examples-todo.md):
+  - [ ] Create `03-control-wrapper/custom-wrapper-implementation` - Custom wrapper with NgxFormErrorDisplayDirective
+  - [ ] Create `04-schema-integration/combined-validation` - Vest + Schema validation together
+  - [ ] Create `05-smart-state/conflict-resolution-patterns` - Different conflict resolution strategies
 - [ ] Add more advanced nested array validation examples
   - [ ] A TodoList with subtasks, with nested array of items (or something similar)
 - [ ] Improve error messaging and handling for nested structures
@@ -256,6 +302,11 @@ Keep code in each directive concise; avoid feature creep in core.
 - [ ] Finalize migration guide with troubleshooting
 - [ ] Finalize root validation API/modes and examples; add advanced tests
 - [ ] Benchmark bundle sizes and document results (core, core+schemas)
+- [ ] **Examples Completion for Stable Release** (from examples-todo.md):
+  - [ ] Complete all Phase 1 & 2 examples from beta releases
+  - [ ] Add comprehensive JSDoc documentation to all examples
+  - [ ] Ensure all examples follow v2 patterns and accessibility guidelines
+  - [ ] Create example-specific README files with clear learning objectives
 
 ### v2.1+
 
@@ -266,6 +317,11 @@ Keep code in each directive concise; avoid feature creep in core.
 - [ ] Additional schema adapters (Yup/Joi) + adapter guide
 - [ ] ESLint rule: validate `name` vs `[ngModel]` path (with autofix)
   - [ ] Other ESLint rules if applicable
+- [ ] **Advanced Examples for Post-2.0** (from examples-todo.md):
+  - [ ] Real-world business forms (Employee Onboarding, E-commerce Checkout, etc.)
+  - [ ] Complex enterprise patterns (deeply nested arrays, dynamic generation)
+  - [ ] Performance optimization showcases
+  - [ ] Advanced smart state patterns (real-time collaboration)
 
 ## Final Notes
 
