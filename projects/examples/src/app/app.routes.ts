@@ -1,221 +1,47 @@
 import { Routes } from '@angular/router';
 
+// Simplified routes focusing on fundamentals only
+// Other examples are temporarily moved to _backup/ folder for progressive restoration
+
 export const appRoutes: Routes = [
-  { path: '', redirectTo: 'simple-form', pathMatch: 'full' },
+  { path: '', redirectTo: 'fundamentals/minimal-form', pathMatch: 'full' },
   {
-    path: 'minimal-form',
-    loadComponent: () =>
-      import('./01-fundamentals/minimal-form/minimal-form.component').then(
-        (m) => m.MinimalFormComponent,
-      ),
-    title: 'Minimal Form',
+    path: 'fundamentals',
+    children: [
+      { path: '', redirectTo: 'minimal-form', pathMatch: 'full' },
+      {
+        path: 'minimal-form',
+        loadComponent: () =>
+          import('./01-fundamentals/minimal-form/minimal-form.page').then(
+            (m) => m.MinimalFormPage,
+          ),
+        title: 'Minimal Form',
+      },
+      {
+        path: 'basic-validation',
+        loadComponent: () =>
+          import(
+            './01-fundamentals/basic-validation/basic-validation.page'
+          ).then((m) => m.BasicValidationPage),
+        title: 'Basic Validation - Foundation',
+      },
+    ],
+  },
+
+  // Fallback routes
+  { path: '**', redirectTo: 'fundamentals/minimal-form' },
+];
+
+// Legacy route redirects for backwards compatibility
+// TODO: Remove these once all examples are restored
+export const legacyRoutes: Routes = [
+  // Old flat route redirects
+  {
+    path: '01-fundamentals/minimal-form',
+    redirectTo: 'fundamentals/minimal-form',
   },
   {
-    path: 'simple-form',
-    loadComponent: () =>
-      import('./02-core-features/simple-form/simple-form.component').then(
-        (m) => m.SimpleFormComponent,
-      ),
-    title: 'Simple Form Example',
-  },
-  {
-    path: 'contact-form',
-    loadComponent: () =>
-      import('./02-core-features/contact-form/contact-form.component').then(
-        (m) => m.ContactFormComponent,
-      ),
-    title: 'Contact Form',
-  },
-  {
-    path: 'registration-form',
-    loadComponent: () =>
-      import(
-        './02-core-features/registration-form/registration-form.component'
-      ).then((m) => m.RegistrationFormComponent),
-    title: 'Registration Form Example',
-  },
-  {
-    path: 'profile-form',
-    loadComponent: () =>
-      import('./02-core-features/profile-form/profile-form.component').then(
-        (m) => m.ProfileFormComponent,
-      ),
-    title: 'Profile Form',
-  },
-  {
-    path: 'business-hours-form',
-    loadComponent: () =>
-      import(
-        './02-core-features/business-hours-form/business-hours-form.component'
-      ).then((m) => m.BusinessHoursFormComponent),
-    title: 'Business Hours Form',
-  },
-  {
-    path: 'survey-form',
-    loadComponent: () =>
-      import('./02-core-features/survey-form/survey-form.component').then(
-        (m) => m.SurveyFormComponent,
-      ),
-    title: 'Survey Form',
-  },
-  {
-    path: 'root-validation-form',
-    loadComponent: () =>
-      import(
-        './02-core-features/root-validation-form/root-validation-form.component'
-      ).then((m) => m.RootValidationFormComponent),
-    title: 'Root Validation Form',
-  },
-  {
-    path: 'root-validation-live-form',
-    loadComponent: () =>
-      import(
-        './02-core-features/root-validation-live-form/root-validation-live-form.component'
-      ).then((m) => m.RootValidationLiveFormComponent),
-    title: 'Root Validation (Live Mode)',
-  },
-  {
-    path: 'async-validation-form',
-    loadComponent: () =>
-      import(
-        './02-core-features/async-validation-form/async-validation-form.component'
-      ).then((m) => m.AsyncValidationFormComponent),
-    title: 'Async Validation Form',
-  },
-  {
-    path: 'control-wrapper-simple',
-    loadComponent: () =>
-      import(
-        './03-control-wrapper/control-wrapper-basics/control-wrapper-basics.component'
-      ).then((m) => m.ControlWrapperBasicsComponent),
-    title: 'Simple (Control Wrapper)',
-  },
-  {
-    path: 'control-wrapper-registration',
-    loadComponent: () =>
-      import(
-        './03-control-wrapper/registration-with-wrapper/registration-with-wrapper.component'
-      ).then((m) => m.RegistrationWithWrapperComponent),
-    title: 'Registration (Control Wrapper)',
-  },
-  {
-    path: 'schema-form',
-    loadComponent: () =>
-      import('./04-schema-integration/schema-form/schema-form.component').then(
-        (m) => m.SchemaFormComponent,
-      ),
-    title: 'Schema Form (Wrapper)',
-  },
-  {
-    path: 'zod-schema-form',
-    loadComponent: () =>
-      import(
-        './04-schema-integration/zod-schema-form/zod-schema-form.component'
-      ).then((m) => m.ZodSchemaFormComponent),
-    title: 'Zod Schema Form',
-  },
-  {
-    path: 'valibot-schema-form',
-    loadComponent: () =>
-      import(
-        './04-schema-integration/valibot-schema-form/valibot-schema-form.component'
-      ).then((m) => m.ValibotSchemaFormComponent),
-    title: 'Valibot Schema Form',
-  },
-  {
-    path: 'custom-schema-form',
-    loadComponent: () =>
-      import(
-        './04-schema-integration/custom-schema-form/custom-schema-form.component'
-      ).then((m) => m.CustomSchemaFormComponent),
-    title: 'Custom Schema Form',
-  },
-  {
-    path: 'phone-numbers-form',
-    loadComponent: () =>
-      import(
-        './02-core-features/phone-numbers-form/phone-numbers-form.component'
-      ).then((m) => m.PhoneNumbersFormComponent),
-    title: 'Phone Numbers Form',
-  },
-  {
-    path: 'smart-profile-form',
-    loadComponent: () =>
-      import(
-        './05-smart-state/smart-profile-form/smart-profile-form.component'
-      ).then((m) => m.SmartProfileFormComponent),
-    title: 'Smart Profile Form',
-  },
-  {
-    path: 'purchase-form',
-    loadComponent: () =>
-      import(
-        './06-advanced-patterns/purchase-form/purchase-form.component'
-      ).then((m) => m.PurchaseFormComponent),
-    title: 'Purchase Form',
-  },
-  {
-    path: 'wizard-form',
-    loadComponent: () =>
-      import('./06-advanced-patterns/wizard-form/wizard-form.component').then(
-        (m) => m.WizardFormComponent,
-      ),
-    title: 'Wizard Form',
-  },
-  {
-    path: 'arktype-schema-form',
-    loadComponent: () =>
-      import(
-        './04-schema-integration/arktype-schema-form/arktype-schema-form.component'
-      ).then((m) => m.ArkTypeSchemaFormComponent),
-    title: 'ArkType Schema Form',
-  },
-  {
-    path: 'migration-example',
-    loadComponent: () =>
-      import(
-        './04-schema-integration/migration-example/migration-example.component'
-      ).then((m) => m.MigrationExampleComponent),
-    title: 'Migration Example',
-  },
-  {
-    path: 'basic-smart-state',
-    loadComponent: () =>
-      import(
-        './05-smart-state/basic-smart-state/basic-smart-state.component'
-      ).then((m) => m.BasicSmartStateComponent),
-    title: 'Basic Smart State',
-  },
-  {
-    path: 'realtime-sync',
-    loadComponent: () =>
-      import('./05-smart-state/realtime-sync/realtime-sync.component').then(
-        (m) => m.RealtimeSyncComponent,
-      ),
-    title: 'Realtime Sync',
-  },
-  {
-    path: 'nested-arrays',
-    loadComponent: () =>
-      import(
-        './06-advanced-patterns/nested-arrays/nested-arrays.component'
-      ).then((m) => m.NestedArraysComponent),
-    title: 'Nested Arrays',
-  },
-  {
-    path: 'dynamic-forms',
-    loadComponent: () =>
-      import(
-        './06-advanced-patterns/dynamic-forms/dynamic-forms.component'
-      ).then((m) => m.DynamicFormsComponent),
-    title: 'Dynamic Forms',
-  },
-  {
-    path: 'custom-wrapper',
-    loadComponent: () =>
-      import(
-        './06-advanced-patterns/custom-wrapper/custom-wrapper.component'
-      ).then((m) => m.CustomWrapperComponent),
-    title: 'Custom Wrapper',
+    path: '01-fundamentals/basic-validation',
+    redirectTo: 'fundamentals/basic-validation',
   },
 ];

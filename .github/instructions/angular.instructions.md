@@ -43,6 +43,8 @@ Instructions for generating high-quality Angular applications with TypeScript, u
 - Implement responsive design using CSS Grid, Flexbox, or Angular CDK Layout utilities
 - Follow Angular Material's theming guidelines if used
 - Maintain accessibility (a11y) with ARIA attributes and semantic HTML
+- For animations use standard css and/or the new Angular 20.2 animation features: https://angular.dev/guide/animations/css
+- Do not use the @angular/animations packages, which is deprecated.
 
 ### State Management
 - Use Angular Signals for reactive state management in components and services
@@ -98,7 +100,7 @@ Instructions for generating high-quality Angular applications with TypeScript, u
 - Follow Angular's naming conventions (e.g., `feature.component.ts`, `feature.service.ts`)
 - Use Angular CLI commands for generating boilerplate code
 - Document components and services with clear JSDoc comments
-- Ensure accessibility compliance (WCAG 2.1) where applicable
+- Ensure accessibility compliance (WCAG 2.2) where applicable
 - Use Angular's built-in i18n for internationalization (if specified)
 - Keep code DRY by creating reusable utilities and shared modules
 - Use signals consistently for state management to ensure reactive updates

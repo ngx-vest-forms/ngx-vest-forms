@@ -4,7 +4,7 @@ This directory contains a comprehensive set of examples demonstrating the ngx-ve
 
 ## 📁 Directory Structure
 
-```
+```console
 examples/src/app/
 ├── 01-fundamentals/              # Tier 1: Basics
 │   └── minimal-form/             # ✅ Absolute minimum: form + vest validation
@@ -145,7 +145,7 @@ Open `http://localhost:4200` to see all examples in a organized, progressive lay
 2. **Real-world Scenarios** - Based on common use cases
 3. **Best Practices** - Demonstrates recommended patterns
 4. **Type Safety** - Full TypeScript integration
-5. **Accessibility** - WCAG 2.1 AA compliance
+5. **Accessibility** - WCAG 2.2 AA compliance
 6. **Performance** - Optimized validation and rendering
 
 ## 📚 Documentation

@@ -9,7 +9,7 @@
     <div>
       <label
         for="add-phone-input"
-        class="mb-2 block text-sm font-medium text-gray-700"
+        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
       >
         Add Phone Number
       </label>
@@ -22,7 +22,7 @@
             [ngModel]="model().addValue"
             (keydown)="onKeyDown($event)"
             placeholder="Enter phone number (e.g., +1-555-123-4567)"
-            class="flex-1 rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            class="flex-1 rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
           />
           <button
             type="button"
@@ -31,7 +31,7 @@
               !model().addValue?.trim() ||
               vestForm.formState().errors['addValue']
             "
-            class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-gray-400"
+            class="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-400"
           >
             Add
           </button>
@@ -41,7 +41,7 @@
 
     <!-- List of existing phone numbers -->
     <div ngModelGroup="values">
-      <h3 class="mb-3 text-sm font-medium text-gray-700">
+      <h3 class="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
         Phone Numbers ({{ phoneNumbersCount() }})
       </h3>
 
@@ -51,7 +51,9 @@
             class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3"
           >
             <!-- Display the phone number (not a form input) -->
-            <span class="flex-1 font-mono text-sm text-gray-800">
+            <span
+              class="flex-1 font-mono text-sm text-gray-800 dark:text-gray-200"
+            >
               {{ item.value }}
             </span>
             <!-- Hidden form input for data binding -->
@@ -60,7 +62,7 @@
             <button
               type="button"
               (click)="removePhoneNumber(item.key)"
-              class="ml-3 rounded-md bg-red-100 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              class="ml-3 rounded-md bg-red-100 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none dark:text-red-300"
               [attr.aria-label]="'Remove phone number ' + item.value"
             >
               Remove
@@ -70,8 +72,10 @@
           <li
             class="rounded-lg border-2 border-dashed border-gray-300 px-6 py-4 text-center"
           >
-            <p class="text-sm text-gray-500">No phone numbers added yet.</p>
-            <p class="mt-1 text-xs text-gray-400">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              No phone numbers added yet.
+            </p>
+            <p class="mt-1 text-xs text-gray-400 dark:text-gray-300">
               Add a phone number above to get started.
             </p>
           </li>

@@ -21,7 +21,7 @@ Always follow this three-part pattern:
 2. **Vest Suite**: Define validation in a separate `*.validations.ts` file
 3. **Template**: Connect with `ngxVestForm` directive and proper bindings
 
-#### Example Structure:
+#### Example Structure
 
 ```typescript
 // user.model.ts
@@ -222,6 +222,38 @@ The recommended approach for error display:
 ```
 
 ### 8. Custom Error Display
+
+### 8.1 Minimal Example Error Display (Why We Use The Directive Early)
+
+Even in the most minimal single-field example, prefer the `NgxFormErrorDisplayDirective` instead of hand-rolled conditionals like:
+
+```html
+<!-- Avoid in new examples -->
+@if (vestForm.formState().errors.email) {
+<div role="alert">{{ vestForm.formState().errors.email[0] }}</div>
+}
+```
+
+Recommended:
+
+```html
+<div ngxFormErrorDisplay #display="formErrorDisplay">
+  <input name="email" [ngModel]="model().email" />
+  @if (display.shouldShowErrors() && display.errors().length) {
+  <div role="alert">{{ display.errors()[0] }}</div>
+  }
+</div>
+```
+
+Rationale:
+
+- Consistent UX: Default mode (on-blur-or-submit) prevents premature error flashing
+- Accessibility: Encourages proper `aria-invalid` and `role="alert"` pairing
+- Async Safety: Filters pending validation states to avoid flicker
+- Copy-Paste Ready: Developers replicate a robust pattern, not a teaching shortcut
+- Extensible: Switch modes via `errorDisplayMode` without rewriting logic
+
+Shortcut patterns are acceptable in internal prototypes but should not appear in public-facing starter examples.
 
 For custom error handling:
 
@@ -526,25 +558,6 @@ private updatePhoneNumbers(numbers: string[]): void {
     ...current,
     phoneNumbers: phoneObject
   }));
-}
-```
-
-#### objectToArray(object: unknown, keys: string[]): unknown
-
-Converts specified object properties back to arrays (useful before saving):
-
-```typescript
-import { objectToArray } from 'ngx-vest-forms/core';
-
-onSubmit() {
-  const formData = this.model();
-
-  // Convert form object back to arrays for API
-  const apiData = objectToArray(formData, ['phoneNumbers', 'addresses']);
-  // { phoneNumbers: { 0: '123', 1: '456' } }
-  // becomes { phoneNumbers: ['123', '456'] }
-
-  this.api.save(apiData);
 }
 ```
 

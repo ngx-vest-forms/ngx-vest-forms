@@ -885,6 +885,56 @@ Use with the convenient wrapper:
 - **Error display modes:** `'on-blur'`, `'on-submit'`, `'on-blur-or-submit'` (default). Configure globally or per control wrapper.
 - **Accessibility:** All wrappers/components use ARIA roles, keyboard navigation, and visible focus indicators. Error messages are announced for screen readers.
 
+### Manual Error Handling (Without Control Wrappers)
+
+When building custom form fields without `NgxControlWrapper`, you have **two approaches** for error display:
+
+#### 1. Recommended: `ngxFormErrorDisplay` Directive
+
+Use this directive for proper error timing and better UX:
+
+```html
+<div
+  ngxFormErrorDisplay
+  #fieldDisplay="formErrorDisplay"
+  [attr.data-invalid]="fieldDisplay.shouldShowErrors() ? 'true' : null"
+>
+  <input name="email" [ngModel]="model().email" />
+  @if (fieldDisplay.shouldShowErrors()) {
+  <ul class="errors" role="alert">
+    @for (error of fieldDisplay.errors(); track error) {
+    <li>{{ error }}</li>
+    }
+  </ul>
+  }
+</div>
+```
+
+**Benefits:**
+
+- ✅ Errors appear only after blur or submit (better UX)
+- ✅ Follows configured `errorDisplayMode`
+- ✅ Accessibility-compliant with `role="alert"`
+- ✅ Consistent timing across all form fields
+
+#### 2. Direct Access (Immediate Display)
+
+For debugging or immediate feedback:
+
+```html
+<div class="form-field">
+  <input name="email" [ngModel]="model().email" />
+  @if (vestForm.formState().errors['email']; as errors) { @for (error of errors;
+  track error) {
+  <span class="error">{{ error }}</span>
+  } }
+</div>
+```
+
+**Use cases:** Development/debugging, admin interfaces, immediate feedback requirements.
+
+> **Best Practice:** Use `ngxFormErrorDisplay` for production forms to ensure proper error timing and accessibility compliance.
+
 ### Configure defaults (DI providers)
 
 Configure core defaults at app/route/component level using provider helpers from `ngx-vest-forms/core`:

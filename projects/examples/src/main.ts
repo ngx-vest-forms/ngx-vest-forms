@@ -9,6 +9,7 @@ import {
   provideRouter,
   withComponentInputBinding,
   withEnabledBlockingInitialNavigation,
+  withViewTransitions,
 } from '@angular/router';
 import { provideEnvironmentNgxMask } from 'ngx-mask';
 import { AppComponent } from './app/app.component';
@@ -35,6 +36,7 @@ await bootstrapApplication(AppComponent, {
       appRoutes,
       withEnabledBlockingInitialNavigation(),
       withComponentInputBinding(),
+      withViewTransitions(),
     ),
   ],
 });

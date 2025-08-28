@@ -1,62 +1,263 @@
-/* You can add global styles to this file, and also import other style files */
-/* Add application styles & imports to this file! */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* ngx-vest-forms Showcase Styles */
+/* Clean, semantic form classes with modern minimal design */
 
-body {
-  @apply bg-white text-gray-900 dark:bg-gray-900 dark:text-white;
-}
-button {
-  @apply mb-2 me-2 rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800;
-}
-button:disabled {
-  @apply cursor-not-allowed bg-gray-400 text-gray-700 dark:bg-gray-600 dark:text-gray-400;
-}
-fieldset {
-  @apply grid gap-4 sm:grid-cols-2 sm:gap-6;
+@use 'tailwindcss';
 
-  label span {
-    @apply mb-2 block text-sm font-medium text-gray-900 dark:text-white;
+/* Configure dark mode variant to use class-based selector */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Modern theme tokens with brand gradient */
+@theme {
+  /* Brand colors (from logo gradient) */
+  --color-brand-start: #6366f1; /* Indigo */
+  --color-brand-end: #8b5cf6; /* Purple */
+
+  /* Neutral colors (modern grays) */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+  /* Semantic colors */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+
+  /* Brand gradient */
+  --gradient-brand: linear-gradient(
+    135deg,
+    var(--color-brand-start),
+    var(--color-brand-end)
+  );
+
+  /* Background system */
+  --color-bg: var(--color-gray-50);
+  --color-bg-elevated: #ffffff;
+  --color-text: var(--color-gray-900);
+  --color-text-muted: var(--color-gray-600);
+  --color-border: var(--color-gray-200);
+  --color-border-focus: var(--color-brand-start);
+}
+
+/* Dark theme variable overrides (activated via .dark class) */
+.dark {
+  --color-bg: var(--color-gray-900);
+  --color-bg-elevated: var(--color-gray-800);
+  --color-text: var(--color-gray-100);
+  --color-text-muted: var(--color-gray-400);
+  --color-border: var(--color-gray-700);
+  --color-border-focus: var(--color-brand-end);
+}
+
+/* Base layer: global resets */
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
   }
 
-  .ngxControlWrapper {
-    select,
-    input[type='text'],
-    input[type='number'],
-    input[type='password'] {
-      @apply block w-full rounded-lg border border-gray-300 bg-gray-50 p-4 text-sm text-gray-900 focus:border-primary-600 focus:ring-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500;
-    }
+  /* Let CSS handle color-scheme automatically based on .dark class */
+  :root {
+    color-scheme: light;
+  }
 
-    &--invalid {
-      label span {
-        @apply mb-2 block text-sm font-medium text-red-700 dark:text-red-500;
-      }
+  .dark {
+    color-scheme: dark;
+  }
 
-      select,
-      input[type='text'],
-      input[type='number'],
-      input[type='password'] {
-        @apply block w-full rounded-lg border border-red-500 bg-red-50 text-sm text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500;
-      }
-    }
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.6;
+  }
 
-    &__errors {
-      @apply mt-2 text-sm text-red-600 dark:text-red-500;
-    }
+  ::selection {
+    background: var(--color-brand-start);
+    color: white;
+  }
 
-    .radio-button {
-      @apply mb-4 flex items-center;
-      label {
-        @apply ms-2 block text-sm font-medium text-gray-900 dark:text-gray-300;
-      }
+  :focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: 2px;
+  }
+}
 
-      input[type='radio'] {
-        @apply h-4 w-4 border-gray-300 focus:ring-2 focus:ring-blue-300 dark:border-gray-600 dark:bg-gray-700 dark:focus:bg-blue-600 dark:focus:ring-blue-600;
-      }
-    }
-    input[type='checkbox'] {
-      @apply h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800;
-    }
+/* Components: semantic classes used by examples */
+@layer components {
+  /* Brand gradient text (enhanced blues extracted from reference) */
+  .brand-gradient {
+    --brand-blue-start: #3b82f6; /* blue-500 */
+    --brand-blue-mid: #2563eb; /* blue-600 */
+    --brand-indigo-end: #4f46e5; /* indigo-600 */
+    background: linear-gradient(
+      120deg,
+      var(--brand-blue-start),
+      var(--brand-blue-mid) 45%,
+      var(--brand-indigo-end)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Navigation link with animated gradient underline */
+  .nav-grad-link {
+    position: relative;
+    --underline-gradient: linear-gradient(
+      90deg,
+      #2563eb,
+      #1d4ed8 45%,
+      #4338ca 85%
+    );
+  }
+  .nav-grad-link:after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0.2rem;
+    height: 2px;
+    background: var(--underline-gradient);
+    border-radius: 2px;
+    transform: scaleX(0.3);
+    opacity: 0.55;
+    transform-origin: left;
+    transition: transform 200ms ease;
+  }
+  .nav-grad-link:hover:after,
+  .nav-grad-link:focus-visible:after,
+  .nav-grad-link.active:after {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  .dark .nav-grad-link:after {
+    filter: brightness(1.2) saturate(1.1);
+  }
+
+  /* Slight color emphasis while preserving minimal fill */
+  .nav-grad-link {
+    @apply rounded-md px-3 py-2 text-sm font-medium transition-colors;
+    color: #1e3a8a; /* blue-800 */
+  }
+  .dark .nav-grad-link {
+    color: #bfdbfe; /* blue-200 */
+  }
+  .nav-grad-link:hover,
+  .nav-grad-link:focus-visible,
+  .nav-grad-link.active {
+    @apply text-gray-900 dark:text-white;
+    background: rgba(255, 255, 255, 0.05);
+  }
+  /* Form semantic classes - keep forms clean and readable */
+  .form-container {
+    @apply space-y-6;
+  }
+
+  .form-field {
+    @apply space-y-2;
+  }
+
+  .form-label {
+    @apply block text-sm font-medium;
+    color: var(--color-text);
+  }
+
+  /* Form controls with modern minimal style */
+  .form-input,
+  .form-textarea,
+  .form-select {
+    @apply w-full px-3 py-2;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    @apply rounded-md shadow-sm;
+    color: var(--color-text);
+    @apply placeholder-gray-400 dark:placeholder-gray-500;
+    @apply focus:border-transparent focus:ring-2 focus:ring-offset-0;
+    --tw-ring-color: var(--color-border-focus);
+    @apply transition-colors duration-200;
+  }
+
+  .form-textarea {
+    @apply min-h-[100px] resize-y;
+  }
+
+  /* Validation states */
+  /* Error message styling */
+  .error-message {
+    @apply mt-1 text-sm text-red-600 dark:text-red-400;
+  }
+
+  .form-hint {
+    @apply mt-1 text-sm;
+    color: var(--color-text-muted);
+  }
+
+  /* Actions */
+  .form-actions {
+    @apply flex gap-3 pt-4;
+  }
+
+  /* Buttons with gradient */
+  .btn-primary {
+    @apply px-4 py-2;
+    background: var(--gradient-brand);
+    @apply font-medium text-white;
+    @apply rounded-md shadow-sm;
+    @apply hover:shadow-lg focus:ring-2 focus:ring-offset-2;
+    --tw-ring-color: var(--color-border-focus);
+    @apply disabled:cursor-not-allowed disabled:opacity-50;
+    @apply transition-all duration-200;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2;
+    background: var(--color-bg-elevated);
+    color: var(--color-text);
+    @apply font-medium;
+    border: 1px solid var(--color-border);
+    @apply rounded-md shadow-sm;
+    @apply hover:shadow-md;
+    @apply focus:ring-2 focus:ring-offset-2;
+    --tw-ring-color: var(--color-border-focus);
+    @apply disabled:cursor-not-allowed disabled:opacity-50;
+    @apply transition-all duration-200;
+  }
+
+  /* Legacy support - keep minimal old classes for existing components */
+  .nv-page-title {
+    @apply mb-4 text-3xl font-bold;
+    background: var(--gradient-brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+@layer utilities {
+  .u-gradient-text {
+    background: var(--gradient-brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Screen reader only text */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 }

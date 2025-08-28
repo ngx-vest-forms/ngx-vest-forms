@@ -1,11 +1,13 @@
 /// <reference types="vitest" />
 import viteTsConfigPaths from 'vite-tsconfig-paths';
 import { defineProject } from 'vitest/config';
+// @ts-ignore
+import tailwindcss from '@tailwindcss/vite';
 
 import angular from '@analogjs/vite-plugin-angular';
 
 export default defineProject(({ mode }) => ({
-  plugins: [angular(), viteTsConfigPaths()],
+  plugins: [angular(), tailwindcss(), viteTsConfigPaths()],
   server: {
     hmr: {
       overlay: false,

@@ -13,6 +13,30 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
+    <!-- Prevent theme flash: apply saved or system preference before styles render -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('color-theme');
+          var prefersDark = window.matchMedia(
+            '(prefers-color-scheme: dark)',
+          ).matches;
+          var isDark =
+            stored === 'dark' ||
+            ((!stored || stored === 'system') && prefersDark);
+
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.colorScheme = 'dark';
+          } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.style.colorScheme = 'light';
+          }
+          document.documentElement.classList.remove('light');
+        } catch (_) {}
+      })();
+    </script>
+    <meta name="color-scheme" content="light dark" />
   </head>
   <body>
     <ngx-root></ngx-root>

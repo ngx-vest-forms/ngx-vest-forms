@@ -29,7 +29,8 @@ export interface UserModel {
   name: string;
   email: string;
 }
-
+```
+```ts
 // user.validations.ts
 import { staticSuite, test, enforce, only } from 'vest';
 
@@ -48,7 +49,8 @@ export const userValidations = staticSuite(
     });
   },
 );
-
+```
+```ts
 // user-form.component.ts
 @Component({
   // Prefer OnPush in real components
@@ -223,17 +225,45 @@ The recommended approach for error display:
 
 ### 8. Custom Error Display
 
-For custom error handling:
+For custom error handling without wrappers, use the `ngxFormErrorDisplay` directive (recommended):
+
+```html
+<div
+  ngxFormErrorDisplay
+  #emailDisplay="formErrorDisplay"
+  [attr.data-invalid]="emailDisplay.shouldShowErrors() ? 'true' : null"
+>
+  <input name="email" [ngModel]="model().email" />
+  @if (emailDisplay.shouldShowErrors()) {
+    <ul class="errors" role="alert">
+      @for (error of emailDisplay.errors(); track error) {
+        <li>{{ error }}</li>
+      }
+    </ul>
+  }
+</div>
+```
+
+**Benefits:**
+- ✅ Proper error timing (shows errors after blur or submit)
+- ✅ Better user experience (no premature error feedback)
+- ✅ Accessibility-compliant with `role="alert"`
+- ✅ Follows configured `errorDisplayMode`
+
+**Alternative (immediate display):**
 
 ```html
 <div>
-  <input name="email" [ngModel]="model().email" #emailControl="ngModel" />
-  @if (vestForm.formState().errors.email) { @for (error of
-  vestForm.formState().errors.email; track error) {
-  <span class="error">{{ error }}</span>
-  } }
+  <input name="email" [ngModel]="model().email" />
+  @if (vestForm.formState().errors.email) {
+    @for (error of vestForm.formState().errors.email; track error) {
+      <span class="error">{{ error }}</span>
+    }
+  }
 </div>
 ```
+
+**Use:** Development/debugging only. Shows errors immediately as user types.
 
 ## Quick Start: Minimal Component (copy-paste)
 
@@ -656,20 +686,110 @@ get isFormComplete() {
 - Nested/array errors missing: Verify your suite uses the full control path that matches your ngModelGroup and `name` settings.
 - Async validations feel stuck: Use the `signal` argument in async tests and avoid swallowing `AbortError` from canceled requests.
 
+## Accessibility Requirements
+
+### WCAG 2.2 Level AA Compliance
+
+All forms using ngx-vest-forms must conform to [WCAG 2.2 Level AA](https://www.w3.org/TR/WCAG22/) standards.
+
+#### Essential Accessibility Patterns
+
+**Form Labels and Association:**
+- All form controls MUST have proper labels using `<label for="controlId">` or `aria-label`
+- Labels must accurately describe the control's purpose
+- Required fields MUST be indicated with `aria-required="true"` and visual indicators (e.g., asterisk)
+
+**Error Handling and Communication:**
+- Error messages MUST be programmatically associated with form controls via `aria-describedby`
+- Use `aria-invalid="true"` on invalid controls (remove when valid)
+- Error messages MUST include `role="alert"` for immediate screen reader announcement
+- Error messages must describe how to fix the issue
+
+**Keyboard Navigation:**
+- All interactive elements must be keyboard accessible with visible focus indicators
+- Form submission should work with Enter key on form controls
+- Provide skip links for complex forms: `<a href="#maincontent" class="sr-only">Skip to main</a>`
+
+**Screen Reader Support:**
+- Use semantic HTML elements (`<form>`, `<fieldset>`, `<legend>`, `<label>`)
+- Form sections should use proper heading structure (`<h1>`, `<h2>`, etc.)
+- Complex forms should use `<fieldset>` and `<legend>` for grouping
+
+#### Implementation with NgxFormErrorDisplay
+
+**Recommended Pattern (WCAG 2.2 compliant):**
+
+```html
+<div ngxFormErrorDisplay #emailDisplay="formErrorDisplay">
+  <label for="email">Email Address *</label>
+  <input
+    id="email"
+    name="email"
+    [ngModel]="model().email"
+    type="email"
+    aria-required="true"
+    [aria-invalid]="emailDisplay.shouldShowErrors() ? 'true' : null"
+    [aria-describedby]="emailDisplay.shouldShowErrors() ? 'email-error' : null"
+  />
+  @if (emailDisplay.shouldShowErrors()) {
+    <div id="email-error" role="alert" class="error-text">
+      @for (error of emailDisplay.errors(); track error) {
+        <div>{{ error }}</div>
+      }
+    </div>
+  }
+</div>
+```
+
+**NgxControlWrapper (automatically WCAG 2.2 compliant):**
+
+```html
+<ngx-control-wrapper>
+  <label for="email">Email Address *</label>
+  <input id="email" name="email" [ngModel]="model().email" type="email" aria-required="true" />
+</ngx-control-wrapper>
+```
+
+#### Accessibility Checklist for ngx-vest-forms
+
+- [ ] All form controls have proper labels (`<label for="id">` or `aria-label`)
+- [ ] Required fields marked with `aria-required="true"` and visual indicators
+- [ ] Error messages use `aria-describedby` to associate with controls
+- [ ] Invalid controls have `aria-invalid="true"` (removed when valid)
+- [ ] Error messages include `role="alert"` for immediate announcement
+- [ ] Form uses semantic HTML structure with proper headings
+- [ ] All interactive elements are keyboard accessible
+- [ ] Focus indicators are clearly visible (contrast ≥ 3:1)
+- [ ] Color is not the only way to convey validation state
+- [ ] Skip links provided for complex forms
+
 ## Error Prevention Checklist
 
 When generating forms with ngx-vest-forms:
 
+**Form Structure:**
 - [ ] Every input has a `name` attribute matching the model property
 - [ ] All inputs use `[ngModel]` (one-way binding), not `ngModel` or `[(ngModel)]`
 - [ ] Form has `ngxVestForm` directive with `[vestSuite]` and `[(formValue)]`
 - [ ] Validation suite uses `only(field)` for performance
 - [ ] Nested objects use `ngModelGroup` with proper path syntax
 - [ ] Form arrays use index-based naming (`items.0.name`)
+
+**Error Handling:**
 - [ ] Error display uses arrays (v2 change from v1 strings)
+- [ ] **Custom error display uses `ngxFormErrorDisplay` for proper timing**
 - [ ] Cross-field validation uses `NGX_ROOT_FORM` constant
 - [ ] Async validations handle cancellation via `signal`
 - [ ] Schema validation uses `ngxVestFormWithSchema` directive
+
+**WCAG 2.2 Accessibility:**
+- [ ] All form controls have proper labels (`<label for="id">` or `aria-label`)
+- [ ] Required fields marked with `aria-required="true"` and visual indicators
+- [ ] Error messages use `aria-describedby` to associate with controls
+- [ ] Invalid controls have `aria-invalid="true"` (removed when valid)
+- [ ] Error messages include `role="alert"` for immediate announcement
+- [ ] All interactive elements are keyboard accessible with visible focus indicators
+- [ ] Color contrast meets WCAG 2.2 requirements (≥4.5:1 for normal text, ≥3:1 for large text)
 
 ## Import Guidelines
 
