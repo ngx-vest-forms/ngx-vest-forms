@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/README.md
+    about: Check the documentation for usage examples and guides
+  - name: 💬 Discussions
+    url: https://github.com/ngx-vest-forms/ngx-vest-forms/discussions
+    about: Ask questions, share ideas, or discuss the project
+  - name: 🐛 Simplified Courses Blog
+    url: https://blog.simplified.courses
+    about: Read articles and tutorials about ngx-vest-forms

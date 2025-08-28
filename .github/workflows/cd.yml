@@ -3,34 +3,70 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+
 jobs:
   cd:
-    concurrency: ci-${{ github.ref }}
+    name: Continuous Deployment
+    concurrency: 
+      group: cd-${{ github.ref }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    
     steps:
       - name: Checkout ✅
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           persist-credentials: false
-      - name: Setup 🏗
-        uses: actions/setup-node@v2
+          
+      - name: Setup Node.js 🏗
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      - name: Install ⚙️
+          
+      - name: Install dependencies ⚙️
         run: npm ci
-      - name: Playwright install
-        run: npx playwright install
-      - name: Build 🛠
-        run: npm run build:ci
-      - name: Test 📋
+        
+      - name: Install Playwright browsers 🎭
+        run: npx playwright install --with-deps
+        
+      - name: Code style check 💅
+        run: npm run prettier:check
+        
+      - name: Build library 🏗️
+        run: npm run build:lib
+        
+      - name: Build examples app 📱
+        run: npm run build:app
+        
+      - name: Run unit tests 🧪
         run: npm run test:ci
-      - name: Storybook
+        
+      - name: Build Storybook 📚
         run: npm run storybook:build
-      - name: Integration test 📋
+        
+      - name: Run Storybook tests 🧪
         run: npm run test:storybook:ci
-      - name: Publish 📢
+        
+      - name: Deploy to GitHub Pages 🚀
+        uses: peaceiris/actions-gh-pages@v3
+        if: success()
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist/examples
+          
+      - name: Semantic Release 📢
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release

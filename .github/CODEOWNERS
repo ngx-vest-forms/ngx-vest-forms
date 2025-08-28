@@ -1,0 +1,23 @@
+# Owners for the entire repository
+* @ngx-vest-forms/maintainers
+
+# Library source code
+projects/ngx-vest-forms/src/ @ngx-vest-forms/core-team
+
+# Documentation
+README.md @ngx-vest-forms/maintainers
+.github/ @ngx-vest-forms/maintainers
+projects/ngx-vest-forms/.storybook/ @ngx-vest-forms/maintainers
+
+# Build and CI configuration
+.github/workflows/ @ngx-vest-forms/maintainers
+package.json @ngx-vest-forms/maintainers
+angular.json @ngx-vest-forms/maintainers
+tsconfig*.json @ngx-vest-forms/maintainers
+
+# Release configuration
+.releaserc @ngx-vest-forms/maintainers
+.commitlintrc.js @ngx-vest-forms/maintainers
+
+# Examples and demos (more permissive)
+projects/examples/ @ngx-vest-forms/maintainers @ngx-vest-forms/contributors

@@ -3,26 +3,64 @@ on:
   pull_request:
     branches:
       - master
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   ci:
+    name: CI Pipeline
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
     steps:
       - name: Checkout ✅
-        uses: actions/checkout@v2
-      - name: Setup 🏗
-        uses: actions/setup-node@v2
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Setup Node.js 🏗
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      - name: Install ⚙️
+          
+      - name: Install dependencies ⚙️
         run: npm ci
-      - name: Playwright install
-        run: npx playwright install
-      - name: Build 🛠
-        run: npm run build:ci
-      - name: Test 📋
+        
+      - name: Install Playwright browsers 🎭
+        run: npx playwright install --with-deps
+        
+      - name: Code style check 💅
+        run: npm run prettier:check
+        
+      - name: Build library 🏗️
+        run: npm run build:lib
+        
+      - name: Build examples app 📱
+        run: npm run build:app
+        
+      - name: Run unit tests 🧪
         run: npm run test:ci
-      - name: Storybook
+        
+      - name: Build Storybook 📚
         run: npm run storybook:build
-      - name: Integration test 📋
+        
+      - name: Run Storybook tests 🧪
         run: npm run test:storybook:ci
+        
+      - name: Upload build artifacts 📦
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            dist/
+            coverage/
+          retention-days: 7

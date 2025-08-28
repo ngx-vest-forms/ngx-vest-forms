@@ -34,8 +34,9 @@ export class FormModelGroupDirective implements AsyncValidator {
   ): Observable<ValidationErrors | null> {
     const { ngForm } = this.formDirective;
     const field = getFormGroupField(ngForm.control, control);
-    return this.formDirective.createAsyncValidator(field, this.validationOptions())(
-      control.value
-    ) as Observable<ValidationErrors | null>;
+    return this.formDirective.createAsyncValidator(
+      field,
+      this.validationOptions()
+    )(control.value) as Observable<ValidationErrors | null>;
   }
 }

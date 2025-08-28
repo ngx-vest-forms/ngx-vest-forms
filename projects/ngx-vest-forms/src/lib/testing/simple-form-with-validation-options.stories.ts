@@ -106,9 +106,9 @@ import { JsonPipe } from '@angular/common';
       </fieldset>
       <pre data-testId="pre__form-errors">
         {{ vm.errors | json }}
-      </pre>
+      </pre
+      >
     </form>
-
   `,
   imports: [vestForms, JsonPipe],
   standalone: true,
@@ -170,33 +170,37 @@ export const ShouldShowFirstnameRequiredAfterDelayForNgModel: StoryObj = {
       expect(
         canvas.getByTestId(selectors.scControlWrapperFirstName)
       ).toHaveTextContent('First name is required');
-    }, 550)
+    }, 550);
   },
 };
 
-export const ShouldShowPasswordConfirmationAfterDelayForNgModelGroup: StoryObj = {
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'first');
-    await userEvent.type(
-      canvas.getByTestId(selectors.inputConfirmPassword),
-      'second'
-    , { delay: 500});
-    await userEvent.click(canvas.getByTestId(selectors.inputConfirmPassword));
-    await canvas.getByTestId(selectors.inputConfirmPassword).blur();
+export const ShouldShowPasswordConfirmationAfterDelayForNgModelGroup: StoryObj =
+  {
+    play: async ({ canvasElement }) => {
+      const canvas = within(canvasElement);
+      await userEvent.type(
+        canvas.getByTestId(selectors.inputPassword),
+        'first'
+      );
+      await userEvent.type(
+        canvas.getByTestId(selectors.inputConfirmPassword),
+        'second',
+        { delay: 500 }
+      );
+      await userEvent.click(canvas.getByTestId(selectors.inputConfirmPassword));
+      await canvas.getByTestId(selectors.inputConfirmPassword).blur();
 
-    await expect(
-      canvas.getByTestId(selectors.scControlWrapperPasswords)
-    ).not.toHaveTextContent('Passwords do not match');
-
-    setTimeout(() => {
-      expect(
+      await expect(
         canvas.getByTestId(selectors.scControlWrapperPasswords)
-      ).toHaveTextContent('Passwords do not match');
-    }, 1000)
-  },
-};
+      ).not.toHaveTextContent('Passwords do not match');
 
+      setTimeout(() => {
+        expect(
+          canvas.getByTestId(selectors.scControlWrapperPasswords)
+        ).toHaveTextContent('Passwords do not match');
+      }, 1000);
+    },
+  };
 
 export const ShouldValidateOnRootFormAfterDelay: StoryObj = {
   play: async ({ canvasElement }) => {
@@ -215,7 +219,7 @@ export const ShouldValidateOnRootFormAfterDelay: StoryObj = {
       JSON.stringify(
         JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)
       )
-    ).toEqual(JSON.stringify({}))
+    ).toEqual(JSON.stringify({}));
 
     const expectedErrors = {
       rootForm: ['Brecht his pass is not 1234'],
@@ -227,6 +231,6 @@ export const ShouldValidateOnRootFormAfterDelay: StoryObj = {
           JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)
         )
       ).toEqual(JSON.stringify(expectedErrors));
-    }, 550)
+    }, 550);
   },
 };

@@ -1,0 +1,103 @@
+name: Feature Request
+description: Suggest a new feature or enhancement for ngx-vest-forms
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a new feature! Please fill out this form to help us understand your request.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Feature Summary
+      description: A clear and concise description of the feature you'd like to see.
+      placeholder: Briefly describe the feature...
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation and Use Case
+      description: Why would this feature be useful? What problem does it solve?
+      placeholder: |
+        - What is the problem you're trying to solve?
+        - How would this feature help you or other users?
+        - Are there any workarounds currently available?
+    validations:
+      required: true
+
+  - type: textarea
+    id: detailed-description
+    attributes:
+      label: Detailed Description
+      description: Provide a detailed description of the proposed feature.
+      placeholder: |
+        - How should this feature work?
+        - What would the API look like?
+        - How should it integrate with existing features?
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Example Usage
+      description: Show how this feature would be used.
+      placeholder: |
+        ```typescript
+        // Example of how the feature would be used
+        ```
+
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: Complexity Estimate
+      description: How complex do you think this feature would be to implement?
+      options:
+        - Low (minor change)
+        - Medium (moderate change)
+        - High (major change)
+        - Unknown
+
+  - type: checkboxes
+    id: breaking-changes
+    attributes:
+      label: Breaking Changes
+      description: Would this feature require breaking changes?
+      options:
+        - label: This feature would require breaking changes
+        - label: This feature could be implemented without breaking changes
+        - label: I'm not sure about breaking changes
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: What alternatives have you considered?
+      placeholder: |
+        - Alternative approaches you've thought about
+        - Why those alternatives don't work
+        - Existing libraries or solutions you've looked at
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context, screenshots, or examples about the feature request.
+      placeholder: Any additional information that might help...
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Before submitting, please confirm:
+      options:
+        - label: I have searched existing issues and feature requests to avoid duplicates
+          required: true
+        - label: I have provided a clear description of the feature
+          required: true
+        - label: I have explained the motivation and use case
+          required: true
+        - label: I understand this is a feature request, not a bug report
+          required: true

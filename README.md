@@ -666,7 +666,8 @@ export class AddressComponent {
 ```
 
 # Examples
-to check the examples, clone this repo and run:
+
+To check the examples, clone this repo and run:
 ```shell
 npm i
 npm start
@@ -676,12 +677,48 @@ There is an example of a complex form with a lot of conditionals and specifics,
 and there is an example of a form array with complex validations that is used to
 create a form to add business hours. A free tutorial will follow soon.
 
-
 You can check the examples in the github repo [here](https://github.com/simplifiedcourses/ngx-vest-forms/blob/master/projects/examples).
 [Here](https://stackblitz.com/~/github.com/simplifiedcourses/ngx-vest-forms-stackblitz){:target="_blank"} is a stackblitz example for you.
 It's filled with form complexities and also contains form array logic.
+
+## 🤝 Contributing
+
+We welcome contributions from the community! Please read our [Contributing Guidelines](.github/CONTRIBUTING.md) to get started.
+
+### Quick Start for Contributors
+
+1. **Fork the repository** (for external contributors) or **clone directly** (for collaborators)
+2. **Create a feature branch**: `git checkout -b feature/your-feature-name`
+3. **Make your changes** following our [development guidelines](.github/CONTRIBUTING.md#development-guidelines)
+4. **Run tests**: `npm run test:ci`
+5. **Submit a Pull Request** with a clear description
+
+### Repository Governance
+
+This project follows a structured governance model to ensure quality and maintainability:
+
+- **Protected master branch** - All changes require pull requests and reviews
+- **Automated CI/CD** - Tests, builds, and releases are automated
+- **Code ownership** - Core areas require review from code owners
+- **Security policy** - See [SECURITY.md](.github/SECURITY.md) for vulnerability reporting
+
+For detailed information, see our [Governance Documentation](.github/GOVERNANCE.md).
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🛡️ Security
+
+If you discover a security vulnerability, please follow our [Security Policy](.github/SECURITY.md) for responsible disclosure.
 
 ## Want to learn more?
 [![course.jpeg](course.jpeg)](https://www.simplified.courses/complex-angular-template-driven-forms)
 
 [This course](https://www.simplified.courses/complex-angular-template-driven-forms) teaches you to become a form expert in no time.
+
+## 🙏 Acknowledgments
+
+- Built with [Angular](https://angular.io/) and [Vest.js](https://vestjs.dev/)
+- Inspired by the need for better form validation in Angular applications
+- Thanks to all [contributors](https://github.com/ngx-vest-forms/ngx-vest-forms/graphs/contributors) who have helped improve this library
