@@ -51,6 +51,13 @@ import { BasicValidationFormComponent } from './basic-validation.form';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    <header class="mb-8">
+      <p class="page-subtitle">
+        Essential validation patterns and manual error handling - building from
+        the minimal example with explicit error display timing
+      </p>
+    </header>
+
     <ngx-example-cards
       [demonstrated]="demonstratedContent"
       [learning]="learningContent"

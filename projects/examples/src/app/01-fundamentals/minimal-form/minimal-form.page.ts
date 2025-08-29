@@ -9,6 +9,13 @@ import { MinimalForm } from './minimal.form';
   imports: [MinimalForm, ExampleCardsComponent, FormStateDisplayComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    <header class="mb-8">
+      <p class="page-subtitle">
+        Your first ngx-vest-forms implementation - the foundation for all other
+        examples
+      </p>
+    </header>
+
     <ngx-example-cards
       [demonstrated]="demonstratedContent"
       [learning]="learningContent"
