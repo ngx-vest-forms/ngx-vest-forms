@@ -72,9 +72,12 @@ import {
           <div class="form-hint" id="name-hint">
             We use this to personalize our response
           </div>
-          @if (nameDisplay.shouldShowErrors() && nameDisplay.errors().length) {
+          @if (
+            nameDisplay.shouldShowErrors() &&
+            (nameDisplay.errors() || []).length
+          ) {
             <div class="form-error" id="name-errors" role="alert">
-              {{ nameDisplay.errors()[0] }}
+              {{ (nameDisplay.errors() || [])[0] }}
             </div>
           }
         </div>
@@ -107,10 +110,11 @@ import {
             For follow-up questions (we respect your privacy)
           </div>
           @if (
-            emailDisplay.shouldShowErrors() && emailDisplay.errors().length
+            emailDisplay.shouldShowErrors() &&
+            (emailDisplay.errors() || []).length
           ) {
             <div class="form-error" id="email-errors" role="alert">
-              {{ emailDisplay.errors()[0] }}
+              {{ (emailDisplay.errors() || [])[0] }}
             </div>
           }
         </div>
@@ -143,10 +147,11 @@ import {
             Helps us understand your use case
           </div>
           @if (
-            companyDisplay.shouldShowErrors() && companyDisplay.errors().length
+            companyDisplay.shouldShowErrors() &&
+            (companyDisplay.errors() || []).length
           ) {
             <div class="form-error" id="company-errors" role="alert">
-              {{ companyDisplay.errors()[0] }}
+              {{ (companyDisplay.errors() || [])[0] }}
             </div>
           }
         </div>
@@ -194,10 +199,11 @@ import {
             Which product are you providing feedback about?
           </div>
           @if (
-            productDisplay.shouldShowErrors() && productDisplay.errors().length
+            productDisplay.shouldShowErrors() &&
+            (productDisplay.errors() || []).length
           ) {
             <div class="form-error" id="product-errors" role="alert">
-              {{ productDisplay.errors()[0] }}
+              {{ (productDisplay.errors() || [])[0] }}
             </div>
           }
         </div>
@@ -229,10 +235,11 @@ import {
           />
           <div class="form-hint" id="rating-hint">1 = Poor, 5 = Excellent</div>
           @if (
-            ratingDisplay.shouldShowErrors() && ratingDisplay.errors().length
+            ratingDisplay.shouldShowErrors() &&
+            (ratingDisplay.errors() || []).length
           ) {
             <div class="form-error" id="rating-errors" role="alert">
-              {{ ratingDisplay.errors()[0] }}
+              {{ (ratingDisplay.errors() || [])[0] }}
             </div>
           }
         </div>
@@ -273,21 +280,21 @@ import {
                 id="improvement-counter"
                 class="text-xs text-gray-500 dark:text-gray-400"
                 [class.text-red-600]="
-                  (model().improvementSuggestions.length || 0) > 500
+                  ((model().improvementSuggestions || '').length || 0) > 500
                 "
                 [class.dark:text-red-400]="
-                  (model().improvementSuggestions.length || 0) > 500
+                  ((model().improvementSuggestions || '').length || 0) > 500
                 "
               >
-                {{ model().improvementSuggestions.length || 0 }}/500
+                {{ (model().improvementSuggestions || '').length || 0 }}/500
               </span>
             </div>
             @if (
               improvementDisplay.shouldShowErrors() &&
-              improvementDisplay.errors().length
+              (improvementDisplay.errors() || []).length
             ) {
               <div class="form-error" id="improvement-errors" role="alert">
-                {{ improvementDisplay.errors()[0] }}
+                {{ (improvementDisplay.errors() || [])[0] }}
               </div>
             }
           </div>
@@ -326,21 +333,21 @@ import {
               id="detailed-counter"
               class="text-xs text-gray-500 dark:text-gray-400"
               [class.text-red-600]="
-                (model().detailedFeedback.length || 0) > 1000
+                ((model().detailedFeedback || '').length || 0) > 1000
               "
               [class.dark:text-red-400]="
-                (model().detailedFeedback.length || 0) > 1000
+                ((model().detailedFeedback || '').length || 0) > 1000
               "
             >
-              {{ model().detailedFeedback.length || 0 }}/1000
+              {{ (model().detailedFeedback || '').length || 0 }}/1000
             </span>
           </div>
           @if (
             detailedDisplay.shouldShowErrors() &&
-            detailedDisplay.errors().length
+            (detailedDisplay.errors() || []).length
           ) {
             <div class="form-error" id="detailed-errors" role="alert">
-              {{ detailedDisplay.errors()[0] }}
+              {{ (detailedDisplay.errors() || [])[0] }}
             </div>
           }
         </div>
@@ -493,7 +500,8 @@ export class ErrorDisplayModesFormComponent {
   private focusFirstInvalidField(): void {
     // Find the first field with errors and focus it
     const formState = this.vestFormRef().formState();
-    const firstErrorField = Object.keys(formState.errors)[0];
+    const errors = formState.errors || {};
+    const firstErrorField = Object.keys(errors)[0];
 
     if (firstErrorField) {
       const element = document.querySelector<HTMLElement>(

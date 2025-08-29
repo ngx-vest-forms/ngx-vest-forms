@@ -1,10 +1,10 @@
 import {
-  Directive,
   computed,
+  Directive,
   effect,
   inject,
+  Injector,
   input,
-  isDevMode,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NgForm } from '@angular/forms';
@@ -94,23 +94,22 @@ export class NgxFormErrorDisplayDirective {
   );
 
   constructor() {
-    // Ensure the warning runs reactively
-    if (isDevMode()) {
-      effect(() => {
+    // Warning for configuration mismatches
+    effect(
+      () => {
         const mode = this.errorDisplayMode();
         const updateOn = this.updateOn();
-        if (
-          updateOn === 'submit' &&
-          (mode === 'on-blur' || mode === 'on-blur-or-submit')
-        ) {
+
+        // Warn about problematic combinations
+        if (updateOn === 'submit' && mode === 'on-blur') {
           console.warn(
-            '[ngx-vest-forms] Warning: errorDisplayMode is set to',
-            `'${mode}'`,
-            "but ngModelOptions.updateOn is 'submit'. Errors will only be shown after submit, regardless of display mode.",
+            '[ngx-vest-forms] Potential UX issue: errorDisplayMode is "on-blur" but updateOn is "submit". ' +
+              'Errors will only show after form submission, not after blur.',
           );
         }
-      });
-    }
+      },
+      { injector: inject(Injector) },
+    );
   }
 
   /**
@@ -126,25 +125,33 @@ export class NgxFormErrorDisplayDirective {
    * @returns A boolean signal that is true when errors should be shown.
    */
   readonly shouldShowErrors = computed(() => {
+    // Simplified signal access - trust Angular 20.2 timing
     const state = this.controlState();
     const mode = this.errorDisplayMode();
-    const errorCount = this.errorMessages().length;
+    const hasPending = this.hasPendingValidation();
     const updateOn = this.updateOn();
+    const errorMessages = this.errorMessages();
 
-    if (!state || this.hasPendingValidation()) return false;
+    // Early return for safety
+    if (!state || hasPending) return false;
+
+    const errorCount = errorMessages?.length || 0;
 
     // Always only show errors after submit if updateOn is 'submit'
     if (updateOn === 'submit') {
       return !!(this.formSubmitted() && errorCount > 0);
     }
+
     // on-blur: show errors after blur (touch)
     if (mode === 'on-blur') {
       return !!(state.isTouched && errorCount > 0);
     }
+
     // on-submit: show errors after submit
     if (mode === 'on-submit') {
       return !!(this.formSubmitted() && errorCount > 0);
     }
+
     // on-blur-or-submit: show errors after blur (touch) or submit
     return !!((state.isTouched || this.formSubmitted()) && errorCount > 0);
   });
@@ -163,8 +170,12 @@ export class NgxFormErrorDisplayDirective {
    * ```
    */
   readonly errors = computed(() => {
-    if (this.hasPendingValidation()) return [];
-    return this.errorMessages();
+    // Simplified approach - let Angular 20.2 handle timing
+    const hasPending = this.hasPendingValidation();
+    if (hasPending) return [];
+
+    const errorMessages = this.errorMessages();
+    return Array.isArray(errorMessages) ? errorMessages : [];
   });
 
   /**
@@ -181,8 +192,11 @@ export class NgxFormErrorDisplayDirective {
    * ```
    */
   readonly warnings = computed(() => {
-    if (this.hasPendingValidation()) return [];
-    return this.warningMessages();
+    const hasPending = this.hasPendingValidation();
+    if (hasPending) return [];
+
+    const warningMessages = this.warningMessages();
+    return Array.isArray(warningMessages) ? warningMessages : [];
   });
 
   /**

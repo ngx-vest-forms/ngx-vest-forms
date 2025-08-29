@@ -1,10 +1,11 @@
 import {
-  Directive,
-  Signal,
+  afterEveryRender,
   computed,
   contentChild,
-  effect,
+  Directive,
   inject,
+  Injector,
+  Signal,
   signal,
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
@@ -48,6 +49,22 @@ export function getInitialNgxFormControlState(): NgxFormControlState {
     isDirty: false,
     isPristine: true,
     errors: null,
+  };
+}
+
+/**
+ * Creates an enhanced initial state including derived properties.
+ * Used for consistent initialization of the main controlState signal.
+ */
+export function getInitialEnhancedControlState() {
+  const baseState = getInitialNgxFormControlState();
+  return {
+    ...baseState,
+    hasErrors: false,
+    isValidTouched: false,
+    isInvalidTouched: false,
+    shouldShowErrors: false,
+    controlRef: null,
   };
 }
 
@@ -143,44 +160,43 @@ export class NgxFormControlStateDirective {
 
   /**
    * Signal to track touched/dirty state separately since these don't emit through observables
+   * Enhanced with defensive defaults for conditional rendering stability
    */
-  readonly #interactionState = signal({
+  readonly #interactionState = signal<{
+    isTouched: boolean;
+    isDirty: boolean;
+  }>({
     isTouched: false,
     isDirty: false,
   });
 
+  readonly #injector = inject(Injector);
+
   constructor() {
-    // Effect to track touched/dirty state changes that Angular doesn't emit through observables
-    // Use a more robust approach with timer to ensure we capture all state changes
-    effect((onCleanup) => {
-      const control = this.#activeControl();
-      if (control) {
-        // Check state immediately
-        this.#interactionState.set({
-          isTouched: control.touched ?? false,
-          isDirty: control.dirty ?? false,
-        });
-
-        // Set up periodic checking to catch state changes that don't emit through observables
-        const intervalId = setInterval(() => {
-          const currentTouched = control.touched ?? false;
-          const currentDirty = control.dirty ?? false;
+    // Angular 20.2: Use afterEveryRender for ongoing state synchronization
+    // This ensures proper timing for touched/dirty state updates
+    afterEveryRender(
+      () => {
+        const control = this.#activeControl();
+        if (control) {
           const currentState = this.#interactionState();
+          const newTouched = control.touched ?? false;
+          const newDirty = control.dirty ?? false;
 
+          // Only update if values actually changed to prevent infinite loops
           if (
-            currentTouched !== currentState.isTouched ||
-            currentDirty !== currentState.isDirty
+            newTouched !== currentState.isTouched ||
+            newDirty !== currentState.isDirty
           ) {
             this.#interactionState.set({
-              isTouched: currentTouched,
-              isDirty: currentDirty,
+              isTouched: newTouched,
+              isDirty: newDirty,
             });
           }
-        }, 50); // Check every 50ms
-
-        onCleanup(() => clearInterval(intervalId));
-      }
-    });
+        }
+      },
+      { injector: this.#injector },
+    );
   }
 
   /**
@@ -229,8 +245,8 @@ export class NgxFormControlStateDirective {
   }
 
   /**
-   * Flattens a nested Angular errors object into a simple array of error keys.
-   * @param errors The Angular errors object.
+   * Flattens Angular form control errors into an array of error keys.
+   * @param errors The errors object from a form control.
    * @returns A flat array of error keys (e.g., ['required', 'minlength']).
    */
   #flattenAngularErrors(errors: Record<string, unknown>): string[] {
@@ -251,16 +267,34 @@ export class NgxFormControlStateDirective {
   }
 
   /**
+   * Extracts error messages from Vest validation results
+   * Simplified approach that trusts Angular's signal handling
+   */
+  #extractVestErrors(errors: Record<string, unknown>): string[] {
+    // Vest errors are stored in the 'errors' property as an array
+    const vestErrors = errors['errors'];
+    if (Array.isArray(vestErrors)) {
+      return vestErrors;
+    }
+
+    // Fallback to standard Angular error keys
+    return this.#flattenAngularErrors(errors);
+  } /**
    * Main control state computed signal - simplified and more reliable
    *
    * Angular v20 best practice: Use computed for derived state
+   * Trusts Angular's signal handling instead of defensive programming
    */
   readonly controlState = computed(() => {
     const baseState = this.#controlStateSignal();
     const interactionState = this.#interactionState();
     const control = this.#activeControl();
 
-    // Merge base state with more up-to-date interaction state
+    if (!baseState) {
+      return getInitialEnhancedControlState();
+    }
+
+    // Merge base state with interaction state
     const mergedState = {
       ...baseState,
       isTouched: interactionState.isTouched || baseState.isTouched,
@@ -297,42 +331,12 @@ export class NgxFormControlStateDirective {
    * - Uses computed for purely derived state (no internal state to maintain)
    * - Better timing and elimination of race conditions
    * - More efficient updates when only errors change
-   * - Improved extraction of multiple Vest error messages
+   * - Trusts Angular's signal handling instead of defensive programming
    */
   readonly errorMessages = computed(() => {
     const state = this.controlState();
-
-    if (!state.errors) {
-      return [];
-    }
-
-    // Extract Vest-specific error messages - check all possible locations
-    const allErrors: string[] = [];
-
-    // 1. Direct errors array property
-    const vestErrors = state.errors['errors'];
-    if (Array.isArray(vestErrors)) {
-      allErrors.push(...vestErrors);
-    }
-
-    // 2. Check for multiple field-specific error arrays (in case Vest structures differently)
-    for (const [key, value] of Object.entries(state.errors)) {
-      if (key !== 'errors' && key !== 'warnings' && Array.isArray(value)) {
-        allErrors.push(...value);
-      }
-    }
-
-    // 3. If we found Vest errors, return them
-    if (allErrors.length > 0) {
-      return allErrors;
-    }
-
-    // 4. Fallback to standard Angular error messages, now with flattening
-    if (Object.keys(state.errors).length > 0) {
-      return this.#flattenAngularErrors(state.errors);
-    }
-
-    return [];
+    if (!state?.errors) return [];
+    return this.#extractVestErrors(state.errors);
   });
 
   /**
@@ -341,39 +345,12 @@ export class NgxFormControlStateDirective {
    */
   readonly warningMessages = computed(() => {
     const state = this.controlState();
+    if (!state?.errors) return [];
 
-    // Extract Vest-specific warning messages from multiple possible locations
-    // 1. Direct warnings property
-    const directWarnings = state.errors?.['warnings'];
-    if (Array.isArray(directWarnings)) {
-      return directWarnings;
-    }
-
-    // 2. Warnings attached to error arrays (non-enumerable)
-    const errorsArray = state.errors?.['errors'];
-    if (Array.isArray(errorsArray)) {
-      const warningsProperty = Object.getOwnPropertyDescriptor(
-        errorsArray,
-        'warnings',
-      );
-      if (warningsProperty && Array.isArray(warningsProperty.value)) {
-        return warningsProperty.value;
-      }
-    }
-
-    // 3. Check if there's an empty errors array but with warnings attached
-    if (state.errors && Object.keys(state.errors).length > 0) {
-      for (const value of Object.values(state.errors)) {
-        if (Array.isArray(value)) {
-          const warningsProperty = Object.getOwnPropertyDescriptor(
-            value,
-            'warnings',
-          );
-          if (warningsProperty && Array.isArray(warningsProperty.value)) {
-            return warningsProperty.value;
-          }
-        }
-      }
+    // Check for Vest warnings in the errors object
+    const warnings = state.errors['warnings'];
+    if (Array.isArray(warnings)) {
+      return warnings;
     }
 
     return [];
@@ -382,9 +359,9 @@ export class NgxFormControlStateDirective {
   /**
    * Enhanced pending validation detection using computed for better reactivity
    */
-  readonly hasPendingValidation = computed(() => {
-    return !!this.controlState().isPending;
-  });
+  readonly hasPendingValidation = computed(
+    () => !!this.controlState().isPending,
+  );
 
   /**
    * Enhanced updateOn detection using computed for better reactivity
@@ -398,18 +375,27 @@ export class NgxFormControlStateDirective {
 
   /**
    * Convenience signals for common state checks using computed for optimal performance
+   * All signals include graceful error handling for race conditions during initialization
    */
   readonly isValid = computed(() => this.controlState().isValid || false);
+
   readonly isInvalid = computed(() => this.controlState().isInvalid || false);
+
   readonly isPending = computed(() => this.controlState().isPending || false);
+
   readonly isTouched = computed(() => this.controlState().isTouched || false);
+
   readonly isDirty = computed(() => this.controlState().isDirty || false);
+
   readonly isPristine = computed(() => this.controlState().isPristine || false);
+
   readonly isDisabled = computed(() => this.controlState().isDisabled || false);
+
   readonly hasErrors = computed(() => this.controlState().hasErrors || false);
 
   /**
    * Enhanced composite state signals for common validation patterns
+   * Simplified without defensive try-catch since base signals already have fallbacks
    */
   readonly isValidAndTouched = computed(
     () => this.isValid() && this.isTouched(),
