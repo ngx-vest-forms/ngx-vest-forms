@@ -12,7 +12,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[class]':
-      "'block rounded-xl shadow-sm ' + (variant() === 'primary-outline' ? 'border border-indigo-300 dark:border-indigo-500' : '')",
+      "'block rounded-xl shadow-sm ' + (variant() === 'primary-outline' ? 'border border-indigo-300 dark:border-indigo-500' : variant() === 'educational' ? 'bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20' : '')",
   },
   template: `
     <div
@@ -31,7 +31,7 @@ import {
   `,
 })
 export class CardComponent {
-  variant = input<'default' | 'primary-outline'>('default');
+  variant = input<'default' | 'primary-outline' | 'educational'>('default');
   labelledBy = input<string | null>(null);
   describedBy = input<string | null>(null);
 

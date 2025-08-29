@@ -63,10 +63,15 @@ export class AppComponent implements AfterViewInit {
     {
       id: 'fundamentals',
       label: 'Fundamentals',
-      pattern: /^\/fundamentals\/(minimal-form|basic-validation)/,
+      pattern:
+        /^\/fundamentals\/(minimal-form|basic-validation|error-display-modes)/,
       links: [
         { path: '/fundamentals/minimal-form', label: 'Minimal Form' },
         { path: '/fundamentals/basic-validation', label: 'Basic Validation' },
+        {
+          path: '/fundamentals/error-display-modes',
+          label: 'Error Display Modes',
+        },
       ],
     },
     // TODO: Restore these categories as examples are moved back from _backup/

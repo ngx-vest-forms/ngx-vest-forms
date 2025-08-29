@@ -25,6 +25,14 @@ export const appRoutes: Routes = [
           ).then((m) => m.BasicValidationPage),
         title: 'Basic Validation - Foundation',
       },
+      {
+        path: 'error-display-modes',
+        loadComponent: () =>
+          import(
+            './01-fundamentals/error-display-modes/error-display-modes.page'
+          ).then((m) => m.ErrorDisplayModesPageComponent),
+        title: 'Error Display Modes - Interactive Demo',
+      },
     ],
   },
 
@@ -43,5 +51,9 @@ export const legacyRoutes: Routes = [
   {
     path: '01-fundamentals/basic-validation',
     redirectTo: 'fundamentals/basic-validation',
+  },
+  {
+    path: '01-fundamentals/error-display-modes',
+    redirectTo: 'fundamentals/error-display-modes',
   },
 ];

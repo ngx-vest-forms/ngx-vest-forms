@@ -188,9 +188,20 @@
     @apply min-h-[100px] resize-y;
   }
 
+  /* Checkbox styling */
+  .form-checkbox {
+    @apply rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800;
+  }
+
+  .form-checkbox-label {
+    @apply flex items-start text-sm font-medium;
+    color: var(--color-text);
+  }
+
   /* Validation states */
   /* Error message styling */
-  .error-message {
+  .error-message,
+  .form-error {
     @apply mt-1 text-sm text-red-600 dark:text-red-400;
   }
 
@@ -237,6 +248,33 @@
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+
+  /* Page layout components */
+  .page-wrapper {
+    @apply mx-auto max-w-4xl;
+  }
+
+  .page-title {
+    @apply mb-4 text-3xl font-bold;
+    background: var(--gradient-brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .page-subtitle {
+    @apply text-lg;
+    color: var(--color-text-muted);
+  }
+
+  /* Inline code styling */
+  .code-inline {
+    @apply rounded bg-gray-100 px-1.5 py-0.5 font-mono text-sm;
+    color: var(--color-text);
+  }
+  .dark .code-inline {
+    @apply bg-gray-800;
   }
 }
 
