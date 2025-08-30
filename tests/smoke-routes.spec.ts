@@ -5,30 +5,9 @@ import { expect, test } from '@playwright/test';
 
 const routes = [
   '/',
-  '/minimal-form',
-  '/simple-form',
-  '/contact-form',
-  '/registration-form',
-  '/profile-form',
-  '/business-hours-form',
-  '/survey-form',
-  '/async-validation-form',
-  '/control-wrapper-simple',
-  '/control-wrapper-registration',
-  '/zod-schema-form',
-  '/valibot-schema-form',
-  '/custom-schema-form',
-  '/phone-numbers-form',
-  '/smart-profile-form',
-  '/purchase-form',
-  '/wizard-form',
-  '/arktype-schema-form',
-  '/migration-example',
-  '/basic-smart-state',
-  '/realtime-sync',
-  '/nested-arrays',
-  '/dynamic-forms',
-  '/custom-wrapper',
+  '/fundamentals/minimal-form',
+  '/fundamentals/basic-validation',
+  '/fundamentals/error-display-modes',
 ] as const;
 
 for (const route of routes) {

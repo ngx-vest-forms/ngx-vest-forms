@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 
-test.describe('Phone Numbers Form - Dynamic Array Management', () => {
+// SKIPPED: Phone numbers form is temporarily disabled
+// TODO: Re-enable this test when phone-numbers-form is restored
+test.describe.skip('Phone Numbers Form - Dynamic Array Management', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the phone numbers form before each test
     await page.goto('http://localhost:4200/phone-numbers-form');
