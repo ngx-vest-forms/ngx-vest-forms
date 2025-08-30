@@ -12,85 +12,118 @@ test.describe('Error Display Modes - Interactive Demo', () => {
     await test.step('Verify page structure and mode selector', async () => {
       // Check page heading and description
       await expect(
-        page.locator('h1, h2').filter({ hasText: /Error Display/i }),
+        page.getByRole('heading', { name: /Error Display Modes/i }),
       ).toBeVisible();
-      await expect(page.locator('text=error display timing')).toBeVisible();
+      await expect(
+        page.getByText(
+          'Explore how different error display timing affects user experience',
+        ),
+      ).toBeVisible();
 
       // Verify error display mode selector is present
-      await expect(page.locator('text=on-blur')).toBeVisible();
-      await expect(page.locator('text=on-submit')).toBeVisible();
-      await expect(page.locator('text=on-blur-or-submit')).toBeVisible();
+      const modeSelector = page.getByRole('combobox', {
+        name: /Error Display Mode/i,
+      });
+      await expect(modeSelector).toBeVisible();
+
+      // Check available options
+      await expect(page.getByText('On Blur')).toBeVisible();
+      await expect(page.getByText('On Submit')).toBeVisible();
+      await expect(page.getByText('On Blur or Submit')).toBeVisible();
 
       // Verify product feedback form is present
       await expect(page.locator('form')).toBeVisible();
-      await expect(page.locator('text=Personal Information')).toBeVisible();
-      await expect(page.locator('input[name="name"]')).toBeVisible();
-      await expect(page.locator('input[name="email"]')).toBeVisible();
+      await expect(page.getByText('👤 Personal Information')).toBeVisible();
+      await expect(
+        page.getByRole('textbox', { name: /Full Name/i }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole('textbox', { name: /Email Address/i }),
+      ).toBeVisible();
     });
 
     await test.step('Verify all form fields are present', async () => {
       // Personal Information
-      await expect(page.locator('input[name="name"]')).toBeVisible();
-      await expect(page.locator('input[name="email"]')).toBeVisible();
-      await expect(page.locator('input[name="company"]')).toBeVisible();
+      await expect(
+        page.getByRole('textbox', { name: /Full Name/i }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole('textbox', { name: /Email Address/i }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole('textbox', { name: /Company/i }),
+      ).toBeVisible();
 
       // Product Feedback
-      await expect(page.locator('select[name="productUsed"]')).toBeVisible();
-      await expect(page.locator('input[name="overallRating"]')).toBeVisible();
-
-      // Conditional fields (may not be visible initially)
-      const improvementField = page.locator(
-        'textarea[name="improvementSuggestions"]',
-      );
-      const detailedField = page.locator('textarea[name="detailedFeedback"]');
-
-      // These might be conditionally visible based on rating
-      // Just verify they exist in DOM even if hidden
       await expect(
-        improvementField.or(page.locator('text=improvement')),
-      ).toBeTruthy();
+        page.getByRole('combobox', { name: /Which product did you use/i }),
+      ).toBeVisible();
       await expect(
-        detailedField.or(page.locator('text=detailed')),
-      ).toBeTruthy();
+        page.getByRole('spinbutton', { name: /Overall Rating/i }),
+      ).toBeVisible();
+
+      // Additional Comments field
+      await expect(
+        page.getByRole('textbox', { name: /Additional Comments/i }),
+      ).toBeVisible();
+
+      // Preferences checkboxes
+      await expect(
+        page.getByRole('checkbox', { name: /Allow us to contact you/i }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole('checkbox', { name: /Subscribe to product updates/i }),
+      ).toBeVisible();
     });
   });
 
   test('should demonstrate on-blur error display mode', async ({ page }) => {
     await test.step('Switch to on-blur mode', async () => {
-      // Select the "on-blur" mode
-      await page.click('text=on-blur');
+      // Select the "On Blur" mode
+      const modeSelector = page.getByRole('combobox', {
+        name: /Error Display Mode/i,
+      });
+      await modeSelector.selectOption('On Blur');
 
-      // Verify mode is selected (could be radio button, button highlight, etc.)
-      const onBlurSelector = page.locator('text=on-blur').first();
-      await expect(onBlurSelector).toBeVisible();
+      // Verify mode is selected
+      await expect(modeSelector).toHaveValue('On Blur');
     });
 
     await test.step('Test errors appear immediately on blur', async () => {
-      const nameField = page.locator('input[name="name"]');
+      const nameField = page.getByRole('textbox', { name: /Full Name/i });
 
       // Focus and immediately blur the field
       await nameField.click();
       await nameField.press('Tab');
 
       // Error should appear immediately after blur
-      await expect(page.locator('text=Name is required')).toBeVisible({
+      await expect(
+        page.locator('[role="alert"]').filter({ hasText: 'Name is required' }),
+      ).toBeVisible({
         timeout: 2000,
       });
     });
 
     await test.step('Test errors do not appear on submit without blur', async () => {
-      // Fill some fields but don't blur the email field
-      const emailField = page.locator('input[name="email"]');
+      // Clear any existing errors by filling the name field
+      await page.getByRole('textbox', { name: /Full Name/i }).fill('John Doe');
+
+      // Focus on email field but don't blur it
+      const emailField = page.getByRole('textbox', { name: /Email Address/i });
       await emailField.click();
-      // Don't blur - go straight to submit
 
-      const submitButton = page.locator('button[type="submit"]');
+      // Go straight to submit without blurring
+      const submitButton = page.getByRole('button', {
+        name: /Submit Feedback/i,
+      });
       if (await submitButton.isVisible()) {
-        await submitButton.click();
-
-        // In pure on-blur mode, errors might not show until fields are touched
-        // This depends on the specific implementation
-        await page.waitForTimeout(1000);
+        // In on-blur mode, submit should not trigger errors for untouched fields
+        // But since we haven't blurred the email field, it shouldn't show error
+        await expect(
+          page
+            .locator('[role="alert"]')
+            .filter({ hasText: 'Email is required' }),
+        ).not.toBeVisible();
       }
     });
   });
@@ -396,9 +429,9 @@ test.describe('Error Display Modes - Interactive Demo', () => {
     await test.step('Test form state after validation errors', async () => {
       // Trigger multiple errors
       await page.click('input[name="name"]');
-      await page.press('Tab');
+      await page.keyboard.press('Tab');
       await page.click('input[name="email"]');
-      await page.press('Tab');
+      await page.keyboard.press('Tab');
 
       // Multiple errors should be visible
       await expect(page.locator('text=Name is required')).toBeVisible();

@@ -84,12 +84,17 @@ export const userValidationSuite = staticSuite(
     });
 
     test('role', 'Please select a valid role', () => {
-      enforce(data.role).inside(['junior', 'mid', 'senior', 'lead']);
+      enforce(data.role).inside([
+        'Junior Developer',
+        'Mid-level Developer',
+        'Senior Developer',
+        'Team Lead',
+      ]);
     });
 
     // Conditional validation for bio field
     // Bio is only required for senior positions
-    if (data.role === 'senior' || data.role === 'lead') {
+    if (data.role === 'Senior Developer' || data.role === 'Team Lead') {
       test('bio', 'Bio is required for senior positions', () => {
         enforce(data.bio).isNotEmpty();
       });
