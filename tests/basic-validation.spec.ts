@@ -37,6 +37,17 @@ test.describe('Basic Validation - Comprehensive Form Testing', () => {
       await expect(submitButton).toBeVisible();
       await expect(submitButton).toBeDisabled();
     });
+
+    await test.step('Verify initial form state', async () => {
+      // Check initial form state in the form state display
+      const formStateDisplay = page.locator('pre').filter({ hasText: 'value' });
+      await expect(formStateDisplay).toBeVisible();
+
+      // Should show validation errors for required fields
+      const formStateText = await formStateDisplay.textContent();
+      expect(formStateText).toContain('"valid": false');
+      expect(formStateText).toContain('"status": "INVALID"');
+    });
   });
 
   test('should validate required fields and show errors on blur', async ({
@@ -47,10 +58,21 @@ test.describe('Basic Validation - Comprehensive Form Testing', () => {
       await nameField.click();
       await nameField.press('Tab');
 
-      // Wait for validation and look for error message
-      await expect(page.getByText('Name is required')).toBeVisible({
-        timeout: 2000,
-      });
+      // Wait for validation and look for error message in the specific error container
+      await expect(page.locator('#name-errors')).toContainText(
+        'Name is required',
+        {
+          timeout: 2000,
+        },
+      );
+    });
+
+    await test.step('Verify form state shows name error', async () => {
+      const formStateDisplay = page.locator('pre').filter({ hasText: 'value' });
+      const formStateText = await formStateDisplay.textContent();
+      expect(formStateText).toContain('"name"');
+      expect(formStateText).toContain('Name is required');
+      expect(formStateText).toContain('"valid": false');
     });
 
     await test.step('Test email field validation', async () => {
@@ -58,9 +80,19 @@ test.describe('Basic Validation - Comprehensive Form Testing', () => {
       await emailField.click();
       await emailField.press('Tab');
 
-      await expect(page.getByText('Email is required')).toBeVisible({
-        timeout: 2000,
-      });
+      await expect(page.locator('#email-errors')).toContainText(
+        'Email is required',
+        {
+          timeout: 2000,
+        },
+      );
+    });
+
+    await test.step('Verify form state shows email error', async () => {
+      const formStateDisplay = page.locator('pre').filter({ hasText: 'value' });
+      const formStateText = await formStateDisplay.textContent();
+      expect(formStateText).toContain('"email"');
+      expect(formStateText).toContain('Email is required');
     });
 
     await test.step('Test age field validation', async () => {
@@ -70,9 +102,19 @@ test.describe('Basic Validation - Comprehensive Form Testing', () => {
       await ageField.fill('');
       await ageField.press('Tab');
 
-      await expect(page.getByText('Age is required')).toBeVisible({
-        timeout: 2000,
-      });
+      await expect(page.locator('#age-errors')).toContainText(
+        'Age is required',
+        {
+          timeout: 2000,
+        },
+      );
+    });
+
+    await test.step('Verify form state shows age error', async () => {
+      const formStateDisplay = page.locator('pre').filter({ hasText: 'value' });
+      const formStateText = await formStateDisplay.textContent();
+      expect(formStateText).toContain('"age"');
+      expect(formStateText).toContain('Age is required');
     });
 
     await test.step('Test terms checkbox validation', async () => {
@@ -83,9 +125,9 @@ test.describe('Basic Validation - Comprehensive Form Testing', () => {
       await termsField.click(); // Uncheck it to trigger validation
       await termsField.press('Tab');
 
-      await expect(
-        page.getByText('You must agree to the terms and conditions'),
-      ).toBeVisible({ timeout: 2000 });
+      await expect(page.locator('#terms-errors')).toContainText(
+        'You must agree to the terms and conditions',
+      );
     });
   });
 
@@ -95,9 +137,10 @@ test.describe('Basic Validation - Comprehensive Form Testing', () => {
       await emailField.fill('invalid-email');
       await emailField.press('Tab');
 
-      await expect(
-        page.getByText('Please enter a valid email address'),
-      ).toBeVisible({ timeout: 2000 });
+      await expect(page.locator('#email-errors')).toContainText(
+        'Please enter a valid email address',
+        { timeout: 2000 },
+      );
     });
 
     await test.step('Test age constraints', async () => {
@@ -106,16 +149,20 @@ test.describe('Basic Validation - Comprehensive Form Testing', () => {
       // Test minimum age
       await ageField.fill('15');
       await ageField.press('Tab');
-      await expect(
-        page.getByText('You must be at least 18 years old'),
-      ).toBeVisible({ timeout: 2000 });
+      await expect(page.locator('#age-errors')).toContainText(
+        'You must be at least 18 years old',
+        { timeout: 2000 },
+      );
 
       // Test maximum age
       await ageField.fill('125');
       await ageField.press('Tab');
-      await expect(page.getByText('Age must be 120 or less')).toBeVisible({
-        timeout: 2000,
-      });
+      await expect(page.locator('#age-errors')).toContainText(
+        'Age must be 120 or less',
+        {
+          timeout: 2000,
+        },
+      );
     });
 
     await test.step('Test name length constraints', async () => {
@@ -123,70 +170,191 @@ test.describe('Basic Validation - Comprehensive Form Testing', () => {
       await nameField.fill('A');
       await nameField.press('Tab');
 
-      await expect(
-        page.getByText('Name must be at least 2 characters'),
-      ).toBeVisible({ timeout: 2000 });
+      await expect(page.locator('#name-errors')).toContainText(
+        'Name must be at least 2 characters',
+      );
     });
   });
 
   test('should handle conditional validation for senior roles', async ({
     page,
   }) => {
-    await test.step('Select senior role and trigger bio validation', async () => {
-      // Fill required fields first
-      await page.getByRole('textbox', { name: /Full Name/i }).fill('John Doe');
+    await test.step('Form validation should work correctly with valid data', async () => {
+      await page.getByRole('textbox', { name: /Full Name/i }).fill('Jane Doe');
       await page
         .getByRole('textbox', { name: /Email Address/i })
-        .fill('john@example.com');
-      await page.getByRole('spinbutton', { name: /Age/i }).fill('35');
+        .fill('jane@example.com');
+      await page.getByRole('spinbutton', { name: /Age/i }).fill('25');
 
-      // Select a senior role to trigger bio field appearance
-      await page
-        .getByRole('combobox', { name: /Role/i })
-        .selectOption('Senior Developer');
+      // Select role that requires bio field
+      const roleSelect = page.getByRole('combobox', { name: /Role/i });
+      await roleSelect.selectOption('Senior Developer');
 
-      // Wait for bio field to appear
-      await expect(
-        page.getByRole('textbox', { name: /Professional Bio/i }),
-      ).toBeVisible({
-        timeout: 2000,
+      // Manually dispatch events to ensure Angular change detection triggers
+      await roleSelect.dispatchEvent('change');
+      await roleSelect.dispatchEvent('input');
+      await roleSelect.dispatchEvent('blur');
+
+      // Wait for bio field to appear using expect.poll
+      const bioField = page.getByRole('textbox', { name: /bio/i });
+      await expect
+        .poll(
+          async () => {
+            try {
+              return await bioField.isVisible();
+            } catch {
+              return false;
+            }
+          },
+          {
+            message:
+              'Bio field should appear when Senior Developer is selected',
+            timeout: 3000,
+          },
+        )
+        .toBeTruthy();
+
+      // Fill bio field with sufficient content (needs 50+ characters for senior roles)
+      await bioField.fill(
+        'I am a senior developer with extensive experience in leading technical teams and architecting scalable software solutions across various industries.',
+      );
+
+      // Check the terms checkbox to complete the form
+      await page.getByRole('checkbox', { name: /agree to the terms/i }).check();
+
+      // Wait for submit button to become enabled using expect.poll
+      const submitButton = page.getByRole('button', {
+        name: /Submit Application/i,
       });
 
-      // Bio should now be required - test by leaving it empty and blurring
-      const bioField = page.getByRole('textbox', { name: /Professional Bio/i });
-      await bioField.click();
-      await bioField.press('Tab');
+      await expect
+        .poll(
+          async () => {
+            return !(await submitButton.isDisabled());
+          },
+          {
+            message: 'Submit button should be enabled with valid data',
+            timeout: 3000,
+          },
+        )
+        .toBeTruthy();
 
-      await expect(
-        page.getByText('Bio is required for senior positions'),
-      ).toBeVisible({ timeout: 2000 });
+      await expect(submitButton).toBeEnabled();
+    });
+
+    await test.step('Wait for bio field to appear and validate', async () => {
+      // Use expect.poll to wait for the form model to update and bio field to appear
+      await expect
+        .poll(
+          async () => {
+            const bioField = page.getByRole('textbox', {
+              name: /Professional Bio/i,
+            });
+            return await bioField.isVisible();
+          },
+          {
+            message:
+              'Bio field should appear when Senior Developer role is selected',
+            timeout: 5000,
+            intervals: [100, 250, 500],
+          },
+        )
+        .toBeTruthy();
+
+      // Verify the bio field is now part of the form validation
+      const bioField = page.getByRole('textbox', { name: /Professional Bio/i });
+      await expect(bioField).toBeVisible();
+
+      // Clear the field first, then focus and blur to trigger validation
+      await bioField.clear();
+      await bioField.focus();
+      await bioField.blur();
+
+      // Wait for bio error to appear
+      await expect
+        .poll(
+          async () => {
+            const errorElement = page.locator('#bio-errors');
+            return await errorElement.isVisible();
+          },
+          {
+            message: 'Bio validation error should appear',
+            timeout: 3000,
+          },
+        )
+        .toBeTruthy();
+
+      await expect(page.locator('#bio-errors')).toContainText(
+        'Bio is required for senior positions',
+      );
     });
 
     await test.step('Test bio length for senior roles', async () => {
       // Bio should have minimum length for senior roles
       const bioField = page.getByRole('textbox', { name: /Professional Bio/i });
       await bioField.fill('Short');
-      await bioField.press('Tab');
+      await bioField.blur();
 
-      await expect(
-        page.getByText(
-          'Bio must be at least 50 characters for senior positions',
-        ),
-      ).toBeVisible({ timeout: 2000 });
+      // Wait for length validation error
+      await expect
+        .poll(
+          async () => {
+            const errorElement = page.locator('#bio-errors');
+            const errorText = await errorElement.textContent();
+            return errorText?.includes(
+              'Bio must be at least 50 characters for senior positions',
+            );
+          },
+          {
+            message: 'Bio length validation error should appear',
+            timeout: 3000,
+          },
+        )
+        .toBeTruthy();
+
+      await expect(page.locator('#bio-errors')).toContainText(
+        'Bio must be at least 50 characters for senior positions',
+      );
     });
 
     await test.step('Test junior role does not require bio', async () => {
-      // Change to junior role
-      await page
-        .getByRole('combobox', { name: /Role/i })
-        .selectOption('Junior Developer');
+      // Change to junior role using the same reliable method
+      const roleSelect = page.getByRole('combobox', { name: /Role/i });
+      await roleSelect.selectOption('Junior Developer');
 
-      // Bio field should disappear
+      // Force Angular change detection again
+      await page.evaluate(() => {
+        const selectElement = document.querySelector(
+          'select[name="role"]',
+        ) as HTMLSelectElement;
+        if (selectElement) {
+          selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+          selectElement.dispatchEvent(new Event('input', { bubbles: true }));
+          selectElement.dispatchEvent(new Event('blur', { bubbles: true }));
+        }
+      });
+
+      // Wait for bio field to disappear
+      await expect
+        .poll(
+          async () => {
+            const bioField = page.getByRole('textbox', {
+              name: /Professional Bio/i,
+            });
+            return !(await bioField.isVisible());
+          },
+          {
+            message:
+              'Bio field should disappear when Junior Developer role is selected',
+            timeout: 5000,
+          },
+        )
+        .toBeTruthy();
+
+      // Verify bio field is not visible
       await expect(
         page.getByRole('textbox', { name: /Professional Bio/i }),
-      ).not.toBeVisible({
-        timeout: 2000,
-      });
+      ).not.toBeVisible();
     });
   });
 
@@ -207,12 +375,23 @@ test.describe('Basic Validation - Comprehensive Form Testing', () => {
         .fill('invalid'); // Invalid format
       await page.getByRole('spinbutton', { name: /Age/i }).fill('15'); // Too young
 
-      // Wait for validation
-      await page.waitForTimeout(500);
-
+      // Wait for form validation to complete using expect.poll
       const submitButton = page.getByRole('button', {
         name: /Submit Application/i,
       });
+
+      await expect
+        .poll(
+          async () => {
+            return await submitButton.isDisabled();
+          },
+          {
+            message: 'Submit button should remain disabled with invalid data',
+            timeout: 3000,
+          },
+        )
+        .toBeTruthy();
+
       await expect(submitButton).toBeDisabled();
     });
 
@@ -235,6 +414,20 @@ test.describe('Basic Validation - Comprehensive Form Testing', () => {
         name: /Submit Application/i,
       });
       await expect(submitButton).toBeEnabled({ timeout: 3000 });
+    });
+
+    await test.step('Verify form state shows valid state', async () => {
+      const formStateDisplay = page
+        .locator('pre')
+        .filter({ hasText: '"valid"' });
+      await expect(formStateDisplay).toContainText('"valid": true');
+      await expect(formStateDisplay).toContainText('"pending": false');
+      await expect(formStateDisplay).toContainText('"errors": {}');
+
+      // Verify form data is reflected in form state display
+      await expect(formStateDisplay).toContainText('John Doe');
+      await expect(formStateDisplay).toContainText('john@example.com');
+      await expect(formStateDisplay).toContainText('30');
     });
   });
 
@@ -301,7 +494,9 @@ test.describe('Basic Validation - Comprehensive Form Testing', () => {
       await nameField.press('Tab');
 
       // Wait for error to appear
-      await expect(page.getByText('Name is required')).toBeVisible();
+      await expect(page.locator('#name-errors')).toContainText(
+        'Name is required',
+      );
 
       // Field should have aria-invalid when in error state
       await expect(nameField).toHaveAttribute('aria-invalid', 'true');
@@ -318,6 +513,148 @@ test.describe('Basic Validation - Comprehensive Form Testing', () => {
 
       const focusedElement = page.locator(':focus');
       await expect(focusedElement).toBeVisible();
+    });
+  });
+
+  test('should handle character counting for bio field', async ({ page }) => {
+    await test.step('Select senior role to show bio field', async () => {
+      // Try clicking and then selecting
+      const roleSelect = page.getByRole('combobox', { name: /Role/i });
+      await roleSelect.click();
+      await roleSelect.selectOption('Senior Developer');
+
+      // Wait for the bio field to appear
+      await expect(
+        page.getByRole('textbox', { name: /Professional Bio/i }),
+      ).toBeVisible();
+    });
+
+    await test.step('Should display character count after typing in bio field', async () => {
+      const bioField = page.getByRole('textbox', { name: /Professional Bio/i });
+
+      // Type something to trigger the model update and check counter
+      await bioField.fill('test');
+
+      // Now check that the counter shows up with the updated count
+      await expect(page.locator('#bio-counter')).toBeVisible();
+      await expect(page.locator('#bio-counter')).toContainText('4/500');
+
+      // Clear and check for 0
+      await bioField.clear();
+      await expect(page.locator('#bio-counter')).toContainText('0/500');
+    });
+
+    await test.step('Should update counter in real-time as user types', async () => {
+      const bioField = page.getByRole('textbox', { name: /Professional Bio/i });
+
+      const testText =
+        'I am a senior developer with extensive experience in leading technical teams.';
+      await bioField.fill(testText);
+      await expect(page.locator('#bio-counter')).toContainText(
+        `${testText.length}/500`,
+      );
+    });
+
+    await test.step('Should handle character limit correctly', async () => {
+      const bioField = page.getByRole('textbox', { name: /Professional Bio/i });
+
+      // Fill exactly 500 characters
+      const maxText = 'a'.repeat(500);
+      await bioField.fill(maxText);
+      await expect(page.locator('#bio-counter')).toContainText('500/500');
+    });
+  });
+
+  test('should handle async validation and submission states', async ({
+    page,
+  }) => {
+    await test.step('Fill form with valid data', async () => {
+      await page.getByRole('textbox', { name: /Full Name/i }).fill('John Doe');
+      await page
+        .getByRole('textbox', { name: /Email Address/i })
+        .fill('john@example.com');
+      await page.getByRole('spinbutton', { name: /Age/i }).fill('25');
+      await page
+        .getByRole('combobox', { name: /Role/i })
+        .selectOption('Senior Developer');
+
+      // Bio field should appear and be filled
+      const bioField = page.getByRole('textbox', { name: /Professional Bio/i });
+      await expect(bioField).toBeVisible();
+      await bioField.fill(
+        'I am a senior developer with extensive experience in leading technical teams and architecting scalable solutions.',
+      );
+
+      await page.getByRole('checkbox', { name: /agree to the terms/i }).check();
+    });
+
+    await test.step('Should show submitting state during form submission', async () => {
+      // Wait for form to be valid
+      await expect(
+        page.getByRole('button', { name: /Submit Application/i }),
+      ).toBeEnabled();
+
+      // Click submit and verify submitting state
+      await page.getByRole('button', { name: /Submit Application/i }).click();
+
+      // Should show "Submitting..." during submission
+      await expect(
+        page.getByRole('button', { name: /Submitting/i }),
+      ).toBeVisible();
+
+      // Reset button should be disabled during submission
+      await expect(
+        page.getByRole('button', { name: /Reset Form/i }),
+      ).toBeDisabled();
+    });
+
+    await test.step('Should return to normal state after submission', async () => {
+      // Eventually should return to normal state
+      await expect(
+        page.getByRole('button', { name: /Submit Application/i }),
+      ).toBeVisible({ timeout: 10_000 });
+      await expect(
+        page.getByRole('button', { name: /Reset Form/i }),
+      ).toBeEnabled();
+    });
+  });
+
+  test('should not have JavaScript validation errors', async ({ page }) => {
+    const consoleErrors: string[] = [];
+
+    // Capture console errors
+    page.on('console', (message) => {
+      if (message.type() === 'error') {
+        consoleErrors.push(message.text());
+      }
+    });
+
+    await test.step('Interact with form to trigger validation', async () => {
+      await page
+        .getByRole('combobox', { name: /Role/i })
+        .selectOption('Senior Developer');
+      await page
+        .getByRole('textbox', { name: /Professional Bio/i })
+        .fill('Test bio content');
+      await page.getByRole('checkbox', { name: /agree to the terms/i }).check();
+
+      // Wait for any potential errors
+      await page.waitForTimeout(2000);
+    });
+
+    await test.step('Verify no validation suite errors', async () => {
+      // Filter out development-related errors
+      const validationErrors = consoleErrors.filter(
+        (error) =>
+          !error.includes('vite') &&
+          !error.includes('Angular is running in development mode') &&
+          !error.includes('connecting...') &&
+          !error.includes('connected.') &&
+          error.includes('Cannot read properties of undefined'),
+      );
+
+      // Should have no validation errors after fixing the validation suite
+      expect(validationErrors).toHaveLength(0);
     });
   });
 });

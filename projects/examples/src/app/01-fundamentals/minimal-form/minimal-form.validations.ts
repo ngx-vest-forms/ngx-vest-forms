@@ -25,7 +25,9 @@ export const minimalFormValidationSuite = staticSuite(
     });
 
     test('email', 'Please enter a valid email', () => {
-      enforce(data.email).matches(/^[^@]+@[^@]+\.[^@]+$/);
+      enforce(data.email)
+        .matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
+        .notMatches(/\.{2,}/); // No consecutive dots
     });
   },
 );

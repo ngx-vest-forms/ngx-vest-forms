@@ -35,6 +35,7 @@ import {
       >
         <label class="form-label" for="email"> Email Address </label>
         <input
+          id="email"
           class="form-input"
           name="email"
           type="email"

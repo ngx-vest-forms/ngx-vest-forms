@@ -132,6 +132,45 @@ For schema validation, use the wrapper directive:
 </form>
 ```
 
+**⚠️ CRITICAL: Avoid HTML Validation Attributes**
+
+Do NOT use HTML validation attributes on form controls within `ngxVestForm`:
+
+```html
+<!-- ❌ WRONG - HTML validation attributes interfere with Vest -->
+<input name="age" [ngModel]="model().age" type="number" min="18" max="120" required />
+<input name="email" [ngModel]="model().email" type="email" required pattern=".+@.+\..+" />
+
+<!-- ✅ CORRECT - Use only Vest validation -->
+<input name="age" [ngModel]="model().age" type="number" />
+<input name="email" [ngModel]="model().email" type="email" />
+```
+
+**Why**: Even though `ngxVestForm` automatically adds `novalidate` to disable browser validation, HTML validation attributes (`min`, `max`, `required`, `pattern`, `minlength`, `maxlength`) can still interfere with:
+- Form validity state
+- Error message display timing
+- Vest validation logic
+- Accessibility attributes
+
+**Solution**: Define all validation rules in your Vest suite instead:
+
+```typescript
+// In your validation suite
+test('age', 'Age must be between 18 and 120', () => {
+  enforce(data.age)
+    .isNotEmpty()
+    .isNumeric()
+    .greaterThanOrEquals(18)
+    .lessThanOrEquals(120);
+});
+
+test('email', 'Please enter a valid email', () => {
+  enforce(data.email)
+    .isNotEmpty()
+    .matches(/^[^@]+@[^@]+\.[^@]+$/);
+});
+```
+
 ## Form State API
 
 `vestForm.formState()` returns reactive, memoized state of the form:
@@ -685,6 +724,7 @@ get isFormComplete() {
 - No errors showing: Ensure each input `name` exactly matches the model property key and paths (e.g., `address.street`, `items.0.name`).
 - Nested/array errors missing: Verify your suite uses the full control path that matches your ngModelGroup and `name` settings.
 - Async validations feel stuck: Use the `signal` argument in async tests and avoid swallowing `AbortError` from canceled requests.
+- HTML validation conflicts: Avoid HTML validation attributes (`min`, `max`, `required`, `pattern`, etc.) as they interfere with Vest validation even when `novalidate` is applied. Use only Vest rules for validation logic.
 
 ## Accessibility Requirements
 
@@ -774,6 +814,7 @@ When generating forms with ngx-vest-forms:
 - [ ] Validation suite uses `only(field)` for performance
 - [ ] Nested objects use `ngModelGroup` with proper path syntax
 - [ ] Form arrays use index-based naming (`items.0.name`)
+- [ ] **CRITICAL: No HTML validation attributes** (`min`, `max`, `required`, `pattern`, etc.) on form controls
 
 **Error Handling:**
 - [ ] Error display uses arrays (v2 change from v1 strings)

@@ -108,8 +108,6 @@ import {
           name="age"
           type="number"
           [ngModel]="model().age"
-          min="18"
-          max="120"
           placeholder="Your age"
           [attr.aria-invalid]="ageDisplay.shouldShowErrors() ? 'true' : null"
           [attr.aria-describedby]="
@@ -189,10 +187,10 @@ import {
             <span
               id="bio-counter"
               class="text-xs text-gray-500 dark:text-gray-400"
-              [class.text-red-600]="(model().bio.length || 0) > 500"
-              [class.dark:text-red-400]="(model().bio.length || 0) > 500"
+              [class.text-red-600]="(model().bio?.length || 0) > 500"
+              [class.dark:text-red-400]="(model().bio?.length || 0) > 500"
             >
-              {{ model().bio.length || 0 }}/500
+              {{ model().bio?.length || 0 }}/500
             </span>
           </div>
           @if (bioDisplay.shouldShowErrors() && bioDisplay.errors().length) {

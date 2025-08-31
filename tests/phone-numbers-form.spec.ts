@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
 
-// SKIPPED: Phone numbers form is temporarily disabled
-// TODO: Re-enable this test when phone-numbers-form is restored
+// SKIPPED: Phone numbers form is from old backup examples
+// These tests are for forms that are no longer active in the current application
+// TODO: Remove this test file or update when phone-numbers-form is restored
+
 test.describe.skip('Phone Numbers Form - Dynamic Array Management', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the phone numbers form before each test

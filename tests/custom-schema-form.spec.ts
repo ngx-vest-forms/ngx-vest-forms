@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test';
 
-// Basic E2E coverage for the Custom Schema Form demonstrating
-// empty submission errors and successful submission after filling.
-// Uses role-based locators per project Playwright guidelines.
+// SKIPPED: Custom schema form is from old backup examples
+// These tests are for forms that are no longer active in the current application
+// TODO: Remove this test file or update when custom schema forms are re-implemented
 
-test.describe('Custom Schema Form', () => {
+test.describe.skip('Custom Schema Form', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/custom-schema-form');
   });

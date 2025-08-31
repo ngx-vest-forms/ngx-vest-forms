@@ -20,19 +20,25 @@ test.describe('Race Condition Fix - Error Display Modes', () => {
   }) => {
     await test.step('Set rating to trigger conditional field', async () => {
       // Find the overall rating field and set it to 3 to trigger the conditional "improvement" field
-      const ratingField = page.locator('input[name="overallRating"]');
+      const ratingField = page.getByRole('spinbutton', {
+        name: /Overall Rating/i,
+      });
       await ratingField.fill('3');
       await ratingField.press('Tab');
     });
 
     await test.step('Verify conditional field appears without errors', async () => {
       // The conditional "What could we improve?" field should appear
-      const improvementField = page.locator('textarea[name="improvement"]');
+      const improvementField = page.getByRole('textbox', {
+        name: /What could we improve/i,
+      });
       await expect(improvementField).toBeVisible({ timeout: 3000 });
     });
 
     await test.step('Interact with conditional field to trigger validation', async () => {
-      const improvementField = page.locator('textarea[name="improvement"]');
+      const improvementField = page.getByRole('textbox', {
+        name: /What could we improve/i,
+      });
 
       // Click and blur to trigger validation (which previously caused infinite loops)
       await improvementField.click();
@@ -46,14 +52,18 @@ test.describe('Race Condition Fix - Error Display Modes', () => {
       // Since the improvement field is empty and required for low ratings,
       // an error should appear WITHOUT causing infinite loops
       const errorMessage = page
-        .locator('text=Please tell us how we can improve')
+        .locator('text=Please help us understand what could be improved')
         .first();
       await expect(errorMessage).toBeVisible({ timeout: 2000 });
     });
 
     await test.step('Test rating changes handle conditional field properly', async () => {
-      const ratingField = page.locator('input[name="overallRating"]');
-      const improvementField = page.locator('textarea[name="improvement"]');
+      const ratingField = page.getByRole('spinbutton', {
+        name: /Overall Rating/i,
+      });
+      const improvementField = page.getByRole('textbox', {
+        name: /What could we improve/i,
+      });
 
       // Change rating to 5 (should hide improvement field)
       await ratingField.fill('5');
@@ -79,7 +89,9 @@ test.describe('Race Condition Fix - Error Display Modes', () => {
       });
 
       // Trigger one more validation cycle to ensure stability
-      const improvementField = page.locator('textarea[name="improvement"]');
+      const improvementField = page.getByRole('textbox', {
+        name: /What could we improve/i,
+      });
       await improvementField.click();
       await improvementField.press('Tab');
       await page.waitForTimeout(500);
@@ -99,7 +111,9 @@ test.describe('Race Condition Fix - Error Display Modes', () => {
     page,
   }) => {
     await test.step('Trigger multiple conditional scenarios', async () => {
-      const ratingField = page.locator('input[name="overallRating"]');
+      const ratingField = page.getByRole('spinbutton', {
+        name: /Overall Rating/i,
+      });
 
       // Rapidly trigger different conditional states
       const scenarios = [3, 5, 1, 4, 2];
@@ -109,7 +123,9 @@ test.describe('Race Condition Fix - Error Display Modes', () => {
         await page.waitForTimeout(200); // Brief pause between changes
 
         // Check if improvement field visibility matches rating
-        const improvementField = page.locator('textarea[name="improvement"]');
+        const improvementField = page.getByRole('textbox', {
+          name: /What could we improve/i,
+        });
         const shouldBeVisible = rating <= 3;
 
         await (shouldBeVisible
@@ -120,10 +136,12 @@ test.describe('Race Condition Fix - Error Display Modes', () => {
 
     await test.step('Verify form remains functional', async () => {
       // Set to a low rating one final time
-      await page.locator('input[name="overallRating"]').fill('1');
+      await page.getByRole('spinbutton', { name: /Overall Rating/i }).fill('1');
 
       // Fill out the improvement field
-      const improvementField = page.locator('textarea[name="improvement"]');
+      const improvementField = page.getByRole('textbox', {
+        name: /What could we improve/i,
+      });
       await improvementField.fill('The service could be faster');
 
       // Blur to trigger validation

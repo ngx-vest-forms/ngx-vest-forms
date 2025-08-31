@@ -37,7 +37,7 @@ It's a small library that bridges the gap between declarative Vest validation su
 - **Powerful Validations:** Use Vest.js for declarative, composable, and async validation logic.
 - **Accessible by Default:** Built-in error display, ARIA roles, and keyboard support via `<ngx-control-wrapper>`.
 - **Modern Angular:** Designed for Angular 19+ standalone components, signals, zoneless.
-- **Native HTML5 validation is disabled:** The `novalidate` attribute is automatically added to all forms using `ngxVestForm`, so all validation is handled by VestJS and Angular, not the browser.
+- **Native HTML5 validation is disabled:** The `novalidate` attribute is automatically added to all forms using `ngxVestForm`, so all validation is handled by VestJS and Angular, not the browser. **Important:** Avoid HTML validation attributes (`min`, `max`, `required`, `pattern`) as they can interfere with Vest validation even when `novalidate` is applied.
 - **Advanced Features Available:** Optional smart state management and UI helper components available as secondary entry points.
 
 ## Why Use Vest.js?
@@ -772,6 +772,7 @@ If you're upgrading from ngx-vest-forms v1, see the [Migration Guide](./docs/MIG
 
 ## Common Pitfalls & Troubleshooting
 
+- **HTML Validation Interference:** 🚨 **CRITICAL** - Avoid HTML validation attributes (`min`, `max`, `required`, `pattern`, `minlength`, `maxlength`) on form controls. Even though `ngxVestForm` automatically adds `novalidate`, these attributes can still interfere with Vest validation logic, form validity state, and error display timing. Define all validation rules in your Vest suite instead.
 - **Type Errors:** Update all imports and type references to use the new NGX-prefixed APIs.
 - **Error Display Issues:** v2 errors are arrays, not strings. Update your error display logic to handle multiple errors per field.
 - **Import Errors:** Optional features (schemas, smart state, control wrapper) are now secondary entry points—update your imports accordingly.
@@ -1047,6 +1048,10 @@ const suite = staticSuite((data, field) => {
 - Check your error display mode (`errorDisplayMode`). Default is `'on-blur-or-submit'`.
 - If using `ngModelOptions.updateOn: 'submit'`, errors only show after submit.
 - Verify your Vest suite is running by adding `console.log` in the test functions.
+
+**Q: Why are my validation errors inconsistent or showing strange browser messages?**
+
+- **🚨 CRITICAL:** Remove HTML validation attributes (`min`, `max`, `required`, `pattern`, `minlength`, `maxlength`) from your form controls. Even though `ngxVestForm` automatically adds `novalidate`, these attributes can still interfere with Vest validation. Define all validation rules in your Vest suite instead.
 
 **Q: Why aren't my errors showing?**
 

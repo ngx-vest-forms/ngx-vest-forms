@@ -11,7 +11,7 @@ export type UserFormModel = {
   email: string;
   age: number;
   role: string;
-  bio: string;
+  bio?: string; // Optional because it's conditionally rendered
   agreeToTerms: boolean;
 };
 
@@ -103,12 +103,12 @@ export const userValidationSuite = staticSuite(
         'bio',
         'Bio must be at least 50 characters for senior positions',
         () => {
-          enforce(data.bio).longerThanOrEquals(50);
+          enforce(data.bio).isNotEmpty().longerThanOrEquals(50);
         },
       );
 
       test('bio', 'Bio must be less than 500 characters', () => {
-        enforce(data.bio).shorterThanOrEquals(500);
+        enforce(data.bio).isNotEmpty().shorterThanOrEquals(500);
       });
     }
 

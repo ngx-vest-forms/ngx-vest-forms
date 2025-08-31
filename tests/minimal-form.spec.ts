@@ -31,6 +31,17 @@ test.describe('Minimal Form - Simplest Form Pattern', () => {
       // Initial state should show email error in the live state display
       await expect(page.getByText('Email is required')).toBeVisible();
     });
+
+    await test.step('Verify initial form state display shows minimal structure', async () => {
+      // Form state is displayed in a JSON format in a pre element
+      const formStateDisplay = page.locator('pre');
+      await expect(formStateDisplay).toContainText('"valid": false');
+      await expect(formStateDisplay).toContainText('"pending": false');
+      await expect(formStateDisplay).toContainText('"errors"');
+
+      // Should show minimal model structure
+      await expect(formStateDisplay).toContainText('"email": ""');
+    });
   });
 
   test('should validate email field on blur', async ({ page }) => {
@@ -83,6 +94,15 @@ test.describe('Minimal Form - Simplest Form Pattern', () => {
           .locator('[role="alert"]')
           .filter({ hasText: 'Please enter a valid email' }),
       ).not.toBeVisible();
+    });
+
+    await test.step('Verify form state display shows valid state', async () => {
+      const formStateDisplay = page.locator('pre');
+      await expect(formStateDisplay).toContainText('"valid": true');
+      await expect(formStateDisplay).toContainText('"errors": {}');
+      await expect(formStateDisplay).toContainText(
+        '"email": "user@example.com"',
+      );
     });
   });
 
@@ -151,8 +171,10 @@ test.describe('Minimal Form - Simplest Form Pattern', () => {
       // Focus field but don't blur yet
       await emailField.click();
 
-      // Error should not appear immediately
-      await expect(page.locator('text=Email is required')).not.toBeVisible({
+      // Error should not appear immediately - check specifically in the form field area, not the JSON state
+      await expect(
+        page.locator('[role="alert"]').filter({ hasText: 'Email is required' }),
+      ).not.toBeVisible({
         timeout: 500,
       });
     });
@@ -164,8 +186,10 @@ test.describe('Minimal Form - Simplest Form Pattern', () => {
       await emailField.click();
       await emailField.press('Tab');
 
-      // Error should now appear
-      await expect(page.locator('text=Email is required')).toBeVisible({
+      // Error should now appear - check specifically in the form field area, not the JSON state
+      await expect(
+        page.locator('[role="alert"]').filter({ hasText: 'Email is required' }),
+      ).toBeVisible({
         timeout: 2000,
       });
     });
@@ -179,9 +203,11 @@ test.describe('Minimal Form - Simplest Form Pattern', () => {
       // Wait briefly for validation
       await page.waitForTimeout(500);
 
-      // Should show format error
+      // Should show format error - check specifically in the form field area, not the JSON state
       await expect(
-        page.locator('text=Please enter a valid email'),
+        page
+          .locator('[role="alert"]')
+          .filter({ hasText: 'Please enter a valid email' }),
       ).toBeVisible();
 
       // Complete the email
@@ -192,7 +218,9 @@ test.describe('Minimal Form - Simplest Form Pattern', () => {
 
       // Error should disappear
       await expect(
-        page.locator('text=Please enter a valid email'),
+        page
+          .locator('[role="alert"]')
+          .filter({ hasText: 'Please enter a valid email' }),
       ).not.toBeVisible();
     });
   });
@@ -205,8 +233,10 @@ test.describe('Minimal Form - Simplest Form Pattern', () => {
       await emailField.click();
       await emailField.press('Tab');
 
-      // Wait for error to appear
-      await expect(page.locator('text=Email is required')).toBeVisible();
+      // Wait for error to appear - check specifically in the form field area, not the JSON state
+      await expect(
+        page.locator('[role="alert"]').filter({ hasText: 'Email is required' }),
+      ).toBeVisible();
 
       // Field should have aria-invalid when in error state
       await expect(emailField).toHaveAttribute('aria-invalid', 'true');
@@ -224,12 +254,21 @@ test.describe('Minimal Form - Simplest Form Pattern', () => {
     });
 
     await test.step('Verify keyboard navigation', async () => {
-      // Form should be fully keyboard accessible
-      await page.keyboard.press('Tab'); // Should focus email field
-      await page.keyboard.press('Tab'); // Should focus submit button
+      // First focus the email field directly to establish starting point
+      const emailField = page.locator('input[name="email"]');
+      await emailField.focus();
 
-      const focusedElement = page.locator(':focus');
-      await expect(focusedElement).toBeVisible();
+      // Should focus email field
+      await expect(page.locator(':focus')).toBeVisible();
+      await expect(emailField).toBeFocused();
+
+      // Fill valid email to enable the submit button
+      await emailField.fill('test@example.com');
+
+      // Tab should move to submit button (now enabled)
+      await page.keyboard.press('Tab');
+      const submitButton = page.locator('button[type="submit"]');
+      await expect(submitButton).toBeFocused();
     });
   });
 
@@ -252,9 +291,13 @@ test.describe('Minimal Form - Simplest Form Pattern', () => {
       await page.waitForTimeout(1000);
 
       // Should end up in valid state without errors
-      await expect(page.locator('text=Email is required')).not.toBeVisible();
       await expect(
-        page.locator('text=Please enter a valid email'),
+        page.locator('[role="alert"]').filter({ hasText: 'Email is required' }),
+      ).not.toBeVisible();
+      await expect(
+        page
+          .locator('[role="alert"]')
+          .filter({ hasText: 'Please enter a valid email' }),
       ).not.toBeVisible();
 
       const submitButton = page.locator('button[type="submit"]');
@@ -300,7 +343,9 @@ test.describe('Minimal Form - Simplest Form Pattern', () => {
 
         // Should not show format error
         await expect(
-          page.locator('text=Please enter a valid email'),
+          page
+            .locator('[role="alert"]')
+            .filter({ hasText: 'Please enter a valid email' }),
         ).not.toBeVisible();
 
         // Clear for next test
@@ -325,15 +370,117 @@ test.describe('Minimal Form - Simplest Form Pattern', () => {
         // Wait for validation
         await page.waitForTimeout(500);
 
-        // Should show format error
+        // Should show format error - check specifically in the form field area, not the JSON state
         await expect(
-          page.locator('text=Please enter a valid email'),
+          page
+            .locator('[role="alert"]')
+            .filter({ hasText: 'Please enter a valid email' }),
         ).toBeVisible();
 
         // Clear for next test
         await emailField.clear();
         await emailField.click();
       }
+    });
+  });
+
+  test('should display accurate live form state JSON', async ({ page }) => {
+    await test.step('Should display initial form state correctly', async () => {
+      // Start fresh - reload the page to reset state
+      await page.reload();
+      await page.waitForLoadState('networkidle');
+
+      // Wait for form to be initialized and validation to run
+      await page.waitForTimeout(500);
+
+      // Get the JSON state from the pre element that contains form state
+      const stateDisplay = page.locator('pre').filter({ hasText: 'value' });
+
+      const initialState = await stateDisplay.textContent();
+      expect(initialState).toContain('"email": ""');
+      expect(initialState).toContain('"Email is required"');
+      expect(initialState).toContain('"status": "INVALID"');
+      expect(initialState).toContain('"valid": false');
+      expect(initialState).toContain('"dirty": false');
+    });
+
+    await test.step('Should update JSON state when email is entered', async () => {
+      const emailInput = page.getByRole('textbox', {
+        name: /email address/i,
+      });
+      const stateDisplay = page.locator('pre').filter({ hasText: 'value' });
+
+      // Enter valid email
+      await emailInput.fill('test@example.com');
+
+      // State should update to reflect valid form
+      const updatedState = await stateDisplay.textContent();
+      expect(updatedState).toContain('"email": "test@example.com"');
+      expect(updatedState).toContain('"errors": {}');
+      expect(updatedState).toContain('"status": "VALID"');
+      expect(updatedState).toContain('"valid": true');
+      expect(updatedState).toContain('"dirty": true');
+    });
+
+    await test.step('Should update JSON state when email is cleared', async () => {
+      const emailInput = page.getByRole('textbox', {
+        name: /email address/i,
+      });
+      const stateDisplay = page.locator('pre').filter({ hasText: 'value' });
+
+      // Clear email and trigger validation
+      await emailInput.fill('');
+      await emailInput.blur();
+
+      // Wait for validation to complete
+      await page.waitForTimeout(200);
+
+      // State should show errors again
+      const clearedState = await stateDisplay.textContent();
+      expect(clearedState).toContain('"email": ""');
+      expect(clearedState).toContain('Email is required');
+      expect(clearedState).toContain('"status": "INVALID"');
+      expect(clearedState).toContain('"valid": false');
+    });
+
+    await test.step('Should show valid state after form completion', async () => {
+      const emailInput = page.getByRole('textbox', {
+        name: /email address/i,
+      });
+      const submitButton = page.getByRole('button', { name: /Submit/i });
+      const stateDisplay = page.locator('pre').filter({ hasText: 'value' });
+
+      // Fill and submit valid form
+      await emailInput.fill('test@example.com');
+      await submitButton.click();
+
+      // Wait for form state to update
+      await page.waitForTimeout(100);
+
+      // State should reflect valid form completion
+      const completedState = await stateDisplay.textContent();
+      expect(completedState).toContain('"email": "test@example.com"');
+      expect(completedState).toContain('"status": "VALID"');
+      expect(completedState).toContain('"valid": true');
+      expect(completedState).toContain('"dirty": true');
+    });
+
+    await test.step('Should display valid JSON format', async () => {
+      const stateDisplay = page.locator('pre').filter({ hasText: 'value' });
+      const jsonText = await stateDisplay.textContent();
+
+      // Should be parseable as valid JSON
+      expect(jsonText).toBeTruthy();
+      if (!jsonText) return;
+
+      expect(() => JSON.parse(jsonText)).not.toThrow();
+
+      const parsedState = JSON.parse(jsonText);
+      expect(parsedState).toHaveProperty('value');
+      expect(parsedState).toHaveProperty('errors');
+      expect(parsedState).toHaveProperty('status');
+      expect(parsedState).toHaveProperty('valid');
+      expect(parsedState).toHaveProperty('invalid');
     });
   });
 });
