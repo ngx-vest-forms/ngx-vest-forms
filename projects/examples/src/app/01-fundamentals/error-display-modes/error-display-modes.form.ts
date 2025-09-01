@@ -13,6 +13,7 @@ import {
   NgxFormErrorDisplayDirective,
   ngxVestForms,
 } from 'ngx-vest-forms/core';
+import { createFocusFirstInvalidField } from '../../ui';
 import {
   ProductFeedbackModel,
   productFeedbackValidationSuite,
@@ -437,6 +438,9 @@ import {
   `,
 })
 export class ErrorDisplayModesFormComponent {
+  /** Focus utility for better testability and Angular best practices */
+  private readonly focusFirstInvalidField = createFocusFirstInvalidField();
+
   /** The error display mode to use for form validation */
   readonly errorDisplayMode = input.required<NgxErrorDisplayMode>();
 
@@ -471,7 +475,7 @@ export class ErrorDisplayModesFormComponent {
     // WCAG 2.2 Compliant: Handle validation in code, not UI
     if (!formState.valid) {
       this.showSubmissionError.set(true);
-      this.focusFirstInvalidField();
+      this.focusFirstInvalidField(formState.errors);
       return;
     }
 
@@ -495,19 +499,5 @@ export class ErrorDisplayModesFormComponent {
       // In a real app, this would redirect or show success
       alert('Thank you for your feedback! 🎉');
     }, 1500);
-  }
-
-  private focusFirstInvalidField(): void {
-    // Find the first field with errors and focus it
-    const formState = this.vestFormRef().formState();
-    const errors = formState.errors || {};
-    const firstErrorField = Object.keys(errors)[0];
-
-    if (firstErrorField) {
-      const element = document.querySelector<HTMLElement>(
-        `#${firstErrorField}`,
-      );
-      element?.focus();
-    }
   }
 }

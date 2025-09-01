@@ -33,6 +33,14 @@ export const appRoutes: Routes = [
           ).then((m) => m.ErrorDisplayModesPageComponent),
         title: 'Error Display Modes - Interactive Demo',
       },
+      {
+        path: 'form-state-demo',
+        loadComponent: () =>
+          import('./01-fundamentals/form-state-demo/form-state-demo.page').then(
+            (m) => m.FormStateDemoPageComponent,
+          ),
+        title: 'Form State Demo - Real-time Monitoring',
+      },
     ],
   },
 
