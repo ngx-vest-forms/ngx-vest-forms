@@ -75,9 +75,32 @@ export class MinimalForm {
   protected readonly model = signal<MinimalFormModel>({ email: '' });
   protected readonly vestFormRef =
     viewChild.required<NgxFormDirective>('vestForm');
+
   /**
-   * Expose the form state
-   * This allows the parent component to access the current form state.
+   * Reactive form state accessor for parent components
+   *
+   * Exposes the current form validation state including:
+   * - `valid`: boolean - true when all validations pass
+   * - `pending`: boolean - true during async validation
+   * - `errors`: Record<string, string[]> - field-level validation errors
+   * - `dirty`: boolean - true when user has interacted with form
+   * - `submitted`: boolean - true after form submission attempt
+   *
+   * @example
+   * ```typescript
+   * // In parent component template:
+   * <ngx-minimal-form #form />
+   * <div>Form is valid: {{ form.formState().valid }}</div>
+   *
+   * // In parent component class:
+   * formComponent = viewChild.required<MinimalForm>('form');
+   * isFormReady = computed(() =>
+   *   this.formComponent().formState().valid &&
+   *   !this.formComponent().formState().pending
+   * );
+   * ```
+   *
+   * @returns Signal containing the current NgxFormState
    */
   readonly formState = computed(() => this.vestFormRef().formState());
 

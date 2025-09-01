@@ -78,7 +78,7 @@ type LearningCardConfig = {
             </h3>
             <ul class="space-y-1 text-xs text-gray-700 dark:text-gray-300">
               @for (item of section.items; track item) {
-                <li>{{ item }}</li>
+                <li [innerHTML]="item"></li>
               }
             </ul>
           </div>

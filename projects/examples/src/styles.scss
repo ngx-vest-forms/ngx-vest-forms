@@ -270,11 +270,12 @@
 
   /* Inline code styling */
   .code-inline {
-    @apply rounded bg-gray-100 px-1.5 py-0.5 font-mono text-sm;
-    color: var(--color-text);
+    @apply rounded bg-indigo-50 px-1.5 py-0.5 font-mono text-sm;
+    color: var(--color-brand-start);
   }
   .dark .code-inline {
-    @apply bg-gray-800;
+    @apply bg-indigo-900/20;
+    color: #a5b4fc; /* lighter indigo for dark mode */
   }
 }
 
