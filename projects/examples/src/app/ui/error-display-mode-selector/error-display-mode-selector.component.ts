@@ -79,23 +79,31 @@ export const ERROR_DISPLAY_MODES: ErrorDisplayModeConfig[] = [
       class="mb-8 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 p-6 dark:from-blue-900/20 dark:to-indigo-900/20"
     >
       <div class="mb-4">
-        <label
-          for="errorDisplayMode"
-          class="text-lg font-semibold text-gray-900 dark:text-gray-100"
-        >
-          🎛️ Error Display Mode
-        </label>
-        <select
-          id="errorDisplayMode"
-          name="errorDisplayMode"
-          [value]="selectedMode()"
-          (change)="onModeChange($event)"
-          class="mt-2 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
-        >
-          @for (modeConfig of errorDisplayModes; track modeConfig.mode) {
-            <option [value]="modeConfig.mode">{{ modeConfig.label }}</option>
-          }
-        </select>
+        <fieldset>
+          <legend
+            class="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100"
+          >
+            🎛️ Error Display Mode
+          </legend>
+          <div class="flex flex-wrap gap-4">
+            @for (modeConfig of errorDisplayModes; track modeConfig.mode) {
+              <label class="flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  name="errorDisplayMode"
+                  [value]="modeConfig.mode"
+                  [checked]="selectedMode() === modeConfig.mode"
+                  (change)="onModeChange($event)"
+                  class="form-radio h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800"
+                />
+                <span
+                  class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >{{ modeConfig.label }}</span
+                >
+              </label>
+            }
+          </div>
+        </fieldset>
       </div>
 
       <div class="rounded-lg bg-white/70 p-4 dark:bg-gray-800/70">
@@ -146,8 +154,8 @@ export class ErrorDisplayModeSelectorComponent {
     this.errorDisplayModes[2];
 
   protected onModeChange(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    const newMode = select.value as NgxErrorDisplayMode;
+    const radio = event.target as HTMLInputElement;
+    const newMode = radio.value as NgxErrorDisplayMode;
     this.modeChange.emit(newMode);
   }
 }

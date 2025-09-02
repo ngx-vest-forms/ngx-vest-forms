@@ -78,6 +78,17 @@ export class AppComponent implements AfterViewInit {
         },
       ],
     },
+    {
+      id: 'control-wrapper',
+      label: 'Control Wrapper',
+      pattern: /^\/control-wrapper\//,
+      links: [
+        {
+          path: '/control-wrapper/control-wrapper-intro',
+          label: 'Control Wrapper Introduction',
+        },
+      ],
+    },
     // TODO: Restore these categories as examples are moved back from _backup/
     // {
     //   id: 'core',
@@ -85,14 +96,6 @@ export class AppComponent implements AfterViewInit {
     //   pattern: /^\/core\//,
     //   links: [
     //     // Will be restored from _backup/02-core-features/
-    //   ],
-    // },
-    // {
-    //   id: 'wrapper',
-    //   label: 'Control Wrapper',
-    //   pattern: /^\/wrapper\//,
-    //   links: [
-    //     // Will be restored from _backup/03-control-wrapper/
     //   ],
     // },
     // {

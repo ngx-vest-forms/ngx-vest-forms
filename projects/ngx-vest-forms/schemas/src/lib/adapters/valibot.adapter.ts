@@ -39,9 +39,9 @@ export const valibotAdapter: SchemaAdapter = {
                 };
                 const pathArray: string[] = Array.isArray(iss.path)
                   ? (iss.path as unknown[]).filter((p) => p != null).map(String)
-                  : typeof iss.path === 'string'
+                  : (typeof iss.path === 'string'
                     ? [String(iss.path)]
-                    : [];
+                    : []);
                 const message = String(iss.message ?? 'Invalid value');
                 const code = (iss.issue ?? iss.type) as string | undefined;
                 return { path: pathArray, message, code };

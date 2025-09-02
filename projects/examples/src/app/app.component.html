@@ -17,10 +17,10 @@
         </a>
       </div>
 
-      <!-- Navigation Section - Centered above sidebar (w-64) -->
-      <div class="flex w-64 items-center justify-center">
+      <!-- Navigation Section - Centered above sidebar with proper width -->
+      <div class="flex max-w-xs flex-1 items-center justify-center">
         <nav
-          class="hidden items-center gap-4 text-sm md:flex"
+          class="hidden items-center gap-6 text-sm md:flex"
           aria-label="Primary navigation"
         >
           <a
@@ -31,6 +31,15 @@
             [class.active]="rlaFund.isActive"
           >
             Fundamentals
+          </a>
+          <a
+            [routerLink]="'/control-wrapper'"
+            #rlaWrapper="routerLinkActive"
+            routerLinkActive="active"
+            class="nav-grad-link"
+            [class.active]="rlaWrapper.isActive"
+          >
+            Control Wrapper
           </a>
         </nav>
       </div>

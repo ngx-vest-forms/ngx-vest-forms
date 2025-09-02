@@ -3,7 +3,7 @@ import { Type } from '@angular/core';
 /**
  * Standard interface for example form components
  */
-export type NgxFormExampleComponent<T = any> = {
+export type NgxFormExampleComponent<T = unknown> = {
   formState(): {
     valid: boolean;
     pending: boolean;
@@ -16,7 +16,7 @@ export type NgxFormExampleComponent<T = any> = {
 /**
  * Standard interface for example page components
  */
-export type NgxFormExamplePage<T = any> = {
+export type NgxFormExamplePage<T = unknown> = {
   formComponent?: NgxFormExampleComponent<T>;
 };
 
@@ -49,12 +49,12 @@ export type ExampleCardConfig = {
 /**
  * Base configuration for form examples
  */
-export type FormExampleConfig<T = any> = {
+export type FormExampleConfig<T = unknown> = {
   name: string;
   selector: string;
   formComponent: Type<NgxFormExampleComponent<T>>;
   pageComponent: Type<NgxFormExamplePage<T>>;
   model: Type<T>;
-  validationSuite: any;
+  validationSuite: unknown;
   cards: ExampleCardConfig;
 };

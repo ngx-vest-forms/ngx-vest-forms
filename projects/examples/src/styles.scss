@@ -277,6 +277,197 @@
     @apply bg-indigo-900/20;
     color: #a5b4fc; /* lighter indigo for dark mode */
   }
+
+  /* Code block syntax highlighting */
+  .code-block {
+    border-radius: 0.5rem;
+    background-color: #f9fafb;
+    padding: 1rem;
+    font-family:
+      ui-monospace, SFMono-Regular, 'SF Mono', Monaco, Inconsolata,
+      'Roboto Mono', Consolas, 'Courier New', monospace;
+    font-size: 0.875rem;
+    line-height: 1.625;
+    border: 1px solid var(--color-gray-200);
+    color: var(--color-gray-800);
+    white-space: pre;
+    overflow-x: auto;
+
+    /* Syntax highlighting colors */
+    .keyword {
+      color: #d73a49; /* Red for keywords */
+      font-weight: 600;
+    }
+
+    .string {
+      color: #032f62; /* Dark blue for strings */
+    }
+
+    .comment {
+      color: #6a737d; /* Gray for comments */
+      font-style: italic;
+    }
+
+    .decorator {
+      color: #e36209; /* Orange for Angular decorators */
+      font-weight: 600;
+    }
+
+    .template {
+      color: #032f62; /* Dark blue for template literals */
+      background: rgba(255, 255, 0, 0.1);
+    }
+
+    .tag {
+      color: #22863a; /* Green for HTML tags */
+      font-weight: 600;
+    }
+
+    .attr {
+      color: #6f42c1; /* Purple for attributes */
+    }
+
+    .attr-name {
+      color: #005cc5; /* Blue for attribute names */
+    }
+
+    .attr-value {
+      color: #032f62; /* Dark blue for attribute values */
+    }
+
+    .directive {
+      color: #e36209; /* Orange for Angular directives */
+      font-weight: 600;
+    }
+
+    .event {
+      color: #d73a49; /* Red for Angular events */
+      font-weight: 600;
+    }
+
+    .number {
+      color: #005cc5; /* Blue for numbers */
+    }
+
+    .function {
+      color: #6f42c1; /* Purple for function names */
+      font-weight: 600;
+    }
+
+    .interpolation {
+      color: #e36209; /* Orange for Angular interpolation */
+      font-weight: 600;
+    }
+
+    .control-flow {
+      color: #d73a49; /* Red for Angular control flow */
+      font-weight: 700;
+    }
+  }
+
+  /* Dark mode code block styling */
+  .dark .code-block {
+    @apply bg-gray-800;
+    border-color: var(--color-gray-700);
+    color: var(--color-gray-200);
+
+    .keyword {
+      color: #ff7b72; /* Light red */
+    }
+
+    .string {
+      color: #a5d6ff; /* Light blue */
+    }
+
+    .comment {
+      color: #8b949e; /* Light gray */
+    }
+
+    .decorator {
+      color: #ffa657; /* Light orange */
+    }
+
+    .template {
+      color: #a5d6ff; /* Light blue */
+      background: rgba(255, 255, 0, 0.15);
+    }
+
+    .tag {
+      color: #7ee787; /* Light green */
+    }
+
+    .attr {
+      color: #d2a8ff; /* Light purple */
+    }
+
+    .attr-name {
+      color: #79c0ff; /* Light blue */
+    }
+
+    .attr-value {
+      color: #a5d6ff; /* Light blue */
+    }
+
+    .directive {
+      color: #ffa657; /* Light orange */
+    }
+
+    .event {
+      color: #ff7b72; /* Light red */
+    }
+
+    .number {
+      color: #79c0ff; /* Light blue for numbers */
+    }
+
+    .function {
+      color: #d2a8ff; /* Light purple for function names */
+    }
+
+    .interpolation {
+      color: #ffa657; /* Light orange for Angular interpolation */
+    }
+
+    .control-flow {
+      color: #ff7b72; /* Light red for Angular control flow */
+      font-weight: 700;
+    }
+  }
+
+  /* Shiki Code Block Styling */
+  .shiki-code-block {
+    border-radius: 0.5rem;
+    background-color: #f9fafb;
+    padding: 1rem;
+    font-family:
+      ui-monospace, SFMono-Regular, 'SF Mono', Monaco, Inconsolata,
+      'Roboto Mono', Consolas, 'Courier New', monospace;
+    font-size: 0.875rem;
+    line-height: 1.625;
+    border: 1px solid var(--color-gray-200);
+    white-space: pre;
+    overflow-x: auto;
+
+    /* Reset margins for embedded content */
+    margin: 0;
+
+    /* Ensure code is visible */
+    & code {
+      background: transparent !important;
+      color: inherit !important;
+      padding: 0 !important;
+      border-radius: 0 !important;
+    }
+
+    /* Shiki generates span elements with inline styles for syntax highlighting */
+    /* We let Shiki handle the colors for better accuracy */
+  }
+
+  /* Dark mode Shiki styling */
+  .dark .shiki-code-block {
+    background-color: #1f2937;
+    border-color: var(--color-gray-700);
+  }
 }
 
 @layer utilities {

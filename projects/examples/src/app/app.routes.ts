@@ -43,6 +43,20 @@ export const appRoutes: Routes = [
       },
     ],
   },
+  {
+    path: 'control-wrapper',
+    children: [
+      { path: '', redirectTo: 'control-wrapper-intro', pathMatch: 'full' },
+      {
+        path: 'control-wrapper-intro',
+        loadComponent: () =>
+          import(
+            './03-control-wrapper/control-wrapper-intro/control-wrapper-intro.page'
+          ).then((m) => m.ControlWrapperIntroPageComponent),
+        title: 'Control Wrapper Introduction - Bridge to Automation',
+      },
+    ],
+  },
 
   // Fallback routes
   { path: '**', redirectTo: 'fundamentals/minimal-form' },
