@@ -6,7 +6,61 @@
 export const CONTROL_WRAPPER_INTRO_CONTENT = {
   demonstrated: {
     icon: '🎯',
-    title: 'NgxControlWrapper Introduction',
+    title: 'Control Wrapper Automation',
+    sections: [
+      {
+        title: 'ngx-vest-forms Features',
+        items: [
+          '• <strong>Form directive:</strong> <code class="code-inline">ngxVestForm</code>',
+          '• <strong>Wrapper component:</strong> <code class="code-inline">&lt;ngx-control-wrapper&gt;</code>',
+          '• <strong>Data binding:</strong> <code class="code-inline">[(formValue)]</code>',
+          '• <strong>Validation suite:</strong> <code class="code-inline">[vestSuite]</code>',
+          '• <strong>Auto error display:</strong> Built-in error handling and timing',
+        ],
+      },
+      {
+        title: 'Manual vs Wrapper Patterns',
+        items: [
+          '• <strong>Manual approach:</strong> <code class="code-inline">ngxFormErrorDisplay</code> + conditional rendering',
+          '• <strong>Wrapper approach:</strong> Zero-config <code class="code-inline">&lt;ngx-control-wrapper&gt;</code>',
+          '• <strong>Side-by-side demo:</strong> Same form, different implementation',
+          '• <strong>Code comparison:</strong> ~70% template reduction with wrapper',
+          '• <strong>Consistent behavior:</strong> Same validation, different UX automation',
+        ],
+      },
+    ],
+  },
+  learning: {
+    title: 'Learning Journey & Next Steps',
+    sections: [
+      {
+        title: 'Implementation Patterns',
+        items: [
+          '• <strong>Manual pattern:</strong> <code class="code-inline">ngxFormErrorDisplay</code> with conditional rendering',
+          '• <strong>Wrapper pattern:</strong> <code class="code-inline">&lt;ngx-control-wrapper&gt;</code> automation',
+          '• <strong>Template reduction:</strong> ~70% less code for error handling',
+          '• <strong>Consistent timing:</strong> Automatic error display mode following',
+        ],
+      },
+      {
+        title: 'Developer Experience Benefits',
+        items: [
+          '• <strong>Zero configuration:</strong> Works out of the box with any form control',
+          '• <strong>Automatic detection:</strong> Finds controls and validation state automatically',
+          '• <strong>Built-in accessibility:</strong> WCAG 2.2 compliance without extra effort',
+          '• <strong>Team standardization:</strong> Consistent patterns across projects',
+        ],
+      },
+    ],
+    nextStep: {
+      text: 'Ready to explore more advanced patterns?',
+      link: '/advanced-forms',
+      linkText: 'Advanced Forms →',
+    },
+  },
+  keyBenefits: {
+    icon: '💡',
+    title: 'Key Benefits & Best Practices',
     sections: [
       {
         title: 'Automated Error Handling',
@@ -29,37 +83,6 @@ export const CONTROL_WRAPPER_INTRO_CONTENT = {
         ],
       },
     ],
-  },
-  learning: {
-    icon: '📚',
-    title: 'Learning Objectives',
-    sections: [
-      {
-        title: 'NgxControlWrapper Mastery',
-        items: [
-          '• <strong>Wrapper fundamentals:</strong> How NgxControlWrapper automates error display',
-          '• <strong>Manual vs. automated:</strong> Compare manual error handling with wrapper approach',
-          '• <strong>Configuration understanding:</strong> Error display modes and timing options',
-          '• <strong>Accessibility benefits:</strong> Built-in WCAG compliance and screen reader support',
-          '• <strong>Integration patterns:</strong> Best practices for wrapper adoption in existing projects',
-        ],
-      },
-      {
-        title: 'Practical Applications',
-        items: [
-          '• <strong>Rapid prototyping:</strong> Quick form development with consistent error display',
-          '• <strong>Production readiness:</strong> Enterprise-grade form validation patterns',
-          '• <strong>Team collaboration:</strong> Standardized error handling across developers',
-          '• <strong>Design system integration:</strong> Consistent styling and behavior patterns',
-          '• <strong>Migration strategy:</strong> Moving from manual to automated error handling',
-        ],
-      },
-    ],
-    nextStep: {
-      text: 'Ready to explore more advanced patterns? Try',
-      link: '/async-validation-demo',
-      linkText: 'Async Validation Demo →',
-    },
   },
   implementation: {
     icon: '🛠️',
