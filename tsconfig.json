@@ -15,11 +15,11 @@
     "paths": {
       "ngx-vest-forms": [
         "dist/ngx-vest-forms"
-      ],
+      ]
     },
     "declaration": false,
     "experimentalDecorators": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "importHelpers": true,
     "target": "ES2022",
     "module": "ES2022",
