@@ -6,8 +6,7 @@ import { NgxMaskDirective } from 'ngx-mask';
 
 @Component({
   selector: 'sc-business-hour',
-  standalone: true,
-  imports: [CommonModule, vestForms, KeyValuePipe, NgxMaskDirective],
+  imports: [CommonModule, vestForms, NgxMaskDirective],
   templateUrl: './business-hour.component.html',
   styleUrls: ['./business-hour.component.scss'],
   viewProviders: [vestFormsViewProviders],

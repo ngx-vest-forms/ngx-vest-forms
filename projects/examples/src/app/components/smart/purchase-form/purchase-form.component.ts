@@ -17,7 +17,6 @@ import { debounceTime, filter, switchMap } from 'rxjs';
 
 @Component({
   selector: 'sc-purchase-form',
-  standalone: true,
   imports: [
     JsonPipe,
     vestForms,

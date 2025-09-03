@@ -12,7 +12,7 @@ import {
 import { JsonPipe } from '@angular/common';
 
 @Component({
-  template: `
+    template: `
     <form
       class="p-4"
       scVestForm
@@ -111,8 +111,7 @@ import { JsonPipe } from '@angular/common';
       </fieldset>
     </form>
   `,
-  imports: [vestForms, JsonPipe],
-  standalone: true,
+    imports: [vestForms, JsonPipe]
 })
 export class FormDirectiveDemoComponent {
   protected readonly formValue = signal<FormModel>({});
