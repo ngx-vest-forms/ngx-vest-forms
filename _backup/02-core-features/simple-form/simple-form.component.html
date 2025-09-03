@@ -1,0 +1,62 @@
+<div class="info-box">
+  <h4 class="info-box-title">ℹ️ Simple Form with v2 Patterns</h4>
+  <p class="info-box-text">
+    This form demonstrates the updated v2 patterns for ngx-vest-forms: using
+    <code>[ngModel]</code> for one-way binding,
+    <code>ngxVestForm</code> directive, and proper accessibility patterns. The
+    <code>[(formValue)]</code> binding handles the two-way data synchronization
+    automatically.
+  </p>
+</div>
+<form
+  ngxVestForm
+  #vestForm="ngxVestForm"
+  [vestSuite]="suite"
+  [(formValue)]="formValue"
+  (ngSubmit)="save()"
+  autocomplete="off"
+  class="nv-form"
+>
+  <div class="nv-field">
+    <label for="email" class="nv-label">Email Address *</label>
+    <input
+      id="email"
+      name="email"
+      type="email"
+      [ngModel]="formValue().email"
+      autocomplete="email"
+      class="nv-input"
+      placeholder="Enter your email address"
+      required
+      aria-describedby="email-help email-errors"
+      [attr.aria-invalid]="
+        (vestForm.formState().errors['email']?.length || 0) > 0
+          ? 'true'
+          : 'false'
+      "
+    />
+    <span id="email-help" class="nv-hint">
+      Please enter a valid email address.
+    </span>
+
+    @if (vestForm.formState().errors['email']) {
+      <div id="email-errors" class="nv-errors" role="alert" aria-live="polite">
+        @for (msg of vestForm.formState().errors['email']; track msg) {
+          <div class="nv-error">{{ msg }}</div>
+        }
+      </div>
+    }
+  </div>
+
+  <button
+    type="submit"
+    class="nv-btn"
+    [disabled]="!vestForm.formState().valid || vestForm.formState().pending"
+  >
+    @if (vestForm.formState().pending) {
+      Validating...
+    } @else {
+      Submit Form
+    }
+  </button>
+</form>

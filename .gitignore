@@ -9,7 +9,7 @@ Thumbs.db
 *.old
 *.bak
 **/backup-old-examples/
-**/*backup*/
+# **/*backup*/
 
 # Compiled output
 **/dist
