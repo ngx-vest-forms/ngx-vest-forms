@@ -89,6 +89,17 @@ export class AppComponent implements AfterViewInit {
         },
       ],
     },
+    {
+      id: 'schema-integration',
+      label: 'Schema Integration',
+      pattern: /^\/schema-integration\//,
+      links: [
+        {
+          path: '/schema-integration/schema-comparison',
+          label: 'Schema Comparison',
+        },
+      ],
+    },
     // TODO: Restore these categories as examples are moved back from _backup/
     // {
     //   id: 'core',
@@ -96,14 +107,6 @@ export class AppComponent implements AfterViewInit {
     //   pattern: /^\/core\//,
     //   links: [
     //     // Will be restored from _backup/02-core-features/
-    //   ],
-    // },
-    // {
-    //   id: 'schemas',
-    //   label: 'Schema Integration',
-    //   pattern: /^\/schemas\//,
-    //   links: [
-    //     // Will be restored from _backup/04-schema-integration/
     //   ],
     // },
     // {

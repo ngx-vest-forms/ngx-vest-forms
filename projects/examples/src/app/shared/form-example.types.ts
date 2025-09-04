@@ -47,6 +47,34 @@ export type ExampleCardConfig = {
 };
 
 /**
+ * Content structure for educational examples
+ */
+export type ExampleContent = {
+  title: string;
+  description: string;
+  demonstrated: {
+    icon: string;
+    title: string;
+    sections: {
+      title: string;
+      items: string[];
+    }[];
+  };
+  learning: {
+    title: string;
+    sections: {
+      title: string;
+      items: string[];
+    }[];
+    nextStep: {
+      text: string;
+      route: string;
+      label: string;
+    };
+  };
+};
+
+/**
  * Base configuration for form examples
  */
 export type FormExampleConfig<T = unknown> = {

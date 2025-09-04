@@ -17,10 +17,10 @@
         </a>
       </div>
 
-      <!-- Navigation Section - Centered above sidebar with proper width -->
-      <div class="flex max-w-xs flex-1 items-center justify-center">
+      <!-- Navigation Section - Aligned with main content -->
+      <div class="flex flex-1 items-center justify-start pl-6">
         <nav
-          class="hidden items-center gap-6 text-sm md:flex"
+          class="hidden items-center gap-8 text-sm md:flex"
           aria-label="Primary navigation"
         >
           <a
@@ -40,6 +40,15 @@
             [class.active]="rlaWrapper.isActive"
           >
             Control Wrapper
+          </a>
+          <a
+            [routerLink]="'/schema-integration'"
+            #rlaSchema="routerLinkActive"
+            routerLinkActive="active"
+            class="nav-grad-link"
+            [class.active]="rlaSchema.isActive"
+          >
+            Schema Integration
           </a>
         </nav>
       </div>

@@ -57,6 +57,20 @@ export const appRoutes: Routes = [
       },
     ],
   },
+  {
+    path: 'schema-integration',
+    children: [
+      { path: '', redirectTo: 'schema-comparison', pathMatch: 'full' },
+      {
+        path: 'schema-comparison',
+        loadComponent: () =>
+          import(
+            './04-schema-integration/schema-comparison/schema-comparison.page'
+          ).then((m) => m.SchemaComparisonPageComponent),
+        title: 'Schema Comparison - Zod, Valibot, ArkType & Custom',
+      },
+    ],
+  },
 
   // Fallback routes
   { path: '**', redirectTo: 'fundamentals/minimal-form' },
