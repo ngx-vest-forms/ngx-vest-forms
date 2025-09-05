@@ -101,7 +101,10 @@
     "setupFilesAfterEnv": [
       "./projects/ngx-vest-forms/src/setup-jest.ts"
     ],
-    "globalSetup": "jest-preset-angular/global-setup"
+    "globalSetup": "jest-preset-angular/global-setup",
+    "transformIgnorePatterns": [
+      "node_modules/(?!(vest|n4s|vest-utils|vestjs-runtime|context|@angular|@storybook)/)"
+    ]
   },
   "publishConfig": {
     "access": "public"
