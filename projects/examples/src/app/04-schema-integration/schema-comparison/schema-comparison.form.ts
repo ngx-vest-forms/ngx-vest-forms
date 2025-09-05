@@ -1,6 +1,5 @@
 import { TitleCasePipe } from '@angular/common';
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   input,
@@ -8,10 +7,10 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
-import { NgxFormDirective, ngxVestForms } from 'ngx-vest-forms/core';
+import { ngxVestForms } from 'ngx-vest-forms/core';
 import { NgxVestFormWithSchemaDirective } from 'ngx-vest-forms/schemas';
+import { ShikiHighlightDirective, type SupportedLanguage } from '../../ui';
 
 import { userProfileValidations } from './schema-comparison.validations';
 import { arktypeUserProfileSchema } from './schemas/user.arktype.schema';
@@ -103,17 +102,12 @@ export const customUserProfileSchema =
 
 @Component({
   selector: 'ngx-schema-comparison-form',
-  // Standalone is implicit per repo instructions
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    FormsModule,
-    // Core + schema directive
+    TitleCasePipe,
+    NgxControlWrapper,
     ngxVestForms,
     NgxVestFormWithSchemaDirective,
-    // UI helpers
-    NgxControlWrapper,
-    // Pipes
-    TitleCasePipe,
+    ShikiHighlightDirective,
   ],
   template: `
     <form
@@ -188,8 +182,11 @@ export const customUserProfileSchema =
           </div>
           <div class="overflow-x-auto rounded-md bg-gray-900 p-4 text-xs">
             <pre
-              class="text-gray-100"
-            ><code class="language-typescript">{{ modelCode() }}</code></pre>
+              ngxShikiHighlight
+              [language]="schemaLanguage()"
+              class="overflow-hidden rounded-lg"
+              >{{ modelCode() }}</pre
+            >
           </div>
         </div>
       </div>
@@ -321,7 +318,7 @@ export class SchemaComparisonFormComponent {
   }>();
   formReset = output();
 
-  vestForm = viewChild.required<NgxFormDirective>('vestForm');
+  vestForm = viewChild.required<NgxVestFormWithSchemaDirective>('vestForm');
 
   readonly schemaTypes: SchemaType[] = ['zod', 'valibot', 'arktype', 'custom'];
   private readonly _selectedSchema = signal<SchemaType>('zod');
@@ -348,6 +345,12 @@ export class SchemaComparisonFormComponent {
 
   // Model code for display in the currently showcasing section
   modelCode = computed(() => MODEL_CODE[this._selectedSchema()]);
+
+  // Dynamic language mapping for better syntax highlighting
+  schemaLanguage = computed((): SupportedLanguage => {
+    // All schema types are TypeScript-based, so use 'typescript' for best highlighting
+    return 'typescript';
+  });
 
   // Current schema information for display
   currentSchemaInfo = computed(() => {
@@ -427,6 +430,9 @@ export class SchemaComparisonFormComponent {
       schemaType: this._selectedSchema(),
     });
   }
+
+  // Expose the vest form for parent component access (as computed to ensure reactive dependency)
+  readonly formDirective = computed(() => this.vestForm());
   // TEMPORARILY DISABLED - Hydration effect might be causing infinite loop
   // TODO: Fix hydration logic to prevent infinite loops
   // private readonly _hydrate = effect(() => {

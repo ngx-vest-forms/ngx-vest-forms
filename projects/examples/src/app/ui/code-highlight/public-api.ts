@@ -1,2 +1,6 @@
 export { ShikiHighlightDirective } from './shiki-highlight.directive';
-export { ShikiHighlightService } from './shiki-highlight.service';
+export {
+  ShikiHighlightService,
+  type SupportedLanguage,
+  type SupportedTheme,
+} from './shiki-highlight.service';

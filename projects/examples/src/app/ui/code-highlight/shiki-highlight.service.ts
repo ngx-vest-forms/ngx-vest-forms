@@ -1,17 +1,30 @@
 import { Injectable, signal } from '@angular/core';
-import { BundledLanguage, BundledTheme, codeToHtml } from 'shiki';
+
+// Import from shiki v1.x using the shorthand approach for better compatibility
+import { codeToHtml } from 'shiki';
 
 export type SupportedLanguage =
   | 'typescript'
   | 'html'
   | 'css'
   | 'json'
-  | 'javascript';
+  | 'javascript'
+  | 'angular-html'
+  | 'angular-ts'
+  | 'text'
+  | 'markdown'
+  | 'zod'
+  | 'valibot'
+  | 'arktype';
+
 export type SupportedTheme =
-  | 'vitesse-dark'
-  | 'vitesse-light'
   | 'github-dark'
-  | 'github-light';
+  | 'github-light'
+  | 'min-light'
+  | 'nord'
+  | 'tokyo-night'
+  | 'vitesse-light'
+  | 'vitesse-dark';
 
 @Injectable({
   providedIn: 'root',
@@ -33,41 +46,72 @@ export class ShikiHighlightService {
   }
 
   /**
-   * Highlight code using Shiki
+   * Highlight code using Shiki with Angular language support
    *
    * @param code - The code to highlight
-   * @param language - Programming language
-   * @param theme - Theme to use (defaults to vitesse-dark)
+   * @param language - Programming language (including angular-html, angular-ts)
+   * @param theme - Theme to use (defaults to tokyo-night)
    * @returns Promise with highlighted HTML
    */
   async highlightCode(
     code: string,
     language: SupportedLanguage,
-    theme: SupportedTheme = 'vitesse-dark',
+    theme: SupportedTheme = 'tokyo-night',
   ): Promise<string> {
     await this.loadingPromise;
 
     try {
+      // Map angular languages to ensure proper highlighting
+      const mappedLanguage = this.mapLanguage(language);
+
       return await codeToHtml(code.trim(), {
-        lang: language as BundledLanguage,
-        theme: theme as BundledTheme,
+        lang: mappedLanguage,
+        theme: theme,
         transformers: [
           {
             // Remove Shiki's default styling to use our Tailwind classes
-            pre(node) {
+            pre(node: { properties?: Record<string, unknown> }) {
               // Keep the pre element but remove inline styles
-              delete node.properties['style'];
-              // Add our custom classes
-              node.properties['class'] = 'shiki-code-block';
+              if (node.properties) {
+                delete node.properties['style'];
+                // Add our custom classes for proper styling
+                node.properties['class'] = `shiki ${theme}`;
+              }
             },
           },
         ],
       });
     } catch (error) {
-      console.warn('Shiki highlighting failed:', error);
-      // Fallback to escaped code
-      return `<pre class="shiki-code-block"><code>${this.escapeHtml(code)}</code></pre>`;
+      console.warn(
+        `Shiki highlighting failed for language "${language}":`,
+        error,
+      );
+      // Fallback to escaped code with proper structure
+      return `<pre class="shiki ${theme}"><code>${this.escapeHtml(code)}</code></pre>`;
     }
+  }
+
+  /**
+   * Map custom language names to Shiki bundled languages
+   */
+  private mapLanguage(language: SupportedLanguage): string {
+    const languageMap: Record<string, string> = {
+      'angular-html': 'angular-html',
+      'angular-ts': 'angular-ts',
+      typescript: 'typescript',
+      javascript: 'javascript',
+      html: 'html',
+      css: 'css',
+      json: 'json',
+      text: 'text',
+      markdown: 'markdown',
+      // Schema languages map to TypeScript since they're TS-based
+      zod: 'typescript',
+      valibot: 'typescript',
+      arktype: 'typescript',
+    };
+
+    return languageMap[language] || 'text';
   }
 
   private async initializeShiki(): Promise<void> {
@@ -75,7 +119,7 @@ export class ShikiHighlightService {
       // Pre-load a small snippet to initialize Shiki
       await codeToHtml('const x = 1;', {
         lang: 'typescript',
-        theme: 'vitesse-dark',
+        theme: 'tokyo-night',
       });
       this.isReady.set(true);
     } catch (error) {

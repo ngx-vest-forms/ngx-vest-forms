@@ -1,11 +1,11 @@
 import {
   Directive,
-  computed,
   effect,
   inject,
   input,
-  isDevMode,
+  linkedSignal,
   model,
+  untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
@@ -33,6 +33,40 @@ import {
 } from '../utils/form-utils';
 import { NgxVestSuite } from '../utils/validation-suite';
 import { NgxValidationOptions } from './validation-options';
+
+/**
+ * Fast deep equality check for form values.
+ * Optimized for common form data structures.
+ */
+function deepEqual<T>(a: T, b: T): boolean {
+  if (a === b) return true;
+  if (a == null || b == null) return a === b;
+  if (typeof a !== typeof b) return false;
+  if (typeof a !== 'object') return a === b;
+
+  // Handle arrays
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  if (Array.isArray(a)) {
+    const arrayA = a as unknown[];
+    const arrayB = b as unknown[];
+    if (arrayA.length !== arrayB.length) return false;
+    return arrayA.every((item, index) => deepEqual(item, arrayB[index]));
+  }
+
+  // Handle objects
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+  if (keysA.length !== keysB.length) return false;
+
+  return keysA.every(
+    (key) =>
+      keysB.includes(key) &&
+      deepEqual(
+        (a as Record<string, unknown>)[key],
+        (b as Record<string, unknown>)[key],
+      ),
+  );
+}
 
 /**
  * Shape of the minimal form state exposed by {@link NgxFormCoreDirective}.
@@ -93,10 +127,40 @@ export class NgxFormCoreDirective<TModel = Record<string, unknown>> {
 
   // Core inputs
   /**
-   * The canonical model for the form. Bind with `[(formValue)]` to get
-   * two-way sync between the Angular form controls and your component state.
+   * Public model binding surface (`[(formValue)]`). Must remain a `model()` for two-way binding.
    */
   readonly formValue = model<TModel | null>(null);
+  #lastLinkedValue: TModel | null = null;
+  #lastSyncedFormValue: TModel | null = null;
+  #lastSyncedModelValue: TModel | null = null;
+
+  /**
+   * Internal LinkedSignal that computes form values from Angular form state.
+   * This eliminates timing issues with the previous dual-effect pattern.
+   */
+  readonly #formValueSignal = linkedSignal(() => {
+    console.log(
+      '[NgxFormCoreDirective] #formValueSignal linkedSignal executed',
+    );
+    // Track form value changes
+    this.#value();
+    const raw = mergeValuesAndRawValues<TModel>(this.ngForm.form);
+    console.log('[NgxFormCoreDirective] raw value computed:', raw);
+
+    if (Object.keys(this.ngForm.form.controls).length > 0) {
+      this.#lastLinkedValue = raw;
+      console.log('[NgxFormCoreDirective] returning raw value:', raw);
+      return raw;
+    } else if (this.#lastLinkedValue !== null) {
+      console.log(
+        '[NgxFormCoreDirective] returning last linked value:',
+        this.#lastLinkedValue,
+      );
+      return this.#lastLinkedValue;
+    }
+    console.log('[NgxFormCoreDirective] returning null');
+    return null;
+  });
   /**
    * A Vest suite to execute per field. When omitted, validation is disabled
    * and the produced async validators always resolve to `null` (valid).
@@ -141,67 +205,138 @@ export class NgxFormCoreDirective<TModel = Record<string, unknown>> {
 
   // Public state
   /** Reactive snapshot of the core state for templates and consumers. */
-  readonly formState = computed<CoreFormState<TModel>>(() => ({
-    value: this.formValue() ?? null,
-    errors: this.#errors(),
-    valid: this.#status() === 'VALID',
-    // Compute dirty by comparing current raw value with the pristine baseline.
-    // This makes dirty flip to false immediately after ngForm.resetForm().
-    dirty: (() => {
-      // Create/refresh baseline lazily if missing
-      const current = mergeValuesAndRawValues<TModel>(this.ngForm.form);
-      if (this.#baseline == null) {
-        try {
-          this.#baseline = structuredClone(current);
-        } catch {
-          // Fallback shallow clone if structuredClone isn't available
-          this.#baseline = { ...(current as object) } as unknown as TModel;
+  readonly formState = linkedSignal(() => {
+    console.log('[NgxFormCoreDirective] formState linkedSignal executed');
+    // Use the internal linkedSignal for consistent form value computation
+    const valueSnapshot = this.#formValueSignal();
+    console.log(
+      '[NgxFormCoreDirective] valueSnapshot from #formValueSignal:',
+      valueSnapshot,
+    );
+
+    // Track other necessary signals to ensure reactive updates
+    const status = this.#status();
+    const errors = this.#errors();
+
+    const formState = {
+      value: valueSnapshot,
+      errors,
+      valid: status === 'VALID',
+      dirty: (() => {
+        const current = valueSnapshot;
+        if (this.#baseline == null && current) {
+          try {
+            this.#baseline = structuredClone(current);
+          } catch {
+            this.#baseline = { ...(current as object) } as unknown as TModel;
+          }
+          return false;
         }
-        return false;
-      }
-      try {
-        return JSON.stringify(current) !== JSON.stringify(this.#baseline);
-      } catch {
-        // As a last resort, fall back to Angular's dirty flag
-        return this.ngForm.form.dirty;
-      }
-    })(),
-    submitted: this.#submitted,
-  }));
+        if (!current) return false;
+        return !deepEqual(current, this.#baseline);
+      })(),
+      submitted: this.#submitted,
+    } satisfies CoreFormState<TModel>;
+
+    console.log(
+      '[NgxFormCoreDirective] final formState being returned:',
+      formState,
+    );
+    return formState;
+  });
 
   constructor() {
-    // form -> model sync
-    effect(() => {
-      // Read the value signal so this effect re-runs when controls update.
-      this.#value();
-      const raw = mergeValuesAndRawValues<TModel>(this.ngForm.form);
-      const hasControls = Object.keys(this.ngForm.form.controls).length > 0;
-      if (hasControls) {
-        this.formValue.set(raw);
-        if (isDevMode()) {
-          console.debug('[NgxFormCoreDirective] form -> model', raw);
+    // Initial validation bootstrap: trigger native async validators once.
+    let bootstrapped = false;
+    effect(
+      () => {
+        if (bootstrapped) return;
+        if (!this.vestSuite()) return;
+        const controls = this.ngForm.form.controls;
+        const keys = Object.keys(controls);
+        if (keys.length === 0) return;
+        for (const key of keys) {
+          const control = (controls as Record<string, AbstractControl>)[key];
+          // Trigger validation (including async) without marking dirty
+          control.updateValueAndValidity({ onlySelf: true, emitEvent: true });
         }
-      }
-      // When the Angular form becomes pristine (e.g., via resetForm),
-      // refresh the baseline so computed dirty becomes false immediately.
-      if (!this.ngForm.form.dirty) {
-        try {
-          this.#baseline = structuredClone(raw);
-        } catch {
-          this.#baseline = { ...(raw as object) } as unknown as TModel;
-        }
-      }
-    });
+        bootstrapped = true;
+      },
+      { allowSignalWrites: true },
+    );
 
-    // model -> form sync (emitEvent: false prevents loops)
+    // Single bidirectional synchronization effect
+    // Uses proper deep comparison and change tracking for correct sync direction
     effect(() => {
-      const model = this.formValue();
-      if (!model) return;
-      const current = this.ngForm.form.value;
-      if (JSON.stringify(current) !== JSON.stringify(model)) {
-        this.ngForm.form.patchValue(model, { emitEvent: false });
-        if (isDevMode()) {
-          console.debug('[NgxFormCoreDirective] model -> form');
+      const formValue = this.#formValueSignal();
+      const modelValue = this.formValue();
+
+      // Skip if either is null
+      if (!formValue && !modelValue) return;
+
+      // Determine what changed using proper deep comparison
+      const valuesEqual = deepEqual(formValue, modelValue);
+
+      if (!valuesEqual) {
+        // Determine sync direction by tracking what actually changed
+        const formChanged = !deepEqual(formValue, this.#lastSyncedFormValue);
+        const modelChanged = !deepEqual(modelValue, this.#lastSyncedModelValue);
+
+        if (formChanged && !modelChanged) {
+          // Form was modified by user -> form wins
+          untracked(() => {
+            this.formValue.set(formValue);
+            this.#lastSyncedFormValue = formValue;
+            this.#lastSyncedModelValue = formValue;
+          });
+        } else if (modelChanged && !formChanged) {
+          // Model was set programmatically -> model wins
+          untracked(() => {
+            if (modelValue) {
+              this.ngForm.form.patchValue(
+                modelValue as Record<string, unknown>,
+                { emitEvent: true },
+              );
+              // Ensure view updates for all controls
+              for (const key of Object.keys(this.ngForm.form.controls)) {
+                const control =
+                  this.ngForm.form.controls[
+                    key as keyof typeof this.ngForm.form.controls
+                  ];
+                if (control) {
+                  control.updateValueAndValidity({ emitEvent: false });
+                }
+              }
+            }
+            this.#lastSyncedFormValue = modelValue;
+            this.#lastSyncedModelValue = modelValue;
+          });
+        } else if (formChanged && modelChanged) {
+          // Both changed - form wins (user interaction takes priority)
+          untracked(() => {
+            this.formValue.set(formValue);
+            this.#lastSyncedFormValue = formValue;
+            this.#lastSyncedModelValue = formValue;
+          });
+        }
+      }
+
+      // Update tracking values if they're in sync
+      if (
+        valuesEqual &&
+        (this.#lastSyncedFormValue === null ||
+          this.#lastSyncedModelValue === null)
+      ) {
+        this.#lastSyncedFormValue = formValue;
+        this.#lastSyncedModelValue = modelValue;
+      }
+
+      // Update baseline when form becomes pristine
+      if (!this.ngForm.form.dirty && formValue) {
+        try {
+          this.#baseline = structuredClone(formValue);
+        } catch {
+          this.#baseline = { ...(formValue as object) } as unknown as TModel;
         }
       }
     });

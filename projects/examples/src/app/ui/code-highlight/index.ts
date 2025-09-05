@@ -1,1 +1,1 @@
-export * from './code-highlight.directive';
+export * from './public-api';

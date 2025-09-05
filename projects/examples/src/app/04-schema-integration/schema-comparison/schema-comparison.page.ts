@@ -2,6 +2,7 @@ import { JsonPipe, TitleCasePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   signal,
   viewChild,
 } from '@angular/core';
@@ -70,10 +71,10 @@ import type { SchemaType, UserProfile } from './user-profile.model';
         />
 
         <!-- Form State Display - Right after the form, before Schema Selection Guide -->
-        @if (formComponent.vestForm()) {
+        @if (formState()) {
           <div class="mt-8">
             <ngx-form-state-display
-              [formState]="formComponent.vestForm()!.formState()"
+              [formState]="formState()!"
               title="Current Form State"
             />
           </div>
@@ -151,6 +152,26 @@ export class SchemaComparisonPageComponent {
 
   // Form component reference
   formComponent = viewChild<SchemaComparisonFormComponent>('formComponent');
+
+  // Computed signal for stable form state access
+  readonly formState = computed(() => {
+    console.log(
+      '[SchemaComparisonPageComponent] formState computed executing...',
+    );
+    const form = this.formComponent();
+    console.log('[SchemaComparisonPageComponent] formComponent:', form);
+    const formDirective = form?.formDirective();
+    console.log(
+      '[SchemaComparisonPageComponent] formDirective:',
+      formDirective,
+    );
+    const formState = formDirective?.formState() ?? null;
+    console.log(
+      '[SchemaComparisonPageComponent] formState from directive:',
+      formState,
+    );
+    return formState;
+  });
 
   // Educational content configurations
   readonly demonstratedContent = SCHEMA_COMPARISON_CONTENT.demonstrated;

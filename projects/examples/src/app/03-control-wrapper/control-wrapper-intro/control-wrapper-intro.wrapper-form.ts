@@ -182,49 +182,6 @@ import {
           }
         </div>
       </div>
-
-      <!-- NgxControlWrapper Complete Guide -->
-      <details class="code-example">
-        <summary class="code-example-title">
-          🚀 NgxControlWrapper Complete Guide & Benefits
-        </summary>
-        <div class="code-example-content">
-          <p class="code-example-description">
-            NgxControlWrapper provides comprehensive form automation with zero
-            configuration. See how simple it is compared to manual error
-            handling:
-          </p>
-          <div [innerHTML]="highlightedCodeExample()"></div>
-          <div class="code-benefits">
-            <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div>
-                <h4 class="benefits-title">✨ Advanced Features:</h4>
-                <ul class="benefits-list">
-                  <li>⏳ Async validation states (spinner, aria-busy)</li>
-                  <li>⚠️ Warning system (role="status", yellow styling)</li>
-                  <li>⚙️ Error display mode configuration</li>
-                  <li>♿ Complete accessibility support</li>
-                  <li>🎨 Consistent error/warning styling</li>
-                  <li>📝 Zero boilerplate code</li>
-                </ul>
-              </div>
-              <div>
-                <h4 class="benefits-title">🎉 Automation Benefits:</h4>
-                <ul class="benefits-list">
-                  <li>✨ Automatic error/warning display</li>
-                  <li>🎨 Consistent styling and behavior</li>
-                  <li>♿ Built-in accessibility compliance</li>
-                  <li>⏳ Automatic async state management</li>
-                  <li>🔄 Zero repetitive code</li>
-                  <li>🛠️ Minimal maintenance overhead</li>
-                  <li>⚙️ Configurable error display modes</li>
-                  <li>📦 Single wrapper for all field logic</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </details>
     </form>
   `,
 })
@@ -255,50 +212,6 @@ export class ControlWrapperIntroWrapperFormComponent {
         warnings: {},
       },
   );
-
-  protected readonly wrapperCodeExample = `<!-- Async Validation with Pending States -->
-<ngx-control-wrapper [errorDisplayMode]="'on-blur'">
-  <label for="username">Username *</label>
-  <input id="username" name="username" [ngModel]="model().username" />
-  <!-- Automatically shows spinner, "Validating..." message -->
-  <!-- Sets aria-busy="true" during async validation -->
-</ngx-control-wrapper>
-
-<!-- Warning System -->
-<ngx-control-wrapper>
-  <label for="email">Email *</label>
-  <input id="email" name="email" [ngModel]="model().email" />
-  <!-- Automatically displays warnings with role="status" -->
-  <!-- Yellow styling for non-blocking feedback -->
-</ngx-control-wrapper>
-
-<!-- Error Display Mode Configuration -->
-<ngx-control-wrapper [errorDisplayMode]="'on-blur-or-submit'">
-  <!-- Controls when errors appear: -->
-  <!-- 'on-blur' | 'on-submit' | 'on-blur-or-submit' -->
-</ngx-control-wrapper>`;
-
-  // Highlighted version of the code example
-  protected readonly highlightedCodeExample = signal<string>('Loading...');
-
-  constructor() {
-    // Initialize highlighting when component loads
-    this.initializeHighlighting();
-  }
-
-  private async initializeHighlighting(): Promise<void> {
-    // For now, use nicely styled plain code block
-    // TODO: Implement proper Shiki syntax highlighting when Vite configuration is properly set up
-    this.highlightedCodeExample.set(
-      `<pre class="shiki vitesse-dark p-4 bg-gray-900 text-gray-100 rounded-lg overflow-x-auto text-sm leading-relaxed"><code class="language-html">${this.escapeHtml(this.wrapperCodeExample)}</code></pre>`,
-    );
-  }
-
-  private escapeHtml(text: string): string {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
 
   protected onSubmit() {
     this.submitAttempted.set(true);

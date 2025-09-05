@@ -107,6 +107,10 @@ export class NgxVestFormWithSchemaDirective {
   // Expose enriched form state similar to full directive
   readonly formState = computed(() => {
     const base = this.#core.formState();
+    console.log(
+      '[NgxVestFormWithSchemaDirective] base formState from core:',
+      base,
+    );
     const status = this.#ngForm.form.status as
       | 'VALID'
       | 'INVALID'
@@ -129,7 +133,7 @@ export class NgxVestFormWithSchemaDirective {
     }
 
     const schema = this.#schemaState?.() ?? null;
-    return {
+    const finalFormState = {
       value: base.value,
       errors: fieldErrors,
       warnings: {},
@@ -149,5 +153,10 @@ export class NgxVestFormWithSchemaDirective {
       warningCount: 0,
       firstInvalidField,
     } as const;
+    console.log(
+      '[NgxVestFormWithSchemaDirective] final formState being returned:',
+      finalFormState,
+    );
+    return finalFormState;
   });
 }

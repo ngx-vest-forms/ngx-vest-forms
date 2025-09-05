@@ -15,12 +15,22 @@ import {
 /**
  * Modern Angular directive for syntax highlighting using Shiki
  *
- * Provides VS Code-quality highlighting with TextMate grammar support.
+ * Provides VS Code-quality highlighting with TextMate grammar support,
+ * including Angular-specific languages (angular-html, angular-ts).
  *
  * Usage:
  * ```html
- * <pre ngxShikiHighlight language="typescript" theme="vitesse-dark">
+ * <pre ngxShikiHighlight language="typescript" theme="github-dark">
  *   const greeting = "Hello, World!";
+ * </pre>
+ *
+ * <pre ngxShikiHighlight language="angular-html" theme="github-dark">
+ *   <div *ngFor="let item of items">{{ item.name }}</div>
+ * </pre>
+ *
+ * <pre ngxShikiHighlight language="angular-ts" theme="github-dark">
+ *   @Component({ selector: 'app-example' })
+ *   export class ExampleComponent {}
  * </pre>
  * ```
  */
@@ -30,7 +40,7 @@ import {
 })
 export class ShikiHighlightDirective {
   readonly language = input<SupportedLanguage>('typescript');
-  readonly theme = input<SupportedTheme>('vitesse-dark');
+  readonly theme = input<SupportedTheme>('tokyo-night');
 
   private readonly element = inject(ElementRef<HTMLElement>);
   private readonly shikiService = inject(ShikiHighlightService);

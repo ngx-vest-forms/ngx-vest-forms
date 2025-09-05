@@ -1,5 +1,6 @@
 import { JsonPipe } from '@angular/common';
 import { ApplicationRef, Component, signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { render, screen } from '@testing-library/angular';
 import { userEvent } from '@vitest/browser/context';
@@ -198,5 +199,82 @@ describe('NgxVestFormWithSchemaDirective (wrapper)', () => {
     expect(
       parsed?.issues?.some((issue) => issue.message === 'Invalid email'),
     ).toBe(true);
+  });
+});
+
+// ================================================================================
+// Additional Schema Directive Tests (consolidated from /test/ folder)
+// ================================================================================
+
+// Test suite for form state synchronization - these test NgxVestFormWithSchemaDirective
+const formSyncSuite = staticSuite((data = {}) => {
+  vestTest('name', 'Name is required', () => {
+    enforce(data.name).isNotEmpty();
+  });
+  vestTest('email', 'Email is required', () => {
+    enforce(data.email).isNotEmpty();
+  });
+});
+
+@Component({
+  imports: [NgxVestFormWithSchemaDirective, FormsModule],
+  template: `
+    <form
+      ngxVestFormWithSchema
+      [vestSuite]="suite"
+      [(formValue)]="model"
+      #vestForm="ngxVestForm"
+    >
+      <input name="name" [ngModel]="model().name" />
+      <input name="email" [ngModel]="model().email" />
+
+      <!-- Display form state values for testing -->
+      <div data-testid="form-values">
+        Name: {{ vestForm.formState().value?.name || 'empty' }} Email:
+        {{ vestForm.formState().value?.email || 'empty' }}
+      </div>
+    </form>
+  `,
+})
+class TestWithSchemaFormSyncComponent {
+  model = signal({ name: '', email: '' });
+  suite = formSyncSuite;
+}
+
+describe('NgxVestFormWithSchemaDirective - Form State Value Sync', () => {
+  it('formState().value reflects user input changes immediately', async () => {
+    // Arrange
+    await render(TestWithSchemaFormSyncComponent);
+    const [nameInput] = screen.getAllByRole('textbox');
+    const formValuesDisplay = screen.getByTestId('form-values');
+
+    // Act - change the name field
+    await userEvent.type(nameInput, 'John Doe');
+    const appReference = TestBed.inject(ApplicationRef);
+    await appReference.whenStable();
+
+    // Assert - form state display should show the new value immediately
+    await expect.element(formValuesDisplay).toHaveTextContent(/Name: John Doe/);
+  });
+
+  it('multiple field changes are reflected in formState().value', async () => {
+    // Arrange
+    await render(TestWithSchemaFormSyncComponent);
+    const [nameInput, emailInput] = screen.getAllByRole('textbox');
+    const formValuesDisplay = screen.getByTestId('form-values');
+
+    // Act - change both fields
+    await userEvent.type(nameInput, 'Jane Smith');
+    await userEvent.type(emailInput, 'jane@example.com');
+    const appReference = TestBed.inject(ApplicationRef);
+    await appReference.whenStable();
+
+    // Assert - both values should be reflected
+    await expect
+      .element(formValuesDisplay)
+      .toHaveTextContent(/Name: Jane Smith/);
+    await expect
+      .element(formValuesDisplay)
+      .toHaveTextContent(/Email: jane@example.com/);
   });
 });

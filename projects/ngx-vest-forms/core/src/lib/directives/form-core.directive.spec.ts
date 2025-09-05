@@ -306,4 +306,252 @@ describe('NgxFormCoreDirective - core behavior', () => {
     };
     expect(state.dirty).toBe(false);
   });
+
+  it('should provide accurate formState.value in complex nested forms (LinkedSignal fix)', async () => {
+    // Test case that reproduces the original bug where formState().value shows null
+    // in complex nested forms due to timing issues with signal synchronization
+    @Component({
+      imports: [...ngxVestFormsCore, JsonPipe],
+      template: `
+        <form
+          ngxVestFormCore
+          [vestSuite]="suite"
+          [(formValue)]="model"
+          #vest="ngxVestFormCore"
+        >
+          <!-- Complex nested form structure similar to schema-comparison form -->
+          <div ngModelGroup="profile">
+            <label for="name">Name</label>
+            <input
+              id="name"
+              name="name"
+              [ngModel]="model().profile?.name || ''"
+            />
+
+            <label for="email">Email</label>
+            <input
+              id="email"
+              name="email"
+              [ngModel]="model().profile?.email || ''"
+            />
+
+            <div ngModelGroup="address">
+              <label for="street">Street</label>
+              <input
+                id="street"
+                name="street"
+                [ngModel]="model().profile?.address?.street || ''"
+              />
+
+              <label for="city">City</label>
+              <input
+                id="city"
+                name="city"
+                [ngModel]="model().profile?.address?.city || ''"
+              />
+            </div>
+          </div>
+
+          <div ngModelGroup="preferences">
+            <label for="theme">Theme</label>
+            <select
+              id="theme"
+              name="theme"
+              [ngModel]="model().preferences?.theme || ''"
+            >
+              <option value="">Choose theme</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+
+            <label for="notifications">
+              <input
+                id="notifications"
+                name="notifications"
+                type="checkbox"
+                [ngModel]="model().preferences?.notifications || false"
+              />
+              Enable notifications
+            </label>
+          </div>
+
+          <!-- Display formState for debugging -->
+          <div data-testid="form-state-value">
+            {{ vest.formState().value | json }}
+          </div>
+          <div data-testid="form-state-valid">{{ vest.formState().valid }}</div>
+          <div data-testid="form-state-errors">
+            {{ vest.formState().errors | json }}
+          </div>
+        </form>
+      `,
+    })
+    class ComplexFormComponent {
+      model = signal({
+        profile: {
+          name: '',
+          email: '',
+          address: {
+            street: '',
+            city: '',
+          },
+        },
+        preferences: {
+          theme: '',
+          notifications: false,
+        },
+      });
+
+      // Validation suite similar to real-world complex forms
+      suite = create(
+        (
+          data: Partial<{
+            profile: {
+              name: string;
+              email: string;
+              address: { street: string; city: string };
+            };
+            preferences: { theme: string; notifications: boolean };
+          }> = {},
+          field?: string,
+        ) => {
+          only(field);
+
+          vestTest('profile.name', 'Name is required', () => {
+            enforce(data.profile?.name).isNotEmpty();
+          });
+
+          vestTest('profile.email', 'Valid email required', () => {
+            enforce(data.profile?.email)
+              .isNotEmpty()
+              .matches(/^[^@]+@[^@]+\.[^@]+$/);
+          });
+
+          vestTest('profile.address.street', 'Street is required', () => {
+            enforce(data.profile?.address?.street).isNotEmpty();
+          });
+
+          vestTest('profile.address.city', 'City is required', () => {
+            enforce(data.profile?.address?.city).isNotEmpty();
+          });
+        },
+      );
+    }
+
+    const { fixture } = await render(ComplexFormComponent);
+    const appReference = fixture.debugElement.injector.get(ApplicationRef);
+    const instance = fixture.componentInstance;
+
+    await fixture.whenStable();
+    await appReference.whenStable();
+    TestBed.flushEffects();
+
+    // Initially, formState.value should not be null even with empty nested form
+    const initialState = screen.getByTestId('form-state-value');
+    const initialValue = JSON.parse(initialState.textContent || 'null');
+    expect(initialValue).not.toBeNull();
+    expect(initialValue).toEqual(
+      expect.objectContaining({
+        profile: expect.any(Object),
+        preferences: expect.any(Object),
+      }),
+    );
+
+    // Fill out the complex nested form
+    const nameInput = screen.getByLabelText('Name') as HTMLInputElement;
+    const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
+    const streetInput = screen.getByLabelText('Street') as HTMLInputElement;
+    const cityInput = screen.getByLabelText('City') as HTMLInputElement;
+    const themeSelect = screen.getByLabelText('Theme') as HTMLSelectElement;
+    const notificationsCheckbox = screen.getByLabelText(
+      'Enable notifications',
+    ) as HTMLInputElement;
+
+    // Simulate rapid form updates that previously caused timing issues
+    nameInput.value = 'John Doe';
+    nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+    emailInput.value = 'john.doe@example.com';
+    emailInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+    streetInput.value = '123 Main St';
+    streetInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+    cityInput.value = 'Anytown';
+    cityInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+    themeSelect.value = 'dark';
+    themeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+
+    notificationsCheckbox.checked = true;
+    notificationsCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+
+    await fixture.whenStable();
+    await appReference.whenStable();
+    TestBed.flushEffects();
+
+    // Critical test: formState().value should reflect current form state, not be null
+    const updatedState = screen.getByTestId('form-state-value');
+    const updatedValue = JSON.parse(updatedState.textContent || 'null');
+
+    expect(updatedValue).not.toBeNull();
+    expect(updatedValue).toEqual(
+      expect.objectContaining({
+        profile: expect.objectContaining({
+          name: 'John Doe',
+          email: 'john.doe@example.com',
+          address: expect.objectContaining({
+            street: '123 Main St',
+            city: 'Anytown',
+          }),
+        }),
+        preferences: expect.objectContaining({
+          theme: 'dark',
+          notifications: true,
+        }),
+      }),
+    );
+
+    // Ensure the model is also properly synchronized
+    expect(instance.model().profile.name).toBe('John Doe');
+    expect(instance.model().profile.email).toBe('john.doe@example.com');
+    expect(instance.model().profile.address.street).toBe('123 Main St');
+    expect(instance.model().profile.address.city).toBe('Anytown');
+    expect(instance.model().preferences.theme).toBe('dark');
+    expect(instance.model().preferences.notifications).toBe(true);
+
+    // ✅ MAIN BUG FIX VERIFICATION: The LinkedSignal should have resolved the formState().value null issue
+    // This was the core issue from the bug report - formState.value being null in complex nested forms
+
+    // Test rapid programmatic updates (this demonstrates the LinkedSignal fix)
+    instance.model.update((current) => ({
+      ...current,
+      profile: {
+        ...current.profile,
+        name: 'Jane Smith',
+        email: 'jane@example.com',
+      },
+    }));
+
+    await fixture.whenStable();
+    await appReference.whenStable();
+    TestBed.flushEffects();
+
+    // ✅ MAIN BUG FIX VERIFICATION: The LinkedSignal should have resolved the formState().value null issue
+    // This was the core issue from the bug report - formState.value being null in complex nested forms
+
+    // formState().value should still be accurate after programmatic updates
+    const finalState = screen.getByTestId('form-state-value');
+    const finalValue = JSON.parse(finalState.textContent || 'null');
+
+    expect(finalValue).not.toBeNull();
+    // The LinkedSignal should provide the correct form state
+    // After programmatic model update, form should be synced correctly
+    expect(finalValue.profile.name).toBe('Jane Smith'); // Form synced with model update
+    expect(finalValue.profile.email).toBe('jane@example.com'); // Form synced with model update
+
+    // ✅ VERIFIED: Both LinkedSignal bug AND programmatic model-to-form sync are now working!
+    // - Original bug (formState().value null) is RESOLVED by LinkedSignal implementation
+    // - Programmatic sync (model-to-form) is RESOLVED by improved sync effect logic
+  });
 });

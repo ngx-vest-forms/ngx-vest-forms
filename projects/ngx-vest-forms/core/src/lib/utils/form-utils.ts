@@ -104,11 +104,11 @@ export function getFormGroupField(
  * @param form
  */
 export function mergeValuesAndRawValues<T>(form: FormGroup): T {
-  // Retrieve the standard values (respecting references)
-  const value = { ...form.value };
+  // Retrieve the standard values with deep cloning to avoid reference sharing
+  const value = structuredClone(form.value);
 
-  // Retrieve the raw values (including disabled values)
-  const rawValue = form.getRawValue();
+  // Retrieve the raw values (including disabled values) and clone to avoid reference sharing
+  const rawValue = structuredClone(form.getRawValue());
 
   // Recursive function to merge rawValue into value
   function mergeRecursive(target: any, source: any) {

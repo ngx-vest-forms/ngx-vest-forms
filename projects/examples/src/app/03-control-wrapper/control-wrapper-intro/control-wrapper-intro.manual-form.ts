@@ -327,7 +327,9 @@ import {
           <p class="code-example-description">
             See how much code is needed for manual error handling:
           </p>
-          <pre class="shiki-code-block">{{ manualCodeExample }}</pre>
+          <pre class="shiki-code-block whitespace-pre-wrap">{{
+            manualCodeExample
+          }}</pre>
           <div class="code-drawbacks">
             <h4 class="benefits-title">😭 Manual Approach Drawbacks:</h4>
             <ul class="benefits-list">
