@@ -239,31 +239,38 @@ export class FormDirective<T extends Record<string, any>>
           filter(() => !this.validationInProgress.has(triggerField)),
           // Small debounce to prevent excessive validation calls
           debounceTime(50),
+          // Use switchMap to flatten the async operation and avoid nested subscriptions
+          switchMap(() => {
+            // Mark that we're triggering validation to prevent infinite loops
+            this.validationInProgress.add(triggerField);
+
+            // Use merge with the idle$ stream to wait for form stabilization
+            // This replaces the hacky timer(10) with a proper form state check
+            return this.idle$.pipe(
+              take(1), // Take the first idle event
+              tap(() => {
+                dependentFields.forEach((dependentField) => {
+                  const dependentControl =
+                    this.ngForm?.form.get(dependentField);
+                  if (
+                    dependentControl &&
+                    !this.validationInProgress.has(dependentField)
+                  ) {
+                    dependentControl.updateValueAndValidity({
+                      onlySelf: true,
+                      emitEvent: false, // Don't emit to prevent extra change events
+                    });
+                  }
+                });
+
+                // Clear the validation flag after processing
+                this.validationInProgress.delete(triggerField);
+              })
+            );
+          }),
           takeUntil(this.destroy$$)
         )
-        .subscribe(() => {
-          // Mark that we're triggering validation to prevent infinite loops
-          this.validationInProgress.add(triggerField);
-
-          // Wait for the form to stabilize before triggering dependent validations
-          timer(10).subscribe(() => {
-            dependentFields.forEach((dependentField) => {
-              const dependentControl = this.ngForm?.form.get(dependentField);
-              if (
-                dependentControl &&
-                !this.validationInProgress.has(dependentField)
-              ) {
-                dependentControl.updateValueAndValidity({
-                  onlySelf: true,
-                  emitEvent: false, // Don't emit to prevent extra change events
-                });
-              }
-            });
-
-            // Clear the validation flag after processing
-            this.validationInProgress.delete(triggerField);
-          });
-        });
+        .subscribe();
 
       this.validationConfigSubscriptions.set(triggerField, subscription);
     });
