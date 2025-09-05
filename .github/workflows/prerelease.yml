@@ -1,9 +1,13 @@
-name: CD
+name: Prerelease
 on:
   push:
     branches:
-      - master
-      - 'release/**'
+      - beta
+      - alpha
+      - 'feat/**'
+      - 'fix/**'
+  pull_request:
+    types: [labeled]
 
 permissions:
   contents: write  # For creating releases and updating changelog
@@ -12,14 +16,21 @@ permissions:
   id-token: write  # For provenance
 
 jobs:
-  cd:
-    concurrency: ci-${{ github.ref }}
+  prerelease:
+    # Only run on beta/alpha branches or PRs with specific labels
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' &&
+       contains(github.event.pull_request.labels.*.name, 'prerelease'))
+    concurrency: prerelease-${{ github.ref }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          # For PR events, checkout the head ref
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref }}
       - name: Setup
         uses: actions/setup-node@v4
         with:
@@ -37,7 +48,7 @@ jobs:
         run: npm run storybook:build
       - name: Integration test
         run: npm run test:storybook:ci
-      - name: Publish
+      - name: Publish prerelease
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}

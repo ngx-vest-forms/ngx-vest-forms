@@ -1,6 +1,27 @@
 {
   "branches": [
-    "master"
+    "master",
+    {
+      "name": "release/v1.x",
+      "range": "1.x.x",
+      "channel": "release-1.x"
+    },
+    {
+      "name": "beta",
+      "prerelease": true
+    },
+    {
+      "name": "alpha",
+      "prerelease": true
+    },
+    {
+      "name": "feat/*",
+      "prerelease": "feat-${name.replace(/feat\\//g, '')}"
+    },
+    {
+      "name": "fix/*",
+      "prerelease": "fix-${name.replace(/fix\\//g, '')}"
+    }
   ],
   "plugins": [
     "@semantic-release/release-notes-generator",
