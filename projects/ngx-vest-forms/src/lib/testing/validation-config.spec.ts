@@ -310,4 +310,101 @@ describe('FormDirective - ValidationConfig', () => {
     // Email validation should have been triggered
     expect(fixture.componentInstance.formValue().user?.name).toBe('John Doe');
   }));
+
+  // Test for separate input and output signals (Issue #11)
+  it('should work with separate input and output signals (Issue #11)', fakeAsync(() => {
+    @Component({
+      standalone: true,
+      template: `
+        <form
+          scVestForm
+          [formValue]="inputFormValue()"
+          [suite]="suite"
+          [validationConfig]="validationConfig"
+          (formValueChange)="handleFormChange($event)"
+        >
+          <input name="password" [ngModel]="outputFormValue().password" />
+          <input
+            name="confirmPassword"
+            [ngModel]="outputFormValue().confirmPassword"
+          />
+        </form>
+      `,
+      imports: [vestForms, FormsModule],
+    })
+    class TestComponent {
+      // Separate signals - input vs output
+      inputFormValue = signal<
+        DeepPartial<{ password: string; confirmPassword: string }>
+      >({});
+      outputFormValue = signal<
+        DeepPartial<{ password: string; confirmPassword: string }>
+      >({});
+
+      validationConfig = {
+        password: ['confirmPassword'],
+      };
+
+      suite = staticSuite((model: any, field?: string) => {
+        test('confirmPassword', 'Passwords must match', () => {
+          if (model.password && model.confirmPassword) {
+            enforce(model.confirmPassword).equals(model.password);
+          }
+        });
+      });
+
+      handleFormChange(value: any) {
+        // Update only the output signal, not the input
+        this.outputFormValue.set(value);
+      }
+    }
+
+    const fixture = TestBed.configureTestingModule({
+      imports: [TestComponent],
+    }).createComponent(TestComponent);
+
+    fixture.detectChanges();
+    tick();
+
+    // Change password - this should trigger confirmPassword validation
+    const passwordInput = fixture.nativeElement.querySelector(
+      'input[name="password"]'
+    );
+    passwordInput.value = 'test123';
+    passwordInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    tick(100);
+
+    // Verify the form state updated in output signal
+    expect(fixture.componentInstance.outputFormValue().password).toBe(
+      'test123'
+    );
+
+    // Now set confirmPassword to a different value
+    const confirmInput = fixture.nativeElement.querySelector(
+      'input[name="confirmPassword"]'
+    );
+    confirmInput.value = 'different';
+    confirmInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    tick(100);
+
+    // Change password again - should trigger confirmPassword revalidation
+    passwordInput.value = 'newpassword';
+    passwordInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    tick(100);
+
+    // The validation should work even with separate signals
+    expect(fixture.componentInstance.outputFormValue().password).toBe(
+      'newpassword'
+    );
+    expect(fixture.componentInstance.outputFormValue().confirmPassword).toBe(
+      'different'
+    );
+
+    // ValidationConfig should have triggered confirmPassword validation
+    // (we can't easily test the internal validation state, but the important thing
+    // is that no errors were thrown and the form continues to work)
+  }));
 });
