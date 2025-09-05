@@ -16,11 +16,11 @@
     },
     {
       "name": "feat/*",
-      "prerelease": "feat-${name.replace(/feat\//g, '')}"
+      "prerelease": "feat-${name.replace(/feat\\//g, '')}"
     },
     {
       "name": "fix/*",
-      "prerelease": "fix-${name.replace(/fix\//g, '')}"
+      "prerelease": "fix-${name.replace(/fix\\//g, '')}"
     }
   ],
   "plugins": [
