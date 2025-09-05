@@ -19,7 +19,6 @@ on:
         options:
           - alpha
           - beta
-          - feat/github-actions-improvements-clean
 
 permissions:
   contents: write  # For creating releases and updating changelog
