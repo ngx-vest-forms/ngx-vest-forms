@@ -1,0 +1,81 @@
+<section>
+  <div class="prose mb-4 max-w-none">
+    <h2>Business Hours</h2>
+    <p>
+      Purpose: Demonstrates schema + Vest validation with a custom UI component
+      for managing a collection. Shows root-form (global) errors via
+      <code>injectNgxRootFormKey</code>.
+    </p>
+    <p class="text-sm">
+      See:
+      <a
+        href="https://github.com/simplifiedcourses/ngx-vest-forms"
+        target="_blank"
+        >README</a
+      >
+      · <a href="https://vestjs.dev" target="_blank">Vest Docs</a>
+    </p>
+  </div>
+  <ul class="form-help">
+    <li>Always show an error if there is no business hour added</li>
+    <li>From field is required</li>
+    <li>To field is required</li>
+    <li>From field should be valid time</li>
+    <li>To field should be valid time</li>
+    <li>
+      If both from and to fields are valid:
+      <ul>
+        <li>To field should be later than from field</li>
+      </ul>
+    </li>
+    <li>The same should apply for edit</li>
+    <li>If more than 1 business hour is added, there should be no overlap</li>
+  </ul>
+  <form
+    class="simple-form"
+    ngxVestFormWithSchema
+    #vestForm="ngxVestForm"
+    [(formValue)]="formValue"
+    [formSchema]="businessHoursFormSchema"
+    [vestSuite]="businessHoursFormValidations"
+  >
+    <fieldset>
+      <ngx-business-hours
+        [businessHoursModel]="businessHoursModel()"
+        (add)="onAddBusinessHour($event)"
+        (remove)="onRemoveBusinessHour($event)"
+      ></ngx-business-hours>
+    </fieldset>
+    <!--
+      Root form errors are displayed below. This is an advanced pattern for cross-field or form-wide errors.
+      See ngx-vest-forms docs for details on root-level validation.
+    -->
+    <h4 class="mb-2 mt-6 text-lg font-semibold text-red-700">
+      Form-wide (root) errors
+    </h4>
+    <p class="mb-2 text-sm text-red-600">
+      These errors are not tied to a single field, but to the overall form state
+      (e.g., overlap, missing entries).
+    </p>
+    @if ((vestForm.formState().errors[rootFormKey] || []).length > 0) {
+      <ul class="alert">
+        @for (
+          error of vestForm.formState().errors[rootFormKey] || [];
+          track error
+        ) {
+          <li>{{ error }}</li>
+        }
+      </ul>
+    }
+    <button type="submit" class="form-submit">Save Business Hours</button>
+  </form>
+  <br />
+  <h3>The value of the form</h3>
+  <pre id="json-data">
+    {{ vestForm.formState().value | json }}
+  </pre>
+
+  <pre id="json-errors">
+    {{ vestForm.formState().errors | json }}
+  </pre>
+</section>

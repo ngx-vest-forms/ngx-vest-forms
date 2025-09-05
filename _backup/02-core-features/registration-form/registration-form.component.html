@@ -1,0 +1,155 @@
+<section>
+  <div class="nv-prose mb-4">
+    <h2>Registration Form</h2>
+    <p>
+      Purpose: Show password confirmation, checkbox handling, and cross-field
+      validation with Vest. Uses <code>NgxControlWrapper</code> for consistent
+      error display.
+    </p>
+    <p class="text-sm">
+      See:
+      <a
+        href="https://github.com/simplifiedcourses/ngx-vest-forms"
+        target="_blank"
+        >README</a
+      >
+      · <a href="https://vestjs.dev" target="_blank">Vest Docs</a>
+    </p>
+  </div>
+  <div class="info-box">
+    <h4 class="info-box-title">ℹ️ Why use simple <code>ngModel</code>?</h4>
+    <p class="info-box-text">
+      This form uses the simple <code>ngModel</code> syntax for all controls.
+      This approach provides automatic two-way binding between the form controls
+      and the model signal, with minimal boilerplate.
+      <code>ngx-vest-forms</code> handles all value syncing, error display, and
+      validation logic. Use <code>[ngModel]</code>
+      only if you need explicit control over the data flow or are working with
+      computed values.
+    </p>
+  </div>
+
+  <p class="nv-hint">
+    Demonstrates password confirmation validation, terms checkbox, and
+    cross-field validation patterns.
+  </p>
+
+  <form
+    ngxVestFormCore
+    [vestSuite]="suite"
+    [(formValue)]="formValue"
+    (ngSubmit)="onSubmit()"
+    #vestForm="ngxVestFormCore"
+    class="simple-form"
+  >
+    <!-- Email Field -->
+    <div class="nv-field">
+      <label class="nv-label" for="email">Email Address</label>
+      <input
+        id="email"
+        type="email"
+        name="email"
+        ngModel
+        autocomplete="email"
+        placeholder="Enter your email"
+        class="nv-input"
+        [attr.aria-invalid]="
+          (vestForm.formState().errors['email']?.length || 0) > 0
+            ? 'true'
+            : 'false'
+        "
+      />
+      <ul class="nv-errors" aria-live="polite">
+        @for (msg of vestForm.formState().errors['email'] || []; track msg) {
+          <li class="text-red-600">{{ msg }}</li>
+        }
+      </ul>
+    </div>
+
+    <!-- Password Field -->
+    <div class="nv-field">
+      <label class="nv-label" for="password">Password</label>
+      <input
+        id="password"
+        type="password"
+        name="password"
+        ngModel
+        autocomplete="new-password"
+        placeholder="Enter your password"
+        class="nv-input"
+        [attr.aria-invalid]="
+          (vestForm.formState().errors['password']?.length || 0) > 0
+            ? 'true'
+            : 'false'
+        "
+      />
+      <div class="nv-hint">
+        Password must be at least 8 characters with uppercase letter and number
+      </div>
+      <ul class="nv-errors" aria-live="polite">
+        @for (msg of vestForm.formState().errors['password'] || []; track msg) {
+          <li class="text-red-600">{{ msg }}</li>
+        }
+      </ul>
+    </div>
+
+    <!-- Confirm Password Field -->
+    <div class="nv-field">
+      <label class="nv-label" for="confirmPassword">Confirm Password</label>
+      <input
+        id="confirmPassword"
+        type="password"
+        name="confirmPassword"
+        ngModel
+        autocomplete="new-password"
+        placeholder="Confirm your password"
+        class="nv-input"
+        [attr.aria-invalid]="
+          (vestForm.formState().errors['confirmPassword']?.length || 0) > 0
+            ? 'true'
+            : 'false'
+        "
+      />
+      <ul class="nv-errors" aria-live="polite">
+        @for (
+          msg of vestForm.formState().errors['confirmPassword'] || [];
+          track msg
+        ) {
+          <li class="text-red-600">{{ msg }}</li>
+        }
+      </ul>
+    </div>
+
+    <!-- Terms and Conditions -->
+    <div class="nv-field">
+      <label class="flex items-center">
+        <input
+          type="checkbox"
+          name="agreeToTerms"
+          ngModel
+          class="rounded-xs border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+        />
+        <span class="ms-2 text-sm text-gray-700 dark:text-gray-300">
+          I agree to the
+          <a href="#" class="text-blue-600 hover:underline dark:text-blue-400">
+            Terms and Conditions
+          </a>
+          and
+          <a href="#" class="text-blue-600 hover:underline dark:text-blue-400">
+            Privacy Policy
+          </a>
+        </span>
+      </label>
+      <ul class="nv-errors" aria-live="polite">
+        @for (
+          msg of vestForm.formState().errors['agreeToTerms'] || [];
+          track msg
+        ) {
+          <li class="text-red-600">{{ msg }}</li>
+        }
+      </ul>
+    </div>
+
+    <button type="submit" class="nv-btn">Register</button>
+  </form>
+</section>
