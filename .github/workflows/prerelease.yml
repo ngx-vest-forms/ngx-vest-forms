@@ -81,7 +81,9 @@ jobs:
           # If we don't have enough commits, fetch more (but still limited)
           if [ "$COMMIT_COUNT" -lt 50 ]; then
             echo "Fetching additional commits for better analysis..."
-            git fetch --deepen=50 || true
+            if ! git fetch --deepen=50; then
+              echo "Warning: git fetch --deepen=50 failed, continuing anyway" >&2
+            fi
           fi
       - name: Setup
         uses: actions/setup-node@v4
