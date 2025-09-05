@@ -16,7 +16,7 @@
     },
     {
       "name": "feat/*",
-      "prerelease": "feat-${name.replace(/feat\\//g, '')}"
+      "prerelease": "feat-${name.replace(/feat\//g, '')}"
     },
     {
       "name": "fix/*",
