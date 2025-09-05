@@ -1,0 +1,111 @@
+name: Prerelease
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch_type:
+        description: 'Branch type'
+        required: true
+        default: 'stable'
+        type: choice
+        options:
+          - stable          # Use predefined branch
+          - custom          # Use custom branch name
+
+      stable_branch:
+        description: 'Stable branch (when branch_type = stable)'
+        required: false
+        default: 'beta'
+        type: choice
+        options:
+          - alpha
+          - beta
+          - rc
+          - release/v1.x
+          - release/v2.x
+
+      custom_branch:
+        description: 'Custom branch name (when branch_type = custom, e.g., feat/awesome-feature, fix/critical-bug)'
+        required: false
+        type: string
+
+permissions:
+  contents: write  # For creating releases and updating changelog
+  issues: write    # For commenting on issues
+  pull-requests: write  # For commenting on PRs
+  id-token: write  # For provenance
+
+jobs:
+  prerelease:
+    runs-on: ubuntu-latest
+    concurrency: prerelease-${{ github.event.inputs.branch_type }}-${{ github.event.inputs.stable_branch }}${{ github.event.inputs.custom_branch }}
+    steps:
+      - name: Determine branch
+        id: branch
+        run: |
+          if [ "${{ github.event.inputs.branch_type }}" = "stable" ]; then
+            echo "branch=${{ github.event.inputs.stable_branch }}" >> $GITHUB_OUTPUT
+          else
+            echo "branch=${{ github.event.inputs.custom_branch }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate branch input
+        run: |
+          BRANCH="${{ steps.branch.outputs.branch }}"
+          if [ -z "$BRANCH" ]; then
+            echo "Error: No branch specified"
+            exit 1
+          fi
+          echo "Releasing from branch: $BRANCH"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ steps.branch.outputs.branch }}
+          fetch-depth: 0  # Fetch full history for semantic-release
+
+      - name: Fetch tags for semantic-release
+        run: |
+          # Fetch only recent tags needed for version calculation
+          git fetch --depth=1 origin +refs/tags/*:refs/tags/* || true
+          echo "Available recent tags:"
+          git tag --sort=-version:refname | head -10 || echo "No tags found"
+
+      - name: Fetch additional history if needed
+        run: |
+          # Check if we have enough history for semantic-release
+          COMMIT_COUNT=$(git rev-list --count HEAD)
+          echo "Current commit count: $COMMIT_COUNT"
+
+          # If we don't have enough commits, fetch more (but still limited)
+          if [ "$COMMIT_COUNT" -lt 50 ]; then
+            echo "Fetching additional commits for better analysis..."
+            if ! git fetch --deepen=50; then
+              echo "Warning: git fetch --deepen=50 failed, continuing anyway" >&2
+            fi
+          fi
+      - name: Setup
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install
+        run: npm ci
+      - name: Playwright install
+        run: npx playwright install
+      - name: Build
+        run: npm run build:ci
+      - name: Test
+        run: npm run test:ci
+      - name: Storybook
+        run: npm run storybook:build
+      - name: Integration test
+        run: npm run test:storybook:ci
+      - name: Publish prerelease
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          echo "Publishing prerelease from branch: ${{ steps.branch.outputs.branch }}"
+          npx semantic-release

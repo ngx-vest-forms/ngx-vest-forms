@@ -20,7 +20,6 @@ import { BusinessHoursComponent } from '../../ui/business-hours/business-hours.c
     JsonPipe,
     vestForms,
     ValidateRootFormDirective,
-    BusinessHourComponent,
     BusinessHoursComponent,
   ],
   templateUrl: './business-hours-form.component.html',
