@@ -25,11 +25,11 @@
     },
     {
       "name": "feat/*",
-      "prerelease": "feat-${name.replace(/feat//g, '').replace(/[^a-zA-Z0-9-_]/g, '')}"
+      "prerelease": "feat-${name.replace(/^feat\\//, '').replace(/[^a-zA-Z0-9-_]/g, '')}"
     },
     {
       "name": "fix/*",
-      "prerelease": "fix-${name.replace(/fix//g, '').replace(/[^a-zA-Z0-9-_]/g, '')}"
+      "prerelease": "fix-${name.replace(/^fix\\//, '').replace(/[^a-zA-Z0-9-_]/g, '')}"
     }
   ],
   "plugins": [

@@ -63,7 +63,26 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ steps.branch.outputs.branch }}
-          fetch-depth: 0  # Important for semantic-release
+          fetch-depth: 100  # Fetch last 100 commits for security (usually sufficient for semantic-release)
+
+      - name: Fetch tags for semantic-release
+        run: |
+          # Fetch only recent tags needed for version calculation
+          git fetch --depth=1 origin +refs/tags/*:refs/tags/* || true
+          echo "Available recent tags:"
+          git tag --sort=-version:refname | head -10 || echo "No tags found"
+
+      - name: Fetch additional history if needed
+        run: |
+          # Check if we have enough history for semantic-release
+          COMMIT_COUNT=$(git rev-list --count HEAD)
+          echo "Current commit count: $COMMIT_COUNT"
+
+          # If we don't have enough commits, fetch more (but still limited)
+          if [ "$COMMIT_COUNT" -lt 50 ]; then
+            echo "Fetching additional commits for better analysis..."
+            git fetch --deepen=50 || true
+          fi
       - name: Setup
         uses: actions/setup-node@v4
         with:
