@@ -3,6 +3,12 @@
 ## Project Overview
 This is an Angular library that provides a lightweight adapter between Angular template-driven forms and Vest.js validation. The library enables unidirectional data flow in forms with sophisticated async validations and conditional logic.
 
+### Prerequisites
+- **Angular**: >=18.0.0 (Signals support required)
+- **Vest.js**: ^5.2.8 (tested and developed against this version)
+- **TypeScript**: >=5.0.0 (for modern Angular features)
+- **Node.js**: >=18.0.0 (required for Angular 16+)
+
 **Key Architecture:**
 - **Library Project**: `projects/ngx-vest-forms/` - The exportable Angular library
 - **Examples Project**: `projects/examples/` - Demo application showcasing usage patterns
@@ -129,3 +135,7 @@ The library hooks into Angular's template-driven forms via:
 - Use `ROOT_FORM` constant for form-level validations
 - Validation options can be set at form, group, or control level for debouncing
 https://blog.simplified.courses/introducing-ngx-vest-forms/
+
+
+## Chat
+- Do not use emojis in the chat responses, expect for checking off tasks.
