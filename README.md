@@ -55,14 +55,14 @@ type MyFormModel = DeepPartial<{
         <input
           type="text"
           name="firstName"
-          [ngModel]="formValue().generalInformation?.firstName"
+          [ngModel]="formValue().generalInfo?.firstName"
         />
 
         <label>Last name</label>
         <input
           type="text"
           name="lastName"
-          [ngModel]="formValue().generalInformation?.lastName"
+          [ngModel]="formValue().generalInfo?.lastName"
         />
       </div>
     </form>
@@ -231,7 +231,7 @@ Let's hide `lastName` if `firstName` is not filled in:
 class MyComponent {
   ...
   protected readonly lastNameAvailable =
-    computed(() => !!this.formValue().generalInformation?.firstName);
+    computed(() => !!this.formValue().generalInfo?.firstName);
 }
 ```
 
@@ -265,7 +265,7 @@ To achieve reactive disabling, we just have to take advantage of computed signal
 ```typescript
 class MyComponent {
   protected readonly lastNameDisabled = computed(
-    () => !this.formValue().generalInformation?.firstName
+    () => !this.formValue().generalInfo?.firstName
   );
 }
 ```
@@ -558,7 +558,7 @@ You can configure additional `validationOptions` at various levels like `form`, 
     <input
       type="text"
       name="userId"
-      [ngModel]="formValue().userId?"
+      [ngModel]="formValue().userId"
       [validationOptions]="{ debounceTime: 300 }"
     />
   </div>
@@ -648,11 +648,7 @@ Additionally, you need to ensure that both fields match.
 import { enforce, omitWhen, staticSuite, test } from 'vest';
 import { MyFormModel } from '../models/my-form.model';
 
-export const myFormModelSuite = staticSuite(
-  (model: MyFormModel, field?: string) => {
-    if (field) {
-      only(field);
-    }
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
     test('password', 'Password is required', () => {
       enforce(model.password).isNotBlank();
