@@ -25,11 +25,11 @@
     },
     {
       "name": "feat/*",
-      "prerelease": "feat-${(name.replace(/^feat\//, '').replace(/[^a-zA-Z0-9-_]/g, '') || 'branch')}"
+      "prerelease": "feat-${((typeof name === 'string' && name.replace(/^feat\\//, '').replace(/[^a-zA-Z0-9-_]/g, '')) ? name.replace(/^feat\\//, '').replace(/[^a-zA-Z0-9-_]/g, '') : 'branch') || 'branch'}"
     },
     {
       "name": "fix/*",
-      "prerelease": "fix-${(name.replace(/^fix\//, '').replace(/[^a-zA-Z0-9-_]/g, '') || 'branch')}"
+      "prerelease": "fix-${((typeof name === 'string' && name.replace(/^fix\\//, '').replace(/[^a-zA-Z0-9-_]/g, '')) ? name.replace(/^fix\\//, '').replace(/[^a-zA-Z0-9-_]/g, '') : 'branch') || 'branch'}"
     }
   ],
   "plugins": [
