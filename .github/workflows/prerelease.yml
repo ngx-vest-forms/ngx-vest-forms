@@ -63,7 +63,7 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ steps.branch.outputs.branch }}
-          fetch-depth: 100  # Fetch last 100 commits for security (usually sufficient for semantic-release)
+          fetch-depth: 0  # Fetch full history for semantic-release
 
       - name: Fetch tags for semantic-release
         run: |
