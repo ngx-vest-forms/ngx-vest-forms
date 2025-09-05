@@ -20,7 +20,7 @@
     },
     {
       "name": "fix/*",
-      "prerelease": "fix-${name.replace(/fix\\//g, '')}"
+      "prerelease": "fix-${name.replace(/fix\//g, '')}"
     }
   ],
   "plugins": [
