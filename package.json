@@ -16,7 +16,7 @@
     "postbuild:lib": "copyfiles README.md dist/ngx-vest-forms",
     "test:lib": "jest",
     "storybook:build": "npx ng run ngx-vest-forms:build-storybook",
-    "test:storybook:ci": "npx run-p --race test:storybook preview-storybook",
+    "test:storybook:ci": "npm run storybook:build && npx run-p --race test:storybook preview-storybook",
     "test:storybook": "wait-on http://127.0.0.1:6006 && test-storybook -c projects/ngx-vest-forms/.storybook --url http://127.0.0.1:6006 --",
     "preview-storybook": "http-server dist/storybook/ngx-vest-forms --port 6006 --silent",
     "test:ci": "npm run test:lib",
@@ -104,6 +104,9 @@
     "globalSetup": "jest-preset-angular/global-setup",
     "transformIgnorePatterns": [
       "node_modules/(?!(vest|n4s|vest-utils|vestjs-runtime|context|@angular|@storybook)/)"
+    ],
+    "modulePathIgnorePatterns": [
+      "dist/"
     ]
   },
   "publishConfig": {
