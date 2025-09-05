@@ -6,6 +6,10 @@ on:
       - 'release/**'
       - 'beta'
       - 'alpha'
+
+permissions:
+  contents: read
+
 jobs:
   ci:
     runs-on: ubuntu-latest

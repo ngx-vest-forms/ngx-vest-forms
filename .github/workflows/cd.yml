@@ -4,6 +4,13 @@ on:
     branches:
       - master
       - 'release/**'
+
+permissions:
+  contents: write  # For creating releases and updating changelog
+  issues: write    # For commenting on issues
+  pull-requests: write  # For commenting on PRs
+  id-token: write  # For provenance
+
 jobs:
   cd:
     concurrency: ci-${{ github.ref }}

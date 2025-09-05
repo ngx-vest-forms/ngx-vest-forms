@@ -8,6 +8,13 @@ on:
       - 'fix/**'
   pull_request:
     types: [labeled]
+
+permissions:
+  contents: write  # For creating releases and updating changelog
+  issues: write    # For commenting on issues
+  pull-requests: write  # For commenting on PRs
+  id-token: write  # For provenance
+
 jobs:
   prerelease:
     # Only run on beta/alpha branches or PRs with specific labels
