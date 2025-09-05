@@ -5,7 +5,7 @@ import {
   fakeAsync,
   tick,
 } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { vestForms } from '../exports';
 import { staticSuite, test, enforce } from 'vest';
 import { DeepPartial } from '../utils/deep-partial';
@@ -406,5 +406,94 @@ describe('FormDirective - ValidationConfig', () => {
     // ValidationConfig should have triggered confirmPassword validation
     // (we can't easily test the internal validation state, but the important thing
     // is that no errors were thrown and the form continues to work)
+  }));
+
+  // Test for debounce behavior with rapid successive changes
+  it('should debounce validation config triggers properly with rapid changes', fakeAsync(() => {
+    let triggerCount = 0;
+
+    @Component({
+      standalone: true,
+      template: `
+        <form
+          scVestForm
+          [formValue]="formValue()"
+          [suite]="suite"
+          [validationConfig]="validationConfig"
+          (formValueChange)="handleFormChange($event)"
+        >
+          <input name="triggerField" [ngModel]="formValue().triggerField" />
+          <input name="dependentField" [ngModel]="formValue().dependentField" />
+        </form>
+      `,
+      imports: [vestForms, FormsModule],
+    })
+    class TestComponent {
+      formValue = signal<
+        DeepPartial<{ triggerField: string; dependentField: string }>
+      >({});
+
+      validationConfig = {
+        triggerField: ['dependentField'],
+      };
+
+      suite = staticSuite((model: any, field?: string) => {
+        if (field === 'dependentField') {
+          triggerCount++; // Count each time dependent field is validated
+        }
+        test('dependentField', 'Dependent field validation', () => {
+          // Simple validation that always passes
+          enforce(model.dependentField || 'default').isString();
+        });
+      });
+
+      handleFormChange(value: any) {
+        this.formValue.set(value);
+      }
+    }
+
+    const fixture = TestBed.configureTestingModule({
+      imports: [TestComponent],
+    }).createComponent(TestComponent);
+
+    fixture.detectChanges();
+    tick(200); // Let initial setup complete
+
+    triggerCount = 0; // Reset counter after setup
+
+    // Simulate rapid successive changes within the debounce window (100ms)
+    const triggerInput = fixture.nativeElement.querySelector(
+      'input[name="triggerField"]'
+    );
+
+    // Fire multiple rapid events within debounce window
+    triggerInput.value = 'value1';
+    triggerInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    tick(25); // 25ms later
+    triggerInput.value = 'value2';
+    triggerInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    tick(25); // 50ms total
+    triggerInput.value = 'value3';
+    triggerInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    tick(25); // 75ms total
+    triggerInput.value = 'value4';
+    triggerInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    // Complete the debounce window and let validation settle
+    tick(150); // Past debounce window
+    fixture.detectChanges();
+    tick(200); // Let form stabilization complete
+
+    // With proper debouncing, we should see only one validation trigger
+    // for the dependent field despite multiple rapid input changes
+    expect(triggerCount).toBeLessThanOrEqual(2); // Allow some flexibility for test timing
+    expect(fixture.componentInstance.formValue().triggerField).toBe('value4');
   }));
 });

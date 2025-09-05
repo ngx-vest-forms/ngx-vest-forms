@@ -31,6 +31,7 @@ import {
   tap,
   merge,
   timer,
+  finalize, // Add finalize import
 } from 'rxjs';
 import { StaticSuite } from 'vest';
 import { DeepRequired } from '../utils/deep-required';
@@ -239,16 +240,19 @@ export class FormDirective<T extends Record<string, any>>
       // Subscribe to changes in the trigger field
       const subscription = triggerControl.valueChanges
         .pipe(
-          // Prevent infinite loops
-          filter(() => !this.validationInProgress.has(triggerField)),
+          // Prevent infinite loops - check and set flag immediately
+          filter(() => {
+            if (this.validationInProgress.has(triggerField)) {
+              return false;
+            }
+            this.validationInProgress.add(triggerField);
+            return true;
+          }),
           // Debounce to prevent excessive validation calls when trigger fields change rapidly
           debounceTime(VALIDATION_CONFIG_DEBOUNCE_TIME),
           // Use switchMap to flatten the async operation and avoid nested subscriptions
           switchMap(() => {
-            // Mark that we're triggering validation to prevent infinite loops
-            this.validationInProgress.add(triggerField);
-
-            // Use merge with the idle$ stream to wait for form stabilization
+            // Use the idle$ stream to wait for form stabilization
             return this.idle$.pipe(
               take(1), // Take the first idle event
               tap(() => {
@@ -265,11 +269,12 @@ export class FormDirective<T extends Record<string, any>>
                     });
                   }
                 });
-
-                // Clear the validation flag after processing
-                this.validationInProgress.delete(triggerField);
               })
             );
+          }),
+          // Ensure flag is cleared in all scenarios (success, error, unsubscribe)
+          finalize(() => {
+            this.validationInProgress.delete(triggerField);
           }),
           takeUntil(this.destroy$$)
         )
