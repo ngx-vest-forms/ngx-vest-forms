@@ -1,6 +1,36 @@
 {
   "branches": [
-    "master"
+    "master",
+    {
+      "name": "release/v1.x",
+      "range": "1.x.x",
+      "channel": "release-1.x"
+    },
+    {
+      "name": "release/v2.x",
+      "range": "2.x.x",
+      "channel": "release-2.x"
+    },
+    {
+      "name": "beta",
+      "prerelease": true
+    },
+    {
+      "name": "rc",
+      "prerelease": "rc"
+    },
+    {
+      "name": "alpha",
+      "prerelease": true
+    },
+    {
+      "name": "feat/*",
+      "prerelease": "feat-${((typeof name === 'string' && name.replace(/^feat\\//, '').replace(/[^a-zA-Z0-9-_]/g, '')) ? name.replace(/^feat\\//, '').replace(/[^a-zA-Z0-9-_]/g, '') : 'branch') || 'branch'}"
+    },
+    {
+      "name": "fix/*",
+      "prerelease": "fix-${((typeof name === 'string' && name.replace(/^fix\\//, '').replace(/[^a-zA-Z0-9-_]/g, '')) ? name.replace(/^fix\\//, '').replace(/[^a-zA-Z0-9-_]/g, '') : 'branch') || 'branch'}"
+    }
   ],
   "plugins": [
     "@semantic-release/release-notes-generator",

@@ -3,33 +3,41 @@ on:
   push:
     branches:
       - master
+      - 'release/**'
+
+permissions:
+  contents: write  # For creating releases and updating changelog
+  issues: write    # For commenting on issues
+  pull-requests: write  # For commenting on PRs
+  id-token: write  # For provenance
+
 jobs:
   cd:
     concurrency: ci-${{ github.ref }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout ✅
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Setup 🏗
+      - name: Setup
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      - name: Install ⚙️
+      - name: Install
         run: npm ci
       - name: Playwright install
         run: npx playwright install
-      - name: Build 🛠
+      - name: Build
         run: npm run build:ci
-      - name: Test 📋
+      - name: Test
         run: npm run test:ci
       - name: Storybook
         run: npm run storybook:build
-      - name: Integration test 📋
+      - name: Integration test
         run: npm run test:storybook:ci
-      - name: Publish 📢
+      - name: Publish
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
