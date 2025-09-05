@@ -3,26 +3,29 @@ on:
   pull_request:
     branches:
       - master
+      - 'release/**'
+      - 'beta'
+      - 'alpha'
 jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout ✅
-        uses: actions/checkout@v2
-      - name: Setup 🏗
-        uses: actions/setup-node@v2
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      - name: Install ⚙️
+      - name: Install
         run: npm ci
       - name: Playwright install
         run: npx playwright install
-      - name: Build 🛠
+      - name: Build
         run: npm run build:ci
-      - name: Test 📋
+      - name: Test
         run: npm run test:ci
       - name: Storybook
         run: npm run storybook:build
-      - name: Integration test 📋
+      - name: Integration test
         run: npm run test:storybook:ci
