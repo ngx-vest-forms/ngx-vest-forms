@@ -7,8 +7,17 @@
       "channel": "release-1.x"
     },
     {
+      "name": "release/v2.x",
+      "range": "2.x.x",
+      "channel": "release-2.x"
+    },
+    {
       "name": "beta",
       "prerelease": true
+    },
+    {
+      "name": "rc",
+      "prerelease": "rc"
     },
     {
       "name": "alpha",
@@ -16,11 +25,11 @@
     },
     {
       "name": "feat/*",
-      "prerelease": "feat-${name.replace(/feat\//g, '').replace(/[^a-zA-Z0-9-_]/g, '')}"
+      "prerelease": "feat-${name.replace(/feat//g, '').replace(/[^a-zA-Z0-9-_]/g, '')}"
     },
     {
       "name": "fix/*",
-      "prerelease": "fix-${name.replace(/fix\//g, '').replace(/[^a-zA-Z0-9-_]/g, '')}"
+      "prerelease": "fix-${name.replace(/fix//g, '').replace(/[^a-zA-Z0-9-_]/g, '')}"
     }
   ],
   "plugins": [

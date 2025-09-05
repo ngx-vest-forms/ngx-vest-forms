@@ -3,22 +3,31 @@ name: Prerelease
 on:
   workflow_dispatch:
     inputs:
-      prerelease_type:
-        description: 'Pre-release type'
+      branch_type:
+        description: 'Branch type'
         required: true
+        default: 'stable'
+        type: choice
+        options:
+          - stable          # Use predefined branch
+          - custom          # Use custom branch name
+
+      stable_branch:
+        description: 'Stable branch (when branch_type = stable)'
+        required: false
         default: 'beta'
         type: choice
         options:
           - alpha
           - beta
-      branch:
-        description: 'Branch to release from'
-        required: true
-        default: 'beta'
-        type: choice
-        options:
-          - alpha
-          - beta
+          - rc
+          - release/v1.x
+          - release/v2.x
+
+      custom_branch:
+        description: 'Custom branch name (when branch_type = custom, e.g., feat/awesome-feature, fix/critical-bug)'
+        required: false
+        type: string
 
 permissions:
   contents: write  # For creating releases and updating changelog
@@ -28,15 +37,33 @@ permissions:
 
 jobs:
   prerelease:
-    concurrency: prerelease-${{ github.event.inputs.branch }}
     runs-on: ubuntu-latest
+    concurrency: prerelease-${{ github.event.inputs.branch_type }}-${{ github.event.inputs.stable_branch }}${{ github.event.inputs.custom_branch }}
     steps:
+      - name: Determine branch
+        id: branch
+        run: |
+          if [ "${{ github.event.inputs.branch_type }}" = "stable" ]; then
+            echo "branch=${{ github.event.inputs.stable_branch }}" >> $GITHUB_OUTPUT
+          else
+            echo "branch=${{ github.event.inputs.custom_branch }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate branch input
+        run: |
+          BRANCH="${{ steps.branch.outputs.branch }}"
+          if [ -z "$BRANCH" ]; then
+            echo "Error: No branch specified"
+            exit 1
+          fi
+          echo "Releasing from branch: $BRANCH"
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-          # Checkout the specified branch
-          ref: ${{ github.event.inputs.branch }}
+          ref: ${{ steps.branch.outputs.branch }}
+          fetch-depth: 0  # Important for semantic-release
       - name: Setup
         uses: actions/setup-node@v4
         with:
@@ -58,4 +85,6 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: npx semantic-release
+        run: |
+          echo "Publishing prerelease from branch: ${{ steps.branch.outputs.branch }}"
+          npx semantic-release
