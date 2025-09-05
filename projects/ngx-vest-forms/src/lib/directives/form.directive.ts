@@ -202,11 +202,14 @@ export class FormDirective<T extends Record<string, any>>
     });
   }
 
+  /**
+   * Handles the initial setup of validation configuration after view initialization.
+   * This ensures that form controls are fully created and available before
+   * attempting to establish validation dependencies. The effect() in the constructor
+   * handles subsequent reactive updates when input signals change.
+   */
   public ngAfterViewInit(): void {
-    // Setup validation config when view is ready
-    timer(0).subscribe(() => {
-      this.setupValidationConfig();
-    });
+    this.setupValidationConfig();
   }
 
   private setupValidationConfig(): void {
@@ -245,7 +248,6 @@ export class FormDirective<T extends Record<string, any>>
             this.validationInProgress.add(triggerField);
 
             // Use merge with the idle$ stream to wait for form stabilization
-            // This replaces the hacky timer(10) with a proper form state check
             return this.idle$.pipe(
               take(1), // Take the first idle event
               tap(() => {
