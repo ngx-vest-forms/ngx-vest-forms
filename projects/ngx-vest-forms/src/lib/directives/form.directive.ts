@@ -42,6 +42,7 @@ import {
 } from '../utils/form-utils';
 import { validateShape } from '../utils/shape-validation';
 import { ValidationOptions } from './validation-options';
+import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
 
 @Directive({
   selector: 'form[scVestForm]',
@@ -240,8 +241,8 @@ export class FormDirective<T extends Record<string, any>>
         .pipe(
           // Prevent infinite loops
           filter(() => !this.validationInProgress.has(triggerField)),
-          // Small debounce to prevent excessive validation calls
-          debounceTime(50),
+          // Debounce to prevent excessive validation calls when trigger fields change rapidly
+          debounceTime(VALIDATION_CONFIG_DEBOUNCE_TIME),
           // Use switchMap to flatten the async operation and avoid nested subscriptions
           switchMap(() => {
             // Mark that we're triggering validation to prevent infinite loops
