@@ -96,13 +96,6 @@
     "type": "git",
     "url": "https://github.com/simplifiedcourses/ngx-vest-forms.git"
   },
-  "jest": {
-    "preset": "jest-preset-angular",
-    "setupFilesAfterEnv": [
-      "./projects/ngx-vest-forms/src/setup-jest.ts"
-    ],
-    "globalSetup": "jest-preset-angular/global-setup"
-  },
   "publishConfig": {
     "access": "public"
   }

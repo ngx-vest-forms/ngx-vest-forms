@@ -24,15 +24,6 @@
           },
           "defaultConfiguration": "production"
         },
-        "test": {
-          "builder": "@angular/build:karma",
-          "options": {
-            "codeCoverage": true,
-            "tsConfig": "projects/ngx-vest-forms/tsconfig.spec.json",
-            "polyfills": ["zone.js", "zone.js/testing"],
-            "karmaConfig": "projects/ngx-vest-forms/karma.conf.js"
-          }
-        },
         "storybook": {
           "builder": "@storybook/angular:start-storybook",
           "options": {
@@ -126,21 +117,6 @@
           "builder": "@angular/build:extract-i18n",
           "options": {
             "buildTarget": "examples:build"
-          }
-        },
-        "test": {
-          "builder": "@angular/build:karma",
-          "options": {
-            "polyfills": ["zone.js", "zone.js/testing"],
-            "tsConfig": "projects/examples/tsconfig.spec.json",
-            "inlineStyleLanguage": "scss",
-            "assets": [
-              "projects/examples/src/favicon.ico",
-              "projects/examples/src/assets"
-            ],
-            "styles": ["projects/examples/src/styles.scss"],
-            "scripts": [],
-            "karmaConfig": "projects/examples/karma.conf.js"
           }
         }
       }
