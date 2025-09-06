@@ -1,7 +1,7 @@
 import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
 import { Component, computed, signal } from '@angular/core';
 import { vestForms } from '../exports';
-import { userEvent, waitFor, within } from '@storybook/test';
+import { userEvent, waitFor, within } from 'storybook/test';
 import { expect } from '@storybook/jest';
 import {
   FormModel,
