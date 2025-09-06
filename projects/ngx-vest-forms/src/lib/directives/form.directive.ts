@@ -219,7 +219,10 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
    * @param validationOptions
    * @returns an asynchronous validator function
    */
-  public createAsyncValidator(field: string, validationOptions: ValidationOptions): AsyncValidatorFn {
+  public createAsyncValidator(
+    field: string,
+    validationOptions: ValidationOptions
+  ): AsyncValidatorFn {
     if (!this.suite()) {
       return () => of(null);
     }
@@ -235,7 +238,7 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
         };
         this.formValueCache[field].debounced = this.formValueCache[
           field
-          ].sub$$!.pipe(debounceTime(validationOptions.debounceTime));
+        ].sub$$!.pipe(debounceTime(validationOptions.debounceTime));
       }
       // Next the latest model in the cache for a certain field
       this.formValueCache[field].sub$$!.next(mod);
