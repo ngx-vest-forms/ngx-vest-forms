@@ -3,9 +3,9 @@
     <ng-content></ng-content>
   </div>
   <div class="sc-control-wrapper__errors">
-    <ul [hidden]="!invalid">
-      @for (error of errors; track error) {
-        <li>{{ error }}</li>
+    <ul [hidden]="!invalid()">
+      @for (error of errors(); track error) {
+      <li>{{ error }}</li>
       }
     </ul>
   </div>
