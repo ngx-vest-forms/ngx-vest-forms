@@ -30,8 +30,6 @@
             "styles": ["projects/ngx-vest-forms/.storybook/styles.scss"],
             "configDir": "projects/ngx-vest-forms/.storybook",
             "browserTarget": "ngx-vest-forms:build",
-            "compodoc": true,
-            "compodocArgs": ["-e", "json", "-d", "projects/ngx-vest-forms"],
             "port": 6006
           }
         },
@@ -40,8 +38,7 @@
           "options": {
             "configDir": "projects/ngx-vest-forms/.storybook",
             "browserTarget": "ngx-vest-forms:build",
-            "compodoc": true,
-            "compodocArgs": ["-e", "json", "-d", "projects/ngx-vest-forms"],
+            "compodoc": false,
             "outputDir": "dist/storybook/ngx-vest-forms"
           }
         }
