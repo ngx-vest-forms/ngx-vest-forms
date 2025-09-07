@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule, KeyValuePipe } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 import {
   arrayToObject,
   vestForms,
@@ -7,11 +7,11 @@ import {
 } from 'ngx-vest-forms';
 
 @Component({
-    selector: 'sc-phonenumbers',
-    imports: [CommonModule, vestForms, KeyValuePipe],
-    templateUrl: './phonenumbers.component.html',
-    styleUrls: ['./phonenumbers.component.scss'],
-    viewProviders: [vestFormsViewProviders]
+  selector: 'sc-phonenumbers',
+  imports: [vestForms, KeyValuePipe],
+  templateUrl: './phonenumbers.component.html',
+  styleUrls: ['./phonenumbers.component.scss'],
+  viewProviders: [vestFormsViewProviders],
 })
 export class PhonenumbersComponent {
   @Input() public values: { [key: string]: string } = {};
