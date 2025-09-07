@@ -4,13 +4,18 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { vestForms } from '../exports';
 import { staticSuite, test, enforce } from 'vest';
 import { DeepPartial } from '../utils/deep-partial';
+import { FormDirective } from '../directives/form.directive';
 
 import {
   BrowserTestingModule,
   platformBrowserTesting,
 } from '@angular/platform-browser/testing';
 
-describe('FormDirective - ValidationConfig', () => {
+/**
+ * Comprehensive test suite for FormDirective
+ * Tests validation config, modern Angular APIs, and directive functionality
+ */
+describe('FormDirective - Comprehensive', () => {
   beforeAll(() => {
     // Initialize the Angular testing environment
     TestBed.initTestEnvironment(BrowserTestingModule, platformBrowserTesting());
@@ -542,4 +547,96 @@ describe('FormDirective - ValidationConfig', () => {
     expect(triggerCount).toBeLessThanOrEqual(2); // Allow some flexibility for test timing
     expect(fixture.componentInstance.formValue().triggerField).toBe('value4');
   }));
+
+  // Modern Angular API Tests
+  describe('Modern Angular APIs', () => {
+    it('should use modern Angular patterns in FormDirective', fakeAsync(() => {
+      @Component({
+        standalone: true,
+        template: `
+          <form
+            scVestForm
+            [formValue]="formValue()"
+            [validationConfig]="validationConfig"
+          >
+            <input name="email" [ngModel]="formValue().email" />
+            <input name="confirmEmail" [ngModel]="formValue().confirmEmail" />
+          </form>
+        `,
+        imports: [vestForms, FormsModule],
+      })
+      class ModernTestComponent {
+        formValue = signal<
+          DeepPartial<{ email?: string; confirmEmail?: string }>
+        >({});
+        validationConfig = { email: ['confirmEmail'] };
+      }
+
+      const fixture = TestBed.createComponent(ModernTestComponent);
+      fixture.detectChanges();
+      tick();
+
+      // Test that the form works with modern signal-based inputs
+      expect(fixture.componentInstance.formValue()).toEqual({});
+
+      // Update the signal and verify reactivity
+      fixture.componentInstance.formValue.set({ email: 'test@example.com' });
+      fixture.detectChanges();
+      tick();
+
+      expect(fixture.componentInstance.formValue().email).toBe(
+        'test@example.com'
+      );
+
+      fixture.destroy();
+    }));
+
+    it('should handle reactive signal changes in validation config', fakeAsync(() => {
+      @Component({
+        standalone: true,
+        template: `
+          <form
+            scVestForm
+            [formValue]="formValue()"
+            [validationConfig]="validationConfig()"
+          >
+            <input name="field1" [ngModel]="formValue().field1" />
+            <input name="field2" [ngModel]="formValue().field2" />
+          </form>
+        `,
+        imports: [vestForms, FormsModule],
+      })
+      class ReactiveTestComponent {
+        formValue = signal<DeepPartial<{ field1?: string; field2?: string }>>(
+          {}
+        );
+        validationConfig = signal<{ [key: string]: string[] }>({});
+      }
+
+      const fixture = TestBed.createComponent(ReactiveTestComponent);
+      const component = fixture.componentInstance;
+      fixture.detectChanges();
+      tick();
+
+      // Verify initial state
+      expect(component.validationConfig()).toEqual({});
+
+      // Change validation config reactively using signals
+      component.validationConfig.set({ field1: ['field2'] });
+      fixture.detectChanges();
+      tick();
+
+      // Verify the change was applied
+      expect(component.validationConfig()).toEqual({ field1: ['field2'] });
+
+      // Test that form still works after config change
+      component.formValue.set({ field1: 'test' });
+      fixture.detectChanges();
+      tick();
+
+      expect(component.formValue().field1).toBe('test');
+
+      fixture.destroy();
+    }));
+  });
 });
