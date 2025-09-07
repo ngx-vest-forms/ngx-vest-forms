@@ -1,8 +1,7 @@
 import type { Config } from 'jest';
-import { createCjsPreset } from 'jest-preset-angular/presets/index.js';
 
-export default {
-  ...createCjsPreset(),
+const config: Config = {
+  preset: 'jest-preset-angular',
   setupFilesAfterEnv: ['<rootDir>/projects/ngx-vest-forms/src/setup-jest.ts'],
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/',
@@ -18,4 +17,10 @@ export default {
   ],
   coverageReporters: ['html', 'lcov', 'text-summary'],
   displayName: 'ngx-vest-forms',
-} satisfies Config;
+  // Handle ES modules from node_modules
+  transformIgnorePatterns: [
+    'node_modules/(?!(@angular|vest|n4s|vestjs-runtime|vest-utils|context)/.*)',
+  ],
+};
+
+export default config;
