@@ -666,6 +666,14 @@ export class AddressComponent {
 ```
 
 # Examples
+
+All examples can be found in the `projects/examples` folder.
+
+## Contributing & Releases
+
+For information about publishing releases, see [RELEASE.md](./RELEASE.md).
+
+Releases are automatically published when commits are pushed to the master branch using semantic-release and conventional commit messages.
 to check the examples, clone this repo and run:
 ```shell
 npm i

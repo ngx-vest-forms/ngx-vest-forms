@@ -4,6 +4,13 @@ on:
     branches:
       - master
       - 'release/**'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to release from'
+        required: false
+        default: 'master'
+        type: string
 
 permissions:
   contents: write  # For creating releases and updating changelog
@@ -16,10 +23,23 @@ jobs:
     concurrency: ci-${{ github.ref }}
     runs-on: ubuntu-latest
     steps:
+      - name: Show release information
+        run: |
+          echo "Releasing from branch: ${{ github.event.inputs.branch || github.ref_name }}"
+          echo "Trigger: ${{ github.event_name }}"
+          
       - name: Checkout
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          ref: ${{ github.event.inputs.branch || github.ref }}
+          fetch-depth: 0  # Fetch full history for semantic-release
+          
+      - name: Fetch tags for semantic-release
+        run: |
+          git fetch --depth=1 origin +refs/tags/*:refs/tags/* || true
+          echo "Available recent tags:"
+          git tag --sort=-version:refname | head -10 || echo "No tags found"
       - name: Setup
         uses: actions/setup-node@v4
         with:
