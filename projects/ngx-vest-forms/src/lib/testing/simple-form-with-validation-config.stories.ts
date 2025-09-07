@@ -1,15 +1,13 @@
 import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
 import { Component, computed, signal } from '@angular/core';
 import { vestForms } from '../exports';
-import { getByText, userEvent, waitFor, within } from 'storybook/test';
-import { expect } from '@storybook/jest';
+import { userEvent, within, expect } from 'storybook/test';
 import {
   FormModel,
   formShape,
   formValidationSuite,
   selectors,
 } from './simple-form';
-import { JsonPipe } from '@angular/common';
 
 @Component({
   template: `
@@ -111,7 +109,7 @@ import { JsonPipe } from '@angular/common';
       </fieldset>
     </form>
   `,
-  imports: [vestForms, JsonPipe],
+  imports: [vestForms],
 })
 export class FormDirectiveDemoComponent {
   protected readonly formValue = signal<FormModel>({});
@@ -176,7 +174,9 @@ export const ShouldRetriggerByValidationConfig: StoryObj = {
   // This test fails due to known race conditions that are fixed in the main branch
   play: async ({ canvasElement }) => {
     // Test temporarily disabled - known issue fixed in PR #28
-    console.log('ShouldRetriggerByValidationConfig test disabled - race condition fix pending');
+    console.log(
+      'ShouldRetriggerByValidationConfig test disabled - race condition fix pending'
+    );
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByTestId(selectors.btnSubmit));
     await expect(
@@ -264,6 +264,8 @@ export const ShouldReactToDynamicValidationConfig: StoryObj = {
     //   ).toHaveTextContent('Confirm password is required');
     // });
     // Test temporarily disabled - known issue fixed in PR #28
-    console.log('ShouldReactToDynamicValidationConfig test disabled - race condition fix pending');
+    console.log(
+      'ShouldReactToDynamicValidationConfig test disabled - race condition fix pending'
+    );
   },
 };
