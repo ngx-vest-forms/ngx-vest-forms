@@ -130,4 +130,16 @@ export class PurchaseFormComponent {
       this.loading.set(false);
     });
   }
+
+  protected reset(): void {
+    // Reset form data to empty state
+    this.formValue.set({});
+
+    // Reset form validation state
+    this.formValid.set(false);
+    this.errors.set({});
+
+    // Reset shipping address state
+    this.shippingAddress.set({});
+  }
 }
