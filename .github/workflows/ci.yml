@@ -25,8 +25,6 @@ jobs:
           cache: 'npm'
       - name: Install
         run: npm ci
-      - name: Clear npm cache (prevent SWC native binding issues)
-        run: npm cache clean --force
       - name: Playwright install
         run: npx playwright install
       - name: Build
