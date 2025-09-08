@@ -18,6 +18,9 @@ const config: Config = {
   ],
   coverageReporters: ['html', 'lcov', 'text-summary'],
   displayName: 'ngx-vest-forms',
+  moduleNameMapper: {
+    '^ngx-vest-forms': '<rootDir>/projects/ngx-vest-forms/src/public-api.ts',
+  },
   // Handle ES modules from node_modules
   transformIgnorePatterns: [
     'node_modules/(?!(@angular|vest|n4s|vestjs-runtime|vest-utils|context)/.*)',
