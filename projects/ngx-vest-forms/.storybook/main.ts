@@ -12,12 +12,5 @@ const config: StorybookConfig = {
     name: '@storybook/angular',
     options: {},
   },
-  env: (config) => ({
-    ...config,
-    NODE_ENV: 'test',
-  }),
-  typescript: {
-    check: false,
-  },
 };
 export default config;

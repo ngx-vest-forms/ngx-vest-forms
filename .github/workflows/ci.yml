@@ -31,3 +31,5 @@ jobs:
         run: npm run build:ci
       - name: Test
         run: npm run test:ci
+      - name: Integration test
+        run: npm run storybook:test

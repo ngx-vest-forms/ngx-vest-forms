@@ -98,8 +98,6 @@ jobs:
         run: npm run build:ci
       - name: Test
         run: npm run test:ci
-      - name: Storybook
-        run: npm run storybook:build
       - name: Integration test
         run: npm run storybook:test
       - name: Publish prerelease
