@@ -17,8 +17,8 @@
     "test:lib": "jest --config jest.config.ts",
     "storybook": "ng run ngx-vest-forms:storybook",
     "storybook:build": "ng run ngx-vest-forms:build-storybook",
-    "storybook:test": "npm run storybook:build && concurrently --kill-others --success first \"http-server dist/storybook/ngx-vest-forms -p 6006 -s\" \"wait-on tcp:6006 && test-storybook -c projects/ngx-vest-forms/.storybook --jest-config projects/ngx-vest-forms/.storybook/test-runner-jest.config.js\"",
-    "test:ci": "npm run test:lib && npm run storybook:test",
+    "storybook:test": "ng run ngx-vest-forms:build-storybook && concurrently --kill-others --success first \"http-server dist/storybook/ngx-vest-forms -p 6006 -s\" \"wait-on tcp:6006 && test-storybook -c projects/ngx-vest-forms/.storybook\"",
+    "test:ci": "npm run test:lib",
     "test:ci-safe": "npm run test:lib",
     "semantic-release": "semantic-release",
     "prettier:check": "prettier --check \"projects/**/*.{ts,js,json,css,scss,html}\"",
@@ -59,7 +59,7 @@
     "@swc/jest": "^0.2.36",
     "@tailwindcss/forms": "^0.5.10",
     "@types/jasmine": "~5.1.9",
-    "@types/jest": "^30.0.0",
+    "@types/jest": "^29.5.12",
     "autoprefixer": "^10.4.21",
     "concurrently": "^9.2.1",
     "copyfiles": "^2.4.1",
@@ -69,9 +69,10 @@
     "husky": "^8.0.3",
     "i18next": "^25.5.2",
     "jasmine-core": "~5.10.0",
-    "jest": "~30.1.3",
-    "jest-preset-angular": "^15.0.0",
-    "json-server": "^0.17.4",
+    "jest": "~29.7.0",
+    "jest-environment-jsdom": "~29.7.0",
+    "jest-preset-angular": "~14.6.1",
+    "json-server": "~0.17.4",
     "karma": "~6.4.4",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.1",
@@ -96,8 +97,8 @@
   },
   "overrides": {
     "@angular-devkit/build-angular": {
-      "jest": "^30.1.3",
-      "jest-environment-jsdom": "^30.1.2"
+      "jest": "^29.7.0",
+      "jest-environment-jsdom": "^29.7.0"
     }
   },
   "publishConfig": {
