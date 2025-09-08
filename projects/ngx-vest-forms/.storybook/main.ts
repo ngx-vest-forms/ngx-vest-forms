@@ -6,7 +6,7 @@ const config: StorybookConfig = {
     '@storybook/addon-links',
     '@chromatic-com/storybook',
     '@storybook/addon-coverage',
-    '@storybook/addon-docs'
+    '@storybook/addon-docs',
   ],
   framework: {
     name: '@storybook/angular',
