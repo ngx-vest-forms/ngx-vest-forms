@@ -103,7 +103,7 @@ jobs:
       - name: Publish prerelease
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Publishing prerelease from branch: ${{ steps.branch.outputs.branch }}"
           npx semantic-release
