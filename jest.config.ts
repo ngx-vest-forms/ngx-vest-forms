@@ -8,6 +8,9 @@ const config: Config = {
     '<rootDir>/dist/',
     '<rootDir>/projects/examples/',
   ],
+  modulePathIgnorePatterns: [
+    '<rootDir>/dist/',
+  ],
   collectCoverageFrom: [
     'projects/ngx-vest-forms/src/lib/**/*.ts',
     '!projects/ngx-vest-forms/src/lib/**/*.spec.ts',
