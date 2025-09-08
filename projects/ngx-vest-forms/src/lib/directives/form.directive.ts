@@ -29,6 +29,7 @@ import {
   take,
   tap,
   finalize,
+  takeUntil,
 } from 'rxjs';
 import { StaticSuite } from 'vest';
 import { DeepRequired } from '../utils/deep-required';
@@ -142,12 +143,6 @@ export class FormDirective<T extends Record<string, any>>
     distinctUntilChanged()
   );
 
-  private validationConfigSubscriptions = new Map<
-    string,
-    { unsubscribe(): void }
-  >();
-  private readonly validationInProgress = new Set<string>();
-
   /**
    * Fired when the status of the root form changes.
    */
@@ -175,13 +170,9 @@ export class FormDirective<T extends Record<string, any>>
     }>;
   } = {};
 
-  public constructor() {
-    // Register cleanup for validation config subscriptions
-    this.destroyRef.onDestroy(() => {
-      this.validationConfigSubscriptions.forEach((sub) => sub.unsubscribe());
-      this.validationConfigSubscriptions.clear();
-    });
+  private readonly validationInProgress = new Set<string>();
 
+  public constructor() {
     /**
      * Trigger shape validations if the form gets updated
      * This is how we can throw run-time errors
@@ -220,10 +211,6 @@ export class FormDirective<T extends Record<string, any>>
   }
 
   private setupValidationConfig(): void {
-    // Clean up all existing subscriptions
-    this.validationConfigSubscriptions.forEach((sub) => sub.unsubscribe());
-    this.validationConfigSubscriptions.clear();
-
     const config = this.validationConfig();
     if (!config) {
       return;
@@ -243,7 +230,7 @@ export class FormDirective<T extends Record<string, any>>
       }
 
       // Subscribe to changes in the trigger field
-      const subscription = triggerControl.valueChanges
+      triggerControl.valueChanges
         .pipe(
           // Prevent infinite loops - check and set flag immediately
           filter(() => {
@@ -280,12 +267,9 @@ export class FormDirective<T extends Record<string, any>>
           // Ensure flag is cleared in all scenarios (success, error, unsubscribe)
           finalize(() => {
             this.validationInProgress.delete(triggerField);
-          }),
-          takeUntilDestroyed(this.destroyRef)
+          })
         )
         .subscribe();
-
-      this.validationConfigSubscriptions.set(triggerField, subscription);
     });
   }
 
