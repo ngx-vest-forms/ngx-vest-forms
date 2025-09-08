@@ -267,7 +267,8 @@ export class FormDirective<T extends Record<string, any>>
           // Ensure flag is cleared in all scenarios (success, error, unsubscribe)
           finalize(() => {
             this.validationInProgress.delete(triggerField);
-          })
+          }),
+          takeUntilDestroyed(this.destroyRef)
         )
         .subscribe();
     });
