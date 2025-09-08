@@ -17,7 +17,7 @@
     "test:lib": "jest --config jest.config.ts",
     "storybook": "ng run ngx-vest-forms:storybook",
     "storybook:build": "ng run ngx-vest-forms:build-storybook",
-    "storybook:test": "ng run ngx-vest-forms:build-storybook && concurrently --kill-others --success first \"http-server dist/storybook/ngx-vest-forms -p 6006 -s\" \"wait-on tcp:6006 && test-storybook -c projects/ngx-vest-forms/.storybook\"",
+    "storybook:test": "rm -rf dist/ngx-vest-forms && ng run ngx-vest-forms:build-storybook && concurrently --kill-others --success first \"http-server dist/storybook/ngx-vest-forms -p 6006 -s\" \"wait-on tcp:6006 && test-storybook -c projects/ngx-vest-forms/.storybook\"",
     "test:ci": "npm run test:lib",
     "semantic-release": "semantic-release",
     "prettier:check": "prettier --check \"projects/**/*.{ts,js,json,css,scss,html}\"",
