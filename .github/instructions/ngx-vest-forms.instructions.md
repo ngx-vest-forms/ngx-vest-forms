@@ -286,6 +286,34 @@ export const createAsyncValidationSuite = (apiService: ApiService) => {
 
 ### Dependent Field Validation
 
+#### Understanding the Architectural Separation
+
+**Critical Concept**: Vest.js and Angular handle different aspects of form validation:
+
+| Responsibility | Handled By | Description |
+|---|---|---|
+| **Validation Logic** | Vest.js | Defines what makes a field valid/invalid |
+| **Form Control Lifecycle** | Angular | When to run validation and update UI |
+| **Cross-field Dependencies** | `validationConfig` | Tells Angular when to revalidate related fields |
+
+**Why `validationConfig` Cannot Be Replaced:**
+
+Vest.js can express cross-field validation logic (e.g., "passwords must match"), but it **cannot trigger Angular to revalidate a different form control** when a dependency changes. Only Angular can call `updateValueAndValidity()` on form controls.
+
+**The Gap `validationConfig` Fills:**
+
+```typescript
+// ❌ Without validationConfig:
+// User changes password → only password field validates
+// confirmPassword field shows stale validation state
+
+// ✅ With validationConfig:
+// User changes password → both password AND confirmPassword validate
+// All dependent fields show current validation state
+```
+
+#### Implementation Pattern
+
 ```typescript
 // Component
 protected readonly validationConfig = {
@@ -416,6 +444,33 @@ ngOnInit() {
     }
   });
 }
+```
+
+#### When to Use Each Approach
+
+**Use Vest.js `omitWhen()` for:**
+- Conditional validation logic (e.g., "validate field X only if condition Y")
+- Complex business rules within the validation suite
+- Optimizing which validations run
+
+**Use `validationConfig` for:**
+- Triggering Angular to revalidate dependent fields
+- Cross-field dependencies where changing field X should revalidate field Y
+- Ensuring UI error states update correctly
+
+**Example - Both Working Together:**
+```typescript
+// validationConfig: Tells Angular WHEN to revalidate
+protected readonly validationConfig = {
+  'password': ['confirmPassword']
+};
+
+// Vest suite: Defines WHAT validation logic to run
+omitWhen(!model.password || !model.confirmPassword, () => {
+  test('confirmPassword', 'Passwords must match', () => {
+    enforce(model.confirmPassword).equals(model.password);
+  });
+});
 ```
 
 ## Common Gotchas & Solutions
