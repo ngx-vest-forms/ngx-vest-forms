@@ -1,35 +1,92 @@
+<!-- prettier-ignore -->
+<div align="center">
+
+<img src="./course.jpeg" alt="ngx-vest-forms" align="center" height="96" />
+
 # ngx-vest-forms
 
-### Introduction
+[![npm version](https://img.shields.io/npm/v/ngx-vest-forms.svg?style=flat-square)](https://www.npmjs.com/package/ngx-vest-forms)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/ngx-vest-forms/ngx-vest-forms/build-test.yml?style=flat-square&label=Build)](https://github.com/ngx-vest-forms/ngx-vest-forms/actions)
+[![Angular](https://img.shields.io/badge/Angular-18+-dd0031?style=flat-square&logo=angular)](https://angular.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
-This is a very lightweight adapter for Angular template-driven forms and [vestjs](https://vestjs.dev).
-This package gives us the ability to create unidirectional forms without any boilerplate.
-It is meant for complex forms with a high focus on complex validations and conditionals.
+⭐ If you like this project, star it on GitHub — it helps a lot!
 
-All the validations are asynchronous and use [vestjs](https://vestjs.dev) suites that can be re-used
-across different frameworks and technologies.
+[Overview](#overview) • [Getting Started](#getting-started) • [Features](#features) • [Examples](#examples) • [Validations](#validations) • [Resources](#resources)
+
+</div>
+
+> [!NOTE]
+> **New Maintainer**: I'm [the-ult](https://bsky.app/profile/the-ult.bsky.social), now maintaining this project as Brecht Billiet has moved on to other priorities. Huge thanks to Brecht for creating this amazing library and his foundational work on Angular forms!
+
+A lightweight, type-safe adapter between Angular template-driven forms and [Vest.js](https://vestjs.dev) validation. Build complex forms with unidirectional data flow, sophisticated async validations, and zero boilerplate.
+
+## Overview
+
+**ngx-vest-forms** transforms Angular template-driven forms into a powerful, type-safe solution for complex form scenarios. By combining Angular's simplicity with Vest.js's validation power, you get:
+
+- **🔄 Unidirectional Data Flow** - Predictable state management with Angular signals
+- **🛡️ Type Safety** - Full TypeScript support with runtime shape validation
+- **⚡ Async Validations** - Built-in support for complex, conditional validations
+- **🎯 Zero Boilerplate** - Automatic form control creation and validation wiring
+- **🔀 Conditional Logic** - Show/hide fields and validation rules dynamically
+- **📦 Reusable Validations** - Share validation suites across frameworks
+
+### Why Choose ngx-vest-forms?
+
+Traditional Angular reactive forms require extensive boilerplate for complex scenarios. Template-driven forms are simpler but lack type safety and advanced validation features. **ngx-vest-forms bridges this gap**, giving you the best of both worlds.
+
+```typescript
+// Before: Complex reactive form setup
+const form = this.fb.group({
+  generalInfo: this.fb.group({
+    firstName: ['', [Validators.required]],
+    lastName: ['', [Validators.required]]
+  })
+});
+
+// After: Simple, type-safe template-driven approach
+protected readonly formValue = signal<MyFormModel>({});
+protected readonly suite = myValidationSuite;
+```
+
+## Getting Started
+
+### Prerequisites
+
+- **Angular**: >=18.0.0 (Signals support required)
+- **Vest.js**: >=5.4.6 (Validation engine)
+- **TypeScript**: >=5.8.0 (Modern Angular features)
+- **Node.js**: >=22.0.0 (Required for Angular 18+)
 
 ### Installation
 
-You can install the package by running:
-
-```shell
-npm i ngx-vest-forms
+```bash
+npm install ngx-vest-forms
 ```
 
-### Creating a simple form
+### Quick Start
 
-Let's start by explaining how to create a simple form.
-I want a form with a form group called `general` info that has 2 properties:
+Create your first ngx-vest-forms component in 3 simple steps:
 
-- `firstName`
-- `lastName`
+#### Step 1: Define your form model
 
-We need to import the `vestForms` const in the imports section of the `@Component` decorator.
-Now we can apply the `scVestForm` directive to the `form` tag and listen to the `formValueChange` output to feed our signal.
-In the form we create a form group for `generalInfo` with the `ngModelGroup` directive.
-And we crate 2 inputs with the `name` attribute and the `[ngModel]` input.
-**Do note that we are not using the banana in the box syntax but only tha square brackets, resulting in a unidirectional dataflow**
+```typescript
+import { signal } from '@angular/core';
+import { vestForms, DeepPartial } from 'ngx-vest-forms';
+
+type MyFormModel = DeepPartial<{
+  generalInfo: {
+    firstName: string;
+    lastName: string;
+  };
+}>;
+```
+
+#### Step 2: Set up your component
+
+Use `[ngModel]` (not `[(ngModel)]`) for unidirectional data flow:
 
 ```typescript
 import { vestForms, DeepPartial } from 'ngx-vest-forms';
@@ -74,10 +131,46 @@ export class MyComponent {
 }
 ```
 
-**Note: Template-driven forms are deep partial, so always use the `?` operator in your templates.**
+#### Step 3: That's it! 🎉
 
-That's it! This will feed the `formValue` signal and angular will create a form group and 2 form controls for us automatically.
-The object that will be fed in the `formValue` signal will look like this:
+Your form automatically creates FormGroups and FormControls with type-safe, unidirectional data flow.
+
+> [!IMPORTANT]
+> Notice we use `[ngModel]` (not `[(ngModel)]`) for unidirectional data flow, and the `?` operator since template-driven forms are `DeepPartial`.
+
+## Features
+
+### Core Features
+
+- **Unidirectional Data Flow** - Predictable state management with Angular signals
+- **Type Safety** - Full TypeScript support with `DeepPartial<T>` and `DeepRequired<T>`
+- **Zero Boilerplate** - Automatic FormControl and FormGroup creation
+- **Shape Validation** - Runtime validation against your TypeScript models (dev mode)
+
+### Advanced Validation
+
+- **Async Validations** - Built-in support with AbortController
+- **Conditional Logic** - Use `omitWhen()` for conditional validation rules
+- **Composable Suites** - Reusable validation functions across projects
+- **Custom Debouncing** - Configure validation timing per field or form
+
+### Dynamic Forms
+
+- **Conditional Fields** - Show/hide fields based on form state
+- **Form Arrays** - Dynamic lists with add/remove functionality
+- **Reactive Disabling** - Disable fields based on computed signals
+- **State Management** - Preserve field state across conditional rendering
+
+### Developer Experience
+
+- **Runtime Shape Checking** - Catch typos in `name` attributes early
+- **Built-in Error Display** - `sc-control-wrapper` component for consistent UX
+- **Validation Config** - Declare field dependencies for complex scenarios
+- **Modern Angular** - Built for Angular 18+ with standalone components
+
+## Basic Usage
+
+The form value will be automatically populated like this:
 
 ```typescript
 formValue = {
@@ -104,14 +197,14 @@ form = {
 }
 ```
 
-The `scVestForm` directive offers some basic outputs for us though:
+The `scVestForm` directive offers these outputs:
 
-| Output               | Description                                                                                                                             |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| formValueChange<T>   | Emits when the form value changes. But debounces<br/> the events since template-driven forms are created by the<br/>framework over time |
-| dirtyChange<boolean> | Emits when the dirty state of the form changes                                                                                          |
-| validChange<boolean> | Emits when the form becomes dirty or pristine                                                                                           |
-| errorsChange         | Emits an entire list of the form and all its form groups and controls                                                                   |
+| Output            | Description                                                                                     |
+| ----------------- | ----------------------------------------------------------------------------------------------- |
+| `formValueChange` | Emits when the form value changes (debounced since template-driven forms are created over time) |
+| `dirtyChange`     | Emits when the dirty state of the form changes                                                  |
+| `validChange`     | Emits when the form becomes valid or invalid                                                    |
+| `errorsChange`    | Emits the complete list of errors for the form and all its controls                             |
 
 ### Avoiding typo's
 
@@ -281,6 +374,133 @@ We can bind the computed signal to the `disabled` directive of Angular.
 />
 ```
 
+## Examples
+
+### Simple Form with Validation
+
+Here's a complete example showing form setup, validation, and error display:
+
+```typescript
+import { Component, signal } from '@angular/core';
+import { staticSuite, test, enforce } from 'vest';
+import { vestForms, DeepPartial, DeepRequired } from 'ngx-vest-forms';
+
+// 1. Define your form model
+type UserFormModel = DeepPartial<{
+  firstName: string;
+  lastName: string;
+  email: string;
+}>;
+
+// 2. Create a shape for runtime validation (recommended)
+const userFormShape: DeepRequired<UserFormModel> = {
+  firstName: '',
+  lastName: '',
+  email: '',
+};
+
+// 3. Create a Vest validation suite
+const userValidationSuite = staticSuite(
+  (model: UserFormModel, field?: string) => {
+    if (field) {
+      only(field); // Critical for performance - only validate the active field
+    }
+
+    test('firstName', 'First name is required', () => {
+      enforce(model.firstName).isNotBlank();
+    });
+
+    test('lastName', 'Last name is required', () => {
+      enforce(model.lastName).isNotBlank();
+    });
+
+    test('email', 'Valid email is required', () => {
+      enforce(model.email).isEmail();
+    });
+  }
+);
+
+@Component({
+  selector: 'app-user-form',
+  imports: [vestForms],
+  template: `
+    <form
+      scVestForm
+      [suite]="suite"
+      [formShape]="shape"
+      (formValueChange)="formValue.set($event)"
+      (ngSubmit)="onSubmit()"
+    >
+      <div sc-control-wrapper>
+        <label>First Name</label>
+        <input [ngModel]="formValue().firstName" name="firstName" />
+      </div>
+
+      <div sc-control-wrapper>
+        <label>Last Name</label>
+        <input [ngModel]="formValue().lastName" name="lastName" />
+      </div>
+
+      <div sc-control-wrapper>
+        <label>Email</label>
+        <input [ngModel]="formValue().email" name="email" type="email" />
+      </div>
+
+      <button type="submit">Submit</button>
+    </form>
+  `,
+})
+export class UserFormComponent {
+  protected readonly formValue = signal<UserFormModel>({});
+  protected readonly suite = userValidationSuite;
+  protected readonly shape = userFormShape;
+
+  protected onSubmit() {
+    console.log('Form submitted:', this.formValue());
+  }
+}
+```
+
+### Conditional Fields Example
+
+```typescript
+@Component({
+  template: `
+    <form scVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
+      <!-- Age field -->
+      <div sc-control-wrapper>
+        <label>Age</label>
+        <input [ngModel]="formValue().age" name="age" type="number" />
+      </div>
+
+      <!-- Emergency contact - only required if under 18 -->
+      @if (emergencyContactRequired()) {
+        <div sc-control-wrapper>
+          <label>Emergency Contact</label>
+          <input
+            [ngModel]="formValue().emergencyContact"
+            name="emergencyContact"
+          />
+        </div>
+      }
+    </form>
+  `,
+})
+export class ConditionalFormComponent {
+  protected readonly formValue = signal<ConditionalFormModel>({});
+
+  // Computed signal for conditional logic
+  protected readonly emergencyContactRequired = computed(
+    () => (this.formValue().age || 0) < 18
+  );
+}
+```
+
+### Live Examples
+
+- **[Purchase Form Demo](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/projects/examples/src/app/components/smart/purchase-form)** - Complex form with nested objects, validation dependencies, and conditional logic
+- **[Business Hours Demo](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/projects/examples/src/app/components/smart/business-hours-form)** - Dynamic form arrays with complex validation rules
+
 ### Validations
 
 The absolute gem in ngx-vest-forms is the flexibility in validations without writing any boilerplate.
@@ -295,6 +515,41 @@ but that are highly flexible:
 - [x] Write validations on form controls
 - [x] Composable/reuse-able different validation suites
 - [x] Write conditional validations
+
+### Validation Performance with `only()`
+
+ngx-vest-forms automatically optimizes validation performance by running validations only for the field being interacted with. This is achieved through Vest's `only()` function:
+
+```typescript
+import { enforce, only, staticSuite, test } from 'vest';
+
+export const myFormModelSuite = staticSuite(
+  (model: MyFormModel, field?: string) => {
+    if (field) {
+      only(field); // Only validate the specific field during user interaction
+    }
+    // When field is undefined (e.g., on submit), all validations run
+
+    test('firstName', 'First name is required', () => {
+      enforce(model.firstName).isNotBlank();
+    });
+    test('lastName', 'Last name is required', () => {
+      enforce(model.lastName).isNotBlank();
+    });
+  }
+);
+```
+
+This pattern ensures:
+
+- ✅ During typing/blur: Only the current field validates (better performance)
+- ✅ On form submit: All fields validate (complete validation)
+- ✅ Untouched fields don't show errors prematurely (better UX)
+
+> [!IMPORTANT]
+> Always include the optional `field?: string` parameter in your suite and use the `only(field)` pattern. The library automatically passes the field name during individual field validation.
+
+### Basic Validation Suite
 
 This is how you write a simple Vest suite:
 
@@ -773,25 +1028,61 @@ export class AddressComponent {
 }
 ```
 
-# Examples
+## Resources
 
-to check the examples, clone this repo and run:
+### Documentation & Tutorials
 
-```shell
-npm i
+- **[Angular Official Documentation](https://angular.dev/guide/forms)** - Template-driven forms guide
+- **[Vest.js Documentation](https://vestjs.dev)** - Validation framework used by ngx-vest-forms
+- **[Live Examples Repository](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/projects/examples)** - Complex form examples and patterns
+- **[Interactive Stackblitz Demo](https://stackblitz.com/~/github.com/simplifiedcourses/ngx-vest-forms-stackblitz)** - Try it in your browser
+
+### Running Examples Locally
+
+Clone this repo and run the examples:
+
+```bash
+npm install
 npm start
 ```
 
-There is an example of a complex form with a lot of conditionals and specifics,
-and there is an example of a form array with complex validations that is used to
-create a form to add business hours. A free tutorial will follow soon.
+### Learning Resources
 
-You can check the examples in the github repo [here](https://github.com/simplifiedcourses/ngx-vest-forms/blob/master/projects/examples).
-[Here](https://stackblitz.com/~/github.com/simplifiedcourses/ngx-vest-forms-stackblitz){:target="\_blank"} is a stackblitz example for you.
-It's filled with form complexities and also contains form array logic.
+[![Angular Forms Course](course.jpeg)](https://www.simplified.courses/complex-angular-template-driven-forms)
 
-## Want to learn more?
+**[Complex Angular Template-Driven Forms Course](https://www.simplified.courses/complex-angular-template-driven-forms)** - Master advanced form patterns and become a form expert.
 
-[![course.jpeg](course.jpeg)](https://www.simplified.courses/complex-angular-template-driven-forms)
+### Founding Articles by Brecht Billiet
 
-[This course](https://www.simplified.courses/complex-angular-template-driven-forms) teaches you to become a form expert in no time.
+This library was originally created by [Brecht Billiet](https://twitter.com/brechtbilliet). Here are his foundational blog posts that inspired and guided the development:
+
+- **[Introducing ngx-vest-forms](https://blog.simplified.courses/introducing-ngx-vest-forms/)** - The original introduction and motivation
+- **[Making Angular Template-Driven Forms Type-Safe](https://blog.simplified.courses/making-angular-template-driven-forms-typesafe/)** - Deep dive into type safety
+- **[Asynchronous Form Validators in Angular with Vest](https://blog.simplified.courses/asynchronous-form-validators-in-angular-with-vest/)** - Advanced async validation patterns
+- **[Template-Driven Forms with Form Arrays](https://blog.simplified.courses/template-driven-forms-with-form-arrays/)** - Dynamic form arrays implementation
+
+### Community & Support
+
+- **[GitHub Issues](https://github.com/ngx-vest-forms/ngx-vest-forms/issues)** - Report bugs or request features
+- **[GitHub Discussions](https://github.com/ngx-vest-forms/ngx-vest-forms/discussions)** - Ask questions and share ideas
+- **[npm Package](https://www.npmjs.com/package/ngx-vest-forms)** - Official package page
+
+## Contributing
+
+We welcome contributions! This project follows standard open-source contribution practices:
+
+1. **Fork** the repository
+2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
+3. **Commit** your changes: `git commit -m 'Add amazing feature'`
+4. **Push** to the branch: `git push origin feature/amazing-feature`
+5. **Open** a Pull Request
+
+Please read our contribution guidelines and code of conduct before contributing.
+
+## Acknowledgments
+
+🙏 **Special thanks to [Brecht Billiet](https://twitter.com/brechtbilliet)** for creating the original version of this library and his pioneering work on Angular forms. His vision and expertise laid the foundation for what ngx-vest-forms has become today.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
