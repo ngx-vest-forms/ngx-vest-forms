@@ -538,7 +538,7 @@ result.isPending('username'); // boolean for specific field
 
 ### 1. Form Validation Suite Structure
 ```typescript
-import { staticSuite, test, enforce, only, omitWhen, ROOT_FORM } from 'vest';
+import { staticSuite, test, enforce, only, omitWhen } from 'vest';
 import { DeepPartial, ROOT_FORM } from 'ngx-vest-forms';
 
 type MyFormModel = DeepPartial<{
