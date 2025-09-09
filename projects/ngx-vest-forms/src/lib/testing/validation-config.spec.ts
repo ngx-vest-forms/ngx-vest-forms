@@ -1,26 +1,15 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { FormsModule, NgForm } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { vestForms } from '../exports';
 import { staticSuite, test, enforce } from 'vest';
 import { DeepPartial } from '../utils/deep-partial';
-import { FormDirective } from '../directives/form.directive';
-
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
 
 /**
  * Comprehensive test suite for FormDirective
  * Tests validation config, modern Angular APIs, and directive functionality
  */
 describe('FormDirective - Comprehensive', () => {
-  beforeAll(() => {
-    // Initialize the Angular testing environment
-    TestBed.initTestEnvironment(BrowserTestingModule, platformBrowserTesting());
-  });
-
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [FormsModule],
