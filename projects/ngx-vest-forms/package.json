@@ -18,6 +18,9 @@
     "Forms",
     "Signals"
   ],
-  "repository": "https://github.com/simplifiedcourses/ngx-vest-forms",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ngx-vest-forms/ngx-vest-forms.git"
+  },
   "sideEffects": false
 }
