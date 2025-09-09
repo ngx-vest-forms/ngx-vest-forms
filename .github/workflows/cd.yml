@@ -36,9 +36,9 @@ jobs:
       - name: Storybook
         run: npm run storybook:build
       - name: Integration test
-        run: npm run test:storybook:ci
+        run: npm run storybook:test
       - name: Publish
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release

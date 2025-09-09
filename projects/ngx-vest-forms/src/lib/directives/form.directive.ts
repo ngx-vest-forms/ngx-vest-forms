@@ -2,11 +2,12 @@ import {
   Directive,
   inject,
   input,
-  OnDestroy,
   Output,
   AfterViewInit,
   effect,
+  DestroyRef,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AsyncValidatorFn,
   NgForm,
@@ -24,14 +25,11 @@ import {
   of,
   ReplaySubject,
   startWith,
-  Subject,
   switchMap,
   take,
-  takeUntil,
   tap,
-  merge,
-  timer,
-  finalize, // Add finalize import
+  finalize,
+  takeUntil,
 } from 'rxjs';
 import { StaticSuite } from 'vest';
 import { DeepRequired } from '../utils/deep-required';
@@ -50,9 +48,10 @@ import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
   standalone: true,
 })
 export class FormDirective<T extends Record<string, any>>
-  implements OnDestroy, AfterViewInit
+  implements AfterViewInit
 {
   public readonly ngForm = inject(NgForm, { self: true, optional: false });
+  private readonly destroyRef = inject(DestroyRef);
 
   /**
    * The value of the form, this is needed for the validation part
@@ -144,13 +143,6 @@ export class FormDirective<T extends Record<string, any>>
     distinctUntilChanged()
   );
 
-  private readonly destroy$$ = new Subject<void>();
-  private validationConfigSubscriptions = new Map<
-    string,
-    { unsubscribe(): void }
-  >();
-  private readonly validationInProgress = new Set<string>();
-
   /**
    * Fired when the status of the root form changes.
    */
@@ -178,16 +170,20 @@ export class FormDirective<T extends Record<string, any>>
     }>;
   } = {};
 
+  private readonly validationInProgress = new Set<string>();
+
   public constructor() {
     /**
      * Trigger shape validations if the form gets updated
      * This is how we can throw run-time errors
      */
-    this.formValueChange.pipe(takeUntil(this.destroy$$)).subscribe((v) => {
-      if (this.formShape()) {
-        validateShape(v, this.formShape() as DeepRequired<T>);
-      }
-    });
+    this.formValueChange
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((v) => {
+        if (this.formShape()) {
+          validateShape(v, this.formShape() as DeepRequired<T>);
+        }
+      });
 
     /**
      * Mark all the fields as touched when the form is submitted
@@ -215,10 +211,6 @@ export class FormDirective<T extends Record<string, any>>
   }
 
   private setupValidationConfig(): void {
-    // Clean up all existing subscriptions
-    this.validationConfigSubscriptions.forEach((sub) => sub.unsubscribe());
-    this.validationConfigSubscriptions.clear();
-
     const config = this.validationConfig();
     if (!config) {
       return;
@@ -238,7 +230,7 @@ export class FormDirective<T extends Record<string, any>>
       }
 
       // Subscribe to changes in the trigger field
-      const subscription = triggerControl.valueChanges
+      triggerControl.valueChanges
         .pipe(
           // Prevent infinite loops - check and set flag immediately
           filter(() => {
@@ -276,11 +268,9 @@ export class FormDirective<T extends Record<string, any>>
           finalize(() => {
             this.validationInProgress.delete(triggerField);
           }),
-          takeUntil(this.destroy$$)
+          takeUntilDestroyed(this.destroyRef)
         )
         .subscribe();
-
-      this.validationConfigSubscriptions.set(triggerField, subscription);
     });
   }
 
@@ -327,17 +317,8 @@ export class FormDirective<T extends Record<string, any>>
             });
           }) as Observable<ValidationErrors | null>;
         }),
-        takeUntil(this.destroy$$)
+        takeUntilDestroyed(this.destroyRef)
       );
     };
-  }
-
-  public ngOnDestroy(): void {
-    this.destroy$$.next();
-    this.destroy$$.complete();
-
-    // Clean up validation config subscriptions
-    this.validationConfigSubscriptions.forEach((sub) => sub.unsubscribe());
-    this.validationConfigSubscriptions.clear();
   }
 }

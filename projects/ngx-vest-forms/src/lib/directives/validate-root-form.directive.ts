@@ -64,12 +64,16 @@ export class ValidateRootFormDirective<T> implements AsyncValidator, OnDestroy {
     if (!this.suite() || !this.formValue()) {
       return of(null);
     }
-    return this.createAsyncValidator('rootForm', this.validationOptions())(
-      control.getRawValue()
-    ) as Observable<ValidationErrors | null>;
+    return this.createAsyncValidator(
+      'rootForm',
+      this.validationOptions()
+    )(control.getRawValue()) as Observable<ValidationErrors | null>;
   }
 
-  public createAsyncValidator(field: string, validationOptions: ValidationOptions): AsyncValidatorFn {
+  public createAsyncValidator(
+    field: string,
+    validationOptions: ValidationOptions
+  ): AsyncValidatorFn {
     if (!this.suite()) {
       return () => of(null);
     }
@@ -85,7 +89,7 @@ export class ValidateRootFormDirective<T> implements AsyncValidator, OnDestroy {
         };
         this.formValueCache[field].debounced = this.formValueCache[
           field
-          ].sub$$!.pipe(debounceTime(validationOptions.debounceTime));
+        ].sub$$!.pipe(debounceTime(validationOptions.debounceTime));
       }
       // Next the latest model in the cache for a certain field
       this.formValueCache[field].sub$$!.next(mod);

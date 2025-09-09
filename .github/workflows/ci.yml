@@ -13,6 +13,8 @@ permissions:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    env:
+      CI: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,11 +27,9 @@ jobs:
         run: npm ci
       - name: Playwright install
         run: npx playwright install
-      - name: Build
-        run: npm run build:ci
       - name: Test
         run: npm run test:ci
-      - name: Storybook
-        run: npm run storybook:build
       - name: Integration test
-        run: npm run test:storybook:ci
+        run: npm run storybook:test
+      - name: Build
+        run: npm run build:ci
