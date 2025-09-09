@@ -9,28 +9,13 @@ const testRunnerConfig = getJestConfig();
 module.exports = {
   ...testRunnerConfig,
 
-  // Prevent Jest haste module naming collision between dist and source
-  watchPathIgnorePatterns: ['<rootDir>/dist/', '<rootDir>/node_modules/'],
+  // Only the essential fixes we need
+  // 1. Prevent Jest haste module naming collision
   modulePathIgnorePatterns: ['<rootDir>/dist/'],
+
+  // 2. Don't scan dist folder for tests or modules
   testPathIgnorePatterns: ['<rootDir>/dist/', '<rootDir>/node_modules/'],
 
-  // More aggressive dist folder exclusion
-  haste: {
-    enableSymlinks: false,
-  },
-
-  // Explicitly set roots to avoid scanning problematic directories
-  roots: ['<rootDir>'],
-
-  // Add better handling for native modules like @swc/core
-  transformIgnorePatterns: [
-    'node_modules/(?!(@angular|vest|n4s|vestjs-runtime|vest-utils|context|@storybook)/.*)',
-  ],
-
-  // Increase timeout to handle potential slower CI environments
+  // 3. Increase timeout for CI environments
   testTimeout: 30000,
-
-  // Add better error handling
-  bail: false,
-  verbose: true,
 };
