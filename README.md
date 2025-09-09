@@ -13,7 +13,7 @@
 
 ⭐ If you like this project, star it on GitHub — it helps a lot!
 
-[Overview](#overview) • [Getting Started](#getting-started) • [Features](#features) • [Examples](#examples) • [Validations](#validations) • [Developer Resources](#developer-resources) • [Resources](#resources)
+[Overview](#overview) • [Getting Started](#getting-started) • [Features](#features) • [Basic Usage](#basic-usage) • [Examples](#examples) • [Resources](#resources) • [Developer Resources](#developer-resources) • [Acknowledgments](#acknowledgments)
 
 </div>
 
@@ -895,6 +895,58 @@ This scenario is common when a field's validity relies on the input of another f
 A typical example is the `confirmPassword` field, which should only be validated if the `password` field is filled in.
 When the `password` field value changes, it necessitates re-validating the `confirmPassword` field to ensure
 consistency.
+
+#### Understanding the Architecture: Why `validationConfig` Is Needed
+
+Before diving into the implementation, it's important to understand the architectural boundaries between Vest.js and Angular:
+
+**What Vest.js Handles:**
+
+- ✅ Validation logic and rules
+- ✅ Conditional validation with `omitWhen()`, `skipWhen()`
+- ✅ Field-level optimization with `only()`
+- ✅ Async validations with AbortController
+- ✅ Cross-field validation logic (e.g., "passwords must match")
+
+**What Vest.js Cannot Do:**
+
+- ❌ Trigger Angular to revalidate a different form control
+- ❌ Control Angular's form control lifecycle
+- ❌ Tell Angular "when field X changes, also validate field Y"
+
+**Angular's Limitation:**
+Angular template-driven forms do not natively know about cross-field dependencies. When a field changes, only its own validators run automatically.
+
+**How `validationConfig` Bridges This Gap:**
+
+The `validationConfig` tells Angular's form system: "when field X changes, also call `updateValueAndValidity()` on field Y". This ensures that:
+
+- Cross-field validations run at the right time
+- UI error states update correctly
+- Form validation state remains consistent
+
+**Example of the Problem:**
+
+```typescript
+// In your Vest suite
+test('confirmPassword', 'Passwords must match', () => {
+  enforce(model.confirmPassword).equals(model.password);
+});
+```
+
+Without `validationConfig`: If user changes `password`, the `confirmPassword` field won't be revalidated automatically, even though its validity depends on the password value.
+
+With `validationConfig`: Angular knows to revalidate `confirmPassword` whenever `password` changes.
+
+**Architectural Benefits of This Separation:**
+
+This separation of concerns provides several advantages:
+
+- **Clarity**: Vest.js focuses on validation logic, `validationConfig` handles Angular orchestration
+- **Reusability**: Vest suites work across frameworks, while `validationConfig` is Angular-specific
+- **Maintainability**: Changes to validation logic don't affect dependency management
+- **Performance**: Only necessary validations run, only necessary controls revalidate
+- **Testability**: Validation logic can be tested independently from Angular form behavior
 
 Here's how you can handle validation dependencies with ngx-vest-forms and vest.js:
 
