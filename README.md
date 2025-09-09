@@ -13,7 +13,7 @@
 
 ⭐ If you like this project, star it on GitHub — it helps a lot!
 
-[Overview](#overview) • [Getting Started](#getting-started) • [Features](#features) • [Examples](#examples) • [Validations](#validations) • [Resources](#resources)
+[Overview](#overview) • [Getting Started](#getting-started) • [Features](#features) • [Examples](#examples) • [Validations](#validations) • [Developer Resources](#developer-resources) • [Resources](#resources)
 
 </div>
 
@@ -22,16 +22,19 @@
 
 A lightweight, type-safe adapter between Angular template-driven forms and [Vest.js](https://vestjs.dev) validation. Build complex forms with unidirectional data flow, sophisticated async validations, and zero boilerplate.
 
+> [!TIP]
+> **For Developers**: This project includes comprehensive instruction files for GitHub Copilot and detailed development guides. See [Developer Resources](#developer-resources) to copy these files to your workspace for enhanced development experience.
+
 ## Overview
 
 **ngx-vest-forms** transforms Angular template-driven forms into a powerful, type-safe solution for complex form scenarios. By combining Angular's simplicity with Vest.js's validation power, you get:
 
-- **🔄 Unidirectional Data Flow** - Predictable state management with Angular signals
-- **🛡️ Type Safety** - Full TypeScript support with runtime shape validation
-- **⚡ Async Validations** - Built-in support for complex, conditional validations
-- **🎯 Zero Boilerplate** - Automatic form control creation and validation wiring
-- **🔀 Conditional Logic** - Show/hide fields and validation rules dynamically
-- **📦 Reusable Validations** - Share validation suites across frameworks
+- **Unidirectional Data Flow** - Predictable state management with Angular signals
+- **Type Safety** - Full TypeScript support with runtime shape validation
+- **Async Validations** - Built-in support for complex, conditional validations
+- **Zero Boilerplate** - Automatic form control creation and validation wiring
+- **Conditional Logic** - Show/hide fields and validation rules dynamically
+- **Reusable Validations** - Share validation suites across frameworks
 
 ### Why Choose ngx-vest-forms?
 
@@ -1067,21 +1070,61 @@ This library was originally created by [Brecht Billiet](https://twitter.com/brec
 - **[GitHub Discussions](https://github.com/ngx-vest-forms/ngx-vest-forms/discussions)** - Ask questions and share ideas
 - **[npm Package](https://www.npmjs.com/package/ngx-vest-forms)** - Official package page
 
-## Contributing
+## Developer Resources
 
-We welcome contributions! This project follows standard open-source contribution practices:
+### Comprehensive Instruction Files
 
-1. **Fork** the repository
-2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
-3. **Commit** your changes: `git commit -m 'Add amazing feature'`
-4. **Push** to the branch: `git push origin feature/amazing-feature`
-5. **Open** a Pull Request
+This project includes detailed instruction files designed to help developers master ngx-vest-forms and Vest.js patterns:
 
-Please read our contribution guidelines and code of conduct before contributing.
+- **[`.github/instructions/ngx-vest-forms.instructions.md`](.github/instructions/ngx-vest-forms.instructions.md)** - Complete guide for using ngx-vest-forms library
+- **[`.github/instructions/vest.instructions.md`](.github/instructions/vest.instructions.md)** - Comprehensive Vest.js validation patterns and best practices
+- **[`.github/copilot-instructions.md`](.github/copilot-instructions.md)** - Main GitHub Copilot instructions for this workspace
+
+### Using Instruction Files in Your Workspace
+
+For the best development experience with ngx-vest-forms, **copy these instruction files to your own project's `.github/` directory**:
+
+```bash
+# Create the directories in your project
+mkdir -p .github/instructions
+
+# Copy the instruction files
+curl -o .github/instructions/ngx-vest-forms.instructions.md \
+  https://raw.githubusercontent.com/ngx-vest-forms/ngx-vest-forms/main/.github/instructions/ngx-vest-forms.instructions.md
+
+curl -o .github/instructions/vest.instructions.md \
+  https://raw.githubusercontent.com/ngx-vest-forms/ngx-vest-forms/main/.github/instructions/vest.instructions.md
+
+# Optionally, adapt the main copilot instructions for your project
+curl -o .github/copilot-instructions.md \
+  https://raw.githubusercontent.com/ngx-vest-forms/ngx-vest-forms/main/.github/copilot-instructions.md
+```
+
+**Benefits of copying instruction files:**
+
+- **GitHub Copilot Integration** - Enhanced code generation aligned with best practices
+- **Comprehensive Documentation** - Complete patterns and examples at your fingertips
+- **Consistent Code Quality** - Maintain validation patterns and architectural standards
+- **Faster Development** - Quick reference for complex scenarios and optimizations
 
 ## Acknowledgments
 
 🙏 **Special thanks to [Brecht Billiet](https://twitter.com/brechtbilliet)** for creating the original version of this library and his pioneering work on Angular forms. His vision and expertise laid the foundation for what ngx-vest-forms has become today.
+
+### Core Contributors & Inspirations
+
+**[Evyatar Alush](https://twitter.com/evyataral)** - Creator of [Vest.js](https://vestjs.dev/)
+
+- 🎯 **The validation engine** that powers ngx-vest-forms
+- 🎙️ **Featured on PodRocket**: [Vest with Evyatar Alush](https://dev.to/podrocket/vest-with-evyatar-alush) - Deep dive into the philosophy and architecture of Vest.js
+
+**[Ward Bell](https://twitter.com/wardbell)** - Template-Driven Forms Advocate
+
+- 📢 **Evangelized Template-Driven Forms**: [Prefer Template-Driven Forms](https://devconf.net/talk/prefer-template-driven-forms-ward-bell-ng-conf-2021) (ng-conf 2021)
+- 🎥 **Original Vest.js + Angular Integration**: [Form validation done right](https://www.youtube.com/watch?v=EMUAtQlh9Ko) - The foundational talk that inspired this approach
+- 💻 **Early Implementation**: [ngc-validate](https://github.com/wardbell/ngc-validate) - The initial version of template-driven forms with Vest.js
+
+These pioneers laid the groundwork that made ngx-vest-forms possible, combining the power of declarative validation with the elegance of Angular's template-driven approach.
 
 ## License
 
