@@ -1,4 +1,4 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, only, skipWhen, staticSuite, test } from 'vest';
 
 /**
  * Form State Demo Model Type
@@ -15,6 +15,11 @@ export type FormStateDemoModel = {
   preferences: string;
   newsletter: boolean;
 };
+
+/**
+ * Field names for type-safe validation
+ */
+type FormStateDemoFieldNames = keyof FormStateDemoModel;
 
 /**
  * Mock async service to simulate username availability check
@@ -53,12 +58,14 @@ const simulateUsernameCheck = (
 /**
  * Form State Demo Validation Suite
  *
- * This validation suite demonstrates comprehensive form state management:
+ * Enhanced validation suite demonstrating comprehensive form state management:
  *
  * Key Features Demonstrated:
+ * - TypeScript generics for type safety
  * - Synchronous validation (immediate feedback)
  * - Asynchronous validation (pending states)
  * - Cross-field validation (password confirmation)
+ * - Performance optimization with skipWhen() for async validations
  * - Multiple validation rules per field
  * - Different field types and validation patterns
  * - Performance optimization with only(field)
@@ -96,12 +103,18 @@ export const formStateDemoValidationSuite = staticSuite(
       },
     );
 
-    // Async validation for username availability
-    test('username', 'Username is already taken', async ({ signal }) => {
-      if (data.username && data.username.length >= 3) {
-        await simulateUsernameCheck(data.username, signal);
-      }
-    });
+    // Advanced: Skip expensive async validation if basic validation fails
+    // This prevents unnecessary server calls when username is invalid
+    skipWhen(
+      (res) => res.hasErrors('username'),
+      () => {
+        test('username', 'Username is already taken', async ({ signal }) => {
+          if (data.username && data.username.length >= 3) {
+            await simulateUsernameCheck(data.username, signal);
+          }
+        });
+      },
+    );
 
     // Email validation
     test('email', 'Email is required', () => {

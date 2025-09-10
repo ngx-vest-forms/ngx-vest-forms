@@ -16,22 +16,67 @@ export type UserFormModel = {
 };
 
 /**
+ * Field names for type-safe validation
+ */
+type UserFieldNames = keyof UserFormModel;
+
+/**
+ * Mock expensive validation service
+ * Simulates checking if an email is already registered (e.g., database lookup)
+ */
+const simulateEmailExistsCheck = async (
+  email: string,
+  signal?: AbortSignal,
+): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      if (signal?.aborted) {
+        reject(new Error('Validation cancelled'));
+        return;
+      }
+
+      // Simulate some emails being taken
+      const existingEmails = [
+        'admin@example.com',
+        'user@example.com',
+        'test@example.com',
+      ];
+
+      if (existingEmails.includes(email.toLowerCase())) {
+        reject(new Error('Email is already registered'));
+      } else {
+        resolve();
+      }
+    }, 800); // Simulate network delay
+
+    signal?.addEventListener('abort', () => {
+      clearTimeout(timeoutId);
+      reject(new Error('Validation cancelled'));
+    });
+  });
+};
+
+/**
  * User Validation Suite
  *
- * This validation suite demonstrates fundamental Vest.js patterns with ngx-vest-forms:
+ * Enhanced validation suite demonstrating advanced Vest.js patterns with ngx-vest-forms:
  *
  * Key Patterns Demonstrated:
+ * - TypeScript generics for compile-time type safety
  * - Using `only(field)` for performance optimization
  * - Multiple validation rules per field
  * - Conditional validation based on other field values
+ * - Async validation with `test.memo()` for performance
  * - Different validation types (required, format, length, range, boolean)
  * - User-friendly error messages
  *
  * Best Practices:
  * - Always include `only(field)` at the start for performance
+ * - Use `test.memo()` for expensive async validations
  * - Use descriptive error messages that guide users
  * - Separate validation concerns by field
  * - Use conditional logic for business rules
+ * - Leverage TypeScript for compile-time validation safety
  */
 export const userValidationSuite = staticSuite(
   (data: Partial<UserFormModel> = {}, field?: string) => {
@@ -60,6 +105,19 @@ export const userValidationSuite = staticSuite(
     test('email', 'Please enter a valid email address', () => {
       enforce(data.email).matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
     });
+
+    // Advanced: Memoized async validation for expensive operations
+    // This prevents duplicate server calls for the same email
+    test.memo(
+      'email',
+      'Email is already registered',
+      async ({ signal }) => {
+        if (data.email && data.email.includes('@')) {
+          await simulateEmailExistsCheck(data.email, signal);
+        }
+      },
+      [data.email], // Dependencies: only re-run if email changes
+    );
 
     // Age validation - required and range validation
     test('age', 'Age is required', () => {

@@ -43,6 +43,11 @@ export type ControlWrapperIntroFormModel = {
 };
 
 /**
+ * Field names for type-safe validation
+ */
+type ControlWrapperFieldNames = keyof ControlWrapperIntroFormModel;
+
+/**
  * Control Wrapper Intro Validation Suite
  *
  * This enhanced validation suite demonstrates ALL NgxControlWrapper capabilities:
