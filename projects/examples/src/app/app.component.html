@@ -50,6 +50,15 @@
           >
             Schema Integration
           </a>
+          <a
+            [routerLink]="'/advanced-patterns'"
+            #rlaAdvanced="routerLinkActive"
+            routerLinkActive="active"
+            class="nav-grad-link"
+            [class.active]="rlaAdvanced.isActive"
+          >
+            Advanced Patterns
+          </a>
         </nav>
       </div>
 

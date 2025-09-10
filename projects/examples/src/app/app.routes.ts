@@ -71,6 +71,20 @@ export const appRoutes: Routes = [
       },
     ],
   },
+  {
+    path: 'advanced-patterns',
+    children: [
+      { path: '', redirectTo: 'multi-step-form', pathMatch: 'full' },
+      {
+        path: 'multi-step-form',
+        loadComponent: () =>
+          import(
+            './02-advanced-patterns/multi-step-form/multi-step-form.page'
+          ).then((m) => m.MultiStepFormPageComponent),
+        title: 'Multi-Step Form - Advanced Group Validation',
+      },
+    ],
+  },
 
   // Fallback routes
   { path: '**', redirectTo: 'fundamentals/minimal-form' },

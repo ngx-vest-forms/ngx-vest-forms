@@ -100,6 +100,17 @@ export class AppComponent implements AfterViewInit {
         },
       ],
     },
+    {
+      id: 'advanced-patterns',
+      label: 'Advanced Patterns',
+      pattern: /^\/advanced-patterns\//,
+      links: [
+        {
+          path: '/advanced-patterns/multi-step-form',
+          label: 'Multi-Step Form',
+        },
+      ],
+    },
     // TODO: Restore these categories as examples are moved back from _backup/
     // {
     //   id: 'core',
@@ -115,14 +126,6 @@ export class AppComponent implements AfterViewInit {
     //   pattern: /^\/smart\//,
     //   links: [
     //     // Will be restored from _backup/05-smart-state/
-    //   ],
-    // },
-    // {
-    //   id: 'advanced',
-    //   label: 'Advanced Patterns',
-    //   pattern: /^\/advanced\//,
-    //   links: [
-    //     // Will be restored from _backup/06-advanced-patterns/
     //   ],
     // },
   ] as const;
