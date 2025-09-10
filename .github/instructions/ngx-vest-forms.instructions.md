@@ -11,6 +11,8 @@ applyTo: '**/*.{ts,html,component.ts}'
 
 Note: Examples target Vest v5 APIs (staticSuite, only(field), async test signal). If you are on an older Vest version, upgrade or adapt accordingly.
 
+For comprehensive Vest.js patterns and best practices, see [vest.instructions.md](vest.instructions.md).
+
 ## Core Principles
 
 ### 1. Form Structure Pattern
@@ -856,7 +858,7 @@ import { NgxVestFormWithSchemaDirective } from 'ngx-vest-forms/schemas';
 // Advanced state management (rarely needed)
 import { NgxVestFormsSmartStateDirective } from 'ngx-vest-forms/smart-state';
 
-// Vest.js imports
+// Vest.js imports (see vest.instructions.md for comprehensive patterns)
 import { staticSuite, test, enforce, only, omitWhen } from 'vest';
 
 // Third-party alternatives for broader utility type needs

@@ -48,7 +48,7 @@ applyTo: '**'
 - [ ] Avoid `any` type (use `unknown`)
 
 ## ngx-vest-forms Patterns
-Follow [`.github/instructions/ngx-vest-forms.instructions.md`](../.github/instructions/ngx-vest-forms.instructions.md):
+Follow [`.github/instructions/ngx-vest-forms.instructions.md`](../.github/instructions/ngx-vest-forms.instructions.md) and [`.github/instructions/vest.instructions.md`](../.github/instructions/vest.instructions.md):
 
 ### Form Implementation Checklist
 
@@ -206,7 +206,8 @@ export const validationSuite = staticSuite((data = {}, currentField) => {
 
 ## Additional Resources
 
-- [Vest Documentation](https://vestjs.dev/)
+- [Vest.js Documentation](https://vestjs.dev/)
+- [Vest.js Instructions](../.github/instructions/vest.instructions.md) - Comprehensive Vest.js patterns and best practices
 - [Angular Signals Guide](https://angular.dev/guide/signals)
 - [Angular LLM Guidelines](https://angular.dev/llms.txt)
 - Project issues: [GitHub Issues](https://github.com/your-org/ngx-vest-forms/issues)
