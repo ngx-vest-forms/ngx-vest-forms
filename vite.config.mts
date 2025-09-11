@@ -10,7 +10,9 @@ export default defineConfig({
   },
   test: {
     // Define projects explicitly to avoid non-project files
-    projects: ['projects/ngx-vest-forms', 'projects/examples'],
+    // Only include the library project for Vitest unit tests
+    // Examples project is tested separately with Playwright E2E tests
+    projects: ['projects/ngx-vest-forms'],
     // Global options only - these affect all projects
     reporters: process.env['CI'] ? ['dot'] : ['default'],
     coverage: {
