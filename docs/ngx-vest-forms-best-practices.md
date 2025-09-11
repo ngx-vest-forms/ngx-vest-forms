@@ -33,8 +33,14 @@ export interface UserModel {
 // user.validations.ts
 import { staticSuite, test, enforce, only } from 'vest';
 
+/**
+ * Field names for type-safe validation
+ * 🎯 BEST PRACTICE: Always create this type for compile-time safety
+ */
+type UserFieldNames = keyof UserModel;
+
 export const userValidations = staticSuite(
-  (data: Partial<UserModel> = {}, field?: string) => {
+  (data: Partial<UserModel> = {}, field?: UserFieldNames) => {
     only(field); // Optimize: only validate changed field
 
     test('name', 'Name is required', () => {
@@ -141,15 +147,77 @@ For schema validation, use the wrapper directive:
 
 Tip: Prefer computed signals when deriving UI state from formState() to avoid unnecessary recalculation.
 
+## TypeScript Best Practices
+
+### 5. Field Name Type Safety
+
+**🎯 ALWAYS create field name types for compile-time safety:**
+
+```typescript
+// user.model.ts
+export interface UserModel {
+  name: string;
+  email: string;
+  age: number;
+}
+
+// user.validations.ts
+/**
+ * Field names for type-safe validation
+ * 🎯 CRITICAL: This provides compile-time field validation
+ */
+type UserFieldNames = keyof UserModel;
+
+export const userValidations = staticSuite(
+  (data: Partial<UserModel> = {}, field?: UserFieldNames) => {
+    only(field);
+    // ... validation logic
+  },
+);
+```
+
+**Benefits:**
+
+- ✅ **IntelliSense**: Get autocomplete for valid field names
+- ✅ **Compile-time Safety**: TypeScript catches invalid field references
+- ✅ **Refactoring Support**: Renaming model fields updates validation automatically
+- ✅ **Documentation**: Self-documents which fields can be validated
+
+**Example of improved safety:**
+
+```typescript
+// ✅ This will work - 'email' is a valid field name
+userValidations(formData, 'email');
+
+// 🚨 This will cause a TypeScript error - caught at compile time
+userValidations(formData, 'invalidField');
+```
+
+**Anti-Pattern to Avoid:**
+
+```typescript
+// ❌ DON'T USE: Provides no type safety
+export const userValidations = staticSuite(
+  (data: Partial<UserModel> = {}, field?: string) => {
+    // No compile-time validation of field names
+  },
+);
+```
+
 ## Validation Suite Best Practices
 
-### 5. Suite Structure
+### 6. Suite Structure
 
 ```typescript
 import { staticSuite, test, enforce, only, omitWhen } from 'vest';
 
+/**
+ * Field names for type-safe validation
+ */
+type FormFieldNames = keyof FormModel;
+
 export const formValidations = staticSuite(
-  (data: Partial<FormModel> = {}, field?: string) => {
+  (data: Partial<FormModel> = {}, field?: FormFieldNames) => {
     // ALWAYS include this for performance
     only(field);
 
@@ -174,7 +242,7 @@ export const formValidations = staticSuite(
 );
 ```
 
-### 6. Cross-Field Validation
+### 7. Cross-Field Validation
 
 For validations involving multiple fields:
 
@@ -280,8 +348,13 @@ interface UserModel {
   email: string;
 }
 
+/**
+ * Field names for type-safe validation
+ */
+type UserFieldNames = keyof UserModel;
+
 export const userValidations = staticSuite(
-  (data: Partial<UserModel> = {}, field?: string) => {
+  (data: Partial<UserModel> = {}, field?: UserFieldNames) => {
     only(field);
     test('name', 'Name is required', () => enforce(data.name).isNotEmpty());
     test('email', 'Email must be valid', () =>

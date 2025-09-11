@@ -156,25 +156,21 @@ const checkUsernameAvailability = async (
 export const multiStepFormValidationSuite = staticSuite(
   (
     data: Partial<MultiStepFormModel> = {},
-    field?: string,
+    field?: MultiStepFieldNames,
     currentStep?: FormSteps,
   ) => {
     // Performance optimization: validate only specific field or step
     if (field) {
       only(field);
     } else if (currentStep) {
-      // For step-based validation, we'll use skip logic instead
-      // Skip all other steps to validate only the current one
-      const allSteps: FormSteps[] = ['personal', 'account', 'profile'];
-      const stepsToSkip = allSteps.filter((step) => step !== currentStep);
-      // Note: We'll implement this with conditional group logic below
+      // For step-based validation, we'll use group logic below
+      // Each group will check if it should validate based on currentStep
     }
 
     // Step 1: Personal Information
     group('personal', () => {
       // Skip this group if we're validating a different step
       if (currentStep && currentStep !== 'personal') {
-        skipWhen(true, () => {});
         return;
       }
       test('firstName', 'First name is required', () => {
@@ -248,7 +244,7 @@ export const multiStepFormValidationSuite = staticSuite(
 
       // Advanced: Skip expensive async check if basic validation fails
       skipWhen(
-        (res) => res.hasErrors('username'),
+        (result) => result.hasErrors('username'),
         () => {
           test.memo(
             'username',

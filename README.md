@@ -31,10 +31,10 @@ It's a small library that bridges the gap between declarative Vest validation su
 **Key Features:**
 
 - **Zero Boilerplate:** Just use `ngModel`/`ngModelGroup` and connect a Vest suite—no manual wiring or error handling needed.
-- **Type Safety:** Optional schema support (Zod, ArkType, Valibot, or object template) for compile-time safety and IDE inference.
+- **Type Safety:** Optional schema support (Zod, ArkType, Valibot, or object template) for compile-time safety and IDE inference. Field validation is also type-safe using `keyof` patterns.
 - **Form-Compatible Types:** Built-in utility types like `FormCompatibleDeepRequired<T>` solve Date/string mismatches in form initialization.
 - **Signals & Reactivity:** All form state (value, errors, validity, pending, etc.) is exposed as signals for easy, reactive UI updates.
-- **Powerful Validations:** Use Vest.js for declarative, composable, and async validation logic.
+- **Powerful Validations:** Use Vest.js for declarative, composable, and async validation logic with TypeScript field name safety.
 - **Accessible by Default:** Built-in error display, ARIA roles, and keyboard support via `<ngx-control-wrapper>`.
 - **Modern Angular:** Designed for Angular 19+ standalone components, signals, zoneless.
 - **Native HTML5 validation is disabled:** The `novalidate` attribute is automatically added to all forms using `ngxVestForm`, so all validation is handled by VestJS and Angular, not the browser. **Important:** Avoid HTML validation attributes (`min`, `max`, `required`, `pattern`) as they can interfere with Vest validation even when `novalidate` is applied.
@@ -95,8 +95,11 @@ const userSchema = z.object({
 });
 type User = z.infer<typeof userSchema>;
 
+// Field names for type-safe validation
+type UserFieldNames = keyof User;
+
 // Vest suite for interactive field validation
-const userSuite = staticSuite((data: Partial<User> = {}, field?: string) => {
+const userSuite = staticSuite((data: Partial<User> = {}, field?: UserFieldNames) => {
   only(field); // Optimize: only validate the changed field
 
   test('name', 'Name is required', () => {
@@ -298,15 +301,21 @@ const userSchema = ngxModelToStandardSchema(userModel);
 
 ```typescript
 // user.validations.ts
-import { staticSuite, test, enforce } from 'vest';
+import { staticSuite, test, enforce, only } from 'vest';
 
-export const userValidations = staticSuite((data = {}, field?: string) => {
-  // The `only` function from Vest is used internally to optimize validation runs
-  test('name', 'Name is required', () => enforce(data.name).isNotEmpty());
-  test('email', 'A valid email is required', () =>
-    enforce(data.email).isEmail(),
-  );
-});
+// Field names for type-safe validation
+type UserFieldNames = keyof typeof userModel;
+
+export const userValidations = staticSuite(
+  (data = {}, field?: UserFieldNames) => {
+    only(field); // Optimize: only validate the changed field
+
+    test('name', 'Name is required', () => enforce(data.name).isNotEmpty());
+    test('email', 'A valid email is required', () =>
+      enforce(data.email).isEmail(),
+    );
+  },
+);
 ```
 
 ### 3. Use in a Standalone Angular Component

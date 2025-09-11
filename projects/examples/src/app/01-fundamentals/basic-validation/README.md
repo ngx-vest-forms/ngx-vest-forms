@@ -41,8 +41,14 @@ protected readonly model = signal<UserFormModel>({
 ### 2. Vest Validation Suite (Business Logic)
 
 ```typescript
+/**
+ * Field names for type-safe validation
+ * 🎯 BEST PRACTICE: Always create this type for compile-time safety
+ */
+type UserFieldNames = keyof UserFormModel;
+
 export const userValidationSuite = staticSuite(
-  (data: Partial<UserFormModel> = {}, field?: string) => {
+  (data: Partial<UserFormModel> = {}, field?: UserFieldNames) => {
     only(field); // 🔥 Critical for performance
 
     test('name', 'Name is required', () => {
@@ -93,10 +99,18 @@ export const userValidationSuite = staticSuite(
 
 **Key Patterns:**
 
-- `only(field)` optimizes performance by validating only changed fields
-- Multiple `test()` calls provide granular error messages
-- Conditional validation based on other field values
-- Descriptive error messages guide users
+- **Type Safety**: `UserFieldNames` provides compile-time field validation
+- **Performance**: `only(field)` optimizes validation by only checking changed fields
+- **Granular Errors**: Multiple `test()` calls provide specific error messages
+- **Conditional Logic**: Business rules like senior role requirements
+- **User Experience**: Descriptive error messages guide users to success
+
+**🎯 TypeScript Benefits:**
+
+- ✅ **IntelliSense**: Get autocomplete when calling validation suite
+- ✅ **Compile-time Safety**: Catch typos in field names before runtime
+- ✅ **Refactoring Support**: Renaming model fields updates validation automatically
+- ✅ **Self-Documentation**: Types clearly show which fields can be validated
 
 ### 3. Template Integration (UI Layer)
 

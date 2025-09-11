@@ -79,7 +79,7 @@ const simulateEmailExistsCheck = async (
  * - Leverage TypeScript for compile-time validation safety
  */
 export const userValidationSuite = staticSuite(
-  (data: Partial<UserFormModel> = {}, field?: string) => {
+  (data: Partial<UserFormModel> = {}, field?: UserFieldNames) => {
     // CRITICAL: Always include only() for performance optimization
     // This ensures only the changed field is validated, not the entire form
     only(field);

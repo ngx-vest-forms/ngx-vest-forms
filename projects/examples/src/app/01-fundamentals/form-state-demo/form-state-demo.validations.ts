@@ -78,7 +78,7 @@ const simulateUsernameCheck = (
  * - field-level and form-level validation
  */
 export const formStateDemoValidationSuite = staticSuite(
-  (data: Partial<FormStateDemoModel> = {}, field?: string) => {
+  (data: Partial<FormStateDemoModel> = {}, field?: FormStateDemoFieldNames) => {
     // CRITICAL: Always include only() for performance optimization
     only(field);
 
@@ -106,7 +106,7 @@ export const formStateDemoValidationSuite = staticSuite(
     // Advanced: Skip expensive async validation if basic validation fails
     // This prevents unnecessary server calls when username is invalid
     skipWhen(
-      (res) => res.hasErrors('username'),
+      (result) => result.hasErrors('username'),
       () => {
         test('username', 'Username is already taken', async ({ signal }) => {
           if (data.username && data.username.length >= 3) {

@@ -72,7 +72,10 @@ type ControlWrapperFieldNames = keyof ControlWrapperIntroFormModel;
  * while NgxControlWrapper provides superior UX and accessibility automatically.
  */
 export const controlWrapperIntroValidationSuite = staticSuite(
-  (data: Partial<ControlWrapperIntroFormModel> = {}, field?: string) => {
+  (
+    data: Partial<ControlWrapperIntroFormModel> = {},
+    field?: ControlWrapperFieldNames,
+  ) => {
     // CRITICAL: Always include only() for performance optimization
     only(field);
 
