@@ -1,13 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { KeyValuePipe } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  signal,
+} from '@angular/core';
 import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 import { ngxVestForms } from 'ngx-vest-forms/core';
 import {
-  MultiStepFormModel,
   FormSteps,
+  MultiStepFormModel,
   multiStepFormValidationSuite,
+  validateAllSteps,
   validateStep,
-  validateAllSteps
 } from './multi-step-form.validations';
 
 /**
@@ -38,32 +43,37 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ngxVestForms, NgxControlWrapper, KeyValuePipe],
   template: `
-    <div class="max-w-2xl mx-auto p-6">
+    <div class="mx-auto max-w-2xl p-6">
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 class="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
           Multi-Step Registration
         </h1>
         <p class="text-gray-600 dark:text-gray-300">
-          Complete all steps to create your account. Advanced Vest.js validation with groups and performance optimization.
+          Complete all steps to create your account. Advanced Vest.js validation
+          with groups and performance optimization.
         </p>
       </div>
 
       <!-- Progress Indicator -->
       <div class="mb-8">
-        <div class="flex items-center justify-between mb-4">
+        <div class="mb-4 flex items-center justify-between">
           @for (step of steps; track step.key; let i = $index) {
-            <div class="flex items-center" [class.flex-1]="i < steps.length - 1">
+            <div
+              class="flex items-center"
+              [class.flex-1]="i < steps.length - 1"
+            >
               <div
-                class="flex items-center justify-center w-10 h-10 rounded-full border-2 font-semibold text-sm transition-colors"
-                [class]="getStepClasses(step.key, i)">
+                class="flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-semibold transition-colors"
+                [class]="getStepClasses(step.key, i)"
+              >
                 {{ i + 1 }}
               </div>
               @if (i < steps.length - 1) {
                 <div
-                  class="flex-1 h-1 mx-4 transition-colors"
+                  class="mx-4 h-1 flex-1 transition-colors"
                   [class.bg-blue-500]="currentStepIndex() > i"
-                  [class.bg-gray-300]="currentStepIndex() <= i">
-                </div>
+                  [class.bg-gray-300]="currentStepIndex() <= i"
+                ></div>
               }
             </div>
           }
@@ -72,7 +82,7 @@ import {
           <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
             {{ steps[currentStepIndex()].title }}
           </h2>
-          <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
+          <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
             {{ steps[currentStepIndex()].description }}
           </p>
         </div>
@@ -83,12 +93,12 @@ import {
         [vestSuite]="suite"
         [(formValue)]="formData"
         #vestForm="ngxVestForm"
-        class="space-y-6">
-
+        class="space-y-6"
+      >
         <!-- Step 1: Personal Information -->
         @if (currentStep() === 'personal') {
           <div class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <ngx-control-wrapper>
                 <label for="firstName">First Name *</label>
                 <input
@@ -96,7 +106,8 @@ import {
                   name="firstName"
                   [ngModel]="formData().firstName"
                   class="form-input"
-                  placeholder="Enter your first name">
+                  placeholder="Enter your first name"
+                />
               </ngx-control-wrapper>
 
               <ngx-control-wrapper>
@@ -106,7 +117,8 @@ import {
                   name="lastName"
                   [ngModel]="formData().lastName"
                   class="form-input"
-                  placeholder="Enter your last name">
+                  placeholder="Enter your last name"
+                />
               </ngx-control-wrapper>
             </div>
 
@@ -117,7 +129,8 @@ import {
                 name="dateOfBirth"
                 type="date"
                 [ngModel]="formData().dateOfBirth"
-                class="form-input">
+                class="form-input"
+              />
             </ngx-control-wrapper>
 
             <ngx-control-wrapper>
@@ -128,7 +141,8 @@ import {
                 type="email"
                 [ngModel]="formData().email"
                 class="form-input"
-                placeholder="Enter your email address">
+                placeholder="Enter your email address"
+              />
             </ngx-control-wrapper>
           </div>
         }
@@ -143,7 +157,8 @@ import {
                 name="username"
                 [ngModel]="formData().username"
                 class="form-input"
-                placeholder="Choose a unique username">
+                placeholder="Choose a unique username"
+              />
               <div class="form-hint">
                 3-20 characters, letters, numbers, and underscores only
               </div>
@@ -157,7 +172,8 @@ import {
                 type="password"
                 [ngModel]="formData().password"
                 class="form-input"
-                placeholder="Create a secure password">
+                placeholder="Create a secure password"
+              />
               <div class="form-hint">
                 At least 8 characters with uppercase, lowercase, and number
               </div>
@@ -171,7 +187,8 @@ import {
                 type="password"
                 [ngModel]="formData().confirmPassword"
                 class="form-input"
-                placeholder="Confirm your password">
+                placeholder="Confirm your password"
+              />
             </ngx-control-wrapper>
           </div>
         }
@@ -187,7 +204,8 @@ import {
                 rows="4"
                 [ngModel]="formData().bio"
                 class="form-input resize-none"
-                placeholder="Tell us about yourself (at least 20 characters)">
+                placeholder="Tell us about yourself (at least 20 characters)"
+              >
               </textarea>
             </ngx-control-wrapper>
 
@@ -199,7 +217,8 @@ import {
                 type="url"
                 [ngModel]="formData().website"
                 class="form-input"
-                placeholder="https://your-website.com">
+                placeholder="https://your-website.com"
+              />
             </ngx-control-wrapper>
 
             <div class="space-y-3">
@@ -213,7 +232,8 @@ import {
                     name="newsletter"
                     type="checkbox"
                     [ngModel]="formData().newsletter"
-                    class="form-checkbox">
+                    class="form-checkbox"
+                  />
                   <span>Subscribe to newsletter</span>
                 </label>
               </ngx-control-wrapper>
@@ -224,7 +244,8 @@ import {
                     name="notifications"
                     type="checkbox"
                     [ngModel]="formData().notifications"
-                    class="form-checkbox">
+                    class="form-checkbox"
+                  />
                   <span>Enable email notifications</span>
                 </label>
               </ngx-control-wrapper>
@@ -235,7 +256,8 @@ import {
                     name="termsAccepted"
                     type="checkbox"
                     [ngModel]="formData().termsAccepted"
-                    class="form-checkbox">
+                    class="form-checkbox"
+                  />
                   <span>I agree to the terms and conditions *</span>
                 </label>
               </ngx-control-wrapper>
@@ -244,14 +266,17 @@ import {
         }
 
         <!-- Navigation Buttons -->
-        <div class="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
+        <div
+          class="flex justify-between border-t border-gray-200 pt-6 dark:border-gray-700"
+        >
           <button
             type="button"
             (click)="previousStep()"
             [disabled]="currentStepIndex() === 0"
             class="btn btn-secondary"
             [class.opacity-50]="currentStepIndex() === 0"
-            [class.cursor-not-allowed]="currentStepIndex() === 0">
+            [class.cursor-not-allowed]="currentStepIndex() === 0"
+          >
             Previous
           </button>
 
@@ -261,7 +286,8 @@ import {
                 type="button"
                 (click)="nextStep()"
                 [disabled]="!canProceedToNextStep()"
-                class="btn btn-primary">
+                class="btn btn-primary"
+              >
                 Next Step
               </button>
             } @else {
@@ -269,7 +295,8 @@ import {
                 type="submit"
                 (click)="onSubmit()"
                 [disabled]="!canSubmitForm()"
-                class="btn btn-primary">
+                class="btn btn-primary"
+              >
                 Create Account
               </button>
             }
@@ -278,11 +305,11 @@ import {
       </form>
 
       <!-- Form State Debug Panel -->
-      <div class="mt-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-        <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-2">
+      <div class="mt-8 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+        <h3 class="mb-2 text-sm font-medium text-gray-900 dark:text-white">
           Form State Debug
         </h3>
-        <div class="text-xs text-gray-600 dark:text-gray-300 space-y-1">
+        <div class="space-y-1 text-xs text-gray-600 dark:text-gray-300">
           <div>Current Step: {{ currentStep() }}</div>
           <div>Step Valid: {{ isCurrentStepValid() }}</div>
           <div>Form Valid: {{ vestForm.formState().valid }}</div>
@@ -294,38 +321,33 @@ import {
       </div>
     </div>
   `,
-  styles: [`
-    .form-input {
-      @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
-             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-             dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white
-             dark:focus:ring-blue-400 dark:focus:border-blue-400;
-    }
+  styles: [
+    `
+      .form-input {
+        @apply w-full rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-400 dark:focus:ring-blue-400;
+      }
 
-    .form-checkbox {
-      @apply h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded
-             dark:border-gray-600 dark:bg-gray-700 dark:focus:ring-blue-400;
-    }
+      .form-checkbox {
+        @apply h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:focus:ring-blue-400;
+      }
 
-    .form-hint {
-      @apply mt-1 text-sm text-gray-500 dark:text-gray-400;
-    }
+      .form-hint {
+        @apply mt-1 text-sm text-gray-500 dark:text-gray-400;
+      }
 
-    .btn {
-      @apply px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2
-             transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
-    }
+      .btn {
+        @apply rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50;
+      }
 
-    .btn-primary {
-      @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500
-             disabled:hover:bg-blue-600;
-    }
+      .btn-primary {
+        @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 disabled:hover:bg-blue-600;
+      }
 
-    .btn-secondary {
-      @apply bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500
-             dark:bg-gray-600 dark:text-white dark:hover:bg-gray-700;
-    }
-  `],
+      .btn-secondary {
+        @apply bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500 dark:bg-gray-600 dark:text-white dark:hover:bg-gray-700;
+      }
+    `,
+  ],
 })
 export class MultiStepFormComponent {
   protected readonly formData = signal<Partial<MultiStepFormModel>>({
@@ -351,22 +373,22 @@ export class MultiStepFormComponent {
     {
       key: 'personal' as FormSteps,
       title: 'Personal Information',
-      description: 'Basic information about you'
+      description: 'Basic information about you',
     },
     {
       key: 'account' as FormSteps,
       title: 'Account Setup',
-      description: 'Create your login credentials'
+      description: 'Create your login credentials',
     },
     {
       key: 'profile' as FormSteps,
       title: 'Profile & Preferences',
-      description: 'Complete your profile setup'
+      description: 'Complete your profile setup',
     },
   ];
 
   protected readonly currentStepIndex = computed(() => {
-    return this.steps.findIndex(step => step.key === this.currentStep());
+    return this.steps.findIndex((step) => step.key === this.currentStep());
   });
 
   /**

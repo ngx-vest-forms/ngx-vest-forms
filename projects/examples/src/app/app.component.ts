@@ -109,6 +109,10 @@ export class AppComponent implements AfterViewInit {
           path: '/advanced-patterns/multi-step-form',
           label: 'Multi-Step Form',
         },
+        {
+          path: '/advanced-patterns/dynamic-arrays',
+          label: 'Dynamic Arrays',
+        },
       ],
     },
     // TODO: Restore these categories as examples are moved back from _backup/

@@ -231,74 +231,27 @@ import { ControlWrapperIntroWrapperFormComponent } from './control-wrapper-intro
   `,
   styles: `
     .form-demo-card {
-      overflow: hidden;
-      border-radius: 0.5rem;
-      border: 1px solid #e5e7eb;
-      background-color: white;
-    }
-
-    .dark .form-demo-card {
-      border-color: #374151;
-      background-color: #1f2937;
+      @apply overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-800;
     }
 
     .form-demo-header {
-      border-bottom: 1px solid #e5e7eb;
-      background-color: #f9fafb;
-      padding: 1rem;
-    }
-
-    .dark .form-demo-header {
-      border-color: #374151;
-      background-color: #111827;
+      @apply border-b border-gray-200 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-900;
     }
 
     .form-demo-title {
-      margin-bottom: 0.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: #111827;
-    }
-
-    .dark .form-demo-title {
-      color: #f9fafb;
+      @apply mb-2 flex items-center gap-3 text-lg font-semibold text-gray-900 dark:text-gray-100;
     }
 
     .automation-badge {
-      border-radius: 0.25rem;
-      padding: 0.25rem 0.5rem;
-      font-size: 0.75rem;
-      font-weight: 500;
-      background-color: #bbf7d0;
-      color: #166534;
-    }
-
-    .dark .automation-badge {
-      background-color: #14532d;
-      color: #bbf7d0;
+      @apply rounded bg-green-200 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200;
     }
 
     .form-demo-description {
-      font-size: 0.875rem;
-      color: #6b7280;
-    }
-
-    .dark .form-demo-description {
-      color: #9ca3af;
+      @apply text-sm text-gray-600 dark:text-gray-400;
     }
 
     .form-state-card {
-      border-radius: 0.5rem;
-      border: 1px solid #e5e7eb;
-      background-color: white;
-    }
-
-    .dark .form-state-card {
-      border-color: #374151;
-      background-color: #1f2937;
+      @apply rounded-lg border border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-800;
     }
   `,
 })

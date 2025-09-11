@@ -32,7 +32,6 @@
     "@shikijs/core": "^1.22.2",
     "@standard-schema/spec": "^1.0.0",
     "@tailwindcss/typography": "^0.5.16",
-    "@tailwindcss/vite": "^4.1.12",
     "@types/node": "^24.3.1",
     "buffer": "^6.0.3",
     "hast": "^0.0.2",

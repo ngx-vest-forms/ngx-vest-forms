@@ -69,7 +69,6 @@ import { BasicValidationFormComponent } from './basic-validation.form';
       <ngx-form-state-display
         [title]="'Live Form State (parent read)'"
         [formState]="childFormState()"
-        class="mt-6"
       />
     </ngx-example-cards>
   `,

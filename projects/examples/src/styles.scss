@@ -1,10 +1,10 @@
 /* ngx-vest-forms Showcase Styles */
 /* Clean, semantic form classes with modern minimal design */
 
-@import 'tailwindcss';
+@use 'tailwindcss';
 
 /* Modern theme tokens with brand gradient */
-@theme {
+@theme default {
   /* Brand colors (from logo gradient) */
   --color-brand-start: #6366f1; /* Indigo */
   --color-brand-end: #8b5cf6; /* Purple */

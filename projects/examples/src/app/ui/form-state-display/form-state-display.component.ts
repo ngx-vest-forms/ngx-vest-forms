@@ -185,59 +185,12 @@ type FormState = {
     </div>
   `,
   styles: `
-    .form-state-container {
-      transition: all 0.2s ease-in-out;
+    .state-item {
+      transition: all 0.2s ease;
     }
 
-    .form-state-container:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.1);
-    }
-
-    .dark .form-state-container:hover {
-      box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.3);
-    }
-
-    .form-state-json {
-      background: transparent;
-      border: none;
-      margin: 0;
-    }
-
-    .form-state-json pre {
-      background: transparent !important;
-    }
-
-    /* Better scrollbar */
-    .form-state-json::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-
-    .form-state-json::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.05);
-      border-radius: 4px;
-    }
-
-    .form-state-json::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 4px;
-    }
-
-    .form-state-json::-webkit-scrollbar-thumb:hover {
-      background: rgba(0, 0, 0, 0.3);
-    }
-
-    .dark .form-state-json::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    .dark .form-state-json::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    .dark .form-state-json::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.3);
+    .state-item:hover {
+      background-color: rgba(59, 130, 246, 0.1);
     }
   `,
 })

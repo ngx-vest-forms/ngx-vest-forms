@@ -28,7 +28,6 @@ import { MinimalForm } from './minimal.form';
       <ngx-form-state-display
         [title]="'Form State'"
         [formState]="formComponent?.formState()"
-        class="mt-6"
       />
     </ngx-example-cards>
   `,

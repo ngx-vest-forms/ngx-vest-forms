@@ -33,12 +33,19 @@ type LearningCardConfig = {
   selector: 'ngx-example-cards',
   imports: [CardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: `
+    :host {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+  `,
   template: `
     <!-- What You'll See Demonstrated Card -->
     <ngx-card
       variant="primary-outline"
       [labelledBy]="demonstratedHeadingId"
-      class="mb-6 text-left"
+      class="text-left"
     >
       <div card-header>
         <h2 [id]="demonstratedHeadingId" class="mb-4 text-lg font-semibold">
@@ -65,7 +72,7 @@ type LearningCardConfig = {
     <ng-content></ng-content>
 
     <!-- Learning Journey Card -->
-    <ngx-card variant="educational" class="mt-8">
+    <ngx-card variant="educational">
       <div card-header>🎯 {{ learning().title }}</div>
 
       <div class="grid gap-4 md:grid-cols-2">

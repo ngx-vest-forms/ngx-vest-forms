@@ -83,6 +83,14 @@ export const appRoutes: Routes = [
           ).then((m) => m.MultiStepFormPageComponent),
         title: 'Multi-Step Form - Advanced Group Validation',
       },
+      {
+        path: 'dynamic-arrays',
+        loadComponent: () =>
+          import(
+            './02-advanced-patterns/dynamic-arrays/dynamic-arrays.page'
+          ).then((m) => m.DynamicArraysPageComponent),
+        title: 'Dynamic Arrays - Advanced Array Validation with each()',
+      },
     ],
   },
 
