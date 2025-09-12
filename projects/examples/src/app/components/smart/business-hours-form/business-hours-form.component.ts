@@ -15,12 +15,10 @@ import { BusinessHoursComponent } from '../../ui/business-hours/business-hours.c
 
 @Component({
   selector: 'sc-business-hours-form',
-  standalone: true,
   imports: [
     JsonPipe,
     vestForms,
     ValidateRootFormDirective,
-    BusinessHourComponent,
     BusinessHoursComponent,
   ],
   templateUrl: './business-hours-form.component.html',

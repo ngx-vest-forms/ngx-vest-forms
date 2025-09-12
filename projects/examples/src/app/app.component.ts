@@ -4,8 +4,7 @@ import { PurchaseFormComponent } from './components/smart/purchase-form/purchase
 
 @Component({
   selector: 'app-root',
-  imports: [PurchaseFormComponent, RouterLink, RouterOutlet],
-  standalone: true,
+  imports: [RouterLink, RouterOutlet],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })

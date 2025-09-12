@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule, KeyValuePipe } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 import {
   arrayToObject,
   vestForms,
@@ -8,8 +8,7 @@ import {
 
 @Component({
   selector: 'sc-phonenumbers',
-  standalone: true,
-  imports: [CommonModule, vestForms, KeyValuePipe],
+  imports: [vestForms, KeyValuePipe],
   templateUrl: './phonenumbers.component.html',
   styleUrls: ['./phonenumbers.component.scss'],
   viewProviders: [vestFormsViewProviders],

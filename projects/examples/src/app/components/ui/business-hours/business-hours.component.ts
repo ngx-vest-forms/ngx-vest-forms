@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { CommonModule, KeyValuePipe } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 import {
   arrayToObject,
   DeepPartial,
@@ -12,8 +12,7 @@ import { NgModelGroup } from '@angular/forms';
 
 @Component({
   selector: 'sc-business-hours',
-  standalone: true,
-  imports: [CommonModule, vestForms, KeyValuePipe, BusinessHourComponent],
+  imports: [vestForms, KeyValuePipe, BusinessHourComponent],
   templateUrl: './business-hours.component.html',
   styleUrls: ['./business-hours.component.scss'],
   viewProviders: [vestFormsViewProviders],
