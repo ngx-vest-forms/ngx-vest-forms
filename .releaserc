@@ -3,13 +3,11 @@
     "master",
     {
       "name": "release/v1.x",
-      "range": "1.x.x",
-      "channel": "release-1.x"
+      "range": "1.x"
     },
     {
-      "name": "release/v2.x",
-      "range": "2.x.x",
-      "channel": "release-2.x"
+      "name": "next",
+      "prerelease": true
     },
     {
       "name": "beta",

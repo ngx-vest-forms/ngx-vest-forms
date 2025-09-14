@@ -18,11 +18,11 @@ on:
         default: 'beta'
         type: choice
         options:
+          - next
           - alpha
           - beta
           - rc
           - release/v1.x
-          - release/v2.x
 
       custom_branch:
         description: 'Custom branch name (when branch_type = custom, e.g., feat/awesome-feature, fix/critical-bug)'
