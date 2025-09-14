@@ -6,7 +6,7 @@
     },
     {
       "name": "release/v1.x",
-      "range": "1.x"
+      "range": ">=1.0.0 <2.0.0"
     },
     {
       "name": "beta",
