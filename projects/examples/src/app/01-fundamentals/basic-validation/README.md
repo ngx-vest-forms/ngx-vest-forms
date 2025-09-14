@@ -48,7 +48,7 @@ protected readonly model = signal<UserFormModel>({
 type UserFieldNames = keyof UserFormModel;
 
 export const userValidationSuite = staticSuite(
-  (data: Partial<UserFormModel> = {}, field?: UserFieldNames) => {
+  (data: Partial<UserFormModel> = {}, field?: UserFieldNames) => {(
     only(field); // 🔥 Critical for performance
 
     test('name', 'Name is required', () => {
