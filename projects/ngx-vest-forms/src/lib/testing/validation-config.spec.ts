@@ -110,7 +110,7 @@ describe('FormDirective - Comprehensive', () => {
           [validationConfig]="validationConfig"
           (formValueChange)="formValue.set($event)"
         >
-          <input name="amount" [ngModel]="formValue().amount" />
+          <input type="number" name="amount" [ngModel]="formValue().amount" />
           <input name="description" [ngModel]="formValue().description" />
         </form>
       `,
@@ -124,7 +124,7 @@ describe('FormDirective - Comprehensive', () => {
         amount: ['description'],
         description: ['amount'],
       };
-      suite = staticSuite((model: any, field?: string) => {
+      suite = staticSuite((model: any, _field?: string) => {
         test('amount', 'Amount is required when description exists', () => {
           if (model.description) {
             enforce(model.amount).isNotBlank();
