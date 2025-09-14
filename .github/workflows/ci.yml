@@ -6,6 +6,7 @@ on:
       - 'release/**'
       - 'beta'
       - 'alpha'
+      - 'rc'
 
 permissions:
   contents: read

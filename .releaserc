@@ -1,15 +1,12 @@
 {
   "branches": [
-    "master",
     {
-      "name": "release/v1.x",
-      "range": "1.x.x",
-      "channel": "release-1.x"
+      "name": "master",
+      "range": ">=2.0.0"
     },
     {
-      "name": "release/v2.x",
-      "range": "2.x.x",
-      "channel": "release-2.x"
+      "name": "release/v1.x",
+      "range": ">=1.0.0 <2.0.0"
     },
     {
       "name": "beta",
