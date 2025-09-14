@@ -1,14 +1,14 @@
-import { Component, signal } from '@angular/core';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
-import { vestForms } from '../exports';
-import { staticSuite, test, enforce } from 'vest';
-import { DeepPartial } from '../utils/deep-partial';
-
 /**
  * Comprehensive test suite for FormDirective
  * Tests validation config, modern Angular APIs, and directive functionality
  */
+import { Component, signal } from '@angular/core';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+import { DeepPartial } from '../utils/deep-partial';
+import { vestForms } from '../exports';
+import { staticSuite, test, enforce } from 'vest';
+
 describe('FormDirective - Comprehensive', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -110,7 +110,7 @@ describe('FormDirective - Comprehensive', () => {
           [validationConfig]="validationConfig"
           (formValueChange)="formValue.set($event)"
         >
-          <input name="amount" [ngModel]="formValue().amount" />
+          <input type="number" name="amount" [ngModel]="formValue().amount" />
           <input name="description" [ngModel]="formValue().description" />
         </form>
       `,
@@ -124,7 +124,7 @@ describe('FormDirective - Comprehensive', () => {
         amount: ['description'],
         description: ['amount'],
       };
-      suite = staticSuite((model: any, field?: string) => {
+      suite = staticSuite((model: any, _field?: string) => {
         test('amount', 'Amount is required when description exists', () => {
           if (model.description) {
             enforce(model.amount).isNotBlank();
@@ -171,7 +171,7 @@ describe('FormDirective - Comprehensive', () => {
 
       // Should not have any loop-related errors
       expect(errorOccurred).toBe(false);
-      expect(fixture.componentInstance.formValue().amount).toBe('100');
+      expect(fixture.componentInstance.formValue().amount).toBe(100);
     } finally {
       console.error = originalError;
     }
