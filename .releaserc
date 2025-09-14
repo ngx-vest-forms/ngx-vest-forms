@@ -1,12 +1,13 @@
 {
   "branches": [
-    {
-      "name": "master",
-      "range": ">=2.0.0"
-    },
+    "master",
     {
       "name": "release/v1.x",
       "range": "1.x"
+    },
+    {
+      "name": "next",
+      "prerelease": true
     },
     {
       "name": "beta",
