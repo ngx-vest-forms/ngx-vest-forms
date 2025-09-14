@@ -1,14 +1,13 @@
-import { Component, signal } from '@angular/core';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
-import { vestForms } from '../exports';
-import { staticSuite, test, enforce } from 'vest';
-import { DeepPartial } from '../utils/deep-partial';
-
 /**
  * Comprehensive test suite for FormDirective
  * Tests validation config, modern Angular APIs, and directive functionality
  */
+import { Component, signal } from '@angular/core';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+import { vestForms, DeepPartial } from 'ngx-vest-forms';
+import { staticSuite, test, enforce } from 'vest';
+
 describe('FormDirective - Comprehensive', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -171,7 +170,7 @@ describe('FormDirective - Comprehensive', () => {
 
       // Should not have any loop-related errors
       expect(errorOccurred).toBe(false);
-      expect(fixture.componentInstance.formValue().amount).toBe('100');
+      expect(fixture.componentInstance.formValue().amount).toBe(100);
     } finally {
       console.error = originalError;
     }
