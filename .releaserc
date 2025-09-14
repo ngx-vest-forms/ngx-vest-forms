@@ -38,7 +38,6 @@
         "pkgRoot": "dist/ngx-vest-forms"
       }
     ],
-    "@semantic-release/git",
     "@semantic-release/github"
   ]
 }

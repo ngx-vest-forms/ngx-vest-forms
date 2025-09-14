@@ -4,6 +4,7 @@ on:
     branches:
       - master
       - 'release/**'
+      - 'next'
       - 'beta'
       - 'alpha'
       - 'rc'

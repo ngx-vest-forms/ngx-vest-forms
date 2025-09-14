@@ -4,6 +4,7 @@ on:
     branches:
       - master
       - 'release/**'
+      - 'next'
 
 permissions:
   contents: write  # For creating releases and updating changelog
@@ -13,7 +14,7 @@ permissions:
 
 jobs:
   cd:
-    concurrency: ci-${{ github.ref }}
+    concurrency: cd-${{ github.ref }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
