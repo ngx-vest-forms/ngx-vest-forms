@@ -5,7 +5,8 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { vestForms, DeepPartial } from 'ngx-vest-forms';
+import { DeepPartial } from '../utils/deep-partial';
+import { vestForms } from '../exports';
 import { staticSuite, test, enforce } from 'vest';
 
 describe('FormDirective - Comprehensive', () => {
