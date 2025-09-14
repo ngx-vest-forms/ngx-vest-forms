@@ -1,4 +1,13 @@
-import { Directive, inject, input, OnDestroy, Output } from '@angular/core';
+import {
+  Directive,
+  inject,
+  input,
+  Output,
+  AfterViewInit,
+  effect,
+  DestroyRef,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AsyncValidatorFn,
   NgForm,
@@ -16,15 +25,13 @@ import {
   of,
   ReplaySubject,
   startWith,
-  Subject,
   switchMap,
   take,
-  takeUntil,
   tap,
-  zip,
+  finalize,
+  takeUntil,
 } from 'rxjs';
 import { StaticSuite } from 'vest';
-import { toObservable } from '@angular/core/rxjs-interop';
 import { DeepRequired } from '../utils/deep-required';
 import {
   cloneDeep,
@@ -34,13 +41,17 @@ import {
 } from '../utils/form-utils';
 import { validateShape } from '../utils/shape-validation';
 import { ValidationOptions } from './validation-options';
+import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
 
 @Directive({
   selector: 'form[scVestForm]',
   standalone: true,
 })
-export class FormDirective<T extends Record<string, any>> implements OnDestroy {
+export class FormDirective<T extends Record<string, any>>
+  implements AfterViewInit
+{
   public readonly ngForm = inject(NgForm, { self: true, optional: false });
+  private readonly destroyRef = inject(DestroyRef);
 
   /**
    * The value of the form, this is needed for the validation part
@@ -131,7 +142,6 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
     startWith(this.ngForm.form.dirty),
     distinctUntilChanged()
   );
-  private readonly destroy$$ = new Subject<void>();
 
   /**
    * Fired when the status of the root form changes.
@@ -160,55 +170,107 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
     }>;
   } = {};
 
-  public constructor() {
-    // When the validation config changes
-    // Listen to changes of the left-side of the config and trigger the updateValueAndValidity
-    // function on the dependant controls or groups at the right-side of the config
-    toObservable(this.validationConfig)
-      .pipe(
-        filter((conf) => !!conf),
-        switchMap((conf) => {
-          if (!conf) {
-            return of(null);
-          }
-          const streams = Object.keys(conf).map((key) => {
-            return this.ngForm?.form.get(key)?.valueChanges.pipe(
-              // Wait until something is pending
-              switchMap(() => this.pending$),
-              // Wait until the form is not pending anymore
-              switchMap(() => this.idle$),
-              map(() => this.ngForm?.form.get(key)?.value),
-              takeUntil(this.destroy$$),
-              tap((v) => {
-                conf[key]?.forEach((path: string) => {
-                  this.ngForm?.form.get(path)?.updateValueAndValidity({
-                    onlySelf: true,
-                    emitEvent: true,
-                  });
-                });
-              })
-            );
-          });
-          return zip(streams);
-        })
-      )
-      .subscribe();
+  private readonly validationInProgress = new Set<string>();
 
+  public constructor() {
     /**
      * Trigger shape validations if the form gets updated
      * This is how we can throw run-time errors
      */
-    this.formValueChange.pipe(takeUntil(this.destroy$$)).subscribe((v) => {
-      if (this.formShape()) {
-        validateShape(v, this.formShape() as DeepRequired<T>);
-      }
-    });
+    this.formValueChange
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((v) => {
+        if (this.formShape()) {
+          validateShape(v, this.formShape() as DeepRequired<T>);
+        }
+      });
 
     /**
      * Mark all the fields as touched when the form is submitted
      */
     this.ngForm.ngSubmit.subscribe(() => {
       this.ngForm.form.markAllAsTouched();
+    });
+
+    /**
+     * Set up validation config reactively using effects
+     */
+    effect(() => {
+      this.setupValidationConfig();
+    });
+  }
+
+  /**
+   * Handles the initial setup of validation configuration after view initialization.
+   * This ensures that form controls are fully created and available before
+   * attempting to establish validation dependencies. The effect() in the constructor
+   * handles subsequent reactive updates when input signals change.
+   */
+  public ngAfterViewInit(): void {
+    this.setupValidationConfig();
+  }
+
+  private setupValidationConfig(): void {
+    const config = this.validationConfig();
+    if (!config) {
+      return;
+    }
+
+    // For each field in the config, set up a subscription to its changes
+    Object.keys(config).forEach((triggerField) => {
+      const dependentFields = config[triggerField];
+      if (!dependentFields || dependentFields.length === 0) {
+        return;
+      }
+
+      const triggerControl = this.ngForm?.form.get(triggerField);
+      if (!triggerControl) {
+        // Control doesn't exist yet, will be handled when the effect runs again
+        return;
+      }
+
+      // Subscribe to changes in the trigger field
+      triggerControl.valueChanges
+        .pipe(
+          // Prevent infinite loops - check and set flag immediately
+          filter(() => {
+            if (this.validationInProgress.has(triggerField)) {
+              return false;
+            }
+            this.validationInProgress.add(triggerField);
+            return true;
+          }),
+          // Debounce to prevent excessive validation calls when trigger fields change rapidly
+          debounceTime(VALIDATION_CONFIG_DEBOUNCE_TIME),
+          // Use switchMap to flatten the async operation and avoid nested subscriptions
+          switchMap(() => {
+            // Use the idle$ stream to wait for form stabilization
+            return this.idle$.pipe(
+              take(1), // Take the first idle event
+              tap(() => {
+                dependentFields.forEach((dependentField) => {
+                  const dependentControl =
+                    this.ngForm?.form.get(dependentField);
+                  if (
+                    dependentControl &&
+                    !this.validationInProgress.has(dependentField)
+                  ) {
+                    dependentControl.updateValueAndValidity({
+                      onlySelf: true,
+                      emitEvent: false, // Don't emit to prevent extra change events
+                    });
+                  }
+                });
+              })
+            );
+          }),
+          // Ensure flag is cleared in all scenarios (success, error, unsubscribe)
+          finalize(() => {
+            this.validationInProgress.delete(triggerField);
+          }),
+          takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe();
     });
   }
 
@@ -219,7 +281,10 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
    * @param validationOptions
    * @returns an asynchronous validator function
    */
-  public createAsyncValidator(field: string, validationOptions: ValidationOptions): AsyncValidatorFn {
+  public createAsyncValidator(
+    field: string,
+    validationOptions: ValidationOptions
+  ): AsyncValidatorFn {
     if (!this.suite()) {
       return () => of(null);
     }
@@ -235,7 +300,7 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
         };
         this.formValueCache[field].debounced = this.formValueCache[
           field
-          ].sub$$!.pipe(debounceTime(validationOptions.debounceTime));
+        ].sub$$!.pipe(debounceTime(validationOptions.debounceTime));
       }
       // Next the latest model in the cache for a certain field
       this.formValueCache[field].sub$$!.next(mod);
@@ -252,12 +317,8 @@ export class FormDirective<T extends Record<string, any>> implements OnDestroy {
             });
           }) as Observable<ValidationErrors | null>;
         }),
-        takeUntil(this.destroy$$)
+        takeUntilDestroyed(this.destroyRef)
       );
     };
-  }
-
-  public ngOnDestroy(): void {
-    this.destroy$$.next();
   }
 }

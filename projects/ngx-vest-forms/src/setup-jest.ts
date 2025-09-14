@@ -1,7 +1,3 @@
-import type { Config } from 'jest';
-import 'jest-preset-angular/setup-jest';
-const config: Config = {
-  verbose: true,
-};
+import { setupZoneTestEnv } from 'jest-preset-angular/setup-env/zone';
 
-export default config;
+setupZoneTestEnv();

@@ -52,14 +52,14 @@
   <br />
 </div>
 
-<pre>{{ vm.errors?.['rootForm'] }}</pre>
+<pre>{{ vm.errors['rootForm'] }}</pre>
 
-@if (vm.errors?.['rootForm']) {
+@if (vm.errors['rootForm']) {
   <div
     class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
     role="alert"
   >
-    {{ vm.errors?.['rootForm'] }}
+    {{ vm.errors['rootForm'] }}
   </div>
 }
 
@@ -75,7 +75,7 @@
   (validChange)="formValid.set($event)"
   (errorsChange)="errors.set($event)"
   (formValueChange)="setFormValue($event)"
-  [validationOptions]="{debounceTime: 300}"
+  [validationOptions]="{ debounceTime: 300 }"
 >
   <fieldset [disabled]="vm.loading">
     <h1 class="text-4xl">Purchase form</h1>
@@ -85,7 +85,7 @@
         <input
           placeholder="Type user id"
           type="text"
-          [validationOptions]="{debounceTime: 500}"
+          [validationOptions]="{ debounceTime: 500 }"
           [ngModel]="vm.formValue.userId"
           name="userId"
         />
@@ -253,7 +253,7 @@
       }
     </div>
     <div class="buttons">
-      <button type="button">Reset</button>&nbsp;
+      <button type="button" (click)="reset()">Reset</button>&nbsp;
       <button type="submit">Submit</button>
     </div>
   </fieldset>

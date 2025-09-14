@@ -5,7 +5,6 @@ import { AddressModel } from '../../../models/address.model';
 
 @Component({
   selector: 'sc-address',
-  standalone: true,
   imports: [vestForms],
   viewProviders: [vestFormsViewProviders],
   templateUrl: './address.component.html',

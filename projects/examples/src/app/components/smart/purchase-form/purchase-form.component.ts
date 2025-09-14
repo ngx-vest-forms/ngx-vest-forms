@@ -17,7 +17,6 @@ import { debounceTime, filter, switchMap } from 'rxjs';
 
 @Component({
   selector: 'sc-purchase-form',
-  standalone: true,
   imports: [
     JsonPipe,
     vestForms,
@@ -129,5 +128,17 @@ export class PurchaseFormComponent {
       this.formValue.update((v) => ({ ...v, ...luke }));
       this.loading.set(false);
     });
+  }
+
+  protected reset(): void {
+    // Reset form data to empty state
+    this.formValue.set({});
+
+    // Reset form validation state
+    this.formValid.set(false);
+    this.errors.set({});
+
+    // Reset shipping address state
+    this.shippingAddress.set({});
   }
 }
