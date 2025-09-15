@@ -100,6 +100,46 @@ The `errorDisplayMode` respects the `updateOn` setting of the `NgModel` directiv
 - If an `NgModel` has `[ngModelOptions]="{ updateOn: 'submit' }"`, its errors will **only** be displayed after a form submission, regardless of the `errorDisplayMode`.
 - If `updateOn` is `'blur'` or `'change'` (default), the `errorDisplayMode` behaves as described above.
 
+#### Interplay: `updateOn` vs `errorDisplayMode`
+
+`updateOn` decides **when Angular updates control value & runs its validators**. `errorDisplayMode` decides **when we are allowed to reveal already‑computed errors**. They are intentionally orthogonal so you can, for example, validate on every change but show errors only after blur, or defer all validation to submit while still using blur/submission visual semantics consistently.
+
+There is one UX gap in native Angular behavior: with `updateOn: 'change'`, if a required field is left empty, the user focuses it and then blurs without typing, no value change occurs → Angular does not re‑run validation → there are still no errors to display (even though UX expectations are that a required indicator should now appear). `ngx-vest-forms` bridges that gap with a one‑time, safe "first blur validation" trigger. It runs exactly once per control (unless `updateOn: 'submit'`) to prime Vest so the wrapper can show the appropriate error message. This improves accessibility by ensuring screen readers and keyboard users receive immediate, actionable feedback after leaving an empty required field.
+
+##### Quick Matrix
+
+| Angular `updateOn` | errorDisplayMode    | User action sequence               | When validation is (re)run\*                           | When errors become visible | Notes                                                   |
+| ------------------ | ------------------- | ---------------------------------- | ------------------------------------------------------ | -------------------------- | ------------------------------------------------------- |
+| `change` (default) | `on-blur`           | Focus → type → blur                | On each value change; plus first‑blur fallback if none | At blur (touched)          | Fallback covers "focus → blur without typing"           |
+| `change`           | `on-submit`         | (Any) → submit                     | On each change; submit triggers form-level suite again | After first submit         | Pre-submit errors hidden even if already validated      |
+| `change`           | `on-blur-or-submit` | Focus → (type?) → blur / OR submit | Changes + first‑blur fallback + submit                 | Blur OR submit             | Most forgiving default                                  |
+| `blur`             | `on-blur`           | Focus → type → blur                | Only at blur (Angular)                                 | Same blur event            | Fallback not needed (Angular already validates on blur) |
+| `blur`             | `on-submit`         | Focus/blur cycles → submit         | Each blur; submit reruns form-level if needed          | After first submit         | Blur validations cached but hidden until submit         |
+| `blur`             | `on-blur-or-submit` | Focus → blur OR submit             | Each blur; submit as needed                            | Blur OR submit             | Similar to `on-blur` unless user never blurs field      |
+| `submit`           | `on-blur`           | Focus/blur → submit                | Only at submit (Angular)                               | After submit (not blur)    | `updateOn: 'submit'` overrides blur visibility timing   |
+| `submit`           | `on-submit`         | Submit                             | Only at submit                                         | After submit               | Simplest late feedback mode                             |
+| `submit`           | `on-blur-or-submit` | Focus/blur → submit                | Only at submit                                         | After submit               | Blur has no effect pre-submit                           |
+
+\*Validation run timing above refers to Vest suite executions orchestrated by `ngxVestForm` for the field; additional dependent validations (via `validationConfig`) may run after related fields settle.
+
+##### Design Rationale
+
+- Keeping a small set of display modes (`on-blur`, `on-submit`, `on-blur-or-submit`) avoids ambiguity and makes behavior predictable.
+- `updateOn` continues to govern data + validity lifecycle; we do not override its core semantics, only fill the UX gap for the untouched-empty-blur case under `change`.
+- The one-time first-blur trigger is idempotent, skips `updateOn: 'submit'`, and will not fire again after a genuine change.
+
+##### Should there be an `on-change` error display mode?
+
+We deliberately did **not** include an `on-change` (immediate) display mode because:
+
+1. Accessibility & UX: Showing errors while a user is still typing increases cognitive load, especially for longer inputs (emails, passwords). Blur-based feedback is generally calmer and still quick.
+2. Separation of concerns: You can still surface _live_ helper hints (e.g., password strength) via warnings or custom UI without promoting hard validation errors mid-entry.
+3. Simplicity: Fewer modes reduce configuration mistakes and learning curve.
+
+If you truly need immediate error surfacing you can: (a) read `vestForm.formState().errors` directly and render custom UI, or (b) create a thin directive extending `NgxFormErrorDisplayDirective` with a different predicate (dirty OR submitted). If community demand grows, a future `'on-change'` (or `'on-change-or-submit'`) mode can be added without breaking existing behavior.
+
+> Accessibility Note: Errors are revealed only when users can meaningfully act on them. This file was generated with accessibility in mind, but please still audit with tooling (e.g., Accessibility Insights) and manual keyboard / screen reader testing.
+
 ### Global Configuration
 
 You can set the default `errorDisplayMode` for all `NgxControlWrapper` instances in your application by providing the `NGX_ERROR_DISPLAY_MODE_DEFAULT` injection token.
@@ -192,7 +232,7 @@ By separating these concerns, `ngx-vest-forms` offers flexibility:
 
 A directive that provides reactive signals for the state of Angular form controls and parsed Vest validation messages.
 
-#### Key Features:
+#### Key Features
 
 - **Reactive State Signals:** Exposes `errors`, `pending`, `touched`, and `dirty` states as signals.
 - **Vest Integration:** Parses and provides Vest validation messages reactively.
@@ -206,12 +246,12 @@ Typically used internally by `NgxFormErrorDisplayDirective` and `NgxControlWrapp
 
 A directive that builds on `NgxFormControlStateDirective` to add display behavior for validation messages.
 
-#### Key Features:
+#### Additional Key Features
 
 - **Automatic Error Display:** Shows validation errors from Vest suites without manual template logic.
 - **Configurable Display Logic:** Control when errors are displayed (on blur, on submit, or both) via `errorDisplayMode`.
 - **Accessibility:** Adds appropriate ARIA attributes to the input field.
 
-#### Usage
+#### How to Use
 
 Automatically used by `NgxControlWrapper`. Typically, you would use `<ngx-control-wrapper>` in your templates, which internally uses this directive to display errors.

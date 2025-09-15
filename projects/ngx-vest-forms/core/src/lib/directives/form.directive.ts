@@ -15,16 +15,16 @@ import {
 } from '@angular/core/rxjs-interop';
 import { AsyncValidatorFn, FormControlStatus } from '@angular/forms';
 import {
-  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  EMPTY,
   filter,
   map,
-  Observable,
-  of,
-  retry,
+  merge as rxMerge,
   startWith,
   switchMap,
+  take,
   tap,
-  zip,
 } from 'rxjs';
 import {
   NGX_SCHEMA_STATE,
@@ -32,6 +32,10 @@ import {
 } from '../tokens/schema-state.token';
 import { NgxFormCoreDirective } from './form-core.directive';
 import { NgxValidationOptions } from './validation-options';
+
+// Shared debounce constant for validationConfig trigger handling
+// Fallback to 50ms if a central constant is not available in this entrypoint
+const VALIDATION_CONFIG_DEBOUNCE_TIME = 50;
 
 // Model typing is schema-agnostic in core/full directive; callers can narrow externally
 
@@ -119,6 +123,13 @@ export class NgxFormDirective<
 
   // formValue two-way binding is provided by the core directive via hostDirectives
   readonly validationConfig = input<Record<string, string[]> | null>(null);
+
+  // --- validationConfig internal helpers ---
+  // Prevent circular triggering when two fields depend on each other (Issue #19)
+  readonly #validationInProgress = new Set<string>();
+  // Note: No manual subscription maps needed; we compose streams and
+  // rely on switchMap + takeUntilDestroyed for lifecycle management.
+  // Note: using shared VALIDATION_CONFIG_DEBOUNCE_TIME constant instead
 
   /// --- INTERNAL BASE SIGNALS ---
   // Track the Angular form status as a signal for advanced status flags
@@ -242,75 +253,88 @@ export class NgxFormDirective<
   }
 
   #setupValidationConfigStreams(): void {
+    const form = this.#core.ngForm.form;
     toObservable(this.validationConfig)
       .pipe(
-        filter((config): config is Record<string, string[]> => !!config),
-        switchMap((config: Record<string, string[]>) =>
-          this.#createDependencyStreams(config),
-        ),
+        distinctUntilChanged(),
+        // For each config, compose a merged stream of all trigger pipelines.
+        // switchMap ensures previous pipelines are torn down automatically
+        // when the config object changes.
+        switchMap((config) => {
+          if (!config) {
+            // Clear any in-progress flags when config becomes null
+            this.#validationInProgress.clear();
+            return EMPTY;
+          }
+
+          const streams = Object.keys(config).map((triggerField) => {
+            const dependents = config[triggerField] || [];
+
+            // Stream that rebinds to the trigger control whenever the form structure changes
+            const triggerControl$ = form.statusChanges.pipe(
+              startWith(form.status),
+              // statusChanges also fires on control creation/removal; augment with a debounce
+              debounceTime(VALIDATION_CONFIG_DEBOUNCE_TIME),
+              tap(() => void 0),
+              // Project to the control instance (may be undefined initially)
+              // Re-run on each status change until control exists
+              map(() => form.get(triggerField)),
+              // Proceed only when control is available
+              filter((c): c is NonNullable<typeof c> => !!c),
+              // Avoid re-subscribing if the control instance is the same
+              distinctUntilChanged(),
+            );
+
+            return triggerControl$.pipe(
+              // For the resolved control, subscribe to valueChanges
+              switchMap((control) =>
+                control.valueChanges.pipe(
+                  // Early guard to prevent re-entrancy during debounce window
+                  filter(() => {
+                    if (this.#validationInProgress.has(triggerField))
+                      return false;
+                    this.#validationInProgress.add(triggerField);
+                    return true;
+                  }),
+                  debounceTime(VALIDATION_CONFIG_DEBOUNCE_TIME),
+                  // Wait for the form to be idle before updating dependents
+                  switchMap(() =>
+                    form.statusChanges.pipe(
+                      startWith(form.status),
+                      filter((s) => s !== 'PENDING'),
+                      take(1),
+                    ),
+                  ),
+                  tap(() => {
+                    for (const depField of dependents) {
+                      const dependentControl = form.get(depField);
+                      if (!dependentControl) {
+                        if (isDevMode()) {
+                          console.warn(
+                            `[ngx-vest-forms] Dependent control '${depField}' not found for validationConfig key '${triggerField}'.`,
+                          );
+                        }
+                        continue;
+                      }
+                      if (!this.#validationInProgress.has(depField)) {
+                        dependentControl.updateValueAndValidity({
+                          onlySelf: true,
+                          emitEvent: false,
+                        });
+                      }
+                    }
+                  }),
+                  tap(() => this.#validationInProgress.delete(triggerField)),
+                ),
+              ),
+            );
+          });
+
+          return streams.length > 0 ? rxMerge(...streams) : EMPTY;
+        }),
         takeUntilDestroyed(this.#destroyRef),
       )
       .subscribe();
-  }
-
-  // submit listener is intentionally absent here
-
-  #createDependencyStreams(
-    config: Record<string, string[]>,
-  ): Observable<unknown> {
-    const streams = Object.keys(config)
-      .map((key) => {
-        const control = this.#core?.ngForm.form.get(key);
-        if (!control) {
-          if (isDevMode()) {
-            console.warn(
-              `[ngx-vest-forms] Control '${key}' not found for validationConfig.`,
-            );
-          }
-          return null;
-        }
-        return control.valueChanges.pipe(
-          map(() => control.value),
-          tap(() => this.#validateDependentFields(config[key], key)),
-        );
-      })
-      .filter((stream): stream is Observable<unknown> => stream !== null);
-
-    if (streams.length === 0) {
-      return of(null);
-    }
-
-    return zip(streams).pipe(
-      retry(3),
-      catchError((error) => {
-        if (isDevMode()) {
-          console.error(
-            '[ngx-vest-forms] Error in validationConfig stream:',
-            error,
-          );
-        }
-        return of(null);
-      }),
-    );
-  }
-
-  #validateDependentFields(
-    dependentFields: string[],
-    sourceField: string,
-  ): void {
-    for (const path of dependentFields || []) {
-      const dependentControl = this.#core?.ngForm.form.get(path);
-      if (dependentControl) {
-        dependentControl.updateValueAndValidity({
-          onlySelf: true,
-          emitEvent: true,
-        });
-      } else if (isDevMode()) {
-        console.warn(
-          `[ngx-vest-forms] Dependent control '${path}' not found for validationConfig key '${sourceField}'.`,
-        );
-      }
-    }
   }
 
   /**

@@ -110,6 +110,42 @@ export class NgxFormErrorDisplayDirective {
       },
       { injector: inject(Injector) },
     );
+
+    // Ensure validators run at least once on first blur when display mode expects blur-based visibility.
+    // This covers the case where updateOn is 'change' (Angular default) and the user blurs
+    // without changing the value: validators wouldn't run otherwise, leading to no error messages.
+    effect(
+      () => {
+        const mode = this.errorDisplayMode();
+        const state = this.controlState();
+        const updateOn = this.updateOn();
+
+        const includesBlur = mode === 'on-blur' || mode === 'on-blur-or-submit';
+        const controlReference = state?.controlRef as {
+          control?: { updateValueAndValidity?: (options?: unknown) => void };
+        } | null;
+
+        if (!includesBlur) return;
+        if (!state?.isTouched) return;
+        if (!controlReference) return;
+        if (updateOn === 'submit') return;
+        if (this.hasPendingValidation()) return;
+        if (this.#postBlurValidated.has(controlReference)) return;
+
+        // Defer to next microtask to avoid running during a render pass
+        queueMicrotask(() => {
+          try {
+            controlReference.control?.updateValueAndValidity?.({
+              onlySelf: true,
+              emitEvent: true,
+            });
+          } finally {
+            this.#postBlurValidated.add(controlReference);
+          }
+        });
+      },
+      { injector: inject(Injector) },
+    );
   }
 
   /**
@@ -155,6 +191,8 @@ export class NgxFormErrorDisplayDirective {
     // on-blur-or-submit: show errors after blur (touch) or submit
     return !!((state.isTouched || this.formSubmitted()) && errorCount > 0);
   });
+
+  #postBlurValidated = new WeakSet<object>();
 
   /**
    * Filtered and processed error messages.

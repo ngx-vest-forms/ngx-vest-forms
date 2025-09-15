@@ -13,13 +13,15 @@ export const asyncValidationSuite = staticSuite(
     });
 
     vestTest('username', 'Username must be available', async () => {
-      if (actualData.username) {
-        // Simulate async validation with controlled timing
-        await new Promise((resolve) => setTimeout(resolve, 200));
-        if (actualData.username === 'taken') {
-          throw new Error('Username is already taken');
-        }
+      if (!actualData.username) {
+        return; // valid
       }
+      // Simulate async validation with controlled timing
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      if (actualData.username === 'taken') {
+        throw new Error('Username is already taken');
+      }
+      return; // valid
     });
   },
 );

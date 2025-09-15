@@ -399,6 +399,47 @@ With the bare `ngModel` attribute (no square brackets), Angular sets up a separa
 
 Only when you explicitly want a blank control regardless of an existing model value (rare) or in quick prototypes. Even then, migrating to `[ngModel]` later is trivial.
 
+### Error Visibility: `ngModelOptions.updateOn` vs `errorDisplayMode`
+
+`ngx-vest-forms` separates two orthogonal concerns:
+
+- **When Angular runs validators & updates values** → controlled by `ngModelOptions.updateOn` (`'change'` (default), `'blur'`, `'submit'`).
+- **When already-known errors become visible to the user** → controlled by `errorDisplayMode` (`'on-blur'`, `'on-submit'`, `'on-blur-or-submit'`).
+
+This lets you, for example, validate on each keystroke (updateOn `'change'`) but only show errors after blur, or defer _all_ validation to submit and still have consistent display semantics.
+
+#### Why a One-Time First-Blur Trigger Exists
+
+Angular with `updateOn: 'change'` does not re-run validators if the user focuses an empty required field and blurs without typing. UX expectations (and accessibility best practices) typically call for showing the missing-required feedback at that point. We add a one-time first-blur validation trigger (skipped for `updateOn: 'submit'`) to prime the Vest suite so the wrapper can display the message. It fires only once per control unless the user changes the value later (normal change validation resumes).
+
+#### Behavior Matrix
+
+| `updateOn` | `errorDisplayMode`  | User Flow (simplified) | Validation Runs\*                                 | Errors Become Visible | Notes                                     |
+| ---------- | ------------------- | ---------------------- | ------------------------------------------------- | --------------------- | ----------------------------------------- |
+| `change`   | `on-blur`           | Focus → (type?) → blur | On each change + first-blur fallback if no change | On blur               | Fallback covers focus→blur empty case     |
+| `change`   | `on-submit`         | Interact → submit      | On changes; submit re-validates needed dependents | After first submit    | Pre-submit errors hidden                  |
+| `change`   | `on-blur-or-submit` | Blur OR submit         | Changes + first-blur fallback + submit            | Blur or submit        | Default in library                        |
+| `blur`     | `on-blur`           | Type → blur            | At blur (Angular)                                 | Same blur             | No fallback necessary                     |
+| `blur`     | `on-submit`         | Blur cycles → submit   | Each blur; submit re-validates form-level if any  | After first submit    | Cached errors hidden until submit         |
+| `blur`     | `on-blur-or-submit` | Blur OR submit         | Each blur; submit as needed                       | Blur or submit        | Similar to on-blur unless no blur happens |
+| `submit`   | `on-blur`           | Focus/blur → submit    | Only at submit                                    | After submit          | Submit timing dominates                   |
+| `submit`   | `on-submit`         | Submit                 | Only at submit                                    | After submit          | Simplest late feedback                    |
+| `submit`   | `on-blur-or-submit` | Blur attempts → submit | Only at submit                                    | After submit          | Blur has no effect pre-submit             |
+
+\*Row describes Vest suite executions for that control; dependency-triggered validations (via `validationConfig`) may add runs after related fields settle.
+
+#### Why Not Include an `on-change` Error Mode?
+
+We intentionally avoided a built-in `'on-change'` (immediate) mode:
+
+1. Reduces cognitive overload—errors while typing feel noisy, especially for multi-character patterns (email, password).
+2. Encourages accessible pacing—feedback appears once the user can act (after leaving the field) or explicitly requests validation (submit).
+3. Keeps configuration surface minimal—three modes cover mainstream UX patterns.
+
+If you need immediate surfacing you can still read `vestForm.formState().errors` directly for custom UI, or extend the internal predicate with a lightweight directive. Community demand could justify adding `'on-change'` later in a minor release without breaking changes.
+
+> Accessibility note: This behavior was implemented with accessibility in mind, but manual audits with tools like Accessibility Insights and screen reader testing are still recommended.
+
 #### Test Coverage
 
 The library’s test suite includes a targeted pair of tests verifying both behaviors (hydration vs empty) so we don’t need to duplicate every scenario across both binding styles.

@@ -250,6 +250,10 @@ export class NgxFormCoreDirective<TModel = Record<string, unknown>> {
     let bootstrapped = false;
     effect(
       () => {
+        // Tie to form status so this effect re-evaluates when controls register
+        // or when the form recalculates its status.
+        // This makes the bootstrap resilient to timing of control registration.
+        this.#status();
         if (bootstrapped) return;
         if (!this.vestSuite()) return;
         const controls = this.ngForm.form.controls;
@@ -264,6 +268,22 @@ export class NgxFormCoreDirective<TModel = Record<string, unknown>> {
       },
       { allowSignalWrites: true },
     );
+
+    // Also perform a one-time bootstrap after the next render to cover cases
+    // where controls register only after view init in template-driven forms.
+    // This complements the effect above and guarantees an initial validation pass.
+    queueMicrotask(() => {
+      if (bootstrapped) return;
+      if (!this.vestSuite()) return;
+      const controls = this.ngForm.form.controls;
+      const keys = Object.keys(controls);
+      if (keys.length === 0) return;
+      for (const key of keys) {
+        const control = (controls as Record<string, AbstractControl>)[key];
+        control.updateValueAndValidity({ onlySelf: true, emitEvent: true });
+      }
+      bootstrapped = true;
+    });
 
     // Single bidirectional synchronization effect
     // Uses proper deep comparison and change tracking for correct sync direction
