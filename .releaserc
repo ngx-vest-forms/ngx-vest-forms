@@ -1,11 +1,27 @@
 {
   "branches": [
     "master",
-    { "name": "release/v1.x", "range": "1.x" },
-    { "name": "next", "prerelease": "next" },
-    { "name": "beta", "prerelease": true },
-    { "name": "rc", "prerelease": "rc" },
-    { "name": "alpha", "prerelease": true },
+    {
+      "name": "release/v1.x",
+      "range": "1.x",
+      "channel": "v1"
+    },
+    {
+      "name": "next",
+      "prerelease": "next"
+    },
+    {
+      "name": "beta",
+      "prerelease": true
+    },
+    {
+      "name": "rc",
+      "prerelease": "rc"
+    },
+    {
+      "name": "alpha",
+      "prerelease": true
+    },
     {
       "name": "feat/*",
       "prerelease": "feat-${((typeof name === 'string' && name.replace(/^feat\\//, '').replace(/[^a-zA-Z0-9-_]/g, '')) ? name.replace(/^feat\\//, '').replace(/[^a-zA-Z0-9-_]/g, '') : 'branch') || 'branch'}"
