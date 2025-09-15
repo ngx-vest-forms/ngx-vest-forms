@@ -3,7 +3,12 @@
     "master",
     {
       "name": "release/v1.x",
-      "range": "1.x"
+      "range": "1.x",
+      "channel": "v1"
+    },
+    {
+      "name": "next",
+      "prerelease": "next"
     },
     {
       "name": "next",
@@ -39,7 +44,6 @@
         "pkgRoot": "dist/ngx-vest-forms"
       }
     ],
-    "@semantic-release/git",
     "@semantic-release/github"
   ]
 }

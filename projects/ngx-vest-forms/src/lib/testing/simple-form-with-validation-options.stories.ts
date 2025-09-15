@@ -1,7 +1,7 @@
 import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
 import { Component, computed, signal } from '@angular/core';
 import { vestForms } from '../exports';
-import { userEvent, within, expect } from 'storybook/test';
+import { userEvent, within, expect, waitFor } from 'storybook/test';
 import {
   FormModel,
   formShape,
@@ -164,11 +164,13 @@ export const ShouldShowFirstnameRequiredAfterDelayForNgModel: StoryObj = {
       canvas.getByTestId(selectors.scControlWrapperFirstName)
     ).not.toHaveTextContent('First name is required');
 
-    setTimeout(() => {
-      expect(
-        canvas.getByTestId(selectors.scControlWrapperFirstName)
-      ).toHaveTextContent('First name is required');
-    }, 550);
+    await waitFor(
+      () =>
+        expect(
+          canvas.getByTestId(selectors.scControlWrapperFirstName)
+        ).toHaveTextContent('First name is required'),
+      { timeout: 600 }
+    );
   },
 };
 
@@ -192,11 +194,13 @@ export const ShouldShowPasswordConfirmationAfterDelayForNgModelGroup: StoryObj =
         canvas.getByTestId(selectors.scControlWrapperPasswords)
       ).not.toHaveTextContent('Passwords do not match');
 
-      setTimeout(() => {
-        expect(
-          canvas.getByTestId(selectors.scControlWrapperPasswords)
-        ).toHaveTextContent('Passwords do not match');
-      }, 1000);
+      await waitFor(
+        () =>
+          expect(
+            canvas.getByTestId(selectors.scControlWrapperPasswords)
+          ).toHaveTextContent('Passwords do not match'),
+        { timeout: 1100 }
+      );
     },
   };
 
@@ -223,12 +227,15 @@ export const ShouldValidateOnRootFormAfterDelay: StoryObj = {
       rootForm: ['Brecht his pass is not 1234'],
     };
 
-    setTimeout(() => {
-      expect(
-        JSON.stringify(
-          JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)
-        )
-      ).toEqual(JSON.stringify(expectedErrors));
-    }, 550);
+    await waitFor(
+      () => {
+        expect(
+          JSON.stringify(
+            JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)
+          )
+        ).toEqual(JSON.stringify(expectedErrors));
+      },
+      { timeout: 600 }
+    );
   },
 };
