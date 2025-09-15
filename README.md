@@ -6,7 +6,7 @@
 # ngx-vest-forms
 
 [![npm version](https://img.shields.io/npm/v/ngx-vest-forms.svg?style=flat-square)](https://www.npmjs.com/package/ngx-vest-forms)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/ngx-vest-forms/ngx-vest-forms/build-test.yml?style=flat-square&label=Build)](https://github.com/ngx-vest-forms/ngx-vest-forms/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/ngx-vest-forms/ngx-vest-forms/cd.yml?branch=master&style=flat-square&label=Build)](https://github.com/ngx-vest-forms/ngx-vest-forms/actions/workflows/cd.yml)
 [![Angular](https://img.shields.io/badge/Angular-18+-dd0031?style=flat-square&logo=angular)](https://angular.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
