@@ -4,7 +4,7 @@
     {
       "name": "release/v1.x",
       "range": "1.x",
-      "channel": "v1"
+      "channel": "release-v1"
     },
     {
       "name": "next",
