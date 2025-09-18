@@ -18,6 +18,12 @@ export {
   ShapeMismatchError,
 } from './lib/utils/shape-validation';
 export { arrayToObject } from './lib/utils/array-to-object';
+export {
+  clearFieldsWhen,
+  clearFields,
+  keepFieldsWhen,
+} from './lib/utils/field-clearing';
+export { shallowEqual, fastDeepEqual } from './lib/utils/equality';
 export { ROOT_FORM, VALIDATION_CONFIG_DEBOUNCE_TIME } from './lib/constants';
 export { ControlWrapperComponent } from './lib/components/control-wrapper/control-wrapper.component';
 export { FormDirective } from './lib/directives/form.directive';

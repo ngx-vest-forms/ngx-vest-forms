@@ -2,12 +2,14 @@ import {
   Directive,
   inject,
   input,
-  Output,
   AfterViewInit,
   effect,
   DestroyRef,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  takeUntilDestroyed,
+  outputFromObservable,
+} from '@angular/core/rxjs-interop';
 import {
   AsyncValidatorFn,
   NgForm,
@@ -20,6 +22,7 @@ import {
   debounceTime,
   distinctUntilChanged,
   filter,
+  finalize,
   map,
   Observable,
   of,
@@ -28,8 +31,6 @@ import {
   switchMap,
   take,
   tap,
-  finalize,
-  takeUntil,
 } from 'rxjs';
 import { StaticSuite } from 'vest';
 import { DeepRequired } from '../utils/deep-required';
@@ -39,12 +40,14 @@ import {
   mergeValuesAndRawValues,
   set,
 } from '../utils/form-utils';
+import { fastDeepEqual } from '../utils/equality';
 import { validateShape } from '../utils/shape-validation';
 import { ValidationOptions } from './validation-options';
 import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
 
 @Directive({
   selector: 'form[scVestForm]',
+  exportAs: 'scVestForm',
   standalone: true,
 })
 export class FormDirective<T extends Record<string, any>>
@@ -113,34 +116,52 @@ export class FormDirective<T extends Record<string, any>>
 
   /**
    * Triggered as soon as the form value changes
-   * Also every time Angular creates a new control or group
    * It also contains the disabled values (raw values)
+   *
+   * Cleanup is handled automatically by the directive when it's destroyed.
    */
-  @Output() public readonly formValueChange = this.ngForm.form.events.pipe(
-    filter((v) => v instanceof ValueChangeEvent),
-    map((v) => (v as ValueChangeEvent<any>).value),
-    map(() => mergeValuesAndRawValues<T>(this.ngForm.form))
+  public readonly formValueChange = outputFromObservable(
+    this.ngForm.form.events.pipe(
+      filter((v) => v instanceof ValueChangeEvent),
+      map((v) => (v as ValueChangeEvent<any>).value),
+      distinctUntilChanged((prev, curr) => {
+        // Use efficient deep equality instead of JSON.stringify for better performance
+        return fastDeepEqual(prev, curr);
+      }),
+      map(() => mergeValuesAndRawValues<T>(this.ngForm.form)),
+      takeUntilDestroyed(this.destroyRef)
+    )
   );
 
   /**
    * Emits an object with all the errors of the form
    * every time a form control or form groups changes its status to valid or invalid
+   *
+   * Cleanup is handled automatically by the directive when it's destroyed.
    */
-  @Output() public readonly errorsChange = this.ngForm.form.events.pipe(
-    filter((v) => v instanceof StatusChangeEvent),
-    map((v) => (v as StatusChangeEvent).status),
-    filter((v) => v !== 'PENDING'),
-    map(() => getAllFormErrors(this.ngForm.form))
+  public readonly errorsChange = outputFromObservable(
+    this.ngForm.form.events.pipe(
+      filter((v) => v instanceof StatusChangeEvent),
+      map((v) => (v as StatusChangeEvent).status),
+      filter((v) => v !== 'PENDING'),
+      map(() => getAllFormErrors(this.ngForm.form)),
+      takeUntilDestroyed(this.destroyRef)
+    )
   );
 
   /**
    * Triggered as soon as the form becomes dirty
+   *
+   * Cleanup is handled automatically by the directive when it's destroyed.
    */
-  @Output() public readonly dirtyChange = this.ngForm.form.events.pipe(
-    filter((v) => v instanceof PristineChangeEvent),
-    map((v) => !(v as PristineChangeEvent).pristine),
-    startWith(this.ngForm.form.dirty),
-    distinctUntilChanged()
+  public readonly dirtyChange = outputFromObservable(
+    this.ngForm.form.events.pipe(
+      filter((v) => v instanceof PristineChangeEvent),
+      map((v) => !(v as PristineChangeEvent).pristine),
+      startWith(this.ngForm.form.dirty),
+      distinctUntilChanged(),
+      takeUntilDestroyed(this.destroyRef)
+    )
   );
 
   /**
@@ -153,11 +174,16 @@ export class FormDirective<T extends Record<string, any>>
 
   /**
    * Triggered When the form becomes valid but waits until the form is idle
+   *
+   * Cleanup is handled automatically by the directive when it's destroyed.
    */
-  @Output() public readonly validChange = this.statusChanges$.pipe(
-    filter((e) => e === 'VALID' || e === 'INVALID'),
-    map((v) => v === 'VALID'),
-    distinctUntilChanged()
+  public readonly validChange = outputFromObservable(
+    this.statusChanges$.pipe(
+      filter((e) => e === 'VALID' || e === 'INVALID'),
+      map((v) => v === 'VALID'),
+      distinctUntilChanged(),
+      takeUntilDestroyed(this.destroyRef)
+    )
   );
 
   /**
@@ -177,20 +203,20 @@ export class FormDirective<T extends Record<string, any>>
      * Trigger shape validations if the form gets updated
      * This is how we can throw run-time errors
      */
-    this.formValueChange
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((v) => {
-        if (this.formShape()) {
-          validateShape(v, this.formShape() as DeepRequired<T>);
-        }
-      });
+    this.formValueChange.subscribe((v) => {
+      if (this.formShape()) {
+        validateShape(v, this.formShape() as DeepRequired<T>);
+      }
+    });
 
     /**
      * Mark all the fields as touched when the form is submitted
      */
-    this.ngForm.ngSubmit.subscribe(() => {
-      this.ngForm.form.markAllAsTouched();
-    });
+    this.ngForm.ngSubmit
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.ngForm.form.markAllAsTouched();
+      });
 
     /**
      * Set up validation config reactively using effects
@@ -208,6 +234,48 @@ export class FormDirective<T extends Record<string, any>>
    */
   public ngAfterViewInit(): void {
     this.setupValidationConfig();
+  }
+
+  /**
+   * Manually trigger form validation update.
+   *
+   * This is useful when form structure changes but no control values change,
+   * which means validation state might be stale. This method forces a re-evaluation
+   * of all form validators and updates the form validity state.
+   *
+   * **IMPORTANT: This method validates ALL form fields by design.**
+   * This is intentional for structure changes as conditional validators may now
+   * apply to different fields, requiring a complete validation refresh.
+   *
+   * **Use Cases:**
+   * - Conditionally showing/hiding form controls based on other field values
+   * - Adding or removing form controls dynamically
+   * - Switching between different form layouts where validation requirements change
+   * - Any scenario where form structure changes but no ValueChangeEvent is triggered
+   *
+   * **Example:**
+   * When switching from a form with required input fields to one with only informational content,
+   * the form should become valid, but this won't happen automatically
+   * when no value changes occur (e.g., switching from input fields to informational content).
+   *
+   * **Performance Note:**
+   * This method calls `updateValueAndValidity({ emitEvent: true })` on the root form,
+   * which validates all form controls. For large forms, consider if more granular
+   * validation updates are possible.
+   *
+   * @example
+   * ```typescript
+   * /// After changing form structure
+   * onProcedureTypeChange(newType: string) {
+   *   this.procedureType.set(newType);
+   *   /// Structure changed but no control values changed
+   *   this.formDirective.triggerFormValidation();
+   * }
+   * ```
+   */
+  public triggerFormValidation(): void {
+    // Update all form controls validity which will trigger all form events
+    this.ngForm.form.updateValueAndValidity({ emitEvent: true });
   }
 
   private setupValidationConfig(): void {
