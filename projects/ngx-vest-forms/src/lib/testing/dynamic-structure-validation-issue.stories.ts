@@ -11,6 +11,7 @@ import { FormDirective } from '../directives/form.directive';
 import { userEvent, within, expect, waitFor } from 'storybook/test';
 import { DeepPartial } from '../utils/deep-partial';
 import { DeepRequired } from '../utils/deep-required';
+import { clearFieldsWhen } from '../utils/field-clearing';
 import { staticSuite, test, enforce, omitWhen, only } from 'vest';
 import { JsonPipe } from '@angular/common';
 
@@ -248,21 +249,20 @@ export class DynamicStructureComponent {
     const rawValue = target.value as 'typeA' | 'typeB' | 'typeC' | '';
     const newValue = rawValue === '' ? undefined : rawValue;
 
-    // Update form value with proper field clearing for component state consistency
-    this.formValue.update((current) => ({
-      ...current,
-      procedureType: newValue,
-      // Clear fields that are no longer relevant to keep component state clean
-      // Angular automatically removes FormControls from DOM, but we need to clean our signal state
-      ...(newValue !== 'typeA' && { fieldA: undefined }),
-      ...(newValue !== 'typeB' && { fieldB: undefined }),
-    }));
+    // Update form value using the clearFieldsWhen utility for better maintainability
+    this.formValue.update((current) =>
+      clearFieldsWhen(
+        { ...current, procedureType: newValue },
+        {
+          fieldA: newValue !== 'typeA',
+          fieldB: newValue !== 'typeB',
+        }
+      )
+    );
 
     // Using the new triggerFormValidation() API to handle structure changes
     // This is necessary because Angular doesn't emit ValueChangeEvent when form structure changes
-    setTimeout(() => {
-      this.vestFormRef.triggerFormValidation();
-    }, 0);
+    this.vestFormRef.triggerFormValidation();
   }
 }
 
@@ -291,19 +291,28 @@ This story demonstrates both a validation issue in ngx-vest-forms and modern Ang
 - **Type B**: Shows input field B (required)
 - **Type C**: Shows informational paragraph (no inputs, no additional validation)
 
-### Key Learning: Field Clearing Logic
+### Key Learning: Field Clearing with Utility Functions
 
 \`\`\`typescript
-// This IS needed for component state consistency:
-...(newType !== 'typeA' && { fieldA: undefined }),
-...(newType !== 'typeB' && { fieldB: undefined }),
+// Using the built-in clearFieldsWhen utility from ngx-vest-forms:
+import { clearFieldsWhen } from 'ngx-vest-forms';
+
+this.formValue.update((current) =>
+  clearFieldsWhen(
+    { ...current, procedureType: newValue },
+    {
+      fieldA: newValue !== 'typeA',
+      fieldB: newValue !== 'typeB',
+    }
+  )
+);
 \`\`\`
 
 **Why?** Angular automatically removes FormControls from DOM when inputs are hidden,
 but your component state (signals/properties) retains old values, creating inconsistency.
 
-### Solution: triggerFormValidation() API
-When form structure changes, manually trigger validation to ensure UI updates immediately.
+### Solution: triggerFormValidation() API + Field Clearing Utilities
+When form structure changes, use \`clearFieldsWhen\` utility and manually trigger validation to ensure UI updates immediately.
         `,
       },
     },
@@ -522,8 +531,21 @@ This story demonstrates why manually clearing fields is needed for component sta
 
 **The Pattern:**
 \`\`\`typescript
-...(newType !== 'typeA' && { fieldA: undefined }),
-...(newType !== 'typeB' && { fieldB: undefined }),
+import { clearFieldsWhen } from 'ngx-vest-forms';
+
+onStructureChange(newValue: string) {
+  this.formValue.update((current) =>
+    clearFieldsWhen(
+      { ...current, procedureType: newValue },
+      {
+        fieldA: newValue !== 'typeA',
+        fieldB: newValue !== 'typeB',
+      }
+    )
+  );
+
+  this.vestFormRef.triggerFormValidation();
+}
 \`\`\`
 
 This ensures component state matches the actual form structure after DOM changes.
