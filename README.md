@@ -13,7 +13,7 @@
 
 ⭐ If you like this project, star it on GitHub — it helps a lot!
 
-[Overview](#overview) • [Getting Started](#getting-started) • [Features](#features) • [Basic Usage](#basic-usage) • [Examples](#examples) • [Resources](#resources) • [Developer Resources](#developer-resources) • [Acknowledgments](#acknowledgments)
+[Overview](#overview) • [Getting Started](#getting-started) • [Features](#features) • [Basic Usage](#basic-usage) • [Examples](#examples) • [Form Structure Changes](#handling-form-structure-changes) • [Documentation](#documentation) • [Resources](#resources) • [Developer Resources](#developer-resources) • [Acknowledgments](#acknowledgments)
 
 </div>
 
@@ -163,6 +163,7 @@ Your form automatically creates FormGroups and FormControls with type-safe, unid
 - **Form Arrays** - Dynamic lists with add/remove functionality
 - **Reactive Disabling** - Disable fields based on computed signals
 - **State Management** - Preserve field state across conditional rendering
+- **Structure Change Detection** - Manual trigger for validation updates when form structure changes
 
 ### Developer Experience
 
@@ -208,6 +209,12 @@ The `scVestForm` directive offers these outputs:
 | `dirtyChange`     | Emits when the dirty state of the form changes                                                  |
 | `validChange`     | Emits when the form becomes valid or invalid                                                    |
 | `errorsChange`    | Emits the complete list of errors for the form and all its controls                             |
+
+### Public Methods
+
+| Method                    | Description                                                                                                           |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `triggerFormValidation()` | Manually triggers form validation update when form structure changes without value changes (e.g., conditional fields) |
 
 ### Avoiding typo's
 
@@ -377,6 +384,123 @@ We can bind the computed signal to the `disabled` directive of Angular.
 />
 ```
 
+### Handling Form Structure Changes
+
+When form structure changes dynamically (e.g., conditional fields are shown/hidden), the validation state may not update automatically since no control values change. For these scenarios, use the `triggerFormValidation()` method:
+
+#### The Problem
+
+```typescript
+// Form structure changes based on selection
+@if (procedureType() === 'typeA') {
+  <input name="fieldA" [ngModel]="formValue().fieldA" />
+}
+@else if (procedureType() === 'typeB') {
+  <input name="fieldB" [ngModel]="formValue().fieldB" />
+}
+@else if (procedureType() === 'typeC') {
+  <p>No additional input required for this procedure type.</p>
+}
+```
+
+**Issue**: When switching from `typeA` to `typeC`, the input field is removed but no control values change, so validation doesn't update automatically.
+
+#### The Solution
+
+```typescript
+@Component({
+  template: `
+    <form
+      scVestForm
+      [suite]="validationSuite"
+      (formValueChange)="formValue.set($event)"
+      #vestForm="scVestForm"
+    >
+      <select
+        name="procedureType"
+        [ngModel]="formValue().procedureType"
+        (ngModelChange)="onProcedureTypeChange($event)"
+      >
+        <option value="typeA">Type A</option>
+        <option value="typeB">Type B</option>
+        <option value="typeC">Type C (No input)</option>
+      </select>
+
+      @if (formValue().procedureType === 'typeA') {
+        <input name="fieldA" [ngModel]="formValue().fieldA" />
+      } @else if (formValue().procedureType === 'typeB') {
+        <input name="fieldB" [ngModel]="formValue().fieldB" />
+      } @else if (formValue().procedureType === 'typeC') {
+        <p>No additional input required.</p>
+      }
+    </form>
+  `,
+})
+export class MyFormComponent {
+  @ViewChild('vestForm') vestForm!: FormDirective<MyFormModel>;
+
+  protected readonly formValue = signal<MyFormModel>({});
+  protected readonly validationSuite = myValidationSuite;
+
+  onProcedureTypeChange(newType: string) {
+    // Update the form value
+    this.formValue.update((current) => ({
+      ...current,
+      procedureType: newType,
+      // Clear fields that are no longer relevant
+      ...(newType !== 'typeA' && { fieldA: undefined }),
+      ...(newType !== 'typeB' && { fieldB: undefined }),
+    }));
+
+    // ✅ CRITICAL: Trigger validation update after structure change
+    this.vestForm.triggerFormValidation();
+  }
+}
+```
+
+#### When to Use `triggerFormValidation()`
+
+Call this method in these scenarios:
+
+- **After changing form structure** - When conditional fields are shown/hidden
+- **After clearing form sections** - When resetting parts of the form
+- **After dynamic field addition/removal** - When programmatically modifying form structure
+- **After switching form modes** - When toggling between different form layouts
+
+#### Validation Suite Pattern for Conditional Fields
+
+```typescript
+import { staticSuite, test, enforce, omitWhen, only } from 'vest';
+
+export const myValidationSuite = staticSuite(
+  (model: MyFormModel, field?: string) => {
+    if (field) {
+      only(field); // Performance optimization
+    }
+
+    // Always validate procedure type
+    test('procedureType', 'Procedure type is required', () => {
+      enforce(model.procedureType).isNotBlank();
+    });
+
+    // Conditional validations
+    omitWhen(model.procedureType !== 'typeA', () => {
+      test('fieldA', 'Field A is required for Type A', () => {
+        enforce(model.fieldA).isNotBlank();
+      });
+    });
+
+    omitWhen(model.procedureType !== 'typeB', () => {
+      test('fieldB', 'Field B is required for Type B', () => {
+        enforce(model.fieldB).isNotBlank();
+      });
+    });
+
+    // Note: No validation needed for typeC as it has no input fields
+  }
+);
+```
+
 ## Examples
 
 ### Simple Form with Validation
@@ -503,6 +627,8 @@ export class ConditionalFormComponent {
 
 - **[Purchase Form Demo](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/projects/examples/src/app/components/smart/purchase-form)** - Complex form with nested objects, validation dependencies, and conditional logic
 - **[Business Hours Demo](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/projects/examples/src/app/components/smart/business-hours-form)** - Dynamic form arrays with complex validation rules
+
+> **💡 Pro Tip**: Check out our detailed [Structure Change Detection Guide](./docs/STRUCTURE_CHANGE_DETECTION.md) for advanced handling of conditional form scenarios, alternative approaches, and performance considerations.
 
 ### Validations
 
@@ -1082,6 +1208,24 @@ export class AddressComponent {
   @Input() address?: AddressModel;
 }
 ```
+
+## Documentation
+
+### Detailed Guides
+
+For comprehensive documentation beyond this README, check out our detailed guides:
+
+- **[Structure Change Detection Guide](./docs/STRUCTURE_CHANGE_DETECTION.md)** - Advanced handling of conditional form scenarios
+  - Alternative approaches and their trade-offs
+  - Performance considerations and best practices
+  - Detailed API reference with examples
+  - When and why to use `triggerFormValidation()`
+
+### Coming Soon
+
+- **Advanced Form Arrays Guide** - Dynamic lists, nested arrays, and complex scenarios
+- **Custom Validation Guide** - Building reusable validation suites and complex rules
+- **Performance Optimization Guide** - Tips and techniques for large-scale forms
 
 ## Resources
 

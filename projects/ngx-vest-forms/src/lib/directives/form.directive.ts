@@ -20,6 +20,7 @@ import {
   debounceTime,
   distinctUntilChanged,
   filter,
+  finalize,
   map,
   Observable,
   of,
@@ -28,8 +29,6 @@ import {
   switchMap,
   take,
   tap,
-  finalize,
-  takeUntil,
 } from 'rxjs';
 import { StaticSuite } from 'vest';
 import { DeepRequired } from '../utils/deep-required';
@@ -45,6 +44,7 @@ import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
 
 @Directive({
   selector: 'form[scVestForm]',
+  exportAs: 'scVestForm',
   standalone: true,
 })
 export class FormDirective<T extends Record<string, any>>
@@ -113,13 +113,17 @@ export class FormDirective<T extends Record<string, any>>
 
   /**
    * Triggered as soon as the form value changes
-   * Also every time Angular creates a new control or group
    * It also contains the disabled values (raw values)
    */
   @Output() public readonly formValueChange = this.ngForm.form.events.pipe(
     filter((v) => v instanceof ValueChangeEvent),
     map((v) => (v as ValueChangeEvent<any>).value),
-    map(() => mergeValuesAndRawValues<T>(this.ngForm.form))
+    distinctUntilChanged((prev, curr) => {
+      // For value changes, compare serialized values
+      return JSON.stringify(prev) === JSON.stringify(curr);
+    }),
+    map(() => mergeValuesAndRawValues<T>(this.ngForm.form)),
+    takeUntilDestroyed(this.destroyRef)
   );
 
   /**
@@ -208,6 +212,39 @@ export class FormDirective<T extends Record<string, any>>
    */
   public ngAfterViewInit(): void {
     this.setupValidationConfig();
+  }
+
+  /**
+   * Manually trigger form validation update.
+   *
+   * This is useful when form structure changes but no control values change,
+   * which means validation state might be stale. This method forces a re-evaluation
+   * of all form validators and updates the form validity state.
+   *
+   * **Use Cases:**
+   * - Conditionally showing/hiding form controls based on other field values
+   * - Adding or removing form controls dynamically
+   * - Switching between different form layouts where validation requirements change
+   * - Any scenario where form structure changes but no ValueChangeEvent is triggered
+   *
+   * **Example:**
+   * When switching from a form with required input fields to one with only informational content,
+   * the form should become valid, but this won't happen automatically
+   * when no value changes occur (e.g., switching from input fields to informational content).
+   *
+   * @example
+   * ```typescript
+   * /// After changing form structure
+   * onProcedureTypeChange(newType: string) {
+   *   this.procedureType.set(newType);
+   *   /// Structure changed but no control values changed
+   *   this.formDirective.triggerFormValidation();
+   * }
+   * ```
+   */
+  public triggerFormValidation(): void {
+    // Update all form controls validity which will trigger all form events
+    this.ngForm.form.updateValueAndValidity({ emitEvent: true });
   }
 
   private setupValidationConfig(): void {
