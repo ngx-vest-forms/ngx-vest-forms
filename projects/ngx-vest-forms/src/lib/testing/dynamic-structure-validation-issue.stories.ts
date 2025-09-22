@@ -229,7 +229,7 @@ export class DynamicStructureComponent {
   // Angular 20: Using signals for state management
   protected readonly formValue = signal<DynamicFormModel>({});
   protected readonly formValid = signal<boolean>(false);
-  protected readonly errors = signal<Record<string, string>>({});
+  protected readonly errors = signal<Record<string, string[]>>({});
 
   // Static properties can remain as regular properties
   protected readonly shape = dynamicFormShape;
