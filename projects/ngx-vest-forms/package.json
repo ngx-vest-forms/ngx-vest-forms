@@ -15,8 +15,17 @@
   },
   "keywords": [
     "Angular",
+    "Async validation",
+    "Dynamic forms",
+    "Error handling",
+    "Form adapter",
+    "Form validation",
     "Forms",
-    "Signals"
+    "Signals",
+    "Template Driven Forms",
+    "Unidirectional data flow",
+    "Validation",
+    "Vestjs"
   ],
   "repository": {
     "type": "git",

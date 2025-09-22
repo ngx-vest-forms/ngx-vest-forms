@@ -13,7 +13,7 @@
 
 ⭐ If you like this project, star it on GitHub — it helps a lot!
 
-[Overview](#overview) • [Getting Started](#getting-started) • [Features](#features) • [Basic Usage](#basic-usage) • [Examples](#examples) • [Resources](#resources) • [Developer Resources](#developer-resources) • [Acknowledgments](#acknowledgments)
+[Overview](#overview) • [Getting Started](#getting-started) • [Features](#features) • [Basic Usage](#basic-usage) • [Examples](#examples) • [Form Structure Changes](#handling-form-structure-changes) • [Field State Utilities](#field-state-utilities) • [Documentation](#documentation) • [Resources](#resources) • [Developer Resources](#developer-resources) • [Acknowledgments](#acknowledgments)
 
 </div>
 
@@ -163,12 +163,14 @@ Your form automatically creates FormGroups and FormControls with type-safe, unid
 - **Form Arrays** - Dynamic lists with add/remove functionality
 - **Reactive Disabling** - Disable fields based on computed signals
 - **State Management** - Preserve field state across conditional rendering
+- **Structure Change Detection** - Manual trigger for validation updates when form structure changes
 
 ### Developer Experience
 
 - **Runtime Shape Checking** - Catch typos in `name` attributes early
 - **Built-in Error Display** - `sc-control-wrapper` component for consistent UX
 - **Validation Config** - Declare field dependencies for complex scenarios
+- **Field State Utilities** - Helper functions for managing dynamic form state
 - **Modern Angular** - Built for Angular 18+ with standalone components
 
 ## Basic Usage
@@ -208,6 +210,12 @@ The `scVestForm` directive offers these outputs:
 | `dirtyChange`     | Emits when the dirty state of the form changes                                                  |
 | `validChange`     | Emits when the form becomes valid or invalid                                                    |
 | `errorsChange`    | Emits the complete list of errors for the form and all its controls                             |
+
+### Public Methods
+
+| Method                    | Description                                                                                                           |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `triggerFormValidation()` | Manually triggers form validation update when form structure changes without value changes (e.g., conditional fields) |
 
 ### Avoiding typo's
 
@@ -377,6 +385,302 @@ We can bind the computed signal to the `disabled` directive of Angular.
 />
 ```
 
+### Handling Form Structure Changes
+
+When form structure changes dynamically in combination with _NON_ form elements (e.g., conditional fields are shown/hidden), the validation state may not update automatically since no control values change. For these scenarios, use the `triggerFormValidation()` method:
+
+#### The Problem
+
+```typescript
+// Form structure changes based on selection
+@if (procedureType() === 'typeA') {
+  <input name="fieldA" [ngModel]="formValue().fieldA" />
+}
+@else if (procedureType() === 'typeB') {
+  <input name="fieldB" [ngModel]="formValue().fieldB" />
+}
+@else if (procedureType() === 'typeC') {
+  <!-- NON-FORM ELEMENT -->
+  <p>No additional input required for this procedure type.</p>
+}
+```
+
+**Issue**: When switching from `typeA` to `typeC`, the input field is removed but no control values change, so validation doesn't update automatically.
+
+#### The Solution
+
+```typescript
+@Component({
+  template: `
+    <form
+      scVestForm
+      [suite]="validationSuite"
+      (formValueChange)="formValue.set($event)"
+      #vestForm="scVestForm"
+    >
+      <select
+        name="procedureType"
+        [ngModel]="formValue().procedureType"
+        (ngModelChange)="onProcedureTypeChange($event)"
+      >
+        <option value="typeA">Type A</option>
+        <option value="typeB">Type B</option>
+        <option value="typeC">Type C (No input)</option>
+      </select>
+
+      @if (formValue().procedureType === 'typeA') {
+        <input name="fieldA" [ngModel]="formValue().fieldA" />
+      } @else if (formValue().procedureType === 'typeB') {
+        <input name="fieldB" [ngModel]="formValue().fieldB" />
+      } @else if (formValue().procedureType === 'typeC') {
+        <p>No additional input required.</p>
+      }
+    </form>
+  `,
+})
+export class MyFormComponent {
+  @ViewChild('vestForm') vestForm!: FormDirective<MyFormModel>;
+
+  protected readonly formValue = signal<MyFormModel>({});
+  protected readonly validationSuite = myValidationSuite;
+
+  onProcedureTypeChange(newType: string) {
+    // Update the form value
+    this.formValue.update((current) => ({
+      ...current,
+      procedureType: newType,
+      // Clear fields that are no longer relevant
+      ...(newType !== 'typeA' && { fieldA: undefined }),
+      ...(newType !== 'typeB' && { fieldB: undefined }),
+    }));
+
+    // ✅ CRITICAL: Trigger validation update after structure change
+    this.vestForm.triggerFormValidation();
+  }
+}
+```
+
+#### When to Use `triggerFormValidation()`
+
+Call this method in these scenarios:
+
+- **After changing form structure** - When conditional fields are shown/hidden
+- **After clearing form sections** - When resetting parts of the form
+- **After dynamic field addition/removal** - When programmatically modifying form structure
+- **After switching form modes** - When toggling between different form layouts
+
+#### Field Clearing Pattern for Component State Consistency
+
+##### When Field Clearing is Required
+
+Field clearing utilities are **specifically needed** when conditional logic switches between:
+
+- **Form inputs** (`<input>`, `<select>`, `<textarea>`) ↔ **NON-form elements** (`<p>`, `<div>`, informational content)
+
+**Primary Use Case - The Problem Scenario:**
+
+```typescript
+// This template structure REQUIRES manual field clearing:
+@if (procedureType === 'typeA') {
+  <input name="fieldA" [ngModel]="formValue().fieldA" />  // Form input
+} @else if (procedureType === 'typeB') {
+  <input name="fieldB" [ngModel]="formValue().fieldB" />  // Form input
+} @else if (procedureType === 'typeC') {
+  <p>No additional input required for this procedure.</p>   // NON-form element!
+}
+```
+
+**Why This Creates State Inconsistency:**
+
+1. **Switching FROM form input TO non-form content:** Angular removes FormControl, but component signal retains old value
+2. **Result:** `ngForm.form.value` becomes clean, but `formValue()` signal remains stale
+3. **Problem:** State inconsistency between Angular's form state and your component state
+
+```typescript
+// Before switching from typeA to typeC:
+formValue() = { procedureType: 'typeA', fieldA: 'some-value' };
+ngForm.form.value = { procedureType: 'typeA', fieldA: 'some-value' };
+
+// After switching (WITHOUT manual clearing):
+formValue() = { procedureType: 'typeC', fieldA: 'some-value' }; // ❌ Stale fieldA!
+ngForm.form.value = { procedureType: 'typeC' }; // ✅ Clean
+
+// After switching (WITH manual clearing):
+formValue() = { procedureType: 'typeC' }; // ✅ Consistent
+ngForm.form.value = { procedureType: 'typeC' }; // ✅ Consistent
+```
+
+##### When Field Clearing is NOT Required
+
+Pure form-to-form conditionals usually don't need manual field clearing:
+
+```typescript
+// This template structure usually DOES NOT require manual field clearing:
+@if (inputType === 'text') {
+  <input name="field" [ngModel]="formValue().field" type="text" />     // Form input
+} @else if (inputType === 'number') {
+  <input name="field" [ngModel]="formValue().field" type="number" />   // Form input
+} @else if (inputType === 'email') {
+  <input name="field" [ngModel]="formValue().field" type="email" />    // Form input
+}
+```
+
+**Why:** All branches contain form inputs with the same `name` attribute, so Angular maintains the FormControl and your component state naturally stays consistent.
+
+**The Pattern:**
+
+```typescript
+onStructureChange(newValue: string) {
+  this.formValue.update((current) => ({
+    ...current,
+    procedureType: newValue,
+    // Clear fields that are no longer relevant
+    ...(newValue !== 'typeA' && { fieldA: undefined }),
+    ...(newValue !== 'typeB' && { fieldB: undefined }),
+  }));
+
+  // Trigger validation update after structure change
+  this.vestFormRef.triggerFormValidation();
+}
+```
+
+#### Alternative: Utility Helper
+
+For cleaner code, you can use the built-in utility functions from ngx-vest-forms:
+
+```typescript
+import { clearFieldsWhen } from 'ngx-vest-forms';
+
+// In your component method
+onStructureChange(newValue: string) {
+  this.formValue.update((current) =>
+    clearFieldsWhen(current, {
+      fieldA: newValue !== 'typeA',
+      fieldB: newValue !== 'typeB',
+    })
+  );
+
+  // Trigger validation update after structure change
+  this.vestFormRef.triggerFormValidation();
+}
+```
+
+**Additional Utility Functions:**
+
+````typescript
+import { clearFields, keepFieldsWhen } from 'ngx-vest-forms';
+
+// Clear specific fields unconditionally
+const cleanedState = clearFields(currentFormValue, ['fieldA', 'fieldB']);
+
+// Keep only fields that meet conditions
+const filteredState = keepFieldsWhen(currentFormValue, {
+  procedureType: true, // always keep
+  fieldA: procedureType === 'typeA',
+  fieldB: procedureType === 'typeB',
+});
+```#### Validation Suite Pattern for Conditional Fields
+
+```typescript
+import { staticSuite, test, enforce, omitWhen, only } from 'vest';
+
+export const myValidationSuite = staticSuite(
+  (model: MyFormModel, field?: string) => {
+    if (field) {
+      only(field); // Performance optimization
+    }
+
+    // Always validate procedure type
+    test('procedureType', 'Procedure type is required', () => {
+      enforce(model.procedureType).isNotBlank();
+    });
+
+    // Conditional validations
+    omitWhen(model.procedureType !== 'typeA', () => {
+      test('fieldA', 'Field A is required for Type A', () => {
+        enforce(model.fieldA).isNotBlank();
+      });
+    });
+
+    omitWhen(model.procedureType !== 'typeB', () => {
+      test('fieldB', 'Field B is required for Type B', () => {
+        enforce(model.fieldB).isNotBlank();
+      });
+    });
+
+    // Note: No validation needed for typeC as it has no input fields
+  }
+);
+```
+
+## Field State Utilities
+
+ngx-vest-forms provides utility functions specifically designed for the scenario where conditional logic switches between **form inputs** and **non-form elements** (like informational text, paragraphs, or other non-input content).
+
+> **Key Use Case:** These utilities are primarily needed when your template conditionally renders form inputs in some branches and non-form content in others. They ensure your component state stays consistent with the actual form structure.
+
+### `clearFieldsWhen`
+
+Conditionally clears fields when switching from form inputs to non-form content.
+
+```typescript
+import { clearFieldsWhen } from 'ngx-vest-forms';
+
+// EXAMPLE: Clear fields when switching to non-form content (typeC shows info text, not input)
+const updatedState = clearFieldsWhen(currentFormValue, {
+  fieldA: procedureType !== 'typeA', // Clear when NOT showing fieldA input
+  fieldB: procedureType !== 'typeB', // Clear when NOT showing fieldB input
+  // When procedureType === 'typeC', both fields are cleared (typeC shows <p> text, not inputs)
+  shippingAddress: !useShippingAddress, // Clear when showing "No shipping needed" message
+});
+```
+
+### `clearFields`
+
+Unconditionally clears specific fields. Useful for form reset operations or cleanup tasks.
+
+```typescript
+import { clearFields } from 'ngx-vest-forms';
+
+// Clear specific fields unconditionally
+const cleanedState = clearFields(currentFormValue, [
+  'temporaryData',
+  'draftSaved',
+]);
+```
+
+### `keepFieldsWhen`
+
+Creates a new state containing only fields that meet specified conditions. Takes a "whitelist" approach instead of clearing unwanted fields.
+
+```typescript
+import { keepFieldsWhen } from 'ngx-vest-forms';
+
+// Keep only relevant fields
+const filteredState = keepFieldsWhen(currentFormValue, {
+  basicInfo: true, // always keep
+  addressInfo: needsAddress,
+  paymentInfo: requiresPayment,
+});
+```
+
+### Why These Utilities Are Needed
+
+The utilities are specifically needed when conditionally switching between **form inputs** and **non-form elements**:
+
+**The Core Problem:**
+
+1. **Template structure:** `@if (condition) { <input> } @else { <p>Info text</p> }`
+2. **Angular's behavior:** Automatically removes FormControls when switching to non-form content
+3. **Your component signals:** Retain old field values from when input was present
+4. **Result:** State inconsistency between `ngForm.form.value` (clean) and `formValue()` (stale)
+
+**The Solution:**
+
+These utilities synchronize your component state with Angular's form state, ensuring consistency when form structure changes involve non-form content.
+
+> **Note:** Pure form-to-form conditionals (e.g., switching between different input types with the same `name`) typically don't require these utilities as Angular maintains the FormControl throughout.
+
 ## Examples
 
 ### Simple Form with Validation
@@ -503,6 +807,8 @@ export class ConditionalFormComponent {
 
 - **[Purchase Form Demo](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/projects/examples/src/app/components/smart/purchase-form)** - Complex form with nested objects, validation dependencies, and conditional logic
 - **[Business Hours Demo](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/projects/examples/src/app/components/smart/business-hours-form)** - Dynamic form arrays with complex validation rules
+
+> **💡 Pro Tip**: Check out our detailed [Structure Change Detection Guide](./docs/STRUCTURE_CHANGE_DETECTION.md) for advanced handling of conditional form scenarios, alternative approaches, and performance considerations.
 
 ### Validations
 
@@ -1083,6 +1389,24 @@ export class AddressComponent {
 }
 ```
 
+## Documentation
+
+### Detailed Guides
+
+For comprehensive documentation beyond this README, check out our detailed guides:
+
+- **[Structure Change Detection Guide](./docs/STRUCTURE_CHANGE_DETECTION.md)** - Advanced handling of conditional form scenarios
+  - Alternative approaches and their trade-offs
+  - Performance considerations and best practices
+  - Detailed API reference with examples
+  - When and why to use `triggerFormValidation()`
+
+### Coming Soon
+
+- **Advanced Form Arrays Guide** - Dynamic lists, nested arrays, and complex scenarios
+- **Custom Validation Guide** - Building reusable validation suites and complex rules
+- **Performance Optimization Guide** - Tips and techniques for large-scale forms
+
 ## Resources
 
 ### Documentation & Tutorials
@@ -1181,3 +1505,4 @@ These pioneers laid the groundwork that made ngx-vest-forms possible, combining 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+````
