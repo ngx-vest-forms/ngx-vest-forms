@@ -207,10 +207,11 @@ export function keepFieldsWhen<T extends Record<string, any>>(
   currentState: T,
   conditions: Partial<Record<keyof T, boolean>>
 ): Partial<T> {
-  return Object.entries(conditions).reduce((state, [fieldName, shouldKeep]) => {
+  const result: Partial<T> = {};
+  Object.entries(conditions).forEach(([fieldName, shouldKeep]) => {
     if (shouldKeep && fieldName in currentState) {
-      return { ...state, [fieldName]: currentState[fieldName as keyof T] };
+      (result as any)[fieldName] = currentState[fieldName as keyof T];
     }
-    return state;
-  }, {} as Partial<T>);
+  });
+  return result;
 }
