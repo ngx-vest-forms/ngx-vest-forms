@@ -147,8 +147,6 @@ describe('FormDirective - Dynamic Structure Changes', () => {
       ).toBeTruthy();
 
       // This test documents the bug - form should be valid but validation doesn't update
-      console.log('Form valid after structure change:', component.isValid());
-      console.log('Form errors after structure change:', component.errors());
 
       // For now, let's just verify the structure changed correctly
       // The validation issue will be fixed in the next phase
@@ -221,17 +219,10 @@ describe('FormDirective - Dynamic Structure Changes', () => {
       fixture.detectChanges();
       tick();
 
-      // Validation might still be stale
-      const wasValidBeforeWorkaround = component.isValid();
-      console.log('Valid before workaround:', wasValidBeforeWorkaround);
-
       // SOLUTION: Use the new triggerFormValidation method
       component.vestForm.triggerFormValidation();
       fixture.detectChanges();
       tick();
-
-      console.log('Valid after triggerFormValidation:', component.isValid());
-
       // Test should now pass with the new API
       expect(component.isValid()).toBe(true);
     }));
