@@ -611,7 +611,7 @@ export const myValidationSuite = staticSuite(
     // Note: No validation needed for typeC as it has no input fields
   }
 );
-````
+```
 
 ## Field State Utilities
 
@@ -1505,3 +1505,4 @@ These pioneers laid the groundwork that made ngx-vest-forms possible, combining 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+````
