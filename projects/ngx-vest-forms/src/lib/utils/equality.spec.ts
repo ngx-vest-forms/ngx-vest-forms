@@ -1,6 +1,31 @@
-import { shallowEqual, fastDeepEqual } from './equality';
+import { shallowEqual, fastDeepEqual, isPrimitive } from './equality';
 
 describe('Equality Utils', () => {
+  describe('isPrimitive', () => {
+    it('should return true for primitive values', () => {
+      expect(isPrimitive(1)).toBe(true);
+      expect(isPrimitive('test')).toBe(true);
+      expect(isPrimitive(true)).toBe(true);
+      expect(isPrimitive(null)).toBe(true);
+      expect(isPrimitive(undefined)).toBe(true);
+      expect(isPrimitive(Symbol('s'))).toBe(true);
+      expect(isPrimitive(10n)).toBe(true);
+    });
+
+    it('should return false for objects', () => {
+      expect(isPrimitive({})).toBe(false);
+      expect(isPrimitive([])).toBe(false);
+      expect(isPrimitive(new Date())).toBe(false);
+      expect(isPrimitive(new Map())).toBe(false);
+      expect(isPrimitive(new Set())).toBe(false);
+    });
+
+    it('should return false for functions', () => {
+      expect(isPrimitive(() => {})).toBe(false);
+      expect(isPrimitive(function () {})).toBe(false);
+    });
+  });
+
   describe('shallowEqual', () => {
     it('should return true for identical objects', () => {
       const obj = { a: 1, b: 2 };

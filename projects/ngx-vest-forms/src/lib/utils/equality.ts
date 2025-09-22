@@ -4,10 +4,12 @@
  * @param value - The value to check
  * @returns true if the value is a primitive (string, number, boolean, null, undefined, symbol, bigint)
  */
-function isPrimitive(
+export function isPrimitive(
   value: unknown
 ): value is string | number | boolean | null | undefined | symbol | bigint {
-  return value === null || typeof value !== 'object';
+  return (
+    value === null || (typeof value !== 'object' && typeof value !== 'function')
+  );
 }
 
 /**
