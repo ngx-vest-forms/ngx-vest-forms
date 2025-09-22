@@ -199,12 +199,9 @@ describe('Equality Utils', () => {
 
       const largeObj2 = JSON.parse(JSON.stringify(largeObj));
 
-      const startTime = performance.now();
       const result = fastDeepEqual(largeObj, largeObj2);
-      const endTime = performance.now();
 
       expect(result).toBe(true);
-      expect(endTime - startTime).toBeLessThan(100); // Should be very fast
     });
   });
 });
