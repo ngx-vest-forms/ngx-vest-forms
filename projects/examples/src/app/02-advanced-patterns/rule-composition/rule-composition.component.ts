@@ -573,7 +573,7 @@ import {
               [disabled]="
                 !vestForm.formState().valid || vestForm.formState().pending
               "
-              class="btn btn-primary"
+              class="btn-primary"
             >
               @if (vestForm.formState().pending) {
                 Validating...
@@ -725,7 +725,7 @@ export class RuleCompositionComponent {
     return {
       hasValidFormat: /^\+?[\d\s\-()]+$/.test(phone),
       hasCountryCode: phone.startsWith('+'),
-      correctLength: phone.replace(/\D/g, '').length >= 10,
+      correctLength: phone.replaceAll(/\D/g, '').length >= 10,
     };
   });
 

@@ -78,6 +78,7 @@ import {
                   [ngModel]="formData().firstName"
                   class="form-input"
                   placeholder="Enter your first name"
+                  aria-required="true"
                 />
               </ngx-control-wrapper>
 
@@ -89,6 +90,7 @@ import {
                   [ngModel]="formData().lastName"
                   class="form-input"
                   placeholder="Enter your last name"
+                  aria-required="true"
                 />
               </ngx-control-wrapper>
             </div>
@@ -101,6 +103,7 @@ import {
                 type="date"
                 [ngModel]="formData().dateOfBirth"
                 class="form-input"
+                aria-required="true"
               />
             </ngx-control-wrapper>
 
@@ -113,6 +116,8 @@ import {
                 [ngModel]="formData().email"
                 class="form-input"
                 placeholder="you@example.com"
+                aria-required="true"
+                (keyup.enter)="onEnterFromEmail()"
               />
             </ngx-control-wrapper>
           </div>
@@ -129,6 +134,7 @@ import {
                 [ngModel]="formData().username"
                 class="form-input"
                 placeholder="Choose a unique username"
+                aria-required="true"
               />
               <p class="mt-1 text-sm text-gray-600">
                 Must be 3-20 characters, letters and numbers only
@@ -144,6 +150,7 @@ import {
                 [ngModel]="formData().password"
                 class="form-input"
                 placeholder="Enter a strong password"
+                aria-required="true"
               />
               <p class="mt-1 text-sm text-gray-600">
                 Must be 8+ characters with uppercase, lowercase, and number
@@ -159,6 +166,7 @@ import {
                 [ngModel]="formData().confirmPassword"
                 class="form-input"
                 placeholder="Confirm your password"
+                aria-required="true"
               />
             </ngx-control-wrapper>
           </div>
@@ -199,6 +207,7 @@ import {
                 name="preferredLanguage"
                 [ngModel]="formData().preferredLanguage"
                 class="form-input"
+                aria-required="true"
               >
                 <option value="">Select a language</option>
                 <option value="en">English</option>
@@ -234,6 +243,7 @@ import {
                     type="checkbox"
                     [ngModel]="formData().agreeToTerms"
                     class="form-checkbox"
+                    aria-required="true"
                   />
                   <label for="agreeToTerms" class="ml-2 text-sm">
                     I agree to the Terms of Service and Privacy Policy *
@@ -252,7 +262,13 @@ import {
             [disabled]="currentStepIndex() === 0"
             class="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Previous
+            @if (currentStepIndex() === 2) {
+              Back to Account Setup
+            } @else if (currentStepIndex() === 1) {
+              Back to Personal Info
+            } @else {
+              Previous
+            }
           </button>
 
           <div class="mx-4 flex-1">
@@ -292,7 +308,7 @@ import {
                   Submitting...
                 </span>
               } @else {
-                Complete Registration
+                Submit Registration
               }
             </button>
           } @else {
@@ -302,7 +318,13 @@ import {
               [disabled]="!canProceedToNextStep()"
               class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Next
+              @if (currentStepIndex() === 0) {
+                Next: Account Setup
+              } @else if (currentStepIndex() === 1) {
+                Next: Profile & Preferences
+              } @else {
+                Next
+              }
             </button>
           }
         </div>
@@ -356,10 +378,10 @@ import {
               </div>
               <div class="ml-3">
                 <h3 class="text-sm font-medium text-green-800">
-                  Registration Complete!
+                  Registration submitted successfully!
                 </h3>
                 <p class="mt-1 text-sm text-green-700">
-                  {{ submissionResult()?.message }}
+                  Thank you for registering
                 </p>
               </div>
             </div>
@@ -416,8 +438,11 @@ export class MultiStepFormComponent {
   // Form reference
   protected readonly vestForm = viewChild(NgxFormDirective);
 
-  // Form state for parent access
-  readonly formState = computed(() => this.vestForm()?.formState());
+  // Form state for parent access (return the actual state object, not the signal)
+  readonly formState = computed(() => {
+    const formDirective = this.vestForm();
+    return formDirective ? formDirective.formState() : ({} as unknown);
+  });
 
   // Validation suite
   protected readonly suite = multiStepFormValidationSuite;
@@ -585,5 +610,12 @@ export class MultiStepFormComponent {
     }
 
     return isValid ? 'text-green-600' : 'text-red-600';
+  }
+
+  // Keyboard: pressing Enter in Email moves to next step if allowed
+  protected onEnterFromEmail(): void {
+    if (this.currentStep() === 'personal' && this.canProceedToNextStep()) {
+      this.nextStep();
+    }
   }
 }

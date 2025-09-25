@@ -1,12 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   isDevMode,
   signal,
+  viewChild,
 } from '@angular/core';
-import { NgxErrorDisplayMode } from 'ngx-vest-forms/core';
+import { NgxErrorDisplayMode, createEmptyFormState } from 'ngx-vest-forms/core';
 import { ExampleCardsComponent } from '../../ui';
 import { ErrorDisplayModeSelectorComponent } from '../../ui/error-display-mode-selector/error-display-mode-selector.component';
+import { FormStateDisplayComponent } from '../../ui/form-state-display/public-api';
 import { ERROR_DISPLAY_MODES_CONTENT } from './error-display-modes.content';
 import { ErrorDisplayModesFormComponent } from './error-display-modes.form';
 
@@ -22,6 +25,7 @@ import { ErrorDisplayModesFormComponent } from './error-display-modes.form';
     ExampleCardsComponent,
     ErrorDisplayModeSelectorComponent,
     ErrorDisplayModesFormComponent,
+    FormStateDisplayComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -45,12 +49,26 @@ import { ErrorDisplayModesFormComponent } from './error-display-modes.form';
         />
 
         <!-- Interactive Demo Form -->
-        <ngx-error-display-modes-form [errorDisplayMode]="selectedMode()" />
+        <ngx-error-display-modes-form
+          #formComp
+          [errorDisplayMode]="selectedMode()"
+        />
+
+        <!-- Developer form state panel -->
+        <ngx-form-state-display
+          [title]="'Live Form State (parent read)'"
+          [formState]="childFormState()"
+        />
       </ngx-example-cards>
     </div>
   `,
 })
 export class ErrorDisplayModesPageComponent {
+  protected readonly formComp = viewChild(ErrorDisplayModesFormComponent);
+  protected readonly childFormState = computed(() => {
+    const state = this.formComp()?.formState();
+    return state || createEmptyFormState();
+  });
   protected readonly selectedMode =
     signal<NgxErrorDisplayMode>('on-blur-or-submit');
 

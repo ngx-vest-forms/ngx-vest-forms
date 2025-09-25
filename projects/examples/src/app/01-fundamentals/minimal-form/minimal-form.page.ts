@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  viewChild,
+} from '@angular/core';
+import { createEmptyFormState } from 'ngx-vest-forms/core';
 import { ExampleCardsComponent } from '../../ui';
 import { FormStateDisplayComponent } from '../../ui/form-state-display/public-api';
 import { MINIMAL_FORM_CONTENT } from './minimal-form.content';
@@ -27,7 +33,7 @@ import { MinimalForm } from './minimal.form';
       <!-- State display for learning -->
       <ngx-form-state-display
         [title]="'Form State'"
-        [formState]="formComponent?.formState()"
+        [formState]="formState()"
       />
     </ngx-example-cards>
   `,
@@ -35,6 +41,10 @@ import { MinimalForm } from './minimal.form';
 export class MinimalFormPage {
   protected readonly formComponent =
     viewChild.required<MinimalForm>('formComponent');
+
+  protected readonly formState = computed(
+    () => this.formComponent()?.formState() ?? createEmptyFormState(),
+  );
 
   protected readonly demonstratedContent = MINIMAL_FORM_CONTENT.demonstrated;
   protected readonly learningContent = MINIMAL_FORM_CONTENT.learning;

@@ -347,7 +347,7 @@ export class NgxFormControlStateDirective {
     const state = this.controlState();
     if (!state?.errors) return [];
 
-    // Check for Vest warnings in the errors object
+    // Check for Vest warnings in the errors object (warnings are at same level as errors)
     const warnings = state.errors['warnings'];
     if (Array.isArray(warnings)) {
       return warnings;

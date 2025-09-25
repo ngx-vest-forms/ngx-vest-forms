@@ -521,6 +521,7 @@ import {
   NgxFormCompatibleDeepRequired,
   arrayToObject,
   objectToArray,
+  createEmptyFormState,
 } from 'ngx-vest-forms/core';
 ```
 
@@ -607,7 +608,69 @@ const formData: FormUser = {
 };
 ```
 
-### 19. Array/Object Conversion Utilities
+### 19. Form State Utilities
+
+For form state management and fallback patterns:
+
+#### createEmptyFormState&lt;T&gt;(): NgxFormState&lt;T&gt;
+
+Creates an empty NgxFormState with default values, useful for components requiring non-null form state fallbacks.
+
+```typescript
+import { createEmptyFormState } from 'ngx-vest-forms/core';
+
+// Basic usage for parent components displaying child form state
+protected readonly formState = computed(() =>
+  this.childForm()?.formState() ?? createEmptyFormState()
+);
+
+// With type safety for specific form models
+interface UserModel { name: string; email: string; }
+const typedState = createEmptyFormState<UserModel>();
+
+// Alternative to verbose inline fallbacks
+// Instead of:
+protected readonly formState = computed(() =>
+  this.childForm()?.formState() ?? {
+    value: null,
+    errors: {},
+    warnings: {},
+    root: null,
+    status: 'VALID',
+    dirty: false,
+    valid: true,
+    invalid: false,
+    pending: false,
+    disabled: false,
+    idle: true,
+    submitted: false,
+    errorCount: 0,
+    warningCount: 0,
+    firstInvalidField: null,
+    schema: undefined,
+  }
+);
+
+// Use this cleaner approach:
+protected readonly formState = computed(() =>
+  this.childForm()?.formState() ?? createEmptyFormState()
+);
+```
+
+**Key Benefits:**
+
+- **Eliminates Boilerplate**: Reduces 17 lines to 1 function call
+- **Type Safety**: Generic support for proper model typing
+- **Consistency**: Ensures all empty states match NgxFormState interface
+- **FormStateDisplay Compatible**: Always safe to pass to FormStateDisplay component
+
+**Common Use Cases:**
+
+- Parent components displaying child form state with FormStateDisplay
+- Testing utilities and mock data generation
+- Fallback values when form components are not yet initialized
+
+### 20. Array/Object Conversion Utilities
 
 For dynamic lists and arrays in template-driven forms:
 
@@ -671,7 +734,7 @@ onSubmit() {
 }
 ```
 
-### 20. Third-Party Alternative
+### 21. Third-Party Alternative
 
 For even more utility types, consider [ts-essentials](https://github.com/ts-essentials/ts-essentials):
 

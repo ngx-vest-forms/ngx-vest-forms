@@ -79,26 +79,36 @@ Wrap each form control (or a group of related controls like radio buttons) with 
 
 ## Configuration
 
-### `errorDisplayMode`
+### `errorDisplayMode` & `warningDisplayMode` (Breaking Change)
 
-Controls when validation errors are displayed.
+`errorDisplayMode` now governs only blocking error visibility. Progressive guidance moved to a separate `warningDisplayMode` input.
 
-- **Type:** `'on-blur' | 'on-submit' | 'on-blur-or-submit'`
-- **Default:** `'on-blur-or-submit'` (globally configurable)
-- **Input:** `[errorDisplayMode]`
+| Input                | Purpose                            | Default               | Allowed Values                                                   |
+| -------------------- | ---------------------------------- | --------------------- | ---------------------------------------------------------------- |
+| `errorDisplayMode`   | When to show blocking errors       | `'on-blur-or-submit'` | `'on-blur' \| 'on-submit' \| 'on-blur-or-submit'`                |
+| `warningDisplayMode` | When to show non-blocking warnings | `'on-change'`         | `'on-change' \| 'on-blur' \| 'on-submit' \| 'on-blur-or-submit'` |
 
-**Behavior:**
+#### Allowed Combinations (warning → error)
 
-- `'on-blur'`: Errors appear when the control loses focus.
-- `'on-submit'`: Errors appear only after the form has been submitted at least once.
-- `'on-blur-or-submit'`: Errors appear either when the control loses focus OR after the form has been submitted.
+| warningDisplayMode  | Permitted errorDisplayMode(s)  | Reason                                                  |
+| ------------------- | ------------------------------ | ------------------------------------------------------- |
+| `on-change`         | any of error modes             | Warnings appear earliest                                |
+| `on-blur`           | `on-blur`, `on-blur-or-submit` | Errors must not precede warnings                        |
+| `on-blur-or-submit` | `on-submit`                    | Errors must not fire before first possible warning gate |
+| `on-submit`         | (invalid)                      | Warnings can't appear later/equal than errors           |
 
-**Important Interaction with `ngModelOptions.updateOn`:**
+Invalid combinations throw an error at runtime.
 
-The `errorDisplayMode` respects the `updateOn` setting of the `NgModel` directive:
+#### Behavior Summary
 
-- If an `NgModel` has `[ngModelOptions]="{ updateOn: 'submit' }"`, its errors will **only** be displayed after a form submission, regardless of the `errorDisplayMode`.
-- If `updateOn` is `'blur'` or `'change'` (default), the `errorDisplayMode` behaves as described above.
+- Errors: blocking, role="alert", appear according to `errorDisplayMode` (never earlier than `updateOn` semantics; `updateOn: 'submit'` always gates).
+- Warnings: non-blocking, role="status", follow `warningDisplayMode`; debounced only for `'on-change'`.
+
+#### Interaction with `ngModelOptions.updateOn`
+
+- `updateOn: 'submit'`: Errors always after submit. Warnings still follow `warningDisplayMode` (except impossible combos are blocked).
+- `updateOn: 'blur'`: Error blur-timing aligns naturally; no extra bootstrap needed.
+- `updateOn: 'change'`: First-blur bootstrap runs once so untouched-but-blurred required fields surface errors.
 
 #### Interplay: `updateOn` vs `errorDisplayMode`
 
@@ -106,7 +116,7 @@ The `errorDisplayMode` respects the `updateOn` setting of the `NgModel` directiv
 
 There is one UX gap in native Angular behavior: with `updateOn: 'change'`, if a required field is left empty, the user focuses it and then blurs without typing, no value change occurs → Angular does not re‑run validation → there are still no errors to display (even though UX expectations are that a required indicator should now appear). `ngx-vest-forms` bridges that gap with a one‑time, safe "first blur validation" trigger. It runs exactly once per control (unless `updateOn: 'submit'`) to prime Vest so the wrapper can show the appropriate error message. This improves accessibility by ensuring screen readers and keyboard users receive immediate, actionable feedback after leaving an empty required field.
 
-##### Quick Matrix
+##### Quick Matrix (Errors)
 
 | Angular `updateOn` | errorDisplayMode    | User action sequence               | When validation is (re)run\*                           | When errors become visible | Notes                                                   |
 | ------------------ | ------------------- | ---------------------------------- | ------------------------------------------------------ | -------------------------- | ------------------------------------------------------- |
@@ -124,19 +134,23 @@ There is one UX gap in native Angular behavior: with `updateOn: 'change'`, if a 
 
 ##### Design Rationale
 
-- Keeping a small set of display modes (`on-blur`, `on-submit`, `on-blur-or-submit`) avoids ambiguity and makes behavior predictable.
-- `updateOn` continues to govern data + validity lifecycle; we do not override its core semantics, only fill the UX gap for the untouched-empty-blur case under `change`.
-- The one-time first-blur trigger is idempotent, skips `updateOn: 'submit'`, and will not fire again after a genuine change.
+- Explicit separation clarifies mental model: progressive hints vs blocking feedback.
+- Prevents illogical combos (e.g. warnings appearing after errors).
+- Keeps accessibility semantics intact (alerts vs status regions).
+- Debounced warnings reduce visual noise while preserving responsiveness.
 
-##### Should there be an `on-change` error display mode?
+##### On-Change Warnings Details
 
-We deliberately did **not** include an `on-change` (immediate) display mode because:
+Progressive hints with minimal latency:
 
-1. Accessibility & UX: Showing errors while a user is still typing increases cognitive load, especially for longer inputs (emails, passwords). Blur-based feedback is generally calmer and still quick.
-2. Separation of concerns: You can still surface _live_ helper hints (e.g., password strength) via warnings or custom UI without promoting hard validation errors mid-entry.
-3. Simplicity: Fewer modes reduce configuration mistakes and learning curve.
+```ts
+{ provide: NGX_ON_CHANGE_WARNING_DEBOUNCE, useValue: 220 } // tweak debounce
+```
 
-If you truly need immediate error surfacing you can: (a) read `vestForm.formState().errors` directly and render custom UI, or (b) create a thin directive extending `NgxFormErrorDisplayDirective` with a different predicate (dirty OR submitted). If community demand grows, a future `'on-change'` (or `'on-change-or-submit'`) mode can be added without breaking existing behavior.
+- Errors still require blur or submit → avoids flicker & premature failure states.
+- Ideal for password strength, heuristic username hints, optional suggestions.
+
+If you need hard errors immediately, you can still read `vestForm.formState().errors` directly or roll a custom directive.
 
 > Accessibility Note: Errors are revealed only when users can meaningfully act on them. This file was generated with accessibility in mind, but please still audit with tooling (e.g., Accessibility Insights) and manual keyboard / screen reader testing.
 
@@ -163,7 +177,46 @@ This global default can still be overridden on a per-instance basis using the `[
 
 ### Styling
 
-The `NgxControlWrapper` renders error messages within a `div` with the class `ngx-control-errors`. You can style this class and its children to match your application's design.
+The `NgxControlWrapper` supports complete theming via CSS custom properties and renders error messages within a `div` with the class `ngx-control-errors`.
+
+#### CSS Custom Properties Theming (Recommended)
+
+You can theme the control wrapper's validation styling using CSS custom properties:
+
+```css
+:root {
+  /* Error colors (defaults to red-600/red-500) */
+  --ngx-vest-forms-error-color: #dc2626;
+  --ngx-vest-forms-error-color-light: #ef4444;
+  --ngx-vest-forms-error-shadow: rgb(220 38 38 / 0.2);
+
+  /* Warning colors (defaults to yellow-600/yellow-500) */
+  --ngx-vest-forms-warning-color: #d97706;
+  --ngx-vest-forms-warning-color-light: #f59e0b;
+  --ngx-vest-forms-warning-shadow: rgb(217 119 6 / 0.3);
+}
+
+/* Theme specific forms */
+.my-custom-form {
+  --ngx-vest-forms-error-color: #991b1b;
+  --ngx-vest-forms-warning-color: #92400e;
+}
+
+/* Dark theme support */
+[data-theme='dark'] {
+  --ngx-vest-forms-error-color: #f87171;
+  --ngx-vest-forms-warning-color: #fbbf24;
+}
+```
+
+The styling follows a CSS pseudo-class driven approach:
+
+- **`:focus:invalid`** - Progressive warnings while user is actively typing (soft orange feedback)
+- **`:invalid:not(:focus)`** - Final errors when user has finished editing (hard red feedback)
+
+#### Error Message Styling
+
+For error message display, you can style the container and message elements:
 
 **Example SCSS:**
 
@@ -171,7 +224,7 @@ The `NgxControlWrapper` renders error messages within a `div` with the class `ng
 .ngx-control-errors {
   margin-top: 0.25rem;
   font-size: 0.875rem;
-  color: red; // Or your theme's error color
+  color: var(--ngx-vest-forms-error-color, #dc2626);
 
   ul {
     list-style: none;
@@ -189,6 +242,8 @@ The `NgxControlWrapper` renders error messages within a `div` with the class `ng
   // e.g., display a spinner or subtle loading animation
 }
 ```
+
+**📖 [Complete CSS Theming Guide](../../docs/CSS_CUSTOM_PROPERTIES_GUIDE.md)**
 
 ### Pending State
 

@@ -4,6 +4,7 @@ import {
   computed,
   viewChild,
 } from '@angular/core';
+import { createEmptyFormState, type NgxFormState } from 'ngx-vest-forms/core';
 import { ExampleCardsComponent } from '../../ui';
 import { FormStateDisplayComponent } from '../../ui/form-state-display/public-api';
 import { DYNAMIC_ARRAYS_CONTENT } from './dynamic-arrays.content';
@@ -41,7 +42,7 @@ import { DynamicArraysFormComponent } from './dynamic-arrays.form';
  * ```
  */
 @Component({
-  selector: 'app-dynamic-arrays-page',
+  selector: 'ngx-dynamic-arrays-page',
   imports: [
     ExampleCardsComponent,
     DynamicArraysFormComponent,
@@ -75,7 +76,7 @@ import { DynamicArraysFormComponent } from './dynamic-arrays.form';
         <div class="demo-state">
           <ngx-form-state-display
             [formState]="formState()"
-            title="Array Form State"
+            [title]="'Array Form State'"
             class="sticky top-4"
           />
         </div>
@@ -145,10 +146,8 @@ export class DynamicArraysPageComponent {
   private readonly formDemo = viewChild(DynamicArraysFormComponent);
 
   protected readonly formState = computed(() => {
-    return this.formDemo()?.formState() || null;
-  });
-
-  protected readonly formValue = computed(() => {
-    return this.formDemo()?.formValue() || null;
+    const state = this.formDemo()?.formState();
+    // Provide fallback for required FormStateDisplay input
+    return (state as NgxFormState<unknown>) ?? createEmptyFormState();
   });
 }

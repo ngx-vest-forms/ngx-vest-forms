@@ -1,21 +1,16 @@
-import { Component, computed, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
+import { NgxFormState } from 'ngx-vest-forms/core';
 import { ShikiHighlightDirective } from '../code-highlight/shiki-highlight.directive';
-
-/**
- * Form state type matching ngx-vest-forms structure
- */
-type FormState = {
-  valid: boolean;
-  pending: boolean;
-  errors: Record<string, string[]>;
-  warnings?: Record<string, string[]>;
-  errorCount?: number;
-  [key: string]: unknown; // Allow additional properties
-};
 
 @Component({
   selector: 'ngx-form-state-display',
   imports: [ShikiHighlightDirective],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
       class="form-state-container overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
@@ -116,43 +111,16 @@ type FormState = {
 
       <!-- Enhanced Content Area -->
       <div class="form-state-content relative">
-        @if (formStateJson(); as stateJson) {
-          <pre
-            ngxShikiHighlight
-            language="json"
-            class="form-state-json min-h-[300px] overflow-auto p-6 text-sm leading-relaxed"
-            data-testid="enhanced-form-state-json"
-            >{{ stateJson }}</pre
-          >
-        } @else {
-          <div class="flex min-h-[300px] items-center justify-center p-6">
-            <div class="text-center">
-              <div
-                class="mx-auto mb-3 h-12 w-12 rounded-full bg-gray-100 p-3 dark:bg-gray-700"
-              >
-                <svg
-                  class="h-6 w-6 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  ></path>
-                </svg>
-              </div>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
-                No form state data available
-              </p>
-            </div>
-          </div>
-        }
+        <div
+          ngxShikiHighlight
+          language="json"
+          [code]="formStateJson()"
+          class="form-state-json min-h-[300px] overflow-auto p-6 text-sm leading-relaxed"
+          data-testid="enhanced-form-state-json"
+        ></div>
 
         <!-- Error Count Overlay -->
-        @if (errorCount() > 0) {
+        @if (hasErrors()) {
           <div
             class="absolute right-4 bottom-4 rounded-full bg-red-500 px-3 py-1 text-xs font-medium text-white shadow-lg"
           >
@@ -194,75 +162,82 @@ type FormState = {
     }
   `,
 })
-export class FormStateDisplayComponent {
+export class FormStateDisplayComponent<T = unknown> {
   readonly title = input.required<string>();
-  readonly formState = input.required<unknown>();
+  // Strict generic typing - no null checks needed
+  readonly formState = input.required<NgxFormState<T>>();
 
   /**
    * Convert form state to formatted JSON string for syntax highlighting
    */
-  protected readonly formStateJson = computed(() => {
+  protected readonly formStateJson = computed<string>(() => {
     const state = this.formState();
-    return state ? JSON.stringify(state, null, 2) : '';
+    // No null check needed - input is required
+    const preview = {
+      valid: Boolean(state.valid),
+      pending: Boolean(state.pending),
+      value: state.value ?? {},
+      errors: state.errors ?? {},
+      warnings: state.warnings ?? {},
+      errorCount:
+        typeof state.errorCount === 'number'
+          ? state.errorCount
+          : Object.values(state.errors ?? {}).reduce<number>(
+              (total, array) =>
+                total + (Array.isArray(array) ? array.length : 0),
+              0,
+            ),
+      status: state.status ?? 'VALID',
+    };
+    return JSON.stringify(preview, null, 2);
   });
 
   /**
    * Get typed form state
    */
-  private readonly typedFormState = computed(() => {
-    const state = this.formState();
-    // Type guard: check if state has the expected structure
-    if (state && typeof state === 'object' && 'valid' in state) {
-      return state as FormState;
-    }
-    return null;
-  });
-
   /**
    * Check if form is valid
    */
   protected readonly isFormValid = computed(() => {
-    const state = this.typedFormState();
-    // Trust the form state's own validity flags. A form is valid when the
-    // exposed state says so and it's not pending. We don't second-guess by
-    // re-deriving from errors to avoid race conditions with async validation
-    // or intermediate mutation states.
-    return state?.valid === true && state?.pending !== true;
+    const state = this.formState();
+    return state.valid && !state.pending;
   });
 
   /**
    * Check if form is pending validation
    */
-  protected readonly isFormPending = computed(() => {
-    const state = this.typedFormState();
-    return state?.pending === true;
+  protected readonly isFormPending = computed<boolean>(() => {
+    const state = this.formState();
+    return state.pending === true;
   });
 
   /**
    * Count total errors
    */
-  protected readonly errorCount = computed(() => {
-    const state = this.typedFormState();
-    if (!state) return 0;
-    // Prefer provided aggregate errorCount when available
+  protected readonly errorCount = computed<number>(() => {
+    const state = this.formState();
     if (typeof state.errorCount === 'number') return state.errorCount;
+    const errors = state.errors ?? {};
+    return Object.values(errors).reduce<number>((total, errorArray) => {
+      return total + (Array.isArray(errorArray) ? errorArray.length : 0);
+    }, 0);
+  });
 
-    // Otherwise derive from errors record (sum of array lengths)
-    if (state.errors && typeof state.errors === 'object') {
-      return Object.values(state.errors).reduce((total, errors) => {
-        return total + (Array.isArray(errors) ? errors.length : 1);
-      }, 0);
-    }
-    return 0;
+  /**
+   * Whether there are any errors (for template conditions)
+   */
+  protected readonly hasErrors = computed<boolean>(() => {
+    const count = this.errorCount();
+    return count > 0;
   });
 
   /**
    * Count form fields (based on error keys, as that's what we have access to)
    */
   protected readonly fieldCount = computed(() => {
-    const state = this.typedFormState();
-    if (!state?.errors) return 0;
-    return Object.keys(state.errors).length;
+    const state = this.formState();
+    const errors = state.errors ?? {};
+    return Object.keys(errors).length;
   });
 
   /**

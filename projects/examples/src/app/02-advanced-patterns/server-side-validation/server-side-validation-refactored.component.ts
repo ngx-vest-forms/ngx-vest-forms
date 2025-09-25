@@ -132,7 +132,16 @@ const productValidationSuite = staticSuite(
   },
 );
 
-function createValidationResult(suiteResult: any): ValidationResult {
+type VestSuiteLikeResult = {
+  isValid(): boolean;
+  getErrors(): Record<string, string[]>;
+  hasWarnings(): boolean;
+  getWarnings(): Record<string, string[]>;
+};
+
+function createValidationResult(
+  suiteResult: VestSuiteLikeResult,
+): ValidationResult {
   return {
     isValid: suiteResult.isValid(),
     errors: suiteResult.getErrors(),
@@ -140,12 +149,7 @@ function createValidationResult(suiteResult: any): ValidationResult {
   };
 }
 
-type ApiResponse<T> = {
-  success: boolean;
-  data?: T;
-  errors?: Record<string, string[]>;
-  message?: string;
-};
+// Removed unused ApiResponse type alias
 
 /**
  * Server-Side Validation Demo Component
@@ -168,7 +172,7 @@ type ApiResponse<T> = {
  * - Validation result visualization
  */
 @Component({
-  selector: 'app-server-side-validation',
+  selector: 'ngx-server-side-validation',
   standalone: true,
   imports: [
     CommonModule,
@@ -306,7 +310,7 @@ type ApiResponse<T> = {
             <button
               type="submit"
               [disabled]="!userForm.formState().valid || userApiLoading()"
-              class="btn btn-primary w-full"
+              class="btn-primary w-full"
             >
               @if (userApiLoading()) {
                 Registering...
@@ -424,7 +428,7 @@ type ApiResponse<T> = {
             <button
               type="submit"
               [disabled]="!productForm.formState().valid || productApiLoading()"
-              class="btn btn-primary w-full"
+              class="btn-primary w-full"
             >
               @if (productApiLoading()) {
                 Creating...
@@ -641,7 +645,7 @@ export class ServerSideValidationComponent {
 
       this.userApiSuccess.set(true);
       console.log('User registration successful:', this.userData());
-    } catch (error) {
+    } catch {
       this.userApiError.set('Network error occurred');
     } finally {
       this.userApiLoading.set(false);
@@ -680,7 +684,7 @@ export class ServerSideValidationComponent {
 
       this.productApiSuccess.set(true);
       console.log('Product creation successful:', this.productData());
-    } catch (error) {
+    } catch {
       this.productApiError.set('Network error occurred');
     } finally {
       this.productApiLoading.set(false);

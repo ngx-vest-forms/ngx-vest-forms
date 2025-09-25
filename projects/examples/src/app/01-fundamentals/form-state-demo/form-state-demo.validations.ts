@@ -17,11 +17,6 @@ export type FormStateDemoModel = {
 };
 
 /**
- * Field names for type-safe validation
- */
-type FormStateDemoFieldNames = keyof FormStateDemoModel;
-
-/**
  * Mock async service to simulate username availability check
  * This demonstrates async validation and pending states
  */
@@ -78,7 +73,7 @@ const simulateUsernameCheck = (
  * - field-level and form-level validation
  */
 export const formStateDemoValidationSuite = staticSuite(
-  (data: Partial<FormStateDemoModel> = {}, field?: FormStateDemoFieldNames) => {
+  (data: Partial<FormStateDemoModel> = {}, field?: string) => {
     // CRITICAL: Always include only() for performance optimization
     only(field);
 

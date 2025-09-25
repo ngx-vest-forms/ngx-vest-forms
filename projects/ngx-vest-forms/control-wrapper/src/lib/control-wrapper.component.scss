@@ -1,9 +1,95 @@
 :host {
   display: block;
+
+  /* CSS Custom Properties for theming - defaults with fallbacks */
+  --ngx-error-color: var(--ngx-vest-forms-error-color, #dc2626); /* red-600 */
+  --ngx-error-color-light: var(
+    --ngx-vest-forms-error-color-light,
+    #ef4444
+  ); /* red-500 */
+  --ngx-error-shadow: var(--ngx-vest-forms-error-shadow, rgb(220 38 38 / 0.2));
+
+  --ngx-warning-color: var(
+    --ngx-vest-forms-warning-color,
+    #d97706
+  ); /* yellow-600 */
+  --ngx-warning-color-light: var(
+    --ngx-vest-forms-warning-color-light,
+    #f59e0b
+  ); /* yellow-500 */
+  --ngx-warning-shadow: var(
+    --ngx-vest-forms-warning-shadow,
+    rgb(217 119 6 / 0.3)
+  );
+
+  /* Private properties for internal state management */
+  --_show-errors: var(--ngx-vest-forms-show-errors, 0);
+  --_show-warnings: var(--ngx-vest-forms-show-warnings, 0);
 }
+
+/* Error states - CSS pseudo-class driven */
+:host(.ngx-control-wrapper--invalid) {
+  --_show-errors: 1;
+
+  /* ERROR: User finished editing, field still invalid (hard red feedback) */
+  input:invalid:not(:focus),
+  select:invalid:not(:focus),
+  textarea:invalid:not(:focus) {
+    border-color: var(--ngx-error-color);
+    box-shadow: 0 0 0 1px var(--ngx-error-color);
+    outline: none;
+  }
+
+  /* WARNING: User actively typing but field invalid (soft orange feedback) */
+  input:focus:invalid,
+  select:focus:invalid,
+  textarea:focus:invalid {
+    border-color: var(--ngx-warning-color);
+    box-shadow: 0 0 0 1px var(--ngx-warning-color);
+    outline: none;
+  }
+
+  /* Enhanced focus states */
+  input:focus:invalid,
+  select:focus:invalid,
+  textarea:focus:invalid {
+    box-shadow: 0 0 0 2px var(--ngx-warning-shadow);
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+
+  input:focus:invalid:not(:placeholder-shown),
+  select:focus:invalid,
+  textarea:focus:invalid:not(:placeholder-shown) {
+    border-color: var(--ngx-warning-color-light);
+  }
+}
+
+/* Warning states for additional non-blocking feedback */
+:host(.ngx-control-wrapper--has-warnings) {
+  --_show-warnings: 1;
+
+  /* Warnings for valid fields (progressive feedback like password strength) */
+  input:not(:invalid):focus,
+  select:not(:invalid):focus,
+  textarea:not(:invalid):focus {
+    border-color: var(--ngx-warning-color);
+    box-shadow: 0 0 0 1px var(--ngx-warning-shadow);
+  }
+
+  input:not(:invalid):not(:focus),
+  select:not(:invalid):not(:focus),
+  textarea:not(:invalid):not(:focus) {
+    border-color: var(--ngx-warning-color);
+    box-shadow: 0 0 0 1px var(--ngx-warning-shadow);
+  }
+}
+
+/* Spinner animation */
 .animate-spin {
   animation: spin 1s linear infinite;
 }
+
 @keyframes spin {
   to {
     transform: rotate(360deg);

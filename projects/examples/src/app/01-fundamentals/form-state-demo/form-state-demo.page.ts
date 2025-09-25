@@ -4,6 +4,7 @@ import {
   computed,
   viewChild,
 } from '@angular/core';
+import { createEmptyFormState } from 'ngx-vest-forms/core';
 import { ExampleCardsComponent } from '../../ui';
 import { FormStateDisplayComponent } from '../../ui/form-state-display/public-api';
 import { FORM_STATE_DEMO_CONTENT } from './form-state-demo.content';
@@ -61,7 +62,9 @@ import { FormStateDemoFormComponent } from './form-state-demo.form.js';
 export class FormStateDemoPageComponent {
   protected readonly formComponent =
     viewChild<FormStateDemoFormComponent>('formComp');
-  readonly childFormState = computed(() => this.formComponent()?.formState());
+  readonly childFormState = computed(
+    () => this.formComponent()?.formState() ?? createEmptyFormState(),
+  );
 
   /** Educational content for the example cards */
   protected readonly demonstratedContent = FORM_STATE_DEMO_CONTENT.demonstrated;

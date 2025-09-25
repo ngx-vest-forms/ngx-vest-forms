@@ -1,4 +1,4 @@
-import { TitleCasePipe } from '@angular/common';
+import { NgClass, TitleCasePipe } from '@angular/common';
 import {
   Component,
   computed,
@@ -104,6 +104,7 @@ export const customUserProfileSchema =
   selector: 'ngx-schema-comparison-form',
   imports: [
     TitleCasePipe,
+    NgClass,
     NgxControlWrapper,
     ngxVestForms,
     NgxVestFormWithSchemaDirective,
@@ -120,8 +121,12 @@ export const customUserProfileSchema =
       class="form-container"
     >
       <!-- Schema Switcher -->
-      <fieldset class="rounded border p-4">
-        <legend class="px-1 text-sm font-medium">Schema Library</legend>
+      <fieldset
+        class="rounded border bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+      >
+        <legend class="px-1 text-sm font-medium dark:text-gray-200">
+          Schema Library
+        </legend>
         <div
           class="grid gap-2 sm:grid-cols-4"
           role="radiogroup"
@@ -129,9 +134,12 @@ export const customUserProfileSchema =
         >
           @for (type of schemaTypes; track type) {
             <label
-              class="flex cursor-pointer items-center gap-2 rounded border p-2 text-sm"
-              [class.bg-blue-50]="selectedSchema() === type"
-              [class.border-blue-500]="selectedSchema() === type"
+              class="flex cursor-pointer items-center gap-2 rounded-md border bg-white p-2 text-sm transition-colors dark:bg-gray-800"
+              [ngClass]="
+                selectedSchema() === type
+                  ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/30'
+                  : ''
+              "
             >
               <input
                 type="radio"
@@ -144,11 +152,16 @@ export const customUserProfileSchema =
                 [attr.aria-label]="type + ' schema'"
               />
               <span class="font-medium">{{ type | titlecase }}</span>
-              <span class="text-xs text-gray-500">{{ bundleSize(type) }}</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400">
+                {{ bundleSize(type) }}
+              </span>
             </label>
           }
         </div>
-        <p id="schema-hint" class="mt-2 text-xs text-gray-600">
+        <p
+          id="schema-hint"
+          class="mt-2 text-xs text-gray-600 dark:text-gray-400"
+        >
           Switch libraries to compare validation behavior.
         </p>
       </fieldset>
@@ -184,9 +197,9 @@ export const customUserProfileSchema =
             <pre
               ngxShikiHighlight
               [language]="schemaLanguage()"
+              [code]="modelCode()"
               class="overflow-hidden rounded-lg"
-              >{{ modelCode() }}</pre
-            >
+            ></pre>
           </div>
         </div>
       </div>

@@ -399,44 +399,128 @@ With the bare `ngModel` attribute (no square brackets), Angular sets up a separa
 
 Only when you explicitly want a blank control regardless of an existing model value (rare) or in quick prototypes. Even then, migrating to `[ngModel]` later is trivial.
 
-### Error Visibility: `ngModelOptions.updateOn` vs `errorDisplayMode`
+### Creating Non-Blocking Warnings with Vest.js
 
-`ngx-vest-forms` separates two orthogonal concerns:
+`ngx-vest-forms` supports both **blocking errors** (prevent form submission) and **non-blocking warnings** (progressive guidance) using Vest.js's `warn()` function.
 
-- **When Angular runs validators & updates values** → controlled by `ngModelOptions.updateOn` (`'change'` (default), `'blur'`, `'submit'`).
-- **When already-known errors become visible to the user** → controlled by `errorDisplayMode` (`'on-blur'`, `'on-submit'`, `'on-blur-or-submit'`).
+#### Vest.js Warning Syntax
 
-This lets you, for example, validate on each keystroke (updateOn `'change'`) but only show errors after blur, or defer _all_ validation to submit and still have consistent display semantics.
+```typescript
+// user.validations.ts
+import { staticSuite, test, enforce, warn, only } from 'vest';
+
+export const userValidations = staticSuite(
+  (data: Partial<UserModel> = {}, field?: string) => {
+    only(field); // Performance optimization
+
+    // BLOCKING ERROR - prevents form submission
+    test('password', 'Password is required', () => {
+      enforce(data.password).isNotEmpty();
+    });
+
+    // NON-BLOCKING WARNING - progressive guidance
+    test('password', 'Password strength: WEAK', () => {
+      warn(); // This makes it a warning instead of an error
+      enforce(data.password).matches(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]$/,
+      );
+    });
+
+    test('password', 'Password strength: MEDIUM', () => {
+      warn(); // Must be called at the start of the test
+      enforce(data.password).matches(
+        /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]$/,
+      );
+    });
+  },
+);
+```
+
+#### Component Usage
+
+```html
+<form ngxVestForm [vestSuite]="userValidations" [(formValue)]="model">
+  <ngx-control-wrapper showWarnings>
+    <label for="password">Password</label>
+    <input
+      id="password"
+      name="password"
+      [ngModel]="model().password"
+      type="password"
+    />
+    <!--
+    Progressive warnings appear with soft orange styling (:focus:invalid)
+    Blocking errors appear with hard red styling (:invalid:not(:focus))
+    -->
+  </ngx-control-wrapper>
+</form>
+```
+
+#### Key Benefits
+
+- **Progressive Feedback**: Warnings guide users during typing without being obtrusive
+- **Form Submission**: Warnings don't prevent submission (only blocking errors do)
+- **CSS-Driven Styling**: Visual distinction automatically handled by pseudo-class selectors
+- **Accessibility**: Warnings use `role="status"`, errors use `role="alert"`
+
+**📖 [Complete Vest.js Documentation](./docs/vest.instructions.md)** | **📖 [CSS Styling Guide](./docs/CSS_CUSTOM_PROPERTIES_GUIDE.md)**
+
+### Error & Warning Visibility (Breaking Change)
+
+`ngx-vest-forms` now cleanly separates three orthogonal concerns:
+
+- **When Angular runs validators & updates values** → `ngModelOptions.updateOn` (`'change'` (default), `'blur'`, `'submit'`).
+- **When blocking errors (failed tests) become visible** → `errorDisplayMode` (`'on-blur'`, `'on-submit'`, `'on-blur-or-submit'`).
+- **When non‑blocking warnings (tests using `warn()`) become visible** → `warningDisplayMode` (`'on-change'`, `'on-blur'`, `'on-submit'`, `'on-blur-or-submit'`).
+
+Progressive guidance is handled exclusively by `warningDisplayMode='on-change'` (default) with debounced live updates; blocking errors remain conservative to avoid mid‑typing noise.
 
 #### Why a One-Time First-Blur Trigger Exists
 
 Angular with `updateOn: 'change'` does not re-run validators if the user focuses an empty required field and blurs without typing. UX expectations (and accessibility best practices) typically call for showing the missing-required feedback at that point. We add a one-time first-blur validation trigger (skipped for `updateOn: 'submit'`) to prime the Vest suite so the wrapper can display the message. It fires only once per control unless the user changes the value later (normal change validation resumes).
 
-#### Behavior Matrix
+#### Error Display Matrix
 
-| `updateOn` | `errorDisplayMode`  | User Flow (simplified) | Validation Runs\*                                 | Errors Become Visible | Notes                                     |
-| ---------- | ------------------- | ---------------------- | ------------------------------------------------- | --------------------- | ----------------------------------------- |
-| `change`   | `on-blur`           | Focus → (type?) → blur | On each change + first-blur fallback if no change | On blur               | Fallback covers focus→blur empty case     |
-| `change`   | `on-submit`         | Interact → submit      | On changes; submit re-validates needed dependents | After first submit    | Pre-submit errors hidden                  |
-| `change`   | `on-blur-or-submit` | Blur OR submit         | Changes + first-blur fallback + submit            | Blur or submit        | Default in library                        |
-| `blur`     | `on-blur`           | Type → blur            | At blur (Angular)                                 | Same blur             | No fallback necessary                     |
-| `blur`     | `on-submit`         | Blur cycles → submit   | Each blur; submit re-validates form-level if any  | After first submit    | Cached errors hidden until submit         |
-| `blur`     | `on-blur-or-submit` | Blur OR submit         | Each blur; submit as needed                       | Blur or submit        | Similar to on-blur unless no blur happens |
-| `submit`   | `on-blur`           | Focus/blur → submit    | Only at submit                                    | After submit          | Submit timing dominates                   |
-| `submit`   | `on-submit`         | Submit                 | Only at submit                                    | After submit          | Simplest late feedback                    |
-| `submit`   | `on-blur-or-submit` | Blur attempts → submit | Only at submit                                    | After submit          | Blur has no effect pre-submit             |
+| `updateOn` | `errorDisplayMode`  | User Flow (simplified) | Validation Runs\*                             | Errors Visible When | Notes                                     |
+| ---------- | ------------------- | ---------------------- | --------------------------------------------- | ------------------- | ----------------------------------------- |
+| `change`   | `on-blur`           | Focus → (type?) → blur | On each change + first-blur fallback if none  | On blur             | Fallback covers focus→blur empty case     |
+| `change`   | `on-submit`         | Interact → submit      | On changes; submit re-validates dependents    | After first submit  | Pre-submit errors hidden                  |
+| `change`   | `on-blur-or-submit` | Blur OR submit         | Changes + fallback + submit                   | Blur or submit      | Default                                   |
+| `blur`     | `on-blur`           | Type → blur            | At blur (Angular)                             | Same blur event     | No fallback necessary                     |
+| `blur`     | `on-submit`         | Blur cycles → submit   | Each blur; submit reruns form-level if needed | After first submit  | Cached errors hidden until submit         |
+| `blur`     | `on-blur-or-submit` | Blur OR submit         | Each blur; submit as needed                   | Blur or submit      | Similar to on-blur unless no blur happens |
+| `submit`   | `on-blur`           | Focus/blur → submit    | Only at submit                                | After submit        | Submit timing dominates                   |
+| `submit`   | `on-submit`         | Submit                 | Only at submit                                | After submit        | Simplest late feedback                    |
+| `submit`   | `on-blur-or-submit` | Blur attempts → submit | Only at submit                                | After submit        | Blur has no effect pre-submit             |
 
-\*Row describes Vest suite executions for that control; dependency-triggered validations (via `validationConfig`) may add runs after related fields settle.
+#### Warning Display Matrix
 
-#### Why Not Include an `on-change` Error Mode?
+| `updateOn` | `warningDisplayMode` | User Flow (simplified) | Validation Runs\*                 | Warnings Visible When  | Notes                                             |
+| ---------- | -------------------- | ---------------------- | --------------------------------- | ---------------------- | ------------------------------------------------- |
+| `change`   | `on-change`          | Type                   | Each change (debounced read)      | Live (debounced)       | Debounce via `NGX_ON_CHANGE_WARNING_DEBOUNCE`     |
+| `change`   | `on-blur`            | Type → blur            | Each change + first-blur fallback | After blur             | Mirrors error timing if both blur-based           |
+| `change`   | `on-blur-or-submit`  | Type → blur/submit     | Changes + fallback + submit       | Blur or submit         | Not earlier than errors if combined rule enforced |
+| `change`   | `on-submit`          | Type → submit          | Changes; submit                   | After submit           | Discouraged (low guidance)                        |
+| `blur`     | `on-change`          | Type → blur            | At blur (Angular)                 | After blur (not live)  | updateOn limits immediacy                         |
+| `blur`     | `on-blur`            | Type → blur            | At blur                           | After blur             | ---                                               |
+| `blur`     | `on-blur-or-submit`  | Blur OR submit         | Each blur; submit as needed       | Blur or submit         | ---                                               |
+| `blur`     | `on-submit`          | Blur cycles → submit   | Each blur; submit                 | After submit           | Low guidance                                      |
+| `submit`   | `on-change`          | Type → submit          | Only at submit                    | After submit (no live) | updateOn overrides live intent                    |
+| `submit`   | `on-blur`            | Focus/blur → submit    | Only at submit                    | After submit           | Blur timing suppressed                            |
+| `submit`   | `on-blur-or-submit`  | Blur attempts → submit | Only at submit                    | After submit           | ---                                               |
+| `submit`   | `on-submit`          | Submit                 | Only at submit                    | After submit           | ---                                               |
 
-We intentionally avoided a built-in `'on-change'` (immediate) mode:
+\*Rows describe Vest executions; dependency-triggered validations may add additional runs.
 
-1. Reduces cognitive overload—errors while typing feel noisy, especially for multi-character patterns (email, password).
-2. Encourages accessible pacing—feedback appears once the user can act (after leaving the field) or explicitly requests validation (submit).
-3. Keeps configuration surface minimal—three modes cover mainstream UX patterns.
+#### On-Change Warnings
 
-If you need immediate surfacing you can still read `vestForm.formState().errors` directly for custom UI, or extend the internal predicate with a lightweight directive. Community demand could justify adding `'on-change'` later in a minor release without breaking changes.
+Progressive, low-friction guidance pattern:
+
+```ts
+{ provide: NGX_ON_CHANGE_WARNING_DEBOUNCE, useValue: 220 }
+```
+
+Use for strength meters, availability hints, heuristic suggestions. Keep blocking errors conservative to reduce noise and meet accessibility expectations.
 
 > Accessibility note: This behavior was implemented with accessibility in mind, but manual audits with tools like Accessibility Insights and screen reader testing are still recommended.
 
@@ -477,6 +561,37 @@ export class MyFormComponent {}
 ```
 
 **📖 [Complete Control Wrapper & Advanced Directives Documentation](./projects/ngx-vest-forms/control-wrapper/README.md)**
+
+#### CSS Custom Properties Theming
+
+The `NgxControlWrapper` supports complete theming via CSS custom properties. You can override the default colors and styling by setting CSS variables:
+
+```css
+:root {
+  /* Error colors (defaults to red-600/red-500) */
+  --ngx-vest-forms-error-color: #dc2626;
+  --ngx-vest-forms-error-color-light: #ef4444;
+  --ngx-vest-forms-error-shadow: rgb(220 38 38 / 0.2);
+
+  /* Warning colors (defaults to yellow-600/yellow-500) */
+  --ngx-vest-forms-warning-color: #d97706;
+  --ngx-vest-forms-warning-color-light: #f59e0b;
+  --ngx-vest-forms-warning-shadow: rgb(217 119 6 / 0.3);
+}
+
+/* Theme specific forms */
+.my-custom-form {
+  --ngx-vest-forms-error-color: #991b1b;
+  --ngx-vest-forms-warning-color: #92400e;
+}
+```
+
+The styling follows a CSS pseudo-class driven approach:
+
+- **`:focus:invalid`** - Progressive warnings while user is actively typing (soft orange feedback)
+- **`:invalid:not(:focus)`** - Final errors when user has finished editing (hard red feedback)
+
+**📖 [Complete CSS Theming Guide](./docs/CSS_CUSTOM_PROPERTIES_GUIDE.md)**
 
 ### 2. The Flexible Way: Build Your Own with `NgxFormErrorDisplayDirective`
 
@@ -804,6 +919,112 @@ type User = InferSchemaType<typeof userSchema>;
 - Prefer Zod, Valibot, or ArkType for new and migrated forms.
 - Use `modelToStandardSchema` only for legacy or custom scenarios.
 - See the [schemas README](./projects/ngx-vest-forms/schemas/README.md) for details and migration notes.
+
+---
+
+## Utilities & Helper Functions
+
+### Form State Utilities
+
+#### `createEmptyFormState<TModel>()`
+
+Creates an empty `NgxFormState` with default values for use as fallbacks when form state might be undefined.
+
+**Use Case:** When displaying child form state that may not be initialized yet, such as in parent components with FormStateDisplay.
+
+**Import:**
+
+```typescript
+import { createEmptyFormState } from 'ngx-vest-forms/core';
+```
+
+**Basic Usage:**
+
+```typescript
+@Component({
+  template: `
+    <!-- FormStateDisplay requires non-null NgxFormState -->
+    <ngx-form-state-display
+      [formState]="formState()"
+      title="Child Form State"
+    />
+  `,
+})
+export class ParentComponent {
+  private readonly childForm = viewChild<MyFormComponent>('childForm');
+
+  // Provide type-safe fallback for FormStateDisplay
+  protected readonly formState = computed(
+    () => this.childForm()?.formState() ?? createEmptyFormState(),
+  );
+}
+```
+
+**With Type Safety:**
+
+```typescript
+interface UserModel {
+  name: string;
+  email: string;
+}
+
+// Type-safe empty state with proper model type
+const emptyState = createEmptyFormState<UserModel>();
+```
+
+**Key Benefits:**
+
+- **Type Safety**: Generic support for proper typing
+- **Consistency**: Eliminates verbose boilerplate across components
+- **Compatibility**: Always compatible with FormStateDisplay expectations
+- **Developer Experience**: Reduces 17 lines of fallback code to 1 function call
+
+**Properties Set:**
+
+```typescript
+{
+  value: null,
+  errors: {},
+  warnings: {},
+  root: null,
+  status: 'VALID',
+  dirty: false,
+  valid: true,
+  invalid: false,
+  pending: false,
+  disabled: false,
+  idle: true,
+  submitted: false,
+  errorCount: 0,
+  warningCount: 0,
+  firstInvalidField: null,
+  schema: undefined
+}
+```
+
+#### `arrayToObject<T>()` and `objectToArray()`
+
+Utility functions for converting between arrays and objects for dynamic form arrays with `ngModelGroup`.
+
+**Import:**
+
+```typescript
+import { arrayToObject, objectToArray } from 'ngx-vest-forms/core';
+```
+
+**Usage:**
+
+```typescript
+// Convert array to object for ngModelGroup compatibility
+const phoneArray = ['123-456-7890', '098-765-4321'];
+const phoneObject = arrayToObject(phoneArray);
+// Result: { 0: '123-456-7890', 1: '098-765-4321' }
+
+// Convert back to array for API submission
+const backToArray = objectToArray(phoneObject, ['phoneNumbers']);
+```
+
+**📖 [Complete Utilities Documentation](./docs/ngx-vest-forms-best-practices.md#utility-types-and-functions)**
 
 ---
 

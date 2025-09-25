@@ -6,7 +6,7 @@ import { ngxVestFormsCore } from '../exports';
 // Note: userEvent not used in this focused core spec; native events dispatched instead.
 import { TestBed } from '@angular/core/testing';
 import { create, enforce, only, test as vestTest } from 'vest';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 // NgxFormCoreDirective included via `ngxVestFormsCore` preset
 
 @Component({
@@ -92,6 +92,8 @@ describe('NgxFormCoreDirective - core behavior', () => {
   });
 
   it('should debounce async validation and produce a single result', async () => {
+    vi.useRealTimers();
+
     @Component({
       imports: [...ngxVestFormsCore],
       template: `
@@ -130,13 +132,8 @@ describe('NgxFormCoreDirective - core behavior', () => {
     const appReference = fixture.debugElement.injector.get(ApplicationRef);
     const username = screen.getByLabelText('Username') as HTMLInputElement;
 
-    // Type quickly multiple times within debounce window
-    username.value = 't';
-    username.dispatchEvent(new Event('input', { bubbles: true }));
-    username.value = 'ta';
-    username.dispatchEvent(new Event('input', { bubbles: true }));
-    username.value = 'tak';
-    username.dispatchEvent(new Event('input', { bubbles: true }));
+    // Type quickly multiple times within debounce window using userEvent
+    await userEvent.type(username, 'tak', { delay: 50 });
 
     // Wait for debounce window to elapse
     await new Promise((r) => setTimeout(r, 200));
@@ -191,6 +188,8 @@ describe('NgxFormCoreDirective - core behavior', () => {
   });
 
   it('should debounce async validation and update validity after delay', async () => {
+    vi.useRealTimers();
+
     @Component({
       imports: [...ngxVestFormsCore, JsonPipe],
       template: `
@@ -228,9 +227,8 @@ describe('NgxFormCoreDirective - core behavior', () => {
     const appReference = fixture.debugElement.injector.get(ApplicationRef);
     const username = screen.getByLabelText('Username') as HTMLInputElement;
 
-    // Trigger validation with debounce
-    username.value = 'o';
-    username.dispatchEvent(new Event('input', { bubbles: true }));
+    // Trigger validation with debounce using userEvent
+    await userEvent.type(username, 'o');
 
     // Shortly after input, async validator should be pending
     await new Promise((r) => setTimeout(r, 50));

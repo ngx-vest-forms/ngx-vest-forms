@@ -1,7 +1,9 @@
 import type { Provider } from '@angular/core';
 import {
   NGX_ERROR_DISPLAY_MODE_DEFAULT,
+  NGX_WARNING_DISPLAY_MODE_DEFAULT,
   type NgxErrorDisplayMode,
+  type NgxWarningDisplayMode,
 } from './config/error-display.config';
 import { NGX_ROOT_FORM } from './utils/form-token';
 
@@ -10,6 +12,8 @@ export type NgxVestFormsCoreOptions = {
   rootFormKey?: string;
   /** Default error display mode for error display directive/wrapper */
   errorDisplayMode?: NgxErrorDisplayMode;
+  /** Default warning display mode for error display directive/wrapper */
+  warningDisplayMode?: NgxWarningDisplayMode;
 };
 
 /**
@@ -33,12 +37,24 @@ export function provideNgxVestFormsCore(
     });
   }
 
+  if (options.warningDisplayMode !== undefined) {
+    providers.push({
+      provide: NGX_WARNING_DISPLAY_MODE_DEFAULT,
+      useValue: options.warningDisplayMode,
+    });
+  }
+
   return providers;
 }
 
 /** Granular helper for feature composition. */
 export function withErrorDisplayMode(mode: NgxErrorDisplayMode): Provider {
   return { provide: NGX_ERROR_DISPLAY_MODE_DEFAULT, useValue: mode };
+}
+
+/** Granular helper for configuring default warning display mode. */
+export function withWarningDisplayMode(mode: NgxWarningDisplayMode): Provider {
+  return { provide: NGX_WARNING_DISPLAY_MODE_DEFAULT, useValue: mode };
 }
 
 /** Granular helper to override the root form key. */

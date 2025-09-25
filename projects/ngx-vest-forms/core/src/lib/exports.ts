@@ -109,6 +109,7 @@ export {
 export { NgxFormCoreDirective } from './directives/form-core.directive';
 export { NgxFormLevelValidationDirective } from './directives/form-level-validation.directive';
 export { NgxFormState } from './directives/form.directive';
+export { createEmptyFormState } from './utils/form-state.utils';
 export { injectNgxRootFormKey } from './utils/form-token';
 
 // Export utility types

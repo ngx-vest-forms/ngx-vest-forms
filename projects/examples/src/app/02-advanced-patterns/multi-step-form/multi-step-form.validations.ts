@@ -68,7 +68,6 @@ export type FormSteps = 'personal' | 'account' | 'profile';
 /**
  * Field names for type-safe validation
  */
-type MultiStepFieldNames = keyof MultiStepFormModel;
 
 /**
  * Mock async service for username availability
@@ -156,7 +155,7 @@ const checkUsernameAvailability = async (
 export const multiStepFormValidationSuite = staticSuite(
   (
     data: Partial<MultiStepFormModel> = {},
-    field?: MultiStepFieldNames,
+    field?: string,
     currentStep?: FormSteps,
   ) => {
     // Performance optimization: validate only specific field or step

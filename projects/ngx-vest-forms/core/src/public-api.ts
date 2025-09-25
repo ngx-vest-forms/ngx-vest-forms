@@ -22,6 +22,7 @@ export {
   NgxInjectRootFormKeyOptions,
   NgxValidationOptions,
   NgxVestSuite,
+  createEmptyFormState,
   getInitialNgxFormControlState,
   injectNgxRootFormKey,
   ngxVestForms,
@@ -41,13 +42,17 @@ export {
 
 export {
   NGX_ERROR_DISPLAY_MODE_DEFAULT,
+  NGX_ON_CHANGE_WARNING_DEBOUNCE,
+  NGX_WARNING_DISPLAY_MODE_DEFAULT,
   NgxErrorDisplayMode,
+  NgxWarningDisplayMode,
 } from './lib/config/error-display.config';
 export {
   provideNgxVestForms,
   provideNgxVestFormsCore,
   withErrorDisplayMode,
   withRootFormKey,
+  withWarningDisplayMode,
 } from './lib/providers';
 export {
   NGX_SCHEMA_STATE,

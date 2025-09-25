@@ -4,6 +4,7 @@ import {
   computed,
   viewChild,
 } from '@angular/core';
+import { createEmptyFormState, type NgxFormState } from 'ngx-vest-forms/core';
 import { ExampleCardsComponent } from '../../ui';
 import { FormStateDisplayComponent } from '../../ui/form-state-display/public-api';
 import { MULTI_STEP_FORM_CONTENT } from './multi-step-form.content';
@@ -40,7 +41,7 @@ import { MultiStepFormComponent } from './multi-step-form.form';
  * ```
  */
 @Component({
-  selector: 'app-multi-step-form-page',
+  selector: 'ngx-multi-step-form-page',
   imports: [
     MultiStepFormComponent,
     ExampleCardsComponent,
@@ -73,7 +74,11 @@ import { MultiStepFormComponent } from './multi-step-form.form';
 export class MultiStepFormPageComponent {
   protected readonly formComponent =
     viewChild<MultiStepFormComponent>('formComp');
-  readonly childFormState = computed(() => this.formComponent()?.formState());
+  readonly childFormState = computed(() => {
+    const state = this.formComponent()?.formState();
+    // Cast to NgxFormState for strict typing or provide empty fallback
+    return (state as NgxFormState<unknown>) ?? createEmptyFormState();
+  });
 
   protected readonly demonstratedContent = MULTI_STEP_FORM_CONTENT.demonstrated;
   protected readonly learningContent = MULTI_STEP_FORM_CONTENT.learning;

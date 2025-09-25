@@ -4,6 +4,7 @@ import {
   computed,
   viewChild,
 } from '@angular/core';
+import { createEmptyFormState } from 'ngx-vest-forms/core';
 import { ExampleCardsComponent } from '../../ui';
 import { FormStateDisplayComponent } from '../../ui/form-state-display/public-api';
 import { BASIC_VALIDATION_CONTENT } from './basic-validation.content';
@@ -76,7 +77,9 @@ import { BasicValidationFormComponent } from './basic-validation.form';
 export class BasicValidationPage {
   protected readonly formComponent =
     viewChild<BasicValidationFormComponent>('formComp');
-  readonly childFormState = computed(() => this.formComponent()?.formState());
+  readonly childFormState = computed(
+    () => this.formComponent()?.formState() ?? createEmptyFormState(),
+  );
 
   protected readonly demonstratedContent =
     BASIC_VALIDATION_CONTENT.demonstrated;

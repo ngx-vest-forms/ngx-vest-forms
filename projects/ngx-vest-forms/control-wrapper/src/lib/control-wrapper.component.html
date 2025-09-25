@@ -15,8 +15,15 @@
       </ul>
     </div>
   }
-  @if (errorDisplay.warnings().length > 0) {
-    <div class="text-sm text-yellow-700" role="status" aria-live="polite">
+  @if (
+    errorDisplay.shouldShowWarnings() && errorDisplay.warnings().length > 0
+  ) {
+    <div
+      class="text-sm text-yellow-700"
+      role="status"
+      aria-live="polite"
+      data-warnings="true"
+    >
       <ul>
         @for (warn of errorDisplay.warnings(); track warn) {
           <li>{{ warn }}</li>

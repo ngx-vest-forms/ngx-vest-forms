@@ -253,9 +253,13 @@ test.describe('Schema Comparison - Comprehensive E2E Tests', () => {
             await expect(submitButton).toBeDisabled();
 
             // Check that validation errors are shown
-            await expect(page.getByText(/Name is required/i)).toBeVisible();
             await expect(
-              page.getByText(/Please enter a valid email/i),
+              page.getByRole('alert').filter({ hasText: /Name is required/i }),
+            ).toBeVisible();
+            await expect(
+              page.getByRole('alert').filter({
+                hasText: /Please enter a valid email/i,
+              }),
             ).toBeVisible();
           });
 
@@ -268,7 +272,9 @@ test.describe('Schema Comparison - Comprehensive E2E Tests', () => {
             await nameField.blur();
 
             // Verify validation errors remain visible
-            await expect(page.getByText(/Name is required/i)).toBeVisible();
+            await expect(
+              page.getByRole('alert').filter({ hasText: /Name is required/i }),
+            ).toBeVisible();
           });
 
           await test.step('Submit button should remain disabled', async () => {

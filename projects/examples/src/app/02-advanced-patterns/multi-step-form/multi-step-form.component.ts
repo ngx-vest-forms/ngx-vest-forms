@@ -39,7 +39,7 @@ import {
  * - Final form submission with all-step validation
  */
 @Component({
-  selector: 'app-multi-step-form',
+  selector: 'ngx-multi-step-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ngxVestForms, NgxControlWrapper, KeyValuePipe],
   template: `
@@ -229,9 +229,9 @@ import {
               <ngx-control-wrapper>
                 <label class="flex items-center space-x-3">
                   <input
-                    name="newsletter"
+                    name="receiveNewsletter"
                     type="checkbox"
-                    [ngModel]="formData().newsletter"
+                    [ngModel]="formData().receiveNewsletter"
                     class="form-checkbox"
                   />
                   <span>Subscribe to newsletter</span>
@@ -239,23 +239,26 @@ import {
               </ngx-control-wrapper>
 
               <ngx-control-wrapper>
-                <label class="flex items-center space-x-3">
-                  <input
-                    name="notifications"
-                    type="checkbox"
-                    [ngModel]="formData().notifications"
-                    class="form-checkbox"
-                  />
-                  <span>Enable email notifications</span>
-                </label>
+                <label for="preferredLanguage">Preferred Language *</label>
+                <select
+                  id="preferredLanguage"
+                  name="preferredLanguage"
+                  class="form-input"
+                  [ngModel]="formData().preferredLanguage"
+                >
+                  <option value="" disabled>Select a language</option>
+                  <option value="en">English</option>
+                  <option value="es">Spanish</option>
+                  <option value="fr">French</option>
+                </select>
               </ngx-control-wrapper>
 
               <ngx-control-wrapper>
                 <label class="flex items-center space-x-3">
                   <input
-                    name="termsAccepted"
+                    name="agreeToTerms"
                     type="checkbox"
-                    [ngModel]="formData().termsAccepted"
+                    [ngModel]="formData().agreeToTerms"
                     class="form-checkbox"
                   />
                   <span>I agree to the terms and conditions *</span>
@@ -273,7 +276,7 @@ import {
             type="button"
             (click)="previousStep()"
             [disabled]="currentStepIndex() === 0"
-            class="btn btn-secondary"
+            class="btn-secondary"
             [class.opacity-50]="currentStepIndex() === 0"
             [class.cursor-not-allowed]="currentStepIndex() === 0"
           >
@@ -286,7 +289,7 @@ import {
                 type="button"
                 (click)="nextStep()"
                 [disabled]="!canProceedToNextStep()"
-                class="btn btn-primary"
+                class="btn-primary"
               >
                 Next Step
               </button>
@@ -295,7 +298,7 @@ import {
                 type="submit"
                 (click)="onSubmit()"
                 [disabled]="!canSubmitForm()"
-                class="btn btn-primary"
+                class="btn-primary"
               >
                 Create Account
               </button>
@@ -360,9 +363,9 @@ export class MultiStepFormComponent {
     confirmPassword: '',
     bio: '',
     website: '',
-    newsletter: false,
-    notifications: false,
-    termsAccepted: false,
+    preferredLanguage: '',
+    receiveNewsletter: false,
+    agreeToTerms: false,
   });
 
   protected readonly suite = multiStepFormValidationSuite;

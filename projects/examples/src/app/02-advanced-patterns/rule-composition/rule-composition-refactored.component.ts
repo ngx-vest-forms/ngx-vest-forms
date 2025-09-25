@@ -44,13 +44,16 @@ import {
  * - Centralized validation rule libraries
  */
 @Component({
-  selector: 'app-rule-composition',
+  selector: 'ngx-rule-composition',
   standalone: true,
   imports: [CommonModule, ngxVestForms, ExampleCardsComponent, CardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <!-- Rule Composition Example with Educational Structure -->
-    <app-example-cards [content]="content">
+    <ngx-example-cards
+      [demonstrated]="content.demonstrated"
+      [learning]="content.learning"
+    >
       <!-- Form Implementation -->
       <form
         ngxVestForm
@@ -570,7 +573,7 @@ import {
               [disabled]="
                 !vestForm.formState().valid || vestForm.formState().pending
               "
-              class="btn btn-primary"
+              class="btn-primary"
             >
               @if (vestForm.formState().pending) {
                 Validating...
@@ -581,7 +584,7 @@ import {
           </div>
         </ngx-card>
       </form>
-    </app-example-cards>
+    </ngx-example-cards>
   `,
   styles: [
     `
@@ -720,9 +723,9 @@ export class RuleCompositionComponent {
   protected readonly phoneChecks = computed(() => {
     const phone = this.formData().phoneNumber || '';
     return {
-      hasValidFormat: /^\+?[\d\s\-\(\)]+$/.test(phone),
+      hasValidFormat: /^\+?[\d\s\-()]+$/.test(phone),
       hasCountryCode: phone.startsWith('+'),
-      correctLength: phone.replace(/\D/g, '').length >= 10,
+      correctLength: phone.replaceAll(/\D/g, '').length >= 10,
     };
   });
 

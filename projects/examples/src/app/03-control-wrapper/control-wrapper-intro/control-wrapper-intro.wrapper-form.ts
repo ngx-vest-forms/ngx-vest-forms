@@ -9,9 +9,13 @@ import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
 import {
   NgxErrorDisplayMode,
   NgxFormDirective,
+  NgxWarningDisplayMode,
+  createEmptyFormState,
   ngxVestForms,
+  type NgxFormState,
 } from 'ngx-vest-forms/core';
 import { ErrorDisplayModeSelectorComponent } from '../../ui/error-display-mode-selector/error-display-mode-selector.component';
+import { WarningDisplayModeSelectorComponent } from '../../ui/warning-display-mode-selector/warning-display-mode-selector.component';
 import {
   ControlWrapperIntroFormModel,
   controlWrapperIntroValidationSuite,
@@ -30,7 +34,12 @@ import {
  */
 @Component({
   selector: 'ngx-control-wrapper-intro-wrapper-form',
-  imports: [ngxVestForms, NgxControlWrapper, ErrorDisplayModeSelectorComponent],
+  imports: [
+    ngxVestForms,
+    NgxControlWrapper,
+    ErrorDisplayModeSelectorComponent,
+    WarningDisplayModeSelectorComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="mb-8">
@@ -79,6 +88,13 @@ import {
         class="mb-6"
       />
 
+      <!-- Warning Display Mode Configuration -->
+      <ngx-warning-display-mode-selector
+        [selectedMode]="warningDisplayMode()"
+        (modeChange)="onWarningDisplayModeChange($event)"
+        class="mb-6"
+      />
+
       <!-- Username Field with Async Validation -->
       <ngx-control-wrapper [errorDisplayMode]="errorDisplayMode()">
         <label class="form-label" for="wrapper-username">
@@ -105,7 +121,12 @@ import {
       </ngx-control-wrapper>
 
       <!-- Email Field with Warning System -->
-      <ngx-control-wrapper [errorDisplayMode]="errorDisplayMode()">
+      <ngx-control-wrapper
+        [errorDisplayMode]="errorDisplayMode()"
+        [showWarnings]="
+          warningDisplayMode() !== 'disabled' ? warningDisplayMode() : undefined
+        "
+      >
         <label class="form-label" for="wrapper-email"> Email Address * </label>
         <input
           class="form-input"
@@ -122,7 +143,12 @@ import {
       </ngx-control-wrapper>
 
       <!-- Password Field with Strength Warnings -->
-      <ngx-control-wrapper [errorDisplayMode]="errorDisplayMode()">
+      <ngx-control-wrapper
+        [errorDisplayMode]="errorDisplayMode()"
+        [showWarnings]="
+          warningDisplayMode() !== 'disabled' ? warningDisplayMode() : undefined
+        "
+      >
         <label class="form-label" for="wrapper-password"> Password * </label>
         <input
           class="form-input"
@@ -158,7 +184,7 @@ import {
       <div class="form-actions">
         <button
           type="submit"
-          class="form-submit"
+          class="btn-primary"
           [disabled]="!formState().valid || formState().pending"
           [attr.aria-describedby]="submitButtonId"
         >
@@ -197,20 +223,19 @@ export class ControlWrapperIntroWrapperFormComponent {
   // Error display mode configuration
   protected readonly errorDisplayMode = signal<NgxErrorDisplayMode>('on-blur');
 
+  // Warning display mode configuration
+  protected readonly warningDisplayMode = signal<
+    NgxWarningDisplayMode | 'disabled'
+  >('on-change');
+
   protected readonly submitted = signal(false);
   protected readonly submitAttempted = signal(false);
   protected readonly submitButtonId = 'wrapper-submit-status';
 
   // Get form state reference
   protected readonly formRef = viewChild<NgxFormDirective>('vestForm');
-  readonly formState = computed(
-    () =>
-      this.formRef()?.formState() ?? {
-        valid: false,
-        pending: false,
-        errors: {},
-        warnings: {},
-      },
+  readonly formState = computed<NgxFormState<unknown>>(
+    () => this.formRef()?.formState() ?? createEmptyFormState(),
   );
 
   protected onSubmit() {
@@ -223,5 +248,11 @@ export class ControlWrapperIntroWrapperFormComponent {
 
   protected onErrorDisplayModeChange(mode: NgxErrorDisplayMode): void {
     this.errorDisplayMode.set(mode);
+  }
+
+  protected onWarningDisplayModeChange(
+    mode: NgxWarningDisplayMode | 'disabled',
+  ): void {
+    this.warningDisplayMode.set(mode);
   }
 }

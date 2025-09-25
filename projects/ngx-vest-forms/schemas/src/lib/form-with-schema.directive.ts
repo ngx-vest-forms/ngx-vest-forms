@@ -7,6 +7,7 @@ import {
   isDevMode,
 } from '@angular/core';
 import { NgForm } from '@angular/forms';
+import type { NgxFormState } from 'ngx-vest-forms/core';
 import {
   getAllFormErrors,
   NGX_SCHEMA_STATE,
@@ -107,10 +108,6 @@ export class NgxVestFormWithSchemaDirective {
   // Expose enriched form state similar to full directive
   readonly formState = computed(() => {
     const base = this.#core.formState();
-    console.log(
-      '[NgxVestFormWithSchemaDirective] base formState from core:',
-      base,
-    );
     const status = this.#ngForm.form.status as
       | 'VALID'
       | 'INVALID'
@@ -132,8 +129,8 @@ export class NgxVestFormWithSchemaDirective {
       }
     }
 
-    const schema = this.#schemaState?.() ?? null;
-    const finalFormState = {
+    const schema = this.#schemaState?.() ?? undefined;
+    const finalFormState: NgxFormState<unknown> = {
       value: base.value,
       errors: fieldErrors,
       warnings: {},
@@ -145,18 +142,14 @@ export class NgxVestFormWithSchemaDirective {
       disabled: isDisabled,
       idle: isIdle,
       submitted: base.submitted,
-      schema: schema,
+      schema,
       errorCount: Object.values(fieldErrors).reduce(
         (a, b) => a + (b?.length ?? 0),
         0,
       ),
       warningCount: 0,
       firstInvalidField,
-    } as const;
-    console.log(
-      '[NgxVestFormWithSchemaDirective] final formState being returned:',
-      finalFormState,
-    );
+    };
     return finalFormState;
   });
 }

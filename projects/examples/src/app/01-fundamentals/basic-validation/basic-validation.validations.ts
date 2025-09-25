@@ -16,11 +16,6 @@ export type UserFormModel = {
 };
 
 /**
- * Field names for type-safe validation
- */
-type UserFieldNames = keyof UserFormModel;
-
-/**
  * Mock expensive validation service
  * Simulates checking if an email is already registered (e.g., database lookup)
  */
@@ -79,7 +74,7 @@ const simulateEmailExistsCheck = async (
  * - Leverage TypeScript for compile-time validation safety
  */
 export const userValidationSuite = staticSuite(
-  (data: Partial<UserFormModel> = {}, field?: UserFieldNames) => {
+  (data: Partial<UserFormModel> = {}, field?: string) => {
     // CRITICAL: Always include only() for performance optimization
     // This ensures only the changed field is validated, not the entire form
     only(field);

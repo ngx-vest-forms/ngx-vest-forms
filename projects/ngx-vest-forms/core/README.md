@@ -1,4 +1,8 @@
-### Configuring defaults (DI providers)
+# ngx-vest-forms/core
+
+**Core form validation functionality** - The minimal, essential features for Vest.js integration with Angular template-driven forms.
+
+## Configuring defaults (DI providers)
 
 Use provider helpers to configure core defaults hierarchically (app, route, or component):
 
@@ -26,10 +30,6 @@ export const appConfig: ApplicationConfig = {
   ],
 };
 ```
-
-# ngx-vest-forms/core
-
-**Core form validation functionality** - The minimal, essential features for Vest.js integration with Angular template-driven forms.
 
 ## What's Included
 
@@ -127,9 +127,45 @@ Both imports provide identical functionality since the main package re-exports c
 
 ## API Reference
 
+### Core Utilities
+
+#### `createEmptyFormState<TModel>()`
+
+Creates an empty `NgxFormState` with default values, useful as fallback for components requiring non-null form state.
+
+```typescript
+import { createEmptyFormState } from 'ngx-vest-forms/core';
+
+// Basic usage
+const emptyState = createEmptyFormState();
+
+// With type safety
+interface UserModel {
+  name: string;
+  email: string;
+}
+const typedState = createEmptyFormState<UserModel>();
+
+// Common pattern in parent components
+const formState = computed(
+  () => this.childForm()?.formState() ?? createEmptyFormState(),
+);
+```
+
+**Use Cases:**
+
+- Parent components displaying child form state with FormStateDisplay
+- Providing fallbacks when form components might not be initialized
+- Test utilities and mock data generation
+
+#### Other Utilities
+
+- `arrayToObject<T>()` and `objectToArray()` - Array/object conversion for dynamic forms
+- `NgxDeepPartial<T>`, `NgxDeepRequired<T>`, `NgxFormCompatibleDeepRequired<T>` - Type utilities
+
 See the [main documentation](../../../README.md) for complete API reference.
 
-Dev-time template checks with `_shape`:
+### Dev-time Template Validation
 
 - If you wrap a plain object using `ngxModelToStandardSchema`, the schema includes a private `_shape` copy of the template. In development, the form directive can leverage this to detect typos in `ngModel`/`ngModelGroup` names.
 - Standard Schema libraries (Zod, Valibot, ArkType) don’t include `_shape`; submit-time validation is unaffected.

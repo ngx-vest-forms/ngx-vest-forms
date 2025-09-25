@@ -19,6 +19,7 @@ export const asyncValidationSuite = staticSuite(
       // Simulate async validation with controlled timing
       await new Promise((resolve) => setTimeout(resolve, 200));
       if (actualData.username === 'taken') {
+        // Throwing an Error causes the test to fail; Vest captures this as a failed validation.
         throw new Error('Username is already taken');
       }
       return; // valid

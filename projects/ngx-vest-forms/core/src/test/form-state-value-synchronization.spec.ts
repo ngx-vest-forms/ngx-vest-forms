@@ -243,7 +243,7 @@ describe('Form State Value Synchronization', () => {
       // Act
       await userEvent.type(
         bioInput,
-        'Software developer passionate about web technologies',
+        'Software developer passionate about web tech',
       );
       await TestBed.inject(ApplicationRef).whenStable();
 
@@ -251,7 +251,7 @@ describe('Form State Value Synchronization', () => {
       const formStateValue = getFormStateValue();
 
       expect(formStateValue.bio).toBe(
-        'Software developer passionate about web technologies',
+        'Software developer passionate about web tech',
       );
     });
 

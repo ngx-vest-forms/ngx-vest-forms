@@ -293,7 +293,7 @@ import {
       <div class="form-actions">
         <button
           type="submit"
-          class="form-submit"
+          class="btn-primary"
           [disabled]="!formState().valid || formState().pending"
           [attr.aria-describedby]="submitButtonId"
         >

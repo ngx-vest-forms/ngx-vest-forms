@@ -132,7 +132,16 @@ const productValidationSuite = staticSuite(
   },
 );
 
-function createValidationResult(suiteResult: any): ValidationResult {
+type VestSuiteLikeResult = {
+  isValid(): boolean;
+  getErrors(): Record<string, string[]>;
+  hasWarnings(): boolean;
+  getWarnings(): Record<string, string[]>;
+};
+
+function createValidationResult(
+  suiteResult: VestSuiteLikeResult,
+): ValidationResult {
   return {
     isValid: suiteResult.isValid(),
     errors: suiteResult.getErrors(),
@@ -161,7 +170,7 @@ function createValidationResult(suiteResult: any): ValidationResult {
  * - Validation result visualization
  */
 @Component({
-  selector: 'app-server-side-validation',
+  selector: 'ngx-server-side-validation',
   standalone: true,
   imports: [
     CommonModule,
@@ -299,7 +308,7 @@ function createValidationResult(suiteResult: any): ValidationResult {
             <button
               type="submit"
               [disabled]="!userForm.formState().valid || userApiLoading()"
-              class="btn btn-primary w-full"
+              class="btn-primary w-full"
             >
               @if (userApiLoading()) {
                 Registering...
@@ -417,7 +426,7 @@ function createValidationResult(suiteResult: any): ValidationResult {
             <button
               type="submit"
               [disabled]="!productForm.formState().valid || productApiLoading()"
-              class="btn btn-primary w-full"
+              class="btn-primary w-full"
             >
               @if (productApiLoading()) {
                 Creating...

@@ -48,9 +48,9 @@ type LearningCardConfig = {
       class="text-left"
     >
       <div card-header>
-        <h2 [id]="demonstratedHeadingId" class="mb-4 text-lg font-semibold">
+        <h3 [id]="demonstratedHeadingId" class="mb-4 text-lg font-semibold">
           {{ demonstrated().icon }} {{ demonstrated().title }}
-        </h2>
+        </h3>
       </div>
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         @for (section of demonstrated().sections; track section.title) {
@@ -72,8 +72,10 @@ type LearningCardConfig = {
     <ng-content></ng-content>
 
     <!-- Learning Journey Card -->
-    <ngx-card variant="educational">
-      <div card-header>🎯 {{ learning().title }}</div>
+    <ngx-card variant="primary-outline">
+      <div card-header>
+        <h2 class="mb-4 text-base font-semibold">🎯 {{ learning().title }}</h2>
+      </div>
 
       <div class="grid gap-4 md:grid-cols-2">
         @for (section of learning().sections; track section.title) {
@@ -83,7 +85,7 @@ type LearningCardConfig = {
             >
               {{ section.title }}
             </h3>
-            <ul class="space-y-1 text-xs text-gray-700 dark:text-gray-300">
+            <ul class="space-y-1 text-sm text-gray-700 dark:text-gray-300">
               @for (item of section.items; track item) {
                 <li [innerHTML]="item"></li>
               }

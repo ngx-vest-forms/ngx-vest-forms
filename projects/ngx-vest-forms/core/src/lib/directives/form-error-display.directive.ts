@@ -6,12 +6,24 @@ import {
   Injector,
   input,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { NgForm } from '@angular/forms';
-import { map, of, startWith } from 'rxjs';
+import {
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  merge,
+  of,
+  shareReplay,
+  startWith,
+  switchMap,
+} from 'rxjs';
 import {
   NGX_ERROR_DISPLAY_MODE_DEFAULT,
+  NGX_ON_CHANGE_WARNING_DEBOUNCE,
+  NGX_WARNING_DISPLAY_MODE_DEFAULT,
   NgxErrorDisplayMode,
+  NgxWarningDisplayMode,
 } from '../config/error-display.config';
 import { NgxFormControlStateDirective } from './form-control-state.directive';
 
@@ -72,9 +84,59 @@ export class NgxFormErrorDisplayDirective {
   readonly #ngForm = inject(NgForm, { optional: true });
   readonly #formControlState = inject(NgxFormControlStateDirective);
 
-  // Configuration for when to display errors
+  // Configuration for when to display blocking errors
   readonly errorDisplayMode = input<NgxErrorDisplayMode>(
     inject(NGX_ERROR_DISPLAY_MODE_DEFAULT),
+  );
+
+  // Configuration for when to display non-blocking warnings (progressive guidance)
+  readonly warningDisplayMode = input<NgxWarningDisplayMode>(
+    inject(NGX_WARNING_DISPLAY_MODE_DEFAULT),
+  );
+
+  /**
+   * Opt-in control for warning display with intelligent input transform.
+   * This provides a developer-friendly API for enabling warnings.
+   *
+   * Usage patterns:
+   * - `<div ngxFormErrorDisplay showWarnings>` → Enables with 'on-change' mode
+   * - `<div ngxFormErrorDisplay showWarnings="true">` → Enables with 'on-change' mode
+   * - `<div ngxFormErrorDisplay showWarnings="on-change">` → Progressive warnings while typing
+   * - `<div ngxFormErrorDisplay showWarnings="on-blur">` → Conservative warnings after blur
+   * - `<div ngxFormErrorDisplay>` (default) → Uses warningDisplayMode or global default
+   *
+   * When showWarnings is provided, it overrides warningDisplayMode for this instance.
+   */
+  readonly showWarnings = input(
+    undefined as NgxWarningDisplayMode | 'disabled' | undefined,
+    {
+      transform: (
+        value: string | boolean | NgxWarningDisplayMode | undefined,
+      ): NgxWarningDisplayMode | 'disabled' | undefined => {
+        // Handle boolean attributes and string coercion
+        if (value === '' || value === true || value === 'true') {
+          return 'on-change'; // Default mode when enabled as boolean
+        }
+
+        if (value === false || value === 'false') {
+          return 'disabled'; // Explicitly disabled
+        }
+
+        if (value === undefined || value === null) {
+          return undefined; // Use warningDisplayMode instead
+        }
+
+        // Handle specific warning modes
+        if (value === 'on-change' || value === 'on-blur') {
+          return value;
+        }
+
+        // Fallback for any other truthy value
+        return typeof value === 'string' && value.length > 0
+          ? 'on-change'
+          : undefined;
+      },
+    },
   );
 
   // Access the underlying form control state and its derived signals
@@ -83,6 +145,7 @@ export class NgxFormErrorDisplayDirective {
   readonly warningMessages = this.#formControlState.warningMessages;
   readonly hasPendingValidation = this.#formControlState.hasPendingValidation;
   readonly updateOn = this.#formControlState.updateOn;
+  readonly #onChangeWarningDebounce = inject(NGX_ON_CHANGE_WARNING_DEBOUNCE);
 
   // Signal that becomes true after the form is submitted
   readonly formSubmitted = toSignal(
@@ -111,9 +174,6 @@ export class NgxFormErrorDisplayDirective {
       { injector: inject(Injector) },
     );
 
-    // Ensure validators run at least once on first blur when display mode expects blur-based visibility.
-    // This covers the case where updateOn is 'change' (Angular default) and the user blurs
-    // without changing the value: validators wouldn't run otherwise, leading to no error messages.
     effect(
       () => {
         const mode = this.errorDisplayMode();
@@ -149,14 +209,11 @@ export class NgxFormErrorDisplayDirective {
   }
 
   /**
-   * Determines if errors should be shown based on the specified display mode and the control's updateOn value.
+   * Determines if errors should be displayed to users based on timing and context.
    *
-   * This signal is used to control when validation messages should be displayed to the user
-   * based on the form's state (touched/submitted), the configured display mode, and the ngModelOptions.updateOn value.
-   *
-   * - If updateOn is 'submit', errors are only shown after form submit (regardless of display mode).
-   * - If updateOn is 'blur', errors are shown after blur (touched) or submit, depending on display mode.
-   * - If updateOn is 'change', errors are shown after change (touched) or submit, depending on display mode.
+   * CSS pseudo-class approach alignment:
+   * - Errors represent "user finished editing, field still invalid" (:invalid:not(:focus))
+   * - Hard red feedback when user has moved away from invalid field
    *
    * @returns A boolean signal that is true when errors should be shown.
    */
@@ -178,8 +235,8 @@ export class NgxFormErrorDisplayDirective {
       return !!(this.formSubmitted() && errorCount > 0);
     }
 
-    // on-blur: show errors after blur (touch)
     if (mode === 'on-blur') {
+      // Aligns with CSS :invalid:not(:focus) - show after user moves away
       return !!(state.isTouched && errorCount > 0);
     }
 
@@ -217,10 +274,83 @@ export class NgxFormErrorDisplayDirective {
   });
 
   /**
+   * Determines the computed warning mode based on showWarnings input and warningDisplayMode.
+   * The showWarnings input takes precedence when provided.
+   */
+  readonly computedWarningMode = computed(
+    (): NgxWarningDisplayMode | undefined => {
+      const explicit = this.showWarnings();
+
+      // Handle explicit disabling via showWarnings="false"
+      if (explicit === 'disabled') {
+        return; // Completely disabled
+      }
+
+      // Handle explicit enabling with specific mode
+      if (explicit === 'on-change' || explicit === 'on-blur') {
+        return explicit; // Use explicit mode
+      }
+
+      // Fallback to warningDisplayMode when showWarnings is undefined
+      return this.warningDisplayMode();
+    },
+  );
+
+  /**
+   * Determines if warnings are explicitly disabled via showWarnings="false".
+   * This is different from showWarnings being undefined (which falls back to warningDisplayMode).
+   */
+  readonly warningsExplicitlyDisabled = computed(() => {
+    const showWarningsValue = this.showWarnings();
+
+    // Check if explicitly disabled via showWarnings="false"
+    return showWarningsValue === 'disabled';
+  });
+
+  /**
+   * Determines if warnings should be shown based on CSS pseudo-class approach:
+   * - Show warnings when field is focused and invalid (:focus:invalid) - soft feedback
+   * - Show warnings for progressive feedback (like password strength) even when valid
+   */
+  readonly shouldShowWarnings = computed(() => {
+    // First check if warnings are explicitly disabled
+    if (this.warningsExplicitlyDisabled()) return false;
+
+    const warningMode = this.computedWarningMode();
+    const state = this.controlState();
+    const hasPending = this.hasPendingValidation();
+    const warningMessages = this.warningMessages();
+
+    if (!state || hasPending || !warningMode) return false;
+
+    const warningCount = warningMessages?.length || 0;
+    if (warningCount === 0) return false;
+
+    // CSS-driven approach: warnings are progressive feedback
+    switch (warningMode) {
+      case 'on-change': {
+        // Progressive: Show warnings while user is actively editing
+        // This aligns with :focus:invalid pseudo-class behavior
+        return true; // Let CSS handle the visual timing via :focus:invalid
+      }
+      case 'on-blur': {
+        // Conservative: Only show after user has finished (blur/touch)
+        return state.isTouched;
+      }
+      default: {
+        return false;
+      }
+    }
+  });
+
+  /**
    * Filtered and processed warning messages.
    *
    * This signal provides non-blocking warning messages from Vest validation.
    * Warnings don't prevent form submission but provide helpful guidance to users.
+   *
+   * For 'on-change' mode: warnings are debounced to prevent visual churn
+   * For 'on-blur' mode: warnings appear immediately after touch (no debounce needed)
    *
    * Usage:
    * ```html
@@ -229,13 +359,50 @@ export class NgxFormErrorDisplayDirective {
    * }
    * ```
    */
-  readonly warnings = computed(() => {
-    const hasPending = this.hasPendingValidation();
-    if (hasPending) return [];
+  readonly warnings = (() => {
+    const injector = inject(Injector);
 
-    const warningMessages = this.warningMessages();
-    return Array.isArray(warningMessages) ? warningMessages : [];
-  });
+    // Stream of raw warnings (mode gating handled downstream). Avoid circular dependency with shouldShowWarnings.
+    const filteredWarnings$ = toObservable(
+      computed(() => {
+        const mode = this.computedWarningMode();
+        if (!mode || this.warningsExplicitlyDisabled()) return [] as string[];
+        const msgs = this.warningMessages();
+        return Array.isArray(msgs) ? msgs : [];
+      }),
+    );
+
+    // Stream of mode changes
+    const mode$ = toObservable(this.computedWarningMode);
+
+    // Apply debounce only for 'on-change' mode
+    const debounced$ = mode$.pipe(
+      startWith(this.computedWarningMode()),
+      switchMap((mode) => {
+        if (mode === 'on-change') {
+          const base$ = filteredWarnings$.pipe(
+            distinctUntilChanged(
+              (a, b) =>
+                a.length === b.length && a.every((v, index) => v === b[index]),
+            ),
+            shareReplay(1),
+          );
+          return merge(
+            base$, // immediate emission
+            base$.pipe(debounceTime(this.#onChangeWarningDebounce)), // trailing debounced
+          ).pipe(
+            distinctUntilChanged(
+              (a, b) =>
+                a.length === b.length && a.every((v, index) => v === b[index]),
+            ),
+          );
+        }
+        return filteredWarnings$; // 'on-blur': no debounce
+      }),
+    );
+
+    return toSignal(debounced$, { initialValue: [], injector });
+  })();
 
   /**
    * Whether the control is currently being validated.

@@ -75,7 +75,7 @@ import type { SchemaType, UserProfile } from './user-profile.model';
           <div class="mt-8">
             <ngx-form-state-display
               [formState]="formState()!"
-              title="Current Form State"
+              [title]="'Current Form State'"
             />
           </div>
         }
@@ -154,24 +154,9 @@ export class SchemaComparisonPageComponent {
   formComponent = viewChild<SchemaComparisonFormComponent>('formComponent');
 
   // Computed signal for stable form state access
-  readonly formState = computed(() => {
-    console.log(
-      '[SchemaComparisonPageComponent] formState computed executing...',
-    );
-    const form = this.formComponent();
-    console.log('[SchemaComparisonPageComponent] formComponent:', form);
-    const formDirective = form?.formDirective();
-    console.log(
-      '[SchemaComparisonPageComponent] formDirective:',
-      formDirective,
-    );
-    const formState = formDirective?.formState() ?? null;
-    console.log(
-      '[SchemaComparisonPageComponent] formState from directive:',
-      formState,
-    );
-    return formState;
-  });
+  readonly formState = computed(
+    () => this.formComponent()?.formDirective()?.formState() ?? null,
+  );
 
   // Educational content configurations
   readonly demonstratedContent = SCHEMA_COMPARISON_CONTENT.demonstrated;

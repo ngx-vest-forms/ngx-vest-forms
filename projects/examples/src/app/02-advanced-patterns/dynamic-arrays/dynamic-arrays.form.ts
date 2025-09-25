@@ -126,7 +126,7 @@ import {
             <button
               type="button"
               (click)="addContactInfo('email')"
-              class="btn btn-primary"
+              class="btn-primary"
             >
               Add First Contact
             </button>
@@ -261,7 +261,7 @@ import {
             <button
               type="button"
               (click)="addAddress('home')"
-              class="btn btn-primary"
+              class="btn-primary"
             >
               Add First Address
             </button>
@@ -443,7 +443,7 @@ import {
         <button
           type="submit"
           [disabled]="!canSubmit() || vestForm.formState().pending"
-          class="btn btn-primary"
+          class="btn-primary"
         >
           @if (vestForm.formState().pending) {
             <span class="inline-flex items-center">
@@ -473,7 +473,7 @@ import {
           }
         </button>
 
-        <button type="button" (click)="resetForm()" class="btn btn-secondary">
+        <button type="button" (click)="resetForm()" class="btn-secondary">
           Reset Form
         </button>
       </div>
@@ -630,29 +630,38 @@ export class DynamicArraysFormComponent {
    */
   protected getContactTypeLabel(type: ContactInfo['type']): string {
     switch (type) {
-      case 'phone':
+      case 'phone': {
         return '📞 Phone';
-      case 'email':
+      }
+      case 'email': {
         return '✉️ Email';
-      case 'address':
+      }
+      case 'address': {
         return '🏠 Address';
-      default:
+      }
+      default: {
         return type;
+      }
     }
   }
 
   protected getAddressTypeLabel(type: Address['type']): string {
     switch (type) {
-      case 'home':
+      case 'home': {
         return '🏠 Home';
-      case 'work':
+      }
+      case 'work': {
         return '🏢 Work';
-      case 'billing':
+      }
+      case 'billing': {
         return '💳 Billing';
-      case 'shipping':
+      }
+      case 'shipping': {
         return '📦 Shipping';
-      default:
+      }
+      default: {
         return type;
+      }
     }
   }
 }

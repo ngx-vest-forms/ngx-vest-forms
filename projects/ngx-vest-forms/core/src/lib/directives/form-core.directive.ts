@@ -17,14 +17,13 @@ import {
 } from '@angular/forms';
 import {
   Observable,
-  ReplaySubject,
   catchError,
-  debounceTime,
   map,
   of,
   startWith,
   switchMap,
   take,
+  timer,
 } from 'rxjs';
 import {
   getAllFormErrors,
@@ -139,26 +138,16 @@ export class NgxFormCoreDirective<TModel = Record<string, unknown>> {
    * This eliminates timing issues with the previous dual-effect pattern.
    */
   readonly #formValueSignal = linkedSignal(() => {
-    console.log(
-      '[NgxFormCoreDirective] #formValueSignal linkedSignal executed',
-    );
     // Track form value changes
     this.#value();
     const raw = mergeValuesAndRawValues<TModel>(this.ngForm.form);
-    console.log('[NgxFormCoreDirective] raw value computed:', raw);
 
     if (Object.keys(this.ngForm.form.controls).length > 0) {
       this.#lastLinkedValue = raw;
-      console.log('[NgxFormCoreDirective] returning raw value:', raw);
       return raw;
     } else if (this.#lastLinkedValue !== null) {
-      console.log(
-        '[NgxFormCoreDirective] returning last linked value:',
-        this.#lastLinkedValue,
-      );
       return this.#lastLinkedValue;
     }
-    console.log('[NgxFormCoreDirective] returning null');
     return null;
   });
   /**
@@ -206,13 +195,8 @@ export class NgxFormCoreDirective<TModel = Record<string, unknown>> {
   // Public state
   /** Reactive snapshot of the core state for templates and consumers. */
   readonly formState = linkedSignal(() => {
-    console.log('[NgxFormCoreDirective] formState linkedSignal executed');
     // Use the internal linkedSignal for consistent form value computation
     const valueSnapshot = this.#formValueSignal();
-    console.log(
-      '[NgxFormCoreDirective] valueSnapshot from #formValueSignal:',
-      valueSnapshot,
-    );
 
     // Track other necessary signals to ensure reactive updates
     const status = this.#status();
@@ -238,10 +222,6 @@ export class NgxFormCoreDirective<TModel = Record<string, unknown>> {
       submitted: this.#submitted,
     } satisfies CoreFormState<TModel>;
 
-    console.log(
-      '[NgxFormCoreDirective] final formState being returned:',
-      formState,
-    );
     return formState;
   });
 
@@ -400,66 +380,65 @@ export class NgxFormCoreDirective<TModel = Record<string, unknown>> {
     const suite = this.vestSuite();
     if (!suite) return () => of(null);
 
-    let subj: ReplaySubject<TModel> | undefined;
-    let stream$: Observable<ValidationErrors | null> | undefined;
-
+    // IMPORTANT: The previous implementation cached a single debounced stream with `take(1)`.
+    // After the first emission the observable completed and subsequent control value changes
+    // returned the already-completed stream – preventing any further validations (and thus
+    // blocking progressive warning updates). This manifested as the warnings test timing out.
+    //
+    // New approach: Build a fresh one-shot observable per invocation so Angular re-validates
+    // on every value change (it calls the AsyncValidatorFn each time). Debounce is applied
+    // within the observable when configured. Each observable completes after a single
+    // Vest result so the control does not remain in the PENDING state.
     return (control: AbstractControl) => {
-      if (!subj) {
-        subj = new ReplaySubject<TModel>(1);
-        stream$ = subj.pipe(
-          debounceTime(options.debounceTime ?? 0),
-          switchMap(
-            (model) =>
-              new Observable<ValidationErrors | null>((observer) => {
-                try {
-                  suite(model, field).done((result) => {
-                    const errors = result.getErrors()[field];
-                    const warnings = result.getWarnings()[field];
-                    const out =
-                      errors?.length || warnings?.length
-                        ? {
-                            ...(errors?.length && { errors }),
-                            ...(warnings?.length && { warnings }),
-                          }
-                        : null;
-                    observer.next(out);
-                    observer.complete();
-                  });
-                } catch {
-                  observer.next({ vestInternalError: 'Validation failed' });
-                  observer.complete();
-                }
-              }),
-          ),
-          catchError(() => of({ vestInternalError: 'Validation failed' })),
-          take(1),
-        );
-      }
-
       const model = mergeValuesAndRawValues<TModel>(this.ngForm.form);
-      // create a targeted snapshot with the candidate control value
+
+      // Targeted snapshot with candidate value injected at path
+      let snapshot: TModel;
       try {
-        const snapshot = structuredClone(model);
-        setValueAtPath(snapshot as object, field, control.value);
-        (subj as ReplaySubject<TModel>).next(snapshot as TModel);
+        snapshot = structuredClone(model) as TModel;
       } catch {
-        // fallback if structuredClone not available
         try {
           const cloneFunction: (<U>(value: U) => U) | undefined = (
             globalThis as unknown as { structuredClone?: <U>(v: U) => U }
           ).structuredClone;
-          const snapshot = (
-            cloneFunction ? cloneFunction(model) : (model as TModel)
-          ) as TModel;
-          setValueAtPath(snapshot as object, field, control.value);
-          (subj as ReplaySubject<TModel>).next(snapshot);
+          snapshot = (cloneFunction ? cloneFunction(model) : model) as TModel;
         } catch {
-          const snapshot = { ...(model as object) } as TModel;
-          setValueAtPath(snapshot as object, field, control.value);
-          (subj as ReplaySubject<TModel>).next(snapshot);
+          snapshot = { ...(model as object) } as TModel;
         }
       }
-      return stream$ ?? of(null);
+      setValueAtPath(snapshot as object, field, control.value);
+
+      // Use timer() instead of of() to properly implement debouncing
+      // timer(debounceTime) waits for the specified time before emitting the snapshot
+      return timer(options.debounceTime ?? 0).pipe(
+        map(() => snapshot),
+        switchMap(
+          (snap) =>
+            new Observable<ValidationErrors | null>((observer) => {
+              try {
+                suite(snap, field).done((result) => {
+                  const errors = result.getErrors()[field];
+                  const warnings = result.getWarnings()[field];
+                  // DEBUG (temporary): surface vest warnings/errors for investigation
+                  const out =
+                    errors?.length || warnings?.length
+                      ? {
+                          ...(errors?.length && { errors }),
+                          ...(warnings?.length && { warnings }),
+                        }
+                      : null;
+                  observer.next(out);
+                  observer.complete();
+                });
+              } catch {
+                observer.next({ vestInternalError: 'Validation failed' });
+                observer.complete();
+              }
+            }),
+        ),
+        catchError(() => of({ vestInternalError: 'Validation failed' })),
+        take(1),
+      );
     };
   }
 }
