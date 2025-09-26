@@ -6,763 +6,242 @@ applyTo: '**/*.{ts,html,component.ts}'
 
 # Vest.js Validation Framework: Best Practices for Angular & ngx-vest-forms
 
-## What is Vest.js?
+## Purpose of this guide
+- Equip the assistant with crisp guardrails when generating Vest.js + Angular code.
+- Focus on behaviours that matter most for ngx-vest-forms: selective validation, touch detection, async hygiene, and accessible feedback.
+- Keep examples lightweight; expand in feature docs only when needed.
 
-Vest.js is a declarative validation framework inspired by unit testing libraries. It simplifies form validation with a suite-like syntax, making validation logic maintainable and readable across any UI framework. When combined with ngx-vest-forms in Angular applications, it provides a powerful solution for complex form validation scenarios.
+## Golden rules (follow these first)
+- Use `staticSuite` + `only(field)` for every form-facing suite; fall back to `create` only when shared mutable state is required.
+- Drive touch state from `result.isTested(field)`—never maintain parallel dirty flags.
+- Prefer `skipWhen`/`omitWhen`/`include.when` over ad-hoc conditionals; they compose with Vest’s execution engine.
+- Keep async validations cancellable via the provided `AbortSignal` and guard expensive work with `skipWhen`.
+- Emit warnings with `warn()` only for non-blocking guidance; errors must still block submission.
+- Mirror Vest state into Angular signals once, then derive everything else from computed signals.
+- Use typed suites so invalid field names fail at compile time.
+- When unsure, copy patterns from this file rather than improvising.
 
-### Core Philosophy
-- **Declarative Syntax**: Write validations like unit tests for clarity and maintainability
-- **Framework Agnostic**: Works with any frontend or backend framework
-- **Performance Optimized**: Selective validation with `only()` function for enhanced performance
-- **Asynchronous First**: Built-in support for async validations
-- **Composable**: Modular and reusable validation logic across projects
-
-## Prerequisites & Installation
-
-```bash
-npm install vest
-```
-
-**Note**: For exact version requirements, see main copilot instructions which define workspace-compatible versions.
-
-## Core Concepts
-
-### Creating Validation Suites
-
-#### Basic Suite Structure
+## Essential suite recipe
 ```typescript
-import { create, test, enforce } from 'vest';
+import { staticSuite, enforce, only, test } from 'vest';
 
-const suite = create((data = {}) => {
-  test('username', 'Username is required', () => {
-    enforce(data.username).isNotBlank();
-  });
-
-  test('username', 'Username must be at least 3 characters long', () => {
-    enforce(data.username).longerThan(2);
-  });
-});
-
-export default suite;
-```
-
-#### Performance-Optimized Suite (CRITICAL for ngx-vest-forms)
-```typescript
-import { create, test, enforce, only } from 'vest';
-
-const suite = create((data = {}, field?: string) => {
-  // ALWAYS include this pattern for optimal performance
+export const contactSuite = staticSuite((data = {}, field?: string) => {
   if (field) {
-    only(field); // Only validate the specific field that changed
+    only(field);
   }
-  // When field is undefined (e.g., on submit), all validations run
 
-  test('username', 'Username is required', () => {
-    enforce(data.username).isNotBlank();
-  });
-
-  test('email', 'Email is invalid', () => {
-    enforce(data.email).isEmail();
-  });
+  test('email', 'Email is required', () => enforce(data.email).isNotBlank());
+  test('email', 'Email format is invalid', () => enforce(data.email).isEmail());
 });
 ```
+- Always accept `(data, field?)`; treat `field` as optional and guard with `if (field) { only(field); }`.
+- Return the suite directly from the module; consumers import the constant.
 
-### TypeScript Support
-
-#### Typed Suites with Generics
+### Type-safe helpers
 ```typescript
 import { create } from 'vest';
 
-type FieldName = 'username' | 'password' | 'email';
-type GroupName = 'SignIn' | 'SignUp';
-type Callback = (data: { username: string; password: string; email?: string }) => void;
+type Field = 'email' | 'password';
+type Group = 'onboarding' | 'profile';
+type Model = { email: string; password: string };
 
-const suite = create<FieldName, GroupName, Callback>(data => {
-  // data is now fully typed
-  test('username', 'Username is required', () => {
-    enforce(data.username).isNotBlank();
-  });
-});
-
-// Type-safe result access
-const result = suite();
-result.getErrors('username'); // ✅ Type-safe
-result.getErrors('invalid_field'); // 🚨 Compilation error
-```
-
-#### Runtime Function Typing
-```typescript
-// Extract typed functions from suite for better type safety
-const { test, group, only } = suite;
-
-// Now all functions are type-safe
-only('username'); // ✅
-only('invalid_field'); // 🚨 Compilation error
-```
-
-## Validation Patterns for Angular/ngx-vest-forms
-
-### 1. Field-Level Validation Pattern
-```typescript
-import { staticSuite, test, enforce, only } from 'vest';
-import { DeepPartial } from 'ngx-vest-forms';
-
-type FormModel = DeepPartial<{
-  generalInfo: {
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-}>;
-
-export const generalInfoValidationSuite = staticSuite(
-  (model: FormModel, field?: string) => {
-    // CRITICAL: Always use this pattern for ngx-vest-forms
-    if (field) {
-      only(field);
-    }
-
-    test('generalInfo.firstName', 'First name is required', () => {
-      enforce(model.generalInfo?.firstName).isNotBlank();
-    });
-
-    test('generalInfo.lastName', 'Last name is required', () => {
-      enforce(model.generalInfo?.lastName).isNotBlank();
-    });
-
-    test('generalInfo.email', 'Email is required', () => {
-      enforce(model.generalInfo?.email).isNotBlank();
-    });
-
-    test('generalInfo.email', 'Email format is invalid', () => {
-      enforce(model.generalInfo?.email).isEmail();
-    });
+export const authSuite = create<Field, Group, (data: Model) => void>((data, field) => {
+  if (field) {
+    only(field);
   }
-);
-```
+  test('password', 'Password is required', () => enforce(data.password).isNotBlank());
+});
 
-### 2. Nested Object Validation
+const { test, group, only } = authSuite; // all helpers now honour the Field/Group union
+```
+- Destructure helpers when you need type-aware `test`, `group`, or `only` outside the suite body.
+
+## Execution & field selection
+
+### `only`, `include`, and groups
+- `only(field)` limits evaluation to the active field; call it before any `test` statements.
+- `only.group(step)` scopes validation to a wizard step without rewriting tests.
+- `include('confirmPassword').when('password')` revalidates dependents whenever the trigger field runs.
+- Prefer the functional `when(result => …)` overload when the dependency is conditional (e.g., only re-run confirm password once the password is valid).
+
+### Execution modes (Vest 5)
+- `mode(Modes.EAGER)` (default): stop after the first failing test **per field**; ideal for most UX.
+- `mode(Modes.ALL)`: capture every failure per field; enable on submit to show all guidance at once.
+- `mode(Modes.ONE)`: stop the entire suite after the first failure; use for server-side “any error blocks” checks.
 ```typescript
-test('addresses.billingAddress.street', 'Street is required', () => {
-  enforce(model.addresses?.billingAddress?.street).isNotBlank();
-});
+import { create, mode, Modes, only, test } from 'vest';
 
-test('addresses.billingAddress.zipcode', 'Invalid zipcode format', () => {
-  enforce(model.addresses?.billingAddress?.zipcode).matches(/^\d{5}(-\d{4})?$/);
+export const profileSuite = create((data, field) => {
+  if (!field) {
+    mode(Modes.ALL);
+  }
+  if (field) {
+    only(field);
+  }
+
+  test('displayName', 'Display name is required', () => enforce(data.displayName).isNotBlank());
 });
 ```
 
-### 3. Conditional Validations with `omitWhen`
+## Conditional helpers
+
+### `skipWhen` vs `omitWhen`
+- `skipWhen(condition, body)` prevents tests from running **but fields still count toward `isValid()`**. Use it to postpone expensive work until prerequisites pass.
+- `omitWhen(condition, body)` removes tests from the result entirely while the condition holds. Use it for feature toggles or optional sections that should not block validity.
 ```typescript
-import { omitWhen } from 'vest';
-
-// Skip address validation if using existing address
-omitWhen(model.useExistingAddress, () => {
-  test('addresses.newAddress.street', 'Street is required', () => {
-    enforce(model.addresses?.newAddress?.street).isNotBlank();
-  });
-
-  test('addresses.newAddress.city', 'City is required', () => {
-    enforce(model.addresses?.newAddress?.city).isNotBlank();
-  });
+skipWhen((result) => result.hasErrors('email'), () => {
+  test('email', 'Domain is blacklisted', async () => checkDomain(data.email));
 });
 
-// Age-based conditional validation
-omitWhen((model.age || 0) >= 18, () => {
-  test('emergencyContact', 'Emergency contact is required for minors', () => {
-    enforce(model.emergencyContact).isNotBlank();
-  });
+omitWhen(!data.useNewAddress, () => {
+  test('address.line1', 'Street is required', () => enforce(data.address?.line1).isNotBlank());
 });
 ```
 
-### 4. Dependent Field Validation
+### Optional fields
+- Invoke `optional('field')`, `optional(['fieldA', 'fieldB'])`, or `optional({ field: valueOrGetter })` inside the suite.
+- Vest omits optional tests when the supplied value is `'' | null | undefined` or when the callback returns `true`.
+- Combine with `warn()` for “nice to have” guidance that should not block submission.
 ```typescript
-// Password confirmation validation
-omitWhen(!model.password || !model.confirmPassword, () => {
-  test('confirmPassword', 'Passwords do not match', () => {
-    enforce(model.confirmPassword).equals(model.password);
-  });
+optional({
+  vatNumber: () => data.businessType !== 'corporation',
+  alternateEmail: data.altEmail,
 });
 
-// Cross-field validation with skipWhen
-skipWhen(res => res.hasErrors('password'), () => {
-  test('confirmPassword', 'Please confirm password', () => {
-    enforce(model.confirmPassword).isNotBlank();
-  });
-});
+test('alternateEmail', 'Format is invalid', () => enforce(data.altEmail).isEmail());
 ```
 
-## Asynchronous Validation Patterns
+### Dynamic collections with `each`
+- Use `each(array, (item, index) => { test(...) })` to validate array items without losing async memoisation.
+- Pass a stable key (e.g., `item.id`) as the fourth argument to keep Vest state aligned with reordered lists.
 
-### Basic Async Validation
-```typescript
-test('username', 'Username is already taken', async () => {
-  return await doesUserExist(userData.username);
-});
+## Async validation patterns
 
-// Using promises
-test('email', 'Email is already registered', () => {
-  return checkEmailAvailability(userData.email)
-    .then(() => Promise.resolve()) // Available
-    .catch(() => Promise.reject()); // Taken
-});
-```
-
-### Async with AbortSignal (Performance Optimization)
+### Guarded async validation
 ```typescript
 import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
 
-test('username', 'Username is already taken', async ({ signal }) => {
-  await lastValueFrom(
-    apiService
-      .checkUsernameAvailability(userData.username)
-      .pipe(takeUntil(fromEvent(signal, 'abort')))
-  ).then(
-    () => Promise.reject(), // Username exists, validation fails
-    () => Promise.resolve()  // Username available, validation passes
-  );
-});
-```
-
-### Factory Pattern for Service Injection
-```typescript
-export const createAsyncValidationSuite = (apiService: ApiService) => {
-  return staticSuite((model: FormModel, field?: string) => {
-    if (field) {
-      only(field);
-    }
-
-    omitWhen(!model.userId, () => {
-      test('userId', 'User ID is already taken', async ({ signal }) => {
-        await lastValueFrom(
-          apiService
-            .checkUserId(model.userId as string)
-            .pipe(takeUntil(fromEvent(signal, 'abort')))
-        ).then(
-          () => Promise.reject(),
-          () => Promise.resolve()
-        );
-      });
-    });
+skipWhen((res) => res.hasErrors('username'), () => {
+  test('username', 'Username already exists', async ({ signal }) => {
+    await lastValueFrom(
+      userService.checkUsername(data.username!).pipe(takeUntil(fromEvent(signal, 'abort')))
+    ).then(
+      () => Promise.reject(),
+      () => Promise.resolve()
+    );
   });
-};
-```
-
-## Advanced Validation Patterns
-
-### 1. Warn-Only Tests (Non-blocking)
-```typescript
-import { warn } from 'vest';
-
-// Password strength indicators
-test('password', 'Password strength: WEAK', () => {
-  warn(); // This test won't prevent form submission
-
-  enforce(data.password).matches(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]$/
-  );
 });
+```
+- Always respect the provided `AbortSignal`; abortable observables or fetch requests must call `takeUntil`/`signal`.
+- Wrap slow validations with `skipWhen` or `omitWhen` to avoid unnecessary network calls.
+- Use `test.memo(name, message, fn, [deps])` to cache deterministic async results.
+- Apply `test.debounce(name, message, fn, wait)` for live-search fields that should wait for idle typing.
 
-test('password', 'Password strength: MEDIUM', () => {
+### Warning-only feedback
+```typescript
+test('password', 'Password strength: add a symbol for extra security', () => {
   warn();
-
-  enforce(data.password).matches(
-    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]$/
-  );
+  enforce(data.password).matches(/[^A-Za-z0-9]/);
 });
 ```
+- Call `warn()` synchronously at the start of the test; async placements will be ignored.
 
-### 2. Dynamic Tests with `each`
+## Error reporting & touch detection
+
 ```typescript
-import { each } from 'vest';
+const suiteState = signal(contactSuite.get());
 
-// Validate array items dynamically
-each(model.phoneNumbers, (phoneNumber, index) => {
-  test(
-    `phoneNumbers.${index}.number`,
-    'Phone number is required',
-    () => {
-      enforce(phoneNumber.number).isNotBlank();
-    },
-    phoneNumber.id // Unique key for state persistence
-  );
+contactSuite.subscribe((result) => suiteState.set(result));
 
-  test(
-    `phoneNumbers.${index}.number`,
-    'Invalid phone number format',
-    () => {
-      enforce(phoneNumber.number).matches(/^\+?[\d\s\-\(\)]+$/);
-    },
-    phoneNumber.id
-  );
-});
+const emailErrors = computed(() => suiteState().getErrors('email'));
+const showEmailErrors = computed(() => suiteState().isTested('email') && suiteState().hasErrors('email'));
 ```
+- Expose read-only signals for value, errors, warnings, `isPending`, and `isValid` on demand.
+- Prefer computed selectors instead of storing plain objects in component state.
+- When submitting, call `suiteState().done(callback)` to react to async completion.
 
-### 3. Grouped Validations (Multi-step Forms)
+## Angular integration patterns
+
+### Basic standalone component
 ```typescript
-import { group, only } from 'vest';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { ngxVestForm } from 'ngx-vest-forms/core';
+import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
+import { contactSuite } from './contact.suite';
 
-const suite = create((data, currentStep) => {
-  only.group(currentStep);
-
-  group('personal_info', () => {
-    test('firstName', 'First name is required', () => {
-      enforce(data.firstName).isNotBlank();
-    });
-
-    test('lastName', 'Last name is required', () => {
-      enforce(data.lastName).isNotBlank();
-    });
-  });
-
-  group('contact_info', () => {
-    test('email', 'Email is required', () => {
-      enforce(data.email).isNotBlank();
-    });
-
-    test('phone', 'Phone is required', () => {
-      enforce(data.phone).isNotBlank();
-    });
-  });
-});
-
-// Usage
-suite(formData, 'personal_info'); // Only validate personal info step
-suite(formData, 'contact_info');  // Only validate contact info step
-```
-
-### 4. Composable Validation Functions
-```typescript
-// Reusable validation components
-export function emailValidations(value: string | undefined, fieldName: string) {
-  test(fieldName, 'Email is required', () => {
-    enforce(value).isNotBlank();
-  });
-
-  test(fieldName, 'Email format is invalid', () => {
-    enforce(value).isEmail();
-  });
-}
-
-export function phoneValidations(value: string | undefined, fieldName: string) {
-  test(fieldName, 'Phone number is required', () => {
-    enforce(value).isNotBlank();
-  });
-
-  test(fieldName, 'Invalid phone format', () => {
-    enforce(value).matches(/^\+?[\d\s\-\(\)]+$/);
-  });
-}
-
-// Main suite using composable validations
-export const contactValidationSuite = staticSuite(
-  (model: ContactModel, field?: string) => {
-    if (field) {
-      only(field);
-    }
-
-    emailValidations(model.email, 'email');
-    phoneValidations(model.phone, 'phone');
-    phoneValidations(model.alternativePhone, 'alternativePhone');
-  }
-);
-```
-
-## State Management Patterns
-
-### 1. Stateful Suite (Client-side)
-```typescript
-// Regular suite maintains state between runs
-const suite = create((data, field) => {
-  if (field) {
-    only(field);
-  }
-  // validation logic
-});
-
-// State persists between calls
-suite(data, 'username');
-suite(data, 'email');
-```
-
-### 2. Stateless Suite (Server-side)
-```typescript
-import { staticSuite } from 'vest';
-
-// Creates new result instance each time
-const suite = staticSuite((data) => {
-  test('username', 'Username is required', () => {
-    enforce(data.username).isNotEmpty();
-  });
-});
-
-// Each call is independent
-suite(data); // No state persistence
-```
-
-### 3. Manual State Reset
-```typescript
-// Reset suite state manually
-suite.reset(); // Clears all validation state
-```
-
-## Integration with ngx-vest-forms
-
-### 1. Basic Integration
-```typescript
-// Component
 @Component({
+  selector: 'app-contact-form',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ngxVestForm, NgxControlWrapper],
   template: `
-    <form scVestForm
-          [suite]="validationSuite"
-          (formValueChange)="formValue.set($event)">
-
-      <div sc-control-wrapper>
-        <input name="username" [ngModel]="formValue().username"/>
-      </div>
+    <form ngxVestForm [vestSuite]="suite" [(formValue)]="model">
+      <ngx-control-wrapper>
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" [ngModel]="model().email" />
+        @if (emailErrors().length && showEmailErrors()) {
+          <p class="text-destructive" role="alert">{{ emailErrors()[0] }}</p>
+        }
+      </ngx-control-wrapper>
     </form>
-  `
+  `,
 })
-export class MyComponent {
-  protected readonly formValue = signal<FormModel>({});
-  protected readonly validationSuite = myValidationSuite;
+export class ContactFormComponent {
+  protected readonly model = signal({ email: '' });
+  protected readonly suite = contactSuite;
+
+  private readonly result = signal(contactSuite.get());
+  private readonly stop = contactSuite.subscribe((res) => this.result.set(res));
+
+  protected readonly emailErrors = computed(() => this.result().getErrors('email'));
+  protected readonly showEmailErrors = computed(() => this.result().isTested('email'));
 }
 ```
+- Always connect template state through computed signals derived from a single `suite.subscribe`.
+- Use `[validationConfig]` to declare dependencies (e.g., `{ password: ['confirmPassword'] }`).
+- Enable `[validateRootForm]="true"` plus `test(ROOT_FORM, ...)` for global checks.
 
-### 2. Validation Configuration for Dependencies
+### Arrays and dynamic controls
+- Wrap Vest accessors in helper methods (`vestForm.field('phones.0.number')`) to manage add/remove flows.
+- Re-run validation after array mutations so Vest updates memoised entries (`suite.validate('phones')`).
+
+## Performance checklist
+- `only(field)` in every suite to avoid whole-form re-validation on keystrokes.
+- Guard async calls with `skipWhen` (prerequisite errors) or `omitWhen` (feature toggles).
+- Memoise deterministic async work with `test.memo` and provide dependency arrays.
+- Debounce live feedback fields with `test.debounce` to reduce chatter.
+- Avoid cloning large data objects; read values immutably inside `test` bodies.
+- Use `suite.resetField(path)` when replacing nested objects to clear stale errors.
+
+## Server-side usage
 ```typescript
-// Component
-protected readonly validationConfig = {
-  'password': ['confirmPassword'],
-  'addresses.billingAddress.country': ['addresses.billingAddress.state']
-};
+import { staticSuite, enforce, test } from 'vest';
 
-// Template
-<form scVestForm
-      [suite]="validationSuite"
-      [validationConfig]="validationConfig">
-```
-
-### 3. Root Form Validation
-```typescript
-import { ROOT_FORM } from 'ngx-vest-forms';
-
-// In validation suite
-test(ROOT_FORM, 'Form-level validation error', () => {
-  enforce(someGlobalCondition).isTruthy();
+const serverSuite = staticSuite((data) => {
+  test('email', 'Email is required', () => enforce(data.email).isNotBlank());
 });
 
-// In component
-<form scVestForm
-      [validateRootForm]="true"
-      (errorsChange)="errors.set($event)">
-```
-
-## Performance Optimization Strategies
-
-### 1. Always Use `only()` Pattern
-```typescript
-// ✅ CORRECT: Optimal performance
-const suite = staticSuite((model, field?: string) => {
-  if (field) {
-    only(field); // Only validate changed field
-  }
-  // validation logic
-});
-
-// ❌ WRONG: Validates all fields every time
-const suite = staticSuite((model) => {
-  // validation logic without only()
-});
-```
-
-### 2. Memoization for Expensive Operations
-```typescript
-import { test } from 'vest';
-
-// Cache expensive async operations
-test.memo(
-  'username',
-  'Username already exists',
-  () => expensiveUsernameCheck(data.username),
-  [data.username] // Dependencies for cache invalidation
-);
-```
-
-### 3. Conditional Test Execution
-```typescript
-// Skip expensive tests when basic validation fails
-skipWhen(res => res.hasErrors('email'), () => {
-  test('email', 'Email domain is blacklisted', async () => {
-    return await checkEmailDomainReputation(data.email);
-  });
-});
-```
-
-## Error Handling & Result Processing
-
-### 1. Accessing Validation Results
-```typescript
-const result = suite(formData);
-
-// Check overall validity
-result.isValid(); // boolean
-
-// Field-specific errors
-result.hasErrors('username'); // boolean
-result.getErrors('username'); // string[]
-
-// All errors
-result.getErrors(); // Record<string, string[]>
-
-// Warnings (non-blocking)
-result.hasWarnings('password'); // boolean
-result.getWarnings('password'); // string[]
-```
-
-### 2. Handling Async Results
-```typescript
-const result = suite(formData)
-  .done('username', (res) => {
-    if (res.hasErrors('username')) {
-      // Handle username validation completion
-    }
-  })
-  .done((res) => {
-    // Handle overall validation completion
-    if (res.isValid()) {
-      // All validations passed
-    }
-  });
-
-// Check for pending async tests
-result.isPending(); // boolean
-result.isPending('username'); // boolean for specific field
-```
-
-## Common Patterns & Best Practices
-
-### 1. Form Validation Suite Structure
-```typescript
-import { staticSuite, test, enforce, only, omitWhen } from 'vest';
-import { DeepPartial, ROOT_FORM } from 'ngx-vest-forms';
-
-type MyFormModel = DeepPartial<{
-  // Define your form structure
-}>;
-
-export const myFormValidationSuite = staticSuite(
-  (model: MyFormModel, field?: string) => {
-    // ALWAYS include for performance
-    if (field) {
-      only(field);
-    }
-
-    // Basic field validations
-    test('fieldName', 'Error message', () => {
-      enforce(model.fieldName).isNotBlank();
-    });
-
-    // Conditional validations
-    omitWhen(condition, () => {
-      // Optional validations
-    });
-
-    // Root form validation
-    test(ROOT_FORM, 'Form-level error', () => {
-      enforce(someCondition).isTruthy();
-    });
-  }
-);
-```
-
-### 2. Async Service Integration
-```typescript
-export const createValidationSuite = (
-  userService: UserService,
-  emailService: EmailService
-) => {
-  return staticSuite((model: FormModel, field?: string) => {
-    if (field) {
-      only(field);
-    }
-
-    // Regular synchronous validations
-    test('username', 'Username is required', () => {
-      enforce(model.username).isNotBlank();
-    });
-
-    // Async validations with service injection
-    omitWhen(!model.username, () => {
-      test('username', 'Username is taken', async ({ signal }) => {
-        await lastValueFrom(
-          userService.checkUsername(model.username!)
-            .pipe(takeUntil(fromEvent(signal, 'abort')))
-        ).then(
-          () => Promise.reject(),
-          () => Promise.resolve()
-        );
-      });
-    });
-  });
-};
-```
-
-### 3. Multi-Stage Form Validation
-```typescript
-const multiStageValidation = create((data, currentStage) => {
-  only.group(currentStage);
-
-  group('stage1', () => {
-    test('firstName', 'First name required', () => {
-      enforce(data.firstName).isNotBlank();
-    });
-  });
-
-  group('stage2', () => {
-    test('email', 'Email required', () => {
-      enforce(data.email).isNotBlank();
-    });
-  });
-
-  group('stage3', () => {
-    test('terms', 'Please accept terms', () => {
-      enforce(data.acceptTerms).isTruthy();
-    });
-  });
-});
-```
-
-## Common Pitfalls & Solutions
-
-### ❌ Wrong: Missing `only()` Pattern
-```typescript
-// Poor performance - validates all fields
-const suite = staticSuite((model) => {
-  test('field1', 'Error', () => { /* validation */ });
-  test('field2', 'Error', () => { /* validation */ });
-});
-```
-
-### ✅ Correct: Using `only()` Pattern
-```typescript
-// Optimal performance - validates only changed field
-const suite = staticSuite((model, field?: string) => {
-  if (field) {
-    only(field);
-  }
-  test('field1', 'Error', () => { /* validation */ });
-  test('field2', 'Error', () => { /* validation */ });
-});
-```
-
-### ❌ Wrong: Incorrect Async Handling
-```typescript
-// Promise rejection not handled properly
-test('username', 'Taken', async () => {
-  const exists = await checkUsername();
-  return exists; // Wrong: should reject if exists
-});
-```
-
-### ✅ Correct: Proper Async Handling
-```typescript
-// Proper promise handling
-test('username', 'Username taken', async () => {
-  const exists = await checkUsername();
-  if (exists) {
-    return Promise.reject(); // Explicit rejection
-  }
-  return Promise.resolve();
-});
-```
-
-### ❌ Wrong: Improper `warn()` Usage
-```typescript
-// Won't work - warn() called after async operation
-test('password', 'Weak password', async () => {
-  await someAsyncCheck();
-  warn(); // Too late!
-});
-```
-
-### ✅ Correct: Proper `warn()` Usage
-```typescript
-// Correct - warn() called in sync portion
-test('password', 'Weak password', async () => {
-  warn(); // Call immediately
-  return await someAsyncCheck();
-});
-```
-
-## Server-Side Usage
-
-### Stateless Validation
-```typescript
-import { staticSuite } from 'vest';
-
-// Perfect for server-side validation
-const serverValidation = staticSuite((data) => {
-  test('username', 'Username required', () => {
-    enforce(data.username).isNotEmpty();
-  });
-});
-
-// Each request gets fresh validation state
-app.post('/validate', (req, res) => {
-  const result = serverValidation(req.body);
-  res.json({ valid: result.isValid(), errors: result.getErrors() });
-});
-```
-
-## TypeScript Integration
-
-### Custom Rule Types
-```typescript
-// global.d.ts
-declare global {
-  namespace n4s {
-    interface EnforceCustomMatchers<R> {
-      isValidPhoneNumber(): R;
-      isStrongPassword(): R;
-    }
-  }
+export async function validatePayload(payload: unknown) {
+  const result = serverSuite(payload);
+  return { valid: result.isValid(), errors: result.getErrors() };
 }
-
-export {};
 ```
+- `staticSuite` is naturally stateless—no manual `reset()` required between requests.
+- Switch to `mode(Modes.ONE)` when the API should bail after the first error.
 
-### Exported Types
-```typescript
-import {
-  Suite,
-  SuiteRunResult,
-  SuiteResult,
-  SuiteSummary
-} from 'vest';
+## Testing guidance
+- Prefer vest-driven integration tests: render the component, interact with inputs, and assert on visible errors.
+- Use `suite.get()` or the subscribed result to assert `isValid`, `isPending`, and specific error strings.
+- Mock async helpers with resolved/rejected promises and advance fake timers when debouncing.
+- For libraries, provide fixture suites that showcase `optional`, `include`, `skipWhen`, and `warn` so consumers can copy known-good patterns.
 
-type MySuite = Suite<FieldName, GroupName, Callback>;
-type MyResult = SuiteResult<FieldName, GroupName>;
-```
+## Reference links
+- Vest docs: https://vestjs.dev/docs/
+- Accessing the result: https://vestjs.dev/docs/writing_your_suite/accessing_the_result
+- Dirty checking guidance: https://vestjs.dev/docs/writing_your_suite/dirty_checking#why-istested-is-a-better-alternative
+- Execution modes: https://vestjs.dev/docs/writing_your_suite/execution_modes
+- Optional fields: https://vestjs.dev/docs/writing_your_suite/optional_fields
+- Include helpers: https://vestjs.dev/docs/writing_your_suite/including_and_excluding/include
+- skipWhen vs omitWhen: https://vestjs.dev/docs/writing_your_suite/including_and_excluding/skipWhen
 
-## Resources & References
-
-- **Vest.js Documentation**: https://vestjs.dev/
-- **ngx-vest-forms Integration**: Use `staticSuite` with `only()` pattern
-- **Performance**: Always include field-specific validation with `only()`
-- **Async Patterns**: Use AbortSignal for cancellable operations
-- **TypeScript**: Leverage generics for type safety
-- **State Management**: Use `staticSuite` for server-side, regular `create` for client-side
-
-## Best Practices Summary
-
-1. **Always use `staticSuite` with `only()` pattern** for ngx-vest-forms integration
-2. **Include field parameter** in suite function signature for performance optimization
-3. **Handle async validations properly** with explicit Promise resolution/rejection
-4. **Use `warn()` for non-blocking validations** like password strength
-5. **Compose validations** for reusability across different forms
-6. **Leverage TypeScript generics** for type safety and better developer experience
-7. **Use AbortSignal** for cancellable async operations
-8. **Apply conditional logic** with `omitWhen` and `skipWhen` for complex scenarios
-9. **Group validations** for multi-step forms and wizard-like interfaces
-10. **Reset state appropriately** based on client-side vs server-side usage
+> Generate code with accessibility in mind: tie error text to inputs via `aria-describedby`, keep focus management predictable, and expose warnings without blocking keyboard flows.
