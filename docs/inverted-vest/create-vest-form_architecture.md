@@ -48,6 +48,26 @@ const touched = computed(() => result().isTested(fieldName)); // Vest built-in
 const valid = computed(() => result().isValid(fieldName));   // Vest built-in
 ```
 
+**Automatic Touch Detection**:
+
+Touch state is handled automatically through validation. When field values are set via the derived API (e.g., `form.setEmail()`), validation is triggered automatically, which marks the field as "tested" in Vest using `result.isTested()`. This eliminates the need for manual touch tracking or blur event handlers:
+
+```typescript
+// ✅ Smart setters handle both values and events automatically
+const setEmail = (valueOrEvent: string | Event) => {
+  const value = extractValueFromEventOrValue(valueOrEvent);
+  model.update(m => ({ ...m, email: value }));
+  suite(model(), 'email'); // Automatically marks field as tested in Vest
+};
+
+// Template usage - much cleaner syntax
+<input
+  [value]="form.email()"
+  (input)="form.setEmail($event)"
+/>
+// Field automatically becomes "tested" when user types, no manual value extraction needed
+```
+
 **Why This Matters**:
 
 - **Less Code to Maintain**: Vest already provides `isTested()`, `isValid()`, `hasErrors()`, `isPending()`
@@ -83,14 +103,39 @@ import { NgxVestSyncDirective } from 'ngx-vest-forms/ngform-sync'; // +2KB
 - **Migration Path**: Easier to adopt incrementally
 - **Clear Responsibilities**: Vest handles validation, while NgForm integration stays a thin adapter that can evolve or be replaced without touching the core.
 
-**When to Use NgForm Integration**:
+**FormsModule is NOT Required for Core Usage**:
+
+The core `createVestForm` function works completely without FormsModule. You can build forms using pure signals and standard HTML:
+
+```typescript
+// ✅ No FormsModule needed - pure signals approach
+@Component({
+  standalone: true,
+  imports: [], // No FormsModule!
+  template: `
+    <form (submit)="handleSubmit($event)">
+      <input [value]="form.email()" (input)="form.setEmail($event)" />
+      @if (form.emailShowErrors()) {
+        <span>{{ form.emailErrors()[0] }}</span>
+      }
+      <button [disabled]="!form.isValid()">Submit</button>
+    </form>
+  `,
+})
+export class PureSignalsFormComponent {
+  form = createVestForm(suite, { email: '' });
+}
+```
+
+**When FormsModule IS Useful**:
 
 - ✅ Using Angular Material or similar UI libraries that expect NgForm
 - ✅ Existing codebase heavily invested in NgForm patterns
 - ✅ Need automatic CSS classes (`.ng-valid`, `.ng-invalid`, etc.)
-- ❌ Simple forms with custom styling
-- ❌ New applications starting from scratch
-- ❌ Bundle size is critical
+- ✅ Migration from existing template-driven forms
+- ❌ Simple forms with custom styling (use pure signals instead)
+- ❌ New applications starting from scratch (use pure signals instead)
+- ❌ Bundle size is critical (use pure signals instead)
 
 **References**:
 
@@ -213,18 +258,18 @@ const serverSuite = create((data, field) => {
 });
 ```
 
-**When to Use Each Mode**:
+#### When to use each mode
 
 - **EAGER (default)**: Most client-side forms - good balance of feedback and performance
 - **ALL**: Complex forms where users need to see all validation issues at once
 - **ONE**: Server-side validation APIs where you only need to know if any validation failed
 
-**Performance Impact**:
+#### Performance impact
 
 - EAGER mode can be **60-80% faster** for forms with multiple validations per field
 - ONE mode can be **90%+ faster** for server-side validation with early termination
 
-**References**:
+#### References
 
 - [Vest.js Execution Modes](https://vestjs.dev/docs/writing_your_suite/execution_modes) - Official documentation
 - [Vest 5 Performance Improvements](https://vestjs.dev/docs/upgrade_guide) - Why EAGER is now default
@@ -241,7 +286,7 @@ const serverSuite = create((data, field) => {
 | **Performance**      | Good                       | Excellent (EAGER mode)    | 60-80% faster         |
 | **Maintenance**      | High (sync complexity)     | Low (leverage Vest)       | Significant reduction |
 
-## Core API: `createVestForm`
+## Core API deep dive: `createVestForm`
 
 ### Why This Architecture?
 
@@ -252,7 +297,7 @@ The current v1 architecture suffers from several fundamental issues:
 3. **Boilerplate Heavy**: Requires multiple directives, providers, and wrapper components for basic functionality
 4. **Integration Friction**: NgForm integration feels forced and creates unnecessary complexity
 
-**v2 Vest-First Architecture Solves This:**
+#### Vest-first architecture advantages
 
 ```typescript
 // v1: Complex sync pattern (AVOID)
@@ -262,7 +307,7 @@ NgForm ↔ SyncService ↔ Vest ↔ ControlWrapper ↔ Template
 Model Signal → Vest Suite → Field Signals → Template
 ```
 
-**Key Benefits:**
+#### Key benefits
 
 - ✅ **Single Source of Truth**: Vest owns all validation state
 - ✅ **Zero Sync Loops**: Signals handle reactivity automatically
@@ -271,6 +316,63 @@ Model Signal → Vest Suite → Field Signals → Template
 - ✅ **Performance**: Field-level caching and selective validation
 
 ### Core Implementation Architecture
+
+#### Smart Value Extraction Utility
+
+The form setters are enhanced with intelligent value extraction that handles both raw values and DOM events:
+
+```typescript
+/**
+ * Smart value extraction that handles both direct values and DOM events
+ * Supports text inputs, checkboxes, selects, and custom input types
+ */
+function extractValueFromEventOrValue<TValue>(
+  valueOrEvent: TValue | Event,
+): TValue {
+  // If it's already a direct value, return as-is
+  if (
+    typeof valueOrEvent !== 'object' ||
+    valueOrEvent === null ||
+    !('target' in valueOrEvent)
+  ) {
+    return valueOrEvent as TValue;
+  }
+
+  const target = valueOrEvent.target as
+    | HTMLInputElement
+    | HTMLSelectElement
+    | HTMLTextAreaElement;
+
+  // Handle different input types
+  switch (target.type) {
+    case 'checkbox':
+    case 'radio':
+      return (target as HTMLInputElement).checked as TValue;
+    case 'number':
+    case 'range':
+      const numValue = (target as HTMLInputElement).valueAsNumber;
+      return (isNaN(numValue) ? target.value : numValue) as TValue;
+    case 'date':
+    case 'datetime-local':
+    case 'time':
+      return (
+        (target as HTMLInputElement).valueAsDate || (target.value as TValue)
+      );
+    case 'file':
+      return (target as HTMLInputElement).files as TValue;
+    default:
+      // Text inputs, textarea, select, etc.
+      return target.value as TValue;
+  }
+}
+```
+
+**Key Benefits:**
+
+- ✅ **Zero Boilerplate**: No more `$event.target.value` in templates
+- ✅ **Type-Safe**: Handles different input types correctly (checkbox → boolean, number → number, etc.)
+- ✅ **Backward Compatible**: Still accepts direct values for programmatic usage
+- ✅ **Comprehensive**: Supports all HTML input types including files, dates, and numbers
 
 #### Simplified Signal-Based Reactive Flow
 
@@ -291,23 +393,48 @@ export function createVestForm<TModel>(
     suiteResult.set(result);
   });
 
-  // Step 3: Form-level operations (delegate to Vest)
-  const validate = (path?: string) => {
-    const result = suite(model(), path);
-    return Promise.resolve(result);
-  };
+  // ✅ Auto-validate on model changes (configurable)
+  if (options.validateOnModelChange !== false) {
+    effect(() => {
+      const value = model();
+      untracked(() => {
+        if (options.debounceMs) {
+          debounce(() => suite(value), options.debounceMs);
+        } else {
+          suite(value);
+        }
+      });
+    });
+  }
 
-  const submit = async () => {
-    const result = await validate(); // Validate all fields
+  // Step 3: Form-level reactive state (signals-first approach)
+  // Instead of async methods, provide reactive signals
+  const isValid = computed(() => suiteResult().isValid());
+  const isPending = computed(() => suiteResult().isPending());
+  const errors = computed(() => suiteResult().getErrors());
+  const warnings = computed(() => suiteResult().getWarnings?.() || {});
+
+  // Reactive submit state using linkedSignal for submission flow
+  const isSubmitting = signal(false);
+  const isSubmitted = signal(false);
+
+  // Submission result as a signal instead of async method
+  const submitResult = linkedSignal(() => {
+    if (!isSubmitted()) return null;
     return {
-      valid: result.isValid(),
+      valid: isValid(),
       value: model(),
-      errors: result.getErrors(),
-      warnings: result.getWarnings?.() || {},
+      errors: errors(),
+      warnings: warnings(),
     };
+  });
+
+  // Validation trigger (imperative but reactive)
+  const validate = (path?: string) => {
+    suite(model(), path); // Vest internally updates suiteResult via subscription
   };
 
-  // Step 4: Field accessor with caching
+  // Step 4: Field accessor with caching and derived signals
   const fieldCache = new Map<string, VestField<any>>();
   const field = createFieldAccessor(model, suiteResult, validate, options);
 
@@ -317,16 +444,44 @@ export function createVestForm<TModel>(
     fieldCache.clear();
   };
 
+  // Imperative actions for form operations
+  const submit = () => {
+    validate(); // Validate all fields
+    isSubmitted.set(true);
+    // Component can react to submitResult() signal changes
+  };
+
+  const reset = (newValue?: TModel) => {
+    suite.reset();
+    isSubmitted.set(false);
+    isSubmitting.set(false);
+    if (newValue !== undefined) {
+      model.set(newValue);
+    } else {
+      model.set(initial as TModel);
+    }
+  };
+
   return {
+    // Reactive state (signals)
     value: model.asReadonly(),
+    isValid,
+    isPending,
+    isSubmitting: isSubmitting.asReadonly(),
+    isSubmitted: isSubmitted.asReadonly(),
+    errors: errors.asReadonly(),
+    warnings: warnings.asReadonly(),
+    submitResult: submitResult.asReadonly(),
+
+    // Field accessor
     field,
+
+    // Imperative actions
     validate,
     submit,
-    reset: () => {
-      suite.reset();
-      model.set(initial as TModel);
-    },
+    reset,
     destroy,
+
     // Vest's built-in methods
     removeField: (path: string) => suite.remove(path),
     resetField: (path: string) => suite.resetField(path),
@@ -340,29 +495,30 @@ Each field in the form is represented by a `VestField<T>` that provides reactive
 
 ```typescript
 export interface VestField<TValue> {
-  // Core state signals
+  // Core state signals (aligned with Angular Signal Forms)
   readonly value: Signal<TValue>;
   readonly valid: Signal<boolean>;
   readonly invalid: Signal<boolean>;
   readonly errors: Signal<readonly string[]>;
-  readonly warnings: Signal<readonly string[]>;
-
-  // Touch and interaction state
+  readonly pending: Signal<boolean>;
   readonly touched: Signal<boolean>;
-  readonly untouched: Signal<boolean>;
   readonly dirty: Signal<boolean>;
+
+  // Additional convenience signals (Angular Reactive Forms compatibility)
+  readonly untouched: Signal<boolean>;
   readonly pristine: Signal<boolean>;
 
-  // Error display logic (strategy-aware)
+  // ngx-vest-forms extensions (beyond Angular Signal Forms)
+  readonly warnings: Signal<readonly string[]>;
   readonly showErrors: Signal<boolean>;
   readonly showWarnings: Signal<boolean>;
 
-  // Field operations
-  set(value: TValue): void;
-  markTouched(): void;
-  markUntouched(): void;
-  reset(value?: TValue): void;
-  validate(): Promise<boolean>;
+  // ✅ Enhanced field operations with automatic touch handling
+  set(valueOrEvent: TValue | Event): void; // Smart setter: accepts values or DOM events
+  markTouched(): void; // Explicitly mark field as tested via validation
+  markUntouched(): void; // Reset touch state
+  reset(value?: TValue): void; // Reset to initial value and clear validation state
+  validate(): void; // Trigger validation (synchronous, uses suite subscription)
 }
 ```
 
@@ -409,14 +565,20 @@ function createVestField<TModel, TValue>(
   // Value signal with path-based access
   const value = computed(() => getValueByPath(model(), path));
 
-  // Use Vest's built-in result methods instead of custom computed signals
+  // Track initial value for dirty/pristine state
+  const initialValue = signal(value());
+
+  // Use Vest's built-in result methods
   const errors = computed(() => suiteResult().getErrors(path) || []);
   const warnings = computed(() => suiteResult().getWarnings?.(path) || []);
   const valid = computed(() => suiteResult().isValid(path));
   const pending = computed(() => suiteResult().isPending(path));
-
-  // CRITICAL: Use Vest's built-in isTested() for touch state
   const touched = computed(() => suiteResult().isTested(path));
+
+  // ADD: Implement dirty/pristine signals to match Angular Signal Forms
+  const dirty = computed(() => value() !== initialValue());
+  const pristine = computed(() => !dirty());
+  const untouched = computed(() => !touched());
 
   // Strategy-aware error display using Vest's isTested()
   const showErrors = computed(() => {
@@ -438,7 +600,8 @@ function createVestField<TModel, TValue>(
   });
 
   // Field operations
-  const set = (newValue: TValue) => {
+  const set = (valueOrEvent: TValue | Event) => {
+    const newValue = extractValueFromEventOrValue<TValue>(valueOrEvent);
     const currentModel = model();
     const updatedModel = setValueByPath(currentModel, path, newValue);
     model.set(updatedModel);
@@ -448,16 +611,25 @@ function createVestField<TModel, TValue>(
   };
 
   return {
+    // Core Angular Signal Forms compatibility
     value,
     valid,
     invalid: computed(() => !valid()),
     errors: errors.asReadonly(),
-    warnings: warnings.asReadonly(),
-    touched,
-    untouched: computed(() => !touched()),
     pending,
+    touched,
+    dirty,
+
+    // Additional convenience signals (Angular Reactive Forms compatibility)
+    untouched,
+    pristine,
+
+    // ngx-vest-forms extensions (beyond Angular Signal Forms)
+    warnings: warnings.asReadonly(),
     showErrors,
     showWarnings: computed(() => showErrors() && warnings().length > 0),
+
+    // Field operations
     set,
     // Vest handles touch state internally via isTested()
     markTouched: () => {
@@ -467,6 +639,12 @@ function createVestField<TModel, TValue>(
     reset: (resetValue?: TValue) => {
       if (resetValue !== undefined) {
         set(resetValue);
+        // Update initial value to new reset value for dirty state tracking
+        initialValue.set(resetValue);
+      } else {
+        // Reset to original initial value
+        const originalValue = initialValue();
+        set(originalValue);
       }
       // Use Vest's built-in resetField method
       options.suite?.resetField?.(path);
@@ -474,6 +652,68 @@ function createVestField<TModel, TValue>(
     validate: () => validate(path),
   };
 }
+```
+
+### Signals-First API Interface
+
+The `VestForm<T>` interface is completely redesigned around Angular signals instead of async methods:
+
+```typescript
+export interface VestForm<TModel> {
+  // ✅ Reactive state (signals) - replaces async methods
+  readonly value: Signal<TModel>;
+  readonly isValid: Signal<boolean>;
+  readonly isPending: Signal<boolean>;
+  readonly isSubmitting: Signal<boolean>;
+  readonly isSubmitted: Signal<boolean>;
+  readonly errors: Signal<Readonly<Record<string, string[]>>>;
+  readonly warnings: Signal<Readonly<Record<string, string[]>>>;
+  readonly submitResult: Signal<SubmitResult<TModel> | null>;
+
+  // Field accessor
+  field<P extends Path<TModel>>(path: P): VestField<PathValue<TModel, P>>;
+
+  // ✅ Imperative actions (trigger reactive updates)
+  validate(path?: Path<TModel>): void;
+  submit(): void;
+  reset(value?: TModel): void;
+  destroy(): void;
+
+  // Vest's built-in methods
+  removeField(path: string): void;
+  resetField(path: string): void;
+}
+```
+
+#### Component Usage Transformation
+
+**Before (async-based):**
+
+```typescript
+protected async submit(): Promise<void> {
+  const result = await this.form.submit();
+  if (result.valid) {
+    // proceed with submission
+  }
+}
+```
+
+**After (signals-first):**
+
+```typescript
+protected readonly submitResult = computed(() => this.form.submitResult());
+protected readonly canSubmit = computed(() => this.form.isValid() && !this.form.isSubmitting());
+
+protected submit(): void {
+  this.form.submit(); // Triggers reactive updates
+}
+
+protected readonly handleSubmitResult = effect(() => {
+  const result = this.submitResult();
+  if (result?.valid) {
+    // proceed with submission - reactive!
+  }
+});
 ```
 
 ### Enhanced Function Signature
@@ -491,9 +731,792 @@ export function createVestForm<TModel>(
 ```typescript
 export interface VestFormOptions<TModel> {
   strategy?: 'immediate' | 'on-touch' | 'on-submit' | 'manual';
+  validateOnModelChange?: boolean; // Default: true - Auto-validate when model changes
   debounceMs?: number; // Debounce validation and error display updates
+  derivedFieldSignals?: boolean; // Default: true - Generate form.email(), form.setEmail() etc.
+  initialValue?: TModel; // For reset operations in action helpers
   currentField?: string; // For selective validation
   schema?: StandardSchema<TModel>; // Optional runtime schema validation
+}
+```
+
+## Template Integration Strategies
+
+### When to Use `[value]` + `(input)` vs `[ngModel]`
+
+The choice between template approaches depends on your architecture goals and constraints:
+
+#### Pure Vest-First Approach (Recommended for New Projects)
+
+```typescript
+// ✅ Direct field binding - no Angular Forms dependency
+<input
+  [value]="form.field('email').value()"
+  (input)="form.field('email').set($event)"
+  (blur)="form.field('email').markTouched()"
+/>
+```
+
+**Benefits:**
+
+- ✅ Minimal bundle size (~3KB core)
+- ✅ Framework-agnostic validation logic
+- ✅ Single source of truth (Vest)
+- ✅ No sync complexity
+- ✅ Explicit data flow
+
+**Use When:**
+
+- Building new applications from scratch
+- Bundle size is critical
+- Custom form styling without Angular Form dependencies
+- Framework-agnostic validation logic is desired
+
+#### Angular Forms Integration (Migration/Compatibility)
+
+```typescript
+// ✅ Angular Forms integration with optional touch directive
+<input
+  name="email"
+  [ngModel]="model().email"
+  vestTouch
+/>
+```
+
+**Benefits:**
+
+- ✅ Compatible with Angular Material and UI libraries
+- ✅ Automatic CSS classes (`.ng-valid`, `.ng-invalid`)
+- ✅ Familiar Angular Forms patterns
+- ✅ Easier migration from existing forms
+
+**Use When:**
+
+- Migrating from existing Angular Forms applications
+- Using Angular Material or UI libraries expecting NgForm
+- Team familiarity with Angular Forms is important
+- Need automatic form state CSS classes
+
+### Touch Detection with `VestTouchDirective`
+
+To eliminate manual `(blur)` handlers, the optional `VestTouchDirective` automatically applies to all form inputs using native Angular attributes - no additional markup needed:
+
+```typescript
+@Directive({
+  selector: '[ngModel], [value](input)',
+  host: {
+    '(blur)': 'onBlur()',
+    '(focus)': 'onFocus()',
+  },
+})
+export class VestTouchDirective {
+  private readonly vestForm = inject(VestFormContext, { optional: true });
+
+  private getFieldName(): string {
+    const element = inject(ElementRef).nativeElement;
+
+    // Strategy 1: Use id attribute (best for accessibility with labels)
+    if (element.id) {
+      return element.id;
+    }
+
+    // Strategy 2: Extract from form.field() call in [value] binding
+    const valueBinding = this.extractFieldPathFromBinding();
+    if (valueBinding) {
+      return valueBinding;
+    }
+
+    // Strategy 3: Use name attribute (Angular Forms compatibility)
+    if (element.name) {
+      return element.name;
+    }
+
+    // Strategy 4: Use formControlName (Reactive Forms compatibility)
+    const formControlName = element.getAttribute('formControlName');
+    if (formControlName) {
+      return formControlName;
+    }
+
+    // Strategy 5: Derive from nested label text (for <label>Text<input/></label> pattern)
+    const labelParent = element.closest('label');
+    if (labelParent) {
+      const labelText = labelParent.textContent?.trim().toLowerCase();
+      if (labelText) {
+        // Convert "Email Address" -> "emailAddress" or "email-address"
+        return labelText.replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '');
+      }
+    }
+
+    // ❌ No field name found - this is a development error
+    const strategies = [
+      'id attribute',
+      'form.field() binding extraction',
+      'name attribute',
+      'formControlName attribute',
+      'nested label text',
+    ];
+
+    console.error(
+      `VestTouchDirective: Could not determine field name for input element. ` +
+        `Please provide one of: ${strategies.join(', ')}`,
+      element,
+    );
+
+    return '';
+  }
+
+  private extractFieldPathFromBinding(): string | null {
+    const element = inject(ElementRef).nativeElement;
+    const valueAttr = element.getAttribute('[value]');
+
+    if (valueAttr) {
+      // Extract field path from: form.field('user.profile.email').value()
+      const fieldMatch = valueAttr.match(
+        /form\.field\(['"`]([^'"`]+)['"`]\)\.value\(\)/,
+      );
+      if (fieldMatch) {
+        return fieldMatch[1]; // Returns 'user.profile.email'
+      }
+    }
+
+    return null;
+  }
+
+  onBlur(): void {
+    const fieldName = this.getFieldName();
+    if (fieldName && this.vestForm) {
+      // ✅ Leverage Vest's native isTested() by triggering validation
+      // This marks the field as "tested" in Vest's internal state
+      this.vestForm.validate(fieldName);
+    }
+  }
+
+  onFocus(): void {
+    // Optional: Additional focus handling for advanced UX patterns
+    const fieldName = this.getFieldName();
+    if (fieldName && this.vestForm) {
+      // Could potentially clear errors or provide other focus feedback
+      // this.vestForm.field(fieldName).clearDisplayErrors();
+    }
+  }
+}
+```
+
+#### Usage with Touch Directive
+
+**Best Practice: Use `id` for accessibility and field identification:**
+
+```typescript
+// ✅ Ideal approach - id serves both accessibility and field identification
+<label for="email">Email Address</label>
+<input
+  id="email"
+  [value]="form.field('email').value()"
+  (input)="form.field('email').set($event.target.value)"
+/>
+```
+
+**Alternative: Nested Label Pattern (also accessible):**
+
+```typescript
+// ✅ Nested label approach - directive derives field name from label text
+<label>
+  Email Address
+  <input
+    [value]="form.field('email').value()"
+    (input)="form.field('email').set($event.target.value)"
+  />
+</label>
+<!-- Directive converts "Email Address" → "emailaddress" as field name -->
+```
+
+**Angular Forms Integration:**
+
+```typescript
+// ✅ Works with ngModel (uses name attribute as fallback)
+<label for="email">Email Address</label>
+<input
+  id="email"
+  name="email"
+  [ngModel]="model().email"
+/>
+```
+
+**Complex Nested Paths:**
+
+```typescript
+// ✅ Directive extracts field path from form.field() call
+<label for="user.profile.email">Email Address</label>
+<input
+  id="user.profile.email"
+  [value]="form.field('user.profile.email').value()"
+  (input)="form.field('user.profile.email').set($event.target.value)"
+/>
+
+// ✅ Alternative: Smart extraction without matching id
+<label for="profile-email">Email Address</label>
+<input
+  id="profile-email"
+  [value]="form.field('user.profile.email').value()"
+  (input)="form.field('user.profile.email').set($event.target.value)"
+/>
+<!-- Directive extracts 'user.profile.email' from the [value] binding -->
+```
+
+#### Comparison: Manual vs Automatic Touch
+
+```typescript
+// ❌ Manual touch handling (verbose, no accessibility)
+<input
+  [value]="form.field('email').value()"
+  (input)="form.field('email').set($event)"
+  (blur)="form.field('email').markTouched()"
+/>
+
+// ✅ Automatic touch handling (clean, accessible)
+<label for="email">Email Address</label>
+<input
+  id="email"
+  [value]="form.field('email').value()"
+  (input)="form.field('email').set($event)"
+/>
+
+// ✅ Complex paths - smart extraction (no coordination needed)
+<label for="profile-email">Email Address</label>
+<input
+  id="profile-email"
+  [value]="form.field('user.profile.email').value()"
+  (input)="form.field('user.profile.email').set($event)"
+/>
+```
+
+### Why Use Vest's Native `isTested()` for Touch Detection
+
+The `VestTouchDirective` leverages Vest's native `isTested()` by triggering validation on blur, rather than maintaining separate touch state:
+
+```typescript
+// ✅ VestTouchDirective approach - triggers validation on blur
+onBlur(): void {
+  this.vestForm.validate(fieldName); // Sets isTested() in Vest
+}
+
+// Then in template, use Vest's built-in state
+const showErrors = computed(() =>
+  result().hasErrors('email') && result().isTested('email')
+);
+```
+
+**Benefits of This Approach:**
+
+- ✅ **Single Source of Truth**: Vest owns all state, no sync needed
+- ✅ **Consistent Behavior**: Touch state aligns with validation state
+- ✅ **Framework Agnostic**: Works the same across all UI frameworks
+- ✅ **No Memory Leaks**: No separate touch tracking to clean up
+- ✅ **Automatic**: Fields become "tested" when user interaction occurs
+
+**Alternative Approaches Comparison:**
+
+| Approach               | State Management     | Sync Required | Framework Coupling |
+| ---------------------- | -------------------- | ------------- | ------------------ |
+| Custom `markTouched()` | Separate touch state | ✅ Required   | ❌ High            |
+| Vest `isTested()`      | Validation-based     | ❌ None       | ✅ None            |
+| Hybrid                 | Both touch + tested  | ⚠️ Complex    | ⚠️ Medium          |
+
+**Why This Works for UX:**
+
+User interaction flow with `VestTouchDirective`:
+
+1. User focuses field → No validation yet
+2. User types → Field validates on input (via `form.field().set()`)
+3. User blurs field → `vestTouch` triggers validation → `isTested()` becomes true
+4. Template shows errors if `hasErrors() && isTested()`
+
+This creates the expected "show errors after user finishes with field" UX pattern while keeping state management simple.
+
+### Benefits of Native Selector Approach
+
+Using `selector: '[ngModel], [value](input)'` provides several advantages:
+
+- ✅ **Zero Additional Markup**: No need for extra `vestTouch` attributes
+- ✅ **Automatic Application**: Works on all form inputs with standard Angular bindings
+- ✅ **Clean Templates**: Templates remain focused on data binding, not directive management
+- ✅ **Progressive Enhancement**: Existing forms get touch detection automatically when directive is included
+- ✅ **Standards-Based**: Relies on standard HTML `name`, `id`, and Angular attributes for field identification
+
+**Field Name Resolution Strategy (in priority order):**
+
+1. **`id` attribute** (primary) - Best for accessibility with `<label for="...">` and supports complex paths
+2. **Extract from `[value]` binding** - Smart parsing of `form.field('user.profile.email').value()` expressions
+3. **`name` attribute** - Angular Forms compatibility for simple field names
+4. **`formControlName` attribute** - Reactive Forms compatibility
+5. **Nested label text** - Derives field name from `<label>Text<input/></label>` pattern**Why this priority order?**
+
+- **`id` first**: Required for proper accessibility with labels, can handle any field path (simple or complex)
+- **Binding extraction**: Automatically derives field path from your template code, no manual coordination needed
+- **`name` fallback**: Supports existing Angular Forms without changes
+- **`formControlName` fallback**: Reactive Forms compatibility
+- **Nested label**: Supports accessible `<label>Text<input/></label>` pattern when other strategies fail
+
+**Key Benefits:**
+
+- ✅ **Accessibility-First**: Encourages proper `<label for="id">` usage
+- ✅ **Smart Extraction**: Reads field paths directly from your `form.field()` calls
+- ✅ **Zero Coordination**: No need to manually keep `id` and field path in sync
+- ✅ **Flexible**: Works with simple names (`id="email"`) or complex paths (`id="any-css-id"` with smart extraction)
+
+This approach makes the directive truly invisible while encouraging accessibility best practices.
+
+### Error Handling and Debugging
+
+When the directive cannot determine a field name, it provides clear development feedback:
+
+```typescript
+// ❌ This input would trigger a console error:
+<input [value]="form.field('email').value()" />
+<!-- No id, name, binding extraction failed, not in a label -->
+
+// Console output:
+// "VestTouchDirective: Could not determine field name for input element.
+//  Please provide one of: id attribute, form.field() binding extraction,
+//  name attribute, formControlName attribute, nested label text"
+```
+
+**Development Best Practices:**
+
+- ✅ Always provide an `id` for inputs (accessibility + field identification)
+- ✅ Use semantic label text that can be converted to field names
+- ✅ Check browser console for VestTouchDirective warnings during development
+- ✅ Prefer explicit over implicit (clear `id` vs. derived field names)
+
+## Complete Usage Examples: Pure Vest-First vs NgForm Integration
+
+### Example 1: Pure Vest-First Approach (Recommended for New Projects)
+
+```typescript
+import { Component, signal, effect } from '@angular/core';
+import { createVestForm } from 'ngx-vest-forms/core';
+import { staticSuite, test, enforce, only } from 'vest';
+
+const loginSuite = staticSuite((data = {}, field) => {
+  if (field) only(field);
+
+  test('email', 'Email is required', () => {
+    enforce(data.email).isNotEmpty();
+  });
+
+  test('email', 'Invalid email format', () => {
+    enforce(data.email).isEmail();
+  });
+
+  test('password', 'Password must be at least 8 characters', () => {
+    enforce(data.password).longerThan(7);
+  });
+});
+
+@Component({
+  template: `
+    <form (ngSubmit)="handleSubmit()">
+      <div>
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          [value]="form.email()"
+          (input)="form.setEmail($event)"
+          [attr.aria-invalid]="form.emailShowErrors()"
+        />
+        @if (form.emailShowErrors()) {
+          <div role="alert" class="error">
+            {{ form.emailErrors()[0] }}
+          </div>
+        }
+      </div>
+
+      <div>
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          [value]="form.password()"
+          (input)="form.setPassword($event)"
+          [attr.aria-invalid]="form.passwordShowErrors()"
+        />
+        @if (form.passwordShowErrors()) {
+          <div role="alert" class="error">
+            {{ form.passwordErrors()[0] }}
+          </div>
+        }
+      </div>
+
+      <button type="submit" [disabled]="!form.isValid()">
+        {{ form.isSubmitting() ? 'Submitting...' : 'Login' }}
+      </button>
+    </form>
+  `,
+})
+export class PureVestFormComponent {
+  // ✅ Single function call creates reactive form
+  protected readonly form = createVestForm(loginSuite, {
+    email: '',
+    password: '',
+  });
+
+  handleSubmit() {
+    this.form.submit();
+  }
+
+  // ✅ Reactive submission handling
+  private readonly handleSubmissionResult = effect(() => {
+    const result = this.form.submitResult();
+    if (result?.valid) {
+      console.log('Login successful!', result.value);
+    }
+  });
+}
+```
+
+**Benefits:**
+
+- ✅ Minimal bundle size (~3KB core)
+- ✅ Framework-agnostic validation logic
+- ✅ Single source of truth (Vest)
+- ✅ Zero boilerplate with derived signals API
+
+### Example 2: NgForm Integration Approach (Migration/Angular Material)
+
+```typescript
+import { Component, signal, computed, effect } from '@angular/core';
+import { createVestForm } from 'ngx-vest-forms/core';
+import { userValidations } from './user.validations';
+
+type UserFormModel = {
+  email: string;
+  name: string;
+};
+
+@Component({
+  selector: 'app-user-form',
+  template: `
+    <!-- ✅ Enhanced Field Signals API - Maximum ergonomics -->
+    <form (ngSubmit)="submit()">
+      <div>
+        <label for="email">Email</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          [value]="form.email()"
+          (input)="form.setEmail($event)"
+          [attr.aria-invalid]="form.emailShowErrors()"
+        />
+        @if (form.emailShowErrors()) {
+          <div role="alert" class="error">
+            {{ form.emailErrors()[0] }}
+          </div>
+        }
+      </div>
+
+      <div>
+        <label for="name">Name</label>
+        <input
+          id="name"
+          name="name"
+          type="text"
+          [value]="form.name()"
+          (input)="form.setName($event)"
+          [attr.aria-invalid]="form.nameShowErrors()"
+        />
+        @if (form.nameShowErrors()) {
+          <div role="alert" class="error">
+            {{ form.nameErrors()[0] }}
+          </div>
+        }
+      </div>
+
+      <button type="submit" [disabled]="!canSubmit()">
+        {{ form.isSubmitting() ? 'Submitting...' : 'Submit' }}
+      </button>
+    </form>
+
+    <!-- ✅ Core API still available for advanced use cases -->
+    <div class="debug-info">
+      Form Valid: {{ form.isValid() }}<br />
+      Email Pending: {{ form.field('email').pending() }}<br />
+      Fields Tested: {{ form.field('email').touched() ? 'Email' : '' }}
+      {{ form.field('name').touched() ? 'Name' : '' }}
+    </div>
+  `,
+})
+export class UserFormComponent {
+  protected readonly model = signal<UserFormModel>({ email: '', name: '' });
+
+  // ✅ Single function call creates entire reactive form with enhanced API (automatic)
+  protected readonly form = createVestForm(userValidations, this.model);
+
+  // ✅ Reactive computed state - no manual tracking needed
+  protected readonly canSubmit = computed(
+    () => this.form.isValid() && !this.form.isSubmitting(),
+  );
+
+  protected submit(): void {
+    this.form.submit(); // Triggers reactive submission
+  }
+
+  // ✅ Reactive submission handling with effect
+  protected readonly handleSubmission = effect(async () => {
+    const result = this.form.submitResult();
+    if (result?.valid) {
+      try {
+        await this.userService.createUser(result.value);
+        this.router.navigate(['/success']);
+      } catch (error) {
+        // Handle error - could set form error state
+      }
+    }
+  });
+
+  protected submit(): void {
+    this.form.submit(); // ✅ Imperative trigger, reactive handling
+  }
+}
+```
+
+### Example 2: Complex Form with Conditional Fields
+
+#### Before (v1 - Manual State Management)
+
+```typescript
+@Component({
+  selector: 'app-profile-form',
+  template: `
+    <form (ngSubmit)="submit()">
+      <!-- Business type selection -->
+      <select
+        [value]="model().businessType"
+        (change)="updateBusinessType($event)"
+      >
+        <option value="individual">Individual</option>
+        <option value="business">Business</option>
+      </select>
+
+      <!-- Conditional business fields -->
+      @if (model().businessType === 'business') {
+        <div>
+          <label for="companyName">Company Name</label>
+          <input
+            id="companyName"
+            [value]="form.field('companyName').value()"
+            (input)="form.field('companyName').set($event)"
+          />
+          @if (shouldShowCompanyErrors()) {
+            <div class="error">{{ form.field('companyName').errors()[0] }}</div>
+          }
+        </div>
+      }
+    </form>
+  `,
+})
+export class ProfileFormComponent {
+  protected readonly model = signal({
+    businessType: 'individual' as 'individual' | 'business',
+    companyName: '',
+  });
+  protected readonly form = createVestForm(profileValidations, this.model);
+
+  // ❌ Manual conditional logic
+  protected shouldShowCompanyErrors(): boolean {
+    return (
+      this.model().businessType === 'business' &&
+      this.form.field('companyName').showErrors()
+    );
+  }
+
+  protected updateBusinessType(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    this.model.update((m) => ({ ...m, businessType: target.value as any }));
+
+    // ❌ Manual validation trigger needed
+    this.form.validate();
+  }
+}
+```
+
+#### After (v2 - Derived Signals API with Reactive Conditional Logic)
+
+```typescript
+import { Component, computed } from '@angular/core';
+import { createVestForm } from 'ngx-vest-forms/core';
+import { profileValidations } from './profile.validations';
+
+@Component({
+  selector: 'app-profile-form',
+  template: `
+    <form (ngSubmit)="submit()">
+      <!-- Business type selection -->
+      <select
+        [value]="form.businessType()"
+        (change)="form.setBusinessType($event)"
+      >
+        <option value="individual">Individual</option>
+        <option value="business">Business</option>
+      </select>
+
+      <!-- ✅ Derived Signals API - Conditional business fields -->
+      @if (isBusinessType()) {
+        <div>
+          <label for="companyName">Company Name</label>
+          <input
+            id="companyName"
+            [value]="form.companyName()"
+            (input)="form.setCompanyName($event)"
+            [class.error]="form.companyNameShowErrors()"
+          />
+          @if (form.companyNameShowErrors()) {
+            <div class="error">{{ form.companyNameErrors()[0] }}</div>
+          }
+        </div>
+      }
+
+      <!-- ✅ Mixed API usage - enhanced + core -->
+      <button [disabled]="!form.isValid()">
+        @if (form.field('companyName').pending()) {
+          Validating...
+        } @else {
+          Save Profile
+        }
+      </button>
+    </form>
+  `,
+})
+export class ProfileFormComponent {
+  protected readonly form = createVestForm(profileValidations, {
+    businessType: 'individual' as 'individual' | 'business',
+    companyName: '',
+  });
+
+  // ✅ Reactive computed using enhanced API
+  protected readonly isBusinessType = computed(
+    () => this.form.businessType() === 'business',
+  );
+
+  // ✅ Validation automatically triggered via enhanced setters
+}
+```
+
+### Example 3: Form with Async Validation
+
+#### Before (v1 - Complex Async Handling)
+
+```typescript
+@Component({
+  selector: 'app-signup-form',
+  template: `
+    <form (ngSubmit)="submit()">
+      <div>
+        <label for="username">Username</label>
+        <input
+          id="username"
+          [value]="form.field('username').value()"
+          (input)="handleUsernameChange($event)"
+        />
+        @if (form.field('username').pending()) {
+          <div class="pending">Checking availability...</div>
+        }
+        @if (form.field('username').showErrors()) {
+          <div class="error">{{ form.field('username').errors()[0] }}</div>
+        }
+      </div>
+    </form>
+  `,
+})
+export class SignupFormComponent {
+  protected readonly model = signal({ username: '', email: '' });
+  protected readonly form = createVestForm(signupValidations, this.model);
+
+  private usernameChangeTimeout?: number;
+
+  protected handleUsernameChange(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    this.form.field('username').set(target.value);
+
+    // ❌ Manual debouncing
+    clearTimeout(this.usernameChangeTimeout);
+    this.usernameChangeTimeout = setTimeout(() => {
+      this.form.validate('username');
+    }, 300);
+  }
+}
+```
+
+#### After (v2 - Derived Signals API with Built-in Reactive Async)
+
+`````typescript
+import { Component } from '@angular/core';
+import { createVestForm } from 'ngx-vest-forms/core';
+import { signupValidations } from './signup.validations';
+
+@Component({
+  selector: 'app-signup-form',
+  template: `
+    <form (ngSubmit)="submit()">
+      <div>
+        <label for="username">Username</label>
+        <input
+          id="username"
+          [value]="form.username()"
+          (input)="form.setUsername($event)"
+          [class.pending]="form.usernamePending()"
+          [class.error]="form.usernameShowErrors()"
+        />
+        @if (form.usernamePending()) {
+          <div class="pending">
+            <!-- ✅ Derived Signals API provides dedicated pending signal -->
+            <span class="spinner"></span> Checking availability...
+          </div>
+        }
+        @if (form.usernameShowErrors()) {
+          <div class="error">{{ form.usernameErrors()[0] }}</div>
+        }
+      </div>
+
+      <div>
+        <label for="email">Email</label>
+        <input
+          id="email"
+          [value]="form.email()"
+          (input)="form.setEmail($event)"
+          [class.error]="form.emailShowErrors()"
+        />
+        @if (form.emailShowErrors()) {
+          <div class="error">{{ form.emailErrors()[0] }}</div>
+        }
+      </div>
+
+      <!-- ✅ Mixed API usage -->
+      <button [disabled]="!form.isValid() || form.isPending()">
+        @if (form.isPending()) {
+          Validating...
+        } @else {
+          Sign Up
+        }
+      </button>
+    </form>
+  `
+})
+export class SignupFormComponent {
+  protected readonly form = createVestForm(signupValidations, {
+    username: '',
+    email: ''
+  }, {
+    debounceMs: 300, // ✅ Built-in debouncing for async validations
+  });
+
+  protected submit(): void {
+    this.form.submit();
+  }
+
+  // ✅ No manual async handling needed - everything reactive!
+  // ✅ Derived Signals API automatically generates usernamePending() signal
 }
 ```
 
@@ -501,7 +1524,7 @@ export interface VestFormOptions<TModel> {
 
 The core API is designed to enable optional integrations without coupling:
 
-```typescript
+```bash
 export interface VestForm<TModel> {
   // Core reactive state
   readonly value: Signal<TModel>;
@@ -527,364 +1550,356 @@ export interface VestForm<TModel> {
 }
 ```
 
-**Why This Design Works:**
-
-1. **Core is Pure**: No Angular dependencies in core validation logic
-2. **Integration is Explicit**: NgForm sync is opt-in via `connectNgForm()`
-3. **Type-Safe Paths**: Full TypeScript inference for nested object access
-4. **Performance Optimized**: Field caching, selective validation, debouncing
-5. **Extensible**: Clear extension points for schemas, arrays, composition
-   ed validation core.
-
-- Deliver a minimal, form-agnostic API driven by `createVestForm`, keeping advanced capab#### Architecture: Two-Layer Approach
-
-1. **Core Touch & Validation (Core Package)**
-
-   ```text
-   User blurs input → VestTouchDirective.onBlur() → vestForm.field(path).markTouched()
-                                                   → vestForm.validate(path)
-                                                   → Vest suite runs with only(path)
-   ```
-
-2. **NgForm State Sync (Optional Package)**
-
-   ```text
-   Vest state changes → NgFormSyncService subscribes → FormControl.setValue()
-                                                     → FormControl.markAsTouched()
-                                                     → FormControl.setErrors()
-   ```
-
-**Key Benefits**:
-
-- ✅ **Clear separation**: Core validation vs NgForm integration
-- ✅ **No sync loops**: Vest validation is manually triggered, NgForm only reflects state
-- ✅ **Optional NgForm**: Zero overhead when not using Angular Forms
-- ✅ **Vest-first**: Validation logic stays in Vest where it belongs
-
-> **Integration Decision**: See [NgForm Sync Decision Guide](./ngform-sync-decision-guide.md) for detailed guidance on when to use NgForm integration.- Align state terminology with Angular Signal Forms (`InteropSharedKeys`) to simpliThis mirrors Angular Signal Forms' `FieldState`, plus `showErrors` to capture common UX needs.
-
-## Additional Vest.js Insights and Architecture Updates
-
-### Key Vest.js Features We Must Integrate
-
-Based on comprehensive analysis of Vest.js v5 documentation, several critical capabilities must be integrated into our architecture:
-
-#### 1. **Execution Modes for Performance Optimization**
-
-Vest 5 introduces three execution modes that dramatically affect performance:
-
-```typescript
-import { create, mode, Modes } from 'vest';
-
-// EAGER (default in v5): Stops after first error per field
-const efficientSuite = create((data, field) => {
-  // Default behavior - no mode() call needed
-  // Stops validating 'email' after first error
-});
-
-// ALL: Validates all tests (like Vest 4 behavior)
-const comprehensiveSuite = create((data, field) => {
-  mode(Modes.ALL); // Get all errors per field
-});
-
-// ONE: Stops after ANY error (server-side optimization)
-const serverSuite = create((data, field) => {
-  mode(Modes.ONE); // Stop entire suite after first failure
-});
-```
-
-**Architecture Impact:**
-
-- Default EAGER mode eliminates need for manual `skipWhen` logic
-- ONE mode perfect for server-side validation APIs
-- ALL mode for complex forms requiring comprehensive error display
-
-#### 2. **Advanced Field Dependencies**
-
-Vest provides sophisticated field dependency management:
-
-```typescript
-const dependentSuite = create((data, field) => {
-  only(field);
-
-  // Basic dependency: validate confirm when password changes
-  include('confirmPassword').when('password');
-
-  // Conditional dependency based on current state
-  include('confirmPassword').when(
-    (result) => result.isTested('password') && !result.hasErrors('password'),
-  );
-
-  // Complex business logic dependencies
-  include('billingAddress').when(() => !data.sameAsShipping);
-  include('taxId').when(() => data.businessAccount);
-});
-```
-
-#### 3. **Powerful Optional Field Strategies**
-
-```typescript
-const flexibleSuite = create((data, field) => {
-  // Simple optional fields
-  optional(['middleName', 'phoneNumber']);
-
-  // Custom optional logic
-  optional({
-    // Use different field for emptiness check
-    username: data.user_name,
-
-    // Complex conditional logic
-    shippingAddress: () => data.sameAsBilling,
-
-    // Business rule dependencies
-    vatNumber: () => data.businessType !== 'corporation',
-  });
-});
-```
-
-#### 4. **Smart Async Validation with Memoization**
-
-```typescript
-const optimizedAsyncSuite = create((data, field) => {
-  // Memoized async validation - only runs when dependencies change
-  test.memo(
-    'username',
-    'Username already exists',
-    () => checkUsernameAvailability(data.username),
-    [data.username], // Dependency array
-  );
-
-  // Skip expensive async validations when basic validation fails
-  omitWhen(
-    (result) => result.hasErrors('email'),
-    () => {
-      test('email', 'Email domain is blacklisted', async ({ signal }) => {
-        return await checkEmailDomain(data.email, { signal });
-      });
-    },
-  );
-});
-```
-
-#### 5. **Built-in Test Orchestration**
-
-Vest provides sophisticated test orchestration that eliminates manual logic:
-
-```typescript
-const orchestratedSuite = create((data, field) => {
-  only(field);
-
-  // Skip tests conditionally (still count against validity)
-  skipWhen(
-    (result) => result.hasErrors('password'),
-    () => {
-      test('password', 'Password strength insufficient', () => {
-        // Expensive strength check
-      });
-    },
-  );
-
-  // Omit tests conditionally (don't count against validity)
-  omitWhen(!data.requiresVerification, () => {
-    test('verificationCode', 'Verification code required', () => {
-      enforce(data.verificationCode).isNotEmpty();
-    });
-  });
-});
-```
-
-### Architecture Updates Based on Vest.js Capabilities
-
-#### Updated VestFormOptions
-
-```typescript
-export interface VestFormOptions<TModel> {
-  strategy?: 'immediate' | 'on-touch' | 'on-submit' | 'manual';
-  debounceMs?: number;
-  currentField?: string;
-
-  // NEW: Vest execution mode configuration
-  executionMode?: 'eager' | 'all' | 'one';
-
-  // NEW: Async validation configuration
-  asyncConfig?: {
-    timeout?: number;
-    retries?: number;
-    memoization?: boolean;
-  };
-
-  // NEW: Optional field configuration
-  optionalFields?: string[] | Record<string, boolean | (() => boolean)>;
-
-  schema?: StandardSchema<TModel>;
-}
-```
-
-#### Enhanced Field Interface with Vest Capabilities
+### VestField contract
 
 ```typescript
 export interface VestField<TValue> {
-  // Core state (derived from Vest result)
-  readonly value: Signal<TValue>;
+  readonly value: Signal<TValue>; // writable when backing signal is writable
+  readonly status: Signal<FormStatus>;
   readonly valid: Signal<boolean>;
   readonly invalid: Signal<boolean>;
+  readonly touched: Signal<boolean>;
+  readonly untouched: Signal<boolean>;
+  readonly dirty: Signal<boolean>;
+  readonly pristine: Signal<boolean>;
+  readonly disabled: Signal<boolean>;
+  readonly enabled: Signal<boolean>;
   readonly errors: Signal<readonly string[]>;
   readonly warnings: Signal<readonly string[]>;
-
-  // Vest's built-in state tracking
-  readonly tested: Signal<boolean>; // Uses result.isTested()
-  readonly pending: Signal<boolean>; // Uses result.isPending()
-  readonly optional: Signal<boolean>; // Derived from optional() calls
-
-  // Enhanced error display with Vest insights
-  readonly showErrors: Signal<boolean>;
-  readonly showWarnings: Signal<boolean>;
-
-  // Field operations
-  set(value: TValue): void;
-  reset(value?: TValue): void;
-  validate(): Promise<SuiteResult>;
-
-  // NEW: Vest-specific operations
-  markTested(): void; // Trigger validation to set isTested()
-  memoize(): void; // Enable memoization for this field
-  clearMemo(): void; // Clear memoization cache
+  readonly showErrors: Signal<boolean>; // resolved with errorDisplay strategy
+  readonly pending: Signal<boolean>;
+  set(next: TValue): void;
+  update(updater: (current: TValue) => TValue): void;
+  reset(next?: TValue): void;
 }
 ```
 
-#### Simplified Touch State Management
+This mirrors Angular Signal Forms’ `FieldState`, plus `showErrors` to capture common UX needs.
 
-Based on Vest's `isTested()` capability, we can eliminate complex touch tracking:
+## Mapping to Angular Signal Forms
+
+We align with the experimental `InteropSharedKeys` so wrappers can treat a `VestField` like a Signal Form field.
+
+| Interop key | VestField source  |
+| ----------- | ----------------- |
+| `value`     | `field.value`     |
+| `valid`     | `field.valid`     |
+| `invalid`   | `field.invalid`   |
+| `touched`   | `field.touched`   |
+| `untouched` | `field.untouched` |
+| `disabled`  | `field.disabled`  |
+| `enabled`   | `field.enabled`   |
+| `errors`    | `field.errors`    |
+| `pristine`  | `field.pristine`  |
+| `dirty`     | `field.dirty`     |
+| `status`    | `field.status`    |
+
+Signal Form adapters can therefore wrap `VestField` instances without additional shims.
+
+## Form-agnostic usage
+
+- **Template-driven**: Bind to `field(path).value()` in `[ngModel]` and call `field(path).set($event)` on change. Use optional NgForm sync for touched state.
+- **Reactive forms**: Treat `VestField` as the source of truth and push values to `FormControl` via a dedicated adapter (future plugin) if necessary.
+- **Signal forms**: Provide a lightweight adapter that maps `VestField` methods onto the experimental `Field<T>` API. Because keys match, the adapter can be a thin shell that proxies signals.
+
+## NgForm Integration Analysis
+
+### What NgForm Provides That Pure Vest Doesn't
+
+While Vest handles validation excellently, NgForm provides several Angular-specific features that enhance the developer experience:
+
+#### 1. Automatic Touch State Management
+
+- **NgForm**: Automatically tracks when fields are focused/blurred via `(focus)` and `(blur)` events
+- **Pure Vest**: Requires manual tracking of touch state for proper error display timing
+- **Impact**: Touch state is crucial for UX - showing errors only after user interaction
+
+#### 2. Aggregate Form State
+
+- **NgForm**: Provides collective `valid`, `dirty`, `touched` state across all controls
+- **Pure Vest**: Must manually compute these from individual field states
+- **Impact**: Essential for submit button states and form-level validation feedback
+
+#### 3. CSS Classes for Styling
+
+- **NgForm**: Automatically applies `.ng-valid`, `.ng-invalid`, `.ng-dirty`, `.ng-pristine`, `.ng-touched`, `.ng-untouched` classes
+- **Pure Vest**: No automatic styling hooks
+- **Impact**: Common styling patterns require manual class binding
+
+#### 4. Submit Event Handling
+
+- **NgForm**: `(ngSubmit)` automatically prevents default form submission and provides form state
+- **Pure Vest**: Must manually handle form submission and prevent default behavior
+- **Impact**: Standard form submission patterns require boilerplate
+
+#### 5. Integration with Angular Ecosystem
+
+- **NgForm**: Expected by Angular Material, third-party libraries, and testing utilities
+- **Pure Vest**: May require adapters for ecosystem compatibility
+- **Impact**: Team familiarity and library compatibility
+
+### When to Use NgForm Sync
+
+#### When NgForm sync is essential
+
+- Applications using Angular Material or similar UI libraries
+- Teams migrating from traditional Angular forms
+- Complex forms requiring automatic CSS class application
+- Forms with complex nested structures (`ngModelGroup`)
+
+#### When NgForm sync is optional
+
+- Simple forms with custom styling
+- Applications prioritizing minimal bundle size
+- Forms with custom touch/focus handling
+- New applications built from scratch with Vest-first mindset
+
+### Trade-offs: Vest-First vs NgForm-First
+
+| Aspect                   | Vest-First (Core)           | NgForm Sync (Optional)     |
+| ------------------------ | --------------------------- | -------------------------- |
+| **Bundle Size**          | Minimal                     | +NgForm overhead           |
+| **Mental Model**         | Single source of truth      | Dual state synchronization |
+| **Touch Tracking**       | Manual implementation       | Automatic                  |
+| **CSS Classes**          | Manual binding              | Automatic                  |
+| **Material Integration** | Requires adaptation         | Native support             |
+| **Performance**          | Optimal (single validation) | Good (sync overhead)       |
+| **Learning Curve**       | New pattern                 | Familiar Angular pattern   |
+
+## Optional integration packages
+
+1. **`@ngx-vest-forms/ngform-sync`** – exports a `vestSync` directive. It accepts a `VestForm` instance, pipes touched/dirty flags from NgForm back into the field tree, and writes Vest errors into Angular controls (following the ngx-minivest approach).
+2. **`@ngx-vest-forms/control-wrapper`** – provides presentational helpers (`<ngx-control-wrapper>`, `<ngx-field-error>`) that consume `VestField` via dependency injection. These components are entirely optional and should accept a `[form]` input or read from a parent `VestFormContext` provider.
+
+Both packages live outside the core so the minimal bundle remains tiny.
+
+## Summary
+
+This architecture proposal completely reorients ngx-vest-forms around Vest-first principles, delivering a lightweight, performant solution that leverages Vest.js v5's built-in capabilities instead of duplicating functionality.
+
+### Summary benefits
+
+- **Simplified API**: Single `createVestForm` function replaces complex directive ecosystem (90% API reduction)
+- **Better Performance**: Leverages Vest 5's EAGER execution mode (60-80% faster) and built-in state management
+- **Smaller Bundle**: Core package reduced to ~3KB (80% reduction) by eliminating redundant state management
+- **More Flexible**: Works with any UI approach - Angular Forms, Signal Forms, or pure HTML
+- **Future-Proof**: Built on Vest's stable, well-documented APIs with automatic feature updates
+- **Reduced Maintenance**: Single source of truth eliminates sync complexity and edge cases
+
+The modular package structure (`core` + optional `ngform-sync`) allows teams to adopt exactly what they need, when they need it, creating a sustainable path forward for both new and existing applications.
+
+### Design decision documentation
+
+- **Vest Built-in APIs**: Uses `result.isTested()`, `suite.subscribe()`, and execution modes instead of custom implementations
+- **NgForm Separation**: Optional package keeps core minimal while providing ecosystem compatibility
+- **Error Display Strategies**: Configurable UX patterns with clear guidelines for when to use each
+- **Signal-Wrapped Subscription**: Single reactive pattern eliminates stale data and memory leaks
+- **Performance Optimization**: EAGER mode and field-level caching provide significant speed improvements
+
+### Additional resources
+
+- [Vest.js Official Guide](https://vestjs.dev/docs/) - Complete validation framework documentation
+- [Vest.js Result Object API](https://vestjs.dev/docs/writing_your_suite/accessing_the_result) - Built-in state methods like `isTested()`, `isValid()`
+- [Vest.js Execution Modes](https://vestjs.dev/docs/writing_your_suite/execution_modes) - Performance optimization with EAGER/ALL/ONE modes
+- [Angular Signals Deep Dive](https://angular.dev/guide/signals) - Modern Angular reactivity patterns
+- [ngx-minivest Reference Implementation](https://github.com/DorianMaliszewski/ngx-minivest) - Similar lightweight, signal-based approach
+- [Bundle Analyzer Best Practices](https://web.dev/reduce-javascript-payloads-with-code-splitting) - Performance optimization techniques
+- [Form UX Guidelines](https://uxdesign.cc/form-design-best-practices-9525c321d759) - When and how to display validation errors
+- [Angular Forms Documentation](https://angular.dev/guide/forms) - Official Angular forms guidance for NgForm integration decisions
+- [Why isTested is Better Than Dirty Checking](https://vestjs.dev/docs/writing_your_suite/dirty_checking#why-istested-is-a-better-alternative) - Vest's approach to touch state
+
+This architecture provides a clear, well-documented foundation for ngx-vest-forms v2 that leverages modern Angular patterns while fully utilizing Vest.js's powerful validation ecosystem.
+
+## HTML validation strategy
+
+- Core automatically sets `novalidate` expectations in documentation; we do not modify the DOM for the developer.
+- Provide guidance to disable built-in browser validation (e.g., add `novalidate` on `<form>`). Our NgForm directive can set `control.setErrors({ vest: message })` so Angular error messages appear in templates.
+- Expose an optional helper `applyVestValidationAttributes(field)` for teams that want parallel native validation (sets `aria-invalid`, `required`, etc.) without conflicting with Vest logic.
+
+## Enhanced Field Signals API (Optional Ergonomic Extension)
+
+### Overview
+
+While the core `form.field('email').value()` API provides full functionality, we can offer an optional ergonomic enhancement inspired by ngrx-toolkit patterns to generate dynamic field signals like `form.email()` for improved developer experience.
+
+### Basic Usage
 
 ```typescript
-// ❌ OLD: Manual touch state management
-const touchedFields = signal(new Set<string>());
-const touched = computed(() => touchedFields().has(fieldName));
+import { createVestForm } from 'ngx-vest-forms/core';
 
-// ✅ NEW: Use Vest's built-in isTested()
-const tested = computed(() => result().isTested(fieldName));
+// Derived field signals are enabled by default
+const form = createVestForm(loginSuite, initialData);
 
-// Error display strategy using isTested()
-const showErrors = computed(() => {
-  const hasErrors = result().hasErrors(fieldName);
-  const isTested = result().isTested(fieldName);
+// Now you can use dynamic field signals
+@Component({
+  template: `
+    <!-- ✅ Derived Signals API - Cleaner syntax -->
+    <input [ngModel]="form.email()" (ngModelChange)="form.setEmail($event)" />
+    <input
+      [ngModel]="form.password()"
+      (ngModelChange)="form.setPassword($event)"
+    />
 
-  switch (strategy) {
-    case 'immediate':
-      return hasErrors;
-    case 'on-touch':
-      return hasErrors && isTested; // Perfect UX timing
-    case 'on-submit':
-      return hasErrors && submitted();
-    default:
-      return hasErrors && isTested;
-  }
+    @if (form.emailShowErrors()) {
+      <div>{{ form.emailErrors()[0] }}</div>
+    }
+
+    <!-- ✅ Still works - Core API always available -->
+    <input
+      [ngModel]="form.field('email').value()"
+      (ngModelChange)="form.field('email').set($event)"
+    />
+  `,
+})
+export class LoginComponent {
+  form = createVestForm(loginSuite, { email: '', password: '' });
+}
+```
+
+### Generated Methods Pattern
+
+For each field in your model, the derived signals API automatically generates:
+
+- `form.email()` - Field value signal
+- `form.setEmail(value)` - Set field value
+- `form.emailValid()` - Field validity signal
+- `form.emailErrors()` - Field errors signal
+- `form.emailShowErrors()` - Should show errors signal
+- `form.emailTouched()` - Field touched state signal
+
+### Key Benefits
+
+#### 1. **Dramatically Improved Developer Experience**
+
+```typescript
+// ❌ Before: Verbose core API
+<input [value]="form.field('email').value()" (input)="form.field('email').set($event.target.value)" />
+@if (form.field('email').showErrors()) {
+  <div>{{ form.field('email').errors()[0] }}</div>
+}
+
+// ✅ After: Clean enhanced API
+<input [value]="form.email()" (input)="form.setEmail($event.target.value)" />
+@if (form.emailShowErrors()) {
+  <div>{{ form.emailErrors()[0] }}</div>
+}
+```
+
+#### 2. **Significant Template Reduction**
+
+- **67% less code**: `form.email()` vs `form.field('email').value()`
+- **50% fewer characters**: Reduces cognitive load and improves readability
+- **Consistent patterns**: Same naming convention across all fields
+
+#### 3. **Superior TypeScript Integration**
+
+- **Full IntelliSense**: All generated methods show in autocomplete with proper types
+- **Compile-time safety**: `form.invalidField()` fails at build time, not runtime
+- **Refactoring support**: Renaming fields updates generated method names automatically
+
+#### 4. **Zero Performance Overhead**
+
+- **Lazy Creation**: Signals only created when first accessed via Proxy
+- **Efficient Caching**: Each signal created once and cached permanently
+- **Tree Shakeable**: Unused fields don't affect bundle size
+- **Memory Efficient**: Same memory footprint as core API after first access
+
+#### 5. **Incremental Adoption**
+
+- **Fully Optional**: Can be enabled/disabled per form without breaking changes
+- **Coexists Perfectly**: `form.email()` and `form.field('email').value()` work simultaneously
+- **Gradual Migration**: Adopt enhanced API field-by-field in existing forms
+
+### Enhanced Signals Configuration
+
+```typescript
+// Generate signals for specific fields only
+const form = createVestForm(suite, data, {
+  enhancements: [
+    withDerivedFieldSignals({
+      fields: ['email', 'password'], // Only these fields get shortcuts
+    }),
+  ],
+});
+
+// Custom field mapping
+const form = createVestForm(suite, data, {
+  enhancements: [
+    withDerivedFieldSignals({
+      fieldMap: {
+        userEmail: 'email', // form.userEmail() -> maps to 'email' field
+        userPassword: 'password', // form.userPassword() -> maps to 'password' field
+      },
+    }),
+  ],
 });
 ```
 
-## Critical Implementation Requirements
+### Why Automatic by Default with Opt-Out?
 
-### Must-Have Features for V2
+Since this is a **new library** without existing code to migrate, we should optimize for the best developer experience by default. The derived field signals should be **automatically enabled** with an opt-out for edge cases.
 
-#### 1. Type-Safe Path Operations
+#### 1. **New Library = Best DX by Default**
 
 ```typescript
-// These path operations must work with full TypeScript inference
-type UserForm = {
-  profile: {
-    name: string;
-    contacts: Array<{ type: string; value: string }>;
+// ✅ New library: Ergonomic by default
+const form = createVestForm(loginSuite, { email: '', password: '' });
+
+// Automatically available without configuration:
+form.email(); // Instead of form.field('email').value()
+form.emailErrors(); // Instead of form.field('email').errors()
+form.emailShowErrors(); // Instead of form.field('email').showErrors()
+form.setEmail(value); // Instead of form.field('email').set(value)
+```
+
+#### 2. **Opt-Out for Edge Cases**
+
+```typescript
+// ❌ Namespace collision: form model has conflicting property names
+interface ProblematicModel {
+  email: string;
+  errors: string[]; // Would conflict with form.errors()
+  valid: boolean; // Would conflict with form.valid()
+  submit: () => void; // Would conflict with form.submit()
+}
+
+// ✅ Opt-out for problematic models
+const form = createVestForm(suite, problematicModel, {
+  derivedFieldSignals: false, // Disable auto-generation
+});
+
+// Only core API available - no conflicts
+form.field('email').value(); // Safe
+form.field('errors').value(); // Safe
+form.field('valid').value(); // Safe
+```
+
+#### 3. **Selective Enhancement for Large Forms**
+
+```typescript
+// Large form: 5-15 fields = 30-90 methods (6 per field)
+// With lazy creation via Proxy, performance impact is negligible
+
+interface TypicalForm {
+  email: string; // → 6 methods: email(), emailErrors(), etc.
+  password: string; // → 6 methods: password(), passwordErrors(), etc.
+  firstName: string; // → 6 methods: firstName(), firstNameErrors(), etc.
+  lastName: string; // → 6 methods: lastName(), lastNameErrors(), etc.
+  // 5 fields = 30 methods total - perfectly manageable
+}
+```
+
+#### 4. **Architectural Guidance for Large Forms**
+
+For forms with 50+ fields, the real solution isn't opting out of ergonomic APIs - it's better architecture:
+
+```typescript
+// ❌ Monolithic 50+ field form
+interface MassiveForm {
+  personalInfo: {
+    /* 20 fields */
   };
-};
-
-const form = createVestForm<UserForm>(suite, initial);
-
-// ✅ TypeScript knows these paths exist and their types
-form.field('profile.name').set('John'); // string
-form.field('profile.contacts.0.type').set('email'); // string
-
-// ❌ TypeScript error - path doesn't exist
-form.field('profile.invalid').set('value'); // Error!
-```
-
-#### 2. Form Arrays Support
-
-```typescript
-// Dynamic arrays must be supported for real-world forms
-interface ContactForm {
-  contacts: Array<{ name: string; email: string }>;
-}
-
-const form = createVestForm(contactSuite, { contacts: [] });
-
-// Array operations
-form.array('contacts').push({ name: '', email: '' });
-form.array('contacts').remove(1);
-form.array('contacts').move(0, 2);
-
-// Individual item validation
-form.field('contacts.0.email').showErrors(); // Works for array items
-```
-
-#### 3. Async Validation with Cancellation
-
-```typescript
-const asyncSuite = staticSuite((data, field) => {
-  if (field) only(field);
-
-  test('username', 'Username already exists', async ({ signal }) => {
-    // Must support AbortSignal for cancelling previous requests
-    const response = await fetch(`/check-username/${data.username}`, {
-      signal,
-    });
-    if (response.ok) throw new Error('Username taken');
-  });
-});
-
-// When user types rapidly, previous requests are cancelled
-form.field('username').set('john'); // Request 1 starts
-form.field('username').set('johnny'); // Request 1 cancelled, Request 2 starts
-```
-
-#### 4. Form Composition
-
-```typescript
-// Must support composing multiple forms for complex UIs
-const personalForm = createVestForm(personalSuite, personalData);
-const addressForm = createVestForm(addressSuite, addressData);
-
-const composedForm = composeVestForms({
-  personal: personalForm,
-  address: addressForm,
-});
-
-// Composed form provides unified interface
-composedForm.valid(); // true only if all sub-forms are valid
-composedForm.submit(); // submits all sub-forms
-```
-
-#### 5. Schema Integration
-
-```typescript
-// Must support runtime schema validation alongside Vest
-import { z } from 'zod';
-
-const userSchema = z.object({
-  email: z.string().email(),
-  age: z.number().min(18),
-});
-
-const form = createVestForm(vestSuite, initialData, {
-  schema: userSchema, // Provides additional type safety and validation
-});
-
-// Schema errors are merged with Vest errors
-form.field('email').errors(); // Can contain both Vest and schema errors
-```
-
-### Architecture Constraints
-
-#### 1. Framework Agnostic Core
+  address: {
 
 ```typescript
 // Core must NOT depend on Angular
@@ -1089,9 +2104,9 @@ ngx-vest-forms/
 
 Vest.js provides `suite.subscribe(callback)` for reacting to validation state changes, but Angular uses signals for reactivity. We need to bridge these two systems efficiently while leveraging Vest's powerful built-in features like `result.isTested()`, execution modes, and field dependencies.
 
-#### Key Vest.js Capabilities We Must Leverage
+#### Key Vest.js capabilities to leverage
 
-**1. Built-in Touch State with `result.isTested()`**
+##### Built-in touch state via `result.isTested()`
 
 ```typescript
 // Instead of manual touch tracking, use Vest's built-in method
@@ -1102,7 +2117,7 @@ const showErrors = computed(() => {
 });
 ```
 
-**2. Execution Modes for Performance**
+##### Execution modes for performance
 
 ```typescript
 import { create, mode, Modes } from 'vest';
@@ -1114,7 +2129,7 @@ const suite = create((data, field) => {
 });
 ```
 
-**3. Field Dependencies with `include().when()`**
+##### Field dependencies with `include().when()`
 
 ```typescript
 const suite = create((data, field) => {
@@ -1130,7 +2145,7 @@ const suite = create((data, field) => {
 });
 ```
 
-**4. Optional Fields**
+##### Optional fields
 
 ```typescript
 const suite = create((data, field) => {
@@ -1144,9 +2159,9 @@ const suite = create((data, field) => {
 });
 ```
 
-#### Real-World Usage Examples
+#### Usage examples in practice
 
-**Example 1: Login Form with Field Dependencies**
+##### Example 1 – login form with field dependencies
 
 ```typescript
 import { Component, signal, computed, effect } from '@angular/core';
@@ -1256,7 +2271,7 @@ export class LoginComponent {
 }
 ```
 
-**Example 2: Registration Form with Async Validation and Optional Fields**
+##### Example 2 – registration form with async validation and optional fields
 
 ````typescript
 import { create, test, enforce, only, optional, omitWhen } from 'vest';
@@ -1337,7 +2352,7 @@ export class RegistrationComponent {
   }
 }
 
-### Recommended Approach: Signal-Wrapped Subscription
+### Recommended approach – signal-wrapped subscription
 
 ```typescript
 export function createVestForm<TModel>(
@@ -1372,11 +2387,11 @@ export function createVestForm<TModel>(
     destroy
   };
 }
-````
+`````
 
 ### Why Signal-Wrapped Subscription is Preferred Over Direct Integration
 
-#### ❌ **Direct Suite Integration (Problematic Approach)**
+#### Direct suite integration pitfalls
 
 ```typescript
 export function createVestForm<TModel>(
@@ -1415,7 +2430,7 @@ export function createVestForm<TModel>(
 }
 ```
 
-**Problems with Direct Integration:**
+#### Problems with direct integration
 
 1. **❌ Broken Reactivity**: Computed signals can't track changes to mutable variables
 2. **❌ Stale Data**: UI won't update when validation state changes
@@ -1423,7 +2438,7 @@ export function createVestForm<TModel>(
 4. **❌ Memory Leaks**: No subscription cleanup mechanism
 5. **❌ Race Conditions**: Multiple simultaneous validations can overwrite results
 
-#### ✅ **Signal-Wrapped Subscription (Recommended Approach)**
+#### Signal-wrapped subscription (recommended approach)
 
 ```typescript
 export function createVestForm<TModel>(
@@ -1487,7 +2502,7 @@ export function createVestForm<TModel>(
 }
 ```
 
-**Benefits of Signal-Wrapped Subscription:**
+#### Benefits of signal-wrapped subscription
 
 1. **✅ True Reactivity**: All UI updates automatically when validation state changes
 2. **✅ Async Support**: Handles async validations seamlessly via `suite.subscribe()`
@@ -1496,9 +2511,9 @@ export function createVestForm<TModel>(
 5. **✅ Consistency**: Works with all Vest features (modes, dependencies, async tests)
 6. **✅ Debugging**: Clear reactive flow makes debugging easier
 
-#### **Real-World Impact Comparison**
+#### Real-world impact comparison
 
-**Direct Integration Issues:**
+##### Direct integration issues
 
 ```typescript
 // User types in email field
@@ -1510,7 +2525,7 @@ validate('email'); // Runs validation, updates currentResult variable
 // ❌ Async email uniqueness check completes but UI never updates
 ```
 
-**Signal-Wrapped Success:**
+##### Signal-wrapped success
 
 ```typescript
 // User types in email field
@@ -1522,9 +2537,9 @@ validate('email'); // Runs validation
 // ✅ Async validation completes → subscription fires again → UI updates
 ```
 
-### Key Integration Insights:
+### Key integration insights
 
-#### 1. **Vest's `isTested()` Eliminates Touch State Management**
+#### Vest's `isTested()` eliminates touch state management
 
 ```typescript
 // ❌ Complex touch tracking (v2 approach)
@@ -1535,7 +2550,7 @@ const touched = computed(() => touchedPaths().has(path));
 const touched = computed(() => result.isTested(path));
 ```
 
-#### 2. **`suite.subscribe()` Should Update One Signal**
+#### `suite.subscribe()` should update one signal
 
 ```typescript
 // ✅ Single signal updated by subscription
@@ -1547,7 +2562,7 @@ const errors = computed(() => suiteResult().getErrors(path));
 const valid = computed(() => suiteResult().isValid(path));
 ```
 
-#### 3. **Validation Triggering Strategy**
+#### Validation triggering strategy
 
 ```typescript
 // Model changes should trigger validation
@@ -1563,9 +2578,9 @@ const setFieldValue = (path: string, value: any) => {
 };
 ```
 
-### Performance Considerations:
+### Performance considerations
 
-#### Avoid Multiple Subscriptions
+#### Avoid multiple subscriptions
 
 ```typescript
 // ❌ BAD: Multiple subscriptions create overhead
@@ -1585,7 +2600,7 @@ const emailErrors = computed(() => suiteResult().getErrors('email'));
 const passwordErrors = computed(() => suiteResult().getErrors('password'));
 ```
 
-#### Memory Management
+#### Memory management
 
 ```typescript
 export class VestFormComponent implements OnDestroy {
@@ -1597,7 +2612,7 @@ export class VestFormComponent implements OnDestroy {
 }
 ```
 
-### Final Recommendation:
+### Final recommendation
 
 **Use `suite.subscribe()` to update a single signal, then derive all field state from that signal using Angular's computed()**. This approach:
 
@@ -1677,7 +2692,7 @@ export interface VestFormOptions<TModel> {
 #### Basic Form (90% of cases)
 
 ```typescript
-import { Component, signal } from '@angular/core';
+import { Component, signal, effect } from '@angular/core';
 import { createVestForm } from 'ngx-vest-forms/core';
 import { staticSuite, test, enforce, only } from 'vest';
 
@@ -1700,18 +2715,28 @@ const loginSuite = staticSuite((data = {}, field) => {
 @Component({
   template: `
     <form (ngSubmit)="handleSubmit()">
+      <!-- ✅ Derived Signals API - Automatic by default -->
       <input
         type="email"
-        [value]="form.field('email').value()"
-        (input)="form.field('email').set($event.target.value)"
-        (blur)="form.field('email').markTouched()"
-        [class.error]="form.field('email').showErrors()"
+        [value]="form.email()"
+        (input)="form.setEmail($event.target.value)"
+        [class.error]="form.emailShowErrors()"
       />
-      @if (form.field('email').showErrors()) {
-        <div class="error">{{ form.field('email').errors()[0] }}</div>
+      @if (form.emailShowErrors()) {
+        <div class="error">{{ form.emailErrors()[0] }}</div>
       }
 
-      <button [disabled]="!form.valid()">Login</button>
+      <input
+        type="password"
+        [value]="form.password()"
+        (input)="form.setPassword($event.target.value)"
+        [class.error]="form.passwordShowErrors()"
+      />
+      @if (form.passwordShowErrors()) {
+        <div class="error">{{ form.passwordErrors()[0] }}</div>
+      }
+
+      <button [disabled]="!form.isValid()">Login</button>
     </form>
   `,
 })
@@ -1721,32 +2746,53 @@ export class LoginComponent {
     password: '',
   });
 
-  async handleSubmit() {
-    const result = await this.form.submit();
-    if (result.valid) {
+  handleSubmit() {
+    this.form.submit(); // Triggers reactive submission
+  }
+
+  // ✅ Reactive submission handling
+  private readonly handleSubmissionResult = effect(() => {
+    const result = this.form.submitResult();
+    if (result?.valid) {
       console.log('Login successful!', result.data);
     }
-  }
+  });
 }
 ```
 
 #### Advanced Form with NgModel Integration
 
 ```typescript
+import { Component, signal } from '@angular/core';
+import { createVestForm } from 'ngx-vest-forms/core';
+import { loginSuite } from './login.validations';
+
 @Component({
   template: `
     <form #ngForm="ngForm" [ngxVestSync]="form">
-      <!-- Automatic touch tracking via NgForm -->
+      <!-- ✅ Derived Signals API with NgModel - Best of both worlds -->
       <input
         name="email"
         [(ngModel)]="model().email"
-        [class.error]="form.field('email').showErrors()"
+        [class.error]="form.emailShowErrors()"
       />
-
-      <!-- Error display respects NgForm touch state -->
-      @if (form.field('email').showErrors()) {
-        <div>{{ form.field('email').errors()[0] }}</div>
+      @if (form.emailShowErrors()) {
+        <div>{{ form.emailErrors()[0] }}</div>
       }
+
+      <input
+        name="password"
+        [(ngModel)]="model().password"
+        [class.error]="form.passwordShowErrors()"
+      />
+      @if (form.passwordShowErrors()) {
+        <div>{{ form.passwordErrors()[0] }}</div>
+      }
+
+      <!-- ✅ Still works - Core API available alongside enhanced -->
+      <button [disabled]="!form.isValid()">
+        {{ form.field('email').pending() ? 'Validating...' : 'Submit' }}
+      </button>
     </form>
   `,
 })
@@ -1786,25 +2832,64 @@ const profileSuite = staticSuite((data: Partial<UserProfile> = {}, field) => {
   });
 });
 
+import { Component } from '@angular/core';
+import { createVestForm } from 'ngx-vest-forms/core';
+
 @Component({
+  selector: 'app-profile-form',
   template: `
-    <!-- Type-safe path access -->
+    <!-- ✅ Derived Signals API - Simplified nested field access -->
     <input
-      [value]="form.field('personal.firstName').value()"
-      (input)="form.field('personal.firstName').set($event.target.value)"
+      [value]="form.personalFirstName()"
+      (input)="form.setPersonalFirstName($event.target.value)"
     />
 
-    <!-- Nested field validation -->
-    @if (form.field('address.zipCode').showErrors()) {
-      <div>{{ form.field('address.zipCode').errors()[0] }}</div>
+    <input
+      [value]="form.personalEmail()"
+      (input)="form.setPersonalEmail($event.target.value)"
+      [class.error]="form.personalEmailShowErrors()"
+    />
+    @if (form.personalEmailShowErrors()) {
+      <div>{{ form.personalEmailErrors()[0] }}</div>
     }
+
+    <!-- ✅ Complex nested paths with enhanced API -->
+    <input
+      [value]="form.addressZipCode()"
+      (input)="form.setAddressZipCode($event.target.value)"
+      [class.error]="form.addressZipCodeShowErrors()"
+    />
+    @if (form.addressZipCodeShowErrors()) {
+      <div>{{ form.addressZipCodeErrors()[0] }}</div>
+    }
+
+    <!-- ✅ Core API still available for dynamic paths -->
+    <button [disabled]="!form.field('personal').valid()">Save Profile</button>
   `,
 })
 export class ProfileComponent {
-  protected readonly form = createVestForm(profileSuite, {
-    personal: { firstName: '', lastName: '', email: '' },
-    address: { street: '', city: '', zipCode: '' },
-  });
+  protected readonly form = createVestForm(
+    profileSuite,
+    {
+      personal: { firstName: '', lastName: '', email: '' },
+      address: { street: '', city: '', zipCode: '' },
+    },
+    {
+      enhancements: [
+        withDerivedFieldSignals({
+          // Custom field mapping for nested paths
+          fieldMap: {
+            personalFirstName: 'personal.firstName',
+            personalLastName: 'personal.lastName',
+            personalEmail: 'personal.email',
+            addressStreet: 'address.street',
+            addressCity: 'address.city',
+            addressZipCode: 'address.zipCode',
+          },
+        }),
+      ],
+    },
+  );
 }
 ```
 
@@ -2300,14 +3385,14 @@ While Vest handles validation excellently, NgForm provides several Angular-speci
 
 ### When to Use NgForm Sync
 
-**Essential for:**
+#### When NgForm sync is essential
 
 - Applications using Angular Material or similar UI libraries
 - Teams migrating from traditional Angular forms
 - Complex forms requiring automatic CSS class application
 - Forms with complex nested structures (`ngModelGroup`)
 
-**Optional for:**
+#### When NgForm sync is optional
 
 - Simple forms with custom styling
 - Applications prioritizing minimal bundle size
@@ -2337,7 +3422,7 @@ Both packages live outside the core so the minimal bundle remains tiny.
 
 This architecture proposal completely reorients ngx-vest-forms around Vest-first principles, delivering a lightweight, performant solution that leverages Vest.js v5's built-in capabilities instead of duplicating functionality.
 
-**Key Benefits:**
+### Summary benefits
 
 - **Simplified API**: Single `createVestForm` function replaces complex directive ecosystem (90% API reduction)
 - **Better Performance**: Leverages Vest 5's EAGER execution mode (60-80% faster) and built-in state management
@@ -2348,7 +3433,7 @@ This architecture proposal completely reorients ngx-vest-forms around Vest-first
 
 The modular package structure (`core` + optional `ngform-sync`) allows teams to adopt exactly what they need, when they need it, creating a sustainable path forward for both new and existing applications.
 
-**Clear Design Decision Documentation:**
+### Design decision documentation
 
 - **Vest Built-in APIs**: Uses `result.isTested()`, `suite.subscribe()`, and execution modes instead of custom implementations
 - **NgForm Separation**: Optional package keeps core minimal while providing ecosystem compatibility
@@ -2356,7 +3441,7 @@ The modular package structure (`core` + optional `ngform-sync`) allows teams to 
 - **Signal-Wrapped Subscription**: Single reactive pattern eliminates stale data and memory leaks
 - **Performance Optimization**: EAGER mode and field-level caching provide significant speed improvements
 
-**Additional Resources:**
+### Additional resources
 
 - [Vest.js Official Guide](https://vestjs.dev/docs/) - Complete validation framework documentation
 - [Vest.js Result Object API](https://vestjs.dev/docs/writing_your_suite/accessing_the_result) - Built-in state methods like `isTested()`, `isValid()`
@@ -2376,20 +3461,421 @@ This architecture provides a clear, well-documented foundation for ngx-vest-form
 - Provide guidance to disable built-in browser validation (e.g., add `novalidate` on `<form>`). Our NgForm directive can set `control.setErrors({ vest: message })` so Angular error messages appear in templates.
 - Expose an optional helper `applyVestValidationAttributes(field)` for teams that want parallel native validation (sets `aria-invalid`, `required`, etc.) without conflicting with Vest logic.
 
+## Enhanced Field Signals API (Optional Ergonomic Extension)
+
+### Overview
+
+While the core `form.field('email').value()` API provides full functionality, we can offer an optional ergonomic enhancement inspired by ngrx-toolkit patterns to generate dynamic field signals like `form.email()` for improved developer experience.
+
+### Basic Usage
+
+```typescript
+import { createVestForm } from 'ngx-vest-forms/core';
+
+// Derived field signals are enabled by default
+const form = createVestForm(loginSuite, initialData);
+
+// Now you can use dynamic field signals
+@Component({
+  template: `
+    <!-- ✅ Derived Signals API - Cleaner syntax -->
+    <input [ngModel]="form.email()" (ngModelChange)="form.setEmail($event)" />
+    <input
+      [ngModel]="form.password()"
+      (ngModelChange)="form.setPassword($event)"
+    />
+
+    @if (form.emailShowErrors()) {
+      <div>{{ form.emailErrors()[0] }}</div>
+    }
+
+    <!-- ✅ Still works - Core API always available -->
+    <input
+      [ngModel]="form.field('email').value()"
+      (ngModelChange)="form.field('email').set($event)"
+    />
+  `,
+})
+export class LoginComponent {
+  form = createVestForm(loginSuite, { email: '', password: '' });
+}
+```
+
+### Generated Methods Pattern
+
+For each field in your model, the derived signals API automatically generates:
+
+- `form.email()` - Field value signal
+- `form.setEmail(value)` - Set field value
+- `form.emailValid()` - Field validity signal
+- `form.emailErrors()` - Field errors signal
+- `form.emailShowErrors()` - Should show errors signal
+- `form.emailTouched()` - Field touched state signal
+
+### Key Benefits
+
+#### 1. **Dramatically Improved Developer Experience**
+
+```typescript
+// ❌ Before: Verbose core API
+<input [value]="form.field('email').value()" (input)="form.field('email').set($event.target.value)" />
+@if (form.field('email').showErrors()) {
+  <div>{{ form.field('email').errors()[0] }}</div>
+}
+
+// ✅ After: Clean enhanced API
+<input [value]="form.email()" (input)="form.setEmail($event.target.value)" />
+@if (form.emailShowErrors()) {
+  <div>{{ form.emailErrors()[0] }}</div>
+}
+```
+
+#### 2. **Significant Template Reduction**
+
+- **67% less code**: `form.email()` vs `form.field('email').value()`
+- **50% fewer characters**: Reduces cognitive load and improves readability
+- **Consistent patterns**: Same naming convention across all fields
+
+#### 3. **Superior TypeScript Integration**
+
+- **Full IntelliSense**: All generated methods show in autocomplete with proper types
+- **Compile-time safety**: `form.invalidField()` fails at build time, not runtime
+- **Refactoring support**: Renaming fields updates generated method names automatically
+
+#### 4. **Zero Performance Overhead**
+
+- **Lazy Creation**: Signals only created when first accessed via Proxy
+- **Efficient Caching**: Each signal created once and cached permanently
+- **Tree Shakeable**: Unused field methods don't affect bundle size
+- **Memory Efficient**: Same memory footprint as core API after first access
+
+#### 5. **Incremental Adoption**
+
+- **Fully Optional**: Can be enabled/disabled per form without breaking changes
+- **Coexists Perfectly**: `form.email()` and `form.field('email').value()` work simultaneously
+- **Gradual Migration**: Adopt enhanced API field-by-field in existing forms
+
+### Enhanced Signals Configuration
+
+```typescript
+// Generate signals for specific fields only
+const form = createVestForm(suite, data, {
+  enhancements: [
+    withDerivedFieldSignals({
+      fields: ['email', 'password'], // Only these fields get shortcuts
+    }),
+  ],
+});
+
+// Custom field mapping
+const form = createVestForm(suite, data, {
+  enhancements: [
+    withDerivedFieldSignals({
+      fieldMap: {
+        userEmail: 'email', // form.userEmail() -> maps to 'email' field
+        userPassword: 'password', // form.userPassword() -> maps to 'password' field
+      },
+    }),
+  ],
+});
+```
+
+### Why Automatic by Default with Opt-Out?
+
+Since this is a **new library** without existing code to migrate, we should optimize for the best developer experience by default. The derived field signals should be **automatically enabled** with an opt-out for edge cases.
+
+#### 1. **New Library = Best DX by Default**
+
+```typescript
+// ✅ New library: Ergonomic by default
+const form = createVestForm(loginSuite, { email: '', password: '' });
+
+// Automatically available without configuration:
+form.email(); // Instead of form.field('email').value()
+form.emailErrors(); // Instead of form.field('email').errors()
+form.emailShowErrors(); // Instead of form.field('email').showErrors()
+form.setEmail(value); // Instead of form.field('email').set(value)
+```
+
+#### 2. **Opt-Out for Edge Cases**
+
+```typescript
+// ❌ Namespace collision: form model has conflicting property names
+interface ProblematicModel {
+  email: string;
+  errors: string[]; // Would conflict with form.errors()
+  valid: boolean; // Would conflict with form.valid()
+  submit: () => void; // Would conflict with form.submit()
+}
+
+// ✅ Opt-out for problematic models
+const form = createVestForm(suite, problematicModel, {
+  derivedFieldSignals: false, // Disable auto-generation
+});
+
+// Only core API available - no conflicts
+form.field('email').value(); // Safe
+form.field('errors').value(); // Safe
+form.field('valid').value(); // Safe
+```
+
+#### 3. **Selective Enhancement for Large Forms**
+
+```typescript
+// Large form: Be selective about which fields get enhanced API
+interface LargeFormModel {
+  // 50+ fields across multiple sections
+  personalInfo: {
+    /* 20 fields */
+  };
+  address: {
+    /* 15 fields */
+  };
+  preferences: {
+    /* 20 fields */
+  };
+}
+
+// ✅ Opt-out with selective enhancement
+const form = createVestForm(suite, largeFormModel, {
+  derivedFieldSignals: {
+    // Only enhance frequently accessed fields
+    include: ['personalInfo.email', 'personalInfo.firstName'],
+    // Or exclude problematic ones
+    exclude: ['preferences.advancedSettings'],
+  },
+});
+```
+
+#### 4. **Performance is Acceptable for Most Forms**
+
+```typescript
+// Typical form: 5-15 fields = 30-90 methods (6 per field)
+// With lazy creation via Proxy, performance impact is negligible
+
+interface TypicalForm {
+  email: string; // → 6 methods: email(), emailErrors(), etc.
+  password: string; // → 6 methods: password(), passwordErrors(), etc.
+  firstName: string; // → 6 methods: firstName(), firstNameErrors(), etc.
+  lastName: string; // → 6 methods: lastName(), lastNameErrors(), etc.
+  // 5 fields = 30 methods total - perfectly manageable
+}
+```
+
+#### 5. **Architectural Guidance for Large Forms**
+
+For forms with 50+ fields, the real solution isn't opting out of ergonomic APIs - it's better architecture:
+
+```typescript
+// ❌ Monolithic 50+ field form
+interface MassiveForm {
+  personalInfo: {
+    /* 20 fields */
+  };
+  address: {
+    /* 15 fields */
+  };
+  preferences: {
+    /* 20 fields */
+  };
+}
+
+// ✅ Composed sub-forms
+const personalForm = createVestForm(personalSuite, personalInfo);
+const addressForm = createVestForm(addressSuite, addressInfo);
+const preferencesForm = createVestForm(preferencesSuite, preferences);
+
+const composedForm = composeVestForms({
+  personal: personalForm,
+  address: addressForm,
+  preferences: preferencesForm,
+});
+```
+
+#### 6. **Bundle Impact is Minimal**
+
+```typescript
+// Derived field signals are just computed() wrappers around form.field()
+// No separate bundle - they're generated on-demand via Proxy
+// Bundle size increase: ~0.5KB for Proxy logic, not per-field
+
+const form = createVestForm(suite, data);
+// form.email() = computed(() => form.field('email').value())
+// No additional bundle size per field
+```
+
+### Summary: Derived Signals by Default Architecture
+
+```typescript
+// ✅ DEFAULT: Derived field signals automatically available
+const form = createVestForm(loginSuite, { email: '', password: '' });
+form.email(); // Ergonomic API by default
+form.setPassword(value); // Direct field methods
+
+// ❌ OPT-OUT: Only for edge cases with namespace collisions
+const form = createVestForm(problematicSuite, problematicModel, {
+  derivedFieldSignals: false, // Disable for conflict resolution
+});
+form.field('email').value(); // Fall back to explicit API
+
+// 🎯 SELECTIVE: Fine-grained control for large/complex forms
+const form = createVestForm(largeSuite, largeModel, {
+  derivedFieldSignals: {
+    include: ['email', 'password'], // Only critical fields
+    exclude: ['metadata.*'], // Skip internal fields
+  },
+});
+```
+
+This approach optimizes for the **90% use case** (small-to-medium forms) while providing escape hatches for edge cases.
+
+### When to Opt-Out of Derived Field Signals
+
+#### **Complete Opt-Out Scenarios**
+
+```typescript
+// ❌ Namespace Collision: Model properties conflict with form methods
+interface ConflictingModel {
+  email: string;
+  errors: string[]; // Conflicts with form.errors()
+  valid: boolean; // Conflicts with form.valid()
+  submit: () => void; // Conflicts with form.submit()
+  reset: string; // Conflicts with form.reset()
+  field: any; // Conflicts with form.field()
+}
+
+const form = createVestForm(suite, conflictingModel, {
+  derivedFieldSignals: false, // Complete opt-out required
+});
+
+// Only explicit field API available
+form.field('email').value(); // ✅ Works
+form.field('errors').value(); // ✅ Works - no conflict
+```
+
+#### **Selective Configuration for Large Forms**
+
+```typescript
+// 🎯 Large Form: 50+ fields across multiple sections
+interface LargeFormModel {
+  // User-facing fields (high priority)
+  email: string;
+  firstName: string;
+  lastName: string;
+
+  // Internal metadata (low priority)
+  metadata: {
+    trackingId: string;
+    sessionInfo: Record<string, any>;
+    debugFlags: boolean[];
+  };
+
+  // Complex nested objects (medium priority)
+  preferences: {
+    notifications: { email: boolean; sms: boolean };
+    privacy: { analytics: boolean; marketing: boolean };
+  };
+}
+
+const form = createVestForm(suite, largeFormModel, {
+  derivedFieldSignals: {
+    // ✅ Include: Generate shortcuts for frequently accessed fields
+    include: [
+      'email',
+      'firstName',
+      'lastName',
+      'preferences.notifications.email',
+    ],
+    // ❌ Exclude: Skip internal/metadata fields to reduce API surface
+    exclude: [
+      'metadata.*', // All metadata fields
+      'preferences.privacy.*', // Complex nested preferences
+    ],
+  },
+});
+
+// Available derived signals (only included fields):
+form.email(); // ✅ Generated
+form.firstName(); // ✅ Generated
+form.preferencesNotificationsEmail(); // ✅ Generated
+
+// Not available (excluded or not included):
+form.metadataTrackingId(); // ❌ Not generated
+form.preferencesPrivacyAnalytics(); // ❌ Not generated
+
+// Always available via explicit API:
+form.field('metadata.trackingId').value(); // ✅ Always works
+form.field('preferences.privacy.analytics').value(); // ✅ Always works
+```
+
+#### **Performance Considerations for Opt-Out**
+
+```typescript
+// 📊 Performance Impact Analysis
+
+// Small Form (5-10 fields): ~50 derived methods
+// - Negligible performance impact
+// - Ergonomic API worth the overhead
+const smallForm = createVestForm(suite, smallModel); // Keep defaults
+
+// Medium Form (15-25 fields): ~150 derived methods
+// - Acceptable performance impact
+// - Consider selective inclusion for cleaner API
+const mediumForm = createVestForm(suite, mediumModel, {
+  derivedFieldSignals: {
+    include: ['email', 'password', 'firstName'], // Most used fields
+  },
+});
+
+// Large Form (50+ fields): ~300+ derived methods
+// - Potential performance concerns
+// - Architectural solution: decompose into smaller forms
+const composedForms = {
+  personal: createVestForm(personalSuite, personalData),
+  address: createVestForm(addressSuite, addressData),
+  preferences: createVestForm(preferencesSuite, preferencesData),
+};
+```
+
+#### **Team Guidelines for Opt-Out Decisions**
+
+| Form Size   | Fields | Recommendation       | Configuration                     |
+| ----------- | ------ | -------------------- | --------------------------------- |
+| **Small**   | 1-10   | Keep defaults        | No configuration needed           |
+| **Medium**  | 11-25  | Selective inclusion  | Include most-used fields only     |
+| **Large**   | 26-50  | Architectural review | Consider form decomposition       |
+| **Massive** | 50+    | Form decomposition   | Split into multiple smaller forms |
+
+#### **Migration Strategy When Opting Out**
+
+```typescript
+// If you need to opt-out after initially using derived signals:
+
+// ❌ Before: Using derived signals
+form.email(); // This will break
+form.setPassword(value); // This will break
+form.emailErrors(); // This will break
+
+// ✅ After: Explicit field API (always available)
+form.field('email').value(); // Direct replacement
+form.field('password').set(value); // Direct replacement
+form.field('email').errors(); // Direct replacement
+
+// Template updates needed:
+// Before: [value]="form.email()"
+// After:  [value]="form.field('email').value()"
+```
+
+### Implementation Details
+
+The derived signals API uses a Proxy-based implementation similar to ngrx-toolkit's `NamedResourceResult` pattern, dynamically generating signals when property names are accessed. See [Derived Field Signals Documentation](./derived-field-signals.md) for complete implementation details and advanced usage patterns.
+
 ## Future plugin roadmap (post v2.0)
 
-- **Array utilities** – helpers for push/remove/reorder with stable validation keys.
 - **Schema adapters** – optional packages for Zod, Valibot, ArkType interop.
 - **Form history** – undo/redo snapshot manager built on top of signal updates.
 - **Async initialisers** – factory that resolves async data before instantiating `createVestForm`.
 - **Signal Form adapter** – direct integration once the Angular API stabilises.
-
-## Open questions
-
-- Should `VestField.value` always expose a writable signal even when the original model is read-only? (Angular prototype uses `deepSignal` to proxy writes.)
-- How aggressively should we memoise field instances? (`field(path)` should be cached per path to avoid signal churn.)
-- What is the minimum surface required to let reactive forms reuse validation state without duplicating control logic?
-- How do we surface warnings distinctly from errors in the optional UI components without duplicating boilerplate?
 
 ## Next steps
 
