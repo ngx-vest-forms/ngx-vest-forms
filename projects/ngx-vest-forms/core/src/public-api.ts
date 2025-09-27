@@ -1,56 +1,76 @@
-/*
- * Public API Surface of ngx-vest-forms
+/**
+ * Public API for ngx-vest-forms/core package
+ * Framework-agnostic validation core built on Vest.js
  */
 
-export { NgxFormControlStateDirective } from './lib/directives/form-control-state.directive';
-export { NgxFormCoreDirective } from './lib/directives/form-core.directive';
-export { NgxFormErrorDisplayDirective } from './lib/directives/form-error-display.directive';
-export { NgxFormModelGroupDirective } from './lib/directives/form-model-group.directive';
-export { NgxFormModelDirective } from './lib/directives/form-model.directive';
+// Main factory function
+export { createVestForm } from './lib/create-vest-form';
+
+// Types and interfaces
+export type {
+  ComposedVestForm,
+  EnhancedVestForm,
+  EnhancedVestFormArray,
+  ErrorDisplayStrategy,
+  Path,
+  PathValue,
+  SchemaAdapter,
+  SchemaValidationResult,
+  VestField,
+  VestForm,
+  VestFormArray,
+  VestFormOptions,
+  WizardForm,
+  WizardStepConfig,
+} from './lib/vest-form.types';
+
+// Error display strategies
 export {
-  NgxFormDirective,
-  NgxFormState,
-} from './lib/directives/form.directive';
+  ERROR_STRATEGIES,
+  computeShowErrors,
+  createCustomErrorStrategy,
+  debounceErrorStrategy,
+  getStrategyInfo,
+} from './lib/error-strategies';
+
+// Form arrays
+export {
+  createFormArrayItem,
+  createVestFormArray,
+  removeFormArrayItem,
+} from './lib/form-arrays';
+
+// Form composition
+export {
+  composeVestForms,
+  compositionUtilities,
+  createWizardForm,
+} from './lib/compose-vest-forms';
+
+// Utility functions
+export {
+  deleteValueByPath,
+  getAllPaths,
+  getValueByPath,
+  hasPath,
+  isValidPath,
+  normalizePath,
+  setValueByPath,
+} from './lib/utils/path-utils';
 
 export {
-  NgxDeepPartial,
-  NgxDeepRequired,
-  NgxFieldKey,
-  NgxFormCompatibleDeepRequired,
-  NgxFormControlState,
-  NgxFormLevelValidationDirective,
-  NgxInjectRootFormKeyOptions,
-  NgxValidationOptions,
-  NgxVestSuite,
-  getInitialNgxFormControlState,
-  injectNgxRootFormKey,
-  ngxVestForms,
-  ngxVestFormsCore,
-  ngxVestFormsViewProviders,
-} from './lib/exports';
+  createFieldSetter,
+  deepClone,
+  extractValueFromEvent,
+  extractValueFromEventOrValue,
+  isEmpty,
+  normalizeFieldValue,
+} from './lib/utils/value-extraction';
 
-export { arrayToObject } from './lib/utils/array-to-object';
-export {
-  cloneDeep,
-  getAllFormErrors,
-  getFormControlField,
-  getFormGroupField,
-  mergeValuesAndRawValues,
-  setValueAtPath as set,
-} from './lib/utils/form-utils';
+// Version information
+export const VERSION = '2.0.0-beta.1';
 
-export {
-  NGX_ERROR_DISPLAY_MODE_DEFAULT,
-  NgxErrorDisplayMode,
-} from './lib/config/error-display.config';
-export {
-  provideNgxVestForms,
-  provideNgxVestFormsCore,
-  withErrorDisplayMode,
-  withRootFormKey,
-} from './lib/providers';
-export {
-  NGX_SCHEMA_STATE,
-  type NgxSchemaValidationState,
-} from './lib/tokens/schema-state.token';
-export * from './lib/utils/field-path.utils';
+// Package metadata
+export const PACKAGE_NAME = 'ngx-vest-forms/core';
+export const PACKAGE_DESCRIPTION =
+  'Framework-agnostic validation core for ngx-vest-forms V2';
