@@ -3,7 +3,7 @@
  * Tests validation config, modern Angular APIs, and directive functionality
  */
 import { Component, signal } from '@angular/core';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { DeepPartial } from '../utils/deep-partial';
 import { vestForms } from '../exports';
@@ -16,9 +16,8 @@ describe('FormDirective - Comprehensive', () => {
     }).compileComponents();
   });
   // Test for Issue #14: Controls not existing on initialization
-  it('should handle validationConfig when controls are added dynamically', fakeAsync(() => {
+  it('should handle validationConfig when controls are added dynamically', async () => {
     @Component({
-      standalone: true,
       template: `
         <form
           scVestForm
@@ -70,18 +69,17 @@ describe('FormDirective - Comprehensive', () => {
     }).createComponent(TestComponent);
 
     fixture.detectChanges();
-    tick();
+    await fixture.whenStable();
 
     // No errors should occur when controls don't exist
     expect(() => {
       fixture.detectChanges();
-      tick();
     }).not.toThrow();
 
     // Add controls dynamically
     fixture.componentInstance.showPasswordFields.set(true);
     fixture.detectChanges();
-    tick(100);
+    await fixture.whenStable();
 
     // Now validation config should work
     const passwordInput = fixture.nativeElement.querySelector(
@@ -90,18 +88,17 @@ describe('FormDirective - Comprehensive', () => {
     passwordInput.value = 'test123';
     passwordInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
-    tick(100);
+    await fixture.whenStable();
 
     // Confirm password should be revalidated
     expect(fixture.componentInstance.formValue().passwords?.password).toBe(
       'test123'
     );
-  }));
+  });
 
   // Test for Issue #19: Circular dependency
-  it('should prevent infinite validation loops with circular dependencies', fakeAsync(() => {
+  it('should prevent infinite validation loops with circular dependencies', async () => {
     @Component({
-      standalone: true,
       template: `
         <form
           scVestForm
@@ -147,7 +144,7 @@ describe('FormDirective - Comprehensive', () => {
     }).createComponent(TestComponent);
 
     fixture.detectChanges();
-    tick();
+    await fixture.whenStable();
 
     // Test that no infinite loop occurs by monitoring console errors or timeouts
     let errorOccurred = false;
@@ -167,7 +164,7 @@ describe('FormDirective - Comprehensive', () => {
       amountInput.value = '100';
       amountInput.dispatchEvent(new Event('input'));
       fixture.detectChanges();
-      tick(500);
+      await fixture.whenStable();
 
       // Should not have any loop-related errors
       expect(errorOccurred).toBe(false);
@@ -175,12 +172,11 @@ describe('FormDirective - Comprehensive', () => {
     } finally {
       console.error = originalError;
     }
-  }));
+  });
 
   // Test for dynamic validationConfig changes
-  it('should handle dynamic validationConfig changes without memory leaks', fakeAsync(() => {
+  it('should handle dynamic validationConfig changes without memory leaks', async () => {
     @Component({
-      standalone: true,
       template: `
         <form
           scVestForm
@@ -221,18 +217,18 @@ describe('FormDirective - Comprehensive', () => {
     }).createComponent(TestComponent);
 
     fixture.detectChanges();
-    tick();
+    await fixture.whenStable();
 
     // Change config multiple times
     fixture.componentInstance.validationConfig.set({
       email: ['firstName', 'lastName'],
     });
     fixture.detectChanges();
-    tick();
+    await fixture.whenStable();
 
     fixture.componentInstance.validationConfig.set({ lastName: ['email'] });
     fixture.detectChanges();
-    tick();
+    await fixture.whenStable();
 
     // Should not have memory leaks or errors
     const emailInput = fixture.nativeElement.querySelector(
@@ -241,17 +237,16 @@ describe('FormDirective - Comprehensive', () => {
     emailInput.value = 'test@example.com';
     emailInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
-    tick(100);
+    await fixture.whenStable();
 
     expect(fixture.componentInstance.formValue().email).toBe(
       'test@example.com'
     );
-  }));
+  });
 
   // Test for nested group validation config
-  it('should work with nested form groups in validationConfig', fakeAsync(() => {
+  it('should work with nested form groups in validationConfig', async () => {
     @Component({
-      standalone: true,
       template: `
         <form
           scVestForm
@@ -303,13 +298,13 @@ describe('FormDirective - Comprehensive', () => {
     }).createComponent(TestComponent);
 
     fixture.detectChanges();
-    tick();
+    await fixture.whenStable();
 
     const nameInput = fixture.nativeElement.querySelector('input[name="name"]');
     nameInput.value = 'John Doe';
     nameInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
-    tick(100);
+    await fixture.whenStable();
 
     // Email validation should have been triggered
     expect(fixture.componentInstance.formValue().user?.name).toBe('John Doe');
@@ -322,7 +317,7 @@ describe('FormDirective - Comprehensive', () => {
     );
 
     // Let validation complete
-    tick(200);
+    await fixture.whenStable();
     fixture.detectChanges();
 
     // The email control should be invalid because name is provided but email is empty
@@ -332,7 +327,7 @@ describe('FormDirective - Comprehensive', () => {
     emailInput.value = 'john@example.com';
     emailInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
-    tick(200);
+    await fixture.whenStable();
 
     // Now both fields have values, form should be in a better state
     expect(fixture.componentInstance.formValue().user?.contact?.email).toBe(
@@ -346,15 +341,14 @@ describe('FormDirective - Comprehensive', () => {
     nameInputEl.value = '';
     nameInputEl.dispatchEvent(new Event('input'));
     fixture.detectChanges();
-    tick(200);
+    await fixture.whenStable();
 
     expect(fixture.componentInstance.formValue().user?.name).toBe('');
-  }));
+  });
 
   // Test for separate input and output signals (Issue #11)
-  it('should work with separate input and output signals (Issue #11)', fakeAsync(() => {
+  it('should work with separate input and output signals (Issue #11)', async () => {
     @Component({
-      standalone: true,
       template: `
         <form
           scVestForm
@@ -404,7 +398,7 @@ describe('FormDirective - Comprehensive', () => {
     }).createComponent(TestComponent);
 
     fixture.detectChanges();
-    tick();
+    await fixture.whenStable();
 
     // Change password - this should trigger confirmPassword validation
     const passwordInput = fixture.nativeElement.querySelector(
@@ -413,7 +407,7 @@ describe('FormDirective - Comprehensive', () => {
     passwordInput.value = 'test123';
     passwordInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
-    tick(100);
+    await fixture.whenStable();
 
     // Verify the form state updated in output signal
     expect(fixture.componentInstance.outputFormValue().password).toBe(
@@ -427,13 +421,13 @@ describe('FormDirective - Comprehensive', () => {
     confirmInput.value = 'different';
     confirmInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
-    tick(100);
+    await fixture.whenStable();
 
     // Change password again - should trigger confirmPassword revalidation
     passwordInput.value = 'newpassword';
     passwordInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
-    tick(100);
+    await fixture.whenStable();
 
     // The validation should work even with separate signals
     expect(fixture.componentInstance.outputFormValue().password).toBe(
@@ -446,14 +440,13 @@ describe('FormDirective - Comprehensive', () => {
     // ValidationConfig should have triggered confirmPassword validation
     // (we can't easily test the internal validation state, but the important thing
     // is that no errors were thrown and the form continues to work)
-  }));
+  });
 
   // Test for debounce behavior with rapid successive changes
-  it('should debounce validation config triggers properly with rapid changes', fakeAsync(() => {
+  it('should debounce validation config triggers properly with rapid changes', async () => {
     let triggerCount = 0;
 
     @Component({
-      standalone: true,
       template: `
         <form
           scVestForm
@@ -497,7 +490,7 @@ describe('FormDirective - Comprehensive', () => {
     }).createComponent(TestComponent);
 
     fixture.detectChanges();
-    tick(200); // Let initial setup complete
+    await fixture.whenStable(); // Let initial setup complete
 
     triggerCount = 0; // Reset counter after setup
 
@@ -511,37 +504,36 @@ describe('FormDirective - Comprehensive', () => {
     triggerInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
-    tick(25); // 25ms later
+    await fixture.whenStable(); // 25ms later
     triggerInput.value = 'value2';
     triggerInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
-    tick(25); // 50ms total
+    await fixture.whenStable(); // 50ms total
     triggerInput.value = 'value3';
     triggerInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
-    tick(25); // 75ms total
+    await fixture.whenStable(); // 75ms total
     triggerInput.value = 'value4';
     triggerInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
     // Complete the debounce window and let validation settle
-    tick(150); // Past debounce window
+    await fixture.whenStable(); // Past debounce window
     fixture.detectChanges();
-    tick(200); // Let form stabilization complete
+    await fixture.whenStable(); // Let form stabilization complete
 
     // With proper debouncing, we should see only one validation trigger
     // for the dependent field despite multiple rapid input changes
     expect(triggerCount).toBeLessThanOrEqual(2); // Allow some flexibility for test timing
     expect(fixture.componentInstance.formValue().triggerField).toBe('value4');
-  }));
+  });
 
   // Modern Angular API Tests
   describe('Modern Angular APIs', () => {
-    it('should use modern Angular patterns in FormDirective', fakeAsync(() => {
+    it('should use modern Angular patterns in FormDirective', async () => {
       @Component({
-        standalone: true,
         template: `
           <form
             scVestForm
@@ -563,7 +555,7 @@ describe('FormDirective - Comprehensive', () => {
 
       const fixture = TestBed.createComponent(ModernTestComponent);
       fixture.detectChanges();
-      tick();
+      await fixture.whenStable();
 
       // Test that the form works with modern signal-based inputs
       expect(fixture.componentInstance.formValue()).toEqual({});
@@ -571,18 +563,17 @@ describe('FormDirective - Comprehensive', () => {
       // Update the signal and verify reactivity
       fixture.componentInstance.formValue.set({ email: 'test@example.com' });
       fixture.detectChanges();
-      tick();
+      await fixture.whenStable();
 
       expect(fixture.componentInstance.formValue().email).toBe(
         'test@example.com'
       );
 
       fixture.destroy();
-    }));
+    });
 
-    it('should handle reactive signal changes in validation config', fakeAsync(() => {
+    it('should handle reactive signal changes in validation config', async () => {
       @Component({
-        standalone: true,
         template: `
           <form
             scVestForm
@@ -605,7 +596,7 @@ describe('FormDirective - Comprehensive', () => {
       const fixture = TestBed.createComponent(ReactiveTestComponent);
       const component = fixture.componentInstance;
       fixture.detectChanges();
-      tick();
+      await fixture.whenStable();
 
       // Verify initial state
       expect(component.validationConfig()).toEqual({});
@@ -613,7 +604,7 @@ describe('FormDirective - Comprehensive', () => {
       // Change validation config reactively using signals
       component.validationConfig.set({ field1: ['field2'] });
       fixture.detectChanges();
-      tick();
+      await fixture.whenStable();
 
       // Verify the change was applied
       expect(component.validationConfig()).toEqual({ field1: ['field2'] });
@@ -621,11 +612,11 @@ describe('FormDirective - Comprehensive', () => {
       // Test that form still works after config change
       component.formValue.set({ field1: 'test' });
       fixture.detectChanges();
-      tick();
+      await fixture.whenStable();
 
       expect(component.formValue().field1).toBe('test');
 
       fixture.destroy();
-    }));
+    });
   });
 });

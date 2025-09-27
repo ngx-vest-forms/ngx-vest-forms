@@ -22,7 +22,7 @@ import { ValidationOptions } from './validation-options';
 
 @Directive({
   selector: 'form[validateRootForm][formValue][suite]',
-  standalone: true,
+
   providers: [
     {
       provide: NG_ASYNC_VALIDATORS,

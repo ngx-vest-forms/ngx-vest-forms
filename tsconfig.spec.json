@@ -4,12 +4,7 @@
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
     "module": "CommonJs",
-    "types": [
-      "jest"
-    ]
+    "types": ["jest", "node", "@testing-library/jest-dom"]
   },
-  "include": [
-    "**/*.spec.ts",
-    "**/*.d.ts"
-  ]
+  "include": ["**/*.spec.ts", "**/*.d.ts", "**/*.test.ts", "jest.config.ts"]
 }

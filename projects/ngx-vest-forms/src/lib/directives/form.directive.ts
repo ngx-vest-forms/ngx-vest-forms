@@ -5,6 +5,7 @@ import {
   AfterViewInit,
   effect,
   DestroyRef,
+  isDevMode,
 } from '@angular/core';
 import {
   takeUntilDestroyed,
@@ -15,15 +16,14 @@ import {
   NgForm,
   PristineChangeEvent,
   StatusChangeEvent,
-  ValidationErrors,
   ValueChangeEvent,
+  ValidationErrors,
 } from '@angular/forms';
 import {
   debounceTime,
   distinctUntilChanged,
   filter,
   finalize,
-  map,
   Observable,
   of,
   ReplaySubject,
@@ -31,6 +31,8 @@ import {
   switchMap,
   take,
   tap,
+  catchError,
+  map,
 } from 'rxjs';
 import { StaticSuite } from 'vest';
 import { DeepRequired } from '../utils/deep-required';
@@ -48,11 +50,20 @@ import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
 @Directive({
   selector: 'form[scVestForm]',
   exportAs: 'scVestForm',
-  standalone: true,
 })
 export class FormDirective<T extends Record<string, any>>
   implements AfterViewInit
 {
+  /**
+   * Returns the current form state: validity and errors.
+   * Used by templates and tests as vestForm.formState().valid/errors
+   */
+  public formState() {
+    return {
+      valid: this.ngForm.form.valid,
+      errors: getAllFormErrors(this.ngForm.form),
+    };
+  }
   public readonly ngForm = inject(NgForm, { self: true, optional: false });
   private readonly destroyRef = inject(DestroyRef);
 
@@ -67,7 +78,7 @@ export class FormDirective<T extends Record<string, any>>
   public readonly suite = input<StaticSuite<
     string,
     string,
-    (model: T, field: string) => void
+    (model: T, field?: string) => void
   > | null>(null);
 
   /**
@@ -189,11 +200,9 @@ export class FormDirective<T extends Record<string, any>>
   /**
    * Used to debounce formValues to make sure vest isn't triggered all the time
    */
+  // Async validator cache for debouncing and single-flight per field
   private readonly formValueCache: {
-    [field: string]: Partial<{
-      sub$$: ReplaySubject<unknown>;
-      debounced: Observable<any>;
-    }>;
+    [field: string]: ReplaySubject<T>;
   } = {};
 
   private readonly validationInProgress = new Set<string>();
@@ -203,8 +212,9 @@ export class FormDirective<T extends Record<string, any>>
      * Trigger shape validations if the form gets updated
      * This is how we can throw run-time errors
      */
-    this.formValueChange.subscribe((v) => {
-      if (this.formShape()) {
+    effect(() => {
+      const v = this.formValue();
+      if (v && this.formShape()) {
         validateShape(v, this.formShape() as DeepRequired<T>);
       }
     });
@@ -349,42 +359,135 @@ export class FormDirective<T extends Record<string, any>>
    * @param validationOptions
    * @returns an asynchronous validator function
    */
+  /**
+   * Improved async validator: composable, debounced, robust error handling.
+   * Compatible with v2 pattern, non-breaking.
+   */
   public createAsyncValidator(
     field: string,
     validationOptions: ValidationOptions
   ): AsyncValidatorFn {
-    if (!this.suite()) {
-      return () => of(null);
-    }
     return (value: any) => {
-      if (!this.formValue()) {
+      const suite = this.suite();
+      const formValue = this.formValue();
+      if (!suite || !formValue) {
         return of(null);
       }
-      const mod = cloneDeep(this.formValue() as T);
-      set(mod as object, field, value); // Update the property with path
-      if (!this.formValueCache[field]) {
-        this.formValueCache[field] = {
-          sub$$: new ReplaySubject(1), // Keep track of the last model
-        };
-        this.formValueCache[field].debounced = this.formValueCache[
-          field
-        ].sub$$!.pipe(debounceTime(validationOptions.debounceTime));
-      }
-      // Next the latest model in the cache for a certain field
-      this.formValueCache[field].sub$$!.next(mod);
 
-      return this.formValueCache[field].debounced!.pipe(
-        // When debounced, take the latest value and perform the asynchronous vest validation
+      const candidate = cloneDeep(formValue as T);
+      set(candidate as object, field, value);
+
+      if (!this.formValueCache[field]) {
+        this.formValueCache[field] = new ReplaySubject<T>(1);
+      }
+
+      const subject = this.formValueCache[field];
+      subject.next(candidate);
+
+      const debounceMs = validationOptions?.debounceTime ?? 0;
+
+      return subject.pipe(
+        debounceTime(debounceMs),
         take(1),
-        switchMap(() => {
-          return new Observable((observer) => {
-            this.suite()!(mod, field).done((result) => {
-              const errors = result.getErrors()[field];
-              observer.next(errors ? { error: errors[0], errors } : null);
+        switchMap((model) => {
+          if (isDevMode()) {
+            console.debug(
+              '[ngx-vest-forms] Running suite for field',
+              field,
+              'with model',
+              model
+            );
+          }
+
+          return new Observable<ValidationErrors | null>((observer) => {
+            const emitResult = (vestResult: any) => {
+              const pushResult = () => {
+                try {
+                  let errors: unknown;
+                  if (typeof vestResult?.getErrors === 'function') {
+                    const direct = vestResult.getErrors(field);
+                    if (Array.isArray(direct)) {
+                      errors = direct;
+                    } else {
+                      const bag = vestResult.getErrors();
+                      errors = bag?.[field];
+                    }
+                  }
+
+                  if (isDevMode()) {
+                    console.debug(
+                      '[ngx-vest-forms] Final result errors for field',
+                      field,
+                      errors
+                    );
+                  }
+
+                  if (Array.isArray(errors) && errors.length > 0) {
+                    observer.next({ error: errors[0], errors });
+                  } else {
+                    observer.next(null);
+                  }
+                } catch (error) {
+                  observer.next({
+                    vestInternalError:
+                      error instanceof Error
+                        ? error.message
+                        : 'Unknown validation error',
+                  });
+                } finally {
+                  observer.complete();
+                }
+              };
+
+              if (typeof queueMicrotask === 'function') {
+                queueMicrotask(pushResult);
+              } else {
+                setTimeout(pushResult, 0);
+              }
+            };
+
+            let suiteResult: any;
+            try {
+              suiteResult = suite(model, field);
+            } catch (error) {
+              observer.next({
+                vestInternalError:
+                  error instanceof Error
+                    ? error.message
+                    : 'Unknown validation error',
+              });
               observer.complete();
-            });
-          }) as Observable<ValidationErrors | null>;
+              return;
+            }
+
+            if (isDevMode()) {
+              console.debug('[ngx-vest-forms] Suite returned', suiteResult);
+            }
+
+            const doneFn = suiteResult?.done;
+            if (typeof doneFn === 'function') {
+              try {
+                doneFn.call(suiteResult, emitResult);
+              } catch (error) {
+                observer.next({
+                  vestInternalError:
+                    error instanceof Error
+                      ? error.message
+                      : 'Unknown validation error',
+                });
+                observer.complete();
+              }
+            } else {
+              emitResult(suiteResult);
+            }
+          });
         }),
+        catchError((err) =>
+          of({
+            vestInternalError:
+              (err as Error)?.message || 'Unknown validation error',
+          })
+        ),
         takeUntilDestroyed(this.destroyRef)
       );
     };
