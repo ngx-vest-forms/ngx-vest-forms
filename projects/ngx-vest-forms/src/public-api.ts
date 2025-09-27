@@ -1,3 +1,6 @@
+export { FormCompatibleDeepRequired } from './lib/utils/deep-required';
+export { FormControlStateDirective } from './lib/directives/form-control-state.directive';
+export { FormErrorDisplayDirective } from './lib/directives/form-error-display.directive';
 /*
  * Public API Surface of ngx-vest-forms
  */
