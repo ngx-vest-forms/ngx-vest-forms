@@ -1,0 +1,23 @@
+{
+  "name": "ngx-vest-forms-schemas",
+  "version": "0.0.0-development",
+  "description": "Schema utilities for ngx-vest-forms",
+  "keywords": [
+    "angular",
+    "forms",
+    "validation",
+    "vest",
+    "schemas",
+    "zod",
+    "arktype",
+    "valibot"
+  ],
+  "peerDependencies": {
+    "@angular/common": "^19.0.0",
+    "@angular/core": "^19.0.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "sideEffects": false
+}
