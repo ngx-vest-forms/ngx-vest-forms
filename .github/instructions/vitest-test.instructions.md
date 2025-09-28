@@ -11,7 +11,9 @@ applyTo: "projects/**/*.{spec,test}.{ts,tsx,js,jsx}"
 - Do not make up tests for non-existent APIs or features.
 - Prefer user-facing behavior over implementation details.
 - Use strict typing and modern Angular best practices.
-- Prefer fakes over mocks.
+- Prefer reusable, type-safe fakes over ad-hoc mocks (see [Fake It Till You Mock It](https://cookbook.marmicode.io/angular/testing/fake-it-till-you-mock-it)).
+  - Share a single fake per dependency and keep it beside the real service (or under `tests/mocks/`) so suites reuse the same behavior contract.
+  - Make fakes explicit: throw whenever a test hits an unsupported method or field instead of returning `undefined`.
 - Always await `TestBed.inject(ApplicationRef).whenStable()` for async Angular tests.
 - Write tests for actual, user-visible behavior only. Do not invent tests for APIs or code that do not exist.
 - Always start with analysis of the current code and, documentation, and intent.
@@ -43,9 +45,16 @@ applyTo: "projects/**/*.{spec,test}.{ts,tsx,js,jsx}"
 - No Angular TestBed or DOM required.
 - Use direct function calls and assertions.
 - Use `vi.mock()` for mocking dependencies.
-- Prefer fakes over mocks/stubs for services you own (see [Fake It Till You Mock It](https://cookbook.marmicode.io/angular/fake-it-till-you-mock-it)).
-- Fakes should be type-safe, maintain internal state, and throw on unhandled calls.
+- Prefer fakes over mocks/stubs for services you own (see [Fake It Till You Mock It](https://cookbook.marmicode.io/angular/testing/fake-it-till-you-mock-it)).
+- Fakes should expose minimal configuration/state helpers, stay type-safe, maintain internal state, and throw on unhandled calls to guard against stale expectations.
+- Assert behavior through the fake's public state instead of relying on `toHaveBeenCalled*` whenever possible.
 - Minimize the number of test doubles per test; only mock at the boundary of the SUT.
+
+### Designing Fakes (Marmicode playbook)
+- Define or derive the shared interface first so the fake mirrors the real contract.
+- Implement only the methods the test actually exercises; any unexpected call must throw (fail fast over silent `undefined`).
+- Provide light-weight helpers such as `configure` or `getState` so assertions focus on observable outcomes, not interaction trivia.
+- Reuse the same fake across suites—export it once rather than recreating ad-hoc stubs in each spec file.
 
 ## Component Testing (Vitest Browser + Angular Testing Library)
 - Use Vitest Browser UI for all component tests whenever possible.
