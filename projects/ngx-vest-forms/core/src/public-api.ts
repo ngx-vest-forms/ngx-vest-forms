@@ -29,6 +29,9 @@ export {
   getStrategyInfo,
 } from './lib/error-strategies';
 
+// Enhanced proxy functionality
+export { createEnhancedProxy } from './lib/enhanced-proxy';
+
 // Form arrays functionality
 export {
   arrayValidationHelpers,

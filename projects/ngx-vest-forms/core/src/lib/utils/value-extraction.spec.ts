@@ -4,6 +4,7 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
+import type { EventLike } from './value-extraction';
 import {
   createFieldSetter,
   deepClone,
@@ -25,16 +26,20 @@ describe('Value Extraction Utilities', () => {
 
     it('should extract value from input events', () => {
       const mockInputEvent = {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
         target: { value: 'input value' },
-      } as unknown as Event;
+      } as EventLike;
 
       expect(extractValueFromEventOrValue(mockInputEvent)).toBe('input value');
     });
 
     it('should extract value from select events', () => {
       const mockSelectEvent = {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
         target: { value: 'selected option' },
-      } as unknown as Event;
+      } as EventLike;
 
       expect(extractValueFromEventOrValue(mockSelectEvent)).toBe(
         'selected option',
@@ -43,43 +48,56 @@ describe('Value Extraction Utilities', () => {
 
     it('should extract checked state from checkbox events', () => {
       const mockCheckboxEvent = {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
         target: {
           type: 'checkbox',
           checked: true,
         },
-      } as unknown as Event;
+      } as EventLike;
 
       expect(extractValueFromEventOrValue(mockCheckboxEvent)).toBe(true);
 
       const uncheckedEvent = {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
         target: {
           type: 'checkbox',
           checked: false,
         },
-      } as unknown as Event;
+      } as EventLike;
 
       expect(extractValueFromEventOrValue(uncheckedEvent)).toBe(false);
     });
 
     it('should extract value from checked radio events', () => {
       const mockRadioEvent = {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
         target: {
           type: 'radio',
           checked: true,
           value: 'radio-value',
         },
-      } as unknown as Event;
+      } as EventLike;
 
       expect(extractValueFromEventOrValue(mockRadioEvent)).toBe('radio-value');
     });
 
     it('should handle events without target', () => {
-      const mockEvent = {} as Event;
+      const mockEvent = {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      } as EventLike;
       expect(extractValueFromEventOrValue(mockEvent)).toBeUndefined();
     });
 
     it('should handle events with null target', () => {
-      const mockEvent = { target: null } as unknown as Event;
+      const mockEvent = {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+        target: null,
+      } as EventLike;
       expect(extractValueFromEventOrValue(mockEvent)).toBeUndefined();
     });
 
@@ -91,7 +109,7 @@ describe('Value Extraction Utilities', () => {
         target: { value: 'event-like' },
         preventDefault: vi.fn(),
         stopPropagation: vi.fn(),
-      } as unknown as Event;
+      } as EventLike;
       expect(extractValueFromEventOrValue(eventLikeObject)).toBe('event-like');
     });
   });
@@ -99,32 +117,53 @@ describe('Value Extraction Utilities', () => {
   describe('extractValueFromEvent', () => {
     it('should extract value from standard input event', () => {
       const mockEvent = {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
         target: { value: 'extracted value' },
-      } as unknown as Event;
+      };
 
-      expect(extractValueFromEvent(mockEvent)).toBe('extracted value');
+      // @ts-expect-error - mock event target is not a full EventTarget implementation
+      expect(extractValueFromEvent(mockEvent as unknown as EventLike)).toBe(
+        'extracted value',
+      );
     });
 
     it('should extract numeric values as strings', () => {
       const mockEvent = {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
         target: { value: '123' },
-      } as unknown as Event;
+      };
 
-      expect(extractValueFromEvent(mockEvent)).toBe('123');
+      // @ts-expect-error - mock event target is not a full EventTarget implementation
+      expect(extractValueFromEvent(mockEvent as unknown as EventLike)).toBe(
+        '123',
+      );
     });
 
     it('should handle missing target gracefully', () => {
-      const mockEvent = {} as Event;
-      expect(extractValueFromEvent(mockEvent)).toBeUndefined();
+      const mockEvent = {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      };
+      // @ts-expect-error - mock event target is not a full EventTarget implementation
+      expect(
+        extractValueFromEvent(mockEvent as unknown as EventLike),
+      ).toBeUndefined();
     });
 
     it('should handle currentTarget as fallback', () => {
       const mockEvent = {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
         target: null,
         currentTarget: { value: 'fallback value' },
-      } as unknown as Event;
+      };
 
-      expect(extractValueFromEvent(mockEvent)).toBe('fallback value');
+      // @ts-expect-error - mock event target is not a full EventTarget implementation
+      expect(extractValueFromEvent(mockEvent as unknown as EventLike)).toBe(
+        'fallback value',
+      );
     });
   });
 
@@ -185,8 +224,10 @@ describe('Value Extraction Utilities', () => {
       const setter = createFieldSetter(mockCallback);
 
       const mockEvent = {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
         target: { value: 'event value' },
-      } as unknown as Event;
+      } as EventLike;
 
       setter(mockEvent);
 
@@ -198,11 +239,13 @@ describe('Value Extraction Utilities', () => {
       const setter = createFieldSetter(mockCallback);
 
       const checkboxEvent = {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
         target: {
           type: 'checkbox',
           checked: true,
         },
-      } as unknown as Event;
+      } as EventLike;
 
       setter(checkboxEvent);
 
@@ -279,8 +322,16 @@ describe('Value Extraction Utilities', () => {
     });
 
     it('should clone arrays deeply', () => {
-      const original = [1, 2, [3, 4, [5, 6]]];
-      const cloned = deepClone(original);
+      const original: [number, number, [number, number, number[]]] = [
+        1,
+        2,
+        [3, 4, [5, 6]],
+      ];
+      const cloned = deepClone(original) as [
+        number,
+        number,
+        [number, number, number[]],
+      ];
 
       expect(cloned).toEqual(original);
       expect(cloned).not.toBe(original);
@@ -309,7 +360,24 @@ describe('Value Extraction Utilities', () => {
     });
 
     it('should handle complex nested structures', () => {
-      const original = {
+      type ComplexModel = {
+        users: {
+          name: string;
+          profile: { age: number; skills: string[] };
+        }[];
+        metadata: {
+          created: Date;
+          settings: {
+            theme: string;
+            notifications: {
+              email: boolean;
+              push: boolean;
+            };
+          };
+        };
+      };
+
+      const original: ComplexModel = {
         users: [
           { name: 'John', profile: { age: 30, skills: ['js', 'ts'] } },
           { name: 'Jane', profile: { age: 25, skills: ['python', 'go'] } },
@@ -325,7 +393,7 @@ describe('Value Extraction Utilities', () => {
           },
         },
       };
-      const cloned = deepClone(original);
+      const cloned = deepClone(original) as ComplexModel;
 
       expect(cloned).toEqual(original);
       expect(cloned.users).not.toBe(original.users);
@@ -356,13 +424,18 @@ describe('Value Extraction Utilities', () => {
     });
 
     it('should handle circular references gracefully', () => {
-      const circular: Record<string, unknown> = { name: 'test' };
+      type Circular = {
+        name: string;
+        self?: Circular;
+      };
+
+      const circular: Circular = { name: 'test' };
       circular.self = circular;
 
       // Should not cause infinite loop
       expect(() => deepClone(circular)).not.toThrow();
 
-      const cloned = deepClone(circular) as Record<string, unknown>;
+      const cloned = deepClone(circular) as Circular;
       expect(cloned.name).toBe('test');
       expect(cloned.self).toBe(cloned); // Circular reference preserved
     });
@@ -376,7 +449,7 @@ describe('Value Extraction Utilities', () => {
           alsoUndefined: undefined,
         },
       };
-      const cloned = deepClone(original);
+      const cloned = deepClone(original) as typeof original;
 
       expect(cloned.nullValue).toBeNull();
       expect(cloned.undefinedValue).toBeUndefined();
@@ -393,7 +466,7 @@ describe('Value Extraction Utilities', () => {
       }
 
       const instance = new TestClass();
-      const cloned = deepClone(instance);
+      const cloned = deepClone(instance) as TestClass;
 
       expect(cloned.name).toBe('test');
       expect(cloned.getValue()).toBe('test');
@@ -405,11 +478,13 @@ describe('Value Extraction Utilities', () => {
   describe('Edge Cases and Integration', () => {
     it('should handle file input events', () => {
       const mockFileEvent = {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
         target: {
           type: 'file',
           files: [new File(['content'], 'test.txt')],
         },
-      } as unknown as Event;
+      } as EventLike;
 
       const extracted = extractValueFromEventOrValue(mockFileEvent);
       expect(extracted).toBeInstanceOf(FileList);
@@ -417,22 +492,26 @@ describe('Value Extraction Utilities', () => {
 
     it('should handle range input events', () => {
       const mockRangeEvent = {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
         target: {
           type: 'range',
           value: '50',
         },
-      } as unknown as Event;
+      } as EventLike;
 
       expect(extractValueFromEventOrValue(mockRangeEvent)).toBe('50');
     });
 
     it('should handle custom events with data', () => {
       const customEvent = {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
         target: {
           dataset: { value: 'custom-data' },
           value: 'regular-value',
         },
-      } as unknown as Event;
+      } as EventLike;
 
       expect(extractValueFromEventOrValue(customEvent)).toBe('regular-value');
     });
@@ -447,13 +526,17 @@ describe('Value Extraction Utilities', () => {
       setter(true);
 
       const inputEvent = {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
         target: { value: 'from input' },
-      } as unknown as Event;
+      } as EventLike;
       setter(inputEvent);
 
       const checkboxEvent = {
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
         target: { type: 'checkbox', checked: false },
-      } as unknown as Event;
+      } as EventLike;
       setter(checkboxEvent);
 
       expect(values).toEqual(['direct string', 42, true, 'from input', false]);

@@ -4,7 +4,9 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import type { Path } from '../vest-form.types';
 import {
+  PathAccessError,
   deleteValueByPath,
   getAllPaths,
   getValueByPath,
@@ -109,9 +111,9 @@ describe('Path Utilities', () => {
 
     it('should handle empty and invalid path formats', () => {
       expect(getValueByPath(testData, '')).toBe(testData);
-      expect(getValueByPath(testData, '.')).toBeUndefined();
-      expect(getValueByPath(testData, '..')).toBeUndefined();
-      expect(getValueByPath(testData, 'name.')).toBeUndefined();
+      expect(() => getValueByPath(testData, '.')).toThrow(PathAccessError);
+      expect(() => getValueByPath(testData, '..')).toThrow(PathAccessError);
+      expect(() => getValueByPath(testData, 'name.')).toThrow(PathAccessError);
     });
 
     it('should handle numeric string paths for arrays', () => {
@@ -208,6 +210,12 @@ describe('Path Utilities', () => {
       expect(result).toEqual({ a: 10, b: 2 });
       expect(simple).toEqual({ a: 1, b: 2 }); // Original unchanged
     });
+
+    it('should throw when traversing through non-object segments', () => {
+      expect(() => setValueByPath({ foo: 'bar' }, 'foo.bar', 'baz')).toThrow(
+        PathAccessError,
+      );
+    });
   });
 
   describe('deleteValueByPath', () => {
@@ -239,10 +247,16 @@ describe('Path Utilities', () => {
     });
 
     it('should handle deletion of non-existent paths gracefully', () => {
-      const result = deleteValueByPath(testData, 'nonexistent');
+      const result = deleteValueByPath(
+        testData,
+        'nonexistent' as unknown as Path<typeof testData>,
+      );
       expect(result).toEqual(testData);
 
-      const result2 = deleteValueByPath(testData, 'profile.nonexistent');
+      const result2 = deleteValueByPath(
+        testData,
+        'profile.nonexistent' as unknown as Path<typeof testData>,
+      );
       expect(result2.profile).toEqual(testData.profile);
     });
 
@@ -274,14 +288,26 @@ describe('Path Utilities', () => {
     });
 
     it('should return false for non-existent paths', () => {
-      expect(hasPath(testData, 'nonexistent')).toBe(false);
-      expect(hasPath(testData, 'profile.nonexistent')).toBe(false);
+      expect(
+        hasPath(testData, 'nonexistent' as unknown as Path<typeof testData>),
+      ).toBe(false);
+      expect(
+        hasPath(
+          testData,
+          'profile.nonexistent' as unknown as Path<typeof testData>,
+        ),
+      ).toBe(false);
       expect(hasPath(testData, 'profile.skills.999')).toBe(false);
     });
 
     it('should handle null values correctly', () => {
       expect(hasPath(testData, 'metadata')).toBe(true); // null is still a value
-      expect(hasPath(testData, 'metadata.property')).toBe(false); // can't access properties of null
+      expect(
+        hasPath(
+          testData,
+          'metadata.property' as unknown as Path<typeof testData>,
+        ),
+      ).toBe(false); // can't access properties of null
     });
   });
 
@@ -388,20 +414,42 @@ describe('Path Utilities', () => {
 
     it('should handle empty and invalid inputs', () => {
       expect(normalizePath('')).toBe('');
-      expect(normalizePath('.')).toBe('');
-      expect(normalizePath('..')).toBe('');
+      expect(normalizePath('.')).toBeNull();
+      expect(normalizePath('..')).toBeNull();
     });
   });
 
   describe('Edge Cases', () => {
     it('should handle circular references gracefully', () => {
       const circular: Record<string, unknown> = { name: 'test' };
-      circular.self = circular;
+      circular['self'] = circular;
 
       // These should not cause infinite loops
       expect(() => getValueByPath(circular, 'name')).not.toThrow();
       expect(() => setValueByPath(circular, 'name', 'updated')).not.toThrow();
       expect(() => hasPath(circular, 'name')).not.toThrow();
+    });
+
+    it('should throw on non-object roots', () => {
+      expect(() =>
+        getValueByPath(
+          'not-an-object' as unknown as Record<string, unknown>,
+          'a',
+        ),
+      ).toThrow(PathAccessError);
+      expect(() =>
+        setValueByPath(
+          'not-an-object' as unknown as Record<string, unknown>,
+          'a',
+          1,
+        ),
+      ).toThrow(PathAccessError);
+      expect(() =>
+        deleteValueByPath(
+          'not-an-object' as unknown as Record<string, unknown>,
+          'a' as unknown as Path<Record<string, unknown>>,
+        ),
+      ).toThrow(PathAccessError);
     });
 
     it('should handle very deep nesting', () => {

@@ -20,11 +20,13 @@ export function computeShowErrors(
   fieldName: string,
   strategy: ErrorDisplayStrategy,
   hasSubmitted: Signal<boolean>,
+  fieldTouched?: Signal<boolean>,
 ): Signal<boolean> {
   return computed(() => {
     const currentResult = result();
     const hasErrors = currentResult.hasErrors(fieldName);
     const isTested = currentResult.isTested(fieldName);
+    const touched = fieldTouched ? fieldTouched() : isTested;
     const isSubmitted = hasSubmitted();
 
     if (!hasErrors) {
@@ -39,7 +41,7 @@ export function computeShowErrors(
 
       case 'on-touch': {
         // Show errors only after field has been tested (touched)
-        return isTested && hasErrors;
+        return touched && hasErrors;
       }
 
       case 'on-submit': {
@@ -54,7 +56,7 @@ export function computeShowErrors(
 
       default: {
         // Default to 'on-touch' behavior
-        return isTested && hasErrors;
+        return touched && hasErrors;
       }
     }
   });

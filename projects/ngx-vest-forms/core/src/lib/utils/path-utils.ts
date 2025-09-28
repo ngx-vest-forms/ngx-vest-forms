@@ -1,40 +1,145 @@
 /**
- * Path utilities for accessing and manipulating nested object properties
- * Framework-agnostic utility functions for dot-notation path access
+ * Path utilities for accessing and manipulating nested object properties.
+ *
+ * These helpers provide the runtime counterpart to the static types exported by
+ * `ts-essentials`. They normalise incoming paths, preserve immutability, and
+ * surface rich error information so that higher-level consumers (e.g.
+ * `createVestForm`) can safely manage deeply nested form models without
+ * sprinkling defensive checks everywhere.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { Path, PathValue } from '../vest-form.types';
 
 /**
- * Get a value from an object using dot notation path
- * @param object - The object to access
- * @param path - Dot-notation path (e.g., 'user.profile.name')
- * @returns The value at the path, or undefined if not found
+ * Error codes returned by {@link PathAccessError} so callers can pattern match
+ * without relying on string parsing.
  */
-export function getValueByPath<T = any>(
-  object: any,
+export type PathAccessErrorCode =
+  | 'invalid-path'
+  | 'non-object-root'
+  | 'missing-intermediate';
+
+/**
+ * Custom error thrown by the path utilities whenever a caller supplies an
+ * invalid path or tries to traverse through a non-object segment. This keeps
+ * the runtime fail-fast and makes debugging significantly easier because we
+ * can surface the exact failing segment.
+ */
+export class PathAccessError extends Error {
+  readonly code: PathAccessErrorCode;
+  readonly path: string;
+
+  constructor(code: PathAccessErrorCode, path: string, message: string) {
+    super(message);
+    this.name = 'PathAccessError';
+    this.code = code;
+    this.path = path;
+  }
+}
+
+/**
+ * Type guard to check if a value is a non-null object
+ */
+function isObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object';
+}
+
+/**
+ * Type guard to check if a string represents a numeric array index
+ */
+function isNumericString(value: string): boolean {
+  return /^\d+$/.test(value);
+}
+
+/**
+ * Normalises a user supplied path and throws a descriptive error when the path
+ * is malformed. Returning early keeps the public helpers focused on the happy
+ * path logic while providing consistent failure semantics.
+ */
+function normaliseOrThrow(path: string): string {
+  const trimmed = path.trim();
+
+  if (
+    trimmed.length === 0 ||
+    trimmed.startsWith('.') ||
+    trimmed.endsWith('.') ||
+    trimmed.includes('..')
+  ) {
+    throw new PathAccessError(
+      'invalid-path',
+      path,
+      `The provided path "${path}" cannot be normalised. Ensure it contains ` +
+        'only dot-separated identifiers and optional numeric array indices.',
+    );
+  }
+
+  const normalised = normalizePath(trimmed);
+
+  if (normalised === null) {
+    throw new PathAccessError(
+      'invalid-path',
+      path,
+      `The provided path "${path}" cannot be normalised. Ensure it contains ` +
+        'only dot-separated identifiers and optional numeric array indices.',
+    );
+  }
+
+  return normalised;
+}
+
+/**
+ * Retrieves the value located at the provided path.
+ *
+ * @param object - Source object to traverse.
+ * @param path - Dot-notation path (typed via {@link Path}) or string input.
+ * @returns The located value or `undefined` when the path does not exist.
+ * @throws {@link PathAccessError} when the path cannot be normalised.
+ */
+export function getValueByPath<
+  TModel extends Record<string, unknown>,
+  P extends Path<TModel>,
+>(object: TModel, path: P): PathValue<TModel, P> | undefined;
+export function getValueByPath<T = unknown>(
+  object: object,
   path: string,
-): T | undefined {
-  if (!object || typeof object !== 'object' || !path) {
-    return undefined;
+): T | undefined;
+export function getValueByPath<
+  TModel extends Record<string, unknown>,
+  P extends Path<TModel>,
+>(
+  object: TModel | object,
+  path: P | string,
+): PathValue<TModel, P> | unknown | undefined {
+  if (!isObject(object)) {
+    throw new PathAccessError(
+      'non-object-root',
+      String(path),
+      'Cannot access a path on a non-object root value.',
+    );
   }
 
-  // Handle simple property access
-  if (!path.includes('.')) {
-    return object[path];
+  if (!path || path === '') {
+    return object as PathValue<TModel, P> | unknown;
   }
 
-  // Handle nested property access
-  const keys = path.split('.');
-  let current = object;
+  const normalisedPath = normaliseOrThrow(String(path));
+
+  if (!normalisedPath.includes('.')) {
+    return (object as Record<string, unknown>)[normalisedPath] as
+      | PathValue<TModel, P>
+      | unknown
+      | undefined;
+  }
+
+  const keys = normalisedPath.split('.');
+  let current: unknown = object as Record<string, unknown>;
 
   for (const key of keys) {
-    if (current == null || typeof current !== 'object') {
+    if (!isObject(current)) {
       return undefined;
     }
 
-    // Handle array indices
-    if (Array.isArray(current) && /^\d+$/.test(key)) {
+    if (Array.isArray(current) && isNumericString(key)) {
       const index = Number.parseInt(key, 10);
       current = current[index];
     } else {
@@ -42,165 +147,247 @@ export function getValueByPath<T = any>(
     }
   }
 
-  return current;
+  return current as PathValue<TModel, P> | unknown | undefined;
 }
 
 /**
- * Set a value in an object using dot notation path
- * Creates a new object with the updated value (immutable)
- * @param obj - The object to update
- * @param path - Dot-notation path (e.g., 'user.profile.name')
- * @param value - The value to set
- * @returns A new object with the updated value
+ * Returns a new object with the value at the provided path replaced.
+ *
+ * @param object - The original immutable value.
+ * @param path - Dot-notation path to update.
+ * @param value - Replacement value.
+ * @returns A shallow-cloned structure containing the new value.
+ * @throws {@link PathAccessError} when the path cannot be normalised or when a
+ *         traversal encounters a non-object intermediate segment.
  */
-export function setValueByPath(object: any, path: string, value: any): any {
-  if (!path) {
-    return object;
+export function setValueByPath<
+  TModel extends Record<string, unknown>,
+  P extends Path<TModel>,
+>(object: TModel, path: P, value: PathValue<TModel, P>): TModel;
+export function setValueByPath<T extends object>(
+  object: T,
+  path: string,
+  value: unknown,
+): T;
+export function setValueByPath<
+  TModel extends Record<string, unknown>,
+  P extends Path<TModel>,
+>(
+  object: TModel | object,
+  path: P | string,
+  value: PathValue<TModel, P> | unknown,
+): TModel {
+  if (!isObject(object)) {
+    throw new PathAccessError(
+      'non-object-root',
+      String(path),
+      'Cannot set a path on a non-object root value.',
+    );
   }
 
-  // Handle simple property access
-  if (!path.includes('.')) {
-    return { ...object, [path]: value };
+  if (!path || path === '') {
+    return (
+      typeof value === 'object' && value !== null ? value : object
+    ) as TModel;
   }
 
-  // Handle nested property access
-  const keys = path.split('.');
-  const result = Array.isArray(object) ? [...object] : { ...object };
-  let current = result;
+  const normalisedPath = normaliseOrThrow(String(path));
+
+  if (!normalisedPath.includes('.')) {
+    // Preserve prototype chain for simple property updates
+    const result = Array.isArray(object)
+      ? [...object]
+      : Object.create(
+          Object.getPrototypeOf(object),
+          Object.getOwnPropertyDescriptors(object),
+        );
+    (result as Record<string, unknown>)[normalisedPath] = value;
+    return result as TModel;
+  }
+
+  const keys = normalisedPath.split('.');
+
+  // Preserve the prototype chain when cloning
+  const result = Array.isArray(object)
+    ? [...(object as unknown[])]
+    : Object.create(
+        Object.getPrototypeOf(object),
+        Object.getOwnPropertyDescriptors(object),
+      );
+
+  let current: Record<string, unknown> = result as Record<string, unknown>;
 
   for (let index = 0; index < keys.length - 1; index++) {
     const key = keys[index];
     const nextKey = keys[index + 1];
 
-    // Create nested structure if it doesn't exist
-    if (current[key] == null || typeof current[key] !== 'object') {
-      // Determine if next level should be an array
-      const isNextArray = /^\d+$/.test(nextKey);
+    const existing = current[key];
+
+    if (existing == null) {
+      const isNextArray = isNumericString(nextKey);
       current[key] = isNextArray ? [] : {};
+    } else if (isObject(existing)) {
+      current[key] = Array.isArray(existing)
+        ? [...(existing as unknown[])]
+        : { ...(existing as Record<string, unknown>) };
     } else {
-      // Clone existing nested object/array
-      current[key] = Array.isArray(current[key])
-        ? [...current[key]]
-        : { ...current[key] };
+      throw new PathAccessError(
+        'missing-intermediate',
+        normalisedPath,
+        `Encountered a non-object value while traversing "${normalisedPath}" at segment "${key}".`,
+      );
     }
 
-    current = current[key];
+    current = current[key] as Record<string, unknown>;
   }
 
-  // Set the final value
   const finalKey = keys.at(-1);
   if (!finalKey) {
-    return result;
+    return result as TModel;
   }
 
-  if (Array.isArray(current) && /^\d+$/.test(finalKey)) {
+  if (Array.isArray(current) && isNumericString(finalKey)) {
     const index = Number.parseInt(finalKey, 10);
-    current[index] = value;
+    (current as unknown[])[index] = value;
   } else {
     current[finalKey] = value;
   }
 
-  return result;
+  return result as TModel;
 }
 
 /**
- * Delete a value from an object using dot notation path
- * Creates a new object with the property removed (immutable)
- * @param obj - The object to update
- * @param path - Dot-notation path (e.g., 'user.profile.name')
- * @returns A new object with the property removed
+ * Delete a value from an object using type-safe dot notation path
  */
-export function deleteValueByPath(object: any, path: string): any {
-  if (!path || !object) {
+/**
+ * Removes a value at the provided path while returning a new immutable copy.
+ * Unlike {@link setValueByPath}, missing paths simply return the original
+ * object so callers can perform idempotent deletions.
+ */
+export function deleteValueByPath<
+  TModel extends Record<string, unknown>,
+  P extends Path<TModel>,
+>(object: TModel, path: P): TModel {
+  if (!isObject(object)) {
+    throw new PathAccessError(
+      'non-object-root',
+      String(path),
+      'Cannot delete a path on a non-object root value.',
+    );
+  }
+
+  if (!path) {
     return object;
   }
 
-  // Handle simple property access
-  if (!path.includes('.')) {
-    const { [path]: _deleted, ...rest } = object;
-    return rest;
+  const normalisedPath = normaliseOrThrow(String(path));
+
+  if (!normalisedPath.includes('.')) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { [normalisedPath]: _deleted, ...rest } = object;
+    return rest as TModel;
   }
 
-  // Handle nested property access
-  const keys = path.split('.');
+  const keys = normalisedPath.split('.');
   const result = Array.isArray(object) ? [...object] : { ...object };
-  let current = result;
+  let current: Record<string, unknown> = result as Record<string, unknown>;
 
   // Navigate to parent of target property
   for (let index = 0; index < keys.length - 1; index++) {
     const key = keys[index];
 
-    if (current[key] == null || typeof current[key] !== 'object') {
-      return result; // Path doesn't exist, return unchanged
+    if (!isObject(current[key])) {
+      return object; // Path doesn't exist
     }
 
-    // Clone nested object/array
+    // Clone the nested object/array
     current[key] = Array.isArray(current[key])
-      ? [...current[key]]
-      : { ...current[key] };
+      ? [...(current[key] as unknown[])]
+      : { ...(current[key] as Record<string, unknown>) };
 
-    current = current[key];
+    current = current[key] as Record<string, unknown>;
   }
 
   // Delete the final property
   const finalKey = keys.at(-1);
-  if (!finalKey) {
-    return result;
+  if (finalKey && Object.prototype.hasOwnProperty.call(current, finalKey)) {
+    if (Array.isArray(current) && isNumericString(finalKey)) {
+      (current as unknown[]).splice(Number.parseInt(finalKey, 10), 1);
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+      delete current[finalKey];
+    }
   }
 
-  if (Array.isArray(current) && /^\d+$/.test(finalKey)) {
-    const index = Number.parseInt(finalKey, 10);
-    current.splice(index, 1);
-  } else {
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-    delete current[finalKey];
-  }
-
-  return result;
+  return result as TModel;
 }
 
 /**
- * Check if a path exists in an object
- * @param obj - The object to check
- * @param path - Dot-notation path (e.g., 'user.profile.name')
- * @returns True if the path exists
+ * Determines whether the supplied path resolves to a value on the object.
+ * Invalid paths are treated as `false` to keep the method side-effect free.
  */
-export function hasPath(object: any, path: string): boolean {
-  return getValueByPath(object, path) !== undefined;
+export function hasPath<
+  TModel extends Record<string, unknown>,
+  P extends Path<TModel>,
+>(object: TModel, path: P): boolean {
+  try {
+    return getValueByPath(object, path) !== undefined;
+  } catch (error: unknown) {
+    if (error instanceof PathAccessError) {
+      return false;
+    }
+    throw error;
+  }
 }
 
 /**
- * Get all paths in an object (flattened dot-notation paths)
- * @param obj - The object to analyze
- * @param prefix - Internal prefix for recursion
- * @returns Array of all paths in the object
+ * Returns every reachable dot-notation path within an object.
+ * Primarily used for testing and debugging in order to snapshot complex model
+ * structures.
  */
-export function getAllPaths(object: any, prefix = ''): string[] {
-  if (object == null || typeof object !== 'object') {
+export function getAllPaths(
+  object: Record<string, unknown>,
+  prefix = '',
+): string[] {
+  if (!isObject(object)) {
     return prefix ? [prefix] : [];
   }
 
   const paths: string[] = [];
+  const entries = Object.entries(object);
 
-  if (Array.isArray(object)) {
-    for (const [index, item] of object.entries()) {
-      const currentPath = prefix ? `${prefix}.${index}` : `${index}`;
-      paths.push(...getAllPaths(item, currentPath));
-    }
-  } else {
-    for (const key of Object.keys(object)) {
-      const currentPath = prefix ? `${prefix}.${key}` : key;
-      paths.push(...getAllPaths(object[key], currentPath));
+  // For empty objects, still add the path to the object itself if we have a prefix
+  if (entries.length === 0 && prefix) {
+    return [prefix];
+  }
+
+  for (const [key, value] of entries) {
+    const currentPath = prefix ? `${prefix}.${key}` : key;
+    paths.push(currentPath);
+
+    if (Array.isArray(value)) {
+      // Don't add paths for empty arrays, but do add paths for their items
+      if (value.length > 0) {
+        for (const [index, item] of value.entries()) {
+          const indexPath = `${currentPath}.${index}`;
+          paths.push(indexPath);
+          if (isObject(item)) {
+            paths.push(...getAllPaths(item, indexPath));
+          }
+        }
+      }
+    } else if (isObject(value) && Object.keys(value).length > 0) {
+      paths.push(...getAllPaths(value, currentPath));
     }
   }
 
-  return paths.length > 0 ? paths : prefix ? [prefix] : [];
+  return paths;
 }
 
 /**
- * Validate a dot-notation path format
- * @param path - The path to validate
- * @returns True if the path is valid
+ * Performs a lightweight validation of a potential path string.
+ * Returning `false` enables callers to present actionable error messages
+ * before attempting a modification that would otherwise throw.
  */
 export function isValidPath(path: string): boolean {
   if (typeof path !== 'string' || path.length === 0) {
@@ -215,23 +402,50 @@ export function isValidPath(path: string): boolean {
   // Validate each segment
   const segments = path.split('.');
   return segments.every((segment) => {
-    // Allow alphanumeric, underscore, and valid array indices
-    return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(segment) || /^\d+$/.test(segment);
+    // Allow alphanumeric, underscore, dash, dollar sign, and valid array indices
+    return (
+      /^[a-zA-Z_$-][a-zA-Z0-9_$-]*$/.test(segment) || /^\d+$/.test(segment)
+    );
   });
 }
 
 /**
- * Normalize a path by removing extra dots and validating format
- * @param path - The path to normalize
- * @returns Normalized path or null if invalid
+ * Normalises a path by converting bracket notation to dot notation and
+ * collapsing duplicate separators. Invalid inputs return `null` so callers can
+ * decide whether to recover or throw.
  */
 export function normalizePath(path: string): string | null {
-  if (!isValidPath(path)) {
+  if (typeof path !== 'string') {
     return null;
   }
 
-  return path
-    .split('.')
-    .filter((segment) => segment.length > 0)
-    .join('.');
+  const trimmed = path.trim();
+
+  if (trimmed.length === 0) {
+    return '';
+  }
+
+  // Convert array notation to dot notation
+  let normalized = trimmed.replaceAll(/\[(\d+)\]/g, '.$1');
+
+  // Clean up duplicate separators and trim leading/trailing dots
+  normalized = normalized
+    .replaceAll(/\.{2,}/g, '.')
+    .replaceAll(/^\.+|\.+$/g, '');
+
+  if (normalized === '') {
+    return trimmed.length === 0 ? '' : null;
+  }
+
+  const segments = normalized.split('.');
+  const isValidSegment = (segment: string) =>
+    /^[a-zA-Z_$-][a-zA-Z0-9_$-]*$/.test(segment) || /^\d+$/.test(segment);
+
+  if (
+    segments.some((segment) => segment.length === 0 || !isValidSegment(segment))
+  ) {
+    return null;
+  }
+
+  return segments.join('.');
 }

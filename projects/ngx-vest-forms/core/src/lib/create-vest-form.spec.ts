@@ -13,27 +13,29 @@ import type { VestFormOptions } from './vest-form.types';
  * Mock validation suite for testing
  * Tests email and password fields with various validation rules
  */
-const mockUserSuite = staticSuite((data = {}, field?: string) => {
-  if (field) {
-    only(field);
-  }
+function createMockSuite() {
+  return staticSuite((data = {}, field?: string) => {
+    if (field) {
+      only(field);
+    }
 
-  test('email', 'Email is required', () => {
-    enforce(data.email).isNotEmpty();
-  });
+    test('email', 'Email is required', () => {
+      enforce(data.email).isNotEmpty();
+    });
 
-  test('email', 'Email format is invalid', () => {
-    enforce(data.email).matches(/^[^@]+@[^@]+\.[^@]+$/);
-  });
+    test('email', 'Email format is invalid', () => {
+      enforce(data.email).matches(/^[^@]+@[^@]+\.[^@]+$/);
+    });
 
-  test('password', 'Password is required', () => {
-    enforce(data.password).isNotEmpty();
-  });
+    test('password', 'Password is required', () => {
+      enforce(data.password).isNotEmpty();
+    });
 
-  test('password', 'Password must be at least 8 characters', () => {
-    enforce(data.password).longerThanOrEquals(8);
+    test('password', 'Password must be at least 8 characters', () => {
+      enforce(data.password).longerThanOrEquals(8);
+    });
   });
-});
+}
 
 /**
  * Test model interface
@@ -48,11 +50,12 @@ type TestUserModel = {
 };
 
 describe('createVestForm', () => {
-  let mockSuite: typeof mockUserSuite;
+  let mockSuite: ReturnType<typeof createMockSuite>;
   let initialModel: TestUserModel;
 
   beforeEach(() => {
-    mockSuite = mockUserSuite;
+    (globalThis as Record<string, unknown>)['__VEST_DEBUG_REGISTRY__'] = true;
+    mockSuite = createMockSuite();
     initialModel = {
       email: '',
       password: '',
@@ -64,6 +67,7 @@ describe('createVestForm', () => {
   });
 
   afterEach(() => {
+    delete (globalThis as Record<string, unknown>)['__VEST_DEBUG_REGISTRY__'];
     vi.clearAllMocks();
   });
 
@@ -173,6 +177,8 @@ describe('createVestForm', () => {
       expect(form.email()).toBe('test@example.com');
       expect(form.password()).toBe('password123');
       expect(form.emailValid()).toBe(true);
+      expect(form.emailTouched()).toBe(true);
+      expect(form.passwordTouched()).toBe(true);
 
       // Touch fields
       form.touchEmail();
@@ -188,6 +194,8 @@ describe('createVestForm', () => {
       expect(form.email()).toBe('');
       expect(form.password()).toBe('');
       expect(form.emailValid()).toBe(false);
+      expect(form.emailTouched()).toBe(false);
+      expect(form.passwordTouched()).toBe(false);
     });
 
     it('should respect includeFields option', () => {
@@ -200,9 +208,8 @@ describe('createVestForm', () => {
       expect(typeof form.setEmail).toBe('function');
 
       // Password should not have enhanced API (only accessible via field())
-      // NOTE: Currently returning function - this indicates includeFields filtering needs fix
-      expect(typeof form.password).toBe('function'); // TEMPORARY: Adjusted to match current behavior
-      expect(typeof form.setPassword).toBe('function'); // TEMPORARY: Adjusted to match current behavior
+      expect(typeof form.password).toBe('undefined');
+      expect(typeof form.setPassword).toBe('undefined');
 
       // But should still be accessible via field()
       const passwordField = form.field('password');
@@ -219,9 +226,22 @@ describe('createVestForm', () => {
       expect(typeof form.setEmail).toBe('function');
 
       // Password should not have enhanced API
-      // NOTE: Currently returning function - this indicates excludeFields filtering needs fix
-      expect(typeof form.password).toBe('function'); // TEMPORARY: Adjusted to match current behavior
-      expect(typeof form.setPassword).toBe('function'); // TEMPORARY: Adjusted to match current behavior
+      expect(typeof form.password).toBe('undefined');
+      expect(typeof form.setPassword).toBe('undefined');
+    });
+
+    it('should support nested field access via camelCase properties', () => {
+      const form = createVestForm(mockSuite, initialModel);
+
+      expect(typeof form.profileName).toBe('function');
+      expect(typeof form.profileAge).toBe('function');
+      expect(form.profileName()).toBe('');
+      expect(form.profileAge()).toBe(0);
+
+      form.setProfileName('Jane');
+      form.setProfileAge(42);
+      expect(form.profileName()).toBe('Jane');
+      expect(form.profileAge()).toBe(42);
     });
   });
 
@@ -241,6 +261,8 @@ describe('createVestForm', () => {
       const form = createVestForm(mockSuite, initialModel);
 
       // Initially invalid (staticSuite runs validation immediately)
+      expect(form.emailErrors()).toContain('Email is required');
+      expect(form.result().getErrors('email')).toContain('Email is required');
       expect(form.emailValid()).toBe(false);
 
       // Set valid email

@@ -4,17 +4,26 @@
  */
 
 import type { Signal, WritableSignal } from '@angular/core';
+import type { PathValue, Paths as TsEssentialsPath } from 'ts-essentials';
 import type { SuiteResult } from 'vest';
+import type {
+  DerivedFieldMethodAccessors,
+  DerivedFieldSignalAccessors,
+} from './utils/derived-field.types';
 
 // Re-export path type utilities from ts-essentials for better type safety
 export type { Paths as Path, PathValue } from 'ts-essentials';
 
+type Path<TModel extends Record<string, unknown>> = TsEssentialsPath<TModel>;
+
 /**
- * Represents a Vest suite (either create or staticSuite)
+ * Represents a Vest suite (either create or staticSuite) with generic model typing
  */
-export type VestSuite = {
+export type VestSuite<
+  TModel extends Record<string, unknown> = Record<string, unknown>,
+> = {
   /** Run validation with data and optional field */
-  (data?: unknown, field?: string): SuiteResult<string, string>;
+  (data?: TModel, field?: Path<TModel>): SuiteResult<string, string>;
 
   /** Subscribe to validation changes (only for create suites) */
   subscribe?: (
@@ -28,7 +37,7 @@ export type VestSuite = {
   reset?: () => void;
 
   /** Reset a specific field (only for create suites) */
-  resetField?: (fieldName: string) => void;
+  resetField?: (fieldName: Path<TModel>) => void;
 };
 
 /**
@@ -185,15 +194,14 @@ export type VestForm<
   /** Whether the form has been submitted */
   hasSubmitted: Signal<boolean>;
 
-  /** Get field access for a specific path */
-  field<K extends keyof TModel>(path: K): VestField<TModel[K]>;
-  field(path: string): VestField<unknown>;
+  /** Get field access for a specific path with proper typing */
+  field<P extends Path<TModel>>(path: P): VestField<PathValue<TModel, P>>;
 
   /** Get array access for a specific path */
-  array(path: string): VestFormArray;
+  array<P extends Path<TModel>>(path: P): VestFormArray;
 
   /** Validate specific field or entire form */
-  validate(fieldPath?: string): void;
+  validate<P extends Path<TModel>>(fieldPath?: P): void;
 
   /** Submit form (runs full validation first) */
   submit(): Promise<TModel>;
@@ -202,7 +210,7 @@ export type VestForm<
   reset(): void;
 
   /** Reset specific field */
-  resetField(path: string): void;
+  resetField<P extends Path<TModel>>(path: P): void;
 
   /** Dispose of the form (cleanup subscriptions) */
   dispose(): void;
@@ -213,56 +221,6 @@ export type VestForm<
  * Provides convenient access to field operations without explicit field() calls
  */
 export type EnhancedVestForm<TModel extends Record<string, unknown>> =
-  VestForm<TModel> & {
-    // For each field K in TModel, generate:
-    // - K(): Signal<TModel[K]>                    // field value
-    // - `${K}Valid`(): Signal<boolean>           // field validity
-    // - `${K}Errors`(): Signal<string[]>        // field errors
-    // - `${K}Pending`(): Signal<boolean>        // field pending state
-    // - `${K}Touched`(): Signal<boolean>        // field touched state
-    // - `${K}ShowErrors`(): Signal<boolean>     // should show errors
-    // - `set${Capitalize<K>}`(value): void      // set field value
-    // - `touch${Capitalize<K>}`(): void         // touch field
-    // - `reset${Capitalize<K>}`(): void         // reset field
-  } & {
-    [K in keyof TModel as K extends string ? K : never]: Signal<TModel[K]>;
-  } & {
-    [K in keyof TModel as K extends string
-      ? `${K}Valid`
-      : never]: Signal<boolean>;
-  } & {
-    [K in keyof TModel as K extends string ? `${K}Errors` : never]: Signal<
-      string[]
-    >;
-  } & {
-    [K in keyof TModel as K extends string
-      ? `${K}Pending`
-      : never]: Signal<boolean>;
-  } & {
-    [K in keyof TModel as K extends string
-      ? `${K}Touched`
-      : never]: Signal<boolean>;
-  } & {
-    [K in keyof TModel as K extends string
-      ? `${K}ShowErrors`
-      : never]: Signal<boolean>;
-  } & {
-    [K in keyof TModel as K extends string
-      ? `set${Capitalize<string & K>}`
-      : never]: (value: TModel[K] | Event) => void;
-  } & {
-    [K in keyof TModel as K extends string
-      ? `touch${Capitalize<string & K>}`
-      : never]: () => void;
-  } & {
-    [K in keyof TModel as K extends string
-      ? `reset${Capitalize<string & K>}`
-      : never]: () => void;
-  };
-
-/**
- * Utility type to capitalize string literal types
- */
-type Capitalize<S extends string> = S extends `${infer F}${infer R}`
-  ? `${Uppercase<F>}${R}`
-  : S;
+  VestForm<TModel> &
+    DerivedFieldSignalAccessors<TModel> &
+    DerivedFieldMethodAccessors<TModel>;
