@@ -119,6 +119,70 @@ export interface VestForm<TModel> {
 }
 ```
 
+}
+
+### 1.2.1 Type Safety Implementation with ts-essentials
+
+**Core Type Infrastructure**:
+
+```typescript
+// vest-form.types.ts - Leveraging ts-essentials for path utilities
+export type { Paths as Path, PathValue } from 'ts-essentials';
+
+// Type-safe path access with automatic inference
+export type VestField<TValue> = {
+  value: Signal<TValue>;
+  errors: Signal<string[]>;
+  valid: Signal<boolean>;
+  // ... other field properties
+};
+
+// Enhanced Field Signals API with proper typing
+export type VestForm<TModel> = {
+  [K in keyof TModel as K extends string ? K : never]: Signal<TModel[K]>;
+} & {
+  [K in keyof TModel as K extends string
+    ? `${K}Valid`
+    : never]: Signal<boolean>;
+} & {
+  [K in keyof TModel as K extends string ? `${K}Errors` : never]: Signal<
+    string[]
+  >;
+} & {
+  [K in keyof TModel as K extends string ? `set${Capitalize<K>}` : never]: (
+    value: TModel[K] | Event,
+  ) => void;
+};
+```
+
+**Why ts-essentials Over Custom Implementation**:
+
+1. **Robust Path Type Generation**: Handles complex nested structures with proper array indexing
+2. **Edge Case Coverage**: Manages optional properties, undefined handling, and deep nesting
+3. **Performance Optimized**: Battle-tested type utilities with optimized compilation
+4. **Maintenance Free**: Zero custom type logic to debug or update
+5. **Ecosystem Compatibility**: Familiar API for developers using ts-essentials elsewhere
+
+**Implementation Benefits**:
+
+```typescript
+interface ComplexForm {
+  user: {
+    profile: { name: string; email?: string };
+    preferences: { theme: 'light' | 'dark' }[];
+  };
+}
+
+// Automatic path generation with ts-essentials
+type FormPaths = Path<ComplexForm>;
+// ^? 'user' | 'user.profile' | 'user.profile.name' | 'user.profile.email' |
+//    'user.preferences' | `user.preferences.${number}` | `user.preferences.${number}.theme`
+
+// Type-safe value extraction
+type UserEmail = PathValue<ComplexForm, 'user.profile.email'>;
+// ^? string | undefined (properly handles optional)
+```
+
 ### 1.3 Testing Strategy
 
 **Unit Tests (95% Coverage Target):**

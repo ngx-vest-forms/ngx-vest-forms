@@ -8,9 +8,7 @@ export { createVestForm } from './lib/create-vest-form';
 
 // Types and interfaces
 export type {
-  ComposedVestForm,
   EnhancedVestForm,
-  EnhancedVestFormArray,
   ErrorDisplayStrategy,
   Path,
   PathValue,
@@ -20,8 +18,6 @@ export type {
   VestForm,
   VestFormArray,
   VestFormOptions,
-  WizardForm,
-  WizardStepConfig,
 } from './lib/vest-form.types';
 
 // Error display strategies
@@ -33,12 +29,14 @@ export {
   getStrategyInfo,
 } from './lib/error-strategies';
 
-// Form arrays
+// Form arrays functionality
 export {
-  createFormArrayItem,
+  arrayValidationHelpers,
+  createEnhancedVestFormArray,
   createVestFormArray,
-  removeFormArrayItem,
 } from './lib/form-arrays';
+
+export type { EnhancedVestFormArray } from './lib/form-arrays';
 
 // Form composition
 export {

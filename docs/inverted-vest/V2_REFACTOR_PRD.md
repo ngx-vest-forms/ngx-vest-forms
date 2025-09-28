@@ -103,6 +103,38 @@ emailField.value(); // same as form.email()
 emailField.set('user@example.com');
 ```
 
+#### Type Safety with ts-essentials Integration
+
+**Path Type Generation**:
+
+```typescript
+// Leverages ts-essentials for robust path typing
+export type { Paths as Path, PathValue } from 'ts-essentials';
+
+interface UserProfile {
+  name: string;
+  contacts: { email: string; phone?: string }[];
+  preferences: { theme: 'light' | 'dark'; notifications: boolean };
+}
+
+// Automatic path union generation
+type ProfilePaths = Path<UserProfile>;
+// ^? 'name' | 'contacts' | `contacts.${number}` | `contacts.${number}.email` |
+//    `contacts.${number}.phone` | 'preferences' | 'preferences.theme' | 'preferences.notifications'
+
+// Type-safe value inference
+type ContactEmail = PathValue<UserProfile, 'contacts.0.email'>;
+// ^? string | undefined (properly handles array bounds and optional properties)
+```
+
+**Benefits over Custom Implementation**:
+
+- **Zero Maintenance**: No custom path type logic to maintain or debug
+- **Battle-tested**: Mature library with comprehensive edge case handling (139+ code examples)
+- **Advanced Features**: Configurable depth, wildcard support, proper undefined handling
+- **Ecosystem Compatibility**: Familiar API for developers using ts-essentials
+- **Future-proof**: Automatic updates and improvements from ts-essentials team
+
 #### Angular Component Integration
 
 ```typescript

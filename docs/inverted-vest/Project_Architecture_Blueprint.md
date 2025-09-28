@@ -154,10 +154,40 @@ Generated: 2025-09-27 (Updated with Enhanced Field Signals API and architectural
 ## 6. Data Architecture
 
 - **Domain model**: Developer-supplied objects or signals typed generically (`TModel`). No imposed schema; Vest suite defines validation semantics.
-- **Entity relationships**: Nested objects handled through dot-paths (`profile.name`, `contacts.0.email`) with compile-time guarantees.
-- **Data access patterns**: `getValueByPath`/`setValueByPath` utilities provide immutable updates.
+- **Entity relationships**: Nested objects handled through dot-paths (`profile.name`, `contacts.0.email`) with compile-time guarantees via ts-essentials `PathValue` integration.
+- **Data access patterns**: `getValueByPath`/`setValueByPath` utilities provide immutable updates with full type safety.
 - **Transformations**: Validation results normalized into `SuiteResult` structures and surfaced via signals (`errors()`, `warnings()`, `isPending()`).
 - **Caching**: Field instances cached per path to avoid recomputation while respecting garbage collection via `destroy()`.
+
+### Type Safety & Path Utilities
+
+The architecture leverages **ts-essentials** for robust path type inference instead of custom implementations:
+
+```typescript
+// Leverages battle-tested ts-essentials utilities
+export type { Paths as Path, PathValue } from 'ts-essentials';
+
+interface UserProfile {
+  name: string;
+  contacts: { email: string; phone?: string }[];
+}
+
+// Automatic path union generation
+type ProfilePaths = Path<UserProfile>;
+// ^? 'name' | 'contacts' | `contacts.${number}` | `contacts.${number}.email` | `contacts.${number}.phone`
+
+// Type-safe value extraction
+type ContactEmail = PathValue<UserProfile, 'contacts.0.email'>;
+// ^? string | undefined (handles array bounds)
+```
+
+**Benefits of ts-essentials Integration**:
+
+- **Zero maintenance burden**: No custom path type logic to maintain or debug
+- **Battle-tested reliability**: Mature library with comprehensive edge case handling
+- **Advanced features**: Configurable depth, wildcard support, proper undefined handling
+- **Ecosystem compatibility**: Familiar API for TypeScript developers
+- **Future-proof**: Automatic updates and improvements from ts-essentials team
 
 ## 7. Cross-Cutting Concerns Implementation
 

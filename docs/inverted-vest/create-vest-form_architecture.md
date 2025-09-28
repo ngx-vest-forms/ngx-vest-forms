@@ -274,6 +274,63 @@ const serverSuite = create((data, field) => {
 - [Vest.js Execution Modes](https://vestjs.dev/docs/writing_your_suite/execution_modes) - Official documentation
 - [Vest 5 Performance Improvements](https://vestjs.dev/docs/upgrade_guide) - Why EAGER is now default
 
+#### 6. **ts-essentials PathValue Integration**
+
+**Decision**: Use ts-essentials `PathValue` and `Paths` types instead of implementing custom path type utilities.
+
+**Rationale**:
+
+```typescript
+// ✅ Recommended: Leverage ts-essentials battle-tested utilities
+export type { Paths as Path, PathValue } from 'ts-essentials';
+
+// ❌ Avoided: Custom implementation with maintenance burden
+// type Path<T> = /* complex recursive type logic */
+// type PathValue<T, P> = /* more complex type logic */
+```
+
+**Why ts-essentials**:
+
+- **Battle-tested Type Safety**: Mature library with 139+ code examples and comprehensive edge case handling
+- **Ecosystem Compatibility**: Widely adopted in TypeScript ecosystem, familiar to developers
+- **Advanced Features**:
+  - Configurable depth control for deeply nested types (`Paths<Type, { depth: 9 }>`)
+  - Support for array indices and wildcards (`employees.*.name`)
+  - Proper `undefined` handling for optional properties
+  - Integration with other ts-essentials utilities (`DeepReadonly`, `DeepPartial`)
+
+```typescript
+// Advanced type inference examples
+interface Company {
+  name: string;
+  employees: { name: string }[];
+}
+
+type CompanyPaths = Paths<Company>;
+// ^? 'name' | 'employees' | `employees.${number}` | `employees.${number}.name`
+
+type CompanyEmployee = PathValue<Company, 'employees.0'>;
+// ^? { name: string } | undefined - handles array bounds correctly
+```
+
+**Maintenance Benefits**:
+
+- **Zero Implementation Burden**: No custom type logic to maintain or debug
+- **Automatic Updates**: Bug fixes and improvements come from ts-essentials team
+- **Consistent Behavior**: Same path utilities across projects reduce cognitive load
+- **Documentation**: Well-documented with examples and type annotations
+
+**Developer Experience**:
+
+- **IntelliSense Support**: Full TypeScript autocomplete for path strings
+- **Familiar API**: Developers already using ts-essentials have zero learning curve
+- **Error Messages**: Better TypeScript error messages for invalid paths
+
+**References**:
+
+- [ts-essentials PathValue Documentation](https://github.com/ts-essentials/ts-essentials/blob/master/lib/path-value/README.md) - Type-safe nested property access
+- [ts-essentials Paths Documentation](https://github.com/ts-essentials/ts-essentials/blob/master/lib/paths/README.md) - Generate path union types
+
 ### Architecture Benefits Summary
 
 | Aspect               | v1 (Current)               | v2 (Proposed)             | Improvement           |
