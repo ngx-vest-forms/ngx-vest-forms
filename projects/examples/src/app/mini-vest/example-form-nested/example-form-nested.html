@@ -1,0 +1,374 @@
+<div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
+  <!-- Form Column -->
+  <div class="rounded-lg bg-white p-8 shadow-xl">
+    <h2 class="mb-6 text-2xl font-bold text-blue-600">Nested Form Example</h2>
+    <p class="mb-6 text-gray-600">
+      This form demonstrates how to handle nested form fields with
+      template-driven forms and Vest.js validation.
+    </p>
+
+    <form
+      (ngSubmit)="onSubmit()"
+      class="space-y-6"
+      [attr.aria-busy]="form.pending()"
+    >
+      <!-- Personal Information Section -->
+      <fieldset class="space-y-4">
+        <legend class="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">
+          Personal Information
+        </legend>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div class="space-y-2">
+            <label
+              class="block text-sm font-medium text-gray-700"
+              for="firstName"
+            >
+              First Name
+            </label>
+            <input
+              type="text"
+              id="firstName"
+              name="firstName"
+              [value]="form.personalInfoFirstName()"
+              (input)="form.setPersonalInfoFirstName($event)"
+              (blur)="form.touchPersonalInfoFirstName()"
+              placeholder="Enter first name"
+              class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              [class.border-red-500]="
+                form.personalInfoFirstNameShowErrors() && !form.personalInfoFirstNameValid()
+              "
+              [class.border-gray-300]="
+                !form.personalInfoFirstNameShowErrors() || form.personalInfoFirstNameValid()
+              "
+              [attr.aria-invalid]="
+                form.personalInfoFirstNameShowErrors() && !form.personalInfoFirstNameValid()
+              "
+              [attr.aria-describedby]="
+                form.personalInfoFirstNameShowErrors() && form.personalInfoFirstNameErrors().length > 0
+                  ? 'firstName-error'
+                  : null
+              "
+            />
+
+            @if ( form.personalInfoFirstNameShowErrors() &&
+            form.personalInfoFirstNameErrors().length > 0 ) {
+            <div class="text-sm text-red-600" id="firstName-error">
+              {{ form.personalInfoFirstNameErrors()[0] }}
+            </div>
+            }
+          </div>
+
+          <div class="space-y-2">
+            <label
+              class="block text-sm font-medium text-gray-700"
+              for="lastName"
+            >
+              Last Name
+            </label>
+            <input
+              type="text"
+              id="lastName"
+              name="lastName"
+              [value]="form.personalInfoLastName()"
+              (input)="form.setPersonalInfoLastName($event)"
+              (blur)="form.touchPersonalInfoLastName()"
+              placeholder="Enter last name"
+              class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              [class.border-red-500]="
+                form.personalInfoLastNameShowErrors() && !form.personalInfoLastNameValid()
+              "
+              [class.border-gray-300]="
+                !form.personalInfoLastNameShowErrors() || form.personalInfoLastNameValid()
+              "
+              [attr.aria-invalid]="
+                form.personalInfoLastNameShowErrors() && !form.personalInfoLastNameValid()
+              "
+              [attr.aria-describedby]="
+                form.personalInfoLastNameShowErrors() && form.personalInfoLastNameErrors().length > 0
+                  ? 'lastName-error'
+                  : null
+              "
+            />
+
+            @if ( form.personalInfoLastNameShowErrors() &&
+            form.personalInfoLastNameErrors().length > 0 ) {
+            <div class="text-sm text-red-600" id="lastName-error">
+              {{ form.personalInfoLastNameErrors()[0] }}
+            </div>
+            }
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700" for="email">
+            Email Address
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            [value]="form.personalInfoEmail()"
+            (input)="form.setPersonalInfoEmail($event)"
+            (blur)="form.touchPersonalInfoEmail()"
+            placeholder="Enter email address"
+            class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            [class.border-red-500]="
+              form.personalInfoEmailShowErrors() && !form.personalInfoEmailValid()
+            "
+            [class.border-gray-300]="
+              !form.personalInfoEmailShowErrors() || form.personalInfoEmailValid()
+            "
+            [attr.aria-invalid]="
+              form.personalInfoEmailShowErrors() && !form.personalInfoEmailValid()
+            "
+            [attr.aria-describedby]="
+              form.personalInfoEmailShowErrors() && form.personalInfoEmailErrors().length > 0
+                ? 'email-error'
+                : null
+            "
+          />
+
+          @if ( form.personalInfoEmailShowErrors() &&
+          form.personalInfoEmailErrors().length > 0 ) {
+          <div class="text-sm text-red-600" id="email-error">
+            {{ form.personalInfoEmailErrors()[0] }}
+          </div>
+          }
+        </div>
+      </fieldset>
+
+      <!-- Address Information Section -->
+      <fieldset class="space-y-4">
+        <legend class="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">
+          Address Information
+        </legend>
+
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700" for="street">
+            Street Address
+          </label>
+          <input
+            type="text"
+            id="street"
+            name="street"
+            [value]="form.addressInfoStreet()"
+            (input)="form.setAddressInfoStreet($event)"
+            (blur)="form.touchAddressInfoStreet()"
+            placeholder="Enter street address"
+            class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            [class.border-red-500]="
+              form.addressInfoStreetShowErrors() && !form.addressInfoStreetValid()
+            "
+            [class.border-gray-300]="
+              !form.addressInfoStreetShowErrors() || form.addressInfoStreetValid()
+            "
+            [attr.aria-invalid]="
+              form.addressInfoStreetShowErrors() && !form.addressInfoStreetValid()
+            "
+            [attr.aria-describedby]="
+              form.addressInfoStreetShowErrors() && form.addressInfoStreetErrors().length > 0
+                ? 'street-error'
+                : null
+            "
+          />
+
+          @if ( form.addressInfoStreetShowErrors() &&
+          form.addressInfoStreetErrors().length > 0 ) {
+          <div class="text-sm text-red-600" id="street-error">
+            {{ form.addressInfoStreetErrors()[0] }}
+          </div>
+          }
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700" for="city">
+              City
+            </label>
+            <input
+              type="text"
+              id="city"
+              name="city"
+              [value]="form.addressInfoCity()"
+              (input)="form.setAddressInfoCity($event)"
+              (blur)="form.touchAddressInfoCity()"
+              placeholder="Enter city"
+              class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              [class.border-red-500]="
+                form.addressInfoCityShowErrors() && !form.addressInfoCityValid()
+              "
+              [class.border-gray-300]="
+                !form.addressInfoCityShowErrors() || form.addressInfoCityValid()
+              "
+              [attr.aria-invalid]="
+                form.addressInfoCityShowErrors() && !form.addressInfoCityValid()
+              "
+              [attr.aria-describedby]="
+                form.addressInfoCityShowErrors() && form.addressInfoCityErrors().length > 0
+                  ? 'city-error'
+                  : null
+              "
+            />
+
+            @if ( form.addressInfoCityShowErrors() &&
+            form.addressInfoCityErrors().length > 0 ) {
+            <div class="text-sm text-red-600" id="city-error">
+              {{ form.addressInfoCityErrors()[0] }}
+            </div>
+            }
+          </div>
+
+          <div class="space-y-2">
+            <label
+              class="block text-sm font-medium text-gray-700"
+              for="zipCode"
+            >
+              ZIP Code
+            </label>
+            <input
+              type="text"
+              id="zipCode"
+              name="zipCode"
+              [value]="form.addressInfoZipCode()"
+              (input)="form.setAddressInfoZipCode($event)"
+              (blur)="form.touchAddressInfoZipCode()"
+              placeholder="12345 or 12345-6789"
+              class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              [class.border-red-500]="
+                form.addressInfoZipCodeShowErrors() && !form.addressInfoZipCodeValid()
+              "
+              [class.border-gray-300]="
+                !form.addressInfoZipCodeShowErrors() || form.addressInfoZipCodeValid()
+              "
+              [attr.aria-invalid]="
+                form.addressInfoZipCodeShowErrors() && !form.addressInfoZipCodeValid()
+              "
+              [attr.aria-describedby]="
+                form.addressInfoZipCodeShowErrors() &&
+                form.addressInfoZipCodeErrors().length > 0
+                  ? 'zipCode-error'
+                  : null
+              "
+            />
+
+            @if ( form.addressInfoZipCodeShowErrors() &&
+            form.addressInfoZipCodeErrors().length > 0 ) {
+            <div class="text-sm text-red-600" id="zipCode-error">
+              {{ form.addressInfoZipCodeErrors()[0] }}
+            </div>
+            }
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700" for="country">
+            Country
+          </label>
+          <select
+            id="country"
+            name="country"
+            [value]="form.addressInfoCountry()"
+            (change)="form.setAddressInfoCountry($event)"
+            (blur)="form.touchAddressInfoCountry()"
+            class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            [class.border-red-500]="
+              form.addressInfoCountryShowErrors() && !form.addressInfoCountryValid()
+            "
+            [class.border-gray-300]="
+              !form.addressInfoCountryShowErrors() || form.addressInfoCountryValid()
+            "
+            [attr.aria-invalid]="
+              form.addressInfoCountryShowErrors() && !form.addressInfoCountryValid()
+            "
+            [attr.aria-describedby]="
+              form.addressInfoCountryShowErrors() &&
+              form.addressInfoCountryErrors().length > 0
+                ? 'country-error'
+                : null
+            "
+          >
+            <option value="">Select a country</option>
+            <option value="US">United States</option>
+            <option value="CA">Canada</option>
+            <option value="UK">United Kingdom</option>
+            <option value="DE">Germany</option>
+            <option value="FR">France</option>
+            <option value="NL">Netherlands</option>
+            <option value="OTHER">Other</option>
+          </select>
+
+          @if ( form.addressInfoCountryShowErrors() &&
+          form.addressInfoCountryErrors().length > 0 ) {
+          <div class="text-sm text-red-600" id="country-error">
+            {{ form.addressInfoCountryErrors()[0] }}
+          </div>
+          }
+        </div>
+      </fieldset>
+
+      <!-- Preferences Section -->
+      <fieldset class="space-y-4">
+        <legend class="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">
+          Preferences
+        </legend>
+
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="newsletter"
+              name="newsletter"
+              [checked]="form.preferencesNewsletter()"
+              (change)="form.setPreferencesNewsletter($event)"
+              (blur)="form.touchPreferencesNewsletter()"
+              class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label class="text-sm font-medium text-gray-700" for="newsletter">
+              Subscribe to newsletter
+            </label>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="notifications"
+              name="notifications"
+              [checked]="form.preferencesNotifications()"
+              (change)="form.setPreferencesNotifications($event)"
+              (blur)="form.touchPreferencesNotifications()"
+              class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label
+              class="text-sm font-medium text-gray-700"
+              for="notifications"
+            >
+              Enable email notifications
+            </label>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="flex gap-4 pt-4">
+        <button
+          type="submit"
+          class="flex-1 rounded-md bg-blue-600 px-6 py-3 font-medium text-white transition-colors duration-200 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-400"
+          [disabled]="form.pending() || form.submitting()"
+        >
+          @if (form.submitting()) { Submitting... } @else { Submit }
+        </button>
+
+        <button
+          type="button"
+          (click)="resetForm()"
+          class="rounded-md bg-gray-600 px-6 py-3 font-medium text-white transition-colors duration-200 hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none"
+        >
+          Reset
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Debugger Column -->
+  <ngx-debugger [form]="debugForm" />
+</div>

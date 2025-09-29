@@ -6,16 +6,16 @@
 export const MINIMAL_FORM_CONTENT = {
   demonstrated: {
     icon: '🏁',
-    title: 'Minimal ngx-vest-forms Setup',
+    title: 'Minimal Vest.js-first Setup',
     sections: [
       {
-        title: 'ngx-vest-forms Features',
+        title: 'V2 Core Features',
         items: [
-          '• <strong>Form directive:</strong> <code class="code-inline">ngxVestForm</code>',
-          '• <strong>Validation binding:</strong> <code class="code-inline">[vestSuite]</code>',
-          '• <strong>Two-way data:</strong> <code class="code-inline">[(formValue)]</code>',
-          '• <strong>Error display:</strong> <code class="code-inline">ngxFormErrorDisplay</code>',
-          '• <strong>Form state access:</strong> <code class="code-inline">#vestForm="ngxVestForm"</code>',
+          '• <strong>Form factory:</strong> <code class="code-inline">createVestForm()</code>',
+          '• <strong>Enhanced Field Signals:</strong> <code class="code-inline">form.email()</code>, <code class="code-inline">form.emailValid()</code>',
+          '• <strong>Native HTML:</strong> <code class="code-inline">[value]</code> and <code class="code-inline">(input)</code> bindings',
+          '• <strong>No directives:</strong> Pure Vest.js + Angular signals',
+          '• <strong>Type safety:</strong> Full TypeScript support with path-based typing',
         ],
       },
       {
@@ -23,8 +23,8 @@ export const MINIMAL_FORM_CONTENT = {
         items: [
           '• <strong>Required field:</strong> Email cannot be empty',
           '• <strong>Email format:</strong> Must be valid email address',
-          '• <strong>Real-time validation:</strong> Immediate feedback on blur',
-          '• <strong>Form state tracking:</strong> Submit button disabled until valid',
+          '• <strong>Real-time validation:</strong> Immediate feedback on input',
+          '• <strong>Form state tracking:</strong> Submit button responds to validation state',
         ],
       },
     ],
@@ -35,19 +35,19 @@ export const MINIMAL_FORM_CONTENT = {
       {
         title: 'Key Benefits Demonstrated',
         items: [
-          '• <strong>Zero boilerplate:</strong> No FormControl or FormGroup setup',
-          '• <strong>Type safety:</strong> Full TypeScript support with signals',
-          '• <strong>Template-driven:</strong> HTML-first approach with Angular forms',
-          '• <strong>Accessibility:</strong> Built-in ARIA attributes and error handling',
+          '• <strong>Zero boilerplate:</strong> No FormControl, FormGroup, or directives needed',
+          '• <strong>Type safety:</strong> Path-based field access with full TypeScript support',
+          '• <strong>Native HTML:</strong> Works with standard HTML form elements',
+          '• <strong>Performance:</strong> Enhanced Field Signals API with proxy-based field access',
         ],
       },
       {
         title: 'Implementation Pattern',
         items: [
-          '• <strong>Model signal:</strong> <code class="code-inline">signal&lt;FormModel&gt;()</code> for reactive state',
+          '• <strong>Form creation:</strong> <code class="code-inline">createVestForm(suite, model)</code> factory',
           '• <strong>Validation suite:</strong> <code class="code-inline">staticSuite()</code> with Vest.js rules',
-          '• <strong>Template binding:</strong> <code class="code-inline">[ngModel]</code> on form controls',
-          '• <strong>Error timing:</strong> <code class="code-inline">shouldShowErrors()</code> for UX control',
+          '• <strong>Field binding:</strong> <code class="code-inline">[value]="form.field()"</code> + <code class="code-inline">(input)="form.setField($event)"</code>',
+          '• <strong>Error display:</strong> <code class="code-inline">form.fieldShowErrors()</code> + <code class="code-inline">form.fieldErrors()</code>',
         ],
       },
     ],

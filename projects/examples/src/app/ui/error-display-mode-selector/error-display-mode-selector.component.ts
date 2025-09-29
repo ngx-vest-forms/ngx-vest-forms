@@ -4,10 +4,13 @@ import {
   input,
   output,
 } from '@angular/core';
-import { NgxErrorDisplayMode } from 'ngx-vest-forms/core';
+import {
+  ERROR_STRATEGIES,
+  type ErrorDisplayStrategy,
+} from 'ngx-vest-forms/core';
 
 export type ErrorDisplayModeConfig = {
-  mode: NgxErrorDisplayMode;
+  mode: ErrorDisplayStrategy;
   label: string;
   description: string;
   whenToUse: string;
@@ -17,50 +20,36 @@ export type ErrorDisplayModeConfig = {
 
 export const ERROR_DISPLAY_MODES: ErrorDisplayModeConfig[] = [
   {
-    mode: 'on-blur',
-    label: 'On Blur',
-    description: 'Show errors immediately when user leaves a field',
-    whenToUse:
-      'Forms where immediate feedback helps (e.g., complex validation)',
-    pros: [
-      'Immediate feedback',
-      'Prevents error accumulation',
-      'Good for expert users',
-    ],
-    cons: [
-      'Can be overwhelming',
-      'May interrupt user flow',
-      'Anxiety-inducing for some users',
-    ],
+    mode: 'immediate',
+    label: ERROR_STRATEGIES.immediate.name,
+    description: ERROR_STRATEGIES.immediate.description,
+    whenToUse: ERROR_STRATEGIES.immediate.useCase,
+    pros: [...ERROR_STRATEGIES.immediate.pros],
+    cons: [...ERROR_STRATEGIES.immediate.cons],
+  },
+  {
+    mode: 'on-touch',
+    label: ERROR_STRATEGIES['on-touch'].name,
+    description: ERROR_STRATEGIES['on-touch'].description,
+    whenToUse: ERROR_STRATEGIES['on-touch'].useCase,
+    pros: [...ERROR_STRATEGIES['on-touch'].pros],
+    cons: [...ERROR_STRATEGIES['on-touch'].cons],
   },
   {
     mode: 'on-submit',
-    label: 'On Submit',
-    description: 'Show errors only when user attempts to submit',
-    whenToUse: 'Simple forms or when you want to minimize interruptions',
-    pros: [
-      'Non-intrusive',
-      'Allows completion without interruption',
-      'Good for simple forms',
-    ],
-    cons: [
-      'Delayed feedback',
-      'May surprise users',
-      'Potentially longer error correction time',
-    ],
+    label: ERROR_STRATEGIES['on-submit'].name,
+    description: ERROR_STRATEGIES['on-submit'].description,
+    whenToUse: ERROR_STRATEGIES['on-submit'].useCase,
+    pros: [...ERROR_STRATEGIES['on-submit'].pros],
+    cons: [...ERROR_STRATEGIES['on-submit'].cons],
   },
   {
-    mode: 'on-blur-or-submit',
-    label: 'On Blur or Submit (Recommended)',
-    description: 'Show errors on field blur OR form submit',
-    whenToUse: 'Most forms - balances immediacy with user flow',
-    pros: [
-      'Balanced approach',
-      'Flexible timing',
-      'Good user experience',
-      'WCAG 2.2 friendly',
-    ],
-    cons: ['Slight complexity in implementation'],
+    mode: 'manual',
+    label: ERROR_STRATEGIES.manual.name,
+    description: ERROR_STRATEGIES.manual.description,
+    whenToUse: ERROR_STRATEGIES.manual.useCase,
+    pros: [...ERROR_STRATEGIES.manual.pros],
+    cons: [...ERROR_STRATEGIES.manual.cons],
   },
 ];
 
@@ -75,9 +64,7 @@ export const ERROR_DISPLAY_MODES: ErrorDisplayModeConfig[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <!-- Mode Selector Section -->
-    <div
-      class="mb-8 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 p-6 dark:from-blue-900/20 dark:to-indigo-900/20"
-    >
+    <div class="error-mode-wrapper">
       <div class="mb-4">
         <fieldset>
           <legend
@@ -106,7 +93,7 @@ export const ERROR_DISPLAY_MODES: ErrorDisplayModeConfig[] = [
         </fieldset>
       </div>
 
-      <div class="rounded-lg bg-white/70 p-4 dark:bg-gray-800/70">
+      <div class="error-mode-summary">
         <div class="mb-2 text-sm font-medium text-gray-900 dark:text-gray-100">
           {{ currentModeConfig().description }}
         </div>
@@ -116,23 +103,28 @@ export const ERROR_DISPLAY_MODES: ErrorDisplayModeConfig[] = [
       </div>
 
       <!-- Testing Instructions -->
-      <div class="mt-4 rounded-lg bg-amber-50 p-3 dark:bg-amber-900/20">
+      <div class="error-mode-instructions">
         <div class="text-sm font-medium text-amber-800 dark:text-amber-200">
           🧪 Try this with "{{ currentModeConfig().label }}":
         </div>
         <div class="mt-1 text-xs text-amber-700 dark:text-amber-300">
           @switch (selectedMode()) {
-            @case ('on-blur') {
-              1. Click in any field → 2. Type something invalid → 3. Tab away →
-              4. Notice immediate error feedback
+            @case ('immediate') {
+              1. Start typing invalid data → 2. See feedback update instantly →
+              3. Notice how errors clear as you type
+            }
+            @case ('on-touch') {
+              1. Click a field → 2. Enter invalid data → 3. Tab away → 4.
+              Observe errors appearing after you leave the field
             }
             @case ('on-submit') {
-              1. Fill form with invalid data → 2. Try to submit → 3. See all
-              errors appear at once
+              1. Fill the form quickly → 2. Submit without fixing issues → 3.
+              Watch all errors appear together
             }
-            @case ('on-blur-or-submit') {
-              1. Try both blur and submit behaviors → 2. Notice flexible error
-              timing
+            @case ('manual') {
+              1. Interact with fields → 2. Notice no automatic errors → 3.
+              Imagine controlling error display yourself (e.g., via guided
+              flows)
             }
           }
         </div>
@@ -142,20 +134,20 @@ export const ERROR_DISPLAY_MODES: ErrorDisplayModeConfig[] = [
 })
 export class ErrorDisplayModeSelectorComponent {
   /** The currently selected error display mode */
-  readonly selectedMode = input.required<NgxErrorDisplayMode>();
+  readonly selectedMode = input.required<ErrorDisplayStrategy>();
 
   /** Event emitted when the mode selection changes */
-  readonly modeChange = output<NgxErrorDisplayMode>();
+  readonly modeChange = output<ErrorDisplayStrategy>();
 
   protected readonly errorDisplayModes = ERROR_DISPLAY_MODES;
 
   protected readonly currentModeConfig = () =>
     this.errorDisplayModes.find((mode) => mode.mode === this.selectedMode()) ||
-    this.errorDisplayModes[2];
+    this.errorDisplayModes[1];
 
   protected onModeChange(event: Event): void {
     const radio = event.target as HTMLInputElement;
-    const newMode = radio.value as NgxErrorDisplayMode;
+    const newMode = radio.value as ErrorDisplayStrategy;
     this.modeChange.emit(newMode);
   }
 }

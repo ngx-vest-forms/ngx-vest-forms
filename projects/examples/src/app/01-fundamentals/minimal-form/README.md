@@ -1,6 +1,6 @@
 # Minimal Form Example
 
-The smallest, production-quality pattern showing how to wire up `ngx-vest-forms` with correct error timing and performance.
+The smallest, production-quality pattern showing how to use `ngx-vest-forms` V2 with the new Vest.js-first approach.
 
 ## 🎯 Learning Objectives
 
@@ -8,18 +8,18 @@ The smallest, production-quality pattern showing how to wire up `ngx-vest-forms`
 
 Core Concepts:
 
-- ✅ Single-field form using `ngxFormErrorDisplay` directive for proper error timing
-- ✅ Two-way model synchronization with `[(formValue)]`
-- ✅ One-way field binding with `[ngModel]` (never `[(ngModel)]`)
+- ✅ Form creation using `createVestForm()` factory function
+- ✅ Enhanced Field Signals API with proxy-based field access
+- ✅ Native HTML bindings with `[value]` and `(input)`
+- ✅ No directive dependencies - pure Vest.js + Angular signals
 - ✅ Performance optimization with `only(field)` in the Vest suite
-- ✅ Form state API usage for submit button enablement
 
 Architecture Patterns:
 
-- ✅ Three-part pattern: Signal model + Vest suite + Template
+- ✅ Two-part pattern: Vest suite + Form factory
 - ✅ OnPush change detection with signals
 - ✅ Modern Angular template control flow
-- ✅ Clean separation of concerns
+- ✅ Direct field access via Enhanced Field Signals API
 
 ## 🏗️ Implementation Details
 
@@ -29,54 +29,46 @@ Architecture Patterns:
 @Component({
   selector: 'ngx-minimal-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ngxVestForms, NgxFormErrorDisplayDirective],
 })
 export class MinimalForm {
-  // Signal-based reactive state
-  protected readonly model = signal<MinimalFormModel>({ email: '' });
+  // Create form instance using Vest.js-first approach
+  protected readonly form = createVestForm(
+    minimalFormValidationSuite,
+    signal<MinimalFormModel>({ email: '' }),
+  );
 
-  // Vest validation suite with performance optimization
-  protected readonly suite = minimalFormValidationSuite;
-
-  // Expose form state for parent components
-  readonly formState = computed(() => this.vestFormRef().formState());
+  // Expose form instance for parent components
+  readonly formState = () => this.form;
 }
 ```
 
-### Template (Current Best Practice)
+### Template (V2 Best Practice)
 
-We use the `NgxFormErrorDisplayDirective` to demonstrate proper error timing (on blur or submit) instead of immediate error flashing.
+We use native HTML bindings with the Enhanced Field Signals API for clean, performant form handling.
 
 ```html
-<form
-  ngxVestForm
-  [vestSuite]="suite"
-  [(formValue)]="model"
-  #vestForm="ngxVestForm"
-  (ngSubmit)="onSubmit()"
->
-  <div ngxFormErrorDisplay #emailDisplay="formErrorDisplay">
+<form (ngSubmit)="onSubmit()" [attr.aria-busy]="form.pending()">
+  <div class="form-field">
     <label for="email">Email Address</label>
     <input
       id="email"
       name="email"
       type="email"
-      [ngModel]="model().email"
+      [value]="form.email()"
+      (input)="form.setEmail($event)"
       placeholder="you@example.com"
-      [attr.aria-invalid]="emailDisplay.shouldShowErrors() ? 'true' : null"
-      [attr.aria-describedby]="
-        emailDisplay.shouldShowErrors() ? 'email-error' : null
-      "
+      [attr.aria-invalid]="form.emailShowErrors() && !form.emailValid()"
+      [attr.aria-describedby]="form.emailShowErrors() ? 'email-error' : null"
     />
 
-    @if (emailDisplay.shouldShowErrors() && emailDisplay.errors().length) {
-    <div id="email-error" role="alert">{{ emailDisplay.errors()[0] }}</div>
+    @if (form.emailShowErrors() && form.emailErrors().length) {
+    <div id="email-error" role="alert">{{ form.emailErrors()[0] }}</div>
     }
   </div>
 
   <button
     type="submit"
-    [disabled]="!vestForm.formState().valid || vestForm.formState().pending"
+    [disabled]="!form.valid() || form.pending() || form.submitting()"
   >
     Submit
   </button>
@@ -103,26 +95,28 @@ export const minimalFormValidationSuite = staticSuite(
 );
 ```
 
-### Why Use the Error Display Directive?
+### Why Use Enhanced Field Signals API?
 
-| Concern                | Manual Immediate         | ngxFormErrorDisplay      |
-| ---------------------- | ------------------------ | ------------------------ |
-| Error Timing           | Immediate (can distract) | Blur or submit (default) |
-| Pending Async Flicker  | Must implement manually  | Built-in filtering       |
-| Consistency Across App | Copy/paste variations    | Single directive pattern |
+| Concern              | Manual Field Access   | Enhanced Field Signals   |
+| -------------------- | --------------------- | ------------------------ |
+| Type Safety          | Manual path strings   | Compile-time validation  |
+| Error Timing         | Manual implementation | Built-in `showErrors()`  |
+| Performance          | Manual optimization   | Cached field instances   |
+| Developer Experience | Verbose API calls     | Clean proxy-based access |
 
-Result: The directive provides better UX and consistent error handling patterns.
+Result: The Enhanced Field Signals API provides better DX, type safety, and performance.
 
 ## ❌ Common Mistakes to Avoid
 
-### ❌ Don't Use Two-Way Binding on Fields
+### ❌ Don't Forget Form Cleanup (For Reactive Suites Only)
 
-```html
-<!-- WRONG: Causes double updates -->
-<input [(ngModel)]="model().email" />
+```typescript
+// If using reactive suites (create() instead of staticSuite()):
+ngOnDestroy() {
+  this.form.dispose(); // Clean up subscriptions
+}
 
-<!-- CORRECT: Use one-way binding -->
-<input [ngModel]="model().email" />
+// Static suites don't need cleanup - no subscriptions created
 ```
 
 ### ❌ Don't Skip Performance Optimization
@@ -146,7 +140,7 @@ Forms **must** be accessible. Essential ARIA attributes include:
 
 ```html
 <!-- ❌ WRONG: Missing accessibility attributes -->
-<input name="email" [ngModel]="model().email" />
+<input name="email" [value]="form.email()" />
 <div>Error message</div>
 
 <!-- ✅ CORRECT: Proper ARIA relationships -->
@@ -154,8 +148,9 @@ Forms **must** be accessible. Essential ARIA attributes include:
 <input
   id="email"
   name="email"
-  [ngModel]="model().email"
-  [attr.aria-invalid]="hasErrors ? 'true' : null"
+  [value]="form.email()"
+  (input)="form.setEmail($event)"
+  [attr.aria-invalid]="form.emailShowErrors() && !form.emailValid()"
   [attr.aria-describedby]="hasErrors ? 'email-error' : null"
 />
 <div id="email-error" role="alert">Error message</div>

@@ -6,16 +6,16 @@
 export const BASIC_VALIDATION_CONTENT = {
   demonstrated: {
     icon: '✅',
-    title: 'Form Validation Essentials',
+    title: 'Comprehensive Form Validation',
     sections: [
       {
-        title: 'ngx-vest-forms Features',
+        title: 'V2 Core Features',
         items: [
-          '• <strong>Form directive:</strong> <code class="code-inline">ngxVestForm</code>',
-          '• <strong>Validation suite:</strong> <code class="code-inline">[vestSuite]</code>',
-          '• <strong>Data binding:</strong> <code class="code-inline">[(formValue)]</code>',
-          '• <strong>Error display:</strong> <code class="code-inline">ngxFormErrorDisplay</code>',
-          '• <strong>State access:</strong> <code class="code-inline">#vestForm="ngxVestForm"</code>',
+          '• <strong>Form factory:</strong> <code class="code-inline">createVestForm()</code>',
+          '• <strong>Enhanced Field Signals:</strong> <code class="code-inline">form.name()</code>, <code class="code-inline">form.nameValid()</code>',
+          '• <strong>Native HTML:</strong> <code class="code-inline">[value]</code> and <code class="code-inline">(input)</code> bindings',
+          '• <strong>Conditional rendering:</strong> <code class="code-inline">@if</code> for dynamic fields',
+          '• <strong>Async validation:</strong> Built-in async field validation with memoization',
         ],
       },
       {
@@ -23,9 +23,10 @@ export const BASIC_VALIDATION_CONTENT = {
         items: [
           '• <strong>Required fields:</strong> Name, email, age, role, terms',
           '• <strong>Format validation:</strong> Email pattern matching',
-          '• <strong>Range validation:</strong> Age between 18-100',
-          '• <strong>Conditional fields:</strong> Bio appears for senior roles',
+          '• <strong>Range validation:</strong> Age between 18-120',
+          '• <strong>Conditional fields:</strong> Bio appears for senior roles only',
           '• <strong>Boolean validation:</strong> Terms agreement required',
+          '• <strong>Async validation:</strong> Email uniqueness check with server simulation',
         ],
       },
     ],

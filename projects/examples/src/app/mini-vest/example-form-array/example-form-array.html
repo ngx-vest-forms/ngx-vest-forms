@@ -1,0 +1,168 @@
+<div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
+  <!-- Form Column -->
+  <div class="rounded-lg bg-white p-8 shadow-xl">
+    <h2 class="mb-6 text-2xl font-bold text-blue-600">
+      Dynamic Form Array Example
+    </h2>
+    <p class="mb-6 text-gray-600">
+      This form demonstrates how to handle dynamic form arrays with
+      template-driven forms and Vest.js validation.
+    </p>
+
+    <form
+      (ngSubmit)="onSubmit()"
+      class="space-y-6"
+      [attr.aria-busy]="form.pending()"
+    >
+      <div class="space-y-4">
+        <div>
+          <label
+            class="mb-2 block text-sm font-medium text-gray-700"
+            for="addInterest"
+          >
+            Add a new interest
+          </label>
+          <div class="flex gap-3">
+            <div class="flex-1">
+              <input
+                id="addInterest"
+                type="text"
+                name="addInterest"
+                [value]="form.addInterest()"
+                (input)="form.setAddInterest($event)"
+                (blur)="form.touchAddInterest()"
+                class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                [class.border-red-500]="
+                  form.addInterestShowErrors() && !form.addInterestValid()
+                "
+                [class.border-gray-300]="
+                  !form.addInterestShowErrors() || form.addInterestValid()
+                "
+                placeholder="Enter a new interest"
+                [attr.aria-invalid]="
+                  form.addInterestShowErrors() && !form.addInterestValid()
+                "
+                [attr.aria-describedby]="
+                  form.addInterestShowErrors() && form.addInterestErrors().length > 0
+                    ? 'addInterest-error'
+                    : null
+                "
+              />
+
+              @if (form.addInterestShowErrors() &&
+              form.addInterestErrors().length > 0) {
+              <div class="mt-2 text-sm text-red-600" id="addInterest-error">
+                {{ form.addInterestErrors()[0] }}
+              </div>
+              }
+            </div>
+
+            <button
+              type="button"
+              (click)="addInterest()"
+              class="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white transition-colors duration-200 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+            >
+              <span aria-hidden="true">+</span>
+              <span>Add Interest</span>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="mb-2 text-lg font-semibold text-gray-800">
+            Current interests
+          </h3>
+
+          @if (form.interests().length > 0) {
+          <div class="space-y-3">
+            @for (interest of form.interests(); track $index) { @let index =
+            $index;
+            <div class="flex items-start gap-3 rounded-md bg-gray-50 p-3">
+              <div class="flex-1">
+                <label class="sr-only" [attr.for]="'interest-' + index">
+                  Interest {{ index + 1 }}
+                </label>
+                <input
+                  type="text"
+                  [id]="'interest-' + index"
+                  [value]="interest"
+                  (input)="updateInterest(index, $event)"
+                  (blur)="touchInterest(index)"
+                  class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  [class.border-red-500]="
+                        showInterestError(index) && !interestValid(index)
+                      "
+                  [class.border-gray-300]="
+                        !showInterestError(index) || interestValid(index)
+                      "
+                  [attr.aria-invalid]="
+                        showInterestError(index) && !interestValid(index)
+                      "
+                  [attr.aria-describedby]="
+                        showInterestError(index) && interestErrors(index).length > 0
+                          ? 'interest-error-' + index
+                          : null
+                      "
+                />
+
+                @if (showInterestError(index) && interestErrors(index).length >
+                0) {
+                <ul
+                  class="mt-2 list-inside list-disc space-y-1 text-sm text-red-600"
+                  [attr.id]="'interest-error-' + index"
+                >
+                  @for (error of interestErrors(index); track error) {
+                  <li>{{ error }}</li>
+                  }
+                </ul>
+                }
+              </div>
+
+              <button
+                type="button"
+                (click)="removeInterest(index)"
+                class="rounded-md bg-red-600 px-3 py-2 text-white transition-colors duration-200 hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
+                [attr.aria-label]="
+                      'Remove interest ' + (interest ? interest : index + 1)
+                    "
+              >
+                ×
+              </button>
+            </div>
+            }
+          </div>
+          } @else {
+          <div
+            class="rounded-md border-2 border-dashed border-gray-300 bg-gray-50 py-8 text-center"
+          >
+            <p class="text-gray-500">
+              No interests added yet. Add your first interest above!
+            </p>
+          </div>
+          }
+        </div>
+      </div>
+
+      <div class="flex gap-4 pt-6">
+        <button
+          type="submit"
+          class="flex-1 rounded-md bg-green-600 px-6 py-3 font-medium text-white transition-colors duration-200 hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-400"
+          [disabled]="form.pending() || form.submitting()"
+        >
+          @if (form.submitting()) { Submitting... } @else { Submit Form }
+        </button>
+
+        <button
+          type="button"
+          (click)="resetForm()"
+          class="rounded-md bg-gray-600 px-6 py-3 font-medium text-white transition-colors duration-200 hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none"
+        >
+          Reset
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Debugger Column -->
+  <ngx-debugger [form]="debugForm" />
+</div>

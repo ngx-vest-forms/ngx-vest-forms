@@ -18,7 +18,7 @@
     "target": "ES2022",
     "module": "ES2022",
     "useDefineForClassFields": false,
-    "lib": ["ES2022", "dom"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "paths": {
       "ngx-vest-forms": [
         "projects/ngx-vest-forms/public-api.ts",
@@ -28,10 +28,6 @@
         "projects/ngx-vest-forms/*/src/public-api.ts",
         "projects/ngx-vest-forms/*/public-api.ts",
         "dist/ngx-vest-forms/*"
-      ],
-      "ngx-vest-forms/smart-state": [
-        "projects/ngx-vest-forms/smart-state/public-api.ts",
-        "dist/ngx-vest-forms/smart-state"
       ],
       "ngx-vest-forms/control-wrapper": [
         "projects/ngx-vest-forms/control-wrapper/public-api.ts",

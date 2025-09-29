@@ -23,42 +23,18 @@
           class="hidden items-center gap-8 text-sm md:flex"
           aria-label="Primary navigation"
         >
-          <a
-            [routerLink]="'/fundamentals'"
-            #rlaFund="routerLinkActive"
-            routerLinkActive="active"
-            class="nav-grad-link"
-            [class.active]="rlaFund.isActive"
-          >
-            Fundamentals
-          </a>
-          <a
-            [routerLink]="'/control-wrapper'"
-            #rlaWrapper="routerLinkActive"
-            routerLinkActive="active"
-            class="nav-grad-link"
-            [class.active]="rlaWrapper.isActive"
-          >
-            Control Wrapper
-          </a>
-          <a
-            [routerLink]="'/schema-integration'"
-            #rlaSchema="routerLinkActive"
-            routerLinkActive="active"
-            class="nav-grad-link"
-            [class.active]="rlaSchema.isActive"
-          >
-            Schema Integration
-          </a>
-          <a
-            [routerLink]="'/advanced-patterns'"
-            #rlaAdvanced="routerLinkActive"
-            routerLinkActive="active"
-            class="nav-grad-link"
-            [class.active]="rlaAdvanced.isActive"
-          >
-            Advanced Patterns
-          </a>
+          @for (category of categoriesList; track category.id) {
+            <a
+              [routerLink]="['/', category.id]"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: false }"
+              #rla="routerLinkActive"
+              class="nav-grad-link"
+              [class.active]="rla.isActive"
+            >
+              {{ category.label }}
+            </a>
+          }
         </nav>
       </div>
 

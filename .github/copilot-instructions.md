@@ -48,7 +48,7 @@ applyTo: '**'
 - [ ] Avoid `any` type (use `unknown`)
 
 ## ngx-vest-forms Patterns
-Follow [`.github/instructions/ngx-vest-forms.instructions.md`](../.github/instructions/ngx-vest-forms.instructions.md) and [`.github/instructions/vest.instructions.md`](../.github/instructions/vest.instructions.md):
+Follow [`.github/__ngx-vest-forms.instructions.md`](__ngx-vest-forms.instructions.md) and [`.github/instructions/vest.instructions.md`](./instructions/vest.instructions.md):
 
 ### Form Implementation Checklist
 
@@ -124,13 +124,13 @@ export class UserFormComponent {
 
 ### Unit Tests (Vitest)
 
-- Follow [`.github/instructions/vitest-test.instructions.md`](../.github/instructions/vitest-test.instructions.md)
+- Follow [`.github/instructions/vitest-test.instructions.md`](./instructions/vitest-test.instructions.md)
 - Use Testing Library patterns
 - Test behavior, not implementation
 
 ### E2E Tests (Playwright)
 
-- Follow [`.github/instructions/playwright.instructions.md`](../.github/instructions/playwright.instructions.md)
+- Follow [`.github/instructions/playwright.instructions.md`](./instructions/playwright.instructions.md)
 - Use accessible locators
 - Mock APIs with MSW
 
@@ -154,7 +154,7 @@ export class UserFormComponent {
 
 ## Commit Messages
 
-Follow [`.github/instructions/commit.instructions.md`](../.github/instructions/commit.instructions.md):
+Follow [`.github/instructions/commit.instructions.md`](./instructions/commit.instructions.md):
 
 - Format: `type(scope): description`
 - Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`
@@ -167,6 +167,19 @@ Follow [`.github/instructions/commit.instructions.md`](../.github/instructions/c
 - [ ] Comments explain "why" not "what"
 - [ ] Examples for components/services
 - [ ] README updated for features
+
+## MCP tools reference
+
+### `mcp_github_get_pull_request`
+
+- **Purpose**: Fetch up-to-date metadata about a single GitHub pull request, including its title, author, status, mergeability, labels, reviewers, and timeline information.
+- **Required parameters**:
+  - `owner` – GitHub organization or user that owns the repository.
+  - `repo` – Repository name.
+  - `pullNumber` – Numeric identifier of the pull request (the number shown in the GitHub UI, e.g., `123`).
+- **Typical usage**: Call the tool when you need authoritative details before summarizing a PR, checking review status, or referencing associated commits. Provide precise owner/repo values and validate the pull number before calling to avoid 404 responses.
+- **Returned data**: Structured JSON mirroring the GitHub REST API response for `GET /repos/{owner}/{repo}/pulls/{pull_number}`. Expect fields like `state`, `mergeable`, `base`, `head`, `requested_reviewers`, and `html_url`.
+- **Pro tips**: Combine with `#mcp_github_get_pull_request_files` to list modified files when preparing review summaries. Retry only after verifying identifiers; repeated bad requests are rate limited.
 
 ## File Templates
 

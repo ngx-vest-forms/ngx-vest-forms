@@ -1,58 +1,50 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  signal,
-  viewChild,
-} from '@angular/core';
-import {
-  NgxFormDirective,
-  NgxFormErrorDisplayDirective,
-  ngxVestForms,
-} from 'ngx-vest-forms';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { createVestForm } from 'ngx-vest-forms/core';
 import {
   MinimalFormModel,
   minimalFormValidationSuite,
 } from './minimal-form.validations';
 
+/**
+ * Modern Minimal Form using Vest.js-first approach
+ *
+ * Key improvements in V2:
+ * - Direct createVestForm() usage instead of directive
+ * - Enhanced Field Signals API via Proxy (form.email(), form.emailValid())
+ * - Native HTML [value] and (input) bindings
+ * - No directive dependencies - pure Vest.js + Angular signals
+ * - Better TypeScript support and performance
+ */
 @Component({
   selector: 'ngx-minimal-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ngxVestForms, NgxFormErrorDisplayDirective],
   template: `
     <form
-      ngxVestForm
-      [vestSuite]="suite"
-      [(formValue)]="model"
-      #vestForm="ngxVestForm"
       (ngSubmit)="onSubmit()"
       class="form-container"
+      [attr.aria-busy]="form.pending()"
     >
-      <div
-        class="form-field"
-        ngxFormErrorDisplay
-        #emailDisplay="formErrorDisplay"
-      >
+      <div class="form-field">
         <label class="form-label" for="email"> Email Address </label>
+
         <input
           id="email"
           class="form-input"
-          name="email"
           type="email"
-          [ngModel]="model().email"
+          [value]="form.email()"
+          (input)="form.setEmail($event)"
           placeholder="you@example.com"
-          [attr.aria-invalid]="emailDisplay.shouldShowErrors() ? 'true' : null"
+          [attr.aria-invalid]="form.emailShowErrors() && !form.emailValid()"
           [attr.aria-describedby]="
-            emailDisplay.shouldShowErrors() ? 'email-error' : null
+            form.emailShowErrors() ? 'email-error' : null
           "
+          autocomplete="email"
         />
 
-        @if (emailDisplay.shouldShowErrors()) {
-          @if (emailDisplay.errors().length) {
-            <div class="form-error" id="email-error" role="alert">
-              {{ emailDisplay.errors()[0] }}
-            </div>
-          }
+        @if (form.emailShowErrors() && form.emailErrors().length) {
+          <div class="form-error" id="email-error" role="alert">
+            {{ form.emailErrors()[0] }}
+          </div>
         }
       </div>
 
@@ -60,52 +52,61 @@ import {
         <button
           class="btn-primary"
           type="submit"
-          [disabled]="
-            !vestForm.formState().valid || vestForm.formState().pending
-          "
+          [disabled]="!form.valid() || form.pending() || form.submitting()"
         >
-          Submit
+          @if (form.submitting()) {
+            Submitting...
+          } @else {
+            Submit
+          }
         </button>
       </div>
     </form>
   `,
 })
 export class MinimalForm {
-  protected readonly suite = minimalFormValidationSuite;
-  protected readonly model = signal<MinimalFormModel>({ email: '' });
-  protected readonly vestFormRef =
-    viewChild.required<NgxFormDirective>('vestForm');
+  // Create form instance using new Vest.js-first approach
+  protected readonly form = createVestForm(
+    minimalFormValidationSuite,
+    signal<MinimalFormModel>({ email: '' }),
+  );
 
   /**
    * Reactive form state accessor for parent components
    *
-   * Exposes the current form validation state including:
-   * - `valid`: boolean - true when all validations pass
-   * - `pending`: boolean - true during async validation
-   * - `errors`: Record<string, string[]> - field-level validation errors
-   * - `dirty`: boolean - true when user has interacted with form
-   * - `submitted`: boolean - true after form submission attempt
+   * Provides direct access to the enhanced form instance with all
+   * validation state and field operations available via Enhanced Field Signals API.
    *
    * @example
    * ```typescript
    * // In parent component template:
    * <ngx-minimal-form #form />
-   * <div>Form is valid: {{ form.formState().valid }}</div>
+   * <div>Form is valid: {{ form.formState().valid() }}</div>
+   * <div>Email value: {{ form.formState().email() }}</div>
    *
    * // In parent component class:
    * formComponent = viewChild.required<MinimalForm>('form');
    * isFormReady = computed(() =>
-   *   this.formComponent().formState().valid &&
-   *   !this.formComponent().formState().pending
+   *   this.formComponent().formState().valid() &&
+   *   !this.formComponent().formState().pending()
    * );
    * ```
    *
-   * @returns Signal containing the current NgxFormState
+   * @returns The enhanced form instance with all validation and field APIs
    */
-  readonly formState = computed(() => this.vestFormRef().formState());
+  readonly formState = () => this.form;
 
-  // Form submission handler
-  onSubmit() {
-    console.log('Form submitted:', this.model());
+  // Form submission handler with async support
+  async onSubmit() {
+    try {
+      const validData = await this.form.submit();
+      console.log('✅ Form submitted successfully:', validData);
+
+      // Here you would typically send to API
+      // await this.apiService.createUser(validData);
+    } catch (error) {
+      console.error('❌ Form submission failed:', error);
+      // Handle validation errors or API errors
+    }
   }
 }

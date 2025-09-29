@@ -196,6 +196,70 @@
     color: var(--color-text);
   }
 
+  /* Shared alert styles */
+  .feedback-alert {
+    @apply mb-4 rounded-lg p-4;
+  }
+
+  .feedback-alert--error {
+    @apply bg-red-50 dark:bg-red-900/20;
+  }
+
+  .feedback-alert--pending {
+    @apply bg-blue-50 dark:bg-blue-900/20;
+  }
+
+  /* Error display mode selector wrappers */
+  .error-mode-wrapper {
+    @apply mb-8 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 p-6 dark:from-blue-900/20 dark:to-indigo-900/20;
+  }
+
+  .error-mode-summary {
+    @apply rounded-lg bg-white/70 p-4 dark:bg-gray-800/70;
+  }
+
+  .error-mode-instructions {
+    @apply mt-4 rounded-lg bg-amber-50 p-3 dark:bg-amber-900/20;
+  }
+
+  /* Form state demo layout helpers */
+  .state-monitor {
+    border-radius: var(--radius-lg);
+    @apply bg-gray-50 p-6 dark:bg-gray-800;
+  }
+
+  .state-section {
+    @apply mb-6 last:mb-0;
+  }
+
+  .state-grid {
+    @apply grid grid-cols-3 gap-4;
+  }
+
+  .state-item {
+    @apply flex flex-col items-center rounded border bg-white p-3 dark:bg-gray-700;
+  }
+
+  .state-label {
+    @apply text-sm font-medium text-gray-600 dark:text-gray-300;
+  }
+
+  .state-value {
+    @apply mt-1 text-lg font-bold;
+  }
+
+  .field-state {
+    @apply flex items-center justify-between rounded border bg-white p-2 dark:bg-gray-700;
+  }
+
+  .field-name {
+    @apply text-sm font-medium;
+  }
+
+  .field-indicators {
+    @apply flex space-x-2;
+  }
+
   /* Form controls with modern minimal style */
   .form-input,
   .form-textarea,

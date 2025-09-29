@@ -4,7 +4,7 @@ import {
   isDevMode,
   signal,
 } from '@angular/core';
-import { NgxErrorDisplayMode } from 'ngx-vest-forms/core';
+import { type ErrorDisplayStrategy } from 'ngx-vest-forms/core';
 import { ExampleCardsComponent } from '../../ui';
 import { ErrorDisplayModeSelectorComponent } from '../../ui/error-display-mode-selector/error-display-mode-selector.component';
 import { ERROR_DISPLAY_MODES_CONTENT } from './error-display-modes.content';
@@ -51,14 +51,13 @@ import { ErrorDisplayModesFormComponent } from './error-display-modes.form';
   `,
 })
 export class ErrorDisplayModesPageComponent {
-  protected readonly selectedMode =
-    signal<NgxErrorDisplayMode>('on-blur-or-submit');
+  protected readonly selectedMode = signal<ErrorDisplayStrategy>('on-touch');
 
   protected readonly demonstratedContent =
     ERROR_DISPLAY_MODES_CONTENT.demonstrated;
   protected readonly learningContent = ERROR_DISPLAY_MODES_CONTENT.learning;
 
-  protected onModeChange(mode: NgxErrorDisplayMode): void {
+  protected onModeChange(mode: ErrorDisplayStrategy): void {
     this.selectedMode.set(mode);
     if (isDevMode()) {
       console.log('🎛️ Error display mode changed to:', mode);

@@ -1,0 +1,91 @@
+<div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
+  <!-- Form Column -->
+  <div class="rounded-lg bg-white p-8 shadow-xl">
+    <h2 class="mb-6 text-2xl font-bold text-blue-600">Simple Form Example</h2>
+    <p class="mb-6 text-gray-600">
+      This form demonstrates how to handle simple form fields with
+      template-driven forms and Vest.js validation.
+    </p>
+
+    <form
+      (ngSubmit)="onSubmit()"
+      class="space-y-4"
+      [attr.aria-busy]="form.pending()"
+    >
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700" for="email">
+          E-mail address:
+        </label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          [value]="form.email()"
+          (input)="form.setEmail($event)"
+          (blur)="form.touchEmail()"
+          placeholder="Enter your email address"
+          class="w-full rounded-md border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          [class.border-red-500]="form.emailShowErrors() && !form.emailValid()"
+          [class.border-gray-300]="!form.emailShowErrors() || form.emailValid()"
+          [attr.aria-invalid]="form.emailShowErrors() && !form.emailValid()"
+          [attr.aria-describedby]="
+            form.emailShowErrors() ? 'email-error' : null
+          "
+        />
+
+        @if (form.emailShowErrors() && form.emailErrors().length) {
+        <div class="text-sm text-red-600" id="email-error" role="alert">
+          {{ form.emailErrors()[0] }}
+        </div>
+        }
+      </div>
+
+      <div class="space-y-2">
+        <label
+          class="block text-sm font-medium text-gray-700"
+          for="verifyEmail"
+        >
+          Verify e-mail address:
+        </label>
+        <input
+          type="email"
+          id="verifyEmail"
+          name="verifyEmail"
+          [value]="form.verifyEmail()"
+          (input)="form.setVerifyEmail($event)"
+          (blur)="form.touchVerifyEmail()"
+          placeholder="Re-enter your email address"
+          class="w-full rounded-md border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          [class.border-red-500]="
+            form.verifyEmailShowErrors() && !form.verifyEmailValid()
+          "
+          [class.border-gray-300]="
+            !form.verifyEmailShowErrors() || form.verifyEmailValid()
+          "
+          [attr.aria-invalid]="
+            form.verifyEmailShowErrors() && !form.verifyEmailValid()
+          "
+          [attr.aria-describedby]="
+            form.verifyEmailShowErrors() ? 'verifyEmail-error' : null
+          "
+        />
+
+        @if (form.verifyEmailShowErrors() && form.verifyEmailErrors().length) {
+        <div class="text-sm text-red-600" id="verifyEmail-error" role="alert">
+          {{ form.verifyEmailErrors()[0] }}
+        </div>
+        }
+      </div>
+
+      <button
+        type="submit"
+        class="w-full rounded-md bg-blue-600 px-4 py-2 font-medium text-white transition-colors duration-200 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-400"
+        [disabled]="!form.valid() || form.pending() || form.submitting()"
+      >
+        @if (form.submitting()) { Submitting... } @else { Submit }
+      </button>
+    </form>
+  </div>
+
+  <ngx-debugger [form]="debugForm"></ngx-debugger>
+</div>

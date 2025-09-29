@@ -79,42 +79,52 @@ export class AppComponent implements AfterViewInit {
       ],
     },
     {
-      id: 'control-wrapper',
-      label: 'Control Wrapper',
-      pattern: /^\/control-wrapper\//,
+      id: 'mini-vest',
+      label: 'Mini Vest',
+      pattern: /^\/mini-vest\/(simple|array|nested)/,
       links: [
-        {
-          path: '/control-wrapper/control-wrapper-intro',
-          label: 'Control Wrapper Introduction',
-        },
+        { path: '/mini-vest/simple', label: 'Simple Form' },
+        { path: '/mini-vest/array', label: 'Array Form' },
+        { path: '/mini-vest/nested', label: 'Nested Form' },
       ],
     },
-    {
-      id: 'schema-integration',
-      label: 'Schema Integration',
-      pattern: /^\/schema-integration\//,
-      links: [
-        {
-          path: '/schema-integration/schema-comparison',
-          label: 'Schema Comparison',
-        },
-      ],
-    },
-    {
-      id: 'advanced-patterns',
-      label: 'Advanced Patterns',
-      pattern: /^\/advanced-patterns\//,
-      links: [
-        {
-          path: '/advanced-patterns/multi-step-form',
-          label: 'Multi-Step Form',
-        },
-        {
-          path: '/advanced-patterns/dynamic-arrays',
-          label: 'Dynamic Arrays',
-        },
-      ],
-    },
+    // {
+    //   id: 'control-wrapper',
+    //   label: 'Control Wrapper',
+    //   pattern: /^\/control-wrapper\//,
+    //   links: [
+    //     {
+    //       path: '/control-wrapper/control-wrapper-intro',
+    //       label: 'Control Wrapper Introduction',
+    //     },
+    //   ],
+    // },
+    // {
+    //   id: 'schema-integration',
+    //   label: 'Schema Integration',
+    //   pattern: /^\/schema-integration\//,
+    //   links: [
+    //     {
+    //       path: '/schema-integration/schema-comparison',
+    //       label: 'Schema Comparison',
+    //     },
+    //   ],
+    // },
+    // {
+    //   id: 'advanced-patterns',
+    //   label: 'Advanced Patterns',
+    //   pattern: /^\/advanced-patterns\//,
+    //   links: [
+    //     {
+    //       path: '/advanced-patterns/multi-step-form',
+    //       label: 'Multi-Step Form',
+    //     },
+    //     {
+    //       path: '/advanced-patterns/dynamic-arrays',
+    //       label: 'Dynamic Arrays',
+    //     },
+    //   ],
+    // },
     // TODO: Restore these categories as examples are moved back from _backup/
     // {
     //   id: 'core',
@@ -133,6 +143,8 @@ export class AppComponent implements AfterViewInit {
     //   ],
     // },
   ] as const;
+
+  protected readonly categoriesList = this.categories;
 
   protected readonly currentPath = toSignal(
     this.router.events.pipe(

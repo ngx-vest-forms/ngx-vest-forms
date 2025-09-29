@@ -44,74 +44,36 @@ export const appRoutes: Routes = [
     ],
   },
   {
-    path: 'control-wrapper',
+    path: 'mini-vest',
     children: [
-      { path: '', redirectTo: 'control-wrapper-intro', pathMatch: 'full' },
+      { path: '', redirectTo: 'simple', pathMatch: 'full' },
       {
-        path: 'control-wrapper-intro',
+        path: 'simple',
         loadComponent: () =>
-          import(
-            './03-control-wrapper/control-wrapper-intro/control-wrapper-intro.page'
-          ).then((m) => m.ControlWrapperIntroPageComponent),
-        title: 'Control Wrapper Introduction - Bridge to Automation',
-      },
-    ],
-  },
-  {
-    path: 'schema-integration',
-    children: [
-      { path: '', redirectTo: 'schema-comparison', pathMatch: 'full' },
-      {
-        path: 'schema-comparison',
-        loadComponent: () =>
-          import(
-            './04-schema-integration/schema-comparison/schema-comparison.page'
-          ).then((m) => m.SchemaComparisonPageComponent),
-        title: 'Schema Comparison - Zod, Valibot, ArkType & Custom',
-      },
-    ],
-  },
-  {
-    path: 'advanced-patterns',
-    children: [
-      { path: '', redirectTo: 'multi-step-form', pathMatch: 'full' },
-      {
-        path: 'multi-step-form',
-        loadComponent: () =>
-          import(
-            './02-advanced-patterns/multi-step-form/multi-step-form.page'
-          ).then((m) => m.MultiStepFormPageComponent),
-        title: 'Multi-Step Form - Advanced Group Validation',
+          import('./mini-vest/example-form-simple/example-form-simple').then(
+            (m) => m.ExampleFormSimple,
+          ),
+        title: 'Mini Vest - Simple Form',
       },
       {
-        path: 'dynamic-arrays',
+        path: 'array',
         loadComponent: () =>
-          import(
-            './02-advanced-patterns/dynamic-arrays/dynamic-arrays.page'
-          ).then((m) => m.DynamicArraysPageComponent),
-        title: 'Dynamic Arrays - Advanced Array Validation with each()',
+          import('./mini-vest/example-form-array/example-form-array').then(
+            (m) => m.ExampleFormArray,
+          ),
+        title: 'Mini Vest - Array Form',
+      },
+      {
+        path: 'nested',
+        loadComponent: () =>
+          import('./mini-vest/example-form-nested/example-form-nested').then(
+            (m) => m.ExampleFormNested,
+          ),
+        title: 'Mini Vest - Nested Form',
       },
     ],
   },
 
   // Fallback routes
   { path: '**', redirectTo: 'fundamentals/minimal-form' },
-];
-
-// Legacy route redirects for backwards compatibility
-// TODO: Remove these once all examples are restored
-export const legacyRoutes: Routes = [
-  // Old flat route redirects
-  {
-    path: '01-fundamentals/minimal-form',
-    redirectTo: 'fundamentals/minimal-form',
-  },
-  {
-    path: '01-fundamentals/basic-validation',
-    redirectTo: 'fundamentals/basic-validation',
-  },
-  {
-    path: '01-fundamentals/error-display-modes',
-    redirectTo: 'fundamentals/error-display-modes',
-  },
 ];

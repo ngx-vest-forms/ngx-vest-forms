@@ -6,26 +6,26 @@
 export const ERROR_DISPLAY_MODES_CONTENT = {
   demonstrated: {
     icon: '⚡',
-    title: 'Error Display Control',
+    title: 'Error Display Strategies',
     sections: [
       {
-        title: 'ngx-vest-forms Features',
+        title: 'V2 Error Strategies',
         items: [
-          '• <strong>Form directive:</strong> <code class="code-inline">ngxVestForm</code>',
-          '• <strong>Error timing:</strong> <code class="code-inline">NgxErrorDisplayMode</code>',
-          '• <strong>Dynamic control:</strong> <code class="code-inline">[errorDisplayMode]</code>',
-          '• <strong>Error display:</strong> <code class="code-inline">ngxFormErrorDisplay</code>',
-          '• <strong>State tracking:</strong> <code class="code-inline">shouldShowErrors()</code>',
+          '• <strong>Form factory:</strong> <code class="code-inline">createVestForm()</code>',
+          '• <strong>Error strategies:</strong> <code class="code-inline">ERROR_STRATEGIES</code>',
+          '• <strong>Dynamic control:</strong> Built-in strategy switching',
+          '• <strong>Field-level control:</strong> <code class="code-inline">form.fieldShowErrors()</code>',
+          '• <strong>Enhanced API:</strong> <code class="code-inline">form.fieldErrors()</code>, <code class="code-inline">form.fieldValid()</code>',
         ],
       },
       {
-        title: 'Display Modes Showcased',
+        title: 'Display Strategies Showcased',
         items: [
-          '• <strong>On Blur:</strong> Errors after field loses focus',
-          '• <strong>On Submit:</strong> Errors only after submit attempt',
-          '• <strong>On Blur or Submit:</strong> Flexible timing (recommended)',
-          '• <strong>Interactive demo:</strong> Switch modes dynamically',
-          '• <strong>Form-level errors:</strong> Summary on submit attempts',
+          '• <strong>immediate:</strong> Show errors as user types',
+          '• <strong>on-touch:</strong> Show errors after field interaction (recommended)',
+          '• <strong>on-submit:</strong> Show errors only after submit attempt',
+          '• <strong>manual:</strong> Full control over error display timing',
+          '• <strong>Interactive demo:</strong> Switch strategies dynamically',
         ],
       },
     ],

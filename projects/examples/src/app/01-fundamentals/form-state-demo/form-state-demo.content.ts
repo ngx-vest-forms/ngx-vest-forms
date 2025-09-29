@@ -11,23 +11,23 @@
 export const FORM_STATE_DEMO_CONTENT = {
   demonstrated: {
     icon: '📊',
-    title: 'Form State Monitoring',
+    title: 'Reactive Form State',
     sections: [
       {
-        title: 'ngx-vest-forms Features',
+        title: 'V2 State Management',
         items: [
-          '• <strong>Form directive:</strong> <code class="code-inline">ngxVestForm</code>',
-          '• <strong>State monitoring:</strong> <code class="code-inline">formState()</code>',
-          '• <strong>Real-time updates:</strong> <code class="code-inline">computed()</code> signals',
-          '• <strong>Async validation:</strong> <code class="code-inline">pending</code> state tracking',
-          '• <strong>Performance metrics:</strong> Validation timing display',
+          '• <strong>Form factory:</strong> <code class="code-inline">createVestForm()</code>',
+          '• <strong>State signals:</strong> <code class="code-inline">form.valid()</code>, <code class="code-inline">form.pending()</code>',
+          '• <strong>Field-level state:</strong> <code class="code-inline">form.fieldValid()</code>, <code class="code-inline">form.fieldTouched()</code>',
+          '• <strong>Enhanced Field Signals:</strong> Direct access to all field state',
+          '• <strong>Real-time updates:</strong> Automatic signal propagation',
         ],
       },
       {
         title: 'Validation Rules Showcased',
         items: [
-          '• <strong>Username availability:</strong> Async remote validation',
-          '• <strong>Password strength:</strong> Complex validation rules',
+          '• <strong>Username availability:</strong> Async remote validation with memoization',
+          '• <strong>Password strength:</strong> Complex validation with immediate feedback',
           '• <strong>Cross-field validation:</strong> Password confirmation',
           '• <strong>Email format:</strong> Pattern matching with feedback',
           '• <strong>Real-time feedback:</strong> Immediate state updates',

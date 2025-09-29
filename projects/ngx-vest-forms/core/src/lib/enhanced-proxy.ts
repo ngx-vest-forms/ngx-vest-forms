@@ -54,11 +54,11 @@ import type { EnhancedVestForm, VestForm } from './vest-form.types';
  * conflicts with template-driven form bindings:
  *
  * ```typescript
- * // Future ngform-sync package strategy:
+ * /// Future ngform-sync package strategy:
  * export function createFormWithNgFormSupport(suite, data, options = {}) {
  *   const baseForm = createVestForm(suite, data);
  *
- *   // Disable proxy for NgForm compatibility
+ *   /// Disable proxy for NgForm compatibility
  *   if (options.useNgForm && !options.enhanceProxy) {
  *     return baseForm; // Use explicit form.field() API
  *   }

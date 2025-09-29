@@ -1,0 +1,70 @@
+<div class="rounded-lg bg-white p-6 shadow-lg">
+  <h3 class="mb-4 text-xl font-semibold text-blue-600">
+    Form State & Validation:
+  </h3>
+
+  <div class="mb-4 flex flex-wrap gap-2">
+    <span
+      class="inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium"
+      [class.bg-green-100]="valid()"
+      [class.text-green-800]="valid()"
+      [class.border-green-300]="valid()"
+      [class.bg-red-100]="!valid()"
+      [class.text-red-800]="!valid()"
+      [class.border-red-300]="!valid()"
+    >
+      Valid: {{ valid() ? '✅' : '❌' }}
+    </span>
+    <span
+      class="inline-flex items-center rounded-full border border-blue-300 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-800"
+    >
+      Pending: {{ pending() ? '⏳' : '—' }}
+    </span>
+    <span
+      class="inline-flex items-center rounded-full border border-purple-300 bg-purple-50 px-3 py-1 text-sm font-medium text-purple-800"
+    >
+      Submitting: {{ submitting() ? '🚀' : 'idle' }}
+    </span>
+  </div>
+
+  <details class="mb-4 rounded-lg border bg-white" open>
+    <summary
+      class="cursor-pointer rounded-lg px-4 py-3 text-lg font-medium hover:bg-gray-50"
+    >
+      Form Model
+    </summary>
+    <div class="px-4 pb-4">
+      <div
+        class="overflow-x-auto rounded-md border border-blue-200 bg-blue-50 p-4 font-mono text-sm text-blue-900"
+      >
+        <pre><code>{{ model() | json }}</code></pre>
+      </div>
+    </div>
+  </details>
+
+  <details class="mb-4 rounded-lg border bg-white" open>
+    <summary
+      class="cursor-pointer rounded-lg px-4 py-3 text-lg font-medium hover:bg-gray-50"
+    >
+      Validation Errors
+    </summary>
+    <div class="px-4 pb-4">
+      @if (errorEntries().length) {
+      <div class="space-y-3">
+        @for (entry of errorEntries(); track entry.field) {
+        <div class="rounded-md border border-red-200 bg-red-50 p-3">
+          <h6 class="text-sm font-semibold text-red-800">{{ entry.field }}</h6>
+          <ul class="mt-2 list-inside list-disc text-sm text-red-700">
+            @for (message of entry.messages; track message) {
+            <li>{{ message }}</li>
+            }
+          </ul>
+        </div>
+        }
+      </div>
+      } @else {
+      <p class="text-sm text-gray-500">No validation errors 🎉</p>
+      }
+    </div>
+  </details>
+</div>
