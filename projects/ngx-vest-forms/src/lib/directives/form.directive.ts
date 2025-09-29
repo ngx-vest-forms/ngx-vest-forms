@@ -212,12 +212,14 @@ export class FormDirective<T extends Record<string, any>>
      * Trigger shape validations if the form gets updated
      * This is how we can throw run-time errors
      */
-    effect(() => {
-      const v = this.formValue();
-      if (v && this.formShape()) {
-        validateShape(v, this.formShape() as DeepRequired<T>);
-      }
-    });
+    if (isDevMode()) {
+      effect(() => {
+        const v = this.formValue();
+        if (v && this.formShape()) {
+          validateShape(v, this.formShape() as DeepRequired<T>);
+        }
+      });
+    }
 
     /**
      * Mark all the fields as touched when the form is submitted
