@@ -48,7 +48,7 @@ applyTo: '**'
 - [ ] Avoid `any` type (use `unknown`)
 
 ## ngx-vest-forms Patterns
-Follow [`.github/__ngx-vest-forms.instructions.md`](__ngx-vest-forms.instructions.md) and [`.github/instructions/vest.instructions.md`](./instructions/vest.instructions.md):
+Follow [`.github/instructions/ngx-vest-forms.instructions.md`](instructions/ngx-vest-forms.instructions.md) and [`.github/instructions/vest.instructions.md`](./instructions/vest.instructions.md):
 
 ### Form Implementation Checklist
 
