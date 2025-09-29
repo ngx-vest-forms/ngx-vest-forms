@@ -252,6 +252,3 @@ export class FormControlStateDirective {
   readonly hasErrors = computed(() => this.errorMessages().length > 0);
 }
 
-// vestTest('email', 'Please provide a valid email', () => {
-//     enforce(data.email).lengthEquals(1);
-//   });
