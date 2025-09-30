@@ -1,11 +1,10 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { staticSafeSuite } from 'ngx-vest-forms/core';
+import { enforce, test } from 'vest';
 import { NestedFormModel } from './example-form-nested.model';
 
-export const nestedValidationSuite = staticSuite(
-  (model: Partial<NestedFormModel> = {}, field?: string) => {
-    if (field) {
-      only(field); // For performance - only validate the active field
-    }
+export const nestedValidationSuite = staticSafeSuite<NestedFormModel>(
+  (model: Partial<NestedFormModel> = {}) => {
+    // ✅ No need for manual only(field) guard - staticSafeSuite handles it automatically!
 
     // Personal Info validations - use nested field names to match form paths
     test('personalInfo.firstName', 'First name is required', () => {

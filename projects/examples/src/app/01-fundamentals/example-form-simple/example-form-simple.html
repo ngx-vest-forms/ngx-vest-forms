@@ -1,0 +1,68 @@
+<div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
+  <!-- Form Column -->
+  <form
+    (ngSubmit)="onSubmit()"
+    class="form-container"
+    [attr.aria-busy]="form.pending()"
+  >
+    <div class="form-field">
+      <label class="form-label" for="email"> Email Address * </label>
+      <input
+        id="email"
+        class="form-input"
+        type="email"
+        [value]="form.email()"
+        (input)="form.setEmail($event)"
+        placeholder="you@example.com"
+        [attr.aria-invalid]="form.emailShowErrors() && !form.emailValid()"
+        [attr.aria-describedby]="
+          form.emailShowErrors() ? 'email-error' : null
+        "
+        autocomplete="email"
+      />
+      @if (form.emailShowErrors() && form.emailErrors().length) {
+      <div class="form-error" id="email-error" role="alert">
+        {{ form.emailErrors()[0] }}
+      </div>
+      }
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="verifyEmail">
+        Verify Email Address *
+      </label>
+      <input
+        id="verifyEmail"
+        class="form-input"
+        type="email"
+        [value]="form.verifyEmail()"
+        (input)="form.setVerifyEmail($event)"
+        placeholder="Confirm your email"
+        [attr.aria-invalid]="
+          form.verifyEmailShowErrors() && !form.verifyEmailValid()
+        "
+        [attr.aria-describedby]="
+          form.verifyEmailShowErrors() ? 'verifyEmail-error' : null
+        "
+        autocomplete="email"
+      />
+      @if (form.verifyEmailShowErrors() && form.verifyEmailErrors().length) {
+      <div class="form-error" id="verifyEmail-error" role="alert">
+        {{ form.verifyEmailErrors()[0] }}
+      </div>
+      }
+    </div>
+
+    <div class="form-actions">
+      <button
+        class="btn-primary"
+        type="submit"
+        [disabled]="!form.valid() || form.pending() || form.submitting()"
+      >
+        @if (form.submitting()) { Submitting... } @else { Submit }
+      </button>
+    </div>
+  </form>
+
+  <ngx-debugger [form]="debugForm"></ngx-debugger>
+</div>

@@ -1,0 +1,61 @@
+/* Enhanced Debugger Styles */
+details > summary {
+  transition: all 0.2s ease;
+  list-style: none;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+details > summary::before {
+  content: '▶';
+  display: inline-block;
+  margin-right: 0.5rem;
+  transition: transform 0.2s ease;
+  font-size: 0.75rem;
+  color: rgb(107 114 128);
+}
+
+details[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+details > summary:hover::before {
+  color: rgb(59 130 246);
+}
+
+.form-state-json {
+  background: linear-gradient(145deg, rgb(239 246 255), rgb(219 234 254));
+  border: 1px solid rgb(191 219 254);
+}
+
+:is(.dark) .form-state-json {
+  background: linear-gradient(
+    145deg,
+    rgb(30 58 138 / 0.1),
+    rgb(30 64 175 / 0.2)
+  );
+  border: 1px solid rgb(29 78 216);
+}
+
+/* Smooth transitions for state changes */
+.inline-flex {
+  transition: all 0.15s ease-in-out;
+}
+
+/* Error list animations */
+.space-y-3 > * {
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -78,6 +78,7 @@ core/
 6. ✅ **`error-strategies.ts`** - Display strategies
 7. ✅ **`form-arrays.ts`** - Array management
 8. ✅ **`compose-vest-forms.ts`** - Form composition
+9. ✅ **`utils/safe-suite.ts`** - Safe Vest suite wrappers (prevents `only(undefined)` bug)
 
 ### 1.2 Core API Design
 
@@ -484,9 +485,9 @@ export class MinimalFormNgFormComponent {
 export class ApiComparisonComponent {}
 ```
 
-## Phase 4: Implementation Timeline
+## Phase 4: Implementation Phases
 
-### Sprint 1-2: Core Foundation (Weeks 1-4)
+### Phase 4.1: Core Foundation (Critical Priority)
 
 - [ ] Archive V1 code to `_backup/v1/`
 - [ ] Set up new package structure with build configuration
@@ -496,7 +497,7 @@ export class ApiComparisonComponent {}
 - [ ] Write comprehensive unit tests (95% coverage)
 - [ ] Set up Vitest testing infrastructure
 
-### Sprint 3-4: Core Features (Weeks 5-8)
+### Phase 4.2: Core Features (High Priority)
 
 - [ ] Implement form arrays (`form.array()`)
 - [ ] Implement form composition (`composeVestForms()`)
@@ -505,7 +506,7 @@ export class ApiComparisonComponent {}
 - [ ] Integration tests with Vest.js v5
 - [ ] Documentation for core package
 
-### Sprint 5-6: Optional Packages (Weeks 9-12)
+### Phase 4.3: Optional Packages (Medium Priority)
 
 - [ ] Build Control Wrapper package with accessibility
 - [ ] Build NgForm Sync package with bidirectional binding
@@ -513,14 +514,33 @@ export class ApiComparisonComponent {}
 - [ ] Testing utilities package
 - [ ] Cross-package integration tests
 
-### Sprint 7-8: Examples & Documentation (Weeks 13-16)
+### Phase 4.4: Examples & Documentation (Medium Priority)
 
-- [ ] Refactor all examples to V2 API structure
+- [x] ✅ Refactor all examples to V2 API structure (using `staticSafeSuite`)
 - [ ] Create pure vs NgForm comparison examples
 - [ ] Build performance comparison demos
-- [ ] Write migration guides from V1
+- [x] ✅ Write migration guides from V1 (Safe Suite Migration Guide)
 - [ ] Complete API documentation
 - [ ] E2E tests with Playwright
+
+### Phase 4.5: Developer Tooling (Optional - Future Enhancement)
+
+**Purpose**: Automate detection and migration of unsafe validation patterns
+
+- [ ] **Task 3**: Create ESLint rule `@ngx-vest-forms/require-safe-suite`
+  - Detects unsafe `staticSuite`/`create` usage without proper `only(field)` guard
+  - Suggests using `staticSafeSuite`/`createSafeSuite` instead
+  - Auto-fixable where possible
+  - See [`docs/ESLINT_RULE_PROPOSAL.md`](../ESLINT_RULE_PROPOSAL.md) for specification
+
+- [ ] **Task 4**: Create codemod for automatic migration
+  - Converts `staticSuite((data, field) => { if (field) { only(field); } ... })` → `staticSafeSuite<T>((data) => { ... })`
+  - Converts `create((data, field) => { if (field) { only(field); } ... })` → `createSafeSuite<T>((data) => { ... })`
+  - Removes unnecessary imports (`only` from 'vest')
+  - Adds required imports (`staticSafeSuite`/`createSafeSuite` from 'ngx-vest-forms/core')
+  - Preserves type parameters and comments
+  - Dry-run mode for preview before applying changes
+  - CLI: `npx @ngx-vest-forms/codemod migrate-to-safe-suite src/**/*.ts`
 
 ## Testing Strategy
 

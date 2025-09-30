@@ -19,3 +19,5 @@ export {
   FocusUtilities,
   createFocusFirstInvalidField,
 } from './utils/focus-utils';
+
+export { asDebuggerForm } from './debugger/debugger';

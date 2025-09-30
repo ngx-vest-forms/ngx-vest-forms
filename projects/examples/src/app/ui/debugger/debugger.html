@@ -1,70 +1,245 @@
-<div class="rounded-lg bg-white p-6 shadow-lg">
-  <h3 class="mb-4 text-xl font-semibold text-blue-600">
-    Form State & Validation:
-  </h3>
-
-  <div class="mb-4 flex flex-wrap gap-2">
-    <span
-      class="inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium"
-      [class.bg-green-100]="valid()"
-      [class.text-green-800]="valid()"
-      [class.border-green-300]="valid()"
-      [class.bg-red-100]="!valid()"
-      [class.text-red-800]="!valid()"
-      [class.border-red-300]="!valid()"
-    >
-      Valid: {{ valid() ? '✅' : '❌' }}
-    </span>
-    <span
-      class="inline-flex items-center rounded-full border border-blue-300 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-800"
-    >
-      Pending: {{ pending() ? '⏳' : '—' }}
-    </span>
-    <span
-      class="inline-flex items-center rounded-full border border-purple-300 bg-purple-50 px-3 py-1 text-sm font-medium text-purple-800"
-    >
-      Submitting: {{ submitting() ? '🚀' : 'idle' }}
-    </span>
-  </div>
-
-  <details class="mb-4 rounded-lg border bg-white" open>
-    <summary
-      class="cursor-pointer rounded-lg px-4 py-3 text-lg font-medium hover:bg-gray-50"
-    >
-      Form Model
-    </summary>
-    <div class="px-4 pb-4">
-      <div
-        class="overflow-x-auto rounded-md border border-blue-200 bg-blue-50 p-4 font-mono text-sm text-blue-900"
-      >
-        <pre><code>{{ model() | json }}</code></pre>
+<div
+  class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+>
+  <!-- Header Section -->
+  <div
+    class="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700"
+  >
+    <div class="flex items-center justify-between px-6 py-4">
+      <div class="flex items-center gap-3">
+        <div
+          class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900"
+        >
+          <svg
+            class="h-4 w-4 text-blue-600 dark:text-blue-300"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            ></path>
+          </svg>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-900 dark:text-gray-100">
+            Form State & Validation
+          </h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            Live debugging information
+          </p>
+        </div>
+      </div>
+      <!-- Status Badge -->
+      <div>
+        @if (valid() && !pending()) {
+        <span
+          class="inline-flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300"
+        >
+          <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+              clip-rule="evenodd"
+            ></path>
+          </svg>
+          Valid
+        </span>
+        } @else if (pending()) {
+        <span
+          class="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
+        >
+          <svg
+            class="h-3 w-3 animate-spin"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+              clip-rule="evenodd"
+            ></path>
+          </svg>
+          Validating
+        </span>
+        } @else {
+        <span
+          class="inline-flex items-center gap-1 rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300"
+        >
+          <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+              clip-rule="evenodd"
+            ></path>
+          </svg>
+          Invalid
+        </span>
+        }
       </div>
     </div>
-  </details>
+  </div>
 
-  <details class="mb-4 rounded-lg border bg-white" open>
-    <summary
-      class="cursor-pointer rounded-lg px-4 py-3 text-lg font-medium hover:bg-gray-50"
+  <!-- Status Indicators Row -->
+  <div
+    class="border-b border-gray-200 bg-white px-6 py-3 dark:border-gray-700 dark:bg-gray-800"
+  >
+    <div class="flex flex-wrap gap-2">
+      <span
+        class="inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium"
+        [class.bg-green-100]="valid()"
+        [class.text-green-800]="valid()"
+        [class.border-green-300]="valid()"
+        [class.bg-red-100]="!valid()"
+        [class.text-red-800]="!valid()"
+        [class.border-red-300]="!valid()"
+      >
+        Valid: {{ valid() ? '✅' : '❌' }}
+      </span>
+      <span
+        class="inline-flex items-center rounded-full border border-blue-300 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-800 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+      >
+        Pending: {{ pending() ? '⏳' : '—' }}
+      </span>
+      <span
+        class="inline-flex items-center rounded-full border border-purple-300 bg-purple-50 px-3 py-1 text-sm font-medium text-purple-800 dark:border-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+      >
+        Submitting: {{ submitting() ? '🚀' : 'idle' }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Collapsible Content Sections -->
+  <div class="space-y-0">
+    <!-- Form Model Section -->
+    <details
+      class="border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+      open
     >
-      Validation Errors
-    </summary>
-    <div class="px-4 pb-4">
-      @if (errorEntries().length) {
-      <div class="space-y-3">
-        @for (entry of errorEntries(); track entry.field) {
-        <div class="rounded-md border border-red-200 bg-red-50 p-3">
-          <h6 class="text-sm font-semibold text-red-800">{{ entry.field }}</h6>
-          <ul class="mt-2 list-inside list-disc text-sm text-red-700">
-            @for (message of entry.messages; track message) {
-            <li>{{ message }}</li>
-            }
-          </ul>
+      <summary
+        class="cursor-pointer px-6 py-4 text-lg font-medium text-gray-900 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-700/50"
+      >
+        <div class="flex items-center gap-2">
+          <svg
+            class="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+            ></path>
+          </svg>
+          Form Model
+        </div>
+      </summary>
+      <div class="px-6 pb-4">
+        <div
+          class="overflow-x-auto rounded-md border border-blue-200 bg-blue-50 p-4 font-mono text-sm text-blue-900 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+        >
+          <pre><code>{{ model() | json }}</code></pre>
+        </div>
+      </div>
+    </details>
+
+    <!-- Validation Errors Section -->
+    <details class="bg-white dark:bg-gray-800" open>
+      <summary
+        class="cursor-pointer px-6 py-4 text-lg font-medium text-gray-900 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-700/50"
+      >
+        <div class="flex items-center gap-2">
+          <svg
+            class="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+            ></path>
+          </svg>
+          Validation Errors @if (errorEntries().length > 0) {
+          <span
+            class="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-100 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300"
+          >
+            {{ errorEntries().length }}
+          </span>
+          }
+        </div>
+      </summary>
+      <div class="px-6 pb-6">
+        @if (errorEntries().length) {
+        <div class="space-y-3">
+          @for (entry of errorEntries(); track entry.field) {
+          <div
+            class="rounded-md border border-red-200 bg-red-50 p-3 dark:border-red-700 dark:bg-red-900/20"
+          >
+            <h6 class="text-sm font-semibold text-red-800 dark:text-red-300">
+              {{ entry.field }}
+            </h6>
+            <ul
+              class="mt-2 list-inside list-disc text-sm text-red-700 dark:text-red-400"
+            >
+              @for (message of entry.messages; track message) {
+              <li>{{ message }}</li>
+              }
+            </ul>
+          </div>
+          }
+        </div>
+        } @else {
+        <div class="py-4 text-center">
+          <div
+            class="mx-auto mb-3 h-12 w-12 rounded-full bg-gray-100 p-3 dark:bg-gray-700"
+          >
+            <svg
+              class="h-6 w-6 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+          </div>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            No validation errors 🎉
+          </p>
         </div>
         }
       </div>
-      } @else {
-      <p class="text-sm text-gray-500">No validation errors 🎉</p>
-      }
+    </details>
+  </div>
+
+  <!-- Footer -->
+  <div
+    class="border-t border-gray-200 bg-gray-50 px-6 py-3 dark:border-gray-700 dark:bg-gray-700"
+  >
+    <div
+      class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400"
+    >
+      <div class="flex items-center gap-4">
+        <span>ngx-vest-forms debugger</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <span
+          class="inline-block h-2 w-2 animate-pulse rounded-full bg-green-400"
+        ></span>
+        <span>Live updating</span>
+      </div>
     </div>
-  </details>
+  </div>
 </div>

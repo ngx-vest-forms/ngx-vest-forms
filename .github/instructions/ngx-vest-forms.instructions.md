@@ -17,11 +17,19 @@ When generating code for ngx-vest-forms V2:
 
 ## Core API Pattern
 
-### 1. Define Validation Suite (Always Use staticSuite)
+### 1. Define Validation Suite (Recommended: Use staticSafeSuite)
+
+> **✅ RECOMMENDED: Use `staticSafeSuite` to prevent the `only(undefined)` bug automatically**
+>
+> The safe wrapper from `ngx-vest-forms/core` handles the `if (field) { only(field); }` guard pattern for you,
+> eliminating the most common validation bug where calling `only(undefined)` causes ZERO tests to run.
+>
+> **If you see**: Only 1 validation error displays at a time → You forgot the guard or used unsafe pattern!
 
 ```typescript
 // user.validations.ts
-import { staticSuite, enforce, only, test, include, skipWhen } from 'vest';
+import { staticSafeSuite } from 'ngx-vest-forms/core';
+import { enforce, test, include, skipWhen } from 'vest';
 
 export interface UserModel {
   email: string;
@@ -29,11 +37,9 @@ export interface UserModel {
   confirmPassword?: string;
 }
 
-export const userValidationSuite = staticSuite((data: UserModel = {}, field?: string) => {
-  // ALWAYS call only(field) first for performance
-  if (field) {
-    only(field);
-  }
+export const userValidationSuite = staticSafeSuite<UserModel>((data = {}) => {
+  // ✅ No need for: if (field) { only(field); }
+  // The wrapper handles it automatically!
 
   test('email', 'Email is required', () => {
     enforce(data.email).isNotEmpty();

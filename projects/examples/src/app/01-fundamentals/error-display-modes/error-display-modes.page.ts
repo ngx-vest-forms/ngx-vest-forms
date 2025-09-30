@@ -3,9 +3,11 @@ import {
   Component,
   isDevMode,
   signal,
+  viewChild,
 } from '@angular/core';
 import { type ErrorDisplayStrategy } from 'ngx-vest-forms/core';
 import { ExampleCardsComponent } from '../../ui';
+import { Debugger } from '../../ui/debugger/debugger';
 import { ErrorDisplayModeSelectorComponent } from '../../ui/error-display-mode-selector/error-display-mode-selector.component';
 import { ERROR_DISPLAY_MODES_CONTENT } from './error-display-modes.content';
 import { ErrorDisplayModesFormComponent } from './error-display-modes.form';
@@ -22,6 +24,7 @@ import { ErrorDisplayModesFormComponent } from './error-display-modes.form';
     ExampleCardsComponent,
     ErrorDisplayModeSelectorComponent,
     ErrorDisplayModesFormComponent,
+    Debugger,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -44,13 +47,27 @@ import { ErrorDisplayModesFormComponent } from './error-display-modes.form';
           class="mb-6"
         />
 
-        <!-- Interactive Demo Form -->
-        <ngx-error-display-modes-form [errorDisplayMode]="selectedMode()" />
+        <!-- Side-by-side layout for form and debugger -->
+        <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
+          <!-- Interactive Demo Form -->
+          <ngx-error-display-modes-form
+            #formComponent
+            [errorDisplayMode]="selectedMode()"
+          />
+
+          <!-- Real-time Form State Debugger -->
+          @if (formComponent?.debugFormState(); as debugForm) {
+            <ngx-debugger [form]="debugForm" />
+          }
+        </div>
       </ngx-example-cards>
     </div>
   `,
 })
 export class ErrorDisplayModesPageComponent {
+  protected readonly formComponent =
+    viewChild<ErrorDisplayModesFormComponent>('formComponent');
+
   protected readonly selectedMode = signal<ErrorDisplayStrategy>('on-touch');
 
   protected readonly demonstratedContent =

@@ -1,11 +1,6 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  viewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, viewChild } from '@angular/core';
 import { ExampleCardsComponent } from '../../ui';
-import { FormStateDisplayComponent } from '../../ui/form-state-display/public-api';
+import { Debugger } from '../../ui/debugger/debugger';
 import { BASIC_VALIDATION_CONTENT } from './basic-validation.content';
 import { BasicValidationFormComponent } from './basic-validation.form';
 
@@ -44,11 +39,7 @@ import { BasicValidationFormComponent } from './basic-validation.form';
 
 @Component({
   selector: 'ngx-basic-validation-page',
-  imports: [
-    BasicValidationFormComponent,
-    ExampleCardsComponent,
-    FormStateDisplayComponent,
-  ],
+  imports: [BasicValidationFormComponent, ExampleCardsComponent, Debugger],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="mb-8">
@@ -62,21 +53,19 @@ import { BasicValidationFormComponent } from './basic-validation.form';
       [demonstrated]="demonstratedContent"
       [learning]="learningContent"
     >
-      <!-- The form component -->
-      <ngx-basic-validation-form #formComp />
-
-      <!-- Developer form state panel -->
-      <ngx-form-state-display
-        [title]="'Live Form State (parent read)'"
-        [formState]="childFormState()"
-      />
+      <!-- Side-by-side layout for form and debugger -->
+      <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
+        <ngx-basic-validation-form #formComp />
+        @if (formComponent()?.debugFormState(); as debugForm) {
+          <ngx-debugger [form]="debugForm" />
+        }
+      </div>
     </ngx-example-cards>
   `,
 })
 export class BasicValidationPage {
   protected readonly formComponent =
     viewChild<BasicValidationFormComponent>('formComp');
-  readonly childFormState = computed(() => this.formComponent()?.formState());
 
   protected readonly demonstratedContent =
     BASIC_VALIDATION_CONTENT.demonstrated;

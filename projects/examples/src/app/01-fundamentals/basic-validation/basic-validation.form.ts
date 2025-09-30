@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { createVestForm } from 'ngx-vest-forms/core';
+import { asDebuggerForm } from '../../ui/debugger/debugger';
 import {
   UserFormModel,
   userValidationSuite,
@@ -177,7 +178,10 @@ export class BasicValidationFormComponent {
     }),
   );
 
+  protected readonly debugForm = asDebuggerForm(this.form);
+
   readonly formState = () => this.form;
+  readonly debugFormState = () => this.debugForm;
 
   async onSubmit() {
     try {

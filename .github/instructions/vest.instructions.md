@@ -12,20 +12,57 @@ applyTo: '**/*.{ts,html,component.ts}'
 - Keep examples lightweight; expand in feature docs only when needed.
 
 ## Golden rules (follow these first)
-- Use `staticSuite` + `only(field)` for every form-facing suite; fall back to `create` only when shared mutable state is required.
+- **ALWAYS use `staticSafeSuite` or `createSafeSuite`** from `ngx-vest-forms/core` - they prevent the `only(undefined)` bug automatically.
+- Only use raw `staticSuite` + manual `only(field)` guard if safe wrappers are unavailable; always guard with `if (field) { only(field); }`.
 - Drive touch state from `result.isTested(field)`—never maintain parallel dirty flags.
-- Prefer `skipWhen`/`omitWhen`/`include.when` over ad-hoc conditionals; they compose with Vest’s execution engine.
+- Prefer `skipWhen`/`omitWhen`/`include.when` over ad-hoc conditionals; they compose with Vest's execution engine.
 - Keep async validations cancellable via the provided `AbortSignal` and guard expensive work with `skipWhen`.
 - Emit warnings with `warn()` only for non-blocking guidance; errors must still block submission.
 - Mirror Vest state into Angular signals once, then derive everything else from computed signals.
 - Use typed suites so invalid field names fail at compile time.
 - When unsure, copy patterns from this file rather than improvising.
 
-## Essential suite recipe
+## Recommended suite recipe (Safe Wrappers)
+
+> **✅ RECOMMENDED: Use `staticSafeSuite` to prevent the `only(undefined)` bug automatically**
+>
+> The safe wrappers from `ngx-vest-forms/core` handle the `if (field) { only(field); }` guard pattern for you,
+> eliminating the most common validation bug where calling `only(undefined)` causes ZERO tests to run.
+
+```typescript
+import { staticSafeSuite } from 'ngx-vest-forms/core';
+import { enforce, test } from 'vest';
+
+export const contactSuite = staticSafeSuite<ContactModel>((data = {}) => {
+  // ✅ No need for: if (field) { only(field); }
+  // The wrapper handles it automatically!
+
+  test('email', 'Email is required', () => enforce(data.email).isNotBlank());
+  test('email', 'Email format is invalid', () => enforce(data.email).isEmail());
+});
+```
+
+**Benefits of Safe Wrappers:**
+- ✅ Prevents the `only(undefined)` bug (runs ZERO tests)
+- ✅ Less boilerplate code
+- ✅ Type-safe with generic parameters
+- ✅ Drop-in replacement for Vest's functions
+- ✅ Zero performance overhead
+
+See [`safe-suite.ts`](../../projects/ngx-vest-forms/core/src/lib/utils/safe-suite.ts) for implementation details.
+
+## Legacy/Manual suite recipe (Fallback Only)
+
+> **⚠️ LEGACY: Only use this pattern if safe wrappers are unavailable**
+>
+> Manual `only(field)` requires careful guarding to prevent the bug where calling `only(undefined)`
+> tells Vest to run **ZERO tests**, breaking form validation.
+
 ```typescript
 import { staticSuite, enforce, only, test } from 'vest';
 
 export const contactSuite = staticSuite((data = {}, field?: string) => {
+  // ✅ CORRECT: Guard with if statement
   if (field) {
     only(field);
   }
@@ -34,6 +71,22 @@ export const contactSuite = staticSuite((data = {}, field?: string) => {
   test('email', 'Email format is invalid', () => enforce(data.email).isEmail());
 });
 ```
+
+**Why this matters:**
+- **When `field` is `undefined`** (initial validation, form-level validation): All tests run, showing all errors
+- **When `field` is `"email"`** (field-level validation): Only email tests run (performance optimization)
+- **When you call `only(undefined)`** (bug): Vest runs NO tests at all, breaking validation
+
+**DO NOT DO THIS:**
+```typescript
+// ❌ WRONG: Missing if guard - breaks when field is undefined!
+export const contactSuite = staticSuite((data = {}, field?: string) => {
+  only(field); // BUG: When field is undefined, NO tests will run!
+
+  test('email', 'Email is required', () => enforce(data.email).isNotBlank());
+});
+```
+
 - Always accept `(data, field?)`; treat `field` as optional and guard with `if (field) { only(field); }`.
 - Return the suite directly from the module; consumers import the constant.
 
@@ -234,6 +287,69 @@ export async function validatePayload(payload: unknown) {
 - Use `suite.get()` or the subscribed result to assert `isValid`, `isPending`, and specific error strings.
 - Mock async helpers with resolved/rejected promises and advance fake timers when debouncing.
 - For libraries, provide fixture suites that showcase `optional`, `include`, `skipWhen`, and `warn` so consumers can copy known-good patterns.
+
+## Common Mistakes to Avoid
+
+### ❌ Mistake #1: Calling `only(field)` without checking if field is undefined
+
+```typescript
+// ❌ WRONG - This breaks form validation!
+export const suite = staticSuite((data, field) => {
+  only(field); // When field is undefined, NO tests run!
+  test('email', 'Required', () => enforce(data.email).isNotEmpty());
+});
+
+// ✅ CORRECT - Always guard with if statement
+export const suite = staticSuite((data, field) => {
+  if (field) {
+    only(field);
+  }
+  test('email', 'Required', () => enforce(data.email).isNotEmpty());
+});
+```
+
+**Impact:** Only 1 error shows at a time; initial form load shows no errors even when multiple fields are invalid.
+
+### ❌ Mistake #2: Maintaining separate "dirty" or "touched" state
+
+```typescript
+// ❌ WRONG - Duplicate state management
+const [dirty, setDirty] = useState({});
+const showError = dirty.email && result.hasErrors('email');
+
+// ✅ CORRECT - Use Vest's built-in isTested()
+const showError = result.isTested('email') && result.hasErrors('email');
+```
+
+### ❌ Mistake #3: Not respecting AbortSignal in async tests
+
+```typescript
+// ❌ WRONG - Request not cancelled when field changes
+test('username', 'Taken', async () => {
+  await fetch('/check-username');
+});
+
+// ✅ CORRECT - Cancel on field change
+test('username', 'Taken', async ({ signal }) => {
+  await fetch('/check-username', { signal });
+});
+```
+
+### ❌ Mistake #4: Not using skipWhen for expensive async validations
+
+```typescript
+// ❌ WRONG - Expensive check runs even when email is invalid
+test('email', 'Taken', async () => {
+  await checkEmailAvailability(data.email);
+});
+
+// ✅ CORRECT - Skip expensive check until email format is valid
+skipWhen((result) => result.hasErrors('email'), () => {
+  test('email', 'Taken', async ({ signal }) => {
+    await checkEmailAvailability(data.email, { signal });
+  });
+});
+```
 
 ## Reference links
 - Vest docs: https://vestjs.dev/docs/

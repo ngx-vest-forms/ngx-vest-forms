@@ -64,7 +64,7 @@ export class AppComponent implements AfterViewInit {
       id: 'fundamentals',
       label: 'Fundamentals',
       pattern:
-        /^\/fundamentals\/(minimal-form|basic-validation|error-display-modes|form-state-demo)/,
+        /^\/fundamentals\/(minimal-form|basic-validation|error-display-modes)/,
       links: [
         { path: '/fundamentals/minimal-form', label: 'Minimal Form' },
         { path: '/fundamentals/basic-validation', label: 'Basic Validation' },
@@ -72,20 +72,6 @@ export class AppComponent implements AfterViewInit {
           path: '/fundamentals/error-display-modes',
           label: 'Error Display Modes',
         },
-        {
-          path: '/fundamentals/form-state-demo',
-          label: 'Form State Demo',
-        },
-      ],
-    },
-    {
-      id: 'mini-vest',
-      label: 'Mini Vest',
-      pattern: /^\/mini-vest\/(simple|array|nested)/,
-      links: [
-        { path: '/mini-vest/simple', label: 'Simple Form' },
-        { path: '/mini-vest/array', label: 'Array Form' },
-        { path: '/mini-vest/nested', label: 'Nested Form' },
       ],
     },
     // {

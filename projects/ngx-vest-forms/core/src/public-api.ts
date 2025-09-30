@@ -68,6 +68,11 @@ export {
   normalizeFieldValue,
 } from './lib/utils/value-extraction';
 
+// Safe suite wrappers (prevent only(undefined) bug)
+export { createSafeSuite, staticSafeSuite } from './lib/utils/safe-suite';
+
+export type { SafeSuite, SafeSuiteFunction } from './lib/utils/safe-suite';
+
 // Version information
 export const VERSION = '2.0.0-beta.1';
 

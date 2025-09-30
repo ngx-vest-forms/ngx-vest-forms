@@ -1,4 +1,5 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { staticSafeSuite } from 'ngx-vest-forms/core';
+import { enforce, test } from 'vest';
 
 /**
  * Form Model Type for Minimal Form Example
@@ -14,11 +15,11 @@ export type MinimalFormModel = {
  * - Single field validation
  * - Required field check
  * - Email format validation
- * - Performance optimization with only(field)
+ * - Automatic performance optimization with staticSafeSuite
  */
-export const minimalFormValidationSuite = staticSuite(
-  (data: Partial<MinimalFormModel> = {}, field?: string) => {
-    only(field);
+export const minimalFormValidationSuite = staticSafeSuite<MinimalFormModel>(
+  (data: Partial<MinimalFormModel> = {}) => {
+    // ✅ No need for manual only(field) guard - staticSafeSuite handles it automatically!
 
     test('email', 'Email is required', () => {
       enforce(data.email).isNotEmpty();

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { createVestForm } from 'ngx-vest-forms/core';
+import { asDebuggerForm } from '../../ui/debugger/debugger';
 import {
   MinimalFormModel,
   minimalFormValidationSuite,
@@ -71,6 +72,9 @@ export class MinimalForm {
     signal<MinimalFormModel>({ email: '' }),
   );
 
+  // Debugger form for development tools
+  protected readonly debugForm = asDebuggerForm(this.form);
+
   /**
    * Reactive form state accessor for parent components
    *
@@ -95,6 +99,13 @@ export class MinimalForm {
    * @returns The enhanced form instance with all validation and field APIs
    */
   readonly formState = () => this.form;
+
+  /**
+   * Debug form accessor for debugger components
+   *
+   * @returns The form instance typed for the debugger component
+   */
+  readonly debugFormState = () => this.debugForm;
 
   // Form submission handler with async support
   async onSubmit() {

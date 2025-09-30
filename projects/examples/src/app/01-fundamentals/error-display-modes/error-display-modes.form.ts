@@ -13,7 +13,7 @@ import {
   type EnhancedVestForm,
   type ErrorDisplayStrategy,
 } from 'ngx-vest-forms/core';
-import { createFocusFirstInvalidField } from '../../ui';
+import { asDebuggerForm, createFocusFirstInvalidField } from '../../ui';
 import {
   ProductFeedbackModel,
   productFeedbackValidationSuite,
@@ -517,4 +517,7 @@ export class ErrorDisplayModesFormComponent implements OnDestroy {
       enhancedFieldSignals: true,
     });
   }
+
+  // Debug support for development
+  readonly debugFormState = () => asDebuggerForm(this.form);
 }

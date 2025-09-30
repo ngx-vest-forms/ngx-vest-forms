@@ -33,44 +33,6 @@ export const appRoutes: Routes = [
           ).then((m) => m.ErrorDisplayModesPageComponent),
         title: 'Error Display Modes - Interactive Demo',
       },
-      {
-        path: 'form-state-demo',
-        loadComponent: () =>
-          import('./01-fundamentals/form-state-demo/form-state-demo.page').then(
-            (m) => m.FormStateDemoPageComponent,
-          ),
-        title: 'Form State Demo - Real-time Monitoring',
-      },
-    ],
-  },
-  {
-    path: 'mini-vest',
-    children: [
-      { path: '', redirectTo: 'simple', pathMatch: 'full' },
-      {
-        path: 'simple',
-        loadComponent: () =>
-          import('./mini-vest/example-form-simple/example-form-simple').then(
-            (m) => m.ExampleFormSimple,
-          ),
-        title: 'Mini Vest - Simple Form',
-      },
-      {
-        path: 'array',
-        loadComponent: () =>
-          import('./mini-vest/example-form-array/example-form-array').then(
-            (m) => m.ExampleFormArray,
-          ),
-        title: 'Mini Vest - Array Form',
-      },
-      {
-        path: 'nested',
-        loadComponent: () =>
-          import('./mini-vest/example-form-nested/example-form-nested').then(
-            (m) => m.ExampleFormNested,
-          ),
-        title: 'Mini Vest - Nested Form',
-      },
     ],
   },
 
