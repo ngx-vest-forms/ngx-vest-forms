@@ -13,7 +13,7 @@
 
 ⭐ If you like this project, star it on GitHub — it helps a lot!
 
-[Overview](#overview) • [Getting Started](#getting-started) • [Features](#features) • [Basic Usage](#basic-usage) • [Examples](#examples) • [Form Structure Changes](#handling-form-structure-changes) • [Field State Utilities](#field-state-utilities) • [Documentation](#documentation) • [Resources](#resources) • [Developer Resources](#developer-resources) • [Acknowledgments](#acknowledgments)
+[Overview](#overview) • [Getting Started](#getting-started) • [Features](#features) • [Examples](#examples) • [Field State Utilities](#field-state-utilities) • [Documentation](#documentation) • [Resources](#resources) • [Developer Resources](#developer-resources) • [Acknowledgments](#acknowledgments)
 
 </div>
 
@@ -152,10 +152,11 @@ Your form automatically creates FormGroups and FormControls with type-safe, unid
 
 ### Advanced Validation
 
-- **Async Validations** - Built-in support with AbortController
+- **Async Validations** - Built-in support with AbortController and pending state
 - **Conditional Logic** - Use `omitWhen()` for conditional validation rules
 - **Composable Suites** - Reusable validation functions across projects
 - **Custom Debouncing** - Configure validation timing per field or form
+- **Warnings Support** - Non-blocking feedback with Vest's `warn()` feature
 
 ### Dynamic Forms
 
@@ -168,10 +169,11 @@ Your form automatically creates FormGroups and FormControls with type-safe, unid
 ### Developer Experience
 
 - **Runtime Shape Checking** - Catch typos in `name` attributes early
-- **Built-in Error Display** - `sc-control-wrapper` component for consistent UX
+- **Flexible Error Display** - Built-in `sc-control-wrapper` or create custom wrappers with `FormErrorDisplayDirective`
+- **Error Display Modes** - Control when errors show: on-blur, on-submit, or both
 - **Validation Config** - Declare field dependencies for complex scenarios
 - **Field State Utilities** - Helper functions for managing dynamic form state
-- **Modern Angular** - Built for Angular 18+ with standalone components
+- **Modern Angular** - Built for Angular 18+ with standalone components and signals
 
 ## Basic Usage
 
@@ -942,9 +944,6 @@ This will show errors automatically on:
 - form submit
 - blur
 
-**Note:** If those requirements don't fill your need, you can write a custom control-wrapper by copy-pasting the
-`control-wrapper` and adjusting the code.
-
 Let's update our form:
 
 ```html
@@ -970,6 +969,272 @@ This is the only thing we need to do to create a form that is completely wired w
 - [x] Automatic adding of css error classes and showing validation messages
   - [x] On blur
   - [x] On submit
+
+### Error Display Control
+
+The `sc-control-wrapper` component uses the `FormErrorDisplayDirective` under the hood to manage when and how errors are displayed. You have full control over this behavior through configuration.
+
+#### Error Display Modes
+
+ngx-vest-forms supports three error display modes:
+
+- **`on-blur-or-submit`** (default) - Show errors after field blur OR form submission
+- **`on-blur`** - Show errors only after field blur
+- **`on-submit`** - Show errors only after form submission
+
+#### Configuring Error Display
+
+##### Global Configuration
+
+Set the default mode for your entire application:
+
+```typescript
+import { provide } from '@angular/core';
+import { SC_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
+
+@Component({
+  providers: [
+    provide(SC_ERROR_DISPLAY_MODE_TOKEN, { useValue: 'on-submit' })
+  ]
+})
+export class MyComponent {}
+```
+
+##### Per-Instance Configuration
+
+Override the mode for specific form fields:
+
+```typescript
+import { FormErrorDisplayDirective } from 'ngx-vest-forms';
+
+@Component({
+  template: `
+    <div formErrorDisplay [errorDisplayMode]="'on-blur'">
+      <input name="email" [ngModel]="formValue().email" />
+    </div>
+  `
+})
+```
+
+#### Creating Custom Control Wrappers
+
+If the default `sc-control-wrapper` doesn't meet your design requirements, you can easily create your own using the `FormErrorDisplayDirective`. This directive provides all the necessary state and logic for displaying errors, warnings, and pending states.
+
+##### Basic Custom Wrapper
+
+```typescript
+import { Component, inject } from '@angular/core';
+import { FormErrorDisplayDirective } from 'ngx-vest-forms';
+
+@Component({
+  selector: 'app-custom-control-wrapper',
+  hostDirectives: [
+    {
+      directive: FormErrorDisplayDirective,
+      inputs: ['errorDisplayMode'],
+    },
+  ],
+  template: `
+    <div class="field-wrapper">
+      <ng-content />
+
+      @if (errorDisplay.shouldShowErrors()) {
+        <div class="error-message">
+          @for (error of errorDisplay.errors(); track error) {
+            <span>{{ error.message || error }}</span>
+          }
+        </div>
+      }
+
+      @if (errorDisplay.isPending()) {
+        <div class="validating">Validating...</div>
+      }
+    </div>
+  `,
+})
+export class CustomControlWrapperComponent {
+  protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
+    self: true,
+  });
+}
+```
+
+##### Advanced Custom Wrapper with Warnings
+
+The `FormErrorDisplayDirective` also exposes warning messages from Vest.js:
+
+```typescript
+@Component({
+  selector: 'app-advanced-wrapper',
+  hostDirectives: [FormErrorDisplayDirective],
+  template: `
+    <div class="form-field">
+      <ng-content />
+
+      <!-- Errors -->
+      @if (errorDisplay.shouldShowErrors()) {
+        <div class="errors" role="alert" aria-live="polite">
+          @for (error of errorDisplay.errors(); track error) {
+            <p class="error">{{ error.message || error }}</p>
+          }
+        </div>
+      }
+
+      <!-- Warnings (non-blocking feedback) -->
+      @if (errorDisplay.warnings().length > 0) {
+        <div class="warnings" role="status" aria-live="polite">
+          @for (warning of errorDisplay.warnings(); track warning) {
+            <p class="warning">{{ warning }}</p>
+          }
+        </div>
+      }
+
+      <!-- Pending state -->
+      @if (errorDisplay.isPending()) {
+        <div class="pending" aria-busy="true">
+          <span class="spinner"></span>
+          Validating...
+        </div>
+      }
+    </div>
+  `,
+})
+export class AdvancedWrapperComponent {
+  protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
+    self: true,
+  });
+}
+```
+
+##### Available Signals from FormErrorDisplayDirective
+
+The directive exposes these computed signals for building custom UIs:
+
+```typescript
+// Error display control
+shouldShowErrors()    // boolean - Whether to show errors based on mode and state
+errors()             // string[] - Filtered errors (empty during pending)
+warnings()           // string[] - Filtered warnings (empty during pending)
+isPending()          // boolean - Whether async validation is running
+
+// Raw state signals (from FormControlStateDirective)
+errorMessages()      // string[] - All error messages
+warningMessages()    // string[] - All warning messages
+controlState()       // FormControlState - Complete control state
+isTouched()          // boolean - Whether control has been touched
+isDirty()            // boolean - Whether control value has changed
+isValid()            // boolean - Whether control is valid
+isInvalid()          // boolean - Whether control is invalid
+hasPendingValidation() // boolean - Whether validation is pending
+updateOn()           // string - The ngModelOptions.updateOn value
+formSubmitted()      // boolean - Whether form has been submitted
+```
+
+##### Real-World Example: Material Design Style Wrapper
+
+```typescript
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { FormErrorDisplayDirective } from 'ngx-vest-forms';
+
+@Component({
+  selector: 'app-mat-field-wrapper',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  hostDirectives: [
+    {
+      directive: FormErrorDisplayDirective,
+      inputs: ['errorDisplayMode'],
+    },
+  ],
+  host: {
+    class: 'mat-form-field',
+    '[class.mat-form-field-invalid]': 'errorDisplay.shouldShowErrors()',
+    '[attr.aria-busy]': "errorDisplay.isPending() ? 'true' : null",
+  },
+  template: `
+    <div class="mat-form-field-wrapper">
+      <div class="mat-form-field-flex">
+        <ng-content />
+      </div>
+
+      <div class="mat-form-field-subscript-wrapper">
+        @if (errorDisplay.shouldShowErrors()) {
+          <div class="mat-error" role="alert" aria-live="assertive">
+            @for (error of errorDisplay.errors(); track error) {
+              <span>{{ error.message || error }}</span>
+            }
+          </div>
+        }
+
+        @if (errorDisplay.warnings().length > 0 && !errorDisplay.shouldShowErrors()) {
+          <div class="mat-hint mat-warn" role="status">
+            @for (warning of errorDisplay.warnings(); track warning) {
+              <span>{{ warning }}</span>
+            }
+          </div>
+        }
+
+        @if (errorDisplay.isPending()) {
+          <div class="mat-hint" aria-busy="true">
+            <mat-spinner diameter="16"></mat-spinner>
+            Validating...
+          </div>
+        }
+      </div>
+    </div>
+  `,
+  styles: [`
+    :host {
+      display: block;
+      margin-bottom: 1rem;
+    }
+
+    .mat-error {
+      color: #f44336;
+      font-size: 0.875rem;
+    }
+
+    .mat-hint {
+      color: rgba(0, 0, 0, 0.6);
+      font-size: 0.875rem;
+    }
+
+    .mat-warn {
+      color: #ff9800;
+    }
+  `]
+})
+export class MatFieldWrapperComponent {
+  protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
+    self: true,
+  });
+}
+```
+
+##### Using Your Custom Wrapper
+
+Once created, use your custom wrapper just like the built-in `sc-control-wrapper`:
+
+```typescript
+@Component({
+  imports: [vestForms, CustomControlWrapperComponent],
+  template: `
+    <form scVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
+      <app-custom-control-wrapper>
+        <label>Email</label>
+        <input name="email" [ngModel]="formValue().email" type="email" />
+      </app-custom-control-wrapper>
+    </form>
+  `
+})
+```
+
+#### Best Practices for Custom Wrappers
+
+1. **Use `hostDirectives`** - Always apply `FormErrorDisplayDirective` as a host directive for automatic state management
+2. **Respect accessibility** - Use proper ARIA attributes (`role="alert"`, `aria-live`, `aria-busy`)
+3. **Filter during pending** - The directive's `errors()` and `warnings()` signals automatically filter during validation
+4. **Leverage computed signals** - All exposed signals are computed, so they update automatically
+5. **Style based on state** - Use host bindings to apply CSS classes based on error display state
 
 ### Conditional validations
 
