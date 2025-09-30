@@ -41,7 +41,7 @@ type MyFormModel = DeepPartial<{
 
 @Component({
   selector: 'app-my-form',
-  standalone: true,
+
   imports: [vestForms],
   template: `
     <form scVestForm
@@ -99,7 +99,7 @@ export const myFormValidationSuite = staticSuite(
           [suite]="validationSuite"
           (formValueChange)="formValue.set($event)"
           (ngSubmit)="onSubmit()">
-      <div ngModelGroup="generalInfo" sc-control-wrapper>
+      <div ngModelGroup="generalInfo"
         <div sc-control-wrapper>
           <label>First name</label>
           <input name="firstName" [ngModel]="formValue().generalInfo?.firstName"/>
@@ -356,7 +356,7 @@ export class MyComponent {
 
 ```typescript
 <form scVestForm [suite]="validationSuite">
-  <div ngModelGroup="generalInfo" sc-control-wrapper>
+  <div ngModelGroup="generalInfo">
     <div sc-control-wrapper>
       <label>First name</label>
       <input name="firstName" [ngModel]="formValue().generalInfo?.firstName"/>

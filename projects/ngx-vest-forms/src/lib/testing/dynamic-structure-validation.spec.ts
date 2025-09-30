@@ -2,10 +2,11 @@
  * Test suite for dynamic structure validation issue
  */
 import { Component, signal, ViewChild } from '@angular/core';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { vestForms } from '../exports';
 import { FormDirective } from '../directives/form.directive';
 import { staticSuite, test, enforce, omitWhen, only } from 'vest';
+import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
 import { DeepPartial } from '../utils/deep-partial';
 
 type DynamicFormModel = DeepPartial<{
@@ -27,7 +28,7 @@ const dynamicFormValidationSuite = staticSuite(
     // Only validate fieldA when procedureType is 'typeA'
     omitWhen(model.procedureType !== 'typeA', () => {
       test('fieldA', 'Field A is required for Type A procedure', () => {
-        enforce(model.fieldA).isNotBlank();
+        enforce(model.fieldA).isNotUndefined().isNotBlank();
       });
     });
 
@@ -42,15 +43,20 @@ const dynamicFormValidationSuite = staticSuite(
   }
 );
 
+const waitForValidation = async (): Promise<void> => {
+  await new Promise((resolve) =>
+    setTimeout(resolve, VALIDATION_CONFIG_DEBOUNCE_TIME + 50)
+  );
+};
+
 describe('FormDirective - Dynamic Structure Changes', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({}).compileComponents();
   });
 
   describe('Form Structure Change Detection', () => {
-    it('should update validation when switching from input field to informational paragraph', fakeAsync(() => {
+    it('should update validation when switching from input field to informational paragraph', async () => {
       @Component({
-        standalone: true,
         imports: [vestForms],
         template: `
           <form
@@ -58,6 +64,7 @@ describe('FormDirective - Dynamic Structure Changes', () => {
             #vestForm="scVestForm"
             [formValue]="formValue()"
             [suite]="suite"
+            [validationConfig]="validationConfig"
             (formValueChange)="formValue.set($event)"
             (validChange)="isValid.set($event)"
             (errorsChange)="errors.set($event)"
@@ -106,6 +113,9 @@ describe('FormDirective - Dynamic Structure Changes', () => {
         errors = signal<Record<string, string[]>>({});
 
         suite = dynamicFormValidationSuite;
+        validationConfig = {
+          procedureType: ['fieldA', 'fieldB'],
+        } as const;
       }
 
       const fixture = TestBed.createComponent(TestComponent);
@@ -121,9 +131,28 @@ describe('FormDirective - Dynamic Structure Changes', () => {
 
       component.formValue.update((v) => ({ ...v, procedureType: 'typeA' }));
       fixture.detectChanges();
-      tick();
+      await fixture.whenStable();
+      TestBed.flushEffects();
+      await waitForValidation();
+
+      // Trigger validation by focusing on fieldA
+      const fieldA = fixture.nativeElement.querySelector(
+        '[data-testid="field-a"]'
+      );
+      if (fieldA) {
+        fieldA.focus();
+        fieldA.blur();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        TestBed.flushEffects();
+        await waitForValidation();
+      }
 
       // Form should be invalid (fieldA is required but empty)
+      // NOTE: This test may have timing issues in zoneless mode
+      await fixture.whenStable();
+      TestBed.flushEffects();
+      await waitForValidation();
       expect(component.isValid()).toBe(false);
       expect(Object.keys(component.errors()).length).toBeGreaterThan(0);
       expect(
@@ -136,7 +165,9 @@ describe('FormDirective - Dynamic Structure Changes', () => {
 
       component.formValue.update((v) => ({ ...v, procedureType: 'typeC' }));
       fixture.detectChanges();
-      tick();
+      await fixture.whenStable();
+      TestBed.flushEffects();
+      await waitForValidation();
 
       // Verify UI structure changed
       expect(
@@ -146,20 +177,21 @@ describe('FormDirective - Dynamic Structure Changes', () => {
         fixture.nativeElement.querySelector('[data-testid="info-text"]')
       ).toBeTruthy();
 
-      // This test documents the bug - form should be valid but validation doesn't update
+      // Force validation refresh now that the structure changed
+      component.vestForm.triggerFormValidation();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      TestBed.flushEffects();
+      await waitForValidation();
 
-      // For now, let's just verify the structure changed correctly
-      // The validation issue will be fixed in the next phase
-      expect(
-        fixture.nativeElement.querySelector('[data-testid="info-text"]')
-      ).toBeTruthy();
-    }));
+      expect(component.isValid()).toBe(true);
+      expect(component.errors()).toEqual({});
+    });
   });
 
   describe('Solution with New API', () => {
-    it('should update validation when using triggerFormValidation method', fakeAsync(() => {
+    it('should update validation when using triggerFormValidation method', async () => {
       @Component({
-        standalone: true,
         imports: [vestForms],
         template: `
           <form
@@ -167,6 +199,7 @@ describe('FormDirective - Dynamic Structure Changes', () => {
             #vestForm="scVestForm"
             [formValue]="formValue()"
             [suite]="suite"
+            [validationConfig]="validationConfig"
             (formValueChange)="formValue.set($event)"
             (validChange)="isValid.set($event)"
             (errorsChange)="errors.set($event)"
@@ -194,6 +227,9 @@ describe('FormDirective - Dynamic Structure Changes', () => {
         errors = signal<Record<string, string[]>>({});
 
         suite = dynamicFormValidationSuite;
+        validationConfig = {
+          procedureType: ['fieldA'],
+        } as const;
       }
 
       const fixture = TestBed.createComponent(TestComponent);
@@ -207,7 +243,9 @@ describe('FormDirective - Dynamic Structure Changes', () => {
 
       component.formValue.update((v) => ({ ...v, procedureType: 'typeA' }));
       fixture.detectChanges();
-      tick();
+      await fixture.whenStable();
+      TestBed.flushEffects();
+      await waitForValidation();
 
       expect(component.isValid()).toBe(false);
 
@@ -217,14 +255,18 @@ describe('FormDirective - Dynamic Structure Changes', () => {
 
       component.formValue.update((v) => ({ ...v, procedureType: 'typeC' }));
       fixture.detectChanges();
-      tick();
+      await fixture.whenStable();
+      TestBed.flushEffects();
+      await waitForValidation();
 
       // SOLUTION: Use the new triggerFormValidation method
       component.vestForm.triggerFormValidation();
       fixture.detectChanges();
-      tick();
+      await fixture.whenStable();
+      TestBed.flushEffects();
+      await waitForValidation();
       // Test should now pass with the new API
       expect(component.isValid()).toBe(true);
-    }));
+    });
   });
 });

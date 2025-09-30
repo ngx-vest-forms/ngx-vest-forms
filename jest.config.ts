@@ -1,8 +1,8 @@
 import type { Config } from 'jest';
 
 const config: Config = {
-  preset: 'jest-preset-angular',
-  setupFilesAfterEnv: ['<rootDir>/projects/ngx-vest-forms/src/setup-jest.ts'],
+  preset: './jest.preset.js',
+  setupFilesAfterEnv: ['<rootDir>/projects/ngx-vest-forms/src/test-setup.ts'],
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/',
     '<rootDir>/dist/',
@@ -23,14 +23,15 @@ const config: Config = {
     '!**/dist/**',
   ],
   coverageReporters: ['html', 'lcov', 'text-summary'],
-  displayName: 'ngx-vest-forms',
   moduleNameMapper: {
     '^ngx-vest-forms': '<rootDir>/projects/ngx-vest-forms/src/public-api.ts',
   },
   // Handle ES modules from node_modules and add fallback for SWC issues
   transformIgnorePatterns: [
-    'node_modules/(?!(@angular|vest|n4s|vestjs-runtime|vest-utils|context)/.*)',
+    'node_modules/(?!(@angular|vest|n4s|vestjs-runtime|vest-utils|context|@testing-library)/.*)',
   ],
+  extensionsToTreatAsEsm: ['.ts'],
+  moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
   // Add explicit roots to avoid scanning dist
   roots: ['<rootDir>/projects/ngx-vest-forms/src'],
 };
