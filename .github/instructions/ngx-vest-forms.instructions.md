@@ -34,6 +34,10 @@ import { staticSuite, test, enforce, only, omitWhen } from 'vest';
 ## Quick Start
 
 ```typescript
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
+import { vestForms, DeepPartial } from 'ngx-vest-forms';
+import { staticSuite, test, enforce, only } from 'vest';
+
 // 1. Form Model
 type MyFormModel = DeepPartial<{ firstName: string; lastName: string }>;
 
@@ -46,6 +50,7 @@ export const mySuite = staticSuite((model: MyFormModel, field?: string) => {
 // 3. Component
 @Component({
   imports: [vestForms],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form scVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
       <div sc-control-wrapper>
@@ -182,8 +187,12 @@ provide(SC_ERROR_DISPLAY_MODE_TOKEN, { useValue: 'on-submit' })
 ### Custom Wrappers
 
 ```typescript
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { FormErrorDisplayDirective } from 'ngx-vest-forms';
+
 @Component({
   selector: 'app-custom-wrapper',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   hostDirectives: [{ directive: FormErrorDisplayDirective, inputs: ['errorDisplayMode'] }],
   template: `
     <ng-content />
@@ -219,9 +228,13 @@ test(ROOT_FORM, 'Form-level error', () => enforce(condition).isTruthy());
 **CRITICAL**: Any component with `ngModelGroup` MUST use `vestFormsViewProviders`:
 
 ```typescript
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
+
 @Component({
   selector: 'app-address-form',
   imports: [vestForms],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [vestFormsViewProviders], // Required!
   template: `<div ngModelGroup="address">...</div>`
 })
@@ -259,19 +272,28 @@ mergeValuesAndRawValues(form)    // Include disabled fields in value
 ## Common Patterns
 
 ```typescript
-// Loading state
-protected readonly isLoading = signal(false);
-async onSubmit() {
-  this.isLoading.set(true);
-  try { await this.api.submit(this.formValue()); }
-  finally { this.isLoading.set(false); }
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
+
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  // ... other config
+})
+export class MyFormComponent {
+  // Loading state
+  protected readonly isLoading = signal(false);
+
+  async onSubmit() {
+    this.isLoading.set(true);
+    try { await this.api.submit(this.formValue()); }
+    finally { this.isLoading.set(false); }
+  }
+
+  // Form reset
+  resetForm() { this.formValue.set({}); }
+
+  // Prefill form
+  ngOnInit() { this.formValue.set({ firstName: 'John', lastName: 'Doe' }); }
 }
-
-// Form reset
-resetForm() { this.formValue.set({}); }
-
-// Prefill form
-ngOnInit() { this.formValue.set({ firstName: 'John', lastName: 'Doe' }); }
 ```
 
 ### When to Use What
@@ -308,6 +330,9 @@ ngOnInit() { this.formValue.set({ firstName: 'John', lastName: 'Doe' }); }
 12. Use `FormErrorDisplayDirective` as hostDirective for custom wrappers
 13. Respect accessibility (ARIA attributes: `role="alert"`, `aria-live`, `aria-busy`)
 14. Use field clearing utilities when switching between form/non-form content
+15. **Always use `ChangeDetectionStrategy.OnPush`** for optimal performance with signals
+16. Use `inject()` function instead of constructor injection
+17. Prefer signal-based APIs (`viewChild()`, `input()`, `output()`) over decorators
 
 ## Resources
 
