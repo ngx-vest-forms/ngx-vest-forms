@@ -185,8 +185,15 @@ export type VestForm<
   /** Whether any async validation is pending */
   pending: Signal<boolean>;
 
-  /** All form errors grouped by field */
+  /** All form errors grouped by field (from Vest, regardless of display strategy) */
   errors: Signal<Record<string, string[]>>;
+
+  /**
+   * Errors that should be visible based on the error display strategy.
+   * Only includes errors for fields where showErrors() returns true.
+   * Useful for error summaries, debuggers, and form-level error displays.
+   */
+  visibleErrors: Signal<Record<string, string[]>>;
 
   /** Form submission state */
   submitting: Signal<boolean>;

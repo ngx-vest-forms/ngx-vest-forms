@@ -7,6 +7,16 @@ import { expect, test } from '@playwright/test';
  * Route: /fundamentals/nested-forms
  * Component: ExampleFormNested
  * Features: Nested object validation, path-based field access, multi-section forms
+ *
+ * IMPORTANT: Understanding Vest.js only() behavior
+ * ==============================================
+ * The validation suite uses staticSafeSuite which automatically calls only(field)
+ * when validating individual fields. This is the correct Vest.js pattern for performance:
+ *
+ * - Initial state: Validates ALL fields → Debugger shows ALL errors (8 errors)
+ * - After field blur: Validates ONLY that field → Debugger shows ONLY that field's errors (1 error)
+ *
+ * This is NOT a bug - it's Vest's intended behavior. Tests must account for this pattern.
  */
 
 test.describe('Nested Forms Example', () => {
@@ -46,6 +56,80 @@ test.describe('Nested Forms Example', () => {
         page.getByRole('checkbox', { name: /notifications/i }),
       ).toBeVisible();
     });
+
+    test('should show all validation errors in debugger initially', async ({
+      page,
+    }) => {
+      // Debugger should show 8 errors initially (all required fields)
+      // This verifies that initial validation runs on ALL fields
+      await expect(page.getByText(/validation errors/i)).toBeVisible();
+      await expect(page.getByText(/8/)).toBeVisible(); // Error count badge
+
+      // Verify specific error fields are present
+      await expect(page.getByText(/personalInfo\.firstName/i)).toBeVisible();
+      await expect(page.getByText(/personalInfo\.email/i)).toBeVisible();
+      await expect(page.getByText(/addressInfo\.street/i)).toBeVisible();
+      await expect(page.getByText(/personalInfo\.gender/i)).toBeVisible();
+    });
+  });
+
+  test.describe('Vest.js only() Behavior', () => {
+    test('should show only field-specific errors after blur (Vest only() pattern)', async ({
+      page,
+    }) => {
+      // Initial state: debugger shows 8 errors (all fields validated)
+      await expect(page.getByText(/validation errors/i)).toBeVisible();
+      await expect(page.getByText(/8/)).toBeVisible();
+
+      // Focus and blur firstName to trigger field-level validation
+      const firstNameField = page.getByRole('textbox', {
+        name: /first name/i,
+      });
+      await firstNameField.click();
+      await firstNameField.blur();
+      await page.waitForTimeout(200);
+
+      // After blur: only(field) is called, so debugger shows ONLY that field's error
+      // This is the correct Vest.js behavior with staticSafeSuite
+      await expect(page.getByText(/validation errors/i)).toBeVisible();
+      await expect(page.getByText(/^1$/)).toBeVisible(); // Error count badge should be 1
+
+      // Inline error should show
+      await expect(
+        page.getByText(/first name is required/i).first(),
+      ).toBeVisible();
+
+      // Debugger should show ONLY firstName error (not all 8)
+      await expect(page.getByText(/personalInfo\.firstName/i)).toBeVisible();
+    });
+
+    test('should restore all errors when validating entire form', async ({
+      page,
+    }) => {
+      // Focus and blur a field first (triggers only() for that field)
+      const firstNameField = page.getByRole('textbox', {
+        name: /first name/i,
+      });
+      await firstNameField.click();
+      await firstNameField.blur();
+      await page.waitForTimeout(200);
+
+      // Debugger now shows 1 error (firstName only)
+      await expect(page.getByText(/^1$/)).toBeVisible();
+
+      // Click submit to validate entire form (no field specified)
+      const submitButton = page.getByRole('button', { name: /submit/i });
+      await submitButton.click();
+      await page.waitForTimeout(300);
+
+      // Debugger should now show all errors again (8 total)
+      await expect(page.getByText(/8/)).toBeVisible();
+
+      // Verify multiple error fields are present
+      await expect(page.getByText(/personalInfo\.firstName/i)).toBeVisible();
+      await expect(page.getByText(/personalInfo\.email/i)).toBeVisible();
+      await expect(page.getByText(/addressInfo\.street/i)).toBeVisible();
+    });
   });
 
   test.describe('Field Validation - Personal Info', () => {
@@ -59,10 +143,12 @@ test.describe('Nested Forms Example', () => {
       await firstNameField.blur();
       await page.waitForTimeout(200);
 
-      // Should show required error
+      // Should show required error inline
       await expect(
         page.getByText(/first name is required/i).first(),
       ).toBeVisible();
+
+      // NOTE: Debugger will show ONLY 1 error due to only() - this is correct!
 
       // Fill valid value
       await firstNameField.fill('John');

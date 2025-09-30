@@ -11,7 +11,7 @@
  * form validation:
  *
  * ```typescript
- * // ❌ WRONG - Runs zero tests when field is undefined
+ * /// ❌ WRONG - Runs zero tests when field is undefined
  * const suite = staticSuite((data, field) => {
  *   only(field); // BUG: When field is undefined, NO tests run!
  *   test('email', 'Required', () => enforce(data.email).isNotEmpty());
@@ -23,9 +23,9 @@
  * These wrapper functions automatically handle the guard pattern for you:
  *
  * ```typescript
- * // ✅ CORRECT - Automatically guards only() calls
+ * /// ✅ CORRECT - Automatically guards only() calls
  * const suite = createSafeSuite((data, field) => {
- *   // No need for if (field) guard - handled by wrapper!
+ *   /// No need for if (field) guard - handled by wrapper!
  *   test('email', 'Required', () => enforce(data.email).isNotEmpty());
  * });
  * ```
@@ -40,7 +40,7 @@
  *   password: string;
  * }
  *
- * // With staticSuite (recommended)
+ * /// With staticSuite (recommended)
  * const userSuite = staticSafeSuite<UserModel>((data, field) => {
  *   test('email', 'Email is required', () => {
  *     enforce(data.email).isNotEmpty();
@@ -53,7 +53,7 @@
  *   });
  * });
  *
- * // With create (for stateful suites)
+ * /// With create (for stateful suites)
  * const statefulSuite = createSafeSuite<UserModel>((data, field) => {
  *   test('email', 'Required', () => enforce(data.email).isNotEmpty());
  * });
@@ -73,7 +73,7 @@
  *   });
  * });
  *
- * // TypeScript will error on invalid field names
+ * /// TypeScript will error on invalid field names
  * typedSuite(data, 'invalidField'); // ❌ Type error!
  * ```
  */

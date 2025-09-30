@@ -21,9 +21,18 @@ export class Debugger {
   protected readonly valid = computed(() => this.form().valid());
   protected readonly pending = computed(() => this.form().pending());
   protected readonly submitting = computed(() => this.form().submitting());
-  protected readonly errors = computed(() => this.form().errors());
+
+  /**
+   * Use the form's visibleErrors convenience API which automatically filters
+   * errors based on the error display strategy (immediate, on-touch, on-submit, manual).
+   * This respects which fields should show errors according to their showErrors() state.
+   */
+  protected readonly visibleErrors = computed(() =>
+    this.form().visibleErrors(),
+  );
+
   protected readonly errorEntries = computed(() =>
-    Object.entries(this.errors())
+    Object.entries(this.visibleErrors())
       .filter(([, messages]) => messages.length > 0)
       .map(([field, messages]) => ({
         field,

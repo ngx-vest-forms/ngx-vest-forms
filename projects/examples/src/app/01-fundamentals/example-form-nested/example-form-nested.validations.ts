@@ -51,14 +51,19 @@ export const nestedValidationSuite = staticSafeSuite<NestedFormModel>(
       enforce(model.personalInfo?.gender).isNotEmpty();
     });
 
+    // Experience level (range) validation - tests value extraction from range input
     test(
       'personalInfo.experienceLevel',
       'Experience level must be between 1 and 10',
       () => {
-        if (model.personalInfo?.experienceLevel !== undefined) {
-          enforce(model.personalInfo.experienceLevel).greaterThanOrEquals(1);
-          enforce(model.personalInfo.experienceLevel).lessThanOrEquals(10);
-        }
+        const level = model.personalInfo?.experienceLevel;
+
+        // Must be a valid number (tests number extraction from range input)
+        enforce(level).isNumber();
+
+        // Must be within valid range
+        enforce(level).greaterThanOrEquals(1);
+        enforce(level).lessThanOrEquals(10);
       },
     );
 

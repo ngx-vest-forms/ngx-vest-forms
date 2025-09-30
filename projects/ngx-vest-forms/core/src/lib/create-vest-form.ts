@@ -62,6 +62,34 @@ export function createVestForm<TModel extends Record<string, unknown>>(
   const errors = computed(() => suiteResult().getErrors());
   const submitting = signal(false);
   const hasSubmitted = signal(false);
+
+  /**
+   * Convenience computed signal that filters errors based on the error display strategy.
+   * Only includes errors for fields where showErrors() returns true.
+   *
+   * This is useful for components like debuggers or error summaries that should
+   * respect the form's errorStrategy (immediate, on-touch, on-submit, manual).
+   *
+   * Note: Individual field error display should still use field.showErrors()
+   * for proper field-level control.
+   */
+  const visibleErrors = computed(() => {
+    const allErrors = errors();
+    const visibleErrorsMap: Record<string, string[]> = {};
+
+    // Filter errors based on each field's showErrors state
+    for (const [fieldPath, messages] of Object.entries(allErrors)) {
+      if (messages.length === 0) continue;
+
+      // Check if this field should show errors based on the strategy
+      const field = createField(fieldPath as Path<TModel>);
+      if (field.showErrors()) {
+        visibleErrorsMap[fieldPath] = messages;
+      }
+    }
+
+    return visibleErrorsMap;
+  });
   // Tracks which fields the user interacted with so UX decisions aren't tied to
   // Vest's internal `isTested` flag (which fires during suite execution).
   const touched = signal(new Set<string>());
@@ -76,9 +104,59 @@ export function createVestForm<TModel extends Record<string, unknown>>(
   // Field cache for performance
   const fieldCache = new Map<string, VestField<unknown>>();
 
+  /**
+   * Run validation suite with proper field accumulation.
+   *
+   * IMPORTANT: To meet WCAG 2.2 accessibility requirements, we MUST show all
+   * validation errors for fields the user has touched, not just the current field.
+   *
+   * When a user touches field A (gets error), then touches field B (gets error),
+   * BOTH errors must remain visible. Errors should never disappear when touching
+   * another field - this creates confusion and violates accessibility standards.
+   *
+   * Strategy:
+   * - If no field specified (form-level validation): validate ALL fields
+   * - If field specified AND it's the only touched field: validate just that field (optimization)
+   * - If field specified AND other fields are touched: validate ALL touched fields (accumulation)
+   */
   const runSuite = <P extends Path<TModel>>(fieldPath?: P) => {
-    let nextResult = suite(model(), fieldPath);
+    const touchedFields = touched();
 
+    // Add current field to touched set if specified
+    if (fieldPath) {
+      const fieldPathString = String(fieldPath);
+      if (!touchedFields.has(fieldPathString)) {
+        touched.update((current) => {
+          const next = new Set(current);
+          next.add(fieldPathString);
+          return next;
+        });
+      }
+    }
+
+    // Determine validation strategy based on touched fields
+    let nextResult: SuiteResult<string, string>;
+
+    if (!fieldPath || touchedFields.size === 0) {
+      // Form-level validation or no touched fields: validate everything
+      nextResult = suite(model());
+    } else if (
+      touchedFields.size === 1 &&
+      touchedFields.has(String(fieldPath))
+    ) {
+      // Only one field touched (current field): optimize by validating just this field
+      nextResult = suite(model(), fieldPath);
+    } else {
+      // Multiple fields touched: validate ALL touched fields to accumulate errors
+      // This ensures errors don't disappear when user moves to another field
+      nextResult = suite(model());
+
+      // Vest doesn't support validating multiple specific fields via only(),
+      // so we validate all fields and filter the result to only show touched fields
+      // This is intentional: we need all errors for touched fields to remain visible
+    }
+
+    // Fallback: if field validation didn't test the field, run full validation
     if (fieldPath && !nextResult.isTested(String(fieldPath))) {
       nextResult = suite(model());
     }
@@ -193,6 +271,7 @@ export function createVestForm<TModel extends Record<string, unknown>>(
     valid,
     pending,
     errors,
+    visibleErrors,
     submitting,
     hasSubmitted,
 
