@@ -1,130 +1,69 @@
+---
+description: Comprehensive guide for using ngx-vest-forms, an Angular adapter for Vest.js validation with template-driven forms.
+applyTo: '**/*.ts, **/*.html'
+---
 # ngx-vest-forms: Angular Template-Driven Forms with Vest.js Validation
 
-## What is ngx-vest-forms?
+Lightweight adapter bridging Angular template-driven forms with Vest.js validation by [Brecht Billiet](https://blog.simplified.courses/introducing-ngx-vest-forms/).
 
-ngx-vest-forms is a lightweight adapter that bridges Angular template-driven forms with Vest.js validation, created by [Brecht Billiet](https://blog.simplified.courses/introducing-ngx-vest-forms/). It enables unidirectional data flow in forms with sophisticated async validations and conditional logic, making complex form handling both simple and maintainable.
+**Core Principles:**
+- Use `[ngModel]` NOT `[(ngModel)]` for unidirectional data flow
+- `DeepPartial<T>` for form models (forms build incrementally)
+- `only(field)` in all validation suites for performance
+- `name` attribute MUST match property path exactly
 
-### Core Philosophy
-- **Unidirectional Data Flow**: Use `[ngModel]` (NOT `[(ngModel)]`) for clean architecture
-- **Type Safety**: Template-driven forms with full TypeScript support
-- **Performance First**: Vest.js `only()` pattern for optimized field-level validation
-- **Simplicity**: Minimal boilerplate with maximum functionality
-- **Battle-Tested**: Production-ready solution used in large-scale applications
+> **See `.github/instructions/vest.instructions.md`** for comprehensive Vest.js validation patterns, async techniques, and performance optimization.
 
-> **Note**: For comprehensive Vest.js validation patterns and advanced techniques, see `.github/instructions/vest.instructions.md`
-
-## Prerequisites
-
-**Note**: For exact version requirements, see main copilot instructions which define workspace-compatible versions.
-
-## Installation
-
-```bash
-npm install ngx-vest-forms vest
-```
-
-## Quick Start Guide
-
-### 1. Basic Form Setup
+## Key Imports
 
 ```typescript
-import { Component, signal } from '@angular/core';
-import { vestForms, DeepPartial } from 'ngx-vest-forms';
+// Core
+import { vestForms, vestFormsViewProviders, DeepPartial, DeepRequired, FormCompatibleDeepRequired } from 'ngx-vest-forms';
 
-// Define your form model with DeepPartial for incremental building
-type MyFormModel = DeepPartial<{
-  generalInfo: {
-    firstName: string;
-    lastName: string;
-  }
-}>
+// Error Display
+import { FormErrorDisplayDirective, FormControlStateDirective, SC_ERROR_DISPLAY_MODE_TOKEN, ScErrorDisplayMode } from 'ngx-vest-forms';
 
+// Constants & Utilities
+import { ROOT_FORM, VALIDATION_CONFIG_DEBOUNCE_TIME, clearFieldsWhen, clearFields, keepFieldsWhen } from 'ngx-vest-forms';
+import { getAllFormErrors, getFormControlField, getFormGroupField, mergeValuesAndRawValues } from 'ngx-vest-forms';
+
+// Vest.js
+import { staticSuite, test, enforce, only, omitWhen } from 'vest';
+```
+
+## Quick Start
+
+```typescript
+// 1. Form Model
+type MyFormModel = DeepPartial<{ firstName: string; lastName: string }>;
+
+// 2. Validation Suite
+export const mySuite = staticSuite((model: MyFormModel, field?: string) => {
+  if (field) { only(field); } // CRITICAL for performance
+  test('firstName', 'Required', () => enforce(model.firstName).isNotBlank());
+});
+
+// 3. Component
 @Component({
-  selector: 'app-my-form',
-
   imports: [vestForms],
   template: `
-    <form scVestForm
-          (formValueChange)="formValue.set($event)"
-          (ngSubmit)="onSubmit()">
-      <div ngModelGroup="generalInfo">
-        <label>First name</label>
-        <input name="firstName" [ngModel]="formValue().generalInfo?.firstName"/>
-
-        <label>Last name</label>
-        <input name="lastName" [ngModel]="formValue().generalInfo?.lastName"/>
-      </div>
-
-      <button type="submit">Submit</button>
-    </form>
-  `
-})
-export class MyFormComponent {
-  protected readonly formValue = signal<MyFormModel>({});
-
-  onSubmit() {
-    console.log('Form submitted:', this.formValue());
-  }
-}
-```
-
-### 2. Adding Validation
-
-```typescript
-// validations/my-form.validations.ts
-import { enforce, only, staticSuite, test } from 'vest';
-import { MyFormModel } from '../models/my-form.model';
-
-export const myFormValidationSuite = staticSuite(
-  (model: MyFormModel, field?: string) => {
-    // For complete staticSuite patterns, see: .github/instructions/vest.instructions.md
-    if (field) { only(field); }
-
-    test('generalInfo.firstName', 'First name is required', () => {
-      enforce(model.generalInfo?.firstName).isNotBlank();
-    });
-
-    test('generalInfo.lastName', 'Last name is required', () => {
-      enforce(model.generalInfo?.lastName).isNotBlank();
-    });
-  }
-);
-```
-
-```typescript
-// Updated component with validation
-@Component({
-  template: `
-    <form scVestForm
-          [suite]="validationSuite"
-          (formValueChange)="formValue.set($event)"
-          (ngSubmit)="onSubmit()">
-      <div ngModelGroup="generalInfo"
-        <div sc-control-wrapper>
-          <label>First name</label>
-          <input name="firstName" [ngModel]="formValue().generalInfo?.firstName"/>
-        </div>
-
-        <div sc-control-wrapper>
-          <label>Last name</label>
-          <input name="lastName" [ngModel]="formValue().generalInfo?.lastName"/>
-        </div>
+    <form scVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
+      <div sc-control-wrapper>
+        <input name="firstName" [ngModel]="formValue().firstName"/>
       </div>
     </form>
   `
 })
 export class MyFormComponent {
   protected readonly formValue = signal<MyFormModel>({});
-  protected readonly validationSuite = myFormValidationSuite;
+  protected readonly suite = mySuite;
 }
 ```
 
-## CRITICAL: Name Attribute Matching
-
-**The most important rule**: The `name` attribute MUST exactly match the property path used in `[ngModel]` bindings.
+## CRITICAL: Name Attribute Must Match Property Path
 
 ```typescript
-// ✅ CORRECT Examples
+// ✅ CORRECT
 <input name="firstName" [ngModel]="formValue().firstName" />
 <input name="generalInfo.firstName" [ngModel]="formValue().generalInfo?.firstName" />
 
@@ -134,338 +73,70 @@ export class MyFormComponent {
   </div>
 </div>
 
-// ❌ WRONG Examples
-<input name="first_name" [ngModel]="formValue().firstName" />
-<input name="firstName" [ngModel]="formValue().generalInfo?.firstName" />
-<input name="street" [ngModel]="formValue().addresses?.billingAddress?.street" />
+// ❌ WRONG
+<input name="first_name" [ngModel]="formValue().firstName" />       // Mismatch!
+<input name="firstName" [ngModel]="formValue().generalInfo?.firstName" />  // Missing path!
 ```
 
-### Why This Matters
-- **Form Control Creation**: Angular creates form controls based on the `name` attribute
-- **Validation Mapping**: Vest.js validation errors are mapped using these paths
-- **Shape Validation**: Development-time validation ensures consistency
-- **Unidirectional Flow**: Proper data binding requires exact path matching
+Required for: form control creation, validation mapping, shape validation, unidirectional flow.
 
 ## Essential Patterns
 
-### Form Models with Type Safety
+### Type-Safe Form Models
 
 ```typescript
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
+// Form model (incremental)
+type FormModel = DeepPartial<{ name: string; birthDate: Date; }>;
 
-// Form model (what the form builds incrementally)
-export type PurchaseFormModel = DeepPartial<{
-  generalInfo: {
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  addresses: {
-    billingAddress: AddressModel;
-    shippingAddress?: AddressModel;
-    shippingAddressDifferentFromBilling: boolean;
-  };
-}>;
+// Shape for runtime validation
+const formShape: DeepRequired<FormModel> = { name: '', birthDate: new Date() };
 
-// Shape for runtime validation (complete structure)
-export const purchaseFormShape: DeepRequired<PurchaseFormModel> = {
-  generalInfo: {
-    firstName: '',
-    lastName: '',
-    email: ''
-  },
-  addresses: {
-    billingAddress: {
-      street: '',
-      number: '',
-      city: '',
-      zipcode: '',
-      country: ''
-    },
-    shippingAddress: {
-      street: '',
-      number: '',
-      city: '',
-      zipcode: '',
-      country: ''
-    },
-    shippingAddressDifferentFromBilling: false
-  }
-};
+// Date-compatible shape (accepts Date | string)
+const dateShape: FormCompatibleDeepRequired<FormModel> = { name: '', birthDate: '' };
 ```
 
-### Unidirectional Data Flow
+### Validation Patterns
 
 ```typescript
-@Component({
-  template: `
-    <form scVestForm
-          [formShape]="formShape"
-          [suite]="validationSuite"
-          (formValueChange)="formValue.set($event)">
-      <!-- Use [ngModel] NOT [(ngModel)] -->
-      <input [ngModel]="formValue().email" name="email"/>
-    </form>
-  `
-})
-export class MyComponent {
-  protected readonly formValue = signal<MyFormModel>({});
-  protected readonly formShape = myFormShape;
-  protected readonly validationSuite = myValidationSuite;
-}
-```
+// Basic suite with performance optimization
+export const suite = staticSuite((model: FormModel, field?: string) => {
+  if (field) { only(field); } // ALWAYS include this
 
-### Performance-Optimized Validation Suites
+  test('email', 'Required', () => enforce(model.email).isNotBlank());
+  test('email', 'Invalid', () => enforce(model.email).isEmail());
+});
 
-```typescript
-export const validationSuite = staticSuite(
-  (model: FormModel, field?: string) => {
-    // ALWAYS include this performance optimization
-    if (field) {
-      only(field); // Only validate the changed field
-    }
-
-    test('email', 'Email is required', () => {
-      enforce(model.email).isNotBlank();
-    });
-
-    test('email', 'Email must be valid', () => {
-      enforce(model.email).matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
-    });
-  }
-);
-```
-
-### Conditional Validations
-
-```typescript
-import { omitWhen } from 'vest';
-
-// Angular-specific conditional validation example:
+// Conditional validation
 omitWhen((model.age || 0) >= 18, () => {
-  test('emergencyContact', 'Emergency contact is required for minors', () => {
-    enforce(model.emergencyContact).isNotBlank();
-  });
+  test('guardian', 'Guardian required for minors', () => enforce(model.guardian).isNotBlank());
+});
+
+// Composable validations
+export function addressValidations(model: AddressModel | undefined, field: string): void {
+  test(`${field}.street`, 'Required', () => enforce(model?.street).isNotBlank());
+}
+addressValidations(model.addresses?.billing, 'addresses.billing');
+
+// Async validation
+test('username', 'Already taken', async ({ signal }) => {
+  await apiService.checkUsername(model.username, { signal });
 });
 ```
 
-> **Complete Conditional Patterns**: See `.github/instructions/vest.instructions.md` for comprehensive conditional validation techniques including `omitWhen`, `skipWhen`, and complex conditions.
-
-### Composable Validations
-
-```typescript
-// Angular-specific reusable validation example:
-export function addressValidations(model: AddressModel | undefined, field: string): void {
-  test(`${field}.street`, 'Street is required', () => {
-    enforce(model?.street).isNotBlank();
-  });
-}
-
-// Usage in main suite:
-addressValidations(model.addresses?.billingAddress, 'addresses.billingAddress');
-```
-
-> **Advanced Composition**: See `.github/instructions/vest.instructions.md` for comprehensive composable validation patterns and suite organization strategies.
-
-### Async Validations
-
-```typescript
-// Angular service integration example:
-export const createAsyncValidationSuite = (apiService: ApiService) => {
-  return staticSuite((model: FormModel, field?: string) => {
-    if (field) { only(field); }
-
-    test('username', 'Username is already taken', async ({ signal }) => {
-      return await apiService.checkUsername(model.username, { signal });
-    });
-  });
-};
-```
-
-> **Complete Async Patterns**: See `.github/instructions/vest.instructions.md` for comprehensive async validation techniques, AbortController usage, and performance optimization.
+> See `.github/instructions/vest.instructions.md` for comprehensive validation patterns.
 
 ### Dependent Field Validation
 
-#### Understanding the Architectural Separation
-
-**Critical Concept**: Vest.js and Angular handle different aspects of form validation:
-
-| Responsibility | Handled By | Description |
-|---|---|---|
-| **Validation Logic** | Vest.js | Defines what makes a field valid/invalid |
-| **Form Control Lifecycle** | Angular | When to run validation and update UI |
-| **Cross-field Dependencies** | `validationConfig` | Tells Angular when to revalidate related fields |
-
-**Why `validationConfig` Cannot Be Replaced:**
-
-Vest.js can express cross-field validation logic (e.g., "passwords must match"), but it **cannot trigger Angular to revalidate a different form control** when a dependency changes. Only Angular can call `updateValueAndValidity()` on form controls.
-
-**The Gap `validationConfig` Fills:**
+Vest.js validates, Angular controls when. Use `validationConfig` to tell Angular to revalidate dependent fields:
 
 ```typescript
-// ❌ Without validationConfig:
-// User changes password → only password field validates
-// confirmPassword field shows stale validation state
-
-// ✅ With validationConfig:
-// User changes password → both password AND confirmPassword validate
-// All dependent fields show current validation state
-```
-
-#### Implementation Pattern
-
-```typescript
-// Component
+// Component: Tell Angular which fields depend on each other
 protected readonly validationConfig = {
-  'passwords.password': ['passwords.confirmPassword'],
+  'password': ['confirmPassword'],
   'age': ['emergencyContact']
 };
 
-// Validation suite
-omitWhen(!model.passwords?.password || !model.passwords?.confirmPassword, () => {
-  test('passwords.confirmPassword', 'Passwords do not match', () => {
-    enforce(model.passwords?.confirmPassword).equals(model.passwords?.password);
-  });
-});
-```
-
-### Conditional UI with Computed Signals
-
-```typescript
-@Component({
-  template: `
-    @if (showShippingAddress()) {
-      <div ngModelGroup="shippingAddress">
-        <!-- Shipping address fields -->
-      </div>
-    }
-  `
-})
-export class MyComponent {
-  protected readonly formValue = signal<FormModel>({});
-
-  protected readonly showShippingAddress = computed(() =>
-    this.formValue().addresses?.shippingAddressDifferentFromBilling
-  );
-}
-```
-
-## Error Display
-
-### Using Control Wrapper Component
-
-```typescript
-<form scVestForm [suite]="validationSuite">
-  <div ngModelGroup="generalInfo">
-    <div sc-control-wrapper>
-      <label>First name</label>
-      <input name="firstName" [ngModel]="formValue().generalInfo?.firstName"/>
-      <!-- Errors display automatically -->
-    </div>
-  </div>
-</form>
-```
-
-### Root Form Validation
-
-```typescript
-import { ROOT_FORM } from 'ngx-vest-forms';
-
-// In validation suite
-test(ROOT_FORM, 'Form-level validation error', () => {
-  enforce(someCondition).isTruthy();
-});
-
-// In component
-<form scVestForm
-      [validateRootForm]="true"
-      (errorsChange)="errors.set($event)">
-</form>
-```
-
-## Advanced Features
-
-### Shape Validation (Development Mode)
-Automatically validates that your `name` attributes match your form structure:
-
-```typescript
-<form scVestForm [formShape]="formShape">
-  <!-- Development mode will warn about mismatched names -->
-</form>
-```
-
-### Validation Options
-
-```typescript
-protected readonly validationOptions = {
-  debounceTime: 300 // Debounce validation calls
-};
-
-<form scVestForm [validationOptions]="validationOptions">
-```
-
-### Form Arrays Support
-For dynamic form arrays, see the [comprehensive form arrays guide](https://blog.simplified.courses/template-driven-forms-with-form-arrays/).
-
-## Common Patterns
-
-### Loading States
-
-```typescript
-protected readonly isLoading = signal(false);
-
-async onSubmit() {
-  this.isLoading.set(true);
-  try {
-    await this.apiService.submitForm(this.formValue());
-  } finally {
-    this.isLoading.set(false);
-  }
-}
-```
-
-### Form Reset
-
-```typescript
-resetForm() {
-  this.formValue.set({});
-}
-```
-
-### Prefilling Forms
-
-```typescript
-ngOnInit() {
-  // Load existing data
-  this.formValue.set({
-    generalInfo: {
-      firstName: 'John',
-      lastName: 'Doe'
-    }
-  });
-}
-```
-
-#### When to Use Each Approach
-
-**Use Vest.js `omitWhen()` for:**
-- Conditional validation logic (e.g., "validate field X only if condition Y")
-- Complex business rules within the validation suite
-- Optimizing which validations run
-
-**Use `validationConfig` for:**
-- Triggering Angular to revalidate dependent fields
-- Cross-field dependencies where changing field X should revalidate field Y
-- Ensuring UI error states update correctly
-
-**Example - Both Working Together:**
-```typescript
-// validationConfig: Tells Angular WHEN to revalidate
-protected readonly validationConfig = {
-  'password': ['confirmPassword']
-};
-
-// Vest suite: Defines WHAT validation logic to run
+// Suite: Define the validation logic
 omitWhen(!model.password || !model.confirmPassword, () => {
   test('confirmPassword', 'Passwords must match', () => {
     enforce(model.confirmPassword).equals(model.password);
@@ -473,63 +144,173 @@ omitWhen(!model.password || !model.confirmPassword, () => {
 });
 ```
 
-## Common Gotchas & Solutions
+### Conditional UI
 
-### ❌ Wrong: Using Two-Way Binding
 ```typescript
-<input [(ngModel)]="formValue().firstName" name="firstName"/>
+protected readonly showShipping = computed(() =>
+  this.formValue().addresses?.differentShipping
+);
+
+// Template: @if (showShipping()) { <div ngModelGroup="shipping">...</div> }
 ```
 
-### ✅ Correct: Using One-Way Binding
+## Error Display
+
+### Built-in Control Wrapper
+
 ```typescript
-<input [ngModel]="formValue().firstName" name="firstName"/>
+<div sc-control-wrapper>
+  <input name="email" [ngModel]="formValue().email"/>
+  <!-- Errors display automatically -->
+</div>
 ```
 
-### ❌ Wrong: Missing Optional Chaining
+### Error Display Modes
+
+- `on-blur-or-submit` (default) - Show after blur OR submit
+- `on-blur` - Show after blur only
+- `on-submit` - Show after submit only
+
 ```typescript
-<input [ngModel]="formValue().generalInfo.firstName" name="firstName"/>
+// Global config
+provide(SC_ERROR_DISPLAY_MODE_TOKEN, { useValue: 'on-submit' })
+
+// Per-instance
+<div formErrorDisplay [errorDisplayMode]="'on-blur'">...</div>
 ```
 
-### ✅ Correct: Using Optional Chaining
+### Custom Wrappers
+
 ```typescript
-<input [ngModel]="formValue().generalInfo?.firstName" name="firstName"/>
+@Component({
+  selector: 'app-custom-wrapper',
+  hostDirectives: [{ directive: FormErrorDisplayDirective, inputs: ['errorDisplayMode'] }],
+  template: `
+    <ng-content />
+    @if (errorDisplay.shouldShowErrors()) {
+      <div role="alert" aria-live="polite">
+        @for (error of errorDisplay.errors(); track error) { <span>{{ error }}</span> }
+      </div>
+    }
+    @if (errorDisplay.isPending()) { <div aria-busy="true">Validating...</div> }
+  `
+})
+export class CustomWrapperComponent {
+  protected readonly errorDisplay = inject(FormErrorDisplayDirective, { self: true });
+}
 ```
 
-### ❌ Wrong: Missing `only()` Pattern
+**Available signals:** `shouldShowErrors()`, `errors()`, `warnings()`, `isPending()`, `isTouched()`, `isDirty()`, `isValid()`, `isInvalid()`, `errorMessages()`, `warningMessages()`, `updateOn()`, `formSubmitted()`
+
+### Root Form Validation
+
 ```typescript
-export const suite = staticSuite((model: FormModel) => {
-  // Missing field parameter and only() optimization
-});
+// Suite
+test(ROOT_FORM, 'Form-level error', () => enforce(condition).isTruthy());
+
+// Component
+<form scVestForm [validateRootForm]="true" (errorsChange)="errors.set($event)"></form>
 ```
 
-### ✅ Correct: Including `only()` Pattern
+## Advanced Features
+
+### Nested Components: `vestFormsViewProviders`
+
+**CRITICAL**: Any component with `ngModelGroup` MUST use `vestFormsViewProviders`:
+
 ```typescript
-export const suite = staticSuite((model: FormModel, field?: string) => {
-  if (field) { only(field); } // Critical for performance
-});
+@Component({
+  selector: 'app-address-form',
+  imports: [vestForms],
+  viewProviders: [vestFormsViewProviders], // Required!
+  template: `<div ngModelGroup="address">...</div>`
+})
 ```
 
-> **Performance Details**: See `.github/instructions/vest.instructions.md` for comprehensive performance optimization strategies.
+### Field Clearing Utilities
+
+```typescript
+// Conditional clearing
+this.formValue.update(v => clearFieldsWhen(v, { fieldA: condition, fieldB: !condition }));
+
+// Unconditional clearing
+this.formValue.update(v => clearFields(v, ['tempData', 'draft']));
+
+// Whitelist approach
+this.formValue.update(v => keepFieldsWhen(v, { basic: true, shipping: needsShipping }));
+```
+
+### Utility Functions
+
+```typescript
+getAllFormErrors(form)           // Get all errors by path
+getFormControlField(root, ctrl)  // Get dot-notation path of control
+getFormGroupField(root, group)   // Get dot-notation path of group
+mergeValuesAndRawValues(form)    // Include disabled fields in value
+```
+
+### Other Features
+
+- **Shape Validation**: `[formShape]="shape"` - Dev mode validation of `name` attributes
+- **Validation Options**: `[validationOptions]="{ debounceTime: 300 }"`
+- **Form Arrays**: See [guide](https://blog.simplified.courses/template-driven-forms-with-form-arrays/)
+- **VALIDATION_CONFIG_DEBOUNCE_TIME**: Constant (100ms) controlling dependent field validation timing
+
+## Common Patterns
+
+```typescript
+// Loading state
+protected readonly isLoading = signal(false);
+async onSubmit() {
+  this.isLoading.set(true);
+  try { await this.api.submit(this.formValue()); }
+  finally { this.isLoading.set(false); }
+}
+
+// Form reset
+resetForm() { this.formValue.set({}); }
+
+// Prefill form
+ngOnInit() { this.formValue.set({ firstName: 'John', lastName: 'Doe' }); }
+```
+
+### When to Use What
+
+| Use Case | Solution |
+|----------|----------|
+| Conditional validation logic | Vest.js `omitWhen()` |
+| Trigger dependent field revalidation | `validationConfig` |
+| Default error display | Built-in `sc-control-wrapper` |
+| Custom error display (Material, etc.) | Custom wrapper with `FormErrorDisplayDirective` as hostDirective |
+
+## Common Gotchas
+
+| ❌ Wrong | ✅ Correct |
+|---------|-----------|
+| `[(ngModel)]="formValue().firstName"` | `[ngModel]="formValue().firstName"` |
+| `[ngModel]="formValue().info.firstName"` | `[ngModel]="formValue().info?.firstName"` |
+| `suite((model) => { test(...) })` | `suite((model, field?) => { if(field) only(field); })` |
+| Nested component without `viewProviders` | `viewProviders: [vestFormsViewProviders]` |
 
 ## Best Practices
 
-1. **Always use `DeepPartial<T>` for form models** - Forms build incrementally
-2. **Always use the `only(field)` pattern** - Critical for performance (see vest.instructions.md)
-3. **Match `name` attributes exactly to property paths** - Essential for binding
-4. **Use computed signals for conditional UI** - Reactive and performant
-5. **Compose validation suites** - Reusable and maintainable (see vest.instructions.md)
-6. **Handle async validations properly** - Use AbortController (see vest.instructions.md)
-7. **Test validation suites independently** - They're just functions
-8. **Use shape validation in development** - Catches typos early
+1. Use `DeepPartial<T>` for form models (forms build incrementally)
+2. Always include `if (field) { only(field); }` in validation suites (performance)
+3. Match `name` attributes exactly to property paths
+4. Use `vestFormsViewProviders` in nested components with `ngModelGroup`
+5. Use computed signals for conditional UI
+6. Compose validation suites for reusability (see vest.instructions.md)
+7. Handle async validations with AbortController (see vest.instructions.md)
+8. Test validation suites independently (they're just functions)
+9. Use shape validation in development (catches typos)
+10. Use `FormCompatibleDeepRequired` for date fields accepting Date | string
+11. Choose appropriate error display mode: `on-blur`, `on-submit`, or `on-blur-or-submit`
+12. Use `FormErrorDisplayDirective` as hostDirective for custom wrappers
+13. Respect accessibility (ARIA attributes: `role="alert"`, `aria-live`, `aria-busy`)
+14. Use field clearing utilities when switching between form/non-form content
 
 ## Resources
 
-- **Original Blog Post**: https://blog.simplified.courses/introducing-ngx-vest-forms/
-- **Vest.js Documentation**: https://vestjs.dev/
-- **Angular Template-Driven Forms**: https://angular.dev/guide/forms/template-driven-forms
-- **Form Arrays Guide**: https://blog.simplified.courses/template-driven-forms-with-form-arrays/
-- **Async Validation Article**: https://blog.simplified.courses/asynchronous-form-validators-in-angular-with-vest/
+- [Original Blog](https://blog.simplified.courses/introducing-ngx-vest-forms/) • [Vest.js Docs](https://vestjs.dev/) • [Angular Forms](https://angular.dev/guide/forms/template-driven-forms) • [Form Arrays](https://blog.simplified.courses/template-driven-forms-with-form-arrays/) • [Async Validation](https://blog.simplified.courses/asynchronous-form-validators-in-angular-with-vest/)
 
-## Credits
-
-ngx-vest-forms was created by [Brecht Billiet](https://twitter.com/brechtbilliet) and is inspired by his extensive work on Angular forms and the principles of clean, maintainable code architecture.
+Created by [Brecht Billiet](https://twitter.com/brechtbilliet)
