@@ -921,7 +921,7 @@ onStructureChange(newValue: string) {
 
 **Additional Utility Functions:**
 
-````typescript
+```typescript
 import { clearFields, keepFieldsWhen } from 'ngx-vest-forms';
 
 // Clear specific fields unconditionally
