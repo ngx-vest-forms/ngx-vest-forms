@@ -7,11 +7,9 @@ export const validationSuite = staticSuite(
       only(field); // For performance - only validate the active field
     }
 
-    test('addInterest', 'Interest cannot be empty when adding', () => {
-      if (field === 'addInterest') {
-        enforce(model?.addInterest).isNotEmpty();
-      }
-    });
+    // Note: addInterest field is NOT validated here.
+    // It's a transient input field validated by component logic.
+    // Vest focuses on validating the actual data (interests array items).
 
     const currentModel = model ?? { interests: [] };
     const interests = currentModel.interests ?? [];

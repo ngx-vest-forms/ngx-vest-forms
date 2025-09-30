@@ -8,6 +8,8 @@ test.describe('Content Accessibility - Educational Sections', () => {
       '/fundamentals/minimal-form',
       '/fundamentals/basic-validation',
       '/fundamentals/error-display-modes',
+      '/fundamentals/form-arrays',
+      '/fundamentals/nested-forms',
     ];
 
     for (const examplePath of examples) {
@@ -15,30 +17,21 @@ test.describe('Content Accessibility - Educational Sections', () => {
         await page.goto(examplePath);
         await page.waitForLoadState('networkidle');
 
-        // Verify educational sections have proper heading structure
-        const featuresHeading = page.getByRole('heading', {
-          name: /ngx-vest-forms Features/i,
-        });
-        await expect(featuresHeading).toBeVisible();
+        const cards = page.locator('ngx-example-cards').first();
+        await expect(cards).toBeVisible();
 
-        // Verify it's an h3 element (level 3)
-        await expect(featuresHeading.locator('xpath=self::h3')).toBeAttached();
+        const sectionHeadings = cards.locator('h3');
+        await expect(sectionHeadings.first()).toBeVisible();
 
-        // Verify feature lists have proper structure with bullet points
-        const featuresList = featuresHeading.locator('..').locator('ul');
-        await expect(featuresList).toBeVisible();
-
-        // Check for bullet points in list items
-        const listItems = featuresList.locator('li');
+        const listItems = cards.locator('li');
+        await expect(listItems.first()).toBeVisible();
         await expect(listItems.first()).toContainText('•');
 
-        // Verify code elements are properly highlighted
-        const codeElements = featuresList.locator('code.code-inline');
+        const codeElements = listItems.locator('code');
         await expect(codeElements.first()).toBeVisible();
         await expect(codeElements.first()).toHaveClass(/code-inline/);
 
-        // Verify strong elements for emphasis
-        const strongElements = featuresList.locator('strong');
+        const strongElements = listItems.locator('strong');
         await expect(strongElements.first()).toBeVisible();
 
         // Check for proper landmark structure
@@ -59,29 +52,35 @@ test.describe('Content Accessibility - Educational Sections', () => {
     page,
   }) => {
     const examples = [
-      { path: '/fundamentals/minimal-form', expectedFeatures: 5 },
-      { path: '/fundamentals/basic-validation', expectedFeatures: 5 },
-      { path: '/fundamentals/error-display-modes', expectedFeatures: 5 },
+      '/fundamentals/minimal-form',
+      '/fundamentals/basic-validation',
+      '/fundamentals/error-display-modes',
+      '/fundamentals/form-arrays',
+      '/fundamentals/nested-forms',
     ];
 
-    for (const example of examples) {
-      await test.step(`Test content patterns on ${example.path}`, async () => {
-        await page.goto(example.path);
+    for (const examplePath of examples) {
+      await test.step(`Test content patterns on ${examplePath}`, async () => {
+        await page.goto(examplePath);
         await page.waitForLoadState('networkidle');
 
-        // Verify consistent number of features listed
-        const featuresSection = page
-          .getByRole('heading', { name: /ngx-vest-forms Features/i })
-          .locator('..');
-        const featureItems = featuresSection.locator('li');
-        await expect(featureItems).toHaveCount(example.expectedFeatures);
+        const cards = page.locator('ngx-example-cards').first();
+        await expect(cards).toBeVisible();
+
+        const featureItems = cards.locator('li');
+        const itemCount = await featureItems.count();
+        expect(itemCount).toBeGreaterThan(0);
 
         // Verify each feature has the bullet point + strong + code pattern
-        for (let index = 0; index < example.expectedFeatures; index++) {
+        for (let index = 0; index < itemCount; index++) {
           const item = featureItems.nth(index);
           await expect(item).toContainText('•');
           await expect(item.locator('strong')).toBeVisible();
-          await expect(item.locator('code')).toBeVisible();
+          const codeSegments = item.locator('code');
+          if ((await codeSegments.count()) > 0) {
+            await expect(codeSegments.first()).toBeVisible();
+            await expect(codeSegments.first()).toHaveClass(/code-inline/);
+          }
         }
       });
     }

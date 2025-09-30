@@ -8,6 +8,8 @@ const routes = [
   '/fundamentals/minimal-form',
   '/fundamentals/basic-validation',
   '/fundamentals/error-display-modes',
+  '/fundamentals/form-arrays',
+  '/fundamentals/nested-forms',
 ] as const;
 
 for (const route of routes) {

@@ -40,6 +40,9 @@ export function createVestForm<TModel extends Record<string, unknown>>(
       ? (initialModel as WritableSignal<TModel>)
       : signal(initialModel as TModel);
 
+  // Capture the initial value for reset operations
+  const initialValue = model();
+
   const isReactiveSuite =
     'subscribe' in suite && typeof suite.subscribe === 'function';
 
@@ -120,30 +123,28 @@ export function createVestForm<TModel extends Record<string, unknown>>(
    * - If field specified AND other fields are touched: validate ALL touched fields (accumulation)
    */
   const runSuite = <P extends Path<TModel>>(fieldPath?: P) => {
-    const touchedFields = touched();
+    const fieldPathString = fieldPath ? String(fieldPath) : undefined;
 
-    // Add current field to touched set if specified
-    if (fieldPath) {
-      const fieldPathString = String(fieldPath);
-      if (!touchedFields.has(fieldPathString)) {
-        touched.update((current) => {
-          const next = new Set(current);
-          next.add(fieldPathString);
-          return next;
-        });
-      }
+    if (fieldPathString) {
+      touched.update((current) => {
+        if (current.has(fieldPathString)) {
+          return current;
+        }
+        const next = new Set(current);
+        next.add(fieldPathString);
+        return next;
+      });
     }
+
+    const touchedFields = touched();
 
     // Determine validation strategy based on touched fields
     let nextResult: SuiteResult<string, string>;
 
-    if (!fieldPath || touchedFields.size === 0) {
+    if (!fieldPathString || touchedFields.size === 0) {
       // Form-level validation or no touched fields: validate everything
       nextResult = suite(model());
-    } else if (
-      touchedFields.size === 1 &&
-      touchedFields.has(String(fieldPath))
-    ) {
+    } else if (touchedFields.size === 1 && fieldPathString) {
       // Only one field touched (current field): optimize by validating just this field
       nextResult = suite(model(), fieldPath);
     } else {
@@ -157,7 +158,7 @@ export function createVestForm<TModel extends Record<string, unknown>>(
     }
 
     // Fallback: if field validation didn't test the field, run full validation
-    if (fieldPath && !nextResult.isTested(String(fieldPath))) {
+    if (fieldPathString && !nextResult.isTested(fieldPathString)) {
       nextResult = suite(model());
     }
 
@@ -225,9 +226,9 @@ export function createVestForm<TModel extends Record<string, unknown>>(
     };
 
     const reset = () => {
-      const initialValue = getValueByPath(initialModel as TModel, path);
-      if (initialValue !== undefined) {
-        const resetModel = setValueByPath(model(), path, initialValue);
+      const fieldInitialValue = getValueByPath(initialValue, path);
+      if (fieldInitialValue !== undefined) {
+        const resetModel = setValueByPath(model(), path, fieldInitialValue);
         model.set(resetModel);
       }
       // Reset field state in Vest (if supported)
@@ -288,6 +289,7 @@ export function createVestForm<TModel extends Record<string, unknown>>(
         suite,
         suiteResult,
         (fieldPath) => createField(fieldPath as Path<TModel>),
+        (targetPath) => runSuite(targetPath as Path<TModel>),
       );
     },
 
@@ -325,7 +327,7 @@ export function createVestForm<TModel extends Record<string, unknown>>(
     },
 
     reset: () => {
-      model.set(initialModel as TModel);
+      model.set(initialValue);
       fieldCache.clear();
       if (suite.reset) {
         suite.reset();

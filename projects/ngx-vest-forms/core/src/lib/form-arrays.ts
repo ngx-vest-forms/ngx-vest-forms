@@ -26,11 +26,13 @@ export function createVestFormArray<T = any>(
   suite: any,
   suiteResult: Signal<SuiteResult<string, string>>,
   createField: (fieldPath: string) => VestField<any>,
+  runSuite?: (fieldPath?: string) => SuiteResult<string, string>,
 ): VestFormArray<T> {
   // Array-level computed signals
   const items = computed(() => {
     const arrayValue = getValueByPath<T[]>(model(), path);
-    return arrayValue || [];
+    // Always return an array, even if undefined (e.g., during reset transitions)
+    return Array.isArray(arrayValue) ? arrayValue : [];
   });
 
   const length = computed(() => items().length);
@@ -55,6 +57,14 @@ export function createVestFormArray<T = any>(
     return suiteResult().getErrors(path);
   });
 
+  const triggerValidation = (targetPath?: string) => {
+    if (runSuite) {
+      runSuite(targetPath);
+    } else {
+      suite(model(), targetPath);
+    }
+  };
+
   /**
    * Update the array in the model and trigger validation
    */
@@ -63,13 +73,7 @@ export function createVestFormArray<T = any>(
     model.set(updatedModel);
 
     // Trigger validation for the array path
-    suite(model(), path);
-
-    // Also validate array items if they have validation rules
-    for (const [index] of newArray.entries()) {
-      const itemPath = `${path}.${index}`;
-      suite(model(), itemPath);
-    }
+    triggerValidation(path);
   }
 
   /**
@@ -193,6 +197,7 @@ export function createEnhancedVestFormArray<T = any>(
   suite: any,
   suiteResult: Signal<SuiteResult<string, string>>,
   createField: (fieldPath: string) => VestField<any>,
+  runSuite?: (fieldPath?: string) => SuiteResult<string, string>,
 ): EnhancedVestFormArray<T> {
   const baseArray = createVestFormArray<T>(
     model,
@@ -200,6 +205,7 @@ export function createEnhancedVestFormArray<T = any>(
     suite,
     suiteResult,
     createField,
+    runSuite,
   );
 
   // Additional computed properties
@@ -251,7 +257,11 @@ export function createEnhancedVestFormArray<T = any>(
 
     const updatedModel = setValueByPath(model(), path, newArray);
     model.set(updatedModel);
-    suite(model(), path);
+    if (runSuite) {
+      runSuite(path);
+    } else {
+      suite(model(), path);
+    }
   };
 
   const swap = (indexA: number, indexB: number): void => {
@@ -270,13 +280,21 @@ export function createEnhancedVestFormArray<T = any>(
 
     const updatedModel = setValueByPath(model(), path, newArray);
     model.set(updatedModel);
-    suite(model(), path);
+    if (runSuite) {
+      runSuite(path);
+    } else {
+      suite(model(), path);
+    }
   };
 
   const clear = (): void => {
     const updatedModel = setValueByPath(model(), path, []);
     model.set(updatedModel);
-    suite(model(), path);
+    if (runSuite) {
+      runSuite(path);
+    } else {
+      suite(model(), path);
+    }
   };
 
   const duplicate = (index: number): void => {

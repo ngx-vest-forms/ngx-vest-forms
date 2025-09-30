@@ -44,6 +44,13 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object';
 }
 
+function cloneObject<T extends Record<string, unknown>>(value: T): T {
+  return Object.create(
+    Object.getPrototypeOf(value),
+    Object.getOwnPropertyDescriptors(value),
+  );
+}
+
 /**
  * Type guard to check if a string represents a numeric array index
  */
@@ -110,12 +117,10 @@ export function getValueByPath<
   object: TModel | object,
   path: P | string,
 ): PathValue<TModel, P> | unknown | undefined {
+  // Gracefully handle non-object root values during reset/transition states
+  // Return undefined instead of throwing to prevent errors during Angular change detection
   if (!isObject(object)) {
-    throw new PathAccessError(
-      'non-object-root',
-      String(path),
-      'Cannot access a path on a non-object root value.',
-    );
+    return undefined;
   }
 
   if (!path || path === '') {
@@ -177,12 +182,12 @@ export function setValueByPath<
   path: P | string,
   value: PathValue<TModel, P> | unknown,
 ): TModel {
+  // Gracefully handle non-object root values during reset/transition states
+  // Return the value as-is if it's an object, otherwise return the original object
   if (!isObject(object)) {
-    throw new PathAccessError(
-      'non-object-root',
-      String(path),
-      'Cannot set a path on a non-object root value.',
-    );
+    return (
+      typeof value === 'object' && value !== null ? value : object
+    ) as TModel;
   }
 
   if (!path || path === '') {
@@ -210,10 +215,7 @@ export function setValueByPath<
   // Preserve the prototype chain when cloning
   const result = Array.isArray(object)
     ? [...(object as unknown[])]
-    : Object.create(
-        Object.getPrototypeOf(object),
-        Object.getOwnPropertyDescriptors(object),
-      );
+    : cloneObject(object as Record<string, unknown>);
 
   let current: Record<string, unknown> = result as Record<string, unknown>;
 
@@ -229,7 +231,7 @@ export function setValueByPath<
     } else if (isObject(existing)) {
       current[key] = Array.isArray(existing)
         ? [...(existing as unknown[])]
-        : { ...(existing as Record<string, unknown>) };
+        : cloneObject(existing as Record<string, unknown>);
     } else {
       throw new PathAccessError(
         'missing-intermediate',
@@ -269,11 +271,7 @@ export function deleteValueByPath<
   P extends Path<TModel>,
 >(object: TModel, path: P): TModel {
   if (!isObject(object)) {
-    throw new PathAccessError(
-      'non-object-root',
-      String(path),
-      'Cannot delete a path on a non-object root value.',
-    );
+    return object;
   }
 
   if (!path) {
@@ -289,7 +287,9 @@ export function deleteValueByPath<
   }
 
   const keys = normalisedPath.split('.');
-  const result = Array.isArray(object) ? [...object] : { ...object };
+  const result = Array.isArray(object)
+    ? [...object]
+    : cloneObject(object as Record<string, unknown>);
   let current: Record<string, unknown> = result as Record<string, unknown>;
 
   // Navigate to parent of target property
@@ -303,7 +303,7 @@ export function deleteValueByPath<
     // Clone the nested object/array
     current[key] = Array.isArray(current[key])
       ? [...(current[key] as unknown[])]
-      : { ...(current[key] as Record<string, unknown>) };
+      : cloneObject(current[key] as Record<string, unknown>);
 
     current = current[key] as Record<string, unknown>;
   }

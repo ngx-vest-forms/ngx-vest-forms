@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { createVestForm } from 'ngx-vest-forms/core';
 import { asDebuggerForm } from '../../ui/debugger/debugger';
 import { FormArrayModel } from './example-form-array.model';
@@ -21,34 +28,69 @@ export class ExampleFormArray {
   readonly debugForm = asDebuggerForm(this.form);
 
   private readonly interestsArray = this.form.array('interests');
+  private readonly addInterestInput =
+    viewChild<ElementRef<HTMLInputElement>>('addInterestInput');
+
+  protected readonly interestEntries = computed(() =>
+    this.interestsArray.map((item, index, field) => ({
+      index,
+      item,
+      field,
+      key: `interests.${index}`,
+    })),
+  );
+
+  // Track whether to show addInterest errors
+  // Client-side validation for the transient addInterest input field
+  private readonly shouldShowAddInterestErrors = signal(false);
+  protected readonly addInterestErrorMessage = signal<string | null>(null);
+
+  // Show error when signal is set
+  protected readonly showAddInterestErrors = computed(
+    () =>
+      this.shouldShowAddInterestErrors() &&
+      this.addInterestErrorMessage() !== null,
+  );
 
   protected addInterest(): void {
-    this.form.validate('addInterest');
-
-    if (this.form.addInterestErrors().length > 0) {
-      console.log('❌ Cannot add interest - validation failed', {
-        errors: this.form.addInterestErrors(),
-      });
-      return;
-    }
-
     const newInterest = this.form.addInterest()?.trim();
+
+    // Client-side validation for the transient input field
     if (!newInterest) {
+      this.shouldShowAddInterestErrors.set(true);
+      this.addInterestErrorMessage.set('Interest cannot be empty');
       console.log('❌ Cannot add empty interest');
       return;
     }
 
+    if (newInterest.length < 2) {
+      this.shouldShowAddInterestErrors.set(true);
+      this.addInterestErrorMessage.set(
+        'Interest must be at least 2 characters',
+      );
+      console.log('❌ Interest too short');
+      return;
+    }
+
+    // Valid interest - add to array
     this.interestsArray.push(newInterest);
+
+    // Clear input and reset error state
     this.form.setAddInterest('');
+    this.shouldShowAddInterestErrors.set(false);
+    this.addInterestErrorMessage.set(null);
+
+    // Focus input for next entry
+    this.addInterestInput()?.nativeElement.focus();
 
     console.log('✅ Interest added successfully', {
       newInterest,
-      totalInterests: this.form.interests().length,
+      totalInterests: this.interestsArray.length(),
     });
   }
 
   protected removeInterest(index: number): void {
-    if (this.form.interests().length === 0) {
+    if (this.interestsArray.length() === 0) {
       console.log('❌ No interests to remove');
       return;
     }
@@ -59,28 +101,8 @@ export class ExampleFormArray {
     console.log('✅ Interest removed successfully', {
       removedIndex: index,
       removedInterest,
-      remainingInterests: this.form.interests().length,
+      remainingInterests: this.interestsArray.length(),
     });
-  }
-
-  protected updateInterest(index: number, value: Event | string): void {
-    this.interestField(index).set(value);
-  }
-
-  protected touchInterest(index: number): void {
-    this.interestField(index).touch();
-  }
-
-  protected showInterestError(index: number): boolean {
-    return this.interestField(index).showErrors();
-  }
-
-  protected interestValid(index: number): boolean {
-    return this.interestField(index).valid();
-  }
-
-  protected interestErrors(index: number): string[] {
-    return this.interestField(index).errors();
   }
 
   protected async onSubmit(): Promise<void> {
@@ -98,10 +120,11 @@ export class ExampleFormArray {
   }
 
   protected resetForm(): void {
+    // Reset the form to initial state (includes interests array)
     this.form.reset();
-  }
 
-  private interestField(index: number) {
-    return this.interestsArray.at(index);
+    // Clear any client-side validation errors
+    this.shouldShowAddInterestErrors.set(false);
+    this.addInterestErrorMessage.set(null);
   }
 }

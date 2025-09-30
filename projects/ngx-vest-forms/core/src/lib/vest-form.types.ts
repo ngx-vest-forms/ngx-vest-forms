@@ -6,6 +6,7 @@
 import type { Signal, WritableSignal } from '@angular/core';
 import type { PathValue, Paths as TsEssentialsPath } from 'ts-essentials';
 import type { SuiteResult } from 'vest';
+import type { EnhancedVestFormArray } from './form-arrays';
 import type {
   DerivedFieldMethodAccessors,
   DerivedFieldSignalAccessors,
@@ -205,7 +206,7 @@ export type VestForm<
   field<P extends Path<TModel>>(path: P): VestField<PathValue<TModel, P>>;
 
   /** Get array access for a specific path */
-  array<P extends Path<TModel>>(path: P): VestFormArray;
+  array<P extends Path<TModel>>(path: P): EnhancedVestFormArray;
 
   /** Validate specific field or entire form */
   validate<P extends Path<TModel>>(fieldPath?: P): void;

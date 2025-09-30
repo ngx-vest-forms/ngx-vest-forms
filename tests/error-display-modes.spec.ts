@@ -26,24 +26,56 @@ test.describe('Error Display Modes - Product Feedback Form', () => {
   });
 
   test.describe('CRITICAL BUG REGRESSION: Multiple Errors Display', () => {
-    test('should display ALL required field errors on initial load', async ({
+    test('should display ALL required field errors after fields are touched', async ({
       page,
     }) => {
-      await test.step('Verify form shows invalid status initially', async () => {
-        // The debugger shows "Invalid" badge when form is invalid
+      await test.step('Touch each required field without entering data', async () => {
+        const nameField = page.getByRole('textbox', { name: /Full Name/i });
+        await nameField.focus();
+        await nameField.blur();
+
+        const emailField = page.getByRole('textbox', {
+          name: /Email Address/i,
+        });
+        await emailField.focus();
+        await emailField.blur();
+
+        const productField = page.getByRole('combobox', {
+          name: /Which product did you use/i,
+        });
+        await productField.focus();
+        await productField.blur();
+
+        const ratingField = page.getByRole('spinbutton', {
+          name: /Overall Rating/i,
+        });
+        await ratingField.focus();
+        await ratingField.blur();
+      });
+
+      await test.step('Verify form shows invalid status', async () => {
         await expect(page.getByText('Invalid', { exact: true })).toBeVisible();
       });
 
       await test.step('Verify multiple errors are tracked in debugger', async () => {
-        // The debugger should show multiple error fields
-        // Look for the "Validation Errors" section or error count
         const debuggerPanel = page.locator('ngx-debugger').first();
         await expect(debuggerPanel).toBeVisible();
 
-        // Verify the form shows errors for required fields by checking error messages
-        await expect(
-          page.getByText(/is required|cannot be empty/i).first(),
-        ).toBeVisible();
+        const errorList = debuggerPanel
+          .locator('details')
+          .filter({ hasText: 'Validation Errors' })
+          .locator('li');
+        await expect(errorList.first()).toBeVisible();
+
+        const errorCount = await errorList.count();
+        expect(errorCount).toBeGreaterThanOrEqual(4);
+      });
+
+      await test.step('Verify required field errors are visible', async () => {
+        await expect(page.locator('#name-errors')).toBeVisible();
+        await expect(page.locator('#email-errors')).toBeVisible();
+        await expect(page.locator('#product-errors')).toBeVisible();
+        await expect(page.locator('#rating-errors')).toBeVisible();
       });
     });
 
@@ -145,6 +177,80 @@ test.describe('Error Display Modes - Product Feedback Form', () => {
       await expect(
         page.getByRole('textbox', { name: /Email Address/i }),
       ).toHaveValue('john.doe@example.com');
+    });
+  });
+
+  test.describe('Conditional Improvement Field Regression', () => {
+    test('should toggle improvement suggestions without race conditions', async ({
+      page,
+    }) => {
+      const ratingField = page.getByRole('spinbutton', {
+        name: /Overall Rating/i,
+      });
+      const improvementField = page.getByRole('textbox', {
+        name: /What could we improve/i,
+      });
+
+      await test.step('Trigger conditional field with low rating', async () => {
+        await ratingField.fill('3');
+        await expect(improvementField).toBeVisible();
+      });
+
+      await test.step('Rapidly toggle ratings to ensure stability', async () => {
+        const sequence = ['5', '2', '4', '1', '3'];
+        for (const value of sequence) {
+          await ratingField.fill(value);
+          await page.waitForTimeout(150);
+        }
+
+        await expect(improvementField).toBeVisible();
+      });
+
+      await test.step('Hide field when rating recovers', async () => {
+        await ratingField.fill('5');
+        await expect(improvementField).not.toBeVisible();
+      });
+    });
+
+    test('should show validation message without console errors', async ({
+      page,
+    }) => {
+      const capturedErrors: string[] = [];
+      page.on('console', (message) => {
+        if (message.type() === 'error') {
+          capturedErrors.push(message.text());
+        }
+      });
+
+      const ratingField = page.getByRole('spinbutton', {
+        name: /Overall Rating/i,
+      });
+
+      await test.step('Trigger conditional field', async () => {
+        await ratingField.fill('2');
+        await expect(
+          page.getByRole('textbox', { name: /What could we improve/i }),
+        ).toBeVisible();
+      });
+
+      await test.step('Blur empty field to surface validation', async () => {
+        const improvementField = page.getByRole('textbox', {
+          name: /What could we improve/i,
+        });
+        await improvementField.focus();
+        await improvementField.blur();
+        await page.waitForTimeout(300);
+
+        await expect(
+          page.getByText(/please help us understand what went wrong/i).first(),
+        ).toBeVisible();
+      });
+
+      expect(
+        capturedErrors.filter((message) =>
+          /Cannot read|ExpressionChangedAfter/.test(message),
+        ),
+      ).toHaveLength(0);
     });
   });
 
