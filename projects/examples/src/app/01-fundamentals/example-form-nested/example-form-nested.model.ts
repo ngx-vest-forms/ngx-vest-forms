@@ -3,6 +3,9 @@ export type NestedFormModel = {
     firstName: string;
     lastName: string;
     email: string;
+    age?: number; // Number input example
+    gender?: string; // Radio button example
+    experienceLevel?: number; // Range slider example (1-10)
   };
   addressInfo: {
     street: string;
@@ -21,6 +24,9 @@ export type FlatFormModel = {
   firstName: string;
   lastName: string;
   email: string;
+  age?: number;
+  gender?: string;
+  experienceLevel?: number;
   street: string;
   city: string;
   zipCode: string;

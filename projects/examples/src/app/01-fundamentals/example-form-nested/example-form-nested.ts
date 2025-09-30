@@ -1,13 +1,12 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { createVestForm } from 'ngx-vest-forms/core';
-import { Debugger, asDebuggerForm } from '../../ui/debugger/debugger';
+import { asDebuggerForm } from '../../ui/debugger/debugger';
 import { NestedFormModel } from './example-form-nested.model';
 import { nestedValidationSuite } from './example-form-nested.validations';
 
 @Component({
   selector: 'ngx-example-form-nested',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Debugger],
   templateUrl: './example-form-nested.html',
 })
 export class ExampleFormNested {
@@ -18,6 +17,9 @@ export class ExampleFormNested {
         firstName: '',
         lastName: '',
         email: '',
+        age: undefined,
+        gender: undefined,
+        experienceLevel: 5, // Default to mid-level
       },
       addressInfo: {
         street: '',
@@ -32,7 +34,7 @@ export class ExampleFormNested {
     }),
   );
 
-  protected readonly debugForm = asDebuggerForm(this.form);
+  readonly debugForm = asDebuggerForm(this.form);
 
   protected async onSubmit(): Promise<void> {
     try {

@@ -1,13 +1,12 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { createVestForm } from 'ngx-vest-forms/core';
-import { Debugger, asDebuggerForm } from '../../ui/debugger/debugger';
+import { asDebuggerForm } from '../../ui/debugger/debugger';
 import { FormArrayModel } from './example-form-array.model';
 import { validationSuite } from './example-form-array.validation';
 
 @Component({
   selector: 'ngx-example-form-array',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Debugger],
   templateUrl: './example-form-array.html',
 })
 export class ExampleFormArray {
@@ -19,7 +18,7 @@ export class ExampleFormArray {
     }),
   );
 
-  protected readonly debugForm = asDebuggerForm(this.form);
+  readonly debugForm = asDebuggerForm(this.form);
 
   private readonly interestsArray = this.form.array('interests');
 

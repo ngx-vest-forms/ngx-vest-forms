@@ -39,6 +39,29 @@ export const nestedValidationSuite = staticSafeSuite<NestedFormModel>(
       enforce(model.personalInfo?.email).matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
     });
 
+    // New input type validations
+    test('personalInfo.age', 'Age must be between 18 and 120', () => {
+      if (model.personalInfo?.age !== undefined) {
+        enforce(model.personalInfo.age).greaterThanOrEquals(18);
+        enforce(model.personalInfo.age).lessThanOrEquals(120);
+      }
+    });
+
+    test('personalInfo.gender', 'Gender selection is required', () => {
+      enforce(model.personalInfo?.gender).isNotEmpty();
+    });
+
+    test(
+      'personalInfo.experienceLevel',
+      'Experience level must be between 1 and 10',
+      () => {
+        if (model.personalInfo?.experienceLevel !== undefined) {
+          enforce(model.personalInfo.experienceLevel).greaterThanOrEquals(1);
+          enforce(model.personalInfo.experienceLevel).lessThanOrEquals(10);
+        }
+      },
+    );
+
     // Address Info validations - use nested field names
     test('addressInfo.street', 'Street address is required', () => {
       enforce(model.addressInfo?.street).isNotEmpty();

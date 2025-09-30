@@ -8,23 +8,6 @@ details > summary::-webkit-details-marker {
   display: none;
 }
 
-details > summary::before {
-  content: '▶';
-  display: inline-block;
-  margin-right: 0.5rem;
-  transition: transform 0.2s ease;
-  font-size: 0.75rem;
-  color: rgb(107 114 128);
-}
-
-details[open] > summary::before {
-  transform: rotate(90deg);
-}
-
-details > summary:hover::before {
-  color: rgb(59 130 246);
-}
-
 .form-state-json {
   background: linear-gradient(145deg, rgb(239 246 255), rgb(219 234 254));
   border: 1px solid rgb(191 219 254);

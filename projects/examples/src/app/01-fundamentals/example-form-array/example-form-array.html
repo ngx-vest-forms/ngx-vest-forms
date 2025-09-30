@@ -1,121 +1,115 @@
-<div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
-  <!-- Form Column -->
-  <form
-    (ngSubmit)="onSubmit()"
-    class="form-container"
-    [attr.aria-busy]="form.pending()"
-  >
-    <!-- Add Interest Field -->
-    <div class="form-field">
-      <label class="form-label" for="addInterest"> Add a new interest * </label>
-      <div class="flex gap-3">
-        <div class="flex-1">
-          <input
-            id="addInterest"
-            class="form-input"
-            type="text"
-            [value]="form.addInterest()"
-            (input)="form.setAddInterest($event)"
-            placeholder="Enter an interest"
-            [attr.aria-invalid]="
+<form
+  (ngSubmit)="onSubmit()"
+  class="form-container"
+  [attr.aria-busy]="form.pending()"
+>
+  <!-- Add Interest Field -->
+  <div class="form-field">
+    <label class="form-label" for="addInterest"> Add a new interest * </label>
+    <div class="flex gap-3">
+      <div class="flex-1">
+        <input
+          id="addInterest"
+          class="form-input"
+          type="text"
+          [value]="form.addInterest()"
+          (input)="form.setAddInterest($event)"
+          placeholder="Enter an interest"
+          [attr.aria-invalid]="
               form.addInterestShowErrors() && !form.addInterestValid()
             "
-            [attr.aria-describedby]="
+          [attr.aria-describedby]="
               form.addInterestShowErrors() && form.addInterestErrors().length > 0
                 ? 'addInterest-error'
                 : null
             "
+        />
+        @if (form.addInterestShowErrors() && form.addInterestErrors().length >
+        0) {
+        <div class="form-error" id="addInterest-error" role="alert">
+          {{ form.addInterestErrors()[0] }}
+        </div>
+        }
+      </div>
+      <button
+        type="button"
+        (click)="addInterest()"
+        class="btn-secondary whitespace-nowrap"
+        [disabled]="form.pending()"
+      >
+        <span aria-hidden="true">+</span>
+        <span>Add Interest</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Current Interests List -->
+  <div class="form-field">
+    <h3 class="form-label">Current interests</h3>
+    @if (form.interests().length > 0) {
+    <div class="space-y-3">
+      @for (interest of form.interests(); track $index) { @let index = $index;
+      <div
+        class="flex items-start gap-3 rounded-md border border-gray-200 bg-gray-50 p-3"
+      >
+        <div class="flex-1">
+          <input
+            type="text"
+            [value]="interest || ''"
+            (input)="updateInterest(index, $event)"
+            class="form-input"
+            [attr.aria-invalid]="showInterestError(index) && interestErrors(index).length > 0"
+            [attr.aria-describedby]="
+                    showInterestError(index) && interestErrors(index).length > 0
+                      ? 'interest-error-' + index
+                      : null
+                  "
           />
-          @if (form.addInterestShowErrors() && form.addInterestErrors().length >
-          0) {
-          <div class="form-error" id="addInterest-error" role="alert">
-            {{ form.addInterestErrors()[0] }}
+          @if (showInterestError(index) && interestErrors(index).length > 0) {
+          <div
+            class="form-error"
+            [attr.id]="'interest-error-' + index"
+            role="alert"
+          >
+            @for (error of interestErrors(index); track error) {
+            <div>{{ error }}</div>
+            }
           </div>
           }
         </div>
         <button
           type="button"
-          (click)="addInterest()"
-          class="btn-secondary whitespace-nowrap"
-          [disabled]="form.pending()"
+          (click)="removeInterest(index)"
+          class="btn-danger"
+          [attr.aria-label]="'Remove interest ' + (interest ? interest : index + 1)"
         >
-          <span aria-hidden="true">+</span>
-          <span>Add Interest</span>
+          ×
         </button>
-      </div>
-    </div>
-
-    <!-- Current Interests List -->
-    <div class="form-field">
-      <h3 class="form-label">Current interests</h3>
-      @if (form.interests().length > 0) {
-      <div class="space-y-3">
-        @for (interest of form.interests(); track $index) { @let index = $index;
-        <div
-          class="flex items-start gap-3 rounded-md border border-gray-200 bg-gray-50 p-3"
-        >
-          <div class="flex-1">
-            <input
-              type="text"
-              [value]="interest || ''"
-              (input)="updateInterest(index, $event)"
-              class="form-input"
-              [attr.aria-invalid]="showInterestError(index) && interestErrors(index).length > 0"
-              [attr.aria-describedby]="
-                    showInterestError(index) && interestErrors(index).length > 0
-                      ? 'interest-error-' + index
-                      : null
-                  "
-            />
-            @if (showInterestError(index) && interestErrors(index).length > 0) {
-            <div
-              class="form-error"
-              [attr.id]="'interest-error-' + index"
-              role="alert"
-            >
-              @for (error of interestErrors(index); track error) {
-              <div>{{ error }}</div>
-              }
-            </div>
-            }
-          </div>
-          <button
-            type="button"
-            (click)="removeInterest(index)"
-            class="btn-danger"
-            [attr.aria-label]="'Remove interest ' + (interest ? interest : index + 1)"
-          >
-            ×
-          </button>
-        </div>
-        }
-      </div>
-      } @else {
-      <div
-        class="rounded-md border-2 border-dashed border-gray-300 bg-gray-50 py-8 text-center"
-      >
-        <p class="text-gray-500">
-          No interests added yet. Add your first interest above!
-        </p>
       </div>
       }
     </div>
-
-    <!-- Form Actions -->
-    <div class="form-actions">
-      <button
-        type="submit"
-        class="btn-primary"
-        [disabled]="form.pending() || form.submitting()"
-      >
-        @if (form.submitting()) { Submitting... } @else { Submit Form }
-      </button>
-      <button type="button" (click)="resetForm()" class="btn-secondary">
-        Reset
-      </button>
+    } @else {
+    <div
+      class="rounded-md border-2 border-dashed border-gray-300 bg-gray-50 py-8 text-center"
+    >
+      <p class="text-gray-500">
+        No interests added yet. Add your first interest above!
+      </p>
     </div>
-  </form>
+    }
+  </div>
 
-  <!-- Debugger Column -->
-  <ngx-debugger [form]="debugForm" />
-</div>
+  <!-- Form Actions -->
+  <div class="form-actions">
+    <button
+      type="submit"
+      class="btn-primary"
+      [disabled]="form.pending() || form.submitting()"
+    >
+      @if (form.submitting()) { Submitting... } @else { Submit Form }
+    </button>
+    <button type="button" (click)="resetForm()" class="btn-secondary">
+      Reset
+    </button>
+  </div>
+</form>

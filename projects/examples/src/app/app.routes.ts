@@ -33,6 +33,22 @@ export const appRoutes: Routes = [
           ).then((m) => m.ErrorDisplayModesPageComponent),
         title: 'Error Display Modes - Interactive Demo',
       },
+      {
+        path: 'form-arrays',
+        loadComponent: () =>
+          import(
+            './01-fundamentals/example-form-array/example-form-array.page'
+          ).then((m) => m.FormArrayPage),
+        title: 'Form Arrays - Dynamic Collections',
+      },
+      {
+        path: 'nested-forms',
+        loadComponent: () =>
+          import(
+            './01-fundamentals/example-form-nested/example-form-nested.page'
+          ).then((m) => m.NestedFormPage),
+        title: 'Nested Forms - Multi-Section',
+      },
     ],
   },
 
