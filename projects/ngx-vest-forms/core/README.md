@@ -110,9 +110,23 @@ const form = createVestForm(
 ### Available Strategies
 
 - **`immediate`** - Show errors as user types (real-time feedback)
-- **`on-touch`** - Show errors after field loses focus (default, balanced UX)
+- **`on-touch`** - Show errors after field loses focus **or form is submitted** (default, balanced UX)
 - **`on-submit`** - Show errors only after form submission (minimal interruption)
 - **`manual`** - Developer controls error display entirely
+
+### Behavior Matrix
+
+Understanding when errors appear for each strategy:
+
+| Scenario                                          | immediate | on-touch | on-submit | manual |
+| ------------------------------------------------- | --------- | -------- | --------- | ------ |
+| Field has errors, not touched, form not submitted | ✅        | ❌       | ❌        | ❌     |
+| Field has errors, touched, form not submitted     | ✅        | ✅       | ❌        | ❌     |
+| Field has errors, **not touched**, form submitted | ✅        | ✅       | ✅        | ❌     |
+| Field has errors, touched, form submitted         | ✅        | ✅       | ✅        | ❌     |
+| Field is valid (no errors)                        | ❌        | ❌       | ❌        | ❌     |
+
+> **💡 Important**: The `on-touch` strategy (default) shows errors for **untouched fields** after form submission. This ensures all validation errors are visible when users click Submit, following accessibility best practices (submit buttons should NOT be disabled).
 
 ## Configuration Options
 

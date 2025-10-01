@@ -37,10 +37,20 @@ export function extractValueFromEventOrValue(valueOrEvent: any): any {
  * @returns Extracted value from the event target
  */
 export function extractValue(event: Event): any {
-  const target = event.target as
+  let target = event.target as
     | HTMLInputElement
     | HTMLSelectElement
-    | HTMLTextAreaElement;
+    | HTMLTextAreaElement
+    | null
+    | undefined;
+
+  // Fall back to currentTarget if target is null or undefined
+  if (!target && event.currentTarget) {
+    target = event.currentTarget as
+      | HTMLInputElement
+      | HTMLSelectElement
+      | HTMLTextAreaElement;
+  }
 
   if (!target) {
     return undefined;
@@ -64,7 +74,9 @@ export function extractValue(event: Event): any {
     case 'number':
     case 'range': {
       const numberValue = (target as HTMLInputElement).valueAsNumber;
-      return Number.isNaN(numberValue) ? target.value : numberValue;
+      return !Number.isNaN(numberValue) && numberValue !== undefined
+        ? numberValue
+        : target.value;
     }
 
     case 'select-multiple': {

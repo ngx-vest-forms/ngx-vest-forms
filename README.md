@@ -162,12 +162,26 @@ const form = createVestForm(suite, model, {
 });
 ```
 
-| Strategy    | Behavior                              | Use Case                                     |
-| ----------- | ------------------------------------- | -------------------------------------------- |
-| `immediate` | Show errors as user types             | Real-time feedback (e.g., password strength) |
-| `on-touch`  | Show errors after field loses focus   | **Default** - balanced UX                    |
-| `on-submit` | Show errors only after submit         | Minimal interruption                         |
-| `manual`    | Developer controls via `touchField()` | Complex custom flows                         |
+| Strategy    | Behavior                                                     | Use Case                                     |
+| ----------- | ------------------------------------------------------------ | -------------------------------------------- |
+| `immediate` | Show errors as user types                                    | Real-time feedback (e.g., password strength) |
+| `on-touch`  | Show errors after field loses focus **or form is submitted** | **Default** - balanced UX (WCAG recommended) |
+| `on-submit` | Show errors only after submit                                | Minimal interruption                         |
+| `manual`    | Developer controls via `touchField()`                        | Complex custom flows                         |
+
+#### Error Display Behavior Matrix
+
+Understanding when errors appear for each strategy:
+
+| Scenario                                          | immediate | on-touch | on-submit | manual |
+| ------------------------------------------------- | --------- | -------- | --------- | ------ |
+| Field has errors, not touched, form not submitted | ✅        | ❌       | ❌        | ❌     |
+| Field has errors, touched, form not submitted     | ✅        | ✅       | ❌        | ❌     |
+| Field has errors, **not touched**, form submitted | ✅        | ✅       | ✅        | ❌     |
+| Field has errors, touched, form submitted         | ✅        | ✅       | ✅        | ❌     |
+| Field is valid (no errors)                        | ❌        | ❌       | ❌        | ❌     |
+
+> **💡 Accessibility Note**: The `on-touch` strategy (default) shows errors for **untouched fields** after form submission. This ensures all validation errors are visible when users click Submit, following WCAG 2.2 accessibility guidelines. Submit buttons should **NOT** be disabled so users can discover what's wrong with the form.
 
 ## 📚 Complete Example
 
@@ -482,6 +496,53 @@ ngOnDestroy() {
   <p id="email-error" role="alert">{{ form.emailErrors()[0] }}</p>
 }
 ```
+
+### 5. Don't Disable Submit Buttons (Accessibility)
+
+```typescript
+// ❌ BAD - Disabling submit prevents error discovery
+<button type="submit" [disabled]="!form.valid()">Submit</button>
+
+// ✅ GOOD - Allow submit, let validation reveal errors
+<button type="submit" [disabled]="form.pending() || form.submitting()">
+  {{ form.submitting() ? 'Saving...' : 'Submit' }}
+</button>
+```
+
+**Why?** Per WCAG 2.2, users should be able to attempt form submission to discover what fields are invalid. Disabling the submit button based on validity hides this information. Only disable during async operations (pending validation or submission in progress).
+
+#### If You Must Disable the Submit Button
+
+Some developers prefer to disable the submit button until the form is valid. If you choose this approach, **you should use the `immediate` strategy** or manually trigger validation on mount to ensure errors are visible:
+
+```typescript
+// Option A: Use immediate strategy (shows errors while typing)
+const form = createVestForm(suite, model, {
+  errorStrategy: 'immediate', // Errors always visible
+});
+
+<button [disabled]="!form.valid()">Submit</button>
+
+// Option B: Touch all fields on mount with on-touch strategy
+@Component({...})
+export class MyFormComponent implements OnInit {
+  form = createVestForm(suite, model, { errorStrategy: 'on-touch' });
+
+  ngOnInit() {
+    // Touch all fields to trigger error display
+    Object.keys(this.form.model()).forEach(key => {
+      const touchMethod = `touch${key.charAt(0).toUpperCase()}${key.slice(1)}`;
+      if (typeof this.form[touchMethod] === 'function') {
+        this.form[touchMethod]();
+      }
+    });
+  }
+}
+
+<button [disabled]="!form.valid()">Submit</button>
+```
+
+**Warning**: With a disabled submit button and `on-touch` strategy, errors won't appear until users interact with fields. This creates a "mystery disabled button" UX problem where users don't know why they can't submit.
 
 ## 📖 API Reference
 

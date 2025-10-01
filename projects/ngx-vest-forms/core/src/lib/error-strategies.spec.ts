@@ -208,6 +208,65 @@ describe('Error Display Strategies', () => {
 
         expect(showErrors()).toBe(false);
       });
+
+      it('should show errors for untouched fields after form submission', () => {
+        // CRITICAL: This tests the accessibility requirement that submit buttons
+        // should NOT be disabled, and clicking submit should show ALL errors,
+        // even for fields the user never touched.
+        const suiteResult = signal<SuiteResult<string, string>>(
+          createMockSuiteResult({
+            fieldName: fieldPath,
+            hasErrors: true,
+            isTested: false, // Field was NEVER touched
+          }),
+        );
+
+        // Initially, errors should not show (field not touched, form not submitted)
+        const showErrors = computeShowErrors(
+          suiteResult,
+          fieldPath,
+          'on-touch',
+          submittedSignal,
+        );
+        expect(showErrors()).toBe(false);
+
+        // User clicks submit (which is NOT disabled for accessibility)
+        submittedSignal.set(true);
+
+        // Now errors MUST show, even though field was never touched
+        expect(showErrors()).toBe(true);
+      });
+
+      it('should continue showing errors after submission even if field is later touched', () => {
+        const suiteResult = signal<SuiteResult<string, string>>(
+          createMockSuiteResult({
+            fieldName: fieldPath,
+            hasErrors: true,
+            isTested: false,
+          }),
+        );
+
+        const showErrors = computeShowErrors(
+          suiteResult,
+          fieldPath,
+          'on-touch',
+          submittedSignal,
+        );
+
+        // Submit form (errors appear for untouched fields)
+        submittedSignal.set(true);
+        expect(showErrors()).toBe(true);
+
+        // User now touches the field - errors should still show
+        suiteResult.set(
+          createMockSuiteResult({
+            fieldName: fieldPath,
+            hasErrors: true,
+            isTested: true,
+          }),
+        );
+        expect(showErrors()).toBe(true);
+      });
     });
 
     describe('on-submit strategy', () => {
@@ -567,13 +626,15 @@ describe('Error Display Strategies', () => {
             manual: false,
           },
         },
-        // Case 3: Field has errors and is submitting
+        // Case 3: Field has errors and form is submitting (untouched field)
+        // IMPORTANT: on-touch should now show errors after submit, even if untouched
+        // This is critical for accessibility (submit buttons should NOT be disabled)
         {
           state: { hasErrors: true, isTested: false },
           submitting: true,
           expected: {
             immediate: true,
-            'on-touch': false,
+            'on-touch': true, // Changed: now shows errors after submit
             'on-submit': true,
             manual: false,
           },

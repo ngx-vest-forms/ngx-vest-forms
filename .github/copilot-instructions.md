@@ -58,6 +58,8 @@ Follow [`.github/instructions/ngx-vest-forms.instructions.md`](instructions/ngx-
 - [ ] Two-way binding with `[(formValue)]`
 - [ ] One-way binding with `[ngModel]` on controls
 - [ ] Fields wrapped in `<ngx-control-wrapper>`
+- [ ] Submit button is **NOT** disabled (accessibility requirement)
+- [ ] Error display mode selector included (for examples)
 
 ### Example Pattern
 

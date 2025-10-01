@@ -40,8 +40,9 @@ export function computeShowErrors(
       }
 
       case 'on-touch': {
-        // Show errors only after field has been tested (touched)
-        return touched && hasErrors;
+        // Show errors after field has been touched OR form has been submitted
+        // This ensures that clicking submit (even with untouched fields) shows all errors
+        return (touched || isSubmitted) && hasErrors;
       }
 
       case 'on-submit': {
@@ -56,7 +57,7 @@ export function computeShowErrors(
 
       default: {
         // Default to 'on-touch' behavior
-        return touched && hasErrors;
+        return (touched || isSubmitted) && hasErrors;
       }
     }
   });
@@ -113,10 +114,14 @@ export const ERROR_STRATEGIES = {
 
   'on-touch': {
     name: 'On Touch',
-    description: 'Show errors after field loses focus',
-    useCase: 'Standard forms, balanced UX (default)',
-    pros: ['Balanced feedback timing', 'Less intrusive'],
-    cons: ['Requires user interaction', 'Delayed feedback'],
+    description: 'Show errors after field loses focus or form is submitted',
+    useCase: 'Standard forms, balanced UX (default) - WCAG recommended',
+    pros: [
+      'Balanced feedback timing',
+      'Less intrusive during data entry',
+      'Shows all errors on submit (even untouched fields)',
+    ],
+    cons: ['Requires interaction or submit for initial display'],
   },
 
   'on-submit': {
@@ -190,7 +195,10 @@ function computeShowErrorsSync(
     }
 
     case 'on-touch': {
-      return parameters.isTested && parameters.hasErrors;
+      // Show errors after field has been touched OR form has been submitted
+      return (
+        (parameters.isTested || parameters.isSubmitted) && parameters.hasErrors
+      );
     }
 
     case 'on-submit': {
@@ -202,7 +210,9 @@ function computeShowErrorsSync(
     }
 
     default: {
-      return parameters.isTested && parameters.hasErrors;
+      return (
+        (parameters.isTested || parameters.isSubmitted) && parameters.hasErrors
+      );
     }
   }
 }

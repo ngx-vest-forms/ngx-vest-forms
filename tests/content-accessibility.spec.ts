@@ -67,7 +67,9 @@ test.describe('Content Accessibility - Educational Sections', () => {
         const cards = page.locator('ngx-example-cards').first();
         await expect(cards).toBeVisible();
 
-        const featureItems = cards.locator('li');
+        // Only get list items that are feature descriptions (contain bullet points)
+        // Exclude validation error lists from the debugger
+        const featureItems = cards.locator('li').filter({ hasText: '•' });
         const itemCount = await featureItems.count();
         expect(itemCount).toBeGreaterThan(0);
 

@@ -430,26 +430,32 @@ describe('Path Utilities', () => {
       expect(() => hasPath(circular, 'name')).not.toThrow();
     });
 
-    it('should throw on non-object roots', () => {
-      expect(() =>
+    it('should handle non-object roots gracefully', () => {
+      // The implementation gracefully handles non-object roots for Angular change detection
+      // during reset/transition states instead of throwing errors
+      expect(
         getValueByPath(
           'not-an-object' as unknown as Record<string, unknown>,
           'a',
         ),
-      ).toThrow(PathAccessError);
-      expect(() =>
+      ).toBeUndefined();
+
+      // setValueByPath returns the original value when root is not an object
+      expect(
         setValueByPath(
           'not-an-object' as unknown as Record<string, unknown>,
           'a',
           1,
         ),
-      ).toThrow(PathAccessError);
-      expect(() =>
+      ).toBe('not-an-object');
+
+      // deleteValueByPath returns the original value when root is not an object
+      expect(
         deleteValueByPath(
           'not-an-object' as unknown as Record<string, unknown>,
           'a' as unknown as Path<Record<string, unknown>>,
         ),
-      ).toThrow(PathAccessError);
+      ).toBe('not-an-object');
     });
 
     it('should handle very deep nesting', () => {

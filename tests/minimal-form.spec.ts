@@ -27,7 +27,9 @@ test.describe('Minimal Form - V2 Implementation', () => {
     await test.step('Verify debugger is present', async () => {
       await expect(page.getByText('Form State & Validation')).toBeVisible();
       await expect(page.getByText('Form Model')).toBeVisible();
-      await expect(page.getByText('Validation Errors')).toBeVisible();
+      // The debugger uses <details>/<summary> for collapsible sections
+      // Use first() to get the summary element, not the "No validation errors" message
+      await expect(page.getByText('Validation Errors').first()).toBeVisible();
     });
   });
 
@@ -71,7 +73,7 @@ test.describe('Minimal Form - V2 Implementation', () => {
       // Check that the form model section exists and shows JSON
       const modelSection = page.locator('details:has-text("Form Model")');
       await expect(modelSection).toBeVisible();
-      
+
       const jsonDisplay = page.locator('pre code').first();
       await expect(jsonDisplay).toBeVisible();
       await expect(jsonDisplay).toContainText('"email"');
@@ -79,10 +81,10 @@ test.describe('Minimal Form - V2 Implementation', () => {
 
     await test.step('Check validation state updates', async () => {
       const emailField = page.getByRole('textbox', { name: /Email Address/i });
-      
+
       // Enter some text and verify it appears in the debugger
       await emailField.fill('user@example.com');
-      
+
       // Verify the value appears somewhere in the debugger
       const jsonDisplay = page.locator('pre code').first();
       // Note: Due to V2 implementation, the exact structure may vary

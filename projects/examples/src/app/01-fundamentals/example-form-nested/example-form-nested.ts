@@ -32,6 +32,9 @@ export class ExampleFormNested {
         notifications: false,
       },
     }),
+    {
+      errorStrategy: 'immediate', // Show all validation errors immediately for demo purposes
+    },
   );
 
   readonly debugForm = asDebuggerForm(this.form);

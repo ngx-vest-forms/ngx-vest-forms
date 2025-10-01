@@ -23,6 +23,7 @@ import {
           type="text"
           [value]="form.name()"
           (input)="form.setName($event)"
+          (blur)="form.touchName()"
           placeholder="Enter your full name"
         />
         @if (form.nameShowErrors() && form.nameErrors().length) {
@@ -41,6 +42,7 @@ import {
           type="email"
           [value]="form.email()"
           (input)="form.setEmail($event)"
+          (blur)="form.touchEmail()"
           placeholder="you@example.com"
         />
         @if (form.emailShowErrors() && form.emailErrors().length) {
@@ -59,6 +61,7 @@ import {
           type="number"
           [value]="form.age()"
           (input)="form.setAge($event)"
+          (blur)="form.touchAge()"
           min="18"
           max="120"
         />
@@ -77,6 +80,7 @@ import {
           class="form-input"
           [value]="form.role()"
           (change)="form.setRole($event)"
+          (blur)="form.touchRole()"
         >
           <option value="">Select a role...</option>
           <option value="Junior Developer">Junior Developer</option>
@@ -101,6 +105,7 @@ import {
             rows="4"
             [value]="form.bio() || ''"
             (input)="form.setBio($event)"
+            (blur)="form.touchBio()"
             placeholder="Tell us about your experience..."
           ></textarea>
           @if (form.bioShowErrors() && form.bioErrors().length) {
@@ -119,7 +124,7 @@ import {
             class="form-checkbox"
             type="checkbox"
             [checked]="form.agreeToTerms()"
-            (change)="form.setAgreeToTerms($event)"
+            (blur)="form.touchAgreeToTerms()"
           />
           <label class="form-checkbox-label" for="agreeToTerms">
             I agree to the terms and conditions *
