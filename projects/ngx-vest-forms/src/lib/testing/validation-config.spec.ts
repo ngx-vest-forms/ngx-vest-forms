@@ -621,18 +621,28 @@ describe('FormDirective - Comprehensive', () => {
             [validationConfig]="validationConfig"
             (formValueChange)="formValue.set($event)"
           >
-            <input type="password" name="password" [ngModel]="formValue().password" />
-            <input type="password" name="confirmPassword" [ngModel]="formValue().confirmPassword" />
+            <input
+              type="password"
+              name="password"
+              [ngModel]="formValue().password"
+            />
+            <input
+              type="password"
+              name="confirmPassword"
+              [ngModel]="formValue().confirmPassword"
+            />
           </form>
         `,
         imports: [vestForms, FormsModule],
       })
       class LifecycleTestComponent {
-        formValue = signal<DeepPartial<{ password?: string; confirmPassword?: string }>>({});
-        
+        formValue = signal<
+          DeepPartial<{ password?: string; confirmPassword?: string }>
+        >({});
+
         // This is a component instance property - should work without workarounds
         validationConfig = {
-          password: ['confirmPassword']
+          password: ['confirmPassword'],
         };
 
         suite = staticSuite((model: any, field?: string) => {
@@ -650,9 +660,13 @@ describe('FormDirective - Comprehensive', () => {
       await fixture.whenStable();
 
       // Set password field
-      const passwordInput = fixture.nativeElement.querySelector('input[name="password"]') as HTMLInputElement;
-      const confirmPasswordInput = fixture.nativeElement.querySelector('input[name="confirmPassword"]') as HTMLInputElement;
-      
+      const passwordInput = fixture.nativeElement.querySelector(
+        'input[name="password"]'
+      ) as HTMLInputElement;
+      const confirmPasswordInput = fixture.nativeElement.querySelector(
+        'input[name="confirmPassword"]'
+      ) as HTMLInputElement;
+
       // Type in password field
       passwordInput.value = 'password123';
       passwordInput.dispatchEvent(new Event('input'));
@@ -660,7 +674,7 @@ describe('FormDirective - Comprehensive', () => {
       await fixture.whenStable();
 
       // Wait for debounce
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -678,14 +692,18 @@ describe('FormDirective - Comprehensive', () => {
       await fixture.whenStable();
 
       // Wait for debounce
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
       fixture.detectChanges();
       await fixture.whenStable();
 
       // The confirmPassword field should have been revalidated
       // This tests that validationConfig was properly set up despite being an instance property
-      expect(fixture.componentInstance.formValue().password).toBe('newpassword');
-      expect(fixture.componentInstance.formValue().confirmPassword).toBe('different');
+      expect(fixture.componentInstance.formValue().password).toBe(
+        'newpassword'
+      );
+      expect(fixture.componentInstance.formValue().confirmPassword).toBe(
+        'different'
+      );
     });
 
     // Test for duplicate subscriptions issue
@@ -708,9 +726,11 @@ describe('FormDirective - Comprehensive', () => {
         imports: [vestForms, FormsModule],
       })
       class DuplicateSubscriptionTestComponent {
-        formValue = signal<DeepPartial<{ field1?: string; field2?: string }>>({});
+        formValue = signal<DeepPartial<{ field1?: string; field2?: string }>>(
+          {}
+        );
         validationConfig = { field1: ['field2'] };
-        
+
         suite = staticSuite((model: any, field?: string) => {
           if (field === 'field2') {
             validationCount++;
@@ -724,21 +744,25 @@ describe('FormDirective - Comprehensive', () => {
         });
       }
 
-      const fixture = TestBed.createComponent(DuplicateSubscriptionTestComponent);
+      const fixture = TestBed.createComponent(
+        DuplicateSubscriptionTestComponent
+      );
       fixture.detectChanges();
       await fixture.whenStable();
 
       validationCount = 0;
 
       // Change field1 value - should trigger field2 validation ONCE
-      const field1Input = fixture.nativeElement.querySelector('input[name="field1"]') as HTMLInputElement;
+      const field1Input = fixture.nativeElement.querySelector(
+        'input[name="field1"]'
+      ) as HTMLInputElement;
       field1Input.value = 'test';
       field1Input.dispatchEvent(new Event('input'));
       fixture.detectChanges();
       await fixture.whenStable();
 
       // Wait for debounce
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
       fixture.detectChanges();
       await fixture.whenStable();
 
