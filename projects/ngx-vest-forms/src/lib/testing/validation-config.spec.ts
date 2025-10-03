@@ -611,7 +611,7 @@ describe('FormDirective - Comprehensive', () => {
     });
 
     // Test for lifecycle timing issue with component instance properties
-    it('should handle validationConfig as component instance property (Issue #XX)', async () => {
+    it('should handle validationConfig as component instance property (Issue #56)', async () => {
       @Component({
         template: `
           <form
@@ -704,6 +704,24 @@ describe('FormDirective - Comprehensive', () => {
       expect(fixture.componentInstance.formValue().confirmPassword).toBe(
         'different'
       );
+
+      // Verify the actual validation state - confirmPassword should be invalid
+      // because it doesn't match the new password
+      const formElement = fixture.nativeElement.querySelector('form');
+      const confirmPasswordControl = formElement.querySelector(
+        'input[name="confirmPassword"]'
+      ) as HTMLInputElement;
+
+      // The control should be marked as invalid and touched
+      expect(confirmPasswordControl.classList.contains('ng-invalid')).toBe(
+        true
+      );
+      expect(confirmPasswordControl.classList.contains('ng-touched')).toBe(
+        true
+      );
+
+      // Form should be invalid overall
+      expect(formElement.classList.contains('ng-invalid')).toBe(true);
     });
 
     // Test for duplicate subscriptions issue
@@ -769,6 +787,20 @@ describe('FormDirective - Comprehensive', () => {
       // Should have triggered validation only once (not multiple times)
       // This tests that we don't have duplicate subscriptions
       expect(validationCount).toBe(1);
+
+      // Verify the actual form control state
+      const field2Control = fixture.componentInstance.formValue().field2;
+      expect(field2Control).toBeUndefined(); // field2 was never touched by user
+
+      // Verify that field2 input WAS validated (triggered by field1 change via validationConfig)
+      // This proves the validationConfig is working correctly
+      const field2Input = fixture.nativeElement.querySelector(
+        'input[name="field2"]'
+      ) as HTMLInputElement;
+      // Field2 is invalid because it's required and empty (validated due to validationConfig)
+      expect(field2Input.classList.contains('ng-invalid')).toBe(true);
+      // Field2 is still untouched (user never interacted with it directly)
+      expect(field2Input.classList.contains('ng-untouched')).toBe(true);
     });
   });
 });

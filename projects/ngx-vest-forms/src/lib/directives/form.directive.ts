@@ -2,7 +2,6 @@ import {
   Directive,
   inject,
   input,
-  AfterViewInit,
   effect,
   DestroyRef,
   isDevMode,
@@ -28,6 +27,7 @@ import {
   of,
   ReplaySubject,
   startWith,
+  Subscription,
   switchMap,
   take,
   tap,
@@ -51,9 +51,7 @@ import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
   selector: 'form[scVestForm]',
   exportAs: 'scVestForm',
 })
-export class FormDirective<T extends Record<string, any>>
-  implements AfterViewInit
-{
+export class FormDirective<T extends Record<string, any>> {
   /**
    * Returns the current form state: validity and errors.
    * Used by templates and tests as vestForm.formState().valid/errors
@@ -208,11 +206,26 @@ export class FormDirective<T extends Record<string, any>>
   private readonly validationInProgress = new Set<string>();
 
   /**
-   * Tracks active subscriptions for each field in validationConfig.
-   * This allows us to clean up old subscriptions when the config changes
-   * to prevent memory leaks and duplicate validation triggers.
+   * Tracks active subscriptions for validationConfig dependencies.
+   *
+   * **Why both manual Map tracking AND takeUntilDestroyed?**
+   * - `takeUntilDestroyed(destroyRef)`: Automatically cleans up when the directive is destroyed
+   * - This Map: Manually cleans up when `validationConfig` signal changes (directive still alive)
+   *
+   * **Example scenario:**
+   * 1. Initial config: `{ password: ['confirmPassword'] }` → creates subscription for 'password'
+   * 2. Config changes to: `{ email: ['confirmEmail'] }` → directive still alive!
+   * 3. Without this Map: old 'password' subscription still active → memory leak + duplicate validation
+   * 4. With this Map: old subscription cleaned up, new subscription created
+   *
+   * The two cleanup mechanisms handle different lifecycle events:
+   * - Component destruction → handled by takeUntilDestroyed
+   * - Config changes → handled by this Map
    */
-  private readonly validationConfigSubscriptions = new Map<string, any>();
+  private readonly validationConfigSubscriptions = new Map<
+    string,
+    Subscription
+  >();
 
   public constructor() {
     /**
@@ -243,21 +256,6 @@ export class FormDirective<T extends Record<string, any>>
     effect(() => {
       this.setupValidationConfig();
     });
-  }
-
-  /**
-   * Handles the initial setup of validation configuration after view initialization.
-   * This ensures that form controls are fully created and available before
-   * attempting to establish validation dependencies. The effect() in the constructor
-   * handles subsequent reactive updates when input signals change.
-   *
-   * NOTE: This is no longer needed as the effect() in the constructor handles both
-   * initial and subsequent changes reactively. However, we keep this method for
-   * backward compatibility in case it's being called by user code.
-   */
-  public ngAfterViewInit(): void {
-    // No longer needed - effect() in constructor handles this reactively
-    // Keeping empty method for backward compatibility
   }
 
   /**
