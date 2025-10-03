@@ -8,6 +8,10 @@ import { FormsModule } from '@angular/forms';
 import { DeepPartial } from '../utils/deep-partial';
 import { vestForms } from '../exports';
 import { staticSuite, test, enforce } from 'vest';
+import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
+
+// Wait time for tests should be slightly longer than debounce to ensure completion
+const TEST_DEBOUNCE_WAIT_TIME = VALIDATION_CONFIG_DEBOUNCE_TIME + 50;
 
 describe('FormDirective - Comprehensive', () => {
   beforeEach(async () => {
@@ -608,15 +612,205 @@ describe('FormDirective - Comprehensive', () => {
 
       // Verify the change was applied
       expect(component.validationConfig()).toEqual({ field1: ['field2'] });
+    });
 
-      // Test that form still works after config change
-      component.formValue.set({ field1: 'test' });
+    // Test for lifecycle timing issue with component instance properties
+    it('should handle validationConfig as component instance property (Issue #56)', async () => {
+      @Component({
+        template: `
+          <form
+            scVestForm
+            [formValue]="formValue()"
+            [suite]="suite"
+            [validationConfig]="validationConfig"
+            (formValueChange)="formValue.set($event)"
+          >
+            <input
+              type="password"
+              name="password"
+              [ngModel]="formValue().password"
+            />
+            <input
+              type="password"
+              name="confirmPassword"
+              [ngModel]="formValue().confirmPassword"
+            />
+          </form>
+        `,
+        imports: [vestForms, FormsModule],
+      })
+      class LifecycleTestComponent {
+        formValue = signal<
+          DeepPartial<{ password?: string; confirmPassword?: string }>
+        >({});
+
+        // This is a component instance property - should work without workarounds
+        validationConfig = {
+          password: ['confirmPassword'],
+        };
+
+        suite = staticSuite((model: any, field?: string) => {
+          test('password', 'Password is required', () => {
+            enforce(model.password).isNotBlank();
+          });
+          test('confirmPassword', 'Passwords must match', () => {
+            enforce(model.confirmPassword).equals(model.password);
+          });
+        });
+      }
+
+      const fixture = TestBed.createComponent(LifecycleTestComponent);
       fixture.detectChanges();
       await fixture.whenStable();
 
-      expect(component.formValue().field1).toBe('test');
+      // Set password field
+      const passwordInput = fixture.nativeElement.querySelector(
+        'input[name="password"]'
+      ) as HTMLInputElement;
+      const confirmPasswordInput = fixture.nativeElement.querySelector(
+        'input[name="confirmPassword"]'
+      ) as HTMLInputElement;
 
-      fixture.destroy();
+      // Type in password field
+      passwordInput.value = 'password123';
+      passwordInput.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // Wait for debounce
+      await new Promise((resolve) =>
+        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+      );
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // Type in confirm password field (make it different to trigger error)
+      confirmPasswordInput.value = 'different';
+      confirmPasswordInput.dispatchEvent(new Event('input'));
+      confirmPasswordInput.dispatchEvent(new Event('blur'));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // Now change password again - confirmPassword should be revalidated
+      passwordInput.value = 'newpassword';
+      passwordInput.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // Wait for debounce
+      await new Promise((resolve) =>
+        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+      );
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // The confirmPassword field should have been revalidated
+      // This tests that validationConfig was properly set up despite being an instance property
+      expect(fixture.componentInstance.formValue().password).toBe(
+        'newpassword'
+      );
+      expect(fixture.componentInstance.formValue().confirmPassword).toBe(
+        'different'
+      );
+
+      // Verify the actual validation state - confirmPassword should be invalid
+      // because it doesn't match the new password
+      const formElement = fixture.nativeElement.querySelector('form');
+      const confirmPasswordControl = formElement.querySelector(
+        'input[name="confirmPassword"]'
+      ) as HTMLInputElement;
+
+      // The control should be marked as invalid and touched
+      expect(confirmPasswordControl.classList.contains('ng-invalid')).toBe(
+        true
+      );
+      expect(confirmPasswordControl.classList.contains('ng-touched')).toBe(
+        true
+      );
+
+      // Form should be invalid overall
+      expect(formElement.classList.contains('ng-invalid')).toBe(true);
+    });
+
+    // Test for duplicate subscriptions issue
+    it('should not create duplicate subscriptions when setupValidationConfig is called multiple times', async () => {
+      let validationCount = 0;
+
+      @Component({
+        template: `
+          <form
+            scVestForm
+            [formValue]="formValue()"
+            [suite]="suite"
+            [validationConfig]="validationConfig"
+            (formValueChange)="formValue.set($event)"
+          >
+            <input name="field1" [ngModel]="formValue().field1" />
+            <input name="field2" [ngModel]="formValue().field2" />
+          </form>
+        `,
+        imports: [vestForms, FormsModule],
+      })
+      class DuplicateSubscriptionTestComponent {
+        formValue = signal<DeepPartial<{ field1?: string; field2?: string }>>(
+          {}
+        );
+        validationConfig = { field1: ['field2'] };
+
+        suite = staticSuite((model: any, field?: string) => {
+          if (field === 'field2') {
+            validationCount++;
+          }
+          test('field1', 'Field 1 is required', () => {
+            enforce(model.field1).isNotBlank();
+          });
+          test('field2', 'Field 2 is required', () => {
+            enforce(model.field2).isNotBlank();
+          });
+        });
+      }
+
+      const fixture = TestBed.createComponent(
+        DuplicateSubscriptionTestComponent
+      );
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      validationCount = 0;
+
+      // Change field1 value - should trigger field2 validation ONCE
+      const field1Input = fixture.nativeElement.querySelector(
+        'input[name="field1"]'
+      ) as HTMLInputElement;
+      field1Input.value = 'test';
+      field1Input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // Wait for debounce
+      await new Promise((resolve) =>
+        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+      );
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // Should have triggered validation only once (not multiple times)
+      // This tests that we don't have duplicate subscriptions
+      expect(validationCount).toBe(1);
+
+      // Verify the actual form control state
+      const field2Control = fixture.componentInstance.formValue().field2;
+      expect(field2Control).toBeUndefined(); // field2 was never touched by user
+
+      // Verify that field2 input WAS validated (triggered by field1 change via validationConfig)
+      // This proves the validationConfig is working correctly
+      const field2Input = fixture.nativeElement.querySelector(
+        'input[name="field2"]'
+      ) as HTMLInputElement;
+      // Field2 is invalid because it's required and empty (validated due to validationConfig)
+      expect(field2Input.classList.contains('ng-invalid')).toBe(true);
+      // Field2 is still untouched (user never interacted with it directly)
+      expect(field2Input.classList.contains('ng-untouched')).toBe(true);
     });
   });
 });

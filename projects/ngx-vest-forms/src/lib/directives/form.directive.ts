@@ -2,7 +2,6 @@ import {
   Directive,
   inject,
   input,
-  AfterViewInit,
   effect,
   DestroyRef,
   isDevMode,
@@ -28,6 +27,7 @@ import {
   of,
   ReplaySubject,
   startWith,
+  Subscription,
   switchMap,
   take,
   tap,
@@ -51,9 +51,7 @@ import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
   selector: 'form[scVestForm]',
   exportAs: 'scVestForm',
 })
-export class FormDirective<T extends Record<string, any>>
-  implements AfterViewInit
-{
+export class FormDirective<T extends Record<string, any>> {
   /**
    * Returns the current form state: validity and errors.
    * Used by templates and tests as vestForm.formState().valid/errors
@@ -231,21 +229,82 @@ export class FormDirective<T extends Record<string, any>>
       });
 
     /**
-     * Set up validation config reactively using effects
+     * Set up validation config reactively using effects.
+     * The effect's cleanup function automatically unsubscribes from all
+     * subscriptions when the config changes or the component is destroyed.
      */
-    effect(() => {
-      this.setupValidationConfig();
-    });
-  }
+    effect((onCleanup) => {
+      const config = this.validationConfig();
+      if (!config) {
+        return;
+      }
 
-  /**
-   * Handles the initial setup of validation configuration after view initialization.
-   * This ensures that form controls are fully created and available before
-   * attempting to establish validation dependencies. The effect() in the constructor
-   * handles subsequent reactive updates when input signals change.
-   */
-  public ngAfterViewInit(): void {
-    this.setupValidationConfig();
+      const subscriptions: Subscription[] = [];
+
+      // For each field in the config, set up subscription
+      Object.keys(config).forEach((triggerField) => {
+        const dependentFields = config[triggerField];
+        if (!dependentFields || dependentFields.length === 0) {
+          return;
+        }
+
+        const triggerControl = this.ngForm?.form.get(triggerField);
+        if (!triggerControl) {
+          // Control doesn't exist yet, will be handled when the effect runs again
+          return;
+        }
+
+        // Subscribe to changes in the trigger field
+        const subscription = triggerControl.valueChanges
+          .pipe(
+            // Prevent infinite loops - check and set flag immediately
+            filter(() => {
+              if (this.validationInProgress.has(triggerField)) {
+                return false;
+              }
+              this.validationInProgress.add(triggerField);
+              return true;
+            }),
+            // Debounce to prevent excessive validation calls when trigger fields change rapidly
+            debounceTime(VALIDATION_CONFIG_DEBOUNCE_TIME),
+            // Use switchMap to flatten the async operation and avoid nested subscriptions
+            switchMap(() => {
+              // Use the idle$ stream to wait for form stabilization
+              return this.idle$.pipe(
+                take(1), // Take the first idle event
+                tap(() => {
+                  dependentFields.forEach((dependentField) => {
+                    const dependentControl =
+                      this.ngForm?.form.get(dependentField);
+                    if (
+                      dependentControl &&
+                      !this.validationInProgress.has(dependentField)
+                    ) {
+                      dependentControl.updateValueAndValidity({
+                        onlySelf: true,
+                        emitEvent: false, // Don't emit to prevent extra change events
+                      });
+                    }
+                  });
+                })
+              );
+            }),
+            // Ensure flag is cleared in all scenarios (success, error, unsubscribe)
+            finalize(() => {
+              this.validationInProgress.delete(triggerField);
+            }),
+            takeUntilDestroyed(this.destroyRef)
+          )
+          .subscribe();
+
+        subscriptions.push(subscription);
+      });
+
+      // Cleanup function: unsubscribe all subscriptions when config changes or component destroys
+      onCleanup(() => {
+        subscriptions.forEach((sub) => sub?.unsubscribe());
+      });
+    });
   }
 
   /**
@@ -288,70 +347,6 @@ export class FormDirective<T extends Record<string, any>>
   public triggerFormValidation(): void {
     // Update all form controls validity which will trigger all form events
     this.ngForm.form.updateValueAndValidity({ emitEvent: true });
-  }
-
-  private setupValidationConfig(): void {
-    const config = this.validationConfig();
-    if (!config) {
-      return;
-    }
-
-    // For each field in the config, set up a subscription to its changes
-    Object.keys(config).forEach((triggerField) => {
-      const dependentFields = config[triggerField];
-      if (!dependentFields || dependentFields.length === 0) {
-        return;
-      }
-
-      const triggerControl = this.ngForm?.form.get(triggerField);
-      if (!triggerControl) {
-        // Control doesn't exist yet, will be handled when the effect runs again
-        return;
-      }
-
-      // Subscribe to changes in the trigger field
-      triggerControl.valueChanges
-        .pipe(
-          // Prevent infinite loops - check and set flag immediately
-          filter(() => {
-            if (this.validationInProgress.has(triggerField)) {
-              return false;
-            }
-            this.validationInProgress.add(triggerField);
-            return true;
-          }),
-          // Debounce to prevent excessive validation calls when trigger fields change rapidly
-          debounceTime(VALIDATION_CONFIG_DEBOUNCE_TIME),
-          // Use switchMap to flatten the async operation and avoid nested subscriptions
-          switchMap(() => {
-            // Use the idle$ stream to wait for form stabilization
-            return this.idle$.pipe(
-              take(1), // Take the first idle event
-              tap(() => {
-                dependentFields.forEach((dependentField) => {
-                  const dependentControl =
-                    this.ngForm?.form.get(dependentField);
-                  if (
-                    dependentControl &&
-                    !this.validationInProgress.has(dependentField)
-                  ) {
-                    dependentControl.updateValueAndValidity({
-                      onlySelf: true,
-                      emitEvent: false, // Don't emit to prevent extra change events
-                    });
-                  }
-                });
-              })
-            );
-          }),
-          // Ensure flag is cleared in all scenarios (success, error, unsubscribe)
-          finalize(() => {
-            this.validationInProgress.delete(triggerField);
-          }),
-          takeUntilDestroyed(this.destroyRef)
-        )
-        .subscribe();
-    });
   }
 
   /**
