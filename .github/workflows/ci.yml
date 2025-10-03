@@ -27,6 +27,8 @@ jobs:
           cache: 'npm'
       - name: Install
         run: npm ci
+      - name: Rebuild native dependencies
+        run: npm rebuild @swc/core
       - name: Playwright install
         run: npx playwright install
       - name: Test
