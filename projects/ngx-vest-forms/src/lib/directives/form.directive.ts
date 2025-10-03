@@ -207,6 +207,13 @@ export class FormDirective<T extends Record<string, any>>
 
   private readonly validationInProgress = new Set<string>();
 
+  /**
+   * Tracks active subscriptions for each field in validationConfig.
+   * This allows us to clean up old subscriptions when the config changes
+   * to prevent memory leaks and duplicate validation triggers.
+   */
+  private readonly validationConfigSubscriptions = new Map<string, any>();
+
   public constructor() {
     /**
      * Trigger shape validations if the form gets updated
@@ -243,9 +250,14 @@ export class FormDirective<T extends Record<string, any>>
    * This ensures that form controls are fully created and available before
    * attempting to establish validation dependencies. The effect() in the constructor
    * handles subsequent reactive updates when input signals change.
+   *
+   * NOTE: This is no longer needed as the effect() in the constructor handles both
+   * initial and subsequent changes reactively. However, we keep this method for
+   * backward compatibility in case it's being called by user code.
    */
   public ngAfterViewInit(): void {
-    this.setupValidationConfig();
+    // No longer needed - effect() in constructor handles this reactively
+    // Keeping empty method for backward compatibility
   }
 
   /**
@@ -293,10 +305,24 @@ export class FormDirective<T extends Record<string, any>>
   private setupValidationConfig(): void {
     const config = this.validationConfig();
     if (!config) {
+      // Clean up all existing subscriptions if config is cleared
+      this.validationConfigSubscriptions.forEach((sub) => sub?.unsubscribe());
+      this.validationConfigSubscriptions.clear();
       return;
     }
 
-    // For each field in the config, set up a subscription to its changes
+    // Track which fields are in the new config
+    const activeFields = new Set<string>(Object.keys(config));
+
+    // Clean up subscriptions for fields that are no longer in the config
+    this.validationConfigSubscriptions.forEach((sub, field) => {
+      if (!activeFields.has(field)) {
+        sub?.unsubscribe();
+        this.validationConfigSubscriptions.delete(field);
+      }
+    });
+
+    // For each field in the config, set up or update subscription
     Object.keys(config).forEach((triggerField) => {
       const dependentFields = config[triggerField];
       if (!dependentFields || dependentFields.length === 0) {
@@ -309,8 +335,14 @@ export class FormDirective<T extends Record<string, any>>
         return;
       }
 
+      // Clean up existing subscription for this field if it exists
+      const existingSub = this.validationConfigSubscriptions.get(triggerField);
+      if (existingSub) {
+        existingSub.unsubscribe();
+      }
+
       // Subscribe to changes in the trigger field
-      triggerControl.valueChanges
+      const subscription = triggerControl.valueChanges
         .pipe(
           // Prevent infinite loops - check and set flag immediately
           filter(() => {
@@ -351,6 +383,9 @@ export class FormDirective<T extends Record<string, any>>
           takeUntilDestroyed(this.destroyRef)
         )
         .subscribe();
+
+      // Store the subscription so we can clean it up later
+      this.validationConfigSubscriptions.set(triggerField, subscription);
     });
   }
 
