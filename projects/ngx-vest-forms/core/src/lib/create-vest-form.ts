@@ -3,13 +3,22 @@
  * Creates a Vest-first form instance with reactive Angular signals
  */
 
-import { computed, signal, WritableSignal } from '@angular/core';
+import {
+  computed,
+  EnvironmentProviders,
+  inject,
+  makeEnvironmentProviders,
+  signal,
+  WritableSignal,
+} from '@angular/core';
 import type { SuiteResult } from 'vest';
 
 import { createEnhancedProxy } from './enhanced-proxy';
 import { computeShowErrors } from './error-strategies';
 import { createEnhancedVestFormArray } from './form-arrays';
+import { NGX_VEST_FORM, NGX_VEST_FORMS_CONFIG } from './tokens';
 import { getValueByPath, setValueByPath } from './utils/path-utils';
+import { isSignal } from './utils/type-helpers';
 import { createFieldSetter } from './utils/value-extraction';
 import type {
   EnhancedVestForm,
@@ -34,6 +43,23 @@ export function createVestForm<TModel extends Record<string, unknown>>(
   initialModel: TModel | WritableSignal<TModel>,
   options: VestFormOptions = {},
 ): EnhancedVestForm<TModel> {
+  // Try to inject global config (optional - only available in injection context)
+  let globalConfig;
+  try {
+    globalConfig = inject(NGX_VEST_FORMS_CONFIG, { optional: true });
+  } catch {
+    // Not in injection context - that's fine
+    globalConfig = null;
+  }
+
+  const resolvedErrorStrategy =
+    options.errorStrategy ?? globalConfig?.defaultErrorStrategy;
+
+  const mergedOptions: VestFormOptions = {
+    ...options,
+    errorStrategy: resolvedErrorStrategy,
+  };
+
   // Normalize the model to a writable signal
   const model =
     typeof initialModel === 'function' && 'set' in initialModel
@@ -100,11 +126,18 @@ export function createVestForm<TModel extends Record<string, unknown>>(
 
   // Options with defaults
   // Preserve errorStrategy signal reference for reactivity
-  const errorStrategy =
-    options.errorStrategy || signal<ErrorDisplayStrategy>('on-touch');
-  const enhancedFieldSignalsEnabled = options.enhancedFieldSignals !== false;
-  const includeFields = options.includeFields;
-  const excludeFields = options.excludeFields || [];
+  let errorStrategy: ErrorDisplayStrategy | Signal<ErrorDisplayStrategy>;
+  if (isSignal(mergedOptions.errorStrategy)) {
+    errorStrategy = mergedOptions.errorStrategy;
+  } else if (mergedOptions.errorStrategy) {
+    errorStrategy = mergedOptions.errorStrategy;
+  } else {
+    errorStrategy = signal<ErrorDisplayStrategy>('on-touch');
+  }
+  const enhancedFieldSignalsEnabled =
+    mergedOptions.enhancedFieldSignals !== false;
+  const includeFields = mergedOptions.includeFields;
+  const excludeFields = mergedOptions.excludeFields || [];
 
   // Field cache for performance
   const fieldCache = new Map<string, VestField<unknown>>();
@@ -309,6 +342,13 @@ export function createVestForm<TModel extends Record<string, unknown>>(
   /**
    * Form-level operations
    */
+  const formProviders: EnvironmentProviders = makeEnvironmentProviders([
+    {
+      provide: NGX_VEST_FORM,
+      useFactory: () => vestForm,
+    },
+  ]);
+
   const vestForm: VestForm<TModel> = {
     model,
     result: suiteResult,
@@ -318,6 +358,7 @@ export function createVestForm<TModel extends Record<string, unknown>>(
     visibleErrors,
     submitting,
     hasSubmitted,
+    errorStrategy,
 
     field: <P extends Path<TModel>>(
       path: P,
@@ -391,6 +432,8 @@ export function createVestForm<TModel extends Record<string, unknown>>(
       touched.set(new Set());
       lastAsyncRunToken = null;
     },
+
+    providers: formProviders,
   };
 
   // Enhanced Field Signals API using Proxy

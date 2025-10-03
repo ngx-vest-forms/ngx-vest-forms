@@ -3,7 +3,11 @@
  * Framework-agnostic validation types built on Vest.js
  */
 
-import type { Signal, WritableSignal } from '@angular/core';
+import type {
+  EnvironmentProviders,
+  Signal,
+  WritableSignal,
+} from '@angular/core';
 import type { PathValue, Paths as TsEssentialsPath } from 'ts-essentials';
 import type { SuiteResult } from 'vest';
 import type { EnhancedVestFormArray } from './form-arrays';
@@ -233,6 +237,16 @@ export type VestForm<
   /** Whether the form has been submitted */
   hasSubmitted: Signal<boolean>;
 
+  /**
+   * Error display strategy (can be static or reactive signal).
+   * Controls when validation errors are shown to users.
+   * - 'immediate': Show errors as soon as they exist
+   * - 'on-touch': Show errors after field is touched/blurred (default)
+   * - 'on-submit': Show errors only after form submission
+   * - 'manual': Full manual control via custom logic
+   */
+  errorStrategy: ErrorDisplayStrategy | Signal<ErrorDisplayStrategy>;
+
   /** Get field access for a specific path with proper typing */
   field<P extends Path<TModel>>(path: P): VestField<PathValue<TModel, P>>;
 
@@ -253,6 +267,9 @@ export type VestForm<
 
   /** Dispose of the form (cleanup subscriptions) */
   dispose(): void;
+
+  /** Environment providers for making the form injectable in templates */
+  providers: EnvironmentProviders;
 };
 
 /**

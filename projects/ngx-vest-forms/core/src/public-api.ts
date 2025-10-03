@@ -6,6 +6,9 @@
 // Main factory function
 export { createVestForm } from './lib/create-vest-form';
 
+// Directives
+export { NgxVestAutoTouchDirective } from './lib/directives/ngx-vest-auto-touch.directive';
+
 // Components
 export { NgxFormErrorComponent } from './lib/components/ngx-form-error.component';
 
@@ -76,6 +79,19 @@ export {
 export { createSafeSuite, staticSafeSuite } from './lib/utils/safe-suite';
 
 export type { SafeSuite, SafeSuiteFunction } from './lib/utils/safe-suite';
+
+// Type helpers for signal unwrapping
+export { isSignal, unwrapSignal } from './lib/utils/type-helpers';
+
+export type { Unwrap } from './lib/utils/type-helpers';
+
+// DI tokens and configuration
+export { NGX_VEST_FORM, NGX_VEST_FORMS_CONFIG } from './lib/tokens';
+
+export type { NgxVestFormsConfig } from './lib/tokens';
+
+// Environment providers
+export { provideNgxVestFormsConfig } from './lib/providers';
 
 // Version information
 export const VERSION = '2.0.0-beta.1';
