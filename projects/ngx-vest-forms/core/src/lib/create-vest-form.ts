@@ -219,6 +219,11 @@ export function createVestForm<TModel extends Record<string, unknown>>(
       () => getValueByPath(model(), path) as PathValue<TModel, P>,
     );
     const fieldErrors = computed(() => suiteResult().getErrors(path));
+    const fieldWarnings = computed(() => suiteResult().getWarnings(path));
+    const fieldValidation = computed(() => ({
+      errors: fieldErrors(),
+      warnings: fieldWarnings(),
+    }));
     const fieldValid = computed(() => fieldErrors().length === 0);
     const fieldPending = computed(() => suiteResult().isPending(path));
     const fieldTouched = computed(() => touched().has(pathKey));
@@ -229,6 +234,14 @@ export function createVestForm<TModel extends Record<string, unknown>>(
       hasSubmitted,
       fieldTouched,
     );
+    const showWarnings = computed(() => {
+      // Show warnings when field is valid (no errors) and has been tested
+      return (
+        fieldValid() &&
+        suiteResult().isTested(path) &&
+        fieldWarnings().length > 0
+      );
+    });
 
     // Field operations with proper typing
     const set = createFieldSetter((newValue: PathValue<TModel, P>) => {
@@ -276,9 +289,13 @@ export function createVestForm<TModel extends Record<string, unknown>>(
       value,
       valid: fieldValid,
       errors: fieldErrors,
+      warnings: fieldWarnings,
+      validation: fieldValidation,
       pending: fieldPending,
       touched: fieldTouched,
       showErrors,
+      showWarnings,
+      fieldName: pathKey,
       set,
       touch,
       reset,

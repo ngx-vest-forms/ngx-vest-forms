@@ -398,7 +398,8 @@ test.describe('Basic Validation - User Registration Form', () => {
         await nameField.fill('A'); // Too short
 
         // Error should appear immediately without blur
-        await expect(nameError).not.toHaveAttribute('aria-hidden', 'true');
+        // Note: Component uses conditional rendering (@if), not aria-hidden
+        await expect(nameError).toBeVisible();
         await expect(nameError).toContainText(/at least 2 characters/i);
       });
 
@@ -406,7 +407,8 @@ test.describe('Basic Validation - User Registration Form', () => {
         await emailField.fill('invalid');
 
         // Error should appear immediately
-        await expect(emailError).not.toHaveAttribute('aria-hidden', 'true');
+        // Note: Component uses conditional rendering (@if), not aria-hidden
+        await expect(emailError).toBeVisible();
         await expect(emailError).toContainText(
           /Please enter a valid email address/i,
         );
@@ -417,10 +419,11 @@ test.describe('Basic Validation - User Registration Form', () => {
 
       await test.step('Verify only the most recently validated field shows errors', async () => {
         // After typing in email, only email errors are visible (Vest's only() behavior)
-        await expect(emailError).not.toHaveAttribute('aria-hidden', 'true');
+        await expect(emailError).toBeVisible();
 
         // Name error is NOT visible because only email was validated
-        await expect(nameError).toHaveAttribute('aria-hidden', 'true');
+        // Note: Component uses conditional rendering - element doesn't exist when hidden
+        await expect(nameError).toBeHidden();
       });
 
       await test.step('Submit button stays enabled for accessibility', async () => {
@@ -456,7 +459,8 @@ test.describe('Basic Validation - User Registration Form', () => {
         await page.waitForTimeout(200);
 
         // Name error should appear
-        await expect(nameError).not.toHaveAttribute('aria-hidden', 'true');
+        // Note: Component uses conditional rendering - check visibility instead of aria-hidden
+        await expect(nameError).toBeVisible();
         await expect(nameError).toContainText(/name is required/i);
       });
 
@@ -466,15 +470,17 @@ test.describe('Basic Validation - User Registration Form', () => {
         await page.waitForTimeout(200);
 
         // Email error should appear
-        await expect(emailError).not.toHaveAttribute('aria-hidden', 'true');
+        // Note: Component uses conditional rendering - check visibility instead of aria-hidden
+        await expect(emailError).toBeVisible();
         await expect(emailError).toContainText(/email is required/i);
       });
 
       await test.step('CRITICAL: Verify BOTH errors persist', async () => {
         // This is the regression test for the only(undefined) bug
         // Both errors should remain visible after touching multiple fields
-        await expect(nameError).not.toHaveAttribute('aria-hidden', 'true');
-        await expect(emailError).not.toHaveAttribute('aria-hidden', 'true');
+        // Note: Component uses conditional rendering - check visibility instead of aria-hidden
+        await expect(nameError).toBeVisible();
+        await expect(emailError).toBeVisible();
       });
 
       await test.step('Touch age field - all three errors should persist', async () => {
@@ -483,9 +489,10 @@ test.describe('Basic Validation - User Registration Form', () => {
         await page.waitForTimeout(200);
 
         // All three errors should be visible
-        await expect(nameError).not.toHaveAttribute('aria-hidden', 'true');
-        await expect(emailError).not.toHaveAttribute('aria-hidden', 'true');
-        await expect(ageError).not.toHaveAttribute('aria-hidden', 'true');
+        // Note: Component uses conditional rendering - check visibility instead of aria-hidden
+        await expect(nameError).toBeVisible();
+        await expect(emailError).toBeVisible();
+        await expect(ageError).toBeVisible();
       });
     });
 
@@ -516,9 +523,10 @@ test.describe('Basic Validation - User Registration Form', () => {
 
         await page.waitForTimeout(200);
 
-        // No errors should appear yet
-        await expect(nameError).toHaveAttribute('aria-hidden', 'true');
-        await expect(emailError).toHaveAttribute('aria-hidden', 'true');
+        // No errors should appear yet (on-submit strategy)
+        // Note: Component uses conditional rendering - elements don't exist when no errors shown
+        await expect(nameError).toBeHidden();
+        await expect(emailError).toBeHidden();
       });
 
       await test.step('Submit button stays enabled for accessibility', async () => {
@@ -529,8 +537,9 @@ test.describe('Basic Validation - User Registration Form', () => {
         await submitButton.click();
 
         await expect(page.getByText('Valid: ❌')).toBeVisible();
-        await expect(nameError).not.toHaveAttribute('aria-hidden', 'true');
-        await expect(emailError).not.toHaveAttribute('aria-hidden', 'true');
+        // Note: Component uses conditional rendering - check visibility instead of aria-hidden
+        await expect(nameError).toBeVisible();
+        await expect(emailError).toBeVisible();
       });
     });
 
@@ -655,7 +664,8 @@ test.describe('Basic Validation - User Registration Form', () => {
           await emailField.blur();
 
           await submitButton.click();
-          await expect(emailError).not.toHaveAttribute('aria-hidden', 'true');
+          // Note: Component uses conditional rendering - check visibility instead of aria-hidden
+          await expect(emailError).toBeVisible();
           await expect(page.getByText('Valid: ❌')).toBeVisible();
           await expect(submitButton).toBeEnabled();
 
@@ -676,7 +686,8 @@ test.describe('Basic Validation - User Registration Form', () => {
           await expect(page.getByText('Pending: —')).toBeVisible({
             timeout: 4000,
           });
-          await expect(emailError).toHaveAttribute('aria-hidden', 'true');
+          // Note: Component uses conditional rendering - error should be hidden/not exist
+          await expect(emailError).toBeHidden();
           await expect(submitButton).toBeEnabled({ timeout: 4000 });
         });
       }

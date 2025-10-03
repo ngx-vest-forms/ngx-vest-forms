@@ -13,9 +13,13 @@ type DerivedAccessor =
   | 'value'
   | 'valid'
   | 'errors'
+  | 'warnings'
+  | 'validation'
   | 'pending'
   | 'touched'
   | 'showErrors'
+  | 'showWarnings'
+  | 'field'
   | 'set'
   | 'touch'
   | 'reset';
@@ -68,12 +72,11 @@ export function createDerivedRegistry<TModel extends Record<string, unknown>>(
     const baseName = toDerivedBaseName(fieldPath);
     const capitalised = capitalise(baseName);
 
+    // Value and state signals
     descriptors.set(baseName, { fieldPath, accessor: 'value' });
     descriptorKeys.push(baseName);
     descriptors.set(`${baseName}Valid`, { fieldPath, accessor: 'valid' });
     descriptorKeys.push(`${baseName}Valid`);
-    descriptors.set(`${baseName}Errors`, { fieldPath, accessor: 'errors' });
-    descriptorKeys.push(`${baseName}Errors`);
     descriptors.set(`${baseName}Pending`, { fieldPath, accessor: 'pending' });
     descriptorKeys.push(`${baseName}Pending`);
     descriptors.set(`${baseName}Touched`, { fieldPath, accessor: 'touched' });
@@ -83,6 +86,28 @@ export function createDerivedRegistry<TModel extends Record<string, unknown>>(
       accessor: 'showErrors',
     });
     descriptorKeys.push(`${baseName}ShowErrors`);
+    descriptors.set(`${baseName}ShowWarnings`, {
+      fieldPath,
+      accessor: 'showWarnings',
+    });
+    descriptorKeys.push(`${baseName}ShowWarnings`);
+
+    // Validation signals (errors, warnings, validation)
+    descriptors.set(`${baseName}Errors`, { fieldPath, accessor: 'errors' });
+    descriptorKeys.push(`${baseName}Errors`);
+    descriptors.set(`${baseName}Warnings`, { fieldPath, accessor: 'warnings' });
+    descriptorKeys.push(`${baseName}Warnings`);
+    descriptors.set(`${baseName}Validation`, {
+      fieldPath,
+      accessor: 'validation',
+    });
+    descriptorKeys.push(`${baseName}Validation`);
+
+    // Field object accessor (PRIMARY for ngx-form-error component)
+    descriptors.set(`${baseName}Field`, { fieldPath, accessor: 'field' });
+    descriptorKeys.push(`${baseName}Field`);
+
+    // Method accessors
     descriptors.set(`set${capitalised}`, { fieldPath, accessor: 'set' });
     descriptorKeys.push(`set${capitalised}`);
     descriptors.set(`touch${capitalised}`, { fieldPath, accessor: 'touch' });
@@ -136,6 +161,12 @@ export function createDerivedRegistry<TModel extends Record<string, unknown>>(
       case 'errors': {
         return field.errors;
       }
+      case 'warnings': {
+        return field.warnings;
+      }
+      case 'validation': {
+        return field.validation;
+      }
       case 'pending': {
         return field.pending;
       }
@@ -144,6 +175,14 @@ export function createDerivedRegistry<TModel extends Record<string, unknown>>(
       }
       case 'showErrors': {
         return field.showErrors;
+      }
+      case 'showWarnings': {
+        return field.showWarnings;
+      }
+      case 'field': {
+        // Return a function that returns the entire VestField object for ngx-form-error component
+        // This matches the type signature: emailField(): VestField<string>
+        return () => field;
       }
       case 'set': {
         return field.set;

@@ -19,6 +19,7 @@
 
 import type { Signal } from '@angular/core';
 import type { PathValue, Paths as TsEssentialsPath } from 'ts-essentials';
+import type { ValidationMessages, VestField } from '../vest-form.types';
 
 /**
  * Minimal alias around {@link TsEssentialsPath} to keep local generics concise.
@@ -70,7 +71,12 @@ type AppendSuffix<
   Suffix extends string,
 > = Suffix extends '' ? Base : `${Base}${Suffix}`;
 
-type BooleanAccessorSuffix = 'Valid' | 'Pending' | 'Touched' | 'ShowErrors';
+type BooleanAccessorSuffix =
+  | 'Valid'
+  | 'Pending'
+  | 'Touched'
+  | 'ShowErrors'
+  | 'ShowWarnings';
 
 type SetterPrefix = 'set';
 type TouchPrefix = 'touch';
@@ -110,11 +116,64 @@ export type DerivedFieldBooleanSignals<TModel extends Record<string, unknown>> =
 
 /**
  * Signal accessors exposing the validation error messages for each field path.
+ * @deprecated Use DerivedFieldValidationSignals for the modern nested approach
  */
 export type DerivedFieldErrorSignals<TModel extends Record<string, unknown>> = {
   [P in Path<TModel> as AppendSuffix<CamelCasePath<P>, 'Errors'>]: Signal<
     string[]
   >;
+};
+
+/**
+ * Signal accessor exposing nested validation messages (errors + warnings)
+ * Example: form.emailValidation() → Signal<{ errors: string[], warnings: string[] }>
+ */
+export type DerivedFieldValidationSignals<
+  TModel extends Record<string, unknown>,
+> = {
+  [P in Path<TModel> as AppendSuffix<
+    CamelCasePath<P>,
+    'Validation'
+  >]: Signal<ValidationMessages>;
+};
+
+/**
+ * Warning signal accessors
+ * Example: form.emailWarnings() → Signal<string[]>
+ */
+export type DerivedFieldWarningSignals<TModel extends Record<string, unknown>> =
+  {
+    [P in Path<TModel> as AppendSuffix<CamelCasePath<P>, 'Warnings'>]: Signal<
+      string[]
+    >;
+  };
+
+/**
+ * ShowWarnings boolean signal accessors
+ * Example: form.emailShowWarnings() → Signal<boolean>
+ */
+export type DerivedFieldShowWarningSignals<
+  TModel extends Record<string, unknown>,
+> = {
+  [P in Path<TModel> as AppendSuffix<
+    CamelCasePath<P>,
+    'ShowWarnings'
+  >]: Signal<boolean>;
+};
+
+/**
+ * VestField object accessors for zero-config component usage
+ * Example: form.emailField() → VestField<string>
+ *
+ * This is the PRIMARY accessor for ngx-form-error component.
+ */
+export type DerivedFieldObjectAccessors<
+  TModel extends Record<string, unknown>,
+> = {
+  [P in Path<TModel> as AppendSuffix<
+    CamelCasePath<P>,
+    'Field'
+  >]: () => VestField<PathValue<TModel, P>>;
 };
 
 /**
@@ -144,13 +203,17 @@ export type DerivedFieldResetMethods<TModel extends Record<string, unknown>> = {
 };
 
 /**
- * Convenience union of all derived signal accessors (values, booleans, errors).
+ * Convenience union of all derived signal accessors (values, booleans, errors, validation).
  */
 export type DerivedFieldSignalAccessors<
   TModel extends Record<string, unknown>,
 > = DerivedFieldValueSignals<TModel> &
   DerivedFieldBooleanSignals<TModel> &
-  DerivedFieldErrorSignals<TModel>;
+  DerivedFieldValidationSignals<TModel> &
+  DerivedFieldObjectAccessors<TModel> &
+  DerivedFieldErrorSignals<TModel> &
+  DerivedFieldWarningSignals<TModel> &
+  DerivedFieldShowWarningSignals<TModel>;
 
 /**
  * Convenience union of all derived field methods (set, touch, reset).

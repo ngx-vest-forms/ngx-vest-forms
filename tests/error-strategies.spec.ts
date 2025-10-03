@@ -221,21 +221,21 @@ test.describe('Error Display Strategies - Comprehensive Tests', () => {
       });
 
       await test.step('Verify all errors are visible immediately', async () => {
-        // Name error
+        // Name error - use semantic role="alert" selector
         const nameError = page
-          .locator('.form-error')
+          .getByRole('alert')
           .filter({ hasText: /at least 2 characters/i });
         await expect(nameError).toBeVisible();
 
         // Email error
         const emailError = page
-          .locator('.form-error')
+          .getByRole('alert')
           .filter({ hasText: /Please enter a valid email address/i });
         await expect(emailError).toBeVisible();
 
         // Age error
         const ageError = page
-          .locator('.form-error')
+          .getByRole('alert')
           .filter({ hasText: /must be at least 18/i });
         await expect(ageError).toBeVisible();
       });
@@ -263,9 +263,9 @@ test.describe('Error Display Strategies - Comprehensive Tests', () => {
         await nameField.focus();
         await nameField.blur();
 
-        // Name error should appear
+        // Name error should appear - use semantic role="alert" selector
         const nameError = page
-          .locator('.form-error')
+          .getByRole('alert')
           .filter({ hasText: /name is required/i });
         await expect(nameError).toBeVisible();
       });
@@ -277,9 +277,9 @@ test.describe('Error Display Strategies - Comprehensive Tests', () => {
         await emailField.focus();
         await emailField.blur();
 
-        // Email error should appear
+        // Email error should appear - use semantic role="alert" selector
         const emailError = page
-          .locator('.form-error')
+          .getByRole('alert')
           .filter({ hasText: /email is required/i });
         await expect(emailError).toBeVisible();
       });
@@ -288,13 +288,14 @@ test.describe('Error Display Strategies - Comprehensive Tests', () => {
         // This is the key regression test for the only(undefined) bug
         // Previously, only the last touched field's error would show
 
+        // Use semantic role="alert" selectors
         const nameError = page
-          .locator('.form-error')
+          .getByRole('alert')
           .filter({ hasText: /name is required/i });
         await expect(nameError).toBeVisible();
 
         const emailError = page
-          .locator('.form-error')
+          .getByRole('alert')
           .filter({ hasText: /email is required/i });
         await expect(emailError).toBeVisible();
       });
@@ -304,19 +305,19 @@ test.describe('Error Display Strategies - Comprehensive Tests', () => {
         await ageField.focus();
         await ageField.blur();
 
-        // All three errors should be visible
+        // All three errors should be visible - use semantic role="alert" selectors
         const nameError = page
-          .locator('.form-error')
+          .getByRole('alert')
           .filter({ hasText: /name is required/i });
         await expect(nameError).toBeVisible();
 
         const emailError = page
-          .locator('.form-error')
+          .getByRole('alert')
           .filter({ hasText: /email is required/i });
         await expect(emailError).toBeVisible();
 
         const ageError = page
-          .locator('.form-error')
+          .getByRole('alert')
           .filter({ hasText: /age is required/i });
         await expect(ageError).toBeVisible();
       });
@@ -346,9 +347,9 @@ test.describe('Error Display Strategies - Comprehensive Tests', () => {
         await bioField.focus();
         await bioField.blur();
 
-        // Bio error should appear immediately (immediate strategy)
+        // Bio error should appear immediately (immediate strategy) - use semantic role="alert" selector
         const bioError = page
-          .locator('.form-error')
+          .getByRole('alert')
           .filter({ hasText: /bio is required/i });
         await expect(bioError).toBeVisible();
       });

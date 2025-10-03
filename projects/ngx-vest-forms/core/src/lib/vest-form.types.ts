@@ -102,17 +102,32 @@ export type SchemaValidationResult<T> = {
 };
 
 /**
+ * Validation messages grouped by severity
+ *
+ * @remarks
+ * Separates blocking errors from non-blocking warnings to enable
+ * proper ARIA live region semantics per WCAG ARIA19/ARIA22.
+ */
+export type ValidationMessages = {
+  /** Blocking errors that prevent form submission */
+  errors: string[];
+
+  /** Non-blocking warnings for user guidance (from Vest warn() tests) */
+  warnings: string[];
+};
+
+/**
  * Individual field interface providing all field-level operations and state
  */
 export type VestField<T = unknown> = {
   /** Current field value as a signal */
   value: Signal<T>;
 
-  /** Whether the field is valid */
+  /** Whether the field is valid (no blocking errors) */
   valid: Signal<boolean>;
 
-  /** Current validation errors */
-  errors: Signal<string[]>;
+  /** Nested validation messages with errors and warnings */
+  validation: Signal<ValidationMessages>;
 
   /** Whether async validation is pending */
   pending: Signal<boolean>;
@@ -120,8 +135,14 @@ export type VestField<T = unknown> = {
   /** Whether the field has been tested (touched) */
   touched: Signal<boolean>;
 
-  /** Whether errors should be displayed (based on strategy) */
+  /** Whether errors should be displayed based on error strategy */
   showErrors: Signal<boolean>;
+
+  /** Whether warnings should be displayed (typically always true) */
+  showWarnings: Signal<boolean>;
+
+  /** Field path/name for identification and ARIA IDs */
+  readonly fieldName: string;
 
   /** Set field value and trigger validation */
   set(value: T | Event): void;
@@ -131,6 +152,16 @@ export type VestField<T = unknown> = {
 
   /** Reset field to initial value and clear touched state */
   reset(): void;
+
+  // ====================================
+  // Backward Compatibility (Deprecated)
+  // ====================================
+
+  /** @deprecated Use field.validation().errors instead */
+  errors: Signal<string[]>;
+
+  /** @deprecated Use field.validation().warnings instead */
+  warnings: Signal<string[]>;
 };
 
 /**

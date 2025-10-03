@@ -6,6 +6,9 @@
 // Main factory function
 export { createVestForm } from './lib/create-vest-form';
 
+// Components
+export { NgxFormErrorComponent } from './lib/components/ngx-form-error.component';
+
 // Types and interfaces
 export type {
   EnhancedVestForm,
@@ -14,6 +17,7 @@ export type {
   PathValue,
   SchemaAdapter,
   SchemaValidationResult,
+  ValidationMessages,
   VestField,
   VestForm,
   VestFormArray,

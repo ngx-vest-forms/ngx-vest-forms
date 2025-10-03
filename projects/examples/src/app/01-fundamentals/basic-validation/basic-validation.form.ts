@@ -4,7 +4,11 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { createVestForm, type ErrorDisplayStrategy } from 'ngx-vest-forms/core';
+import {
+  createVestForm,
+  NgxFormErrorComponent,
+  type ErrorDisplayStrategy,
+} from 'ngx-vest-forms/core';
 import { asDebuggerForm } from '../../ui/debugger/debugger';
 import {
   UserFormModel,
@@ -17,6 +21,7 @@ import {
 @Component({
   selector: 'ngx-basic-validation-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [NgxFormErrorComponent],
   template: `
     <form
       (submit)="onSubmit($event)"
@@ -45,20 +50,7 @@ import {
               : null
           "
         />
-        <div
-          class="form-error"
-          id="name-error"
-          role="alert"
-          aria-live="assertive"
-          aria-atomic="true"
-          [attr.aria-hidden]="
-            form.nameShowErrors() && form.nameErrors().length ? null : 'true'
-          "
-        >
-          @if (form.nameShowErrors() && form.nameErrors().length) {
-            {{ form.nameErrors()[0] }}
-          }
-        </div>
+        <ngx-form-error [field]="form.nameField()" />
       </div>
 
       <!-- Email Field -->
@@ -82,20 +74,7 @@ import {
               : null
           "
         />
-        <div
-          class="form-error"
-          id="email-error"
-          role="alert"
-          aria-live="assertive"
-          aria-atomic="true"
-          [attr.aria-hidden]="
-            form.emailShowErrors() && form.emailErrors().length ? null : 'true'
-          "
-        >
-          @if (form.emailShowErrors() && form.emailErrors().length) {
-            {{ form.emailErrors()[0] }}
-          }
-        </div>
+        <ngx-form-error [field]="form.emailField()" />
       </div>
 
       <!-- Age Field -->
@@ -118,20 +97,7 @@ import {
             form.ageShowErrors() && form.ageErrors().length ? 'age-error' : null
           "
         />
-        <div
-          class="form-error"
-          id="age-error"
-          role="alert"
-          aria-live="assertive"
-          aria-atomic="true"
-          [attr.aria-hidden]="
-            form.ageShowErrors() && form.ageErrors().length ? null : 'true'
-          "
-        >
-          @if (form.ageShowErrors() && form.ageErrors().length) {
-            {{ form.ageErrors()[0] }}
-          }
-        </div>
+        <ngx-form-error [field]="form.ageField()" />
       </div>
 
       <!-- Role Field -->
@@ -159,20 +125,7 @@ import {
           <option value="Senior Developer">Senior Developer</option>
           <option value="Team Lead">Team Lead</option>
         </select>
-        <div
-          class="form-error"
-          id="role-error"
-          role="alert"
-          aria-live="assertive"
-          aria-atomic="true"
-          [attr.aria-hidden]="
-            form.roleShowErrors() && form.roleErrors().length ? null : 'true'
-          "
-        >
-          @if (form.roleShowErrors() && form.roleErrors().length) {
-            {{ form.roleErrors()[0] }}
-          }
-        </div>
+        <ngx-form-error [field]="form.roleField()" />
       </div>
 
       <!-- Bio Field (conditional) -->
@@ -197,22 +150,38 @@ import {
                 : null
             "
           ></textarea>
-          <div
-            class="form-error"
-            id="bio-error"
-            role="alert"
-            aria-live="assertive"
-            aria-atomic="true"
-            [attr.aria-hidden]="
-              form.bioShowErrors() && form.bioErrors().length ? null : 'true'
-            "
-          >
-            @if (form.bioShowErrors() && form.bioErrors().length) {
-              {{ form.bioErrors()[0] }}
-            }
-          </div>
+          <ngx-form-error [field]="form.bioField()" />
         </div>
       }
+
+      <!-- Terms Agreement -->
+      <div class="form-field">
+        <div class="flex items-start">
+          <input
+            id="agreeToTerms"
+            class="form-checkbox"
+            type="checkbox"
+            [checked]="form.agreeToTerms()"
+            (change)="form.setAgreeToTerms($event)"
+            (blur)="form.touchAgreeToTerms()"
+            aria-required="true"
+            [attr.aria-invalid]="
+              form.agreeToTermsShowErrors() && !form.agreeToTermsValid()
+                ? 'true'
+                : null
+            "
+            [attr.aria-describedby]="
+              form.agreeToTermsShowErrors() && form.agreeToTermsErrors().length
+                ? 'agreeToTerms-error'
+                : null
+            "
+          />
+          <label class="form-checkbox-label" for="agreeToTerms">
+            I agree to the terms and conditions *
+          </label>
+        </div>
+        <ngx-form-error [field]="form.agreeToTermsField()" />
+      </div>
 
       <!-- Terms Agreement -->
       <div class="form-field">

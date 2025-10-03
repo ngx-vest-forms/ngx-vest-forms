@@ -152,7 +152,202 @@ form.profileName(); // profile.name → profileName()
 form.setProfileName(); // profile.name → setProfileName()
 ```
 
-### 3. Error Display Strategies
+### 3. Zero-Configuration Error Display Component
+
+The `NgxFormErrorComponent` eliminates repetitive error display boilerplate, reducing template code by **93%** while ensuring WCAG 2.2 compliance.
+
+#### Without NgxFormErrorComponent (Manual Approach)
+
+```typescript
+import { Component, signal } from '@angular/core';
+import { createVestForm } from 'ngx-vest-forms/core';
+import { contactValidations } from './contact.validations';
+
+@Component({
+  selector: 'app-contact-form',
+  template: `
+    <form (ngSubmit)="onSubmit()">
+      <!-- Email Field - 15+ lines of boilerplate per field -->
+      <label for="email">Email *</label>
+      <input
+        id="email"
+        type="email"
+        [value]="form.email() ?? ''"
+        (input)="form.setEmail($event)"
+        (blur)="form.touchEmail()"
+        [attr.aria-invalid]="form.emailShowErrors() && !form.emailValid()"
+        [attr.aria-describedby]="form.emailShowErrors() ? 'email-error' : null"
+      />
+      <!-- Manual error display with ARIA attributes -->
+      @if (form.emailShowErrors() && form.emailErrors().length) {
+        <div
+          id="email-error"
+          class="error-container"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+        >
+          @for (error of form.emailErrors(); track error) {
+            <p class="error-message">{{ error }}</p>
+          }
+        </div>
+      }
+
+      <!-- Name Field - Another 15+ lines... -->
+      <label for="name">Name *</label>
+      <input
+        id="name"
+        type="text"
+        [value]="form.name() ?? ''"
+        (input)="form.setName($event)"
+        (blur)="form.touchName()"
+        [attr.aria-invalid]="form.nameShowErrors() && !form.nameValid()"
+        [attr.aria-describedby]="form.nameShowErrors() ? 'name-error' : null"
+      />
+      @if (form.nameShowErrors() && form.nameErrors().length) {
+        <div
+          id="name-error"
+          class="error-container"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+        >
+          @for (error of form.nameErrors(); track error) {
+            <p class="error-message">{{ error }}</p>
+          }
+        </div>
+      }
+
+      <button type="submit" [disabled]="form.pending()">Submit</button>
+    </form>
+  `,
+})
+export class ContactFormComponent {
+  protected readonly form = createVestForm(
+    contactValidations,
+    signal({ email: '', name: '' }),
+  );
+
+  protected onSubmit = async () => {
+    try {
+      await this.form.submit();
+      console.log('Valid:', this.form.model());
+    } catch {
+      console.log('Invalid:', this.form.errors());
+    }
+  };
+}
+```
+
+#### With NgxFormErrorComponent (Recommended)
+
+```typescript
+import { Component, signal } from '@angular/core';
+import { createVestForm, NgxFormErrorComponent } from 'ngx-vest-forms/core';
+import { contactValidations } from './contact.validations';
+
+@Component({
+  selector: 'app-contact-form',
+  imports: [NgxFormErrorComponent], // ✅ Import the component
+  template: `
+    <form (ngSubmit)="onSubmit()">
+      <!-- Email Field - Just 1 line for error display! -->
+      <label for="email">Email *</label>
+      <input
+        id="email"
+        type="email"
+        [value]="form.email() ?? ''"
+        (input)="form.setEmail($event)"
+        (blur)="form.touchEmail()"
+        [attr.aria-invalid]="form.emailShowErrors() && !form.emailValid()"
+        [attr.aria-describedby]="form.emailShowErrors() ? 'email-error' : null"
+      />
+      <ngx-form-error [field]="form.emailField()" />
+
+      <!-- Name Field - Also just 1 line! -->
+      <label for="name">Name *</label>
+      <input
+        id="name"
+        type="text"
+        [value]="form.name() ?? ''"
+        (input)="form.setName($event)"
+        (blur)="form.touchName()"
+        [attr.aria-invalid]="form.nameShowErrors() && !form.nameValid()"
+        [attr.aria-describedby]="form.nameShowErrors() ? 'name-error' : null"
+      />
+      <ngx-form-error [field]="form.nameField()" />
+
+      <button type="submit" [disabled]="form.pending()">Submit</button>
+    </form>
+  `,
+})
+export class ContactFormComponent {
+  protected readonly form = createVestForm(
+    contactValidations,
+    signal({ email: '', name: '' }),
+  );
+
+  protected onSubmit = async () => {
+    try {
+      await this.form.submit();
+      console.log('Valid:', this.form.model());
+    } catch {
+      console.log('Invalid:', this.form.errors());
+    }
+  };
+}
+```
+
+#### Benefits
+
+| Aspect                  | Manual Approach     | NgxFormErrorComponent |
+| ----------------------- | ------------------- | --------------------- |
+| **Lines per Field**     | 15+ lines           | 1 line                |
+| **Code Reduction**      | Baseline            | **93% less code**     |
+| **WCAG 2.2 Compliance** | Manual setup        | Automatic ✅          |
+| **ARIA Attributes**     | Must implement      | Built-in ✅           |
+| **Warnings Support**    | Extra code required | Built-in ✅           |
+| **Dark Mode**           | Custom CSS          | Built-in ✅           |
+| **Theming**             | Custom CSS          | CSS Custom Props ✅   |
+
+#### Features
+
+- ✅ **Single Input API**: Just pass `[field]="form.emailField()"`
+- ✅ **Automatic ARIA**: `role="alert"`, `aria-live`, `aria-atomic`, IDs
+- ✅ **Errors + Warnings**: Displays blocking errors and non-blocking warnings
+- ✅ **WCAG 2.2 Level AA**: Compliant out of the box
+- ✅ **Themeable**: CSS custom properties (`--ngx-vest-forms-*`)
+- ✅ **Dark Mode**: Respects `prefers-color-scheme`
+- ✅ **Zero Boilerplate**: Eliminates repetitive template code
+
+#### Custom Styling
+
+Override error colors with CSS custom properties:
+
+```css
+/* Light mode */
+:root {
+  --ngx-vest-forms-error-color: #dc2626;
+  --ngx-vest-forms-error-bg: #fef2f2;
+  --ngx-vest-forms-error-border: #fca5a5;
+
+  --ngx-vest-forms-warning-color: #f59e0b;
+  --ngx-vest-forms-warning-bg: #fffbeb;
+  --ngx-vest-forms-warning-border: #fcd34d;
+}
+
+/* Dark mode - automatic */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ngx-vest-forms-error-color: #fca5a5;
+    --ngx-vest-forms-error-bg: #7f1d1d;
+    --ngx-vest-forms-warning-color: #fcd34d;
+    --ngx-vest-forms-warning-bg: #78350f;
+  }
+}
+```
+
+### 4. Error Display Strategies
 
 Control **when** validation errors are shown:
 
@@ -178,7 +373,7 @@ You can now pass a **signal** for `errorStrategy` to change the strategy dynamic
 const errorMode = signal<ErrorDisplayStrategy>('on-touch');
 
 const form = createVestForm(suite, model, {
-  errorStrategy: errorMode // ✅ Pass signal instead of static string
+  errorStrategy: errorMode, // ✅ Pass signal instead of static string
 });
 
 // Switch strategy at runtime - form reacts automatically!
