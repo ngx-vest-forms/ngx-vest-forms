@@ -348,7 +348,9 @@ describe('FormDirective - ValidationConfig', () => {
     const { fixture } = await render(TestValidationConfigHost);
     const instance = fixture.componentInstance;
     expect(instance.vestForm).toBeDefined();
-    expect(typeof instance.vestForm['setupValidationConfig']).toBe('function');
+    expect(instance.vestForm.validationConfig()).toEqual({
+      username: ['email'],
+    });
   });
 
   it('should not cause infinite loops or redundant validations', async () => {
@@ -372,7 +374,10 @@ describe('FormDirective - ValidationConfig', () => {
     const { fixture } = await render(TestValidationConfigLoop);
     const instance = fixture.componentInstance;
     expect(instance.vestForm).toBeDefined();
-    expect(typeof instance.vestForm['setupValidationConfig']).toBe('function');
+    expect(instance.vestForm.validationConfig()).toEqual({
+      username: ['email'],
+      email: ['username'],
+    });
   });
 });
 

@@ -8,6 +8,10 @@ import { FormsModule } from '@angular/forms';
 import { DeepPartial } from '../utils/deep-partial';
 import { vestForms } from '../exports';
 import { staticSuite, test, enforce } from 'vest';
+import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
+
+// Wait time for tests should be slightly longer than debounce to ensure completion
+const TEST_DEBOUNCE_WAIT_TIME = VALIDATION_CONFIG_DEBOUNCE_TIME + 50;
 
 describe('FormDirective - Comprehensive', () => {
   beforeEach(async () => {
@@ -674,7 +678,9 @@ describe('FormDirective - Comprehensive', () => {
       await fixture.whenStable();
 
       // Wait for debounce
-      await new Promise((resolve) => setTimeout(resolve, 150));
+      await new Promise((resolve) =>
+        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+      );
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -692,7 +698,9 @@ describe('FormDirective - Comprehensive', () => {
       await fixture.whenStable();
 
       // Wait for debounce
-      await new Promise((resolve) => setTimeout(resolve, 150));
+      await new Promise((resolve) =>
+        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+      );
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -780,7 +788,9 @@ describe('FormDirective - Comprehensive', () => {
       await fixture.whenStable();
 
       // Wait for debounce
-      await new Promise((resolve) => setTimeout(resolve, 150));
+      await new Promise((resolve) =>
+        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+      );
       fixture.detectChanges();
       await fixture.whenStable();
 
