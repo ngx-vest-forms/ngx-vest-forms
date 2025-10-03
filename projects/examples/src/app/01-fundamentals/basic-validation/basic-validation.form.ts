@@ -1,5 +1,10 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { createVestForm } from 'ngx-vest-forms/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  signal,
+} from '@angular/core';
+import { createVestForm, type ErrorDisplayStrategy } from 'ngx-vest-forms/core';
 import { asDebuggerForm } from '../../ui/debugger/debugger';
 import {
   UserFormModel,
@@ -13,7 +18,12 @@ import {
   selector: 'ngx-basic-validation-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <form (ngSubmit)="onSubmit()" class="form-container">
+    <form
+      (submit)="onSubmit($event)"
+      class="form-container"
+      novalidate
+      [attr.aria-busy]="form.pending() || form.submitting() ? 'true' : null"
+    >
       <!-- Name Field -->
       <div class="form-field">
         <label class="form-label" for="name">Full Name *</label>
@@ -25,12 +35,30 @@ import {
           (input)="form.setName($event)"
           (blur)="form.touchName()"
           placeholder="Enter your full name"
+          aria-required="true"
+          [attr.aria-invalid]="
+            form.nameShowErrors() && !form.nameValid() ? 'true' : null
+          "
+          [attr.aria-describedby]="
+            form.nameShowErrors() && form.nameErrors().length
+              ? 'name-error'
+              : null
+          "
         />
-        @if (form.nameShowErrors() && form.nameErrors().length) {
-          <div class="form-error" role="alert">
+        <div
+          class="form-error"
+          id="name-error"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+          [attr.aria-hidden]="
+            form.nameShowErrors() && form.nameErrors().length ? null : 'true'
+          "
+        >
+          @if (form.nameShowErrors() && form.nameErrors().length) {
             {{ form.nameErrors()[0] }}
-          </div>
-        }
+          }
+        </div>
       </div>
 
       <!-- Email Field -->
@@ -44,12 +72,30 @@ import {
           (input)="form.setEmail($event)"
           (blur)="form.touchEmail()"
           placeholder="you@example.com"
+          aria-required="true"
+          [attr.aria-invalid]="
+            form.emailShowErrors() && !form.emailValid() ? 'true' : null
+          "
+          [attr.aria-describedby]="
+            form.emailShowErrors() && form.emailErrors().length
+              ? 'email-error'
+              : null
+          "
         />
-        @if (form.emailShowErrors() && form.emailErrors().length) {
-          <div class="form-error" role="alert">
+        <div
+          class="form-error"
+          id="email-error"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+          [attr.aria-hidden]="
+            form.emailShowErrors() && form.emailErrors().length ? null : 'true'
+          "
+        >
+          @if (form.emailShowErrors() && form.emailErrors().length) {
             {{ form.emailErrors()[0] }}
-          </div>
-        }
+          }
+        </div>
       </div>
 
       <!-- Age Field -->
@@ -64,12 +110,28 @@ import {
           (blur)="form.touchAge()"
           min="18"
           max="120"
+          aria-required="true"
+          [attr.aria-invalid]="
+            form.ageShowErrors() && !form.ageValid() ? 'true' : null
+          "
+          [attr.aria-describedby]="
+            form.ageShowErrors() && form.ageErrors().length ? 'age-error' : null
+          "
         />
-        @if (form.ageShowErrors() && form.ageErrors().length) {
-          <div class="form-error" role="alert">
+        <div
+          class="form-error"
+          id="age-error"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+          [attr.aria-hidden]="
+            form.ageShowErrors() && form.ageErrors().length ? null : 'true'
+          "
+        >
+          @if (form.ageShowErrors() && form.ageErrors().length) {
             {{ form.ageErrors()[0] }}
-          </div>
-        }
+          }
+        </div>
       </div>
 
       <!-- Role Field -->
@@ -81,6 +143,15 @@ import {
           [value]="form.role()"
           (change)="form.setRole($event)"
           (blur)="form.touchRole()"
+          aria-required="true"
+          [attr.aria-invalid]="
+            form.roleShowErrors() && !form.roleValid() ? 'true' : null
+          "
+          [attr.aria-describedby]="
+            form.roleShowErrors() && form.roleErrors().length
+              ? 'role-error'
+              : null
+          "
         >
           <option value="">Select a role...</option>
           <option value="Junior Developer">Junior Developer</option>
@@ -88,11 +159,20 @@ import {
           <option value="Senior Developer">Senior Developer</option>
           <option value="Team Lead">Team Lead</option>
         </select>
-        @if (form.roleShowErrors() && form.roleErrors().length) {
-          <div class="form-error" role="alert">
+        <div
+          class="form-error"
+          id="role-error"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+          [attr.aria-hidden]="
+            form.roleShowErrors() && form.roleErrors().length ? null : 'true'
+          "
+        >
+          @if (form.roleShowErrors() && form.roleErrors().length) {
             {{ form.roleErrors()[0] }}
-          </div>
-        }
+          }
+        </div>
       </div>
 
       <!-- Bio Field (conditional) -->
@@ -107,12 +187,30 @@ import {
             (input)="form.setBio($event)"
             (blur)="form.touchBio()"
             placeholder="Tell us about your experience..."
+            aria-required="true"
+            [attr.aria-invalid]="
+              form.bioShowErrors() && !form.bioValid() ? 'true' : null
+            "
+            [attr.aria-describedby]="
+              form.bioShowErrors() && form.bioErrors().length
+                ? 'bio-error'
+                : null
+            "
           ></textarea>
-          @if (form.bioShowErrors() && form.bioErrors().length) {
-            <div class="form-error" role="alert">
+          <div
+            class="form-error"
+            id="bio-error"
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true"
+            [attr.aria-hidden]="
+              form.bioShowErrors() && form.bioErrors().length ? null : 'true'
+            "
+          >
+            @if (form.bioShowErrors() && form.bioErrors().length) {
               {{ form.bioErrors()[0] }}
-            </div>
-          }
+            }
+          </div>
         </div>
       }
 
@@ -124,19 +222,42 @@ import {
             class="form-checkbox"
             type="checkbox"
             [checked]="form.agreeToTerms()"
+            (change)="form.setAgreeToTerms($event)"
             (blur)="form.touchAgreeToTerms()"
+            aria-required="true"
+            [attr.aria-invalid]="
+              form.agreeToTermsShowErrors() && !form.agreeToTermsValid()
+                ? 'true'
+                : null
+            "
+            [attr.aria-describedby]="
+              form.agreeToTermsShowErrors() && form.agreeToTermsErrors().length
+                ? 'agreeToTerms-error'
+                : null
+            "
           />
           <label class="form-checkbox-label" for="agreeToTerms">
             I agree to the terms and conditions *
           </label>
         </div>
-        @if (
-          form.agreeToTermsShowErrors() && form.agreeToTermsErrors().length
-        ) {
-          <div class="form-error" role="alert">
+        <div
+          class="form-error"
+          id="agreeToTerms-error"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+          [attr.aria-hidden]="
+            form.agreeToTermsShowErrors() && form.agreeToTermsErrors().length
+              ? null
+              : 'true'
+          "
+        >
+          @if (
+            form.agreeToTermsShowErrors() && form.agreeToTermsErrors().length
+          ) {
             {{ form.agreeToTermsErrors()[0] }}
-          </div>
-        }
+          }
+        </div>
       </div>
 
       <!-- Form Actions -->
@@ -144,7 +265,7 @@ import {
         <button
           class="btn-primary"
           type="submit"
-          [disabled]="!form.valid() || form.submitting()"
+          [disabled]="form.pending() || form.submitting()"
         >
           @if (form.submitting()) {
             Submitting...
@@ -171,6 +292,10 @@ import {
   `,
 })
 export class BasicValidationFormComponent {
+  // Input for dynamic error display strategy
+  readonly errorDisplayMode = input<ErrorDisplayStrategy>('on-touch');
+
+  // Create form with reactive error strategy (library now supports Signal<ErrorDisplayStrategy>)
   protected readonly form = createVestForm(
     userValidationSuite,
     signal<UserFormModel>({
@@ -181,6 +306,7 @@ export class BasicValidationFormComponent {
       bio: '',
       agreeToTerms: false,
     }),
+    { errorStrategy: this.errorDisplayMode }, // ✅ Pass signal directly - strategy changes reactively!
   );
 
   protected readonly debugForm = asDebuggerForm(this.form);
@@ -188,11 +314,14 @@ export class BasicValidationFormComponent {
   readonly formState = () => this.form;
   readonly debugFormState = () => this.debugForm;
 
-  async onSubmit() {
+  async onSubmit(event?: Event) {
+    event?.preventDefault();
+    event?.stopPropagation();
     try {
       const validData = await this.form.submit();
       console.log('✅ Form submitted successfully:', validData);
     } catch (error) {
+      console.log('DEBUG: basic validation submit caught error');
       console.error('❌ Form submission failed:', error);
     }
   }

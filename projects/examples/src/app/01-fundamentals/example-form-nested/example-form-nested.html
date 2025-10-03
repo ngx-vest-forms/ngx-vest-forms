@@ -32,7 +32,7 @@
             (input)="form.setPersonalInfoFirstName($event)"
             (blur)="form.touchPersonalInfoFirstName()"
             placeholder="Enter first name"
-            class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             [class.border-red-500]="
                 form.personalInfoFirstNameShowErrors() && !form.personalInfoFirstNameValid()
               "
@@ -69,7 +69,7 @@
             (input)="form.setPersonalInfoLastName($event)"
             (blur)="form.touchPersonalInfoLastName()"
             placeholder="Enter last name"
-            class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             [class.border-red-500]="
                 form.personalInfoLastNameShowErrors() && !form.personalInfoLastNameValid()
               "
@@ -107,7 +107,7 @@
           (input)="form.setPersonalInfoEmail($event)"
           (blur)="form.touchPersonalInfoEmail()"
           placeholder="Enter email address"
-          class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           [class.border-red-500]="
               form.personalInfoEmailShowErrors() && !form.personalInfoEmailValid()
             "
@@ -149,7 +149,7 @@
             placeholder="Enter your age"
             min="18"
             max="120"
-            class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             [class.border-red-500]="
                 form.personalInfoAgeShowErrors() && !form.personalInfoAgeValid()
               "
@@ -334,7 +334,7 @@
           (input)="form.setAddressInfoStreet($event)"
           (blur)="form.touchAddressInfoStreet()"
           placeholder="Enter street address"
-          class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           [class.border-red-500]="
               form.addressInfoStreetShowErrors() && !form.addressInfoStreetValid()
             "
@@ -372,7 +372,7 @@
             (input)="form.setAddressInfoCity($event)"
             (blur)="form.touchAddressInfoCity()"
             placeholder="Enter city"
-            class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             [class.border-red-500]="
                 form.addressInfoCityShowErrors() && !form.addressInfoCityValid()
               "
@@ -409,7 +409,7 @@
             (input)="form.setAddressInfoZipCode($event)"
             (blur)="form.touchAddressInfoZipCode()"
             placeholder="12345 or 12345-6789"
-            class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             [class.border-red-500]="
                 form.addressInfoZipCodeShowErrors() && !form.addressInfoZipCodeValid()
               "
@@ -446,7 +446,7 @@
           [value]="form.addressInfoCountry()"
           (change)="form.setAddressInfoCountry($event)"
           (blur)="form.touchAddressInfoCountry()"
-          class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           [class.border-red-500]="
               form.addressInfoCountryShowErrors() && !form.addressInfoCountryValid()
             "
@@ -524,8 +524,8 @@
     <div class="flex gap-4 pt-4">
       <button
         type="submit"
-        class="flex-1 rounded-md bg-blue-600 px-6 py-3 font-medium text-white transition-colors duration-200 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-400"
-        [disabled]="form.pending() || form.submitting()"
+        class="flex-1 rounded-md bg-blue-600 px-6 py-3 font-medium text-white transition-colors duration-200 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-gray-400"
+        [disabled]="!form.valid() || form.pending() || form.submitting()"
       >
         @if (form.submitting()) { Submitting... } @else { Submit }
       </button>
@@ -533,7 +533,7 @@
       <button
         type="button"
         (click)="resetForm()"
-        class="rounded-md bg-gray-600 px-6 py-3 font-medium text-white transition-colors duration-200 hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none"
+        class="rounded-md bg-gray-600 px-6 py-3 font-medium text-white transition-colors duration-200 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
       >
         Reset
       </button>

@@ -48,7 +48,7 @@ const DEFAULT_STRATEGY: ErrorDisplayStrategy = 'on-touch';
       (ngSubmit)="onSubmit()"
       class="form-container"
       aria-labelledby="productFeedbackHeading"
-      [attr.aria-busy]="form.pending()"
+      [attr.aria-busy]="form.pending() || form.submitting() ? 'true' : null"
     >
       <!-- Personal Information Section -->
       <fieldset class="mb-8">
@@ -415,7 +415,7 @@ const DEFAULT_STRATEGY: ErrorDisplayStrategy = 'on-touch';
         <button
           type="submit"
           class="btn-primary"
-          [disabled]="form.submitting()"
+          [disabled]="form.pending() || form.submitting()"
           [attr.aria-describedby]="
             showSubmissionError() ? 'submission-error' : null
           "

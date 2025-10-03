@@ -109,7 +109,11 @@ describe('Error Display Strategies', () => {
     describe('immediate strategy', () => {
       it('should show errors immediately when field has errors', () => {
         const suiteResult = signal<SuiteResult<string, string>>(
-          createMockSuiteResult({ fieldName: fieldPath, hasErrors: true }),
+          createMockSuiteResult({
+            fieldName: fieldPath,
+            hasErrors: true,
+            isTested: true,
+          }),
         );
         const showErrors = computeShowErrors(
           suiteResult,
@@ -140,6 +144,7 @@ describe('Error Display Strategies', () => {
           createMockSuiteResult({
             fieldName: fieldPath,
             hasErrors: true,
+            isTested: true,
             isPending: true,
           }),
         );
@@ -212,16 +217,18 @@ describe('Error Display Strategies', () => {
       it('should show errors for untouched fields after form submission', () => {
         // CRITICAL: This tests the accessibility requirement that submit buttons
         // should NOT be disabled, and clicking submit should show ALL errors,
-        // even for fields the user never touched.
+        // even for fields the user never touched (blurred).
+        // Note: When form is submitted, validation runs first (isTested becomes true),
+        // then errors are displayed based on the strategy.
         const suiteResult = signal<SuiteResult<string, string>>(
           createMockSuiteResult({
             fieldName: fieldPath,
             hasErrors: true,
-            isTested: false, // Field was NEVER touched
+            isTested: false, // Field not yet validated (user hasn't typed or blurred)
           }),
         );
 
-        // Initially, errors should not show (field not touched, form not submitted)
+        // Initially, errors should not show (field not validated, form not submitted)
         const showErrors = computeShowErrors(
           suiteResult,
           fieldPath,
@@ -231,9 +238,17 @@ describe('Error Display Strategies', () => {
         expect(showErrors()).toBe(false);
 
         // User clicks submit (which is NOT disabled for accessibility)
+        // In real code, this triggers validation which sets isTested=true
         submittedSignal.set(true);
+        suiteResult.set(
+          createMockSuiteResult({
+            fieldName: fieldPath,
+            hasErrors: true,
+            isTested: true, // ✅ Validation ran on submit
+          }),
+        );
 
-        // Now errors MUST show, even though field was never touched
+        // Now errors MUST show, even though field was never explicitly touched (blurred)
         expect(showErrors()).toBe(true);
       });
 
@@ -267,6 +282,126 @@ describe('Error Display Strategies', () => {
         );
         expect(showErrors()).toBe(true);
       });
+
+      describe('with explicit fieldTouched signal (WCAG-compliant architecture)', () => {
+        it('should use explicit fieldTouched when provided, ignoring isTested', () => {
+          // This tests the new architecture where validation (isTested) is separate from touch state
+          const fieldTouched = signal(false);
+          const suiteResult = signal<SuiteResult<string, string>>(
+            createMockSuiteResult({
+              fieldName: fieldPath,
+              hasErrors: true,
+              isTested: true, // ✅ Field validated (has isTested=true)
+            }),
+          );
+
+          const showErrors = computeShowErrors(
+            suiteResult,
+            fieldPath,
+            'on-touch',
+            submittedSignal,
+            fieldTouched, // ✅ But explicitly NOT touched
+          );
+
+          // Should NOT show errors because explicit fieldTouched=false overrides isTested=true
+          expect(showErrors()).toBe(false);
+        });
+
+        it('should show errors when explicit fieldTouched is true, even if isTested is false', () => {
+          // Edge case: field marked as touched but not yet validated
+          const fieldTouched = signal(true);
+          const suiteResult = signal<SuiteResult<string, string>>(
+            createMockSuiteResult({
+              fieldName: fieldPath,
+              hasErrors: true,
+              isTested: false, // Not validated yet
+            }),
+          );
+
+          const showErrors = computeShowErrors(
+            suiteResult,
+            fieldPath,
+            'on-touch',
+            submittedSignal,
+            fieldTouched,
+          );
+
+          // Should show errors because explicit fieldTouched=true (user blurred the field)
+          expect(showErrors()).toBe(true);
+        });
+
+        it('should react to fieldTouched signal changes', () => {
+          const fieldTouched = signal(false);
+          const suiteResult = signal<SuiteResult<string, string>>(
+            createMockSuiteResult({
+              fieldName: fieldPath,
+              hasErrors: true,
+              isTested: true,
+            }),
+          );
+
+          const showErrors = computeShowErrors(
+            suiteResult,
+            fieldPath,
+            'on-touch',
+            submittedSignal,
+            fieldTouched,
+          );
+
+          // Initially not showing errors (not touched)
+          expect(showErrors()).toBe(false);
+
+          // User blurs the field (explicit touch event)
+          fieldTouched.set(true);
+
+          // Now errors should show
+          expect(showErrors()).toBe(true);
+        });
+
+        it('should fall back to isTested when fieldTouched is not provided (Vest.js first)', () => {
+          // This tests that Vest.js API is the default/fallback
+          const suiteResult = signal<SuiteResult<string, string>>(
+            createMockSuiteResult({
+              fieldName: fieldPath,
+              hasErrors: true,
+              isTested: true, // Vest says field was tested
+            }),
+          );
+
+          const showErrors = computeShowErrors(
+            suiteResult,
+            fieldPath,
+            'on-touch',
+            submittedSignal,
+            // ✅ No fieldTouched provided - should fall back to isTested
+          );
+
+          // Should show errors because isTested=true is used as fallback
+          expect(showErrors()).toBe(true);
+        });
+
+        it('should not show errors when neither isTested nor fieldTouched are true', () => {
+          const fieldTouched = signal(false);
+          const suiteResult = signal<SuiteResult<string, string>>(
+            createMockSuiteResult({
+              fieldName: fieldPath,
+              hasErrors: true,
+              isTested: false,
+            }),
+          );
+
+          const showErrors = computeShowErrors(
+            suiteResult,
+            fieldPath,
+            'on-touch',
+            submittedSignal,
+            fieldTouched,
+          );
+
+          // Neither validation ran nor field touched - no errors shown
+          expect(showErrors()).toBe(false);
+        });
+      });
     });
 
     describe('on-submit strategy', () => {
@@ -288,7 +423,11 @@ describe('Error Display Strategies', () => {
 
       it('should show errors after submission attempt', () => {
         const suiteResult = signal<SuiteResult<string, string>>(
-          createMockSuiteResult({ fieldName: fieldPath, hasErrors: true }),
+          createMockSuiteResult({
+            fieldName: fieldPath,
+            hasErrors: true,
+            isTested: true,
+          }),
         );
 
         submittedSignal.set(true);
@@ -379,7 +518,11 @@ describe('Error Display Strategies', () => {
 
       it('should update when submission state changes', () => {
         const suiteResult = signal<SuiteResult<string, string>>(
-          createMockSuiteResult({ fieldName: fieldPath, hasErrors: true }),
+          createMockSuiteResult({
+            fieldName: fieldPath,
+            hasErrors: true,
+            isTested: true,
+          }),
         );
         const showErrors = computeShowErrors(
           suiteResult,
@@ -562,6 +705,151 @@ describe('Error Display Strategies', () => {
       );
       expect(manualShow()).toBe(false);
     });
+
+    describe('reactive errorStrategy (Signal support)', () => {
+      // Local scope variables for this describe block
+      const fieldPath = 'email';
+      const submittedSignal = signal(false);
+
+      beforeEach(() => submittedSignal.set(false));
+
+      it('should support dynamic strategy switching', () => {
+        const strategySignal = signal<ErrorDisplayStrategy>('on-submit');
+        const fieldTouched = signal(true);
+        const suiteResult = signal<SuiteResult<string, string>>(
+          createMockSuiteResult({
+            fieldName: fieldPath,
+            hasErrors: true,
+            isTested: true,
+          }),
+        );
+
+        const showErrors = computeShowErrors(
+          suiteResult,
+          fieldPath,
+          strategySignal, // ✅ Pass signal instead of static string
+          submittedSignal,
+          fieldTouched,
+        );
+
+        // Initially on-submit strategy - not submitted yet
+        expect(showErrors()).toBe(false);
+
+        // Switch to on-touch strategy dynamically
+        strategySignal.set('on-touch');
+
+        // Now errors should show (field is touched and has errors)
+        expect(showErrors()).toBe(true);
+
+        // Switch to manual strategy
+        strategySignal.set('manual');
+
+        // Errors should hide (manual never shows automatically)
+        expect(showErrors()).toBe(false);
+      });
+
+      it('should react to strategy changes from immediate to on-touch', () => {
+        const strategySignal = signal<ErrorDisplayStrategy>('immediate');
+        const fieldTouched = signal(false);
+        const suiteResult = signal<SuiteResult<string, string>>(
+          createMockSuiteResult({
+            fieldName: fieldPath,
+            hasErrors: true,
+            isTested: true, // Validated
+          }),
+        );
+
+        const showErrors = computeShowErrors(
+          suiteResult,
+          fieldPath,
+          strategySignal,
+          submittedSignal,
+          fieldTouched,
+        );
+
+        // immediate strategy shows errors when validated
+        expect(showErrors()).toBe(true);
+
+        // Switch to on-touch - errors should hide (field not touched)
+        strategySignal.set('on-touch');
+        expect(showErrors()).toBe(false);
+
+        // User blurs field
+        fieldTouched.set(true);
+
+        // Now errors show again
+        expect(showErrors()).toBe(true);
+      });
+
+      it('should handle all strategy transitions correctly', () => {
+        const strategySignal = signal<ErrorDisplayStrategy>('manual');
+        const suiteResult = signal<SuiteResult<string, string>>(
+          createMockSuiteResult({
+            fieldName: fieldPath,
+            hasErrors: true,
+            isTested: true,
+          }),
+        );
+
+        const showErrors = computeShowErrors(
+          suiteResult,
+          fieldPath,
+          strategySignal,
+          submittedSignal,
+        );
+
+        // manual: never shows
+        expect(showErrors()).toBe(false);
+
+        // Switch to immediate: shows when validated
+        strategySignal.set('immediate');
+        expect(showErrors()).toBe(true);
+
+        // Switch to on-submit: hides until submitted
+        strategySignal.set('on-submit');
+        expect(showErrors()).toBe(false);
+
+        // Submit form
+        submittedSignal.set(true);
+        expect(showErrors()).toBe(true);
+
+        // Switch back to manual: hides again
+        strategySignal.set('manual');
+        expect(showErrors()).toBe(false);
+      });
+
+      it('should work with both static and signal strategies', () => {
+        const suiteResult = signal<SuiteResult<string, string>>(
+          createMockSuiteResult({
+            fieldName: fieldPath,
+            hasErrors: true,
+            isTested: true,
+          }),
+        );
+
+        // Static strategy
+        const staticShowErrors = computeShowErrors(
+          suiteResult,
+          fieldPath,
+          'immediate', // Static string
+          submittedSignal,
+        );
+        expect(staticShowErrors()).toBe(true);
+
+        // Signal strategy
+        const strategySignal = signal<ErrorDisplayStrategy>('immediate');
+        const signalShowErrors = computeShowErrors(
+          suiteResult,
+          fieldPath,
+          strategySignal, // Signal
+          submittedSignal,
+        );
+        expect(signalShowErrors()).toBe(true);
+
+        // Both should behave the same for the same strategy
+        expect(staticShowErrors()).toBe(signalShowErrors());
+      });
+    });
   });
 
   describe('getStrategyInfo', () => {
@@ -604,12 +892,13 @@ describe('Error Display Strategies', () => {
   describe('Strategy Comparison', () => {
     it('should demonstrate different strategy behaviors', () => {
       const testCases = [
-        // Case 1: Field has errors but not touched, not submitting
+        // Case 1: Field has errors but not tested, not submitting
+        // No strategy should show errors if field hasn't been validated yet (isTested=false)
         {
           state: { hasErrors: true, isTested: false },
           submitting: false,
           expected: {
-            immediate: true,
+            immediate: false, // Fixed: can't show errors if validation hasn't run
             'on-touch': false,
             'on-submit': false,
             manual: false,
@@ -626,20 +915,33 @@ describe('Error Display Strategies', () => {
             manual: false,
           },
         },
-        // Case 3: Field has errors and form is submitting (untouched field)
-        // IMPORTANT: on-touch should now show errors after submit, even if untouched
-        // This is critical for accessibility (submit buttons should NOT be disabled)
+        // Case 3: Field has errors and form is submitting (untested field)
+        // IMPORTANT: In real usage, submit triggers validation which sets isTested=true
+        // This test case represents the intermediate state DURING validation
+        // on-touch shows errors immediately when form is submitted (doesn't wait for isTested)
         {
           state: { hasErrors: true, isTested: false },
           submitting: true,
           expected: {
+            immediate: false, // Waits for validation to complete (isTested=true)
+            'on-touch': true, // Shows errors on submit, even before field is individually validated
+            'on-submit': false, // Waits for validation to complete (isTested=true)
+            manual: false,
+          },
+        },
+        // Case 4: Field has errors, validated, and form submitted
+        // This is the CORRECT state after submit - validation has completed (isTested=true)
+        {
+          state: { hasErrors: true, isTested: true },
+          submitting: true,
+          expected: {
             immediate: true,
-            'on-touch': true, // Changed: now shows errors after submit
+            'on-touch': true, // Shows errors after submit, even if never explicitly touched
             'on-submit': true,
             manual: false,
           },
         },
-        // Case 4: Field is valid (no errors expected for any strategy)
+        // Case 5: Field is valid (no errors expected for any strategy)
         {
           state: { hasErrors: false, isTested: true },
           submitting: true,
@@ -708,7 +1010,11 @@ describe('Error Display Strategies', () => {
 
     it('should handle frequent updates efficiently', () => {
       const suiteResult = signal(
-        createMockSuiteResult({ fieldName: 'test', hasErrors: false }),
+        createMockSuiteResult({
+          fieldName: 'test',
+          hasErrors: false,
+          isTested: true,
+        }),
       );
       const submittingSignal = signal(false);
 
@@ -723,7 +1029,11 @@ describe('Error Display Strategies', () => {
       for (let index = 0; index < 100; index++) {
         const hasErrors = index % 2 === 0;
         suiteResult.set(
-          createMockSuiteResult({ fieldName: 'test', hasErrors }),
+          createMockSuiteResult({
+            fieldName: 'test',
+            hasErrors,
+            isTested: true,
+          }),
         );
         expect(showErrors()).toBe(hasErrors);
       }

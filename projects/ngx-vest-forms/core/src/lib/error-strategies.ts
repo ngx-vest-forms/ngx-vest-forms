@@ -11,14 +11,14 @@ import type { ErrorDisplayStrategy } from './vest-form.types';
  * Compute whether errors should be displayed based on the configured strategy
  * @param result - Current Vest suite result signal
  * @param fieldName - Name of the field to check
- * @param strategy - Error display strategy to use
+ * @param strategy - Error display strategy to use (can be static or signal)
  * @param submitted - Whether the form has been submitted (for 'on-submit' strategy)
  * @returns Signal indicating whether errors should be shown
  */
 export function computeShowErrors(
   result: Signal<SuiteResult<string, string>>,
   fieldName: string,
-  strategy: ErrorDisplayStrategy,
+  strategy: ErrorDisplayStrategy | Signal<ErrorDisplayStrategy>,
   hasSubmitted: Signal<boolean>,
   fieldTouched?: Signal<boolean>,
 ): Signal<boolean> {
@@ -26,28 +26,36 @@ export function computeShowErrors(
     const currentResult = result();
     const hasErrors = currentResult.hasErrors(fieldName);
     const isTested = currentResult.isTested(fieldName);
-    const touched = fieldTouched ? fieldTouched() : isTested;
     const isSubmitted = hasSubmitted();
+    // Vest.js first: Use explicit fieldTouched when provided, otherwise fall back to Vest's isTested
+    // This allows precise WCAG control (explicit blur) while respecting Vest's validation state
+    const touched = fieldTouched ? fieldTouched() : isTested;
 
     if (!hasErrors) {
       return false; // No errors to show
     }
 
-    switch (strategy) {
+    // Unwrap strategy (always a signal or function)
+    const currentStrategy =
+      typeof strategy === 'function' ? strategy() : strategy;
+
+    switch (currentStrategy) {
       case 'immediate': {
-        // Show errors as soon as they exist
-        return hasErrors;
+        // Show errors as soon as validation produces them
+        // Still requires validation to have run (isTested=true) - can't show errors that don't exist yet
+        return hasErrors && isTested;
       }
 
       case 'on-touch': {
-        // Show errors after field has been touched OR form has been submitted
-        // This ensures that clicking submit (even with untouched fields) shows all errors
+        // Show errors after field has been explicitly touched (blur) OR form has been submitted
+        // Use explicit touch tracking (fieldTouched) when available
         return (touched || isSubmitted) && hasErrors;
       }
 
       case 'on-submit': {
         // Show errors only after form submission attempt
-        return isSubmitted && hasErrors;
+        // Requires both submission AND that the field was validated (isTested)
+        return isSubmitted && hasErrors && isTested;
       }
 
       case 'manual': {

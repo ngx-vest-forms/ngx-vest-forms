@@ -1,95 +1,206 @@
 import { expect, test } from '@playwright/test';
 
+const removeViteOverlays = async (page: import('@playwright/test').Page) => {
+  await page.evaluate(() => {
+    const overlays = document.querySelectorAll('vite-error-overlay');
+    for (const overlay of overlays) {
+      overlay.remove();
+    }
+  });
+};
+
 test.describe('Minimal Form - V2 Implementation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/fundamentals/minimal-form');
     await page.waitForLoadState('networkidle');
+    await removeViteOverlays(page);
   });
 
-  test('should display the minimal form with email field', async ({ page }) => {
-    await test.step('Verify form structure', async () => {
-      // Check form heading
+  test.describe('page structure', () => {
+    test('renders primary layout elements', async ({ page }) => {
       await expect(
         page.getByRole('heading', { name: /Minimal Form/i }),
       ).toBeVisible();
 
-      // Verify email field is present and properly labeled
       await expect(
         page.getByRole('textbox', { name: /Email Address/i }),
       ).toBeVisible();
 
-      // Submit button should be present and disabled initially
       const submitButton = page.getByRole('button', { name: /Submit/i });
       await expect(submitButton).toBeVisible();
-      await expect(submitButton).toBeDisabled();
-    });
+      await expect(submitButton).toBeEnabled();
 
-    await test.step('Verify debugger is present', async () => {
-      await expect(page.getByText('Form State & Validation')).toBeVisible();
-      await expect(page.getByText('Form Model')).toBeVisible();
-      // The debugger uses <details>/<summary> for collapsible sections
-      // Use first() to get the summary element, not the "No validation errors" message
+      await expect(
+        page.getByRole('heading', { name: /Form State & Validation/i }),
+      ).toBeVisible();
+      await expect(page.getByText('Form Model').first()).toBeVisible();
       await expect(page.getByText('Validation Errors').first()).toBeVisible();
     });
   });
 
-  test('should validate email field correctly', async ({ page }) => {
-    await test.step('Test required field validation', async () => {
-      const emailField = page.getByRole('textbox', { name: /Email Address/i });
-
-      // Interact with field by typing and clearing to trigger touched state
-      await emailField.fill('a');
-      await emailField.fill('');
-      await emailField.blur();
-
-      // Required error should appear in the form field error display
+  test.describe('error display selector', () => {
+    test('lists all available strategies', async ({ page }) => {
       await expect(
-        page.locator('[role="alert"]').filter({ hasText: 'Email is required' }),
-      ).toBeVisible({
-        timeout: 2000,
-      });
+        page.getByRole('radio', { name: /^Immediate$/i }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole('radio', { name: /^On Touch$/i }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole('radio', { name: /^On Submit$/i }),
+      ).toBeVisible();
     });
 
-    await test.step('Test valid email acceptance', async () => {
+    test('defaults to on-touch strategy', async ({ page }) => {
+      const onTouchRadio = page.getByRole('radio', { name: /^On Touch$/i });
+      await expect(onTouchRadio).toBeChecked();
+    });
+
+    test('allows switching strategies', async ({ page }) => {
+      const immediateRadio = page.getByRole('radio', {
+        name: /^Immediate$/i,
+      });
+      const onSubmitRadio = page.getByRole('radio', {
+        name: /^On Submit$/i,
+      });
+
+      await immediateRadio.check();
+      await expect(immediateRadio).toBeChecked();
+
+      await onSubmitRadio.check();
+      await expect(onSubmitRadio).toBeChecked();
+    });
+  });
+
+  test.describe('email field validation', () => {
+    test('shows required error after blur in default on-touch strategy', async ({
+      page,
+    }) => {
+      const emailField = page.getByRole('textbox', {
+        name: /Email Address/i,
+      });
+      const emailError = page.locator('#email-error');
+
+      await expect
+        .poll(async () =>
+          emailError.evaluate((node) => node.getAttribute('aria-hidden')),
+        )
+        .toBe('true');
+
+      await emailField.click();
+      await emailField.blur();
+
+      await expect(emailError).toContainText(/email is required/i);
+      await expect
+        .poll(async () =>
+          emailError.evaluate((node) => node.getAttribute('aria-hidden')),
+        )
+        .not.toBe('true');
+
+      await emailField.fill('user@example.com');
+      await emailField.blur();
+
+      await expect
+        .poll(async () =>
+          emailError.evaluate((node) => node.getAttribute('aria-hidden')),
+        )
+        .toBe('true');
+    });
+
+    test('maintains field value when switching strategies', async ({
+      page,
+    }) => {
+      const emailField = page.getByRole('textbox', {
+        name: /Email Address/i,
+      });
+
+      await emailField.fill('persist@example.com');
+      await emailField.blur();
+
+      await page.getByRole('radio', { name: /^Immediate$/i }).check();
+      await page.getByRole('radio', { name: /^On Submit$/i }).check();
+      await page.getByRole('radio', { name: /^On Touch$/i }).check();
+
+      await expect(emailField).toHaveValue('persist@example.com');
+    });
+  });
+
+  test.describe('error strategies', () => {
+    test('immediate strategy surfaces invalid input during typing', async ({
+      page,
+    }) => {
+      const immediateRadio = page.getByRole('radio', { name: /^Immediate$/i });
       const emailField = page.getByRole('textbox', { name: /Email Address/i });
+      const emailError = page.locator('#email-error');
 
-      // Enter valid email
-      await emailField.fill('test@example.com');
-      await emailField.press('Tab');
+      await immediateRadio.check();
+      await emailField.fill('invalid');
 
-      // Error should disappear
-      await expect(
-        page.locator('[role="alert"]').filter({ hasText: 'Email is required' }),
-      ).not.toBeVisible();
+      await expect(emailError).toContainText(/valid email/i);
+      await expect
+        .poll(async () =>
+          emailError.evaluate((node) => node.getAttribute('aria-hidden')),
+        )
+        .not.toBe('true');
 
-      // Submit button should be enabled
+      await emailField.fill('valid@example.com');
+      await expect
+        .poll(async () =>
+          emailError.evaluate((node) => node.getAttribute('aria-hidden')),
+        )
+        .toBe('true');
+    });
+
+    test('on-submit strategy reveals errors only after submit attempt', async ({
+      page,
+    }) => {
+      const onSubmitRadio = page.getByRole('radio', { name: /^On Submit$/i });
+      const emailError = page.locator('#email-error');
       const submitButton = page.getByRole('button', { name: /Submit/i });
+
+      await onSubmitRadio.check();
+
+      await expect
+        .poll(async () =>
+          emailError.evaluate((node) => node.getAttribute('aria-hidden')),
+        )
+        .toBe('true');
+
+      await submitButton.click();
+
+      await expect(emailError).toContainText(/email is required/i);
+      await expect
+        .poll(async () =>
+          emailError.evaluate((node) => node.getAttribute('aria-hidden')),
+        )
+        .not.toBe('true');
       await expect(submitButton).toBeEnabled();
     });
   });
 
-  test('should display form state in debugger', async ({ page }) => {
-    await test.step('Check form model is displayed', async () => {
-      // Check that the form model section exists and shows JSON
-      const modelSection = page.locator('details:has-text("Form Model")');
-      await expect(modelSection).toBeVisible();
-
-      const jsonDisplay = page.locator('pre code').first();
-      await expect(jsonDisplay).toBeVisible();
-      await expect(jsonDisplay).toContainText('"email"');
-    });
-
-    await test.step('Check validation state updates', async () => {
+  test.describe('submit button accessibility', () => {
+    test('remains enabled even when the form has validation errors', async ({
+      page,
+    }) => {
       const emailField = page.getByRole('textbox', { name: /Email Address/i });
+      const submitButton = page.getByRole('button', { name: /Submit/i });
 
-      // Enter some text and verify it appears in the debugger
-      await emailField.fill('user@example.com');
+      await emailField.click();
+      await emailField.blur();
 
-      // Verify the value appears somewhere in the debugger
-      const jsonDisplay = page.locator('pre code').first();
-      // Note: Due to V2 implementation, the exact structure may vary
-      // but the key functionality should work
-      await expect(jsonDisplay).toContainText('email');
+      await expect(submitButton).toBeEnabled();
     });
+  });
+
+  test('debugger reflects validation state changes', async ({ page }) => {
+    const emailField = page.getByRole('textbox', { name: /Email Address/i });
+    const debuggerValidity = page.getByText(/Valid: ❌/i);
+
+    await expect(debuggerValidity).toBeVisible();
+
+    await emailField.fill('debugger@example.com');
+    await emailField.blur();
+
+    await expect(page.getByText(/debugger@example.com/i)).toBeVisible();
   });
 });

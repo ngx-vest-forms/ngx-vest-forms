@@ -124,6 +124,8 @@ export class UserFormComponent {
 
 ## Testing Requirements
 
+- Prefer to use #runTests in VSCode over terminal commands
+
 ### Unit Tests (Vitest)
 
 - Follow [`.github/instructions/vitest-test.instructions.md`](./instructions/vitest-test.instructions.md)
@@ -134,7 +136,8 @@ export class UserFormComponent {
 
 - Follow [`.github/instructions/playwright.instructions.md`](./instructions/playwright.instructions.md)
 - Use accessible locators
-- Mock APIs with MSW
+- use #playwright and #chrome-devtools for debugging
+- Test real user flows
 
 ## Accessibility Checklist
 

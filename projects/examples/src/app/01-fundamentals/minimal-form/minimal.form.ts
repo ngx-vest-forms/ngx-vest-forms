@@ -1,5 +1,10 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { createVestForm } from 'ngx-vest-forms/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  signal,
+} from '@angular/core';
+import { createVestForm, type ErrorDisplayStrategy } from 'ngx-vest-forms/core';
 import { asDebuggerForm } from '../../ui/debugger/debugger';
 import {
   MinimalFormModel,
@@ -21,9 +26,10 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form
-      (ngSubmit)="onSubmit()"
+      (submit)="onSubmit($event)"
       class="form-container"
-      [attr.aria-busy]="form.pending()"
+      novalidate
+      [attr.aria-busy]="form.pending() || form.submitting() ? 'true' : null"
     >
       <div class="form-field">
         <label class="form-label" for="email"> Email Address </label>
@@ -34,26 +40,39 @@ import {
           type="email"
           [value]="form.email()"
           (input)="form.setEmail($event)"
+          (blur)="form.touchEmail()"
           placeholder="you@example.com"
-          [attr.aria-invalid]="form.emailShowErrors() && !form.emailValid()"
+          aria-required="true"
+          [attr.aria-invalid]="
+            form.emailShowErrors() && !form.emailValid() ? 'true' : null
+          "
           [attr.aria-describedby]="
             form.emailShowErrors() ? 'email-error' : null
           "
           autocomplete="email"
         />
 
-        @if (form.emailShowErrors() && form.emailErrors().length) {
-          <div class="form-error" id="email-error" role="alert">
+        <div
+          class="form-error"
+          id="email-error"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+          [attr.aria-hidden]="
+            form.emailShowErrors() && form.emailErrors().length ? null : 'true'
+          "
+        >
+          @if (form.emailShowErrors() && form.emailErrors().length) {
             {{ form.emailErrors()[0] }}
-          </div>
-        }
+          }
+        </div>
       </div>
 
       <div class="form-actions">
         <button
           class="btn-primary"
           type="submit"
-          [disabled]="!form.valid() || form.pending() || form.submitting()"
+          [disabled]="form.pending() || form.submitting()"
         >
           @if (form.submitting()) {
             Submitting...
@@ -66,10 +85,16 @@ import {
   `,
 })
 export class MinimalForm {
-  // Create form instance using new Vest.js-first approach
+  // Input for dynamic error display strategy
+  readonly errorDisplayMode = input<ErrorDisplayStrategy>('on-touch');
+
+  // Create form with reactive error strategy (library now supports Signal<ErrorDisplayStrategy>)
   protected readonly form = createVestForm(
     minimalFormValidationSuite,
     signal<MinimalFormModel>({ email: '' }),
+    {
+      errorStrategy: this.errorDisplayMode, // ✅ Pass signal directly - strategy changes reactively!
+    },
   );
 
   // Debugger form for development tools
@@ -108,7 +133,9 @@ export class MinimalForm {
   readonly debugFormState = () => this.debugForm;
 
   // Form submission handler with async support
-  async onSubmit() {
+  async onSubmit(event?: Event) {
+    event?.preventDefault();
+    event?.stopPropagation();
     try {
       const validData = await this.form.submit();
       console.log('✅ Form submitted successfully:', validData);
@@ -116,6 +143,7 @@ export class MinimalForm {
       // Here you would typically send to API
       // await this.apiService.createUser(validData);
     } catch (error) {
+      console.log('DEBUG: minimal form submit caught error');
       console.error('❌ Form submission failed:', error);
       // Handle validation errors or API errors
     }

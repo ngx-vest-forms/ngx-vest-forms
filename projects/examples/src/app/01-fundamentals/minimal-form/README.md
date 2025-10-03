@@ -61,9 +61,10 @@ We use native HTML bindings with the Enhanced Field Signals API for clean, perfo
       [attr.aria-describedby]="form.emailShowErrors() ? 'email-error' : null"
     />
 
-    @if (form.emailShowErrors() && form.emailErrors().length) {
-    <div id="email-error" role="alert">{{ form.emailErrors()[0] }}</div>
-    }
+    <div id="email-error" role="alert" aria-live="assertive" aria-atomic="true">
+      @if (form.emailShowErrors() && form.emailErrors().length) { {{
+      form.emailErrors()[0] }} }
+    </div>
   </div>
 
   <button
@@ -160,9 +161,10 @@ Forms **must** be accessible. Essential ARIA attributes include:
 
 - `aria-describedby`: Links input to error messages for screen readers
 - `aria-invalid`: Indicates validation state to assistive technology
-- `role="alert"`: Announces errors when they appear
+- `role="alert"` + `aria-live="assertive"` + `aria-atomic="true"`: Announces blocking errors immediately while preventing partial announcements
 - `id` attributes: Provide targets for `aria-describedby`
 - `<label>` elements: Associate descriptive text with form controls
+- `role="status"` (or `aria-live="polite"`): Use for non-blocking warnings or confirmations so announcements are polite and non-interruptive
 
 ## 🔄 Form State Lifecycle
 

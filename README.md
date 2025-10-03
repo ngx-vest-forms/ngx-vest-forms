@@ -169,6 +169,69 @@ const form = createVestForm(suite, model, {
 | `on-submit` | Show errors only after submit                                | Minimal interruption                         |
 | `manual`    | Developer controls via `touchField()`                        | Complex custom flows                         |
 
+#### Reactive Error Strategy
+
+You can now pass a **signal** for `errorStrategy` to change the strategy dynamically at runtime:
+
+```typescript
+// Create a signal for the error strategy
+const errorMode = signal<ErrorDisplayStrategy>('on-touch');
+
+const form = createVestForm(suite, model, {
+  errorStrategy: errorMode // ✅ Pass signal instead of static string
+});
+
+// Switch strategy at runtime - form reacts automatically!
+errorMode.set('immediate'); // Now shows errors while typing
+errorMode.set('on-submit'); // Now only shows errors after submit
+```
+
+**Use cases:**
+
+- ✅ Toggle between beginner-friendly (on-submit) and expert (immediate) modes
+- ✅ Provide user preferences for error display timing
+- ✅ Switch strategies based on form complexity or user behavior
+- ✅ A/B testing different error display patterns
+
+#### Understanding "on-touch" Strategy
+
+The `on-touch` strategy shows errors when fields are marked as "touched" (Vest's `isTested()` state). Fields become touched when:
+
+1. **User calls `field.touch()`** - typically on blur events (optional)
+2. **Form is submitted** - all fields automatically marked as touched
+
+**Important:** Blur event handlers are **optional**. The "on-touch" strategy will always show errors after submit, even without blur handlers.
+
+```typescript
+// Option 1: Show errors after blur OR submit (better UX)
+<input
+  [value]="form.email()"
+  (input)="form.setEmail($event)"
+  (blur)="form.field('email').touch()"  // ← Optional blur handler
+/>
+
+// Option 2: Show errors only after submit (simpler)
+<input
+  [value]="form.email()"
+  (input)="form.setEmail($event)"
+  // No blur handler - errors appear on submit only
+/>
+```
+
+**When to add blur handlers:**
+
+- ✅ Multi-field forms where users benefit from immediate feedback per field
+- ✅ Forms where users tab through fields (errors show as they move)
+- ❌ Simple 1-3 field forms (submit-only is less intrusive)
+
+#### Touch State vs Error Display
+
+**Key Concept:** Setters (`form.setEmail()`) validate but don't mark fields as touched. This separation enables the "on-touch" strategy to work correctly:
+
+- **Typing** (`(input)="form.setEmail($event)"`) → Validates in background, no errors shown
+- **Blur** (`(blur)="form.field('email').touch()"`) → Marks as touched, errors appear (optional)
+- **Submit** (`form.submit()`) → Marks all fields as touched, all errors appear (automatic)
+
 #### Error Display Behavior Matrix
 
 Understanding when errors appear for each strategy:
@@ -266,13 +329,14 @@ import { userValidationSuite, type UserFormModel } from './user.validations';
   standalone: true,
   template: `
     <form (submit)="onSubmit($event)">
-      <!-- Name Field -->
+      <!-- Name Field (with blur handler for immediate feedback) -->
       <div class="field">
         <label for="name">Name *</label>
         <input
           id="name"
           [value]="form.name() ?? ''"
           (input)="form.setName($event)"
+          (blur)="form.field('name').touch()"
           [attr.aria-invalid]="form.nameShowErrors() && !form.nameValid()"
         />
         @if (form.nameShowErrors() && form.nameErrors().length) {
@@ -280,7 +344,7 @@ import { userValidationSuite, type UserFormModel } from './user.validations';
         }
       </div>
 
-      <!-- Email Field -->
+      <!-- Email Field (with blur handler for immediate feedback) -->
       <div class="field">
         <label for="email">Email *</label>
         <input
@@ -288,6 +352,7 @@ import { userValidationSuite, type UserFormModel } from './user.validations';
           type="email"
           [value]="form.email() ?? ''"
           (input)="form.setEmail($event)"
+          (blur)="form.field('email').touch()"
           [attr.aria-invalid]="form.emailShowErrors() && !form.emailValid()"
         />
         @if (form.emailPending()) {
@@ -298,7 +363,7 @@ import { userValidationSuite, type UserFormModel } from './user.validations';
         }
       </div>
 
-      <!-- Password Fields -->
+      <!-- Password Fields (without blur handlers - errors show on submit only) -->
       <div class="field">
         <label for="password">Password *</label>
         <input
@@ -445,7 +510,33 @@ const suite = staticSafeSuite((data) => {
 
 ## 🎓 Best Practices
 
-### 1. Use `staticSafeSuite` to Prevent Bugs
+### 1. Choose the Right Touch Behavior for Your Form
+
+**Blur handlers are optional** - choose based on form complexity:
+
+```typescript
+// ✅ Multi-field forms: Add blur handlers for immediate feedback
+<input
+  [value]="form.email()"
+  (input)="form.setEmail($event)"
+  (blur)="form.field('email').touch()"  // Errors appear on blur
+/>
+
+// ✅ Simple forms: Skip blur handlers for less interruption
+<input
+  [value]="form.email()"
+  (input)="form.setEmail($event)"
+  // Errors appear on submit only
+/>
+```
+
+**Why setters don't mark as touched:**
+
+- Allows "validate while typing, show errors after blur" UX pattern
+- Prevents error messages from appearing mid-typing (better UX)
+- `form.submit()` automatically marks all fields as touched (errors always shown on submit)
+
+### 2. Use `staticSafeSuite` to Prevent Bugs
 
 ```typescript
 // ❌ BAD - Manual only() guard required
@@ -463,18 +554,116 @@ const suite = staticSafeSuite((data) => {
 
 **Why?** Calling `only(undefined)` tells Vest to run **ZERO tests**, breaking validation.
 
-### 2. Handle Async Validation Properly
+### 2. Handle Async Validation with `test.memo()` and Stateful Suites
+
+**⚠️ CRITICAL:** When using `test.memo()` for async validation caching, you **MUST** use `createSafeSuite` (stateful) instead of `staticSafeSuite` (stateless).
+
+#### Why `test.memo()` Requires Stateful Suites
+
+Vest.js memoization keys include the **suite instance ID**:
 
 ```typescript
-skipWhen(
-  (result) => result.hasErrors('email'),
-  () => {
-    test('email', 'Email taken', async ({ signal }) => {
-      // ✅ Respect AbortSignal
+// ❌ BAD - Breaks test.memo() caching!
+import { staticSafeSuite } from 'ngx-vest-forms/core';
+
+const suite = staticSafeSuite((data) => {
+  test.memo(
+    'email',
+    'Email taken',
+    async ({ signal }) => {
+      // This will be called on EVERY keystroke!
+      // staticSuite creates NEW instance → NEW instance ID → cache miss
       await fetch(`/api/check/${data.email}`, { signal });
-    });
-  },
-);
+    },
+    [data.email],
+  );
+});
+```
+
+**Problem:** `staticSafeSuite` creates a **new suite instance** on every call, breaking memoization. Your async validation will retrigger on every keystroke even with `test.memo()`.
+
+```typescript
+// ✅ GOOD - Enables test.memo() caching!
+import { createSafeSuite } from 'ngx-vest-forms/core';
+
+const suite = createSafeSuite((data) => {
+  test.memo(
+    'email',
+    'Email taken',
+    async ({ signal }) => {
+      // Cached by [data.email] - only runs when email changes!
+      // Stateful suite maintains same instance ID → cache hit
+      await fetch(`/api/check/${data.email}`, { signal });
+    },
+    [data.email],
+  );
+});
+```
+
+**Solution:** Stateful suites (`createSafeSuite`) maintain the **same instance ID** across calls, enabling proper memoization.
+
+#### Complete Async Validation Example
+
+```typescript
+import { createSafeSuite } from 'ngx-vest-forms/core';
+import { enforce, test, skipWhen } from 'vest';
+
+const userSuite = createSafeSuite((data = {}) => {
+  // Basic validation first
+  test('email', 'Email is required', () => {
+    enforce(data.email).isNotEmpty();
+  });
+
+  test('email', 'Invalid email format', () => {
+    enforce(data.email).isEmail();
+  });
+
+  // Skip expensive async check until basic validation passes
+  skipWhen(
+    (result) => result.hasErrors('email'),
+    () => {
+      test.memo(
+        'email',
+        'Email is already taken',
+        async ({ signal }) => {
+          // ✅ Respect AbortSignal for cancellation
+          const response = await fetch(`/api/check-email/${data.email}`, {
+            signal,
+          });
+          if (!response.ok) throw new Error('Email taken');
+        },
+        [data.email], // ✅ Memoization key - only runs when email changes
+      );
+    },
+  );
+});
+```
+
+#### When to Use Which Suite Type
+
+| Suite Type        | Use Case                                  | Works with `test.memo()` |
+| ----------------- | ----------------------------------------- | ------------------------ |
+| `staticSafeSuite` | Forms without async validation            | ❌ No (breaks cache)     |
+| `staticSafeSuite` | Server-side validation (stateless)        | ❌ No (breaks cache)     |
+| `createSafeSuite` | Forms with `test.memo()` async validation | ✅ Yes (maintains cache) |
+| `createSafeSuite` | Need `.subscribe()`, `.get()`, `.reset()` | ✅ Yes                   |
+
+#### Memory Management for Stateful Suites
+
+**Important:** Stateful suites created with `createSafeSuite` maintain internal state. Always clean up:
+
+```typescript
+@Component({...})
+export class MyFormComponent implements OnDestroy {
+  form = createVestForm(
+    createSafeSuite((data) => { /* with test.memo() */ }),
+    initialModel
+  );
+
+  ngOnDestroy() {
+    this.form.dispose(); // ✅ CRITICAL - Prevents memory leaks
+  }
+}
 ```
 
 ### 3. Always Call `dispose()`

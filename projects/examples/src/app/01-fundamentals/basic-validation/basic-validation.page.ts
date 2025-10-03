@@ -1,6 +1,13 @@
-import { ChangeDetectionStrategy, Component, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { type ErrorDisplayStrategy } from 'ngx-vest-forms/core';
 import { ExampleCardsComponent } from '../../ui';
 import { Debugger } from '../../ui/debugger/debugger';
+import { ErrorDisplayModeSelectorComponent } from '../../ui/error-display-mode-selector/error-display-mode-selector.component';
 import { BASIC_VALIDATION_CONTENT } from './basic-validation.content';
 import { BasicValidationFormComponent } from './basic-validation.form';
 
@@ -39,7 +46,12 @@ import { BasicValidationFormComponent } from './basic-validation.form';
 
 @Component({
   selector: 'ngx-basic-validation-page',
-  imports: [BasicValidationFormComponent, ExampleCardsComponent, Debugger],
+  imports: [
+    BasicValidationFormComponent,
+    ExampleCardsComponent,
+    Debugger,
+    ErrorDisplayModeSelectorComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="mb-8">
@@ -53,9 +65,19 @@ import { BasicValidationFormComponent } from './basic-validation.form';
       [demonstrated]="demonstratedContent"
       [learning]="learningContent"
     >
+      <!-- Error Display Mode Selector -->
+      <ngx-error-display-mode-selector
+        [selectedMode]="selectedMode()"
+        (modeChange)="onModeChange($event)"
+        class="mb-6"
+      />
+
       <!-- Side-by-side layout for form and debugger -->
       <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
-        <ngx-basic-validation-form #formComp />
+        <ngx-basic-validation-form
+          #formComp
+          [errorDisplayMode]="selectedMode()"
+        />
         @if (formComponent()?.debugFormState(); as debugForm) {
           <ngx-debugger [form]="debugForm" />
         }
@@ -67,7 +89,13 @@ export class BasicValidationPage {
   protected readonly formComponent =
     viewChild<BasicValidationFormComponent>('formComp');
 
+  protected readonly selectedMode = signal<ErrorDisplayStrategy>('on-touch');
+
   protected readonly demonstratedContent =
     BASIC_VALIDATION_CONTENT.demonstrated;
   protected readonly learningContent = BASIC_VALIDATION_CONTENT.learning;
+
+  protected onModeChange(mode: ErrorDisplayStrategy): void {
+    this.selectedMode.set(mode);
+  }
 }

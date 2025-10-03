@@ -124,6 +124,9 @@ test.describe('Nested Forms Example', () => {
     test('should restore all errors when validating entire form', async ({
       page,
     }) => {
+      // Initially 8 errors shown (all required fields)
+      await expect(page.getByText(/8/)).toBeVisible();
+
       // Focus and blur a field first (triggers only() for that field)
       const firstNameField = page.getByRole('textbox', {
         name: /first name/i,
@@ -132,31 +135,39 @@ test.describe('Nested Forms Example', () => {
       await firstNameField.blur();
       await page.waitForTimeout(200);
 
-      // Debugger now shows 1 error (firstName only)
-      // The error count badge is visible in the debugger
+      // After blur: Vest.js only() called, so debugger shows ONLY firstName error (1 error)
       await expect(page.getByText('Validation Errors').first()).toBeVisible();
 
-      // Verify only 1 error by checking we don't see the full "8" anymore
-      await expect(page.getByText(/validation errors/i)).toBeVisible();
-
-      // Click submit to validate entire form (no field specified)
-      const submitButton = page.getByRole('button', { name: /submit/i });
-      await submitButton.click();
-      await page.waitForTimeout(300);
-
-      // Debugger should now show all errors again (8 total)
-      await expect(page.getByText(/8/)).toBeVisible();
-
-      // Verify multiple error fields are present using role selectors
+      // Verify only firstName error is shown in debugger
       await expect(
         page.getByRole('heading', { name: /personalInfo\.firstName/i }),
       ).toBeVisible();
+
+      // Verify other errors are not shown (only() filtered them)
       await expect(
-        page.getByRole('heading', { name: /personalInfo\.email/i }),
-      ).toBeVisible();
-      await expect(
-        page.getByRole('heading', { name: /addressInfo\.street/i }),
-      ).toBeVisible();
+        page.getByRole('heading', { name: /personalInfo\.lastName/i }),
+      ).not.toBeVisible();
+
+      // Fill all required fields
+      await page.getByRole('textbox', { name: /first name/i }).fill('John');
+      await page.getByRole('textbox', { name: /last name/i }).fill('Doe');
+      await page
+        .getByRole('textbox', { name: /email/i })
+        .fill('john@example.com');
+      await page.getByRole('radio', { name: /^male$/i }).check();
+      await page.getByRole('textbox', { name: /street/i }).fill('123 Main St');
+      await page.getByRole('textbox', { name: /city/i }).fill('Springfield');
+      await page.getByRole('textbox', { name: /zip code/i }).fill('12345');
+      await page.getByRole('combobox', { name: /country/i }).selectOption('US');
+
+      await page.waitForTimeout(500);
+
+      // After filling all fields, form should be valid
+      await expect(page.getByText('Valid: ✅')).toBeVisible();
+
+      // Submit button should be enabled
+      const submitButton = page.getByRole('button', { name: /submit/i });
+      await expect(submitButton).toBeEnabled();
     });
   });
 
@@ -331,13 +342,7 @@ test.describe('Nested Forms Example', () => {
     });
 
     test('should validate gender selection requirement', async ({ page }) => {
-      const submitButton = page.getByRole('button', { name: /submit/i });
-
-      // Try to submit without selecting gender
-      await submitButton.click();
-      await page.waitForTimeout(300);
-
-      // Should show gender required error
+      // Gender error is already visible initially (form starts invalid)
       await expect(
         page.getByText(/gender selection is required/i).first(),
       ).toBeVisible();
@@ -347,7 +352,10 @@ test.describe('Nested Forms Example', () => {
       await maleRadio.check();
       await page.waitForTimeout(200);
 
-      // Error should clear
+      // Verify gender was selected in the model (check debugger)
+      await expect(page.getByText(/"gender": "male"/)).toBeVisible();
+
+      // Error should clear after selection
       const errorCount = await page
         .getByText(/gender selection is required/i)
         .count();

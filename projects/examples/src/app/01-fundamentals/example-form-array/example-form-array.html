@@ -107,7 +107,7 @@
     <button
       type="submit"
       class="btn-primary"
-      [disabled]="form.pending() || form.submitting()"
+      [disabled]="!form.valid() || form.pending() || form.submitting()"
     >
       @if (form.submitting()) { Submitting... } @else { Submit Form }
     </button>

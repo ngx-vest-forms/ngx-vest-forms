@@ -136,9 +136,20 @@ export const userValidationSuite = staticSuite(
     <div id="name-hint" class="form-hint">
       Enter your full name (2-50 characters)
     </div>
-    @if (nameDisplay.shouldShowErrors() && nameDisplay.errors().length) {
-    <div id="name-errors" role="alert">{{ nameDisplay.errors()[0] }}</div>
-    }
+    <div
+      id="name-errors"
+      role="alert"
+      aria-live="assertive"
+      aria-atomic="true"
+      [attr.aria-hidden]="
+        nameDisplay.shouldShowErrors() && nameDisplay.errors().length
+          ? null
+          : 'true'
+      "
+    >
+      @if (nameDisplay.shouldShowErrors() && nameDisplay.errors().length) { {{
+      nameDisplay.errors()[0] }} }
+    </div>
   </div>
   <!-- other fields using ngxFormErrorDisplay ... -->
 </form>
@@ -228,7 +239,18 @@ This example demonstrates the **recommended approach** to error handling:
   />
   <div id="email-hint" class="form-hint">We'll use this to contact you</div>
   @if (fieldDisplay.shouldShowErrors()) {
-  <div id="email-errors" class="errors" role="alert">
+  <div
+    id="email-errors"
+    class="errors"
+    role="alert"
+    aria-live="assertive"
+    aria-atomic="true"
+    [attr.aria-hidden]="
+      fieldDisplay.shouldShowErrors() && fieldDisplay.errors().length
+        ? null
+        : 'true'
+    "
+  >
     @for (error of fieldDisplay.errors(); track error) {
     <div>{{ error }}</div>
     }
@@ -321,9 +343,10 @@ Forms **must** be accessible. Essential ARIA attributes include:
 
 - `aria-describedby`: Links input to help text and error messages
 - `aria-invalid`: Indicates validation state to screen readers
-- `role="alert"`: Announces errors when they appear
+- `role="alert"` + `aria-live="assertive"` + `aria-atomic="true"`: Announces blocking errors immediately and ensures the full message is read
 - `id` attributes: Provide targets for `aria-describedby`
 - `<label>` elements: Associate descriptive text with form controls
+- `role="status"` (or `aria-live="polite"`): Use for non-blocking warnings or confirmations so announcements are polite and non-interruptive
 
 ## 🎓 Educational Value
 

@@ -54,8 +54,8 @@ export type ErrorDisplayStrategy =
  * Configuration options for creating a VestForm instance
  */
 export type VestFormOptions = {
-  /** Strategy for when to display validation errors */
-  errorStrategy?: ErrorDisplayStrategy;
+  /** Strategy for when to display validation errors (can be static or reactive signal) */
+  errorStrategy?: ErrorDisplayStrategy | Signal<ErrorDisplayStrategy>;
 
   /** Whether to enable Enhanced Field Signals API (default: true) */
   enhancedFieldSignals?: boolean;

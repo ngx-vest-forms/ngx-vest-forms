@@ -17,14 +17,64 @@ When generating code for ngx-vest-forms V2:
 
 ## Core API Pattern
 
-### 1. Define Validation Suite (Recommended: Use staticSafeSuite)
+### 1. Define Validation Suite - Choose the Right Suite Type
 
-> **✅ RECOMMENDED: Use `staticSafeSuite` to prevent the `only(undefined)` bug automatically**
+> **⚠️ CRITICAL DECISION:** The choice between `staticSafeSuite` and `createSafeSuite` depends on whether you use `test.memo()` for async validation!
+
+#### When to Use `staticSafeSuite` (Stateless - Default Choice)
+
+**✅ Use for:**
+- Forms without async validation
+- Forms with async validation using `test()` (not `test.memo()`)
+- Server-side validation (stateless)
+- Most common use cases
+
+**✅ RECOMMENDED: Use `staticSafeSuite` to prevent the `only(undefined)` bug automatically**
 >
 > The safe wrapper from `ngx-vest-forms/core` handles the `if (field) { only(field); }` guard pattern for you,
 > eliminating the most common validation bug where calling `only(undefined)` causes ZERO tests to run.
 >
 > **If you see**: Only 1 validation error displays at a time → You forgot the guard or used unsafe pattern!
+
+#### When to Use `createSafeSuite` (Stateful - Required for test.memo())
+
+**⚠️ REQUIRED for:**
+- Forms using `test.memo()` for async validation caching
+- Need `.subscribe()`, `.get()`, `.reset()` methods
+
+**Why?** Vest.js memoization keys include the **suite instance ID**. `staticSafeSuite` creates a NEW instance on every call, breaking `test.memo()` cache. `createSafeSuite` maintains the same instance ID, enabling proper memoization.
+
+```typescript
+// ❌ WRONG - staticSafeSuite + test.memo() = broken cache!
+import { staticSafeSuite } from 'ngx-vest-forms/core';
+
+const suite = staticSafeSuite((data) => {
+  test.memo('email', 'Email taken', async ({ signal }) => {
+    // This will run on EVERY keystroke! Cache is broken.
+    await fetch(`/api/check/${data.email}`, { signal });
+  }, [data.email]);
+});
+
+// ✅ CORRECT - createSafeSuite + test.memo() = proper caching!
+import { createSafeSuite } from 'ngx-vest-forms/core';
+
+const suite = createSafeSuite((data) => {
+  test.memo('email', 'Email taken', async ({ signal }) => {
+    // This only runs when data.email changes! Cache works.
+    await fetch(`/api/check/${data.email}`, { signal });
+  }, [data.email]);
+});
+```
+
+#### Suite Type Decision Matrix
+
+| Scenario                                      | Use                 | Reason                                 |
+| --------------------------------------------- | ------------------- | -------------------------------------- |
+| No async validation                           | `staticSafeSuite`   | Lighter, stateless, server-safe        |
+| Async with `test()` (no memo)                 | `staticSafeSuite`   | No memoization needed                  |
+| Async with `test.memo()`                      | `createSafeSuite`   | **REQUIRED** - maintains instance ID   |
+| Need `.subscribe()` / `.get()` / `.reset()`   | `createSafeSuite`   | Stateful suite provides these methods  |
+| Server-side validation                        | `staticSafeSuite`   | Stateless, no memory leaks             |
 
 ```typescript
 // user.validations.ts
@@ -81,7 +131,7 @@ import { userValidationSuite, type UserModel } from './user.validations';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form novalidate (ngSubmit)="onSubmit()" [attr.aria-busy]="form.pending() || null">
-      <!-- Email Field -->
+      <!-- Email Field (with blur handler for immediate feedback) -->
       <div class="field">
         <label for="email">Email *</label>
         <input
@@ -89,6 +139,7 @@ import { userValidationSuite, type UserModel } from './user.validations';
           type="email"
           [value]="form.email() ?? ''"
           (input)="form.setEmail($event)"
+          (blur)="form.field('email').touch()"
           [attr.aria-invalid]="form.emailShowErrors() && !form.emailValid()"
           [attr.aria-describedby]="form.emailShowErrors() ? 'email-error' : null"
         />
@@ -97,7 +148,7 @@ import { userValidationSuite, type UserModel } from './user.validations';
         }
       </div>
 
-      <!-- Password Field -->
+      <!-- Password Field (without blur - errors show on submit only) -->
       <div class="field">
         <label for="password">Password *</label>
         <input
@@ -163,10 +214,36 @@ form.emailPending();    // Signal<boolean> - async validation pending
 form.emailShowErrors(); // Signal<boolean> - should show errors based on strategy
 
 // Field setters (handle DOM events or direct values)
-form.setEmail($event);  // Accepts Event or string
+form.setEmail($event);  // Accepts Event or string - validates but doesn't mark as touched
 form.setEmail('user@example.com');
-form.touchEmail();      // Mark field as touched
+form.touchEmail();      // Mark field as touched AND validates (use for blur events)
 form.resetEmail();      // Reset to initial value
+```
+
+### Touch State Behavior (WCAG 2.2 Compliant)
+
+**Key Concept:** Setters validate but don't mark fields as touched. This enables the "on-touch" error strategy:
+
+- **`form.setEmail()`** → Validates in background, doesn't show errors (typing)
+- **`form.touchEmail()`** → Marks as touched AND validates (blur event - optional)
+- **`form.submit()`** → Marks all fields as touched, then validates (automatic)
+
+**Blur handlers are optional:**
+```typescript
+// Option 1: Show errors after blur OR submit (better UX for multi-field forms)
+<input
+  [value]="form.email()"
+  (input)="form.setEmail($event)"
+  (blur)="form.field('email').touch()"  // ← Optional blur handler
+/>
+
+// Option 2: Show errors only after submit (simpler, less intrusive)
+<input
+  [value]="form.email()"
+  (input)="form.setEmail($event)"
+  // No blur handler - errors appear on submit only
+/>
+```
 
 // Explicit field API (for complex paths)
 const emailField = form.field('email');
@@ -180,10 +257,12 @@ emailField.set('user@example.com');
 // Text/Email/URL inputs
 [value]="form.fieldName() ?? ''"
 (input)="form.setFieldName($event)"
+(blur)="form.field('fieldName').touch()"  // ← Optional: show errors on blur
 
 // Number inputs
 [value]="form.age() ?? ''"
 (input)="form.setAge($event)" // Auto-converts to number
+(blur)="form.field('age').touch()"  // ← Optional: show errors on blur
 
 // Checkbox inputs
 [checked]="form.agreed() === true"
@@ -202,6 +281,8 @@ emailField.set('user@example.com');
 (change)="form.setLanguages($event)" // Returns array
 ```
 
+**Note:** Blur handlers (`(blur)="form.field().touch()"`) are **optional**. Add them for immediate per-field feedback in multi-field forms. Omit them for simpler forms where errors appear only on submit.
+
 ## Form State Management
 
 ```typescript
@@ -219,6 +300,13 @@ form.validate();     // Re-run all validations
 form.validate('email'); // Re-run specific field validation
 form.dispose();      // Clean up subscriptions (always call in ngOnDestroy)
 ```
+
+## Messaging Semantics & Live Regions
+
+- **Blocking errors** must be rendered inside a container that is present in the DOM on load, marked with `role="alert"`, `aria-live="assertive"`, and `aria-atomic="true"`. Update the text content instead of recreating the element so screen readers announce the change consistently (WCAG Technique [ARIA19](https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA19)).
+- **Non-blocking warnings or successes** should use `role="status"` (implicit `aria-live="polite"`) or `aria-live="polite"` with `aria-atomic="true"`, ensuring they do not interrupt the current announcement (WCAG Technique [ARIA22](https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA22)).
+- **Static hints or helper copy** belong in `aria-describedby` without a live region. If the hint content needs to update dynamically, keep the element in the DOM and add `aria-live="polite"` so users hear the change when it happens.
+- Always connect messages back to their input via `aria-describedby`, even when using `role="alert"` or `role="status"`, so assistive technology users can re-read the guidance after moving focus.
 
 ## Error Display Strategies
 
@@ -304,16 +392,17 @@ form = createVestForm(suite, signal(model));
 
 ## Required Checklist
 
-- [ ] Use `staticSuite` for all validation suites (recommended)
-- [ ] Call `only(field)` at the start of suites
+- [ ] Use `staticSafeSuite` for all validation suites (recommended, prevents bugs)
 - [ ] Create forms with `signal()` models for reactivity
 - [ ] Use native `[value]`/`(input)` instead of `ngModel`
 - [ ] Include `?? ''` for potentially undefined string values
 - [ ] Add proper ARIA attributes (`aria-invalid`, `aria-describedby`)
 - [ ] Use `@if` control flow for error display
+- [ ] **Optional:** Add `(blur)="form.field('name').touch()"` for immediate per-field feedback
 - [ ] Call `form.dispose()` in `ngOnDestroy` (only needed for `create` suites, harmless for `staticSuite`)
 - [ ] Use `skipWhen` for expensive async validations
-- [ ] Handle `AbortSignal` in async tests"onSubmit()"
+- [ ] Handle `AbortSignal` in async tests
+- [ ] Never disable submit button based on validity (WCAG 2.2 - only disable during async operations)"onSubmit()"
   class="form-grid"
   [attr.aria-busy]="form.pending() || null"
 >

@@ -51,6 +51,35 @@ export default defineProject(({ mode }) => ({
         },
       ],
     },
+    /**
+     * Test isolation configuration for Angular projects
+     *
+     * **Why isolation is disabled:**
+     * Per Marmicode's guidance, Angular's TestBed provides sufficient isolation
+     * for test files. TestBed.resetTestingModule() (called in global afterEach)
+     * ensures proper cleanup between tests.
+     *
+     * Disabling Vitest's isolation improves performance significantly:
+     * - Faster test execution (no VM/thread overhead per file)
+     * - Lower memory usage
+     * - Still maintains proper test independence via TestBed
+     *
+     * This is the same pattern used with Karma, which ran all tests in a
+     * single browser window successfully.
+     *
+     * @see https://cookbook.marmicode.io/angular/testing/why-vitest#vitest-isolation-modes
+     */
+    isolate: false,
+    poolOptions: {
+      threads: {
+        // Disable isolation for thread pool (browser mode doesn't use this, but good to be explicit)
+        isolate: false,
+      },
+      forks: {
+        // Disable isolation for fork pool (if ever used)
+        isolate: false,
+      },
+    },
     // Optimize for CI performance
     maxConcurrency: process.env['CI'] ? 1 : 5,
     minThreads: process.env['CI'] ? 1 : undefined,

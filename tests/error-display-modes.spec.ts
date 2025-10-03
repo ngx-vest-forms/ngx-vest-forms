@@ -25,6 +25,48 @@ test.describe('Error Display Modes - Product Feedback Form', () => {
     await page.waitForLoadState('networkidle');
   });
 
+  test.describe('Error Display Mode Selector', () => {
+    test('should have default on-touch strategy selected', async ({ page }) => {
+      const onTouchRadio = page.getByRole('radio', {
+        name: /^On Touch$/i,
+      });
+      await expect(onTouchRadio).toBeChecked();
+    });
+
+    test('should allow switching between strategies', async ({ page }) => {
+      await test.step('Switch to immediate strategy', async () => {
+        const immediateRadio = page.getByRole('radio', {
+          name: /Immediate/i,
+        });
+        await immediateRadio.check();
+        await expect(immediateRadio).toBeChecked();
+      });
+
+      await test.step('Switch to on-submit strategy', async () => {
+        const onSubmitRadio = page.getByRole('radio', {
+          name: /On Submit/i,
+        });
+        await onSubmitRadio.check();
+        await expect(onSubmitRadio).toBeChecked();
+      });
+
+      await test.step('Switch back to on-touch', async () => {
+        const onTouchRadio = page.getByRole('radio', {
+          name: /^On Touch$/i,
+        });
+        await onTouchRadio.check();
+        await expect(onTouchRadio).toBeChecked();
+      });
+    });
+
+    test('should display strategy information', async ({ page }) => {
+      // Verify strategy labels and descriptions are visible
+      await expect(page.getByText('Immediate', { exact: true })).toBeVisible();
+      await expect(page.getByText('On Touch', { exact: true })).toBeVisible();
+      await expect(page.getByText('On Submit', { exact: true })).toBeVisible();
+    });
+  });
+
   test.describe('CRITICAL BUG REGRESSION: Multiple Errors Display', () => {
     test('should display ALL required field errors after fields are touched', async ({
       page,

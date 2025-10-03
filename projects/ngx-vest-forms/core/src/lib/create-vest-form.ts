@@ -54,6 +54,7 @@ export function createVestForm<TModel extends Record<string, unknown>>(
 
   const suiteResult = signal(initialResult);
   let unsubscribe: (() => void) | undefined;
+  let lastAsyncRunToken: symbol | null = null;
 
   if (isReactiveSuite && suite.subscribe) {
     unsubscribe = suite.subscribe((result: SuiteResult<string, string>) => {
@@ -98,8 +99,9 @@ export function createVestForm<TModel extends Record<string, unknown>>(
   const touched = signal(new Set<string>());
 
   // Options with defaults
-  const errorStrategy: ErrorDisplayStrategy =
-    options.errorStrategy || 'on-touch';
+  // Preserve errorStrategy signal reference for reactivity
+  const errorStrategy =
+    options.errorStrategy || signal<ErrorDisplayStrategy>('on-touch');
   const enhancedFieldSignalsEnabled = options.enhancedFieldSignals !== false;
   const includeFields = options.includeFields;
   const excludeFields = options.excludeFields || [];
@@ -123,17 +125,19 @@ export function createVestForm<TModel extends Record<string, unknown>>(
    * - If field specified AND other fields are touched: validate ALL touched fields (accumulation)
    */
   const runSuite = <P extends Path<TModel>>(fieldPath?: P) => {
+    // ✅ WCAG COMPLIANCE: runSuite() does NOT modify touch state
+    // Touch state is managed explicitly by touch() calls only
     const fieldPathString = fieldPath ? String(fieldPath) : undefined;
 
-    if (fieldPathString) {
-      touched.update((current) => {
-        if (current.has(fieldPathString)) {
-          return current;
-        }
-        const next = new Set(current);
-        next.add(fieldPathString);
-        return next;
-      });
+    // CRITICAL: If async validation is pending, skip calling the suite again
+    // to prevent re-triggering async tests and breaking memoization.
+    // The subscription will update when async completes.
+    const currentResult = suiteResult();
+    if (currentResult.isPending()) {
+      // Special case: If validating a DIFFERENT field while async is pending,
+      // we need to decide whether to skip or validate. For now, return current result
+      // to avoid re-triggering pending async tests.
+      return currentResult;
     }
 
     const touchedFields = touched();
@@ -144,8 +148,9 @@ export function createVestForm<TModel extends Record<string, unknown>>(
     if (!fieldPathString || touchedFields.size === 0) {
       // Form-level validation or no touched fields: validate everything
       nextResult = suite(model());
-    } else if (touchedFields.size === 1 && fieldPathString) {
+    } else if (touchedFields.size === 1 && fieldPath) {
       // Only one field touched (current field): optimize by validating just this field
+      // TypeScript knows fieldPath is defined here due to the guard
       nextResult = suite(model(), fieldPath);
     } else {
       // Multiple fields touched: validate ALL touched fields to accumulate errors
@@ -163,6 +168,33 @@ export function createVestForm<TModel extends Record<string, unknown>>(
     }
 
     suiteResult.set(nextResult);
+
+    if (nextResult.isPending()) {
+      if (
+        !isReactiveSuite &&
+        'done' in nextResult &&
+        typeof nextResult.done === 'function'
+      ) {
+        const asyncRunToken = Symbol('vest-async-run');
+        lastAsyncRunToken = asyncRunToken;
+
+        nextResult.done(() => {
+          if (lastAsyncRunToken !== asyncRunToken) {
+            return;
+          }
+
+          lastAsyncRunToken = null;
+          // Vest mutates the SuiteResult instance when async validations settle.
+          // To notify Angular signals, we must call the suite again to get a fresh result.
+          // This is safe because Vest caches async results internally.
+          const freshResult = suite(model());
+          suiteResult.set(freshResult);
+        });
+      }
+    } else {
+      lastAsyncRunToken = null;
+    }
+
     return nextResult;
   };
 
@@ -202,14 +234,8 @@ export function createVestForm<TModel extends Record<string, unknown>>(
     const set = createFieldSetter((newValue: PathValue<TModel, P>) => {
       const updatedModel = setValueByPath(model(), path, newValue);
       model.set(updatedModel);
-      touched.update((current) => {
-        if (current.has(pathKey)) {
-          return current;
-        }
-        const next = new Set(current);
-        next.add(pathKey);
-        return next;
-      });
+      // ✅ WCAG COMPLIANCE: set() validates but does NOT mark as touched
+      // Only touch() should modify touch state
       runSuite(path);
     });
 
@@ -346,6 +372,7 @@ export function createVestForm<TModel extends Record<string, unknown>>(
       unsubscribe?.();
       fieldCache.clear();
       touched.set(new Set());
+      lastAsyncRunToken = null;
     },
   };
 
