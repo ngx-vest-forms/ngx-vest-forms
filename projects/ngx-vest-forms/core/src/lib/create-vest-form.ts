@@ -9,6 +9,7 @@ import {
   inject,
   makeEnvironmentProviders,
   signal,
+  type Signal,
   WritableSignal,
 } from '@angular/core';
 import type { SuiteResult } from 'vest';
