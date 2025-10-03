@@ -28,9 +28,14 @@ jobs:
       - name: Install
         run: npm ci
       - name: Rebuild native dependencies
-        run: npm rebuild @swc/core
+        run: |
+          npm rebuild @swc/core
+          npm install --force @swc/core-linux-x64-gnu @swc/core-linux-x64-musl
+      - name: Verify SWC installation
+        run: |
+          node -e "try { require('@swc/core'); console.log('SWC loaded successfully'); } catch(e) { console.error('SWC failed to load:', e.message); process.exit(1); }"
       - name: Playwright install
-        run: npx playwright install
+        run: npx playwright install --with-deps
       - name: Test
         run: npm run test:ci
       - name: Integration test
