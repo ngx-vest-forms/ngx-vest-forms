@@ -67,7 +67,7 @@ import { NgxVestFormBusyDirective } from './lib/directives/ngx-vest-form-busy.di
  *
  * - **WCAG 2.2 Compliance**: Automatic ARIA attributes for accessibility
  * - **Less Boilerplate**: Reduces template code from ~15 lines to ~3 per field
- * - **Opt-Out**: Use `ngxVestAriaDisabled`, `ngxVestTouchDisabled`, or `ngxVestFormBusyDisabled` to disable per element
+ * - **Opt-Out**: Use `ngxVestAutoAriaDisabled`, `ngxVestAutoTouchDisabled`, or `ngxVestAutoFormBusyDisabled` to disable per element
  * - **Type-Safe**: Readonly tuple prevents accidental modifications
  *
  * @see {@link NgxVestAutoAriaDirective} - Auto ARIA attributes for controls

@@ -309,7 +309,7 @@ describe('NgxVestAutoAriaDirective', () => {
   });
 
   describe('Opt-Out Attribute', () => {
-    it('should not apply when ngxVestAriaDisabled attribute is present', async () => {
+    it('should not apply when ngxVestAutoAriaDisabled attribute is present', async () => {
       @Component({
         standalone: true,
         imports: [NgxVestAutoAriaDirective],
@@ -317,7 +317,7 @@ describe('NgxVestAutoAriaDirective', () => {
           <input
             id="email"
             type="email"
-            ngxVestAriaDisabled
+            ngxVestAutoAriaDisabled
             [value]="form.email()"
             (input)="form.setEmail($event)"
           />

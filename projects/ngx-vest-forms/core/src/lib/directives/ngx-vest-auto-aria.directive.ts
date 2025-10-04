@@ -15,11 +15,11 @@ import type { VestForm } from '../vest-form.types';
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector
   selector: `
-    input[value]:not([ngxVestAriaDisabled]),
-    textarea[value]:not([ngxVestAriaDisabled]),
-    select[value]:not([ngxVestAriaDisabled]),
-    input[type="checkbox"][checked]:not([ngxVestAriaDisabled]),
-    input[type="radio"][checked]:not([ngxVestAriaDisabled])
+    input[value]:not([ngxVestAutoAriaDisabled]),
+    textarea[value]:not([ngxVestAutoAriaDisabled]),
+    select[value]:not([ngxVestAutoAriaDisabled]),
+    input[type="checkbox"][checked]:not([ngxVestAutoAriaDisabled]),
+    input[type="radio"][checked]:not([ngxVestAutoAriaDisabled])
   `,
   host: {
     '[attr.aria-invalid]': 'ariaInvalid()',

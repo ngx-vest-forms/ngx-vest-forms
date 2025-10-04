@@ -32,7 +32,7 @@ export type NgxVestFormsConfig = {
    *
    * When `true`, the NgxVestAutoTouchDirective will automatically apply to
    * all form controls with `[value]` bindings (unless opted out with
-   * `ngxVestTouchDisabled` attribute).
+   * `ngxVestAutoTouchDisabled` attribute).
    *
    * When `false`, the directive will be disabled even if imported.
    *
@@ -45,7 +45,7 @@ export type NgxVestFormsConfig = {
    *
    * When `true`, the NgxVestAutoAriaDirective will automatically apply to
    * all form controls with `[value]` bindings (unless opted out with
-   * `ngxVestAriaDisabled` attribute).
+   * `ngxVestAutoAriaDisabled` attribute).
    *
    * When `false`, the directive will be disabled even if imported.
    *
@@ -58,7 +58,7 @@ export type NgxVestFormsConfig = {
    *
    * When `true`, the NgxVestFormBusyDirective will automatically apply to
    * all `<form>` elements with `NGX_VEST_FORM` provider (unless opted out with
-   * `ngxVestFormBusyDisabled` attribute).
+   * `ngxVestAutoFormBusyDisabled` attribute).
    *
    * When `false`, the directive will be disabled even if imported.
    *

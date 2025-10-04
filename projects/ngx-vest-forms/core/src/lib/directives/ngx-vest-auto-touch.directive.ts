@@ -28,7 +28,7 @@ import type { VestForm } from '../vest-form.types';
  * - **Auto-Application**: Applies to all inputs/textareas/selects with `[value]` binding
  * - **Strategy-Aware**: Only active when `errorStrategy === 'on-touch'`
  * - **Field Name Extraction**: Automatic extraction via 4-tier priority system
- * - **Opt-Out Mechanism**: Use `ngxVestTouchDisabled` attribute to exclude specific fields
+ * - **Opt-Out Mechanism**: Use `ngxVestAutoTouchDisabled` attribute to exclude specific fields
  * - **Global Configuration**: Configure behavior via `provideNgxVestFormsConfig()`
  *
  * ## Usage
@@ -86,7 +86,7 @@ import type { VestForm } from '../vest-form.types';
  * ```html
  * <!-- Exclude specific fields from auto-touch -->
  * <input
- *   ngxVestTouchDisabled
+ *   ngxVestAutoTouchDisabled
  *   [value]="form.specialField()"
  *   (blur)="customBlurLogic()"
  * />
@@ -165,9 +165,9 @@ import type { VestForm } from '../vest-form.types';
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector
   selector: `
-    input[value]:not([ngxVestTouchDisabled]),
-    textarea[value]:not([ngxVestTouchDisabled]),
-    select[value]:not([ngxVestTouchDisabled])
+    input[value]:not([ngxVestAutoTouchDisabled]),
+    textarea[value]:not([ngxVestAutoTouchDisabled]),
+    select[value]:not([ngxVestAutoTouchDisabled])
   `,
   standalone: true,
   host: {

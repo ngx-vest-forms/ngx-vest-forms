@@ -525,7 +525,7 @@ describe('NgxVestAutoTouchDirective', () => {
   });
 
   describe('Opt-Out Mechanism', () => {
-    it('should NOT apply when ngxVestTouchDisabled attribute is present', async () => {
+    it('should NOT apply when ngxVestAutoTouchDisabled attribute is present', async () => {
       const form = createVestForm(testSuite, signal({ email: '' }));
       const touchSpy = vi.fn();
       form.field('email').touch = touchSpy;
@@ -539,7 +539,7 @@ describe('NgxVestAutoTouchDirective', () => {
             id="email"
             type="email"
             [value]="''"
-            ngxVestTouchDisabled
+            ngxVestAutoTouchDisabled
             data-testid="email-input"
           />
         `,

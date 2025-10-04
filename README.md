@@ -243,7 +243,7 @@ The `NgxVestFormBusyDirective` (included in `NgxVestForms`) adds `aria-busy` to 
 
 ```typescript
 // Disable for specific form
-<form ngxVestFormBusyDisabled [attr.aria-busy]="customLogic()">
+<form ngxVestAutoFormBusyDisabled [attr.aria-busy]="customLogic()">
   <!-- Manual control -->
 </form>
 
@@ -750,13 +750,13 @@ import { NgxVestForms } from 'ngx-vest-forms/core';
 
 ```typescript
 // Disable auto-ARIA for specific input
-<input [value]="form.email()" ngxVestAriaDisabled />
+<input [value]="form.email()" ngxVestAutoAriaDisabled />
 
 // Disable auto-touch for specific input
-<input [value]="form.email()" ngxVestTouchDisabled />
+<input [value]="form.email()" ngxVestAutoTouchDisabled />
 
 // Disable auto-busy for specific form
-<form ngxVestFormBusyDisabled [attr.aria-busy]="customLogic()">
+<form ngxVestAutoFormBusyDisabled [attr.aria-busy]="customLogic()">
 
 // Global disable via config
 provideNgxVestFormsConfig({

@@ -5,7 +5,7 @@
  * - aria-busy='true' when form is pending or submitting (string, not boolean)
  * - aria-busy removed (null) when form is idle
  * - Global config disable via autoFormBusy: false
- * - Opt-out via ngxVestFormBusyDisabled attribute
+ * - Opt-out via ngxVestAutoFormBusyDisabled attribute
  */
 
 import { Component, signal } from '@angular/core';
@@ -199,12 +199,12 @@ describe('NgxVestFormBusyDirective', () => {
   });
 
   describe('Opt-Out Attribute', () => {
-    it('should not apply when ngxVestFormBusyDisabled attribute is present', async () => {
+    it('should not apply when ngxVestAutoFormBusyDisabled attribute is present', async () => {
       @Component({
         standalone: true,
         imports: [NgxVestFormBusyDirective],
         template: `
-          <form ngxVestFormBusyDisabled (submit)="onSubmit($event)">
+          <form ngxVestAutoFormBusyDisabled (submit)="onSubmit($event)">
             <input
               id="email"
               type="email"

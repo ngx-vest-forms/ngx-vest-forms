@@ -14,7 +14,7 @@ import type { VestForm } from '../vest-form.types';
  * - **Auto-Application**: Applies to all `<form>` elements with `NGX_VEST_FORM` provider
  * - **WCAG 2.2 Compliant**: Uses string `"true"` per ARIA spec (not boolean)
  * - **Reactive**: Updates automatically via computed signal
- * - **Opt-Out Mechanism**: Use `ngxVestFormBusyDisabled` attribute to exclude specific forms
+ * - **Opt-Out Mechanism**: Use `ngxVestAutoFormBusyDisabled` attribute to exclude specific forms
  * - **Global Configuration**: Configure behavior via `provideNgxVestFormsConfig()`
  *
  * ## Usage
@@ -48,7 +48,7 @@ import type { VestForm } from '../vest-form.types';
  *
  * ```html
  * <!-- Exclude specific forms from auto aria-busy -->
- * <form ngxVestFormBusyDisabled (submit)="onSubmit($event)">
+ * <form ngxVestAutoFormBusyDisabled (submit)="onSubmit($event)">
  *   <!-- Manual aria-busy management -->
  * </form>
  * ```
@@ -150,7 +150,7 @@ import type { VestForm } from '../vest-form.types';
  */
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'form:not([ngxVestFormBusyDisabled])',
+  selector: 'form:not([ngxVestAutoFormBusyDisabled])',
   standalone: true,
   host: {
     '[attr.aria-busy]': 'ariaBusy()',
