@@ -4,7 +4,11 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { createVestForm, type ErrorDisplayStrategy } from 'ngx-vest-forms/core';
+import {
+  createVestForm,
+  NgxVestForms,
+  type ErrorDisplayStrategy,
+} from 'ngx-vest-forms/core';
 import { asDebuggerForm } from '../../ui/debugger/debugger';
 import {
   MinimalFormModel,
@@ -12,18 +16,19 @@ import {
 } from './minimal-form.validations';
 
 /**
- * Modern Minimal Form using Vest.js-first approach
+ * Modern Minimal Form using Vest.js-first approach with Auto-ARIA
  *
  * Key improvements in V2:
  * - Direct createVestForm() usage instead of directive
  * - Enhanced Field Signals API via Proxy (form.email(), form.emailValid())
  * - Native HTML [value] and (input) bindings
- * - No directive dependencies - pure Vest.js + Angular signals
+ * - NgxVestForms bundle for automatic ARIA attributes and touch detection
  * - Better TypeScript support and performance
  */
 @Component({
   selector: 'ngx-minimal-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [NgxVestForms],
   template: `
     <form
       (submit)="onSubmit($event)"
@@ -40,32 +45,12 @@ import {
           type="email"
           [value]="form.email()"
           (input)="form.setEmail($event)"
-          (blur)="form.touchEmail()"
           placeholder="you@example.com"
           aria-required="true"
-          [attr.aria-invalid]="
-            form.emailShowErrors() && !form.emailValid() ? 'true' : null
-          "
-          [attr.aria-describedby]="
-            form.emailShowErrors() ? 'email-error' : null
-          "
           autocomplete="email"
         />
 
-        <div
-          class="form-error"
-          id="email-error"
-          role="alert"
-          aria-live="assertive"
-          aria-atomic="true"
-          [attr.aria-hidden]="
-            form.emailShowErrors() && form.emailErrors().length ? null : 'true'
-          "
-        >
-          @if (form.emailShowErrors() && form.emailErrors().length) {
-            {{ form.emailErrors()[0] }}
-          }
-        </div>
+        <ngx-form-error [field]="form.emailField()" />
       </div>
 
       <div class="form-actions">

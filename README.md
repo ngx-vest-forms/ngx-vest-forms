@@ -1,39 +1,26 @@
-# ngx-vest-forms - v2
+# ngx-vest-forms (v2)
 
-> **Vest-First Form Validation for Angular**
-> A lightweight, framework-agnostic form validation library that puts Vest.js at the core and treats Angular as an optional integration layer.
+> **The most productive way to build accessible forms in Angular**
+> Vest-first validation with automatic accessibility, zero boilerplate, and built-in best practices.
 
 [![npm version](https://badge.fury.io/js/ngx-vest-forms.svg)](https://www.npmjs.com/package/ngx-vest-forms)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## � What's New in V2?
+## What You Get for Free
 
-V2 represents a **complete architectural shift** from Angular Forms to Vest-first validation:
+ngx-vest-forms eliminates the tedious parts of form development:
 
-| Aspect                | V1 (NgForm-centric)     | V2 (Vest-first)          |
-| --------------------- | ----------------------- | ------------------------ |
-| **Core Dependency**   | Angular FormsModule     | Vest.js                  |
-| **Form State**        | NgForm controls         | Vest validation result   |
-| **Touch Detection**   | Manual blur handlers    | Automatic via validation |
-| **API Style**         | Directive-based         | Factory function         |
-| **Bundle Size**       | ~8KB (with FormsModule) | ~3KB (core only)         |
-| **Framework Lock-in** | Angular-specific        | Framework-agnostic       |
+| Feature                 | Without ngx-vest-forms                                    | With ngx-vest-forms                |
+| ----------------------- | --------------------------------------------------------- | ---------------------------------- |
+| **ARIA Attributes**     | 15+ lines per field (aria-invalid, aria-describedby, IDs) | ✅ **Automatic**                   |
+| **Error Display**       | Custom component + state management                       | ✅ **Built-in `<ngx-form-error>`** |
+| **Touch Detection**     | Manual blur handlers + state tracking                     | ✅ **Automatic**                   |
+| **Async Validation**    | Race conditions + AbortController wiring                  | ✅ **Built-in with `test.memo()`** |
+| **Field Signals**       | Manual wiring (value, valid, errors, etc.)                | ✅ **Auto-generated proxies**      |
+| **Code per Field**      | ~20-30 lines                                              | **~3-5 lines**                     |
+| **WCAG 2.2 Compliance** | Manual implementation                                     | ✅ **By default**                  |
 
-### Why the Change?
-
-**V1 Problem**: Attempting to bridge two incompatible paradigms (Angular Forms + Vest) created complexity:
-
-- Double bookkeeping of state
-- Timing bugs between NgForm and Vest
-- Unnecessary Angular dependencies
-- Complex synchronization logic
-
-**V2 Solution**: Make Vest.js the single source of truth:
-
-- ✅ **Simpler**: One state source (Vest)
-- ✅ **Faster**: No double validation
-- ✅ **Lighter**: No FormsModule required
-- ✅ **Flexible**: Works with any UI framework
+**Result:** Write **80% less code** with **better accessibility** than handwritten forms.
 
 ## 📦 Installation
 
@@ -41,17 +28,21 @@ V2 represents a **complete architectural shift** from Angular Forms to Vest-firs
 npm install ngx-vest-forms vest
 ```
 
-## 🎯 Quick Start - No FormsModule Required
+## ⚡ Quick Start - Batteries Included
 
-Unlike V1, V2 works with **pure Angular Signals and standard HTML**:
+Here's a **complete, production-ready, accessible** contact form in under 50 lines:
 
 ```typescript
-import { Component } from '@angular/core';
-import { createVestForm, staticSafeSuite } from 'ngx-vest-forms/core';
+import { Component, signal } from '@angular/core';
+import {
+  createVestForm,
+  NgxVestForms,
+  staticSafeSuite,
+} from 'ngx-vest-forms/core';
 import { test, enforce } from 'vest';
 
-// 1. Define validation suite
-const emailSuite = staticSafeSuite((data = {}) => {
+// 1. Define validation rules
+const contactSuite = staticSafeSuite((data = {}) => {
   test('email', 'Email is required', () => {
     enforce(data.email).isNotEmpty();
   });
@@ -59,73 +50,99 @@ const emailSuite = staticSafeSuite((data = {}) => {
   test('email', 'Invalid email format', () => {
     enforce(data.email).isEmail();
   });
+
+  test('message', 'Message is required', () => {
+    enforce(data.message).isNotEmpty();
+  });
 });
 
-// 2. Create form component (no FormsModule!)
+// 2. Build your form (NgxVestForms = auto-ARIA + auto-touch + error component)
 @Component({
-  selector: 'app-email-form',
+  selector: 'app-contact',
   standalone: true,
+  imports: [NgxVestForms], // ← ONE import for all features!
   template: `
-    <form (submit)="handleSubmit($event)">
-      <input
-        type="email"
-        [value]="form.email()"
-        (input)="form.setEmail($event)"
-        placeholder="Enter email"
-      />
+    <form (submit)="onSubmit($event)">
+      <div>
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          [value]="form.email()"
+          (input)="form.setEmail($event)"
+        />
+        <!-- ✅ Auto ARIA: aria-invalid + aria-describedby + unique IDs -->
+        <!-- ✅ Auto touch: errors appear after blur or submit -->
+        <ngx-form-error [field]="form.emailField()" />
+      </div>
 
-      @if (form.emailShowErrors()) {
-        <span class="error">{{ form.emailErrors()[0] }}</span>
-      }
+      <div>
+        <label for="message">Message</label>
+        <textarea
+          id="message"
+          [value]="form.message()"
+          (input)="form.setMessage($event)"
+        ></textarea>
+        <ngx-form-error [field]="form.messageField()" />
+      </div>
 
-      <button [disabled]="!form.valid() || form.pending()">
-        {{ form.pending() ? 'Validating...' : 'Submit' }}
+      <button type="submit" [disabled]="form.pending()">
+        {{ form.pending() ? 'Validating...' : 'Send' }}
       </button>
     </form>
   `,
 })
-export class EmailFormComponent {
-  form = createVestForm(emailSuite, { email: '' });
+export class ContactFormComponent {
+  form = createVestForm(contactSuite, signal({ email: '', message: '' }));
 
-  async handleSubmit(event: Event) {
+  async onSubmit(event: Event) {
     event.preventDefault();
-    try {
-      const validData = await this.form.submit();
-      console.log('✅ Valid:', validData);
-    } catch {
-      console.log('❌ Invalid:', this.form.errors());
-    }
+    const data = await this.form.submit(); // ✅ Auto-validates, throws if invalid
+    console.log('✅ Sending:', data);
   }
 
   ngOnDestroy() {
-    this.form.dispose(); // Clean up
+    this.form.dispose();
   }
 }
 ```
 
-## 🎨 Key Features
+**That's it!** You now have:
 
-### 1. Vest-First Architecture
+- ✅ WCAG 2.2 Level AA compliant form
+- ✅ Automatic `aria-invalid="true"` when fields have errors
+- ✅ Automatic `aria-describedby` linking errors to inputs
+- ✅ Errors appear after blur or submit (configurable)
+- ✅ Visual error messages with proper semantic markup
+- ✅ Dark mode support
+- ✅ Async validation with race condition protection
 
-In V2, **Vest.js owns all validation logic and state**. Angular Signals provide reactivity, but Vest is the source of truth.
+## 🎯 Core Concepts
+
+### The NgxVestForms Constant
+
+Import **one constant** to get all convenience features:
 
 ```typescript
-// V1 (NgForm-centric) ❌
-<form ngxVestForm [vestSuite]="suite" [(formValue)]="model">
-  <input name="email" [(ngModel)]="model.email" />
-</form>
+import { NgxVestForms } from 'ngx-vest-forms/core';
 
-// V2 (Vest-first) ✅
-const form = createVestForm(suite, { email: '' });
-
-<form>
-  <input [value]="form.email()" (input)="form.setEmail($event)" />
-</form>
+@Component({
+  imports: [NgxVestForms], // Includes:
+  // - NgxVestAutoAriaDirective (auto aria-invalid + aria-describedby)
+  // - NgxVestAutoTouchDirective (auto touch detection)
+  // - NgxFormErrorComponent (styled error display)
+})
 ```
 
-### 2. Enhanced Field Signals API
+**Benefits:**
 
-V2 automatically generates field accessors via **Proxy** — no manual wiring required:
+- Type-safe (typed as `const` array)
+- Tree-shakeable (only what you use)
+- Single import line vs. three separate imports
+
+### Field Signals API (Auto-Generated)
+
+The form proxy automatically creates signals for every field:
 
 ```typescript
 const form = createVestForm(suite, {
@@ -133,495 +150,224 @@ const form = createVestForm(suite, {
   profile: { name: '', age: 0 },
 });
 
-// Automatic field signals (camelCase conversion)
-form.email(); // Signal<string> - field value
-form.emailValid(); // Signal<boolean> - field validity
-form.emailErrors(); // Signal<string[]> - field errors
-form.emailTouched(); // Signal<boolean> - user interacted
+// ✅ Value signals (read-only)
+form.email(); // Signal<string>
+form.profileName(); // Nested: profile.name → profileName()
+
+// ✅ Validation signals (computed, read-only)
+form.emailValid(); // Signal<boolean>
+form.emailErrors(); // Signal<string[]>
+form.emailTouched(); // Signal<boolean>
 form.emailPending(); // Signal<boolean> - async validation
-form.emailShowErrors(); // Signal<boolean> - should show errors
+form.emailShowErrors(); // Signal<boolean> - based on error strategy
 
-// Automatic field setters (handles Events or raw values)
-form.setEmail($event); // Accepts DOM Event
-form.setEmail('user@example.com'); // Or raw string
-form.touchEmail(); // Mark as touched
+// ✅ Field object (for advanced usage)
+form.emailField(); // Complete field state for <ngx-form-error>
+
+// ✅ Setters (handle Events or raw values)
+form.setEmail($event); // Accepts DOM Event from (input)
+form.setEmail('test@example.com'); // Or raw value
+form.touchEmail(); // Mark as touched (optional - auto on blur)
 form.resetEmail(); // Reset to initial value
-
-// Nested field access (dot.path → camelCase)
-form.profileName(); // profile.name → profileName()
-form.setProfileName(); // profile.name → setProfileName()
 ```
 
-### 3. Zero-Configuration Error Display Component
+### Automatic Accessibility
 
-The `NgxFormErrorComponent` eliminates repetitive error display boilerplate, reducing template code by **93%** while ensuring WCAG 2.2 compliance.
-
-#### Without NgxFormErrorComponent (Manual Approach)
+The `NgxVestAutoAriaDirective` (included in `NgxVestForms`) adds ARIA attributes automatically:
 
 ```typescript
-import { Component, signal } from '@angular/core';
-import { createVestForm } from 'ngx-vest-forms/core';
-import { contactValidations } from './contact.validations';
+// Your template (what you write):
+<input
+  id="email"
+  [value]="form.email()"
+  (input)="form.setEmail($event)"
+/>
+<ngx-form-error [field]="form.emailField()" />
 
-@Component({
-  selector: 'app-contact-form',
-  template: `
-    <form (ngSubmit)="onSubmit()">
-      <!-- Email Field - 15+ lines of boilerplate per field -->
-      <label for="email">Email *</label>
-      <input
-        id="email"
-        type="email"
-        [value]="form.email() ?? ''"
-        (input)="form.setEmail($event)"
-        (blur)="form.touchEmail()"
-        [attr.aria-invalid]="form.emailShowErrors() && !form.emailValid()"
-        [attr.aria-describedby]="form.emailShowErrors() ? 'email-error' : null"
-      />
-      <!-- Manual error display with ARIA attributes -->
-      @if (form.emailShowErrors() && form.emailErrors().length) {
-        <div
-          id="email-error"
-          class="error-container"
-          role="alert"
-          aria-live="assertive"
-          aria-atomic="true"
-        >
-          @for (error of form.emailErrors(); track error) {
-            <p class="error-message">{{ error }}</p>
-          }
-        </div>
-      }
-
-      <!-- Name Field - Another 15+ lines... -->
-      <label for="name">Name *</label>
-      <input
-        id="name"
-        type="text"
-        [value]="form.name() ?? ''"
-        (input)="form.setName($event)"
-        (blur)="form.touchName()"
-        [attr.aria-invalid]="form.nameShowErrors() && !form.nameValid()"
-        [attr.aria-describedby]="form.nameShowErrors() ? 'name-error' : null"
-      />
-      @if (form.nameShowErrors() && form.nameErrors().length) {
-        <div
-          id="name-error"
-          class="error-container"
-          role="alert"
-          aria-live="assertive"
-          aria-atomic="true"
-        >
-          @for (error of form.nameErrors(); track error) {
-            <p class="error-message">{{ error }}</p>
-          }
-        </div>
-      }
-
-      <button type="submit" [disabled]="form.pending()">Submit</button>
-    </form>
-  `,
-})
-export class ContactFormComponent {
-  protected readonly form = createVestForm(
-    contactValidations,
-    signal({ email: '', name: '' }),
-  );
-
-  protected onSubmit = async () => {
-    try {
-      await this.form.submit();
-      console.log('Valid:', this.form.model());
-    } catch {
-      console.log('Invalid:', this.form.errors());
-    }
-  };
-}
+// Rendered HTML (what users get):
+<input
+  id="email"
+  value="test@example.com"
+  aria-invalid="true"          // ← Added automatically!
+  aria-describedby="email-error" // ← Links to error message!
+/>
+<p id="email-error" role="alert">Invalid email format</p>
 ```
 
-#### With NgxFormErrorComponent (Recommended)
+**How it works:**
 
-```typescript
-import { Component, signal } from '@angular/core';
-import { createVestForm, NgxFormErrorComponent } from 'ngx-vest-forms/core';
-import { contactValidations } from './contact.validations';
+- Detects `[value]` or `[checked]` bindings on inputs
+- Finds parent form with `createVestForm`
+- Extracts field name from setter calls (e.g., `form.setEmail($event)`)
+- Updates `aria-invalid` and `aria-describedby` reactively
+- Uses string `"true"` (not boolean) per ARIA 1.2 spec
+- Preserves existing IDs (e.g., hint text)
 
-@Component({
-  selector: 'app-contact-form',
-  imports: [NgxFormErrorComponent], // ✅ Import the component
-  template: `
-    <form (ngSubmit)="onSubmit()">
-      <!-- Email Field - Just 1 line for error display! -->
-      <label for="email">Email *</label>
-      <input
-        id="email"
-        type="email"
-        [value]="form.email() ?? ''"
-        (input)="form.setEmail($event)"
-        (blur)="form.touchEmail()"
-        [attr.aria-invalid]="form.emailShowErrors() && !form.emailValid()"
-        [attr.aria-describedby]="form.emailShowErrors() ? 'email-error' : null"
-      />
-      <ngx-form-error [field]="form.emailField()" />
+**Special handling:**
 
-      <!-- Name Field - Also just 1 line! -->
-      <label for="name">Name *</label>
-      <input
-        id="name"
-        type="text"
-        [value]="form.name() ?? ''"
-        (input)="form.setName($event)"
-        (blur)="form.touchName()"
-        [attr.aria-invalid]="form.nameShowErrors() && !form.nameValid()"
-        [attr.aria-describedby]="form.nameShowErrors() ? 'name-error' : null"
-      />
-      <ngx-form-error [field]="form.nameField()" />
+- Radio buttons: Only first in group gets `aria-describedby` (prevents repetitive announcements)
+- Manual override: Detects static `aria-invalid` or `aria-describedby` attributes and skips automation
 
-      <button type="submit" [disabled]="form.pending()">Submit</button>
-    </form>
-  `,
-})
-export class ContactFormComponent {
-  protected readonly form = createVestForm(
-    contactValidations,
-    signal({ email: '', name: '' }),
-  );
+### Error Display Strategies
 
-  protected onSubmit = async () => {
-    try {
-      await this.form.submit();
-      console.log('Valid:', this.form.model());
-    } catch {
-      console.log('Invalid:', this.form.errors());
-    }
-  };
-}
-```
-
-#### Benefits
-
-| Aspect                  | Manual Approach     | NgxFormErrorComponent |
-| ----------------------- | ------------------- | --------------------- |
-| **Lines per Field**     | 15+ lines           | 1 line                |
-| **Code Reduction**      | Baseline            | **93% less code**     |
-| **WCAG 2.2 Compliance** | Manual setup        | Automatic ✅          |
-| **ARIA Attributes**     | Must implement      | Built-in ✅           |
-| **Warnings Support**    | Extra code required | Built-in ✅           |
-| **Dark Mode**           | Custom CSS          | Built-in ✅           |
-| **Theming**             | Custom CSS          | CSS Custom Props ✅   |
-
-#### Features
-
-- ✅ **Single Input API**: Just pass `[field]="form.emailField()"`
-- ✅ **Automatic ARIA**: `role="alert"`, `aria-live`, `aria-atomic`, IDs
-- ✅ **Errors + Warnings**: Displays blocking errors and non-blocking warnings
-- ✅ **WCAG 2.2 Level AA**: Compliant out of the box
-- ✅ **Themeable**: CSS custom properties (`--ngx-vest-forms-*`)
-- ✅ **Dark Mode**: Respects `prefers-color-scheme`
-- ✅ **Zero Boilerplate**: Eliminates repetitive template code
-
-#### Custom Styling
-
-Override error colors with CSS custom properties:
-
-```css
-/* Light mode */
-:root {
-  --ngx-vest-forms-error-color: #dc2626;
-  --ngx-vest-forms-error-bg: #fef2f2;
-  --ngx-vest-forms-error-border: #fca5a5;
-
-  --ngx-vest-forms-warning-color: #f59e0b;
-  --ngx-vest-forms-warning-bg: #fffbeb;
-  --ngx-vest-forms-warning-border: #fcd34d;
-}
-
-/* Dark mode - automatic */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ngx-vest-forms-error-color: #fca5a5;
-    --ngx-vest-forms-error-bg: #7f1d1d;
-    --ngx-vest-forms-warning-color: #fcd34d;
-    --ngx-vest-forms-warning-bg: #78350f;
-  }
-}
-```
-
-### 4. Error Display Strategies
-
-Control **when** validation errors are shown:
+Control **when** validation errors appear:
 
 ```typescript
 const form = createVestForm(suite, model, {
-  errorStrategy: 'on-touch', // immediate | on-touch | on-submit | manual
+  errorStrategy: 'on-touch', // Default - best UX
 });
 ```
 
-| Strategy    | Behavior                                                     | Use Case                                     |
-| ----------- | ------------------------------------------------------------ | -------------------------------------------- |
-| `immediate` | Show errors as user types                                    | Real-time feedback (e.g., password strength) |
-| `on-touch`  | Show errors after field loses focus **or form is submitted** | **Default** - balanced UX (WCAG recommended) |
-| `on-submit` | Show errors only after submit                                | Minimal interruption                         |
-| `manual`    | Developer controls via `touchField()`                        | Complex custom flows                         |
+| Strategy      | Errors Show              | Use Case                               |
+| ------------- | ------------------------ | -------------------------------------- |
+| `'immediate'` | As user types            | Real-time feedback (password strength) |
+| `'on-touch'`  | After blur **or** submit | **Recommended** - balanced UX          |
+| `'on-submit'` | Only after submit        | Minimal interruption                   |
+| `'manual'`    | Via `touchField()`       | Custom flows                           |
 
-#### Reactive Error Strategy
+**Important:** The `on-touch` strategy shows errors for **all fields** (even untouched) after submit. This ensures accessibility - users can discover what's wrong by attempting submission (WCAG 2.2 guideline).
 
-You can now pass a **signal** for `errorStrategy` to change the strategy dynamically at runtime:
+### Reactive Error Strategy
+
+You can change the strategy dynamically using signals:
 
 ```typescript
-// Create a signal for the error strategy
 const errorMode = signal<ErrorDisplayStrategy>('on-touch');
 
 const form = createVestForm(suite, model, {
-  errorStrategy: errorMode, // ✅ Pass signal instead of static string
+  errorStrategy: errorMode, // ← Pass signal!
 });
 
-// Switch strategy at runtime - form reacts automatically!
+// Switch at runtime - form reacts automatically!
 errorMode.set('immediate'); // Now shows errors while typing
-errorMode.set('on-submit'); // Now only shows errors after submit
 ```
 
-**Use cases:**
+## 🚀 Advanced Usage
 
-- ✅ Toggle between beginner-friendly (on-submit) and expert (immediate) modes
-- ✅ Provide user preferences for error display timing
-- ✅ Switch strategies based on form complexity or user behavior
-- ✅ A/B testing different error display patterns
+### Without Convenience Directives (Full Control)
 
-#### Understanding "on-touch" Strategy
-
-The `on-touch` strategy shows errors when fields are marked as "touched" (Vest's `isTested()` state). Fields become touched when:
-
-1. **User calls `field.touch()`** - typically on blur events (optional)
-2. **Form is submitted** - all fields automatically marked as touched
-
-**Important:** Blur event handlers are **optional**. The "on-touch" strategy will always show errors after submit, even without blur handlers.
+If you need complete control over ARIA attributes and error display, you can opt out of `NgxVestForms`:
 
 ```typescript
-// Option 1: Show errors after blur OR submit (better UX)
-<input
-  [value]="form.email()"
-  (input)="form.setEmail($event)"
-  (blur)="form.field('email').touch()"  // ← Optional blur handler
-/>
-
-// Option 2: Show errors only after submit (simpler)
-<input
-  [value]="form.email()"
-  (input)="form.setEmail($event)"
-  // No blur handler - errors appear on submit only
-/>
-```
-
-**When to add blur handlers:**
-
-- ✅ Multi-field forms where users benefit from immediate feedback per field
-- ✅ Forms where users tab through fields (errors show as they move)
-- ❌ Simple 1-3 field forms (submit-only is less intrusive)
-
-#### Touch State vs Error Display
-
-**Key Concept:** Setters (`form.setEmail()`) validate but don't mark fields as touched. This separation enables the "on-touch" strategy to work correctly:
-
-- **Typing** (`(input)="form.setEmail($event)"`) → Validates in background, no errors shown
-- **Blur** (`(blur)="form.field('email').touch()"`) → Marks as touched, errors appear (optional)
-- **Submit** (`form.submit()`) → Marks all fields as touched, all errors appear (automatic)
-
-#### Error Display Behavior Matrix
-
-Understanding when errors appear for each strategy:
-
-| Scenario                                          | immediate | on-touch | on-submit | manual |
-| ------------------------------------------------- | --------- | -------- | --------- | ------ |
-| Field has errors, not touched, form not submitted | ✅        | ❌       | ❌        | ❌     |
-| Field has errors, touched, form not submitted     | ✅        | ✅       | ❌        | ❌     |
-| Field has errors, **not touched**, form submitted | ✅        | ✅       | ✅        | ❌     |
-| Field has errors, touched, form submitted         | ✅        | ✅       | ✅        | ❌     |
-| Field is valid (no errors)                        | ❌        | ❌       | ❌        | ❌     |
-
-> **💡 Accessibility Note**: The `on-touch` strategy (default) shows errors for **untouched fields** after form submission. This ensures all validation errors are visible when users click Submit, following WCAG 2.2 accessibility guidelines. Submit buttons should **NOT** be disabled so users can discover what's wrong with the form.
-
-## 📚 Complete Example
-
-### 1. Define Validation Suite
-
-```typescript
-// user.validations.ts
-import { staticSafeSuite } from 'ngx-vest-forms/core';
-import { enforce, test, skipWhen } from 'vest';
-
-export type UserFormModel = {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword?: string;
-};
-
-export const userValidationSuite = staticSafeSuite<UserFormModel>(
-  (data: Partial<UserFormModel> = {}) => {
-    // ✅ No need for manual only(field) guard!
-
-    // Name validation
-    test('name', 'Name is required', () => {
-      enforce(data.name).isNotEmpty();
-    });
-
-    test('name', 'Name must be at least 2 characters', () => {
-      enforce(data.name).longerThanOrEquals(2);
-    });
-
-    // Email validation
-    test('email', 'Email is required', () => {
-      enforce(data.email).isNotEmpty();
-    });
-
-    test('email', 'Invalid email format', () => {
-      enforce(data.email).isEmail();
-    });
-
-    // Skip expensive async check until basic validation passes
-    skipWhen(
-      (result) => result.hasErrors('email'),
-      () => {
-        test('email', 'Email is already taken', async ({ signal }) => {
-          const response = await fetch(`/api/check-email/${data.email}`, {
-            signal,
-          });
-          if (!response.ok) throw new Error('Email taken');
-        });
-      },
-    );
-
-    // Password validation
-    test('password', 'Password must be at least 8 characters', () => {
-      enforce(data.password).longerThanOrEquals(8);
-    });
-
-    // Conditional validation
-    if (data.password) {
-      test('confirmPassword', 'Please confirm your password', () => {
-        enforce(data.confirmPassword).isNotEmpty();
-      });
-
-      test('confirmPassword', 'Passwords must match', () => {
-        enforce(data.confirmPassword).equals(data.password);
-      });
-    }
-  },
-);
-```
-
-### 2. Create Form Component
-
-```typescript
-// user-form.component.ts
 import { Component, signal } from '@angular/core';
-import { createVestForm } from 'ngx-vest-forms/core';
-import { userValidationSuite, type UserFormModel } from './user.validations';
+import { createVestForm, staticSafeSuite } from 'ngx-vest-forms/core';
+import { test, enforce } from 'vest';
+
+const loginSuite = staticSafeSuite((data = {}) => {
+  test('email', 'Email is required', () => {
+    enforce(data.email).isNotEmpty();
+  });
+
+  test('password', 'Password is required', () => {
+    enforce(data.password).isNotEmpty();
+  });
+});
 
 @Component({
-  selector: 'app-user-form',
+  selector: 'app-login',
   standalone: true,
+  imports: [], // No NgxVestForms - pure createVestForm
   template: `
     <form (submit)="onSubmit($event)">
-      <!-- Name Field (with blur handler for immediate feedback) -->
-      <div class="field">
-        <label for="name">Name *</label>
-        <input
-          id="name"
-          [value]="form.name() ?? ''"
-          (input)="form.setName($event)"
-          (blur)="form.field('name').touch()"
-          [attr.aria-invalid]="form.nameShowErrors() && !form.nameValid()"
-        />
-        @if (form.nameShowErrors() && form.nameErrors().length) {
-          <p role="alert">{{ form.nameErrors()[0] }}</p>
-        }
-      </div>
-
-      <!-- Email Field (with blur handler for immediate feedback) -->
-      <div class="field">
-        <label for="email">Email *</label>
+      <!-- Manual ARIA (you control everything) -->
+      <div>
+        <label for="email">Email</label>
         <input
           id="email"
           type="email"
-          [value]="form.email() ?? ''"
+          [value]="form.email()"
           (input)="form.setEmail($event)"
           (blur)="form.field('email').touch()"
-          [attr.aria-invalid]="form.emailShowErrors() && !form.emailValid()"
+          [attr.aria-invalid]="
+            showEmailErrors() && !form.emailValid() ? 'true' : null
+          "
+          [attr.aria-describedby]="
+            showEmailErrors() ? 'email-error email-hint' : 'email-hint'
+          "
         />
-        @if (form.emailPending()) {
-          <span>Checking email...</span>
-        }
-        @if (form.emailShowErrors() && form.emailErrors().length) {
-          <p role="alert">{{ form.emailErrors()[0] }}</p>
+        <p id="email-hint">We'll never share your email</p>
+
+        @if (showEmailErrors()) {
+          <div
+            id="email-error"
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true"
+            class="error"
+          >
+            @for (error of form.emailErrors(); track error) {
+              <p>{{ error }}</p>
+            }
+          </div>
         }
       </div>
 
-      <!-- Password Fields (without blur handlers - errors show on submit only) -->
-      <div class="field">
-        <label for="password">Password *</label>
+      <!-- Password field (similar pattern) -->
+      <div>
+        <label for="password">Password</label>
         <input
           id="password"
           type="password"
-          [value]="form.password() ?? ''"
+          [value]="form.password()"
           (input)="form.setPassword($event)"
+          (blur)="form.field('password').touch()"
+          [attr.aria-invalid]="
+            showPasswordErrors() && !form.passwordValid() ? 'true' : null
+          "
+          [attr.aria-describedby]="
+            showPasswordErrors() ? 'password-error' : null
+          "
         />
-        @if (form.passwordShowErrors() && form.passwordErrors().length) {
-          <p role="alert">{{ form.passwordErrors()[0] }}</p>
+
+        @if (showPasswordErrors()) {
+          <div
+            id="password-error"
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true"
+            class="error"
+          >
+            @for (error of form.passwordErrors(); track error) {
+              <p>{{ error }}</p>
+            }
+          </div>
         }
       </div>
 
-      @if (form.password()) {
-        <div class="field">
-          <label for="confirmPassword">Confirm Password *</label>
-          <input
-            id="confirmPassword"
-            type="password"
-            [value]="form.confirmPassword() ?? ''"
-            (input)="form.setConfirmPassword($event)"
-          />
-          @if (
-            form.confirmPasswordShowErrors() &&
-            form.confirmPasswordErrors().length
-          ) {
-            <p role="alert">{{ form.confirmPasswordErrors()[0] }}</p>
-          }
-        </div>
-      }
-
-      <!-- Submit Button -->
-      <button type="submit" [disabled]="form.pending() || form.submitting()">
-        @if (form.submitting()) {
-          Saving...
-        } @else if (form.pending()) {
-          Validating...
-        } @else {
-          Submit
-        }
-      </button>
+      <button type="submit" [disabled]="form.pending()">Login</button>
     </form>
   `,
+  styles: [
+    `
+      .error {
+        color: #dc2626;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+      }
+    `,
+  ],
 })
-export class UserFormComponent {
-  form = createVestForm(
-    userValidationSuite,
-    signal<UserFormModel>({
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-    }),
-    { errorStrategy: 'on-touch' },
+export class LoginFormComponent {
+  form = createVestForm(loginSuite, signal({ email: '', password: '' }), {
+    errorStrategy: 'on-touch',
+  });
+
+  // Custom computed signals for error display
+  showEmailErrors = computed(
+    () => this.form.emailTouched() && this.form.emailErrors().length > 0,
+  );
+
+  showPasswordErrors = computed(
+    () => this.form.passwordTouched() && this.form.passwordErrors().length > 0,
   );
 
   async onSubmit(event: Event) {
     event.preventDefault();
     try {
-      const validData = await this.form.submit();
-      console.log('✅ Valid:', validData);
+      const data = await this.form.submit();
+      console.log('Logging in:', data);
     } catch {
-      console.log('❌ Invalid:', this.form.errors());
+      console.log('Invalid credentials');
     }
   }
 
@@ -630,6 +376,454 @@ export class UserFormComponent {
   }
 }
 ```
+
+**When to use manual approach:**
+
+- ✅ Need custom ARIA patterns (e.g., `aria-describedby` with multiple IDs)
+- ✅ Building a design system with custom error components
+- ✅ Complex accessibility requirements beyond WCAG 2.2
+- ❌ Most applications (use `NgxVestForms` instead - less code, same accessibility)
+
+### Complete Production Example
+
+Here's a **full-featured registration form** with all advanced patterns:
+
+```typescript
+import { Component, signal } from '@angular/core';
+import {
+  createVestForm,
+  NgxVestForms,
+  createSafeSuite,
+} from 'ngx-vest-forms/core';
+import { test, enforce, skipWhen } from 'vest';
+
+interface RegisterFormModel {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  agreeToTerms: boolean;
+}
+
+// Advanced validation with async checks
+const registerSuite = createSafeSuite<RegisterFormModel>((data = {}) => {
+  // Name validation
+  test('name', 'Name is required', () => {
+    enforce(data.name).isNotEmpty();
+  });
+
+  test('name', 'Name must be at least 2 characters', () => {
+    enforce(data.name).longerThan(1);
+  });
+
+  // Email validation
+  test('email', 'Email is required', () => {
+    enforce(data.email).isNotEmpty();
+  });
+
+  test('email', 'Invalid email format', () => {
+    enforce(data.email).isEmail();
+  });
+
+  // Async email uniqueness check (only after format is valid)
+  skipWhen(
+    (result) => result.hasErrors('email'),
+    () => {
+      test.memo(
+        'email',
+        'Email is already registered',
+        async ({ signal }) => {
+          const response = await fetch(`/api/check-email/${data.email}`, {
+            signal,
+          });
+          if (!response.ok) throw new Error('Email taken');
+        },
+        [data.email],
+      ); // Memoization key - only re-run when email changes
+    },
+  );
+
+  // Password validation
+  test('password', 'Password is required', () => {
+    enforce(data.password).isNotEmpty();
+  });
+
+  test('password', 'Password must be at least 8 characters', () => {
+    enforce(data.password).longerThan(7);
+  });
+
+  // Password strength warning (non-blocking)
+  test(
+    'password',
+    'Consider adding special characters for stronger password',
+    () => {
+      warn(); // Non-blocking - doesn't prevent submission
+      enforce(data.password).matches(/[!@#$%^&*(),.?":{}|<>]/);
+    },
+  );
+
+  // Confirm password (only validate when password exists)
+  include('confirmPassword').when('password');
+
+  test('confirmPassword', 'Please confirm your password', () => {
+    enforce(data.confirmPassword).isNotEmpty();
+  });
+
+  test('confirmPassword', 'Passwords must match', () => {
+    enforce(data.confirmPassword).equals(data.password);
+  });
+
+  // Terms agreement
+  test('agreeToTerms', 'You must agree to the terms', () => {
+    enforce(data.agreeToTerms).isTruthy();
+  });
+});
+
+@Component({
+  selector: 'app-register',
+  standalone: true,
+  imports: [NgxVestForms],
+  template: `
+    <form
+      (submit)="onSubmit($event)"
+      [attr.aria-busy]="form.pending() ? 'true' : null"
+    >
+      <!-- Name Field -->
+      <div>
+        <label for="name">Full Name *</label>
+        <input
+          id="name"
+          [value]="form.name()"
+          (input)="form.setName($event)"
+          aria-required="true"
+        />
+        <ngx-form-error [field]="form.nameField()" />
+      </div>
+
+      <!-- Email Field (with async validation) -->
+      <div>
+        <label for="email">Email *</label>
+        <input
+          id="email"
+          type="email"
+          [value]="form.email()"
+          (input)="form.setEmail($event)"
+          aria-required="true"
+        />
+        @if (form.emailPending()) {
+          <p class="text-blue-600">Checking availability...</p>
+        }
+        <ngx-form-error [field]="form.emailField()" />
+      </div>
+
+      <!-- Password Field (with warning) -->
+      <div>
+        <label for="password">Password *</label>
+        <input
+          id="password"
+          type="password"
+          [value]="form.password()"
+          (input)="form.setPassword($event)"
+          aria-required="true"
+        />
+        <ngx-form-error [field]="form.passwordField()" />
+      </div>
+
+      <!-- Confirm Password Field -->
+      <div>
+        <label for="confirmPassword">Confirm Password *</label>
+        <input
+          id="confirmPassword"
+          type="password"
+          [value]="form.confirmPassword()"
+          (input)="form.setConfirmPassword($event)"
+          aria-required="true"
+        />
+        <ngx-form-error [field]="form.confirmPasswordField()" />
+      </div>
+
+      <!-- Terms Checkbox -->
+      <div>
+        <label>
+          <input
+            id="agreeToTerms"
+            type="checkbox"
+            [checked]="form.agreeToTerms()"
+            (change)="form.setAgreeToTerms($event)"
+            aria-required="true"
+          />
+          I agree to the <a href="/terms">Terms and Conditions</a> *
+        </label>
+        <ngx-form-error [field]="form.agreeToTermsField()" />
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" [disabled]="form.pending() || form.submitting()">
+        @if (form.submitting()) {
+          Creating Account...
+        } @else if (form.pending()) {
+          Validating...
+        } @else {
+          Create Account
+        }
+      </button>
+
+      <!-- Debug Info (dev only) -->
+      @if (isDev) {
+        <details>
+          <summary>Debug</summary>
+          <pre>{{
+            {
+              valid: form.valid(),
+              pending: form.pending(),
+              errors: form.errors(),
+            } | json
+          }}</pre>
+        </details>
+      }
+    </form>
+  `,
+})
+export class RegisterFormComponent {
+  isDev = !isDevMode(); // Angular's isDevMode()
+
+  form = createVestForm(
+    registerSuite,
+    signal<RegisterFormModel>({
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      agreeToTerms: false,
+    }),
+    { errorStrategy: 'on-touch' },
+  );
+
+  async onSubmit(event: Event) {
+    event.preventDefault();
+
+    try {
+      const validData = await this.form.submit();
+
+      // Call your API
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(validData),
+      });
+
+      if (response.ok) {
+        console.log('✅ Registration successful!');
+        // Navigate to success page
+      }
+    } catch (error) {
+      console.log('❌ Form validation failed:', this.form.errors());
+    }
+  }
+
+  ngOnDestroy() {
+    this.form.dispose(); // Clean up subscriptions
+  }
+}
+```
+
+**This example demonstrates:**
+
+- ✅ Async validation with `test.memo()` (email uniqueness check)
+- ✅ Conditional validation with `include().when()` (confirmPassword)
+- ✅ Non-blocking warnings with `warn()` (password strength)
+- ✅ Race condition protection with `AbortSignal`
+- ✅ Pending state UI (`form.pending()`, `form.submitting()`)
+- ✅ Complete WCAG 2.2 accessibility
+- ✅ Production-ready error handling
+
+## 📚 Complete API Reference
+
+### `createVestForm(suite, model, options?)`
+
+**Parameters:**
+
+- `suite`: Vest validation suite (from `staticSafeSuite` or `createSafeSuite`)
+- `model`: Initial form data (object or `Signal<T>`)
+- `options`: Configuration object
+  - `errorStrategy`: `'immediate' | 'on-touch' | 'on-submit' | 'manual'` or `Signal<ErrorDisplayStrategy>`
+
+**Returns:** `EnhancedVestForm<TModel>`
+
+### Form State Signals
+
+```typescript
+// Overall form state
+form.valid(); // Signal<boolean> - is form valid?
+form.pending(); // Signal<boolean> - async validation running?
+form.submitting(); // Signal<boolean> - submit() in progress?
+form.errors(); // Signal<Record<string, string[]>> - all errors
+form.model(); // Signal<TModel> - current form data
+form.result(); // Signal<SuiteResult> - raw Vest result
+
+// Per-field signals (auto-generated via proxy)
+form.fieldName(); // Signal<T> - field value
+form.fieldNameValid(); // Signal<boolean> - field valid?
+form.fieldNameErrors(); // Signal<string[]> - field errors
+form.fieldNameWarnings(); // Signal<string[]> - field warnings
+form.fieldNameTouched(); // Signal<boolean> - user interacted?
+form.fieldNamePending(); // Signal<boolean> - async validation?
+form.fieldNameShowErrors(); // Signal<boolean> - show errors based on strategy
+form.fieldNameField(); // Complete field state for <ngx-form-error>
+```
+
+### Form Operations
+
+```typescript
+// Validation
+await form.submit(); // Validates all fields, returns data (throws if invalid)
+form.validate(); // Re-run all validations
+form.validate('fieldName'); // Re-run specific field validation
+
+// Field manipulation
+form.setFieldName($event); // Set field value (accepts Event or raw value)
+form.touchFieldName(); // Mark field as touched (triggers error display)
+form.resetFieldName(); // Reset field to initial value
+
+// Form-level operations
+form.reset(); // Reset entire form to initial state
+form.dispose(); // Clean up subscriptions (call in ngOnDestroy)
+```
+
+### NgxVestForms Constant
+
+Import all convenience features in one line:
+
+```typescript
+import { NgxVestForms } from 'ngx-vest-forms/core';
+
+@Component({
+  imports: [NgxVestForms], // Includes:
+  // 1. NgxVestAutoAriaDirective - Auto aria-invalid + aria-describedby
+  // 2. NgxVestAutoTouchDirective - Auto touch detection on blur
+  // 3. NgxFormErrorComponent - Styled, accessible error display
+})
+```
+
+**Opt-out options:**
+
+```typescript
+// Disable auto-ARIA for specific input
+<input [value]="form.email()" ngxVestAriaDisabled />
+
+// Disable auto-touch for specific input
+<input [value]="form.email()" ngxVestTouchDisabled />
+
+// Global disable via config
+provideNgxVestFormsConfig({
+  autoAria: false,  // Disable auto-ARIA globally
+  autoTouch: false, // Disable auto-touch globally
+  debug: true       // Enable debug logging
+})
+```
+
+## 🎓 Best Practices
+
+### 1. Always Call `dispose()`
+
+```typescript
+@Component({...})
+export class MyFormComponent implements OnDestroy {
+  form = createVestForm(suite, model);
+
+  ngOnDestroy() {
+    this.form.dispose(); // ✅ Prevent memory leaks
+  }
+}
+```
+
+### 2. Use `staticSafeSuite` to Prevent Bugs
+
+```typescript
+// ❌ BAD - Manual only() guard (easy to forget!)
+import { staticSuite, only } from 'vest';
+const suite = staticSuite((data, field) => {
+  if (field) only(field); // Forgetting this breaks validation!
+});
+
+// ✅ GOOD - Automatic guard
+import { staticSafeSuite } from 'ngx-vest-forms/core';
+const suite = staticSafeSuite((data) => {
+  // No guard needed - wrapper handles it!
+});
+```
+
+**Why?** Calling `only(undefined)` tells Vest to run **ZERO tests**, breaking validation.
+
+### 3. Use `createSafeSuite` for Async Validation with `test.memo()`
+
+**⚠️ CRITICAL:** When using `test.memo()` for async validation caching, you **MUST** use `createSafeSuite`:
+
+```typescript
+// ❌ WRONG - Breaks test.memo() caching!
+import { staticSafeSuite } from 'ngx-vest-forms/core';
+
+const suite = staticSafeSuite((data) => {
+  test.memo(
+    'email',
+    'Email taken',
+    async ({ signal }) => {
+      // This runs on EVERY keystroke! Cache is broken.
+      await checkEmail(data.email, { signal });
+    },
+    [data.email],
+  );
+});
+
+// ✅ CORRECT - Enables test.memo() caching!
+import { createSafeSuite } from 'ngx-vest-forms/core';
+
+const suite = createSafeSuite((data) => {
+  test.memo(
+    'email',
+    'Email taken',
+    async ({ signal }) => {
+      // This only runs when data.email changes! Cache works.
+      await checkEmail(data.email, { signal });
+    },
+    [data.email],
+  );
+});
+```
+
+**Why?** Vest.js memoization keys include the **suite instance ID**. `staticSafeSuite` creates a new instance on every call, breaking memoization. `createSafeSuite` maintains the same instance ID.
+
+### 4. Don't Disable Submit Buttons (Accessibility)
+
+```typescript
+// ❌ BAD - Disabling submit prevents error discovery
+<button type="submit" [disabled]="!form.valid()">Submit</button>
+
+// ✅ GOOD - Allow submit, let validation reveal errors
+<button type="submit" [disabled]="form.pending() || form.submitting()">
+  {{ form.submitting() ? 'Saving...' : 'Submit' }}
+</button>
+```
+
+**Why?** Per WCAG 2.2, users should be able to attempt form submission to discover what fields are invalid. Only disable during async operations.
+
+### 5. Use Proper ARIA Attributes (if not using NgxVestForms)
+
+```typescript
+// Manual ARIA (when you need full control)
+<input
+  [value]="form.email()"
+  (input)="form.setEmail($event)"
+  [attr.aria-invalid]="form.emailShowErrors() && !form.emailValid() ? 'true' : null"
+  [attr.aria-describedby]="form.emailShowErrors() ? 'email-error' : null"
+/>
+
+@if (form.emailShowErrors()) {
+  <p id="email-error" role="alert">{{ form.emailErrors()[0] }}</p>
+}
+```
+
+**Note:** With `NgxVestForms`, this is automatic!
 
 ## 🔄 Migration from V1
 
@@ -662,10 +856,11 @@ export class MyFormComponent {
 
 ```typescript
 @Component({
-  imports: [], // No imports needed!
+  imports: [NgxVestForms], // New convenience constant!
   template: `
     <form>
       <input [value]="form.email()" (input)="form.setEmail($event)" />
+      <ngx-form-error [field]="form.emailField()" />
     </form>
   `,
 })
@@ -678,299 +873,45 @@ export class MyFormComponent {
 }
 ```
 
-### Validation Suite Update
-
-**Before:**
-
-```typescript
-import { staticSuite, only, test } from 'vest';
-
-const suite = staticSuite((data, field) => {
-  if (field) only(field); // Manual guard
-  test('email', ...);
-});
-```
-
-**After:**
-
-```typescript
-import { staticSafeSuite } from 'ngx-vest-forms/core';
-import { test } from 'vest';
-
-const suite = staticSafeSuite((data) => {
-  // Automatic guard!
-  test('email', ...);
-});
-```
-
-## 🎓 Best Practices
-
-### 1. Choose the Right Touch Behavior for Your Form
-
-**Blur handlers are optional** - choose based on form complexity:
-
-```typescript
-// ✅ Multi-field forms: Add blur handlers for immediate feedback
-<input
-  [value]="form.email()"
-  (input)="form.setEmail($event)"
-  (blur)="form.field('email').touch()"  // Errors appear on blur
-/>
-
-// ✅ Simple forms: Skip blur handlers for less interruption
-<input
-  [value]="form.email()"
-  (input)="form.setEmail($event)"
-  // Errors appear on submit only
-/>
-```
-
-**Why setters don't mark as touched:**
-
-- Allows "validate while typing, show errors after blur" UX pattern
-- Prevents error messages from appearing mid-typing (better UX)
-- `form.submit()` automatically marks all fields as touched (errors always shown on submit)
-
-### 2. Use `staticSafeSuite` to Prevent Bugs
-
-```typescript
-// ❌ BAD - Manual only() guard required
-import { staticSuite, only } from 'vest';
-const suite = staticSuite((data, field) => {
-  if (field) only(field); // Easy to forget!
-});
-
-// ✅ GOOD - Automatic guard
-import { staticSafeSuite } from 'ngx-vest-forms/core';
-const suite = staticSafeSuite((data) => {
-  // No guard needed!
-});
-```
-
-**Why?** Calling `only(undefined)` tells Vest to run **ZERO tests**, breaking validation.
-
-### 2. Handle Async Validation with `test.memo()` and Stateful Suites
-
-**⚠️ CRITICAL:** When using `test.memo()` for async validation caching, you **MUST** use `createSafeSuite` (stateful) instead of `staticSafeSuite` (stateless).
-
-#### Why `test.memo()` Requires Stateful Suites
-
-Vest.js memoization keys include the **suite instance ID**:
-
-```typescript
-// ❌ BAD - Breaks test.memo() caching!
-import { staticSafeSuite } from 'ngx-vest-forms/core';
-
-const suite = staticSafeSuite((data) => {
-  test.memo(
-    'email',
-    'Email taken',
-    async ({ signal }) => {
-      // This will be called on EVERY keystroke!
-      // staticSuite creates NEW instance → NEW instance ID → cache miss
-      await fetch(`/api/check/${data.email}`, { signal });
-    },
-    [data.email],
-  );
-});
-```
-
-**Problem:** `staticSafeSuite` creates a **new suite instance** on every call, breaking memoization. Your async validation will retrigger on every keystroke even with `test.memo()`.
-
-```typescript
-// ✅ GOOD - Enables test.memo() caching!
-import { createSafeSuite } from 'ngx-vest-forms/core';
-
-const suite = createSafeSuite((data) => {
-  test.memo(
-    'email',
-    'Email taken',
-    async ({ signal }) => {
-      // Cached by [data.email] - only runs when email changes!
-      // Stateful suite maintains same instance ID → cache hit
-      await fetch(`/api/check/${data.email}`, { signal });
-    },
-    [data.email],
-  );
-});
-```
-
-**Solution:** Stateful suites (`createSafeSuite`) maintain the **same instance ID** across calls, enabling proper memoization.
-
-#### Complete Async Validation Example
-
-```typescript
-import { createSafeSuite } from 'ngx-vest-forms/core';
-import { enforce, test, skipWhen } from 'vest';
-
-const userSuite = createSafeSuite((data = {}) => {
-  // Basic validation first
-  test('email', 'Email is required', () => {
-    enforce(data.email).isNotEmpty();
-  });
-
-  test('email', 'Invalid email format', () => {
-    enforce(data.email).isEmail();
-  });
-
-  // Skip expensive async check until basic validation passes
-  skipWhen(
-    (result) => result.hasErrors('email'),
-    () => {
-      test.memo(
-        'email',
-        'Email is already taken',
-        async ({ signal }) => {
-          // ✅ Respect AbortSignal for cancellation
-          const response = await fetch(`/api/check-email/${data.email}`, {
-            signal,
-          });
-          if (!response.ok) throw new Error('Email taken');
-        },
-        [data.email], // ✅ Memoization key - only runs when email changes
-      );
-    },
-  );
-});
-```
-
-#### When to Use Which Suite Type
-
-| Suite Type        | Use Case                                  | Works with `test.memo()` |
-| ----------------- | ----------------------------------------- | ------------------------ |
-| `staticSafeSuite` | Forms without async validation            | ❌ No (breaks cache)     |
-| `staticSafeSuite` | Server-side validation (stateless)        | ❌ No (breaks cache)     |
-| `createSafeSuite` | Forms with `test.memo()` async validation | ✅ Yes (maintains cache) |
-| `createSafeSuite` | Need `.subscribe()`, `.get()`, `.reset()` | ✅ Yes                   |
-
-#### Memory Management for Stateful Suites
-
-**Important:** Stateful suites created with `createSafeSuite` maintain internal state. Always clean up:
-
-```typescript
-@Component({...})
-export class MyFormComponent implements OnDestroy {
-  form = createVestForm(
-    createSafeSuite((data) => { /* with test.memo() */ }),
-    initialModel
-  );
-
-  ngOnDestroy() {
-    this.form.dispose(); // ✅ CRITICAL - Prevents memory leaks
-  }
-}
-```
-
-### 3. Always Call `dispose()`
-
-```typescript
-ngOnDestroy() {
-  this.form.dispose(); // ✅ Prevent memory leaks
-}
-```
-
-### 4. Use Proper ARIA Attributes
-
-```typescript
-<input
-  [attr.aria-invalid]="form.emailShowErrors() && !form.emailValid()"
-  [attr.aria-describedby]="form.emailShowErrors() ? 'email-error' : null"
-/>
-@if (form.emailShowErrors()) {
-  <p id="email-error" role="alert">{{ form.emailErrors()[0] }}</p>
-}
-```
-
-### 5. Don't Disable Submit Buttons (Accessibility)
-
-```typescript
-// ❌ BAD - Disabling submit prevents error discovery
-<button type="submit" [disabled]="!form.valid()">Submit</button>
-
-// ✅ GOOD - Allow submit, let validation reveal errors
-<button type="submit" [disabled]="form.pending() || form.submitting()">
-  {{ form.submitting() ? 'Saving...' : 'Submit' }}
-</button>
-```
-
-**Why?** Per WCAG 2.2, users should be able to attempt form submission to discover what fields are invalid. Disabling the submit button based on validity hides this information. Only disable during async operations (pending validation or submission in progress).
-
-#### If You Must Disable the Submit Button
-
-Some developers prefer to disable the submit button until the form is valid. If you choose this approach, **you should use the `immediate` strategy** or manually trigger validation on mount to ensure errors are visible:
-
-```typescript
-// Option A: Use immediate strategy (shows errors while typing)
-const form = createVestForm(suite, model, {
-  errorStrategy: 'immediate', // Errors always visible
-});
-
-<button [disabled]="!form.valid()">Submit</button>
-
-// Option B: Touch all fields on mount with on-touch strategy
-@Component({...})
-export class MyFormComponent implements OnInit {
-  form = createVestForm(suite, model, { errorStrategy: 'on-touch' });
-
-  ngOnInit() {
-    // Touch all fields to trigger error display
-    Object.keys(this.form.model()).forEach(key => {
-      const touchMethod = `touch${key.charAt(0).toUpperCase()}${key.slice(1)}`;
-      if (typeof this.form[touchMethod] === 'function') {
-        this.form[touchMethod]();
-      }
-    });
-  }
-}
-
-<button [disabled]="!form.valid()">Submit</button>
-```
-
-**Warning**: With a disabled submit button and `on-touch` strategy, errors won't appear until users interact with fields. This creates a "mystery disabled button" UX problem where users don't know why they can't submit.
-
-## 📖 API Reference
-
-### `createVestForm(suite, model, options?)`
-
-**Parameters:**
-
-- `suite`: Vest validation suite
-- `model`: Initial form data (object or signal)
-- `options`: Configuration (errorStrategy, etc.)
-
-**Returns:** `EnhancedVestForm<TModel>`
-
-### Form State Signals
-
-```typescript
-form.valid(); // Overall validity
-form.pending(); // Async validation pending
-form.errors(); // All field errors
-form.submitting(); // Submit in progress
-form.model(); // Current form data
-
-// Field signals (via proxy)
-form.fieldName(); // Field value
-form.fieldNameValid(); // Field validity
-form.fieldNameErrors(); // Field errors
-form.setFieldName(); // Field setter
-```
-
-### Form Operations
-
-```typescript
-await form.submit(); // Validates & returns data (throws if invalid)
-form.reset(); // Reset all fields
-form.validate(); // Re-run validation
-form.dispose(); // Clean up (call in ngOnDestroy)
-```
-
 ## 📊 Performance
 
 - **Bundle Size**: ~3KB (core only, no FormsModule)
 - **Validation Speed**: ~60-80% faster than V1
 - **Memory**: Lower (single state source)
 - **Change Detection**: Optimized with OnPush + Signals
+
+## � What's New in V2?
+
+V2 represents a **complete architectural shift** from Angular Forms to Vest-first validation:
+
+| Aspect                | V1 (NgForm-centric)     | V2 (Vest-first)         |
+| --------------------- | ----------------------- | ----------------------- |
+| **Core Dependency**   | Angular FormsModule     | Vest.js                 |
+| **Form State**        | NgForm controls         | Vest validation result  |
+| **Touch Detection**   | Manual blur handlers    | Automatic via directive |
+| **API Style**         | Directive-based         | Factory function        |
+| **Bundle Size**       | ~8KB (with FormsModule) | ~3KB (core only)        |
+| **Framework Lock-in** | Angular-specific        | Framework-agnostic      |
+| **Accessibility**     | Manual ARIA attributes  | Automatic ARIA          |
+
+### Why the Change?
+
+**V1 Problem**: Attempting to bridge two incompatible paradigms (Angular Forms + Vest) created complexity:
+
+- Double bookkeeping of state
+- Timing bugs between NgForm and Vest
+- Unnecessary Angular dependencies
+- Complex synchronization logic
+- Manual ARIA attributes (15+ lines per field)
+
+**V2 Solution**: Make Vest.js the single source of truth + automatic accessibility:
+
+- ✅ **Simpler**: One state source (Vest)
+- ✅ **Faster**: No double validation
+- ✅ **Lighter**: No FormsModule required
+- ✅ **Accessible**: Auto-ARIA by default
+- ✅ **Flexible**: Works with any UI framework
+- ✅ **80% Less Code**: Auto-generated signals + directives
 
 ## 🤝 Contributing
 

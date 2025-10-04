@@ -41,6 +41,19 @@ export type NgxVestFormsConfig = {
   autoTouch?: boolean;
 
   /**
+   * Enable or disable the auto-aria directive globally.
+   *
+   * When `true`, the NgxVestAutoAriaDirective will automatically apply to
+   * all form controls with `[value]` bindings (unless opted out with
+   * `ngxVestAriaDisabled` attribute).
+   *
+   * When `false`, the directive will be disabled even if imported.
+   *
+   * @default true
+   */
+  autoAria?: boolean;
+
+  /**
    * Custom field name resolver for complex scenarios.
    *
    * This function is called after checking for the `data-vest-field` attribute
@@ -116,6 +129,7 @@ export const NGX_VEST_FORMS_CONFIG = new InjectionToken<NgxVestFormsConfig>(
     providedIn: 'root',
     factory: () => ({
       autoTouch: true,
+      autoAria: true,
       debug: false,
     }),
   },

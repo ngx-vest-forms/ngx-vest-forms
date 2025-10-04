@@ -7,10 +7,74 @@
 export { createVestForm } from './lib/create-vest-form';
 
 // Directives
+export { NgxVestAutoAriaDirective } from './lib/directives/ngx-vest-auto-aria.directive';
 export { NgxVestAutoTouchDirective } from './lib/directives/ngx-vest-auto-touch.directive';
 
 // Components
 export { NgxFormErrorComponent } from './lib/components/ngx-form-error.component';
+
+// Import classes for use in NgxVestForms constant
+import { NgxFormErrorComponent } from './lib/components/ngx-form-error.component';
+import { NgxVestAutoAriaDirective } from './lib/directives/ngx-vest-auto-aria.directive';
+import { NgxVestAutoTouchDirective } from './lib/directives/ngx-vest-auto-touch.directive';
+
+/**
+ * Convenience constant for importing all ngx-vest-forms directives and components.
+ *
+ * This constant provides a type-safe tuple of all public directives and components
+ * that work together to provide automatic form accessibility and validation UX.
+ *
+ * ## What's Included
+ *
+ * - **NgxVestAutoAriaDirective**: Automatically adds `aria-invalid` and `aria-describedby`
+ * - **NgxVestAutoTouchDirective**: Automatically marks fields as touched on blur/change
+ * - **NgxFormErrorComponent**: Displays validation errors with proper ARIA attributes
+ *
+ * ## Usage
+ *
+ * Import all components at once for maximum automation:
+ *
+ * ```typescript
+ * import { NgxVestForms } from 'ngx-vest-forms/core';
+ *
+ * @Component({
+ *   imports: [NgxVestForms],
+ *   template: `
+ *     <form>
+ *       <input id="email" type="email" [value]="form.email()" (input)="form.setEmail($event)" />
+ *       <ngx-form-error field="email" />
+ *     </form>
+ *   `
+ * })
+ * ```
+ *
+ * Or import selectively:
+ *
+ * ```typescript
+ * import { NgxVestAutoAriaDirective, NgxFormErrorComponent } from 'ngx-vest-forms/core';
+ *
+ * @Component({
+ *   imports: [NgxVestAutoAriaDirective, NgxFormErrorComponent],
+ *   /// ...
+ * })
+ * ```
+ *
+ * ## Benefits
+ *
+ * - **WCAG 2.2 Compliance**: Automatic ARIA attributes for accessibility
+ * - **Less Boilerplate**: Reduces template code from ~15 lines to ~3 per field
+ * - **Opt-Out**: Use `ngxVestAriaDisabled` or `ngxVestTouchDisabled` to disable per field
+ * - **Type-Safe**: Readonly tuple prevents accidental modifications
+ *
+ * @see {@link NgxVestAutoAriaDirective} - Auto ARIA attributes
+ * @see {@link NgxVestAutoTouchDirective} - Auto touch detection
+ * @see {@link NgxFormErrorComponent} - Error display
+ */
+export const NgxVestForms = [
+  NgxVestAutoAriaDirective,
+  NgxVestAutoTouchDirective,
+  NgxFormErrorComponent,
+] as const;
 
 // Types and interfaces
 export type {
@@ -29,10 +93,10 @@ export type {
 
 // Error display strategies
 export {
-  ERROR_STRATEGIES,
   computeShowErrors,
   createCustomErrorStrategy,
   debounceErrorStrategy,
+  ERROR_STRATEGIES,
   getStrategyInfo,
 } from './lib/error-strategies';
 
