@@ -9,6 +9,7 @@ export { createVestForm } from './lib/create-vest-form';
 // Directives
 export { NgxVestAutoAriaDirective } from './lib/directives/ngx-vest-auto-aria.directive';
 export { NgxVestAutoTouchDirective } from './lib/directives/ngx-vest-auto-touch.directive';
+export { NgxVestFormBusyDirective } from './lib/directives/ngx-vest-form-busy.directive';
 
 // Components
 export { NgxFormErrorComponent } from './lib/components/ngx-form-error.component';
@@ -17,6 +18,7 @@ export { NgxFormErrorComponent } from './lib/components/ngx-form-error.component
 import { NgxFormErrorComponent } from './lib/components/ngx-form-error.component';
 import { NgxVestAutoAriaDirective } from './lib/directives/ngx-vest-auto-aria.directive';
 import { NgxVestAutoTouchDirective } from './lib/directives/ngx-vest-auto-touch.directive';
+import { NgxVestFormBusyDirective } from './lib/directives/ngx-vest-form-busy.directive';
 
 /**
  * Convenience constant for importing all ngx-vest-forms directives and components.
@@ -28,6 +30,7 @@ import { NgxVestAutoTouchDirective } from './lib/directives/ngx-vest-auto-touch.
  *
  * - **NgxVestAutoAriaDirective**: Automatically adds `aria-invalid` and `aria-describedby`
  * - **NgxVestAutoTouchDirective**: Automatically marks fields as touched on blur/change
+ * - **NgxVestFormBusyDirective**: Automatically adds `aria-busy` to forms during processing
  * - **NgxFormErrorComponent**: Displays validation errors with proper ARIA attributes
  *
  * ## Usage
@@ -40,9 +43,10 @@ import { NgxVestAutoTouchDirective } from './lib/directives/ngx-vest-auto-touch.
  * @Component({
  *   imports: [NgxVestForms],
  *   template: `
- *     <form>
+ *     <form (submit)="onSubmit($event)">
  *       <input id="email" type="email" [value]="form.email()" (input)="form.setEmail($event)" />
  *       <ngx-form-error field="email" />
+ *       <button type="submit">Submit</button>
  *     </form>
  *   `
  * })
@@ -63,16 +67,18 @@ import { NgxVestAutoTouchDirective } from './lib/directives/ngx-vest-auto-touch.
  *
  * - **WCAG 2.2 Compliance**: Automatic ARIA attributes for accessibility
  * - **Less Boilerplate**: Reduces template code from ~15 lines to ~3 per field
- * - **Opt-Out**: Use `ngxVestAriaDisabled` or `ngxVestTouchDisabled` to disable per field
+ * - **Opt-Out**: Use `ngxVestAriaDisabled`, `ngxVestTouchDisabled`, or `ngxVestFormBusyDisabled` to disable per element
  * - **Type-Safe**: Readonly tuple prevents accidental modifications
  *
- * @see {@link NgxVestAutoAriaDirective} - Auto ARIA attributes
+ * @see {@link NgxVestAutoAriaDirective} - Auto ARIA attributes for controls
  * @see {@link NgxVestAutoTouchDirective} - Auto touch detection
+ * @see {@link NgxVestFormBusyDirective} - Auto aria-busy for forms
  * @see {@link NgxFormErrorComponent} - Error display
  */
 export const NgxVestForms = [
   NgxVestAutoAriaDirective,
   NgxVestAutoTouchDirective,
+  NgxVestFormBusyDirective,
   NgxFormErrorComponent,
 ] as const;
 

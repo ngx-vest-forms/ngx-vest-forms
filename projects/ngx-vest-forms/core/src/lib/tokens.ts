@@ -54,6 +54,19 @@ export type NgxVestFormsConfig = {
   autoAria?: boolean;
 
   /**
+   * Enable or disable the auto-form-busy directive globally.
+   *
+   * When `true`, the NgxVestFormBusyDirective will automatically apply to
+   * all `<form>` elements with `NGX_VEST_FORM` provider (unless opted out with
+   * `ngxVestFormBusyDisabled` attribute).
+   *
+   * When `false`, the directive will be disabled even if imported.
+   *
+   * @default true
+   */
+  autoFormBusy?: boolean;
+
+  /**
    * Custom field name resolver for complex scenarios.
    *
    * This function is called after checking for the `data-vest-field` attribute
@@ -130,6 +143,7 @@ export const NGX_VEST_FORMS_CONFIG = new InjectionToken<NgxVestFormsConfig>(
     factory: () => ({
       autoTouch: true,
       autoAria: true,
+      autoFormBusy: true,
       debug: false,
     }),
   },

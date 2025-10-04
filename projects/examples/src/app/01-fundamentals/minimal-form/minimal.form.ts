@@ -30,12 +30,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgxVestForms],
   template: `
-    <form
-      (submit)="onSubmit($event)"
-      class="form-container"
-      novalidate
-      [attr.aria-busy]="form.pending() || form.submitting() ? 'true' : null"
-    >
+    <form (submit)="onSubmit($event)" class="form-container" novalidate>
       <div class="form-field">
         <label class="form-label" for="email"> Email Address </label>
 
