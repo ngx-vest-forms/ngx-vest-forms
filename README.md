@@ -13,6 +13,7 @@ ngx-vest-forms eliminates the tedious parts of form development:
 | Feature                 | Without ngx-vest-forms                                    | With ngx-vest-forms                |
 | ----------------------- | --------------------------------------------------------- | ---------------------------------- |
 | **ARIA Attributes**     | 15+ lines per field (aria-invalid, aria-describedby, IDs) | ✅ **Automatic**                   |
+| **Form Busy State**     | Manual aria-busy bindings on every form                   | ✅ **Automatic**                   |
 | **Error Display**       | Custom component + state management                       | ✅ **Built-in `<ngx-form-error>`** |
 | **Touch Detection**     | Manual blur handlers + state tracking                     | ✅ **Automatic**                   |
 | **Async Validation**    | Race conditions + AbortController wiring                  | ✅ **Built-in with `test.memo()`** |
@@ -112,6 +113,7 @@ export class ContactFormComponent {
 - ✅ WCAG 2.2 Level AA compliant form
 - ✅ Automatic `aria-invalid="true"` when fields have errors
 - ✅ Automatic `aria-describedby` linking errors to inputs
+- ✅ Automatic `aria-busy="true"` during async operations
 - ✅ Errors appear after blur or submit (configurable)
 - ✅ Visual error messages with proper semantic markup
 - ✅ Dark mode support
@@ -130,6 +132,7 @@ import { NgxVestForms } from 'ngx-vest-forms/core';
   imports: [NgxVestForms], // Includes:
   // - NgxVestAutoAriaDirective (auto aria-invalid + aria-describedby)
   // - NgxVestAutoTouchDirective (auto touch detection)
+  // - NgxVestFormBusyDirective (auto aria-busy on forms)
   // - NgxFormErrorComponent (styled error display)
 })
 ```
@@ -207,6 +210,46 @@ The `NgxVestAutoAriaDirective` (included in `NgxVestForms`) adds ARIA attributes
 
 - Radio buttons: Only first in group gets `aria-describedby` (prevents repetitive announcements)
 - Manual override: Detects static `aria-invalid` or `aria-describedby` attributes and skips automation
+
+### Automatic Form Busy State
+
+The `NgxVestFormBusyDirective` (included in `NgxVestForms`) adds `aria-busy` to forms automatically:
+
+```typescript
+// Your template (what you write):
+<form (submit)="onSubmit($event)">
+  <input id="email" [value]="form.email()" (input)="form.setEmail($event)" />
+  <button type="submit" [disabled]="form.pending() || form.submitting()">
+    {{ form.submitting() ? 'Saving...' : 'Submit' }}
+  </button>
+</form>
+
+// Rendered HTML during async operations:
+<form aria-busy="true"> <!-- ← Added automatically! -->
+  <input id="email" value="test@example.com" />
+  <button type="submit" disabled>Saving...</button>
+</form>
+```
+
+**How it works:**
+
+- Detects `<form>` elements with `createVestForm` provider
+- Monitors `form.pending()` and `form.submitting()` states
+- Updates `aria-busy` reactively (string `"true"` per ARIA 1.2 spec)
+- Removes attribute when form is not busy
+- Informs assistive technologies about async operations
+
+**Opt-out:**
+
+```typescript
+// Disable for specific form
+<form ngxVestFormBusyDisabled [attr.aria-busy]="customLogic()">
+  <!-- Manual control -->
+</form>
+
+// Disable globally
+provideNgxVestFormsConfig({ autoFormBusy: false })
+```
 
 ### Error Display Strategies
 
@@ -484,10 +527,7 @@ const registerSuite = createSafeSuite<RegisterFormModel>((data = {}) => {
   standalone: true,
   imports: [NgxVestForms],
   template: `
-    <form
-      (submit)="onSubmit($event)"
-      [attr.aria-busy]="form.pending() ? 'true' : null"
-    >
+    <form (submit)="onSubmit($event)">
       <!-- Name Field -->
       <div>
         <label for="name">Full Name *</label>
@@ -701,7 +741,8 @@ import { NgxVestForms } from 'ngx-vest-forms/core';
   imports: [NgxVestForms], // Includes:
   // 1. NgxVestAutoAriaDirective - Auto aria-invalid + aria-describedby
   // 2. NgxVestAutoTouchDirective - Auto touch detection on blur
-  // 3. NgxFormErrorComponent - Styled, accessible error display
+  // 3. NgxVestFormBusyDirective - Auto aria-busy on forms
+  // 4. NgxFormErrorComponent - Styled, accessible error display
 })
 ```
 
@@ -714,11 +755,15 @@ import { NgxVestForms } from 'ngx-vest-forms/core';
 // Disable auto-touch for specific input
 <input [value]="form.email()" ngxVestTouchDisabled />
 
+// Disable auto-busy for specific form
+<form ngxVestFormBusyDisabled [attr.aria-busy]="customLogic()">
+
 // Global disable via config
 provideNgxVestFormsConfig({
-  autoAria: false,  // Disable auto-ARIA globally
-  autoTouch: false, // Disable auto-touch globally
-  debug: true       // Enable debug logging
+  autoAria: false,     // Disable auto-ARIA globally
+  autoTouch: false,    // Disable auto-touch globally
+  autoFormBusy: false, // Disable auto-busy globally
+  debug: true          // Enable debug logging
 })
 ```
 
