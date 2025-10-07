@@ -17,7 +17,7 @@ type TestModel = {
 describe('staticSafeSuite', () => {
   describe('basic validation', () => {
     it('should run all tests when field parameter is undefined', () => {
-      const suite = staticSafeSuite<TestModel>((data, _field) => {
+      const suite = staticSafeSuite<TestModel>((data) => {
         test('email', 'Email is required', () => {
           enforce(data?.email).isNotEmpty();
         });
@@ -36,7 +36,7 @@ describe('staticSafeSuite', () => {
     });
 
     it('should run only specified field tests when field parameter is provided', () => {
-      const suite = staticSafeSuite<TestModel>((data, _field) => {
+      const suite = staticSafeSuite<TestModel>((data) => {
         test('email', 'Email is required', () => {
           enforce(data?.email).isNotEmpty();
         });
@@ -56,7 +56,7 @@ describe('staticSafeSuite', () => {
     });
 
     it('should validate correctly when all fields are valid', () => {
-      const suite = staticSafeSuite<TestModel>((data, _field) => {
+      const suite = staticSafeSuite<TestModel>((data) => {
         test('email', 'Email is required', () => {
           enforce(data?.email).isNotEmpty();
         });
@@ -81,7 +81,7 @@ describe('staticSafeSuite', () => {
     it('should enforce type-safe field names', () => {
       type UserFields = 'email' | 'password';
 
-      const suite = staticSafeSuite<TestModel, UserFields>((data, _field) => {
+      const suite = staticSafeSuite<TestModel, UserFields>((data) => {
         test('email', 'Email is required', () => {
           enforce(data?.email).isNotEmpty();
         });
@@ -106,7 +106,7 @@ describe('staticSafeSuite', () => {
 
   describe('cross-field validation', () => {
     it('should handle include().when() for dependent fields', () => {
-      const suite = staticSafeSuite<TestModel>((data, _field) => {
+      const suite = staticSafeSuite<TestModel>((data) => {
         test('password', 'Password is required', () => {
           enforce(data?.password).isNotEmpty();
         });
@@ -129,7 +129,7 @@ describe('staticSafeSuite', () => {
     });
 
     it('should validate dependent fields when validating all fields', () => {
-      const suite = staticSafeSuite<TestModel>((data, _field) => {
+      const suite = staticSafeSuite<TestModel>((data) => {
         test('password', 'Password is required', () => {
           enforce(data?.password).isNotEmpty();
         });
@@ -154,7 +154,7 @@ describe('staticSafeSuite', () => {
 
   describe('stateless behavior', () => {
     it('should not maintain state between calls', () => {
-      const suite = staticSafeSuite<TestModel>((data, _field) => {
+      const suite = staticSafeSuite<TestModel>((data) => {
         test('email', 'Email is required', () => {
           enforce(data?.email).isNotEmpty();
         });
@@ -173,7 +173,7 @@ describe('staticSafeSuite', () => {
     });
 
     it('should not have subscribe, get, reset methods', () => {
-      const suite = staticSafeSuite<TestModel>((data, _field) => {
+      const suite = staticSafeSuite<TestModel>((data) => {
         test('email', 'Email is required', () => {
           enforce(data?.email).isNotEmpty();
         });
@@ -190,7 +190,7 @@ describe('staticSafeSuite', () => {
 describe('createSafeSuite', () => {
   describe('basic validation', () => {
     it('should run all tests when field parameter is undefined', () => {
-      const suite = createSafeSuite<TestModel>((data, _field) => {
+      const suite = createSafeSuite<TestModel>((data) => {
         test('email', 'Email is required', () => {
           enforce(data?.email).isNotEmpty();
         });
@@ -209,7 +209,7 @@ describe('createSafeSuite', () => {
     });
 
     it('should run only specified field tests when field parameter is provided', () => {
-      const suite = createSafeSuite<TestModel>((data, _field) => {
+      const suite = createSafeSuite<TestModel>((data) => {
         test('email', 'Email is required', () => {
           enforce(data?.email).isNotEmpty();
         });
@@ -230,7 +230,7 @@ describe('createSafeSuite', () => {
 
   describe('stateful behavior', () => {
     it('should maintain state between calls', () => {
-      const suite = createSafeSuite<TestModel>((data, _field) => {
+      const suite = createSafeSuite<TestModel>((data) => {
         test('email', 'Email is required', () => {
           enforce(data?.email).isNotEmpty();
         });
@@ -256,10 +256,13 @@ describe('createSafeSuite', () => {
       expect(typeof suite.subscribe).toBe('function');
 
       let callCount = 0;
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const unsubscribe = suite.subscribe!(() => {
+      const unsubscribe = suite.subscribe?.(() => {
         callCount++;
       });
+
+      if (!unsubscribe) {
+        throw new Error('subscribe should be defined');
+      }
 
       // Should trigger subscription
       suite({ email: '' });
@@ -279,7 +282,7 @@ describe('createSafeSuite', () => {
     });
 
     it('should provide get method', () => {
-      const suite = createSafeSuite<TestModel>((data, _field) => {
+      const suite = createSafeSuite<TestModel>((data) => {
         test('email', 'Email is required', () => {
           enforce(data?.email).isNotEmpty();
         });
@@ -289,14 +292,18 @@ describe('createSafeSuite', () => {
       expect(typeof suite.get).toBe('function');
 
       suite({ email: '' });
-      const result = suite.get!();
+      const result = suite.get?.();
+
+      if (!result) {
+        throw new Error('get should return a result');
+      }
 
       expect(result.hasErrors('email')).toBe(true);
       expect(result.isTested('email')).toBe(true);
     });
 
     it('should provide reset method', () => {
-      const suite = createSafeSuite<TestModel>((data, _field) => {
+      const suite = createSafeSuite<TestModel>((data) => {
         test('email', 'Email is required', () => {
           enforce(data?.email).isNotEmpty();
         });
@@ -305,18 +312,22 @@ describe('createSafeSuite', () => {
       expect(suite.reset).toBeDefined();
       expect(typeof suite.reset).toBe('function');
 
+      if (!suite.get || !suite.reset) {
+        throw new Error('get and reset should be defined');
+      }
+
       // Run validation
       suite({ email: '' });
-      expect(suite.get!().hasErrors('email')).toBe(true);
+      expect(suite.get().hasErrors('email')).toBe(true);
 
       // Reset state
-      suite.reset!();
-      expect(suite.get!().hasErrors('email')).toBe(false);
-      expect(suite.get!().isTested('email')).toBe(false);
+      suite.reset();
+      expect(suite.get().hasErrors('email')).toBe(false);
+      expect(suite.get().isTested('email')).toBe(false);
     });
 
     it('should provide resetField method', () => {
-      const suite = createSafeSuite<TestModel>((data, _field) => {
+      const suite = createSafeSuite<TestModel>((data) => {
         test('email', 'Email is required', () => {
           enforce(data?.email).isNotEmpty();
         });
@@ -329,19 +340,23 @@ describe('createSafeSuite', () => {
       expect(suite.resetField).toBeDefined();
       expect(typeof suite.resetField).toBe('function');
 
+      if (!suite.get || !suite.resetField) {
+        throw new Error('get and resetField should be defined');
+      }
+
       // Run validation on both fields
       suite({ email: '', password: '' });
-      expect(suite.get!().hasErrors('email')).toBe(true);
-      expect(suite.get!().hasErrors('password')).toBe(true);
+      expect(suite.get().hasErrors('email')).toBe(true);
+      expect(suite.get().hasErrors('password')).toBe(true);
 
       // Reset only email
-      suite.resetField!('email');
-      expect(suite.get!().isTested('email')).toBe(false);
-      expect(suite.get!().hasErrors('email')).toBe(false);
+      suite.resetField('email');
+      expect(suite.get().isTested('email')).toBe(false);
+      expect(suite.get().hasErrors('email')).toBe(false);
 
       // Password should still have errors
-      expect(suite.get!().isTested('password')).toBe(true);
-      expect(suite.get!().hasErrors('password')).toBe(true);
+      expect(suite.get().isTested('password')).toBe(true);
+      expect(suite.get().hasErrors('password')).toBe(true);
     });
   });
 
@@ -349,7 +364,7 @@ describe('createSafeSuite', () => {
     it('should enforce type-safe field names', () => {
       type UserFields = 'email' | 'password';
 
-      const suite = createSafeSuite<TestModel, UserFields>((data, _field) => {
+      const suite = createSafeSuite<TestModel, UserFields>((data) => {
         test('email', 'Email is required', () => {
           enforce(data?.email).isNotEmpty();
         });
@@ -375,7 +390,7 @@ describe('createSafeSuite', () => {
 
 describe('Regression: only(undefined) bug', () => {
   it('should NOT exhibit the only(undefined) bug with staticSafeSuite', () => {
-    const suite = staticSafeSuite<TestModel>((data, _field) => {
+    const suite = staticSafeSuite<TestModel>((data) => {
       test('email', 'Email is required', () => {
         enforce(data?.email).isNotEmpty();
       });
@@ -400,7 +415,7 @@ describe('Regression: only(undefined) bug', () => {
   });
 
   it('should NOT exhibit the only(undefined) bug with createSafeSuite', () => {
-    const suite = createSafeSuite<TestModel>((data, _field) => {
+    const suite = createSafeSuite<TestModel>((data) => {
       test('email', 'Email is required', () => {
         enforce(data?.email).isNotEmpty();
       });
@@ -425,21 +440,8 @@ describe('Regression: only(undefined) bug', () => {
   });
 
   it('should show difference between safe wrapper and unsafe pattern', () => {
-    // ❌ UNSAFE: Direct only() call without guard (for comparison)
-    const unsafeSuite = staticSafeSuite<TestModel>((data, field) => {
-      // Intentionally bypass the wrapper's safety by re-calling only
-      // This demonstrates what happens without the wrapper
-      test('email', 'Email is required', () => {
-        enforce(data?.email).isNotEmpty();
-      });
-
-      test('password', 'Password is required', () => {
-        enforce(data?.password).isNotEmpty();
-      });
-    });
-
     // ✅ SAFE: Uses wrapper's built-in guard
-    const safeSuite = staticSafeSuite<TestModel>((data, _field) => {
+    const safeSuite = staticSafeSuite<TestModel>((data) => {
       // No manual only() call - wrapper handles it
       test('email', 'Email is required', () => {
         enforce(data?.email).isNotEmpty();
@@ -450,7 +452,6 @@ describe('Regression: only(undefined) bug', () => {
       });
     });
 
-    const unsafeResult = unsafeSuite({ email: '', password: '' });
     const safeResult = safeSuite({ email: '', password: '' });
 
     // Safe suite should run all tests

@@ -5,7 +5,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { type ErrorDisplayStrategy } from 'ngx-vest-forms/core';
+import { type ErrorDisplayStrategy } from 'ngx-vest-forms';
 import { ExampleCardsComponent } from '../../ui';
 import { Debugger } from '../../ui/debugger/debugger';
 import { ErrorDisplayModeSelectorComponent } from '../../ui/error-display-mode-selector/error-display-mode-selector.component';

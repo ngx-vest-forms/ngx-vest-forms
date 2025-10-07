@@ -1,18 +1,22 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { staticSafeSuite } from 'ngx-vest-forms';
+import { enforce, test } from 'vest';
 import { FormArrayModel } from './example-form-array.model';
 
-export const validationSuite = staticSuite(
-  (model: Partial<FormArrayModel> | undefined, field?: string) => {
-    if (field) {
-      only(field); // For performance - only validate the active field
-    }
+export const validationSuite = staticSafeSuite<FormArrayModel>(
+  (model: Partial<FormArrayModel> = {}) => {
+    // NOTE: addInterest is NOT validated in the main suite
+    // It's validated separately in the component when user clicks Add
 
-    // Note: addInterest field is NOT validated here.
-    // It's a transient input field validated by component logic.
-    // Vest focuses on validating the actual data (interests array items).
+    // Validate interests array items
+    const interests = model.interests ?? [];
 
-    const currentModel = model ?? { interests: [] };
-    const interests = currentModel.interests ?? [];
+    // CRITICAL: Always run at least one test to prevent Vest from considering
+    // the form invalid when no field-level tests are registered.
+    // This test validates the array itself exists and is valid.
+    test('interests', 'Interests array is valid', () => {
+      enforce(interests).isArray();
+    });
+
     for (const [index, interest] of interests.entries()) {
       const path = `interests.${index}`;
 
@@ -26,3 +30,16 @@ export const validationSuite = staticSuite(
     }
   },
 );
+
+// Separate validation for the addInterest field (used in component logic)
+export function validateAddInterest(value: string | undefined): string[] {
+  const errors: string[] = [];
+
+  if (!value || value.trim() === '') {
+    errors.push('Interest cannot be empty');
+  } else if (value.trim().length < 2) {
+    errors.push('Interest must be at least 2 characters');
+  }
+
+  return errors;
+}

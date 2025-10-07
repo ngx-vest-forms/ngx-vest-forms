@@ -69,7 +69,7 @@ export type NgxControlWrapperConfig = {
  */
 @Component({
   selector: 'ngx-control-wrapper',
-  standalone: true,
+
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None, // Allow CSS custom properties to be inherited

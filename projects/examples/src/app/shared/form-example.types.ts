@@ -10,7 +10,7 @@ export type NgxFormExampleComponent<T = unknown> = {
     errors: Record<string, string[]>;
   };
   model(): T;
-  onSubmit(): void;
+  save(): void;
 };
 
 /**

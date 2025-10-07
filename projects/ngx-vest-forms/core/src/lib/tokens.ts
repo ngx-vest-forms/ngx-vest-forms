@@ -4,7 +4,11 @@
  */
 
 import { InjectionToken } from '@angular/core';
-import type { ErrorDisplayStrategy, VestForm } from './vest-form.types';
+import type {
+  ErrorDisplayStrategy,
+  VestField,
+  VestForm,
+} from './vest-form.types';
 
 /**
  * Global configuration for ngx-vest-forms directives and behaviors.
@@ -14,7 +18,7 @@ import type { ErrorDisplayStrategy, VestForm } from './vest-form.types';
  *
  * @example
  * ```typescript
- * // App-wide configuration
+ * /// App-wide configuration
  * export const appConfig: ApplicationConfig = {
  *   providers: [
  *     provideNgxVestFormsConfig({
@@ -85,7 +89,7 @@ export type NgxVestFormsConfig = {
    * ```typescript
    * provideNgxVestFormsConfig({
    *   fieldNameResolver: (element) => {
-   *     // Custom logic: extract from formControlName
+   *     /// Custom logic: extract from formControlName
    *     return element.getAttribute('formControlName');
    *   }
    * })
@@ -114,7 +118,7 @@ export type NgxVestFormsConfig = {
    *
    * @example
    * ```typescript
-   * // Enable debug mode in development
+   * /// Enable debug mode in development
    * provideNgxVestFormsConfig({
    *   debug: !environment.production
    * })
@@ -132,7 +136,7 @@ export type NgxVestFormsConfig = {
  *
  * @example
  * ```typescript
- * // Inject in a directive
+ * /// Inject in a directive
  * readonly #globalConfig = inject(NGX_VEST_FORMS_CONFIG, { optional: true });
  * ```
  */
@@ -158,10 +162,29 @@ export const NGX_VEST_FORMS_CONFIG = new InjectionToken<NgxVestFormsConfig>(
  *
  * @example
  * ```typescript
- * // Inject in a directive
+ * /// Inject in a directive
  * readonly #form = inject<VestForm<Record<string, unknown>>>(NGX_VEST_FORM, { optional: true });
  * ```
  */
 export const NGX_VEST_FORM = new InjectionToken<
   VestForm<Record<string, unknown>>
 >('NGX_VEST_FORM');
+
+/**
+ * Injection token for field instance provided at the field level.
+ *
+ * This token allows auto-directives to work WITHOUT form-level providers
+ * by binding the field directly on the input element via [ngxVestField].
+ *
+ * @example
+ * ```typescript
+ * /// In template
+ * <input [ngxVestField]="form.emailField()" />
+ *
+ * /// In directive
+ * readonly #field = inject(NGX_VEST_FIELD, { optional: true });
+ * ```
+ */
+export const NGX_VEST_FIELD = new InjectionToken<VestField<unknown>>(
+  'NGX_VEST_FIELD',
+);

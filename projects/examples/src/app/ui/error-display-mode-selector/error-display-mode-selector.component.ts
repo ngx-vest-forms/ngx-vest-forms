@@ -7,7 +7,7 @@ import {
 import {
   ERROR_STRATEGIES,
   type ErrorDisplayStrategy,
-} from 'ngx-vest-forms/core';
+} from 'ngx-vest-forms';
 
 export type ErrorDisplayModeConfig = {
   mode: ErrorDisplayStrategy;

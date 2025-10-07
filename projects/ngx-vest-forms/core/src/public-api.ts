@@ -10,6 +10,8 @@ export { createVestForm } from './lib/create-vest-form';
 export { NgxVestAutoAriaDirective } from './lib/directives/ngx-vest-auto-aria.directive';
 export { NgxVestAutoTouchDirective } from './lib/directives/ngx-vest-auto-touch.directive';
 export { NgxVestFormBusyDirective } from './lib/directives/ngx-vest-form-busy.directive';
+export { NgxVestFormProviderDirective } from './lib/directives/ngx-vest-form-provider.directive';
+export { NgxVestFormDirective } from './lib/directives/ngx-vest-form.directive';
 
 // Components
 export { NgxFormErrorComponent } from './lib/components/ngx-form-error.component';
@@ -19,6 +21,7 @@ import { NgxFormErrorComponent } from './lib/components/ngx-form-error.component
 import { NgxVestAutoAriaDirective } from './lib/directives/ngx-vest-auto-aria.directive';
 import { NgxVestAutoTouchDirective } from './lib/directives/ngx-vest-auto-touch.directive';
 import { NgxVestFormBusyDirective } from './lib/directives/ngx-vest-form-busy.directive';
+import { NgxVestFormDirective } from './lib/directives/ngx-vest-form.directive';
 
 /**
  * Convenience constant for importing all ngx-vest-forms directives and components.
@@ -28,9 +31,11 @@ import { NgxVestFormBusyDirective } from './lib/directives/ngx-vest-form-busy.di
  *
  * ## What's Included
  *
+ * - **NgxVestFormDirective**: All-in-one convenience directive (use with `[ngxVestForm]="form"`)
  * - **NgxVestAutoAriaDirective**: Automatically adds `aria-invalid` and `aria-describedby`
  * - **NgxVestAutoTouchDirective**: Automatically marks fields as touched on blur/change
  * - **NgxVestFormBusyDirective**: Automatically adds `aria-busy` to forms during processing
+ * - **NgxVestFormProviderDirective**: Provides form instance to child directives (use on `<form>` element)
  * - **NgxFormErrorComponent**: Displays validation errors with proper ARIA attributes
  *
  * ## Usage
@@ -43,9 +48,10 @@ import { NgxVestFormBusyDirective } from './lib/directives/ngx-vest-form-busy.di
  * @Component({
  *   imports: [NgxVestForms],
  *   template: `
- *     <form (submit)="onSubmit($event)">
+ *     <!-- ✅ RECOMMENDED: Use all-in-one directive -->
+ *     <form [ngxVestForm]="form" (submit)="save($event)">
  *       <input id="email" type="email" [value]="form.email()" (input)="form.setEmail($event)" />
- *       <ngx-form-error field="email" />
+ *       <ngx-form-error [field]="form.emailField()" />
  *       <button type="submit">Submit</button>
  *     </form>
  *   `
@@ -70,16 +76,18 @@ import { NgxVestFormBusyDirective } from './lib/directives/ngx-vest-form-busy.di
  * - **Opt-Out**: Use `ngxVestAutoAriaDisabled`, `ngxVestAutoTouchDisabled`, or `ngxVestAutoFormBusyDisabled` to disable per element
  * - **Type-Safe**: Readonly tuple prevents accidental modifications
  *
+ * @see {@link NgxVestFormDirective} - All-in-one convenience directive
  * @see {@link NgxVestAutoAriaDirective} - Auto ARIA attributes for controls
  * @see {@link NgxVestAutoTouchDirective} - Auto touch detection
  * @see {@link NgxVestFormBusyDirective} - Auto aria-busy for forms
  * @see {@link NgxFormErrorComponent} - Error display
  */
 export const NgxVestForms = [
-  NgxVestAutoAriaDirective,
-  NgxVestAutoTouchDirective,
-  NgxVestFormBusyDirective,
-  NgxFormErrorComponent,
+  NgxVestFormDirective, // ✅ Provides form context via NgxVestFormProviderDirective
+  NgxFormErrorComponent, // ✅ Error display component
+  NgxVestAutoAriaDirective, // ✅ Auto ARIA on inputs (standalone selector)
+  NgxVestAutoTouchDirective, // ✅ Auto touch on blur (standalone selector)
+  NgxVestFormBusyDirective, // ✅ Auto aria-busy on forms
 ] as const;
 
 // Types and interfaces
@@ -90,6 +98,7 @@ export type {
   PathValue,
   SchemaAdapter,
   SchemaValidationResult,
+  SubmitResult,
   ValidationMessages,
   VestField,
   VestForm,
@@ -161,7 +170,7 @@ export { NGX_VEST_FORM, NGX_VEST_FORMS_CONFIG } from './lib/tokens';
 export type { NgxVestFormsConfig } from './lib/tokens';
 
 // Environment providers
-export { provideNgxVestFormsConfig } from './lib/providers';
+export { provideNgxVestFormsConfig, provideVestForm } from './lib/providers';
 
 // Version information
 export const VERSION = '2.0.0-beta.1';

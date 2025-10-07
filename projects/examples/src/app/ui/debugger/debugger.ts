@@ -5,7 +5,7 @@ import {
   computed,
   input,
 } from '@angular/core';
-import type { EnhancedVestForm } from 'ngx-vest-forms/core';
+import type { EnhancedVestForm } from 'ngx-vest-forms';
 
 @Component({
   selector: 'ngx-debugger',

@@ -60,15 +60,15 @@ test.describe('Minimal Form - V2 Implementation', () => {
       const immediateRadio = page.getByRole('radio', {
         name: /^Immediate$/i,
       });
-      const onSubmitRadio = page.getByRole('radio', {
+      const saveRadio = page.getByRole('radio', {
         name: /^On Submit$/i,
       });
 
       await immediateRadio.check();
       await expect(immediateRadio).toBeChecked();
 
-      await onSubmitRadio.check();
-      await expect(onSubmitRadio).toBeChecked();
+      await saveRadio.check();
+      await expect(saveRadio).toBeChecked();
     });
   });
 
@@ -81,30 +81,25 @@ test.describe('Minimal Form - V2 Implementation', () => {
       });
       const emailError = page.locator('#email-error');
 
-      await expect
-        .poll(async () =>
-          emailError.evaluate((node) => node.getAttribute('aria-hidden')),
-        )
-        .toBe('true');
+      // Initially, error container should not exist (no errors)
+      await expect(emailError).not.toBeAttached();
 
-      await emailField.click();
+      // Focus field, then blur to trigger on-touch validation
+      await emailField.focus();
+      await page.waitForTimeout(100); // Wait for focus to register
       await emailField.blur();
+      await page.waitForTimeout(500); // Wait for blur event and validation
 
+      // After blur, error should be visible (on-touch strategy)
+      // Note: Using toBeVisible instead of toBeAttached as fallback
+      await expect(emailError).toBeVisible({ timeout: 10_000 });
       await expect(emailError).toContainText(/email is required/i);
-      await expect
-        .poll(async () =>
-          emailError.evaluate((node) => node.getAttribute('aria-hidden')),
-        )
-        .not.toBe('true');
 
       await emailField.fill('user@example.com');
-      await emailField.blur();
+      await page.waitForTimeout(300); // Wait for validation
 
-      await expect
-        .poll(async () =>
-          emailError.evaluate((node) => node.getAttribute('aria-hidden')),
-        )
-        .toBe('true');
+      // After entering valid email, error should not exist
+      await expect(emailError).not.toBeAttached();
     });
 
     test('maintains field value when switching strategies', async ({
@@ -136,44 +131,33 @@ test.describe('Minimal Form - V2 Implementation', () => {
       await immediateRadio.check();
       await emailField.fill('invalid');
 
+      // With immediate strategy, errors show while typing
+      await expect(emailError).toBeAttached();
       await expect(emailError).toContainText(/valid email/i);
-      await expect
-        .poll(async () =>
-          emailError.evaluate((node) => node.getAttribute('aria-hidden')),
-        )
-        .not.toBe('true');
 
       await emailField.fill('valid@example.com');
-      await expect
-        .poll(async () =>
-          emailError.evaluate((node) => node.getAttribute('aria-hidden')),
-        )
-        .toBe('true');
+
+      // After entering valid email, error should disappear
+      await expect(emailError).not.toBeAttached();
     });
 
     test('on-submit strategy reveals errors only after submit attempt', async ({
       page,
     }) => {
-      const onSubmitRadio = page.getByRole('radio', { name: /^On Submit$/i });
+      const saveRadio = page.getByRole('radio', { name: /^On Submit$/i });
       const emailError = page.locator('#email-error');
       const submitButton = page.getByRole('button', { name: /Submit/i });
 
-      await onSubmitRadio.check();
+      await saveRadio.check();
 
-      await expect
-        .poll(async () =>
-          emailError.evaluate((node) => node.getAttribute('aria-hidden')),
-        )
-        .toBe('true');
+      // Initially, no errors should be visible
+      await expect(emailError).not.toBeAttached();
 
       await submitButton.click();
 
+      // After submit attempt, errors should appear
+      await expect(emailError).toBeAttached();
       await expect(emailError).toContainText(/email is required/i);
-      await expect
-        .poll(async () =>
-          emailError.evaluate((node) => node.getAttribute('aria-hidden')),
-        )
-        .not.toBe('true');
       await expect(submitButton).toBeEnabled();
     });
   });

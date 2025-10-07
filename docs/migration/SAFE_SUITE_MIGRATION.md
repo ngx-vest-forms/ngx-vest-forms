@@ -248,7 +248,7 @@ import { userValidations, type UserModel } from './user.validations';
 @Component({
   selector: 'app-user-form',
   template: `
-    <form (ngSubmit)="onSubmit()">
+    <form (ngSubmit)="save()">
       <input
         [value]="form.email()"
         (input)="form.setEmail($event)"
@@ -268,7 +268,7 @@ export class UserFormComponent {
     signal<UserModel>({ email: '', password: '' }),
   );
 
-  onSubmit = async () => {
+  save = async () => {
     try {
       await this.form.submit();
       console.log('Valid:', this.form.model());

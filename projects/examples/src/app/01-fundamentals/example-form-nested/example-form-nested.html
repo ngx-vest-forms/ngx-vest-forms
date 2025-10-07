@@ -1,542 +1,261 @@
-<div class="rounded-lg bg-white p-8 shadow-xl">
-  <h2 class="mb-6 text-2xl font-bold text-blue-600">Nested Form Example</h2>
-  <p class="mb-6 text-gray-600">
-    This form demonstrates how to handle nested form fields with template-driven
-    forms and Vest.js validation.
-  </p>
+<form [ngxVestForm]="form" (ngSubmit)="save()" class="form-container">
+  <!-- Personal Information Section -->
+  <fieldset class="form-field">
+    <legend class="form-label">Personal Information</legend>
 
-  <form
-    (ngSubmit)="onSubmit()"
-    class="space-y-6"
-    [attr.aria-busy]="form.pending()"
-  >
-    <!-- Personal Information Section -->
-    <fieldset class="space-y-4">
-      <legend class="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">
-        Personal Information
-      </legend>
-
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div class="space-y-2">
-          <label
-            class="block text-sm font-medium text-gray-700"
-            for="firstName"
-          >
-            First Name
-          </label>
-          <input
-            type="text"
-            id="firstName"
-            name="firstName"
-            [value]="form.personalInfoFirstName()"
-            (input)="form.setPersonalInfoFirstName($event)"
-            (blur)="form.touchPersonalInfoFirstName()"
-            placeholder="Enter first name"
-            class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            [class.border-red-500]="
-                form.personalInfoFirstNameShowErrors() && !form.personalInfoFirstNameValid()
-              "
-            [class.border-gray-300]="
-                !form.personalInfoFirstNameShowErrors() || form.personalInfoFirstNameValid()
-              "
-            [attr.aria-invalid]="
-                form.personalInfoFirstNameShowErrors() && !form.personalInfoFirstNameValid()
-              "
-            [attr.aria-describedby]="
-                form.personalInfoFirstNameShowErrors() && form.personalInfoFirstNameErrors().length > 0
-                  ? 'firstName-error'
-                  : null
-              "
-          />
-
-          @if ( form.personalInfoFirstNameShowErrors() &&
-          form.personalInfoFirstNameErrors().length > 0 ) {
-          <div class="text-sm text-red-600" id="firstName-error">
-            {{ form.personalInfoFirstNameErrors()[0] }}
-          </div>
-          }
-        </div>
-
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700" for="lastName">
-            Last Name
-          </label>
-          <input
-            type="text"
-            id="lastName"
-            name="lastName"
-            [value]="form.personalInfoLastName()"
-            (input)="form.setPersonalInfoLastName($event)"
-            (blur)="form.touchPersonalInfoLastName()"
-            placeholder="Enter last name"
-            class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            [class.border-red-500]="
-                form.personalInfoLastNameShowErrors() && !form.personalInfoLastNameValid()
-              "
-            [class.border-gray-300]="
-                !form.personalInfoLastNameShowErrors() || form.personalInfoLastNameValid()
-              "
-            [attr.aria-invalid]="
-                form.personalInfoLastNameShowErrors() && !form.personalInfoLastNameValid()
-              "
-            [attr.aria-describedby]="
-                form.personalInfoLastNameShowErrors() && form.personalInfoLastNameErrors().length > 0
-                  ? 'lastName-error'
-                  : null
-              "
-          />
-
-          @if ( form.personalInfoLastNameShowErrors() &&
-          form.personalInfoLastNameErrors().length > 0 ) {
-          <div class="text-sm text-red-600" id="lastName-error">
-            {{ form.personalInfoLastNameErrors()[0] }}
-          </div>
-          }
-        </div>
-      </div>
-
-      <div class="space-y-2">
-        <label class="block text-sm font-medium text-gray-700" for="email">
-          Email Address
-        </label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          [value]="form.personalInfoEmail()"
-          (input)="form.setPersonalInfoEmail($event)"
-          (blur)="form.touchPersonalInfoEmail()"
-          placeholder="Enter email address"
-          class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          [class.border-red-500]="
-              form.personalInfoEmailShowErrors() && !form.personalInfoEmailValid()
-            "
-          [class.border-gray-300]="
-              !form.personalInfoEmailShowErrors() || form.personalInfoEmailValid()
-            "
-          [attr.aria-invalid]="
-              form.personalInfoEmailShowErrors() && !form.personalInfoEmailValid()
-            "
-          [attr.aria-describedby]="
-              form.personalInfoEmailShowErrors() && form.personalInfoEmailErrors().length > 0
-                ? 'email-error'
-                : null
-            "
-        />
-
-        @if ( form.personalInfoEmailShowErrors() &&
-        form.personalInfoEmailErrors().length > 0 ) {
-        <div class="text-sm text-red-600" id="email-error">
-          {{ form.personalInfoEmailErrors()[0] }}
-        </div>
-        }
-      </div>
-
-      <!-- New Input Types Demonstration -->
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <!-- Number Input -->
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700" for="age">
-            Age (Number Input)
-          </label>
-          <input
-            type="number"
-            id="age"
-            name="age"
-            [value]="form.personalInfoAge()"
-            (input)="form.setPersonalInfoAge($event)"
-            (blur)="form.touchPersonalInfoAge()"
-            placeholder="Enter your age"
-            min="18"
-            max="120"
-            class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            [class.border-red-500]="
-                form.personalInfoAgeShowErrors() && !form.personalInfoAgeValid()
-              "
-            [class.border-gray-300]="
-                !form.personalInfoAgeShowErrors() || form.personalInfoAgeValid()
-              "
-            [attr.aria-invalid]="
-                form.personalInfoAgeShowErrors() && !form.personalInfoAgeValid()
-              "
-            [attr.aria-describedby]="
-                form.personalInfoAgeShowErrors() && form.personalInfoAgeErrors().length > 0
-                  ? 'age-error'
-                  : null
-              "
-          />
-
-          @if ( form.personalInfoAgeShowErrors() &&
-          form.personalInfoAgeErrors().length > 0 ) {
-          <div class="text-sm text-red-600" id="age-error">
-            {{ form.personalInfoAgeErrors()[0] }}
-          </div>
-          }
-        </div>
-
-        <!-- Range Slider -->
-        <div class="space-y-2">
-          <label
-            class="block text-sm font-medium text-gray-700"
-            for="experienceLevel"
-          >
-            Experience Level (Range: {{ form.personalInfoExperienceLevel() || 5
-            }}/10)
-          </label>
-          <input
-            type="range"
-            id="experienceLevel"
-            name="experienceLevel"
-            [value]="form.personalInfoExperienceLevel()"
-            (input)="form.setPersonalInfoExperienceLevel($event)"
-            (blur)="form.touchPersonalInfoExperienceLevel()"
-            min="1"
-            max="10"
-            step="1"
-            class="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-blue-600"
-            [attr.aria-invalid]="
-                form.personalInfoExperienceLevelShowErrors() && !form.personalInfoExperienceLevelValid()
-              "
-            [attr.aria-describedby]="
-                form.personalInfoExperienceLevelShowErrors() && form.personalInfoExperienceLevelErrors().length > 0
-                  ? 'experienceLevel-error'
-                  : null
-              "
-            [attr.aria-valuemin]="1"
-            [attr.aria-valuemax]="10"
-            [attr.aria-valuenow]="form.personalInfoExperienceLevel() || 5"
-          />
-
-          @if ( form.personalInfoExperienceLevelShowErrors() &&
-          form.personalInfoExperienceLevelErrors().length > 0 ) {
-          <div class="text-sm text-red-600" id="experienceLevel-error">
-            {{ form.personalInfoExperienceLevelErrors()[0] }}
-          </div>
-          }
-        </div>
-      </div>
-
-      <!-- Radio Button Group -->
-      <fieldset class="space-y-2">
-        <legend class="block text-sm font-medium text-gray-700">
-          Gender (Radio Group)
-        </legend>
-        <div class="flex flex-wrap gap-4">
-          <div class="flex items-center">
-            <input
-              type="radio"
-              id="gender-male"
-              name="gender"
-              value="male"
-              [checked]="form.personalInfoGender() === 'male'"
-              (change)="form.setPersonalInfoGender($event)"
-              (blur)="form.touchPersonalInfoGender()"
-              class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
-              [attr.aria-invalid]="
-                  form.personalInfoGenderShowErrors() && !form.personalInfoGenderValid()
-                "
-            />
-            <label for="gender-male" class="ml-2 text-sm text-gray-700">
-              Male
-            </label>
-          </div>
-
-          <div class="flex items-center">
-            <input
-              type="radio"
-              id="gender-female"
-              name="gender"
-              value="female"
-              [checked]="form.personalInfoGender() === 'female'"
-              (change)="form.setPersonalInfoGender($event)"
-              (blur)="form.touchPersonalInfoGender()"
-              class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
-              [attr.aria-invalid]="
-                  form.personalInfoGenderShowErrors() && !form.personalInfoGenderValid()
-                "
-            />
-            <label for="gender-female" class="ml-2 text-sm text-gray-700">
-              Female
-            </label>
-          </div>
-
-          <div class="flex items-center">
-            <input
-              type="radio"
-              id="gender-other"
-              name="gender"
-              value="other"
-              [checked]="form.personalInfoGender() === 'other'"
-              (change)="form.setPersonalInfoGender($event)"
-              (blur)="form.touchPersonalInfoGender()"
-              class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
-              [attr.aria-invalid]="
-                  form.personalInfoGenderShowErrors() && !form.personalInfoGenderValid()
-                "
-            />
-            <label for="gender-other" class="ml-2 text-sm text-gray-700">
-              Other
-            </label>
-          </div>
-
-          <div class="flex items-center">
-            <input
-              type="radio"
-              id="gender-prefer-not-to-say"
-              name="gender"
-              value="prefer-not-to-say"
-              [checked]="form.personalInfoGender() === 'prefer-not-to-say'"
-              (change)="form.setPersonalInfoGender($event)"
-              (blur)="form.touchPersonalInfoGender()"
-              class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
-              [attr.aria-invalid]="
-                  form.personalInfoGenderShowErrors() && !form.personalInfoGenderValid()
-                "
-            />
-            <label
-              for="gender-prefer-not-to-say"
-              class="ml-2 text-sm text-gray-700"
-            >
-              Prefer not to say
-            </label>
-          </div>
-        </div>
-
-        @if ( form.personalInfoGenderShowErrors() &&
-        form.personalInfoGenderErrors().length > 0 ) {
-        <div
-          class="text-sm text-red-600"
-          id="gender-error"
-          role="alert"
-          aria-live="polite"
-        >
-          {{ form.personalInfoGenderErrors()[0] }}
-        </div>
-        }
-      </fieldset>
-    </fieldset>
-
-    <!-- Address Information Section -->
-    <fieldset class="space-y-4">
-      <legend class="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">
-        Address Information
-      </legend>
-
-      <div class="space-y-2">
-        <label class="block text-sm font-medium text-gray-700" for="street">
-          Street Address
-        </label>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div class="form-field">
+        <label class="form-label" for="firstName"> First Name </label>
         <input
           type="text"
-          id="street"
-          name="street"
-          [value]="form.addressInfoStreet()"
-          (input)="form.setAddressInfoStreet($event)"
-          (blur)="form.touchAddressInfoStreet()"
-          placeholder="Enter street address"
-          class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          [class.border-red-500]="
-              form.addressInfoStreetShowErrors() && !form.addressInfoStreetValid()
-            "
-          [class.border-gray-300]="
-              !form.addressInfoStreetShowErrors() || form.addressInfoStreetValid()
-            "
-          [attr.aria-invalid]="
-              form.addressInfoStreetShowErrors() && !form.addressInfoStreetValid()
-            "
-          [attr.aria-describedby]="
-              form.addressInfoStreetShowErrors() && form.addressInfoStreetErrors().length > 0
-                ? 'street-error'
-                : null
-            "
+          id="firstName"
+          [value]="form.personalInfoFirstName()"
+          (input)="form.setPersonalInfoFirstName($event)"
+          placeholder="Enter first name"
+          class="form-input"
         />
 
-        @if ( form.addressInfoStreetShowErrors() &&
-        form.addressInfoStreetErrors().length > 0 ) {
-        <div class="text-sm text-red-600" id="street-error">
-          {{ form.addressInfoStreetErrors()[0] }}
-        </div>
-        }
+        <ngx-form-error [field]="form.personalInfoFirstNameField()" />
       </div>
 
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700" for="city">
-            City
-          </label>
-          <input
-            type="text"
-            id="city"
-            name="city"
-            [value]="form.addressInfoCity()"
-            (input)="form.setAddressInfoCity($event)"
-            (blur)="form.touchAddressInfoCity()"
-            placeholder="Enter city"
-            class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            [class.border-red-500]="
-                form.addressInfoCityShowErrors() && !form.addressInfoCityValid()
-              "
-            [class.border-gray-300]="
-                !form.addressInfoCityShowErrors() || form.addressInfoCityValid()
-              "
-            [attr.aria-invalid]="
-                form.addressInfoCityShowErrors() && !form.addressInfoCityValid()
-              "
-            [attr.aria-describedby]="
-                form.addressInfoCityShowErrors() && form.addressInfoCityErrors().length > 0
-                  ? 'city-error'
-                  : null
-              "
-          />
+      <div class="form-field">
+        <label class="form-label" for="lastName"> Last Name </label>
+        <input
+          type="text"
+          id="lastName"
+          [value]="form.personalInfoLastName()"
+          (input)="form.setPersonalInfoLastName($event)"
+          placeholder="Enter last name"
+          class="form-input"
+        />
 
-          @if ( form.addressInfoCityShowErrors() &&
-          form.addressInfoCityErrors().length > 0 ) {
-          <div class="text-sm text-red-600" id="city-error">
-            {{ form.addressInfoCityErrors()[0] }}
-          </div>
-          }
-        </div>
-
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700" for="zipCode">
-            ZIP Code
-          </label>
-          <input
-            type="text"
-            id="zipCode"
-            name="zipCode"
-            [value]="form.addressInfoZipCode()"
-            (input)="form.setAddressInfoZipCode($event)"
-            (blur)="form.touchAddressInfoZipCode()"
-            placeholder="12345 or 12345-6789"
-            class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            [class.border-red-500]="
-                form.addressInfoZipCodeShowErrors() && !form.addressInfoZipCodeValid()
-              "
-            [class.border-gray-300]="
-                !form.addressInfoZipCodeShowErrors() || form.addressInfoZipCodeValid()
-              "
-            [attr.aria-invalid]="
-                form.addressInfoZipCodeShowErrors() && !form.addressInfoZipCodeValid()
-              "
-            [attr.aria-describedby]="
-                form.addressInfoZipCodeShowErrors() &&
-                form.addressInfoZipCodeErrors().length > 0
-                  ? 'zipCode-error'
-                  : null
-              "
-          />
-
-          @if ( form.addressInfoZipCodeShowErrors() &&
-          form.addressInfoZipCodeErrors().length > 0 ) {
-          <div class="text-sm text-red-600" id="zipCode-error">
-            {{ form.addressInfoZipCodeErrors()[0] }}
-          </div>
-          }
-        </div>
+        <ngx-form-error [field]="form.personalInfoLastNameField()" />
       </div>
-
-      <div class="space-y-2">
-        <label class="block text-sm font-medium text-gray-700" for="country">
-          Country
-        </label>
-        <select
-          id="country"
-          name="country"
-          [value]="form.addressInfoCountry()"
-          (change)="form.setAddressInfoCountry($event)"
-          (blur)="form.touchAddressInfoCountry()"
-          class="w-full rounded-md border px-3 py-2 shadow-sm transition-colors duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          [class.border-red-500]="
-              form.addressInfoCountryShowErrors() && !form.addressInfoCountryValid()
-            "
-          [class.border-gray-300]="
-              !form.addressInfoCountryShowErrors() || form.addressInfoCountryValid()
-            "
-          [attr.aria-invalid]="
-              form.addressInfoCountryShowErrors() && !form.addressInfoCountryValid()
-            "
-          [attr.aria-describedby]="
-              form.addressInfoCountryShowErrors() &&
-              form.addressInfoCountryErrors().length > 0
-                ? 'country-error'
-                : null
-            "
-        >
-          <option value="">Select a country</option>
-          <option value="US">United States</option>
-          <option value="CA">Canada</option>
-          <option value="UK">United Kingdom</option>
-          <option value="DE">Germany</option>
-          <option value="FR">France</option>
-          <option value="NL">Netherlands</option>
-          <option value="OTHER">Other</option>
-        </select>
-
-        @if ( form.addressInfoCountryShowErrors() &&
-        form.addressInfoCountryErrors().length > 0 ) {
-        <div class="text-sm text-red-600" id="country-error">
-          {{ form.addressInfoCountryErrors()[0] }}
-        </div>
-        }
-      </div>
-    </fieldset>
-
-    <!-- Preferences Section -->
-    <fieldset class="space-y-4">
-      <legend class="mb-4 border-b pb-2 text-lg font-semibold text-gray-800">
-        Preferences
-      </legend>
-
-      <div class="space-y-3">
-        <div class="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="newsletter"
-            name="newsletter"
-            [checked]="form.preferencesNewsletter()"
-            (change)="form.setPreferencesNewsletter($event)"
-            (blur)="form.touchPreferencesNewsletter()"
-            class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-          />
-          <label class="text-sm font-medium text-gray-700" for="newsletter">
-            Subscribe to newsletter
-          </label>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="notifications"
-            name="notifications"
-            [checked]="form.preferencesNotifications()"
-            (change)="form.setPreferencesNotifications($event)"
-            (blur)="form.touchPreferencesNotifications()"
-            class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-          />
-          <label class="text-sm font-medium text-gray-700" for="notifications">
-            Enable email notifications
-          </label>
-        </div>
-      </div>
-    </fieldset>
-
-    <div class="flex gap-4 pt-4">
-      <button
-        type="submit"
-        class="flex-1 rounded-md bg-blue-600 px-6 py-3 font-medium text-white transition-colors duration-200 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-gray-400"
-        [disabled]="!form.valid() || form.pending() || form.submitting()"
-      >
-        @if (form.submitting()) { Submitting... } @else { Submit }
-      </button>
-
-      <button
-        type="button"
-        (click)="resetForm()"
-        class="rounded-md bg-gray-600 px-6 py-3 font-medium text-white transition-colors duration-200 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-      >
-        Reset
-      </button>
     </div>
-  </form>
-</div>
+
+    <div class="form-field">
+      <label class="form-label" for="email"> Email Address </label>
+      <input
+        type="email"
+        id="email"
+        [value]="form.personalInfoEmail()"
+        (input)="form.setPersonalInfoEmail($event)"
+        placeholder="Enter email address"
+        class="form-input"
+      />
+
+      <ngx-form-error [field]="form.personalInfoEmailField()" />
+    </div>
+
+    <!-- New Input Types Demonstration -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <!-- Number Input -->
+      <div class="form-field">
+        <label class="form-label" for="age"> Age (Number Input) </label>
+        <input
+          type="number"
+          id="age"
+          [value]="form.personalInfoAge()"
+          (input)="form.setPersonalInfoAge($event)"
+          placeholder="Enter your age"
+          min="18"
+          max="120"
+          class="form-input"
+        />
+
+        <ngx-form-error [field]="form.personalInfoAgeField()" />
+      </div>
+
+      <!-- Range Slider -->
+      <div class="form-field">
+        <label class="form-label" for="experienceLevel">
+          Experience Level (Range: {{ form.personalInfoExperienceLevel() || 5
+          }}/10)
+        </label>
+        <input
+          type="range"
+          id="experienceLevel"
+          [value]="form.personalInfoExperienceLevel()"
+          (input)="form.setPersonalInfoExperienceLevel($event)"
+          min="1"
+          max="10"
+          step="1"
+          [attr.aria-valuemin]="1"
+          [attr.aria-valuemax]="10"
+          [attr.aria-valuenow]="form.personalInfoExperienceLevel() || 5"
+        />
+
+        <ngx-form-error [field]="form.personalInfoExperienceLevelField()" />
+      </div>
+    </div>
+
+    <!-- Radio Button Group -->
+    <fieldset class="space-y-2">
+      <legend class="form-label">Gender (Radio Group)</legend>
+      <div class="flex flex-wrap gap-4">
+        <div class="flex items-center">
+          <input
+            type="radio"
+            id="gender-male"
+            value="male"
+            [checked]="form.personalInfoGender() === 'male'"
+            (change)="form.setPersonalInfoGender($event)"
+          />
+          <label for="gender-male" class="form-label"> Male </label>
+        </div>
+
+        <div class="flex items-center">
+          <input
+            type="radio"
+            id="gender-female"
+            value="female"
+            [checked]="form.personalInfoGender() === 'female'"
+            (change)="form.setPersonalInfoGender($event)"
+          />
+          <label for="gender-female" class="form-label"> Female </label>
+        </div>
+
+        <div class="flex items-center">
+          <input
+            type="radio"
+            id="gender-other"
+            value="other"
+            [checked]="form.personalInfoGender() === 'other'"
+            (change)="form.setPersonalInfoGender($event)"
+          />
+          <label for="gender-other" class="form-label"> Other </label>
+        </div>
+
+        <div class="flex items-center">
+          <input
+            type="radio"
+            id="gender-prefer-not-to-say"
+            value="prefer-not-to-say"
+            [checked]="form.personalInfoGender() === 'prefer-not-to-say'"
+            (change)="form.setPersonalInfoGender($event)"
+          />
+          <label for="gender-prefer-not-to-say" class="form-label">
+            Prefer not to say
+          </label>
+        </div>
+      </div>
+
+      <ngx-form-error [field]="form.personalInfoGenderField()" />
+    </fieldset>
+  </fieldset>
+
+  <!-- Address Information Section -->
+  <fieldset class="form-field">
+    <legend class="form-label">Address Information</legend>
+
+    <div class="form-field">
+      <label class="form-label" for="street"> Street Address </label>
+      <input
+        type="text"
+        id="street"
+        [value]="form.addressInfoStreet()"
+        (input)="form.setAddressInfoStreet($event)"
+        placeholder="Enter street address"
+        class="form-input"
+      />
+
+      <ngx-form-error [field]="form.addressInfoStreetField()" />
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div class="form-field">
+        <label class="form-label" for="city"> City </label>
+        <input
+          type="text"
+          id="city"
+          [value]="form.addressInfoCity()"
+          (input)="form.setAddressInfoCity($event)"
+          placeholder="Enter city"
+          class="form-input"
+        />
+
+        <ngx-form-error [field]="form.addressInfoCityField()" />
+      </div>
+
+      <div class="form-field">
+        <label class="form-label" for="zipCode"> ZIP Code </label>
+        <input
+          type="text"
+          id="zipCode"
+          [value]="form.addressInfoZipCode()"
+          (input)="form.setAddressInfoZipCode($event)"
+          placeholder="12345 or 12345-6789"
+          class="form-input"
+        />
+
+        <ngx-form-error [field]="form.addressInfoZipCodeField()" />
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label class="form-label" for="country"> Country </label>
+      <select
+        id="country"
+        [value]="form.addressInfoCountry()"
+        (change)="form.setAddressInfoCountry($event)"
+        class="form-input"
+      >
+        <option value="">Select a country</option>
+        <option value="US">United States</option>
+        <option value="CA">Canada</option>
+        <option value="UK">United Kingdom</option>
+        <option value="DE">Germany</option>
+        <option value="FR">France</option>
+        <option value="NL">Netherlands</option>
+        <option value="OTHER">Other</option>
+      </select>
+
+      <ngx-form-error [field]="form.addressInfoCountryField()" />
+    </div>
+  </fieldset>
+
+  <!-- Preferences Section -->
+  <fieldset class="form-field">
+    <legend class="form-label">Preferences</legend>
+
+    <div class="space-y-3">
+      <div class="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="newsletter"
+          [checked]="form.preferencesNewsletter()"
+          (change)="form.setPreferencesNewsletter($event)"
+        />
+        <label class="form-label" for="newsletter">
+          Subscribe to newsletter
+        </label>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="notifications"
+          [checked]="form.preferencesNotifications()"
+          (change)="form.setPreferencesNotifications($event)"
+        />
+        <label class="form-label" for="notifications">
+          Enable email notifications
+        </label>
+      </div>
+    </div>
+  </fieldset>
+
+  <div class="form-actions">
+    <button
+      type="submit"
+      class="btn-primary"
+      [disabled]="!form.valid() || form.pending() || form.submitting()"
+    >
+      @if (form.submitting()) { Submitting... } @else { Submit }
+    </button>
+
+    <button type="button" (click)="resetForm()" class="btn-secondary">
+      Reset
+    </button>
+  </div>
+</form>

@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { createVestForm } from 'ngx-vest-forms/core';
-import { Debugger, asDebuggerForm } from '../../ui/debugger/debugger';
+import { createVestForm, NgxVestForms } from 'ngx-vest-forms';
+import { asDebuggerForm, Debugger } from '../../ui/debugger/debugger';
 import { FormModel } from './example-form-simple.model';
-import { validationSuite } from './example-form.-simplevalidation';
+import { validationSuite } from './example-form-simple.validation';
 
 @Component({
   selector: 'ngx-example-form-simple',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Debugger],
+  imports: [Debugger, NgxVestForms],
   templateUrl: './example-form-simple.html',
 })
 export class ExampleFormSimple {
@@ -23,12 +23,13 @@ export class ExampleFormSimple {
 
   readonly formState = () => this.form;
 
-  async onSubmit() {
-    try {
-      const result = await this.form.submit();
-      console.log('✅ Form validation passed - ready to submit', result);
-    } catch (error) {
-      console.error('❌ Form validation failed', error);
+  async save() {
+    const result = await this.form.submit();
+
+    if (result.valid) {
+      console.log('✅ Form validation passed - ready to submit', result.data);
+    } else {
+      console.error('❌ Form validation failed', result.errors);
     }
   }
 

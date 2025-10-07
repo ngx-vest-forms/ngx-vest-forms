@@ -47,9 +47,12 @@ export function createVestFormArray<T = any>(
     }
 
     // Check if all array items are valid
+    // NOTE: Use !hasErrors() instead of isValid() because isValid() returns false
+    // for fields that haven't been tested yet, even if they have no errors.
+    // This was causing the bug where adding valid items made the form invalid.
     return arrayItems.every((_item, index) => {
       const itemPath = `${path}.${index}`;
-      return currentResult.isValid(itemPath);
+      return !currentResult.hasErrors(itemPath);
     });
   });
 
@@ -72,8 +75,11 @@ export function createVestFormArray<T = any>(
     const updatedModel = setValueByPath(model(), path, newArray);
     model.set(updatedModel);
 
-    // Trigger validation for the array path
-    triggerValidation(path);
+    // Trigger validation for the entire form (not just the array path)
+    // BUG FIX: Passing `path` to triggerValidation would use only(path), which
+    // prevents array item tests (path.0, path.1, etc.) from running.
+    // This caused the form to show as invalid after adding/removing array items.
+    triggerValidation();
   }
 
   /**
@@ -257,10 +263,12 @@ export function createEnhancedVestFormArray<T = any>(
 
     const updatedModel = setValueByPath(model(), path, newArray);
     model.set(updatedModel);
+    // Trigger validation for the entire form (not just the array path)
+    // to ensure array item tests run (see bug fix in updateArray)
     if (runSuite) {
-      runSuite(path);
+      runSuite();
     } else {
-      suite(model(), path);
+      suite(model());
     }
   };
 
@@ -280,20 +288,24 @@ export function createEnhancedVestFormArray<T = any>(
 
     const updatedModel = setValueByPath(model(), path, newArray);
     model.set(updatedModel);
+    // Trigger validation for the entire form (not just the array path)
+    // to ensure array item tests run (see bug fix in updateArray)
     if (runSuite) {
-      runSuite(path);
+      runSuite();
     } else {
-      suite(model(), path);
+      suite(model());
     }
   };
 
   const clear = (): void => {
     const updatedModel = setValueByPath(model(), path, []);
     model.set(updatedModel);
+    // Trigger validation for the entire form (not just the array path)
+    // to ensure array item tests run (see bug fix in updateArray)
     if (runSuite) {
-      runSuite(path);
+      runSuite();
     } else {
-      suite(model(), path);
+      suite(model());
     }
   };
 

@@ -419,7 +419,7 @@ return formInstance.fieldState(this.name());
 // Located in ngx-vest-forms/directives
 @Directive({
   selector: '[vestFormProvider]',
-  standalone: true,
+
   providers: [
     {
       provide: VEST_FORM_TOKEN,
@@ -1068,7 +1068,6 @@ The directive approach is cleaner because:
 ```typescript
 @Directive({
   selector: 'form[vestSync]',
-  standalone: true,
 })
 export class VestSyncDirective<T> {
   vestSync = input.required<VestForm<T>>();

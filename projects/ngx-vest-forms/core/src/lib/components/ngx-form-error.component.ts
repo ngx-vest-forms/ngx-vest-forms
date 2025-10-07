@@ -33,7 +33,7 @@ import type { VestField } from '../vest-form.types';
  *   selector: 'app-contact-form',
  *   imports: [NgxFormErrorComponent],
  *   template: `
- *     <form (ngSubmit)="onSubmit()">
+ *     <form (ngSubmit)="save()">
  *       <label for="email">Email *</label>
  *       <input
  *         id="email"
@@ -54,7 +54,7 @@ import type { VestField } from '../vest-form.types';
  *     signal({ email: '', message: '' })
  *   );
  *
- *   protected onSubmit = async () => {
+ *   protected save = async () => {
  *     try {
  *       await this.form.submit();
  *       console.log('Valid:', this.form.model());

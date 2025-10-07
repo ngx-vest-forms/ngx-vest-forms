@@ -3,6 +3,7 @@
 ## 📋 Product Requirements Document
 
 ### **Overview**
+
 A comprehensive interactive demonstration of ngx-vest-forms error display modes using a realistic product feedback form. Users can dynamically switch between different error display modes to understand when and how validation errors appear.
 
 ---
@@ -10,12 +11,14 @@ A comprehensive interactive demonstration of ngx-vest-forms error display modes 
 ## **🎯 Business Objectives**
 
 ### Primary Goals
+
 1. **Educational Excellence**: Clearly demonstrate the three error display modes with immediate visual feedback
 2. **Best Practice Advocacy**: Show the recommended WCAG 2.2 compliant form submission patterns
 3. **Developer Experience**: Provide copy-paste examples of proper error handling implementation
 4. **Library Feature Showcase**: Highlight the flexibility and power of ngx-vest-forms error display system
 
 ### Success Metrics
+
 - Developers understand when to use each error display mode
 - Clear demonstration of accessibility-compliant form patterns
 - Reduced support questions about error timing behavior
@@ -26,16 +29,19 @@ A comprehensive interactive demonstration of ngx-vest-forms error display modes 
 ## **👥 User Stories**
 
 ### As a Frontend Developer
+
 - **I want to** see how error display modes affect user experience **so that** I can choose the right mode for my forms
 - **I want to** switch between modes instantly **so that** I can compare behaviors side-by-side
 - **I want to** see WCAG 2.2 compliant submission handling **so that** I can implement accessible forms
 - **I want to** copy working code examples **so that** I can implement these patterns quickly
 
 ### As a UX Designer
+
 - **I want to** understand error timing implications **so that** I can design better form experiences
 - **I want to** see how different modes affect form usability **so that** I can make informed design decisions
 
 ### As a Product Owner
+
 - **I want to** ensure our forms are accessible **so that** we comply with WCAG 2.2 standards
 - **I want to** reduce form abandonment **so that** we improve conversion rates
 
@@ -44,11 +50,13 @@ A comprehensive interactive demonstration of ngx-vest-forms error display modes 
 ## **🏗️ Technical Requirements**
 
 ### **Form Context: Product Feedback**
+
 **Scenario**: Users providing feedback about a software product they've used
 
 ### **Form Fields & Validation Rules**
 
 #### **1. Personal Information Section**
+
 ```typescript
 // Required fields with format validation
 name: {
@@ -71,6 +79,7 @@ company: {
 ```
 
 #### **2. Feedback Section**
+
 ```typescript
 productUsed: {
   rules: ['required'],
@@ -103,6 +112,7 @@ detailedFeedback: {
 ```
 
 #### **3. Preferences Section**
+
 ```typescript
 allowFollowUp: {
   rules: [],  // Optional checkbox
@@ -120,6 +130,7 @@ newsletter: {
 ```
 
 ### **Error Display Mode Selector**
+
 ```typescript
 interface ErrorDisplayModeConfig {
   mode: 'on-blur' | 'on-submit' | 'on-blur-or-submit';
@@ -133,24 +144,47 @@ const ERROR_DISPLAY_MODES: ErrorDisplayModeConfig[] = [
   {
     mode: 'on-blur',
     description: 'Show errors immediately when user leaves a field',
-    whenToUse: 'Forms where immediate feedback helps (e.g., complex validation)',
-    pros: ['Immediate feedback', 'Prevents error accumulation', 'Good for expert users'],
-    cons: ['Can be overwhelming', 'May interrupt user flow', 'Anxiety-inducing for some users']
+    whenToUse:
+      'Forms where immediate feedback helps (e.g., complex validation)',
+    pros: [
+      'Immediate feedback',
+      'Prevents error accumulation',
+      'Good for expert users',
+    ],
+    cons: [
+      'Can be overwhelming',
+      'May interrupt user flow',
+      'Anxiety-inducing for some users',
+    ],
   },
   {
     mode: 'on-submit',
     description: 'Show errors only when user attempts to submit',
     whenToUse: 'Simple forms or when you want to minimize interruptions',
-    pros: ['Non-intrusive', 'Allows completion without interruption', 'Good for simple forms'],
-    cons: ['Delayed feedback', 'May surprise users', 'Potentially longer error correction time']
+    pros: [
+      'Non-intrusive',
+      'Allows completion without interruption',
+      'Good for simple forms',
+    ],
+    cons: [
+      'Delayed feedback',
+      'May surprise users',
+      'Potentially longer error correction time',
+    ],
   },
   {
     mode: 'on-blur-or-submit',
-    description: 'Show errors on field blur OR form submit (recommended default)',
+    description:
+      'Show errors on field blur OR form submit (recommended default)',
     whenToUse: 'Most forms - balances immediacy with user flow',
-    pros: ['Balanced approach', 'Flexible timing', 'Good user experience', 'WCAG 2.2 friendly'],
-    cons: ['Slight complexity in implementation']
-  }
+    pros: [
+      'Balanced approach',
+      'Flexible timing',
+      'Good user experience',
+      'WCAG 2.2 friendly',
+    ],
+    cons: ['Slight complexity in implementation'],
+  },
 ];
 ```
 
@@ -159,6 +193,7 @@ const ERROR_DISPLAY_MODES: ErrorDisplayModeConfig[] = [
 ## **🎨 User Experience Requirements**
 
 ### **Layout Structure**
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ 📋 Error Display Modes - Interactive Demo               │
@@ -189,6 +224,7 @@ const ERROR_DISPLAY_MODES: ErrorDisplayModeConfig[] = [
 ```
 
 ### **Interactive Behavior**
+
 1. **Mode Switching**: Changing the dropdown immediately applies the new error display mode to all fields
 2. **Visual Feedback**: Current mode is clearly highlighted with description and recommendations
 3. **Testing Guidance**: Dynamic instructions on how to test the current mode
@@ -199,6 +235,7 @@ const ERROR_DISPLAY_MODES: ErrorDisplayModeConfig[] = [
 ## **⚡ Technical Implementation Requirements**
 
 ### **Core Features**
+
 - ✅ **Dynamic Mode Switching**: Change `errorDisplayMode` input reactively
 - ✅ **WCAG 2.2 Compliance**: No disabled submit buttons, proper error announcements
 - ✅ **Real-time Validation**: Immediate validation feedback based on current mode
@@ -206,43 +243,48 @@ const ERROR_DISPLAY_MODES: ErrorDisplayModeConfig[] = [
 - ✅ **Accessibility**: Full keyboard navigation, screen reader support, proper ARIA attributes
 
 ### **Form Submission Behavior**
+
 ```typescript
-onSubmit() {
+save() {
   const formState = this.vestForm.formState();
-  
+
   // WCAG 2.2 Compliant: Never disable submit button
   if (!formState.valid) {
     this.showSubmissionError.set(true);
     this.focusFirstInvalidField();
     return;
   }
-  
+
   if (formState.pending) {
     this.showPendingMessage.set(true);
     return;
   }
-  
+
   // Valid submission
   this.submitFeedback(this.model());
 }
 ```
 
 ### **Error Display Integration**
+
 ```html
 <!-- Each field uses ngxFormErrorDisplay with dynamic mode -->
-<div ngxFormErrorDisplay 
-     [errorDisplayMode]="currentMode()" 
-     #fieldDisplay="formErrorDisplay">
-  
-  <input [attr.aria-invalid]="fieldDisplay.shouldShowErrors() ? 'true' : null"
-         [attr.aria-describedby]="fieldDisplay.shouldShowErrors() ? 'field-error' : null" />
-  
+<div
+  ngxFormErrorDisplay
+  [errorDisplayMode]="currentMode()"
+  #fieldDisplay="formErrorDisplay"
+>
+  <input
+    [attr.aria-invalid]="fieldDisplay.shouldShowErrors() ? 'true' : null"
+    [attr.aria-describedby]="fieldDisplay.shouldShowErrors() ? 'field-error' : null"
+  />
+
   @if (fieldDisplay.shouldShowErrors()) {
-    <div id="field-error" role="alert">
-      @for (error of fieldDisplay.errors(); track error) {
-        <div>{{ error }}</div>
-      }
-    </div>
+  <div id="field-error" role="alert">
+    @for (error of fieldDisplay.errors(); track error) {
+    <div>{{ error }}</div>
+    }
+  </div>
   }
 </div>
 ```
@@ -252,18 +294,21 @@ onSubmit() {
 ## **🧪 Testing Scenarios**
 
 ### **Mode Comparison Tests**
+
 1. **Fill form partially → Switch modes → Observe error timing**
 2. **Invalid email → Tab away → Compare immediate vs delayed feedback**
 3. **Submit with errors → See how each mode handles submission**
 4. **Conditional field validation → Test rating-based field visibility**
 
 ### **Accessibility Tests**
+
 1. **Keyboard-only navigation** through all modes
 2. **Screen reader announcements** for each error display mode
 3. **Focus management** when switching between modes
 4. **Color contrast** and visual feedback requirements
 
 ### **Edge Cases**
+
 1. **Rapid mode switching** while validation is pending
 2. **Form reset** behavior across different modes
 3. **Browser back/forward** state preservation
@@ -274,7 +319,9 @@ onSubmit() {
 ## **📚 Educational Content**
 
 ### **Mode Descriptions**
+
 Each mode includes:
+
 - 📖 **When to use it**
 - ✅ **Advantages**
 - ⚠️ **Considerations**
@@ -282,7 +329,9 @@ Each mode includes:
 - 📋 **Code examples**
 
 ### **Testing Instructions**
+
 Dynamic guidance that changes based on selected mode:
+
 ```
 Current Mode: on-blur
 🧪 Try this:
@@ -299,21 +348,25 @@ Current Mode: on-blur
 ## **🚀 Implementation Phases**
 
 ### **Phase 1: Core Form** (MVP)
+
 - Basic form structure with all field types
 - Working validation with static mode
 - WCAG 2.2 compliant submission handling
 
 ### **Phase 2: Dynamic Mode Switching**
+
 - Mode selector with real-time switching
 - Educational content and descriptions
 - Testing guidance
 
 ### **Phase 3: Enhanced UX**
+
 - Smooth transitions between modes
 - Advanced form state visualization
 - Mobile-optimized experience
 
 ### **Phase 4: Advanced Features**
+
 - Performance optimization
 - Extensive testing scenarios
 - Copy-paste code examples
@@ -323,6 +376,7 @@ Current Mode: on-blur
 ## **📋 Acceptance Criteria**
 
 ### **Functional Requirements**
+
 - [ ] Form validates according to defined rules
 - [ ] Error display mode can be changed dynamically
 - [ ] All three modes work correctly
@@ -331,6 +385,7 @@ Current Mode: on-blur
 - [ ] Conditional field logic works correctly
 
 ### **Accessibility Requirements**
+
 - [ ] Full keyboard navigation support
 - [ ] Screen reader compatibility
 - [ ] Proper ARIA attributes and announcements
@@ -339,6 +394,7 @@ Current Mode: on-blur
 - [ ] Error messages are programmatically associated
 
 ### **Educational Requirements**
+
 - [ ] Clear explanation of each mode
 - [ ] Interactive testing guidance
 - [ ] Code examples are accurate and copyable
@@ -350,6 +406,7 @@ Current Mode: on-blur
 ## **🔮 Future Enhancements**
 
 ### **Advanced Features**
+
 - [ ] **Custom Error Display Timing**: Configurable delay/debounce settings
 - [ ] **Animation Modes**: Different error appearance animations
 - [ ] **Multi-language Support**: Error display in different languages
@@ -358,6 +415,7 @@ Current Mode: on-blur
 - [ ] **A/B Testing Setup**: Compare user behavior across modes
 
 ### **Developer Tools**
+
 - [ ] **Code Generator**: Generate forms with selected error display mode
 - [ ] **Testing Helpers**: Automated testing utilities for different modes
 - [ ] **Debug Panel**: Advanced form state inspection tools

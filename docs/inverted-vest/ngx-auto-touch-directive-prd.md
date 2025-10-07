@@ -88,7 +88,7 @@ Auto-apply to all form controls with `[value]` binding, excluding opted-out elem
     textarea[value]:not([ngxVestTouchDisabled]),
     select[value]:not([ngxVestTouchDisabled])
   `,
-  standalone: true,
+
   host: { '(blur)': 'onBlur()' },
 })
 export class NgxVestAutoTouchDirective implements OnDestroy {
@@ -518,7 +518,6 @@ describe('NgxVestAutoTouchDirective', () => {
   describe('Auto-Application via Selector', () => {
     it('should auto-apply to text inputs with [value] binding', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestAutoTouchDirective],
         template: `
           <input
@@ -552,7 +551,6 @@ describe('NgxVestAutoTouchDirective', () => {
 
     it('should auto-apply to number inputs', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestAutoTouchDirective],
         template: `
           <input
@@ -581,7 +579,6 @@ describe('NgxVestAutoTouchDirective', () => {
 
     it('should auto-apply to select dropdowns', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestAutoTouchDirective],
         template: `
           <select
@@ -617,7 +614,6 @@ describe('NgxVestAutoTouchDirective', () => {
 
     it('should auto-apply to textarea elements', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestAutoTouchDirective],
         template: `
           <textarea
@@ -650,7 +646,6 @@ describe('NgxVestAutoTouchDirective', () => {
 
     it('should NOT auto-apply to radio buttons (use change event)', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestAutoTouchDirective],
         template: `
           <input
@@ -688,7 +683,6 @@ describe('NgxVestAutoTouchDirective', () => {
 
     it('should NOT auto-apply to checkboxes (use change event)', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestAutoTouchDirective],
         template: `
           <input
@@ -725,7 +719,6 @@ describe('NgxVestAutoTouchDirective', () => {
   describe('Strategy Awareness', () => {
     it('should only activate when errorStrategy is "on-touch"', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestAutoTouchDirective],
         template: `
           <input
@@ -754,7 +747,6 @@ describe('NgxVestAutoTouchDirective', () => {
 
     it('should NOT activate when errorStrategy is "on-submit"', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestAutoTouchDirective],
         template: `
           <input
@@ -782,7 +774,6 @@ describe('NgxVestAutoTouchDirective', () => {
 
     it('should react to dynamic strategy changes', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestAutoTouchDirective],
         template: `
           <input
@@ -823,7 +814,6 @@ describe('NgxVestAutoTouchDirective', () => {
   describe('Field Name Extraction', () => {
     it('should extract from data-vest-field attribute (priority 1)', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestAutoTouchDirective],
         template: `
           <input
@@ -859,7 +849,6 @@ describe('NgxVestAutoTouchDirective', () => {
 
     it('should extract from id attribute (priority 3)', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestAutoTouchDirective],
         template: `
           <input
@@ -888,7 +877,6 @@ describe('NgxVestAutoTouchDirective', () => {
 
     it('should extract from name attribute (priority 4)', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestAutoTouchDirective],
         template: `
           <input
@@ -916,7 +904,6 @@ describe('NgxVestAutoTouchDirective', () => {
 
     it('should convert underscores to dots in field paths', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestAutoTouchDirective],
         template: `
           <input
@@ -950,7 +937,6 @@ describe('NgxVestAutoTouchDirective', () => {
 
     it('should handle missing field name gracefully', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestAutoTouchDirective],
         template: `
           <input [value]="form.email()" (input)="form.setEmail($event)" />
@@ -980,7 +966,6 @@ describe('NgxVestAutoTouchDirective', () => {
   describe('Opt-Out Mechanism', () => {
     it('should respect ngxVestTouchDisabled attribute', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestAutoTouchDirective],
         template: `
           <input
@@ -1011,7 +996,6 @@ describe('NgxVestAutoTouchDirective', () => {
   describe('Global Configuration', () => {
     it('should disable when globalConfig.autoTouch is false', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestAutoTouchDirective],
         providers: [provideNgxVestFormsConfig({ autoTouch: false })],
         template: `
@@ -1040,7 +1024,6 @@ describe('NgxVestAutoTouchDirective', () => {
 
     it('should use custom field name resolver from config', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestAutoTouchDirective],
         providers: [
           provideNgxVestFormsConfig({
@@ -1078,7 +1061,6 @@ describe('NgxVestAutoTouchDirective', () => {
   describe('Cleanup', () => {
     it('should clean up effect on destroy', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestAutoTouchDirective],
         template: `
           @if (show()) {

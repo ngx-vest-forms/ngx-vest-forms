@@ -13,6 +13,7 @@
 import { Component, signal } from '@angular/core';
 import { render, screen } from '@testing-library/angular';
 import { userEvent } from '@vitest/browser/context';
+import { enforce, test } from 'vest';
 import { describe, expect, it } from 'vitest';
 import { NgxFormErrorComponent } from '../components/ngx-form-error.component';
 import { createVestForm } from '../create-vest-form';
@@ -20,50 +21,57 @@ import { NGX_VEST_FORMS_CONFIG } from '../tokens';
 import { staticSafeSuite } from '../utils/safe-suite';
 import { NgxVestAutoAriaDirective } from './ngx-vest-auto-aria.directive';
 import { NgxVestAutoTouchDirective } from './ngx-vest-auto-touch.directive';
+import { NgxVestFormProviderDirective } from './ngx-vest-form-provider.directive';
 
 // Test validation suite
 const testSuite = staticSafeSuite(
   (data: { email?: string; password?: string } = {}) => {
-    if (!data.email) {
-      return; // Skip all tests if no data
-    }
+    test('email', 'Email is required', () => {
+      enforce(data.email).isNotEmpty();
+    });
 
-    // Email validations
-    if (!data.email || data.email.trim() === '') {
-      throw new Error('Email is required');
-    }
+    test('email', 'Email must contain @', () => {
+      enforce(data.email).matches(/@/);
+    });
 
-    if (data.email && !data.email.includes('@')) {
-      throw new Error('Email must contain @');
-    }
-
-    // Password validations
-    if (data.password && data.password.length < 8) {
-      throw new Error('Password must be at least 8 characters');
-    }
+    test('password', 'Password must be at least 8 characters', () => {
+      enforce(data.password).longerThanOrEquals(8);
+    });
   },
 );
 
 describe('NgxVestAutoAriaDirective', () => {
   describe('ARIA Attribute Generation', () => {
     it('should add aria-invalid="true" (string) when field has errors', async () => {
+      const form = createVestForm(
+        testSuite,
+        signal({ email: '', password: '' }),
+        {
+          errorStrategy: 'immediate',
+        },
+      );
+
       @Component({
-        standalone: true,
-        imports: [NgxVestAutoAriaDirective, NgxFormErrorComponent],
+        imports: [
+          NgxVestAutoAriaDirective,
+          NgxFormErrorComponent,
+          NgxVestFormProviderDirective,
+        ],
+
         template: `
-          <input
-            id="email"
-            type="email"
-            [value]="form.email()"
-            (input)="form.setEmail($event)"
-          />
-          <ngx-form-error [field]="form.emailField()" />
+          <div [ngxVestFormProvider]="form">
+            <input
+              id="email"
+              type="email"
+              [value]="form.email()"
+              (input)="form.setEmail($event)"
+            />
+            <ngx-form-error [field]="form.emailField()" />
+          </div>
         `,
       })
       class TestComponent {
-        form = createVestForm(testSuite, signal({ email: '', password: '' }), {
-          errorStrategy: 'immediate',
-        });
+        form = form;
       }
 
       await render(TestComponent);
@@ -85,23 +93,35 @@ describe('NgxVestAutoAriaDirective', () => {
     });
 
     it('should add aria-describedby with error ID when field has errors', async () => {
+      const form = createVestForm(
+        testSuite,
+        signal({ email: '', password: '' }),
+        {
+          errorStrategy: 'immediate',
+        },
+      );
+
       @Component({
-        standalone: true,
-        imports: [NgxVestAutoAriaDirective, NgxFormErrorComponent],
+        imports: [
+          NgxVestAutoAriaDirective,
+          NgxFormErrorComponent,
+          NgxVestFormProviderDirective,
+        ],
+
         template: `
-          <input
-            id="email"
-            type="email"
-            [value]="form.email()"
-            (input)="form.setEmail($event)"
-          />
-          <ngx-form-error [field]="form.emailField()" />
+          <div [ngxVestFormProvider]="form">
+            <input
+              id="email"
+              type="email"
+              [value]="form.email()"
+              (input)="form.setEmail($event)"
+            />
+            <ngx-form-error [field]="form.emailField()" />
+          </div>
         `,
       })
       class TestComponent {
-        form = createVestForm(testSuite, signal({ email: '', password: '' }), {
-          errorStrategy: 'immediate',
-        });
+        form = form;
       }
 
       await render(TestComponent);
@@ -120,25 +140,37 @@ describe('NgxVestAutoAriaDirective', () => {
     });
 
     it('should preserve existing aria-describedby IDs (hint text)', async () => {
+      const form = createVestForm(
+        testSuite,
+        signal({ email: '', password: '' }),
+        {
+          errorStrategy: 'immediate',
+        },
+      );
+
       @Component({
-        standalone: true,
-        imports: [NgxVestAutoAriaDirective, NgxFormErrorComponent],
+        imports: [
+          NgxVestAutoAriaDirective,
+          NgxFormErrorComponent,
+          NgxVestFormProviderDirective,
+        ],
+
         template: `
-          <input
-            id="email"
-            type="email"
-            aria-describedby="email-hint"
-            [value]="form.email()"
-            (input)="form.setEmail($event)"
-          />
-          <span id="email-hint">We'll never share your email</span>
-          <ngx-form-error [field]="form.emailField()" />
+          <div [ngxVestFormProvider]="form">
+            <input
+              id="email"
+              type="email"
+              aria-describedby="email-hint"
+              [value]="form.email()"
+              (input)="form.setEmail($event)"
+            />
+            <span id="email-hint">We'll never share your email</span>
+            <ngx-form-error [field]="form.emailField()" />
+          </div>
         `,
       })
       class TestComponent {
-        form = createVestForm(testSuite, signal({ email: '', password: '' }), {
-          errorStrategy: 'immediate',
-        });
+        form = form;
       }
 
       await render(TestComponent);
@@ -161,23 +193,31 @@ describe('NgxVestAutoAriaDirective', () => {
 
   describe('Manual Override Detection', () => {
     it('should NOT override manual aria-invalid attribute', async () => {
+      const form = createVestForm(
+        testSuite,
+        signal({ email: '', password: '' }),
+        {
+          errorStrategy: 'immediate',
+        },
+      );
+
       @Component({
-        standalone: true,
-        imports: [NgxVestAutoAriaDirective],
+        imports: [NgxVestAutoAriaDirective, NgxVestFormProviderDirective],
+
         template: `
-          <input
-            id="email"
-            type="email"
-            aria-invalid="false"
-            [value]="form.email()"
-            (input)="form.setEmail($event)"
-          />
+          <div [ngxVestFormProvider]="form">
+            <input
+              id="email"
+              type="email"
+              aria-invalid="false"
+              [value]="form.email()"
+              (input)="form.setEmail($event)"
+            />
+          </div>
         `,
       })
       class TestComponent {
-        form = createVestForm(testSuite, signal({ email: '', password: '' }), {
-          errorStrategy: 'immediate',
-        });
+        form = form;
       }
 
       await render(TestComponent);
@@ -187,75 +227,91 @@ describe('NgxVestAutoAriaDirective', () => {
       await expect.element(input).toHaveAttribute('aria-invalid', 'false');
     });
 
-    it('should NOT override manual aria-describedby attribute', async () => {
+    it('should append error ID to manual aria-describedby attribute', async () => {
+      const form = createVestForm(
+        testSuite,
+        signal({ email: '', password: '' }),
+        {
+          errorStrategy: 'immediate',
+        },
+      );
+
       @Component({
-        standalone: true,
-        imports: [NgxVestAutoAriaDirective],
+        imports: [NgxVestAutoAriaDirective, NgxVestFormProviderDirective],
+
         template: `
-          <input
-            id="email"
-            type="email"
-            aria-describedby="custom-error"
-            [value]="form.email()"
-            (input)="form.setEmail($event)"
-          />
+          <div [ngxVestFormProvider]="form">
+            <input
+              id="email"
+              type="email"
+              aria-describedby="custom-hint"
+              [value]="form.email()"
+              (input)="form.setEmail($event)"
+            />
+          </div>
         `,
       })
       class TestComponent {
-        form = createVestForm(testSuite, signal({ email: '', password: '' }), {
-          errorStrategy: 'immediate',
-        });
+        form = form;
       }
 
       await render(TestComponent);
       const input = screen.getByRole('textbox');
 
-      // Manual attribute should take precedence
+      // Should append error ID to existing manual ID
       await expect
         .element(input)
-        .toHaveAttribute('aria-describedby', 'custom-error');
+        .toHaveAttribute('aria-describedby', 'custom-hint email-error');
     });
   });
 
   describe('Radio Button Handling', () => {
     it('should only add aria-describedby to first radio in group', async () => {
       const radioSuite = staticSafeSuite((data: { gender?: string } = {}) => {
-        if (!data.gender) {
-          throw new Error('Gender is required');
-        }
+        test('gender', 'Gender is required', () => {
+          enforce(data.gender).isNotEmpty();
+        });
+      });
+
+      const form = createVestForm(radioSuite, signal({ gender: '' }), {
+        errorStrategy: 'immediate',
       });
 
       @Component({
-        standalone: true,
-        imports: [NgxVestAutoAriaDirective, NgxFormErrorComponent],
+        imports: [
+          NgxVestAutoAriaDirective,
+          NgxFormErrorComponent,
+          NgxVestFormProviderDirective,
+        ],
+
         template: `
-          <input
-            id="gender-male"
-            type="radio"
-            name="gender"
-            value="male"
-            [checked]="form.gender() === 'male'"
-            (change)="form.setGender($event)"
-          />
-          <label for="gender-male">Male</label>
+          <div [ngxVestFormProvider]="form">
+            <input
+              id="gender-male"
+              type="radio"
+              name="gender"
+              value="male"
+              [checked]="form.gender() === 'male'"
+              (change)="form.setGender($event)"
+            />
+            <label for="gender-male">Male</label>
 
-          <input
-            id="gender-female"
-            type="radio"
-            name="gender"
-            value="female"
-            [checked]="form.gender() === 'female'"
-            (change)="form.setGender($event)"
-          />
-          <label for="gender-female">Female</label>
+            <input
+              id="gender-female"
+              type="radio"
+              name="gender"
+              value="female"
+              [checked]="form.gender() === 'female'"
+              (change)="form.setGender($event)"
+            />
+            <label for="gender-female">Female</label>
 
-          <ngx-form-error [field]="form.genderField()" />
+            <ngx-form-error [field]="form.genderField()" />
+          </div>
         `,
       })
       class TestComponent {
-        form = createVestForm(radioSuite, signal({ gender: '' }), {
-          errorStrategy: 'immediate',
-        });
+        form = form;
       }
 
       await render(TestComponent);
@@ -273,22 +329,30 @@ describe('NgxVestAutoAriaDirective', () => {
 
   describe('Global Config', () => {
     it('should disable directive when autoAria config is false', async () => {
+      const form = createVestForm(
+        testSuite,
+        signal({ email: '', password: '' }),
+        {
+          errorStrategy: 'immediate',
+        },
+      );
+
       @Component({
-        standalone: true,
-        imports: [NgxVestAutoAriaDirective],
+        imports: [NgxVestAutoAriaDirective, NgxVestFormProviderDirective],
+
         template: `
-          <input
-            id="email"
-            type="email"
-            [value]="form.email()"
-            (input)="form.setEmail($event)"
-          />
+          <div [ngxVestFormProvider]="form">
+            <input
+              id="email"
+              type="email"
+              [value]="form.email()"
+              (input)="form.setEmail($event)"
+            />
+          </div>
         `,
       })
       class TestComponent {
-        form = createVestForm(testSuite, signal({ email: '', password: '' }), {
-          errorStrategy: 'immediate',
-        });
+        form = form;
       }
 
       await render(TestComponent, {
@@ -310,23 +374,31 @@ describe('NgxVestAutoAriaDirective', () => {
 
   describe('Opt-Out Attribute', () => {
     it('should not apply when ngxVestAutoAriaDisabled attribute is present', async () => {
+      const form = createVestForm(
+        testSuite,
+        signal({ email: '', password: '' }),
+        {
+          errorStrategy: 'immediate',
+        },
+      );
+
       @Component({
-        standalone: true,
-        imports: [NgxVestAutoAriaDirective],
+        imports: [NgxVestAutoAriaDirective, NgxVestFormProviderDirective],
+
         template: `
-          <input
-            id="email"
-            type="email"
-            ngxVestAutoAriaDisabled
-            [value]="form.email()"
-            (input)="form.setEmail($event)"
-          />
+          <div [ngxVestFormProvider]="form">
+            <input
+              id="email"
+              type="email"
+              ngxVestAutoAriaDisabled
+              [value]="form.email()"
+              (input)="form.setEmail($event)"
+            />
+          </div>
         `,
       })
       class TestComponent {
-        form = createVestForm(testSuite, signal({ email: '', password: '' }), {
-          errorStrategy: 'immediate',
-        });
+        form = form;
       }
 
       await render(TestComponent);
@@ -340,23 +412,35 @@ describe('NgxVestAutoAriaDirective', () => {
 
   describe('Field Name Extraction', () => {
     it('should use id attribute for field name', async () => {
+      const form = createVestForm(
+        testSuite,
+        signal({ email: '', password: '' }),
+        {
+          errorStrategy: 'immediate',
+        },
+      );
+
       @Component({
-        standalone: true,
-        imports: [NgxVestAutoAriaDirective, NgxFormErrorComponent],
+        imports: [
+          NgxVestAutoAriaDirective,
+          NgxFormErrorComponent,
+          NgxVestFormProviderDirective,
+        ],
+
         template: `
-          <input
-            id="email"
-            type="email"
-            [value]="form.email()"
-            (input)="form.setEmail($event)"
-          />
-          <ngx-form-error [field]="form.emailField()" />
+          <div [ngxVestFormProvider]="form">
+            <input
+              id="email"
+              type="email"
+              [value]="form.email()"
+              (input)="form.setEmail($event)"
+            />
+            <ngx-form-error [field]="form.emailField()" />
+          </div>
         `,
       })
       class TestComponent {
-        form = createVestForm(testSuite, signal({ email: '', password: '' }), {
-          errorStrategy: 'immediate',
-        });
+        form = form;
       }
 
       await render(TestComponent);
@@ -369,23 +453,35 @@ describe('NgxVestAutoAriaDirective', () => {
     });
 
     it('should use name attribute as fallback when id is missing', async () => {
+      const form = createVestForm(
+        testSuite,
+        signal({ email: '', password: '' }),
+        {
+          errorStrategy: 'immediate',
+        },
+      );
+
       @Component({
-        standalone: true,
-        imports: [NgxVestAutoAriaDirective, NgxFormErrorComponent],
+        imports: [
+          NgxVestAutoAriaDirective,
+          NgxFormErrorComponent,
+          NgxVestFormProviderDirective,
+        ],
+
         template: `
-          <input
-            name="email"
-            type="email"
-            [value]="form.email()"
-            (input)="form.setEmail($event)"
-          />
-          <ngx-form-error [field]="form.emailField()" />
+          <div [ngxVestFormProvider]="form">
+            <input
+              name="email"
+              type="email"
+              [value]="form.email()"
+              (input)="form.setEmail($event)"
+            />
+            <ngx-form-error [field]="form.emailField()" />
+          </div>
         `,
       })
       class TestComponent {
-        form = createVestForm(testSuite, signal({ email: '', password: '' }), {
-          errorStrategy: 'immediate',
-        });
+        form = form;
       }
 
       await render(TestComponent);
@@ -398,25 +494,37 @@ describe('NgxVestAutoAriaDirective', () => {
     });
 
     it('should prefer data-vest-field over id/name', async () => {
+      const form = createVestForm(
+        testSuite,
+        signal({ email: '', password: '' }),
+        {
+          errorStrategy: 'immediate',
+        },
+      );
+
       @Component({
-        standalone: true,
-        imports: [NgxVestAutoAriaDirective, NgxFormErrorComponent],
+        imports: [
+          NgxVestAutoAriaDirective,
+          NgxFormErrorComponent,
+          NgxVestFormProviderDirective,
+        ],
+
         template: `
-          <input
-            id="userEmail"
-            name="user_email"
-            data-vest-field="email"
-            type="email"
-            [value]="form.email()"
-            (input)="form.setEmail($event)"
-          />
-          <ngx-form-error [field]="form.emailField()" />
+          <div [ngxVestFormProvider]="form">
+            <input
+              id="userEmail"
+              name="user_email"
+              data-vest-field="email"
+              type="email"
+              [value]="form.email()"
+              (input)="form.setEmail($event)"
+            />
+            <ngx-form-error [field]="form.emailField()" />
+          </div>
         `,
       })
       class TestComponent {
-        form = createVestForm(testSuite, signal({ email: '', password: '' }), {
-          errorStrategy: 'immediate',
-        });
+        form = form;
       }
 
       await render(TestComponent);
@@ -431,31 +539,40 @@ describe('NgxVestAutoAriaDirective', () => {
 
   describe('Integration with NgxVestForms Bundle', () => {
     it('should work with all NgxVestForms directives and components', async () => {
+      const form = createVestForm(
+        testSuite,
+        signal({ email: '', password: '' }),
+        {
+          errorStrategy: 'on-touch',
+        },
+      );
+
       const NgxVestForms = [
         NgxVestAutoAriaDirective,
         NgxVestAutoTouchDirective,
         NgxFormErrorComponent,
+        NgxVestFormProviderDirective,
       ] as const;
 
       @Component({
-        standalone: true,
         imports: [NgxVestForms],
+
         template: `
           <form>
-            <input
-              id="email"
-              type="email"
-              [value]="form.email()"
-              (input)="form.setEmail($event)"
-            />
-            <ngx-form-error [field]="form.emailField()" />
+            <div [ngxVestFormProvider]="form">
+              <input
+                id="email"
+                type="email"
+                [value]="form.email()"
+                (input)="form.setEmail($event)"
+              />
+              <ngx-form-error [field]="form.emailField()" />
+            </div>
           </form>
         `,
       })
       class TestComponent {
-        form = createVestForm(testSuite, signal({ email: '', password: '' }), {
-          errorStrategy: 'on-touch',
-        });
+        form = form;
       }
 
       await render(TestComponent);

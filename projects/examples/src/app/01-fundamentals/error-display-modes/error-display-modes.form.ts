@@ -10,9 +10,10 @@ import {
 } from '@angular/core';
 import {
   createVestForm,
+  NgxVestForms,
   type EnhancedVestForm,
   type ErrorDisplayStrategy,
-} from 'ngx-vest-forms/core';
+} from 'ngx-vest-forms';
 import { asDebuggerForm, createFocusFirstInvalidField } from '../../ui';
 import {
   ProductFeedbackModel,
@@ -42,12 +43,15 @@ const DEFAULT_STRATEGY: ErrorDisplayStrategy = 'on-touch';
 @Component({
   selector: 'ngx-error-display-modes-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [NgxVestForms],
   template: `
     <!-- Product Feedback Form -->
     <form
-      (ngSubmit)="onSubmit()"
+      [ngxVestForm]="form"
+      (ngSubmit)="save()"
       class="form-container"
       aria-labelledby="productFeedbackHeading"
+      novalidate
     >
       <!-- Personal Information Section -->
       <fieldset class="mb-8">
@@ -63,30 +67,17 @@ const DEFAULT_STRATEGY: ErrorDisplayStrategy = 'on-touch';
           <input
             class="form-input"
             id="name"
-            name="name"
             type="text"
             autocomplete="name"
             [value]="form.name() || ''"
             (input)="form.setName($event)"
-            (blur)="form.touchName()"
-            [attr.aria-invalid]="
-              form.nameShowErrors() && !form.nameValid() ? 'true' : null
-            "
-            [attr.aria-describedby]="
-              form.nameShowErrors() && form.nameErrors().length
-                ? 'name-hint name-errors'
-                : 'name-hint'
-            "
+            aria-describedby="name-hint"
             placeholder="Your full name"
           />
           <div class="form-hint" id="name-hint">
             We use this to personalize our response
           </div>
-          @if (form.nameShowErrors() && form.nameErrors().length) {
-            <div class="form-error" id="name-errors" role="alert">
-              {{ form.nameErrors()[0] }}
-            </div>
-          }
+          <ngx-form-error [field]="form.nameField()" />
         </div>
 
         <!-- Email Field -->
@@ -95,30 +86,17 @@ const DEFAULT_STRATEGY: ErrorDisplayStrategy = 'on-touch';
           <input
             class="form-input"
             id="email"
-            name="email"
             type="email"
             autocomplete="email"
             [value]="form.email() || ''"
             (input)="form.setEmail($event)"
-            (blur)="form.touchEmail()"
             placeholder="your.email@company.com"
-            [attr.aria-invalid]="
-              form.emailShowErrors() && !form.emailValid() ? 'true' : null
-            "
-            [attr.aria-describedby]="
-              form.emailShowErrors() && form.emailErrors().length
-                ? 'email-hint email-errors'
-                : 'email-hint'
-            "
+            aria-describedby="email-hint"
           />
           <div class="form-hint" id="email-hint">
             For follow-up questions (we respect your privacy)
           </div>
-          @if (form.emailShowErrors() && form.emailErrors().length) {
-            <div class="form-error" id="email-errors" role="alert">
-              {{ form.emailErrors()[0] }}
-            </div>
-          }
+          <ngx-form-error [field]="form.emailField()" />
         </div>
 
         <!-- Company Field -->
@@ -127,30 +105,17 @@ const DEFAULT_STRATEGY: ErrorDisplayStrategy = 'on-touch';
           <input
             class="form-input"
             id="company"
-            name="company"
             type="text"
             autocomplete="organization"
             [value]="form.company() || ''"
             (input)="form.setCompany($event)"
-            (blur)="form.touchCompany()"
             placeholder="Your company (optional)"
-            [attr.aria-invalid]="
-              form.companyShowErrors() && !form.companyValid() ? 'true' : null
-            "
-            [attr.aria-describedby]="
-              form.companyShowErrors() && form.companyErrors().length
-                ? 'company-hint company-errors'
-                : 'company-hint'
-            "
+            aria-describedby="company-hint"
           />
           <div class="form-hint" id="company-hint">
             Helps us understand your use case
           </div>
-          @if (form.companyShowErrors() && form.companyErrors().length) {
-            <div class="form-error" id="company-errors" role="alert">
-              {{ form.companyErrors()[0] }}
-            </div>
-          }
+          <ngx-form-error [field]="form.companyField()" />
         </div>
       </fieldset>
 
@@ -170,20 +135,9 @@ const DEFAULT_STRATEGY: ErrorDisplayStrategy = 'on-touch';
           <select
             class="form-input"
             id="productUsed"
-            name="productUsed"
             [value]="form.productUsed() || ''"
             (change)="form.setProductUsed($event)"
-            (blur)="form.touchProductUsed()"
-            [attr.aria-invalid]="
-              form.productUsedShowErrors() && !form.productUsedValid()
-                ? 'true'
-                : null
-            "
-            [attr.aria-describedby]="
-              form.productUsedShowErrors() && form.productUsedErrors().length
-                ? 'product-hint product-errors'
-                : 'product-hint'
-            "
+            aria-describedby="product-hint"
           >
             <option value="">Select a product...</option>
             <option value="Web App">Web Application</option>
@@ -195,13 +149,7 @@ const DEFAULT_STRATEGY: ErrorDisplayStrategy = 'on-touch';
           <div class="form-hint" id="product-hint">
             Which product are you providing feedback about?
           </div>
-          @if (
-            form.productUsedShowErrors() && form.productUsedErrors().length
-          ) {
-            <div class="form-error" id="product-errors" role="alert">
-              {{ form.productUsedErrors()[0] }}
-            </div>
-          }
+          <ngx-form-error [field]="form.productUsedField()" />
         </div>
 
         <!-- Overall Rating -->
@@ -210,34 +158,16 @@ const DEFAULT_STRATEGY: ErrorDisplayStrategy = 'on-touch';
           <input
             class="form-input"
             id="overallRating"
-            name="overallRating"
             type="number"
             min="1"
             max="5"
             [value]="form.overallRating() > 0 ? form.overallRating() : ''"
             (input)="form.setOverallRating($event)"
-            (blur)="form.touchOverallRating()"
             placeholder="Rate 1-5 stars"
-            [attr.aria-invalid]="
-              form.overallRatingShowErrors() && !form.overallRatingValid()
-                ? 'true'
-                : null
-            "
-            [attr.aria-describedby]="
-              form.overallRatingShowErrors() &&
-              form.overallRatingErrors().length
-                ? 'rating-hint rating-errors'
-                : 'rating-hint'
-            "
+            aria-describedby="rating-hint"
           />
           <div class="form-hint" id="rating-hint">1 = Poor, 5 = Excellent</div>
-          @if (
-            form.overallRatingShowErrors() && form.overallRatingErrors().length
-          ) {
-            <div class="form-error" id="rating-errors" role="alert">
-              {{ form.overallRatingErrors()[0] }}
-            </div>
-          }
+          <ngx-form-error [field]="form.overallRatingField()" />
         </div>
 
         <!-- Conditional Improvement Suggestions -->
@@ -249,24 +179,11 @@ const DEFAULT_STRATEGY: ErrorDisplayStrategy = 'on-touch';
             <textarea
               class="form-input"
               id="improvementSuggestions"
-              name="improvementSuggestions"
               rows="4"
               [value]="form.improvementSuggestions() || ''"
               (input)="form.setImprovementSuggestions($event)"
-              (blur)="form.touchImprovementSuggestions()"
               placeholder="Please help us understand what went wrong..."
-              [attr.aria-invalid]="
-                form.improvementSuggestionsShowErrors() &&
-                !form.improvementSuggestionsValid()
-                  ? 'true'
-                  : null
-              "
-              [attr.aria-describedby]="
-                form.improvementSuggestionsShowErrors() &&
-                form.improvementSuggestionsErrors().length
-                  ? 'improvement-hint improvement-counter improvement-errors'
-                  : 'improvement-hint improvement-counter'
-              "
+              aria-describedby="improvement-hint improvement-counter"
             ></textarea>
             <div class="mt-1 flex items-center justify-between">
               <div class="form-hint" id="improvement-hint">
@@ -281,14 +198,7 @@ const DEFAULT_STRATEGY: ErrorDisplayStrategy = 'on-touch';
                 {{ improvementLength() }}/500
               </span>
             </div>
-            @if (
-              form.improvementSuggestionsShowErrors() &&
-              form.improvementSuggestionsErrors().length
-            ) {
-              <div class="form-error" id="improvement-errors" role="alert">
-                {{ form.improvementSuggestionsErrors()[0] }}
-              </div>
-            }
+            <ngx-form-error [field]="form.improvementSuggestionsField()" />
           </div>
         }
 
@@ -300,23 +210,11 @@ const DEFAULT_STRATEGY: ErrorDisplayStrategy = 'on-touch';
           <textarea
             class="form-input"
             id="detailedFeedback"
-            name="detailedFeedback"
             rows="4"
             [value]="form.detailedFeedback() || ''"
             (input)="form.setDetailedFeedback($event)"
-            (blur)="form.touchDetailedFeedback()"
             placeholder="Share your detailed experience..."
-            [attr.aria-invalid]="
-              form.detailedFeedbackShowErrors() && !form.detailedFeedbackValid()
-                ? 'true'
-                : null
-            "
-            [attr.aria-describedby]="
-              form.detailedFeedbackShowErrors() &&
-              form.detailedFeedbackErrors().length
-                ? 'detailed-hint detailed-counter detailed-errors'
-                : 'detailed-hint detailed-counter'
-            "
+            aria-describedby="detailed-hint detailed-counter"
           ></textarea>
           <div class="mt-1 flex items-center justify-between">
             <div class="form-hint" id="detailed-hint">
@@ -331,14 +229,7 @@ const DEFAULT_STRATEGY: ErrorDisplayStrategy = 'on-touch';
               {{ detailedLength() }}/1000
             </span>
           </div>
-          @if (
-            form.detailedFeedbackShowErrors() &&
-            form.detailedFeedbackErrors().length
-          ) {
-            <div class="form-error" id="detailed-errors" role="alert">
-              {{ form.detailedFeedbackErrors()[0] }}
-            </div>
-          }
+          <ngx-form-error [field]="form.detailedFeedbackField()" />
         </div>
       </fieldset>
 
@@ -478,7 +369,7 @@ export class ErrorDisplayModesFormComponent implements OnDestroy {
     return this.formRef();
   }
 
-  async onSubmit(): Promise<void> {
+  async save(): Promise<void> {
     this.showSubmissionError.set(false);
     this.showPendingMessage.set(false);
 

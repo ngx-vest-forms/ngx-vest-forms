@@ -8,7 +8,7 @@ import {
   createVestForm,
   NgxVestForms,
   type ErrorDisplayStrategy,
-} from 'ngx-vest-forms/core';
+} from 'ngx-vest-forms';
 import { asDebuggerForm } from '../../ui/debugger/debugger';
 import {
   MinimalFormModel,
@@ -16,13 +16,14 @@ import {
 } from './minimal-form.validations';
 
 /**
- * Modern Minimal Form using Vest.js-first approach with Auto-ARIA
+ * Modern Minimal Form using Vest.js-first approach
  *
  * Key improvements in V2:
- * - Direct createVestForm() usage instead of directive
+ * - Direct createVestForm() usage
  * - Enhanced Field Signals API via Proxy (form.email(), form.emailValid())
  * - Native HTML [value] and (input) bindings
- * - NgxVestForms bundle for automatic ARIA attributes and touch detection
+ * - NgxVestForms bundle for automatic ARIA and touch detection
+ * - [ngxVestForm] directive for all auto-enhancements
  * - Better TypeScript support and performance
  */
 @Component({
@@ -30,7 +31,12 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgxVestForms],
   template: `
-    <form (submit)="onSubmit($event)" class="form-container" novalidate>
+    <form
+      [ngxVestForm]="form"
+      (submit)="save($event)"
+      class="form-container"
+      novalidate
+    >
       <div class="form-field">
         <label class="form-label" for="email"> Email Address </label>
 
@@ -88,12 +94,12 @@ export class MinimalForm {
    *
    * @example
    * ```typescript
-   * // In parent component template:
+   * /// In parent component template:
    * <ngx-minimal-form #form />
    * <div>Form is valid: {{ form.formState().valid() }}</div>
    * <div>Email value: {{ form.formState().email() }}</div>
    *
-   * // In parent component class:
+   * /// In parent component class:
    * formComponent = viewChild.required<MinimalForm>('form');
    * isFormReady = computed(() =>
    *   this.formComponent().formState().valid() &&
@@ -113,19 +119,20 @@ export class MinimalForm {
   readonly debugFormState = () => this.debugForm;
 
   // Form submission handler with async support
-  async onSubmit(event?: Event) {
+  async save(event?: Event) {
     event?.preventDefault();
     event?.stopPropagation();
-    try {
-      const validData = await this.form.submit();
-      console.log('✅ Form submitted successfully:', validData);
 
+    // V2: submit() returns SubmitResult instead of throwing
+    const result = await this.form.submit();
+
+    if (result.valid) {
+      console.log('✅ Form submitted successfully:', result.data);
       // Here you would typically send to API
-      // await this.apiService.createUser(validData);
-    } catch (error) {
-      console.log('DEBUG: minimal form submit caught error');
-      console.error('❌ Form submission failed:', error);
-      // Handle validation errors or API errors
+      // await this.apiService.createUser(result.data);
+    } else {
+      console.log('❌ Form validation failed:', result.errors);
+      // Errors are already displayed via NgxFormErrorComponent
     }
   }
 }

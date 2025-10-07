@@ -120,7 +120,7 @@ export const userValidationSuite = staticSuite(
   [vestSuite]="suite"
   [(formValue)]="model"
   #vestForm="ngxVestForm"
-  (ngSubmit)="onSubmit()"
+  (ngSubmit)="save()"
 >
   <div ngxFormErrorDisplay #nameDisplay="formErrorDisplay">
     <label for="name">Full Name *</label>

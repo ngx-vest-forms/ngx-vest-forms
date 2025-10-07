@@ -54,7 +54,6 @@ describe('NgxVestFormBusyDirective', () => {
   describe('ARIA Attribute Generation', () => {
     it('should NOT add aria-busy when form is idle', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestFormBusyDirective],
         template: `
           <form>
@@ -77,10 +76,9 @@ describe('NgxVestFormBusyDirective', () => {
 
     it('should add aria-busy="true" (string) when form is submitting', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestFormBusyDirective],
         template: `
-          <form (submit)="onSubmit($event)">
+          <form (submit)="save($event)">
             <input
               id="email"
               type="email"
@@ -96,7 +94,7 @@ describe('NgxVestFormBusyDirective', () => {
           errorStrategy: 'immediate',
         });
 
-        async onSubmit(event: Event) {
+        async save(event: Event) {
           event.preventDefault();
           try {
             await this.form.submit();
@@ -143,10 +141,9 @@ describe('NgxVestFormBusyDirective', () => {
 
     it('should remove aria-busy when form submission completes', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestFormBusyDirective],
         template: `
-          <form (submit)="onSubmit($event)">
+          <form (submit)="save($event)">
             <input
               id="email"
               type="email"
@@ -164,7 +161,7 @@ describe('NgxVestFormBusyDirective', () => {
 
         submitComplete = false;
 
-        async onSubmit(event: Event) {
+        async save(event: Event) {
           event.preventDefault();
           try {
             await this.form.submit();
@@ -201,10 +198,9 @@ describe('NgxVestFormBusyDirective', () => {
   describe('Opt-Out Attribute', () => {
     it('should not apply when ngxVestAutoFormBusyDisabled attribute is present', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestFormBusyDirective],
         template: `
-          <form ngxVestAutoFormBusyDisabled (submit)="onSubmit($event)">
+          <form ngxVestAutoFormBusyDisabled (submit)="save($event)">
             <input
               id="email"
               type="email"
@@ -220,7 +216,7 @@ describe('NgxVestFormBusyDirective', () => {
           errorStrategy: 'immediate',
         });
 
-        async onSubmit(event: Event) {
+        async save(event: Event) {
           event.preventDefault();
           try {
             await this.form.submit();
@@ -250,10 +246,9 @@ describe('NgxVestFormBusyDirective', () => {
   describe('Global Config', () => {
     it('should disable directive when autoFormBusy config is false', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestFormBusyDirective],
         template: `
-          <form (submit)="onSubmit($event)">
+          <form (submit)="save($event)">
             <input
               id="email"
               type="email"
@@ -269,7 +264,7 @@ describe('NgxVestFormBusyDirective', () => {
           errorStrategy: 'immediate',
         });
 
-        async onSubmit(event: Event) {
+        async save(event: Event) {
           event.preventDefault();
           try {
             await this.form.submit();
@@ -312,7 +307,6 @@ describe('NgxVestFormBusyDirective', () => {
   describe('Integration with VestForm', () => {
     it('should work when NGX_VEST_FORM provider is available', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestFormBusyDirective],
         template: `
           <form>
@@ -340,7 +334,6 @@ describe('NgxVestFormBusyDirective', () => {
 
     it('should not error when NGX_VEST_FORM provider is missing', async () => {
       @Component({
-        standalone: true,
         imports: [NgxVestFormBusyDirective],
         template: `
           <form>
@@ -368,7 +361,6 @@ describe('NgxVestFormBusyDirective', () => {
       // Note: This test is tricky because async validation completes quickly.
       // In real usage, test.memo() with debouncing would make this more visible.
       @Component({
-        standalone: true,
         imports: [NgxVestFormBusyDirective],
         template: `
           <form>

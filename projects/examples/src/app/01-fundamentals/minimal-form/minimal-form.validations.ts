@@ -1,4 +1,4 @@
-import { staticSafeSuite } from 'ngx-vest-forms/core';
+import { staticSafeSuite } from 'ngx-vest-forms';
 import { enforce, test } from 'vest';
 
 /**

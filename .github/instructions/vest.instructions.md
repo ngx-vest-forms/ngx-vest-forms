@@ -224,7 +224,7 @@ import { contactSuite } from './contact.suite';
 
 @Component({
   selector: 'app-contact-form',
-  standalone: true,
+
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ngxVestForm, NgxControlWrapper],
   template: `

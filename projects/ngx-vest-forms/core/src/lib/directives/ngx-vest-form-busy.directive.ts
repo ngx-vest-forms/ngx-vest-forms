@@ -1,6 +1,6 @@
 import { computed, Directive, inject, type Signal } from '@angular/core';
 import { NGX_VEST_FORM, NGX_VEST_FORMS_CONFIG } from '../tokens';
-import type { VestForm } from '../vest-form.types';
+import type { NgxVestFormProviderDirective } from './ngx-vest-form-provider.directive';
 
 /**
  * Automatically applies `aria-busy` attribute to form elements based on validation state.
@@ -28,7 +28,7 @@ import type { VestForm } from '../vest-form.types';
  * @Component({
  *   imports: [NgxVestForms], // Includes form-busy directive
  *   template: `
- *     <form (submit)="onSubmit($event)">
+ *     <form (submit)="save($event)">
  *       <!-- aria-busy automatically managed -->
  *       <input [value]="form.email()" (input)="form.setEmail($event)" />
  *       <button type="submit">Submit</button>
@@ -37,7 +37,7 @@ import type { VestForm } from '../vest-form.types';
  * })
  * export class MyFormComponent {
  *   form = createVestForm(suite, signal({ email: '' }));
- *   async onSubmit(e: Event) {
+ *   async save(e: Event) {
  *     e.preventDefault();
  *     await this.form.submit(); // aria-busy="true" while submitting
  *   }
@@ -48,7 +48,7 @@ import type { VestForm } from '../vest-form.types';
  *
  * ```html
  * <!-- Exclude specific forms from auto aria-busy -->
- * <form ngxVestAutoFormBusyDisabled (submit)="onSubmit($event)">
+ * <form ngxVestAutoFormBusyDisabled (submit)="save($event)">
  *   <!-- Manual aria-busy management -->
  * </form>
  * ```
@@ -115,7 +115,7 @@ import type { VestForm } from '../vest-form.types';
  * @Component({
  *   imports: [NgxVestForms], // All directives + components
  *   template: `
- *     <form (submit)="onSubmit($event)">
+ *     <form (submit)="save($event)">
  *       <input [value]="form.email()" (input)="form.setEmail($event)" />
  *       <ngx-form-error [field]="form.emailField()" />
  *       <button type="submit">Submit</button>
@@ -151,19 +151,25 @@ import type { VestForm } from '../vest-form.types';
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector
   selector: 'form:not([ngxVestAutoFormBusyDisabled])',
-  standalone: true,
+
   host: {
     '[attr.aria-busy]': 'ariaBusy()',
   },
 })
 export class NgxVestFormBusyDirective {
   /**
-   * Inject the VestForm instance from the parent component's DI tree.
-   * This is provided by createVestForm() via NGX_VEST_FORM token.
+   * Inject the form provider directive from the parent component's DI tree.
+   * This is provided by [ngxVestFormProvider] directive via NGX_VEST_FORM token.
    */
-  readonly #form = inject<VestForm<Record<string, unknown>>>(NGX_VEST_FORM, {
+  readonly #formProvider = inject<NgxVestFormProviderDirective>(NGX_VEST_FORM, {
     optional: true,
   });
+
+  /**
+   * Lazy computed signal to get the VestForm instance from the provider.
+   * Uses computed to defer access until after the provider's input signal is initialized.
+   */
+  readonly #form = computed(() => this.#formProvider?.getForm() ?? null);
 
   /**
    * Inject global configuration to check if directive is enabled.
@@ -177,7 +183,7 @@ export class NgxVestFormBusyDirective {
    * 2. Global config allows auto-form-busy (not explicitly disabled)
    */
   readonly #isActive = computed(() => {
-    if (!this.#form) {
+    if (!this.#form()) {
       return false; // No form context - directive inactive
     }
     if (this.#globalConfig?.autoFormBusy === false) {
@@ -197,12 +203,13 @@ export class NgxVestFormBusyDirective {
    * @returns 'true' when form is processing, null otherwise
    */
   protected readonly ariaBusy: Signal<'true' | null> = computed(() => {
-    if (!this.#isActive() || !this.#form) {
+    const form = this.#form();
+    if (!this.#isActive() || !form) {
       return null; // Directive disabled or no form
     }
 
-    const isPending = this.#form.pending();
-    const isSubmitting = this.#form.submitting();
+    const isPending = form.pending();
+    const isSubmitting = form.submitting();
 
     return isPending || isSubmitting ? 'true' : null;
   });

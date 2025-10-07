@@ -8,7 +8,7 @@ import {
   createVestForm,
   NgxVestForms,
   type ErrorDisplayStrategy,
-} from 'ngx-vest-forms/core';
+} from 'ngx-vest-forms';
 import { asDebuggerForm } from '../../ui/debugger/debugger';
 import {
   UserFormModel,
@@ -23,7 +23,12 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgxVestForms],
   template: `
-    <form (submit)="onSubmit($event)" class="form-container" novalidate>
+    <form
+      [ngxVestForm]="form"
+      (submit)="save($event)"
+      class="form-container"
+      novalidate
+    >
       <!-- Name Field -->
       <div class="form-field">
         <label class="form-label" for="name">Full Name *</label>
@@ -178,15 +183,16 @@ export class BasicValidationFormComponent {
   readonly formState = () => this.form;
   readonly debugFormState = () => this.debugForm;
 
-  async onSubmit(event?: Event) {
+  async save(event?: Event) {
     event?.preventDefault();
     event?.stopPropagation();
-    try {
-      const validData = await this.form.submit();
-      console.log('✅ Form submitted successfully:', validData);
-    } catch (error) {
-      console.log('DEBUG: basic validation submit caught error');
-      console.error('❌ Form submission failed:', error);
+
+    const result = await this.form.submit();
+
+    if (result.valid) {
+      console.log('✅ Form submitted successfully:', result.data);
+    } else {
+      console.log('❌ Form has validation errors:', result.errors);
     }
   }
 

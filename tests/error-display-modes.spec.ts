@@ -43,11 +43,11 @@ test.describe('Error Display Modes - Product Feedback Form', () => {
       });
 
       await test.step('Switch to on-submit strategy', async () => {
-        const onSubmitRadio = page.getByRole('radio', {
+        const saveRadio = page.getByRole('radio', {
           name: /On Submit/i,
         });
-        await onSubmitRadio.check();
-        await expect(onSubmitRadio).toBeChecked();
+        await saveRadio.check();
+        await expect(saveRadio).toBeChecked();
       });
 
       await test.step('Switch back to on-touch', async () => {
@@ -114,10 +114,10 @@ test.describe('Error Display Modes - Product Feedback Form', () => {
       });
 
       await test.step('Verify required field errors are visible', async () => {
-        await expect(page.locator('#name-errors')).toBeVisible();
-        await expect(page.locator('#email-errors')).toBeVisible();
-        await expect(page.locator('#product-errors')).toBeVisible();
-        await expect(page.locator('#rating-errors')).toBeVisible();
+        await expect(page.locator('#name-error')).toBeVisible();
+        await expect(page.locator('#email-error')).toBeVisible();
+        await expect(page.locator('#productUsed-error')).toBeVisible();
+        await expect(page.locator('#overallRating-error')).toBeVisible();
       });
     });
 

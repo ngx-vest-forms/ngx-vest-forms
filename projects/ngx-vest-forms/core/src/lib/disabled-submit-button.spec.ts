@@ -8,6 +8,7 @@
 import { signal } from '@angular/core';
 import { enforce, test } from 'vest';
 import { describe, expect, it } from 'vitest';
+import { runInAngular } from '../../../test-utilities';
 import { createVestForm } from './create-vest-form';
 import { staticSafeSuite } from './utils/safe-suite';
 
@@ -88,7 +89,7 @@ describe('Disabled Submit Button Scenarios', () => {
 
       // Now email errors are visible
       expect(form.emailShowErrors()).toBe(true);
-      expect(form.emailErrors()).toContain('Email is required');
+      expect(form.emailValidation().errors).toContain('Email is required');
 
       // But password errors still hidden (not touched)
       expect(form.passwordShowErrors()).toBe(false);
@@ -120,43 +121,46 @@ describe('Disabled Submit Button Scenarios', () => {
       expect(form.passwordShowErrors()).toBe(true);
 
       // User knows what to fix!
-      expect(form.emailErrors()).toContain('Email is required');
-      expect(form.passwordErrors()).toContain(
+      expect(form.emailValidation().errors).toContain('Email is required');
+      expect(form.passwordValidation().errors).toContain(
         'Password must be at least 8 characters',
       );
     });
   });
 
   describe('✅ Solution B: Touch all fields on mount', () => {
-    it('should show all errors when fields are touched on init', () => {
-      const form = createVestForm(
-        testSuite,
-        signal<TestModel>({
-          email: '',
-          password: '',
-        }),
-        {
-          errorStrategy: 'on-touch',
-        },
-      );
+    it('should show all errors when fields are touched on init', async () => {
+      await runInAngular(async () => {
+        const form = createVestForm(
+          testSuite,
+          signal<TestModel>({
+            email: '',
+            password: '',
+          }),
+          {
+            errorStrategy: 'on-touch',
+          },
+        );
 
-      // Initial: no errors visible
-      expect(form.emailShowErrors()).toBe(false);
-      expect(form.passwordShowErrors()).toBe(false);
+        // Simulate ngOnInit touching all fields
+        form.touchEmail();
+        form.touchPassword();
 
-      // Simulate ngOnInit touching all fields
-      form.touchEmail();
-      form.touchPassword();
+        // Re-validate the full form to get all errors after touching
+        form.validate();
 
-      // Now all fields are touched, so errors are visible
-      expect(form.emailShowErrors()).toBe(true);
-      expect(form.passwordShowErrors()).toBe(true);
+        // Now all fields are touched AND validated, so errors are visible
+        expect(form.emailTouched()).toBe(true);
+        expect(form.passwordTouched()).toBe(true);
+        expect(form.emailShowErrors()).toBe(true);
+        expect(form.passwordShowErrors()).toBe(true);
 
-      // User sees errors and knows what to fix
-      expect(form.emailErrors()).toContain('Email is required');
-      expect(form.passwordErrors()).toContain(
-        'Password must be at least 8 characters',
-      );
+        // User sees errors and knows what to fix
+        expect(form.emailValidation().errors).toContain('Email is required');
+        expect(form.passwordValidation().errors).toContain(
+          'Password must be at least 8 characters',
+        );
+      });
     });
   });
 
@@ -184,11 +188,10 @@ describe('Disabled Submit Button Scenarios', () => {
       expect(form.passwordShowErrors()).toBe(false);
 
       // User clicks submit (button is enabled!)
-      try {
-        await form.submit();
-      } catch {
-        // Expected to fail validation
-      }
+      const result = await form.submit();
+
+      // Expected to fail validation
+      expect(result.valid).toBe(false);
 
       // Now hasSubmitted is true
       expect(form.hasSubmitted()).toBe(true);
@@ -198,8 +201,8 @@ describe('Disabled Submit Button Scenarios', () => {
       expect(form.passwordShowErrors()).toBe(true);
 
       // User sees all errors and knows what to fix!
-      expect(form.emailErrors()).toContain('Email is required');
-      expect(form.passwordErrors()).toContain(
+      expect(form.emailValidation().errors).toContain('Email is required');
+      expect(form.passwordValidation().errors).toContain(
         'Password must be at least 8 characters',
       );
     });

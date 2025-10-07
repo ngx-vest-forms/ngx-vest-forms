@@ -1,26 +1,29 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  ElementRef,
   computed,
+  ElementRef,
   signal,
   viewChild,
 } from '@angular/core';
-import { createVestForm } from 'ngx-vest-forms/core';
+import { createVestForm, NgxVestForms } from 'ngx-vest-forms';
 import { asDebuggerForm } from '../../ui/debugger/debugger';
 import { FormArrayModel } from './example-form-array.model';
-import { validationSuite } from './example-form-array.validation';
+import {
+  validateAddInterest,
+  validationSuite,
+} from './example-form-array.validation';
 
 @Component({
   selector: 'ngx-example-form-array',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [NgxVestForms],
   templateUrl: './example-form-array.html',
 })
 export class ExampleFormArray {
   protected readonly form = createVestForm(
     validationSuite,
     signal<FormArrayModel>({
-      addInterest: '',
       interests: [],
     }),
   );
@@ -31,6 +34,12 @@ export class ExampleFormArray {
   private readonly addInterestInput =
     viewChild<ElementRef<HTMLInputElement>>('addInterestInput');
 
+  // Separate signal for the addInterest input (not part of form model)
+  protected readonly addInterestValue = signal('');
+  // Manual error tracking for addInterest field
+  protected readonly addInterestError = signal<string | null>(null);
+  protected readonly addInterestShowError = signal(false);
+
   protected readonly interestEntries = computed(() =>
     this.interestsArray.map((item, index, field) => ({
       index,
@@ -40,45 +49,29 @@ export class ExampleFormArray {
     })),
   );
 
-  // Track whether to show addInterest errors
-  // Client-side validation for the transient addInterest input field
-  private readonly shouldShowAddInterestErrors = signal(false);
-  protected readonly addInterestErrorMessage = signal<string | null>(null);
-
-  // Show error when signal is set
-  protected readonly showAddInterestErrors = computed(
-    () =>
-      this.shouldShowAddInterestErrors() &&
-      this.addInterestErrorMessage() !== null,
-  );
-
   protected addInterest(): void {
-    const newInterest = this.form.addInterest()?.trim();
+    const newInterest = this.addInterestValue()?.trim();
 
-    // Client-side validation for the transient input field
-    if (!newInterest) {
-      this.shouldShowAddInterestErrors.set(true);
-      this.addInterestErrorMessage.set('Interest cannot be empty');
-      console.log('❌ Cannot add empty interest');
-      return;
-    }
+    // Validate the addInterest field manually
+    const errors = validateAddInterest(newInterest);
 
-    if (newInterest.length < 2) {
-      this.shouldShowAddInterestErrors.set(true);
-      this.addInterestErrorMessage.set(
-        'Interest must be at least 2 characters',
-      );
-      console.log('❌ Interest too short');
+    if (errors.length > 0) {
+      // Show error
+      this.addInterestError.set(errors[0]);
+      this.addInterestShowError.set(true);
+      console.log('❌ Cannot add invalid interest', { errors });
       return;
     }
 
     // Valid interest - add to array
-    this.interestsArray.push(newInterest);
+    if (newInterest) {
+      this.interestsArray.push(newInterest);
+    }
 
-    // Clear input and reset error state
-    this.form.setAddInterest('');
-    this.shouldShowAddInterestErrors.set(false);
-    this.addInterestErrorMessage.set(null);
+    // Clear the input and error state
+    this.addInterestValue.set('');
+    this.addInterestError.set(null);
+    this.addInterestShowError.set(false);
 
     // Focus input for next entry
     this.addInterestInput()?.nativeElement.focus();
@@ -105,16 +98,16 @@ export class ExampleFormArray {
     });
   }
 
-  protected async onSubmit(): Promise<void> {
-    try {
-      const result = await this.form.submit();
+  protected async save(): Promise<void> {
+    const result = await this.form.submit();
+
+    if (result.valid) {
       console.log('✅ Form validation passed - ready to submit', {
-        result,
+        data: result.data,
       });
-    } catch (error) {
+    } else {
       console.log('❌ Form validation failed', {
-        errors: this.form.errors(),
-        error,
+        errors: result.errors,
       });
     }
   }
@@ -122,9 +115,5 @@ export class ExampleFormArray {
   protected resetForm(): void {
     // Reset the form to initial state (includes interests array)
     this.form.reset();
-
-    // Clear any client-side validation errors
-    this.shouldShowAddInterestErrors.set(false);
-    this.addInterestErrorMessage.set(null);
   }
 }

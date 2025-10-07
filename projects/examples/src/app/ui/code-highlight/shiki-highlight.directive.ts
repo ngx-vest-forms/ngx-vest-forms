@@ -36,7 +36,6 @@ import {
  */
 @Directive({
   selector: '[ngxShikiHighlight]',
-  standalone: true,
 })
 export class ShikiHighlightDirective {
   readonly language = input<SupportedLanguage>('typescript');

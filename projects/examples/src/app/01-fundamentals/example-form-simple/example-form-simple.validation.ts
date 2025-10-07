@@ -1,12 +1,9 @@
-import { enforce, include, only, staticSuite, test } from 'vest';
+import { staticSafeSuite } from 'ngx-vest-forms';
+import { enforce, include, test } from 'vest';
 import { FormModel } from './example-form-simple.model';
 
-export const validationSuite = staticSuite(
-  (model: Partial<FormModel> = {}, field?: string) => {
-    if (field) {
-      only(field);
-    }
-
+export const validationSuite = staticSafeSuite<FormModel>(
+  (model: Partial<FormModel> = {}) => {
     include('verifyEmail').when('email');
     include('email').when('verifyEmail');
 
@@ -30,7 +27,6 @@ export const validationSuite = staticSuite(
       },
     );
 
-    // Cross-field validation: ensure emails match
     test('verifyEmail', 'Email addresses must match', () => {
       enforce(model.verifyEmail).equals(model.email);
     });

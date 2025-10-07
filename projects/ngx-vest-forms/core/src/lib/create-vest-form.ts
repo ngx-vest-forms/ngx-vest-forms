@@ -26,6 +26,7 @@ import type {
   ErrorDisplayStrategy,
   Path,
   PathValue,
+  SubmitResult,
   VestField,
   VestForm,
   VestFormOptions,
@@ -140,69 +141,33 @@ export function createVestForm<TModel extends Record<string, unknown>>(
   const includeFields = mergedOptions.includeFields;
   const excludeFields = mergedOptions.excludeFields || [];
 
-  // Field cache for performance
-  const fieldCache = new Map<string, VestField<unknown>>();
-
   /**
-   * Run validation suite with proper field accumulation.
+   * Run validation suite - simplified two-mode approach.
    *
-   * IMPORTANT: To meet WCAG 2.2 accessibility requirements, we MUST show all
-   * validation errors for fields the user has touched, not just the current field.
+   * Mode 1: Field-specific validation (when fieldPath provided)
+   * - Validates only the specified field using Vest's only() mechanism
+   * - Used during user input (set/touch operations)
    *
-   * When a user touches field A (gets error), then touches field B (gets error),
-   * BOTH errors must remain visible. Errors should never disappear when touching
-   * another field - this creates confusion and violates accessibility standards.
-   *
-   * Strategy:
-   * - If no field specified (form-level validation): validate ALL fields
-   * - If field specified AND it's the only touched field: validate just that field (optimization)
-   * - If field specified AND other fields are touched: validate ALL touched fields (accumulation)
+   * Mode 2: Full form validation (no fieldPath)
+   * - Validates all fields
+   * - Used during submit() and reset() operations
    */
   const runSuite = <P extends Path<TModel>>(fieldPath?: P) => {
-    // ✅ WCAG COMPLIANCE: runSuite() does NOT modify touch state
-    // Touch state is managed explicitly by touch() calls only
-    const fieldPathString = fieldPath ? String(fieldPath) : undefined;
-
-    // CRITICAL: If async validation is pending, skip calling the suite again
-    // to prevent re-triggering async tests and breaking memoization.
-    // The subscription will update when async completes.
     const currentResult = suiteResult();
+
+    // Skip if async validation is already pending to avoid re-triggering
     if (currentResult.isPending()) {
-      // Special case: If validating a DIFFERENT field while async is pending,
-      // we need to decide whether to skip or validate. For now, return current result
-      // to avoid re-triggering pending async tests.
       return currentResult;
     }
 
-    const touchedFields = touched();
-
-    // Determine validation strategy based on touched fields
-    let nextResult: SuiteResult<string, string>;
-
-    if (!fieldPathString || touchedFields.size === 0) {
-      // Form-level validation or no touched fields: validate everything
-      nextResult = suite(model());
-    } else if (touchedFields.size === 1 && fieldPath) {
-      // Only one field touched (current field): optimize by validating just this field
-      // TypeScript knows fieldPath is defined here due to the guard
-      nextResult = suite(model(), fieldPath);
-    } else {
-      // Multiple fields touched: validate ALL touched fields to accumulate errors
-      // This ensures errors don't disappear when user moves to another field
-      nextResult = suite(model());
-
-      // Vest doesn't support validating multiple specific fields via only(),
-      // so we validate all fields and filter the result to only show touched fields
-      // This is intentional: we need all errors for touched fields to remain visible
-    }
-
-    // Fallback: if field validation didn't test the field, run full validation
-    if (fieldPathString && !nextResult.isTested(fieldPathString)) {
-      nextResult = suite(model());
-    }
+    // Simple two-mode logic: field-specific OR full form
+    const nextResult = fieldPath
+      ? suite(model(), fieldPath) // Mode 1: single field
+      : suite(model()); // Mode 2: full form
 
     suiteResult.set(nextResult);
 
+    // Handle async validation completion for non-reactive suites
     if (nextResult.isPending()) {
       if (
         !isReactiveSuite &&
@@ -218,9 +183,7 @@ export function createVestForm<TModel extends Record<string, unknown>>(
           }
 
           lastAsyncRunToken = null;
-          // Vest mutates the SuiteResult instance when async validations settle.
-          // To notify Angular signals, we must call the suite again to get a fresh result.
-          // This is safe because Vest caches async results internally.
+          // Get fresh result after async completion
           const freshResult = suite(model());
           suiteResult.set(freshResult);
         });
@@ -233,20 +196,12 @@ export function createVestForm<TModel extends Record<string, unknown>>(
   };
 
   /**
-   * Create a VestField instance for a specific path with proper typing
+   * Create a VestField instance for a specific path with proper typing.
+   * Angular's computed() provides automatic memoization, so no manual cache needed.
    */
   function createField<P extends Path<TModel>>(
     path: P,
   ): VestField<PathValue<TModel, P>> {
-    // Check cache first
-    const cacheKey = String(path);
-    if (fieldCache.has(cacheKey)) {
-      const cachedField = fieldCache.get(cacheKey);
-      if (cachedField) {
-        return cachedField as VestField<PathValue<TModel, P>>;
-      }
-    }
-
     // Create field signals with proper typing
     const pathKey = String(path);
     const value = computed<PathValue<TModel, P>>(
@@ -283,7 +238,9 @@ export function createVestForm<TModel extends Record<string, unknown>>(
       model.set(updatedModel);
       // ✅ WCAG COMPLIANCE: set() validates but does NOT mark as touched
       // Only touch() should modify touch state
-      runSuite(path);
+      // ✅ BUG FIX: Must validate entire form, not just this field
+      // Using only(path) prevents validation of dependent fields and cross-field validations
+      runSuite();
     });
 
     const touch = () => {
@@ -322,8 +279,6 @@ export function createVestForm<TModel extends Record<string, unknown>>(
     const field: VestField<PathValue<TModel, P>> = {
       value,
       valid: fieldValid,
-      errors: fieldErrors,
-      warnings: fieldWarnings,
       validation: fieldValidation,
       pending: fieldPending,
       touched: fieldTouched,
@@ -335,8 +290,6 @@ export function createVestForm<TModel extends Record<string, unknown>>(
       reset,
     };
 
-    // Cache the field
-    fieldCache.set(cacheKey, field);
     return field;
   }
 
@@ -382,7 +335,7 @@ export function createVestForm<TModel extends Record<string, unknown>>(
       runSuite(fieldPath);
     },
 
-    submit: async (): Promise<TModel> => {
+    submit: async (): Promise<SubmitResult<TModel>> => {
       submitting.set(true);
       hasSubmitted.set(true);
       try {
@@ -401,11 +354,12 @@ export function createVestForm<TModel extends Record<string, unknown>>(
           });
         }
 
-        if (result.isValid()) {
-          return model();
-        } else {
-          throw new Error('Form validation failed');
-        }
+        // Return standardized result object instead of throwing
+        return {
+          valid: result.isValid(),
+          data: model(),
+          errors: result.getErrors(),
+        };
       } finally {
         submitting.set(false);
       }
@@ -413,7 +367,6 @@ export function createVestForm<TModel extends Record<string, unknown>>(
 
     reset: () => {
       model.set(initialValue);
-      fieldCache.clear();
       if (suite.reset) {
         suite.reset();
       }
@@ -429,7 +382,6 @@ export function createVestForm<TModel extends Record<string, unknown>>(
 
     dispose: () => {
       unsubscribe?.();
-      fieldCache.clear();
       touched.set(new Set());
       lastAsyncRunToken = null;
     },

@@ -110,7 +110,6 @@ The core `createVestForm` function works completely without FormsModule. You can
 ```typescript
 // ✅ No FormsModule needed - pure signals approach
 @Component({
-  standalone: true,
   imports: [], // No FormsModule!
   template: `
     <form (submit)="handleSubmit($event)">

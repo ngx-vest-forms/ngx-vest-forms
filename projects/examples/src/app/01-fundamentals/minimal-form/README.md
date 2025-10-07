@@ -47,7 +47,7 @@ export class MinimalForm {
 We use native HTML bindings with the Enhanced Field Signals API for clean, performant form handling.
 
 ```html
-<form (ngSubmit)="onSubmit()" [attr.aria-busy]="form.pending()">
+<form (ngSubmit)="save()">
   <div class="form-field">
     <label for="email">Email Address</label>
     <input

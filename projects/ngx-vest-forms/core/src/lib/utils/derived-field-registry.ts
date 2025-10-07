@@ -12,8 +12,6 @@ import type { Path, VestField, VestForm } from '../vest-form.types';
 type DerivedAccessor =
   | 'value'
   | 'valid'
-  | 'errors'
-  | 'warnings'
   | 'validation'
   | 'pending'
   | 'touched'
@@ -92,11 +90,7 @@ export function createDerivedRegistry<TModel extends Record<string, unknown>>(
     });
     descriptorKeys.push(`${baseName}ShowWarnings`);
 
-    // Validation signals (errors, warnings, validation)
-    descriptors.set(`${baseName}Errors`, { fieldPath, accessor: 'errors' });
-    descriptorKeys.push(`${baseName}Errors`);
-    descriptors.set(`${baseName}Warnings`, { fieldPath, accessor: 'warnings' });
-    descriptorKeys.push(`${baseName}Warnings`);
+    // Validation signal (combined errors + warnings)
     descriptors.set(`${baseName}Validation`, {
       fieldPath,
       accessor: 'validation',
@@ -157,12 +151,6 @@ export function createDerivedRegistry<TModel extends Record<string, unknown>>(
       }
       case 'valid': {
         return field.valid;
-      }
-      case 'errors': {
-        return field.errors;
-      }
-      case 'warnings': {
-        return field.warnings;
       }
       case 'validation': {
         return field.validation;

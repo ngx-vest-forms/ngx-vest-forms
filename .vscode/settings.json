@@ -75,4 +75,22 @@
     "titleBar.inactiveForeground": "#e7e7e799"
   },
   "peacock.color": "#1857a4",
+  "chat.mcp.serverSampling": {
+    "ngx-vest-forms-v2/.vscode/mcp.json: playwright-test": {
+      "allowedModels": [
+        "copilot/gpt-4.1",
+        "copilot/claude-opus-4",
+        "copilot/claude-opus-41",
+        "copilot/claude-3.7-sonnet-thought",
+        "copilot/claude-sonnet-4",
+        "copilot/claude-sonnet-4.5",
+        "copilot/gemini-2.0-flash-001",
+        "copilot/gemini-2.5-pro",
+        "copilot/gpt-5",
+        "copilot/gpt-5-mini",
+        "copilot/gpt-5-codex",
+        "copilot/grok-code-fast-1"
+      ]
+    }
+  },
 }

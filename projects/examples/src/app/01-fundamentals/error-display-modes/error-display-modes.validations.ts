@@ -1,4 +1,4 @@
-import { staticSafeSuite } from 'ngx-vest-forms/core';
+import { createSafeSuite } from 'ngx-vest-forms';
 import { enforce, omitWhen, test } from 'vest';
 
 export type ProductFeedbackModel = {
@@ -19,9 +19,9 @@ export type ProductFeedbackModel = {
 };
 
 export const productFeedbackValidationSuite =
-  staticSafeSuite<ProductFeedbackModel>(
+  createSafeSuite<ProductFeedbackModel>(
     (data: Partial<ProductFeedbackModel> = {}) => {
-      // ✅ No need for manual only(field) guard - staticSafeSuite handles it automatically!
+      // ✅ No need for manual only(field) guard - createSafeSuite handles it automatically!
 
       // Personal Information Section
       test('name', 'Name is required', () => {

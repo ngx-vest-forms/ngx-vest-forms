@@ -865,9 +865,9 @@ describe('Error Display Strategies', () => {
       expect(onTouchInfo.name).toBe('On Touch');
       expect(onTouchInfo.description).toContain('loses focus');
 
-      const onSubmitInfo = getStrategyInfo('on-submit');
-      expect(onSubmitInfo.name).toBe('On Submit');
-      expect(onSubmitInfo.description).toContain('submission');
+      const saveInfo = getStrategyInfo('on-submit');
+      expect(saveInfo.name).toBe('On Submit');
+      expect(saveInfo.description).toContain('submission');
 
       const manualInfo = getStrategyInfo('manual');
       expect(manualInfo.name).toBe('Manual');

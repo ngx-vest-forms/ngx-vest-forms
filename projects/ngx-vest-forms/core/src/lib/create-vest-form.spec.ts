@@ -240,22 +240,12 @@ describe('createVestForm', () => {
       expect(emailField).toBeDefined();
       expect(emailField.value()).toBe('');
       expect(emailField.valid()).toBe(false);
-      expect(emailField.errors()).toContain('Email is required');
+      expect(emailField.validation().errors).toContain('Email is required');
       expect(emailField.touched()).toBe(false);
 
       expect(passwordField).toBeDefined();
       expect(passwordField.value()).toBe('');
       expect(passwordField.valid()).toBe(false);
-    });
-
-    it('should cache field instances', () => {
-      const form = createVestForm(mockSuite, initialModel);
-      forms.push(form);
-
-      const field1 = form.field('email');
-      const field2 = form.field('email');
-
-      expect(field1).toBe(field2); // Should be the same cached instance
     });
 
     it('should support nested field paths', () => {
@@ -283,9 +273,11 @@ describe('createVestForm', () => {
       expect(form.emailValid()).toBe(false);
       expect(form.passwordValid()).toBe(false);
 
-      // Field error signals
-      expect(form.emailErrors()).toContain('Email is required');
-      expect(form.passwordErrors()).toContain('Password is required');
+      // Field validation signals (use validation().errors instead of errors())
+      expect(form.emailValidation().errors).toContain('Email is required');
+      expect(form.passwordValidation().errors).toContain(
+        'Password is required',
+      );
 
       // Field state signals
       expect(form.emailTouched()).toBe(false); // staticSuite doesn't mark fields as tested until explicitly validated
@@ -395,7 +387,7 @@ describe('createVestForm', () => {
       forms.push(form);
 
       // Initially invalid (staticSuite runs validation immediately)
-      expect(form.emailErrors()).toContain('Email is required');
+      expect(form.emailValidation().errors).toContain('Email is required');
       expect(form.result().getErrors('email')).toContain('Email is required');
       expect(form.emailValid()).toBe(false);
 
@@ -404,7 +396,7 @@ describe('createVestForm', () => {
       form.validate('email');
 
       expect(form.emailValid()).toBe(true);
-      expect(form.emailErrors()).toHaveLength(0);
+      expect(form.emailValidation().errors).toHaveLength(0);
     });
 
     it('should validate entire form', () => {
@@ -432,7 +424,8 @@ describe('createVestForm', () => {
 
       const result = await form.submit();
 
-      expect(result).toEqual({
+      expect(result.valid).toBe(true);
+      expect(result.data).toEqual({
         email: 'test@example.com',
         password: 'password123',
         profile: {
@@ -440,6 +433,7 @@ describe('createVestForm', () => {
           age: 0,
         },
       });
+      expect(result.errors).toEqual({});
     });
 
     it('should reject submission with invalid data', async () => {
@@ -447,7 +441,10 @@ describe('createVestForm', () => {
       forms.push(form);
 
       // Keep invalid data (empty fields)
-      await expect(form.submit()).rejects.toThrow('Form validation failed');
+      const result = await form.submit();
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
       expect(form.hasSubmitted()).toBe(true);
     });
 
@@ -690,73 +687,76 @@ describe('createVestForm', () => {
     // - The runSuite() WCAG refactoring affected async handling
     // - There's a deeper issue with stateful suite subscription
     // Deferred to separate investigation to avoid blocking WCAG implementation.
-    it.todo('should allow new field validation after previous async completes', async () => {
-      let asyncCallCount = 0;
+    it.todo(
+      'should allow new field validation after previous async completes',
+      async () => {
+        let asyncCallCount = 0;
 
-      // Using stateful suite for automatic async completion detection
-      const asyncSuite = create((data = {}, field?: string) => {
-        if (field) {
-          only(field);
-        }
+        // Using stateful suite for automatic async completion detection
+        const asyncSuite = create((data = {}, field?: string) => {
+          if (field) {
+            only(field);
+          }
 
-        test('email', 'Email is required', () => {
-          enforce(data.email).isNotEmpty();
+          test('email', 'Email is required', () => {
+            enforce(data.email).isNotEmpty();
+          });
+
+          test('email', 'Checking...', async () => {
+            asyncCallCount++;
+            await new Promise((resolve) => setTimeout(resolve, 50));
+          });
         });
 
-        test('email', 'Checking...', async () => {
-          asyncCallCount++;
-          await new Promise((resolve) => setTimeout(resolve, 50));
-        });
-      });
+        const form = createVestForm(asyncSuite, { email: 'test@example.com' });
+        createdForms.push(form);
 
-      const form = createVestForm(asyncSuite, { email: 'test@example.com' });
-      createdForms.push(form);
+        // First validation
+        form.validate('email');
+        expect(form.pending()).toBe(true);
+        expect(asyncCallCount).toBe(1);
 
-      // First validation
-      form.validate('email');
-      expect(form.pending()).toBe(true);
-      expect(asyncCallCount).toBe(1);
+        // Wait for async to complete
+        // Note: After async completes, subscription fires and calls suite.get()
+        // which re-runs the suite, incrementing asyncCallCount to 2.
+        await vi.waitFor(() => !form.pending(), { timeout: 150 });
+        console.log(
+          'After first async: count=%s, pending=%s',
+          asyncCallCount,
+          form.pending(),
+        );
+        expect(asyncCallCount).toBe(1); // Only called once (initial validation)
+        expect(form.pending()).toBe(false);
 
-      // Wait for async to complete
-      // Note: After async completes, subscription fires and calls suite.get()
-      // which re-runs the suite, incrementing asyncCallCount to 2.
-      await vi.waitFor(() => !form.pending(), { timeout: 150 });
-      console.log(
-        'After first async: count=%s, pending=%s',
-        asyncCallCount,
-        form.pending(),
-      );
-      expect(asyncCallCount).toBe(1); // Only called once (initial validation)
-      expect(form.pending()).toBe(false);
+        // Change email and validate again - should trigger new async
+        form.setEmail('newemail@example.com');
+        console.log('Changed email to newemail@example.com');
 
-      // Change email and validate again - should trigger new async
-      form.setEmail('newemail@example.com');
-      console.log('Changed email to newemail@example.com');
+        // Small delay to ensure previous async fully completed
+        await new Promise((resolve) => setTimeout(resolve, 10));
 
-      // Small delay to ensure previous async fully completed
-      await new Promise((resolve) => setTimeout(resolve, 10));
+        form.validate('email');
+        console.log(
+          'Called validate, pending=%s, count=%s',
+          form.pending(),
+          asyncCallCount,
+        );
 
-      form.validate('email');
-      console.log(
-        'Called validate, pending=%s, count=%s',
-        form.pending(),
-        asyncCallCount,
-      );
+        // Wait for pending state to become true for new validation
+        await vi.waitFor(() => form.pending(), { timeout: 100 });
+        console.log('Pending became true, count=%s', asyncCallCount);
 
-      // Wait for pending state to become true for new validation
-      await vi.waitFor(() => form.pending(), { timeout: 100 });
-      console.log('Pending became true, count=%s', asyncCallCount);
-
-      // New async should be called
-      // Count progression: 1 (initial) → 2 (subscription after first) → 3 (second validation)
-      await vi.waitFor(() => asyncCallCount === 3, { timeout: 150 });
-      console.log(
-        'Final: count=%s, pending=%s',
-        asyncCallCount,
-        form.pending(),
-      );
-      expect(asyncCallCount).toBe(3); // Initial + subscription + second validation
-    });
+        // New async should be called
+        // Count progression: 1 (initial) → 2 (subscription after first) → 3 (second validation)
+        await vi.waitFor(() => asyncCallCount === 3, { timeout: 150 });
+        console.log(
+          'Final: count=%s, pending=%s',
+          asyncCallCount,
+          form.pending(),
+        );
+        expect(asyncCallCount).toBe(3); // Initial + subscription + second validation
+      },
+    );
 
     it('should return current result when pending without re-running', async () => {
       // Using stateful suite for automatic async completion detection
@@ -787,109 +787,115 @@ describe('createVestForm', () => {
       await vi.waitFor(() => !form.pending(), { timeout: 200 });
     });
 
-    it.todo('should validate different field via all-fields strategy when async pending', async () => {
-      let emailAsyncCount = 0;
-      let usernameAsyncCount = 0;
+    it.todo(
+      'should validate different field via all-fields strategy when async pending',
+      async () => {
+        let emailAsyncCount = 0;
+        let usernameAsyncCount = 0;
 
-      // Using stateful suite for automatic async completion detection
-      const multiAsyncSuite = create(
-        (data: Record<string, unknown> = {}, field?: string) => {
-          if (field) {
-            only(field);
-          }
+        // Using stateful suite for automatic async completion detection
+        const multiAsyncSuite = create(
+          (data: Record<string, unknown> = {}, field?: string) => {
+            if (field) {
+              only(field);
+            }
 
-          test('email', 'Checking email...', async () => {
-            enforce(data['email']).isNotEmpty(); // Use bracket notation for index signature
-            emailAsyncCount++;
-            await new Promise((resolve) => setTimeout(resolve, 100));
-          });
+            test('email', 'Checking email...', async () => {
+              enforce(data['email']).isNotEmpty(); // Use bracket notation for index signature
+              emailAsyncCount++;
+              await new Promise((resolve) => setTimeout(resolve, 100));
+            });
 
-          test('username', 'Checking username...', async () => {
-            enforce(data['username']).isNotEmpty(); // Use bracket notation for index signature
-            usernameAsyncCount++;
-            await new Promise((resolve) => setTimeout(resolve, 100));
-          });
-        },
-      );
+            test('username', 'Checking username...', async () => {
+              enforce(data['username']).isNotEmpty(); // Use bracket notation for index signature
+              usernameAsyncCount++;
+              await new Promise((resolve) => setTimeout(resolve, 100));
+            });
+          },
+        );
 
-      const form = createVestForm(multiAsyncSuite, {
-        email: 'test@example.com',
-        username: 'testuser',
-      });
-      createdForms.push(form);
+        const form = createVestForm(multiAsyncSuite, {
+          email: 'test@example.com',
+          username: 'testuser',
+        });
+        createdForms.push(form);
 
-      // Start email async
-      form.validate('email');
-      expect(form.pending()).toBe(true);
-      expect(form.result().isPending('email')).toBe(true);
-      expect(emailAsyncCount).toBe(1);
+        // Start email async
+        form.validate('email');
+        expect(form.pending()).toBe(true);
+        expect(form.result().isPending('email')).toBe(true);
+        expect(emailAsyncCount).toBe(1);
 
-      // Try to validate email again while pending - should skip
-      form.validate('email');
-      expect(emailAsyncCount).toBe(1); // ✅ Not called again
+        // Try to validate email again while pending - should skip
+        form.validate('email');
+        expect(emailAsyncCount).toBe(1); // ✅ Not called again
 
-      // Validate username while email pending
-      // With async pending fix: We skip calling suite when async is pending
-      // This prevents re-triggering async tests and breaking memoization
-      form.validate('username');
+        // Validate username while email pending
+        // With async pending fix: We skip calling suite when async is pending
+        // This prevents re-triggering async tests and breaking memoization
+        form.validate('username');
 
-      // Username async should NOT be triggered because async is already pending
-      expect(usernameAsyncCount).toBe(0); // ✅ Not called (async pending)
-      expect(emailAsyncCount).toBe(1); // ✅ Email async continues (not aborted)
+        // Username async should NOT be triggered because async is already pending
+        expect(usernameAsyncCount).toBe(0); // ✅ Not called (async pending)
+        expect(emailAsyncCount).toBe(1); // ✅ Email async continues (not aborted)
 
-      await vi.waitFor(() => !form.pending(), { timeout: 300 });
-    });
+        await vi.waitFor(() => !form.pending(), { timeout: 300 });
+      },
+    );
 
-    it.todo('should validate different field via all-fields strategy when async pending', async () => {
-      let emailAsyncCount = 0;
-      let usernameAsyncCount = 0;
+    it.todo(
+      'should validate different field via all-fields strategy when async pending',
+      async () => {
+        let emailAsyncCount = 0;
+        let usernameAsyncCount = 0;
 
-      const multiAsyncSuite = staticSuite(
-        (data: Record<string, string> = {}, field?: string) => {
-          if (field) {
-            only(field);
-          }
+        const multiAsyncSuite = staticSuite(
+          (data: Record<string, string> = {}, field?: string) => {
+            if (field) {
+              only(field);
+            }
 
-          test('email', 'Checking email...', async () => {
-            enforce(data['email']).isNotEmpty(); // Use bracket notation for index signature
-            emailAsyncCount++;
-            await new Promise((resolve) => setTimeout(resolve, 100));
-          });
+            test('email', 'Checking email...', async () => {
+              enforce(data['email']).isNotEmpty(); // Use bracket notation for index signature
+              emailAsyncCount++;
+              await new Promise((resolve) => setTimeout(resolve, 100));
+            });
 
-          test('username', 'Checking username...', async () => {
-            enforce(data['username']).isNotEmpty(); // Use bracket notation for index signature
-            usernameAsyncCount++;
-            await new Promise((resolve) => setTimeout(resolve, 100));
-          });
-        },
-      );
+            test('username', 'Checking username...', async () => {
+              enforce(data['username']).isNotEmpty(); // Use bracket notation for index signature
+              usernameAsyncCount++;
+              await new Promise((resolve) => setTimeout(resolve, 100));
+            });
+          },
+        );
 
-      const form = createVestForm(multiAsyncSuite, {
-        email: 'test@example.com',
-        username: 'testuser',
-      });
-      createdForms.push(form);
+        const form = createVestForm(multiAsyncSuite, {
+          email: 'test@example.com',
+          username: 'testuser',
+        });
+        createdForms.push(form);
 
-      // Start email async
-      form.validate('email');
-      expect(form.pending()).toBe(true);
-      expect(form.result().isPending('email')).toBe(true);
-      expect(emailAsyncCount).toBe(1);
+        // Start email async
+        form.validate('email');
+        expect(form.pending()).toBe(true);
+        expect(form.result().isPending('email')).toBe(true);
+        expect(emailAsyncCount).toBe(1);
 
-      // Try to validate email again while pending - should skip
-      form.validate('email');
-      expect(emailAsyncCount).toBe(1); // ✅ Not called again
+        // Try to validate email again while pending - should skip
+        form.validate('email');
+        expect(emailAsyncCount).toBe(1); // ✅ Not called again
 
-      // Validate username while email pending
-      // With async pending fix: We skip calling suite when async is pending
-      // This prevents re-triggering async tests and breaking memoization
-      form.validate('username');
+        // Validate username while email pending
+        // With async pending fix: We skip calling suite when async is pending
+        // This prevents re-triggering async tests and breaking memoization
+        form.validate('username');
 
-      // Username async should NOT be triggered because async is already pending
-      expect(usernameAsyncCount).toBe(0); // ✅ Not called (async pending)
-      expect(emailAsyncCount).toBe(1); // ✅ Email async continues (not aborted)
+        // Username async should NOT be triggered because async is already pending
+        expect(usernameAsyncCount).toBe(0); // ✅ Not called (async pending)
+        expect(emailAsyncCount).toBe(1); // ✅ Email async continues (not aborted)
 
-      await vi.waitFor(() => !form.pending(), { timeout: 300 });
-    });
+        await vi.waitFor(() => !form.pending(), { timeout: 300 });
+      },
+    );
   });
 });

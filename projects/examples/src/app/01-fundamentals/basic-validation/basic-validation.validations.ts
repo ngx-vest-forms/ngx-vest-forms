@@ -1,4 +1,4 @@
-import { staticSafeSuite } from 'ngx-vest-forms/core';
+import { createSafeSuite } from 'ngx-vest-forms';
 import { enforce, test } from 'vest';
 
 /**
@@ -72,18 +72,18 @@ const simulateEmailExistsCheck = async (
  * - User-friendly error messages
  *
  * Best Practices:
- * - Use `staticSafeSuite` to prevent the only(undefined) bug automatically
+ * - Use `createSafeSuite` to prevent the only(undefined) bug automatically
  * - Use `test.memo()` for expensive async validations
  * - Use descriptive error messages that guide users
  * - Separate validation concerns by field
  * - Use conditional logic for business rules
  * - Leverage TypeScript for compile-time validation safety
  */
-export const userValidationSuite = staticSafeSuite<
+export const userValidationSuite = createSafeSuite<
   UserFormModel,
   UserFieldNames
 >((data: Partial<UserFormModel> = {}) => {
-  // ✅ No need for manual only(field) guard - staticSafeSuite handles it automatically!
+  // ✅ No need for manual only(field) guard - createSafeSuite handles it automatically!
 
   // Name validation - multiple rules for comprehensive validation
   test('name', 'Name is required', () => {

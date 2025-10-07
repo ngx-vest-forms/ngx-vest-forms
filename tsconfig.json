@@ -13,13 +13,14 @@
     "sourceMap": true,
     "declaration": false,
     "experimentalDecorators": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "importHelpers": true,
     "target": "ES2022",
     "module": "ES2022",
     "useDefineForClassFields": false,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "paths": {
+      "@shikijs/core/types": ["node_modules/@shikijs/types/dist/index.d.mts"],
       "ngx-vest-forms": [
         "projects/ngx-vest-forms/public-api.ts",
         "dist/ngx-vest-forms"

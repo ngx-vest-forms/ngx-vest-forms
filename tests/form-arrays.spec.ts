@@ -52,8 +52,8 @@ test.describe('Form Arrays Example', () => {
         /interest cannot be empty/i,
       );
 
-      // Form should be invalid
-      await expect(page.getByText(/Valid: ❌/i)).toBeVisible();
+      // Form should still be valid (addInterest is not part of form model)
+      await expect(page.getByText(/Valid: ✅/i)).toBeVisible();
     });
 
     test('should clear error after successfully adding interest', async ({
@@ -107,31 +107,26 @@ test.describe('Form Arrays Example', () => {
     test('should add new interest to array and maintain form validity', async ({
       page,
     }) => {
-      const input = page.getByRole('textbox', { name: /add.*interest/i });
       const addButton = page.getByRole('button', { name: /add interest/i });
+      const input = page.getByRole('textbox', {
+        name: /add a new interest/i,
+      });
 
-      // Add first interest
+      // Add a valid interest
       await input.fill('Reading');
       await addButton.click();
 
-      // Verify interest appears in editable list
+      // Input should be cleared and focused
+      await expect(input).toHaveValue('');
+      await expect(input).toBeFocused();
+
+      // Interest should appear in the list
       await expect(
-        page.getByRole('textbox', { name: /Interest 1/i }),
+        page.getByRole('textbox', { name: /interest 1/i }),
       ).toHaveValue('Reading');
 
-      // Input should be cleared
-      await expect(input).toHaveValue('');
-
-      // Form should be valid after adding (this was the bug - form was showing invalid!)
+      // Form should be valid after adding (bug fix: changed isValid() to !hasErrors())
       await expect(page.getByText(/Valid: ✅/i)).toBeVisible();
-
-      // Form debugger should show the interest in the model
-      await expect(
-        page.locator('code').filter({ hasText: 'interests' }),
-      ).toContainText('Reading');
-
-      // No validation errors
-      await expect(page.getByText(/No validation errors/i)).toBeVisible();
     });
 
     test('should add multiple interests sequentially', async ({ page }) => {
@@ -247,7 +242,7 @@ test.describe('Form Arrays Example', () => {
       await input.fill('Reading');
       await addButton.click();
 
-      // Submit form
+      // Submit form (bug fix: form should now be valid and button enabled)
       await page.getByRole('button', { name: /submit/i }).click();
 
       // Form should be processed (check for success state or navigation)

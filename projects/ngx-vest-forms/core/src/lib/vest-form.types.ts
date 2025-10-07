@@ -47,6 +47,22 @@ export type VestSuite<
 
 /**
  * Error display strategies determining when validation errors are shown to users
+/**
+ * Error display strategies determining when validation errors are shown to users
+ *
+ * - `immediate`: Show errors as soon as they exist (no delay)
+ * - `on-touch`: Show errors after field has been touched/blurred (WCAG recommended)
+ * - `on-submit`: Show errors only after form submission attempt
+ * - `manual`: No automatic error display (use `showErrors()` signal manually)
+ *
+ * @example
+ * ```typescript
+ * // Accessible UX (recommended)
+ * const form = createVestForm(suite, model, { errorStrategy: 'on-touch' });
+ *
+ * // Immediate feedback
+ * const form = createVestForm(suite, model, { errorStrategy: 'immediate' });
+ * ```
  */
 export type ErrorDisplayStrategy =
   | 'immediate'
@@ -121,6 +137,36 @@ export type ValidationMessages = {
 };
 
 /**
+ * Result of form submission.
+ *
+ * @remarks
+ * Always returns a result object with valid flag instead of throwing.
+ * This provides a clearer contract and better error handling patterns.
+ *
+ * @example
+ * ```typescript
+ * async save() {
+ *   const result = await form.submit();
+ *   if (result.valid) {
+ *     await this.api.save(result.data);
+ *   } else {
+ *     console.log('Errors:', result.errors);
+ *   }
+ * }
+ * ```
+ */
+export type SubmitResult<TModel> = {
+  /** Whether the form is valid and submission can proceed */
+  valid: boolean;
+
+  /** Form data (always present, even if invalid) */
+  data: TModel;
+
+  /** All validation errors by field path */
+  errors: Record<string, string[]>;
+};
+
+/**
  * Individual field interface providing all field-level operations and state
  */
 export type VestField<T = unknown> = {
@@ -130,7 +176,7 @@ export type VestField<T = unknown> = {
   /** Whether the field is valid (no blocking errors) */
   valid: Signal<boolean>;
 
-  /** Nested validation messages with errors and warnings */
+  /** Validation messages with errors and warnings */
   validation: Signal<ValidationMessages>;
 
   /** Whether async validation is pending */
@@ -156,16 +202,6 @@ export type VestField<T = unknown> = {
 
   /** Reset field to initial value and clear touched state */
   reset(): void;
-
-  // ====================================
-  // Backward Compatibility (Deprecated)
-  // ====================================
-
-  /** @deprecated Use field.validation().errors instead */
-  errors: Signal<string[]>;
-
-  /** @deprecated Use field.validation().warnings instead */
-  warnings: Signal<string[]>;
 };
 
 /**
@@ -256,8 +292,8 @@ export type VestForm<
   /** Validate specific field or entire form */
   validate<P extends Path<TModel>>(fieldPath?: P): void;
 
-  /** Submit form (runs full validation first) */
-  submit(): Promise<TModel>;
+  /** Submit form (runs full validation first) and returns result */
+  submit(): Promise<SubmitResult<TModel>>;
 
   /** Reset form to initial state */
   reset(): void;

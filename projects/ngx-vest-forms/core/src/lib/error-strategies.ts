@@ -27,8 +27,10 @@ export function computeShowErrors(
     const hasErrors = currentResult.hasErrors(fieldName);
     const isTested = currentResult.isTested(fieldName);
     const isSubmitted = hasSubmitted();
-    // Vest.js first: Use explicit fieldTouched when provided, otherwise fall back to Vest's isTested
-    // This allows precise WCAG control (explicit blur) while respecting Vest's validation state
+    // Prefer explicit touch signals, but gracefully fall back to Vest's isTested state
+    // to support forms that rely on automatic touch tracking. This preserves WCAG 2.2
+    // behaviour for manual blur handlers while maintaining compatibility with
+    // components that do not provide a custom fieldTouched signal.
     const touched = fieldTouched ? fieldTouched() : isTested;
 
     if (!hasErrors) {
@@ -48,7 +50,7 @@ export function computeShowErrors(
 
       case 'on-touch': {
         // Show errors after field has been explicitly touched (blur) OR form has been submitted
-        // Use explicit touch tracking (fieldTouched) when available
+        // WCAG 2.2 compliant: requires explicit user interaction (blur) or submission attempt
         return (touched || isSubmitted) && hasErrors;
       }
 

@@ -1,10 +1,6 @@
 <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-2">
   <!-- Form Column -->
-  <form
-    (ngSubmit)="onSubmit()"
-    class="form-container"
-    [attr.aria-busy]="form.pending()"
-  >
+  <form [ngxVestForm]="form" (ngSubmit)="save()" class="form-container">
     <div class="form-field">
       <label class="form-label" for="email"> Email Address * </label>
       <input
@@ -14,17 +10,9 @@
         [value]="form.email()"
         (input)="form.setEmail($event)"
         placeholder="you@example.com"
-        [attr.aria-invalid]="form.emailShowErrors() && !form.emailValid()"
-        [attr.aria-describedby]="
-          form.emailShowErrors() ? 'email-error' : null
-        "
         autocomplete="email"
       />
-      @if (form.emailShowErrors() && form.emailErrors().length) {
-      <div class="form-error" id="email-error" role="alert">
-        {{ form.emailErrors()[0] }}
-      </div>
-      }
+      <ngx-form-error [field]="form.emailField()" />
     </div>
 
     <div class="form-field">
@@ -38,19 +26,9 @@
         [value]="form.verifyEmail()"
         (input)="form.setVerifyEmail($event)"
         placeholder="Confirm your email"
-        [attr.aria-invalid]="
-          form.verifyEmailShowErrors() && !form.verifyEmailValid()
-        "
-        [attr.aria-describedby]="
-          form.verifyEmailShowErrors() ? 'verifyEmail-error' : null
-        "
         autocomplete="email"
       />
-      @if (form.verifyEmailShowErrors() && form.verifyEmailErrors().length) {
-      <div class="form-error" id="verifyEmail-error" role="alert">
-        {{ form.verifyEmailErrors()[0] }}
-      </div>
-      }
+      <ngx-form-error [field]="form.verifyEmailField()" />
     </div>
 
     <div class="form-actions">

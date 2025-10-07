@@ -93,7 +93,7 @@ const testSuite = staticSafeSuite((data = {}) => {
 
 // Component under test with input property
 @Component({
-  standalone: true,
+
   template: `
     <div>{{ emailValue() }}</div>
   `,
@@ -127,7 +127,7 @@ describe('Component with inputs', () => {
 
 // Example with ngx-vest-forms integration
 @Component({
-  standalone: true,
+
   template: `
     <form>
       <input

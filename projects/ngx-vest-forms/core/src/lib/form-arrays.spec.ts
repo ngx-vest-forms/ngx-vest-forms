@@ -277,7 +277,9 @@ describe('Form Arrays', () => {
       formArray.push('test');
 
       expect(runSuite).toHaveBeenCalledTimes(1);
-      expect(runSuite).toHaveBeenCalledWith('items');
+      // runSuite is called without arguments to ensure array item tests run
+      // (calling with 'items' would use only('items') and skip item.0, item.1, etc.)
+      expect(runSuite).toHaveBeenCalledWith(undefined);
       expect(suite).not.toHaveBeenCalled();
     });
 
@@ -524,9 +526,11 @@ describe('Form Arrays', () => {
       formArray.clear();
 
       expect(runSuite).toHaveBeenCalledTimes(3);
-      expect(runSuite).toHaveBeenNthCalledWith(1, 'items');
-      expect(runSuite).toHaveBeenNthCalledWith(2, 'items');
-      expect(runSuite).toHaveBeenNthCalledWith(3, 'items');
+      // Enhanced methods call runSuite without arguments to ensure array item tests run
+      // (calling with path would use only(path) and skip item.0, item.1, etc.)
+      expect(runSuite).toHaveBeenNthCalledWith(1);
+      expect(runSuite).toHaveBeenNthCalledWith(2);
+      expect(runSuite).toHaveBeenNthCalledWith(3);
       expect(suite).not.toHaveBeenCalled();
     });
 

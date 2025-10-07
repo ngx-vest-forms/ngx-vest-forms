@@ -90,7 +90,6 @@ describe('NgxFormErrorComponent', () => {
 
     it('should generate correct ARIA ID for error container', async () => {
       @Component({
-        standalone: true,
         imports: [NgxFormErrorComponent],
         template: `<ngx-form-error [field]="form.emailField()" />`,
       })

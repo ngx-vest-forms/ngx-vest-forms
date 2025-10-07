@@ -7,7 +7,11 @@ import {
   makeEnvironmentProviders,
   type EnvironmentProviders,
 } from '@angular/core';
-import { NGX_VEST_FORMS_CONFIG, type NgxVestFormsConfig } from './tokens';
+import {
+  NGX_VEST_FORM,
+  NGX_VEST_FORMS_CONFIG,
+  type NgxVestFormsConfig,
+} from './tokens';
 
 /**
  * Provide global ngx-vest-forms configuration.
@@ -84,4 +88,86 @@ export function provideNgxVestFormsConfig(
   return makeEnvironmentProviders([
     { provide: NGX_VEST_FORMS_CONFIG, useValue: config },
   ]);
+}
+
+/**
+ * Provide a Vest form instance to child directives (NgxVestAutoTouch, NgxVestAutoAria).
+ *
+ * This helper simplifies the provider boilerplate required for auto-directives to discover
+ * their parent form context. Instead of manually writing the factory pattern, use this
+ * function to reduce code and improve maintainability.
+ *
+ * ## When to use
+ *
+ * **Required** when using auto-directives:
+ * - `NgxVestAutoTouch` - Automatic blur-to-touch detection
+ * - `NgxVestAutoAria` - Automatic ARIA attribute management
+ *
+ * **Optional** when using manual patterns:
+ * - Explicit `(blur)="form.touchField()"` handlers
+ * - Manual `[attr.aria-invalid]` bindings
+ * - `<ngx-form-error [field]="form.field()">` with input binding
+ *
+ * @param formFactory - Function that returns the form instance (usually a component property)
+ * @returns View providers array ready for `@Component({ viewProviders: [...] })`
+ *
+ * @example Basic usage
+ * ```typescript
+ * import { Component, signal } from '@angular/core';
+ * import { createVestForm, provideVestForm } from 'ngx-vest-forms/core';
+ * import { userValidations } from './user.validations';
+ *
+ * @Component({
+ *   selector: 'app-user-form',
+ *   viewProviders: provideVestForm((self: UserFormComponent) => self.form),
+ *   template: `
+ *     <form>
+ *       <!-- Auto-touch and auto-ARIA work automatically -->
+ *       <input id="email" [value]="form.email()" (input)="form.setEmail($event)" />
+ *       <ngx-form-error [field]="form.emailField()" />
+ *     </form>
+ *   `
+ * })
+ * export class UserFormComponent {
+ *   readonly form = createVestForm(userValidations, signal({ email: '' }));
+ * }
+ * ```
+ *
+ * @example Without auto-directives (provider not needed)
+ * ```typescript
+ * @Component({
+ *   selector: 'app-manual-form',
+ *   // No viewProviders needed - everything is explicit
+ *   template: `
+ *     <form>
+ *       <input
+ *         id="email"
+ *         [value]="form.email()"
+ *         (input)="form.setEmail($event)"
+ *         (blur)="form.touchEmail()"
+ *         [attr.aria-invalid]="form.emailShowErrors() && !form.emailValid()"
+ *       />
+ *       @if (form.emailShowErrors() && form.emailErrors().length) {
+ *         <span role="alert">{{ form.emailErrors()[0] }}</span>
+ *       }
+ *     </form>
+ *   `
+ * })
+ * export class ManualFormComponent {
+ *   readonly form = createVestForm(userValidations, signal({ email: '' }));
+ * }
+ * ```
+ */
+export function provideVestForm<T>(formFactory: (component: T) => unknown): {
+  provide: unknown;
+  useFactory: (component: T) => unknown;
+  deps: [new () => T];
+}[] {
+  return [
+    {
+      provide: NGX_VEST_FORM,
+      useFactory: formFactory,
+      deps: [formFactory as never as new () => T],
+    },
+  ];
 }

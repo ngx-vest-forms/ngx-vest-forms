@@ -9,17 +9,22 @@ import {
   type OnDestroy,
   type Signal,
 } from '@angular/core';
-import { NGX_VEST_FORM, NGX_VEST_FORMS_CONFIG } from '../tokens';
-import type { VestForm } from '../vest-form.types';
+import {
+  NGX_VEST_FIELD,
+  NGX_VEST_FORM,
+  NGX_VEST_FORMS_CONFIG,
+} from '../tokens';
+import type { VestField } from '../vest-form.types';
+import { NgxVestFormProviderDirective } from './ngx-vest-form-provider.directive';
 
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector
   selector: `
-    input[value]:not([ngxVestAutoAriaDisabled]),
+    input[value]:not([ngxVestAutoAriaDisabled]):not([type="radio"]):not([type="checkbox"]),
     textarea[value]:not([ngxVestAutoAriaDisabled]),
     select[value]:not([ngxVestAutoAriaDisabled]),
-    input[type="checkbox"][checked]:not([ngxVestAutoAriaDisabled]),
-    input[type="radio"][checked]:not([ngxVestAutoAriaDisabled])
+    input[type="checkbox"]:not([ngxVestAutoAriaDisabled]),
+    input[type="radio"]:not([ngxVestAutoAriaDisabled])
   `,
   host: {
     '[attr.aria-invalid]': 'ariaInvalid()',
@@ -32,11 +37,21 @@ export class NgxVestAutoAriaDirective implements OnDestroy {
     inject<
       ElementRef<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     >(ElementRef);
-  readonly #form = inject<VestForm<Record<string, unknown>>>(NGX_VEST_FORM, {
+
+  // Try field-level injection first (via [ngxVestField]), then form-level
+  readonly #field = inject<VestField<unknown>>(NGX_VEST_FIELD, {
+    optional: true,
+  });
+  readonly #formProvider = inject<NgxVestFormProviderDirective>(NGX_VEST_FORM, {
     optional: true,
   });
   readonly #globalConfig = inject(NGX_VEST_FORMS_CONFIG, { optional: true });
   readonly #injector = inject(Injector);
+
+  /**
+   * Computed to get the actual form instance from the provider directive.
+   */
+  readonly #form = computed(() => this.#formProvider?.getForm() ?? null);
 
   // 2. Manual Override Detection (HostAttributeToken)
   readonly #manualAriaInvalid = inject(new HostAttributeToken('aria-invalid'), {
@@ -67,20 +82,16 @@ export class NgxVestAutoAriaDirective implements OnDestroy {
    */
   #hasManualAriaInvalid = () => this.#manualAriaInvalid !== null;
 
-  /**
-   * Check if developer manually set static aria-describedby attribute.
-   */
-  #hasManualAriaDescribedBy = () => this.#manualAriaDescribedBy !== null;
-
   // 4. Reactive Activation State
   readonly #isActive = computed(() => {
-    if (!this.#form) {
-      return false; // No form context - directive inactive
-    }
     if (this.#globalConfig?.autoAria === false) {
       return false; // Globally disabled via config
     }
-    return true; // Active when form exists and not disabled
+    // Active if field OR form is available
+    if (!this.#field && !this.#form()) {
+      return false; // No context - directive inactive
+    }
+    return true; // Active when field or form exists and not disabled
   });
 
   /**
@@ -90,19 +101,33 @@ export class NgxVestAutoAriaDirective implements OnDestroy {
    * Angular's [attr.aria-invalid] binding will:
    * - Set attribute to "true" when signal returns 'true'
    * - Remove attribute entirely when signal returns null
+   * - Preserve manual value when signal returns the manual value
    *
-   * @returns 'true' when field has errors, null otherwise
+   * @returns 'true' when field has errors, manual value if manually set, null otherwise
    */
-  protected readonly ariaInvalid: Signal<'true' | null> = computed(() => {
-    if (!this.#isActive() || this.#hasManualAriaInvalid()) {
-      return null; // Directive disabled OR manual override exists
+  protected readonly ariaInvalid: Signal<string | null> = computed(() => {
+    // If manually set, preserve the manual value
+    if (this.#hasManualAriaInvalid()) {
+      return this.#manualAriaInvalid;
     }
 
-    if (!this.#fieldName || !this.#form) {
-      return null; // No field name or form context
+    if (!this.#isActive()) {
+      return null; // Directive disabled
     }
 
-    const field = this.#form.field(this.#fieldName);
+    // Field-level injection (direct access)
+    let field: VestField<unknown> | null = this.#field;
+
+    // Form-level injection (extract field name then access)
+    const form = this.#form();
+    if (!field && form && this.#fieldName) {
+      field = form.field(this.#fieldName);
+    }
+
+    if (!field) {
+      return null; // No field context
+    }
+
     const showErrors = field.showErrors();
     const isValid = field.valid();
 
@@ -113,6 +138,12 @@ export class NgxVestAutoAriaDirective implements OnDestroy {
    * Computed signal for aria-describedby attribute.
    * Appends error ID when errors are visible.
    *
+   * NOTE: Unlike aria-invalid, we DO NOT block modification when aria-describedby
+   * is manually set. Instead, we treat the initial value as a "hint" ID that we
+   * append the error ID to. This allows developers to add hint text via
+   * `aria-describedby="email-hint"` and the directive will append "email-error"
+   * when errors occur, resulting in `aria-describedby="email-hint email-error"`.
+   *
    * Special handling for radio buttons:
    * - Only first radio in group gets aria-describedby
    * - Prevents repetitive screen reader announcements
@@ -120,12 +151,25 @@ export class NgxVestAutoAriaDirective implements OnDestroy {
    * @returns Space-separated ID list or null
    */
   protected readonly ariaDescribedBy: Signal<string | null> = computed(() => {
-    if (!this.#isActive() || this.#hasManualAriaDescribedBy()) {
-      return null; // Directive disabled OR manual override exists
+    // Note: We do NOT check #hasManualAriaDescribedBy() here!
+    // Manual aria-describedby values are treated as initial hints to append to.
+
+    if (!this.#isActive()) {
+      return null; // Directive disabled
     }
 
-    if (!this.#fieldName || !this.#form) {
-      return null; // No field name or form context
+    // Field-level injection (direct access)
+    let field: VestField<unknown> | null = this.#field;
+    const fieldName = this.#fieldName;
+
+    // Form-level injection (extract field name then access)
+    const form = this.#form();
+    if (!field && form && fieldName) {
+      field = form.field(fieldName);
+    }
+
+    if (!field || !fieldName) {
+      return null; // No field context
     }
 
     // Special handling for radio buttons (only first in group gets aria-describedby)
@@ -139,7 +183,6 @@ export class NgxVestAutoAriaDirective implements OnDestroy {
       }
     }
 
-    const field = this.#form.field(this.#fieldName);
     const showErrors = field.showErrors();
     const hasErrors = field.validation().errors.length > 0;
 
@@ -149,7 +192,7 @@ export class NgxVestAutoAriaDirective implements OnDestroy {
     }
 
     // Append error ID to existing IDs
-    const errorId = `${this.#fieldName}-error`;
+    const errorId = `${fieldName}-error`;
     const existing = this.#existingAriaDescribedBy;
 
     return existing ? `${existing} ${errorId}` : errorId;
@@ -176,11 +219,12 @@ export class NgxVestAutoAriaDirective implements OnDestroy {
   /**
    * Extract field name from element using 4-tier priority hierarchy.
    *
-   * Priority order:
+   * Priority order (with special handling for radio buttons):
    * 1. data-vest-field attribute (explicit nested paths)
    * 2. Custom resolver from global config (project-specific logic)
-   * 3. id attribute (WCAG preferred)
-   * 4. name attribute (fallback)
+   * 3a. name attribute (for radio buttons - represents the field/group)
+   * 3b. id attribute (WCAG preferred for other inputs)
+   * 4. name attribute (fallback for non-radio inputs)
    *
    * @returns Field name/path or null if not found
    */
@@ -199,6 +243,15 @@ export class NgxVestAutoAriaDirective implements OnDestroy {
       if (resolved) {
         return resolved;
       }
+    }
+
+    // Special case for radio buttons: use name attribute (represents the field group)
+    if (
+      element instanceof HTMLInputElement &&
+      element.type === 'radio' &&
+      element.name
+    ) {
+      return this.#convertToFieldPath(element.name);
     }
 
     // Priority 3: ID attribute (WCAG preferred)

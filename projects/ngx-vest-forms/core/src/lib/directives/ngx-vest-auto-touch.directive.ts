@@ -12,9 +12,14 @@ import {
   Injector,
   type OnDestroy,
 } from '@angular/core';
-import { NGX_VEST_FORM, NGX_VEST_FORMS_CONFIG } from '../tokens';
+import {
+  NGX_VEST_FIELD,
+  NGX_VEST_FORM,
+  NGX_VEST_FORMS_CONFIG,
+} from '../tokens';
 import { unwrapSignal } from '../utils/type-helpers';
-import type { VestForm } from '../vest-form.types';
+import type { VestField } from '../vest-form.types';
+import { NgxVestFormProviderDirective } from './ngx-vest-form-provider.directive';
 
 /**
  * Automatically triggers touch state on blur for form controls with the "on-touch" error display strategy.
@@ -165,41 +170,62 @@ import type { VestForm } from '../vest-form.types';
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector
   selector: `
-    input[value]:not([ngxVestAutoTouchDisabled]),
+    input[value]:not([type="checkbox"]):not([type="radio"]):not([ngxVestAutoTouchDisabled]),
     textarea[value]:not([ngxVestAutoTouchDisabled]),
     select[value]:not([ngxVestAutoTouchDisabled])
   `,
-  standalone: true,
+
   host: {
     '(blur)': 'onBlur()',
   },
 })
 export class NgxVestAutoTouchDirective implements OnDestroy {
-  // ES Private Fields (using # prefix for true runtime privacy)
   readonly #element =
     inject<
       ElementRef<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     >(ElementRef);
-  readonly #form = inject<VestForm<Record<string, unknown>>>(NGX_VEST_FORM, {
+
+  // Try field-level injection first (via [ngxVestField]), then form-level
+  readonly #field = inject<VestField<unknown>>(NGX_VEST_FIELD, {
+    optional: true,
+  });
+  readonly #formProvider = inject<NgxVestFormProviderDirective>(NGX_VEST_FORM, {
     optional: true,
   });
   readonly #globalConfig = inject(NGX_VEST_FORMS_CONFIG, { optional: true });
   readonly #injector = inject(Injector);
 
   /**
+   * Computed to get the actual form instance from the provider directive.
+   * The NGX_VEST_FORM token now provides the directive, which has a getForm() method.
+   */
+  readonly #form = computed(() => this.#formProvider?.getForm() ?? null);
+
+  /**
    * Reactive computed signal that determines if the directive should be active.
    * Only active when:
-   * 1. Form instance is available
+   * 1. Field OR Form instance is available
    * 2. Global config allows auto-touch (not explicitly disabled)
-   * 3. Form's error strategy is 'on-touch'
+   * 3. Form's error strategy is 'on-touch' (if using form-level injection)
    */
   readonly #isActive = computed(() => {
-    if (!this.#form || this.#globalConfig?.autoTouch === false) {
+    if (this.#globalConfig?.autoTouch === false) {
+      return false;
+    }
+
+    // Field-level injection (always active if field is provided)
+    if (this.#field) {
+      return true;
+    }
+
+    // Form-level injection (check error strategy)
+    const form = this.#form();
+    if (!form) {
       return false;
     }
 
     // Access errorStrategy from the form (now exposed on VestForm interface)
-    const strategy = unwrapSignal(this.#form.errorStrategy);
+    const strategy = unwrapSignal(form.errorStrategy);
     return strategy === 'on-touch';
   });
 
@@ -235,13 +261,20 @@ export class NgxVestAutoTouchDirective implements OnDestroy {
       return; // Strategy is not 'on-touch' - skip
     }
 
+    // Field-level injection (direct access - no field name extraction needed)
+    if (this.#field) {
+      this.#field.touch();
+      return;
+    }
+
+    // Form-level injection (extract field name then access)
     const fieldName = this.#extractFieldName();
     if (!fieldName) {
       return; // Could not extract field name
     }
 
     // Touch the field (triggers validation + error display)
-    this.#form?.field(fieldName).touch();
+    this.#form()?.field(fieldName).touch();
   }
 
   /**

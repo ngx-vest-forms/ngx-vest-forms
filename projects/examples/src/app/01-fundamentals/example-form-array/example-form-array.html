@@ -1,30 +1,23 @@
-<form
-  (ngSubmit)="onSubmit()"
-  class="form-container"
-  [attr.aria-busy]="form.pending()"
->
+<form [ngxVestForm]="form" (ngSubmit)="save()" class="form-container">
   <!-- Add Interest Field -->
   <div class="form-field">
     <label class="form-label" for="addInterest"> Add a new interest * </label>
     <div class="flex gap-3">
       <div class="flex-1">
         <input
-          id="addInterest"
           #addInterestInput
+          id="addInterest"
           class="form-input"
           type="text"
-          [value]="form.addInterest() || ''"
-          (input)="form.setAddInterest($event)"
-          (blur)="form.touchAddInterest()"
+          [value]="addInterestValue()"
+          (input)="addInterestValue.set($any($event.target).value)"
           placeholder="Enter an interest"
-          [attr.aria-invalid]="showAddInterestErrors() || null"
-          [attr.aria-describedby]="
-              showAddInterestErrors() ? 'addInterest-error' : null
-            "
+          [attr.aria-invalid]="addInterestShowError() ? 'true' : null"
+          [attr.aria-describedby]="addInterestShowError() ? 'addInterest-error' : null"
         />
-        @if (showAddInterestErrors()) {
-        <div class="form-error" id="addInterest-error" role="alert">
-          {{ addInterestErrorMessage() }}
+        @if (addInterestShowError() && addInterestError()) {
+        <div role="alert" id="addInterest-error" class="text-destructive mt-1">
+          {{ addInterestError() }}
         </div>
         }
       </div>
@@ -54,27 +47,10 @@
             type="text"
             [value]="entry.field.value() ?? ''"
             (input)="entry.field.set($event)"
-            (blur)="entry.field.touch()"
             class="form-input"
             [attr.aria-label]="'Interest ' + (entry.index + 1)"
-            [attr.aria-invalid]="entry.field.showErrors() && entry.field.errors().length > 0"
-            [attr.aria-describedby]="
-                    entry.field.showErrors() && entry.field.errors().length > 0
-                      ? 'interest-error-' + entry.index
-                      : null
-                  "
           />
-          @if (entry.field.showErrors() && entry.field.errors().length > 0) {
-          <div
-            class="form-error"
-            [attr.id]="'interest-error-' + entry.index"
-            role="alert"
-          >
-            @for (error of entry.field.errors(); track error) {
-            <div>{{ error }}</div>
-            }
-          </div>
-          }
+          <ngx-form-error [field]="entry.field" />
         </div>
         <button
           type="button"

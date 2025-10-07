@@ -19,7 +19,7 @@ import { inject } from '@angular/core';
  * export class MyFormComponent {
  *   private readonly focusFirstInvalidField = createFocusFirstInvalidField();
  *
- *   onSubmit() {
+ *   save() {
  *     if (!this.formState().valid) {
  *       this.focusFirstInvalidField(this.formState().errors);
  *     }
