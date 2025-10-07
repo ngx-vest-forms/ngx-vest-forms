@@ -76,13 +76,24 @@ export class AppComponent implements AfterViewInit {
         { path: '/fundamentals/nested-forms', label: 'Nested Forms' },
       ],
     },
+    {
+      id: 'form-field',
+      label: 'Form Field Wrapper',
+      pattern: /^\/form-field\//,
+      links: [
+        {
+          path: '/form-field/form-field-showcase',
+          label: 'Form Field Showcase',
+        },
+      ],
+    },
     // {
-    //   id: 'control-wrapper',
+    //   id: 'form-field',
     //   label: 'Control Wrapper',
-    //   pattern: /^\/control-wrapper\//,
+    //   pattern: /^\/form-field\//,
     //   links: [
     //     {
-    //       path: '/control-wrapper/control-wrapper-intro',
+    //       path: '/form-field/form-field-intro',
     //       label: 'Control Wrapper Introduction',
     //     },
     //   ],

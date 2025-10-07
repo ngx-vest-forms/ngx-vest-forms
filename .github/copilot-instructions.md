@@ -18,7 +18,7 @@ applyTo: '**'
 ### Library Entry Points
 
 - `ngx-vest-forms/core` - Main directive (`ngxVestForm`)
-- `ngx-vest-forms/control-wrapper` - UI helpers (`NgxControlWrapper`)
+- `ngx-vest-forms/form-field` - UI helpers (`NgxVestFormField`)
 - `ngx-vest-forms/schemas` - Schema adapters (Zod, Valibot, ArkType)
 - `ngx-vest-forms/smart-state` - Advanced state management
 
@@ -57,7 +57,7 @@ Follow [`.github/instructions/ngx-vest-forms.instructions.md`](instructions/ngx-
 - [ ] Form uses `ngxVestForm` directive
 - [ ] Two-way binding with `[(formValue)]`
 - [ ] One-way binding with `[ngModel]` on controls
-- [ ] Fields wrapped in `<ngx-control-wrapper>`
+- [ ] Fields wrapped in `<ngx-vest-form-field>`
 - [ ] Submit button is **NOT** disabled (accessibility requirement)
 - [ ] Error display mode selector included (for examples)
 
@@ -82,17 +82,17 @@ export const userValidations = staticSuite((data = {}, currentField) => {
 // user-form.component.ts
 import { Component, signal } from '@angular/core';
 import { ngxVestForms } from 'ngx-vest-forms/core';
-import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
+import { NgxVestFormField } from 'ngx-vest-forms/form-field';
 import { userValidations } from './user.validations';
 
 @Component({
-  imports: [ngxVestForms, NgxControlWrapper],
+  imports: [ngxVestForms, NgxVestFormField],
   template: `
     <form ngxVestForm [vestSuite]="suite" [(formValue)]="model">
-      <ngx-control-wrapper>
+      <ngx-vest-form-field>
         <label for="email">Email</label>
         <input id="email" name="email" [ngModel]="model().email" type="email" />
-      </ngx-control-wrapper>
+      </ngx-vest-form-field>
     </form>
   `,
 })

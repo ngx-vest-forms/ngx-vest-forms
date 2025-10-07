@@ -108,6 +108,30 @@ export type NgxVestFormsConfig = {
   defaultErrorStrategy?: ErrorDisplayStrategy;
 
   /**
+   * Enable strict field resolution mode.
+   *
+   * When `true`, the auto-touch directive will throw errors instead of warnings
+   * when it cannot resolve a field name from an element's id/name attributes.
+   * This helps catch configuration mistakes during development.
+   *
+   * When `false` (default), warnings are logged but the directive continues
+   * gracefully, allowing the form to function without auto-touch for that field.
+   *
+   * @default false
+   *
+   * @example
+   * ```typescript
+   * /// Enable strict mode in development
+   * provideNgxVestFormsConfig({
+   *   strictFieldResolution: !environment.production
+   * })
+   * ```
+   *
+   * @throws {Error} When enabled and field name cannot be resolved from element
+   */
+  strictFieldResolution?: boolean;
+
+  /**
    * Enable debug logging for directive behavior.
    *
    * When `true`, directives will log warnings and diagnostic information
@@ -148,6 +172,7 @@ export const NGX_VEST_FORMS_CONFIG = new InjectionToken<NgxVestFormsConfig>(
       autoTouch: true,
       autoAria: true,
       autoFormBusy: true,
+      strictFieldResolution: false,
       debug: false,
     }),
   },

@@ -51,7 +51,7 @@ This refactor transforms ngx-vest-forms from a V1 NgForm-centric approach to a V
 
 ### Phase 2: Optional Packages
 
-- `control-wrapper/` - UI components (2KB)
+- `form-field/` - UI components (2KB)
 - `ngform-sync/` - NgForm integration (2KB)
 - `schemas/` - Zod/Valibot/ArkType adapters (1KB each)
 - `testing/` - Test utilities (1KB)
@@ -67,7 +67,7 @@ This refactor transforms ngx-vest-forms from a V1 NgForm-centric approach to a V
 ```text
 projects/ngx-vest-forms/
 ├── core/                    # Framework-agnostic validation (~3KB)
-├── control-wrapper/         # Accessible UI components (~2KB)
+├── form-field/         # Accessible UI components (~2KB)
 ├── ngform-sync/            # Optional NgForm integration (~2KB)
 ├── schemas/                # Schema adapters (~1KB each)
 └── testing/                # Test utilities (~1KB)

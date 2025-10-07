@@ -1467,13 +1467,13 @@ test.describe('NgxVestAutoTouchDirective E2E', () => {
 ```typescript
 // Before: No directive import
 @Component({
-  imports: [NgxControlWrapper],
+  imports: [NgxVestFormField],
   // ...
 })
 
 // After: Add NgxVestAutoTouchDirective
 @Component({
-  imports: [NgxControlWrapper, NgxVestAutoTouchDirective],
+  imports: [NgxVestFormField, NgxVestAutoTouchDirective],
   // ...
 })
 ```

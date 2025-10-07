@@ -234,7 +234,7 @@ Creates a new VestForm instance.
 
 ## Related Packages
 
-- **`@ngx-vest-forms/control-wrapper`** - Accessible UI components
+- **`@ngx-vest-forms/form-field`** - Accessible UI components
 - **`@ngx-vest-forms/ngform-sync`** - Optional NgForm integration
 - **`@ngx-vest-forms/schemas`** - Schema adapters (Zod, Valibot, ArkType)
 

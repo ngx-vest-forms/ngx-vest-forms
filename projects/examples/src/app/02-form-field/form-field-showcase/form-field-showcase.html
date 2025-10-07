@@ -1,0 +1,146 @@
+<form
+  [ngxVestForm]="form"
+  (ngSubmit)="save($event)"
+  class="form-container"
+  novalidate
+>
+  <div class="space-y-6">
+    <h2 class="text-lg font-semibold">Personal Information</h2>
+
+    <!-- Name Field -->
+    <ngx-vest-form-field [field]="form.nameField()">
+      <label class="form-label" for="name">Full Name *</label>
+      <input
+        id="name"
+        class="form-input"
+        type="text"
+        [value]="form.name()"
+        (input)="form.setName($event)"
+        placeholder="John Doe"
+        aria-required="true"
+      />
+    </ngx-vest-form-field>
+
+    <!-- Email Field -->
+    <ngx-vest-form-field [field]="form.emailField()">
+      <label class="form-label" for="email">Email Address *</label>
+      <input
+        id="email"
+        class="form-input"
+        type="email"
+        [value]="form.email()"
+        (input)="form.setEmail($event)"
+        placeholder="john@example.com"
+        aria-required="true"
+        autocomplete="email"
+      />
+    </ngx-vest-form-field>
+
+    <!-- Website Field (Optional) -->
+    <ngx-vest-form-field [field]="form.websiteField()">
+      <label class="form-label" for="website">Website (Optional)</label>
+      <input
+        id="website"
+        class="form-input"
+        type="url"
+        [value]="form.website()"
+        (input)="form.setWebsite($event)"
+        placeholder="https://example.com"
+        autocomplete="url"
+      />
+    </ngx-vest-form-field>
+
+    <!-- Age Field -->
+    <ngx-vest-form-field [field]="form.ageField()">
+      <label class="form-label" for="age">Age *</label>
+      <input
+        id="age"
+        class="form-input"
+        type="number"
+        [value]="form.age()"
+        (input)="form.setAge($event)"
+        min="18"
+        max="120"
+        placeholder="25"
+        aria-required="true"
+      />
+    </ngx-vest-form-field>
+  </div>
+
+  <div class="space-y-6">
+    <h2 class="text-lg font-semibold">Additional Details</h2>
+
+    <!-- Country Field -->
+    <ngx-vest-form-field [field]="form.countryField()">
+      <label class="form-label" for="country">Country *</label>
+      <select
+        id="country"
+        class="form-select"
+        [value]="form.country()"
+        (change)="form.setCountry($event)"
+        aria-required="true"
+      >
+        @for (country of countries; track country.value) {
+        <option [value]="country.value">{{ country.label }}</option>
+        }
+      </select>
+    </ngx-vest-form-field>
+
+    <!-- Bio Field -->
+    <ngx-vest-form-field [field]="form.bioField()">
+      <label class="form-label" for="bio">Bio *</label>
+      <textarea
+        id="bio"
+        class="form-textarea"
+        [value]="form.bio()"
+        (input)="form.setBio($event)"
+        placeholder="Tell us about yourself (minimum 20 characters)..."
+        aria-required="true"
+      ></textarea>
+    </ngx-vest-form-field>
+  </div>
+
+  <div class="space-y-6">
+    <h2 class="text-lg font-semibold">Agreements</h2>
+
+    <!-- Terms and Conditions Checkbox -->
+    <ngx-vest-form-field [field]="form.agreeToTermsField()">
+      <label class="form-checkbox-label" for="agreeToTerms">
+        <input
+          id="agreeToTerms"
+          class="form-checkbox"
+          type="checkbox"
+          [checked]="form.agreeToTerms() === true"
+          (change)="form.setAgreeToTerms($event)"
+          aria-required="true"
+        />
+        <span class="ml-2">I agree to the terms and conditions *</span>
+      </label>
+    </ngx-vest-form-field>
+  </div>
+
+  <!-- Form Actions -->
+  <div class="mt-8 flex items-center gap-4">
+    <button
+      class="btn-primary"
+      type="submit"
+      [disabled]="form.pending() || form.submitting()"
+    >
+      @if (form.submitting()) { Submitting... } @else { Submit Form }
+    </button>
+
+    <button class="btn-secondary" type="reset" (click)="resetForm()">
+      Reset
+    </button>
+
+    <div class="ml-auto text-sm text-gray-600 dark:text-gray-400">
+      @if (form.valid()) {
+      <span class="text-green-600 dark:text-green-400">✓ All fields valid</span>
+      } @else if (form.hasSubmitted()) {
+      <span class="text-red-600 dark:text-red-400">⚠ Please fix errors</span>
+      } @else {
+      <span>* Required fields</span>
+      }
+    </div>
+  </div>
+</form>

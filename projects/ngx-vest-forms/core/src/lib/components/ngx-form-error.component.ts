@@ -68,12 +68,21 @@ import type { VestField } from '../vest-form.types';
  * ### Custom Styling
  *
  * ```css
- * /// Override error colors
+ * /// Override error/warning colors (defaults have no background or border)
  * :root {
  *   --ngx-vest-forms-error-color: #dc2626;
  *   --ngx-vest-forms-warning-color: #f59e0b;
+ * }
+ *
+ * /// Add background and border (optional - default is transparent)
+ * :root {
  *   --ngx-vest-forms-error-bg: #fef2f2;
+ *   --ngx-vest-forms-error-border: #fca5a5;
  *   --ngx-vest-forms-warning-bg: #fffbeb;
+ *   --ngx-vest-forms-warning-border: #fcd34d;
+ *   --ngx-vest-forms-border-width: 1px;
+ *   --ngx-vest-forms-border-radius: 0.375rem;
+ *   --ngx-vest-forms-padding: 0.5rem;
  * }
  *
  * /// Dark mode
@@ -81,6 +90,10 @@ import type { VestField } from '../vest-form.types';
  *   :root {
  *     --ngx-vest-forms-error-color: #fca5a5;
  *     --ngx-vest-forms-warning-color: #fcd34d;
+ *     --ngx-vest-forms-error-bg: #7f1d1d;
+ *     --ngx-vest-forms-error-border: #991b1b;
+ *     --ngx-vest-forms-warning-bg: #78350f;
+ *     --ngx-vest-forms-warning-border: #92400e;
  *   }
  * }
  * ```
@@ -153,13 +166,13 @@ import type { VestField } from '../vest-form.types';
     @property --ngx-vest-forms-error-bg {
       syntax: '<color>';
       inherits: true;
-      initial-value: #fef2f2;
+      initial-value: transparent;
     }
 
     @property --ngx-vest-forms-error-border {
       syntax: '<color>';
       inherits: true;
-      initial-value: #fca5a5;
+      initial-value: transparent;
     }
 
     /* Warning Colors */
@@ -172,20 +185,20 @@ import type { VestField } from '../vest-form.types';
     @property --ngx-vest-forms-warning-bg {
       syntax: '<color>';
       inherits: true;
-      initial-value: #fffbeb;
+      initial-value: transparent;
     }
 
     @property --ngx-vest-forms-warning-border {
       syntax: '<color>';
       inherits: true;
-      initial-value: #fcd34d;
+      initial-value: transparent;
     }
 
     /* Spacing */
     @property --ngx-vest-forms-spacing {
       syntax: '<length>';
       inherits: true;
-      initial-value: 0.5rem;
+      initial-value: 0.375rem;
     }
 
     @property --ngx-vest-forms-gap {
@@ -204,20 +217,27 @@ import type { VestField } from '../vest-form.types';
     @property --ngx-vest-forms-line-height {
       syntax: '<number>';
       inherits: true;
-      initial-value: 1.5;
+      initial-value: 1.25;
     }
 
     /* Border */
     @property --ngx-vest-forms-border-width {
       syntax: '<length>';
       inherits: true;
-      initial-value: 1px;
+      initial-value: 0px;
     }
 
     @property --ngx-vest-forms-border-radius {
       syntax: '<length>';
       inherits: true;
-      initial-value: 0.375rem;
+      initial-value: 0px;
+    }
+
+    /* Padding */
+    @property --ngx-vest-forms-padding {
+      syntax: '<length>';
+      inherits: true;
+      initial-value: 0px;
     }
 
     /**
@@ -228,12 +248,7 @@ import type { VestField } from '../vest-form.types';
     @media (prefers-color-scheme: dark) {
       :host {
         --ngx-vest-forms-error-color: #fca5a5;
-        --ngx-vest-forms-error-bg: #7f1d1d;
-        --ngx-vest-forms-error-border: #991b1b;
-
         --ngx-vest-forms-warning-color: #fcd34d;
-        --ngx-vest-forms-warning-bg: #78350f;
-        --ngx-vest-forms-warning-border: #92400e;
       }
     }
 
@@ -250,7 +265,7 @@ import type { VestField } from '../vest-form.types';
       display: flex;
       flex-direction: column;
       gap: var(--ngx-vest-forms-gap);
-      padding: var(--ngx-vest-forms-spacing);
+      padding: var(--ngx-vest-forms-padding);
       border-width: var(--ngx-vest-forms-border-width);
       border-style: solid;
       border-radius: var(--ngx-vest-forms-border-radius);

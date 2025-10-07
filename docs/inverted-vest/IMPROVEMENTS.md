@@ -300,7 +300,7 @@ import { createVestForm, NgxVestForms } from 'ngx-vest-forms';
 - ✅ No `@HostListener()` decorators found (0 matches)
 - ✅ All components use `ChangeDetectionStrategy.OnPush`:
   - `NgxFormErrorComponent` ✅
-  - `NgxControlWrapper` ✅
+  - `NgxVestFormField` ✅
 - ✅ All use `input()` / `output()` / `viewChild()` signal-based APIs
 - ✅ All use `inject()` function instead of constructor injection
 - ✅ All use `host` object in decorators instead of `@HostBinding`

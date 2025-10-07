@@ -235,6 +235,49 @@ provideNgxVestFormsConfig({ autoTouch: false, autoAria: false })
 
 **Note:** When using `[ngxVestForm]` directive, auto-ARIA and auto-touch apply automatically - NO manual handlers needed.
 
+## Optional: Form Field Component
+
+For cleaner markup with automatic error display, use `NgxVestFormField`:
+
+```typescript
+import { NgxVestFormField } from 'ngx-vest-forms/form-field';
+
+@Component({
+  imports: [NgxVestForms, NgxVestFormField],
+  template: `
+    <form [ngxVestForm]="form">
+      <ngx-vest-form-field [field]="form.emailField()">
+        <label for="email">Email</label>
+        <input id="email" [value]="form.email()" (input)="form.setEmail($event)" />
+      </ngx-vest-form-field>
+    </form>
+  `
+})
+```
+
+**Benefits:**
+- ✅ **Automatic Error Display** - No need to manually add `<ngx-form-error>`
+- ✅ **Consistent Layout** - Standardized spacing via CSS custom properties
+- ✅ **Optional Validation** - Works with or without `[field]` input
+- ✅ **Themeable** - CSS custom properties for customization
+
+**Comparison:**
+
+```typescript
+// Without form-field (manual)
+<div class="form-field">
+  <label for="email">Email</label>
+  <input id="email" [value]="form.email()" (input)="form.setEmail($event)" />
+  <ngx-form-error [field]="form.emailField()" />
+</div>
+
+// With form-field (automatic)
+<ngx-vest-form-field [field]="form.emailField()">
+  <label for="email">Email</label>
+  <input id="email" [value]="form.email()" (input)="form.setEmail($event)" />
+</ngx-vest-form-field>
+```
+
 ## Form State
 
 ```typescript
@@ -303,16 +346,42 @@ test('password', 'Add special chars', () => {
 
 ## Error Display Strategies
 
+### Standard Usage (Static Strategy)
+
+Most applications use a fixed error strategy - simply pass a string:
+
 ```typescript
-createVestForm(suite, model, {
+// Default: show errors after field is touched
+const form = createVestForm(suite, model);
+
+// Or explicitly set the strategy
+const form = createVestForm(suite, model, {
   errorStrategy: 'on-touch' // immediate | on-touch | on-submit | manual
 });
 ```
 
-- `immediate` - Show errors as soon as they exist
-- `on-touch` (default) - Show after field touched/tested
-- `on-submit` - Show after submit attempt
+**Available strategies:**
+- `immediate` - Show errors as soon as they exist (while typing)
+- `on-touch` (default) - Show after field touched/tested (WCAG recommended)
+- `on-submit` - Show only after submit attempt
 - `manual` - Custom logic via `form.field('name').showErrors()`
+
+### Advanced: Dynamic Error Strategy (Rare)
+
+For demo apps or admin panels where users switch error modes at runtime, pass a Signal:
+
+```typescript
+const errorMode = signal<ErrorDisplayStrategy>('on-touch');
+
+const form = createVestForm(suite, model, {
+  errorStrategy: errorMode  // ← Pass signal reference (not errorMode())
+});
+
+// Changes react automatically
+errorMode.set('immediate');
+```
+
+**⚠️ Note:** If using a signal, pass the signal itself (`errorMode`), not the called value (`errorMode()`). The latter evaluates once at initialization and won't react to changes.
 
 ## Package Structure
 
@@ -323,6 +392,10 @@ import { createVestForm, staticSafeSuite } from 'ngx-vest-forms';
 // NgxVestForms constant (recommended) - ~5KB
 import { NgxVestForms } from 'ngx-vest-forms';
 // Includes: All directives + NgxFormErrorComponent
+
+// Form Field (optional) - ~2KB
+import { NgxVestFormField } from 'ngx-vest-forms/form-field';
+// Layout wrapper with automatic error display
 
 // Bundle (convenience) - ~8-10KB
 import { createVestForm, NgxVestForms } from 'ngx-vest-forms/bundle';
@@ -367,6 +440,33 @@ import { createVestForm, NgxVestForms } from 'ngx-vest-forms/bundle';
 **When to use:** Using schema adapters (Zod, Valibot) or smart state features
 **Bundle size:** ~8-10KB (all features)
 
+### Form Field Component (Optional)
+
+```typescript
+// 🎨 Layout wrapper with automatic error display
+import { NgxVestFormField } from 'ngx-vest-forms/form-field';
+```
+
+**Includes:** Control wrapper component
+**When to use:** Want consistent layout + automatic error display without manual `<ngx-form-error>`
+**Bundle size:** ~2KB
+
+**Benefits:**
+
+- ✅ No manual error component needed
+- ✅ Consistent spacing via CSS custom properties
+- ✅ Works with or without validation
+
+**Example:**
+
+```typescript
+<ngx-vest-form-field [field]="form.emailField()">
+  <label for="email">Email</label>
+  <input id="email" [value]="form.email()" (input)="form.setEmail($event)" />
+  <!-- Error display automatic! -->
+</ngx-vest-form-field>
+```
+
 ## App-Wide Config
 
 ```typescript
@@ -378,12 +478,33 @@ export const appConfig: ApplicationConfig = {
     provideNgxVestFormsConfig({
       autoTouch: true,
       autoAria: true,
+      strictFieldResolution: false, // Enable in dev: !environment.production
       debug: false,
       defaultErrorStrategy: 'on-touch',
     }),
   ],
 };
 ```
+
+### Strict Field Resolution
+
+When using Enhanced Field Signals with nested forms, the auto-touch directive resolves camelCase IDs to nested paths (e.g., `personalInfoFirstName` → `personalInfo.firstName`). By default, resolution failures log console warnings. Enable strict mode to throw errors instead:
+
+```typescript
+// Development: Fail fast on misconfigured IDs
+provideNgxVestFormsConfig({
+  strictFieldResolution: !environment.production
+});
+```
+
+**Behavior:**
+- `false` (default): Logs `console.warn()` when field resolution fails
+- `true`: Throws `Error` when field resolution fails
+
+**Use cases:**
+- **Development**: Catch ID naming mistakes early
+- **Production**: Graceful degradation with warnings
+- **CI/CD**: Enable in test environments to prevent regressions
 
 ## Dynamic Collections
 
@@ -411,12 +532,14 @@ items.valid();       // Aggregate validity
 - [ ] Use native `[value]`/`(input)`, NOT `ngModel`
 - [ ] Import `NgxVestForms` constant for clean imports
 - [ ] Use `[ngxVestForm]="form"` directive (recommended for WCAG 2.2)
-- [ ] Use `NgxFormErrorComponent` for error display
+- [ ] Use `NgxFormErrorComponent` for error display (or `NgxVestFormField` for automatic display)
 - [ ] Use `@if` control flow (not `*ngIf`)
 - [ ] Call `form.dispose()` in `ngOnDestroy`
 - [ ] Use `skipWhen` for expensive async validations
 - [ ] Handle `AbortSignal` in async tests
 - [ ] Only disable submit during `pending()`, not based on validity
+- [ ] Use camelCase IDs for nested form fields (e.g., `personalInfoFirstName` for `personalInfo.firstName`)
+- [ ] Enable `strictFieldResolution` in development to catch ID naming mistakes
 
 ## Common Mistakes
 
@@ -424,12 +547,13 @@ items.valid();       // Aggregate validity
 ❌ Using `ngModel`/`[(ngModel)]` → Use `[value]`/`(input)`
 ❌ Not using `[ngxVestForm]` directive → Manual ARIA + touch handling required
 ❌ Importing individual directives → Use `NgxVestForms` constant
-❌ Manual error display → Use `NgxFormErrorComponent`
+❌ Manual error display → Use `NgxFormErrorComponent` (or `NgxVestFormField` for automatic display)
 ❌ `try-catch` on submit → Use `SubmitResult.valid` check
 ❌ Disabling submit on invalid → Only disable during `pending()`
 ❌ Forgetting `dispose()` → Always call in `ngOnDestroy`
 ❌ `staticSafeSuite` + `test.memo()` → Use `createSafeSuite`
 ❌ Using deprecated `field.errors()` → Use `field.validation().errors`
 ❌ Using deprecated `field.warnings()` → Use `field.validation().warnings`
+❌ Dynamic error strategy with `errorMode()` → Pass `errorMode` NOT `errorMode()` (edge case - most apps use static string)
 
 > **For Angular-specific mistakes** (method naming, change detection, etc.), see [angular.instructions.md](./angular.instructions.md)

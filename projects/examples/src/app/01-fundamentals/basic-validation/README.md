@@ -361,7 +361,7 @@ This example serves as the **foundation** for understanding ngx-vest-forms:
 
 After mastering this example, explore:
 
-1. **NgxControlWrapper** - Automatic error display helpers
+1. **NgxVestFormField** - Automatic error display helpers
 2. **Schema Validation** - Type-safe validation with Zod
 3. **Advanced Patterns** - Complex forms and async validation
 

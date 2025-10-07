@@ -52,6 +52,21 @@ export const appRoutes: Routes = [
     ],
   },
 
+  {
+    path: 'form-field',
+    children: [
+      { path: '', redirectTo: 'form-field-showcase', pathMatch: 'full' },
+      {
+        path: 'form-field-showcase',
+        loadComponent: () =>
+          import(
+            './02-form-field/form-field-showcase/form-field-showcase.page'
+          ).then((m) => m.FormFieldShowcasePage),
+        title: 'Form Field Showcase - NgxVestFormField',
+      },
+    ],
+  },
+
   // Fallback routes
   { path: '**', redirectTo: 'fundamentals/minimal-form' },
 ];

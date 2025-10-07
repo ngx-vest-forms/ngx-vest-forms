@@ -31,7 +31,7 @@ echo "# V1 API Reference" > _backup/v1/API_REFERENCE.md
 
 ```bash
 # Create new modular package structure
-mkdir -p projects/ngx-vest-forms/{core,control-wrapper,ngform-sync,schemas,testing}
+mkdir -p projects/ngx-vest-forms/{core,form-field,ngform-sync,schemas,testing}
 
 # Initialize package.json files for each module
 # Setup tsconfig, build configs, and testing infrastructure
@@ -216,16 +216,16 @@ describe('createVestForm', () => {
 
 ## Phase 2: Optional Packages
 
-### 2.1 Control Wrapper Package (`projects/ngx-vest-forms/control-wrapper/`)
+### 2.1 Control Wrapper Package (`projects/ngx-vest-forms/form-field/`)
 
 **Purpose**: Accessible, reusable UI components for form fields
 
 ```typescript
-// control-wrapper.component.ts
+// form-field.component.ts
 @Component({
-  selector: 'ngx-control-wrapper',
+  selector: 'ngx-vest-form-field',
   template: `
-    <div class="control-wrapper" [class]="wrapperClasses()">
+    <div class="form-field" [class]="wrapperClasses()">
       <ng-content select="label" />
       <div class="input-container">
         <ng-content />
@@ -247,7 +247,7 @@ describe('createVestForm', () => {
     </div>
   `,
 })
-export class NgxControlWrapper {
+export class NgxVestFormField {
   field = input.required<VestField<any>>();
   strategy = input<ErrorStrategy>('on-touch');
 
@@ -334,7 +334,7 @@ projects/examples/src/app/
 │   ├── multi-step-form/
 │   └── server-side-validation/
 ├── 03-ui-patterns/                # Control wrapper examples
-│   ├── control-wrapper-intro/
+│   ├── form-field-intro/
 │   └── custom-error-display/
 ├── 04-schema-integration/         # Schema adapter examples
 │   ├── zod-integration/

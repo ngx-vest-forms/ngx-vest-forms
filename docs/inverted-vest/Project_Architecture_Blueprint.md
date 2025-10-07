@@ -9,7 +9,7 @@ Generated: 2025-09-27 (Updated with Enhanced Field Signals API and architectural
 - **Framework**: Angular 20+ standalone components with signal-based change detection (per `.github/copilot-instructions.md`).
 - **Language**: TypeScript 5.8+ in strict mode with signal primitives (`signal`, `computed`, `effect`).
 - **Validation Engine**: Vest.js v5 static suites (`staticSuite`, `only`, `test`, `include`, `skipWhen`, `omitWhen`).
-- **UI Helpers**: Optional `@ngx-vest-forms/control-wrapper` components for field presentation.
+- **UI Helpers**: Optional `@ngx-vest-forms/form-field` components for field presentation.
 - **Schema Adapters**: Optional integrations for Zod, Valibot, ArkType via `schemas/` directory.
 - **Tooling**: Vitest for unit/component testing, Playwright for E2E, Tailwind CSS 4.x for styling (per repo instructions).
 
@@ -52,7 +52,7 @@ Generated: 2025-09-27 (Updated with Enhanced Field Signals API and architectural
 +-------------------------------------------------------------+
 |                    ngx-vest-forms Integrations              |
 |  - ngform-sync (optional)                                   |
-|  - control-wrapper components (optional)                    |
+|  - form-field components (optional)                    |
 |  - future reactive-forms adapter                            |
 +-------------------------------------------------------------+
 
@@ -116,7 +116,7 @@ Generated: 2025-09-27 (Updated with Enhanced Field Signals API and architectural
 
 ### 4.5 UI Helpers (`components/`)
 
-- **Purpose**: Provide accessible, reusable field wrappers (`<ngx-control-wrapper>`) and error presenters consuming the `VestField` contract.
+- **Purpose**: Provide accessible, reusable field wrappers (`<ngx-vest-form-field>`) and error presenters consuming the `VestField` contract.
 - **Interaction**: Accept `VestField` via inputs or context; rely on `showErrors`/`errors` signals for rendering.
 - **Evolution**: Additional components (debug overlays, form summaries) remain optional to keep core lean.
 

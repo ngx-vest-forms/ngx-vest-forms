@@ -89,7 +89,7 @@ ngx-vest-forms/
 ```bash
 # Primary entry points for different use cases
 ngx-vest-forms/core              # Core: createVestForm, composeVestForms
-ngx-vest-forms/control-wrapper        # UI: VestField, FieldError components
+ngx-vest-forms/form-field        # UI: VestField, FieldError components
 ngx-vest-forms/ngform              # Integration: VestSync, FormProvider
 ngx-vest-forms/schemas           # Schema: Zod, Valibot adapters
 ngx-vest-forms/utils             # Advanced: arrays, history, async
@@ -1824,7 +1824,7 @@ This pattern scales well for complex applications and provides excellent user ex
 | Nested objects           | ✅ ngModelGroup     | ✅ Direct binding                 | P1       |
 | Schema validation        | ✅ Separate package | ✅ Built-in helper                | P2       |
 | **UI Components**        |
-| NgxControlWrapper        | ✅ Component        | ✅ Keep + enhance                 | P1       |
+| NgxVestFormField         | ✅ Component        | ✅ Keep + enhance                 | P1       |
 | Error display            | ✅ Directive        | ✅ Signal-based                   | P0       |
 | Smart state              | ✅ Complex          | ✅ Computed signals               | P2       |
 | **New v3 Features**      |
@@ -1961,9 +1961,9 @@ The inverted architecture represents a fundamental shift in how we approach form
 ```typescript
 // Lots of boilerplate, directives, configuration
 <form ngxVestForm [vestSuite]="suite" [validationConfig]="config">
-  <ngx-control-wrapper>
+  <ngx-vest-form-field>
     <input ngxFormErrorDisplay #display="formErrorDisplay" />
-  </ngx-control-wrapper>
+  </ngx-vest-form-field>
 </form>
 ```
 

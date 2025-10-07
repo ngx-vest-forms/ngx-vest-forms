@@ -20,14 +20,13 @@ import { BasicValidationFormComponent } from './basic-validation.form';
  * 🎯 Learning Objectives:
  * - Understanding the three-part pattern: Model Signal + Vest Suite + Template
  * - Manual error display using formState.errors
- * - Proper one-way binding with [ngModel]
  * - Form submission handling with validation state
  * - Multiple field types with different validation rules
  * - Conditional validation logic in action
  *
  * 🚀 Features Demonstrated:
  * - Core ngxVestForm directive
- * - Manual error display (no NgxControlWrapper)
+ * - Manual error display (no NgxVestFormField)
  * - Form state API (valid, pending, errors)
  * - Different field types (text, email, number, select, textarea)
  * - Conditional validation logic

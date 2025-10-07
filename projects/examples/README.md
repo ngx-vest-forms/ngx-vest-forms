@@ -16,8 +16,8 @@ examples/src/app/
 │   ├── business-hours-form/      # ✅ Complex nested data
 │   ├── survey-form/              # ✅ Conditional validation
 │   └── async-validation-form/    # ✅ Debounced async checks
-├── 03-control-wrapper/           # Tier 3: Wrapper-based UX
-│   ├── control-wrapper-basics/   # ✅ Simple form with wrapper
+├── 03-form-field/           # Tier 3: Wrapper-based UX
+│   ├── form-field-basics/   # ✅ Simple form with wrapper
 │   └── registration-with-wrapper/# ✅ Registration with wrapper
 ├── 04-schema-integration/        # Tier 4: Type-safe schemas
 │   ├── zod-schema-form/          # ✅ Zod integration
@@ -46,7 +46,7 @@ examples/src/app/
 Perfect for new users learning the basics:
 
 1. **Simple Form** - Single email field with basic validation
-2. **Contact Form** - Multi-field form with NgxControlWrapper
+2. **Contact Form** - Multi-field form with NgxVestFormField
 3. **Registration Form** - Password confirmation and terms validation
 
 ### Tier 2: Core Features
@@ -60,7 +60,7 @@ Common real-world form patterns:
 
 ### Tier 3: Control Wrapper
 
-Dedicated examples showing how `<ngx-control-wrapper>` reduces boilerplate and standardizes error/pending UI across fields.
+Dedicated examples showing how `<ngx-vest-form-field>` reduces boilerplate and standardizes error/pending UI across fields.
 
 ### Tier 4: Schema Integration
 

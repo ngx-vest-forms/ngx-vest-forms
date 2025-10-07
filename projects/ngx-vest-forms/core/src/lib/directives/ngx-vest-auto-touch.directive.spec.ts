@@ -575,6 +575,410 @@ describe('NgxVestAutoTouchDirective', () => {
     });
   });
 
+  describe('Strict Field Resolution', () => {
+    it('should throw error when strictFieldResolution=true and resolveFieldPath returns null', async () => {
+      // Create form with Enhanced Field Signals enabled
+      const form = createVestForm(testSuite, signal({ email: '' }));
+
+      // Mock resolveFieldPath to return null (unresolved ID)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.spyOn(form as any, 'resolveFieldPath').mockReturnValue(null);
+
+      // Spy on console.error to capture the uncaught error
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(vi.fn());
+
+      @Component({
+        imports: [NgxVestAutoTouchDirective, NgxVestFormProviderDirective],
+        template: `
+          <div [ngxVestFormProvider]="form">
+            <input
+              id="unknownField"
+              type="text"
+              [value]="''"
+              data-testid="input"
+            />
+          </div>
+        `,
+      })
+      class TestComponent {
+        readonly form = form;
+      }
+
+      const config: NgxVestFormsConfig = {
+        strictFieldResolution: true,
+      };
+
+      // Render with strict mode enabled
+      await render(TestComponent, {
+        providers: [{ provide: NGX_VEST_FORMS_CONFIG, useValue: config }],
+      });
+
+      const input = screen.getByTestId<HTMLInputElement>('input');
+
+      // Click to focus, then tab to blur
+      await userEvent.click(input);
+
+      // Blur will throw error in strict mode (Angular catches it and logs to console.error)
+      try {
+        await userEvent.tab();
+        await TestBed.inject(ApplicationRef).whenStable();
+      } catch {
+        // Error might be caught or uncaught depending on test harness
+      }
+
+      // Verify error was thrown by checking console.error was called
+      // Angular logs errors as: console.error('ERROR', errorObject)
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'ERROR',
+        expect.objectContaining({
+          message: expect.stringContaining(
+            'Could not resolve field name from id="unknownField"',
+          ),
+        }),
+      );
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('should throw error when strictFieldResolution=true and no id/name found', async () => {
+      const form = createVestForm(testSuite, signal({ email: '' }));
+
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(vi.fn());
+
+      @Component({
+        imports: [NgxVestAutoTouchDirective, NgxVestFormProviderDirective],
+        template: `
+          <div [ngxVestFormProvider]="form">
+            <!-- No id or name attribute -->
+            <input type="text" [value]="''" data-testid="input" />
+          </div>
+        `,
+      })
+      class TestComponent {
+        readonly form = form;
+      }
+
+      const config: NgxVestFormsConfig = {
+        strictFieldResolution: true,
+      };
+
+      await render(TestComponent, {
+        providers: [{ provide: NGX_VEST_FORMS_CONFIG, useValue: config }],
+      });
+
+      const input = screen.getByTestId<HTMLInputElement>('input');
+
+      await userEvent.click(input);
+
+      try {
+        await userEvent.tab();
+        await TestBed.inject(ApplicationRef).whenStable();
+      } catch {
+        // Error might be caught or uncaught
+      }
+
+      // Verify error was thrown
+      // Angular logs errors as: console.error('ERROR', errorObject)
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'ERROR',
+        expect.objectContaining({
+          message: expect.stringContaining(
+            'Could not extract field name from element',
+          ),
+        }),
+      );
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('should console.warn when strictFieldResolution=false (default) and resolveFieldPath returns null', async () => {
+      const consoleWarnSpy = vi
+        .spyOn(console, 'warn')
+        .mockImplementation(vi.fn());
+
+      const form = createVestForm(testSuite, signal({ email: '' }));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.spyOn(form as any, 'resolveFieldPath').mockReturnValue(null);
+
+      @Component({
+        imports: [NgxVestAutoTouchDirective, NgxVestFormProviderDirective],
+        template: `
+          <div [ngxVestFormProvider]="form">
+            <input
+              id="unknownField"
+              type="text"
+              [value]="''"
+              data-testid="input"
+            />
+          </div>
+        `,
+      })
+      class TestComponent {
+        readonly form = form;
+      }
+
+      const config: NgxVestFormsConfig = {
+        strictFieldResolution: false,
+      };
+
+      await render(TestComponent, {
+        providers: [{ provide: NGX_VEST_FORMS_CONFIG, useValue: config }],
+      });
+
+      const input = screen.getByTestId<HTMLInputElement>('input');
+
+      // Clear previous warnings
+      consoleWarnSpy.mockClear();
+
+      // Blur should warn but not throw
+      await userEvent.click(input);
+      await userEvent.tab(); // Trigger blur
+
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      // Should have logged warning
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Could not resolve field name from id="unknownField"',
+        ),
+        expect.anything(),
+      );
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should console.warn when strictFieldResolution=false (default) and no id/name found', async () => {
+      const consoleWarnSpy = vi
+        .spyOn(console, 'warn')
+        .mockImplementation(vi.fn());
+
+      const form = createVestForm(testSuite, signal({ email: '' }));
+
+      @Component({
+        imports: [NgxVestAutoTouchDirective, NgxVestFormProviderDirective],
+        template: `
+          <div [ngxVestFormProvider]="form">
+            <input type="text" [value]="''" data-testid="input" />
+          </div>
+        `,
+      })
+      class TestComponent {
+        readonly form = form;
+      }
+
+      const config: NgxVestFormsConfig = {
+        strictFieldResolution: false,
+      };
+
+      await render(TestComponent, {
+        providers: [{ provide: NGX_VEST_FORMS_CONFIG, useValue: config }],
+      });
+
+      const input = screen.getByTestId<HTMLInputElement>('input');
+
+      consoleWarnSpy.mockClear();
+
+      await userEvent.click(input);
+      await userEvent.tab();
+
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Could not extract field name from element'),
+        expect.anything(),
+      );
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should use default behavior (warn) when strictFieldResolution is undefined', async () => {
+      const consoleWarnSpy = vi
+        .spyOn(console, 'warn')
+        .mockImplementation(vi.fn());
+
+      const form = createVestForm(testSuite, signal({ email: '' }));
+
+      @Component({
+        imports: [NgxVestAutoTouchDirective, NgxVestFormProviderDirective],
+        template: `
+          <div [ngxVestFormProvider]="form">
+            <input type="text" [value]="''" data-testid="input" />
+          </div>
+        `,
+      })
+      class TestComponent {
+        readonly form = form;
+      }
+
+      // No config provided - should use default
+      await render(TestComponent);
+
+      const input = screen.getByTestId<HTMLInputElement>('input');
+
+      consoleWarnSpy.mockClear();
+
+      await userEvent.click(input);
+      await userEvent.tab();
+
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      // Should warn (default behavior)
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Could not extract field name from element'),
+        expect.anything(),
+      );
+
+      consoleWarnSpy.mockRestore();
+    });
+  });
+
+  describe('Enhanced Field Signals Resolution', () => {
+    it('should resolve camelCase ID to nested path via resolveFieldPath', async () => {
+      const form = createVestForm(
+        staticSafeSuite(
+          (data: { personalInfo?: { firstName?: string } } = {}) => {
+            test('personalInfo.firstName', 'Required', () => {
+              enforce(data.personalInfo?.firstName).isNotEmpty();
+            });
+          },
+        ),
+        signal({ personalInfo: { firstName: '' } }),
+      );
+
+      @Component({
+        imports: [NgxVestAutoTouchDirective, NgxVestFormProviderDirective],
+        template: `
+          <div [ngxVestFormProvider]="form">
+            <input
+              id="personalInfoFirstName"
+              type="text"
+              [value]="form.personalInfoFirstName()"
+              data-testid="input"
+            />
+          </div>
+        `,
+      })
+      class TestComponent {
+        readonly form = form;
+      }
+
+      await render(TestComponent);
+
+      const input = screen.getByTestId<HTMLInputElement>('input');
+
+      // Should start untouched
+      expect(form.personalInfoFirstNameTouched()).toBe(false);
+
+      // Blur should mark as touched
+      await userEvent.click(input);
+      await userEvent.tab();
+
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      expect(form.personalInfoFirstNameTouched()).toBe(true);
+    });
+
+    it('should fallback to underscore-to-dot conversion when resolveFieldPath returns null', async () => {
+      // Suppress console warnings for this test
+      const consoleWarnSpy = vi
+        .spyOn(console, 'warn')
+        .mockImplementation(vi.fn());
+
+      const form = createVestForm(
+        staticSafeSuite((data: { address?: { street?: string } } = {}) => {
+          test('address.street', 'Required', () => {
+            enforce(data.address?.street).isNotEmpty();
+          });
+        }),
+        signal({ address: { street: '' } }),
+      );
+
+      // Mock resolveFieldPath to return null (simulating ID not in Enhanced Field Signals registry)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.spyOn(form as any, 'resolveFieldPath').mockReturnValue(null);
+
+      @Component({
+        imports: [NgxVestAutoTouchDirective, NgxVestFormProviderDirective],
+        template: `
+          <div [ngxVestFormProvider]="form">
+            <input
+              id="address_street"
+              type="text"
+              [value]="''"
+              data-testid="input"
+            />
+          </div>
+        `,
+      })
+      class TestComponent {
+        readonly form = form;
+      }
+
+      await render(TestComponent);
+
+      const input = screen.getByTestId<HTMLInputElement>('input');
+
+      // Should work via fallback underscore-to-dot conversion (warning will be logged)
+      await userEvent.click(input);
+      await userEvent.tab();
+
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      // Warning should have been logged since resolveFieldPath returned null
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Could not resolve field name from id="address_street"',
+        ),
+        expect.anything(),
+      );
+
+      // Field should be touched via fallback path: address_street → address.street
+      expect(form.field('address.street').touched()).toBe(true);
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should handle forms without resolveFieldPath (Enhanced Field Signals disabled)', async () => {
+      const form = createVestForm(testSuite, signal({ email: '' }));
+
+      // Remove resolveFieldPath to simulate disabled Enhanced Field Signals
+      delete (form as Record<string, unknown>)['resolveFieldPath'];
+
+      @Component({
+        imports: [NgxVestAutoTouchDirective, NgxVestFormProviderDirective],
+        template: `
+          <div [ngxVestFormProvider]="form">
+            <input
+              id="email"
+              type="text"
+              [value]="form.email()"
+              data-testid="input"
+            />
+          </div>
+        `,
+      })
+      class TestComponent {
+        readonly form = form;
+      }
+
+      await render(TestComponent);
+
+      const input = screen.getByTestId<HTMLInputElement>('input');
+
+      // Should still work via direct ID
+      await userEvent.click(input);
+      await userEvent.tab();
+
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      expect(form.emailTouched()).toBe(true);
+    });
+  });
+
   describe('Cleanup', () => {
     it('should not throw errors when destroyed', async () => {
       @Component({

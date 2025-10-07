@@ -283,6 +283,22 @@ export type VestForm<
    */
   errorStrategy: ErrorDisplayStrategy | Signal<ErrorDisplayStrategy>;
 
+  /**
+   * Resolve field path from camelCase accessor name.
+   * Used internally by auto-touch directive to map HTML id attributes to field paths.
+   *
+   * @param camelCaseName - CamelCase field accessor (e.g., "personalInfoFirstName", "email")
+   * @returns The original field path (e.g., "personalInfo.firstName", "email") or null if not found
+   *
+   * @example
+   * ```typescript
+   * form.resolveFieldPath("personalInfoFirstName") // → "personalInfo.firstName"
+   * form.resolveFieldPath("email") // → "email"
+   * form.resolveFieldPath("unknown") // → null
+   * ```
+   */
+  resolveFieldPath?(camelCaseName: string): string | null;
+
   /** Get field access for a specific path with proper typing */
   field<P extends Path<TModel>>(path: P): VestField<PathValue<TModel, P>>;
 

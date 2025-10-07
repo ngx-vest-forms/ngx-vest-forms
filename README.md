@@ -171,6 +171,33 @@ import {
 **When to use:** Using schema adapters (Zod, Valibot) or smart state features
 **Bundle size:** ~8-10KB (all features)
 
+#### Form Field Component (Optional)
+
+```typescript
+// 🎨 Layout wrapper with automatic error display
+import { NgxVestFormField } from 'ngx-vest-forms/form-field';
+```
+
+**Includes:** Form field wrapper component
+**When to use:** Want consistent layout + automatic error display without manual `<ngx-form-error>`
+**Bundle size:** ~2KB
+
+**Benefits:**
+
+- ✅ No manual error component needed
+- ✅ Consistent spacing via CSS custom properties
+- ✅ Works with or without validation
+
+**Example:**
+
+```typescript
+<ngx-vest-form-field [field]="form.emailField()">
+  <label for="email">Email</label>
+  <input id="email" [value]="form.email()" (input)="form.setEmail($event)" />
+  <!-- Error display automatic! -->
+</ngx-vest-form-field>
+```
+
 ### Field Signals API (Auto-Generated)
 
 The form proxy automatically creates signals for every field:
@@ -245,6 +272,102 @@ form.field('email').set('user@example.com'); // Setter
 Both APIs are **always available** - the Enhanced Proxy is just syntactic sugar over the explicit API.
 
 **📚 [Complete Enhanced Proxy Documentation](./docs/enhanced-proxy.md)** - Performance considerations, field filtering, troubleshooting, and advanced usage patterns.
+
+## 🎨 Optional: Form Field Component
+
+For even cleaner markup, use the **NgxVestFormField** component that combines labels, inputs, and automatic error display:
+
+```bash
+npm install ngx-vest-forms-form-field
+```
+
+### Quick Comparison
+
+**Without Form Field (Manual):**
+
+```html
+<div class="form-field">
+  <label for="email">Email</label>
+  <input id="email" [value]="form.email()" (input)="form.setEmail($event)" />
+  <ngx-form-error [field]="form.emailField()" />
+</div>
+```
+
+**With Form Field (Simplified):**
+
+```html
+<ngx-vest-form-field [field]="form.emailField()">
+  <label for="email">Email</label>
+  <input id="email" [value]="form.email()" (input)="form.setEmail($event)" />
+</ngx-vest-form-field>
+```
+
+### Features
+
+- ✅ **Automatic Error Display** - No need to manually add `<ngx-form-error>`
+- ✅ **Consistent Layout** - Standardized spacing via CSS custom properties
+- ✅ **Works Without Validation** - Can be used for layout consistency only
+- ✅ **Themeable** - CSS custom properties with dark mode support
+- ✅ **Flexible** - Works with any input type (text, select, textarea, etc.)
+
+### Example Usage
+
+```typescript
+import { Component, signal } from '@angular/core';
+import { createVestForm, NgxVestForms } from 'ngx-vest-forms';
+import { NgxVestFormField } from 'ngx-vest-forms/form-field';
+
+@Component({
+  imports: [NgxVestForms, NgxVestFormField],
+  template: `
+    <form [ngxVestForm]="form" (submit)="save($event)">
+      <ngx-vest-form-field [field]="form.emailField()">
+        <label for="email">Email *</label>
+        <input
+          id="email"
+          type="email"
+          [value]="form.email()"
+          (input)="form.setEmail($event)"
+        />
+      </ngx-vest-form-field>
+
+      <ngx-vest-form-field [field]="form.messageField()">
+        <label for="message">Message *</label>
+        <textarea
+          id="message"
+          [value]="form.message()"
+          (input)="form.setMessage($event)"
+        ></textarea>
+      </ngx-vest-form-field>
+
+      <button type="submit">Send</button>
+    </form>
+  `,
+})
+export class ContactForm {
+  form = createVestForm(validations, signal({ email: '', message: '' }));
+
+  async save(event: Event) {
+    event.preventDefault();
+    const result = await this.form.submit();
+    if (result.valid) console.log('✅', result.data);
+  }
+}
+```
+
+### Custom Styling
+
+Override CSS custom properties to match your design system:
+
+```css
+:root {
+  --ngx-vest-form-field-gap: 0.75rem;
+  --ngx-vest-form-field-margin: 1.5rem;
+  --ngx-vest-form-field-content-gap: 0.5rem;
+}
+```
+
+**📚 [Full Form Field Documentation](./projects/ngx-vest-forms/form-field/README.md)**
 
 ### Automatic Accessibility
 
@@ -342,19 +465,74 @@ const form = createVestForm(suite, model, {
 
 **Important:** The `on-touch` strategy shows errors for **all fields** (even untouched) after submit. This ensures accessibility - users can discover what's wrong by attempting submission (WCAG 2.2 guideline).
 
-### Reactive Error Strategy
+### Advanced: Dynamic Error Strategy
 
-You can change the strategy dynamically using signals:
+Most applications use a static strategy. For demo apps or admin panels where users need to switch error modes at runtime, you can pass a signal:
 
 ```typescript
 const errorMode = signal<ErrorDisplayStrategy>('on-touch');
 
 const form = createVestForm(suite, model, {
-  errorStrategy: errorMode, // ← Pass signal!
+  errorStrategy: errorMode, // Pass signal reference (not errorMode())
 });
 
-// Switch at runtime - form reacts automatically!
-errorMode.set('immediate'); // Now shows errors while typing
+// Switch at runtime - form reacts automatically
+errorMode.set('immediate');
+```
+
+> **Note:** Pass the signal itself (`errorMode`), not the called value (`errorMode()`). The latter evaluates once and won't react to changes.
+
+### Nested Forms & ID Convention
+
+When using Enhanced Field Signals with nested object structures, follow the **camelCase ID convention** for automatic field resolution:
+
+```typescript
+// Model structure
+const model = signal({
+  personalInfo: {
+    firstName: '',
+    lastName: '',
+    email: ''
+  },
+  address: {
+    street: '',
+    city: ''
+  }
+});
+
+// ✅ CORRECT: Use camelCase IDs matching accessor names
+<input
+  id="personalInfoFirstName"
+  [value]="form.personalInfoFirstName()"
+  (input)="form.setPersonalInfoFirstName($event)"
+/>
+
+<input
+  id="addressStreet"
+  [value]="form.addressStreet()"
+  (input)="form.setAddressStreet($event)"
+/>
+
+// ❌ WRONG: Don't use simple IDs for nested fields
+<input
+  id="firstName"  <!-- Won't auto-resolve to personalInfo.firstName -->
+  [value]="form.personalInfoFirstName()"
+/>
+```
+
+**How it works:** The `NgxVestAutoTouchDirective` (included in `NgxVestForms`) automatically resolves camelCase IDs to nested paths using the Enhanced Field Signals registry:
+
+- `personalInfoFirstName` → `personalInfo.firstName`
+- `addressInfoStreet` → `addressInfo.street`
+- No manual `data-vest-field` attributes needed!
+
+**Development tip:** Enable strict field resolution to catch ID naming mistakes early:
+
+```typescript
+// app.config.ts
+provideNgxVestFormsConfig({
+  strictFieldResolution: !environment.production, // Throws errors in dev, warns in prod
+});
 ```
 
 ## 🚀 Advanced Usage
@@ -784,10 +962,11 @@ import { NgxVestForms } from 'ngx-vest-forms/core';
 
 // Global disable via config
 provideNgxVestFormsConfig({
-  autoAria: false,     // Disable auto-ARIA globally
-  autoTouch: false,    // Disable auto-touch globally
-  autoFormBusy: false, // Disable auto-busy globally
-  debug: true          // Enable debug logging
+  autoAria: false,              // Disable auto-ARIA globally
+  autoTouch: false,             // Disable auto-touch globally
+  autoFormBusy: false,          // Disable auto-busy globally
+  strictFieldResolution: false, // Throw errors on field resolution failures (dev: !environment.production)
+  debug: true                   // Enable debug logging
 })
 ```
 

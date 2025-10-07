@@ -48,8 +48,8 @@ ngx-vest-forms/
 │   ├── form-arrays.ts            # Dynamic collection management
 │   ├── compose-vest-forms.ts     # Multi-form composition
 │   └── utils/                    # Path helpers, value extraction
-├── control-wrapper/              # Optional UI helpers (~2KB)
-│   ├── NgxControlWrapper         # Accessible field wrapper component
+├── form-field/              # Optional UI helpers (~2KB)
+│   ├── NgxVestFormField         # Accessible field wrapper component
 │   └── error display components # Strategy-based error presentation
 ├── ngform-sync/                  # Optional NgForm integration (~2KB)
 │   ├── NgxVestSyncDirective      # Bidirectional NgForm synchronization
@@ -192,20 +192,20 @@ export class NgFormUserComponent {
 ### Optional Control Wrapper
 
 ```typescript
-import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
+import { NgxVestFormField } from 'ngx-vest-forms/form-field';
 
 @Component({
-  imports: [NgxControlWrapper],
+  imports: [NgxVestFormField],
   template: `
     <form>
-      <ngx-control-wrapper [field]="form.field('email')">
+      <ngx-vest-form-field [field]="form.field('email')">
         <label for="email">Email</label>
         <input
           id="email"
           [value]="form.email()"
           (input)="form.setEmail($event)"
         />
-      </ngx-control-wrapper>
+      </ngx-vest-form-field>
     </form>
   `,
 })
@@ -348,7 +348,7 @@ examples/
 │   ├── multi-step-form/
 │   └── server-side-validation/
 ├── 03-ui-patterns/               # Control wrapper examples
-│   ├── control-wrapper-intro/
+│   ├── form-field-intro/
 │   └── custom-error-display/
 ├── 04-schema-integration/        # Schema adapter examples
 │   ├── zod-integration/

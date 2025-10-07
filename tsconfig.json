@@ -30,9 +30,9 @@
         "projects/ngx-vest-forms/*/public-api.ts",
         "dist/ngx-vest-forms/*"
       ],
-      "ngx-vest-forms/control-wrapper": [
-        "projects/ngx-vest-forms/control-wrapper/public-api.ts",
-        "dist/ngx-vest-forms/control-wrapper"
+      "ngx-vest-forms/form-field": [
+        "projects/ngx-vest-forms/form-field/public-api.ts",
+        "dist/ngx-vest-forms/form-field"
       ],
       "ngx-vest-forms/schemas": [
         "projects/ngx-vest-forms/schemas/public-api.ts",

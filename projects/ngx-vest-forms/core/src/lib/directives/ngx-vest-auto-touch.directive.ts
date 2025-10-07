@@ -283,7 +283,7 @@ export class NgxVestAutoTouchDirective implements OnDestroy {
    * Priority order:
    * 1. data-vest-field attribute (explicit nested paths)
    * 2. Custom resolver from global config (project-specific logic)
-   * 3. id attribute (WCAG preferred)
+   * 3. id attribute (WCAG preferred) - with Enhanced Field Signals resolution
    * 4. name attribute (fallback)
    *
    * @returns Field name/path or null if not found
@@ -306,7 +306,27 @@ export class NgxVestAutoTouchDirective implements OnDestroy {
     }
 
     // Priority 3: ID attribute (WCAG preferred)
+    // Try Enhanced Field Signals resolution first (camelCase → nested path)
     if (element.id) {
+      const form = this.#form();
+      if (form?.resolveFieldPath) {
+        const resolved = form.resolveFieldPath(element.id);
+        if (resolved) {
+          return resolved; // e.g., "personalInfoFirstName" → "personalInfo.firstName"
+        }
+        // Enhanced Field Signals enabled but ID not found in registry
+        // This likely means the ID doesn't match any accessor name
+        const message =
+          `[NgxVestAutoTouchDirective] Could not resolve field name from id="${element.id}". ` +
+          `Ensure the id matches a camelCase accessor (e.g., "personalInfoFirstName" for "personalInfo.firstName").`;
+
+        if (this.#globalConfig?.strictFieldResolution) {
+          throw new Error(message);
+        }
+        console.warn(message, element);
+      }
+
+      // Fallback to underscore-to-dot conversion
       return this.#convertToFieldPath(element.id);
     }
 
@@ -316,12 +336,14 @@ export class NgxVestAutoTouchDirective implements OnDestroy {
     }
 
     // No field name found
-    if (this.#globalConfig?.debug) {
-      console.warn(
-        '[NgxVestAutoTouchDirective] Could not extract field name from element:',
-        element,
-      );
+    const message =
+      '[NgxVestAutoTouchDirective] Could not extract field name from element. ' +
+      'Add an id or name attribute, or use data-vest-field for explicit field path.';
+
+    if (this.#globalConfig?.strictFieldResolution) {
+      throw new Error(message);
     }
+    console.warn(message, element);
     return null;
   }
 

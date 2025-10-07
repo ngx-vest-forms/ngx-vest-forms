@@ -47,30 +47,27 @@ import type { EnhancedVestForm, VestForm } from './vest-form.types';
  * - The proxy overhead is minimal (~1-2ms per property access)
  * - Memory usage scales linearly with the number of unique field paths accessed
  *
- * ## NgForm Integration Strategy
+ * ## NgForm Integration Strategy (Legacy/Future Reference)
  *
- * This proxy is designed for conditional enablement based on NgForm usage patterns.
- * Future NgForm integration packages may need to disable proxy enhancement to avoid
- * conflicts with template-driven form bindings:
+ * NgForm and [(ngModel)] are NOT supported in ngx-vest-forms v2+. All examples and code should use signal-based binding and [ngModel] (one-way) only.
+ * The following is for legacy/future reference only:
  *
  * ```typescript
- * /// Future ngform-sync package strategy:
+ * // Future ngform-sync package strategy (not supported in v2)
  * export function createFormWithNgFormSupport(suite, data, options = {}) {
  *   const baseForm = createVestForm(suite, data);
- *
- *   /// Disable proxy for NgForm compatibility
+ *   // Disable proxy for NgForm compatibility
  *   if (options.useNgForm && !options.enhanceProxy) {
  *     return baseForm; // Use explicit form.field() API
  *   }
- *
  *   return createEnhancedProxy(baseForm);
  * }
  * ```
  *
  * This separation allows for:
  * - Pure signals approach (Enhanced Proxy recommended)
- * - NgForm template-driven approach (explicit API recommended)
- * - Hybrid approaches with selective enhancement
+ * - NgForm template-driven approach (explicit API recommended, not supported)
+ * - Hybrid approaches with selective enhancement (not supported)
  *
  * @param vestForm - Base VestForm instance to enhance with proxy accessors
  * @param includeFields - Optional allowlist of field names. If provided, only these
@@ -190,6 +187,14 @@ export function createEnhancedProxy<TModel extends Record<string, unknown>>(
     includeFields,
     excludeFields,
   );
+
+  // Add resolveFieldPath method to the form before proxying
+  // This allows auto-touch directive to map camelCase names to field paths
+  (vestForm as VestForm<TModel>).resolveFieldPath = (
+    camelCaseName: string,
+  ): string | null => {
+    return derivedRegistry.resolveFieldPath(camelCaseName);
+  };
 
   return new Proxy(vestForm, {
     get(target, property: string | symbol, receiver) {

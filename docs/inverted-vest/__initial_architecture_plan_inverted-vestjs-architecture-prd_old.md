@@ -1847,7 +1847,7 @@ This pattern scales well for complex applications and provides excellent user ex
 | Nested objects           | ✅ ngModelGroup     | ✅ Direct binding                 | P1       |
 | Schema validation        | ✅ Separate package | ✅ Built-in helper                | P2       |
 | **UI Components**        |
-| NgxControlWrapper        | ✅ Component        | ✅ Keep + enhance                 | P1       |
+| NgxVestFormField         | ✅ Component        | ✅ Keep + enhance                 | P1       |
 | Error display            | ✅ Directive        | ✅ Signal-based                   | P0       |
 | Smart state              | ✅ Complex          | ✅ Computed signals               | P2       |
 | **New v3 Features**      |
@@ -1962,10 +1962,10 @@ These utilities are optional and tree-shakeable; production apps do not pay for 
 
 We will land v3 changes in the example gallery immediately after the core API stabilizes so that every scenario doubles as executable documentation:
 
-1. **Audit existing stories** – inventory each form under `projects/examples/src/app` (minimal form, control wrapper demos, multi-step flow, etc.) and map legacy APIs (`formState()`, `getError`, `ngxVestForm` directive) to their new `createVestForm` equivalents.
+1. **Audit existing stories** – inventory each form under `projects/examples/src/app` (minimal form, form-field demos, multi-step flow, etc.) and map legacy APIs (`formState()`, `getError`, `ngxVestForm` directive) to their new `createVestForm` equivalents.
 2. **Update shared utilities** – refactor shared components in `projects/examples/src/app/ui` (error display, form state panels, dev tooling) to consume `form.field()` and the new signal bindings.
 3. **Migrate pages incrementally** – start with `01-fundamentals` examples to validate the patterns, then roll forward to advanced patterns, schema integration, and smart state demos.
-4. **Retire deprecated bindings** – remove leftover wrapper directives (`ngxFormErrorDisplay`, legacy control wrapper) once the replacement components land, and ensure every template uses the new signal-first bindings (`field.value()`, `field.showErrors()`).
+4. **Retire deprecated bindings** – remove leftover wrapper directives (`ngxFormErrorDisplay`, legacy form-field) once the replacement components land, and ensure every template uses the new signal-first bindings (`field.value()`, `field.showErrors()`).
 5. **Regenerate screenshots & docs** – refresh README snippets, diagrams, and any visual assets that reference the old directive-based API.
 
 Success criteria: the example app compiles without the v2 directives, ESLint/Markdown linters pass, and each example page showcases the recommended v3 patterns.
@@ -2005,9 +2005,9 @@ The inverted architecture represents a fundamental shift in how we approach form
 ```typescript
 // Lots of boilerplate, directives, configuration
 <form ngxVestForm [vestSuite]="suite" [validationConfig]="config">
-  <ngx-control-wrapper>
+  <ngx-vest-form-field>
     <input ngxFormErrorDisplay #display="formErrorDisplay" />
-  </ngx-control-wrapper>
+  </ngx-vest-form-field>
 </form>
 ```
 

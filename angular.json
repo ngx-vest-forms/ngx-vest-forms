@@ -69,23 +69,23 @@
         }
       }
     },
-    "ngx-vest-forms-control-wrapper": {
+    "ngx-vest-forms-form-field": {
       "projectType": "library",
-      "root": "projects/ngx-vest-forms/control-wrapper",
-      "sourceRoot": "projects/ngx-vest-forms/control-wrapper/src",
+      "root": "projects/ngx-vest-forms/form-field",
+      "sourceRoot": "projects/ngx-vest-forms/form-field/src",
       "prefix": "lib",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:ng-packagr",
           "options": {
-            "project": "projects/ngx-vest-forms/control-wrapper/ng-package.json"
+            "project": "projects/ngx-vest-forms/form-field/ng-package.json"
           },
           "configurations": {
             "production": {
-              "tsConfig": "projects/ngx-vest-forms/control-wrapper/tsconfig.lib.prod.json"
+              "tsConfig": "projects/ngx-vest-forms/form-field/tsconfig.lib.prod.json"
             },
             "development": {
-              "tsConfig": "projects/ngx-vest-forms/control-wrapper/tsconfig.lib.json"
+              "tsConfig": "projects/ngx-vest-forms/form-field/tsconfig.lib.json"
             }
           },
           "defaultConfiguration": "production"
@@ -94,8 +94,8 @@
           "builder": "@angular-eslint/builder:lint",
           "options": {
             "lintFilePatterns": [
-              "projects/ngx-vest-forms/control-wrapper/**/*.ts",
-              "projects/ngx-vest-forms/control-wrapper/**/*.html"
+              "projects/ngx-vest-forms/form-field/**/*.ts",
+              "projects/ngx-vest-forms/form-field/**/*.html"
             ],
             "eslintConfig": "projects/ngx-vest-forms/eslint.config.mjs"
           }

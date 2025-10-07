@@ -5,10 +5,12 @@
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div class="form-field">
-        <label class="form-label" for="firstName"> First Name </label>
+        <label class="form-label" for="personalInfoFirstName">
+          First Name
+        </label>
         <input
           type="text"
-          id="firstName"
+          id="personalInfoFirstName"
           [value]="form.personalInfoFirstName()"
           (input)="form.setPersonalInfoFirstName($event)"
           placeholder="Enter first name"
@@ -19,10 +21,10 @@
       </div>
 
       <div class="form-field">
-        <label class="form-label" for="lastName"> Last Name </label>
+        <label class="form-label" for="personalInfoLastName"> Last Name </label>
         <input
           type="text"
-          id="lastName"
+          id="personalInfoLastName"
           [value]="form.personalInfoLastName()"
           (input)="form.setPersonalInfoLastName($event)"
           placeholder="Enter last name"
@@ -34,10 +36,10 @@
     </div>
 
     <div class="form-field">
-      <label class="form-label" for="email"> Email Address </label>
+      <label class="form-label" for="personalInfoEmail"> Email Address </label>
       <input
         type="email"
-        id="email"
+        id="personalInfoEmail"
         [value]="form.personalInfoEmail()"
         (input)="form.setPersonalInfoEmail($event)"
         placeholder="Enter email address"
@@ -51,10 +53,12 @@
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <!-- Number Input -->
       <div class="form-field">
-        <label class="form-label" for="age"> Age (Number Input) </label>
+        <label class="form-label" for="personalInfoAge">
+          Age (Number Input)
+        </label>
         <input
           type="number"
-          id="age"
+          id="personalInfoAge"
           [value]="form.personalInfoAge()"
           (input)="form.setPersonalInfoAge($event)"
           placeholder="Enter your age"
@@ -68,13 +72,13 @@
 
       <!-- Range Slider -->
       <div class="form-field">
-        <label class="form-label" for="experienceLevel">
+        <label class="form-label" for="personalInfoExperienceLevel">
           Experience Level (Range: {{ form.personalInfoExperienceLevel() || 5
           }}/10)
         </label>
         <input
           type="range"
-          id="experienceLevel"
+          id="personalInfoExperienceLevel"
           [value]="form.personalInfoExperienceLevel()"
           (input)="form.setPersonalInfoExperienceLevel($event)"
           min="1"
@@ -96,45 +100,49 @@
         <div class="flex items-center">
           <input
             type="radio"
-            id="gender-male"
+            id="personalInfoGender-male"
             value="male"
             [checked]="form.personalInfoGender() === 'male'"
             (change)="form.setPersonalInfoGender($event)"
           />
-          <label for="gender-male" class="form-label"> Male </label>
+          <label for="personalInfoGender-male" class="form-label"> Male </label>
         </div>
 
         <div class="flex items-center">
           <input
             type="radio"
-            id="gender-female"
+            id="personalInfoGender-female"
             value="female"
             [checked]="form.personalInfoGender() === 'female'"
             (change)="form.setPersonalInfoGender($event)"
           />
-          <label for="gender-female" class="form-label"> Female </label>
+          <label for="personalInfoGender-female" class="form-label">
+            Female
+          </label>
         </div>
 
         <div class="flex items-center">
           <input
             type="radio"
-            id="gender-other"
+            id="personalInfoGender-other"
             value="other"
             [checked]="form.personalInfoGender() === 'other'"
             (change)="form.setPersonalInfoGender($event)"
           />
-          <label for="gender-other" class="form-label"> Other </label>
+          <label for="personalInfoGender-other" class="form-label">
+            Other
+          </label>
         </div>
 
         <div class="flex items-center">
           <input
             type="radio"
-            id="gender-prefer-not-to-say"
+            id="personalInfoGender-preferNotToSay"
             value="prefer-not-to-say"
             [checked]="form.personalInfoGender() === 'prefer-not-to-say'"
             (change)="form.setPersonalInfoGender($event)"
           />
-          <label for="gender-prefer-not-to-say" class="form-label">
+          <label for="personalInfoGender-preferNotToSay" class="form-label">
             Prefer not to say
           </label>
         </div>
@@ -149,10 +157,10 @@
     <legend class="form-label">Address Information</legend>
 
     <div class="form-field">
-      <label class="form-label" for="street"> Street Address </label>
+      <label class="form-label" for="addressInfoStreet"> Street Address </label>
       <input
         type="text"
-        id="street"
+        id="addressInfoStreet"
         [value]="form.addressInfoStreet()"
         (input)="form.setAddressInfoStreet($event)"
         placeholder="Enter street address"
@@ -164,10 +172,10 @@
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div class="form-field">
-        <label class="form-label" for="city"> City </label>
+        <label class="form-label" for="addressInfoCity"> City </label>
         <input
           type="text"
-          id="city"
+          id="addressInfoCity"
           [value]="form.addressInfoCity()"
           (input)="form.setAddressInfoCity($event)"
           placeholder="Enter city"
@@ -178,10 +186,10 @@
       </div>
 
       <div class="form-field">
-        <label class="form-label" for="zipCode"> ZIP Code </label>
+        <label class="form-label" for="addressInfoZipCode"> ZIP Code </label>
         <input
           type="text"
-          id="zipCode"
+          id="addressInfoZipCode"
           [value]="form.addressInfoZipCode()"
           (input)="form.setAddressInfoZipCode($event)"
           placeholder="12345 or 12345-6789"
@@ -193,9 +201,9 @@
     </div>
 
     <div class="form-field">
-      <label class="form-label" for="country"> Country </label>
+      <label class="form-label" for="addressInfoCountry"> Country </label>
       <select
-        id="country"
+        id="addressInfoCountry"
         [value]="form.addressInfoCountry()"
         (change)="form.setAddressInfoCountry($event)"
         class="form-input"

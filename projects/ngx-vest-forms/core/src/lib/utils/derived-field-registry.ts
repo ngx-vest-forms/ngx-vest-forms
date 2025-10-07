@@ -30,6 +30,7 @@ type DerivedDescriptor = {
 type DerivedRegistry = {
   has(property: string): boolean;
   get(property: string): unknown;
+  resolveFieldPath(camelCaseName: string): string | null;
 };
 
 export function createDerivedRegistry<TModel extends Record<string, unknown>>(
@@ -128,6 +129,36 @@ export function createDerivedRegistry<TModel extends Record<string, unknown>>(
       const value = selectAccessor(field, descriptor.accessor);
       cache.set(property, value);
       return value;
+    },
+    resolveFieldPath(camelCaseName: string): string | null {
+      // Check if this camelCase name maps to a field path
+      // Try as-is first (for simple fields like "email")
+      const descriptor = descriptors.get(camelCaseName);
+      if (descriptor) {
+        return descriptor.fieldPath;
+      }
+
+      // Not found - could be a setter/touch/reset method name, check those too
+      // e.g., "setPersonalInfoFirstName" → "personalInfo.firstName"
+      if (
+        camelCaseName.startsWith('set') ||
+        camelCaseName.startsWith('touch') ||
+        camelCaseName.startsWith('reset')
+      ) {
+        // Strip the prefix and check again
+        const withoutPrefix = camelCaseName.slice(
+          camelCaseName.startsWith('set') ? 3 : 5,
+        );
+        // Decapitalize first letter
+        const baseName =
+          withoutPrefix.charAt(0).toLowerCase() + withoutPrefix.slice(1);
+        const baseDescriptor = descriptors.get(baseName);
+        if (baseDescriptor) {
+          return baseDescriptor.fieldPath;
+        }
+      }
+
+      return null;
     },
   };
 

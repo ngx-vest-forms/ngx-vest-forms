@@ -247,7 +247,7 @@ The current v2 architecture suffers from several fundamental issues:
 
 ```typescript
 // v2: Complex sync pattern (AVOID)
-NgForm ↔ SyncService ↔ Vest ↔ ControlWrapper ↔ Template
+NgForm ↔ SyncService ↔ Vest ↔ FormField ↔ Template
 
 // v3: Simple unidirectional flow (GOAL)
 Model Signal → Vest Suite → Field Signals → Template
@@ -2320,7 +2320,7 @@ While Vest handles validation excellently, NgForm provides several Angular-speci
 ## Optional integration packages
 
 1. **`@ngx-vest-forms/ngform-sync`** – exports a `vestSync` directive. It accepts a `VestForm` instance, pipes touched/dirty flags from NgForm back into the field tree, and writes Vest errors into Angular controls (following the ngx-minivest approach).
-2. **`@ngx-vest-forms/control-wrapper`** – provides presentational helpers (`<ngx-control-wrapper>`, `<ngx-field-error>`) that consume `VestField` via dependency injection. These components are entirely optional and should accept a `[form]` input or read from a parent `VestFormContext` provider.
+2. **`@ngx-vest-forms/form-field`** – provides presentational helpers (`<ngx-vest-form-field>`, `<ngx-field-error>`) that consume `VestField` via dependency injection. These components are entirely optional and should accept a `[form]` input or read from a parent `VestFormContext` provider.
 
 Both packages live outside the core so the minimal bundle remains tiny.
 

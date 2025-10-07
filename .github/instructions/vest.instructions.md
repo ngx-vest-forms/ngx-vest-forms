@@ -219,23 +219,23 @@ const showEmailErrors = computed(() => suiteState().isTested('email') && suiteSt
 ```typescript
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { ngxVestForm } from 'ngx-vest-forms/core';
-import { NgxControlWrapper } from 'ngx-vest-forms/control-wrapper';
+import { NgxVestFormField } from 'ngx-vest-forms/form-field';
 import { contactSuite } from './contact.suite';
 
 @Component({
   selector: 'app-contact-form',
 
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ngxVestForm, NgxControlWrapper],
+  imports: [ngxVestForm, NgxVestFormField],
   template: `
     <form ngxVestForm [vestSuite]="suite" [(formValue)]="model">
-      <ngx-control-wrapper>
+      <ngx-vest-form-field>
         <label for="email">Email</label>
         <input id="email" name="email" type="email" [ngModel]="model().email" />
         @if (emailErrors().length && showEmailErrors()) {
           <p class="text-destructive" role="alert">{{ emailErrors()[0] }}</p>
         }
-      </ngx-control-wrapper>
+      </ngx-vest-form-field>
     </form>
   `,
 })
