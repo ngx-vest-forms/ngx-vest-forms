@@ -232,9 +232,228 @@ Creates a new VestForm instance.
 - `form.errors` - Signal with all form errors
 - `form.submitting` - Signal indicating if form is being submitted
 
+## Styling NgxFormErrorComponent
+
+The `NgxFormErrorComponent` (included in this package) provides extensive customization through CSS custom properties. All properties are prefixed with `--ngx-vest-forms-*` to avoid naming conflicts.
+
+### Default Appearance
+
+By default, the error component displays text-only messages with no background, border, or padding:
+
+```css
+/* Default values - minimal styling */
+:root {
+  --ngx-vest-forms-error-color: #dc2626; /* Red-600 */
+  --ngx-vest-forms-warning-color: #f59e0b; /* Amber-500 */
+  --ngx-vest-forms-error-bg: transparent;
+  --ngx-vest-forms-error-border: transparent;
+  --ngx-vest-forms-warning-bg: transparent;
+  --ngx-vest-forms-warning-border: transparent;
+  --ngx-vest-forms-border-width: 0px;
+  --ngx-vest-forms-border-radius: 0px;
+  --ngx-vest-forms-padding: 0px;
+}
+```
+
+### CSS Custom Properties Reference
+
+| Property                          | Default       | Description                        |
+| --------------------------------- | ------------- | ---------------------------------- |
+| **Colors**                        |               |                                    |
+| `--ngx-vest-forms-error-color`    | `#dc2626`     | Error text color                   |
+| `--ngx-vest-forms-error-bg`       | `transparent` | Error background color             |
+| `--ngx-vest-forms-error-border`   | `transparent` | Error border color                 |
+| `--ngx-vest-forms-warning-color`  | `#f59e0b`     | Warning text color                 |
+| `--ngx-vest-forms-warning-bg`     | `transparent` | Warning background color           |
+| `--ngx-vest-forms-warning-border` | `transparent` | Warning border color               |
+| **Spacing**                       |               |                                    |
+| `--ngx-vest-forms-spacing`        | `0.375rem`    | Margin-top of error container      |
+| `--ngx-vest-forms-gap`            | `0.25rem`     | Gap between multiple messages      |
+| **Typography**                    |               |                                    |
+| `--ngx-vest-forms-font-size`      | `0.875rem`    | Font size (14px)                   |
+| `--ngx-vest-forms-line-height`    | `1.25`        | Line height for readability        |
+| **Border & Padding**              |               |                                    |
+| `--ngx-vest-forms-border-width`   | `0px`         | Border width (0 = no border)       |
+| `--ngx-vest-forms-border-radius`  | `0px`         | Border radius (0 = square corners) |
+| `--ngx-vest-forms-padding`        | `0px`         | Internal padding (0 = no padding)  |
+
+### Styling Examples
+
+#### Example 1: Minimal (Text Only)
+
+The default style - just colored text:
+
+```css
+/* No customization needed - this is the default */
+```
+
+**Result:** Simple red/amber text below inputs with no background or borders.
+
+#### Example 2: Outlined Style
+
+Add borders and padding for more prominent errors:
+
+```css
+:root {
+  --ngx-vest-forms-error-border: #fca5a5; /* Red-300 */
+  --ngx-vest-forms-warning-border: #fcd34d; /* Amber-300 */
+  --ngx-vest-forms-border-width: 1px;
+  --ngx-vest-forms-border-radius: 0.375rem; /* 6px */
+  --ngx-vest-forms-padding: 0.75rem; /* 12px */
+}
+```
+
+#### Example 3: Filled Style
+
+Use backgrounds for high visibility:
+
+```css
+:root {
+  --ngx-vest-forms-error-color: #991b1b; /* Red-800 */
+  --ngx-vest-forms-error-bg: #fef2f2; /* Red-50 */
+  --ngx-vest-forms-error-border: #fca5a5; /* Red-300 */
+  --ngx-vest-forms-warning-color: #92400e; /* Amber-800 */
+  --ngx-vest-forms-warning-bg: #fffbeb; /* Amber-50 */
+  --ngx-vest-forms-warning-border: #fcd34d; /* Amber-300 */
+  --ngx-vest-forms-border-width: 1px;
+  --ngx-vest-forms-border-radius: 0.5rem; /* 8px */
+  --ngx-vest-forms-padding: 1rem; /* 16px */
+}
+```
+
+#### Example 4: Material Design Style
+
+Mimic Material Design error styling:
+
+```css
+:root {
+  --ngx-vest-forms-error-color: #d32f2f;
+  --ngx-vest-forms-warning-color: #f57c00;
+  --ngx-vest-forms-font-size: 0.75rem; /* 12px */
+  --ngx-vest-forms-spacing: 0.5rem; /* 8px */
+}
+```
+
+### Dark Mode Support
+
+The component includes automatic dark mode support via `prefers-color-scheme`:
+
+```css
+/* Built-in dark mode (no customization needed) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ngx-vest-forms-error-color: #fca5a5; /* Red-300 */
+    --ngx-vest-forms-warning-color: #fcd34d; /* Amber-300 */
+  }
+}
+```
+
+#### Custom Dark Mode with Backgrounds
+
+Override dark mode for filled style:
+
+```css
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ngx-vest-forms-error-color: #fca5a5; /* Red-300 */
+    --ngx-vest-forms-error-bg: #7f1d1d; /* Red-900 */
+    --ngx-vest-forms-error-border: #991b1b; /* Red-800 */
+    --ngx-vest-forms-warning-color: #fcd34d; /* Amber-300 */
+    --ngx-vest-forms-warning-bg: #78350f; /* Amber-900 */
+    --ngx-vest-forms-warning-border: #92400e; /* Amber-800 */
+  }
+}
+```
+
+### Accessibility Features
+
+The error component includes built-in accessibility compliance:
+
+- **ARIA Live Regions**: Errors use `role="alert"` with `aria-live="assertive"`, warnings use `role="status"` with `aria-live="polite"`
+- **High Contrast Mode**: Automatically increases border width to 2px
+- **Reduced Motion**: Respects `prefers-reduced-motion` to disable animations
+- **Color Contrast**: Default colors meet WCAG 2.2 Level AA (4.5:1 for normal text)
+
+### Integration with Design Systems
+
+#### Tailwind CSS
+
+```css
+:root {
+  --ngx-vest-forms-error-color: theme('colors.red.600');
+  --ngx-vest-forms-error-bg: theme('colors.red.50');
+  --ngx-vest-forms-error-border: theme('colors.red.200');
+  --ngx-vest-forms-spacing: theme('spacing.3');
+  --ngx-vest-forms-border-radius: theme('borderRadius.lg');
+  --ngx-vest-forms-padding: theme('spacing.4');
+}
+```
+
+#### Bootstrap
+
+```css
+:root {
+  --ngx-vest-forms-error-color: var(--bs-danger);
+  --ngx-vest-forms-error-bg: var(--bs-danger-bg-subtle);
+  --ngx-vest-forms-error-border: var(--bs-danger-border-subtle);
+  --ngx-vest-forms-font-size: var(--bs-body-font-size);
+  --ngx-vest-forms-border-radius: var(--bs-border-radius);
+}
+```
+
+### Complete Example
+
+```typescript
+import { Component, signal } from '@angular/core';
+import { createVestForm } from 'ngx-vest-forms/core';
+import { NgxFormErrorComponent } from 'ngx-vest-forms/core';
+import { userValidations } from './user.validations';
+
+@Component({
+  selector: 'app-user-form',
+  imports: [NgxFormErrorComponent],
+  styles: `
+    /* Custom error styling for this component */
+    :host {
+      --ngx-vest-forms-error-color: #dc2626;
+      --ngx-vest-forms-error-bg: #fef2f2;
+      --ngx-vest-forms-error-border: #fca5a5;
+      --ngx-vest-forms-border-width: 1px;
+      --ngx-vest-forms-border-radius: 0.5rem;
+      --ngx-vest-forms-padding: 0.75rem;
+    }
+  `,
+  template: `
+    <form (ngSubmit)="save()">
+      <label for="email">Email</label>
+      <input
+        id="email"
+        type="email"
+        [value]="form.email() ?? ''"
+        (input)="form.setEmail($event)"
+      />
+      <ngx-form-error [field]="form.emailField()" />
+
+      <button type="submit">Submit</button>
+    </form>
+  `,
+})
+export class UserFormComponent {
+  protected readonly form = createVestForm(
+    userValidations,
+    signal({ email: '' }),
+  );
+
+  protected save = async () => {
+    const result = await this.form.submit();
+    if (result.valid) console.log('Valid:', result.data);
+  };
+}
+```
+
 ## Related Packages
 
-- **`@ngx-vest-forms/form-field`** - Accessible UI components
+- **`@ngx-vest-forms/form-field`** - Accessible UI components with automatic error display
 - **`@ngx-vest-forms/ngform-sync`** - Optional NgForm integration
 - **`@ngx-vest-forms/schemas`** - Schema adapters (Zod, Valibot, ArkType)
 

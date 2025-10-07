@@ -355,19 +355,163 @@ export class ContactForm {
 }
 ```
 
-### Custom Styling
+**📚 [Full Form Field Documentation](./projects/ngx-vest-forms/form-field/README.md)**
 
-Override CSS custom properties to match your design system:
+## Styling & Theming
+
+ngx-vest-forms components are fully customizable through CSS custom properties. Both the error display and form field wrapper provide extensive theming options.
+
+### Quick Start: Basic Theming
 
 ```css
 :root {
-  --ngx-vest-form-field-gap: 0.75rem;
-  --ngx-vest-form-field-margin: 1.5rem;
-  --ngx-vest-form-field-content-gap: 0.5rem;
+  /* Error component colors (NgxFormErrorComponent) */
+  --ngx-vest-forms-error-color: #dc2626;
+  --ngx-vest-forms-warning-color: #f59e0b;
+
+  /* Form field layout (NgxVestFormField) */
+  --ngx-vest-form-field-gap: 0.5rem;
+  --ngx-vest-form-field-margin: 1rem;
 }
 ```
 
-**📚 [Full Form Field Documentation](./projects/ngx-vest-forms/form-field/README.md)**
+### NgxFormErrorComponent Styling
+
+The error display component supports:
+
+- **Colors**: Error/warning text, backgrounds, and borders
+- **Spacing**: Gaps, padding, and margins
+- **Typography**: Font size and line height
+- **Borders**: Width and radius
+
+#### Example: Filled Style with Borders
+
+```css
+:root {
+  --ngx-vest-forms-error-color: #991b1b; /* Red-800 */
+  --ngx-vest-forms-error-bg: #fef2f2; /* Red-50 */
+  --ngx-vest-forms-error-border: #fca5a5; /* Red-300 */
+  --ngx-vest-forms-border-width: 1px;
+  --ngx-vest-forms-border-radius: 0.5rem;
+  --ngx-vest-forms-padding: 0.75rem;
+}
+```
+
+#### Example: Dark Mode
+
+```css
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ngx-vest-forms-error-color: #fca5a5; /* Red-300 */
+    --ngx-vest-forms-error-bg: #7f1d1d; /* Red-900 */
+    --ngx-vest-forms-error-border: #991b1b; /* Red-800 */
+  }
+}
+```
+
+**📚 [Complete Error Styling Documentation](./projects/ngx-vest-forms/core/README.md#styling-ngxformerrorcomponent)**
+
+### NgxVestFormField Styling
+
+The form field wrapper provides layout customization:
+
+- **Gap**: Spacing between label/input and error messages
+- **Margin**: Bottom margin of field wrappers
+- **Content Gap**: Spacing between label and input
+
+#### Example: Spacious Layout
+
+```css
+:root {
+  --ngx-vest-form-field-gap: 0.75rem; /* 12px */
+  --ngx-vest-form-field-margin: 2rem; /* 32px */
+  --ngx-vest-form-field-content-gap: 0.5rem; /* 8px */
+}
+```
+
+#### Example: Tailwind Integration
+
+```css
+:root {
+  --ngx-vest-form-field-gap: theme('spacing.3');
+  --ngx-vest-form-field-margin: theme('spacing.6');
+}
+```
+
+**📚 [Complete Form Field Styling Documentation](./projects/ngx-vest-forms/form-field/README.md#custom-styling)**
+
+### Complete Theming Example
+
+Combine both components for a cohesive design:
+
+```typescript
+@Component({
+  selector: 'app-themed-form',
+  imports: [NgxVestForms, NgxVestFormField],
+  styles: `
+    /* Layout */
+    :host {
+      --ngx-vest-form-field-gap: 0.5rem;
+      --ngx-vest-form-field-margin: 1.5rem;
+
+      /* Error styling */
+      --ngx-vest-forms-error-color: #dc2626;
+      --ngx-vest-forms-error-bg: #fef2f2;
+      --ngx-vest-forms-error-border: #fca5a5;
+      --ngx-vest-forms-border-width: 1px;
+      --ngx-vest-forms-border-radius: 0.375rem;
+      --ngx-vest-forms-padding: 0.5rem;
+    }
+
+    /* Dark mode */
+    @media (prefers-color-scheme: dark) {
+      :host {
+        --ngx-vest-forms-error-color: #fca5a5;
+        --ngx-vest-forms-error-bg: #7f1d1d;
+        --ngx-vest-forms-error-border: #991b1b;
+      }
+    }
+
+    /* Custom input styles */
+    input,
+    textarea {
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      padding: 0.5rem;
+    }
+
+    input:focus,
+    textarea:focus {
+      outline: 2px solid #3b82f6;
+      outline-offset: 2px;
+    }
+  `,
+  template: `
+    <form [ngxVestForm]="form" (submit)="save($event)">
+      <ngx-vest-form-field [field]="form.emailField()">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          [value]="form.email()"
+          (input)="form.setEmail($event)"
+        />
+      </ngx-vest-form-field>
+    </form>
+  `,
+})
+export class ThemedFormComponent {
+  /* ... */
+}
+```
+
+### Accessibility Features
+
+Both components include built-in WCAG 2.2 Level AA compliance:
+
+- **ARIA Live Regions**: Errors use `role="alert"` (assertive), warnings use `role="status"` (polite)
+- **High Contrast Mode**: Automatically increases border width
+- **Reduced Motion**: Respects `prefers-reduced-motion`
+- **Color Contrast**: Default colors meet 4.5:1 ratio requirement
 
 ### Automatic Accessibility
 

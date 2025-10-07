@@ -87,19 +87,197 @@ protected readonly name = signal('');
 
 ## Custom Styling
 
-Override CSS custom properties to match your design system:
+The form field wrapper provides layout customization through CSS custom properties. All properties are prefixed with `--ngx-vest-form-field-*`.
+
+### CSS Custom Properties Reference
+
+| Property                            | Default   | Description                                                |
+| ----------------------------------- | --------- | ---------------------------------------------------------- |
+| `--ngx-vest-form-field-gap`         | `0.5rem`  | Spacing between content (label + input) and error messages |
+| `--ngx-vest-form-field-margin`      | `1rem`    | Bottom margin of the entire field wrapper                  |
+| `--ngx-vest-form-field-content-gap` | `0.25rem` | Spacing between label and input inside the wrapper         |
+
+### Styling Examples
+
+#### Example 1: Compact Form
+
+Reduce spacing for dense layouts:
+
+```css
+:root {
+  --ngx-vest-form-field-gap: 0.25rem; /* 4px */
+  --ngx-vest-form-field-margin: 0.75rem; /* 12px */
+  --ngx-vest-form-field-content-gap: 0.125rem; /* 2px */
+}
+```
+
+#### Example 2: Spacious Form
+
+Increase spacing for better readability:
+
+```css
+:root {
+  --ngx-vest-form-field-gap: 0.75rem; /* 12px */
+  --ngx-vest-form-field-margin: 2rem; /* 32px */
+  --ngx-vest-form-field-content-gap: 0.5rem; /* 8px */
+}
+```
+
+#### Example 3: Custom Label Styling
+
+Style labels and inputs while preserving layout:
 
 ```css
 :root {
   --ngx-vest-form-field-gap: 0.75rem;
   --ngx-vest-form-field-margin: 1.5rem;
-  --ngx-vest-form-field-content-gap: 0.5rem;
 }
 
 /* Custom label styles */
 ngx-vest-form-field label {
   font-weight: 600;
-  color: var(--label-color);
+  font-size: 0.875rem; /* 14px */
+  color: #374151; /* Gray-700 */
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+/* Custom input styles */
+ngx-vest-form-field input,
+ngx-vest-form-field textarea,
+ngx-vest-form-field select {
+  border: 1px solid #d1d5db; /* Gray-300 */
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+}
+
+ngx-vest-form-field input:focus,
+ngx-vest-form-field textarea:focus,
+ngx-vest-form-field select:focus {
+  outline: 2px solid #3b82f6; /* Blue-500 */
+  outline-offset: 2px;
+  border-color: transparent;
+}
+```
+
+#### Example 4: Card-Style Fields
+
+Add backgrounds and borders for visual grouping:
+
+```css
+:root {
+  --ngx-vest-form-field-gap: 0.5rem;
+  --ngx-vest-form-field-margin: 1.5rem;
+}
+
+ngx-vest-form-field {
+  display: block;
+  background: #f9fafb; /* Gray-50 */
+  border: 1px solid #e5e7eb; /* Gray-200 */
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+ngx-vest-form-field label {
+  font-weight: 500;
+  color: #1f2937; /* Gray-800 */
+}
+```
+
+### Dark Mode Support
+
+Customize for dark mode using `prefers-color-scheme`:
+
+```css
+@media (prefers-color-scheme: dark) {
+  ngx-vest-form-field label {
+    color: #f3f4f6; /* Gray-100 */
+  }
+
+  ngx-vest-form-field input,
+  ngx-vest-form-field textarea,
+  ngx-vest-form-field select {
+    background-color: #1f2937; /* Gray-800 */
+    border-color: #4b5563; /* Gray-600 */
+    color: #f9fafb; /* Gray-50 */
+  }
+}
+```
+
+### Integration with Design Systems
+
+#### Tailwind CSS
+
+```css
+:root {
+  --ngx-vest-form-field-gap: theme('spacing.3');
+  --ngx-vest-form-field-margin: theme('spacing.6');
+  --ngx-vest-form-field-content-gap: theme('spacing.2');
+}
+```
+
+Then use Tailwind classes for labels and inputs:
+
+```html
+<ngx-vest-form-field [field]="form.emailField()">
+  <label for="email" class="block text-sm font-medium text-gray-700"
+    >Email</label
+  >
+  <input
+    id="email"
+    type="email"
+    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+    [value]="form.email()"
+    (input)="form.setEmail($event)"
+  />
+</ngx-vest-form-field>
+```
+
+#### Bootstrap
+
+```css
+:root {
+  --ngx-vest-form-field-gap: 0.5rem;
+  --ngx-vest-form-field-margin: var(--bs-gutter-y, 1rem);
+  --ngx-vest-form-field-content-gap: 0.25rem;
+}
+```
+
+Use Bootstrap classes:
+
+```html
+<ngx-vest-form-field [field]="form.emailField()">
+  <label for="email" class="form-label">Email</label>
+  <input
+    id="email"
+    type="email"
+    class="form-control"
+    [value]="form.email()"
+    (input)="form.setEmail($event)"
+  />
+</ngx-vest-form-field>
+```
+
+### Error Styling
+
+The form field wrapper automatically includes `NgxFormErrorComponent` for error display. To customize error appearance, see the [NgxFormErrorComponent styling documentation](../core/README.md#styling-ngxformerrorcomponent).
+
+You can combine form field layout with error styling:
+
+```css
+:root {
+  /* Form field layout */
+  --ngx-vest-form-field-gap: 0.5rem;
+  --ngx-vest-form-field-margin: 1.5rem;
+
+  /* Error styling (from NgxFormErrorComponent) */
+  --ngx-vest-forms-error-color: #dc2626;
+  --ngx-vest-forms-error-bg: #fef2f2;
+  --ngx-vest-forms-error-border: #fca5a5;
+  --ngx-vest-forms-border-width: 1px;
+  --ngx-vest-forms-border-radius: 0.375rem;
+  --ngx-vest-forms-padding: 0.5rem;
 }
 ```
 
@@ -131,14 +309,6 @@ ngx-vest-form-field label {
 | Property | Type                            | Description                                                                                  |
 | -------- | ------------------------------- | -------------------------------------------------------------------------------------------- |
 | `field`  | `VestField<unknown>` (optional) | Field object from Enhanced Proxy API. When provided, automatically displays errors/warnings. |
-
-## CSS Custom Properties
-
-| Property                            | Default   | Description                        |
-| ----------------------------------- | --------- | ---------------------------------- |
-| `--ngx-vest-form-field-gap`         | `0.5rem`  | Spacing between content and errors |
-| `--ngx-vest-form-field-margin`      | `1rem`    | Bottom margin of wrapper           |
-| `--ngx-vest-form-field-content-gap` | `0.25rem` | Spacing between label and input    |
 
 ## Accessibility
 
