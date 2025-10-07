@@ -57,7 +57,23 @@ ngx-vest-forms takes a **validation-first approach** that decouples validation l
 - Team is **unfamiliar with Vest.js**
 - Need **third-party component integration** (Angular Material, PrimeNG)
 
-**📚 For detailed comparison with examples, migration guides, and Signal Forms compatibility analysis, see [Architecture Comparison](./docs/ARCHITECTURE_COMPARISON.md).**
+### 📚 Documentation & Strategic Direction
+
+**Architecture & Comparison:**
+
+- **[Architecture Comparison](./docs/ARCHITECTURE_COMPARISON.md)** - Detailed comparison with NgForm/NgModel, examples, and migration guides
+- **[Strategic Overview](./docs/NGX_VEST_FORMS_STRATEGIC_OVERVIEW.md)** - TL;DR strategic decisions, Angular Signal Forms compatibility, Standard Schema integration, roadmap
+
+**Angular Signal Forms Compatibility:**
+
+- **Philosophy Alignment:** 100% ✅ - Both use developer-owned signals, bidirectional sync, and Angular 20+ best practices
+- **Implementation:** Intentionally different 🎯 - Enhanced Proxy API and Vest.js portability are unique advantages
+- **Standard Schema Support:** Coming soon - Type validation layer (Zod, Valibot, ArkType) to complement Vest.js
+
+**Additional Resources:**
+
+- **[Integration Feasibility Analysis](./docs/INTEGRATION_FEASIBILITY_ANALYSIS.md)** - Detailed analysis of NgForm integration, core abstraction, and Signal Forms alignment paths
+- **[Standard Schema Adapters Guide](./docs/STANDARD_SCHEMA_ADAPTERS_GUIDE.md)** - Comprehensive implementation guide for dual-layer validation (type + business logic)
 
 ## 📦 Installation
 
