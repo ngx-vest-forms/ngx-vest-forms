@@ -23,6 +23,42 @@ ngx-vest-forms eliminates the tedious parts of form development:
 
 **Result:** Write **80% less code** with **better accessibility** than handwritten forms.
 
+## 🤔 Why ngx-vest-forms vs Angular Forms?
+
+ngx-vest-forms takes a **validation-first approach** that decouples validation logic from Angular's form primitives, offering superior flexibility and developer experience compared to NgForm/NgModel or Reactive Forms.
+
+### Quick Comparison
+
+| Feature                          | NgForm/NgModel                        | ngx-vest-forms                                       | Winner             |
+| -------------------------------- | ------------------------------------- | ---------------------------------------------------- | ------------------ |
+| **Validation Logic Portability** | ❌ Coupled to Angular validators      | ✅ Vest suites work anywhere (Node.js, React, tests) | **ngx-vest-forms** |
+| **Async Validation**             | ⚠️ Custom AsyncValidator (100+ lines) | ✅ Built-in (debounce, cancel, memo)                 | **ngx-vest-forms** |
+| **Cross-Field Validation**       | ❌ Custom FormGroup validator         | ✅ Declarative `include.when`                        | **ngx-vest-forms** |
+| **Type Safety**                  | ❌ String-based field access          | ✅ Auto-generated type-safe proxies                  | **ngx-vest-forms** |
+| **WCAG 2.2 Compliance**          | ⚠️ Manual ARIA implementation         | ✅ Automatic ARIA attributes                         | **ngx-vest-forms** |
+| **Learning Curve**               | ✅ Low (Angular docs)                 | ⚠️ Medium (learn Vest.js)                            | **NgForm**         |
+| **Simple Forms**                 | ✅ Minimal boilerplate                | ⚠️ More setup required                               | **NgForm**         |
+| **Ecosystem**                    | ✅ Angular Material, PrimeNG          | ⚠️ Manual integration                                | **NgForm**         |
+
+### Decision Matrix
+
+**✅ Use ngx-vest-forms when:**
+
+- You need **complex validation** (async, cross-field, conditional)
+- **Validation portability** is important (share with backend/tests)
+- **WCAG 2.2 compliance** is mandatory
+- Building **production applications** with robust UX requirements
+- **Type safety** is critical
+
+**✅ Use NgForm/NgModel when:**
+
+- Building **simple forms** (1-3 fields, basic validation)
+- **Rapid prototyping** (speed over structure)
+- Team is **unfamiliar with Vest.js**
+- Need **third-party component integration** (Angular Material, PrimeNG)
+
+**📚 For detailed comparison with examples, migration guides, and Signal Forms compatibility analysis, see [Architecture Comparison](./docs/ARCHITECTURE_COMPARISON.md).**
+
 ## 📦 Installation
 
 ```bash
@@ -281,7 +317,7 @@ For even cleaner markup, use the **NgxVestFormField** component that combines la
 npm install ngx-vest-forms-form-field
 ```
 
-### Quick Comparison
+### Usage Comparison
 
 **Without Form Field (Manual):**
 
