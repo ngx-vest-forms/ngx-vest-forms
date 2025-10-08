@@ -44,7 +44,7 @@ export const MINIMAL_FORM_CONTENT = {
       {
         title: 'Implementation Pattern',
         items: [
-          '• <strong>Form creation:</strong> <code class="code-inline">createVestForm(suite, model)</code> factory',
+          '• <strong>Form creation:</strong> <code class="code-inline">createVestForm(model, { suite })</code> factory',
           '• <strong>Validation suite:</strong> <code class="code-inline">staticSuite()</code> with Vest.js rules',
           '• <strong>Field binding:</strong> <code class="code-inline">[value]="form.field()"</code> + <code class="code-inline">(input)="form.setField($event)"</code>',
           '• <strong>Error display:</strong> <code class="code-inline">form.fieldShowErrors()</code> + <code class="code-inline">form.fieldErrors()</code>',

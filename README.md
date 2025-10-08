@@ -3,8 +3,13 @@
 > **The most productive way to build accessible forms in Angular**
 > Vest-first validation with automatic accessibility, zero boilerplate, and built-in best practices.
 
-[![npm version](https://badge.fury.io/js/ngx-vest-forms.svg)](https://www.npmjs.com/package/ngx-vest-forms)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Github Stars](https://badgen.net/github/stars/ngx-vest-forms/ngx-vest-forms?color=yellow&label=Github%20🌟)](https://github.com/ngx-vest-forms/ngx-vest-forms)
+[![Next Release](https://badgen.net/npm/v/ngx-vest-forms/beta?label=Next&color=orange)](https://www.npmjs.com/package/ngx-vest-forms?activeTab=versions)
+[![Version](https://badgen.net/npm/v/ngx-vest-forms?&icon=npm)](https://www.npmjs.com/package/ngx-vest-forms)
+[![Downloads](https://badgen.net/npm/dt/ngx-vest-forms?label=Downloads)](https://www.npmjs.com/package/ngx-vest-forms)
+[![Bundle Size](https://badgen.net/bundlephobia/minzip/ngx-vest-forms)](https://bundlephobia.com/package/ngx-vest-forms)
+[![License](https://badgen.net/npm/license/ngx-vest-forms)](https://opensource.org/licenses/MIT)
+[![Build Status](https://badgen.net/github/checks/ngx-vest-forms/ngx-vest-forms)](https://github.com/ngx-vest-forms/ngx-vest-forms/actions)
 
 ## What You Get for Free
 
@@ -81,16 +86,20 @@ ngx-vest-forms takes a **validation-first approach** that decouples validation l
 npm install ngx-vest-forms vest
 ```
 
-## ⚡ Quick Start - Batteries Included
+## ⚡ Quick Start
 
-Here's a **complete, production-ready, accessible** contact form in **under 40 lines**:
+Learn ngx-vest-forms progressively - start simple and add features as needed!
+
+### Level 1: Basic Form (Core Validation)
+
+Start with the **core validation logic** - no Angular directives, no accessibility helpers:
 
 ```typescript
-import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
-import { createVestForm, NgxVestForms, staticSafeSuite } from 'ngx-vest-forms';
+import { Component, signal } from '@angular/core';
+import { createVestForm, staticSafeSuite } from 'ngx-vest-forms/core';
 import { test, enforce } from 'vest';
 
-// 1. Define validation rules (use staticSafeSuite for simplicity)
+// 1. Define validation rules
 const contactSuite = staticSafeSuite((data = {}) => {
   test('email', 'Email is required', () => {
     enforce(data.email).isNotEmpty();
@@ -98,63 +107,323 @@ const contactSuite = staticSafeSuite((data = {}) => {
   test('email', 'Invalid email format', () => {
     enforce(data.email).isEmail();
   });
-  test('message', 'Message is required', () => {
-    enforce(data.message).isNotEmpty();
-  });
 });
 
-// 2. Build your form with NgxVestForms (auto-ARIA + auto-touch + error component)
+// 2. Create form component
 @Component({
   selector: 'app-contact',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgxVestForms], // ← ONE import for everything!
   template: `
-    <form [ngxVestForm]="form" (submit)="save($event)">
-      <label for="email">Email *</label>
+    <form (submit)="save($event)">
+      <label for="email">Email</label>
       <input
         id="email"
         type="email"
-        [value]="form.email()"
+        [value]="form.email() ?? ''"
         (input)="form.setEmail($event)"
       />
-      <ngx-form-error [field]="form.emailField()" />
+      @if (form.emailShowErrors() && form.emailValidation().errors.length) {
+        <p role="alert">{{ form.emailValidation().errors[0] }}</p>
+      }
 
-      <label for="message">Message *</label>
-      <textarea
-        id="message"
-        [value]="form.message()"
-        (input)="form.setMessage($event)"
-      ></textarea>
-      <ngx-form-error [field]="form.messageField()" />
-
-      <button type="submit" [disabled]="form.pending()">Send</button>
+      <button type="submit" [disabled]="form.pending()">Submit</button>
     </form>
   `,
 })
 export class ContactFormComponent {
-  form = createVestForm(contactSuite, signal({ email: '', message: '' }));
+  protected readonly form = createVestForm(signal({ email: '' }), contactSuite);
 
-  async save(event: Event) {
+  protected save = async (event: Event) => {
     event.preventDefault();
     const result = await this.form.submit();
     if (result.valid) {
-      console.log('✅ Sending:', result.data);
+      console.log('✅ Valid:', result.data);
     }
-  }
-  // Note: No ngOnDestroy needed - staticSafeSuite has no subscriptions!
+  };
 }
 ```
 
-**That's it!** You now have:
+**What you get:**
 
-- ✅ WCAG 2.2 Level AA compliant form
-- ✅ Automatic `aria-invalid="true"` when fields have errors
-- ✅ Automatic `aria-describedby` linking errors to inputs
-- ✅ Automatic `aria-busy="true"` during async operations
-- ✅ Progressive error disclosure (errors appear after blur or submit)
-- ✅ Visual error messages with proper semantic markup (`role="alert"`)
+- ✅ Type-safe validation with Vest.js
+- ✅ Auto-generated field signals (`form.email()`, `form.emailValidation()`)
+- ✅ Submit handling with validation
+- ✅ ~30 lines of code
+
+**What's missing:**
+
+- ❌ Accessibility attributes (aria-invalid, aria-describedby)
+- ❌ Touch state management (errors show immediately)
+- ❌ Styled error components
+
+---
+
+### Level 2: Add Form Field Wrapper (Better UX)
+
+Add the **form-field component** for consistent layout and automatic error display:
+
+```bash
+npm install ngx-vest-forms-form-field
+```
+
+```typescript
+import { Component, signal } from '@angular/core';
+import { createVestForm, staticSafeSuite } from 'ngx-vest-forms/core';
+import { NgxVestFormField } from 'ngx-vest-forms/form-field';
+import { test, enforce } from 'vest';
+
+const contactSuite = staticSafeSuite((data = {}) => {
+  test('email', 'Email is required', () => {
+    enforce(data.email).isNotEmpty();
+  });
+  test('email', 'Invalid email format', () => {
+    enforce(data.email).isEmail();
+  });
+});
+
+@Component({
+  selector: 'app-contact',
+  imports: [NgxVestFormField],
+  template: `
+    <form (submit)="save($event)">
+      <ngx-vest-form-field [field]="form.emailField()">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          [value]="form.email() ?? ''"
+          (input)="form.setEmail($event)"
+        />
+        <!-- Error display is automatic! -->
+      </ngx-vest-form-field>
+
+      <button type="submit" [disabled]="form.pending()">Submit</button>
+    </form>
+  `,
+})
+export class ContactFormComponent {
+  protected readonly form = createVestForm(signal({ email: '' }), contactSuite);
+
+  protected save = async (event: Event) => {
+    event.preventDefault();
+    const result = await this.form.submit();
+    if (result.valid) {
+      console.log('✅ Valid:', result.data);
+    }
+  };
+}
+```
+
+**What you get additionally:**
+
+- ✅ **Automatic error display** (no manual `@if` blocks)
+- ✅ **Consistent layout** via CSS custom properties
+- ✅ **Cleaner template** markup
+- ✅ ~25 lines of code (5 lines less!)
+
+**Still missing:**
+
+- ❌ Accessibility attributes
+- ❌ Touch state management
+
+---
+
+### Level 3: Add Type Validation (Schema Layer)
+
+Add **schema validation** for type-level checks with Zod, Valibot, or ArkType:
+
+```typescript
+import { Component, signal } from '@angular/core';
+import { createVestForm, staticSafeSuite } from 'ngx-vest-forms/core';
+import { NgxVestFormField } from 'ngx-vest-forms/form-field';
+import { type InferOutput } from 'ngx-vest-forms/schemas';
+import { z } from 'zod';
+import { test, enforce } from 'vest';
+
+// 1. Define schema for type validation with .default() values
+const ContactSchema = z.object({
+  email: z.string().email().default(''),
+  message: z.string().min(10).default(''),
+});
+
+// 2. Infer TypeScript type from schema
+type ContactModel = InferOutput<typeof ContactSchema>;
+
+// 3. Create initial values helper
+function createInitialContact(): ContactModel {
+  return ContactSchema.parse({}); // Uses .default() values
+}
+
+// 4. Define Vest suite for business logic (async, cross-field, etc.)
+const contactSuite = staticSafeSuite<ContactModel>((data) => {
+  test('email', 'Email already taken', async ({ signal }) => {
+    const response = await fetch(`/api/check-email/${data.email}`, { signal });
+    if (!response.ok) throw new Error();
+  });
+});
+
+// 5. Create form with dual-layer validation
+@Component({
+  selector: 'app-contact',
+  imports: [NgxVestFormField],
+  template: `
+    <form (submit)="save($event)">
+      <ngx-vest-form-field [field]="form.emailField()">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          [value]="form.email() ?? ''"
+          (input)="form.setEmail($event)"
+        />
+      </ngx-vest-form-field>
+
+      <ngx-vest-form-field [field]="form.messageField()">
+        <label for="message">Message</label>
+        <textarea
+          id="message"
+          [value]="form.message() ?? ''"
+          (input)="form.setMessage($event)"
+        ></textarea>
+      </ngx-vest-form-field>
+
+      <button type="submit" [disabled]="form.pending()">Submit</button>
+    </form>
+  `,
+})
+export class ContactFormComponent {
+  protected readonly form = createVestForm(
+    createInitialContact(), // ← Uses schema defaults
+    contactSuite,
+    { schema: ContactSchema }, // ← Type validation layer
+  );
+
+  protected save = async (event: Event) => {
+    event.preventDefault();
+    const result = await this.form.submit();
+    if (result.valid) {
+      console.log('✅ Valid:', result.data);
+    }
+  };
+}
+```
+
+**What you get additionally:**
+
+- ✅ **Type-level validation** (format, structure checks)
+- ✅ **Business logic validation** (async API checks, cross-field rules)
+- ✅ **Unified error handling** (schema + Vest errors combined)
+- ✅ **Standard Schema support** (Zod 3.24+, Valibot 1.0+, ArkType 2.0+)
+
+> **Note:** No adapter wrappers needed! Modern schema libraries natively implement [StandardSchemaV1](https://standardschema.dev/).
+
+---
+
+### Level 4: Full Production Setup (Recommended) 🌟
+
+Add **all accessibility features** with the `NgxVestForms` constant:
+
+```typescript
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
+import { createVestForm, staticSafeSuite, NgxVestForms } from 'ngx-vest-forms';
+import { NgxVestFormField } from 'ngx-vest-forms/form-field';
+import { type InferOutput } from 'ngx-vest-forms/schemas';
+import { z } from 'zod';
+import { test } from 'vest';
+
+const ContactSchema = z.object({
+  email: z.string().email().default(''),
+  message: z.string().min(10).default(''),
+});
+
+type ContactModel = InferOutput<typeof ContactSchema>;
+
+function createInitialContact(): ContactModel {
+  return ContactSchema.parse({});
+}
+
+const contactSuite = staticSafeSuite<ContactModel>((data) => {
+  test('email', 'Email already taken', async ({ signal }) => {
+    const response = await fetch(`/api/check-email/${data.email}`, { signal });
+    if (!response.ok) throw new Error();
+  });
+});
+
+@Component({
+  selector: 'app-contact',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [NgxVestForms, NgxVestFormField], // ← ONE import for all directives
+  template: `
+    <form [ngxVestForm]="form" (submit)="save($event)">
+      <ngx-vest-form-field [field]="form.emailField()">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          [value]="form.email() ?? ''"
+          (input)="form.setEmail($event)"
+        />
+      </ngx-vest-form-field>
+
+      <ngx-vest-form-field [field]="form.messageField()">
+        <label for="message">Message</label>
+        <textarea
+          id="message"
+          [value]="form.message() ?? ''"
+          (input)="form.setMessage($event)"
+        ></textarea>
+      </ngx-vest-form-field>
+
+      <button type="submit" [disabled]="form.pending()">Submit</button>
+    </form>
+  `,
+})
+export class ContactFormComponent {
+  protected readonly form = createVestForm(
+    createInitialContact(),
+    contactSuite,
+    { schema: ContactSchema },
+  );
+
+  protected save = async (event: Event) => {
+    event.preventDefault();
+    const result = await this.form.submit();
+    if (result.valid) {
+      console.log('✅ Valid:', result.data);
+    }
+  };
+}
+```
+
+**The `[ngxVestForm]` directive automatically adds:**
+
+- ✅ **ARIA Attributes** - `aria-invalid`, `aria-describedby` on inputs
+- ✅ **Touch Management** - Errors appear **after blur** (progressive disclosure)
+- ✅ **Form Busy State** - `aria-busy="true"` during async validation
+- ✅ **WCAG 2.2 Level AA** - Full accessibility compliance
+
+**Complete feature checklist:**
+
+- ✅ Type-safe validation (Vest.js + Schema)
+- ✅ Auto-generated field signals
+- ✅ Automatic error display
+- ✅ Consistent layout
+- ✅ Full accessibility (WCAG 2.2)
+- ✅ Touch state management
 - ✅ Dark mode support
-- ✅ Zero boilerplate - 80% less code than traditional forms
+- ✅ **80% less code** than manual implementation
+
+---
+
+## 📊 Quick Comparison
+
+| Level       | Code Lines | Features              | Best For             |
+| ----------- | ---------- | --------------------- | -------------------- |
+| **Level 1** | ~30        | Core validation       | Learning, prototypes |
+| **Level 2** | ~25        | + Auto errors, layout | Internal tools       |
+| **Level 3** | ~40        | + Type validation     | Complex forms        |
+| **Level 4** | ~45        | + Full accessibility  | **Production apps**  |
+
+**Recommendation:** Start with **Level 1** to learn the API, then jump to **Level 4** for production applications.
 
 ## 🎯 Core Concepts
 
@@ -1281,6 +1550,104 @@ const suite = createSafeSuite((data) => {
 ```
 
 **Note:** With `NgxVestForms`, this is automatic!
+
+### 6. Model-Schema Alignment (When Using Schemas)
+
+When using schema validation with Zod, Valibot, or ArkType, follow this **golden rule**:
+
+**Schema defines the complete data shape, TypeScript types are inferred from the schema.**
+
+#### ✅ CORRECT Pattern
+
+```typescript
+import { z } from 'zod';
+import { type InferOutput } from 'ngx-vest-forms/schemas';
+
+// 1. Define schema with ALL fields (including UI-only like confirmPassword)
+export const userSchema = z.object({
+  email: z.string().min(1).email().default(''),
+  password: z.string().min(8).default(''),
+  confirmPassword: z.string().min(1).default(''), // ✅ In schema
+  age: z.number().int().min(18).default(18),
+});
+
+// 2. Infer TypeScript type from schema (single source of truth)
+export type UserModel = InferOutput<typeof userSchema>;
+
+// 3. Create initial values using schema defaults
+export function createInitialUser(): UserModel {
+  return userSchema.parse({}); // Uses .default() values
+}
+
+// 4. Create form with aligned types
+const form = createVestForm(
+  createInitialUser(),
+  userSuite,
+  { schema: userSchema }, // TypeScript enforces schema matches UserModel
+);
+```
+
+#### ❌ WRONG Pattern
+
+```typescript
+// ❌ Manual type definition can drift from schema
+type UserModel = {
+  email: string;
+  password: string;
+  age: number;
+  // Missing confirmPassword! Type mismatch!
+};
+
+const userSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  confirmPassword: z.string(), // Not in manual type
+  age: z.number().min(18),
+});
+```
+
+#### Why This Matters
+
+1. **Type Safety**: Generic `TModel` in `createVestForm` ensures schema validates the same type as your model
+2. **Single Source of Truth**: Schema defines structure AND initial values
+3. **Prevents Drift**: Manual types can become outdated when schema changes
+4. **Better DX**: `schema.parse({})` auto-fills defaults, no manual initial value objects
+
+#### Cross-Field Validation Pattern
+
+For fields like `confirmPassword`, you have two options:
+
+##### Option 1: Schema handles validation (simpler)
+
+```typescript
+const schema = z
+  .object({
+    password: z.string().min(8).default(''),
+    confirmPassword: z.string().min(1).default(''),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords must match',
+    path: ['confirmPassword'],
+  });
+```
+
+##### Option 2: Vest handles validation (recommended - more flexible)
+
+```typescript
+const schema = z.object({
+  password: z.string().min(8).default(''),
+  confirmPassword: z.string().min(1).default(''),
+});
+
+const suite = staticSafeSuite<InferOutput<typeof schema>>((data) => {
+  include('confirmPassword').when('password');
+  test('confirmPassword', 'Passwords must match', () => {
+    enforce(data.confirmPassword).equals(data.password);
+  });
+});
+```
+
+**See [Zod Basic Example](./projects/examples/src/app/03-schemas/zod-basic/) for full implementation.**
 
 ## 🔄 Migration from V1
 

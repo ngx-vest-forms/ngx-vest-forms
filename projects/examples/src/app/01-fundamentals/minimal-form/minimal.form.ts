@@ -76,9 +76,9 @@ export class MinimalForm {
 
   // Create form with reactive error strategy (library now supports Signal<ErrorDisplayStrategy>)
   protected readonly form = createVestForm(
-    minimalFormValidationSuite,
     signal<MinimalFormModel>({ email: '' }),
     {
+      suite: minimalFormValidationSuite,
       errorStrategy: this.errorDisplayMode, // ✅ Pass signal directly - strategy changes reactively!
     },
   );

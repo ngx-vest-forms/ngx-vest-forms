@@ -37,7 +37,7 @@ export type FormFieldShowcaseModel = {
  *
  * @example
  * ```typescript
- * const form = createVestForm(formFieldShowcaseValidations, signal({
+ * const form = createVestForm(signal({
  *   name: '',
  *   email: '',
  *   website: '',
@@ -45,7 +45,7 @@ export type FormFieldShowcaseModel = {
  *   bio: '',
  *   country: '',
  *   agreeToTerms: false
- * }));
+ * }), formFieldShowcaseValidations);
  * ```
  */
 export const formFieldShowcaseValidations =

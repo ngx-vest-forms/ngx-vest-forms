@@ -36,12 +36,11 @@ describe('Disabled Submit Button Scenarios', () => {
     it('should NOT show errors when button is disabled and no fields touched', () => {
       // Simulate developer disabling button based on validity
       const form = createVestForm(
-        testSuite,
         signal<TestModel>({
           email: '',
           password: '',
         }),
-        {
+        { suite: testSuite,
           errorStrategy: 'on-touch', // Default strategy
         },
       );
@@ -71,12 +70,11 @@ describe('Disabled Submit Button Scenarios', () => {
 
     it('should show errors once user starts touching fields', () => {
       const form = createVestForm(
-        testSuite,
         signal<TestModel>({
           email: '',
           password: '',
         }),
-        {
+        { suite: testSuite,
           errorStrategy: 'on-touch',
         },
       );
@@ -99,12 +97,11 @@ describe('Disabled Submit Button Scenarios', () => {
   describe('✅ Solution A: Use immediate strategy', () => {
     it('should show all errors immediately, even with disabled button', () => {
       const form = createVestForm(
-        testSuite,
         signal<TestModel>({
           email: '',
           password: '',
         }),
-        {
+        { suite: testSuite,
           errorStrategy: 'immediate', // Show errors immediately
         },
       );
@@ -132,12 +129,11 @@ describe('Disabled Submit Button Scenarios', () => {
     it('should show all errors when fields are touched on init', async () => {
       await runInAngular(async () => {
         const form = createVestForm(
-          testSuite,
-          signal<TestModel>({
+        signal<TestModel>({
             email: '',
             password: '',
           }),
-          {
+        { suite: testSuite,
             errorStrategy: 'on-touch',
           },
         );
@@ -167,12 +163,11 @@ describe('Disabled Submit Button Scenarios', () => {
   describe('✅ Recommended: Enable submit button', () => {
     it('should show all errors when user clicks submit', async () => {
       const form = createVestForm(
-        testSuite,
         signal<TestModel>({
           email: '',
           password: '',
         }),
-        {
+        { suite: testSuite,
           errorStrategy: 'on-touch',
         },
       );

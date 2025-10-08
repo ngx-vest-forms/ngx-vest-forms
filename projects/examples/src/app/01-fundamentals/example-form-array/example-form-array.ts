@@ -22,10 +22,10 @@ import {
 })
 export class ExampleFormArray {
   protected readonly form = createVestForm(
-    validationSuite,
     signal<FormArrayModel>({
       interests: [],
     }),
+    { suite: validationSuite },
   );
 
   readonly debugForm = asDebuggerForm(this.form);

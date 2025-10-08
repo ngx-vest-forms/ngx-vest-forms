@@ -43,13 +43,10 @@ const testSuite = staticSafeSuite(
 describe('NgxVestAutoAriaDirective', () => {
   describe('ARIA Attribute Generation', () => {
     it('should add aria-invalid="true" (string) when field has errors', async () => {
-      const form = createVestForm(
-        testSuite,
-        signal({ email: '', password: '' }),
-        {
-          errorStrategy: 'immediate',
-        },
-      );
+      const form = createVestForm(signal({ email: '', password: '' }), {
+        suite: testSuite,
+        errorStrategy: 'immediate',
+      });
 
       @Component({
         imports: [
@@ -93,13 +90,10 @@ describe('NgxVestAutoAriaDirective', () => {
     });
 
     it('should add aria-describedby with error ID when field has errors', async () => {
-      const form = createVestForm(
-        testSuite,
-        signal({ email: '', password: '' }),
-        {
-          errorStrategy: 'immediate',
-        },
-      );
+      const form = createVestForm(signal({ email: '', password: '' }), {
+        suite: testSuite,
+        errorStrategy: 'immediate',
+      });
 
       @Component({
         imports: [
@@ -140,13 +134,10 @@ describe('NgxVestAutoAriaDirective', () => {
     });
 
     it('should preserve existing aria-describedby IDs (hint text)', async () => {
-      const form = createVestForm(
-        testSuite,
-        signal({ email: '', password: '' }),
-        {
-          errorStrategy: 'immediate',
-        },
-      );
+      const form = createVestForm(signal({ email: '', password: '' }), {
+        suite: testSuite,
+        errorStrategy: 'immediate',
+      });
 
       @Component({
         imports: [
@@ -193,13 +184,10 @@ describe('NgxVestAutoAriaDirective', () => {
 
   describe('Manual Override Detection', () => {
     it('should NOT override manual aria-invalid attribute', async () => {
-      const form = createVestForm(
-        testSuite,
-        signal({ email: '', password: '' }),
-        {
-          errorStrategy: 'immediate',
-        },
-      );
+      const form = createVestForm(signal({ email: '', password: '' }), {
+        suite: testSuite,
+        errorStrategy: 'immediate',
+      });
 
       @Component({
         imports: [NgxVestAutoAriaDirective, NgxVestFormProviderDirective],
@@ -228,13 +216,10 @@ describe('NgxVestAutoAriaDirective', () => {
     });
 
     it('should append error ID to manual aria-describedby attribute', async () => {
-      const form = createVestForm(
-        testSuite,
-        signal({ email: '', password: '' }),
-        {
-          errorStrategy: 'immediate',
-        },
-      );
+      const form = createVestForm(signal({ email: '', password: '' }), {
+        suite: testSuite,
+        errorStrategy: 'immediate',
+      });
 
       @Component({
         imports: [NgxVestAutoAriaDirective, NgxVestFormProviderDirective],
@@ -273,7 +258,8 @@ describe('NgxVestAutoAriaDirective', () => {
         });
       });
 
-      const form = createVestForm(radioSuite, signal({ gender: '' }), {
+      const form = createVestForm(signal({ gender: '' }), {
+        suite: radioSuite,
         errorStrategy: 'immediate',
       });
 
@@ -329,13 +315,10 @@ describe('NgxVestAutoAriaDirective', () => {
 
   describe('Global Config', () => {
     it('should disable directive when autoAria config is false', async () => {
-      const form = createVestForm(
-        testSuite,
-        signal({ email: '', password: '' }),
-        {
-          errorStrategy: 'immediate',
-        },
-      );
+      const form = createVestForm(signal({ email: '', password: '' }), {
+        suite: testSuite,
+        errorStrategy: 'immediate',
+      });
 
       @Component({
         imports: [NgxVestAutoAriaDirective, NgxVestFormProviderDirective],
@@ -374,13 +357,10 @@ describe('NgxVestAutoAriaDirective', () => {
 
   describe('Opt-Out Attribute', () => {
     it('should not apply when ngxVestAutoAriaDisabled attribute is present', async () => {
-      const form = createVestForm(
-        testSuite,
-        signal({ email: '', password: '' }),
-        {
-          errorStrategy: 'immediate',
-        },
-      );
+      const form = createVestForm(signal({ email: '', password: '' }), {
+        suite: testSuite,
+        errorStrategy: 'immediate',
+      });
 
       @Component({
         imports: [NgxVestAutoAriaDirective, NgxVestFormProviderDirective],
@@ -412,13 +392,10 @@ describe('NgxVestAutoAriaDirective', () => {
 
   describe('Field Name Extraction', () => {
     it('should use id attribute for field name', async () => {
-      const form = createVestForm(
-        testSuite,
-        signal({ email: '', password: '' }),
-        {
-          errorStrategy: 'immediate',
-        },
-      );
+      const form = createVestForm(signal({ email: '', password: '' }), {
+        suite: testSuite,
+        errorStrategy: 'immediate',
+      });
 
       @Component({
         imports: [
@@ -453,13 +430,10 @@ describe('NgxVestAutoAriaDirective', () => {
     });
 
     it('should use name attribute as fallback when id is missing', async () => {
-      const form = createVestForm(
-        testSuite,
-        signal({ email: '', password: '' }),
-        {
-          errorStrategy: 'immediate',
-        },
-      );
+      const form = createVestForm(signal({ email: '', password: '' }), {
+        suite: testSuite,
+        errorStrategy: 'immediate',
+      });
 
       @Component({
         imports: [
@@ -494,13 +468,10 @@ describe('NgxVestAutoAriaDirective', () => {
     });
 
     it('should prefer data-vest-field over id/name', async () => {
-      const form = createVestForm(
-        testSuite,
-        signal({ email: '', password: '' }),
-        {
-          errorStrategy: 'immediate',
-        },
-      );
+      const form = createVestForm(signal({ email: '', password: '' }), {
+        suite: testSuite,
+        errorStrategy: 'immediate',
+      });
 
       @Component({
         imports: [
@@ -539,13 +510,10 @@ describe('NgxVestAutoAriaDirective', () => {
 
   describe('Integration with NgxVestForms Bundle', () => {
     it('should work with all NgxVestForms directives and components', async () => {
-      const form = createVestForm(
-        testSuite,
-        signal({ email: '', password: '' }),
-        {
-          errorStrategy: 'on-touch',
-        },
-      );
+      const form = createVestForm(signal({ email: '', password: '' }), {
+        suite: testSuite,
+        errorStrategy: 'on-touch',
+      });
 
       const NgxVestForms = [
         NgxVestAutoAriaDirective,
@@ -583,7 +551,7 @@ describe('NgxVestAutoAriaDirective', () => {
 
       // Blur triggers touch - now errors show
       await userEvent.click(input);
-      await userEvent.tab();
+      input.dispatchEvent(new FocusEvent('blur', { bubbles: true }));
 
       await expect.element(input).toHaveAttribute('aria-invalid', 'true');
       await expect

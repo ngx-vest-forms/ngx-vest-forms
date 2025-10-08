@@ -87,6 +87,17 @@ export class AppComponent implements AfterViewInit {
         },
       ],
     },
+    {
+      id: 'schemas',
+      label: 'Schema Integration',
+      pattern: /^\/schemas\//,
+      links: [
+        {
+          path: '/schemas/zod-basic',
+          label: 'Zod Basic',
+        },
+      ],
+    },
     // {
     //   id: 'form-field',
     //   label: 'Control Wrapper',

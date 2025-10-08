@@ -12,11 +12,11 @@ import { validationSuite } from './example-form-simple.validation';
 })
 export class ExampleFormSimple {
   protected readonly form = createVestForm(
-    validationSuite,
     signal<FormModel>({
       email: '',
       verifyEmail: '',
     }),
+    validationSuite,
   );
 
   protected readonly debugForm = asDebuggerForm(this.form);

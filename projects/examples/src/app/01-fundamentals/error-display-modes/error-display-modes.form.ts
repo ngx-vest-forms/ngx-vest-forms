@@ -402,7 +402,8 @@ export class ErrorDisplayModesFormComponent implements OnDestroy {
   private createForm(
     strategy: ErrorDisplayStrategy,
   ): EnhancedVestForm<ProductFeedbackModel> {
-    return createVestForm(productFeedbackValidationSuite, this.model, {
+    return createVestForm(this.model, {
+      suite: productFeedbackValidationSuite,
       errorStrategy: strategy,
       enhancedFieldSignals: true,
     });

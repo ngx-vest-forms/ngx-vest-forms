@@ -1,0 +1,13 @@
+{
+  "name": "ngx-vest-forms-schemas",
+  "version": "2.0.0",
+  "description": "Standard Schema adapters for ngx-vest-forms",
+  "peerDependencies": {
+    "@angular/common": "^20.0.0",
+    "@angular/core": "^20.0.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "sideEffects": false
+}

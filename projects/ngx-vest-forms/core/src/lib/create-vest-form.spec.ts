@@ -23,7 +23,7 @@ import type { VestFormOptions } from './vest-form.types';
  * ```typescript
  * it('my test', () => {
  *   const mockSuite = createMockSuite(); // Fresh suite per test
- *   const form = createVestForm(mockSuite, model);
+ *   const form = createVestForm(model, { suite: mockSuite });
  * });
  * ```
  *
@@ -32,7 +32,7 @@ import type { VestFormOptions } from './vest-form.types';
  * let mockSuite;
  * beforeEach(() => { mockSuite = createMockSuite(); });
  * it('my test', () => {
- *   const form = createVestForm(mockSuite, model); // Shared suite = pollution!
+ *   const form = createVestForm(model, { suite: mockSuite }); // Shared suite = pollution!
  * });
  * ```
  */
@@ -132,7 +132,7 @@ describe('createVestForm', () => {
   describe.sequential('Form Creation', () => {
     it('should create form with plain object model', () => {
       const mockSuite = createMockSuite(); // Fresh suite for test isolation
-      const form = createVestForm(mockSuite, initialModel);
+      const form = createVestForm(initialModel, { suite: mockSuite });
       forms.push(form);
 
       expect(form).toBeDefined();
@@ -146,8 +146,8 @@ describe('createVestForm', () => {
     it('should create independent form instances without state pollution', async () => {
       // Create two forms with the same suite and initial model
       const mockSuite = createMockSuite(); // Fresh suite for test isolation
-      const form1 = createVestForm(mockSuite, initialModel);
-      const form2 = createVestForm(mockSuite, initialModel);
+      const form1 = createVestForm(initialModel, { suite: mockSuite });
+      const form2 = createVestForm(initialModel, { suite: mockSuite });
       forms.push(form1, form2);
 
       // Verify initial state is independent
@@ -202,7 +202,7 @@ describe('createVestForm', () => {
 
     it('should create form with signal model', () => {
       const modelSignal = signal(initialModel);
-      const form = createVestForm(mockSuite, modelSignal);
+      const form = createVestForm(modelSignal, { suite: mockSuite });
       forms.push(form);
 
       expect(form).toBeDefined();
@@ -217,7 +217,7 @@ describe('createVestForm', () => {
         debounceMs: 500,
       };
 
-      const form = createVestForm(mockSuite, initialModel, options);
+      const form = createVestForm(initialModel, { suite: mockSuite, ...options });
       forms.push(form);
 
       expect(form).toBeDefined();
@@ -231,7 +231,7 @@ describe('createVestForm', () => {
       // WORKAROUND: Create a fresh suite within the test to avoid pollution
       // This ensures complete isolation from previous tests
       const freshSuite = createMockSuite();
-      const form = createVestForm(freshSuite, initialModel);
+      const form = createVestForm(initialModel, { suite: freshSuite });
       forms.push(form);
 
       const emailField = form.field('email');
@@ -249,7 +249,7 @@ describe('createVestForm', () => {
     });
 
     it('should support nested field paths', () => {
-      const form = createVestForm(mockSuite, initialModel);
+      const form = createVestForm(initialModel, { suite: mockSuite });
       forms.push(form);
 
       const nameField = form.field('profile.name');
@@ -262,7 +262,7 @@ describe('createVestForm', () => {
 
   describe('Enhanced Field Signals API', () => {
     it('should provide automatic field signals', () => {
-      const form = createVestForm(mockSuite, initialModel);
+      const form = createVestForm(initialModel, { suite: mockSuite });
       forms.push(form);
 
       // Field value signals
@@ -286,7 +286,7 @@ describe('createVestForm', () => {
     });
 
     it('should provide automatic field operations', () => {
-      const form = createVestForm(mockSuite, initialModel);
+      const form = createVestForm(initialModel, { suite: mockSuite });
       forms.push(form);
 
       // Set field values
@@ -320,7 +320,7 @@ describe('createVestForm', () => {
     });
 
     it('should respect includeFields option', () => {
-      const form = createVestForm(mockSuite, initialModel, {
+      const form = createVestForm(initialModel, { suite: mockSuite,
         includeFields: ['email'],
       });
       forms.push(form);
@@ -339,7 +339,7 @@ describe('createVestForm', () => {
     });
 
     it('should respect excludeFields option', () => {
-      const form = createVestForm(mockSuite, initialModel, {
+      const form = createVestForm(initialModel, { suite: mockSuite,
         excludeFields: ['password'],
       });
       forms.push(form);
@@ -354,7 +354,7 @@ describe('createVestForm', () => {
     });
 
     it('should support nested field access via camelCase properties', () => {
-      const form = createVestForm(mockSuite, initialModel);
+      const form = createVestForm(initialModel, { suite: mockSuite });
       forms.push(form);
 
       expect(typeof form.profileName).toBe('function');
@@ -371,7 +371,7 @@ describe('createVestForm', () => {
 
   describe.sequential('Form Operations', () => {
     it('should refresh suite result after field updates', () => {
-      const form = createVestForm(mockSuite, initialModel);
+      const form = createVestForm(initialModel, { suite: mockSuite });
       forms.push(form);
 
       expect(form.emailValid()).toBe(false);
@@ -383,7 +383,7 @@ describe('createVestForm', () => {
     });
 
     it('should validate specific fields', () => {
-      const form = createVestForm(mockSuite, initialModel);
+      const form = createVestForm(initialModel, { suite: mockSuite });
       forms.push(form);
 
       // Initially invalid (staticSuite runs validation immediately)
@@ -400,7 +400,7 @@ describe('createVestForm', () => {
     });
 
     it('should validate entire form', () => {
-      const form = createVestForm(mockSuite, initialModel);
+      const form = createVestForm(initialModel, { suite: mockSuite });
       forms.push(form);
 
       // Set valid data
@@ -415,7 +415,7 @@ describe('createVestForm', () => {
     });
 
     it('should handle form submission', async () => {
-      const form = createVestForm(mockSuite, initialModel);
+      const form = createVestForm(initialModel, { suite: mockSuite });
       forms.push(form);
 
       // Set valid data
@@ -437,7 +437,7 @@ describe('createVestForm', () => {
     });
 
     it('should reject submission with invalid data', async () => {
-      const form = createVestForm(mockSuite, initialModel);
+      const form = createVestForm(initialModel, { suite: mockSuite });
       forms.push(form);
 
       // Keep invalid data (empty fields)
@@ -449,7 +449,7 @@ describe('createVestForm', () => {
     });
 
     it('should manage submitting state', async () => {
-      const form = createVestForm(mockSuite, initialModel);
+      const form = createVestForm(initialModel, { suite: mockSuite });
       forms.push(form);
 
       // Set valid data
@@ -468,7 +468,7 @@ describe('createVestForm', () => {
     });
 
     it('should reset form to initial state', () => {
-      const form = createVestForm(mockSuite, initialModel);
+      const form = createVestForm(initialModel, { suite: mockSuite });
       forms.push(form);
 
       console.log(
@@ -496,7 +496,7 @@ describe('createVestForm', () => {
     });
 
     it('should reset specific fields', () => {
-      const form = createVestForm(mockSuite, initialModel);
+      const form = createVestForm(initialModel, { suite: mockSuite });
       forms.push(form);
 
       // Change email
@@ -520,7 +520,7 @@ describe('createVestForm', () => {
         ],
       };
 
-      const form = createVestForm(mockSuite, modelWithArrays);
+      const form = createVestForm(modelWithArrays, { suite: mockSuite });
       forms.push(form);
 
       const tagsArray = form.array('tags');
@@ -539,7 +539,7 @@ describe('createVestForm', () => {
 
   describe('Memory Management', () => {
     it('should dispose form resources', () => {
-      const form = createVestForm(mockSuite, initialModel);
+      const form = createVestForm(initialModel, { suite: mockSuite });
       forms.push(form);
 
       // Create some fields to populate cache
@@ -553,7 +553,7 @@ describe('createVestForm', () => {
 
   describe('Error Handling', () => {
     it('should handle Event objects in field setters', () => {
-      const form = createVestForm(mockSuite, initialModel);
+      const form = createVestForm(initialModel, { suite: mockSuite });
       forms.push(form);
 
       // Mock DOM event
@@ -612,7 +612,7 @@ describe('createVestForm', () => {
         });
       });
 
-      const form = createVestForm(asyncSuite, { email: 'test@example.com' });
+      const form = createVestForm(signal({ email: 'test@example.com' }), { suite: asyncSuite });
       createdForms.push(form);
 
       // Initial validation triggers async
@@ -655,10 +655,10 @@ describe('createVestForm', () => {
         });
       });
 
-      const form = createVestForm(asyncSuite, {
+      const form = createVestForm(signal({
         email: 'test@example.com',
         password: '',
-      });
+      }), { suite: asyncSuite });
       createdForms.push(form);
 
       // Trigger email async validation
@@ -708,7 +708,7 @@ describe('createVestForm', () => {
           });
         });
 
-        const form = createVestForm(asyncSuite, { email: 'test@example.com' });
+        const form = createVestForm(signal({ email: 'test@example.com' }), { suite: asyncSuite });
         createdForms.push(form);
 
         // First validation
@@ -773,7 +773,7 @@ describe('createVestForm', () => {
         },
       );
 
-      const form = createVestForm(asyncSuite, { email: 'test@example.com' });
+      const form = createVestForm(signal({ email: 'test@example.com' }), { suite: asyncSuite });
       createdForms.push(form);
 
       // Start async validation
@@ -814,10 +814,10 @@ describe('createVestForm', () => {
           },
         );
 
-        const form = createVestForm(multiAsyncSuite, {
+        const form = createVestForm(signal({
           email: 'test@example.com',
           username: 'testuser',
-        });
+        }), { suite: multiAsyncSuite });
         createdForms.push(form);
 
         // Start email async
@@ -869,10 +869,10 @@ describe('createVestForm', () => {
           },
         );
 
-        const form = createVestForm(multiAsyncSuite, {
+        const form = createVestForm(signal({
           email: 'test@example.com',
           username: 'testuser',
-        });
+        }), { suite: multiAsyncSuite });
         createdForms.push(form);
 
         // Start email async

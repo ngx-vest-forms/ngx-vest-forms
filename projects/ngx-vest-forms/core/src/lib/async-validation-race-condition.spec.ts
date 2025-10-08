@@ -114,13 +114,12 @@ describe('Async Validation Race Condition with only()', () => {
       );
 
       const form = createVestForm(
-        validationSuite,
         signal<TestModel>({
           email: '',
           name: '',
           agreeToTerms: false,
         }),
-        { errorStrategy: 'immediate' },
+        { suite: validationSuite, errorStrategy: 'immediate' },
       );
       createdForms.push(form); // Track for cleanup
 
@@ -210,13 +209,12 @@ describe('Async Validation Race Condition with only()', () => {
       );
 
       const form = createVestForm(
-        validationSuite,
         signal<TestModel>({
           email: '',
           name: '',
           agreeToTerms: false,
         }),
-        { errorStrategy: 'immediate' },
+        { suite: validationSuite, errorStrategy: 'immediate' },
       );
       createdForms.push(form); // Track for cleanup
 

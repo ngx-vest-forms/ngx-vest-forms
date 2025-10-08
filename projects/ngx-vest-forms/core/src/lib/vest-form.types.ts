@@ -57,11 +57,11 @@ export type VestSuite<
  *
  * @example
  * ```typescript
- * // Accessible UX (recommended)
- * const form = createVestForm(suite, model, { errorStrategy: 'on-touch' });
+ * /// Accessible UX (recommended)
+ * const form = createVestForm(model, { suite: userValidations, errorStrategy: 'on-touch' });
  *
- * // Immediate feedback
- * const form = createVestForm(suite, model, { errorStrategy: 'immediate' });
+ * /// Immediate feedback
+ * const form = createVestForm(model, { suite: userValidations, errorStrategy: 'immediate' });
  * ```
  */
 export type ErrorDisplayStrategy =
@@ -73,7 +73,12 @@ export type ErrorDisplayStrategy =
 /**
  * Configuration options for creating a VestForm instance
  */
-export type VestFormOptions = {
+export type VestFormOptions<
+  TModel extends Record<string, unknown> = Record<string, unknown>,
+> = {
+  /** Vest validation suite (required) */
+  suite: VestSuite<TModel>;
+
   /** Strategy for when to display validation errors (can be static or reactive signal) */
   errorStrategy?: ErrorDisplayStrategy | Signal<ErrorDisplayStrategy>;
 
@@ -86,39 +91,44 @@ export type VestFormOptions = {
   /** Fields to exclude from Enhanced Field Signals API */
   excludeFields?: string[];
 
-  /** Optional schema adapter for runtime validation */
-  schema?: SchemaAdapter<unknown>;
+  /**
+   * Optional Standard Schema for type/structure validation (runs before Vest suite)
+   * Supports any Standard Schema v1 compatible library (Zod, Valibot, ArkType, etc.)
+   * @see https://standardschema.dev/
+   */
+  schema?: StandardSchema<TModel>;
 
   /** Custom debounce time for validation in milliseconds */
   debounceMs?: number;
 };
 
 /**
- * Schema adapter interface for integrating runtime schema validation
+ * Standard Schema v1 compatible type
+ * Represents any validation schema that implements the StandardSchemaV1 interface
  */
-export type SchemaAdapter<T> = {
-  /** Validate data against the schema */
-  validate(data: unknown): SchemaValidationResult<T>;
-
-  /** Get TypeScript type information */
-  getSchema(): unknown;
+export type StandardSchema<T = unknown> = {
+  readonly '~standard': {
+    readonly version: 1;
+    readonly vendor: string;
+    readonly validate: (
+      value: unknown,
+    ) =>
+      | { readonly value: T; readonly issues?: undefined }
+      | { readonly issues: readonly SchemaIssue[] }
+      | Promise<
+          | { readonly value: T; readonly issues?: undefined }
+          | { readonly issues: readonly SchemaIssue[] }
+        >;
+    readonly types?: { readonly input: T; readonly output: T } | undefined;
+  };
 };
 
 /**
- * Result of schema validation
+ * Standard Schema issue format
  */
-export type SchemaValidationResult<T> = {
-  /** Whether validation passed */
-  success: boolean;
-
-  /** Validated data if successful */
-  data?: T;
-
-  /** Validation errors if failed */
-  errors?: {
-    path: string;
-    message: string;
-  }[];
+export type SchemaIssue = {
+  readonly message: string;
+  readonly path?: readonly (PropertyKey | { readonly key: PropertyKey })[];
 };
 
 /**
@@ -272,6 +282,19 @@ export type VestForm<
 
   /** Whether the form has been submitted */
   hasSubmitted: Signal<boolean>;
+
+  /** Schema validation errors (Layer 1 - all errors, unfiltered) */
+  schemaErrors: Signal<Record<string, string[]>>;
+
+  /**
+   * Schema errors that should be visible based on the error display strategy.
+   * Only includes schema errors for fields that should show errors based on
+   * touch state, submit state, and the current errorStrategy.
+   *
+   * Ensures schema validation errors (Layer 1) behave consistently with
+   * Vest validation errors (Layer 2) in terms of display timing.
+   */
+  visibleSchemaErrors: Signal<Record<string, string[]>>;
 
   /**
    * Error display strategy (can be static or reactive signal).

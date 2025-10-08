@@ -159,7 +159,104 @@
       </div>
     </details>
 
-    <!-- Validation Errors Section -->
+    <!-- Schema Validation Errors Section (Layer 1) - Always show when schema present -->
+    @if (schema()) {
+    <details
+      class="group border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+      [attr.open]="hasSchemaErrors() ? true : null"
+    >
+      <summary
+        class="flex cursor-pointer items-center gap-2 px-6 py-4 text-lg font-medium text-gray-900 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-700/50 [&::-webkit-details-marker]:hidden"
+      >
+        <svg
+          class="h-4 w-4 transition-transform group-open:rotate-90"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 5l7 7-7 7"
+          ></path>
+        </svg>
+        <svg
+          class="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+          ></path>
+        </svg>
+        <span>{{ schemaVendorDisplay() }} Schema Errors (Layer 1)</span>
+        @if (schemaErrorCount() > 0) {
+        <span
+          class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-orange-100 text-xs font-medium text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
+        >
+          {{ schemaErrorCount() }}
+        </span>
+        }
+      </summary>
+      <div class="px-6 pb-6">
+        <div
+          class="mb-3 rounded-md border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+        >
+          <strong>💡 Two-Layer Validation:</strong>
+          @if (schemaVendor()) {
+          <strong>{{ schemaVendor() }}</strong> runs first (Layer 1) for type
+          safety, then Vest.js (Layer 2) for business logic. Errors are merged
+          and displayed inline. } @else { Schema validation runs first (Layer 1)
+          for type safety, then Vest.js (Layer 2) for business logic. Errors are
+          merged and displayed inline. }
+        </div>
+        @if (hasSchemaErrors()) {
+        <div class="space-y-3">
+          @for (entry of Object.entries(schemaErrors()); track entry[0]) {
+          <div
+            class="rounded-md border border-orange-200 bg-orange-50 p-3 dark:border-orange-700 dark:bg-orange-900/20"
+          >
+            <h6
+              class="text-sm font-semibold text-orange-800 dark:text-orange-300"
+            >
+              {{ entry[0] }}
+            </h6>
+            <ul
+              class="mt-2 list-inside list-disc text-sm text-orange-700 dark:text-orange-400"
+            >
+              @for (message of entry[1]; track message) {
+              <li>{{ message }}</li>
+              }
+            </ul>
+          </div>
+          }
+        </div>
+        } @else {
+        <div
+          class="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800 dark:border-green-700 dark:bg-green-900/20 dark:text-green-300"
+        >
+          <div class="flex items-center gap-2">
+            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fill-rule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                clip-rule="evenodd"
+              ></path>
+            </svg>
+            Schema validation passed
+          </div>
+        </div>
+        }
+      </div>
+    </details>
+    }
+
+    <!-- Validation Errors Section (Layer 2 when schema present, otherwise all errors) -->
     <details class="group bg-white dark:bg-gray-800" open>
       <summary
         class="flex cursor-pointer items-center gap-2 px-6 py-4 text-lg font-medium text-gray-900 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-700/50 [&::-webkit-details-marker]:hidden"
@@ -190,7 +287,10 @@
             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
           ></path>
         </svg>
-        <span>Validation Errors</span>
+        <span>
+          @if (schema()) { Vest.js Validation Errors (Layer 2) } @else {
+          Validation Errors }
+        </span>
         @if (errorEntries().length > 0) {
         <span
           class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-100 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300"

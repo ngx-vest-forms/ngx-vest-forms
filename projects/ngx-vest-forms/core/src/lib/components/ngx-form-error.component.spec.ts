@@ -46,13 +46,10 @@ describe('NgxFormErrorComponent', () => {
         template: `<ngx-form-error [field]="form.emailField()" />`,
       })
       class TestComponent {
-        form = createVestForm(
-          testSuite,
-          signal<TestModel>({ email: '', password: '' }),
-          {
-            errorStrategy: 'immediate',
-          },
-        );
+        form = createVestForm(signal<TestModel>({ email: '', password: '' }), {
+          suite: testSuite,
+          errorStrategy: 'immediate',
+        });
       }
 
       await render(TestComponent);
@@ -72,13 +69,10 @@ describe('NgxFormErrorComponent', () => {
         template: `<ngx-form-error [field]="form.emailField()" />`,
       })
       class TestComponent {
-        form = createVestForm(
-          testSuite,
-          signal<TestModel>({ email: '', password: '' }),
-          {
-            errorStrategy: 'immediate',
-          },
-        );
+        form = createVestForm(signal<TestModel>({ email: '', password: '' }), {
+          suite: testSuite,
+          errorStrategy: 'immediate',
+        });
       }
 
       await render(TestComponent);
@@ -94,13 +88,10 @@ describe('NgxFormErrorComponent', () => {
         template: `<ngx-form-error [field]="form.emailField()" />`,
       })
       class TestComponent {
-        form = createVestForm(
-          testSuite,
-          signal<TestModel>({ email: '', password: '' }),
-          {
-            errorStrategy: 'immediate',
-          },
-        );
+        form = createVestForm(signal<TestModel>({ email: '', password: '' }), {
+          suite: testSuite,
+          errorStrategy: 'immediate',
+        });
       }
 
       await render(TestComponent);
@@ -115,13 +106,10 @@ describe('NgxFormErrorComponent', () => {
         template: `<ngx-form-error [field]="form.emailField()" />`,
       })
       class TestComponent {
-        form = createVestForm(
-          testSuite,
-          signal<TestModel>({ email: '', password: '' }),
-          {
-            errorStrategy: 'on-submit', // Won't show until submit
-          },
-        );
+        form = createVestForm(signal<TestModel>({ email: '', password: '' }), {
+          suite: testSuite,
+          errorStrategy: 'on-submit', // Won't show until submit
+        });
       }
 
       await render(TestComponent);
@@ -138,14 +126,11 @@ describe('NgxFormErrorComponent', () => {
       })
       class TestComponent {
         form = createVestForm(
-          testSuite,
           signal<TestModel>({
             email: 'valid@example.com',
             password: 'password123',
           }),
-          {
-            errorStrategy: 'immediate',
-          },
+          { suite: testSuite, errorStrategy: 'immediate' },
         );
       }
 
@@ -172,11 +157,8 @@ describe('NgxFormErrorComponent', () => {
       })
       class TestComponent {
         form = createVestForm(
-          suiteWithWarnings,
           signal<TestModel>({ email: '', password: 'simple' }),
-          {
-            errorStrategy: 'immediate',
-          },
+          { suite: suiteWithWarnings, errorStrategy: 'immediate' },
         );
       }
 
@@ -197,11 +179,8 @@ describe('NgxFormErrorComponent', () => {
       })
       class TestComponent {
         form = createVestForm(
-          suiteWithWarnings,
           signal<TestModel>({ email: '', password: 'simple' }),
-          {
-            errorStrategy: 'immediate',
-          },
+          { suite: suiteWithWarnings, errorStrategy: 'immediate' },
         );
       }
 
@@ -223,11 +202,8 @@ describe('NgxFormErrorComponent', () => {
       })
       class TestComponent {
         form = createVestForm(
-          suiteWithWarnings,
           signal<TestModel>({ email: '', password: 'simple' }),
-          {
-            errorStrategy: 'immediate',
-          },
+          { suite: suiteWithWarnings, errorStrategy: 'immediate' },
         );
       }
 
@@ -249,11 +225,8 @@ describe('NgxFormErrorComponent', () => {
         })
         class TestComponent {
           form = createVestForm(
-            testSuite,
             signal<TestModel>({ email: '', password: '' }),
-            {
-              errorStrategy: 'immediate',
-            },
+            { suite: testSuite, errorStrategy: 'immediate' },
           );
         }
 
@@ -271,11 +244,8 @@ describe('NgxFormErrorComponent', () => {
         })
         class TestComponent {
           form = createVestForm(
-            testSuite,
             signal<TestModel>({ email: '', password: '' }),
-            {
-              errorStrategy: 'immediate',
-            },
+            { suite: testSuite, errorStrategy: 'immediate' },
           );
         }
 
@@ -302,11 +272,8 @@ describe('NgxFormErrorComponent', () => {
         })
         class TestComponent {
           form = createVestForm(
-            testSuite,
             signal<TestModel>({ email: '', password: '' }),
-            {
-              errorStrategy: 'on-touch',
-            },
+            { suite: testSuite, errorStrategy: 'on-touch' },
           );
         }
 
@@ -324,11 +291,8 @@ describe('NgxFormErrorComponent', () => {
         })
         class TestComponent {
           form = createVestForm(
-            testSuite,
             signal<TestModel>({ email: '', password: '' }),
-            {
-              errorStrategy: 'on-touch',
-            },
+            { suite: testSuite, errorStrategy: 'on-touch' },
           );
         }
 
@@ -350,11 +314,8 @@ describe('NgxFormErrorComponent', () => {
         })
         class TestComponent {
           form = createVestForm(
-            testSuite,
             signal<TestModel>({ email: '', password: '' }),
-            {
-              errorStrategy: 'on-touch',
-            },
+            { suite: testSuite, errorStrategy: 'on-touch' },
           );
         }
 
@@ -376,11 +337,8 @@ describe('NgxFormErrorComponent', () => {
         })
         class TestComponent {
           form = createVestForm(
-            testSuite,
             signal<TestModel>({ email: '', password: '' }),
-            {
-              errorStrategy: 'on-touch',
-            },
+            { suite: testSuite, errorStrategy: 'on-touch' },
           );
         }
 
@@ -409,11 +367,8 @@ describe('NgxFormErrorComponent', () => {
         })
         class TestComponent {
           form = createVestForm(
-            testSuite,
             signal<TestModel>({ email: '', password: '' }),
-            {
-              errorStrategy: 'on-touch',
-            },
+            { suite: testSuite, errorStrategy: 'on-touch' },
           );
         }
 
@@ -441,11 +396,8 @@ describe('NgxFormErrorComponent', () => {
         })
         class TestComponent {
           form = createVestForm(
-            testSuite,
             signal<TestModel>({ email: '', password: '' }),
-            {
-              errorStrategy: 'on-submit',
-            },
+            { suite: testSuite, errorStrategy: 'on-submit' },
           );
         }
 
@@ -463,11 +415,8 @@ describe('NgxFormErrorComponent', () => {
         })
         class TestComponent {
           form = createVestForm(
-            testSuite,
             signal<TestModel>({ email: '', password: '' }),
-            {
-              errorStrategy: 'on-submit',
-            },
+            { suite: testSuite, errorStrategy: 'on-submit' },
           );
         }
 
@@ -489,11 +438,8 @@ describe('NgxFormErrorComponent', () => {
         })
         class TestComponent {
           form = createVestForm(
-            testSuite,
             signal<TestModel>({ email: '', password: '' }),
-            {
-              errorStrategy: 'on-submit',
-            },
+            { suite: testSuite, errorStrategy: 'on-submit' },
           );
         }
 
@@ -519,14 +465,11 @@ describe('NgxFormErrorComponent', () => {
         })
         class TestComponent {
           form = createVestForm(
-            testSuite,
             signal<TestModel>({
               email: 'valid@example.com',
               password: 'password123',
             }),
-            {
-              errorStrategy: 'on-submit',
-            },
+            { suite: testSuite, errorStrategy: 'on-submit' },
           );
         }
 
@@ -548,11 +491,8 @@ describe('NgxFormErrorComponent', () => {
         })
         class TestComponent {
           form = createVestForm(
-            testSuite,
             signal<TestModel>({ email: '', password: '' }),
-            {
-              errorStrategy: 'on-submit',
-            },
+            { suite: testSuite, errorStrategy: 'on-submit' },
           );
         }
 
@@ -592,11 +532,8 @@ describe('NgxFormErrorComponent', () => {
         })
         class TestComponent {
           form = createVestForm(
-            testSuite,
             signal<TestModel>({ email: '', password: '' }),
-            {
-              errorStrategy: 'manual',
-            },
+            { suite: testSuite, errorStrategy: 'manual' },
           );
         }
 
@@ -614,11 +551,8 @@ describe('NgxFormErrorComponent', () => {
         })
         class TestComponent {
           form = createVestForm(
-            testSuite,
             signal<TestModel>({ email: '', password: '' }),
-            {
-              errorStrategy: 'manual',
-            },
+            { suite: testSuite, errorStrategy: 'manual' },
           );
         }
 
@@ -771,13 +705,10 @@ describe('NgxFormErrorComponent', () => {
         template: `<ngx-form-error [field]="form.emailField()" />`,
       })
       class TestComponent {
-        form = createVestForm(
-          testSuite,
-          signal<TestModel>({ email: '', password: '' }),
-          {
-            errorStrategy: 'immediate',
-          },
-        );
+        form = createVestForm(signal<TestModel>({ email: '', password: '' }), {
+          suite: testSuite,
+          errorStrategy: 'immediate',
+        });
       }
 
       await render(TestComponent);
@@ -795,13 +726,10 @@ describe('NgxFormErrorComponent', () => {
         template: `<ngx-form-error [field]="form.emailField()" />`,
       })
       class TestComponent {
-        form = createVestForm(
-          testSuite,
-          signal<TestModel>({ email: '', password: '' }),
-          {
-            errorStrategy: 'immediate',
-          },
-        );
+        form = createVestForm(signal<TestModel>({ email: '', password: '' }), {
+          suite: testSuite,
+          errorStrategy: 'immediate',
+        });
       }
 
       const { container } = await render(TestComponent);
@@ -821,13 +749,10 @@ describe('NgxFormErrorComponent', () => {
         template: `<ngx-form-error [field]="form.emailField()" />`,
       })
       class TestComponent {
-        form = createVestForm(
-          testSuite,
-          signal<TestModel>({ email: '', password: '' }),
-          {
-            errorStrategy: 'immediate',
-          },
-        );
+        form = createVestForm(signal<TestModel>({ email: '', password: '' }), {
+          suite: testSuite,
+          errorStrategy: 'immediate',
+        });
       }
 
       const { container } = await render(TestComponent);
@@ -847,13 +772,10 @@ describe('NgxFormErrorComponent', () => {
         template: `<ngx-form-error [field]="form.emailField()" />`,
       })
       class TestComponent {
-        form = createVestForm(
-          testSuite,
-          signal<TestModel>({ email: '', password: '' }),
-          {
-            errorStrategy: 'immediate',
-          },
-        );
+        form = createVestForm(signal<TestModel>({ email: '', password: '' }), {
+          suite: testSuite,
+          errorStrategy: 'immediate',
+        });
       }
 
       const { container } = await render(TestComponent);
@@ -880,14 +802,11 @@ describe('NgxFormErrorComponent', () => {
       })
       class TestComponent {
         form = createVestForm(
-          testSuite,
           signal<TestModel>({
             email: 'valid@example.com',
             password: 'password123',
           }),
-          {
-            errorStrategy: 'immediate',
-          },
+          { suite: testSuite, errorStrategy: 'immediate' },
         );
       }
 
@@ -904,13 +823,10 @@ describe('NgxFormErrorComponent', () => {
         template: `<ngx-form-error [field]="form.emailField()" />`,
       })
       class TestComponent {
-        form = createVestForm(
-          testSuite,
-          signal<TestModel>({ email: '', password: '' }),
-          {
-            errorStrategy: 'immediate',
-          },
-        );
+        form = createVestForm(signal<TestModel>({ email: '', password: '' }), {
+          suite: testSuite,
+          errorStrategy: 'immediate',
+        });
       }
 
       await render(TestComponent);
@@ -928,13 +844,10 @@ describe('NgxFormErrorComponent', () => {
         template: `<ngx-form-error [field]="form.emailField()" />`,
       })
       class TestComponent {
-        form = createVestForm(
-          testSuite,
-          signal<TestModel>({ email: '', password: '' }),
-          {
-            errorStrategy: 'immediate',
-          },
-        );
+        form = createVestForm(signal<TestModel>({ email: '', password: '' }), {
+          suite: testSuite,
+          errorStrategy: 'immediate',
+        });
       }
 
       await render(TestComponent);
@@ -954,13 +867,10 @@ describe('NgxFormErrorComponent', () => {
         template: `<ngx-form-error [field]="form.emailField()" />`,
       })
       class TestComponent {
-        form = createVestForm(
-          testSuite,
-          signal<TestModel>({ email: '', password: '' }),
-          {
-            errorStrategy: 'immediate',
-          },
-        );
+        form = createVestForm(signal<TestModel>({ email: '', password: '' }), {
+          suite: testSuite,
+          errorStrategy: 'immediate',
+        });
       }
 
       await render(TestComponent);
@@ -975,13 +885,10 @@ describe('NgxFormErrorComponent', () => {
         template: `<ngx-form-error [field]="form.emailField()" />`,
       })
       class TestComponent {
-        form = createVestForm(
-          testSuite,
-          signal<TestModel>({ email: '', password: '' }),
-          {
-            errorStrategy: 'immediate',
-          },
-        );
+        form = createVestForm(signal<TestModel>({ email: '', password: '' }), {
+          suite: testSuite,
+          errorStrategy: 'immediate',
+        });
       }
 
       await render(TestComponent);
@@ -996,13 +903,10 @@ describe('NgxFormErrorComponent', () => {
         template: `<ngx-form-error [field]="form.emailField()" />`,
       })
       class TestComponent {
-        form = createVestForm(
-          testSuite,
-          signal<TestModel>({ email: '', password: '' }),
-          {
-            errorStrategy: 'immediate',
-          },
-        );
+        form = createVestForm(signal<TestModel>({ email: '', password: '' }), {
+          suite: testSuite,
+          errorStrategy: 'immediate',
+        });
       }
 
       await render(TestComponent);
@@ -1031,13 +935,10 @@ describe('NgxFormErrorComponent', () => {
         template: `<ngx-form-error [field]="form.emailField()" />`,
       })
       class TestComponent {
-        form = createVestForm(
-          eagerSuite,
-          signal<TestModel>({ email: '', password: '' }),
-          {
-            errorStrategy: 'immediate',
-          },
-        );
+        form = createVestForm(signal<TestModel>({ email: '', password: '' }), {
+          suite: eagerSuite,
+          errorStrategy: 'immediate',
+        });
       }
 
       await render(TestComponent);
@@ -1071,13 +972,10 @@ describe('NgxFormErrorComponent', () => {
         template: `<ngx-form-error [field]="form.emailField()" />`,
       })
       class TestComponent {
-        form = createVestForm(
-          allModeSuite,
-          signal<TestModel>({ email: '', password: '' }),
-          {
-            errorStrategy: 'immediate',
-          },
-        );
+        form = createVestForm(signal<TestModel>({ email: '', password: '' }), {
+          suite: allModeSuite,
+          errorStrategy: 'immediate',
+        });
       }
 
       const { container } = await render(TestComponent);
@@ -1115,9 +1013,9 @@ describe('NgxFormErrorComponent', () => {
       })
       class TestComponent {
         form = createVestForm(
-          allModeSuite,
           signal<TestModel>({ email: 'invalid-email', password: '' }),
           {
+            suite: allModeSuite,
             errorStrategy: 'immediate',
           },
         );

@@ -106,7 +106,8 @@ describe('NgxVestFormField', () => {
         `,
       })
       class TestFormComponent {
-        form = createVestForm(testSuite, signal({ email: '', name: '' }), {
+        form = createVestForm(signal({ email: '', name: '' }), {
+          suite: testSuite,
           errorStrategy: 'immediate',
         });
       }
@@ -135,8 +136,8 @@ describe('NgxVestFormField', () => {
       })
       class TestFormComponent {
         form = createVestForm(
-          testSuite,
           signal({ email: 'test@example.com', name: 'John' }),
+          { suite: testSuite },
         );
 
         constructor() {
@@ -168,11 +169,10 @@ describe('NgxVestFormField', () => {
         `,
       })
       class TestFormComponent {
-        form = createVestForm(
-          testSuite,
-          signal({ email: 'invalid-email', name: '' }),
-          { errorStrategy: 'immediate' },
-        );
+        form = createVestForm(signal({ email: 'invalid-email', name: '' }), {
+          suite: testSuite,
+          errorStrategy: 'immediate',
+        });
       }
 
       await render(TestFormComponent);
@@ -212,7 +212,8 @@ describe('NgxVestFormField', () => {
         `,
       })
       class TestFormComponent {
-        form = createVestForm(testSuite, signal({ email: '', name: '' }), {
+        form = createVestForm(signal({ email: '', name: '' }), {
+          suite: testSuite,
           errorStrategy: 'immediate',
         });
       }
@@ -334,7 +335,8 @@ describe('NgxVestFormField', () => {
         `,
       })
       class TestFormComponent {
-        form = createVestForm(testSuite, signal({ email: '', name: '' }), {
+        form = createVestForm(signal({ email: '', name: '' }), {
+          suite: testSuite,
           errorStrategy: 'immediate',
         });
       }

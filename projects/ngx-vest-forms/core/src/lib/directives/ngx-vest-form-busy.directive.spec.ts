@@ -62,9 +62,9 @@ describe('NgxVestFormBusyDirective', () => {
         `,
       })
       class TestComponent {
-        form = createVestForm(testSuite, signal({ email: '', password: '' }), {
+        form = createVestForm(signal({ email: '', password: '' }), { suite: testSuite, 
           errorStrategy: 'immediate',
-        });
+         });
       }
 
       await render(TestComponent);
@@ -90,9 +90,9 @@ describe('NgxVestFormBusyDirective', () => {
         `,
       })
       class TestComponent {
-        form = createVestForm(testSuite, signal({ email: '', password: '' }), {
+        form = createVestForm(signal({ email: '', password: '' }), { suite: testSuite, 
           errorStrategy: 'immediate',
-        });
+         });
 
         async save(event: Event) {
           event.preventDefault();
@@ -155,9 +155,9 @@ describe('NgxVestFormBusyDirective', () => {
         `,
       })
       class TestComponent {
-        form = createVestForm(testSuite, signal({ email: '', password: '' }), {
+        form = createVestForm(signal({ email: '', password: '' }), { suite: testSuite, 
           errorStrategy: 'immediate',
-        });
+         });
 
         submitComplete = false;
 
@@ -212,9 +212,9 @@ describe('NgxVestFormBusyDirective', () => {
         `,
       })
       class TestComponent {
-        form = createVestForm(testSuite, signal({ email: '', password: '' }), {
+        form = createVestForm(signal({ email: '', password: '' }), { suite: testSuite, 
           errorStrategy: 'immediate',
-        });
+         });
 
         async save(event: Event) {
           event.preventDefault();
@@ -260,9 +260,9 @@ describe('NgxVestFormBusyDirective', () => {
         `,
       })
       class TestComponent {
-        form = createVestForm(testSuite, signal({ email: '', password: '' }), {
+        form = createVestForm(signal({ email: '', password: '' }), { suite: testSuite, 
           errorStrategy: 'immediate',
-        });
+         });
 
         async save(event: Event) {
           event.preventDefault();
@@ -320,9 +320,9 @@ describe('NgxVestFormBusyDirective', () => {
         `,
       })
       class TestComponent {
-        form = createVestForm(testSuite, signal({ email: '', password: '' }), {
+        form = createVestForm(signal({ email: '', password: '' }), { suite: testSuite, 
           errorStrategy: 'immediate',
-        });
+         });
       }
 
       await render(TestComponent);
@@ -374,9 +374,9 @@ describe('NgxVestFormBusyDirective', () => {
         `,
       })
       class TestComponent {
-        form = createVestForm(asyncSuite, signal({ email: '' }), {
+        form = createVestForm(signal({ email: '' }), { suite: asyncSuite, 
           errorStrategy: 'immediate',
-        });
+         });
       }
 
       await render(TestComponent);

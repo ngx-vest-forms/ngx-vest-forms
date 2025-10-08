@@ -1,6 +1,10 @@
-# Standard Schema Adapters Guide
+# Standard Schema Integration Guide
 
-**Purpose:** Comprehensive explanation of Standard Schema adapters in ngx-vest-forms - what they do, why they're valuable, and how to use them.
+**Purpose:** Comprehensive explanation of Standard Schema support in ngx-vest-forms - what it does, why it's valuable, and how to use it.
+
+> **⚠️ Breaking Change (v2.0):** `createVestForm` parameter order changed from `(suite, model, options)` to `(model, suite, options)` to align with Angular Signal Forms conventions. All examples below use the new signature.
+
+> **📝 Note on Architecture (2024+):** This guide previously described adapter wrapper functions (`fromZod()`, `fromValibot()`, etc.). As of 2024, **Zod 3.24.0+, Valibot 1.0+, and ArkType 2.0+ natively implement the [StandardSchemaV1 specification](https://standardschema.dev)**. ngx-vest-forms now uses schemas **directly** - no adapter wrappers needed!
 
 ---
 
@@ -8,7 +12,7 @@
 
 1. [Executive Summary](#executive-summary)
 2. [The Problem: Two Types of Validation](#the-problem-two-types-of-validation)
-3. [What Standard Schema Adapters Do](#what-standard-schema-adapters-do)
+3. [What Standard Schema Support Does](#what-standard-schema-support-does)
 4. [Key Advantages](#key-advantages)
 5. [Dual-Layer Validation Architecture](#dual-layer-validation-architecture)
 6. [Concrete Examples](#concrete-examples)
@@ -21,19 +25,21 @@
 
 ## Executive Summary
 
-**TL;DR:** Standard Schema adapters add a **type validation layer** before Vest.js business logic validation, giving you:
+**TL;DR:** Standard Schema support adds a **type validation layer** before Vest.js business logic validation, giving you:
 
 - ✅ **Separation of concerns** - Structure validation (Zod) separate from business rules (Vest)
 - ✅ **Type safety** - Runtime type checking with compile-time type inference
 - ✅ **Ecosystem compatibility** - Use same schemas in tRPC, TanStack, Hono, etc.
 - ✅ **Better DX** - Catch structural errors immediately, business errors progressively
 - ✅ **Framework portability** - Share type schemas across frontend/backend/services
+- ✅ **Native StandardSchemaV1** - Direct schema usage, no wrapper functions needed
 
-**What they DON'T do:**
+**What it DOESN'T do:**
 
 - ❌ Replace Vest.js (Vest is still the validation engine)
 - ❌ Change your forms (same Enhanced Proxy API)
 - ❌ Break existing code (opt-in via `schema` option)
+- ❌ Require adapter wrappers (libraries implement StandardSchemaV1 natively)
 
 ---
 
@@ -151,9 +157,9 @@ const userSuite = staticSafeSuite<User>((data) => {
 
 ---
 
-## What Standard Schema Adapters Do
+## What Standard Schema Support Does
 
-Standard Schema adapters provide a **two-layer validation pipeline**:
+Standard Schema integration provides a **two-layer validation pipeline**:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -162,15 +168,15 @@ Standard Schema adapters provide a **two-layer validation pipeline**:
 └──────────────────────┬──────────────────────────────────────┘
                        │
                        ▼
-         ┌─────────────────────────────┐
-         │   LAYER 1: Type Validation  │
-         │  (Standard Schema Adapter)  │
-         ├─────────────────────────────┤
-         │ • Is email a string?        │
-         │ • Is email valid format?    │
-         │ • Is age a number?          │
-         │ • Is role enum value?       │
-         └──────────┬──────────────────┘
+         ┌─────────────────────────────────┐
+         │   LAYER 1: Type Validation      │
+         │  (StandardSchemaV1 Interface)   │
+         ├─────────────────────────────────┤
+         │ • Is email a string?            │
+         │ • Is email valid format?        │
+         │ • Is age a number?              │
+         │ • Is role enum value?           │
+         └──────────┬────────────────────┘
                     │
          ┌──────────┴──────────┐
          │                     │
@@ -199,37 +205,92 @@ Standard Schema adapters provide a **two-layer validation pipeline**:
               └────────────────────────────────┘
 ```
 
-### Adapter Responsibilities
+### Native StandardSchemaV1 Support
 
-The `SchemaAdapter` interface (already in ngx-vest-forms types):
+ngx-vest-forms uses the [StandardSchemaV1 specification](https://standardschema.dev) **directly**:
 
 ```typescript
-export type SchemaAdapter<T> = {
-  // Validate data structure and types
-  validate(data: unknown): SchemaValidationResult<T>;
-
-  // Get underlying schema (for introspection)
-  getSchema(): unknown;
-};
-
-export type SchemaValidationResult<T> = {
-  success: boolean; // Did validation pass?
-  data?: T; // Parsed/transformed data
-  errors?: {
-    // Schema errors
-    path: string; // 'email', 'user.profile.name'
-    message: string; // 'Invalid email format'
-  }[];
-};
+// StandardSchemaV1 interface (built into Zod, Valibot, ArkType)
+interface StandardSchemaV1<Input = unknown, Output = Input> {
+  readonly '~standard': {
+    readonly version: 1;
+    readonly vendor: string;
+    readonly validate: (
+      value: unknown,
+    ) =>
+      | { value: Output; issues?: undefined }
+      | {
+          issues: ReadonlyArray<{
+            message: string;
+            path?: ReadonlyArray<PropertyKey>;
+          }>;
+          value?: undefined;
+        }
+      | Promise</* same as above */>;
+  };
+}
 ```
 
-### What Adapters Actually Do
+**Why no adapter wrappers?**
 
-1. **Wrap Standard Schema libraries** (Zod, Valibot, ArkType)
-2. **Normalize error format** (different libraries → common format)
-3. **Run before Vest.js** (type check first, then business logic)
-4. **Provide type inference** (TypeScript types from schemas)
-5. **Enable ecosystem integration** (same schema in tRPC, TanStack)
+- ✅ **Zod 3.24.0+** implements StandardSchemaV1 natively
+- ✅ **Valibot 1.0+** implements StandardSchemaV1 natively
+- ✅ **ArkType 2.0+** implements StandardSchemaV1 natively
+
+**We simply call the native interface:**
+
+```typescript
+// Inside createVestForm
+const validationResult = schema['~standard'].validate(data);
+```
+
+### What ngx-vest-forms Provides
+
+Since schemas implement StandardSchemaV1 natively, we provide **optional type guards** for runtime detection:
+
+```typescript
+import {
+  isZodSchema,
+  isValibotSchema,
+  isArkTypeSchema,
+} from 'ngx-vest-forms/schemas';
+
+// Runtime type detection (optional - rarely needed)
+if (isZodSchema(schema)) {
+  console.log('Using Zod schema');
+  // Access Zod-specific properties
+}
+
+// Direct usage (recommended)
+const form = createVestForm(model, suite, {
+  schema: UserSchema, // Any StandardSchemaV1-compatible schema
+});
+```
+
+### Type Helpers (Also Optional)
+
+```typescript
+import type {
+  ZodInfer,
+  ValibotInfer,
+  ArkTypeInfer,
+} from 'ngx-vest-forms/schemas';
+import { z } from 'zod';
+
+const UserSchema = z.object({ name: z.string() });
+
+// Option 1: Use library's native type inference
+type User = z.infer<typeof UserSchema>;
+
+// Option 2: Use our helper (same result)
+type User = ZodInfer<typeof UserSchema>;
+```
+
+**When to use helpers:**
+
+- ✅ Building generic utilities that work with multiple schema libraries
+- ✅ Need consistent naming across different libraries
+- ❌ Regular form usage (use native `z.infer`, `v.InferOutput`, `type.infer` instead)
 
 ---
 
@@ -252,7 +313,7 @@ const userSuite = staticSafeSuite<z.infer<typeof UserSchema>>((data) => {
   });
 });
 
-const form = createVestForm(userSuite, model, {
+const form = createVestForm(model, userSuite, {
   schema: UserSchema, // Layer 1: Structure
   // userSuite         // Layer 2: Business logic
 });
@@ -278,7 +339,7 @@ const ProductSchema = z.object({
 });
 
 // Form gets RUNTIME type checking
-const form = createVestForm(productSuite, model, {
+const form = createVestForm(model, productSuite, {
   schema: ProductSchema,
 });
 
@@ -309,7 +370,7 @@ export const UserSchema = z.object({
 });
 
 // 2. Use in ngx-vest-forms
-const form = createVestForm(userSuite, model, {
+const form = createVestForm(model, userSuite, {
   schema: UserSchema, // ✅ Type validation
 });
 
@@ -349,7 +410,7 @@ const { register } = useForm({
 
 ```typescript
 // With schema adapter
-const form = createVestForm(userSuite, model, {
+const form = createVestForm(model, userSuite, {
   schema: UserSchema,
   errorStrategy: 'on-touch', // For business errors
 });
@@ -387,7 +448,7 @@ form.setEmail('test@example.com');
 **Skip Expensive Checks:**
 
 ```typescript
-const form = createVestForm(userSuite, model, {
+const form = createVestForm(model, userSuite, {
   schema: z.object({
     email: z.string().email(), // Fast: regex check
   }),
@@ -766,7 +827,7 @@ form.setCountry('CA');
 
 ```typescript
 // Setup
-const form = createVestForm(userSuite, model, {
+const form = createVestForm(model, userSuite, {
   schema: UserSchema,
   errorStrategy: 'on-touch',
 });
@@ -991,7 +1052,7 @@ import type {
  *   age: z.number().min(18),
  * });
  *
- * const form = createVestForm(userSuite, model, {
+ * const form = createVestForm(model, userSuite, {
  *   schema: fromZod(UserSchema),
  * });
  * ```
@@ -1234,7 +1295,7 @@ export const userRouter = t.router({
 // frontend/user-form.component.ts (Angular)
 import { CreateUserSchema } from '../shared/schemas/user.schema';
 
-const form = createVestForm(userSuite, model, {
+const form = createVestForm(model, userSuite, {
   schema: CreateUserSchema, // ✅ Same schema validates form
 });
 ```
@@ -1263,7 +1324,7 @@ export const ProductSchema = v.object({
 
 ```typescript
 // angular-app/product-form.component.ts
-const form = createVestForm(productSuite, model, {
+const form = createVestForm(model, productSuite, {
   schema: fromValibot(ProductSchema), // ✅ Valibot validation
 });
 ```
@@ -1309,7 +1370,7 @@ app.post('/users', zValidator('json', CreateUserSchema), async (c) => {
 
 ```typescript
 // frontend/user-form.component.ts
-const form = createVestForm(userSuite, model, {
+const form = createVestForm(model, userSuite, {
   schema: CreateUserSchema, // ✅ Same schema as backend
 });
 ```
@@ -1431,7 +1492,7 @@ form.setEmail('test@gmail.com');
   `,
 })
 export class UserFormComponent {
-  form = createVestForm(userSuite, model, {
+  form = createVestForm(model, userSuite, {
     schema: UserSchema, // ✅ Works with Material
   });
 }
@@ -1470,10 +1531,10 @@ const router = t.router({
 
 ```typescript
 // Before (still works)
-const form = createVestForm(userSuite, model);
+const form = createVestForm(model, userSuite);
 
 // After (add schema)
-const form = createVestForm(userSuite, model, {
+const form = createVestForm(model, userSuite, {
   schema: UserSchema, // ✅ Add this line
 });
 ```

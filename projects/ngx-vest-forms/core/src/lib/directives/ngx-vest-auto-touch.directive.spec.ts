@@ -36,7 +36,7 @@ const testSuite = staticSafeSuite(
 describe('NgxVestAutoTouchDirective', () => {
   describe('Auto-Application', () => {
     it('should auto-apply to text inputs with [value] binding', async () => {
-      const form = createVestForm(testSuite, signal({ email: '' }));
+      const form = createVestForm(signal({ email: '' }), { suite: testSuite });
 
       @Component({
         imports: [NgxVestAutoTouchDirective, NgxVestFormProviderDirective],
@@ -63,7 +63,7 @@ describe('NgxVestAutoTouchDirective', () => {
     });
 
     it('should auto-apply to email inputs with [value] binding', async () => {
-      const form = createVestForm(testSuite, signal({ email: '' }));
+      const form = createVestForm(signal({ email: '' }), { suite: testSuite });
 
       @Component({
         imports: [NgxVestAutoTouchDirective, NgxVestFormProviderDirective],
@@ -89,7 +89,7 @@ describe('NgxVestAutoTouchDirective', () => {
     });
 
     it('should auto-apply to number inputs with [value] binding', async () => {
-      const form = createVestForm(testSuite, signal({ email: '' }));
+      const form = createVestForm(signal({ email: '' }), { suite: testSuite });
 
       @Component({
         imports: [NgxVestAutoTouchDirective, NgxVestFormProviderDirective],
@@ -192,7 +192,7 @@ describe('NgxVestAutoTouchDirective', () => {
 
   describe('Blur Behavior', () => {
     it('should call form.field().touch() on blur', async () => {
-      const form = createVestForm(testSuite, signal({ email: '' }));
+      const form = createVestForm(signal({ email: '' }), { suite: testSuite });
       const touchSpy = vi.fn();
       const originalFieldFunction = form.field.bind(form);
       form.field = vi.fn((path: string) => {
@@ -225,7 +225,7 @@ describe('NgxVestAutoTouchDirective', () => {
 
       // Trigger blur
       await userEvent.click(input);
-      await userEvent.tab();
+      input.dispatchEvent(new FocusEvent('blur'));
 
       // Verify touch was called
       await TestBed.inject(ApplicationRef).whenStable();
@@ -251,16 +251,23 @@ describe('NgxVestAutoTouchDirective', () => {
 
       // Blur should not throw error when no form
       await userEvent.click(input);
-      await userEvent.tab();
+      input.dispatchEvent(new FocusEvent('blur'));
 
       // No error should be thrown
       expect(input).toBeInTheDocument();
     });
 
     it('should NOT call touch when global config disables auto-touch', async () => {
-      const form = createVestForm(testSuite, signal({ email: '' }));
+      const form = createVestForm(signal({ email: '' }), { suite: testSuite });
       const touchSpy = vi.fn();
-      form.field('email').touch = touchSpy;
+      const originalFieldFunction = form.field.bind(form);
+      form.field = vi.fn((path: string) => {
+        const result = originalFieldFunction(path as 'email');
+        if (path === 'email') {
+          return { ...result, touch: touchSpy };
+        }
+        return result;
+      }) as unknown as typeof form.field;
 
       @Component({
         imports: [NgxVestAutoTouchDirective, NgxVestFormProviderDirective],
@@ -290,7 +297,7 @@ describe('NgxVestAutoTouchDirective', () => {
 
       // Trigger blur
       await userEvent.click(input);
-      await userEvent.tab();
+      input.dispatchEvent(new FocusEvent('blur'));
 
       // Verify touch was NOT called
       await TestBed.inject(ApplicationRef).whenStable();
@@ -300,7 +307,7 @@ describe('NgxVestAutoTouchDirective', () => {
 
   describe('Field Name Extraction', () => {
     it('should extract field name from id attribute (priority 3)', async () => {
-      const form = createVestForm(testSuite, signal({ email: '' }));
+      const form = createVestForm(signal({ email: '' }), { suite: testSuite });
       const touchSpy = vi.fn();
       const originalFieldFunction = form.field.bind(form);
       form.field = vi.fn((path: string) => {
@@ -340,7 +347,9 @@ describe('NgxVestAutoTouchDirective', () => {
     });
 
     it('should extract field name from id attribute (priority 5)', async () => {
-      const form = createVestForm(testSuite, signal({ firstName: '' }));
+      const form = createVestForm(signal({ firstName: '' }), {
+        suite: testSuite,
+      });
       const touchSpy = vi.fn();
       const originalFieldFunction = form.field.bind(form);
       form.field = vi.fn((path: string) => {
@@ -379,7 +388,7 @@ describe('NgxVestAutoTouchDirective', () => {
     });
 
     it('should convert underscores to dots in field paths', async () => {
-      const form = createVestForm(testSuite, signal({ email: '' }));
+      const form = createVestForm(signal({ email: '' }), { suite: testSuite });
       const originalFieldFunction = form.field.bind(form);
       form.field = vi.fn((path: string) =>
         originalFieldFunction(path as 'email'),
@@ -414,7 +423,7 @@ describe('NgxVestAutoTouchDirective', () => {
     });
 
     it('should use data-vest-field attribute (priority 1)', async () => {
-      const form = createVestForm(testSuite, signal({ email: '' }));
+      const form = createVestForm(signal({ email: '' }), { suite: testSuite });
       const originalFieldFunction = form.field.bind(form);
       form.field = vi.fn((path: string) =>
         originalFieldFunction(path as 'email'),
@@ -450,7 +459,7 @@ describe('NgxVestAutoTouchDirective', () => {
     });
 
     it('should use custom resolver from config (priority 2)', async () => {
-      const form = createVestForm(testSuite, signal({ email: '' }));
+      const form = createVestForm(signal({ email: '' }), { suite: testSuite });
       const originalFieldFunction = form.field.bind(form);
       form.field = vi.fn((path: string) =>
         originalFieldFunction(path as 'email'),
@@ -500,7 +509,7 @@ describe('NgxVestAutoTouchDirective', () => {
 
   describe('Opt-Out Mechanism', () => {
     it('should NOT apply when ngxVestAutoTouchDisabled attribute is present', async () => {
-      const form = createVestForm(testSuite, signal({ email: '' }));
+      const form = createVestForm(signal({ email: '' }), { suite: testSuite });
       const touchSpy = vi.fn();
       form.field('email').touch = touchSpy;
 
@@ -537,7 +546,7 @@ describe('NgxVestAutoTouchDirective', () => {
         .mockImplementation(() => {
           /* noop - we're just suppressing console warnings in test */
         });
-      const form = createVestForm(testSuite, signal({ email: '' }));
+      const form = createVestForm(signal({ email: '' }), { suite: testSuite });
 
       @Component({
         imports: [NgxVestAutoTouchDirective, NgxVestFormProviderDirective],
@@ -578,7 +587,7 @@ describe('NgxVestAutoTouchDirective', () => {
   describe('Strict Field Resolution', () => {
     it('should throw error when strictFieldResolution=true and resolveFieldPath returns null', async () => {
       // Create form with Enhanced Field Signals enabled
-      const form = createVestForm(testSuite, signal({ email: '' }));
+      const form = createVestForm(signal({ email: '' }), { suite: testSuite });
 
       // Mock resolveFieldPath to return null (unresolved ID)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -643,7 +652,7 @@ describe('NgxVestAutoTouchDirective', () => {
     });
 
     it('should throw error when strictFieldResolution=true and no id/name found', async () => {
-      const form = createVestForm(testSuite, signal({ email: '' }));
+      const form = createVestForm(signal({ email: '' }), { suite: testSuite });
 
       const consoleErrorSpy = vi
         .spyOn(console, 'error')
@@ -700,7 +709,7 @@ describe('NgxVestAutoTouchDirective', () => {
         .spyOn(console, 'warn')
         .mockImplementation(vi.fn());
 
-      const form = createVestForm(testSuite, signal({ email: '' }));
+      const form = createVestForm(signal({ email: '' }), { suite: testSuite });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vi.spyOn(form as any, 'resolveFieldPath').mockReturnValue(null);
 
@@ -756,7 +765,7 @@ describe('NgxVestAutoTouchDirective', () => {
         .spyOn(console, 'warn')
         .mockImplementation(vi.fn());
 
-      const form = createVestForm(testSuite, signal({ email: '' }));
+      const form = createVestForm(signal({ email: '' }), { suite: testSuite });
 
       @Component({
         imports: [NgxVestAutoTouchDirective, NgxVestFormProviderDirective],
@@ -800,7 +809,7 @@ describe('NgxVestAutoTouchDirective', () => {
         .spyOn(console, 'warn')
         .mockImplementation(vi.fn());
 
-      const form = createVestForm(testSuite, signal({ email: '' }));
+      const form = createVestForm(signal({ email: '' }), { suite: testSuite });
 
       @Component({
         imports: [NgxVestAutoTouchDirective, NgxVestFormProviderDirective],
@@ -838,16 +847,15 @@ describe('NgxVestAutoTouchDirective', () => {
 
   describe('Enhanced Field Signals Resolution', () => {
     it('should resolve camelCase ID to nested path via resolveFieldPath', async () => {
-      const form = createVestForm(
-        staticSafeSuite(
+      const form = createVestForm(signal({ personalInfo: { firstName: '' } }), {
+        suite: staticSafeSuite(
           (data: { personalInfo?: { firstName?: string } } = {}) => {
             test('personalInfo.firstName', 'Required', () => {
               enforce(data.personalInfo?.firstName).isNotEmpty();
             });
           },
         ),
-        signal({ personalInfo: { firstName: '' } }),
-      );
+      });
 
       @Component({
         imports: [NgxVestAutoTouchDirective, NgxVestFormProviderDirective],
@@ -888,14 +896,15 @@ describe('NgxVestAutoTouchDirective', () => {
         .spyOn(console, 'warn')
         .mockImplementation(vi.fn());
 
-      const form = createVestForm(
-        staticSafeSuite((data: { address?: { street?: string } } = {}) => {
-          test('address.street', 'Required', () => {
-            enforce(data.address?.street).isNotEmpty();
-          });
-        }),
-        signal({ address: { street: '' } }),
-      );
+      const form = createVestForm(signal({ address: { street: '' } }), {
+        suite: staticSafeSuite(
+          (data: { address?: { street?: string } } = {}) => {
+            test('address.street', 'Required', () => {
+              enforce(data.address?.street).isNotEmpty();
+            });
+          },
+        ),
+      });
 
       // Mock resolveFieldPath to return null (simulating ID not in Enhanced Field Signals registry)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -943,7 +952,7 @@ describe('NgxVestAutoTouchDirective', () => {
     });
 
     it('should handle forms without resolveFieldPath (Enhanced Field Signals disabled)', async () => {
-      const form = createVestForm(testSuite, signal({ email: '' }));
+      const form = createVestForm(signal({ email: '' }), { suite: testSuite });
 
       // Remove resolveFieldPath to simulate disabled Enhanced Field Signals
       delete (form as Record<string, unknown>)['resolveFieldPath'];

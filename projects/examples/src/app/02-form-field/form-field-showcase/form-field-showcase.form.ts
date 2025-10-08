@@ -4,7 +4,6 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import {
   createVestForm,
   NgxVestForms,
@@ -44,7 +43,7 @@ import {
 @Component({
   selector: 'ngx-form-field-showcase',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgxVestForms, NgxVestFormField, FormsModule],
+  imports: [NgxVestForms, NgxVestFormField],
   templateUrl: './form-field-showcase.html',
 })
 export class FormFieldShowcase {
@@ -73,8 +72,10 @@ export class FormFieldShowcase {
    * ⚠️ IMPORTANT: Pass the signal itself (this.errorDisplayMode), NOT the value (this.errorDisplayMode())
    * This allows the form to react to error strategy changes automatically.
    */
-  readonly form = createVestForm(formFieldShowcaseValidations, this.model, {
+  readonly form = createVestForm(this.model, {
+    suite: formFieldShowcaseValidations,
     errorStrategy: this.errorDisplayMode,
+    enhancedFieldSignals: true, // ✅ Enable camelCase field accessors
   });
 
   /**

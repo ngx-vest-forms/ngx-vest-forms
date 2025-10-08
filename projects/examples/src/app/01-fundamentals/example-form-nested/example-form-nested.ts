@@ -24,7 +24,6 @@ export class ExampleFormNested {
   errorDisplayMode = input<ErrorDisplayStrategy>('on-touch');
 
   protected readonly form = createVestForm(
-    nestedValidationSuite,
     signal<NestedFormModel>({
       personalInfo: {
         firstName: '',
@@ -46,6 +45,7 @@ export class ExampleFormNested {
       },
     }),
     {
+      suite: nestedValidationSuite,
       errorStrategy: this.errorDisplayMode, // ✅ Pass signal directly - strategy changes reactively!
     },
   );

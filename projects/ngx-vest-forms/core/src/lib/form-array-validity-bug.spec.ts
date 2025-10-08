@@ -91,8 +91,8 @@ describe('Form Array Validity Bug', () => {
   it('BUG: empty array should result in valid form', () => {
     // Arrange
     const form = createVestForm(
-      validationSuite,
-      signal<FormWithArray>({ interests: [] }),
+      signal(
+      { interests: [] }, { suite: validationSuite },
     );
 
     // Act - form is initialized with empty array
@@ -105,8 +105,8 @@ describe('Form Array Validity Bug', () => {
   it('BUG: array with one valid item should result in valid form', () => {
     // Arrange
     const form = createVestForm(
-      validationSuite,
-      signal<FormWithArray>({ interests: [] }),
+      signal(
+      { interests: [] }, { suite: validationSuite },
     );
     const interestsArray = form.array('interests');
 
@@ -121,8 +121,8 @@ describe('Form Array Validity Bug', () => {
   it('BUG: array with multiple valid items should result in valid form', () => {
     // Arrange
     const form = createVestForm(
-      validationSuite,
-      signal<FormWithArray>({ interests: [] }),
+      signal(
+      { interests: [] }, { suite: validationSuite },
     );
     const interestsArray = form.array('interests');
 
@@ -140,8 +140,8 @@ describe('Form Array Validity Bug', () => {
   it('WORKING: array with invalid items should result in invalid form', () => {
     // Arrange
     const form = createVestForm(
-      validationSuite,
-      signal<FormWithArray>({ interests: [] }),
+      signal(
+      { interests: [] }, { suite: validationSuite },
     );
     const interestsArray = form.array('interests');
 
@@ -160,8 +160,8 @@ describe('Form Array Validity Bug', () => {
   it('✅ FIXED: array validity should update after fixing invalid items', () => {
     // Arrange
     const form = createVestForm(
-      validationSuite,
-      signal<FormWithArray>({ interests: [] }),
+      signal(
+      { interests: [] }, { suite: validationSuite },
     );
     const interestsArray = form.array('interests');
     interestsArray.push('A'); // Invalid
@@ -177,8 +177,8 @@ describe('Form Array Validity Bug', () => {
   it('✅ FIXED: check raw validation result for empty array', () => {
     // Arrange
     const form = createVestForm(
-      validationSuite,
-      signal<FormWithArray>({ interests: [] }),
+      signal(
+      { interests: [] }, { suite: validationSuite },
     );
 
     // Act - get raw validation state
@@ -203,8 +203,8 @@ describe('Form Array Validity Bug', () => {
   it('✅ FIXED: check raw validation result after adding valid item', () => {
     // Arrange
     const form = createVestForm(
-      validationSuite,
-      signal<FormWithArray>({ interests: [] }),
+      signal(
+      { interests: [] }, { suite: validationSuite },
     );
     const interestsArray = form.array('interests');
 

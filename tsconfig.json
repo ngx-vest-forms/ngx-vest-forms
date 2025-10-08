@@ -31,11 +31,11 @@
         "dist/ngx-vest-forms/*"
       ],
       "ngx-vest-forms/form-field": [
-        "projects/ngx-vest-forms/form-field/public-api.ts",
+        "projects/ngx-vest-forms/form-field/src/public-api.ts",
         "dist/ngx-vest-forms/form-field"
       ],
       "ngx-vest-forms/schemas": [
-        "projects/ngx-vest-forms/schemas/public-api.ts",
+        "projects/ngx-vest-forms/schemas/src/public-api.ts",
         "dist/ngx-vest-forms/schemas"
       ]
     }

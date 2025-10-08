@@ -1,0 +1,136 @@
+<form
+  [ngxVestForm]="form"
+  (submit)="save($event)"
+  class="form-container"
+  novalidate
+>
+  <!-- Email Field -->
+  <div class="form-field">
+    <label class="form-label" for="email">Email Address *</label>
+    <input
+      id="email"
+      class="form-input"
+      type="email"
+      [value]="form.email()"
+      (input)="form.setEmail($event)"
+      placeholder="you@example.com"
+      aria-required="true"
+    />
+    <ngx-form-error [field]="form.emailField()" />
+  </div>
+
+  <!-- Username Field -->
+  <div class="form-field">
+    <label class="form-label" for="username">Username *</label>
+    <input
+      id="username"
+      class="form-input"
+      type="text"
+      [value]="form.username()"
+      (input)="form.setUsername($event)"
+      placeholder="johndoe"
+      aria-required="true"
+    />
+    <ngx-form-error [field]="form.usernameField()" />
+    @if (form.usernamePending()) {
+    <p class="text-muted-foreground mt-1 text-sm">
+      <span class="mr-1 inline-block animate-spin">⏳</span>
+      Checking availability...
+    </p>
+    }
+  </div>
+
+  <!-- Password Field -->
+  <div class="form-field">
+    <label class="form-label" for="password">Password *</label>
+    <input
+      id="password"
+      class="form-input"
+      type="password"
+      [value]="form.password()"
+      (input)="form.setPassword($event)"
+      placeholder="••••••••"
+      aria-required="true"
+    />
+    <ngx-form-error [field]="form.passwordField()" />
+    @if ( form.passwordField().validation().warnings.length > 0 &&
+    form.passwordShowWarnings() ) {
+    <div class="mt-1 space-y-1 text-sm text-amber-600">
+      @for (warning of form.passwordField().validation().warnings; track
+      warning) {
+      <p>⚠️ {{ warning }}</p>
+      }
+    </div>
+    }
+  </div>
+
+  <!-- Confirm Password Field -->
+  <div class="form-field">
+    <label class="form-label" for="confirmPassword">Confirm Password *</label>
+    <input
+      id="confirmPassword"
+      class="form-input"
+      type="password"
+      [value]="form.confirmPassword()"
+      (input)="form.setConfirmPassword($event)"
+      placeholder="••••••••"
+      aria-required="true"
+    />
+    <ngx-form-error [field]="form.confirmPasswordField()" />
+  </div>
+
+  <!-- Age Field -->
+  <div class="form-field">
+    <label class="form-label" for="age">Age *</label>
+    <input
+      id="age"
+      class="form-input"
+      type="number"
+      [value]="form.age()"
+      (input)="form.setAge($event)"
+      min="18"
+      max="120"
+      aria-required="true"
+    />
+    <ngx-form-error [field]="form.ageField()" />
+  </div>
+
+  <!-- Terms Agreement -->
+  <div class="form-field">
+    <div class="flex items-start">
+      <input
+        id="agreeToTerms"
+        class="form-checkbox"
+        type="checkbox"
+        [checked]="form.agreeToTerms() === true"
+        (change)="form.setAgreeToTerms($event)"
+        aria-required="true"
+      />
+      <label class="form-checkbox-label" for="agreeToTerms">
+        I agree to the terms and conditions *
+      </label>
+    </div>
+    <ngx-form-error [field]="form.agreeToTermsField()" />
+  </div>
+
+  <!-- Submit Error -->
+  @if (submitError()) {
+  <div role="alert" class="text-destructive text-sm">{{ submitError() }}</div>
+  }
+
+  <!-- Form Actions -->
+  <div class="form-actions">
+    <button class="btn-primary" type="submit" [disabled]="isSubmitting()">
+      @if (isSubmitting()) { Registering... } @else { Register }
+    </button>
+
+    <button
+      class="btn-secondary"
+      type="button"
+      (click)="reset()"
+      [disabled]="isSubmitting()"
+    >
+      Reset
+    </button>
+  </div>
+</form>

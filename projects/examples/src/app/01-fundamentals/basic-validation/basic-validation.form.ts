@@ -166,7 +166,6 @@ export class BasicValidationFormComponent {
 
   // Create form with reactive error strategy (library now supports Signal<ErrorDisplayStrategy>)
   protected readonly form = createVestForm(
-    userValidationSuite,
     signal<UserFormModel>({
       name: '',
       email: '',
@@ -175,7 +174,10 @@ export class BasicValidationFormComponent {
       bio: '',
       agreeToTerms: false,
     }),
-    { errorStrategy: this.errorDisplayMode }, // ✅ Pass signal directly - strategy changes reactively!
+    {
+      suite: userValidationSuite,
+      errorStrategy: this.errorDisplayMode, // ✅ Pass signal directly - strategy changes reactively!
+    },
   );
 
   protected readonly debugForm = asDebuggerForm(this.form);

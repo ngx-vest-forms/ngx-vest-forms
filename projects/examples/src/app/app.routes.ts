@@ -67,6 +67,21 @@ export const appRoutes: Routes = [
     ],
   },
 
+  {
+    path: 'schemas',
+    children: [
+      { path: '', redirectTo: 'zod-basic', pathMatch: 'full' },
+      {
+        path: 'zod-basic',
+        loadComponent: () =>
+          import('./03-schemas/zod-basic/zod-basic.page').then(
+            (m) => m.ZodBasicPage,
+          ),
+        title: 'Zod Basic - Two-Layer Validation',
+      },
+    ],
+  },
+
   // Fallback routes
   { path: '**', redirectTo: 'fundamentals/minimal-form' },
 ];
