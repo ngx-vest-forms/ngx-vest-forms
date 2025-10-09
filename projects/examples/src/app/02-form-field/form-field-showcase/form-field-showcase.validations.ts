@@ -1,4 +1,4 @@
-import { staticSafeSuite } from 'ngx-vest-forms/core';
+import { createSafeSuite } from 'ngx-vest-forms/core';
 import { enforce, test } from 'vest';
 
 /**
@@ -26,7 +26,11 @@ export type FormFieldShowcaseModel = {
 /**
  * Validation suite for the form-field showcase example.
  *
- * Uses `staticSafeSuite` to prevent the `only(undefined)` bug automatically.
+ * ✅ IMPORTANT: Uses createSafeSuite (stateful) instead of staticSafeSuite (stateless)
+ * because this form has multiple fields and we need errors to persist across field navigation.
+ * When a user tabs between fields in 'on-touch' mode, all touched field errors must remain
+ * visible. createSafeSuite maintains this state, staticSafeSuite doesn't.
+ *
  * Demonstrates various validation patterns:
  * - Required fields
  * - Email format validation
@@ -49,7 +53,7 @@ export type FormFieldShowcaseModel = {
  * ```
  */
 export const formFieldShowcaseValidations =
-  staticSafeSuite<FormFieldShowcaseModel>((data = {}) => {
+  createSafeSuite<FormFieldShowcaseModel>((data = {}) => {
     // Name validation
     test('name', 'Name is required', () => {
       enforce(data.name).isNotEmpty();

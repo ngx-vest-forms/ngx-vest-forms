@@ -147,16 +147,6 @@ import {
           Reset Form
         </button>
       </div>
-
-      <!-- Debug Info -->
-      <details class="debug-info">
-        <summary>Debug Information</summary>
-        <div class="debug-content">
-          <div><strong>Form Valid:</strong> {{ form.valid() }}</div>
-          <div><strong>Form Pending:</strong> {{ form.pending() }}</div>
-          <div><strong>Submitting:</strong> {{ form.submitting() }}</div>
-        </div>
-      </details>
     </form>
   `,
 })

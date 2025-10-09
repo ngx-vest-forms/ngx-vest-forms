@@ -98,7 +98,9 @@ export type {
   PathValue,
   SchemaIssue,
   StandardSchema,
+  StructuredValidationError,
   SubmitResult,
+  SubmittedStatus,
   ValidationMessages,
   VestField,
   VestForm,
@@ -148,7 +150,6 @@ export {
 export {
   createFieldSetter,
   deepClone,
-  extractValueFromEvent,
   extractValueFromEventOrValue,
   isEmpty,
   normalizeFieldValue,
@@ -158,6 +159,12 @@ export {
 export { createSafeSuite, staticSafeSuite } from './lib/utils/safe-suite';
 
 export type { SafeSuite, SafeSuiteFunction } from './lib/utils/safe-suite';
+
+// Structured error parsing utilities
+export {
+  parseStructuredError,
+  parseStructuredErrors,
+} from './lib/utils/structured-errors';
 
 // Type helpers for signal unwrapping
 export { isSignal, unwrapSignal } from './lib/utils/type-helpers';

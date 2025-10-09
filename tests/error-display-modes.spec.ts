@@ -311,8 +311,8 @@ test.describe('Error Display Modes - Product Feedback Form', () => {
     });
 
     test('should show validation state changes', async ({ page }) => {
-      // Initially invalid
-      await expect(page.getByText('Invalid', { exact: true })).toBeVisible();
+      // Initially idle (pristine form with on-touch strategy)
+      await expect(page.getByText('Idle', { exact: true })).toBeVisible();
 
       await page
         .getByRole('textbox', { name: /Full Name/i })

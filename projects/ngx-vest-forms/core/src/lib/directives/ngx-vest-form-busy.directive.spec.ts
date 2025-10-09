@@ -1,401 +1,221 @@
-/**
- * Unit tests for NgxVestFormBusyDirective
- *
- * Tests automatic aria-busy attribute management for form accessibility:
- * - aria-busy='true' when form is pending or submitting (string, not boolean)
- * - aria-busy removed (null) when form is idle
- * - Global config disable via autoFormBusy: false
- * - Opt-out via ngxVestAutoFormBusyDisabled attribute
- */
-
-import { Component, signal } from '@angular/core';
+import { ApplicationRef, Component, signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { render, screen } from '@testing-library/angular';
 import { userEvent } from '@vitest/browser/context';
+import { enforce, test } from 'vest';
 import { describe, expect, it } from 'vitest';
 import { createVestForm } from '../create-vest-form';
 import { NGX_VEST_FORMS_CONFIG } from '../tokens';
-import { staticSafeSuite } from '../utils/safe-suite';
+import { createSafeSuite } from '../utils/safe-suite';
 import { NgxVestFormBusyDirective } from './ngx-vest-form-busy.directive';
+import { NgxVestFormProviderDirective } from './ngx-vest-form-provider.directive';
 
-// Test validation suite with async validation
-const testSuite = staticSafeSuite(
-  (data: { email?: string; password?: string } = {}) => {
-    if (!data.email) {
-      return; // Skip all tests if no data
-    }
+const asyncValidationSuite = createSafeSuite(
+  (data: { email?: string } = {}) => {
+    test('email', 'Email must include @', () => {
+      enforce(data.email).matches(/@/);
+    });
 
-    // Sync validation
-    if (!data.email || data.email.trim() === '') {
-      throw new Error('Email is required');
-    }
+    test('email', 'Email still processing', async ({ signal }) => {
+      await new Promise<void>((resolve, reject) => {
+        const timeoutId = setTimeout(resolve, 75);
 
-    if (data.email && !data.email.includes('@')) {
-      throw new Error('Email must contain @');
-    }
+        signal?.addEventListener(
+          'abort',
+          () => {
+            clearTimeout(timeoutId);
+            reject(new Error('validation aborted'));
+          },
+          { once: true },
+        );
+      }).catch(() => {
+        /* Ignore abort rejections to mirror Vest cancellation semantics */
+      });
+    });
   },
 );
 
-// Suite with async validation for testing pending state
-const asyncSuite = staticSafeSuite((data: { email?: string } = {}) => {
-  if (!data.email) {
-    return;
-  }
+@Component({
+  imports: [NgxVestFormProviderDirective, NgxVestFormBusyDirective],
+  template: `
+    <form
+      aria-label="Account form"
+      [ngxVestFormProvider]="form"
+      (submit)="save($event)"
+    >
+      <label for="account-email">Email</label>
+      <input
+        id="account-email"
+        type="email"
+        [value]="form.email()"
+        (input)="form.setEmail($event)"
+      />
+      <button type="submit">Submit</button>
+    </form>
+  `,
+})
+class AsyncSubmitHostComponent {
+  protected readonly form = createVestForm(signal({ email: '' }), {
+    suite: asyncValidationSuite,
+    errorStrategy: 'immediate',
+  });
 
-  // Sync validation first
-  if (!data.email.includes('@')) {
-    throw new Error('Invalid email format');
+  async save(event: Event) {
+    event.preventDefault();
+    await this.form.submit();
   }
+}
 
-  // Async validation - simulates checking if email is taken
-  // Note: In real tests, we'd use test.memo() but for unit tests this is sufficient
-});
+@Component({
+  imports: [NgxVestFormProviderDirective, NgxVestFormBusyDirective],
+  template: `
+    <form
+      aria-label="Manual busy form"
+      ngxVestAutoFormBusyDisabled
+      [ngxVestFormProvider]="form"
+      (submit)="save($event)"
+    >
+      <label for="manual-email">Email</label>
+      <input
+        id="manual-email"
+        type="email"
+        [value]="form.email()"
+        (input)="form.setEmail($event)"
+      />
+      <button type="submit">Submit</button>
+    </form>
+  `,
+})
+class OptOutHostComponent {
+  protected readonly form = createVestForm(signal({ email: '' }), {
+    suite: asyncValidationSuite,
+    errorStrategy: 'immediate',
+  });
+
+  async save(event: Event) {
+    event.preventDefault();
+    await this.form.submit();
+  }
+}
+
+@Component({
+  imports: [NgxVestFormBusyDirective],
+  template: `
+    <form aria-label="Standalone form">
+      <label for="standalone-email">Email</label>
+      <input id="standalone-email" type="email" />
+      <button type="submit">Submit</button>
+    </form>
+  `,
+})
+class NoProviderComponent {
+  protected noop(): void {
+    // Directive should gracefully skip when no provider is available.
+  }
+}
+
+async function waitForAngularStability() {
+  await TestBed.inject(ApplicationRef).whenStable();
+}
+
+async function expectBusy(form: HTMLElement) {
+  await expect
+    .poll(() => form.getAttribute('aria-busy'), {
+      timeout: 200,
+      interval: 10,
+    })
+    .toBe('true');
+}
+
+async function expectIdle(form: HTMLElement) {
+  await expect
+    .poll(() => form.getAttribute('aria-busy'), {
+      timeout: 300,
+      interval: 10,
+    })
+    .toBeNull();
+}
 
 describe('NgxVestFormBusyDirective', () => {
-  describe('ARIA Attribute Generation', () => {
-    it('should NOT add aria-busy when form is idle', async () => {
-      @Component({
-        imports: [NgxVestFormBusyDirective],
-        template: `
-          <form>
-            <button type="submit">Submit</button>
-          </form>
-        `,
-      })
-      class TestComponent {
-        form = createVestForm(signal({ email: '', password: '' }), { suite: testSuite, 
-          errorStrategy: 'immediate',
-         });
-      }
+  it('reflects pending validation and submit activity via aria-busy', async () => {
+    await render(AsyncSubmitHostComponent);
 
-      await render(TestComponent);
-      const form = document.querySelector('form');
+    const form = screen.getByRole('form', { name: 'Account form' });
+    const emailInput = screen.getByRole('textbox', { name: /email/i });
+    const submitButton = screen.getByRole('button', { name: /submit/i });
 
-      // Form is idle - no aria-busy attribute
-      expect(form).not.toHaveAttribute('aria-busy');
-    });
+    expect(form).not.toHaveAttribute('aria-busy');
 
-    it('should add aria-busy="true" (string) when form is submitting', async () => {
-      @Component({
-        imports: [NgxVestFormBusyDirective],
-        template: `
-          <form (submit)="save($event)">
-            <input
-              id="email"
-              type="email"
-              [value]="form.email()"
-              (input)="form.setEmail($event)"
-            />
-            <button type="submit">Submit</button>
-          </form>
-        `,
-      })
-      class TestComponent {
-        form = createVestForm(signal({ email: '', password: '' }), { suite: testSuite, 
-          errorStrategy: 'immediate',
-         });
+    await userEvent.clear(emailInput);
+    await userEvent.type(emailInput, 'user@example.com');
 
-        async save(event: Event) {
-          event.preventDefault();
-          try {
-            await this.form.submit();
-          } catch {
-            // Expected - form is invalid
-          }
-        }
-      }
+    const submission = userEvent.click(submitButton);
 
-      await render(TestComponent);
-      const form = document.querySelector('form');
-      const submitButton = screen.getByRole('button', { name: /submit/i });
+    await expectBusy(form);
 
-      // Initially idle
-      expect(form).not.toHaveAttribute('aria-busy');
+    await submission;
+    await waitForAngularStability();
 
-      // Type valid email
-      const input = screen.getByRole('textbox');
-      await userEvent.clear(input);
-      await userEvent.type(input, 'user@example.com');
+    await expectIdle(form);
+  });
 
-      // Click submit - form becomes submitting
-      await userEvent.click(submitButton);
+  it('does not set aria-busy when ngxVestAutoFormBusyDisabled is present', async () => {
+    await render(OptOutHostComponent);
 
-      // Should have aria-busy while submitting (may be very brief)
-      // Note: This test verifies the attribute is set correctly, even if brief
-      await expect
-        .poll(
-          () => {
-            const currentAriaBusy = form?.getAttribute('aria-busy');
-            return currentAriaBusy === 'true' || currentAriaBusy === null;
+    const form = screen.getByRole('form', { name: 'Manual busy form' });
+    const emailInput = screen.getByRole('textbox', { name: /email/i });
+    const submitButton = screen.getByRole('button', { name: /submit/i });
+
+    await userEvent.clear(emailInput);
+    await userEvent.type(emailInput, 'user@example.com');
+
+    const submission = userEvent.click(submitButton);
+
+    await expectIdle(form);
+
+    await submission;
+    await waitForAngularStability();
+
+    expect(form).not.toHaveAttribute('aria-busy');
+  });
+
+  it('respects global autoFormBusy=false configuration', async () => {
+    await render(AsyncSubmitHostComponent, {
+      providers: [
+        {
+          provide: NGX_VEST_FORMS_CONFIG,
+          useValue: {
+            autoFormBusy: false,
+            autoAria: true,
+            autoTouch: true,
+            debug: false,
           },
-          { timeout: 100 },
-        )
-        .toBe(true);
-
-      // Verify it's string 'true', not boolean (when set)
-      if (form?.hasAttribute('aria-busy')) {
-        const ariaBusy = form.getAttribute('aria-busy');
-        expect(ariaBusy).toBe('true');
-        expect(typeof ariaBusy).toBe('string');
-      }
+        },
+      ],
     });
 
-    it('should remove aria-busy when form submission completes', async () => {
-      @Component({
-        imports: [NgxVestFormBusyDirective],
-        template: `
-          <form (submit)="save($event)">
-            <input
-              id="email"
-              type="email"
-              [value]="form.email()"
-              (input)="form.setEmail($event)"
-            />
-            <button type="submit">Submit</button>
-          </form>
-        `,
-      })
-      class TestComponent {
-        form = createVestForm(signal({ email: '', password: '' }), { suite: testSuite, 
-          errorStrategy: 'immediate',
-         });
+    const form = screen.getByRole('form', { name: 'Account form' });
+    const emailInput = screen.getByRole('textbox', { name: /email/i });
+    const submitButton = screen.getByRole('button', { name: /submit/i });
 
-        submitComplete = false;
+    await userEvent.clear(emailInput);
+    await userEvent.type(emailInput, 'user@example.com');
 
-        async save(event: Event) {
-          event.preventDefault();
-          try {
-            await this.form.submit();
-            this.submitComplete = true;
-          } catch {
-            this.submitComplete = true;
-          }
-        }
-      }
+    const submission = userEvent.click(submitButton);
 
-      const { fixture } = await render(TestComponent);
-      const component = fixture.componentInstance;
-      const form = document.querySelector('form');
-      const submitButton = screen.getByRole('button', { name: /submit/i });
+    await expectIdle(form);
 
-      // Type valid email
-      const input = screen.getByRole('textbox');
-      await userEvent.clear(input);
-      await userEvent.type(input, 'user@example.com');
+    await submission;
+    await waitForAngularStability();
 
-      // Submit form
-      await userEvent.click(submitButton);
-
-      // Wait for submission to complete
-      await expect
-        .poll(() => component.submitComplete, { timeout: 1000 })
-        .toBe(true);
-
-      // aria-busy should be removed after submission
-      expect(form).not.toHaveAttribute('aria-busy');
-    });
+    expect(form).not.toHaveAttribute('aria-busy');
   });
 
-  describe('Opt-Out Attribute', () => {
-    it('should not apply when ngxVestAutoFormBusyDisabled attribute is present', async () => {
-      @Component({
-        imports: [NgxVestFormBusyDirective],
-        template: `
-          <form ngxVestAutoFormBusyDisabled (submit)="save($event)">
-            <input
-              id="email"
-              type="email"
-              [value]="form.email()"
-              (input)="form.setEmail($event)"
-            />
-            <button type="submit">Submit</button>
-          </form>
-        `,
-      })
-      class TestComponent {
-        form = createVestForm(signal({ email: '', password: '' }), { suite: testSuite, 
-          errorStrategy: 'immediate',
-         });
+  it('leaves forms without a provider untouched', async () => {
+    await render(NoProviderComponent);
 
-        async save(event: Event) {
-          event.preventDefault();
-          try {
-            await this.form.submit();
-          } catch {
-            // Expected
-          }
-        }
-      }
+    const form = screen.getByRole('form', { name: 'Standalone form' });
 
-      await render(TestComponent);
-      const form = document.querySelector('form');
-      const submitButton = screen.getByRole('button', { name: /submit/i });
-
-      // Type valid email
-      const input = screen.getByRole('textbox');
-      await userEvent.clear(input);
-      await userEvent.type(input, 'user@example.com');
-
-      // Submit form
-      await userEvent.click(submitButton);
-
-      // Directive should not apply due to opt-out attribute
-      expect(form).not.toHaveAttribute('aria-busy');
-    });
-  });
-
-  describe('Global Config', () => {
-    it('should disable directive when autoFormBusy config is false', async () => {
-      @Component({
-        imports: [NgxVestFormBusyDirective],
-        template: `
-          <form (submit)="save($event)">
-            <input
-              id="email"
-              type="email"
-              [value]="form.email()"
-              (input)="form.setEmail($event)"
-            />
-            <button type="submit">Submit</button>
-          </form>
-        `,
-      })
-      class TestComponent {
-        form = createVestForm(signal({ email: '', password: '' }), { suite: testSuite, 
-          errorStrategy: 'immediate',
-         });
-
-        async save(event: Event) {
-          event.preventDefault();
-          try {
-            await this.form.submit();
-          } catch {
-            // Expected
-          }
-        }
-      }
-
-      await render(TestComponent, {
-        providers: [
-          {
-            provide: NGX_VEST_FORMS_CONFIG,
-            useValue: {
-              autoTouch: true,
-              autoAria: true,
-              autoFormBusy: false, // Disabled globally
-              debug: false,
-            },
-          },
-        ],
-      });
-
-      const form = document.querySelector('form');
-      const submitButton = screen.getByRole('button', { name: /submit/i });
-
-      // Type valid email
-      const input = screen.getByRole('textbox');
-      await userEvent.clear(input);
-      await userEvent.type(input, 'user@example.com');
-
-      // Submit form
-      await userEvent.click(submitButton);
-
-      // Directive disabled - no aria-busy added
-      expect(form).not.toHaveAttribute('aria-busy');
-    });
-  });
-
-  describe('Integration with VestForm', () => {
-    it('should work when NGX_VEST_FORM provider is available', async () => {
-      @Component({
-        imports: [NgxVestFormBusyDirective],
-        template: `
-          <form>
-            <input
-              id="email"
-              type="email"
-              [value]="form.email()"
-              (input)="form.setEmail($event)"
-            />
-          </form>
-        `,
-      })
-      class TestComponent {
-        form = createVestForm(signal({ email: '', password: '' }), { suite: testSuite, 
-          errorStrategy: 'immediate',
-         });
-      }
-
-      await render(TestComponent);
-      const form = document.querySelector('form');
-
-      // Form provider exists - directive should be active
-      expect(form).toBeInTheDocument();
-    });
-
-    it('should not error when NGX_VEST_FORM provider is missing', async () => {
-      @Component({
-        imports: [NgxVestFormBusyDirective],
-        template: `
-          <form>
-            <input type="email" />
-          </form>
-        `,
-      })
-      class TestComponent {
-        // No createVestForm() - no NGX_VEST_FORM provider
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        noop() {}
-      }
-
-      // Should render without errors
-      await render(TestComponent);
-      const form = document.querySelector('form');
-
-      // No form provider - directive should be inactive
-      expect(form).not.toHaveAttribute('aria-busy');
-    });
-  });
-
-  describe('Pending State (Async Validation)', () => {
-    it('should set aria-busy="true" when async validation is pending', async () => {
-      // Note: This test is tricky because async validation completes quickly.
-      // In real usage, test.memo() with debouncing would make this more visible.
-      @Component({
-        imports: [NgxVestFormBusyDirective],
-        template: `
-          <form>
-            <input
-              id="email"
-              type="email"
-              [value]="form.email()"
-              (input)="form.setEmail($event)"
-            />
-          </form>
-        `,
-      })
-      class TestComponent {
-        form = createVestForm(signal({ email: '' }), { suite: asyncSuite, 
-          errorStrategy: 'immediate',
-         });
-      }
-
-      await render(TestComponent);
-      const form = document.querySelector('form');
-
-      // Type to trigger validation
-      const input = screen.getByRole('textbox');
-      await userEvent.type(input, 'test@example.com');
-
-      // Check if aria-busy was set (may be brief)
-      await expect
-        .poll(
-          () => {
-            const ariaBusy = form?.getAttribute('aria-busy');
-            return ariaBusy === null || ariaBusy === 'true';
-          },
-          { timeout: 100 },
-        )
-        .toBe(true);
-    });
+    expect(form).not.toHaveAttribute('aria-busy');
   });
 });

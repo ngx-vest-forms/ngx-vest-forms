@@ -1,34 +1,32 @@
 /**
- * Type-safe Vest suite wrappers that prevent the common `only(undefined)` bug.
+ * Guard-railed, type-safe wrappers around Vest's `staticSuite` and `create` APIs.
  *
  * @module safe-suite
- * @see https://github.com/ngx-vest-forms/ngx-vest-forms/blob/main/docs/bug-fixes/only-field-validation-bug.md
+ * @see https://vestjs.dev/docs/writing_your_suite/including_and_excluding/skip_and_only
  *
- * ## The Problem
+ * ## Why these wrappers exist
  *
- * When using Vest's `only(field)` function, calling it with `undefined` tells Vest
- * to run **ZERO tests** instead of all tests. This is a common mistake that breaks
- * form validation:
+ * Vest expects consumers to call `only(field)` on every run so it can decide
+ * whether to execute the entire suite or just the targeted field. The most
+ * common mistakes we see in app code are:
  *
- * ```typescript
- * /// ❌ WRONG - Runs zero tests when field is undefined
- * const suite = staticSuite((data, field) => {
- *   only(field); // BUG: When field is undefined, NO tests run!
- *   test('email', 'Required', () => enforce(data.email).isNotEmpty());
- * });
- * ```
+ * - forgetting to call `only()` altogether, which forces every test to run on
+ *   each keystroke (hurting performance and async cancellation semantics)
+ * - wrapping `only()` in `if (field) { ... }`, which Vest explicitly warns
+ *   against because conditional calls break its execution order tracking
  *
- * ## The Solution
+ * These helpers remove that sharp edge by invoking `only(field)` for you every
+ * time, while still exposing typed data and field generics. That means teams can
+ * focus on the actual validation logic instead of boilerplate guards.
  *
- * These wrapper functions automatically handle the guard pattern for you:
+ * ## Features at a glance
  *
- * ```typescript
- * /// ✅ CORRECT - Automatically guards only() calls
- * const suite = createSafeSuite((data, field) => {
- *   /// No need for if (field) guard - handled by wrapper!
- *   test('email', 'Required', () => enforce(data.email).isNotEmpty());
- * });
- * ```
+ * - ✅ **Automatic `only()` discipline** – the wrapper always calls `only(field)`
+ *   with the incoming value (or falsy), matching Vest best practices
+ * - ✅ **Typed data + fields** – consistent `Partial<TModel>` input and
+ *   `TField` hinting across the library
+ * - ✅ **No hidden behaviour** – aside from the `only()` guard, the returned
+ *   suite behaves exactly like Vest's original helpers
  *
  * @example Basic Usage
  * ```typescript
@@ -40,8 +38,8 @@
  *   password: string;
  * }
  *
- * /// With staticSuite (recommended)
- * const userSuite = staticSafeSuite<UserModel>((data, field) => {
+ * /// With staticSuite (recommended for stateless usage)
+ * const userSuite = staticSafeSuite<UserModel>((data) => {
  *   test('email', 'Email is required', () => {
  *     enforce(data.email).isNotEmpty();
  *   });
@@ -53,8 +51,8 @@
  *   });
  * });
  *
- * /// With create (for stateful suites)
- * const statefulSuite = createSafeSuite<UserModel>((data, field) => {
+ * /// With create (stateful + subscribable)
+ * const statefulSuite = createSafeSuite<UserModel>((data) => {
  *   test('email', 'Required', () => enforce(data.email).isNotEmpty());
  * });
  * ```
@@ -63,7 +61,7 @@
  * ```typescript
  * type UserFields = 'email' | 'password' | 'confirmPassword';
  *
- * const typedSuite = staticSafeSuite<UserModel, UserFields>((data, field) => {
+ * const typedSuite = staticSafeSuite<UserModel, UserFields>((data) => {
  *   test('email', 'Required', () => enforce(data.email).isNotEmpty());
  *   test('password', 'Required', () => enforce(data.password).isNotEmpty());
  *
@@ -135,17 +133,17 @@ export type SafeSuite<
  * Creates a **stateless** Vest validation suite with built-in `only()` guard protection.
  *
  * This is the **recommended** approach for most use cases, especially server-side validation
- * and Angular components. It wraps Vest's `staticSuite` and automatically handles the
- * `if (field) { only(field); }` pattern to prevent the common bug where `only(undefined)`
- * causes zero tests to run.
+ * and Angular components. It wraps Vest's `staticSuite` and automatically applies the
+ * unconditional `only(field)` call so every execution follows Vest best practices without
+ * extra boilerplate.
  *
  * ## Why Use This?
  *
- * - ✅ **Prevents the `only(undefined)` bug** - No manual guard needed
- * - ✅ **Type-safe** - Generic parameters for model and field names
- * - ✅ **Server-safe** - Stateless by design (uses `staticSuite` internally)
- * - ✅ **Clean API** - Less boilerplate, more focus on validation logic
- * - ✅ **Drop-in replacement** - Works exactly like `staticSuite`
+ * - ✅ **Consistent field scoping** – guarantees `only(field)` runs on every invocation
+ * - ✅ **Type-safe** – generic parameters keep model and field names aligned
+ * - ✅ **Server-safe** – stateless by design (uses `staticSuite` internally)
+ * - ✅ **Clean API** – less boilerplate, more room for validation logic
+ * - ✅ **Drop-in replacement** – behaves like `staticSuite` with added guard rails
  *
  * ## When to Use
  *
@@ -201,7 +199,7 @@ export type SafeSuite<
  *   });
  * });
  *
- * // Usage in component
+ * /// Usage in component
  * const result = contactValidations({ name: '', email: '', message: '' });
  * console.log(result.getErrors()); // All field errors
  *
@@ -253,7 +251,7 @@ export type SafeSuite<
  *   }
  * );
  *
- * // TypeScript enforces valid field names
+ * /// TypeScript enforces valid field names
  * registerValidations(data, 'username'); // ✅ Valid
  * registerValidations(data, 'invalidField'); // ❌ Type error!
  * ```
@@ -306,12 +304,11 @@ export function staticSafeSuite<
   TField extends string = string,
 >(suiteFunction: SafeSuiteFunction<TModel>): SafeSuite<TModel, TField> {
   return staticSuite((data?: Partial<TModel>, field?: TField) => {
-    // ✅ CRITICAL: Guard only() to prevent running zero tests
-    // When field is undefined (form-level validation), ALL tests run
-    // When field is defined (field-level validation), only that field's tests run
-    if (field) {
-      only(field);
-    }
+    // ✅ CRITICAL: Always invoke only() with the incoming field value
+    // MUST NOT use conditional if statement per Vest.js docs:
+    // "skip() and only() should not be called conditionally"
+    // When field is undefined, Vest runs the whole suite; when it's a string, only that field's tests run
+    only(field); // Vest ignores falsy values, so undefined/false validate the full suite
 
     // Execute user's validation logic (field is handled by wrapper, not passed to user)
     suiteFunction(data);
@@ -321,17 +318,17 @@ export function staticSafeSuite<
 /**
  * Creates a **stateful** Vest validation suite with built-in `only()` guard protection.
  *
- * This wraps Vest's `create` function and automatically handles the `if (field) { only(field); }`
- * pattern. Unlike {@link staticSafeSuite}, this creates a stateful suite that maintains validation
- * state between calls and provides `.subscribe()`, `.get()`, and `.reset()` methods.
+ * This wraps Vest's `create` function and automatically applies the unconditional
+ * `only(field)` call. Unlike {@link staticSafeSuite}, this variant maintains internal state
+ * between calls and exposes `.subscribe()`, `.get()`, and `.reset()` helpers.
  *
  * ## Why Use This?
  *
- * - ✅ **Prevents the `only(undefined)` bug** - No manual guard needed
- * - ✅ **Type-safe** - Generic parameters for model and field names
- * - ✅ **Stateful** - Maintains validation state across calls
- * - ✅ **Observable** - Subscribe to validation changes with `.subscribe()`
- * - ✅ **Resettable** - Clear state with `.reset()` or `.resetField()`
+ * - ✅ **Consistent field scoping** – guarantees `only(field)` runs on every invocation
+ * - ✅ **Type-safe** – generic parameters keep model and field names aligned
+ * - ✅ **Stateful** – maintains validation state across calls
+ * - ✅ **Observable** – subscribe to validation changes with `.subscribe()`
+ * - ✅ **Resettable** – clear state with `.reset()` or `.resetField()`
  *
  * ## When to Use
  *
@@ -424,17 +421,17 @@ export function staticSafeSuite<
  *   }
  * );
  *
- * // Subscribe to changes
+ * /// Subscribe to changes
  * const unsubscribe = profileValidations.subscribe((result) => {
  *   console.log('Valid:', result.isValid());
  *   console.log('Errors:', result.getErrors());
  * });
  *
- * // Run validations
+ * /// Run validations
  * profileValidations({ displayName: '' }); // Triggers subscription
  * profileValidations({ displayName: 'John' }, 'displayName'); // Triggers subscription
  *
- * // Clean up
+ * /// Clean up
  * unsubscribe();
  * ```
  *
@@ -458,19 +455,19 @@ export function staticSafeSuite<
  *   });
  * });
  *
- * // Run validations
+ * /// Run validations
  * searchValidations({ query: 'ab' }); // Has errors
  * console.log(searchValidations.get().hasErrors('query')); // true
  *
- * // Reset entire suite
+ * /// Reset entire suite
  * searchValidations.reset();
  * console.log(searchValidations.get().hasErrors('query')); // false (untested)
  *
- * // Run again
+ * /// Run again
  * searchValidations({ query: 'valid query' });
  * console.log(searchValidations.get().hasErrors('query')); // false (valid)
  *
- * // Reset single field
+ * /// Reset single field
  * searchValidations.resetField('query');
  * console.log(searchValidations.get().isTested('query')); // false
  * ```
@@ -483,12 +480,11 @@ export function createSafeSuite<
   TField extends string = string,
 >(suiteFunction: SafeSuiteFunction<TModel>): SafeSuite<TModel, TField> {
   return create((data?: Partial<TModel>, field?: TField) => {
-    // ✅ CRITICAL: Guard only() to prevent running zero tests
-    // When field is undefined (form-level validation), ALL tests run
-    // When field is defined (field-level validation), only that field's tests run
-    if (field) {
-      only(field);
-    }
+    // ✅ CRITICAL: Always invoke only() with the incoming field value
+    // MUST NOT use conditional if statement per Vest.js docs:
+    // "skip() and only() should not be called conditionally"
+    // When field is undefined, Vest runs the whole suite; when it's a string, only that field's tests run
+    only(field); // Vest ignores falsy values, so undefined/false validate the full suite
 
     // Execute user's validation logic (field is handled by wrapper, not passed to user)
     suiteFunction(data);

@@ -10,6 +10,7 @@ applyTo: "projects/**/*.{spec,test}.{ts,tsx,js,jsx}"
 - Make sure to properly use ngx-vest-forms functionality in tests.
 - Do not make up tests for non-existent APIs or features.
 - Prefer user-facing behavior over implementation details.
+- Treat Vest.js as a third-party dependency: never assert its internal state, execution order, or helpers—validate only the observable behavior surfaced through our public APIs.
 - Use strict typing and modern Angular best practices.
 - Prefer reusable, type-safe fakes over ad-hoc mocks (see [Fake It Till You Mock It](https://cookbook.marmicode.io/angular/testing/fake-it-till-you-mock-it)).
   - Share a single fake per dependency and keep it beside the real service (or under `tests/mocks/`) so suites reuse the same behavior contract.
@@ -39,6 +40,12 @@ applyTo: "projects/**/*.{spec,test}.{ts,tsx,js,jsx}"
 - Maintain high code coverage with **Vitest**.
 - Enable code coverage with `--coverage` to ensure all critical paths are tested.
 - Assert error paths and loading states, not just happy paths.
+
+### Pragmatic Testing Strategy
+- Aim for the "widest narrow" tests: fast, isolated, and low cognitive load, while still exercising end-to-end behavior through our public API surface (Honeycomb model).
+- Bias toward tests that strengthen the earliest safety nets (fast feedback) before leaning on wide/e2e checks.
+- When tests feel brittle or overly setup-heavy, consider narrowing the System Under Test or introducing purposeful fakes instead of piling on assertions.
+- Use risk and cost to decide what deserves a test—focus on regressions we expect our library to catch rather than duplicating coverage that belongs to Vest itself.
 
 ## Unit Testing (Vitest Node)
 - Use for pure functions, utilities, and services without Angular dependencies.
@@ -256,5 +263,10 @@ expect(valueSignal()).toBe('updated');
 ### Async/Signals
 - Use `expect.poll()` for polling async signal values.
 - Always await `whenStable()` after triggering async changes.
+
+### Evaluate Test Value
+- Track when a test produces false positives or misses regressions; adjust or remove low-value cases instead of letting them linger.
+- Prefer adding focused narrow tests where recurring bugs slip past wider safety nets.
+- Keep qualitative measures (team confidence, feedback speed) in mind—optimize instructions and suites for fast iteration rather than chasing coverage numbers alone.
 
 

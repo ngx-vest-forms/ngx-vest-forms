@@ -98,6 +98,11 @@ export class ExampleFormArray {
     });
   }
 
+  /**
+   * Form submission handler
+   *
+   * Note: No need for event.preventDefault() - handled automatically by [ngxVestForm] directive
+   */
   protected async save(): Promise<void> {
     const result = await this.form.submit();
 

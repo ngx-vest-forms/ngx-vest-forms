@@ -1,6 +1,6 @@
 ---
 description: Tailwind CSS usage rules for styling (2025 best practices)
-applyTo: '**/*.{html,js,jsx,ts,tsx,css,scss,sass,md,mdx}'
+applyTo: 'projects/examples/**/*.{html,js,jsx,ts,tsx,css,scss,sass,md,mdx}'
 ---
 
 ## General Guidelines

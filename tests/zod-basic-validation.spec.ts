@@ -611,7 +611,8 @@ test.describe('Zod Basic - Schema Integration Validation', () => {
       // Form State section should show validity status
       await expect(page.getByText(/Valid:/)).toBeVisible();
       await expect(page.getByText(/Pending:/)).toBeVisible();
-      await expect(page.getByText(/Submitting:/)).toBeVisible();
+      // Status is shown as "Status: Idle" (or "Status: 🚀 Submitting" or "Status: ✅ Submitted")
+      await expect(page.getByText(/Status:/)).toBeVisible();
     });
 
     test.fixme(

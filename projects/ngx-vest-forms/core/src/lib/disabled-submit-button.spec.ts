@@ -40,7 +40,8 @@ describe('Disabled Submit Button Scenarios', () => {
           email: '',
           password: '',
         }),
-        { suite: testSuite,
+        {
+          suite: testSuite,
           errorStrategy: 'on-touch', // Default strategy
         },
       );
@@ -57,8 +58,8 @@ describe('Disabled Submit Button Scenarios', () => {
       expect(form.passwordTouched()).toBe(false);
 
       // User can't click submit (button is disabled)
-      // So hasSubmitted never becomes true
-      expect(form.hasSubmitted()).toBe(false);
+      // So submittedStatus remains unsubmitted
+      expect(form.submittedStatus()).toBe('unsubmitted');
 
       // Result: NO ERRORS VISIBLE (BAD UX!)
       expect(form.emailShowErrors()).toBe(false);
@@ -74,16 +75,14 @@ describe('Disabled Submit Button Scenarios', () => {
           email: '',
           password: '',
         }),
-        { suite: testSuite,
-          errorStrategy: 'on-touch',
-        },
+        { suite: testSuite, errorStrategy: 'on-touch' },
       );
 
       // Initial: no errors visible
       expect(form.emailShowErrors()).toBe(false);
 
       // User touches email field
-      form.touchEmail();
+      form.field('email').markAsTouched();
 
       // Now email errors are visible
       expect(form.emailShowErrors()).toBe(true);
@@ -101,7 +100,8 @@ describe('Disabled Submit Button Scenarios', () => {
           email: '',
           password: '',
         }),
-        { suite: testSuite,
+        {
+          suite: testSuite,
           errorStrategy: 'immediate', // Show errors immediately
         },
       );
@@ -129,18 +129,16 @@ describe('Disabled Submit Button Scenarios', () => {
     it('should show all errors when fields are touched on init', async () => {
       await runInAngular(async () => {
         const form = createVestForm(
-        signal<TestModel>({
+          signal<TestModel>({
             email: '',
             password: '',
           }),
-        { suite: testSuite,
-            errorStrategy: 'on-touch',
-          },
+          { suite: testSuite, errorStrategy: 'on-touch' },
         );
 
         // Simulate ngOnInit touching all fields
-        form.touchEmail();
-        form.touchPassword();
+        form.field('email').markAsTouched();
+        form.field('password').markAsTouched();
 
         // Re-validate the full form to get all errors after touching
         form.validate();
@@ -167,9 +165,7 @@ describe('Disabled Submit Button Scenarios', () => {
           email: '',
           password: '',
         }),
-        { suite: testSuite,
-          errorStrategy: 'on-touch',
-        },
+        { suite: testSuite, errorStrategy: 'on-touch' },
       );
 
       // Button is enabled: [disabled]="form.pending() || form.submitting()"
@@ -188,8 +184,8 @@ describe('Disabled Submit Button Scenarios', () => {
       // Expected to fail validation
       expect(result.valid).toBe(false);
 
-      // Now hasSubmitted is true
-      expect(form.hasSubmitted()).toBe(true);
+      // Now submittedStatus is submitted
+      expect(form.submittedStatus()).toBe('submitted');
 
       // All errors are visible (on-touch + submitted)
       expect(form.emailShowErrors()).toBe(true);

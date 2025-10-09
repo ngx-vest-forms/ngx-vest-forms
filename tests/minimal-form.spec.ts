@@ -178,7 +178,8 @@ test.describe('Minimal Form - V2 Implementation', () => {
 
   test('debugger reflects validation state changes', async ({ page }) => {
     const emailField = page.getByRole('textbox', { name: /Email Address/i });
-    const debuggerValidity = page.getByText(/Valid: ❌/i);
+    // Use exact match to avoid matching "Invalid: ❌"
+    const debuggerValidity = page.getByText('Valid: ❌', { exact: true });
 
     await expect(debuggerValidity).toBeVisible();
 

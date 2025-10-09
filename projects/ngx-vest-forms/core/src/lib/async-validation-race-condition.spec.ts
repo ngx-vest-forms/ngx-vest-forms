@@ -39,117 +39,114 @@ describe('Async Validation Race Condition with only()', () => {
     createdForms = [];
   });
 
-  it.todo(
-    'should NOT abort async validation when another field is validated',
-    async () => {
-      let asyncCallCount = 0;
-      let asyncResolveCount = 0;
-      let asyncAbortCount = 0;
+  it('should NOT abort async validation when another field is validated', async () => {
+    let asyncCallCount = 0;
+    let asyncResolveCount = 0;
+    let asyncAbortCount = 0;
 
-      // Simulate async email validation (like checking if email exists)
-      const checkEmailAsync = async (
-        email: string,
-        signal: AbortSignal,
-      ): Promise<void> => {
-        asyncCallCount++;
+    // Simulate async email validation (like checking if email exists)
+    const checkEmailAsync = async (
+      email: string,
+      signal: AbortSignal,
+    ): Promise<void> => {
+      asyncCallCount++;
 
-        return new Promise((resolve, reject) => {
-          const timeoutId = setTimeout(() => {
-            if (signal.aborted) {
-              asyncAbortCount++;
-              reject(new Error('Aborted'));
-              return;
-            }
-            asyncResolveCount++;
-
-            // Email validation passes for non-blacklisted emails
-            if (email === 'admin@example.com') {
-              reject(new Error('Email already exists'));
-            } else {
-              resolve();
-            }
-          }, 100); // 100ms async delay
-
-          signal.addEventListener('abort', () => {
+      return new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          if (signal.aborted) {
             asyncAbortCount++;
-            clearTimeout(timeoutId);
             reject(new Error('Aborted'));
-          });
+            return;
+          }
+          asyncResolveCount++;
+
+          // Email validation passes for non-blacklisted emails
+          if (email === 'admin@example.com') {
+            reject(new Error('Email already exists'));
+          } else {
+            resolve();
+          }
+        }, 100); // 100ms async delay
+
+        signal.addEventListener('abort', () => {
+          asyncAbortCount++;
+          clearTimeout(timeoutId);
+          reject(new Error('Aborted'));
         });
-      };
+      });
+    };
 
-      // CRITICAL: Must use createSafeSuite (stateful) instead of staticSafeSuite for test.memo() to work!
-      // test.memo() memoization key includes "suite instance ID"
-      // staticSuite creates new instance on every call, breaking memoization
-      const validationSuite = createSafeSuite<TestModel>(
-        (data = {} as TestModel) => {
-          test('name', 'Name is required', () => {
-            enforce(data.name).isNotEmpty();
-          });
+    // CRITICAL: Must use createSafeSuite (stateful) instead of staticSafeSuite for test.memo() to work!
+    // test.memo() memoization key includes "suite instance ID"
+    // staticSuite creates new instance on every call, breaking memoization
+    const validationSuite = createSafeSuite<TestModel>(
+      (data = {} as TestModel) => {
+        test('name', 'Name is required', () => {
+          enforce(data.name).isNotEmpty();
+        });
 
-          test('email', 'Email is required', () => {
-            enforce(data.email).isNotEmpty();
-          });
+        test('email', 'Email is required', () => {
+          enforce(data.email).isNotEmpty();
+        });
 
-          test('email', 'Email format is invalid', () => {
-            enforce(data.email).matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
-          });
+        test('email', 'Email format is invalid', () => {
+          enforce(data.email).matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+        });
 
-          // Async validation with test.memo
-          test.memo(
-            'email',
-            'Email is already registered',
-            async ({ signal }) => {
-              if (data.email && data.email.includes('@')) {
-                await checkEmailAsync(data.email, signal);
-              }
-            },
-            [data.email],
-          );
+        // Async validation with test.memo
+        test.memo(
+          'email',
+          'Email is already registered',
+          async ({ signal }) => {
+            if (data.email && data.email.includes('@')) {
+              await checkEmailAsync(data.email, signal);
+            }
+          },
+          [data.email],
+        );
 
-          test('agreeToTerms', 'You must agree to the terms', () => {
-            enforce(data.agreeToTerms).isTruthy();
-          });
-        },
-      );
+        test('agreeToTerms', 'You must agree to the terms', () => {
+          enforce(data.agreeToTerms).isTruthy();
+        });
+      },
+    );
 
-      const form = createVestForm(
-        signal<TestModel>({
-          email: '',
-          name: '',
-          agreeToTerms: false,
-        }),
-        { suite: validationSuite, errorStrategy: 'immediate' },
-      );
-      createdForms.push(form); // Track for cleanup
+    const form = createVestForm(
+      signal<TestModel>({
+        email: '',
+        name: '',
+        agreeToTerms: false,
+      }),
+      { suite: validationSuite, errorStrategy: 'immediate' },
+    );
+    createdForms.push(form); // Track for cleanup
 
-      // Step 1: Fill name field
-      form.setName('Jane Smith');
-      expect(form.valid()).toBe(false); // Still invalid (email + terms missing)
-      expect(form.pending()).toBe(false); // No async validation yet
+    // Step 1: Fill name field
+    form.setName('Jane Smith');
+    expect(form.valid()).toBe(false); // Still invalid (email + terms missing)
+    expect(form.pending()).toBe(false); // No async validation yet
 
-      // Step 2: Fill email field -> this triggers async validation
-      form.setEmail('jane@example.com');
-      expect(form.pending()).toBe(true); // Async validation started
-      expect(asyncCallCount).toBe(1); // Async validation called once
+    // Step 2: Fill email field -> this triggers async validation
+    form.setEmail('jane@example.com');
+    expect(form.pending()).toBe(true); // Async validation started
+    expect(asyncCallCount).toBe(1); // Async validation called once
 
-      // Step 3: IMMEDIATELY fill another field (checkbox) while async validation is pending
-      // Per Vest.js docs: only() is SAFE - it doesn't abort pending async validation
-      form.setAgreeToTerms(true);
+    // Step 3: IMMEDIATELY fill another field (checkbox) while async validation is pending
+    // Per Vest.js docs: only() is SAFE - it doesn't abort pending async validation
+    form.setAgreeToTerms(true);
 
-      // Wait for async validation to complete using polling
-      // This is more reliable than whenStable() for Vest async validations
-      await expect.poll(() => asyncResolveCount, { timeout: 500 }).toBe(1);
+    // Wait for async validation to complete using polling
+    // This is more reliable than whenStable() for Vest async validations
+    await expect.poll(() => asyncResolveCount, { timeout: 500 }).toBe(1);
 
-      // Verify async validation completed successfully (not aborted)
-      expect(asyncAbortCount).toBe(0); // Should NOT be aborted
-      expect(form.pending()).toBe(false);
+    // Verify async validation completed successfully (not aborted)
+    expect(asyncAbortCount).toBe(0); // Should NOT be aborted
+    expect(form.pending()).toBe(false);
 
-      // Form should be valid now
-      expect(form.valid()).toBe(true);
-      expect(form.errors()).toEqual({});
-    },
-  );
+    // Form should be valid now
+    expect(form.valid()).toBe(true);
+    expect(form.errors()).toEqual({});
+  });
 
   it.todo(
     'should handle multiple rapid field changes without losing async validation',

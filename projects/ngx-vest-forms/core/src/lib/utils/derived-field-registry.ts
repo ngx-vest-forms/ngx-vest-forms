@@ -3,7 +3,12 @@
  *
  * Extracted from `create-vest-form` to make the proxy implementation easier to
  * reason about and to keep the derived API logic colocated. The registry is in
- * charge of translating dot-notation field paths into the generated camelCase
+ * charge       case 'set': {
+        return field.set;
+      }
+      case 'markAsTouched': {
+        return field.markAsTouched;
+      }ating dot-notation field paths into the generated camelCase
  * accessors documented in `docs/inverted-vest/derived-field-signals.md`.
  */
 
@@ -12,6 +17,8 @@ import type { Path, VestField, VestForm } from '../vest-form.types';
 type DerivedAccessor =
   | 'value'
   | 'valid'
+  | 'invalid'
+  | 'dirty'
   | 'validation'
   | 'pending'
   | 'touched'
@@ -19,7 +26,8 @@ type DerivedAccessor =
   | 'showWarnings'
   | 'field'
   | 'set'
-  | 'touch'
+  | 'markAsTouched'
+  | 'markAsDirty'
   | 'reset';
 
 type DerivedDescriptor = {
@@ -76,6 +84,10 @@ export function createDerivedRegistry<TModel extends Record<string, unknown>>(
     descriptorKeys.push(baseName);
     descriptors.set(`${baseName}Valid`, { fieldPath, accessor: 'valid' });
     descriptorKeys.push(`${baseName}Valid`);
+    descriptors.set(`${baseName}Invalid`, { fieldPath, accessor: 'invalid' });
+    descriptorKeys.push(`${baseName}Invalid`);
+    descriptors.set(`${baseName}Dirty`, { fieldPath, accessor: 'dirty' });
+    descriptorKeys.push(`${baseName}Dirty`);
     descriptors.set(`${baseName}Pending`, { fieldPath, accessor: 'pending' });
     descriptorKeys.push(`${baseName}Pending`);
     descriptors.set(`${baseName}Touched`, { fieldPath, accessor: 'touched' });
@@ -105,8 +117,16 @@ export function createDerivedRegistry<TModel extends Record<string, unknown>>(
     // Method accessors
     descriptors.set(`set${capitalised}`, { fieldPath, accessor: 'set' });
     descriptorKeys.push(`set${capitalised}`);
-    descriptors.set(`touch${capitalised}`, { fieldPath, accessor: 'touch' });
-    descriptorKeys.push(`touch${capitalised}`);
+    descriptors.set(`markAsTouched${capitalised}`, {
+      fieldPath,
+      accessor: 'markAsTouched',
+    });
+    descriptorKeys.push(`markAsTouched${capitalised}`);
+    descriptors.set(`markAsDirty${capitalised}`, {
+      fieldPath,
+      accessor: 'markAsDirty',
+    });
+    descriptorKeys.push(`markAsDirty${capitalised}`);
     descriptors.set(`reset${capitalised}`, { fieldPath, accessor: 'reset' });
     descriptorKeys.push(`reset${capitalised}`);
   }
@@ -138,14 +158,30 @@ export function createDerivedRegistry<TModel extends Record<string, unknown>>(
         return descriptor.fieldPath;
       }
 
-      // Not found - could be a setter/touch/reset method name, check those too
+      // Not found - could be a setter/touch/markAsTouched/markAsDirty/reset method name, check those too
       // e.g., "setPersonalInfoFirstName" → "personalInfo.firstName"
+      //       "markAsTouchedPersonalInfoFirstName" → "personalInfo.firstName"
       if (
+        camelCaseName.startsWith('markAsTouched') ||
+        camelCaseName.startsWith('markAsDirty')
+      ) {
+        // Strip the longer prefix (13 chars for markAsTouched, 11 for markAsDirty)
+        const withoutPrefix = camelCaseName.slice(
+          camelCaseName.startsWith('markAsTouched') ? 13 : 11,
+        );
+        // Decapitalize first letter
+        const baseName =
+          withoutPrefix.charAt(0).toLowerCase() + withoutPrefix.slice(1);
+        const baseDescriptor = descriptors.get(baseName);
+        if (baseDescriptor) {
+          return baseDescriptor.fieldPath;
+        }
+      } else if (
         camelCaseName.startsWith('set') ||
-        camelCaseName.startsWith('touch') ||
         camelCaseName.startsWith('reset')
       ) {
         // Strip the prefix and check again
+        // 'set' = 3 chars, 'reset' = 5 chars
         const withoutPrefix = camelCaseName.slice(
           camelCaseName.startsWith('set') ? 3 : 5,
         );
@@ -183,6 +219,12 @@ export function createDerivedRegistry<TModel extends Record<string, unknown>>(
       case 'valid': {
         return field.valid;
       }
+      case 'invalid': {
+        return field.invalid;
+      }
+      case 'dirty': {
+        return field.dirty;
+      }
       case 'validation': {
         return field.validation;
       }
@@ -206,8 +248,11 @@ export function createDerivedRegistry<TModel extends Record<string, unknown>>(
       case 'set': {
         return field.set;
       }
-      case 'touch': {
-        return field.touch;
+      case 'markAsTouched': {
+        return field.markAsTouched;
+      }
+      case 'markAsDirty': {
+        return field.markAsDirty;
       }
       case 'reset': {
         return field.reset;

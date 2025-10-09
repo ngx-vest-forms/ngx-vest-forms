@@ -7,10 +7,13 @@ import { signal } from '@angular/core';
 import type { SuiteResult } from 'vest';
 import { enforce, staticSuite, test as vestTest } from 'vest';
 import { describe, expect, it, vi } from 'vitest';
+import { runInAngular } from '../../../test-utilities';
+import { createVestForm } from './create-vest-form';
 import {
   createEnhancedVestFormArray,
   createVestFormArray,
 } from './form-arrays';
+import { staticSafeSuite } from './utils/safe-suite';
 import type { VestField } from './vest-form.types';
 
 describe('Form Arrays', () => {
@@ -584,6 +587,56 @@ describe('Form Arrays', () => {
       expect(formArray.isEmpty()).toBe(true);
       expect(formArray.first()).toBeUndefined();
       expect(formArray.last()).toBeUndefined();
+    });
+  });
+
+  describe('integration with createVestForm', () => {
+    it('restores form validity after correcting an invalid array item', async () => {
+      type FormModel = { interests: string[] };
+
+      const suite = staticSafeSuite<FormModel>((data = {}) => {
+        const interests = data.interests ?? [];
+
+        vestTest('interests', 'Interests must be an array', () => {
+          enforce(interests).isArray();
+        });
+
+        for (const [index, interest] of interests.entries()) {
+          const path = `interests.${index}` as const;
+
+          vestTest(path, 'Interest cannot be empty', () => {
+            enforce(interest).isNotEmpty();
+          });
+
+          vestTest(path, 'Interest must be at least two characters', () => {
+            enforce(interest).longerThan(1);
+          });
+        }
+      });
+
+      const form = createVestForm<FormModel>(signal({ interests: [] }), {
+        suite,
+      });
+      const interestsArray = form.array('interests');
+
+      await runInAngular(() => {
+        interestsArray.push('A');
+      });
+
+      expect(form.valid()).toBe(false);
+      expect(form.errors()).toMatchObject({
+        'interests.0': expect.arrayContaining([
+          expect.stringContaining('least two characters'),
+        ]),
+      });
+
+      await runInAngular(() => {
+        interestsArray.at(0).set('Reading');
+      });
+
+      expect(form.errors()).toEqual({});
+      expect(form.valid()).toBe(true);
+      expect(interestsArray.valid()).toBe(true);
     });
   });
 });

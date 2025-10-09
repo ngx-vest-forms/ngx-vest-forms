@@ -107,7 +107,7 @@ describe('Schema Error Filtering (visibleSchemaErrors)', () => {
 
       // Touch email field
       const emailField = form.field('email');
-      emailField.touch();
+      emailField.markAsTouched();
 
       // Only email errors should be visible
       expect(form.visibleSchemaErrors()).toEqual({
@@ -159,7 +159,7 @@ describe('Schema Error Filtering (visibleSchemaErrors)', () => {
 
       // Touch and see error
       const emailField = form.field('email');
-      emailField.touch();
+      emailField.markAsTouched();
       expect(form.visibleSchemaErrors()).toEqual({
         email: ['Email is required'],
       });
@@ -235,7 +235,7 @@ describe('Schema Error Filtering (visibleSchemaErrors)', () => {
 
       // Touch field
       const emailField = form.field('email');
-      emailField.touch();
+      emailField.markAsTouched();
 
       // Still no visible errors (on-submit strategy)
       expect(form.visibleSchemaErrors()).toEqual({});
@@ -279,7 +279,7 @@ describe('Schema Error Filtering (visibleSchemaErrors)', () => {
       });
 
       // Touch and submit
-      form.field('email').touch();
+      form.field('email').markAsTouched();
       form.submit();
 
       // Still no visible errors (manual strategy)

@@ -228,7 +228,7 @@ type FormState = {
         <!-- Error Count Overlay -->
         @if (errorCount() > 0) {
           <div
-            class="absolute bottom-4 right-4 rounded-full bg-red-500 px-3 py-1 text-xs font-medium text-white shadow-lg"
+            class="absolute right-4 bottom-4 rounded-full bg-red-500 px-3 py-1 text-xs font-medium text-white shadow-lg"
           >
             {{ errorCount() }} error{{ errorCount() === 1 ? '' : 's' }}
           </div>

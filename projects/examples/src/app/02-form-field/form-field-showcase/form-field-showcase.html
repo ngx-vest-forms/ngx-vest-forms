@@ -1,9 +1,4 @@
-<form
-  [ngxVestForm]="form"
-  (ngSubmit)="save($event)"
-  class="form-container"
-  novalidate
->
+<form [ngxVestForm]="form" (submit)="save()" class="form-container" novalidate>
   <div class="space-y-6">
     <h2 class="text-lg font-semibold">Personal Information</h2>
 
@@ -136,7 +131,7 @@
     <div class="ml-auto text-sm text-gray-600 dark:text-gray-400">
       @if (form.valid()) {
       <span class="text-green-600 dark:text-green-400">✓ All fields valid</span>
-      } @else if (form.hasSubmitted()) {
+      } @else if (form.submittedStatus() === 'submitted') {
       <span class="text-red-600 dark:text-red-400">⚠ Please fix errors</span>
       } @else {
       <span>* Required fields</span>

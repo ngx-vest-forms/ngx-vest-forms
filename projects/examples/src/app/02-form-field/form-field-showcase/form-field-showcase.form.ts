@@ -81,9 +81,7 @@ export class FormFieldShowcase {
   /**
    * Form submission handler
    */
-  protected async save(event: Event): Promise<void> {
-    event.preventDefault();
-
+  protected async save(): Promise<void> {
     const result = await this.form.submit();
 
     if (result.valid) {

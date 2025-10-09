@@ -5,6 +5,13 @@ applyTo: '**'
 
 # ngx-vest-forms Copilot Instructions
 
+## LLM Output
+- Provide code snippets, explanations, and suggestions that align with the project's architecture and best practices.
+- Ensure all code adheres to TypeScript strict mode and Angular 20+ standards.
+- Do not make up code or API's always use real libraries and APIs. And check documentation if unsure. Use context7 if possible.
+- When reporting information to me, be very concise and to the point. But also descriptive enough to be useful.
+- Eliminate: emojis (expect checkmarks, etc), filler, hype, soft asks, conversational transitions, call-to-action appendixes
+
 ## Quick Reference
 
 - **Framework**: Angular 20+ with signals, standalone components
@@ -165,6 +172,7 @@ Follow [`.github/instructions/commit.instructions.md`](./instructions/commit.ins
 - Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`
 - Imperative mood in description
 - Max 80 chars in summary
+- be concise but descriptive
 
 ## Documentation Requirements
 
@@ -172,19 +180,6 @@ Follow [`.github/instructions/commit.instructions.md`](./instructions/commit.ins
 - [ ] Comments explain "why" not "what"
 - [ ] Examples for components/services
 - [ ] README updated for features
-
-## MCP tools reference
-
-### `mcp_github_get_pull_request`
-
-- **Purpose**: Fetch up-to-date metadata about a single GitHub pull request, including its title, author, status, mergeability, labels, reviewers, and timeline information.
-- **Required parameters**:
-  - `owner` – GitHub organization or user that owns the repository.
-  - `repo` – Repository name.
-  - `pullNumber` – Numeric identifier of the pull request (the number shown in the GitHub UI, e.g., `123`).
-- **Typical usage**: Call the tool when you need authoritative details before summarizing a PR, checking review status, or referencing associated commits. Provide precise owner/repo values and validate the pull number before calling to avoid 404 responses.
-- **Returned data**: Structured JSON mirroring the GitHub REST API response for `GET /repos/{owner}/{repo}/pulls/{pull_number}`. Expect fields like `state`, `mergeable`, `base`, `head`, `requested_reviewers`, and `html_url`.
-- **Pro tips**: Combine with `#mcp_github_get_pull_request_files` to list modified files when preparing review summaries. Retry only after verifying identifiers; repeated bad requests are rate limited.
 
 ## File Templates
 

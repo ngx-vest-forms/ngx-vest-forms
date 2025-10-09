@@ -1,8 +1,14 @@
-import { staticSafeSuite } from 'ngx-vest-forms';
+import { createSafeSuite } from 'ngx-vest-forms';
 import { enforce, test } from 'vest';
 import { FormArrayModel } from './example-form-array.model';
 
-export const validationSuite = staticSafeSuite<FormArrayModel>(
+/**
+ * ✅ IMPORTANT: Uses createSafeSuite (stateful) instead of staticSafeSuite (stateless)
+ * because this form has multiple array items and we need errors to persist across item navigation.
+ * When a user tabs between array items in 'on-touch' mode, all touched item errors must remain
+ * visible. createSafeSuite maintains this state, staticSafeSuite doesn't.
+ */
+export const validationSuite = createSafeSuite<FormArrayModel>(
   (model: Partial<FormArrayModel> = {}) => {
     // NOTE: addInterest is NOT validated in the main suite
     // It's validated separately in the component when user clicks Add

@@ -52,6 +52,11 @@ export class ExampleFormNested {
 
   readonly debugForm = asDebuggerForm(this.form);
 
+  /**
+   * Form submission handler
+   *
+   * Note: No need for event.preventDefault() - handled automatically by [ngxVestForm] directive
+   */
   protected async save(): Promise<void> {
     const result = await this.form.submit();
 

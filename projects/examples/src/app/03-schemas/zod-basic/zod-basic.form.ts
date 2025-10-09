@@ -91,8 +91,7 @@ export class ZodBasicFormComponent implements OnDestroy {
   /**
    * Submit handler
    */
-  async save(event: Event): Promise<void> {
-    event.preventDefault();
+  async save(): Promise<void> {
     this.isSubmitting.set(true);
     this.submitError.set(null);
 

@@ -39,6 +39,12 @@ Instructions for generating high-quality Angular applications with TypeScript, u
 
 ### Forms and User Input
 - Use `save()` method name for form submission handlers (not `onSubmit()` - follows Angular 20+ conventions)
+- **Form Submission and Page Reload Prevention**:
+  - ✅ **With ngx-vest-forms**: Use `[ngxVestForm]` directive - automatically calls `preventDefault()`
+    - Example: `<form [ngxVestForm]="form" (submit)="save()">` - NO event parameter needed!
+  - ⚠️ **Without ngx-vest-forms** (or without `[ngxVestForm]` directive): Must manually call `preventDefault()`
+    - Native `(submit)` does NOT auto-prevent default (unlike `(ngSubmit)`)
+    - Example: `async save(event: Event) { event.preventDefault(); /* ... */ }`
 - Only use `id` attributes on form inputs for label association (`<label for="email">`)
 - Do NOT add `name` attributes to inputs - not needed with modern Angular forms or form libraries
 - Always use `ChangeDetectionStrategy.OnPush` for optimal performance with signals

@@ -73,6 +73,8 @@ type AppendSuffix<
 
 type BooleanAccessorSuffix =
   | 'Valid'
+  | 'Invalid'
+  | 'Dirty'
   | 'Pending'
   | 'Touched'
   | 'ShowErrors'
@@ -80,6 +82,8 @@ type BooleanAccessorSuffix =
 
 type SetterPrefix = 'set';
 type TouchPrefix = 'touch';
+type MarkAsTouchedPrefix = 'markAsTouched';
+type MarkAsDirtyPrefix = 'markAsDirty';
 type ResetPrefix = 'reset';
 
 type CapitalizeFirst<Value extends string> =
@@ -92,6 +96,12 @@ type SetterName<Base extends string> =
 
 type TouchName<Base extends string> = `${TouchPrefix}${CapitalizeFirst<Base>}`;
 
+type MarkAsTouchedName<Base extends string> =
+  `${MarkAsTouchedPrefix}${CapitalizeFirst<Base>}`;
+
+type MarkAsDirtyName<Base extends string> =
+  `${MarkAsDirtyPrefix}${CapitalizeFirst<Base>}`;
+
 type ResetName<Base extends string> = `${ResetPrefix}${CapitalizeFirst<Base>}`;
 
 /**
@@ -102,8 +112,8 @@ export type DerivedFieldValueSignals<TModel extends Record<string, unknown>> = {
 };
 
 /**
- * Signal accessors exposing derived boolean state (`valid`, `pending`, `touched`,
- * `showErrors`) for each field path. Mirrors the behaviour of the runtime proxy which
+ * Signal accessors exposing derived boolean state (`valid`, `invalid`, `dirty`, `pending`, `touched`,
+ * `showErrors`, `showWarnings`) for each field path. Mirrors the behaviour of the runtime proxy which
  * capitalises every segment after the first.
  */
 export type DerivedFieldBooleanSignals<TModel extends Record<string, unknown>> =
@@ -162,6 +172,24 @@ export type DerivedFieldTouchMethods<TModel extends Record<string, unknown>> = {
 };
 
 /**
+ * Mark as touched methods (e.g. `markAsTouchedProfileName`) - Angular Signal Forms compatible alias for touch.
+ */
+export type DerivedFieldMarkAsTouchedMethods<
+  TModel extends Record<string, unknown>,
+> = {
+  [P in Path<TModel> as MarkAsTouchedName<CamelCasePath<P>>]: () => void;
+};
+
+/**
+ * Mark as dirty methods (e.g. `markAsDirtyProfileName`) for explicitly marking a field as modified.
+ */
+export type DerivedFieldMarkAsDirtyMethods<
+  TModel extends Record<string, unknown>,
+> = {
+  [P in Path<TModel> as MarkAsDirtyName<CamelCasePath<P>>]: () => void;
+};
+
+/**
  * Reset methods (e.g. `resetProfileName`) restoring the initial model value.
  */
 export type DerivedFieldResetMethods<TModel extends Record<string, unknown>> = {
@@ -179,12 +207,14 @@ export type DerivedFieldSignalAccessors<
   DerivedFieldObjectAccessors<TModel>;
 
 /**
- * Convenience union of all derived field methods (set, touch, reset).
+ * Convenience union of all derived field methods (set, touch, markAsTouched, markAsDirty, reset).
  */
 export type DerivedFieldMethodAccessors<
   TModel extends Record<string, unknown>,
 > = DerivedFieldSetterMethods<TModel> &
   DerivedFieldTouchMethods<TModel> &
+  DerivedFieldMarkAsTouchedMethods<TModel> &
+  DerivedFieldMarkAsDirtyMethods<TModel> &
   DerivedFieldResetMethods<TModel>;
 
 /**

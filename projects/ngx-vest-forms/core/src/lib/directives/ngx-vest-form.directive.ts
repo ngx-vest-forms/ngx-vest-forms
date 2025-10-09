@@ -6,6 +6,7 @@
  * - NgxVestAutoAriaDirective (accessible error states)
  * - NgxVestAutoTouchDirective (touch state management)
  * - NgxVestFormBusyDirective (aria-busy during async validation)
+ * - **Auto-preventDefault** on form submit (prevents page reload)
  *
  * **When to use:**
  * - Quick form setup with all features
@@ -21,7 +22,8 @@
  * ```typescript
  * @Component({
  *   template: `
- *     <form [ngxVestForm]="form">
+ *     <form [ngxVestForm]="form" (submit)="save()">
+ *       <!-- ✅ preventDefault() called automatically -->
  *       <input
  *         id="email"
  *         [value]="form.email()"
@@ -32,6 +34,14 @@
  * })
  * export class MyFormComponent {
  *   readonly form = createVestForm(emailSuite, signal({ email: '' }));
+ *
+ *   async save() {
+ *     // ✅ No need for event.preventDefault() - handled by directive
+ *     const result = await this.form.submit();
+ *     if (result.valid) {
+ *       await this.api.save(result.data);
+ *     }
+ *   }
  * }
  * ```
  *
@@ -65,6 +75,9 @@ import { NgxVestFormProviderDirective } from './ngx-vest-form-provider.directive
 
 @Directive({
   selector: 'form[ngxVestForm]',
+  host: {
+    '(submit)': 'preventDefaultSubmit($event)',
+  },
   hostDirectives: [
     {
       directive: NgxVestFormProviderDirective,
@@ -83,4 +96,24 @@ export class NgxVestFormDirective {
    * via the hostDirectives input mapping above.
    */
   readonly ngxVestForm = input.required<VestForm<Record<string, unknown>>>();
+
+  /**
+   * Automatically prevents the default form submission behavior.
+   * This prevents page reload when the form is submitted.
+   *
+   * **Why this is needed:**
+   * - ngx-vest-forms uses native (submit) events, NOT (ngSubmit)
+   * - Native (submit) does NOT auto-prevent default (unlike Angular Forms' (ngSubmit))
+   * - Without preventDefault(), the browser performs a full page reload
+   *
+   * **How it works:**
+   * - This method is called via host binding BEFORE your (submit) handler
+   * - Your submit handler in the component still executes normally
+   * - No naming conflicts with component methods (this is protected)
+   *
+   * @internal This method is called by Angular's host binding system
+   */
+  protected preventDefaultSubmit(event: SubmitEvent): void {
+    event.preventDefault();
+  }
 }

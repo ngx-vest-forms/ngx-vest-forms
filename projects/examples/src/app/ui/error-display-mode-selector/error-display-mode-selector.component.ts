@@ -4,10 +4,7 @@ import {
   input,
   output,
 } from '@angular/core';
-import {
-  ERROR_STRATEGIES,
-  type ErrorDisplayStrategy,
-} from 'ngx-vest-forms';
+import { ERROR_STRATEGIES, type ErrorDisplayStrategy } from 'ngx-vest-forms';
 
 export type ErrorDisplayModeConfig = {
   mode: ErrorDisplayStrategy;

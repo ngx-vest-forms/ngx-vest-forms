@@ -91,16 +91,6 @@ export function extractValue(event: Event): any {
 }
 
 /**
- * @deprecated Use extractValue instead
- * Extract value from a DOM Event object
- * @param event - DOM Event object
- * @returns Extracted value from the event
- */
-export function extractValueFromEvent(event: any): any {
-  return extractValue(event);
-}
-
-/**
  * Create a setter function that handles both values and events
  * @param onChange - Callback function to call with the extracted value
  * @returns Setter function that accepts either a value or event

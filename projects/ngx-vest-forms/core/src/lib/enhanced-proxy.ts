@@ -27,13 +27,24 @@ import type { EnhancedVestForm, VestForm } from './vest-form.types';
  * For a field path like `"user.profile.email"`, the proxy generates:
  * - `form.userProfileEmail()` - Field value signal
  * - `form.userProfileEmailValid()` - Field validity signal
- * - `form.userProfileEmailErrors()` - Field errors signal
+ * - `form.userProfileEmailInvalid()` - Field invalidity signal (NEW in v2.0)
+ * - `form.userProfileEmailDirty()` - Field dirty state signal (NEW in v2.0)
+ * - `form.userProfileEmailValidation()` - Structured errors/warnings (NEW in v2.0)
  * - `form.userProfileEmailTouched()` - Field touched state signal
  * - `form.userProfileEmailPending()` - Field pending state signal
  * - `form.userProfileEmailShowErrors()` - Computed show errors signal
  * - `form.setUserProfileEmail(value)` - Field setter function
- * - `form.touchUserProfileEmail()` - Mark field as touched
+ * - `form.markAsTouchedUserProfileEmail()` - Mark field as touched (NEW in v2.0)
+ * - `form.markAsDirtyUserProfileEmail()` - Mark field as dirty (NEW in v2.0)
  * - `form.resetUserProfileEmail()` - Reset field to initial value
+ *
+ * **Note:** The naming pattern for methods is `{verb}{CapitalizedFieldPath}`:
+ * - Setters: `setEmail()`, `setUserProfileEmail()`
+ * - Touch: `markAsTouchedEmail()`, `markAsTouchedUserProfileEmail()`
+ * - Dirty: `markAsDirtyEmail()`, `markAsDirtyUserProfileEmail()`
+ * - Reset: `resetEmail()`, `resetUserProfileEmail()`
+ *
+ * Alternatively, use the explicit API: `form.field('user.profile.email').markAsTouched()`
  *
  * ## Browser Compatibility
  *
@@ -88,13 +99,22 @@ import type { EnhancedVestForm, VestForm } from './vest-form.types';
  * const form = createVestForm(userSuite, { email: '', name: '' });
  * const enhancedForm = createEnhancedProxy(form);
  *
- * // Dynamic field accessors
+ * // Dynamic field accessors (read-only signals)
  * console.log(enhancedForm.email()); // Current email value
  * console.log(enhancedForm.emailValid()); // Email validity state
+ * console.log(enhancedForm.emailValidation()); // { errors: [], warnings: [] }
  *
- * // Field operations
- * enhancedForm.setEmail('user@example.com');
- * enhancedForm.touchEmail();
+ * /// Field operations via Enhanced Proxy
+ * enhancedForm.setEmail('user@example.com');        // Set value
+ * enhancedForm.markAsTouchedEmail();                 // Mark as touched
+ * enhancedForm.markAsDirtyEmail();                   // Mark as dirty
+ * enhancedForm.resetEmail();                         // Reset to initial
+ *
+ * /// Or use explicit API (same result)
+ * enhancedForm.field('email').set('user@example.com');
+ * enhancedForm.field('email').markAsTouched();
+ * enhancedForm.field('email').markAsDirty();
+ * enhancedForm.field('email').reset();
  * ```
  *
  * @example Nested Field Paths

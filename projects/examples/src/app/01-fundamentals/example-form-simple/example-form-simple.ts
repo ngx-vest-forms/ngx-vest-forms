@@ -23,6 +23,11 @@ export class ExampleFormSimple {
 
   readonly formState = () => this.form;
 
+  /**
+   * Form submission handler
+   *
+   * Note: No need for event.preventDefault() - handled automatically by [ngxVestForm] directive
+   */
   async save() {
     const result = await this.form.submit();
 

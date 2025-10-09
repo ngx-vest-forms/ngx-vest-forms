@@ -72,6 +72,10 @@ export class AppComponent implements AfterViewInit {
           path: '/fundamentals/error-display-modes',
           label: 'Error Display Modes',
         },
+        {
+          path: '/fundamentals/field-states',
+          label: 'Field States',
+        },
         { path: '/fundamentals/form-arrays', label: 'Form Arrays' },
         { path: '/fundamentals/nested-forms', label: 'Nested Forms' },
       ],

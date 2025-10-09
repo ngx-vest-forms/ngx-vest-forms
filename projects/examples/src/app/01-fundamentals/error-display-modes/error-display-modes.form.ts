@@ -48,7 +48,7 @@ const DEFAULT_STRATEGY: ErrorDisplayStrategy = 'on-touch';
     <!-- Product Feedback Form -->
     <form
       [ngxVestForm]="form"
-      (ngSubmit)="save()"
+      (submit)="save()"
       class="form-container"
       aria-labelledby="productFeedbackHeading"
       novalidate
@@ -369,6 +369,11 @@ export class ErrorDisplayModesFormComponent implements OnDestroy {
     return this.formRef();
   }
 
+  /**
+   * Form submission handler
+   *
+   * Note: No need for event.preventDefault() - handled automatically by [ngxVestForm] directive
+   */
   async save(): Promise<void> {
     this.showSubmissionError.set(false);
     this.showPendingMessage.set(false);

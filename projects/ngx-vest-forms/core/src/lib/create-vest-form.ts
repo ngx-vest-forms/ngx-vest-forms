@@ -18,6 +18,7 @@ import { createEnhancedProxy } from './enhanced-proxy';
 import { createEnhancedVestFormArray } from './form-arrays';
 import { NGX_VEST_FORM, NGX_VEST_FORMS_CONFIG } from './tokens';
 import { getValueByPath, setValueByPath } from './utils/path-utils';
+import { parseStructuredErrors } from './utils/structured-errors';
 import { isSignal } from './utils/type-helpers';
 import { createFieldSetter } from './utils/value-extraction';
 import type {
@@ -26,6 +27,7 @@ import type {
   Path,
   PathValue,
   SubmitResult,
+  SubmittedStatus,
   VestField,
   VestForm,
   VestFormOptions,
@@ -104,27 +106,124 @@ export function createVestForm<TModel extends Record<string, unknown>>(
   const isReactiveSuite =
     'subscribe' in suite && typeof suite.subscribe === 'function';
 
-  // For static suites, get an empty result first to avoid marking fields as tested
-  const initialResult =
-    isReactiveSuite && 'get' in suite && typeof suite.get === 'function'
-      ? suite.get()
-      : suite(model());
+  // Get initial result - for stateful suites (createSafeSuite), run the suite once
+  // to initialize state, then use .get(). For static suites, just run it.
+  let initialResult;
+  if (isReactiveSuite && 'get' in suite && typeof suite.get === 'function') {
+    // Run suite once to initialize state (createSafeSuite needs this)
+    suite(model());
+    initialResult = suite.get();
+
+    // Safety check: if .get() returns undefined, run suite again
+    if (!initialResult) {
+      initialResult = suite(model());
+    }
+  } else {
+    // Static suite - just run it
+    initialResult = suite(model());
+  }
+
+  // Final safety check - should never be undefined
+  if (!initialResult) {
+    throw new Error(
+      'createVestForm: Suite returned undefined result. This should not happen. Please check your validation suite implementation.',
+    );
+  }
 
   const suiteResult = signal(initialResult);
-  let unsubscribe: (() => void) | undefined;
+  // Disabled: See note below about subscriptions
+  // let unsubscribe: (() => void) | undefined;
   let lastAsyncRunToken: symbol | null = null;
 
-  if (isReactiveSuite && suite.subscribe) {
-    unsubscribe = suite.subscribe((result: SuiteResult<string, string>) => {
-      suiteResult.set(result);
-    });
-  }
+  // NOTE: Subscriptions are disabled when using `only()` because Vest emits undefined
+  // during intermediate validation states. We update suiteResult in runSuite() instead.
+  // See test-vest-only.spec.ts for demonstration of this Vest behavior.
+  //
+  // if (isReactiveSuite && suite.subscribe) {
+  //   unsubscribe = suite.subscribe((result: SuiteResult<string, string>) => {
+  //     if (result) {
+  //       suiteResult.set(result);
+  //     }
+  //   });
+  // }
+
   const valid = computed(() => {
     // Form is valid only if both schema AND Vest validation pass
     const hasSchemaErrors = Object.keys(schemaErrors()).length > 0;
     return !hasSchemaErrors && suiteResult().isValid();
   });
+
+  /**
+   * Whether the form is invalid (has errors, regardless of pending state)
+   *
+   * @remarks
+   * Note: invalid() is NOT the same as !valid()
+   * - invalid() is true when there are VISIBLE errors (respecting errorStrategy)
+   * - valid() is true only when there are no errors AND no pending validators
+   *
+   * This means with 'on-touch' strategy, a pristine form with validation errors
+   * will have invalid() = false until fields are touched or form is submitted.
+   */
+  const invalid = computed(() => {
+    // We need to compute visible errors inline here because visibleErrors()
+    // is defined later and would create a circular dependency
+    const allErrors = errors();
+    const isSubmitted = hasSubmittedInternal();
+    const touchedFields = touched();
+
+    // Unwrap strategy (signal or static value)
+    const currentStrategy =
+      typeof errorStrategy === 'function' ? errorStrategy() : errorStrategy;
+
+    // Check if any field has errors that should be visible based on strategy
+    for (const [fieldPath, messages] of Object.entries(allErrors)) {
+      if (messages.length === 0) continue;
+
+      let shouldShow = false;
+
+      switch (currentStrategy) {
+        case 'immediate': {
+          shouldShow = true;
+          break;
+        }
+        case 'on-touch': {
+          shouldShow = touchedFields.has(fieldPath) || isSubmitted;
+          break;
+        }
+        case 'on-submit': {
+          shouldShow = isSubmitted;
+          break;
+        }
+        case 'manual': {
+          shouldShow = false;
+          break;
+        }
+        default: {
+          // Default to 'on-touch' behavior
+          shouldShow = touchedFields.has(fieldPath) || isSubmitted;
+        }
+      }
+
+      if (shouldShow) {
+        return true; // At least one error should be visible
+      }
+    }
+
+    return false; // No visible errors
+  });
+
   const pending = computed(() => suiteResult().isPending());
+
+  /**
+   * Track which fields have been modified from their initial values
+   * Map of field path -> initial value for comparison
+   */
+  const dirtyFields = signal(new Set<string>());
+
+  /**
+   * Form-level dirty state - true if any field has been modified
+   */
+  const dirty = computed(() => dirtyFields().size > 0);
 
   /**
    * Merged errors from both schema validation (Layer 1) and Vest validation (Layer 2)
@@ -152,7 +251,17 @@ export function createVestForm<TModel extends Record<string, unknown>>(
   });
 
   const submitting = signal(false);
-  const hasSubmitted = signal(false);
+  const hasSubmittedInternal = signal(false);
+
+  /**
+   * Form submission status (Angular Signal Forms compatible)
+   * Consolidates submission state into a single signal with 3 states
+   */
+  const submittedStatus = computed<SubmittedStatus>(() => {
+    if (submitting()) return 'submitting';
+    if (hasSubmittedInternal()) return 'submitted';
+    return 'unsubmitted';
+  });
 
   /**
    * Convenience computed signal that filters errors based on the error display strategy.
@@ -193,7 +302,7 @@ export function createVestForm<TModel extends Record<string, unknown>>(
   const visibleSchemaErrors = computed(() => {
     const allSchemaErrors = schemaErrors();
     const visibleSchemaErrorsMap: Record<string, string[]> = {};
-    const isSubmitted = hasSubmitted();
+    const isSubmitted = hasSubmittedInternal();
     const touchedFields = touched();
 
     // Unwrap strategy (always a signal or function)
@@ -366,37 +475,43 @@ export function createVestForm<TModel extends Record<string, unknown>>(
     // Run schema validation if provided (Layer 1)
     runSchemaValidation(model());
 
-    // Skip if async validation is already pending to avoid re-triggering
-    if (currentResult.isPending()) {
-      return currentResult;
-    }
+    const currentModel = model();
 
     // Simple two-mode logic: field-specific OR full form
     const nextResult = fieldPath
-      ? suite(model(), fieldPath) // Mode 1: single field
-      : suite(model()); // Mode 2: full form
+      ? suite(currentModel, fieldPath) // Mode 1: single field
+      : suite(currentModel); // Mode 2: full form
 
+    // Safety check - suite should never return undefined
+    if (!nextResult) {
+      console.error('createVestForm: Suite returned undefined result');
+      return currentResult; // Return previous result to prevent crashes
+    }
+
+    // Update the suite result signal immediately with the new result
     suiteResult.set(nextResult);
 
-    // Handle async validation completion for non-reactive suites
+    // Handle async validation completion
+    // The .done() callback receives the FINAL result after async completes
+    // We just need to update our signal with this final result
     if (nextResult.isPending()) {
-      if (
-        !isReactiveSuite &&
-        'done' in nextResult &&
-        typeof nextResult.done === 'function'
-      ) {
+      if ('done' in nextResult && typeof nextResult.done === 'function') {
         const asyncRunToken = Symbol('vest-async-run');
         lastAsyncRunToken = asyncRunToken;
 
-        nextResult.done(() => {
+        nextResult.done((finalResult: SuiteResult<string, string>) => {
+          // Check if this is still the latest async run
           if (lastAsyncRunToken !== asyncRunToken) {
             return;
           }
 
           lastAsyncRunToken = null;
-          // Get fresh result after async completion
-          const freshResult = suite(model());
-          suiteResult.set(freshResult);
+
+          // The finalResult passed to .done() is already the completed result
+          // from Vest - we just update our signal with it
+          if (finalResult) {
+            suiteResult.set(finalResult);
+          }
         });
       }
     } else {
@@ -424,10 +539,24 @@ export function createVestForm<TModel extends Record<string, unknown>>(
     const fieldValidation = computed(() => ({
       errors: fieldErrors(),
       warnings: fieldWarnings(),
+      structuredErrors: parseStructuredErrors(fieldErrors()),
+      structuredWarnings: parseStructuredErrors(fieldWarnings()),
     }));
     const fieldValid = computed(() => fieldErrors().length === 0);
+
+    /**
+     * Field is invalid if it has errors, regardless of pending state
+     * This differs from valid() which requires no errors AND no pending
+     */
+    const fieldInvalid = computed(() => fieldErrors().length > 0);
+
     const fieldPending = computed(() => suiteResult().isPending(path));
     const fieldTouched = computed(() => touched().has(pathKey));
+
+    /**
+     * Field is dirty if it has been modified from its initial value
+     */
+    const fieldDirty = computed(() => dirtyFields().has(pathKey));
 
     // ✅ BUG FIX: computeShowErrors needs to check merged errors, not just vest errors
     // Create a wrapper computed that checks if the field has any errors (schema + vest)
@@ -439,7 +568,7 @@ export function createVestForm<TModel extends Record<string, unknown>>(
     const showErrors = computed(() => {
       const currentHasErrors = hasFieldErrors();
       const isTested = suiteResult().isTested(path);
-      const isSubmitted = hasSubmitted();
+      const isSubmitted = hasSubmittedInternal();
       const fieldIsTouched = fieldTouched();
       const hasSchemaErrors = hasSchemaErrorsForField();
       const effectiveTouched = fieldIsTouched;
@@ -497,16 +626,48 @@ export function createVestForm<TModel extends Record<string, unknown>>(
 
     // Field operations with proper typing
     const set = createFieldSetter((newValue: PathValue<TModel, P>) => {
+      const initialFieldValue = getValueByPath(initialValue, path);
+
+      // Track dirty state if value differs from initial
+      if (newValue === initialFieldValue) {
+        // Value matches initial - remove from dirty set
+        dirtyFields.update((current) => {
+          if (!current.has(pathKey)) {
+            return current; // Already clean
+          }
+          const next = new Set(current);
+          next.delete(pathKey);
+          return next;
+        });
+      } else {
+        // Value differs from initial - mark as dirty
+        dirtyFields.update((current) => {
+          if (current.has(pathKey)) {
+            return current; // Already dirty
+          }
+          const next = new Set(current);
+          next.add(pathKey);
+          return next;
+        });
+      }
+
       const updatedModel = setValueByPath(model(), path, newValue);
       model.set(updatedModel);
       // ✅ WCAG COMPLIANCE: set() validates but does NOT mark as touched
-      // Only touch() should modify touch state
-      // ✅ BUG FIX: Must validate entire form, not just this field
-      // Using only(path) prevents validation of dependent fields and cross-field validations
-      runSuite();
+      // Only markAsTouched() should modify touch state
+      // ✅ VEST BEST PRACTICE: Validate only this field (+ dependencies via include().when())
+      // Vest merges results from previous runs, so other field errors remain visible
+      // Cross-field validation should use Vest's include().when() pattern
+
+      const requiresFullValidation = /\.\d+(?:\.|$)/.test(pathKey);
+      runSuite((requiresFullValidation ? undefined : path) as P | undefined);
     });
 
-    const touch = () => {
+    /**
+     * Mark field as touched without changing value
+     * Aligns with Angular Forms API
+     */
+    const markAsTouched = () => {
       touched.update((current) => {
         if (current.has(pathKey)) {
           return current;
@@ -516,6 +677,21 @@ export function createVestForm<TModel extends Record<string, unknown>>(
         return next;
       });
       runSuite(path);
+    };
+
+    /**
+     * Mark field as dirty programmatically
+     * Useful for custom validation scenarios
+     */
+    const markAsDirty = () => {
+      dirtyFields.update((current) => {
+        if (current.has(pathKey)) {
+          return current;
+        }
+        const next = new Set(current);
+        next.add(pathKey);
+        return next;
+      });
     };
 
     const reset = () => {
@@ -528,7 +704,19 @@ export function createVestForm<TModel extends Record<string, unknown>>(
       if (suite.resetField) {
         suite.resetField(path);
       }
+
+      // Clear touched state
       touched.update((current) => {
+        if (!current.has(pathKey)) {
+          return current;
+        }
+        const next = new Set(current);
+        next.delete(pathKey);
+        return next;
+      });
+
+      // Clear dirty state
+      dirtyFields.update((current) => {
         if (!current.has(pathKey)) {
           return current;
         }
@@ -542,6 +730,8 @@ export function createVestForm<TModel extends Record<string, unknown>>(
     const field: VestField<PathValue<TModel, P>> = {
       value,
       valid: fieldValid,
+      invalid: fieldInvalid,
+      dirty: fieldDirty,
       validation: fieldValidation,
       pending: fieldPending,
       touched: fieldTouched,
@@ -549,7 +739,8 @@ export function createVestForm<TModel extends Record<string, unknown>>(
       showWarnings,
       fieldName: pathKey,
       set,
-      touch,
+      markAsTouched,
+      markAsDirty,
       reset,
     };
 
@@ -570,11 +761,13 @@ export function createVestForm<TModel extends Record<string, unknown>>(
     model,
     result: suiteResult,
     valid,
+    invalid,
+    dirty,
     pending,
     errors,
     visibleErrors,
     submitting,
-    hasSubmitted,
+    submittedStatus,
     errorStrategy,
     schemaErrors: schemaErrors.asReadonly(), // ✅ Expose schema errors (unfiltered)
     visibleSchemaErrors, // ✅ Expose filtered schema errors
@@ -597,33 +790,45 @@ export function createVestForm<TModel extends Record<string, unknown>>(
     },
 
     validate: <P extends Path<TModel>>(fieldPath?: P) => {
-      runSuite(fieldPath);
+      return runSuite(fieldPath);
     },
 
     submit: async (): Promise<SubmitResult<TModel>> => {
       submitting.set(true);
-      hasSubmitted.set(true);
+      hasSubmittedInternal.set(true);
       try {
         // Run full validation
         const result = runSuite();
 
-        // Wait for async validations to complete (if supported)
+        // Wait for async validations to complete (if any exist)
+        // For sync suites, done() fires immediately
+        // For async suites, done() fires when all pending async tests complete
         if ('done' in result && typeof result.done === 'function') {
           await new Promise<void>((resolve) => {
-            // Type assertion for Vest's done method which is not in official types
+            // done() receives finalResult as parameter per Vest docs
+            // But we don't need it - we just wait for completion
             (
               result as SuiteResult<string, string> & {
-                done: (callback: () => void) => void;
+                done: (
+                  callback: (finalResult: SuiteResult<string, string>) => void,
+                ) => void;
               }
-            ).done(() => resolve());
+            ).done(() => {
+              resolve(); // Signal completion
+            });
           });
         }
 
+        // Get the final result after all async operations complete
+        // For sync suites, this is the same as the initial result
+        // For async suites, we need to get the updated result
+        const finalResult = result;
+
         // Return standardized result object instead of throwing
         return {
-          valid: result.isValid(),
+          valid: finalResult.isValid(),
           data: model(),
-          errors: result.getErrors(),
+          errors: finalResult.getErrors(),
         };
       } finally {
         submitting.set(false);
@@ -635,8 +840,9 @@ export function createVestForm<TModel extends Record<string, unknown>>(
       if (suite.reset) {
         suite.reset();
       }
-      hasSubmitted.set(false);
+      hasSubmittedInternal.set(false);
       touched.set(new Set());
+      dirtyFields.set(new Set()); // Clear dirty state on reset
       runSuite();
     },
 
@@ -646,7 +852,7 @@ export function createVestForm<TModel extends Record<string, unknown>>(
     },
 
     dispose: () => {
-      unsubscribe?.();
+      // unsubscribe?.(); // Disabled - see subscription note above
       touched.set(new Set());
       lastAsyncRunToken = null;
     },

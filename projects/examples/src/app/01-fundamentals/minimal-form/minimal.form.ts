@@ -37,6 +37,24 @@ import {
       class="form-container"
       novalidate
     >
+      <!-- Unsaved Changes Indicator (v2.0 dirty() API) -->
+      @if (form.dirty()) {
+        <div
+          class="mb-4 rounded-lg border-l-4 border-amber-500 bg-amber-50 px-4 py-3 dark:border-amber-400 dark:bg-amber-900/20"
+          role="status"
+          aria-live="polite"
+        >
+          <div class="flex items-center gap-2">
+            <span class="text-amber-600 dark:text-amber-400">⚠️</span>
+            <span
+              class="text-sm font-medium text-amber-800 dark:text-amber-300"
+            >
+              Unsaved changes
+            </span>
+          </div>
+        </div>
+      }
+
       <div class="form-field">
         <label class="form-label" for="email"> Email Address </label>
 

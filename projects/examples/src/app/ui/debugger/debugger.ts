@@ -21,8 +21,13 @@ export class Debugger {
 
   protected readonly model = computed(() => this.form().model());
   protected readonly valid = computed(() => this.form().valid());
+  protected readonly invalid = computed(() => this.form().invalid());
+  protected readonly dirty = computed(() => this.form().dirty());
   protected readonly pending = computed(() => this.form().pending());
   protected readonly submitting = computed(() => this.form().submitting());
+  protected readonly submittedStatus = computed(() =>
+    this.form().submittedStatus(),
+  );
 
   /**
    * Detect schema vendor from StandardSchemaV1 specification.

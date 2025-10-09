@@ -1,10 +1,20 @@
-import { staticSafeSuite } from 'ngx-vest-forms';
+import { createSafeSuite } from 'ngx-vest-forms';
 import { enforce, test } from 'vest';
 import { NestedFormModel } from './example-form-nested.model';
 
-export const nestedValidationSuite = staticSafeSuite<NestedFormModel>(
+/**
+ * ✅ IMPORTANT: Use createSafeSuite (stateful) instead of staticSafeSuite (stateless)
+ *
+ * Why? Multi-field forms need to preserve validation errors across field-level validations.
+ * When a user navigates between fields (firstName → lastName), previously validated field
+ * errors must remain visible. createSafeSuite maintains this state, staticSafeSuite doesn't.
+ *
+ * - createSafeSuite: Maintains errors across only() calls (perfect for forms)
+ * - staticSafeSuite: Each validation is independent (good for server-side validation)
+ */
+export const nestedValidationSuite = createSafeSuite<NestedFormModel>(
   (model: Partial<NestedFormModel> = {}) => {
-    // ✅ No need for manual only(field) guard - staticSafeSuite handles it automatically!
+    // ✅ No need for manual only(field) guard - createSafeSuite handles it automatically!
 
     // Personal Info validations - use nested field names to match form paths
     test('personalInfo.firstName', 'First name is required', () => {

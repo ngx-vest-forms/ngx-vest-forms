@@ -533,7 +533,11 @@ test.describe('Basic Validation - User Registration Form', () => {
         await expect(submitButton).toBeEnabled();
         await submitButton.click();
 
-        await expect(page.getByText('Valid: ❌')).toBeVisible();
+        // Check form is invalid - the "Invalid:" badge should show ❌
+        // Using .nth(1) to get the second badge (first is "Valid:", second is "Invalid:")
+        await expect(
+          page.locator('span').filter({ hasText: 'Invalid: ❌' }),
+        ).toBeVisible();
         // Note: Component uses conditional rendering - check visibility instead of aria-hidden
         await expect(nameError).toBeVisible();
         await expect(emailError).toBeVisible();

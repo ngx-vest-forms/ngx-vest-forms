@@ -33,7 +33,7 @@ import { NgxFormErrorComponent, type VestField } from 'ngx-vest-forms/core';
  *   selector: 'app-contact-form',
  *   imports: [NgxVestFormField],
  *   template: `
- *     <form (ngSubmit)="save()">
+ *     <form (submit)="save()">
  *       <ngx-vest-form-field [field]="form.emailField()">
  *         <label for="email">Email *</label>
  *         <input

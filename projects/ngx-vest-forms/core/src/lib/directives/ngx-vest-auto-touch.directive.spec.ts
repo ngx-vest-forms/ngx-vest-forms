@@ -191,14 +191,14 @@ describe('NgxVestAutoTouchDirective', () => {
   });
 
   describe('Blur Behavior', () => {
-    it('should call form.field().touch() on blur', async () => {
+    it('should call form.field().markAsTouched() on blur', async () => {
       const form = createVestForm(signal({ email: '' }), { suite: testSuite });
-      const touchSpy = vi.fn();
+      const markAsTouchedSpy = vi.fn();
       const originalFieldFunction = form.field.bind(form);
       form.field = vi.fn((path: string) => {
         const result = originalFieldFunction(path as 'email');
         if (path === 'email') {
-          return { ...result, touch: touchSpy };
+          return { ...result, markAsTouched: markAsTouchedSpy };
         }
         return result;
       }) as unknown as typeof form.field;
@@ -227,9 +227,9 @@ describe('NgxVestAutoTouchDirective', () => {
       await userEvent.click(input);
       input.dispatchEvent(new FocusEvent('blur'));
 
-      // Verify touch was called
+      // Verify markAsTouched was called
       await TestBed.inject(ApplicationRef).whenStable();
-      expect(touchSpy).toHaveBeenCalled();
+      expect(markAsTouchedSpy).toHaveBeenCalled();
     });
 
     it('should NOT call touch when form is not provided', async () => {
@@ -257,14 +257,14 @@ describe('NgxVestAutoTouchDirective', () => {
       expect(input).toBeInTheDocument();
     });
 
-    it('should NOT call touch when global config disables auto-touch', async () => {
+    it('should NOT call markAsTouched when global config disables auto-touch', async () => {
       const form = createVestForm(signal({ email: '' }), { suite: testSuite });
-      const touchSpy = vi.fn();
+      const markAsTouchedSpy = vi.fn();
       const originalFieldFunction = form.field.bind(form);
       form.field = vi.fn((path: string) => {
         const result = originalFieldFunction(path as 'email');
         if (path === 'email') {
-          return { ...result, touch: touchSpy };
+          return { ...result, markAsTouched: markAsTouchedSpy };
         }
         return result;
       }) as unknown as typeof form.field;
@@ -299,21 +299,21 @@ describe('NgxVestAutoTouchDirective', () => {
       await userEvent.click(input);
       input.dispatchEvent(new FocusEvent('blur'));
 
-      // Verify touch was NOT called
+      // Verify markAsTouched was NOT called
       await TestBed.inject(ApplicationRef).whenStable();
-      expect(touchSpy).not.toHaveBeenCalled();
+      expect(markAsTouchedSpy).not.toHaveBeenCalled();
     });
   });
 
   describe('Field Name Extraction', () => {
     it('should extract field name from id attribute (priority 3)', async () => {
       const form = createVestForm(signal({ email: '' }), { suite: testSuite });
-      const touchSpy = vi.fn();
+      const markAsTouchedSpy = vi.fn();
       const originalFieldFunction = form.field.bind(form);
       form.field = vi.fn((path: string) => {
         const result = originalFieldFunction(path as 'email');
         if (path === 'email') {
-          return { ...result, touch: touchSpy };
+          return { ...result, markAsTouched: markAsTouchedSpy };
         }
         return result;
       }) as unknown as typeof form.field;
@@ -343,19 +343,19 @@ describe('NgxVestAutoTouchDirective', () => {
 
       await TestBed.inject(ApplicationRef).whenStable();
       expect(form.field).toHaveBeenCalledWith('email');
-      expect(touchSpy).toHaveBeenCalled();
+      expect(markAsTouchedSpy).toHaveBeenCalled();
     });
 
     it('should extract field name from id attribute (priority 5)', async () => {
       const form = createVestForm(signal({ firstName: '' }), {
         suite: testSuite,
       });
-      const touchSpy = vi.fn();
+      const markAsTouchedSpy = vi.fn();
       const originalFieldFunction = form.field.bind(form);
       form.field = vi.fn((path: string) => {
         const result = originalFieldFunction(path as 'firstName');
         if (path === 'firstName') {
-          return { ...result, touch: touchSpy };
+          return { ...result, markAsTouched: markAsTouchedSpy };
         }
         return result;
       }) as unknown as typeof form.field;
@@ -384,7 +384,7 @@ describe('NgxVestAutoTouchDirective', () => {
       await userEvent.tab();
 
       await TestBed.inject(ApplicationRef).whenStable();
-      expect(touchSpy).toHaveBeenCalled();
+      expect(markAsTouchedSpy).toHaveBeenCalled();
     });
 
     it('should convert underscores to dots in field paths', async () => {
@@ -510,8 +510,8 @@ describe('NgxVestAutoTouchDirective', () => {
   describe('Opt-Out Mechanism', () => {
     it('should NOT apply when ngxVestAutoTouchDisabled attribute is present', async () => {
       const form = createVestForm(signal({ email: '' }), { suite: testSuite });
-      const touchSpy = vi.fn();
-      form.field('email').touch = touchSpy;
+      const markAsTouchedSpy = vi.fn();
+      form.field('email').markAsTouched = markAsTouchedSpy;
 
       @Component({
         imports: [NgxVestAutoTouchDirective, NgxVestFormProviderDirective],
@@ -535,7 +535,7 @@ describe('NgxVestAutoTouchDirective', () => {
 
       await TestBed.inject(ApplicationRef).whenStable();
       // Directive should not have applied due to opt-out
-      expect(touchSpy).not.toHaveBeenCalled();
+      expect(markAsTouchedSpy).not.toHaveBeenCalled();
     });
   });
 

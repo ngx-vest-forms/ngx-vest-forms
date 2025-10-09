@@ -33,7 +33,7 @@ import type { VestField } from '../vest-form.types';
  *   selector: 'app-contact-form',
  *   imports: [NgxFormErrorComponent],
  *   template: `
- *     <form (ngSubmit)="save()">
+ *     <form (submit)="save()">
  *       <label for="email">Email *</label>
  *       <input
  *         id="email"

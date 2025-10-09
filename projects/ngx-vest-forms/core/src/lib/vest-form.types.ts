@@ -132,6 +132,28 @@ export type SchemaIssue = {
 };
 
 /**
+ * Structured validation error with machine-readable kind property
+ *
+ * @remarks
+ * Provides a structured format for errors that enables:
+ * - Better error handling and debugging
+ * - Internationalization (i18n) support
+ * - Type-safe error checking
+ *
+ * Aligns with Angular Signal Forms ValidationError format.
+ */
+export type StructuredValidationError = {
+  /** Error type/kind (e.g., 'required', 'email', 'minLength', 'custom') */
+  readonly kind: string;
+
+  /** Human-readable error message */
+  readonly message: string;
+
+  /** Optional parameters associated with the validation (e.g., { min: 18 } for minLength) */
+  readonly params?: Record<string, unknown>;
+};
+
+/**
  * Validation messages grouped by severity
  *
  * @remarks
@@ -144,7 +166,38 @@ export type ValidationMessages = {
 
   /** Non-blocking warnings for user guidance (from Vest warn() tests) */
   warnings: string[];
+
+  /**
+   * Structured errors with machine-readable kind property (optional)
+   *
+   * @remarks
+   * Provides additional metadata for better error handling and i18n.
+   * When available, corresponds 1:1 with the `errors` array.
+   */
+  structuredErrors?: readonly StructuredValidationError[];
+
+  /**
+   * Structured warnings with machine-readable kind property (optional)
+   *
+   * @remarks
+   * Provides additional metadata for better warning handling and i18n.
+   * When available, corresponds 1:1 with the `warnings` array.
+   */
+  structuredWarnings?: readonly StructuredValidationError[];
 };
+
+/**
+ * Form submission status
+ *
+ * @remarks
+ * Consolidates `submitting()` and `hasSubmitted()` into a single signal
+ * compatible with Angular Signal Forms API.
+ *
+ * - `unsubmitted`: Form has never been submitted
+ * - `submitting`: Form submission is in progress
+ * - `submitted`: Form has been submitted (regardless of success/failure)
+ */
+export type SubmittedStatus = 'unsubmitted' | 'submitting' | 'submitted';
 
 /**
  * Result of form submission.
@@ -186,6 +239,31 @@ export type VestField<T = unknown> = {
   /** Whether the field is valid (no blocking errors) */
   valid: Signal<boolean>;
 
+  /**
+   * Whether the field is invalid (has errors, regardless of pending state)
+   *
+   * @remarks
+   * Note: `invalid()` is NOT the same as `!valid()`
+   * - `invalid()` is `true` when there are errors, regardless of pending validators
+   * - `valid()` is `true` only when there are no errors AND no pending validators
+   *
+   * Example: If a field has 2 validators with no errors and 1 pending async validator:
+   * - `invalid()` = `false` (no errors yet)
+   * - `valid()` = `false` (async validation pending)
+   *
+   * This aligns with Angular Signal Forms behavior.
+   */
+  invalid: Signal<boolean>;
+
+  /**
+   * Whether the field value has been changed by the user
+   *
+   * @remarks
+   * A field becomes dirty when its value differs from the initial value.
+   * This is different from `touched()` which only tracks focus/blur events.
+   */
+  dirty: Signal<boolean>;
+
   /** Validation messages with errors and warnings */
   validation: Signal<ValidationMessages>;
 
@@ -207,8 +285,17 @@ export type VestField<T = unknown> = {
   /** Set field value and trigger validation */
   set(value: T | Event): void;
 
-  /** Mark field as touched without changing value */
-  touch(): void;
+  /**
+   * Mark field as touched without changing value
+   * Aligns with Angular Forms API (markAsTouched)
+   */
+  markAsTouched(): void;
+
+  /**
+   * Mark field as dirty programmatically
+   * Useful for custom validation scenarios
+   */
+  markAsDirty(): void;
 
   /** Reset field to initial value and clear touched state */
   reset(): void;
@@ -264,6 +351,26 @@ export type VestForm<
   /** Whether the entire form is valid */
   valid: Signal<boolean>;
 
+  /**
+   * Whether the form is invalid (has any errors, regardless of pending state)
+   *
+   * @remarks
+   * Note: `invalid()` is NOT the same as `!valid()`
+   * - `invalid()` is `true` when ANY field has errors, regardless of pending validators
+   * - `valid()` is `true` only when NO fields have errors AND no pending validators
+   *
+   * This aligns with Angular Signal Forms behavior.
+   */
+  invalid: Signal<boolean>;
+
+  /**
+   * Whether any field in the form has been modified by the user
+   *
+   * @remarks
+   * The form becomes dirty when any field value differs from its initial value.
+   */
+  dirty: Signal<boolean>;
+
   /** Whether any async validation is pending */
   pending: Signal<boolean>;
 
@@ -280,8 +387,17 @@ export type VestForm<
   /** Form submission state */
   submitting: Signal<boolean>;
 
-  /** Whether the form has been submitted */
-  hasSubmitted: Signal<boolean>;
+  /**
+   * Form submission status (Angular Signal Forms compatible)
+   *
+   * @remarks
+   * Consolidates submission state into a single signal with 3 states.
+   *
+   * - Returns `'unsubmitted'` when form has never been submitted
+   * - Returns `'submitting'` during async submit operation
+   * - Returns `'submitted'` after form has been submitted (regardless of success/failure)
+   */
+  submittedStatus: Signal<SubmittedStatus>;
 
   /** Schema validation errors (Layer 1 - all errors, unfiltered) */
   schemaErrors: Signal<Record<string, string[]>>;

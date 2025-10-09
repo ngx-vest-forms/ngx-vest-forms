@@ -82,7 +82,7 @@ type ValidationMessages = {
 
 // Operations
 emailField.set(value); // Set value and validate
-emailField.touch(); // Mark touched without value change
+emailField.markAsTouched(); // Mark touched without value change
 emailField.reset(); // Reset to initial value
 ```
 

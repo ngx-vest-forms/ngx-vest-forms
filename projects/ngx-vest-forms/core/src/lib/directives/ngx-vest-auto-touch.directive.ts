@@ -263,7 +263,7 @@ export class NgxVestAutoTouchDirective implements OnDestroy {
 
     // Field-level injection (direct access - no field name extraction needed)
     if (this.#field) {
-      this.#field.touch();
+      this.#field.markAsTouched();
       return;
     }
 
@@ -274,7 +274,7 @@ export class NgxVestAutoTouchDirective implements OnDestroy {
     }
 
     // Touch the field (triggers validation + error display)
-    this.#form()?.field(fieldName).touch();
+    this.#form()?.field(fieldName).markAsTouched();
   }
 
   /**

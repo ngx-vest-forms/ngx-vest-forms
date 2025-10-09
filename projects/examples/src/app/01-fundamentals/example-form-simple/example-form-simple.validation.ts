@@ -1,8 +1,14 @@
-import { staticSafeSuite } from 'ngx-vest-forms';
+import { createSafeSuite } from 'ngx-vest-forms';
 import { enforce, include, test } from 'vest';
 import { FormModel } from './example-form-simple.model';
 
-export const validationSuite = staticSafeSuite<FormModel>(
+/**
+ * ✅ IMPORTANT: Uses createSafeSuite (stateful) instead of staticSafeSuite (stateless)
+ * because this form has multiple fields (email and verifyEmail) and we need errors to persist
+ * across field navigation. When a user tabs between fields in 'on-touch' mode, all touched
+ * field errors must remain visible. createSafeSuite maintains this state, staticSafeSuite doesn't.
+ */
+export const validationSuite = createSafeSuite<FormModel>(
   (model: Partial<FormModel> = {}) => {
     include('verifyEmail').when('email');
     include('email').when('verifyEmail');

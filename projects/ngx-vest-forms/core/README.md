@@ -20,13 +20,11 @@ npm install ngx-vest-forms-core vest
 ## Quick Start
 
 ```typescript
-import { createVestForm } from 'ngx-vest-forms/core';
-import { staticSuite, test, enforce, only } from 'vest';
+import { createVestForm, staticSafeSuite } from 'ngx-vest-forms/core';
+import { test, enforce } from 'vest';
 
-// Define validation suite
-const userSuite = staticSuite((data = {}, field) => {
-  if (field) only(field);
-
+// Define validation suite (automatic only(field) guard)
+const userSuite = staticSafeSuite((data = {}) => {
   test('email', 'Email is required', () => {
     enforce(data.email).isNotEmpty();
   });
@@ -42,15 +40,15 @@ const form = createVestForm(userSuite, { email: '' });
 // Enhanced Field Signals API - automatic generation
 form.email(); // Signal<string> - field value
 form.emailValid(); // Signal<boolean> - field validity
-form.emailErrors(); // Signal<string[]> - field errors
+form.emailValidation(); // Signal<{ errors: string[], warnings: string[] }> - structured errors
 form.emailTouched(); // Signal<boolean> - field touched state
 form.setEmail(); // (value: string | Event) => void - field setter
-form.touchEmail(); // () => void - mark field as touched
 form.resetEmail(); // () => void - reset field to initial value
 
 // Alternative explicit API
 const emailField = form.field('email');
 emailField.value(); // Signal<string>
+emailField.markAsTouched(); // Mark as touched
 emailField.set('user@example.com');
 ```
 
@@ -210,7 +208,7 @@ Creates a new VestForm instance.
 
 **Parameters:**
 
-- `suite` - Vest static suite for validation
+- `suite` - Validation suite (prefer `staticSafeSuite` or `createSafeSuite` from this package)
 - `initialModel` - Initial form data (object or signal)
 - `options?` - Configuration options
 
@@ -222,7 +220,7 @@ Creates a new VestForm instance.
 - `form.validate(path?)` - Run validation (specific field or entire form)
 - `form.submit()` - Submit form (validates first, returns Promise)
 - `form.reset()` - Reset form to initial state
-- `form.dispose()` - Cleanup subscriptions
+- `form.dispose()` - Optional teardown for `createSafeSuite` forms (cancels pending async validators, clears state)
 
 ### Form Properties
 

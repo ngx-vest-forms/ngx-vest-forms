@@ -378,7 +378,7 @@ function useExplicitFieldAPI<T>(form: VestForm<T>, fieldPath: string) {
     valid: () => form.field(fieldPath).valid(),
     showErrors: () => form.field(fieldPath).showErrors(),
     set: (value: any) => form.field(fieldPath).set(value),
-    touch: () => form.field(fieldPath).touch(),
+    markAsTouched: () => form.field(fieldPath).markAsTouched(),
     reset: () => form.field(fieldPath).reset(),
   };
 }
@@ -489,8 +489,8 @@ export function createVestForm<TModel>(
         case 'set':
           signal = (value: any) => coreForm.field(fieldPath).set(value);
           break;
-        case 'touch':
-          signal = () => coreForm.field(fieldPath).touch();
+        case 'markAsTouched':
+          signal = () => coreForm.field(fieldPath).markAsTouched();
           break;
         case 'reset':
           signal = () => coreForm.field(fieldPath).reset();

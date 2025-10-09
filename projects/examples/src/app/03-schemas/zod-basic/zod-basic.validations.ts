@@ -13,7 +13,7 @@
  * - Only runs after schema passes
  */
 
-import { staticSafeSuite } from 'ngx-vest-forms/core';
+import { createSafeSuite } from 'ngx-vest-forms';
 import type { InferOutput } from 'ngx-vest-forms/schemas';
 import { enforce, include, skipWhen, test, warn } from 'vest';
 import { z } from 'zod';
@@ -90,13 +90,18 @@ export function createInitialUserRegistration(): UserRegistrationModel {
 /**
  * LAYER 2: Vest.js Suite - Business Logic Validation
  *
+ * ✅ IMPORTANT: Uses createSafeSuite (stateful) instead of staticSafeSuite (stateless)
+ * because this form has multiple fields and we need errors to persist across field navigation.
+ * When a user tabs between fields in 'on-touch' mode, all touched field errors must remain
+ * visible. createSafeSuite maintains this state, staticSafeSuite doesn't.
+ *
  * Runs ONLY after schema validation passes.
  * Provides:
  * - Async username availability check
  * - Cross-field password confirmation
  * - Warning for weak passwords (non-blocking)
  */
-export const userRegistrationSuite = staticSafeSuite<UserRegistrationModel>(
+export const userRegistrationSuite = createSafeSuite<UserRegistrationModel>(
   (data = {}) => {
     // ========================================
     // EMAIL - Domain-specific validation

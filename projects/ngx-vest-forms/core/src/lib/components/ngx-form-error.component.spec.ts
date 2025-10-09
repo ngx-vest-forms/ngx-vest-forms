@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { render, screen } from '@testing-library/angular';
-import { enforce, test } from 'vest';
+import { userEvent } from '@vitest/browser/context';
+import { enforce, test, warn } from 'vest';
 import { describe, expect, it } from 'vitest';
 import { createVestForm } from '../create-vest-form';
 import { staticSafeSuite } from '../utils/safe-suite';
@@ -214,6 +215,60 @@ describe('NgxFormErrorComponent', () => {
         expect(statusContainers[0].id).toBe('password-warning');
       }
     });
+
+    it('should display warnings when field is dirty (not touched) using dirty() + warnings() pattern', async () => {
+      // Suite with warnings using warn()
+      const passwordSuite = staticSafeSuite<TestModel>((data = {}) => {
+        test('password', 'Consider adding special characters', () => {
+          warn(); // Non-blocking warning
+          enforce(data.password).matches(/[!@#$%^&*]/);
+        });
+      });
+
+      @Component({
+        imports: [NgxFormErrorComponent],
+        template: `
+          <input
+            id="password"
+            [value]="form.password()"
+            (input)="form.setPassword($event)"
+          />
+          @if (
+            form.passwordDirty() && form.passwordValidation().warnings.length
+          ) {
+            <ngx-form-error [field]="form.passwordField()" />
+          }
+        `,
+      })
+      class TestComponent {
+        form = createVestForm(
+          signal<TestModel>({ email: '', password: '' }),
+          { suite: passwordSuite, errorStrategy: 'on-touch' }, // on-touch strategy, but warnings show on dirty
+        );
+      }
+
+      await render(TestComponent);
+      const input = screen.getByRole('textbox');
+
+      // Initially: no warnings (field not dirty)
+      expect(
+        screen.queryByText(/Consider adding special characters/i),
+      ).toBeNull();
+
+      // Type in field → makes it dirty (NOT touched yet - no blur)
+      await userEvent.type(input, 'simple');
+
+      // Warnings should appear immediately (dirty + warnings pattern)
+      // Note: Field is NOT touched yet, but warnings still show because we check dirty()
+      const warningText = await screen.findByText(
+        /Consider adding special characters/i,
+      );
+      expect(warningText).toBeInTheDocument();
+
+      // Verify ARIA role is "status" (warnings, not errors)
+      const warningContainer = screen.getByRole('status');
+      expect(warningContainer).toHaveAttribute('aria-live', 'polite');
+    });
   });
 
   describe('Error Strategy Integration', () => {
@@ -299,7 +354,7 @@ describe('NgxFormErrorComponent', () => {
         const { fixture } = await render(TestComponent);
 
         // Touch the field programmatically
-        fixture.componentInstance.form.touchEmail();
+        fixture.componentInstance.form.field('email').markAsTouched();
         await fixture.whenStable();
 
         // Now errors should appear
@@ -307,7 +362,7 @@ describe('NgxFormErrorComponent', () => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
       });
 
-      it('should show errors after field is touched via field().touch()', async () => {
+      it('should show errors after field is touched via field().markAsTouched()', async () => {
         @Component({
           imports: [NgxFormErrorComponent],
           template: `<ngx-form-error [field]="form.emailField()" />`,
@@ -322,7 +377,7 @@ describe('NgxFormErrorComponent', () => {
         const { fixture } = await render(TestComponent);
 
         // Touch the field via field accessor
-        fixture.componentInstance.form.field('email').touch();
+        fixture.componentInstance.form.field('email').markAsTouched();
         await fixture.whenStable();
 
         // Now errors should appear
@@ -345,7 +400,7 @@ describe('NgxFormErrorComponent', () => {
         const { fixture } = await render(TestComponent);
 
         // Touch the field
-        fixture.componentInstance.form.touchEmail();
+        fixture.componentInstance.form.field('email').markAsTouched();
         await fixture.whenStable();
 
         // Errors appear
@@ -375,7 +430,7 @@ describe('NgxFormErrorComponent', () => {
         const { fixture } = await render(TestComponent);
 
         // Touch the field
-        fixture.componentInstance.form.touchEmail();
+        fixture.componentInstance.form.field('email').markAsTouched();
         await fixture.whenStable();
 
         // Set valid value
@@ -423,7 +478,7 @@ describe('NgxFormErrorComponent', () => {
         const { fixture } = await render(TestComponent);
 
         // Touch the field
-        fixture.componentInstance.form.touchEmail();
+        fixture.componentInstance.form.field('email').markAsTouched();
         await fixture.whenStable();
 
         // Still no errors (not submitted yet)
@@ -559,7 +614,7 @@ describe('NgxFormErrorComponent', () => {
         const { fixture } = await render(TestComponent);
 
         // Touch the field
-        fixture.componentInstance.form.touchEmail();
+        fixture.componentInstance.form.field('email').markAsTouched();
         await fixture.whenStable();
 
         // Still no errors

@@ -4,7 +4,28 @@ applyTo: '**/*.{ts,html,component.ts}'
 ---
 
 
-# Vest.js Validation Framework: Best Practices for Angular & ngx-vest-forms
+# Vest.js Validation Best Practices for Angular & ngx-vest-forms
+### Execution modes (Vest 5)
+- `mode(Modes.EAGER)` (default): stop after first failing test **per field**; best for live validation UX.
+- `mode(Modes.ALL)`: collect all failures per field; use on submit to show comprehensive errors.
+- `mode(Modes.ONE)`: stop entire suite after first failure anywhere; use for server-side fast-fail.
+
+```typescript
+import { create, mode, Modes, only, test } from 'vest';
+
+export const profileSuite = create((data, field) => {
+  // Show all errors on submit, but only first error during typing
+  if (!field) mode(Modes.ALL);
+
+  only(field);
+
+  test('displayName', 'Display name is required', () => enforce(data.displayName).isNotBlank());
+  test('displayName', 'Must be 3+ chars', () => enforce(data.displayName).longerThan(2));
+});
+```
+- **EAGER** (field typing): Show first error immediately, stop testing that field after first failure.
+- **ALL** (form submit): Show every error to help users fix all issues at once.
+- **ONE** (server validation): Fail fast, no need to process all fields if one is invalid.: Best Practices for Angular & ngx-vest-forms
 
 ## Purpose of this guide
 - Equip the assistant with crisp guardrails when generating Vest.js + Angular code.
@@ -12,8 +33,8 @@ applyTo: '**/*.{ts,html,component.ts}'
 - Keep examples lightweight; expand in feature docs only when needed.
 
 ## Golden rules (follow these first)
-- **ALWAYS use `staticSafeSuite` or `createSafeSuite`** from `ngx-vest-forms/core` - they prevent the `only(undefined)` bug automatically.
-- Only use raw `staticSuite` + manual `only(field)` guard if safe wrappers are unavailable; always guard with `if (field) { only(field); }`.
+- **ALWAYS use `staticSafeSuite` or `createSafeSuite`** from `ngx-vest-forms/core` – they centralize the `only()` call, enforce type-safe field names, and keep suite wiring consistent.
+- Only use raw `staticSuite` when the safe wrappers truly can’t be imported; call `only(field ?? false)` (or a similar unconditional call) at the top of the suite instead of wrapping it in an `if`.
 - Drive touch state from `result.isTested(field)`—never maintain parallel dirty flags.
 - Prefer `skipWhen`/`omitWhen`/`include.when` over ad-hoc conditionals; they compose with Vest's execution engine.
 - Keep async validations cancellable via the provided `AbortSignal` and guard expensive work with `skipWhen`.
@@ -24,10 +45,10 @@ applyTo: '**/*.{ts,html,component.ts}'
 
 ## Recommended suite recipe (Safe Wrappers)
 
-> **✅ RECOMMENDED: Use `staticSafeSuite` to prevent the `only(undefined)` bug automatically**
+> **✅ RECOMMENDED: Use `staticSafeSuite` to keep `only()` wiring consistent**
 >
-> The safe wrappers from `ngx-vest-forms/core` handle the `if (field) { only(field); }` guard pattern for you,
-> eliminating the most common validation bug where calling `only(undefined)` causes ZERO tests to run.
+> The safe wrappers from `ngx-vest-forms/core` always invoke `only(field)` for you,
+> so there’s no chance of accidentally skipping the call or wrapping it in a conditional.
 
 ```typescript
 import { staticSafeSuite } from 'ngx-vest-forms/core';
@@ -43,7 +64,7 @@ export const contactSuite = staticSafeSuite<ContactModel>((data = {}) => {
 ```
 
 **Benefits of Safe Wrappers:**
-- ✅ Prevents the `only(undefined)` bug (runs ZERO tests)
+- ✅ Guarantees `only()` is applied unconditionally with the field argument you pass
 - ✅ Less boilerplate code
 - ✅ Type-safe with generic parameters
 - ✅ Drop-in replacement for Vest's functions
@@ -55,17 +76,15 @@ See [`safe-suite.ts`](../../projects/ngx-vest-forms/core/src/lib/utils/safe-suit
 
 > **⚠️ LEGACY: Only use this pattern if safe wrappers are unavailable**
 >
-> Manual `only(field)` requires careful guarding to prevent the bug where calling `only(undefined)`
-> tells Vest to run **ZERO tests**, breaking form validation.
+> When using raw `staticSuite`, you must ALWAYS call `only()` unconditionally at the suite's top level.
+> Vest relies on consistent execution order tracking - conditional calls corrupt this internal state.
 
 ```typescript
 import { staticSuite, enforce, only, test } from 'vest';
 
 export const contactSuite = staticSuite((data = {}, field?: string) => {
-  // ✅ CORRECT: Guard with if statement
-  if (field) {
-    only(field);
-  }
+  // ✅ CORRECT: Call only() unconditionally (passing undefined is safe)
+  only(field);
 
   test('email', 'Email is required', () => enforce(data.email).isNotBlank());
   test('email', 'Email format is invalid', () => enforce(data.email).isEmail());
@@ -73,41 +92,70 @@ export const contactSuite = staticSuite((data = {}, field?: string) => {
 ```
 
 **Why this matters:**
-- **When `field` is `undefined`** (initial validation, form-level validation): All tests run, showing all errors
-- **When `field` is `"email"`** (field-level validation): Only email tests run (performance optimization)
-- **When you call `only(undefined)`** (bug): Vest runs NO tests at all, breaking validation
+- **When `field` is `undefined`**: `only(undefined)` is ignored by Vest → all tests run
+- **When `field` is `"email"`**: Only email tests run (performance optimization)
+- **Vest tracks execution order internally** - it needs to see the same function calls on every run to maintain state synchronization
 
 **DO NOT DO THIS:**
 ```typescript
-// ❌ WRONG: Missing if guard - breaks when field is undefined!
+// ❌ WRONG: Calling only() conditionally breaks execution order tracking!
 export const contactSuite = staticSuite((data = {}, field?: string) => {
-  only(field); // BUG: When field is undefined, NO tests will run!
+  if (field) {
+    only(field); // BUG: Conditional call corrupts Vest's execution order!
+  }
+
+  test('email', 'Email is required', () => enforce(data.email).isNotBlank());
+});
+
+// ❌ ALSO WRONG: Same problem, different syntax
+export const contactSuite = staticSuite((data = {}, field?: string) => {
+  field && only(field); // BUG: Still a conditional call!
 
   test('email', 'Email is required', () => enforce(data.email).isNotBlank());
 });
 ```
 
-- Always accept `(data, field?)`; treat `field` as optional and guard with `if (field) { only(field); }`.
+**Alternative correct patterns:**
+```typescript
+// ✅ CORRECT: Unconditional call (recommended)
+only(field);
+
+// ✅ CORRECT: Unconditional call with explicit fallback
+only(field ?? false);
+
+// ✅ CORRECT: Unconditional call with conditional argument
+only(shouldValidateField ? 'email' : false);
+```
+
+> **Critical Rule from Vest Docs:** `only()`, `skip()`, and `.done()` must NEVER be called conditionally.
+> The function call itself must always execute - only the *arguments* can be conditional.
+>
+> **Why?** Vest maintains an internal execution order counter that increments on each function call.
+> Skipping a call (via `if`) breaks this counter, causing unpredictable validation behavior,
+> especially with async tests, state subscriptions, and result memoization.
+
+- Always accept `(data, field?)`; call `only(field)` unconditionally at the top of the suite.
 - Return the suite directly from the module; consumers import the constant.
 
-### Type-safe helpers
+### Type-safe suite generics
 ```typescript
-import { create } from 'vest';
+import { create, only } from 'vest';
 
 type Field = 'email' | 'password';
 type Group = 'onboarding' | 'profile';
 type Model = { email: string; password: string };
 
-export const authSuite = create<Field, Group, (data: Model) => void>((data, field) => {
-  if (field) {
-    only(field);
+export const authSuite = create<Field, Group, (data: Model, field?: Field) => void>(
+  (data, field) => {
+    only(field); // TypeScript enforces field must be Field | undefined
+    test('password', 'Password is required', () => enforce(data.password).isNotBlank());
   }
-  test('password', 'Password is required', () => enforce(data.password).isNotBlank());
-});
+);
 
-const { test, group, only } = authSuite; // all helpers now honour the Field/Group union
+const { test, group, only: onlyTyped } = authSuite; // Destructured helpers are type-aware
 ```
-- Destructure helpers when you need type-aware `test`, `group`, or `only` outside the suite body.
+- Use suite generics `<FieldName, GroupName, Callback>` for compile-time safety.
+- Destructure `test`, `group`, `only` from the suite when you need them outside the suite body.
 
 ## Execution & field selection
 
@@ -128,9 +176,7 @@ export const profileSuite = create((data, field) => {
   if (!field) {
     mode(Modes.ALL);
   }
-  if (field) {
-    only(field);
-  }
+  only(field ?? false);
 
   test('displayName', 'Display name is required', () => enforce(data.displayName).isNotBlank());
 });
@@ -170,25 +216,27 @@ test('alternateEmail', 'Format is invalid', () => enforce(data.altEmail).isEmail
 
 ## Async validation patterns
 
-### Guarded async validation
+### Async validation with cancellation
 ```typescript
 import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
 
 skipWhen((res) => res.hasErrors('username'), () => {
   test('username', 'Username already exists', async ({ signal }) => {
+    // Vest provides { signal } automatically to async tests
     await lastValueFrom(
       userService.checkUsername(data.username!).pipe(takeUntil(fromEvent(signal, 'abort')))
     ).then(
-      () => Promise.reject(),
-      () => Promise.resolve()
+      () => Promise.reject(), // Username exists = fail
+      () => Promise.resolve()  // Username free = pass
     );
   });
 });
 ```
-- Always respect the provided `AbortSignal`; abortable observables or fetch requests must call `takeUntil`/`signal`.
-- Wrap slow validations with `skipWhen` or `omitWhen` to avoid unnecessary network calls.
-- Use `test.memo(name, message, fn, [deps])` to cache deterministic async results.
-- Apply `test.debounce(name, message, fn, wait)` for live-search fields that should wait for idle typing.
+- **Vest automatically passes `{ signal }` to async test callbacks** for cancellation support.
+- Always respect the `signal` - cancel observables with `takeUntil(fromEvent(signal, 'abort'))` or fetch with `{ signal }`.
+- Wrap expensive checks with `skipWhen` to avoid running when prerequisite validations fail.
+- Cache deterministic async results: `test.memo(name, message, fn, [deps])` - re-runs only when deps change.
+- Debounce live-typing fields: `test.debounce(name, message, fn, waitMs)` - waits for user to stop typing.
 
 ### Warning-only feedback
 ```typescript
@@ -209,9 +257,24 @@ contactSuite.subscribe((result) => suiteState.set(result));
 const emailErrors = computed(() => suiteState().getErrors('email'));
 const showEmailErrors = computed(() => suiteState().isTested('email') && suiteState().hasErrors('email'));
 ```
-- Expose read-only signals for value, errors, warnings, `isPending`, and `isValid` on demand.
-- Prefer computed selectors instead of storing plain objects in component state.
-- When submitting, call `suiteState().done(callback)` to react to async completion.
+
+### Three ways to access suite results
+```typescript
+// 1. Direct result (from suite call)
+const result = suite(data);
+result.hasErrors();
+
+// 2. Suite method (latest state)
+suite.hasErrors();
+
+// 3. suite.get() (latest state, same as #2)
+suite.get().hasErrors();
+```
+- All three access the same result data; choose based on context.
+- **Subscribe** to track state changes: `suite.subscribe(res => updateState(res))`.
+- Use `isTested(field)` for touch detection - never maintain separate dirty flags.
+- React to async completion: `result.done(callback)` or `result.done(fieldName, callback)`.
+- **Never call `.done()` conditionally** - it breaks async tracking.
 
 ## Angular integration patterns
 
@@ -290,25 +353,32 @@ export async function validatePayload(payload: unknown) {
 
 ## Common Mistakes to Avoid
 
-### ❌ Mistake #1: Calling `only(field)` without checking if field is undefined
+### ❌ Mistake #1: Calling `only()`, `skip()`, or `.done()` conditionally
 
 ```typescript
-// ❌ WRONG - This breaks form validation!
+// ❌ WRONG - Conditional calls break Vest's execution tracking!
 export const suite = staticSuite((data, field) => {
-  only(field); // When field is undefined, NO tests run!
+  if (field) {
+    only(field); // BUG: Conditional call breaks state tracking!
+  }
   test('email', 'Required', () => enforce(data.email).isNotEmpty());
 });
 
-// ✅ CORRECT - Always guard with if statement
+// ✅ CORRECT - Always call unconditionally, pass conditional values as args
 export const suite = staticSuite((data, field) => {
-  if (field) {
-    only(field);
-  }
+  only(field); // Safe: only(undefined) is ignored, runs all tests
+  test('email', 'Required', () => enforce(data.email).isNotEmpty());
+});
+
+// ✅ ALSO CORRECT - Conditional arguments, not conditional calls
+export const suite = staticSuite((data, field) => {
+  only(field ?? false); // Explicit: false tells Vest to run all tests
+  skip(shouldSkipPromo ? 'promo' : false); // Conditional value, not call
   test('email', 'Required', () => enforce(data.email).isNotEmpty());
 });
 ```
 
-**Impact:** Only 1 error shows at a time; initial form load shows no errors even when multiple fields are invalid.
+**Impact:** Conditional calls corrupt Vest's internal execution order tracking, causing unpredictable validation behavior.
 
 ### ❌ Mistake #2: Maintaining separate "dirty" or "touched" state
 
@@ -321,7 +391,25 @@ const showError = dirty.email && result.hasErrors('email');
 const showError = result.isTested('email') && result.hasErrors('email');
 ```
 
-### ❌ Mistake #3: Not respecting AbortSignal in async tests
+### ❌ Mistake #3: Calling `.done()` conditionally
+
+```typescript
+// ❌ WRONG - Conditional .done() breaks async tracking
+if (field === 'username') {
+  result.done(() => {/* ... */});
+}
+
+// ✅ CORRECT - Always call .done(), perform checks inside callback
+result.done(() => {
+  if (field === 'username') {
+    /* ... */
+  }
+});
+```
+
+**Impact:** Missed callbacks when async tests complete, especially with field-level validation.
+
+### ❌ Mistake #4: Not respecting AbortSignal in async tests
 
 ```typescript
 // ❌ WRONG - Request not cancelled when field changes
@@ -335,7 +423,7 @@ test('username', 'Taken', async ({ signal }) => {
 });
 ```
 
-### ❌ Mistake #4: Not using skipWhen for expensive async validations
+### ❌ Mistake #5: Not using skipWhen for expensive async validations
 
 ```typescript
 // ❌ WRONG - Expensive check runs even when email is invalid

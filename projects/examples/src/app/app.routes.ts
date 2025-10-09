@@ -26,6 +26,14 @@ export const appRoutes: Routes = [
         title: 'Basic Validation - Foundation',
       },
       {
+        path: 'field-states',
+        loadComponent: () =>
+          import('./01-fundamentals/field-states/field-states.page').then(
+            (m) => m.FieldStatesPage,
+          ),
+        title: 'Field States - dirty, touched, invalid',
+      },
+      {
         path: 'error-display-modes',
         loadComponent: () =>
           import(
