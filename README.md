@@ -734,7 +734,88 @@ Forget about manually adding, removing validators on reactive forms and not bein
 re-use them. This code is easy to test, easy to re-use on frontend, backend, angular, react, etc...
 **Oh, it's also pretty readable**
 
+### Dependent Field Validation with Conditional Rendering
+
+When fields that depend on each other are conditionally rendered (using `@if`), you need a **reactive validationConfig** to avoid "control not found" warnings.
+
+> **💡 Related Pattern**: If you're also switching between form inputs and non-form content (like informational text), you'll need [`triggerFormValidation()`](#handling-form-structure-changes) in addition to computed `validationConfig`. See the [comparison matrix](#handling-dynamic-forms-two-common-patterns) for when to use each.
+
+#### The Problem
+
+```typescript
+// ❌ This causes warnings when conditional fields don't exist
+class MyComponent {
+  protected readonly validationConfig = {
+    quantity: ['justification'], // justification only shows when quantity > 5!
+  };
+}
+```
+
+#### The Solution
+
+Use a **computed signal** for `validationConfig`:
+
+```typescript
+import { Component, signal, computed } from '@angular/core';
+
+@Component({
+  template: `
+    <form scVestForm [validationConfig]="validationConfig()" ...>
+      <input name="quantity" [ngModel]="formValue().quantity" />
+
+      @if ((formValue().quantity || 0) > 5) {
+        <textarea
+          name="justification"
+          [ngModel]="formValue().justification"
+        ></textarea>
+      }
+    </form>
+  `,
+})
+export class MyComponent {
+  protected readonly formValue = signal<MyFormModel>({});
+
+  // ✅ Computed config only references controls that exist
+  protected readonly validationConfig = computed(() => {
+    const config: Record<string, string[]> = {};
+
+    // Only add dependency when field is in DOM
+    if ((this.formValue().quantity || 0) > 5) {
+      config['quantity'] = ['justification'];
+      config['justification'] = ['quantity']; // Bidirectional validation
+    }
+
+    return config;
+  });
+}
+```
+
+**Key Points:**
+
+- ✅ **Reactive**: Config updates when field visibility changes
+- ✅ **No Warnings**: Only references controls that exist in DOM
+- ✅ **Bidirectional**: Works for two-way validation dependencies
+- ✅ **Type-Safe**: Full TypeScript support
+
+**Template Binding:**
+
+```html
+<!-- Notice the function call: validationConfig() -->
+<form scVestForm [validationConfig]="validationConfig()" ...></form>
+```
+
 ## Advanced Topics
+
+### Handling Dynamic Forms: Two Common Patterns
+
+Dynamic forms present two distinct challenges that require different solutions:
+
+| Challenge                                           | Solution                                                                              | When to Use                                                |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| **Conditional fields with validation dependencies** | [Computed `validationConfig`](#dependent-field-validation-with-conditional-rendering) | Fields depend on each other AND are conditionally rendered |
+| **Structure changes without value changes**         | [`triggerFormValidation()`](#handling-form-structure-changes)                         | Switching between form inputs and non-form content         |
+
+> **💡 Pro Tip**: These solutions are complementary and often used together in complex forms with both conditional validation dependencies and dynamic structure changes.
 
 ### Handling Form Structure Changes
 
@@ -822,6 +903,8 @@ Call this method in these scenarios:
 - **After clearing form sections** - When resetting parts of the form
 - **After dynamic field addition/removal** - When programmatically modifying form structure
 - **After switching form modes** - When toggling between different form layouts
+
+> **💡 Note**: If your conditional fields have validation dependencies, you'll also need [computed `validationConfig`](#dependent-field-validation-with-conditional-rendering) to prevent "control not found" warnings. See the [comparison matrix](#handling-dynamic-forms-two-common-patterns) for clarification.
 
 #### Field Clearing Pattern for Component State Consistency
 

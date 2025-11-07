@@ -1,5 +1,17 @@
-import { ValidateRootFormDirective, vestForms } from 'ngx-vest-forms';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  ValidateRootFormDirective,
+  vestForms,
+  clearFields,
+  setValueAtPath,
+} from 'ngx-vest-forms';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { JsonPipe } from '@angular/common';
 import { AddressComponent } from '../../ui/address/address.component';
 import { PhonenumbersComponent } from '../../ui/phonenumbers/phonenumbers.component';
@@ -26,6 +38,7 @@ import { debounceTime, filter, switchMap } from 'rxjs';
   ],
   templateUrl: './purchase-form.component.html',
   styleUrls: ['./purchase-form.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PurchaseFormComponent {
   private readonly lukeService = inject(LukeService);
@@ -48,6 +61,7 @@ export class PurchaseFormComponent {
       showShippingAddress:
         this.formValue().addresses?.shippingAddressDifferentFromBillingAddress,
       showGenderOther: this.formValue().gender === 'other',
+      showJustification: (this.formValue().quantity || 0) > 5,
       // Take shipping address from the state
       shippingAddress:
         this.formValue().addresses?.shippingAddress || this.shippingAddress(),
@@ -55,13 +69,27 @@ export class PurchaseFormComponent {
     };
   });
 
-  protected readonly validationConfig: {
-    [key: string]: string[];
-  } = {
-    age: ['emergencyContact'],
-    'passwords.password': ['passwords.confirmPassword'],
-    gender: ['genderOther'],
-  };
+  // Computed validationConfig that only references controls that exist in the DOM
+  // This prevents "control not found" warnings for conditionally rendered fields
+  protected readonly validationConfig = computed(() => {
+    const config: { [key: string]: string[] } = {
+      age: ['emergencyContact'],
+      'passwords.password': ['passwords.confirmPassword'],
+    };
+
+    // Only add gender → genderOther dependency when genderOther field is visible
+    if (this.viewModel().showGenderOther) {
+      config['gender'] = ['genderOther'];
+    }
+
+    // Only add quantity ↔ justification bidirectional dependency when justification is visible
+    if (this.viewModel().showJustification) {
+      config['quantity'] = ['justification'];
+      config['justification'] = ['quantity'];
+    }
+
+    return config;
+  });
 
   constructor() {
     const firstName = computed(() => this.formValue().firstName);
@@ -87,8 +115,9 @@ export class PurchaseFormComponent {
             },
           }));
         }
-      },
-      { allowSignalWrites: true }
+      }
+      // Note: allowSignalWrites is deprecated and no longer needed
+      // Writes are always allowed in effects in modern Angular
     );
 
     // When firstName is Luke, fetch luke skywalker and update the form value
@@ -140,5 +169,30 @@ export class PurchaseFormComponent {
 
     // Reset shipping address state
     this.shippingAddress.set({});
+  }
+
+  /**
+   * Example: Clear sensitive fields while keeping basic info
+   * Showcases the clearFields utility from ngx-vest-forms
+   */
+  protected clearSensitiveData(): void {
+    this.formValue.update((v) =>
+      clearFields(v, ['passwords', 'emergencyContact', 'userId'])
+    );
+  }
+
+  /**
+   * Example: Programmatically set nested values
+   * Showcases the setValueAtPath utility from ngx-vest-forms
+   */
+  protected prefillBillingAddress(): void {
+    this.formValue.update((v) => {
+      const updated = structuredClone(v); // Clone to avoid mutation
+      setValueAtPath(updated, 'addresses.billingAddress.street', '123 Main St');
+      setValueAtPath(updated, 'addresses.billingAddress.city', 'New York');
+      setValueAtPath(updated, 'addresses.billingAddress.zipcode', '10001');
+      setValueAtPath(updated, 'addresses.billingAddress.country', 'USA');
+      return updated;
+    });
   }
 }

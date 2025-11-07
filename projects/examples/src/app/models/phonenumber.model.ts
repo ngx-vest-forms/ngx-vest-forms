@@ -1,10 +1,10 @@
-import { DeepRequired } from 'ngx-vest-forms';
+import { NgxDeepRequired } from 'ngx-vest-forms';
 
 export type PhonenumberModel = Partial<{
   addValue: string;
   values: { [key: string]: string };
 }>;
-export const phonenumberShape: DeepRequired<PhonenumberModel> = {
+export const phonenumberShape: NgxDeepRequired<PhonenumberModel> = {
   addValue: '',
   values: {
     '0': '',

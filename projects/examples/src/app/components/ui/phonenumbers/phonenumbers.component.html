@@ -1,13 +1,13 @@
 <label>
   <span>Phonenumbers</span>
   <div ngModelGroup="values">
-    @for (item of values | keyvalue; track item.key) {
+    @for (item of values() | keyvalue; track item.key) {
       <div sc-control-wrapper>
         <div class="relative">
           <input
             type="text"
             name="{{ item.key }}"
-            [ngModel]="values[item.key]"
+            [ngModel]="values()[item.key]"
             placeholder="Type phone number"
           />
           <button
@@ -25,7 +25,8 @@
     <div class="relative">
       <input
         type="text"
-        [(ngModel)]="addValue"
+        [ngModel]="addValue()"
+        (ngModelChange)="addValue.set($event)"
         name="addValue"
         placeholder="Type phone number"
       />

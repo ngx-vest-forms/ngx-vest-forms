@@ -171,6 +171,54 @@ omitWhen(!model.password || !model.confirmPassword, () => {
 });
 ```
 
+#### Reactive validationConfig for Conditional Fields
+
+**CRITICAL**: When using `validationConfig` with conditionally rendered fields (`@if` blocks), make it a **computed signal** to prevent "control not found" warnings:
+
+```typescript
+// ❌ WRONG: Static config references controls that may not exist
+protected readonly validationConfig = {
+  'gender': ['genderOther'],           // genderOther only exists when gender='Other'
+  'quantity': ['justification']        // justification only exists when quantity > 5
+};
+
+// ✅ CORRECT: Computed config only references existing controls
+protected readonly validationConfig = computed(() => {
+  const config: Record<string, string[]> = {};
+
+  // Only add dependency when the field actually exists in DOM
+  if (this.formValue().gender === 'Other') {
+    config['gender'] = ['genderOther'];
+  }
+
+  if ((this.formValue().quantity || 0) > 5) {
+    config['quantity'] = ['justification'];
+    config['justification'] = ['quantity'];  // Bidirectional
+  }
+
+  return config;
+});
+```
+
+**Template binding:**
+
+```typescript
+<form scVestForm [validationConfig]="validationConfig()" ...>
+  <input name="quantity" [ngModel]="formValue().quantity" />
+
+  @if ((formValue().quantity || 0) > 5) {
+    <textarea name="justification" [ngModel]="formValue().justification"></textarea>
+  }
+</form>
+```
+
+**Why this is necessary:**
+
+1. Static config is evaluated once at component initialization
+2. If referenced controls don't exist in DOM, Angular throws warnings
+3. Computed signal reactively rebuilds config based on current field visibility
+4. Prevents race conditions with conditional field rendering
+
 ### Conditional UI
 
 ```typescript

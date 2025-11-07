@@ -3,43 +3,45 @@ import {
   BusinessHourFormModel,
   BusinessHoursFormModel,
 } from '../models/business-hours-form.model';
-import { ROOT_FORM } from 'ngx-vest-forms';
+import { NgxVestSuite, NgxFieldKey, ROOT_FORM } from 'ngx-vest-forms';
 
-export const businessHoursSuite = staticSuite(
-  (model: BusinessHoursFormModel, field?: string) => {
-    if (field) {
+export const businessHoursSuite: NgxVestSuite<BusinessHoursFormModel> =
+  staticSuite(
+    (
+      model: BusinessHoursFormModel,
+      field?: NgxFieldKey<BusinessHoursFormModel>
+    ) => {
       only(field);
-    }
-    const values = model.businessHours?.values
-      ? Object.values(model.businessHours.values)
-      : [];
+      const values = model.businessHours?.values
+        ? Object.values(model.businessHours.values)
+        : [];
 
-    test(ROOT_FORM, 'You should have at least one business hour', () => {
-      enforce((values?.length || 0) > 0).isTruthy();
-    });
-    omitWhen(values?.length < 2, () => {
-      test(
-        `businessHours.values`,
-        'There should be no overlap between business hours',
-        () => {
-          enforce(
-            areBusinessHoursValid(values as BusinessHourFormModel[])
-          ).isTruthy();
-        }
-      );
-    });
-    each(values, (businessHour, index) => {
+      test(ROOT_FORM, 'You should have at least one business hour', () => {
+        enforce((values?.length || 0) > 0).isTruthy();
+      });
+      omitWhen(values?.length < 2, () => {
+        test(
+          `businessHours.values`,
+          'There should be no overlap between business hours',
+          () => {
+            enforce(
+              areBusinessHoursValid(values as BusinessHourFormModel[])
+            ).isTruthy();
+          }
+        );
+      });
+      each(values, (businessHour, index) => {
+        validateBusinessHourModel(
+          `businessHours.values.${index}`,
+          model.businessHours?.values?.[index]
+        );
+      });
       validateBusinessHourModel(
-        `businessHours.values.${index}`,
-        model.businessHours?.values?.[index]
+        'businessHours.addValue',
+        model.businessHours?.addValue
       );
-    });
-    validateBusinessHourModel(
-      'businessHours.addValue',
-      model.businessHours?.addValue
-    );
-  }
-);
+    }
+  );
 
 function validateBusinessHourModel(
   field: string,

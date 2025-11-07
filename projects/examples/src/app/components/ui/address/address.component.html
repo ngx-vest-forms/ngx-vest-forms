@@ -5,7 +5,7 @@
       <input
         placeholder="Type street"
         type="text"
-        [ngModel]="address?.street"
+        [ngModel]="address()?.street"
         name="street"
       />
     </label>
@@ -16,7 +16,7 @@
       <input
         placeholder="Type street number"
         type="text"
-        [ngModel]="address?.number"
+        [ngModel]="address()?.number"
         name="number"
       />
     </label>
@@ -27,7 +27,7 @@
       <input
         placeholder="Type city"
         type="text"
-        [ngModel]="address?.city"
+        [ngModel]="address()?.city"
         name="city"
       />
     </label>
@@ -38,7 +38,7 @@
       <input
         placeholder="Type zipcode"
         type="text"
-        [ngModel]="address?.zipcode"
+        [ngModel]="address()?.zipcode"
         name="zipcode"
       />
     </label>
@@ -49,7 +49,7 @@
       <input
         placeholder="Type country"
         type="text"
-        [ngModel]="address?.country"
+        [ngModel]="address()?.country"
         name="country"
       />
     </label>

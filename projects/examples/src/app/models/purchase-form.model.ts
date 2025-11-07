@@ -1,11 +1,16 @@
 import { AddressModel, addressShape } from './address.model';
 import { PhonenumberModel, phonenumberShape } from './phonenumber.model';
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
+import {
+  NgxDeepPartial,
+  NgxDeepRequired,
+  NgxFormCompatibleDeepRequired,
+} from 'ngx-vest-forms';
 
-export type PurchaseFormModel = DeepPartial<{
+export type PurchaseFormModel = NgxDeepPartial<{
   userId: string;
   firstName: string;
   lastName: string;
+  birthDate: Date;
   age: number;
   emergencyContact: string;
   passwords: {
@@ -16,6 +21,8 @@ export type PurchaseFormModel = DeepPartial<{
   gender: 'male' | 'female' | 'other';
   genderOther: string;
   productId: string;
+  quantity: number;
+  justification: string;
   addresses: {
     shippingAddress: AddressModel;
     billingAddress: AddressModel;
@@ -23,10 +30,13 @@ export type PurchaseFormModel = DeepPartial<{
   };
 }>;
 
-export const purchaseFormShape: DeepRequired<PurchaseFormModel> = {
+// Using NgxDeepRequired for the shape (standard approach)
+// Note: birthDate will accept empty string in the form initialization
+export const purchaseFormShape: NgxDeepRequired<PurchaseFormModel> = {
   userId: '',
   firstName: '',
   lastName: '',
+  birthDate: new Date(), // Initialize with Date object for type safety
   age: 0,
   emergencyContact: '',
   addresses: {
@@ -42,4 +52,6 @@ export const purchaseFormShape: DeepRequired<PurchaseFormModel> = {
   gender: 'other',
   genderOther: '',
   productId: '',
+  quantity: 0,
+  justification: '',
 };

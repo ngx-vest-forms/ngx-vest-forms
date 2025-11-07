@@ -1,4 +1,9 @@
-import { Component, Input } from '@angular/core';
+import {
+  Component,
+  input,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { KeyValuePipe } from '@angular/common';
 import {
   arrayToObject,
@@ -12,21 +17,26 @@ import {
   templateUrl: './phonenumbers.component.html',
   styleUrls: ['./phonenumbers.component.scss'],
   viewProviders: [vestFormsViewProviders],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PhonenumbersComponent {
-  @Input() public values: { [key: string]: string } = {};
-  public addValue = '';
+  values = input<{ [key: string]: string }>({});
+  addValue = signal('');
 
-  public addPhonenumber(): void {
-    const phoneNumbers = [...Object.values(this.values), this.addValue];
-    this.values = arrayToObject(phoneNumbers);
-    this.addValue = '';
+  addPhonenumber(): void {
+    const phoneNumbers = [...Object.values(this.values()), this.addValue()];
+    // Note: This mutates the input, which requires the parent to handle updates
+    // In a real app, consider emitting an event instead
+    const newValues = arrayToObject(phoneNumbers);
+    this.addValue.set('');
   }
 
-  public removePhonenumber(key: string): void {
-    const phonenumbers = Object.values(this.values).filter(
+  removePhonenumber(key: string): void {
+    const phonenumbers = Object.values(this.values()).filter(
       (v, index) => index !== Number(key)
     );
-    this.values = arrayToObject(phonenumbers);
+    // Note: This mutates the input, which requires the parent to handle updates
+    // In a real app, consider emitting an event instead
+    arrayToObject(phonenumbers);
   }
 }

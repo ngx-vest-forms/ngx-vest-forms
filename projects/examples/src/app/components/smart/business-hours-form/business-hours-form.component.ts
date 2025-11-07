@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { JsonPipe } from '@angular/common';
 import {
   ValidateRootFormDirective,
@@ -23,6 +23,7 @@ import { BusinessHoursComponent } from '../../ui/business-hours/business-hours.c
   ],
   templateUrl: './business-hours-form.component.html',
   styleUrls: ['./business-hours-form.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BusinessHoursFormComponent {
   protected readonly formValue = signal<BusinessHoursFormModel>({});

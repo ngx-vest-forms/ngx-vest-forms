@@ -7,6 +7,19 @@
   <ul class="text-md list-disc ml-4">
     <li>Show validation errors on blur</li>
     <li>Show validation errors on submit</li>
+    <li>Demonstrates <strong>NgxDeepPartial</strong> for form model types</li>
+    <li>
+      Demonstrates <strong>bidirectional validationConfig</strong> (quantity ↔
+      justification)
+    </li>
+    <li>
+      Showcases <strong>clearFields()</strong> utility (Clear Sensitive Data
+      button)
+    </li>
+    <li>
+      Showcases <strong>setValueAtPath()</strong> utility (Prefill Billing
+      Address button)
+    </li>
     <li>When first name is <strong>Brecht</strong>: Set gender to male</li>
     <li>
       When first name is <strong>Brecht</strong> and last name is
@@ -20,6 +33,11 @@
     <li>When age is of legal age, disable Emergency contact</li>
     <li>There should be at least one phone number</li>
     <li>Phone numbers should not be empty</li>
+    <li>Quantity is required and must be at least 1</li>
+    <li>
+      When quantity exceeds 5, justification is required (bidirectional
+      validation)
+    </li>
     <li>When gender is <strong>other</strong>, show Specify gender</li>
     <li>When gender is <strong>other</strong>, make Specify gender required</li>
     <li>Password is required</li>
@@ -49,6 +67,12 @@
     </li>
   </ul>
   <button class="mt-6" (click)="fetchData()">Fetch data</button>
+  <button class="mt-6 ml-2" (click)="clearSensitiveData()">
+    Clear Sensitive Data
+  </button>
+  <button class="mt-6 ml-2" (click)="prefillBillingAddress()">
+    Prefill Billing Address
+  </button>
   <br />
 </div>
 
@@ -71,7 +95,7 @@
   [validateRootForm]="true"
   [formShape]="shape"
   [suite]="suite"
-  [validationConfig]="validationConfig"
+  [validationConfig]="validationConfig()"
   (validChange)="formValid.set($event)"
   (errorsChange)="errors.set($event)"
   (formValueChange)="setFormValue($event)"
@@ -110,6 +134,17 @@
           type="text"
           [ngModel]="vm.formValue.lastName"
           name="lastName"
+        />
+      </label>
+    </div>
+    <div class="w-full" sc-control-wrapper>
+      <label>
+        <span>Birth Date</span>
+        <input
+          placeholder="Select birth date"
+          type="date"
+          [ngModel]="vm.formValue.birthDate"
+          name="birthDate"
         />
       </label>
     </div>
@@ -228,6 +263,30 @@
         </select>
       </label>
     </div>
+    <div class="w-full" sc-control-wrapper>
+      <label>
+        <span>Quantity</span>
+        <input
+          placeholder="Enter quantity"
+          type="number"
+          [ngModel]="vm.formValue.quantity"
+          name="quantity"
+        />
+      </label>
+    </div>
+    @if (vm.showJustification) {
+      <div class="w-full" sc-control-wrapper>
+        <label>
+          <span>Justification (required when quantity > 5)</span>
+          <textarea
+            placeholder="Please justify your large order"
+            [ngModel]="vm.formValue.justification"
+            name="justification"
+            rows="3"
+          ></textarea>
+        </label>
+      </div>
+    }
     <div class="sm:col-span-2" sc-control-wrapper ngModelGroup="addresses">
       <div sc-control-wrapper ngModelGroup="billingAddress">
         <h3 class="text-2xl">Billing address</h3>

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 
 import { vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 import { AddressModel } from '../../../models/address.model';
@@ -9,7 +9,8 @@ import { AddressModel } from '../../../models/address.model';
   viewProviders: [vestFormsViewProviders],
   templateUrl: './address.component.html',
   styleUrls: ['./address.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AddressComponent {
-  @Input() address?: AddressModel;
+  address = input<AddressModel>();
 }
