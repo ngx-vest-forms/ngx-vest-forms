@@ -921,7 +921,7 @@ onStructureChange(newValue: string) {
 
 **Additional Utility Functions:**
 
-```typescript
+````typescript
 import { clearFields, keepFieldsWhen } from 'ngx-vest-forms';
 
 // Clear specific fields unconditionally
@@ -965,7 +965,7 @@ export const myValidationSuite = staticSuite(
     // Note: No validation needed for typeC as it has no input fields
   }
 );
-```
+````
 
 ### Field State Utilities
 
@@ -1040,7 +1040,12 @@ These utilities synchronize your component state with Angular's form state, ensu
 #### Conditional Fields Example
 
 ```typescript
-import { Component, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  signal,
+  computed,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -1267,22 +1272,22 @@ The directive exposes these computed signals for building custom UIs:
 
 ```typescript
 // Error display control
-shouldShowErrors()    // boolean - Whether to show errors based on mode and state
-errors()             // string[] - Filtered errors (empty during pending)
-warnings()           // string[] - Filtered warnings (empty during pending)
-isPending()          // boolean - Whether async validation is running
+shouldShowErrors(); // boolean - Whether to show errors based on mode and state
+errors(); // string[] - Filtered errors (empty during pending)
+warnings(); // string[] - Filtered warnings (empty during pending)
+isPending(); // boolean - Whether async validation is running
 
 // Raw state signals (from FormControlStateDirective)
-errorMessages()      // string[] - All error messages
-warningMessages()    // string[] - All warning messages
-controlState()       // FormControlState - Complete control state
-isTouched()          // boolean - Whether control has been touched
-isDirty()            // boolean - Whether control value has changed
-isValid()            // boolean - Whether control is valid
-isInvalid()          // boolean - Whether control is invalid
-hasPendingValidation() // boolean - Whether validation is pending
-updateOn()           // string - The ngModelOptions.updateOn value
-formSubmitted()      // boolean - Whether form has been submitted
+errorMessages(); // string[] - All error messages
+warningMessages(); // string[] - All warning messages
+controlState(); // FormControlState - Complete control state
+isTouched(); // boolean - Whether control has been touched
+isDirty(); // boolean - Whether control value has changed
+isValid(); // boolean - Whether control is valid
+isInvalid(); // boolean - Whether control is invalid
+hasPendingValidation(); // boolean - Whether validation is pending
+updateOn(); // string - The ngModelOptions.updateOn value
+formSubmitted(); // boolean - Whether form has been submitted
 ```
 
 ##### Real-World Example: Material Design Style Wrapper
@@ -1320,7 +1325,9 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
           </div>
         }
 
-        @if (errorDisplay.warnings().length > 0 && !errorDisplay.shouldShowErrors()) {
+        @if (
+          errorDisplay.warnings().length > 0 && !errorDisplay.shouldShowErrors()
+        ) {
           <div class="mat-hint mat-warn" role="status">
             @for (warning of errorDisplay.warnings(); track warning) {
               <span>{{ warning }}</span>
@@ -1337,26 +1344,28 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
       </div>
     </div>
   `,
-  styles: [`
-    :host {
-      display: block;
-      margin-bottom: 1rem;
-    }
+  styles: [
+    `
+      :host {
+        display: block;
+        margin-bottom: 1rem;
+      }
 
-    .mat-error {
-      color: #f44336;
-      font-size: 0.875rem;
-    }
+      .mat-error {
+        color: #f44336;
+        font-size: 0.875rem;
+      }
 
-    .mat-hint {
-      color: rgba(0, 0, 0, 0.6);
-      font-size: 0.875rem;
-    }
+      .mat-hint {
+        color: rgba(0, 0, 0, 0.6);
+        font-size: 0.875rem;
+      }
 
-    .mat-warn {
-      color: #ff9800;
-    }
-  `]
+      .mat-warn {
+        color: #ff9800;
+      }
+    `,
+  ],
 })
 export class MatFieldWrapperComponent {
   protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
@@ -1746,6 +1755,14 @@ Now that you've seen how ngx-vest-forms works, here's a complete overview of its
 
 For comprehensive documentation beyond this README, check out our detailed guides:
 
+- **[Utility Types & Functions Reference](./projects/ngx-vest-forms/src/lib/utils/README.md)** - Complete guide to all utility types and functions
+  - Type utilities: `NgxDeepPartial`, `NgxDeepRequired`, `NgxFormCompatibleDeepRequired`
+  - Form utilities: `getAllFormErrors()`, `setValueAtPath()`, `mergeValuesAndRawValues()`
+  - Array/Object conversion: `arrayToObject()`, `deepArrayToObject()`, `objectToArray()`
+  - Field path utilities: `parseFieldPath()`, `stringifyFieldPath()`
+  - Field clearing: `clearFieldsWhen()`, `clearFields()`, `keepFieldsWhen()`
+  - Equality utilities: `shallowEqual()`, `fastDeepEqual()`
+  - Shape validation: `validateShape()`
 - **[Structure Change Detection Guide](./docs/STRUCTURE_CHANGE_DETECTION.md)** - Advanced handling of conditional form scenarios
   - Alternative approaches and their trade-offs
   - Performance considerations and best practices
@@ -1856,4 +1873,7 @@ These pioneers laid the groundwork that made ngx-vest-forms possible, combining 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-````
+
+```
+
+```

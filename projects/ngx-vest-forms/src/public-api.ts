@@ -5,7 +5,7 @@
 export { vestForms, vestFormsViewProviders } from './lib/exports';
 
 // Type utilities
-export { DeepPartial } from './lib/utils/deep-partial';
+export { DeepPartial, NgxDeepPartial } from './lib/utils/deep-partial';
 export {
   DeepRequired,
   FormCompatibleDeepRequired,
@@ -17,6 +17,7 @@ export { NgxVestSuite, NgxFieldKey } from './lib/utils/validation-suite';
 // Form utilities
 export {
   set,
+  setValueAtPath,
   cloneDeep,
   getAllFormErrors,
   getFormControlField,
@@ -31,7 +32,11 @@ export {
   validateShape,
   ShapeMismatchError,
 } from './lib/utils/shape-validation';
-export { arrayToObject } from './lib/utils/array-to-object';
+export {
+  arrayToObject,
+  deepArrayToObject,
+  objectToArray,
+} from './lib/utils/array-to-object';
 export {
   clearFieldsWhen,
   clearFields,

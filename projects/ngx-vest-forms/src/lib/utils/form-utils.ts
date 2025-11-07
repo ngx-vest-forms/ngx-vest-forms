@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
 import { ROOT_FORM } from '../constants';
+import { stringifyFieldPath } from './field-path.utils';
 
 /**
  * Recursively calculates the path of a form control
@@ -10,20 +12,43 @@ function getControlPath(
   formGroup: FormGroup,
   control: AbstractControl
 ): string {
+  // First attempt: depth-first traversal from provided root
   for (const key in formGroup.controls) {
-    if (formGroup.controls.hasOwnProperty(key)) {
-      const ctrl = formGroup.get(key);
-      if (ctrl instanceof FormGroup) {
-        const path = getControlPath(ctrl, control);
-        if (path) {
-          return key + '.' + path;
-        }
-      } else if (ctrl === control) {
+    if (Object.prototype.hasOwnProperty.call(formGroup.controls, key)) {
+      const child = formGroup.get(key);
+      if (child === control) {
         return key;
+      }
+      if (child instanceof FormGroup || child instanceof FormArray) {
+        const subPath = getControlPath(child as FormGroup, control);
+        if (subPath) {
+          return `${key}.${subPath}`;
+        }
       }
     }
   }
-  return '';
+
+  // Fallback: walk up the parent chain from control to root
+  let current: AbstractControl | null | undefined = control;
+  const segments: string[] = [];
+  while (current && (current as any).parent) {
+    const parent: any = (current as any).parent;
+    if (!parent?.controls) break;
+    for (const key of Object.keys(parent.controls)) {
+      if (parent.controls[key] === current) {
+        segments.unshift(key);
+        break;
+      }
+    }
+    current = parent;
+    if (current === formGroup) {
+      return segments.join('.');
+    }
+  }
+
+  // Last resort: try control.name if available
+  const name: string | undefined = (control as any).name as any;
+  return name ?? '';
 }
 
 /**
@@ -79,15 +104,15 @@ export function getFormGroupField(
  * @param form
  */
 export function mergeValuesAndRawValues<T>(form: FormGroup): T {
-  // Retrieve the standard values (respecting references)
-  const value = { ...form.value };
+  // Retrieve the standard values with deep cloning to avoid reference sharing
+  const value = structuredClone(form.value);
 
-  // Retrieve the raw values (including disabled values)
-  const rawValue = form.getRawValue();
+  // Retrieve the raw values (including disabled values) and clone to avoid reference sharing
+  const rawValue = structuredClone(form.getRawValue());
 
   // Recursive function to merge rawValue into value
   function mergeRecursive(target: any, source: any) {
-    Object.keys(source).forEach((key) => {
+    for (const key of Object.keys(source)) {
       if (target[key] === undefined) {
         // If the key is not in the target, add it directly (for disabled fields)
         target[key] = source[key];
@@ -100,13 +125,14 @@ export function mergeValuesAndRawValues<T>(form: FormGroup): T {
         mergeRecursive(target[key], source[key]);
       }
       // If the target already has the key with a primitive value, it's left as is to maintain references
-    });
+    }
   }
 
   mergeRecursive(value, rawValue);
   return value;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type Primitive = undefined | null | boolean | string | number | Function;
 
 function isPrimitive(value: any): value is Primitive {
@@ -118,32 +144,34 @@ function isPrimitive(value: any): value is Primitive {
 /**
  * Performs a deep-clone of an object
  * @param obj
+ *
+ * @deprecated Use official ES {@link https://developer.mozilla.org/en-US/docs/Web/API/Window/structuredClone structuredClone} instead
  */
-export function cloneDeep<T>(obj: T): T {
+export function cloneDeep<T>(object: T): T {
   // Handle primitives (null, undefined, boolean, string, number, function)
-  if (isPrimitive(obj)) {
-    return obj;
+  if (isPrimitive(object)) {
+    return object;
   }
 
   // Handle Date
-  if (obj instanceof Date) {
-    return new Date(obj.getTime()) as any as T;
+  if (object instanceof Date) {
+    return new Date(object) as any as T;
   }
 
   // Handle Array
-  if (Array.isArray(obj)) {
-    return obj.map((item) => cloneDeep(item)) as any as T;
+  if (Array.isArray(object)) {
+    return object.map((item) => cloneDeep(item)) as any as T;
   }
 
   // Handle Object
-  if (obj instanceof Object) {
-    const clonedObj: any = {};
-    for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        clonedObj[key] = cloneDeep((obj as any)[key]);
+  if (object instanceof Object) {
+    const clonedObject: any = {};
+    for (const key in object) {
+      if (Object.prototype.hasOwnProperty.call(object, key)) {
+        clonedObject[key] = cloneDeep((object as any)[key]);
       }
     }
-    return clonedObj as T;
+    return clonedObject as T;
   }
 
   throw new Error("Unable to copy object! Its type isn't supported.");
@@ -155,7 +183,7 @@ export function cloneDeep<T>(obj: T): T {
  * @param path
  * @param value
  */
-export function set(obj: object, path: string, value: any): void {
+export function setValueAtPath(obj: object, path: string, value: any): void {
   const keys = path.split('.');
   let current: any = obj;
 
@@ -171,44 +199,89 @@ export function set(obj: object, path: string, value: any): void {
 }
 
 /**
+ * @deprecated Use {@link setValueAtPath} instead
+ */
+export function set(obj: object, path: string, value: any): void {
+  return setValueAtPath(obj, path, value);
+}
+
+/**
  * Traverses the form and returns the errors by path
  * @param form
  */
-export function getAllFormErrors(
-  form?: AbstractControl
-): Record<string, string> {
-  const errors: Record<string, string> = {};
+export function getAllFormErrors(form?: AbstractControl): Record<string, any> {
+  const errors: Record<string, any> = {};
   if (!form) {
     return errors;
   }
 
-  function collect(control: AbstractControl, path: string): void {
+  function collect(
+    control: AbstractControl,
+    pathParts: (string | number)[]
+  ): void {
+    const pathString = stringifyFieldPath(pathParts);
+
+    // Skip processing the root form control directly in NgxFormDirective
+    if (pathParts.length === 0 && control === form) {
+      // Instead, iterate its children if it's a group/array
+      if (control instanceof FormGroup || control instanceof FormArray) {
+        for (const key of Object.keys(control.controls)) {
+          const childControl = control.get(key);
+          const nextPath = [
+            // ...pathParts, // pathParts is empty here
+            Number.isNaN(Number(key)) ? key : Number(key),
+          ];
+          if (childControl) {
+            collect(childControl, nextPath);
+          }
+        }
+      }
+      return; // Stop processing for the root form itself at this level
+    }
+
     if (control instanceof FormGroup || control instanceof FormArray) {
-      Object.keys(control.controls).forEach((key) => {
+      for (const key of Object.keys(control.controls)) {
         const childControl = control.get(key);
-        const controlPath = path ? `${path}.${key}` : key;
-        if (path && control.errors && control.enabled) {
-          Object.keys(control.errors).forEach((errorKey) => {
-            errors[path] = control.errors![errorKey];
-          });
-        }
+        const nextPath = [
+          ...pathParts,
+          Number.isNaN(Number(key)) ? key : Number(key),
+        ];
         if (childControl) {
-          collect(childControl, controlPath);
+          collect(childControl, nextPath);
         }
-      });
-    } else {
-      if (control.errors && control.enabled) {
-        Object.keys(control.errors).forEach((errorKey) => {
-          errors[path] = control.errors![errorKey];
+      }
+    }
+
+    // Attach control errors (both errors and warnings)
+    if (control.errors && control.enabled) {
+      // If errors is an array, assign it
+      if (control.errors['errors'] && Array.isArray(control.errors['errors'])) {
+        errors[pathString] = control.errors['errors'];
+      }
+      // Optionally, add warnings if present
+      if (
+        control.errors['warnings'] &&
+        Array.isArray(control.errors['warnings'])
+      ) {
+        // Attach warnings as a property on the error array (non-enumerable)
+        // This is still done here for field-specific warnings, but not for root warnings.
+        if (!errors[pathString]) {
+          errors[pathString] = []; // Ensure array exists if only warnings are present
+        }
+        Object.defineProperty(errors[pathString], 'warnings', {
+          value: control.errors['warnings'],
+          enumerable: false, // Keep it non-enumerable as per previous behavior for field warnings
+          configurable: true,
+          writable: true,
         });
       }
     }
   }
 
-  collect(form, '');
-  if (form.errors && form.errors!['errors']) {
-    errors[ROOT_FORM] = form.errors && form.errors!['errors'];
-  }
+  collect(form, []);
+
+  // Root form errors (form.errors) are no longer processed here.
+  // They are handled directly in NgxFormDirective to populate formState.root.
 
   return errors;
 }

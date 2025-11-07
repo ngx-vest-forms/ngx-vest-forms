@@ -33,8 +33,9 @@ import { FormErrorDisplayDirective, FormControlStateDirective, SC_ERROR_DISPLAY_
 // Constants & Utilities
 import { ROOT_FORM, VALIDATION_CONFIG_DEBOUNCE_TIME } from 'ngx-vest-forms';
 import { clearFieldsWhen, clearFields, keepFieldsWhen } from 'ngx-vest-forms';
-import { getAllFormErrors, getFormControlField, getFormGroupField, mergeValuesAndRawValues } from 'ngx-vest-forms';
+import { getAllFormErrors, getFormControlField, getFormGroupField, mergeValuesAndRawValues, setValueAtPath } from 'ngx-vest-forms';
 import { parseFieldPath, stringifyFieldPath } from 'ngx-vest-forms';
+import { arrayToObject, deepArrayToObject, objectToArray } from 'ngx-vest-forms';
 
 // Vest.js
 import { staticSuite, test, enforce, only, omitWhen } from 'vest';
@@ -281,7 +282,139 @@ getAllFormErrors(form)           // Get all errors by path
 getFormControlField(root, ctrl)  // Get dot-notation path of control
 getFormGroupField(root, group)   // Get dot-notation path of group
 mergeValuesAndRawValues(form)    // Include disabled fields in value
+setValueAtPath(obj, path, value) // Set nested value (e.g., 'user.name', 'John')
 ```
+
+### Array ↔ Object Conversion Utilities
+
+Angular template-driven forms struggle with arrays. Converting arrays to objects with numeric keys enables `ngModelGroup` to work properly with dynamic arrays (phone numbers, addresses, etc.).
+
+```typescript
+import { arrayToObject, deepArrayToObject, objectToArray } from 'ngx-vest-forms';
+
+// FORM LOAD: Convert backend arrays → form-compatible objects
+const phoneNumbers = ['123-4567', '987-6543'];
+const formModel = {
+  phoneNumbers: arrayToObject(phoneNumbers)  // {0: '123-4567', 1: '987-6543'}
+};
+
+// Deep conversion for nested arrays
+const addresses = [
+  { street: 'Main St', phones: ['111', '222'] },
+  { street: '2nd Ave', phones: ['333'] }
+];
+const deepModel = {
+  addresses: deepArrayToObject(addresses)
+  // {
+  //   0: { street: 'Main St', phones: {0: '111', 1: '222'} },
+  //   1: { street: '2nd Ave', phones: {0: '333'} }
+  // }
+};
+
+// FORM SUBMIT: Convert back to arrays for backend
+const submitData = objectToArray(formModel, ['phoneNumbers']);
+// { phoneNumbers: ['123-4567', '987-6543'] }
+
+// Selective deep conversion (specify which properties)
+const deepSubmit = objectToArray(deepModel, ['addresses', 'phones']);
+// {
+//   addresses: [
+//     { street: 'Main St', phones: ['111', '222'] },
+//     { street: '2nd Ave', phones: ['333'] }
+//   ]
+// }
+```
+
+**Complete workflow example:**
+
+```typescript
+import { Component, signal } from '@angular/core';
+import { arrayToObject, objectToArray, deepArrayToObject } from 'ngx-vest-forms';
+
+type BackendData = {
+  phoneNumbers: string[];
+  tags: string[];
+};
+
+type FormModel = {
+  phoneNumbers: { [key: number]: string };
+  tags: { [key: number]: string };
+  name?: string;
+};
+
+@Component({
+  // ...
+})
+export class MyFormComponent {
+  protected readonly formValue = signal<FormModel>({});
+
+  // Load data from backend
+  async ngOnInit() {
+    const backendData = await this.api.load(); // { phoneNumbers: ['123', '456'], tags: ['tag1'] }
+
+    // Convert arrays to objects for form
+    this.formValue.set({
+      name: backendData.name,
+      phoneNumbers: arrayToObject(backendData.phoneNumbers),
+      tags: arrayToObject(backendData.tags)
+    });
+  }
+
+  // Submit data to backend
+  async onSubmit() {
+    const formData = this.formValue();
+
+    // Convert objects back to arrays for backend
+    const backendData = objectToArray(formData, ['phoneNumbers', 'tags']);
+    // { name: '...', phoneNumbers: ['123', '456'], tags: ['tag1'] }
+
+    await this.api.save(backendData);
+  }
+
+  // Add item dynamically
+  addPhoneNumber(newNumber: string) {
+    this.formValue.update(v => ({
+      ...v,
+      phoneNumbers: arrayToObject([
+        ...Object.values(v.phoneNumbers || {}),
+        newNumber
+      ])
+    }));
+  }
+
+  // Remove item dynamically
+  removePhoneNumber(index: number) {
+    this.formValue.update(v => {
+      const phones = Object.values(v.phoneNumbers || {})
+        .filter((_, i) => i !== index);
+      return { ...v, phoneNumbers: arrayToObject(phones) };
+    });
+  }
+}
+```
+
+**Template usage:**
+
+```html
+<form scVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
+  <!-- Use ngModelGroup with numeric keys -->
+  <div *ngFor="let phoneKV of formValue().phoneNumbers | keyvalue: originalOrder">
+    <div [ngModelGroup]="phoneKV.key">
+      <input name="number" [ngModel]="phoneKV.value" />
+      <button type="button" (click)="removePhoneNumber(+phoneKV.key)">Remove</button>
+    </div>
+  </div>
+
+  <button type="button" (click)="addPhoneNumber('')">Add Phone</button>
+</form>
+```
+
+**When to use which:**
+- `arrayToObject()` - Shallow conversion, single-level arrays
+- `deepArrayToObject()` - Convert all nested arrays recursively
+- `objectToArray()` - Selective conversion back to arrays (specify keys)
+
+> **Note:** Use `structuredClone()` instead of deprecated `cloneDeep()` for object cloning
 
 ### Field Path Utilities
 
@@ -318,6 +451,44 @@ stringifyFieldPath(['form', 'sections', 0, 'fields', 'name']);
 - **Validation Options**: `[validationOptions]="{ debounceTime: 300 }"`
 - **Form Arrays**: See [guide](https://blog.simplified.courses/template-driven-forms-with-form-arrays/)
 - **VALIDATION_CONFIG_DEBOUNCE_TIME**: Constant (100ms) controlling dependent field validation timing
+
+## Utility Types and Functions Quick Reference
+
+> **📖 Complete Documentation**: See [Utility Types & Functions README](../../projects/ngx-vest-forms/src/lib/utils/README.md) for detailed examples, use cases, and workflows.
+
+### Available Utilities Summary
+
+| Category | Function | Purpose | Section |
+|----------|----------|---------|---------|
+| **Types** | `NgxDeepPartial<T>` | Optional properties (form models) | [Essential Patterns](#type-safe-form-models) |
+| | `NgxDeepRequired<T>` | Required properties (shapes) | [Essential Patterns](#type-safe-form-models) |
+| | `NgxFormCompatibleDeepRequired<T>` | Date compatibility | [Essential Patterns](#type-safe-form-models) |
+| | `NgxVestSuite<T>` | Cleaner suite types | [Validation Patterns](#validation-patterns) |
+| | `NgxFieldKey<T>` | Field name autocomplete | [Validation Patterns](#validation-patterns) |
+| **Forms** | `getAllFormErrors()` | Get all error paths | [Advanced Features](#utility-functions) |
+| | `setValueAtPath()` | Set nested values | [Advanced Features](#utility-functions) |
+| | `getFormControlField()` | Get control path | [Advanced Features](#utility-functions) |
+| | `getFormGroupField()` | Get group path | [Advanced Features](#utility-functions) |
+| | `mergeValuesAndRawValues()` | Include disabled fields | [Advanced Features](#utility-functions) |
+| **Arrays** | `arrayToObject()` | Array → Object (shallow) | [Advanced Features](#array--object-conversion-utilities) |
+| | `deepArrayToObject()` | Array → Object (deep) | [Advanced Features](#array--object-conversion-utilities) |
+| | `objectToArray()` | Object → Array (selective) | [Advanced Features](#array--object-conversion-utilities) |
+| **Paths** | `parseFieldPath()` | String → Segments | [Advanced Features](#field-path-utilities) |
+| | `stringifyFieldPath()` | Segments → String | [Advanced Features](#field-path-utilities) |
+| **Clearing** | `clearFieldsWhen()` | Conditional clear | [Advanced Features](#field-clearing-utilities) |
+| | `clearFields()` | Unconditional clear | [Advanced Features](#field-clearing-utilities) |
+| | `keepFieldsWhen()` | Whitelist keep | [Advanced Features](#field-clearing-utilities) |
+| **Equality** | `shallowEqual()` | Fast comparison | See README |
+| | `fastDeepEqual()` | Deep comparison | See README |
+| **Validation** | `validateShape()` | Dev mode shape check | See README |
+
+**Import Path:** All utilities are exported from `'ngx-vest-forms'`
+
+**Naming Convention:**
+- ✅ **Recommended**: Use `Ngx`-prefixed versions (`NgxDeepPartial`, `NgxDeepRequired`, etc.)
+- ⚠️ **Legacy**: Non-prefixed aliases available for backward compatibility (`DeepPartial`, `DeepRequired`, etc.)
+
+The `Ngx` prefix prevents naming conflicts with other libraries and clearly identifies ngx-vest-forms utilities.
 
 ## Common Patterns
 
@@ -384,9 +555,11 @@ export class MyFormComponent {
 15. Respect accessibility (ARIA attributes: `role="alert"`, `aria-live`, `aria-busy`)
 16. Use field clearing utilities when switching between form/non-form content
 17. Use field path utilities (`parseFieldPath`/`stringifyFieldPath`) for Standard Schema integration
-18. **Always use `ChangeDetectionStrategy.OnPush`** for optimal performance with signals
-19. Use `inject()` function instead of constructor injection
-20. Prefer signal-based APIs (`viewChild()`, `input()`, `output()`) over decorators
+18. Use array conversion utilities (`arrayToObject`/`objectToArray`) for form arrays
+19. Use `structuredClone()` instead of deprecated `cloneDeep()` for object cloning
+20. **Always use `ChangeDetectionStrategy.OnPush`** for optimal performance with signals
+21. Use `inject()` function instead of constructor injection
+22. Prefer signal-based APIs (`viewChild()`, `input()`, `output()`) over decorators
 
 ## Resources
 
