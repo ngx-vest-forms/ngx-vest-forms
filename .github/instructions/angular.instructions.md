@@ -37,6 +37,21 @@ Instructions for generating high-quality Angular applications with TypeScript, u
 - Keep templates clean and logic in component classes or services
 - Use Angular directives and pipes for reusable functionality
 
+### Forms and User Input
+- Use `save()` method name for form submission handlers (not `onSubmit()` - follows Angular 20+ conventions)
+- **Form Submission and Page Reload Prevention**:
+  - ✅ **With ngx-vest-forms**: Use `[ngxVestForm]` directive - automatically calls `preventDefault()`
+    - Example: `<form [ngxVestForm]="form" (submit)="save()">` - NO event parameter needed!
+  - ⚠️ **Without ngx-vest-forms** (or without `[ngxVestForm]` directive): Must manually call `preventDefault()`
+    - Native `(submit)` does NOT auto-prevent default (unlike `(ngSubmit)`)
+    - Example: `async save(event: Event) { event.preventDefault(); /* ... */ }`
+- Only use `id` attributes on form inputs for label association (`<label for="email">`)
+- Do NOT add `name` attributes to inputs - not needed with modern Angular forms or form libraries
+- Always use `ChangeDetectionStrategy.OnPush` for optimal performance with signals
+- Use `inject()` function for dependency injection instead of constructor injection
+- Prefer signal-based APIs: `input()`, `output()`, `model()`, `viewChild()`, etc. instead of decorators
+- `standalone: true` is the default in Angular 20+ (no need to specify explicitly)
+
 ### Styling
 - Use Angular's component-level CSS encapsulation (default: ViewEncapsulation.Emulated)
 - Prefer SCSS for styling with consistent theming

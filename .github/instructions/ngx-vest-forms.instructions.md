@@ -18,14 +18,23 @@ Lightweight adapter bridging Angular template-driven forms with Vest.js validati
 
 ```typescript
 // Core
-import { vestForms, vestFormsViewProviders, DeepPartial, DeepRequired, FormCompatibleDeepRequired } from 'ngx-vest-forms';
+import { vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
+
+// Type Utilities (Ngx-prefixed recommended, backward compatible aliases available)
+import { NgxDeepPartial, NgxDeepRequired, NgxFormCompatibleDeepRequired } from 'ngx-vest-forms';
+import { DeepPartial, DeepRequired, FormCompatibleDeepRequired } from 'ngx-vest-forms'; // Legacy aliases
+
+// Validation Suite Types
+import { NgxVestSuite, NgxFieldKey } from 'ngx-vest-forms';
 
 // Error Display
 import { FormErrorDisplayDirective, FormControlStateDirective, SC_ERROR_DISPLAY_MODE_TOKEN, ScErrorDisplayMode } from 'ngx-vest-forms';
 
 // Constants & Utilities
-import { ROOT_FORM, VALIDATION_CONFIG_DEBOUNCE_TIME, clearFieldsWhen, clearFields, keepFieldsWhen } from 'ngx-vest-forms';
+import { ROOT_FORM, VALIDATION_CONFIG_DEBOUNCE_TIME } from 'ngx-vest-forms';
+import { clearFieldsWhen, clearFields, keepFieldsWhen } from 'ngx-vest-forms';
 import { getAllFormErrors, getFormControlField, getFormGroupField, mergeValuesAndRawValues } from 'ngx-vest-forms';
+import { parseFieldPath, stringifyFieldPath } from 'ngx-vest-forms';
 
 // Vest.js
 import { staticSuite, test, enforce, only, omitWhen } from 'vest';
@@ -35,14 +44,14 @@ import { staticSuite, test, enforce, only, omitWhen } from 'vest';
 
 ```typescript
 import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
-import { vestForms, DeepPartial } from 'ngx-vest-forms';
+import { vestForms, NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
 import { staticSuite, test, enforce, only } from 'vest';
 
 // 1. Form Model
-type MyFormModel = DeepPartial<{ firstName: string; lastName: string }>;
+type MyFormModel = NgxDeepPartial<{ firstName: string; lastName: string }>;
 
 // 2. Validation Suite
-export const mySuite = staticSuite((model: MyFormModel, field?: string) => {
+export const mySuite: NgxVestSuite<MyFormModel> = staticSuite((model, field?) => {
   if (field) { only(field); } // CRITICAL for performance
   test('firstName', 'Required', () => enforce(model.firstName).isNotBlank());
 });
@@ -90,25 +99,37 @@ Required for: form control creation, validation mapping, shape validation, unidi
 ### Type-Safe Form Models
 
 ```typescript
-// Form model (incremental)
-type FormModel = DeepPartial<{ name: string; birthDate: Date; }>;
+// Form model (incremental) - use Ngx-prefixed version
+type FormModel = NgxDeepPartial<{ name: string; birthDate: Date; }>;
 
 // Shape for runtime validation
-const formShape: DeepRequired<FormModel> = { name: '', birthDate: new Date() };
+const formShape: NgxDeepRequired<FormModel> = { name: '', birthDate: new Date() };
 
-// Date-compatible shape (accepts Date | string)
-const dateShape: FormCompatibleDeepRequired<FormModel> = { name: '', birthDate: '' };
+// Date-compatible shape (accepts Date | string for Angular form compatibility)
+const dateShape: NgxFormCompatibleDeepRequired<FormModel> = { name: '', birthDate: '' };
+
+// Backward compatible aliases (legacy, prefer Ngx-prefixed versions)
+type LegacyModel = DeepPartial<{ name: string }>;
+const legacyShape: DeepRequired<LegacyModel> = { name: '' };
 ```
+
+**Why Ngx prefix?** Prevents naming conflicts with other libraries and clearly identifies ngx-vest-forms utilities. Both versions work identically; the Ngx-prefixed versions are recommended for new code.
 
 ### Validation Patterns
 
 ```typescript
-// Basic suite with performance optimization
-export const suite = staticSuite((model: FormModel, field?: string) => {
+// Basic suite with performance optimization (using NgxVestSuite type)
+export const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
   if (field) { only(field); } // ALWAYS include this
 
   test('email', 'Required', () => enforce(model.email).isNotBlank());
   test('email', 'Invalid', () => enforce(model.email).isEmail());
+});
+
+// With type-safe field parameter (optional - adds autocomplete hints)
+export const typedSuite = staticSuite((model: FormModel, field?: NgxFieldKey<FormModel>) => {
+  if (field) { only(field); } // Autocomplete for field names!
+  test('email', 'Required', () => enforce(model.email).isNotBlank());
 });
 
 // Conditional validation
@@ -262,6 +283,35 @@ getFormGroupField(root, group)   // Get dot-notation path of group
 mergeValuesAndRawValues(form)    // Include disabled fields in value
 ```
 
+### Field Path Utilities
+
+Convert between different field path formats (useful for Standard Schema integration, Angular forms, and Vest.js field names):
+
+```typescript
+import { parseFieldPath, stringifyFieldPath } from 'ngx-vest-forms';
+
+// Parse: 'addresses[0].street' → ['addresses', 0, 'street']
+const segments = parseFieldPath('addresses[0].street');
+// ['addresses', 0, 'street']
+
+// Stringify: ['addresses', 0, 'street'] → 'addresses[0].street'
+const path = stringifyFieldPath(['addresses', 0, 'street']);
+// 'addresses[0].street'
+
+// Works with nested arrays and complex structures
+parseFieldPath('users[0].contacts[1].email');
+// ['users', 0, 'contacts', 1, 'email']
+
+stringifyFieldPath(['form', 'sections', 0, 'fields', 'name']);
+// 'form.sections[0].fields.name'
+```
+
+**Use cases:**
+- Converting Angular form paths to Vest.js field names
+- Integrating with Standard Schema validation
+- Manipulating nested form structures programmatically
+- Building dynamic form field paths
+
 ### Other Features
 
 - **Shape Validation**: `[formShape]="shape"` - Dev mode validation of `name` attributes
@@ -312,27 +362,31 @@ export class MyFormComponent {
 | `[(ngModel)]="formValue().firstName"` | `[ngModel]="formValue().firstName"` |
 | `[ngModel]="formValue().info.firstName"` | `[ngModel]="formValue().info?.firstName"` |
 | `suite((model) => { test(...) })` | `suite((model, field?) => { if(field) only(field); })` |
+| `suite: StaticSuite<string, string, ...>` | `suite: NgxVestSuite<MyModel>` (cleaner!) |
 | Nested component without `viewProviders` | `viewProviders: [vestFormsViewProviders]` |
 
 ## Best Practices
 
-1. Use `DeepPartial<T>` for form models (forms build incrementally)
+1. Use `NgxDeepPartial<T>` for form models (forms build incrementally, Ngx-prefixed recommended)
 2. Always include `if (field) { only(field); }` in validation suites (performance)
 3. Match `name` attributes exactly to property paths
 4. Use `vestFormsViewProviders` in nested components with `ngModelGroup`
 5. Use computed signals for conditional UI
-6. Compose validation suites for reusability (see vest.instructions.md)
-7. Handle async validations with AbortController (see vest.instructions.md)
-8. Test validation suites independently (they're just functions)
-9. Use shape validation in development (catches typos)
-10. Use `FormCompatibleDeepRequired` for date fields accepting Date | string
-11. Choose appropriate error display mode: `on-blur`, `on-submit`, or `on-blur-or-submit`
-12. Use `FormErrorDisplayDirective` as hostDirective for custom wrappers
-13. Respect accessibility (ARIA attributes: `role="alert"`, `aria-live`, `aria-busy`)
-14. Use field clearing utilities when switching between form/non-form content
-15. **Always use `ChangeDetectionStrategy.OnPush`** for optimal performance with signals
-16. Use `inject()` function instead of constructor injection
-17. Prefer signal-based APIs (`viewChild()`, `input()`, `output()`) over decorators
+6. Type validation suites with `NgxVestSuite<T>` for cleaner API (replaces verbose StaticSuite generics)
+7. Use `NgxFieldKey<T>` for field parameter to get autocomplete hints (optional)
+8. Compose validation suites for reusability (see vest.instructions.md)
+9. Handle async validations with AbortController (see vest.instructions.md)
+10. Test validation suites independently (they're just functions)
+11. Use shape validation in development (catches typos)
+12. Use `NgxFormCompatibleDeepRequired` for date fields accepting Date | string
+13. Choose appropriate error display mode: `on-blur`, `on-submit`, or `on-blur-or-submit`
+14. Use `FormErrorDisplayDirective` as hostDirective for custom wrappers
+15. Respect accessibility (ARIA attributes: `role="alert"`, `aria-live`, `aria-busy`)
+16. Use field clearing utilities when switching between form/non-form content
+17. Use field path utilities (`parseFieldPath`/`stringifyFieldPath`) for Standard Schema integration
+18. **Always use `ChangeDetectionStrategy.OnPush`** for optimal performance with signals
+19. Use `inject()` function instead of constructor injection
+20. Prefer signal-based APIs (`viewChild()`, `input()`, `output()`) over decorators
 
 ## Resources
 
