@@ -18,7 +18,7 @@ import {
   takeUntil,
   timer,
 } from 'rxjs';
-import { cloneDeep, set } from '../utils/form-utils';
+import { setValueAtPath } from '../utils/form-utils';
 import { NgxVestSuite } from '../utils/validation-suite';
 import { ValidationOptions } from './validation-options';
 
@@ -70,8 +70,8 @@ export class ValidateRootFormDirective<T> implements AsyncValidator, OnDestroy {
         return of(null);
       }
       const value = control.getRawValue();
-      const mod = cloneDeep(value as T);
-      set(mod as object, field, value); // Update the property with path
+      const mod = structuredClone(value) as T;
+      setValueAtPath(mod as object, field, value); // Update the property with path
 
       // Use timer() pattern like v2 instead of ReplaySubject cache
       return timer(validationOptions.debounceTime ?? 0).pipe(

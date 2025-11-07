@@ -45,10 +45,9 @@ import {
 } from 'rxjs';
 import { DeepRequired } from '../utils/deep-required';
 import {
-  cloneDeep,
   getAllFormErrors,
   mergeValuesAndRawValues,
-  set,
+  setValueAtPath,
 } from '../utils/form-utils';
 import { NgxVestSuite } from '../utils/validation-suite';
 import { fastDeepEqual } from '../utils/equality';
@@ -497,7 +496,7 @@ export class FormDirective<T extends Record<string, any>> {
           snapshot = { ...(model as object) } as T;
         }
       }
-      set(snapshot as object, field, control.value);
+      setValueAtPath(snapshot as object, field, control.value);
 
       // Use timer() instead of ReplaySubject for proper debouncing
       return timer(validationOptions.debounceTime ?? 0).pipe(
