@@ -9,7 +9,7 @@ Lightweight adapter bridging Angular template-driven forms with Vest.js validati
 **Core Principles:**
 - Use `[ngModel]` NOT `[(ngModel)]` for unidirectional data flow
 - `DeepPartial<T>` for form models (forms build incrementally)
-- `only(field)` in all validation suites for performance
+- **CRITICAL**: Call `only(field)` **unconditionally** in all validation suites (breaking change in latest version)
 - `name` attribute MUST match property path exactly
 
 > **See `.github/instructions/vest.instructions.md`** for comprehensive Vest.js validation patterns, async techniques, and performance optimization.
@@ -53,7 +53,7 @@ type MyFormModel = NgxDeepPartial<{ firstName: string; lastName: string }>;
 
 // 2. Validation Suite
 export const mySuite: NgxVestSuite<MyFormModel> = staticSuite((model, field?) => {
-  if (field) { only(field); } // CRITICAL for performance
+  only(field); // CRITICAL: Call unconditionally (breaking change)
   test('firstName', 'Required', () => enforce(model.firstName).isNotBlank());
 });
 
@@ -118,18 +118,26 @@ const legacyShape: DeepRequired<LegacyModel> = { name: '' };
 
 ### Validation Patterns
 
+> **⚠️ BREAKING CHANGE**: You MUST now call `only()` unconditionally. The old `if (field)` pattern breaks Vest's execution tracking. See [Migration Guide](../../docs/PR-60-CHANGES.md#migration-guide).
+
 ```typescript
-// Basic suite with performance optimization (using NgxVestSuite type)
+// ✅ CORRECT: Unconditional only() call (required since latest version)
 export const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
-  if (field) { only(field); } // ALWAYS include this
+  only(field); // ALWAYS call unconditionally (safe: only(undefined) runs all tests)
 
   test('email', 'Required', () => enforce(model.email).isNotBlank());
   test('email', 'Invalid', () => enforce(model.email).isEmail());
 });
 
+// ❌ WRONG: Conditional only() corrupts Vest's execution tracking
+export const badSuite = staticSuite((model, field?) => {
+  if (field) { only(field); } // BUG: Breaks omitWhen + validationConfig!
+  test('email', 'Required', () => enforce(model.email).isNotBlank());
+});
+
 // With type-safe field parameter (optional - adds autocomplete hints)
 export const typedSuite = staticSuite((model: FormModel, field?: NgxFieldKey<FormModel>) => {
-  if (field) { only(field); } // Autocomplete for field names!
+  only(field); // Autocomplete for field names!
   test('email', 'Required', () => enforce(model.email).isNotBlank());
 });
 
@@ -580,14 +588,15 @@ export class MyFormComponent {
 |---------|-----------|
 | `[(ngModel)]="formValue().firstName"` | `[ngModel]="formValue().firstName"` |
 | `[ngModel]="formValue().info.firstName"` | `[ngModel]="formValue().info?.firstName"` |
-| `suite((model) => { test(...) })` | `suite((model, field?) => { if(field) only(field); })` |
+| `if (field) { only(field); }` | `only(field);` (unconditional call) |
+| `suite((model) => { test(...) })` | `suite((model, field?) => { only(field); })` |
 | `suite: StaticSuite<string, string, ...>` | `suite: NgxVestSuite<MyModel>` (cleaner!) |
 | Nested component without `viewProviders` | `viewProviders: [vestFormsViewProviders]` |
 
 ## Best Practices
 
 1. Use `NgxDeepPartial<T>` for form models (forms build incrementally, Ngx-prefixed recommended)
-2. Always include `if (field) { only(field); }` in validation suites (performance)
+2. **CRITICAL**: Always call `only(field)` **unconditionally** in validation suites (breaking change - fixes omitWhen + validationConfig bugs)
 3. Match `name` attributes exactly to property paths
 4. Use `vestFormsViewProviders` in nested components with `ngModelGroup`
 5. Use computed signals for conditional UI
