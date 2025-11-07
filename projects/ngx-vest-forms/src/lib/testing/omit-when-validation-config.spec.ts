@@ -18,7 +18,9 @@ import { staticSuite, test, enforce, only, omitWhen } from 'vest';
 import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
 
 // Wait time for tests should be slightly longer than debounce to ensure completion
-const TEST_DEBOUNCE_WAIT_TIME = VALIDATION_CONFIG_DEBOUNCE_TIME + 50;
+// Buffer ensures all async operations (debounce + validation) have completed
+const VALIDATION_COMPLETION_BUFFER = 50;
+const TEST_DEBOUNCE_WAIT_TIME = VALIDATION_CONFIG_DEBOUNCE_TIME + VALIDATION_COMPLETION_BUFFER;
 
 describe('omitWhen + validationConfig + Nested Fields', () => {
   beforeEach(async () => {

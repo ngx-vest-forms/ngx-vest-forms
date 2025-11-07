@@ -30,6 +30,7 @@ import {
   Subscription,
   switchMap,
   take,
+  takeWhile,
   tap,
   catchError,
   map,
@@ -332,17 +333,14 @@ export class FormDirective<T extends Record<string, any>> {
           .pipe(
             // Only retry when not currently validating
             filter(() => this.ngForm.form.status !== 'PENDING'),
+            // Stop watching once all subscriptions are set up
+            takeWhile(() => successfullySetup.size < totalConfigKeys, true),
             tap(() => {
               // Mark that subsequent setups are retries
               isRetrySetup = true;
               
               // Retry setting up subscriptions for fields that weren't set up yet
               Object.keys(config).forEach(setupSubscription);
-              
-              // Stop watching once all subscriptions are set up
-              if (successfullySetup.size >= totalConfigKeys) {
-                structureWatcher.unsubscribe();
-              }
             }),
             takeUntilDestroyed(this.destroyRef)
           )
