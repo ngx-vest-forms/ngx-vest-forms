@@ -240,9 +240,15 @@ export class FormDirective<T extends Record<string, any>> {
       }
 
       const subscriptions: Subscription[] = [];
+      const successfullySetup = new Set<string>();
+      let isRetrySetup = false; // Track if this is a retry (controls added later)
 
-      // For each field in the config, set up subscription
-      Object.keys(config).forEach((triggerField) => {
+      // Helper function to set up subscription for a trigger field
+      const setupSubscription = (triggerField: string) => {
+        if (successfullySetup.has(triggerField)) {
+          return; // Already set up successfully
+        }
+
         const dependentFields = config[triggerField];
         if (!dependentFields || dependentFields.length === 0) {
           return;
@@ -250,8 +256,30 @@ export class FormDirective<T extends Record<string, any>> {
 
         const triggerControl = this.ngForm?.form.get(triggerField);
         if (!triggerControl) {
-          // Control doesn't exist yet, will be handled when the effect runs again
+          // Control doesn't exist yet, will be retried on next status change
           return;
+        }
+
+        // Mark as successfully set up before creating subscription
+        successfullySetup.add(triggerField);
+
+        // Only trigger immediate validation if this is a retry setup (controls added late)
+        // AND the trigger field has a value. This handles the case where controls are
+        // added after user interaction, but avoids duplicate validations during initial setup.
+        if (isRetrySetup) {
+          const triggerHasValue = triggerControl.value != null && triggerControl.value !== '';
+          if (triggerHasValue) {
+            // Trigger validation on dependent fields immediately
+            dependentFields.forEach((dependentField) => {
+              const dependentControl = this.ngForm?.form.get(dependentField);
+              if (dependentControl && !this.validationInProgress.has(dependentField)) {
+                dependentControl.updateValueAndValidity({
+                  onlySelf: true,
+                  emitEvent: false,
+                });
+              }
+            });
+          }
         }
 
         // Subscribe to changes in the trigger field
@@ -267,27 +295,20 @@ export class FormDirective<T extends Record<string, any>> {
             }),
             // Debounce to prevent excessive validation calls when trigger fields change rapidly
             debounceTime(VALIDATION_CONFIG_DEBOUNCE_TIME),
-            // Use switchMap to flatten the async operation and avoid nested subscriptions
-            switchMap(() => {
-              // Use the idle$ stream to wait for form stabilization
-              return this.idle$.pipe(
-                take(1), // Take the first idle event
-                tap(() => {
-                  dependentFields.forEach((dependentField) => {
-                    const dependentControl =
-                      this.ngForm?.form.get(dependentField);
-                    if (
-                      dependentControl &&
-                      !this.validationInProgress.has(dependentField)
-                    ) {
-                      dependentControl.updateValueAndValidity({
-                        onlySelf: true,
-                        emitEvent: false, // Don't emit to prevent extra change events
-                      });
-                    }
+            tap(() => {
+              // Trigger dependent field validation
+              dependentFields.forEach((dependentField) => {
+                const dependentControl = this.ngForm?.form.get(dependentField);
+                if (
+                  dependentControl &&
+                  !this.validationInProgress.has(dependentField)
+                ) {
+                  dependentControl.updateValueAndValidity({
+                    onlySelf: true,
+                    emitEvent: false, // Don't emit to prevent extra change events
                   });
-                })
-              );
+                }
+              });
             }),
             // Ensure flag is cleared in all scenarios (success, error, unsubscribe)
             finalize(() => {
@@ -298,7 +319,37 @@ export class FormDirective<T extends Record<string, any>> {
           .subscribe();
 
         subscriptions.push(subscription);
-      });
+      };
+
+      // Try to set up all subscriptions initially
+      Object.keys(config).forEach(setupSubscription);
+
+      // If any subscriptions couldn't be set up (controls don't exist yet),
+      // watch for form structure changes and retry
+      const totalConfigKeys = Object.keys(config).length;
+      if (successfullySetup.size < totalConfigKeys) {
+        const structureWatcher = this.ngForm.form.statusChanges
+          .pipe(
+            // Only retry when not currently validating
+            filter(() => this.ngForm.form.status !== 'PENDING'),
+            tap(() => {
+              // Mark that subsequent setups are retries
+              isRetrySetup = true;
+              
+              // Retry setting up subscriptions for fields that weren't set up yet
+              Object.keys(config).forEach(setupSubscription);
+              
+              // Stop watching once all subscriptions are set up
+              if (successfullySetup.size >= totalConfigKeys) {
+                structureWatcher.unsubscribe();
+              }
+            }),
+            takeUntilDestroyed(this.destroyRef)
+          )
+          .subscribe();
+
+        subscriptions.push(structureWatcher);
+      }
 
       // Cleanup function: unsubscribe all subscriptions when config changes or component destroys
       onCleanup(() => {
@@ -366,12 +417,16 @@ export class FormDirective<T extends Record<string, any>> {
   ): AsyncValidatorFn {
     return (value: any) => {
       const suite = this.suite();
-      const formValue = this.formValue();
-      if (!suite || !formValue) {
+      if (!suite) {
         return of(null);
       }
 
-      const candidate = cloneDeep(formValue as T);
+      // Get the current form values directly from the Angular form
+      // This ensures we have the most up-to-date values, including changes
+      // triggered by validationConfig that haven't propagated to formValue() yet
+      const candidate = cloneDeep(
+        mergeValuesAndRawValues<T>(this.ngForm.form)
+      );
       set(candidate as object, field, value);
 
       if (!this.formValueCache[field]) {
