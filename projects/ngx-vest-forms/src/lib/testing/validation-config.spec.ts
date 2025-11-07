@@ -2,13 +2,14 @@
  * Comprehensive test suite for FormDirective
  * Tests validation config, modern Angular APIs, and directive functionality
  */
-import { Component, signal } from '@angular/core';
+import { Component, signal, ViewChild } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { DeepPartial } from '../utils/deep-partial';
 import { vestForms } from '../exports';
 import { staticSuite, test, enforce, only, omitWhen, include } from 'vest';
 import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
+import { FormDirective } from '../directives/form.directive';
 
 // Wait time for tests should be slightly longer than debounce to ensure completion
 const TEST_DEBOUNCE_WAIT_TIME = VALIDATION_CONFIG_DEBOUNCE_TIME + 50;
@@ -452,50 +453,56 @@ describe('FormDirective - Comprehensive', () => {
       template: `
         <form
           scVestForm
+          #vestForm="scVestForm"
           [formValue]="formValue()"
           [suite]="suite"
           [validationConfig]="validationConfig"
           (formValueChange)="formValue.set($event)"
         >
-          <input name="aantal" type="number" [ngModel]="formValue().aantal" />
           <input
-            name="onderbouwing"
+            name="quantity"
+            type="number"
+            [ngModel]="formValue().quantity"
+          />
+          <input
+            name="justification"
             type="text"
-            [ngModel]="formValue().onderbouwing"
+            [ngModel]="formValue().justification"
           />
         </form>
       `,
       imports: [vestForms, FormsModule],
     })
     class TestComponent {
+      @ViewChild('vestForm', { static: true }) vestForm!: FormDirective<any>;
       formValue = signal<
-        DeepPartial<{ aantal: number | null; onderbouwing: string | null }>
+        DeepPartial<{ quantity: number | null; justification: string | null }>
       >({
-        aantal: null,
-        onderbouwing: null,
+        quantity: null,
+        justification: null,
       });
       validationConfig = {
-        aantal: ['onderbouwing'],
-        onderbouwing: ['aantal'],
+        quantity: ['justification'],
+        justification: ['quantity'],
       };
       suite = staticSuite((model: any, field?: string) => {
         if (field) {
           only(field);
         }
 
-        const hasAantal = !!model.aantal;
-        const hasOnderbouwing = !!model.onderbouwing;
-        const hasEither = hasAantal || hasOnderbouwing;
+        const hasQuantity = !!model.quantity;
+        const hasJustification = !!model.justification;
+        const hasEither = hasQuantity || hasJustification;
 
         // Use omitWhen to skip ALL validation when both are empty
         omitWhen(!hasEither, () => {
           // BOTH fields are required when either has a value
-          test('onderbouwing', 'Onderbouwing is required', () => {
-            enforce(model.onderbouwing).isNotBlank();
+          test('justification', 'Justification is required', () => {
+            enforce(model.justification).isNotBlank();
           });
 
-          test('aantal', 'Aantal is required', () => {
-            enforce(model.aantal).isTruthy();
+          test('quantity', 'Quantity is required', () => {
+            enforce(model.quantity).isTruthy();
           });
         });
       });
@@ -508,20 +515,20 @@ describe('FormDirective - Comprehensive', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const aantalInput = fixture.nativeElement.querySelector(
-      'input[name="aantal"]'
+    const quantityInput = fixture.nativeElement.querySelector(
+      'input[name="quantity"]'
     );
-    const onderbouwingInput = fixture.nativeElement.querySelector(
-      'input[name="onderbouwing"]'
+    const justificationInput = fixture.nativeElement.querySelector(
+      'input[name="justification"]'
     );
 
     // Both empty = valid
-    expect(fixture.componentInstance.formValue().aantal).toBe(null);
-    expect(fixture.componentInstance.formValue().onderbouwing).toBe(null);
+    expect(fixture.componentInstance.formValue().quantity).toBe(null);
+    expect(fixture.componentInstance.formValue().justification).toBe(null);
 
-    // Fill aantal, onderbouwing should become invalid
-    aantalInput.value = '123';
-    aantalInput.dispatchEvent(new Event('input'));
+    // Fill quantity, justification should become invalid
+    quantityInput.value = '123';
+    quantityInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -532,14 +539,21 @@ describe('FormDirective - Comprehensive', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    // When aantal is filled, onderbouwing becomes required (and is empty, so invalid)
-    // aantal itself is valid because it has a value
-    expect(aantalInput.classList.contains('ng-valid')).toBe(true);
-    expect(onderbouwingInput.classList.contains('ng-invalid')).toBe(true);
+    // When quantity is filled, justification becomes required (and is empty, so invalid)
+    // quantity itself is valid because it has a value
+    expect(quantityInput.classList.contains('ng-valid')).toBe(true);
 
-    // Now fill onderbouwing, both should become valid
-    onderbouwingInput.value = 'This is my reasoning';
-    onderbouwingInput.dispatchEvent(new Event('input'));
+    // Trigger blur on justification to mark it as touched (validation errors only show after touch)
+    justificationInput.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(justificationInput.classList.contains('ng-invalid')).toBe(true);
+    expect(justificationInput.classList.contains('ng-touched')).toBe(true);
+
+    // Now fill justification, both should become valid
+    justificationInput.value = 'This is my reasoning';
+    justificationInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -551,12 +565,12 @@ describe('FormDirective - Comprehensive', () => {
     await fixture.whenStable();
 
     // Both fields have values, both should be valid
-    expect(aantalInput.classList.contains('ng-valid')).toBe(true);
-    expect(onderbouwingInput.classList.contains('ng-valid')).toBe(true);
+    expect(quantityInput.classList.contains('ng-valid')).toBe(true);
+    expect(justificationInput.classList.contains('ng-valid')).toBe(true);
 
-    // Clear aantal, onderbouwing should become invalid (only one field filled)
-    aantalInput.value = '';
-    aantalInput.dispatchEvent(new Event('input'));
+    // Clear quantity, justification should become invalid (only one field filled)
+    quantityInput.value = '';
+    quantityInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -567,14 +581,20 @@ describe('FormDirective - Comprehensive', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    // Only onderbouwing has value, so aantal becomes required (but is empty, so invalid)
-    // onderbouwing itself is valid because it has a value
-    expect(aantalInput.classList.contains('ng-invalid')).toBe(true);
-    expect(onderbouwingInput.classList.contains('ng-valid')).toBe(true);
+    // Trigger blur on quantity to mark it as touched
+    quantityInput.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    await fixture.whenStable();
 
-    // Now clear onderbouwing too, both should be valid (both empty)
-    onderbouwingInput.value = '';
-    onderbouwingInput.dispatchEvent(new Event('input'));
+    // Only justification has value, so quantity becomes required (but is empty, so invalid after touch)
+    // justification itself is valid because it has a value
+    expect(quantityInput.classList.contains('ng-invalid')).toBe(true);
+    expect(quantityInput.classList.contains('ng-touched')).toBe(true);
+    expect(justificationInput.classList.contains('ng-valid')).toBe(true);
+
+    // Now clear justification too, both should be valid (both empty)
+    justificationInput.value = '';
+    justificationInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -593,9 +613,314 @@ describe('FormDirective - Comprehensive', () => {
     await fixture.whenStable();
 
     // Both empty - omitWhen skips validation, so both are valid
-    expect(aantalInput.classList.contains('ng-valid')).toBe(true);
-    expect(onderbouwingInput.classList.contains('ng-valid')).toBe(true);
-  }); // Test for debounce behavior with rapid successive changes
+    expect(quantityInput.classList.contains('ng-valid')).toBe(true);
+    expect(justificationInput.classList.contains('ng-valid')).toBe(true);
+  });
+
+  // Additional comprehensive tests for quantity/justification bidirectional validation with touch states
+  it('should show error on justification when quantity is filled but justification is empty (with blur)', async () => {
+    @Component({
+      template: `
+        <form
+          scVestForm
+          [formValue]="formValue()"
+          [suite]="suite"
+          [validationConfig]="validationConfig"
+          (formValueChange)="formValue.set($event)"
+        >
+          <input
+            name="quantity"
+            type="number"
+            [ngModel]="formValue().quantity"
+          />
+          <input
+            name="justification"
+            type="text"
+            [ngModel]="formValue().justification"
+          />
+        </form>
+      `,
+      imports: [vestForms, FormsModule],
+    })
+    class TestComponent {
+      formValue = signal<
+        DeepPartial<{ quantity: number | null; justification: string | null }>
+      >({
+        quantity: null,
+        justification: null,
+      });
+      validationConfig = {
+        quantity: ['justification'],
+        justification: ['quantity'],
+      };
+      suite = staticSuite((model: any, field?: string) => {
+        if (field) {
+          only(field);
+        }
+
+        const hasQuantity = !!model.quantity;
+        const hasJustification = !!model.justification;
+        const hasEither = hasQuantity || hasJustification;
+
+        omitWhen(!hasEither, () => {
+          test('justification', 'Justification is required', () => {
+            enforce(model.justification).isNotBlank();
+          });
+
+          test('quantity', 'Quantity is required', () => {
+            enforce(model.quantity).isTruthy();
+          });
+        });
+      });
+    }
+
+    const fixture = TestBed.configureTestingModule({
+      imports: [TestComponent],
+    }).createComponent(TestComponent);
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const quantityInput = fixture.nativeElement.querySelector(
+      'input[name="quantity"]'
+    );
+    const justificationInput = fixture.nativeElement.querySelector(
+      'input[name="justification"]'
+    );
+
+    // Fill quantity
+    quantityInput.value = '123';
+    quantityInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Wait for validation to complete FIRST
+    await new Promise((resolve) =>
+      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // NOW blur justification to trigger touch state
+    justificationInput.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Justification should be invalid and touched (marked by blur)
+    expect(justificationInput.classList.contains('ng-invalid')).toBe(true);
+    expect(justificationInput.classList.contains('ng-touched')).toBe(true);
+  });
+
+  it('should show error on quantity when justification is filled but quantity is empty (with blur)', async () => {
+    @Component({
+      template: `
+        <form
+          scVestForm
+          [formValue]="formValue()"
+          [suite]="suite"
+          [validationConfig]="validationConfig"
+          (formValueChange)="formValue.set($event)"
+        >
+          <input
+            name="quantity"
+            type="number"
+            [ngModel]="formValue().quantity"
+          />
+          <input
+            name="justification"
+            type="text"
+            [ngModel]="formValue().justification"
+          />
+        </form>
+      `,
+      imports: [vestForms, FormsModule],
+    })
+    class TestComponent {
+      formValue = signal<
+        DeepPartial<{ quantity: number | null; justification: string | null }>
+      >({
+        quantity: null,
+        justification: null,
+      });
+      validationConfig = {
+        quantity: ['justification'],
+        justification: ['quantity'],
+      };
+      suite = staticSuite((model: any, field?: string) => {
+        if (field) {
+          only(field);
+        }
+
+        const hasQuantity = !!model.quantity;
+        const hasJustification = !!model.justification;
+        const hasEither = hasQuantity || hasJustification;
+
+        omitWhen(!hasEither, () => {
+          test('justification', 'Justification is required', () => {
+            enforce(model.justification).isNotBlank();
+          });
+
+          test('quantity', 'Quantity is required', () => {
+            enforce(model.quantity).isTruthy();
+          });
+        });
+      });
+    }
+
+    const fixture = TestBed.configureTestingModule({
+      imports: [TestComponent],
+    }).createComponent(TestComponent);
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const quantityInput = fixture.nativeElement.querySelector(
+      'input[name="quantity"]'
+    );
+    const justificationInput = fixture.nativeElement.querySelector(
+      'input[name="justification"]'
+    );
+
+    // Fill justification
+    justificationInput.value = 'test';
+    justificationInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Wait for validation to complete FIRST
+    await new Promise((resolve) =>
+      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // NOW blur quantity to trigger touch state
+    quantityInput.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Quantity should be invalid and touched (marked by blur)
+    expect(quantityInput.classList.contains('ng-invalid')).toBe(true);
+    expect(quantityInput.classList.contains('ng-touched')).toBe(true);
+  });
+
+  it('should remove error from justification when quantity is cleared', async () => {
+    @Component({
+      template: `
+        <form
+          scVestForm
+          [formValue]="formValue()"
+          [suite]="suite"
+          [validationConfig]="validationConfig"
+          (formValueChange)="formValue.set($event)"
+        >
+          <input
+            name="quantity"
+            type="number"
+            [ngModel]="formValue().quantity"
+          />
+          <input
+            name="justification"
+            type="text"
+            [ngModel]="formValue().justification"
+          />
+        </form>
+      `,
+      imports: [vestForms, FormsModule],
+    })
+    class TestComponent {
+      formValue = signal<
+        DeepPartial<{ quantity: number | null; justification: string | null }>
+      >({
+        quantity: null,
+        justification: null,
+      });
+      validationConfig = {
+        quantity: ['justification'],
+        justification: ['quantity'],
+      };
+      suite = staticSuite((model: any, field?: string) => {
+        if (field) {
+          only(field);
+        }
+
+        const hasQuantity = !!model.quantity;
+        const hasJustification = !!model.justification;
+        const hasEither = hasQuantity || hasJustification;
+
+        omitWhen(!hasEither, () => {
+          test('justification', 'Justification is required', () => {
+            enforce(model.justification).isNotBlank();
+          });
+
+          test('quantity', 'Quantity is required', () => {
+            enforce(model.quantity).isTruthy();
+          });
+        });
+      });
+    }
+
+    const fixture = TestBed.configureTestingModule({
+      imports: [TestComponent],
+    }).createComponent(TestComponent);
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const quantityInput = fixture.nativeElement.querySelector(
+      'input[name="quantity"]'
+    );
+    const justificationInput = fixture.nativeElement.querySelector(
+      'input[name="justification"]'
+    );
+
+    // Fill quantity first
+    quantityInput.value = '123';
+    quantityInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Wait for validation to complete FIRST
+    await new Promise((resolve) =>
+      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // NOW blur justification to trigger touch state
+    justificationInput.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // After blur, justification should be invalid and touched
+    expect(justificationInput.classList.contains('ng-invalid')).toBe(true);
+    expect(justificationInput.classList.contains('ng-touched')).toBe(true);
+
+    // Now clear quantity
+    quantityInput.value = '';
+    quantityInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Wait for validationConfig debounce
+    await new Promise((resolve) =>
+      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Wait for async validator to complete on justification
+    await new Promise((resolve) =>
+      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Justification should now be valid (both empty)
+    expect(justificationInput.classList.contains('ng-valid')).toBe(true);
+  });
+
+  // Test for debounce behavior with rapid successive changes
   it('should debounce validation config triggers properly with rapid changes', async () => {
     let triggerCount = 0;
 
@@ -681,6 +1006,200 @@ describe('FormDirective - Comprehensive', () => {
     // for the dependent field despite multiple rapid input changes
     expect(triggerCount).toBeLessThanOrEqual(2); // Allow some flexibility for test timing
     expect(fixture.componentInstance.formValue().triggerField).toBe('value4');
+  });
+
+  // Test for single-direction dependency with omitWhen (password/confirmPassword pattern)
+  it('should handle single-direction validationConfig with omitWhen (password/confirmPassword)', async () => {
+    @Component({
+      template: `
+        <form
+          scVestForm
+          [formValue]="formValue()"
+          [suite]="suite"
+          [validationConfig]="validationConfig"
+          (formValueChange)="formValue.set($event)"
+        >
+          <input
+            name="password"
+            type="password"
+            [ngModel]="formValue().password"
+          />
+          <input
+            name="confirmPassword"
+            type="password"
+            [ngModel]="formValue().confirmPassword"
+          />
+        </form>
+      `,
+      imports: [vestForms, FormsModule],
+    })
+    class TestComponent {
+      formValue = signal<
+        DeepPartial<{ password: string; confirmPassword: string }>
+      >({});
+      validationConfig = {
+        password: ['confirmPassword'],
+      };
+      suite = staticSuite((model: any, field?: string) => {
+        if (field) {
+          only(field);
+        }
+
+        test('password', 'Password is required', () => {
+          enforce(model.password).isNotBlank();
+        });
+
+        omitWhen(!model.password, () => {
+          test('confirmPassword', 'Passwords must match', () => {
+            enforce(model.confirmPassword).equals(model.password);
+          });
+        });
+      });
+    }
+
+    const fixture = TestBed.configureTestingModule({
+      imports: [TestComponent],
+    }).createComponent(TestComponent);
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const passwordInput = fixture.nativeElement.querySelector(
+      'input[name="password"]'
+    );
+    const confirmPasswordInput = fixture.nativeElement.querySelector(
+      'input[name="confirmPassword"]'
+    );
+
+    // Set password and confirmPassword to different values
+    passwordInput.value = 'password123';
+    passwordInput.dispatchEvent(new Event('input'));
+    confirmPasswordInput.value = 'different';
+    confirmPasswordInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    await new Promise((resolve) =>
+      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // confirmPassword should be invalid (doesn't match)
+    expect(confirmPasswordInput.classList.contains('ng-invalid')).toBe(true);
+
+    // Change password - should trigger confirmPassword revalidation
+    passwordInput.value = 'newpassword';
+    passwordInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    await new Promise((resolve) =>
+      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // confirmPassword should still be invalid (still doesn't match new password)
+    expect(confirmPasswordInput.classList.contains('ng-invalid')).toBe(true);
+
+    // Now match the passwords
+    confirmPasswordInput.value = 'newpassword';
+    confirmPasswordInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    await new Promise((resolve) =>
+      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Both should be valid now
+    expect(passwordInput.classList.contains('ng-valid')).toBe(true);
+    expect(confirmPasswordInput.classList.contains('ng-valid')).toBe(true);
+  });
+
+  it('should omit confirmPassword validation when password is empty', async () => {
+    @Component({
+      template: `
+        <form
+          scVestForm
+          [formValue]="formValue()"
+          [suite]="suite"
+          [validationConfig]="validationConfig"
+          (formValueChange)="formValue.set($event)"
+        >
+          <input
+            name="password"
+            type="password"
+            [ngModel]="formValue().password"
+          />
+          <input
+            name="confirmPassword"
+            type="password"
+            [ngModel]="formValue().confirmPassword"
+          />
+        </form>
+      `,
+      imports: [vestForms, FormsModule],
+    })
+    class TestComponent {
+      formValue = signal<
+        DeepPartial<{ password: string; confirmPassword: string }>
+      >({});
+      validationConfig = {
+        password: ['confirmPassword'],
+      };
+      suite = staticSuite((model: any, field?: string) => {
+        if (field) {
+          only(field);
+        }
+
+        test('password', 'Password is required', () => {
+          enforce(model.password).isNotBlank();
+        });
+
+        omitWhen(!model.password, () => {
+          test('confirmPassword', 'Passwords must match', () => {
+            enforce(model.confirmPassword).equals(model.password);
+          });
+        });
+      });
+    }
+
+    const fixture = TestBed.configureTestingModule({
+      imports: [TestComponent],
+    }).createComponent(TestComponent);
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const passwordInput = fixture.nativeElement.querySelector(
+      'input[name="password"]'
+    );
+    const confirmPasswordInput = fixture.nativeElement.querySelector(
+      'input[name="confirmPassword"]'
+    );
+
+    // Leave password empty, set confirmPassword to any value
+    passwordInput.value = '';
+    passwordInput.dispatchEvent(new Event('input'));
+    confirmPasswordInput.value = 'somevalue';
+    confirmPasswordInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    await new Promise((resolve) =>
+      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Password should be invalid (required but empty)
+    // confirmPassword should be valid (validation is omitted when password is empty)
+    expect(passwordInput.classList.contains('ng-invalid')).toBe(true);
+    expect(confirmPasswordInput.classList.contains('ng-valid')).toBe(true);
   });
 
   // Modern Angular API Tests
@@ -909,10 +1428,6 @@ describe('FormDirective - Comprehensive', () => {
         suite = staticSuite((model: any, field?: string) => {
           if (field === 'field2') {
             validationCount++;
-            console.log(
-              `[TEST] field2 validation called, count=${validationCount}, stack:`,
-              new Error().stack
-            );
           }
           test('field1', 'Field 1 is required', () => {
             enforce(model.field1).isNotBlank();
@@ -925,6 +1440,13 @@ describe('FormDirective - Comprehensive', () => {
 
       const fixture = TestBed.createComponent(
         DuplicateSubscriptionTestComponent
+      );
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // Wait for initial validators with debounce timers to complete
+      await new Promise((resolve) =>
+        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
       );
       fixture.detectChanges();
       await fixture.whenStable();

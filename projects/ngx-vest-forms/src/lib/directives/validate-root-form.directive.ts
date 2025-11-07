@@ -8,6 +8,7 @@ import {
 } from '@angular/forms';
 import {
   debounceTime,
+  map,
   Observable,
   of,
   ReplaySubject,
@@ -15,9 +16,10 @@ import {
   switchMap,
   take,
   takeUntil,
+  timer,
 } from 'rxjs';
-import { StaticSuite } from 'vest';
 import { cloneDeep, set } from '../utils/form-utils';
+import { NgxVestSuite } from '../utils/validation-suite';
 import { ValidationOptions } from './validation-options';
 
 @Directive({
@@ -36,27 +38,13 @@ export class ValidateRootFormDirective<T> implements AsyncValidator, OnDestroy {
   private readonly destroy$$ = new Subject<void>();
 
   public readonly formValue = input<T | null>(null);
-  public readonly suite = input<StaticSuite<
-    string,
-    string,
-    (model: T, field: string) => void
-  > | null>(null);
+  public readonly suite = input<NgxVestSuite<T> | null>(null);
 
   /**
    * Whether the root form should be validated or not
    * This will use the field rootForm
    */
   public readonly validateRootForm = input(false);
-
-  /**
-   * Used to debounce formValues to make sure vest isn't triggered all the time
-   */
-  private readonly formValueCache: {
-    [field: string]: Partial<{
-      sub$$: ReplaySubject<unknown>;
-      debounced: Observable<any>;
-    }>;
-  } = {};
 
   public validate(
     control: AbstractControl<any, any>
@@ -67,7 +55,7 @@ export class ValidateRootFormDirective<T> implements AsyncValidator, OnDestroy {
     return this.createAsyncValidator(
       'rootForm',
       this.validationOptions()
-    )(control.getRawValue()) as Observable<ValidationErrors | null>;
+    )(control) as Observable<ValidationErrors | null>;
   }
 
   public createAsyncValidator(
@@ -77,35 +65,27 @@ export class ValidateRootFormDirective<T> implements AsyncValidator, OnDestroy {
     if (!this.suite()) {
       return () => of(null);
     }
-    return (value: any) => {
+    return (control: AbstractControl) => {
       if (!this.formValue()) {
         return of(null);
       }
+      const value = control.getRawValue();
       const mod = cloneDeep(value as T);
       set(mod as object, field, value); // Update the property with path
-      if (!this.formValueCache[field]) {
-        this.formValueCache[field] = {
-          sub$$: new ReplaySubject(1), // Keep track of the last model
-        };
-        this.formValueCache[field].debounced = this.formValueCache[
-          field
-        ].sub$$!.pipe(debounceTime(validationOptions.debounceTime));
-      }
-      // Next the latest model in the cache for a certain field
-      this.formValueCache[field].sub$$!.next(mod);
 
-      return this.formValueCache[field].debounced!.pipe(
-        // When debounced, take the latest value and perform the asynchronous vest validation
-        take(1),
-        switchMap(() => {
+      // Use timer() pattern like v2 instead of ReplaySubject cache
+      return timer(validationOptions.debounceTime ?? 0).pipe(
+        map(() => mod),
+        switchMap((model) => {
           return new Observable((observer) => {
-            this.suite()!(mod, field).done((result) => {
+            this.suite()!(model, field).done((result) => {
               const errors = result.getErrors()[field];
               observer.next(errors ? { error: errors[0], errors } : null);
               observer.complete();
             });
           }) as Observable<ValidationErrors | null>;
         }),
+        take(1),
         takeUntil(this.destroy$$)
       );
     };

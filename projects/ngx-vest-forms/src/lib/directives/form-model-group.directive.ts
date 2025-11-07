@@ -65,7 +65,7 @@ export class FormModelGroupDirective implements AsyncValidator {
       field,
       this.validationOptions()
     );
-    const validationResult = asyncValidator(control.value);
+    const validationResult = asyncValidator(control);
     if (validationResult instanceof Observable) {
       return validationResult;
     } else if (validationResult instanceof Promise) {

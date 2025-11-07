@@ -7,10 +7,14 @@ import {
   untracked,
   DestroyRef,
   isDevMode,
+  linkedSignal,
+  computed,
 } from '@angular/core';
 import {
   takeUntilDestroyed,
   outputFromObservable,
+  toObservable,
+  toSignal,
 } from '@angular/core/rxjs-interop';
 import {
   AsyncValidatorFn,
@@ -19,6 +23,8 @@ import {
   StatusChangeEvent,
   ValueChangeEvent,
   ValidationErrors,
+  AbstractControl,
+  FormGroup,
 } from '@angular/forms';
 import {
   debounceTime,
@@ -27,17 +33,16 @@ import {
   finalize,
   Observable,
   of,
-  ReplaySubject,
   startWith,
-  Subscription,
   switchMap,
   take,
-  takeWhile,
   tap,
   catchError,
   map,
+  EMPTY,
+  merge as rxMerge,
+  timer,
 } from 'rxjs';
-import { StaticSuite } from 'vest';
 import { DeepRequired } from '../utils/deep-required';
 import {
   cloneDeep,
@@ -45,6 +50,7 @@ import {
   mergeValuesAndRawValues,
   set,
 } from '../utils/form-utils';
+import { NgxVestSuite } from '../utils/validation-suite';
 import { fastDeepEqual } from '../utils/equality';
 import { validateShape } from '../utils/shape-validation';
 import { ValidationOptions } from './validation-options';
@@ -55,32 +61,70 @@ import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
   exportAs: 'scVestForm',
 })
 export class FormDirective<T extends Record<string, any>> {
-  /**
-   * Returns the current form state: validity and errors.
-   * Used by templates and tests as vestForm.formState().valid/errors
-   */
-  public formState() {
-    return {
-      valid: this.ngForm.form.valid,
-      errors: getAllFormErrors(this.ngForm.form),
-    };
-  }
   public readonly ngForm = inject(NgForm, { self: true, optional: false });
   private readonly destroyRef = inject(DestroyRef);
 
+  // Track last linked value to prevent unnecessary updates
+  #lastLinkedValue: T | null = null;
+  #lastSyncedFormValue: T | null = null;
+  #lastSyncedModelValue: T | null = null;
+
+  // Internal signal tracking form value changes via statusChanges
+  readonly #value = toSignal(
+    this.ngForm.form.statusChanges.pipe(startWith(this.ngForm.form.status)),
+    { initialValue: this.ngForm.form.status }
+  );
+
   /**
-   * The value of the form, this is needed for the validation part
+   * LinkedSignal that computes form values from Angular form state.
+   * This eliminates timing issues with the previous dual-effect pattern.
+   */
+  readonly #formValueSignal = linkedSignal(() => {
+    // Track form value changes
+    this.#value();
+    const raw = mergeValuesAndRawValues<T>(this.ngForm.form);
+    if (Object.keys(this.ngForm.form.controls).length > 0) {
+      this.#lastLinkedValue = raw;
+      return raw;
+    } else if (this.#lastLinkedValue !== null) {
+      return this.#lastLinkedValue;
+    }
+    return null;
+  });
+
+  /**
+   * Track the Angular form status as a signal for advanced status flags
+   */
+  readonly #statusSignal = toSignal(
+    this.ngForm.form.statusChanges.pipe(startWith(this.ngForm.form.status)),
+    { initialValue: this.ngForm.form.status }
+  );
+
+  /**
+   * Computed signal for form state with validity and errors.
+   * Used by templates and tests as vestForm.formState().valid/errors
+   */
+  public readonly formState = computed(() => {
+    // Tie to status signal to ensure recomputation on validation changes
+    this.#statusSignal();
+    return {
+      valid: this.ngForm.form.valid,
+      errors: getAllFormErrors(this.ngForm.form),
+      value: this.#formValueSignal(),
+    };
+  });
+
+  /**
+   * The value of the form, this is needed for the validation part.
+   * Using input() here because two-way binding is provided via formValueChange output.
+   * In the minimal core directive (form-core.directive.ts), this would be model() instead.
    */
   public readonly formValue = input<T | null>(null);
 
   /**
    * Static vest suite that will be used to feed our angular validators
    */
-  public readonly suite = input<StaticSuite<
-    string,
-    string,
-    (model: T, field?: string) => void
-  > | null>(null);
+  public readonly suite = input<NgxVestSuite<T> | null>(null);
 
   /**
    * The shape of our form model. This is a deep required version of the form model
@@ -199,18 +243,9 @@ export class FormDirective<T extends Record<string, any>> {
   );
 
   /**
-   * Used to debounce formValues to make sure vest isn't triggered all the time
+   * Track validation in progress to prevent circular triggering (Issue #19)
    */
-  // Async validator cache for debouncing and single-flight per field
-  private readonly formValueCache: {
-    [field: string]: ReplaySubject<T>;
-  } = {};
-
   private readonly validationInProgress = new Set<string>();
-  private readonly validationConfigSubscriptions = new Map<
-    string,
-    Subscription
-  >(); // Store subscriptions by trigger field
 
   public constructor() {
     /**
@@ -236,210 +271,153 @@ export class FormDirective<T extends Record<string, any>> {
       });
 
     /**
-     * Set up validation config reactively using effects.
-     * The effect must read the validationConfig signal to establish a reactive dependency
-     * and trigger execution. Without reading the signal, the effect would never run.
-     * The effect's cleanup function automatically unsubscribes from all
-     * subscriptions when the component is destroyed.
+     * Single bidirectional synchronization effect using linkedSignal.
+     * Uses proper deep comparison and change tracking for correct sync direction.
+     * Note: formValue is read-only input(), so we emit changes via formValueChange output.
      */
-    effect((onCleanup) => {
-      // Track effect start time for debugging late control setup
-      const effectStartTime = Date.now();
-      // Read the config to establish reactivity
-      // This creates a reactive dependency that triggers the effect during component initialization
-      let config = this.validationConfig();
+    effect(() => {
+      const formValue = this.#formValueSignal();
+      const modelValue = this.formValue();
 
-      if (!config) {
-        return;
-      }
+      // Skip if either is null
+      if (!formValue && !modelValue) return;
 
-      // Minimum time (in ms) that must pass before we consider a control "late-added"
-      // Controls that appear within this window are considered part of initial setup (race condition)
-      // This threshold is kept short (60ms) to distinguish between:
-      // - Initial setup race condition: controls appear within milliseconds (typically <50ms)
-      // - True late additions: controls appear 60ms+ later from user interaction
-      const LATE_CONTROL_THRESHOLD_MS = 60;
+      // Determine what changed using proper deep comparison
+      const valuesEqual = fastDeepEqual(formValue, modelValue);
 
-      // Helper function to trigger validation on dependent fields
-      const triggerDependentValidation = (dependentFields: string[]) => {
-        queueMicrotask(() => {
-          dependentFields.forEach((dependentField) => {
-            const dependentControl = this.ngForm?.form.get(dependentField);
-            if (
-              dependentControl &&
-              !this.validationInProgress.has(dependentField)
-            ) {
-              // Use emitEvent: true to ensure async validators re-run
-              // This is critical for omitWhen scenarios where validation logic
-              // depends on other field values that have changed
-              dependentControl.updateValueAndValidity({
-                onlySelf: true,
-                emitEvent: true,
-              });
-            }
-          });
-        });
-      };
-
-      // Helper function to set up subscription for a trigger field
-      const setupSubscription = (triggerField: string) => {
-        const timestamp = Date.now();
-
-        // Check if subscription already exists for this trigger field
-        if (this.validationConfigSubscriptions.has(triggerField)) {
-          return; // Already set up successfully
-        }
-
-        const dependentFields = config[triggerField];
-        if (!dependentFields || dependentFields.length === 0) {
-          return;
-        }
-
-        const triggerControl = this.ngForm?.form.get(triggerField);
-        if (!triggerControl) {
-          // Control doesn't exist yet, will be retried on next status change
-          return;
-        }
-
-        // Only set placeholder AFTER confirming control exists and has dependent fields
-        // This prevents duplicate setup while allowing structure watcher to retry for missing controls
-        this.validationConfigSubscriptions.set(
-          triggerField,
-          new Subscription()
+      if (!valuesEqual) {
+        // Determine sync direction by tracking what actually changed
+        const formChanged = !fastDeepEqual(
+          formValue,
+          this.#lastSyncedFormValue
+        );
+        const modelChanged = !fastDeepEqual(
+          modelValue,
+          this.#lastSyncedModelValue
         );
 
-        // Trigger immediate validation if this control already has a value that the user entered
-        // This happens when the subscription is set up after the user already changed the field
-        const triggerHasValue =
-          triggerControl.value != null && triggerControl.value !== '';
-        const userHasInteracted =
-          triggerControl.touched || triggerControl.dirty;
-
-        if (triggerHasValue && userHasInteracted) {
-          // Also mark dependent fields as touched so errors display
-          dependentFields.forEach((dependentField) => {
-            const dependentControl = this.ngForm?.form.get(dependentField);
-            if (dependentControl && !dependentControl.touched) {
-              dependentControl.markAsTouched();
-            }
+        if (formChanged && !modelChanged) {
+          // Form was modified by user -> form wins
+          // Note: We can't call this.formValue.set() since it's an input()
+          // The formValueChange output will emit the new value
+          untracked(() => {
+            this.#lastSyncedFormValue = formValue;
+            this.#lastSyncedModelValue = formValue;
           });
-
-          // Trigger validation on dependent fields immediately
-          triggerDependentValidation(dependentFields);
-        }
-
-        // Track whether this field was previously touched to avoid duplicate triggers
-        let wasPreviouslyTouched = triggerControl.touched;
-        let lastValue = triggerControl.value;
-        let valueChangedRecently = false; // Track if value just changed to prevent statusChanges duplicate
-
-        // Subscribe to value changes in the trigger field
-        const valueChangesSubscription = triggerControl.valueChanges
-          .pipe(
-            // Track value changes immediately before any processing
-            tap((newValue) => {
-              lastValue = newValue;
-              valueChangedRecently = true; // Mark that value just changed
-            }),
-            // Debounce to prevent excessive validation calls when trigger fields change rapidly
-            debounceTime(VALIDATION_CONFIG_DEBOUNCE_TIME),
-            tap(() => {
-              // Trigger validation immediately after debounce (no idle$ wait to avoid circular deadlock)
-              triggerDependentValidation(dependentFields);
-              // Reset valueChangedRecently after triggering validation
-              // Use setTimeout to ensure statusChanges sees the flag during its own debounce
-              setTimeout(() => {
-                valueChangedRecently = false;
-              }, VALIDATION_CONFIG_DEBOUNCE_TIME + 50);
-            }),
-            takeUntilDestroyed(this.destroyRef)
-          )
-          .subscribe();
-
-        // Subscribe to status changes to catch touch events
-        // This enables validation to trigger when user tabs through fields without changing values
-        const statusChangesSubscription = triggerControl.statusChanges
-          .pipe(
-            // Trigger dependent validation when status changes (e.g., after blur validation)
-            // UNLESS a value change just happened (to prevent duplicates with valueChanges)
-            filter(() => {
-              // Skip if value change validation is in progress
-              if (this.validationInProgress.has(triggerField)) {
-                return false;
-              }
-
-              // Skip if a value change just happened (prevents duplicate with valueChanges)
-              if (valueChangedRecently) {
-                return false;
-              }
-
-              // Trigger if the control is touched (user has interacted with it)
-              // This ensures cross-field validation runs even when user just tabs through
-              return triggerControl.touched;
-            }),
-            // Debounce to batch multiple status changes
-            debounceTime(VALIDATION_CONFIG_DEBOUNCE_TIME),
-            tap(() => {
-              // Mark dependent fields as touched so errors display immediately
-              // This implements the same pattern as the user's markDependentFieldsTouched utility
-              dependentFields.forEach((dependentField) => {
-                const dependentControl = this.ngForm?.form.get(dependentField);
-                if (dependentControl && !dependentControl.touched) {
-                  dependentControl.markAsTouched();
+        } else if (modelChanged && !formChanged) {
+          // Model was modified programmatically -> model wins
+          untracked(() => {
+            // Update form controls with new model values
+            if (modelValue) {
+              Object.keys(modelValue).forEach((key) => {
+                const control = this.ngForm.form.get(key);
+                if (control && control.value !== modelValue[key]) {
+                  control.setValue(modelValue[key], { emitEvent: false });
                 }
               });
-
-              // Trigger validation on dependent fields
-              triggerDependentValidation(dependentFields);
-            }),
-            takeUntilDestroyed(this.destroyRef)
-          )
-          .subscribe();
-
-        // Replace the placeholder with the actual combined subscription
-        const combinedSubscription = new Subscription();
-        combinedSubscription.add(valueChangesSubscription);
-        combinedSubscription.add(statusChangesSubscription);
-        this.validationConfigSubscriptions.set(
-          triggerField,
-          combinedSubscription
-        );
-      };
-
-      // Try to set up all subscriptions initially
-      Object.keys(config).forEach(setupSubscription);
-
-      // If any subscriptions couldn't be set up (controls don't exist yet),
-      // watch for form structure changes and retry
-      const totalConfigKeys = Object.keys(config).length;
-      if (this.validationConfigSubscriptions.size < totalConfigKeys) {
-        const structureWatcher = this.ngForm.form.statusChanges
-          .pipe(
-            // Only retry when not currently validating
-            filter(() => this.ngForm.form.status !== 'PENDING'),
-            // Stop watching once all subscriptions are set up
-            takeWhile(
-              () => this.validationConfigSubscriptions.size < totalConfigKeys,
-              true
-            ),
-            tap(() => {
-              // Retry setting up subscriptions for fields that weren't set up yet
-              Object.keys(config).forEach(setupSubscription);
-            }),
-            takeUntilDestroyed(this.destroyRef)
-          )
-          .subscribe();
+            }
+            this.#lastSyncedFormValue = modelValue;
+            this.#lastSyncedModelValue = modelValue;
+          });
+        }
       }
-
-      // Cleanup function: unsubscribe all subscriptions when component destroys
-      onCleanup(() => {
-        // Unsubscribe from all field-level subscriptions and clear the Map
-        this.validationConfigSubscriptions.forEach((subscription) =>
-          subscription.unsubscribe()
-        );
-        this.validationConfigSubscriptions.clear();
-      });
     });
+
+    /**
+     * Set up validation config reactively using v2 pattern with toObservable + switchMap.
+     * This provides automatic cleanup when config changes.
+     */
+    const form = this.ngForm.form;
+    toObservable(this.validationConfig)
+      .pipe(
+        distinctUntilChanged(),
+        // For each config, compose a merged stream of all trigger pipelines.
+        // switchMap ensures previous pipelines are torn down automatically
+        // when the config object changes.
+        switchMap((config) => {
+          if (!config) {
+            // Clear any in-progress flags when config becomes null
+            this.validationInProgress.clear();
+            return EMPTY;
+          }
+
+          const streams = Object.keys(config).map((triggerField) => {
+            const dependents = config[triggerField] || [];
+
+            // Stream that rebinds to the trigger control whenever the form structure changes
+            const triggerControl$ = form.statusChanges.pipe(
+              startWith(form.status),
+              // Project to the control instance (may be undefined initially)
+              // Re-run on each status change until control exists
+              map(() => form.get(triggerField)),
+              // Proceed only when control is available
+              filter((c): c is NonNullable<typeof c> => !!c),
+              // Avoid re-subscribing if the control instance is the same
+              distinctUntilChanged()
+            );
+
+            return triggerControl$.pipe(
+              // For the resolved control, subscribe to BOTH valueChanges and statusChanges
+              // This ensures validation triggers on both value changes AND touch state changes
+              switchMap((control) => {
+                // Create a stream that combines value changes and touch state changes
+                const valueChange$ = control.valueChanges;
+                const touchChange$ = control.statusChanges.pipe(
+                  filter(() => control.touched)
+                );
+
+                return rxMerge(valueChange$, touchChange$).pipe(
+                  // Debounce to batch rapid changes
+                  debounceTime(VALIDATION_CONFIG_DEBOUNCE_TIME),
+                  // Wait for the form to be idle before updating dependents
+                  switchMap(() =>
+                    form.statusChanges.pipe(
+                      startWith(form.status),
+                      filter((s) => s !== 'PENDING'),
+                      take(1),
+                      map(() => control) // Pass through the control
+                    )
+                  ),
+                  tap(() => {
+                    for (const depField of dependents) {
+                      const dependentControl = form.get(depField);
+                      if (!dependentControl) {
+                        if (isDevMode()) {
+                          console.warn(
+                            `[ngx-vest-forms] Dependent control '${depField}' not found for validationConfig key '${triggerField}'.`
+                          );
+                        }
+                        continue;
+                      }
+
+                      // Only mark dependent fields as touched when the trigger field was touched
+                      // This preserves untouched state for programmatic value changes
+                      if (control.touched && !dependentControl.touched) {
+                        dependentControl.markAsTouched();
+                      }
+
+                      if (!this.validationInProgress.has(depField)) {
+                        // Use emitEvent: true to ensure async validators re-run
+                        // This is critical for omitWhen scenarios where validation logic
+                        // depends on other field values that have changed
+                        dependentControl.updateValueAndValidity({
+                          onlySelf: true,
+                          emitEvent: true,
+                        });
+                      }
+                    }
+                  }),
+                  tap(() => this.validationInProgress.delete(triggerField))
+                );
+              })
+            );
+          });
+
+          return streams.length > 0 ? rxMerge(...streams) : EMPTY;
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe();
   }
 
   /**
@@ -492,147 +470,65 @@ export class FormDirective<T extends Record<string, any>> {
    * @returns an asynchronous validator function
    */
   /**
-   * Improved async validator: composable, debounced, robust error handling.
-   * Compatible with v2 pattern, non-breaking.
+   * V2 async validator pattern: uses timer() + switchMap for proper re-validation.
+   * Each invocation builds a fresh one-shot observable, ensuring progressive validation.
    */
   public createAsyncValidator(
     field: string,
     validationOptions: ValidationOptions
   ): AsyncValidatorFn {
-    return (value: any) => {
-      const suite = this.suite();
-      const formValue = this.formValue();
+    const suite = this.suite();
+    if (!suite) return () => of(null);
 
-      if (!suite) {
-        return of(null);
-      }
+    return (control: AbstractControl) => {
+      const model = mergeValuesAndRawValues<T>(this.ngForm.form);
 
-      // If there's no formValue and the form has no controls, return null early
-      // This handles test scenarios and edge cases gracefully
-      if (!formValue && Object.keys(this.ngForm.form.controls).length === 0) {
-        return of(null);
-      }
-
-      // Build the validation model from current form state
-      // Always use form's current values to ensure validation sees the latest state
-      // This is critical for validation config scenarios where dependent fields need current values
-      // IMPORTANT: Use structuredClone when available for better performance and to ensure
-      // omitWhen conditions see the latest model state (fixes bidirectional dependency issues)
-      let candidate: T;
+      // Targeted snapshot with candidate value injected at path
+      let snapshot: T;
       try {
-        const currentModel = mergeValuesAndRawValues<T>(this.ngForm.form);
-        candidate = structuredClone(currentModel) as T;
+        snapshot = structuredClone(model) as T;
       } catch {
-        // Fallback to cloneDeep for environments without structuredClone
-        candidate = cloneDeep(mergeValuesAndRawValues<T>(this.ngForm.form));
+        try {
+          const cloneFunction: (<U>(value: U) => U) | undefined = (
+            globalThis as unknown as { structuredClone?: <U>(v: U) => U }
+          ).structuredClone;
+          snapshot = (cloneFunction ? cloneFunction(model) : model) as T;
+        } catch {
+          snapshot = { ...(model as object) } as T;
+        }
       }
+      set(snapshot as object, field, control.value);
 
-      // Set the value for the field being validated
-      set(candidate as object, field, value);
-
-      if (!this.formValueCache[field]) {
-        this.formValueCache[field] = new ReplaySubject<T>(1);
-      }
-
-      const subject = this.formValueCache[field];
-      subject.next(candidate);
-
-      const debounceMs = validationOptions?.debounceTime ?? 0;
-
-      return subject.pipe(
-        debounceTime(debounceMs),
-        take(1),
-        switchMap((model) => {
-          if (isDevMode()) {
-            console.debug('[SV] Running suite for', field, 'with model', model);
-          }
-
-          return new Observable<ValidationErrors | null>((observer) => {
-            const emitResult = (vestResult: any) => {
-              const pushResult = () => {
-                try {
-                  let errors: unknown;
-                  if (typeof vestResult?.getErrors === 'function') {
-                    const direct = vestResult.getErrors(field);
-                    if (Array.isArray(direct)) {
-                      errors = direct;
-                    } else {
-                      const bag = vestResult.getErrors();
-                      errors = bag?.[field];
-                    }
-                  }
-
-                  if (isDevMode()) {
-                    console.debug('[SV] Final errors for', field, errors);
-                  }
-
-                  if (Array.isArray(errors) && errors.length > 0) {
-                    observer.next({ error: errors[0], errors });
-                  } else {
-                    observer.next(null);
-                  }
-                } catch (error) {
-                  observer.next({
-                    vestInternalError:
-                      error instanceof Error
-                        ? error.message
-                        : 'Unknown validation error',
-                  });
-                } finally {
-                  observer.complete();
-                }
-              };
-
-              if (typeof queueMicrotask === 'function') {
-                queueMicrotask(pushResult);
-              } else {
-                setTimeout(pushResult, 0);
-              }
-            };
-
-            let suiteResult: any;
-            try {
-              suiteResult = suite(model, field);
-            } catch (error) {
-              observer.next({
-                vestInternalError:
-                  error instanceof Error
-                    ? error.message
-                    : 'Unknown validation error',
-              });
-              observer.complete();
-              return;
-            }
-
-            if (isDevMode()) {
-              console.debug('[SV] Suite returned', suiteResult);
-            }
-
-            const doneFn = suiteResult?.done;
-            if (typeof doneFn === 'function') {
+      // Use timer() instead of ReplaySubject for proper debouncing
+      return timer(validationOptions.debounceTime ?? 0).pipe(
+        map(() => snapshot),
+        switchMap(
+          (snap) =>
+            new Observable<ValidationErrors | null>((observer) => {
               try {
-                doneFn.call(suiteResult, emitResult);
-              } catch (error) {
-                observer.next({
-                  vestInternalError:
-                    error instanceof Error
-                      ? error.message
-                      : 'Unknown validation error',
+                suite(snap, field).done((result: any) => {
+                  const errors = result.getErrors()[field];
+                  const warnings = result.getWarnings()[field];
+
+                  const out =
+                    errors?.length || warnings?.length
+                      ? {
+                          ...(errors?.length && { errors }),
+                          ...(warnings?.length && { warnings }),
+                        }
+                      : null;
+
+                  observer.next(out);
+                  observer.complete();
                 });
+              } catch {
+                observer.next({ vestInternalError: 'Validation failed' });
                 observer.complete();
               }
-            } else {
-              emitResult(suiteResult);
-            }
-          });
-        }),
-        catchError((err) =>
-          of({
-            vestInternalError:
-              (err as Error)?.message || 'Unknown validation error',
-          })
+            })
         ),
-        takeUntilDestroyed(this.destroyRef)
+        catchError(() => of({ vestInternalError: 'Validation failed' })),
+        take(1)
       );
     };
   }
