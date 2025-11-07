@@ -12,9 +12,7 @@ type TestModel = {
 };
 
 const testSuite = staticSuite((data: TestModel = {}, field?: string) => {
-  if (field) {
-    only(field);
-  }
+  only(field); // ✅ Call unconditionally
   vestTest('email', 'Email is required', () => {
     enforce(data.email ?? '').isNotBlank();
   });

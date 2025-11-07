@@ -17,9 +17,7 @@ type DynamicFormModel = DeepPartial<{
 
 const dynamicFormValidationSuite = staticSuite(
   (model: DynamicFormModel, field?: string) => {
-    if (field) {
-      only(field);
-    }
+    only(field); // ✅ Call unconditionally
 
     test('procedureType', 'Procedure type is required', () => {
       enforce(model.procedureType).isNotBlank();

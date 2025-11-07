@@ -23,9 +23,7 @@ export const formShape: DeepRequired<FormModel> = {
 
 export const formValidationSuite = staticSuite(
   (model: FormModel, field?: string) => {
-    if (field) {
-      only(field);
-    }
+    only(field); // ✅ Call unconditionally
     test(ROOT_FORM, 'Brecht his pass is not 1234', () => {
       enforce(
         model.firstName === 'Brecht' &&

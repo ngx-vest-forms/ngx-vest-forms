@@ -15,9 +15,7 @@ type AddressFormModel = {
 
 const addressFormSuite = staticSuite(
   (data: Partial<AddressFormModel> = {}, field?: string) => {
-    if (field) {
-      only(field);
-    }
+    only(field); // ✅ Call unconditionally
 
     vestTest('address.street', 'Street is required', () => {
       enforce(data.address?.street).isNotEmpty();

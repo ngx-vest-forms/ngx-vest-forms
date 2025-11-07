@@ -141,14 +141,16 @@ protected readonly formValue = signal<MyFormModel>({});
 ## Key Development Patterns
 
 ### Validation Suite Pattern
-Always structure validation suites with the `only()` pattern for optimal performance.
+Always structure validation suites with the unconditional `only()` pattern for optimal performance.
+
+> **CRITICAL**: Call `only(field)` unconditionally at the top of your suite. Never wrap it in `if (field)` as this corrupts Vest's execution tracking.
 
 > **Complete Validation Patterns**: See `.github/instructions/vest.instructions.md` for comprehensive validation patterns and performance optimization.
 
 ```typescript
 export const validationSuite = staticSuite(
   (model: FormModel, field?: string) => {
-    if (field) { only(field); } // Critical for performance
+    only(field); // ✅ CORRECT: Call unconditionally (safe: only(undefined) runs all tests)
 
     test('firstName', 'First name is required', () => {
       enforce(model.firstName).isNotBlank();
