@@ -417,16 +417,24 @@ export class FormDirective<T extends Record<string, any>> {
   ): AsyncValidatorFn {
     return (value: any) => {
       const suite = this.suite();
+      const formValue = this.formValue();
+      
       if (!suite) {
         return of(null);
       }
 
-      // Get the current form values directly from the Angular form
-      // This ensures we have the most up-to-date values, including changes
-      // triggered by validationConfig that haven't propagated to formValue() yet
-      const candidate = cloneDeep(
-        mergeValuesAndRawValues<T>(this.ngForm.form)
-      );
+      // If there's no formValue and the form has no controls, return null early
+      // This handles test scenarios and edge cases gracefully
+      if (!formValue && Object.keys(this.ngForm.form.controls).length === 0) {
+        return of(null);
+      }
+
+      // Build the validation model from current form state
+      // Always use form's current values to ensure validation sees the latest state
+      // This is critical for validation config scenarios where dependent fields need current values
+      const candidate = cloneDeep(mergeValuesAndRawValues<T>(this.ngForm.form));
+      
+      // Set the value for the field being validated
       set(candidate as object, field, value);
 
       if (!this.formValueCache[field]) {
