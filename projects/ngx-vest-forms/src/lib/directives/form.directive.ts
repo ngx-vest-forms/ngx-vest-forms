@@ -243,15 +243,11 @@ export class FormDirective<T extends Record<string, any>> {
      * subscriptions when the component is destroyed.
      */
     effect((onCleanup) => {
+      // Track effect start time for debugging late control setup
       const effectStartTime = Date.now();
-      // Read validation config directly (without untracked) to ensure effect runs
+      // Read the config to establish reactivity
       // This creates a reactive dependency that triggers the effect during component initialization
       let config = this.validationConfig();
-      const effectId = Math.random().toString(36).substring(7);
-      console.log(
-        `[${effectStartTime}] setupValidationConfig effect START, effectId=${effectId}, config:`,
-        config
-      );
 
       if (!config) {
         return;
@@ -266,25 +262,19 @@ export class FormDirective<T extends Record<string, any>> {
 
       // Helper function to trigger validation on dependent fields
       const triggerDependentValidation = (dependentFields: string[]) => {
-        console.log(`[T DV] Called for: ${dependentFields.join(', ')}`);
         queueMicrotask(() => {
           dependentFields.forEach((dependentField) => {
             const dependentControl = this.ngForm?.form.get(dependentField);
-            const inProgress = this.validationInProgress.has(dependentField);
-            console.log(
-              `[T DV] Checking ${dependentField} - control exists: ${!!dependentControl}, inProgress: ${inProgress}`
-            );
             if (
               dependentControl &&
               !this.validationInProgress.has(dependentField)
             ) {
-              console.log(`[T DV] Updating ${dependentField}`);
-              // IMPORTANT: Use emitEvent: true to ensure async validators re-run
-              // This is critical for omitWhen scenarios where the validation logic
+              // Use emitEvent: true to ensure async validators re-run
+              // This is critical for omitWhen scenarios where validation logic
               // depends on other field values that have changed
               dependentControl.updateValueAndValidity({
                 onlySelf: true,
-                emitEvent: true, // Changed from false - we WANT validation to re-run
+                emitEvent: true,
               });
             }
           });
@@ -297,9 +287,6 @@ export class FormDirective<T extends Record<string, any>> {
 
         // Check if subscription already exists for this trigger field
         if (this.validationConfigSubscriptions.has(triggerField)) {
-          console.log(
-            `[VC] ${triggerField} subscription already exists, skipping.`
-          );
           return; // Already set up successfully
         }
 
@@ -311,7 +298,6 @@ export class FormDirective<T extends Record<string, any>> {
         const triggerControl = this.ngForm?.form.get(triggerField);
         if (!triggerControl) {
           // Control doesn't exist yet, will be retried on next status change
-          console.log(`[VC] ${triggerField} control doesn't exist yet.`);
           return;
         }
 
@@ -321,7 +307,6 @@ export class FormDirective<T extends Record<string, any>> {
           triggerField,
           new Subscription()
         );
-        console.log(`[VC] ${triggerField} marked as placeholder.`);
 
         // Trigger immediate validation if this control already has a value that the user entered
         // This happens when the subscription is set up after the user already changed the field
@@ -329,15 +314,6 @@ export class FormDirective<T extends Record<string, any>> {
           triggerControl.value != null && triggerControl.value !== '';
         const userHasInteracted =
           triggerControl.touched || triggerControl.dirty;
-
-        console.log(
-          `[VC] ${triggerField} - hasValue: ${triggerHasValue}, hasInteracted: ${userHasInteracted}, value:`,
-          triggerControl.value,
-          'touched:',
-          triggerControl.touched,
-          'dirty:',
-          triggerControl.dirty
-        );
 
         if (triggerHasValue && userHasInteracted) {
           // Also mark dependent fields as touched so errors display
@@ -349,9 +325,6 @@ export class FormDirective<T extends Record<string, any>> {
           });
 
           // Trigger validation on dependent fields immediately
-          console.log(
-            `[VC] Control with user value detected: triggering immediate validation for ${triggerField} -> ${dependentFields.join(', ')}`
-          );
           triggerDependentValidation(dependentFields);
         }
 
@@ -365,31 +338,12 @@ export class FormDirective<T extends Record<string, any>> {
           .pipe(
             // Track value changes immediately before any processing
             tap((newValue) => {
-              console.log(`[VC] ${triggerField} value changed to:`, newValue);
               lastValue = newValue;
               valueChangedRecently = true; // Mark that value just changed
-            }),
-            // Prevent infinite loops - check and set flag immediately
-            filter(() => {
-              const inProgress = this.validationInProgress.has(triggerField);
-              console.log(
-                `[VC] ${triggerField} filter check - inProgress:`,
-                inProgress
-              );
-              if (inProgress) {
-                return false;
-              }
-              this.validationInProgress.add(triggerField);
-              return true;
             }),
             // Debounce to prevent excessive validation calls when trigger fields change rapidly
             debounceTime(VALIDATION_CONFIG_DEBOUNCE_TIME),
             tap(() => {
-              console.log(
-                `[VC] valueChanges for ${triggerField} -> triggers ${dependentFields.join(
-                  ', '
-                )}`
-              );
               // Trigger validation immediately after debounce (no idle$ wait to avoid circular deadlock)
               triggerDependentValidation(dependentFields);
               // Reset valueChangedRecently after triggering validation
@@ -397,10 +351,6 @@ export class FormDirective<T extends Record<string, any>> {
               setTimeout(() => {
                 valueChangedRecently = false;
               }, VALIDATION_CONFIG_DEBOUNCE_TIME + 50);
-            }),
-            // Ensure flag is cleared in all scenarios (success, error, unsubscribe)
-            finalize(() => {
-              this.validationInProgress.delete(triggerField);
             }),
             takeUntilDestroyed(this.destroyRef)
           )
@@ -418,15 +368,8 @@ export class FormDirective<T extends Record<string, any>> {
                 return false;
               }
 
-              console.log(
-                `[VC] statusChanges filter for ${triggerField}: valueChangedRecently=${valueChangedRecently}, touched=${triggerControl.touched}`
-              );
-
               // Skip if a value change just happened (prevents duplicate with valueChanges)
               if (valueChangedRecently) {
-                console.log(
-                  `[VC] statusChanges SKIPPED for ${triggerField}: valueChangedRecently=true`
-                );
                 return false;
               }
 
@@ -437,12 +380,6 @@ export class FormDirective<T extends Record<string, any>> {
             // Debounce to batch multiple status changes
             debounceTime(VALIDATION_CONFIG_DEBOUNCE_TIME),
             tap(() => {
-              console.log(
-                `[VC] statusChanges for ${triggerField} -> triggers ${dependentFields.join(
-                  ', '
-                )}`
-              );
-
               // Mark dependent fields as touched so errors display immediately
               // This implements the same pattern as the user's markDependentFieldsTouched utility
               dependentFields.forEach((dependentField) => {
@@ -463,20 +400,13 @@ export class FormDirective<T extends Record<string, any>> {
         const combinedSubscription = new Subscription();
         combinedSubscription.add(valueChangesSubscription);
         combinedSubscription.add(statusChangesSubscription);
-        console.log(`[VC] Replacing placeholder for ${triggerField}.`);
         this.validationConfigSubscriptions.set(
           triggerField,
           combinedSubscription
         );
-        console.log(
-          `[VC] Map now has ${
-            this.validationConfigSubscriptions.size
-          } entries: ${Array.from(this.validationConfigSubscriptions.keys())}`
-        );
       };
 
       // Try to set up all subscriptions initially
-      console.log(`[VC] Setting up subscriptions for: ${Object.keys(config)}`);
       Object.keys(config).forEach(setupSubscription);
 
       // If any subscriptions couldn't be set up (controls don't exist yet),
@@ -493,7 +423,6 @@ export class FormDirective<T extends Record<string, any>> {
               true
             ),
             tap(() => {
-              console.log(`[VC] Structure watcher: retrying setup.`);
               // Retry setting up subscriptions for fields that weren't set up yet
               Object.keys(config).forEach(setupSubscription);
             }),
@@ -504,10 +433,6 @@ export class FormDirective<T extends Record<string, any>> {
 
       // Cleanup function: unsubscribe all subscriptions when component destroys
       onCleanup(() => {
-        const cleanupTime = Date.now();
-        console.log(
-          `[VC] Cleanup running - unsubscribing ${this.validationConfigSubscriptions.size} subscriptions.`
-        );
         // Unsubscribe from all field-level subscriptions and clear the Map
         this.validationConfigSubscriptions.forEach((subscription) =>
           subscription.unsubscribe()

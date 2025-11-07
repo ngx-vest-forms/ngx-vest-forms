@@ -593,11 +593,6 @@ describe('FormDirective - Comprehensive', () => {
     await fixture.whenStable();
 
     // Both empty - omitWhen skips validation, so both are valid
-    console.log('aantal classes:', Array.from(aantalInput.classList));
-    console.log(
-      'onderbouwing classes:',
-      Array.from(onderbouwingInput.classList)
-    );
     expect(aantalInput.classList.contains('ng-valid')).toBe(true);
     expect(onderbouwingInput.classList.contains('ng-valid')).toBe(true);
   }); // Test for debounce behavior with rapid successive changes
