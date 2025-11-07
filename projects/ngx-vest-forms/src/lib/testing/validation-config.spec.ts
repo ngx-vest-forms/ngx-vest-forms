@@ -7,7 +7,7 @@ import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { DeepPartial } from '../utils/deep-partial';
 import { vestForms } from '../exports';
-import { staticSuite, test, enforce } from 'vest';
+import { staticSuite, test, enforce, only, omitWhen, include } from 'vest';
 import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
 
 // Wait time for tests should be slightly longer than debounce to ensure completion
@@ -446,7 +446,161 @@ describe('FormDirective - Comprehensive', () => {
     // is that no errors were thrown and the form continues to work)
   });
 
-  // Test for debounce behavior with rapid successive changes
+  // Test for bidirectional dependencies with omitWhen (moved from omit-when-validation-config.spec.ts)
+  it('should handle bidirectional validationConfig with omitWhen correctly', async () => {
+    @Component({
+      template: `
+        <form
+          scVestForm
+          [formValue]="formValue()"
+          [suite]="suite"
+          [validationConfig]="validationConfig"
+          (formValueChange)="formValue.set($event)"
+        >
+          <input name="aantal" type="number" [ngModel]="formValue().aantal" />
+          <input
+            name="onderbouwing"
+            type="text"
+            [ngModel]="formValue().onderbouwing"
+          />
+        </form>
+      `,
+      imports: [vestForms, FormsModule],
+    })
+    class TestComponent {
+      formValue = signal<
+        DeepPartial<{ aantal: number | null; onderbouwing: string | null }>
+      >({
+        aantal: null,
+        onderbouwing: null,
+      });
+      validationConfig = {
+        aantal: ['onderbouwing'],
+        onderbouwing: ['aantal'],
+      };
+      suite = staticSuite((model: any, field?: string) => {
+        if (field) {
+          only(field);
+        }
+
+        const hasAantal = !!model.aantal;
+        const hasOnderbouwing = !!model.onderbouwing;
+        const hasEither = hasAantal || hasOnderbouwing;
+
+        // Use omitWhen to skip ALL validation when both are empty
+        omitWhen(!hasEither, () => {
+          // BOTH fields are required when either has a value
+          test('onderbouwing', 'Onderbouwing is required', () => {
+            enforce(model.onderbouwing).isNotBlank();
+          });
+
+          test('aantal', 'Aantal is required', () => {
+            enforce(model.aantal).isTruthy();
+          });
+        });
+      });
+    }
+
+    const fixture = TestBed.configureTestingModule({
+      imports: [TestComponent],
+    }).createComponent(TestComponent);
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const aantalInput = fixture.nativeElement.querySelector(
+      'input[name="aantal"]'
+    );
+    const onderbouwingInput = fixture.nativeElement.querySelector(
+      'input[name="onderbouwing"]'
+    );
+
+    // Both empty = valid
+    expect(fixture.componentInstance.formValue().aantal).toBe(null);
+    expect(fixture.componentInstance.formValue().onderbouwing).toBe(null);
+
+    // Fill aantal, onderbouwing should become invalid
+    aantalInput.value = '123';
+    aantalInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Wait for debounce and validation to complete
+    await new Promise((resolve) =>
+      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // When aantal is filled, onderbouwing becomes required (and is empty, so invalid)
+    // aantal itself is valid because it has a value
+    expect(aantalInput.classList.contains('ng-valid')).toBe(true);
+    expect(onderbouwingInput.classList.contains('ng-invalid')).toBe(true);
+
+    // Now fill onderbouwing, both should become valid
+    onderbouwingInput.value = 'This is my reasoning';
+    onderbouwingInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Wait for debounce and validation to complete
+    await new Promise((resolve) =>
+      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Both fields have values, both should be valid
+    expect(aantalInput.classList.contains('ng-valid')).toBe(true);
+    expect(onderbouwingInput.classList.contains('ng-valid')).toBe(true);
+
+    // Clear aantal, onderbouwing should become invalid (only one field filled)
+    aantalInput.value = '';
+    aantalInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Wait for debounce and validation to complete
+    await new Promise((resolve) =>
+      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Only onderbouwing has value, so aantal becomes required (but is empty, so invalid)
+    // onderbouwing itself is valid because it has a value
+    expect(aantalInput.classList.contains('ng-invalid')).toBe(true);
+    expect(onderbouwingInput.classList.contains('ng-valid')).toBe(true);
+
+    // Now clear onderbouwing too, both should be valid (both empty)
+    onderbouwingInput.value = '';
+    onderbouwingInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Wait for debounce and validation to complete
+    await new Promise((resolve) =>
+      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Give Angular extra time for dependent validation and CSS class updates
+    await new Promise((resolve) =>
+      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Both empty - omitWhen skips validation, so both are valid
+    console.log('aantal classes:', Array.from(aantalInput.classList));
+    console.log(
+      'onderbouwing classes:',
+      Array.from(onderbouwingInput.classList)
+    );
+    expect(aantalInput.classList.contains('ng-valid')).toBe(true);
+    expect(onderbouwingInput.classList.contains('ng-valid')).toBe(true);
+  }); // Test for debounce behavior with rapid successive changes
   it('should debounce validation config triggers properly with rapid changes', async () => {
     let triggerCount = 0;
 
@@ -760,6 +914,10 @@ describe('FormDirective - Comprehensive', () => {
         suite = staticSuite((model: any, field?: string) => {
           if (field === 'field2') {
             validationCount++;
+            console.log(
+              `[TEST] field2 validation called, count=${validationCount}, stack:`,
+              new Error().stack
+            );
           }
           test('field1', 'Field 1 is required', () => {
             enforce(model.field1).isNotBlank();
