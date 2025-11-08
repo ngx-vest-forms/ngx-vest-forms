@@ -104,10 +104,15 @@ export function getFormGroupField(
  * @param form
  */
 export function mergeValuesAndRawValues<T>(form: FormGroup): T {
-  // Retrieve the standard values with deep cloning to avoid reference sharing
+  // Deep clone both values to prevent reference sharing.
+  // This is necessary because:
+  // 1. form.value may contain object references that could be mutated elsewhere
+  // 2. form.getRawValue() also returns references to form control values
+  // 3. Without cloning, mutations to the returned object would affect the original form state
+  // 4. The merge operation itself requires a mutable copy to work with
+  // Performance note: For large forms, this may have performance implications. However,
+  // reference isolation is critical for maintaining form state integrity.
   const value = structuredClone(form.value);
-
-  // Retrieve the raw values (including disabled values) and clone to avoid reference sharing
   const rawValue = structuredClone(form.getRawValue());
 
   // Recursive function to merge rawValue into value
@@ -146,6 +151,9 @@ function isPrimitive(value: any): value is Primitive {
  * @param obj
  *
  * @deprecated Use official ES {@link https://developer.mozilla.org/en-US/docs/Web/API/Window/structuredClone structuredClone} instead
+ * 
+ * Browser Support: structuredClone is available in all modern browsers (Chrome 98+, Firefox 94+, Safari 15.4+, Edge 98+)
+ * and Node.js 17+. A polyfill is provided in test-setup.ts for Jest test environments.
  */
 export function cloneDeep<T>(object: T): T {
   // Handle primitives (null, undefined, boolean, string, number, function)
