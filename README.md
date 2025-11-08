@@ -1045,6 +1045,8 @@ export class CustomWrapperComponent {
 
 For form-level validations that span multiple fields, use the `ROOT_FORM` constant with `[validateRootForm]="true"`:
 
+> **⚠️ Breaking Change (v3)**: Default validation mode changed from `'live'` to `'submit'`. See [Migration Guide](./docs/MIGRATION-V3.md) for details.
+
 ```typescript
 import { ROOT_FORM } from 'ngx-vest-forms';
 
@@ -1058,11 +1060,31 @@ test(ROOT_FORM, 'Passwords must match', () => {
 <form
   scVestForm
   [validateRootForm]="true"
+  [validateRootFormMode]="'submit'"
   [suite]="suite"
   (errorsChange)="errors.set($event)"
 >
   <!-- Display root-level errors -->
   {{ errors()?.['rootForm'] }}
+</form>
+```
+
+#### Validation Modes
+
+Root form validation supports two modes:
+
+- **`'submit'` (default)**: Validates only after the form is submitted. This is the recommended mode for most use cases as it prevents premature validation errors.
+- **`'live'`**: Validates on every value change, providing immediate feedback.
+
+```html
+<!-- Submit mode - validates after submit (default) -->
+<form scVestForm [validateRootForm]="true" [validateRootFormMode]="'submit'">
+  <!-- form controls -->
+</form>
+
+<!-- Live mode - validates immediately -->
+<form scVestForm [validateRootForm]="true" [validateRootFormMode]="'live'">
+  <!-- form controls -->
 </form>
 ```
 

@@ -354,19 +354,17 @@ export const ShouldValidateOnRootForm: StoryObj = {
       'Billiet'
     );
     await userEvent.type(canvas.getByTestId(selectors.inputPassword), '1234');
-    const expectedErrors = {
-      rootForm: ['Brecht his pass is not 1234'],
-    };
-    await expect(
-      JSON.stringify(
-        JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)
-      )
-    ).toEqual(JSON.stringify(expectedErrors));
-    await userEvent.type(canvas.getByTestId(selectors.inputPassword), '5');
-    await expect(
-      JSON.stringify(
-        JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)
-      )
-    ).toEqual(JSON.stringify({}));
+    // Submit form to trigger root form validation
+    await userEvent.click(canvas.getByTestId(selectors.btnSubmit));
+    await waitFor(
+      () => {
+        const errorsText = canvas
+          .getByTestId(selectors.preFormErrors)
+          .textContent?.trim();
+        const errors = errorsText ? JSON.parse(errorsText) : {};
+        expect(errors).toEqual({ rootForm: ['Brecht his pass is not 1234'] });
+      },
+      { timeout: 2000 }
+    );
   },
 };

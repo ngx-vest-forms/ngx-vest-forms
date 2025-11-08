@@ -339,13 +339,113 @@ export class CustomWrapperComponent {
 
 ### Root Form Validation
 
-```typescript
-// Suite
-test(ROOT_FORM, 'Form-level error', () => enforce(condition).isTruthy());
+Root form validation enables form-level validations that span multiple fields (e.g., password confirmation, cross-field dependencies).
 
-// Component
-<form scVestForm [validateRootForm]="true" (errorsChange)="errors.set($event)"></form>
+#### Validation Modes
+
+Root form validations check relationships between multiple fields. The mode determines when these validations run.
+
+**Submit Mode (default)** - Validates only after form submission:
+```typescript
+<form
+  scVestForm
+  [validateRootForm]="true"
+  [validateRootFormMode]="'submit'"
+  (errorsChange)="errors.set($event)">
+  <!-- Validation triggered on submit -->
+</form>
 ```
+
+**Why 'submit' is the default:**
+
+Root form validations like `"Brecht Billiet cannot be 30"` check multiple fields (`firstName` + `lastName` + `age`). In 'live' mode:
+- User types "B" → ❌ Error appears immediately (but user hasn't finished typing!)
+- User types "Brecht" → ❌ Still showing error (hasn't reached lastName yet)
+- User types "Billiet" → ❌ Still showing error (hasn't reached age yet)
+
+This creates terrible UX - users see errors for validations they cannot possibly satisfy yet.
+
+Submit mode waits until the user attempts to submit (when all fields are likely filled), providing clear, actionable feedback.
+
+**Live Mode** - Validates on every value change:
+```typescript
+<form
+  scVestForm
+  [validateRootForm]="true"
+  [validateRootFormMode]="'live'"
+  (errorsChange)="errors.set($event)">
+  <!-- Validation triggered on every change -->
+</form>
+```
+
+**When to use 'live' mode:**
+- Migrating from v2 and need identical behavior
+- Simple two-field comparisons where immediate feedback is helpful
+- You have a specific UX requirement for real-time validation
+
+**Recommendation:** Use `'submit'` mode (default) for almost all cases. Root form validations are cross-field rules that users can only fix after filling multiple inputs.#### Validation Suite Pattern
+
+```typescript
+import { ROOT_FORM } from 'ngx-vest-forms';
+import { staticSuite, test, enforce, only } from 'vest';
+
+export const suite = staticSuite((model: FormModel, field?) => {
+  only(field);
+
+  // Regular field validations
+  test('password', 'Required', () => enforce(model.password).isNotBlank());
+  test('confirmPassword', 'Required', () => enforce(model.confirmPassword).isNotBlank());
+
+  // Root form validation (cross-field)
+  test(ROOT_FORM, 'Passwords must match', () => {
+    enforce(model.password).equals(model.confirmPassword);
+  });
+});
+```
+
+#### Component Setup
+
+```typescript
+import { Component, signal } from '@angular/core';
+import { ROOT_FORM } from 'ngx-vest-forms';
+
+@Component({
+  template: `
+    <form
+      scVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      [validateRootForm]="true"
+      [validateRootFormMode]="'submit'"
+      (formValueChange)="formValue.set($event)"
+      (errorsChange)="errors.set($event)">
+
+      <input name="password" [ngModel]="formValue().password" />
+      <input name="confirmPassword" [ngModel]="formValue().confirmPassword" />
+
+      @if (errors()[ROOT_FORM]) {
+        <div role="alert">{{ errors()[ROOT_FORM][0] }}</div>
+      }
+
+      <button type="submit">Submit</button>
+    </form>
+  `
+})
+export class MyFormComponent {
+  protected readonly ROOT_FORM = ROOT_FORM;
+  protected readonly formValue = signal<FormModel>({});
+  protected readonly errors = signal<Record<string, string[]>>({});
+  protected readonly suite = mySuite;
+}
+```
+
+**When to use:**
+- ✅ Cross-field validation (password confirmation, date ranges)
+- ✅ Form-level business rules
+- ✅ Submit-only validation (default prevents premature errors)
+- ✅ Live validation (set mode to `'live'` for immediate feedback)
+
+> **⚠️ Breaking Change**: Default mode changed from `'live'` to `'submit'`. To preserve old behavior, explicitly set `[validateRootFormMode]="'live'"`.
 
 ## Advanced Features
 
@@ -642,6 +742,7 @@ export class MyFormComponent {
 | `suite((model) => { test(...) })` | `suite((model, field?) => { only(field); })` |
 | `suite: StaticSuite<string, string, ...>` | `suite: NgxVestSuite<MyModel>` (cleaner!) |
 | Nested component without `viewProviders` | `viewProviders: [vestFormsViewProviders]` |
+| `[validateRootForm]="true"` without mode (v2 behavior) | `[validateRootForm]="true" [validateRootFormMode]="'live'"` (explicit mode) |
 
 ## Best Practices
 

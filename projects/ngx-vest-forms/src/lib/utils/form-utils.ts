@@ -215,6 +215,13 @@ export function getAllFormErrors(form?: AbstractControl): Record<string, any> {
     return errors;
   }
 
+  // Collect root form errors (from ValidateRootFormDirective) before processing children
+  if (form.errors && form.enabled) {
+    if (form.errors['errors'] && Array.isArray(form.errors['errors'])) {
+      errors[ROOT_FORM] = form.errors['errors'];
+    }
+  }
+
   function collect(
     control: AbstractControl,
     pathParts: (string | number)[]
