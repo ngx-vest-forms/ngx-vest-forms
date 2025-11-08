@@ -63,9 +63,12 @@ public triggerFormValidation(): void
       }
     </form>
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyFormComponent {
-  @ViewChild('vestForm') vestForm!: FormDirective<MyFormModel>;
+  // Modern Angular 20+: Use viewChild() instead of @ViewChild
+  private readonly vestForm =
+    viewChild.required<FormDirective<MyFormModel>>('vestForm');
 
   protected readonly formValue = signal<MyFormModel>({});
   protected readonly validationSuite = myValidationSuite;
@@ -81,7 +84,7 @@ export class MyFormComponent {
     }));
 
     // IMPORTANT: Trigger validation update after structure change
-    this.vestForm.triggerFormValidation();
+    this.vestForm().triggerFormValidation();
   }
 }
 ```
@@ -102,9 +105,7 @@ import { staticSuite, test, enforce, omitWhen, only } from 'vest';
 
 export const myValidationSuite = staticSuite(
   (model: MyFormModel, field?: string) => {
-    if (field) {
-      only(field); // Performance optimization
-    }
+    only(field); // CRITICAL: Always call unconditionally
 
     // Always validate procedure type
     test('procedureType', 'Procedure type is required', () => {

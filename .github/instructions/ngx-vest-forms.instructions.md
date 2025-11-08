@@ -27,6 +27,9 @@ import { DeepPartial, DeepRequired, FormCompatibleDeepRequired } from 'ngx-vest-
 // Validation Suite Types
 import { NgxVestSuite, NgxFieldKey } from 'ngx-vest-forms';
 
+// Form State Types & Utilities
+import { NgxFormState, createEmptyFormState } from 'ngx-vest-forms';
+
 // Error Display
 import { FormErrorDisplayDirective, FormControlStateDirective, SC_ERROR_DISPLAY_MODE_TOKEN, ScErrorDisplayMode } from 'ngx-vest-forms';
 
@@ -115,6 +118,51 @@ const legacyShape: DeepRequired<LegacyModel> = { name: '' };
 ```
 
 **Why Ngx prefix?** Prevents naming conflicts with other libraries and clearly identifies ngx-vest-forms utilities. Both versions work identically; the Ngx-prefixed versions are recommended for new code.
+
+### Form State Type and Utilities
+
+The `formState` computed signal returns an `NgxFormState<T>` with the current form state:
+
+```typescript
+import { NgxFormState, createEmptyFormState, vestForms } from 'ngx-vest-forms';
+import { Component, computed, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+
+// Form state structure
+interface NgxFormState<TModel> {
+  valid: boolean;                    // Whether form is valid
+  errors: Record<string, string[]>;  // Map of field errors by path
+  value: TModel | null;              // Current form value (includes disabled)
+}
+
+// Parent component displaying child form state
+@Component({
+  template: `
+    <app-child-form #childForm />
+    <div>Valid: {{ formState().valid }}</div>
+    <div>Errors: {{ formState().errors | json }}</div>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class ParentComponent {
+  // Modern Angular 20+: Use viewChild() instead of @ViewChild
+  private readonly childForm = viewChild<ChildFormComponent>('childForm');
+
+  // Safe fallback when child form isn't initialized
+  protected readonly formState = computed(() =>
+    this.childForm()?.vestForm?.formState() ?? createEmptyFormState()
+  );
+}
+```
+
+**`createEmptyFormState()` returns:**
+- `valid: true`
+- `errors: {}`
+- `value: null`
+
+**Use cases:**
+- Parent components displaying child form state
+- Preventing null reference errors before form initialization
+- Providing safe defaults for optional form references
 
 ### Validation Patterns
 
@@ -521,7 +569,9 @@ stringifyFieldPath(['form', 'sections', 0, 'fields', 'name']);
 | | `NgxFormCompatibleDeepRequired<T>` | Date compatibility | [Essential Patterns](#type-safe-form-models) |
 | | `NgxVestSuite<T>` | Cleaner suite types | [Validation Patterns](#validation-patterns) |
 | | `NgxFieldKey<T>` | Field name autocomplete | [Validation Patterns](#validation-patterns) |
-| **Forms** | `getAllFormErrors()` | Get all error paths | [Advanced Features](#utility-functions) |
+| | `NgxFormState<T>` | Form state type | [Advanced Features](#utility-functions) |
+| **Forms** | `createEmptyFormState()` | Safe fallback state | [Advanced Features](#utility-functions) |
+| | `getAllFormErrors()` | Get all error paths | [Advanced Features](#utility-functions) |
 | | `setValueAtPath()` | Set nested values | [Advanced Features](#utility-functions) |
 | | `getFormControlField()` | Get control path | [Advanced Features](#utility-functions) |
 | | `getFormGroupField()` | Get group path | [Advanced Features](#utility-functions) |

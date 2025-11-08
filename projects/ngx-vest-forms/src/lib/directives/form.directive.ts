@@ -49,6 +49,7 @@ import {
   mergeValuesAndRawValues,
   setValueAtPath,
 } from '../utils/form-utils';
+import { NgxFormState } from '../utils/form-state.utils';
 import { NgxVestSuite } from '../utils/validation-suite';
 import { fastDeepEqual } from '../utils/equality';
 import { validateShape } from '../utils/shape-validation';
@@ -103,7 +104,7 @@ export class FormDirective<T extends Record<string, any>> {
    * Computed signal for form state with validity and errors.
    * Used by templates and tests as vestForm.formState().valid/errors
    */
-  public readonly formState = computed(() => {
+  public readonly formState = computed<NgxFormState<T>>(() => {
     // Tie to status signal to ensure recomputation on validation changes
     this.#statusSignal();
     return {

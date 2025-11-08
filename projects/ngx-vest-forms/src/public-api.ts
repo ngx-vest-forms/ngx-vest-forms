@@ -13,6 +13,10 @@ export {
   NgxFormCompatibleDeepRequired,
 } from './lib/utils/deep-required';
 export { NgxVestSuite, NgxFieldKey } from './lib/utils/validation-suite';
+export {
+  NgxFormState,
+  createEmptyFormState,
+} from './lib/utils/form-state.utils';
 
 // Form utilities
 export {

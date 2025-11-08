@@ -302,6 +302,48 @@ The `NgxVestSuite<T>` type provides:
 - **Type Safety**: Full TypeScript support for model and field parameters
 - **Template Compatibility**: Works seamlessly in Angular templates without `$any()` casts
 
+### Form State Type and Utilities
+
+The `formState` computed signal returns an `NgxFormState<T>` object with the current form state:
+
+```typescript
+import { NgxFormState, createEmptyFormState } from 'ngx-vest-forms';
+
+// The form state contains:
+interface NgxFormState<TModel> {
+  valid: boolean; // Whether the form is valid
+  errors: Record<string, string[]>; // Map of field errors by path
+  value: TModel | null; // Current form value (includes disabled fields)
+}
+
+// Useful for parent components displaying child form state
+@Component({
+  template: `
+    <app-child-form #childForm />
+    <div>Form Valid: {{ formState().valid }}</div>
+    <div>Errors: {{ formState().errors | json }}</div>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ParentComponent {
+  // Modern Angular 20+: Use viewChild() instead of @ViewChild
+  private readonly childForm = viewChild<ChildFormComponent>('childForm');
+
+  // Provide safe fallback when child form isn't initialized yet
+  protected readonly formState = computed(
+    () => this.childForm()?.vestForm?.formState() ?? createEmptyFormState()
+  );
+}
+```
+
+The `createEmptyFormState()` utility creates a safe default state:
+
+- `valid: true`
+- `errors: {}`
+- `value: null`
+
+This prevents null reference errors in templates when child forms or form references might be undefined.
+
 ### Shape Validation: Catching Typos Early
 
 Template-driven forms are type-safe, but not in the `name` attributes or `ngModelGroup` attributes.
@@ -819,11 +861,12 @@ class MyComponent {
     </form>
 
 `,
+changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MyFormComponent {
-readonly vestForm =
+// Modern Angular 20+: Use viewChild() function API
+private readonly vestForm =
 viewChild.required<FormDirective<MyFormModel>>('vestForm');
-
 protected readonly formValue = signal<MyFormModel>({});
 protected readonly validationSuite = myValidationSuite;
 
@@ -838,7 +881,7 @@ procedureType: newType,
 }));
 
     // ✅ CRITICAL: Trigger validation update after structure change
-    this.vestForm.triggerFormValidation();
+    this.vestForm().triggerFormValidation();
 
 }
 }
@@ -881,11 +924,12 @@ Pure form-to-form conditionals (switching input types with same `name`) usually 
 
 > **📖 Complete Guide**: See **[Field Clearing Utilities](./docs/FIELD-CLEARING-UTILITIES.md)** for detailed patterns and use cases.
 
+```typescript
 // Trigger validation update after structure change
-this.vestFormRef.triggerFormValidation();
+this.vestFormRef().triggerFormValidation();
 }
 
-````
+```
 
 ### Field State Utilities
 
@@ -911,7 +955,7 @@ const updatedState = clearFieldsWhen(formValue(), {
   'addresses.shippingAddress': !useShippingAddress,
   emergencyContact: age >= 18, // Clear when adult (no emergency contact input shown)
 });
-````
+```
 
 **Important Note:**
 
