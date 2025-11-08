@@ -37,6 +37,7 @@ export class PhonenumbersComponent {
     );
     // Note: This mutates the input, which requires the parent to handle updates
     // In a real app, consider emitting an event instead
-    arrayToObject(phonenumbers);
+    const newValues = arrayToObject(phonenumbers);
+    this.values.set(newValues);
   }
 }
