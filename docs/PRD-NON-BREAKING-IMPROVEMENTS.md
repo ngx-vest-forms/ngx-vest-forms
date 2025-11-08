@@ -11,6 +11,52 @@ This PRD outlines 6 high-impact, non-breaking improvements for ngx-vest-forms th
 
 ---
 
+## PR #60 Follow-up Work (November 2025)
+
+### Context
+
+PR #60 successfully fixed critical validation timing bugs and modernized the codebase to Angular 18+ standards. The PR was **approved for merge** with follow-up enhancements tracked below.
+
+**Key Achievements:**
+
+- Fixed critical `omitWhen` + `validationConfig` race condition
+- Modernized all examples to Angular 18+ (signals, OnPush, etc.)
+- Added comprehensive documentation (1300+ lines)
+- All 198 tests passing
+- Zero breaking changes to API (only validation suite pattern change)
+
+### High Priority Follow-ups
+
+#### Browser Compatibility Documentation (COMPLETED)
+
+**Status:** ✅ Completed - Browser Support section added to README.md
+
+**Outcome:**
+
+- README.md has "Browser Support" section with Chrome 98+, Firefox 94+, Safari 15.4+, Edge 98+
+- Documented that `structuredClone()` is natively supported (no polyfill needed)
+- Clarified Node.js >=18.19.0 requirement aligns with Angular 18+ needs
+
+#### Unit Tests for New Utilities
+
+**Priority:** High
+**Effort:** 2-4 hours
+
+Missing comprehensive tests for:
+
+- `setValueAtPath()` - Path validation, nested updates
+- `clearFields()` - Selective clearing, deep paths
+- Array conversion utilities - Edge cases, deep structures
+
+**Acceptance Criteria:**
+
+- [ ] Unit tests for `setValueAtPath()` with invalid paths
+- [ ] Tests for `clearFields()` with nested objects
+- [ ] Tests for array/object conversions with edge cases
+- [ ] 100% code coverage for new utility functions
+
+---
+
 ## 1. Enhanced Field Path Types with Template Literal Autocomplete
 
 ### Problem Statement

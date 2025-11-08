@@ -88,7 +88,18 @@ protected readonly suite = myValidationSuite;
 - **Angular**: >=18.0.0 (Signals support required)
 - **Vest.js**: >=5.4.6 (Validation engine)
 - **TypeScript**: >=5.8.0 (Modern Angular features)
-- **Node.js**: >=22.0.0 (Required for Angular 18+)
+- **Node.js**: >=18.19.0 (Required for Angular 18+)
+
+### Browser Support
+
+ngx-vest-forms supports all modern browsers that Angular 18+ targets:
+
+- **Chrome**: 98+ (includes `structuredClone()` support)
+- **Firefox**: 94+ (includes `structuredClone()` support)
+- **Safari**: 15.4+ (includes `structuredClone()` support)
+- **Edge**: 98+ (includes `structuredClone()` support)
+
+> **Note**: The library uses native `structuredClone()` for object cloning, which is fully supported in all Angular 18+ target environments. No polyfill is required.
 
 ### Installation
 
