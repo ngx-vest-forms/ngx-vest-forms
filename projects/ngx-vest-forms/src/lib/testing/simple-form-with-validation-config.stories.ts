@@ -16,7 +16,7 @@ import {
       scVestForm
       (ngSubmit)="onSubmit()"
       [formValue]="formValue()"
-      [validateRootForm]="true"
+      validateRootForm
       [formShape]="shape"
       [validationConfig]="validationConfig"
       [suite]="suite"

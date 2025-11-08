@@ -222,22 +222,37 @@ test('username', 'Already taken', async ({ signal }) => {
 
 Vest.js validates, Angular controls when. Use `validationConfig` to tell Angular to revalidate dependent fields:
 
+> **⚠️ CRITICAL with `omitWhen`/`skipWhen`**: When using Vest.js's `omitWhen` or `skipWhen` for conditional validations, `validationConfig` is **essential** to ensure Angular re-validates dependent fields when conditions change. Without it, conditional validations won't update properly!
+
 ```typescript
 import { ValidationConfigMap } from 'ngx-vest-forms';
 
 // Component: Tell Angular which fields depend on each other with type safety
 protected readonly validationConfig: ValidationConfigMap<FormModel> = {
-  'password': ['confirmPassword'],  // Autocomplete works!
-  'age': ['emergencyContact']
+  'password': ['confirmPassword'],  // When password changes, re-validate confirmPassword
+  'age': ['emergencyContact']       // When age changes, re-validate emergencyContact (for omitWhen condition)
 };
 
 // Suite: Define the validation logic
+// Example 1: Field comparison (password confirmation)
 omitWhen(!model.password || !model.confirmPassword, () => {
   test('confirmPassword', 'Passwords must match', () => {
     enforce(model.confirmPassword).equals(model.password);
   });
 });
+
+// Example 2: Conditional requirement (age-based)
+omitWhen((model.age || 0) >= 18, () => {
+  test('emergencyContact', 'Required for minors', () => {
+    enforce(model.emergencyContact).isNotBlank();
+  });
+});
 ```
+
+**Why this matters:**
+- When `password` changes → `omitWhen` condition changes → Angular needs to re-validate `confirmPassword`
+- When `age` changes to 18+ → `omitWhen` skips validation → Angular needs to clear `emergencyContact` errors
+- Without `validationConfig`, these dependent fields won't re-validate automatically
 
 #### Reactive validationConfig for Conditional Fields
 
@@ -298,6 +313,43 @@ protected readonly showShipping = computed(() =>
 
 // Template: @if (showShipping()) { <div ngModelGroup="shipping">...</div> }
 ```
+
+## Validation Features: Three Complementary Tools
+
+ngx-vest-forms provides three features for handling validation in complex, dynamic forms. These serve different purposes and often work together:
+
+### validationConfig vs validateRootForm vs triggerFormValidation()
+
+| Feature                       | Purpose                                        | Error Location                       | Use Cases                                        |
+| ----------------------------- | ---------------------------------------------- | ------------------------------------ | ------------------------------------------------ |
+| **`validationConfig`**        | **Re-validation trigger** when fields change   | **Field level** (`errors.fieldName`) | Fields that need re-validation when others change |
+| **`validateRootForm`**        | Creates **form-level** validations             | **Form level** (`errors.rootForm`)   | Form-wide business rules                         |
+| **`triggerFormValidation()`** | Manual validation trigger for structure changes | N/A (triggers existing validations)  | Structure changes without value changes          |
+
+### Quick Decision Guide
+
+**Use `validationConfig` when:**
+- ☑ Field Y's **validation logic** checks field X's value
+- ☑ When field X **changes**, field Y needs **re-validation**
+- ☑ Need **automatic re-validation trigger**
+- ☑ Examples: Password confirmation, quantity ↔ justification
+
+**Use `validateRootForm` when:**
+- ☑ Error belongs to **entire form** (not a specific field)
+- ☑ Rule involves multiple unrelated fields
+- ☑ Examples: "Brecht is not 30", at least one contact method
+
+**Use `triggerFormValidation()` when:**
+- ☑ Form **structure changes** without value changes
+- ☑ Switching between inputs and non-form content
+- ☑ Clearing fields programmatically
+- ☑ Examples: Dynamic form modes, conditional layouts
+
+**Use ALL THREE when:**
+- ☑ Complex dynamic forms with field dependencies, form-level rules, AND structure changes
+- ☑ Examples: Multi-step forms, purchase forms with conditional sections
+
+> **📖 See Complete Guide**: `.github/instructions/VALIDATION-CONFIG-VS-ROOT-FORM.md` for detailed comparison, decision trees, and working examples.
 
 ## Error Display
 
@@ -363,7 +415,7 @@ Root form validations check relationships between multiple fields. The mode dete
 ```typescript
 <form
   scVestForm
-  [validateRootForm]="true"
+  validateRootForm
   [validateRootFormMode]="'submit'"
   (errorsChange)="errors.set($event)">
   <!-- Validation triggered on submit -->
@@ -385,7 +437,7 @@ Submit mode waits until the user attempts to submit (when all fields are likely 
 ```typescript
 <form
   scVestForm
-  [validateRootForm]="true"
+  validateRootForm
   [validateRootFormMode]="'live'"
   (errorsChange)="errors.set($event)">
   <!-- Validation triggered on every change -->
@@ -429,7 +481,7 @@ import { ROOT_FORM } from 'ngx-vest-forms';
       scVestForm
       [suite]="suite"
       [formValue]="formValue()"
-      [validateRootForm]="true"
+      validateRootForm
       [validateRootFormMode]="'submit'"
       (formValueChange)="formValue.set($event)"
       (errorsChange)="errors.set($event)">
@@ -783,12 +835,36 @@ export class MyFormComponent {
 }
 ```
 
-### When to Use What
+### validationConfig vs validateRootForm: When to Use What
+
+**Two complementary features for cross-field validation:**
+
+| Feature | Purpose | Errors Appear At | Use For |
+|---------|---------|------------------|---------|
+| **`validationConfig`** | Controls **when** field validations run | **Field level** (`errors.fieldName`) | Field validations that depend on other fields |
+| **`validateRootForm`** | Creates **form-level** validations | **Form level** (`errors.rootForm`) | Form-wide business rules |
+
+**Key Insight**: These solve different problems and work together!
+
+> **📖 Complete Guide**: See [ValidationConfig vs ROOT_FORM Validation](../../docs/VALIDATION-CONFIG-VS-ROOT-FORM.md) for detailed comparison, decision trees, and common mistakes.
+
+**Quick Decision Guide:**
+
+Use `validationConfig` when:
+- ✅ Error belongs to a **specific field** (e.g., `confirmPassword`)
+- ✅ One field's validation **depends on another** (password ↔ confirmPassword)
+- ✅ Using `omitWhen` for conditional requirements (age triggers emergencyContact)
+
+Use `validateRootForm` when:
+- ✅ Error belongs to the **entire form**, not a specific field
+- ✅ Rule validates **multiple fields together** as business constraint
+- ✅ Example: "Brecht is not 30 anymore" (firstName + lastName + age)
+
+### Other Use Cases
 
 | Use Case | Solution |
 |----------|----------|
 | Conditional validation logic | Vest.js `omitWhen()` |
-| Trigger dependent field revalidation | `validationConfig` |
 | Default error display | Built-in `sc-control-wrapper` |
 | Custom error display (Material, etc.) | Custom wrapper with `FormErrorDisplayDirective` as hostDirective |
 
@@ -802,7 +878,7 @@ export class MyFormComponent {
 | `suite((model) => { test(...) })` | `suite((model, field?) => { only(field); })` |
 | `suite: StaticSuite<string, string, ...>` | `suite: NgxVestSuite<MyModel>` (cleaner!) |
 | Nested component without `viewProviders` | `viewProviders: [vestFormsViewProviders]` |
-| `[validateRootForm]="true"` without mode (v2 behavior) | `[validateRootForm]="true" [validateRootFormMode]="'live'"` (explicit mode) |
+| `validateRootForm` without mode (v2 behavior) | `validateRootForm [validateRootFormMode]="'live'"` (explicit mode) |
 
 ## Best Practices
 

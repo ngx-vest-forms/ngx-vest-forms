@@ -11,7 +11,7 @@
 **v1.4.x Behavior (old):**
 
 ```typescript
-<form scVestForm [validateRootForm]="true">
+<form scVestForm validateRootForm>
   <!-- ✅ Validated on EVERY value change (live mode) -->
 </form>
 ```
@@ -19,7 +19,7 @@
 **v1.5.0 Behavior (new - BREAKING):**
 
 ```typescript
-<form scVestForm [validateRootForm]="true">
+<form scVestForm validateRootForm>
   <!-- ⚠️ NOW: Only validates AFTER form submission (submit mode) -->
 </form>
 ```
@@ -78,7 +78,7 @@ Explicitly set `validateRootFormMode` to `'live'`:
 ```typescript
 <form
   scVestForm
-  [validateRootForm]="true"
+  validateRootForm
   [validateRootFormMode]="'live'">  <!-- ← Add this to restore v2 behavior -->
   <!-- Validates on every change (old behavior) -->
 </form>
@@ -91,7 +91,7 @@ Use the new submit-based validation (no change needed):
 ```typescript
 <form
   scVestForm
-  [validateRootForm]="true">  <!-- Validates after submit (v3 default) -->
+  validateRootForm>  <!-- Validates after submit (v3 default) -->
   <!-- Or explicitly: [validateRootFormMode]="'submit'" -->
 </form>
 ```
@@ -110,7 +110,7 @@ import { ROOT_FORM } from 'ngx-vest-forms';
       scVestForm
       [suite]="suite"
       [formValue]="formValue()"
-      [validateRootForm]="true"
+      validateRootForm
       (formValueChange)="formValue.set($event)"
       (errorsChange)="errors.set($event)"
     >
@@ -142,7 +142,7 @@ import { ROOT_FORM } from 'ngx-vest-forms';
       scVestForm
       [suite]="suite"
       [formValue]="formValue()"
-      [validateRootForm]="true"
+      validateRootForm
       [validateRootFormMode]="'live'"  <!-- ← ADD THIS LINE -->
       (formValueChange)="formValue.set($event)"
       (errorsChange)="errors.set($event)">
@@ -175,7 +175,7 @@ import { ROOT_FORM } from 'ngx-vest-forms';
       scVestForm
       [suite]="suite"
       [formValue]="formValue()"
-      [validateRootForm]="true"
+      validateRootForm
       [validateRootFormMode]="'submit'"  <!-- ← Optional: explicit submit mode -->
       (formValueChange)="formValue.set($event)"
       (errorsChange)="errors.set($event)">
@@ -204,7 +204,7 @@ Search your codebase for:
 grep -r "validateRootForm" --include="*.ts" --include="*.html"
 ```
 
-Look for forms using `[validateRootForm]="true"` without `validateRootFormMode` and decide whether to:
+Look for forms using `validateRootForm` without `validateRootFormMode` and decide whether to:
 
 - Add `[validateRootFormMode]="'live'"` (preserve old behavior)
 - Accept new default `'submit'` mode (better UX)
@@ -261,7 +261,7 @@ test(ROOT_FORM, 'Full name must match ID', () => {
       scVestForm
       [suite]="suite"
       [formValue]="formValue()"
-      [validateRootForm]="true"
+      validateRootForm
       [validateRootFormMode]="validationMode()"  <!-- ← Dynamic mode control! -->
       (formValueChange)="formValue.set($event)"
       (errorsChange)="errors.set($event)">
@@ -383,7 +383,7 @@ export class LegacyFormComponent {
   - A: Even for password confirmation, `'submit'` mode provides better UX - users can focus on entering their password without being interrupted by "passwords don't match" errors. However, if you prefer immediate feedback, use `'live'` mode for this specific case.
 
 - **Q: Do I have to update all my forms?**
-  - A: Only forms using `[validateRootForm]="true"`. Regular field validation is unchanged.
+  - A: Only forms using `validateRootForm`. Regular field validation is unchanged.
 
 - **Q: Can I mix modes in different forms?**
   - A: Yes! Each form can have its own `validateRootFormMode` setting.

@@ -18,7 +18,7 @@ import { JsonPipe } from '@angular/common';
       scVestForm
       (ngSubmit)="onSubmit()"
       [formValue]="formValue()"
-      [validateRootForm]="true"
+      validateRootForm
       [formShape]="shape"
       [suite]="suite"
       (dirtyChange)="formDirty.set($event)"

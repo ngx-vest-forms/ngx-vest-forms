@@ -1,10 +1,10 @@
 import {
-  ValidateRootFormDirective,
   vestForms,
   clearFields,
   setValueAtPath,
   ValidationConfigMap,
   NgxVestSuite,
+  ROOT_FORM,
 } from 'ngx-vest-forms';
 import {
   Component,
@@ -31,13 +31,7 @@ import { debounceTime, filter, switchMap } from 'rxjs';
 
 @Component({
   selector: 'sc-purchase-form',
-  imports: [
-    JsonPipe,
-    vestForms,
-    AddressComponent,
-    PhonenumbersComponent,
-    ValidateRootFormDirective,
-  ],
+  imports: [JsonPipe, vestForms, AddressComponent, PhonenumbersComponent],
   templateUrl: './purchase-form.component.html',
   styleUrls: ['./purchase-form.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,7 +44,7 @@ export class PurchaseFormComponent {
   protected readonly formValue = signal<PurchaseFormModel>({});
   protected readonly formValid = signal<boolean>(false);
   protected readonly loading = signal<boolean>(false);
-  protected readonly errors = signal<Record<string, string>>({});
+  protected readonly errors = signal<Record<string, string[]>>({});
   protected readonly purchaseValidationSuite: NgxVestSuite<PurchaseFormModel> =
     createPurchaseValidationSuite(this.swapiService);
   private readonly shippingAddress = signal<AddressModel>({});
@@ -78,23 +72,29 @@ export class PurchaseFormComponent {
     ValidationConfigMap<PurchaseFormModel>
   >(() => {
     const config: ValidationConfigMap<PurchaseFormModel> = {
+      quantity: ['justification'],
+      justification: ['quantity'],
       age: ['emergencyContact'],
       'passwords.password': ['passwords.confirmPassword'],
+      'passwords.confirmPassword': ['passwords.password'],
     };
 
-    // Only add gender → genderOther dependency when genderOther field is visible
-    if (this.viewModel().showGenderOther) {
+    // Conditionally add genderOther validation when gender is 'other'
+    if (this.formValue().gender === 'other') {
       config['gender'] = ['genderOther'];
     }
 
-    // Only add quantity ↔ justification bidirectional dependency when justification is visible
-    if (this.viewModel().showJustification) {
+    // Conditionally add justification when quantity > 5
+    if ((this.formValue().quantity || 0) > 5) {
       config['quantity'] = ['justification'];
       config['justification'] = ['quantity'];
     }
 
     return config;
   });
+
+  // Expose ROOT_FORM constant for template
+  protected readonly ROOT_FORM = ROOT_FORM;
 
   constructor() {
     const firstName = computed(() => this.formValue().firstName);
@@ -174,6 +174,11 @@ export class PurchaseFormComponent {
 
     // Reset shipping address state
     this.shippingAddress.set({});
+
+    // Force change detection to properly clear all fields
+    setTimeout(() => {
+      this.formValue.set({});
+    }, 0);
   }
 
   /**

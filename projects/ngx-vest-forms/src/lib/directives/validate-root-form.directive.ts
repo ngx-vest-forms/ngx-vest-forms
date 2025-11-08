@@ -1,32 +1,92 @@
-import { Directive, input, OnDestroy, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  booleanAttribute,
+  Directive,
+  effect,
+  inject,
+  Injector,
+  input,
+  OnDestroy,
+  signal,
+} from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   AsyncValidator,
   AsyncValidatorFn,
   NG_ASYNC_VALIDATORS,
+  NgForm,
   ValidationErrors,
 } from '@angular/forms';
 import {
-  debounceTime,
+  catchError,
   map,
   Observable,
   of,
-  ReplaySubject,
   Subject,
   switchMap,
   take,
   takeUntil,
+  tap,
   timer,
 } from 'rxjs';
-import { setValueAtPath } from '../utils/form-utils';
 import { NgxVestSuite } from '../utils/validation-suite';
 import { ValidationOptions } from './validation-options';
 
+/**
+ * Validates the root form (cross-field validation) using a Vest suite.
+ *
+ * @remarks
+ * Root form validation is for cross-field rules like password confirmation,
+ * form-wide business logic, or validations that span multiple fields.
+ *
+ * Contract:
+ * - Inputs:
+ *   - `validateRootForm`: boolean. Enables root form validation.
+ *   - `validateRootFormMode`: 'submit' | 'live'. Default 'submit'.
+ *     - 'submit': Validates only after first form submission (better UX)
+ *     - 'live': Validates on every value change (immediate feedback)
+ *   - `formValue`: Current form model (required)
+ *   - `suite`: Vest validation suite (required)
+ *   - `validationOptions`: { debounceTime?: number } to debounce validation
+ * - Output:
+ *   - Errors placed at 'rootForm' key: `{ error: string, errors: string[] }`
+ *   - When no errors: `null`
+ *
+ * @example
+ * ```html
+ * <form scVestForm
+ *       validateRootForm
+ *       [suite]="suite"
+ *       [formValue]="formValue()"
+ *       [validateRootFormMode]="'submit'"
+ *       (errorsChange)="errors.set($event)"
+ *       #form="ngForm">
+ *   <!-- form fields -->
+ *   @if (errors()['rootForm']) {
+ *     <div role="alert">{{ errors()['rootForm'][0] }}</div>
+ *   }
+ * </form>
+ * ```
+ *
+ * @example
+ * Validation suite:
+ * ```typescript
+ * import { ROOT_FORM } from 'ngx-vest-forms';
+ *
+ * export const suite = staticSuite((model, field?) => {
+ *   only(field);
+ *
+ *   test(ROOT_FORM, 'Passwords must match', () => {
+ *     enforce(model.confirmPassword).equals(model.password);
+ *   });
+ * });
+ * ```
+ *
+ * @publicApi
+ */
 @Directive({
-  selector: 'form[validateRootForm][formValue][suite]',
-  host: {
-    '(ngSubmit)': 'onSubmit()',
-  },
+  selector: 'form[validateRootForm]',
   providers: [
     {
       provide: NG_ASYNC_VALIDATORS,
@@ -35,11 +95,16 @@ import { ValidationOptions } from './validation-options';
     },
   ],
 })
-export class ValidateRootFormDirective<T> implements AsyncValidator, OnDestroy {
+export class ValidateRootFormDirective<T>
+  implements AsyncValidator, AfterViewInit, OnDestroy
+{
+  private readonly injector = inject(Injector);
+  private ngForm: NgForm | null = null;
   public validationOptions = input<ValidationOptions>({ debounceTime: 0 });
   private readonly destroy$$ = new Subject<void>();
   private readonly hasSubmitted = signal(false);
-  private lastControl: AbstractControl | null = null;
+  private readonly hasSubmitted$: Observable<boolean>;
+  private readonly formValue$: Observable<T | null>;
 
   public readonly formValue = input<T | null>(null);
   public readonly suite = input<NgxVestSuite<T> | null>(null);
@@ -48,7 +113,9 @@ export class ValidateRootFormDirective<T> implements AsyncValidator, OnDestroy {
    * Whether the root form should be validated or not
    * This will use the field rootForm
    */
-  public readonly validateRootForm = input(false);
+  readonly validateRootForm = input(false, {
+    transform: booleanAttribute,
+  });
 
   /**
    * Validation mode:
@@ -57,24 +124,56 @@ export class ValidateRootFormDirective<T> implements AsyncValidator, OnDestroy {
    */
   public readonly validateRootFormMode = input<'submit' | 'live'>('submit');
 
-  /**
-   * Host binding for form submit event
-   * Triggers revalidation after first submit in 'submit' mode
-   */
-  public onSubmit(): void {
-    this.hasSubmitted.set(true);
-    this.lastControl?.updateValueAndValidity({
-      onlySelf: true,
-      emitEvent: true,
+  constructor() {
+    // Convert signals to Observables in injection context
+    this.hasSubmitted$ = toObservable(this.hasSubmitted);
+    this.formValue$ = toObservable(this.formValue);
+
+    // Trigger validation when hasSubmitted or formValue changes
+    effect(() => {
+      // Track dependencies
+      this.hasSubmitted();
+      this.formValue();
+
+      // Trigger revalidation if form exists
+      // Use emitEvent: true so the form directive can update its errors
+      if (this.ngForm?.control) {
+        this.ngForm.control.updateValueAndValidity();
+      }
     });
+  }
+
+  /**
+   * Subscribe to form submit event using NgForm.ngSubmit EventEmitter
+   * This approach avoids conflicts with component's (ngSubmit) handlers
+   * Uses Injector to lazily get NgForm, avoiding circular dependency
+   * (Directive → NgForm → AsyncValidators → Directive)
+   */
+  public ngAfterViewInit(): void {
+    // Lazily inject NgForm to avoid circular dependency
+    this.ngForm = this.injector.get(NgForm, null);
+
+    if (!this.ngForm) {
+      console.error(
+        '[ValidateRootFormDirective] NgForm not found. Ensure directive is on a form element with NgForm.'
+      );
+      return;
+    }
+
+    // Subscribe to form submission to set hasSubmitted flag
+    this.ngForm.ngSubmit
+      .pipe(
+        tap(() => {
+          this.hasSubmitted.set(true);
+        }),
+        takeUntil(this.destroy$$)
+      )
+      .subscribe();
   }
 
   public validate(
     control: AbstractControl<any, any>
   ): Observable<ValidationErrors | null> {
-    // Cache control for revalidation after submit
-    this.lastControl = control;
-
     // Skip validation if suite or formValue not set
     if (!this.suite() || !this.formValue()) {
       return of(null);
@@ -85,10 +184,14 @@ export class ValidateRootFormDirective<T> implements AsyncValidator, OnDestroy {
       return of(null);
     }
 
-    return this.createAsyncValidator(
+    // Call the validator and return its Observable
+    // Angular expects this to complete after emitting once
+    const validationResult = this.createAsyncValidator(
       'rootForm',
       this.validationOptions()
     )(control) as Observable<ValidationErrors | null>;
+
+    return validationResult;
   }
 
   public createAsyncValidator(
@@ -99,24 +202,38 @@ export class ValidateRootFormDirective<T> implements AsyncValidator, OnDestroy {
       return () => of(null);
     }
     return (control: AbstractControl) => {
-      if (!this.formValue()) {
+      const currentFormValue = this.formValue();
+      if (!currentFormValue) {
         return of(null);
       }
-      const value = control.getRawValue();
-      const mod = structuredClone(value) as T;
-      setValueAtPath(mod as object, field, value); // Update the property with path
+      // Use the formValue input which contains the actual model data
+      const mod = structuredClone(currentFormValue) as T;
 
       // Use timer() pattern instead of ReplaySubject cache
       return timer(validationOptions.debounceTime ?? 0).pipe(
         map(() => mod),
         switchMap((model) => {
           return new Observable((observer) => {
-            this.suite()!(model, field).done((result) => {
-              const errors = result.getErrors()[field];
-              observer.next(errors ? { error: errors[0], errors } : null);
+            try {
+              this.suite()!(model, field).done((result) => {
+                const errors = result.getErrors()[field];
+                // Return { errors: string[] } format expected by getAllFormErrors()
+                observer.next(errors ? { errors } : null);
+                observer.complete();
+              });
+            } catch (err) {
+              console.error(
+                '[validate-root-form] Validation suite error:',
+                err
+              );
+              observer.next(null);
               observer.complete();
-            });
+            }
           }) as Observable<ValidationErrors | null>;
+        }),
+        catchError((err) => {
+          console.error('[validate-root-form] Observable error:', err);
+          return of(null);
         }),
         take(1),
         takeUntil(this.destroy$$)

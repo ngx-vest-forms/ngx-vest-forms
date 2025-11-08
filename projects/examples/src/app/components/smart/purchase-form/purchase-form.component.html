@@ -76,14 +76,17 @@
   <br />
 </div>
 
-<pre>{{ vm.errors['rootForm'] }}</pre>
+<!-- Debug: Show ROOT_FORM errors -->
+<pre>ROOT_FORM errors: {{ vm.errors[ROOT_FORM] | json }}</pre>
 
-@if (vm.errors['rootForm']) {
+@if (vm.errors[ROOT_FORM] && vm.errors[ROOT_FORM].length > 0) {
   <div
     class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
     role="alert"
   >
-    {{ vm.errors['rootForm'] }}
+    @for (error of vm.errors[ROOT_FORM]; track error) {
+      <div>{{ error }}</div>
+    }
   </div>
 }
 
@@ -92,7 +95,8 @@
   scVestForm
   (ngSubmit)="onSubmit()"
   [formValue]="formValue()"
-  [validateRootForm]="true"
+  validateRootForm
+  [validateRootFormMode]="'submit'"
   [formShape]="shape"
   [suite]="purchaseValidationSuite"
   [validationConfig]="validationConfig()"

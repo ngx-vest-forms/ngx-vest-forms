@@ -1,11 +1,12 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ViewChild } from '@angular/core';
+import { NgForm, FormsModule } from '@angular/forms';
+import { JsonPipe } from '@angular/common';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { enforce, only, staticSuite, test } from 'vest';
 import { vestForms } from '../exports';
-
-// Use 'rootForm' string directly instead of ROOT_FORM constant for templates
-const rootFormKey = 'rootForm';
+import { ROOT_FORM } from '../constants';
+import { getAllFormErrors } from '../utils/form-utils';
 
 /**
  * Test validation suite for root form validation tests
@@ -26,7 +27,7 @@ const createTestValidationSuite = staticSuite(
       enforce(data['confirmPassword']).isNotBlank();
     });
 
-    test(rootFormKey, 'Passwords must match', () => {
+    test(ROOT_FORM, 'Passwords must match', () => {
       if (data['password'] && data['confirmPassword']) {
         enforce(data['confirmPassword']).equals(data['password']);
       }
@@ -34,7 +35,290 @@ const createTestValidationSuite = staticSuite(
   }
 );
 
+/**
+ * Test validation suite with multiple ROOT_FORM tests (like Brecht example)
+ */
+const createMultiRootFormValidationSuite = staticSuite(
+  (data: Record<string, unknown> = {}, field?: string) => {
+    only(field);
+
+    test('firstName', 'First name is required', () => {
+      enforce(data['firstName']).isNotBlank();
+    });
+
+    test('lastName', 'Last name is required', () => {
+      enforce(data['lastName']).isNotBlank();
+    });
+
+    test('age', 'Age is required', () => {
+      enforce(data['age']).isNotBlank();
+    });
+
+    // Cross-field validation (like "Brecht is not 30 anymore")
+    test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
+      enforce(
+        data['firstName'] === 'Brecht' &&
+          data['lastName'] === 'Billiet' &&
+          data['age'] === 30
+      ).isFalsy();
+    });
+
+    // Another root form test
+    test(ROOT_FORM, 'Age must be numeric', () => {
+      if (data['age']) {
+        enforce(Number(data['age'])).greaterThan(0);
+      }
+    });
+  }
+);
+
 describe('ValidateRootFormDirective', () => {
+  describe('integration with getAllFormErrors', () => {
+    it('should expose ROOT_FORM errors via getAllFormErrors after submit', async () => {
+      @Component({
+        imports: [vestForms],
+        template: `
+          <form
+            scVestForm
+            validateRootForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+            (errorsChange)="errors.set($event)"
+            #vest="scVestForm"
+            #ngForm="ngForm"
+          >
+            <input
+              name="password"
+              [ngModel]="model().password"
+              data-testid="password"
+            />
+            <input
+              name="confirmPassword"
+              [ngModel]="model().confirmPassword"
+              data-testid="confirm-password"
+            />
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
+            }
+            <button type="submit" data-testid="submit">Submit</button>
+          </form>
+        `,
+      })
+      class TestComponent {
+        ROOT_FORM = ROOT_FORM;
+        model = signal<Record<string, unknown>>({
+          password: 'password123',
+          confirmPassword: 'mismatch',
+        });
+        errors = signal<Record<string, string[]>>({});
+        suite = createTestValidationSuite;
+
+        @ViewChild('ngForm', { static: false }) ngForm!: NgForm;
+      }
+
+      const fixture = await render(TestComponent);
+      const component = fixture.fixture.componentInstance;
+
+      // No error before submit
+      expect(screen.queryByTestId('root-error')).toBeNull();
+
+      // Submit form
+      await userEvent.click(screen.getByTestId('submit'));
+
+      // Wait for async validation to complete
+      await waitFor(
+        () => {
+          const allErrors = getAllFormErrors(component.ngForm.control);
+          expect(allErrors[ROOT_FORM]).toBeDefined();
+          expect(allErrors[ROOT_FORM]).toContain('Passwords must match');
+        },
+        { timeout: 2000 }
+      );
+
+      // Error should appear in UI
+      await waitFor(
+        () => {
+          expect(screen.queryByTestId('root-error')).toBeInTheDocument();
+        },
+        { timeout: 2000 }
+      );
+    });
+
+    it('should handle multiple ROOT_FORM errors (Brecht scenario)', async () => {
+      @Component({
+        imports: [vestForms, JsonPipe],
+        template: `
+          <form
+            scVestForm
+            validateRootForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+            (errorsChange)="errors.set($event)"
+            #vest="scVestForm"
+            #ngForm="ngForm"
+          >
+            <input
+              name="firstName"
+              [ngModel]="model().firstName"
+              data-testid="firstName"
+            />
+            <input
+              name="lastName"
+              [ngModel]="model().lastName"
+              data-testid="lastName"
+            />
+            <input
+              name="age"
+              type="number"
+              [ngModel]="model().age"
+              data-testid="age"
+            />
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">
+                {{ errors()[ROOT_FORM] | json }}
+              </div>
+            }
+            <button type="submit" data-testid="submit">Submit</button>
+          </form>
+        `,
+      })
+      class TestComponent {
+        ROOT_FORM = ROOT_FORM;
+        model = signal<Record<string, unknown>>({
+          firstName: 'Brecht',
+          lastName: 'Billiet',
+          age: 30,
+        });
+        errors = signal<Record<string, string[]>>({});
+        suite = createMultiRootFormValidationSuite;
+
+        @ViewChild('ngForm', { static: false }) ngForm!: NgForm;
+      }
+
+      const fixture = await render(TestComponent);
+      const component = fixture.fixture.componentInstance;
+
+      // Submit form
+      await userEvent.click(screen.getByTestId('submit'));
+
+      // Wait for async validation to complete
+      await waitFor(
+        () => {
+          const allErrors = getAllFormErrors(component.ngForm.control);
+          console.log('Brecht scenario - getAllFormErrors result:', allErrors);
+          console.log(
+            'Brecht scenario - NgForm errors:',
+            component.ngForm.control.errors
+          );
+          console.log('Brecht scenario - errors signal:', component.errors());
+
+          expect(allErrors[ROOT_FORM]).toBeDefined();
+          expect(allErrors[ROOT_FORM]).toContain('Brecht is not 30 anymore');
+        },
+        { timeout: 2000 }
+      );
+
+      // Error should appear in UI
+      await waitFor(
+        () => {
+          const errorDiv = screen.queryByTestId('root-error');
+          expect(errorDiv).toBeInTheDocument();
+          expect(errorDiv?.textContent).toContain('Brecht is not 30 anymore');
+        },
+        { timeout: 2000 }
+      );
+    });
+
+    it('should clear ROOT_FORM errors when condition no longer applies', async () => {
+      @Component({
+        imports: [vestForms],
+        template: `
+          <form
+            scVestForm
+            validateRootForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+            (errorsChange)="errors.set($event)"
+            #vest="scVestForm"
+            #ngForm="ngForm"
+          >
+            <input
+              name="firstName"
+              [ngModel]="model().firstName"
+              data-testid="firstName"
+            />
+            <input
+              name="lastName"
+              [ngModel]="model().lastName"
+              data-testid="lastName"
+            />
+            <input
+              name="age"
+              type="number"
+              [ngModel]="model().age"
+              data-testid="age"
+            />
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
+            }
+            <button type="submit" data-testid="submit">Submit</button>
+          </form>
+        `,
+      })
+      class TestComponent {
+        ROOT_FORM = ROOT_FORM;
+        model = signal<Record<string, unknown>>({
+          firstName: 'Brecht',
+          lastName: 'Billiet',
+          age: 30,
+        });
+        errors = signal<Record<string, string[]>>({});
+        suite = createMultiRootFormValidationSuite;
+
+        @ViewChild('ngForm', { static: false }) ngForm!: NgForm;
+      }
+
+      const fixture = await render(TestComponent);
+      const component = fixture.fixture.componentInstance;
+
+      // Submit form to trigger validation
+      await userEvent.click(screen.getByTestId('submit'));
+
+      // Wait for error to appear
+      await waitFor(
+        () => {
+          expect(screen.queryByTestId('root-error')).toBeInTheDocument();
+        },
+        { timeout: 2000 }
+      );
+
+      // Change age to 31 to fix the validation
+      const ageInput = screen.getByTestId('age');
+      await userEvent.clear(ageInput);
+      await userEvent.type(ageInput, '31');
+
+      // Wait for error to disappear
+      await waitFor(
+        () => {
+          const allErrors = getAllFormErrors(component.ngForm.control);
+          console.log('After change - getAllFormErrors result:', allErrors);
+          expect(allErrors[ROOT_FORM]).toBeUndefined();
+        },
+        { timeout: 2000 }
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.queryByTestId('root-error')).not.toBeInTheDocument();
+        },
+        { timeout: 2000 }
+      );
+    });
+  });
+
   describe('disabled by default', () => {
     it('should not validate when validateRootForm is false', async () => {
       @Component({
@@ -78,7 +362,7 @@ describe('ValidateRootFormDirective', () => {
         template: `
           <form
             scVestForm
-            [validateRootForm]="true"
+            validateRootForm
             [suite]="suite"
             [formValue]="model()"
             (formValueChange)="model.set($event)"
@@ -123,7 +407,7 @@ describe('ValidateRootFormDirective', () => {
         template: `
           <form
             scVestForm
-            [validateRootForm]="true"
+            validateRootForm
             [suite]="suite"
             [formValue]="model()"
             (formValueChange)="model.set($event)"
@@ -179,7 +463,7 @@ describe('ValidateRootFormDirective', () => {
         template: `
           <form
             scVestForm
-            [validateRootForm]="true"
+            validateRootForm
             [suite]="suite"
             [formValue]="model()"
             (formValueChange)="model.set($event)"
@@ -247,7 +531,7 @@ describe('ValidateRootFormDirective', () => {
         template: `
           <form
             scVestForm
-            [validateRootForm]="true"
+            validateRootForm
             [validateRootFormMode]="'live'"
             [suite]="suite"
             [formValue]="model()"
@@ -298,7 +582,7 @@ describe('ValidateRootFormDirective', () => {
         template: `
           <form
             scVestForm
-            [validateRootForm]="true"
+            validateRootForm
             [validateRootFormMode]="'live'"
             [suite]="suite"
             [formValue]="model()"
@@ -364,7 +648,7 @@ describe('ValidateRootFormDirective', () => {
         template: `
           <form
             scVestForm
-            [validateRootForm]="true"
+            validateRootForm
             [validateRootFormMode]="'live'"
             [validationOptions]="{ debounceTime: 500 }"
             [suite]="suite"

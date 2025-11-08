@@ -1147,9 +1147,56 @@ export class CustomWrapperComponent {
 
 > **📖 Detailed Guide**: See **[Custom Control Wrappers](./docs/CUSTOM-CONTROL-WRAPPERS.md)** for Material Design examples, available signals reference, and best practices.
 
+### Cross-Field Validation: Three Complementary Features
+
+ngx-vest-forms provides three features for handling validation in complex, dynamic forms:
+
+> **💡 Key Insight**: `validationConfig` is **essential** when using Vest.js's `omitWhen`/`skipWhen` for conditional validations. It ensures Angular re-validates dependent fields when conditions change.
+
+| Feature                       | Purpose                                         | Errors Appear At                     | Use For                                           |
+| ----------------------------- | ----------------------------------------------- | ------------------------------------ | ------------------------------------------------- |
+| **`validationConfig`**        | **Re-validation trigger** when fields change    | **Field level** (`errors.fieldName`) | Fields that need re-validation when others change |
+| **`validateRootForm`**        | Creates **form-level** validations              | **Form level** (`errors.rootForm`)   | Form-wide business rules                          |
+| **`triggerFormValidation()`** | Manual validation trigger for structure changes | N/A (triggers existing validations)  | Structure changes without value changes           |
+
+**Key Insight**: These solve different problems and often work together!
+
+> **📖 Complete Guide**: See **[Validation Features Guide](./docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)** for detailed comparison, decision trees, use cases, and examples of using all three features together.
+
+**Quick Examples:**
+
+```typescript
+// validationConfig: Re-validation trigger (NOT validation logic!)
+// This says: "When password changes, also re-validate confirmPassword"
+validationConfig = {
+  password: ['confirmPassword'], // When password changes, revalidate confirmPassword
+};
+// The actual validation logic is in your Vest suite:
+test('confirmPassword', 'Must match', () => {
+  enforce(model.confirmPassword).equals(model.password);
+});
+
+// validateRootForm: Form-level business rules
+test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
+  enforce(
+    model.firstName === 'Brecht' &&
+      model.lastName === 'Billiet' &&
+      model.age === 30
+  ).isFalsy();
+});
+
+// triggerFormValidation(): After structure changes
+protected readonly vestFormRef = viewChild.required('vestForm', { read: FormDirective });
+
+onTypeChange(type: string) {
+  this.formValue.update(v => ({ ...v, type }));
+  this.vestFormRef().triggerFormValidation(); // ✅ Force validation update
+}
+```
+
 ### Validations on the Root Form
 
-For form-level validations that span multiple fields, use the `ROOT_FORM` constant with `[validateRootForm]="true"`:
+For form-level validations that span multiple fields, use the `ROOT_FORM` constant with `validateRootForm`:
 
 > **⚠️ Breaking Change (v3)**: Default validation mode changed from `'live'` to `'submit'`. See [Migration Guide](./docs/MIGRATION-V3.md) for details.
 
@@ -1165,7 +1212,7 @@ test(ROOT_FORM, 'Passwords must match', () => {
 ```html
 <form
   scVestForm
-  [validateRootForm]="true"
+  validateRootForm
   [validateRootFormMode]="'submit'"
   [suite]="suite"
   (errorsChange)="errors.set($event)"
@@ -1184,12 +1231,12 @@ Root form validation supports two modes:
 
 ```html
 <!-- Submit mode - validates after submit (default) -->
-<form scVestForm [validateRootForm]="true" [validateRootFormMode]="'submit'">
+<form scVestForm validateRootForm [validateRootFormMode]="'submit'">
   <!-- form controls -->
 </form>
 
 <!-- Live mode - validates immediately -->
-<form scVestForm [validateRootForm]="true" [validateRootFormMode]="'live'">
+<form scVestForm validateRootForm [validateRootFormMode]="'live'">
   <!-- form controls -->
 </form>
 ```
@@ -1197,6 +1244,8 @@ Root form validation supports two modes:
 ### Validation of Dependent Controls
 
 When field validations depend on other fields (e.g., `confirmPassword` depends on `password`), use `validationConfig` to trigger re-validation:
+
+> **📖 When to use `validationConfig` vs `validateRootForm`**: See **[ValidationConfig vs ROOT_FORM Validation](./docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)** for a complete comparison and decision tree.
 
 ```typescript
 // In your suite - Vest handles the logic
