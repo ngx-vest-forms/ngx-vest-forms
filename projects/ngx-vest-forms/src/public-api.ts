@@ -12,11 +12,24 @@ export {
   NgxDeepRequired,
   NgxFormCompatibleDeepRequired,
 } from './lib/utils/deep-required';
-export { NgxVestSuite, NgxFieldKey } from './lib/utils/validation-suite';
+export {
+  NgxVestSuite,
+  NgxFieldKey,
+  NgxTypedVestSuite,
+} from './lib/utils/validation-suite';
 export {
   NgxFormState,
   createEmptyFormState,
 } from './lib/utils/form-state.utils';
+export {
+  FieldPath,
+  ValidationConfigMap,
+  FormFieldName,
+  FieldPathValue,
+  ValidateFieldPath,
+  LeafFieldPath,
+  ROOT_FORM as ROOT_FORM_CONSTANT,
+} from './lib/utils/field-path-types';
 
 // Form utilities
 export {
@@ -55,7 +68,10 @@ export { ROOT_FORM, VALIDATION_CONFIG_DEBOUNCE_TIME } from './lib/constants';
 export { ControlWrapperComponent } from './lib/components/control-wrapper/control-wrapper.component';
 
 // Directives
-export { FormDirective } from './lib/directives/form.directive';
+export {
+  FormDirective,
+  NgxValidationConfig,
+} from './lib/directives/form.directive';
 export { FormModelDirective } from './lib/directives/form-model.directive';
 export { FormModelGroupDirective } from './lib/directives/form-model-group.directive';
 export { ValidateRootFormDirective } from './lib/directives/validate-root-form.directive';

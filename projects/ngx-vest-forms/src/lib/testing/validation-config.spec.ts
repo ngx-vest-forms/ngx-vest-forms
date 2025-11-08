@@ -618,17 +618,17 @@ describe('FormDirective - Comprehensive', () => {
   // Additional comprehensive tests for quantity/justification bidirectional validation with touch states
   /**
    * Tests the correct UX flow for cross-field validation with omitWhen + validationConfig.
-   * 
+   *
    * CORRECT UX Flow:
    * 1. User fills in "quantity" with a value (e.g., "123")
    * 2. User tabs to next field → "quantity" becomes touched
    * 3. User tabs out of "justification" → "justification" becomes touched
    * 4. Expected: Error appears on "justification" field (after touched, but without being dirty)
-   * 
+   *
    * Key Point: The error should NOT appear immediately when quantity is filled.
    * It should only appear after the user touches (blurs) the justification field.
    * The field becomes invalid (ng-invalid) but not dirty (ng-pristine) since no value was entered.
-   * 
+   *
    * This provides better UX - users aren't confronted with errors for fields they haven't
    * interacted with yet. The validationConfig ensures the dependent field is validated
    * when the trigger field changes, but the error only displays after the user has

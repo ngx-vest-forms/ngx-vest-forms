@@ -4,13 +4,13 @@ import { addressValidations } from './address.validations';
 import { phonenumberValidations } from './phonenumber.validations';
 import { SwapiService } from '../swapi.service';
 import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
-import { NgxVestSuite, NgxFieldKey, ROOT_FORM } from 'ngx-vest-forms';
+import { NgxTypedVestSuite, FormFieldName, ROOT_FORM } from 'ngx-vest-forms';
 
 export const createPurchaseValidationSuite = (
   swapiService: SwapiService
-): NgxVestSuite<PurchaseFormModel> => {
+): NgxTypedVestSuite<PurchaseFormModel> => {
   return staticSuite(
-    (model: PurchaseFormModel, field?: NgxFieldKey<PurchaseFormModel>) => {
+    (model: PurchaseFormModel, field?: FormFieldName<PurchaseFormModel>) => {
       only(field);
 
       test(ROOT_FORM, 'Brecht is not 30 anymore', () => {

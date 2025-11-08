@@ -151,7 +151,7 @@ function isPrimitive(value: any): value is Primitive {
  * @param obj
  *
  * @deprecated Use official ES {@link https://developer.mozilla.org/en-US/docs/Web/API/Window/structuredClone structuredClone} instead
- * 
+ *
  * Browser Support: structuredClone is available in all modern browsers (Chrome 98+, Firefox 94+, Safari 15.4+, Edge 98+)
  * and Node.js 17+. A polyfill is provided in test-setup.ts for Jest test environments.
  */

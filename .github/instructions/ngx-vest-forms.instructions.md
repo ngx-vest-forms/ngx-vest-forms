@@ -25,7 +25,10 @@ import { NgxDeepPartial, NgxDeepRequired, NgxFormCompatibleDeepRequired } from '
 import { DeepPartial, DeepRequired, FormCompatibleDeepRequired } from 'ngx-vest-forms'; // Legacy aliases
 
 // Validation Suite Types
-import { NgxVestSuite, NgxFieldKey } from 'ngx-vest-forms';
+import { NgxVestSuite, NgxTypedVestSuite, FormFieldName, NgxFieldKey } from 'ngx-vest-forms';
+
+// Field Path Types (Type-safe field references with autocomplete)
+import { FieldPath, ValidationConfigMap, FieldPathValue, ValidateFieldPath, LeafFieldPath } from 'ngx-vest-forms';
 
 // Form State Types & Utilities
 import { NgxFormState, createEmptyFormState } from 'ngx-vest-forms';
@@ -74,7 +77,7 @@ export const mySuite: NgxVestSuite<MyFormModel> = staticSuite((model, field?) =>
 })
 export class MyFormComponent {
   protected readonly formValue = signal<MyFormModel>({});
-  protected readonly suite = mySuite;
+  protected readonly suite = mySuite; // No type assertion needed
 }
 ```
 
@@ -183,11 +186,18 @@ export const badSuite = staticSuite((model, field?) => {
   test('email', 'Required', () => enforce(model.email).isNotBlank());
 });
 
-// With type-safe field parameter (optional - adds autocomplete hints)
-export const typedSuite = staticSuite((model: FormModel, field?: NgxFieldKey<FormModel>) => {
-  only(field); // Autocomplete for field names!
-  test('email', 'Required', () => enforce(model.email).isNotBlank());
-});
+// Recommended: Use NgxTypedVestSuite for autocomplete at definition, NgxVestSuite for component
+import { NgxTypedVestSuite, FormFieldName } from 'ngx-vest-forms';
+
+export const typedSuite: NgxTypedVestSuite<FormModel> = staticSuite(
+  (model: FormModel, field?: FormFieldName<FormModel>) => {
+    only(field); // Autocomplete for 'email' | 'name' | 'profile.age' | typeof ROOT_FORM!
+    test('email', 'Required', () => enforce(model.email).isNotBlank());
+  }
+);
+
+// Component - use NgxVestSuite type (no assertion needed)
+protected readonly suite: NgxVestSuite<FormModel> = typedSuite;
 
 // Conditional validation
 omitWhen((model.age || 0) >= 18, () => {
@@ -213,9 +223,11 @@ test('username', 'Already taken', async ({ signal }) => {
 Vest.js validates, Angular controls when. Use `validationConfig` to tell Angular to revalidate dependent fields:
 
 ```typescript
-// Component: Tell Angular which fields depend on each other
-protected readonly validationConfig = {
-  'password': ['confirmPassword'],
+import { ValidationConfigMap } from 'ngx-vest-forms';
+
+// Component: Tell Angular which fields depend on each other with type safety
+protected readonly validationConfig: ValidationConfigMap<FormModel> = {
+  'password': ['confirmPassword'],  // Autocomplete works!
   'age': ['emergencyContact']
 };
 
@@ -232,15 +244,17 @@ omitWhen(!model.password || !model.confirmPassword, () => {
 **CRITICAL**: When using `validationConfig` with conditionally rendered fields (`@if` blocks), make it a **computed signal** to prevent "control not found" warnings:
 
 ```typescript
+import { ValidationConfigMap } from 'ngx-vest-forms';
+
 // ❌ WRONG: Static config references controls that may not exist
-protected readonly validationConfig = {
+protected readonly validationConfig: ValidationConfigMap<FormModel> = {
   'gender': ['genderOther'],           // genderOther only exists when gender='Other'
   'quantity': ['justification']        // justification only exists when quantity > 5
 };
 
-// ✅ CORRECT: Computed config only references existing controls
-protected readonly validationConfig = computed(() => {
-  const config: Record<string, string[]> = {};
+// ✅ CORRECT: Computed config only references existing controls with type safety
+protected readonly validationConfig = computed<ValidationConfigMap<FormModel>>(() => {
+  const config: ValidationConfigMap<FormModel> = {};
 
   // Only add dependency when the field actually exists in DOM
   if (this.formValue().gender === 'Other') {
@@ -620,7 +634,47 @@ export class MyFormComponent {
 
 > **Note:** Use `structuredClone()` instead of deprecated `cloneDeep()` for object cloning
 
-### Field Path Utilities
+### Field Path Types and Utilities
+
+ngx-vest-forms provides comprehensive type-safe field path support with IDE autocomplete and compile-time validation.
+
+> **📖 Complete Guide**: See [Field Path Types Documentation](../../docs/FIELD-PATHS.md) for comprehensive coverage of type-safe field references, autocomplete patterns, and best practices.
+
+#### Field Path Type Utilities
+
+```typescript
+import { FieldPath, ValidationConfigMap, FormFieldName, FieldPathValue } from 'ngx-vest-forms';
+
+type FormModel = NgxDeepPartial<{
+  user: {
+    email: string;
+    profile: { age: number; }
+  }
+}>;
+
+// ✅ FieldPath<T> - All valid field paths with autocomplete
+type Paths = FieldPath<FormModel>;
+// Result: 'user' | 'user.email' | 'user.profile' | 'user.profile.age'
+
+// ✅ ValidationConfigMap<T> - Type-safe validation config
+const config: ValidationConfigMap<FormModel> = {
+  'user.email': ['user.profile.age'],  // Autocomplete for all paths!
+};
+
+// ✅ FormFieldName<T> - Field names for Vest suites (includes ROOT_FORM)
+export const suite: NgxTypedVestSuite<FormModel> = staticSuite(
+  (model: FormModel, field?: FormFieldName<FormModel>) => {
+    only(field);
+    // ✅ Autocomplete: 'user' | 'user.email' | 'user.profile.age' | typeof ROOT_FORM
+  }
+);
+
+// ✅ FieldPathValue<T, Path> - Infer value type at path
+type EmailType = FieldPathValue<FormModel, 'user.email'>; // string
+type AgeType = FieldPathValue<FormModel, 'user.profile.age'>; // number
+```
+
+#### Field Path Runtime Utilities
 
 Convert between different field path formats (useful for Standard Schema integration, Angular forms, and Vest.js field names):
 
@@ -668,8 +722,14 @@ stringifyFieldPath(['form', 'sections', 0, 'fields', 'name']);
 | | `NgxDeepRequired<T>` | Required properties (shapes) | [Essential Patterns](#type-safe-form-models) |
 | | `NgxFormCompatibleDeepRequired<T>` | Date compatibility | [Essential Patterns](#type-safe-form-models) |
 | | `NgxVestSuite<T>` | Cleaner suite types | [Validation Patterns](#validation-patterns) |
-| | `NgxFieldKey<T>` | Field name autocomplete | [Validation Patterns](#validation-patterns) |
+| | `NgxTypedVestSuite<T>` | Typed suite with autocomplete | [Validation Patterns](#validation-patterns) |
+| | `NgxFieldKey<T>` | Field name autocomplete (legacy) | [Validation Patterns](#validation-patterns) |
 | | `NgxFormState<T>` | Form state type | [Advanced Features](#utility-functions) |
+| **Field Paths** | `FieldPath<T>` | Type-safe field paths | [Field Path Types](#field-path-types-and-utilities) |
+| | `ValidationConfigMap<T>` | Type-safe validation config | [Field Path Types](#field-path-types-and-utilities) |
+| | `FormFieldName<T>` | Field names for Vest suites | [Field Path Types](#field-path-types-and-utilities) |
+| | `FieldPathValue<T, Path>` | Infer value type at path | [Field Path Types](#field-path-types-and-utilities) |
+| | `LeafFieldPath<T>` | Extract leaf paths only | [Field Path Types](#field-path-types-and-utilities) |
 | **Forms** | `createEmptyFormState()` | Safe fallback state | [Advanced Features](#utility-functions) |
 | | `getAllFormErrors()` | Get all error paths | [Advanced Features](#utility-functions) |
 | | `setValueAtPath()` | Set nested values | [Advanced Features](#utility-functions) |
@@ -771,6 +831,12 @@ export class MyFormComponent {
 
 ## Resources
 
+### Core Documentation
+- [Field Path Types Guide](../../docs/FIELD-PATHS.md) - Complete guide to type-safe field references with autocomplete
+- [Utility Types & Functions](../../projects/ngx-vest-forms/src/lib/utils/README.md) - Comprehensive API reference
+- [Complete Example](../../docs/COMPLETE-EXAMPLE.md) - Full working example from start to finish
+- [Migration Guide](../../docs/MIGRATION.md) - Upgrading from previous versions
+
+### External Resources
 - [Original Blog](https://blog.simplified.courses/introducing-ngx-vest-forms/) • [Vest.js Docs](https://vestjs.dev/) • [Angular Forms](https://angular.dev/guide/forms/template-driven-forms) • [Form Arrays](https://blog.simplified.courses/template-driven-forms-with-form-arrays/) • [Async Validation](https://blog.simplified.courses/asynchronous-form-validators-in-angular-with-vest/)
 
-Created by [Brecht Billiet](https://twitter.com/brechtbilliet)

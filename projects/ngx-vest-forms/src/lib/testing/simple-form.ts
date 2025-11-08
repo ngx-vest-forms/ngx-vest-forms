@@ -25,12 +25,12 @@ export const formValidationSuite = staticSuite(
   (model: FormModel, field?: string) => {
     /**
      * CRITICAL: Call only() unconditionally, even when field is undefined.
-     * 
+     *
      * Why: Calling only(undefined) is safe and runs all tests. Conditional calls like
      * `if (field) { only(field); }` corrupt Vest's internal execution order tracking,
      * causing issues with omitWhen + validationConfig combinations where tests may be
      * incorrectly omitted even when conditions are false.
-     * 
+     *
      * @see https://github.com/ngx-vest-forms/ngx-vest-forms/pull/60
      */
     only(field); // ✅ Call unconditionally

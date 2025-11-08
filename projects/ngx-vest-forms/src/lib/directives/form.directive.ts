@@ -9,6 +9,7 @@ import {
   isDevMode,
   linkedSignal,
   computed,
+  InputSignal,
 } from '@angular/core';
 import {
   takeUntilDestroyed,
@@ -55,6 +56,16 @@ import { fastDeepEqual } from '../utils/equality';
 import { validateShape } from '../utils/shape-validation';
 import { ValidationOptions } from './validation-options';
 import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
+import type { ValidationConfigMap } from '../utils/field-path-types';
+
+/**
+ * Type for validation configuration that accepts both the typed and untyped versions.
+ * This ensures backward compatibility while supporting the new typed API.
+ */
+export type NgxValidationConfig<T = unknown> =
+  | Record<string, string[]>
+  | ValidationConfigMap<T>
+  | null;
 
 @Directive({
   selector: 'form[scVestForm]',
@@ -123,6 +134,8 @@ export class FormDirective<T extends Record<string, any>> {
 
   /**
    * Static vest suite that will be used to feed our angular validators
+   * Accepts both NgxVestSuite (with string field) and NgxTypedVestSuite (with FormFieldName<T> field)
+   * through the flexible callback signature
    */
   public readonly suite = input<NgxVestSuite<T> | null>(null);
 
@@ -147,9 +160,8 @@ export class FormDirective<T extends Record<string, any>> {
    *
    * @param v
    */
-  public readonly validationConfig = input<{ [key: string]: string[] } | null>(
-    null
-  );
+  public readonly validationConfig: InputSignal<NgxValidationConfig<T>> =
+    input<NgxValidationConfig<T>>(null);
 
   private readonly pending$ = this.ngForm.form.events.pipe(
     filter((v) => v instanceof StatusChangeEvent),
@@ -342,7 +354,8 @@ export class FormDirective<T extends Record<string, any>> {
           }
 
           const streams = Object.keys(config).map((triggerField) => {
-            const dependents = config[triggerField] || [];
+            const dependents: string[] =
+              (config as Record<string, string[]>)[triggerField] || [];
 
             // Stream that rebinds to the trigger control whenever the form structure changes
             const triggerControl$ = form.statusChanges.pipe(

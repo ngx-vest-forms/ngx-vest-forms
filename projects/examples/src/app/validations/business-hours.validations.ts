@@ -3,13 +3,13 @@ import {
   BusinessHourFormModel,
   BusinessHoursFormModel,
 } from '../models/business-hours-form.model';
-import { NgxVestSuite, NgxFieldKey, ROOT_FORM } from 'ngx-vest-forms';
+import { NgxTypedVestSuite, FormFieldName, ROOT_FORM } from 'ngx-vest-forms';
 
-export const businessHoursSuite: NgxVestSuite<BusinessHoursFormModel> =
+export const businessHoursSuite: NgxTypedVestSuite<BusinessHoursFormModel> =
   staticSuite(
     (
       model: BusinessHoursFormModel,
-      field?: NgxFieldKey<BusinessHoursFormModel>
+      field?: FormFieldName<BusinessHoursFormModel>
     ) => {
       only(field);
       const values = model.businessHours?.values

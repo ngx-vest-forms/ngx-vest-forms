@@ -272,35 +272,84 @@ This is why you must use the `?` operator in templates:
 
 ### Validation Suite Type Safety
 
-Use `NgxVestSuite<T>` for cleaner validation suite types:
+Use `NgxVestSuite<T>` for cleaner validation suite types. For maximum type safety with IDE autocomplete, define suites with `NgxTypedVestSuite<T>` and assign to `NgxVestSuite<T>` in components:
 
 ```typescript
-import { NgxVestSuite, NgxDeepPartial } from 'ngx-vest-forms';
+import { NgxVestSuite, NgxTypedVestSuite, FormFieldName, NgxDeepPartial } from 'ngx-vest-forms';
 import { staticSuite, only, test, enforce } from 'vest';
 
 type FormModel = NgxDeepPartial<{
   email: string;
   password: string;
+  profile: {
+    age: number;
+  };
 }>;
 
-// ✅ Clean API with NgxVestSuite
-const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
-  only(field); // CRITICAL: Always call only() unconditionally
+// ✅ RECOMMENDED: Define with NgxTypedVestSuite for autocomplete
+export const validationSuite: NgxTypedVestSuite<FormModel> = staticSuite(
+  (model: FormModel, field?: FormFieldName<FormModel>) => {
+    only(field); // CRITICAL: Always call only() unconditionally
 
-  test('email', 'Email is required', () => {
-    enforce(model.email).isNotBlank();
-  });
+    // IDE autocomplete suggests: 'email' | 'password' | 'profile' | 'profile.age' | typeof ROOT_FORM
+    test('email', 'Email is required', () => {
+      enforce(model.email).isNotBlank();
+    });
+
+    test('profile.age', 'Must be 18+', () => {
+      enforce(model.profile?.age).greaterThanOrEquals(18);
+    });
+  }
+);
+
+// Component - use NgxVestSuite type (no assertion needed)
+@Component({...})
+class MyFormComponent {
+  // ✅ Types are compatible - no type assertion needed
+  protected readonly suite: NgxVestSuite<FormModel> = validationSuite;
+  protected readonly formValue = signal<FormModel>({});
+}
+
+// ✅ ALTERNATIVE: Simple form without autocomplete
+const simpleSuite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
+  only(field);
+  test('email', 'Required', () => enforce(model.email).isNotBlank());
 });
 
 // ❌ Old verbose way (still works but more complex)
 // const suite: StaticSuite<string, string, (model: FormModel, field?: string) => void> = ...
 ```
 
-The `NgxVestSuite<T>` type provides:
+**Key Benefits:**
 
-- **Cleaner API**: No need to specify `StaticSuite` generic parameters
-- **Type Safety**: Full TypeScript support for model and field parameters
+- **NgxTypedVestSuite**: Provides `FormFieldName<T>` autocomplete at validation definition site
+- **NgxVestSuite**: Accepts both typed and untyped suites, works in Angular templates
+- **No Type Assertions**: Types are compatible by design - no `as any` casts needed
+- **Type Safety**: Full TypeScript support where it matters (validation suite definition)
 - **Template Compatibility**: Works seamlessly in Angular templates without `$any()` casts
+
+#### Why This Pattern? (TypeScript Contravariance Explained)
+
+The two-step pattern (define with `NgxTypedVestSuite`, assign to `NgxVestSuite`) exists because of **TypeScript's contravariance rules** for function parameters:
+
+1. **The Problem**: `NgxTypedVestSuite<T>` cannot be directly assigned to `NgxVestSuite<T>`
+   - `NgxTypedVestSuite` expects: `field?: FormFieldName<T>` (more specific type)
+   - `NgxVestSuite` accepts: `field?: any` (less specific type)
+   - TypeScript contravariance: more specific → less specific = type error
+
+2. **The Solution**: `NgxVestSuite` uses strategic `any` for the field parameter
+   - Accepts **both** `string` and `FormFieldName<T>` field parameters
+   - The `any` is **safe** because:
+     - Model parameter `T` remains fully typed (type safety where it matters)
+     - Field validation happens at validation suite definition
+     - Runtime behavior is identical
+
+3. **Alternative Options**:
+   - ❌ **Use `NgxTypedVestSuite` everywhere**: Type error when assigning to component properties
+   - ⚠️ **Use type inference** (`const suite = ...`): Works but loses explicit typing documentation
+   - ✅ **Recommended pattern**: Best of both worlds (autocomplete + compatibility)
+
+> **📖 Complete explanation**: See `type-compatibility-test.ts` in the repository for a detailed technical breakdown with examples of all three approaches.
 
 ### Form State Type and Utilities
 
@@ -1162,7 +1211,8 @@ Now that you've seen how ngx-vest-forms works, here's a complete overview of its
 ### Core Features
 
 - **Unidirectional Data Flow** - Predictable state management with Angular signals
-- **Type Safety** - Full TypeScript support with `DeepPartial<T>` and `DeepRequired<T>`
+- **Type Safety** - Full TypeScript support with `NgxDeepPartial<T>` and `NgxDeepRequired<T>`
+- **Enhanced Field Path Types** - Template literal autocomplete for field names ([Documentation](./docs/FIELD-PATHS.md))
 - **Zero Boilerplate** - Automatic FormControl and FormGroup creation
 - **Shape Validation** - Runtime validation against your TypeScript models (dev mode)
 
@@ -1198,6 +1248,12 @@ Now that you've seen how ngx-vest-forms works, here's a complete overview of its
 
 For comprehensive documentation beyond this README, check out our detailed guides:
 
+- **[Field Path Types](./docs/FIELD-PATHS.md)** - Type-safe field references with IDE autocomplete
+  - Template literal types for field paths
+  - `ValidationConfigMap<T>` for type-safe configs
+  - `FormFieldName<T>` for Vest suites
+  - Migration guide and best practices
+  - Performance considerations
 - **[Utility Types & Functions Reference](./projects/ngx-vest-forms/src/lib/utils/README.md)** - Complete guide to all utility types and functions
   - Type utilities: `NgxDeepPartial`, `NgxDeepRequired`, `NgxFormCompatibleDeepRequired`
   - Form utilities: `getAllFormErrors()`, `setValueAtPath()`, `mergeValuesAndRawValues()`

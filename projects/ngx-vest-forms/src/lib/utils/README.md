@@ -161,9 +161,13 @@ const formData: FormUser = {
 
 ---
 
-### NgxVestSuite<T>
+### NgxVestSuite<T> and NgxTypedVestSuite<T>
 
-Type-safe wrapper for Vest.js StaticSuite with cleaner API.
+Type-safe wrappers for Vest.js StaticSuite with cleaner API and optional autocomplete.
+
+#### NgxVestSuite<T> - Flexible, Component-Friendly
+
+**Use for**: Component properties, function parameters, public APIs that need flexibility.
 
 ```typescript
 import { NgxVestSuite } from 'ngx-vest-forms';
@@ -171,29 +175,80 @@ import { staticSuite, test, enforce, only } from 'vest';
 
 type FormModel = { email: string; password: string };
 
-// ✅ Clean: Using NgxVestSuite
+// ✅ Simple: Using NgxVestSuite (no autocomplete, but works everywhere)
 export const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
-  if (field) {
-    only(field);
-  }
+  only(field);
   test('email', 'Required', () => enforce(model.email).isNotBlank());
 });
 
-// ❌ Verbose: Without NgxVestSuite
-export const suite: StaticSuite<
-  string,
-  string,
-  (model: FormModel, field?: string) => void
-> = staticSuite((model, field?) => {
-  /* ... */
-});
+// Component - works seamlessly
+@Component({...})
+class MyFormComponent {
+  protected readonly suite: NgxVestSuite<FormModel> = suite;
+}
 ```
+
+#### NgxTypedVestSuite<T> - Type-Safe with Autocomplete
+
+**Use for**: Validation suite definitions where you want IDE autocomplete for field names.
+
+```typescript
+import { NgxTypedVestSuite, FormFieldName } from 'ngx-vest-forms';
+
+// ✅ With autocomplete: Using NgxTypedVestSuite
+export const suite: NgxTypedVestSuite<FormModel> = staticSuite(
+  (model: FormModel, field?: FormFieldName<FormModel>) => {
+    only(field);
+    // IDE suggests: 'email' | 'password' | typeof ROOT_FORM
+    test('email', 'Required', () => enforce(model.email).isNotBlank());
+  }
+);
+```
+
+#### Recommended Pattern: Best of Both Worlds
+
+**Why this pattern?** TypeScript's contravariance rules prevent `NgxTypedVestSuite<T>` from being directly assignable to `NgxVestSuite<T>` because:
+
+- `NgxTypedVestSuite` expects `field?: FormFieldName<T>` (more specific)
+- `NgxVestSuite` accepts `field?: any` (less specific)
+- Contravariance: more specific → less specific = type error
+
+**Solution**: Define with `NgxTypedVestSuite`, assign to `NgxVestSuite` property:
+
+```typescript
+import { NgxVestSuite, NgxTypedVestSuite, FormFieldName } from 'ngx-vest-forms';
+
+// Step 1: Define with NgxTypedVestSuite for autocomplete
+export const userSuite: NgxTypedVestSuite<FormModel> = staticSuite(
+  (model: FormModel, field?: FormFieldName<FormModel>) => {
+    only(field);
+    // ✅ IDE autocomplete: 'email' | 'password' | typeof ROOT_FORM
+    test('email', 'Required', () => enforce(model.email).isNotBlank());
+  }
+);
+
+// Step 2: Use NgxVestSuite in component (no type assertion needed)
+@Component({...})
+class MyFormComponent {
+  // ✅ Types are compatible - NgxVestSuite accepts both typed and untyped
+  protected readonly suite: NgxVestSuite<FormModel> = userSuite;
+}
+```
+
+#### Three Usage Options Compared
+
+| Approach                                                                 | Autocomplete       | Explicit Type    | Flexible             | Recommended              |
+| ------------------------------------------------------------------------ | ------------------ | ---------------- | -------------------- | ------------------------ |
+| **Recommended Pattern** (define `NgxTypedVestSuite`, use `NgxVestSuite`) | ✅ At definition   | ✅ In component  | ✅ Accepts any suite | ✅ **Best**              |
+| **Type Inference** (`const suite = ...`)                                 | ✅ At definition   | ❌ Inferred only | ❌ Too specific      | ⚠️ Works but less clear  |
+| **Simple NgxVestSuite** (`NgxVestSuite<T>`)                              | ❌ No autocomplete | ✅ Explicit      | ✅ Accepts any suite | ✅ Good for simple forms |
 
 **When to use:**
 
-- ✅ All validation suite type annotations
-- ✅ When you want cleaner type signatures
-- ✅ For better IDE autocomplete
+- ✅ **NgxTypedVestSuite**: Validation suite definitions (get autocomplete)
+- ✅ **NgxVestSuite**: Component properties (template compatibility)
+- ✅ **Recommended Pattern**: Complex forms needing autocomplete + flexibility
+- ✅ **Simple NgxVestSuite**: Simple forms without autocomplete needs
 
 ---
 
@@ -528,6 +583,8 @@ export class MyFormComponent {
 ## Field Path Utilities
 
 Convert between different field path formats (useful for Standard Schema integration, Angular forms, and Vest.js field names).
+
+> **💡 Type Safety**: For compile-time type checking and IDE autocomplete of field paths, see the **[Field Path Types Guide](../../../../docs/FIELD-PATHS.md)** which covers `FieldPath<T>`, `ValidationConfigMap<T>`, and `FormFieldName<T>`.
 
 ### parseFieldPath()
 

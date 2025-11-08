@@ -3,6 +3,8 @@ import {
   vestForms,
   clearFields,
   setValueAtPath,
+  ValidationConfigMap,
+  NgxVestSuite,
 } from 'ngx-vest-forms';
 import {
   Component,
@@ -49,7 +51,8 @@ export class PurchaseFormComponent {
   protected readonly formValid = signal<boolean>(false);
   protected readonly loading = signal<boolean>(false);
   protected readonly errors = signal<Record<string, string>>({});
-  protected readonly suite = createPurchaseValidationSuite(this.swapiService);
+  protected readonly purchaseValidationSuite: NgxVestSuite<PurchaseFormModel> =
+    createPurchaseValidationSuite(this.swapiService);
   private readonly shippingAddress = signal<AddressModel>({});
   protected readonly shape = purchaseFormShape;
   private readonly viewModel = computed(() => {
@@ -71,8 +74,10 @@ export class PurchaseFormComponent {
 
   // Computed validationConfig that only references controls that exist in the DOM
   // This prevents "control not found" warnings for conditionally rendered fields
-  protected readonly validationConfig = computed(() => {
-    const config: { [key: string]: string[] } = {
+  protected readonly validationConfig = computed<
+    ValidationConfigMap<PurchaseFormModel>
+  >(() => {
+    const config: ValidationConfigMap<PurchaseFormModel> = {
       age: ['emergencyContact'],
       'passwords.password': ['passwords.confirmPassword'],
     };

@@ -2,6 +2,7 @@ import {
   Component,
   input,
   signal,
+  output,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { KeyValuePipe } from '@angular/common';
@@ -10,6 +11,7 @@ import {
   vestForms,
   vestFormsViewProviders,
 } from 'ngx-vest-forms';
+import type { PhoneNumberMap } from '../../../models/phonenumber.model';
 
 @Component({
   selector: 'sc-phonenumbers',
@@ -20,24 +22,22 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PhonenumbersComponent {
-  values = input<{ [key: string]: string }>({});
+  values = input<PhoneNumberMap>({});
+  valuesChange = output<PhoneNumberMap>();
   addValue = signal('');
 
   addPhonenumber(): void {
     const phoneNumbers = [...Object.values(this.values()), this.addValue()];
-    // Note: This mutates the input, which requires the parent to handle updates
-    // In a real app, consider emitting an event instead
     const newValues = arrayToObject(phoneNumbers);
     this.addValue.set('');
+    this.valuesChange.emit(newValues);
   }
 
   removePhonenumber(key: string): void {
     const phonenumbers = Object.values(this.values()).filter(
       (v, index) => index !== Number(key)
     );
-    // Note: This mutates the input, which requires the parent to handle updates
-    // In a real app, consider emitting an event instead
     const newValues = arrayToObject(phonenumbers);
-    this.values.set(newValues);
+    this.valuesChange.emit(newValues);
   }
 }

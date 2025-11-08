@@ -4,6 +4,7 @@ import {
   ValidateRootFormDirective,
   ROOT_FORM,
   vestForms,
+  NgxVestSuite,
 } from 'ngx-vest-forms';
 import {
   BusinessHoursFormModel,
@@ -29,7 +30,8 @@ export class BusinessHoursFormComponent {
   protected readonly formValue = signal<BusinessHoursFormModel>({});
   protected readonly formValid = signal<boolean>(false);
   protected readonly errors = signal<Record<string, string>>({});
-  protected readonly suite = businessHoursSuite;
+  protected readonly businessHoursSuite: NgxVestSuite<BusinessHoursFormModel> =
+    businessHoursSuite;
   protected readonly shape = businessHoursFormShape;
   protected readonly ROOT_FORM = ROOT_FORM;
 }
