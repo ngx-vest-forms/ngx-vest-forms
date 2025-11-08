@@ -1,7 +1,7 @@
 import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
 import { Component, computed, signal } from '@angular/core';
 import { vestForms } from '../exports';
-import { userEvent, within, expect } from 'storybook/test';
+import { userEvent, within, expect, waitFor } from 'storybook/test';
 import {
   FormModel,
   formShape,
@@ -170,13 +170,7 @@ export const Primary: StoryObj = {
 };
 
 export const ShouldRetriggerByValidationConfig: StoryObj = {
-  // TODO: Re-enable after PR #28 (validation config race condition fix) is merged
-  // This test fails due to known race conditions that are fixed in the main branch
   play: async ({ canvasElement }) => {
-    // Test temporarily disabled - known issue fixed in PR #28
-    console.log(
-      'ShouldRetriggerByValidationConfig test disabled - race condition fix pending'
-    );
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByTestId(selectors.btnSubmit));
     await expect(
@@ -195,24 +189,21 @@ export const ShouldRetriggerByValidationConfig: StoryObj = {
     await canvas.getByTestId(selectors.inputConfirmPassword).blur();
     await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'f');
 
-    // TODO: Re-enable after PR #28 is merged - fixes validation config race conditions
-    // await waitFor(() => {
-    //   expect(
-    //     canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
-    //   ).toHaveTextContent('Confirm password is required');
-    // });
-    // await userEvent.clear(canvas.getByTestId(selectors.inputPassword));
-    // await waitFor(() => {
-    //   expect(
-    //     canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
-    //   ).not.toHaveTextContent('Confirm password is required');
-    // });
+    await waitFor(() => {
+      expect(
+        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
+      ).toHaveTextContent('Confirm password is required');
+    });
+    await userEvent.clear(canvas.getByTestId(selectors.inputPassword));
+    await waitFor(() => {
+      expect(
+        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
+      ).not.toHaveTextContent('Confirm password is required');
+    });
   },
 };
 
 export const ShouldReactToDynamicValidationConfig: StoryObj = {
-  // TODO: Re-enable after PR #28 (validation config race condition fix) is merged
-  // This test fails due to known race conditions that are fixed in the main branch
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByTestId(selectors.btnSubmit));
@@ -232,40 +223,35 @@ export const ShouldReactToDynamicValidationConfig: StoryObj = {
     await canvas.getByTestId(selectors.inputConfirmPassword).blur();
     await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'f');
 
-    // TODO: Re-enable after PR #28 is merged - fixes validation config race conditions
-    // await waitFor(() => {
-    //   expect(
-    //     canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
-    //   ).toHaveTextContent('Confirm password is required');
-    // });
-    // await userEvent.clear(canvas.getByTestId(selectors.inputPassword));
-    // await waitFor(() => {
-    //   expect(
-    //     canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
-    //   ).not.toHaveTextContent('Confirm password is required');
-    // });
-    // await userEvent.click(
-    //   canvas.getByTestId(selectors.btnToggleValidationConfig)
-    // );
-    // await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'f');
-    // await waitFor(() => {
-    //   expect(
-    //     canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
-    //   ).not.toHaveTextContent('Confirm password is required');
-    // });
-    // await userEvent.clear(canvas.getByTestId(selectors.inputPassword));
-    // await userEvent.click(
-    //   canvas.getByTestId(selectors.btnToggleValidationConfig)
-    // );
-    // await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'f');
-    // await waitFor(() => {
-    //   expect(
-    //     canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
-    //   ).toHaveTextContent('Confirm password is required');
-    // });
-    // Test temporarily disabled - known issue fixed in PR #28
-    console.log(
-      'ShouldReactToDynamicValidationConfig test disabled - race condition fix pending'
+    await waitFor(() => {
+      expect(
+        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
+      ).toHaveTextContent('Confirm password is required');
+    });
+    await userEvent.clear(canvas.getByTestId(selectors.inputPassword));
+    await waitFor(() => {
+      expect(
+        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
+      ).not.toHaveTextContent('Confirm password is required');
+    });
+    await userEvent.click(
+      canvas.getByTestId(selectors.btnToggleValidationConfig)
     );
+    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'f');
+    await waitFor(() => {
+      expect(
+        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
+      ).not.toHaveTextContent('Confirm password is required');
+    });
+    await userEvent.clear(canvas.getByTestId(selectors.inputPassword));
+    await userEvent.click(
+      canvas.getByTestId(selectors.btnToggleValidationConfig)
+    );
+    await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'f');
+    await waitFor(() => {
+      expect(
+        canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
+      ).toHaveTextContent('Confirm password is required');
+    });
   },
 };

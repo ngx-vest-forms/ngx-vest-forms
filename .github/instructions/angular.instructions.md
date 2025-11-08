@@ -38,7 +38,8 @@ Instructions for generating high-quality Angular applications with TypeScript, u
 - Use Angular directives and pipes for reusable functionality
 
 ### Forms and User Input
-- Use `save()` method name for form submission handlers (not `onSubmit()` - follows Angular 20+ conventions)
+- Use `onSubmit()` method name for form submission handlers (common Angular convention)
+  - Note: Angular 20+ guidelines suggest `save()`, but this project uses `onSubmit()` consistently
 - **Form Submission and Page Reload Prevention**:
   - ✅ **With ngx-vest-forms**: Use `[ngxVestForm]` directive - automatically calls `preventDefault()`
     - Example: `<form [ngxVestForm]="form" (submit)="save()">` - NO event parameter needed!

@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-// TODO: Switch to NgxFormErrorDisplayDirective from 'ngx-vest-forms/core' if/when available
 import { FormErrorDisplayDirective } from '../../directives/form-error-display.directive';
 
 /**

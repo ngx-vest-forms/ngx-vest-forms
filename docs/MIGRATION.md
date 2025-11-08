@@ -1,4 +1,4 @@
-# Migration Guide: v1 → v1.5.0
+# Migration Guide: v1.4.x → v1.5.0
 
 ## Breaking Changes
 
@@ -8,7 +8,7 @@
 
 #### What Changed
 
-**v2 Behavior (old):**
+**v1.4.x Behavior (old):**
 
 ```typescript
 <form scVestForm [validateRootForm]="true">
@@ -16,7 +16,7 @@
 </form>
 ```
 
-**v3 Behavior (new - BREAKING):**
+**v1.5.0 Behavior (new - BREAKING):**
 
 ```typescript
 <form scVestForm [validateRootForm]="true">
@@ -130,7 +130,7 @@ export class MyFormComponent {
 }
 ```
 
-**After (v3 - preserving old behavior):**
+**After (v1.5.0 - preserving old behavior):**
 
 ```typescript
 import { Component, signal } from '@angular/core';
@@ -163,7 +163,7 @@ export class MyFormComponent {
 }
 ```
 
-**After (v3 - adopting new default):**
+**After (v1.5.0 - adopting new default):**
 
 ```typescript
 import { Component, signal } from '@angular/core';
@@ -246,7 +246,7 @@ test(ROOT_FORM, 'Full name must match ID', () => {
 
 ## Non-Breaking Enhancements
 
-### New Features in v3
+### New Features in v1.5.0
 
 1. **Validation Mode Control**: New `validateRootFormMode` input for fine-grained control
 2. **Submit Event Handling**: Automatic `(ngSubmit)` binding for better integration

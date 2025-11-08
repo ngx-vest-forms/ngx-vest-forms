@@ -143,28 +143,6 @@ describe('FormDirective - Async Validator', () => {
     @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
   }
 
-  it.skip('should clear debounce cache when field changes (obsolete - v2 removed cache)', async () => {
-    const { fixture } = await render(TestDebounceCacheHost);
-    const instance = fixture.componentInstance;
-    const validator1 = instance.vestForm.createAsyncValidator('username', {
-      debounceTime: 0,
-    });
-    const validator2 = instance.vestForm.createAsyncValidator('email', {
-      debounceTime: 0,
-    });
-    const controlA = { value: 'a' } as any;
-    const controlB = { value: 'b' } as any;
-    const firstValidation = awaitResult(validator1(controlA));
-    jest.runOnlyPendingTimers();
-    await firstValidation;
-    const secondValidation = awaitResult(validator2(controlB));
-    jest.runOnlyPendingTimers();
-    await secondValidation;
-    expect(Object.keys((instance.vestForm as any)['formValueCache'])).toEqual(
-      expect.arrayContaining(['username', 'email'])
-    );
-  });
-
   @Component({
     selector: 'test-form-throw',
     imports: [vestForms, AsyncPipe],
@@ -284,39 +262,6 @@ describe('FormDirective - Validator Cache', () => {
     suite = signal(jest.fn());
     @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
   }
-
-  it.skip('should create a new cache entry per field (obsolete - v2 removed cache)', async () => {
-    const { fixture } = await render(TestValidatorCacheHost);
-    const instance = fixture.componentInstance;
-    const validator1 = instance.vestForm.createAsyncValidator('username', {
-      debounceTime: 0,
-    });
-    const validator2 = instance.vestForm.createAsyncValidator('email', {
-      debounceTime: 0,
-    });
-    const controlA = { value: 'a' } as any;
-    const controlB = { value: 'b' } as any;
-    validator1(controlA);
-    validator2(controlB);
-    expect(Object.keys((instance.vestForm as any)['formValueCache'])).toEqual(
-      expect.arrayContaining(['username', 'email'])
-    );
-  });
-
-  it.skip('should not leak cache entries when fields are removed/added dynamically (obsolete - v2 removed cache)', async () => {
-    const { fixture } = await render(TestValidatorCacheHost);
-    const instance = fixture.componentInstance;
-    const validator1 = instance.vestForm.createAsyncValidator('username', {
-      debounceTime: 0,
-    });
-    const controlA = { value: 'a' } as any;
-    validator1(controlA);
-    // Simulate field removal by deleting cache
-    delete (instance.vestForm as any)['formValueCache']['username'];
-    expect(
-      (instance.vestForm as any)['formValueCache']['username']
-    ).toBeUndefined();
-  });
 });
 
 describe('FormDirective - Composability & Host Bindings', () => {
