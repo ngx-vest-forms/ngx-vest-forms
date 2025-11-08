@@ -55,7 +55,7 @@ import { NgxVestSuite } from '../utils/validation-suite';
 import { fastDeepEqual } from '../utils/equality';
 import { validateShape } from '../utils/shape-validation';
 import { ValidationOptions } from './validation-options';
-import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
+import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import type { ValidationConfigMap } from '../utils/field-path-types';
 
 /**
@@ -74,6 +74,9 @@ export type NgxValidationConfig<T = unknown> =
 export class FormDirective<T extends Record<string, any>> {
   public readonly ngForm = inject(NgForm, { self: true, optional: false });
   private readonly destroyRef = inject(DestroyRef);
+  private readonly configDebounceTime = inject(
+    NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN
+  );
 
   // Track last linked value to prevent unnecessary updates
   #lastLinkedValue: T | null = null;
@@ -381,7 +384,7 @@ export class FormDirective<T extends Record<string, any>> {
 
                 return rxMerge(valueChange$, touchChange$).pipe(
                   // Debounce to batch rapid changes
-                  debounceTime(VALIDATION_CONFIG_DEBOUNCE_TIME),
+                  debounceTime(this.configDebounceTime),
                   // Wait for the form to be idle before updating dependents
                   switchMap(() =>
                     form.statusChanges.pipe(

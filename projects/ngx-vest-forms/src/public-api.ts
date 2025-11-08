@@ -64,6 +64,9 @@ export { shallowEqual, fastDeepEqual } from './lib/utils/equality';
 // Constants
 export { ROOT_FORM, VALIDATION_CONFIG_DEBOUNCE_TIME } from './lib/constants';
 
+// Tokens
+export { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from './lib/tokens/debounce.token';
+
 // Components
 export { ControlWrapperComponent } from './lib/components/control-wrapper/control-wrapper.component';
 

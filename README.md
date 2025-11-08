@@ -664,6 +664,52 @@ For example, to debounce validation (useful for API calls):
 </form>
 ```
 
+#### Configurable Validation Config Debounce
+
+The `validationConfig` feature (for triggering dependent field validations) uses a debounce to prevent excessive validation calls. You can configure this debounce globally or per-component using the `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN`:
+
+**Global Configuration** (recommended for consistent behavior):
+
+```typescript
+import { ApplicationConfig } from '@angular/core';
+import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    // Set global debounce for validationConfig dependencies
+    { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 150 },
+  ],
+};
+```
+
+**Per-Route Configuration**:
+
+```typescript
+{
+  path: 'checkout',
+  component: CheckoutComponent,
+  providers: [
+    { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 50 }
+  ]
+}
+```
+
+**Per-Component Configuration**:
+
+```typescript
+@Component({
+  providers: [
+    // Disable debounce for testing
+    { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 0 },
+  ],
+})
+export class MyFormComponent {}
+```
+
+**Default**: 100ms (maintains backward compatibility)
+
+> **Note**: This token controls the debounce for `validationConfig` dependency triggering only. For individual field validation debouncing, use `[validationOptions]="{ debounceTime: 300 }"` on the control as shown above.
+
 ## Intermediate Topics
 
 ### Conditional Fields
