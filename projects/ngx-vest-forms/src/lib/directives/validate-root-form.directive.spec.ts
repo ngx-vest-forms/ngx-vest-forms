@@ -1,5 +1,5 @@
 import { Component, signal, ViewChild } from '@angular/core';
-import { NgForm, FormsModule } from '@angular/forms';
+import { NgForm } from '@angular/forms';
 import { JsonPipe } from '@angular/common';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
