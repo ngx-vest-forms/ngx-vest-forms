@@ -349,7 +349,7 @@ The two-step pattern (define with `NgxTypedVestSuite`, assign to `NgxVestSuite`)
    - ⚠️ **Use type inference** (`const suite = ...`): Works but loses explicit typing documentation
    - ✅ **Recommended pattern**: Best of both worlds (autocomplete + compatibility)
 
-> **📖 Complete explanation**: See `type-compatibility-test.ts` in the repository for a detailed technical breakdown with examples of all three approaches.
+> **📖 Complete explanation**: See [docs/TYPE-COMPATIBILITY.md](docs/TYPE-COMPATIBILITY.md) for a detailed technical breakdown with examples of all three approaches.
 
 ### Form State Type and Utilities
 
