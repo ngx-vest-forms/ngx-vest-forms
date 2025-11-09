@@ -231,7 +231,7 @@ export class DynamicStructureComponent {
   protected readonly errors = signal<Record<string, string[]>>({});
 
   // Static properties can remain as regular properties
-  protected readonly shape = dynamicFormShape;
+  protected readonly shape = formShape;
   protected readonly suite = dynamicFormValidationSuite;
 
   // Angular 20: Using computed() for derived state
@@ -261,7 +261,7 @@ export class DynamicStructureComponent {
 
     // Using the new triggerFormValidation() API to handle structure changes
     // This is necessary because Angular doesn't emit ValueChangeEvent when form structure changes
-    this.vestFormRef.triggerFormValidation();
+    this.vestFormRef().triggerFormValidation();
   }
 }
 
