@@ -804,7 +804,7 @@ Check this interesting example below:
 test('passwords.password', 'Password is not filled in', () => {
   enforce(model.passwords?.password).isNotBlank();
 });
-```typescript
+
 omitWhen(!model.passwords?.password, () => {
   test('passwords.confirmPassword', 'Confirm password required', () => {
     enforce(model.passwords?.confirmPassword).isNotBlank();
@@ -814,11 +814,8 @@ omitWhen(!model.passwords?.password, () => {
     enforce(model.passwords?.confirmPassword).equals(model.passwords?.password);
   });
 });
-````
 
 This pattern is testable, reusable across frameworks, and readable.
-
-````
 
 Forget about manually adding, removing validators on reactive forms and not being able to
 re-use them. This code is easy to test, easy to re-use on frontend, backend, angular, react, etc...
@@ -891,7 +888,7 @@ export class MyComponent {
 
 ```html
 <!-- Notice the function call: validationConfig() -->
-<form scVestForm [validationConfig]="validationConfig()" ...></form>
+<form scVestForm [validationConfig]="validationConfig()" ...>...</form>
 ```
 
 ## Advanced Topics
@@ -949,51 +946,6 @@ class MyComponent {
 
 > **📖 Detailed Guide**: See **[Field Clearing Utilities](./docs/FIELD-CLEARING-UTILITIES.md)** and **[Structure Change Detection Guide](./docs/STRUCTURE_CHANGE_DETECTION.md)** for comprehensive examples.
 
-        [ngModel]="formValue().procedureType"
-        (ngModelChange)="onProcedureTypeChange($event)"
-      >
-        <option value="typeA">Type A</option>
-        <option value="typeB">Type B</option>
-        <option value="typeC">Type C (No input)</option>
-      </select>
-
-      @if (formValue().procedureType === 'typeA') {
-        <input name="fieldA" [ngModel]="formValue().fieldA" />
-      } @else if (formValue().procedureType === 'typeB') {
-        <input name="fieldB" [ngModel]="formValue().fieldB" />
-      } @else if (formValue().procedureType === 'typeC') {
-        <p>No additional input required.</p>
-      }
-    </form>
-
-`,
-changeDetection: ChangeDetectionStrategy.OnPush
-})
-export class MyFormComponent {
-// Modern Angular 20+: Use viewChild() function API
-private readonly vestForm =
-viewChild.required<FormDirective<MyFormModel>>('vestForm');
-protected readonly formValue = signal<MyFormModel>({});
-protected readonly validationSuite = myValidationSuite;
-
-onProcedureTypeChange(newType: string) {
-// Update the form value
-this.formValue.update((current) => ({
-...current,
-procedureType: newType,
-// Clear fields that are no longer relevant
-...(newType !== 'typeA' && { fieldA: undefined }),
-...(newType !== 'typeB' && { fieldB: undefined }),
-}));
-
-    // ✅ CRITICAL: Trigger validation update after structure change
-    this.vestForm().triggerFormValidation();
-
-}
-}
-
-````
-
 **When to use `triggerFormValidation()`**: After form structure changes (showing/hiding fields), clearing form sections, or switching between form inputs and non-form content.
 
 > **🔗 See Also**: [Computed `validationConfig`](#dependent-field-validation-with-conditional-rendering) for validation dependencies, and [Field Clearing Utilities](./docs/FIELD-CLEARING-UTILITIES.md) for state management.
@@ -1008,10 +960,12 @@ procedureType: newType,
 // Use clearFieldsWhen to synchronize state
 import { clearFieldsWhen } from 'ngx-vest-forms';
 
-this.formValue.update(v => clearFieldsWhen(v, {
-  fieldA: procedureType !== 'typeA' // Clear when NOT showing input
-}));
-````
+this.formValue.update((v) =>
+  clearFieldsWhen(v, {
+    fieldA: procedureType !== 'typeA', // Clear when NOT showing input
+  })
+);
+```
 
 **When NOT required**: Pure form-to-form conditionals (switching input types with same `name`) – Angular maintains FormControl throughout.
 
@@ -1029,13 +983,6 @@ Pure form-to-form conditionals (switching input types with same `name`) usually 
 ```
 
 > **📖 Complete Guide**: See **[Field Clearing Utilities](./docs/FIELD-CLEARING-UTILITIES.md)** for detailed patterns and use cases.
-
-```typescript
-// Trigger validation update after structure change
-this.vestFormRef().triggerFormValidation();
-}
-
-```
 
 ### Field State Utilities
 
@@ -1478,11 +1425,3 @@ These pioneers laid the groundwork that made ngx-vest-forms possible, combining 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-```
-
-```
-
-```
-
-```
