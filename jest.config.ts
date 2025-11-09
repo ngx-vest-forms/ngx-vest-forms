@@ -3,11 +3,7 @@ import type { Config } from 'jest';
 const config: Config = {
   preset: './jest.preset.js',
   setupFilesAfterEnv: ['<rootDir>/projects/ngx-vest-forms/src/test-setup.ts'],
-  testPathIgnorePatterns: [
-    '<rootDir>/node_modules/',
-    '<rootDir>/dist/',
-    '<rootDir>/projects/examples/',
-  ],
+  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/dist/'],
   modulePathIgnorePatterns: ['<rootDir>/dist/'],
   // Prevent Jest haste module naming collision between dist and source
   haste: {
@@ -17,8 +13,10 @@ const config: Config = {
   watchPathIgnorePatterns: ['<rootDir>/dist/'],
   collectCoverageFrom: [
     'projects/ngx-vest-forms/src/lib/**/*.ts',
+    'projects/examples/src/app/**/*.ts',
     '!projects/ngx-vest-forms/src/lib/**/*.spec.ts',
     '!projects/ngx-vest-forms/src/lib/testing/**',
+    '!projects/examples/src/app/**/*.spec.ts',
     '!**/node_modules/**',
     '!**/dist/**',
   ],
@@ -33,7 +31,10 @@ const config: Config = {
   extensionsToTreatAsEsm: ['.ts'],
   moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
   // Add explicit roots to avoid scanning dist
-  roots: ['<rootDir>/projects/ngx-vest-forms/src'],
+  roots: [
+    '<rootDir>/projects/ngx-vest-forms/src',
+    '<rootDir>/projects/examples/src',
+  ],
 };
 
 export default config;

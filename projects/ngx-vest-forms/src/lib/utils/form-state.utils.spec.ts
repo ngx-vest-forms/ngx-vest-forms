@@ -35,15 +35,25 @@ describe('form-state.utils', () => {
     });
 
     it('should be useful as a fallback when child form is not initialized', () => {
-      // Simulating a scenario where child form might be undefined
-      const mockFormState = (): NgxFormState<unknown> | null => null;
+      // Simulating a scenario where child form might return null or a state
+      let childState: NgxFormState<unknown> | null = null;
+      const mockFormState = (): NgxFormState<unknown> | null => childState;
 
-      // This pattern is useful in parent components
-      const formState = mockFormState() ?? createEmptyFormState();
+      // Test fallback when null
+      const formStateWhenNull = mockFormState() ?? createEmptyFormState();
+      expect(formStateWhenNull.valid).toBe(true);
+      expect(formStateWhenNull.errors).toEqual({});
+      expect(formStateWhenNull.value).toBeNull();
 
-      expect(formState.valid).toBe(true);
-      expect(formState.errors).toEqual({});
-      expect(formState.value).toBeNull();
+      // Test that it uses the actual state when available
+      childState = {
+        value: { test: 'data' },
+        errors: { field: ['error'] },
+        valid: false,
+      };
+      const formStateWhenPresent = mockFormState() ?? createEmptyFormState();
+      expect(formStateWhenPresent).toBe(childState);
+      expect(formStateWhenPresent.valid).toBe(false);
     });
   });
 });
