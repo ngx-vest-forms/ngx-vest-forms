@@ -8,6 +8,7 @@ import {
   input,
   OnDestroy,
   signal,
+  untracked,
 } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import {
@@ -99,7 +100,7 @@ export class ValidateRootFormDirective<T>
   implements AsyncValidator, AfterViewInit, OnDestroy
 {
   private readonly injector = inject(Injector);
-  private ngForm: NgForm | null = null;
+  private readonly lastControl = signal<NgForm | null>(null);
   public validationOptions = input<ValidationOptions>({ debounceTime: 0 });
   private readonly destroy$$ = new Subject<void>();
   private readonly hasSubmitted = signal(false);
@@ -137,8 +138,10 @@ export class ValidateRootFormDirective<T>
 
       // Trigger revalidation if form exists
       // Use emitEvent: true so the form directive can update its errors
-      if (this.ngForm?.control) {
-        this.ngForm.control.updateValueAndValidity();
+      // Use untracked() to avoid making the effect reactive to lastControl changes
+      const ngForm = untracked(() => this.lastControl());
+      if (ngForm?.control) {
+        ngForm.control.updateValueAndValidity();
       }
     });
   }
@@ -151,9 +154,10 @@ export class ValidateRootFormDirective<T>
    */
   public ngAfterViewInit(): void {
     // Lazily inject NgForm to avoid circular dependency
-    this.ngForm = this.injector.get(NgForm, null);
+    const ngForm = this.injector.get(NgForm, null);
+    this.lastControl.set(ngForm);
 
-    if (!this.ngForm) {
+    if (!ngForm) {
       console.error(
         '[ValidateRootFormDirective] NgForm not found. Ensure directive is on a form element with NgForm.'
       );
@@ -161,7 +165,7 @@ export class ValidateRootFormDirective<T>
     }
 
     // Subscribe to form submission to set hasSubmitted flag
-    this.ngForm.ngSubmit
+    ngForm.ngSubmit
       .pipe(
         tap(() => {
           this.hasSubmitted.set(true);

@@ -70,7 +70,7 @@ export type NgxValidationConfig<T = unknown> =
   exportAs: 'scVestForm',
 })
 export class FormDirective<T extends Record<string, any>> {
-  public readonly ngForm = inject(NgForm, { self: true, optional: false });
+  public readonly ngForm = inject(NgForm, { self: true });
   private readonly destroyRef = inject(DestroyRef);
   private readonly configDebounceTime = inject(
     NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN
@@ -295,43 +295,61 @@ export class FormDirective<T extends Record<string, any>> {
       // Skip if either is null
       if (!formValue && !modelValue) return;
 
-      // Determine what changed using proper deep comparison
-      const valuesEqual = fastDeepEqual(formValue, modelValue);
+      // Compute change flags first
+      const formChanged = !fastDeepEqual(formValue, this.#lastSyncedFormValue);
+      const modelChanged = !fastDeepEqual(
+        modelValue,
+        this.#lastSyncedModelValue
+      );
 
-      if (!valuesEqual) {
-        // Determine sync direction by tracking what actually changed
-        const formChanged = !fastDeepEqual(
-          formValue,
-          this.#lastSyncedFormValue
-        );
-        const modelChanged = !fastDeepEqual(
-          modelValue,
-          this.#lastSyncedModelValue
-        );
+      // Early return if nothing changed
+      if (!formChanged && !modelChanged) {
+        return;
+      }
 
-        if (formChanged && !modelChanged) {
-          // Form was modified by user -> form wins
-          // Note: We can't call this.formValue.set() since it's an input()
-          // The formValueChange output will emit the new value
+      if (formChanged && !modelChanged) {
+        // Form was modified by user -> form wins
+        // Note: We can't call this.formValue.set() since it's an input()
+        // The formValueChange output will emit the new value
+        // Use untracked() to avoid infinite loops - we're updating tracking state here
+        untracked(() => {
+          this.#lastSyncedFormValue = formValue;
+          this.#lastSyncedModelValue = formValue;
+        });
+      } else if (modelChanged && !formChanged) {
+        // Model was modified programmatically -> model wins
+        // Use untracked() to avoid infinite loops - we're updating tracking state here
+        untracked(() => {
+          // Update form controls with new model values
+          if (modelValue) {
+            Object.keys(modelValue).forEach((key) => {
+              const control = this.ngForm.form.get(key);
+              if (control && control.value !== modelValue[key]) {
+                control.setValue(modelValue[key], { emitEvent: false });
+              }
+            });
+          }
+          this.#lastSyncedFormValue = modelValue;
+          this.#lastSyncedModelValue = modelValue;
+        });
+      } else if (formChanged && modelChanged) {
+        // Both form and model changed simultaneously
+        // Check if they changed to the same value (synchronized change) or different values (conflict)
+        const valuesEqual = fastDeepEqual(formValue, modelValue);
+
+        if (valuesEqual) {
+          // Both changed to the same value - this is a synchronized change, not a conflict
+          // Just update tracking to acknowledge the change
           untracked(() => {
             this.#lastSyncedFormValue = formValue;
             this.#lastSyncedModelValue = formValue;
           });
-        } else if (modelChanged && !formChanged) {
-          // Model was modified programmatically -> model wins
-          untracked(() => {
-            // Update form controls with new model values
-            if (modelValue) {
-              Object.keys(modelValue).forEach((key) => {
-                const control = this.ngForm.form.get(key);
-                if (control && control.value !== modelValue[key]) {
-                  control.setValue(modelValue[key], { emitEvent: false });
-                }
-              });
-            }
-            this.#lastSyncedFormValue = modelValue;
-            this.#lastSyncedModelValue = modelValue;
-          });
+        } else {
+          // Both changed to different values - this is a true conflict
+          // This is an edge case that should rarely happen in practice.
+          // We intentionally do nothing here to avoid breaking the Angular event flow.
+          // The form will continue with its current values, and validation will run normally.
+          // The next change (either form or model) will trigger proper synchronization.
         }
       }
     });
@@ -502,14 +520,8 @@ export class FormDirective<T extends Record<string, any>> {
       try {
         snapshot = structuredClone(model) as T;
       } catch {
-        try {
-          const cloneFunction: (<U>(value: U) => U) | undefined = (
-            globalThis as unknown as { structuredClone?: <U>(v: U) => U }
-          ).structuredClone;
-          snapshot = (cloneFunction ? cloneFunction(model) : model) as T;
-        } catch {
-          snapshot = { ...(model as object) } as T;
-        }
+        // Fallback for environments without structuredClone or for values with functions/circular refs
+        snapshot = { ...(model as object) } as T;
       }
       setValueAtPath(snapshot as object, field, control.value);
 

@@ -152,8 +152,8 @@ export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
 // 3. Runtime behavior is identical - only TypeScript signatures differ
 type NgxSuiteCallback<T> = {
   // Method syntax yields bivariant parameters under strictFunctionTypes
-  // Use `any` for field to accept both string and FormFieldName<T> from typed suites
-  bivarianceHack(model: T, field?: any): void;
+  // Use `unknown` for field to accept both string and FormFieldName<T> from typed suites
+  bivarianceHack(model: T, field?: unknown): void;
 }['bivarianceHack'];
 
 export type NgxVestSuite<T = unknown> = StaticSuite<

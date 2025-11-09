@@ -2,9 +2,16 @@
 /**
  * Converts a flat array to an object with numeric keys.
  * Does not recurse into nested arrays or objects.
+ * Uses reduce() for optimal single-pass conversion.
  */
 export function arrayToObject<T>(array: T[]): Record<number, T> {
-  return Object.fromEntries(array.map((value, index) => [index, value]));
+  return array.reduce(
+    (acc, value, index) => {
+      acc[index] = value;
+      return acc;
+    },
+    {} as Record<number, T>
+  );
 }
 
 /**

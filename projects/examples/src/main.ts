@@ -32,7 +32,7 @@ bootstrapApplication(AppComponent, {
     provideEnvironmentNgxMask({ validation: false }),
     provideRouter(appRoutes, withEnabledBlockingInitialNavigation()),
     // Global configuration for validation config debounce timing
-    // Default is 100ms - this example shows how to configure it globally
+    // Using 150ms instead of default 100ms to reduce validation frequency during rapid typing
     { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 150 },
   ],
 });
