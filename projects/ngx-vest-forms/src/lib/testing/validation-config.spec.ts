@@ -5,7 +5,7 @@
 import { Component, signal, ViewChild } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { DeepPartial } from '../utils/deep-partial';
+import type { NgxDeepPartial } from '../../public-api';
 import { vestForms } from '../exports';
 import { staticSuite, test, enforce, only, omitWhen } from 'vest';
 import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
@@ -49,7 +49,7 @@ describe('FormDirective - Comprehensive', () => {
     })
     class TestComponent {
       formValue = signal<
-        DeepPartial<{
+        NgxDeepPartial<{
           passwords: { password: string; confirmPassword: string };
         }>
       >({});
@@ -119,9 +119,9 @@ describe('FormDirective - Comprehensive', () => {
       imports: [vestForms, FormsModule],
     })
     class TestComponent {
-      formValue = signal<DeepPartial<{ amount: number; description: string }>>(
-        {}
-      );
+      formValue = signal<
+        NgxDeepPartial<{ amount: number; description: string }>
+      >({});
       validationConfig = {
         amount: ['description'],
         description: ['amount'],
@@ -199,7 +199,7 @@ describe('FormDirective - Comprehensive', () => {
     })
     class TestComponent {
       formValue = signal<
-        DeepPartial<{ firstName: string; lastName: string; email: string }>
+        NgxDeepPartial<{ firstName: string; lastName: string; email: string }>
       >({});
       validationConfig = signal<any>({
         firstName: ['lastName'],
@@ -275,7 +275,7 @@ describe('FormDirective - Comprehensive', () => {
     })
     class TestComponent {
       formValue = signal<
-        DeepPartial<{
+        NgxDeepPartial<{
           user: {
             name: string;
             contact: { email: string };
@@ -374,10 +374,10 @@ describe('FormDirective - Comprehensive', () => {
     class TestComponent {
       // Separate signals - input vs output
       inputFormValue = signal<
-        DeepPartial<{ password: string; confirmPassword: string }>
+        NgxDeepPartial<{ password: string; confirmPassword: string }>
       >({});
       outputFormValue = signal<
-        DeepPartial<{ password: string; confirmPassword: string }>
+        NgxDeepPartial<{ password: string; confirmPassword: string }>
       >({});
 
       validationConfig = {
@@ -476,7 +476,10 @@ describe('FormDirective - Comprehensive', () => {
     class TestComponent {
       @ViewChild('vestForm', { static: true }) vestForm!: FormDirective<any>;
       formValue = signal<
-        DeepPartial<{ quantity: number | null; justification: string | null }>
+        NgxDeepPartial<{
+          quantity: number | null;
+          justification: string | null;
+        }>
       >({
         quantity: null,
         justification: null,
@@ -660,7 +663,10 @@ describe('FormDirective - Comprehensive', () => {
     })
     class TestComponent {
       formValue = signal<
-        DeepPartial<{ quantity: number | null; justification: string | null }>
+        NgxDeepPartial<{
+          quantity: number | null;
+          justification: string | null;
+        }>
       >({
         quantity: null,
         justification: null,
@@ -751,7 +757,10 @@ describe('FormDirective - Comprehensive', () => {
     })
     class TestComponent {
       formValue = signal<
-        DeepPartial<{ quantity: number | null; justification: string | null }>
+        NgxDeepPartial<{
+          quantity: number | null;
+          justification: string | null;
+        }>
       >({
         quantity: null,
         justification: null,
@@ -842,7 +851,10 @@ describe('FormDirective - Comprehensive', () => {
     })
     class TestComponent {
       formValue = signal<
-        DeepPartial<{ quantity: number | null; justification: string | null }>
+        NgxDeepPartial<{
+          quantity: number | null;
+          justification: string | null;
+        }>
       >({
         quantity: null,
         justification: null,
@@ -951,7 +963,7 @@ describe('FormDirective - Comprehensive', () => {
     })
     class TestComponent {
       formValue = signal<
-        DeepPartial<{ triggerField: string; dependentField: string }>
+        NgxDeepPartial<{ triggerField: string; dependentField: string }>
       >({});
 
       validationConfig = {
@@ -1045,7 +1057,7 @@ describe('FormDirective - Comprehensive', () => {
     })
     class TestComponent {
       formValue = signal<
-        DeepPartial<{ password: string; confirmPassword: string }>
+        NgxDeepPartial<{ password: string; confirmPassword: string }>
       >({});
       validationConfig = {
         password: ['confirmPassword'],
@@ -1154,7 +1166,7 @@ describe('FormDirective - Comprehensive', () => {
     })
     class TestComponent {
       formValue = signal<
-        DeepPartial<{ password: string; confirmPassword: string }>
+        NgxDeepPartial<{ password: string; confirmPassword: string }>
       >({});
       validationConfig = {
         password: ['confirmPassword'],
@@ -1226,7 +1238,7 @@ describe('FormDirective - Comprehensive', () => {
       })
       class ModernTestComponent {
         formValue = signal<
-          DeepPartial<{ email?: string; confirmEmail?: string }>
+          NgxDeepPartial<{ email?: string; confirmEmail?: string }>
         >({});
         validationConfig = { email: ['confirmEmail'] };
       }
@@ -1265,9 +1277,9 @@ describe('FormDirective - Comprehensive', () => {
         imports: [vestForms, FormsModule],
       })
       class ReactiveTestComponent {
-        formValue = signal<DeepPartial<{ field1?: string; field2?: string }>>(
-          {}
-        );
+        formValue = signal<
+          NgxDeepPartial<{ field1?: string; field2?: string }>
+        >({});
         validationConfig = signal<{ [key: string]: string[] }>({});
       }
 
@@ -1315,7 +1327,7 @@ describe('FormDirective - Comprehensive', () => {
       })
       class LifecycleTestComponent {
         formValue = signal<
-          DeepPartial<{ password?: string; confirmPassword?: string }>
+          NgxDeepPartial<{ password?: string; confirmPassword?: string }>
         >({});
 
         // This is a component instance property - should work without workarounds
@@ -1426,9 +1438,9 @@ describe('FormDirective - Comprehensive', () => {
         imports: [vestForms, FormsModule],
       })
       class DuplicateSubscriptionTestComponent {
-        formValue = signal<DeepPartial<{ field1?: string; field2?: string }>>(
-          {}
-        );
+        formValue = signal<
+          NgxDeepPartial<{ field1?: string; field2?: string }>
+        >({});
         validationConfig = { field1: ['field2'] };
 
         suite = staticSuite((model: any, field?: string) => {

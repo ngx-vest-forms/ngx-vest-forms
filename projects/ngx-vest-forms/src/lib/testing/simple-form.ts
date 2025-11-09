@@ -1,9 +1,8 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
-import { DeepPartial } from '../utils/deep-partial';
-import { DeepRequired } from '../utils/deep-required';
+import type { NgxDeepPartial, NgxDeepRequired } from '../../public-api';
 import { ROOT_FORM } from '../constants';
 
-export type FormModel = DeepPartial<{
+export type FormModel = NgxDeepPartial<{
   firstName: string;
   lastName: string;
   passwords: {
@@ -12,7 +11,7 @@ export type FormModel = DeepPartial<{
   };
 }>;
 
-export const formShape: DeepRequired<FormModel> = {
+export const formShape: NgxDeepRequired<FormModel> = {
   firstName: '',
   lastName: '',
   passwords: {

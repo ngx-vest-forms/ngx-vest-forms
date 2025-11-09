@@ -7,9 +7,9 @@ import { vestForms } from '../exports';
 import { FormDirective } from '../directives/form.directive';
 import { staticSuite, test, enforce, omitWhen, only } from 'vest';
 import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
-import { DeepPartial } from '../utils/deep-partial';
+import type { NgxDeepPartial } from '../../public-api';
 
-type DynamicFormModel = DeepPartial<{
+type DynamicFormModel = NgxDeepPartial<{
   procedureType: 'typeA' | 'typeB' | 'typeC';
   fieldA?: string;
   fieldB?: string;

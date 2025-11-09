@@ -161,9 +161,8 @@ describe('ScControlWrapperComponent', () => {
 
     // Async validation suite for pending state tests
     const asyncSuite = staticSuite((data: TestModel = {}, field?: string) => {
-      if (field) {
-        only(field);
-      }
+      // ✅ CRITICAL: Always call only() unconditionally (PR #60 requirement)
+      only(field);
       vestTest('email', 'Email must be available', () => {
         return new Promise<void>((resolve, reject) => {
           setTimeout(() => {

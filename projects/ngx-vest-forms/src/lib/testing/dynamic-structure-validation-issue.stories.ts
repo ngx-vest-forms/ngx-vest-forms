@@ -3,25 +3,24 @@ import {
   Component,
   computed,
   signal,
-  ViewChild,
+  viewChild,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { vestForms } from '../exports';
 import { FormDirective } from '../directives/form.directive';
 import { userEvent, within, expect, waitFor } from 'storybook/test';
-import { DeepPartial } from '../utils/deep-partial';
-import { DeepRequired } from '../utils/deep-required';
+import type { NgxDeepPartial, NgxDeepRequired } from '../../public-api';
 import { clearFieldsWhen } from '../utils/field-clearing';
 import { staticSuite, test, enforce, omitWhen, only } from 'vest';
 import { JsonPipe } from '@angular/common';
 
-type DynamicFormModel = DeepPartial<{
+type DynamicFormModel = NgxDeepPartial<{
   procedureType: 'typeA' | 'typeB' | 'typeC';
   fieldA?: string;
   fieldB?: string;
 }>;
 
-const dynamicFormShape: DeepRequired<DynamicFormModel> = {
+const formShape: NgxDeepRequired<DynamicFormModel> = {
   procedureType: 'typeA',
   fieldA: '',
   fieldB: '',
@@ -29,9 +28,9 @@ const dynamicFormShape: DeepRequired<DynamicFormModel> = {
 
 const dynamicFormValidationSuite = staticSuite(
   (model: DynamicFormModel, field?: string) => {
-    if (field) {
-      only(field);
-    }
+    // ✅ CRITICAL: Always call only() unconditionally (PR #60 requirement)
+    // Calling only() conditionally corrupts Vest's execution tracking
+    only(field);
 
     test('procedureType', 'Procedure type is required', () => {
       enforce(model.procedureType).isNotBlank();
@@ -223,8 +222,8 @@ const dynamicFormValidationSuite = staticSuite(
 })
 export class DynamicStructureComponent {
   // Angular 20: Using ViewChild to access template reference
-  @ViewChild('vestForm', { static: true })
-  private readonly vestFormRef!: FormDirective<DynamicFormModel>;
+  protected readonly vestFormRef =
+    viewChild.required<FormDirective<DynamicFormModel>>('vestForm');
 
   // Angular 20: Using signals for state management
   protected readonly formValue = signal<DynamicFormModel>({});
