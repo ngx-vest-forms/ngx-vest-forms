@@ -15,6 +15,7 @@ import {
   set,
   setValueAtPath,
 } from './form-utils';
+import { ROOT_FORM } from '../constants';
 
 describe('getFormControlField function', () => {
   it('should return correct field name for FormControl in root FormGroup', () => {
@@ -290,6 +291,174 @@ describe('setValueAtPath function', () => {
       },
     });
   });
+
+  it('should set a value at root level', () => {
+    const object = {};
+    setValueAtPath(object, 'name', 'John Doe');
+    expect(object).toEqual({
+      name: 'John Doe',
+    });
+  });
+
+  it('should create nested objects for deep paths', () => {
+    const object = {};
+    setValueAtPath(object, 'user.profile.settings.theme', 'dark');
+    expect(object).toEqual({
+      user: {
+        profile: {
+          settings: {
+            theme: 'dark',
+          },
+        },
+      },
+    });
+  });
+
+  it('should overwrite existing values at the path', () => {
+    const object = {
+      address: {
+        city: 'Boston',
+        state: 'MA',
+      },
+    };
+    setValueAtPath(object, 'address.city', 'New York');
+    expect(object).toEqual({
+      address: {
+        city: 'New York',
+        state: 'MA',
+      },
+    });
+  });
+
+  it('should preserve existing nested properties', () => {
+    const object = {
+      user: {
+        name: 'John',
+        email: 'john@example.com',
+      },
+    };
+    setValueAtPath(object, 'user.age', 30);
+    expect(object).toEqual({
+      user: {
+        name: 'John',
+        email: 'john@example.com',
+        age: 30,
+      },
+    });
+  });
+
+  it('should handle setting undefined values', () => {
+    const object = {};
+    setValueAtPath(object, 'address.city', undefined);
+    expect(object).toEqual({
+      address: {
+        city: undefined,
+      },
+    });
+  });
+
+  it('should handle setting null values', () => {
+    const object = {};
+    setValueAtPath(object, 'address.city', null);
+    expect(object).toEqual({
+      address: {
+        city: null,
+      },
+    });
+  });
+
+  it('should handle setting object values', () => {
+    const object = {};
+    const addressValue = { street: '123 Main St', city: 'New York' };
+    setValueAtPath(object, 'address', addressValue);
+    expect(object).toEqual({
+      address: addressValue,
+    });
+  });
+
+  it('should handle setting array values', () => {
+    const object = {};
+    const tags = ['javascript', 'typescript', 'angular'];
+    setValueAtPath(object, 'user.tags', tags);
+    expect(object).toEqual({
+      user: {
+        tags: tags,
+      },
+    });
+  });
+
+  it('should handle paths with single segment', () => {
+    const object = {};
+    setValueAtPath(object, 'email', 'test@example.com');
+    expect(object).toEqual({
+      email: 'test@example.com',
+    });
+  });
+
+  it('should create intermediate objects when they do not exist', () => {
+    const object = {
+      user: {
+        name: 'John',
+      },
+    };
+    setValueAtPath(object, 'user.profile.bio', 'Developer');
+    expect(object).toEqual({
+      user: {
+        name: 'John',
+        profile: {
+          bio: 'Developer',
+        },
+      },
+    });
+  });
+
+  it('should handle numeric values', () => {
+    const object = {};
+    setValueAtPath(object, 'user.age', 25);
+    expect(object).toEqual({
+      user: {
+        age: 25,
+      },
+    });
+  });
+
+  it('should handle boolean values', () => {
+    const object = {};
+    setValueAtPath(object, 'user.active', true);
+    expect(object).toEqual({
+      user: {
+        active: true,
+      },
+    });
+  });
+
+  it('should handle zero as a value', () => {
+    const object = {};
+    setValueAtPath(object, 'count', 0);
+    expect(object).toEqual({
+      count: 0,
+    });
+  });
+
+  it('should handle empty string as a value', () => {
+    const object = {};
+    setValueAtPath(object, 'user.middleName', '');
+    expect(object).toEqual({
+      user: {
+        middleName: '',
+      },
+    });
+  });
+
+  it('should handle false as a value', () => {
+    const object = {};
+    setValueAtPath(object, 'settings.notifications', false);
+    expect(object).toEqual({
+      settings: {
+        notifications: false,
+      },
+    });
+  });
 });
 
 describe('set function (deprecated)', () => {
@@ -301,5 +470,143 @@ describe('set function (deprecated)', () => {
         city: 'New York',
       },
     });
+  });
+
+  it('should work identically to setValueAtPath', () => {
+    const obj1 = {};
+    const obj2 = {};
+
+    set(obj1, 'user.profile.name', 'John');
+    setValueAtPath(obj2, 'user.profile.name', 'John');
+
+    expect(obj1).toEqual(obj2);
+  });
+});
+
+describe('cloneDeep', () => {
+  it('should clone primitive values', () => {
+    expect(cloneDeep(42)).toBe(42);
+    expect(cloneDeep('test')).toBe('test');
+    expect(cloneDeep(true)).toBe(true);
+    expect(cloneDeep(null)).toBe(null);
+    expect(cloneDeep(undefined)).toBeUndefined();
+  });
+
+  it('should clone Date objects', () => {
+    const date = new Date('2025-01-01');
+    const cloned = cloneDeep(date);
+    expect(cloned).toBeInstanceOf(Date);
+    expect(cloned).toEqual(date);
+    expect(cloned).not.toBe(date);
+  });
+
+  it('should clone arrays', () => {
+    const arr = [1, 2, { nested: 'value' }];
+    const cloned = cloneDeep(arr);
+    expect(cloned).toEqual(arr);
+    expect(cloned).not.toBe(arr);
+    expect(cloned[2]).not.toBe(arr[2]);
+  });
+
+  it('should clone objects', () => {
+    const obj = { a: 1, b: { nested: 'value' } };
+    const cloned = cloneDeep(obj);
+    expect(cloned).toEqual(obj);
+    expect(cloned).not.toBe(obj);
+    expect(cloned.b).not.toBe(obj.b);
+  });
+
+  it('should handle deeply nested structures', () => {
+    const obj = {
+      level1: {
+        level2: {
+          level3: [1, 2, { deep: 'value' }],
+        },
+      },
+    };
+    const cloned = cloneDeep(obj);
+    expect(cloned).toEqual(obj);
+    expect(cloned.level1.level2.level3[2]).not.toBe(
+      obj.level1.level2.level3[2]
+    );
+  });
+});
+
+describe('getAllFormErrors', () => {
+  it('should return empty object when form is undefined', () => {
+    expect(getAllFormErrors(undefined)).toEqual({});
+  });
+
+  it('should collect root form errors', () => {
+    const form = new FormGroup({});
+    form.setErrors({ errors: ['Root error'] });
+    const errors = getAllFormErrors(form);
+    expect(errors[ROOT_FORM]).toEqual(['Root error']);
+  });
+
+  it('should collect errors from nested FormGroups', () => {
+    const form = new FormGroup({
+      user: new FormGroup({
+        name: new FormControl('', {
+          validators: () => ({ errors: ['Name error'] }),
+        }),
+      }),
+    });
+    form.updateValueAndValidity();
+    const errors = getAllFormErrors(form);
+    expect(errors['user.name']).toEqual(['Name error']);
+  });
+
+  it('should not collect errors from disabled controls', () => {
+    const control = new FormControl('', {
+      validators: () => ({ errors: ['Error'] }),
+    });
+    const form = new FormGroup({ field: control });
+    control.disable();
+    control.updateValueAndValidity();
+    const errors = getAllFormErrors(form);
+    expect(errors['field']).toBeUndefined();
+  });
+
+  it('should collect warnings as non-enumerable property', () => {
+    const control = new FormControl('', {
+      validators: () => ({
+        errors: ['Error'],
+        warnings: ['Warning'],
+      }),
+    });
+    const form = new FormGroup({ field: control });
+    control.updateValueAndValidity();
+    const errors = getAllFormErrors(form);
+    expect(errors['field']).toEqual(['Error']);
+    expect((errors['field'] as any).warnings).toEqual(['Warning']);
+    expect(Object.keys(errors['field'])).not.toContain('warnings');
+  });
+
+  it('should handle controls with only warnings', () => {
+    const control = new FormControl('', {
+      validators: () => ({ warnings: ['Warning'] }),
+    });
+    const form = new FormGroup({ field: control });
+    control.updateValueAndValidity();
+    const errors = getAllFormErrors(form);
+    expect(errors['field']).toEqual([]);
+    expect((errors['field'] as any).warnings).toEqual(['Warning']);
+  });
+
+  it('should collect errors from deeply nested structures', () => {
+    const deepControl = new FormControl('', {
+      validators: () => ({ errors: ['Deep error'] }),
+    });
+    const form = new FormGroup({
+      level1: new FormGroup({
+        level2: new FormGroup({
+          level3: deepControl,
+        }),
+      }),
+    });
+    deepControl.updateValueAndValidity();
+    const errors = getAllFormErrors(form);
+    expect(errors['level1.level2.level3']).toEqual(['Deep error']);
   });
 });

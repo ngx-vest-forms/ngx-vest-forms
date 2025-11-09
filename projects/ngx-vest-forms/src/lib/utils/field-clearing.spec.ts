@@ -148,6 +148,12 @@ describe('Field Clearing Utilities', () => {
       fieldA?: string;
       fieldB?: string;
       fieldC?: number;
+      nestedData?: {
+        subField: string;
+        deepNested?: {
+          value: number;
+        };
+      };
     }
 
     it('should clear specified fields unconditionally', () => {
@@ -246,6 +252,130 @@ describe('Field Clearing Utilities', () => {
         fieldA: undefined,
         nonExistentField: undefined,
       } as any);
+    });
+
+    it('should handle nested object fields', () => {
+      const initialState: TestFormModel = {
+        procedureType: 'typeA',
+        fieldA: 'valueA',
+        nestedData: {
+          subField: 'nested value',
+          deepNested: {
+            value: 42,
+          },
+        },
+      };
+
+      const result = clearFields(initialState, ['nestedData']);
+
+      expect(result).toEqual({
+        procedureType: 'typeA',
+        fieldA: 'valueA',
+        nestedData: undefined,
+      });
+    });
+
+    it('should clear multiple nested fields', () => {
+      const initialState: TestFormModel = {
+        procedureType: 'typeA',
+        fieldA: 'valueA',
+        fieldB: 'valueB',
+        nestedData: {
+          subField: 'nested',
+          deepNested: {
+            value: 100,
+          },
+        },
+      };
+
+      const result = clearFields(initialState, ['fieldA', 'nestedData']);
+
+      expect(result).toEqual({
+        procedureType: 'typeA',
+        fieldA: undefined,
+        fieldB: 'valueB',
+        nestedData: undefined,
+      });
+    });
+
+    it('should handle deeply nested structures', () => {
+      interface DeepModel {
+        level1?: {
+          level2?: {
+            level3?: {
+              value: string;
+            };
+          };
+        };
+        other?: string;
+      }
+
+      const initialState: DeepModel = {
+        level1: {
+          level2: {
+            level3: {
+              value: 'deep',
+            },
+          },
+        },
+        other: 'preserved',
+      };
+
+      const result = clearFields(initialState, ['level1']);
+
+      expect(result).toEqual({
+        level1: undefined,
+        other: 'preserved',
+      });
+    });
+
+    it('should handle arrays in nested objects', () => {
+      interface ModelWithArrays {
+        items?: string[];
+        nested?: {
+          tags?: string[];
+          count: number;
+        };
+      }
+
+      const initialState: ModelWithArrays = {
+        items: ['a', 'b', 'c'],
+        nested: {
+          tags: ['tag1', 'tag2'],
+          count: 5,
+        },
+      };
+
+      const result = clearFields(initialState, ['nested']);
+
+      expect(result).toEqual({
+        items: ['a', 'b', 'c'],
+        nested: undefined,
+      });
+    });
+
+    it('should preserve other nested properties when clearing sibling', () => {
+      interface SiblingModel {
+        data?: {
+          keep: string;
+          clear: string;
+        };
+      }
+
+      const initialState: SiblingModel = {
+        data: {
+          keep: 'preserved',
+          clear: 'removed',
+        },
+      };
+
+      // Note: clearFields works at top level, can't clear nested properties
+      // This test shows that clearing 'data' removes the entire object
+      const result = clearFields(initialState, ['data']);
+
+      expect(result).toEqual({
+        data: undefined,
+      });
     });
   });
 

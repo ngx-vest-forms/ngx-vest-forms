@@ -43,6 +43,46 @@ describe('arrayToObject', () => {
     expect(result[0]).toBe(obj1);
     expect(result[1]).toBe(obj2);
   });
+
+  it('should handle arrays with undefined elements', () => {
+    const inputArray = ['a', undefined, 'c'];
+    const expectedOutput = { 0: 'a', 1: undefined, 2: 'c' };
+    expect(arrayToObject(inputArray)).toEqual(expectedOutput);
+  });
+
+  it('should handle arrays with null elements', () => {
+    const inputArray = ['a', null, 'c'];
+    const expectedOutput = { 0: 'a', 1: null, 2: 'c' };
+    expect(arrayToObject(inputArray)).toEqual(expectedOutput);
+  });
+
+  it('should handle arrays with boolean values', () => {
+    const inputArray = [true, false, true];
+    const expectedOutput = { 0: true, 1: false, 2: true };
+    expect(arrayToObject(inputArray)).toEqual(expectedOutput);
+  });
+
+  it('should handle arrays with numeric values including zero', () => {
+    const inputArray = [0, 1, 2];
+    const expectedOutput = { 0: 0, 1: 1, 2: 2 };
+    expect(arrayToObject(inputArray)).toEqual(expectedOutput);
+  });
+
+  it('should handle large arrays', () => {
+    const inputArray = Array.from({ length: 100 }, (_, i) => `item${i}`);
+    const result = arrayToObject(inputArray);
+    expect(Object.keys(result).length).toBe(100);
+    expect(result[0]).toBe('item0');
+    expect(result[99]).toBe('item99');
+  });
+
+  it('should handle arrays with explicit undefined values', () => {
+    const inputArray = ['a', undefined, 'c'] as (string | undefined)[];
+    const result = arrayToObject(inputArray);
+    expect(result[0]).toBe('a');
+    expect(result[1]).toBeUndefined();
+    expect(result[2]).toBe('c');
+  });
 });
 
 describe('deepArrayToObject', () => {
@@ -180,6 +220,39 @@ describe('deepArrayToObject', () => {
       },
     });
   });
+
+  it('should not modify the original array or nested objects', () => {
+    const nestedObj = { val: 'test' };
+    const array = [['a', 'b'], [nestedObj]];
+    const originalCopy = JSON.parse(JSON.stringify(array));
+    const result = deepArrayToObject(array) as Record<
+      number,
+      Record<number, any>
+    >;
+
+    expect(array).toEqual(originalCopy);
+    expect(result[1][0]).not.toBe(nestedObj);
+  });
+
+  it('should handle arrays with complex objects', () => {
+    const date = new Date('2025-01-01');
+    const array = [date, { nested: [date] }];
+    const result = deepArrayToObject(array) as Record<number, any>;
+
+    // deepArrayToObject recursively processes objects, Date objects are handled
+    expect(typeof result[0]).toBe('object');
+    expect(typeof result[1].nested).toBe('object');
+    expect(result[1].nested[0]).toBeDefined();
+  });
+
+  it('should handle arrays with function properties in objects', () => {
+    const fn = () => 'test';
+    const array = [{ fn, arr: ['a'] }];
+    const result = deepArrayToObject(array) as Record<number, any>;
+
+    expect(result[0].fn).toBe(fn);
+    expect(result[0].arr).toEqual({ 0: 'a' });
+  });
 });
 
 describe('objectToArray', () => {
@@ -271,6 +344,86 @@ describe('objectToArray', () => {
     const snapshot = JSON.parse(JSON.stringify(model));
     objectToArray(model, ['phones']);
     expect(model).toEqual(snapshot); // original unmodified
+  });
+
+  it('should handle non-contiguous numeric keys', () => {
+    const model = { list: { 0: 'a', 2: 'c', 5: 'f' } };
+    const result = objectToArray(model, ['list']);
+    // objectToArray sorts numeric keys and creates array with sorted values
+    // Non-contiguous keys result in a sparse array
+    expect(result).toEqual({ list: ['a', 'c', 'f'] });
+  });
+
+  it('should handle very large numeric keys', () => {
+    const model = { list: { 0: 'first', 1000: 'last' } };
+    const result = objectToArray(model, ['list']) as { list: string[] };
+    // objectToArray creates array from sorted numeric keys
+    expect(result.list.length).toBe(2);
+    expect(result.list[0]).toBe('first');
+    expect(result.list[1]).toBe('last');
+  });
+
+  it('should not convert objects with negative numeric keys', () => {
+    const model = { data: { '-1': 'neg', 0: 'zero', 1: 'one' } } as any;
+    const result = objectToArray(model, ['data']);
+    expect(result).toEqual(model);
+  });
+
+  it('should not convert objects with decimal numeric keys', () => {
+    const model = { data: { '0.5': 'half', 0: 'zero', 1: 'one' } } as any;
+    const result = objectToArray(model, ['data']);
+    expect(result).toEqual(model);
+  });
+
+  it('should handle deeply nested conversions with multiple keys', () => {
+    const model = {
+      level1: {
+        0: {
+          level2: {
+            0: { level3: { 0: 'deep', 1: 'value' } },
+          },
+        },
+      },
+    };
+
+    // The objectToArray function's special case handling:
+    // When the result is a single-entry object with a converted array value,
+    // it returns just the array (unwraps the outer object)
+    const result = objectToArray(model, ['level1', 'level2', 'level3']);
+    expect(result).toEqual([
+      {
+        level2: [{ level3: ['deep', 'value'] }],
+      },
+    ]);
+  });
+
+  it('should handle empty conversion keys array', () => {
+    const model = {
+      phones: { 0: '123', 1: '456' },
+      tags: { 0: 'x' },
+    };
+    const result = objectToArray(model, []);
+    expect(result).toEqual(model);
+  });
+
+  it('should handle null and undefined values in numeric objects', () => {
+    const model = {
+      list: { 0: 'a', 1: null, 2: undefined, 3: 'd' },
+    };
+    const result = objectToArray(model, ['list']);
+    expect(result).toEqual({
+      list: ['a', null, undefined, 'd'],
+    });
+  });
+
+  it('should handle objects with string numeric keys (e.g., "0", "1")', () => {
+    const model = {
+      items: { '0': 'first', '1': 'second', '2': 'third' },
+    };
+    const result = objectToArray(model, ['items']);
+    expect(result).toEqual({
+      items: ['first', 'second', 'third'],
+    });
   });
 });
 
