@@ -3,7 +3,10 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "../../out-tsc/spec",
-    "types": ["jasmine"]
+    "types": ["jasmine"],
+    "paths": {
+      "ngx-vest-forms": ["projects/ngx-vest-forms/src/public-api.ts"]
+    }
   },
   "include": ["src/**/*.spec.ts", "src/**/*.d.ts"]
 }

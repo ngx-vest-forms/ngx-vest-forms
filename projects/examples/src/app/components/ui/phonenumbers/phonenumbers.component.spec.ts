@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { vestForms } from '../../../../../../ngx-vest-forms/src/lib/exports';
+import { vestForms } from 'ngx-vest-forms';
 import { PhonenumbersComponent } from './phonenumbers.component';
 
 @Component({
