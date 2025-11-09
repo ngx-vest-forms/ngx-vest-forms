@@ -25,7 +25,7 @@ import { NgxDeepPartial, NgxDeepRequired, NgxFormCompatibleDeepRequired } from '
 import { DeepPartial, DeepRequired, FormCompatibleDeepRequired } from 'ngx-vest-forms'; // Legacy aliases
 
 // Validation Suite Types
-import { NgxVestSuite, NgxTypedVestSuite, FormFieldName, NgxFieldKey } from 'ngx-vest-forms';
+import { NgxVestSuite, NgxFieldKey } from 'ngx-vest-forms';
 
 // Field Path Types (Type-safe field references with autocomplete)
 import { FieldPath, ValidationConfigMap, FieldPathValue, ValidateFieldPath, LeafFieldPath } from 'ngx-vest-forms';
@@ -185,19 +185,6 @@ export const badSuite = staticSuite((model, field?) => {
   if (field) { only(field); } // BUG: Breaks omitWhen + validationConfig!
   test('email', 'Required', () => enforce(model.email).isNotBlank());
 });
-
-// Recommended: Use NgxTypedVestSuite for autocomplete at definition, NgxVestSuite for component
-import { NgxTypedVestSuite, FormFieldName } from 'ngx-vest-forms';
-
-export const typedSuite: NgxTypedVestSuite<FormModel> = staticSuite(
-  (model: FormModel, field?: FormFieldName<FormModel>) => {
-    only(field); // Autocomplete for 'email' | 'name' | 'profile.age' | typeof ROOT_FORM!
-    test('email', 'Required', () => enforce(model.email).isNotBlank());
-  }
-);
-
-// Component - use NgxVestSuite type (no assertion needed)
-protected readonly suite: NgxVestSuite<FormModel> = typedSuite;
 
 // Conditional validation
 omitWhen((model.age || 0) >= 18, () => {
@@ -714,10 +701,10 @@ const config: ValidationConfigMap<FormModel> = {
 };
 
 // ✅ FormFieldName<T> - Field names for Vest suites (includes ROOT_FORM)
-export const suite: NgxTypedVestSuite<FormModel> = staticSuite(
-  (model: FormModel, field?: FormFieldName<FormModel>) => {
+export const suite: NgxVestSuite<FormModel> = staticSuite(
+  (model: FormModel, field?: string) => {
     only(field);
-    // ✅ Autocomplete: 'user' | 'user.email' | 'user.profile.age' | typeof ROOT_FORM
+    // Field parameter accepts any string field name
   }
 );
 
@@ -774,7 +761,6 @@ stringifyFieldPath(['form', 'sections', 0, 'fields', 'name']);
 | | `NgxDeepRequired<T>` | Required properties (shapes) | [Essential Patterns](#type-safe-form-models) |
 | | `NgxFormCompatibleDeepRequired<T>` | Date compatibility | [Essential Patterns](#type-safe-form-models) |
 | | `NgxVestSuite<T>` | Cleaner suite types | [Validation Patterns](#validation-patterns) |
-| | `NgxTypedVestSuite<T>` | Typed suite with autocomplete | [Validation Patterns](#validation-patterns) |
 | | `NgxFieldKey<T>` | Field name autocomplete (legacy) | [Validation Patterns](#validation-patterns) |
 | | `NgxFormState<T>` | Form state type | [Advanced Features](#utility-functions) |
 | **Field Paths** | `FieldPath<T>` | Type-safe field paths | [Field Path Types](#field-path-types-and-utilities) |

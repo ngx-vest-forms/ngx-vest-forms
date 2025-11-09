@@ -12,8 +12,6 @@ import {
   NgxDeepPartial,
   NgxDeepRequired,
   NgxVestSuite,
-  NgxTypedVestSuite,
-  FormFieldName,
 } from 'ngx-vest-forms';
 
 // 1. Define your form model (always NgxDeepPartial)
@@ -30,14 +28,12 @@ const userFormShape: NgxDeepRequired<UserFormModel> = {
   email: '',
 };
 
-// 3. Create a Vest validation suite with proper typing
-// ✅ RECOMMENDED: Define with NgxTypedVestSuite for autocomplete
-const userValidationSuite: NgxTypedVestSuite<UserFormModel> = staticSuite(
-  (model: UserFormModel, field?: FormFieldName<UserFormModel>) => {
+// 3. Create a Vest validation suite
+const userValidationSuite: NgxVestSuite<UserFormModel> = staticSuite(
+  (model: UserFormModel, field?: string) => {
     // CRITICAL: Always call only() unconditionally (only(undefined) is safe)
     only(field); // When field is undefined, all tests run
 
-    // ✅ Autocomplete suggests: 'firstName' | 'lastName' | 'email' | typeof ROOT_FORM
     test('firstName', 'First name is required', () => {
       enforce(model.firstName).isNotBlank();
     });
@@ -87,8 +83,7 @@ const userValidationSuite: NgxTypedVestSuite<UserFormModel> = staticSuite(
 })
 export class UserFormComponent {
   protected readonly formValue = signal<UserFormModel>({});
-  // ✅ Use NgxVestSuite type in component (no type assertion needed)
-  protected readonly suite: NgxVestSuite<UserFormModel> = userValidationSuite;
+  protected readonly suite = userValidationSuite;
   protected readonly shape = userFormShape;
 
   protected onSubmit() {

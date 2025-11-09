@@ -2,21 +2,21 @@
 
 ## Overview
 
-This document explains why we use `NgxTypedVestSuite` for validation suite definitions and `NgxVestSuite` for component properties, and demonstrates the TypeScript contravariance issue that makes this pattern necessary.
+This document explains the relationship between `NgxTypedVestSuite` and `NgxVestSuite`, and shows how to use strong typing with `FormFieldName<T>` autocomplete in your validation suites.
 
 ## Table of Contents
 
-- [The Problem](#the-problem)
-- [The Solution](#the-solution)
-- [Three Approaches](#three-approaches)
+- [Quick Start](#quick-start)
+- [Why Two Types?](#why-two-types)
 - [Recommended Pattern](#recommended-pattern)
+- [Type Inference Pattern](#type-inference-pattern)
 - [Technical Explanation](#technical-explanation)
 
 ---
 
-## The Problem
+## Quick Start
 
-TypeScript's `strictFunctionTypes` setting enforces contravariance for function parameters. This creates a type incompatibility between our two suite types:
+Use `NgxTypedVestSuite` to get autocomplete for field names:
 
 ```typescript
 import { staticSuite, test, enforce, only } from 'vest';
@@ -30,153 +30,140 @@ import {
 type UserModel = NgxDeepPartial<{
   email: string;
   password: string;
+  profile: {
+    age: number;
+  };
 }>;
 
-// ✅ Define with NgxTypedVestSuite - gets autocomplete
-const typedSuite: NgxTypedVestSuite<UserModel> = staticSuite(
+// ✅ BEST: Define with NgxTypedVestSuite for strong typing
+export const userSuite: NgxTypedVestSuite<UserModel> = staticSuite(
   (model: UserModel, field?: FormFieldName<UserModel>) => {
     only(field);
+    // ✅ IDE autocomplete for: 'email' | 'password' | 'profile' | 'profile.age' | typeof ROOT_FORM
     test('email', 'Required', () => enforce(model.email).isNotBlank());
+    test('profile.age', 'Must be 18+', () =>
+      enforce(model.profile?.age).greaterThanOrEquals(18)
+    );
   }
 );
 
-// ✅ Define with NgxVestSuite - works but no autocomplete
-const untypedSuite: NgxVestSuite<UserModel> = staticSuite(
-  (model: UserModel, field?: string) => {
-    only(field);
-    test('email', 'Required', () => enforce(model.email).isNotBlank());
-  }
-);
+// Component - use type inference (no explicit type needed)
+@Component({...})
+class UserFormComponent {
+  protected readonly suite = userSuite; // ✅ Works in templates, type inferred
+  protected readonly formValue = signal<UserModel>({});
+}
 ```
-
-## The Solution
-
-`NgxVestSuite` uses `any` for the field parameter, which accepts **both** `string` and `FormFieldName<T>`. This strategic use of `any` is safe because:
-
-- Model parameter `T` remains fully typed
-- Field validation happens at validation suite definition
-- Runtime behavior is identical
 
 ---
 
-## Three Approaches
+## Why Two Types?
 
-### Option 1: Use NgxTypedVestSuite in Component
+**`NgxTypedVestSuite<T>`**: Strong typing with `FormFieldName<T>` autocomplete
 
-```typescript
-class ComponentWithTypedSuite {
-  // ❌ TypeScript ERROR if strictFunctionTypes is enabled:
-  // Type 'NgxTypedVestSuite<UserModel>' is not assignable to type 'NgxVestSuite<UserModel>'
-  //
-  // Why? Because function parameters are contravariant:
-  // - NgxTypedVestSuite expects: field?: FormFieldName<UserModel>
-  // - NgxVestSuite accepts: field?: any
-  // - FormFieldName<UserModel> is MORE SPECIFIC than any
-  // - You can't assign a more specific type to a less specific type in contravariant position
+- Use when **defining** validation suites
+- Provides IDE autocomplete for all valid field paths
+- Catches typos at compile time
 
-  // This would work with type inference:
-  protected readonly suiteInferred = typedSuite; // ✅ Type is inferred as NgxTypedVestSuite<UserModel>
+**`NgxVestSuite<T>`**: Flexible base type with `any` field parameter
 
-  // But if you explicitly type it as NgxVestSuite, you get an error:
-  // protected readonly suiteExplicit: NgxVestSuite<UserModel> = typedSuite; // ❌ Type error!
-}
-```
-
-**Verdict**: ❌ Creates type errors with explicit typing
-
-### Option 2: Use NgxVestSuite in Component (RECOMMENDED)
-
-```typescript
-class ComponentWithUntypedSuite {
-  // ✅ Works perfectly - types are compatible
-  protected readonly suite: NgxVestSuite<UserModel> = typedSuite; // ✅ No error!
-
-  // Why does this work?
-  // Because NgxVestSuite uses `any` for the field parameter,
-  // which accepts BOTH string and FormFieldName<UserModel>
-}
-```
-
-**Verdict**: ✅ Recommended - Best balance of type safety and flexibility
-
-### Option 3: Use Type Inference
-
-```typescript
-class ComponentWithInference {
-  // ✅ This works, but loses the benefit of explicit typing
-  protected readonly suite = typedSuite;
-
-  // Problem: The inferred type is NgxTypedVestSuite<UserModel>
-  // This means if you later want to accept different suite types
-  // or use it in a more flexible way, you're stuck with the specific type
-}
-```
-
-**Verdict**: ⚠️ Works but loses documentation value of explicit typing
+- Used internally by the form directive
+- Accepts **both** typed and untyped suites seamlessly
+- The `any` is safe because model parameter remains fully typed
 
 ---
 
 ## Recommended Pattern
 
-The best approach combines both types:
-
-1. Define suite with `NgxTypedVestSuite` for autocomplete
-2. Assign to `NgxVestSuite` property for compatibility
+**Always use `NgxTypedVestSuite` when defining validation suites, and let TypeScript infer the type in components:**
 
 ```typescript
-class RecommendedPattern {
-  // ✅ Define validation with NgxTypedVestSuite
-  private static readonly validationSuite: NgxTypedVestSuite<UserModel> =
-    staticSuite((model: UserModel, field?: FormFieldName<UserModel>) => {
-      only(field);
-      // ✅ IDE suggests: 'email' | 'password' | typeof ROOT_FORM
-      test('email', 'Required', () => enforce(model.email).isNotBlank());
-    });
+// ✅ RECOMMENDED: Strong typing at definition
+export const userValidation: NgxTypedVestSuite<UserModel> = staticSuite(
+  (model: UserModel, field?: FormFieldName<UserModel>) => {
+    only(field);
+    // Full autocomplete for field names
+    test('email', 'Required', () => enforce(model.email).isNotBlank());
+  }
+);
 
-  // ✅ Use NgxVestSuite in component for flexibility
-  protected readonly suite: NgxVestSuite<UserModel> =
-    RecommendedPattern.validationSuite;
+// ✅ In component: Use type inference
+@Component({...})
+class MyFormComponent {
+  protected readonly suite = userValidation; // ✅ No explicit type needed
+  protected readonly formValue = signal<UserModel>({});
 }
 ```
 
-**Benefits**:
+**Why this works:**
 
-- Get autocomplete at definition site (where you write validation logic)
-- Explicit typing in component (self-documenting, flexible)
-- No type errors (NgxVestSuite accepts both typed and untyped suites)
-- Works with Angular's strict template checking
-- Can be used in functions that accept NgxVestSuite
+- `NgxVestSuite` uses `any` for field parameter
+- Accepts both `string` and `FormFieldName<T>`
+- No type compatibility issues
+- Full type safety where it matters (validation definition)
+
+---
+
+## Type Inference Pattern
+
+If you prefer explicit typing in components, you can use `NgxVestSuite`:
+
+```typescript
+@Component({...})
+class MyFormComponent {
+  // ✅ Also works: Explicit NgxVestSuite type
+  protected readonly suite: NgxVestSuite<UserModel> = userValidation;
+  protected readonly formValue = signal<UserModel>({});
+}
+```
+
+**Both patterns are valid - choose based on your team's preference.**
 
 ---
 
 ## Technical Explanation
 
-### TypeScript Function Parameter Contravariance
+### Why `any` for Field Parameter?
 
-When `strictFunctionTypes` is enabled (which it should be for type safety), function parameters are contravariant. This means:
+`NgxVestSuite` uses `any` for the field parameter to accept both:
 
-If you have:
+1. Plain `string` field names
+2. `FormFieldName<T>` from `NgxTypedVestSuite` (string literal union with autocomplete)
 
-- Type A with parameter `(field?: FormFieldName<T>)` — More specific
-- Type B with parameter `(field?: any)` — Less specific
+This strategic use of `any` is safe because:
 
-Then:
+- **Model parameter `T` remains fully typed** - This is where type safety matters most
+- **Field validation happens at definition site** - Errors caught when writing validation logic
+- **Runtime behavior is identical** - `string` and `FormFieldName<T>` are both strings at runtime
+- **Enables type compatibility** - `NgxTypedVestSuite` works where `NgxVestSuite` is expected
 
-- A is **NOT** assignable to B (contravariance rule)
-- B **IS** assignable to A (any accepts everything)
+### Type System Flow
 
-### Our Solution
+```typescript
+// 1. Define with strong typing
+export const suite: NgxTypedVestSuite<UserModel> = staticSuite(
+  (model: UserModel, field?: FormFieldName<UserModel>) => {
+    // FormFieldName<UserModel> = 'email' | 'password' | 'profile' | 'profile.age' | typeof ROOT_FORM
+    only(field); // ✅ Type-safe autocomplete
+  }
+);
 
-- `NgxTypedVestSuite` has `FormFieldName<T>` parameter (specific, autocomplete)
-- `NgxVestSuite` has `any` parameter (flexible, accepts both)
-- Define with `NgxTypedVestSuite`, assign to `NgxVestSuite` property
-- Result: Autocomplete where you need it, compatibility everywhere else
+// 2. Form directive accepts both types
+@Directive(...)
+class FormDirective<T> {
+  suite = input<NgxVestSuite<T> | NgxTypedVestSuite<T> | null>(null);
+  //             ^^^^^^^^^^^^^ - accepts any field parameter
+  //                             ^^^^^^^^^^^^^^^^^^^ - strong typed field parameter
+}
 
-### Why `any` is Safe Here
+// 3. Runtime execution (both use same code path)
+(suite as NgxVestSuite<T>)(model, field).done(...);
+// Cast to NgxVestSuite for uniform execution
+```
 
-The `any` in `NgxVestSuite` is safe because:
+### Benefits
 
-1. Model parameter `(T)` remains fully typed
-2. Field validation happens at validation suite definition
-3. Runtime behavior is identical
-4. Type safety enforced where it matters (suite creation)
+✅ **Strong typing where you write code** - `FormFieldName<T>` autocomplete when defining validations
+✅ **Flexibility where you use code** - Works seamlessly in templates and components
+✅ **Type safety** - Model parameter `T` remains fully typed throughout
+✅ **No type assertions needed** - Everything just works

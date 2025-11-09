@@ -10,7 +10,6 @@ import {
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import {
   clearFields,
-  NgxVestSuite,
   ROOT_FORM,
   setValueAtPath,
   ValidationConfigMap,
@@ -45,8 +44,9 @@ export class PurchaseFormComponent {
   protected readonly formValid = signal<boolean>(false);
   protected readonly loading = signal<boolean>(false);
   protected readonly errors = signal<Record<string, string[]>>({});
-  protected readonly purchaseValidationSuite: NgxVestSuite<PurchaseFormModel> =
-    createPurchaseValidationSuite(this.swapiService);
+  protected readonly purchaseValidationSuite = createPurchaseValidationSuite(
+    this.swapiService
+  );
   private readonly shippingAddress = signal<AddressModel>({});
   protected readonly shape = purchaseFormShape;
   private readonly viewModel = computed(() => {

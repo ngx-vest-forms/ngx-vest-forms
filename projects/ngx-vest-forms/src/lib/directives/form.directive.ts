@@ -53,7 +53,7 @@ import {
   setValueAtPath,
 } from '../utils/form-utils';
 import { validateShape } from '../utils/shape-validation';
-import { NgxVestSuite } from '../utils/validation-suite';
+import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
 import { ValidationOptions } from './validation-options';
 
 /**
@@ -134,11 +134,14 @@ export class FormDirective<T extends Record<string, any>> {
   public readonly formValue = input<T | null>(null);
 
   /**
-   * Static vest suite that will be used to feed our angular validators
-   * Accepts both NgxVestSuite (with string field) and NgxTypedVestSuite (with FormFieldName<T> field)
-   * through the flexible callback signature
+   * Static vest suite that will be used to feed our angular validators.
+   * Accepts both NgxVestSuite and NgxTypedVestSuite through compatible type signatures.
+   * NgxTypedVestSuite<T> is assignable to NgxVestSuite<T> due to bivariance and
+   * FormFieldName<T> (string literal union) being assignable to string.
    */
-  public readonly suite = input<NgxVestSuite<T> | null>(null);
+  public readonly suite = input<NgxVestSuite<T> | NgxTypedVestSuite<T> | null>(
+    null
+  );
 
   /**
    * The shape of our form model. This is a deep required version of the form model
@@ -532,7 +535,9 @@ export class FormDirective<T extends Record<string, any>> {
           (snap) =>
             new Observable<ValidationErrors | null>((observer) => {
               try {
-                suite(snap, field).done((result: any) => {
+                // Cast to NgxVestSuite to accept string field parameter
+                // Both NgxVestSuite and NgxTypedVestSuite work with string at runtime
+                (suite as NgxVestSuite<T>)(snap, field).done((result: any) => {
                   const errors = result.getErrors()[field];
                   const warnings = result.getWarnings()[field];
 

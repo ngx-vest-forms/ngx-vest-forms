@@ -283,10 +283,10 @@ This is why you must use the `?` operator in templates:
 
 ### Validation Suite Type Safety
 
-Use `NgxVestSuite<T>` for cleaner validation suite types. For maximum type safety with IDE autocomplete, define suites with `NgxTypedVestSuite<T>` and assign to `NgxVestSuite<T>` in components:
+Use `NgxVestSuite<T>` for type-safe validation suites:
 
 ```typescript
-import { NgxVestSuite, NgxTypedVestSuite, FormFieldName, NgxDeepPartial } from 'ngx-vest-forms';
+import { NgxVestSuite, NgxDeepPartial } from 'ngx-vest-forms';
 import { staticSuite, only, test, enforce } from 'vest';
 
 type FormModel = NgxDeepPartial<{
@@ -297,12 +297,11 @@ type FormModel = NgxDeepPartial<{
   };
 }>;
 
-// ✅ RECOMMENDED: Define with NgxTypedVestSuite for autocomplete
-export const validationSuite: NgxTypedVestSuite<FormModel> = staticSuite(
-  (model: FormModel, field?: FormFieldName<FormModel>) => {
+// Create validation suite
+export const validationSuite: NgxVestSuite<FormModel> = staticSuite(
+  (model: FormModel, field?: string) => {
     only(field); // CRITICAL: Always call only() unconditionally
 
-    // IDE autocomplete suggests: 'email' | 'password' | 'profile' | 'profile.age' | typeof ROOT_FORM
     test('email', 'Email is required', () => {
       enforce(model.email).isNotBlank();
     });
@@ -313,54 +312,20 @@ export const validationSuite: NgxTypedVestSuite<FormModel> = staticSuite(
   }
 );
 
-// Component - use NgxVestSuite type (no assertion needed)
+// Component - use directly
 @Component({...})
 class MyFormComponent {
-  // ✅ Types are compatible - no type assertion needed
-  protected readonly suite: NgxVestSuite<FormModel> = validationSuite;
+  protected readonly suite = validationSuite;
   protected readonly formValue = signal<FormModel>({});
 }
-
-// ✅ ALTERNATIVE: Simple form without autocomplete
-const simpleSuite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
-  only(field);
-  test('email', 'Required', () => enforce(model.email).isNotBlank());
-});
-
-// ❌ Old verbose way (still works but more complex)
-// const suite: StaticSuite<string, string, (model: FormModel, field?: string) => void> = ...
 ```
 
 **Key Benefits:**
 
-- **NgxTypedVestSuite**: Provides `FormFieldName<T>` autocomplete at validation definition site
-- **NgxVestSuite**: Accepts both typed and untyped suites, works in Angular templates
-- **No Type Assertions**: Types are compatible by design - no `as any` casts needed
-- **Type Safety**: Full TypeScript support where it matters (validation suite definition)
-- **Template Compatibility**: Works seamlessly in Angular templates without `$any()` casts
-
-#### Why This Pattern? (TypeScript Contravariance Explained)
-
-The two-step pattern (define with `NgxTypedVestSuite`, assign to `NgxVestSuite`) exists because of **TypeScript's contravariance rules** for function parameters:
-
-1. **The Problem**: `NgxTypedVestSuite<T>` cannot be directly assigned to `NgxVestSuite<T>`
-   - `NgxTypedVestSuite` expects: `field?: FormFieldName<T>` (more specific type)
-   - `NgxVestSuite` accepts: `field?: any` (less specific type)
-   - TypeScript contravariance: more specific → less specific = type error
-
-2. **The Solution**: `NgxVestSuite` uses strategic `any` for the field parameter
-   - Accepts **both** `string` and `FormFieldName<T>` field parameters
-   - The `any` is **safe** because:
-     - Model parameter `T` remains fully typed (type safety where it matters)
-     - Field validation happens at validation suite definition
-     - Runtime behavior is identical
-
-3. **Alternative Options**:
-   - ❌ **Use `NgxTypedVestSuite` everywhere**: Type error when assigning to component properties
-   - ⚠️ **Use type inference** (`const suite = ...`): Works but loses explicit typing documentation
-   - ✅ **Recommended pattern**: Best of both worlds (autocomplete + compatibility)
-
-> **📖 Complete explanation**: See [docs/TYPE-COMPATIBILITY.md](docs/TYPE-COMPATIBILITY.md) for a detailed technical breakdown with examples of all three approaches.
+- **Type Safety**: Full TypeScript support for model and field parameters
+- **Template Compatibility**: Works seamlessly in Angular templates
+- **Simplified API**: Single type for all validation suite needs
+- **No Type Assertions**: No `as any` or `$any()` casts needed
 
 ### Form State Type and Utilities
 
