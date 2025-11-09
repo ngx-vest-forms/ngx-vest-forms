@@ -36,9 +36,11 @@ jobs:
           node -e "try { require('@swc/core'); console.log('SWC loaded successfully'); } catch(e) { console.error('SWC failed to load:', e.message); process.exit(1); }"
       - name: Playwright install
         run: npx playwright install --with-deps
+      - name: Build library
+        run: npm run build:lib
       - name: Test
-        run: npm run test:lib  # TODO: Re-enable test:examples when timing issues are resolved (PR #60)
+        run: npm run test:ci
       - name: Integration test
         run: npm run storybook:test
-      - name: Build
-        run: npm run build:ci
+      - name: Build examples app
+        run: npm run build:app
