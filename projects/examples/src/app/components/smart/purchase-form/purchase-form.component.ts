@@ -1,33 +1,33 @@
+import { JsonPipe } from '@angular/common';
 import {
-  vestForms,
-  clearFields,
-  setValueAtPath,
-  ValidationConfigMap,
-  NgxVestSuite,
-  ROOT_FORM,
-} from 'ngx-vest-forms';
-import {
+  ChangeDetectionStrategy,
   Component,
   computed,
   effect,
   inject,
   signal,
-  ChangeDetectionStrategy,
 } from '@angular/core';
-import { JsonPipe } from '@angular/common';
-import { AddressComponent } from '../../ui/address/address.component';
-import { PhonenumbersComponent } from '../../ui/phonenumbers/phonenumbers.component';
-import { LukeService } from '../../../luke.service';
-import { SwapiService } from '../../../swapi.service';
-import { ProductService } from '../../../product.service';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import {
+  clearFields,
+  NgxVestSuite,
+  ROOT_FORM,
+  setValueAtPath,
+  ValidationConfigMap,
+  vestForms,
+} from 'ngx-vest-forms';
+import { debounceTime, filter, switchMap } from 'rxjs';
+import { LukeService } from '../../../luke.service';
+import { AddressModel } from '../../../models/address.model';
 import {
   PurchaseFormModel,
   purchaseFormShape,
 } from '../../../models/purchase-form.model';
+import { ProductService } from '../../../product.service';
+import { SwapiService } from '../../../swapi.service';
 import { createPurchaseValidationSuite } from '../../../validations/purchase.validations';
-import { AddressModel } from '../../../models/address.model';
-import { debounceTime, filter, switchMap } from 'rxjs';
+import { AddressComponent } from '../../ui/address/address.component';
+import { PhonenumbersComponent } from '../../ui/phonenumbers/phonenumbers.component';
 
 @Component({
   selector: 'sc-purchase-form',

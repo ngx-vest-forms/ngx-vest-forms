@@ -1,8 +1,8 @@
-import { Component, signal, viewChild } from '@angular/core';
 import { JsonPipe } from '@angular/common';
+import { Component, signal, viewChild } from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { staticSuite, test as vestTest, enforce, only } from 'vest';
+import { enforce, only, staticSuite, test as vestTest } from 'vest';
 import { vestForms } from '../exports';
 import { FormDirective } from './form.directive';
 

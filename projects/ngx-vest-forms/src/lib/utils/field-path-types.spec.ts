@@ -1,12 +1,12 @@
+import { ROOT_FORM } from '../constants';
 import type {
   FieldPath,
-  ValidationConfigMap,
-  FormFieldName,
   FieldPathValue,
-  ValidateFieldPath,
+  FormFieldName,
   LeafFieldPath,
+  ValidateFieldPath,
+  ValidationConfigMap,
 } from './field-path-types';
-import { ROOT_FORM } from '../constants';
 
 describe('field-path-types', () => {
   describe('FieldPath', () => {

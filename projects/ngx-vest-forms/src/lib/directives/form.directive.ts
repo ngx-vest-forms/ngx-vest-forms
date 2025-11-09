@@ -1,62 +1,60 @@
 // ... existing code ...
 import {
+  computed,
+  DestroyRef,
   Directive,
+  effect,
   inject,
   input,
-  effect,
-  untracked,
-  DestroyRef,
+  InputSignal,
   isDevMode,
   linkedSignal,
-  computed,
-  InputSignal,
+  untracked,
 } from '@angular/core';
 import {
-  takeUntilDestroyed,
   outputFromObservable,
+  takeUntilDestroyed,
   toObservable,
   toSignal,
 } from '@angular/core/rxjs-interop';
 import {
+  AbstractControl,
   AsyncValidatorFn,
   NgForm,
   PristineChangeEvent,
   StatusChangeEvent,
-  ValueChangeEvent,
   ValidationErrors,
-  AbstractControl,
-  FormGroup,
+  ValueChangeEvent,
 } from '@angular/forms';
 import {
+  catchError,
   debounceTime,
   distinctUntilChanged,
+  EMPTY,
   filter,
-  finalize,
+  map,
   Observable,
   of,
+  merge as rxMerge,
   startWith,
   switchMap,
   take,
   tap,
-  catchError,
-  map,
-  EMPTY,
-  merge as rxMerge,
   timer,
 } from 'rxjs';
+import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import { DeepRequired } from '../utils/deep-required';
+import { fastDeepEqual } from '../utils/equality';
+import type { ValidationConfigMap } from '../utils/field-path-types';
+import { NgxFormState } from '../utils/form-state.utils';
 import {
   getAllFormErrors,
   mergeValuesAndRawValues,
   setValueAtPath,
 } from '../utils/form-utils';
-import { NgxFormState } from '../utils/form-state.utils';
-import { NgxVestSuite } from '../utils/validation-suite';
-import { fastDeepEqual } from '../utils/equality';
 import { validateShape } from '../utils/shape-validation';
+import { NgxVestSuite } from '../utils/validation-suite';
 import { ValidationOptions } from './validation-options';
-import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
-import type { ValidationConfigMap } from '../utils/field-path-types';
 
 /**
  * Type for validation configuration that accepts both the typed and untyped versions.

@@ -1,5 +1,6 @@
-import { Component, Input } from '@angular/core';
 import { KeyValuePipe } from '@angular/common';
+import { Component, Input } from '@angular/core';
+import { NgModelGroup } from '@angular/forms';
 import {
   arrayToObject,
   DeepPartial,
@@ -8,7 +9,6 @@ import {
 } from 'ngx-vest-forms';
 import { BusinessHourFormModel } from '../../../models/business-hours-form.model';
 import { BusinessHourComponent } from '../business-hour/business-hour.component';
-import { NgModelGroup } from '@angular/forms';
 
 @Component({
   selector: 'sc-business-hours',

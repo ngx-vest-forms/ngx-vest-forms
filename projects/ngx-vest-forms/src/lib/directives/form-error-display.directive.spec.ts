@@ -21,7 +21,7 @@ import type { ScErrorDisplayMode } from './form-error-display.directive';
  */
 
 import { Component, inject } from '@angular/core';
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { FormErrorDisplayDirective } from './form-error-display.directive';
 // (removed broken import block)

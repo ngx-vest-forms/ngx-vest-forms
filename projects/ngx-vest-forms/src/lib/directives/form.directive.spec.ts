@@ -1,10 +1,10 @@
-import { Component, signal, ViewChild } from '@angular/core';
-import { vestForms } from '../exports';
-import { render } from '@testing-library/angular';
-import { staticSuite, only, enforce } from 'vest';
-import { Observable, isObservable } from 'rxjs';
-import { FormDirective } from '../directives/form.directive';
 import { AsyncPipe } from '@angular/common';
+import { Component, signal, ViewChild } from '@angular/core';
+import { render } from '@testing-library/angular';
+import { isObservable, Observable } from 'rxjs';
+import { enforce, only, staticSuite } from 'vest';
+import { FormDirective } from '../directives/form.directive';
+import { vestForms } from '../exports';
 // Helper to await either a Promise or Observable
 async function awaitResult<T>(result: Promise<T> | Observable<T>) {
   if (isObservable(result)) {

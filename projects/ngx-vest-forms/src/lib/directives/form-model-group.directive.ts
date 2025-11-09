@@ -5,9 +5,9 @@ import {
   NG_ASYNC_VALIDATORS,
   ValidationErrors,
 } from '@angular/forms';
-import { FormDirective } from './form.directive';
 import { Observable, from, of } from 'rxjs';
 import { getFormGroupField } from '../utils/form-utils';
+import { FormDirective } from './form.directive';
 import { ValidationOptions } from './validation-options';
 
 /**

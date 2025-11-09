@@ -1,15 +1,15 @@
+import { provideHttpClient } from '@angular/common/http';
 import { bootstrapApplication } from '@angular/platform-browser';
-import { AppComponent } from './app/app.component';
 import {
   provideRouter,
   Routes,
   withEnabledBlockingInitialNavigation,
 } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
-import { PurchaseFormComponent } from './app/components/smart/purchase-form/purchase-form.component';
-import { BusinessHoursFormComponent } from './app/components/smart/business-hours-form/business-hours-form.component';
 import { provideEnvironmentNgxMask } from 'ngx-mask';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
+import { AppComponent } from './app/app.component';
+import { BusinessHoursFormComponent } from './app/components/smart/business-hours-form/business-hours-form.component';
+import { PurchaseFormComponent } from './app/components/smart/purchase-form/purchase-form.component';
 
 const appRoutes: Routes = [
   {

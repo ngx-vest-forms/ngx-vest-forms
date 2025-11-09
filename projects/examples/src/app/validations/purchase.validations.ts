@@ -1,10 +1,10 @@
+import { FormFieldName, NgxTypedVestSuite, ROOT_FORM } from 'ngx-vest-forms';
+import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 import { PurchaseFormModel } from '../models/purchase-form.model';
+import { SwapiService } from '../swapi.service';
 import { addressValidations } from './address.validations';
 import { phonenumberValidations } from './phonenumber.validations';
-import { SwapiService } from '../swapi.service';
-import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
-import { NgxTypedVestSuite, FormFieldName, ROOT_FORM } from 'ngx-vest-forms';
 
 export const createPurchaseValidationSuite = (
   swapiService: SwapiService

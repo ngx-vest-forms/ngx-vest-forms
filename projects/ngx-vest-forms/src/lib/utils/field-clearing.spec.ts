@@ -1,4 +1,4 @@
-import { clearFieldsWhen, clearFields, keepFieldsWhen } from './field-clearing';
+import { clearFields, clearFieldsWhen, keepFieldsWhen } from './field-clearing';
 
 describe('Field Clearing Utilities', () => {
   describe('clearFieldsWhen', () => {

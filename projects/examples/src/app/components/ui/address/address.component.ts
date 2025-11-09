@@ -1,4 +1,4 @@
-import { Component, input, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 import { vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 import { AddressModel } from '../../../models/address.model';

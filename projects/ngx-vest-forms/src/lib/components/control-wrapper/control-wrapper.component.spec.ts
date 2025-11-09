@@ -1,8 +1,7 @@
 import { Component, signal } from '@angular/core';
-import { render, screen, fireEvent } from '@testing-library/angular';
-import { waitFor } from '@testing-library/angular';
+import { fireEvent, render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { enforce, staticSuite, test as vestTest, only } from 'vest';
+import { enforce, only, staticSuite, test as vestTest } from 'vest';
 import { vestForms } from '../../exports';
 
 // Test validation suite for the component tests

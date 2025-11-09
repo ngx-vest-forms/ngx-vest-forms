@@ -1,11 +1,11 @@
+import { KeyValuePipe } from '@angular/common';
 import {
+  ChangeDetectionStrategy,
   Component,
   input,
-  signal,
   output,
-  ChangeDetectionStrategy,
+  signal,
 } from '@angular/core';
-import { KeyValuePipe } from '@angular/common';
 import {
   arrayToObject,
   vestForms,

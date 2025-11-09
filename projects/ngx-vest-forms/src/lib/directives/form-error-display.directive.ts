@@ -1,13 +1,13 @@
 import {
   Directive,
   computed,
+  effect,
   inject,
   input,
   signal,
-  effect,
 } from '@angular/core';
-import { SC_ERROR_DISPLAY_MODE_TOKEN } from './error-display-mode.token';
 import { NgForm } from '@angular/forms';
+import { SC_ERROR_DISPLAY_MODE_TOKEN } from './error-display-mode.token';
 import { FormControlStateDirective } from './form-control-state.directive';
 
 export type ScErrorDisplayMode = 'on-blur' | 'on-submit' | 'on-blur-or-submit';

@@ -1,11 +1,5 @@
-import {
-  EmailValidator,
-  FormArray,
-  FormControl,
-  FormGroup,
-  RequiredValidator,
-  Validators,
-} from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
+import { ROOT_FORM } from '../constants';
 import {
   cloneDeep,
   getAllFormErrors,
@@ -15,7 +9,6 @@ import {
   set,
   setValueAtPath,
 } from './form-utils';
-import { ROOT_FORM } from '../constants';
 
 describe('getFormControlField function', () => {
   it('should return correct field name for FormControl in root FormGroup', () => {

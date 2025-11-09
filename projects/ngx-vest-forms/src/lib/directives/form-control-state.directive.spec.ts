@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { FormControlStateDirective } from './form-control-state.directive';
 

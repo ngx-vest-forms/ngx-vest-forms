@@ -1,11 +1,11 @@
+import { JsonPipe } from '@angular/common';
 import { Component, signal, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { JsonPipe } from '@angular/common';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { enforce, only, staticSuite, test } from 'vest';
-import { vestForms } from '../exports';
 import { ROOT_FORM } from '../constants';
+import { vestForms } from '../exports';
 import { getAllFormErrors } from '../utils/form-utils';
 
 /**

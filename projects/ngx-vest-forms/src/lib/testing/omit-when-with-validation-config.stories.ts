@@ -1,10 +1,10 @@
-import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
-import { Component, signal, computed } from '@angular/core';
 import { JsonPipe } from '@angular/common';
-import { vestForms } from '../exports';
-import { userEvent, within, expect, waitFor } from 'storybook/test';
-import { staticSuite, test, only, enforce, omitWhen } from 'vest';
+import { Component, computed, signal } from '@angular/core';
+import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 import type { NgxDeepPartial } from '../../public-api';
+import { vestForms } from '../exports';
 import type { NgxVestSuite } from '../utils/validation-suite';
 
 /**
@@ -78,7 +78,7 @@ const selectors = {
   selector: 'app-omit-when-validation-config',
   template: `
     <div class="p-4">
-      <h2 class="text-xl font-bold mb-4">omitWhen + validationConfig Test</h2>
+      <h2 class="mb-4 text-xl font-bold">omitWhen + validationConfig Test</h2>
       <p class="mb-4 text-sm text-gray-600">
         This demonstrates issue #59 fix: bidirectional dependencies where both
         fields are optional when empty, but both become required when one has a
@@ -139,7 +139,7 @@ const selectors = {
           <button
             [attr.data-testid]="selectors.btnSubmit"
             type="submit"
-            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            class="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
           >
             Submit
           </button>
@@ -147,7 +147,7 @@ const selectors = {
             [attr.data-testid]="selectors.btnClearAantal"
             type="button"
             (click)="clearAantal()"
-            class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+            class="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
           >
             Clear Aantal
           </button>
@@ -155,7 +155,7 @@ const selectors = {
             [attr.data-testid]="selectors.btnClearOnderbouwing"
             type="button"
             (click)="clearOnderbouwing()"
-            class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+            class="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
           >
             Clear Onderbouwing
           </button>
@@ -164,9 +164,9 @@ const selectors = {
 
       <div
         [attr.data-testid]="selectors.formDebug"
-        class="mt-4 p-4 bg-gray-100 rounded text-xs"
+        class="mt-4 rounded bg-gray-100 p-4 text-xs"
       >
-        <h3 class="font-bold mb-2">Debug Info:</h3>
+        <h3 class="mb-2 font-bold">Debug Info:</h3>
         <pre>{{ vm | json }}</pre>
       </div>
     </div>

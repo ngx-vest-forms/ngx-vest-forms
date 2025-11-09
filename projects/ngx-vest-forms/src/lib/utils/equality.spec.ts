@@ -1,4 +1,4 @@
-import { shallowEqual, fastDeepEqual, isPrimitive } from './equality';
+import { fastDeepEqual, isPrimitive, shallowEqual } from './equality';
 
 describe('Equality Utils', () => {
   describe('isPrimitive', () => {

@@ -3,11 +3,11 @@
  */
 import { Component, signal, ViewChild } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { vestForms } from '../exports';
-import { FormDirective } from '../directives/form.directive';
-import { staticSuite, test, enforce, omitWhen, only } from 'vest';
-import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 import type { NgxDeepPartial } from '../../public-api';
+import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
+import { FormDirective } from '../directives/form.directive';
+import { vestForms } from '../exports';
 
 type DynamicFormModel = NgxDeepPartial<{
   procedureType: 'typeA' | 'typeB' | 'typeC';

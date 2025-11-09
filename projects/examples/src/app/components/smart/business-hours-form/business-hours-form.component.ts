@@ -1,17 +1,16 @@
-import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { JsonPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import {
-  ValidateRootFormDirective,
-  ROOT_FORM,
-  vestForms,
   NgxVestSuite,
+  ROOT_FORM,
+  ValidateRootFormDirective,
+  vestForms,
 } from 'ngx-vest-forms';
 import {
   BusinessHoursFormModel,
   businessHoursFormShape,
 } from '../../../models/business-hours-form.model';
 import { businessHoursSuite } from '../../../validations/business-hours.validations';
-import { BusinessHourComponent } from '../../ui/business-hour/business-hour.component';
 import { BusinessHoursComponent } from '../../ui/business-hours/business-hours.component';
 
 @Component({

@@ -1,9 +1,9 @@
+import { FormFieldName, NgxTypedVestSuite, ROOT_FORM } from 'ngx-vest-forms';
 import { each, enforce, omitWhen, only, staticSuite, test } from 'vest';
 import {
   BusinessHourFormModel,
   BusinessHoursFormModel,
 } from '../models/business-hours-form.model';
-import { NgxTypedVestSuite, FormFieldName, ROOT_FORM } from 'ngx-vest-forms';
 
 export const businessHoursSuite: NgxTypedVestSuite<BusinessHoursFormModel> =
   staticSuite(

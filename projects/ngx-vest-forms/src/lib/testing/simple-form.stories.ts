@@ -1,14 +1,14 @@
-import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
+import { JsonPipe } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
+import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { vestForms } from '../exports';
-import { userEvent, waitFor, within, expect } from 'storybook/test';
 import {
   FormModel,
   formShape,
   formValidationSuite,
   selectors,
 } from './simple-form';
-import { JsonPipe } from '@angular/common';
 
 @Component({
   imports: [vestForms, JsonPipe],

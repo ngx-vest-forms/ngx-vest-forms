@@ -14,8 +14,8 @@
 import { Component, signal } from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
+import { enforce, only, staticSuite, test } from 'vest';
 import { vestForms } from '../exports';
-import { staticSuite, test, enforce, only } from 'vest';
 import { DeepPartial } from '../utils/deep-partial';
 
 describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => {

@@ -5,11 +5,11 @@
 import { Component, signal, ViewChild } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 import type { NgxDeepPartial } from '../../public-api';
-import { vestForms } from '../exports';
-import { staticSuite, test, enforce, only, omitWhen } from 'vest';
 import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
 import { FormDirective } from '../directives/form.directive';
+import { vestForms } from '../exports';
 
 // Wait time for tests should be slightly longer than debounce to ensure completion
 const TEST_DEBOUNCE_WAIT_TIME = VALIDATION_CONFIG_DEBOUNCE_TIME + 50;

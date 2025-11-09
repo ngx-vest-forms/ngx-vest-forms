@@ -1,5 +1,5 @@
-import { AddressModel } from '../models/address.model';
 import { enforce, test } from 'vest';
+import { AddressModel } from '../models/address.model';
 
 export function addressValidations(
   model: AddressModel | undefined,

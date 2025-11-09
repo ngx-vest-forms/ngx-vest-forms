@@ -1,10 +1,10 @@
 <div
-  class="sm:col-span-2 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
+  class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800 sm:col-span-2"
 >
   <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">
     Example: complex form with comples validations and conditionals
   </h3>
-  <ul class="text-md list-disc ml-4">
+  <ul class="text-md ml-4 list-disc">
     <li>Show validation errors on blur</li>
     <li>Show validation errors on submit</li>
     <li>Demonstrates <strong>NgxDeepPartial</strong> for form model types</li>
@@ -67,10 +67,10 @@
     </li>
   </ul>
   <button class="mt-6" (click)="fetchData()">Fetch data</button>
-  <button class="mt-6 ml-2" (click)="clearSensitiveData()">
+  <button class="ml-2 mt-6" (click)="clearSensitiveData()">
     Clear Sensitive Data
   </button>
-  <button class="mt-6 ml-2" (click)="prefillBillingAddress()">
+  <button class="ml-2 mt-6" (click)="prefillBillingAddress()">
     Prefill Billing Address
   </button>
   <br />
@@ -81,7 +81,7 @@
 
 @if (vm.errors[ROOT_FORM] && vm.errors[ROOT_FORM].length > 0) {
   <div
-    class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
+    class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-800 dark:bg-gray-800 dark:text-red-400"
     role="alert"
   >
     @for (error of vm.errors[ROOT_FORM]; track error) {
@@ -180,7 +180,7 @@
       </sc-phonenumbers>
     </div>
     <div
-      class="sm:col-span-2 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
+      class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800 sm:col-span-2"
     >
       <div class="" sc-control-wrapper>
         <label><span>Gender</span></label>

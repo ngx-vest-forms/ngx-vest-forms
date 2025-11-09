@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from './debounce.token';
 import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
+import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from './debounce.token';
 
 describe('NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN', () => {
   it('should have default value from constant', () => {
