@@ -55,6 +55,41 @@ Missing comprehensive tests for:
 - [ ] Tests for array/object conversions with edge cases
 - [ ] 100% code coverage for new utility functions
 
+#### Complex ValidationConfig Test Scenario
+
+**Priority:** Medium
+**Effort:** 3-4 hours
+**Issue:** #59
+
+Create comprehensive test scenario demonstrating the interaction between `omitWhen` and `validationConfig` that originally led to discovering the timing issues.
+
+**Acceptance Criteria:**
+
+- [ ] Create Storybook story with complex form demonstrating:
+  - Multiple conditional validations using `omitWhen`
+  - Bidirectional `validationConfig` dependencies
+  - Async validations with dependent fields
+  - Field clearing with structure changes
+- [ ] Add interaction tests covering all edge cases
+- [ ] Document the scenario in test comments
+- [ ] Verify no race conditions occur
+
+#### Code Modernization Consistency
+
+**Priority:** Low-Medium
+**Effort:** 2-3 hours
+
+Ensure complete consistency across the codebase:
+
+**Acceptance Criteria:**
+
+- [ ] All components use `ChangeDetectionStrategy.OnPush`
+- [ ] All `@ViewChild`/`@Input`/`@Output` converted to signal-based APIs
+- [ ] All validation suites use unconditional `only(field)` pattern
+- [ ] Consistent use of `NgxDeepPartial` over legacy `DeepPartial` aliases
+- [ ] Remove deprecated `allowSignalWrites` from effect options
+- [ ] Update all examples to use modern patterns consistently
+
 ---
 
 ## 1. Enhanced Field Path Types with Template Literal Autocomplete
