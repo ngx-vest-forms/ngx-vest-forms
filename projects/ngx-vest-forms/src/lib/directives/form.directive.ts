@@ -115,16 +115,35 @@ export class FormDirective<T extends Record<string, any>> {
   /**
    * Computed signal for form state with validity and errors.
    * Used by templates and tests as vestForm.formState().valid/errors
+   *
+   * Uses custom equality function to prevent unnecessary recalculations
+   * when form status changes but actual values/errors remain the same.
    */
-  public readonly formState = computed<NgxFormState<T>>(() => {
-    // Tie to status signal to ensure recomputation on validation changes
-    this.#statusSignal();
-    return {
-      valid: this.ngForm.form.valid,
-      errors: getAllFormErrors(this.ngForm.form),
-      value: this.#formValueSignal(),
-    };
-  });
+  public readonly formState = computed<NgxFormState<T>>(
+    () => {
+      // Tie to status signal to ensure recomputation on validation changes
+      this.#statusSignal();
+      return {
+        valid: this.ngForm.form.valid,
+        errors: getAllFormErrors(this.ngForm.form),
+        value: this.#formValueSignal(),
+      };
+    },
+    {
+      equal: (a, b) => {
+        // Fast path: reference equality
+        if (a === b) return true;
+        // Null/undefined check
+        if (!a || !b) return false;
+        // Deep equality check for form state properties
+        return (
+          a.valid === b.valid &&
+          fastDeepEqual(a.errors, b.errors) &&
+          fastDeepEqual(a.value, b.value)
+        );
+      },
+    }
+  );
 
   /**
    * The value of the form, this is needed for the validation part.

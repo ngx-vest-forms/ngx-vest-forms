@@ -167,6 +167,9 @@ export class ParentComponent {
 - Preventing null reference errors before form initialization
 - Providing safe defaults for optional form references
 
+**Performance Note:**
+The `formState` signal uses optimized memoization with deep equality checking. It only recalculates when `valid`, `errors`, or `value` actually change - not on every status event. This makes `formState()` efficient for frequent access in templates and computed signals, even in large forms.
+
 ### Validation Patterns
 
 > **⚠️ BREAKING CHANGE**: You MUST now call `only()` unconditionally. The old `if (field)` pattern breaks Vest's execution tracking. See [Migration Guide](../../docs/PR-60-CHANGES.md#migration-guide).

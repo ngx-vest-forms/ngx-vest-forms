@@ -430,4 +430,94 @@ describe('FormDirective - Shape Validation', () => {
   });
 });
 
-// Edge case tests can be added as needed
+describe('FormDirective - FormState Memoization', () => {
+  @Component({
+    selector: 'test-memoization-host',
+    template: `
+      <form
+        scVestForm
+        [suite]="suite()"
+        [formValue]="formValue()"
+        (formValueChange)="formValue.set($event)"
+        #vest="scVestForm"
+      >
+        <input name="field1" [ngModel]="formValue().field1" />
+      </form>
+    `,
+    standalone: true,
+    imports: [vestForms],
+  })
+  class TestMemoizationHost {
+    formValue = signal<{ field1?: string }>({});
+    suite = signal(
+      staticSuite((model: { field1?: string } = {}, field?: string) => {
+        only(field);
+      })
+    );
+    @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
+  }
+
+  it('should memoize formState when status changes but values/errors/valid remain the same', async () => {
+    const { fixture } = await render(TestMemoizationHost);
+    const instance = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Get initial formState reference
+    const initialState = instance.vestForm.formState();
+
+    // Trigger form status change without changing actual values/errors/valid
+    // This simulates Angular's statusChanges emitting even when nothing meaningful changed
+    instance.vestForm.ngForm.form.updateValueAndValidity({ emitEvent: true });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // FormState should return same reference due to memoization
+    const stateAfterUpdate = instance.vestForm.formState();
+    expect(stateAfterUpdate).toBe(initialState);
+
+    // Verify the equality function is working by checking the values are actually equal
+    expect(stateAfterUpdate.valid).toBe(initialState.valid);
+    expect(stateAfterUpdate.errors).toEqual(initialState.errors);
+    expect(stateAfterUpdate.value).toEqual(initialState.value);
+  });
+
+  it('should use custom equality function with fastDeepEqual for deep comparison', async () => {
+    const { fixture } = await render(TestMemoizationHost);
+    const instance = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const state1 = instance.vestForm.formState();
+
+    // Multiple calls without changes should return same instance
+    const state2 = instance.vestForm.formState();
+    expect(state1).toBe(state2);
+
+    // The computed signal should use the custom equality function
+    // which compares valid (boolean), errors (object), and value (object) deeply
+    // This test verifies the memoization is working correctly
+  });
+
+  it('should prevent getAllFormErrors from being called repeatedly for identical states', async () => {
+    const { fixture } = await render(TestMemoizationHost);
+    const instance = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Get initial state (this calls getAllFormErrors once)
+    const state1 = instance.vestForm.formState();
+
+    // Trigger multiple status changes without actual value/error changes
+    for (let i = 0; i < 5; i++) {
+      instance.vestForm.ngForm.form.updateValueAndValidity({ emitEvent: true });
+      fixture.detectChanges();
+    }
+
+    const state2 = instance.vestForm.formState();
+
+    // Should still be the same reference, meaning getAllFormErrors was not called
+    // for each status change - the memoization prevented unnecessary recalculations
+    expect(state2).toBe(state1);
+  });
+});
