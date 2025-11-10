@@ -413,7 +413,7 @@ The `sc-control-wrapper` component automatically provides WCAG 2.2 AA compliant 
 <div sc-control-wrapper>
   <label for="email">Email Address</label>
   <input id="email" name="email" [ngModel]="formValue().email" />
-  <!-- 
+  <!--
     When validation fails:
     - Input gets aria-invalid="true"
     - Input gets aria-describedby="ngx-control-wrapper-0-error"
@@ -432,36 +432,36 @@ When creating custom wrappers, follow these patterns:
   selector: 'app-accessible-wrapper',
   template: `
     <ng-content />
-    
+
     @if (errorDisplay.shouldShowErrors()) {
-      <div 
+      <div
         [id]="errorId"
-        role="alert" 
-        aria-live="assertive" 
+        role="alert"
+        aria-live="assertive"
         aria-atomic="true">
         @for (error of errorDisplay.errors(); track error) {
           <p>{{ error }}</p>
         }
       </div>
     }
-    
+
     @if (errorDisplay.warnings().length > 0) {
-      <div 
+      <div
         [id]="warningId"
-        role="status" 
-        aria-live="polite" 
+        role="status"
+        aria-live="polite"
         aria-atomic="true">
         @for (warn of errorDisplay.warnings(); track warn) {
           <p>{{ warn }}</p>
         }
       </div>
     }
-    
+
     @if (errorDisplay.isPending()) {
-      <div 
+      <div
         [id]="pendingId"
-        role="status" 
-        aria-live="polite" 
+        role="status"
+        aria-live="polite"
         aria-atomic="true">
         <span aria-hidden="true">⏳</span>
         Validating…
@@ -472,34 +472,34 @@ When creating custom wrappers, follow these patterns:
 export class AccessibleWrapperComponent implements AfterContentInit {
   protected readonly errorDisplay = inject(FormErrorDisplayDirective, { self: true });
   private readonly elementRef = inject(ElementRef);
-  
+
   // Generate unique IDs
   private static nextId = 0;
   protected readonly uniqueId = `custom-wrapper-${AccessibleWrapperComponent.nextId++}`;
   protected readonly errorId = `${this.uniqueId}-error`;
   protected readonly warningId = `${this.uniqueId}-warning`;
   protected readonly pendingId = `${this.uniqueId}-pending`;
-  
+
   ngAfterContentInit(): void {
     // Find all form controls and associate them with error messages
     const controls = this.elementRef.nativeElement.querySelectorAll('input, select, textarea');
-    
+
     effect(() => {
       const ids: string[] = [];
       if (this.errorDisplay.shouldShowErrors()) ids.push(this.errorId);
       if (this.errorDisplay.warnings().length > 0) ids.push(this.warningId);
       if (this.errorDisplay.isPending()) ids.push(this.pendingId);
-      
+
       const describedBy = ids.length > 0 ? ids.join(' ') : null;
       const shouldShowErrors = this.errorDisplay.shouldShowErrors();
-      
+
       controls.forEach(control => {
         if (describedBy) {
           control.setAttribute('aria-describedby', describedBy);
         } else {
           control.removeAttribute('aria-describedby');
         }
-        
+
         if (shouldShowErrors) {
           control.setAttribute('aria-invalid', 'true');
         } else {

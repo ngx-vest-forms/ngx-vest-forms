@@ -130,11 +130,7 @@ class EmptyWrapperComponent {}
     >
       <sc-control-wrapper>
         <label for="firstName">First Name</label>
-        <input
-          id="firstName"
-          name="firstName"
-          [ngModel]="model().firstName"
-        />
+        <input id="firstName" name="firstName" [ngModel]="model().firstName" />
         <label for="lastName">Last Name</label>
         <input id="lastName" name="lastName" [ngModel]="model().lastName" />
       </sc-control-wrapper>
@@ -369,17 +365,25 @@ describe('ScControlWrapperComponent', () => {
       // Verify unique IDs exist
       expect(emailErrorContainer).toHaveAttribute('id');
       expect(usernameErrorContainer).toHaveAttribute('id');
-      
+
       // Verify IDs are different (no collisions)
       expect(emailErrorContainer?.id).not.toBe(usernameErrorContainer?.id);
-      
+
       // Verify ID format matches pattern
-      expect(emailErrorContainer?.id).toMatch(/^ngx-control-wrapper-\d+-error$/);
-      expect(usernameErrorContainer?.id).toMatch(/^ngx-control-wrapper-\d+-error$/);
-      
+      expect(emailErrorContainer?.id).toMatch(
+        /^ngx-control-wrapper-\d+-error$/
+      );
+      expect(usernameErrorContainer?.id).toMatch(
+        /^ngx-control-wrapper-\d+-error$/
+      );
+
       // Verify containers are queryable by their IDs
-      expect(document.getElementById(emailErrorContainer!.id)).toBe(emailErrorContainer);
-      expect(document.getElementById(usernameErrorContainer!.id)).toBe(usernameErrorContainer);
+      expect(document.getElementById(emailErrorContainer!.id)).toBe(
+        emailErrorContainer
+      );
+      expect(document.getElementById(usernameErrorContainer!.id)).toBe(
+        usernameErrorContainer
+      );
     });
 
     it('should associate error messages with form controls via aria-describedby', async () => {
@@ -398,7 +402,7 @@ describe('ScControlWrapperComponent', () => {
       await waitFor(() => {
         expect(emailInput).toHaveAttribute('aria-describedby');
         const describedBy = emailInput.getAttribute('aria-describedby')!;
-        
+
         // Verify format of aria-describedby value
         expect(describedBy).toMatch(/^ngx-control-wrapper-\d+-error$/);
         expect(describedBy).not.toContain(' '); // Single ID, no spaces
@@ -407,7 +411,7 @@ describe('ScControlWrapperComponent', () => {
         const errorElement = screen.getByText('Email is required');
         const errorContainer = errorElement.closest('[role="alert"]');
         expect(errorContainer?.id).toBe(describedBy);
-        
+
         // Verify the referenced element actually exists in DOM
         const referencedElement = document.getElementById(describedBy);
         expect(referencedElement).toBe(errorContainer);
@@ -459,7 +463,9 @@ describe('ScControlWrapperComponent', () => {
         () => {
           expect(emailInput).not.toHaveAttribute('aria-invalid');
           expect(emailInput).not.toHaveAttribute('aria-describedby');
-          expect(screen.queryByText('Email is required')).not.toBeInTheDocument();
+          expect(
+            screen.queryByText('Email is required')
+          ).not.toBeInTheDocument();
         },
         { timeout: 1000 }
       );
@@ -483,20 +489,22 @@ describe('ScControlWrapperComponent', () => {
       expect(errorContainer).toHaveAttribute('aria-atomic', 'true');
       expect(errorContainer).toHaveAttribute('id');
       expect(errorContainer?.id).toMatch(/^ngx-control-wrapper-\d+-error$/);
-      
+
       // Verify the container is accessible by role
       expect(screen.getByRole('alert')).toBe(errorContainer);
     });
 
     it('should use role="status" with aria-live="polite" for warnings', async () => {
       // Create suite with warnings
-      const warningSuite = staticSuite((data: TestModel = {}, field?: string) => {
-        only(field);
-        vestTest('username', 'Username looks weak', () => {
-          warn(); // Must be called synchronously at start
-          enforce(data.username ?? '').longerThan(5);
-        });
-      });
+      const warningSuite = staticSuite(
+        (data: TestModel = {}, field?: string) => {
+          only(field);
+          vestTest('username', 'Username looks weak', () => {
+            warn(); // Must be called synchronously at start
+            enforce(data.username ?? '').longerThan(5);
+          });
+        }
+      );
 
       @Component({
         imports: [vestForms],
@@ -509,7 +517,11 @@ describe('ScControlWrapperComponent', () => {
           >
             <sc-control-wrapper>
               <label for="username">Username</label>
-              <input id="username" name="username" [ngModel]="model().username" />
+              <input
+                id="username"
+                name="username"
+                [ngModel]="model().username"
+              />
             </sc-control-wrapper>
           </form>
         `,
@@ -538,7 +550,7 @@ describe('ScControlWrapperComponent', () => {
       expect(warningContainer).toHaveAttribute('aria-atomic', 'true');
       expect(warningContainer).toHaveAttribute('id');
       expect(warningContainer?.id).toMatch(/^ngx-control-wrapper-\d+-warning$/);
-      
+
       // Verify the warning is associated with the input via aria-describedby
       await waitFor(() => {
         const describedBy = usernameInput.getAttribute('aria-describedby');
@@ -558,14 +570,16 @@ describe('ScControlWrapperComponent', () => {
         () => {
           const pendingText = screen.getByText('Validating…');
           const pendingContainer = pendingText.closest('[role="status"]');
-          
+
           // Verify all ARIA attributes for pending state
           expect(pendingContainer).toHaveAttribute('role', 'status');
           expect(pendingContainer).toHaveAttribute('aria-live', 'polite');
           expect(pendingContainer).toHaveAttribute('aria-atomic', 'true');
           expect(pendingContainer).toHaveAttribute('id');
-          expect(pendingContainer?.id).toMatch(/^ngx-control-wrapper-\d+-pending$/);
-          
+          expect(pendingContainer?.id).toMatch(
+            /^ngx-control-wrapper-\d+-pending$/
+          );
+
           // Verify pending state is associated with input
           const describedBy = emailInput.getAttribute('aria-describedby');
           expect(describedBy).toContain(pendingContainer!.id);
@@ -612,7 +626,11 @@ describe('ScControlWrapperComponent', () => {
           >
             <sc-control-wrapper>
               <label for="username">Username</label>
-              <input id="username" name="username" [ngModel]="model().username" />
+              <input
+                id="username"
+                name="username"
+                [ngModel]="model().username"
+              />
             </sc-control-wrapper>
           </form>
         `,
@@ -634,27 +652,29 @@ describe('ScControlWrapperComponent', () => {
       await waitFor(() => {
         const describedBy = usernameInput.getAttribute('aria-describedby')!;
         expect(describedBy).toMatch(/^ngx-control-wrapper-\d+-error$/);
-        
+
         // Verify the referenced element exists
         const errorElement = document.getElementById(describedBy);
         expect(errorElement).toBeInTheDocument();
         expect(errorElement).toHaveAttribute('role', 'alert');
-        
+
         // Verify format: should be a single ID
         expect(describedBy.split(' ')).toHaveLength(1);
       });
     });
 
     it('should handle multiple controls in one wrapper with proper ARIA associations', async () => {
-      const multiSuite = staticSuite((data: { firstName?: string; lastName?: string }, field?: string) => {
-        only(field);
-        vestTest('firstName', 'First name is required', () => {
-          enforce(data.firstName ?? '').isNotBlank();
-        });
-        vestTest('lastName', 'Last name is required', () => {
-          enforce(data.lastName ?? '').isNotBlank();
-        });
-      });
+      const multiSuite = staticSuite(
+        (data: { firstName?: string; lastName?: string }, field?: string) => {
+          only(field);
+          vestTest('firstName', 'First name is required', () => {
+            enforce(data.firstName ?? '').isNotBlank();
+          });
+          vestTest('lastName', 'Last name is required', () => {
+            enforce(data.lastName ?? '').isNotBlank();
+          });
+        }
+      );
 
       @Component({
         imports: [vestForms],
@@ -667,9 +687,17 @@ describe('ScControlWrapperComponent', () => {
           >
             <sc-control-wrapper>
               <label for="firstName">First Name</label>
-              <input id="firstName" name="firstName" [ngModel]="model().firstName" />
+              <input
+                id="firstName"
+                name="firstName"
+                [ngModel]="model().firstName"
+              />
               <label for="lastName">Last Name</label>
-              <input id="lastName" name="lastName" [ngModel]="model().lastName" />
+              <input
+                id="lastName"
+                name="lastName"
+                [ngModel]="model().lastName"
+              />
             </sc-control-wrapper>
           </form>
         `,
@@ -691,7 +719,9 @@ describe('ScControlWrapperComponent', () => {
       // Wait for errors
       await waitFor(
         () => {
-          expect(screen.queryByText('First name is required')).toBeInTheDocument();
+          expect(
+            screen.queryByText('First name is required')
+          ).toBeInTheDocument();
         },
         { timeout: 1000 }
       );

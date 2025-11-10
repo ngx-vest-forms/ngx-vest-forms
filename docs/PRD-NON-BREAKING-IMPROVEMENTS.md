@@ -1255,7 +1255,7 @@ export class ControlWrapperComponent implements AfterContentInit {
 
 - [x] ✅ WCAG 2.2 AA compliance verified
 - [x] ✅ All ARIA attributes dynamically update
-- [x] ✅ Keyboard-only navigation works correctly  
+- [x] ✅ Keyboard-only navigation works correctly
 - [x] ✅ Unique IDs generated for each wrapper instance
 - [x] ✅ aria-describedby properly associates controls with messages
 - [x] ✅ aria-invalid correctly reflects validation state
@@ -1274,7 +1274,7 @@ Successfully implemented comprehensive ARIA enhancements that provide WCAG 2.2 A
 - **Unique ID System**: Each control-wrapper instance generates unique IDs for error, warning, and pending regions
 - **Dynamic Associations**: `aria-describedby` automatically updated as messages appear/disappear
 - **State Management**: `aria-invalid` set/removed based on `shouldShowErrors()` state
-- **Proper Roles**: 
+- **Proper Roles**:
   - Errors: `role="alert"` + `aria-live="assertive"` (blocking)
   - Warnings: `role="status"` + `aria-live="polite"` (non-blocking)
   - Pending: `role="status"` + `aria-live="polite"` (informational)
@@ -1284,6 +1284,7 @@ Successfully implemented comprehensive ARIA enhancements that provide WCAG 2.2 A
 **Test Coverage:**
 
 Added 10 comprehensive ARIA tests (290 total, all passing):
+
 1. Unique ID generation for multiple wrappers
 2. aria-describedby association with form controls
 3. aria-invalid state management (set/removed correctly)
@@ -1298,6 +1299,7 @@ Added 10 comprehensive ARIA tests (290 total, all passing):
 **Documentation:**
 
 Comprehensive ARIA section added to `.github/instructions/ngx-vest-forms.instructions.md`:
+
 - Automatic features list
 - Usage examples with explanations
 - Custom wrapper patterns with full ARIA implementation
