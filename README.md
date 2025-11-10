@@ -856,6 +856,143 @@ export class MyComponent {
 <form scVestForm [validationConfig]="validationConfig()" ...>...</form>
 ```
 
+### ValidationConfig Fluent Builder API
+
+For complex validation configurations, ngx-vest-forms provides a type-safe fluent builder API that makes validation dependencies clearer and easier to maintain.
+
+#### Why Use the Builder?
+
+**Without Builder (Manual):**
+
+```typescript
+// ❌ Verbose, error-prone, no type safety
+protected readonly validationConfig = {
+  'password': ['confirmPassword'],
+  'confirmPassword': ['password'], // Easy to forget reverse
+  'startDate': ['endDate'],
+  'endDate': ['startDate'],
+  'country': ['state', 'zipCode'],
+};
+```
+
+**With Builder:**
+
+```typescript
+import { createValidationConfig } from 'ngx-vest-forms';
+
+// ✅ Clean, type-safe, self-documenting
+protected readonly validationConfig = createValidationConfig<MyFormModel>()
+  .bidirectional('password', 'confirmPassword')
+  .bidirectional('startDate', 'endDate')
+  .whenChanged('country', ['state', 'zipCode'])
+  .build();
+```
+
+#### Builder Methods
+
+**`whenChanged(trigger, revalidate)`** - One-way dependency
+
+```typescript
+// When country changes, revalidate state and zipCode
+.whenChanged('country', ['state', 'zipCode'])
+```
+
+**`bidirectional(field1, field2)`** - Two-way dependency
+
+```typescript
+// When either password or confirmPassword changes, revalidate the other
+.bidirectional('password', 'confirmPassword')
+```
+
+**`group(fields)`** - All fields revalidate each other
+
+```typescript
+// When any contact field changes, revalidate all others
+.group(['firstName', 'lastName', 'email'])
+```
+
+**`merge(config)`** - Combine configurations
+
+```typescript
+// Conditionally merge additional config
+.merge(isInternational() ? { country: ['customsForm'] } : {})
+```
+
+#### Real-World Example
+
+```typescript
+import { Component, signal, computed } from '@angular/core';
+import { createValidationConfig, type DeepPartial } from 'ngx-vest-forms';
+
+type OrderFormModel = DeepPartial<{
+  // Customer info
+  firstName: string;
+  lastName: string;
+  email: string;
+
+  // Password
+  password: string;
+  confirmPassword: string;
+
+  // Dates
+  startDate: Date;
+  endDate: Date;
+
+  // Location
+  country: string;
+  state: string;
+  zipCode: string;
+}>;
+
+@Component({
+  // ...
+})
+export class OrderFormComponent {
+  protected readonly validationConfig = createValidationConfig<OrderFormModel>()
+    // Customer info group
+    .group(['firstName', 'lastName', 'email'])
+
+    // Password confirmation
+    .bidirectional('password', 'confirmPassword')
+
+    // Date range
+    .bidirectional('startDate', 'endDate')
+
+    // Location dependencies
+    .whenChanged('country', ['state', 'zipCode'])
+
+    .build();
+}
+```
+
+#### Benefits
+
+- ✅ **Type Safety**: IDE autocomplete for all field paths
+- ✅ **Readability**: Intent is clear from method names
+- ✅ **Maintainability**: Less boilerplate, easier to understand
+- ✅ **Error Prevention**: Compile-time validation of field names
+- ✅ **Backward Compatible**: Works alongside manual configurations
+
+#### Combining with Computed Signals
+
+For dynamic configurations, combine the builder with computed signals:
+
+```typescript
+protected readonly validationConfig = computed(() =>
+  createValidationConfig<FormModel>()
+    .bidirectional('password', 'confirmPassword')
+    // Conditionally add dependencies
+    .merge(
+      this.isInternational()
+        ? { country: ['customsForm', 'taxId'] }
+        : {}
+    )
+    .build()
+);
+```
+
+> **📚 Learn More**: See the [ValidationConfig Builder Guide](./docs/VALIDATION-CONFIG-BUILDER.md) for comprehensive examples and patterns.
+
 ## Advanced Topics
 
 ### Handling Dynamic Forms: Two Common Patterns

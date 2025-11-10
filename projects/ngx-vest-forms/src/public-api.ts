@@ -26,6 +26,10 @@ export {
   createEmptyFormState,
 } from './lib/utils/form-state.utils';
 export {
+  ValidationConfigBuilder,
+  createValidationConfig,
+} from './lib/utils/validation-config-builder';
+export {
   NgxFieldKey,
   NgxTypedVestSuite,
   NgxVestSuite,

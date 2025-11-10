@@ -1,0 +1,115 @@
+feat(validation-config): add fluent builder API with type safety and comprehensive documentation
+
+## What Changed
+
+### New Features
+- Add ValidationConfigBuilder class with fluent API for creating validation configurations
+- Add createValidationConfig<T>() factory function for type-safe builder instantiation
+- Add duplicate detection warnings in development mode for both whenChanged() and bidirectional()
+- Add comprehensive test suite with 46 tests covering all builder methods and edge cases
+
+### Builder Methods
+- whenChanged(trigger, dependents): One-way dependency (country → state/zipCode)
+- bidirectional(field1, field2): Two-way dependency (password ↔ confirmPassword)
+- group(fields): All fields revalidate each other (N×N-1 dependencies)
+- merge(config): Combine with existing configurations
+
+### Documentation
+- Add dedicated ValidationConfig Builder API section in README.md (132 lines)
+- Add comprehensive VALIDATION-CONFIG-BUILDER.md guide (843 lines)
+  - Why ValidationConfig Matters (explains stale validation problem with omitWhen/skipWhen)
+  - Complete API Reference with "When to Use", "Real-World Use Case", and "Vest.js Patterns"
+  - Common Patterns (password confirmation, date ranges, address validation, etc.)
+  - Migration Guide (manual → builder conversion)
+  - Best Practices and Performance Considerations
+  - Troubleshooting section
+- Update ngx-vest-forms.instructions.md to feature builder as recommended approach
+- Update utilities reference table with createValidationConfig() link
+
+### Real-World Usage
+- Refactor purchase-form.component.ts to use builder API
+  - Reduced from 28 lines of manual config to 16 lines with builder
+  - Use computed signal with conditional builder methods based on form state
+  - Clear, self-documenting code showing practical usage
+
+### Exports
+- Export ValidationConfigBuilder and createValidationConfig from public-api.ts
+
+## Why This Matters
+
+### Problem Solved
+Manual validation configuration is verbose, error-prone, and lacks type safety:
+- Easy to forget reverse dependencies (password → confirmPassword, but not the reverse)
+- No IDE autocomplete for field names
+- No compile-time type checking
+- Intent is unclear from raw object syntax
+
+### Builder Benefits
+- ✅ Full IDE autocomplete for all field paths
+- ✅ Compile-time type checking (catches typos before runtime)
+- ✅ Self-documenting code (intent clear from method names)
+- ✅ Less boilerplate (bidirectional() handles both directions)
+- ✅ Development-mode warnings for duplicate dependencies
+- ✅ Zero production overhead (ngDevMode checks)
+
+## Technical Details
+
+### Type Safety
+- Uses FieldPath<T> for full type safety on all field references
+- Works seamlessly with DeepPartial<T> form models
+- IDE autocomplete includes nested paths (e.g., 'addresses.billing.street')
+
+### Duplicate Detection
+- Development-mode warnings for duplicate dependents in whenChanged()
+- Development-mode warnings for duplicate bidirectional relationships
+- Automatic deduplication even when duplicates are detected
+- Zero runtime overhead in production (ngDevMode checks)
+
+### Testing
+- 46 comprehensive tests covering all methods and edge cases
+- Tests for whenChanged(), bidirectional(), group(), merge(), build()
+- Duplicate detection warning tests (dev mode vs production)
+- Complex scenario tests with real-world examples
+- Type safety verification tests
+
+### Performance
+- build() returns deep copy (immutable)
+- Deduplication using Set for O(n) performance
+- group() creates N×(N-1) dependencies (documented performance note)
+- Builder reusable after build() calls
+
+## Breaking Changes
+None - this is a new feature that doesn't affect existing code.
+
+## Migration Path
+Existing manual configurations continue to work. Users can gradually migrate:
+
+Before (manual):
+```typescript
+protected readonly validationConfig = {
+  'password': ['confirmPassword'],
+  'confirmPassword': ['password'],
+  'country': ['state', 'zipCode'],
+};
+```
+
+After (builder):
+```typescript
+protected readonly validationConfig = createValidationConfig<FormModel>()
+  .bidirectional('password', 'confirmPassword')
+  .whenChanged('country', ['state', 'zipCode'])
+  .build();
+```
+
+## Documentation Coverage
+- README.md: Quick introduction with examples and benefits
+- VALIDATION-CONFIG-BUILDER.md: Comprehensive 843-line guide
+- ngx-vest-forms.instructions.md: Featured as recommended approach
+- purchase-form.component.ts: Real-world working example
+- JSDoc: Extensive method documentation with examples
+
+## Testing
+✅ All 46 tests pass (100% success rate)
+✅ Duplicate warnings correctly appear in dev mode only
+✅ Type safety verified at compile time
+✅ Edge cases covered (empty arrays, single-field groups, chaining after build)

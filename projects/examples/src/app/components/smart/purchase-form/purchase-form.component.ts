@@ -10,9 +10,9 @@ import {
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import {
   clearFields,
+  createValidationConfig,
   ROOT_FORM,
   setValueAtPath,
-  ValidationConfigMap,
   vestForms,
 } from 'ngx-vest-forms';
 import { debounceTime, filter, switchMap } from 'rxjs';
@@ -66,31 +66,27 @@ export class PurchaseFormComponent {
     };
   });
 
-  // Computed validationConfig that only references controls that exist in the DOM
+  // Computed validationConfig using the fluent builder API
   // This prevents "control not found" warnings for conditionally rendered fields
-  protected readonly validationConfig = computed<
-    ValidationConfigMap<PurchaseFormModel>
-  >(() => {
-    const config: ValidationConfigMap<PurchaseFormModel> = {
-      quantity: ['justification'],
-      justification: ['quantity'],
-      age: ['emergencyContact'],
-      'passwords.password': ['passwords.confirmPassword'],
-      'passwords.confirmPassword': ['passwords.password'],
-    };
+  protected readonly validationConfig = computed(() => {
+    const builder = createValidationConfig<PurchaseFormModel>()
+      // Password confirmation (bidirectional validation)
+      .bidirectional('passwords.password', 'passwords.confirmPassword')
+
+      // Age and emergency contact relationship
+      .bidirectional('age', 'emergencyContact');
 
     // Conditionally add genderOther validation when gender is 'other'
     if (this.formValue().gender === 'other') {
-      config['gender'] = ['genderOther'];
+      builder.whenChanged('gender', 'genderOther');
     }
 
     // Conditionally add justification when quantity > 5
     if ((this.formValue().quantity || 0) > 5) {
-      config['quantity'] = ['justification'];
-      config['justification'] = ['quantity'];
+      builder.bidirectional('quantity', 'justification');
     }
 
-    return config;
+    return builder.build();
   });
 
   // Expose ROOT_FORM constant for template

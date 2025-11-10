@@ -244,6 +244,43 @@ omitWhen((model.age || 0) >= 18, () => {
 - When `age` changes to 18+ → `omitWhen` skips validation → Angular needs to clear `emergencyContact` errors
 - Without `validationConfig`, these dependent fields won't re-validate automatically
 
+#### ValidationConfig Fluent Builder API (Recommended)
+
+**NEW**: Use the type-safe builder API for cleaner, more maintainable validation configurations:
+
+```typescript
+import { createValidationConfig } from 'ngx-vest-forms';
+
+// ✅ BEST: Type-safe builder with autocomplete
+protected readonly validationConfig = createValidationConfig<FormModel>()
+  .bidirectional('password', 'confirmPassword')     // Password confirmation
+  .whenChanged('age', 'emergencyContact')           // Age affects emergency contact
+  .group(['firstName', 'lastName', 'email'])        // Contact group
+  .build();
+
+// ❌ MANUAL: Verbose, error-prone
+protected readonly validationConfig: ValidationConfigMap<FormModel> = {
+  'password': ['confirmPassword'],
+  'confirmPassword': ['password'],
+  'age': ['emergencyContact'],
+  'firstName': ['lastName', 'email'],
+  'lastName': ['firstName', 'email'],
+  'email': ['firstName', 'lastName'],
+};
+```
+
+**Builder Methods:**
+- `whenChanged(trigger, dependents)` - One-way: when trigger changes, revalidate dependents
+- `bidirectional(field1, field2)` - Two-way: fields revalidate each other
+- `group(fields)` - All fields in group revalidate each other
+- `merge(config)` - Combine with existing configurations
+
+**Benefits:**
+- ✅ Full IDE autocomplete for field names
+- ✅ Compile-time type checking (catches typos)
+- ✅ Self-documenting code (intent is clear)
+- ✅ Less boilerplate (no manual bidirectional setup)
+
 #### Reactive validationConfig for Conditional Fields
 
 **CRITICAL**: When using `validationConfig` with conditionally rendered fields (`@if` blocks), make it a **computed signal** to prevent "control not found" warnings:
@@ -257,11 +294,26 @@ protected readonly validationConfig: ValidationConfigMap<FormModel> = {
   'quantity': ['justification']        // justification only exists when quantity > 5
 };
 
-// ✅ CORRECT: Computed config only references existing controls with type safety
+// ✅ CORRECT: Computed config with builder API (recommended)
+protected readonly validationConfig = computed(() => {
+  const builder = createValidationConfig<FormModel>();
+
+  // Only add dependency when the field actually exists in DOM
+  if (this.formValue().gender === 'Other') {
+    builder.whenChanged('gender', 'genderOther');
+  }
+
+  if ((this.formValue().quantity || 0) > 5) {
+    builder.bidirectional('quantity', 'justification');
+  }
+
+  return builder.build();
+});
+
+// ✅ ALSO CORRECT: Computed config with manual object (legacy)
 protected readonly validationConfig = computed<ValidationConfigMap<FormModel>>(() => {
   const config: ValidationConfigMap<FormModel> = {};
 
-  // Only add dependency when the field actually exists in DOM
   if (this.formValue().gender === 'Other') {
     config['gender'] = ['genderOther'];
   }
@@ -916,6 +968,7 @@ stringifyFieldPath(['form', 'sections', 0, 'fields', 'name']);
 | **Equality** | `shallowEqual()` | Fast comparison | See README |
 | | `fastDeepEqual()` | Deep comparison | See README |
 | **Validation** | `validateShape()` | Dev mode shape check | See README |
+| | `createValidationConfig<T>()` | Fluent builder for validation config | See [Builder Guide](../../docs/VALIDATION-CONFIG-BUILDER.md) |
 
 **Import Path:** All utilities are exported from `'ngx-vest-forms'`
 
