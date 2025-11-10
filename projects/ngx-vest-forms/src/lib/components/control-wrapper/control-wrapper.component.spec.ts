@@ -359,19 +359,27 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.tab();
       await screen.findByText('Username is required', {}, { timeout: 1000 });
 
-      // Find error containers
+      // Find error containers using Testing Library
       const emailError = screen.getByText('Email is required');
       const usernameError = screen.getByText('Username is required');
 
       const emailErrorContainer = emailError.closest('[role="alert"]');
       const usernameErrorContainer = usernameError.closest('[role="alert"]');
 
-      // Verify unique IDs
+      // Verify unique IDs exist
       expect(emailErrorContainer).toHaveAttribute('id');
       expect(usernameErrorContainer).toHaveAttribute('id');
+      
+      // Verify IDs are different (no collisions)
       expect(emailErrorContainer?.id).not.toBe(usernameErrorContainer?.id);
-      expect(emailErrorContainer?.id).toMatch(/ngx-control-wrapper-\d+-error/);
-      expect(usernameErrorContainer?.id).toMatch(/ngx-control-wrapper-\d+-error/);
+      
+      // Verify ID format matches pattern
+      expect(emailErrorContainer?.id).toMatch(/^ngx-control-wrapper-\d+-error$/);
+      expect(usernameErrorContainer?.id).toMatch(/^ngx-control-wrapper-\d+-error$/);
+      
+      // Verify containers are queryable by their IDs
+      expect(document.getElementById(emailErrorContainer!.id)).toBe(emailErrorContainer);
+      expect(document.getElementById(usernameErrorContainer!.id)).toBe(usernameErrorContainer);
     });
 
     it('should associate error messages with form controls via aria-describedby', async () => {
@@ -389,13 +397,21 @@ describe('ScControlWrapperComponent', () => {
       // Verify aria-describedby points to error ID
       await waitFor(() => {
         expect(emailInput).toHaveAttribute('aria-describedby');
-        const describedBy = emailInput.getAttribute('aria-describedby');
-        expect(describedBy).toMatch(/ngx-control-wrapper-\d+-error/);
+        const describedBy = emailInput.getAttribute('aria-describedby')!;
+        
+        // Verify format of aria-describedby value
+        expect(describedBy).toMatch(/^ngx-control-wrapper-\d+-error$/);
+        expect(describedBy).not.toContain(' '); // Single ID, no spaces
 
         // Verify the error element has the matching ID
         const errorElement = screen.getByText('Email is required');
         const errorContainer = errorElement.closest('[role="alert"]');
         expect(errorContainer?.id).toBe(describedBy);
+        
+        // Verify the referenced element actually exists in DOM
+        const referencedElement = document.getElementById(describedBy);
+        expect(referencedElement).toBe(errorContainer);
+        expect(referencedElement).toBeInTheDocument();
       });
     });
 
@@ -427,6 +443,7 @@ describe('ScControlWrapperComponent', () => {
       await screen.findByText('Email is required', {}, { timeout: 1000 });
       await waitFor(() => {
         expect(emailInput).toHaveAttribute('aria-invalid', 'true');
+        expect(emailInput).toHaveAttribute('aria-describedby');
       });
 
       // Type valid email
@@ -437,10 +454,12 @@ describe('ScControlWrapperComponent', () => {
       });
       await userEvent.tab();
 
-      // Wait for error to disappear and aria-invalid to be removed
+      // Wait for error to disappear and both aria attributes to be removed
       await waitFor(
         () => {
           expect(emailInput).not.toHaveAttribute('aria-invalid');
+          expect(emailInput).not.toHaveAttribute('aria-describedby');
+          expect(screen.queryByText('Email is required')).not.toBeInTheDocument();
         },
         { timeout: 1000 }
       );
@@ -454,12 +473,19 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.tab();
       await screen.findByText('Email is required', {}, { timeout: 1000 });
 
+      // Find error container using Testing Library
       const errorElement = screen.getByText('Email is required');
       const errorContainer = errorElement.closest('[role="alert"]');
 
+      // Verify all ARIA attributes for errors
       expect(errorContainer).toHaveAttribute('role', 'alert');
       expect(errorContainer).toHaveAttribute('aria-live', 'assertive');
       expect(errorContainer).toHaveAttribute('aria-atomic', 'true');
+      expect(errorContainer).toHaveAttribute('id');
+      expect(errorContainer?.id).toMatch(/^ngx-control-wrapper-\d+-error$/);
+      
+      // Verify the container is accessible by role
+      expect(screen.getByRole('alert')).toBe(errorContainer);
     });
 
     it('should use role="status" with aria-live="polite" for warnings', async () => {
@@ -502,12 +528,22 @@ describe('ScControlWrapperComponent', () => {
 
       await screen.findByText('Username looks weak', {}, { timeout: 1000 });
 
+      // Find warning container using Testing Library
       const warningElement = screen.getByText('Username looks weak');
       const warningContainer = warningElement.closest('[role="status"]');
 
+      // Verify all ARIA attributes for warnings
       expect(warningContainer).toHaveAttribute('role', 'status');
       expect(warningContainer).toHaveAttribute('aria-live', 'polite');
       expect(warningContainer).toHaveAttribute('aria-atomic', 'true');
+      expect(warningContainer).toHaveAttribute('id');
+      expect(warningContainer?.id).toMatch(/^ngx-control-wrapper-\d+-warning$/);
+      
+      // Verify the warning is associated with the input via aria-describedby
+      await waitFor(() => {
+        const describedBy = usernameInput.getAttribute('aria-describedby');
+        expect(describedBy).toContain(warningContainer!.id);
+      });
     });
 
     it('should use role="status" with aria-live="polite" for pending state', async () => {
@@ -517,14 +553,22 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.type(emailInput, 'test@example.com');
       await userEvent.tab();
 
-      // Wait for pending state
+      // Wait for pending state with comprehensive ARIA checks
       await waitFor(
         () => {
           const pendingText = screen.getByText('Validating…');
           const pendingContainer = pendingText.closest('[role="status"]');
+          
+          // Verify all ARIA attributes for pending state
           expect(pendingContainer).toHaveAttribute('role', 'status');
           expect(pendingContainer).toHaveAttribute('aria-live', 'polite');
           expect(pendingContainer).toHaveAttribute('aria-atomic', 'true');
+          expect(pendingContainer).toHaveAttribute('id');
+          expect(pendingContainer?.id).toMatch(/^ngx-control-wrapper-\d+-pending$/);
+          
+          // Verify pending state is associated with input
+          const describedBy = emailInput.getAttribute('aria-describedby');
+          expect(describedBy).toContain(pendingContainer!.id);
         },
         { timeout: 1000 }
       );
@@ -588,8 +632,16 @@ describe('ScControlWrapperComponent', () => {
 
       // Verify aria-describedby includes error ID
       await waitFor(() => {
-        const describedBy = usernameInput.getAttribute('aria-describedby');
-        expect(describedBy).toMatch(/ngx-control-wrapper-\d+-error/);
+        const describedBy = usernameInput.getAttribute('aria-describedby')!;
+        expect(describedBy).toMatch(/^ngx-control-wrapper-\d+-error$/);
+        
+        // Verify the referenced element exists
+        const errorElement = document.getElementById(describedBy);
+        expect(errorElement).toBeInTheDocument();
+        expect(errorElement).toHaveAttribute('role', 'alert');
+        
+        // Verify format: should be a single ID
+        expect(describedBy.split(' ')).toHaveLength(1);
       });
     });
 
