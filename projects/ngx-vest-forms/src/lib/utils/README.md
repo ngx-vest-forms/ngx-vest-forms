@@ -486,7 +486,7 @@ const apiData = objectToArray(formData, [
 ### Complete Array Conversion Workflow
 
 ```typescript
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject, effect } from '@angular/core';
 import { arrayToObject, objectToArray } from 'ngx-vest-forms';
 
 type BackendData = {
@@ -505,13 +505,18 @@ type FormModel = {
   // ...
 })
 export class MyFormComponent {
+  private readonly api = inject(ApiService);
   protected readonly formValue = signal<FormModel>({
     phoneNumbers: {},
     addresses: {},
   });
 
-  // LOAD: Convert backend arrays → form-compatible objects
-  async ngOnInit() {
+  constructor() {
+    // LOAD: Convert backend arrays → form-compatible objects
+    this.loadData();
+  }
+
+  private async loadData() {
     const data = await this.api.load();
     this.formValue.set({
       phoneNumbers: arrayToObject(data.phoneNumbers),
@@ -525,7 +530,7 @@ export class MyFormComponent {
   }
 
   // SUBMIT: Convert form objects → backend arrays
-  async onSubmit() {
+  protected async save() {
     const formData = this.formValue();
     const backendData = objectToArray(formData, [
       'phoneNumbers',
@@ -536,7 +541,7 @@ export class MyFormComponent {
   }
 
   // Add item dynamically
-  addPhoneNumber(newNumber: string) {
+  protected addPhoneNumber(newNumber: string) {
     this.formValue.update((v) => ({
       ...v,
       phoneNumbers: arrayToObject([
@@ -547,7 +552,7 @@ export class MyFormComponent {
   }
 
   // Remove item dynamically
-  removePhoneNumber(index: number) {
+  protected removePhoneNumber(index: number) {
     this.formValue.update((v) => {
       const phones = Object.values(v.phoneNumbers).filter(
         (_, i) => i !== index
