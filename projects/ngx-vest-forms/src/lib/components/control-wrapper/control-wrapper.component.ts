@@ -1,14 +1,34 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  AfterContentInit,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormErrorDisplayDirective } from '../../directives/form-error-display.directive';
 
+// Counter for unique IDs
+let nextUniqueId = 0;
+
 /**
- * Accessible ScControlWrapper
+ * Accessible ScControlWrapper with WCAG 2.2 AA Compliance
  *
  * Usage:
  *   - Wrap any form element with `sc-control-wrapper` or `[scControlWrapper]` (or `[sc-control-wrapper]` for legacy) that contains an `ngModel` or `ngModelGroup`.
  *   - Errors and warnings are shown when the control is invalid and touched, after form submit, or both, depending on the error display mode.
  *   - Pending state is shown with a spinner and aria-busy when async validation is running.
  *   - No manual error/warning/pending signal management is needed in your form components.
+ *
+ * ARIA & Accessibility Features:
+ *   - Automatically generates unique IDs for error/warning/pending regions
+ *   - Associates error messages with form controls via aria-describedby
+ *   - Sets aria-invalid="true" on form controls when errors should be shown
+ *   - Uses role="alert" with aria-live="assertive" for blocking errors
+ *   - Uses role="status" with aria-live="polite" for warnings and pending states
+ *   - Implements aria-atomic="true" for complete message announcements
  *
  * Error & Warning Display Behavior:
  *   - The error display mode can be configured globally using the SC_ERROR_DISPLAY_MODE_TOKEN injection token (import from core), or per instance using the `errorDisplayMode` input on FormErrorDisplayDirective (which this component uses as a hostDirective).
@@ -61,8 +81,67 @@ import { FormErrorDisplayDirective } from '../../directives/form-error-display.d
     },
   ],
 })
-export class ControlWrapperComponent {
+export class ControlWrapperComponent implements AfterContentInit {
   protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
     self: true,
   });
+  private readonly elementRef = inject(ElementRef);
+
+  // Generate unique IDs for ARIA associations
+  protected readonly uniqueId = `ngx-control-wrapper-${nextUniqueId++}`;
+  protected readonly errorId = `${this.uniqueId}-error`;
+  protected readonly warningId = `${this.uniqueId}-warning`;
+  protected readonly pendingId = `${this.uniqueId}-pending`;
+
+  // Track form controls found in the wrapper
+  private readonly formControls = signal<HTMLElement[]>([]);
+
+  /**
+   * Computed signal that builds aria-describedby string based on visible regions
+   */
+  protected readonly ariaDescribedBy = computed(() => {
+    const ids: string[] = [];
+    if (this.errorDisplay.shouldShowErrors()) {
+      ids.push(this.errorId);
+    }
+    if (this.errorDisplay.warnings().length > 0) {
+      ids.push(this.warningId);
+    }
+    if (this.errorDisplay.isPending()) {
+      ids.push(this.pendingId);
+    }
+    return ids.length > 0 ? ids.join(' ') : null;
+  });
+
+  constructor() {
+    // Effect to update aria-describedby and aria-invalid on form controls
+    effect(() => {
+      const describedBy = this.ariaDescribedBy();
+      const shouldShowErrors = this.errorDisplay.shouldShowErrors();
+
+      this.formControls().forEach((control) => {
+        // Update aria-describedby
+        if (describedBy) {
+          control.setAttribute('aria-describedby', describedBy);
+        } else {
+          control.removeAttribute('aria-describedby');
+        }
+
+        // Update aria-invalid
+        if (shouldShowErrors) {
+          control.setAttribute('aria-invalid', 'true');
+        } else {
+          control.removeAttribute('aria-invalid');
+        }
+      });
+    });
+  }
+
+  ngAfterContentInit(): void {
+    // Find all form controls (input, select, textarea) in the wrapper
+    const controls = this.elementRef.nativeElement.querySelectorAll(
+      'input, select, textarea'
+    );
+    this.formControls.set(Array.from(controls) as HTMLElement[]);
+  }
 }

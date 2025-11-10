@@ -4,7 +4,13 @@
   </div>
 
   @if (errorDisplay.shouldShowErrors()) {
-    <div class="text-sm text-red-600" role="alert" aria-live="polite">
+    <div
+      [id]="errorId"
+      class="text-sm text-red-600"
+      role="alert"
+      aria-live="assertive"
+      aria-atomic="true"
+    >
       <ul>
         @for (error of errorDisplay.errors(); track error) {
           <li>{{ error.message || error }}</li>
@@ -13,7 +19,13 @@
     </div>
   }
   @if (errorDisplay.warnings().length > 0) {
-    <div class="text-sm text-yellow-700" role="status" aria-live="polite">
+    <div
+      [id]="warningId"
+      class="text-sm text-yellow-700"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
       <ul>
         @for (warn of errorDisplay.warnings(); track warn) {
           <li>{{ warn }}</li>
@@ -22,9 +34,16 @@
     </div>
   }
   @if (errorDisplay.isPending()) {
-    <div class="flex items-center gap-1 text-xs text-gray-500" aria-busy="true">
+    <div
+      [id]="pendingId"
+      class="flex items-center gap-1 text-xs text-gray-500"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
       <span
         class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-gray-400 border-t-transparent"
+        aria-hidden="true"
       ></span>
       Validating…
     </div>

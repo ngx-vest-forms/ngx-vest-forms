@@ -393,6 +393,134 @@ export class CustomWrapperComponent {
 
 **Available signals:** `shouldShowErrors()`, `errors()`, `warnings()`, `isPending()`, `isTouched()`, `isDirty()`, `isValid()`, `isInvalid()`, `errorMessages()`, `warningMessages()`, `updateOn()`, `formSubmitted()`
 
+### Accessibility & ARIA Compliance
+
+The `sc-control-wrapper` component automatically provides WCAG 2.2 AA compliant ARIA attributes:
+
+**Automatic Features:**
+- ✅ **Unique IDs** - Each error/warning/pending region gets a unique ID
+- ✅ **aria-describedby** - Form controls automatically associated with error messages
+- ✅ **aria-invalid** - Set to `"true"` on form controls when errors should be shown
+- ✅ **Proper ARIA roles**:
+  - Errors: `role="alert"` with `aria-live="assertive"` (blocking issues)
+  - Warnings: `role="status"` with `aria-live="polite"` (non-blocking guidance)
+  - Pending: `role="status"` with `aria-live="polite"` (validation in progress)
+- ✅ **aria-atomic="true"** - Complete message announcements for screen readers
+- ✅ **Decorative elements hidden** - Spinner marked with `aria-hidden="true"`
+
+**Example Usage:**
+```typescript
+<div sc-control-wrapper>
+  <label for="email">Email Address</label>
+  <input id="email" name="email" [ngModel]="formValue().email" />
+  <!-- 
+    When validation fails:
+    - Input gets aria-invalid="true"
+    - Input gets aria-describedby="ngx-control-wrapper-0-error"
+    - Error message has matching id and role="alert"
+    - Screen reader announces: "Email is required" assertively
+  -->
+</div>
+```
+
+**Custom Wrappers - ARIA Best Practices:**
+
+When creating custom wrappers, follow these patterns:
+
+```typescript
+@Component({
+  selector: 'app-accessible-wrapper',
+  template: `
+    <ng-content />
+    
+    @if (errorDisplay.shouldShowErrors()) {
+      <div 
+        [id]="errorId"
+        role="alert" 
+        aria-live="assertive" 
+        aria-atomic="true">
+        @for (error of errorDisplay.errors(); track error) {
+          <p>{{ error }}</p>
+        }
+      </div>
+    }
+    
+    @if (errorDisplay.warnings().length > 0) {
+      <div 
+        [id]="warningId"
+        role="status" 
+        aria-live="polite" 
+        aria-atomic="true">
+        @for (warn of errorDisplay.warnings(); track warn) {
+          <p>{{ warn }}</p>
+        }
+      </div>
+    }
+    
+    @if (errorDisplay.isPending()) {
+      <div 
+        [id]="pendingId"
+        role="status" 
+        aria-live="polite" 
+        aria-atomic="true">
+        <span aria-hidden="true">⏳</span>
+        Validating…
+      </div>
+    }
+  `
+})
+export class AccessibleWrapperComponent implements AfterContentInit {
+  protected readonly errorDisplay = inject(FormErrorDisplayDirective, { self: true });
+  private readonly elementRef = inject(ElementRef);
+  
+  // Generate unique IDs
+  private static nextId = 0;
+  protected readonly uniqueId = `custom-wrapper-${AccessibleWrapperComponent.nextId++}`;
+  protected readonly errorId = `${this.uniqueId}-error`;
+  protected readonly warningId = `${this.uniqueId}-warning`;
+  protected readonly pendingId = `${this.uniqueId}-pending`;
+  
+  ngAfterContentInit(): void {
+    // Find all form controls and associate them with error messages
+    const controls = this.elementRef.nativeElement.querySelectorAll('input, select, textarea');
+    
+    effect(() => {
+      const ids: string[] = [];
+      if (this.errorDisplay.shouldShowErrors()) ids.push(this.errorId);
+      if (this.errorDisplay.warnings().length > 0) ids.push(this.warningId);
+      if (this.errorDisplay.isPending()) ids.push(this.pendingId);
+      
+      const describedBy = ids.length > 0 ? ids.join(' ') : null;
+      const shouldShowErrors = this.errorDisplay.shouldShowErrors();
+      
+      controls.forEach(control => {
+        if (describedBy) {
+          control.setAttribute('aria-describedby', describedBy);
+        } else {
+          control.removeAttribute('aria-describedby');
+        }
+        
+        if (shouldShowErrors) {
+          control.setAttribute('aria-invalid', 'true');
+        } else {
+          control.removeAttribute('aria-invalid');
+        }
+      });
+    });
+  }
+}
+```
+
+**Key ARIA Guidelines:**
+1. **Always use `role="alert"` for errors** - These are blocking issues that prevent form submission
+2. **Always use `role="status"` for warnings and pending** - These are non-blocking updates
+3. **Set `aria-atomic="true"`** - Ensures complete message is announced, not just changes
+4. **Use `aria-hidden="true"` for decorative icons** - Prevents screen readers from announcing meaningless content
+5. **Associate messages with controls via `aria-describedby`** - Screen reader users can move to control and still hear the error
+6. **Set `aria-invalid="true"` only when errors should be shown** - Indicates validation state to assistive technologies
+
+> **📖 For comprehensive accessibility guidance**, see `.github/instructions/a11y.instructions.md`
+
 ### Root Form Validation
 
 Root form validation enables form-level validations that span multiple fields (e.g., password confirmation, cross-field dependencies).
