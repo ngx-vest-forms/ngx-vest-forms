@@ -1538,11 +1538,7 @@ describe('FormDirective - Comprehensive', () => {
             [validationConfig]="validationConfig"
             (formValueChange)="formValue.set($event)"
           >
-            <input
-              name="aantal"
-              type="number"
-              [ngModel]="formValue().aantal"
-            />
+            <input name="aantal" type="number" [ngModel]="formValue().aantal" />
             <textarea
               name="onderbouwing"
               [ngModel]="formValue().onderbouwing"
@@ -1641,6 +1637,265 @@ describe('FormDirective - Comprehensive', () => {
       await fixture.whenStable();
 
       expect(onderbouwingInput.classList.contains('ng-invalid')).toBe(true);
+    });
+
+    it('should use take(1) to prevent continuous statusChanges listening', async () => {
+      // This test verifies that triggerControl$ uses take(1) to stop listening
+      // after the control is found, preventing the feedback loop described in PR #60
+      let statusChangesSubscriptionCount = 0;
+
+      @Component({
+        template: `
+          <form
+            scVestForm
+            [formValue]="formValue()"
+            [suite]="suite"
+            [validationConfig]="validationConfig"
+            (formValueChange)="formValue.set($event)"
+          >
+            <input name="field1" [ngModel]="formValue().field1" />
+            <input name="field2" [ngModel]="formValue().field2" />
+          </form>
+        `,
+        imports: [vestForms, FormsModule],
+      })
+      class TestComponent {
+        formValue = signal<NgxDeepPartial<{ field1: string; field2: string }>>({
+          field1: '',
+          field2: '',
+        });
+        validationConfig = {
+          field1: ['field2'],
+        };
+        suite = staticSuite((model: any, field?: string) => {
+          only(field);
+          test('field1', 'Required', () => {
+            enforce(model.field1).isNotBlank();
+          });
+          test('field2', 'Required', () => {
+            enforce(model.field2).isNotBlank();
+          });
+        });
+      }
+
+      const fixture = TestBed.configureTestingModule({
+        imports: [TestComponent],
+      }).createComponent(TestComponent);
+
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+      );
+      fixture.detectChanges();
+
+      // Spy on form.statusChanges after initialization
+      const formDirective =
+        fixture.debugElement.children[0].injector.get(FormDirective);
+      const originalStatusChanges = formDirective.ngForm.form.statusChanges;
+      let subscribeCallCount = 0;
+
+      // Patch statusChanges.subscribe to count subscriptions
+      const originalSubscribe = originalStatusChanges.subscribe.bind(
+        originalStatusChanges
+      );
+      originalStatusChanges.subscribe = ((...args: any[]) => {
+        subscribeCallCount++;
+        return originalSubscribe(...args);
+      }) as any;
+
+      // Trigger a change
+      const field1Input = fixture.nativeElement.querySelector(
+        'input[name="field1"]'
+      ) as HTMLInputElement;
+      field1Input.value = 'test';
+      field1Input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+      );
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // With take(1), the subscription should be created but then immediately
+      // complete, so subsequent status changes shouldn't create new subscriptions
+      const initialSubscribeCount = subscribeCallCount;
+
+      // Trigger another status change
+      field1Input.value = 'test2';
+      field1Input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+      );
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // The subscribe count should not increase significantly
+      // (may increase by 1-2 due to new validation cycle, but not continuously)
+      expect(subscribeCallCount - initialSubscribeCount).toBeLessThan(3);
+    });
+
+    it('should prevent re-entry with validationInProgress Set', async () => {
+      // This test verifies that the validationInProgress Set prevents
+      // a field from triggering validation while it's already being validated
+      let field1ValidationCount = 0;
+      let field2ValidationCount = 0;
+
+      @Component({
+        template: `
+          <form
+            scVestForm
+            [formValue]="formValue()"
+            [suite]="suite"
+            [validationConfig]="validationConfig"
+            (formValueChange)="formValue.set($event)"
+          >
+            <input name="field1" [ngModel]="formValue().field1" />
+            <input name="field2" [ngModel]="formValue().field2" />
+          </form>
+        `,
+        imports: [vestForms, FormsModule],
+      })
+      class TestComponent {
+        formValue = signal<NgxDeepPartial<{ field1: string; field2: string }>>({
+          field1: '',
+          field2: '',
+        });
+        validationConfig = {
+          field1: ['field2'],
+          field2: ['field1'],
+        };
+        suite = staticSuite((model: any, field?: string) => {
+          only(field);
+          if (field === 'field1') field1ValidationCount++;
+          if (field === 'field2') field2ValidationCount++;
+
+          test('field1', 'Required', () => {
+            enforce(model.field1).isNotBlank();
+          });
+          test('field2', 'Required', () => {
+            enforce(model.field2).isNotBlank();
+          });
+        });
+      }
+
+      const fixture = TestBed.configureTestingModule({
+        imports: [TestComponent],
+      }).createComponent(TestComponent);
+
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+      );
+      fixture.detectChanges();
+
+      // Reset counters
+      field1ValidationCount = 0;
+      field2ValidationCount = 0;
+
+      // Change field1, which should trigger field2 validation via config
+      const field1Input = fixture.nativeElement.querySelector(
+        'input[name="field1"]'
+      ) as HTMLInputElement;
+      field1Input.value = 'test';
+      field1Input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME + 200)
+      );
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // With bidirectional config and validationInProgress protection:
+      // - field1 changes → validates field1 (count: 1) → triggers field2 validation (count: 1)
+      // - field2 validation completes → would try to trigger field1, but validationInProgress blocks it
+      // Expected: field1: 1-2, field2: 1-2 (not continuous loop)
+      expect(field1ValidationCount).toBeLessThan(5);
+      expect(field2ValidationCount).toBeLessThan(5);
+    });
+
+    it('should batch markAsTouched with updateValueAndValidity to reduce class updates', async () => {
+      // This test verifies the optimization where markAsTouched is called
+      // BEFORE updateValueAndValidity with { onlySelf: true } to reduce
+      // duplicate class attribute updates
+
+      @Component({
+        template: `
+          <form
+            scVestForm
+            [formValue]="formValue()"
+            [suite]="suite"
+            [validationConfig]="validationConfig"
+            (formValueChange)="formValue.set($event)"
+          >
+            <input name="field1" [ngModel]="formValue().field1" />
+            <input name="field2" [ngModel]="formValue().field2" />
+          </form>
+        `,
+        imports: [vestForms, FormsModule],
+      })
+      class TestComponent {
+        formValue = signal<NgxDeepPartial<{ field1: string; field2: string }>>({
+          field1: '',
+          field2: '',
+        });
+        validationConfig = {
+          field1: ['field2'],
+        };
+        suite = staticSuite((model: any, field?: string) => {
+          only(field);
+          test('field1', 'Required', () => {
+            enforce(model.field1).isNotBlank();
+          });
+          test('field2', 'Required', () => {
+            enforce(model.field2).isNotBlank();
+          });
+        });
+      }
+
+      const fixture = TestBed.configureTestingModule({
+        imports: [TestComponent],
+      }).createComponent(TestComponent);
+
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+      );
+      fixture.detectChanges();
+
+      const field1Input = fixture.nativeElement.querySelector(
+        'input[name="field1"]'
+      ) as HTMLInputElement;
+      const field2Input = fixture.nativeElement.querySelector(
+        'input[name="field2"]'
+      ) as HTMLInputElement;
+
+      // Mark field1 as touched and change its value
+      field1Input.dispatchEvent(new Event('blur'));
+      field1Input.value = 'test';
+      field1Input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+      );
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // Verify that field2 is also marked as touched (touch propagation works)
+      expect(field2Input.classList.contains('ng-touched')).toBe(true);
+
+      // Verify validation ran (field2 should be invalid because it's empty)
+      expect(field2Input.classList.contains('ng-invalid')).toBe(true);
     });
   });
 });

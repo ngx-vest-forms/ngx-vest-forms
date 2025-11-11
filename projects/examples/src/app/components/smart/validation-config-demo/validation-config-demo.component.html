@@ -1,0 +1,310 @@
+<div class="container mx-auto max-w-7xl p-6">
+  <div class="mb-8">
+    <h1 class="mb-2 text-4xl font-bold">ValidationConfig Demo</h1>
+    <p class="text-gray-600">
+      Demonstrates ValidationConfig patterns with race condition fixes
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <!-- Form -->
+    <div class="rounded-lg bg-white p-6 shadow-lg">
+      <form
+        scVestForm
+        [suite]="suite"
+        [formShape]="shape"
+        [formValue]="formValue()"
+        [validationConfig]="validationConfig"
+        (formValueChange)="formValue.set($event)"
+        (validChange)="isValid.set($event)"
+        (errorsChange)="errors.set($event)"
+        (ngSubmit)="onSubmit()"
+        class="space-y-6"
+      >
+        <!-- Bidirectional Example -->
+        <section class="space-y-4 border-l-4 border-blue-500 pl-4">
+          <div>
+            <h2 class="mb-2 text-xl font-semibold">Bidirectional Validation</h2>
+            <p class="text-sm text-gray-600">
+              Changing either password field revalidates the other
+              automatically.
+            </p>
+          </div>
+
+          <div sc-control-wrapper>
+            <label for="password" class="mb-2 block text-sm font-medium">
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              [ngModel]="formValue().password"
+              class="w-full rounded-md border px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter password (min 8 chars)"
+            />
+          </div>
+
+          <div sc-control-wrapper>
+            <label for="confirmPassword" class="mb-2 block text-sm font-medium">
+              Confirm Password
+            </label>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              [ngModel]="formValue().confirmPassword"
+              class="w-full rounded-md border px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              placeholder="Confirm password"
+            />
+          </div>
+        </section>
+
+        <!-- Conditional Validation Example -->
+        <section class="space-y-4 border-l-4 border-green-500 pl-4">
+          <div>
+            <h2 class="mb-2 text-xl font-semibold">Conditional Validation</h2>
+            <p class="text-sm text-gray-600">
+              Toggling the checkbox triggers justification validation.
+            </p>
+          </div>
+
+          <div>
+            <label class="flex cursor-pointer items-center gap-2">
+              <input
+                type="checkbox"
+                name="requiresJustification"
+                [ngModel]="formValue().requiresJustification"
+                class="rounded"
+              />
+              <span class="text-sm font-medium">Requires Justification</span>
+            </label>
+          </div>
+
+          @if (formValue().requiresJustification) {
+            <div sc-control-wrapper>
+              <label for="justification" class="mb-2 block text-sm font-medium">
+                Justification (min 20 characters)
+              </label>
+              <textarea
+                id="justification"
+                name="justification"
+                [ngModel]="formValue().justification"
+                rows="3"
+                class="w-full rounded-md border px-3 py-2 focus:border-green-500 focus:ring-2 focus:ring-green-500"
+                placeholder="Explain why justification is needed..."
+              ></textarea>
+            </div>
+          }
+        </section>
+
+        <!-- Cascade Example -->
+        <section class="space-y-4 border-l-4 border-purple-500 pl-4">
+          <div>
+            <h2 class="mb-2 text-xl font-semibold">Cascade Validation</h2>
+            <p class="text-sm text-gray-600">
+              Changing country triggers state and zip code validation.
+            </p>
+          </div>
+
+          <div sc-control-wrapper>
+            <label for="country" class="mb-2 block text-sm font-medium">
+              Country
+            </label>
+            <select
+              id="country"
+              name="country"
+              [ngModel]="formValue().country"
+              class="w-full rounded-md border px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="">Select country...</option>
+              <option value="US">United States</option>
+              <option value="CA">Canada</option>
+              <option value="UK">United Kingdom</option>
+              <option value="NL">Netherlands</option>
+            </select>
+          </div>
+
+          <div sc-control-wrapper>
+            <label for="state" class="mb-2 block text-sm font-medium">
+              State/Province
+            </label>
+            <input
+              type="text"
+              id="state"
+              name="state"
+              [ngModel]="formValue().state"
+              class="w-full rounded-md border px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-500"
+              placeholder="Enter state/province"
+            />
+          </div>
+
+          <div sc-control-wrapper>
+            <label for="zipCode" class="mb-2 block text-sm font-medium">
+              Postal Code
+            </label>
+            <input
+              type="text"
+              id="zipCode"
+              name="zipCode"
+              [ngModel]="formValue().zipCode"
+              class="w-full rounded-md border px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-500"
+              placeholder="Enter postal code"
+            />
+          </div>
+        </section>
+
+        <!-- Date Range Example -->
+        <section class="space-y-4 border-l-4 border-orange-500 pl-4">
+          <div>
+            <h2 class="mb-2 text-xl font-semibold">Date Range Validation</h2>
+            <p class="text-sm text-gray-600">
+              Start and end dates validate against each other.
+            </p>
+          </div>
+
+          <div sc-control-wrapper>
+            <label for="startDate" class="mb-2 block text-sm font-medium">
+              Start Date
+            </label>
+            <input
+              type="date"
+              id="startDate"
+              name="startDate"
+              [ngModel]="formValue().startDate"
+              class="w-full rounded-md border px-3 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+
+          <div sc-control-wrapper>
+            <label for="endDate" class="mb-2 block text-sm font-medium">
+              End Date
+            </label>
+            <input
+              type="date"
+              id="endDate"
+              name="endDate"
+              [ngModel]="formValue().endDate"
+              class="w-full rounded-md border px-3 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+        </section>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          [disabled]="!isValid()"
+          class="w-full rounded-md bg-blue-600 py-3 font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Submit Form
+        </button>
+      </form>
+    </div>
+
+    <!-- Debug Panel -->
+    <div class="space-y-4">
+      <!-- Valid Status -->
+      <div class="rounded-lg bg-white p-6 shadow">
+        <h3 class="mb-3 text-lg font-semibold">Form Valid</h3>
+        <div
+          [class]="isValid() ? 'text-green-600' : 'text-red-600'"
+          class="font-mono text-2xl font-bold"
+        >
+          {{ isValid() ? '✓ Valid' : '✗ Invalid' }}
+        </div>
+      </div>
+
+      <!-- Error Summary -->
+      <div class="rounded-lg bg-white p-6 shadow">
+        <h3 class="mb-3 text-lg font-semibold">Validation Summary</h3>
+        <div class="space-y-3">
+          @if (hasPasswordErrors()) {
+            <div class="rounded border border-red-200 bg-red-50 p-3">
+              <div class="mb-1 text-sm font-semibold text-red-800">
+                Password Issues
+              </div>
+              @for (error of hasPasswordErrors(); track error) {
+                <div class="text-xs text-red-600">• {{ error }}</div>
+              }
+            </div>
+          }
+
+          @if (hasLocationErrors()) {
+            <div class="rounded border border-purple-200 bg-purple-50 p-3">
+              <div class="mb-1 text-sm font-semibold text-purple-800">
+                Location Issues
+              </div>
+              @for (error of hasLocationErrors(); track error) {
+                <div class="text-xs text-purple-600">• {{ error }}</div>
+              }
+            </div>
+          }
+
+          @if (hasDateErrors()) {
+            <div class="rounded border border-orange-200 bg-orange-50 p-3">
+              <div class="mb-1 text-sm font-semibold text-orange-800">
+                Date Issues
+              </div>
+              @for (error of hasDateErrors(); track error) {
+                <div class="text-xs text-orange-600">• {{ error }}</div>
+              }
+            </div>
+          }
+
+          @if (
+            !hasPasswordErrors() &&
+            !hasLocationErrors() &&
+            !hasDateErrors() &&
+            !isValid()
+          ) {
+            <div class="rounded border border-gray-200 bg-gray-50 p-3">
+              <div class="text-sm text-gray-600">
+                Fill out all required fields to enable submission
+              </div>
+            </div>
+          }
+
+          @if (isValid()) {
+            <div class="rounded border border-green-200 bg-green-50 p-3">
+              <div class="text-sm font-semibold text-green-800">
+                ✓ All validations passed! Form is ready to submit.
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Form Data -->
+      <div class="rounded-lg bg-white p-6 shadow">
+        <h3 class="mb-3 text-lg font-semibold">Form Data</h3>
+        <pre class="overflow-auto rounded border bg-gray-50 p-3 text-xs">{{
+          formValue()
+        }}</pre>
+      </div>
+
+      <!-- Key Points -->
+      <div class="rounded-lg border border-blue-200 bg-blue-50 p-6">
+        <h3 class="mb-3 text-lg font-semibold text-blue-900">Key Features</h3>
+        <ul class="space-y-2 text-sm text-blue-800">
+          <li>
+            <strong>✓ No Race Conditions:</strong> Validation config uses
+            <code class="rounded bg-blue-100 px-1">take(1)</code> to prevent
+            feedback loops
+          </li>
+          <li>
+            <strong>✓ Debounced:</strong> Validation is debounced to reduce
+            frequency during rapid typing
+          </li>
+          <li>
+            <strong>✓ Conditional Fields:</strong> Works seamlessly with
+            <code class="rounded bg-blue-100 px-1">&#64;if</code> blocks
+          </li>
+          <li>
+            <strong>✓ Cross-field Validation:</strong> Fields automatically
+            revalidate when dependencies change
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
