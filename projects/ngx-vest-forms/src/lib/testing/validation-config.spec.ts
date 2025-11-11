@@ -459,16 +459,20 @@ describe('FormDirective - Comprehensive', () => {
           [validationConfig]="validationConfig"
           (formValueChange)="formValue.set($event)"
         >
-          <input
-            name="quantity"
-            type="number"
-            [ngModel]="formValue().quantity"
-          />
-          <input
-            name="justification"
-            type="text"
-            [ngModel]="formValue().justification"
-          />
+          <div sc-control-wrapper>
+            <input
+              name="quantity"
+              type="number"
+              [ngModel]="formValue().quantity"
+            />
+          </div>
+          <div sc-control-wrapper>
+            <input
+              name="justification"
+              type="text"
+              [ngModel]="formValue().justification"
+            />
+          </div>
         </form>
       `,
       imports: [vestForms, FormsModule],
@@ -518,10 +522,13 @@ describe('FormDirective - Comprehensive', () => {
 
     const quantityInput = fixture.nativeElement.querySelector(
       'input[name="quantity"]'
-    );
+    ) as HTMLInputElement;
     const justificationInput = fixture.nativeElement.querySelector(
       'input[name="justification"]'
-    );
+    ) as HTMLInputElement;
+    const justificationWrapper = justificationInput.closest(
+      '.ngx-control-wrapper'
+    ) as HTMLElement;
 
     // Both empty = valid
     expect(fixture.componentInstance.formValue().quantity).toBe(null);
@@ -543,6 +550,8 @@ describe('FormDirective - Comprehensive', () => {
     // When quantity is filled, justification becomes required (and is empty, so invalid)
     // quantity itself is valid because it has a value
     expect(quantityInput.classList.contains('ng-valid')).toBe(true);
+    // Error should not be displayed until justification is touched
+    expect(justificationWrapper.querySelector('[role="alert"]')).toBeNull();
 
     // Trigger blur on justification to mark it as touched (validation errors only show after touch)
     justificationInput.dispatchEvent(new Event('blur'));
@@ -551,6 +560,14 @@ describe('FormDirective - Comprehensive', () => {
 
     expect(justificationInput.classList.contains('ng-invalid')).toBe(true);
     expect(justificationInput.classList.contains('ng-touched')).toBe(true);
+    expect(justificationInput.classList.contains('ng-pristine')).toBe(true);
+
+    const justificationError =
+      justificationWrapper.querySelector('[role="alert"]');
+    expect(justificationError).not.toBeNull();
+    expect(justificationError?.textContent ?? '').toContain(
+      'Justification is required'
+    );
 
     // Now fill justification, both should become valid
     justificationInput.value = 'This is my reasoning';
