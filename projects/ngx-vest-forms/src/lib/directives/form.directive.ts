@@ -406,21 +406,17 @@ export class FormDirective<T extends Record<string, any>> {
               map(() => form.get(triggerField)),
               // Proceed only when control is available
               filter((c): c is NonNullable<typeof c> => !!c),
-              // Avoid re-subscribing if the control instance is the same
-              distinctUntilChanged()
+              // CRITICAL: take(1) to stop listening after control is found
+              // Without this, the pipeline continues to listen to statusChanges,
+              // creating a feedback loop where validation triggers re-trigger the pipeline
+              take(1)
             );
 
             return triggerControl$.pipe(
-              // For the resolved control, subscribe to BOTH valueChanges and statusChanges
-              // This ensures validation triggers on both value changes AND touch state changes
+              // For the resolved control, subscribe to valueChanges only
+              // Touch state propagation is handled separately via markAsTouched() below
               switchMap((control) => {
-                // Create a stream that combines value changes and touch state changes
-                const valueChange$ = control.valueChanges;
-                const touchChange$ = control.statusChanges.pipe(
-                  filter(() => control.touched)
-                );
-
-                return rxMerge(valueChange$, touchChange$).pipe(
+                return control.valueChanges.pipe(
                   // Debounce to batch rapid changes
                   debounceTime(this.configDebounceTime),
                   // Wait for the form to be idle before updating dependents
@@ -458,6 +454,11 @@ export class FormDirective<T extends Record<string, any>> {
                       map(() => control)
                     );
                   }),
+                  // Add trigger field to validation-in-progress set BEFORE processing
+                  // This prevents circular triggers in bidirectional validationConfig
+                  tap(() => {
+                    this.validationInProgress.add(triggerField);
+                  }),
                   tap(() => {
                     for (const depField of dependents) {
                       const dependentControl = form.get(depField);
@@ -477,16 +478,17 @@ export class FormDirective<T extends Record<string, any>> {
                       }
 
                       if (!this.validationInProgress.has(depField)) {
-                        // Use emitEvent: true to ensure async validators re-run
-                        // This is critical for omitWhen scenarios where validation logic
-                        // depends on other field values that have changed
+                        // Use emitEvent: false to prevent circular triggers in bidirectional validationConfig
+                        // The validation will still run (async validators re-execute), but won't emit
+                        // statusChanges/valueChanges that would trigger other validationConfig listeners
                         dependentControl.updateValueAndValidity({
                           onlySelf: true,
-                          emitEvent: true,
+                          emitEvent: false, // CRITICAL: Prevents feedback loop
                         });
                       }
                     }
                   }),
+                  // Remove trigger field from validation-in-progress set AFTER processing
                   tap(() => this.validationInProgress.delete(triggerField))
                 );
               })

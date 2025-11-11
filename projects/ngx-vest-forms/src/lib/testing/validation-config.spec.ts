@@ -1522,5 +1522,125 @@ describe('FormDirective - Comprehensive', () => {
       // Field2 is still untouched (user never interacted with it directly)
       expect(field2Input.classList.contains('ng-untouched')).toBe(true);
     });
+
+    it('should not create validation feedback loop with bidirectional validationConfig', async () => {
+      // This test verifies the fix for the race condition bug report where
+      // validation config was causing continuous re-triggering due to listening
+      // to form.statusChanges even after controls were found.
+      let validationCallCount = 0;
+
+      @Component({
+        template: `
+          <form
+            scVestForm
+            [formValue]="formValue()"
+            [suite]="suite"
+            [validationConfig]="validationConfig"
+            (formValueChange)="formValue.set($event)"
+          >
+            <input
+              name="aantal"
+              type="number"
+              [ngModel]="formValue().aantal"
+            />
+            <textarea
+              name="onderbouwing"
+              [ngModel]="formValue().onderbouwing"
+            ></textarea>
+          </form>
+        `,
+        imports: [vestForms, FormsModule],
+      })
+      class RaceConditionTestComponent {
+        formValue = signal<
+          NgxDeepPartial<{ aantal: number | null; onderbouwing: string | null }>
+        >({
+          aantal: null,
+          onderbouwing: null,
+        });
+        validationConfig = {
+          aantal: ['onderbouwing'],
+          onderbouwing: ['aantal'],
+        };
+        suite = staticSuite((model: any, field?: string) => {
+          only(field);
+          validationCallCount++;
+
+          const hasAantal = !!model.aantal;
+          const hasOnderbouwing = !!model.onderbouwing;
+          const hasEither = hasAantal || hasOnderbouwing;
+
+          omitWhen(!hasEither, () => {
+            test('onderbouwing', 'Onderbouwing is required', () => {
+              enforce(model.onderbouwing).isNotBlank();
+            });
+
+            test('aantal', 'Aantal is required', () => {
+              enforce(model.aantal).isTruthy();
+            });
+          });
+        });
+      }
+
+      const fixture = TestBed.configureTestingModule({
+        imports: [RaceConditionTestComponent],
+      }).createComponent(RaceConditionTestComponent);
+
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // Wait for initial validation to complete
+      await new Promise((resolve) =>
+        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+      );
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // Reset counter after initialization
+      validationCallCount = 0;
+
+      // Fill in aantal field
+      const aantalInput = fixture.nativeElement.querySelector(
+        'input[name="aantal"]'
+      ) as HTMLInputElement;
+      aantalInput.value = '5';
+      aantalInput.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      // Wait for debounce + validation to complete
+      await new Promise((resolve) =>
+        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+      );
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const validationCountAfterChange = validationCallCount;
+
+      // Wait an additional period to see if validation keeps re-triggering
+      // If there's a feedback loop, validationCallCount will continue to increase
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const validationCountAfterWait = validationCallCount;
+
+      // The key test: validation should stabilize, not continue indefinitely
+      // With bidirectional config, we expect some back-and-forth (typically 5-7 validations total)
+      // But it should NOT continue after that - the count should remain stable
+      expect(validationCountAfterWait).toBe(validationCountAfterChange);
+
+      // Also verify the validation actually worked (onderbouwing should be invalid)
+      const onderbouwingInput = fixture.nativeElement.querySelector(
+        'textarea[name="onderbouwing"]'
+      ) as HTMLTextAreaElement;
+
+      // Touch the onderbouwing field to see errors
+      onderbouwingInput.dispatchEvent(new Event('blur'));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(onderbouwingInput.classList.contains('ng-invalid')).toBe(true);
+    });
   });
 });
