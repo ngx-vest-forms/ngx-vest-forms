@@ -18,6 +18,14 @@
  */
 
 /**
+ * @internal
+ * Internal utility for parsing field path strings.
+ *
+ * **Not intended for external use.** While this function can parse field paths,
+ * it's primarily used internally. Most users won't need to parse field paths manually.
+ * If you do need this functionality, consider using your own implementation tailored
+ * to your specific needs.
+ *
  * Converts a dot/bracket notation path (e.g. `'addresses[0].street'`)
  * to a Standard Schema path array (e.g. `['addresses', 0, 'street']`).
  *

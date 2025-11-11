@@ -11,26 +11,28 @@ This directory contains all utility types and functions provided by ngx-vest-for
   - [NgxVestSuite<T>](#ngxvestsuitet)
   - [NgxFieldKey<T>](#ngxfieldkeyt)
 - [Form Utilities](#form-utilities)
+  - [setValueAtPath()](#setvalueatpath)
+- [Internal Form Utilities](#internal-form-utilities) ⚠️
   - [getAllFormErrors()](#getallformerrors)
   - [getFormControlField()](#getformcontrolfield)
   - [getFormGroupField()](#getformgroupfield)
   - [mergeValuesAndRawValues()](#mergevaluesandrawvalues)
-  - [setValueAtPath()](#setvalueatpath)
 - [Array/Object Conversion](#arrayobject-conversion)
   - [arrayToObject()](#arraytoobject)
   - [deepArrayToObject()](#deeparraytoobject)
   - [objectToArray()](#objecttoarray)
 - [Field Path Utilities](#field-path-utilities)
-  - [parseFieldPath()](#parsefieldpath)
   - [stringifyFieldPath()](#stringifyfieldpath)
+- [Internal Path Utilities](#internal-path-utilities) ⚠️
+  - [parseFieldPath()](#parsefieldpath)
 - [Field Clearing Utilities](#field-clearing-utilities)
   - [clearFieldsWhen()](#clearfieldswhen)
   - [clearFields()](#clearfields)
   - [keepFieldsWhen()](#keepfieldswhen)
-- [Equality Utilities](#equality-utilities)
+- [Internal Equality Utilities](#internal-equality-utilities) ⚠️
   - [shallowEqual()](#shallowequal)
   - [fastDeepEqual()](#fastdeepequal)
-- [Shape Validation](#shape-validation)
+- [Internal Shape Validation](#internal-shape-validation) ⚠️
   - [validateShape()](#validateshape)
 
 ---
@@ -281,6 +283,35 @@ export const suite = staticSuite(
 
 ## Form Utilities
 
+### setValueAtPath()
+
+Sets a value at a nested path using dot notation (creates intermediate objects).
+
+```typescript
+import { setValueAtPath } from 'ngx-vest-forms';
+
+const obj = {};
+setValueAtPath(obj, 'user.profile.name', 'John');
+// obj = { user: { profile: { name: 'John' } } }
+
+setValueAtPath(obj, 'addresses[0].street', 'Main St');
+// obj = { addresses: { 0: { street: 'Main St' } } }
+```
+
+**Backward Compatible Alias:** `set()` (use `setValueAtPath()` in new code)
+
+**When to use:**
+
+- ✅ Dynamic form value updates
+- ✅ Programmatic form population
+- ✅ Handling deeply nested structures
+
+---
+
+## Internal Form Utilities
+
+> **⚠️ Internal API**: These utilities are marked with `@internal` in their source files and are not part of the primary public API. They are exported for advanced use cases but may change without notice. Consider using alternative approaches or Angular's built-in form APIs instead.
+
 ### getAllFormErrors()
 
 Gets all form errors organized by field path (supports nested fields and arrays).
@@ -358,31 +389,6 @@ const allValues = mergeValuesAndRawValues(form);
 - ✅ Submitting forms with disabled fields
 - ✅ Getting complete form state
 - ✅ Conditional field handling
-
----
-
-### setValueAtPath()
-
-Sets a value at a nested path using dot notation (creates intermediate objects).
-
-```typescript
-import { setValueAtPath } from 'ngx-vest-forms';
-
-const obj = {};
-setValueAtPath(obj, 'user.profile.name', 'John');
-// obj = { user: { profile: { name: 'John' } } }
-
-setValueAtPath(obj, 'addresses[0].street', 'Main St');
-// obj = { addresses: { 0: { street: 'Main St' } } }
-```
-
-**Backward Compatible Alias:** `set()` (use `setValueAtPath()` in new code)
-
-**When to use:**
-
-- ✅ Dynamic form value updates
-- ✅ Programmatic form population
-- ✅ Handling deeply nested structures
 
 ---
 
@@ -587,35 +593,11 @@ export class MyFormComponent {
 
 ## Field Path Utilities
 
-Convert between different field path formats (useful for Standard Schema integration, Angular forms, and Vest.js field names).
-
 > **💡 Type Safety**: For compile-time type checking and IDE autocomplete of field paths, see the **[Field Path Types Guide](../../../../docs/FIELD-PATHS.md)** which covers `FieldPath<T>`, `ValidationConfigMap<T>`, and `FormFieldName<T>`.
-
-### parseFieldPath()
-
-Parses path string into segments array.
-
-```typescript
-import { parseFieldPath } from 'ngx-vest-forms';
-
-const segments = parseFieldPath('addresses[0].street');
-// ['addresses', 0, 'street']
-
-parseFieldPath('users[0].contacts[1].email');
-// ['users', 0, 'contacts', 1, 'email']
-```
-
-**When to use:**
-
-- ✅ Converting path strings to arrays
-- ✅ Standard Schema integration
-- ✅ Path manipulation
-
----
 
 ### stringifyFieldPath()
 
-Converts segments array to path string.
+Converts segments array to path string (public API).
 
 ```typescript
 import { stringifyFieldPath } from 'ngx-vest-forms';
@@ -632,6 +614,32 @@ stringifyFieldPath(['form', 'sections', 0, 'fields', 'name']);
 - ✅ Converting arrays to path strings
 - ✅ Building dynamic field paths
 - ✅ Error message formatting
+
+---
+
+## Internal Path Utilities
+
+> **⚠️ Internal API**: This utility is marked with `@internal` and is not part of the primary public API. It's exported for advanced use cases but may change without notice.
+
+### parseFieldPath()
+
+Parses path string into segments array (internal utility).
+
+```typescript
+import { parseFieldPath } from 'ngx-vest-forms';
+
+const segments = parseFieldPath('addresses[0].street');
+// ['addresses', 0, 'street']
+
+parseFieldPath('users[0].contacts[1].email');
+// ['users', 0, 'contacts', 1, 'email']
+```
+
+**When to use:**
+
+- ⚠️ Advanced integration scenarios only
+- ⚠️ May change without notice
+- ✅ Consider using `stringifyFieldPath()` for most use cases
 
 ---
 
@@ -704,13 +712,13 @@ this.formValue.update((v) =>
 
 ---
 
-## Equality Utilities
+## Internal Equality Utilities
 
-Utilities for comparing values efficiently.
+> **⚠️ Internal API**: These utilities are marked with `@internal` and are not part of the primary public API. They are exported for advanced use cases but may change without notice. Consider using your own comparison logic or a library like lodash if you need equality checks in your application.
 
 ### shallowEqual()
 
-Compares two objects shallowly (only first level).
+Compares two objects shallowly (only first level) - internal utility.
 
 ```typescript
 import { shallowEqual } from 'ngx-vest-forms';
@@ -721,15 +729,15 @@ const notEqual = shallowEqual({ a: 1, b: { c: 3 } }, { a: 1, b: { c: 3 } }); // 
 
 **When to use:**
 
-- ✅ Fast shallow comparisons
-- ✅ Change detection optimization
-- ✅ When deep equality is not needed
+- ⚠️ Advanced performance optimization only
+- ⚠️ Used internally for form change detection
+- ✅ Consider using your own comparison logic instead
 
 ---
 
 ### fastDeepEqual()
 
-Compares two values deeply (recursive comparison).
+Compares two values deeply (recursive comparison) - internal utility.
 
 ```typescript
 import { fastDeepEqual } from 'ngx-vest-forms';
@@ -739,15 +747,15 @@ const equal = fastDeepEqual({ a: 1, b: { c: 3 } }, { a: 1, b: { c: 3 } }); // tr
 
 **When to use:**
 
-- ✅ Deep value comparisons
-- ✅ Complex nested structures
-- ✅ When reference equality is not enough
+- ⚠️ Advanced performance optimization only
+- ⚠️ Used internally for form value comparison
+- ✅ Consider using your own comparison logic instead
 
 ---
 
-## Shape Validation
+## Internal Shape Validation
 
-Runtime validation of form structure against expected shape (development mode only).
+> **⚠️ Internal API**: This utility is used internally by the library and may change without notice.
 
 ### validateShape()
 
@@ -772,10 +780,9 @@ validateShape(formValue, formShape, 'formValue');
 
 **When to use:**
 
-- ✅ Development mode validation
-- ✅ Catching typos in `name` attributes
-- ✅ Ensuring form structure matches model
-- ✅ Used internally by `scVestForm` directive
+- ⚠️ Used internally by `scVestForm` directive
+- ⚠️ Development mode validation only
+- ✅ The directive handles this automatically
 
 **Note:** Only runs in development mode (Angular `isDevMode()`).
 
@@ -783,7 +790,7 @@ validateShape(formValue, formShape, 'formValue');
 
 ## Importing Utilities
 
-All utilities are exported from the main package:
+### Public API (Recommended)
 
 ```typescript
 // Type utilities
@@ -799,14 +806,8 @@ import {
   FormCompatibleDeepRequired,
 } from 'ngx-vest-forms';
 
-// Form utilities
-import {
-  getAllFormErrors,
-  getFormControlField,
-  getFormGroupField,
-  mergeValuesAndRawValues,
-  setValueAtPath,
-} from 'ngx-vest-forms';
+// Public form utilities
+import { setValueAtPath } from 'ngx-vest-forms';
 
 // Array/Object conversion
 import {
@@ -816,15 +817,35 @@ import {
 } from 'ngx-vest-forms';
 
 // Field path utilities
-import { parseFieldPath, stringifyFieldPath } from 'ngx-vest-forms';
+import { stringifyFieldPath } from 'ngx-vest-forms';
 
 // Field clearing
 import { clearFieldsWhen, clearFields, keepFieldsWhen } from 'ngx-vest-forms';
 
-// Equality utilities
+// Form state utilities
+import { createEmptyFormState, NgxFormState } from 'ngx-vest-forms';
+```
+
+### Internal API (Advanced Use Only)
+
+> **⚠️ Warning**: These are marked with `@internal` and may change without notice.
+
+```typescript
+// Internal form utilities (consider alternatives)
+import {
+  getAllFormErrors,
+  getFormControlField,
+  getFormGroupField,
+  mergeValuesAndRawValues,
+} from 'ngx-vest-forms';
+
+// Internal path utilities (consider alternatives)
+import { parseFieldPath } from 'ngx-vest-forms';
+
+// Internal equality utilities (consider lodash or custom logic)
 import { shallowEqual, fastDeepEqual } from 'ngx-vest-forms';
 
-// Shape validation
+// Internal shape validation (automatic via directive)
 import { validateShape, ShapeMismatchError } from 'ngx-vest-forms';
 ```
 

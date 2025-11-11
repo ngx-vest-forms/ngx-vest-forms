@@ -3,7 +3,7 @@ import { Component, Input } from '@angular/core';
 import { NgModelGroup } from '@angular/forms';
 import {
   arrayToObject,
-  DeepPartial,
+  NgxDeepPartial,
   vestForms,
   vestFormsViewProviders,
 } from 'ngx-vest-forms';
@@ -18,7 +18,7 @@ import { BusinessHourComponent } from '../business-hour/business-hour.component'
   viewProviders: [vestFormsViewProviders],
 })
 export class BusinessHoursComponent {
-  @Input() public businessHoursModel?: DeepPartial<{
+  @Input() public businessHoursModel?: NgxDeepPartial<{
     addValue: BusinessHourFormModel;
     values: {
       [key: string]: BusinessHourFormModel;

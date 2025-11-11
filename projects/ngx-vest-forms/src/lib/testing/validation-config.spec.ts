@@ -53,7 +53,6 @@ describe('FormDirective - Comprehensive', () => {
           passwords: { password: string; confirmPassword: string };
         }>
       >({});
-      showPasswordFields = signal(false);
       validationConfig = {
         'passwords.password': ['passwords.confirmPassword'],
       };
@@ -67,6 +66,7 @@ describe('FormDirective - Comprehensive', () => {
           );
         });
       });
+      showPasswordFields = signal(false);
     }
 
     const fixture = TestBed.configureTestingModule({

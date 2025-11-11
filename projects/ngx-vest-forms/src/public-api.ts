@@ -41,29 +41,37 @@ export {
   deepArrayToObject,
   objectToArray,
 } from './lib/utils/array-to-object';
-export { fastDeepEqual, shallowEqual } from './lib/utils/equality';
 export {
   clearFields,
   clearFieldsWhen,
   keepFieldsWhen,
 } from './lib/utils/field-clearing';
-export {
-  parseFieldPath,
-  stringifyFieldPath,
-} from './lib/utils/field-path.utils';
-export {
-  cloneDeep,
-  getAllFormErrors,
-  getFormControlField,
-  getFormGroupField,
-  mergeValuesAndRawValues,
-  set,
-  setValueAtPath,
-} from './lib/utils/form-utils';
+export { stringifyFieldPath } from './lib/utils/field-path.utils';
+export { setValueAtPath } from './lib/utils/form-utils';
 export {
   ShapeMismatchError,
   validateShape,
 } from './lib/utils/shape-validation';
+
+// Internal utilities - exported for advanced use cases but not part of the primary API
+// These are marked with @internal in their source files and may change without notice
+/** @internal */ export {
+  fastDeepEqual,
+  shallowEqual,
+} from './lib/utils/equality';
+/** @internal */ export { parseFieldPath } from './lib/utils/field-path.utils';
+/** @internal */ export {
+  getAllFormErrors,
+  getFormControlField,
+  getFormGroupField,
+  mergeValuesAndRawValues,
+} from './lib/utils/form-utils';
+
+// Deprecated - kept for backward compatibility, will be removed in future major version
+/** @deprecated Use setValueAtPath instead */ export {
+  cloneDeep,
+  set,
+} from './lib/utils/form-utils';
 
 // Constants
 export { ROOT_FORM, VALIDATION_CONFIG_DEBOUNCE_TIME } from './lib/constants';

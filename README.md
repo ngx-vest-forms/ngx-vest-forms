@@ -1409,14 +1409,13 @@ For comprehensive documentation beyond this README, check out our detailed guide
   - `FormFieldName<T>` for Vest suites
   - Migration guide and best practices
   - Performance considerations
-- **[Utility Types & Functions Reference](./projects/ngx-vest-forms/src/lib/utils/README.md)** - Complete guide to all utility types and functions
+- **[Utility Types & Functions Reference](./projects/ngx-vest-forms/src/lib/utils/README.md)** - Complete guide to all public utility types and functions
   - Type utilities: `NgxDeepPartial`, `NgxDeepRequired`, `NgxFormCompatibleDeepRequired`
-  - Form utilities: `getAllFormErrors()`, `setValueAtPath()`, `mergeValuesAndRawValues()`
+  - Form utilities: `setValueAtPath()`, `createEmptyFormState()`
   - Array/Object conversion: `arrayToObject()`, `deepArrayToObject()`, `objectToArray()`
-  - Field path utilities: `parseFieldPath()`, `stringifyFieldPath()`
+  - Field path utilities: `stringifyFieldPath()`
   - Field clearing: `clearFieldsWhen()`, `clearFields()`, `keepFieldsWhen()`
-  - Equality utilities: `shallowEqual()`, `fastDeepEqual()`
-  - Shape validation: `validateShape()`
+  - Validation config builder: `createValidationConfig()`
 - **[Structure Change Detection Guide](./docs/STRUCTURE_CHANGE_DETECTION.md)** - Advanced handling of conditional form scenarios
   - Alternative approaches and their trade-offs
   - Performance considerations and best practices

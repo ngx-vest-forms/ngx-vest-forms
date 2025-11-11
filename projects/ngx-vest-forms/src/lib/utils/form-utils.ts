@@ -75,6 +75,13 @@ function getGroupPath(formGroup: FormGroup, control: AbstractControl): string {
 }
 
 /**
+ * @internal
+ * Internal utility for calculating form control field paths.
+ *
+ * **Not intended for external use.** This function is used internally by the library
+ * to determine field names for validation. Use the `name` attribute on your form controls
+ * instead of relying on this function.
+ *
  * Calculates the field name of a form control: Eg: addresses.shippingAddress.street
  * @param rootForm
  * @param control
@@ -87,6 +94,12 @@ export function getFormControlField(
 }
 
 /**
+ * @internal
+ * Internal utility for calculating form group field paths.
+ *
+ * **Not intended for external use.** This function is used internally by the library
+ * to determine field names for nested form groups.
+ *
  * Calcuates the field name of a form group Eg: addresses.shippingAddress
  * @param rootForm
  * @param control
@@ -99,6 +112,13 @@ export function getFormGroupField(
 }
 
 /**
+ * @internal
+ * Internal utility for merging form values with disabled field values.
+ *
+ * **Not intended for external use.** This function is used internally by the library
+ * to include disabled field values in form submissions. Use Angular's `getRawValue()`
+ * method on your form if you need to access disabled field values.
+ *
  * This RxJS operator merges the value of the form with the raw value.
  * By doing this we can assure that we don't lose values of disabled form fields
  * @param form
@@ -214,6 +234,13 @@ export function set(obj: object, path: string, value: any): void {
 }
 
 /**
+ * @internal
+ * Internal utility for collecting all form errors by field path.
+ *
+ * **Not intended for external use.** This function is used internally by the library
+ * to generate the form state. Use the `formState()` signal from the `scVestForm` directive
+ * to access form errors in your components.
+ *
  * Traverses the form and returns the errors by path
  * @param form
  */

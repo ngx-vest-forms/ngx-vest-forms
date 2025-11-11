@@ -36,11 +36,11 @@ import { NgxFormState, createEmptyFormState } from 'ngx-vest-forms';
 // Error Display
 import { FormErrorDisplayDirective, FormControlStateDirective, SC_ERROR_DISPLAY_MODE_TOKEN, ScErrorDisplayMode } from 'ngx-vest-forms';
 
-// Constants & Utilities
+// Constants & Public Utilities
 import { ROOT_FORM, VALIDATION_CONFIG_DEBOUNCE_TIME } from 'ngx-vest-forms';
 import { clearFieldsWhen, clearFields, keepFieldsWhen } from 'ngx-vest-forms';
-import { getAllFormErrors, getFormControlField, getFormGroupField, mergeValuesAndRawValues, setValueAtPath } from 'ngx-vest-forms';
-import { parseFieldPath, stringifyFieldPath } from 'ngx-vest-forms';
+import { setValueAtPath } from 'ngx-vest-forms';
+import { stringifyFieldPath } from 'ngx-vest-forms';
 import { arrayToObject, deepArrayToObject, objectToArray } from 'ngx-vest-forms';
 
 // Vest.js
@@ -715,14 +715,11 @@ this.formValue.update(v => clearFields(v, ['tempData', 'draft']));
 this.formValue.update(v => keepFieldsWhen(v, { basic: true, shipping: needsShipping }));
 ```
 
-### Utility Functions
+### Public Utility Functions
 
 ```typescript
-getAllFormErrors(form)           // Get all errors by path
-getFormControlField(root, ctrl)  // Get dot-notation path of control
-getFormGroupField(root, group)   // Get dot-notation path of group
-mergeValuesAndRawValues(form)    // Include disabled fields in value
 setValueAtPath(obj, path, value) // Set nested value (e.g., 'user.name', 'John')
+stringifyFieldPath(segments)     // Convert path array to dot notation string
 ```
 
 ### Array ↔ Object Conversion Utilities
@@ -898,31 +895,23 @@ type AgeType = FieldPathValue<FormModel, 'user.profile.age'>; // number
 
 #### Field Path Runtime Utilities
 
-Convert between different field path formats (useful for Standard Schema integration, Angular forms, and Vest.js field names):
+Convert path segment arrays to dot/bracket notation strings:
 
 ```typescript
-import { parseFieldPath, stringifyFieldPath } from 'ngx-vest-forms';
-
-// Parse: 'addresses[0].street' → ['addresses', 0, 'street']
-const segments = parseFieldPath('addresses[0].street');
-// ['addresses', 0, 'street']
+import { stringifyFieldPath } from 'ngx-vest-forms';
 
 // Stringify: ['addresses', 0, 'street'] → 'addresses[0].street'
 const path = stringifyFieldPath(['addresses', 0, 'street']);
 // 'addresses[0].street'
 
 // Works with nested arrays and complex structures
-parseFieldPath('users[0].contacts[1].email');
-// ['users', 0, 'contacts', 1, 'email']
-
 stringifyFieldPath(['form', 'sections', 0, 'fields', 'name']);
 // 'form.sections[0].fields.name'
 ```
 
 **Use cases:**
-- Converting Angular form paths to Vest.js field names
+- Converting path arrays to Vest.js field names
 - Integrating with Standard Schema validation
-- Manipulating nested form structures programmatically
 - Building dynamic form field paths
 
 ### Other Features
@@ -951,24 +940,16 @@ stringifyFieldPath(['form', 'sections', 0, 'fields', 'name']);
 | | `FormFieldName<T>` | Field names for Vest suites | [Field Path Types](#field-path-types-and-utilities) |
 | | `FieldPathValue<T, Path>` | Infer value type at path | [Field Path Types](#field-path-types-and-utilities) |
 | | `LeafFieldPath<T>` | Extract leaf paths only | [Field Path Types](#field-path-types-and-utilities) |
-| **Forms** | `createEmptyFormState()` | Safe fallback state | [Advanced Features](#utility-functions) |
-| | `getAllFormErrors()` | Get all error paths | [Advanced Features](#utility-functions) |
-| | `setValueAtPath()` | Set nested values | [Advanced Features](#utility-functions) |
-| | `getFormControlField()` | Get control path | [Advanced Features](#utility-functions) |
-| | `getFormGroupField()` | Get group path | [Advanced Features](#utility-functions) |
-| | `mergeValuesAndRawValues()` | Include disabled fields | [Advanced Features](#utility-functions) |
+| **Forms** | `createEmptyFormState()` | Safe fallback state | [Form State Type](#form-state-type-and-utilities) |
+| | `setValueAtPath()` | Set nested values | [Advanced Features](#public-utility-functions) |
 | **Arrays** | `arrayToObject()` | Array → Object (shallow) | [Advanced Features](#array--object-conversion-utilities) |
 | | `deepArrayToObject()` | Array → Object (deep) | [Advanced Features](#array--object-conversion-utilities) |
 | | `objectToArray()` | Object → Array (selective) | [Advanced Features](#array--object-conversion-utilities) |
-| **Paths** | `parseFieldPath()` | String → Segments | [Advanced Features](#field-path-utilities) |
-| | `stringifyFieldPath()` | Segments → String | [Advanced Features](#field-path-utilities) |
+| **Paths** | `stringifyFieldPath()` | Segments → String | [Advanced Features](#field-path-runtime-utilities) |
 | **Clearing** | `clearFieldsWhen()` | Conditional clear | [Advanced Features](#field-clearing-utilities) |
 | | `clearFields()` | Unconditional clear | [Advanced Features](#field-clearing-utilities) |
 | | `keepFieldsWhen()` | Whitelist keep | [Advanced Features](#field-clearing-utilities) |
-| **Equality** | `shallowEqual()` | Fast comparison | See README |
-| | `fastDeepEqual()` | Deep comparison | See README |
-| **Validation** | `validateShape()` | Dev mode shape check | See README |
-| | `createValidationConfig<T>()` | Fluent builder for validation config | See [Builder Guide](../../docs/VALIDATION-CONFIG-BUILDER.md) |
+| **Validation** | `createValidationConfig<T>()` | Fluent builder for validation config | See [Builder Guide](../../docs/VALIDATION-CONFIG-BUILDER.md) |
 
 **Import Path:** All utilities are exported from `'ngx-vest-forms'`
 
@@ -1068,9 +1049,9 @@ Use `validateRootForm` when:
 14. Use `FormErrorDisplayDirective` as hostDirective for custom wrappers
 15. Respect accessibility (ARIA attributes: `role="alert"`, `aria-live`, `aria-busy`)
 16. Use field clearing utilities when switching between form/non-form content
-17. Use field path utilities (`parseFieldPath`/`stringifyFieldPath`) for Standard Schema integration
+17. Use `stringifyFieldPath()` utility for converting path arrays to field names
 18. Use array conversion utilities (`arrayToObject`/`objectToArray`) for form arrays
-19. Use `structuredClone()` instead of deprecated `cloneDeep()` for object cloning
+19. Use `structuredClone()` for deep cloning objects (native browser API)
 20. **Always use `ChangeDetectionStrategy.OnPush`** for optimal performance with signals
 21. Use `inject()` function instead of constructor injection
 22. Prefer signal-based APIs (`viewChild()`, `input()`, `output()`) over decorators
