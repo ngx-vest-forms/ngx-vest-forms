@@ -432,6 +432,32 @@ export class FormDirective<T extends Record<string, any>> {
                       map(() => control) // Pass through the control
                     )
                   ),
+                  // Additional check: wait for all dependent controls to exist
+                  // This prevents race conditions when validationConfig changes
+                  // and new controls are conditionally rendered (e.g., @if blocks)
+                  switchMap(() => {
+                    // Check if all dependents exist
+                    const allDependentsExist = dependents.every(
+                      (depField) => !!form.get(depField)
+                    );
+
+                    if (allDependentsExist) {
+                      // All controls exist, proceed immediately
+                      return of(control);
+                    }
+
+                    // Wait for dependent controls to be added to the form
+                    // by listening to form structure changes
+                    return form.statusChanges.pipe(
+                      startWith(form.status),
+                      // Check again on each status change
+                      filter(() =>
+                        dependents.every((depField) => !!form.get(depField))
+                      ),
+                      take(1),
+                      map(() => control)
+                    );
+                  }),
                   tap(() => {
                     for (const depField of dependents) {
                       const dependentControl = form.get(depField);
