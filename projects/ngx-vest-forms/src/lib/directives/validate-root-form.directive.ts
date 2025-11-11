@@ -159,7 +159,8 @@ export class ValidateRootFormDirective<T>
 
     if (!ngForm) {
       console.error(
-        '[ValidateRootFormDirective] NgForm not found. Ensure directive is on a form element with NgForm.'
+        '[ValidateRootFormDirective] NgForm not found. Ensure the directive is used on a <form> element with the scVestForm directive. ' +
+        'Common setup mistakes: (1) Missing scVestForm directive, (2) Directive on non-form element, (3) NgForm not imported in module/component.'
       );
       return;
     }
