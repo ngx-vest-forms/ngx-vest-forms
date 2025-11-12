@@ -30,7 +30,7 @@ jobs:
       - name: Install
         run: npm ci
       - name: Playwright install
-        run: npx playwright install
+        run: npx playwright install --with-deps
       - name: Build
         run: npm run build:ci
       - name: Test
@@ -40,7 +40,7 @@ jobs:
       - name: Integration test
         run: npm run storybook:test
       - name: E2E tests
-        run: npm run ng e2e -- --project=chromium
+        run: npx playwright test --project=chromium
         env:
           CI: true
       - name: Publish
