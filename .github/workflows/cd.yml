@@ -39,6 +39,10 @@ jobs:
         run: npm run storybook:build
       - name: Integration test
         run: npm run storybook:test
+      - name: E2E tests
+        run: npm run ng e2e -- --project=chromium
+        env:
+          CI: true
       - name: Publish
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -30,7 +30,9 @@
             "configDir": "projects/ngx-vest-forms/.storybook",
             "browserTarget": "ngx-vest-forms:build",
             "port": 6006,
-            "styles": ["projects/ngx-vest-forms/.storybook/styles.scss"],
+            "styles": [
+              "projects/ngx-vest-forms/.storybook/styles.scss"
+            ],
             "compodoc": false
           }
         },
@@ -41,6 +43,17 @@
             "browserTarget": "ngx-vest-forms:build",
             "outputDir": "dist/storybook/ngx-vest-forms",
             "compodoc": false
+          }
+        },
+        "e2e": {
+          "builder": "playwright-ng-schematics:playwright",
+          "options": {
+            "devServerTarget": "ngx-vest-forms:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "ngx-vest-forms:serve:production"
+            }
           }
         }
       }
@@ -63,14 +76,18 @@
               "base": "dist/examples"
             },
             "index": "projects/examples/src/index.html",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "tsConfig": "projects/examples/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
               "projects/examples/src/favicon.ico",
               "projects/examples/src/assets"
             ],
-            "styles": ["projects/examples/src/styles.scss"],
+            "styles": [
+              "projects/examples/src/styles.scss"
+            ],
             "scripts": [],
             "browser": "projects/examples/src/main.ts"
           },
@@ -115,6 +132,17 @@
           "builder": "@angular/build:extract-i18n",
           "options": {
             "buildTarget": "examples:build"
+          }
+        },
+        "e2e": {
+          "builder": "playwright-ng-schematics:playwright",
+          "options": {
+            "devServerTarget": "examples:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "examples:serve:production"
+            }
           }
         }
       }

@@ -22,7 +22,8 @@
     "test:ci": "npm run test:lib && npm run test:examples",
     "semantic-release": "semantic-release",
     "prettier:check": "prettier --check \"projects/**/*.{ts,js,json,css,scss,html}\"",
-    "prettier:format": "prettier --write \"projects/**/*.{ts,js,json,css,scss,html}\""
+    "prettier:format": "prettier --write \"projects/**/*.{ts,js,json,css,scss,html}\"",
+    "e2e": "ng e2e"
   },
   "private": false,
   "dependencies": {
@@ -48,6 +49,7 @@
     "@chromatic-com/storybook": "~4.1.1",
     "@commitlint/cli": "~20.1.0",
     "@commitlint/config-conventional": "~20.0.0",
+    "@playwright/test": "1.56.1",
     "@semantic-release/changelog": "~6.0.3",
     "@semantic-release/git": "~10.0.1",
     "@storybook/addon-coverage": "~2.0.0",
@@ -85,6 +87,7 @@
     "ngx-mask": "~20.0.3",
     "npm-run-all": "~4.1.5",
     "playwright": "~1.56.1",
+    "playwright-ng-schematics": "^2.1.1",
     "postcss": "~8.5.6",
     "prettier-plugin-organize-imports": "^4.3.0",
     "prettier-plugin-tailwindcss": "^0.7.1",
@@ -107,10 +110,10 @@
     }
   },
   "optionalDependencies": {
-    "@swc/core-linux-x64-gnu": "~1.13.5",
-    "@swc/core-linux-x64-musl": "~1.13.5",
+    "@swc/core-darwin-arm64": "~1.13.5",
     "@swc/core-darwin-x64": "~1.13.5",
-    "@swc/core-darwin-arm64": "~1.13.5"
+    "@swc/core-linux-x64-gnu": "~1.13.5",
+    "@swc/core-linux-x64-musl": "~1.13.5"
   },
   "publishConfig": {
     "access": "public"

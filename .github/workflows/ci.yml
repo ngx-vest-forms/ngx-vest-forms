@@ -42,5 +42,9 @@ jobs:
         run: npm run test:ci
       - name: Integration test
         run: npm run storybook:test
+      - name: E2E tests
+        run: npm run ng e2e -- --project=chromium
+        env:
+          CI: true
       - name: Build examples app
         run: npm run build:app

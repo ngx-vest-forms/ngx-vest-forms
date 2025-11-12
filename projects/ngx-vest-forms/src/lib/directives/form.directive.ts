@@ -1,5 +1,6 @@
 // ... existing code ...
 import {
+  ChangeDetectorRef,
   computed,
   DestroyRef,
   Directive,
@@ -36,6 +37,7 @@ import {
   map,
   Observable,
   of,
+  race,
   merge as rxMerge,
   startWith,
   switchMap,
@@ -73,6 +75,7 @@ export type NgxValidationConfig<T = unknown> =
 export class FormDirective<T extends Record<string, any>> {
   public readonly ngForm = inject(NgForm, { self: true });
   private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly configDebounceTime = inject(
     NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN
   );
@@ -571,21 +574,54 @@ export class FormDirective<T extends Record<string, any>> {
     );
 
     return triggerControl$.pipe(
-      switchMap((control) =>
-        control.valueChanges.pipe(
+      switchMap((control) => {
+        if (isDevMode()) {
+          console.log(
+            `[ngx-vest-forms] Setting up valueChanges listener for '${triggerField}' → [${dependents.join(', ')}]`
+          );
+        }
+        return control.valueChanges.pipe(
+          tap(() => {
+            if (isDevMode()) {
+              console.log(
+                `[ngx-vest-forms] valueChanges fired for '${triggerField}', inProgress=${this.validationInProgress.has(triggerField)}`
+              );
+            }
+          }),
           // CRITICAL: Filter out changes when this field is being validated by another field's config
           // This prevents circular triggers in bidirectional validationConfig
           filter(() => !this.validationInProgress.has(triggerField)),
+          tap(() => {
+            if (isDevMode()) {
+              console.log(
+                `[ngx-vest-forms] Passed inProgress filter for '${triggerField}', will debounce...`
+              );
+            }
+          }),
           debounceTime(this.configDebounceTime),
-          switchMap(() => this.#waitForFormIdle(form, control)),
+          tap(() => {
+            if (isDevMode()) {
+              console.log(
+                `[ngx-vest-forms] After debounce for '${triggerField}', will switchMap...`
+              );
+            }
+          }),
+          switchMap(() => {
+            if (isDevMode()) {
+              console.log(
+                `[ngx-vest-forms] switchMap executing for '${triggerField}', waiting for form idle...`
+              );
+            }
+            return this.#waitForFormIdle(form, control);
+          }),
           switchMap(() =>
             this.#waitForDependentControls(form, dependents, control)
           ),
           tap(() =>
             this.#updateDependentFields(form, control, triggerField, dependents)
           )
-        )
-      )
+        );
+      })
     );
   }
 
@@ -594,20 +630,70 @@ export class FormDirective<T extends Record<string, any>> {
    * This prevents validation race conditions where dependent field validation
    * triggers while the trigger field's validation is still running.
    *
+   * If the form stays PENDING for longer than 2 seconds (e.g., slow async validators),
+   * proceeds anyway to prevent blocking the validation pipeline.
+   *
    * @param form - The NgForm instance
    * @param control - The trigger control to pass through
-   * @returns Observable that emits the control once form is idle
+   * @returns Observable that emits the control once form is idle or timeout
    */
   #waitForFormIdle(
     form: FormGroup,
     control: AbstractControl
   ): Observable<AbstractControl> {
-    return form.statusChanges.pipe(
-      startWith(form.status),
+    if (isDevMode()) {
+      console.log(
+        `[ngx-vest-forms] #waitForFormIdle called, current form.status="${form.status}"`
+      );
+    }
+
+    // If form is already non-PENDING, return immediately
+    if (form.status !== 'PENDING') {
+      if (isDevMode()) {
+        console.log(
+          `[ngx-vest-forms] #waitForFormIdle: form is already idle (status="${form.status}"), returning immediately`
+        );
+      }
+      return of(control);
+    }
+
+    // Form is PENDING, wait for it to become idle
+    if (isDevMode()) {
+      console.log(
+        `[ngx-vest-forms] #waitForFormIdle: form is PENDING, waiting for statusChanges...`
+      );
+    }
+
+    const idle$ = form.statusChanges.pipe(
+      tap((status) => {
+        if (isDevMode()) {
+          console.log(
+            `[ngx-vest-forms] #waitForFormIdle statusChanges emitted: "${status}"`
+          );
+        }
+      }),
       filter((s) => s !== 'PENDING'),
-      take(1),
-      map(() => control)
+      tap((status) => {
+        if (isDevMode()) {
+          console.log(
+            `[ngx-vest-forms] #waitForFormIdle filter passed with status="${status}"`
+          );
+        }
+      }),
+      take(1)
     );
+
+    const timeout$ = timer(2000).pipe(
+      tap(() => {
+        if (isDevMode()) {
+          console.warn(
+            '[ngx-vest-forms] Form stayed PENDING for 2s, proceeding anyway to prevent blocking.'
+          );
+        }
+      })
+    );
+
+    return race(idle$, timeout$).pipe(map(() => control));
   }
 
   /**
@@ -676,6 +762,12 @@ export class FormDirective<T extends Record<string, any>> {
 
       // Only validate if not already in progress (prevents bidirectional loops)
       if (!this.validationInProgress.has(depField)) {
+        if (isDevMode()) {
+          console.log(
+            `[ngx-vest-forms] ValidationConfig triggering: ${triggerField} → ${depField}`
+          );
+        }
+
         // CRITICAL: Mark the dependent field as in-progress BEFORE calling updateValueAndValidity
         // This prevents the dependent field's valueChanges from triggering its own validationConfig
         this.validationInProgress.add(depField);
@@ -686,23 +778,40 @@ export class FormDirective<T extends Record<string, any>> {
           dependentControl.markAsTouched({ onlySelf: true });
         }
 
-        // emitEvent: false prevents circular triggers in bidirectional validationConfig
-        // Validation still runs (async validators re-execute), but won't emit events
-        // that would trigger other validationConfig listeners
+        // emitEvent: true is REQUIRED for async validators to actually run
+        // The validationInProgress Set prevents infinite loops:
+        // 1. Field A changes → triggers validation on dependent field B
+        // 2. B is added to validationInProgress Set
+        // 3. B's statusChanges emits → #handleValueChange checks validationInProgress
+        // 4. Since B is in validationInProgress, its validationConfig is not triggered
+        // 5. After 500ms timeout, B is removed from validationInProgress
+        // This way:
+        // - Async validators CAN run (emitEvent: true)
+        // - BUT circular triggers are prevented (validationInProgress check)
         dependentControl.updateValueAndValidity({
           onlySelf: true,
-          emitEvent: false,
+          emitEvent: true, // Changed from false - REQUIRED for validators to run!
         });
+
+        // CRITICAL: Force immediate change detection for OnPush components
+        // updateValueAndValidity updates the control's status, but doesn't automatically
+        // trigger change detection. Components using OnPush won't see the ng-invalid class
+        // update in the DOM without this. Using detectChanges() instead of markForCheck()
+        // to force immediate synchronous update rather than waiting for next CD cycle.
+        this.cdr.detectChanges();
       }
     }
 
     // Keep fields marked as in-progress for a short time to prevent immediate re-triggering
     // Use setTimeout to ensure async validators have time to complete before allowing new triggers
+    // INCREASED from 100ms to 500ms to fix bidirectional validation issues with password/date fields
+    // This gives validators enough time to complete and propagate before allowing re-triggering
+    // Bidirectional validations need more time because both fields validate each other
     setTimeout(() => {
       this.validationInProgress.delete(triggerField);
       for (const depField of dependents) {
         this.validationInProgress.delete(depField);
       }
-    }, 100);
+    }, 500);
   }
 }

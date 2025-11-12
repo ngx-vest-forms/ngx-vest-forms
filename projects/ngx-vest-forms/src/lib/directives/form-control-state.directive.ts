@@ -88,6 +88,14 @@ export class FormControlStateDirective {
   );
 
   /**
+   * Track whether this control has been validated at least once.
+   * This is separate from touched - a field can be validated via validationConfig
+   * without being touched by the user. This flag enables showing errors for
+   * validationConfig-triggered validations even before user interaction.
+   */
+  readonly #hasBeenValidated = signal<boolean>(false);
+
+  /**
    * Internal signal for control state (updated reactively)
    */
   readonly #controlStateSignal = signal<FormControlState>(
@@ -107,6 +115,12 @@ export class FormControlStateDirective {
       const sub = control.control?.statusChanges?.subscribe(() => {
         const { status, valid, invalid, pending, disabled, pristine, errors } =
           control;
+
+        // Mark as validated when status changes from PENDING or when invalid/valid
+        if (status && status !== 'PENDING') {
+          this.#hasBeenValidated.set(true);
+        }
+
         this.#controlStateSignal.set({
           status,
           isValid: valid,
@@ -249,4 +263,11 @@ export class FormControlStateDirective {
   readonly isPristine = computed(() => this.controlState().isPristine || false);
   readonly isDisabled = computed(() => this.controlState().isDisabled || false);
   readonly hasErrors = computed(() => this.errorMessages().length > 0);
+
+  /**
+   * Whether this control has been validated at least once.
+   * True after the first validation completes, even if the user hasn't touched the field.
+   * This enables showing errors for validationConfig-triggered validations.
+   */
+  readonly hasBeenValidated = computed(() => this.#hasBeenValidated());
 }

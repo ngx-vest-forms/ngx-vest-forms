@@ -39,6 +39,7 @@ export class FormErrorDisplayDirective {
   readonly isDirty = this.#formControlState.isDirty;
   readonly isValid = this.#formControlState.isValid;
   readonly isInvalid = this.#formControlState.isInvalid;
+  readonly hasBeenValidated = this.#formControlState.hasBeenValidated;
   /**
    * Expose updateOn and formSubmitted as public signals for advanced consumers.
    * updateOn: The ngModelOptions.updateOn value for the control (change/blur/submit)
@@ -72,28 +73,47 @@ export class FormErrorDisplayDirective {
 
   /**
    * Determines if errors should be shown based on the specified display mode
-   * and the control's state (touched/submitted).
+   * and the control's state (touched/submitted/validated).
+   *
+   * Note: We check both hasErrors (extracted error messages) AND isInvalid (Angular's validation state)
+   * because in some cases (like conditional validations via validationConfig), the control is marked
+   * as invalid by Angular before error messages are extracted from Vest. This ensures aria-invalid
+   * is set correctly even during the validation propagation delay.
+   *
+   * For validationConfig-triggered validations: A field can be validated without being touched
+   * (e.g., confirmPassword validated when password changes). We check hasBeenValidated to show
+   * errors in these scenarios, providing better UX and proper ARIA attributes.
    */
   readonly shouldShowErrors = computed(() => {
     const mode = this.errorDisplayMode();
     const isTouched = this.isTouched();
+    const isInvalid = this.isInvalid();
     const hasErrors = this.errorMessages().length > 0;
+    const hasBeenValidated = this.hasBeenValidated();
     const updateOn = this.updateOn();
     const formSubmitted = this.formSubmitted();
+
+    // Consider errors present if either we have error messages OR the control is invalid
+    // This handles the race condition where Angular marks control invalid before Vest errors propagate
+    const hasErrorState = hasErrors || isInvalid;
+
     // Always only show errors after submit if updateOn is 'submit'
     if (updateOn === 'submit') {
-      return !!(formSubmitted && hasErrors);
+      return !!(formSubmitted && hasErrorState);
     }
-    // on-blur: show errors after blur (touch)
+    // on-blur: show errors after blur (touch) OR if validated via validationConfig
     if (mode === 'on-blur') {
-      return !!(isTouched && hasErrors);
+      return !!((isTouched || hasBeenValidated) && hasErrorState);
     }
     // on-submit: show errors after submit
     if (mode === 'on-submit') {
-      return !!(formSubmitted && hasErrors);
+      return !!(formSubmitted && hasErrorState);
     }
-    // on-blur-or-submit: show errors after blur (touch) or submit
-    return !!((isTouched || formSubmitted) && hasErrors);
+    // on-blur-or-submit: show errors after blur (touch), submit, OR validationConfig trigger
+    return !!(
+      (isTouched || formSubmitted || hasBeenValidated) &&
+      hasErrorState
+    );
   });
 
   /**

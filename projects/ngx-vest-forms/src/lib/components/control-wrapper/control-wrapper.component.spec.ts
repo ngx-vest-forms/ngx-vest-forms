@@ -491,7 +491,9 @@ describe('ScControlWrapperComponent', () => {
       expect(errorContainer?.id).toMatch(/^ngx-control-wrapper-\d+-error$/);
 
       // Verify the container is accessible by role
-      expect(screen.getByRole('alert')).toBe(errorContainer);
+      // Use getAllByRole since there might be multiple alerts on the page
+      const alerts = screen.getAllByRole('alert');
+      expect(alerts).toContain(errorContainer);
     });
 
     it('should use role="status" with aria-live="polite" for warnings', async () => {
