@@ -20,10 +20,16 @@ PR #60 successfully fixed critical validation timing bugs and modernized the cod
 **Key Achievements:**
 
 - Fixed critical `omitWhen` + `validationConfig` race condition
+- Fixed validation feedback loop in bidirectional configs
 - Modernized all examples to Angular 18+ (signals, OnPush, etc.)
 - Added comprehensive documentation (1300+ lines)
 - All 198 tests passing
 - Zero breaking changes to API (only validation suite pattern change)
+
+**Issues Resolved:**
+
+- ✅ Closes #59 - Complex validationConfig test scenario created
+- ✅ Closes #56 - validationConfig lifecycle timing issues fixed
 
 ### High Priority Follow-ups
 
@@ -1626,11 +1632,268 @@ Component 'UserFormComponent' contains form controls but is missing 'vestFormsVi
 
 ---
 
+## Open Issues Analysis (November 2025)
+
+### Issues Fixed by PR #60
+
+- ✅ **#59** - Complex validationConfig test scenario (Storybook story created)
+- ✅ **#56** - validationConfig lifecycle timing issues (effect-based setup, duplicate subscriptions fixed)
+
+### Remaining Open Issues
+
+#### Issue #18: StandardSchema Support (v2 Enhancement)
+
+**Priority:** Low (v2 milestone)
+**Effort:** 2-3 weeks
+**Description:** Add support for standardschema to enable Zod/Valibot interoperability
+
+**Analysis:** This is a v2 enhancement that would require significant architectural changes to support multiple validation schema formats. The current `DeepRequired<T>` shape validation system works well for development-mode type checking, but standardschema would enable runtime validation with Zod/Valibot.
+
+**Recommendation:** Track for v2 release. Would pair well with improvement #1 (Field Path Types) to provide type-safe schema definitions.
+
+---
+
+#### Issue #15: sc-control-wrapper & Tailwind Compatibility
+
+**Priority:** Medium
+**Effort:** 1-2 days
+**Description:** Grid layout issues and error message display problems with Tailwind CSS
+
+**Analysis:** Two separate issues reported:
+
+1. Tailwind grid not working when using sc-control-wrapper
+2. Vest validation messages not displaying
+
+**Root Cause:** The `sc-control-wrapper` component uses flexbox layout which may conflict with Tailwind's grid utilities. The wrapper structure adds an extra DOM layer that breaks grid parent-child relationships.
+
+**Proposed Solution (can be added to PRD):**
+
+```typescript
+// New feature: Control wrapper customization
+@Component({
+  selector: 'sc-control-wrapper',
+  host: {
+    '[style.display]': 'displayMode()',
+    '[style.grid-column]': 'gridColumn()',
+    '[style.grid-row]': 'gridRow()',
+  },
+})
+export class ControlWrapperComponent {
+  // Allow customization of wrapper display mode
+  public readonly displayMode = input<'flex' | 'grid' | 'contents'>('flex');
+  public readonly gridColumn = input<string | null>(null);
+  public readonly gridRow = input<string | null>(null);
+}
+```
+
+**Usage:**
+
+```html
+<div class="grid grid-cols-2 gap-4">
+  <sc-control-wrapper displayMode="contents">
+    <input name="firstName" />
+  </sc-control-wrapper>
+</div>
+```
+
+**Add to PRD as Enhancement #7:** Control Wrapper Layout Customization
+
+---
+
+#### Issue #13: Can't bind to 'validateRootForm' Property
+
+**Priority:** High (Critical Bug)
+**Effort:** 1 day
+**Description:** Template compilation error - `validateRootForm` not recognized
+
+**Analysis:** This appears to be a critical bug where the directive input is not being exported or registered properly. User reports:
+
+- Angular 19
+- ngx-vest-forms v1.1.0
+- Error: "Can't bind to 'validateRootForm' since it isn't a known property of 'form'"
+- No suites ever run, validation always true
+
+**Root Cause Investigation Needed:**
+
+1. Check if `ValidateRootFormDirective` is properly exported in `public-api.ts`
+2. Verify directive selector matches `form[scVestForm][validateRootForm]`
+3. Confirm vestForms import includes the directive
+4. Check if there's a missing standalone directive import
+
+**Immediate Action Required:**
+
+- Reproduce the issue with Angular 19 + ngx-vest-forms 1.1.0
+- Create minimal reproduction test case
+- Verify directive is properly exported and registered
+- Add test coverage to prevent regression
+
+**Add to PRD as Critical Bug Fix #8:** Investigate validateRootForm Binding Issue
+
+---
+
+#### Issue #12: Date & Empty String Shape Mismatch
+
+**Priority:** Medium (v2 Enhancement)
+**Effort:** 1 week
+**Description:** Shape validation throws warnings when Date fields initialized with empty string
+
+**Analysis:** Valid use case where UI libraries (PrimeNG p-calendar) require empty string to show placeholder instead of rendering a date value. Current shape validation expects Date type but gets empty string, causing console spam.
+
+**Proposed Solutions:**
+
+**Option 1: Relaxed Type Checking for Known Patterns**
+
+```typescript
+// Allow common empty value patterns
+function isValidShapeMismatch(expected: any, actual: any): boolean {
+  // Allow empty string for Date fields (common pattern)
+  if (expected instanceof Date && actual === '') return false;
+
+  // Allow null/undefined for optional fields
+  if ((actual === null || actual === undefined) && !isRequired(field))
+    return false;
+
+  return typeof expected !== typeof actual;
+}
+```
+
+**Option 2: Shape Validation Config**
+
+```typescript
+<form
+  scVestForm
+  [shapeValidation]="{
+    ignoreEmptyStrings: true,
+    allowedMismatches: { dateOfBirth: ['', null] }
+  }">
+```
+
+**Add to PRD as Enhancement #9:** Flexible Shape Validation Options
+
+---
+
+#### Issue #9: Native HTML5 Validation Ignored
+
+**Priority:** Low-Medium (v2 Enhancement)
+**Effort:** 2-3 weeks
+**Description:** When using native `required` attribute, Vest validation is bypassed
+
+**Analysis:** HTML5 validation and Vest validation don't work together harmoniously. When native `required` is present, Angular's validator runs first and may prevent Vest validators from executing.
+
+**Current Behavior:**
+
+```html
+<input name="email" required [ngModel]="value" />
+<!-- Native validation runs, Vest validation bypassed -->
+```
+
+**Desired Behavior:**
+
+- Vest validation should take precedence
+- Native validation messages should be suppressed
+- OR: Show native messages when Vest messages not available
+
+**Proposed Solution:**
+
+```typescript
+// In FormDirective constructor
+effect(() => {
+  // Detect native validators on controls
+  Object.keys(this.ngForm.controls).forEach((key) => {
+    const control = this.ngForm.controls[key];
+    if (hasNativeValidators(control)) {
+      // Option A: Override native validators
+      control.clearValidators();
+      control.setValidators([vestAsyncValidator]);
+
+      // Option B: Merge native error messages into Vest errors
+      mergeNativeErrors(control, vestErrors);
+    }
+  });
+});
+```
+
+**Add to PRD as Enhancement #10:** Native Validator Integration
+
+---
+
+#### Issue #7: Use ngx Prefix Instead of sc
+
+**Priority:** Low (v2 Breaking Change)
+**Effort:** 1-2 weeks + migration schematic
+**Description:** Change library prefix from `sc` (Simplified Courses) to `ngx` for broader adoption
+
+**Analysis:** Valid concern - `sc` prefix ties library to Simplified Courses brand, while `ngx` is the community standard for Angular libraries.
+
+**Breaking Changes:**
+
+```typescript
+// OLD
+(scVestForm, scControlWrapper, scVestFormsShape, vestFormsViewProviders);
+
+// NEW
+(ngxVestForm, ngxControlWrapper, ngxVestFormsShape, vestFormsViewProviders);
+```
+
+**Migration Strategy:**
+
+1. Create v2 branch with new prefixes
+2. Build migration schematic using Angular schematics
+3. Provide automated migration: `ng update ngx-vest-forms --migrate-only`
+4. Maintain v1.x with `sc` prefix for 6+ months
+5. Deprecation warnings in v1.x pointing to migration guide
+
+**Schematic Implementation:**
+
+```typescript
+// Angular schematic to auto-migrate prefixes
+export default function (): Rule {
+  return chain([
+    updateTemplates(), // scVestForm -> ngxVestForm
+    updateImports(), // Update TypeScript imports
+    updateStyleSheets(), // .sc-control-wrapper -> .ngx-control-wrapper
+  ]);
+}
+```
+
+**Add to PRD as v2 Enhancement #11:** Rebrand with ngx Prefix
+
+---
+
+### Issue Priority Summary
+
+| Issue                          | Priority    | Effort    | Recommendation                             |
+| ------------------------------ | ----------- | --------- | ------------------------------------------ |
+| #13 - validateRootForm binding | 🔴 Critical | 1 day     | **Investigate immediately** - blocking bug |
+| #15 - Tailwind compatibility   | 🟡 Medium   | 1-2 days  | **Add to PRD as Enhancement #7**           |
+| #12 - Date shape mismatch      | 🟡 Medium   | 1 week    | **Add to PRD as Enhancement #9**           |
+| #9 - Native validation         | 🟢 Low      | 2-3 weeks | **Track for v2 (Enhancement #10)**         |
+| #18 - StandardSchema           | 🟢 Low      | 2-3 weeks | **Track for v2**                           |
+| #7 - ngx prefix                | 🟢 Low      | 1-2 weeks | **Track for v2 (Enhancement #11)**         |
+
+**Immediate Actions:**
+
+1. ✅ Update PR #60 to reference issues #56 and #59 (COMPLETED)
+2. 🔴 Create test case for issue #13 and investigate (URGENT)
+3. 🟡 Add issues #15, #12 to current PRD as enhancements #7, #9
+4. 🟢 Track issues #9, #18, #7 for v2 milestone
+
+---
+
 ## Conclusion
 
 These 6 improvements represent high-value, low-risk enhancements that will significantly improve the ngx-vest-forms developer experience while maintaining full backward compatibility. Implementation follows Angular best practices and aligns with v2 development patterns where appropriate.
 
+**Current Status:**
+
+- ✅ PR #60 merged - Fixes issues #56, #59
+- ✅ Enhancements #5, #6 completed (signal memoization, ARIA management)
+- 🟡 4 enhancements remaining (#1-4)
+- 🔴 1 critical bug (#13) requires immediate investigation
+- 🟡 2 medium priority enhancements (#7, #9) can be added to current PRD
+- 🟢 3 low priority enhancements (#10, #11, standardschema) tracked for v2
+
 **Total Estimated Effort:** 6 weeks
 **Risk Level:** Low
 **Impact Level:** High
-**Breaking Changes:** None
+**Breaking Changes:** None (v1.x); Several planned for v2.0
