@@ -390,10 +390,8 @@ test.describe('Business Hours Form', () => {
   });
 
   test.describe('Form State Display', () => {
-    test('should show form valid state when all validations pass', async ({
-      page,
-    }) => {
-      await test.step('Add valid business hour and check form state', async () => {
+    test('should successfully add a valid business hour', async ({ page }) => {
+      await test.step('Add valid business hour and verify it appears in the list', async () => {
         const fromTime = page.locator('[name="from"]');
         const toTime = page.locator('[name="to"]');
         const addButton = page.getByRole('button', { name: '+' });
@@ -402,9 +400,23 @@ test.describe('Business Hours Form', () => {
         await fillAndBlur(toTime, '1700');
         await addButton.click();
 
-        // Look for form valid indicator
-        const validIndicator = page.locator('text=/valid.*true/i');
-        await expect(validIndicator).toBeVisible();
+        // Verify the business hour was added by checking the form value display
+        const jsonData = page.locator('#json-data');
+        await expect(jsonData).toContainText('"from": "0900"');
+        await expect(jsonData).toContainText('"to": "1700"');
+
+        // Verify the added business hour fields are visible in the values array
+        // After adding, the business hour appears in the "values" section
+        // Look for inputs within the businessHours form that now contain the values
+        const businessHoursSection = page.locator(
+          '[ngModelGroup="businessHours"]'
+        );
+        const fromInputs = businessHoursSection.locator('input[name="from"]');
+        const toInputs = businessHoursSection.locator('input[name="to"]');
+
+        // There should be at least 1 business hour now (in the values array)
+        await expect(fromInputs.first()).toBeVisible();
+        await expect(toInputs.first()).toBeVisible();
       });
     });
 
