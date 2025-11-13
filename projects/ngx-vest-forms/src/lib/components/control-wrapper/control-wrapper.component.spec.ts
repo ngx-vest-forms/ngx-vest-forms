@@ -314,9 +314,9 @@ describe('ScControlWrapperComponent', () => {
       // Wait for error to appear
       await screen.findByText('Email is required', {}, { timeout: 1000 });
       const errorElement = screen.getByText('Email is required');
-      const errorContainer = errorElement.closest('[role="alert"]');
+      const errorContainer = errorElement.closest('[role="status"]');
       expect(errorContainer).toBeInTheDocument();
-      expect(errorContainer).toHaveAttribute('aria-live', 'assertive');
+      expect(errorContainer).toHaveAttribute('aria-live', 'polite');
     });
 
     it('should project child content correctly', async () => {
@@ -359,8 +359,8 @@ describe('ScControlWrapperComponent', () => {
       const emailError = screen.getByText('Email is required');
       const usernameError = screen.getByText('Username is required');
 
-      const emailErrorContainer = emailError.closest('[role="alert"]');
-      const usernameErrorContainer = usernameError.closest('[role="alert"]');
+      const emailErrorContainer = emailError.closest('[role="status"]');
+      const usernameErrorContainer = usernameError.closest('[role="status"]');
 
       // Verify unique IDs exist
       expect(emailErrorContainer).toHaveAttribute('id');
@@ -409,7 +409,7 @@ describe('ScControlWrapperComponent', () => {
 
         // Verify the error element has the matching ID
         const errorElement = screen.getByText('Email is required');
-        const errorContainer = errorElement.closest('[role="alert"]');
+        const errorContainer = errorElement.closest('[role="status"]');
         expect(errorContainer?.id).toBe(describedBy);
 
         // Verify the referenced element actually exists in DOM
@@ -471,7 +471,7 @@ describe('ScControlWrapperComponent', () => {
       );
     });
 
-    it('should use role="alert" with aria-live="assertive" for error messages', async () => {
+    it('should use role="status" with aria-live="polite" for error messages', async () => {
       await render(TestFormComponent);
       const emailInput = screen.getByLabelText('Email');
 
@@ -481,19 +481,19 @@ describe('ScControlWrapperComponent', () => {
 
       // Find error container using Testing Library
       const errorElement = screen.getByText('Email is required');
-      const errorContainer = errorElement.closest('[role="alert"]');
+      const errorContainer = errorElement.closest('[role="status"]');
 
       // Verify all ARIA attributes for errors
-      expect(errorContainer).toHaveAttribute('role', 'alert');
-      expect(errorContainer).toHaveAttribute('aria-live', 'assertive');
+      expect(errorContainer).toHaveAttribute('role', 'status');
+      expect(errorContainer).toHaveAttribute('aria-live', 'polite');
       expect(errorContainer).toHaveAttribute('aria-atomic', 'true');
       expect(errorContainer).toHaveAttribute('id');
       expect(errorContainer?.id).toMatch(/^ngx-control-wrapper-\d+-error$/);
 
       // Verify the container is accessible by role
-      // Use getAllByRole since there might be multiple alerts on the page
-      const alerts = screen.getAllByRole('alert');
-      expect(alerts).toContain(errorContainer);
+      // Use getAllByRole since there might be multiple status regions on the page
+      const statuses = screen.getAllByRole('status');
+      expect(statuses).toContain(errorContainer);
     });
 
     it('should use role="status" with aria-live="polite" for warnings', async () => {
@@ -658,7 +658,7 @@ describe('ScControlWrapperComponent', () => {
         // Verify the referenced element exists
         const errorElement = document.getElementById(describedBy);
         expect(errorElement).toBeInTheDocument();
-        expect(errorElement).toHaveAttribute('role', 'alert');
+        expect(errorElement).toHaveAttribute('role', 'status');
 
         // Verify format: should be a single ID
         expect(describedBy.split(' ')).toHaveLength(1);

@@ -1403,6 +1403,10 @@ Now that you've seen how ngx-vest-forms works, here's a complete overview of its
 
 For comprehensive documentation beyond this README, check out our detailed guides:
 
+- **[Accessibility Guide](./docs/ACCESSIBILITY.md)** - WCAG 2.2 AA compliance and best practices
+  - Polite vs assertive ARIA live regions
+  - Field-level and form-level error strategies
+  - Implementation details and testing guidance
 - **[Field Path Types](./docs/FIELD-PATHS.md)** - Type-safe field references with IDE autocomplete
   - Template literal types for field paths
   - `ValidationConfigMap<T>` for type-safe configs

@@ -26,9 +26,32 @@ let nextUniqueId = 0;
  *   - Automatically generates unique IDs for error/warning/pending regions
  *   - Associates error messages with form controls via aria-describedby
  *   - Sets aria-invalid="true" on form controls when errors should be shown
- *   - Uses role="alert" with aria-live="assertive" for blocking errors
+ *   - Uses role="status" with aria-live="polite" for inline field errors to avoid interrupting typing
  *   - Uses role="status" with aria-live="polite" for warnings and pending states
  *   - Implements aria-atomic="true" for complete message announcements
+ *
+ * Accessibility Strategy:
+ *
+ *   Inline Field Messages (default):
+ *   - Field-level errors use role="status" with aria-live="polite"
+ *   - Rationale: Errors often update as users type. Polite announcements avoid interrupting
+ *     typing flow and prevent excessive screen reader chatter. This aligns with WCAG guidance
+ *     for non-critical, continuously updating messages.
+ *
+ *   Warnings & Pending States:
+ *   - Also use role="status" and aria-live="polite"
+ *   - Referenced via aria-describedby so users are informed without interruption
+ *
+ *   Blocking Errors (form-level):
+ *   - For post-submit validation errors that block submission, implement a separate
+ *     form-level error summary with role="alert" and aria-live="assertive"
+ *   - Example:
+ *     ```html
+ *     <!-- Keep in DOM; update text content on submit -->
+ *     <div id="form-errors" role="alert" aria-live="assertive" aria-atomic="true"></div>
+ *     ```
+ *   - This provides immediate, reliable announcements for blocking errors while keeping
+ *     inline field errors non-disruptive. Follows WCAG ARIA19/ARIA22 guidance.
  *
  * Error & Warning Display Behavior:
  *   - The error display mode can be configured globally using the SC_ERROR_DISPLAY_MODE_TOKEN injection token (import from core), or per instance using the `errorDisplayMode` input on FormErrorDisplayDirective (which this component uses as a hostDirective).
@@ -63,6 +86,10 @@ let nextUniqueId = 0;
  * Best Practices:
  *   - Use for every input or group in your forms.
  *   - Do not manually display errors for individual fields; rely on this wrapper.
+ *   - Validate with tools like Accessibility Insights and real screen reader testing.
+ *
+ * @see https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA19 - ARIA19: Using ARIA role=alert
+ * @see https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA22 - ARIA22: Using role=status
  */
 @Component({
   selector: 'sc-control-wrapper, [scControlWrapper], [sc-control-wrapper]',
