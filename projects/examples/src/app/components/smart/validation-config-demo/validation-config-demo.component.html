@@ -40,7 +40,7 @@
               id="password"
               name="password"
               [ngModel]="formValue().password"
-              class="w-full rounded-md border px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              class="w-full rounded-md border px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 aria-[invalid=true]:border-red-500 aria-[invalid=true]:bg-red-50 aria-[invalid=true]:text-red-900 aria-[invalid=true]:placeholder-red-700"
               placeholder="Enter password (min 8 chars)"
             />
           </div>
@@ -54,7 +54,7 @@
               id="confirmPassword"
               name="confirmPassword"
               [ngModel]="formValue().confirmPassword"
-              class="w-full rounded-md border px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              class="w-full rounded-md border px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 aria-[invalid=true]:border-red-500 aria-[invalid=true]:bg-red-50 aria-[invalid=true]:text-red-900 aria-[invalid=true]:placeholder-red-700"
               placeholder="Confirm password"
             />
           </div>
@@ -91,7 +91,7 @@
                 name="justification"
                 [ngModel]="formValue().justification"
                 rows="3"
-                class="w-full rounded-md border px-3 py-2 focus:border-green-500 focus:ring-2 focus:ring-green-500"
+                class="w-full rounded-md border px-3 py-2 focus:border-green-500 focus:ring-2 focus:ring-green-500 aria-[invalid=true]:border-red-500 aria-[invalid=true]:bg-red-50 aria-[invalid=true]:text-red-900 aria-[invalid=true]:placeholder-red-700"
                 placeholder="Explain why justification is needed..."
               ></textarea>
             </div>
@@ -115,7 +115,7 @@
               id="country"
               name="country"
               [ngModel]="formValue().country"
-              class="w-full rounded-md border px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-500"
+              class="w-full rounded-md border px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-500 aria-[invalid=true]:border-red-500 aria-[invalid=true]:bg-red-50 aria-[invalid=true]:text-red-900"
             >
               <option value="">Select country...</option>
               <option value="US">United States</option>
@@ -134,7 +134,7 @@
               id="state"
               name="state"
               [ngModel]="formValue().state"
-              class="w-full rounded-md border px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-500"
+              class="w-full rounded-md border px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-500 aria-[invalid=true]:border-red-500 aria-[invalid=true]:bg-red-50 aria-[invalid=true]:text-red-900 aria-[invalid=true]:placeholder-red-700"
               placeholder="Enter state/province"
             />
           </div>
@@ -148,7 +148,7 @@
               id="zipCode"
               name="zipCode"
               [ngModel]="formValue().zipCode"
-              class="w-full rounded-md border px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-500"
+              class="w-full rounded-md border px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-500 aria-[invalid=true]:border-red-500 aria-[invalid=true]:bg-red-50 aria-[invalid=true]:text-red-900 aria-[invalid=true]:placeholder-red-700"
               placeholder="Enter postal code"
             />
           </div>
@@ -172,7 +172,7 @@
               id="startDate"
               name="startDate"
               [ngModel]="formValue().startDate"
-              class="w-full rounded-md border px-3 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-500"
+              class="w-full rounded-md border px-3 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-500 aria-[invalid=true]:border-red-500 aria-[invalid=true]:bg-red-50 aria-[invalid=true]:text-red-900"
             />
           </div>
 
@@ -185,7 +185,7 @@
               id="endDate"
               name="endDate"
               [ngModel]="formValue().endDate"
-              class="w-full rounded-md border px-3 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-500"
+              class="w-full rounded-md border px-3 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-500 aria-[invalid=true]:border-red-500 aria-[invalid=true]:bg-red-50 aria-[invalid=true]:text-red-900"
             />
           </div>
         </section>

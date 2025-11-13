@@ -96,6 +96,12 @@ export class FormControlStateDirective {
   readonly #hasBeenValidated = signal<boolean>(false);
 
   /**
+   * Track the previous status to detect actual status changes (not just status emissions).
+   * This helps distinguish between initial control creation and actual re-validation.
+   */
+  #previousStatus: string | null | undefined = undefined;
+
+  /**
    * Internal signal for control state (updated reactively)
    */
   readonly #controlStateSignal = signal<FormControlState>(
@@ -116,10 +122,28 @@ export class FormControlStateDirective {
         const { status, valid, invalid, pending, disabled, pristine, errors } =
           control;
 
-        // Mark as validated when status changes from PENDING or when invalid/valid
-        if (status && status !== 'PENDING') {
+        // Get current interaction state
+        const currentInteraction = this.#interactionState();
+
+        // Mark as validated only when status actually CHANGES (not on first emission)
+        // AND the status is not PENDING (validation completed)
+        // AND the control has been interacted with (touched or dirty)
+        // This ensures hasBeenValidated is only true for:
+        // 1. User-triggered validations (touched/dirty)
+        // 2. ValidationConfig-triggered validations that result in the control becoming touched
+        // But NOT for initial page load validations
+        if (
+          this.#previousStatus !== undefined && // Not the first status emission
+          this.#previousStatus !== status && // Status actually changed
+          status &&
+          status !== 'PENDING' &&
+          (currentInteraction.isTouched || currentInteraction.isDirty) // Control was interacted with
+        ) {
           this.#hasBeenValidated.set(true);
         }
+
+        // Track current status for next iteration
+        this.#previousStatus = status;
 
         this.#controlStateSignal.set({
           status,
@@ -136,6 +160,10 @@ export class FormControlStateDirective {
       // Initial update
       const { status, valid, invalid, pending, disabled, pristine, errors } =
         control;
+
+      // Set initial previous status
+      this.#previousStatus = status;
+
       this.#controlStateSignal.set({
         status,
         isValid: valid,
@@ -147,6 +175,7 @@ export class FormControlStateDirective {
         isPristine: pristine,
         errors,
       });
+
       return () => sub?.unsubscribe();
     });
 

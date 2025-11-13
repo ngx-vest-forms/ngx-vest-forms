@@ -545,6 +545,149 @@ test.describe('ValidationConfig Demo', () => {
     });
   });
 
+  test.describe('Visual Error Styling', () => {
+    test('should apply red border and error background to invalid text inputs', async ({
+      page,
+    }) => {
+      await test.step('Verify invalid password field has error styling', async () => {
+        const password = page.getByLabel('Password', { exact: true });
+
+        await fillAndBlur(password, 'Short');
+
+        // Verify aria-invalid is set (the trigger for visual styling)
+        await expect(password).toHaveAttribute('aria-invalid', 'true');
+
+        // Verify the error styling classes are applied via aria-invalid CSS
+        const borderColor = await password.evaluate((el) =>
+          window.getComputedStyle(el).getPropertyValue('border-color')
+        );
+        const backgroundColor = await password.evaluate((el) =>
+          window.getComputedStyle(el).getPropertyValue('background-color')
+        );
+
+        // Red border (rgb(239, 68, 68) = Tailwind red-500)
+        expect(borderColor).toContain('239, 68, 68');
+
+        // Light red/pink background (rgb(254, 242, 242) = Tailwind red-50)
+        expect(backgroundColor).toContain('254, 242, 242');
+      });
+    });
+
+    test('should apply red border to invalid select elements', async ({
+      page,
+    }) => {
+      await test.step('Verify invalid country select has error styling', async () => {
+        const country = page.getByLabel(/country/i);
+
+        await country.focus();
+        await country.blur();
+
+        // Verify aria-invalid is set
+        await expect(country).toHaveAttribute('aria-invalid', 'true');
+
+        // Verify red border styling
+        const borderColor = await country.evaluate((el) =>
+          window.getComputedStyle(el).getPropertyValue('border-color')
+        );
+
+        expect(borderColor).toContain('239, 68, 68');
+      });
+    });
+
+    test('should apply red border to invalid textarea elements', async ({
+      page,
+    }) => {
+      await test.step('Verify invalid justification textarea has error styling', async () => {
+        const checkbox = page.getByLabel(/requires justification/i);
+        await checkbox.check();
+
+        const justification = page.getByRole('textbox', {
+          name: /justification.*min 20/i,
+        });
+
+        await fillAndBlur(justification, 'Too short');
+
+        // Verify aria-invalid is set
+        await expect(justification).toHaveAttribute('aria-invalid', 'true');
+
+        // Verify error styling
+        const borderColor = await justification.evaluate((el) =>
+          window.getComputedStyle(el).getPropertyValue('border-color')
+        );
+        const backgroundColor = await justification.evaluate((el) =>
+          window.getComputedStyle(el).getPropertyValue('background-color')
+        );
+
+        expect(borderColor).toContain('239, 68, 68');
+        expect(backgroundColor).toContain('254, 242, 242');
+      });
+    });
+
+    test('should remove error styling when field becomes valid', async ({
+      page,
+    }) => {
+      await test.step('Fix invalid field and verify styling is removed', async () => {
+        const password = page.getByLabel('Password', { exact: true });
+
+        // Make field invalid
+        await fillAndBlur(password, 'Short');
+        await expect(password).toHaveAttribute('aria-invalid', 'true');
+
+        let borderColor = await password.evaluate((el) =>
+          window.getComputedStyle(el).getPropertyValue('border-color')
+        );
+        expect(borderColor).toContain('239, 68, 68'); // Red
+
+        // Fix the field
+        await fillAndBlur(password, 'ValidPassword123');
+        await expect(password).not.toHaveAttribute('aria-invalid', 'true');
+
+        // Verify error styling is removed (should be default gray border)
+        borderColor = await password.evaluate((el) =>
+          window.getComputedStyle(el).getPropertyValue('border-color')
+        );
+
+        // Should NOT be red anymore
+        expect(borderColor).not.toContain('239, 68, 68');
+      });
+    });
+
+    test('should apply error styling consistently across all field types', async ({
+      page,
+    }) => {
+      await test.step('Verify error styling on multiple field types', async () => {
+        const password = page.getByLabel('Password', { exact: true });
+        const country = page.getByLabel(/country/i);
+        const state = page.getByLabel(/state/i);
+        const startDate = page.getByLabel(/start date/i);
+
+        // Trigger errors on all fields
+        await fillAndBlur(password, 'Short');
+        await country.focus();
+        await country.blur();
+        await country.selectOption({ label: 'United States' });
+        await state.focus();
+        await state.blur();
+        await startDate.focus();
+        await startDate.blur();
+
+        // All should have aria-invalid
+        await expect(password).toHaveAttribute('aria-invalid', 'true');
+        await expect(country).toHaveAttribute('aria-invalid', 'true');
+        await expect(state).toHaveAttribute('aria-invalid', 'true');
+        await expect(startDate).toHaveAttribute('aria-invalid', 'true');
+
+        // All should have red borders
+        for (const field of [password, country, state, startDate]) {
+          const borderColor = await field.evaluate((el) =>
+            window.getComputedStyle(el).getPropertyValue('border-color')
+          );
+          expect(borderColor).toContain('239, 68, 68');
+        }
+      });
+    });
+  });
+
   test.describe('Color-Coded Sections Display', () => {
     test('should display all validation sections with color coding', async ({
       page,

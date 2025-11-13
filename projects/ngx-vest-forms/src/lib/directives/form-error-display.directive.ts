@@ -89,7 +89,6 @@ export class FormErrorDisplayDirective {
     const isTouched = this.isTouched();
     const isInvalid = this.isInvalid();
     const hasErrors = this.errorMessages().length > 0;
-    const hasBeenValidated = this.hasBeenValidated();
     const updateOn = this.updateOn();
     const formSubmitted = this.formSubmitted();
 
@@ -101,19 +100,17 @@ export class FormErrorDisplayDirective {
     if (updateOn === 'submit') {
       return !!(formSubmitted && hasErrorState);
     }
-    // on-blur: show errors after blur (touch) OR if validated via validationConfig
+    // on-blur: show errors after blur (touch)
     if (mode === 'on-blur') {
-      return !!((isTouched || hasBeenValidated) && hasErrorState);
+      return !!(isTouched && hasErrorState);
     }
     // on-submit: show errors after submit
     if (mode === 'on-submit') {
       return !!(formSubmitted && hasErrorState);
     }
-    // on-blur-or-submit: show errors after blur (touch), submit, OR validationConfig trigger
-    return !!(
-      (isTouched || formSubmitted || hasBeenValidated) &&
-      hasErrorState
-    );
+    // on-blur-or-submit: show errors after blur (touch) OR submit
+    // Removed hasBeenValidated check as it was causing errors to show on page load
+    return !!((isTouched || formSubmitted) && hasErrorState);
   });
 
   /**
