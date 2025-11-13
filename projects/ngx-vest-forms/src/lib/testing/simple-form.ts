@@ -70,13 +70,18 @@ export const formValidationSuite = staticSuite(
 
 export const selectors = {
   scControlWrapperFirstName: 'sc-control-wrapper__first-name',
+  ngxControlWrapperFirstName: 'ngx-control-wrapper__first-name',
   inputFirstName: 'input__first-name',
   scControlWrapperLastName: 'sc-control-wrapper__last-name',
+  ngxControlWrapperLastName: 'ngx-control-wrapper__last-name',
   inputLastName: 'input__last-name',
   scControlWrapperPasswords: 'sc-control-wrapper__passwords',
+  ngxControlWrapperPasswords: 'ngx-control-wrapper__passwords',
   scControlWrapperPassword: 'sc-control-wrapper__password',
+  ngxControlWrapperPassword: 'ngx-control-wrapper__password',
   inputPassword: 'input__password',
   scControlWrapperConfirmPassword: 'sc-control-wrapper__confirm-password',
+  ngxControlWrapperConfirmPassword: 'ngx-control-wrapper__confirm-password',
   inputConfirmPassword: 'input__confirm-password',
   btnSubmit: 'btn__submit',
   btnToggleValidationConfig: 'btn__toggle-validation-config',

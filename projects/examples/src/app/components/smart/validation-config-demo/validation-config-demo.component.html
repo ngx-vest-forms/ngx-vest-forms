@@ -10,7 +10,7 @@
     <!-- Form -->
     <div class="rounded-lg bg-white p-6 shadow-lg">
       <form
-        scVestForm
+        ngxVestForm
         [suite]="suite"
         [formShape]="shape"
         [formValue]="formValue()"
@@ -31,7 +31,7 @@
             </p>
           </div>
 
-          <div sc-control-wrapper>
+          <div ngx-control-wrapper>
             <label for="password" class="mb-2 block text-sm font-medium">
               Password
             </label>
@@ -45,7 +45,7 @@
             />
           </div>
 
-          <div sc-control-wrapper>
+          <div ngx-control-wrapper>
             <label for="confirmPassword" class="mb-2 block text-sm font-medium">
               Confirm Password
             </label>
@@ -82,7 +82,7 @@
           </div>
 
           @if (formValue().requiresJustification) {
-            <div sc-control-wrapper>
+            <div ngx-control-wrapper>
               <label for="justification" class="mb-2 block text-sm font-medium">
                 Justification (min 20 characters)
               </label>
@@ -107,7 +107,7 @@
             </p>
           </div>
 
-          <div sc-control-wrapper>
+          <div ngx-control-wrapper>
             <label for="country" class="mb-2 block text-sm font-medium">
               Country
             </label>
@@ -125,7 +125,7 @@
             </select>
           </div>
 
-          <div sc-control-wrapper>
+          <div ngx-control-wrapper>
             <label for="state" class="mb-2 block text-sm font-medium">
               State/Province
             </label>
@@ -139,7 +139,7 @@
             />
           </div>
 
-          <div sc-control-wrapper>
+          <div ngx-control-wrapper>
             <label for="zipCode" class="mb-2 block text-sm font-medium">
               Postal Code
             </label>
@@ -163,7 +163,7 @@
             </p>
           </div>
 
-          <div sc-control-wrapper>
+          <div ngx-control-wrapper>
             <label for="startDate" class="mb-2 block text-sm font-medium">
               Start Date
             </label>
@@ -176,7 +176,7 @@
             />
           </div>
 
-          <div sc-control-wrapper>
+          <div ngx-control-wrapper>
             <label for="endDate" class="mb-2 block text-sm font-medium">
               End Date
             </label>

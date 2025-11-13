@@ -24,7 +24,7 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
       @Component({
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [formValue]="formValue()"
             [suite]="suite"
             (formValueChange)="formValue.set($event)"
@@ -114,7 +114,7 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
       @Component({
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [formValue]="formValue()"
             [suite]="suite"
             (formValueChange)="formValue.set($event)"
@@ -187,7 +187,7 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
       @Component({
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [formValue]="formValue()"
             [suite]="suite"
             (formValueChange)="handleFormChange($event)"
@@ -312,7 +312,7 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
       @Component({
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [formValue]="formValue()"
             [suite]="suite"
             (formValueChange)="formValue.set($event)"
@@ -430,7 +430,7 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
       @Component({
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [formValue]="formValue()"
             [suite]="suite"
             (formValueChange)="formValue.set($event)"
@@ -502,7 +502,7 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
       @Component({
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [formValue]="formValue()"
             [suite]="suite"
             (formValueChange)="formValue.set($event)"

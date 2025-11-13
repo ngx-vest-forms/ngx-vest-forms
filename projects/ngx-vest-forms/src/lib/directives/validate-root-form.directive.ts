@@ -43,8 +43,8 @@ import { ValidationOptions } from './validation-options';
  *
  * Contract:
  * - Inputs:
- *   - `validateRootForm`: boolean. Enables root form validation.
- *   - `validateRootFormMode`: 'submit' | 'live'. Default 'submit'.
+ *   - `validateRootForm` or `ngxValidateRootForm`: boolean. Enables root form validation.
+ *   - `validateRootFormMode` or `ngxValidateRootFormMode`: 'submit' | 'live'. Default 'submit'.
  *     - 'submit': Validates only after first form submission (better UX)
  *     - 'live': Validates on every value change (immediate feedback)
  *   - `formValue`: Current form model (required)
@@ -87,7 +87,7 @@ import { ValidationOptions } from './validation-options';
  * @publicApi
  */
 @Directive({
-  selector: 'form[validateRootForm]',
+  selector: 'form[validateRootForm], form[ngxValidateRootForm]',
   providers: [
     {
       provide: NG_ASYNC_VALIDATORS,
@@ -113,8 +113,12 @@ export class ValidateRootFormDirective<T>
   /**
    * Whether the root form should be validated or not
    * This will use the field rootForm
+   * Accepts both validateRootForm and ngxValidateRootForm
    */
   readonly validateRootForm = input(false, {
+    transform: booleanAttribute,
+  });
+  readonly ngxValidateRootForm = input(false, {
     transform: booleanAttribute,
   });
 
@@ -122,8 +126,10 @@ export class ValidateRootFormDirective<T>
    * Validation mode:
    * - 'submit' (default): Only validates after form submission
    * - 'live': Validates on every value change
+   * Accepts both validateRootFormMode and ngxValidateRootFormMode
    */
   public readonly validateRootFormMode = input<'submit' | 'live'>('submit');
+  public readonly ngxValidateRootFormMode = input<'submit' | 'live'>('submit');
 
   constructor() {
     // Convert signals to Observables in injection context
@@ -160,7 +166,7 @@ export class ValidateRootFormDirective<T>
     if (!ngForm) {
       console.error(
         '[ValidateRootFormDirective] NgForm not found. Ensure the directive is used on a <form> element with the scVestForm directive. ' +
-        'Common setup mistakes: (1) Missing scVestForm directive, (2) Directive on non-form element, (3) NgForm not imported in module/component.'
+          'Common setup mistakes: (1) Missing scVestForm directive, (2) Directive on non-form element, (3) NgForm not imported in module/component.'
       );
       return;
     }
@@ -184,8 +190,20 @@ export class ValidateRootFormDirective<T>
       return of(null);
     }
 
+    // Check both validateRootForm and ngxValidateRootForm inputs
+    const isEnabled = this.validateRootForm() || this.ngxValidateRootForm();
+    if (!isEnabled) {
+      return of(null);
+    }
+
+    // Get mode from either input (ngx prefix takes precedence if both set)
+    const mode =
+      this.ngxValidateRootFormMode() !== 'submit'
+        ? this.ngxValidateRootFormMode()
+        : this.validateRootFormMode();
+
     // In 'submit' mode, skip validation until form is submitted
-    if (this.validateRootFormMode() === 'submit' && !this.hasSubmitted()) {
+    if (mode === 'submit' && !this.hasSubmitted()) {
       return of(null);
     }
 

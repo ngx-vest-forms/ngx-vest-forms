@@ -8,7 +8,7 @@ import { PhoneNumbersComponent } from './phonenumbers.component';
   imports: [PhoneNumbersComponent, FormsModule, vestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [formValue]="formValue()"
       (formValueChange)="formValue.set($event)"
     >

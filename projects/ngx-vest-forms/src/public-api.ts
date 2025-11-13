@@ -77,6 +77,10 @@ export {
 export { ROOT_FORM, VALIDATION_CONFIG_DEBOUNCE_TIME } from './lib/constants';
 
 // Tokens
+export {
+  NGX_ERROR_DISPLAY_MODE_TOKEN,
+  SC_ERROR_DISPLAY_MODE_TOKEN,
+} from './lib/directives/error-display-mode.token';
 export { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from './lib/tokens/debounce.token';
 
 // Components
@@ -84,7 +88,10 @@ export { ControlWrapperComponent } from './lib/components/control-wrapper/contro
 
 // Directives
 export { FormControlStateDirective } from './lib/directives/form-control-state.directive';
-export { FormErrorDisplayDirective } from './lib/directives/form-error-display.directive';
+export {
+  FormErrorDisplayDirective,
+  ScErrorDisplayMode,
+} from './lib/directives/form-error-display.directive';
 export { FormModelGroupDirective } from './lib/directives/form-model-group.directive';
 export { FormModelDirective } from './lib/directives/form-model.directive';
 export {

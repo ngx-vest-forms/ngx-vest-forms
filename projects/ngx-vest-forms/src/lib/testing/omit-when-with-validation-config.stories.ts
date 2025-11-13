@@ -67,8 +67,8 @@ const formShape: NgxDeepPartial<OmitWhenFormModel> = {
 const selectors = {
   inputAantal: 'input__aantal',
   inputOnderbouwing: 'input__onderbouwing',
-  scControlWrapperAantal: 'sc-control-wrapper__aantal',
-  scControlWrapperOnderbouwing: 'sc-control-wrapper__onderbouwing',
+  ngxControlWrapperAantal: 'ngx-control-wrapper__aantal',
+  ngxControlWrapperOnderbouwing: 'ngx-control-wrapper__onderbouwing',
   btnSubmit: 'btn__submit',
   btnClearAantal: 'btn__clear-aantal',
   btnClearOnderbouwing: 'btn__clear-onderbouwing',
@@ -87,8 +87,8 @@ const selectors = {
       </p>
 
       <form
-        #vestForm="scVestForm"
-        scVestForm
+        #vestForm="ngxVestForm"
+        ngxVestForm
         (ngSubmit)="save()"
         [formValue]="formValue()"
         [formShape]="shape"
@@ -102,8 +102,8 @@ const selectors = {
         <div ngModelGroup="berekendeAftrekVoorarrest">
           <div
             class="w-full"
-            sc-control-wrapper
-            [attr.data-testid]="selectors.scControlWrapperAantal"
+            ngx-control-wrapper
+            [attr.data-testid]="selectors.ngxControlWrapperAantal"
           >
             <label class="block">
               <span class="text-sm font-medium">Aantal</span>
@@ -120,8 +120,8 @@ const selectors = {
 
           <div
             class="w-full"
-            sc-control-wrapper
-            [attr.data-testid]="selectors.scControlWrapperOnderbouwing"
+            ngx-control-wrapper
+            [attr.data-testid]="selectors.ngxControlWrapperOnderbouwing"
           >
             <label class="block">
               <span class="text-sm font-medium">Onderbouwing</span>
@@ -330,7 +330,7 @@ export const Scenario1_FillAantalFirst: StoryObj = {
     await waitFor(
       () => {
         const wrapper = canvas.getByTestId(
-          selectors.scControlWrapperOnderbouwing
+          selectors.ngxControlWrapperOnderbouwing
         );
         expect(wrapper).toHaveTextContent(
           'Onderbouwing is verplicht wanneer aantal is ingevuld'
@@ -368,7 +368,7 @@ export const Scenario2_FillOnderbouwingFirst: StoryObj = {
     // Wait for validation to complete
     await waitFor(
       () => {
-        const wrapper = canvas.getByTestId(selectors.scControlWrapperAantal);
+        const wrapper = canvas.getByTestId(selectors.ngxControlWrapperAantal);
         expect(wrapper).toHaveTextContent(
           'Aantal is verplicht wanneer onderbouwing is ingevuld'
         );
@@ -399,9 +399,9 @@ export const Scenario5_SubmitEmptyFields: StoryObj = {
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     // Verify no errors appear (both fields are optional when empty)
-    const aantalWrapper = canvas.getByTestId(selectors.scControlWrapperAantal);
+    const aantalWrapper = canvas.getByTestId(selectors.ngxControlWrapperAantal);
     const onderbouwingWrapper = canvas.getByTestId(
-      selectors.scControlWrapperOnderbouwing
+      selectors.ngxControlWrapperOnderbouwing
     );
 
     expect(aantalWrapper).not.toHaveTextContent('verplicht');
@@ -434,7 +434,7 @@ export const Scenario6_RapidFieldSwitching: StoryObj = {
     await waitFor(
       () => {
         expect(
-          canvas.getByTestId(selectors.scControlWrapperAantal)
+          canvas.getByTestId(selectors.ngxControlWrapperAantal)
         ).toHaveTextContent('verplicht');
       },
       { timeout: 5000 }

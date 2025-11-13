@@ -47,6 +47,14 @@
 >
 > **See**: [Performance Optimization with `only()`](#performance-optimization-with-only) section and [Migration Guide](./docs/PR-60-CHANGES.md#migration-guide) for complete details.
 
+> [!NOTE]
+> **Selector Prefix Update**: We now recommend using the `ngx-` prefix for all selectors. The legacy `sc-` prefix is **deprecated** and will be removed in v3.0.0.
+>
+> - ✅ **Recommended**: `<ngx-control-wrapper>`, `ngxVestForm`, `ngxValidateRootForm`
+> - ⚠️ **Deprecated**: `<sc-control-wrapper>`, `scVestForm`, `validateRootForm`
+>
+> Both prefixes work in v2.0+, allowing gradual migration. See [Dual Selector Support](./docs/dev/DUAL-SELECTOR-SUPPORT.md) for complete migration guide.
+
 A lightweight, type-safe adapter between Angular template-driven forms and [Vest.js](https://vestjs.dev) validation. Build complex forms with unidirectional data flow, sophisticated async validations, and zero boilerplate.
 
 > [!TIP]
@@ -144,7 +152,7 @@ type MyFormModel = NgxDeepPartial<{
   imports: [vestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       (formValueChange)="formValue.set($event)"
       (ngSubmit)="save()"
     >
@@ -197,7 +205,7 @@ type SimpleForm = NgxDeepPartial<{
   imports: [vestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       (formValueChange)="formValue.set($event)"
       (ngSubmit)="save()"
     >
@@ -220,7 +228,7 @@ export class SimpleFormComponent {
 }
 ```
 
-That's all you need! The `scVestForm` directive automatically:
+That's all you need! The `ngxVestForm` directive automatically:
 
 - Creates FormControls for each input
 - Manages form state with signals
@@ -233,7 +241,7 @@ A complete working form with ngx-vest-forms requires just 4 steps:
 1. **Define your form model** using `NgxDeepPartial<T>`
 2. **Create a validation suite** with Vest.js using `staticSuite()`
 3. **Set up your component** with a signal for form state
-4. **Build your template** with `scVestForm` directive and `[ngModel]` bindings
+4. **Build your template** with `ngxVestForm` directive and `[ngModel]` bindings
 
 The result: A fully functional form with type safety, automatic form control creation, validation on blur/submit, and error display - all with minimal boilerplate.
 
@@ -243,7 +251,7 @@ The result: A fully functional form with type safety, automatic form control cre
 
 ### Understanding Form State
 
-Angular automatically creates FormGroups and FormControls based on your template structure. The `scVestForm` directive provides these outputs:
+Angular automatically creates FormGroups and FormControls based on your template structure. The `ngxVestForm` directive provides these outputs:
 
 | Output            | Description                                     |
 | ----------------- | ----------------------------------------------- |
@@ -396,7 +404,7 @@ export const myFormModelShape: DeepRequired<MyFormModel> = {
   imports: [vestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [formShape]="shape"
       (formValueChange)="formValue.set($event)"
       (ngSubmit)="save()"
@@ -425,7 +433,7 @@ export class MyComponent {
 }
 ```
 
-By passing the shape to the `formShape` input the `scVestForm` will validate the actual form value
+By passing the shape to the `formShape` input the `ngxVestForm` will validate the actual form value
 against the form shape every time the form changes, but only when Angular is in devMode.
 
 Making a typo in the name attribute or an ngModelGroup attribute would result in runtime errors.
@@ -493,7 +501,7 @@ class MyComponent {
 ```html
 <!-- Template -->
 <form
-  scVestForm
+  ngxVestForm
   [suite]="suite"
   (formValueChange)="formValue.set($event)"
   (ngSubmit)="save()"
@@ -515,27 +523,27 @@ This means `valid`, `invalid`, `errors`, `statusChanges` all work just like a re
 
 ### Displaying Validation Errors
 
-Use the `sc-control-wrapper` component to show validation errors consistently:
+Use the `ngx-control-wrapper` component to show validation errors consistently:
 
 ```html
-<div ngModelGroup="generalInfo" sc-control-wrapper>
-  <div sc-control-wrapper>
+<div ngModelGroup="generalInfo" ngx-control-wrapper>
+  <ngx-control-wrapper>
     <label>First name</label>
     <input
       type="text"
       name="firstName"
       [ngModel]="formValue().generalInfo?.firstName"
     />
-  </div>
+  </ngx-control-wrapper>
 
-  <div sc-control-wrapper>
+  <ngx-control-wrapper>
     <label>Last name</label>
     <input
       type="text"
       name="lastName"
       [ngModel]="formValue().generalInfo?.lastName"
     />
-  </div>
+  </ngx-control-wrapper>
 </div>
 ```
 
@@ -544,7 +552,7 @@ Errors show automatically:
 - ✅ On blur
 - ✅ On submit
 
-You can use `sc-control-wrapper` on:
+You can use `ngx-control-wrapper` on:
 
 - Elements that hold `ngModelGroup`
 - Elements that have an `ngModel` (or form control) inside of them
@@ -574,7 +582,7 @@ export const badSuite = staticSuite((model, field?) => {
 
 ### Error Display Control
 
-The `sc-control-wrapper` component uses the `FormErrorDisplayDirective` under the hood to manage when and how errors are displayed.
+The `ngx-control-wrapper` component uses the `FormErrorDisplayDirective` under the hood to manage when and how errors are displayed.
 
 #### Error Display Modes
 
@@ -590,15 +598,15 @@ ngx-vest-forms supports three error display modes:
 
 ```typescript
 import { ApplicationConfig } from '@angular/core';
-import { SC_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
+import { NGX_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
 
 export const appConfig: ApplicationConfig = {
-  providers: [{ provide: SC_ERROR_DISPLAY_MODE_TOKEN, useValue: 'on-submit' }],
+  providers: [{ provide: NGX_ERROR_DISPLAY_MODE_TOKEN, useValue: 'on-submit' }],
 };
 
 // Or in a component
 @Component({
-  providers: [{ provide: SC_ERROR_DISPLAY_MODE_TOKEN, useValue: 'on-submit' }],
+  providers: [{ provide: NGX_ERROR_DISPLAY_MODE_TOKEN, useValue: 'on-submit' }],
 })
 export class MyComponent {}
 ```
@@ -608,15 +616,15 @@ export class MyComponent {}
 ```typescript
 @Component({
   template: `
-    <div sc-control-wrapper [errorDisplayMode]="'on-blur'">
+    <ngx-control-wrapper [errorDisplayMode]="'on-blur'">
       <input name="email" [ngModel]="formValue().email" />
-    </div>
+    </ngx-control-wrapper>
   `,
 })
 export class MyFormComponent {}
 ```
 
-> **Note**: The `sc-control-wrapper` component accepts `errorDisplayMode` as an input to override the global setting for specific fields.
+> **Note**: The `ngx-control-wrapper` component accepts `errorDisplayMode` as an input to override the global setting for specific fields.
 
 ### Validation Options
 
@@ -625,9 +633,9 @@ You can configure additional `validationOptions` at various levels like `form`, 
 For example, to debounce validation (useful for API calls):
 
 ```html
-<form scVestForm ... [validationOptions]="{ debounceTime: 0 }">
+<form ngxVestForm ... [validationOptions]="{ debounceTime: 0 }">
   ...
-  <div sc-control-wrapper>
+  <ngx-control-wrapper>
     <label>UserId</label>
     <input
       type="text"
@@ -635,7 +643,7 @@ For example, to debounce validation (useful for API calls):
       [ngModel]="formValue().userId"
       [validationOptions]="{ debounceTime: 300 }"
     />
-  </div>
+  </ngx-control-wrapper>
   ...
 </form>
 ```
@@ -812,7 +820,7 @@ import { Component, signal, computed } from '@angular/core';
 
 @Component({
   template: `
-    <form scVestForm [validationConfig]="validationConfig()" ...>
+    <form ngxVestForm [validationConfig]="validationConfig()" ...>
       <input name="quantity" [ngModel]="formValue().quantity" />
 
       @if ((formValue().quantity || 0) > 5) {
@@ -853,7 +861,7 @@ export class MyComponent {
 
 ```html
 <!-- Notice the function call: validationConfig() -->
-<form scVestForm [validationConfig]="validationConfig()" ...>...</form>
+<form ngxVestForm [validationConfig]="validationConfig()" ...>...</form>
 ```
 
 ### ValidationConfig Fluent Builder API
@@ -1013,7 +1021,7 @@ When form structure changes dynamically (e.g., switching between form inputs and
 ```typescript
 @Component({
   template: `
-    <form scVestForm [suite]="suite" #vestForm="scVestForm">
+    <form ngxVestForm [suite]="suite" #vestForm="ngxVestForm">
       <select
         name="type"
         [ngModel]="formValue().type"
@@ -1260,9 +1268,9 @@ test(ROOT_FORM, 'Passwords must match', () => {
 
 ```html
 <form
-  scVestForm
-  validateRootForm
-  [validateRootFormMode]="'submit'"
+  ngxVestForm
+  ngxValidateRootForm
+  [ngxValidateRootFormMode]="'submit'"
   [suite]="suite"
   (errorsChange)="errors.set($event)"
 >
@@ -1280,12 +1288,12 @@ Root form validation supports two modes:
 
 ```html
 <!-- Submit mode - validates after submit (default) -->
-<form scVestForm validateRootForm [validateRootFormMode]="'submit'">
+<form ngxVestForm ngxValidateRootForm [ngxValidateRootFormMode]="'submit'">
   <!-- form controls -->
 </form>
 
 <!-- Live mode - validates immediately -->
-<form scVestForm validateRootForm [validateRootFormMode]="'live'">
+<form ngxVestForm ngxValidateRootForm [ngxValidateRootFormMode]="'live'">
   <!-- form controls -->
 </form>
 ```
@@ -1313,7 +1321,7 @@ protected validationConfig = {
 ```
 
 ```html
-<form scVestForm [suite]="suite" [validationConfig]="validationConfig">
+<form ngxVestForm [suite]="suite" [validationConfig]="validationConfig">
   <input name="password" [ngModel]="formValue().password" />
   <input name="confirmPassword" [ngModel]="formValue().confirmPassword" />
 </form>
@@ -1338,10 +1346,10 @@ import { vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
   selector: 'app-address',
   viewProviders: [vestFormsViewProviders], // ⚠️ REQUIRED for child form components
   template: `
-    <div sc-control-wrapper>
+    <ngx-control-wrapper>
       <label>Street</label>
       <input [ngModel]="address().street" name="street" />
-    </div>
+    </ngx-control-wrapper>
     <!-- More address fields... -->
   `,
 })
@@ -1391,7 +1399,7 @@ Now that you've seen how ngx-vest-forms works, here's a complete overview of its
 ### Developer Experience
 
 - **Runtime Shape Checking** - Catch typos in `name` attributes early
-- **Flexible Error Display** - Built-in `sc-control-wrapper` or create custom wrappers with `FormErrorDisplayDirective`
+- **Flexible Error Display** - Built-in `ngx-control-wrapper` or create custom wrappers with `FormErrorDisplayDirective`
 - **Error Display Modes** - Control when errors show: on-blur, on-submit, or both
 - **Validation Config** - Declare field dependencies for complex scenarios
 - **Field State Utilities** - Helper functions for managing dynamic form state

@@ -7,7 +7,10 @@ import {
   signal,
 } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { SC_ERROR_DISPLAY_MODE_TOKEN } from './error-display-mode.token';
+import {
+  NGX_ERROR_DISPLAY_MODE_TOKEN,
+  SC_ERROR_DISPLAY_MODE_TOKEN,
+} from './error-display-mode.token';
 import { FormControlStateDirective } from './form-control-state.directive';
 
 export type ScErrorDisplayMode = 'on-blur' | 'on-submit' | 'on-blur-or-submit';
@@ -16,17 +19,18 @@ export const SC_ERROR_DISPLAY_MODE_DEFAULT: ScErrorDisplayMode =
   'on-blur-or-submit';
 
 @Directive({
-  selector: '[formErrorDisplay]',
-  exportAs: 'formErrorDisplay',
+  selector: '[formErrorDisplay], [ngxErrorDisplay]',
+  exportAs: 'formErrorDisplay, ngxErrorDisplay',
   hostDirectives: [FormControlStateDirective],
 })
 export class FormErrorDisplayDirective {
   readonly #formControlState = inject(FormControlStateDirective);
   // Optionally inject NgForm for form submission tracking
   readonly #ngForm = inject(NgForm, { optional: true });
-  // Use DI token for global default, fallback to hardcoded default
+  // Use DI token for global default, check both tokens (ngx takes precedence)
   readonly errorDisplayMode = input<ScErrorDisplayMode>(
-    inject(SC_ERROR_DISPLAY_MODE_TOKEN, { optional: true }) ??
+    inject(NGX_ERROR_DISPLAY_MODE_TOKEN, { optional: true }) ??
+      inject(SC_ERROR_DISPLAY_MODE_TOKEN, { optional: true }) ??
       SC_ERROR_DISPLAY_MODE_DEFAULT
   );
 

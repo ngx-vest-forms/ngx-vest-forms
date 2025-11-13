@@ -14,10 +14,10 @@ import {
   template: `
     <form
       class="p-4"
-      scVestForm
+      ngxVestForm
       (ngSubmit)="save()"
       [formValue]="formValue()"
-      validateRootForm
+      ngxValidateRootForm
       [formShape]="shape"
       [suite]="suite"
       (validChange)="formValid.set($event)"
@@ -28,8 +28,8 @@ import {
       <fieldset>
         <div
           class="w-full"
-          sc-control-wrapper
-          data-testid="sc-control-wrapper__first-name"
+          ngx-control-wrapper
+          data-testid="ngx-control-wrapper__first-name"
         >
           <label>
             <span>First name</span>
@@ -45,8 +45,8 @@ import {
         </div>
         <div
           class="w-full"
-          sc-control-wrapper
-          data-testid="sc-control-wrapper__last-name"
+          ngx-control-wrapper
+          data-testid="ngx-control-wrapper__last-name"
         >
           <label>
             <span>Last name</span>
@@ -61,16 +61,16 @@ import {
         </div>
         <div
           class="sm:col-span-2"
-          sc-control-wrapper
-          data-testid="sc-control-wrapper__passwords"
+          ngx-control-wrapper
+          data-testid="ngx-control-wrapper__passwords"
           ngModelGroup="passwords"
           [validationOptions]="{ debounceTime: 900 }"
         >
           <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
             <div
               class="w-full"
-              sc-control-wrapper
-              data-testid="sc-control-wrapper__password"
+              ngx-control-wrapper
+              data-testid="ngx-control-wrapper__password"
             >
               <label>
                 <span>Password</span>
@@ -85,8 +85,8 @@ import {
             </div>
             <div
               class="w-full"
-              sc-control-wrapper
-              data-testid="sc-control-wrapper__confirm-password"
+              ngx-control-wrapper
+              data-testid="ngx-control-wrapper__confirm-password"
             >
               <label>
                 <span>Confirm</span>
@@ -161,13 +161,13 @@ export const ShouldShowFirstnameRequiredAfterDelayForNgModel: StoryObj = {
     canvas.getByTestId(selectors.inputFirstName).blur();
 
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperFirstName)
+      canvas.getByTestId(selectors.ngxControlWrapperFirstName)
     ).not.toHaveTextContent('First name is required');
 
     await waitFor(
       () =>
         expect(
-          canvas.getByTestId(selectors.scControlWrapperFirstName)
+          canvas.getByTestId(selectors.ngxControlWrapperFirstName)
         ).toHaveTextContent('First name is required'),
       { timeout: 600 }
     );
@@ -191,13 +191,13 @@ export const ShouldShowPasswordConfirmationAfterDelayForNgModelGroup: StoryObj =
       await canvas.getByTestId(selectors.inputConfirmPassword).blur();
 
       await expect(
-        canvas.getByTestId(selectors.scControlWrapperPasswords)
+        canvas.getByTestId(selectors.ngxControlWrapperPasswords)
       ).not.toHaveTextContent('Passwords do not match');
 
       await waitFor(
         () =>
           expect(
-            canvas.getByTestId(selectors.scControlWrapperPasswords)
+            canvas.getByTestId(selectors.ngxControlWrapperPasswords)
           ).toHaveTextContent('Passwords do not match'),
         { timeout: 1100 }
       );

@@ -30,10 +30,10 @@ const addressFormSuite = staticSuite(
   imports: [...vestForms, JsonPipe],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [suite]="suite"
       [(formValue)]="model"
-      #vestForm="scVestForm"
+      #vestForm="ngxVestForm"
     >
       <div ngModelGroup="address" data-testid="address-group">
         <label for="street">Street</label>

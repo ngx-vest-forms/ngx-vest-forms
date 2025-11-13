@@ -8,10 +8,10 @@ describe('FormModelDirective', () => {
   @Component({
     template: `
       <form
-        scVestForm
+        ngxVestForm
         [suite]="suite"
         [(formValue)]="model"
-        #vestForm="scVestForm"
+        #vestForm="ngxVestForm"
       >
         <input name="email" [ngModel]="model().email" placeholder="email" />
         <input
@@ -80,10 +80,10 @@ describe('FormModelDirective', () => {
     @Component({
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [suite]="suite"
           [(formValue)]="model"
-          #vestForm="scVestForm"
+          #vestForm="ngxVestForm"
         >
           <input name="email" [ngModel]="model().email" placeholder="email" />
         </form>

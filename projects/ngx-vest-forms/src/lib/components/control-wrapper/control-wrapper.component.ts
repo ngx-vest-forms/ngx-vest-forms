@@ -92,13 +92,15 @@ let nextUniqueId = 0;
  * @see https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA22 - ARIA22: Using role=status
  */
 @Component({
-  selector: 'sc-control-wrapper, [scControlWrapper], [sc-control-wrapper]',
+  selector:
+    'sc-control-wrapper, ngx-control-wrapper, [scControlWrapper], [ngxControlWrapper], [sc-control-wrapper], [ngx-control-wrapper]',
   templateUrl: './control-wrapper.component.html',
   styleUrls: ['./control-wrapper.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    class: 'sc-control-wrapper',
+    class: 'sc-control-wrapper ngx-control-wrapper',
     '[class.sc-control-wrapper--invalid]': 'errorDisplay.shouldShowErrors()',
+    '[class.ngx-control-wrapper--invalid]': 'errorDisplay.shouldShowErrors()',
     '[attr.aria-busy]': "errorDisplay.isPending() ? 'true' : null",
   },
   hostDirectives: [

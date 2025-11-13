@@ -59,9 +59,9 @@ const dynamicFormValidationSuite = staticSuite(
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form
-      #vestForm="scVestForm"
+      #vestForm="ngxVestForm"
       class="max-w-lg p-4"
-      scVestForm
+      ngxVestForm
       [formValue]="formValue()"
       [formShape]="shape"
       [suite]="suite"
@@ -75,8 +75,8 @@ const dynamicFormValidationSuite = staticSuite(
         </legend>
 
         <div
-          sc-control-wrapper
-          data-testid="sc-control-wrapper__procedure-type"
+          ngx-control-wrapper
+          data-testid="ngx-control-wrapper__procedure-type"
         >
           <label class="block">
             <span class="mb-2 block text-sm font-medium">Procedure Type</span>
@@ -99,8 +99,8 @@ const dynamicFormValidationSuite = staticSuite(
         <!-- Using @if instead of *ngIf (Angular 20 best practice) -->
         @if (formValue().procedureType === 'typeA') {
           <div
-            sc-control-wrapper
-            data-testid="sc-control-wrapper__field-a"
+            ngx-control-wrapper
+            data-testid="ngx-control-wrapper__field-a"
             class="rounded bg-blue-50 p-3"
           >
             <label class="block">
@@ -124,8 +124,8 @@ const dynamicFormValidationSuite = staticSuite(
         <!-- Type B: Shows input field B -->
         @if (formValue().procedureType === 'typeB') {
           <div
-            sc-control-wrapper
-            data-testid="sc-control-wrapper__field-b"
+            ngx-control-wrapper
+            data-testid="ngx-control-wrapper__field-b"
             class="rounded bg-green-50 p-3"
           >
             <label class="block">

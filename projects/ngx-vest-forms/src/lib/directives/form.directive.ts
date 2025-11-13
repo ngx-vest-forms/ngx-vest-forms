@@ -69,8 +69,8 @@ export type NgxValidationConfig<T = unknown> =
   | null;
 
 @Directive({
-  selector: 'form[scVestForm]',
-  exportAs: 'scVestForm',
+  selector: 'form[scVestForm], form[ngxVestForm]',
+  exportAs: 'scVestForm, ngxVestForm',
 })
 export class FormDirective<T extends Record<string, any>> {
   public readonly ngForm = inject(NgForm, { self: true });

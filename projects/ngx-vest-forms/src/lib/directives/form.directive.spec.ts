@@ -21,11 +21,11 @@ import { firstValueFrom } from 'rxjs';
   standalone: true,
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [suite]="suite()"
       [formValue]="formValue()"
       (formValueChange)="formValue.set($event)"
-      #vest="scVestForm"
+      #vest="ngxVestForm"
     >
       <label for="username">Username</label>
       <input
@@ -91,10 +91,10 @@ describe('FormDirective - Async Validator', () => {
     selector: 'test-parallel-validation-host',
     template: `
       <form
-        scVestForm
+        ngxVestForm
         [suite]="suite()"
         [formValue]="formValue()"
-        #vest="scVestForm"
+        #vest="ngxVestForm"
       ></form>
     `,
     standalone: true,
@@ -128,10 +128,10 @@ describe('FormDirective - Async Validator', () => {
     selector: 'test-debounce-cache-host',
     template: `
       <form
-        scVestForm
+        ngxVestForm
         [suite]="suite()"
         [formValue]="formValue()"
-        #vest="scVestForm"
+        #vest="ngxVestForm"
       ></form>
     `,
     standalone: true,
@@ -149,10 +149,10 @@ describe('FormDirective - Async Validator', () => {
     standalone: true,
     template: `
       <form
-        scVestForm
+        ngxVestForm
         [suite]="suite()"
         [formValue]="formValue()"
-        #vest="scVestForm"
+        #vest="ngxVestForm"
       >
         <label for="username">Username</label>
         <input id="username" name="username" [ngModel]="formValue().username" />
@@ -189,7 +189,7 @@ describe('FormDirective - Async Validator', () => {
   it('should return null if suite or formValue is not set', async () => {
     @Component({
       selector: 'test-null-suite-host',
-      template: `<form scVestForm #vest="scVestForm"></form>`,
+      template: `<form ngxVestForm #vest="ngxVestForm"></form>`,
       standalone: true,
       imports: [vestForms],
     })
@@ -209,7 +209,7 @@ describe('FormDirective - Async Validator', () => {
   it('should handle undefined/null values for candidate model', async () => {
     @Component({
       selector: 'test-undefined-value-host',
-      template: `<form scVestForm [suite]="suite()" #vest="scVestForm"></form>`,
+      template: `<form ngxVestForm [suite]="suite()" #vest="ngxVestForm"></form>`,
       standalone: true,
       imports: [vestForms],
     })
@@ -248,10 +248,10 @@ describe('FormDirective - Validator Cache', () => {
     selector: 'test-validator-cache-host',
     template: `
       <form
-        scVestForm
+        ngxVestForm
         [suite]="suite()"
         [formValue]="formValue()"
-        #vest="scVestForm"
+        #vest="ngxVestForm"
       ></form>
     `,
     standalone: true,
@@ -269,8 +269,8 @@ describe('FormDirective - Composability & Host Bindings', () => {
     @Component({
       selector: 'test-multi-directive-host',
       template: `
-        <form scVestForm #vest1="scVestForm"></form>
-        <form scVestForm #vest2="scVestForm"></form>
+        <form ngxVestForm #vest1="ngxVestForm"></form>
+        <form ngxVestForm #vest2="ngxVestForm"></form>
       `,
       standalone: true,
       imports: [vestForms],
@@ -290,9 +290,9 @@ describe('FormDirective - ValidationConfig', () => {
     selector: 'test-validation-config-host',
     template: `
       <form
-        scVestForm
+        ngxVestForm
         [validationConfig]="validationConfig()"
-        #vest="scVestForm"
+        #vest="ngxVestForm"
       ></form>
     `,
     standalone: true,
@@ -318,9 +318,9 @@ describe('FormDirective - ValidationConfig', () => {
     @Component({
       selector: 'test-validation-config-loop',
       template: `<form
-        scVestForm
+        ngxVestForm
         [validationConfig]="validationConfig()"
-        #vest="scVestForm"
+        #vest="ngxVestForm"
       ></form>`,
       standalone: true,
       imports: [vestForms],
@@ -346,7 +346,7 @@ describe('FormDirective - Signals/Outputs', () => {
   it('should emit correct values on formValueChange, errorsChange, dirtyChange, validChange', async () => {
     @Component({
       selector: 'test-signals-outputs-host',
-      template: `<form scVestForm #vest="scVestForm"></form>`,
+      template: `<form ngxVestForm #vest="ngxVestForm"></form>`,
       standalone: true,
       imports: [vestForms],
     })
@@ -365,7 +365,7 @@ describe('FormDirective - Signals/Outputs', () => {
 describe('FormDirective - triggerFormValidation', () => {
   @Component({
     selector: 'test-trigger-validation-host',
-    template: `<form scVestForm #vest="scVestForm"></form>`,
+    template: `<form ngxVestForm #vest="ngxVestForm"></form>`,
     standalone: true,
     imports: [vestForms],
   })
@@ -394,10 +394,10 @@ describe('FormDirective - Shape Validation', () => {
   @Component({
     selector: 'test-shape-validation-host',
     template: `<form
-      scVestForm
+      ngxVestForm
       [formShape]="formShape()"
       [formValue]="formValue()"
-      #vest="scVestForm"
+      #vest="ngxVestForm"
     ></form>`,
     standalone: true,
     imports: [vestForms],
@@ -435,11 +435,11 @@ describe('FormDirective - FormState Memoization', () => {
     selector: 'test-memoization-host',
     template: `
       <form
-        scVestForm
+        ngxVestForm
         [suite]="suite()"
         [formValue]="formValue()"
         (formValueChange)="formValue.set($event)"
-        #vest="scVestForm"
+        #vest="ngxVestForm"
       >
         <input name="field1" [ngModel]="formValue().field1" />
       </form>

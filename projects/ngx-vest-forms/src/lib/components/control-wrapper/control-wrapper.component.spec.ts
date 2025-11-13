@@ -30,19 +30,19 @@ const testSuite = staticSuite((data: TestModel = {}, field?: string) => {
   imports: [vestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [suite]="suite"
       [formValue]="model()"
       (formValueChange)="model.set($event)"
     >
-      <sc-control-wrapper>
+      <ngx-control-wrapper>
         <label for="email">Email</label>
         <input id="email" name="email" [ngModel]="model().email" />
-      </sc-control-wrapper>
-      <sc-control-wrapper>
+      </ngx-control-wrapper>
+      <ngx-control-wrapper>
         <label for="username">Username</label>
         <input id="username" name="username" [ngModel]="model().username" />
-      </sc-control-wrapper>
+      </ngx-control-wrapper>
     </form>
   `,
 })
@@ -55,7 +55,7 @@ class TestFormComponent {
   imports: [vestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [suite]="suite"
       [formValue]="model()"
       (formValueChange)="model.set($event)"
@@ -93,15 +93,15 @@ const asyncSuite = staticSuite((data: TestModel = {}, field?: string) => {
   imports: [vestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [suite]="suite"
       [formValue]="model()"
       (formValueChange)="model.set($event)"
     >
-      <sc-control-wrapper>
+      <ngx-control-wrapper>
         <label for="email">Email</label>
         <input id="email" name="email" [ngModel]="model().email" />
-      </sc-control-wrapper>
+      </ngx-control-wrapper>
     </form>
   `,
 })
@@ -113,9 +113,9 @@ class AsyncTestComponent {
 @Component({
   imports: [vestForms],
   template: `
-    <sc-control-wrapper>
+    <ngx-control-wrapper>
       <div>Empty wrapper</div>
-    </sc-control-wrapper>
+    </ngx-control-wrapper>
   `,
 })
 class EmptyWrapperComponent {}
@@ -124,16 +124,16 @@ class EmptyWrapperComponent {}
   imports: [vestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [formValue]="model()"
       (formValueChange)="model.set($event)"
     >
-      <sc-control-wrapper>
+      <ngx-control-wrapper>
         <label for="firstName">First Name</label>
         <input id="firstName" name="firstName" [ngModel]="model().firstName" />
         <label for="lastName">Last Name</label>
         <input id="lastName" name="lastName" [ngModel]="model().lastName" />
-      </sc-control-wrapper>
+      </ngx-control-wrapper>
     </form>
   `,
 })
@@ -149,20 +149,20 @@ describe('ScControlWrapperComponent', () => {
       expect(screen.getByLabelText('Username')).toBeInTheDocument();
       const emailInput = screen.getByLabelText('Email');
       const usernameInput = screen.getByLabelText('Username');
-      const emailWrapper = emailInput.closest('.sc-control-wrapper');
-      const usernameWrapper = usernameInput.closest('.sc-control-wrapper');
+      const emailWrapper = emailInput.closest('.ngx-control-wrapper');
+      const usernameWrapper = usernameInput.closest('.ngx-control-wrapper');
       expect(emailWrapper).toBeInTheDocument();
       expect(usernameWrapper).toBeInTheDocument();
-      expect(emailWrapper).toHaveClass('sc-control-wrapper');
-      expect(usernameWrapper).toHaveClass('sc-control-wrapper');
+      expect(emailWrapper).toHaveClass('ngx-control-wrapper');
+      expect(usernameWrapper).toHaveClass('ngx-control-wrapper');
     });
     it('should render component correctly with directive attribute syntax', async () => {
       await render(DirectiveAttributeComponent);
       expect(screen.getByLabelText('Email')).toBeInTheDocument();
       const emailInput = screen.getByLabelText('Email');
-      const wrapper = emailInput.closest('.sc-control-wrapper');
+      const wrapper = emailInput.closest('.ngx-control-wrapper');
       expect(wrapper).toBeInTheDocument();
-      expect(wrapper).toHaveClass('sc-control-wrapper');
+      expect(wrapper).toHaveClass('ngx-control-wrapper');
     });
     it('should display validation errors when field is invalid and touched', async () => {
       await render(TestFormComponent);
@@ -181,8 +181,8 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.tab();
       // Wait for error to appear
       await screen.findByText('Email is required', {}, { timeout: 1000 });
-      const wrapper = emailInput.closest('.sc-control-wrapper');
-      expect(wrapper).toHaveClass('sc-control-wrapper--invalid');
+      const wrapper = emailInput.closest('.ngx-control-wrapper');
+      expect(wrapper).toHaveClass('ngx-control-wrapper--invalid');
     });
 
     it('should remove invalid CSS class when field becomes valid', async () => {
@@ -192,8 +192,8 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.tab();
       // Wait for error to appear
       await screen.findByText('Email is required', {}, { timeout: 1000 });
-      const wrapper = emailInput.closest('.sc-control-wrapper');
-      expect(wrapper).toHaveClass('sc-control-wrapper--invalid');
+      const wrapper = emailInput.closest('.ngx-control-wrapper');
+      expect(wrapper).toHaveClass('ngx-control-wrapper--invalid');
       // Type valid email
       fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
       fixture.fixture.componentInstance.model.set({
@@ -204,7 +204,7 @@ describe('ScControlWrapperComponent', () => {
       // Wait for error to disappear
       await waitFor(
         () => {
-          expect(wrapper).not.toHaveClass('sc-control-wrapper--invalid');
+          expect(wrapper).not.toHaveClass('ngx-control-wrapper--invalid');
         },
         { timeout: 1000 }
       );
@@ -232,7 +232,7 @@ describe('ScControlWrapperComponent', () => {
       const emailInput = screen.getByLabelText('Email');
       await userEvent.type(emailInput, 'test@example.com');
       await userEvent.tab();
-      const wrapper = emailInput.closest('.sc-control-wrapper');
+      const wrapper = emailInput.closest('.ngx-control-wrapper');
       // Wait for pending state
       await waitFor(
         () => {
@@ -274,15 +274,15 @@ describe('ScControlWrapperComponent', () => {
         imports: [vestForms],
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [suite]="suite"
             [formValue]="model()"
             (formValueChange)="model.set($event)"
           >
-            <sc-control-wrapper [errorDisplayMode]="'on-submit'">
+            <ngx-control-wrapper [errorDisplayMode]="'on-submit'">
               <label for="email">Email</label>
               <input id="email" name="email" [ngModel]="model().email" />
-            </sc-control-wrapper>
+            </ngx-control-wrapper>
             <button type="submit">Submit</button>
           </form>
         `,
@@ -329,7 +329,7 @@ describe('ScControlWrapperComponent', () => {
       await render(EmptyWrapperComponent);
       expect(screen.getByText('Empty wrapper')).toBeInTheDocument();
       const content = screen.getByText('Empty wrapper');
-      const wrapper = content.closest('.sc-control-wrapper');
+      const wrapper = content.closest('.ngx-control-wrapper');
       expect(wrapper).toBeInTheDocument();
     });
 
@@ -512,19 +512,19 @@ describe('ScControlWrapperComponent', () => {
         imports: [vestForms],
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [suite]="suite"
             [formValue]="model()"
             (formValueChange)="model.set($event)"
           >
-            <sc-control-wrapper>
+            <ngx-control-wrapper>
               <label for="username">Username</label>
               <input
                 id="username"
                 name="username"
                 [ngModel]="model().username"
               />
-            </sc-control-wrapper>
+            </ngx-control-wrapper>
           </form>
         `,
       })
@@ -600,7 +600,7 @@ describe('ScControlWrapperComponent', () => {
       // Wait for pending state
       await waitFor(
         () => {
-          const wrapper = emailInput.closest('.sc-control-wrapper');
+          const wrapper = emailInput.closest('.ngx-control-wrapper');
           const spinner = wrapper!.querySelector('.animate-spin');
           expect(spinner).toHaveAttribute('aria-hidden', 'true');
         },
@@ -621,19 +621,19 @@ describe('ScControlWrapperComponent', () => {
         imports: [vestForms],
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [suite]="suite"
             [formValue]="model()"
             (formValueChange)="model.set($event)"
           >
-            <sc-control-wrapper>
+            <ngx-control-wrapper>
               <label for="username">Username</label>
               <input
                 id="username"
                 name="username"
                 [ngModel]="model().username"
               />
-            </sc-control-wrapper>
+            </ngx-control-wrapper>
           </form>
         `,
       })
@@ -682,12 +682,12 @@ describe('ScControlWrapperComponent', () => {
         imports: [vestForms],
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [suite]="suite"
             [formValue]="model()"
             (formValueChange)="model.set($event)"
           >
-            <sc-control-wrapper>
+            <ngx-control-wrapper>
               <label for="firstName">First Name</label>
               <input
                 id="firstName"
@@ -700,7 +700,7 @@ describe('ScControlWrapperComponent', () => {
                 name="lastName"
                 [ngModel]="model().lastName"
               />
-            </sc-control-wrapper>
+            </ngx-control-wrapper>
           </form>
         `,
       })

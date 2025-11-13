@@ -2,7 +2,7 @@
   <span>PhoneNumbers</span>
   <div ngModelGroup="values">
     @for (item of values() | keyvalue; track item.key) {
-      <div sc-control-wrapper>
+      <div ngx-control-wrapper>
         <div class="relative">
           <input
             type="text"
@@ -21,7 +21,7 @@
       </div>
     }
   </div>
-  <div sc-control-wrapper>
+  <div ngx-control-wrapper>
     <div class="relative">
       <input
         type="text"

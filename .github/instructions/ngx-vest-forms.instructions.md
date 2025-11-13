@@ -12,6 +12,12 @@ Lightweight adapter bridging Angular template-driven forms with Vest.js validati
 - **CRITICAL**: Call `only(field)` **unconditionally** in all validation suites (breaking change in latest version)
 - `name` attribute MUST match property path exactly
 
+> **⚠️ DEPRECATION NOTICE**: The `sc-` prefix for selectors is **deprecated** and will be removed in v3.0.0. Use the `ngx-` prefix instead:
+> - ✅ **Recommended**: `ngxVestForm`, `<ngx-control-wrapper>`, `ngxValidateRootForm`, `NGX_ERROR_DISPLAY_MODE_TOKEN`
+> - ⚠️ **Deprecated**: `scVestForm`, `<sc-control-wrapper>`, `validateRootForm`, `SC_ERROR_DISPLAY_MODE_TOKEN`
+>
+> Both prefixes work in v2.0+. See [Dual Selector Support](../../docs/dev/DUAL-SELECTOR-SUPPORT.md) for migration guide.
+
 > **See `.github/instructions/vest.instructions.md`** for comprehensive Vest.js validation patterns, async techniques, and performance optimization.
 
 ## Key Imports
@@ -33,8 +39,9 @@ import { FieldPath, ValidationConfigMap, FieldPathValue, ValidateFieldPath, Leaf
 // Form State Types & Utilities
 import { NgxFormState, createEmptyFormState } from 'ngx-vest-forms';
 
-// Error Display
-import { FormErrorDisplayDirective, FormControlStateDirective, SC_ERROR_DISPLAY_MODE_TOKEN, ScErrorDisplayMode } from 'ngx-vest-forms';
+// Error Display (Ngx-prefixed recommended)
+import { FormErrorDisplayDirective, FormControlStateDirective, NGX_ERROR_DISPLAY_MODE_TOKEN, ScErrorDisplayMode } from 'ngx-vest-forms';
+import { SC_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms'; // Deprecated, use NGX_ERROR_DISPLAY_MODE_TOKEN
 
 // Constants & Public Utilities
 import { ROOT_FORM, VALIDATION_CONFIG_DEBOUNCE_TIME } from 'ngx-vest-forms';
@@ -68,10 +75,10 @@ export const mySuite: NgxVestSuite<MyFormModel> = staticSuite((model, field?) =>
   imports: [vestForms],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <form scVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
-      <div sc-control-wrapper>
+    <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
+      <ngx-control-wrapper>
         <input name="firstName" [ngModel]="formValue().firstName"/>
-      </div>
+      </ngx-control-wrapper>
     </form>
   `
 })
@@ -330,7 +337,7 @@ protected readonly validationConfig = computed<ValidationConfigMap<FormModel>>((
 **Template binding:**
 
 ```typescript
-<form scVestForm [validationConfig]="validationConfig()" ...>
+<form ngxVestForm [validationConfig]="validationConfig()" ...>
   <input name="quantity" [ngModel]="formValue().quantity" />
 
   @if ((formValue().quantity || 0) > 5) {
@@ -360,12 +367,12 @@ protected readonly showShipping = computed(() =>
 
 ngx-vest-forms provides three features for handling validation in complex, dynamic forms. These serve different purposes and often work together:
 
-### validationConfig vs validateRootForm vs triggerFormValidation()
+### validationConfig vs ngxValidateRootForm vs triggerFormValidation()
 
 | Feature                       | Purpose                                        | Error Location                       | Use Cases                                        |
 | ----------------------------- | ---------------------------------------------- | ------------------------------------ | ------------------------------------------------ |
 | **`validationConfig`**        | **Re-validation trigger** when fields change   | **Field level** (`errors.fieldName`) | Fields that need re-validation when others change |
-| **`validateRootForm`**        | Creates **form-level** validations             | **Form level** (`errors.rootForm`)   | Form-wide business rules                         |
+| **`ngxValidateRootForm`**        | Creates **form-level** validations             | **Form level** (`errors.rootForm`)   | Form-wide business rules                         |
 | **`triggerFormValidation()`** | Manual validation trigger for structure changes | N/A (triggers existing validations)  | Structure changes without value changes          |
 
 ### Quick Decision Guide
@@ -376,7 +383,7 @@ ngx-vest-forms provides three features for handling validation in complex, dynam
 - ☑ Need **automatic re-validation trigger**
 - ☑ Examples: Password confirmation, quantity ↔ justification
 
-**Use `validateRootForm` when:**
+**Use `ngxValidateRootForm` when:**
 - ☑ Error belongs to **entire form** (not a specific field)
 - ☑ Rule involves multiple unrelated fields
 - ☑ Examples: "Brecht is not 30", at least one contact method
@@ -398,10 +405,10 @@ ngx-vest-forms provides three features for handling validation in complex, dynam
 ### Built-in Control Wrapper
 
 ```typescript
-<div sc-control-wrapper>
+<ngx-control-wrapper>
   <input name="email" [ngModel]="formValue().email"/>
   <!-- Errors display automatically -->
-</div>
+</ngx-control-wrapper>
 ```
 
 ### Error Display Modes
@@ -412,7 +419,7 @@ ngx-vest-forms provides three features for handling validation in complex, dynam
 
 ```typescript
 // Global config
-provide(SC_ERROR_DISPLAY_MODE_TOKEN, { useValue: 'on-submit' })
+provide(NGX_ERROR_DISPLAY_MODE_TOKEN, { useValue: 'on-submit' })
 
 // Per-instance
 <div formErrorDisplay [errorDisplayMode]="'on-blur'">...</div>
@@ -447,7 +454,7 @@ export class CustomWrapperComponent {
 
 ### Accessibility & ARIA Compliance
 
-The `sc-control-wrapper` component automatically provides WCAG 2.2 AA compliant ARIA attributes:
+The `ngx-control-wrapper` component automatically provides WCAG 2.2 AA compliant ARIA attributes:
 
 **Automatic Features:**
 - ✅ **Unique IDs** - Each error/warning/pending region gets a unique ID
@@ -462,7 +469,7 @@ The `sc-control-wrapper` component automatically provides WCAG 2.2 AA compliant 
 
 **Example Usage:**
 ```typescript
-<div sc-control-wrapper>
+<ngx-control-wrapper>
   <label for="email">Email Address</label>
   <input id="email" name="email" [ngModel]="formValue().email" />
   <!--
@@ -472,7 +479,7 @@ The `sc-control-wrapper` component automatically provides WCAG 2.2 AA compliant 
     - Error message has matching id and role="alert"
     - Screen reader announces: "Email is required" assertively
   -->
-</div>
+</ngx-control-wrapper>
 ```
 
 **Custom Wrappers - ARIA Best Practices:**
@@ -584,9 +591,9 @@ Root form validations check relationships between multiple fields. The mode dete
 **Submit Mode (default)** - Validates only after form submission:
 ```typescript
 <form
-  scVestForm
-  validateRootForm
-  [validateRootFormMode]="'submit'"
+  ngxVestForm
+  ngxValidateRootForm
+  [ngxValidateRootFormMode]="'submit'"
   (errorsChange)="errors.set($event)">
   <!-- Validation triggered on submit -->
 </form>
@@ -606,9 +613,9 @@ Submit mode waits until the user attempts to submit (when all fields are likely 
 **Live Mode** - Validates on every value change:
 ```typescript
 <form
-  scVestForm
-  validateRootForm
-  [validateRootFormMode]="'live'"
+  ngxVestForm
+  ngxValidateRootForm
+  [ngxValidateRootFormMode]="'live'"
   (errorsChange)="errors.set($event)">
   <!-- Validation triggered on every change -->
 </form>
@@ -648,11 +655,11 @@ import { ROOT_FORM } from 'ngx-vest-forms';
 @Component({
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [suite]="suite"
       [formValue]="formValue()"
-      validateRootForm
-      [validateRootFormMode]="'submit'"
+      ngxValidateRootForm
+      [ngxValidateRootFormMode]="'submit'"
       (formValueChange)="formValue.set($event)"
       (errorsChange)="errors.set($event)">
 
@@ -681,7 +688,7 @@ export class MyFormComponent {
 - ✅ Submit-only validation (default prevents premature errors)
 - ✅ Live validation (set mode to `'live'` for immediate feedback)
 
-> **⚠️ Breaking Change**: Default mode changed from `'live'` to `'submit'`. To preserve old behavior, explicitly set `[validateRootFormMode]="'live'"`.
+> **⚠️ Breaking Change**: Default mode changed from `'live'` to `'submit'`. To preserve old behavior, explicitly set `[ngxValidateRootFormMode]="'live'"`.
 
 ## Advanced Features
 
@@ -833,7 +840,7 @@ export class MyFormComponent {
 **Template usage:**
 
 ```html
-<form scVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
+<form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
   <!-- Use ngModelGroup with numeric keys -->
   <div *ngFor="let phoneKV of formValue().phoneNumbers | keyvalue: originalOrder">
     <div [ngModelGroup]="phoneKV.key">
@@ -986,16 +993,14 @@ export class MyFormComponent {
 }
 ```
 
-### validationConfig vs validateRootForm: When to Use What
+### validationConfig vs ngxValidateRootForm: When to Use What
 
 **Two complementary features for cross-field validation:**
 
 | Feature | Purpose | Errors Appear At | Use For |
 |---------|---------|------------------|---------|
 | **`validationConfig`** | Controls **when** field validations run | **Field level** (`errors.fieldName`) | Field validations that depend on other fields |
-| **`validateRootForm`** | Creates **form-level** validations | **Form level** (`errors.rootForm`) | Form-wide business rules |
-
-**Key Insight**: These solve different problems and work together!
+| **`ngxValidateRootForm`** | Creates **form-level** validations | **Form level** (`errors.rootForm`) | Form-wide business rules |**Key Insight**: These solve different problems and work together!
 
 > **📖 Complete Guide**: See [ValidationConfig vs ROOT_FORM Validation](../../docs/VALIDATION-CONFIG-VS-ROOT-FORM.md) for detailed comparison, decision trees, and common mistakes.
 
@@ -1006,7 +1011,7 @@ Use `validationConfig` when:
 - ✅ One field's validation **depends on another** (password ↔ confirmPassword)
 - ✅ Using `omitWhen` for conditional requirements (age triggers emergencyContact)
 
-Use `validateRootForm` when:
+Use `ngxValidateRootForm` when:
 - ✅ Error belongs to the **entire form**, not a specific field
 - ✅ Rule validates **multiple fields together** as business constraint
 - ✅ Example: "Brecht is not 30 anymore" (firstName + lastName + age)
@@ -1016,7 +1021,7 @@ Use `validateRootForm` when:
 | Use Case | Solution |
 |----------|----------|
 | Conditional validation logic | Vest.js `omitWhen()` |
-| Default error display | Built-in `sc-control-wrapper` |
+| Default error display | Built-in `ngx-control-wrapper` |
 | Custom error display (Material, etc.) | Custom wrapper with `FormErrorDisplayDirective` as hostDirective |
 
 ## Common Gotchas
@@ -1029,9 +1034,7 @@ Use `validateRootForm` when:
 | `suite((model) => { test(...) })` | `suite((model, field?) => { only(field); })` |
 | `suite: StaticSuite<string, string, ...>` | `suite: NgxVestSuite<MyModel>` (cleaner!) |
 | Nested component without `viewProviders` | `viewProviders: [vestFormsViewProviders]` |
-| `validateRootForm` without mode (v2 behavior) | `validateRootForm [validateRootFormMode]="'live'"` (explicit mode) |
-
-## Best Practices
+| `validateRootForm` without mode | `ngxValidateRootForm [ngxValidateRootFormMode]="'submit'"` (explicit mode recommended) |## Best Practices
 
 1. Use `NgxDeepPartial<T>` for form models (forms build incrementally, Ngx-prefixed recommended)
 2. **CRITICAL**: Always call `only(field)` **unconditionally** in validation suites (breaking change - fixes omitWhen + validationConfig bugs)

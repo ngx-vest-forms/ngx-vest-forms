@@ -46,8 +46,8 @@ function getInitialFormControlState(): FormControlState {
 }
 
 @Directive({
-  selector: '[formControlState]',
-  exportAs: 'formControlState',
+  selector: '[formControlState], [ngxControlState]',
+  exportAs: 'formControlState, ngxControlState',
 })
 export class FormControlStateDirective {
   protected readonly contentNgModel: Signal<NgModel | undefined> =

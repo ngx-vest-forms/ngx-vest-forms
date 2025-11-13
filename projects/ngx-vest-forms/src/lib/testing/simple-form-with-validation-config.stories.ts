@@ -7,10 +7,10 @@ import { FormModel, formShape, formValidationSuite } from './simple-form';
   template: `
     <form
       class="p-4"
-      scVestForm
+      ngxVestForm
       (ngSubmit)="save()"
       [formValue]="formValue()"
-      validateRootForm
+      ngxValidateRootForm
       [formShape]="shape"
       [validationConfig]="validationConfig"
       [suite]="suite"
@@ -21,8 +21,8 @@ import { FormModel, formShape, formValidationSuite } from './simple-form';
       <fieldset>
         <div
           class="w-full"
-          sc-control-wrapper
-          data-testid="sc-control-wrapper__first-name"
+          ngx-control-wrapper
+          data-testid="ngx-control-wrapper__first-name"
         >
           <label>
             <span>First name</span>
@@ -37,8 +37,8 @@ import { FormModel, formShape, formValidationSuite } from './simple-form';
         </div>
         <div
           class="w-full"
-          sc-control-wrapper
-          data-testid="sc-control-wrapper__last-name"
+          ngx-control-wrapper
+          data-testid="ngx-control-wrapper__last-name"
         >
           <label>
             <span>Last name</span>
@@ -53,15 +53,15 @@ import { FormModel, formShape, formValidationSuite } from './simple-form';
         </div>
         <div
           class="sm:col-span-2"
-          sc-control-wrapper
-          data-testid="sc-control-wrapper__passwords"
+          ngx-control-wrapper
+          data-testid="ngx-control-wrapper__passwords"
           ngModelGroup="passwords"
         >
           <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
             <div
               class="w-full"
-              sc-control-wrapper
-              data-testid="sc-control-wrapper__password"
+              ngx-control-wrapper
+              data-testid="ngx-control-wrapper__password"
             >
               <label>
                 <span>Password</span>
@@ -76,8 +76,8 @@ import { FormModel, formShape, formValidationSuite } from './simple-form';
             </div>
             <div
               class="w-full"
-              sc-control-wrapper
-              data-testid="sc-control-wrapper__confirm-password"
+              ngx-control-wrapper
+              data-testid="ngx-control-wrapper__confirm-password"
             >
               <label>
                 <span>Confirm</span>

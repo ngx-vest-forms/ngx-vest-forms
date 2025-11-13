@@ -79,13 +79,13 @@ describe('ValidateRootFormDirective', () => {
         imports: [vestForms],
         template: `
           <form
-            scVestForm
-            validateRootForm
+            ngxVestForm
+            ngxValidateRootForm
             [suite]="suite"
             [formValue]="model()"
             (formValueChange)="model.set($event)"
             (errorsChange)="errors.set($event)"
-            #vest="scVestForm"
+            #vest="ngxVestForm"
             #ngForm="ngForm"
           >
             <input
@@ -150,13 +150,13 @@ describe('ValidateRootFormDirective', () => {
         imports: [vestForms, JsonPipe],
         template: `
           <form
-            scVestForm
-            validateRootForm
+            ngxVestForm
+            ngxValidateRootForm
             [suite]="suite"
             [formValue]="model()"
             (formValueChange)="model.set($event)"
             (errorsChange)="errors.set($event)"
-            #vest="scVestForm"
+            #vest="ngxVestForm"
             #ngForm="ngForm"
           >
             <input
@@ -230,13 +230,13 @@ describe('ValidateRootFormDirective', () => {
         imports: [vestForms],
         template: `
           <form
-            scVestForm
-            validateRootForm
+            ngxVestForm
+            ngxValidateRootForm
             [suite]="suite"
             [formValue]="model()"
             (formValueChange)="model.set($event)"
             (errorsChange)="errors.set($event)"
-            #vest="scVestForm"
+            #vest="ngxVestForm"
             #ngForm="ngForm"
           >
             <input
@@ -313,16 +313,16 @@ describe('ValidateRootFormDirective', () => {
   });
 
   describe('disabled by default', () => {
-    it('should not validate when validateRootForm is false', async () => {
+    it('should not validate when ngxValidateRootForm is false', async () => {
       @Component({
         imports: [vestForms],
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [suite]="suite"
             [formValue]="model()"
             (formValueChange)="model.set($event)"
-            #vest="scVestForm"
+            #vest="ngxVestForm"
           >
             <input
               name="password"
@@ -354,13 +354,13 @@ describe('ValidateRootFormDirective', () => {
         imports: [vestForms],
         template: `
           <form
-            scVestForm
-            validateRootForm
+            ngxVestForm
+            ngxValidateRootForm
             [suite]="suite"
             [formValue]="model()"
             (formValueChange)="model.set($event)"
             (errorsChange)="errors.set($event)"
-            #vest="scVestForm"
+            #vest="ngxVestForm"
           >
             <input
               name="password"
@@ -399,13 +399,13 @@ describe('ValidateRootFormDirective', () => {
         imports: [vestForms],
         template: `
           <form
-            scVestForm
-            validateRootForm
+            ngxVestForm
+            ngxValidateRootForm
             [suite]="suite"
             [formValue]="model()"
             (formValueChange)="model.set($event)"
             (errorsChange)="errors.set($event)"
-            #vest="scVestForm"
+            #vest="ngxVestForm"
           >
             <input
               name="password"
@@ -455,13 +455,13 @@ describe('ValidateRootFormDirective', () => {
         imports: [vestForms],
         template: `
           <form
-            scVestForm
-            validateRootForm
+            ngxVestForm
+            ngxValidateRootForm
             [suite]="suite"
             [formValue]="model()"
             (formValueChange)="model.set($event)"
             (errorsChange)="errors.set($event)"
-            #vest="scVestForm"
+            #vest="ngxVestForm"
           >
             <input
               name="password"
@@ -523,14 +523,14 @@ describe('ValidateRootFormDirective', () => {
         imports: [vestForms],
         template: `
           <form
-            scVestForm
-            validateRootForm
-            [validateRootFormMode]="'live'"
+            ngxVestForm
+            ngxValidateRootForm
+            [ngxValidateRootFormMode]="'live'"
             [suite]="suite"
             [formValue]="model()"
             (formValueChange)="model.set($event)"
             (errorsChange)="errors.set($event)"
-            #vest="scVestForm"
+            #vest="ngxVestForm"
           >
             <input
               name="password"
@@ -574,14 +574,14 @@ describe('ValidateRootFormDirective', () => {
         imports: [vestForms],
         template: `
           <form
-            scVestForm
-            validateRootForm
-            [validateRootFormMode]="'live'"
+            ngxVestForm
+            ngxValidateRootForm
+            [ngxValidateRootFormMode]="'live'"
             [suite]="suite"
             [formValue]="model()"
             (formValueChange)="model.set($event)"
             (errorsChange)="errors.set($event)"
-            #vest="scVestForm"
+            #vest="ngxVestForm"
           >
             <input
               name="password"
@@ -640,15 +640,15 @@ describe('ValidateRootFormDirective', () => {
         imports: [vestForms],
         template: `
           <form
-            scVestForm
-            validateRootForm
-            [validateRootFormMode]="'live'"
+            ngxVestForm
+            ngxValidateRootForm
+            [ngxValidateRootFormMode]="'live'"
             [validationOptions]="{ debounceTime: 500 }"
             [suite]="suite"
             [formValue]="model()"
             (formValueChange)="model.set($event)"
             (errorsChange)="errors.set($event)"
-            #vest="scVestForm"
+            #vest="ngxVestForm"
           >
             <input
               name="password"

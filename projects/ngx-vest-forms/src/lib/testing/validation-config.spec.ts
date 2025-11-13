@@ -25,7 +25,7 @@ describe('FormDirective - Comprehensive', () => {
     @Component({
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [formValue]="formValue()"
           [suite]="suite"
           [validationConfig]="validationConfig"
@@ -106,7 +106,7 @@ describe('FormDirective - Comprehensive', () => {
     @Component({
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [formValue]="formValue()"
           [suite]="suite"
           [validationConfig]="validationConfig"
@@ -184,7 +184,7 @@ describe('FormDirective - Comprehensive', () => {
     @Component({
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [formValue]="formValue()"
           [suite]="suite"
           [validationConfig]="validationConfig()"
@@ -254,7 +254,7 @@ describe('FormDirective - Comprehensive', () => {
     @Component({
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [formValue]="formValue()"
           [suite]="suite"
           [validationConfig]="validationConfig"
@@ -356,7 +356,7 @@ describe('FormDirective - Comprehensive', () => {
     @Component({
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [formValue]="inputFormValue()"
           [suite]="suite"
           [validationConfig]="validationConfig"
@@ -452,27 +452,27 @@ describe('FormDirective - Comprehensive', () => {
     @Component({
       template: `
         <form
-          scVestForm
-          #vestForm="scVestForm"
+          ngxVestForm
+          #vestForm="ngxVestForm"
           [formValue]="formValue()"
           [suite]="suite"
           [validationConfig]="validationConfig"
           (formValueChange)="formValue.set($event)"
         >
-          <div sc-control-wrapper>
+          <ngx-control-wrapper>
             <input
               name="quantity"
               type="number"
               [ngModel]="formValue().quantity"
             />
-          </div>
-          <div sc-control-wrapper>
+          </ngx-control-wrapper>
+          <ngx-control-wrapper>
             <input
               name="justification"
               type="text"
               [ngModel]="formValue().justification"
             />
-          </div>
+          </ngx-control-wrapper>
         </form>
       `,
       imports: [vestForms, FormsModule],
@@ -606,7 +606,7 @@ describe('FormDirective - Comprehensive', () => {
     @Component({
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [formValue]="formValue()"
           [suite]="suite"
           [validationConfig]="validationConfig"
@@ -700,7 +700,7 @@ describe('FormDirective - Comprehensive', () => {
     @Component({
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [formValue]="formValue()"
           [suite]="suite"
           [validationConfig]="validationConfig"
@@ -794,7 +794,7 @@ describe('FormDirective - Comprehensive', () => {
     @Component({
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [formValue]="formValue()"
           [suite]="suite"
           [validationConfig]="validationConfig"
@@ -922,7 +922,7 @@ describe('FormDirective - Comprehensive', () => {
     @Component({
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [formValue]="formValue()"
           [suite]="suite"
           [validationConfig]="validationConfig"
@@ -1008,7 +1008,7 @@ describe('FormDirective - Comprehensive', () => {
     @Component({
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [formValue]="formValue()"
           [suite]="suite"
           [validationConfig]="validationConfig"
@@ -1117,7 +1117,7 @@ describe('FormDirective - Comprehensive', () => {
     @Component({
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [formValue]="formValue()"
           [suite]="suite"
           [validationConfig]="validationConfig"
@@ -1199,7 +1199,7 @@ describe('FormDirective - Comprehensive', () => {
       @Component({
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [formValue]="formValue()"
             [validationConfig]="validationConfig"
           >
@@ -1239,7 +1239,7 @@ describe('FormDirective - Comprehensive', () => {
       @Component({
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [formValue]="formValue()"
             [validationConfig]="validationConfig()"
           >
@@ -1278,7 +1278,7 @@ describe('FormDirective - Comprehensive', () => {
       @Component({
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [formValue]="formValue()"
             [suite]="suite"
             [validationConfig]="validationConfig"
@@ -1398,7 +1398,7 @@ describe('FormDirective - Comprehensive', () => {
       @Component({
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [formValue]="formValue()"
             [suite]="suite"
             [validationConfig]="validationConfig"
@@ -1488,7 +1488,7 @@ describe('FormDirective - Comprehensive', () => {
       @Component({
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [formValue]="formValue()"
             [suite]="suite"
             [validationConfig]="validationConfig"
@@ -1603,7 +1603,7 @@ describe('FormDirective - Comprehensive', () => {
       @Component({
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [formValue]="formValue()"
             [suite]="suite"
             [validationConfig]="validationConfig"
@@ -1704,7 +1704,7 @@ describe('FormDirective - Comprehensive', () => {
       @Component({
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [formValue]="formValue()"
             [suite]="suite"
             [validationConfig]="validationConfig"
@@ -1785,7 +1785,7 @@ describe('FormDirective - Comprehensive', () => {
       @Component({
         template: `
           <form
-            scVestForm
+            ngxVestForm
             [formValue]="formValue()"
             [suite]="suite"
             [validationConfig]="validationConfig"

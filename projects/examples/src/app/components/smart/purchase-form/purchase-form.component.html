@@ -92,11 +92,11 @@
 
 <form
   class="mt-8"
-  scVestForm
+  ngxVestForm
   (ngSubmit)="save()"
   [formValue]="formValue()"
-  validateRootForm
-  [validateRootFormMode]="'submit'"
+  ngxValidateRootForm
+  [ngxValidateRootFormMode]="'submit'"
   [formShape]="shape"
   [suite]="purchaseValidationSuite"
   [validationConfig]="validationConfig()"
@@ -107,7 +107,7 @@
 >
   <fieldset [disabled]="vm.loading">
     <h1 class="text-4xl">Purchase form</h1>
-    <div class="sm:col-span-2" sc-control-wrapper>
+    <div class="sm:col-span-2" ngx-control-wrapper>
       <label>
         <span>User id</span>
         <input
@@ -119,7 +119,7 @@
         />
       </label>
     </div>
-    <div class="w-full" sc-control-wrapper>
+    <div class="w-full" ngx-control-wrapper>
       <label>
         <span>First name</span>
         <input
@@ -130,7 +130,7 @@
         />
       </label>
     </div>
-    <div class="w-full" sc-control-wrapper>
+    <div class="w-full" ngx-control-wrapper>
       <label>
         <span>Last name</span>
         <input
@@ -141,7 +141,7 @@
         />
       </label>
     </div>
-    <div class="w-full" sc-control-wrapper>
+    <div class="w-full" ngx-control-wrapper>
       <label>
         <span>Birth Date</span>
         <input
@@ -152,7 +152,7 @@
         />
       </label>
     </div>
-    <div class="w-full" sc-control-wrapper>
+    <div class="w-full" ngx-control-wrapper>
       <label>
         <span>Age</span>
         <input
@@ -163,7 +163,7 @@
         />
       </label>
     </div>
-    <div class="w-full" sc-control-wrapper>
+    <div class="w-full" ngx-control-wrapper>
       <label>
         <span>Emergency contact</span>
         <input
@@ -175,14 +175,14 @@
         />
       </label>
     </div>
-    <div class="sm:col-span-2" sc-control-wrapper ngModelGroup="phonenumbers">
+    <div class="sm:col-span-2" ngx-control-wrapper ngModelGroup="phonenumbers">
       <sc-phonenumbers [values]="vm.formValue.phonenumbers?.values || {}">
       </sc-phonenumbers>
     </div>
     <div
       class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800 sm:col-span-2"
     >
-      <div class="" sc-control-wrapper>
+      <div class="" ngx-control-wrapper>
         <label><span>Gender</span></label>
         <div class="flex">
           <div class="radio-button mr-4">
@@ -218,7 +218,7 @@
         </div>
       </div>
       @if (vm.showGenderOther) {
-        <div class="sm:col-span-2" sc-control-wrapper>
+        <div class="sm:col-span-2" ngx-control-wrapper>
           <label>
             <span>Specify gender</span>
             <input
@@ -231,9 +231,9 @@
       }
     </div>
 
-    <div class="sm:col-span-2" sc-control-wrapper ngModelGroup="passwords">
+    <div class="sm:col-span-2" ngx-control-wrapper ngModelGroup="passwords">
       <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
-        <div class="w-full" sc-control-wrapper>
+        <div class="w-full" ngx-control-wrapper>
           <label>
             <span>Password</span>
             <input
@@ -244,7 +244,7 @@
             />
           </label>
         </div>
-        <div class="w-full" sc-control-wrapper>
+        <div class="w-full" ngx-control-wrapper>
           <label>
             <span>Confirm</span>
             <input
@@ -257,7 +257,7 @@
         </div>
       </div>
     </div>
-    <div class="sm:col-span-2" sc-control-wrapper>
+    <div class="sm:col-span-2" ngx-control-wrapper>
       <label>
         <span>Product</span>
         <select name="productId" [ngModel]="vm.formValue.productId">
@@ -267,7 +267,7 @@
         </select>
       </label>
     </div>
-    <div class="w-full" sc-control-wrapper>
+    <div class="w-full" ngx-control-wrapper>
       <label>
         <span>Quantity</span>
         <input
@@ -279,7 +279,7 @@
       </label>
     </div>
     @if (vm.showJustification) {
-      <div class="w-full" sc-control-wrapper>
+      <div class="w-full" ngx-control-wrapper>
         <label>
           <span>Justification (required when quantity > 5)</span>
           <textarea
@@ -291,14 +291,14 @@
         </label>
       </div>
     }
-    <div class="sm:col-span-2" sc-control-wrapper ngModelGroup="addresses">
-      <div sc-control-wrapper ngModelGroup="billingAddress">
+    <div class="sm:col-span-2" ngx-control-wrapper ngModelGroup="addresses">
+      <div ngx-control-wrapper ngModelGroup="billingAddress">
         <h3 class="text-2xl">Billing address</h3>
         <sc-address
           [address]="vm.formValue.addresses?.billingAddress"
         ></sc-address>
       </div>
-      <label sc-control-wrapper>
+      <label ngx-control-wrapper>
         <span>Shipping address is different from billing address</span>
         <input
           type="checkbox"
@@ -309,7 +309,7 @@
         />
       </label>
       @if (vm.showShippingAddress) {
-        <div sc-control-wrapper ngModelGroup="shippingAddress">
+        <div ngx-control-wrapper ngModelGroup="shippingAddress">
           <h3 class="text-2xl">Shipping Address</h3>
           <sc-address [address]="vm.shippingAddress"></sc-address>
         </div>

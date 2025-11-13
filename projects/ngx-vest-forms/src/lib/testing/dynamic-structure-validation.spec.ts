@@ -58,8 +58,8 @@ describe('FormDirective - Dynamic Structure Changes', () => {
         imports: [vestForms],
         template: `
           <form
-            scVestForm
-            #vestForm="scVestForm"
+            ngxVestForm
+            #vestForm="ngxVestForm"
             [formValue]="formValue()"
             [suite]="suite"
             [validationConfig]="validationConfig"
@@ -193,8 +193,8 @@ describe('FormDirective - Dynamic Structure Changes', () => {
         imports: [vestForms],
         template: `
           <form
-            scVestForm
-            #vestForm="scVestForm"
+            ngxVestForm
+            #vestForm="ngxVestForm"
             [formValue]="formValue()"
             [suite]="suite"
             [validationConfig]="validationConfig"
