@@ -130,6 +130,27 @@ validationConfig = {
 
 Enables **form-level** validation for cross-field business rules that don't belong to any single field.
 
+> **💡 Import Checklist**: To use `validateRootForm`, ensure you import `vestForms`:
+>
+> ```typescript
+> import { vestForms, ROOT_FORM } from 'ngx-vest-forms';
+> 
+> @Component({
+>   imports: [vestForms], // ✅ Required - includes ValidateRootFormDirective
+>   // ...
+> })
+> ```
+>
+> **Troubleshooting**: If you see the error:
+> ```
+> Can't bind to 'validateRootForm' since it isn't a known property of 'form'
+> ```
+> 
+> This means the `ValidateRootFormDirective` is not in scope. Verify that:
+> 1. ✅ `vestForms` is imported in your component's `imports` array
+> 2. ✅ Your component has `standalone: true` (or uses `vestForms` in module imports)
+> 3. ✅ The form element has the `scVestForm` directive (required for root form validation)
+
 ### How It Works
 
 ```typescript

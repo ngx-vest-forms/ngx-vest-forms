@@ -1249,6 +1249,19 @@ For form-level validations that span multiple fields, use the `ROOT_FORM` consta
 
 > **⚠️ Breaking Change (v3)**: Default validation mode changed from `'live'` to `'submit'`. See [Migration Guide](./docs/MIGRATION-V3.md) for details.
 
+> **💡 Import Checklist**: To use `validateRootForm`, you must import `vestForms` in your component:
+>
+> ```typescript
+> import { vestForms, ROOT_FORM } from 'ngx-vest-forms';
+> 
+> @Component({
+>   imports: [vestForms], // ✅ Required - includes ValidateRootFormDirective
+>   // ...
+> })
+> ```
+>
+> **Common Issue**: If you see "Can't bind to 'validateRootForm' since it isn't a known property of 'form'", verify that `vestForms` is imported in your component's `imports` array.
+
 ```typescript
 import { ROOT_FORM } from 'ngx-vest-forms';
 
