@@ -252,7 +252,7 @@ export class OmitWhenValidationConfigComponent {
 
   protected onSubmit(): void {
     if (this.formValid()) {
-      console.log('Form submitted:', this.formValue());
+      // Intentionally left blank: avoid noisy console output in Storybook
     }
   }
 }

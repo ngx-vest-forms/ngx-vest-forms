@@ -148,7 +148,7 @@ export class PurchaseFormComponent {
 
   protected onSubmit(): void {
     if (this.formValid()) {
-      console.log(this.formValue());
+      // Intentionally no console output in examples to keep CI and demos quiet
     }
   }
 

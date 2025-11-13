@@ -135,7 +135,7 @@ export class FormDirectiveDemoComponent {
 
   protected onSubmit(): void {
     if (this.formValid()) {
-      console.log(this.formValue());
+      // Intentionally left blank: avoid noisy console output in Storybook
     }
   }
 }

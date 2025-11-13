@@ -207,12 +207,6 @@ describe('ValidateRootFormDirective', () => {
       await waitFor(
         () => {
           const allErrors = getAllFormErrors(component.ngForm.control);
-          console.log('Brecht scenario - getAllFormErrors result:', allErrors);
-          console.log(
-            'Brecht scenario - NgForm errors:',
-            component.ngForm.control.errors
-          );
-          console.log('Brecht scenario - errors signal:', component.errors());
 
           expect(allErrors[ROOT_FORM]).toBeDefined();
           expect(allErrors[ROOT_FORM]).toContain('Brecht is not 30 anymore');
@@ -304,7 +298,6 @@ describe('ValidateRootFormDirective', () => {
       await waitFor(
         () => {
           const allErrors = getAllFormErrors(component.ngForm.control);
-          console.log('After change - getAllFormErrors result:', allErrors);
           expect(allErrors[ROOT_FORM]).toBeUndefined();
         },
         { timeout: 2000 }

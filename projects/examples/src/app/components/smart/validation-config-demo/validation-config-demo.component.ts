@@ -60,8 +60,7 @@ export class ValidationConfigDemoComponent {
 
   protected onSubmit(): void {
     if (this.isValid()) {
-      console.log('✅ Form submitted successfully:', this.formValue());
-      alert('Form is valid! Check console for submitted data.');
+      // Intentionally no console output or alerts in examples to keep CI and demos quiet
     }
   }
 }

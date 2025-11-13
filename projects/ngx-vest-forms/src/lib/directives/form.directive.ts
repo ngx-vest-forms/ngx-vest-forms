@@ -575,43 +575,12 @@ export class FormDirective<T extends Record<string, any>> {
 
     return triggerControl$.pipe(
       switchMap((control) => {
-        if (isDevMode()) {
-          console.log(
-            `[ngx-vest-forms] Setting up valueChanges listener for '${triggerField}' → [${dependents.join(', ')}]`
-          );
-        }
         return control.valueChanges.pipe(
-          tap(() => {
-            if (isDevMode()) {
-              console.log(
-                `[ngx-vest-forms] valueChanges fired for '${triggerField}', inProgress=${this.validationInProgress.has(triggerField)}`
-              );
-            }
-          }),
           // CRITICAL: Filter out changes when this field is being validated by another field's config
           // This prevents circular triggers in bidirectional validationConfig
           filter(() => !this.validationInProgress.has(triggerField)),
-          tap(() => {
-            if (isDevMode()) {
-              console.log(
-                `[ngx-vest-forms] Passed inProgress filter for '${triggerField}', will debounce...`
-              );
-            }
-          }),
           debounceTime(this.configDebounceTime),
-          tap(() => {
-            if (isDevMode()) {
-              console.log(
-                `[ngx-vest-forms] After debounce for '${triggerField}', will switchMap...`
-              );
-            }
-          }),
           switchMap(() => {
-            if (isDevMode()) {
-              console.log(
-                `[ngx-vest-forms] switchMap executing for '${triggerField}', waiting for form idle...`
-              );
-            }
             return this.#waitForFormIdle(form, control);
           }),
           switchMap(() =>
@@ -641,57 +610,19 @@ export class FormDirective<T extends Record<string, any>> {
     form: FormGroup,
     control: AbstractControl
   ): Observable<AbstractControl> {
-    if (isDevMode()) {
-      console.log(
-        `[ngx-vest-forms] #waitForFormIdle called, current form.status="${form.status}"`
-      );
-    }
-
     // If form is already non-PENDING, return immediately
     if (form.status !== 'PENDING') {
-      if (isDevMode()) {
-        console.log(
-          `[ngx-vest-forms] #waitForFormIdle: form is already idle (status="${form.status}"), returning immediately`
-        );
-      }
       return of(control);
     }
 
     // Form is PENDING, wait for it to become idle
-    if (isDevMode()) {
-      console.log(
-        `[ngx-vest-forms] #waitForFormIdle: form is PENDING, waiting for statusChanges...`
-      );
-    }
 
     const idle$ = form.statusChanges.pipe(
-      tap((status) => {
-        if (isDevMode()) {
-          console.log(
-            `[ngx-vest-forms] #waitForFormIdle statusChanges emitted: "${status}"`
-          );
-        }
-      }),
       filter((s) => s !== 'PENDING'),
-      tap((status) => {
-        if (isDevMode()) {
-          console.log(
-            `[ngx-vest-forms] #waitForFormIdle filter passed with status="${status}"`
-          );
-        }
-      }),
       take(1)
     );
 
-    const timeout$ = timer(2000).pipe(
-      tap(() => {
-        if (isDevMode()) {
-          console.warn(
-            '[ngx-vest-forms] Form stayed PENDING for 2s, proceeding anyway to prevent blocking.'
-          );
-        }
-      })
-    );
+    const timeout$ = timer(2000);
 
     return race(idle$, timeout$).pipe(map(() => control));
   }
@@ -752,22 +683,11 @@ export class FormDirective<T extends Record<string, any>> {
     for (const depField of dependents) {
       const dependentControl = form.get(depField);
       if (!dependentControl) {
-        if (isDevMode()) {
-          console.warn(
-            `[ngx-vest-forms] Dependent control '${depField}' not found for validationConfig key '${triggerField}'.`
-          );
-        }
         continue;
       }
 
       // Only validate if not already in progress (prevents bidirectional loops)
       if (!this.validationInProgress.has(depField)) {
-        if (isDevMode()) {
-          console.log(
-            `[ngx-vest-forms] ValidationConfig triggering: ${triggerField} → ${depField}`
-          );
-        }
-
         // CRITICAL: Mark the dependent field as in-progress BEFORE calling updateValueAndValidity
         // This prevents the dependent field's valueChanges from triggering its own validationConfig
         this.validationInProgress.add(depField);

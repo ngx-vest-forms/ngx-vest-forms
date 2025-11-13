@@ -1,4 +1,4 @@
-import { Directive, inject, input, isDevMode } from '@angular/core';
+import { Directive, inject, input } from '@angular/core';
 import {
   AbstractControl,
   AsyncValidator,
@@ -41,31 +41,16 @@ export class FormModelDirective implements AsyncValidator {
   ): Observable<ValidationErrors | null> {
     // Null check for control
     if (!control) {
-      if (isDevMode()) {
-        console.debug(
-          '[ngx-vest-forms] Validate called with null control in FormModelDirective.'
-        );
-      }
       return of(null);
     }
     // Null check for form context
     const context = this.formDirective;
     if (!context) {
-      if (isDevMode()) {
-        console.debug(
-          '[ngx-vest-forms] ngModel used outside of ngxVestForm; skipping validation.'
-        );
-      }
       return of(null);
     }
     const { ngForm } = context;
     const field = getFormControlField(ngForm.control, control);
     if (!field) {
-      if (isDevMode()) {
-        console.debug(
-          '[ngx-vest-forms] Could not determine field name for validation in FormModelDirective (skipping).'
-        );
-      }
       return of(null);
     }
     const asyncValidator = context.createAsyncValidator(
@@ -77,19 +62,8 @@ export class FormModelDirective implements AsyncValidator {
     if (validationResult instanceof Observable) {
       return validationResult;
     } else if (validationResult instanceof Promise) {
-      if (isDevMode()) {
-        console.debug(
-          '[ngx-vest-forms] Async validator returned a Promise. Converting to Observable.'
-        );
-      }
       return from(validationResult);
     } else {
-      if (isDevMode()) {
-        console.error(
-          '[ngx-vest-forms] Async validator returned an unexpected type:',
-          validationResult
-        );
-      }
       return of(null);
     }
   }
