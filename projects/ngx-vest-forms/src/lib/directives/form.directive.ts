@@ -567,9 +567,9 @@ export class FormDirective<T extends Record<string, any>> {
       startWith(form.status),
       map(() => form.get(triggerField)),
       filter((c): c is AbstractControl => !!c),
-      /// CRITICAL: take(1) to stop listening after control is found
-      /// Without this, the pipeline continues to listen to statusChanges,
-      /// creating a feedback loop where validation triggers re-trigger the pipeline
+      // CRITICAL: take(1) to stop listening after control is found
+      // Without this, the pipeline continues to listen to statusChanges,
+      // creating a feedback loop where validation triggers re-trigger the pipeline
       take(1)
     );
 
