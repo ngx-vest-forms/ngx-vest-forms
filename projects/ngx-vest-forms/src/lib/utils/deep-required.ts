@@ -93,9 +93,9 @@ export type NgxDeepRequired<T> = {
 export type NgxFormCompatibleDeepRequired<T> = {
   [K in keyof T]-?: T[K] extends Date | undefined
     ? Date | string // Date properties (including optional ones) get the union treatment
-      : T[K] extends object | undefined
-        ? NgxFormCompatibleDeepRequired<NonNullable<T[K]>> // Recursively apply to nested objects, removing undefined
-        : T[K]; // All other types remain unchanged
+    : T[K] extends object | undefined
+      ? NgxFormCompatibleDeepRequired<NonNullable<T[K]>> // Recursively apply to nested objects, removing undefined
+      : T[K]; // All other types remain unchanged
 };
 
 // Legacy aliases for backward compatibility
