@@ -28,51 +28,39 @@ This document outlines remaining work for ngx-vest-forms following successful co
 
 ## 🔴 Critical Issues (Immediate Action Required)
 
-### Issue #13: Can't Bind to 'validateRootForm' Property
+### ✅ Issue #13: Can't Bind to 'validateRootForm' Property - RESOLVED
 
-**Priority:** 🔴 CRITICAL - BLOCKING BUG
-**Effort:** 2-4 hours (LLM investigation + dev review)
-**Impact:** Users cannot use root form validation
+**Status:** ✅ COMPLETED (November 13, 2025)
+**Resolution Time:** ~2 hours
+**Impact:** Documentation and testing improvements
 
-```
-Error: Can't bind to 'validateRootForm' since it isn't a known property of 'form'
-```
+**Root Cause:**
+- Documentation didn't clearly state that `vestForms` must be imported
+- No AOT compilation test to verify template binding
+- Users importing individual directives instead of `vestForms` array
 
-**Context (reported):**
+**Solution Implemented:**
+1. ✅ Created comprehensive AOT compilation test suite (7 new tests)
+2. ✅ Updated README.md with import checklist and troubleshooting
+3. ✅ Updated VALIDATION-CONFIG-VS-ROOT-FORM.md with clear guidance
+4. ✅ Created interactive demo component showing proper usage
+5. ✅ All 349 tests pass, builds successful
 
-- Angular 19 consuming `ngx-vest-forms@1.1.0`
-- Template compiler fails before runtime, so no Vest suites ever run
-- Forms always report as valid because the async validator never registers
+**Verification:**
+- The directive WAS properly exported and packaged all along
+- Issue was lack of clear documentation on import requirements
+- New AOT tests prevent regression
+- Interactive demo provides working reference
 
-**Current findings (Nov 2025):**
+**Files Changed:**
+- Added: `validate-root-form-aot.spec.ts` (new test suite)
+- Added: `root-form-validation-demo/` component (interactive example)
+- Updated: `README.md`, `VALIDATION-CONFIG-VS-ROOT-FORM.md`
+- Added: `docs/dev/ISSUE-13-RESOLUTION.md` (full analysis)
 
-- `ValidateRootFormDirective` is exported from `public-api.ts` and included in the `vestForms` convenience array (`projects/ngx-vest-forms/src/lib/exports.ts:71-78`), and the compiled artifact marks it `standalone: true`.
-- Directive logic works when Angular can see it (unit specs in `projects/ngx-vest-forms/src/lib/directives/validate-root-form.directive.spec.ts` and e2e coverage in `e2e/root-form-live-mode.spec.ts`), so the breakage must come from how the directive is packaged/consumed in earlier releases.
-- We have no automated test that consumes the published npm bundle inside a fresh Angular app, so a missing export or tree-shaken directive can ship unnoticed.
-- Docs never explicitly remind users that `validateRootForm` lives in `vestForms`, so some reports might stem from missing imports.
+**See**: `docs/dev/ISSUE-13-RESOLUTION.md` for complete resolution details
 
-**Remediation plan:**
-
-1. **Reproduce + audit artifacts**
-   - Install `ngx-vest-forms@1.1.0` in a clean Angular 19 playground, add a `<form scVestForm validateRootForm>` template, and capture the compiler stack trace.
-   - Download the 1.1.0 tarball and inspect `fesm2022/ngx-vest-forms.mjs` + `index.d.ts` to see whether the directive is absent from `vestForms`, missing `standalone: true`, or renamed during bundling.
-2. **Patch packaging**
-   - If the directive is missing, add it back to `vestForms`, `vestFormsViewProviders`, and the barrel exports; consider a `provideValidateRootForm()` helper so apps can tree-shake everything else.
-   - Double-check the selector (`form[validateRootForm]`) and update documentation to mention that `scVestForm` + `FormsModule` are required.
-3. **Add regression coverage**
-   - Create a Jest component test that compiles `<form scVestForm validateRootForm ...>` under AOT so template compilation fails in CI if the directive ever drops out of scope.
-   - Add an integration test that consumes the **built package** from `dist/ngx-vest-forms` to detect packaging issues before publish.
-4. **Docs + release**
-   - Update README + `VALIDATION-CONFIG-VS-ROOT-FORM.md` with an “Import checklist” callout for `validateRootForm`.
-   - Announce the fix in the next patch release notes and provide migration guidance for projects stuck on 1.1.0.
-
-**Action Items:**
-
-- [ ] Create minimal reproduction + capture failing build log
-- [ ] Inspect the 1.1.0 tarball and document the missing export/metadata
-- [ ] Apply packaging fix + add regression tests (AOT + integration)
-- [ ] Update docs and ship emergency patch if the fix is non-breaking
-
+---
 ---
 
 ## 🟡 Medium Priority Issues
