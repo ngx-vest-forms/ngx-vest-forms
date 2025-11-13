@@ -26,11 +26,11 @@ import { ProductService } from '../../../product.service';
 import { SwapiService } from '../../../swapi.service';
 import { createPurchaseValidationSuite } from '../../../validations/purchase.validations';
 import { AddressComponent } from '../../ui/address/address.component';
-import { PhonenumbersComponent } from '../../ui/phonenumbers/phonenumbers.component';
+import { PhoneNumbersComponent } from '../../ui/phonenumbers/phonenumbers.component';
 
 @Component({
   selector: 'sc-purchase-form',
-  imports: [JsonPipe, vestForms, AddressComponent, PhonenumbersComponent],
+  imports: [JsonPipe, vestForms, AddressComponent, PhoneNumbersComponent],
   templateUrl: './purchase-form.component.html',
   styleUrls: ['./purchase-form.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

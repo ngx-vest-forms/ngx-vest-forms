@@ -732,7 +732,7 @@ test.describe('ValidationConfig Demo', () => {
         const form = page.locator('form');
 
         // Snapshot entire form's accessibility structure
-        // Note: Error messages appear in alert containers with list/listitem structure
+        // Note: Error messages render inside status regions with list/listitem structure
         await expect(form).toMatchAriaSnapshot(`
           - heading "Bidirectional Validation" [level=2]
           - paragraph: Changing either password field revalidates the other automatically.
@@ -740,12 +740,15 @@ test.describe('ValidationConfig Demo', () => {
           - textbox "Password":
             - /placeholder: Enter password (min 8 chars)
             - text: Short
-          - alert:
+          - status:
             - list:
               - listitem: Password must be at least 8 characters
           - text: Confirm Password
           - textbox "Confirm Password":
             - /placeholder: Confirm password
+          - status:
+            - list:
+              - listitem: Please confirm your password
           - heading "Conditional Validation" [level=2]
           - paragraph: Toggling the checkbox triggers justification validation.
           - checkbox "Requires Justification"
@@ -762,17 +765,20 @@ test.describe('ValidationConfig Demo', () => {
           - text: State/Province
           - textbox "State/Province":
             - /placeholder: Enter state/province
-          - alert:
+          - status:
             - list:
               - listitem: State/Province is required
           - text: Postal Code
           - textbox "Postal Code":
             - /placeholder: Enter postal code
+          - status:
+            - list:
+              - listitem: Postal code is required
           - heading "Date Range Validation" [level=2]
           - paragraph: Start and end dates validate against each other.
           - text: Start Date
           - textbox "Start Date"
-          - alert:
+          - status:
             - list:
               - listitem: Start date is required
           - text: End Date

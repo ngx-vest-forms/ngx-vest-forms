@@ -1,6 +1,6 @@
 import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
 import { AddressModel, addressShape } from './address.model';
-import { PhonenumberModel, phonenumberShape } from './phonenumber.model';
+import { PhoneNumberModel, phoneNumberShape } from './phonenumber.model';
 
 export type PurchaseFormModel = NgxDeepPartial<{
   userId: string;
@@ -13,7 +13,7 @@ export type PurchaseFormModel = NgxDeepPartial<{
     password: string;
     confirmPassword?: string;
   };
-  phonenumbers: PhonenumberModel;
+  phonenumbers: PhoneNumberModel;
   gender: 'male' | 'female' | 'other';
   genderOther: string;
   productId: string;
@@ -44,7 +44,7 @@ export const purchaseFormShape: NgxDeepRequired<PurchaseFormModel> = {
     password: '',
     confirmPassword: '',
   },
-  phonenumbers: phonenumberShape,
+  phonenumbers: phoneNumberShape,
   gender: 'other',
   genderOther: '',
   productId: '',

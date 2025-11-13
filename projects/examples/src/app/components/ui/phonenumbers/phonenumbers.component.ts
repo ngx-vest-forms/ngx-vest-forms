@@ -21,19 +21,19 @@ import type { PhoneNumberMap } from '../../../models/phonenumber.model';
   viewProviders: [vestFormsViewProviders],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PhonenumbersComponent {
+export class PhoneNumbersComponent {
   values = input<PhoneNumberMap>({});
   valuesChange = output<PhoneNumberMap>();
   addValue = signal('');
 
-  addPhonenumber(): void {
+  addPhoneNumber(): void {
     const phoneNumbers = [...Object.values(this.values()), this.addValue()];
     const newValues = arrayToObject(phoneNumbers);
     this.addValue.set('');
     this.valuesChange.emit(newValues);
   }
 
-  removePhonenumber(key: string): void {
+  removePhoneNumber(key: string): void {
     const phonenumbers = Object.values(this.values()).filter(
       (v, index) => index !== Number(key)
     );

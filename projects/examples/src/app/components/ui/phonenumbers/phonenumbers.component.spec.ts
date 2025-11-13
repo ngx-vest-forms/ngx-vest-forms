@@ -2,10 +2,10 @@ import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { vestForms } from 'ngx-vest-forms';
-import { PhonenumbersComponent } from './phonenumbers.component';
+import { PhoneNumbersComponent } from './phonenumbers.component';
 
 @Component({
-  imports: [PhonenumbersComponent, FormsModule, vestForms],
+  imports: [PhoneNumbersComponent, FormsModule, vestForms],
   template: `
     <form
       scVestForm
@@ -14,7 +14,7 @@ import { PhonenumbersComponent } from './phonenumbers.component';
     >
       <sc-phonenumbers
         [values]="formValue().phonenumbers ?? {}"
-        (valuesChange)="onPhonenumbersChange($event)"
+        (valuesChange)="onPhoneNumbersChange($event)"
       />
     </form>
   `,
@@ -22,12 +22,12 @@ import { PhonenumbersComponent } from './phonenumbers.component';
 class TestWrapperComponent {
   formValue = signal<{ phonenumbers?: Record<string, string> }>({});
 
-  onPhonenumbersChange(values: Record<string, string>): void {
+  onPhoneNumbersChange(values: Record<string, string>): void {
     this.formValue.update((current) => ({ ...current, phonenumbers: values }));
   }
 }
 
-describe('PhonenumbersComponent', () => {
+describe('PhoneNumbersComponent', () => {
   let fixture: ComponentFixture<TestWrapperComponent>;
   let component: TestWrapperComponent;
   let compiled: HTMLElement;
@@ -80,7 +80,7 @@ describe('PhonenumbersComponent', () => {
 
   it('should emit new values when adding a phone number', () => {
     const valueSpy = jest.fn();
-    component.onPhonenumbersChange = valueSpy;
+    component.onPhoneNumbersChange = valueSpy;
 
     // Set initial value
     component.formValue.set({ phonenumbers: { '0': '+1234567890' } });
@@ -88,10 +88,10 @@ describe('PhonenumbersComponent', () => {
 
     // Get the phonenumbers component
     const phonenumbersDebug = fixture.debugElement.query(
-      (el) => el.componentInstance instanceof PhonenumbersComponent
+      (el) => el.componentInstance instanceof PhoneNumbersComponent
     );
     const phonenumbersComponent =
-      phonenumbersDebug?.componentInstance as PhonenumbersComponent;
+      phonenumbersDebug?.componentInstance as PhoneNumbersComponent;
 
     // Set the add value
     phonenumbersComponent.addValue.set('+9999999999');
@@ -115,7 +115,7 @@ describe('PhonenumbersComponent', () => {
 
   it('should emit new values when removing a phone number', () => {
     const valueSpy = jest.fn();
-    component.onPhonenumbersChange = valueSpy;
+    component.onPhoneNumbersChange = valueSpy;
 
     // Set initial values
     component.formValue.set({
@@ -143,7 +143,7 @@ describe('PhonenumbersComponent', () => {
 
   it('should handle empty add value', () => {
     const valueSpy = jest.fn();
-    component.onPhonenumbersChange = valueSpy;
+    component.onPhoneNumbersChange = valueSpy;
 
     // Set initial value
     component.formValue.set({ phonenumbers: { '0': '+1234567890' } });
@@ -151,10 +151,10 @@ describe('PhonenumbersComponent', () => {
 
     // Get the phonenumbers component
     const phonenumbersDebug = fixture.debugElement.query(
-      (el) => el.componentInstance instanceof PhonenumbersComponent
+      (el) => el.componentInstance instanceof PhoneNumbersComponent
     );
     const phonenumbersComponent =
-      phonenumbersDebug?.componentInstance as PhonenumbersComponent;
+      phonenumbersDebug?.componentInstance as PhoneNumbersComponent;
 
     // Set empty string
     phonenumbersComponent.addValue.set('');
@@ -175,7 +175,7 @@ describe('PhonenumbersComponent', () => {
 
   it('should maintain correct indices after removal', () => {
     const valueSpy = jest.fn();
-    component.onPhonenumbersChange = valueSpy;
+    component.onPhoneNumbersChange = valueSpy;
 
     // Set initial values
     component.formValue.set({
@@ -203,7 +203,7 @@ describe('PhonenumbersComponent', () => {
 
   it('should handle removing last phone number', () => {
     const valueSpy = jest.fn();
-    component.onPhonenumbersChange = valueSpy;
+    component.onPhoneNumbersChange = valueSpy;
 
     // Set initial value
     component.formValue.set({ phonenumbers: { '0': '+1234567890' } });

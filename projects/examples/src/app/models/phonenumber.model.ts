@@ -6,11 +6,11 @@ import { NgxDeepRequired } from 'ngx-vest-forms';
  */
 export type PhoneNumberMap = Record<string, string>;
 
-export type PhonenumberModel = Partial<{
+export type PhoneNumberModel = Partial<{
   addValue: string;
   values: PhoneNumberMap;
 }>;
-export const phonenumberShape: NgxDeepRequired<PhonenumberModel> = {
+export const phoneNumberShape: NgxDeepRequired<PhoneNumberModel> = {
   addValue: '',
   values: {
     '0': '',
