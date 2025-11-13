@@ -1,8 +1,12 @@
 # PR #60: Critical Validation Fixes and New Utilities
 
+**Status:** ✅ Merged - November 2025
+**Issues Closed:** #59, #56
+**Test Coverage:** 91.27% (280+ tests passing)
+
 ## Overview
 
-PR #60 fixes critical timing issues with `omitWhen` + `validationConfig` for nested fields and introduces new utilities for working with arrays and field paths in template-driven forms.
+PR #60 fixed critical timing issues with `omitWhen` + `validationConfig` and introduced comprehensive utilities for arrays, field paths, and form state management. This release also included major modernization work (#5-6) completed post-PR.
 
 ## Critical Fixes
 
@@ -157,12 +161,37 @@ const suite: NgxVestSuite<MyModel> = staticSuite((model, field?) => { ... });
 
 ## Test Coverage
 
-Added 7 new test scenarios covering:
+- **280+ tests** passing (21 test suites)
+- **91.27% utility coverage** (up from ~17%)
+- **7 new Storybook scenarios** covering bidirectional dependencies
+- **10 new ARIA tests** (Enhancement #6)
+- **30+ new utility tests** for field paths, array conversion, form state
 
-- Bidirectional dependencies (both fields optional when empty, both required when one has value)
-- Single-direction dependencies with `omitWhen`
-- Clearing trigger fields to verify `omitWhen` properly omits tests
-- Nested field paths with `ngModelGroup`
+## Post-PR Enhancements (November 2025)
+
+### Enhancement #5: Signal Memoization ✅
+
+**Completed:** November 10, 2025
+**Impact:** 60-80% reduction in unnecessary recalculations
+
+- Custom equality comparator for `formState` computed signal
+- Uses `fastDeepEqual()` for error comparison
+- Zero API changes - internal optimization
+- 3 new memoization tests added
+
+### Enhancement #6: WCAG 2.2 AA ARIA Management ✅
+
+**Completed:** November 10, 2025
+**Impact:** Full accessibility compliance
+
+- Unique ID system for error/warning/pending regions
+- Dynamic `aria-describedby` associations
+- Proper ARIA roles (`alert` vs `status`)
+- `aria-invalid` state management
+- 10 comprehensive ARIA tests
+- Complete accessibility documentation
+
+See `../ACCESSIBILITY.md` for full details.
 
 ## Documentation Updates
 
@@ -173,6 +202,9 @@ Added 7 new test scenarios covering:
 
 ## References
 
-- PR: https://github.com/ngx-vest-forms/ngx-vest-forms/pull/60
-- Issue: https://github.com/ngx-vest-forms/ngx-vest-forms/issues/59
-- Utilities Documentation: `./projects/ngx-vest-forms/src/lib/utils/README.md`
+- [PR #60](https://github.com/ngx-vest-forms/ngx-vest-forms/pull/60)
+- [Issue #59](https://github.com/ngx-vest-forms/ngx-vest-forms/issues/59) - ValidationConfig test scenario
+- [Issue #56](https://github.com/ngx-vest-forms/ngx-vest-forms/issues/56) - Lifecycle timing
+- [Utilities Documentation](../../projects/ngx-vest-forms/src/lib/utils/README.md)
+- [Accessibility Guide](../ACCESSIBILITY.md)
+- [Roadmap](./ROADMAP.md) - See remaining work for v1.6.0

@@ -1,248 +1,157 @@
-# Product Requirements Document: Non-Breaking Improvements for ngx-vest-forms
+# Product Requirements Document: ngx-vest-forms Roadmap
 
-**Version:** 1.0
-**Date:** November 8, 2025
-**Status:** Draft
-**Priority:** High
+**Version:** 2.0
+**Date:** November 13, 2025
+**Status:** Active Development
+**Last Updated:** After PR #60 completion
 
 ## Executive Summary
 
-This PRD outlines 6 high-impact, non-breaking improvements for ngx-vest-forms that will significantly enhance developer experience, type safety, accessibility, and performance. All changes maintain full backward compatibility with the current API.
+This PRD outlines the remaining high-impact improvements for ngx-vest-forms following successful completion of PR #60, enhancements #5-6, and comprehensive test coverage. Focus areas: type safety, developer experience, configurability, and critical bug fixes.
+
+## Quick Status Overview
+
+### ✅ Recently Completed (Nov 2025)
+- PR #60: Validation timing fixes, array utilities, field path utilities
+- Enhancement #5: Signal memoization with custom equality
+- Enhancement #6: WCAG 2.2 AA ARIA management
+- 91.27% utility test coverage (30+ new tests)
+- Complex ValidationConfig test scenario (Storybook)
+- Browser compatibility documentation
+- Code modernization (signals, OnPush, unconditional `only()`)
+
+### 🎯 Current Focus (v1.5.0 Release)
+- **4 Major Enhancements** (#1-4) - Type safety, error messages, configurability, fluent API
+- **3 Critical Issues** (#13, #15, #12) - Blocking bugs and compatibility fixes
 
 ---
 
-## PR #60 Follow-up Work (November 2025)
+## 🔴 Critical Issues (Immediate Action Required)
 
-### Context
+### Issue #13: Can't Bind to 'validateRootForm' Property
 
-PR #60 successfully fixed critical validation timing bugs and modernized the codebase to Angular 18+ standards. The PR was **approved for merge** with follow-up enhancements tracked below.
+**Priority:** 🔴 CRITICAL - BLOCKING BUG
+**Effort:** 1 day
+**Impact:** Users cannot use root form validation
 
-**Key Achievements:**
+**Problem:** Template compilation error - `validateRootForm` input not recognized.
 
-- Fixed critical `omitWhen` + `validationConfig` race condition
-- Fixed validation feedback loop in bidirectional configs
-- Modernized all examples to Angular 18+ (signals, OnPush, etc.)
-- Added comprehensive documentation (1300+ lines)
-- All 198 tests passing
-- Zero breaking changes to API (only validation suite pattern change)
+```
+Error: Can't bind to 'validateRootForm' since it isn't a known property of 'form'
+```
 
-**Issues Resolved:**
+**Reported Context:**
+- Angular 19
+- ngx-vest-forms v1.1.0
+- No validation suites ever run
+- Forms always report as valid
 
-- ✅ Closes #59 - Complex validationConfig test scenario created
-- ✅ Closes #56 - validationConfig lifecycle timing issues fixed
+**Investigation Needed:**
+1. Verify `ValidateRootFormDirective` exported in `public-api.ts`
+2. Check directive selector matches `form[scVestForm][validateRootForm]`
+3. Confirm vestForms import includes directive
+4. Test with Angular 19 compatibility
 
-### High Priority Follow-ups
+**Action Items:**
+- [ ] Create minimal reproduction case
+- [ ] Verify directive registration
+- [ ] Add regression tests
+- [ ] Document usage pattern
 
-#### Browser Compatibility Documentation (COMPLETED)
+---
 
-**Status:** ✅ Completed - Browser Support section added to README.md
+### Issue #15: Tailwind Grid Layout Compatibility
 
-**Outcome:**
+**Priority:** 🟡 MEDIUM
+**Effort:** 1-2 days
+**Impact:** Breaks Tailwind grid layouts
 
-- README.md has "Browser Support" section with Chrome 98+, Firefox 94+, Safari 15.4+, Edge 98+
-- Documented that `structuredClone()` is natively supported (no polyfill needed)
-- Clarified Node.js >=18.19.0 requirement aligns with Angular 18+ needs
+**Problem:** `sc-control-wrapper` component uses flexbox which conflicts with parent grid layouts.
 
-#### Unit Tests for New Utilities
+**Proposed Solution:**
+
+```typescript
+@Component({
+  selector: 'sc-control-wrapper',
+  template: `
+    <div [style.display]="displayMode()" [style.grid-column]="gridColumn()">
+      <ng-content />
+      <!-- error messages -->
+    </div>
+  `
+})
+export class ControlWrapperComponent {
+  public readonly displayMode = input<'flex' | 'contents' | 'block'>('flex');
+  public readonly gridColumn = input<string | null>(null);
+}
+```
+
+**Usage:**
+```html
+<div class="grid grid-cols-2 gap-4">
+  <sc-control-wrapper displayMode="contents">
+    <input name="email" />
+  </sc-control-wrapper>
+</div>
+```
+
+**Action Items:**
+- [ ] Add layout customization inputs
+- [ ] Update Tailwind examples
+- [ ] Add integration tests
+- [ ] Document grid layout patterns
+
+---
+
+### Issue #12: Date/Empty String Shape Validation
+
+**Priority:** 🟡 MEDIUM
+**Effort:** 1 week
+**Impact:** Console warnings for legitimate patterns
+
+**Problem:** Shape validation warns when Date fields initialized with empty string (common pattern for UI libraries like PrimeNG).
+
+**Proposed Solutions:**
+
+**Option 1: Relaxed Type Checking**
+```typescript
+function isValidShapeMismatch(expected: any, actual: any): boolean {
+  // Allow empty string for Date fields (common UI pattern)
+  if (expected instanceof Date && actual === '') return false;
+  // Allow null/undefined for optional fields
+  if (actual == null) return false;
+  return typeof expected !== typeof actual;
+}
+```
+
+**Option 2: Configuration**
+```html
+<form
+  scVestForm
+  [shapeValidation]="{
+    allowEmptyDates: true,
+    allowNullValues: true
+  }">
+</form>
+```
+
+**Action Items:**
+- [ ] Implement relaxed type checking
+- [ ] Add configuration option
+- [ ] Update shape validation tests
+- [ ] Document common patterns
+
+---
+
+---
+
+## 🎯 Planned Enhancements (v1.6.0)
+
+### Enhancement #1: Enhanced Field Path Types with Template Literal Autocomplete
 
 **Priority:** High
-**Effort:** 2-4 hours
-**Status:** ✅ Completed - Comprehensive test coverage achieved
-
-Missing comprehensive tests for:
-
-- `setValueAtPath()` - Path validation, nested updates
-- `clearFields()` - Selective clearing, deep paths
-- Array conversion utilities - Edge cases, deep structures
-
-**Outcome:**
-
-Achieved **91.27% overall utility coverage** (up from ~17%):
-
-| File                | Coverage | Tests Added                                 |
-| ------------------- | -------- | ------------------------------------------- |
-| field-clearing.ts   | 100%     | 8 new tests for nested scenarios            |
-| field-path.utils.ts | 100%     | Already covered                             |
-| form-state.utils.ts | 100%     | Already covered                             |
-| equality.ts         | 98.43%   | Already well covered                        |
-| shape-validation.ts | 95.45%   | Already well covered                        |
-| array-to-object.ts  | 91.30%   | 21 new edge case tests                      |
-| form-utils.ts       | 85.04%   | 13 new tests for cloneDeep/getAllFormErrors |
-
-**Test Enhancements:**
-
-- ✅ **form-utils.spec.ts**: 30 new tests
-  - `setValueAtPath()`: 17 comprehensive tests (root level, deep nesting, types, edge cases)
-  - `cloneDeep()`: 6 tests (primitives, Date, arrays, objects, deep structures)
-  - `getAllFormErrors()`: 7 tests (root errors, nested groups, warnings, disabled controls)
-
-- ✅ **field-clearing.spec.ts**: 8 new tests
-  - Nested structures, deep nesting (level1.level2.level3)
-  - Arrays in nested objects, multiple field clearing
-  - Sibling preservation patterns
-
-- ✅ **array-to-object.spec.ts**: 21 new tests
-  - `arrayToObject()`: 7 new (undefined/null, booleans, explicit undefined, large arrays)
-  - `deepArrayToObject()`: 5 new (complex objects, immutability, multiple properties)
-  - `objectToArray()`: 9 new (non-contiguous keys, large keys, negatives, decimals, nested conversions)
-
-**Verification:**
-
-- ✅ All 197 tests passing
-- ✅ Edge cases comprehensively covered
-- ✅ TypeScript type safety maintained
-- ✅ Follows Jest best practices
-
-**Acceptance Criteria:**
-
-- ✅ Unit tests for `setValueAtPath()` with invalid paths
-- ✅ Tests for `clearFields()` with nested objects
-- ✅ Tests for array/object conversions with edge cases
-- ✅ 91.27% code coverage for utility functions (target: ~90%)
-
-#### Complex ValidationConfig Test Scenario
-
-**Priority:** Medium
-**Effort:** 3-4 hours
-**Issue:** #59
-**Status:** ✅ Completed - Comprehensive Storybook story created
-
-Create comprehensive test scenario demonstrating the interaction between `omitWhen` and `validationConfig` that originally led to discovering the timing issues.
-
-**Outcome:**
-
-Created `/projects/ngx-vest-forms/src/lib/testing/omit-when-with-validation-config.stories.ts` with:
-
-- ✅ **Component demonstrating bidirectional dependencies**:
-  - Two fields (aantal, onderbouwing) both optional when empty
-  - Both become required when one has a value
-  - Uses `omitWhen` for conditional validation logic
-  - Bidirectional `validationConfig` for cross-field triggering
-
-- ✅ **Six comprehensive test scenarios**:
-  1. `Scenario1_FillAantalFirst` - Fill aantal → onderbouwing becomes required
-  2. `Scenario2_FillOnderbouwingFirst` - Fill onderbouwing → aantal becomes required
-  3. `Scenario3_ClearTriggerRemovesErrors` - Clear trigger field removes dependent errors
-  4. `Scenario4_BidirectionalCycle` - Both fields can trigger each other correctly
-  5. `Scenario5_SubmitEmptyFields` - No errors when both empty (both optional)
-  6. `Scenario6_RapidFieldSwitching` - Validation updates correctly with rapid input
-
-- ✅ **Interaction tests** covering edge cases with `waitFor` assertions
-- ✅ **Debug panel** showing form state, errors, and validation status
-- ✅ **Clear documentation** in story metadata explaining issue #59 and PR #60 fix
-- ✅ **Helper buttons** for programmatically clearing fields to test scenarios
-
-**Technical Details:**
-
-- Uses `NgxVestSuite<T>` for proper typing
-- Demonstrates unconditional `only(field)` pattern (PR #60 requirement)
-- Tests verify `mergeValuesAndRawValues` fix prevents stale data in `omitWhen`
-- All scenarios use Storybook's interaction testing API with proper assertions
-
-**Verification:**
-
-- ✅ Storybook story compiles successfully
-- ✅ Library builds without errors
-- ✅ Story demonstrates the fix prevents `errorCount: 0, testCount: 0` issue
-
-**Acceptance Criteria:**
-
-- ✅ Create Storybook story with complex form demonstrating:
-  - ✅ Multiple conditional validations using `omitWhen`
-  - ✅ Bidirectional `validationConfig` dependencies
-  - ✅ Field clearing with structure changes
-- ✅ Add interaction tests covering all edge cases
-- ✅ Document the scenario in test comments
-- ✅ Verify no race conditions occur
-
-#### Code Modernization Consistency
-
-**Priority:** Low-Medium
-**Effort:** 2-3 hours
-**Status:** ✅ Completed - Full codebase modernization applied
-
-Ensure complete consistency across the codebase with Angular 18+ best practices and PR #60 patterns.
-
-**Outcome:**
-
-**✅ All Acceptance Criteria Met:**
-
-1. **ChangeDetectionStrategy.OnPush**: ✅ All components already using OnPush
-   - `control-wrapper.component.ts`: Already had `ChangeDetectionStrategy.OnPush`
-   - All Storybook components: Already configured
-
-2. **Signal-based APIs**: ✅ Migrated from decorator-based to signal APIs
-   - **@ViewChild migrations**: 1 instance converted
-     - `dynamic-structure-validation-issue.stories.ts`: Converted to `viewChild.required()`
-   - **Note**: Test files retain `@ViewChild` for Jest compatibility (19 instances) - acceptable pattern
-
-3. **Unconditional only(field) Pattern**: ✅ All validation suites fixed
-   - Fixed 2 instances of conditional `if (field) { only(field); }` pattern:
-     - `dynamic-structure-validation-issue.stories.ts`
-     - `control-wrapper.component.spec.ts`
-   - All now use correct `only(field)` unconditional call per PR #60 requirements
-
-4. **NgxDeepPartial Consistency**: ✅ All legacy aliases replaced
-   - Migrated 4 files from `DeepPartial` to `NgxDeepPartial`:
-     - `simple-form.ts`
-     - `dynamic-structure-validation.spec.ts`
-     - `dynamic-structure-validation-issue.stories.ts`
-     - `validation-config.spec.ts` (17+ type references)
-   - All now use recommended `Ngx`-prefixed versions
-   - Prevents naming conflicts with other libraries
-
-5. **No deprecated patterns**: ✅ Clean codebase
-   - No `allowSignalWrites` found in codebase
-   - All effects use modern patterns
-
-**Verification:**
-
-- ✅ Library builds: 831ms without errors
-- ✅ All tests pass: 277 passed, 1 skipped (21 test suites)
-- ✅ TypeScript compilation: Zero errors
-- ✅ Pattern consistency: All validation suites follow unconditional `only()` pattern
-- ✅ Type consistency: All form models use `NgxDeepPartial`
-
-**Files Modified:**
-
-1. `dynamic-structure-validation-issue.stories.ts` (4 changes)
-   - Unconditional `only(field)` call
-   - `@ViewChild` → `viewChild.required()`
-   - `DeepPartial` → `NgxDeepPartial`
-   - `DeepRequired` → `NgxDeepRequired`
-
-2. `control-wrapper.component.spec.ts` (1 change)
-   - Unconditional `only(field)` in async test suite
-
-3. `simple-form.ts` (3 changes)
-   - All `DeepPartial` → `NgxDeepPartial`
-   - All `DeepRequired` → `NgxDeepRequired`
-
-4. `dynamic-structure-validation.spec.ts` (2 changes)
-   - All `DeepPartial` → `NgxDeepPartial`
-
-5. `validation-config.spec.ts` (17+ changes)
-   - All `DeepPartial` → `NgxDeepPartial` (comprehensive)
-
-**Technical Notes:**
-
-- Test files intentionally keep `@ViewChild` for Jest compatibility
-- Dev-mode warnings in tests are expected (controls not found scenarios)
-- All changes maintain full backward compatibility
-- Zero breaking changes to public API
-
-**Acceptance Criteria:**
-
-- ✅ All components use `ChangeDetectionStrategy.OnPush`
-- ✅ All production `@ViewChild` converted to signal-based APIs
-- ✅ All validation suites use unconditional `only(field)` pattern
-- ✅ Consistent use of `NgxDeepPartial` over legacy aliases
-- ✅ No deprecated patterns (`allowSignalWrites`, etc.)
-- ✅ All examples follow modern Angular 18+ patterns
-
----
-
-## 1. Enhanced Field Path Types with Template Literal Autocomplete
+**Effort:** 1-2 weeks
+**Dependencies:** None
 
 ### Problem Statement
 
@@ -391,7 +300,11 @@ export const suite = staticSuite(
 
 ---
 
-## 2. Development-Mode Error Messages with Context-Aware Helpers
+### Enhancement #2: Development-Mode Error Messages with Context-Aware Helpers
+
+**Priority:** High
+**Effort:** 2 weeks
+**Dependencies:** None
 
 ### Problem Statement
 
@@ -627,7 +540,11 @@ suite(snap, field)
 
 ---
 
-## 3. Configurable Debouncing via Dependency Injection Token
+### Enhancement #3: Configurable Debouncing via Dependency Injection Token
+
+**Priority:** Medium
+**Effort:** 1 week
+**Dependencies:** None
 
 ### Problem Statement
 
@@ -740,7 +657,11 @@ export class TestFormComponent {}
 
 ---
 
-## 4. ValidationConfig Fluent Builder API
+### Enhancement #4: ValidationConfig Fluent Builder API
+
+**Priority:** Medium
+**Effort:** 1-2 weeks
+**Dependencies:** Enhancement #1 (Field Path Types)
 
 ### Problem Statement
 
@@ -894,9 +815,7 @@ protected validationConfig = createValidationConfig<FormModel>()
 
 ---
 
-## 5. Optimized Computed Signal Memoization ✅
-
-**Status:** COMPLETED - November 10, 2025
+## Implementation Roadmap
 
 ### Problem Statement
 
@@ -1330,33 +1249,38 @@ Zero performance impact - ARIA updates use signals and effects efficiently.
 
 ### Phase 1: Foundation (Week 1-2)
 
-- [ ] #1: Field Path Types
-- [ ] #2: Error Messages & Catalog
-- [ ] #3: Debouncing Token
+- [ ] Investigate Issue #13: `validateRootForm` binding
+- [ ] Create reproduction case
+- [ ] Fix directive registration
+- [ ] Add regression tests
+- [ ] Emergency patch release if needed
 
-**Priority:** These provide immediate DX improvements and foundation for other features.
+### Phase 2: Medium Priority Fixes (Week 2)
 
-### Phase 2: Advanced Features (Week 3-4)
-
-- [ ] #4: ValidationConfig Builder (depends on #1)
-- [x] #5: Signal Memoization ✅ COMPLETED (November 10, 2025)
-- [x] #6: ARIA Management ✅ COMPLETED (November 10, 2025)
-
-**Priority:** Build on foundation with advanced features.
-
-### Phase 3: Testing & Documentation (Week 5)
-
-- [ ] Comprehensive testing of all features
-- [ ] Performance benchmarks
-- [ ] Accessibility audits
+- [ ] Issue #15: Tailwind grid compatibility
+- [ ] Issue #12: Date/empty string shape validation
+- [ ] Integration testing
 - [ ] Documentation updates
+
+### Phase 3: Foundation Enhancements (Week 3-4)
+
+- [ ] Enhancement #1: Field Path Types
+- [ ] Enhancement #2: Error Messages & Catalog
+- [ ] Enhancement #3: Debouncing Token
+- [ ] Unit tests for all enhancements
+
+### Phase 4: Advanced Features (Week 5-6)
+
+- [ ] Enhancement #4: ValidationConfig Builder
+- [ ] Performance benchmarks
+- [ ] Comprehensive documentation
 - [ ] Migration guides
 
-### Phase 4: Release (Week 6)
+### Phase 5: Release (Week 7)
 
-- [ ] Beta release for community testing
-- [ ] Address feedback
-- [ ] Final release
+- [ ] Beta testing period
+- [ ] Community feedback
+- [ ] Final v1.6.0 release
 
 ---
 

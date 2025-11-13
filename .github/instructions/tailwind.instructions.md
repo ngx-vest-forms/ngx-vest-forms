@@ -37,8 +37,29 @@ applyTo: 'projects/examples/**/*.{html,js,jsx,ts,tsx,css,scss,sass,md,mdx}'
 
 ## Components (TypeScript/JavaScript)
 - Prefer TypeScript over JavaScript for component files to ensure type safety when applying Tailwind classes
-- Use dynamic utility classes with template literals or arrays (e.g., `className={`p-${padding} bg-${color}`}`)
-- Validate dynamic values with TypeScript types
+- **NEVER** use template literals for dynamic class names (e.g., `` `p-${padding}` ``) - Tailwind cannot detect interpolated strings at build time
+- Instead, use static lookup objects that map keys to complete class strings:
+  ```typescript
+  // ✅ CORRECT: Static class strings in lookup objects
+  const paddingMap: Record<string, string> = {
+    small: 'p-2',
+    medium: 'p-4',
+    large: 'p-8'
+  };
+  const colorMap: Record<string, string> = {
+    primary: 'bg-blue-500',
+    secondary: 'bg-gray-500',
+    danger: 'bg-red-500'
+  };
+
+  // Compose classes from mapped values
+  const classes = `${paddingMap[padding]} ${colorMap[color]}`;
+
+  // ❌ WRONG: Template literal interpolation
+  // const classes = `p-${padding} bg-${color}`; // Classes won't be detected!
+  ```
+- All Tailwind class names must appear as complete, static strings somewhere in your source code
+- Use TypeScript union types to constrain valid keys: `padding: 'small' | 'medium' | 'large'`
 - Integrate Tailwind with modern frameworks by applying utilities in component logic
 - Favor functional components over class-based ones in frameworks like React
 
