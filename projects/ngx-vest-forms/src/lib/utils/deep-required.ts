@@ -101,8 +101,19 @@ export type NgxFormCompatibleDeepRequired<T> = {
 };
 
 // Legacy aliases for backward compatibility
-/** @deprecated Use NgxDeepRequired instead */
+/**
+ * @deprecated
+ * Deprecated since v1.2.0 (2024-06).
+ * Use {@link NgxDeepRequired} instead for deep required types.
+ * Migration: Replace `DeepRequired<T>` with `NgxDeepRequired<T>`.
+ */
 export type DeepRequired<T> = NgxDeepRequired<T>;
 
-/** @deprecated Use NgxFormCompatibleDeepRequired instead */
+/**
+ * @deprecated
+ * Deprecated since v1.2.0 (2024-06).
+ * Use {@link NgxFormCompatibleDeepRequired} instead for form-compatible deep required types.
+ * Migration: Replace `FormCompatibleDeepRequired<T>` with `NgxFormCompatibleDeepRequired<T>`.
+ * Rationale: The new name is more consistent and descriptive.
+ */
 export type FormCompatibleDeepRequired<T> = NgxFormCompatibleDeepRequired<T>;
