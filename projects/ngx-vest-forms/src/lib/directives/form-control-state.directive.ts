@@ -119,25 +119,38 @@ export class FormControlStateDirective {
       }
       // Listen to control changes
       const sub = control.control?.statusChanges?.subscribe(() => {
-        const { status, valid, invalid, pending, disabled, pristine, errors } =
-          control;
+        const {
+          status,
+          valid,
+          invalid,
+          pending,
+          disabled,
+          pristine,
+          errors,
+          touched,
+          dirty,
+        } = control;
 
-        // Get current interaction state
-        const currentInteraction = this.#interactionState();
-
-        // Mark as validated only when status actually CHANGES (not on first emission)
-        // AND the status is not PENDING (validation completed)
-        // AND the control has been interacted with (touched or dirty)
-        // This ensures hasBeenValidated is only true for:
-        // 1. User-triggered validations (touched/dirty)
-        // 2. ValidationConfig-triggered validations that result in the control becoming touched
+        // Mark as validated when:
+        // 1. Control has been touched (user blurred the field), OR
+        // 2. Status actually CHANGED (not on first emission) AND validation completed (not PENDING)
+        //    AND the control has been interacted with (touched or dirty)
+        //
+        // This ensures hasBeenValidated is true for:
+        // - User blur events (touched becomes true)
+        // - User-triggered validations (dirty)
+        // - ValidationConfig-triggered validations that result in the control becoming touched
         // But NOT for initial page load validations
+        //
+        // IMPORTANT: Read touched/dirty directly from control, not from signal,
+        // to avoid race conditions with afterEveryRender sync
         if (
-          this.#previousStatus !== undefined && // Not the first status emission
-          this.#previousStatus !== status && // Status actually changed
-          status &&
-          status !== 'PENDING' &&
-          (currentInteraction.isTouched || currentInteraction.isDirty) // Control was interacted with
+          touched || // Control was blurred (most common case)
+          (this.#previousStatus !== undefined && // Not the first status emission
+            this.#previousStatus !== status && // Status actually changed
+            status &&
+            status !== 'PENDING' &&
+            dirty) // Or control value changed (typed)
         ) {
           this.#hasBeenValidated.set(true);
         }
@@ -195,6 +208,12 @@ export class FormControlStateDirective {
               isTouched: newTouched,
               isDirty: newDirty,
             });
+
+            // Mark as validated when control becomes touched (e.g., user blurred the field)
+            // This handles the case where blur doesn't trigger statusChanges (field already invalid)
+            if (newTouched && !current.isTouched) {
+              this.#hasBeenValidated.set(true);
+            }
           }
         }
       },
