@@ -10,6 +10,7 @@ import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
 import { AppComponent } from './app/app.component';
 import { BusinessHoursFormComponent } from './app/components/smart/business-hours-form/business-hours-form.component';
 import { PurchaseFormComponent } from './app/components/smart/purchase-form/purchase-form.component';
+import { RootFormValidationDemoComponent } from './app/components/smart/root-form-validation-demo/root-form-validation-demo.component';
 import { ValidationConfigDemoComponent } from './app/components/smart/validation-config-demo/validation-config-demo.component';
 
 const appRoutes: Routes = [
@@ -29,6 +30,10 @@ const appRoutes: Routes = [
   {
     path: 'validation-config-demo',
     component: ValidationConfigDemoComponent,
+  },
+  {
+    path: 'root-form-validation-demo',
+    component: RootFormValidationDemoComponent,
   },
 ];
 bootstrapApplication(AppComponent, {

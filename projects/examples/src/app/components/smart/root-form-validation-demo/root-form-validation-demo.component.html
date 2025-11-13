@@ -1,0 +1,184 @@
+<div class="max-w-2xl mx-auto p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+  <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
+    Root Form Validation Demo
+  </h2>
+
+  <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+    <h3 class="font-semibold mb-2 text-blue-900 dark:text-blue-200">
+      What this demonstrates:
+    </h3>
+    <ul class="list-disc list-inside space-y-1 text-sm text-blue-800 dark:text-blue-300">
+      <li>
+        <strong>Field-level validation</strong>: Password and Confirm Password
+        have their own validation rules
+      </li>
+      <li>
+        <strong>Root form validation</strong>: Cross-field rule that checks if
+        passwords match (shown at form level)
+      </li>
+      <li>
+        <strong>Validation modes</strong>: Toggle between 'submit' (validate
+        after submit) and 'live' (validate immediately)
+      </li>
+    </ul>
+  </div>
+
+  <!-- Validation Mode Toggle -->
+  <div class="mb-4 flex items-center gap-3">
+    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+      Validation Mode:
+    </label>
+    <button
+      type="button"
+      (click)="toggleValidationMode()"
+      class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
+    >
+      {{ validationMode() === 'submit' ? 'Submit Mode' : 'Live Mode' }}
+    </button>
+    <span class="text-xs text-gray-600 dark:text-gray-400">
+      @if (validationMode() === 'submit') { (Root form errors appear after
+      submit) } @else { (Root form errors appear immediately) }
+    </span>
+  </div>
+
+  <!-- Form with validateRootForm directive -->
+  <form
+    scVestForm
+    validateRootForm
+    [validateRootFormMode]="validationMode()"
+    [suite]="suite"
+    [formValue]="formValue()"
+    (formValueChange)="formValue.set($event)"
+    (errorsChange)="errors.set($event)"
+    (ngSubmit)="onSubmit()"
+    class="space-y-6"
+  >
+    <!-- Root Form Errors (displayed at form level) -->
+    @if (errors()[ROOT_FORM]) {
+    <div
+      role="alert"
+      class="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+    >
+      <div class="flex items-start">
+        <svg
+          class="w-5 h-5 text-red-600 dark:text-red-400 mr-3 mt-0.5"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+            clip-rule="evenodd"
+          />
+        </svg>
+        <div>
+          <h4 class="font-semibold text-red-800 dark:text-red-200 mb-1">
+            Form Error
+          </h4>
+          @for (error of errors()[ROOT_FORM]; track error) {
+          <p class="text-sm text-red-700 dark:text-red-300">{{ error }}</p>
+          }
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- Password Field -->
+    <div sc-control-wrapper>
+      <label
+        for="password"
+        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+      >
+        Password <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="password"
+        name="password"
+        type="password"
+        [ngModel]="formValue().password"
+        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+        placeholder="Enter your password"
+      />
+    </div>
+
+    <!-- Confirm Password Field -->
+    <div sc-control-wrapper>
+      <label
+        for="confirmPassword"
+        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+      >
+        Confirm Password <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="confirmPassword"
+        name="confirmPassword"
+        type="password"
+        [ngModel]="formValue().confirmPassword"
+        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+        placeholder="Confirm your password"
+      />
+    </div>
+
+    <!-- Submit Button -->
+    <div class="pt-4">
+      <button
+        type="submit"
+        class="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+      >
+        Submit Form
+      </button>
+    </div>
+  </form>
+
+  <!-- Code Example -->
+  <div
+    class="mt-8 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
+  >
+    <h3 class="font-semibold mb-3 text-gray-900 dark:text-white">
+      Implementation:
+    </h3>
+    <pre class="text-xs overflow-x-auto"><code class="text-gray-800 dark:text-gray-200">// Component imports
+import &#123; vestForms, ROOT_FORM &#125; from 'ngx-vest-forms';
+
+&#64;Component(&#123;
+  imports: [vestForms], // ✅ Required!
+&#125;)
+
+// Vest suite
+test(ROOT_FORM, 'Passwords must match', () =&gt; &#123;
+  enforce(model.confirmPassword).equals(model.password);
+&#125;);
+
+// Template
+&lt;form 
+  scVestForm 
+  validateRootForm
+  [validateRootFormMode]="'submit'"
+  [suite]="suite"
+  (errorsChange)="errors.set($event)"&gt;
+  
+  &#64;if (errors()[ROOT_FORM]) &#123;
+    &lt;div role="alert"&gt;&#123;&#123; errors()[ROOT_FORM][0] &#125;&#125;&lt;/div&gt;
+  &#125;
+&lt;/form&gt;</code></pre>
+  </div>
+
+  <!-- Debug Info -->
+  <details class="mt-6">
+    <summary
+      class="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+    >
+      Debug Info (Current State)
+    </summary>
+    <div class="mt-3 p-3 bg-gray-100 dark:bg-gray-900 rounded text-xs">
+      <div class="mb-2">
+        <strong>Form Value:</strong>
+        <pre>{{ formValue() | json }}</pre>
+      </div>
+      <div>
+        <strong>Errors:</strong>
+        <pre>{{ errors() | json }}</pre>
+      </div>
+    </div>
+  </details>
+</div>
