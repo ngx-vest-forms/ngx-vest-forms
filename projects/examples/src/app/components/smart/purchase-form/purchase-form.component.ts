@@ -146,7 +146,7 @@ export class PurchaseFormComponent {
     return this.viewModel();
   }
 
-  protected onSubmit(): void {
+  protected save(): void {
     if (this.formValid()) {
       // Intentionally no console output in examples to keep CI and demos quiet
     }

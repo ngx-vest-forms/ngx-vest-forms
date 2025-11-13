@@ -146,7 +146,7 @@ type MyFormModel = NgxDeepPartial<{
     <form
       scVestForm
       (formValueChange)="formValue.set($event)"
-      (ngSubmit)="onSubmit()"
+      (ngSubmit)="save()"
     >
       <div ngModelGroup="generalInfo">
         <label>First name</label>
@@ -199,7 +199,7 @@ type SimpleForm = NgxDeepPartial<{
     <form
       scVestForm
       (formValueChange)="formValue.set($event)"
-      (ngSubmit)="onSubmit()"
+      (ngSubmit)="save()"
     >
       <label for="email">Email</label>
       <input id="email" name="email" [ngModel]="formValue().email" />
@@ -214,7 +214,7 @@ type SimpleForm = NgxDeepPartial<{
 export class SimpleFormComponent {
   protected readonly formValue = signal<SimpleForm>({});
 
-  protected onSubmit(): void {
+  protected save(): void {
     console.log('Form submitted:', this.formValue());
   }
 }
@@ -399,7 +399,7 @@ export const myFormModelShape: DeepRequired<MyFormModel> = {
       scVestForm
       [formShape]="shape"
       (formValueChange)="formValue.set($event)"
-      (ngSubmit)="onSubmit()"
+      (ngSubmit)="save()"
     >
       <div ngModelGroup="generalInfo">
         <label>First name</label>
@@ -496,7 +496,7 @@ class MyComponent {
   scVestForm
   [suite]="suite"
   (formValueChange)="formValue.set($event)"
-  (ngSubmit)="onSubmit()"
+  (ngSubmit)="save()"
 >
   ...
 </form>

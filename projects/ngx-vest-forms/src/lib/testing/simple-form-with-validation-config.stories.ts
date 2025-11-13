@@ -8,7 +8,7 @@ import { FormModel, formShape, formValidationSuite } from './simple-form';
     <form
       class="p-4"
       scVestForm
-      (ngSubmit)="onSubmit()"
+      (ngSubmit)="save()"
       [formValue]="formValue()"
       validateRootForm
       [formShape]="shape"
@@ -145,7 +145,7 @@ export class FormDirectiveDemoComponent {
     this.formValue.set(v);
   }
 
-  protected onSubmit(): void {
+  protected save(): void {
     if (this.formValid()) {
       // Intentionally left blank: avoid noisy console output in Storybook
     }

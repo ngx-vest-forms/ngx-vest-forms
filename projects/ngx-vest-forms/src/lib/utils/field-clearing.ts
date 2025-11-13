@@ -135,7 +135,7 @@ export function clearFieldsWhen<T extends Record<string, any>>(
  * }
  *
  * ///  Clear all optional fields on form submission
- * onSubmit() {
+ * save() {
  *   const finalData = clearFields(this.formValue(), ['draftField', 'tempNotes']);
  *   this.submitForm(finalData);
  * }

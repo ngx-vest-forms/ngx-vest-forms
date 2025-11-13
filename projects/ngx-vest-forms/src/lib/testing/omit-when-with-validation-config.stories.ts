@@ -89,7 +89,7 @@ const selectors = {
       <form
         #vestForm="scVestForm"
         scVestForm
-        (ngSubmit)="onSubmit()"
+        (ngSubmit)="save()"
         [formValue]="formValue()"
         [formShape]="shape"
         [validationConfig]="validationConfig"
@@ -250,7 +250,7 @@ export class OmitWhenValidationConfigComponent {
     }
   }
 
-  protected onSubmit(): void {
+  protected save(): void {
     if (this.formValid()) {
       // Intentionally left blank: avoid noisy console output in Storybook
     }

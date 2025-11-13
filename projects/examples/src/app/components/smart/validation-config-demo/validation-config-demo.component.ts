@@ -58,7 +58,7 @@ export class ValidationConfigDemoComponent {
     () => this.errors()['startDate'] || this.errors()['endDate']
   );
 
-  protected onSubmit(): void {
+  protected save(): void {
     if (this.isValid()) {
       // Intentionally no console output or alerts in examples to keep CI and demos quiet
     }

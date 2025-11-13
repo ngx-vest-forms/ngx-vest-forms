@@ -147,7 +147,7 @@ interface NgxFormState<TModel> {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ParentComponent {
-  // Modern Angular 20+: Use viewChild() instead of @ViewChild
+  // Angular 17.2+: Use viewChild() (functional query API) instead of @ViewChild
   private readonly childForm = viewChild<ChildFormComponent>('childForm');
 
   // Safe fallback when child form isn't initialized
@@ -798,7 +798,7 @@ export class MyFormComponent {
   }
 
   // Submit data to backend
-  async onSubmit() {
+  async save() {
     const formData = this.formValue();
 
     // Convert objects back to arrays for backend
@@ -972,7 +972,7 @@ export class MyFormComponent {
   // Loading state
   protected readonly isLoading = signal(false);
 
-  async onSubmit() {
+  async save() {
     this.isLoading.set(true);
     try { await this.api.submit(this.formValue()); }
     finally { this.isLoading.set(false); }

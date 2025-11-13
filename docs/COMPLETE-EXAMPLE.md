@@ -59,7 +59,7 @@ const userValidationSuite: NgxVestSuite<UserFormModel> = staticSuite(
       [suite]="suite"
       [formShape]="shape"
       (formValueChange)="formValue.set($event)"
-      (ngSubmit)="onSubmit()"
+      (ngSubmit)="save()"
     >
       <!-- Each field wrapped for error display -->
       <div sc-control-wrapper>
@@ -86,7 +86,7 @@ export class UserFormComponent {
   protected readonly suite = userValidationSuite;
   protected readonly shape = userFormShape;
 
-  protected onSubmit() {
+  protected save() {
     console.log('Form submitted:', this.formValue());
   }
 }
