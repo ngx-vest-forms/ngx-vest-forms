@@ -110,10 +110,10 @@
     }
   },
   "optionalDependencies": {
-    "@swc/core-darwin-arm64": "~1.13.5",
-    "@swc/core-darwin-x64": "~1.13.5",
-    "@swc/core-linux-x64-gnu": "~1.13.5",
-    "@swc/core-linux-x64-musl": "~1.13.5"
+    "@swc/core-darwin-arm64": "~1.15.1",
+    "@swc/core-darwin-x64": "~1.15.1",
+    "@swc/core-linux-x64-gnu": "~1.15.1",
+    "@swc/core-linux-x64-musl": "~1.15.1"
   },
   "publishConfig": {
     "access": "public"
