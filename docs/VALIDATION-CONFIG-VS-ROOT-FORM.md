@@ -469,7 +469,7 @@ export class MyFormComponent {
 - Dynamic conditional form layouts
 - After programmatic form value manipulation
 
-### Use ALL THREE when:when:
+### Use ALL THREE when:
 
 - ✅ Complex **dynamic forms** with multiple concerns:
   - Field-level dependencies (`validationConfig`)

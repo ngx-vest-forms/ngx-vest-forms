@@ -372,14 +372,15 @@ describe('ValidateRootFormDirective', () => {
               [ngModel]="model().confirmPassword"
               data-testid="confirm-password"
             />
-            @if (errors()['rootForm']) {
-              <div data-testid="root-error">{{ errors()['rootForm'] }}</div>
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
             }
             <button type="submit" data-testid="submit">Submit</button>
           </form>
         `,
       })
       class TestComponent {
+        ROOT_FORM = ROOT_FORM;
         model = signal<Record<string, unknown>>({
           password: 'password123',
           confirmPassword: 'mismatch',
@@ -417,14 +418,15 @@ describe('ValidateRootFormDirective', () => {
               [ngModel]="model().confirmPassword"
               data-testid="confirm-password"
             />
-            @if (errors()['rootForm']) {
-              <div data-testid="root-error">{{ errors()['rootForm'] }}</div>
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
             }
             <button type="submit" data-testid="submit">Submit</button>
           </form>
         `,
       })
       class TestComponent {
+        ROOT_FORM = ROOT_FORM;
         model = signal<Record<string, unknown>>({
           password: 'password123',
           confirmPassword: 'mismatch',
@@ -473,14 +475,15 @@ describe('ValidateRootFormDirective', () => {
               [ngModel]="model().confirmPassword"
               data-testid="confirm-password"
             />
-            @if (errors()['rootForm']) {
-              <div data-testid="root-error">{{ errors()['rootForm'] }}</div>
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
             }
             <button type="submit" data-testid="submit">Submit</button>
           </form>
         `,
       })
       class TestComponent {
+        ROOT_FORM = ROOT_FORM;
         model = signal<Record<string, unknown>>({
           password: 'password123',
           confirmPassword: 'mismatch',
@@ -542,14 +545,15 @@ describe('ValidateRootFormDirective', () => {
               [ngModel]="model().confirmPassword"
               data-testid="confirm-password"
             />
-            @if (errors()['rootForm']) {
-              <div data-testid="root-error">{{ errors()['rootForm'] }}</div>
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
             }
             <button type="submit" data-testid="submit">Submit</button>
           </form>
         `,
       })
       class TestComponent {
+        ROOT_FORM = ROOT_FORM;
         model = signal<Record<string, unknown>>({
           password: 'password123',
           confirmPassword: 'mismatch',
@@ -593,14 +597,15 @@ describe('ValidateRootFormDirective', () => {
               [ngModel]="model().confirmPassword"
               data-testid="confirm-password"
             />
-            @if (errors()['rootForm']) {
-              <div data-testid="root-error">{{ errors()['rootForm'] }}</div>
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
             }
             <button type="submit" data-testid="submit">Submit</button>
           </form>
         `,
       })
       class TestComponent {
+        ROOT_FORM = ROOT_FORM;
         model = signal<Record<string, unknown>>({
           password: 'password123',
           confirmPassword: 'mismatch',
@@ -660,14 +665,15 @@ describe('ValidateRootFormDirective', () => {
               [ngModel]="model().confirmPassword"
               data-testid="confirm-password"
             />
-            @if (errors()['rootForm']) {
-              <div data-testid="root-error">{{ errors()['rootForm'] }}</div>
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
             }
             <button type="submit" data-testid="submit">Submit</button>
           </form>
         `,
       })
       class TestComponent {
+        ROOT_FORM = ROOT_FORM;
         model = signal<Record<string, unknown>>({
           password: 'password123',
           confirmPassword: 'mismatch',
