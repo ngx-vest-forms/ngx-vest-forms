@@ -1,9 +1,9 @@
 # Product Requirements Document: ngx-vest-forms Roadmap
 
-**Version:** 2.0
-**Date:** November 13, 2025
+**Version:** 2.1
+**Date:** November 14, 2025
 **Status:** Active Development
-**Last Updated:** After PR #60 completion
+**Last Updated:** After v2.0.0 release with dual selector support
 
 ## Executive Summary
 
@@ -12,15 +12,26 @@ This PRD outlines the remaining high-impact improvements for ngx-vest-forms foll
 ## Quick Status Overview
 
 ### ✅ Recently Completed (Nov 2025)
+
 - PR #60: Validation timing fixes, array utilities, field path utilities
 - Enhancement #5: Signal memoization with custom equality
 - Enhancement #6: WCAG 2.2 AA ARIA management
+- **v2.0.0 Release**: Dual selector support (sc- and ngx- prefixes)
+  - All components/directives support both legacy `sc-` and recommended `ngx-` selectors
+  - New `NGX_ERROR_DISPLAY_MODE_TOKEN` with backward compatibility
+  - `ngxValidateRootForm` and `ngxValidateRootFormMode` inputs added
+  - Fixed BEM structure: host element gets dual CSS classes, inner div gets BEM element classes
+  - Updated 33 files: 7 examples, 22+ test files to use ngx- prefix
+  - Created comprehensive migration guide: `docs/dev/DUAL-SELECTOR-SUPPORT.md`
+  - Deprecation timeline: v2.x (warnings), v3.0.0 (removal)
 - 91.27% utility test coverage (30+ new tests)
+- All 343 tests passing with dual selector support
 - Complex ValidationConfig test scenario (Storybook)
 - Browser compatibility documentation
 - Code modernization (signals, OnPush, unconditional `only()`)
 
-### 🎯 Current Focus (v1.5.0 Release)
+### 🎯 Current Focus (v2.1.0 Release)
+
 - **4 Major Enhancements** (#1-4) - Type safety, error messages, configurability, fluent API
 - **3 Critical Issues** (#13, #15, #12) - Blocking bugs and compatibility fixes
 
@@ -41,18 +52,21 @@ Error: Can't bind to 'validateRootForm' since it isn't a known property of 'form
 ```
 
 **Reported Context:**
+
 - Angular 19
 - ngx-vest-forms v1.1.0
 - No validation suites ever run
 - Forms always report as valid
 
 **Investigation Needed:**
+
 1. Verify `ValidateRootFormDirective` exported in `public-api.ts`
 2. Check directive selector matches `form[scVestForm][validateRootForm]`
 3. Confirm vestForms import includes directive
 4. Test with Angular 19 compatibility
 
 **Action Items:**
+
 - [ ] Create minimal reproduction case
 - [ ] Verify directive registration
 - [ ] Add regression tests
@@ -78,7 +92,7 @@ Error: Can't bind to 'validateRootForm' since it isn't a known property of 'form
       <ng-content />
       <!-- error messages -->
     </div>
-  `
+  `,
 })
 export class ControlWrapperComponent {
   public readonly displayMode = input<'flex' | 'contents' | 'block'>('flex');
@@ -87,6 +101,7 @@ export class ControlWrapperComponent {
 ```
 
 **Usage:**
+
 ```html
 <div class="grid grid-cols-2 gap-4">
   <sc-control-wrapper displayMode="contents">
@@ -96,6 +111,7 @@ export class ControlWrapperComponent {
 ```
 
 **Action Items:**
+
 - [ ] Add layout customization inputs
 - [ ] Update Tailwind examples
 - [ ] Add integration tests
@@ -114,6 +130,7 @@ export class ControlWrapperComponent {
 **Proposed Solutions:**
 
 **Option 1: Relaxed Type Checking**
+
 ```typescript
 function isValidShapeMismatch(expected: any, actual: any): boolean {
   // Allow empty string for Date fields (common UI pattern)
@@ -125,17 +142,19 @@ function isValidShapeMismatch(expected: any, actual: any): boolean {
 ```
 
 **Option 2: Configuration**
+
 ```html
 <form
   scVestForm
   [shapeValidation]="{
     allowEmptyDates: true,
     allowNullValues: true
-  }">
-</form>
+  }"
+></form>
 ```
 
 **Action Items:**
+
 - [ ] Implement relaxed type checking
 - [ ] Add configuration option
 - [ ] Update shape validation tests
@@ -145,7 +164,7 @@ function isValidShapeMismatch(expected: any, actual: any): boolean {
 
 ---
 
-## 🎯 Planned Enhancements (v1.6.0)
+## 🎯 Planned Enhancements (v2.2.0)
 
 ### Enhancement #1: Enhanced Field Path Types with Template Literal Autocomplete
 

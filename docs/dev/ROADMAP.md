@@ -1,8 +1,8 @@
 # ngx-vest-forms Roadmap
 
-**Last Updated:** November 13, 2025
-**Current Version:** 1.4.x
-**Next Release:** 1.6.0
+**Last Updated:** November 14, 2025
+**Current Version:** 2.0.0
+**Next Release:** 2.1.0
 
 ## 🎯 Overview
 
@@ -15,9 +15,15 @@ This document outlines remaining work for ngx-vest-forms following successful co
 - **PR #60**: Validation timing fixes, array/field path utilities, `only()` pattern enforcement
 - **Enhancement #5**: Signal memoization with custom equality (60-80% performance improvement)
 - **Enhancement #6**: WCAG 2.2 AA ARIA management (10 new tests, full accessibility compliance)
-- **Test Coverage**: 91.27% utility coverage (30+ new tests)
+- **Dual Selector Support**: Full `ngx-` prefix implementation alongside legacy `sc-` prefix (v2.0.0)
+  - All components and directives support both selectors
+  - New `NGX_ERROR_DISPLAY_MODE_TOKEN` with backward compatibility
+  - Updated 33 files (7 examples, 22+ tests) to use ngx- prefix
+  - Complete migration guide in `docs/dev/DUAL-SELECTOR-SUPPORT.md`
+  - Deprecation timeline: v2.x warnings, v3.0.0 removal
+- **Test Coverage**: 91.27% utility coverage (30+ new tests), all 343 tests passing
 - **Code Modernization**: Signals, OnPush, unconditional `only()` pattern throughout
-- **Documentation**: Browser compatibility, comprehensive accessibility guide
+- **Documentation**: Browser compatibility, comprehensive accessibility guide, dual selector migration
 
 **PR #60 Copilot Review Items (Addressed):**
 
@@ -369,7 +375,7 @@ const validationConfig = createValidationConfig<FormModel>()
 
 **Total Effort:** ~1.5-2 weeks with LLM-assisted development
 
-### Phase 1: v1.5.0 Release (Days 1-3)
+### Phase 1: v2.1.0 Release (Days 1-3)
 
 **Day 1: Critical Bug Fixes**
 
@@ -382,9 +388,9 @@ const validationConfig = createValidationConfig<FormModel>()
 - [ ] Issue #12: Date shape validation (4-6 hours)
 - [ ] Code Quality: Simplify structuredClone fallback (1-2 hours)
 - [ ] Integration testing (2 hours)
-- [ ] v1.5.0 Release
+- [ ] v2.1.0 Release
 
-### Phase 2: v1.6.0 Release (Days 4-10)
+### Phase 2: v2.2.0 Release (Days 4-10)
 
 **Days 4-6: Foundation Enhancements**
 
@@ -463,7 +469,6 @@ const validationConfig = createValidationConfig<FormModel>()
 - Review `untracked()` usage
 - Native HTML5 validation integration (#9)
 - StandardSchema support (#18)
-- Rebrand with `ngx` prefix (#7)
 
 ### Performance Optimizations (from PR #60 review)
 
@@ -471,11 +476,12 @@ const validationConfig = createValidationConfig<FormModel>()
 - `arrayToObject()` single-pass implementation (replace map+fromEntries with reduce or for-loop)
 - Bidirectional sync edge case: explicit handling for simultaneous form+model changes
 
-### Breaking Changes (v2.0)
+### Breaking Changes (v3.0)
 
-- Rename `sc` → `ngx` prefix
-- Migration schematic
-- 6-month deprecation period for v1.x
+- Remove `sc-` prefix support (deprecated in v2.0)
+- Migration schematic for automated prefix updates
+- Remove `SC_ERROR_DISPLAY_MODE_TOKEN` (use `NGX_ERROR_DISPLAY_MODE_TOKEN`)
+- 6-12 month deprecation period for v2.x
 
 ---
 
