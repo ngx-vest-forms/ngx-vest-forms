@@ -7,12 +7,12 @@ import { TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 import type { NgxDeepPartial } from '../../public-api';
-import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
 import { FormDirective } from '../directives/form.directive';
 import { vestForms } from '../exports';
 
 // Wait time for tests should be slightly longer than debounce to ensure completion
-const TEST_DEBOUNCE_WAIT_TIME = VALIDATION_CONFIG_DEBOUNCE_TIME + 50;
+// Default debounce is 100ms, so we add 50ms buffer
+const TEST_DEBOUNCE_WAIT_TIME = 150;
 
 describe('FormDirective - Comprehensive', () => {
   beforeEach(async () => {

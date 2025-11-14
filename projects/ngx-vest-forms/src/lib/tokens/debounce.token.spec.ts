@@ -1,6 +1,5 @@
 import { Component, inject } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from './debounce.token';
 
 describe('NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN', () => {
@@ -15,7 +14,6 @@ describe('NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN', () => {
     const fixture = TestBed.createComponent(TestComponent);
     const component = fixture.componentInstance;
 
-    expect(component.debounceTime).toBe(VALIDATION_CONFIG_DEBOUNCE_TIME);
     expect(component.debounceTime).toBe(100);
   });
 

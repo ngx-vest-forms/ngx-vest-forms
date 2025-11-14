@@ -21,6 +21,9 @@ This document outlines remaining work for ngx-vest-forms following successful co
   - Updated 33 files (7 examples, 22+ tests) to use ngx- prefix
   - Complete migration guide in `docs/dev/DUAL-SELECTOR-SUPPORT.md`
   - Deprecation timeline: v2.x warnings, v3.0.0 removal
+- **Breaking Changes for v2.0.0**:
+  - Removed deprecated `VALIDATION_CONFIG_DEBOUNCE_TIME` constant (use `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN` instead)
+  - Unconditional `only()` pattern now required in validation suites
 - **Test Coverage**: 91.27% utility coverage (30+ new tests), all 343 tests passing
 - **Code Modernization**: Signals, OnPush, unconditional `only()` pattern throughout
 - **Documentation**: Browser compatibility, comprehensive accessibility guide, dual selector migration
@@ -145,7 +148,7 @@ if (actual == null) return false;
 
 ---
 
-## 🟢 Code Quality Improvements (v1.5.0)
+## 🟢 Code Quality Improvements (v2.1.0)
 
 ### Simplify structuredClone Fallback Logic
 
@@ -198,7 +201,7 @@ try {
 
 ---
 
-## 🎯 Planned Enhancements (v1.6.0)
+## 🎯 Planned Enhancements (v2.2.0)
 
 ### Enhancement #1: Enhanced Field Path Types
 
@@ -285,11 +288,16 @@ The 'name' attribute "user_email" doesn't match model path "email".
 
 ### Enhancement #3: Configurable Debouncing
 
-**Priority:** Medium
-**Effort:** 4-6 hours (LLM token + directive update + dev integration testing)
-**Dependencies:** None
+**Priority:** ~~Medium~~ **COMPLETED in v2.0.0** ✅
+**Status:** SHIPPED - `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN` is available
 
-**Goal:** Configurable validation debounce timing```typescript
+**Implementation Complete:**
+- ✅ `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN` injection token created
+- ✅ Default value: 100ms (backward compatible)
+- ✅ Global, route-level, and component-level configuration supported
+- ✅ Deprecated `VALIDATION_CONFIG_DEBOUNCE_TIME` constant removed in v2.0.0
+
+**Usage:**```typescript
 // Currently: hardcoded 100ms
 // Proposed: DI token
 
@@ -322,9 +330,35 @@ export const appConfig: ApplicationConfig = {
 
 **Files:**
 
-- NEW: `lib/tokens/debounce.token.ts`
-- UPDATE: `lib/directives/form.directive.ts`
-- DEPRECATE: `lib/constants.ts` (add migration note)
+- ~~NEW: `lib/tokens/debounce.token.ts`~~ ✅ **COMPLETED**
+- ~~UPDATE: `lib/directives/form.directive.ts`~~ ✅ **COMPLETED**
+- ~~DEPRECATE: `lib/constants.ts` (add migration note)~~ ✅ **REMOVED in v2.0.0**
+
+**Migration Guide:**
+
+Users upgrading from v1.x to v2.0.0 need to replace the removed constant:
+
+```typescript
+// ❌ Old (removed in v2.0.0)
+import { VALIDATION_CONFIG_DEBOUNCE_TIME } from 'ngx-vest-forms';
+
+// ✅ New (v2.0.0+)
+import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
+
+// Global configuration
+export const appConfig: ApplicationConfig = {
+  providers: [
+    { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 100 } // Same default
+  ]
+};
+
+// Component-level override
+@Component({
+  providers: [
+    { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 0 } // For testing
+  ]
+})
+```
 
 ---
 

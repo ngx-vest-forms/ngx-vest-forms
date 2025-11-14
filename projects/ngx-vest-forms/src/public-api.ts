@@ -74,7 +74,7 @@ export {
 } from './lib/utils/form-utils';
 
 // Constants
-export { ROOT_FORM, VALIDATION_CONFIG_DEBOUNCE_TIME } from './lib/constants';
+export { ROOT_FORM } from './lib/constants';
 
 // Tokens
 export {

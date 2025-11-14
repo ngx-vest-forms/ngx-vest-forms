@@ -567,23 +567,25 @@ suite(snap, field)
 
 ### Problem Statement
 
-The `VALIDATION_CONFIG_DEBOUNCE_TIME` is currently hardcoded to 100ms. Different applications have different needs:
+The validation config debounce time was previously hardcoded to 100ms via the now-removed `VALIDATION_CONFIG_DEBOUNCE_TIME` constant. Different applications have different needs:
 
 - Fast networks → lower debounce (50ms) for snappier UX
 - Slow networks/expensive validations → higher debounce (300ms) to reduce load
 - Testing → 0ms for synchronous behavior
 
-### Current State
+### Current State (Pre-v2.0.0)
 
 ```typescript
-// constants.ts
-export const VALIDATION_CONFIG_DEBOUNCE_TIME = 100; // ← hardcoded
+// constants.ts (removed in v2.0.0)
+export const VALIDATION_CONFIG_DEBOUNCE_TIME = 100; // ← hardcoded, deprecated, removed
 
-// form.directive.ts
+// form.directive.ts (old usage, no longer supported)
 debounceTime(VALIDATION_CONFIG_DEBOUNCE_TIME); // ← cannot configure
 ```
 
-### Proposed Solution
+> **Note**: The `VALIDATION_CONFIG_DEBOUNCE_TIME` constant was removed in v2.0.0. Use `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN` instead.
+
+### Proposed Solution (Implemented in v2.0.0)
 
 Introduce an InjectionToken for configurable debounce timing at app/route/component level.
 

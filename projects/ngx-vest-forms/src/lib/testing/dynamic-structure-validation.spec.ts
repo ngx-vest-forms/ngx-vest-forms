@@ -5,7 +5,6 @@ import { Component, signal, ViewChild } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 import type { NgxDeepPartial } from '../../public-api';
-import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
 import { FormDirective } from '../directives/form.directive';
 import { vestForms } from '../exports';
 
@@ -42,8 +41,8 @@ const dynamicFormValidationSuite = staticSuite(
 );
 
 const waitForValidation = async (): Promise<void> => {
-  await new Promise((resolve) =>
-    setTimeout(resolve, VALIDATION_CONFIG_DEBOUNCE_TIME + 50)
+  await new Promise(
+    (resolve) => setTimeout(resolve, 150) // Default debounce (100ms) + buffer (50ms)
   );
 };
 

@@ -44,7 +44,7 @@ import { FormErrorDisplayDirective, FormControlStateDirective, NGX_ERROR_DISPLAY
 import { SC_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms'; // Deprecated, use NGX_ERROR_DISPLAY_MODE_TOKEN
 
 // Constants & Public Utilities
-import { ROOT_FORM, VALIDATION_CONFIG_DEBOUNCE_TIME } from 'ngx-vest-forms';
+import { ROOT_FORM, NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
 import { clearFieldsWhen, clearFields, keepFieldsWhen } from 'ngx-vest-forms';
 import { setValueAtPath } from 'ngx-vest-forms';
 import { stringifyFieldPath } from 'ngx-vest-forms';
@@ -926,7 +926,7 @@ stringifyFieldPath(['form', 'sections', 0, 'fields', 'name']);
 - **Shape Validation**: `[formShape]="shape"` - Dev mode validation of `name` attributes
 - **Validation Options**: `[validationOptions]="{ debounceTime: 300 }"`
 - **Form Arrays**: See [guide](https://blog.simplified.courses/template-driven-forms-with-form-arrays/)
-- **VALIDATION_CONFIG_DEBOUNCE_TIME**: Constant (100ms) controlling dependent field validation timing
+- **NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN**: Injection token for configurable dependent field validation debounce timing (default: 100ms)
 
 ## Utility Types and Functions Quick Reference
 
