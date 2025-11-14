@@ -17,7 +17,15 @@
  * ```
  */
 export type NgxDeepRequired<T> = {
-  [K in keyof T]-?: T[K] extends object ? NgxDeepRequired<T[K]> : T[K];
+  [K in keyof T]-?: T[K] extends Date | Function
+    ? T[K]
+    : T[K] extends Array<infer U>
+      ? Array<NgxDeepRequired<U>>
+      : T[K] extends ReadonlyArray<infer U>
+        ? ReadonlyArray<NgxDeepRequired<U>>
+        : T[K] extends object
+          ? NgxDeepRequired<T[K]>
+          : T[K];
 };
 
 /**
@@ -93,9 +101,15 @@ export type NgxDeepRequired<T> = {
 export type NgxFormCompatibleDeepRequired<T> = {
   [K in keyof T]-?: T[K] extends Date | undefined
     ? Date | string // Date properties (including optional ones) get the union treatment
-    : T[K] extends object | undefined
-      ? NgxFormCompatibleDeepRequired<NonNullable<T[K]>> // Recursively apply to nested objects, removing undefined
-      : T[K]; // All other types remain unchanged
+    : T[K] extends Function
+      ? T[K] // Functions are leaf types
+      : T[K] extends Array<infer U>
+        ? Array<NgxFormCompatibleDeepRequired<U>> // Recursively process array elements
+        : T[K] extends ReadonlyArray<infer U>
+          ? ReadonlyArray<NgxFormCompatibleDeepRequired<U>> // Recursively process readonly array elements
+          : T[K] extends object | undefined
+            ? NgxFormCompatibleDeepRequired<NonNullable<T[K]>> // Recursively apply to nested objects, removing undefined
+            : T[K]; // All other types remain unchanged
 };
 
 // Legacy aliases for backward compatibility
