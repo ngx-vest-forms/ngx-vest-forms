@@ -405,6 +405,108 @@ const validationConfig = createValidationConfig<FormModel>()
 
 ---
 
+### Enhancement #5: Headless Core Entry Point (`ngxVestFormCore`)
+
+**Priority:** Medium
+**Effort:** 3-4 days (split directive + docs + dedicated tests)
+**Origin:** PR #31 introduces `projects/ngx-vest-forms/core`
+
+#### Problem Statement (Core Entry Point)
+
+Teams building custom design systems only want the reactive form bridge (signals + Vest execution) and prefer to render their own wrappers/error UI. Today the single `ngxVestForm` directive bundles everything, so lightweight consumers cannot tree-shake display logic or compose experimental host directives.
+
+#### Proposed Solution (Core Entry Point)
+
+- Extract the base directive into a `ngxVestFormCore` entry point that exposes:
+  - `[(formValue)]` signal binding
+  - Vest suite execution + validation options
+  - `formState()` access for low-level consumers
+- Keep `ngxVestForm` as the batteries-included preset that re-exports `core` + wrappers
+- Mirror PR #31’s `ngxVestFormsCore` preset and the accompanying Jest specs to ensure parity
+
+#### Benefits (Core Entry Point)
+
+- Smaller bundle when consumers only need headless behavior
+- Cleaner layering for future host directives (schema validation, smart state)
+- Explicit “core vs. enhanced” documentation for integrators
+
+#### Action Items (Core Entry Point)
+
+- [ ] Split current directive implementation into `core` (new ng-package) and existing wrappers
+- [ ] Publish `ngxVestFormsCore` array for easy importing (`imports: [...ngxVestFormsCore]`)
+- [ ] Update README + docs/COMPLETE-EXAMPLE.md with headless recipes
+- [ ] Port PR #31’s `form-core.directive.spec.ts` to protect the new entry point
+
+---
+
+### Enhancement #6: Schema Validation Adapter & `[formSchema]`
+
+**Priority:** High
+**Effort:** 4-5 days (adapter registry + directive + docs)
+**Origin:** PR #31 adds `projects/ngx-vest-forms/schemas`
+
+#### Problem Statement (Schema Adapter)
+
+Apps regularly pair Vest with schema validators (Zod/Valibot/ArkType) for submit-time safety, yet ngx-vest-forms has no first-party hook to run those schemas or surface their errors. Teams currently duplicate logic and cannot enforce template conformance.
+
+#### Proposed Solution (Schema Adapter)
+
+- Ship an optional schemas entry point exposing:
+  - `ngxModelToStandardSchema()` helper (wraps plain JS objects into StandardSchemaV1)
+  - Adapter registry that detects Zod/Valibot/ArkType or generic `safeParse` functions
+  - `NgxSchemaValidationDirective` host directive that runs once per `ngSubmit` and exposes `schema()` state (success flag, issue list, `errorMap`)
+  - Dev-mode template conformance warnings that compare `formValue` names vs. schema shape to catch `name` typos
+- Allow `[formSchema]` on both `ngxVestForm` and `ngxVestFormCore`
+
+#### Benefits (Schema Adapter)
+
+- Unified error surface combining Vest field errors + schema-level issues
+- Optional dependency so teams opt-in only when needed
+- Safer large forms with minimal extra code (just bind `[formSchema]`)
+
+#### Action Items (Schema Adapter)
+
+- [ ] Port schema adapter utilities + directive tests from PR #31
+- [ ] Document schema workflows (submit-time guardrails, template mismatch warnings) in a new `docs/SCHEMA-VALIDATION.md`
+- [ ] Add Playwright coverage that shows schema errors in the existing examples app
+- [ ] Provide migration guidance for teams currently hand-wiring schema validation in `ngSubmit`
+
+---
+
+### Enhancement #7: Smart State Extension for External Data Sync
+
+**Priority:** Medium
+**Effort:** 1 week (directive + resolver UX + docs)
+**Origin:** PR #31 adds `projects/ngx-vest-forms/smart-state`
+
+#### Problem Statement (Smart State)
+
+When backend data refreshes mid-edit (autosave, admin override, collaborative sessions) the current implementation overwrites `formValue`, leading to lost user input. Consumers need battle-tested merge/conflict strategies rather than re-implementing reducers per project.
+
+#### Proposed Solution (Smart State)
+
+- Introduce `ngxSmartStateExtension` host directive with inputs:
+  - `[externalData]` – latest server payload
+  - `[smartStateOptions]` – merge strategy (`replace | preserve | smart`), `preserveFields`, and conflict callbacks
+  - `[isDirty]` / `[isValid]` – hints from the parent form state
+- Ship `SmartStateExtension` utility (already tested in PR #31) that handles deep path comparisons, `preserveFields`, and conflict snapshots
+- Expose `form.smartState()` so UIs can present “keep mine vs. accept server” dialogs
+
+#### Benefits (Smart State)
+
+- Prevents accidental data loss during background refreshes
+- Provides reusable conflict resolution hooks for advanced apps (collaboration, offline sync)
+- Aligns with Angular 18 signal patterns (directive implemented with signals/effects)
+
+#### Action Items (Smart State)
+
+- [ ] Finalize directive API + wire it into `ngxVestForm(Core)` instances
+- [ ] Add documentation (similar to PR #31’s Smart State README) with real scenarios: user profile, collaborative editor, offline order sync
+- [ ] Create unit + Playwright specs covering merge strategies and `'prompt-user'` conflicts
+- [ ] Offer helper UI component (optional) for conflict prompts to accelerate adoption
+
+---
+
 ## Implementation Timeline
 
 **Total Effort:** ~1.5-2 weeks with LLM-assisted development

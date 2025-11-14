@@ -172,7 +172,7 @@ function isValidShapeMismatch(expected: any, actual: any): boolean {
 **Effort:** 1-2 weeks
 **Dependencies:** None
 
-### Problem Statement
+### Problem Statement — Headless Core
 
 Currently, field names in `validationConfig`, Vest suite `test()` calls, and other APIs are plain strings with no compile-time validation. This leads to:
 
@@ -181,7 +181,7 @@ Currently, field names in `validationConfig`, Vest suite `test()` calls, and oth
 - Manual string concatenation prone to errors (e.g., `'addresses.billingAddress.street'`)
 - Difficult refactoring when model properties change
 
-### Current State
+### Current State — Headless Core
 
 ```typescript
 // Current implementation - plain strings
@@ -207,7 +207,7 @@ test('addresses.billingAddress.street', 'Required', () => {
 });
 ```
 
-### Proposed Solution
+### Proposed Solution — Headless Core
 
 Implement recursive template literal types for field path generation with full type safety and IDE autocomplete.
 
@@ -280,7 +280,7 @@ export const suite = staticSuite(
 );
 ```
 
-### Technical Implementation
+### Technical Implementation — Headless Core
 
 **New Files:**
 
@@ -294,7 +294,7 @@ export const suite = staticSuite(
 
 **Breaking Changes:** None (enhanced types are backward compatible)
 
-### Benefits
+### Benefits — Headless Core
 
 - **Type Safety:** Compile-time validation of field names
 - **Developer Experience:** IDE autocomplete for all field paths
@@ -302,14 +302,14 @@ export const suite = staticSuite(
 - **Error Prevention:** Typos caught at build time, not runtime
 - **Documentation:** Types serve as inline documentation
 
-### Success Metrics
+### Success Metrics — Headless Core
 
 - [ ] Zero TypeScript errors in existing codebase after implementation
 - [ ] IDE autocomplete works for all field path scenarios
 - [ ] Unit tests verify type inference for nested objects (3+ levels deep)
 - [ ] Documentation with before/after examples
 
-### Risks & Mitigations
+### Risks & Mitigations — Headless Core
 
 | Risk                                        | Impact | Mitigation                                                            |
 | ------------------------------------------- | ------ | --------------------------------------------------------------------- |
@@ -325,7 +325,7 @@ export const suite = staticSuite(
 **Effort:** 2 weeks
 **Dependencies:** None
 
-### Problem Statement
+### Problem Statement — Schema Adapter
 
 When developers make mistakes with ngx-vest-forms, error messages are generic Angular errors that don't provide guidance on how to fix the issue. Common issues include:
 
@@ -334,7 +334,7 @@ When developers make mistakes with ngx-vest-forms, error messages are generic An
 - Incorrect `validationConfig` setup
 - Vest suite not properly structured
 
-### Current State
+### Current State — Schema Adapter
 
 ```typescript
 // User creates this (wrong):
@@ -346,7 +346,7 @@ When developers make mistakes with ngx-vest-forms, error messages are generic An
 // No guidance on what's wrong or how to fix it
 ```
 
-### Proposed Solution
+### Proposed Solution — Schema Adapter
 
 Add development-mode helper utilities that provide actionable error messages with:
 
@@ -529,7 +529,7 @@ suite(snap, field)
   });
 ```
 
-### Technical Implementation
+### Technical Implementation — Schema Adapter
 
 **New Files:**
 
@@ -543,14 +543,14 @@ suite(snap, field)
 - `projects/ngx-vest-forms/src/lib/utils/shape-validation.ts` - Add shape mismatch errors
 - `projects/ngx-vest-forms/src/public-api.ts` - Export error helpers (for testing)
 
-### Benefits
+### Benefits — Schema Adapter
 
 - **Faster Debugging:** Clear error messages reduce time to resolution
 - **Better Onboarding:** New developers understand mistakes immediately
 - **Documentation as Code:** Error messages link to comprehensive docs
 - **Production Safety:** All helpers wrapped in `isDevMode()` checks (zero prod overhead)
 
-### Success Metrics
+### Success Metrics — Schema Adapter
 
 - [ ] All common error scenarios have dedicated error codes
 - [ ] Error messages include code examples
@@ -833,6 +833,189 @@ protected validationConfig = createValidationConfig<FormModel>()
 - [ ] All common patterns have convenience methods
 - [ ] Unit tests for all builder methods
 - [ ] Migration guide from manual config to builder
+
+---
+
+### Enhancement #5: Headless Core Entry Point (`ngxVestFormCore`)
+
+**Priority:** Medium
+**Effort:** 3-4 days (new entry point + docs + regression tests)
+**Dependencies:** None (splits existing directive into layered packages)
+
+### Problem Statement
+
+Consumers who only need the signal-based form bridge (value sync + Vest execution) must import `ngxVestForm`, which always registers control wrappers, accessibility helpers, and other batteries-included components. This increases bundle size for headless use cases (Storybook harnesses, design system wrappers, integration tests) and makes it harder to compose experimental directives showcased in PR #31.
+
+### Current State
+
+- Single directive (`ngxVestForm`) combines core responsibilities (form↔signal sync) with optional concerns (error display, wrappers, validation config helpers)
+- No way to tree-shake wrappers or opt into new host directives without paying for everything
+- Tests cover the combined directive only; headless behavior relies on indirect coverage
+
+### Proposed Solution
+
+- Extract the base logic into a `ngxVestFormCore` directive + `ngxVestFormsCore` preset array as prototyped in PR #31 (`projects/ngx-vest-forms/core`)
+- Preserve the current `ngxVestForm` preset as a thin wrapper that imports the core package plus wrappers/error display
+- Ensure both directives share typings (`formState()`, `[(formValue)]`, `[vestSuite]`, `[validationOptions]`)
+- Document decision matrix: when to choose `core` vs. `full` preset
+
+### Technical Implementation
+
+**New Files:**
+
+- `projects/ngx-vest-forms/core/ng-package.json`
+- `projects/ngx-vest-forms/core/src/lib/form-core.directive.ts`
+- `projects/ngx-vest-forms/core/src/lib/exports.ts` (mirrors `ngxVestFormsCore` preset)
+
+**Modified Files:**
+
+- `projects/ngx-vest-forms/src/lib/directives/form.directive.ts` → move shared logic into core
+- `projects/ngx-vest-forms/src/public-api.ts` → re-export both entry points
+- Storybook + Jest specs referencing `ngxVestForm` to ensure both variants stay aligned
+
+### Benefits
+
+- **Tree-shaking:** Apps that render their own wrappers avoid shipping unused templates
+- **Composable architecture:** Core directive becomes the foundation for schema/smart-state host directives
+- **Testing:** Dedicated `form-core.directive.spec.ts` (already authored in PR #31) isolates low-level behavior
+
+### Success Metrics
+
+- [ ] `ngxVestFormCore` published as standalone entry point with docs
+- [ ] Bundle diff shows measurable savings (>5% reduction) for headless consumers
+- [ ] Existing examples continue working with full `ngxVestForm`
+- [ ] New headless example demonstrates swapping wrappers without regressions
+
+### Risks & Mitigations — Schema Adapter
+
+| Risk                                                   | Impact | Mitigation                                                                  |
+| ------------------------------------------------------ | ------ | --------------------------------------------------------------------------- |
+| Public API confusion between `core` and `full` presets | Medium | Add comparison table + migration guide in docs/COMPLETE-EXAMPLE.md          |
+| Diverging behavior between directives                  | Medium | Share unit tests + use inheritance/composition to avoid duplicate logic     |
+| Angular packaging complexity (extra ng-package)        | Low    | Follow structure from PR #31 where `core` has its own tsconfig + ng-package |
+
+---
+
+### Enhancement #6: Schema Validation Adapter & `[formSchema]`
+
+**Priority:** High
+**Effort:** 4-5 days (adapter registry + directive + docs + testing)
+**Dependencies:** Headless core split (optional but clarifies layering)
+
+### Problem Statement
+
+Many teams run submit-time validation with Zod/Valibot/ArkType (or plain objects) in addition to Vest field-level checks. Without a first-party hook, developers duplicate logic and cannot surface schema errors alongside Vest errors. Template mismatch bugs (wrong `name` attribute) also slip through because there is no schema to compare against.
+
+### Current State
+
+- No `[formSchema]` input on `ngxVestForm`
+- No registry to normalize schema libraries into a consistent output
+- Template conformance checks rely on manual auditing or runtime warnings elsewhere
+
+### Proposed Solution
+
+- Ship an optional `ngx-vest-forms/schemas` entry point (mirroring PR #31) that provides:
+  - `ngxModelToStandardSchema()` helper for turning plain objects into StandardSchemaV1-compliant schemas
+  - Adapter registry that auto-detects StandardSchemaV1, `safeParse` objects, ArkType functions, etc.
+  - `NgxSchemaValidationDirective` host directive that runs on `ngSubmit`, exposes `schema()` state (success flag, `issues`, `errorMap`), and re-triggers Angular validation
+  - Dev-mode template conformance warnings when extracted schema shape doesnt match rendered form control names
+
+### Technical Implementation
+
+**New Files:**
+
+- `projects/ngx-vest-forms/schemas/src/lib/runtime-schema.ts` (interfaces + adapters)
+- `projects/ngx-vest-forms/schemas/src/lib/schema-validation.directive.ts`
+- `projects/ngx-vest-forms/schemas/src/lib/schema-adapter.ts` (`ngxModelToStandardSchema`, `ngxExtractTemplateFromSchema`)
+- `projects/ngx-vest-forms/schemas/src/lib/adapter-registry.ts`
+
+**Modified Files:**
+
+- `projects/ngx-vest-forms/src/lib/directives/form.directive.ts` → accept `[formSchema]` and inject schema directive optionally
+- Examples + docs to demonstrate Zod/Valibot integration
+
+### Benefits
+
+- **Unified validation story:** Schema errors map to form controls or `_root`, appearing next to Vest errors
+- **Developer ergonomics:** `ngxModelToStandardSchema()` lets teams avoid bringing heavy dependencies when a static object suffices
+- **Safety:** Template conformance warnings catch `name`/`[ngModel]` mismatches early
+
+### Success Metrics
+
+- [ ] Schema adapter handles StandardSchemaV1, `safeParse`, function schemas, and identity fallback (per PR #31 tests)
+- [ ] `[formSchema]` binding does not regress existing forms when omitted
+- [ ] Dev-mode warning surfaces misaligned `name` attributes within 1 render cycle
+- [ ] Docs include cookbook for Zod, Valibot, ArkType, and plain object templates
+
+### Risks & Mitigations
+
+| Risk                                                   | Impact | Mitigation                                                                                          |
+| ------------------------------------------------------ | ------ | --------------------------------------------------------------------------------------------------- |
+| Schema bundle adds weight for users who do not opt in  | Low    | Keep entry point optional; document tree-shaking                                                    |
+| Error surfaces become confusing (Vest vs. Schema)      | Medium | Provide guidance + UI recipes showing combined error display                                        |
+| Adapter maintenance overhead for third-party libraries | Medium | Centralize adapters in registry + add contract tests (see PR #31’s `to-any-runtime-schema.spec.ts`) |
+
+---
+
+### Enhancement #7: Smart State Extension for External Data Sync
+
+**Priority:** Medium
+**Effort:** 1 week (directive + utility + docs + UX guidance)
+**Dependencies:** Headless core exposed (optional) so smart state can be a composable host directive
+
+### Problem Statement — Smart State
+
+Long-lived forms often receive server updates (autosave drafts, admin edits, collaborative sessions). Today, when `formValue` changes from the outside, ngx-vest-forms overwrites local edits, causing data loss and forcing teams to reimplement merge/conflict logic per project.
+
+### Current State — Smart State
+
+- `ngxVestForm` treats `[(formValue)]` as source of truth and does not differentiate between user edits vs. server patches
+- No utilities for deep comparison, conflict detection, or prompting users
+- Complex apps bolt on NgRx/Signals-based reducers outside the form directive, increasing boilerplate
+
+### Proposed Solution — Smart State
+
+- Introduce `ngxSmartStateExtension` host directive, modeled after PR #31 prototypes, with inputs:
+  - `[externalData]`: latest payload from backend/real-time feeds
+  - `[smartStateOptions]`: `mergeStrategy` (`replace`, `preserve`, `smart`), `preserveFields`, and `onConflict` callback returning merged data or `'prompt-user'`
+  - `[isDirty]`, `[isValid]`: hints from the main form state
+- Expose `form.smartState()` API with `mergedValue`, `conflictState`, and helper `resolveConflict('local' | 'external' | 'merge')`
+- Provide `SmartStateExtension` utility class (already unit-tested in PR #31) for pure merging logic
+
+### Technical Implementation — Smart State
+
+**New Files:**
+
+- `projects/ngx-vest-forms/smart-state/src/lib/smart-state-extension.ts`
+- `projects/ngx-vest-forms/smart-state/src/lib/smart-state-extension.directive.ts`
+- `projects/ngx-vest-forms/smart-state/src/lib/smart-state-extension.types.ts`
+- `projects/ngx-vest-forms/smart-state/README.md` (usage cookbook)
+
+**Modified Files:**
+
+- `projects/ngx-vest-forms/src/lib/directives/form.directive.ts` → expose `isDirty`, `isValid`, and register smart state host directive when available
+- Examples + docs highlighting user profile, collaborative editor, offline order sync scenarios (mirroring PR #31 README)
+
+### Benefits — Smart State
+
+- **Data safety:** Prevents overwriting local edits when server pushes new data mid-edit
+- **Conflict UX:** Provides shared conflict state so apps can render “keep mine / accept server” dialogs quickly
+- **Extensibility:** Options like `preserveFields` cover common cases (protect critical fields, arrays, nested paths)
+
+### Success Metrics — Smart State
+
+- [ ] Directive handles all three merge strategies with unit coverage (see PR #31 specs)
+- [ ] `'prompt-user'` conflicts expose state that UI components can consume
+- [ ] Playwright test demonstrates conflict resolution in the examples app
+- [ ] Documentation includes at least three real-world workflows
+
+### Risks & Mitigations — Smart State
+
+| Risk                                                      | Impact | Mitigation                                                                                          |
+| --------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------- |
+| Merge logic becomes a maintenance burden                  | Medium | Keep pure logic isolated in `SmartStateExtension` with extensive unit tests                         |
+| Developers misuse merge strategies and still lose data    | Medium | Provide opinionated defaults + guardrails (e.g., warn if `preserveFields` references unknown paths) |
+| Directive complicates forms that never need external data | Low    | Keep feature opt-in; no behavior change unless `[externalData]` is bound                            |
 
 ---
 
