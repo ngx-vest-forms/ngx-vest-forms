@@ -6,93 +6,11 @@
 
 ## 🎯 Overview
 
-This document outlines remaining work for ngx-vest-forms following successful completion of PR #60 and enhancements #5-6.
-
----
-
-## ✅ Recently Completed (November 2025)
-
-- **PR #60**: Validation timing fixes, array/field path utilities, `only()` pattern enforcement
-- **Enhancement #5**: Signal memoization with custom equality (60-80% performance improvement)
-- **Enhancement #6**: WCAG 2.2 AA ARIA management (10 new tests, full accessibility compliance)
-- **Dual Selector Support**: Full `ngx-` prefix implementation alongside legacy `sc-` prefix (v2.0.0)
-  - All components and directives support both selectors
-  - New `NGX_ERROR_DISPLAY_MODE_TOKEN` with backward compatibility
-  - Updated 33 files (7 examples, 22+ tests) to use ngx- prefix
-  - Complete migration guide in `docs/dev/DUAL-SELECTOR-SUPPORT.md`
-  - Deprecation timeline: v2.x warnings, v3.0.0 removal
-- **Breaking Changes for v2.0.0**:
-  - Removed deprecated `VALIDATION_CONFIG_DEBOUNCE_TIME` constant (use `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN` instead)
-  - Unconditional `only()` pattern now required in validation suites
-- **Test Coverage**: 91.27% utility coverage (30+ new tests), all 343 tests passing
-- **Code Modernization**: Signals, OnPush, unconditional `only()` pattern throughout
-- **Documentation**: Browser compatibility, comprehensive accessibility guide, dual selector migration
-
-**PR #60 Copilot Review Items (Addressed):**
-
-- ✅ JSDoc for `only()` pattern explaining unconditional call requirement
-- ✅ `structuredClone()` double-cloning documented (reference isolation necessity)
-- ✅ Deprecation notice enhanced with browser/Node.js requirements
-- ✅ Unused imports cleaned up
-- ✅ Example components (`phonenumbers.component.ts`) already emit new values correctly
-- ✅ `inject(NgForm, { self: true })` already uses correct parameters (no redundant `optional: false`)
-- ⏭️ `structuredClone` fallback simplification moved to v1.5.0 code quality improvements
-
-**Issues Resolved:**
-
-- ✅ #59 - Complex ValidationConfig test scenario
-- ✅ #56 - ValidationConfig lifecycle timing issues
-
----
+This document outlines remaining work for ngx-vest-forms following successful completion of PR #60 and enhancements #5-6. Completed milestones from November 2025 now live in `docs/dev/archive/ROADMAP-2025-11-completed.md` to keep this roadmap focused on upcoming work.
 
 ## 🔴 Critical Issues (Immediate Action Required)
 
-### Issue #13: Can't Bind to 'validateRootForm' Property
-
-**Priority:** 🔴 CRITICAL - BLOCKING BUG
-**Effort:** 2-4 hours (LLM investigation + dev review)
-**Impact:** Users cannot use root form validation
-
-```
-Error: Can't bind to 'validateRootForm' since it isn't a known property of 'form'
-```
-
-**Context (reported):**
-
-- Angular 19 consuming `ngx-vest-forms@1.1.0`
-- Template compiler fails before runtime, so no Vest suites ever run
-- Forms always report as valid because the async validator never registers
-
-**Current findings (Nov 2025):**
-
-- `ValidateRootFormDirective` is exported from `public-api.ts` and included in the `vestForms` convenience array (`projects/ngx-vest-forms/src/lib/exports.ts:71-78`), and the compiled artifact marks it `standalone: true`.
-- Directive logic works when Angular can see it (unit specs in `projects/ngx-vest-forms/src/lib/directives/validate-root-form.directive.spec.ts` and e2e coverage in `e2e/root-form-live-mode.spec.ts`), so the breakage must come from how the directive is packaged/consumed in earlier releases.
-- We have no automated test that consumes the published npm bundle inside a fresh Angular app, so a missing export or tree-shaken directive can ship unnoticed.
-- Docs never explicitly remind users that `validateRootForm` lives in `vestForms`, so some reports might stem from missing imports.
-
-**Remediation plan:**
-
-1. **Reproduce + audit artifacts**
-   - Install `ngx-vest-forms@1.1.0` in a clean Angular 19 playground, add a `<form scVestForm validateRootForm>` template, and capture the compiler stack trace.
-   - Download the 1.1.0 tarball and inspect `fesm2022/ngx-vest-forms.mjs` + `index.d.ts` to see whether the directive is absent from `vestForms`, missing `standalone: true`, or renamed during bundling.
-2. **Patch packaging**
-   - If the directive is missing, add it back to `vestForms`, `vestFormsViewProviders`, and the barrel exports; consider a `provideValidateRootForm()` helper so apps can tree-shake everything else.
-   - Double-check the selector (`form[validateRootForm]`) and update documentation to mention that `scVestForm` + `FormsModule` are required.
-3. **Add regression coverage**
-   - Create a Jest component test that compiles `<form scVestForm validateRootForm ...>` under AOT so template compilation fails in CI if the directive ever drops out of scope.
-   - Add an integration test that consumes the **built package** from `dist/ngx-vest-forms` to detect packaging issues before publish.
-4. **Docs + release**
-   - Update README + `VALIDATION-CONFIG-VS-ROOT-FORM.md` with an “Import checklist” callout for `validateRootForm`.
-   - Announce the fix in the next patch release notes and provide migration guidance for projects stuck on 1.1.0.
-
-**Action Items:**
-
-- [ ] Create minimal reproduction + capture failing build log
-- [ ] Inspect the 1.1.0 tarball and document the missing export/metadata
-- [ ] Apply packaging fix + add regression tests (AOT + integration)
-- [ ] Update docs and ship emergency patch if the fix is non-breaking
-
----
+No outstanding critical issues. The previously blocking `validateRootForm` packaging bug (#13) was resolved in v2.0.0 and is documented in `docs/dev/archive/ROADMAP-2025-11-completed.md`.
 
 ## 🟡 Medium Priority Issues
 
@@ -203,49 +121,15 @@ try {
 
 ## 🎯 Planned Enhancements (v2.2.0)
 
-### Enhancement #1: Enhanced Field Path Types
-
-**Priority:** High
-**Effort:** 1-2 days (LLM type generation + dev refinement + extensive testing)
-**Dependencies:** None
-
-**Goal:** Type-safe field paths with IDE autocomplete
-
-```typescript
-// Before: plain strings (error-prone)
-const validationConfig = {
-  firstName: ['addresses.billingAddress.street'], // no autocomplete
-};
-
-// After: type-safe with autocomplete
-type FieldPath<T> = /* recursive template literal type */;
-const validationConfig: ValidationConfigMap<FormModel> = {
-  firstName: ['addresses.billingAddress.street'], // ✅ autocomplete!
-};
-```
-
-**Benefits:**
-
-- Compile-time field name validation
-- IDE autocomplete for nested paths
-- Refactoring safety
-- Prevents typos
-
-**Files:**
-
-- NEW: `lib/utils/field-path-types.ts`
-- UPDATE: `lib/directives/form.directive.ts`
-- EXPORT: `public-api.ts`
-
----
-
 ### Enhancement #2: Development-Mode Error Messages
 
 **Priority:** High
 **Effort:** 2-3 days (LLM catalog + helpers + dev documentation review)
 **Dependencies:** None
 
-**Goal:** Context-aware error messages with solutions```typescript
+**Goal:** Context-aware error messages with solutions
+
+```typescript
 // Current: Generic Angular error
 // "Cannot find control with name: 'user_email'"
 
@@ -261,7 +145,7 @@ The 'name' attribute "user_email" doesn't match model path "email".
 
 📖 Docs: https://...
 
-````
+```
 
 **Error Catalog:**
 
@@ -284,128 +168,7 @@ The 'name' attribute "user_email" doesn't match model path "email".
 - NEW: `docs/ERRORS.md`
 - UPDATE: `lib/directives/form.directive.ts`
 
----
-
-### Enhancement #3: Configurable Debouncing
-
-**Priority:** ~~Medium~~ **COMPLETED in v2.0.0** ✅
-**Status:** SHIPPED - `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN` is available
-
-**Implementation Complete:**
-- ✅ `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN` injection token created
-- ✅ Default value: 100ms (backward compatible)
-- ✅ Global, route-level, and component-level configuration supported
-- ✅ Deprecated `VALIDATION_CONFIG_DEBOUNCE_TIME` constant removed in v2.0.0
-
-**Usage:**```typescript
-// Currently: hardcoded 100ms
-// Proposed: DI token
-
-// Global config
-export const appConfig: ApplicationConfig = {
-  providers: [
-    { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 50 }
-  ]
-};
-
-// Per-component
-@Component({
-  providers: [
-    { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 300 }
-  ]
-})
-````
-
-**Use Cases:**
-
-- Fast networks → 50ms (snappier UX)
-- Expensive validations → 300ms (reduce load)
-- Testing → 0ms (synchronous)
-
-**Benefits:**
-
-- Performance tuning flexibility
-- Testing support
-- Backward compatible (default 100ms)
-
-**Files:**
-
-- ~~NEW: `lib/tokens/debounce.token.ts`~~ ✅ **COMPLETED**
-- ~~UPDATE: `lib/directives/form.directive.ts`~~ ✅ **COMPLETED**
-- ~~DEPRECATE: `lib/constants.ts` (add migration note)~~ ✅ **REMOVED in v2.0.0**
-
-**Migration Guide:**
-
-Users upgrading from v1.x to v2.0.0 need to replace the removed constant:
-
-```typescript
-// ❌ Old (removed in v2.0.0)
-import { VALIDATION_CONFIG_DEBOUNCE_TIME } from 'ngx-vest-forms';
-
-// ✅ New (v2.0.0+)
-import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
-
-// Global configuration
-export const appConfig: ApplicationConfig = {
-  providers: [
-    { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 100 } // Same default
-  ]
-};
-
-// Component-level override
-@Component({
-  providers: [
-    { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 0 } // For testing
-  ]
-})
-```
-
----
-
-### Enhancement #4: ValidationConfig Fluent Builder
-
-**Priority:** Medium
-**Effort:** 1-2 days (LLM builder API + comprehensive tests + dev UX validation)
-**Dependencies:** Enhancement #1**Goal:** Fluent API for validation configuration
-
-```typescript
-// Before: verbose, error-prone
-const validationConfig = {
-  password: ['confirmPassword'],
-  confirmPassword: ['password'],
-  // ... manual bidirectional setup
-};
-
-// After: fluent, type-safe
-const validationConfig = createValidationConfig<FormModel>()
-  .bidirectional('password', 'confirmPassword')
-  .whenChanged('country', 'state', 'zipCode')
-  .group(['firstName', 'lastName', 'email'])
-  .build();
-```
-
-**API Methods:**
-
-- `whenChanged(trigger, ...dependents)` - One-way dependency
-- `bidirectional(field1, field2)` - Both trigger each other
-- `group([...fields])` - All trigger all
-- `build()` - Return config object
-
-**Benefits:**
-
-- Type safety (uses FieldPath from #1)
-- Clear intent
-- Less boilerplate
-- Validation logic
-
-**Files:**
-
-- NEW: `lib/utils/validation-config-builder.ts`
-- NEW: `lib/utils/validation-config-builder.spec.ts`
-
----
-
-### Enhancement #5: Headless Core Entry Point (`ngxVestFormCore`)
+### Enhancement #3: Headless Core Entry Point (`ngxVestFormCore`)
 
 **Priority:** Medium
 **Effort:** 3-4 days (split directive + docs + dedicated tests)
@@ -439,7 +202,7 @@ Teams building custom design systems only want the reactive form bridge (signals
 
 ---
 
-### Enhancement #6: Schema Validation Adapter & `[formSchema]`
+### Enhancement #4: Schema Validation Adapter & `[formSchema]`
 
 **Priority:** High
 **Effort:** 4-5 days (adapter registry + directive + docs)
@@ -473,7 +236,7 @@ Apps regularly pair Vest with schema validators (Zod/Valibot/ArkType) for submit
 
 ---
 
-### Enhancement #7: Smart State Extension for External Data Sync
+### Enhancement #5: Smart State Extension for External Data Sync
 
 **Priority:** Medium
 **Effort:** 1 week (directive + resolver UX + docs)
@@ -513,35 +276,34 @@ When backend data refreshes mid-edit (autosave, admin override, collaborative se
 
 ### Phase 1: v2.1.0 Release (Days 1-3)
 
-**Day 1: Critical Bug Fixes**
-
-- [ ] Issue #13: validateRootForm binding (2-4 hours)
-- [ ] Emergency patch release if needed
-
-**Days 2-3: Medium Priority + Code Quality**
+#### Days 1-2: Medium Priority + Code Quality
 
 - [ ] Issue #15: Tailwind compatibility (3-4 hours)
 - [ ] Issue #12: Date shape validation (4-6 hours)
 - [ ] Code Quality: Simplify structuredClone fallback (1-2 hours)
 - [ ] Integration testing (2 hours)
-- [ ] v2.1.0 Release
+
+#### Day 3: Release Readiness
+
+- [ ] v2.1.0 release candidate build
+- [ ] Docs + changelog updates
+- [ ] Publish v2.1.0 once acceptance passes
 
 ### Phase 2: v2.2.0 Release (Days 4-10)
 
-**Days 4-6: Foundation Enhancements**
+#### Days 4-6: Foundation Enhancement
 
-- [ ] Enhancement #1: Field Path Types (1-2 days)
-- [ ] Enhancement #2: Error Messages (2-3 days)
-- [ ] Enhancement #3: Debouncing Token (4-6 hours)
-- [ ] Unit tests for all (included above)
+- [ ] Enhancement #1: Error Messages (2-3 days)
+- [ ] Unit tests (included above)
 
-**Days 7-8: Advanced Features**
+#### Days 7-8: Advanced Features
 
-- [ ] Enhancement #4: ValidationConfig Builder (1-2 days)
+- [ ] Enhancement #3: Headless Core Entry Point (3-4 days)
+- [ ] Enhancement #4: Schema Validation Adapter (4-5 days)
 - [ ] Performance benchmarks (4 hours)
 - [ ] Documentation updates (4 hours)
 
-**Days 9-10: Release Preparation**
+#### Days 9-10: Release Preparation
 
 - [ ] Beta testing
 - [ ] Community feedback
@@ -633,8 +395,8 @@ When backend data refreshes mid-edit (autosave, admin override, collaborative se
 
 ## References
 
-- PR #60: https://github.com/ngx-vest-forms/ngx-vest-forms/pull/60
-- Issue #59: https://github.com/ngx-vest-forms/ngx-vest-forms/issues/59
-- Issue #56: https://github.com/ngx-vest-forms/ngx-vest-forms/issues/56
+- PR #60: <https://github.com/ngx-vest-forms/ngx-vest-forms/pull/60>
+- Issue #59: <https://github.com/ngx-vest-forms/ngx-vest-forms/issues/59>
+- Issue #56: <https://github.com/ngx-vest-forms/ngx-vest-forms/issues/56>
 - Documentation: `/docs/`
 - Examples: `/projects/examples/`
