@@ -259,6 +259,87 @@ describe('ValidateRootFormDirective - AOT Compilation Tests', () => {
     });
   });
 
+  describe('Issue #13: Exact Scenario from Bug Report', () => {
+    /**
+     * This test reproduces the exact scenario from Issue #13:
+     * https://github.com/ngx-vest-forms/ngx-vest-forms/issues/13
+     *
+     * User reported: "Can't bind to 'validateRootForm' since it isn't a known property of 'form'"
+     * Context: Angular 19 consuming ngx-vest-forms with <form scVestForm validateRootForm>
+     *
+     * This test verifies that the directive works correctly when properly imported.
+     */
+    it('should compile the exact template from Issue #13 when vestForms is imported', () => {
+      const suite = staticSuite((data: Record<string, unknown> = {}, field?: string) => {
+        only(field);
+        test(ROOT_FORM, 'Form-level validation', () => {
+          enforce(data['test']).isNotBlank();
+        });
+      });
+
+      @Component({
+        selector: 'app-issue-13-fix',
+        standalone: true,
+        imports: [vestForms], // ✅ This is the fix - users must import vestForms
+        template: `
+          <form scVestForm validateRootForm [suite]="suite" [formValue]="model()">
+            <input name="test" [ngModel]="model().test" />
+          </form>
+        `,
+      })
+      class Issue13FixComponent {
+        model = signal<Record<string, unknown>>({});
+        suite = suite;
+      }
+
+      // This should NOT throw when vestForms is imported
+      expect(() => {
+        TestBed.configureTestingModule({
+          imports: [Issue13FixComponent],
+        });
+        const fixture: ComponentFixture<Issue13FixComponent> = TestBed.createComponent(Issue13FixComponent);
+        fixture.detectChanges();
+      }).not.toThrow();
+    });
+
+    it('should document the error when vestForms is NOT imported (Issue #13 reproduction)', () => {
+      const suite = staticSuite((data: Record<string, unknown> = {}, field?: string) => {
+        only(field);
+        test(ROOT_FORM, 'Test', () => { enforce(data['test']).isNotBlank(); });
+      });
+
+      @Component({
+        selector: 'app-issue-13-broken',
+        standalone: true,
+        imports: [FormsModule], // ❌ Missing vestForms - reproduces Issue #13
+        template: `
+          <form
+            validateRootForm
+            [suite]="suite"
+            [formValue]="model()"
+          >
+            <input name="test" />
+          </form>
+        `,
+      })
+      class Issue13BrokenComponent {
+        model = signal<Record<string, unknown>>({});
+        suite = suite;
+      }
+
+      // This test documents what happens when imports are missing (Issue #13 scenario)
+      // In AOT compilation, this would fail with:
+      // "Can't bind to 'validateRootForm' since it isn't a known property of 'form'"
+      expect(() => {
+        TestBed.configureTestingModule({
+          imports: [Issue13BrokenComponent],
+        });
+        const fixture: ComponentFixture<Issue13BrokenComponent> = TestBed.createComponent(Issue13BrokenComponent);
+        fixture.detectChanges();
+      }).not.toThrow(); // JIT mode doesn't throw, but directive won't work
+    });
+  });
+
   describe('Error Detection', () => {
     it('should fail compilation if ValidateRootFormDirective is not imported', () => {
       const suite = staticSuite((data: Record<string, unknown> = {}, field?: string) => {

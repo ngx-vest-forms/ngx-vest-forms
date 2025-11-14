@@ -1,5 +1,7 @@
 # Issue #13: validateRootForm Binding Issue - Resolution
 
+**GitHub Issue**: https://github.com/ngx-vest-forms/ngx-vest-forms/issues/13
+
 ## Issue Summary
 
 **Problem**: Users reported error: "Can't bind to 'validateRootForm' since it isn't a known property of 'form'"
