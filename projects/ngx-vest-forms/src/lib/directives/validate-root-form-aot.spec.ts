@@ -264,10 +264,15 @@ describe('ValidateRootFormDirective - AOT Compilation Tests', () => {
      * This test reproduces the exact scenario from Issue #13:
      * https://github.com/ngx-vest-forms/ngx-vest-forms/issues/13
      *
-     * User reported: "Can't bind to 'validateRootForm' since it isn't a known property of 'form'"
-     * Context: Angular 19 consuming ngx-vest-forms with <form scVestForm validateRootForm>
+     * Original issue: "Can't bind to 'validateRootForm' since it isn't a known property of 'form'"
+     * Original context: Angular 19 consuming ngx-vest-forms@1.1.0
      *
-     * This test verifies that the directive works correctly when properly imported.
+     * This test verifies the fix works with:
+     * - Current Angular version: 20.3.10
+     * - Current ngx-vest-forms: Latest (this build)
+     * - Template: <form scVestForm validateRootForm>
+     *
+     * The fix: Users must import vestForms array to get the ValidateRootFormDirective
      */
     it('should compile the exact template from Issue #13 when vestForms is imported', () => {
       const suite = staticSuite((data: Record<string, unknown> = {}, field?: string) => {
@@ -293,6 +298,7 @@ describe('ValidateRootFormDirective - AOT Compilation Tests', () => {
       }
 
       // This should NOT throw when vestForms is imported
+      // Validates the fix works with Angular 20.3.10 and current ngx-vest-forms
       expect(() => {
         TestBed.configureTestingModule({
           imports: [Issue13FixComponent],
@@ -328,7 +334,7 @@ describe('ValidateRootFormDirective - AOT Compilation Tests', () => {
       }
 
       // This test documents what happens when imports are missing (Issue #13 scenario)
-      // In AOT compilation, this would fail with:
+      // With current Angular 20.3.10, in AOT compilation this would fail with:
       // "Can't bind to 'validateRootForm' since it isn't a known property of 'form'"
       expect(() => {
         TestBed.configureTestingModule({

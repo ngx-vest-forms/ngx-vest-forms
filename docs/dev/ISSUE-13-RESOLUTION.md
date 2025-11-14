@@ -6,7 +6,11 @@
 
 **Problem**: Users reported error: "Can't bind to 'validateRootForm' since it isn't a known property of 'form'"
 
+**Original Context**: Angular 19 consuming `ngx-vest-forms@1.1.0`
+
 **Status**: ✅ RESOLVED
+
+**Testing Context**: Fix verified with Angular 20.3.10 and current ngx-vest-forms build
 
 ## Root Cause Analysis
 
