@@ -170,11 +170,6 @@ export class PurchaseFormComponent {
 
     // Reset shipping address state
     this.shippingAddress.set({});
-
-    // Force change detection to properly clear all fields
-    setTimeout(() => {
-      this.formValue.set({});
-    }, 0);
   }
 
   /**
