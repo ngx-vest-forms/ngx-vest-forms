@@ -60,7 +60,7 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
 
       <!-- Errors -->
       @if (errorDisplay.shouldShowErrors()) {
-        <div class="errors" role="alert" aria-live="polite">
+        <div class="errors" role="alert" aria-live="assertive">
           @for (error of errorDisplay.errors(); track error) {
             <p class="error">{{ error.message || error }}</p>
           }

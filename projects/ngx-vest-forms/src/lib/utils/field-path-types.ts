@@ -4,7 +4,21 @@
 type Primitive = string | number | boolean | Date | null | undefined;
 
 /**
- * Array element type extractor
+ * Utility type to extract the element type of an array.
+ *
+ * Given an array type (e.g., `string[]`), returns the type of its elements (`string`).
+ * If the type is not an array, returns `never`.
+ *
+ * @template T - The array type to extract the element type from
+ *
+ * @example
+ * ```typescript
+ * type Numbers = number[];
+ * type Element = ArrayElement<Numbers>; // Result: number
+ *
+ * type NotArray = string;
+ * type Element2 = ArrayElement<NotArray>; // Result: never
+ * ```
  */
 type ArrayElement<T> = T extends (infer U)[] ? U : never;
 

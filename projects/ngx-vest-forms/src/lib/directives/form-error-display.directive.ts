@@ -113,7 +113,6 @@ export class FormErrorDisplayDirective {
       return !!(formSubmitted && hasErrorState);
     }
     // on-blur-or-submit: show errors after blur (touch) OR submit
-    // Removed hasBeenValidated check as it was causing errors to show on page load
     return !!((isTouched || formSubmitted) && hasErrorState);
   });
 
