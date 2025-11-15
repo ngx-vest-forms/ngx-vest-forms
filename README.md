@@ -381,7 +381,7 @@ This prevents null reference errors in templates when child forms or form refere
 
 Template-driven forms are type-safe, but not in the `name` attributes or `ngModelGroup` attributes.
 Making a typo in those can result in a time-consuming endeavor. For this we have introduced shapes.
-A shape is an object where the `scVestForm` can validate to. It is a deep required of the form model:
+A shape is an object where the `ngxVestForm` can validate to. It is a deep required of the form model:
 
 ```typescript
 import { DeepPartial, DeepRequired, vestForms } from 'ngx-vest-forms';

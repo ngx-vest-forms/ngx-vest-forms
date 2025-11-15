@@ -87,7 +87,7 @@ type OrderFormModel = NgxDeepPartial<{
   selector: 'app-order-form',
   imports: [vestForms, AddressFormComponent],
   template: `
-    <form scVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
+    <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
       <label>Customer Name</label>
       <input name="customerName" [ngModel]="formValue().customerName" />
 
@@ -161,7 +161,7 @@ Child components can include their own error display:
   viewProviders: [vestFormsViewProviders],
   template: `
     <div ngModelGroup="contact">
-      <div sc-control-wrapper>
+      <div ngx-control-wrapper>
         <label for="email">Email</label>
         <input
           id="email"
@@ -171,7 +171,7 @@ Child components can include their own error display:
         />
       </div>
 
-      <div sc-control-wrapper>
+      <div ngx-control-wrapper>
         <label for="phone">Phone</label>
         <input
           id="phone"
@@ -200,7 +200,7 @@ Child components can contain other child components - all need `vestFormsViewPro
   imports: [vestForms],
   viewProviders: [vestFormsViewProviders], // Required
   template: `
-    <div sc-control-wrapper>
+    <div ngx-control-wrapper>
       <label [for]="fieldName()">{{ label() }}</label>
       <input
         [id]="fieldName()"
@@ -249,7 +249,7 @@ Child components work seamlessly with conditional rendering:
 ```typescript
 @Component({
   template: `
-    <form scVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
+    <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
       <label>
         <input
           type="checkbox"
@@ -343,7 +343,7 @@ export class Step2Component { }
 // Parent
 @Component({
   template: `
-    <form scVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
+    <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
       @if (currentStep() === 1) {
         <app-step1 [data]="formValue().step1" />
       }

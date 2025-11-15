@@ -11,7 +11,7 @@
 **v1.4.x Behavior (old):**
 
 ```typescript
-<form scVestForm validateRootForm>
+<form ngxVestForm validateRootForm>
   <!-- ✅ Validated on EVERY value change (live mode) -->
 </form>
 ```
@@ -19,7 +19,7 @@
 **v1.5.0 Behavior (new - BREAKING):**
 
 ```typescript
-<form scVestForm validateRootForm>
+<form ngxVestForm validateRootForm>
   <!-- ⚠️ NOW: Only validates AFTER form submission (submit mode) -->
 </form>
 ```
@@ -77,7 +77,7 @@ Explicitly set `validateRootFormMode` to `'live'`:
 
 ```typescript
 <form
-  scVestForm
+  ngxVestForm
   validateRootForm
   [validateRootFormMode]="'live'">  <!-- ← Add this to restore v2 behavior -->
   <!-- Validates on every change (old behavior) -->
@@ -90,7 +90,7 @@ Use the new submit-based validation (no change needed):
 
 ```typescript
 <form
-  scVestForm
+  ngxVestForm
   validateRootForm>  <!-- Validates after submit (v3 default) -->
   <!-- Or explicitly: [validateRootFormMode]="'submit'" -->
 </form>
@@ -107,7 +107,7 @@ import { ROOT_FORM } from 'ngx-vest-forms';
 @Component({
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [suite]="suite"
       [formValue]="formValue()"
       validateRootForm
@@ -139,7 +139,7 @@ import { ROOT_FORM } from 'ngx-vest-forms';
 @Component({
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [suite]="suite"
       [formValue]="formValue()"
       validateRootForm
@@ -172,7 +172,7 @@ import { ROOT_FORM } from 'ngx-vest-forms';
 @Component({
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [suite]="suite"
       [formValue]="formValue()"
       validateRootForm
@@ -258,7 +258,7 @@ test(ROOT_FORM, 'Full name must match ID', () => {
 @Component({
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [suite]="suite"
       [formValue]="formValue()"
       validateRootForm
@@ -355,7 +355,7 @@ If you need to temporarily rollback to v2 behavior globally:
   selector: 'app-legacy-form',
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [validateRootForm]="validateRootForm()"
       [validateRootFormMode]="'live'"  <!-- Force live mode -->
       [suite]="suite()"

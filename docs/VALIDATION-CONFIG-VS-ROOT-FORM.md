@@ -12,15 +12,15 @@ ngx-vest-forms provides three complementary features for handling validation in 
 
 ## Quick Comparison
 
-| Feature                 | `validationConfig`                            | `validateRootForm`                               | `triggerFormValidation()`                                     |
-| ----------------------- | --------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------- |
-| **Purpose**             | Re-validation trigger                         | Create form-level validations                    | Manual validation trigger                                     |
-| **What it does**        | When field X changes, re-validate field Y     | Runs ROOT_FORM tests from Vest suite             | Forces validation update when form structure changes          |
-| **Where errors appear** | At **field level** (`errors.fieldName`)       | At **form level** (`errors.rootForm`)            | N/A (triggers existing validations)                           |
-| **Use for**             | Field validations that depend on other fields | Form-wide business rules                         | Structure changes without value changes                       |
-| **When to call**        | Automatic (via config)                        | Automatic (on blur/submit)                       | Manual (after structure change)                               |
-| **Directive/Method**    | `FormDirective` (`scVestForm`)                | `ValidateRootFormDirective` (`validateRootForm`) | `FormDirective.triggerFormValidation()` (public method)       |
-| **Works with**          | Field-level tests (`test()`)                  | ROOT_FORM tests (`test(ROOT_FORM, ...)`)         | All validations (validationConfig + validateRootForm + tests) |
+| Feature                 | `validationConfig`                            | `validateRootForm`                                  | `triggerFormValidation()`                                     |
+| ----------------------- | --------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------- |
+| **Purpose**             | Re-validation trigger                         | Create form-level validations                       | Manual validation trigger                                     |
+| **What it does**        | When field X changes, re-validate field Y     | Runs ROOT_FORM tests from Vest suite                | Forces validation update when form structure changes          |
+| **Where errors appear** | At **field level** (`errors.fieldName`)       | At **form level** (`errors.rootForm`)               | N/A (triggers existing validations)                           |
+| **Use for**             | Field validations that depend on other fields | Form-wide business rules                            | Structure changes without value changes                       |
+| **When to call**        | Automatic (via config)                        | Automatic (on blur/submit)                          | Manual (after structure change)                               |
+| **Directive/Method**    | `FormDirective` (`ngxVestForm`)               | `ValidateRootFormDirective` (`ngxValidateRootForm`) | `FormDirective.triggerFormValidation()` (public method)       |
+| **Works with**          | Field-level tests (`test()`)                  | ROOT_FORM tests (`test(ROOT_FORM, ...)`)            | All validations (validationConfig + validateRootForm + tests) |
 
 ## Understanding validationConfig
 
@@ -148,7 +148,7 @@ test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
 ```html
 <!-- Template -->
 <form
-  scVestForm
+  ngxVestForm
   validateRootForm
   [validateRootFormMode]="'submit'"
   (errorsChange)="errors.set($event)"
@@ -255,7 +255,7 @@ this.vestFormRef().triggerFormValidation();
 ```typescript
 @Component({
   template: `
-    <form scVestForm #vestForm="scVestForm">
+    <form ngxVestForm #vestForm="ngxVestForm">
       <select
         name="type"
         [ngModel]="formValue().type"
@@ -321,12 +321,12 @@ These features complement each other in complex, dynamic forms:
 @Component({
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [validationConfig]="validationConfig()"
       validateRootForm
       [validateRootFormMode]="'submit'"
       (errorsChange)="errors.set($event)"
-      #vestForm="scVestForm"
+      #vestForm="ngxVestForm"
     >
       <select
         name="type"

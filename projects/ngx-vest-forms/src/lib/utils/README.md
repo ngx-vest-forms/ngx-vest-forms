@@ -572,7 +572,7 @@ export class MyFormComponent {
 **Template usage with ngModelGroup:**
 
 ```html
-<form scVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
+<form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
   <!-- Use ngModelGroup with numeric keys -->
   <div
     *ngFor="let phoneKV of formValue().phoneNumbers | keyvalue: originalOrder"
@@ -780,7 +780,7 @@ validateShape(formValue, formShape, 'formValue');
 
 **When to use:**
 
-- ⚠️ Used internally by `scVestForm` directive
+- ⚠️ Used internally by `ngxVestForm` directive
 - ⚠️ Development mode validation only
 - ✅ The directive handles this automatically
 

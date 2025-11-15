@@ -55,24 +55,24 @@ const userValidationSuite: NgxVestSuite<UserFormModel> = staticSuite(
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [suite]="suite"
       [formShape]="shape"
       (formValueChange)="formValue.set($event)"
       (ngSubmit)="save()"
     >
       <!-- Each field wrapped for error display -->
-      <div sc-control-wrapper>
+      <div ngx-control-wrapper>
         <label>First Name</label>
         <input [ngModel]="formValue().firstName" name="firstName" />
       </div>
 
-      <div sc-control-wrapper>
+      <div ngx-control-wrapper>
         <label>Last Name</label>
         <input [ngModel]="formValue().lastName" name="lastName" />
       </div>
 
-      <div sc-control-wrapper>
+      <div ngx-control-wrapper>
         <label>Email</label>
         <input [ngModel]="formValue().email" name="email" type="email" />
       </div>
@@ -97,7 +97,7 @@ export class UserFormComponent {
 - ✅ **Type-safe form model** with `NgxDeepPartial<T>`
 - ✅ **Automatic form control creation** - No manual FormControl definitions
 - ✅ **Validation on blur and submit** - Default error display modes
-- ✅ **Error display** with built-in `sc-control-wrapper`
+- ✅ **Error display** with built-in `ngx-control-wrapper`
 - ✅ **Runtime shape validation** - Catches typos in development mode
 - ✅ **Unidirectional data flow** - Using `[ngModel]` (not `[(ngModel)]`)
 - ✅ **Performance optimized** - Using `only(field)` for field-level validation
@@ -166,7 +166,7 @@ For unidirectional data flow, use property binding only:
 Update the form value through the `(formValueChange)` event:
 
 ```typescript
-<form scVestForm (formValueChange)="formValue.set($event)">
+<form ngxVestForm (formValueChange)="formValue.set($event)">
 ```
 
 ### 5. Name Attribute Must Match Property Path

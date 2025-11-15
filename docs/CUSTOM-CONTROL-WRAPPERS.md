@@ -1,6 +1,6 @@
 # Creating Custom Control Wrappers
 
-If the default `sc-control-wrapper` doesn't meet your design requirements, you can easily create your own using the `FormErrorDisplayDirective`. This directive provides all the necessary state and logic for displaying errors, warnings, and pending states.
+If the default `ngx-control-wrapper` doesn't meet your design requirements, you can easily create your own using the `FormErrorDisplayDirective`. This directive provides all the necessary state and logic for displaying errors, warnings, and pending states.
 
 ## Basic Custom Wrapper
 
@@ -203,13 +203,13 @@ export class MatFieldWrapperComponent {
 
 ## Using Your Custom Wrapper
 
-Once created, use your custom wrapper just like the built-in `sc-control-wrapper`:
+Once created, use your custom wrapper just like the built-in `ngx-control-wrapper`:
 
 ```typescript
 @Component({
   imports: [vestForms, CustomControlWrapperComponent],
   template: `
-    <form scVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
+    <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
       <app-custom-control-wrapper>
         <label>Email</label>
         <input name="email" [ngModel]="formValue().email" type="email" />

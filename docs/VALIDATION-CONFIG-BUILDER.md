@@ -826,11 +826,11 @@ createValidationConfig();
 
 1. Field names exactly match model property paths
 2. Configuration is passed to `[validationConfig]` input
-3. Form is using `scVestForm` directive
+3. Form is using `ngxVestForm` directive
 
 ```typescript
 // Template
-<form scVestForm [validationConfig]="validationConfig">
+<form ngxVestForm [validationConfig]="validationConfig">
   <input name="password" [ngModel]="formValue().password" />
   <input name="confirmPassword" [ngModel]="formValue().confirmPassword" />
 </form>

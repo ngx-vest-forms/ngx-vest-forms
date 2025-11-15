@@ -160,7 +160,7 @@ type ProcedureFormModel = NgxDeepPartial<{
   selector: 'app-procedure-form',
   imports: [vestForms],
   template: `
-    <form scVestForm (formValueChange)="formValue.set($event)" #vestForm>
+    <form ngxVestForm (formValueChange)="formValue.set($event)" #vestForm>
       <label>Procedure Type</label>
       <select
         name="procedureType"

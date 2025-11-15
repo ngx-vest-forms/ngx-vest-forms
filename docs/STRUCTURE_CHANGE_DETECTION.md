@@ -39,10 +39,10 @@ public triggerFormValidation(): void
 @Component({
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [suite]="validationSuite"
       (formValueChange)="formValue.set($event)"
-      #vestForm="scVestForm"
+      #vestForm="ngxVestForm"
     >
       <select
         name="procedureType"
