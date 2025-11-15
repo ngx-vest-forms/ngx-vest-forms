@@ -22,9 +22,9 @@ The `ValidationConfigBuilder` provides a type-safe, fluent API for creating vali
 ## Quick Start
 
 ```typescript
-import { createValidationConfig, type DeepPartial } from 'ngx-vest-forms';
+import { createValidationConfig, type NgxDeepPartial } from 'ngx-vest-forms';
 
-type MyFormModel = DeepPartial<{
+type MyFormModel = NgxDeepPartial<{
   password: string;
   confirmPassword: string;
   email: string;
@@ -463,7 +463,7 @@ createValidationConfig<FormModel>()
 ### Complex Form with Multiple Patterns
 
 ```typescript
-type OrderFormModel = DeepPartial<{
+type OrderFormModel = NgxDeepPartial<{
   // Customer info
   firstName: string;
   lastName: string;
@@ -543,7 +543,7 @@ export class CheckoutComponent {
 ### Nested Field Paths
 
 ```typescript
-type FormModel = DeepPartial<{
+type FormModel = NgxDeepPartial<{
   addresses: {
     billing: {
       street: string;
@@ -790,17 +790,17 @@ const config2 = builder.whenChanged('c', 'd').build();
 
 **Problem:** "Type 'string' is not assignable to type FieldPath<T>"
 
-**Solution:** Ensure your type parameter is correctly defined with `DeepPartial`:
+**Solution:** Ensure your type parameter is correctly defined with `NgxDeepPartial`:
 
 ```typescript
 // ✅ Correct
-type MyFormModel = DeepPartial<{
+type MyFormModel = NgxDeepPartial<{
   password: string;
 }>;
 
 // ❌ Wrong
 type MyFormModel = {
-  password?: string; // Use DeepPartial instead
+  password?: string; // Use NgxDeepPartial instead
 };
 ```
 

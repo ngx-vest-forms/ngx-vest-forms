@@ -11,7 +11,8 @@ import {
   vestForms,
   NgxDeepPartial,
   NgxDeepRequired,
-  NgxVestSuite,
+  NgxTypedVestSuite,
+  FormFieldName,
 } from 'ngx-vest-forms';
 
 // 1. Define your form model (always NgxDeepPartial)
@@ -29,8 +30,8 @@ const userFormShape: NgxDeepRequired<UserFormModel> = {
 };
 
 // 3. Create a Vest validation suite
-const userValidationSuite: NgxVestSuite<UserFormModel> = staticSuite(
-  (model: UserFormModel, field?: string) => {
+const userValidationSuite: NgxTypedVestSuite<UserFormModel> = staticSuite(
+  (model: UserFormModel, field?: FormFieldName<UserFormModel>) => {
     // CRITICAL: Always call only() unconditionally (only(undefined) is safe)
     only(field); // When field is undefined, all tests run
 
@@ -63,18 +64,27 @@ const userValidationSuite: NgxVestSuite<UserFormModel> = staticSuite(
     >
       <!-- Each field wrapped for error display -->
       <div ngx-control-wrapper>
-        <label>First Name</label>
-        <input [ngModel]="formValue().firstName" name="firstName" />
+        <label for="firstName">First Name</label>
+        <input
+          id="firstName"
+          name="firstName"
+          [ngModel]="formValue().firstName"
+        />
       </div>
 
       <div ngx-control-wrapper>
-        <label>Last Name</label>
-        <input [ngModel]="formValue().lastName" name="lastName" />
+        <label for="lastName">Last Name</label>
+        <input id="lastName" name="lastName" [ngModel]="formValue().lastName" />
       </div>
 
       <div ngx-control-wrapper>
-        <label>Email</label>
-        <input [ngModel]="formValue().email" name="email" type="email" />
+        <label for="email">Email</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          [ngModel]="formValue().email"
+        />
       </div>
 
       <button type="submit">Submit</button>

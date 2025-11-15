@@ -16,7 +16,7 @@ Lightweight adapter bridging Angular template-driven forms with Vest.js validati
 > - ✅ **Recommended**: `ngxVestForm`, `<ngx-control-wrapper>`, `ngxValidateRootForm`, `NGX_ERROR_DISPLAY_MODE_TOKEN`
 > - ⚠️ **Deprecated**: `scVestForm`, `<sc-control-wrapper>`, `validateRootForm`, `SC_ERROR_DISPLAY_MODE_TOKEN`
 >
-> Both prefixes work in v2.0+. See [Dual Selector Support](../../docs/dev/DUAL-SELECTOR-SUPPORT.md) for migration guide.
+> Both prefixes work in v2.0+. See [Dual Selector Support](../../docs/DUAL-SELECTOR-SUPPORT.md) for migration guide.
 
 > **See `.github/instructions/vest.instructions.md`** for comprehensive Vest.js validation patterns, async techniques, and performance optimization.
 
@@ -179,7 +179,7 @@ The `formState` signal uses optimized memoization with deep equality checking. I
 
 ### Validation Patterns
 
-> **⚠️ BREAKING CHANGE**: You MUST now call `only()` unconditionally. The old `if (field)` pattern breaks Vest's execution tracking. See [Migration Guide](../../docs/PR-60-CHANGES.md#migration-guide).
+> **⚠️ BREAKING CHANGE**: You MUST now call `only()` unconditionally. The old `if (field)` pattern breaks Vest's execution tracking. See [Migration Guide](../../docs/migration/MIGRATION-v1.x-to-v2.0.0.md).
 
 ```typescript
 // ✅ CORRECT: Unconditional only() call (required since latest version)
@@ -1065,7 +1065,8 @@ Use `ngxValidateRootForm` when:
 - [Field Path Types Guide](../../docs/FIELD-PATHS.md) - Complete guide to type-safe field references with autocomplete
 - [Utility Types & Functions](../../projects/ngx-vest-forms/src/lib/utils/README.md) - Comprehensive API reference
 - [Complete Example](../../docs/COMPLETE-EXAMPLE.md) - Full working example from start to finish
-- [Migration Guide](../../docs/MIGRATION.md) - Upgrading from previous versions
+- [Migration Guide (v1.x → v2.0.0)](../../docs/migration/MIGRATION-v1.x-to-v2.0.0.md) - Upgrading from v1.x to v2.0.0
+- [Selector Prefix Migration Guide](../../docs/SELECTOR-PREFIX-MIGRATION.md) - Migrating from sc- to ngx- prefix
 
 ### External Resources
 - [Original Blog](https://blog.simplified.courses/introducing-ngx-vest-forms/) • [Vest.js Docs](https://vestjs.dev/) • [Angular Forms](https://angular.dev/guide/forms/template-driven-forms) • [Form Arrays](https://blog.simplified.courses/template-driven-forms-with-form-arrays/) • [Async Validation](https://blog.simplified.courses/asynchronous-form-validators-in-angular-with-vest/)

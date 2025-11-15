@@ -710,6 +710,7 @@ For working with field paths at runtime, see:
 - [Vest.js Best Practices](./VEST-BEST-PRACTICES.md)
 - [ngx-vest-forms Guide](./.github/instructions/ngx-vest-forms.instructions.md)
 - [Migration Guide](./MIGRATION.md)
+- [Selector Prefix Migration Guide](./SELECTOR-PREFIX-MIGRATION.md)
 
 ---
 

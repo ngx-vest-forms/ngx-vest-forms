@@ -312,6 +312,7 @@ export const orderSuite: NgxVestSuite<OrderFormModel> = staticSuite(
 // Reusable component
 @Component({
   selector: 'app-name-section',
+  imports: [vestForms],
   viewProviders: [vestFormsViewProviders],
   template: `
     <div [ngModelGroup]="groupName()">

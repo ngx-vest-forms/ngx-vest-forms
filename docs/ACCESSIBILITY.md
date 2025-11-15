@@ -8,6 +8,8 @@ ngx-vest-forms is built with accessibility in mind, following WCAG 2.2 Level AA 
 
 The `ngx-control-wrapper` component uses **polite announcements** for inline field errors, warnings, and pending states:
 
+> **Backward Compatibility:** The legacy selector `sc-control-wrapper` still works in v2.x and provides the same accessibility features. See the [Selector Prefix Migration Guide](SELECTOR-PREFIX-MIGRATION.md) for migration details.
+
 - `role="status"` with `aria-live="polite"`
 - Avoids interrupting typing flow
 - Prevents excessive screen reader chatter

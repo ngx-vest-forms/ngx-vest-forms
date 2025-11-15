@@ -209,7 +209,11 @@ describe('FormDirective - Async Validator', () => {
   it('should handle undefined/null values for candidate model', async () => {
     @Component({
       selector: 'test-undefined-value-host',
-      template: `<form ngxVestForm [suite]="suite()" #vest="ngxVestForm"></form>`,
+      template: `<form
+        ngxVestForm
+        [suite]="suite()"
+        #vest="ngxVestForm"
+      ></form>`,
       standalone: true,
       imports: [vestForms],
     })

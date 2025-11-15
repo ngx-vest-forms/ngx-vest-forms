@@ -6,11 +6,11 @@
 
 ## 🎯 Overview
 
-This document outlines remaining work for ngx-vest-forms following successful completion of PR #60 and enhancements #5-6. Completed milestones from November 2025 now live in `docs/dev/archive/ROADMAP-2025-11-completed.md` to keep this roadmap focused on upcoming work.
+This document outlines remaining work for ngx-vest-forms following successful completion of PR #60 and enhancements #5-6. Completed milestones from November 2025 are recorded in PR #60 and the Git history to keep this roadmap focused on upcoming work.
 
 ## 🔴 Critical Issues (Immediate Action Required)
 
-No outstanding critical issues. The previously blocking `validateRootForm` packaging bug (#13) was resolved in v2.0.0 and is documented in `docs/dev/archive/ROADMAP-2025-11-completed.md`.
+No outstanding critical issues. The previously blocking `validateRootForm` packaging bug (#13) was resolved in v2.0.0 and is documented in PR #60.
 
 ## 🟡 Medium Priority Issues
 
