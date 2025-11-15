@@ -53,6 +53,21 @@ function validateFormValue(
         keyToCompareWith = '0';
       }
       const newPath = path ? `${path}.${key}` : key;
+      const shapeValue = shape?.[keyToCompareWith];
+
+      // Skip validation for Date fields that receive empty strings
+      // This is a common pattern in UI libraries (Angular Material, PrimeNG, etc.)
+      // where date inputs emit empty strings before a date is selected
+      if (shapeValue instanceof Date && formValue[key] === '') {
+        continue;
+      }
+
+      // Skip validation for null or undefined values
+      // These are valid states during form initialization
+      if (formValue[key] == null) {
+        continue;
+      }
+
       if (typeof formValue[key] === 'object' && formValue[key] !== null) {
         if (
           (typeof shape[keyToCompareWith] !== 'object' ||

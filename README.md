@@ -462,6 +462,14 @@ Error: Shape mismatch:
     at map.js:7:24
 ```
 
+**Note on Date Fields**: Shape validation automatically handles Date fields that may receive empty strings during form initialization. This is a common pattern in UI libraries (Angular Material, PrimeNG, etc.) where date inputs emit empty strings before a date is selected. The validation will not throw errors for:
+
+- Date fields receiving empty strings (`''`)
+- Fields with `null` or `undefined` values during initialization
+- Date fields transitioning between empty strings and Date objects
+
+This ensures a smooth development experience without false positive shape mismatch errors.
+
 ## Validation
 
 ngx-vest-forms uses [Vest.js](https://vestjs.dev) for validation - a lightweight, flexible validation framework that works across any JavaScript environment.

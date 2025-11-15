@@ -167,3 +167,43 @@ class FormDirective<T> {
 ✅ **Flexibility where you use code** - Works seamlessly in templates and components
 ✅ **Type safety** - Model parameter `T` remains fully typed throughout
 ✅ **No type assertions needed** - Everything just works
+
+---
+
+## Date Field Compatibility
+
+When using Date fields in your form models, `ngx-vest-forms` automatically handles the common pattern where UI libraries emit empty strings before a date is selected.
+
+### Shape Validation with Date Fields
+
+```typescript
+type FormModel = NgxDeepPartial<{
+  birthDate: Date;
+  appointmentDate: Date;
+}>;
+
+// Shape uses Date objects for type safety
+export const formShape: NgxDeepRequired<FormModel> = {
+  birthDate: new Date(),
+  appointmentDate: new Date(),
+};
+```
+
+**What happens at runtime:**
+
+1. **Initial state**: Date fields start as empty strings (`''`) from the UI
+2. **Shape validation**: Automatically skips validation for Date fields receiving empty strings
+3. **User interaction**: When a date is selected, the field updates to a Date object
+4. **No errors**: Shape validation handles the transition seamlessly
+
+This behavior applies to:
+
+- Date fields receiving empty strings (`''`)
+- Fields with `null` or `undefined` values during initialization
+- Nested Date fields in complex form structures
+
+**Note**: This is purely a runtime shape validation improvement. Your TypeScript types remain strict, ensuring type safety at compile time.
+
+```
+
+```
