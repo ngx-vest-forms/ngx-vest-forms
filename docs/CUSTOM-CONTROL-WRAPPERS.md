@@ -42,6 +42,82 @@ export class CustomControlWrapperComponent {
 }
 ```
 
+## Preventing Flashing Validation Messages
+
+For async validations, you may want to prevent the "Validating..." message from flashing when validation completes quickly. Use the `createDebouncedPendingState` utility:
+
+```typescript
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import {
+  FormErrorDisplayDirective,
+  createDebouncedPendingState,
+} from 'ngx-vest-forms';
+
+@Component({
+  selector: 'app-debounced-wrapper',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  hostDirectives: [FormErrorDisplayDirective],
+  template: `
+    <div class="field-wrapper">
+      <ng-content />
+
+      @if (errorDisplay.shouldShowErrors()) {
+        <div class="error-message" role="alert" aria-live="polite">
+          @for (error of errorDisplay.errors(); track error) {
+            <span>{{ error.message || error }}</span>
+          }
+        </div>
+      }
+
+      <!-- Only show after 200ms delay, keep visible for minimum 500ms -->
+      @if (showPendingMessage()) {
+        <div class="validating" role="status" aria-live="polite">
+          <span class="spinner" aria-hidden="true"></span>
+          Validating…
+        </div>
+      }
+    </div>
+  `,
+})
+export class DebouncedWrapperComponent {
+  protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
+    self: true,
+  });
+
+  // Debounced pending state prevents flashing for quick validations
+  private readonly pendingState = createDebouncedPendingState(
+    this.errorDisplay.isPending,
+    { showAfter: 200, minimumDisplay: 500 }
+  );
+
+  protected readonly showPendingMessage = this.pendingState.showPendingMessage;
+}
+```
+
+**How it works:**
+
+- **200ms delay** — Validation message only shows if validation takes longer than 200ms
+- **500ms minimum** — Once shown, message stays visible for at least 500ms to prevent flickering
+- **Better UX** — Users don't see distracting flashes for quick async validations
+
+**Options:**
+
+```typescript
+interface DebouncedPendingStateOptions {
+  showAfter?: number; // Default: 200ms
+  minimumDisplay?: number; // Default: 500ms
+}
+```
+
+**Returns:**
+
+```typescript
+interface DebouncedPendingStateResult {
+  showPendingMessage: Signal<boolean>; // Debounced signal
+  cleanup: () => void; // Optional cleanup function
+}
+```
+
 ## Advanced Custom Wrapper with Warnings
 
 The `FormErrorDisplayDirective` also exposes warning messages from Vest.js:

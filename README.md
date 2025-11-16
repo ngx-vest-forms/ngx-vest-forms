@@ -179,6 +179,8 @@ Access complete form and field state through the `FormErrorDisplayDirective` or 
 - `errorMessages()` / `warningMessages()` — Current validation messages
 - `shouldShowErrors()` — Computed based on display mode and state
 
+**Tip**: For async validations, use `createDebouncedPendingState()` to prevent "Validating..." messages from flashing when validation completes quickly (< 200ms).
+
 📖 **[Complete Guide: Custom Control Wrappers](./docs/CUSTOM-CONTROL-WRAPPERS.md)**
 
 ## Advanced Features
