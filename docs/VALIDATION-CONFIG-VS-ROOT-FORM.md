@@ -6,7 +6,7 @@ ngx-vest-forms provides three complementary features for handling validation in 
 
 - **`validationConfig`**: Triggers **re-validation** of dependent fields (when field X changes, also validate field Y)
 - **`validateRootForm`**: Enables **form-level** validation (cross-field rules at the form level)
-- **`triggerFormValidation()`**: Manually triggers validation when form **structure** changes
+- **`triggerFormValidation()`**: Manually triggers validation when switching from **input fields to non-input content** (structure changes without value changes)
 
 **Key Insight**: These are **not alternatives** - they solve different problems and often work together!
 
@@ -231,7 +231,9 @@ test(ROOT_FORM, 'Addresses cannot be the same', () => {
 
 ### Purpose
 
-Manually triggers validation update when form **structure** changes without triggering value changes (e.g., switching between inputs and non-form content).
+Manually triggers validation update when switching from **input fields to non-input content** (like `<p>` tags) where no control values change.
+
+**Critical Distinction**: Only needed when switching between form controls and non-form content. NOT needed when switching between different input fields (value changes trigger validation automatically).
 
 ### How It Works
 
@@ -250,7 +252,9 @@ this.vestFormRef().triggerFormValidation();
 
 ### Use Cases
 
-✅ **Switching between input and non-input content**
+✅ **Switching from input field to non-input content (like paragraphs)**
+
+**This is the primary use case** - when `@if` conditions switch from a form control to informational content:
 
 ```typescript
 @Component({
@@ -456,18 +460,21 @@ export class MyFormComponent {
 
 ### Use `triggerFormValidation()` when:
 
-- ✅ Form **structure changes** without value changes
-- ✅ Switching between **input fields and non-form content** (e.g., `<p>` tags)
-- ✅ Clearing fields programmatically with utilities
-- ✅ Dynamic form modes or layouts
-- ✅ Need to **force validation update** after structural change
+- ☑ Switching from **input field → non-input content** (e.g., `<input>` → `<p>`)
+- ☑ Structure changes **without** value changes
+- ☑ Clearing fields programmatically (often combined with field clearing utilities)
+
+**NOT needed when:**
+
+- ☒ Switching between different input fields (value changes handle this automatically)
+- ☒ Normal field value updates (Angular's ValueChangeEvent handles this)
 
 **Examples:**
 
-- Switching from form inputs to informational text
-- After using `clearFieldsWhen()` or similar utilities
-- Dynamic conditional form layouts
-- After programmatic form value manipulation
+- ✅ Switching from form input to informational paragraph
+- ✅ After using `clearFieldsWhen()` that removes fields completely
+- ✅ Conditional sections that toggle between inputs and static content
+- ❌ Switching from one input to another input (automatic)
 
 ### Use ALL THREE when:
 
@@ -552,19 +559,20 @@ validationConfig = { password: ['confirmPassword'] };
 
 ## Summary Table
 
-| Scenario                           | Solution                     | Why                                                         |
-| ---------------------------------- | ---------------------------- | ----------------------------------------------------------- |
-| Password confirmation              | `validationConfig`           | Field-level validation - error belongs to `confirmPassword` |
-| "Brecht is not 30"                 | `validateRootForm`           | Form-level rule - doesn't belong to any single field        |
-| Switching form type (input → text) | `triggerFormValidation()`    | Structure change without value change                       |
-| Quantity ↔ Justification          | `validationConfig`           | Bidirectional field-level validations                       |
-| At least one contact method        | `validateRootForm`           | Form-level constraint across multiple fields                |
-| Clearing fields programmatically   | `triggerFormValidation()`    | After using field clearing utilities                        |
-| Age triggers emergency contact     | `validationConfig`           | Conditional field requirement                               |
-| Addresses must differ              | `validateRootForm`           | Form-wide business rule                                     |
-| Dynamic conditional layout         | `triggerFormValidation()`    | Controls added/removed based on conditions                  |
-| End date after start date          | `validationConfig` (usually) | Field-level validation on `endDate` field                   |
-| Complex dynamic purchase form      | **ALL THREE**                | Field dependencies + form-level rules + structure changes   |
+| Scenario                                  | Solution                     | Why                                                         |
+| ----------------------------------------- | ---------------------------- | ----------------------------------------------------------- |
+| Password confirmation                     | `validationConfig`           | Field-level validation - error belongs to `confirmPassword` |
+| "Brecht is not 30"                        | `validateRootForm`           | Form-level rule - doesn't belong to any single field        |
+| Switching input → paragraph/text          | `triggerFormValidation()`    | Structure change from input to non-input content            |
+| Switching between different inputs        | **Not needed (automatic)**   | Value changes trigger validation automatically              |
+| Quantity ↔ Justification                 | `validationConfig`           | Bidirectional field-level validations                       |
+| At least one contact method               | `validateRootForm`           | Form-level constraint across multiple fields                |
+| Clearing fields to non-input content      | `triggerFormValidation()`    | After structure change with field clearing utilities        |
+| Age triggers emergency contact            | `validationConfig`           | Conditional field requirement                               |
+| Addresses must differ                     | `validateRootForm`           | Form-wide business rule                                     |
+| Dynamic layout (inputs ↔ static content) | `triggerFormValidation()`    | Controls replaced with non-input elements                   |
+| End date after start date                 | `validationConfig` (usually) | Field-level validation on `endDate` field                   |
+| Complex dynamic purchase form             | **ALL THREE**                | Field dependencies + form-level rules + structure changes   |
 
 ## Additional Resources
 

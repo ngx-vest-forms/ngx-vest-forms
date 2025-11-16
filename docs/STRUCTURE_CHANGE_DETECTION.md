@@ -6,7 +6,7 @@ This document explains advanced techniques for handling form validation updates 
 
 ## The Problem
 
-When form structure changes (e.g., controls are added or removed) without control value changes, the `formValueChange` event is not automatically emitted. This can lead to situations where form validity is not updated correctly.
+When form structure changes from **input fields to non-input content** (like `<p>` tags) without control value changes, the `formValueChange` event is not automatically emitted. This can lead to situations where form validity is not updated correctly.
 
 ### Example Scenario
 
@@ -24,6 +24,26 @@ When form structure changes (e.g., controls are added or removed) without contro
 ```
 
 When switching from `typeA` to `typeC`, the input field is removed but no control values change, so validation doesn't update automatically.
+
+### When You DON'T Need This
+
+**Important**: You do **NOT** need `triggerFormValidation()` when switching between different input fields:
+
+```typescript
+// ✅ This works automatically - no triggerFormValidation() needed
+@if (procedureType() === 'typeA') {
+  <input name="fieldA" [ngModel]="formValue().fieldA" />
+} @else {
+  <input name="fieldB" [ngModel]="formValue().fieldB" />
+}
+```
+
+Why? Because switching between inputs means control values change, which triggers Angular's `ValueChangeEvent` and validation updates automatically.
+
+**You only need `triggerFormValidation()` when**:
+
+- Switching from input field → non-input content (like `<p>`, `<div>`, etc.)
+- The structure changes but no control values change
 
 ## Solution: Manual Validation Update
 

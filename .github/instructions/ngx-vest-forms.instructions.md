@@ -389,10 +389,13 @@ ngx-vest-forms provides three features for handling validation in complex, dynam
 - ☑ Examples: "Brecht is not 30", at least one contact method
 
 **Use `triggerFormValidation()` when:**
-- ☑ Form **structure changes** without value changes
-- ☑ Switching between inputs and non-form content
-- ☑ Clearing fields programmatically
-- ☑ Examples: Dynamic form modes, conditional layouts
+- ☑ Switching from **input field → non-input content** (e.g., `<input>` → `<p>`)
+- ☑ Structure changes **without** value changes
+- ☑ Clearing fields programmatically (when removing inputs entirely)
+- ☑ Examples: Toggle between form input and informational paragraph
+
+**NOT needed when:**
+- ☒ Switching between different input fields (value changes trigger validation automatically)
 
 **Use ALL THREE when:**
 - ☑ Complex dynamic forms with field dependencies, form-level rules, AND structure changes

@@ -330,7 +330,9 @@ const cleaned = clearFieldsWhen(state, {
 
 ## Combining with `triggerFormValidation()`
 
-Always call `triggerFormValidation()` after clearing fields to update validation state:
+**Important**: Only call `triggerFormValidation()` when clearing fields results in switching from **input fields to non-input content** (like paragraphs or informational text).
+
+**You DON'T need it** if you're just switching between different input fields (value changes trigger validation automatically).
 
 ```typescript
 protected onStructureChange(newValue: string): void {
@@ -341,10 +343,16 @@ protected onStructureChange(newValue: string): void {
     })
   );
 
-  // 2. Trigger validation update
+  // 2. Trigger validation update (only if structure changes to non-input content)
+  // Example: @if switches from <input> to <p>No input required</p>
   this.vestFormRef().triggerFormValidation();
 }
 ```
+
+**When to call `triggerFormValidation()`**:
+
+- ✅ Clearing a field that switches from `<input>` → `<p>` (non-input content)
+- ❌ Clearing a field that switches from one `<input>` to another `<input>` (automatic)
 
 ## Validation Pattern for Cleared Fields
 

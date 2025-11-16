@@ -227,14 +227,23 @@ test(ROOT_FORM, 'At least one contact method is required', () => {
 
 ### Dynamic Form Structure
 
-Manually trigger validation when form structure changes (controls added/removed) without value changes.
+Manually trigger validation when form structure changes between **input fields and non-input content** (like `<p>` tags) without value changes.
 
-**When to use**: Conditional form sections, dynamic field arrays, or when switching between different form layouts.
+**When to use**: When switching from form controls to informational text/paragraphs where no control values change.
+
+**NOT needed when**: Switching between different input fields (value changes trigger validation automatically).
 
 ```typescript
-// When structure changes
-onProcedureTypeChange(newType: string) {
-  this.vestForm.triggerFormValidation();
+// Example: Switching from input to paragraph
+@if (type() === 'typeA') {
+  <input name="fieldA" [ngModel]="formValue().fieldA" />
+} @else {
+  <p>No input required</p>  // ← No form control, needs triggerFormValidation()
+}
+
+onTypeChange(newType: string) {
+  this.formValue.update(v => ({ ...v, type: newType }));
+  this.vestForm.triggerFormValidation();  // Only needed for structure changes
 }
 ```
 
