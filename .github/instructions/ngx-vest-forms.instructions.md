@@ -432,7 +432,7 @@ provide(NGX_ERROR_DISPLAY_MODE_TOKEN, { useValue: 'on-submit' })
 
 ```typescript
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { FormErrorDisplayDirective } from 'ngx-vest-forms';
+import { FormErrorDisplayDirective, createDebouncedPendingState } from 'ngx-vest-forms';
 
 @Component({
   selector: 'app-custom-wrapper',
@@ -445,15 +445,31 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
         @for (error of errorDisplay.errors(); track error) { <span>{{ error }}</span> }
       </div>
     }
-    @if (errorDisplay.isPending()) { <div aria-busy="true">Validating...</div> }
+    @if (showPendingMessage()) {
+      <div aria-busy="true" role="status" aria-live="polite">Validating...</div>
+    }
   `
 })
 export class CustomWrapperComponent {
   protected readonly errorDisplay = inject(FormErrorDisplayDirective, { self: true });
+
+  // Debounced pending state to prevent flashing for quick validations
+  private readonly pendingState = createDebouncedPendingState(
+    this.errorDisplay.isPending,
+    { showAfter: 200, minimumDisplay: 500 }
+  );
+  protected readonly showPendingMessage = this.pendingState.showPendingMessage;
 }
 ```
 
 **Available signals:** `shouldShowErrors()`, `errors()`, `warnings()`, `isPending()`, `isTouched()`, `isDirty()`, `isValid()`, `isInvalid()`, `errorMessages()`, `warningMessages()`, `updateOn()`, `formSubmitted()`
+
+**Debounced Pending State:**
+
+The `createDebouncedPendingState()` utility prevents validation messages from flashing for quick async validations:
+- **200ms delay** - Pending message only shows if validation takes longer than 200ms
+- **500ms minimum** - Once shown, message stays visible for at least 500ms to prevent flickering
+- Use with `errorDisplay.isPending` signal for optimal UX
 
 ### Accessibility & ARIA Compliance
 

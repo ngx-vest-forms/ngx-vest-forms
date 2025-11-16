@@ -12,6 +12,7 @@ This directory contains all utility types and functions provided by ngx-vest-for
   - [NgxFieldKey<T>](#ngxfieldkeyt)
 - [Form Utilities](#form-utilities)
   - [setValueAtPath()](#setvalueatpath)
+  - [createDebouncedPendingState()](#createdebouncedpendingstate)
 - [Internal Form Utilities](#internal-form-utilities) ⚠️
   - [getAllFormErrors()](#getallformerrors)
   - [getFormControlField()](#getformcontrolfield)
@@ -305,6 +306,70 @@ setValueAtPath(obj, 'addresses[0].street', 'Main St');
 - ✅ Dynamic form value updates
 - ✅ Programmatic form population
 - ✅ Handling deeply nested structures
+
+---
+
+### createDebouncedPendingState()
+
+Creates a debounced pending state signal that prevents flashing validation messages during async validations.
+
+```typescript
+import { createDebouncedPendingState } from 'ngx-vest-forms';
+import { Component, inject } from '@angular/core';
+import { FormErrorDisplayDirective } from 'ngx-vest-forms';
+
+@Component({
+  selector: 'app-custom-wrapper',
+  hostDirectives: [
+    { directive: FormErrorDisplayDirective, inputs: ['errorDisplayMode'] },
+  ],
+  template: `
+    <ng-content />
+    @if (showPendingMessage()) {
+      <div role="status" aria-live="polite" aria-atomic="true">
+        <span aria-hidden="true">⏳</span>
+        Validating…
+      </div>
+    }
+  `,
+})
+export class CustomWrapperComponent {
+  protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
+    self: true,
+  });
+
+  // Create debounced pending state
+  private readonly pendingState = createDebouncedPendingState(
+    this.errorDisplay.isPending,
+    { showAfter: 200, minimumDisplay: 500 }
+  );
+
+  protected readonly showPendingMessage = this.pendingState.showPendingMessage;
+}
+```
+
+**Options:**
+
+- `showAfter` (default: 200ms) - Delay before showing pending message
+- `minimumDisplay` (default: 500ms) - Minimum time to keep message visible once shown
+
+**Returns:**
+
+- `showPendingMessage` - Signal that is true when pending message should be shown
+- `cleanup()` - Optional cleanup function (effect cleanup handles most cases)
+
+**When to use:**
+
+- ✅ Creating custom control wrappers with async validation feedback
+- ✅ Preventing "Validating..." message from flashing for quick validations
+- ✅ Ensuring pending messages stay visible long enough to be noticed
+- ✅ Improving UX for async form validation
+
+**How it works:**
+
+1. When validation starts, waits `showAfter`ms before showing pending message
+2. If validation completes before `showAfter`, message never appears (prevents flash)
+3. Once shown, keeps message visible for at least `minimumDisplay`ms (prevents flicker)
 
 ---
 

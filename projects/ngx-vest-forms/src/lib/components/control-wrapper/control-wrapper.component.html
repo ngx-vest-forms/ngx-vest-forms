@@ -32,7 +32,9 @@
     </ul>
   </div>
 }
-@if (errorDisplay.isPending()) {
+
+<!-- Show pending state only after a delay to prevent flashing for quick validations -->
+@if (showPendingMessage()) {
   <div
     [id]="pendingId"
     class="flex items-center gap-1 text-xs text-gray-500"

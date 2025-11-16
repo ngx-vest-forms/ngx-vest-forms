@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormErrorDisplayDirective } from '../../directives/form-error-display.directive';
+import { createDebouncedPendingState } from '../../utils/pending-state.utils';
 
 // Counter for unique IDs
 let nextUniqueId = 0;
@@ -70,7 +71,8 @@ let nextUniqueId = 0;
  *   <sc-control-wrapper>
  *     <input name="username" ngModel />
  *   </sc-control-wrapper>
- *   /// If async validation is running, a spinner and 'Validating…' will be shown.
+ *   /// If async validation is running for >200ms, a spinner and 'Validating…' will be shown.
+ *   /// Once shown, the validation message stays visible for minimum 500ms to prevent flashing.
  *   /// If Vest warnings are present, they will be shown below errors.
  *
  * Example (global config):
@@ -126,6 +128,16 @@ export class ControlWrapperComponent implements AfterContentInit {
   private readonly formControls = signal<HTMLElement[]>([]);
 
   /**
+   * Debounced pending state to prevent flashing for quick async validations.
+   * Uses createDebouncedPendingState utility with 200ms delay and 500ms minimum display.
+   */
+  private readonly pendingState = createDebouncedPendingState(
+    this.errorDisplay.isPending,
+    { showAfter: 200, minimumDisplay: 500 }
+  );
+  protected readonly showPendingMessage = this.pendingState.showPendingMessage;
+
+  /**
    * Computed signal that builds aria-describedby string based on visible regions
    */
   protected readonly ariaDescribedBy = computed(() => {
@@ -136,7 +148,7 @@ export class ControlWrapperComponent implements AfterContentInit {
     if (this.errorDisplay.warnings().length > 0) {
       ids.push(this.warningId);
     }
-    if (this.errorDisplay.isPending()) {
+    if (this.showPendingMessage()) {
       ids.push(this.pendingId);
     }
     return ids.length > 0 ? ids.join(' ') : null;

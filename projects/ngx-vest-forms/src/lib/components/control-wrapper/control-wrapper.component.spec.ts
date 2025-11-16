@@ -89,6 +89,22 @@ const asyncSuite = staticSuite((data: TestModel = {}, field?: string) => {
   });
 });
 
+// Slow async validation suite to test @defer behavior (300ms delay ensures pending message shows)
+const slowAsyncSuite = staticSuite((data: TestModel = {}, field?: string) => {
+  only(field);
+  vestTest('email', 'Email must be available', () => {
+    return new Promise<void>((resolve, reject) => {
+      setTimeout(() => {
+        if (data.email === 'taken@example.com') {
+          reject(new Error('Email must be available'));
+        } else {
+          resolve();
+        }
+      }, 300); // Longer delay to ensure @defer (after 200ms) triggers
+    });
+  });
+});
+
 @Component({
   imports: [vestForms],
   template: `
@@ -108,6 +124,27 @@ const asyncSuite = staticSuite((data: TestModel = {}, field?: string) => {
 class AsyncTestComponent {
   model = signal({ email: '' });
   suite = asyncSuite;
+}
+
+@Component({
+  imports: [vestForms],
+  template: `
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="model()"
+      (formValueChange)="model.set($event)"
+    >
+      <ngx-control-wrapper>
+        <label for="email">Email</label>
+        <input id="email" name="email" [ngModel]="model().email" />
+      </ngx-control-wrapper>
+    </form>
+  `,
+})
+class SlowAsyncTestComponent {
+  model = signal({ email: '' });
+  suite = slowAsyncSuite;
 }
 
 @Component({
@@ -228,28 +265,31 @@ describe('ScControlWrapperComponent', () => {
     });
 
     it('should show pending state and spinner during async validation, and remove after completion', async () => {
-      await render(AsyncTestComponent);
+      // Use SlowAsyncTestComponent to ensure pending message appears (300ms validation > 200ms delay)
+      await render(SlowAsyncTestComponent);
       const emailInput = screen.getByLabelText('Email');
       await userEvent.type(emailInput, 'test@example.com');
       await userEvent.tab();
       const wrapper = emailInput.closest('.ngx-control-wrapper');
-      // Wait for pending state
+
+      // Wait for pending state (after 200ms delay)
       await waitFor(
         () => {
           expect(wrapper).toHaveAttribute('aria-busy', 'true');
           expect(wrapper!.querySelector('.animate-spin')).toBeInTheDocument();
         },
-        { timeout: 1000 }
+        { timeout: 1500 }
       );
-      // Wait for async validation to complete and spinner to disappear
+
+      // Wait for async validation to complete and minimum display time (500ms) to pass
       await waitFor(
         () => {
-          expect(wrapper).not.toHaveAttribute('aria-busy', 'true');
+          expect(wrapper).not.toHaveAttribute('aria-busy');
           expect(
             wrapper!.querySelector('.animate-spin')
           ).not.toBeInTheDocument();
         },
-        { timeout: 1000 }
+        { timeout: 2000 }
       );
     });
 
@@ -561,13 +601,14 @@ describe('ScControlWrapperComponent', () => {
     });
 
     it('should use role="status" with aria-live="polite" for pending state', async () => {
-      await render(AsyncTestComponent);
+      // Use SlowAsyncTestComponent to reliably test pending state ARIA attributes
+      await render(SlowAsyncTestComponent);
       const emailInput = screen.getByLabelText('Email');
 
       await userEvent.type(emailInput, 'test@example.com');
       await userEvent.tab();
 
-      // Wait for pending state with comprehensive ARIA checks
+      // Wait for pending state to appear (after 200ms delay)
       await waitFor(
         () => {
           const pendingText = screen.getByText('Validating…');
@@ -586,25 +627,26 @@ describe('ScControlWrapperComponent', () => {
           const describedBy = emailInput.getAttribute('aria-describedby');
           expect(describedBy).toContain(pendingContainer!.id);
         },
-        { timeout: 1000 }
+        { timeout: 1500 }
       );
     });
 
     it('should hide spinner from screen readers with aria-hidden', async () => {
-      await render(AsyncTestComponent);
+      // Use SlowAsyncTestComponent to ensure pending message appears
+      await render(SlowAsyncTestComponent);
       const emailInput = screen.getByLabelText('Email');
 
       await userEvent.type(emailInput, 'test@example.com');
       await userEvent.tab();
 
-      // Wait for pending state
+      // Wait for pending state (after 200ms delay)
       await waitFor(
         () => {
           const wrapper = emailInput.closest('.ngx-control-wrapper');
           const spinner = wrapper!.querySelector('.animate-spin');
           expect(spinner).toHaveAttribute('aria-hidden', 'true');
         },
-        { timeout: 1000 }
+        { timeout: 1500 }
       );
     });
 
@@ -735,6 +777,65 @@ describe('ScControlWrapperComponent', () => {
         expect(firstNameInput).toHaveAttribute('aria-invalid', 'true');
         expect(lastNameInput).toHaveAttribute('aria-invalid', 'true');
       });
+    });
+
+    it('should prevent flashing validation message for quick async validations using @defer', async () => {
+      // Test with fast async validation (50ms) - pending message should NOT appear
+      await render(AsyncTestComponent);
+      const emailInput = screen.getByLabelText('Email');
+
+      await userEvent.type(emailInput, 'test@example.com');
+      await userEvent.tab();
+
+      // Wait 150ms (less than defer's 200ms delay)
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      // Pending message should NOT have appeared yet (defer delay prevents it)
+      expect(screen.queryByText('Validating…')).not.toBeInTheDocument();
+
+      // Wait for validation to complete
+      await waitFor(
+        () => {
+          // Validation completes without showing pending message (desired behavior)
+          expect(screen.queryByText('Validating…')).not.toBeInTheDocument();
+        },
+        { timeout: 200 }
+      );
+    });
+
+    it('should show validation message for slow async validations after defer delay', async () => {
+      // Test with slow async validation (300ms) - pending message SHOULD appear after 200ms
+      await render(SlowAsyncTestComponent);
+      const emailInput = screen.getByLabelText('Email');
+
+      await userEvent.type(emailInput, 'test@example.com');
+      await userEvent.tab();
+
+      // Wait for defer delay (200ms) to pass
+      await new Promise((resolve) => setTimeout(resolve, 250));
+
+      // Pending message should now be visible
+      await waitFor(
+        () => {
+          const pendingText = screen.getByText('Validating…');
+          expect(pendingText).toBeInTheDocument();
+
+          // Verify ARIA attributes
+          const pendingContainer = pendingText.closest('[role="status"]');
+          expect(pendingContainer).toHaveAttribute('role', 'status');
+          expect(pendingContainer).toHaveAttribute('aria-live', 'polite');
+          expect(pendingContainer).toHaveAttribute('aria-atomic', 'true');
+        },
+        { timeout: 100 }
+      );
+
+      // Wait for validation to complete (300ms total from start)
+      await waitFor(
+        () => {
+          expect(screen.queryByText('Validating…')).not.toBeInTheDocument();
+        },
+        { timeout: 1000 }
+      );
     });
   });
 });

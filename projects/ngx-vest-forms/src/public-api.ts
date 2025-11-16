@@ -49,6 +49,11 @@ export {
 export { stringifyFieldPath } from './lib/utils/field-path.utils';
 export { setValueAtPath } from './lib/utils/form-utils';
 export {
+  DebouncedPendingStateOptions,
+  DebouncedPendingStateResult,
+  createDebouncedPendingState,
+} from './lib/utils/pending-state.utils';
+export {
   ShapeMismatchError,
   validateShape,
 } from './lib/utils/shape-validation';
