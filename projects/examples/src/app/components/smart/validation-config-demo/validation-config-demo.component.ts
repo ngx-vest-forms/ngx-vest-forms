@@ -12,7 +12,7 @@ import {
 import { validationDemoSuite } from '../../../validations/validation-demo.validations';
 
 @Component({
-  selector: 'app-validation-config-demo',
+  selector: 'ngx-validation-config-demo',
   imports: [vestForms],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './validation-config-demo.component.html',

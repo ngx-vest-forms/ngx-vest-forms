@@ -15,7 +15,7 @@ import { ValidationOptions } from './validation-options';
  * It will use a vest suite behind the scenes
  */
 @Directive({
-  selector: '[ngModel]',
+  selector: '[ngModel],[ngxModel]',
   providers: [
     {
       provide: NG_ASYNC_VALIDATORS,
@@ -25,20 +25,19 @@ import { ValidationOptions } from './validation-options';
   ],
 })
 export class FormModelDirective implements AsyncValidator {
-  public validationOptions = input<ValidationOptions>({ debounceTime: 0 });
+  validationOptions = input<ValidationOptions>({ debounceTime: 0 });
   /**
    * Reference to the form that needs to be validated
    * Injected optionally so that using ngModel outside of an ngxVestForm
    * does not crash the application. In that case, validation becomes a no-op.
    */
-  private readonly formDirective: FormDirective<Record<string, any>> | null =
-    inject(FormDirective, {
-      optional: true,
-    });
+  private readonly formDirective: FormDirective<
+    Record<string, unknown>
+  > | null = inject(FormDirective, {
+    optional: true,
+  });
 
-  public validate(
-    control: AbstractControl
-  ): Observable<ValidationErrors | null> {
+  validate(control: AbstractControl): Observable<ValidationErrors | null> {
     // Null check for control
     if (!control) {
       return of(null);

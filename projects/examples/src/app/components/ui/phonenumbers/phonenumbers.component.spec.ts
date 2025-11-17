@@ -12,7 +12,7 @@ import { PhoneNumbersComponent } from './phonenumbers.component';
       [formValue]="formValue()"
       (formValueChange)="formValue.set($event)"
     >
-      <sc-phonenumbers
+      <ngx-phonenumbers
         [values]="formValue().phonenumbers ?? {}"
         (valuesChange)="onPhoneNumbersChange($event)"
       />

@@ -1,7 +1,7 @@
 import { Component, effect, signal } from '@angular/core';
 
 @Component({
-  selector: 'app-theme-switcher',
+  selector: 'ngx-theme-switcher',
   imports: [],
   templateUrl: './theme-switcher.component.html',
   styleUrls: ['./theme-switcher.component.scss'],

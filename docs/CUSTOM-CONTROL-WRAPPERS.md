@@ -9,7 +9,7 @@ import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormErrorDisplayDirective } from 'ngx-vest-forms';
 
 @Component({
-  selector: 'app-custom-control-wrapper',
+  selector: 'ngx-custom-control-wrapper',
   changeDetection: ChangeDetectionStrategy.OnPush,
   hostDirectives: [
     {
@@ -54,7 +54,7 @@ import {
 } from 'ngx-vest-forms';
 
 @Component({
-  selector: 'app-debounced-wrapper',
+  selector: 'ngx-debounced-wrapper',
   changeDetection: ChangeDetectionStrategy.OnPush,
   hostDirectives: [FormErrorDisplayDirective],
   template: `
@@ -127,7 +127,7 @@ import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormErrorDisplayDirective } from 'ngx-vest-forms';
 
 @Component({
-  selector: 'app-advanced-wrapper',
+  selector: 'ngx-advanced-wrapper',
   changeDetection: ChangeDetectionStrategy.OnPush,
   hostDirectives: [FormErrorDisplayDirective],
   template: `
@@ -200,7 +200,7 @@ import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormErrorDisplayDirective } from 'ngx-vest-forms';
 
 @Component({
-  selector: 'app-mat-field-wrapper',
+  selector: 'ngx-mat-field-wrapper',
   changeDetection: ChangeDetectionStrategy.OnPush,
   hostDirectives: [
     {
@@ -286,10 +286,10 @@ Once created, use your custom wrapper just like the built-in `ngx-control-wrappe
   imports: [vestForms, CustomControlWrapperComponent],
   template: `
     <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
-      <app-custom-control-wrapper>
+      <ngx-custom-control-wrapper>
         <label>Email</label>
         <input name="email" [ngModel]="formValue().email" type="email" />
-      </app-custom-control-wrapper>
+      </ngx-custom-control-wrapper>
     </form>
   `
 })

@@ -36,6 +36,8 @@ jobs:
           node -e "try { require('@swc/core'); console.log('SWC loaded successfully'); } catch(e) { console.error('SWC failed to load:', e.message); process.exit(1); }"
       - name: Playwright install
         run: npx playwright install --with-deps
+      - name: Lint
+        run: npm run lint
       - name: Build library
         run: npm run build:lib
       - name: Test

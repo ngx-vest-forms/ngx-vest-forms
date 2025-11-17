@@ -37,10 +37,10 @@ describe('NgxDeepPartial / DeepPartial', () => {
 
   it('should correctly handle arrays of objects', () => {
     type MyType = {
-      users: Array<{
+      users: {
         name: string;
         email: string;
-      }>;
+      }[];
     };
 
     const partial: NgxDeepPartial<MyType> = {
@@ -101,7 +101,7 @@ describe('NgxDeepPartial / DeepPartial', () => {
 
   it('should handle readonly arrays', () => {
     type MyType = {
-      readonlyItems: ReadonlyArray<string>;
+      readonlyItems: readonly string[];
     };
 
     const partial: NgxDeepPartial<MyType> = {
@@ -150,15 +150,15 @@ describe('NgxDeepPartial / DeepPartial', () => {
 
   it('should handle mixed nested structures with arrays and objects', () => {
     type MyType = {
-      users: Array<{
+      users: {
         profile: {
           name: string;
-          contacts: Array<{
+          contacts: {
             type: string;
             value: string;
-          }>;
+          }[];
         };
-      }>;
+      }[];
     };
 
     const partial: NgxDeepPartial<MyType> = {

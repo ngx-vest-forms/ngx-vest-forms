@@ -101,14 +101,14 @@ export class ValidateRootFormDirective<T>
 {
   private readonly injector = inject(Injector);
   private readonly lastControl = signal<NgForm | null>(null);
-  public validationOptions = input<ValidationOptions>({ debounceTime: 0 });
+  validationOptions = input<ValidationOptions>({ debounceTime: 0 });
   private readonly destroy$$ = new Subject<void>();
   private readonly hasSubmitted = signal(false);
   private readonly hasSubmitted$: Observable<boolean>;
   private readonly formValue$: Observable<T | null>;
 
-  public readonly formValue = input<T | null>(null);
-  public readonly suite = input<NgxVestSuite<T> | null>(null);
+  readonly formValue = input<T | null>(null);
+  readonly suite = input<NgxVestSuite<T> | null>(null);
 
   /**
    * Whether the root form should be validated or not
@@ -128,8 +128,8 @@ export class ValidateRootFormDirective<T>
    * - 'live': Validates on every value change
    * Accepts both validateRootFormMode and ngxValidateRootFormMode
    */
-  public readonly validateRootFormMode = input<'submit' | 'live'>('submit');
-  public readonly ngxValidateRootFormMode = input<'submit' | 'live'>('submit');
+  readonly validateRootFormMode = input<'submit' | 'live'>('submit');
+  readonly ngxValidateRootFormMode = input<'submit' | 'live'>('submit');
 
   constructor() {
     // Convert signals to Observables in injection context
@@ -158,7 +158,7 @@ export class ValidateRootFormDirective<T>
    * Uses Injector to lazily get NgForm, avoiding circular dependency
    * (Directive → NgForm → AsyncValidators → Directive)
    */
-  public ngAfterViewInit(): void {
+  ngAfterViewInit(): void {
     // Lazily inject NgForm to avoid circular dependency
     const ngForm = this.injector.get(NgForm, null);
     this.lastControl.set(ngForm);
@@ -182,9 +182,7 @@ export class ValidateRootFormDirective<T>
       .subscribe();
   }
 
-  public validate(
-    control: AbstractControl<any, any>
-  ): Observable<ValidationErrors | null> {
+  validate(control: AbstractControl): Observable<ValidationErrors | null> {
     // Skip validation if suite or formValue not set
     if (!this.suite() || !this.formValue()) {
       return of(null);
@@ -217,14 +215,20 @@ export class ValidateRootFormDirective<T>
     return validationResult;
   }
 
-  public createAsyncValidator(
+  createAsyncValidator(
     field: string,
     validationOptions: ValidationOptions
   ): AsyncValidatorFn {
     if (!this.suite()) {
       return () => of(null);
     }
-    return (control: AbstractControl) => {
+
+    // Note: AsyncValidatorFn requires (control: AbstractControl) signature,
+    // but root form validation uses formValue input (typed model) instead of control.value.
+    // This is intentional - cross-field validation operates on the complete form model,
+    // not individual control values. The underscore prefix indicates intentional non-use.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    return (_control: AbstractControl) => {
       const currentFormValue = this.formValue();
       if (!currentFormValue) {
         return of(null);
@@ -238,7 +242,13 @@ export class ValidateRootFormDirective<T>
         switchMap((model) => {
           return new Observable((observer) => {
             try {
-              this.suite()!(model, field).done((result) => {
+              const suite = this.suite();
+              if (!suite) {
+                observer.next(null);
+                observer.complete();
+                return;
+              }
+              suite(model, field).done((result) => {
                 const errors = result.getErrors()[field];
                 // Return { errors: string[] } format expected by getAllFormErrors()
                 observer.next(errors ? { errors } : null);
@@ -264,7 +274,7 @@ export class ValidateRootFormDirective<T>
     };
   }
 
-  public ngOnDestroy(): void {
+  ngOnDestroy(): void {
     this.destroy$$.next();
   }
 }

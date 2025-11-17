@@ -53,7 +53,7 @@ import { SC_ERROR_DISPLAY_MODE_TOKEN } from './error-display-mode.token';
   `,
 })
 class TestErrorDisplayHostComponent {
-  model: string = '';
+  model = '';
   mode: ScErrorDisplayMode = 'on-blur-or-submit';
   ngModelOptions: any = {};
   /**

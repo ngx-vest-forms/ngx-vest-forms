@@ -147,7 +147,7 @@ interface NgxFormState<TModel> {
 // Parent component displaying child form state
 @Component({
   template: `
-    <app-child-form #childForm />
+    <ngx-child-form #childForm />
     <div>Valid: {{ formState().valid }}</div>
     <div>Errors: {{ formState().errors | json }}</div>
   `,
@@ -435,7 +435,7 @@ import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormErrorDisplayDirective, createDebouncedPendingState } from 'ngx-vest-forms';
 
 @Component({
-  selector: 'app-custom-wrapper',
+  selector: 'ngx-custom-wrapper',
   changeDetection: ChangeDetectionStrategy.OnPush,
   hostDirectives: [{ directive: FormErrorDisplayDirective, inputs: ['errorDisplayMode'] }],
   template: `
@@ -507,7 +507,7 @@ When creating custom wrappers, follow these patterns:
 
 ```typescript
 @Component({
-  selector: 'app-accessible-wrapper',
+  selector: 'ngx-accessible-wrapper',
   template: `
     <ng-content />
 
@@ -720,7 +720,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 
 @Component({
-  selector: 'app-address-form',
+  selector: 'ngx-address-form',
   imports: [vestForms],
   changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [vestFormsViewProviders], // Required!

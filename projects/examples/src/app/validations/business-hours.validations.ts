@@ -142,8 +142,8 @@ function isFromEarlierThanTo(from?: string, to?: string) {
     return false;
   }
   // Split the "from" and "to" strings into hours and minutes
-  let [fromHours, fromMinutes] = from.split(':').map(Number);
-  let [toHours, toMinutes] = to.split(':').map(Number);
+  const [fromHours, fromMinutes] = from.split(':').map(Number);
+  const [toHours, toMinutes] = to.split(':').map(Number);
 
   // Check if the "from" time is earlier than the "to" time
   if (fromHours < toHours) {

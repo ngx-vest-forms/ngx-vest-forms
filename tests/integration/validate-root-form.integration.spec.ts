@@ -37,8 +37,8 @@ const issueThirteenSuite = staticSuite(
       (validChange)="formValid.set($event)"
       (ngSubmit)="onSubmit()"
     >
-      <div class="w-full" ngModelGroup="generalInfo" sc-control-wrapper>
-        <div sc-control-wrapper>
+      <div class="w-full" ngModelGroup="generalInfo" ngx-control-wrapper>
+        <div ngx-control-wrapper>
           <label for="firstName">First name</label>
           <input
             id="firstName"

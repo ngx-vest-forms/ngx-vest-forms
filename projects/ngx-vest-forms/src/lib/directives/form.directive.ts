@@ -72,8 +72,8 @@ export type NgxValidationConfig<T = unknown> =
   selector: 'form[scVestForm], form[ngxVestForm]',
   exportAs: 'scVestForm, ngxVestForm',
 })
-export class FormDirective<T extends Record<string, any>> {
-  public readonly ngForm = inject(NgForm, { self: true });
+export class FormDirective<T extends Record<string, unknown>> {
+  readonly ngForm = inject(NgForm, { self: true });
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly configDebounceTime = inject(
@@ -123,7 +123,7 @@ export class FormDirective<T extends Record<string, any>> {
    * Uses custom equality function to prevent unnecessary recalculations
    * when form status changes but actual values/errors remain the same.
    */
-  public readonly formState = computed<NgxFormState<T>>(
+  readonly formState = computed<NgxFormState<T>>(
     () => {
       // Tie to status signal to ensure recomputation on validation changes
       this.#statusSignal();
@@ -154,7 +154,7 @@ export class FormDirective<T extends Record<string, any>> {
    * Using input() here because two-way binding is provided via formValueChange output.
    * In the minimal core directive (form-core.directive.ts), this would be model() instead.
    */
-  public readonly formValue = input<T | null>(null);
+  readonly formValue = input<T | null>(null);
 
   /**
    * Static vest suite that will be used to feed our angular validators.
@@ -162,9 +162,7 @@ export class FormDirective<T extends Record<string, any>> {
    * NgxTypedVestSuite<T> is assignable to NgxVestSuite<T> due to bivariance and
    * FormFieldName<T> (string literal union) being assignable to string.
    */
-  public readonly suite = input<NgxVestSuite<T> | NgxTypedVestSuite<T> | null>(
-    null
-  );
+  readonly suite = input<NgxVestSuite<T> | NgxTypedVestSuite<T> | null>(null);
 
   /**
    * The shape of our form model. This is a deep required version of the form model
@@ -172,7 +170,7 @@ export class FormDirective<T extends Record<string, any>> {
    * contains values that shouldn't be there (typo's) that the developer gets run-time
    * errors in dev mode
    */
-  public readonly formShape = input<DeepRequired<T> | null>(null);
+  readonly formShape = input<DeepRequired<T> | null>(null);
 
   /**
    * Updates the validation config which is a dynamic object that will be used to
@@ -187,7 +185,7 @@ export class FormDirective<T extends Record<string, any>> {
    *
    * @param v
    */
-  public readonly validationConfig: InputSignal<NgxValidationConfig<T>> =
+  readonly validationConfig: InputSignal<NgxValidationConfig<T>> =
     input<NgxValidationConfig<T>>(null);
 
   private readonly pending$ = this.ngForm.form.events.pipe(
@@ -202,7 +200,7 @@ export class FormDirective<T extends Record<string, any>> {
    * that is not PENDING
    * We need this to assure that the form is in 'idle' state
    */
-  public readonly idle$ = this.ngForm.form.events.pipe(
+  readonly idle$ = this.ngForm.form.events.pipe(
     filter((v) => v instanceof StatusChangeEvent),
     map((v) => (v as StatusChangeEvent).status),
     filter((v) => v !== 'PENDING'),
@@ -215,10 +213,10 @@ export class FormDirective<T extends Record<string, any>> {
    *
    * Cleanup is handled automatically by the directive when it's destroyed.
    */
-  public readonly formValueChange = outputFromObservable(
+  readonly formValueChange = outputFromObservable(
     this.ngForm.form.events.pipe(
       filter((v) => v instanceof ValueChangeEvent),
-      map((v) => (v as ValueChangeEvent<any>).value),
+      map((v) => (v as ValueChangeEvent<unknown>).value),
       distinctUntilChanged((prev, curr) => {
         // Use efficient deep equality instead of JSON.stringify for better performance
         return fastDeepEqual(prev, curr);
@@ -234,7 +232,7 @@ export class FormDirective<T extends Record<string, any>> {
    *
    * Cleanup is handled automatically by the directive when it's destroyed.
    */
-  public readonly errorsChange = outputFromObservable(
+  readonly errorsChange = outputFromObservable(
     this.ngForm.form.events.pipe(
       filter((v) => v instanceof StatusChangeEvent),
       map((v) => (v as StatusChangeEvent).status),
@@ -249,7 +247,7 @@ export class FormDirective<T extends Record<string, any>> {
    *
    * Cleanup is handled automatically by the directive when it's destroyed.
    */
-  public readonly dirtyChange = outputFromObservable(
+  readonly dirtyChange = outputFromObservable(
     this.ngForm.form.events.pipe(
       filter((v) => v instanceof PristineChangeEvent),
       map((v) => !(v as PristineChangeEvent).pristine),
@@ -272,7 +270,7 @@ export class FormDirective<T extends Record<string, any>> {
    *
    * Cleanup is handled automatically by the directive when it's destroyed.
    */
-  public readonly validChange = outputFromObservable(
+  readonly validChange = outputFromObservable(
     this.statusChanges$.pipe(
       filter((e) => e === 'VALID' || e === 'INVALID'),
       map((v) => v === 'VALID'),
@@ -286,7 +284,7 @@ export class FormDirective<T extends Record<string, any>> {
    */
   private readonly validationInProgress = new Set<string>();
 
-  public constructor() {
+  constructor() {
     /**
      * Trigger shape validations if the form gets updated
      * This is how we can throw run-time errors
@@ -421,7 +419,7 @@ export class FormDirective<T extends Record<string, any>> {
    * }
    * ```
    */
-  public triggerFormValidation(): void {
+  triggerFormValidation(): void {
     // Update all form controls validity which will trigger all form events
     this.ngForm.form.updateValueAndValidity({ emitEvent: true });
   }
@@ -437,7 +435,7 @@ export class FormDirective<T extends Record<string, any>> {
    * V2 async validator pattern: uses timer() + switchMap for proper re-validation.
    * Each invocation builds a fresh one-shot observable, ensuring progressive validation.
    */
-  public createAsyncValidator(
+  createAsyncValidator(
     field: string,
     validationOptions: ValidationOptions
   ): AsyncValidatorFn {
@@ -466,6 +464,7 @@ export class FormDirective<T extends Record<string, any>> {
               try {
                 // Cast to NgxVestSuite to accept string field parameter
                 // Both NgxVestSuite and NgxTypedVestSuite work with string at runtime
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (suite as NgxVestSuite<T>)(snap, field).done((result: any) => {
                   const errors = result.getErrors()[field];
                   const warnings = result.getWarnings()[field];

@@ -57,17 +57,15 @@ function getControlPath(
  * @param control
  */
 function getGroupPath(formGroup: FormGroup, control: AbstractControl): string {
-  for (const key in formGroup.controls) {
-    if (formGroup.controls.hasOwnProperty(key)) {
-      const ctrl = formGroup.get(key);
-      if (ctrl === control) {
-        return key;
-      }
-      if (ctrl instanceof FormGroup) {
-        const path = getGroupPath(ctrl, control);
-        if (path) {
-          return key + '.' + path;
-        }
+  for (const key of Object.keys(formGroup.controls)) {
+    const ctrl = formGroup.get(key);
+    if (ctrl === control) {
+      return key;
+    }
+    if (ctrl instanceof FormGroup) {
+      const path = getGroupPath(ctrl, control);
+      if (path) {
+        return `${key}.${path}`;
       }
     }
   }

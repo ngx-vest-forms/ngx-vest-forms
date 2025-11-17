@@ -83,7 +83,7 @@ export class ValidationConfigBuilder<T> {
    */
   whenChanged<K extends FieldPath<T>>(
     trigger: K,
-    revalidate: FieldPath<T> | FieldPath<T>[]
+    revalidate: FieldPath<T> | Array<FieldPath<T>>
   ): this {
     const deps = Array.isArray(revalidate) ? revalidate : [revalidate];
     const existing = this.config[trigger] || [];

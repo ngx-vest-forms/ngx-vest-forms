@@ -29,7 +29,7 @@ import { AddressComponent } from '../../ui/address/address.component';
 import { PhoneNumbersComponent } from '../../ui/phonenumbers/phonenumbers.component';
 
 @Component({
-  selector: 'sc-purchase-form',
+  selector: 'ngx-purchase-form',
   imports: [JsonPipe, vestForms, AddressComponent, PhoneNumbersComponent],
   templateUrl: './purchase-form.component.html',
   styleUrls: ['./purchase-form.component.scss'],
@@ -39,7 +39,7 @@ export class PurchaseFormComponent {
   private readonly lukeService = inject(LukeService);
   private readonly swapiService = inject(SwapiService);
   private readonly productService = inject(ProductService);
-  public readonly products = toSignal(this.productService.getAll());
+  readonly products = toSignal(this.productService.getAll());
   protected readonly formValue = signal<PurchaseFormModel>({});
   protected readonly formValid = signal<boolean>(false);
   protected readonly loading = signal<boolean>(false);

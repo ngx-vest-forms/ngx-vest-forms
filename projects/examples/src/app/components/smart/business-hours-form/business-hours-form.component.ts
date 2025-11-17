@@ -13,7 +13,7 @@ import { businessHoursSuite } from '../../../validations/business-hours.validati
 import { BusinessHoursComponent } from '../../ui/business-hours/business-hours.component';
 
 @Component({
-  selector: 'sc-business-hours-form',
+  selector: 'ngx-business-hours-form',
   imports: [
     JsonPipe,
     vestForms,

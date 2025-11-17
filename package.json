@@ -24,7 +24,8 @@
     "semantic-release": "semantic-release",
     "prettier:check": "prettier --check \"projects/**/*.{ts,js,json,css,scss,html}\"",
     "prettier:format": "prettier --write \"projects/**/*.{ts,js,json,css,scss,html}\"",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "lint": "ng lint"
   },
   "private": false,
   "dependencies": {
@@ -42,8 +43,6 @@
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~20.3.10",
-    "@angular-eslint/builder": "~20.6.0",
-    "@angular-eslint/schematics": "~20.6.0",
     "@angular/build": "~20.3.10",
     "@angular/cli": "~20.3.10",
     "@angular/compiler-cli": "~20.3.11",
@@ -66,10 +65,13 @@
     "@testing-library/user-event": "~14.6.1",
     "@types/jasmine": "~5.1.12",
     "@types/jest": "~29.5.12",
+    "angular-eslint": "20.6.0",
     "autoprefixer": "~10.4.22",
     "concurrently": "~9.2.1",
     "copyfiles": "~2.4.1",
+    "eslint": "^9.39.1",
     "eslint-config-prettier": "~10.1.8",
+    "eslint-plugin-jest": "^29.1.0",
     "eslint-plugin-prettier": "~5.5.4",
     "http-server": "~14.1.1",
     "husky": "~9.1.7",
@@ -98,6 +100,7 @@
     "tailwindcss": "~3.4.3",
     "ts-node": "~10.9.2",
     "typescript": "~5.9.3",
+    "typescript-eslint": "8.46.3",
     "wait-on": "~9.0.3"
   },
   "repository": {

@@ -4,7 +4,7 @@ import { vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 import { AddressModel } from '../../../models/address.model';
 
 @Component({
-  selector: 'sc-address',
+  selector: 'ngx-address',
   imports: [vestForms],
   viewProviders: [vestFormsViewProviders],
   templateUrl: './address.component.html',

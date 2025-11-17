@@ -51,7 +51,7 @@
  * // ['users', 0, 'addresses', 1, 'street']
  * ```
  */
-export function parseFieldPath(path: string): (string | number)[] {
+export function parseFieldPath(path: string): Array<string | number> {
   if (!path) return [];
 
   return path
@@ -87,7 +87,7 @@ export function parseFieldPath(path: string): (string | number)[] {
  * // 'users[0].addresses[1].street'
  * ```
  */
-export function stringifyFieldPath(path: (string | number)[]): string {
+export function stringifyFieldPath(path: Array<string | number>): string {
   if (!path || path.length === 0) return '';
 
   let result = '';

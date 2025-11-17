@@ -20,7 +20,7 @@ import { FormControlStateDirective } from './form-control-state.directive';
   `,
 })
 class TestHostComponent {
-  model: string = '';
+  model = '';
 }
 
 describe('FormControlStateDirective', () => {

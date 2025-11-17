@@ -3,7 +3,7 @@ import { effect, Signal, signal } from '@angular/core';
 /**
  * Options for configuring debounced pending state behavior.
  */
-export interface DebouncedPendingStateOptions {
+export type DebouncedPendingStateOptions = {
   /**
    * Delay in milliseconds before showing the pending message.
    * Prevents flashing for quick async validations.
@@ -23,7 +23,7 @@ export interface DebouncedPendingStateOptions {
  * Result of createDebouncedPendingState containing the debounced signal
  * and cleanup function.
  */
-export interface DebouncedPendingStateResult {
+export type DebouncedPendingStateResult = {
   /**
    * Signal that is true when the pending message should be shown.
    * This is debounced according to the provided options.

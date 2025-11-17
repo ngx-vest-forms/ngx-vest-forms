@@ -14,7 +14,7 @@ import {
 import type { PhoneNumberMap } from '../../../models/phonenumber.model';
 
 @Component({
-  selector: 'sc-phonenumbers',
+  selector: 'ngx-phonenumbers',
   imports: [vestForms, KeyValuePipe],
   templateUrl: './phonenumbers.component.html',
   styleUrls: ['./phonenumbers.component.scss'],

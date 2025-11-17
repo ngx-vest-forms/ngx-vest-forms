@@ -19,7 +19,6 @@ This guide covers migration from v1.x (mostly v1.4) to v2.0.0, which includes cr
 
 ## Breaking Changes
 
-
 ## Breaking Changes
 
 ### 1. Unconditional `only()` Pattern Required (CRITICAL)
@@ -35,8 +34,10 @@ You MUST now call `only()` unconditionally at the top of validation suites. The 
 ```typescript
 // ❌ BROKEN: Conditional only() corrupts execution tracking
 export const suite = staticSuite((model, field?) => {
-  if (field) { only(field); } // BUG: Breaks omitWhen + validationConfig!
-  
+  if (field) {
+    only(field);
+  } // BUG: Breaks omitWhen + validationConfig!
+
   test('email', 'Required', () => {
     enforce(model.email).isNotBlank();
   });
@@ -49,7 +50,7 @@ export const suite = staticSuite((model, field?) => {
 // ✅ CORRECT: Unconditional only() call required
 export const suite = staticSuite((model, field?) => {
   only(field); // ALWAYS call unconditionally (safe: only(undefined) runs all tests)
-  
+
   test('email', 'Required', () => {
     enforce(model.email).isNotBlank();
   });
@@ -85,11 +86,13 @@ grep -r "if (field)" --include="*.ts" | grep "only"
 ```typescript
 // Before
 export const mySuite = staticSuite((model, field?) => {
-  if (field) { only(field); } // ❌ Remove this wrapper
+  if (field) {
+    only(field);
+  } // ❌ Remove this wrapper
   // ... rest of suite
 });
 
-// After  
+// After
 export const mySuite = staticSuite((model, field?) => {
   only(field); // ✅ Call unconditionally
   // ... rest of suite
@@ -135,18 +138,16 @@ const debounce = VALIDATION_CONFIG_DEBOUNCE_TIME; // 100ms
 // ✅ Use injection token
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
 
-// Global configuration (app-level)
+// Global configuration (ngx-level)
 export const appConfig: ApplicationConfig = {
-  providers: [
-    { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 100 }
-  ]
+  providers: [{ provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 100 }],
 };
 
 // Component-level override
 @Component({
   providers: [
-    { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 0 } // Instant validation
-  ]
+    { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 0 }, // Instant validation
+  ],
 })
 export class MyFormComponent {}
 ```
@@ -190,9 +191,7 @@ import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
 ```typescript
 // Test environment - disable debouncing for synchronous tests
 TestBed.configureTestingModule({
-  providers: [
-    { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 0 }
-  ]
+  providers: [{ provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 0 }],
 });
 ```
 
@@ -438,7 +437,6 @@ test(ROOT_FORM, 'Full name must match ID', () => {
 
 **Recommendation**: Default to `'submit'` mode. Only use `'live'` if you're migrating and need time to test UX changes.
 
-
 ---
 
 ## New Features in v2.0.0
@@ -470,7 +468,11 @@ import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
 **Handle form arrays in template-driven forms:**
 
 ```typescript
-import { arrayToObject, deepArrayToObject, objectToArray } from 'ngx-vest-forms';
+import {
+  arrayToObject,
+  deepArrayToObject,
+  objectToArray,
+} from 'ngx-vest-forms';
 
 // Convert arrays to objects for template-driven forms
 const objectForm = arrayToObject(['value1', 'value2']);
@@ -530,7 +532,7 @@ import { clearFieldsWhen, clearFields, keepFieldsWhen } from 'ngx-vest-forms';
 // Conditionally clear fields
 const updated = clearFieldsWhen(formValue(), {
   'addresses.shippingAddress': !useShippingAddress,
-  emergencyContact: age >= 18
+  emergencyContact: age >= 18,
 });
 
 // Unconditional clearing
@@ -539,7 +541,7 @@ const cleaned = clearFields(formValue(), ['tempData', 'cached']);
 // Whitelist approach
 const filtered = keepFieldsWhen(formValue(), {
   basicInfo: true,
-  addressInfo: needsAddress
+  addressInfo: needsAddress,
 });
 ```
 
@@ -551,9 +553,9 @@ const filtered = keepFieldsWhen(formValue(), {
 import { createValidationConfig } from 'ngx-vest-forms';
 
 const config = createValidationConfig<FormModel>()
-  .bidirectional('password', 'confirmPassword')     // Password confirmation
-  .whenChanged('age', 'emergencyContact')           // Age affects emergency contact
-  .group(['firstName', 'lastName', 'email'])        // Contact group
+  .bidirectional('password', 'confirmPassword') // Password confirmation
+  .whenChanged('age', 'emergencyContact') // Age affects emergency contact
+  .group(['firstName', 'lastName', 'email']) // Contact group
   .build();
 ```
 
@@ -692,11 +694,11 @@ If you need to temporarily rollback to v2 behavior globally:
 2. **Add mode to each**: Add `[validateRootFormMode]="'live'"` to all matches
 3. **Or create a wrapper component** with `'live'` as default:
 
-```typescript
+````typescript
 @Component({
-  selector: 'app-legacy-form',
+  selector: 'ngx-legacy-form',
   template: `
-    
+
 ---
 
 ## Testing Changes
@@ -720,7 +722,7 @@ it('validates root form live', () => {
   fixture.detectChanges();
   expect(component.errors()[ROOT_FORM]).toBeDefined(); // ✅ Passes in v1.x
 });
-```
+````
 
 **After (v2.0.0):**
 
@@ -767,9 +769,7 @@ expect(errors).toContain('error message');
 
 ```typescript
 TestBed.configureTestingModule({
-  providers: [
-    { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 0 }
-  ]
+  providers: [{ provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 0 }],
 });
 ```
 
@@ -865,7 +865,7 @@ import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
 ```typescript
 // This is CORRECT and SAFE
 only(field); // When field is undefined, all tests run
-             // When field is 'email', only email tests run
+// When field is 'email', only email tests run
 ```
 
 ### Issue: "Tests fail after migration"
@@ -954,11 +954,12 @@ A: Yes! All new utilities (field clearing, array conversion, config builder) are
 **Version:** 2.0.0
 **Migration Guide Created:** January 2025
 **Status:** Stable
-  `,
+`,
 })
 export class LegacyFormComponent {
-  // Use this wrapper for all legacy forms
+// Use this wrapper for all legacy forms
 }
+
 ```
 
 ---
@@ -979,3 +980,4 @@ export class LegacyFormComponent {
 
 - **Q: Can I mix modes in different forms?**
   - A: Yes! Each form can have its own `validateRootFormMode` setting.
+```

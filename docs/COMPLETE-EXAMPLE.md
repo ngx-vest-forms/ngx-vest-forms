@@ -51,7 +51,7 @@ const userValidationSuite: NgxTypedVestSuite<UserFormModel> = staticSuite(
 
 // 4. Create the component
 @Component({
-  selector: 'app-user-form',
+  selector: 'ngx-user-form',
   imports: [vestForms],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `

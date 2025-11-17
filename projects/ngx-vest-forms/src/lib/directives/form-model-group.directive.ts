@@ -15,7 +15,7 @@ import { ValidationOptions } from './validation-options';
  * It will use a vest suite behind the scenes
  */
 @Directive({
-  selector: '[ngModelGroup]',
+  selector: '[ngModelGroup],[ngxModelGroup]',
   providers: [
     {
       provide: NG_ASYNC_VALIDATORS,
@@ -25,13 +25,12 @@ import { ValidationOptions } from './validation-options';
   ],
 })
 export class FormModelGroupDirective implements AsyncValidator {
-  public validationOptions = input<ValidationOptions>({ debounceTime: 0 });
-  private readonly formDirective: FormDirective<Record<string, any>> | null =
-    inject(FormDirective, { optional: true });
+  validationOptions = input<ValidationOptions>({ debounceTime: 0 });
+  private readonly formDirective: FormDirective<
+    Record<string, unknown>
+  > | null = inject(FormDirective, { optional: true });
 
-  public validate(
-    control: AbstractControl
-  ): Observable<ValidationErrors | null> {
+  validate(control: AbstractControl): Observable<ValidationErrors | null> {
     // Null check for control
     if (!control) {
       return of(null);

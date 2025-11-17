@@ -29,7 +29,7 @@ type AddressModel = NgxDeepPartial<{
 }>;
 
 @Component({
-  selector: 'app-address-form',
+  selector: 'ngx-address-form',
   imports: [vestForms],
   viewProviders: [vestFormsViewProviders], // CRITICAL: Required for child components
   template: `
@@ -84,7 +84,7 @@ type OrderFormModel = NgxDeepPartial<{
 }>;
 
 @Component({
-  selector: 'app-order-form',
+  selector: 'ngx-order-form',
   imports: [vestForms, AddressFormComponent],
   template: `
     <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
@@ -92,10 +92,10 @@ type OrderFormModel = NgxDeepPartial<{
       <input name="customerName" [ngModel]="formValue().customerName" />
 
       <h3>Billing Address</h3>
-      <app-address-form [address]="formValue().billingAddress" />
+      <ngx-address-form [address]="formValue().billingAddress" />
 
       <h3>Shipping Address</h3>
-      <app-address-form [address]="formValue().shippingAddress" />
+      <ngx-address-form [address]="formValue().shippingAddress" />
 
       <button type="submit">Submit Order</button>
     </form>
@@ -114,7 +114,7 @@ Pass the field name as an input when you need different `ngModelGroup` names:
 
 ```typescript
 @Component({
-  selector: 'app-address-form',
+  selector: 'ngx-address-form',
   imports: [vestForms],
   viewProviders: [vestFormsViewProviders],
   template: `
@@ -139,12 +139,12 @@ export class AddressFormComponent {
 Usage:
 
 ```typescript
-<app-address-form
+<ngx-address-form
   groupName="billingAddress"
   [address]="formValue().billingAddress"
 />
 
-<app-address-form
+<ngx-address-form
   groupName="shippingAddress"
   [address]="formValue().shippingAddress"
 />
@@ -156,7 +156,7 @@ Child components can include their own error display:
 
 ```typescript
 @Component({
-  selector: 'app-contact-form',
+  selector: 'ngx-contact-form',
   imports: [vestForms],
   viewProviders: [vestFormsViewProviders],
   template: `
@@ -196,7 +196,7 @@ Child components can contain other child components - all need `vestFormsViewPro
 ```typescript
 // Grandchild component
 @Component({
-  selector: 'app-phone-input',
+  selector: 'ngx-phone-input',
   imports: [vestForms],
   viewProviders: [vestFormsViewProviders], // Required
   template: `
@@ -219,17 +219,17 @@ export class PhoneInputComponent {
 
 // Child component using grandchild
 @Component({
-  selector: 'app-contact-form',
+  selector: 'ngx-contact-form',
   imports: [vestForms, PhoneInputComponent],
   viewProviders: [vestFormsViewProviders], // Required
   template: `
     <div ngModelGroup="contact">
-      <app-phone-input
+      <ngx-phone-input
         fieldName="homePhone"
         label="Home Phone"
         [value]="contact()?.homePhone"
       />
-      <app-phone-input
+      <ngx-phone-input
         fieldName="mobilePhone"
         label="Mobile Phone"
         [value]="contact()?.mobilePhone"
@@ -259,13 +259,13 @@ Child components work seamlessly with conditional rendering:
         Different shipping address
       </label>
 
-      <app-address-form
+      <ngx-address-form
         groupName="billingAddress"
         [address]="formValue().billingAddress"
       />
 
       @if (formValue().includeShipping) {
-        <app-address-form
+        <ngx-address-form
           groupName="shippingAddress"
           [address]="formValue().shippingAddress"
         />
@@ -311,7 +311,7 @@ export const orderSuite: NgxVestSuite<OrderFormModel> = staticSuite(
 ```typescript
 // Reusable component
 @Component({
-  selector: 'app-name-section',
+  selector: 'ngx-name-section',
   imports: [vestForms],
   viewProviders: [vestFormsViewProviders],
   template: `
@@ -327,8 +327,8 @@ export class NameSectionComponent {
 }
 
 // Used in multiple forms
-<app-name-section groupName="primary" [person]="formValue().primary" />
-<app-name-section groupName="spouse" [person]="formValue().spouse" />
+<ngx-name-section groupName="primary" [person]="formValue().primary" />
+<ngx-name-section groupName="spouse" [person]="formValue().spouse" />
 ```
 
 ### Pattern 2: Complex Multi-Step Form
@@ -346,10 +346,10 @@ export class Step2Component { }
   template: `
     <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
       @if (currentStep() === 1) {
-        <app-step1 [data]="formValue().step1" />
+        <ngx-step1 [data]="formValue().step1" />
       }
       @if (currentStep() === 2) {
-        <app-step2 [data]="formValue().step2" />
+        <ngx-step2 [data]="formValue().step2" />
       }
     </form>
   `,

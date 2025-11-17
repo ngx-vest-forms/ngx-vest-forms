@@ -11,21 +11,19 @@ import { BusinessHourFormModel } from '../../../models/business-hours-form.model
 import { BusinessHourComponent } from '../business-hour/business-hour.component';
 
 @Component({
-  selector: 'sc-business-hours',
+  selector: 'ngx-business-hours',
   imports: [vestForms, KeyValuePipe, BusinessHourComponent],
   templateUrl: './business-hours.component.html',
   styleUrls: ['./business-hours.component.scss'],
   viewProviders: [vestFormsViewProviders],
 })
 export class BusinessHoursComponent {
-  @Input() public businessHoursModel?: NgxDeepPartial<{
+  @Input() businessHoursModel?: NgxDeepPartial<{
     addValue: BusinessHourFormModel;
-    values: {
-      [key: string]: BusinessHourFormModel;
-    };
+    values: Record<string, BusinessHourFormModel>;
   }> = {};
 
-  public addBusinessHour(group: NgModelGroup): void {
+  addBusinessHour(group: NgModelGroup): void {
     if (!this.businessHoursModel?.values) {
       return;
     }
@@ -37,7 +35,7 @@ export class BusinessHoursComponent {
     this.businessHoursModel.addValue = undefined;
   }
 
-  public removeBusinessHour(key: string): void {
+  removeBusinessHour(key: string): void {
     if (!this.businessHoursModel?.values) {
       return;
     }

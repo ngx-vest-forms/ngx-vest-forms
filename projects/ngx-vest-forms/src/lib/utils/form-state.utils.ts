@@ -2,7 +2,7 @@
  * Represents the state of a form managed by scVestForm directive.
  * This is the structure returned by NgxVestFormDirective.formState() or similar.
  */
-export interface NgxFormState<TModel = unknown> {
+export type NgxFormState<TModel = unknown> = {
   /** Whether the form is valid */
   valid: boolean;
   /** Map of field errors by field path */

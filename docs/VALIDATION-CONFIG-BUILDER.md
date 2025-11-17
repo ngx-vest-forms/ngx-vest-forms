@@ -747,7 +747,7 @@ describe('MyComponent validation config', () => {
 The validation config respects the debounce token configuration:
 
 ```typescript
-// App-level debounce configuration
+// ngx-level debounce configuration
 bootstrapApplication(AppComponent, {
   providers: [
     {

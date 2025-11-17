@@ -18,7 +18,7 @@ let nextUniqueId = 0;
  * Accessible ScControlWrapper with WCAG 2.2 AA Compliance
  *
  * Usage:
- *   - Wrap any form element with `sc-control-wrapper` or `[scControlWrapper]` (or `[sc-control-wrapper]` for legacy) that contains an `ngModel` or `ngModelGroup`.
+ *   - Wrap any form element with `ngx-control-wrapper` or `[scControlWrapper]` (or `[ngx-control-wrapper]` for legacy) that contains an `ngModel` or `ngModelGroup`.
  *   - Errors and warnings are shown when the control is invalid and touched, after form submit, or both, depending on the error display mode.
  *   - Pending state is shown with a spinner and aria-busy when async validation is running.
  *   - No manual error/warning/pending signal management is needed in your form components.
@@ -68,9 +68,9 @@ let nextUniqueId = 0;
  *   /// To customize errorDisplayMode for this instance, use the errorDisplayMode input.
  *
  * Example (with warnings and pending):
- *   <sc-control-wrapper>
+ *   <ngx-control-wrapper>
  *     <input name="username" ngModel />
- *   </sc-control-wrapper>
+ *   </ngx-control-wrapper>
  *   /// If async validation is running for >200ms, a spinner and 'Validating…' will be shown.
  *   /// Once shown, the validation message stays visible for minimum 500ms to prevent flashing.
  *   /// If Vest warnings are present, they will be shown below errors.
@@ -95,13 +95,12 @@ let nextUniqueId = 0;
  */
 @Component({
   selector:
-    'sc-control-wrapper, ngx-control-wrapper, [scControlWrapper], [ngxControlWrapper], [sc-control-wrapper], [ngx-control-wrapper]',
+    'ngx-control-wrapper, ngx-control-wrapper, [scControlWrapper], [ngxControlWrapper], [ngx-control-wrapper], [ngx-control-wrapper]',
   templateUrl: './control-wrapper.component.html',
   styleUrls: ['./control-wrapper.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    class: 'sc-control-wrapper ngx-control-wrapper',
-    '[class.sc-control-wrapper--invalid]': 'errorDisplay.shouldShowErrors()',
+    class: 'ngx-control-wrapper ngx-control-wrapper',
     '[class.ngx-control-wrapper--invalid]': 'errorDisplay.shouldShowErrors()',
     '[attr.aria-busy]': "errorDisplay.isPending() ? 'true' : null",
   },

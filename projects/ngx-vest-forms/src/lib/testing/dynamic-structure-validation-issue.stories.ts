@@ -55,7 +55,7 @@ const dynamicFormValidationSuite = staticSuite(
 );
 
 @Component({
-  selector: 'app-dynamic-structure',
+  selector: 'ngx-dynamic-structure',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form

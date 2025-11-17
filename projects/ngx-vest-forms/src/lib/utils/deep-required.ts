@@ -17,6 +17,7 @@
  * ```
  */
 export type NgxDeepRequired<T> = {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   [K in keyof T]-?: T[K] extends Date | Function
     ? T[K]
     : T[K] extends Array<infer U>

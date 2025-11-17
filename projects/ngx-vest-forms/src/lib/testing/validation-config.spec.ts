@@ -1598,7 +1598,7 @@ describe('FormDirective - Comprehensive', () => {
     it('should use take(1) to prevent continuous statusChanges listening', async () => {
       // This test verifies that triggerControl$ uses take(1) to stop listening
       // after the control is found, preventing the feedback loop described in PR #60
-      let statusChangesSubscriptionCount = 0;
+      const statusChangesSubscriptionCount = 0;
 
       @Component({
         template: `

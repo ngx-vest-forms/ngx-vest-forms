@@ -319,7 +319,7 @@ import { Component, inject } from '@angular/core';
 import { FormErrorDisplayDirective } from 'ngx-vest-forms';
 
 @Component({
-  selector: 'app-custom-wrapper',
+  selector: 'ngx-custom-wrapper',
   hostDirectives: [
     { directive: FormErrorDisplayDirective, inputs: ['errorDisplayMode'] },
   ],

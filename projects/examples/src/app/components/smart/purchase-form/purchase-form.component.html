@@ -176,14 +176,14 @@
       </label>
     </div>
     <div class="sm:col-span-2" ngx-control-wrapper ngModelGroup="phonenumbers">
-      <sc-phonenumbers [values]="vm.formValue.phonenumbers?.values || {}">
-      </sc-phonenumbers>
+      <ngx-phonenumbers [values]="vm.formValue.phonenumbers?.values || {}">
+      </ngx-phonenumbers>
     </div>
     <div
       class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800 sm:col-span-2"
     >
       <div class="" ngx-control-wrapper>
-        <label><span>Gender</span></label>
+        <span>Gender</span>
         <div class="flex">
           <div class="radio-button mr-4">
             <input
@@ -294,9 +294,9 @@
     <div class="sm:col-span-2" ngx-control-wrapper ngModelGroup="addresses">
       <div ngx-control-wrapper ngModelGroup="billingAddress">
         <h3 class="text-2xl">Billing address</h3>
-        <sc-address
+        <ngx-address
           [address]="vm.formValue.addresses?.billingAddress"
-        ></sc-address>
+        ></ngx-address>
       </div>
       <label ngx-control-wrapper>
         <span>Shipping address is different from billing address</span>
@@ -311,7 +311,7 @@
       @if (vm.showShippingAddress) {
         <div ngx-control-wrapper ngModelGroup="shippingAddress">
           <h3 class="text-2xl">Shipping Address</h3>
-          <sc-address [address]="vm.shippingAddress"></sc-address>
+          <ngx-address [address]="vm.shippingAddress"></ngx-address>
         </div>
       }
     </div>

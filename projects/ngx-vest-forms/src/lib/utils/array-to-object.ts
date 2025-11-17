@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/no-nested-ternary */
 /**
  * Converts a flat array to an object with numeric keys.
  * Does not recurse into nested arrays or objects.

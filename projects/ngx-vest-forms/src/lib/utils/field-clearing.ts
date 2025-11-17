@@ -143,7 +143,7 @@ export function clearFieldsWhen<T extends Record<string, any>>(
  */
 export function clearFields<T extends Record<string, any>>(
   currentState: T,
-  fieldsToClear: Array<keyof T>
+  fieldsToClear: (keyof T)[]
 ): T {
   const result = { ...currentState };
 

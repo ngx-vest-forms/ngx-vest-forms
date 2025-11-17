@@ -76,7 +76,7 @@ const selectors = {
 };
 
 @Component({
-  selector: 'app-omit-when-validation-config',
+  selector: 'ngx-omit-when-validation-config',
   template: `
     <div class="p-4">
       <h2 class="mb-4 text-xl font-bold">omitWhen + validationConfig Test</h2>

@@ -4,23 +4,16 @@
 type Primitive = string | number | boolean | Date | null | undefined;
 
 /**
- * Utility type to extract the element type of an array.
+ * Helper type to extract the element type from an array.
+ * Used internally for type inference with array paths.
  *
- * Given an array type (e.g., `string[]`), returns the type of its elements (`string`).
- * If the type is not an array, returns `never`.
- *
- * @template T - The array type to extract the element type from
- *
+ * @template T - The array type to extract from
  * @example
  * ```typescript
- * type Numbers = number[];
- * type Element = ArrayElement<Numbers>; // Result: number
- *
- * type NotArray = string;
+ * type Element = ArrayElement<string[]>; // Result: string
  * type Element2 = ArrayElement<NotArray>; // Result: never
  * ```
  */
-type ArrayElement<T> = T extends (infer U)[] ? U : never;
 
 /**
  * Recursively generates all valid field paths for a type as string literals.
@@ -75,19 +68,19 @@ type ArrayElement<T> = T extends (infer U)[] ? U : never;
 export type FieldPath<
   T,
   Prefix extends string = '',
-  Depth extends ReadonlyArray<number> = [],
+  Depth extends readonly number[] = [],
 > = Depth['length'] extends 10
   ? never // Max depth reached, prevent infinite recursion
   : T extends Primitive
     ? never // Don't traverse primitives
-    : T extends ReadonlyArray<infer U>
+    : T extends readonly (infer U)[]
       ? // For arrays, generate paths for the element type
         FieldPath<U, Prefix, [...Depth, 1]>
       : {
           [K in keyof T & string]: T[K] extends Primitive
             ? // Primitive property: just the field name
               `${Prefix}${K}`
-            : T[K] extends ReadonlyArray<infer U>
+            : T[K] extends readonly (infer U)[]
               ? // Array property: field name plus element paths
                 | `${Prefix}${K}`
                   | (U extends Primitive
@@ -136,9 +129,9 @@ export type FieldPath<
  * };
  * ```
  */
-export type ValidationConfigMap<T> = Partial<{
-  [K in FieldPath<T>]: FieldPath<T>[];
-}>;
+export type ValidationConfigMap<T> = Partial<
+  Record<FieldPath<T>, FieldPath<T>[]>
+>;
 
 /**
  * Type-safe field name for use in Vest test() calls and form APIs.
@@ -262,17 +255,17 @@ export type ValidateFieldPath<T, Path extends string> =
 export type LeafFieldPath<
   T,
   Prefix extends string = '',
-  Depth extends ReadonlyArray<number> = [],
+  Depth extends readonly number[] = [],
 > = Depth['length'] extends 10
   ? never
   : T extends Primitive
     ? never
-    : T extends ReadonlyArray<infer U>
+    : T extends readonly (infer U)[]
       ? LeafFieldPath<U, Prefix, [...Depth, 1]>
       : {
           [K in keyof T & string]: T[K] extends Primitive
             ? `${Prefix}${K}`
-            : T[K] extends ReadonlyArray<infer U>
+            : T[K] extends readonly (infer U)[]
               ? U extends Primitive
                 ? never
                 : LeafFieldPath<U, `${Prefix}${K}.`, [...Depth, 1]>

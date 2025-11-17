@@ -157,7 +157,7 @@ type ProcedureFormModel = NgxDeepPartial<{
 }>;
 
 @Component({
-  selector: 'app-procedure-form',
+  selector: 'ngx-procedure-form',
   imports: [vestForms],
   template: `
     <form ngxVestForm (formValueChange)="formValue.set($event)" #vestForm>

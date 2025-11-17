@@ -52,7 +52,7 @@ type SearchFormModel = NgxDeepPartial<{
 }>;
 
 @Component({
-  selector: 'app-search-form',
+  selector: 'ngx-search-form',
   template: `
     <form
       ngxVestForm
@@ -163,7 +163,7 @@ type LoginFormModel = NgxDeepPartial<{
 }>;
 
 @Component({
-  selector: 'app-login-form',
+  selector: 'ngx-login-form',
   template: `
     <form
       ngxVestForm
@@ -278,7 +278,7 @@ import { Component } from '@angular/core';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
 
 @Component({
-  selector: 'app-complex-form',
+  selector: 'ngx-complex-form',
   providers: [
     {
       provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
@@ -287,7 +287,7 @@ import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
   ],
 })
 export class ComplexFormComponent {
-  // This component uses 500ms debounce, overriding app-wide 200ms
+  // This component uses 500ms debounce, overriding ngx-wide 200ms
 }
 ```
 
