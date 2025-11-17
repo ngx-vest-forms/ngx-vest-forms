@@ -73,14 +73,14 @@ export type FieldPath<
   ? never // Max depth reached, prevent infinite recursion
   : T extends Primitive
     ? never // Don't traverse primitives
-    : T extends readonly (infer U)[]
+    : T extends ReadonlyArray<infer U>
       ? // For arrays, generate paths for the element type
         FieldPath<U, Prefix, [...Depth, 1]>
       : {
           [K in keyof T & string]: T[K] extends Primitive
             ? // Primitive property: just the field name
               `${Prefix}${K}`
-            : T[K] extends readonly (infer U)[]
+            : T[K] extends ReadonlyArray<infer U>
               ? // Array property: field name plus element paths
                 | `${Prefix}${K}`
                   | (U extends Primitive
@@ -130,7 +130,7 @@ export type FieldPath<
  * ```
  */
 export type ValidationConfigMap<T> = Partial<
-  Record<FieldPath<T>, FieldPath<T>[]>
+  Record<FieldPath<T>, Array<FieldPath<T>>>
 >;
 
 /**
@@ -260,12 +260,12 @@ export type LeafFieldPath<
   ? never
   : T extends Primitive
     ? never
-    : T extends readonly (infer U)[]
+    : T extends ReadonlyArray<infer U>
       ? LeafFieldPath<U, Prefix, [...Depth, 1]>
       : {
           [K in keyof T & string]: T[K] extends Primitive
             ? `${Prefix}${K}`
-            : T[K] extends readonly (infer U)[]
+            : T[K] extends ReadonlyArray<infer U>
               ? U extends Primitive
                 ? never
                 : LeafFieldPath<U, `${Prefix}${K}.`, [...Depth, 1]>

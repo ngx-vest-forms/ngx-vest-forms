@@ -227,7 +227,7 @@ export class ValidateRootFormDirective<T>
     // but root form validation uses formValue input (typed model) instead of control.value.
     // This is intentional - cross-field validation operates on the complete form model,
     // not individual control values. The underscore prefix indicates intentional non-use.
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     return (_control: AbstractControl) => {
       const currentFormValue = this.formValue();
       if (!currentFormValue) {

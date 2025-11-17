@@ -257,7 +257,7 @@ export function getAllFormErrors(form?: AbstractControl): Record<string, any> {
 
   function collect(
     control: AbstractControl,
-    pathParts: (string | number)[]
+    pathParts: Array<string | number>
   ): void {
     const pathString = stringifyFieldPath(pathParts);
 
