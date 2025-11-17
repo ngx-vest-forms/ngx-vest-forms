@@ -1,3 +1,4 @@
+/* eslint-disable @angular-eslint/component-selector */
 import { AsyncPipe } from '@angular/common';
 import { Component, signal, ViewChild } from '@angular/core';
 import { render } from '@testing-library/angular';
