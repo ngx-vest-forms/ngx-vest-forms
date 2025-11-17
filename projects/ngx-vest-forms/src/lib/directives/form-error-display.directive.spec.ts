@@ -236,7 +236,7 @@ describe('FormErrorDisplayDirective', () => {
 
   // Host directive usage test
   @Component({
-    selector: 'host-field',
+    selector: 'ngx-host-field',
     imports: [FormsModule, FormErrorDisplayDirective],
     hostDirectives: [FormErrorDisplayDirective],
     template: `
