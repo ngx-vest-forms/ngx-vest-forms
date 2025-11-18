@@ -446,13 +446,9 @@ export class FormDirective<T extends Record<string, unknown>> {
       const model = mergeValuesAndRawValues<T>(this.ngForm.form);
 
       // Targeted snapshot with candidate value injected at path
-      let snapshot: T;
-      try {
-        snapshot = structuredClone(model) as T;
-      } catch {
-        // Fallback for environments without structuredClone or for values with functions/circular refs
-        snapshot = { ...(model as object) } as T;
-      }
+      // mergeValuesAndRawValues already returns a deep clone (via structuredClone),
+      // so we can modify it directly without affecting the form state.
+      const snapshot = model;
       setValueAtPath(snapshot as object, field, control.value);
 
       // Use timer() instead of ReplaySubject for proper debouncing
