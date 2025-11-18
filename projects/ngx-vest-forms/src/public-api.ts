@@ -53,10 +53,7 @@ export {
   DebouncedPendingStateResult,
   createDebouncedPendingState,
 } from './lib/utils/pending-state.utils';
-export {
-  ShapeMismatchError,
-  validateShape,
-} from './lib/utils/shape-validation';
+export { validateShape } from './lib/utils/shape-validation';
 
 // Internal utilities - exported for advanced use cases but not part of the primary API
 // These are marked with @internal in their source files and may change without notice

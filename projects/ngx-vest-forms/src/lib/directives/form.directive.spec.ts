@@ -413,25 +413,34 @@ describe('FormDirective - Shape Validation', () => {
     @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
   }
 
-  it('should throw in dev mode if form value shape does not match formShape', async () => {
+  let consoleWarnSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleWarnSpy.mockRestore();
+  });
+
+  it('should warn in dev mode if form value shape does not match formShape', async () => {
     // Only run this test if isDevMode is true
     const { fixture } = await render(TestShapeValidationHost);
     const instance = fixture.componentInstance;
     // Simulate a value change that triggers shape validation
-    expect(() => {
-      instance.formValue.set({ foo: 'bar' });
-      fixture.detectChanges();
-    }).toThrow();
+    instance.formValue.set({ foo: 'bar' });
+    fixture.detectChanges();
+    expect(consoleWarnSpy).toHaveBeenCalled();
   });
 
-  it('should not throw in production mode', async () => {
+  it('should not warn in production mode', async () => {
     // This test is skipped in prod builds; in real prod, shape validation is a no-op
-    // Here, we just ensure no throw if shape is correct
+    // Here, we just ensure no warning if shape is correct
     const { fixture } = await render(TestShapeValidationHost);
     const instance = fixture.componentInstance;
-    expect(() => {
-      instance.formValue.set({ username: 'ok' });
-    }).not.toThrow();
+    instance.formValue.set({ username: 'ok' });
+    fixture.detectChanges();
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
   });
 });
 

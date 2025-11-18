@@ -839,7 +839,7 @@ const formShape: NgxDeepRequired<FormModel> = {
   profile: { age: 0 },
 };
 
-// Throws ShapeMismatchError if structure doesn't match
+// Logs a warning if structure doesn't match in dev mode
 validateShape(formValue, formShape, 'formValue');
 ```
 
@@ -911,7 +911,7 @@ import { parseFieldPath } from 'ngx-vest-forms';
 import { shallowEqual, fastDeepEqual } from 'ngx-vest-forms';
 
 // Internal shape validation (automatic via directive)
-import { validateShape, ShapeMismatchError } from 'ngx-vest-forms';
+import { validateShape } from 'ngx-vest-forms';
 ```
 
 ---

@@ -1,13 +1,5 @@
 import { isDevMode } from '@angular/core';
-
-/**
- * Clean error that improves the DX when making typo's in the `name` or `ngModelGroup` attributes
- */
-export class ShapeMismatchError extends Error {
-  constructor(errorList: string[]) {
-    super(`Shape mismatch:\n\n${errorList.join('\n')}\n\n`);
-  }
-}
+import { NGX_VEST_FORMS_ERRORS, logWarning } from '../errors/error-catalog';
 
 /**
  * Validates a form value against a shape
@@ -17,16 +9,13 @@ export class ShapeMismatchError extends Error {
  * @param formVal
  * @param shape
  */
-export function validateShape(
-  formVal: Record<string, any>,
-  shape: Record<string, any>
-): void {
+export function validateShape<
+  T extends Record<string, unknown>,
+  U extends Record<string, unknown>,
+>(formVal: T, shape: U): void {
   // Only execute in dev mode
   if (isDevMode()) {
-    const errors = validateFormValue(formVal, shape);
-    if (errors.length) {
-      throw new ShapeMismatchError(errors);
-    }
+    validateFormValue(formVal, shape);
   }
 }
 
@@ -41,8 +30,7 @@ function validateFormValue(
   formValue: Record<string, any>,
   shape: Record<string, any>,
   path = ''
-): string[] {
-  const errors: string[] = [];
+): void {
   for (const key in formValue) {
     if (Object.keys(formValue).includes(key)) {
       // In form arrays we don't know how many items there are
@@ -74,15 +62,28 @@ function validateFormValue(
             shape[keyToCompareWith] === null) &&
           isNaN(parseFloat(key))
         ) {
-          errors.push(`[ngModelGroup] Mismatch: '${newPath}'`);
+          logWarning(NGX_VEST_FORMS_ERRORS.SHAPE_MISMATCH, newPath);
         }
-        errors.push(
-          ...validateFormValue(formValue[key], shape[keyToCompareWith], newPath)
-        );
+        validateFormValue(formValue[key], shape[keyToCompareWith], newPath);
       } else if ((shape ? !(key in shape) : true) && isNaN(parseFloat(key))) {
-        errors.push(`[ngModel] Mismatch '${newPath}'`);
+        logWarning(NGX_VEST_FORMS_ERRORS.SHAPE_MISMATCH, newPath);
       }
     }
   }
-  return errors;
+
+  // Check for missing keys in formValue
+  // We skip arrays because empty arrays are valid even if shape defines an item structure (at key '0')
+  if (
+    shape &&
+    typeof formValue === 'object' &&
+    formValue !== null &&
+    !Array.isArray(formValue)
+  ) {
+    for (const key of Object.keys(shape)) {
+      if (!(key in formValue)) {
+        const newPath = path ? `${path}.${key}` : key;
+        logWarning(NGX_VEST_FORMS_ERRORS.SHAPE_MISMATCH, newPath);
+      }
+    }
+  }
 }
