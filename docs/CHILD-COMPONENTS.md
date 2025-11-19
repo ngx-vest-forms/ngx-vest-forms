@@ -16,7 +16,7 @@ For child components to access the parent form's `NgForm`, they must include `ve
 ```typescript
 import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import {
-  vestForms,
+  NgxVestForms,
   vestFormsViewProviders,
   NgxDeepPartial,
 } from 'ngx-vest-forms';
@@ -30,7 +30,7 @@ type AddressModel = NgxDeepPartial<{
 
 @Component({
   selector: 'ngx-address-form',
-  imports: [vestForms],
+  imports: [NgxVestForms],
   viewProviders: [vestFormsViewProviders], // CRITICAL: Required for child components
   template: `
     <div ngModelGroup="address">
@@ -73,7 +73,7 @@ export class AddressFormComponent {
 
 ```typescript
 import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
-import { vestForms, NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
+import { NgxVestForms, NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
 import { staticSuite, test, enforce, only } from 'vest';
 import { AddressFormComponent } from './address-form.component';
 
@@ -85,7 +85,7 @@ type OrderFormModel = NgxDeepPartial<{
 
 @Component({
   selector: 'ngx-order-form',
-  imports: [vestForms, AddressFormComponent],
+  imports: [NgxVestForms, AddressFormComponent],
   template: `
     <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
       <label>Customer Name</label>
@@ -115,7 +115,7 @@ Pass the field name as an input when you need different `ngModelGroup` names:
 ```typescript
 @Component({
   selector: 'ngx-address-form',
-  imports: [vestForms],
+  imports: [NgxVestForms],
   viewProviders: [vestFormsViewProviders],
   template: `
     <div [ngModelGroup]="groupName()">
@@ -157,7 +157,7 @@ Child components can include their own error display:
 ```typescript
 @Component({
   selector: 'ngx-contact-form',
-  imports: [vestForms],
+  imports: [NgxVestForms],
   viewProviders: [vestFormsViewProviders],
   template: `
     <div ngModelGroup="contact">
@@ -197,7 +197,7 @@ Child components can contain other child components - all need `vestFormsViewPro
 // Grandchild component
 @Component({
   selector: 'ngx-phone-input',
-  imports: [vestForms],
+  imports: [NgxVestForms],
   viewProviders: [vestFormsViewProviders], // Required
   template: `
     <div ngx-control-wrapper>
@@ -220,7 +220,7 @@ export class PhoneInputComponent {
 // Child component using grandchild
 @Component({
   selector: 'ngx-contact-form',
-  imports: [vestForms, PhoneInputComponent],
+  imports: [NgxVestForms, PhoneInputComponent],
   viewProviders: [vestFormsViewProviders], // Required
   template: `
     <div ngModelGroup="contact">
@@ -312,7 +312,7 @@ export const orderSuite: NgxVestSuite<OrderFormModel> = staticSuite(
 // Reusable component
 @Component({
   selector: 'ngx-name-section',
-  imports: [vestForms],
+  imports: [NgxVestForms],
   viewProviders: [vestFormsViewProviders],
   template: `
     <div [ngModelGroup]="groupName()">

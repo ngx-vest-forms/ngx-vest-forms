@@ -4,7 +4,7 @@ import {
   computed,
   signal,
 } from '@angular/core';
-import { createValidationConfig, vestForms } from 'ngx-vest-forms';
+import { createValidationConfig, NgxVestForms } from 'ngx-vest-forms';
 import {
   ValidationDemoModel,
   validationDemoShape,
@@ -13,7 +13,7 @@ import { validationDemoSuite } from '../../../validations/validation-demo.valida
 
 @Component({
   selector: 'ngx-validation-config-demo',
-  imports: [vestForms],
+  imports: [NgxVestForms],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './validation-config-demo.component.html',
   styleUrls: ['./validation-config-demo.component.scss'],

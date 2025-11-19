@@ -2,7 +2,7 @@
  * Public API Surface of ngx-vest-forms
  */
 
-export { vestForms, vestFormsViewProviders } from './lib/exports';
+export { NgxVestForms, vestForms, vestFormsViewProviders } from './lib/exports';
 
 // Type utilities
 export { DeepPartial, NgxDeepPartial } from './lib/utils/deep-partial';

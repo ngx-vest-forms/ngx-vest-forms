@@ -65,7 +65,7 @@ Start simple (with validations):
 
 ```ts
 import { Component, signal } from '@angular/core';
-import { vestForms, NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
+import { NgxVestForms, NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
 import { staticSuite, only, test, enforce } from 'vest';
 
 type MyFormModel = NgxDeepPartial<{ email: string; name: string }>;
@@ -79,7 +79,7 @@ const suite: NgxVestSuite<MyFormModel> = staticSuite((model, field?) => {
 });
 
 @Component({
-  imports: [vestForms],
+  imports: [NgxVestForms],
   template: `
     <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
       <ngx-control-wrapper>

@@ -1,11 +1,11 @@
 import { Component, Input } from '@angular/core';
 import { NgxMaskDirective } from 'ngx-mask';
-import { vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
+import { NgxVestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 import { BusinessHourFormModel } from '../../../models/business-hours-form.model';
 
 @Component({
   selector: 'ngx-business-hour',
-  imports: [vestForms, NgxMaskDirective],
+  imports: [NgxVestForms, NgxMaskDirective],
   templateUrl: './business-hour.component.html',
   styleUrls: ['./business-hour.component.scss'],
   viewProviders: [vestFormsViewProviders],

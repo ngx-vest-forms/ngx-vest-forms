@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-import { vestForms, vestFormsViewProviders } from 'ngx-vest-forms';
+import { NgxVestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 import { AddressModel } from '../../../models/address.model';
 
 @Component({
   selector: 'ngx-address',
-  imports: [vestForms],
+  imports: [NgxVestForms],
   viewProviders: [vestFormsViewProviders],
   templateUrl: './address.component.html',
   styleUrls: ['./address.component.scss'],

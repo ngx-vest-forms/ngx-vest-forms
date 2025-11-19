@@ -144,7 +144,7 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import {
-  vestForms,
+  NgxVestForms,
   NgxDeepPartial,
   clearFieldsWhen,
   FormDirective,
@@ -158,7 +158,7 @@ type ProcedureFormModel = NgxDeepPartial<{
 
 @Component({
   selector: 'ngx-procedure-form',
-  imports: [vestForms],
+  imports: [NgxVestForms],
   template: `
     <form ngxVestForm (formValueChange)="formValue.set($event)" #vestForm>
       <label>Procedure Type</label>

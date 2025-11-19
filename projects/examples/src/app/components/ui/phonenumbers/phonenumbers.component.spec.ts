@@ -1,11 +1,11 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { vestForms } from 'ngx-vest-forms';
+import { NgxVestForms } from 'ngx-vest-forms';
 import { PhoneNumbersComponent } from './phonenumbers.component';
 
 @Component({
-  imports: [PhoneNumbersComponent, FormsModule, vestForms],
+  imports: [PhoneNumbersComponent, FormsModule, NgxVestForms],
   template: `
     <form
       ngxVestForm

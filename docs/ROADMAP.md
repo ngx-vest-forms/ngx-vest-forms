@@ -143,7 +143,7 @@ Teams building custom design systems only want the reactive form bridge (signals
 #### Action Items (Core Entry Point)
 
 - [ ] Split current directive implementation into `core` (new ng-package) and existing wrappers
-- [ ] Publish `ngxVestFormsCore` array for easy importing (`imports: [...ngxVestFormsCore]`)
+- [ ] Publish `NgxVestFormsCore` array for easy importing (`imports: [...NgxVestFormsCore]`)
 - [ ] Update README + docs/COMPLETE-EXAMPLE.md with headless recipes
 - [ ] Port PR #31’s `form-core.directive.spec.ts` to protect the new entry point
 

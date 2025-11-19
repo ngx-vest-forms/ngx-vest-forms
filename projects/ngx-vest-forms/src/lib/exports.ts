@@ -66,9 +66,24 @@ export const vestFormsViewProviders = [
 ];
 
 /**
- * Exports all the stuff we need to use the template driven forms
+ * Collection of directives, components, and modules required for ngx-vest-forms.
+ *
+ * This array exports all the necessary components and directives to enable
+ * Vest validation integration with Angular template-driven forms.
+ *
+ * @example
+ * ```typescript
+ * import { NgxVestForms } from 'ngx-vest-forms';
+ *
+ * @Component({
+ *   standalone: true,
+ *   imports: [NgxVestForms],
+ *   /// ...
+ * })
+ * export class MyComponent { }
+ * ```
  */
-export const vestForms = [
+export const NgxVestForms = [
   ValidateRootFormDirective,
   ControlWrapperComponent,
   FormDirective,
@@ -76,3 +91,8 @@ export const vestForms = [
   FormModelDirective,
   FormModelGroupDirective,
 ] as const;
+
+/**
+ * @deprecated Use `NgxVestForms` instead
+ */
+export const vestForms = NgxVestForms;

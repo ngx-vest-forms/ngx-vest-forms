@@ -8,14 +8,14 @@ import {
 } from '@angular/core';
 import {
   arrayToObject,
-  vestForms,
+  NgxVestForms,
   vestFormsViewProviders,
 } from 'ngx-vest-forms';
 import type { PhoneNumberMap } from '../../../models/phonenumber.model';
 
 @Component({
   selector: 'ngx-phonenumbers',
-  imports: [vestForms, KeyValuePipe],
+  imports: [NgxVestForms, KeyValuePipe],
   templateUrl: './phonenumbers.component.html',
   styleUrls: ['./phonenumbers.component.scss'],
   viewProviders: [vestFormsViewProviders],

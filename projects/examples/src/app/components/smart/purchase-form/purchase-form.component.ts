@@ -11,9 +11,9 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import {
   clearFields,
   createValidationConfig,
+  NgxVestForms,
   ROOT_FORM,
   setValueAtPath,
-  vestForms,
 } from 'ngx-vest-forms';
 import { debounceTime, filter, switchMap } from 'rxjs';
 import { LukeService } from '../../../luke.service';
@@ -30,7 +30,7 @@ import { PhoneNumbersComponent } from '../../ui/phonenumbers/phonenumbers.compon
 
 @Component({
   selector: 'ngx-purchase-form',
-  imports: [JsonPipe, vestForms, AddressComponent, PhoneNumbersComponent],
+  imports: [JsonPipe, NgxVestForms, AddressComponent, PhoneNumbersComponent],
   templateUrl: './purchase-form.component.html',
   styleUrls: ['./purchase-form.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

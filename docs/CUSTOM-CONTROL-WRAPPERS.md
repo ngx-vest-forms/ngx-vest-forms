@@ -283,7 +283,7 @@ Once created, use your custom wrapper just like the built-in `ngx-control-wrappe
 
 ```typescript
 @Component({
-  imports: [vestForms, CustomControlWrapperComponent],
+  imports: [NgxVestForms, CustomControlWrapperComponent],
   template: `
     <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
       <ngx-custom-control-wrapper>

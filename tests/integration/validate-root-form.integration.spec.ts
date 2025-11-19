@@ -1,6 +1,6 @@
 import { Component, signal, Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ROOT_FORM, vestForms } from 'ngx-vest-forms';
+import { NgxVestForms, ROOT_FORM } from 'ngx-vest-forms';
 import { enforce, only, staticSuite, test } from 'vest';
 
 type GeneralInfoForm = {
@@ -26,7 +26,7 @@ const issueThirteenSuite = staticSuite(
 
 @Component({
   standalone: true,
-  imports: [vestForms],
+  imports: [NgxVestForms],
   template: `
     <form
       scVestForm
@@ -81,7 +81,7 @@ async function compilePackageConsumer(component: Type<unknown>): Promise<void> {
 describe('validateRootForm integration (dist consumer)', () => {
   afterEach(() => TestBed.resetTestingModule());
 
-  it('compiles when consumers import vestForms from the built package', async () => {
+  it('compiles when consumers import NgxVestForms from the built package', async () => {
     await expect(
       compilePackageConsumer(PackageConsumerComponent)
     ).resolves.toBeUndefined();

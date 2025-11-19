@@ -120,7 +120,7 @@ providers: [{ provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 150 }];
 **Before (v1.x):**
 
 ```typescript
-import { vestForms, SC_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
+import { NgxVestForms, SC_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
 
 @Component({
   template: `
@@ -139,7 +139,7 @@ import { vestForms, SC_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
 **After (v2.x):**
 
 ```typescript
-import { vestForms, NGX_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
+import { NgxVestForms, NGX_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
 
 @Component({
   template: `

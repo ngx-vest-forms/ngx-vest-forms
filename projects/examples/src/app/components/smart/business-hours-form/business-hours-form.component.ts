@@ -1,9 +1,9 @@
 import { JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import {
+  NgxVestForms,
   ROOT_FORM,
   ValidateRootFormDirective,
-  vestForms,
 } from 'ngx-vest-forms';
 import {
   BusinessHoursFormModel,
@@ -16,7 +16,7 @@ import { BusinessHoursComponent } from '../../ui/business-hours/business-hours.c
   selector: 'ngx-business-hours-form',
   imports: [
     JsonPipe,
-    vestForms,
+    NgxVestForms,
     ValidateRootFormDirective,
     BusinessHoursComponent,
   ],

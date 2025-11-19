@@ -4,7 +4,7 @@ import { NgModelGroup } from '@angular/forms';
 import {
   arrayToObject,
   NgxDeepPartial,
-  vestForms,
+  NgxVestForms,
   vestFormsViewProviders,
 } from 'ngx-vest-forms';
 import { BusinessHourFormModel } from '../../../models/business-hours-form.model';
@@ -12,7 +12,7 @@ import { BusinessHourComponent } from '../business-hour/business-hour.component'
 
 @Component({
   selector: 'ngx-business-hours',
-  imports: [vestForms, KeyValuePipe, BusinessHourComponent],
+  imports: [NgxVestForms, KeyValuePipe, BusinessHourComponent],
   templateUrl: './business-hours.component.html',
   styleUrls: ['./business-hours.component.scss'],
   viewProviders: [vestFormsViewProviders],

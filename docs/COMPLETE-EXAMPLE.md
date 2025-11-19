@@ -8,7 +8,7 @@ This guide shows a complete, working ngx-vest-forms implementation from start to
 import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { staticSuite, test, enforce, only } from 'vest';
 import {
-  vestForms,
+  NgxVestForms,
   NgxDeepPartial,
   NgxDeepRequired,
   NgxTypedVestSuite,
@@ -52,7 +52,7 @@ const userValidationSuite: NgxTypedVestSuite<UserFormModel> = staticSuite(
 // 4. Create the component
 @Component({
   selector: 'ngx-user-form',
-  imports: [vestForms],
+  imports: [NgxVestForms],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form
