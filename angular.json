@@ -40,7 +40,8 @@
             "configDir": "projects/ngx-vest-forms/.storybook",
             "port": 6006,
             "styles": ["projects/ngx-vest-forms/.storybook/styles.scss"],
-            "compodoc": false
+            "compodoc": false,
+            "experimentalZoneless": true
           }
         },
         "build-storybook": {
@@ -48,7 +49,8 @@
           "options": {
             "configDir": "projects/ngx-vest-forms/.storybook",
             "outputDir": "dist/storybook/ngx-vest-forms",
-            "compodoc": false
+            "compodoc": false,
+            "experimentalZoneless": true
           }
         },
         "e2e": {

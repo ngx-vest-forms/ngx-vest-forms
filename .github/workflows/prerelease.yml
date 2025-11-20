@@ -91,7 +91,7 @@ jobs:
           node-version: '24'
           cache: 'npm'
       - name: Install
-        run: npm ci
+        run: npm install --legacy-peer-deps
       - name: Playwright install
         run: npx playwright install --with-deps
       - name: Lint
