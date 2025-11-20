@@ -41,6 +41,7 @@
     "vest": "~5.4.6"
   },
   "devDependencies": {
+    "@angular-devkit/build-angular": "^21.0.0",
     "@angular/build": "^21.0.0",
     "@angular/cli": "~21.0.0",
     "@angular/compiler-cli": "~21.0.0",
@@ -51,9 +52,9 @@
     "@semantic-release/changelog": "~6.0.3",
     "@semantic-release/git": "~10.0.1",
     "@storybook/addon-coverage": "~3.0.0",
-    "@storybook/addon-docs": "~10.0.8",
-    "@storybook/addon-links": "~10.0.8",
-    "@storybook/angular": "~10.0.8",
+    "@storybook/addon-docs": "^10.0.8",
+    "@storybook/addon-links": "^10.0.8",
+    "@storybook/angular": "^10.0.8",
     "@storybook/test-runner": "~0.24.1",
     "@swc/core": "~1.15.2",
     "@swc/jest": "~0.2.39",
@@ -94,13 +95,13 @@
     "prettier-plugin-tailwindcss": "^0.7.1",
     "semantic-release": "~25.0.2",
     "semantic-release-cli": "~5.4.6",
-    "storybook": "~10.0.8",
+    "storybook": "10.0.8",
     "tailwindcss": "~3.4.3",
     "ts-node": "~10.9.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "8.47.0",
     "wait-on": "~9.0.3",
-    "eslint-plugin-storybook": "10.0.8"
+    "eslint-plugin-storybook": "^10.0.8"
   },
   "repository": {
     "type": "git",

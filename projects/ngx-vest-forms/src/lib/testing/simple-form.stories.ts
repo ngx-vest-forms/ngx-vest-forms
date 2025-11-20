@@ -203,19 +203,20 @@ export const ShouldShowErrorsOnBlur: StoryObj = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByTestId(selectors.inputFirstName));
-    canvas.getByTestId(selectors.inputFirstName).blur();
+    // Use userEvent.tab to trigger a realistic blur sequence in Chromium + Angular 21
+    await userEvent.tab();
     await expect(
       canvas.getByTestId(selectors.ngxControlWrapperFirstName)
     ).toHaveTextContent('First name is required');
 
     await userEvent.click(canvas.getByTestId(selectors.inputLastName));
-    canvas.getByTestId(selectors.inputLastName).blur();
+    await userEvent.tab();
     await expect(
       canvas.getByTestId(selectors.ngxControlWrapperLastName)
     ).toHaveTextContent('Last name is required');
 
     await userEvent.click(canvas.getByTestId(selectors.inputPassword));
-    canvas.getByTestId(selectors.inputPassword).blur();
+    await userEvent.tab();
     await expect(
       canvas.getByTestId(selectors.ngxControlWrapperPassword)
     ).toHaveTextContent('Password is required');
@@ -230,6 +231,8 @@ export const ShouldValidateOnGroups: StoryObj = {
       canvas.getByTestId(selectors.inputConfirmPassword),
       'second'
     );
+    // Trigger blur on the confirm password to ensure group validation fires in Angular 21
+    await userEvent.tab();
     await expect(
       canvas.getByTestId(selectors.ngxControlWrapperPasswords)
     ).toHaveTextContent('Passwords do not match');
@@ -345,6 +348,10 @@ export const ShouldHaveCorrectStatussesAndOnFormUpdate: StoryObj = {
 export const ShouldValidateOnRootForm: StoryObj = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    // Wait until the submit button is rendered to avoid race conditions with Angular 21 rendering lifecycle
+    await waitFor(() => {
+      expect(canvas.getByTestId(selectors.btnSubmit)).toBeInTheDocument();
+    });
     await userEvent.type(
       canvas.getByTestId(selectors.inputFirstName),
       'Brecht'
@@ -354,6 +361,11 @@ export const ShouldValidateOnRootForm: StoryObj = {
       'Billiet'
     );
     await userEvent.type(canvas.getByTestId(selectors.inputPassword), '1234');
+    // Provide confirm password so field-level required/group validations don't mask root form error.
+    await userEvent.type(
+      canvas.getByTestId(selectors.inputConfirmPassword),
+      '1234'
+    );
     // Submit form to trigger root form validation
     await userEvent.click(canvas.getByTestId(selectors.btnSubmit));
     await waitFor(
