@@ -1,1 +1,6 @@
-module.exports = require('jest-preset-angular/jest-preset');
+const { createCjsPreset } = require('jest-preset-angular/presets');
+
+module.exports = createCjsPreset({
+  tsconfig: '<rootDir>/tsconfig.spec.json',
+  testEnvironment: 'jsdom',
+});

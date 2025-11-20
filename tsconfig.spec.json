@@ -3,7 +3,9 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
-    "module": "CommonJs",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
     "types": ["jest", "node", "@testing-library/jest-dom"]
   },
   "include": ["**/*.spec.ts", "**/*.d.ts", "**/*.test.ts", "jest.config.ts"]
