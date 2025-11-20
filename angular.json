@@ -87,8 +87,8 @@
             "tsConfig": "projects/examples/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
-              "src/favicon.ico",
-              "src/assets"
+              "projects/examples/src/favicon.ico",
+              "projects/examples/src/assets"
             ],
             "styles": ["projects/examples/src/styles.scss"],
             "scripts": [],

@@ -1,5 +1,6 @@
 import type { Config } from 'jest';
-import baseConfig from './jest.config';
+// @ts-expect-error - Jest requires the .ts extension for imports in ESM mode, but TS complains
+import baseConfig from './jest.config.ts';
 
 const moduleNameMapper = { ...(baseConfig.moduleNameMapper ?? {}) };
 moduleNameMapper['^ngx-vest-forms$'] = '<rootDir>/dist/ngx-vest-forms';
