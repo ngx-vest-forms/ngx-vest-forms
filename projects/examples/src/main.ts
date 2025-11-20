@@ -1,4 +1,3 @@
-import { provideHttpClient } from '@angular/common/http';
 import { bootstrapApplication } from '@angular/platform-browser';
 import {
   provideRouter,
@@ -33,7 +32,6 @@ const appRoutes: Routes = [
 ];
 bootstrapApplication(AppComponent, {
   providers: [
-    provideHttpClient(),
     provideEnvironmentNgxMask({ validation: false }),
     provideRouter(appRoutes, withEnabledBlockingInitialNavigation()),
     // Global configuration for validation config debounce timing

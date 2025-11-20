@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { NgxMaskDirective } from 'ngx-mask';
 import { NgxVestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 import { BusinessHourFormModel } from '../../../models/business-hours-form.model';
@@ -11,5 +11,5 @@ import { BusinessHourFormModel } from '../../../models/business-hours-form.model
   viewProviders: [vestFormsViewProviders],
 })
 export class BusinessHourComponent {
-  @Input() businessHour?: BusinessHourFormModel = {};
+  readonly businessHour = input<BusinessHourFormModel | undefined>({});
 }

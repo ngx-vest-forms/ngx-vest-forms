@@ -5,7 +5,7 @@
       mask="00:00"
       placeholder="00:00"
       type="text"
-      [ngModel]="businessHour?.from"
+      [ngModel]="businessHour()?.from"
       name="from"
     />
   </label>
@@ -17,7 +17,7 @@
       mask="00:00"
       placeholder="00:00"
       type="text"
-      [ngModel]="businessHour?.to"
+      [ngModel]="businessHour()?.to"
       name="to"
     />
   </label>

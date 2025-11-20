@@ -1,10 +1,10 @@
 <div ngModelGroup="businessHours" ngx-control-wrapper>
   <div ngModelGroup="values" ngx-control-wrapper>
-    @for (item of businessHoursModel?.values | keyvalue; track item.key) {
+    @for (item of businessHoursModel()?.values | keyvalue; track item.key) {
       <div ngx-control-wrapper [ngModelGroup]="item.key">
         <div class="flex items-start">
           <ngx-business-hour
-            [businessHour]="businessHoursModel?.values?.[item.key]"
+            [businessHour]="businessHoursModel()?.values?.[item.key]"
           ></ngx-business-hour>
           <button
             class="ml-4 mt-1.5"
@@ -21,7 +21,7 @@
   <div ngx-control-wrapper ngModelGroup="addValue" #group="ngModelGroup">
     <div class="flex items-start">
       <ngx-business-hour
-        [businessHour]="businessHoursModel?.addValue"
+        [businessHour]="businessHoursModel()?.addValue"
       ></ngx-business-hour>
       <button
         class="ml-4 mt-1.5"
