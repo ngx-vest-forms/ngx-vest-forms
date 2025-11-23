@@ -6,14 +6,14 @@ import { expect, Locator, Page } from '@playwright/test';
 export async function navigateToPurchaseForm(page: Page): Promise<void> {
   await page.goto('/purchase');
   await expect(
-    page.getByRole('heading', { name: /complex form with.*validations/i })
+    page.getByRole('heading', { name: /purchase form/i, level: 3 })
   ).toBeVisible();
 }
 
 export async function navigateToBusinessHoursForm(page: Page): Promise<void> {
   await page.goto('/business-hours');
   await expect(
-    page.getByRole('heading', { name: /form array with complex validations/i })
+    page.getByRole('heading', { name: /complex validations/i })
   ).toBeVisible();
 }
 
@@ -31,7 +31,7 @@ export async function navigateToValidationConfigDemo(
  */
 export async function waitForValidationToComplete(
   field: Locator,
-  timeout: number = 5000
+  timeout = 5000
 ): Promise<void> {
   await expect(field).not.toHaveAttribute('aria-busy', 'true', { timeout });
 }
@@ -67,7 +67,7 @@ export async function waitForValidationToComplete(
 export async function expectFieldHasError(
   field: Locator,
   expectedError?: string | RegExp,
-  strict: boolean = false
+  strict = false
 ): Promise<void> {
   // Wait for the field to have ng-invalid class (Angular validation detected error)
   // Use expect.poll() with gradual backoff for race conditions
@@ -165,7 +165,7 @@ export async function getFormLevelErrors(page: Page): Promise<Locator> {
  */
 export async function monitorAriaStability(
   field: Locator,
-  maxDuration: number = 1000
+  maxDuration = 1000
 ): Promise<boolean> {
   const startTime = Date.now();
   let lastBusyState = false;
@@ -201,7 +201,7 @@ export async function expectEnabled(element: Locator): Promise<void> {
 /**
  * Wait for a debounced input to trigger validation
  */
-export async function waitForDebounce(duration: number = 1100): Promise<void> {
+export async function waitForDebounce(duration = 1100): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, duration));
 }
 
@@ -221,13 +221,15 @@ export async function expectUnchecked(checkbox: Locator): Promise<void> {
 
 /**
  * Select a radio button by value
+ * For purchase form, radio buttons are inside individual labels, so we use the label text
  */
 export async function selectRadio(
   page: Page,
   name: string,
   value: string
 ): Promise<void> {
-  await page.getByRole('radio', { name: value, exact: true }).check();
+  // Use getByLabel to find the radio by its individual label text
+  await page.getByLabel(value, { exact: true }).check();
 }
 
 /**

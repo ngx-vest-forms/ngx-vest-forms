@@ -1,330 +1,431 @@
-<div
-  class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800 sm:col-span-2"
->
-  <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">
-    Example: complex form with comples validations and conditionals
-  </h3>
-  <ul class="text-md ml-4 list-disc">
-    <li>Show validation errors on blur</li>
-    <li>Show validation errors on submit</li>
-    <li>Demonstrates <strong>NgxDeepPartial</strong> for form model types</li>
-    <li>
-      Demonstrates <strong>bidirectional validationConfig</strong> (quantity ↔
-      justification)
-    </li>
-    <li>
-      Showcases <strong>clearFields()</strong> utility (Clear Sensitive Data
-      button)
-    </li>
-    <li>
-      Showcases <strong>setValueAtPath()</strong> utility (Prefill Billing
-      Address button)
-    </li>
-    <li>When first name is <strong>Brecht</strong>: Set gender to male</li>
-    <li>
-      When first name is <strong>Brecht</strong> and last name is
-      <strong>Billiet</strong>: Set age and passwords
-    </li>
-    <li>
-      When first name is <strong>Luke</strong>: Fetch
-      <strong>Luke Skywalker from the swapi api</strong>
-    </li>
-    <li>When age is below 18, make Emergency contact required</li>
-    <li>When age is of legal age, disable Emergency contact</li>
-    <li>There should be at least one phone number</li>
-    <li>Phone numbers should not be empty</li>
-    <li>Quantity is required and must be at least 1</li>
-    <li>
-      When quantity exceeds 5, justification is required (bidirectional
-      validation)
-    </li>
-    <li>When gender is <strong>other</strong>, show Specify gender</li>
-    <li>When gender is <strong>other</strong>, make Specify gender required</li>
-    <li>Password is required</li>
-    <li>Confirm password is only required when password is filled in</li>
-    <li>Passwords should match, but only check if both are filled in</li>
-    <li>Billing address is required</li>
-    <li>Show shipping address only when needed (otherwise remove from DOM)</li>
-    <li>
-      If shipping address is different from billing address, make it required
-    </li>
-    <li>
-      If shipping address is different from billing address, make sure they are
-      not the same
-    </li>
-    <li>
-      When providing shipping address and toggling the checkbox back and forth,
-      make sure the state is kept
-    </li>
-    <li>
-      When clicking the Fetch data button, load data, disable the form, and
-      patch and re-enable the form
-    </li>
-    <li>When the user id is taken, perform async validation</li>
-    <li>
-      Try to set the firstName to Brecht lastName to Billiet, Now change the age
-      to 30. It shows how we can do validations on the root
-    </li>
-  </ul>
-  <button class="mt-6" (click)="fetchData()">Fetch data</button>
-  <button class="ml-2 mt-6" (click)="clearSensitiveData()">
-    Clear Sensitive Data
-  </button>
-  <button class="ml-2 mt-6" (click)="prefillBillingAddress()">
-    Prefill Billing Address
-  </button>
-  <br />
-</div>
-
-<!-- Debug: Show ROOT_FORM errors -->
-<pre>ROOT_FORM errors: {{ vm.errors[ROOT_FORM] | json }}</pre>
-
-@if (vm.errors[ROOT_FORM] && vm.errors[ROOT_FORM].length > 0) {
-  <div
-    class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-800 dark:bg-gray-800 dark:text-red-400"
-    role="alert"
-  >
-    @for (error of vm.errors[ROOT_FORM]; track error) {
-      <div>{{ error }}</div>
-    }
-  </div>
-}
-
-<form
-  class="mt-8"
-  ngxVestForm
-  (ngSubmit)="save()"
-  [formValue]="formValue()"
-  ngxValidateRootForm
-  [ngxValidateRootFormMode]="'submit'"
-  [formShape]="shape"
-  [suite]="purchaseValidationSuite"
-  [validationConfig]="validationConfig()"
-  (validChange)="formValid.set($event)"
-  (errorsChange)="errors.set($event)"
-  (formValueChange)="setFormValue($event)"
-  [validationOptions]="{ debounceTime: 300 }"
->
-  <fieldset [disabled]="vm.loading">
-    <h1 class="text-4xl">Purchase form</h1>
-    <div class="sm:col-span-2" ngx-control-wrapper>
-      <label>
-        <span>User id</span>
-        <input
-          placeholder="Type user id"
-          type="text"
-          [validationOptions]="{ debounceTime: 500 }"
-          [ngModel]="vm.formValue.userId"
-          name="userId"
-        />
-      </label>
-    </div>
-    <div class="w-full" ngx-control-wrapper>
-      <label>
-        <span>First name</span>
-        <input
-          placeholder="Type your first name"
-          type="text"
-          [ngModel]="vm.formValue.firstName"
-          name="firstName"
-        />
-      </label>
-    </div>
-    <div class="w-full" ngx-control-wrapper>
-      <label>
-        <span>Last name</span>
-        <input
-          placeholder="Type your last name"
-          type="text"
-          [ngModel]="vm.formValue.lastName"
-          name="lastName"
-        />
-      </label>
-    </div>
-    <div class="w-full" ngx-control-wrapper>
-      <label>
-        <span>Birth Date</span>
-        <input
-          placeholder="Select birth date"
-          type="date"
-          [ngModel]="vm.formValue.birthDate"
-          name="birthDate"
-        />
-      </label>
-    </div>
-    <div class="w-full" ngx-control-wrapper>
-      <label>
-        <span>Age</span>
-        <input
-          placeholder="Choose your age"
-          type="number"
-          [ngModel]="vm.formValue.age"
-          name="age"
-        />
-      </label>
-    </div>
-    <div class="w-full" ngx-control-wrapper>
-      <label>
-        <span>Emergency contact</span>
-        <input
-          placeholder="Type your emergency contact"
-          type="text"
-          [disabled]="vm.emergencyContactDisabled"
-          [ngModel]="vm.formValue.emergencyContact"
-          name="emergencyContact"
-        />
-      </label>
-    </div>
-    <div class="sm:col-span-2" ngx-control-wrapper ngModelGroup="phonenumbers">
-      <ngx-phonenumbers [values]="vm.formValue.phonenumbers?.values || {}">
-      </ngx-phonenumbers>
-    </div>
-    <div
-      class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800 sm:col-span-2"
-    >
-      <div class="" ngx-control-wrapper>
-        <span>Gender</span>
-        <div class="flex">
-          <div class="radio-button mr-4">
-            <input
-              id="gender-male"
-              type="radio"
-              [ngModel]="vm.formValue.gender"
-              name="gender"
-              value="male"
-            />
-            <label for="gender-male">Male</label>
-          </div>
-          <div class="radio-button mr-4">
-            <input
-              id="gender-female"
-              type="radio"
-              [ngModel]="vm.formValue.gender"
-              name="gender"
-              value="female"
-            />
-            <label for="gender-female">Female</label>
-          </div>
-          <div class="radio-button mr-4">
-            <input
-              id="gender-other"
-              type="radio"
-              [ngModel]="vm.formValue.gender"
-              name="gender"
-              value="other"
-            />
-            <label for="gender-other">Other</label>
-          </div>
-        </div>
+<div class="page-container grid gap-8 lg:grid-cols-[350px_1fr]">
+  <!-- Instructions Panel -->
+  <div class="space-y-6">
+    <app-card title="Form Features">
+      <div class="prose prose-sm dark:prose-invert max-w-none">
+        <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+          <li>Show validation errors on blur/submit</li>
+          <li><strong>NgxDeepPartial</strong> for form model types</li>
+          <li>
+            <strong>Bidirectional validationConfig</strong> (quantity ↔
+            justification)
+          </li>
+          <li><strong>clearFields()</strong> utility</li>
+          <li><strong>setValueAtPath()</strong> utility</li>
+          <li>Conditional logic based on First Name (Brecht/Luke)</li>
+          <li>Async validation (User ID)</li>
+          <li>Cross-field validation (Passwords, Address)</li>
+        </ul>
       </div>
-      @if (vm.showGenderOther) {
-        <div class="sm:col-span-2" ngx-control-wrapper>
-          <label>
-            <span>Specify gender</span>
-            <input
-              type="text"
-              [ngModel]="vm.formValue.genderOther"
-              name="genderOther"
-            />
-          </label>
-        </div>
-      }
-    </div>
 
-    <div class="sm:col-span-2" ngx-control-wrapper ngModelGroup="passwords">
-      <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
-        <div class="w-full" ngx-control-wrapper>
-          <label>
-            <span>Password</span>
-            <input
-              placeholder="Type password"
-              type="password"
-              [ngModel]="vm.formValue.passwords?.password"
-              name="password"
-            />
-          </label>
-        </div>
-        <div class="w-full" ngx-control-wrapper>
-          <label>
-            <span>Confirm</span>
-            <input
-              placeholder="Confirm password"
-              type="password"
-              [ngModel]="vm.formValue.passwords?.confirmPassword"
-              name="confirmPassword"
-            />
-          </label>
-        </div>
+      <div class="mt-6 flex flex-col gap-2">
+        <button class="btn btn-primary w-full" (click)="fetchData()">
+          Fetch Data (Luke)
+        </button>
+        <button class="btn btn-secondary w-full" (click)="clearSensitiveData()">
+          Clear Sensitive Data
+        </button>
+        <button
+          class="btn btn-secondary w-full"
+          (click)="prefillBillingAddress()"
+        >
+          Prefill Billing Address
+        </button>
       </div>
-    </div>
-    <div class="sm:col-span-2" ngx-control-wrapper>
-      <label>
-        <span>Product</span>
-        <select name="productId" [ngModel]="vm.formValue.productId">
-          @for (product of products(); track product.id) {
-            <option [value]="product.id">{{ product.name }}</option>
-          }
-        </select>
-      </label>
-    </div>
-    <div class="w-full" ngx-control-wrapper>
-      <label>
-        <span>Quantity</span>
-        <input
-          placeholder="Enter quantity"
-          type="number"
-          [ngModel]="vm.formValue.quantity"
-          name="quantity"
-        />
-      </label>
-    </div>
-    @if (vm.showJustification) {
-      <div class="w-full" ngx-control-wrapper>
-        <label>
-          <span>Justification (required when quantity > 5)</span>
-          <textarea
-            placeholder="Please justify your large order"
-            [ngModel]="vm.formValue.justification"
-            name="justification"
-            rows="3"
-          ></textarea>
-        </label>
-      </div>
-    }
-    <div class="sm:col-span-2" ngx-control-wrapper ngModelGroup="addresses">
-      <div ngx-control-wrapper ngModelGroup="billingAddress">
-        <h3 class="text-2xl">Billing address</h3>
-        <ngx-address
-          [address]="vm.formValue.addresses?.billingAddress"
-        ></ngx-address>
-      </div>
-      <label ngx-control-wrapper>
-        <span>Shipping address is different from billing address</span>
-        <input
-          type="checkbox"
-          [ngModel]="
-            vm.formValue.addresses?.shippingAddressDifferentFromBillingAddress
+    </app-card>
+
+    <!-- Form State Debug -->
+    <app-card title="Form Value">
+      <pre
+        class="max-h-96 overflow-x-auto overflow-y-auto rounded-lg bg-gray-50 p-3 text-xs text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+        >{{ formValue() | json }}</pre
+      >
+
+      <div
+        class="mt-4 flex items-center justify-between border-t border-gray-100 pt-4 dark:border-gray-700"
+      >
+        <span class="text-sm font-medium text-gray-600 dark:text-gray-400"
+          >Validity Status</span
+        >
+        <span
+          class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+          [class]="
+            vm.formValid
+              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+              : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
           "
-          name="shippingAddressDifferentFromBillingAddress"
-        />
-      </label>
-      @if (vm.showShippingAddress) {
-        <div ngx-control-wrapper ngModelGroup="shippingAddress">
-          <h3 class="text-2xl">Shipping Address</h3>
-          <ngx-address [address]="vm.shippingAddress"></ngx-address>
-        </div>
-      }
-    </div>
-    <div class="buttons">
-      <button type="button" (click)="reset()">Reset</button>&nbsp;
-      <button type="submit">Submit</button>
-    </div>
-  </fieldset>
-</form>
-<br />
-<p>Valid: {{ vm.formValid }}</p>
+        >
+          {{ vm.formValid ? 'Valid' : 'Invalid' }}
+        </span>
+      </div>
+    </app-card>
+  </div>
 
-<h3>The value of the form</h3>
-<pre id="json-data">
-  {{ vm.formValue | json }}
-</pre>
+  <!-- Main Form Area -->
+  <div class="space-y-6">
+    <!-- Root Errors Alert -->
+    @if (vm.errors[ROOT_FORM] && vm.errors[ROOT_FORM].length > 0) {
+      <div
+        class="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/30"
+        role="alert"
+      >
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg
+              class="h-5 w-5 text-red-400"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-red-800 dark:text-red-200">
+              Form Errors
+            </h3>
+            <div class="mt-2 text-sm text-red-700 dark:text-red-300">
+              <ul class="list-disc space-y-1 pl-5">
+                @for (error of vm.errors[ROOT_FORM]; track error) {
+                  <li>{{ error }}</li>
+                }
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <app-card
+      title="Purchase Form"
+      subtitle="Please fill in your details below."
+    >
+      <form
+        ngxVestForm
+        (ngSubmit)="save()"
+        [formValue]="formValue()"
+        ngxValidateRootForm
+        [ngxValidateRootFormMode]="'submit'"
+        [formShape]="shape"
+        [suite]="purchaseValidationSuite"
+        [validationConfig]="validationConfig()"
+        (validChange)="formValid.set($event)"
+        (errorsChange)="errors.set($event)"
+        (formValueChange)="setFormValue($event)"
+        [validationOptions]="{ debounceTime: 300 }"
+      >
+        <fieldset [disabled]="vm.loading" class="contents">
+          <div class="grid gap-6 md:grid-cols-2">
+            <!-- Personal Information -->
+            <div class="md:col-span-2">
+              <h3 class="section-title">Personal Information</h3>
+              <div class="grid gap-6 md:grid-cols-2">
+                <div class="form-group" ngx-control-wrapper>
+                  <label>
+                    <span class="label-text">User ID</span>
+                    <input
+                      class="input-field"
+                      placeholder="Type user id"
+                      type="text"
+                      [validationOptions]="{ debounceTime: 500 }"
+                      [ngModel]="formValue().userId"
+                      name="userId"
+                    />
+                  </label>
+                </div>
+
+                <div class="form-group" ngx-control-wrapper>
+                  <label>
+                    <span class="label-text">First Name</span>
+                    <input
+                      class="input-field"
+                      placeholder="Type your first name"
+                      type="text"
+                      [ngModel]="formValue().firstName"
+                      name="firstName"
+                    />
+                  </label>
+                </div>
+
+                <div class="form-group" ngx-control-wrapper>
+                  <label>
+                    <span class="label-text">Last Name</span>
+                    <input
+                      class="input-field"
+                      placeholder="Type your last name"
+                      type="text"
+                      [ngModel]="formValue().lastName"
+                      name="lastName"
+                    />
+                  </label>
+                </div>
+
+                <div class="form-group" ngx-control-wrapper>
+                  <label>
+                    <span class="label-text">Birth Date</span>
+                    <input
+                      class="input-field"
+                      placeholder="Select birth date"
+                      type="date"
+                      [ngModel]="formValue().birthDate"
+                      name="birthDate"
+                    />
+                  </label>
+                </div>
+
+                <div class="form-group" ngx-control-wrapper>
+                  <label>
+                    <span class="label-text">Age</span>
+                    <input
+                      class="input-field"
+                      placeholder="Choose your age"
+                      type="number"
+                      [ngModel]="formValue().age"
+                      name="age"
+                    />
+                  </label>
+                </div>
+
+                <div class="form-group" ngx-control-wrapper>
+                  <label>
+                    <span class="label-text">Emergency Contact</span>
+                    <input
+                      class="input-field"
+                      placeholder="Type your emergency contact"
+                      type="text"
+                      [disabled]="vm.emergencyContactDisabled"
+                      [ngModel]="formValue().emergencyContact"
+                      name="emergencyContact"
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Phone Numbers -->
+            <div class="md:col-span-2">
+              <h3 class="section-title">Contact Details</h3>
+              <div
+                class="form-group"
+                ngx-control-wrapper
+                ngModelGroup="phonenumbers"
+              >
+                <div class="label">
+                  <span class="label-text">Phone Numbers</span>
+                  <ngx-phonenumbers
+                    [values]="formValue().phonenumbers?.values || {}"
+                  >
+                  </ngx-phonenumbers>
+                </div>
+              </div>
+            </div>
+
+            <!-- Gender -->
+            <div class="md:col-span-2">
+              <div class="form-group" ngx-control-wrapper>
+                <label>
+                  <span class="label-text mb-3 block">Gender</span>
+                  <div class="radio-group">
+                    <div class="radio-item">
+                      <input
+                        id="gender-male"
+                        type="radio"
+                        [ngModel]="formValue().gender"
+                        name="gender"
+                        value="male"
+                      />
+                      <label for="gender-male">Male</label>
+                    </div>
+                    <div class="radio-item">
+                      <input
+                        id="gender-female"
+                        type="radio"
+                        [ngModel]="formValue().gender"
+                        name="gender"
+                        value="female"
+                      />
+                      <label for="gender-female">Female</label>
+                    </div>
+                    <div class="radio-item">
+                      <input
+                        id="gender-other"
+                        type="radio"
+                        [ngModel]="formValue().gender"
+                        name="gender"
+                        value="other"
+                      />
+                      <label for="gender-other">Other</label>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            @if (vm.showGenderOther) {
+              <div class="form-group" ngx-control-wrapper>
+                <label>
+                  <span class="label-text">Specify gender</span>
+                  <input
+                    class="input-field"
+                    placeholder="Specify gender"
+                    type="text"
+                    [ngModel]="formValue().genderOther"
+                    name="genderOther"
+                  />
+                </label>
+              </div>
+            }
+
+            <!-- Security -->
+            <div
+              class="border-t border-gray-100 pt-6 dark:border-gray-700 md:col-span-2"
+            >
+              <h3 class="section-title">Security</h3>
+              <div class="grid gap-6 md:grid-cols-2" ngModelGroup="passwords">
+                <div class="form-group" ngx-control-wrapper>
+                  <label>
+                    <span class="label-text">Password</span>
+                    <input
+                      class="input-field"
+                      placeholder="Type password"
+                      type="password"
+                      [ngModel]="formValue().passwords?.password"
+                      name="password"
+                    />
+                  </label>
+                </div>
+                <div class="form-group" ngx-control-wrapper>
+                  <label>
+                    <span class="label-text">Confirm Password</span>
+                    <input
+                      class="input-field"
+                      placeholder="Confirm password"
+                      type="password"
+                      [ngModel]="formValue().passwords?.confirmPassword"
+                      name="confirmPassword"
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Order Details -->
+            <div
+              class="border-t border-gray-100 pt-6 dark:border-gray-700 md:col-span-2"
+            >
+              <h3 class="section-title">Order Details</h3>
+              <div class="grid gap-6 md:grid-cols-2">
+                <div class="form-group" ngx-control-wrapper>
+                  <label>
+                    <span class="label-text">Product</span>
+                    <select
+                      class="input-field"
+                      [ngModel]="formValue().productId"
+                      name="productId"
+                    >
+                      @for (product of products(); track product.id) {
+                        <option [value]="product.id">{{ product.name }}</option>
+                      }
+                    </select>
+                  </label>
+                </div>
+                <div class="form-group" ngx-control-wrapper>
+                  <label>
+                    <span class="label-text">Quantity</span>
+                    <input
+                      class="input-field"
+                      placeholder="Enter quantity"
+                      type="number"
+                      [ngModel]="formValue().quantity"
+                      name="quantity"
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            @if (vm.showJustification) {
+              <div class="form-group md:col-span-2" ngx-control-wrapper>
+                <label>
+                  <span class="label-text"
+                    >Justification (required when quantity > 5)</span
+                  >
+                  <textarea
+                    class="input-field"
+                    rows="3"
+                    placeholder="Please justify your large order"
+                    [ngModel]="formValue().justification"
+                    name="justification"
+                  ></textarea>
+                </label>
+              </div>
+            }
+
+            <!-- Addresses -->
+            <div
+              class="border-t border-gray-100 pt-6 dark:border-gray-700 md:col-span-2"
+            >
+              <div ngModelGroup="addresses">
+                <div
+                  class="form-group mb-6"
+                  ngx-control-wrapper
+                  ngModelGroup="billingAddress"
+                >
+                  <h3 class="section-title">Billing Address</h3>
+                  <ngx-address
+                    [address]="formValue().addresses?.billingAddress"
+                  ></ngx-address>
+                </div>
+
+                <div class="mb-6 flex items-center" ngx-control-wrapper>
+                  <input
+                    id="shipping-checkbox"
+                    type="checkbox"
+                    class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-primary-600"
+                    [ngModel]="
+                      formValue().addresses
+                        ?.shippingAddressDifferentFromBillingAddress
+                    "
+                    name="shippingAddressDifferentFromBillingAddress"
+                  />
+                  <label
+                    for="shipping-checkbox"
+                    class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+                  >
+                    Shipping address is different from billing address
+                  </label>
+                </div>
+
+                @if (vm.showShippingAddress) {
+                  <div
+                    class="animate-fade-in form-group"
+                    ngx-control-wrapper
+                    ngModelGroup="shippingAddress"
+                  >
+                    <h3 class="section-title">Shipping Address</h3>
+                    <ngx-address [address]="vm.shippingAddress"></ngx-address>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div
+              class="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-6 dark:border-gray-700 md:col-span-2"
+            >
+              <button type="button" (click)="reset()" class="btn btn-secondary">
+                Reset
+              </button>
+              <button type="submit" class="btn btn-primary">
+                Submit Order
+              </button>
+            </div>
+          </div>
+        </fieldset>
+      </form>
+    </app-card>
+  </div>
+</div>

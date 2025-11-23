@@ -1,19 +1,20 @@
-<label>
-  <span>PhoneNumbers</span>
-  <div ngModelGroup="values">
+<div class="space-y-3">
+  <div ngModelGroup="values" class="space-y-3">
     @for (item of values() | keyvalue; track item.key) {
       <div ngx-control-wrapper>
-        <div class="relative">
+        <div class="relative flex items-center gap-2">
           <input
             type="text"
             name="{{ item.key }}"
             [ngModel]="values()[item.key]"
             placeholder="Type phone number"
+            class="input-field pr-20"
+            [attr.aria-label]="'Phone number ' + item.key"
           />
           <button
             type="button"
             (click)="removePhoneNumber(item.key)"
-            class="absolute bottom-0.5 end-0.5 rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+            class="btn-input-action btn-input-action-danger"
           >
             Remove
           </button>
@@ -21,22 +22,25 @@
       </div>
     }
   </div>
+
   <div ngx-control-wrapper>
-    <div class="relative">
+    <div class="relative flex items-center gap-2">
       <input
         type="text"
         [ngModel]="addValue()"
         (ngModelChange)="addValue.set($event)"
         name="addValue"
         placeholder="Type phone number"
+        class="input-field pr-20"
+        aria-label="PhoneNumbers Add"
       />
       <button
         type="button"
         (click)="addPhoneNumber()"
-        class="absolute bottom-0.5 end-0.5 rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+        class="btn-input-action btn-input-action-primary"
       >
         Add
       </button>
     </div>
   </div>
-</label>
+</div>

@@ -186,9 +186,9 @@ test.describe('Enhanced ValidationConfig - Complex Cascade Dependencies', () => 
     page,
   }) => {
     await test.step('Select country and verify cascade to state and zipCode', async () => {
-      const country = page.getByLabel(/country/i);
-      const state = page.getByLabel(/state/i);
-      const zipCode = page.getByLabel(/postal code/i);
+      const country = page.getByRole('combobox', { name: /country/i });
+      const state = page.getByRole('textbox', { name: /state/i });
+      const zipCode = page.getByRole('textbox', { name: /postal code/i });
 
       /**
        * ValidationConfig setup:
@@ -211,8 +211,8 @@ test.describe('Enhanced ValidationConfig - Complex Cascade Dependencies', () => 
     });
 
     await test.step('Fill dependent fields and verify they become valid', async () => {
-      const state = page.getByLabel(/state/i);
-      const zipCode = page.getByLabel(/postal code/i);
+      const state = page.getByRole('textbox', { name: /state/i });
+      const zipCode = page.getByRole('textbox', { name: /postal code/i });
 
       await fillAndBlur(state, 'California');
       await expectFieldValid(state);
@@ -222,9 +222,9 @@ test.describe('Enhanced ValidationConfig - Complex Cascade Dependencies', () => 
     });
 
     await test.step('Change country and verify dependent fields revalidate', async () => {
-      const country = page.getByLabel(/country/i);
-      const state = page.getByLabel(/state/i);
-      const zipCode = page.getByLabel(/postal code/i);
+      const country = page.getByRole('combobox', { name: /country/i });
+      const state = page.getByRole('textbox', { name: /state/i });
+      const zipCode = page.getByRole('textbox', { name: /postal code/i });
 
       // Change country - this should trigger revalidation via validationConfig
       await country.selectOption({ label: 'Canada' });
@@ -243,9 +243,9 @@ test.describe('Enhanced ValidationConfig - Complex Cascade Dependencies', () => 
     page,
   }) => {
     await test.step('Rapidly change country multiple times', async () => {
-      const country = page.getByLabel(/country/i);
-      const state = page.getByLabel(/state/i);
-      const zipCode = page.getByLabel(/postal code/i);
+      const country = page.getByRole('combobox', { name: /country/i });
+      const state = page.getByRole('textbox', { name: /state/i });
+      const zipCode = page.getByRole('textbox', { name: /postal code/i });
 
       // Select country and fill dependents
       await country.selectOption({ label: 'United States' });

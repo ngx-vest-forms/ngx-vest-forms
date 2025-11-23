@@ -1,63 +1,133 @@
 /* You can add global styles to this file, and also import other style files */
-/* Add application styles & imports to this file! */
-/* Add application styles & imports to this file! */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-white text-gray-900 dark:bg-gray-900 dark:text-white;
+@layer base {
+  body {
+    @apply min-h-screen bg-gradient-to-br from-indigo-100 via-white to-cyan-100 text-gray-900 dark:from-slate-950 dark:via-indigo-950 dark:to-slate-900 dark:text-white;
+  }
 }
-button {
-  @apply mb-2 me-2 rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800;
-}
-button:disabled {
-  @apply cursor-not-allowed bg-gray-400 text-gray-700 dark:bg-gray-600 dark:text-gray-400;
-}
-fieldset {
-  @apply grid gap-4 sm:grid-cols-2 sm:gap-6;
 
-  label span {
-    @apply mb-2 block text-sm font-medium text-gray-900 dark:text-white;
+@layer components {
+  .page-container {
+    @apply mx-auto max-w-7xl p-4 sm:p-6 lg:p-8;
+  }
+
+  .card {
+    @apply rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800;
+  }
+
+  .section-title {
+    @apply mb-4 text-lg font-medium text-gray-900 dark:text-white;
+  }
+
+  .label-text {
+    @apply mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300;
+  }
+
+  .input-field {
+    @apply block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500;
+
+    /* Apply error styling when aria-invalid is true */
+    &[aria-invalid='true'] {
+      @apply border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500;
+    }
+  }
+
+  .input-field-error {
+    @apply border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-center text-sm font-medium focus:outline-none focus:ring-4;
+  }
+
+  .btn-primary {
+    @apply bg-primary-700 text-white hover:bg-primary-800 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800;
+  }
+
+  .btn-secondary {
+    @apply border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:border-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-700;
+  }
+
+  .btn-danger {
+    @apply border border-red-300 bg-white text-red-700 hover:bg-red-50 focus:ring-red-200 dark:border-red-600 dark:bg-gray-800 dark:text-red-500 dark:hover:border-red-500 dark:hover:bg-gray-700 dark:focus:ring-red-900;
+  }
+
+  .btn-input-action {
+    @apply absolute right-1 top-1 rounded-md px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-2;
+  }
+
+  .btn-input-action-danger {
+    @apply bg-red-100 text-red-700 hover:bg-red-200 focus:ring-red-500 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50;
+  }
+
+  .btn-input-action-primary {
+    @apply bg-blue-100 text-blue-700 hover:bg-blue-200 focus:ring-blue-500 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50;
+  }
+
+  .error-message {
+    @apply mt-1 text-sm text-red-600 dark:text-red-500;
+  }
+
+  .form-group {
+    @apply w-full;
+  }
+
+  .radio-group {
+    @apply flex gap-6;
+  }
+
+  .radio-item {
+    @apply flex items-center gap-2;
+
+    input[type='radio'] {
+      @apply h-4 w-4 border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-primary-600;
+    }
+
+    label {
+      @apply ml-2 text-sm font-medium text-gray-900 dark:text-gray-300;
+    }
+  }
+}
+
+/* Legacy support for existing components until fully migrated */
+fieldset {
+  @apply grid gap-6 sm:grid-cols-2;
+
+  label span,
+  .label span {
+    @apply label-text;
   }
 
   .ngx-control-wrapper {
     select,
     input[type='text'],
     input[type='number'],
-    input[type='password'] {
-      @apply block w-full rounded-lg border border-gray-300 bg-gray-50 p-4 text-sm text-gray-900 focus:border-primary-600 focus:ring-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500;
+    input[type='password'],
+    input[type='date'],
+    textarea {
+      @apply input-field;
     }
 
     &--invalid {
       label span {
-        @apply mb-2 block text-sm font-medium text-red-700 dark:text-red-500;
+        @apply text-red-600 dark:text-red-500;
       }
 
       select,
       input[type='text'],
       input[type='number'],
-      input[type='password'] {
-        @apply block w-full rounded-lg border border-red-500 bg-red-50 text-sm text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500;
+      input[type='password'],
+      input[type='date'],
+      textarea {
+        @apply input-field-error;
       }
     }
 
     &__errors {
-      @apply mt-2 text-sm text-red-600 dark:text-red-500;
-    }
-
-    .radio-button {
-      @apply mb-4 flex items-center;
-      label {
-        @apply ms-2 block text-sm font-medium text-gray-900 dark:text-gray-300;
-      }
-
-      input[type='radio'] {
-        @apply h-4 w-4 border-gray-300 focus:ring-2 focus:ring-blue-300 dark:border-gray-600 dark:bg-gray-700 dark:focus:bg-blue-600 dark:focus:ring-blue-600;
-      }
-    }
-    input[type='checkbox'] {
-      @apply h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800;
+      @apply error-message;
     }
   }
 }

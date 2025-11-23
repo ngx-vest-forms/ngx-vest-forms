@@ -1,3 +1,4 @@
+import { JsonPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -10,10 +11,11 @@ import {
   validationDemoShape,
 } from '../../../models/validation-demo.model';
 import { validationDemoSuite } from '../../../validations/validation-demo.validations';
+import { CardComponent } from '../../ui/card/card.component';
 
 @Component({
   selector: 'ngx-validation-config-demo',
-  imports: [NgxVestForms],
+  imports: [NgxVestForms, JsonPipe, CardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './validation-config-demo.component.html',
   styleUrls: ['./validation-config-demo.component.scss'],

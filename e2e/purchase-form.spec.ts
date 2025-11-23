@@ -198,7 +198,7 @@ test.describe('Purchase Form', () => {
     }) => {
       await test.step('Fill password and verify confirmPassword becomes required', async () => {
         const password = page.getByLabel('Password', { exact: true });
-        const confirmPassword = page.getByLabel(/^confirm$/i);
+        const confirmPassword = page.getByLabel('Confirm Password');
 
         await fillAndBlur(password, 'SecurePass123');
 
@@ -304,10 +304,8 @@ test.describe('Purchase Form', () => {
         const firstName = page.getByLabel(/first name/i);
         await fillAndBlur(firstName, 'Brecht');
 
-        const maleRadio = page.getByRole('radio', {
-          name: 'Male',
-          exact: true,
-        });
+        // Use getByLabel to find the radio by its individual label
+        const maleRadio = page.getByLabel('Male', { exact: true });
         await expect(maleRadio).toBeChecked();
       });
     });
@@ -320,7 +318,7 @@ test.describe('Purchase Form', () => {
         const lastName = page.getByLabel(/last name/i);
         const age = page.getByLabel(/age/i);
         const password = page.getByLabel('Password', { exact: true });
-        const confirmPassword = page.getByLabel(/^confirm$/i);
+        const confirmPassword = page.getByLabel('Confirm Password');
 
         await fillAndBlur(firstName, 'Brecht');
         await fillAndBlur(lastName, 'Billiet');
@@ -344,20 +342,29 @@ test.describe('Purchase Form', () => {
         await checkbox.check();
         await expectChecked(checkbox);
 
-        // Fill shipping address fields
-        const shippingStreet = page.getByLabel(/street/i).nth(1);
+        // Wait for shipping section to appear and verify it's visible
+        const shippingHeading = page.getByRole('heading', {
+          name: 'Shipping Address',
+        });
+        await expect(shippingHeading).toBeVisible();
+
+        // Fill shipping address fields - use placeholder since labels are not wrapping inputs
+        const shippingStreet = page.getByPlaceholder('Type street').nth(1);
         await fillAndBlur(shippingStreet, '123 Shipping St');
 
-        // Uncheck and recheck
+        // Uncheck checkbox - shipping section should disappear
         await checkbox.uncheck();
         await expectUnchecked(checkbox);
-        await expect(shippingStreet).not.toBeVisible();
 
+        // Verify shipping section is now hidden (check the heading instead of individual fields)
+        await expect(shippingHeading).not.toBeVisible();
+
+        // Check again - shipping section should reappear
         await checkbox.check();
         await expectChecked(checkbox);
 
-        // Verify shipping address fields are visible again
-        await expect(shippingStreet).toBeVisible();
+        // Verify shipping section is visible again
+        await expect(shippingHeading).toBeVisible();
       });
     });
 
@@ -400,7 +407,7 @@ test.describe('Purchase Form', () => {
     }) => {
       await test.step('Fill sensitive fields and clear them', async () => {
         const password = page.getByLabel('Password', { exact: true });
-        const confirmPassword = page.getByLabel(/^confirm$/i);
+        const confirmPassword = page.getByLabel('Confirm Password');
         const userId = page.getByLabel(/user id/i);
         const emergencyContact = page.getByLabel(/emergency contact/i);
 
@@ -436,7 +443,7 @@ test.describe('Purchase Form', () => {
         });
         await prefillButton.click();
 
-        const billingStreet = page.getByLabel(/street/i).first();
+        const billingStreet = page.getByPlaceholder('Type street').first();
         await expect(billingStreet).not.toBeEmpty();
       });
     });

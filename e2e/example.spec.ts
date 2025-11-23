@@ -11,7 +11,7 @@ test.describe('Smoke Tests', () => {
     await page.getByRole('link', { name: /purchase form/i }).click();
     await expect(page).toHaveURL(/\/purchase/);
     await expect(
-      page.getByRole('heading', { name: /complex form with.*validations/i })
+      page.getByRole('heading', { name: /purchase form/i, level: 3 })
     ).toBeVisible();
   });
 
@@ -20,9 +20,7 @@ test.describe('Smoke Tests', () => {
     await page.getByRole('link', { name: /business hours form/i }).click();
     await expect(page).toHaveURL(/\/business-hours/);
     await expect(
-      page.getByRole('heading', {
-        name: /form array with complex validations/i,
-      })
+      page.getByRole('heading', { name: /complex validations/i, level: 3 })
     ).toBeVisible();
   });
 

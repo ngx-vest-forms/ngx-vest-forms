@@ -14,7 +14,7 @@
     "sourceMap": true,
     "skipLibCheck": true,
     "paths": {
-      "ngx-vest-forms": ["dist/ngx-vest-forms"]
+      "ngx-vest-forms": ["projects/ngx-vest-forms/src/public-api.ts"]
     },
     "declaration": false,
     "experimentalDecorators": true,

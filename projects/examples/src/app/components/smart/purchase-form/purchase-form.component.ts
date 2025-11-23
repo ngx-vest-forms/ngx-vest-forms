@@ -26,11 +26,18 @@ import { ProductService } from '../../../product.service';
 import { SwapiService } from '../../../swapi.service';
 import { createPurchaseValidationSuite } from '../../../validations/purchase.validations';
 import { AddressComponent } from '../../ui/address/address.component';
+import { CardComponent } from '../../ui/card/card.component';
 import { PhoneNumbersComponent } from '../../ui/phonenumbers/phonenumbers.component';
 
 @Component({
   selector: 'ngx-purchase-form',
-  imports: [JsonPipe, NgxVestForms, AddressComponent, PhoneNumbersComponent],
+  imports: [
+    JsonPipe,
+    NgxVestForms,
+    AddressComponent,
+    PhoneNumbersComponent,
+    CardComponent,
+  ],
   templateUrl: './purchase-form.component.html',
   styleUrls: ['./purchase-form.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

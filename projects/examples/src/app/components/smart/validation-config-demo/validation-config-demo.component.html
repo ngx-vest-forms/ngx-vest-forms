@@ -1,14 +1,164 @@
-<div class="container mx-auto max-w-7xl p-6">
-  <div class="mb-8">
-    <h1 class="mb-2 text-4xl font-bold">ValidationConfig Demo</h1>
-    <p class="text-gray-600">
-      Demonstrates ValidationConfig patterns with race condition fixes
-    </p>
+<div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+  <!-- Instructions Panel -->
+  <div class="space-y-6 lg:col-span-1">
+    <app-card>
+      <h1 class="mb-2 text-2xl font-bold text-gray-900 dark:text-white">
+        ValidationConfig Demo
+      </h1>
+      <p class="text-gray-600 dark:text-gray-300">
+        Demonstrates ValidationConfig patterns with race condition fixes.
+      </p>
+
+      <div
+        class="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/30 dark:bg-blue-900/20"
+      >
+        <h3
+          class="mb-3 text-sm font-semibold uppercase tracking-wider text-blue-900 dark:text-blue-300"
+        >
+          Key Features
+        </h3>
+        <ul class="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+          <li class="flex items-start gap-2">
+            <span class="mt-0.5 text-blue-600 dark:text-blue-400">✓</span>
+            <span>
+              <strong>No Race Conditions:</strong> Uses
+              <code class="rounded bg-blue-100 px-1 dark:bg-blue-800"
+                >take(1)</code
+              >
+              to prevent loops
+            </span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="mt-0.5 text-blue-600 dark:text-blue-400">✓</span>
+            <span>
+              <strong>Debounced:</strong> Reduces validation frequency
+            </span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="mt-0.5 text-blue-600 dark:text-blue-400">✓</span>
+            <span>
+              <strong>Conditional Fields:</strong> Works with
+              <code class="rounded bg-blue-100 px-1 dark:bg-blue-800"
+                >&#64;if</code
+              >
+              blocks
+            </span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="mt-0.5 text-blue-600 dark:text-blue-400">✓</span>
+            <span>
+              <strong>Cross-field:</strong> Auto-revalidation of dependencies
+            </span>
+          </li>
+        </ul>
+      </div>
+    </app-card>
+
+    <!-- Debug Panel -->
+    <app-card>
+      <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+        Form State
+      </h3>
+
+      <div class="mb-4">
+        <div class="mb-2 flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300"
+            >Validity Status</span
+          >
+          <span
+            class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+            [class.bg-green-100]="isValid()"
+            [class.text-green-800]="isValid()"
+            [class.bg-red-100]="!isValid()"
+            [class.text-red-800]="!isValid()"
+          >
+            {{ isValid() ? 'Valid' : 'Invalid' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Validation Summary -->
+      <div class="mb-6 space-y-3">
+        @if (hasPasswordErrors()) {
+          <div
+            class="rounded border border-red-200 bg-red-50 p-3 dark:border-red-900/30 dark:bg-red-900/20"
+          >
+            <div
+              class="mb-1 text-xs font-semibold uppercase tracking-wider text-red-800 dark:text-red-300"
+            >
+              Password Issues
+            </div>
+            @for (error of hasPasswordErrors(); track error) {
+              <div class="text-xs text-red-600 dark:text-red-400">
+                • {{ error }}
+              </div>
+            }
+          </div>
+        }
+
+        @if (hasLocationErrors()) {
+          <div
+            class="rounded border border-purple-200 bg-purple-50 p-3 dark:border-purple-900/30 dark:bg-purple-900/20"
+          >
+            <div
+              class="mb-1 text-xs font-semibold uppercase tracking-wider text-purple-800 dark:text-purple-300"
+            >
+              Location Issues
+            </div>
+            @for (error of hasLocationErrors(); track error) {
+              <div class="text-xs text-purple-600 dark:text-purple-400">
+                • {{ error }}
+              </div>
+            }
+          </div>
+        }
+
+        @if (hasDateErrors()) {
+          <div
+            class="rounded border border-orange-200 bg-orange-50 p-3 dark:border-orange-900/30 dark:bg-orange-900/20"
+          >
+            <div
+              class="mb-1 text-xs font-semibold uppercase tracking-wider text-orange-800 dark:text-orange-300"
+            >
+              Date Issues
+            </div>
+            @for (error of hasDateErrors(); track error) {
+              <div class="text-xs text-orange-600 dark:text-orange-400">
+                • {{ error }}
+              </div>
+            }
+          </div>
+        }
+
+        @if (
+          !hasPasswordErrors() &&
+          !hasLocationErrors() &&
+          !hasDateErrors() &&
+          !isValid()
+        ) {
+          <div class="text-xs italic text-gray-500 dark:text-gray-400">
+            Fill out all required fields to enable submission
+          </div>
+        }
+      </div>
+
+      <div>
+        <h4
+          class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+        >
+          Form Value
+        </h4>
+        <pre
+          class="mt-2 max-h-40 overflow-auto rounded bg-gray-50 p-2 text-xs text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+          >{{ formValue() | json }}</pre
+        >
+      </div>
+    </app-card>
   </div>
 
-  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-    <!-- Form -->
-    <div class="rounded-lg bg-white p-6 shadow-lg">
+  <!-- Main Form -->
+  <div class="lg:col-span-2">
+    <app-card>
       <form
         ngxVestForm
         [suite]="suite"
@@ -19,292 +169,217 @@
         (validChange)="isValid.set($event)"
         (errorsChange)="errors.set($event)"
         (ngSubmit)="save()"
-        class="space-y-6"
+        class="space-y-8"
       >
         <!-- Bidirectional Example -->
-        <section class="space-y-4 border-l-4 border-blue-500 pl-4">
-          <div>
-            <h2 class="mb-2 text-xl font-semibold">Bidirectional Validation</h2>
-            <p class="text-sm text-gray-600">
-              Changing either password field revalidates the other
-              automatically.
-            </p>
-          </div>
+        <section
+          class="relative rounded-lg border border-blue-100 bg-blue-50/30 p-6 dark:border-blue-900/30 dark:bg-blue-900/10"
+        >
+          <h2
+            class="absolute -top-3 left-4 bg-white px-2 text-sm font-semibold text-blue-600 dark:bg-gray-800 dark:text-blue-400"
+          >
+            Bidirectional Validation
+          </h2>
+          <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            Changing either password field revalidates the other automatically.
+          </p>
 
-          <div ngx-control-wrapper>
-            <label for="password" class="mb-2 block text-sm font-medium">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              [ngModel]="formValue().password"
-              class="w-full rounded-md border px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 aria-[invalid=true]:border-red-500 aria-[invalid=true]:bg-red-50 aria-[invalid=true]:text-red-900 aria-[invalid=true]:placeholder-red-700"
-              placeholder="Enter password (min 8 chars)"
-            />
-          </div>
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div class="form-group" ngx-control-wrapper>
+              <label>
+                <span class="label-text">Password</span>
+                <input
+                  class="input-field"
+                  type="password"
+                  id="password"
+                  name="password"
+                  [ngModel]="formValue().password"
+                  placeholder="Enter password (min 8 chars)"
+                />
+              </label>
+            </div>
 
-          <div ngx-control-wrapper>
-            <label for="confirmPassword" class="mb-2 block text-sm font-medium">
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              [ngModel]="formValue().confirmPassword"
-              class="w-full rounded-md border px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 aria-[invalid=true]:border-red-500 aria-[invalid=true]:bg-red-50 aria-[invalid=true]:text-red-900 aria-[invalid=true]:placeholder-red-700"
-              placeholder="Confirm password"
-            />
+            <div class="form-group" ngx-control-wrapper>
+              <label>
+                <span class="label-text">Confirm Password</span>
+                <input
+                  class="input-field"
+                  type="password"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  [ngModel]="formValue().confirmPassword"
+                  placeholder="Confirm password"
+                />
+              </label>
+            </div>
           </div>
         </section>
 
         <!-- Conditional Validation Example -->
-        <section class="space-y-4 border-l-4 border-green-500 pl-4">
-          <div>
-            <h2 class="mb-2 text-xl font-semibold">Conditional Validation</h2>
-            <p class="text-sm text-gray-600">
-              Toggling the checkbox triggers justification validation.
-            </p>
-          </div>
+        <section
+          class="relative rounded-lg border border-green-100 bg-green-50/30 p-6 dark:border-green-900/30 dark:bg-green-900/10"
+        >
+          <h2
+            class="absolute -top-3 left-4 bg-white px-2 text-sm font-semibold text-green-600 dark:bg-gray-800 dark:text-green-400"
+          >
+            Conditional Validation
+          </h2>
+          <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            Toggling the checkbox triggers justification validation.
+          </p>
 
-          <div>
-            <label class="flex cursor-pointer items-center gap-2">
+          <div class="space-y-4">
+            <div class="flex items-center">
               <input
+                id="requiresJustification"
                 type="checkbox"
                 name="requiresJustification"
                 [ngModel]="formValue().requiresJustification"
-                class="rounded"
+                class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700"
               />
-              <span class="text-sm font-medium">Requires Justification</span>
-            </label>
-          </div>
-
-          @if (formValue().requiresJustification) {
-            <div ngx-control-wrapper>
-              <label for="justification" class="mb-2 block text-sm font-medium">
-                Justification (min 20 characters)
+              <label
+                for="requiresJustification"
+                class="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Requires Justification
               </label>
-              <textarea
-                id="justification"
-                name="justification"
-                [ngModel]="formValue().justification"
-                rows="3"
-                class="w-full rounded-md border px-3 py-2 focus:border-green-500 focus:ring-2 focus:ring-green-500 aria-[invalid=true]:border-red-500 aria-[invalid=true]:bg-red-50 aria-[invalid=true]:text-red-900 aria-[invalid=true]:placeholder-red-700"
-                placeholder="Explain why justification is needed..."
-              ></textarea>
             </div>
-          }
+
+            @if (formValue().requiresJustification) {
+              <div class="form-group animate-fade-in" ngx-control-wrapper>
+                <label>
+                  <span class="label-text"
+                    >Justification (min 20 characters)</span
+                  >
+                  <textarea
+                    class="input-field"
+                    id="justification"
+                    name="justification"
+                    [ngModel]="formValue().justification"
+                    rows="3"
+                    placeholder="Explain why justification is needed..."
+                  ></textarea>
+                </label>
+              </div>
+            }
+          </div>
         </section>
 
         <!-- Cascade Example -->
-        <section class="space-y-4 border-l-4 border-purple-500 pl-4">
-          <div>
-            <h2 class="mb-2 text-xl font-semibold">Cascade Validation</h2>
-            <p class="text-sm text-gray-600">
-              Changing country triggers state and zip code validation.
-            </p>
-          </div>
+        <section
+          class="relative rounded-lg border border-purple-100 bg-purple-50/30 p-6 dark:border-purple-900/30 dark:bg-purple-900/10"
+        >
+          <h2
+            class="absolute -top-3 left-4 bg-white px-2 text-sm font-semibold text-purple-600 dark:bg-gray-800 dark:text-purple-400"
+          >
+            Cascade Validation
+          </h2>
+          <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            Changing country triggers state and zip code validation.
+          </p>
 
-          <div ngx-control-wrapper>
-            <label for="country" class="mb-2 block text-sm font-medium">
-              Country
-            </label>
-            <select
-              id="country"
-              name="country"
-              [ngModel]="formValue().country"
-              class="w-full rounded-md border px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-500 aria-[invalid=true]:border-red-500 aria-[invalid=true]:bg-red-50 aria-[invalid=true]:text-red-900"
-            >
-              <option value="">Select country...</option>
-              <option value="US">United States</option>
-              <option value="CA">Canada</option>
-              <option value="UK">United Kingdom</option>
-              <option value="NL">Netherlands</option>
-            </select>
-          </div>
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            <div class="form-group" ngx-control-wrapper>
+              <label>
+                <span class="label-text">Country</span>
+                <select
+                  class="input-field"
+                  id="country"
+                  name="country"
+                  [ngModel]="formValue().country"
+                >
+                  <option value="">Select country...</option>
+                  <option value="US">United States</option>
+                  <option value="CA">Canada</option>
+                  <option value="UK">United Kingdom</option>
+                  <option value="NL">Netherlands</option>
+                </select>
+              </label>
+            </div>
 
-          <div ngx-control-wrapper>
-            <label for="state" class="mb-2 block text-sm font-medium">
-              State/Province
-            </label>
-            <input
-              type="text"
-              id="state"
-              name="state"
-              [ngModel]="formValue().state"
-              class="w-full rounded-md border px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-500 aria-[invalid=true]:border-red-500 aria-[invalid=true]:bg-red-50 aria-[invalid=true]:text-red-900 aria-[invalid=true]:placeholder-red-700"
-              placeholder="Enter state/province"
-            />
-          </div>
+            <div class="form-group" ngx-control-wrapper>
+              <label>
+                <span class="label-text">State/Province</span>
+                <input
+                  class="input-field"
+                  type="text"
+                  id="state"
+                  name="state"
+                  [ngModel]="formValue().state"
+                  placeholder="Enter state/province"
+                />
+              </label>
+            </div>
 
-          <div ngx-control-wrapper>
-            <label for="zipCode" class="mb-2 block text-sm font-medium">
-              Postal Code
-            </label>
-            <input
-              type="text"
-              id="zipCode"
-              name="zipCode"
-              [ngModel]="formValue().zipCode"
-              class="w-full rounded-md border px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-500 aria-[invalid=true]:border-red-500 aria-[invalid=true]:bg-red-50 aria-[invalid=true]:text-red-900 aria-[invalid=true]:placeholder-red-700"
-              placeholder="Enter postal code"
-            />
+            <div class="form-group" ngx-control-wrapper>
+              <label>
+                <span class="label-text">Postal Code</span>
+                <input
+                  class="input-field"
+                  type="text"
+                  id="zipCode"
+                  name="zipCode"
+                  [ngModel]="formValue().zipCode"
+                  placeholder="Enter postal code"
+                />
+              </label>
+            </div>
           </div>
         </section>
 
         <!-- Date Range Example -->
-        <section class="space-y-4 border-l-4 border-orange-500 pl-4">
-          <div>
-            <h2 class="mb-2 text-xl font-semibold">Date Range Validation</h2>
-            <p class="text-sm text-gray-600">
-              Start and end dates validate against each other.
-            </p>
-          </div>
+        <section
+          class="relative rounded-lg border border-orange-100 bg-orange-50/30 p-6 dark:border-orange-900/30 dark:bg-orange-900/10"
+        >
+          <h2
+            class="absolute -top-3 left-4 bg-white px-2 text-sm font-semibold text-orange-600 dark:bg-gray-800 dark:text-orange-400"
+          >
+            Date Range Validation
+          </h2>
+          <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            Start and end dates validate against each other.
+          </p>
 
-          <div ngx-control-wrapper>
-            <label for="startDate" class="mb-2 block text-sm font-medium">
-              Start Date
-            </label>
-            <input
-              type="date"
-              id="startDate"
-              name="startDate"
-              [ngModel]="formValue().startDate"
-              class="w-full rounded-md border px-3 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-500 aria-[invalid=true]:border-red-500 aria-[invalid=true]:bg-red-50 aria-[invalid=true]:text-red-900"
-            />
-          </div>
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div class="form-group" ngx-control-wrapper>
+              <label>
+                <span class="label-text">Start Date</span>
+                <input
+                  class="input-field"
+                  type="date"
+                  id="startDate"
+                  name="startDate"
+                  [ngModel]="formValue().startDate"
+                />
+              </label>
+            </div>
 
-          <div ngx-control-wrapper>
-            <label for="endDate" class="mb-2 block text-sm font-medium">
-              End Date
-            </label>
-            <input
-              type="date"
-              id="endDate"
-              name="endDate"
-              [ngModel]="formValue().endDate"
-              class="w-full rounded-md border px-3 py-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-500 aria-[invalid=true]:border-red-500 aria-[invalid=true]:bg-red-50 aria-[invalid=true]:text-red-900"
-            />
+            <div class="form-group" ngx-control-wrapper>
+              <label>
+                <span class="label-text">End Date</span>
+                <input
+                  class="input-field"
+                  type="date"
+                  id="endDate"
+                  name="endDate"
+                  [ngModel]="formValue().endDate"
+                />
+              </label>
+            </div>
           </div>
         </section>
 
         <!-- Submit Button -->
-        <button
-          type="submit"
-          [disabled]="!isValid()"
-          class="w-full rounded-md bg-blue-600 py-3 font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Submit Form
-        </button>
+        <div class="pt-4">
+          <button
+            type="submit"
+            [disabled]="!isValid()"
+            class="btn btn-primary w-full"
+          >
+            Submit Form
+          </button>
+        </div>
       </form>
-    </div>
-
-    <!-- Debug Panel -->
-    <div class="space-y-4">
-      <!-- Valid Status -->
-      <div class="rounded-lg bg-white p-6 shadow">
-        <h3 class="mb-3 text-lg font-semibold">Form Valid</h3>
-        <div
-          [class]="isValid() ? 'text-green-600' : 'text-red-600'"
-          class="font-mono text-2xl font-bold"
-        >
-          {{ isValid() ? '✓ Valid' : '✗ Invalid' }}
-        </div>
-      </div>
-
-      <!-- Error Summary -->
-      <div class="rounded-lg bg-white p-6 shadow">
-        <h3 class="mb-3 text-lg font-semibold">Validation Summary</h3>
-        <div class="space-y-3">
-          @if (hasPasswordErrors()) {
-            <div class="rounded border border-red-200 bg-red-50 p-3">
-              <div class="mb-1 text-sm font-semibold text-red-800">
-                Password Issues
-              </div>
-              @for (error of hasPasswordErrors(); track error) {
-                <div class="text-xs text-red-600">• {{ error }}</div>
-              }
-            </div>
-          }
-
-          @if (hasLocationErrors()) {
-            <div class="rounded border border-purple-200 bg-purple-50 p-3">
-              <div class="mb-1 text-sm font-semibold text-purple-800">
-                Location Issues
-              </div>
-              @for (error of hasLocationErrors(); track error) {
-                <div class="text-xs text-purple-600">• {{ error }}</div>
-              }
-            </div>
-          }
-
-          @if (hasDateErrors()) {
-            <div class="rounded border border-orange-200 bg-orange-50 p-3">
-              <div class="mb-1 text-sm font-semibold text-orange-800">
-                Date Issues
-              </div>
-              @for (error of hasDateErrors(); track error) {
-                <div class="text-xs text-orange-600">• {{ error }}</div>
-              }
-            </div>
-          }
-
-          @if (
-            !hasPasswordErrors() &&
-            !hasLocationErrors() &&
-            !hasDateErrors() &&
-            !isValid()
-          ) {
-            <div class="rounded border border-gray-200 bg-gray-50 p-3">
-              <div class="text-sm text-gray-600">
-                Fill out all required fields to enable submission
-              </div>
-            </div>
-          }
-
-          @if (isValid()) {
-            <div class="rounded border border-green-200 bg-green-50 p-3">
-              <div class="text-sm font-semibold text-green-800">
-                ✓ All validations passed! Form is ready to submit.
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-
-      <!-- Form Data -->
-      <div class="rounded-lg bg-white p-6 shadow">
-        <h3 class="mb-3 text-lg font-semibold">Form Data</h3>
-        <pre class="overflow-auto rounded border bg-gray-50 p-3 text-xs">{{
-          formValue()
-        }}</pre>
-      </div>
-
-      <!-- Key Points -->
-      <div class="rounded-lg border border-blue-200 bg-blue-50 p-6">
-        <h3 class="mb-3 text-lg font-semibold text-blue-900">Key Features</h3>
-        <ul class="space-y-2 text-sm text-blue-800">
-          <li>
-            <strong>✓ No Race Conditions:</strong> Validation config uses
-            <code class="rounded bg-blue-100 px-1">take(1)</code> to prevent
-            feedback loops
-          </li>
-          <li>
-            <strong>✓ Debounced:</strong> Validation is debounced to reduce
-            frequency during rapid typing
-          </li>
-          <li>
-            <strong>✓ Conditional Fields:</strong> Works seamlessly with
-            <code class="rounded bg-blue-100 px-1">&#64;if</code> blocks
-          </li>
-          <li>
-            <strong>✓ Cross-field Validation:</strong> Fields automatically
-            revalidate when dependencies change
-          </li>
-        </ul>
-      </div>
-    </div>
+    </app-card>
   </div>
 </div>

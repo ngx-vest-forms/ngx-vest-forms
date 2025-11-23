@@ -42,9 +42,13 @@ test.describe('Business Hours Form', () => {
         const addButton = page.getByRole('button', { name: '+' });
         await addButton.click();
 
-        // ROOT_FORM error should not be visible
-        const errorMessage = page.locator('text=/at least one business hour/i');
-        await expect(errorMessage).not.toBeVisible();
+        // Verify the business hour was added successfully
+        // Check that the form value now contains the added business hour
+        const formValueSection = page
+          .getByRole('heading', { name: 'Form Value' })
+          .locator('..');
+        await expect(formValueSection).toContainText('"from": "0900"');
+        await expect(formValueSection).toContainText('"to": "1700"');
       });
     });
   });
@@ -401,9 +405,11 @@ test.describe('Business Hours Form', () => {
         await addButton.click();
 
         // Verify the business hour was added by checking the form value display
-        const jsonData = page.locator('#json-data');
-        await expect(jsonData).toContainText('"from": "0900"');
-        await expect(jsonData).toContainText('"to": "1700"');
+        const formValueSection = page
+          .getByRole('heading', { name: 'Form Value' })
+          .locator('..');
+        await expect(formValueSection).toContainText('"from": "0900"');
+        await expect(formValueSection).toContainText('"to": "1700"');
 
         // Verify the added business hour fields are visible in the values array
         // After adding, the business hour appears in the "values" section

@@ -23,14 +23,14 @@ export const createPurchaseValidationSuite = (
 
       omitWhen(!model.userId, () => {
         test('userId', 'userId is already taken', async ({ signal }) => {
-          await lastValueFrom(
+          const exists = await lastValueFrom(
             swapiService
-              .searchUserById(model.userId as string)
+              .userIdExists(model.userId as string)
               .pipe(takeUntil(fromEvent(signal, 'abort')))
-          ).then(
-            () => Promise.reject(),
-            () => Promise.resolve()
           );
+          if (exists) {
+            return Promise.reject();
+          }
         });
       });
 

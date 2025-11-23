@@ -11,6 +11,7 @@ import {
 } from '../../../models/business-hours-form.model';
 import { businessHoursSuite } from '../../../validations/business-hours.validations';
 import { BusinessHoursComponent } from '../../ui/business-hours/business-hours.component';
+import { CardComponent } from '../../ui/card/card.component';
 
 @Component({
   selector: 'ngx-business-hours-form',
@@ -19,6 +20,7 @@ import { BusinessHoursComponent } from '../../ui/business-hours/business-hours.c
     NgxVestForms,
     ValidateRootFormDirective,
     BusinessHoursComponent,
+    CardComponent,
   ],
   templateUrl: './business-hours-form.component.html',
   styleUrls: ['./business-hours-form.component.scss'],
