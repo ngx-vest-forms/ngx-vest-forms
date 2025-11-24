@@ -1,6 +1,8 @@
 :host {
-  @apply flex;
+  display: flex;
+
   label {
-    @apply flex items-center;
+    display: flex;
+    align-items: center;
   }
 }

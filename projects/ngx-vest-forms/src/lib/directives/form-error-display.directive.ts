@@ -134,6 +134,16 @@ export class FormErrorDisplayDirective {
 
   /**
    * Whether the control is currently being validated (pending)
+   * Excludes pristine+untouched controls to prevent "Validating..." on initial load
    */
-  readonly isPending = computed(() => this.hasPendingValidation());
+  readonly isPending = computed(() => {
+    // Don't show pending state for pristine untouched controls
+    // This prevents "Validating..." message appearing on initial page load
+    const state = this.#formControlState.controlState();
+    if (state.isPristine && !state.isTouched) {
+      return false;
+    }
+    return this.hasPendingValidation();
+  });
 }
+

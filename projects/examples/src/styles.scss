@@ -1,17 +1,53 @@
 /* You can add global styles to this file, and also import other style files */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@use 'tailwindcss';
+
+/* Theme customization - Tailwind CSS v4 */
+@theme {
+  /* Primary color palette (teal) */
+  --color-primary-50: oklch(0.978 0.014 180.744);
+  --color-primary-100: oklch(0.952 0.027 180.899);
+  --color-primary-200: oklch(0.905 0.054 181.072);
+  --color-primary-300: oklch(0.831 0.096 182.361);
+  --color-primary-400: oklch(0.742 0.131 183.563);
+  --color-primary-500: oklch(0.647 0.138 186.42);
+  --color-primary-600: oklch(0.551 0.128 189.206);
+  --color-primary-700: oklch(0.473 0.111 191.25);
+  --color-primary-800: oklch(0.406 0.09 192.846);
+  --color-primary-900: oklch(0.356 0.07 194.893);
+  --color-primary-950: oklch(0.253 0.048 198.286);
+}
 
 @layer base {
   body {
-    @apply min-h-screen bg-gradient-to-br from-indigo-100 via-white to-cyan-100 text-gray-900 dark:from-slate-950 dark:via-indigo-950 dark:to-slate-900 dark:text-white;
+    min-height: 100vh;
+    background: linear-gradient(to bottom right, oklch(0.924 0.018 267.416), white, oklch(0.954 0.05 195.365));
+    color: oklch(0.278 0.029 256.848);
+  }
+
+  body.dark {
+    background: linear-gradient(to bottom right, oklch(0.175 0.028 264.052), oklch(0.264 0.055 293.357), oklch(0.175 0.028 264.052));
+    color: white;
   }
 }
 
 @layer components {
   .page-container {
-    @apply mx-auto max-w-7xl p-4 sm:p-6 lg:p-8;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 80rem; /* max-w-7xl */
+    padding: 1rem; /* p-4 */
+  }
+
+  @media (min-width: 640px) {
+    .page-container {
+      padding: 1.5rem; /* sm:p-6 */
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .page-container {
+      padding: 2rem; /* lg:p-8 */
+    }
   }
 
   .card {
@@ -40,7 +76,7 @@
   }
 
   .btn {
-    @apply inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-center text-sm font-medium focus:outline-none focus:ring-4;
+    @apply inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-center text-sm font-medium focus:outline-hidden focus:ring-4;
   }
 
   .btn-primary {
@@ -56,7 +92,7 @@
   }
 
   .btn-input-action {
-    @apply absolute right-1 top-1 rounded-md px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-2;
+    @apply absolute right-1 top-1 rounded-md px-3 py-1.5 text-xs font-medium focus:outline-hidden focus:ring-2;
   }
 
   .btn-input-action-danger {
@@ -98,7 +134,7 @@ fieldset {
 
   label span,
   .label span {
-    @apply label-text;
+    @apply mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300;
   }
 
   .ngx-control-wrapper {
@@ -108,7 +144,7 @@ fieldset {
     input[type='password'],
     input[type='date'],
     textarea {
-      @apply input-field;
+      @apply block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500;
     }
 
     &--invalid {
@@ -122,12 +158,12 @@ fieldset {
       input[type='password'],
       input[type='date'],
       textarea {
-        @apply input-field-error;
+        @apply border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500;
       }
     }
 
     &__errors {
-      @apply error-message;
+      @apply mt-1 text-sm text-red-600 dark:text-red-500;
     }
   }
 }

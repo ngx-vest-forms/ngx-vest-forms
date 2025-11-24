@@ -21,7 +21,7 @@ export const createPurchaseValidationSuite = (
         ).isFalsy();
       });
 
-      omitWhen(!model.userId, () => {
+      omitWhen(!model.userId || (model.userId as string).trim() === '', () => {
         test('userId', 'userId is already taken', async ({ signal }) => {
           const exists = await lastValueFrom(
             swapiService

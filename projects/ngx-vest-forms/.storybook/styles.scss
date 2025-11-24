@@ -1,15 +1,28 @@
 /* You can add global styles to this file, and also import other style files */
 /* Add application styles & imports to this file! */
-/* Add application styles & imports to this file! */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@use 'tailwindcss';
+
+/* Theme customization - Tailwind CSS v4 */
+@theme {
+  /* Primary color palette (teal) */
+  --color-primary-50: oklch(0.978 0.014 180.744);
+  --color-primary-100: oklch(0.952 0.027 180.899);
+  --color-primary-200: oklch(0.905 0.054 181.072);
+  --color-primary-300: oklch(0.831 0.096 182.361);
+  --color-primary-400: oklch(0.742 0.131 183.563);
+  --color-primary-500: oklch(0.647 0.138 186.42);
+  --color-primary-600: oklch(0.551 0.128 189.206);
+  --color-primary-700: oklch(0.473 0.111 191.25);
+  --color-primary-800: oklch(0.406 0.09 192.846);
+  --color-primary-900: oklch(0.356 0.07 194.893);
+  --color-primary-950: oklch(0.253 0.048 198.286);
+}
 
 body {
   @apply bg-white text-gray-900 dark:bg-gray-900 dark:text-white;
 }
 button {
-  @apply mb-2 me-2 rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800;
+  @apply mb-2 me-2 rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800 focus:outline-hidden focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800;
 }
 fieldset {
   @apply grid gap-4 sm:grid-cols-2 sm:gap-6;

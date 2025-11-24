@@ -1,30 +1,44 @@
 ---
-description: Tailwind CSS usage rules for styling (2025 best practices)
+description: Tailwind CSS v4 usage rules for styling (2025 best practices)
 applyTo: 'projects/examples/**/*.{html,js,jsx,ts,tsx,css,scss,sass,md,mdx}'
 ---
+
+## Project Setup (Tailwind CSS v4.1.17)
+- This project uses **Tailwind CSS v4.1.17** with the new CSS-first configuration approach
+- PostCSS plugin: `@tailwindcss/postcss` (configured in `.postcssrc.json`)
+- Angular 21's built-in PostCSS support processes Tailwind automatically
+- Theme configuration is in CSS `@theme` blocks (see `projects/examples/src/styles.scss` and `projects/ngx-vest-forms/.storybook/styles.scss`)
+- The `tailwind.config.js` file is legacy and no longer used (kept for reference only)
 
 ## General Guidelines
 - Use Tailwind utility classes for consistent styling, with custom CSS only for special cases
 - Organize classes logically (layout, spacing, color, typography)
 - Use responsive and state variants (e.g., sm:, md:, lg:, hover:, focus:, dark:) in markup
-- Embrace Tailwind v4 features like container queries and CSS variables
+- Embrace Tailwind v4 features like container queries, CSS variables, and oklch colors
 - Rely on Tailwind classes rather than inline styles or external CSS files for a unified design language
 
 ## Configuration (CSS Files)
+- Use `@use 'tailwindcss';` instead of the old `@tailwind` directives
 - Use the `@theme` directive to define custom design tokens like fonts, breakpoints, and colors
-- Prefer modern color formats such as `oklch` for better color gamut support, defining them in the `:root` scope
-- Take advantage of automatic content detection, which eliminates the need for a `content` array in configuration
+- Prefer modern color formats such as `oklch` for better color gamut support and P3 color gamut
+- Theme colors use CSS custom properties (e.g., `--color-primary-500: oklch(0.647 0.138 186.42);`)
+- Take advantage of automatic content detection, which eliminates the need for a `content` array
 - Rely on Oxide engine to scan project files, excluding those in `.gitignore` and binary extensions
 - Add specific sources with `@source` only when necessary
-- Extend Tailwind with custom utilities using the `@utility` directive in CSS files
+- Extend Tailwind with custom utilities using the `@utility` directive (not `@layer utilities`)
 
 ## Styling (CSS Files)
+- **CRITICAL**: Avoid using `@apply` with custom component classes or responsive variants in component SCSS files
+- When using `@apply`, only use it with simple, non-responsive Tailwind utilities in global stylesheets
+- For complex styles with responsive variants, use regular CSS with media queries instead of `@apply`
+- Gradient syntax: `bg-linear-to-br` instead of `bg-gradient-to-br` (linear gradients)
+- Use `outline-hidden` instead of `outline-none` for hiding outlines
+- Use renamed utilities: `shadow-xs` (was `shadow-sm`), `shadow-sm` (was `shadow`), `rounded-sm` (was `rounded`)
 - Incorporate 3D transform utilities like `rotate-x-*`, `rotate-y-*`, and `scale-z-*` for advanced visual effects
 - Implement container queries with `@container`, `@max-*`, and `@min-*` utilities for adaptive layouts
 - Use arbitrary values and properties with square bracket notation (e.g., `[mask-type:luminance]` or `top-[117px]`)
 - Apply modifiers like `hover` or `lg` with arbitrary values for flexible styling
 - Use the `not-*` variant for `:not()` pseudo-classes and the `starting` variant for `@starting-style`
-- Check browser support for advanced features like `@starting-style` using resources like caniuse
 
 ## Components (HTML)
 - Apply Tailwind utility classes directly in HTML for styling components
