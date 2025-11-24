@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DeepPartial } from './deep-partial';
 import type { ValidationConfigMap } from './field-path-types';
 import {
@@ -101,10 +102,10 @@ describe('ValidationConfigBuilder', () => {
     });
 
     describe('duplicate detection warnings', () => {
-      let consoleWarnSpy: jest.SpyInstance;
+      let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
 
       beforeEach(() => {
-        consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+        consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       });
 
       afterEach(() => {
@@ -113,7 +114,7 @@ describe('ValidationConfigBuilder', () => {
 
       it('should warn when adding duplicate dependents in development mode', () => {
         // Mock ngDevMode to be true
-        (global as any).ngDevMode = true;
+        (globalThis as any).ngDevMode = true;
 
         createValidationConfig<TestFormModel>()
           .whenChanged('password', ['confirmPassword', 'email'])
@@ -134,7 +135,7 @@ describe('ValidationConfigBuilder', () => {
       });
 
       it('should not warn when adding unique dependents', () => {
-        (global as any).ngDevMode = true;
+        (globalThis as any).ngDevMode = true;
 
         createValidationConfig<TestFormModel>()
           .whenChanged('password', ['confirmPassword'])
@@ -145,7 +146,7 @@ describe('ValidationConfigBuilder', () => {
       });
 
       it('should not warn in production mode', () => {
-        (global as any).ngDevMode = false;
+        (globalThis as any).ngDevMode = false;
 
         createValidationConfig<TestFormModel>()
           .whenChanged('password', ['confirmPassword', 'email'])
@@ -156,7 +157,7 @@ describe('ValidationConfigBuilder', () => {
       });
 
       it('should warn about multiple duplicates', () => {
-        (global as any).ngDevMode = true;
+        (globalThis as any).ngDevMode = true;
 
         createValidationConfig<TestFormModel>()
           .whenChanged('password', ['confirmPassword', 'email', 'firstName'])
@@ -169,7 +170,7 @@ describe('ValidationConfigBuilder', () => {
       });
 
       it('should deduplicate despite warning', () => {
-        (global as any).ngDevMode = true;
+        (globalThis as any).ngDevMode = true;
 
         const config = createValidationConfig<TestFormModel>()
           .whenChanged('password', ['confirmPassword', 'email'])
@@ -237,10 +238,10 @@ describe('ValidationConfigBuilder', () => {
     });
 
     describe('duplicate detection warnings', () => {
-      let consoleWarnSpy: jest.SpyInstance;
+      let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
 
       beforeEach(() => {
-        consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+        consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       });
 
       afterEach(() => {
@@ -248,7 +249,7 @@ describe('ValidationConfigBuilder', () => {
       });
 
       it('should warn when calling bidirectional with same fields twice in development mode', () => {
-        (global as any).ngDevMode = true;
+        (globalThis as any).ngDevMode = true;
 
         createValidationConfig<TestFormModel>()
           .bidirectional('password', 'confirmPassword')
@@ -266,7 +267,7 @@ describe('ValidationConfigBuilder', () => {
       });
 
       it('should warn when calling bidirectional with reversed fields in development mode', () => {
-        (global as any).ngDevMode = true;
+        (globalThis as any).ngDevMode = true;
 
         createValidationConfig<TestFormModel>()
           .bidirectional('password', 'confirmPassword')
@@ -281,7 +282,7 @@ describe('ValidationConfigBuilder', () => {
       });
 
       it('should not warn when adding different bidirectional relationships', () => {
-        (global as any).ngDevMode = true;
+        (globalThis as any).ngDevMode = true;
 
         createValidationConfig<TestFormModel>()
           .bidirectional('password', 'confirmPassword')
@@ -292,7 +293,7 @@ describe('ValidationConfigBuilder', () => {
       });
 
       it('should not warn in production mode', () => {
-        (global as any).ngDevMode = false;
+        (globalThis as any).ngDevMode = false;
 
         createValidationConfig<TestFormModel>()
           .bidirectional('password', 'confirmPassword')
@@ -303,7 +304,7 @@ describe('ValidationConfigBuilder', () => {
       });
 
       it('should still create correct config despite warning', () => {
-        (global as any).ngDevMode = true;
+        (globalThis as any).ngDevMode = true;
 
         const config = createValidationConfig<TestFormModel>()
           .bidirectional('password', 'confirmPassword')
@@ -317,7 +318,7 @@ describe('ValidationConfigBuilder', () => {
       });
 
       it('should not warn when bidirectional is combined with whenChanged for same fields', () => {
-        (global as any).ngDevMode = true;
+        (globalThis as any).ngDevMode = true;
 
         createValidationConfig<TestFormModel>()
           .bidirectional('password', 'confirmPassword')

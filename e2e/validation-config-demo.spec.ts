@@ -609,11 +609,12 @@ test.describe('ValidationConfig Demo', () => {
           window.getComputedStyle(el).getPropertyValue('background-color')
         );
 
-        // Red border (rgb(239, 68, 68) = Tailwind red-500)
-        expect(borderColor).toContain('239, 68, 68');
+        // Red border (Tailwind red-500 in OKLCH format)
+        expect(borderColor).toMatch(/oklch\(0\.637\s+0\.237\s+25\.33/);
 
-        // Light red/pink background (rgb(254, 242, 242) = Tailwind red-50)
-        expect(backgroundColor).toContain('254, 242, 242');
+        // Light red/pink background (Tailwind red-50 in OKLCH format)
+        // Note: Webkit may have floating-point precision differences (17.38 vs 17.379999)
+        expect(backgroundColor).toMatch(/oklch\(0\.971\s+0\.013\s+17\.3[78]/);
       });
     });
 
@@ -634,7 +635,8 @@ test.describe('ValidationConfig Demo', () => {
           window.getComputedStyle(el).getPropertyValue('border-color')
         );
 
-        expect(borderColor).toContain('239, 68, 68');
+        // Red border (Tailwind red-500 in OKLCH format)
+        expect(borderColor).toMatch(/oklch\(0\.637\s+0\.237\s+25\.33/);
       });
     });
 
@@ -662,8 +664,11 @@ test.describe('ValidationConfig Demo', () => {
           window.getComputedStyle(el).getPropertyValue('background-color')
         );
 
-        expect(borderColor).toContain('239, 68, 68');
-        expect(backgroundColor).toContain('254, 242, 242');
+        // Red border (Tailwind red-500 in OKLCH format)
+        expect(borderColor).toMatch(/oklch\(0\.637\s+0\.237\s+25\.33/);
+        // Light red/pink background (Tailwind red-50 in OKLCH format)
+        // Note: Webkit may have floating-point precision differences (17.38 vs 17.379999)
+        expect(backgroundColor).toMatch(/oklch\(0\.971\s+0\.013\s+17\.3[78]/);
       });
     });
 
@@ -680,7 +685,8 @@ test.describe('ValidationConfig Demo', () => {
         let borderColor = await password.evaluate((el) =>
           window.getComputedStyle(el).getPropertyValue('border-color')
         );
-        expect(borderColor).toContain('239, 68, 68'); // Red
+        // Red border (Tailwind red-500 in OKLCH format)
+        expect(borderColor).toMatch(/oklch\(0\.637\s+0\.237\s+25\.33/);
 
         // Fix the field
         await fillAndBlur(password, 'ValidPassword123');
@@ -691,8 +697,8 @@ test.describe('ValidationConfig Demo', () => {
           window.getComputedStyle(el).getPropertyValue('border-color')
         );
 
-        // Should NOT be red anymore
-        expect(borderColor).not.toContain('239, 68, 68');
+        // Should NOT be red anymore (should not match red-500 OKLCH)
+        expect(borderColor).not.toMatch(/oklch\(0\.637\s+0\.237\s+25\.33/);
       });
     });
 
@@ -780,12 +786,12 @@ test.describe('ValidationConfig Demo', () => {
         const state = page.getByRole('textbox', { name: /state\/province/i });
         const startDate = page.getByLabel(/start date/i);
 
-        // All invalid fields should have red borders (Tailwind red-500)
+        // All invalid fields should have red borders (Tailwind red-500 in OKLCH format)
         for (const field of [password, state, startDate]) {
           const borderColor = await field.evaluate((el) =>
             window.getComputedStyle(el).getPropertyValue('border-color')
           );
-          expect(borderColor).toContain('239, 68, 68');
+          expect(borderColor).toMatch(/oklch\(0\.637\s+0\.237\s+25\.33/);
         }
       });
     });

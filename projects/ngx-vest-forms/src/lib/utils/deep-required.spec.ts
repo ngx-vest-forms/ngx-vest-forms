@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 // Fallback Jest-based type test for DeepRequired and FormCompatibleDeepRequired
 import {
   DeepRequired,
@@ -57,8 +58,8 @@ describe('NgxDeepRequired', () => {
       callback?: () => void;
       handler?: { onClick?: (e: Event) => void };
     };
-    const onClick = jest.fn();
-    const callback = jest.fn();
+    const onClick = vi.fn();
+    const callback = vi.fn();
     const value: NgxDeepRequired<Model> = {
       callback,
       handler: { onClick },
@@ -128,7 +129,7 @@ describe('NgxDeepRequired', () => {
       metadata?: { key?: string; value?: any };
       callback?: () => void;
     };
-    const callback = jest.fn();
+    const callback = vi.fn();
     const value: NgxDeepRequired<Model> = {
       id: 1,
       name: 'test',
@@ -223,8 +224,8 @@ describe('NgxFormCompatibleDeepRequired', () => {
       callback?: () => void;
       config?: { onSubmit?: (data: any) => void };
     };
-    const onSubmit = jest.fn();
-    const callback = jest.fn();
+    const onSubmit = vi.fn();
+    const callback = vi.fn();
     const value: NgxFormCompatibleDeepRequired<Model> = {
       callback,
       config: { onSubmit },

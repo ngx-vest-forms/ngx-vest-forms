@@ -1,11 +1,12 @@
 /* eslint-disable @angular-eslint/component-selector */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AsyncPipe } from '@angular/common';
 import { Component, signal, ViewChild } from '@angular/core';
 import { render } from '@testing-library/angular';
 import { isObservable, Observable } from 'rxjs';
 import { enforce, only, staticSuite } from 'vest';
 import { FormDirective } from '../directives/form.directive';
-import { vestForms } from '../exports';
+import { NgxVestForms, vestForms } from '../exports';
 // Helper to await either a Promise or Observable
 async function awaitResult<T>(result: Promise<T> | Observable<T>) {
   if (isObservable(result)) {
@@ -18,8 +19,8 @@ import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'test-form',
-  imports: [vestForms],
-  standalone: true,
+   imports: [NgxVestForms],
+
   template: `
     <form
       ngxVestForm
@@ -55,11 +56,11 @@ class TestFormComponent {
 
 describe('FormDirective - Async Validator', () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
   });
 
   it('should debounce async validation calls per field (single-flight)', async () => {
@@ -76,13 +77,13 @@ describe('FormDirective - Async Validator', () => {
     fixture.detectChanges();
 
     // Advance time less than debounce window (simulate debounceTime: 150ms)
-    jest.advanceTimersByTime(100);
+    vi.advanceTimersByTime(100);
     fixture.detectChanges();
     // No validation should have run yet
     expect(instance.count()).toBe(0);
 
     // Advance past debounce window
-    jest.advanceTimersByTime(100);
+    vi.advanceTimersByTime(100);
     fixture.detectChanges();
     // Only one validation should have run
     expect(instance.count()).toBe(1);
@@ -98,12 +99,12 @@ describe('FormDirective - Async Validator', () => {
         #vest="ngxVestForm"
       ></form>
     `,
-    standalone: true,
-    imports: [vestForms],
+
+     imports: [NgxVestForms],
   })
   class TestParallelValidationHost {
     formValue = signal({ username: '' });
-    mockSuite = jest.fn();
+    mockSuite = vi.fn();
     suite = signal(this.mockSuite);
     @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
   }
@@ -120,7 +121,7 @@ describe('FormDirective - Async Validator', () => {
       awaitResult(validator(controlA)),
       awaitResult(validator(controlB)),
     ]);
-    jest.runOnlyPendingTimers();
+    vi.runOnlyPendingTimers();
     await pending;
     expect(instance.mockSuite).toHaveBeenCalled();
   });
@@ -135,19 +136,19 @@ describe('FormDirective - Async Validator', () => {
         #vest="ngxVestForm"
       ></form>
     `,
-    standalone: true,
-    imports: [vestForms],
+
+     imports: [NgxVestForms],
   })
   class TestDebounceCacheHost {
     formValue = signal({ username: '', email: '' });
-    suite = signal(jest.fn());
+    suite = signal(vi.fn());
     @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
   }
 
   @Component({
     selector: 'test-form-throw',
-    imports: [vestForms, AsyncPipe],
-    standalone: true,
+     imports: [NgxVestForms],
+
     template: `
       <form
         ngxVestForm
@@ -178,7 +179,7 @@ describe('FormDirective - Async Validator', () => {
       { debounceTime: 0 }
     );
     const resultPromise = awaitResult(validator({ value: 'abc' } as any));
-    jest.runOnlyPendingTimers();
+    vi.runOnlyPendingTimers();
     await Promise.resolve();
     const result = await resultPromise;
     // Both v2 and current implementation use generic error message
@@ -191,8 +192,8 @@ describe('FormDirective - Async Validator', () => {
     @Component({
       selector: 'test-null-suite-host',
       template: `<form ngxVestForm #vest="ngxVestForm"></form>`,
-      standalone: true,
-      imports: [vestForms],
+
+       imports: [NgxVestForms],
     })
     class TestNullSuiteHost {
       @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
@@ -215,8 +216,8 @@ describe('FormDirective - Async Validator', () => {
         [suite]="suite()"
         #vest="ngxVestForm"
       ></form>`,
-      standalone: true,
-      imports: [vestForms],
+
+       imports: [NgxVestForms],
     })
     class TestUndefinedValueHost {
       // Provide a proper Vest suite that calls .done() callback
@@ -239,7 +240,7 @@ describe('FormDirective - Async Validator', () => {
     const resultPromise = awaitResult(validator(control));
 
     // Advance all timers to complete the timer(0) and Vest suite execution
-    jest.runAllTimers();
+    vi.runAllTimers();
     await Promise.resolve(); // Let microtasks flush
 
     const result = await resultPromise;
@@ -248,25 +249,9 @@ describe('FormDirective - Async Validator', () => {
   });
 });
 
-describe('FormDirective - Validator Cache', () => {
-  @Component({
-    selector: 'test-validator-cache-host',
-    template: `
-      <form
-        ngxVestForm
-        [suite]="suite()"
-        [formValue]="formValue()"
-        #vest="ngxVestForm"
-      ></form>
-    `,
-    standalone: true,
-    imports: [vestForms],
-  })
-  class TestValidatorCacheHost {
-    formValue = signal({ username: '', email: '' });
-    suite = signal(jest.fn());
-    @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
-  }
+describe.skip('FormDirective - Validator Cache', () => {
+  // TODO: Add validator cache tests
+  it.todo('should cache validators');
 });
 
 describe('FormDirective - Composability & Host Bindings', () => {
@@ -277,8 +262,8 @@ describe('FormDirective - Composability & Host Bindings', () => {
         <form ngxVestForm #vest1="ngxVestForm"></form>
         <form ngxVestForm #vest2="ngxVestForm"></form>
       `,
-      standalone: true,
-      imports: [vestForms],
+
+       imports: [NgxVestForms],
     })
     class TestMultiDirectiveHost {
       @ViewChild('vest1', { static: true }) vestForm1!: FormDirective<any>;
@@ -300,8 +285,8 @@ describe('FormDirective - ValidationConfig', () => {
         #vest="ngxVestForm"
       ></form>
     `,
-    standalone: true,
-    imports: [vestForms],
+
+     imports: [NgxVestForms],
   })
   class TestValidationConfigHost {
     validationConfig = signal<{ [key: string]: string[] }>({
@@ -327,8 +312,8 @@ describe('FormDirective - ValidationConfig', () => {
         [validationConfig]="validationConfig()"
         #vest="ngxVestForm"
       ></form>`,
-      standalone: true,
-      imports: [vestForms],
+
+       imports: [NgxVestForms],
     })
     class TestValidationConfigLoop {
       validationConfig = signal<{ [key: string]: string[] }>({
@@ -352,8 +337,8 @@ describe('FormDirective - Signals/Outputs', () => {
     @Component({
       selector: 'test-signals-outputs-host',
       template: `<form ngxVestForm #vest="ngxVestForm"></form>`,
-      standalone: true,
-      imports: [vestForms],
+
+       imports: [NgxVestForms],
     })
     class TestSignalsOutputsHost {
       @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
@@ -371,8 +356,8 @@ describe('FormDirective - triggerFormValidation', () => {
   @Component({
     selector: 'test-trigger-validation-host',
     template: `<form ngxVestForm #vest="ngxVestForm"></form>`,
-    standalone: true,
-    imports: [vestForms],
+
+     imports: [NgxVestForms],
   })
   class TestTriggerValidationHost {
     @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
@@ -382,7 +367,7 @@ describe('FormDirective - triggerFormValidation', () => {
     const { fixture } = await render(TestTriggerValidationHost);
     const instance = fixture.componentInstance;
     // Mock updateValueAndValidity
-    const mockFn = jest.fn();
+    const mockFn = vi.fn();
     Object.defineProperty(
       instance.vestForm.ngForm.form,
       'updateValueAndValidity',
@@ -404,8 +389,8 @@ describe('FormDirective - Shape Validation', () => {
       [formValue]="formValue()"
       #vest="ngxVestForm"
     ></form>`,
-    standalone: true,
-    imports: [vestForms],
+
+     imports: [NgxVestForms],
   })
   class TestShapeValidationHost {
     formShape = signal<{ username: string }>({ username: '' });
@@ -413,10 +398,10 @@ describe('FormDirective - Shape Validation', () => {
     @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
   }
 
-  let consoleWarnSpy: jest.SpyInstance;
+  let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -458,8 +443,8 @@ describe('FormDirective - FormState Memoization', () => {
         <input name="field1" [ngModel]="formValue().field1" />
       </form>
     `,
-    standalone: true,
-    imports: [vestForms],
+
+     imports: [NgxVestForms],
   })
   class TestMemoizationHost {
     formValue = signal<{ field1?: string }>({});

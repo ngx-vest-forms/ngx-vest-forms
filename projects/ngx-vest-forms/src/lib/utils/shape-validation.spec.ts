@@ -1,10 +1,11 @@
+import { vi } from 'vitest';
 import { validateShape } from './shape-validation';
 
 describe('validateShape function', () => {
-  let consoleWarnSpy: jest.SpyInstance;
+  let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -56,8 +57,8 @@ describe('validateShape function', () => {
 
     validateShape(formValue, shape);
     expect(consoleWarnSpy).toHaveBeenCalled();
-    const calls = consoleWarnSpy.mock.calls.map((call) => call[0]);
-    expect(calls.some((msg) => msg.includes('addresss'))).toBe(true);
+    const calls = consoleWarnSpy.mock.calls.map((call: any) => call[0]);
+    expect(calls.some((msg: string) => msg.includes('addresss'))).toBe(true);
   });
 
   it('should warn with correct ngModelGroup error message', () => {

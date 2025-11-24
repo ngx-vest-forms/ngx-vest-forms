@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
@@ -79,7 +80,7 @@ describe('PhoneNumbersComponent', () => {
   });
 
   it('should emit new values when adding a phone number', () => {
-    const valueSpy = jest.fn();
+    const valueSpy = vi.fn();
     component.onPhoneNumbersChange = valueSpy;
 
     // Set initial value
@@ -114,7 +115,7 @@ describe('PhoneNumbersComponent', () => {
   });
 
   it('should emit new values when removing a phone number', () => {
-    const valueSpy = jest.fn();
+    const valueSpy = vi.fn();
     component.onPhoneNumbersChange = valueSpy;
 
     // Set initial values
@@ -142,7 +143,7 @@ describe('PhoneNumbersComponent', () => {
   });
 
   it('should handle empty add value', () => {
-    const valueSpy = jest.fn();
+    const valueSpy = vi.fn();
     component.onPhoneNumbersChange = valueSpy;
 
     // Set initial value
@@ -174,7 +175,7 @@ describe('PhoneNumbersComponent', () => {
   });
 
   it('should maintain correct indices after removal', () => {
-    const valueSpy = jest.fn();
+    const valueSpy = vi.fn();
     component.onPhoneNumbersChange = valueSpy;
 
     // Set initial values
@@ -202,7 +203,7 @@ describe('PhoneNumbersComponent', () => {
   });
 
   it('should handle removing last phone number', () => {
-    const valueSpy = jest.fn();
+    const valueSpy = vi.fn();
     component.onPhoneNumbersChange = valueSpy;
 
     // Set initial value

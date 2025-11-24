@@ -2,7 +2,7 @@ import { JsonPipe } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
 import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import { vestForms } from '../exports';
+import { NgxVestForms } from '../exports';
 import {
   FormModel,
   formShape,
@@ -109,7 +109,7 @@ import {
       >
     </form>
   `,
-  imports: [vestForms, JsonPipe],
+  imports: [NgxVestForms, JsonPipe],
 })
 export class FormDirectiveDemoComponent {
   protected readonly formValue = signal<FormModel>({});

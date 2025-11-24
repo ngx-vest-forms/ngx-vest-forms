@@ -10,6 +10,7 @@ describe('Field Clearing Utilities', () => {
       nestedData?: {
         subField: string;
       };
+      [key: string]: unknown;
     }
 
     it('should clear fields when condition is true', () => {
@@ -154,6 +155,7 @@ describe('Field Clearing Utilities', () => {
           value: number;
         };
       };
+      [key: string]: unknown;
     }
 
     it('should clear specified fields unconditionally', () => {
@@ -308,6 +310,7 @@ describe('Field Clearing Utilities', () => {
           };
         };
         other?: string;
+        [key: string]: unknown;
       }
 
       const initialState: DeepModel = {
@@ -336,6 +339,7 @@ describe('Field Clearing Utilities', () => {
           tags?: string[];
           count: number;
         };
+        [key: string]: unknown;
       }
 
       const initialState: ModelWithArrays = {
@@ -360,6 +364,7 @@ describe('Field Clearing Utilities', () => {
           keep: string;
           clear: string;
         };
+        [key: string]: unknown;
       }
 
       const initialState: SiblingModel = {
@@ -388,6 +393,7 @@ describe('Field Clearing Utilities', () => {
       nestedData?: {
         subField: string;
       };
+      [key: string]: unknown;
     }
 
     it('should keep only fields where condition is true', () => {
@@ -550,6 +556,7 @@ describe('Field Clearing Utilities', () => {
         billing?: { street: string };
         shipping?: { street: string };
       };
+      [key: string]: unknown;
     }
 
     it('should handle complex dynamic form scenario', () => {

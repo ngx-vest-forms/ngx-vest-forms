@@ -2,7 +2,8 @@ import { Component, signal } from '@angular/core';
 import { fireEvent, render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { enforce, only, staticSuite, test as vestTest, warn } from 'vest';
-import { vestForms } from '../../exports';
+import { NgxVestForms } from '../../exports';
+import { describe, expect, it } from 'vitest';
 
 // Test validation suite for the component tests
 type TestModel = {
@@ -27,7 +28,7 @@ const testSuite = staticSuite((data: TestModel = {}, field?: string) => {
 });
 
 @Component({
-  imports: [vestForms],
+   imports: [NgxVestForms],
   template: `
     <form
       ngxVestForm
@@ -52,7 +53,7 @@ class TestFormComponent {
 }
 
 @Component({
-  imports: [vestForms],
+   imports: [NgxVestForms],
   template: `
     <form
       ngxVestForm
@@ -106,7 +107,7 @@ const slowAsyncSuite = staticSuite((data: TestModel = {}, field?: string) => {
 });
 
 @Component({
-  imports: [vestForms],
+   imports: [NgxVestForms],
   template: `
     <form
       ngxVestForm
@@ -127,7 +128,7 @@ class AsyncTestComponent {
 }
 
 @Component({
-  imports: [vestForms],
+   imports: [NgxVestForms],
   template: `
     <form
       ngxVestForm
@@ -148,7 +149,7 @@ class SlowAsyncTestComponent {
 }
 
 @Component({
-  imports: [vestForms],
+   imports: [NgxVestForms],
   template: `
     <ngx-control-wrapper>
       <div>Empty wrapper</div>
@@ -158,7 +159,7 @@ class SlowAsyncTestComponent {
 class EmptyWrapperComponent {}
 
 @Component({
-  imports: [vestForms],
+   imports: [NgxVestForms],
   template: `
     <form
       ngxVestForm
@@ -311,7 +312,7 @@ describe('ScControlWrapperComponent', () => {
 
     it('should respect errorDisplayMode input from directive', async () => {
       @Component({
-        imports: [vestForms],
+         imports: [NgxVestForms],
         template: `
           <form
             ngxVestForm
@@ -556,7 +557,7 @@ describe('ScControlWrapperComponent', () => {
       );
 
       @Component({
-        imports: [vestForms],
+         imports: [NgxVestForms],
         template: `
           <form
             ngxVestForm
@@ -671,7 +672,7 @@ describe('ScControlWrapperComponent', () => {
       });
 
       @Component({
-        imports: [vestForms],
+         imports: [NgxVestForms],
         template: `
           <form
             ngxVestForm
@@ -735,7 +736,7 @@ describe('ScControlWrapperComponent', () => {
       );
 
       @Component({
-        imports: [vestForms],
+         imports: [NgxVestForms],
         template: `
           <form
             ngxVestForm

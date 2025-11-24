@@ -1,6 +1,6 @@
 import eslint from '@eslint/js';
 import angular from 'angular-eslint';
-import jest from 'eslint-plugin-jest';
+import vitest from '@vitest/eslint-plugin';
 import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 
@@ -68,19 +68,17 @@ export default defineConfig([
   // Test files - more lenient rules
   {
     files: ['**/*.spec.ts', '**/*.stories.ts', '**/testing/**/*.ts'],
-    plugins: { jest },
+    plugins: { vitest },
     languageOptions: {
-      globals: jest.environments.globals.globals,
+      globals: vitest.environments.env.globals,
     },
-    ...jest.configs['flat/recommended'],
     rules: {
-      ...jest.configs['flat/recommended'].rules,
-      'jest/expect-expect': 'warn',
-      'jest/no-disabled-tests': 'warn',
-      'jest/no-focused-tests': 'error',
-      'jest/no-identical-title': 'error',
-      'jest/valid-expect': 'error',
-      'jest/no-conditional-expect': 'off', // Allow conditional expects in tests
+      'vitest/expect-expect': 'warn',
+      'vitest/no-disabled-tests': 'warn',
+      'vitest/no-focused-tests': 'error',
+      'vitest/no-identical-title': 'error',
+      'vitest/valid-expect': 'error',
+      'vitest/no-conditional-expect': 'off', // Allow conditional expects in tests
       '@angular-eslint/component-selector': 'off', // Allow test components without ngx prefix
       '@angular-eslint/directive-selector': 'off', // Allow test directives without ngx prefix
       '@typescript-eslint/no-explicit-any': 'off', // Allow any in tests

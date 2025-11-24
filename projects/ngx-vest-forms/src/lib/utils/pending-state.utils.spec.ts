@@ -7,13 +7,11 @@ import {
 
 describe('pending-state.utils', () => {
   beforeEach(() => {
-    TestBed.configureTestingModule({});
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   describe('createDebouncedPendingState', () => {
@@ -52,11 +50,11 @@ describe('pending-state.utils', () => {
         expect(result.showPendingMessage()).toBe(false);
 
         // Advance time by 199ms (just before threshold)
-        jest.advanceTimersByTime(199);
+        vi.advanceTimersByTime(199);
         expect(result.showPendingMessage()).toBe(false);
 
         // Advance to 200ms (at threshold)
-        jest.advanceTimersByTime(1);
+        vi.advanceTimersByTime(1);
         expect(result.showPendingMessage()).toBe(true);
       });
     });
@@ -70,59 +68,62 @@ describe('pending-state.utils', () => {
         isPending.set(true);
         expect(result.showPendingMessage()).toBe(false);
 
-        jest.advanceTimersByTime(299);
+        vi.advanceTimersByTime(299);
         expect(result.showPendingMessage()).toBe(false);
 
-        jest.advanceTimersByTime(1);
+        vi.advanceTimersByTime(1);
         expect(result.showPendingMessage()).toBe(true);
       });
     });
 
-    it('should not show pending message if validation completes before showAfter delay', () => {
-      TestBed.runInInjectionContext(() => {
+    it('should not show pending message if validation completes before showAfter delay', async () => {
+      await TestBed.runInInjectionContext(async () => {
         const isPending = signal(false);
         const result = createDebouncedPendingState(isPending);
 
         // Start validation
         isPending.set(true);
+        await vi.advanceTimersByTimeAsync(0); // Flush effects
         expect(result.showPendingMessage()).toBe(false);
 
         // Complete validation before 200ms
-        jest.advanceTimersByTime(150);
+        await vi.advanceTimersByTimeAsync(150);
         isPending.set(false);
+        await vi.advanceTimersByTimeAsync(0); // Flush effects
 
         // Advance past the original showAfter delay
-        jest.advanceTimersByTime(100);
+        await vi.advanceTimersByTimeAsync(100);
         expect(result.showPendingMessage()).toBe(false);
       });
     });
 
-    it('should keep pending message visible for minimum duration after shown (default 500ms)', () => {
-      TestBed.runInInjectionContext(() => {
+    it('should keep pending message visible for minimum duration after shown (default 500ms)', async () => {
+      await TestBed.runInInjectionContext(async () => {
         const isPending = signal(false);
         const result = createDebouncedPendingState(isPending);
 
         // Start and show pending message
         isPending.set(true);
-        jest.advanceTimersByTime(200); // Show after delay
+        await vi.advanceTimersByTimeAsync(200); // Show after delay
         expect(result.showPendingMessage()).toBe(true);
 
         // Complete validation immediately
         isPending.set(false);
+        await vi.advanceTimersByTimeAsync(0); // Flush effects
         expect(result.showPendingMessage()).toBe(true); // Still visible
 
         // Advance 499ms (just before minimum)
-        jest.advanceTimersByTime(499);
+        await vi.advanceTimersByTimeAsync(499);
         expect(result.showPendingMessage()).toBe(true);
 
         // Advance to 500ms (at minimum)
-        jest.advanceTimersByTime(1);
+        await vi.advanceTimersByTimeAsync(1);
         expect(result.showPendingMessage()).toBe(false);
       });
     });
 
-    it('should use custom minimumDisplay duration', () => {
-      TestBed.runInInjectionContext(() => {
+    it('should use custom minimumDisplay duration', async () => {
+      await TestBed.runInInjectionContext(async () => {
         const isPending = signal(false);
         const options: DebouncedPendingStateOptions = {
           showAfter: 200,
@@ -132,100 +133,106 @@ describe('pending-state.utils', () => {
 
         // Show pending message
         isPending.set(true);
-        jest.advanceTimersByTime(200);
+        await vi.advanceTimersByTimeAsync(200);
         expect(result.showPendingMessage()).toBe(true);
 
         // Complete validation
         isPending.set(false);
+        await vi.advanceTimersByTimeAsync(0); // Flush effects
 
         // Should stay visible for 1000ms
-        jest.advanceTimersByTime(999);
+        await vi.advanceTimersByTimeAsync(999);
         expect(result.showPendingMessage()).toBe(true);
 
-        jest.advanceTimersByTime(1);
+        await vi.advanceTimersByTimeAsync(1);
         expect(result.showPendingMessage()).toBe(false);
       });
     });
 
-    it('should handle multiple rapid validation cycles correctly', () => {
-      TestBed.runInInjectionContext(() => {
+    it('should handle multiple rapid validation cycles correctly', async () => {
+      await TestBed.runInInjectionContext(async () => {
         const isPending = signal(false);
         const result = createDebouncedPendingState(isPending);
 
         // First validation - quick completion (no message shown)
         isPending.set(true);
-        jest.advanceTimersByTime(100);
+        await vi.advanceTimersByTimeAsync(100);
         isPending.set(false);
+        await vi.advanceTimersByTimeAsync(0); // Flush effects
         expect(result.showPendingMessage()).toBe(false);
 
         // Second validation - slow completion (message shown)
         isPending.set(true);
-        jest.advanceTimersByTime(200);
+        await vi.advanceTimersByTimeAsync(200);
         expect(result.showPendingMessage()).toBe(true);
 
         isPending.set(false);
-        jest.advanceTimersByTime(500);
+        await vi.advanceTimersByTimeAsync(500);
         expect(result.showPendingMessage()).toBe(false);
 
         // Third validation - quick completion (no message shown)
         isPending.set(true);
-        jest.advanceTimersByTime(50);
+        await vi.advanceTimersByTimeAsync(50);
         isPending.set(false);
-        jest.advanceTimersByTime(500);
+        await vi.advanceTimersByTimeAsync(500);
         expect(result.showPendingMessage()).toBe(false);
       });
     });
 
-    it('should cancel showAfter timeout if validation restarts during delay', () => {
-      TestBed.runInInjectionContext(() => {
+    it('should cancel showAfter timeout if validation restarts during delay', async () => {
+      await TestBed.runInInjectionContext(async () => {
         const isPending = signal(false);
         const result = createDebouncedPendingState(isPending);
 
         // Start first validation
         isPending.set(true);
-        jest.advanceTimersByTime(150);
+        await vi.advanceTimersByTimeAsync(150);
 
         // Restart validation (complete and start again)
         isPending.set(false);
+        await vi.advanceTimersByTimeAsync(0); // Flush effects
         isPending.set(true);
+        await vi.advanceTimersByTimeAsync(0); // Flush effects
 
         // Original timeout should be cancelled, new one starts
-        jest.advanceTimersByTime(100); // Total 250ms from first start, but only 100ms from restart
+        await vi.advanceTimersByTimeAsync(100); // Total 250ms from first start, but only 100ms from restart
         expect(result.showPendingMessage()).toBe(false);
 
         // Advance to complete second delay
-        jest.advanceTimersByTime(100); // 200ms from restart
+        await vi.advanceTimersByTimeAsync(100); // 200ms from restart
         expect(result.showPendingMessage()).toBe(true);
       });
     });
 
-    it('should cancel minimumDisplay timeout if validation restarts', () => {
-      TestBed.runInInjectionContext(() => {
+    it('should cancel minimumDisplay timeout if validation restarts', async () => {
+      await TestBed.runInInjectionContext(async () => {
         const isPending = signal(false);
         const result = createDebouncedPendingState(isPending);
 
         // Show pending message
         isPending.set(true);
-        jest.advanceTimersByTime(200);
+        await vi.advanceTimersByTimeAsync(200);
         expect(result.showPendingMessage()).toBe(true);
 
         // Complete validation
         isPending.set(false);
-        jest.advanceTimersByTime(100); // 100ms into minimum display
+        await vi.advanceTimersByTimeAsync(100); // 100ms into minimum display
 
         // Restart validation - should cancel minimum display timeout
         isPending.set(true);
+        await vi.advanceTimersByTimeAsync(0); // Flush effects
         expect(result.showPendingMessage()).toBe(true);
 
         // Complete quickly
-        jest.advanceTimersByTime(100);
+        await vi.advanceTimersByTimeAsync(100);
         isPending.set(false);
+        await vi.advanceTimersByTimeAsync(0); // Flush effects
 
         // Should still show because new validation was shown
         expect(result.showPendingMessage()).toBe(true);
 
         // Complete new minimum display
-        jest.advanceTimersByTime(500);
+        await vi.advanceTimersByTimeAsync(500);
         expect(result.showPendingMessage()).toBe(false);
       });
     });
@@ -237,13 +244,13 @@ describe('pending-state.utils', () => {
 
         // Start validation
         isPending.set(true);
-        jest.advanceTimersByTime(100);
+        vi.advanceTimersByTime(100);
 
         // Call cleanup manually
         result.cleanup();
 
         // Advance past showAfter delay - message should not appear because cleanup was called
-        jest.advanceTimersByTime(200);
+        vi.advanceTimersByTime(200);
         expect(result.showPendingMessage()).toBe(false);
       });
     });
@@ -255,25 +262,25 @@ describe('pending-state.utils', () => {
 
         // Show pending message
         isPending.set(true);
-        jest.advanceTimersByTime(200);
+        vi.advanceTimersByTime(200);
         expect(result.showPendingMessage()).toBe(true);
 
         // Complete validation
         isPending.set(false);
-        jest.advanceTimersByTime(100); // 100ms into minimum display
+        vi.advanceTimersByTime(100); // 100ms into minimum display
 
         // Call cleanup
         result.cleanup();
 
         // Message should remain true (cleanup doesn't reset the signal)
         // but advancing timers should not hide it (timeout was cleared)
-        jest.advanceTimersByTime(1000);
+        vi.advanceTimersByTime(1000);
         expect(result.showPendingMessage()).toBe(true);
       });
     });
 
-    it('should work with custom options set to zero', () => {
-      TestBed.runInInjectionContext(() => {
+    it('should work with custom options set to zero', async () => {
+      await TestBed.runInInjectionContext(async () => {
         const isPending = signal(false);
         const options: DebouncedPendingStateOptions = {
           showAfter: 0,
@@ -283,12 +290,12 @@ describe('pending-state.utils', () => {
 
         // Should show after 0ms delay (setTimeout with 0 still needs to execute)
         isPending.set(true);
-        jest.runAllTimers(); // Run the 0ms timeout
+        await vi.runAllTimersAsync(); // Run the 0ms timeout
         expect(result.showPendingMessage()).toBe(true);
 
         // Should hide after 0ms minimum
         isPending.set(false);
-        jest.runAllTimers(); // Run the 0ms timeout
+        await vi.runAllTimersAsync(); // Run the 0ms timeout
         expect(result.showPendingMessage()).toBe(false);
       });
     });
@@ -303,8 +310,8 @@ describe('pending-state.utils', () => {
       });
     });
 
-    it('should handle long-running validations correctly', () => {
-      TestBed.runInInjectionContext(() => {
+    it('should handle long-running validations correctly', async () => {
+      await TestBed.runInInjectionContext(async () => {
         const isPending = signal(false);
         const result = createDebouncedPendingState(isPending);
 
@@ -312,25 +319,26 @@ describe('pending-state.utils', () => {
         isPending.set(true);
 
         // Show message after delay
-        jest.advanceTimersByTime(200);
+        await vi.advanceTimersByTimeAsync(200);
         expect(result.showPendingMessage()).toBe(true);
 
         // Validation continues for a long time
-        jest.advanceTimersByTime(5000);
+        await vi.advanceTimersByTimeAsync(5000);
         expect(result.showPendingMessage()).toBe(true);
 
         // Finally complete
         isPending.set(false);
+        await vi.advanceTimersByTimeAsync(0); // Flush effects
         expect(result.showPendingMessage()).toBe(true);
 
         // Hide after minimum display
-        jest.advanceTimersByTime(500);
+        await vi.advanceTimersByTimeAsync(500);
         expect(result.showPendingMessage()).toBe(false);
       });
     });
 
-    it('should work correctly with all custom options', () => {
-      TestBed.runInInjectionContext(() => {
+    it('should work correctly with all custom options', async () => {
+      await TestBed.runInInjectionContext(async () => {
         const isPending = signal(false);
         const options: DebouncedPendingStateOptions = {
           showAfter: 100,
@@ -340,60 +348,62 @@ describe('pending-state.utils', () => {
 
         // Show after custom delay
         isPending.set(true);
-        jest.advanceTimersByTime(100);
+        await vi.advanceTimersByTimeAsync(100);
         expect(result.showPendingMessage()).toBe(true);
 
         // Complete validation
         isPending.set(false);
+        await vi.advanceTimersByTimeAsync(0); // Flush effects
 
         // Stay visible for custom minimum
-        jest.advanceTimersByTime(299);
+        await vi.advanceTimersByTimeAsync(299);
         expect(result.showPendingMessage()).toBe(true);
 
-        jest.advanceTimersByTime(1);
+        await vi.advanceTimersByTimeAsync(1);
         expect(result.showPendingMessage()).toBe(false);
       });
     });
 
-    it('should handle edge case: validation completes exactly at showAfter delay', () => {
-      TestBed.runInInjectionContext(() => {
+    it('should handle edge case: validation completes exactly at showAfter delay', async () => {
+      await TestBed.runInInjectionContext(async () => {
         const isPending = signal(false);
         const result = createDebouncedPendingState(isPending);
 
         isPending.set(true);
-        jest.advanceTimersByTime(200); // Exactly at showAfter
+        await vi.advanceTimersByTimeAsync(200); // Exactly at showAfter
         expect(result.showPendingMessage()).toBe(true);
 
         // Complete immediately after showing
         isPending.set(false);
+        await vi.advanceTimersByTimeAsync(0); // Flush effects
         expect(result.showPendingMessage()).toBe(true);
 
         // Should respect minimum display
-        jest.advanceTimersByTime(500);
+        await vi.advanceTimersByTimeAsync(500);
         expect(result.showPendingMessage()).toBe(false);
       });
     });
 
-    it('should handle state changes during component lifecycle', () => {
-      TestBed.runInInjectionContext(() => {
+    it('should handle state changes during component lifecycle', async () => {
+      await TestBed.runInInjectionContext(async () => {
         const isPending = signal(false);
         const result = createDebouncedPendingState(isPending);
 
         // Simulate validation starting on component init
         isPending.set(true);
-        jest.advanceTimersByTime(200);
+        await vi.advanceTimersByTimeAsync(200);
         expect(result.showPendingMessage()).toBe(true);
 
         // Simulate validation completing before component destroy
         isPending.set(false);
-        jest.advanceTimersByTime(500);
+        await vi.advanceTimersByTimeAsync(500);
         expect(result.showPendingMessage()).toBe(false);
 
         // Cleanup (simulating ngOnDestroy)
         result.cleanup();
 
         // No errors should occur
-        expect(() => jest.runAllTimers()).not.toThrow();
+        await expect(vi.runAllTimersAsync()).resolves.not.toThrow();
       });
     });
   });

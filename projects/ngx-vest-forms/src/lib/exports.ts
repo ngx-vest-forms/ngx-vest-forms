@@ -76,7 +76,7 @@ export const vestFormsViewProviders = [
  * import { NgxVestForms } from 'ngx-vest-forms';
  *
  * @Component({
- *   standalone: true,
+ *
  *   imports: [NgxVestForms],
  *   /// ...
  * })

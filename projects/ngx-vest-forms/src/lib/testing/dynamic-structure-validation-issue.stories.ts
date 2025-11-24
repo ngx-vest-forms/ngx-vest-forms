@@ -11,7 +11,7 @@ import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 import type { NgxDeepPartial, NgxDeepRequired } from '../../public-api';
 import { FormDirective } from '../directives/form.directive';
-import { vestForms } from '../exports';
+import { NgxVestForms } from '../exports';
 import { clearFieldsWhen } from '../utils/field-clearing';
 
 type DynamicFormModel = NgxDeepPartial<{
@@ -218,7 +218,7 @@ const dynamicFormValidationSuite = staticSuite(
       </fieldset>
     </form>
   `,
-  imports: [vestForms, JsonPipe],
+  imports: [NgxVestForms, JsonPipe],
 })
 export class DynamicStructureComponent {
   // Angular 20: Using ViewChild to access template reference

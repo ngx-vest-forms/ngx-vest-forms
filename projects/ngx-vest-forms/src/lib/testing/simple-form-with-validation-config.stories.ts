@@ -1,6 +1,6 @@
 import { Component, computed, signal } from '@angular/core';
 import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
-import { vestForms } from '../exports';
+import { NgxVestForms } from '../exports';
 import { FormModel, formShape, formValidationSuite } from './simple-form';
 
 @Component({
@@ -103,7 +103,7 @@ import { FormModel, formShape, formValidationSuite } from './simple-form';
       </fieldset>
     </form>
   `,
-  imports: [vestForms],
+  imports: [NgxVestForms],
 })
 export class FormDirectiveDemoComponent {
   protected readonly formValue = signal<FormModel>({});

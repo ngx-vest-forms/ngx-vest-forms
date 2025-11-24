@@ -5,7 +5,7 @@ import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 import type { NgxDeepPartial } from '../../public-api';
 import { FormDirective } from '../directives/form.directive';
-import { vestForms } from '../exports';
+import { NgxVestForms } from '../exports';
 import type { NgxVestSuite } from '../utils/validation-suite';
 
 /**
@@ -173,8 +173,8 @@ const selectors = {
       </div>
     </div>
   `,
-  imports: [vestForms, JsonPipe],
-  standalone: true,
+  imports: [NgxVestForms, JsonPipe],
+
 })
 export class OmitWhenValidationConfigComponent {
   private readonly vestFormRef = viewChild.required('vestForm', {

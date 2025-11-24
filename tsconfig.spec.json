@@ -3,10 +3,18 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
+    "target": "ES2022",
     "module": "ES2022",
     "moduleResolution": "bundler",
     "isolatedModules": true,
-    "types": ["jest", "node", "@testing-library/jest-dom"]
+    "noPropertyAccessFromIndexSignature": false,
+    "types": [
+      "vitest/globals",
+      "node",
+      "@testing-library/jest-dom",
+      "@vitest/browser-playwright"
+    ]
   },
-  "include": ["**/*.spec.ts", "**/*.d.ts", "**/*.test.ts", "jest.config.ts"]
+  "files": ["projects/ngx-vest-forms/src/test-setup.ts"],
+  "include": ["**/*.spec.ts", "**/*.d.ts", "**/*.test.ts", "vitest.config.ts"]
 }

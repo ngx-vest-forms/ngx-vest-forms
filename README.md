@@ -118,7 +118,7 @@ That's all you need. The directive automatically creates controls, wires validat
 - **Vest.js validations** — Sync/async, conditional, composable patterns with `only(field)` optimization
 - **Error display modes** — Control when errors show: `on-blur`, `on-submit`, or `on-blur-or-submit` (default)
 - **Form state tracking** — Access touched, dirty, valid/invalid states for individual fields or entire form
-- **Error display helpers** — `ngx-control-wrapper`, tokens, and `FormErrorDisplayDirective` for consistent UX
+- **Error display helpers** — `ngx-control-wrapper` component (recommended) or `FormErrorDisplayDirective` as hostDirective for custom wrappers
 - **Cross-field dependencies** — `validationConfig` for field-to-field triggers, `ROOT_FORM` for form-level rules
 - **Utilities** — Field paths, field clearing, validation config builder
 
@@ -134,7 +134,7 @@ providers: [
   { provide: NGX_ERROR_DISPLAY_MODE_TOKEN, useValue: 'on-blur-or-submit' }
 ]
 
-// Or per-field via control wrapper
+// Recommended: Use ngx-control-wrapper component
 <ngx-control-wrapper [errorDisplayMode]="'on-blur'">
   <input name="email" [ngModel]="formValue().email" />
 </ngx-control-wrapper>

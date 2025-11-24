@@ -1,8 +1,17 @@
 # Creating Custom Control Wrappers
 
-If the default `ngx-control-wrapper` doesn't meet your design requirements, you can easily create your own using the `FormErrorDisplayDirective`. This directive provides all the necessary state and logic for displaying errors, warnings, and pending states.
+## Recommended Pattern: HostDirective on Component
 
-## Basic Custom Wrapper
+The **recommended approach** for error display is to use `FormErrorDisplayDirective` as a **hostDirective on a wrapper component** with content projection. This pattern:
+
+- ✅ Provides clean separation of concerns (UI in template, logic in directive)
+- ✅ Supports all directive features via `contentChild()` queries
+- ✅ Enables reusable error display components across your application
+- ✅ Follows Angular best practices for directive composition
+
+If the default `ngx-control-wrapper` doesn't meet your design requirements, you can easily create your own custom wrapper component using this pattern.
+
+## Basic Custom Wrapper (Recommended Pattern)
 
 ```typescript
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
@@ -11,6 +20,7 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
 @Component({
   selector: 'ngx-custom-control-wrapper',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // ✅ RECOMMENDED: Use FormErrorDisplayDirective as hostDirective
   hostDirectives: [
     {
       directive: FormErrorDisplayDirective,
@@ -19,6 +29,7 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
   ],
   template: `
     <div class="field-wrapper">
+      <!-- Content projection enables contentChild() queries in the directive -->
       <ng-content />
 
       @if (errorDisplay.shouldShowErrors()) {
@@ -36,6 +47,7 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
   `,
 })
 export class CustomControlWrapperComponent {
+  // Inject the hostDirective to access its signals and state
   protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
     self: true,
   });

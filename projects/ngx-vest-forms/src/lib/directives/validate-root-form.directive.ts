@@ -88,6 +88,7 @@ import { ValidationOptions } from './validation-options';
  */
 @Directive({
   selector: 'form[validateRootForm], form[ngxValidateRootForm]',
+
   providers: [
     {
       provide: NG_ASYNC_VALIDATORS,
@@ -227,7 +228,7 @@ export class ValidateRootFormDirective<T>
     // but root form validation uses formValue input (typed model) instead of control.value.
     // This is intentional - cross-field validation operates on the complete form model,
     // not individual control values. The underscore prefix indicates intentional non-use.
-     
+
     return (_control: AbstractControl) => {
       const currentFormValue = this.formValue();
       if (!currentFormValue) {

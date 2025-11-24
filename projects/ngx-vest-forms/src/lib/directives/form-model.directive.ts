@@ -16,6 +16,7 @@ import { ValidationOptions } from './validation-options';
  */
 @Directive({
   selector: '[ngModel],[ngxModel]',
+
   providers: [
     {
       provide: NG_ASYNC_VALIDATORS,

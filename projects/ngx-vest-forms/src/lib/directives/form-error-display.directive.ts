@@ -1,9 +1,9 @@
 import {
   Directive,
+  input,
   computed,
   effect,
   inject,
-  input,
   signal,
 } from '@angular/core';
 import { NgForm } from '@angular/forms';
@@ -21,13 +21,18 @@ export const SC_ERROR_DISPLAY_MODE_DEFAULT: ScErrorDisplayMode =
 @Directive({
   selector: '[formErrorDisplay], [ngxErrorDisplay]',
   exportAs: 'formErrorDisplay, ngxErrorDisplay',
+
   hostDirectives: [FormControlStateDirective],
 })
 export class FormErrorDisplayDirective {
   readonly #formControlState = inject(FormControlStateDirective);
   // Optionally inject NgForm for form submission tracking
   readonly #ngForm = inject(NgForm, { optional: true });
-  // Use DI token for global default, check both tokens (ngx takes precedence)
+
+  /**
+   * Input signal for error display mode.
+   * Works seamlessly with hostDirectives in Angular 19+.
+   */
   readonly errorDisplayMode = input<ScErrorDisplayMode>(
     inject(NGX_ERROR_DISPLAY_MODE_TOKEN, { optional: true }) ??
       inject(SC_ERROR_DISPLAY_MODE_TOKEN, { optional: true }) ??

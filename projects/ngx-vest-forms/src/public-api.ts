@@ -5,31 +5,29 @@
 export { NgxVestForms, vestForms, vestFormsViewProviders } from './lib/exports';
 
 // Type utilities
-export { DeepPartial, NgxDeepPartial } from './lib/utils/deep-partial';
-export {
+export type { DeepPartial, NgxDeepPartial } from './lib/utils/deep-partial';
+export type {
   DeepRequired,
   FormCompatibleDeepRequired,
   NgxDeepRequired,
   NgxFormCompatibleDeepRequired,
 } from './lib/utils/deep-required';
-export {
+export type {
   FieldPath,
   FieldPathValue,
   FormFieldName,
   LeafFieldPath,
-  ROOT_FORM as ROOT_FORM_CONSTANT,
   ValidateFieldPath,
   ValidationConfigMap,
 } from './lib/utils/field-path-types';
-export {
-  NgxFormState,
-  createEmptyFormState,
-} from './lib/utils/form-state.utils';
+export { ROOT_FORM as ROOT_FORM_CONSTANT } from './lib/utils/field-path-types';
+export type { NgxFormState } from './lib/utils/form-state.utils';
+export { createEmptyFormState } from './lib/utils/form-state.utils';
 export {
   ValidationConfigBuilder,
   createValidationConfig,
 } from './lib/utils/validation-config-builder';
-export {
+export type {
   NgxFieldKey,
   NgxTypedVestSuite,
   NgxVestSuite,
@@ -48,11 +46,11 @@ export {
 } from './lib/utils/field-clearing';
 export { stringifyFieldPath } from './lib/utils/field-path.utils';
 export { setValueAtPath } from './lib/utils/form-utils';
-export {
+export type {
   DebouncedPendingStateOptions,
   DebouncedPendingStateResult,
-  createDebouncedPendingState,
 } from './lib/utils/pending-state.utils';
+export { createDebouncedPendingState } from './lib/utils/pending-state.utils';
 export { validateShape } from './lib/utils/shape-validation';
 
 // Internal utilities - exported for advanced use cases but not part of the primary API
@@ -90,15 +88,11 @@ export { ControlWrapperComponent } from './lib/components/control-wrapper/contro
 
 // Directives
 export { FormControlStateDirective } from './lib/directives/form-control-state.directive';
-export {
-  FormErrorDisplayDirective,
-  ScErrorDisplayMode,
-} from './lib/directives/form-error-display.directive';
+export { FormErrorDisplayDirective } from './lib/directives/form-error-display.directive';
+export type { ScErrorDisplayMode } from './lib/directives/form-error-display.directive';
 export { FormModelGroupDirective } from './lib/directives/form-model-group.directive';
 export { FormModelDirective } from './lib/directives/form-model.directive';
-export {
-  FormDirective,
-  NgxValidationConfig,
-} from './lib/directives/form.directive';
+export { FormDirective } from './lib/directives/form.directive';
+export type { NgxValidationConfig } from './lib/directives/form.directive';
 export { ValidateRootFormDirective } from './lib/directives/validate-root-form.directive';
-export { ValidationOptions } from './lib/directives/validation-options';
+export type { ValidationOptions } from './lib/directives/validation-options';

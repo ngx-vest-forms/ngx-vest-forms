@@ -96,9 +96,67 @@ let nextUniqueId = 0;
 @Component({
   selector:
     'ngx-control-wrapper, ngx-control-wrapper, [scControlWrapper], [ngxControlWrapper], [ngx-control-wrapper], [ngx-control-wrapper]',
-  templateUrl: './control-wrapper.component.html',
-  styleUrls: ['./control-wrapper.component.scss'],
+  template: `
+    <div class="ngx-control-wrapper__content">
+      <ng-content />
+    </div>
+
+    @if (errorDisplay.shouldShowErrors()) {
+      <div
+        [id]="errorId"
+        class="text-sm text-red-600"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <ul>
+          @for (error of errorDisplay.errors(); track error) {
+            <li>{{ error.message || error }}</li>
+          }
+        </ul>
+      </div>
+    }
+    @if (errorDisplay.warnings().length > 0) {
+      <div
+        [id]="warningId"
+        class="text-sm text-yellow-700"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <ul>
+          @for (warn of errorDisplay.warnings(); track warn) {
+            <li>{{ warn }}</li>
+          }
+        </ul>
+      </div>
+    }
+
+    <!-- Show pending state only after a delay to prevent flashing for quick validations -->
+    @if (showPendingMessage()) {
+      <div
+        [id]="pendingId"
+        class="flex items-center gap-1 text-xs text-gray-500"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <span
+          class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-gray-400 border-t-transparent"
+          aria-hidden="true"
+        ></span>
+        Validating…
+      </div>
+    }
+  `,
+  styles: `
+    :host {
+      display: block;
+      position: relative;
+    }
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
+
   host: {
     class: 'ngx-control-wrapper ngx-control-wrapper',
     '[class.ngx-control-wrapper--invalid]': 'errorDisplay.shouldShowErrors()',

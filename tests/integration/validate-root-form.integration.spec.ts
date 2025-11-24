@@ -25,7 +25,7 @@ const issueThirteenSuite = staticSuite(
 );
 
 @Component({
-  standalone: true,
+
   imports: [NgxVestForms],
   template: `
     <form

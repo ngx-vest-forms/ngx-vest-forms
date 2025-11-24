@@ -15,7 +15,7 @@ import { Component, signal } from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { enforce, only, staticSuite, test } from 'vest';
-import { vestForms } from '../exports';
+import { NgxVestForms } from '../exports';
 import { DeepPartial } from '../utils/deep-partial';
 
 describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => {
@@ -50,7 +50,7 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
             </button>
           </form>
         `,
-        imports: [vestForms],
+         imports: [NgxVestForms],
       })
       class TestComponent {
         formValue = signal<
@@ -135,7 +135,7 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
             <div data-testid="click-count">{{ clickCount() }}</div>
           </form>
         `,
-        imports: [vestForms],
+         imports: [NgxVestForms],
       })
       class TestComponent {
         formValue = signal<DeepPartial<{ field1?: string; field2?: string }>>({
@@ -218,7 +218,7 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
             </button>
           </form>
         `,
-        imports: [vestForms],
+         imports: [NgxVestForms],
       })
       class TestComponent {
         formValue = signal<
@@ -353,7 +353,7 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
             </button>
           </form>
         `,
-        imports: [vestForms],
+         imports: [NgxVestForms],
       })
       class TestComponent {
         formValue = signal<
@@ -450,7 +450,7 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
             <button type="submit" data-testid="submit">Submit</button>
           </form>
         `,
-        imports: [vestForms],
+         imports: [NgxVestForms],
       })
       class TestComponent {
         formValue = signal<DeepPartial<{ email?: string }>>({
@@ -518,7 +518,7 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
             <div data-testid="reset-count">{{ resetCount() }}</div>
           </form>
         `,
-        imports: [vestForms],
+         imports: [NgxVestForms],
       })
       class TestComponent {
         formValue = signal<DeepPartial<{ testField?: string }>>({});
