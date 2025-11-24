@@ -56,7 +56,7 @@
     "@storybook/addon-links": "^10.0.8",
     "@storybook/angular": "^10.0.8",
     "@storybook/test-runner": "~0.24.1",
-    "@swc/core": "~1.15.2",
+    "@swc/core": "~1.15.3",
     "@swc/jest": "~0.2.39",
     "@tailwindcss/forms": "~0.5.10",
     "@testing-library/angular": "~18.1.1",
@@ -64,13 +64,13 @@
     "@testing-library/user-event": "~14.6.1",
     "@types/jasmine": "~5.1.13",
     "@types/jest": "~30.0.0",
-    "angular-eslint": "20.6.0",
+    "angular-eslint": "21.0.1",
     "autoprefixer": "~10.4.22",
     "concurrently": "~9.2.1",
     "copyfiles": "~2.4.1",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "~10.1.8",
-    "eslint-plugin-jest": "^29.1.0",
+    "eslint-plugin-jest": "^29.2.1",
     "eslint-plugin-prettier": "~5.5.4",
     "eslint-plugin-storybook": "^10.0.8",
     "http-server": "~14.1.1",
@@ -90,7 +90,7 @@
     "ngx-mask": "~20.0.3",
     "npm-run-all": "~4.1.5",
     "playwright": "~1.56.1",
-    "playwright-ng-schematics": "^2.1.1",
+    "playwright-ng-schematics": "^21.0.1",
     "postcss": "~8.5.6",
     "prettier-plugin-organize-imports": "^4.3.0",
     "prettier-plugin-tailwindcss": "^0.7.1",
@@ -137,10 +137,10 @@
     }
   },
   "optionalDependencies": {
-    "@swc/core-darwin-arm64": "~1.15.2",
-    "@swc/core-darwin-x64": "~1.15.2",
-    "@swc/core-linux-x64-gnu": "~1.15.2",
-    "@swc/core-linux-x64-musl": "~1.15.2"
+    "@swc/core-darwin-arm64": "~1.15.3",
+    "@swc/core-darwin-x64": "~1.15.3",
+    "@swc/core-linux-x64-gnu": "~1.15.3",
+    "@swc/core-linux-x64-musl": "~1.15.3"
   },
   "publishConfig": {
     "access": "public"
