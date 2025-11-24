@@ -12,7 +12,7 @@ export class SwapiService {
       catchError(() => of(false))
     );
   }
-  searchUserById(id: string): Observable<any> {
+  searchUserById(id: string): Observable<unknown> {
     return this.httpClient
       .get(`https://swapi.dev/api/people/${id}`)
       .pipe(delay(800));

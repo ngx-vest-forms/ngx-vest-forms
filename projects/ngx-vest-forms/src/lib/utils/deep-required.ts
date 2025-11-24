@@ -102,7 +102,7 @@ export type NgxDeepRequired<T> = {
 export type NgxFormCompatibleDeepRequired<T> = {
   [K in keyof T]-?: T[K] extends Date | undefined
     ? Date | string // Date properties (including optional ones) get the union treatment
-    : T[K] extends Function
+    : T[K] extends (...args: unknown[]) => unknown
       ? T[K] // Functions are leaf types
       : T[K] extends Array<infer U>
         ? Array<NgxFormCompatibleDeepRequired<U>> // Recursively process array elements

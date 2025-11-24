@@ -1,7 +1,7 @@
 <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
   <!-- Instructions Panel -->
   <div class="space-y-6 lg:col-span-1">
-    <app-card>
+    <ngx-card>
       <h1 class="mb-2 text-2xl font-bold text-gray-900 dark:text-white">
         ValidationConfig Demo
       </h1>
@@ -52,10 +52,10 @@
           </li>
         </ul>
       </div>
-    </app-card>
+    </ngx-card>
 
     <!-- Debug Panel -->
-    <app-card>
+    <ngx-card>
       <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
         Form State
       </h3>
@@ -153,12 +153,12 @@
           >{{ formValue() | json }}</pre
         >
       </div>
-    </app-card>
+    </ngx-card>
   </div>
 
   <!-- Main Form -->
   <div class="lg:col-span-2">
-    <app-card>
+    <ngx-card>
       <form
         ngxVestForm
         [suite]="suite"
@@ -380,6 +380,6 @@
           </button>
         </div>
       </form>
-    </app-card>
+    </ngx-card>
   </div>
 </div>

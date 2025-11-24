@@ -9,7 +9,7 @@ describe('Purchase Validations', () => {
     mockSwapiService = {
       searchUserById: jest.fn(),
       userIdExists: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<SwapiService>;
   });
 
   it('should fail validation when userId exists (async)', () => {

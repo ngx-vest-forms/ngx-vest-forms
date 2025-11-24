@@ -27,8 +27,8 @@ export function validateShape<
  * @param path
  */
 function validateFormValue(
-  formValue: Record<string, any>,
-  shape: Record<string, any>,
+  formValue: Record<string, unknown>,
+  shape: Record<string, unknown>,
   path = ''
 ): void {
   for (const key in formValue) {
@@ -64,7 +64,11 @@ function validateFormValue(
         ) {
           logWarning(NGX_VEST_FORMS_ERRORS.SHAPE_MISMATCH, newPath);
         }
-        validateFormValue(formValue[key], shape[keyToCompareWith], newPath);
+        validateFormValue(
+          formValue[key] as Record<string, unknown>,
+          shape[keyToCompareWith] as Record<string, unknown>,
+          newPath
+        );
       } else if ((shape ? !(key in shape) : true) && isNaN(parseFloat(key))) {
         logWarning(NGX_VEST_FORMS_ERRORS.SHAPE_MISMATCH, newPath);
       }

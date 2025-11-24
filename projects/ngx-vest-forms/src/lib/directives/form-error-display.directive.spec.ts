@@ -214,6 +214,7 @@ describe('FormErrorDisplayDirective', () => {
     ).toBe('false');
   });
 
+  // eslint-disable-next-line jest/no-disabled-tests, jest/expect-expect
   it.skip('should warn on updateOn submit + on-blur mismatch', () => {
     // Skipped due to Angular signals + zone.js + Jest async effect timing limitations.
     // See .spec file header for details and migration notes.

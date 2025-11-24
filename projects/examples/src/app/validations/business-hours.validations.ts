@@ -111,15 +111,6 @@ function areBusinessHoursValid(
   );
 }
 
-function timeStrToMinutes(time?: string): number {
-  if (!time) {
-    return 0;
-  }
-  const hours = Number(time?.slice(0, 2));
-  const minutes = Number(time?.slice(2, 4));
-  return hours * 60 + minutes;
-}
-
 function isValidTime(time?: string): boolean {
   let valid = false;
   if (time?.length === 4) {

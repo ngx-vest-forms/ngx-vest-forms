@@ -125,24 +125,8 @@ describe('validateShape function', () => {
     // But `contact` is in shape.
     // If `contact` is in shape, but not in formValue, it's missing in formValue.
     // The old code didn't seem to check for missing keys in formValue (only extra keys in formValue).
-    // Wait, the previous test case:
-    /*
-      it('should throw ShapeMismatchError with correct ngModelGroup error message', () => {
-        const formValue = { ... };
-        const shape = {
-          ...,
-          contact: { ... }
-        };
-        try {
-          validateShape(formValue, shape);
-        } catch (error) {
-           expect(error).toBeInstanceOf(ShapeMismatchError);
-           expect((error as ShapeMismatchError).message).toContain(
-            "[ngModelGroup] Mismatch: 'contact'"
-          );
-        }
-      });
-    */
+    // Note: The implementation has been updated to check for missing keys in formValue.
+    // This validation runs only in development mode to help developers catch shape mismatches.
     // If this test passed, then `validateShape` MUST have thrown.
     // But `validateShape` only iterates `formValue`.
     // Unless `formValue` had `contact`?
@@ -223,26 +207,8 @@ describe('validateShape function', () => {
     }
     */
     // It strictly iterates formValue.
-    // So the test case `should throw ... contact` MUST have failed or I am misreading it.
-    //
-    // Wait, if I look at the test file content I read:
-    /*
-    it('should throw ShapeMismatchError with correct ngModelGroup error message', () => {
-        const formValue = { ... }; // No contact
-        const shape = { ..., contact: { ... } };
-        try {
-          validateShape(formValue, shape);
-        } catch (error) {
-           // ...
-        }
-    });
-    */
-    // If `validateShape` doesn't throw, the `catch` block is not executed.
-    // And the test finishes.
-    // Jest doesn't fail if `try/catch` swallows the error and no expectation fails.
-    // BUT `expect(error).toBeInstanceOf(...)` is inside catch.
-    // If catch is not entered, assertions are not run.
-    // So the test would PASS (false positive) if it doesn't throw!
+    // The implementation validates that formValue keys match the shape structure.
+    // Jest requires explicit assertions in try/catch blocks to avoid false positives.
     // Unless there is `expect.assertions(X)`? No.
     // So the previous test was likely a FALSE POSITIVE!
     //

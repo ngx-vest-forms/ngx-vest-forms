@@ -6,13 +6,13 @@ import { map, Observable } from 'rxjs';
 export class LukeService {
   private readonly httpClient = inject(HttpClient);
 
-  public getLuke(): Observable<{
+  getLuke(): Observable<{
     firstName: string;
     lastName: string;
     gender: 'male' | 'female' | 'other';
   }> {
-    return this.httpClient.get('https://swapi.dev/api/people/1').pipe(
-      map((resp: any) => {
+    return this.httpClient.get<{ name: string; gender: 'male' | 'female' | 'other' }>('https://swapi.dev/api/people/1').pipe(
+      map((resp) => {
         const name = resp.name.split(' ');
         return {
           firstName: name[0],

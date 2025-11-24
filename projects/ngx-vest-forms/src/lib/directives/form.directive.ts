@@ -531,7 +531,7 @@ export class FormDirective<T extends Record<string, unknown>> {
   #createValidationStreams(
     form: FormGroup,
     config: ValidationConfigMap<T> | null | undefined
-  ): Observable<any> {
+  ): Observable<unknown> {
     if (!config) {
       this.validationInProgress.clear();
       return EMPTY;
@@ -566,7 +566,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     form: FormGroup,
     triggerField: string,
     dependents: string[]
-  ): Observable<any> {
+  ): Observable<unknown> {
     // Wait for trigger control to exist, then stop listening (take(1) prevents feedback loops)
     const triggerControl$ = form.statusChanges.pipe(
       startWith(form.status),

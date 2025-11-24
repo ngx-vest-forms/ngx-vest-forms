@@ -1,7 +1,7 @@
 <div class="page-container grid gap-8 lg:grid-cols-[350px_1fr]">
   <!-- Instructions Panel -->
   <div class="space-y-6">
-    <app-card title="Form Features">
+    <ngx-card title="Form Features">
       <div class="prose prose-sm dark:prose-invert max-w-none">
         <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
           <li>Show validation errors on blur/submit</li>
@@ -32,10 +32,10 @@
           Prefill Billing Address
         </button>
       </div>
-    </app-card>
+    </ngx-card>
 
     <!-- Form State Debug -->
-    <app-card title="Form Value">
+    <ngx-card title="Form Value">
       <pre
         class="max-h-96 overflow-x-auto overflow-y-auto rounded-lg bg-gray-50 p-3 text-xs text-gray-800 dark:bg-gray-900 dark:text-gray-300"
         >{{ formValue() | json }}</pre
@@ -58,7 +58,7 @@
           {{ vm.formValid ? 'Valid' : 'Invalid' }}
         </span>
       </div>
-    </app-card>
+    </ngx-card>
   </div>
 
   <!-- Main Form Area -->
@@ -99,7 +99,7 @@
       </div>
     }
 
-    <app-card
+    <ngx-card
       title="Purchase Form"
       subtitle="Please fill in your details below."
     >
@@ -426,6 +426,6 @@
           </div>
         </fieldset>
       </form>
-    </app-card>
+    </ngx-card>
   </div>
 </div>

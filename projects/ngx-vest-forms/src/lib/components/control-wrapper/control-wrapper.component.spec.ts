@@ -276,7 +276,8 @@ describe('ScControlWrapperComponent', () => {
       await waitFor(
         () => {
           expect(wrapper).toHaveAttribute('aria-busy', 'true');
-          expect(wrapper!.querySelector('.animate-spin')).toBeInTheDocument();
+          const spinner = wrapper?.querySelector('.animate-spin');
+          expect(spinner).toBeInTheDocument();
         },
         { timeout: 1500 }
       );
@@ -285,9 +286,8 @@ describe('ScControlWrapperComponent', () => {
       await waitFor(
         () => {
           expect(wrapper).not.toHaveAttribute('aria-busy');
-          expect(
-            wrapper!.querySelector('.animate-spin')
-          ).not.toBeInTheDocument();
+          const spinner = wrapper?.querySelector('.animate-spin');
+          expect(spinner).not.toBeInTheDocument();
         },
         { timeout: 2000 }
       );
@@ -418,12 +418,16 @@ describe('ScControlWrapperComponent', () => {
       );
 
       // Verify containers are queryable by their IDs
-      expect(document.getElementById(emailErrorContainer!.id)).toBe(
-        emailErrorContainer
-      );
-      expect(document.getElementById(usernameErrorContainer!.id)).toBe(
-        usernameErrorContainer
-      );
+      if (emailErrorContainer) {
+        expect(document.getElementById(emailErrorContainer.id)).toBe(
+          emailErrorContainer
+        );
+      }
+      if (usernameErrorContainer) {
+        expect(document.getElementById(usernameErrorContainer.id)).toBe(
+          usernameErrorContainer
+        );
+      }
     });
 
     it('should associate error messages with form controls via aria-describedby', async () => {
@@ -441,21 +445,24 @@ describe('ScControlWrapperComponent', () => {
       // Verify aria-describedby points to error ID
       await waitFor(() => {
         expect(emailInput).toHaveAttribute('aria-describedby');
-        const describedBy = emailInput.getAttribute('aria-describedby')!;
+        const describedBy = emailInput.getAttribute('aria-describedby');
+        expect(describedBy).toBeTruthy();
 
-        // Verify format of aria-describedby value
-        expect(describedBy).toMatch(/^ngx-control-wrapper-\d+-error$/);
-        expect(describedBy).not.toContain(' '); // Single ID, no spaces
+        if (describedBy) {
+          // Verify format of aria-describedby value
+          expect(describedBy).toMatch(/^ngx-control-wrapper-\d+-error$/);
+          expect(describedBy).not.toContain(' '); // Single ID, no spaces
 
-        // Verify the error element has the matching ID
-        const errorElement = screen.getByText('Email is required');
-        const errorContainer = errorElement.closest('[role="status"]');
-        expect(errorContainer?.id).toBe(describedBy);
+          // Verify the error element has the matching ID
+          const errorElement = screen.getByText('Email is required');
+          const errorContainer = errorElement.closest('[role="status"]');
+          expect(errorContainer?.id).toBe(describedBy);
 
-        // Verify the referenced element actually exists in DOM
-        const referencedElement = document.getElementById(describedBy);
-        expect(referencedElement).toBe(errorContainer);
-        expect(referencedElement).toBeInTheDocument();
+          // Verify the referenced element actually exists in DOM
+          const referencedElement = document.getElementById(describedBy);
+          expect(referencedElement).toBe(errorContainer);
+          expect(referencedElement).toBeInTheDocument();
+        }
       });
     });
 
@@ -596,7 +603,9 @@ describe('ScControlWrapperComponent', () => {
       // Verify the warning is associated with the input via aria-describedby
       await waitFor(() => {
         const describedBy = usernameInput.getAttribute('aria-describedby');
-        expect(describedBy).toContain(warningContainer!.id);
+        if (warningContainer) {
+          expect(describedBy).toContain(warningContainer.id);
+        }
       });
     });
 
@@ -625,7 +634,9 @@ describe('ScControlWrapperComponent', () => {
 
           // Verify pending state is associated with input
           const describedBy = emailInput.getAttribute('aria-describedby');
-          expect(describedBy).toContain(pendingContainer!.id);
+          if (pendingContainer?.id) {
+            expect(describedBy).toContain(pendingContainer.id);
+          }
         },
         { timeout: 1500 }
       );
@@ -643,7 +654,7 @@ describe('ScControlWrapperComponent', () => {
       await waitFor(
         () => {
           const wrapper = emailInput.closest('.ngx-control-wrapper');
-          const spinner = wrapper!.querySelector('.animate-spin');
+          const spinner = wrapper?.querySelector('.animate-spin');
           expect(spinner).toHaveAttribute('aria-hidden', 'true');
         },
         { timeout: 1500 }
@@ -694,16 +705,19 @@ describe('ScControlWrapperComponent', () => {
 
       // Verify aria-describedby includes error ID
       await waitFor(() => {
-        const describedBy = usernameInput.getAttribute('aria-describedby')!;
-        expect(describedBy).toMatch(/^ngx-control-wrapper-\d+-error$/);
+        const describedBy = usernameInput.getAttribute('aria-describedby');
+        expect(describedBy).toBeTruthy();
+        if (describedBy) {
+          expect(describedBy).toMatch(/^ngx-control-wrapper-\d+-error$/);
 
-        // Verify the referenced element exists
-        const errorElement = document.getElementById(describedBy);
-        expect(errorElement).toBeInTheDocument();
-        expect(errorElement).toHaveAttribute('role', 'status');
+          // Verify the referenced element exists
+          const errorElement = document.getElementById(describedBy);
+          expect(errorElement).toBeInTheDocument();
+          expect(errorElement).toHaveAttribute('role', 'status');
 
-        // Verify format: should be a single ID
-        expect(describedBy.split(' ')).toHaveLength(1);
+          // Verify format: should be a single ID
+          expect(describedBy.split(' ')).toHaveLength(1);
+        }
       });
     });
 

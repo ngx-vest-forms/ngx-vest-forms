@@ -139,10 +139,14 @@ export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
 // Allows NgxVestSuite<SpecificModel> to be assignable to NgxVestSuite<unknown>
 // without leaking $any() casts into consumer templates.
 //
-// Field parameter uses `any` to accept both:
+// Field parameter uses `string | undefined` (not narrower types) to maintain bivariance:
 // 1. Plain string field names ('email', 'addresses.billing.street')
 // 2. FormFieldName<T> from NgxTypedVestSuite (string literal union with autocomplete)
 // 3. undefined to run all tests
+//
+// CRITICAL: Must be `string | undefined` (or wider) to allow NgxTypedVestSuite<T>
+// (which uses FormFieldName<T>) to be assignable to NgxVestSuite<T>.
+// FormFieldName<T> extends string, so string | undefined is the widest safe type.
 //
 // This is safe because:
 // - The model parameter (T) remains fully typed for type safety
@@ -150,6 +154,7 @@ export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
 // - Allows NgxTypedVestSuite to be used where NgxVestSuite is expected
 type NgxSuiteCallback<T> = {
   // Method syntax yields bivariant parameters under strictFunctionTypes
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   bivarianceHack(model: T, field?: any): void;
 }['bivarianceHack'];
 
