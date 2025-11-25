@@ -1,13 +1,13 @@
 <button
   type="button"
   (click)="toggleTheme()"
-  class="group rounded-lg p-2 text-gray-700 transition-colors hover:bg-gray-100 focus:outline-hidden focus:ring-2 focus:ring-gray-300 dark:text-gray-300 dark:hover:bg-gray-800 dark:focus:ring-gray-600"
+  class="group rounded-lg p-2 transition-colors hover:bg-gray-100 focus:outline-hidden focus:ring-2 focus:ring-gray-300 dark:hover:bg-gray-800 dark:focus:ring-gray-600"
   aria-label="Toggle theme"
 >
   @if (isDarkMode()) {
     <!-- Sun icon - outlined by default, filled on hover -->
     <svg
-      class="h-5 w-5 transition-all"
+      class="h-5 w-5 text-yellow-400 transition-all"
       fill="none"
       stroke="currentColor"
       stroke-width="2"
@@ -30,7 +30,7 @@
   } @else {
     <!-- Moon icon - outlined by default, filled on hover -->
     <svg
-      class="h-5 w-5 transition-all"
+      class="h-5 w-5 text-blue-600 transition-all"
       stroke="currentColor"
       fill="none"
       stroke-width="2"
