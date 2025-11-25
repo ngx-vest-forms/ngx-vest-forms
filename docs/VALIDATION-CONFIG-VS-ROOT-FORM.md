@@ -242,6 +242,10 @@ Manually triggers validation update when switching from **input fields to non-in
 this.vestFormRef().triggerFormValidation();
 ```
 
+**CRITICAL: This does NOT mark fields as touched or show errors.** It only re-runs validation logic.
+
+> **Note on form submission**: With the default `on-blur-or-submit` error display mode, errors are shown automatically when you submit via `(ngSubmit)`. The form internally calls `markAllAsTouched()` on submit. You only need to call `markAllAsTouched()` manually for special cases like multiple forms with one submit button.
+
 **Flow:**
 
 1. Form structure changes (e.g., `@if` switches from `<input>` to `<p>`)
@@ -249,6 +253,7 @@ this.vestFormRef().triggerFormValidation();
 3. Call `triggerFormValidation()` manually
 4. Calls `updateValueAndValidity({ emitEvent: true })` on root form
 5. All validations re-run (field-level + form-level)
+6. Validity state updates but touched state remains unchanged
 
 ### Use Cases
 
@@ -298,7 +303,18 @@ class MyComponent {
 - **Manual**: Must be called explicitly (not automatic)
 - **Form-wide**: Triggers ALL validations (fields + root form)
 - **Structure changes**: Needed when controls added/removed without value changes
+- **Does NOT show errors**: Only re-runs validation logic, doesn't mark fields as touched
 - **Zero overhead**: Only runs when explicitly called
+
+### Comparison with markAllAsTouched()
+
+| Method | Purpose | Updates Validity | Shows Errors | When to Use |
+|--------|---------|-----------------|--------------|-------------|
+| `triggerFormValidation()` | Re-run validation logic | ✅ Yes | ❌ No | Structure changes without value changes |
+| `markAllAsTouched()` | Show all errors | ❌ No | ✅ Yes | Multiple forms with one button, programmatic submit |
+| Both together | Complete refresh | ✅ Yes | ✅ Yes | Rare - structure changed AND show all errors |
+
+> **Note**: With `on-blur-or-submit` mode (default), `markAllAsTouched()` is called automatically on `(ngSubmit)`. You rarely need to call it manually.
 
 ### Common Pattern with Field Clearing
 

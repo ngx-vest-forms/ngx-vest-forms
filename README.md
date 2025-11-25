@@ -235,8 +235,12 @@ Manually trigger validation when form structure changes between **input fields a
 
 **NOT needed when**: Switching between different input fields (value changes trigger validation automatically).
 
+**IMPORTANT**: `triggerFormValidation()` only re-runs validation logic—it does NOT mark fields as touched or show errors.
+
+> **Note on form submission**: With the default `on-blur-or-submit` error display mode, errors are shown automatically when you submit via `(ngSubmit)`. The form automatically calls `markAllAsTouched()` internally. You only need to call `markAllAsTouched()` manually for special cases like multiple forms with one submit button.
+
 ```typescript
-// Example: Switching from input to paragraph
+// Structure change: Re-run validation
 @if (type() === 'typeA') {
   <input name="fieldA" [ngModel]="formValue().fieldA" />
 } @else {
@@ -245,7 +249,23 @@ Manually trigger validation when form structure changes between **input fields a
 
 onTypeChange(newType: string) {
   this.formValue.update(v => ({ ...v, type: newType }));
-  this.vestForm.triggerFormValidation();  // Only needed for structure changes
+  this.vestForm.triggerFormValidation();  // Re-runs validation, doesn't show errors
+}
+
+// Standard form submission - NO manual call needed!
+// Errors shown automatically via (ngSubmit) with default on-blur-or-submit mode
+<form ngxVestForm (ngSubmit)="save()">
+  <!-- ... -->
+  <button type="submit">Submit</button>
+</form>
+
+// Multiple forms with one button - NEED manual markAllAsTouched()
+submitBoth() {
+  this.form1().markAllAsTouched();
+  this.form2().markAllAsTouched();
+  if (this.form1().valid && this.form2().valid) {
+    // Submit logic
+  }
 }
 ```
 

@@ -53,6 +53,18 @@ Why? Because switching between inputs means control values change, which trigger
 public triggerFormValidation(): void
 ```
 
+**CRITICAL: This method does NOT mark fields as touched or show errors.**
+
+It only re-runs validation logic to update validity state.
+
+> **Note on form submission**: With the default `on-blur-or-submit` error display mode, errors are shown automatically when you submit via `(ngSubmit)`. The form internally calls `markAllAsTouched()` on submit. You only need to call `markAllAsTouched()` manually for special cases like multiple forms with one submit button.
+
+**When to use each:**
+
+- `triggerFormValidation()` - Re-run validation when structure changes
+- `markAllAsTouched()` - Manually show all errors (rarely needed - automatic on submit)
+- Both together - Rare, only if structure changed AND you want to show all errors immediately
+
 ### Usage
 
 ```typescript

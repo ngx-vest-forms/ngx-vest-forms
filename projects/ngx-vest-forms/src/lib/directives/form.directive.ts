@@ -395,6 +395,21 @@ export class FormDirective<T extends Record<string, unknown>> {
    * This is intentional for structure changes as conditional validators may now
    * apply to different fields, requiring a complete validation refresh.
    *
+   * **CRITICAL: This method does NOT mark fields as touched or show errors.**
+   * It only re-runs validation logic. To show all errors (e.g., on submit),
+   * use `markAllAsTouched()` instead or in combination.
+   *
+   * **When to use each:**
+   * - `triggerFormValidation()` - Re-run validation when structure changes
+   * - `markAllAsTouched()` - Show all errors to user (e.g., on submit)
+   * - Both together - Rare, only if structure changed AND you want to show errors
+   *
+   * **Note on form submission:**
+   * When using the default error display mode (`on-blur-or-submit`), you typically
+   * don't need to call this method on submit. The form directive automatically marks
+   * all fields as touched on `ngSubmit`, and errors will display automatically.
+   * Only use this method when form structure changes without value changes.
+   *
    * **Use Cases:**
    * - Conditionally showing/hiding form controls based on other field values
    * - Adding or removing form controls dynamically
@@ -419,6 +434,16 @@ export class FormDirective<T extends Record<string, unknown>> {
    *   /// Structure changed but no control values changed
    *   this.formDirective.triggerFormValidation();
    * }
+   *
+   * /// For submit with multiple forms (show all errors)
+   * submitAll() {
+   *   // Mark all as touched to show errors
+   *   this.form1Ref().markAllAsTouched();
+   *   this.form2Ref().markAllAsTouched();
+   *   // Only needed if structure changed without value changes
+   *   // this.form1Ref().triggerFormValidation();
+   *   // this.form2Ref().triggerFormValidation();
+   * }
    * ```
    */
   triggerFormValidation(path?: string): void {
@@ -433,6 +458,50 @@ export class FormDirective<T extends Record<string, unknown>> {
       // Update all form controls validity which will trigger all form events
       this.ngForm.form.updateValueAndValidity({ emitEvent: true });
     }
+  }
+
+  /**
+   * Convenience method to mark all form controls as touched.
+   *
+   * This is useful for showing all validation errors at once, typically when
+   * the user clicks a submit button. When a field is marked as touched,
+   * the error display logic (based on `errorDisplayMode`) will show its errors.
+   *
+   * **Note on automatic behavior:**
+   * When using the default error display mode (`on-blur-or-submit`), you typically
+   * don't need to call this method manually for regular form submissions. The form
+   * directive automatically marks all fields as touched on `ngSubmit`, so errors
+   * will display automatically when the user submits the form.
+   *
+   * **When to use this method:**
+   * - Multiple forms with a single submit button (forms without their own submit)
+   * - Programmatic form submission without triggering `ngSubmit`
+   * - Custom validation flows outside the normal submit process
+   *
+   * **Note:** This method only marks fields as touched—it does NOT re-run validation.
+   * If you also need to re-run validation (e.g., after structure changes), call
+   * `triggerFormValidation()` as well.
+   *
+   * @example
+   * ```typescript
+   * /// Standard form submission - NO need to call markAllAsTouched()
+   * /// The directive handles this automatically on ngSubmit
+   * <form ngxVestForm (ngSubmit)="save()">
+   *   <button type="submit">Submit</button>
+   * </form>
+   *
+   * /// Multiple forms with one submit button
+   * submitAll() {
+   *   this.form1().markAllAsTouched();
+   *   this.form2().markAllAsTouched();
+   *   if (this.form1().formState().valid && this.form2().formState().valid) {
+   *     /// Submit all forms
+   *   }
+   * }
+   * ```
+   */
+  markAllAsTouched(): void {
+    this.ngForm.form.markAllAsTouched();
   }
 
   /**

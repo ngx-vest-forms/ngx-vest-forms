@@ -396,6 +396,50 @@ ngx-vest-forms provides three features for handling validation in complex, dynam
 
 **NOT needed when:**
 - ☒ Switching between different input fields (value changes trigger validation automatically)
+- ☒ Showing all errors on regular form submit (automatic with `on-blur-or-submit` mode)
+
+**CRITICAL: `triggerFormValidation()` does NOT mark fields as touched or show errors.**
+
+It only re-runs validation logic.
+
+> **Note on automatic behavior:** With the default `on-blur-or-submit` error display mode, errors are shown automatically when you submit via `(ngSubmit)`. The form internally calls `markAllAsTouched()` on submit. You only need to call `markAllAsTouched()` manually for special cases.
+
+```typescript
+// Standard form submission - NO manual call needed!
+// Errors shown automatically via (ngSubmit) with default on-blur-or-submit mode
+<form ngxVestForm (ngSubmit)="save()">
+  <!-- ... -->
+  <button type="submit">Submit</button>
+</form>
+
+save() {
+  if (this.formValid()) {
+    // Submit logic - errors already shown automatically if validation fails
+  }
+}
+
+// Multiple forms with one button - NEED manual markAllAsTouched()
+submitBoth() {
+  this.form1().markAllAsTouched();
+  this.form2().markAllAsTouched();
+  if (this.form1().valid && this.form2().valid) {
+    // Submit logic
+  }
+}
+
+// Structure change: Re-run validation (doesn't show errors)
+onTypeChange(newType: string) {
+  this.formValue.update(v => ({ ...v, type: newType }));
+  this.vestFormRef().triggerFormValidation();  // Updates validity state
+}
+
+// Both together (rare): Structure changed AND show errors immediately
+onComplexChange() {
+  this.formValue.update(v => ({ ...v, type: 'new' }));
+  this.vestFormRef().triggerFormValidation();
+  this.vestFormRef().markAllAsTouched();  // Only if you need to show errors immediately
+}
+```
 
 **Use ALL THREE when:**
 - ☑ Complex dynamic forms with field dependencies, form-level rules, AND structure changes
