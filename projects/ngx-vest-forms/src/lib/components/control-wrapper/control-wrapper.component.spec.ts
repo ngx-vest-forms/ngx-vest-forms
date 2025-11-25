@@ -90,7 +90,7 @@ const asyncSuite = staticSuite((data: TestModel = {}, field?: string) => {
   });
 });
 
-// Slow async validation suite to test @defer behavior (300ms delay ensures pending message shows)
+// Slow async validation suite to test @defer behavior (800ms delay ensures pending message shows)
 const slowAsyncSuite = staticSuite((data: TestModel = {}, field?: string) => {
   only(field);
   vestTest('email', 'Email must be available', () => {
@@ -101,7 +101,7 @@ const slowAsyncSuite = staticSuite((data: TestModel = {}, field?: string) => {
         } else {
           resolve();
         }
-      }, 300); // Longer delay to ensure @defer (after 200ms) triggers
+      }, 800); // Longer delay to ensure @defer (after 500ms) triggers
     });
   });
 });
@@ -266,14 +266,14 @@ describe('ScControlWrapperComponent', () => {
     });
 
     it('should show pending state and spinner during async validation, and remove after completion', async () => {
-      // Use SlowAsyncTestComponent to ensure pending message appears (300ms validation > 200ms delay)
+      // Use SlowAsyncTestComponent to ensure pending message appears (800ms validation > 500ms delay)
       await render(SlowAsyncTestComponent);
       const emailInput = screen.getByLabelText('Email');
       await userEvent.type(emailInput, 'test@example.com');
       await userEvent.tab();
       const wrapper = emailInput.closest('.ngx-control-wrapper');
 
-      // Wait for pending state (after 200ms delay)
+      // Wait for pending state (after 500ms delay)
       await waitFor(
         () => {
           expect(wrapper).toHaveAttribute('aria-busy', 'true');
@@ -618,7 +618,7 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.type(emailInput, 'test@example.com');
       await userEvent.tab();
 
-      // Wait for pending state to appear (after 200ms delay)
+      // Wait for pending state to appear (after 500ms delay)
       await waitFor(
         () => {
           const pendingText = screen.getByText('Validating…');
@@ -651,7 +651,7 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.type(emailInput, 'test@example.com');
       await userEvent.tab();
 
-      // Wait for pending state (after 200ms delay)
+      // Wait for pending state (after 500ms delay)
       await waitFor(
         () => {
           const wrapper = emailInput.closest('.ngx-control-wrapper');
@@ -802,8 +802,8 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.type(emailInput, 'test@example.com');
       await userEvent.tab();
 
-      // Wait 150ms (less than defer's 200ms delay)
-      await new Promise((resolve) => setTimeout(resolve, 150));
+      // Wait 400ms (less than defer's 500ms delay)
+      await new Promise((resolve) => setTimeout(resolve, 400));
 
       // Pending message should NOT have appeared yet (defer delay prevents it)
       expect(screen.queryByText('Validating…')).not.toBeInTheDocument();
@@ -819,15 +819,15 @@ describe('ScControlWrapperComponent', () => {
     });
 
     it('should show validation message for slow async validations after defer delay', async () => {
-      // Test with slow async validation (300ms) - pending message SHOULD appear after 200ms
+      // Test with slow async validation (800ms) - pending message SHOULD appear after 500ms
       await render(SlowAsyncTestComponent);
       const emailInput = screen.getByLabelText('Email');
 
       await userEvent.type(emailInput, 'test@example.com');
       await userEvent.tab();
 
-      // Wait for defer delay (200ms) to pass
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      // Wait for defer delay (500ms) to pass
+      await new Promise((resolve) => setTimeout(resolve, 600));
 
       // Pending message should now be visible
       await waitFor(
@@ -844,7 +844,7 @@ describe('ScControlWrapperComponent', () => {
         { timeout: 100 }
       );
 
-      // Wait for validation to complete (300ms total from start)
+      // Wait for validation to complete (800ms total from start)
       await waitFor(
         () => {
           expect(screen.queryByText('Validating…')).not.toBeInTheDocument();
