@@ -186,11 +186,11 @@ export class ControlWrapperComponent implements AfterContentInit {
 
   /**
    * Debounced pending state to prevent flashing for quick async validations.
-   * Uses createDebouncedPendingState utility with 200ms delay and 500ms minimum display.
+   * Uses createDebouncedPendingState utility with 500ms delay and 500ms minimum display.
    */
   private readonly pendingState = createDebouncedPendingState(
     this.errorDisplay.isPending,
-    { showAfter: 200, minimumDisplay: 500 }
+    { showAfter: 500, minimumDisplay: 500 }
   );
   protected readonly showPendingMessage = this.pendingState.showPendingMessage;
 
