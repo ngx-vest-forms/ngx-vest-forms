@@ -69,6 +69,44 @@ export type NgxValidationConfig<T = unknown> =
   | ValidationConfigMap<T>
   | null;
 
+/**
+ * Main form directive for ngx-vest-forms that bridges Angular template-driven forms with Vest.js validation.
+ *
+ * This directive provides:
+ * - **Unidirectional data flow**: Use `[ngModel]` (not `[(ngModel)]`) with `(formValueChange)` for predictable state updates
+ * - **Vest.js integration**: Automatic async validators from Vest suites with field-level optimization
+ * - **Validation dependencies**: Configure cross-field validation triggers via `validationConfig`
+ * - **Form state**: Access validity, errors, and values through the `formState` signal
+ *
+ * @usageNotes
+ *
+ * ### Basic Usage
+ * ```html
+ * <form ngxVestForm [suite]="validationSuite" (formValueChange)="formValue.set($event)">
+ *   <input name="email" [ngModel]="formValue().email" />
+ * </form>
+ * ```
+ *
+ * ### With Validation Dependencies
+ * ```html
+ * <form ngxVestForm [suite]="suite" [validationConfig]="validationConfig">
+ *   <input name="password" [ngModel]="formValue().password" />
+ *   <input name="confirmPassword" [ngModel]="formValue().confirmPassword" />
+ * </form>
+ * ```
+ * ```typescript
+ * validationConfig = { 'password': ['confirmPassword'] };
+ * ```
+ *
+ * ### Accessing Form State
+ * ```typescript
+ * vestForm = viewChild.required('vestForm', { read: FormDirective });
+ * isValid = computed(() => this.vestForm().formState().valid);
+ * ```
+ *
+ * @see {@link https://github.com/ngx-vest-forms/ngx-vest-forms} for full documentation
+ * @publicApi
+ */
 @Directive({
   selector: 'form[scVestForm], form[ngxVestForm]',
   exportAs: 'scVestForm, ngxVestForm',

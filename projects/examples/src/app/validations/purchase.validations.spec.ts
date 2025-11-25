@@ -1,6 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { delay, of } from 'rxjs';
-import { SwapiService } from '../swapi.service';
 import { createPurchaseValidationSuite } from './purchase.validations';
 
 describe('Purchase Validations', () => {

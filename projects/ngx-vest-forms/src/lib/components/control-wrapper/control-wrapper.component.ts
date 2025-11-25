@@ -15,33 +15,41 @@ import { createDebouncedPendingState } from '../../utils/pending-state.utils';
 let nextUniqueId = 0;
 
 /**
- * Accessible ScControlWrapper with WCAG 2.2 AA Compliance
+ * Accessible form control wrapper with WCAG 2.2 AA compliance.
  *
- * Usage:
- *   - Wrap any form element with `ngx-control-wrapper` or `[scControlWrapper]` (or `[ngx-control-wrapper]` for legacy) that contains an `ngModel` or `ngModelGroup`.
- *   - Errors and warnings are shown when the control is invalid and touched, after form submit, or both, depending on the error display mode.
- *   - Pending state is shown with a spinner and aria-busy when async validation is running.
- *   - No manual error/warning/pending signal management is needed in your form components.
+ * Wrap form fields to automatically display validation errors, warnings, and pending states
+ * with proper accessibility attributes.
  *
- * ARIA & Accessibility Features:
- *   - Automatically generates unique IDs for error/warning/pending regions
- *   - Associates error messages with form controls via aria-describedby
- *   - Sets aria-invalid="true" on form controls when errors should be shown
- *   - Uses role="status" with aria-live="polite" for inline field errors to avoid interrupting typing
- *   - Uses role="status" with aria-live="polite" for warnings and pending states
- *   - Implements aria-atomic="true" for complete message announcements
+ * @usageNotes
  *
- * Accessibility Strategy:
+ * ### Basic Usage
+ * ```html
+ * <ngx-control-wrapper>
+ *   <label for="email">Email</label>
+ *   <input id="email" name="email" [ngModel]="formValue().email" />
+ * </ngx-control-wrapper>
+ * ```
  *
- *   Inline Field Messages (default):
- *   - Field-level errors use role="status" with aria-live="polite"
- *   - Rationale: Errors often update as users type. Polite announcements avoid interrupting
- *     typing flow and prevent excessive screen reader chatter. This aligns with WCAG guidance
- *     for non-critical, continuously updating messages.
+ * ### Error Display Modes
+ * Control when errors appear using the `errorDisplayMode` input:
+ * - `'on-blur-or-submit'` (default): Show errors after blur OR form submit
+ * - `'on-blur'`: Show errors only after blur
+ * - `'on-submit'`: Show errors only after form submit
  *
- *   Warnings & Pending States:
- *   - Also use role="status" and aria-live="polite"
- *   - Referenced via aria-describedby so users are informed without interruption
+ * ```html
+ * <ngx-control-wrapper [errorDisplayMode]="'on-submit'">
+ *   <input name="email" [ngModel]="formValue().email" />
+ * </ngx-control-wrapper>
+ * ```
+ *
+ * ### Accessibility Features (Automatic)
+ * - Unique IDs for error/warning/pending regions
+ * - `aria-describedby` linking errors to form controls
+ * - `aria-invalid="true"` when errors are shown
+ * - `role="status"` with `aria-live="polite"` for non-interruptive announcements
+ * - Debounced pending state to prevent flashing for quick validations
+ *
+ * @see {@link FormErrorDisplayDirective} for custom wrapper implementation
  *
  *   Blocking Errors (form-level):
  *   - For post-submit validation errors that block submission, implement a separate
@@ -95,7 +103,7 @@ let nextUniqueId = 0;
  */
 @Component({
   selector:
-    'ngx-control-wrapper, ngx-control-wrapper, [scControlWrapper], [ngxControlWrapper], [ngx-control-wrapper], [ngx-control-wrapper]',
+    'ngx-control-wrapper, sc-control-wrapper, [scControlWrapper], [ngxControlWrapper], [ngx-control-wrapper], [sc-control-wrapper]',
   template: `
     <div class="ngx-control-wrapper__content">
       <ng-content />
@@ -158,7 +166,7 @@ let nextUniqueId = 0;
   changeDetection: ChangeDetectionStrategy.OnPush,
 
   host: {
-    class: 'ngx-control-wrapper ngx-control-wrapper',
+    class: 'ngx-control-wrapper sc-control-wrapper',
     '[class.ngx-control-wrapper--invalid]': 'errorDisplay.shouldShowErrors()',
     '[attr.aria-busy]': "errorDisplay.isPending() ? 'true' : null",
   },

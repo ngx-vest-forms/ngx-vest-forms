@@ -1,16 +1,16 @@
 import {
   AfterViewInit,
   booleanAttribute,
+  DestroyRef,
   Directive,
   effect,
   inject,
   Injector,
   input,
-  OnDestroy,
   signal,
   untracked,
 } from '@angular/core';
-import { toObservable } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   AsyncValidator,
@@ -24,10 +24,8 @@ import {
   map,
   Observable,
   of,
-  Subject,
   switchMap,
   take,
-  takeUntil,
   tap,
   timer,
 } from 'rxjs';
@@ -37,22 +35,41 @@ import { ValidationOptions } from './validation-options';
 /**
  * Validates the root form (cross-field validation) using a Vest suite.
  *
- * @remarks
- * Root form validation is for cross-field rules like password confirmation,
- * form-wide business logic, or validations that span multiple fields.
+ * Use this directive for form-wide validations that span multiple fields, such as:
+ * - Password confirmation (`password` must match `confirmPassword`)
+ * - Date range validation (`startDate` must be before `endDate`)
+ * - Business rules like "at least one contact method required"
  *
- * Contract:
- * - Inputs:
- *   - `validateRootForm` or `ngxValidateRootForm`: boolean. Enables root form validation.
- *   - `validateRootFormMode` or `ngxValidateRootFormMode`: 'submit' | 'live'. Default 'submit'.
- *     - 'submit': Validates only after first form submission (better UX)
- *     - 'live': Validates on every value change (immediate feedback)
- *   - `formValue`: Current form model (required)
- *   - `suite`: Vest validation suite (required)
- *   - `validationOptions`: { debounceTime?: number } to debounce validation
- * - Output:
- *   - Errors placed at 'rootForm' key: `{ error: string, errors: string[] }`
- *   - When no errors: `null`
+ * @usageNotes
+ *
+ * ### Basic Usage
+ * ```html
+ * <form ngxVestForm ngxValidateRootForm [suite]="suite" (errorsChange)="errors.set($event)">
+ *   <!-- form fields -->
+ *   @if (errors()['rootForm']) {
+ *     <div role="alert">{{ errors()['rootForm'][0] }}</div>
+ *   }
+ * </form>
+ * ```
+ *
+ * ### Validation Modes
+ * - `'submit'` (default): Validates only after form submission. Better UX for complex cross-field rules.
+ * - `'live'`: Validates on every value change. Use sparingly for simple two-field comparisons.
+ *
+ * ```html
+ * <form ngxVestForm ngxValidateRootForm [ngxValidateRootFormMode]="'live'">
+ * ```
+ *
+ * ### Vest Suite Pattern
+ * ```typescript
+ * import { ROOT_FORM } from 'ngx-vest-forms';
+ *
+ * test(ROOT_FORM, 'Passwords must match', () => {
+ *   enforce(model.confirmPassword).equals(model.password);
+ * });
+ * ```
+ *
+ * @see {@link https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/VALIDATION-CONFIG-VS-ROOT-FORM.md}
  *
  * @example
  * ```html
@@ -98,12 +115,12 @@ import { ValidationOptions } from './validation-options';
   ],
 })
 export class ValidateRootFormDirective<T>
-  implements AsyncValidator, AfterViewInit, OnDestroy
+  implements AsyncValidator, AfterViewInit
 {
   private readonly injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly lastControl = signal<NgForm | null>(null);
   validationOptions = input<ValidationOptions>({ debounceTime: 0 });
-  private readonly destroy$$ = new Subject<void>();
   private readonly hasSubmitted = signal(false);
   private readonly hasSubmitted$: Observable<boolean>;
   private readonly formValue$: Observable<T | null>;
@@ -178,7 +195,7 @@ export class ValidateRootFormDirective<T>
         tap(() => {
           this.hasSubmitted.set(true);
         }),
-        takeUntil(this.destroy$$)
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe();
   }
@@ -270,12 +287,8 @@ export class ValidateRootFormDirective<T>
           return of(null);
         }),
         take(1),
-        takeUntil(this.destroy$$)
+        takeUntilDestroyed(this.destroyRef)
       );
     };
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$$.next();
   }
 }

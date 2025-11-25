@@ -1,5 +1,4 @@
 import { bootstrapApplication } from '@angular/platform-browser';
-import { provideZonelessChangeDetection } from '@angular/core';
 import {
   provideRouter,
   Routes,
@@ -38,7 +37,6 @@ const appRoutes: Routes = [
 ];
 bootstrapApplication(AppComponent, {
   providers: [
-    provideZonelessChangeDetection(),
     provideEnvironmentNgxMask({ validation: false }),
     provideRouter(appRoutes, withEnabledBlockingInitialNavigation()),
     // Global configuration for validation config debounce timing
