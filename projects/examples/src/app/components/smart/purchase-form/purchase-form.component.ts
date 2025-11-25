@@ -124,8 +124,6 @@ export class PurchaseFormComponent {
           }));
         }
       }
-      // Note: allowSignalWrites is deprecated and no longer needed
-      // Writes are always allowed in effects in modern Angular
     );
 
     // When firstName is Luke, fetch luke skywalker and update the form value
