@@ -2,7 +2,7 @@
  * Comprehensive test suite for FormDirective
  * Tests validation config, modern Angular APIs, and directive functionality
  */
-import { Component, signal, ViewChild } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 import type { NgxDeepPartial } from '../../public-api';
@@ -481,7 +481,6 @@ describe('FormDirective - Comprehensive', () => {
        imports: [NgxVestForms],
     })
     class TestComponent {
-      @ViewChild('vestForm', { static: true }) vestForm!: FormDirective<any>;
       formValue = signal<
         NgxDeepPartial<{
           quantity: number | null;
