@@ -826,9 +826,7 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.type(emailInput, 'test@example.com');
       await userEvent.tab();
 
-      // Wait for defer delay (500ms) to pass
-      await new Promise((resolve) => setTimeout(resolve, 600));
-
+      // Wait for defer delay (500ms) to pass - handled by waitFor
       // Pending message should now be visible
       await waitFor(
         () => {
@@ -841,7 +839,7 @@ describe('ScControlWrapperComponent', () => {
           expect(pendingContainer).toHaveAttribute('aria-live', 'polite');
           expect(pendingContainer).toHaveAttribute('aria-atomic', 'true');
         },
-        { timeout: 100 }
+        { timeout: 2000 }
       );
 
       // Wait for validation to complete (800ms total from start)
