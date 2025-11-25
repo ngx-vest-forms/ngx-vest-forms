@@ -96,9 +96,10 @@ export class WizardFormComponent {
   protected readonly step2ValidationConfig = computed(() => {
     const builder = createValidationConfig<WizardStep2Model>();
 
-    // Only add newsletter dependency when checkbox is checked
+    // Bidirectional: checkbox and frequency field revalidate each other
+    // Only when checkbox is checked (to avoid "control not found" warnings)
     if (this.step2Data().subscribeNewsletter) {
-      builder.whenChanged('subscribeNewsletter', 'newsletterFrequency');
+      builder.bidirectional('subscribeNewsletter', 'newsletterFrequency');
     }
 
     return builder.build();
@@ -125,6 +126,17 @@ export class WizardFormComponent {
   // ========== Computed States ==========
   protected readonly allFormsValid = computed(
     () => this.step1Valid() && this.step2Valid() && this.step3Valid()
+  );
+
+  /**
+   * Computed: true if any form has async validators running (PENDING state).
+   * Useful to show a loading indicator during async validation.
+   */
+  protected readonly isValidating = computed(
+    () =>
+      this.step1Form()?.ngForm?.form?.status === 'PENDING' ||
+      this.step2Form()?.ngForm?.form?.status === 'PENDING' ||
+      this.step3Form()?.ngForm?.form?.status === 'PENDING'
   );
 
   protected readonly isFirstStep = computed(() => this.currentStep() === 1);

@@ -91,6 +91,10 @@
     @apply border border-red-300 bg-white text-red-700 hover:bg-red-50 focus:ring-red-200 dark:border-red-600 dark:bg-gray-800 dark:text-red-500 dark:hover:border-red-500 dark:hover:bg-gray-700 dark:focus:ring-red-900;
   }
 
+  .btn-success {
+    @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-green-500 dark:hover:bg-green-600;
+  }
+
   .btn-input-action {
     @apply absolute right-1 top-1 rounded-md px-3 py-1.5 text-xs font-medium focus:outline-hidden focus:ring-2;
   }
