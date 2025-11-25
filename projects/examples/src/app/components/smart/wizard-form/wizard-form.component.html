@@ -1,0 +1,752 @@
+<div class="space-y-8">
+  <!-- Header -->
+  <div class="text-center">
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+      Multi-Form Wizard
+    </h1>
+    <p class="mt-2 text-gray-600 dark:text-gray-400">
+      Demonstrates multiple forms with bidirectional validation and final submit
+      validation
+    </p>
+  </div>
+
+  <!-- Success Message -->
+  @if (submitSuccess()) {
+    <ngx-card>
+      <div class="text-center">
+        <div
+          class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900"
+        >
+          <svg
+            class="h-8 w-8 text-green-600 dark:text-green-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+        </div>
+        <h2 class="mt-4 text-xl font-semibold text-gray-900 dark:text-white">
+          Registration Complete!
+        </h2>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">
+          Your wizard submission was successful.
+        </p>
+        <button
+          type="button"
+          class="mt-6 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          (click)="resetWizard()"
+        >
+          Start New Registration
+        </button>
+      </div>
+    </ngx-card>
+  } @else {
+    <!-- Wizard Steps Indicator -->
+    <ngx-wizard-steps
+      [steps]="steps"
+      [currentStep]="currentStep()"
+      [completedSteps]="completedSteps()"
+    />
+
+    <!-- Error Alert -->
+    @if (submitError()) {
+      <div
+        class="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-900/20"
+      >
+        <div class="flex items-center gap-3">
+          <svg
+            class="h-5 w-5 text-red-600 dark:text-red-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+          <p class="text-sm text-red-700 dark:text-red-300">
+            {{ submitError() }}
+          </p>
+        </div>
+      </div>
+    }
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <!-- Form Section -->
+      <div class="lg:col-span-2">
+        <!-- Step 1: Account Setup -->
+        @if (currentStep() === 1) {
+          <ngx-card>
+            <h2 class="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
+              Step 1: Account Setup
+            </h2>
+            <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">
+              Create your account with email and password. Both fields require
+              confirmation (bidirectional validation).
+            </p>
+
+            <form
+              #step1Form="ngxVestForm"
+              ngxVestForm
+              [suite]="step1Suite"
+              [formShape]="step1Shape"
+              [formValue]="step1Data()"
+              [validationConfig]="step1ValidationConfig"
+              (formValueChange)="step1Data.set($event)"
+              (validChange)="step1Valid.set($event)"
+              (errorsChange)="step1Errors.set($event)"
+              (ngSubmit)="onStep1Submit()"
+            >
+              <div class="space-y-6">
+                <!-- Email -->
+                <ngx-control-wrapper>
+                  <label
+                    for="email"
+                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Email Address
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    autocomplete="email"
+                    class="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    [ngModel]="step1Data().email"
+                  />
+                </ngx-control-wrapper>
+
+                <!-- Confirm Email -->
+                <ngx-control-wrapper>
+                  <label
+                    for="confirmEmail"
+                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Confirm Email
+                  </label>
+                  <input
+                    id="confirmEmail"
+                    type="email"
+                    name="confirmEmail"
+                    autocomplete="email"
+                    class="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    [ngModel]="step1Data().confirmEmail"
+                  />
+                </ngx-control-wrapper>
+
+                <!-- Password -->
+                <ngx-control-wrapper>
+                  <label
+                    for="password"
+                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    name="password"
+                    autocomplete="new-password"
+                    class="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    [ngModel]="step1Data().password"
+                  />
+                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Minimum 8 characters with at least one number
+                  </p>
+                </ngx-control-wrapper>
+
+                <!-- Confirm Password -->
+                <ngx-control-wrapper>
+                  <label
+                    for="confirmPassword"
+                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Confirm Password
+                  </label>
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    name="confirmPassword"
+                    autocomplete="new-password"
+                    class="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    [ngModel]="step1Data().confirmPassword"
+                  />
+                </ngx-control-wrapper>
+              </div>
+
+              <ngx-wizard-navigation
+                [showPrevious]="false"
+                [showSaveAndContinue]="true"
+                [showSubmit]="false"
+                [canContinue]="step1Valid()"
+              />
+            </form>
+          </ngx-card>
+        }
+
+        <!-- Step 2: Profile Information -->
+        @if (currentStep() === 2) {
+          <ngx-card>
+            <h2 class="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
+              Step 2: Profile Information
+            </h2>
+            <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">
+              Enter your personal details. Newsletter frequency is only required
+              when subscribed.
+            </p>
+
+            <form
+              #step2Form="ngxVestForm"
+              ngxVestForm
+              [suite]="step2Suite"
+              [formShape]="step2Shape"
+              [formValue]="step2Data()"
+              [validationConfig]="step2ValidationConfig()"
+              (formValueChange)="step2Data.set($event)"
+              (validChange)="step2Valid.set($event)"
+              (errorsChange)="step2Errors.set($event)"
+              (ngSubmit)="onStep2Submit()"
+            >
+              <div class="space-y-6">
+                <!-- Name Row -->
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <ngx-control-wrapper>
+                    <label
+                      for="firstName"
+                      class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      First Name
+                    </label>
+                    <input
+                      id="firstName"
+                      type="text"
+                      name="firstName"
+                      autocomplete="given-name"
+                      class="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                      [ngModel]="step2Data().firstName"
+                    />
+                  </ngx-control-wrapper>
+
+                  <ngx-control-wrapper>
+                    <label
+                      for="lastName"
+                      class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      Last Name
+                    </label>
+                    <input
+                      id="lastName"
+                      type="text"
+                      name="lastName"
+                      autocomplete="family-name"
+                      class="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                      [ngModel]="step2Data().lastName"
+                    />
+                  </ngx-control-wrapper>
+                </div>
+
+                <!-- Phone -->
+                <ngx-control-wrapper>
+                  <label
+                    for="phone"
+                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Phone Number
+                  </label>
+                  <input
+                    id="phone"
+                    type="tel"
+                    name="phone"
+                    autocomplete="tel"
+                    class="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    [ngModel]="step2Data().phone"
+                  />
+                </ngx-control-wrapper>
+
+                <!-- Date of Birth -->
+                <ngx-control-wrapper>
+                  <label
+                    for="dateOfBirth"
+                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Date of Birth
+                  </label>
+                  <input
+                    id="dateOfBirth"
+                    type="date"
+                    name="dateOfBirth"
+                    autocomplete="bday"
+                    class="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    [ngModel]="step2Data().dateOfBirth"
+                  />
+                </ngx-control-wrapper>
+
+                <!-- Newsletter Section -->
+                <div
+                  class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
+                >
+                  <div class="flex items-start gap-3">
+                    <input
+                      id="subscribeNewsletter"
+                      type="checkbox"
+                      name="subscribeNewsletter"
+                      class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      [ngModel]="step2Data().subscribeNewsletter"
+                    />
+                    <div class="flex-1">
+                      <label
+                        for="subscribeNewsletter"
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      >
+                        Subscribe to Newsletter
+                      </label>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">
+                        Receive updates about new features and promotions
+                      </p>
+                    </div>
+                  </div>
+
+                  @if (step2Data().subscribeNewsletter) {
+                    <div class="mt-4">
+                      <ngx-control-wrapper>
+                        <label
+                          for="newsletterFrequency"
+                          class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >
+                          Newsletter Frequency
+                        </label>
+                        <select
+                          id="newsletterFrequency"
+                          name="newsletterFrequency"
+                          class="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          [ngModel]="step2Data().newsletterFrequency"
+                        >
+                          <option value="">Select frequency...</option>
+                          <option value="daily">Daily</option>
+                          <option value="weekly">Weekly</option>
+                          <option value="monthly">Monthly</option>
+                        </select>
+                      </ngx-control-wrapper>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <ngx-wizard-navigation
+                [showPrevious]="true"
+                [showSaveAndContinue]="true"
+                [showSubmit]="false"
+                [canContinue]="step2Valid()"
+                (previous)="previousStep()"
+              />
+            </form>
+          </ngx-card>
+        }
+
+        <!-- Step 3: Review & Confirmation -->
+        @if (currentStep() === 3) {
+          <ngx-card>
+            <h2 class="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
+              Step 3: Review & Confirm
+            </h2>
+            <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">
+              Review your information and accept the terms to complete
+              registration.
+            </p>
+
+            <!-- Summary Cards -->
+            <div class="mb-6 space-y-4">
+              <!-- Account Summary -->
+              <div
+                class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
+              >
+                <div class="flex items-center justify-between">
+                  <h3
+                    class="text-sm font-medium text-gray-900 dark:text-white"
+                  >
+                    Account Details
+                  </h3>
+                  <button
+                    type="button"
+                    class="text-xs text-blue-600 hover:underline dark:text-blue-400"
+                    (click)="goToStep(1)"
+                  >
+                    Edit
+                  </button>
+                </div>
+                <dl class="mt-2 grid grid-cols-2 gap-2 text-sm">
+                  <dt class="text-gray-500 dark:text-gray-400">Email:</dt>
+                  <dd class="text-gray-900 dark:text-white">
+                    {{ step1Data().email || '-' }}
+                  </dd>
+                </dl>
+                @if (!step1Valid()) {
+                  <p class="mt-2 text-xs text-red-600 dark:text-red-400">
+                    ⚠️ Please complete account setup
+                  </p>
+                }
+              </div>
+
+              <!-- Profile Summary -->
+              <div
+                class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
+              >
+                <div class="flex items-center justify-between">
+                  <h3
+                    class="text-sm font-medium text-gray-900 dark:text-white"
+                  >
+                    Profile Details
+                  </h3>
+                  <button
+                    type="button"
+                    class="text-xs text-blue-600 hover:underline dark:text-blue-400"
+                    (click)="goToStep(2)"
+                  >
+                    Edit
+                  </button>
+                </div>
+                <dl class="mt-2 grid grid-cols-2 gap-2 text-sm">
+                  <dt class="text-gray-500 dark:text-gray-400">Name:</dt>
+                  <dd class="text-gray-900 dark:text-white">
+                    {{ step2Data().firstName }} {{ step2Data().lastName }}
+                  </dd>
+                  <dt class="text-gray-500 dark:text-gray-400">Phone:</dt>
+                  <dd class="text-gray-900 dark:text-white">
+                    {{ step2Data().phone || '-' }}
+                  </dd>
+                  <dt class="text-gray-500 dark:text-gray-400">Newsletter:</dt>
+                  <dd class="text-gray-900 dark:text-white">
+                    {{
+                      step2Data().subscribeNewsletter
+                        ? step2Data().newsletterFrequency || 'Yes'
+                        : 'No'
+                    }}
+                  </dd>
+                </dl>
+                @if (!step2Valid()) {
+                  <p class="mt-2 text-xs text-red-600 dark:text-red-400">
+                    ⚠️ Please complete profile information
+                  </p>
+                }
+              </div>
+            </div>
+
+            <!-- Terms Form -->
+            <form
+              #step3Form="ngxVestForm"
+              ngxVestForm
+              [suite]="step3Suite"
+              [formShape]="step3Shape"
+              [formValue]="step3Data()"
+              (formValueChange)="step3Data.set($event)"
+              (validChange)="step3Valid.set($event)"
+              (errorsChange)="step3Errors.set($event)"
+              (ngSubmit)="onStep3Submit()"
+            >
+              <div class="space-y-4">
+                <ngx-control-wrapper>
+                  <div class="flex items-start gap-3">
+                    <input
+                      id="acceptTerms"
+                      type="checkbox"
+                      name="acceptTerms"
+                      class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      [ngModel]="step3Data().acceptTerms"
+                    />
+                    <label
+                      for="acceptTerms"
+                      class="text-sm text-gray-700 dark:text-gray-300"
+                    >
+                      I accept the
+                      <a
+                        href="#"
+                        class="text-blue-600 hover:underline dark:text-blue-400"
+                        >Terms of Service</a
+                      >
+                    </label>
+                  </div>
+                </ngx-control-wrapper>
+
+                <ngx-control-wrapper>
+                  <div class="flex items-start gap-3">
+                    <input
+                      id="acceptPrivacy"
+                      type="checkbox"
+                      name="acceptPrivacy"
+                      class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      [ngModel]="step3Data().acceptPrivacy"
+                    />
+                    <label
+                      for="acceptPrivacy"
+                      class="text-sm text-gray-700 dark:text-gray-300"
+                    >
+                      I accept the
+                      <a
+                        href="#"
+                        class="text-blue-600 hover:underline dark:text-blue-400"
+                        >Privacy Policy</a
+                      >
+                    </label>
+                  </div>
+                </ngx-control-wrapper>
+
+                <ngx-control-wrapper>
+                  <label
+                    for="comments"
+                    class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Additional Comments (optional)
+                  </label>
+                  <textarea
+                    id="comments"
+                    name="comments"
+                    rows="3"
+                    class="block w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    [ngModel]="step3Data().comments"
+                  ></textarea>
+                </ngx-control-wrapper>
+              </div>
+
+              <ngx-wizard-navigation
+                [showPrevious]="true"
+                [showSaveAndContinue]="false"
+                [showSubmit]="true"
+                [submitDisabled]="isSubmitting() || !allFormsValid()"
+                (previous)="previousStep()"
+                (submitAll)="submitAll()"
+              />
+
+              @if (isSubmitting()) {
+                <div class="mt-4 flex items-center justify-center gap-2">
+                  <svg
+                    class="h-5 w-5 animate-spin text-blue-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    ></circle>
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  <span class="text-sm text-gray-600 dark:text-gray-400"
+                    >Submitting...</span
+                  >
+                </div>
+              }
+            </form>
+          </ngx-card>
+        }
+      </div>
+
+      <!-- Sidebar: Debug/Info Panel -->
+      <div class="space-y-6 lg:col-span-1">
+        <ngx-card>
+          <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+            Wizard State
+          </h3>
+
+          <div class="space-y-4">
+            <!-- Step Validity -->
+            <div>
+              <h4
+                class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+              >
+                Step Validity
+              </h4>
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-gray-600 dark:text-gray-300"
+                    >Step 1: Account</span
+                  >
+                  <span
+                    class="rounded-full px-2 py-0.5 text-xs font-medium"
+                    [class.bg-green-100]="step1Valid()"
+                    [class.text-green-800]="step1Valid()"
+                    [class.bg-red-100]="!step1Valid()"
+                    [class.text-red-800]="!step1Valid()"
+                    [class.dark:bg-green-900]="step1Valid()"
+                    [class.dark:text-green-300]="step1Valid()"
+                    [class.dark:bg-red-900]="!step1Valid()"
+                    [class.dark:text-red-300]="!step1Valid()"
+                  >
+                    {{ step1Valid() ? 'Valid' : 'Invalid' }}
+                  </span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-gray-600 dark:text-gray-300"
+                    >Step 2: Profile</span
+                  >
+                  <span
+                    class="rounded-full px-2 py-0.5 text-xs font-medium"
+                    [class.bg-green-100]="step2Valid()"
+                    [class.text-green-800]="step2Valid()"
+                    [class.bg-red-100]="!step2Valid()"
+                    [class.text-red-800]="!step2Valid()"
+                    [class.dark:bg-green-900]="step2Valid()"
+                    [class.dark:text-green-300]="step2Valid()"
+                    [class.dark:bg-red-900]="!step2Valid()"
+                    [class.dark:text-red-300]="!step2Valid()"
+                  >
+                    {{ step2Valid() ? 'Valid' : 'Invalid' }}
+                  </span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-gray-600 dark:text-gray-300"
+                    >Step 3: Confirm</span
+                  >
+                  <span
+                    class="rounded-full px-2 py-0.5 text-xs font-medium"
+                    [class.bg-green-100]="step3Valid()"
+                    [class.text-green-800]="step3Valid()"
+                    [class.bg-red-100]="!step3Valid()"
+                    [class.text-red-800]="!step3Valid()"
+                    [class.dark:bg-green-900]="step3Valid()"
+                    [class.dark:text-green-300]="step3Valid()"
+                    [class.dark:bg-red-900]="!step3Valid()"
+                    [class.dark:text-red-300]="!step3Valid()"
+                  >
+                    {{ step3Valid() ? 'Valid' : 'Invalid' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- All Forms Valid -->
+            <div
+              class="rounded-lg border p-3"
+              [class.border-green-200]="allFormsValid()"
+              [class.bg-green-50]="allFormsValid()"
+              [class.border-yellow-200]="!allFormsValid()"
+              [class.bg-yellow-50]="!allFormsValid()"
+              [class.dark:border-green-900]="allFormsValid()"
+              [class.dark:bg-green-900/20]="allFormsValid()"
+              [class.dark:border-yellow-900]="!allFormsValid()"
+              [class.dark:bg-yellow-900/20]="!allFormsValid()"
+            >
+              <div class="flex items-center gap-2">
+                @if (allFormsValid()) {
+                  <svg
+                    class="h-5 w-5 text-green-600 dark:text-green-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span
+                    class="text-sm font-medium text-green-700 dark:text-green-300"
+                    >Ready to submit!</span
+                  >
+                } @else {
+                  <svg
+                    class="h-5 w-5 text-yellow-600 dark:text-yellow-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                  <span
+                    class="text-sm font-medium text-yellow-700 dark:text-yellow-300"
+                    >Complete all steps</span
+                  >
+                }
+              </div>
+            </div>
+
+            <!-- Current Data Preview -->
+            <div>
+              <h4
+                class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+              >
+                Current Step Data
+              </h4>
+              <pre
+                class="max-h-48 overflow-auto rounded-lg bg-gray-100 p-3 text-xs dark:bg-gray-800"
+              >{{
+                  currentStep() === 1
+                    ? (step1Data() | json)
+                    : currentStep() === 2
+                      ? (step2Data() | json)
+                      : (step3Data() | json)
+                }}</pre>
+            </div>
+          </div>
+        </ngx-card>
+
+        <!-- Feature Highlights -->
+        <ngx-card>
+          <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+            Key Features
+          </h3>
+          <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+            <li class="flex items-start gap-2">
+              <span class="mt-0.5 text-blue-600 dark:text-blue-400">✓</span>
+              <span>
+                <strong>Bidirectional validation:</strong> Email/password
+                confirmations validate each other
+              </span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="mt-0.5 text-blue-600 dark:text-blue-400">✓</span>
+              <span>
+                <strong>Conditional fields:</strong> Newsletter frequency only
+                required when subscribed
+              </span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="mt-0.5 text-blue-600 dark:text-blue-400">✓</span>
+              <span>
+                <strong>On-blur validation:</strong> Errors show immediately
+                after leaving a field
+              </span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="mt-0.5 text-blue-600 dark:text-blue-400">✓</span>
+              <span>
+                <strong>markAllAsTouched():</strong> Final submit validates ALL
+                forms at once
+              </span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="mt-0.5 text-blue-600 dark:text-blue-400">✓</span>
+              <span>
+                <strong>Step data persistence:</strong> Data preserved when
+                navigating between steps
+              </span>
+            </li>
+          </ul>
+        </ngx-card>
+      </div>
+    </div>
+  }
+</div>

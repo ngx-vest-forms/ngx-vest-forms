@@ -11,6 +11,7 @@ import { AppComponent } from './app/app.component';
 import { BusinessHoursFormComponent } from './app/components/smart/business-hours-form/business-hours-form.component';
 import { PurchaseFormComponent } from './app/components/smart/purchase-form/purchase-form.component';
 import { ValidationConfigDemoComponent } from './app/components/smart/validation-config-demo/validation-config-demo.component';
+import { WizardFormComponent } from './app/components/smart/wizard-form/wizard-form.component';
 
 const appRoutes: Routes = [
   {
@@ -29,6 +30,10 @@ const appRoutes: Routes = [
   {
     path: 'validation-config-demo',
     component: ValidationConfigDemoComponent,
+  },
+  {
+    path: 'wizard',
+    component: WizardFormComponent,
   },
 ];
 bootstrapApplication(AppComponent, {
