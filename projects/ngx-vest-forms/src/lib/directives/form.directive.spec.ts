@@ -46,8 +46,8 @@ class TestFormComponent {
   suite = signal(
     staticSuite(
       (model: { username: string } = { username: '' }, field?: string) => {
-        this.count.update((count) => count + 1);
         only(field); // ✅ Call unconditionally
+        this.count.update((count) => count + 1);
         enforce(model.username).isNotEmpty();
       }
     )

@@ -543,6 +543,79 @@ export class FormDirective<T extends Record<string, unknown>> {
   }
 
   /**
+   * Resets the form to a pristine, untouched state with optional new values.
+   *
+   * This method properly resets the form by:
+   * 1. Resetting Angular's underlying NgForm with the provided value
+   * 2. Clearing the bidirectional sync tracking state
+   * 3. Forcing a form validity update to clear any stale validation errors
+   *
+   * **Why this method exists:**
+   * When using the pattern `formValue.set({})` to reset a form, there can be a timing
+   * issue where the form controls in the DOM still hold their old values while the
+   * signal has already been updated. This creates a conflict in the bidirectional
+   * sync logic, requiring workarounds like calling `formValue.set({})` twice with
+   * a setTimeout. This method provides a proper solution by:
+   * - Calling Angular's `NgForm.resetForm()` which properly clears all controls
+   * - Clearing the internal sync tracking state to avoid stale comparisons
+   * - Triggering a form validity update to ensure validation state is current
+   *
+   * **Usage:**
+   * Instead of the double-set workaround:
+   * ```typescript
+   * // ❌ Old workaround (avoid)
+   * reset(): void {
+   *   this.formValue.set({});
+   *   setTimeout(() => this.formValue.set({}), 0);
+   * }
+   *
+   * // ✅ Preferred approach
+   * vestForm = viewChild.required('vestForm', { read: FormDirective });
+   * reset(): void {
+   *   this.formValue.set({});
+   *   this.vestForm().resetForm();
+   * }
+   * ```
+   *
+   * **With new values:**
+   * ```typescript
+   * // Reset and set new initial values
+   * resetWithDefaults(): void {
+   *   const defaults = { firstName: '', lastName: '', age: 18 };
+   *   this.formValue.set(defaults);
+   *   this.vestForm().resetForm(defaults);
+   * }
+   * ```
+   *
+   * @param value - Optional new value to reset the form to. If not provided,
+   *                resets to empty/default values.
+   *
+   * @see {@link markAllAsTouched} for showing validation errors
+   * @see {@link triggerFormValidation} for re-running validation without reset
+   */
+  resetForm(value?: T | null): void {
+    // Reset Angular's form to clear all controls and mark as pristine/untouched
+    this.ngForm.resetForm(value ?? undefined);
+
+    // Clear the bidirectional sync tracking state so the next formValue change
+    // is treated as a model change (not a conflict with stale form values)
+    this.#lastSyncedFormValue = null;
+    this.#lastSyncedModelValue = null;
+    this.#lastLinkedValue = null;
+
+    // Force change detection to ensure DOM updates are reflected
+    // Note: This is still needed even with signals because we're modifying NgForm
+    // (reactive forms), not signals. The formValue signal updates happen in the
+    // consumer component. detectChanges() ensures NgForm's reset is reflected in
+    // the DOM before we update validity.
+    this.cdr.detectChanges();
+
+    // Trigger validation update to clear any stale errors
+    // Now synchronous since detectChanges() has flushed DOM updates
+    this.ngForm.form.updateValueAndValidity({ emitEvent: true });
+  }
+
+  /**
    * This will feed the formValueCache, debounce it till the next tick
    * and create an asynchronous validator that runs a vest suite
    * @param field

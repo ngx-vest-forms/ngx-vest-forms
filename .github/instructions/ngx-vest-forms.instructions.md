@@ -1041,6 +1041,9 @@ import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
   // ... other config
 })
 export class MyFormComponent {
+  // ViewChild for form reset
+  protected readonly vestForm = viewChild.required('vestForm', { read: FormDirective });
+
   // Loading state
   protected readonly isLoading = signal(false);
 
@@ -1050,8 +1053,11 @@ export class MyFormComponent {
     finally { this.isLoading.set(false); }
   }
 
-  // Form reset
-  resetForm() { this.formValue.set({}); }
+  // Form reset - use resetForm() to properly clear form state
+  reset() {
+    this.formValue.set({});
+    this.vestForm().resetForm();
+  }
 
   // Prefill form
   ngOnInit() { this.formValue.set({ firstName: 'John', lastName: 'Doe' }); }

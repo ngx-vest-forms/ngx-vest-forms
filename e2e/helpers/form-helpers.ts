@@ -1,6 +1,13 @@
 import { expect, Locator, Page } from '@playwright/test';
 
 /**
+ * Validation polling configuration
+ * These values handle timing issues with Angular change detection and Vest validation
+ */
+const VALIDATION_TIMEOUT = 15000; // 15s to handle: debounce (100ms) + form idle wait + bidirectional validation
+const POLL_INTERVALS = [50, 100, 250, 500, 1000, 2000]; // Gradual backoff with longer final interval
+
+/**
  * Navigation helpers for the three demo forms
  */
 export async function navigateToPurchaseForm(page: Page): Promise<void> {
@@ -72,7 +79,6 @@ export async function expectFieldHasError(
   // Wait for the field to have ng-invalid class (Angular validation detected error)
   // Use expect.poll() with gradual backoff for race conditions
   // This handles timing issues with Angular change detection and Vest validation
-  // Timeout set to 15s to account for: debounce (100ms) + form idle wait + validation execution
   await expect
     .poll(
       async () => {
@@ -81,8 +87,8 @@ export async function expectFieldHasError(
       },
       {
         message: 'Field should have ng-invalid class',
-        timeout: 15000, // Increased from 10s to handle bidirectional validation
-        intervals: [50, 100, 250, 500, 1000, 2000], // Gradual backoff with longer final interval
+        timeout: VALIDATION_TIMEOUT,
+        intervals: POLL_INTERVALS,
       }
     )
     .toBe(true);
@@ -131,8 +137,8 @@ export async function expectFieldValid(field: Locator): Promise<void> {
       },
       {
         message: 'Field should have ng-valid class',
-        timeout: 15000, // Increased to handle bidirectional validation timing
-        intervals: [50, 100, 250, 500, 1000, 2000], // Gradual backoff with longer final interval
+        timeout: VALIDATION_TIMEOUT,
+        intervals: POLL_INTERVALS,
       }
     )
     .toBe(true);

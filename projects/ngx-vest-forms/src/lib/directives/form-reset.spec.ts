@@ -1,30 +1,71 @@
 /**
- * Regression tests for Bug #1: Reset Button Requires Double-Click
+ * Tests for Form Reset Functionality
  *
- * Bug Report: BUG_REPORT_PURCHASE_FORM.md - Bug #1
- * Fixed: 2025-01-08
+ * This file tests the FormDirective's reset capabilities and documents the proper
+ * patterns for resetting ngx-vest-forms forms.
  *
- * Root Cause: Signal update timing issue when calling formValue.set({})
- * Fix: Added setTimeout(() => { this.formValue.set({}); }, 0) to force change detection
+ * ## Background: The Form Reset Challenge
  *
- * These tests ensure that form reset functionality works correctly with signals
- * and that all fields clear completely on a single reset operation.
+ * When using ngx-vest-forms with Angular signals and template-driven forms, there's
+ * a timing challenge when resetting forms. The issue stems from how Angular's
+ * bidirectional sync works between the component's signal state and the DOM:
+ *
+ * 1. User calls `formValue.set({})` to reset the form
+ * 2. The signal updates immediately to `{}`
+ * 3. But the DOM form controls still contain their old values
+ * 4. When Angular's change detection runs, the bidirectional sync logic sees:
+ *    - Model changed: true (signal is now `{}`)
+ *    - Form changed: true (DOM controls still have values)
+ * 5. This creates a "conflict" state where neither wins
+ *
+ * ## Solutions
+ *
+ * ### Solution 1: Use `FormDirective.resetForm()` (RECOMMENDED)
+ *
+ * The `resetForm()` method properly resets both the Angular form and the internal
+ * tracking state, ensuring clean synchronization:
+ *
+ * ```typescript
+ * vestForm = viewChild.required('vestForm', { read: FormDirective });
+ *
+ * reset(): void {
+ *   this.formValue.set({});
+ *   this.vestForm().resetForm();
+ * }
+ * ```
+ *
+ * ### Solution 2: Double-set workaround (legacy, not recommended)
+ *
+ * Before `resetForm()` was added, a workaround was to set the value twice:
+ *
+ * ```typescript
+ * reset(): void {
+ *   this.formValue.set({});
+ *   setTimeout(() => this.formValue.set({}), 0);
+ * }
+ * ```
+ *
+ * This works because the second set happens after Angular has processed the first
+ * change detection cycle, clearing the DOM controls.
  */
 
-import { Component, signal } from '@angular/core';
+import { Component, signal, viewChild } from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
+import { describe, expect, it } from 'vitest';
 import { enforce, only, staticSuite, test } from 'vest';
 import { NgxVestForms } from '../exports';
 import { DeepPartial } from '../utils/deep-partial';
+import { FormDirective } from './form.directive';
 
-describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => {
-  describe('Basic reset functionality', () => {
-    it('should completely clear all form fields on single reset call', async () => {
+describe('FormDirective - Reset Functionality', () => {
+  describe('Using resetForm() method (RECOMMENDED)', () => {
+    it('should completely clear all form fields on single reset call using resetForm()', async () => {
       @Component({
         template: `
           <form
             ngxVestForm
+            #vestForm="ngxVestForm"
             [formValue]="formValue()"
             [suite]="suite"
             (formValueChange)="formValue.set($event)"
@@ -50,9 +91,11 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
             </button>
           </form>
         `,
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
       })
       class TestComponent {
+        vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
+
         formValue = signal<
           DeepPartial<{ firstName?: string; age?: number; gender?: string }>
         >({
@@ -68,12 +111,14 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
           });
         });
 
+        /**
+         * Proper reset pattern using FormDirective.resetForm()
+         * This is the recommended approach as it properly handles
+         * the bidirectional sync state.
+         */
         reset(): void {
           this.formValue.set({});
-          // Bug fix: setTimeout ensures change detection completes
-          setTimeout(() => {
-            this.formValue.set({});
-          }, 0);
+          this.vestFormRef().resetForm();
         }
       }
 
@@ -88,15 +133,10 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
       // Click reset button once
       await userEvent.click(screen.getByTestId('reset'));
 
-      // Wait for reset to complete (including setTimeout)
-      await waitFor(
-        () => {
-          expect(component.formValue()).toEqual({});
-        },
-        { timeout: 100 }
-      );
-
-      // Verify all fields are cleared in the DOM
+      // Wait for reset to complete - verify DOM inputs are empty
+      // Note: After NgForm.resetForm(), Angular sets control values to null,
+      // so formValue() will contain null values for each registered control.
+      // The key test is that DOM inputs are empty and form is pristine.
       await waitFor(() => {
         const firstNameInput = screen.getByTestId(
           'firstName'
@@ -108,13 +148,21 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
         expect(ageInput.value).toBe('');
         expect(genderInput.value).toBe('');
       });
+
+      // Verify form state is pristine and untouched after reset
+      await waitFor(() => {
+        const form = fixture.nativeElement.querySelector('form');
+        expect(form.classList.contains('ng-pristine')).toBe(true);
+        expect(form.classList.contains('ng-untouched')).toBe(true);
+      });
     });
 
-    it('should clear form without double-click requirement', async () => {
+    it('should clear form with a single click using resetForm()', async () => {
       @Component({
         template: `
           <form
             ngxVestForm
+            #vestForm="ngxVestForm"
             [formValue]="formValue()"
             [suite]="suite"
             (formValueChange)="formValue.set($event)"
@@ -135,9 +183,11 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
             <div data-testid="click-count">{{ clickCount() }}</div>
           </form>
         `,
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
       })
       class TestComponent {
+        vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
+
         formValue = signal<DeepPartial<{ field1?: string; field2?: string }>>({
           field1: 'value1',
           field2: 'value2',
@@ -155,9 +205,7 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
         reset(): void {
           this.clickCount.update((c) => c + 1);
           this.formValue.set({});
-          setTimeout(() => {
-            this.formValue.set({});
-          }, 0);
+          this.vestFormRef().resetForm();
         }
       }
 
@@ -169,10 +217,9 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
       // Verify form cleared with single click
       await waitFor(() => {
         expect(screen.getByTestId('click-count')).toHaveTextContent('1');
-        expect(fixture.componentInstance.formValue()).toEqual({});
       });
 
-      // Verify fields are actually cleared
+      // Verify fields are actually cleared in DOM
       await waitFor(() => {
         const field1 = screen.getByTestId('field1') as HTMLInputElement;
         const field2 = screen.getByTestId('field2') as HTMLInputElement;
@@ -180,139 +227,13 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
         expect(field2.value).toBe('');
       });
     });
-  });
 
-  describe('Reset after auto-fill scenarios (Bug #1 specific)', () => {
-    it('should clear all fields including auto-filled values after single reset', async () => {
+    it('should reset nested form groups completely using resetForm()', async () => {
       @Component({
         template: `
           <form
             ngxVestForm
-            [formValue]="formValue()"
-            [suite]="suite"
-            (formValueChange)="handleFormChange($event)"
-          >
-            <input
-              name="firstName"
-              [ngModel]="formValue().firstName"
-              data-testid="firstName"
-            />
-            <input
-              name="lastName"
-              [ngModel]="formValue().lastName"
-              data-testid="lastName"
-            />
-            <input
-              name="age"
-              type="number"
-              [ngModel]="formValue().age"
-              data-testid="age"
-            />
-            <input
-              name="gender"
-              [ngModel]="formValue().gender"
-              data-testid="gender"
-            />
-            <button type="button" (click)="reset()" data-testid="reset">
-              Reset
-            </button>
-          </form>
-        `,
-         imports: [NgxVestForms],
-      })
-      class TestComponent {
-        formValue = signal<
-          DeepPartial<{
-            firstName?: string;
-            lastName?: string;
-            age?: number;
-            gender?: string;
-          }>
-        >({});
-
-        suite = staticSuite((model: any, field?: string) => {
-          only(field);
-          test('firstName', 'First name is required', () => {
-            enforce(model.firstName).isNotBlank();
-          });
-        });
-
-        handleFormChange(value: any): void {
-          // Simulate auto-fill logic (like Brecht example)
-          if (value.firstName === 'Brecht' && value.lastName === 'Billiet') {
-            this.formValue.set({
-              ...value,
-              age: 35,
-              gender: 'male',
-            });
-          } else {
-            this.formValue.set(value);
-          }
-        }
-
-        reset(): void {
-          this.formValue.set({});
-          setTimeout(() => {
-            this.formValue.set({});
-          }, 0);
-        }
-      }
-
-      const { fixture } = await render(TestComponent);
-
-      // Type Brecht and Billiet to trigger auto-fill
-      const firstNameInput = screen.getByTestId('firstName');
-      const lastNameInput = screen.getByTestId('lastName');
-
-      await userEvent.type(firstNameInput, 'Brecht');
-      await userEvent.type(lastNameInput, 'Billiet');
-
-      // Wait for auto-fill to complete
-      await waitFor(() => {
-        expect(fixture.componentInstance.formValue().age).toBe(35);
-        expect(fixture.componentInstance.formValue().gender).toBe('male');
-      });
-
-      // Verify auto-filled values are present
-      await waitFor(() => {
-        const ageInput = screen.getByTestId('age') as HTMLInputElement;
-        const genderInput = screen.getByTestId('gender') as HTMLInputElement;
-        expect(ageInput.value).toBe('35');
-        expect(genderInput.value).toBe('male');
-      });
-
-      // Click reset once
-      await userEvent.click(screen.getByTestId('reset'));
-
-      // Verify ALL fields cleared (including auto-filled ones)
-      await waitFor(
-        () => {
-          expect(fixture.componentInstance.formValue()).toEqual({});
-        },
-        { timeout: 100 }
-      );
-
-      // Verify DOM is cleared
-      await waitFor(() => {
-        const firstNameEl = screen.getByTestId('firstName') as HTMLInputElement;
-        const lastNameEl = screen.getByTestId('lastName') as HTMLInputElement;
-        const ageEl = screen.getByTestId('age') as HTMLInputElement;
-        const genderEl = screen.getByTestId('gender') as HTMLInputElement;
-
-        expect(firstNameEl.value).toBe('');
-        expect(lastNameEl.value).toBe('');
-        expect(ageEl.value).toBe('');
-        expect(genderEl.value).toBe('');
-      });
-    });
-  });
-
-  describe('Reset with nested form groups', () => {
-    it('should clear nested groups completely on single reset', async () => {
-      @Component({
-        template: `
-          <form
-            ngxVestForm
+            #vestForm="ngxVestForm"
             [formValue]="formValue()"
             [suite]="suite"
             (formValueChange)="formValue.set($event)"
@@ -353,9 +274,11 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
             </button>
           </form>
         `,
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
       })
       class TestComponent {
+        vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
+
         formValue = signal<
           DeepPartial<{
             topLevel?: string;
@@ -377,9 +300,7 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
 
         reset(): void {
           this.formValue.set({});
-          setTimeout(() => {
-            this.formValue.set({});
-          }, 0);
+          this.vestFormRef().resetForm();
         }
       }
 
@@ -396,15 +317,9 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
       // Click reset once
       await userEvent.click(screen.getByTestId('reset'));
 
-      // Verify entire structure cleared
-      await waitFor(
-        () => {
-          expect(fixture.componentInstance.formValue()).toEqual({});
-        },
-        { timeout: 100 }
-      );
-
       // Verify all nested fields cleared in DOM
+      // Note: formValue() will contain nulls for each control after NgForm.resetForm(),
+      // but the key test is that DOM inputs are empty
       await waitFor(() => {
         expect((screen.getByTestId('topLevel') as HTMLInputElement).value).toBe(
           ''
@@ -423,6 +338,203 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
         ).toBe('');
       });
     });
+
+    it('should reset form with new values using resetForm(value)', async () => {
+      @Component({
+        template: `
+          <form
+            ngxVestForm
+            #vestForm="ngxVestForm"
+            [formValue]="formValue()"
+            [suite]="suite"
+            (formValueChange)="formValue.set($event)"
+          >
+            <input
+              name="firstName"
+              [ngModel]="formValue().firstName"
+              data-testid="firstName"
+            />
+            <input
+              name="lastName"
+              [ngModel]="formValue().lastName"
+              data-testid="lastName"
+            />
+            <button type="button" (click)="resetWithDefaults()" data-testid="reset">
+              Reset with Defaults
+            </button>
+          </form>
+        `,
+        imports: [NgxVestForms],
+      })
+      class TestComponent {
+        vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
+
+        formValue = signal<
+          DeepPartial<{ firstName?: string; lastName?: string }>
+        >({
+          firstName: 'John',
+          lastName: 'Doe',
+        });
+
+        suite = staticSuite((model: any, field?: string) => {
+          only(field);
+          test('firstName', 'Required', () => {
+            enforce(model.firstName).isNotBlank();
+          });
+        });
+
+        /**
+         * Reset form with new default values
+         */
+        resetWithDefaults(): void {
+          const defaults = { firstName: 'Default', lastName: 'User' };
+          this.formValue.set(defaults);
+          this.vestFormRef().resetForm(defaults);
+        }
+      }
+
+      const { fixture } = await render(TestComponent);
+
+      // Verify initial values
+      expect(
+        (screen.getByTestId('firstName') as HTMLInputElement).value
+      ).toBe('John');
+
+      // Click reset with defaults
+      await userEvent.click(screen.getByTestId('reset'));
+
+      // Verify new default values are set
+      await waitFor(() => {
+        expect(
+          (screen.getByTestId('firstName') as HTMLInputElement).value
+        ).toBe('Default');
+        expect(
+          (screen.getByTestId('lastName') as HTMLInputElement).value
+        ).toBe('User');
+        expect(fixture.componentInstance.formValue()).toEqual({
+          firstName: 'Default',
+          lastName: 'User',
+        });
+      });
+    });
+  });
+
+  describe('Reset after auto-fill scenarios', () => {
+    it('should clear all fields including auto-filled values using resetForm()', async () => {
+      @Component({
+        template: `
+          <form
+            ngxVestForm
+            #vestForm="ngxVestForm"
+            [formValue]="formValue()"
+            [suite]="suite"
+            (formValueChange)="handleFormChange($event)"
+          >
+            <input
+              name="firstName"
+              [ngModel]="formValue().firstName"
+              data-testid="firstName"
+            />
+            <input
+              name="lastName"
+              [ngModel]="formValue().lastName"
+              data-testid="lastName"
+            />
+            <input
+              name="age"
+              type="number"
+              [ngModel]="formValue().age"
+              data-testid="age"
+            />
+            <input
+              name="gender"
+              [ngModel]="formValue().gender"
+              data-testid="gender"
+            />
+            <button type="button" (click)="reset()" data-testid="reset">
+              Reset
+            </button>
+          </form>
+        `,
+        imports: [NgxVestForms],
+      })
+      class TestComponent {
+        vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
+
+        formValue = signal<
+          DeepPartial<{
+            firstName?: string;
+            lastName?: string;
+            age?: number;
+            gender?: string;
+          }>
+        >({});
+
+        suite = staticSuite((model: any, field?: string) => {
+          only(field);
+          test('firstName', 'First name is required', () => {
+            enforce(model.firstName).isNotBlank();
+          });
+        });
+
+        handleFormChange(value: any): void {
+          // Simulate auto-fill logic (like the Brecht example in purchase form)
+          if (value.firstName === 'Brecht' && value.lastName === 'Billiet') {
+            this.formValue.set({
+              ...value,
+              age: 35,
+              gender: 'male',
+            });
+          } else {
+            this.formValue.set(value);
+          }
+        }
+
+        reset(): void {
+          this.formValue.set({});
+          this.vestFormRef().resetForm();
+        }
+      }
+
+      const { fixture } = await render(TestComponent);
+
+      // Type Brecht and Billiet to trigger auto-fill
+      const firstNameInput = screen.getByTestId('firstName');
+      const lastNameInput = screen.getByTestId('lastName');
+
+      await userEvent.type(firstNameInput, 'Brecht');
+      await userEvent.type(lastNameInput, 'Billiet');
+
+      // Wait for auto-fill to complete
+      await waitFor(() => {
+        expect(fixture.componentInstance.formValue().age).toBe(35);
+        expect(fixture.componentInstance.formValue().gender).toBe('male');
+      });
+
+      // Verify auto-filled values are present in DOM
+      await waitFor(() => {
+        const ageInput = screen.getByTestId('age') as HTMLInputElement;
+        const genderInput = screen.getByTestId('gender') as HTMLInputElement;
+        expect(ageInput.value).toBe('35');
+        expect(genderInput.value).toBe('male');
+      });
+
+      // Click reset once
+      await userEvent.click(screen.getByTestId('reset'));
+
+      // Verify DOM is cleared (the key test for reset functionality)
+      await waitFor(() => {
+        const firstNameEl = screen.getByTestId('firstName') as HTMLInputElement;
+        const lastNameEl = screen.getByTestId('lastName') as HTMLInputElement;
+        const ageEl = screen.getByTestId('age') as HTMLInputElement;
+        const genderEl = screen.getByTestId('gender') as HTMLInputElement;
+
+        expect(firstNameEl.value).toBe('');
+        expect(lastNameEl.value).toBe('');
+        expect(ageEl.value).toBe('');
+        expect(genderEl.value).toBe('');
+      });
+    });
   });
 
   describe('Reset with errors signal', () => {
@@ -431,6 +543,7 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
         template: `
           <form
             ngxVestForm
+            #vestForm="ngxVestForm"
             [formValue]="formValue()"
             [suite]="suite"
             (formValueChange)="formValue.set($event)"
@@ -450,9 +563,11 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
             <button type="submit" data-testid="submit">Submit</button>
           </form>
         `,
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
       })
       class TestComponent {
+        vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
+
         formValue = signal<DeepPartial<{ email?: string }>>({
           email: 'invalid',
         });
@@ -468,9 +583,7 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
         reset(): void {
           this.formValue.set({});
           this.errors.set({});
-          setTimeout(() => {
-            this.formValue.set({});
-          }, 0);
+          this.vestFormRef().resetForm();
         }
       }
 
@@ -503,6 +616,7 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
         template: `
           <form
             ngxVestForm
+            #vestForm="ngxVestForm"
             [formValue]="formValue()"
             [suite]="suite"
             (formValueChange)="formValue.set($event)"
@@ -518,9 +632,11 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
             <div data-testid="reset-count">{{ resetCount() }}</div>
           </form>
         `,
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
       })
       class TestComponent {
+        vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
+
         formValue = signal<DeepPartial<{ testField?: string }>>({});
         resetCount = signal(0);
 
@@ -534,9 +650,7 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
         reset(): void {
           this.resetCount.update((c) => c + 1);
           this.formValue.set({});
-          setTimeout(() => {
-            this.formValue.set({});
-          }, 0);
+          this.vestFormRef().resetForm();
         }
       }
 
@@ -562,6 +676,81 @@ describe('FormDirective - Reset Functionality (Bug #1 Regression Tests)', () => 
       // Verify final state
       expect(screen.getByTestId('reset-count')).toHaveTextContent('3');
       expect(input.value).toBe('');
+    });
+  });
+
+  describe('Legacy double-set workaround (for documentation)', () => {
+    /**
+     * This test documents the legacy workaround pattern that was used before
+     * resetForm() was added. It's kept for historical reference and to ensure
+     * backward compatibility for users who haven't migrated yet.
+     *
+     * @deprecated Use resetForm() instead of this pattern
+     */
+    it('should work with double-set setTimeout workaround (legacy pattern)', async () => {
+      @Component({
+        template: `
+          <form
+            ngxVestForm
+            [formValue]="formValue()"
+            [suite]="suite"
+            (formValueChange)="formValue.set($event)"
+          >
+            <input
+              name="firstName"
+              [ngModel]="formValue().firstName"
+              data-testid="firstName"
+            />
+            <button type="button" (click)="reset()" data-testid="reset">
+              Reset
+            </button>
+          </form>
+        `,
+        imports: [NgxVestForms],
+      })
+      class TestComponent {
+        formValue = signal<DeepPartial<{ firstName?: string }>>({
+          firstName: 'John',
+        });
+
+        suite = staticSuite((model: any, field?: string) => {
+          only(field);
+          test('firstName', 'Required', () => {
+            enforce(model.firstName).isNotBlank();
+          });
+        });
+
+        /**
+         * @deprecated Use resetForm() instead
+         *
+         * Legacy workaround: Setting formValue to {} twice (once immediately,
+         * and once inside setTimeout) works around a signal update timing issue.
+         * The second set happens after Angular has processed the first change
+         * detection cycle, clearing the DOM controls.
+         */
+        reset(): void {
+          this.formValue.set({});
+          setTimeout(() => {
+            this.formValue.set({});
+          }, 0);
+        }
+      }
+
+      const { fixture } = await render(TestComponent);
+
+      // Verify initial state
+      expect(fixture.componentInstance.formValue().firstName).toBe('John');
+
+      // Click reset
+      await userEvent.click(screen.getByTestId('reset'));
+
+      // Wait for reset to complete (including setTimeout)
+      // Verify field cleared in DOM
+      await waitFor(() => {
+        expect(
+          (screen.getByTestId('firstName') as HTMLInputElement).value
+        ).toBe('');
+      });
     });
   });
 });
