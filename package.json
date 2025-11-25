@@ -41,8 +41,8 @@
     "vest": "~5.4.6"
   },
   "devDependencies": {
-    "@analogjs/vite-plugin-angular": "^2.1.0",
-    "@analogjs/vitest-angular": "^2.1.0",
+    "@analogjs/vite-plugin-angular": "^2.1.1",
+    "@analogjs/vitest-angular": "^2.1.1",
     "@angular-devkit/build-angular": "21.0.0",
     "@angular/build": "21.0.0",
     "@angular/cli": "21.0.0",
