@@ -136,7 +136,7 @@ let nextUniqueId = 0;
     @if (showPendingMessage()) {
       <div
         [id]="pendingId"
-        class="flex items-center gap-1 text-xs text-gray-500"
+        class="absolute right-0 top-0 flex items-center gap-1 text-xs text-gray-500"
         role="status"
         aria-live="polite"
         aria-atomic="true"
