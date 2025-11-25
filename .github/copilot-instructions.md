@@ -144,7 +144,9 @@ protected readonly formValue = signal<MyFormModel>({});
 ### Validation Suite Pattern
 Always structure validation suites with the unconditional `only()` pattern for optimal performance.
 
-> **CRITICAL**: Call `only(field)` unconditionally at the top of your suite. Never wrap it in `if (field)` as this corrupts Vest's execution tracking.
+> **CRITICAL**: Call `only(field)` unconditionally at the top of your suite. Never wrap it in `if (field)` as this breaks Vest's change detection mechanism.
+>
+> **Vest.js Official Warning**: "skip() and only() should not be called conditionally - i.e. inside of an if statement."
 
 > **Complete Validation Patterns**: See `.github/instructions/vest.instructions.md` for comprehensive validation patterns and performance optimization.
 

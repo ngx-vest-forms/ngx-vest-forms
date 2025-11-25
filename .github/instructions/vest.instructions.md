@@ -51,7 +51,7 @@ export const contactSuite = staticSuite((data = {}, field?: string) => {
 **Why this matters:**
 - `only(undefined)` is **safe** - Vest ignores it and runs all tests
 - `only('email')` runs only email tests (performance optimization)
-- Vest tracks execution order internally - **conditional calls corrupt this state**
+- Vest relies on consistent function execution to detect changes between runs - **conditional calls break this detection mechanism**
 
 **❌ WRONG: Conditional `only()` call**
 
@@ -72,7 +72,11 @@ only(field ?? false);      // ✅ Explicit fallback
 only(condition ? 'email' : false); // ✅ Conditional argument, not call
 ```
 
-> **Critical Rule**: `only()`, `skip()`, and `.done()` must **NEVER** be called conditionally. The function call itself must always execute - only the *arguments* can be conditional. Vest maintains an internal execution order counter that breaks with conditional calls, causing unpredictable behavior with async tests, subscriptions, and memoization.
+> **Critical Rule**: `only()`, `skip()`, and `.done()` must **NEVER** be called conditionally. The function call itself must always execute - only the *arguments* can be conditional. Vest relies on consistent function execution to detect changes between runs. Conditional calls break this detection mechanism, causing unpredictable behavior with async tests, subscriptions, and memoization.
+>
+> **Vest.js Official Warning**: "skip() and only() should not be called conditionally - i.e. inside of an if statement. Vest relies on the consistent execution of these functions in the suite to detect changes between runs."
+>
+> Source: [Vest.js - Skip and Only](https://vestjs.dev/docs/writing_your_suite/including_and_excluding/skip_and_only)
 
 ## TypeScript Support
 
@@ -308,14 +312,16 @@ export const contactSuite = staticSuite((model, field?: string) => {
 ### ❌ Mistake #1: Calling `only()`, `skip()`, or `.done()` Conditionally
 
 ```typescript
-// ❌ WRONG - Breaks execution tracking!
+// ❌ WRONG - Breaks Vest's change detection!
 if (field) {
-  only(field); // Conditional call corrupts internal state
+  only(field); // Conditional call breaks consistent execution
 }
 
 // ✅ CORRECT - Always call unconditionally
 only(field); // Safe: only(undefined) runs all tests
 ```
+
+> **Vest.js Official Warning**: "skip() and only() should not be called conditionally - i.e. inside of an if statement."
 
 ### ❌ Mistake #2: Maintaining Separate Touch State
 

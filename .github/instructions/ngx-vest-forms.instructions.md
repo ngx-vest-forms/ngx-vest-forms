@@ -179,7 +179,9 @@ The `formState` signal uses optimized memoization with deep equality checking. I
 
 ### Validation Patterns
 
-> **⚠️ BREAKING CHANGE**: You MUST now call `only()` unconditionally. The old `if (field)` pattern breaks Vest's execution tracking. See [Migration Guide](../../docs/migration/MIGRATION-v1.x-to-v2.0.0.md).
+> **⚠️ BREAKING CHANGE**: You MUST now call `only()` unconditionally. The old `if (field)` pattern breaks Vest's change detection. See [Migration Guide](../../docs/migration/MIGRATION-v1.x-to-v2.0.0.md).
+>
+> **Vest.js Official Warning**: "skip() and only() should not be called conditionally - i.e. inside of an if statement."
 
 ```typescript
 // ✅ CORRECT: Unconditional only() call (required since latest version)
@@ -190,7 +192,7 @@ export const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
   test('email', 'Invalid', () => enforce(model.email).isEmail());
 });
 
-// ❌ WRONG: Conditional only() corrupts Vest's execution tracking
+// ❌ WRONG: Conditional only() breaks Vest's change detection
 export const badSuite = staticSuite((model, field?) => {
   if (field) { only(field); } // BUG: Breaks omitWhen + validationConfig!
   test('email', 'Required', () => enforce(model.email).isNotBlank());

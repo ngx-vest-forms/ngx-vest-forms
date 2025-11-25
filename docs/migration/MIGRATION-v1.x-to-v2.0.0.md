@@ -27,12 +27,12 @@ This guide covers migration from v1.x (mostly v1.4) to v2.0.0, which includes cr
 
 **What Changed:**
 
-You MUST now call `only()` unconditionally at the top of validation suites. The old conditional pattern breaks Vest's execution tracking.
+You MUST now call `only()` unconditionally at the top of validation suites. The old conditional pattern breaks Vest's change detection.
 
 **v1.x Behavior (old):**
 
 ```typescript
-// ❌ BROKEN: Conditional only() corrupts execution tracking
+// ❌ BROKEN: Conditional only() breaks Vest's change detection
 export const suite = staticSuite((model, field?) => {
   if (field) {
     only(field);
@@ -59,18 +59,22 @@ export const suite = staticSuite((model, field?) => {
 
 **Why This Change?**
 
-Conditional `only()` calls corrupt Vest's internal execution tracking, breaking the combination of `omitWhen` + `validationConfig` timing. This causes:
+Conditional `only()` calls break Vest's change detection mechanism (violating Vest.js requirements). In ngx-vest-forms, this manifests as timing issues when combining `omitWhen` with `validationConfig` field dependencies, causing:
 
 - ❌ Dependent field validations don't trigger properly
-- ❌ `omitWhen` conditions evaluated incorrectly
+- ❌ `omitWhen` conditions evaluated with stale state
 - ❌ `validationConfig` dependencies fail to update
 - ❌ Race conditions in complex forms
+
+> **Vest.js Official Warning**: "skip() and only() should not be called conditionally - i.e. inside of an if statement. Vest relies on the consistent execution of these functions in the suite to detect changes between runs."
+>
+> Source: [Vest.js - Skip and Only](https://vestjs.dev/docs/writing_your_suite/including_and_excluding/skip_and_only)
 
 The unconditional pattern is safe because:
 
 - ✅ `only(undefined)` runs all tests (full validation)
 - ✅ `only('fieldName')` optimizes by running only that field's tests
-- ✅ Vest's execution tracking remains consistent
+- ✅ Vest's change detection remains consistent
 - ✅ `omitWhen` + `validationConfig` work reliably
 
 **Migration Steps:**
@@ -902,7 +906,7 @@ import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
 
 **Q: Why is conditional `only()` broken?**
 
-A: Conditional `only()` corrupts Vest's execution tracking, causing timing issues with `omitWhen` + `validationConfig`. The unconditional pattern is safe because `only(undefined)` runs all tests.
+A: Conditional `only()` breaks Vest's change detection mechanism (violating Vest.js requirements), causing timing issues with `omitWhen` + `validationConfig` in ngx-vest-forms. The unconditional pattern is safe because `only(undefined)` runs all tests.
 
 **Q: Will this affect performance?**
 

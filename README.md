@@ -54,7 +54,7 @@ npm install ngx-vest-forms
 > only(field); // only(undefined) safely runs all tests
 > ```
 >
-> Why: Conditional `only()` corrupts Vest's execution tracking and breaks `omitWhen` + `validationConfig`.
+> Why: Conditional `only()` breaks Vest's change detection mechanism and causes timing issues with `omitWhen` + `validationConfig` in ngx-vest-forms.
 > See the [Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md#1-unconditional-only-pattern-required-critical).
 >
 > Selector prefix: use `ngx-` (recommended). The legacy `sc-` works in v2.x but is deprecated and will be removed in v3.
