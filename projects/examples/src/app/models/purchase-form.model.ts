@@ -27,7 +27,7 @@ export type PurchaseFormModel = NgxDeepPartial<{
 }>;
 
 // Using NgxDeepRequired for the shape (standard approach)
-// Note: birthDate will accept empty string in the form initialization
+// Note: birthDate is initialized with a Date object for type safety
 export const purchaseFormShape: NgxDeepRequired<PurchaseFormModel> = {
   userId: '',
   firstName: '',
