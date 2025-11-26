@@ -24,6 +24,8 @@ import type { PhoneNumberMap } from '../../../models/phonenumber.model';
 export class PhoneNumbersComponent {
   values = input<PhoneNumberMap>({});
   valuesChange = output<PhoneNumberMap>();
+  
+  /** Holds the user's input for a new phone number */
   addValue = signal('');
 
   addPhoneNumber(): void {

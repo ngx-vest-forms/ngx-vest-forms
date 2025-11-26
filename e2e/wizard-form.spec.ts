@@ -125,8 +125,8 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
       page,
     }) => {
       await test.step('Password and confirm password must match', async () => {
-        const passwordField = page.getByRole('textbox', { name: 'Password', exact: true });
-        const confirmPasswordField = page.getByRole('textbox', { name: 'Confirm Password' });
+        const passwordField = page.getByLabel('Password', { exact: true });
+        const confirmPasswordField = page.getByLabel('Confirm Password');
 
         // Fill password first
         await fillAndBlur(passwordField, 'SecurePass123!');
