@@ -45,8 +45,24 @@
  * }
  * ```
  *
- * This works because the second set happens after Angular has processed the first
- * change detection cycle, clearing the DOM controls.
+ * **Why both calls are required:**
+ *
+ * The first `set({})` alone is insufficient because of a race condition:
+ * 1. First `set({})` updates the signal to `{}`
+ * 2. Angular's change detection runs and updates the template bindings
+ * 3. BUT: The NgForm's internal form controls still hold stale values
+ * 4. The bidirectional sync sees both model AND form changed → conflict state
+ * 5. Neither wins, so the form retains old values
+ *
+ * The `setTimeout(..., 0)` defers the second `set({})` to the next event loop tick:
+ * 1. By then, Angular has fully processed the first change detection cycle
+ * 2. The NgForm controls have been cleared by the binding updates
+ * 3. The second `set({})` now sees: model changed, form empty → model wins
+ * 4. Form correctly shows empty values
+ *
+ * **Why `resetForm()` is better:**
+ * It calls `NgForm.resetForm()` directly, which clears controls AND marks the form
+ * as pristine/untouched in a single synchronous operation, avoiding the race entirely.
  */
 
 import { Component, signal, viewChild } from '@angular/core';
@@ -723,10 +739,18 @@ describe('FormDirective - Reset Functionality', () => {
         /**
          * @deprecated Use resetForm() instead
          *
-         * Legacy workaround: Setting formValue to {} twice (once immediately,
-         * and once inside setTimeout) works around a signal update timing issue.
-         * The second set happens after Angular has processed the first change
-         * detection cycle, clearing the DOM controls.
+         * Legacy workaround: Both set() calls are required due to a race condition:
+         *
+         * 1. First `set({})`: Updates signal, but NgForm controls still hold stale values.
+         *    The bidirectional sync sees both model AND form changed → conflict state.
+         *
+         * 2. `setTimeout`: Defers second call to next event loop tick, after Angular's
+         *    change detection has cleared the NgForm controls.
+         *
+         * 3. Second `set({})`: Now model changed + form empty → model wins → form clears.
+         *
+         * The `resetForm()` method avoids this by calling NgForm.resetForm() directly,
+         * which clears controls synchronously without the race condition.
          */
         reset(): void {
           this.formValue.set({});
