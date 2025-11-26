@@ -3,9 +3,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   ElementRef,
   inject,
+  OnDestroy,
   signal,
 } from '@angular/core';
 import { FormErrorDisplayDirective } from '../../directives/form-error-display.directive';
@@ -177,11 +179,12 @@ let nextUniqueId = 0;
     },
   ],
 })
-export class ControlWrapperComponent implements AfterContentInit {
+export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
   protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
     self: true,
   });
   private readonly elementRef = inject(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   // Generate unique IDs for ARIA associations
   protected readonly uniqueId = `ngx-control-wrapper-${nextUniqueId++}`;
@@ -191,6 +194,9 @@ export class ControlWrapperComponent implements AfterContentInit {
 
   // Track form controls found in the wrapper
   private readonly formControls = signal<HTMLElement[]>([]);
+
+  // MutationObserver to detect dynamically added/removed controls
+  private mutationObserver: MutationObserver | null = null;
 
   /**
    * Debounced pending state to prevent flashing for quick async validations.
@@ -241,10 +247,40 @@ export class ControlWrapperComponent implements AfterContentInit {
         }
       });
     });
+
+    // Clean up MutationObserver when component is destroyed
+    this.destroyRef.onDestroy(() => {
+      this.mutationObserver?.disconnect();
+      this.mutationObserver = null;
+    });
   }
 
   ngAfterContentInit(): void {
-    // Find all form controls (input, select, textarea) in the wrapper
+    // Initial query for form controls
+    this.updateFormControls();
+
+    // Set up MutationObserver to detect dynamically added/removed controls (via @if/@for)
+    // This ensures ARIA associations stay in sync with dynamic content
+    this.mutationObserver = new MutationObserver(() => {
+      this.updateFormControls();
+    });
+
+    this.mutationObserver.observe(this.elementRef.nativeElement, {
+      childList: true,
+      subtree: true,
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.mutationObserver?.disconnect();
+    this.mutationObserver = null;
+  }
+
+  /**
+   * Query and update the list of form controls within this wrapper.
+   * Called on init and whenever the DOM structure changes.
+   */
+  private updateFormControls(): void {
     const controls = this.elementRef.nativeElement.querySelectorAll(
       'input, select, textarea'
     );

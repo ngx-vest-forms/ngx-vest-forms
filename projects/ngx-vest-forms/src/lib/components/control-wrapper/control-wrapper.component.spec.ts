@@ -850,5 +850,109 @@ describe('ScControlWrapperComponent', () => {
         { timeout: 1000 }
       );
     });
+
+    it('should update ARIA associations for dynamically added controls via @if', async () => {
+      // Suite with validation for dynamically added field
+      const dynamicSuite = staticSuite(
+        (data: { showField?: boolean; dynamicValue?: string }, field?: string) => {
+          only(field);
+          vestTest('dynamicValue', 'Dynamic field is required', () => {
+            enforce(data.dynamicValue ?? '').isNotBlank();
+          });
+        }
+      );
+
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper>
+              @if (showField()) {
+                <label for="dynamicValue">Dynamic Field</label>
+                <input
+                  id="dynamicValue"
+                  name="dynamicValue"
+                  [ngModel]="model().dynamicValue"
+                />
+              }
+            </ngx-control-wrapper>
+            <button type="button" (click)="toggleField()">Toggle</button>
+          </form>
+        `,
+      })
+      class DynamicControlComponent {
+        model = signal({ showField: false, dynamicValue: '' });
+        showField = signal(false);
+        suite = dynamicSuite;
+
+        toggleField() {
+          this.showField.update(v => !v);
+        }
+      }
+
+      const fixture = await render(DynamicControlComponent);
+
+      // Initially, input should not exist
+      expect(screen.queryByLabelText('Dynamic Field')).not.toBeInTheDocument();
+
+      // Toggle to show the field
+      const toggleButton = screen.getByRole('button', { name: 'Toggle' });
+      await userEvent.click(toggleButton);
+
+      // Wait for input to appear
+      await waitFor(() => {
+        expect(screen.getByLabelText('Dynamic Field')).toBeInTheDocument();
+      });
+
+      const dynamicInput = screen.getByLabelText('Dynamic Field');
+
+      // Trigger validation by focusing and leaving the field
+      await userEvent.click(dynamicInput);
+      await userEvent.tab();
+
+      // Wait for error to appear
+      await screen.findByText('Dynamic field is required', {}, { timeout: 1000 });
+
+      // MutationObserver should have detected the new control and set up ARIA associations
+      await waitFor(() => {
+        expect(dynamicInput).toHaveAttribute('aria-invalid', 'true');
+        expect(dynamicInput).toHaveAttribute('aria-describedby');
+        const describedBy = dynamicInput.getAttribute('aria-describedby');
+        expect(describedBy).toMatch(/^ngx-control-wrapper-\d+-error$/);
+      });
+
+      // Toggle to hide the field
+      await userEvent.click(toggleButton);
+
+      // Input should be removed
+      await waitFor(() => {
+        expect(screen.queryByLabelText('Dynamic Field')).not.toBeInTheDocument();
+      });
+
+      // Toggle to show the field again
+      await userEvent.click(toggleButton);
+
+      // Wait for input to reappear
+      await waitFor(() => {
+        expect(screen.getByLabelText('Dynamic Field')).toBeInTheDocument();
+      });
+
+      // New input instance should also get ARIA associations after validation
+      const newDynamicInput = screen.getByLabelText('Dynamic Field');
+      await userEvent.click(newDynamicInput);
+      await userEvent.tab();
+
+      await screen.findByText('Dynamic field is required', {}, { timeout: 1000 });
+
+      await waitFor(() => {
+        expect(newDynamicInput).toHaveAttribute('aria-invalid', 'true');
+        expect(newDynamicInput).toHaveAttribute('aria-describedby');
+      });
+    });
   });
 });
