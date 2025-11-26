@@ -57,7 +57,7 @@ export class FormModelDirective implements AsyncValidator {
       field,
       this.validationOptions()
     );
-    // Pass the control value to the validator
+    // Pass the control to the validator
     const validationResult = asyncValidator(control);
     if (validationResult instanceof Observable) {
       return validationResult;
