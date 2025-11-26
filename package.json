@@ -9,7 +9,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "vitest run --config vitest.config.ts",
-    "prepare": "husky install",
+    "prepare": "husky",
     "build:app": "ng build examples --configuration=production --base-href=/ngx-vest-forms/",
     "build:lib": "ng build ngx-vest-forms --configuration=production",
     "build:ci": "npm run build:lib && npm run build:app",
