@@ -254,9 +254,11 @@ export class ValidateRootFormDirective<T>
       // Use the formValue input which contains the actual model data
       const mod = structuredClone(currentFormValue) as T;
 
-      // Use timer() pattern instead of ReplaySubject cache
-      return timer(validationOptions.debounceTime ?? 0).pipe(
-        map(() => mod),
+      const debounce = validationOptions.debounceTime ?? 0;
+      const source$ =
+        debounce > 0 ? timer(debounce).pipe(map(() => mod)) : of(mod);
+
+      return source$.pipe(
         switchMap((model) => {
           return new Observable((observer) => {
             try {
