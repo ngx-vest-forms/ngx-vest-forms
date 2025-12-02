@@ -223,20 +223,19 @@ test.describe('Purchase Form', () => {
     // Manual testing confirms bidirectional validation works correctly in real usage.
     // Issue: fill() triggers rapid concurrent validations faster than 100ms debounce + 500ms validationInProgress timeout can handle.
     // Real users never type this fast. Attempts to fix: timeout, exhaustMap, synchronous status check - none resolved race condition reliably.
-    test.fixme(
-      'should show error when passwords do not match',
-      async ({ page }) => {
-        await test.step('Fill mismatched passwords', async () => {
-          const password = page.getByLabel('Password', { exact: true });
-          const confirmPassword = page.getByLabel(/^confirm$/i);
+    test.fixme('should show error when passwords do not match', async ({
+      page,
+    }) => {
+      await test.step('Fill mismatched passwords', async () => {
+        const password = page.getByLabel('Password', { exact: true });
+        const confirmPassword = page.getByLabel(/^confirm$/i);
 
-          await fillAndBlur(password, 'SecurePass123');
-          await fillAndBlur(confirmPassword, 'DifferentPass456');
+        await fillAndBlur(password, 'SecurePass123');
+        await fillAndBlur(confirmPassword, 'DifferentPass456');
 
-          await expectFieldHasError(confirmPassword, /match/i);
-        });
-      }
-    );
+        await expectFieldHasError(confirmPassword, /match/i);
+      });
+    });
 
     // FIXME: Flaky test - bidirectional validation timing issue in automated tests.
     // Manual testing confirms bidirectional validation works correctly in real usage.
@@ -260,23 +259,22 @@ test.describe('Purchase Form', () => {
     // Manual testing confirms bidirectional validation works correctly in real usage.
     // Issue: fill() triggers rapid concurrent validations faster than 100ms debounce + 500ms validationInProgress timeout can handle.
     // Real users never type this fast. Attempts to fix: timeout, exhaustMap, synchronous status check - none resolved race condition reliably.
-    test.fixme(
-      'should revalidate confirmPassword when password changes',
-      async ({ page }) => {
-        await test.step('Change password after confirmPassword is filled', async () => {
-          const password = page.getByLabel('Password', { exact: true });
-          const confirmPassword = page.getByLabel(/^confirm$/i);
+    test.fixme('should revalidate confirmPassword when password changes', async ({
+      page,
+    }) => {
+      await test.step('Change password after confirmPassword is filled', async () => {
+        const password = page.getByLabel('Password', { exact: true });
+        const confirmPassword = page.getByLabel(/^confirm$/i);
 
-          await fillAndBlur(password, 'SecurePass123');
-          await fillAndBlur(confirmPassword, 'SecurePass123');
-          await expectFieldValid(confirmPassword);
+        await fillAndBlur(password, 'SecurePass123');
+        await fillAndBlur(confirmPassword, 'SecurePass123');
+        await expectFieldValid(confirmPassword);
 
-          // Change password, confirmPassword should show error
-          await fillAndBlur(password, 'NewPassword456');
-          await expectFieldHasError(confirmPassword, /match/i);
-        });
-      }
-    );
+        // Change password, confirmPassword should show error
+        await fillAndBlur(password, 'NewPassword456');
+        await expectFieldHasError(confirmPassword, /match/i);
+      });
+    });
   });
 
   test.describe('Async Validation - UserId', () => {
@@ -368,37 +366,36 @@ test.describe('Purchase Form', () => {
       });
     });
 
-    test.fixme(
-      'should validate that shipping address differs from billing address',
-      async ({ page }) => {
-        await test.step('Set same address for both billing and shipping', async () => {
-          const billingStreet = page.getByLabel(/street/i).first();
-          await fillAndBlur(billingStreet, '456 Main St');
+    test.fixme('should validate that shipping address differs from billing address', async ({
+      page,
+    }) => {
+      await test.step('Set same address for both billing and shipping', async () => {
+        const billingStreet = page.getByLabel(/street/i).first();
+        await fillAndBlur(billingStreet, '456 Main St');
 
-          const checkbox = page.getByLabel(
-            /shipping address is different from billing address/i
-          );
-          await checkbox.check();
+        const checkbox = page.getByLabel(
+          /shipping address is different from billing address/i
+        );
+        await checkbox.check();
 
-          const shippingStreet = page.getByLabel(/street/i).nth(1);
-          await fillAndBlur(shippingStreet, '456 Main St');
+        const shippingStreet = page.getByLabel(/street/i).nth(1);
+        await fillAndBlur(shippingStreet, '456 Main St');
 
-          // Fill other matching fields to trigger the "addresses must differ" validation
-          const billingNumber = page.getByLabel(/number/i).first();
-          const shippingNumber = page.getByLabel(/number/i).nth(1);
-          await fillAndBlur(billingNumber, '10');
-          await fillAndBlur(shippingNumber, '10');
+        // Fill other matching fields to trigger the "addresses must differ" validation
+        const billingNumber = page.getByLabel(/number/i).first();
+        const shippingNumber = page.getByLabel(/number/i).nth(1);
+        await fillAndBlur(billingNumber, '10');
+        await fillAndBlur(shippingNumber, '10');
 
-          // Submit or blur to trigger form-level validation
-          const submitButton = page.getByRole('button', { name: /submit/i });
-          await submitButton.click();
+        // Submit or blur to trigger form-level validation
+        const submitButton = page.getByRole('button', { name: /submit/i });
+        await submitButton.click();
 
-          // Check for error message about addresses being the same
-          const errorMessage = page.locator('text=/addresses.*differ/i');
-          await expect(errorMessage).toBeVisible();
-        });
-      }
-    );
+        // Check for error message about addresses being the same
+        const errorMessage = page.locator('text=/addresses.*differ/i');
+        await expect(errorMessage).toBeVisible();
+      });
+    });
   });
 
   test.describe('Utility Functions', () => {
@@ -460,107 +457,103 @@ test.describe('Purchase Form', () => {
     // 2. Missing required fields preventing form submission
     // 3. Complex field interaction state machine
     // Solution: Simplify test OR fill ALL required fields OR disable auto-fill effects for testing.
-    test.fixme(
-      'should show ROOT_FORM error "Brecht is not 30 anymore" when firstName=Brecht, lastName=Billiet, age=30',
-      async ({ page }) => {
-        await test.step('Fill specific values that trigger ROOT_FORM validation', async () => {
-          const firstName = page.getByLabel(/first name/i);
-          const lastName = page.getByLabel(/last name/i);
-          const age = page.getByLabel(/age/i);
+    test.fixme('should show ROOT_FORM error "Brecht is not 30 anymore" when firstName=Brecht, lastName=Billiet, age=30', async ({
+      page,
+    }) => {
+      await test.step('Fill specific values that trigger ROOT_FORM validation', async () => {
+        const firstName = page.getByLabel(/first name/i);
+        const lastName = page.getByLabel(/last name/i);
+        const age = page.getByLabel(/age/i);
 
-          // Fill firstName first (triggers gender="male" effect)
-          await fillAndBlur(firstName, 'Brecht');
+        // Fill firstName first (triggers gender="male" effect)
+        await fillAndBlur(firstName, 'Brecht');
 
-          // Wait for effect to complete
-          await page.waitForTimeout(300);
+        // Wait for effect to complete
+        await page.waitForTimeout(300);
 
-          // Fill age BEFORE lastName to avoid auto-fill effect overwriting it
-          await fillAndBlur(age, '30');
+        // Fill age BEFORE lastName to avoid auto-fill effect overwriting it
+        await fillAndBlur(age, '30');
 
-          // Now fill lastName (this will trigger auto-fill effect, but age is already set)
-          // IMPORTANT: The auto-fill effect sets age=35, so we need to set age=30 AFTER
-          await fillAndBlur(lastName, 'Billiet');
+        // Now fill lastName (this will trigger auto-fill effect, but age is already set)
+        // IMPORTANT: The auto-fill effect sets age=35, so we need to set age=30 AFTER
+        await fillAndBlur(lastName, 'Billiet');
 
-          // Wait for auto-fill effect
-          await page.waitForTimeout(300);
+        // Wait for auto-fill effect
+        await page.waitForTimeout(300);
 
-          // Re-set age to 30 after auto-fill
-          await fillAndBlur(age, '30');
+        // Re-set age to 30 after auto-fill
+        await fillAndBlur(age, '30');
 
-          // Wait for any effects to settle
-          await page.waitForTimeout(500);
+        // Wait for any effects to settle
+        await page.waitForTimeout(500);
 
-          // Submit the form to trigger ROOT_FORM validation
-          const submitButton = page.getByRole('button', { name: /submit/i });
-          await submitButton.click();
+        // Submit the form to trigger ROOT_FORM validation
+        const submitButton = page.getByRole('button', { name: /submit/i });
+        await submitButton.click();
 
-          // Wait for validation to complete
-          await page.waitForTimeout(1000);
+        // Wait for validation to complete
+        await page.waitForTimeout(1000);
 
-          // Check the debug pre element for ROOT_FORM errors
-          const debugErrors = page.locator('pre:has-text("ROOT_FORM errors")');
-          await expect(debugErrors).toContainText('Brecht is not 30 anymore');
+        // Check the debug pre element for ROOT_FORM errors
+        const debugErrors = page.locator('pre:has-text("ROOT_FORM errors")');
+        await expect(debugErrors).toContainText('Brecht is not 30 anymore');
 
-          // Also verify the error message appears in the alert div
-          const errorMessage = page
-            .locator('text=/Brecht is not 30 anymore/i')
-            .first();
-          await expect(errorMessage).toBeVisible();
-        });
-      }
-    );
+        // Also verify the error message appears in the alert div
+        const errorMessage = page
+          .locator('text=/Brecht is not 30 anymore/i')
+          .first();
+        await expect(errorMessage).toBeVisible();
+      });
+    });
 
     // FIXME: Depends on previous test - see above FIXME comment for root cause.
-    test.fixme(
-      'should clear ROOT_FORM error when age changes from 30',
-      async ({ page }) => {
-        await test.step('Change age from 30 to 31 and verify error clears', async () => {
-          const firstName = page.getByLabel(/first name/i);
-          const lastName = page.getByLabel(/last name/i);
-          const age = page.getByLabel(/age/i);
+    test.fixme('should clear ROOT_FORM error when age changes from 30', async ({
+      page,
+    }) => {
+      await test.step('Change age from 30 to 31 and verify error clears', async () => {
+        const firstName = page.getByLabel(/first name/i);
+        const lastName = page.getByLabel(/last name/i);
+        const age = page.getByLabel(/age/i);
 
-          // Follow same order as previous test
-          await fillAndBlur(firstName, 'Brecht');
-          await page.waitForTimeout(300);
-          await fillAndBlur(age, '30');
-          await fillAndBlur(lastName, 'Billiet');
-          await page.waitForTimeout(300);
-          await fillAndBlur(age, '30');
+        // Follow same order as previous test
+        await fillAndBlur(firstName, 'Brecht');
+        await page.waitForTimeout(300);
+        await fillAndBlur(age, '30');
+        await fillAndBlur(lastName, 'Billiet');
+        await page.waitForTimeout(300);
+        await fillAndBlur(age, '30');
 
-          // Wait for any auto-population effects
-          await page.waitForTimeout(500);
+        // Wait for any auto-population effects
+        await page.waitForTimeout(500);
 
-          const submitButton = page.getByRole('button', { name: /submit/i });
-          await submitButton.click();
+        const submitButton = page.getByRole('button', { name: /submit/i });
+        await submitButton.click();
 
-          // Wait for validation
-          await page.waitForTimeout(1000);
+        // Wait for validation
+        await page.waitForTimeout(1000);
 
-          const debugErrors = page.locator('pre:has-text("ROOT_FORM errors")');
-          await expect(debugErrors).toContainText('Brecht is not 30 anymore');
+        const debugErrors = page.locator('pre:has-text("ROOT_FORM errors")');
+        await expect(debugErrors).toContainText('Brecht is not 30 anymore');
 
-          const errorMessage = page
-            .locator('text=/Brecht is not 30 anymore/i')
-            .first();
-          await expect(errorMessage).toBeVisible();
+        const errorMessage = page
+          .locator('text=/Brecht is not 30 anymore/i')
+          .first();
+        await expect(errorMessage).toBeVisible();
 
-          // Change age to 31
-          await fillAndBlur(age, '31');
-          await submitButton.click();
+        // Change age to 31
+        await fillAndBlur(age, '31');
+        await submitButton.click();
 
-          // Wait for validation
-          await page.waitForTimeout(1000);
+        // Wait for validation
+        await page.waitForTimeout(1000);
 
-          // Error should be gone from debug output
-          await expect(debugErrors).not.toContainText(
-            'Brecht is not 30 anymore'
-          );
+        // Error should be gone from debug output
+        await expect(debugErrors).not.toContainText('Brecht is not 30 anymore');
 
-          // Error should be gone from UI
-          await expect(errorMessage).not.toBeVisible();
-        });
-      }
-    );
+        // Error should be gone from UI
+        await expect(errorMessage).not.toBeVisible();
+      });
+    });
   });
 
   test.describe('Phone Numbers Array Validation', () => {
@@ -583,7 +576,7 @@ test.describe('Purchase Form', () => {
       page,
     }) => {
       await test.step('Add phone number and verify validation', async () => {
-        const phoneInput = page.getByLabel(/phonenumbers add/i);
+        const phoneInput = page.getByLabel(/add new phone number/i);
         await fillAndBlur(phoneInput, '555-1234');
 
         const addButton = page.getByRole('button', { name: /^add$/i });
@@ -619,48 +612,47 @@ test.describe('Purchase Form', () => {
     // FIXME: This test has issues with form-level validation interfering with field-level tests
     // The phone number validation shows up in the wrapper that contains the address fields
     // Need to either fill ALL required fields or test address validation differently
-    test.fixme(
-      'should require all billing address fields',
-      async ({ page }) => {
-        await test.step('Focus and blur address fields', async () => {
-          // Fill minimum required fields to avoid other validation errors
-          const firstName = page.getByLabel(/first name/i);
-          await firstName.fill('John');
+    test.fixme('should require all billing address fields', async ({
+      page,
+    }) => {
+      await test.step('Focus and blur address fields', async () => {
+        // Fill minimum required fields to avoid other validation errors
+        const firstName = page.getByLabel(/first name/i);
+        await firstName.fill('John');
 
-          // Add a phone number to avoid phone validation errors
-          const phoneInput = page.getByLabel(/phonenumbers add/i);
-          await phoneInput.fill('555-1234');
-          const addButton = page.getByRole('button', { name: /^add$/i });
-          await addButton.click();
-          await page.waitForTimeout(300);
+        // Add a phone number to avoid phone validation errors
+        const phoneInput = page.getByLabel(/phonenumbers add/i);
+        await phoneInput.fill('555-1234');
+        const addButton = page.getByRole('button', { name: /^add$/i });
+        await addButton.click();
+        await page.waitForTimeout(300);
 
-          const street = page.getByLabel(/street/i).first();
-          const number = page.getByLabel(/number/i).first();
-          const city = page.getByLabel(/city/i).first();
-          const zipcode = page.getByLabel(/zipcode/i).first();
-          const country = page.getByLabel(/country/i).first();
+        const street = page.getByLabel(/street/i).first();
+        const number = page.getByLabel(/number/i).first();
+        const city = page.getByLabel(/city/i).first();
+        const zipcode = page.getByLabel(/zipcode/i).first();
+        const country = page.getByLabel(/country/i).first();
 
-          await street.focus();
-          await street.blur();
-          await expectFieldHasError(street, /required/i);
+        await street.focus();
+        await street.blur();
+        await expectFieldHasError(street, /required/i);
 
-          await number.focus();
-          await number.blur();
-          await expectFieldHasError(number, /required/i);
+        await number.focus();
+        await number.blur();
+        await expectFieldHasError(number, /required/i);
 
-          await city.focus();
-          await city.blur();
-          await expectFieldHasError(city, /required/i);
+        await city.focus();
+        await city.blur();
+        await expectFieldHasError(city, /required/i);
 
-          await zipcode.focus();
-          await zipcode.blur();
-          await expectFieldHasError(zipcode, /required/i);
+        await zipcode.focus();
+        await zipcode.blur();
+        await expectFieldHasError(zipcode, /required/i);
 
-          await country.focus();
-          await country.blur();
-          await expectFieldHasError(country, /required/i);
-        });
-      }
-    );
+        await country.focus();
+        await country.blur();
+        await expectFieldHasError(country, /required/i);
+      });
+    });
   });
 });

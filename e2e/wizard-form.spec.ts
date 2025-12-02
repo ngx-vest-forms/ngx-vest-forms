@@ -1,13 +1,10 @@
 import { expect, test } from '@playwright/test';
 import {
   expectChecked,
-  expectDisabled,
-  expectEnabled,
   expectFieldHasError,
   expectFieldValid,
   expectUnchecked,
   fillAndBlur,
-  waitForValidationToComplete,
 } from './helpers/form-helpers';
 
 /**
@@ -16,7 +13,7 @@ import {
 async function navigateToWizard(page: import('@playwright/test').Page) {
   await page.goto('/wizard');
   await expect(
-    page.getByRole('heading', { name: /multi-form wizard/i, level: 1 })
+    page.getByRole('heading', { name: /multi-form wizard/i, level: 2 })
   ).toBeVisible();
 }
 
@@ -142,8 +139,14 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
       });
 
       await test.step('Changing password should revalidate confirm password', async () => {
-        const passwordField = page.getByRole('textbox', { name: 'Password', exact: true });
-        const confirmPasswordField = page.getByRole('textbox', { name: 'Confirm Password', exact: true });
+        const passwordField = page.getByRole('textbox', {
+          name: 'Password',
+          exact: true,
+        });
+        const confirmPasswordField = page.getByRole('textbox', {
+          name: 'Confirm Password',
+          exact: true,
+        });
 
         // Set matching passwords
         await fillAndBlur(passwordField, 'SecurePass123!');
@@ -160,16 +163,20 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
       });
     });
 
-    test('should navigate to step 2 when step 1 is valid', async ({
-      page,
-    }) => {
+    test('should navigate to step 2 when step 1 is valid', async ({ page }) => {
       await test.step('Submit All triggers validation on all steps', async () => {
-        await fillAndBlur(page.getByLabel(/email address/i), 'test@example.com');
+        await fillAndBlur(
+          page.getByLabel(/email address/i),
+          'test@example.com'
+        );
         await fillAndBlur(
           page.getByLabel(/confirm email/i),
           'test@example.com'
         ); // Must match email
-        await fillAndBlur(page.getByRole('textbox', { name: 'Password', exact: true }), 'SecurePass123!');
+        await fillAndBlur(
+          page.getByRole('textbox', { name: 'Password', exact: true }),
+          'SecurePass123!'
+        );
         await fillAndBlur(
           page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
           'SecurePass123!'
@@ -188,7 +195,9 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
       page,
     }) => {
       await test.step('Click Save & Continue on empty form shows validation errors', async () => {
-        const nextButton = page.getByRole('button', { name: /save & continue/i });
+        const nextButton = page.getByRole('button', {
+          name: /save & continue/i,
+        });
 
         // Button is always enabled (a11y best practice)
         await expect(nextButton).toBeEnabled();
@@ -199,7 +208,10 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         // Primary required fields should show errors
         // Note: confirmEmail/confirmPassword use omitWhen(!email/!password)
         // so they only validate when primary field has a value
-        await expectFieldHasError(page.getByLabel(/email address/i), /required/i);
+        await expectFieldHasError(
+          page.getByLabel(/email address/i),
+          /required/i
+        );
         await expectFieldHasError(
           page.getByRole('textbox', { name: 'Password', exact: true }),
           /required/i
@@ -212,13 +224,21 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
       });
 
       await test.step('Fill email but not confirm, click shows confirm error', async () => {
-        await fillAndBlur(page.getByLabel(/email address/i), 'test@example.com');
+        await fillAndBlur(
+          page.getByLabel(/email address/i),
+          'test@example.com'
+        );
 
-        const nextButton = page.getByRole('button', { name: /save & continue/i });
+        const nextButton = page.getByRole('button', {
+          name: /save & continue/i,
+        });
         await nextButton.click();
 
         // Now confirmEmail should show error (omitWhen condition no longer true)
-        await expectFieldHasError(page.getByLabel(/confirm email/i), /confirm/i);
+        await expectFieldHasError(
+          page.getByLabel(/confirm email/i),
+          /confirm/i
+        );
 
         // Should still be on step 1
         await expect(
@@ -233,7 +253,10 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
       // Navigate to step 2 by completing step 1
       await fillAndBlur(page.getByLabel(/email address/i), 'test@example.com');
       await fillAndBlur(page.getByLabel(/confirm email/i), 'test@example.com');
-      await fillAndBlur(page.getByRole('textbox', { name: 'Password', exact: true }), 'SecurePass123!');
+      await fillAndBlur(
+        page.getByRole('textbox', { name: 'Password', exact: true }),
+        'SecurePass123!'
+      );
       await fillAndBlur(
         page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
         'SecurePass123!'
@@ -322,7 +345,10 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
 
         await frequencyField.focus();
         await frequencyField.blur();
-        await expectFieldHasError(frequencyField, /please select newsletter frequency/i);
+        await expectFieldHasError(
+          frequencyField,
+          /please select newsletter frequency/i
+        );
       });
 
       await test.step('Unchecking newsletter should hide frequency field', async () => {
@@ -358,9 +384,7 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
       });
     });
 
-    test('should navigate to step 3 when step 2 is valid', async ({
-      page,
-    }) => {
+    test('should navigate to step 3 when step 2 is valid', async ({ page }) => {
       await test.step('Fill all step 2 fields and submit', async () => {
         await fillAndBlur(page.getByLabel(/first name/i), 'John');
         await fillAndBlur(page.getByLabel(/last name/i), 'Doe');
@@ -384,7 +408,10 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
       // Step 1
       await fillAndBlur(page.getByLabel(/email address/i), 'john@example.com');
       await fillAndBlur(page.getByLabel(/confirm email/i), 'john@example.com');
-      await fillAndBlur(page.getByRole('textbox', { name: 'Password', exact: true }), 'SecurePass123!');
+      await fillAndBlur(
+        page.getByRole('textbox', { name: 'Password', exact: true }),
+        'SecurePass123!'
+      );
       await fillAndBlur(
         page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
         'SecurePass123!'
@@ -475,7 +502,9 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
       await test.step('Click edit link to go back to step 1', async () => {
         // The Account Details card is the first one on the review page
         // Use first() to avoid strict mode violation since both cards have Edit buttons
-        const editAccountLink = page.getByRole('button', { name: /edit/i }).first();
+        const editAccountLink = page
+          .getByRole('button', { name: /edit/i })
+          .first();
 
         await editAccountLink.click();
 
@@ -493,12 +522,18 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
     }) => {
       await test.step('Complete step 1 and step 2 fully, leave step 3 incomplete', async () => {
         // Fill step 1 completely
-        await fillAndBlur(page.getByLabel(/email address/i), 'test@example.com');
+        await fillAndBlur(
+          page.getByLabel(/email address/i),
+          'test@example.com'
+        );
         await fillAndBlur(
           page.getByLabel(/confirm email/i),
           'test@example.com'
         );
-        await fillAndBlur(page.getByRole('textbox', { name: 'Password', exact: true }), 'SecurePass123!');
+        await fillAndBlur(
+          page.getByRole('textbox', { name: 'Password', exact: true }),
+          'SecurePass123!'
+        );
         await fillAndBlur(
           page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
           'SecurePass123!'
@@ -540,12 +575,18 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
     }) => {
       await test.step('Complete all steps, then break step 1, and submit', async () => {
         // Fill step 1 correctly
-        await fillAndBlur(page.getByLabel(/email address/i), 'test@example.com');
+        await fillAndBlur(
+          page.getByLabel(/email address/i),
+          'test@example.com'
+        );
         await fillAndBlur(
           page.getByLabel(/confirm email/i),
           'test@example.com'
         );
-        await fillAndBlur(page.getByRole('textbox', { name: 'Password', exact: true }), 'SecurePass123!');
+        await fillAndBlur(
+          page.getByRole('textbox', { name: 'Password', exact: true }),
+          'SecurePass123!'
+        );
         await fillAndBlur(
           page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
           'SecurePass123!'
@@ -574,7 +615,9 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         );
 
         // Save & Continue button is always enabled (a11y)
-        const nextButton = page.getByRole('button', { name: /save & continue/i });
+        const nextButton = page.getByRole('button', {
+          name: /save & continue/i,
+        });
         await expect(nextButton).toBeEnabled();
 
         // Click to trigger validation - should show error
@@ -598,12 +641,18 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
     }) => {
       await test.step('Complete all steps and submit successfully', async () => {
         // Step 1: Account
-        await fillAndBlur(page.getByLabel(/email address/i), 'john@example.com');
+        await fillAndBlur(
+          page.getByLabel(/email address/i),
+          'john@example.com'
+        );
         await fillAndBlur(
           page.getByLabel(/confirm email/i),
           'john@example.com'
         );
-        await fillAndBlur(page.getByRole('textbox', { name: 'Password', exact: true }), 'SecurePass123!');
+        await fillAndBlur(
+          page.getByRole('textbox', { name: 'Password', exact: true }),
+          'SecurePass123!'
+        );
         await fillAndBlur(
           page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
           'SecurePass123!'
@@ -625,9 +674,9 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         await clickSubmitAll(page);
 
         // Should show success message
-        await expect(
-          page.getByText(/registration complete/i)
-        ).toBeVisible({ timeout: 3000 }); // Wait for API simulation
+        await expect(page.getByText(/registration complete/i)).toBeVisible({
+          timeout: 3000,
+        }); // Wait for API simulation
       });
     });
 
@@ -636,12 +685,18 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
     }) => {
       await test.step('Navigate to step 2 and click Save & Continue to show all errors', async () => {
         // Fill step 1 completely
-        await fillAndBlur(page.getByLabel(/email address/i), 'test@example.com');
+        await fillAndBlur(
+          page.getByLabel(/email address/i),
+          'test@example.com'
+        );
         await fillAndBlur(
           page.getByLabel(/confirm email/i),
           'test@example.com'
         );
-        await fillAndBlur(page.getByRole('textbox', { name: 'Password', exact: true }), 'SecurePass123!');
+        await fillAndBlur(
+          page.getByRole('textbox', { name: 'Password', exact: true }),
+          'SecurePass123!'
+        );
         await fillAndBlur(
           page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
           'SecurePass123!'
@@ -652,7 +707,9 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         await fillAndBlur(page.getByLabel(/first name/i), 'John');
 
         // Save & Continue button is always enabled (a11y)
-        const nextButton = page.getByRole('button', { name: /save & continue/i });
+        const nextButton = page.getByRole('button', {
+          name: /save & continue/i,
+        });
         await expect(nextButton).toBeEnabled();
 
         // Click to trigger validation on ALL fields (markAllAsTouched)
@@ -677,12 +734,18 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
     }) => {
       await test.step('Fill step 1, navigate to step 2, go back, verify data persists', async () => {
         // Fill step 1
-        await fillAndBlur(page.getByLabel(/email address/i), 'persist@example.com');
+        await fillAndBlur(
+          page.getByLabel(/email address/i),
+          'persist@example.com'
+        );
         await fillAndBlur(
           page.getByLabel(/confirm email/i),
           'persist@example.com'
         );
-        await fillAndBlur(page.getByRole('textbox', { name: 'Password', exact: true }), 'Persist123!');
+        await fillAndBlur(
+          page.getByRole('textbox', { name: 'Password', exact: true }),
+          'Persist123!'
+        );
         await fillAndBlur(
           page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
           'Persist123!'
@@ -707,15 +770,23 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
       });
     });
 
-    test('should track completed steps via step indicator UI', async ({ page }) => {
+    test('should track completed steps via step indicator UI', async ({
+      page,
+    }) => {
       await test.step('Complete step 1 and verify step indicator shows checkmark', async () => {
         // Fill and submit step 1
-        await fillAndBlur(page.getByLabel(/email address/i), 'test@example.com');
+        await fillAndBlur(
+          page.getByLabel(/email address/i),
+          'test@example.com'
+        );
         await fillAndBlur(
           page.getByLabel(/confirm email/i),
           'test@example.com'
         );
-        await fillAndBlur(page.getByRole('textbox', { name: 'Password', exact: true }), 'SecurePass123!');
+        await fillAndBlur(
+          page.getByRole('textbox', { name: 'Password', exact: true }),
+          'SecurePass123!'
+        );
         await fillAndBlur(
           page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
           'SecurePass123!'
@@ -725,7 +796,11 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         // After navigating to step 2, step 1 should show completed state
         // The wizard-steps component shows a checkmark SVG for completed steps
         // and applies blue background color (bg-blue-600) to completed steps
-        const step1Circle = page.locator('ngx-wizard-steps li').first().locator('span').first();
+        const step1Circle = page
+          .locator('ngx-wizard-steps li')
+          .first()
+          .locator('span')
+          .first();
 
         // Completed steps have bg-blue-600 class and show checkmark
         await expect(step1Circle).toHaveClass(/bg-blue-600/);
@@ -734,7 +809,10 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
 
       await test.step('Current step (step 2) has aria-current attribute', async () => {
         // The current step indicator has aria-current="step"
-        const step2Circle = page.locator('ngx-wizard-steps li').nth(1).locator('[aria-current="step"]');
+        const step2Circle = page
+          .locator('ngx-wizard-steps li')
+          .nth(1)
+          .locator('[aria-current="step"]');
         await expect(step2Circle).toBeVisible();
       });
     });
