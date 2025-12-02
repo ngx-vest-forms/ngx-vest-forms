@@ -7,6 +7,7 @@ import {
   fillAndBlur,
   monitorAriaStability,
   navigateToValidationConfigDemo,
+  typeAndBlur,
 } from './helpers/form-helpers';
 
 test.describe('ValidationConfig Demo', () => {
@@ -89,29 +90,23 @@ test.describe('ValidationConfig Demo', () => {
       });
     });
 
-    // FIXME: Bidirectional ValidationConfig timing in Playwright
-    // Works correctly in manual testing (verified with mcp_playwright_browser_*)
-    // ValidationConfig valueChanges listener fires and triggers dependent field validation
-    // But in automated Playwright tests, the bidirectional trigger doesn't fire reliably
-    // even with expect.poll() and 15s timeout. This is a test framework limitation.
-    test.fixme(
-      'should revalidate confirmPassword when password changes (bidirectional)',
-      async ({ page }) => {
-        await test.step('Change password after confirmPassword is filled', async () => {
-          const password = page.getByLabel('Password', { exact: true });
-          const confirmPassword = page.getByLabel(/confirm password/i);
+    test('should revalidate confirmPassword when password changes (bidirectional)', async ({
+      page,
+    }) => {
+      await test.step('Change password after confirmPassword is filled', async () => {
+        const password = page.getByLabel('Password', { exact: true });
+        const confirmPassword = page.getByLabel(/confirm password/i);
 
-          await fillAndBlur(password, 'MySecure123');
-          await fillAndBlur(confirmPassword, 'MySecure123');
-          await expectFieldValid(confirmPassword);
+        await fillAndBlur(password, 'MySecure123');
+        await fillAndBlur(confirmPassword, 'MySecure123');
+        await expectFieldValid(confirmPassword);
 
-          // Change password, confirmPassword should show error
-          // Using expect.poll() in expectFieldHasError handles bidirectional validation timing
-          await fillAndBlur(password, 'NewPassword456');
-          await expectFieldHasError(confirmPassword, /match/i);
-        });
-      }
-    );
+        // Change password using typeAndBlur - this properly triggers Angular's
+        // valueChanges which is needed for bidirectional validation config to work
+        await typeAndBlur(password, 'NewPassword456');
+        await expectFieldHasError(confirmPassword, /match/i);
+      });
+    });
 
     test('should NOT create infinite validation loops (race condition test)', async ({
       page,
@@ -388,45 +383,46 @@ test.describe('ValidationConfig Demo', () => {
       });
     });
 
-    // FIXME: Bidirectional ValidationConfig timing in Playwright
-    // Same issue as password bidirectional tests - works in manual testing but not in automated tests
-    test.fixme(
-      'should clear error when endDate is corrected to be after startDate (bidirectional)',
-      async ({ page }) => {
-        await test.step('Fix date range', async () => {
-          const startDate = page.getByLabel(/start date/i);
-          const endDate = page.getByLabel(/end date/i);
+    test('should clear error when endDate is corrected to be after startDate (bidirectional)', async ({
+      page,
+    }) => {
+      await test.step('Fix date range', async () => {
+        const startDate = page.getByLabel(/start date/i);
+        const endDate = page.getByLabel(/end date/i);
 
-          await fillAndBlur(startDate, '2025-01-10');
-          await fillAndBlur(endDate, '2025-01-05');
-          await expectFieldHasError(endDate, /after/i);
+        await fillAndBlur(startDate, '2025-01-10');
+        await fillAndBlur(endDate, '2025-01-05');
+        await expectFieldHasError(endDate, /after/i);
 
-          // Fix endDate, error should clear on both fields
-          await fillAndBlur(endDate, '2025-01-20');
-          await expectFieldValid(endDate);
-          await expectFieldValid(startDate);
-        });
-      }
-    );
+        // Fix endDate using typeAndBlur for proper bidirectional trigger
+        await typeAndBlur(endDate, '2025-01-20');
+        await expectFieldValid(endDate);
+        await expectFieldValid(startDate);
+      });
+    });
 
-    // FIXME: Bidirectional ValidationConfig timing in Playwright
-    test.fixme(
-      'should revalidate endDate when startDate changes (bidirectional)',
-      async ({ page }) => {
-        await test.step('Change startDate after dates are filled', async () => {
-          const startDate = page.getByLabel(/start date/i);
-          const endDate = page.getByLabel(/end date/i);
+    // FIXME: Date input bidirectional validation in Playwright
+    // Password bidirectional validation works perfectly with typeAndBlur(), but date inputs
+    // (type="date") handle input events differently. Playwright's type() and fill() methods
+    // don't trigger Angular's valueChanges in a way that fires the bidirectional config.
+    // The feature works correctly in manual browser testing - this is a test limitation.
+    // See: https://github.com/microsoft/playwright/issues/9189 (date input value setting)
+    test.fixme('should revalidate endDate when startDate changes (bidirectional)', async ({
+      page,
+    }) => {
+      await test.step('Change startDate after dates are filled', async () => {
+        const startDate = page.getByLabel(/start date/i);
+        const endDate = page.getByLabel(/end date/i);
 
-          await fillAndBlur(startDate, '2025-01-10');
-          await fillAndBlur(endDate, '2025-01-15');
-          await expectFieldValid(endDate);
+        await fillAndBlur(startDate, '2025-01-10');
+        await fillAndBlur(endDate, '2025-01-15');
+        await expectFieldValid(endDate);
 
-          // Change startDate to be after endDate, endDate should show error
-          await fillAndBlur(startDate, '2025-01-20');
-          await expectFieldHasError(endDate, /after/i);
-        });
-      }
-    );
+        // Change startDate - endDate should show error via bidirectional config
+        await typeAndBlur(startDate, '2025-01-20');
+        await expectFieldHasError(endDate, /after/i);
+      });
+    });
   });
 
   test.describe('Overall Form Validation', () => {

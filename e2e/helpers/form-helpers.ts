@@ -148,13 +148,38 @@ export async function expectFieldValid(field: Locator): Promise<void> {
 }
 
 /**
- * Fill a text input and trigger blur to activate validation
+ * Fill a text input and trigger blur to activate validation.
+ * Uses Playwright's fill() which sets value directly.
  */
 export async function fillAndBlur(
   field: Locator,
   value: string
 ): Promise<void> {
   await field.fill(value);
+  await field.blur();
+}
+
+/**
+ * Type into a text input character by character and trigger blur.
+ * This simulates real user typing which properly triggers Angular's
+ * input events and valueChanges - essential for bidirectional
+ * validation in ValidationConfig to work correctly in tests.
+ *
+ * Use this instead of fillAndBlur when testing bidirectional/cross-field
+ * validation where changing one field should trigger revalidation of another.
+ *
+ * @param field - The input locator
+ * @param value - The value to type
+ * @param delay - Delay between keystrokes in ms (default: 50)
+ */
+export async function typeAndBlur(
+  field: Locator,
+  value: string,
+  delay = 50
+): Promise<void> {
+  await field.click();
+  await field.fill(''); // Clear any existing value
+  await field.type(value, { delay });
   await field.blur();
 }
 
