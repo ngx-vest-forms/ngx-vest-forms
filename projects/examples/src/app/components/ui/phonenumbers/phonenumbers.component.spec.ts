@@ -1,8 +1,8 @@
-import { vi } from 'vitest';
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgxVestForms } from 'ngx-vest-forms';
+import { vi } from 'vitest';
 import { PhoneNumbersComponent } from './phonenumbers.component';
 
 @Component({

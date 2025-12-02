@@ -5,10 +5,10 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { NgxDeepPartial } from '../../public-api';
 import { FormDirective } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 // Wait time for tests should be slightly longer than debounce to ensure completion
 // Default debounce is 100ms, so we add 50ms buffer
@@ -48,7 +48,7 @@ describe('FormDirective - Comprehensive', () => {
           }
         </form>
       `,
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
     })
     class TestComponent {
       formValue = signal<
@@ -119,7 +119,7 @@ describe('FormDirective - Comprehensive', () => {
           <input name="description" [ngModel]="formValue().description" />
         </form>
       `,
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
     })
     class TestComponent {
       formValue = signal<
@@ -198,7 +198,7 @@ describe('FormDirective - Comprehensive', () => {
           <input name="email" [ngModel]="formValue().email" />
         </form>
       `,
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
     })
     class TestComponent {
       formValue = signal<
@@ -274,7 +274,7 @@ describe('FormDirective - Comprehensive', () => {
           </div>
         </form>
       `,
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
     })
     class TestComponent {
       formValue = signal<
@@ -372,7 +372,7 @@ describe('FormDirective - Comprehensive', () => {
           />
         </form>
       `,
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
     })
     class TestComponent {
       // Separate signals - input vs output
@@ -478,7 +478,7 @@ describe('FormDirective - Comprehensive', () => {
           </ngx-control-wrapper>
         </form>
       `,
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
     })
     class TestComponent {
       formValue = signal<
@@ -626,7 +626,7 @@ describe('FormDirective - Comprehensive', () => {
           />
         </form>
       `,
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
     })
     class TestComponent {
       formValue = signal<
@@ -720,7 +720,7 @@ describe('FormDirective - Comprehensive', () => {
           />
         </form>
       `,
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
     })
     class TestComponent {
       formValue = signal<
@@ -814,7 +814,7 @@ describe('FormDirective - Comprehensive', () => {
           />
         </form>
       `,
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
     })
     class TestComponent {
       formValue = signal<
@@ -934,7 +934,7 @@ describe('FormDirective - Comprehensive', () => {
           <input name="dependentField" [ngModel]="formValue().dependentField" />
         </form>
       `,
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
     })
     class TestComponent {
       formValue = signal<
@@ -1028,7 +1028,7 @@ describe('FormDirective - Comprehensive', () => {
           />
         </form>
       `,
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
     })
     class TestComponent {
       formValue = signal<
@@ -1137,7 +1137,7 @@ describe('FormDirective - Comprehensive', () => {
           />
         </form>
       `,
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
     })
     class TestComponent {
       formValue = signal<
@@ -1209,7 +1209,7 @@ describe('FormDirective - Comprehensive', () => {
             <input name="confirmEmail" [ngModel]="formValue().confirmEmail" />
           </form>
         `,
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
       })
       class ModernTestComponent {
         formValue = signal<
@@ -1249,7 +1249,7 @@ describe('FormDirective - Comprehensive', () => {
             <input name="field2" [ngModel]="formValue().field2" />
           </form>
         `,
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
       })
       class ReactiveTestComponent {
         formValue = signal<
@@ -1298,7 +1298,7 @@ describe('FormDirective - Comprehensive', () => {
             />
           </form>
         `,
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
       })
       class LifecycleTestComponent {
         formValue = signal<
@@ -1410,7 +1410,7 @@ describe('FormDirective - Comprehensive', () => {
             <input name="field2" [ngModel]="formValue().field2" />
           </form>
         `,
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
       })
       class DuplicateSubscriptionTestComponent {
         formValue = signal<
@@ -1503,7 +1503,7 @@ describe('FormDirective - Comprehensive', () => {
             ></textarea>
           </form>
         `,
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
       })
       class RaceConditionTestComponent {
         formValue = signal<
@@ -1615,7 +1615,7 @@ describe('FormDirective - Comprehensive', () => {
             <input name="field2" [ngModel]="formValue().field2" />
           </form>
         `,
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
       })
       class TestComponent {
         formValue = signal<NgxDeepPartial<{ field1: string; field2: string }>>({
@@ -1716,7 +1716,7 @@ describe('FormDirective - Comprehensive', () => {
             <input name="field2" [ngModel]="formValue().field2" />
           </form>
         `,
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
       })
       class TestComponent {
         formValue = signal<NgxDeepPartial<{ field1: string; field2: string }>>({
@@ -1797,7 +1797,7 @@ describe('FormDirective - Comprehensive', () => {
             <input name="field2" [ngModel]="formValue().field2" />
           </form>
         `,
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
       })
       class TestComponent {
         formValue = signal<NgxDeepPartial<{ field1: string; field2: string }>>({

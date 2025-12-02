@@ -68,8 +68,8 @@
 import { Component, signal, viewChild } from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
 import { enforce, only, staticSuite, test } from 'vest';
+import { describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
 import { DeepPartial } from '../utils/deep-partial';
 import { FormDirective } from './form.directive';
@@ -375,7 +375,11 @@ describe('FormDirective - Reset Functionality', () => {
               [ngModel]="formValue().lastName"
               data-testid="lastName"
             />
-            <button type="button" (click)="resetWithDefaults()" data-testid="reset">
+            <button
+              type="button"
+              (click)="resetWithDefaults()"
+              data-testid="reset"
+            >
               Reset with Defaults
             </button>
           </form>
@@ -412,9 +416,9 @@ describe('FormDirective - Reset Functionality', () => {
       const { fixture } = await render(TestComponent);
 
       // Verify initial values
-      expect(
-        (screen.getByTestId('firstName') as HTMLInputElement).value
-      ).toBe('John');
+      expect((screen.getByTestId('firstName') as HTMLInputElement).value).toBe(
+        'John'
+      );
 
       // Click reset with defaults
       await userEvent.click(screen.getByTestId('reset'));
@@ -424,9 +428,9 @@ describe('FormDirective - Reset Functionality', () => {
         expect(
           (screen.getByTestId('firstName') as HTMLInputElement).value
         ).toBe('Default');
-        expect(
-          (screen.getByTestId('lastName') as HTMLInputElement).value
-        ).toBe('User');
+        expect((screen.getByTestId('lastName') as HTMLInputElement).value).toBe(
+          'User'
+        );
         expect(fixture.componentInstance.formValue()).toEqual({
           firstName: 'Default',
           lastName: 'User',

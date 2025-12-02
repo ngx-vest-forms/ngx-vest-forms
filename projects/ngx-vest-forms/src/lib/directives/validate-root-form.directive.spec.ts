@@ -4,10 +4,10 @@ import { NgForm } from '@angular/forms';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { enforce, only, staticSuite, test } from 'vest';
+import { describe, expect, it } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import { NgxVestForms } from '../exports';
 import { getAllFormErrors } from '../utils/form-utils';
-import { describe, it, expect } from 'vitest';
 
 /**
  * Test validation suite for root form validation tests
@@ -77,7 +77,7 @@ describe('ValidateRootFormDirective', () => {
   describe('integration with getAllFormErrors', () => {
     it('should expose ROOT_FORM errors via getAllFormErrors after submit', async () => {
       @Component({
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
         template: `
           <form
             ngxVestForm
@@ -148,7 +148,7 @@ describe('ValidateRootFormDirective', () => {
 
     it('should handle multiple ROOT_FORM errors (Brecht scenario)', async () => {
       @Component({
-         imports: [NgxVestForms, JsonPipe],
+        imports: [NgxVestForms, JsonPipe],
         template: `
           <form
             ngxVestForm
@@ -228,7 +228,7 @@ describe('ValidateRootFormDirective', () => {
 
     it('should clear ROOT_FORM errors when condition no longer applies', async () => {
       @Component({
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
         template: `
           <form
             ngxVestForm
@@ -316,7 +316,7 @@ describe('ValidateRootFormDirective', () => {
   describe('disabled by default', () => {
     it('should not validate when ngxValidateRootForm is false', async () => {
       @Component({
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
         template: `
           <form
             ngxVestForm
@@ -352,7 +352,7 @@ describe('ValidateRootFormDirective', () => {
   describe('submit mode (default)', () => {
     it('should not validate before form submission', async () => {
       @Component({
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
         template: `
           <form
             ngxVestForm
@@ -398,7 +398,7 @@ describe('ValidateRootFormDirective', () => {
 
     it('should validate on form submission', async () => {
       @Component({
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
         template: `
           <form
             ngxVestForm
@@ -455,7 +455,7 @@ describe('ValidateRootFormDirective', () => {
 
     it('should revalidate after submit when values change', async () => {
       @Component({
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
         template: `
           <form
             ngxVestForm
@@ -524,7 +524,7 @@ describe('ValidateRootFormDirective', () => {
   describe('live mode', () => {
     it('should validate without submit in live mode', async () => {
       @Component({
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
         template: `
           <form
             ngxVestForm
@@ -576,7 +576,7 @@ describe('ValidateRootFormDirective', () => {
 
     it('should revalidate immediately when values change in live mode', async () => {
       @Component({
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
         template: `
           <form
             ngxVestForm
@@ -643,7 +643,7 @@ describe('ValidateRootFormDirective', () => {
   describe('debouncing', () => {
     it('should respect debounceTime in validation options', async () => {
       @Component({
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
         template: `
           <form
             ngxVestForm

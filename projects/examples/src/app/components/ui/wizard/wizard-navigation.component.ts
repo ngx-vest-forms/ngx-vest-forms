@@ -19,7 +19,11 @@ import {
   selector: 'ngx-wizard-navigation',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="flex items-center justify-between pt-6" role="navigation" aria-label="Form navigation">
+    <div
+      class="flex items-center justify-between pt-6"
+      role="navigation"
+      aria-label="Form navigation"
+    >
       <!-- Previous button -->
       @if (showPrevious()) {
         <button
@@ -51,10 +55,7 @@ import {
       <div class="flex gap-3">
         <!-- Save & Continue button (for steps 1 and 2) -->
         @if (showSaveAndContinue()) {
-          <button
-            type="submit"
-            class="btn btn-primary gap-2"
-          >
+          <button type="submit" class="btn btn-primary gap-2">
             Save & Continue
             <svg
               class="h-4 w-4"

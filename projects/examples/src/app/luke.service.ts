@@ -11,15 +11,20 @@ export class LukeService {
     lastName: string;
     gender: 'male' | 'female' | 'other';
   }> {
-    return this.httpClient.get<{ name: string; gender: 'male' | 'female' | 'other' }>('https://swapi.dev/api/people/1').pipe(
-      map((resp) => {
-        const name = resp.name.split(' ');
-        return {
-          firstName: name[0],
-          lastName: name[1],
-          gender: resp.gender,
-        };
-      })
-    );
+    return this.httpClient
+      .get<{
+        name: string;
+        gender: 'male' | 'female' | 'other';
+      }>('https://swapi.dev/api/people/1')
+      .pipe(
+        map((resp) => {
+          const name = resp.name.split(' ');
+          return {
+            firstName: name[0],
+            lastName: name[1],
+            gender: resp.gender,
+          };
+        })
+      );
   }
 }

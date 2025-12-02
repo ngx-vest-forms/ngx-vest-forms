@@ -1,5 +1,5 @@
-import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { delay, of } from 'rxjs';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPurchaseValidationSuite } from './purchase.validations';
 
 describe('Purchase Validations', () => {

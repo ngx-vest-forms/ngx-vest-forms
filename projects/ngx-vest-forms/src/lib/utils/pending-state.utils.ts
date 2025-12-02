@@ -17,7 +17,7 @@ export type DebouncedPendingStateOptions = {
    * @default 500
    */
   minimumDisplay?: number;
-}
+};
 
 /**
  * Result of createDebouncedPendingState containing the debounced signal
@@ -35,7 +35,7 @@ export type DebouncedPendingStateResult = {
    * Call this in ngOnDestroy if needed (though the effect cleanup handles most cases).
    */
   cleanup: () => void;
-}
+};
 
 /**
  * Creates a debounced pending state signal that prevents flashing validation messages.

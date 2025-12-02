@@ -174,7 +174,6 @@ const selectors = {
     </div>
   `,
   imports: [NgxVestForms, JsonPipe],
-
 })
 export class OmitWhenValidationConfigComponent {
   private readonly vestFormRef = viewChild.required('vestForm', {

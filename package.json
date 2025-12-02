@@ -83,6 +83,7 @@
     "playwright": "~1.57.0",
     "playwright-ng-schematics": "^21.0.1",
     "postcss": "~8.5.6",
+    "prettier": "~3.7.3",
     "prettier-plugin-organize-imports": "^4.3.0",
     "prettier-plugin-tailwindcss": "~0.7.2",
     "semantic-release": "~25.0.2",

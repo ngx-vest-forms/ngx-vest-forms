@@ -210,7 +210,8 @@ export function keepFieldsWhen<T extends Record<string, unknown>>(
   const result: Partial<T> = {};
   Object.entries(conditions).forEach(([fieldName, shouldKeep]) => {
     if (shouldKeep && fieldName in currentState) {
-      (result as Record<string, unknown>)[fieldName] = currentState[fieldName as keyof T];
+      (result as Record<string, unknown>)[fieldName] =
+        currentState[fieldName as keyof T];
     }
   });
   return result;

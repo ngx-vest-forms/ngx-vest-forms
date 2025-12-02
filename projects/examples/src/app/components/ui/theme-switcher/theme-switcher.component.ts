@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, effect, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  signal,
+} from '@angular/core';
 
 @Component({
   selector: 'ngx-theme-switcher',

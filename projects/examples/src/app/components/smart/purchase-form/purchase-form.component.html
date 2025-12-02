@@ -282,7 +282,7 @@
 
             <!-- Security -->
             <div
-              class="border-t border-gray-100 pt-6 dark:border-gray-700 md:col-span-2"
+              class="border-t border-gray-100 pt-6 md:col-span-2 dark:border-gray-700"
             >
               <h3 class="section-title">Security</h3>
               <div class="grid gap-6 md:grid-cols-2" ngModelGroup="passwords">
@@ -315,7 +315,7 @@
 
             <!-- Order Details -->
             <div
-              class="border-t border-gray-100 pt-6 dark:border-gray-700 md:col-span-2"
+              class="border-t border-gray-100 pt-6 md:col-span-2 dark:border-gray-700"
             >
               <h3 class="section-title">Order Details</h3>
               <div class="grid gap-6 md:grid-cols-2">
@@ -367,7 +367,7 @@
 
             <!-- Addresses -->
             <div
-              class="border-t border-gray-100 pt-6 dark:border-gray-700 md:col-span-2"
+              class="border-t border-gray-100 pt-6 md:col-span-2 dark:border-gray-700"
             >
               <div ngModelGroup="addresses">
                 <div
@@ -385,7 +385,7 @@
                   <input
                     id="shipping-checkbox"
                     type="checkbox"
-                    class="h-4 w-4 rounded-sm border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-primary-600"
+                    class="text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 h-4 w-4 rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800"
                     [ngModel]="
                       formValue().addresses
                         ?.shippingAddressDifferentFromBillingAddress
@@ -415,7 +415,7 @@
 
             <!-- Actions -->
             <div
-              class="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-6 dark:border-gray-700 md:col-span-2"
+              class="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-6 md:col-span-2 dark:border-gray-700"
             >
               <button type="button" (click)="reset()" class="btn btn-secondary">
                 Reset

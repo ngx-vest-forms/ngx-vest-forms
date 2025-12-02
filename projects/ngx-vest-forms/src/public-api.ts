@@ -12,6 +12,7 @@ export type {
   NgxDeepRequired,
   NgxFormCompatibleDeepRequired,
 } from './lib/utils/deep-required';
+export { ROOT_FORM as ROOT_FORM_CONSTANT } from './lib/utils/field-path-types';
 export type {
   FieldPath,
   FieldPathValue,
@@ -20,9 +21,8 @@ export type {
   ValidateFieldPath,
   ValidationConfigMap,
 } from './lib/utils/field-path-types';
-export { ROOT_FORM as ROOT_FORM_CONSTANT } from './lib/utils/field-path-types';
-export type { NgxFormState } from './lib/utils/form-state.utils';
 export { createEmptyFormState } from './lib/utils/form-state.utils';
+export type { NgxFormState } from './lib/utils/form-state.utils';
 export {
   ValidationConfigBuilder,
   createValidationConfig,
@@ -46,11 +46,11 @@ export {
 } from './lib/utils/field-clearing';
 export { stringifyFieldPath } from './lib/utils/field-path.utils';
 export { setValueAtPath } from './lib/utils/form-utils';
+export { createDebouncedPendingState } from './lib/utils/pending-state.utils';
 export type {
   DebouncedPendingStateOptions,
   DebouncedPendingStateResult,
 } from './lib/utils/pending-state.utils';
-export { createDebouncedPendingState } from './lib/utils/pending-state.utils';
 export { validateShape } from './lib/utils/shape-validation';
 
 // Internal utilities - exported for advanced use cases but not part of the primary API

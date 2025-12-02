@@ -9,7 +9,7 @@ export type NgxFormState<TModel = unknown> = {
   errors: Record<string, string[]>;
   /** Current form value (includes disabled fields) */
   value: TModel | null;
-}
+};
 
 /**
  * Creates an empty NgxFormState with default values.

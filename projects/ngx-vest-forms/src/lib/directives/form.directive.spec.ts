@@ -1,12 +1,11 @@
 /* eslint-disable @angular-eslint/component-selector */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AsyncPipe } from '@angular/common';
 import { Component, signal, ViewChild } from '@angular/core';
 import { render } from '@testing-library/angular';
 import { isObservable, Observable } from 'rxjs';
 import { enforce, only, staticSuite } from 'vest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FormDirective } from '../directives/form.directive';
-import { NgxVestForms, vestForms } from '../exports';
+import { NgxVestForms } from '../exports';
 // Helper to await either a Promise or Observable
 async function awaitResult<T>(result: Promise<T> | Observable<T>) {
   if (isObservable(result)) {
@@ -19,7 +18,7 @@ import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'test-form',
-   imports: [NgxVestForms],
+  imports: [NgxVestForms],
 
   template: `
     <form
@@ -100,7 +99,7 @@ describe('FormDirective - Async Validator', () => {
       ></form>
     `,
 
-     imports: [NgxVestForms],
+    imports: [NgxVestForms],
   })
   class TestParallelValidationHost {
     formValue = signal({ username: '' });
@@ -137,7 +136,7 @@ describe('FormDirective - Async Validator', () => {
       ></form>
     `,
 
-     imports: [NgxVestForms],
+    imports: [NgxVestForms],
   })
   class TestDebounceCacheHost {
     formValue = signal({ username: '', email: '' });
@@ -147,7 +146,7 @@ describe('FormDirective - Async Validator', () => {
 
   @Component({
     selector: 'test-form-throw',
-     imports: [NgxVestForms],
+    imports: [NgxVestForms],
 
     template: `
       <form
@@ -193,7 +192,7 @@ describe('FormDirective - Async Validator', () => {
       selector: 'test-null-suite-host',
       template: `<form ngxVestForm #vest="ngxVestForm"></form>`,
 
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
     })
     class TestNullSuiteHost {
       @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
@@ -217,7 +216,7 @@ describe('FormDirective - Async Validator', () => {
         #vest="ngxVestForm"
       ></form>`,
 
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
     })
     class TestUndefinedValueHost {
       // Provide a proper Vest suite that calls .done() callback
@@ -263,7 +262,7 @@ describe('FormDirective - Composability & Host Bindings', () => {
         <form ngxVestForm #vest2="ngxVestForm"></form>
       `,
 
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
     })
     class TestMultiDirectiveHost {
       @ViewChild('vest1', { static: true }) vestForm1!: FormDirective<any>;
@@ -286,7 +285,7 @@ describe('FormDirective - ValidationConfig', () => {
       ></form>
     `,
 
-     imports: [NgxVestForms],
+    imports: [NgxVestForms],
   })
   class TestValidationConfigHost {
     validationConfig = signal<{ [key: string]: string[] }>({
@@ -313,7 +312,7 @@ describe('FormDirective - ValidationConfig', () => {
         #vest="ngxVestForm"
       ></form>`,
 
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
     })
     class TestValidationConfigLoop {
       validationConfig = signal<{ [key: string]: string[] }>({
@@ -338,7 +337,7 @@ describe('FormDirective - Signals/Outputs', () => {
       selector: 'test-signals-outputs-host',
       template: `<form ngxVestForm #vest="ngxVestForm"></form>`,
 
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
     })
     class TestSignalsOutputsHost {
       @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
@@ -357,7 +356,7 @@ describe('FormDirective - triggerFormValidation', () => {
     selector: 'test-trigger-validation-host',
     template: `<form ngxVestForm #vest="ngxVestForm"></form>`,
 
-     imports: [NgxVestForms],
+    imports: [NgxVestForms],
   })
   class TestTriggerValidationHost {
     @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
@@ -390,7 +389,7 @@ describe('FormDirective - Shape Validation', () => {
       #vest="ngxVestForm"
     ></form>`,
 
-     imports: [NgxVestForms],
+    imports: [NgxVestForms],
   })
   class TestShapeValidationHost {
     formShape = signal<{ username: string }>({ username: '' });
@@ -444,7 +443,7 @@ describe('FormDirective - FormState Memoization', () => {
       </form>
     `,
 
-     imports: [NgxVestForms],
+    imports: [NgxVestForms],
   })
   class TestMemoizationHost {
     formValue = signal<{ field1?: string }>({});

@@ -87,7 +87,9 @@
         <!-- Step 1: Account Setup -->
         @if (currentStep() === 1) {
           <ngx-card>
-            <h2 class="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
+            <h2
+              class="mb-6 text-xl font-semibold text-gray-900 dark:text-white"
+            >
               Step 1: Account Setup
             </h2>
             <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">
@@ -196,7 +198,9 @@
         <!-- Step 2: Profile Information -->
         @if (currentStep() === 2) {
           <ngx-card>
-            <h2 class="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
+            <h2
+              class="mb-6 text-xl font-semibold text-gray-900 dark:text-white"
+            >
               Step 2: Profile Information
             </h2>
             <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">
@@ -354,7 +358,9 @@
         <!-- Step 3: Review & Confirmation -->
         @if (currentStep() === 3) {
           <ngx-card>
-            <h2 class="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
+            <h2
+              class="mb-6 text-xl font-semibold text-gray-900 dark:text-white"
+            >
               Step 3: Review & Confirm
             </h2>
             <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">
@@ -369,9 +375,7 @@
                 class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
               >
                 <div class="flex items-center justify-between">
-                  <h3
-                    class="text-sm font-medium text-gray-900 dark:text-white"
-                  >
+                  <h3 class="text-sm font-medium text-gray-900 dark:text-white">
                     Account Details
                   </h3>
                   <button
@@ -400,9 +404,7 @@
                 class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
               >
                 <div class="flex items-center justify-between">
-                  <h3
-                    class="text-sm font-medium text-gray-900 dark:text-white"
-                  >
+                  <h3 class="text-sm font-medium text-gray-900 dark:text-white">
                     Profile Details
                   </h3>
                   <button
@@ -540,7 +542,7 @@
             <!-- Step Validity -->
             <div>
               <h4
-                class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                class="mb-2 text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
               >
                 Step Validity
               </h4>
@@ -658,19 +660,20 @@
             <!-- Current Data Preview -->
             <div>
               <h4
-                class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                class="mb-2 text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
               >
                 Current Step Data
               </h4>
               <pre
                 class="max-h-48 overflow-auto rounded-lg bg-gray-100 p-3 text-xs dark:bg-gray-800"
-              >{{
+                >{{
                   currentStep() === 1
                     ? (step1Data() | json)
                     : currentStep() === 2
                       ? (step2Data() | json)
                       : (step3Data() | json)
-                }}</pre>
+                }}</pre
+              >
             </div>
           </div>
         </ngx-card>

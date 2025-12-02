@@ -13,10 +13,10 @@ import {
 } from 'ngx-vest-forms';
 import {
   WizardStep1Model,
-  WizardStep2Model,
-  WizardStep3Model,
   wizardStep1Shape,
+  WizardStep2Model,
   wizardStep2Shape,
+  WizardStep3Model,
   wizardStep3Shape,
 } from '../../../models/wizard-form.model';
 import {

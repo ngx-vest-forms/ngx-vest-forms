@@ -2,8 +2,8 @@ import { Component, signal } from '@angular/core';
 import { fireEvent, render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { enforce, only, staticSuite, test as vestTest, warn } from 'vest';
-import { NgxVestForms } from '../../exports';
 import { describe, expect, it } from 'vitest';
+import { NgxVestForms } from '../../exports';
 
 // Test validation suite for the component tests
 type TestModel = {
@@ -28,7 +28,7 @@ const testSuite = staticSuite((data: TestModel = {}, field?: string) => {
 });
 
 @Component({
-   imports: [NgxVestForms],
+  imports: [NgxVestForms],
   template: `
     <form
       ngxVestForm
@@ -53,7 +53,7 @@ class TestFormComponent {
 }
 
 @Component({
-   imports: [NgxVestForms],
+  imports: [NgxVestForms],
   template: `
     <form
       ngxVestForm
@@ -107,7 +107,7 @@ const slowAsyncSuite = staticSuite((data: TestModel = {}, field?: string) => {
 });
 
 @Component({
-   imports: [NgxVestForms],
+  imports: [NgxVestForms],
   template: `
     <form
       ngxVestForm
@@ -128,7 +128,7 @@ class AsyncTestComponent {
 }
 
 @Component({
-   imports: [NgxVestForms],
+  imports: [NgxVestForms],
   template: `
     <form
       ngxVestForm
@@ -149,7 +149,7 @@ class SlowAsyncTestComponent {
 }
 
 @Component({
-   imports: [NgxVestForms],
+  imports: [NgxVestForms],
   template: `
     <ngx-control-wrapper>
       <div>Empty wrapper</div>
@@ -159,7 +159,7 @@ class SlowAsyncTestComponent {
 class EmptyWrapperComponent {}
 
 @Component({
-   imports: [NgxVestForms],
+  imports: [NgxVestForms],
   template: `
     <form
       ngxVestForm
@@ -312,7 +312,7 @@ describe('ScControlWrapperComponent', () => {
 
     it('should respect errorDisplayMode input from directive', async () => {
       @Component({
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
         template: `
           <form
             ngxVestForm
@@ -557,7 +557,7 @@ describe('ScControlWrapperComponent', () => {
       );
 
       @Component({
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
         template: `
           <form
             ngxVestForm
@@ -672,7 +672,7 @@ describe('ScControlWrapperComponent', () => {
       });
 
       @Component({
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
         template: `
           <form
             ngxVestForm
@@ -736,7 +736,7 @@ describe('ScControlWrapperComponent', () => {
       );
 
       @Component({
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
         template: `
           <form
             ngxVestForm
@@ -854,7 +854,10 @@ describe('ScControlWrapperComponent', () => {
     it('should update ARIA associations for dynamically added controls via @if', async () => {
       // Suite with validation for dynamically added field
       const dynamicSuite = staticSuite(
-        (data: { showField?: boolean; dynamicValue?: string }, field?: string) => {
+        (
+          data: { showField?: boolean; dynamicValue?: string },
+          field?: string
+        ) => {
           only(field);
           vestTest('dynamicValue', 'Dynamic field is required', () => {
             enforce(data.dynamicValue ?? '').isNotBlank();
@@ -891,7 +894,7 @@ describe('ScControlWrapperComponent', () => {
         suite = dynamicSuite;
 
         toggleField() {
-          this.showField.update(v => !v);
+          this.showField.update((v) => !v);
         }
       }
 
@@ -916,7 +919,11 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.tab();
 
       // Wait for error to appear
-      await screen.findByText('Dynamic field is required', {}, { timeout: 1000 });
+      await screen.findByText(
+        'Dynamic field is required',
+        {},
+        { timeout: 1000 }
+      );
 
       // MutationObserver should have detected the new control and set up ARIA associations
       await waitFor(() => {
@@ -931,7 +938,9 @@ describe('ScControlWrapperComponent', () => {
 
       // Input should be removed
       await waitFor(() => {
-        expect(screen.queryByLabelText('Dynamic Field')).not.toBeInTheDocument();
+        expect(
+          screen.queryByLabelText('Dynamic Field')
+        ).not.toBeInTheDocument();
       });
 
       // Toggle to show the field again
@@ -947,7 +956,11 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.click(newDynamicInput);
       await userEvent.tab();
 
-      await screen.findByText('Dynamic field is required', {}, { timeout: 1000 });
+      await screen.findByText(
+        'Dynamic field is required',
+        {},
+        { timeout: 1000 }
+      );
 
       await waitFor(() => {
         expect(newDynamicInput).toHaveAttribute('aria-invalid', 'true');

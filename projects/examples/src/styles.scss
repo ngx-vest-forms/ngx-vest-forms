@@ -20,12 +20,22 @@
 @layer base {
   body {
     min-height: 100vh;
-    background: linear-gradient(to bottom right, oklch(0.924 0.018 267.416), white, oklch(0.954 0.05 195.365));
+    background: linear-gradient(
+      to bottom right,
+      oklch(0.924 0.018 267.416),
+      white,
+      oklch(0.954 0.05 195.365)
+    );
     color: oklch(0.278 0.029 256.848);
   }
 
   body.dark {
-    background: linear-gradient(to bottom right, oklch(0.175 0.028 264.052), oklch(0.264 0.055 293.357), oklch(0.175 0.028 264.052));
+    background: linear-gradient(
+      to bottom right,
+      oklch(0.175 0.028 264.052),
+      oklch(0.264 0.055 293.357),
+      oklch(0.175 0.028 264.052)
+    );
     color: white;
   }
 }
@@ -63,7 +73,7 @@
   }
 
   .input-field {
-    @apply block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500;
+    @apply focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-500 dark:focus:ring-primary-500 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400;
 
     /* Apply error styling when aria-invalid is true */
     &[aria-invalid='true'] {
@@ -76,11 +86,11 @@
   }
 
   .btn {
-    @apply inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-center text-sm font-medium focus:outline-hidden focus:ring-4;
+    @apply inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-center text-sm font-medium focus:ring-4 focus:outline-hidden;
   }
 
   .btn-primary {
-    @apply bg-primary-700 text-white hover:bg-primary-800 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800;
+    @apply bg-primary-700 hover:bg-primary-800 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 text-white;
   }
 
   .btn-secondary {
@@ -96,7 +106,7 @@
   }
 
   .btn-input-action {
-    @apply absolute right-1 top-1 rounded-md px-3 py-1.5 text-xs font-medium focus:outline-hidden focus:ring-2;
+    @apply absolute top-1 right-1 rounded-md px-3 py-1.5 text-xs font-medium focus:ring-2 focus:outline-hidden;
   }
 
   .btn-input-action-danger {
@@ -123,7 +133,7 @@
     @apply flex items-center gap-2;
 
     input[type='radio'] {
-      @apply h-4 w-4 border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-primary-600;
+      @apply text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 h-4 w-4 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800;
     }
 
     label {
@@ -148,7 +158,7 @@ fieldset {
     input[type='password'],
     input[type='date'],
     textarea {
-      @apply block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500;
+      @apply focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-500 dark:focus:ring-primary-500 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400;
     }
 
     &--invalid {

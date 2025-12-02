@@ -1,9 +1,9 @@
 import { Component, signal, Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { enforce, only, staticSuite, test } from 'vest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import { NgxVestForms } from '../exports';
-import { afterEach, describe, expect, it } from 'vitest';
 
 type PasswordFormModel = {
   password?: string;
@@ -75,8 +75,7 @@ describe('ValidateRootFormDirective (template compilation)', () => {
 
   it('compiles templates that use validateRootForm attribute', async () => {
     @Component({
-
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
       template: `
         <form
           scVestForm
@@ -105,8 +104,7 @@ describe('ValidateRootFormDirective (template compilation)', () => {
 
   it('compiles templates that bind validateRootForm inputs', async () => {
     @Component({
-
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
       template: `
         <form
           scVestForm
@@ -137,8 +135,7 @@ describe('ValidateRootFormDirective (template compilation)', () => {
 
   it('compiles templates using ngxValidateRootForm alias and live mode', async () => {
     @Component({
-
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
       template: `
         <form
           ngxVestForm
@@ -165,8 +162,7 @@ describe('ValidateRootFormDirective (template compilation)', () => {
 
   it('compiles template that mirrors the Issue #13 reproduction snippet', async () => {
     @Component({
-
-       imports: [NgxVestForms],
+      imports: [NgxVestForms],
       template: `
         <form
           scVestForm

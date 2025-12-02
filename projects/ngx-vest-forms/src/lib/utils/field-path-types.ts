@@ -82,12 +82,12 @@ export type FieldPath<
               `${Prefix}${K}`
             : T[K] extends ReadonlyArray<infer U>
               ? // Array property: field name plus element paths
-                | `${Prefix}${K}`
+                  | `${Prefix}${K}`
                   | (U extends Primitive
                       ? never
                       : FieldPath<U, `${Prefix}${K}.`, [...Depth, 1]>)
               : // Object property: field name plus nested paths
-                | `${Prefix}${K}`
+                  | `${Prefix}${K}`
                   | FieldPath<T[K], `${Prefix}${K}.`, [...Depth, 1]>;
         }[keyof T & string];
 

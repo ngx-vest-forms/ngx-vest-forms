@@ -21,18 +21,31 @@ export type WizardStepConfig = {
   selector: 'ngx-wizard-steps',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <nav [attr.aria-label]="'Progress: Step ' + currentStep() + ' of ' + steps().length">
+    <nav
+      [attr.aria-label]="
+        'Progress: Step ' + currentStep() + ' of ' + steps().length
+      "
+    >
       <ol role="list" class="flex items-center justify-between">
-        @for (step of steps(); track step.id; let i = $index; let last = $last) {
+        @for (
+          step of steps();
+          track step.id;
+          let i = $index;
+          let last = $last
+        ) {
           <li class="relative" [class.flex-1]="!last">
             <!-- Step connector line -->
             @if (!last) {
               <div
-                class="absolute left-0 top-4 -ml-px mt-0.5 h-0.5 w-full"
+                class="absolute top-4 left-0 mt-0.5 -ml-px h-0.5 w-full"
                 [class.bg-blue-600]="getStepStatus(step.id) === 'completed'"
                 [class.bg-gray-200]="getStepStatus(step.id) !== 'completed'"
-                [class.dark:bg-blue-500]="getStepStatus(step.id) === 'completed'"
-                [class.dark:bg-gray-700]="getStepStatus(step.id) !== 'completed'"
+                [class.dark:bg-blue-500]="
+                  getStepStatus(step.id) === 'completed'
+                "
+                [class.dark:bg-gray-700]="
+                  getStepStatus(step.id) !== 'completed'
+                "
                 aria-hidden="true"
               ></div>
             }
@@ -54,11 +67,21 @@ export type WizardStepConfig = {
                   getStepStatus(step.id) === 'current' ||
                   getStepStatus(step.id) === 'upcoming'
                 "
-                [class.dark:border-blue-500]="getStepStatus(step.id) === 'current'"
-                [class.dark:text-blue-400]="getStepStatus(step.id) === 'current'"
-                [class.dark:border-gray-600]="getStepStatus(step.id) === 'upcoming'"
-                [class.dark:text-gray-400]="getStepStatus(step.id) === 'upcoming'"
-                [attr.aria-current]="getStepStatus(step.id) === 'current' ? 'step' : null"
+                [class.dark:border-blue-500]="
+                  getStepStatus(step.id) === 'current'
+                "
+                [class.dark:text-blue-400]="
+                  getStepStatus(step.id) === 'current'
+                "
+                [class.dark:border-gray-600]="
+                  getStepStatus(step.id) === 'upcoming'
+                "
+                [class.dark:text-gray-400]="
+                  getStepStatus(step.id) === 'upcoming'
+                "
+                [attr.aria-current]="
+                  getStepStatus(step.id) === 'current' ? 'step' : null
+                "
                 [attr.aria-label]="getStepAriaLabel(step)"
                 role="img"
               >
@@ -92,7 +115,9 @@ export type WizardStepConfig = {
                   getStepStatus(step.id) === 'current' ||
                   getStepStatus(step.id) === 'completed'
                 "
-                [class.dark:text-gray-400]="getStepStatus(step.id) === 'upcoming'"
+                [class.dark:text-gray-400]="
+                  getStepStatus(step.id) === 'upcoming'
+                "
                 aria-hidden="true"
               >
                 {{ step.title }}

@@ -1,16 +1,19 @@
-import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { Component, inject, Directive, input } from '@angular/core';
+import {
+  ApplicationRef,
+  Component,
+  Directive,
+  inject,
+  input,
+} from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ApplicationRef } from '@angular/core';
-import { FormsModule, NgModel } from '@angular/forms';
-import { By } from '@angular/platform-browser';
-import { FormErrorDisplayDirective } from './form-error-display.directive';
-import { SC_ERROR_DISPLAY_MODE_TOKEN } from './error-display-mode.token';
+import { FormsModule } from '@angular/forms';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ScErrorDisplayMode } from './form-error-display.directive';
+import { FormErrorDisplayDirective } from './form-error-display.directive';
 
 @Directive({
   selector: '[ngxDummy]',
-  standalone: true
+  standalone: true,
 })
 class DummyDirective {
   readonly testInput = input('default');
@@ -80,10 +83,7 @@ describe('FormErrorDisplayDirective', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        TestErrorDisplayHostComponent,
-        FormsModule,
-      ],
+      imports: [TestErrorDisplayHostComponent, FormsModule],
       providers: [],
     }).compileComponents();
     fixture = TestBed.createComponent(TestErrorDisplayHostComponent);
@@ -124,21 +124,31 @@ describe('FormErrorDisplayDirective', () => {
 
     // Use expect.poll for signal-based values that update asynchronously
     // DON'T call fixture.detectChanges() - zoneless Angular handles this
-    await expect.poll(() => {
-      const touchedValue = fixture.nativeElement.querySelector('#is-touched')?.textContent;
-      return touchedValue;
-    }, {
-      timeout: 2000,
-      interval: 50,
-    }).toBe('true');
+    await expect
+      .poll(
+        () => {
+          const touchedValue =
+            fixture.nativeElement.querySelector('#is-touched')?.textContent;
+          return touchedValue;
+        },
+        {
+          timeout: 2000,
+          interval: 50,
+        }
+      )
+      .toBe('true');
 
-    await expect.poll(() =>
-      fixture.nativeElement.querySelector('#should-show-errors')?.textContent
-    ).toBe('true');
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('#should-show-errors')
+            ?.textContent
+      )
+      .toBe('true');
 
-    await expect.poll(() =>
-      fixture.nativeElement.querySelector('#errors')?.textContent
-    ).toBe('required');
+    await expect
+      .poll(() => fixture.nativeElement.querySelector('#errors')?.textContent)
+      .toBe('required');
   });
 
   it('should show errors only after submit in on-submit mode', async () => {
@@ -165,12 +175,19 @@ describe('FormErrorDisplayDirective', () => {
 
     await TestBed.inject(ApplicationRef).whenStable();
 
-    await expect.poll(() =>
-      fixture.nativeElement.querySelector('#should-show-errors')?.textContent
-    ).toBe('true');
-    await expect.poll(() =>
-      fixture.nativeElement.querySelector('#form-submitted')?.textContent
-    ).toBe('true');
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('#should-show-errors')
+            ?.textContent
+      )
+      .toBe('true');
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('#form-submitted')?.textContent
+      )
+      .toBe('true');
   });
 
   it('should show errors after blur or submit in on-blur-or-submit mode', async () => {
@@ -187,13 +204,19 @@ describe('FormErrorDisplayDirective', () => {
 
     expect(input.classList.contains('ng-touched')).toBe(true);
 
-    await expect.poll(() =>
-      fixture.nativeElement.querySelector('#is-touched')?.textContent
-    ).toBe('true');
+    await expect
+      .poll(
+        () => fixture.nativeElement.querySelector('#is-touched')?.textContent
+      )
+      .toBe('true');
 
-    await expect.poll(() =>
-      fixture.nativeElement.querySelector('#should-show-errors')?.textContent
-    ).toBe('true');
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('#should-show-errors')
+            ?.textContent
+      )
+      .toBe('true');
 
     // Reset and test submit
     host.model = '';
@@ -205,9 +228,13 @@ describe('FormErrorDisplayDirective', () => {
 
     await TestBed.inject(ApplicationRef).whenStable();
 
-    await expect.poll(() =>
-      fixture.nativeElement.querySelector('#should-show-errors')?.textContent
-    ).toBe('true');
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('#should-show-errors')
+            ?.textContent
+      )
+      .toBe('true');
   });
 
   it('should use the default error display mode when not specified', async () => {
@@ -215,14 +242,10 @@ describe('FormErrorDisplayDirective', () => {
     // the directive uses the default mode ('on-blur-or-submit')
     await TestBed.resetTestingModule()
       .configureTestingModule({
-        imports: [
-          TestInjectedModeComponent,
-        ],
+        imports: [TestInjectedModeComponent],
       })
       .compileComponents();
-    const customFixture = TestBed.createComponent(
-      TestInjectedModeComponent
-    );
+    const customFixture = TestBed.createComponent(TestInjectedModeComponent);
 
     // CRITICAL: Initial detectChanges to render template
     customFixture.detectChanges();
@@ -243,10 +266,13 @@ describe('FormErrorDisplayDirective', () => {
     await TestBed.inject(ApplicationRef).whenStable();
 
     // With default mode 'on-blur-or-submit', errors should show after blur
-    await expect.poll(() =>
-      customFixture.nativeElement.querySelector('#should-show-errors')
-        .textContent
-    ).toBe('true');
+    await expect
+      .poll(
+        () =>
+          customFixture.nativeElement.querySelector('#should-show-errors')
+            .textContent
+      )
+      .toBe('true');
   });
 
   it('should warn on updateOn submit + on-blur mismatch', async () => {
@@ -287,7 +313,6 @@ describe('FormErrorDisplayDirective', () => {
       <input name="test" [ngModel]="value" required />
       <span id="host-errors">{{ formErrorDisplay.errors().join(',') }}</span>
     `,
-
   })
   class HostFieldComponent {
     value = '';

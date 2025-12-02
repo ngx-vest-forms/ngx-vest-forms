@@ -4,10 +4,10 @@
 import { Component, signal, ViewChild } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import type { NgxDeepPartial, ValidationConfigMap } from '../../public-api';
 import { FormDirective } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
-import { describe, beforeEach, it, expect } from 'vitest';
 
 type DynamicFormModel = NgxDeepPartial<{
   procedureType: 'typeA' | 'typeB' | 'typeC';
@@ -55,7 +55,7 @@ describe('FormDirective - Dynamic Structure Changes', () => {
   describe('Form Structure Change Detection', () => {
     it('should update validation when switching from input field to informational paragraph', async () => {
       @Component({
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
         template: `
           <form
             ngxVestForm
@@ -190,7 +190,7 @@ describe('FormDirective - Dynamic Structure Changes', () => {
   describe('Solution with New API', () => {
     it('should update validation when using triggerFormValidation method', async () => {
       @Component({
-         imports: [NgxVestForms],
+        imports: [NgxVestForms],
         template: `
           <form
             ngxVestForm
