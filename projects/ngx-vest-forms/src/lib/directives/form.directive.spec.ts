@@ -248,10 +248,7 @@ describe('FormDirective - Async Validator', () => {
   });
 });
 
-describe.skip('FormDirective - Validator Cache', () => {
-  // TODO: Add validator cache tests
-  it.todo('should cache validators');
-});
+describe.todo('FormDirective - Validator Cache');
 
 describe('FormDirective - Composability & Host Bindings', () => {
   it('should allow multiple directives to coexist', async () => {

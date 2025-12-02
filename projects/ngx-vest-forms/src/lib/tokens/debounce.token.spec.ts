@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { describe, expect, it } from 'vitest';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from './debounce.token';
 
 describe('NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN', () => {
@@ -92,7 +93,7 @@ describe('NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN', () => {
 
   it('should support custom values for performance tuning', () => {
     @Component({
-      selector: 'slow-network-component',
+      selector: 'ngx-slow-network-component',
       template: '',
       providers: [
         {
@@ -106,7 +107,7 @@ describe('NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN', () => {
     }
 
     @Component({
-      selector: 'fast-network-component',
+      selector: 'ngx-fast-network-component',
       template: '',
       providers: [
         {

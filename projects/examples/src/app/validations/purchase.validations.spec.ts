@@ -1,9 +1,12 @@
 import { delay, of } from 'rxjs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi, type Mocked } from 'vitest';
+import type { SwapiService } from '../swapi.service';
 import { createPurchaseValidationSuite } from './purchase.validations';
 
 describe('Purchase Validations', () => {
-  let mockSwapiService: any;
+  let mockSwapiService: Mocked<
+    Pick<SwapiService, 'searchUserById' | 'userIdExists'>
+  >;
 
   beforeEach(() => {
     mockSwapiService = {
@@ -16,7 +19,9 @@ describe('Purchase Validations', () => {
     // Mock service to return true (user exists) with small delay for async behavior
     mockSwapiService.userIdExists.mockReturnValue(of(true).pipe(delay(10)));
 
-    const suite = createPurchaseValidationSuite(mockSwapiService);
+    const suite = createPurchaseValidationSuite(
+      mockSwapiService as unknown as SwapiService
+    );
 
     return new Promise<void>((resolve, reject) => {
       suite({ userId: '1' }, 'userId').done((result) => {
@@ -38,7 +43,9 @@ describe('Purchase Validations', () => {
     // Mock service to return false (user not found) with small delay for async behavior
     mockSwapiService.userIdExists.mockReturnValue(of(false).pipe(delay(10)));
 
-    const suite = createPurchaseValidationSuite(mockSwapiService);
+    const suite = createPurchaseValidationSuite(
+      mockSwapiService as unknown as SwapiService
+    );
 
     return new Promise<void>((resolve, reject) => {
       const result = suite({ userId: '999' }, 'userId');
@@ -61,7 +68,9 @@ describe('Purchase Validations', () => {
     // Mock with longer delay to ensure we catch the pending state
     mockSwapiService.userIdExists.mockReturnValue(of(true).pipe(delay(200)));
 
-    const suite = createPurchaseValidationSuite(mockSwapiService);
+    const suite = createPurchaseValidationSuite(
+      mockSwapiService as unknown as SwapiService
+    );
     const result = suite({ userId: '1' }, 'userId');
 
     // With proper delay, we should catch the pending state
