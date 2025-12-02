@@ -1,7 +1,7 @@
 <div ngModelGroup="businessHours" ngx-control-wrapper class="space-y-4">
   <!-- Existing Business Hours List -->
   <div ngModelGroup="values" ngx-control-wrapper class="space-y-3">
-    @for (item of businessHoursModel()?.values | keyvalue; track item.key) {
+    @for (item of values() | keyvalue; track item.key) {
       <div
         ngx-control-wrapper
         [ngModelGroup]="item.key"
@@ -9,7 +9,7 @@
       >
         <div class="flex items-start justify-between gap-4">
           <ngx-business-hour
-            [businessHour]="businessHoursModel()?.values?.[item.key]"
+            [businessHour]="values()[item.key]"
             class="flex-grow"
           ></ngx-business-hour>
 
@@ -27,7 +27,7 @@
     }
   </div>
 
-  @if ((businessHoursModel()?.values | keyvalue)?.length) {
+  @if ((values() | keyvalue)?.length) {
     <div class="relative py-4">
       <div class="absolute inset-0 flex items-center" aria-hidden="true">
         <div class="w-full border-t border-gray-200 dark:border-gray-700"></div>
@@ -50,7 +50,7 @@
   >
     <div class="flex items-start justify-between gap-4">
       <ngx-business-hour
-        [businessHour]="businessHoursModel()?.addValue"
+        [businessHour]="newBusinessHour()"
         class="flex-grow"
       ></ngx-business-hour>
 

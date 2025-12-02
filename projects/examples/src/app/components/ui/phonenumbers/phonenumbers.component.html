@@ -9,7 +9,7 @@
             [ngModel]="values()[item.key]"
             placeholder="Type phone number"
             class="input-field pr-20"
-            [attr.aria-label]="'Phone number ' + item.key"
+            [attr.aria-label]="'Phone number ' + (+item.key + 1)"
           />
           <button
             type="button"
@@ -27,12 +27,12 @@
     <div class="relative flex items-center gap-2">
       <input
         type="text"
-        [ngModel]="addValue()"
-        (ngModelChange)="addValue.set($event)"
+        [ngModel]="newPhoneNumber()"
+        (ngModelChange)="onNewPhoneNumberChange($event)"
         name="addValue"
         placeholder="Type phone number"
         class="input-field pr-20"
-        aria-label="PhoneNumbers Add"
+        aria-label="Add new phone number"
       />
       <button
         type="button"

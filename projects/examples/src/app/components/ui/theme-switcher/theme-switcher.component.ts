@@ -1,10 +1,11 @@
-import { Component, effect, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, signal } from '@angular/core';
 
 @Component({
   selector: 'ngx-theme-switcher',
   imports: [],
   templateUrl: './theme-switcher.component.html',
   styleUrls: ['./theme-switcher.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ThemeSwitcherComponent {
   protected readonly isDarkMode = signal<boolean>(this.getInitialTheme());

@@ -115,7 +115,8 @@
 
         <fieldset class="space-y-6">
           <ngx-business-hours
-            [businessHoursModel]="formValue().businessHours"
+            [values]="getBusinessHoursValues()"
+            (valuesChange)="onBusinessHoursChange($event)"
           ></ngx-business-hours>
         </fieldset>
       </form>

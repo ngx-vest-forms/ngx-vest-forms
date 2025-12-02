@@ -201,4 +201,18 @@ export class PurchaseFormComponent {
       return updated;
     });
   }
+
+  /**
+   * Handles structural changes to phone numbers (add/remove).
+   * Value edits flow automatically via ngModel + vestFormsViewProviders.
+   */
+  protected onPhoneNumbersChange(values: Record<string, string>): void {
+    this.formValue.update((v) => ({
+      ...v,
+      phonenumbers: {
+        ...v.phonenumbers,
+        values,
+      },
+    }));
+  }
 }

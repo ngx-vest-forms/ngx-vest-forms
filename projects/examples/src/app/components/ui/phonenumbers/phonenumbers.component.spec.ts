@@ -94,8 +94,8 @@ describe('PhoneNumbersComponent', () => {
     const phonenumbersComponent =
       phonenumbersDebug?.componentInstance as PhoneNumbersComponent;
 
-    // Set the add value
-    phonenumbersComponent.addValue.set('+9999999999');
+    // Set the new phone number value
+    phonenumbersComponent.newPhoneNumber.set('+9999999999');
 
     // Click add button
     const addButton = Array.from(compiled.querySelectorAll('button')).find(
@@ -111,7 +111,7 @@ describe('PhoneNumbersComponent', () => {
     });
 
     // Should reset the add input
-    expect(phonenumbersComponent.addValue()).toBe('');
+    expect(phonenumbersComponent.newPhoneNumber()).toBe('');
   });
 
   it('should emit new values when removing a phone number', () => {
@@ -142,7 +142,7 @@ describe('PhoneNumbersComponent', () => {
     });
   });
 
-  it('should handle empty add value', () => {
+  it('should not add empty phone numbers', () => {
     const valueSpy = vi.fn();
     component.onPhoneNumbersChange = valueSpy;
 
@@ -158,7 +158,7 @@ describe('PhoneNumbersComponent', () => {
       phonenumbersDebug?.componentInstance as PhoneNumbersComponent;
 
     // Set empty string
-    phonenumbersComponent.addValue.set('');
+    phonenumbersComponent.newPhoneNumber.set('');
 
     // Click add button
     const addButton = Array.from(compiled.querySelectorAll('button')).find(
@@ -167,10 +167,39 @@ describe('PhoneNumbersComponent', () => {
     addButton.click();
     fixture.detectChanges();
 
-    // Should emit with empty string added
+    // Should NOT emit when value is empty (early return)
+    expect(valueSpy).not.toHaveBeenCalled();
+  });
+
+  it('should trim whitespace when adding phone numbers', () => {
+    const valueSpy = vi.fn();
+    component.onPhoneNumbersChange = valueSpy;
+
+    // Set initial value
+    component.formValue.set({ phonenumbers: { '0': '+1234567890' } });
+    fixture.detectChanges();
+
+    // Get the phonenumbers component
+    const phonenumbersDebug = fixture.debugElement.query(
+      (el) => el.componentInstance instanceof PhoneNumbersComponent
+    );
+    const phonenumbersComponent =
+      phonenumbersDebug?.componentInstance as PhoneNumbersComponent;
+
+    // Set value with whitespace
+    phonenumbersComponent.newPhoneNumber.set('  +9999999999  ');
+
+    // Click add button
+    const addButton = Array.from(compiled.querySelectorAll('button')).find(
+      (btn) => btn.textContent?.trim() === 'Add'
+    ) as HTMLButtonElement;
+    addButton.click();
+    fixture.detectChanges();
+
+    // Should emit with trimmed value
     expect(valueSpy).toHaveBeenCalledWith({
       '0': '+1234567890',
-      '1': '',
+      '1': '+9999999999',
     });
   });
 

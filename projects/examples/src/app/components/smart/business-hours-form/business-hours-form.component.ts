@@ -10,7 +10,10 @@ import {
   businessHoursFormShape,
 } from '../../../models/business-hours-form.model';
 import { businessHoursSuite } from '../../../validations/business-hours.validations';
-import { BusinessHoursComponent } from '../../ui/business-hours/business-hours.component';
+import {
+  BusinessHoursComponent,
+  BusinessHoursMap,
+} from '../../ui/business-hours/business-hours.component';
 import { CardComponent } from '../../ui/card/card.component';
 
 @Component({
@@ -33,4 +36,33 @@ export class BusinessHoursFormComponent {
   protected readonly businessHoursSuite = businessHoursSuite;
   protected readonly shape = businessHoursFormShape;
   protected readonly ROOT_FORM = ROOT_FORM;
+
+  /** Returns business hours values with proper typing for the child component */
+  protected getBusinessHoursValues(): BusinessHoursMap {
+    const values = this.formValue().businessHours?.values;
+    if (!values) return {};
+
+    // Filter out any undefined values from DeepPartial
+    const result: BusinessHoursMap = {};
+    for (const [key, value] of Object.entries(values)) {
+      if (value) {
+        result[key] = value;
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Handles structural changes (add/remove) from BusinessHoursComponent.
+   * Value edits flow automatically via ngModel + vestFormsViewProviders.
+   */
+  protected onBusinessHoursChange(values: BusinessHoursMap): void {
+    this.formValue.update((current) => ({
+      ...current,
+      businessHours: {
+        ...current.businessHours,
+        values,
+      },
+    }));
+  }
 }

@@ -217,6 +217,7 @@
                   <span class="label-text">Phone Numbers</span>
                   <ngx-phonenumbers
                     [values]="formValue().phonenumbers?.values || {}"
+                    (valuesChange)="onPhoneNumbersChange($event)"
                   >
                   </ngx-phonenumbers>
                 </div>
