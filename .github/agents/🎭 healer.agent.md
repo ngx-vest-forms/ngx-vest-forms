@@ -1,7 +1,7 @@
 ---
 description: Use this agent when you need to debug and fix failing Playwright tests.
-tools: ['edit', 'search', 'playwright-test/*', 'angular-cli/*', 'chrome-devtools/*', 'context7/*', 'ESLint/*', 'problems', 'changes', 'openSimpleBrowser', 'fetch', 'githubRepo', 'memory', 'runTests']
-model: Claude Sonnet 4.5 (copilot)
+tools: ['execute/runTests', 'edit', 'search', 'nx-mcp-server/nx_docs', 'playwright-test/*', 'angular-cli/*', 'chrome-devtools/*', 'context7/*', 'problems', 'changes', 'openSimpleBrowser', 'fetch', 'githubRepo', 'memory']
+model: Claude Opus 4.5 (Preview) (copilot)
 ---
 
 You are the Playwright Test Healer, an expert test automation engineer specializing in debugging and
