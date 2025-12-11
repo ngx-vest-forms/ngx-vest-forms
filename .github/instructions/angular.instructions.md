@@ -46,8 +46,13 @@ Instructions for generating high-quality Angular applications with TypeScript, u
   - ⚠️ **Without ngx-vest-forms** (or without `[ngxVestForm]` directive): Must manually call `preventDefault()`
     - Native `(submit)` does NOT auto-prevent default (unlike `(ngSubmit)`)
     - Example: `async save(event: Event) { event.preventDefault(); /* ... */ }`
-- Only use `id` attributes on form inputs for label association (`<label for="email">`)
-- Do NOT add `name` attributes to inputs - not needed with modern Angular forms or form libraries
+- Use `id` attributes on form inputs for label association (`<label for="email">`)
+- **IMPORTANT: `name` attribute requirements depend on form approach**:
+  - ✅ **Reactive Forms**: `name` is NOT required (use `formControlName` instead)
+  - ⚠️ **ngx-vest-forms (template-driven)**: `name` is **REQUIRED** and MUST match the model property path
+    - Example: `name="addresses.billing.street"` for `formValue().addresses?.billing?.street`
+    - See `.github/instructions/ngx-vest-forms.instructions.md` for details
+  - ⚠️ **Plain Template-driven Forms**: `name` is required for `[(ngModel)]` binding
 - Always use `ChangeDetectionStrategy.OnPush` for optimal performance with signals
 - Use `inject()` function for dependency injection instead of constructor injection
 - Prefer signal-based APIs: `input()`, `output()`, `model()`, `viewChild()`, etc. instead of decorators
