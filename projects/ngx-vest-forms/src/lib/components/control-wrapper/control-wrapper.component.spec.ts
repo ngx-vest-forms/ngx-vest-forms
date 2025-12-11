@@ -467,6 +467,82 @@ describe('ScControlWrapperComponent', () => {
       });
     });
 
+    it('should preserve consumer aria-describedby tokens while adding/removing wrapper IDs', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper>
+              <label for="email">Email</label>
+              <span id="email-hint">Enter your email</span>
+              <input
+                id="email"
+                name="email"
+                aria-describedby="email-hint"
+                [ngModel]="model().email"
+              />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class ConsumerDescribedByComponent {
+        model = signal({ email: '' });
+        suite = testSuite;
+      }
+
+      const fixture = await render(ConsumerDescribedByComponent);
+      const emailInput = screen.getByLabelText('Email');
+
+      // Consumer hint should be preserved even before the wrapper adds anything.
+      expect(emailInput).toHaveAttribute('aria-describedby', 'email-hint');
+
+      // Trigger error
+      await userEvent.click(emailInput);
+      await userEvent.tab();
+      await screen.findByText('Email is required', {}, { timeout: 1000 });
+
+      await waitFor(() => {
+        const describedBy = emailInput.getAttribute('aria-describedby');
+        expect(describedBy).toBeTruthy();
+        if (!describedBy) return;
+
+        const tokens = describedBy.split(/\s+/).filter(Boolean);
+        expect(tokens).toContain('email-hint');
+
+        const wrapperErrorId = tokens.find((t) =>
+          /^ngx-control-wrapper-\d+-error$/.test(t)
+        );
+        expect(wrapperErrorId).toBeTruthy();
+        if (wrapperErrorId) {
+          expect(document.getElementById(wrapperErrorId)).toBeInTheDocument();
+        }
+      });
+
+      // Make field valid again
+      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+      fixture.fixture.componentInstance.model.set({
+        email: 'test@example.com',
+      });
+      await userEvent.tab();
+
+      // Wrapper should remove only its own IDs, leaving consumer hint intact.
+      await waitFor(
+        () => {
+          expect(emailInput).not.toHaveAttribute('aria-invalid');
+          expect(emailInput).toHaveAttribute('aria-describedby', 'email-hint');
+          expect(
+            screen.queryByText('Email is required')
+          ).not.toBeInTheDocument();
+        },
+        { timeout: 1000 }
+      );
+    });
+
     it('should set aria-invalid="true" on form controls when errors should be shown', async () => {
       await render(TestFormComponent);
       const emailInput = screen.getByLabelText('Email');

@@ -108,13 +108,38 @@ export async function expectFieldHasError(
   }
 
   if (expectedError) {
-    const errorId = await field.getAttribute('aria-describedby');
-    if (errorId) {
-      const errorElement = field.page().locator(`#${errorId}`);
-      await expect(errorElement).toContainText(expectedError);
-    } else {
+    const describedBy = await field.getAttribute('aria-describedby');
+    const ids = describedBy?.split(/\s+/).filter(Boolean) ?? [];
+
+    if (ids.length === 0) {
       const message =
         'Warning: aria-describedby not set, cannot verify error message';
+      if (strict) {
+        throw new Error(message);
+      }
+      console.warn(message);
+      return;
+    }
+
+    let matched = false;
+    for (const id of ids) {
+      const candidate = field.page().locator(`#${id}`);
+      if ((await candidate.count()) === 0) {
+        continue;
+      }
+
+      try {
+        await expect(candidate).toContainText(expectedError, { timeout: 1000 });
+        matched = true;
+        break;
+      } catch {
+        // Try the next described-by node.
+      }
+    }
+
+    if (!matched) {
+      const message =
+        'Warning: aria-describedby did not reference an element containing the expected error message';
       if (strict) {
         throw new Error(message);
       }

@@ -225,16 +225,61 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
     return ids.length > 0 ? ids.join(' ') : null;
   });
 
+  /**
+   * IDs managed by this wrapper when composing aria-describedby.
+   *
+   * We remove only these from the consumer-provided aria-describedby tokens and then
+   * append the currently-relevant wrapper IDs. This prevents clobbering app-provided
+   * hint/help text associations.
+   */
+  private readonly wrapperOwnedDescribedByIds = [
+    this.errorId,
+    this.warningId,
+    this.pendingId,
+  ];
+
+  private mergeAriaDescribedBy(
+    existing: string | null,
+    wrapperActiveIds: string[]
+  ): string | null {
+    const existingTokens = (existing ?? '')
+      .split(/\s+/)
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    // Remove any previous wrapper-owned IDs from the existing list.
+    const existingWithoutWrapper = existingTokens.filter(
+      (t) => !this.wrapperOwnedDescribedByIds.includes(t)
+    );
+
+    // Append current wrapper IDs, preserving existing order and uniqueness.
+    const merged: string[] = [...existingWithoutWrapper];
+    for (const id of wrapperActiveIds) {
+      if (!merged.includes(id)) {
+        merged.push(id);
+      }
+    }
+
+    return merged.length > 0 ? merged.join(' ') : null;
+  }
+
   constructor() {
     // Effect to update aria-describedby and aria-invalid on form controls
     effect(() => {
       const describedBy = this.ariaDescribedBy();
+      const wrapperActiveIds = describedBy
+        ? describedBy.split(/\s+/).filter(Boolean)
+        : [];
       const shouldShowErrors = this.errorDisplay.shouldShowErrors();
 
       this.formControls().forEach((control) => {
-        // Update aria-describedby
-        if (describedBy) {
-          control.setAttribute('aria-describedby', describedBy);
+        // Update aria-describedby (merge, don't overwrite)
+        const nextDescribedBy = this.mergeAriaDescribedBy(
+          control.getAttribute('aria-describedby'),
+          wrapperActiveIds
+        );
+        if (nextDescribedBy) {
+          control.setAttribute('aria-describedby', nextDescribedBy);
         } else {
           control.removeAttribute('aria-describedby');
         }
