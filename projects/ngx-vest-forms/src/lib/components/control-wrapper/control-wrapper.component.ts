@@ -106,64 +106,7 @@ let nextUniqueId = 0;
 @Component({
   selector:
     'ngx-control-wrapper, sc-control-wrapper, [scControlWrapper], [ngxControlWrapper], [ngx-control-wrapper], [sc-control-wrapper]',
-  template: `
-    <div class="ngx-control-wrapper__content">
-      <ng-content />
-    </div>
-
-    <!--
-      Live regions are kept stable in the DOM to improve announcement reliability.
-      We update the inner content instead of relying on node mount/unmount.
-    -->
-    <div
-      [id]="errorId"
-      class="text-sm text-red-600"
-      role="status"
-      aria-live="polite"
-      aria-atomic="true"
-    >
-      @if (errorDisplay.shouldShowErrors()) {
-        <ul>
-          @for (error of errorDisplay.errors(); track error) {
-            <li>{{ error.message || error }}</li>
-          }
-        </ul>
-      }
-    </div>
-
-    <div
-      [id]="warningId"
-      class="text-sm text-yellow-700"
-      role="status"
-      aria-live="polite"
-      aria-atomic="true"
-    >
-      @if (errorDisplay.warnings().length > 0) {
-        <ul>
-          @for (warn of errorDisplay.warnings(); track warn) {
-            <li>{{ warn }}</li>
-          }
-        </ul>
-      }
-    </div>
-
-    <!-- Pending state is also stable; content appears only after the debounce delay -->
-    <div
-      [id]="pendingId"
-      class="absolute top-0 right-0 flex items-center gap-1 text-xs text-gray-500"
-      role="status"
-      aria-live="polite"
-      aria-atomic="true"
-    >
-      @if (showPendingMessage()) {
-        <span
-          class="inline-block h-3 w-3 animate-spin rounded-full border-2 border-gray-400 border-t-transparent"
-          aria-hidden="true"
-        ></span>
-        Validating…
-      }
-    </div>
-  `,
+  templateUrl: './control-wrapper.component.html',
   styles: `
     :host {
       display: block;
