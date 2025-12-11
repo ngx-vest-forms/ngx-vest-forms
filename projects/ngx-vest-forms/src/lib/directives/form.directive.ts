@@ -384,12 +384,11 @@ export class FormDirective<T extends Record<string, unknown>> {
         untracked(() => {
           // Update form controls with new model values
           if (modelValue) {
-            Object.keys(modelValue).forEach((key) => {
-              const control = this.ngForm.form.get(key);
-              if (control && control.value !== modelValue[key]) {
-                control.setValue(modelValue[key], { emitEvent: false });
-              }
-            });
+            // IMPORTANT: Use root patchValue instead of per-key setValue.
+            // - Supports nested objects (ngModelGroup) without throwing when partial objects are provided.
+            // - patchValue ignores missing controls/keys, which is compatible with DeepPartial form models.
+            // - emitEvent:false prevents feedback loops; validation still updates internally.
+            this.ngForm.form.patchValue(modelValue, { emitEvent: false });
           }
           this.#lastSyncedFormValue = modelValue;
           this.#lastSyncedModelValue = modelValue;

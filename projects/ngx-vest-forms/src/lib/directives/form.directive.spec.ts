@@ -328,6 +328,80 @@ describe('FormDirective - ValidationConfig', () => {
   });
 });
 
+describe('FormDirective - Model to Form Synchronization', () => {
+  it('should patch nested values when model changes (ngModelGroup) without requiring full objects', async () => {
+    @Component({
+      selector: 'test-nested-model-sync-host',
+      template: `
+        <form
+          ngxVestForm
+          [suite]="suite()"
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          #vest="ngxVestForm"
+        >
+          <div ngModelGroup="user">
+            <label for="firstName">First name</label>
+            <input
+              id="firstName"
+              name="firstName"
+              [ngModel]="formValue().user?.firstName"
+            />
+            <label for="lastName">Last name</label>
+            <input
+              id="lastName"
+              name="lastName"
+              [ngModel]="formValue().user?.lastName"
+            />
+          </div>
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestNestedModelSyncHost {
+      formValue = signal<{ user?: { firstName?: string; lastName?: string } }>({
+        user: { firstName: '', lastName: '' },
+      });
+      suite = signal(
+        staticSuite((model: unknown = {}, field?: string) => {
+          // No validations required for this test; keep suite well-formed.
+          only(field);
+        })
+      );
+    }
+
+    const { fixture } = await render(TestNestedModelSyncHost);
+    const instance = fixture.componentInstance;
+
+    // Initial render
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const firstNameInput = fixture.nativeElement.querySelector(
+      'input[name="firstName"]'
+    ) as HTMLInputElement | null;
+    const lastNameInput = fixture.nativeElement.querySelector(
+      'input[name="lastName"]'
+    ) as HTMLInputElement | null;
+
+    expect(firstNameInput).toBeTruthy();
+    expect(lastNameInput).toBeTruthy();
+
+    expect(firstNameInput!.value).toBe('');
+    expect(lastNameInput!.value).toBe('');
+
+    // Programmatic model update with a partial nested object.
+    // Regression: previous implementation used setValue on the FormGroup which would throw.
+    instance.formValue.set({ user: { firstName: 'Ada' } });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(firstNameInput!.value).toBe('Ada');
+    // lastName should remain unchanged.
+    expect(lastNameInput!.value).toBe('');
+  });
+});
+
 describe('FormDirective - Signals/Outputs', () => {
   it('should emit correct values on formValueChange, errorsChange, dirtyChange, validChange', async () => {
     @Component({
