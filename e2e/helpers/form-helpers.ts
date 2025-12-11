@@ -4,7 +4,7 @@ import { expect, Locator, Page } from '@playwright/test';
  * Validation polling configuration
  * These values handle timing issues with Angular change detection and Vest validation
  */
-const VALIDATION_TIMEOUT = 15000; // 15s to handle: debounce (100ms) + form idle wait + bidirectional validation
+const VALIDATION_TIMEOUT = 5000; // 5s: debounce (100ms) + validation (500ms) + buffer; faster E2E feedback
 const POLL_INTERVALS = [50, 100, 250, 500, 1000, 2000]; // Gradual backoff with longer final interval
 
 /**
