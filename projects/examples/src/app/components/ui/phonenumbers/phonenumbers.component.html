@@ -28,8 +28,8 @@
       <input
         type="text"
         [ngModel]="newPhoneNumber()"
+        [ngModelOptions]="{ standalone: true }"
         (ngModelChange)="onNewPhoneNumberChange($event)"
-        name="addValue"
         placeholder="Type phone number"
         class="input-field pr-20"
         aria-label="Add new phone number"

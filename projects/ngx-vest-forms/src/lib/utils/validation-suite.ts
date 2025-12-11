@@ -154,7 +154,13 @@ export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
 // - Allows NgxTypedVestSuite to be used where NgxVestSuite is expected
 type NgxSuiteCallback<T> = {
   // Method syntax yields bivariant parameters under strictFunctionTypes
-  bivarianceHack(model: T, field?: unknown): void;
+  // IMPORTANT: this is intentionally `any`.
+  // Angular template type-checking (and the bivariant method trick) effectively
+  // requires mutual assignability between this callback and the typed variant
+  // that uses `FormFieldName<T>`. Using `unknown` (safer) or even `string`
+  // breaks production builds because `string` is not assignable to
+  // `FormFieldName<T>` (a string-literal union of known paths).
+  bivarianceHack(model: T, field?: any): void;
 }['bivarianceHack'];
 
 export type NgxVestSuite<T = unknown> = StaticSuite<

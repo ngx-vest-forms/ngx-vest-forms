@@ -45,7 +45,7 @@ describe('PhoneNumbersComponent', () => {
 
   it('should render empty phone numbers list', () => {
     const addInput = compiled.querySelector(
-      'input[name="addValue"]'
+      'input[aria-label="Add new phone number"]'
     ) as HTMLInputElement;
     expect(addInput).toBeTruthy();
     expect(addInput.placeholder).toBe('Type phone number');
