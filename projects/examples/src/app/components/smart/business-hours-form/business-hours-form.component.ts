@@ -1,6 +1,7 @@
 import { JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import {
+  createValidationConfig,
   NgxVestForms,
   ROOT_FORM,
   ValidateRootFormDirective,
@@ -37,6 +38,11 @@ export class BusinessHoursFormComponent {
   protected readonly shape = businessHoursFormShape;
   protected readonly ROOT_FORM = ROOT_FORM;
 
+  protected readonly validationConfig =
+    createValidationConfig<BusinessHoursFormModel>()
+      .bidirectional('businessHours.addValue.from', 'businessHours.addValue.to')
+      .build();
+
   /** Returns business hours values with proper typing for the child component */
   protected getBusinessHoursValues(): BusinessHoursMap {
     const values = this.formValue().businessHours?.values;
@@ -61,6 +67,10 @@ export class BusinessHoursFormComponent {
       ...current,
       businessHours: {
         ...current.businessHours,
+        // Clear the add-new slot values after adding/removing.
+        // This keeps the UI ready for the next entry and avoids emitting a
+        // separate form value change from inside the child component.
+        addValue: { from: '', to: '' },
         values,
       },
     }));

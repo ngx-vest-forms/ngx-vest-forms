@@ -15,6 +15,7 @@ export const businessHoursSuite: NgxTypedVestSuite<BusinessHoursFormModel> =
       const values = model.businessHours?.values
         ? Object.values(model.businessHours.values)
         : [];
+      const addValue = model.businessHours?.addValue;
 
       test(ROOT_FORM, 'You should have at least one business hour', () => {
         enforce((values?.length || 0) > 0).isTruthy();
@@ -36,40 +37,49 @@ export const businessHoursSuite: NgxTypedVestSuite<BusinessHoursFormModel> =
           model.businessHours?.values?.[index]
         );
       });
-      validateBusinessHourModel(
-        'businessHours.addValue',
-        model.businessHours?.addValue
-      );
+
+      // The add-new fields are an optional entry area.
+      // If both are empty, they should not make the whole form invalid.
+      // Once the user starts typing in either field, we validate the pair.
+      validateBusinessHourModel('businessHours.addValue', addValue, {
+        allowEmptyPair: true,
+      });
     }
   );
 
+function isBlank(value: unknown): boolean {
+  return typeof value !== 'string' || value.trim().length === 0;
+}
+
 function validateBusinessHourModel(
   field: string,
-  model?: BusinessHourFormModel
+  model?: BusinessHourFormModel,
+  options?: { allowEmptyPair?: boolean }
 ) {
+  const isEmptyPair =
+    options?.allowEmptyPair && isBlank(model?.from) && isBlank(model?.to);
+
   test(`${field}.to`, 'Required', () => {
+    if (isEmptyPair) return;
     enforce(model?.to).isNotBlank();
   });
   test(`${field}.from`, 'Required', () => {
+    if (isEmptyPair) return;
     enforce(model?.from).isNotBlank();
   });
   test(`${field}.from`, 'Should be a valid time', () => {
+    if (isEmptyPair || isBlank(model?.from)) return;
     enforce(isValidTime(model?.from)).isTruthy();
   });
   test(`${field}.to`, 'Should be a valid time', () => {
+    if (isEmptyPair || isBlank(model?.to)) return;
     enforce(isValidTime(model?.to)).isTruthy();
   });
   omitWhen(
     () => !isValidTime(model?.from) || !isValidTime(model?.to),
     () => {
       test(field, 'The from should be earlier than the to', () => {
-        const fromFirst = Number(model?.from?.slice(0, 2));
-        const fromSecond = Number(model?.from?.slice(2, 4));
-        const toFirst = Number(model?.to?.slice(0, 2));
-        const toSecond = Number(model?.to?.slice(2, 4));
-        const from = `${fromFirst}:${fromSecond}`;
-        const to = `${toFirst}:${toSecond}`;
-        enforce(isFromEarlierThanTo(from, to)).isTruthy();
+        enforce(isFromEarlierThanTo(model?.from, model?.to)).isTruthy();
       });
     }
   );
@@ -112,36 +122,45 @@ function areBusinessHoursValid(
 }
 
 function isValidTime(time?: string): boolean {
-  let valid = false;
-  if (time?.length === 4) {
-    const first = Number(time?.slice(0, 2));
-    const second = Number(time?.slice(2, 4));
-    if (
-      typeof first === 'number' &&
-      typeof second === 'number' &&
-      first < 24 &&
-      second < 60
-    ) {
-      valid = true;
-    }
-  }
-  return valid;
+  return parseTime(time) !== null;
 }
 
-function isFromEarlierThanTo(from?: string, to?: string) {
-  if (!from || !to) {
-    return false;
-  }
-  // Split the "from" and "to" strings into hours and minutes
-  const [fromHours, fromMinutes] = from.split(':').map(Number);
-  const [toHours, toMinutes] = to.split(':').map(Number);
+type ParsedTime = { hours: number; minutes: number };
 
-  // Check if the "from" time is earlier than the "to" time
-  if (fromHours < toHours) {
-    return true;
-  } else if (fromHours === toHours) {
-    return fromMinutes < toMinutes;
-  } else {
+function parseTime(time: unknown): ParsedTime | null {
+  if (typeof time !== 'string') return null;
+  const trimmed = time.trim();
+  if (!trimmed) return null;
+
+  if (trimmed.includes(':')) {
+    const [h, m] = trimmed.split(':');
+    if (!h || !m) return null;
+    const hours = Number(h);
+    const minutes = Number(m);
+    if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return null;
+    if (hours < 0 || hours >= 24 || minutes < 0 || minutes >= 60) return null;
+    return { hours, minutes };
+  }
+
+  if (trimmed.length === 4) {
+    const hours = Number(trimmed.slice(0, 2));
+    const minutes = Number(trimmed.slice(2, 4));
+    if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return null;
+    if (hours < 0 || hours >= 24 || minutes < 0 || minutes >= 60) return null;
+    return { hours, minutes };
+  }
+
+  return null;
+}
+
+function isFromEarlierThanTo(from?: string, to?: string): boolean {
+  const fromTime = parseTime(from);
+  const toTime = parseTime(to);
+  if (!fromTime || !toTime) {
     return false;
   }
+
+  const fromMinutesTotal = fromTime.hours * 60 + fromTime.minutes;
+  const toMinutesTotal = toTime.hours * 60 + toTime.minutes;
+  return fromMinutesTotal < toMinutesTotal;
 }

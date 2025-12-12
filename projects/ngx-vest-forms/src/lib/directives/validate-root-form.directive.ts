@@ -29,7 +29,8 @@ import {
   tap,
   timer,
 } from 'rxjs';
-import { NgxVestSuite } from '../utils/validation-suite';
+import { ROOT_FORM } from '../constants';
+import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
 import { ValidationOptions } from './validation-options';
 
 /**
@@ -126,7 +127,7 @@ export class ValidateRootFormDirective<T>
   private readonly formValue$: Observable<T | null>;
 
   readonly formValue = input<T | null>(null);
-  readonly suite = input<NgxVestSuite<T> | null>(null);
+  readonly suite = input<NgxVestSuite<T> | NgxTypedVestSuite<T> | null>(null);
 
   /**
    * Whether the root form should be validated or not
@@ -226,7 +227,7 @@ export class ValidateRootFormDirective<T>
     // Call the validator and return its Observable
     // Angular expects this to complete after emitting once
     const validationResult = this.createAsyncValidator(
-      'rootForm',
+      ROOT_FORM,
       this.validationOptions()
     )(control) as Observable<ValidationErrors | null>;
 
@@ -234,7 +235,7 @@ export class ValidateRootFormDirective<T>
   }
 
   createAsyncValidator(
-    field: string,
+    field: typeof ROOT_FORM,
     validationOptions: ValidationOptions
   ): AsyncValidatorFn {
     if (!this.suite()) {
@@ -268,7 +269,23 @@ export class ValidateRootFormDirective<T>
                 observer.complete();
                 return;
               }
-              suite(model, field).done((result) => {
+              // NOTE: `suite` can be a union of typed and untyped suite functions.
+              // When calling a union of functions, TypeScript requires arguments
+              // to satisfy all call signatures, which can produce overly-strict
+              // errors in template type-checking. At runtime this is always the
+              // ROOT_FORM field ('rootForm'), which is valid for both variants.
+              const runSuite = suite as unknown as (
+                model: T,
+                field?: any
+              ) => {
+                done: (
+                  cb: (result: {
+                    getErrors: () => Record<string, string[]>;
+                  }) => void
+                ) => void;
+              };
+
+              runSuite(model, field).done((result) => {
                 const errors = result.getErrors()[field];
                 // Return { errors: string[] } format expected by getAllFormErrors()
                 observer.next(errors ? { errors } : null);

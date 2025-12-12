@@ -1,10 +1,12 @@
 import { KeyValuePipe } from '@angular/common';
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  inject,
+  Injector,
   input,
   output,
-  signal,
 } from '@angular/core';
 import { NgModelGroup } from '@angular/forms';
 import {
@@ -36,11 +38,16 @@ export type BusinessHoursMap = Record<string, BusinessHourFormModel>;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BusinessHoursComponent {
+  private readonly injector = inject(Injector);
+
   /**
    * Business hours map from parent.
    * Changes to existing values flow back to parent via ngModel + vestFormsViewProviders.
    */
   readonly values = input<BusinessHoursMap>({});
+
+  /** The current "add new slot" values from the parent form model. */
+  readonly addValue = input<BusinessHourFormModel | undefined>(undefined);
 
   /**
    * Emits when business hours are added or removed (structural changes).
@@ -48,32 +55,75 @@ export class BusinessHoursComponent {
    */
   readonly valuesChange = output<BusinessHoursMap>();
 
-  /** Local UI state for the "add new" form fields - not part of form model */
-  readonly newBusinessHour = signal<BusinessHourFormModel>({});
-
   /** Adds the new business hour and emits structural change to parent */
-  addBusinessHour(group: NgModelGroup): void {
-    const newValue = this.newBusinessHour();
-    if (!newValue.from || !newValue.to) return;
+  addBusinessHour(
+    addValueGroup: NgModelGroup,
+    valuesGroup?: NgModelGroup
+  ): void {
+    // IMPORTANT:
+    // We read the current add-new values from the parent model (`addValue()`),
+    // which is kept in sync via the parent form's (formValueChange) output.
+    // This is the most reliable unidirectional flow and avoids relying on
+    // the internal NgModelGroup control value.
+    const newValue = this.addValue();
+    if (!newValue?.from || !newValue?.to) return;
 
-    const businessHours = [...Object.values(this.values()), newValue];
+    // IMPORTANT: use the current form group's value as the source of truth.
+    // `values()` is an input that is updated by the parent via unidirectional sync,
+    // which can lag behind during rapid consecutive adds.
+    const currentValues =
+      (valuesGroup?.control.value as BusinessHoursMap | null) ?? this.values();
+
+    const businessHours = [...Object.values(currentValues), newValue];
     const newValues = arrayToObject(businessHours);
-    group.control.markAsUntouched();
-    this.newBusinessHour.set({});
+
+    // IMPORTANT: Do NOT reset values here.
+    // Resetting would emit a form value change first, which can overwrite the
+    // structural update we emit via valuesChange (race/conflict with the parent
+    // unidirectional sync). Instead, the parent clears `businessHours.addValue`
+    // as part of handling `valuesChange`, and the form directive patches that
+    // value back into the form with emitEvent:false.
+    addValueGroup.control.markAsPristine();
+    addValueGroup.control.markAsUntouched();
     this.valuesChange.emit(newValues);
+
+    // After the parent applies the structural update, it also clears the addValue
+    // inputs via the unidirectional formValue sync. That can temporarily clear one
+    // field before the other, leaving a stale one-sided validation error.
+    // Additionally, the form directive patches values with emitEvent:false, so
+    // group-level validators (e.g. businessHours.values overlap checks) may not
+    // automatically re-run after structural changes.
+    // Trigger a follow-up validity refresh after the next render.
+    // This is more deterministic than setTimeout and ensures the parent has
+    // applied the structural change + unidirectional model patch.
+    afterNextRender(
+      () => {
+        addValueGroup.control.get('from')?.updateValueAndValidity();
+        addValueGroup.control.get('to')?.updateValueAndValidity();
+        valuesGroup?.control.updateValueAndValidity();
+      },
+      { injector: this.injector }
+    );
   }
 
   /** Removes a business hour and emits structural change to parent */
-  removeBusinessHour(key: string): void {
-    const businessHours = Object.values(this.values()).filter(
+  removeBusinessHour(key: string, valuesGroup?: NgModelGroup): void {
+    const currentValues =
+      (valuesGroup?.control.value as BusinessHoursMap | null) ?? this.values();
+
+    const businessHours = Object.values(currentValues).filter(
       (_, index) => index !== Number(key)
     );
     const newValues = arrayToObject(businessHours);
     this.valuesChange.emit(newValues);
-  }
 
-  /** Updates the local new business hour (local UI state only) */
-  onNewBusinessHourChange(value: BusinessHourFormModel): void {
-    this.newBusinessHour.set(value);
+    // See note in addBusinessHour(): structural changes are patched into the form with
+    // emitEvent:false, so we proactively refresh group-level validations.
+    afterNextRender(
+      () => {
+        valuesGroup?.control.updateValueAndValidity();
+      },
+      { injector: this.injector }
+    );
   }
 }

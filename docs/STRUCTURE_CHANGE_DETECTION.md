@@ -192,6 +192,45 @@ onProcedureTypeChange(newType: string) {
 4. **Document usage** - Add comments explaining why the manual update is needed
 5. **Test thoroughly** - Verify validation behavior with all form structure combinations
 
+## FAQ: Do I need `#group="ngModelGroup"` with `ngx-control-wrapper`?
+
+No. Template reference variables like `#group="ngModelGroup"` (or `#form="ngForm"`) are a **standard Angular template-driven forms** pattern and are **not required** by ngx-vest-forms.
+
+`ngx-control-wrapper` does not change how `ngModelGroup` works. It's safe to wrap groups/controls with `ngx-control-wrapper`, and you can still export and reference Angular directives as usual.
+
+### When a template ref _is_ useful
+
+Use a template ref when you need **imperative access** to the group instance, for example:
+
+- Checking group state in the template (`group.pending`, `group.invalid`)
+- Calling low-level Angular APIs on the group (`control.updateValueAndValidity()`)
+- Passing the group to a component method that needs to coordinate structural changes
+
+Example:
+
+```html
+<div ngModelGroup="addresses" ngx-control-wrapper>
+  <div ngModelGroup="billing" #billingGroup="ngModelGroup" ngx-control-wrapper>
+    <!-- ... -->
+  </div>
+
+  <button
+    type="button"
+    [disabled]="billingGroup.pending || billingGroup.invalid"
+  >
+    Save
+  </button>
+</div>
+```
+
+### Preferred ngx-vest-forms API for structure changes
+
+If your goal is specifically to refresh validation after a structure change, prefer calling the higher-level API on the form directive:
+
+- `FormDirective.triggerFormValidation()`
+
+This keeps the logic at the form level and avoids relying on Angular internals like `updateValueAndValidity()`.
+
 ## Performance Considerations
 
 - The manual update method has **zero overhead** when not called

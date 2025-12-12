@@ -78,9 +78,11 @@
       <form
         ngxVestForm
         ngxValidateRootForm
+        [ngxValidateRootFormMode]="'live'"
         [formValue]="formValue()"
         [formShape]="shape"
         [suite]="businessHoursSuite"
+        [validationConfig]="validationConfig"
         (validChange)="formValid.set($event)"
         (errorsChange)="errors.set($event)"
         (formValueChange)="formValue.set($event)"
@@ -116,6 +118,7 @@
         <fieldset class="space-y-6">
           <ngx-business-hours
             [values]="getBusinessHoursValues()"
+            [addValue]="formValue().businessHours?.addValue"
             (valuesChange)="onBusinessHoursChange($event)"
           ></ngx-business-hours>
         </fieldset>
