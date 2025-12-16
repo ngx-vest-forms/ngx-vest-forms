@@ -661,6 +661,25 @@ export class FormDirective<T extends Record<string, unknown>> {
                         }
                       : null;
 
+                  // CRITICAL: Ensure DOM validity classes update for OnPush components.
+                  //
+                  // Angular's template-driven forms update `ng-valid`/`ng-invalid` host classes
+                  // during change detection. When async validation completes, there may be no
+                  // follow-up change detection pass for OnPush hosts, leaving the DOM in a stale
+                  // visual state (even though the control status has updated).
+                  //
+                  // We schedule a detectChanges() on the next microtask to avoid calling it
+                  // synchronously inside Angular's own validation pipeline.
+                  queueMicrotask(() => {
+                    try {
+                      this.cdr.detectChanges();
+                    } catch {
+                      // Fallback: mark for check when immediate detectChanges isn't safe.
+                      // This keeps behavior resilient in edge cases.
+                      this.cdr.markForCheck();
+                    }
+                  });
+
                   observer.next(out);
                   observer.complete();
                 });

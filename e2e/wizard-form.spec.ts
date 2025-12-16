@@ -56,6 +56,22 @@ async function clickSubmitAll(page: import('@playwright/test').Page) {
   await page.getByRole('button', { name: /submit all/i }).click();
 }
 
+/**
+ * Helper: Wait until the Wizard State sidebar shows a specific validity state.
+ * This prevents races where `validChange` hasn't propagated yet when a step is submitted.
+ */
+async function waitForSidebarStepValidity(
+  page: import('@playwright/test').Page,
+  stepLabel: 'Step 1: Account' | 'Step 2: Profile' | 'Step 3: Confirm',
+  expected: 'Valid' | 'Invalid',
+  timeout = 30_000
+) {
+  const row = page.getByText(stepLabel, { exact: true }).locator('..');
+  await expect(row.getByText(expected, { exact: true })).toBeVisible({
+    timeout,
+  });
+}
+
 test.describe('Wizard Form - Multi-Form Validation', () => {
   test.beforeEach(async ({ page }) => {
     await navigateToWizard(page);
@@ -193,6 +209,10 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
         'SecurePass123!'
       );
+
+      // Ensure step 1 validity is computed before submitting (debounced validations)
+      await waitForSidebarStepValidity(page, 'Step 1: Account', 'Valid');
+
       await clickNext(page);
 
       // Verify we're on step 2 (with extended timeout for parallel test runs)
@@ -331,6 +351,15 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           timeout: 10000,
         });
 
+        // Ensure Step 2 validity has propagated before submitting.
+        // Step navigation is guarded by `step2Valid()` in the component.
+        await waitForSidebarStepValidity(
+          page,
+          'Step 2: Profile',
+          'Valid',
+          45_000
+        );
+
         // Submit step 2
         await clickNext(page);
 
@@ -362,6 +391,8 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         'SecurePass123!'
       );
 
+      await waitForSidebarStepValidity(page, 'Step 1: Account', 'Valid');
+
       // Wait for validations to settle before navigating (extended timeout)
       await expect(page.getByText('Validating…')).toHaveCount(0, {
         timeout: 15000,
@@ -384,6 +415,13 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
       await expect(page.getByText('Validating…')).toHaveCount(0, {
         timeout: 15000,
       });
+
+      await waitForSidebarStepValidity(
+        page,
+        'Step 2: Profile',
+        'Valid',
+        45_000
+      );
 
       await clickNext(page);
 
@@ -578,6 +616,8 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           'SecurePass123!'
         );
 
+        await waitForSidebarStepValidity(page, 'Step 1: Account', 'Valid');
+
         // Wait for validations to settle before navigating
         await expect(page.getByText('Validating…')).toHaveCount(0, {
           timeout: 10000,
@@ -601,6 +641,13 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           timeout: 10000,
         });
 
+        await waitForSidebarStepValidity(
+          page,
+          'Step 2: Profile',
+          'Valid',
+          45_000
+        );
+
         await clickNext(page);
 
         // Wait for step 3 heading (with extended timeout for parallel test runs)
@@ -614,7 +661,14 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
 
         // Now go back to step 1 and break the email confirmation
         await clickPrevious(page);
+        await expect(
+          page.getByRole('heading', { name: /profile information/i })
+        ).toBeVisible({ timeout: 20_000 });
         await clickPrevious(page);
+
+        await expect(
+          page.getByRole('heading', { name: /step 1: account setup/i })
+        ).toBeVisible({ timeout: 20_000 });
 
         // Break email confirmation (mismatch)
         await fillAndBlur(
@@ -677,6 +731,13 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         await fillAndBlur(page.getByLabel(/last name/i), 'Doe');
         await fillAndBlur(page.getByLabel(/phone number/i), '123-456-7890');
         await fillAndBlur(page.getByLabel(/date of birth/i), '1990-01-15');
+
+        await waitForSidebarStepValidity(
+          page,
+          'Step 2: Profile',
+          'Valid',
+          45_000
+        );
         await clickNext(page);
 
         // Wait for step 3 heading

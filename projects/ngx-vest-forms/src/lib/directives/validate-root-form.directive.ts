@@ -293,7 +293,7 @@ export class ValidateRootFormDirective<T>
               // ROOT_FORM field ('rootForm'), which is valid for both variants.
               const runSuite = suite as unknown as (
                 model: T,
-                field?: any
+                field?: unknown
               ) => {
                 done: (
                   cb: (result: {

@@ -1,8 +1,9 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Route } from '@playwright/test';
 import {
   expectFieldHasError,
   fillAndBlur,
   navigateToPurchaseForm,
+  waitForValidationToComplete,
 } from './helpers/form-helpers';
 
 /**
@@ -47,13 +48,26 @@ test.describe('getAllFormErrors() Field-Level Errors', () => {
     page,
   }) => {
     await test.step('Trigger async validation and verify error collection', async () => {
+      // Make this test deterministic by mocking the external SWAPI call.
+      // Without this, network failures (or blocked outbound traffic) cause
+      // SwapiService.userIdExists() to resolve to false and the field stays valid.
+      const swapiUserRoute = async (route: Route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ name: 'Luke Skywalker' }),
+        });
+      };
+
+      await page.route('**/api/people/1', swapiUserRoute);
+
       const userId = page.getByLabel(/user.*id/i);
 
       // Fill with a value that triggers async validation error
       await fillAndBlur(userId, '1');
 
-      // Wait for async validation to complete
-      await page.waitForTimeout(3000);
+      // Wait for async validation to complete (aria-busy driven)
+      await waitForValidationToComplete(userId, 10_000);
 
       // Verify async error appears in the UI (collected by getAllFormErrors)
       await expectFieldHasError(userId, /already taken/i);
@@ -65,6 +79,8 @@ test.describe('getAllFormErrors() Field-Level Errors', () => {
       // Error should clear (though field may still be invalid due to other rules)
       const takenError = page.getByText(/already taken/i);
       await expect(takenError).not.toBeVisible();
+
+      await page.unroute('**/api/people/1', swapiUserRoute);
     });
   });
 });
