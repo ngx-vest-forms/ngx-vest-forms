@@ -6,7 +6,7 @@ import { Product } from './product.type';
   providedIn: 'root',
 })
 export class ProductService {
-  public getAll(): Observable<Product[]> {
+  getAll(): Observable<Product[]> {
     return of([
       { id: '0', name: 'Iphone x' },
       { id: '1', name: 'Iphone 11' },
