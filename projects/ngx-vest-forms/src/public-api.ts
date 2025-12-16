@@ -85,9 +85,11 @@ export { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from './lib/tokens/debounce.toke
 
 // Components
 export { ControlWrapperComponent } from './lib/components/control-wrapper/control-wrapper.component';
+export { FormGroupWrapperComponent } from './lib/components/form-group-wrapper/form-group-wrapper.component';
 
 // Directives
 export { FormControlStateDirective } from './lib/directives/form-control-state.directive';
+export { FormErrorControlDirective } from './lib/directives/form-error-control.directive';
 export { FormErrorDisplayDirective } from './lib/directives/form-error-display.directive';
 export type { ScErrorDisplayMode } from './lib/directives/form-error-display.directive';
 export { FormModelGroupDirective } from './lib/directives/form-model-group.directive';

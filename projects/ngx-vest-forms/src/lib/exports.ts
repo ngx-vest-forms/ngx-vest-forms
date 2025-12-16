@@ -6,6 +6,10 @@ import {
   NgModelGroup,
 } from '@angular/forms';
 import { ControlWrapperComponent } from './components/control-wrapper/control-wrapper.component';
+import { FormGroupWrapperComponent } from './components/form-group-wrapper/form-group-wrapper.component';
+import { FormControlStateDirective } from './directives/form-control-state.directive';
+import { FormErrorControlDirective } from './directives/form-error-control.directive';
+import { FormErrorDisplayDirective } from './directives/form-error-display.directive';
 import { FormModelGroupDirective } from './directives/form-model-group.directive';
 import { FormModelDirective } from './directives/form-model.directive';
 import { FormDirective } from './directives/form.directive';
@@ -86,6 +90,10 @@ export const vestFormsViewProviders = [
 export const NgxVestForms = [
   ValidateRootFormDirective,
   ControlWrapperComponent,
+  FormGroupWrapperComponent,
+  FormControlStateDirective,
+  FormErrorDisplayDirective,
+  FormErrorControlDirective,
   FormDirective,
   FormsModule,
   FormModelDirective,

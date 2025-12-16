@@ -60,7 +60,18 @@ test.describe('Accessibility - stable live regions', () => {
 
       await fillAndBlur(password, 'Short1');
 
-      await expect(errorRegion).toContainText(/8/i);
+      // Wait for validation to complete (ng-invalid class appears)
+      await expect
+        .poll(
+          async () => {
+            const classes = await password.getAttribute('class');
+            return classes?.includes('ng-invalid') ?? false;
+          },
+          { timeout: 5000, message: 'Field should have ng-invalid class' }
+        )
+        .toBe(true);
+
+      await expect(errorRegion).toContainText(/8/i, { timeout: 5000 });
 
       // Wrapper should point aria-describedby at the error region id.
       await expect(password).toHaveAttribute(

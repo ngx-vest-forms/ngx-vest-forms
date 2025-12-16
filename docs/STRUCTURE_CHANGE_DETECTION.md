@@ -198,6 +198,8 @@ No. Template reference variables like `#group="ngModelGroup"` (or `#form="ngForm
 
 `ngx-control-wrapper` does not change how `ngModelGroup` works. It's safe to wrap groups/controls with `ngx-control-wrapper`, and you can still export and reference Angular directives as usual.
 
+Accessibility note: for a **group container** (an element that contains multiple inputs), prefer using `<ngx-form-group-wrapper>` (group-safe by default). If you apply `ngx-control-wrapper` to a group container, consider setting `ariaAssociationMode="none"` so the wrapper does not stamp `aria-describedby` / `aria-invalid` onto every descendant control.
+
 ### When a template ref _is_ useful
 
 Use a template ref when you need **imperative access** to the group instance, for example:
@@ -209,10 +211,10 @@ Use a template ref when you need **imperative access** to the group instance, fo
 Example:
 
 ```html
-<div ngModelGroup="addresses" ngx-control-wrapper>
-  <div ngModelGroup="billing" #billingGroup="ngModelGroup" ngx-control-wrapper>
+<ngx-form-group-wrapper ngModelGroup="addresses">
+  <ngx-form-group-wrapper ngModelGroup="billing" #billingGroup="ngModelGroup">
     <!-- ... -->
-  </div>
+  </ngx-form-group-wrapper>
 
   <button
     type="button"
@@ -220,7 +222,7 @@ Example:
   >
     Save
   </button>
-</div>
+</ngx-form-group-wrapper>
 ```
 
 ### Preferred ngx-vest-forms API for structure changes

@@ -7,6 +7,76 @@ import {
   typeAndBlur,
 } from './helpers/form-helpers';
 
+function digitsToMaskedTime(value: string): string {
+  // Expect 4 digits: HHMM -> HH:MM
+  if (!/^\d{4}$/.test(value)) return value;
+  return `${value.slice(0, 2)}:${value.slice(2, 4)}`;
+}
+
+function selectAllShortcut(): string {
+  return process.platform === 'darwin' ? 'Meta+A' : 'Control+A';
+}
+
+/**
+ * Helper to wait for the add form to be ready for new input.
+ * After adding a slot, Angular clears the addValue inputs via unidirectional flow.
+ * This helper waits for those inputs to be cleared before filling them again.
+ */
+async function waitForAddFormReady(
+  fromTime: ReturnType<Page['locator']>,
+  toTime: ReturnType<Page['locator']>
+): Promise<void> {
+  // Wait for both inputs to be cleared (empty value)
+  await expect(fromTime).toHaveValue('');
+  await expect(toTime).toHaveValue('');
+}
+
+/**
+ * Helper to fill a masked time input.
+ * The ngx-mask directive requires specific input handling.
+ * This helper clears the input first, then types the value sequentially
+ * to ensure the mask processes each character correctly.
+ */
+async function fillMaskedTimeInput(
+  input: ReturnType<Page['locator']>,
+  value: string
+): Promise<void> {
+  await input.focus();
+
+  // Clearing masked inputs with keyboard shortcuts tends to be more reliable
+  // than programmatic value setting.
+  await input.press(selectAllShortcut());
+  await input.press('Backspace');
+
+  await input.type(value, { delay: 50 });
+  await input.blur();
+
+  // Ensure the mask actually processed the input.
+  await expect(input).toHaveValue(digitsToMaskedTime(value));
+}
+
+/**
+ * Helper to add a time slot (fill inputs and click Add button).
+ * Uses sequential key presses for reliable input handling with ngx-mask.
+ */
+async function addTimeSlot(
+  page: Page,
+  fromValue: string,
+  toValue: string
+): Promise<void> {
+  const addNewSlot = getAddNewSlot(page);
+  const fromTime = addNewSlot.locator('input[name="from"]');
+  const toTime = addNewSlot.locator('input[name="to"]');
+  const addButton = getAddButton(page);
+
+  await fillMaskedTimeInput(fromTime, fromValue);
+  await fillMaskedTimeInput(toTime, toValue);
+
+  // The Add button is disabled until the unidirectional model sync completes.
+  await expect(addButton).toBeEnabled();
+  await addButton.click();
+}
+
 async function readJsonPanel(
   page: Page,
   panelHeading: 'Form Value' | 'Errors'
@@ -203,20 +273,18 @@ test.describe('Business Hours Form', () => {
         const addNewSlot = getAddNewSlot(page);
         const fromTime = addNewSlot.locator('input[name="from"]');
         const toTime = addNewSlot.locator('input[name="to"]');
-        const addButton = getAddButton(page);
         const valuesGroup = page.locator('[ngModelGroup="values"]');
 
         // Add first slot
-        await fillAndBlur(fromTime, '0900');
-        await fillAndBlur(toTime, '1200');
-        await addButton.click();
+        await addTimeSlot(page, '0900', '1200');
 
         await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(1);
 
+        // Wait for add form to be ready (inputs cleared by Angular)
+        await waitForAddFormReady(fromTime, toTime);
+
         // Add second slot
-        await fillAndBlur(fromTime, '1300');
-        await fillAndBlur(toTime, '1700');
-        await addButton.click();
+        await addTimeSlot(page, '1300', '1700');
 
         await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(2);
 
@@ -232,20 +300,18 @@ test.describe('Business Hours Form', () => {
         const addNewSlot = getAddNewSlot(page);
         const fromTime = addNewSlot.locator('input[name="from"]');
         const toTime = addNewSlot.locator('input[name="to"]');
-        const addButton = getAddButton(page);
         const valuesGroup = page.locator('[ngModelGroup="values"]');
 
         // Add first slot: 09:00 - 12:00
-        await fillAndBlur(fromTime, '0900');
-        await fillAndBlur(toTime, '1200');
-        await addButton.click();
+        await addTimeSlot(page, '0900', '1200');
 
         await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(1);
 
+        // Wait for add form to be ready (inputs cleared by Angular)
+        await waitForAddFormReady(fromTime, toTime);
+
         // Add overlapping slot: 11:00 - 14:00
-        await fillAndBlur(fromTime, '1100');
-        await fillAndBlur(toTime, '1400');
-        await addButton.click();
+        await addTimeSlot(page, '1100', '1400');
 
         await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(2);
 
@@ -263,20 +329,18 @@ test.describe('Business Hours Form', () => {
         const addNewSlot = getAddNewSlot(page);
         const fromTime = addNewSlot.locator('input[name="from"]');
         const toTime = addNewSlot.locator('input[name="to"]');
-        const addButton = getAddButton(page);
         const valuesGroup = page.locator('[ngModelGroup="values"]');
 
         // Add first slot: 13:00 - 17:00
-        await fillAndBlur(fromTime, '1300');
-        await fillAndBlur(toTime, '1700');
-        await addButton.click();
+        await addTimeSlot(page, '1300', '1700');
 
         await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(1);
 
+        // Wait for add form to be ready (inputs cleared by Angular)
+        await waitForAddFormReady(fromTime, toTime);
+
         // Add earlier slot: 09:00 - 12:00
-        await fillAndBlur(fromTime, '0900');
-        await fillAndBlur(toTime, '1200');
-        await addButton.click();
+        await addTimeSlot(page, '0900', '1200');
 
         await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(2);
 
@@ -296,20 +360,18 @@ test.describe('Business Hours Form', () => {
         const addNewSlot = getAddNewSlot(page);
         const fromTime = addNewSlot.locator('input[name="from"]');
         const toTime = addNewSlot.locator('input[name="to"]');
-        const addButton = getAddButton(page);
         const valuesGroup = page.locator('[ngModelGroup="values"]');
 
         // Add first slot
-        await fillAndBlur(fromTime, '0900');
-        await fillAndBlur(toTime, '1200');
-        await addButton.click();
+        await addTimeSlot(page, '0900', '1200');
 
         await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(1);
 
+        // Wait for add form to be ready (inputs cleared by Angular)
+        await waitForAddFormReady(fromTime, toTime);
+
         // Add overlapping slot
-        await fillAndBlur(fromTime, '1100');
-        await fillAndBlur(toTime, '1400');
-        await addButton.click();
+        await addTimeSlot(page, '1100', '1400');
 
         await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(2);
 
@@ -437,10 +499,15 @@ test.describe('Business Hours Form', () => {
           .first()
           .click();
 
-        const formValue = await readJsonPanel(page, 'Form Value');
-        await expect(
-          normalizeTime(formValue['businessHours']?.['values']?.['0']?.['from'])
-        ).toBe('1300');
+        // Wait for form value to update after removal
+        await expect
+          .poll(async () => {
+            const formValue = await readJsonPanel(page, 'Form Value');
+            return normalizeTime(
+              formValue['businessHours']?.['values']?.['0']?.['from']
+            );
+          })
+          .toBe('1300');
       });
     });
 

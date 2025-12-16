@@ -1,5 +1,5 @@
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-  <div ngx-control-wrapper class="form-group">
+  <ngx-control-wrapper class="form-group">
     <label class="label-text" [attr.for]="idPrefix() + '-from'">From</label>
     <input
       [id]="idPrefix() + '-from'"
@@ -10,9 +10,9 @@
       name="from"
       class="input-field"
     />
-  </div>
+  </ngx-control-wrapper>
 
-  <div ngx-control-wrapper class="form-group">
+  <ngx-control-wrapper class="form-group">
     <label class="label-text" [attr.for]="idPrefix() + '-to'">To</label>
     <input
       [id]="idPrefix() + '-to'"
@@ -23,5 +23,5 @@
       name="to"
       class="input-field"
     />
-  </div>
+  </ngx-control-wrapper>
 </div>

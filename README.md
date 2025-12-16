@@ -118,7 +118,10 @@ That's all you need. The directive automatically creates controls, wires validat
 - **Vest.js validations** — Sync/async, conditional, composable patterns with `only(field)` optimization
 - **Error display modes** — Control when errors show: `on-blur`, `on-submit`, or `on-blur-or-submit` (default)
 - **Form state tracking** — Access touched, dirty, valid/invalid states for individual fields or entire form
-- **Error display helpers** — `ngx-control-wrapper` component (recommended) or `FormErrorDisplayDirective` as hostDirective for custom wrappers
+- **Error display helpers** — `ngx-control-wrapper` component (recommended) plus directive building blocks for custom wrappers:
+  - `ngx-form-group-wrapper` component (recommended for `ngModelGroup` containers)
+  - `FormErrorDisplayDirective` (state + display policy)
+  - `FormErrorControlDirective` (adds ARIA wiring + stable region IDs)
 - **Cross-field dependencies** — `validationConfig` for field-to-field triggers, `ROOT_FORM` for form-level rules
 - **Utilities** — Field paths, field clearing, validation config builder
 
@@ -138,7 +141,36 @@ providers: [
 <ngx-control-wrapper [errorDisplayMode]="'on-blur'">
   <input name="email" [ngModel]="formValue().email" />
 </ngx-control-wrapper>
+
+// Group-safe mode (use this on an ngModelGroup container)
+<ngx-form-group-wrapper ngModelGroup="address">
+  <ngx-control-wrapper>
+    <label for="street">Street</label>
+    <input id="street" name="street" [ngModel]="formValue().address?.street" />
+  </ngx-control-wrapper>
+
+  <ngx-control-wrapper>
+    <label for="city">City</label>
+    <input id="city" name="city" [ngModel]="formValue().address?.city" />
+  </ngx-control-wrapper>
+</ngx-form-group-wrapper>
 ```
+
+#### ARIA association (advanced)
+
+`<ngx-control-wrapper>` can optionally apply `aria-describedby` / `aria-invalid` to **descendant** controls.
+This is controlled by `ariaAssociationMode`:
+
+- `"all-controls"` (default) — stamps all descendant `input/select/textarea`
+- `"single-control"` — stamps only if exactly one control exists (useful for input + extra buttons)
+- `"none"` — never mutates descendant controls (group-safe / manual wiring)
+
+For `ngModelGroup` containers, prefer using `<ngx-form-group-wrapper>` (group-safe by default).
+
+📖 See also:
+
+- [Accessibility Guide](./docs/ACCESSIBILITY.md)
+- [`ControlWrapperComponent` docs](./projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md)
 
 **Available modes:**
 

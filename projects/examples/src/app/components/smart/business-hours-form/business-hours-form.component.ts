@@ -1,7 +1,13 @@
 import { JsonPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  signal,
+  viewChild,
+} from '@angular/core';
 import {
   createValidationConfig,
+  FormDirective,
   NgxVestForms,
   ROOT_FORM,
   ValidateRootFormDirective,
@@ -31,6 +37,10 @@ import { CardComponent } from '../../ui/card/card.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BusinessHoursFormComponent {
+  /** Reference to the form directive for triggering validation after structural changes */
+  protected readonly vestFormRef =
+    viewChild<FormDirective<BusinessHoursFormModel>>('vestForm');
+
   protected readonly formValue = signal<BusinessHoursFormModel>({});
   protected readonly formValid = signal<boolean>(false);
   protected readonly errors = signal<Record<string, string>>({});
@@ -74,5 +84,12 @@ export class BusinessHoursFormComponent {
         values,
       },
     }));
+
+    // Trigger validation refresh after structural changes.
+    // This ensures all validations re-run, including:
+    // - Form-level overlap detection (ROOT_FORM tests)
+    // - Field-level validations with allowEmptyPair logic for cleared addValue inputs
+    // - Any conditional validations that depend on the structure
+    this.vestFormRef()?.triggerFormValidation();
   }
 }

@@ -13,7 +13,7 @@ If the default `ngx-control-wrapper` doesn't meet your design requirements, you 
 
 ## Basic Custom Wrapper (Recommended Pattern)
 
-```typescript
+````typescript
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormErrorDisplayDirective } from 'ngx-vest-forms';
 
@@ -33,15 +33,17 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
       <ng-content />
 
       @if (errorDisplay.shouldShowErrors()) {
-        <div class="error-message">
+        <div class="error-message" role="status" aria-live="polite" aria-atomic="true">
           @for (error of errorDisplay.errors(); track error) {
-            <span>{{ error.message || error }}</span>
+            <span>{{ error }}</span>
           }
         </div>
       }
 
       @if (errorDisplay.isPending()) {
-        <div class="validating">Validating...</div>
+        <div class="validating" role="status" aria-live="polite" aria-atomic="true">
+          Validating...
+        </div>
       }
     </div>
   `,
@@ -52,7 +54,71 @@ export class CustomControlWrapperComponent {
     self: true,
   });
 }
-```
+
+## When you want automatic ARIA wiring (recommended)
+
+If you want your custom wrapper to automatically:
+
+- merge `aria-describedby` without clobbering consumer-provided IDs, and
+- toggle `aria-invalid` when errors become visible
+
+…use `FormErrorControlDirective` (it composes `FormErrorDisplayDirective` and adds ARIA + stable IDs).
+
+```ts
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { FormErrorControlDirective } from 'ngx-vest-forms';
+
+@Component({
+  selector: 'ngx-custom-error-control',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  hostDirectives: [
+    {
+      directive: FormErrorControlDirective,
+      inputs: ['errorDisplayMode', 'ariaAssociationMode'],
+    },
+  ],
+  template: `
+    <div class="field-wrapper">
+      <ng-content />
+
+      <!-- Keep regions in the DOM so aria-describedby targets always exist -->
+      <div [id]="ec.errorId" role="status" aria-live="polite" aria-atomic="true">
+        @if (ec.errorDisplay.shouldShowErrors()) {
+          @for (error of ec.errorDisplay.errors(); track error) {
+            <div>{{ error }}</div>
+          }
+        }
+      </div>
+
+      <div [id]="ec.pendingId" role="status" aria-live="polite" aria-atomic="true">
+        @if (ec.showPendingMessage()) {
+          <div>Validating…</div>
+        }
+      </div>
+    </div>
+  `,
+})
+export class CustomErrorControlComponent {
+  protected readonly ec = inject(FormErrorControlDirective, { self: true });
+}
+````
+
+### Choosing an ARIA association mode
+
+Both `<ngx-control-wrapper>` and `FormErrorControlDirective` support:
+
+- `ariaAssociationMode="all-controls"` (default) — stamps all descendant controls
+- `ariaAssociationMode="single-control"` — stamps only if exactly one control exists
+- `ariaAssociationMode="none"` — **never** mutates descendant controls (group-safe)
+
+If your wrapper targets an `NgModelGroup` container (or otherwise contains multiple controls), prefer using
+`<ngx-form-group-wrapper>` instead of trying to make `<ngx-control-wrapper>` behave like a group wrapper.
+
+If you still need a custom wrapper around a multi-control container, use `ariaAssociationMode="none"` so the
+wrapper does not stamp `aria-describedby` / `aria-invalid` onto every descendant control.
+
+`ariaAssociationMode="single-control"` is mainly useful when your wrapper _usually_ contains one control, but
+may sometimes contain additional focusable elements (for example, an input with an adjacent “Clear” button).
 
 ## Preventing Flashing Validation Messages
 
@@ -74,16 +140,26 @@ import {
       <ng-content />
 
       @if (errorDisplay.shouldShowErrors()) {
-        <div class="error-message" role="alert" aria-live="polite">
+        <div
+          class="error-message"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           @for (error of errorDisplay.errors(); track error) {
-            <span>{{ error.message || error }}</span>
+            <span>{{ error }}</span>
           }
         </div>
       }
 
       <!-- Only show after 200ms delay, keep visible for minimum 500ms -->
       @if (showPendingMessage()) {
-        <div class="validating" role="status" aria-live="polite">
+        <div
+          class="validating"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           <span class="spinner" aria-hidden="true"></span>
           Validating…
         </div>
@@ -148,16 +224,21 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
 
       <!-- Errors -->
       @if (errorDisplay.shouldShowErrors()) {
-        <div class="errors" role="alert" aria-live="assertive">
+        <div class="errors" role="status" aria-live="polite" aria-atomic="true">
           @for (error of errorDisplay.errors(); track error) {
-            <p class="error">{{ error.message || error }}</p>
+            <p class="error">{{ error }}</p>
           }
         </div>
       }
 
       <!-- Warnings (non-blocking feedback) -->
       @if (errorDisplay.warnings().length > 0) {
-        <div class="warnings" role="status" aria-live="polite">
+        <div
+          class="warnings"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           @for (warning of errorDisplay.warnings(); track warning) {
             <p class="warning">{{ warning }}</p>
           }
@@ -166,7 +247,13 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
 
       <!-- Pending state -->
       @if (errorDisplay.isPending()) {
-        <div class="pending" aria-busy="true">
+        <div
+          class="pending"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          aria-busy="true"
+        >
           <span class="spinner"></span>
           Validating...
         </div>
@@ -233,9 +320,14 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
 
       <div class="mat-form-field-subscript-wrapper">
         @if (errorDisplay.shouldShowErrors()) {
-          <div class="mat-error" role="alert" aria-live="assertive">
+          <div
+            class="mat-error"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             @for (error of errorDisplay.errors(); track error) {
-              <span>{{ error.message || error }}</span>
+              <span>{{ error }}</span>
             }
           </div>
         }
@@ -243,7 +335,12 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
         @if (
           errorDisplay.warnings().length > 0 && !errorDisplay.shouldShowErrors()
         ) {
-          <div class="mat-hint mat-warn" role="status">
+          <div
+            class="mat-hint mat-warn"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             @for (warning of errorDisplay.warnings(); track warning) {
               <span>{{ warning }}</span>
             }
@@ -251,7 +348,13 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
         }
 
         @if (errorDisplay.isPending()) {
-          <div class="mat-hint" aria-busy="true">
+          <div
+            class="mat-hint"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            aria-busy="true"
+          >
             <mat-spinner diameter="16"></mat-spinner>
             Validating...
           </div>

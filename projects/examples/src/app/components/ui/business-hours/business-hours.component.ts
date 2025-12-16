@@ -1,10 +1,7 @@
 import { KeyValuePipe } from '@angular/common';
 import {
-  afterNextRender,
   ChangeDetectionStrategy,
   Component,
-  inject,
-  Injector,
   input,
   output,
 } from '@angular/core';
@@ -38,8 +35,6 @@ export type BusinessHoursMap = Record<string, BusinessHourFormModel>;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BusinessHoursComponent {
-  private readonly injector = inject(Injector);
-
   /**
    * Business hours map from parent.
    * Changes to existing values flow back to parent via ngModel + vestFormsViewProviders.
@@ -61,11 +56,12 @@ export class BusinessHoursComponent {
     valuesGroup?: NgModelGroup
   ): void {
     // IMPORTANT:
-    // We read the current add-new values from the parent model (`addValue()`),
-    // which is kept in sync via the parent form's (formValueChange) output.
-    // This is the most reliable unidirectional flow and avoids relying on
-    // the internal NgModelGroup control value.
-    const newValue = this.addValue();
+    // For click-time actions (like adding a new slot), the NgModelGroup control
+    // value is the authoritative source of truth. The parent-provided `addValue()`
+    // is updated via unidirectional sync and can lag a tick behind user input.
+    const groupValue = addValueGroup.control
+      .value as BusinessHourFormModel | null;
+    const newValue = groupValue ?? this.addValue();
     if (!newValue?.from || !newValue?.to) return;
 
     // IMPORTANT: use the current form group's value as the source of truth.
@@ -87,23 +83,27 @@ export class BusinessHoursComponent {
     addValueGroup.control.markAsUntouched();
     this.valuesChange.emit(newValues);
 
-    // After the parent applies the structural update, it also clears the addValue
-    // inputs via the unidirectional formValue sync. That can temporarily clear one
-    // field before the other, leaving a stale one-sided validation error.
-    // Additionally, the form directive patches values with emitEvent:false, so
-    // group-level validators (e.g. businessHours.values overlap checks) may not
-    // automatically re-run after structural changes.
-    // Trigger a follow-up validity refresh after the next render.
-    // This is more deterministic than setTimeout and ensures the parent has
-    // applied the structural change + unidirectional model patch.
-    afterNextRender(
-      () => {
-        addValueGroup.control.get('from')?.updateValueAndValidity();
-        addValueGroup.control.get('to')?.updateValueAndValidity();
-        valuesGroup?.control.updateValueAndValidity();
-      },
-      { injector: this.injector }
-    );
+    // Note: Validation refresh after structural changes is handled by the parent
+    // component via triggerFormValidation() in onBusinessHoursChange(). This ensures
+    // all validations (including form-level overlap checks and field-level rules)
+    // are re-run after the parent applies the structural update.
+  }
+
+  /**
+   * Checks if the add button should be disabled.
+   * Disabled when: pending, invalid, or either from/to field is empty.
+   *
+   * Note: We use a method instead of inline template expression to avoid
+   * TypeScript warnings about optional chaining on group.control, which
+   * CAN be null during initial render despite TypeScript's type inference.
+   */
+  isAddButtonDisabled(group: NgModelGroup): boolean {
+    if (group.pending || group.invalid) return true;
+    const control = group.control;
+    if (!control) return true;
+    const fromValue = control.get('from')?.value;
+    const toValue = control.get('to')?.value;
+    return !fromValue || !toValue;
   }
 
   /** Removes a business hour and emits structural change to parent */
@@ -117,13 +117,7 @@ export class BusinessHoursComponent {
     const newValues = arrayToObject(businessHours);
     this.valuesChange.emit(newValues);
 
-    // See note in addBusinessHour(): structural changes are patched into the form with
-    // emitEvent:false, so we proactively refresh group-level validations.
-    afterNextRender(
-      () => {
-        valuesGroup?.control.updateValueAndValidity();
-      },
-      { injector: this.injector }
-    );
+    // Note: Validation refresh after structural changes is handled by the parent
+    // component via triggerFormValidation() in onBusinessHoursChange().
   }
 }

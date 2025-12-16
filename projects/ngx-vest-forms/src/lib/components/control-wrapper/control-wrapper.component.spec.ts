@@ -382,6 +382,70 @@ describe('ScControlWrapperComponent', () => {
   });
 
   describe('ARIA Enhancements', () => {
+    it('should allow opting out of descendant ARIA stamping (group-safe mode)', async () => {
+      const multiSuite = staticSuite(
+        (data: { firstName?: string; lastName?: string }, field?: string) => {
+          only(field);
+          vestTest('firstName', 'First name is required', () => {
+            enforce(data.firstName ?? '').isNotBlank();
+          });
+          vestTest('lastName', 'Last name is required', () => {
+            enforce(data.lastName ?? '').isNotBlank();
+          });
+        }
+      );
+
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper ariaAssociationMode="none">
+              <label for="firstName">First Name</label>
+              <input
+                id="firstName"
+                name="firstName"
+                [ngModel]="model().firstName"
+              />
+              <label for="lastName">Last Name</label>
+              <input
+                id="lastName"
+                name="lastName"
+                [ngModel]="model().lastName"
+              />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class GroupSafeAriaComponent {
+        model = signal({ firstName: '', lastName: '' });
+        suite = multiSuite;
+      }
+
+      await render(GroupSafeAriaComponent);
+
+      const firstNameInput = screen.getByLabelText('First Name');
+      const lastNameInput = screen.getByLabelText('Last Name');
+
+      // Trigger validation on the first field
+      await userEvent.click(firstNameInput);
+      await userEvent.tab();
+
+      await screen.findByText('First name is required', {}, { timeout: 1000 });
+
+      // Wrapper should render messages, but must not mutate descendant controls
+      await waitFor(() => {
+        expect(firstNameInput).not.toHaveAttribute('aria-invalid');
+        expect(firstNameInput).not.toHaveAttribute('aria-describedby');
+        expect(lastNameInput).not.toHaveAttribute('aria-invalid');
+        expect(lastNameInput).not.toHaveAttribute('aria-describedby');
+      });
+    });
+
     it('should generate unique IDs for error, warning, and pending regions', async () => {
       await render(TestFormComponent);
       const emailInput = screen.getByLabelText('Email');

@@ -1,8 +1,8 @@
 <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
   <div class="form-group" ngx-control-wrapper>
-    <label class="label-text" for="street">Street</label>
+    <label class="label-text" [attr.for]="fieldIds().street">Street</label>
     <input
-      id="street"
+      [id]="fieldIds().street"
       class="input-field"
       placeholder="Type street"
       type="text"
@@ -11,9 +11,9 @@
     />
   </div>
   <div class="form-group" ngx-control-wrapper>
-    <label class="label-text" for="number">Number</label>
+    <label class="label-text" [attr.for]="fieldIds().number">Number</label>
     <input
-      id="number"
+      [id]="fieldIds().number"
       class="input-field"
       placeholder="Type street number"
       type="text"
@@ -22,9 +22,9 @@
     />
   </div>
   <div class="form-group" ngx-control-wrapper>
-    <label class="label-text" for="city">City</label>
+    <label class="label-text" [attr.for]="fieldIds().city">City</label>
     <input
-      id="city"
+      [id]="fieldIds().city"
       class="input-field"
       placeholder="Type city"
       type="text"
@@ -33,9 +33,9 @@
     />
   </div>
   <div class="form-group" ngx-control-wrapper>
-    <label class="label-text" for="zipcode">Zipcode</label>
+    <label class="label-text" [attr.for]="fieldIds().zipcode">Zipcode</label>
     <input
-      id="zipcode"
+      [id]="fieldIds().zipcode"
       class="input-field"
       placeholder="Type zipcode"
       type="text"
@@ -44,9 +44,9 @@
     />
   </div>
   <div class="form-group sm:col-span-2" ngx-control-wrapper>
-    <label class="label-text" for="country">Country</label>
+    <label class="label-text" [attr.for]="fieldIds().country">Country</label>
     <input
-      id="country"
+      [id]="fieldIds().country"
       class="input-field"
       placeholder="Type country"
       type="text"

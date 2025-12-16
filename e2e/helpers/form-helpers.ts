@@ -192,14 +192,31 @@ export async function expectFieldValid(
 
 /**
  * Fill a text input and trigger blur to activate validation.
- * Uses Playwright's fill() which sets value directly.
+ * Uses keyboard interactions (select-all + backspace + type) to better
+ * simulate real user input. This is important for masked inputs and for
+ * Angular's template-driven forms which rely on input events.
+ *
+ * EXCEPTION: For date/time inputs (type="date", "time", "datetime-local"),
+ * uses Playwright's fill() directly because keyboard input doesn't work
+ * reliably with browser date pickers.
  */
 export async function fillAndBlur(
   field: Locator,
   value: string
 ): Promise<void> {
-  await field.fill(value);
-  await field.blur();
+  // Date/time inputs require direct fill() - keyboard typing doesn't work
+  const inputType = await field.getAttribute('type');
+  if (
+    inputType === 'date' ||
+    inputType === 'time' ||
+    inputType === 'datetime-local'
+  ) {
+    await field.fill(value);
+    await field.blur();
+    return;
+  }
+
+  await typeAndBlur(field, value, 0);
 }
 
 /**
@@ -221,8 +238,15 @@ export async function typeAndBlur(
   delay = 50
 ): Promise<void> {
   await field.click();
-  await field.fill(''); // Clear any existing value
-  await field.type(value, { delay });
+
+  const modifier = process.platform === 'darwin' ? 'Meta' : 'Control';
+  await field.press(`${modifier}+A`);
+  await field.press('Backspace');
+
+  if (value.length > 0) {
+    await field.type(value, { delay });
+  }
+
   await field.blur();
 }
 

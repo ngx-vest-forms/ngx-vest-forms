@@ -51,38 +51,67 @@ function isBlank(value: unknown): boolean {
   return typeof value !== 'string' || value.trim().length === 0;
 }
 
+/**
+ * Validates a business hour model (from/to time pair).
+ *
+ * Uses `omitWhen` to skip validation when:
+ * - `allowEmptyPair` is true AND both fields are empty (for add-new UI)
+ * - Individual time format validation is skipped when field is blank
+ * - Cross-field "from < to" validation is skipped when either time is invalid
+ *
+ * NOTE: When using `omitWhen` for cross-field validation (from ↔ to),
+ * you MUST also configure `validationConfig` in the component to ensure
+ * Angular triggers revalidation of the dependent field. Example:
+ *
+ * ```typescript
+ * validationConfig = createValidationConfig<BusinessHoursFormModel>()
+ *   .bidirectional('businessHours.addValue.from', 'businessHours.addValue.to')
+ *   .build();
+ * ```
+ *
+ * This is because:
+ * - Vest's `omitWhen` controls WHETHER tests run
+ * - Angular's `validationConfig` controls WHEN to trigger revalidation
+ */
 function validateBusinessHourModel(
   field: string,
   model?: BusinessHourFormModel,
   options?: { allowEmptyPair?: boolean }
 ) {
+  // Ensure boolean (not undefined) for omitWhen
   const isEmptyPair =
-    options?.allowEmptyPair && isBlank(model?.from) && isBlank(model?.to);
+    !!options?.allowEmptyPair && isBlank(model?.from) && isBlank(model?.to);
 
-  test(`${field}.to`, 'Required', () => {
-    if (isEmptyPair) return;
-    enforce(model?.to).isNotBlank();
-  });
-  test(`${field}.from`, 'Required', () => {
-    if (isEmptyPair) return;
-    enforce(model?.from).isNotBlank();
-  });
-  test(`${field}.from`, 'Should be a valid time', () => {
-    if (isEmptyPair || isBlank(model?.from)) return;
-    enforce(isValidTime(model?.from)).isTruthy();
-  });
-  test(`${field}.to`, 'Should be a valid time', () => {
-    if (isEmptyPair || isBlank(model?.to)) return;
-    enforce(isValidTime(model?.to)).isTruthy();
-  });
-  omitWhen(
-    () => !isValidTime(model?.from) || !isValidTime(model?.to),
-    () => {
+  // Skip all validation if both fields are empty and that's allowed (add-new UI)
+  omitWhen(isEmptyPair, () => {
+    // Required validations
+    test(`${field}.from`, 'Required', () => {
+      enforce(model?.from).isNotBlank();
+    });
+    test(`${field}.to`, 'Required', () => {
+      enforce(model?.to).isNotBlank();
+    });
+
+    // Format validation - only when field has a value
+    omitWhen(isBlank(model?.from), () => {
+      test(`${field}.from`, 'Should be a valid time', () => {
+        enforce(isValidTime(model?.from)).isTruthy();
+      });
+    });
+    omitWhen(isBlank(model?.to), () => {
+      test(`${field}.to`, 'Should be a valid time', () => {
+        enforce(isValidTime(model?.to)).isTruthy();
+      });
+    });
+
+    // Cross-field validation - only when both times are valid
+    // NOTE: Requires validationConfig.bidirectional() in component!
+    omitWhen(!isValidTime(model?.from) || !isValidTime(model?.to), () => {
       test(field, 'The from should be earlier than the to', () => {
         enforce(isFromEarlierThanTo(model?.from, model?.to)).isTruthy();
       });
-    }
-  );
+    });
+  });
 }
 
 function areBusinessHoursValid(

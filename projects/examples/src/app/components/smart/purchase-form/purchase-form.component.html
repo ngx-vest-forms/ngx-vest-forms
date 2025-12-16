@@ -377,6 +377,7 @@
                 >
                   <h3 class="section-title">Billing Address</h3>
                   <ngx-address
+                    idPrefix="billing-address"
                     [address]="formValue().addresses?.billingAddress"
                   ></ngx-address>
                 </div>
@@ -407,7 +408,10 @@
                     ngModelGroup="shippingAddress"
                   >
                     <h3 class="section-title">Shipping Address</h3>
-                    <ngx-address [address]="vm.shippingAddress"></ngx-address>
+                    <ngx-address
+                      idPrefix="shipping-address"
+                      [address]="vm.shippingAddress"
+                    ></ngx-address>
                   </div>
                 }
               </div>

@@ -161,12 +161,24 @@ export class ValidateRootFormDirective<T>
       this.hasSubmitted();
       this.formValue();
 
+      // Also track inputs that affect whether validation should run.
+      // These can be set after the first validation pass and we want the
+      // root form to re-evaluate once they become available.
+      this.suite();
+      this.validateRootForm();
+      this.ngxValidateRootForm();
+      this.validateRootFormMode();
+      this.ngxValidateRootFormMode();
+      this.validationOptions();
+
       // Trigger revalidation if form exists
       // Use emitEvent: true so the form directive can update its errors
       // Use untracked() to avoid making the effect reactive to lastControl changes
       const ngForm = untracked(() => this.lastControl());
       if (ngForm?.control) {
-        ngForm.control.updateValueAndValidity();
+        // Defer to the next microtask so Angular has a chance to finish
+        // wiring up controls/groups (ngModel/ngModelGroup) on initial render.
+        queueMicrotask(() => ngForm.control.updateValueAndValidity());
       }
     });
   }
@@ -189,6 +201,11 @@ export class ValidateRootFormDirective<T>
       );
       return;
     }
+
+    // Ensure we run at least one validation pass after the form is ready.
+    // This matters for 'live' mode root-form errors that should appear
+    // without requiring a user interaction.
+    queueMicrotask(() => ngForm.control.updateValueAndValidity());
 
     // Subscribe to form submission to set hasSubmitted flag
     ngForm.ngSubmit

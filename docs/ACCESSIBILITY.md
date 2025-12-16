@@ -14,6 +14,44 @@ The `ngx-control-wrapper` component uses **polite announcements** for inline fie
 - Avoids interrupting typing flow
 - Prevents excessive screen reader chatter
 
+The wrapper also:
+
+- merges its own `aria-describedby` tokens with any consumer-provided tokens (so existing hint text associations are preserved)
+- toggles `aria-invalid` only when errors are meant to be shown (based on the configured error display mode)
+
+### Group containers (NgModelGroup) — avoid stamping descendant controls
+
+When applying a wrapper to an `NgModelGroup` container (i.e. a region that contains multiple inputs), do **not** automatically set `aria-describedby`/`aria-invalid` on all descendant controls.
+
+Use one of these patterns:
+
+- Prefer per-field wrappers (each input has its own `<ngx-control-wrapper>`) and keep group-level messages separate.
+- Prefer using the dedicated `<ngx-form-group-wrapper>` for `NgModelGroup` containers (group-safe by default).
+- If you still want to use `<ngx-control-wrapper>` around a group container, set:
+  - `ariaAssociationMode="none"` (group-safe mode)
+
+This keeps ARIA relationships predictable and avoids surprising changes across an entire group.
+
+### Unique `id` attributes (avoid duplicates)
+
+Ensure form control `id` attributes are unique in the DOM.
+
+If you render the same child component multiple times on a page (for example, billing + shipping address),
+avoid hard-coded IDs like `id="street"`. Prefer an ID prefix derived from the group/property path
+(for example, `billingAddress-street`, `shippingAddress-street`).
+
+See: [Child Form Components](./CHILD-COMPONENTS.md).
+
+### Custom wrappers
+
+If you build a custom wrapper component, you can use `FormErrorControlDirective` to get:
+
+- stable region IDs (`errorId`, `warningId`, `pendingId`)
+- the same `aria-describedby` merging behavior
+- `aria-invalid` wiring
+
+See: [Custom Control Wrappers](./CUSTOM-CONTROL-WRAPPERS.md).
+
 ### Form-Level Errors (Assertive)
 
 For blocking post-submit errors, implement a form-level summary with **assertive announcements**:
@@ -41,12 +79,18 @@ For blocking post-submit errors, implement a form-level summary with **assertive
 
 ## Implementation Details
 
-See the `ControlWrapperComponent` JSDoc for comprehensive accessibility features including:
+See the `ControlWrapperComponent` docs for comprehensive accessibility features including:
 
 - Automatic ARIA ID generation
 - `aria-describedby` associations
 - `aria-invalid` state management
 - Unique region identification
+
+Component docs:
+
+- [`projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md`](../projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md)
+
+For directive-only composition (no UI), see `FormErrorControlDirective`.
 
 ## Validation & Testing
 

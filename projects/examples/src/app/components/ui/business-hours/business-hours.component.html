@@ -1,14 +1,12 @@
-<div ngModelGroup="businessHours" ngx-control-wrapper class="space-y-4">
+<ngx-form-group-wrapper ngModelGroup="businessHours" class="space-y-4">
   <!-- Existing Business Hours List -->
-  <div
+  <ngx-form-group-wrapper
     ngModelGroup="values"
     #valuesGroup="ngModelGroup"
-    ngx-control-wrapper
     class="space-y-3"
   >
     @for (item of values() | keyvalue; track item.key) {
-      <div
-        ngx-control-wrapper
+      <ngx-form-group-wrapper
         [ngModelGroup]="item.key"
         class="group relative rounded-lg border border-gray-200 bg-gray-50 p-4 transition-colors hover:bg-white dark:border-gray-700 dark:bg-gray-800/50 dark:hover:bg-gray-800"
       >
@@ -29,9 +27,9 @@
             <i class="fa-solid fa-trash" aria-hidden="true"></i>
           </button>
         </div>
-      </div>
+      </ngx-form-group-wrapper>
     }
-  </div>
+  </ngx-form-group-wrapper>
 
   @if ((values() | keyvalue)?.length) {
     <div class="relative py-4">
@@ -48,8 +46,7 @@
   }
 
   <!-- Add New Business Hour -->
-  <div
-    ngx-control-wrapper
+  <ngx-form-group-wrapper
     ngModelGroup="addValue"
     #group="ngModelGroup"
     class="rounded-lg border-2 border-dashed border-gray-300 p-4 dark:border-gray-700"
@@ -63,9 +60,7 @@
 
       <button
         type="button"
-        [disabled]="
-          group.pending || group.invalid || !addValue()?.from || !addValue()?.to
-        "
+        [disabled]="isAddButtonDisabled(group)"
         (click)="addBusinessHour(group, valuesGroup)"
         class="btn btn-secondary mt-7"
       >
@@ -73,5 +68,5 @@
         Add
       </button>
     </div>
-  </div>
-</div>
+  </ngx-form-group-wrapper>
+</ngx-form-group-wrapper>

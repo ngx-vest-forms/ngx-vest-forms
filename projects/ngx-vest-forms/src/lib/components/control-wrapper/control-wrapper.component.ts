@@ -7,6 +7,7 @@ import {
   effect,
   ElementRef,
   inject,
+  input,
   OnDestroy,
   signal,
 } from '@angular/core';
@@ -134,6 +135,24 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
   private readonly elementRef = inject(ElementRef);
   private readonly destroyRef = inject(DestroyRef);
 
+  /**
+   * Controls how this wrapper applies ARIA attributes to descendant controls.
+   *
+   * - `all-controls` (default, backwards compatible): apply `aria-describedby` / `aria-invalid`
+   *   to all `input/select/textarea` elements inside the wrapper.
+   * - `single-control`: apply ARIA attributes only when exactly one control is found.
+   *   (Useful for wrappers that sometimes contain helper buttons/controls.)
+   * - `none`: do not mutate descendant controls at all (group-safe mode).
+   *
+   * Notes:
+   * - Use `none` when wrapping a container (e.g. `NgModelGroup`) to avoid stamping ARIA
+   *   across multiple child controls.
+   * - This does not affect whether messages render; it only affects ARIA wiring.
+   */
+  readonly ariaAssociationMode = input<
+    'all-controls' | 'single-control' | 'none'
+  >('all-controls');
+
   // Generate unique IDs for ARIA associations
   protected readonly uniqueId = `ngx-control-wrapper-${nextUniqueId++}`;
   protected readonly errorId = `${this.uniqueId}-error`;
@@ -142,6 +161,9 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
 
   // Track form controls found in the wrapper
   private readonly formControls = signal<HTMLElement[]>([]);
+
+  // Signals when content is initialized so effects can safely touch the DOM.
+  private readonly contentInitialized = signal(false);
 
   // MutationObserver to detect dynamically added/removed controls
   private mutationObserver: MutationObserver | null = null;
@@ -214,13 +236,28 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
   constructor() {
     // Effect to update aria-describedby and aria-invalid on form controls
     effect(() => {
+      if (!this.contentInitialized()) return;
+
+      const mode = this.ariaAssociationMode();
+      if (mode === 'none') {
+        return;
+      }
+
       const describedBy = this.ariaDescribedBy();
       const wrapperActiveIds = describedBy
         ? describedBy.split(/\s+/).filter(Boolean)
         : [];
       const shouldShowErrors = this.errorDisplay.shouldShowErrors();
 
-      this.formControls().forEach((control) => {
+      const targets = (() => {
+        const controls = this.formControls();
+        if (mode === 'single-control') {
+          return controls.length === 1 ? controls : [];
+        }
+        return controls;
+      })();
+
+      targets.forEach((control) => {
         // Update aria-describedby (merge, don't overwrite)
         const nextDescribedBy = this.mergeAriaDescribedBy(
           control.getAttribute('aria-describedby'),
@@ -246,22 +283,45 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
       this.mutationObserver?.disconnect();
       this.mutationObserver = null;
     });
+
+    // Effect to enable/disable DOM observation based on ariaAssociationMode.
+    // This keeps the wrapper cheap in group-safe mode.
+    effect(() => {
+      if (!this.contentInitialized()) return;
+
+      const mode = this.ariaAssociationMode();
+
+      if (mode === 'none') {
+        this.mutationObserver?.disconnect();
+        this.mutationObserver = null;
+        if (this.formControls().length > 0) {
+          this.formControls.set([]);
+        }
+        return;
+      }
+
+      // Ensure controls list is up to date.
+      this.updateFormControls();
+
+      // Ensure MutationObserver is installed (dynamic @if/@for support).
+      if (!this.mutationObserver) {
+        this.mutationObserver = new MutationObserver(() => {
+          this.updateFormControls();
+        });
+
+        this.mutationObserver.observe(this.elementRef.nativeElement, {
+          childList: true,
+          subtree: true,
+        });
+      }
+    });
   }
 
   ngAfterContentInit(): void {
-    // Initial query for form controls
-    this.updateFormControls();
+    this.contentInitialized.set(true);
 
-    // Set up MutationObserver to detect dynamically added/removed controls (via @if/@for)
-    // This ensures ARIA associations stay in sync with dynamic content
-    this.mutationObserver = new MutationObserver(() => {
-      this.updateFormControls();
-    });
-
-    this.mutationObserver.observe(this.elementRef.nativeElement, {
-      childList: true,
-      subtree: true,
-    });
+    // ARIA wiring + observer setup is managed by effects so that the wrapper can
+    // opt out (ariaAssociationMode="none").
   }
 
   ngOnDestroy(): void {

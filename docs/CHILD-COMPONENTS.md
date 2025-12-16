@@ -33,29 +33,34 @@ type AddressModel = NgxDeepPartial<{
   imports: [NgxVestForms],
   viewProviders: [vestFormsViewProviders], // CRITICAL: Required for child components
   template: `
-    <div ngModelGroup="address">
-      <label for="street">Street</label>
+    <div [ngModelGroup]="groupName()">
+      <label [for]="groupName() + '-street'">Street</label>
       <input
-        id="street"
+        [id]="groupName() + '-street'"
         name="street"
         type="text"
         [ngModel]="address()?.street"
       />
 
-      <label for="city">City</label>
-      <input id="city" name="city" type="text" [ngModel]="address()?.city" />
-
-      <label for="zipcode">Zipcode</label>
+      <label [for]="groupName() + '-city'">City</label>
       <input
-        id="zipcode"
+        [id]="groupName() + '-city'"
+        name="city"
+        type="text"
+        [ngModel]="address()?.city"
+      />
+
+      <label [for]="groupName() + '-zipcode'">Zipcode</label>
+      <input
+        [id]="groupName() + '-zipcode'"
         name="zipcode"
         type="text"
         [ngModel]="address()?.zipcode"
       />
 
-      <label for="country">Country</label>
+      <label [for]="groupName() + '-country'">Country</label>
       <input
-        id="country"
+        [id]="groupName() + '-country'"
         name="country"
         type="text"
         [ngModel]="address()?.country"
@@ -65,6 +70,15 @@ type AddressModel = NgxDeepPartial<{
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AddressFormComponent {
+  /**
+   * Name of the `ngModelGroup`.
+   *
+   * This must match the property path in the parent form model (e.g. "billingAddress").
+   *
+   * It is also used to keep input IDs unique when multiple address components are rendered
+   * on the same page (e.g. billing + shipping).
+   */
+  readonly groupName = input.required<string>();
   readonly address = input<AddressModel>();
 }
 ```
@@ -92,10 +106,16 @@ type OrderFormModel = NgxDeepPartial<{
       <input name="customerName" [ngModel]="formValue().customerName" />
 
       <h3>Billing Address</h3>
-      <ngx-address-form [address]="formValue().billingAddress" />
+      <ngx-address-form
+        groupName="billingAddress"
+        [address]="formValue().billingAddress"
+      />
 
       <h3>Shipping Address</h3>
-      <ngx-address-form [address]="formValue().shippingAddress" />
+      <ngx-address-form
+        groupName="shippingAddress"
+        [address]="formValue().shippingAddress"
+      />
 
       <button type="submit">Submit Order</button>
     </form>
