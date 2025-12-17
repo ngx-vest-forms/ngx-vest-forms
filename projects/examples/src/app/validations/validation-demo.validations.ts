@@ -3,6 +3,7 @@ import { ValidationDemoModel } from '../models/validation-demo.model';
 
 export const validationDemoSuite = staticSuite(
   (model: ValidationDemoModel, field?: string) => {
+    // CRITICAL: Must call unconditionally to prevent Vest execution tracking corruption (see PR #60)
     only(field);
 
     // Password validation
