@@ -519,18 +519,12 @@ test.describe('Purchase Form', () => {
         const zipcodeError = page.getByText(/zipcode.*required/i);
         const countryError = page.getByText(/country.*required/i);
 
-        // At least some address validation errors should be visible
-        // Note: Some fields may not have explicit "required" validation
-        // so we check for the presence of any error indicators
-        const addressSection = page
-          .locator('div')
-          .filter({ hasText: /billing address/i })
-          .locator('ngx-address')
-          .first();
-
-        // Check that the address section has invalid fields
-        const invalidFields = addressSection.locator('.ng-invalid');
-        await expect(invalidFields.first()).toBeVisible({ timeout: 3000 });
+        // Verify all address validation errors are visible
+        await expect(streetError).toBeVisible({ timeout: 3000 });
+        await expect(numberError).toBeVisible({ timeout: 3000 });
+        await expect(cityError).toBeVisible({ timeout: 3000 });
+        await expect(zipcodeError).toBeVisible({ timeout: 3000 });
+        await expect(countryError).toBeVisible({ timeout: 3000 });
       });
     });
   });
