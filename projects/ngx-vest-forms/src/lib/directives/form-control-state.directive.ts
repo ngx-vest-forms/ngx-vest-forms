@@ -131,19 +131,21 @@ export class FormControlStateDirective {
           dirty,
         } = control;
 
-        // Mark as validated when:
-        // 1. Control has been touched (user blurred the field), OR
-        // 2. Status actually CHANGED (not on first emission) AND validation completed (not PENDING)
-        //    AND the control has been interacted with (touched or dirty)
+        // Mark as validated when any of the following conditions are met:
+        // 1. The control has been touched (user blurred the field).
+        // 2. The control's status has actually changed (not the first status emission),
+        //    AND the new status is not 'PENDING' (validation completed),
+        //    AND the control has been interacted with (dirty).
         //
         // This ensures hasBeenValidated is true for:
-        // - User blur events (touched becomes true)
-        // - User-triggered validations (dirty)
-        // - ValidationConfig-triggered validations that result in the control becoming touched
-        // But NOT for initial page load validations
+        //   - User blur events (touched becomes true)
+        //   - User-triggered validations (dirty)
+        //   - ValidationConfig-triggered validations that result in the control becoming touched
+        // But NOT for initial page load validations.
         //
+        // Accessibility: The logic is structured for clarity and maintainability.
         // IMPORTANT: Read touched/dirty directly from control, not from signal,
-        // to avoid race conditions with afterEveryRender sync
+        // to avoid race conditions with afterEveryRender sync.
         if (
           touched || // Control was blurred (most common case)
           (this.#previousStatus !== undefined && // Not the first status emission

@@ -64,6 +64,10 @@ export async function waitForValidationToComplete(
  * - Pre-production WCAG 2.2 AA compliance validation
  * - When ARIA timing bugs are fixed and you want to prevent regressions
  *
+ * RECOMMENDATION: For production WCAG 2.2 AA compliance validation or pre-release
+ * accessibility audits, run tests with `strict = true` to catch ARIA timing issues
+ * that impact real users relying on assistive technologies.
+ *
  * Known Issue: Fields with omitWhen conditional validations may have ng-invalid class
  * but not aria-invalid attribute due to shouldShowErrors() race condition.
  *

@@ -18,16 +18,6 @@ async function navigateToWizard(page: import('@playwright/test').Page) {
 }
 
 /**
- * Helper: Get wizard step indicator
- */
-function getStepIndicator(
-  page: import('@playwright/test').Page,
-  stepNumber: number
-) {
-  return page.locator(`.wizard-step[data-step="${stepNumber}"]`);
-}
-
-/**
  * Helper: Click navigation button
  * Waits for any "Validating…" indicators to disappear before and after clicking
  */
