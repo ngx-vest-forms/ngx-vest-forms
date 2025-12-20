@@ -172,7 +172,7 @@ Usage:
 
 ## Child Components with Error Display
 
-Child components can include their own error display:
+Child components can include their own error display using `ngx-control-wrapper` for individual fields:
 
 ```typescript
 @Component({
@@ -181,7 +181,7 @@ Child components can include their own error display:
   viewProviders: [vestFormsViewProviders],
   template: `
     <div ngModelGroup="contact">
-      <div ngx-control-wrapper>
+      <ngx-control-wrapper>
         <label for="email">Email</label>
         <input
           id="email"
@@ -189,9 +189,9 @@ Child components can include their own error display:
           type="email"
           [ngModel]="contact()?.email"
         />
-      </div>
+      </ngx-control-wrapper>
 
-      <div ngx-control-wrapper>
+      <ngx-control-wrapper>
         <label for="phone">Phone</label>
         <input
           id="phone"
@@ -199,7 +199,7 @@ Child components can include their own error display:
           type="tel"
           [ngModel]="contact()?.phone"
         />
-      </div>
+      </ngx-control-wrapper>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -208,6 +208,56 @@ export class ContactFormComponent {
   readonly contact = input<ContactModel>();
 }
 ```
+
+### Using `ngx-form-group-wrapper` (Recommended)
+
+For group-level error display plus individual field wrappers, use `ngx-form-group-wrapper` with `ngModelGroup` directly on it:
+
+```typescript
+@Component({
+  selector: 'ngx-address-form',
+  imports: [NgxVestForms],
+  viewProviders: [vestFormsViewProviders],
+  template: `
+    <!-- ngModelGroup directly on the wrapper (recommended) -->
+    <ngx-form-group-wrapper [ngModelGroup]="groupName()">
+      <ngx-control-wrapper>
+        <label [for]="groupName() + '-street'">Street</label>
+        <input
+          [id]="groupName() + '-street'"
+          name="street"
+          type="text"
+          [ngModel]="address()?.street"
+        />
+      </ngx-control-wrapper>
+
+      <ngx-control-wrapper>
+        <label [for]="groupName() + '-city'">City</label>
+        <input
+          [id]="groupName() + '-city'"
+          name="city"
+          type="text"
+          [ngModel]="address()?.city"
+        />
+      </ngx-control-wrapper>
+    </ngx-form-group-wrapper>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class AddressFormComponent {
+  readonly groupName = input.required<string>();
+  readonly address = input<AddressModel>();
+}
+```
+
+**Benefits of this pattern:**
+
+- **Less DOM nesting** - No extra `<div>` needed for the `ngModelGroup`
+- **Group-level errors** - `ngx-form-group-wrapper` can display errors for the entire group
+- **Per-field errors** - Each `ngx-control-wrapper` handles its own field's errors
+- **Accessible** - Group wrapper doesn't stamp ARIA attributes on descendant controls
+
+````
 
 ## Nested Child Components
 
@@ -260,7 +310,7 @@ export class PhoneInputComponent {
 export class ContactFormComponent {
   readonly contact = input<ContactModel>();
 }
-```
+````
 
 ## Conditional Child Components
 

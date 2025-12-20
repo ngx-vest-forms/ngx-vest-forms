@@ -30,6 +30,23 @@ Use one of these patterns:
 - If you still want to use `<ngx-control-wrapper>` around a group container, set:
   - `ariaAssociationMode="none"` (group-safe mode)
 
+**Recommended pattern** — `ngModelGroup` directly on the wrapper:
+
+```html
+<!-- ngModelGroup directly on ngx-form-group-wrapper (recommended) -->
+<ngx-form-group-wrapper ngModelGroup="address">
+  <ngx-control-wrapper>
+    <label for="street">Street</label>
+    <input id="street" name="street" [ngModel]="formValue().address?.street" />
+  </ngx-control-wrapper>
+
+  <ngx-control-wrapper>
+    <label for="city">City</label>
+    <input id="city" name="city" [ngModel]="formValue().address?.city" />
+  </ngx-control-wrapper>
+</ngx-form-group-wrapper>
+```
+
 This keeps ARIA relationships predictable and avoids surprising changes across an entire group.
 
 ### Unique `id` attributes (avoid duplicates)
