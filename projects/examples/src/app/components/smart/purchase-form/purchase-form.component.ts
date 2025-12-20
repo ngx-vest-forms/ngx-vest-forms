@@ -6,11 +6,13 @@ import {
   effect,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import {
   clearFields,
   createValidationConfig,
+  FormDirective,
   NgxVestForms,
   ROOT_FORM,
   setValueAtPath,
@@ -47,6 +49,11 @@ export class PurchaseFormComponent {
   private readonly swapiService = inject(SwapiService);
   private readonly productService = inject(ProductService);
   readonly products = toSignal(this.productService.getAll());
+
+  // Form reference for reset functionality
+  private readonly vestForm =
+    viewChild.required<FormDirective<PurchaseFormModel>>('vestForm');
+
   protected readonly formValue = signal<PurchaseFormModel>({});
   protected readonly formValid = signal<boolean>(false);
   protected readonly loading = signal<boolean>(false);
@@ -164,15 +171,16 @@ export class PurchaseFormComponent {
   }
 
   protected reset(): void {
-    // Reset form data to empty state
+    // 1. Reset form data (component owns the data)
     this.formValue.set({});
 
-    // Reset form validation state
-    this.formValid.set(false);
-    this.errors.set({});
+    // 2. Reset Angular form state + Vest validation state
+    this.vestForm().resetForm();
 
-    // Reset shipping address state
+    // 3. Reset component-local cache (not part of form directive)
     this.shippingAddress.set({});
+
+    // Note: formValid and errors will auto-update via output bindings
   }
 
   /**

@@ -8,6 +8,7 @@ import {
   monitorAriaStability,
   navigateToValidationConfigDemo,
   typeAndBlur,
+  waitForValidationToSettle,
 } from './helpers/form-helpers';
 
 test.describe('ValidationConfig Demo', () => {
@@ -30,7 +31,7 @@ test.describe('ValidationConfig Demo', () => {
         await confirmPassword.blur();
 
         // Wait for validation to propagate
-        await page.waitForTimeout(500);
+        await waitForValidationToSettle(page);
 
         await expectFieldHasError(confirmPassword, /confirm/i);
       });
@@ -323,7 +324,7 @@ test.describe('ValidationConfig Demo', () => {
 
         // Fields should be revalidated (might show errors if validation changed)
         // Just verify no validation deadlock occurs
-        await page.waitForTimeout(500);
+        await waitForValidationToSettle(page);
 
         // Verify form still responds to input
         await fillAndBlur(state, 'Ontario');
@@ -481,17 +482,17 @@ test.describe('ValidationConfig Demo', () => {
         // Rapidly change both fields multiple times
         await password.fill('Pass1');
         await confirmPassword.fill('Pass1');
-        await page.waitForTimeout(100);
+        await waitForValidationToSettle(page);
 
         await password.fill('Password2');
         await confirmPassword.fill('Password2');
-        await page.waitForTimeout(100);
+        await waitForValidationToSettle(page);
 
         await password.fill('MySecure123');
         await confirmPassword.fill('MySecure123');
 
         // Wait for validations to settle
-        await page.waitForTimeout(1000);
+        await waitForValidationToSettle(page);
 
         // Both fields should stabilize without thrashing
         const passwordStable = await monitorAriaStability(password, 1000);
@@ -512,7 +513,7 @@ test.describe('ValidationConfig Demo', () => {
         await password.type('MySecure123', { delay: 50 });
 
         // Validation should not run until debounce completes
-        await page.waitForTimeout(300); // Wait for debounce (typically ~300ms)
+        await waitForValidationToSettle(page);
 
         // Now validation should have completed
         await expectFieldValid(password);

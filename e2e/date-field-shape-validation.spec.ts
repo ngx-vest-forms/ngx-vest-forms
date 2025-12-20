@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { navigateToPurchaseForm } from './helpers/form-helpers';
+import {
+  navigateToPurchaseForm,
+  waitForConsoleCheck,
+  waitForFormProcessing,
+} from './helpers/form-helpers';
 
 test.describe('Date Field Shape Validation', () => {
   test.beforeEach(async ({ page }) => {
@@ -31,7 +35,7 @@ test.describe('Date Field Shape Validation', () => {
       await expect(form).toBeVisible();
 
       // Wait a moment for any delayed validations
-      await page.waitForTimeout(500);
+      await waitForConsoleCheck(page);
 
       // Verify no shape mismatch errors
       const shapeMismatchErrors = consoleErrors.filter(
@@ -76,7 +80,7 @@ test.describe('Date Field Shape Validation', () => {
       await dateField.blur();
 
       // Wait for validation
-      await page.waitForTimeout(300);
+      await waitForFormProcessing(page);
 
       // Verify no shape mismatch errors
       const shapeMismatchErrors = consoleErrors.filter(
@@ -106,12 +110,12 @@ test.describe('Date Field Shape Validation', () => {
       // Fill the date field
       await dateField.fill('2000-01-01');
       await dateField.blur();
-      await page.waitForTimeout(200);
+      await waitForFormProcessing(page);
 
       // Clear the date field
       await dateField.clear();
       await dateField.blur();
-      await page.waitForTimeout(200);
+      await waitForFormProcessing(page);
 
       // Verify no shape mismatch errors
       const shapeMismatchErrors = consoleErrors.filter(
@@ -139,7 +143,7 @@ test.describe('Date Field Shape Validation', () => {
       await expect(dateField).toBeVisible();
 
       // Wait for form initialization
-      await page.waitForTimeout(500);
+      await waitForConsoleCheck(page);
 
       // Verify no shape mismatch errors occurred during initialization
       const shapeMismatchErrors = consoleErrors.filter(

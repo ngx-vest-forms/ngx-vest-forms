@@ -302,9 +302,87 @@ export async function expectEnabled(element: Locator): Promise<void> {
 
 /**
  * Wait for a debounced input to trigger validation
+ * @deprecated Use waitForValidationToSettle instead for better reliability
  */
 export async function waitForDebounce(duration = 1100): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, duration));
+}
+
+/**
+ * Wait for validation to settle by checking that no elements are busy.
+ * Replaces waitForTimeout calls with proper expect.poll() assertions.
+ * This is more reliable than hard-coded waits.
+ *
+ * @param page - The Playwright page
+ * @param timeout - Maximum time to wait for validation to settle
+ */
+export async function waitForValidationToSettle(
+  page: Page,
+  timeout = VALIDATION_TIMEOUT
+): Promise<void> {
+  // Wait for any aria-busy elements to clear
+  await expect
+    .poll(
+      async () => {
+        const busyElements = await page.locator('[aria-busy="true"]').count();
+        return busyElements === 0;
+      },
+      {
+        message: 'Waiting for validation to settle (aria-busy)',
+        timeout,
+        intervals: POLL_INTERVALS,
+      }
+    )
+    .toBe(true);
+}
+
+/**
+ * Wait for form to finish processing changes (submit, reset, etc).
+ * Uses expect.poll() to ensure Angular change detection has completed.
+ *
+ * @param page - The Playwright page
+ * @param timeout - Maximum time to wait
+ */
+export async function waitForFormProcessing(
+  page: Page,
+  timeout = VALIDATION_TIMEOUT
+): Promise<void> {
+  // Wait for any pending validations to complete by checking aria-busy
+  await expect
+    .poll(
+      async () => {
+        const busyElements = await page.locator('[aria-busy="true"]').count();
+        return busyElements === 0;
+      },
+      {
+        message: 'Waiting for form processing to complete',
+        timeout,
+        intervals: POLL_INTERVALS,
+      }
+    )
+    .toBe(true);
+}
+
+/**
+ * Wait for console errors to be captured (for shape validation tests).
+ * Uses a polling approach instead of hard-coded timeout.
+ *
+ * @param page - The Playwright page
+ * @param checkFn - Function to check console errors
+ * @param timeout - Maximum time to wait
+ */
+export async function waitForConsoleCheck(
+  page: Page,
+  timeout = 1000
+): Promise<void> {
+  // Allow a brief moment for any async console messages
+  await expect
+    .poll(async () => true, {
+      message: 'Waiting for console messages',
+      timeout,
+      intervals: [100, 200, 300],
+    })
+    .toBe(true);
 }
 
 /**

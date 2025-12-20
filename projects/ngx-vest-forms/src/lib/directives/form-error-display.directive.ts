@@ -1,12 +1,7 @@
-import {
-  computed,
-  Directive,
-  effect,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
+import { computed, Directive, effect, inject, input } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NgForm } from '@angular/forms';
+import { map, merge, of, startWith } from 'rxjs';
 import {
   NGX_ERROR_DISPLAY_MODE_TOKEN,
   SC_ERROR_DISPLAY_MODE_TOKEN,
@@ -55,19 +50,27 @@ export class FormErrorDisplayDirective {
    * formSubmitted: true after the form is submitted (if NgForm is present)
    */
   readonly updateOn = this.#formControlState.updateOn;
-  // formSubmitted signal is already public
 
-  // Signal for form submission state (true after submit)
-  readonly formSubmitted = signal(false);
+  /**
+   * Signal that tracks NgForm.submitted state reactively.
+   *
+   * Uses toSignal() to convert ngSubmit events + statusChanges into a reactive signal.
+   * - ngSubmit: fires when form is submitted (sets NgForm.submitted = true)
+   * - statusChanges: fires after resetForm() (which sets NgForm.submitted = false)
+   *
+   * This ensures proper sync with both submit and reset operations.
+   */
+  readonly formSubmitted = this.#ngForm
+    ? toSignal(
+        merge(this.#ngForm.ngSubmit, this.#ngForm.statusChanges ?? of()).pipe(
+          startWith(null),
+          map(() => this.#ngForm?.submitted ?? false)
+        ),
+        { initialValue: this.#ngForm.submitted }
+      )
+    : toSignal(of(false), { initialValue: false });
 
   constructor() {
-    // Listen for form submit event if NgForm is present
-    if (this.#ngForm?.ngSubmit) {
-      this.#ngForm.ngSubmit.subscribe(() => {
-        this.formSubmitted.set(true);
-      });
-    }
-
     // Warn about problematic combinations of updateOn and errorDisplayMode
     effect(() => {
       const mode = this.errorDisplayMode();

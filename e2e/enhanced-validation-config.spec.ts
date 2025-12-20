@@ -6,6 +6,7 @@ import {
   expectUnchecked,
   fillAndBlur,
   navigateToValidationConfigDemo,
+  waitForValidationToSettle,
 } from './helpers/form-helpers';
 
 /**
@@ -230,7 +231,7 @@ test.describe('Enhanced ValidationConfig - Complex Cascade Dependencies', () => 
       await country.selectOption({ label: 'Canada' });
 
       // Wait for validation to process
-      await page.waitForTimeout(500);
+      await waitForValidationToSettle(page);
 
       // Fields should still be valid (values haven't been cleared)
       // But they have been revalidated

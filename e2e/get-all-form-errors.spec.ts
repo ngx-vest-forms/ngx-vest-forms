@@ -4,6 +4,7 @@ import {
   fillAndBlur,
   navigateToPurchaseForm,
   waitForValidationToComplete,
+  waitForValidationToSettle,
 } from './helpers/form-helpers';
 
 /**
@@ -74,7 +75,7 @@ test.describe('getAllFormErrors() Field-Level Errors', () => {
 
       // Clear the field to verify error is removed
       await fillAndBlur(userId, '');
-      await page.waitForTimeout(1000);
+      await waitForValidationToSettle(page);
 
       // Error should clear (though field may still be invalid due to other rules)
       const takenError = page.getByText(/already taken/i);

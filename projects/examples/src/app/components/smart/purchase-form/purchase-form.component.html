@@ -105,6 +105,7 @@
     >
       <form
         ngxVestForm
+        #vestForm="ngxVestForm"
         (ngSubmit)="save()"
         [formValue]="formValue()"
         ngxValidateRootForm

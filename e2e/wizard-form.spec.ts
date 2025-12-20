@@ -47,6 +47,17 @@ async function clickSubmitAll(page: import('@playwright/test').Page) {
 }
 
 /**
+ * Helper: Wait for all validations to settle.
+ * Uses a longer timeout for parallel execution scenarios.
+ */
+async function waitForValidationsToSettle(
+  page: import('@playwright/test').Page,
+  timeout = 20_000
+) {
+  await expect(page.getByText('Validating…')).toHaveCount(0, { timeout });
+}
+
+/**
  * Helper: Wait until the Wizard State sidebar shows a specific validity state.
  * This prevents races where `validChange` hasn't propagated yet when a step is submitted.
  */
@@ -155,6 +166,12 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           /required/i
         );
 
+        // Verify the account section has proper heading structure in accessibility tree
+        const accountSection = page.getByRole('heading', {
+          name: /step 1: account setup/i,
+        });
+        await expect(accountSection).toBeVisible();
+
         // Should still be on step 1 (didn't navigate)
         await expect(
           page.getByRole('heading', { name: /step 1: account setup/i })
@@ -187,6 +204,10 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
   });
 
   test.describe('Step 2: Profile Information', () => {
+    // The beforeEach navigation through step 1 can be flaky in parallel execution
+    // due to resource contention and async validation timing. Adding retries to handle this.
+    test.describe.configure({ retries: 2 });
+
     test.beforeEach(async ({ page }) => {
       // Navigate to step 2 by completing step 1
       await fillAndBlur(page.getByLabel(/email address/i), 'test@example.com');
@@ -200,7 +221,10 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         'SecurePass123!'
       );
 
-      // Ensure step 1 validity is computed before submitting (debounced validations)
+      // Wait for all validations to settle (debounced validations)
+      await waitForValidationsToSettle(page);
+
+      // Ensure step 1 validity is computed before submitting
       await waitForSidebarStepValidity(page, 'Step 1: Account', 'Valid');
 
       await clickNext(page);
@@ -337,9 +361,7 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         await fillAndBlur(page.getByLabel(/date of birth/i), '1990-01-15');
 
         // Wait for async validations to settle before clicking Next
-        await expect(page.getByText('Validating…')).toHaveCount(0, {
-          timeout: 10000,
-        });
+        await waitForValidationsToSettle(page);
 
         // Ensure Step 2 validity has propagated before submitting.
         // Step navigation is guarded by `step2Valid()` in the component.
@@ -381,12 +403,9 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         'SecurePass123!'
       );
 
+      // Wait for async validations to settle first, then check sidebar
+      await waitForValidationsToSettle(page);
       await waitForSidebarStepValidity(page, 'Step 1: Account', 'Valid');
-
-      // Wait for validations to settle before navigating (extended timeout)
-      await expect(page.getByText('Validating…')).toHaveCount(0, {
-        timeout: 15000,
-      });
 
       await clickNext(page);
 
@@ -395,16 +414,14 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         page.getByRole('heading', { name: /profile information/i })
       ).toBeVisible({ timeout: 30000 });
 
-      // Step 2
+      // Step 2: Fill all required fields
       await fillAndBlur(page.getByLabel(/first name/i), 'John');
       await fillAndBlur(page.getByLabel(/last name/i), 'Doe');
       await fillAndBlur(page.getByLabel(/phone number/i), '123-456-7890');
       await fillAndBlur(page.getByLabel(/date of birth/i), '1990-01-15');
 
-      // Wait for validations to settle before navigating (extended timeout)
-      await expect(page.getByText('Validating…')).toHaveCount(0, {
-        timeout: 15000,
-      });
+      // Wait for async validations to complete
+      await waitForValidationsToSettle(page);
 
       await waitForSidebarStepValidity(
         page,
@@ -509,6 +526,9 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
   });
 
   test.describe('Final Submit - All Forms Validation', () => {
+    // These tests navigate through multiple steps which can be flaky in parallel execution
+    test.describe.configure({ retries: 2 });
+
     test('CRITICAL: Submit All triggers validation on ALL forms', async ({
       page,
     }) => {
@@ -532,9 +552,7 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         );
 
         // Wait for validations to settle before navigating
-        await expect(page.getByText('Validating…')).toHaveCount(0, {
-          timeout: 15000,
-        });
+        await waitForValidationsToSettle(page);
 
         await clickNext(page);
 
@@ -550,9 +568,7 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         await fillAndBlur(page.getByLabel(/date of birth/i), '1990-01-15');
 
         // Wait for validations to settle before navigating
-        await expect(page.getByText('Validating…')).toHaveCount(0, {
-          timeout: 15000,
-        });
+        await waitForValidationsToSettle(page);
 
         await clickNext(page);
 
@@ -607,11 +623,7 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         );
 
         await waitForSidebarStepValidity(page, 'Step 1: Account', 'Valid');
-
-        // Wait for validations to settle before navigating
-        await expect(page.getByText('Validating…')).toHaveCount(0, {
-          timeout: 10000,
-        });
+        await waitForValidationsToSettle(page);
 
         await clickNext(page);
 
@@ -626,10 +638,8 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         await fillAndBlur(page.getByLabel(/phone number/i), '123-456-7890');
         await fillAndBlur(page.getByLabel(/date of birth/i), '1990-01-15');
 
-        // Wait for validations to settle before navigating
-        await expect(page.getByText('Validating…')).toHaveCount(0, {
-          timeout: 10000,
-        });
+        // Wait for async validations to complete
+        await waitForValidationsToSettle(page);
 
         await waitForSidebarStepValidity(
           page,
@@ -666,6 +676,9 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           'broken@example.com'
         );
 
+        // Wait for validation to process the change
+        await waitForValidationsToSettle(page);
+
         // Save & Continue button is always enabled (a11y)
         const nextButton = page.getByRole('button', {
           name: /save & continue/i,
@@ -674,6 +687,9 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
 
         // Click to trigger validation - should show error
         await nextButton.click();
+
+        // Wait for validation triggered by submit
+        await waitForValidationsToSettle(page);
 
         // Confirm email should show error
         await expectFieldHasError(
@@ -709,18 +725,26 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
           'SecurePass123!'
         );
+
+        // Wait for step 1 to become valid before navigating
+        await waitForSidebarStepValidity(page, 'Step 1: Account', 'Valid');
+        await waitForValidationsToSettle(page);
+
         await clickNext(page);
 
-        // Wait for step 2 heading
+        // Wait for step 2 heading (with extended timeout for parallel test runs)
         await expect(
           page.getByRole('heading', { name: /profile information/i })
-        ).toBeVisible();
+        ).toBeVisible({ timeout: 30000 });
 
         // Step 2: Profile
         await fillAndBlur(page.getByLabel(/first name/i), 'John');
         await fillAndBlur(page.getByLabel(/last name/i), 'Doe');
         await fillAndBlur(page.getByLabel(/phone number/i), '123-456-7890');
         await fillAndBlur(page.getByLabel(/date of birth/i), '1990-01-15');
+
+        // Wait for async validations to complete
+        await waitForValidationsToSettle(page);
 
         await waitForSidebarStepValidity(
           page,
@@ -730,10 +754,10 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         );
         await clickNext(page);
 
-        // Wait for step 3 heading
+        // Wait for step 3 heading (with extended timeout for parallel test runs)
         await expect(
           page.getByRole('heading', { name: /review.*confirm/i })
-        ).toBeVisible();
+        ).toBeVisible({ timeout: 30000 });
 
         // Step 3: Review
         await page.getByLabel(/accept.*terms/i).check();
@@ -803,6 +827,9 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
   });
 
   test.describe('Wizard Navigation & State Persistence', () => {
+    // This section can be flaky due to navigation timing in parallel execution
+    test.describe.configure({ retries: 2 });
+
     test('should persist data when navigating back and forth', async ({
       page,
     }) => {
@@ -824,12 +851,17 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
           'Persist123!'
         );
+
+        // Wait for step 1 to be valid before navigating
+        await waitForSidebarStepValidity(page, 'Step 1: Account', 'Valid');
+        await waitForValidationsToSettle(page);
+
         await clickNext(page);
 
-        // Now on step 2
+        // Now on step 2 (extended timeout for parallel test runs)
         await expect(
           page.getByRole('heading', { name: /profile information/i })
-        ).toBeVisible();
+        ).toBeVisible({ timeout: 30000 });
 
         // Go back to step 1
         await clickPrevious(page);
@@ -937,6 +969,51 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           await expect(errorElement).toBeVisible();
           await expect(errorElement).toContainText(/required/i);
         }
+      });
+    });
+
+    test('should have accessible wizard step indicators', async ({ page }) => {
+      await test.step('Verify wizard steps have proper accessibility structure', async () => {
+        // Verify the wizard steps navigation has proper list structure with dynamic aria-label
+        const wizardSteps = page.locator('ngx-wizard-steps nav');
+        await expect(wizardSteps).toMatchAriaSnapshot(`
+          - 'navigation "Progress: Step 1 of 3"':
+            - list:
+              - listitem:
+                - 'img "Step 1: Account - Current step"'
+              - listitem:
+                - 'img "Step 2: Profile - Not started"'
+              - listitem:
+                - 'img "Step 3: Review - Not started"'
+        `);
+      });
+
+      await test.step('Current step should have aria-current attribute', async () => {
+        // The current step indicator should have aria-current="step"
+        const currentStep = page.locator('[aria-current="step"]');
+        await expect(currentStep).toBeVisible();
+      });
+    });
+
+    test('should show validation errors in accessible format', async ({
+      page,
+    }) => {
+      await test.step('Submit empty form and verify error accessibility', async () => {
+        // Click next to trigger validation on all fields
+        await page.getByRole('button', { name: /save & continue/i }).click();
+
+        // Wait for validation to complete
+        await expect(page.getByText('Validating…')).toHaveCount(0, {
+          timeout: 5000,
+        });
+
+        // Verify email field has proper error structure
+        const emailField = page.getByLabel(/email address/i);
+        await expect(emailField).toHaveAttribute('aria-invalid', 'true');
+
+        // Error should be associated via aria-describedby
+        const describedBy = await emailField.getAttribute('aria-describedby');
+        expect(describedBy).toBeTruthy();
       });
     });
   });

@@ -569,12 +569,18 @@ describe('FormDirective - Reset Functionality', () => {
             (formValueChange)="formValue.set($event)"
             (errorsChange)="errors.set($event)"
           >
-            <input
-              name="email"
-              [ngModel]="formValue().email"
-              data-testid="email"
-            />
-            @if (errors()['email']) {
+            <ngx-control-wrapper>
+              <input
+                name="email"
+                [ngModel]="formValue().email"
+                data-testid="email"
+              />
+            </ngx-control-wrapper>
+            @if (
+              (vestForm.ngForm.submitted ||
+                vestForm.ngForm.controls['email']?.touched) &&
+              errors()['email']
+            ) {
               <div data-testid="email-error">{{ errors()['email'][0] }}</div>
             }
             <button type="button" (click)="reset()" data-testid="reset">

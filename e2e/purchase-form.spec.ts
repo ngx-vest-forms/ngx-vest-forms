@@ -9,6 +9,7 @@ import {
   fillAndBlur,
   navigateToPurchaseForm,
   selectRadio,
+  waitForFormProcessing,
   waitForValidationToComplete,
 } from './helpers/form-helpers';
 
@@ -94,6 +95,13 @@ test.describe('Purchase Form', () => {
 
         await fillAndBlur(age, '18');
         await expectDisabled(emergencyContact);
+
+        // Verify accessibility tree shows disabled state
+        const emergencyWrapper = emergencyContact.locator('..');
+        await expect(emergencyWrapper).toMatchAriaSnapshot(`
+          - text: Emergency Contact
+          - textbox "Emergency Contact" [disabled]
+        `);
       });
     });
 
@@ -126,6 +134,13 @@ test.describe('Purchase Form', () => {
         await genderOther.focus();
         await genderOther.blur();
         await expectFieldHasError(genderOther, /specify/i);
+
+        // Verify the genderOther error state in accessibility tree
+        const genderOtherWrapper = genderOther.locator('..');
+        await expect(genderOtherWrapper).toMatchAriaSnapshot(`
+          - text: Specify gender
+          - textbox "Specify gender"
+        `);
       });
     });
 
@@ -212,7 +227,7 @@ test.describe('Purchase Form', () => {
 
         // Wait for validation to complete and config to update
         await waitForValidationToComplete(password, 2000);
-        await page.waitForTimeout(500);
+        await waitForFormProcessing(page);
 
         await confirmPassword.focus();
         await confirmPassword.blur();
@@ -375,14 +390,14 @@ test.describe('Purchase Form', () => {
         await fillAndBlur(shippingCountry, 'Netherlands');
 
         // Wait for Angular to process all changes
-        await page.waitForTimeout(500);
+        await waitForFormProcessing(page);
 
         // Submit to trigger form-level validation
         const submitButton = page.getByRole('button', { name: /submit/i });
         await submitButton.click();
 
-        // Wait for validation
-        await page.waitForTimeout(500);
+        // Wait for validation to settle
+        await waitForFormProcessing(page);
 
         // Check for error message - the validation tests that billing and shipping addresses are different
         // when shippingAddressDifferentFromBillingAddress is checked
@@ -476,8 +491,8 @@ test.describe('Purchase Form', () => {
         await addButton.click();
 
         // After adding, the phone number should appear in the list
-        // Wait for it to be added to the DOM
-        await page.waitForTimeout(300);
+        // Wait for Angular to process the change
+        await waitForFormProcessing(page);
       });
     });
   });
@@ -508,8 +523,8 @@ test.describe('Purchase Form', () => {
         const submitButton = page.getByRole('button', { name: /submit/i });
         await submitButton.click();
 
-        // Wait for validation
-        await page.waitForTimeout(300);
+        // Wait for validation to settle
+        await waitForFormProcessing(page);
 
         // The billing address fields should show validation errors
         // These are shown as error messages in the control wrapper
@@ -525,6 +540,142 @@ test.describe('Purchase Form', () => {
         await expect(cityError).toBeVisible({ timeout: 3000 });
         await expect(zipcodeError).toBeVisible({ timeout: 3000 });
         await expect(countryError).toBeVisible({ timeout: 3000 });
+      });
+    });
+  });
+
+  test.describe('Form Reset Functionality', () => {
+    test('should clear all form values when clicking Reset button', async ({
+      page,
+    }) => {
+      await test.step('Fill form fields and click Reset', async () => {
+        const firstName = page.getByLabel(/first name/i);
+        const lastName = page.getByLabel(/last name/i);
+        const age = page.getByLabel(/age/i);
+
+        await fillAndBlur(firstName, 'John');
+        await fillAndBlur(lastName, 'Doe');
+        await fillAndBlur(age, '25');
+
+        // Verify fields have values
+        await expect(firstName).toHaveValue('John');
+        await expect(lastName).toHaveValue('Doe');
+        await expect(age).toHaveValue('25');
+
+        // Click Reset button
+        const resetButton = page.getByRole('button', { name: /^reset$/i });
+        await resetButton.click();
+
+        // Verify all fields are cleared
+        await expect(firstName).toBeEmpty();
+        await expect(lastName).toBeEmpty();
+        await expect(age).toBeEmpty();
+      });
+    });
+
+    test('should clear validation errors after reset', async ({ page }) => {
+      await test.step('Trigger validation errors, then reset form', async () => {
+        const firstName = page.getByLabel(/first name/i);
+        const lastName = page.getByLabel(/last name/i);
+
+        // Focus and blur to trigger validation errors
+        await firstName.focus();
+        await firstName.blur();
+        await expectFieldHasError(firstName, /required/i);
+
+        await lastName.focus();
+        await lastName.blur();
+        await expectFieldHasError(lastName, /required/i);
+
+        // Click Reset button
+        const resetButton = page.getByRole('button', { name: /^reset$/i });
+        await resetButton.click();
+
+        // Verify errors are cleared (fields should no longer show validation errors)
+        // After reset, fields should be pristine and untouched, so no errors should display
+        await expect(firstName).not.toHaveAttribute('aria-invalid', 'true');
+        await expect(lastName).not.toHaveAttribute('aria-invalid', 'true');
+      });
+    });
+
+    test('should reset form to pristine state after submit and reset', async ({
+      page,
+    }) => {
+      await test.step('Submit form with errors, then reset', async () => {
+        // Submit the form without filling any fields to trigger validation
+        const submitButton = page.getByRole('button', { name: /submit/i });
+        await submitButton.click();
+
+        // Wait for validation errors to appear
+        await waitForFormProcessing(page);
+
+        // Form should show as invalid (look for any validation error)
+        const anyError = page
+          .locator('[role="status"]')
+          .filter({ hasText: /required/i })
+          .first();
+        await expect(anyError).toBeVisible({ timeout: 3000 });
+
+        // Click Reset button
+        const resetButton = page.getByRole('button', { name: /^reset$/i });
+        await resetButton.click();
+
+        // Wait for reset to complete
+        await waitForFormProcessing(page);
+
+        // The form should be in pristine state - no errors visible
+        // Check the firstName field specifically
+        const firstName = page.getByLabel(/first name/i);
+        await expect(firstName).not.toHaveAttribute('aria-invalid', 'true');
+      });
+    });
+
+    test('should allow re-entering data after reset', async ({ page }) => {
+      await test.step('Fill, reset, and refill form', async () => {
+        const firstName = page.getByLabel(/first name/i);
+        const lastName = page.getByLabel(/last name/i);
+
+        // Initial fill
+        await fillAndBlur(firstName, 'John');
+        await fillAndBlur(lastName, 'Doe');
+
+        // Reset
+        const resetButton = page.getByRole('button', { name: /^reset$/i });
+        await resetButton.click();
+
+        // Verify cleared
+        await expect(firstName).toBeEmpty();
+
+        // Refill with different data
+        await fillAndBlur(firstName, 'Jane');
+        await fillAndBlur(lastName, 'Smith');
+
+        // Verify new values
+        await expect(firstName).toHaveValue('Jane');
+        await expect(lastName).toHaveValue('Smith');
+      });
+    });
+
+    test('should reset conditional fields state', async ({ page }) => {
+      await test.step('Set conditional field, reset, verify conditional state is reset', async () => {
+        const age = page.getByLabel(/age/i);
+        const emergencyContact = page.getByLabel(/emergency contact/i);
+
+        // Set age >= 18 to disable emergency contact
+        await fillAndBlur(age, '25');
+        await expectDisabled(emergencyContact);
+
+        // Click Reset
+        const resetButton = page.getByRole('button', { name: /^reset$/i });
+        await resetButton.click();
+
+        // After reset, age should be empty
+        await expect(age).toBeEmpty();
+        // With age empty, the conditional logic (age || 0) >= 18 evaluates to (0 >= 18) = false
+        // So emergency contact becomes ENABLED (available for minors)
+        await expectEnabled(emergencyContact);
+        // Also verify the emergency contact field is empty
+        await expect(emergencyContact).toBeEmpty();
       });
     });
   });
