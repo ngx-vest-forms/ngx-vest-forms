@@ -4,22 +4,36 @@ This guide covers migration from v1.x (mostly v1.4) to v2.0.0, which includes cr
 
 ## Overview of Changes
 
+### Breaking Changes
+
 - ⚠️ **CRITICAL**: Unconditional `only()` pattern now required
 - ⚠️ **Breaking**: Deprecated `VALIDATION_CONFIG_DEBOUNCE_TIME` constant removed
 - ⚠️ **Breaking**: Default root form validation mode changed to `'submit'`
-- ✨ **New**: Ngx-prefixed utility types (`NgxDeepPartial`, `NgxDeepRequired`, etc.)
+
+### New Features
+
+- ✨ **New**: Unified `NgxVestForms` import surface (deprecates `vestForms`)
+- ✨ **New**: Ngx-prefixed utility types (`NgxDeepPartial`, `NgxDeepRequired`, `NgxVestSuite`, etc.)
+- ✨ **New**: Type-safe field paths with IDE autocomplete (`FieldPath<T>`, `LeafFieldPath<T>`)
+- ✨ **New**: `FormGroupWrapperComponent` for NgModelGroup containers
 - ✨ **New**: Array/Object conversion utilities
-- ✨ **New**: Field path utilities
-- ✨ **New**: Validation config builder API
+- ✨ **New**: Field path utilities (`stringifyFieldPath`, `setValueAtPath`)
+- ✨ **New**: Validation config builder API with fluent methods
+- ✨ **New**: `createDebouncedPendingState()` for UX-friendly pending indicators
+- ✨ **New**: `createEmptyFormState()` for safe form state initialization
+- ✨ **New**: Dual selector support (`sc-` legacy and `ngx-` new prefixes)
+- ✨ **New**: Suite typing helpers (`NgxVestSuite`, `NgxTypedVestSuite<T>`, `NgxFieldKey<T>`)
 - ✨ **New**: WCAG 2.2 AA accessibility compliance
-- ♿ **Enhanced**: ARIA management for polite/assertive announcements
+
+### Improvements
+
+- ♿ **Enhanced**: Smart ARIA management for polite/assertive announcements
 - 🚀 **Performance**: 60-80% improvement in large forms with signal memoization
+- 📦 **Upgraded**: Angular 21.0.1, TypeScript 5.9.3, Vitest 4.x (replaces Jest)
 
 ---
 
-## Breaking Changes
-
-## Breaking Changes
+## Detailed Breaking Changes
 
 ### 1. Unconditional `only()` Pattern Required (CRITICAL)
 
@@ -79,13 +93,13 @@ The unconditional pattern is safe because:
 
 **Migration Steps:**
 
-1. Find all validation suites with conditional `only()`:
+**Step 1:** Find all validation suites with conditional `only()`:
 
 ```bash
 grep -r "if (field)" --include="*.ts" | grep "only"
 ```
 
-2. Remove the `if (field)` wrapper:
+**Step 2:** Remove the `if (field)` wrapper:
 
 ```typescript
 // Before
@@ -167,13 +181,13 @@ The injection token provides:
 
 **Migration Steps:**
 
-1. Find all usages:
+**Step 1:** Find all usages:
 
 ```bash
 grep -r "VALIDATION_CONFIG_DEBOUNCE_TIME" --include="*.ts"
 ```
 
-2. Replace with injection token:
+**Step 2:** Replace with injection token:
 
 ```typescript
 // Before
@@ -215,7 +229,7 @@ TestBed.configureTestingModule({
 </form>
 ```
 
-**v1.5.0 Behavior (new - BREAKING):**
+**v2.0.0 Behavior (new - BREAKING):**
 
 ```typescript
 <form ngxVestForm validateRootForm>
@@ -329,7 +343,7 @@ export class MyFormComponent {
 }
 ```
 
-**After (v1.5.0 - preserving old behavior):**
+**After (v2.0.0 - preserving old behavior):**
 
 ```typescript
 import { Component, signal } from '@angular/core';
@@ -358,11 +372,11 @@ import { ROOT_FORM } from 'ngx-vest-forms';
   `,
 })
 export class MyFormComponent {
-  // Root form errors still show immediately (same as v2)
+  // Root form errors still show immediately (same as v1.x)
 }
 ```
 
-**After (v1.5.0 - adopting new default):**
+**After (v2.0.0 - adopting new default):**
 
 ```typescript
 import { Component, signal } from '@angular/core';
@@ -375,7 +389,7 @@ import { ROOT_FORM } from 'ngx-vest-forms';
       [suite]="suite"
       [formValue]="formValue()"
       validateRootForm
-      [validateRootFormMode]="'submit'"  <!-- ← Optional: explicit submit mode -->
+      [ngxValidateRootFormMode]="'submit'"  <!-- ← Optional: explicit submit mode -->
       (formValueChange)="formValue.set($event)"
       (errorsChange)="errors.set($event)">
 
@@ -394,6 +408,8 @@ export class MyFormComponent {
   // Root form errors only show after submit button clicked (better UX!)
 }
 ```
+
+> **Note**: The directive attribute has been renamed from `validateRootFormMode` to `ngxValidateRootFormMode` in v2.0.0 for consistency with the dual selector support.
 
 #### Find All Affected Forms
 
@@ -492,19 +508,32 @@ const arrayData = objectToArray(objectForm);
 
 ### Field Path Utilities
 
-**Type-safe field path manipulation:**
+**Generate field paths dynamically for arrays and repeated sections:**
 
 ```typescript
-import { stringifyFieldPath, parseFieldPath } from 'ngx-vest-forms';
+import { stringifyFieldPath } from 'ngx-vest-forms';
 
-// Create dot-notation paths from arrays
-stringifyFieldPath(['form', 'sections', 0, 'fields', 'name']);
-// → 'form.sections.0.fields.name'
+// Dynamic path generation for array forms
+items.forEach((item, index) => {
+  const namePath = stringifyFieldPath(['items', index, 'name']);
+  // → 'items[0].name', 'items[1].name', etc.
 
-// Parse paths back to arrays (internal utility)
-parseFieldPath('form.sections.0.fields.name');
-// → ['form', 'sections', 0, 'fields', 'name']
+  const addressPath = stringifyFieldPath(['items', index, 'address', 'street']);
+  // → 'items[0].address.street'
+});
+
+// Useful in validation suites for dynamic field names
+function itemValidations(model: FormModel, itemIndex: number) {
+  const basePath = ['items', itemIndex];
+
+  test(stringifyFieldPath([...basePath, 'name']), 'Name is required', () => {
+    enforce(model.items?.[itemIndex]?.name).isNotBlank();
+  });
+}
 ```
+
+> **Note:** `parseFieldPath` is also exported but marked `@internal` - it's used internally
+> by the library and most users won't need it directly.
 
 ### Enhanced Form State Type
 
@@ -559,9 +588,15 @@ import { createValidationConfig } from 'ngx-vest-forms';
 const config = createValidationConfig<FormModel>()
   .bidirectional('password', 'confirmPassword') // Password confirmation
   .whenChanged('age', 'emergencyContact') // Age affects emergency contact
-  .group(['firstName', 'lastName', 'email']) // Contact group
+  .whenChanged('country', ['state', 'zipCode']) // One field triggers multiple
   .build();
 ```
+
+**Methods:**
+
+- `.whenChanged(source, targets)` - Revalidate targets when source changes
+- `.bidirectional(field1, field2)` - Two-way dependency (both revalidate each other)
+- `.build()` - Returns the `ValidationConfigMap<T>` object
 
 **Benefits:**
 
@@ -569,6 +604,125 @@ const config = createValidationConfig<FormModel>()
 - ✅ Compile-time type checking
 - ✅ Self-documenting code
 - ✅ Less boilerplate
+
+### Unified Import Surface: `NgxVestForms`
+
+**Single, clean import for all library functionality:**
+
+```typescript
+import { NgxVestForms } from 'ngx-vest-forms';
+
+@Component({
+  imports: [NgxVestForms], // Includes all directives, components, and FormsModule
+  // ...
+})
+export class MyFormComponent {}
+```
+
+> **Deprecation:** `vestForms` is deprecated; use `NgxVestForms` instead.
+
+### Suite Typing Helpers
+
+**Improved type safety for validation suites:**
+
+```typescript
+import { NgxVestSuite, NgxFieldKey } from 'ngx-vest-forms';
+
+// Type-safe suite signature
+export const mySuite: NgxVestSuite<MyFormModel> = staticSuite(
+  (model: MyFormModel, field?: NgxFieldKey<MyFormModel>) => {
+    only(field);
+    // field is now typed as keyof MyFormModel (with dot notation support)
+  }
+);
+```
+
+**Available types:**
+
+| Type                   | Purpose                                     |
+| ---------------------- | ------------------------------------------- |
+| `NgxVestSuite`         | Generic validation suite type               |
+| `NgxTypedVestSuite<T>` | Typed validation suite with model inference |
+| `NgxFieldKey<T>`       | All valid field keys for a model            |
+
+### FormGroupWrapperComponent
+
+**Dedicated wrapper for `NgModelGroup` containers:**
+
+```html
+<!-- Recommended: ngModelGroup directly on the wrapper -->
+<ngx-form-group-wrapper ngModelGroup="addresses">
+  <ngx-control-wrapper>
+    <input name="street" [ngModel]="formValue().addresses?.street" />
+  </ngx-control-wrapper>
+  <ngx-control-wrapper>
+    <input name="city" [ngModel]="formValue().addresses?.city" />
+  </ngx-control-wrapper>
+</ngx-form-group-wrapper>
+```
+
+**Key difference from `ControlWrapperComponent`:**
+
+- Does NOT stamp `aria-describedby`/`aria-invalid` on descendant controls
+- Renders group-level errors/warnings/pending UI only
+- Use for containers with multiple inputs
+
+### `createDebouncedPendingState()`
+
+**Prevents "Validating..." message flashing for fast async validations:**
+
+```typescript
+import { createDebouncedPendingState } from 'ngx-vest-forms';
+
+// Only shows "Validating..." if validation takes > 200ms
+// Keeps message visible for at least 500ms once shown
+const pending = createDebouncedPendingState(
+  this.errorDisplay.isPending,
+  { showAfter: 200, minimumDisplay: 500 }
+);
+
+// Use in template
+@if (pending.showPendingMessage()) {
+  <div role="status" aria-live="polite">Validating...</div>
+}
+```
+
+### Dual Selector Support
+
+**All components/directives support both `sc-` (legacy) and `ngx-` (new) prefixes:**
+
+```html
+<!-- Both work identically -->
+<sc-control-wrapper>...</sc-control-wrapper>
+<ngx-control-wrapper>...</ngx-control-wrapper>
+
+<form scVestForm>...</form>
+<form ngxVestForm>...</form>
+```
+
+> **Recommendation:** Use `ngx-` prefixed selectors for new code.
+
+### Type-Safe Field Paths
+
+**Compile-time type safety for field names with IDE autocomplete:**
+
+```typescript
+import { FieldPath, LeafFieldPath, ValidationConfigMap } from 'ngx-vest-forms';
+
+type UserModel = { name: string; profile: { age: number } };
+
+// Type: 'name' | 'profile' | 'profile.age'
+type UserPaths = FieldPath<UserModel>;
+
+// Leaf-only paths (excludes intermediate objects)
+type UserLeafPaths = LeafFieldPath<UserModel>; // 'name' | 'profile.age'
+
+// Type-safe validation config
+const config: ValidationConfigMap<UserModel> = {
+  'profile.age': ['name'], // ✅ Autocomplete & validation
+  'invalid.path': ['name'], // ❌ Compile error
+};
+```
 
 ### WCAG 2.2 AA Accessibility Compliance
 
@@ -752,7 +906,7 @@ it('validates root form after submit', () => {
 });
 ```
 
-### Storybook/Integration Tests
+### Storybook and E2E Test Updates
 
 **Update test assertions:**
 
@@ -826,7 +980,7 @@ echo "\n=== Migration check complete ==="
 
 ---
 
-## Rollback Strategy
+## Emergency Rollback
 
 If you need to temporarily rollback:
 
@@ -958,30 +1112,3 @@ A: Yes! All new utilities (field clearing, array conversion, config builder) are
 **Version:** 2.0.0
 **Migration Guide Created:** January 2025
 **Status:** Stable
-`,
-})
-export class LegacyFormComponent {
-// Use this wrapper for all legacy forms
-}
-
-```
-
----
-
-## Questions?
-
-- **Q: Why did the default change?**
-  - A: Root form validations check relationships between multiple fields. In 'live' mode, users see errors for validations they cannot satisfy yet (e.g., "firstName + lastName + age must match" error appears when they've only typed firstName). Submit mode only validates when all fields are complete, providing much better UX.
-
-- **Q: Which mode should I use?**
-  - A: Use `'submit'` (new default) for almost all cases. Root form validations are cross-field rules that users can only fix after filling multiple inputs. Only use `'live'` if you have a specific UX requirement or need time to test the new behavior during migration.
-
-- **Q: What about password confirmation - shouldn't that validate live?**
-  - A: Even for password confirmation, `'submit'` mode provides better UX - users can focus on entering their password without being interrupted by "passwords don't match" errors. However, if you prefer immediate feedback, use `'live'` mode for this specific case.
-
-- **Q: Do I have to update all my forms?**
-  - A: Only forms using `validateRootForm`. Regular field validation is unchanged.
-
-- **Q: Can I mix modes in different forms?**
-  - A: Yes! Each form can have its own `validateRootFormMode` setting.
-```
