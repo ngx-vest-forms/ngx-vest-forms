@@ -133,6 +133,7 @@
                       type="text"
                       [validationOptions]="{ debounceTime: 500 }"
                       [ngModel]="formValue().userId"
+                      [disabled]="fetchedDataDisabled()"
                       name="userId"
                     />
                   </label>
@@ -146,6 +147,7 @@
                       placeholder="Type your first name"
                       type="text"
                       [ngModel]="formValue().firstName"
+                      [disabled]="fetchedDataDisabled()"
                       name="firstName"
                     />
                   </label>
@@ -159,6 +161,7 @@
                       placeholder="Type your last name"
                       type="text"
                       [ngModel]="formValue().lastName"
+                      [disabled]="fetchedDataDisabled()"
                       name="lastName"
                     />
                   </label>
@@ -236,6 +239,7 @@
                         id="gender-male"
                         type="radio"
                         [ngModel]="formValue().gender"
+                        [disabled]="fetchedDataDisabled()"
                         name="gender"
                         value="male"
                       />
@@ -246,6 +250,7 @@
                         id="gender-female"
                         type="radio"
                         [ngModel]="formValue().gender"
+                        [disabled]="fetchedDataDisabled()"
                         name="gender"
                         value="female"
                       />
@@ -256,6 +261,7 @@
                         id="gender-other"
                         type="radio"
                         [ngModel]="formValue().gender"
+                        [disabled]="fetchedDataDisabled()"
                         name="gender"
                         value="other"
                       />

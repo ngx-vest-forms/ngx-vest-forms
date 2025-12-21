@@ -1,4 +1,5 @@
 import { JsonPipe } from '@angular/common';
+import { httpResource } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -8,7 +9,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
   clearFields,
   createValidationConfig,
@@ -17,8 +18,6 @@ import {
   ROOT_FORM,
   setValueAtPath,
 } from 'ngx-vest-forms';
-import { debounceTime, filter, switchMap } from 'rxjs';
-import { LukeService } from '../../../luke.service';
 import { AddressModel } from '../../../models/address.model';
 import {
   initialPurchaseFormValue,
@@ -31,6 +30,13 @@ import { createPurchaseValidationSuite } from '../../../validations/purchase.val
 import { AddressComponent } from '../../ui/address/address.component';
 import { CardComponent } from '../../ui/card/card.component';
 import { PhoneNumbersComponent } from '../../ui/phonenumbers/phonenumbers.component';
+
+// API response type from json-server
+type LukeApiResponse = {
+  id: string;
+  name: string;
+  gender: 'male' | 'female' | 'other';
+};
 
 @Component({
   selector: 'ngx-purchase-form',
@@ -46,10 +52,12 @@ import { PhoneNumbersComponent } from '../../ui/phonenumbers/phonenumbers.compon
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PurchaseFormComponent {
-  private readonly lukeService = inject(LukeService);
   private readonly swapiService = inject(SwapiService);
   private readonly productService = inject(ProductService);
   readonly products = toSignal(this.productService.getAll());
+
+  // Signal to trigger Luke fetch (changes value to trigger refetch)
+  private readonly lukeFetchTrigger = signal<string | undefined>(undefined);
 
   // Form reference for reset functionality
   private readonly vestForm =
@@ -59,12 +67,39 @@ export class PurchaseFormComponent {
     initialPurchaseFormValue
   );
   protected readonly formValid = signal<boolean>(false);
-  protected readonly loading = signal<boolean>(false);
   protected readonly errors = signal<Record<string, string[]>>({});
   protected readonly purchaseValidationSuite = createPurchaseValidationSuite(
     this.swapiService
   );
   private readonly shippingAddress = signal<AddressModel>({});
+
+  // httpResource for fetching Luke data - only fetches when trigger is set
+  private readonly lukeResource = httpResource<LukeApiResponse>(() =>
+    this.lukeFetchTrigger() ? 'http://localhost:3000/people/1' : undefined
+  );
+
+  // Transform the raw API response into the form model shape
+  private readonly lukeData = computed(() => {
+    const data = this.lukeResource.value();
+    if (!data) return undefined;
+    const nameParts = data.name.split(' ');
+    return {
+      userId: data.id,
+      firstName: nameParts[0],
+      lastName: nameParts[1],
+      gender: data.gender,
+    };
+  });
+
+  // Fields populated by fetch should be disabled (system-provided data)
+  protected readonly fetchedDataDisabled = computed(
+    () => this.lukeResource.value() !== undefined
+  );
+
+  // Derive loading state from httpResource status
+  protected readonly loading = computed(
+    () => this.lukeResource.status() === 'loading'
+  );
   protected readonly shape = purchaseFormShape;
   private readonly viewModel = computed(() => {
     return {
@@ -112,6 +147,8 @@ export class PurchaseFormComponent {
   constructor() {
     const firstName = computed(() => this.formValue().firstName);
     const lastName = computed(() => this.formValue().lastName);
+
+    // Effect for Brecht-specific logic
     effect(() => {
       // If the first name is Brecht, update the gender to male
       if (firstName() === 'Brecht') {
@@ -134,16 +171,31 @@ export class PurchaseFormComponent {
       }
     });
 
-    // When firstName is Luke, fetch luke skywalker and update the form value
-    toObservable(firstName)
-      .pipe(
-        debounceTime(1000),
-        filter((v) => v === 'Luke'),
-        switchMap(() => this.lukeService.getLuke())
-      )
-      .subscribe((luke) => {
+    // Effect to update form when Luke data is fetched via httpResource
+    effect(() => {
+      const luke = this.lukeData();
+      if (luke) {
         this.formValue.update((v) => ({ ...v, ...luke }));
+      }
+    });
+
+    // Effect to auto-fetch Luke when firstName becomes 'Luke'
+    // Uses a debounced approach by tracking the previous value
+    let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+    effect((onCleanup) => {
+      const name = firstName();
+      if (name === 'Luke') {
+        debounceTimer = setTimeout(() => {
+          // Only trigger if not already loading and trigger hasn't been set for this
+          if (this.lukeResource.status() !== 'loading') {
+            this.lukeFetchTrigger.set(`auto-${Date.now()}`);
+          }
+        }, 1000);
+      }
+      onCleanup(() => {
+        if (debounceTimer) clearTimeout(debounceTimer);
       });
+    });
   }
 
   protected setFormValue(v: PurchaseFormModel): void {
@@ -166,11 +218,9 @@ export class PurchaseFormComponent {
   }
 
   protected fetchData() {
-    this.loading.set(true);
-    this.lukeService.getLuke().subscribe((luke) => {
-      this.formValue.update((v) => ({ ...v, ...luke }));
-      this.loading.set(false);
-    });
+    // Trigger httpResource fetch by changing the signal value
+    // The unique ID ensures a new fetch even if called multiple times
+    this.lukeFetchTrigger.set(`manual-${Date.now()}`);
   }
 
   protected reset(): void {
@@ -183,16 +233,31 @@ export class PurchaseFormComponent {
     // 3. Reset component-local cache (not part of form directive)
     this.shippingAddress.set({});
 
+    // 4. Reset Luke fetch trigger so fields become editable again
+    this.lukeFetchTrigger.set(undefined);
+
     // Note: formValid and errors will auto-update via output bindings
   }
 
   /**
    * Example: Clear sensitive fields while keeping basic info
    * Showcases the clearFields utility from ngx-vest-forms
+   * Also clears any fetched data (Luke) and resets the fetch trigger
    */
   protected clearSensitiveData(): void {
+    // Clear fetched data trigger so fields become editable again
+    this.lukeFetchTrigger.set(undefined);
+
+    // Clear sensitive fields including fetched user data
     this.formValue.update((v) =>
-      clearFields(v, ['passwords', 'emergencyContact', 'userId'])
+      clearFields(v, [
+        'passwords',
+        'emergencyContact',
+        'userId',
+        'firstName',
+        'lastName',
+        'gender',
+      ])
     );
   }
 
@@ -204,6 +269,7 @@ export class PurchaseFormComponent {
     this.formValue.update((v) => {
       const updated = structuredClone(v); // Clone to avoid mutation
       setValueAtPath(updated, 'addresses.billingAddress.street', '123 Main St');
+      setValueAtPath(updated, 'addresses.billingAddress.number', '42A');
       setValueAtPath(updated, 'addresses.billingAddress.city', 'New York');
       setValueAtPath(updated, 'addresses.billingAddress.zipcode', '10001');
       setValueAtPath(updated, 'addresses.billingAddress.country', 'USA');

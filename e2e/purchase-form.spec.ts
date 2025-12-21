@@ -518,21 +518,32 @@ test.describe('Purchase Form', () => {
 
   test.describe('Address Validation', () => {
     test('should require all billing address fields', async ({ page }) => {
+      await test.step('Uncheck shipping address checkbox to focus on billing', async () => {
+        // Uncheck shipping address to reduce duplicate error messages
+        const shippingCheckbox = page.getByRole('checkbox', {
+          name: /shipping address is different/i,
+        });
+        await shippingCheckbox.uncheck();
+        // No need to wait for full form processing here - just wait for checkbox state
+        await expect(shippingCheckbox).not.toBeChecked();
+      });
+
       await test.step('Submit form and verify address validation errors', async () => {
         // Submit the form to trigger all validations
         const submitButton = page.getByRole('button', { name: /submit/i });
         await submitButton.click();
 
-        // Wait for validation to settle
-        await waitForFormProcessing(page);
+        // Scope to the billing address section to avoid strict mode violations
+        const billingSection = page
+          .getByRole('heading', { name: /billing address/i })
+          .locator('..');
 
         // The billing address fields should show validation errors
-        // These are shown as error messages in the control wrapper
-        const streetError = page.getByText(/street.*required/i);
-        const numberError = page.getByText(/number.*required/i);
-        const cityError = page.getByText(/city.*required/i);
-        const zipcodeError = page.getByText(/zipcode.*required/i);
-        const countryError = page.getByText(/country.*required/i);
+        const streetError = billingSection.getByText(/street.*required/i);
+        const numberError = billingSection.getByText(/number.*required/i);
+        const cityError = billingSection.getByText(/city.*required/i);
+        const zipcodeError = billingSection.getByText(/zipcode.*required/i);
+        const countryError = billingSection.getByText(/country.*required/i);
 
         // Verify all address validation errors are visible
         await expect(streetError).toBeVisible({ timeout: 3000 });
@@ -676,6 +687,442 @@ test.describe('Purchase Form', () => {
         await expectEnabled(emergencyContact);
         // Also verify the emergency contact field is empty
         await expect(emergencyContact).toBeEmpty();
+      });
+    });
+  });
+
+  test.describe('Fetch Data (Luke) Functionality', () => {
+    test('should fetch Luke data and populate form fields', async ({
+      page,
+    }) => {
+      await test.step('Click Fetch Data button and verify fields are populated', async () => {
+        const fetchButton = page.getByRole('button', {
+          name: /fetch data.*luke/i,
+        });
+        const userId = page.getByLabel(/user id/i);
+        const firstName = page.getByLabel(/first name/i);
+        const lastName = page.getByLabel(/last name/i);
+        const genderMale = page.locator('#gender-male');
+
+        // Initially fields should be empty/unchecked
+        await expect(userId).toBeEmpty();
+        await expect(firstName).toBeEmpty();
+        await expect(lastName).toBeEmpty();
+        await expect(genderMale).not.toBeChecked();
+
+        // Click fetch button
+        await fetchButton.click();
+
+        // Wait for the data to load (fields should be populated)
+        await expect(userId).toHaveValue('1', { timeout: 5000 });
+        await expect(firstName).toHaveValue('Luke');
+        await expect(lastName).toHaveValue('Skywalker');
+        await expect(genderMale).toBeChecked();
+      });
+    });
+
+    test('should disable fetched fields after data is loaded', async ({
+      page,
+    }) => {
+      await test.step('Fetch data and verify fields are disabled', async () => {
+        const fetchButton = page.getByRole('button', {
+          name: /fetch data.*luke/i,
+        });
+        const userId = page.getByLabel(/user id/i);
+        const firstName = page.getByLabel(/first name/i);
+        const lastName = page.getByLabel(/last name/i);
+        const genderMale = page.locator('#gender-male');
+        const genderFemale = page.locator('#gender-female');
+        const genderOther = page.locator('#gender-other');
+
+        // Before fetch, fields should be enabled
+        await expectEnabled(userId);
+        await expectEnabled(firstName);
+        await expectEnabled(lastName);
+
+        // Click fetch button
+        await fetchButton.click();
+
+        // Wait for data to load
+        await expect(firstName).toHaveValue('Luke', { timeout: 5000 });
+
+        // After fetch, fields should be disabled
+        await expectDisabled(userId);
+        await expectDisabled(firstName);
+        await expectDisabled(lastName);
+        await expectDisabled(genderMale);
+        await expectDisabled(genderFemale);
+        await expectDisabled(genderOther);
+      });
+    });
+
+    test('should clear fetched data and re-enable fields when clicking Clear Sensitive Data', async ({
+      page,
+    }) => {
+      await test.step('Fetch data, then clear sensitive data', async () => {
+        const fetchButton = page.getByRole('button', {
+          name: /fetch data.*luke/i,
+        });
+        const clearButton = page.getByRole('button', {
+          name: /clear sensitive data/i,
+        });
+        const userId = page.getByLabel(/user id/i);
+        const firstName = page.getByLabel(/first name/i);
+        const lastName = page.getByLabel(/last name/i);
+        const genderMale = page.locator('#gender-male');
+
+        // Fetch data first
+        await fetchButton.click();
+        await expect(firstName).toHaveValue('Luke', { timeout: 5000 });
+        await expectDisabled(firstName);
+
+        // Click clear sensitive data
+        await clearButton.click();
+
+        // Fields should be cleared and re-enabled
+        await expect(userId).toBeEmpty();
+        await expect(firstName).toBeEmpty();
+        await expect(lastName).toBeEmpty();
+        await expect(genderMale).not.toBeChecked();
+
+        // Fields should be editable again
+        await expectEnabled(userId);
+        await expectEnabled(firstName);
+        await expectEnabled(lastName);
+        await expectEnabled(genderMale);
+      });
+    });
+
+    test('should clear fetched data and re-enable fields when clicking Reset', async ({
+      page,
+    }) => {
+      await test.step('Fetch data, then reset form', async () => {
+        const fetchButton = page.getByRole('button', {
+          name: /fetch data.*luke/i,
+        });
+        const resetButton = page.getByRole('button', { name: /^reset$/i });
+        const userId = page.getByLabel(/user id/i);
+        const firstName = page.getByLabel(/first name/i);
+        const lastName = page.getByLabel(/last name/i);
+        const genderMale = page.locator('#gender-male');
+
+        // Fetch data first
+        await fetchButton.click();
+        await expect(firstName).toHaveValue('Luke', { timeout: 5000 });
+        await expectDisabled(firstName);
+
+        // Click reset
+        await resetButton.click();
+
+        // Fields should be cleared and re-enabled
+        await expect(userId).toBeEmpty();
+        await expect(firstName).toBeEmpty();
+        await expect(lastName).toBeEmpty();
+        await expect(genderMale).not.toBeChecked();
+
+        // Fields should be editable again
+        await expectEnabled(userId);
+        await expectEnabled(firstName);
+        await expectEnabled(lastName);
+        await expectEnabled(genderMale);
+      });
+    });
+
+    test('should allow re-fetching data after reset', async ({ page }) => {
+      await test.step('Fetch, reset, then fetch again', async () => {
+        const fetchButton = page.getByRole('button', {
+          name: /fetch data.*luke/i,
+        });
+        const resetButton = page.getByRole('button', { name: /^reset$/i });
+        const firstName = page.getByLabel(/first name/i);
+
+        // Fetch data
+        await fetchButton.click();
+        await expect(firstName).toHaveValue('Luke', { timeout: 5000 });
+
+        // Reset
+        await resetButton.click();
+        await expect(firstName).toBeEmpty();
+        await expectEnabled(firstName);
+
+        // Fetch again
+        await fetchButton.click();
+        await expect(firstName).toHaveValue('Luke', { timeout: 5000 });
+        await expectDisabled(firstName);
+      });
+    });
+  });
+
+  test.describe('Prefill Billing Address', () => {
+    test('should prefill all billing address fields including street number', async ({
+      page,
+    }) => {
+      await test.step('Click prefill button and verify all address fields are populated', async () => {
+        const prefillButton = page.getByRole('button', {
+          name: /prefill billing address/i,
+        });
+
+        await prefillButton.click();
+
+        // Use specific IDs for billing address fields to avoid ambiguity
+        await expect(page.locator('#billing-address-street')).toHaveValue(
+          '123 Main St'
+        );
+        await expect(page.locator('#billing-address-number')).toHaveValue(
+          '42A'
+        );
+        await expect(page.locator('#billing-address-city')).toHaveValue(
+          'New York'
+        );
+        await expect(page.locator('#billing-address-zipcode')).toHaveValue(
+          '10001'
+        );
+        await expect(page.locator('#billing-address-country')).toHaveValue(
+          'USA'
+        );
+      });
+    });
+  });
+
+  test.describe('Error Display Modes and Timing', () => {
+    test('should show errors on blur for individual fields', async ({
+      page,
+    }) => {
+      await test.step('Focus and blur empty required field', async () => {
+        const firstName = page.getByLabel(/first name/i);
+
+        // Initially no error shown (field may not have aria-invalid yet)
+        const initialAriaInvalid = await firstName.getAttribute('aria-invalid');
+        expect(
+          initialAriaInvalid === null || initialAriaInvalid === 'false'
+        ).toBe(true);
+
+        // Focus the field
+        await firstName.focus();
+
+        // Blur without entering value
+        await firstName.blur();
+
+        // Wait for validation
+        await waitForFormProcessing(page);
+
+        // Error should now be visible
+        await expectFieldHasError(firstName, /required/i);
+      });
+    });
+
+    test('should show all errors on submit even for untouched fields', async ({
+      page,
+    }) => {
+      await test.step('Submit empty form and verify all errors appear', async () => {
+        const firstName = page.getByLabel(/first name/i);
+        const lastName = page.getByLabel(/last name/i);
+        const submitButton = page.getByRole('button', { name: /submit/i });
+
+        // Don't touch any fields - pristine (may not have aria-invalid)
+        const firstNameInvalid = await firstName.getAttribute('aria-invalid');
+        const lastNameInvalid = await lastName.getAttribute('aria-invalid');
+        expect(firstNameInvalid === null || firstNameInvalid === 'false').toBe(
+          true
+        );
+        expect(lastNameInvalid === null || lastNameInvalid === 'false').toBe(
+          true
+        );
+
+        // Submit
+        await submitButton.click();
+        await waitForFormProcessing(page);
+
+        // Both should show errors even though never touched
+        await expectFieldHasError(firstName, /required/i);
+        await expectFieldHasError(lastName, /required/i);
+      });
+    });
+
+    test('should clear error when field is fixed after blur', async ({
+      page,
+    }) => {
+      await test.step('Blur triggers error, typing clears it', async () => {
+        const firstName = page.getByLabel(/first name/i);
+
+        // Trigger error by blurring empty field
+        await firstName.focus();
+        await firstName.blur();
+        await waitForFormProcessing(page);
+        await expectFieldHasError(firstName, /required/i);
+
+        // Type to fix - error should clear (don't wait for processing, just check result)
+        await firstName.fill('John');
+        await page.waitForTimeout(200);
+        await expectFieldValid(firstName);
+      });
+    });
+
+    test('should debounce async validation on userId field', async ({
+      page,
+    }) => {
+      await test.step('Verify debounced validation behavior', async () => {
+        const userId = page.getByLabel(/user id/i);
+
+        // Focus field
+        await userId.focus();
+
+        // Type rapidly - use "1" which exists and will fail validation
+        await userId.fill('1');
+
+        // Immediately check - should not be validating yet (500ms debounce)
+        const ariaBusyBefore = await userId.getAttribute('aria-busy');
+        expect(ariaBusyBefore === null || ariaBusyBefore === 'false').toBe(
+          true
+        );
+
+        // Wait for debounce (500ms) + async validation (800ms) + buffer
+        await page.waitForTimeout(1500);
+
+        // Should have completed validation - verify error is shown
+        await expectFieldHasError(userId, /already taken/i);
+      });
+    });
+  });
+
+  test.describe('FormGroup Wrapper - Group Level Errors', () => {
+    test('should display ROOT_FORM validation errors at form level', async ({
+      page,
+    }) => {
+      await test.step('Trigger ROOT_FORM validation and verify display', async () => {
+        const firstName = page.getByLabel(/first name/i);
+        const lastName = page.getByLabel(/last name/i);
+        const age = page.getByLabel(/age/i);
+        const submitButton = page.getByRole('button', { name: /submit/i });
+
+        // Fill with Brecht/Billiet combination that triggers ROOT_FORM validation
+        await fillAndBlur(firstName, 'Brecht');
+        await fillAndBlur(lastName, 'Billiet');
+
+        // Age auto-fills to 35 due to effect, but let's manually set to 30 to trigger error
+        await age.clear();
+        await fillAndBlur(age, '30');
+
+        // Submit to trigger ROOT_FORM validation
+        await submitButton.click();
+        await page.waitForTimeout(300);
+
+        // Should show form-level error (not field-level)
+        const formLevelError = page.getByText(/brecht.*not.*30/i);
+        await expect(formLevelError).toBeVisible();
+      });
+    });
+
+    test('should show nested group validation errors', async ({ page }) => {
+      await test.step('Verify nested address group shows validation', async () => {
+        const submitButton = page.getByRole('button', { name: /submit/i });
+
+        // Submit without filling address
+        await submitButton.click();
+        await waitForFormProcessing(page);
+
+        // Billing address fields should show errors
+        const billingStreet = page.locator('#billing-address-street');
+        await expectFieldHasError(billingStreet, /required/i);
+      });
+    });
+  });
+
+  test.describe('Validation Options Inheritance', () => {
+    test('should apply control-level debounceTime for userId', async ({
+      page,
+    }) => {
+      await test.step('Verify userId has 500ms debounce', async () => {
+        const userId = page.getByLabel(/user id/i);
+
+        await userId.focus();
+        await userId.fill('1'); // Use "1" which exists and will fail validation
+
+        // Should not validate immediately (has 500ms debounce)
+        const ariaBusy = await userId.getAttribute('aria-busy');
+        expect(ariaBusy === null || ariaBusy === 'false').toBe(true);
+
+        // Wait for debounce (500ms) + async validation (800ms) + buffer
+        await page.waitForTimeout(1500);
+
+        // Should have validated - verify error shown
+        await expectFieldHasError(userId, /already taken/i);
+      });
+    });
+
+    test('should apply default validation timing for other fields', async ({
+      page,
+    }) => {
+      await test.step('Verify firstName validates immediately on blur', async () => {
+        const firstName = page.getByLabel(/first name/i);
+
+        await firstName.focus();
+        await firstName.blur();
+
+        // Should validate quickly (no debounce)
+        await waitForFormProcessing(page);
+
+        await expectFieldHasError(firstName, /required/i);
+      });
+    });
+  });
+
+  test.describe('Advanced Field Clearing Scenarios', () => {
+    test('should clear fetched data fields when clicking Clear Sensitive Data', async ({
+      page,
+    }) => {
+      await test.step('Fetch data then clear, verify specific fields cleared', async () => {
+        const fetchButton = page.getByRole('button', {
+          name: /fetch data.*luke/i,
+        });
+        const clearButton = page.getByRole('button', {
+          name: /clear sensitive data/i,
+        });
+        const userId = page.getByLabel(/user id/i);
+        const firstName = page.getByLabel(/first name/i);
+        const age = page.getByLabel(/age/i);
+
+        // Fill age first (should NOT be cleared)
+        await fillAndBlur(age, '25');
+
+        // Fetch Luke data
+        await fetchButton.click();
+        await expect(firstName).toHaveValue('Luke', { timeout: 5000 });
+
+        // Clear sensitive data
+        await clearButton.click();
+
+        // Sensitive fields should be cleared
+        await expect(userId).toBeEmpty();
+        await expect(firstName).toBeEmpty();
+
+        // Age should still have value (not in clearFields list)
+        await expect(age).toHaveValue('25');
+      });
+    });
+
+    test('should preserve non-sensitive data when clearing', async ({
+      page,
+    }) => {
+      await test.step('Fill form, clear sensitive, verify preservation', async () => {
+        const password = page.getByLabel('Password', { exact: true });
+        const age = page.getByLabel(/age/i);
+        const clearButton = page.getByRole('button', {
+          name: /clear sensitive data/i,
+        });
+
+        // Fill multiple fields
+        await fillAndBlur(age, '30');
+        await fillAndBlur(password, 'Secret123');
+
+        // Clear sensitive data
+        await clearButton.click();
+
+        // Password should be cleared (sensitive)
+        await expect(password).toBeEmpty();
+
+        // Age should be preserved (not sensitive)
+        await expect(age).toHaveValue('30');
       });
     });
   });
