@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { FormControlStateDirective } from './form-control-state.directive';
 
@@ -11,6 +11,7 @@ import { FormControlStateDirective } from './form-control-state.directive';
       <span id="is-valid">{{ state.isValid() }}</span>
       <span id="is-touched">{{ state.isTouched() }}</span>
       <span id="has-errors">{{ state.hasErrors() }}</span>
+      <span id="has-been-validated">{{ state.hasBeenValidated() }}</span>
       <span id="error-messages">{{ state.errorMessages()!.join(',') }}</span>
       <span id="warning-messages">{{
         state.warningMessages()!.join(',')
@@ -19,7 +20,7 @@ import { FormControlStateDirective } from './form-control-state.directive';
   `,
 })
 class TestHostComponent {
-  model: string = '';
+  model = '';
 }
 
 describe('FormControlStateDirective', () => {
@@ -58,5 +59,56 @@ describe('FormControlStateDirective', () => {
       fixture.nativeElement.querySelector('#has-errors').textContent;
     expect(isValid).toBe('true');
     expect(hasErrors).toBe('false');
+  });
+
+  it('should track hasBeenValidated flag correctly', async () => {
+    const hasBeenValidatedEl = fixture.nativeElement.querySelector(
+      '#has-been-validated'
+    );
+
+    // Initially should be false (no validation yet)
+    expect(hasBeenValidatedEl.textContent).toBe('false');
+
+    // Trigger validation by filling the field
+    const input: HTMLInputElement =
+      fixture.nativeElement.querySelector('input');
+    input.value = 'test';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // After validation completes, hasBeenValidated should be true
+    expect(hasBeenValidatedEl.textContent).toBe('true');
+
+    // Clear the field - hasBeenValidated should remain true
+    input.value = '';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // Still true even though field is now invalid again
+    expect(hasBeenValidatedEl.textContent).toBe('true');
+  });
+
+  it('should set hasBeenValidated when field becomes invalid', async () => {
+    const input: HTMLInputElement =
+      fixture.nativeElement.querySelector('input');
+    const hasBeenValidatedEl = fixture.nativeElement.querySelector(
+      '#has-been-validated'
+    );
+
+    // Initially false
+    expect(hasBeenValidatedEl.textContent).toBe('false');
+
+    // Blur without filling (triggers validation, field becomes invalid)
+    input.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // Should be true after validation runs
+    expect(hasBeenValidatedEl.textContent).toBe('true');
   });
 });

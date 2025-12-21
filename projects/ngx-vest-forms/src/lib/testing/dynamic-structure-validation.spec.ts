@@ -3,13 +3,13 @@
  */
 import { Component, signal, ViewChild } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { vestForms } from '../exports';
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import type { NgxDeepPartial, ValidationConfigMap } from '../../public-api';
 import { FormDirective } from '../directives/form.directive';
-import { staticSuite, test, enforce, omitWhen, only } from 'vest';
-import { VALIDATION_CONFIG_DEBOUNCE_TIME } from '../constants';
-import { DeepPartial } from '../utils/deep-partial';
+import { NgxVestForms } from '../exports';
 
-type DynamicFormModel = DeepPartial<{
+type DynamicFormModel = NgxDeepPartial<{
   procedureType: 'typeA' | 'typeB' | 'typeC';
   fieldA?: string;
   fieldB?: string;
@@ -17,9 +17,7 @@ type DynamicFormModel = DeepPartial<{
 
 const dynamicFormValidationSuite = staticSuite(
   (model: DynamicFormModel, field?: string) => {
-    if (field) {
-      only(field);
-    }
+    only(field); // ✅ Call unconditionally
 
     test('procedureType', 'Procedure type is required', () => {
       enforce(model.procedureType).isNotBlank();
@@ -44,24 +42,24 @@ const dynamicFormValidationSuite = staticSuite(
 );
 
 const waitForValidation = async (): Promise<void> => {
-  await new Promise((resolve) =>
-    setTimeout(resolve, VALIDATION_CONFIG_DEBOUNCE_TIME + 50)
+  await new Promise(
+    (resolve) => setTimeout(resolve, 150) // Default debounce (100ms) + buffer (50ms)
   );
 };
 
 describe('FormDirective - Dynamic Structure Changes', () => {
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({}).compileComponents();
+  beforeEach(() => {
+    TestBed.resetTestingModule();
   });
 
   describe('Form Structure Change Detection', () => {
     it('should update validation when switching from input field to informational paragraph', async () => {
       @Component({
-        imports: [vestForms],
+        imports: [NgxVestForms],
         template: `
           <form
-            scVestForm
-            #vestForm="scVestForm"
+            ngxVestForm
+            #vestForm="ngxVestForm"
             [formValue]="formValue()"
             [suite]="suite"
             [validationConfig]="validationConfig"
@@ -113,9 +111,9 @@ describe('FormDirective - Dynamic Structure Changes', () => {
         errors = signal<Record<string, string[]>>({});
 
         suite = dynamicFormValidationSuite;
-        validationConfig = {
+        validationConfig: ValidationConfigMap<DynamicFormModel> = {
           procedureType: ['fieldA', 'fieldB'],
-        } as const;
+        };
       }
 
       const fixture = TestBed.createComponent(TestComponent);
@@ -192,11 +190,11 @@ describe('FormDirective - Dynamic Structure Changes', () => {
   describe('Solution with New API', () => {
     it('should update validation when using triggerFormValidation method', async () => {
       @Component({
-        imports: [vestForms],
+        imports: [NgxVestForms],
         template: `
           <form
-            scVestForm
-            #vestForm="scVestForm"
+            ngxVestForm
+            #vestForm="ngxVestForm"
             [formValue]="formValue()"
             [suite]="suite"
             [validationConfig]="validationConfig"
@@ -227,9 +225,9 @@ describe('FormDirective - Dynamic Structure Changes', () => {
         errors = signal<Record<string, string[]>>({});
 
         suite = dynamicFormValidationSuite;
-        validationConfig = {
+        validationConfig: ValidationConfigMap<DynamicFormModel> = {
           procedureType: ['fieldA'],
-        } as const;
+        };
       }
 
       const fixture = TestBed.createComponent(TestComponent);

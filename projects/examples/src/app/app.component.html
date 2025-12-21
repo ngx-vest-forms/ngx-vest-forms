@@ -1,5 +1,44 @@
-<ul class="ml-4 mt-4 underline">
-  <li><a routerLink="purchase">Purchase form</a></li>
-  <li><a routerLink="business-hours">Business hours form</a></li>
-</ul>
-<router-outlet></router-outlet>
+<nav
+  class="border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
+>
+  <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+    <ul class="flex gap-6">
+      <li>
+        <a
+          routerLink="purchase"
+          routerLinkActive="font-semibold text-blue-600 dark:text-blue-500"
+          class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-500"
+          >Purchase form</a
+        >
+      </li>
+      <li>
+        <a
+          routerLink="business-hours"
+          routerLinkActive="font-semibold text-blue-600 dark:text-blue-500"
+          class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-500"
+          >Business hours form</a
+        >
+      </li>
+      <li>
+        <a
+          routerLink="validation-config-demo"
+          routerLinkActive="font-semibold text-blue-600 dark:text-blue-500"
+          class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-500"
+          >ValidationConfig Demo</a
+        >
+      </li>
+      <li>
+        <a
+          routerLink="wizard"
+          routerLinkActive="font-semibold text-blue-600 dark:text-blue-500"
+          class="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-500"
+          >Wizard Form</a
+        >
+      </li>
+    </ul>
+    <ngx-theme-switcher />
+  </div>
+</nav>
+<main class="mx-auto max-w-7xl px-4 py-6">
+  <router-outlet></router-outlet>
+</main>

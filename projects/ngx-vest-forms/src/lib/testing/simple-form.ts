@@ -1,9 +1,8 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
-import { DeepPartial } from '../utils/deep-partial';
-import { DeepRequired } from '../utils/deep-required';
+import type { NgxDeepPartial, NgxDeepRequired } from '../../public-api';
 import { ROOT_FORM } from '../constants';
 
-export type FormModel = DeepPartial<{
+export type FormModel = NgxDeepPartial<{
   firstName: string;
   lastName: string;
   passwords: {
@@ -12,7 +11,7 @@ export type FormModel = DeepPartial<{
   };
 }>;
 
-export const formShape: DeepRequired<FormModel> = {
+export const formShape: NgxDeepRequired<FormModel> = {
   firstName: '',
   lastName: '',
   passwords: {
@@ -23,9 +22,17 @@ export const formShape: DeepRequired<FormModel> = {
 
 export const formValidationSuite = staticSuite(
   (model: FormModel, field?: string) => {
-    if (field) {
-      only(field);
-    }
+    /**
+     * CRITICAL: Call only() unconditionally, even when field is undefined.
+     *
+     * Why: Calling only(undefined) is safe and runs all tests. Conditional calls like
+     * `if (field) { only(field); }` corrupt Vest's internal execution order tracking,
+     * causing issues with omitWhen + validationConfig combinations where tests may be
+     * incorrectly omitted even when conditions are false.
+     *
+     * @see https://github.com/ngx-vest-forms/ngx-vest-forms/pull/60
+     */
+    only(field); // ✅ Call unconditionally
     test(ROOT_FORM, 'Brecht his pass is not 1234', () => {
       enforce(
         model.firstName === 'Brecht' &&
@@ -62,14 +69,19 @@ export const formValidationSuite = staticSuite(
 );
 
 export const selectors = {
-  scControlWrapperFirstName: 'sc-control-wrapper__first-name',
+  scControlWrapperFirstName: 'ngx-control-wrapper__first-name',
+  ngxControlWrapperFirstName: 'ngx-control-wrapper__first-name',
   inputFirstName: 'input__first-name',
-  scControlWrapperLastName: 'sc-control-wrapper__last-name',
+  scControlWrapperLastName: 'ngx-control-wrapper__last-name',
+  ngxControlWrapperLastName: 'ngx-control-wrapper__last-name',
   inputLastName: 'input__last-name',
-  scControlWrapperPasswords: 'sc-control-wrapper__passwords',
-  scControlWrapperPassword: 'sc-control-wrapper__password',
+  scControlWrapperPasswords: 'ngx-control-wrapper__passwords',
+  ngxControlWrapperPasswords: 'ngx-control-wrapper__passwords',
+  scControlWrapperPassword: 'ngx-control-wrapper__password',
+  ngxControlWrapperPassword: 'ngx-control-wrapper__password',
   inputPassword: 'input__password',
-  scControlWrapperConfirmPassword: 'sc-control-wrapper__confirm-password',
+  scControlWrapperConfirmPassword: 'ngx-control-wrapper__confirm-password',
+  ngxControlWrapperConfirmPassword: 'ngx-control-wrapper__confirm-password',
   inputConfirmPassword: 'input__confirm-password',
   btnSubmit: 'btn__submit',
   btnToggleValidationConfig: 'btn__toggle-validation-config',

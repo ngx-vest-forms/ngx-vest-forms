@@ -1,57 +1,57 @@
 <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
-  <div class="w-full" sc-control-wrapper>
-    <label>
-      <span>Street</span>
-      <input
-        placeholder="Type street"
-        type="text"
-        [ngModel]="address?.street"
-        name="street"
-      />
-    </label>
+  <div class="form-group" ngx-control-wrapper>
+    <label class="label-text" [attr.for]="fieldIds().street">Street</label>
+    <input
+      [id]="fieldIds().street"
+      class="input-field"
+      placeholder="Type street"
+      type="text"
+      [ngModel]="address()?.street"
+      name="street"
+    />
   </div>
-  <div class="w-full" sc-control-wrapper>
-    <label>
-      <span>Number</span>
-      <input
-        placeholder="Type street number"
-        type="text"
-        [ngModel]="address?.number"
-        name="number"
-      />
-    </label>
+  <div class="form-group" ngx-control-wrapper>
+    <label class="label-text" [attr.for]="fieldIds().number">Number</label>
+    <input
+      [id]="fieldIds().number"
+      class="input-field"
+      placeholder="Type street number"
+      type="text"
+      [ngModel]="address()?.number"
+      name="number"
+    />
   </div>
-  <div class="w-full" sc-control-wrapper>
-    <label>
-      <span>City</span>
-      <input
-        placeholder="Type city"
-        type="text"
-        [ngModel]="address?.city"
-        name="city"
-      />
-    </label>
+  <div class="form-group" ngx-control-wrapper>
+    <label class="label-text" [attr.for]="fieldIds().city">City</label>
+    <input
+      [id]="fieldIds().city"
+      class="input-field"
+      placeholder="Type city"
+      type="text"
+      [ngModel]="address()?.city"
+      name="city"
+    />
   </div>
-  <div class="w-full" sc-control-wrapper>
-    <label>
-      <span>Zipcode</span>
-      <input
-        placeholder="Type zipcode"
-        type="text"
-        [ngModel]="address?.zipcode"
-        name="zipcode"
-      />
-    </label>
+  <div class="form-group" ngx-control-wrapper>
+    <label class="label-text" [attr.for]="fieldIds().zipcode">Zipcode</label>
+    <input
+      [id]="fieldIds().zipcode"
+      class="input-field"
+      placeholder="Type zipcode"
+      type="text"
+      [ngModel]="address()?.zipcode"
+      name="zipcode"
+    />
   </div>
-  <div class="sm:col-span-2" sc-control-wrapper>
-    <label>
-      <span>Country</span>
-      <input
-        placeholder="Type country"
-        type="text"
-        [ngModel]="address?.country"
-        name="country"
-      />
-    </label>
+  <div class="form-group sm:col-span-2" ngx-control-wrapper>
+    <label class="label-text" [attr.for]="fieldIds().country">Country</label>
+    <input
+      [id]="fieldIds().country"
+      class="input-field"
+      placeholder="Type country"
+      type="text"
+      [ngModel]="address()?.country"
+      name="country"
+    />
   </div>
 </div>

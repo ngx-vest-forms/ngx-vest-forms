@@ -90,7 +90,7 @@
  * ```
  *
  */
-export function clearFieldsWhen<T extends Record<string, any>>(
+export function clearFieldsWhen<T extends Record<string, unknown>>(
   currentState: T,
   conditions: Partial<Record<keyof T, boolean>>
 ): T {
@@ -98,7 +98,7 @@ export function clearFieldsWhen<T extends Record<string, any>>(
 
   Object.entries(conditions).forEach(([fieldName, shouldClear]) => {
     if (shouldClear) {
-      (result as any)[fieldName] = undefined;
+      (result as Record<string, unknown>)[fieldName] = undefined;
     }
   });
 
@@ -135,20 +135,20 @@ export function clearFieldsWhen<T extends Record<string, any>>(
  * }
  *
  * ///  Clear all optional fields on form submission
- * onSubmit() {
+ * save() {
  *   const finalData = clearFields(this.formValue(), ['draftField', 'tempNotes']);
  *   this.submitForm(finalData);
  * }
  * ```
  */
-export function clearFields<T extends Record<string, any>>(
+export function clearFields<T extends Record<string, unknown>>(
   currentState: T,
   fieldsToClear: Array<keyof T>
 ): T {
   const result = { ...currentState };
 
   fieldsToClear.forEach((fieldName) => {
-    (result as any)[fieldName] = undefined;
+    (result as Record<string, unknown>)[fieldName as string] = undefined;
   });
 
   return result;
@@ -203,14 +203,15 @@ export function clearFields<T extends Record<string, any>>(
  *
  * @since 1.0.0
  */
-export function keepFieldsWhen<T extends Record<string, any>>(
+export function keepFieldsWhen<T extends Record<string, unknown>>(
   currentState: T,
   conditions: Partial<Record<keyof T, boolean>>
 ): Partial<T> {
   const result: Partial<T> = {};
   Object.entries(conditions).forEach(([fieldName, shouldKeep]) => {
     if (shouldKeep && fieldName in currentState) {
-      (result as any)[fieldName] = currentState[fieldName as keyof T];
+      (result as Record<string, unknown>)[fieldName] =
+        currentState[fieldName as keyof T];
     }
   });
   return result;

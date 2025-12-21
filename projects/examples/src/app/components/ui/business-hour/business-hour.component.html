@@ -1,24 +1,27 @@
-<div sc-control-wrapper>
-  <label>
-    <span class="mr-4">From</span>
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+  <ngx-control-wrapper class="form-group">
+    <label class="label-text" [attr.for]="idPrefix() + '-from'">From</label>
     <input
+      [id]="idPrefix() + '-from'"
       mask="00:00"
       placeholder="00:00"
       type="text"
-      [ngModel]="businessHour?.from"
+      [ngModel]="businessHour()?.from"
       name="from"
+      class="input-field"
     />
-  </label>
-</div>
-<div sc-control-wrapper class="ml-4">
-  <label>
-    <span class="mr-4">To</span>
+  </ngx-control-wrapper>
+
+  <ngx-control-wrapper class="form-group">
+    <label class="label-text" [attr.for]="idPrefix() + '-to'">To</label>
     <input
+      [id]="idPrefix() + '-to'"
       mask="00:00"
       placeholder="00:00"
       type="text"
-      [ngModel]="businessHour?.to"
+      [ngModel]="businessHour()?.to"
       name="to"
+      class="input-field"
     />
-  </label>
+  </ngx-control-wrapper>
 </div>

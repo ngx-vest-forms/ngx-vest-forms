@@ -13,6 +13,13 @@ export function isPrimitive(
 }
 
 /**
+ * @internal
+ * Internal utility for shallow equality checks.
+ *
+ * **Not intended for external use.** This function is used internally by the library
+ * for performance-critical operations. Consider using your own comparison logic or
+ * a library like lodash if you need shallow equality checks in your application.
+ *
  * Optimized shallow equality check for objects.
  *
  * **Why this custom implementation is preferred:**
@@ -73,6 +80,13 @@ export function shallowEqual(obj1: unknown, obj2: unknown): boolean {
 }
 
 /**
+ * @internal
+ * Internal utility for deep equality checks.
+ *
+ * **Not intended for external use.** This function is used internally by the library
+ * for form value comparison and change detection. Consider using your own comparison
+ * logic or a library like lodash if you need deep equality checks in your application.
+ *
  * Fast deep equality check optimized for form values and Angular applications.
  *
  * **Why this custom implementation is preferred over alternatives:**

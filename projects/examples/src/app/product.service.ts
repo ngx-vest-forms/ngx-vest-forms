@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { Product } from './product.type';
 import { delay, Observable, of } from 'rxjs';
+import { Product } from './product.type';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ProductService {
-  public getAll(): Observable<Product[]> {
+  getAll(): Observable<Product[]> {
     return of([
       { id: '0', name: 'Iphone x' },
       { id: '1', name: 'Iphone 11' },

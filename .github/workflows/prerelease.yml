@@ -88,18 +88,24 @@ jobs:
       - name: Setup
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
       - name: Install
-        run: npm ci
+        run: npm install
       - name: Playwright install
-        run: npx playwright install
+        run: npx playwright install --with-deps
+      - name: Lint
+        run: npm run lint
       - name: Build
         run: npm run build:ci
       - name: Test
         run: npm run test:ci
       - name: Integration test
         run: npm run storybook:test
+      - name: E2E tests
+        run: npx playwright test --project=chromium
+        env:
+          CI: true
       - name: Publish prerelease
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

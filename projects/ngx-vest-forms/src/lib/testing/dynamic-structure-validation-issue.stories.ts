@@ -1,27 +1,26 @@
-import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
+import { JsonPipe } from '@angular/common';
 import {
+  ChangeDetectionStrategy,
   Component,
   computed,
   signal,
-  ViewChild,
-  ChangeDetectionStrategy,
+  viewChild,
 } from '@angular/core';
-import { vestForms } from '../exports';
+import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import type { NgxDeepPartial, NgxDeepRequired } from '../../public-api';
 import { FormDirective } from '../directives/form.directive';
-import { userEvent, within, expect, waitFor } from 'storybook/test';
-import { DeepPartial } from '../utils/deep-partial';
-import { DeepRequired } from '../utils/deep-required';
+import { NgxVestForms } from '../exports';
 import { clearFieldsWhen } from '../utils/field-clearing';
-import { staticSuite, test, enforce, omitWhen, only } from 'vest';
-import { JsonPipe } from '@angular/common';
 
-type DynamicFormModel = DeepPartial<{
+type DynamicFormModel = NgxDeepPartial<{
   procedureType: 'typeA' | 'typeB' | 'typeC';
   fieldA?: string;
   fieldB?: string;
 }>;
 
-const dynamicFormShape: DeepRequired<DynamicFormModel> = {
+const formShape: NgxDeepRequired<DynamicFormModel> = {
   procedureType: 'typeA',
   fieldA: '',
   fieldB: '',
@@ -29,9 +28,9 @@ const dynamicFormShape: DeepRequired<DynamicFormModel> = {
 
 const dynamicFormValidationSuite = staticSuite(
   (model: DynamicFormModel, field?: string) => {
-    if (field) {
-      only(field);
-    }
+    // ✅ CRITICAL: Always call only() unconditionally (PR #60 requirement)
+    // Calling only() conditionally corrupts Vest's execution tracking
+    only(field);
 
     test('procedureType', 'Procedure type is required', () => {
       enforce(model.procedureType).isNotBlank();
@@ -56,13 +55,13 @@ const dynamicFormValidationSuite = staticSuite(
 );
 
 @Component({
-  selector: 'app-dynamic-structure',
+  selector: 'ngx-dynamic-structure',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form
-      #vestForm="scVestForm"
-      class="p-4 max-w-lg"
-      scVestForm
+      #vestForm="ngxVestForm"
+      class="max-w-lg p-4"
+      ngxVestForm
       [formValue]="formValue()"
       [formShape]="shape"
       [suite]="suite"
@@ -71,21 +70,21 @@ const dynamicFormValidationSuite = staticSuite(
       (errorsChange)="errors.set($event)"
     >
       <fieldset class="space-y-4">
-        <legend class="text-lg font-semibold mb-4">
+        <legend class="mb-4 text-lg font-semibold">
           Dynamic Form Structure Test - Angular 20 Best Practices
         </legend>
 
         <div
-          sc-control-wrapper
-          data-testid="sc-control-wrapper__procedure-type"
+          ngx-control-wrapper
+          data-testid="ngx-control-wrapper__procedure-type"
         >
           <label class="block">
-            <span class="block text-sm font-medium mb-2">Procedure Type</span>
+            <span class="mb-2 block text-sm font-medium">Procedure Type</span>
             <select
               name="procedureType"
               [ngModel]="formValue().procedureType"
               data-testid="select__procedure-type"
-              class="w-full p-2 border border-gray-300 rounded"
+              class="w-full rounded border border-gray-300 p-2"
               (change)="onProcedureTypeChange($event)"
             >
               <option value="">Select a procedure type...</option>
@@ -100,12 +99,12 @@ const dynamicFormValidationSuite = staticSuite(
         <!-- Using @if instead of *ngIf (Angular 20 best practice) -->
         @if (formValue().procedureType === 'typeA') {
           <div
-            sc-control-wrapper
-            data-testid="sc-control-wrapper__field-a"
-            class="bg-blue-50 p-3 rounded"
+            ngx-control-wrapper
+            data-testid="ngx-control-wrapper__field-a"
+            class="rounded bg-blue-50 p-3"
           >
             <label class="block">
-              <span class="block text-sm font-medium mb-2"
+              <span class="mb-2 block text-sm font-medium"
                 >Field A (Required)</span
               >
               <input
@@ -113,10 +112,10 @@ const dynamicFormValidationSuite = staticSuite(
                 [ngModel]="formValue().fieldA"
                 data-testid="input__field-a"
                 placeholder="Enter Field A value"
-                class="w-full p-2 border border-gray-300 rounded"
+                class="w-full rounded border border-gray-300 p-2"
               />
             </label>
-            <p class="text-sm text-blue-600 mt-1">
+            <p class="mt-1 text-sm text-blue-600">
               This field is required for Type A procedures.
             </p>
           </div>
@@ -125,12 +124,12 @@ const dynamicFormValidationSuite = staticSuite(
         <!-- Type B: Shows input field B -->
         @if (formValue().procedureType === 'typeB') {
           <div
-            sc-control-wrapper
-            data-testid="sc-control-wrapper__field-b"
-            class="bg-green-50 p-3 rounded"
+            ngx-control-wrapper
+            data-testid="ngx-control-wrapper__field-b"
+            class="rounded bg-green-50 p-3"
           >
             <label class="block">
-              <span class="block text-sm font-medium mb-2"
+              <span class="mb-2 block text-sm font-medium"
                 >Field B (Required)</span
               >
               <input
@@ -138,10 +137,10 @@ const dynamicFormValidationSuite = staticSuite(
                 [ngModel]="formValue().fieldB"
                 data-testid="input__field-b"
                 placeholder="Enter Field B value"
-                class="w-full p-2 border border-gray-300 rounded"
+                class="w-full rounded border border-gray-300 p-2"
               />
             </label>
-            <p class="text-sm text-green-600 mt-1">
+            <p class="mt-1 text-sm text-green-600">
               This field is required for Type B procedures.
             </p>
           </div>
@@ -151,17 +150,17 @@ const dynamicFormValidationSuite = staticSuite(
         @if (formValue().procedureType === 'typeC') {
           <div
             data-testid="info__type-c"
-            class="bg-yellow-50 p-4 rounded border-l-4 border-yellow-400"
+            class="rounded border-l-4 border-yellow-400 bg-yellow-50 p-4"
           >
             <h3 class="text-lg font-medium text-yellow-800">
               Type C Procedure Information
             </h3>
-            <p class="text-yellow-700 mt-2">
+            <p class="mt-2 text-yellow-700">
               This procedure type does not require any additional input fields.
               The system will automatically configure the necessary parameters
               based on your selection.
             </p>
-            <ul class="list-disc list-inside text-yellow-700 mt-2 space-y-1">
+            <ul class="mt-2 list-inside list-disc space-y-1 text-yellow-700">
               <li>Automatic parameter configuration</li>
               <li>No additional user input required</li>
               <li>Processing will begin immediately upon form submission</li>
@@ -172,18 +171,18 @@ const dynamicFormValidationSuite = staticSuite(
         <button
           type="submit"
           data-testid="btn__submit"
-          class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50"
+          class="w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
           [disabled]="!formValid()"
         >
           {{ formValid() ? 'Submit Form' : 'Please complete required fields' }}
         </button>
 
         <!-- Debug information -->
-        <details class="mt-6 bg-gray-100 p-4 rounded">
+        <details class="mt-6 rounded bg-gray-100 p-4">
           <summary class="cursor-pointer font-medium">
             Debug Information (Angular 20 Pattern with Signals)
           </summary>
-          <div class="mt-3 space-y-2 text-sm font-mono">
+          <div class="mt-3 space-y-2 font-mono text-sm">
             <div data-testid="debug__form-valid" class="flex justify-between">
               <span>Form Valid:</span>
               <span
@@ -203,14 +202,14 @@ const dynamicFormValidationSuite = staticSuite(
               </span>
             </div>
             <div data-testid="debug__form-value" class="border-t pt-2">
-              <span class="block mb-1">Form Value:</span>
-              <pre class="bg-white p-2 rounded text-xs overflow-auto">{{
+              <span class="mb-1 block">Form Value:</span>
+              <pre class="overflow-auto rounded bg-white p-2 text-xs">{{
                 formValue() | json
               }}</pre>
             </div>
             <div data-testid="debug__errors" class="border-t pt-2">
-              <span class="block mb-1">Errors:</span>
-              <pre class="bg-white p-2 rounded text-xs overflow-auto">{{
+              <span class="mb-1 block">Errors:</span>
+              <pre class="overflow-auto rounded bg-white p-2 text-xs">{{
                 errors() | json
               }}</pre>
             </div>
@@ -219,12 +218,12 @@ const dynamicFormValidationSuite = staticSuite(
       </fieldset>
     </form>
   `,
-  imports: [vestForms, JsonPipe],
+  imports: [NgxVestForms, JsonPipe],
 })
 export class DynamicStructureComponent {
   // Angular 20: Using ViewChild to access template reference
-  @ViewChild('vestForm', { static: true })
-  private readonly vestFormRef!: FormDirective<DynamicFormModel>;
+  protected readonly vestFormRef =
+    viewChild.required<FormDirective<DynamicFormModel>>('vestForm');
 
   // Angular 20: Using signals for state management
   protected readonly formValue = signal<DynamicFormModel>({});
@@ -232,7 +231,7 @@ export class DynamicStructureComponent {
   protected readonly errors = signal<Record<string, string[]>>({});
 
   // Static properties can remain as regular properties
-  protected readonly shape = dynamicFormShape;
+  protected readonly shape = formShape;
   protected readonly suite = dynamicFormValidationSuite;
 
   // Angular 20: Using computed() for derived state
@@ -262,7 +261,7 @@ export class DynamicStructureComponent {
 
     // Using the new triggerFormValidation() API to handle structure changes
     // This is necessary because Angular doesn't emit ValueChangeEvent when form structure changes
-    this.vestFormRef.triggerFormValidation();
+    this.vestFormRef().triggerFormValidation();
   }
 }
 

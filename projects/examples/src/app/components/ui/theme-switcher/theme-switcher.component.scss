@@ -1,0 +1,10 @@
+:host button {
+  // Reset the global button styles
+  background: none;
+  border: none;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  // Then allow Tailwind classes to apply
+  cursor: pointer;
+}

@@ -1,19 +1,20 @@
-<label>
-  <span>Phonenumbers</span>
-  <div ngModelGroup="values">
-    @for (item of values | keyvalue; track item.key) {
-      <div sc-control-wrapper>
-        <div class="relative">
+<div class="space-y-3">
+  <div ngModelGroup="values" class="space-y-3">
+    @for (item of values() | keyvalue; track item.key) {
+      <div ngx-control-wrapper>
+        <div class="relative flex items-center gap-2">
           <input
             type="text"
             name="{{ item.key }}"
-            [ngModel]="values[item.key]"
+            [ngModel]="values()[item.key]"
             placeholder="Type phone number"
+            class="input-field pr-20"
+            [attr.aria-label]="'Phone number ' + (+item.key + 1)"
           />
           <button
             type="button"
-            (click)="removePhonenumber(item.key)"
-            class="text-white absolute end-0.5 bottom-0.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+            (click)="removePhoneNumber(item.key)"
+            class="btn-input-action btn-input-action-danger"
           >
             Remove
           </button>
@@ -21,21 +22,25 @@
       </div>
     }
   </div>
-  <div sc-control-wrapper>
-    <div class="relative">
+
+  <div ngx-control-wrapper>
+    <div class="relative flex items-center gap-2">
       <input
         type="text"
-        [(ngModel)]="addValue"
-        name="addValue"
+        [ngModel]="newPhoneNumber()"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="onNewPhoneNumberChange($event)"
         placeholder="Type phone number"
+        class="input-field pr-20"
+        aria-label="Add new phone number"
       />
       <button
         type="button"
-        (click)="addPhonenumber()"
-        class="text-white absolute end-0.5 bottom-0.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+        (click)="addPhoneNumber()"
+        class="btn-input-action btn-input-action-primary"
       >
         Add
       </button>
     </div>
   </div>
-</label>
+</div>

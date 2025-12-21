@@ -1,54 +1,129 @@
-<div
-  class="sm:col-span-2 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700"
->
-  <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">
-    Example: form array with complex validations
-  </h3>
-  <ul class="text-md list-disc ml-4">
-    <li>Always show an error if there is no business hour added</li>
-    <li>From field is required</li>
-    <li>To field is required</li>
-    <li>From field should be valid time</li>
-    <li>To field should be valid time</li>
-    <li>
-      If both from and to fields are valid:
-      <ul>
-        <li>To field should be later than from field</li>
-      </ul>
-    </li>
-    <li>The same should apply for edit</li>
-    <li>If more than 1 business hour is added, there should be no overlap</li>
-  </ul>
+<div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+  <!-- Instructions Panel -->
+  <div class="lg:col-span-1">
+    <ngx-card title="Complex Validations">
+      <div class="prose prose-sm dark:prose-invert">
+        <p class="text-gray-600 dark:text-gray-300">
+          This example demonstrates form array validation with complex
+          cross-field rules:
+        </p>
+        <ul class="list-disc space-y-2 pl-4 text-gray-600 dark:text-gray-300">
+          <li>
+            <strong>Required:</strong> At least one business hour must be added.
+          </li>
+          <li><strong>Format:</strong> 'From' and 'To' must be valid times.</li>
+          <li>
+            <strong>Logic:</strong> 'To' time must be later than 'From' time.
+          </li>
+          <li>
+            <strong>Overlap:</strong> Multiple time ranges cannot overlap.
+          </li>
+        </ul>
+      </div>
+    </ngx-card>
+
+    <!-- Form State Panel -->
+    <ngx-card title="Form State" class="mt-6 block">
+      <div class="mb-4">
+        <div class="mb-2 flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300"
+            >Validity Status</span
+          >
+          <span
+            class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+            [class.bg-green-100]="formValid()"
+            [class.text-green-800]="formValid()"
+            [class.bg-red-100]="!formValid()"
+            [class.text-red-800]="!formValid()"
+          >
+            {{ formValid() ? 'Valid' : 'Invalid' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <h4
+            class="text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
+          >
+            Form Value
+          </h4>
+          <pre
+            class="mt-2 max-h-40 overflow-auto rounded-sm bg-gray-50 p-2 text-xs text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+            >{{ formValue() | json }}</pre
+          >
+        </div>
+
+        <div>
+          <h4
+            class="text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
+          >
+            Errors
+          </h4>
+          <pre
+            class="mt-2 max-h-40 overflow-auto rounded-sm bg-gray-50 p-2 text-xs text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+            >{{ errors() | json }}</pre
+          >
+        </div>
+      </div>
+    </ngx-card>
+  </div>
+
+  <!-- Main Form -->
+  <div class="lg:col-span-2">
+    <ngx-card
+      title="Business Hours"
+      subtitle="Configure your opening hours for the week."
+    >
+      <form
+        ngxVestForm
+        #vestForm="ngxVestForm"
+        ngxValidateRootForm
+        [ngxValidateRootFormMode]="'live'"
+        [formValue]="formValue()"
+        [formShape]="shape"
+        [suite]="businessHoursSuite"
+        [validationConfig]="validationConfig"
+        (validChange)="formValid.set($event)"
+        (errorsChange)="errors.set($event)"
+        (formValueChange)="formValue.set($event)"
+      >
+        @if (errors()[ROOT_FORM]) {
+          <div class="mb-4 rounded-md bg-red-50 p-4 dark:bg-red-900/20">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg
+                  class="h-5 w-5 text-red-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800 dark:text-red-200">
+                  Validation Error
+                </h3>
+                <div class="mt-2 text-sm text-red-700 dark:text-red-300">
+                  {{ errors()[ROOT_FORM] }}
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <fieldset class="space-y-6">
+          <ngx-business-hours
+            [values]="getBusinessHoursValues()"
+            [addValue]="formValue().businessHours?.addValue"
+            (valuesChange)="onBusinessHoursChange($event)"
+          ></ngx-business-hours>
+        </fieldset>
+      </form>
+    </ngx-card>
+  </div>
 </div>
-
-<form
-  class="mt-8"
-  scVestForm
-  [validateRootForm]="true"
-  [formValue]="formValue()"
-  [formShape]="shape"
-  [suite]="suite"
-  (validChange)="formValid.set($event)"
-  (errorsChange)="errors.set($event)"
-  (formValueChange)="formValue.set($event)"
->
-  <span class="block mb-2 text-sm font-medium text-red-700 dark:text-red-500;">
-    {{ errors()[ROOT_FORM] }}
-  </span>
-  <fieldset>
-    <sc-business-hours
-      [businessHoursModel]="formValue().businessHours"
-    ></sc-business-hours>
-  </fieldset>
-</form>
-<br />
-<p>Valid: {{ formValid() }}</p>
-
-<h3>The value of the form</h3>
-<pre id="json-data">
-  {{ formValue() | json }}
-</pre>
-
-<pre id="json-errors">
-  {{ errors() | json }}
-</pre>

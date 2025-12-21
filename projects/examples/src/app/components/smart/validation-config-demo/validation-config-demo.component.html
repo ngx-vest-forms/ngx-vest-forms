@@ -1,0 +1,385 @@
+<div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+  <!-- Instructions Panel -->
+  <div class="space-y-6 lg:col-span-1">
+    <ngx-card>
+      <h1 class="mb-2 text-2xl font-bold text-gray-900 dark:text-white">
+        ValidationConfig Demo
+      </h1>
+      <p class="text-gray-600 dark:text-gray-300">
+        Demonstrates ValidationConfig patterns with race condition fixes.
+      </p>
+
+      <div
+        class="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/30 dark:bg-blue-900/20"
+      >
+        <h3
+          class="mb-3 text-sm font-semibold tracking-wider text-blue-900 uppercase dark:text-blue-300"
+        >
+          Key Features
+        </h3>
+        <ul class="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+          <li class="flex items-start gap-2">
+            <span class="mt-0.5 text-blue-600 dark:text-blue-400">✓</span>
+            <span>
+              <strong>No Race Conditions:</strong> Uses
+              <code class="rounded bg-blue-100 px-1 dark:bg-blue-800"
+                >take(1)</code
+              >
+              to prevent loops
+            </span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="mt-0.5 text-blue-600 dark:text-blue-400">✓</span>
+            <span>
+              <strong>Debounced:</strong> Reduces validation frequency
+            </span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="mt-0.5 text-blue-600 dark:text-blue-400">✓</span>
+            <span>
+              <strong>Conditional Fields:</strong> Works with
+              <code class="rounded bg-blue-100 px-1 dark:bg-blue-800"
+                >&#64;if</code
+              >
+              blocks
+            </span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="mt-0.5 text-blue-600 dark:text-blue-400">✓</span>
+            <span>
+              <strong>Cross-field:</strong> Auto-revalidation of dependencies
+            </span>
+          </li>
+        </ul>
+      </div>
+    </ngx-card>
+
+    <!-- Debug Panel -->
+    <ngx-card>
+      <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+        Form State
+      </h3>
+
+      <div class="mb-4">
+        <div class="mb-2 flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300"
+            >Validity Status</span
+          >
+          <span
+            class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+            [class.bg-green-100]="isValid()"
+            [class.text-green-800]="isValid()"
+            [class.bg-red-100]="!isValid()"
+            [class.text-red-800]="!isValid()"
+          >
+            {{ isValid() ? 'Valid' : 'Invalid' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Validation Summary -->
+      <div class="mb-6 space-y-3">
+        @if (hasPasswordErrors()) {
+          <div
+            class="rounded border border-red-200 bg-red-50 p-3 dark:border-red-900/30 dark:bg-red-900/20"
+          >
+            <div
+              class="mb-1 text-xs font-semibold tracking-wider text-red-800 uppercase dark:text-red-300"
+            >
+              Password Issues
+            </div>
+            @for (error of hasPasswordErrors(); track error) {
+              <div class="text-xs text-red-600 dark:text-red-400">
+                • {{ error }}
+              </div>
+            }
+          </div>
+        }
+
+        @if (hasLocationErrors()) {
+          <div
+            class="rounded border border-purple-200 bg-purple-50 p-3 dark:border-purple-900/30 dark:bg-purple-900/20"
+          >
+            <div
+              class="mb-1 text-xs font-semibold tracking-wider text-purple-800 uppercase dark:text-purple-300"
+            >
+              Location Issues
+            </div>
+            @for (error of hasLocationErrors(); track error) {
+              <div class="text-xs text-purple-600 dark:text-purple-400">
+                • {{ error }}
+              </div>
+            }
+          </div>
+        }
+
+        @if (hasDateErrors()) {
+          <div
+            class="rounded border border-orange-200 bg-orange-50 p-3 dark:border-orange-900/30 dark:bg-orange-900/20"
+          >
+            <div
+              class="mb-1 text-xs font-semibold tracking-wider text-orange-800 uppercase dark:text-orange-300"
+            >
+              Date Issues
+            </div>
+            @for (error of hasDateErrors(); track error) {
+              <div class="text-xs text-orange-600 dark:text-orange-400">
+                • {{ error }}
+              </div>
+            }
+          </div>
+        }
+
+        @if (
+          !hasPasswordErrors() &&
+          !hasLocationErrors() &&
+          !hasDateErrors() &&
+          !isValid()
+        ) {
+          <div class="text-xs text-gray-500 italic dark:text-gray-400">
+            Fill out all required fields to enable submission
+          </div>
+        }
+      </div>
+
+      <div>
+        <h4
+          class="text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
+        >
+          Form Value
+        </h4>
+        <pre
+          class="mt-2 max-h-40 overflow-auto rounded-sm bg-gray-50 p-2 text-xs text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+          >{{ formValue() | json }}</pre
+        >
+      </div>
+    </ngx-card>
+  </div>
+
+  <!-- Main Form -->
+  <div class="lg:col-span-2">
+    <ngx-card>
+      <form
+        ngxVestForm
+        [suite]="suite"
+        [formShape]="shape"
+        [formValue]="formValue()"
+        [validationConfig]="validationConfig"
+        (formValueChange)="formValue.set($event)"
+        (validChange)="isValid.set($event)"
+        (errorsChange)="errors.set($event)"
+        (ngSubmit)="save()"
+        class="space-y-8"
+      >
+        <!-- Bidirectional Example -->
+        <section
+          class="relative rounded-lg border border-blue-100 bg-blue-50/30 p-6 dark:border-blue-900/30 dark:bg-blue-900/10"
+        >
+          <h2
+            class="absolute -top-3 left-4 bg-white px-2 text-sm font-semibold text-blue-600 dark:bg-gray-800 dark:text-blue-400"
+          >
+            Bidirectional Validation
+          </h2>
+          <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            Changing either password field revalidates the other automatically.
+          </p>
+
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div class="form-group" ngx-control-wrapper>
+              <label>
+                <span class="label-text">Password</span>
+                <input
+                  class="input-field"
+                  type="password"
+                  id="password"
+                  name="password"
+                  [ngModel]="formValue().password"
+                  placeholder="Enter password (min 8 chars)"
+                />
+              </label>
+            </div>
+
+            <div class="form-group" ngx-control-wrapper>
+              <label>
+                <span class="label-text">Confirm Password</span>
+                <input
+                  class="input-field"
+                  type="password"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  [ngModel]="formValue().confirmPassword"
+                  placeholder="Confirm password"
+                />
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <!-- Conditional Validation Example -->
+        <section
+          class="relative rounded-lg border border-green-100 bg-green-50/30 p-6 dark:border-green-900/30 dark:bg-green-900/10"
+        >
+          <h2
+            class="absolute -top-3 left-4 bg-white px-2 text-sm font-semibold text-green-600 dark:bg-gray-800 dark:text-green-400"
+          >
+            Conditional Validation
+          </h2>
+          <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            Toggling the checkbox triggers justification validation.
+          </p>
+
+          <div class="space-y-4">
+            <div class="flex items-center">
+              <input
+                id="requiresJustification"
+                type="checkbox"
+                name="requiresJustification"
+                [ngModel]="formValue().requiresJustification"
+                class="h-4 w-4 rounded-sm border-gray-300 text-green-600 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700"
+              />
+              <label
+                for="requiresJustification"
+                class="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Requires Justification
+              </label>
+            </div>
+
+            @if (formValue().requiresJustification) {
+              <div class="form-group animate-fade-in" ngx-control-wrapper>
+                <label>
+                  <span class="label-text"
+                    >Justification (min 20 characters)</span
+                  >
+                  <textarea
+                    class="input-field"
+                    id="justification"
+                    name="justification"
+                    [ngModel]="formValue().justification"
+                    rows="3"
+                    placeholder="Explain why justification is needed..."
+                  ></textarea>
+                </label>
+              </div>
+            }
+          </div>
+        </section>
+
+        <!-- Cascade Example -->
+        <section
+          class="relative rounded-lg border border-purple-100 bg-purple-50/30 p-6 dark:border-purple-900/30 dark:bg-purple-900/10"
+        >
+          <h2
+            class="absolute -top-3 left-4 bg-white px-2 text-sm font-semibold text-purple-600 dark:bg-gray-800 dark:text-purple-400"
+          >
+            Cascade Validation
+          </h2>
+          <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            Changing country triggers state and zip code validation.
+          </p>
+
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+            <div class="form-group" ngx-control-wrapper>
+              <label>
+                <span class="label-text">Country</span>
+                <select
+                  class="input-field"
+                  id="country"
+                  name="country"
+                  [ngModel]="formValue().country"
+                >
+                  <option value="">Select country...</option>
+                  <option value="US">United States</option>
+                  <option value="CA">Canada</option>
+                  <option value="UK">United Kingdom</option>
+                  <option value="NL">Netherlands</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="form-group" ngx-control-wrapper>
+              <label>
+                <span class="label-text">State/Province</span>
+                <input
+                  class="input-field"
+                  type="text"
+                  id="state"
+                  name="state"
+                  [ngModel]="formValue().state"
+                  placeholder="Enter state/province"
+                />
+              </label>
+            </div>
+
+            <div class="form-group" ngx-control-wrapper>
+              <label>
+                <span class="label-text">Postal Code</span>
+                <input
+                  class="input-field"
+                  type="text"
+                  id="zipCode"
+                  name="zipCode"
+                  [ngModel]="formValue().zipCode"
+                  placeholder="Enter postal code"
+                />
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <!-- Date Range Example -->
+        <section
+          class="relative rounded-lg border border-orange-100 bg-orange-50/30 p-6 dark:border-orange-900/30 dark:bg-orange-900/10"
+        >
+          <h2
+            class="absolute -top-3 left-4 bg-white px-2 text-sm font-semibold text-orange-600 dark:bg-gray-800 dark:text-orange-400"
+          >
+            Date Range Validation
+          </h2>
+          <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            Start and end dates validate against each other.
+          </p>
+
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div class="form-group" ngx-control-wrapper>
+              <label>
+                <span class="label-text">Start Date</span>
+                <input
+                  class="input-field"
+                  type="date"
+                  id="startDate"
+                  name="startDate"
+                  [ngModel]="formValue().startDate"
+                />
+              </label>
+            </div>
+
+            <div class="form-group" ngx-control-wrapper>
+              <label>
+                <span class="label-text">End Date</span>
+                <input
+                  class="input-field"
+                  type="date"
+                  id="endDate"
+                  name="endDate"
+                  [ngModel]="formValue().endDate"
+                />
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <!-- Submit Button -->
+        <div class="pt-4">
+          <button
+            type="submit"
+            [disabled]="!isValid()"
+            class="btn btn-primary w-full"
+          >
+            Submit Form
+          </button>
+        </div>
+      </form>
+    </ngx-card>
+  </div>
+</div>

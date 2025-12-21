@@ -4,8 +4,8 @@ const config: TestRunnerConfig = {
   // Setup hook runs once before all tests
   async setup() {
     // Handle potential Jest/SWC issues and clean environment
-    if (typeof jest !== 'undefined') {
-      jest.clearAllMocks();
+    if (typeof vi !== 'undefined') {
+      vi.clearAllMocks();
     }
   },
 };

@@ -1,0 +1,33 @@
+<div class="ngx-form-group-wrapper__content">
+  <ng-content />
+</div>
+
+<!--
+  Keep regions stable in the DOM so IDs are always valid targets.
+  This wrapper does NOT modify descendant controls.
+-->
+<div [id]="errorId" role="status" aria-live="polite" aria-atomic="true">
+  @if (errorDisplay.shouldShowErrors() && errorDisplay.errors().length > 0) {
+    <ul>
+      @for (error of errorDisplay.errors(); track error) {
+        <li>{{ error }}</li>
+      }
+    </ul>
+  }
+</div>
+
+<div [id]="warningId" role="status" aria-live="polite" aria-atomic="true">
+  @if (errorDisplay.warnings().length > 0) {
+    <ul>
+      @for (warn of errorDisplay.warnings(); track warn) {
+        <li>{{ warn }}</li>
+      }
+    </ul>
+  }
+</div>
+
+<div [id]="pendingId" role="status" aria-live="polite" aria-atomic="true">
+  @if (showPendingMessage()) {
+    <span aria-hidden="true">Validating…</span>
+  }
+</div>

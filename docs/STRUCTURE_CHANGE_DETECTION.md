@@ -6,7 +6,7 @@ This document explains advanced techniques for handling form validation updates 
 
 ## The Problem
 
-When form structure changes (e.g., controls are added or removed) without control value changes, the `formValueChange` event is not automatically emitted. This can lead to situations where form validity is not updated correctly.
+When form structure changes from **input fields to non-input content** (like `<p>` tags) without control value changes, the `formValueChange` event is not automatically emitted. This can lead to situations where form validity is not updated correctly.
 
 ### Example Scenario
 
@@ -25,6 +25,26 @@ When form structure changes (e.g., controls are added or removed) without contro
 
 When switching from `typeA` to `typeC`, the input field is removed but no control values change, so validation doesn't update automatically.
 
+### When You DON'T Need This
+
+**Important**: You do **NOT** need `triggerFormValidation()` when switching between different input fields:
+
+```typescript
+// ✅ This works automatically - no triggerFormValidation() needed
+@if (procedureType() === 'typeA') {
+  <input name="fieldA" [ngModel]="formValue().fieldA" />
+} @else {
+  <input name="fieldB" [ngModel]="formValue().fieldB" />
+}
+```
+
+Why? Because switching between inputs means control values change, which triggers Angular's `ValueChangeEvent` and validation updates automatically.
+
+**You only need `triggerFormValidation()` when**:
+
+- Switching from input field → non-input content (like `<p>`, `<div>`, etc.)
+- The structure changes but no control values change
+
 ## Solution: Manual Validation Update
 
 ### API
@@ -33,16 +53,28 @@ When switching from `typeA` to `typeC`, the input field is removed but no contro
 public triggerFormValidation(): void
 ```
 
+**CRITICAL: This method does NOT mark fields as touched or show errors.**
+
+It only re-runs validation logic to update validity state.
+
+> **Note on form submission**: With the default `on-blur-or-submit` error display mode, errors are shown automatically when you submit via `(ngSubmit)`. The form internally calls `markAllAsTouched()` on submit. You only need to call `markAllAsTouched()` manually for special cases like multiple forms with one submit button.
+
+**When to use each:**
+
+- `triggerFormValidation()` - Re-run validation when structure changes
+- `markAllAsTouched()` - Manually show all errors (rarely needed - automatic on submit)
+- Both together - Rare, only if structure changed AND you want to show all errors immediately
+
 ### Usage
 
 ```typescript
 @Component({
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [suite]="validationSuite"
       (formValueChange)="formValue.set($event)"
-      #vestForm="scVestForm"
+      #vestForm="ngxVestForm"
     >
       <select
         name="procedureType"
@@ -63,9 +95,12 @@ public triggerFormValidation(): void
       }
     </form>
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyFormComponent {
-  @ViewChild('vestForm') vestForm!: FormDirective<MyFormModel>;
+  // Modern Angular 20+: Use viewChild() instead of @ViewChild
+  private readonly vestForm =
+    viewChild.required<FormDirective<MyFormModel>>('vestForm');
 
   protected readonly formValue = signal<MyFormModel>({});
   protected readonly validationSuite = myValidationSuite;
@@ -81,7 +116,7 @@ export class MyFormComponent {
     }));
 
     // IMPORTANT: Trigger validation update after structure change
-    this.vestForm.triggerFormValidation();
+    this.vestForm().triggerFormValidation();
   }
 }
 ```
@@ -102,9 +137,7 @@ import { staticSuite, test, enforce, omitWhen, only } from 'vest';
 
 export const myValidationSuite = staticSuite(
   (model: MyFormModel, field?: string) => {
-    if (field) {
-      only(field); // Performance optimization
-    }
+    only(field); // CRITICAL: Always call unconditionally
 
     // Always validate procedure type
     test('procedureType', 'Procedure type is required', () => {
@@ -158,6 +191,47 @@ onProcedureTypeChange(newType: string) {
 3. **Use in event handlers** - Call from `(ngModelChange)` or similar events
 4. **Document usage** - Add comments explaining why the manual update is needed
 5. **Test thoroughly** - Verify validation behavior with all form structure combinations
+
+## FAQ: Do I need `#group="ngModelGroup"` with `ngx-control-wrapper`?
+
+No. Template reference variables like `#group="ngModelGroup"` (or `#form="ngForm"`) are a **standard Angular template-driven forms** pattern and are **not required** by ngx-vest-forms.
+
+`ngx-control-wrapper` does not change how `ngModelGroup` works. It's safe to wrap groups/controls with `ngx-control-wrapper`, and you can still export and reference Angular directives as usual.
+
+Accessibility note: for a **group container** (an element that contains multiple inputs), prefer using `<ngx-form-group-wrapper>` (group-safe by default). If you apply `ngx-control-wrapper` to a group container, consider setting `ariaAssociationMode="none"` so the wrapper does not stamp `aria-describedby` / `aria-invalid` onto every descendant control.
+
+### When a template ref _is_ useful
+
+Use a template ref when you need **imperative access** to the group instance, for example:
+
+- Checking group state in the template (`group.pending`, `group.invalid`)
+- Calling low-level Angular APIs on the group (`control.updateValueAndValidity()`)
+- Passing the group to a component method that needs to coordinate structural changes
+
+Example:
+
+```html
+<ngx-form-group-wrapper ngModelGroup="addresses">
+  <ngx-form-group-wrapper ngModelGroup="billing" #billingGroup="ngModelGroup">
+    <!-- ... -->
+  </ngx-form-group-wrapper>
+
+  <button
+    type="button"
+    [disabled]="billingGroup.pending || billingGroup.invalid"
+  >
+    Save
+  </button>
+</ngx-form-group-wrapper>
+```
+
+### Preferred ngx-vest-forms API for structure changes
+
+If your goal is specifically to refresh validation after a structure change, prefer calling the higher-level API on the form directive:
+
+- `FormDirective.triggerFormValidation()`
+
+This keeps the logic at the form level and avoids relying on Angular internals like `updateValueAndValidity()`.
 
 ## Performance Considerations
 

@@ -1,12 +1,13 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
-import { PurchaseFormComponent } from './components/smart/purchase-form/purchase-form.component';
+import { ThemeSwitcherComponent } from './components/ui/theme-switcher/theme-switcher.component';
 
 @Component({
-  selector: 'app-root',
-  imports: [RouterLink, RouterOutlet],
+  selector: 'ngx-root',
+  imports: [RouterLink, RouterOutlet, ThemeSwitcherComponent],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
   title = 'purchase';

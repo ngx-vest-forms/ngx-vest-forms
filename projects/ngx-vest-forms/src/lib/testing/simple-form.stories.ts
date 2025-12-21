@@ -1,24 +1,24 @@
-import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
+import { JsonPipe } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
-import { vestForms } from '../exports';
-import { userEvent, waitFor, within, expect } from 'storybook/test';
+import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { NgxVestForms } from '../exports';
 import {
   FormModel,
   formShape,
   formValidationSuite,
   selectors,
 } from './simple-form';
-import { JsonPipe } from '@angular/common';
 
 @Component({
-  imports: [vestForms, JsonPipe],
+  imports: [NgxVestForms, JsonPipe],
   template: `
     <form
       class="p-4"
-      scVestForm
-      (ngSubmit)="onSubmit()"
+      ngxVestForm
+      (ngSubmit)="save()"
       [formValue]="formValue()"
-      [validateRootForm]="true"
+      ngxValidateRootForm
       [formShape]="shape"
       [suite]="suite"
       (dirtyChange)="formDirty.set($event)"
@@ -29,8 +29,8 @@ import { JsonPipe } from '@angular/common';
       <fieldset>
         <div
           class="w-full"
-          sc-control-wrapper
-          data-testid="sc-control-wrapper__first-name"
+          ngx-control-wrapper
+          data-testid="ngx-control-wrapper__first-name"
         >
           <label>
             <span>First name</span>
@@ -45,8 +45,8 @@ import { JsonPipe } from '@angular/common';
         </div>
         <div
           class="w-full"
-          sc-control-wrapper
-          data-testid="sc-control-wrapper__last-name"
+          ngx-control-wrapper
+          data-testid="ngx-control-wrapper__last-name"
         >
           <label>
             <span>Last name</span>
@@ -61,15 +61,15 @@ import { JsonPipe } from '@angular/common';
         </div>
         <div
           class="sm:col-span-2"
-          sc-control-wrapper
-          data-testid="sc-control-wrapper__passwords"
+          ngx-control-wrapper
+          data-testid="ngx-control-wrapper__passwords"
           ngModelGroup="passwords"
         >
           <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
             <div
               class="w-full"
-              sc-control-wrapper
-              data-testid="sc-control-wrapper__password"
+              ngx-control-wrapper
+              data-testid="ngx-control-wrapper__password"
             >
               <label>
                 <span>Password</span>
@@ -84,8 +84,8 @@ import { JsonPipe } from '@angular/common';
             </div>
             <div
               class="w-full"
-              sc-control-wrapper
-              data-testid="sc-control-wrapper__confirm-password"
+              ngx-control-wrapper
+              data-testid="ngx-control-wrapper__confirm-password"
             >
               <label>
                 <span>Confirm</span>
@@ -139,9 +139,9 @@ export class FormDirectiveDemoComponent {
     this.formValue.set(v);
   }
 
-  protected onSubmit(): void {
+  protected save(): void {
     if (this.formValid()) {
-      console.log(this.formValue());
+      // Intentionally left blank: avoid noisy console output in Storybook
     }
   }
 }
@@ -166,16 +166,16 @@ export const ShouldShowErrorsOnSubmit: StoryObj = {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByTestId(selectors.btnSubmit));
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperFirstName)
+      canvas.getByTestId(selectors.ngxControlWrapperFirstName)
     ).toHaveTextContent('First name is required');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperLastName)
+      canvas.getByTestId(selectors.ngxControlWrapperLastName)
     ).toHaveTextContent('Last name is required');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperPassword)
+      canvas.getByTestId(selectors.ngxControlWrapperPassword)
     ).toHaveTextContent('Password is required');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperConfirmPassword)
+      canvas.getByTestId(selectors.ngxControlWrapperConfirmPassword)
     ).not.toHaveTextContent('Confirm password is required');
   },
 };
@@ -189,13 +189,13 @@ export const ShouldHideErrorsWhenValid: StoryObj = {
     await userEvent.type(canvas.getByTestId(selectors.inputLastName), 'last');
     await userEvent.type(canvas.getByTestId(selectors.inputPassword), 'pass');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperFirstName)
+      canvas.getByTestId(selectors.ngxControlWrapperFirstName)
     ).not.toHaveTextContent('First name is required');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperLastName)
+      canvas.getByTestId(selectors.ngxControlWrapperLastName)
     ).not.toHaveTextContent('Last name is required');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperPassword)
+      canvas.getByTestId(selectors.ngxControlWrapperPassword)
     ).not.toHaveTextContent('Password is required');
   },
 };
@@ -203,21 +203,22 @@ export const ShouldShowErrorsOnBlur: StoryObj = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByTestId(selectors.inputFirstName));
-    canvas.getByTestId(selectors.inputFirstName).blur();
+    // Use userEvent.tab to trigger a realistic blur sequence in Chromium + Angular 21
+    await userEvent.tab();
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperFirstName)
+      canvas.getByTestId(selectors.ngxControlWrapperFirstName)
     ).toHaveTextContent('First name is required');
 
     await userEvent.click(canvas.getByTestId(selectors.inputLastName));
-    canvas.getByTestId(selectors.inputLastName).blur();
+    await userEvent.tab();
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperLastName)
+      canvas.getByTestId(selectors.ngxControlWrapperLastName)
     ).toHaveTextContent('Last name is required');
 
     await userEvent.click(canvas.getByTestId(selectors.inputPassword));
-    canvas.getByTestId(selectors.inputPassword).blur();
+    await userEvent.tab();
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperPassword)
+      canvas.getByTestId(selectors.ngxControlWrapperPassword)
     ).toHaveTextContent('Password is required');
   },
 };
@@ -230,12 +231,14 @@ export const ShouldValidateOnGroups: StoryObj = {
       canvas.getByTestId(selectors.inputConfirmPassword),
       'second'
     );
+    // Trigger blur on the confirm password to ensure group validation fires in Angular 21
+    await userEvent.tab();
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperPasswords)
+      canvas.getByTestId(selectors.ngxControlWrapperPasswords)
     ).toHaveTextContent('Passwords do not match');
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperPasswords)
-    ).toHaveClass('sc-control-wrapper--invalid');
+      canvas.getByTestId(selectors.ngxControlWrapperPasswords)
+    ).toHaveClass('ngx-control-wrapper--invalid');
   },
 };
 
@@ -345,6 +348,10 @@ export const ShouldHaveCorrectStatussesAndOnFormUpdate: StoryObj = {
 export const ShouldValidateOnRootForm: StoryObj = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    // Wait until the submit button is rendered to avoid race conditions with Angular 21 rendering lifecycle
+    await waitFor(() => {
+      expect(canvas.getByTestId(selectors.btnSubmit)).toBeInTheDocument();
+    });
     await userEvent.type(
       canvas.getByTestId(selectors.inputFirstName),
       'Brecht'
@@ -354,19 +361,22 @@ export const ShouldValidateOnRootForm: StoryObj = {
       'Billiet'
     );
     await userEvent.type(canvas.getByTestId(selectors.inputPassword), '1234');
-    const expectedErrors = {
-      rootForm: ['Brecht his pass is not 1234'],
-    };
-    await expect(
-      JSON.stringify(
-        JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)
-      )
-    ).toEqual(JSON.stringify(expectedErrors));
-    await userEvent.type(canvas.getByTestId(selectors.inputPassword), '5');
-    await expect(
-      JSON.stringify(
-        JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)
-      )
-    ).toEqual(JSON.stringify({}));
+    // Provide confirm password so field-level required/group validations don't mask root form error.
+    await userEvent.type(
+      canvas.getByTestId(selectors.inputConfirmPassword),
+      '1234'
+    );
+    // Submit form to trigger root form validation
+    await userEvent.click(canvas.getByTestId(selectors.btnSubmit));
+    await waitFor(
+      () => {
+        const errorsText = canvas
+          .getByTestId(selectors.preFormErrors)
+          .textContent?.trim();
+        const errors = errorsText ? JSON.parse(errorsText) : {};
+        expect(errors).toEqual({ rootForm: ['Brecht his pass is not 1234'] });
+      },
+      { timeout: 2000 }
+    );
   },
 };

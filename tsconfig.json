@@ -2,7 +2,6 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "baseUrl": "./",
     "outDir": "./dist/out-tsc",
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
@@ -14,7 +13,7 @@
     "sourceMap": true,
     "skipLibCheck": true,
     "paths": {
-      "ngx-vest-forms": ["dist/ngx-vest-forms"]
+      "ngx-vest-forms": ["./projects/ngx-vest-forms/src/public-api.ts"]
     },
     "declaration": false,
     "experimentalDecorators": true,
@@ -22,8 +21,7 @@
     "importHelpers": true,
     "target": "ES2022",
     "module": "ES2022",
-    "useDefineForClassFields": false,
-    "lib": ["ES2022", "dom"]
+    "useDefineForClassFields": false
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

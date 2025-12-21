@@ -37,6 +37,27 @@ Instructions for generating high-quality Angular applications with TypeScript, u
 - Keep templates clean and logic in component classes or services
 - Use Angular directives and pipes for reusable functionality
 
+### Forms and User Input
+- Use `save()` method name for form submission handlers (common Angular convention)
+  - Note: Angular 20+ guidelines suggest `save()`, but this project uses `save()` consistently
+- **Form Submission and Page Reload Prevention**:
+  - ✅ **With ngx-vest-forms**: Use `[ngxVestForm]` directive - automatically calls `preventDefault()`
+    - Example: `<form [ngxVestForm]="form" (submit)="save()">` - NO event parameter needed!
+  - ⚠️ **Without ngx-vest-forms** (or without `[ngxVestForm]` directive): Must manually call `preventDefault()`
+    - Native `(submit)` does NOT auto-prevent default (unlike `(ngSubmit)`)
+    - Example: `async save(event: Event) { event.preventDefault(); /* ... */ }`
+- Use `id` attributes on form inputs for label association (`<label for="email">`)
+- **IMPORTANT: `name` attribute requirements depend on form approach**:
+  - ✅ **Reactive Forms**: `name` is NOT required (use `formControlName` instead)
+  - ⚠️ **ngx-vest-forms (template-driven)**: `name` is **REQUIRED** and MUST match the model property path
+    - Example: `name="addresses.billing.street"` for `formValue().addresses?.billing?.street`
+    - See `.github/instructions/ngx-vest-forms.instructions.md` for details
+  - ⚠️ **Plain Template-driven Forms**: `name` is required for `[(ngModel)]` binding
+- Always use `ChangeDetectionStrategy.OnPush` for optimal performance with signals
+- Use `inject()` function for dependency injection instead of constructor injection
+- Prefer signal-based APIs: `input()`, `output()`, `model()`, `viewChild()`, etc. instead of decorators
+- `standalone: true` is the default in Angular 20+ (no need to specify explicitly)
+
 ### Styling
 - Use Angular's component-level CSS encapsulation (default: ViewEncapsulation.Emulated)
 - Prefer SCSS for styling with consistent theming

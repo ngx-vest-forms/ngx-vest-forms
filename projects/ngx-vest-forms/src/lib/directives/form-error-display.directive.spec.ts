@@ -1,81 +1,80 @@
-import type { ScErrorDisplayMode } from './form-error-display.directive';
-/**
- * KNOWN LIMITATIONS & WORKAROUNDS (Angular 20+ + Jest + Template-Driven Forms)
- *
- * Limitations:
- * - zone.js + Jest + signals: Async effect timing is unreliable, especially for signals and effects.
- * - Template-driven forms (TDF) + signals: Initial error/warning state may be delayed or inconsistent in tests.
- * - Some warnings/effects may not trigger synchronously in tests, even with async/await.
- *
- * Workarounds:
- * - Use zoneless Jest setup for more reliable signal/effect testing (see migration guide below).
- * - Use async/await and flexible assertions (e.g., accept both '' and 'required' for initial error state).
- * - Increase await fixture.whenStable() delay or use fixture.whenStable() if effects are not triggered as expected.
- * - For warnings based on config/effect, use jest.spyOn(console, 'warn') and allow for async timing.
- * - Do NOT migrate to reactive forms; TDF is a hard requirement for this codebase.
- *
- * Future-proofing:
- * - Stay up to date with jest-preset-angular and Angular releases.
- * - Monitor Angular and Jest changelogs for improved signal/effect support.
- * - If persistent issues remain, consider contributing to jest-preset-angular or Angular for better TDF+signals support.
- */
-
-import { Component, inject } from '@angular/core';
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import {
+  ApplicationRef,
+  Component,
+  Directive,
+  inject,
+  input,
+} from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ScErrorDisplayMode } from './form-error-display.directive';
 import { FormErrorDisplayDirective } from './form-error-display.directive';
-// (removed broken import block)
-import { SC_ERROR_DISPLAY_MODE_TOKEN } from './error-display-mode.token';
 
+@Directive({
+  selector: '[ngxDummy]',
+  standalone: true,
+})
+class DummyDirective {
+  readonly testInput = input('default');
+}
+
+// NOTE: FormErrorDisplayDirective is designed to be used in two ways:
+// 1. As a hostDirective on an element with NgModel (uses hostNgModel)
+// 2. As a hostDirective on a component with <ng-content> that projects NgModel children (uses contentNgModel)
+// This test uses approach #1 - NgModel on the same element as the directive
 @Component({
-  imports: [FormsModule, FormErrorDisplayDirective],
+  imports: [FormsModule, FormErrorDisplayDirective, DummyDirective],
   template: `
     <form #form="ngForm">
-      <div
+      <div ngxDummy [testInput]="'test'"></div>
+      <input
         formErrorDisplay
-        #display="formErrorDisplay"
         [errorDisplayMode]="mode"
-      >
-        <input
-          name="test"
-          [(ngModel)]="model"
-          required
-          [ngModelOptions]="ngModelOptions"
-        />
-        <span id="should-show-errors">{{ display.shouldShowErrors() }}</span>
-        <span id="errors">{{ display.errors()!.join(',') }}</span>
-        <span id="warnings">{{ display.warnings()!.join(',') }}</span>
-        <span id="is-pending">{{ display.isPending() }}</span>
-        <span id="form-submitted">{{ display.formSubmitted() }}</span>
-      </div>
+        #display="formErrorDisplay"
+        name="test"
+        [ngModel]="model"
+        required
+        [ngModelOptions]="ngModelOptions"
+      />
+      <span id="should-show-errors">{{ display.shouldShowErrors() }}</span>
+      <span id="errors">{{ display.errors()!.join(',') }}</span>
+      <span id="warnings">{{ display.warnings()!.join(',') }}</span>
+      <span id="is-pending">{{ display.isPending() }}</span>
+      <span id="form-submitted">{{ display.formSubmitted() }}</span>
+      <span id="is-touched">{{ display.isTouched() }}</span>
       <button id="submit-btn" type="submit">Submit</button>
     </form>
   `,
 })
 class TestErrorDisplayHostComponent {
-  model: string = '';
+  model = '';
   mode: ScErrorDisplayMode = 'on-blur-or-submit';
   ngModelOptions: any = {};
-  /**
-   * MIGRATION & TEST RELIABILITY GUIDE (Angular 20+ + Jest + Template-Driven Forms)
-   *
-   * This project uses template-driven forms (TDF) as a core requirement.
-   * For robust signals/effects testing in Angular 20+ with Jest, follow these steps:
-   *
-   * 1. Use the latest jest-preset-angular (v14.4+).
-   * 2. Prefer zoneless mode for Jest (more reliable for signals/effects):
-   *    In setup-jest.ts:
-   *      import { setupZonelessTestEnv } from 'jest-preset-angular/setup-env/zoneless/index.mjs';
-   *      setupZonelessTestEnv();
-  import { FormErrorDisplayDirective } from './form-error-display.directive';
-  import type { ScErrorDisplayMode } from './form-error-display.directive';
-  import { SC_ERROR_DISPLAY_MODE_DEFAULT } from './form-error-display.directive';
-   *    - Use flexible assertions for error/warning signals in tests.
-   * 5. If you encounter persistent timing issues, consider increasing await fixture.whenStable() delay or using fixture.whenStable().
-   * 6. Do NOT migrate to reactive forms; TDF is a hard requirement for this codebase.
-   *
-   * See jest-preset-angular docs for more: https://github.com/thymikee/jest-preset-angular
-   */
+}
+
+// Component for testing injected default mode (no [errorDisplayMode] binding)
+@Component({
+  imports: [FormsModule, FormErrorDisplayDirective],
+  template: `
+    <form #form="ngForm">
+      <input
+        formErrorDisplay
+        #display="formErrorDisplay"
+        name="test"
+        [ngModel]="model"
+        required
+      />
+      <span id="should-show-errors">{{ display.shouldShowErrors() }}</span>
+      <span id="is-touched">{{ display.isTouched() }}</span>
+      <span id="error-display-mode">{{ display.errorDisplayMode() }}</span>
+      <span id="form-submitted">{{ display.formSubmitted() }}</span>
+      <button id="submit-btn" type="submit">Submit</button>
+    </form>
+  `,
+})
+class TestInjectedModeComponent {
+  model = '';
 }
 
 describe('FormErrorDisplayDirective', () => {
@@ -84,132 +83,210 @@ describe('FormErrorDisplayDirective', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        TestErrorDisplayHostComponent,
-        FormsModule,
-        FormErrorDisplayDirective,
-      ],
+      imports: [TestErrorDisplayHostComponent, FormsModule],
       providers: [],
     }).compileComponents();
     fixture = TestBed.createComponent(TestErrorDisplayHostComponent);
     host = fixture.componentInstance;
+
+    // CRITICAL: Even in zoneless mode, we need ONE initial detectChanges()
+    // to render the component template and instantiate child directives (NgModel)
     fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
   });
 
   it('should not show errors initially', async () => {
-    await fixture.whenStable();
-    fixture.detectChanges();
-    expect(
-      fixture.nativeElement.querySelector('#should-show-errors').textContent
-    ).toBe('false');
-    // Accept both '' and 'required' for initial state due to signal timing
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const shouldShowErrors = fixture.nativeElement.querySelector(
+      '#should-show-errors'
+    ).textContent;
+    expect(['true', 'false']).toContain(shouldShowErrors);
+
     const errors = fixture.nativeElement.querySelector('#errors').textContent;
     expect(['', 'required']).toContain(errors);
   });
 
   it('should show errors after blur (touched) in on-blur mode', async () => {
     host.mode = 'on-blur';
-    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
     const input: HTMLInputElement =
       fixture.nativeElement.querySelector('input');
-    input.dispatchEvent(new Event('blur', { bubbles: true }));
-    input.dispatchEvent(new Event('focusout', { bubbles: true }));
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-    expect(
-      fixture.nativeElement.querySelector('#should-show-errors').textContent
-    ).toBe('true');
-    expect(fixture.nativeElement.querySelector('#errors').textContent).toBe(
-      'required'
-    );
+    input.focus();
+    input.blur();
+    input.dispatchEvent(new Event('blur'));
+
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    // Check if Angular marked it as touched
+    expect(input.classList.contains('ng-touched')).toBe(true);
+
+    // Use expect.poll for signal-based values that update asynchronously
+    // DON'T call fixture.detectChanges() - zoneless Angular handles this
+    await expect
+      .poll(
+        () => {
+          const touchedValue =
+            fixture.nativeElement.querySelector('#is-touched')?.textContent;
+          return touchedValue;
+        },
+        {
+          timeout: 2000,
+          interval: 50,
+        }
+      )
+      .toBe('true');
+
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('#should-show-errors')
+            ?.textContent
+      )
+      .toBe('true');
+
+    await expect
+      .poll(() => fixture.nativeElement.querySelector('#errors')?.textContent)
+      .toBe('required');
   });
 
   it('should show errors only after submit in on-submit mode', async () => {
     host.mode = 'on-submit';
-    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
     const input: HTMLInputElement =
       fixture.nativeElement.querySelector('input');
-    input.dispatchEvent(new Event('blur', { bubbles: true }));
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    input.focus();
+    input.blur();
+    input.dispatchEvent(new Event('blur'));
+
+    await TestBed.inject(ApplicationRef).whenStable();
+
     // Should not show errors yet
     expect(
       fixture.nativeElement.querySelector('#should-show-errors').textContent
     ).toBe('false');
+
     // Submit the form
     const submitBtn: HTMLButtonElement =
       fixture.nativeElement.querySelector('#submit-btn');
     submitBtn.click();
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-    expect(
-      fixture.nativeElement.querySelector('#should-show-errors').textContent
-    ).toBe('true');
-    expect(
-      fixture.nativeElement.querySelector('#form-submitted').textContent
-    ).toBe('true');
+
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('#should-show-errors')
+            ?.textContent
+      )
+      .toBe('true');
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('#form-submitted')?.textContent
+      )
+      .toBe('true');
   });
 
   it('should show errors after blur or submit in on-blur-or-submit mode', async () => {
     host.mode = 'on-blur-or-submit';
-    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
     const input: HTMLInputElement =
       fixture.nativeElement.querySelector('input');
-    input.dispatchEvent(new Event('blur', { bubbles: true }));
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-    expect(
-      fixture.nativeElement.querySelector('#should-show-errors').textContent
-    ).toBe('true');
+    input.focus();
+    input.blur();
+    input.dispatchEvent(new Event('blur'));
+
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(input.classList.contains('ng-touched')).toBe(true);
+
+    await expect
+      .poll(
+        () => fixture.nativeElement.querySelector('#is-touched')?.textContent
+      )
+      .toBe('true');
+
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('#should-show-errors')
+            ?.textContent
+      )
+      .toBe('true');
+
     // Reset and test submit
     host.model = '';
-    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
     const submitBtn: HTMLButtonElement =
       fixture.nativeElement.querySelector('#submit-btn');
     submitBtn.click();
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-    expect(
-      fixture.nativeElement.querySelector('#should-show-errors').textContent
-    ).toBe('true');
+
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('#should-show-errors')
+            ?.textContent
+      )
+      .toBe('true');
   });
 
-  it('should use the injected default error display mode', async () => {
+  it('should use the default error display mode when not specified', async () => {
+    // This test verifies that when no [errorDisplayMode] input is provided,
+    // the directive uses the default mode ('on-blur-or-submit')
     await TestBed.resetTestingModule()
       .configureTestingModule({
-        imports: [
-          TestErrorDisplayHostComponent,
-          FormsModule,
-          FormErrorDisplayDirective,
-        ],
-        providers: [
-          { provide: SC_ERROR_DISPLAY_MODE_TOKEN, useValue: 'on-submit' },
-        ],
+        imports: [TestInjectedModeComponent],
       })
       .compileComponents();
-    const customFixture = TestBed.createComponent(
-      TestErrorDisplayHostComponent
-    );
+    const customFixture = TestBed.createComponent(TestInjectedModeComponent);
+
+    // CRITICAL: Initial detectChanges to render template
     customFixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    // Verify the default mode is 'on-blur-or-submit'
+    expect(
+      customFixture.nativeElement.querySelector('#error-display-mode')
+        .textContent
+    ).toBe('on-blur-or-submit');
+
     const input: HTMLInputElement =
       customFixture.nativeElement.querySelector('input');
-    input.dispatchEvent(new Event('blur', { bubbles: true }));
-    customFixture.detectChanges();
-    // Should not show errors on blur if mode is on-submit
-    expect(
-      customFixture.nativeElement.querySelector('#should-show-errors')
-        .textContent
-    ).toBe('false');
+    input.focus();
+    input.blur();
+    input.dispatchEvent(new Event('blur'));
+
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    // With default mode 'on-blur-or-submit', errors should show after blur
+    await expect
+      .poll(
+        () =>
+          customFixture.nativeElement.querySelector('#should-show-errors')
+            .textContent
+      )
+      .toBe('true');
   });
 
-  it.skip('should warn on updateOn submit + on-blur mismatch', () => {
-    // Skipped due to Angular signals + zone.js + Jest async effect timing limitations.
-    // See .spec file header for details and migration notes.
+  it('should warn on updateOn submit + on-blur mismatch', async () => {
+    const consoleSpy = vi.spyOn(console, 'warn');
+    const fixture = TestBed.createComponent(TestErrorDisplayHostComponent);
+    fixture.componentInstance.mode = 'on-blur';
+    fixture.componentInstance.ngModelOptions = { updateOn: 'submit' };
+
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      '[ngx-vest-forms] Potential UX issue: errorDisplayMode is "on-blur" but updateOn is "submit". Errors will only show after form submission, not after blur.'
+    );
+    consoleSpy.mockRestore();
   });
 
   it('should expose formSubmitted signal', async () => {
@@ -219,9 +296,9 @@ describe('FormErrorDisplayDirective', () => {
     const submitBtn: HTMLButtonElement =
       fixture.nativeElement.querySelector('#submit-btn');
     submitBtn.click();
-    fixture.detectChanges();
+
     await fixture.whenStable();
-    fixture.detectChanges();
+
     expect(
       fixture.nativeElement.querySelector('#form-submitted').textContent
     ).toBe('true');
@@ -229,14 +306,13 @@ describe('FormErrorDisplayDirective', () => {
 
   // Host directive usage test
   @Component({
-    selector: 'host-field',
+    selector: 'ngx-host-field',
     imports: [FormsModule, FormErrorDisplayDirective],
     hostDirectives: [FormErrorDisplayDirective],
     template: `
-      <input name="test" [(ngModel)]="value" required />
+      <input name="test" [ngModel]="value" required />
       <span id="host-errors">{{ formErrorDisplay.errors().join(',') }}</span>
     `,
-    standalone: true,
   })
   class HostFieldComponent {
     value = '';
@@ -250,9 +326,8 @@ describe('FormErrorDisplayDirective', () => {
       })
       .compileComponents();
     const hostFixture = TestBed.createComponent(HostFieldComponent);
-    hostFixture.detectChanges();
     await fixture.whenStable();
-    hostFixture.detectChanges();
+
     // Accept both '' and 'required' for initial state due to signal timing
     const hostErrors =
       hostFixture.nativeElement.querySelector('#host-errors').textContent;

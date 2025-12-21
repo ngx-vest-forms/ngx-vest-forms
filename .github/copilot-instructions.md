@@ -18,20 +18,21 @@ When generating code for this repository:
 Before generating code, scan the codebase to identify:
 
 1. **Language Versions**: Detect the exact versions of programming languages in use
-   - **Angular**: >=18.0.0 (Signals support required)
-   - **TypeScript**: >=5.8.0 (for modern Angular features)
-   - **Node.js**: >=22.0.0 (required for Angular 18+)
+   - **Angular**: 21.0.1 (as specified in package.json dependencies and overrides)
+   - **TypeScript**: ~5.9.3 (for modern Angular features)
+   - **Node.js**: >=22.0.0 (required for Angular 21)
    - Never use language features beyond the detected version
 
 2. **Framework Versions**: Identify the exact versions of all frameworks
-   - **Angular**: >=18.0.0 with standalone components and signals
-   - **RxJS**: >=7.8.0 for reactive programming
-   - **Vest.js**: >=5.4.6 for validation (critical: use `staticSuite` and `only()` pattern)
+   - **Angular**: 21.0.1 with standalone components and signals
+   - **RxJS**: ~7.8.2 for reactive programming
+   - **Vest.js**: ~5.4.6 for validation (critical: use `staticSuite` and `only()` pattern)
    - Respect version constraints when generating code
 
 3. **Library Versions**: Note the exact versions of key libraries and dependencies
-   - **Jest**: For unit testing with `jest-preset-angular`
-   - **Storybook**: For component testing and documentation
+   - **Vitest**: ^4.0.14 for unit testing with `@analogjs/vitest-angular`
+   - **Playwright**: 1.57.0 for end-to-end testing
+   - **Storybook**: 10.0.8 for component testing and documentation
    - Generate code compatible with these specific versions
 
 ## Project Overview
@@ -141,14 +142,18 @@ protected readonly formValue = signal<MyFormModel>({});
 ## Key Development Patterns
 
 ### Validation Suite Pattern
-Always structure validation suites with the `only()` pattern for optimal performance.
+Always structure validation suites with the unconditional `only()` pattern for optimal performance.
+
+> **CRITICAL**: Call `only(field)` unconditionally at the top of your suite. Never wrap it in `if (field)` as this breaks Vest's change detection mechanism.
+>
+> **Vest.js Official Warning**: "skip() and only() should not be called conditionally - i.e. inside of an if statement."
 
 > **Complete Validation Patterns**: See `.github/instructions/vest.instructions.md` for comprehensive validation patterns and performance optimization.
 
 ```typescript
 export const validationSuite = staticSuite(
   (model: FormModel, field?: string) => {
-    if (field) { only(field); } // Critical for performance
+    only(field); // ✅ CORRECT: Call unconditionally (safe: only(undefined) runs all tests)
 
     test('firstName', 'First name is required', () => {
       enforce(model.firstName).isNotBlank();

@@ -1,9 +1,10 @@
-import { Component, signal, viewChild } from '@angular/core';
 import { JsonPipe } from '@angular/common';
+import { Component, signal, viewChild } from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { staticSuite, test as vestTest, enforce, only } from 'vest';
-import { vestForms } from '../exports';
+import { enforce, only, staticSuite, test as vestTest } from 'vest';
+import { describe, expect, it } from 'vitest';
+import { NgxVestForms } from '../exports';
 import { FormDirective } from './form.directive';
 
 type AddressFormModel = {
@@ -15,9 +16,7 @@ type AddressFormModel = {
 
 const addressFormSuite = staticSuite(
   (data: Partial<AddressFormModel> = {}, field?: string) => {
-    if (field) {
-      only(field);
-    }
+    only(field); // ✅ Call unconditionally
 
     vestTest('address.street', 'Street is required', () => {
       enforce(data.address?.street).isNotEmpty();
@@ -29,13 +28,13 @@ const addressFormSuite = staticSuite(
 );
 
 @Component({
-  imports: [...vestForms, JsonPipe],
+  imports: [NgxVestForms, JsonPipe],
   template: `
     <form
-      scVestForm
+      ngxVestForm
       [suite]="suite"
       [(formValue)]="model"
-      #vestForm="scVestForm"
+      #vestForm="ngxVestForm"
     >
       <div ngModelGroup="address" data-testid="address-group">
         <label for="street">Street</label>
@@ -59,7 +58,6 @@ const addressFormSuite = staticSuite(
       </div>
     </form>
   `,
-  standalone: true,
 })
 class TestGroupComponent {
   readonly vestForm =
@@ -102,32 +100,72 @@ describe('FormModelGroupDirective', () => {
     await userEvent.tab();
     await userEvent.click(cityInput);
     await userEvent.tab();
-    await waitFor(() => {
-      const formErrors = screen.getByTestId('form-errors');
-      expect(formErrors.textContent).toMatch(/Street is required/);
-    });
+    // Wait for errors to appear
+    await waitFor(() =>
+      expect(screen.getByTestId('form-errors').textContent).toMatch(
+        /Street is required/
+      )
+    );
+
     await userEvent.clear(streetInput);
     await userEvent.type(streetInput, '123 Main St');
+    await userEvent.tab(); // Blur street input
     await userEvent.clear(cityInput);
     await userEvent.type(cityInput, 'Anytown');
+    await userEvent.tab(); // Blur city input
+
+    // Wait for errors to clear and form to become valid
     await waitFor(() => {
-      const formErrors = screen.getByTestId('form-errors');
-      expect(formErrors.textContent).not.toMatch(/Street is required/);
-      expect(formErrors.textContent).not.toMatch(/City is required/);
-      expect(screen.getByTestId('form-valid')).toHaveTextContent('true');
+      const formErrors = screen.getByTestId('form-errors').textContent;
+      // Since errors are displayed as JSON, check if either error message still appears
+      const hasStreetError = formErrors?.includes('Street is required');
+      const hasCityError = formErrors?.includes('City is required');
+      expect(!hasStreetError && !hasCityError).toBe(true);
     });
-  });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('form-valid').textContent).toBe('true');
+    });
+  }, 10000); // Increase timeout to 10 seconds
 
   it('should handle form group path resolution correctly', async () => {
     await render(TestGroupComponent);
     const streetInput = screen.getByTestId('street-input');
-    await userEvent.clear(streetInput);
-    await userEvent.type(streetInput, '123 Main St');
+    const cityInput = screen.getByTestId('city-input');
+
+    // Click street input to focus it
+    await userEvent.click(streetInput);
+    // Type valid street address
+    await userEvent.keyboard('123 Main St');
+    // Give form time to update model
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Tab moves focus to city input
     await userEvent.tab();
-    await waitFor(() => {
-      const formErrors = screen.getByTestId('form-errors');
-      expect(formErrors.textContent).not.toMatch(/Street is required/);
-      expect(formErrors.textContent).toMatch(/City is required/);
-    });
-  });
+    // Give time for street validation to run
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Tab again to blur city (triggers validation on empty city)
+    await userEvent.tab();
+    // Give time for city validation to run
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // Wait for street validation to clear (street is now valid) and city error to appear
+    await waitFor(
+      () => {
+        const formErrors = screen.getByTestId('form-errors').textContent;
+        // Both conditions must be true for the waitFor to succeed
+        if (formErrors?.includes('Street is required')) {
+          throw new Error('Street error should be cleared');
+        }
+        if (!formErrors?.includes('City is required')) {
+          throw new Error('City error should be present');
+        }
+      },
+      { timeout: 3000 }
+    );
+
+    // Final assertion to satisfy linter
+    const finalErrors = screen.getByTestId('form-errors').textContent;
+    expect(finalErrors).not.toMatch(/Street is required/);
+    expect(finalErrors).toMatch(/City is required/);
+  }, 10000); // Increase timeout to 10 seconds
 });

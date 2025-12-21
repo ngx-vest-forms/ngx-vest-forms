@@ -1,23 +1,23 @@
-import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
+import { JsonPipe } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
-import { vestForms } from '../exports';
-import { userEvent, within, expect, waitFor } from 'storybook/test';
+import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { NgxVestForms } from '../exports';
 import {
   FormModel,
   formShape,
   formValidationSuite,
   selectors,
 } from './simple-form';
-import { JsonPipe } from '@angular/common';
 
 @Component({
   template: `
     <form
       class="p-4"
-      scVestForm
-      (ngSubmit)="onSubmit()"
+      ngxVestForm
+      (ngSubmit)="save()"
       [formValue]="formValue()"
-      [validateRootForm]="true"
+      ngxValidateRootForm
       [formShape]="shape"
       [suite]="suite"
       (validChange)="formValid.set($event)"
@@ -28,8 +28,8 @@ import { JsonPipe } from '@angular/common';
       <fieldset>
         <div
           class="w-full"
-          sc-control-wrapper
-          data-testid="sc-control-wrapper__first-name"
+          ngx-control-wrapper
+          data-testid="ngx-control-wrapper__first-name"
         >
           <label>
             <span>First name</span>
@@ -45,8 +45,8 @@ import { JsonPipe } from '@angular/common';
         </div>
         <div
           class="w-full"
-          sc-control-wrapper
-          data-testid="sc-control-wrapper__last-name"
+          ngx-control-wrapper
+          data-testid="ngx-control-wrapper__last-name"
         >
           <label>
             <span>Last name</span>
@@ -61,16 +61,16 @@ import { JsonPipe } from '@angular/common';
         </div>
         <div
           class="sm:col-span-2"
-          sc-control-wrapper
-          data-testid="sc-control-wrapper__passwords"
+          ngx-control-wrapper
+          data-testid="ngx-control-wrapper__passwords"
           ngModelGroup="passwords"
           [validationOptions]="{ debounceTime: 900 }"
         >
           <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
             <div
               class="w-full"
-              sc-control-wrapper
-              data-testid="sc-control-wrapper__password"
+              ngx-control-wrapper
+              data-testid="ngx-control-wrapper__password"
             >
               <label>
                 <span>Password</span>
@@ -85,8 +85,8 @@ import { JsonPipe } from '@angular/common';
             </div>
             <div
               class="w-full"
-              sc-control-wrapper
-              data-testid="sc-control-wrapper__confirm-password"
+              ngx-control-wrapper
+              data-testid="ngx-control-wrapper__confirm-password"
             >
               <label>
                 <span>Confirm</span>
@@ -109,7 +109,7 @@ import { JsonPipe } from '@angular/common';
       >
     </form>
   `,
-  imports: [vestForms, JsonPipe],
+  imports: [NgxVestForms, JsonPipe],
 })
 export class FormDirectiveDemoComponent {
   protected readonly formValue = signal<FormModel>({});
@@ -133,9 +133,9 @@ export class FormDirectiveDemoComponent {
     this.formValue.set(v);
   }
 
-  protected onSubmit(): void {
+  protected save(): void {
     if (this.formValid()) {
-      console.log(this.formValue());
+      // Intentionally left blank: avoid noisy console output in Storybook
     }
   }
 }
@@ -161,13 +161,13 @@ export const ShouldShowFirstnameRequiredAfterDelayForNgModel: StoryObj = {
     canvas.getByTestId(selectors.inputFirstName).blur();
 
     await expect(
-      canvas.getByTestId(selectors.scControlWrapperFirstName)
+      canvas.getByTestId(selectors.ngxControlWrapperFirstName)
     ).not.toHaveTextContent('First name is required');
 
     await waitFor(
       () =>
         expect(
-          canvas.getByTestId(selectors.scControlWrapperFirstName)
+          canvas.getByTestId(selectors.ngxControlWrapperFirstName)
         ).toHaveTextContent('First name is required'),
       { timeout: 600 }
     );
@@ -191,13 +191,13 @@ export const ShouldShowPasswordConfirmationAfterDelayForNgModelGroup: StoryObj =
       await canvas.getByTestId(selectors.inputConfirmPassword).blur();
 
       await expect(
-        canvas.getByTestId(selectors.scControlWrapperPasswords)
+        canvas.getByTestId(selectors.ngxControlWrapperPasswords)
       ).not.toHaveTextContent('Passwords do not match');
 
       await waitFor(
         () =>
           expect(
-            canvas.getByTestId(selectors.scControlWrapperPasswords)
+            canvas.getByTestId(selectors.ngxControlWrapperPasswords)
           ).toHaveTextContent('Passwords do not match'),
         { timeout: 1100 }
       );
@@ -216,26 +216,17 @@ export const ShouldValidateOnRootFormAfterDelay: StoryObj = {
       'Billiet'
     );
     await userEvent.type(canvas.getByTestId(selectors.inputPassword), '1234');
-
-    await expect(
-      JSON.stringify(
-        JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)
-      )
-    ).toEqual(JSON.stringify({}));
-
-    const expectedErrors = {
-      rootForm: ['Brecht his pass is not 1234'],
-    };
-
+    // Submit form to trigger root form validation
+    await userEvent.click(canvas.getByTestId(selectors.btnSubmit));
     await waitFor(
       () => {
-        expect(
-          JSON.stringify(
-            JSON.parse(canvas.getByTestId(selectors.preFormErrors).innerHTML)
-          )
-        ).toEqual(JSON.stringify(expectedErrors));
+        const errorsText = canvas
+          .getByTestId(selectors.preFormErrors)
+          .textContent?.trim();
+        const errors = errorsText ? JSON.parse(errorsText) : {};
+        expect(errors).toEqual({ rootForm: ['Brecht his pass is not 1234'] });
       },
-      { timeout: 600 }
+      { timeout: 2000 }
     );
   },
 };

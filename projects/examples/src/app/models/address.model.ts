@@ -1,13 +1,13 @@
-import { DeepRequired, DeepPartial } from 'ngx-vest-forms';
+import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
 
-export type AddressModel = DeepPartial<{
+export type AddressModel = NgxDeepPartial<{
   street: string;
   number: string;
   city: string;
   zipcode: string;
   country: string;
 }>;
-export const addressShape: DeepRequired<AddressModel> = {
+export const addressShape: NgxDeepRequired<AddressModel> = {
   street: '',
   number: '',
   city: '',

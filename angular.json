@@ -24,23 +24,51 @@
           },
           "defaultConfiguration": "production"
         },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "tsconfig.spec.json",
+            "runnerConfig": "vitest.config.ts"
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/ngx-vest-forms/**/*.ts",
+              "projects/ngx-vest-forms/**/*.html"
+            ],
+            "eslintConfig": "projects/ngx-vest-forms/eslint.config.mjs"
+          }
+        },
         "storybook": {
           "builder": "@storybook/angular:start-storybook",
           "options": {
             "configDir": "projects/ngx-vest-forms/.storybook",
-            "browserTarget": "ngx-vest-forms:build",
             "port": 6006,
             "styles": ["projects/ngx-vest-forms/.storybook/styles.scss"],
-            "compodoc": false
+            "compodoc": false,
+            "experimentalZoneless": true
           }
         },
         "build-storybook": {
           "builder": "@storybook/angular:build-storybook",
           "options": {
             "configDir": "projects/ngx-vest-forms/.storybook",
-            "browserTarget": "ngx-vest-forms:build",
             "outputDir": "dist/storybook/ngx-vest-forms",
-            "compodoc": false
+            "compodoc": false,
+            "experimentalZoneless": true
+          }
+        },
+        "e2e": {
+          "builder": "playwright-ng-schematics:playwright",
+          "options": {
+            "devServerTarget": "ngx-vest-forms:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "ngx-vest-forms:serve:production"
+            }
           }
         }
       }
@@ -63,7 +91,6 @@
               "base": "dist/examples"
             },
             "index": "projects/examples/src/index.html",
-            "polyfills": ["zone.js"],
             "tsConfig": "projects/examples/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
@@ -99,6 +126,23 @@
           },
           "defaultConfiguration": "production"
         },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "tsconfig.spec.json",
+            "runnerConfig": "vitest.config.ts"
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/examples/**/*.ts",
+              "projects/examples/**/*.html"
+            ],
+            "eslintConfig": "projects/examples/eslint.config.mjs"
+          }
+        },
         "serve": {
           "builder": "@angular/build:dev-server",
           "configurations": {
@@ -115,6 +159,17 @@
           "builder": "@angular/build:extract-i18n",
           "options": {
             "buildTarget": "examples:build"
+          }
+        },
+        "e2e": {
+          "builder": "playwright-ng-schematics:playwright",
+          "options": {
+            "devServerTarget": "examples:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "examples:serve:production"
+            }
           }
         }
       }

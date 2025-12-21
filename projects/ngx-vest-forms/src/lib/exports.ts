@@ -5,11 +5,15 @@ import {
   NgForm,
   NgModelGroup,
 } from '@angular/forms';
-import { ValidateRootFormDirective } from './directives/validate-root-form.directive';
 import { ControlWrapperComponent } from './components/control-wrapper/control-wrapper.component';
-import { FormDirective } from './directives/form.directive';
-import { FormModelDirective } from './directives/form-model.directive';
+import { FormGroupWrapperComponent } from './components/form-group-wrapper/form-group-wrapper.component';
+import { FormControlStateDirective } from './directives/form-control-state.directive';
+import { FormErrorControlDirective } from './directives/form-error-control.directive';
+import { FormErrorDisplayDirective } from './directives/form-error-display.directive';
 import { FormModelGroupDirective } from './directives/form-model-group.directive';
+import { FormModelDirective } from './directives/form-model.directive';
+import { FormDirective } from './directives/form.directive';
+import { ValidateRootFormDirective } from './directives/validate-root-form.directive';
 
 /**
  * This is borrowed from  [https://github.com/wardbell/ngc-validate/blob/main/src/app/core/form-container-view-provider.ts](https://github.com/wardbell/ngc-validate/blob/main/src/app/core/form-container-view-provider.ts)
@@ -66,13 +70,37 @@ export const vestFormsViewProviders = [
 ];
 
 /**
- * Exports all the stuff we need to use the template driven forms
+ * Collection of directives, components, and modules required for ngx-vest-forms.
+ *
+ * This array exports all the necessary components and directives to enable
+ * Vest validation integration with Angular template-driven forms.
+ *
+ * @example
+ * ```typescript
+ * import { NgxVestForms } from 'ngx-vest-forms';
+ *
+ * @Component({
+ *
+ *   imports: [NgxVestForms],
+ *   /// ...
+ * })
+ * export class MyComponent { }
+ * ```
  */
-export const vestForms = [
+export const NgxVestForms = [
   ValidateRootFormDirective,
   ControlWrapperComponent,
+  FormGroupWrapperComponent,
+  FormControlStateDirective,
+  FormErrorDisplayDirective,
+  FormErrorControlDirective,
   FormDirective,
   FormsModule,
   FormModelDirective,
   FormModelGroupDirective,
 ] as const;
+
+/**
+ * @deprecated Use `NgxVestForms` instead
+ */
+export const vestForms = NgxVestForms;

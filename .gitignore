@@ -43,3 +43,8 @@ Thumbs.db
 
 *storybook.log
 /.playwright-mcp
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/

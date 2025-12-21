@@ -1,10 +1,16 @@
-import { DeepRequired } from 'ngx-vest-forms';
+import { NgxDeepRequired } from 'ngx-vest-forms';
 
-export type PhonenumberModel = Partial<{
+/**
+ * Map of phone numbers indexed by numeric keys
+ * Used for template-driven forms with ngModelGroup
+ */
+export type PhoneNumberMap = Record<string, string>;
+
+export type PhoneNumberModel = Partial<{
   addValue: string;
-  values: { [key: string]: string };
+  values: PhoneNumberMap;
 }>;
-export const phonenumberShape: DeepRequired<PhonenumberModel> = {
+export const phoneNumberShape: NgxDeepRequired<PhoneNumberModel> = {
   addValue: '',
   values: {
     '0': '',

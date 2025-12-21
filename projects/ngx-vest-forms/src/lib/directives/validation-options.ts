@@ -1,9 +1,9 @@
 /**
  * Validation Options
  */
-export interface ValidationOptions {
+export type ValidationOptions = {
   /**
    * debounceTime for the next validation
    */
   debounceTime: number;
-}
+};
