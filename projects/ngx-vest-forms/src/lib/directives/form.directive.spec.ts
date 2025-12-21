@@ -387,8 +387,12 @@ describe('FormDirective - Model to Form Synchronization', () => {
     expect(firstNameInput).toBeTruthy();
     expect(lastNameInput).toBeTruthy();
 
-    expect(firstNameInput!.value).toBe('');
-    expect(lastNameInput!.value).toBe('');
+    if (!firstNameInput || !lastNameInput) {
+      throw new Error('Inputs not found');
+    }
+
+    expect(firstNameInput.value).toBe('');
+    expect(lastNameInput.value).toBe('');
 
     // Programmatic model update with a partial nested object.
     // Regression: previous implementation used setValue on the FormGroup which would throw.
@@ -396,9 +400,9 @@ describe('FormDirective - Model to Form Synchronization', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(firstNameInput!.value).toBe('Ada');
+    expect(firstNameInput.value).toBe('Ada');
     // lastName should remain unchanged.
-    expect(lastNameInput!.value).toBe('');
+    expect(lastNameInput.value).toBe('');
   });
 });
 

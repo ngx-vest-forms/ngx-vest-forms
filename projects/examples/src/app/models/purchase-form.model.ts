@@ -56,8 +56,8 @@ export const initialPurchaseFormValue: PurchaseFormModel = {
   userId: '',
   firstName: '',
   lastName: '',
-  birthDate: null as any,
-  age: null as any,
+  birthDate: undefined,
+  age: undefined,
   emergencyContact: '',
   passwords: {
     password: '',
@@ -67,10 +67,10 @@ export const initialPurchaseFormValue: PurchaseFormModel = {
     addValue: '',
     values: {},
   },
-  gender: null as any,
+  gender: undefined,
   genderOther: '',
   productId: '',
-  quantity: null as any,
+  quantity: undefined,
   justification: '',
   addresses: {
     shippingAddress: {
