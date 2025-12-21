@@ -51,3 +51,42 @@ export const purchaseFormShape: NgxDeepRequired<PurchaseFormModel> = {
   quantity: 0,
   justification: '',
 };
+
+export const initialPurchaseFormValue: PurchaseFormModel = {
+  userId: '',
+  firstName: '',
+  lastName: '',
+  birthDate: null as any,
+  age: null as any,
+  emergencyContact: '',
+  passwords: {
+    password: '',
+    confirmPassword: '',
+  },
+  phonenumbers: {
+    addValue: '',
+    values: {},
+  },
+  gender: null as any,
+  genderOther: '',
+  productId: '',
+  quantity: null as any,
+  justification: '',
+  addresses: {
+    shippingAddress: {
+      street: '',
+      number: '',
+      city: '',
+      zipcode: '',
+      country: '',
+    },
+    billingAddress: {
+      street: '',
+      number: '',
+      city: '',
+      zipcode: '',
+      country: '',
+    },
+    shippingAddressDifferentFromBillingAddress: true,
+  },
+};

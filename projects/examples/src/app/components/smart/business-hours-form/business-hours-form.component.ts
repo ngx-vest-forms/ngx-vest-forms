@@ -15,6 +15,7 @@ import {
 import {
   BusinessHoursFormModel,
   businessHoursFormShape,
+  initialBusinessHoursFormValue,
 } from '../../../models/business-hours-form.model';
 import { businessHoursSuite } from '../../../validations/business-hours.validations';
 import {
@@ -41,7 +42,9 @@ export class BusinessHoursFormComponent {
   protected readonly vestFormRef =
     viewChild<FormDirective<BusinessHoursFormModel>>('vestForm');
 
-  protected readonly formValue = signal<BusinessHoursFormModel>({});
+  protected readonly formValue = signal<BusinessHoursFormModel>(
+    initialBusinessHoursFormValue
+  );
   protected readonly formValid = signal<boolean>(false);
   protected readonly errors = signal<Record<string, string>>({});
   protected readonly businessHoursSuite = businessHoursSuite;

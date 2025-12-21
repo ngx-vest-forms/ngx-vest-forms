@@ -15,7 +15,7 @@ export class LukeService {
       .get<{
         name: string;
         gender: 'male' | 'female' | 'other';
-      }>('https://swapi.dev/api/people/1')
+      }>('http://localhost:3000/people/1')
       .pipe(
         map((resp) => {
           const name = resp.name.split(' ');

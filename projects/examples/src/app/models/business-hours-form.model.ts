@@ -25,3 +25,10 @@ export const businessHoursFormShape: NgxDeepRequired<BusinessHoursFormModel> = {
     },
   },
 };
+
+export const initialBusinessHoursFormValue: BusinessHoursFormModel = {
+  businessHours: {
+    addValue: { from: '', to: '' },
+    values: {},
+  },
+};

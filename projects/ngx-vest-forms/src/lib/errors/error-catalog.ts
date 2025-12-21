@@ -1,8 +1,8 @@
 export const NGX_VEST_FORMS_ERRORS = {
-  SHAPE_MISMATCH: {
+  EXTRA_PROPERTY: {
     code: 'NGX-001',
     message: (path: string) =>
-      `Shape mismatch: Property '${path}' is defined in the form shape but missing in the form value.`,
+      `Shape mismatch: Property '${path}' is present in the form value but not defined in the form shape.`,
   },
   TYPE_MISMATCH: {
     code: 'NGX-002',

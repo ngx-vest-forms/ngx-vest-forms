@@ -21,6 +21,7 @@ import { debounceTime, filter, switchMap } from 'rxjs';
 import { LukeService } from '../../../luke.service';
 import { AddressModel } from '../../../models/address.model';
 import {
+  initialPurchaseFormValue,
   PurchaseFormModel,
   purchaseFormShape,
 } from '../../../models/purchase-form.model';
@@ -54,7 +55,9 @@ export class PurchaseFormComponent {
   private readonly vestForm =
     viewChild.required<FormDirective<PurchaseFormModel>>('vestForm');
 
-  protected readonly formValue = signal<PurchaseFormModel>({});
+  protected readonly formValue = signal<PurchaseFormModel>(
+    initialPurchaseFormValue
+  );
   protected readonly formValid = signal<boolean>(false);
   protected readonly loading = signal<boolean>(false);
   protected readonly errors = signal<Record<string, string[]>>({});
@@ -172,10 +175,10 @@ export class PurchaseFormComponent {
 
   protected reset(): void {
     // 1. Reset form data (component owns the data)
-    this.formValue.set({});
+    this.formValue.set(initialPurchaseFormValue);
 
     // 2. Reset Angular form state + Vest validation state
-    this.vestForm().resetForm();
+    this.vestForm().resetForm(initialPurchaseFormValue);
 
     // 3. Reset component-local cache (not part of form directive)
     this.shippingAddress.set({});
