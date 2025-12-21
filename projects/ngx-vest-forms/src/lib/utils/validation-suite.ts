@@ -25,11 +25,11 @@ import { FormFieldName } from './field-path-types';
  *   age: number;
  * }
  *
- * // Type: 'name' | 'email' | 'age' | string
+ * /// Type: 'name' | 'email' | 'age' | string
  * type UserField = NgxFieldKey<User>;
  *
- * // IDE suggests 'name', 'email', 'age'
- * // but also accepts 'addresses[0].street'
+ * /// IDE suggests 'name', 'email', 'age'
+ * /// but also accepts 'addresses[0].street'
  * const field: UserField = 'email'; // ✅ autocomplete
  * const nested: UserField = 'profile.settings.theme'; // ✅ also valid
  * ```
@@ -91,7 +91,7 @@ export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
  *   age: number;
  * }>;
  *
- * // Create validation suite
+ * /// Create validation suite
  * export const userValidation: NgxVestSuite<UserModel> = staticSuite((model, field?) => {
  *   only(field); // Always call unconditionally
  *
@@ -108,7 +108,7 @@ export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
  *   });
  * });
  *
- * // Use in component
+ * /// Use in component
  * @Component({...})
  * class UserFormComponent {
  *   protected readonly suite = userValidation;
@@ -118,10 +118,10 @@ export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
  *
  * @example
  * ```typescript
- * // For dynamic/untyped scenarios, use unknown
+ * /// For dynamic/untyped scenarios, use unknown
  * const dynamicSuite: NgxVestSuite = create((model, field) => {
  *   only(field);
- *   // Validation logic for any model structure
+ *   /// Validation logic for any model structure
  * });
  * ```
  *
@@ -160,6 +160,7 @@ type NgxSuiteCallback<T> = {
   // that uses `FormFieldName<T>`. Using `unknown` (safer) or even `string`
   // breaks production builds because `string` is not assignable to
   // `FormFieldName<T>` (a string-literal union of known paths).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   bivarianceHack(model: T, field?: any): void;
 }['bivarianceHack'];
 
@@ -179,16 +180,16 @@ export type NgxVestSuite<T = unknown> = StaticSuite<
  * ```typescript
  * import { NgxTypedVestSuite, FormFieldName } from 'ngx-vest-forms';
  *
- * // ✅ RECOMMENDED: Define with NgxTypedVestSuite for autocomplete
+ * /// ✅ RECOMMENDED: Define with NgxTypedVestSuite for autocomplete
  * export const userSuite: NgxTypedVestSuite<UserModel> = staticSuite(
  *   (model: UserModel, field?: FormFieldName<UserModel>) => {
  *     only(field);
- *     // ✅ IDE autocomplete for: 'email' | 'password' | 'profile.age' | typeof ROOT_FORM
+ *     /// ✅ IDE autocomplete for: 'email' | 'password' | 'profile.age' | typeof ROOT_FORM
  *     test('email', 'Required', () => enforce(model.email).isNotBlank());
  *   }
  * );
  *
- * // ✅ In component: Use type inference (no explicit type)
+ * /// ✅ In component: Use type inference (no explicit type)
  * @Component({...})
  * class MyFormComponent {
  *   protected readonly suite = userSuite; // ✅ Type inferred automatically
