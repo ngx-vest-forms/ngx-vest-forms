@@ -343,10 +343,9 @@ If you encounter issues during migration:
 
 ## See Also
 
-- [Dual Selector Support Technical Details](./dev/DUAL-SELECTOR-SUPPORT.md)
+- [Dual Selector Support Technical Details](./DUAL-SELECTOR-SUPPORT.md)
 - [Complete Example](./COMPLETE-EXAMPLE.md) - Full working example with new selectors
-- [Migration Guide (v1.4 → v1.5)](./MIGRATION.md) - For older version upgrades
-- [Migration Guide (v1.x → v2.0.0)](./archive/MIGRATION-v1.x-to-v2.0.0.md) - Complete migration guide for v2.0.0 upgrade
+- [Migration Guide (v1.x → v2.0.0)](./migration/MIGRATION-v1.x-to-v2.0.0.md) - Complete migration guide for v2.0.0 upgrade
 - [Main README](../README.md) - Library overview and quick start
 
 ---

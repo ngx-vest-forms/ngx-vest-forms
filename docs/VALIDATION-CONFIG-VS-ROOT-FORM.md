@@ -308,11 +308,11 @@ class MyComponent {
 
 ### Comparison with markAllAsTouched()
 
-| Method | Purpose | Updates Validity | Shows Errors | When to Use |
-|--------|---------|-----------------|--------------|-------------|
-| `triggerFormValidation()` | Re-run validation logic | ✅ Yes | ❌ No | Structure changes without value changes |
-| `markAllAsTouched()` | Show all errors | ❌ No | ✅ Yes | Multiple forms with one button, programmatic submit |
-| Both together | Complete refresh | ✅ Yes | ✅ Yes | Rare - structure changed AND show all errors |
+| Method                    | Purpose                 | Updates Validity | Shows Errors | When to Use                                         |
+| ------------------------- | ----------------------- | ---------------- | ------------ | --------------------------------------------------- |
+| `triggerFormValidation()` | Re-run validation logic | ✅ Yes           | ❌ No        | Structure changes without value changes             |
+| `markAllAsTouched()`      | Show all errors         | ❌ No            | ✅ Yes       | Multiple forms with one button, programmatic submit |
+| Both together             | Complete refresh        | ✅ Yes           | ✅ Yes       | Rare - structure changed AND show all errors        |
 
 > **Note**: With `on-blur-or-submit` mode (default), `markAllAsTouched()` is called automatically on `(ngSubmit)`. You rarely need to call it manually.
 
@@ -575,20 +575,20 @@ validationConfig = { password: ['confirmPassword'] };
 
 ## Summary Table
 
-| Scenario                                  | Solution                     | Why                                                         |
-| ----------------------------------------- | ---------------------------- | ----------------------------------------------------------- |
-| Password confirmation                     | `validationConfig`           | Field-level validation - error belongs to `confirmPassword` |
-| "Brecht is not 30"                        | `validateRootForm`           | Form-level rule - doesn't belong to any single field        |
-| Switching input → paragraph/text          | `triggerFormValidation()`    | Structure change from input to non-input content            |
-| Switching between different inputs        | **Not needed (automatic)**   | Value changes trigger validation automatically              |
+| Scenario                                 | Solution                     | Why                                                         |
+| ---------------------------------------- | ---------------------------- | ----------------------------------------------------------- |
+| Password confirmation                    | `validationConfig`           | Field-level validation - error belongs to `confirmPassword` |
+| "Brecht is not 30"                       | `validateRootForm`           | Form-level rule - doesn't belong to any single field        |
+| Switching input → paragraph/text         | `triggerFormValidation()`    | Structure change from input to non-input content            |
+| Switching between different inputs       | **Not needed (automatic)**   | Value changes trigger validation automatically              |
 | Quantity ↔ Justification                 | `validationConfig`           | Bidirectional field-level validations                       |
-| At least one contact method               | `validateRootForm`           | Form-level constraint across multiple fields                |
-| Clearing fields to non-input content      | `triggerFormValidation()`    | After structure change with field clearing utilities        |
-| Age triggers emergency contact            | `validationConfig`           | Conditional field requirement                               |
-| Addresses must differ                     | `validateRootForm`           | Form-wide business rule                                     |
+| At least one contact method              | `validateRootForm`           | Form-level constraint across multiple fields                |
+| Clearing fields to non-input content     | `triggerFormValidation()`    | After structure change with field clearing utilities        |
+| Age triggers emergency contact           | `validationConfig`           | Conditional field requirement                               |
+| Addresses must differ                    | `validateRootForm`           | Form-wide business rule                                     |
 | Dynamic layout (inputs ↔ static content) | `triggerFormValidation()`    | Controls replaced with non-input elements                   |
-| End date after start date                 | `validationConfig` (usually) | Field-level validation on `endDate` field                   |
-| Complex dynamic purchase form             | **ALL THREE**                | Field dependencies + form-level rules + structure changes   |
+| End date after start date                | `validationConfig` (usually) | Field-level validation on `endDate` field                   |
+| Complex dynamic purchase form            | **ALL THREE**                | Field dependencies + form-level rules + structure changes   |
 
 ## Additional Resources
 
@@ -596,5 +596,5 @@ validationConfig = { password: ['confirmPassword'] };
 - **[README: Dependent Field Validation](../README.md#dependent-field-validation-with-conditional-rendering)** - validationConfig patterns
 - **[README: Root Form Validation](../README.md#validations-on-the-root-form)** - validateRootForm usage
 - **[Complete Example](./COMPLETE-EXAMPLE.md)** - Full working example
-- **[Migration Guide](./MIGRATION.md)** - Upgrading to v3 (validateRootFormMode change)
+- **[Migration Guide (v1.x → v2.0.0)](./migration/MIGRATION-v1.x-to-v2.0.0.md)** - Upgrading guide (validateRootFormMode change)
 - **[Vest.js Documentation](https://vestjs.dev)** - Validation framework docs
