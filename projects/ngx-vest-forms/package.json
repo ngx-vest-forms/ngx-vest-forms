@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "author": "Brecht Billiet, Arjen Althoff",
-  "description": "Opinionated template-driven forms library for Angular",
+  "description": "Opinionated template-driven forms library for Angular with Vest.js integration",
   "peerDependencies": {
     "@angular/core": ">=19.0.0",
     "@angular/common": ">=19.0.0",

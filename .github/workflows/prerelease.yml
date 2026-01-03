@@ -38,6 +38,7 @@ permissions:
 jobs:
   prerelease:
     runs-on: ubuntu-latest
+    environment: npm-publish  # Required for OIDC Trusted Publisher
     concurrency: prerelease-${{ github.event.inputs.branch_type }}-${{ github.event.inputs.stable_branch }}${{ github.event.inputs.custom_branch }}
     steps:
       - name: Determine branch
@@ -90,6 +91,7 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
       - name: Install
         run: npm install
       - name: Playwright install
@@ -108,8 +110,8 @@ jobs:
           CI: true
       - name: Publish prerelease
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true  # Enable provenance attestation with OIDC
         run: |
           echo "Publishing prerelease from branch: ${{ steps.branch.outputs.branch }}"
           npx semantic-release

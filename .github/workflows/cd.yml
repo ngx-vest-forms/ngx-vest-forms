@@ -16,6 +16,7 @@ jobs:
   cd:
     concurrency: cd-${{ github.ref }}
     runs-on: ubuntu-latest
+    environment: npm-publish  # Required for OIDC Trusted Publisher
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,6 +28,7 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
       - name: Install
         run: npm install
       - name: Playwright install
@@ -47,6 +49,6 @@ jobs:
           CI: true
       - name: Publish
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true  # Enable provenance attestation with OIDC
         run: npx semantic-release
