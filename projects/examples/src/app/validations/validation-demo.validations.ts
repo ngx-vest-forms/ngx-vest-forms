@@ -1,4 +1,4 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, only, staticSuite, test, warn } from 'vest';
 import { ValidationDemoModel } from '../models/validation-demo.model';
 
 export const validationDemoSuite = staticSuite(
@@ -13,6 +13,14 @@ export const validationDemoSuite = staticSuite(
 
     test('password', 'Password must be at least 8 characters', () => {
       enforce(model.password).longerThanOrEquals(8);
+    });
+
+    // Non-blocking password strength warning
+    omitWhen(!model.password, () => {
+      test('password', 'For better security, use 12+ characters', () => {
+        warn(); // Non-blocking warning
+        enforce(model.password).longerThanOrEquals(12);
+      });
     });
 
     // Confirm password (depends on password)
