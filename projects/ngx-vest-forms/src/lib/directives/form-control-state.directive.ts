@@ -230,17 +230,26 @@ export class FormControlStateDirective {
   readonly controlState = computed(() => this.#controlStateSignal());
 
   /**
-   * Recursively flattens Angular error objects into an array of error keys.
+   * Recursively flattens Angular error objects into an array of error messages.
+   * Handles string values, objects with a message property, and nested structures.
    */
   #flattenAngularErrors(errors: Record<string, unknown>): string[] {
     const result: string[] = [];
     for (const key of Object.keys(errors)) {
       const value = errors[key];
-      if (typeof value === 'object' && value !== null) {
+      if (typeof value === 'string') {
+        // String values: push the value itself, not the key
+        result.push(value);
+      } else if (value && typeof value === 'object' && 'message' in value) {
+        // Objects with a 'message' property: extract the message
+        result.push((value as { message: string }).message);
+      } else if (typeof value === 'object' && value !== null) {
+        // Nested objects/arrays: recursively flatten
         result.push(
           ...this.#flattenAngularErrors(value as Record<string, unknown>)
         );
       } else {
+        // Fallback: push the key for primitive types (backward compatibility)
         result.push(key);
       }
     }
@@ -258,8 +267,11 @@ export class FormControlStateDirective {
     if (Array.isArray(vestErrors)) {
       return vestErrors;
     }
-    // Fallback to flattened Angular error keys
-    return this.#flattenAngularErrors(state.errors);
+    // Fallback to flattened Angular error keys, excluding 'warnings' key
+    // to prevent warnings from appearing in the error list
+    const errorsWithoutWarnings = { ...state.errors };
+    delete errorsWithoutWarnings['warnings'];
+    return this.#flattenAngularErrors(errorsWithoutWarnings);
   });
 
   /**
