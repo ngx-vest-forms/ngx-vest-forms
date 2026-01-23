@@ -81,6 +81,25 @@ It renders three regions with generated IDs:
 
 The pending region is positioned `absolute` in the top-right corner of the wrapper (host is `position: relative`).
 
+### Warnings visibility
+
+- Warnings are **non-blocking** and do not make a field invalid.
+- Warnings can show after validation has run due to `validationConfig` even if the
+  field was not touched yet.
+- Warnings are cleared on `resetForm()`.
+
+### Styling dependency (Tailwind CSS)
+
+> **Note**: The default template uses **Tailwind CSS** utility classes for styling (colors, spacing, spinner animation).
+> If your project does not include Tailwind, the message regions will render but without visual styling.
+>
+> **Options for non-Tailwind projects**:
+>
+> 1. **Add equivalent CSS** targeting the wrapper classes (`.ngx-control-wrapper`, region elements)
+> 2. **Build a custom wrapper** using `FormErrorDisplayDirective` — see [Custom Control Wrappers](../../../../../../docs/CUSTOM-CONTROL-WRAPPERS.md)
+>
+> A future major version may replace Tailwind classes with framework-agnostic CSS custom properties.
+
 ### ARIA merging
 
 When ARIA stamping is enabled (anything except `"none"`), the wrapper:

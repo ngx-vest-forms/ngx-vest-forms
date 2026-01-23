@@ -25,6 +25,11 @@ export const validationDemoSuite = staticSuite(
 
     // Confirm password (depends on password)
     omitWhen(!model.password, () => {
+      test('confirmPassword', 'Tip: confirm your password for safety', () => {
+        warn();
+        enforce(model.confirmPassword).isNotBlank();
+      });
+
       test('confirmPassword', 'Please confirm your password', () => {
         enforce(model.confirmPassword).isNotBlank();
       });

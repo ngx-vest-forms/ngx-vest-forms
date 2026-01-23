@@ -214,6 +214,13 @@ export class CustomWrapperComponent {
 
 **Available signals:** `shouldShowErrors()`, `errors()`, `warnings()`, `isPending()`, `isValid()`, `isInvalid()`, `isTouched()`, `isDirty()`
 
+**Warnings behavior:**
+
+- Warnings are **non-blocking** and do not make a field invalid.
+- Warnings are stored separately from `control.errors` and are cleared on `resetForm()`.
+- Warnings may appear after `validationConfig` triggers validation, even if the field
+  was not touched yet.
+
 ## Root Form Validation
 
 For form-level validations (errors not tied to a specific field):

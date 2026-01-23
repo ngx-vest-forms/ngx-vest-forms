@@ -9,6 +9,7 @@ import {
   InputSignal,
   isDevMode,
   linkedSignal,
+  signal,
   untracked,
 } from '@angular/core';
 import {
@@ -117,6 +118,14 @@ export class FormDirective<T extends Record<string, unknown>> {
   private readonly configDebounceTime = inject(
     NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN
   );
+
+  /**
+   * Public signal storing field warnings keyed by field path.
+   * This allows warnings to be stored and displayed without affecting field validity.
+   * Angular's control.errors !== null marks a field as invalid, so we store warnings
+   * separately when they exist without errors.
+   */
+  readonly fieldWarnings = signal<Map<string, readonly string[]>>(new Map());
 
   // Track last linked value to prevent unnecessary updates
   #lastLinkedValue: T | null = null;
@@ -323,6 +332,10 @@ export class FormDirective<T extends Record<string, unknown>> {
   private readonly validationInProgress = new Set<string>();
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.fieldWarnings.set(new Map());
+    });
+
     /**
      * Trigger shape validations if the form gets updated
      * This is how we can throw run-time errors
@@ -594,6 +607,9 @@ export class FormDirective<T extends Record<string, unknown>> {
     // Reset Angular's form to clear all controls and mark as pristine/untouched
     this.ngForm.resetForm(value ?? undefined);
 
+    // Clear any stored warnings to avoid stale messages after reset
+    this.fieldWarnings.set(new Map());
+
     // Clear the bidirectional sync tracking state so the next formValue change
     // is treated as a model change (not a conflict with stale form values)
     this.#lastSyncedFormValue = null;
@@ -653,13 +669,32 @@ export class FormDirective<T extends Record<string, unknown>> {
                   const errors = result.getErrors()[field];
                   const warnings = result.getWarnings()[field];
 
-                  const out =
-                    errors?.length || warnings?.length
-                      ? {
-                          ...(errors?.length && { errors }),
-                          ...(warnings?.length && { warnings }),
-                        }
-                      : null;
+                  // Store warnings in the fieldWarnings signal for access by control wrappers.
+                  // This is necessary because Angular marks a field as invalid when control.errors !== null.
+                  // By storing warnings separately, fields can remain valid while still displaying warnings.
+                  this.fieldWarnings.update((map) => {
+                    const newMap = new Map(map);
+                    if (warnings?.length) {
+                      newMap.set(field, warnings);
+                    } else {
+                      newMap.delete(field);
+                    }
+                    return newMap;
+                  });
+
+                  // Build the validation result:
+                  // - Errors exist → return { errors, warnings? } (field invalid, Angular shows ng-invalid)
+                  // - Only warnings → return null (field valid, warnings accessed via fieldWarnings signal)
+                  // - Neither → return null (field valid)
+                  //
+                  // When errors exist, we also include warnings in control.errors for backwards compatibility
+                  // with code that reads warnings from control.errors.warnings.
+                  const out = errors?.length
+                    ? {
+                        errors,
+                        ...(warnings?.length && { warnings }),
+                      }
+                    : null;
 
                   // CRITICAL: Ensure DOM validity classes update for OnPush components.
                   //

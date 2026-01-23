@@ -14,6 +14,9 @@ The `ngx-control-wrapper` component uses **polite announcements** for inline fie
 - Avoids interrupting typing flow
 - Prevents excessive screen reader chatter
 
+Warnings may also appear after `validationConfig`-triggered validation, even if the
+field was not touched yet.
+
 The wrapper also:
 
 - merges its own `aria-describedby` tokens with any consumer-provided tokens (so existing hint text associations are preserved)

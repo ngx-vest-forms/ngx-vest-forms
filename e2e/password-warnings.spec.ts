@@ -15,6 +15,15 @@ import { fillAndBlur, waitForValidationToSettle } from './helpers/form-helpers';
  */
 test.describe('Password Warnings - Vest warn() Integration', () => {
   test.beforeEach(async ({ page }) => {
+    // Capture console logs for debugging
+    page.on('console', (msg) => {
+      if (
+        msg.text().includes('[warningMessages]') ||
+        msg.text().includes('[createAsyncValidator]')
+      ) {
+        console.log('BROWSER:', msg.text());
+      }
+    });
     await page.goto('http://localhost:4200/');
   });
 
@@ -33,6 +42,36 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
     await waitForValidationToSettle(page);
   }
 
+  async function getWarningElementFor(
+    password: import('@playwright/test').Locator
+  ): Promise<import('@playwright/test').Locator> {
+    // Poll until aria-describedby contains a warning id
+    // This handles the timing where aria-describedby exists but warning hasn't been added yet
+    let warningId: string | null = null;
+
+    await expect
+      .poll(
+        async () => {
+          const describedBy = await password.getAttribute('aria-describedby');
+          const ids = describedBy?.split(/\s+/).filter(Boolean) ?? [];
+          warningId = ids.find((id) => id.includes('-warning')) ?? null;
+          return !!warningId;
+        },
+        {
+          message: 'Waiting for warning id in aria-describedby',
+          timeout: 10000,
+          intervals: [50, 100, 250, 500, 1000, 2000],
+        }
+      )
+      .toBe(true);
+
+    if (!warningId) {
+      throw new Error('Expected warning id in aria-describedby');
+    }
+
+    return password.page().locator(`#${warningId}`);
+  }
+
   test('should display actual warning messages, not array indices (fixes #69)', async ({
     page,
   }) => {
@@ -44,13 +83,21 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
 
       // Wait for validation to complete (aria-busy is on wrapper, not input)
       await waitForValidationToSettle(page);
+
+      // Additional wait to ensure signal propagation completes
+      // This handles the edge case where fieldWarnings signal updates
+      // but the computed warningMessages hasn't re-evaluated yet
+      await page.waitForTimeout(500);
     });
 
     await test.step('Verify warning messages display actual text (not indices)', async () => {
-      const warningsContainer = page.getByTestId('password-warnings');
+      const password = page.getByLabel('Password', { exact: true });
+      const warningsContainer = await getWarningElementFor(password);
 
       // Should show warnings
-      await expect(warningsContainer).toBeVisible();
+      await expect(warningsContainer).toContainText(
+        /characters|uppercase|lowercase/i
+      );
 
       // Should contain actual warning messages
       await expect(warningsContainer).toContainText(/12 characters/i);
@@ -67,7 +114,8 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
     });
 
     await test.step('Verify warnings have proper ARIA attributes', async () => {
-      const warningsContainer = page.getByTestId('password-warnings');
+      const password = page.getByLabel('Password', { exact: true });
+      const warningsContainer = await getWarningElementFor(password);
 
       // Should use role="status" with aria-live="polite" (non-assertive for warnings)
       await expect(warningsContainer).toHaveAttribute('role', 'status');
@@ -108,8 +156,11 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
     });
 
     await test.step('Verify warnings are displayed', async () => {
-      const warningsContainer = page.getByTestId('password-warnings');
-      await expect(warningsContainer).toBeVisible();
+      const password = page.getByLabel('Password', { exact: true });
+      const warningsContainer = await getWarningElementFor(password);
+      await expect(warningsContainer).toContainText(
+        /warning|characters|uppercase|lowercase/i
+      );
     });
 
     await test.step('Submit form successfully despite warnings', async () => {
@@ -134,8 +185,10 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
       await fillPasswordAndWaitForWarnings(page, password, 'weak');
 
       // Wait for warnings to appear
-      const warningsContainer = page.getByTestId('password-warnings');
-      await expect(warningsContainer).toBeVisible();
+      const warningsContainer = await getWarningElementFor(password);
+      await expect(warningsContainer).toContainText(
+        /warning|characters|uppercase|lowercase/i
+      );
     });
 
     await test.step('Update to strong password', async () => {
@@ -147,10 +200,24 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
     });
 
     await test.step('Verify warnings are cleared', async () => {
-      const warningsContainer = page.getByTestId('password-warnings');
+      const password = page.getByLabel('Password', { exact: true });
 
-      // Warnings should no longer be visible
-      await expect(warningsContainer).not.toBeVisible();
+      // When warnings are cleared, the warning element should either:
+      // 1. Not exist in aria-describedby, or
+      // 2. Contain no warning text
+      // Check that no warning-related describedby references remain with warning content
+      const describedBy = await password.getAttribute('aria-describedby');
+      const ids = describedBy?.split(/\s+/).filter(Boolean) ?? [];
+      const warningId = ids.find((id) => id.includes('-warning'));
+
+      if (warningId) {
+        // If a warning element exists, verify it has no warning content
+        const warningsContainer = password.page().locator(`#${warningId}`);
+        await expect(warningsContainer).not.toContainText(
+          /characters|uppercase|lowercase/i
+        );
+      }
+      // If no warning ID exists, that's also valid - warnings were cleared
     });
   });
 
@@ -160,18 +227,18 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
     await test.step('Test length warning only', async () => {
       const password = page.getByLabel('Password', { exact: true });
 
-      // Long enough but no complexity - use fill + blur for reliability
-      await fillPasswordAndWaitForWarnings(page, password, 'passwordpassword');
+      // Complex enough but too short - should trigger length warning only
+      await fillPasswordAndWaitForWarnings(page, password, 'P@ssw0rd');
 
       // Wait for warnings container to appear
-      const warningsContainer = page.getByTestId('password-warnings');
-      await expect(warningsContainer).toBeVisible();
+      const warningsContainer = await getWarningElementFor(password);
+      await expect(warningsContainer).toContainText(/characters/i);
 
-      // Should NOT show length warning (12+ chars)
-      await expect(warningsContainer).not.toContainText(/12 characters/i);
+      // Should show length warning
+      await expect(warningsContainer).toContainText(/12 characters/i);
 
-      // Should show complexity warning
-      await expect(warningsContainer).toContainText(
+      // Should NOT show complexity warning (complexity satisfied)
+      await expect(warningsContainer).not.toContainText(
         /mix of uppercase, lowercase/i
       );
     });
@@ -179,28 +246,40 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
     await test.step('Test complexity warning only', async () => {
       const password = page.getByLabel('Password', { exact: true });
 
-      // Complex but short - use fill + blur for reliability
-      await fillPasswordAndWaitForWarnings(page, password, 'P@ss1');
+      // Long enough but no complexity - should trigger complexity warning only
+      await fillPasswordAndWaitForWarnings(page, password, 'passwordpassword');
 
       // Wait for warnings container with updated content
-      const warningsContainer = page.getByTestId('password-warnings');
+      const warningsContainer = await getWarningElementFor(password);
 
-      // Should show complexity warning (short but complex password)
+      // Should show complexity warning
       await expect(warningsContainer).toContainText(
         /mix of uppercase, lowercase/i
       );
 
-      // Should NOT show length warning (password is short)
+      // Should NOT show length warning (12+ chars)
       await expect(warningsContainer).not.toContainText(/12 characters/i);
     });
   });
 
   test('should not show warnings on pristine field', async ({ page }) => {
     await test.step('Password field starts without warnings', async () => {
-      const warningsContainer = page.getByTestId('password-warnings');
+      const password = page.getByLabel('Password', { exact: true });
 
-      // Warnings should not be visible on page load (pristine field)
-      await expect(warningsContainer).not.toBeVisible();
+      // On a pristine field, aria-describedby may not include a warning ID
+      // Check that no warning content is visible anywhere
+      const describedBy = await password.getAttribute('aria-describedby');
+      const ids = describedBy?.split(/\s+/).filter(Boolean) ?? [];
+      const warningId = ids.find((id) => id.includes('-warning'));
+
+      if (warningId) {
+        const warningsContainer = password.page().locator(`#${warningId}`);
+        // If a warning element exists, verify it has no warning content
+        await expect(warningsContainer).not.toContainText(
+          /characters|uppercase|lowercase/i
+        );
+      }
+      // If no warning ID exists, that's valid - pristine field has no warnings
     });
 
     await test.step('Focus and blur without entering text', async () => {
@@ -209,8 +288,16 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
       await password.blur();
 
       // Still no warnings (no value entered)
-      const warningsContainer = page.getByTestId('password-warnings');
-      await expect(warningsContainer).not.toBeVisible();
+      const describedBy = await password.getAttribute('aria-describedby');
+      const ids = describedBy?.split(/\s+/).filter(Boolean) ?? [];
+      const warningId = ids.find((id) => id.includes('-warning'));
+
+      if (warningId) {
+        const warningsContainer = password.page().locator(`#${warningId}`);
+        await expect(warningsContainer).not.toContainText(
+          /characters|uppercase|lowercase/i
+        );
+      }
     });
   });
 
@@ -222,12 +309,15 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
       await fillPasswordAndWaitForWarnings(page, password, 'short');
 
       // Wait for warnings container to appear
-      const warningsContainer = page.getByTestId('password-warnings');
-      await expect(warningsContainer).toBeVisible();
+      const warningsContainer = await getWarningElementFor(password);
+      await expect(warningsContainer).toContainText(
+        /characters|uppercase|lowercase/i
+      );
     });
 
     await test.step('Verify both warnings are displayed', async () => {
-      const warningsContainer = page.getByTestId('password-warnings');
+      const password = page.getByLabel('Password', { exact: true });
+      const warningsContainer = await getWarningElementFor(password);
 
       // Should show length warning
       const lengthWarning = warningsContainer.getByText(/12 characters/i);
@@ -239,7 +329,7 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
       await expect(complexityWarning).toBeVisible();
 
       // Should have 2 warning elements
-      const warnings = warningsContainer.locator('div.flex');
+      const warnings = warningsContainer.locator('li');
       await expect(warnings).toHaveCount(2);
     });
   });
@@ -254,8 +344,10 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
       await fillPasswordAndWaitForWarnings(page, password, 'weak123');
 
       // Wait for warnings container to appear
-      const warningsContainer = page.getByTestId('password-warnings');
-      await expect(warningsContainer).toBeVisible();
+      const warningsContainer = await getWarningElementFor(password);
+      await expect(warningsContainer).toContainText(
+        /characters|uppercase|lowercase/i
+      );
     });
 
     await test.step('Interact with other fields', async () => {
@@ -265,7 +357,8 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
     });
 
     await test.step('Verify warnings persist', async () => {
-      const warningsContainer = page.getByTestId('password-warnings');
+      const password = page.getByLabel('Password', { exact: true });
+      const warningsContainer = await getWarningElementFor(password);
 
       // Warnings should still be visible
       await expect(warningsContainer).toBeVisible();
@@ -283,21 +376,21 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
       await fillPasswordAndWaitForWarnings(page, password, 'weak');
 
       // Wait for warnings container to appear
-      const warningsContainer = page.getByTestId('password-warnings');
-      await expect(warningsContainer).toBeVisible();
+      const warningsContainer = await getWarningElementFor(password);
+      await expect(warningsContainer).toContainText(
+        /characters|uppercase|lowercase/i
+      );
     });
 
     await test.step('Verify ARIA live region configuration', async () => {
-      const warningsContainer = page.getByTestId('password-warnings');
+      const password = page.getByLabel('Password', { exact: true });
+      const warningsContainer = await getWarningElementFor(password);
 
       // Should have proper ARIA attributes for screen reader announcement
       await expect(warningsContainer).toHaveAttribute('role', 'status');
       await expect(warningsContainer).toHaveAttribute('aria-live', 'polite');
 
       // Warning icons should be decorative (not read by screen readers)
-      const warningIcon = warningsContainer.locator('svg').first();
-      await expect(warningIcon).toBeVisible();
-
       // Text content should be accessible
       const warningText = await warningsContainer.textContent();
       expect(warningText).toBeTruthy();

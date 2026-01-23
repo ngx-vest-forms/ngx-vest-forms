@@ -2,7 +2,7 @@
 import { Component, signal, ViewChild } from '@angular/core';
 import { render } from '@testing-library/angular';
 import { isObservable, Observable } from 'rxjs';
-import { enforce, only, staticSuite } from 'vest';
+import { enforce, only, staticSuite, test as vestTest, warn } from 'vest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FormDirective } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
@@ -245,6 +245,127 @@ describe('FormDirective - Async Validator', () => {
     const result = await resultPromise;
     // Should be null because the suite produces no errors/warnings
     expect(result).toBeNull();
+  });
+
+  it('should return null (valid) when field has only warnings, not errors', async () => {
+    // This test verifies the fix for: Warnings should NOT affect field validity
+    // Previously, returning { warnings: [...] } caused Angular to mark the field as invalid
+    @Component({
+      selector: 'test-warnings-only-host',
+      template: `<form
+        ngxVestForm
+        [suite]="suite()"
+        #vest="ngxVestForm"
+      ></form>`,
+
+      imports: [NgxVestForms],
+    })
+    class TestWarningsOnlyHost {
+      // Suite that only produces warnings (via warn()), no errors
+      suite = signal(
+        staticSuite((model: { password?: string } = {}, field?: string) => {
+          only(field);
+          // Only a warning - should NOT make field invalid
+          vestTest('password', 'Password is weak', () => {
+            warn();
+            enforce(model.password ?? '').longerThan(12);
+          });
+        })
+      );
+      @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
+    }
+    const { fixture } = await render(TestWarningsOnlyHost);
+    const instance = fixture.componentInstance;
+    const validator = instance.vestForm.createAsyncValidator('password', {
+      debounceTime: 0,
+    });
+    // Password of length 8 triggers warning but NOT error (warn() makes it non-blocking)
+    const control = { value: 'Short123' } as any;
+
+    // Start the async validator
+    const resultPromise = awaitResult(validator(control));
+
+    // Advance all timers to complete the timer(0) and Vest suite execution
+    vi.runAllTimers();
+    await Promise.resolve(); // Let microtasks flush
+
+    const result = await resultPromise;
+
+    // CRITICAL: When a field has ONLY warnings (no errors), the validator should
+    // return null OR { warnings: [...] } with a truthy 'warnings' key but NO 'errors'.
+    // However, Angular interprets any non-null return as "invalid".
+    //
+    // The FIX: Return { warnings: [...] } separately from errors, but ensure the
+    // actual ValidationErrors (errors key) is null/empty so Angular marks field as valid.
+    //
+    // Expected: null (field is valid, warnings are informational only)
+    // Bug would return: { warnings: ['Password is weak'] } making field ng-invalid
+    expect(result).toBeNull();
+  });
+
+  it('should return errors AND warnings when both exist', async () => {
+    // When a field has BOTH errors and warnings, we need to return both
+    // but only errors should affect validity
+    @Component({
+      selector: 'test-errors-and-warnings-host',
+      template: `<form
+        ngxVestForm
+        [suite]="suite()"
+        #vest="ngxVestForm"
+      ></form>`,
+
+      imports: [NgxVestForms],
+    })
+    class TestErrorsAndWarningsHost {
+      // Suite that produces both errors and warnings for short passwords
+      // IMPORTANT: Warning tests must come BEFORE error tests in Vest
+      // because Vest stops processing after a field fails a non-warning test
+      suite = signal(
+        staticSuite((model: { password?: string } = {}, field?: string) => {
+          only(field);
+          // Warning - password should be longer than 12 characters (informational)
+          // Runs FIRST so it gets captured before the error test
+          vestTest('password', 'Password should be longer than 12 characters', () => {
+            warn();
+            enforce(model.password ?? '').longerThan(12);
+          });
+          // Error - password must be at least 8 characters
+          vestTest('password', 'Password must be at least 8 characters', () => {
+            enforce(model.password ?? '').longerThanOrEquals(8);
+          });
+        })
+      );
+      @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
+    }
+    const { fixture } = await render(TestErrorsAndWarningsHost);
+    const instance = fixture.componentInstance;
+    const validator = instance.vestForm.createAsyncValidator('password', {
+      debounceTime: 0,
+    });
+    // Short password (5 chars) triggers both:
+    // - Error: not >= 8 characters
+    // - Warning: not > 12 characters
+    const control = { value: 'short' } as any;
+
+    // Start the async validator
+    const resultPromise = awaitResult(validator(control));
+
+    // Advance all timers
+    vi.runAllTimers();
+    await Promise.resolve();
+
+    const result = await resultPromise;
+
+    // When both exist, errors should be returned (making field invalid)
+    // and warnings should be included for display purposes
+    expect(result).not.toBeNull();
+    expect(result).toHaveProperty('errors');
+    expect(result?.errors).toContain('Password must be at least 8 characters');
+    // Warnings should also be present for the control-wrapper to display
+    expect(result).toHaveProperty('warnings');
+    expect(result?.warnings).toContain(
+      'Password should be longer than 12 characters'
+    );
   });
 });
 

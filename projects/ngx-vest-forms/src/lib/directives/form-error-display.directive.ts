@@ -1,4 +1,4 @@
-import { computed, Directive, effect, inject, input } from '@angular/core';
+import { computed, Directive, effect, inject, input, Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NgForm } from '@angular/forms';
 import { map, merge, of, startWith } from 'rxjs';
@@ -16,7 +16,7 @@ export const SC_ERROR_DISPLAY_MODE_DEFAULT: ScErrorDisplayMode =
 @Directive({
   selector: '[formErrorDisplay], [ngxErrorDisplay]',
   exportAs: 'formErrorDisplay, ngxErrorDisplay',
-
+  standalone: true,
   hostDirectives: [FormControlStateDirective],
 })
 export class FormErrorDisplayDirective {
@@ -60,7 +60,7 @@ export class FormErrorDisplayDirective {
    *
    * This ensures proper sync with both submit and reset operations.
    */
-  readonly formSubmitted = this.#ngForm
+  readonly formSubmitted: Signal<boolean> = this.#ngForm
     ? toSignal(
         merge(this.#ngForm.ngSubmit, this.#ngForm.statusChanges ?? of()).pipe(
           startWith(null),
@@ -96,7 +96,7 @@ export class FormErrorDisplayDirective {
    * (e.g., confirmPassword validated when password changes). We check hasBeenValidated to show
    * errors in these scenarios, providing better UX and proper ARIA attributes.
    */
-  readonly shouldShowErrors = computed(() => {
+  readonly shouldShowErrors: Signal<boolean> = computed(() => {
     const mode = this.errorDisplayMode();
     const isTouched = this.isTouched();
     const isInvalid = this.isInvalid();
@@ -127,7 +127,7 @@ export class FormErrorDisplayDirective {
   /**
    * Errors to display (filtered for pending state)
    */
-  readonly errors = computed(() => {
+  readonly errors: Signal<string[]> = computed(() => {
     if (this.hasPendingValidation()) return [];
     return this.errorMessages();
   });
@@ -135,7 +135,7 @@ export class FormErrorDisplayDirective {
   /**
    * Warnings to display (filtered for pending state)
    */
-  readonly warnings = computed(() => {
+  readonly warnings: Signal<string[]> = computed(() => {
     if (this.hasPendingValidation()) return [];
     return this.warningMessages();
   });
@@ -144,7 +144,7 @@ export class FormErrorDisplayDirective {
    * Whether the control is currently being validated (pending)
    * Excludes pristine+untouched controls to prevent "Validating..." on initial load
    */
-  readonly isPending = computed(() => {
+  readonly isPending: Signal<boolean> = computed(() => {
     // Don't show pending state for pristine untouched controls
     // This prevents "Validating..." message appearing on initial page load
     const state = this.#formControlState.controlState();

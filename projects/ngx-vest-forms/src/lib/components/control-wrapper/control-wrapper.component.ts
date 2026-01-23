@@ -49,21 +49,31 @@ let nextUniqueId = 0;
  * - Unique IDs for error/warning/pending regions
  * - `aria-describedby` linking errors to form controls
  * - `aria-invalid="true"` when errors are shown
- * - `role="status"` with `aria-live="polite"` for non-interruptive announcements
+ * - `role="status"` with `aria-live="polite"` for non-disruptive announcements
  * - Debounced pending state to prevent flashing for quick validations
+ *
+ * ### WCAG 2.2 AA - Error Severity Levels
+ * This component uses `role="status"` for **field-level** validation messages:
+ * - **Errors**: Non-disruptive announcement (user can continue filling other fields)
+ * - **Warnings**: Informational only, doesn't block submission
+ * - **Pending**: Status update while async validation runs
+ *
+ * For **form-level blocking errors** (e.g., submission failed), implement a separate
+ * error summary component with `role="alert"` and `aria-live="assertive"`.
  *
  * @see {@link FormErrorDisplayDirective} for custom wrapper implementation
  *
- *   Blocking Errors (form-level):
+ *   Form-Level Blocking Errors:
  *   - For post-submit validation errors that block submission, implement a separate
  *     form-level error summary with role="alert" and aria-live="assertive"
- *   - Example:
+ *   - This component uses role="status" for field-level errors (non-disruptive)
+ *   - Example for form-level errors:
  *     ```html
  *     <!-- Keep in DOM; update text content on submit -->
  *     <div id="form-errors" role="alert" aria-live="assertive" aria-atomic="true"></div>
  *     ```
- *   - This provides immediate, reliable announcements for blocking errors while keeping
- *     inline field errors non-disruptive. Follows WCAG ARIA19/ARIA22 guidance.
+ *   - This separation provides immediate announcements for blocking form errors while
+ *     keeping inline field errors non-disruptive. Follows WCAG ARIA21/ARIA22 guidance.
  *
  * Error & Warning Display Behavior:
  *   - The error display mode can be configured globally using the SC_ERROR_DISPLAY_MODE_TOKEN injection token (import from core), or per instance using the `errorDisplayMode` input on FormErrorDisplayDirective (which this component uses as a hostDirective).
@@ -179,6 +189,24 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
   protected readonly showPendingMessage = this.pendingState.showPendingMessage;
 
   /**
+   * Whether to display warnings.
+   * Warnings are shown when:
+   * 1. The field has been touched (user has interacted with it)
+   * 2. The field has warnings to display
+   * 3. The field is not currently pending validation
+   *
+   * NOTE: Unlike errors, warnings can exist on VALID fields (warnings-only scenario).
+   * We don't require isInvalid() because Vest warn() tests don't affect field validity.
+   */
+  protected readonly shouldShowWarnings = computed(() => {
+    const isTouched = this.errorDisplay.isTouched();
+    const hasBeenValidated = this.errorDisplay.hasBeenValidated();
+    const isPending = this.errorDisplay.isPending();
+    const hasWarnings = this.errorDisplay.warnings().length > 0;
+    return (isTouched || hasBeenValidated) && hasWarnings && !isPending;
+  });
+
+  /**
    * Computed signal that builds aria-describedby string based on visible regions
    */
   protected readonly ariaDescribedBy = computed(() => {
@@ -186,7 +214,7 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
     if (this.errorDisplay.shouldShowErrors()) {
       ids.push(this.errorId);
     }
-    if (this.errorDisplay.warnings().length > 0) {
+    if (this.shouldShowWarnings()) {
       ids.push(this.warningId);
     }
     if (this.showPendingMessage()) {

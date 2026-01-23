@@ -1,6 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
+import { enforce, only, staticSuite, test as vestTest, warn } from 'vest';
+import { NgxVestForms } from '../exports';
 import { FormControlStateDirective } from './form-control-state.directive';
 
 @Component({
@@ -23,12 +25,46 @@ class TestHostComponent {
   model = '';
 }
 
+@Component({
+  imports: [FormsModule, NgxVestForms, FormControlStateDirective],
+  template: `
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      (formValueChange)="formValue.set($event)"
+    >
+      <div formControlState #state="formControlState">
+        <input name="test" [ngModel]="formValue().test" />
+        <span id="warning-only">{{ state.warningMessages().join(',') }}</span>
+      </div>
+    </form>
+  `,
+})
+class WarningOnlyHostComponent {
+  readonly formValue = signal<{ test?: string }>({});
+  readonly suite = staticSuite(
+    (model: { test?: string } = {}, field?: string) => {
+      only(field);
+      vestTest('test', 'Test warning', () => {
+        warn();
+        enforce(model.test ?? '').longerThan(3);
+      });
+    }
+  );
+}
+
 describe('FormControlStateDirective', () => {
   let fixture: ComponentFixture<TestHostComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TestHostComponent, FormsModule, FormControlStateDirective],
+      imports: [
+        TestHostComponent,
+        WarningOnlyHostComponent,
+        FormsModule,
+        FormControlStateDirective,
+      ],
     }).compileComponents();
     fixture = TestBed.createComponent(TestHostComponent);
     fixture.detectChanges();
@@ -110,5 +146,29 @@ describe('FormControlStateDirective', () => {
 
     // Should be true after validation runs
     expect(hasBeenValidatedEl.textContent).toBe('true');
+  });
+
+  it('should surface warning-only messages from fieldWarnings', async () => {
+    const warningFixture = TestBed.createComponent(WarningOnlyHostComponent);
+    warningFixture.detectChanges();
+    await warningFixture.whenStable();
+
+    const input: HTMLInputElement =
+      warningFixture.nativeElement.querySelector('input');
+
+    // Simulate user input
+    input.value = 'a';
+    input.dispatchEvent(new Event('input'));
+
+    warningFixture.detectChanges();
+    await warningFixture.whenStable();
+
+    // Wait for async validation to complete (debounce + processing)
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    warningFixture.detectChanges();
+
+    const warningText =
+      warningFixture.nativeElement.querySelector('#warning-only').textContent;
+    expect(warningText).toContain('Test warning');
   });
 });

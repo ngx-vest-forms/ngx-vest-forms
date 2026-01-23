@@ -4,8 +4,13 @@ import {
   Component,
   computed,
   signal,
+  viewChild,
 } from '@angular/core';
-import { createValidationConfig, NgxVestForms } from 'ngx-vest-forms';
+import {
+  createValidationConfig,
+  FormDirective,
+  NgxVestForms,
+} from 'ngx-vest-forms';
 import {
   ValidationDemoModel,
   validationDemoShape,
@@ -21,9 +26,16 @@ import { CardComponent } from '../../ui/card/card.component';
   styleUrls: ['./validation-config-demo.component.scss'],
 })
 export class ValidationConfigDemoComponent {
-  protected readonly formValue = signal<ValidationDemoModel>({
+  private readonly initialFormValue: ValidationDemoModel = {
     requiresJustification: false,
-  });
+  };
+
+  protected readonly formValue = signal<ValidationDemoModel>(
+    this.initialFormValue
+  );
+
+  private readonly vestForm =
+    viewChild.required<FormDirective<ValidationDemoModel>>('vestForm');
 
   protected readonly suite = validationDemoSuite;
   protected readonly shape = validationDemoShape;
@@ -64,5 +76,10 @@ export class ValidationConfigDemoComponent {
     if (this.isValid()) {
       // Intentionally no console output or alerts in examples to keep CI and demos quiet
     }
+  }
+
+  protected reset(): void {
+    this.vestForm().resetForm(this.initialFormValue);
+    this.formValue.set(this.initialFormValue);
   }
 }
