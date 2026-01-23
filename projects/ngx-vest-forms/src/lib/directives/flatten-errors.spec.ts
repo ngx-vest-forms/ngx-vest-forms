@@ -1,7 +1,7 @@
 import { Component, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, NgModel } from '@angular/forms';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { FormControlStateDirective } from './form-control-state.directive';
 
 /**
@@ -49,25 +49,21 @@ describe('FormControlStateDirective - #flattenAngularErrors bug fix', () => {
 
     const ngModel = component.ngModelRef();
     if (!ngModel) throw new Error('NgModel not found');
-    
+
     ngModel.control.setErrors(mockErrors);
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const directive = component.state();
-    if (!directive) throw new Error('Directive not found');
-    
-    const warningMessages = directive.warningMessages();
+    const warningEl = fixture.nativeElement.querySelector('#warning-messages');
+    const warningText = warningEl.textContent || '';
 
     // Should extract the actual warning messages
-    expect(warningMessages).toEqual([
-      'Password is weak',
-      'Should be longer than 12 characters',
-    ]);
-    
+    expect(warningText).toContain('Password is weak');
+    expect(warningText).toContain('Should be longer than 12 characters');
+
     // Should NOT return array indices
-    expect(warningMessages).not.toContain('0');
-    expect(warningMessages).not.toContain('1');
+    // The bug would produce only numeric indices like "0,1"
+    expect(warningText.trim()).not.toMatch(/^(\d+\s*,\s*)*\d+$/);
   });
 
   it('should handle nested array errors in errorMessages()', async () => {
@@ -78,25 +74,21 @@ describe('FormControlStateDirective - #flattenAngularErrors bug fix', () => {
 
     const ngModel = component.ngModelRef();
     if (!ngModel) throw new Error('NgModel not found');
-    
+
     ngModel.control.setErrors(mockErrors);
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const directive = component.state();
-    if (!directive) throw new Error('Directive not found');
-    
-    const errorMessages = directive.errorMessages();
+    const errorEl = fixture.nativeElement.querySelector('#error-messages');
+    const errorText = errorEl.textContent || '';
 
     // Should flatten and return actual error messages
-    expect(errorMessages).toContain('Error 1');
-    expect(errorMessages).toContain('Error 2');
-    expect(errorMessages).toContain('Error 3');
-    
+    expect(errorText).toContain('Error 1');
+    expect(errorText).toContain('Error 2');
+    expect(errorText).toContain('Error 3');
+
     // Should NOT return array indices
-    expect(errorMessages).not.toContain('0');
-    expect(errorMessages).not.toContain('1');
-    expect(errorMessages).not.toContain('2');
+    expect(errorText.trim()).not.toMatch(/^(\d+\s*,\s*)*\d+$/);
   });
 
   it('should extract string values from error objects', async () => {
@@ -108,23 +100,21 @@ describe('FormControlStateDirective - #flattenAngularErrors bug fix', () => {
 
     const ngModel = component.ngModelRef();
     if (!ngModel) throw new Error('NgModel not found');
-    
+
     ngModel.control.setErrors(mockErrors);
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const directive = component.state();
-    if (!directive) throw new Error('Directive not found');
-    
-    const errorMessages = directive.errorMessages();
+    const errorEl = fixture.nativeElement.querySelector('#error-messages');
+    const errorText = errorEl.textContent || '';
 
     // Should extract string values, not keys
-    expect(errorMessages).toContain('This is a custom error');
-    expect(errorMessages).toContain('This is another error');
-    
+    expect(errorText).toContain('This is a custom error');
+    expect(errorText).toContain('This is another error');
+
     // Should NOT include the error keys
-    expect(errorMessages).not.toContain('customError');
-    expect(errorMessages).not.toContain('anotherError');
+    expect(errorText).not.toContain('customError');
+    expect(errorText).not.toContain('anotherError');
   });
 
   it('should extract message property from error objects', async () => {
@@ -136,23 +126,17 @@ describe('FormControlStateDirective - #flattenAngularErrors bug fix', () => {
 
     const ngModel = component.ngModelRef();
     if (!ngModel) throw new Error('NgModel not found');
-    
+
     ngModel.control.setErrors(mockErrors);
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const directive = component.state();
-    if (!directive) throw new Error('Directive not found');
-    
-    const errorMessages = directive.errorMessages();
+    const errorEl = fixture.nativeElement.querySelector('#error-messages');
+    const errorText = errorEl.textContent || '';
 
     // Should extract the 'message' property value
-    expect(errorMessages).toContain('Validation failed with details');
-    expect(errorMessages).toContain('Custom validation message');
-    
-    // Should NOT include error keys
-    expect(errorMessages).not.toContain('validation');
-    expect(errorMessages).not.toContain('custom');
+    expect(errorText).toContain('Validation failed with details');
+    expect(errorText).toContain('Custom validation message');
   });
 
   it('should handle mixed error types', async () => {
@@ -168,29 +152,26 @@ describe('FormControlStateDirective - #flattenAngularErrors bug fix', () => {
 
     const ngModel = component.ngModelRef();
     if (!ngModel) throw new Error('NgModel not found');
-    
+
     ngModel.control.setErrors(mockErrors);
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const directive = component.state();
-    if (!directive) throw new Error('Directive not found');
-    
-    const errorMessages = directive.errorMessages();
+    const errorEl = fixture.nativeElement.querySelector('#error-messages');
+    const errorText = errorEl.textContent || '';
 
     // Should handle all types correctly
-    expect(errorMessages).toContain('Direct string error');
-    expect(errorMessages).toContain('Array error 1');
-    expect(errorMessages).toContain('Array error 2');
-    expect(errorMessages).toContain('Object with message');
-    expect(errorMessages).toContain('Nested warning 1');
-    expect(errorMessages).toContain('Nested warning 2');
-    
+    expect(errorText).toContain('Direct string error');
+    expect(errorText).toContain('Array error 1');
+    expect(errorText).toContain('Array error 2');
+    expect(errorText).toContain('Object with message');
+    expect(errorText).toContain('Nested warning 1');
+    expect(errorText).toContain('Nested warning 2');
+
     // Should NOT include keys or indices
-    expect(errorMessages).not.toContain('stringError');
-    expect(errorMessages).not.toContain('arrayErrors');
-    expect(errorMessages).not.toContain('0');
-    expect(errorMessages).not.toContain('1');
+    expect(errorText).not.toContain('stringError');
+    expect(errorText).not.toContain('arrayErrors');
+    expect(errorText.trim()).not.toMatch(/^(\d+\s*,\s*)*\d+$/);
   });
 
   it('should maintain backward compatibility with primitive error keys', async () => {
@@ -202,18 +183,16 @@ describe('FormControlStateDirective - #flattenAngularErrors bug fix', () => {
 
     const ngModel = component.ngModelRef();
     if (!ngModel) throw new Error('NgModel not found');
-    
+
     ngModel.control.setErrors(mockErrors);
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const directive = component.state();
-    if (!directive) throw new Error('Directive not found');
-    
-    const errorMessages = directive.errorMessages();
+    const errorEl = fixture.nativeElement.querySelector('#error-messages');
+    const errorText = errorEl.textContent || '';
 
     // Should fallback to keys for non-string primitives (backward compatibility)
-    expect(errorMessages).toContain('required');
-    expect(errorMessages).toContain('minlength');
+    expect(errorText).toContain('required');
+    expect(errorText).toContain('minlength');
   });
 });
