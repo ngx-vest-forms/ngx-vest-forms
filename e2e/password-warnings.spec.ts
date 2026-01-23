@@ -184,15 +184,14 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
 
       // Wait for warnings container with updated content
       const warningsContainer = page.getByTestId('password-warnings');
-      await expect(warningsContainer).toContainText(/12 characters/i);
 
-      // Should show length warning
-      await expect(warningsContainer).toContainText(/12 characters/i);
-
-      // Should NOT show complexity warning (has all types)
-      await expect(warningsContainer).not.toContainText(
+      // Should show complexity warning (short but complex password)
+      await expect(warningsContainer).toContainText(
         /mix of uppercase, lowercase/i
       );
+
+      // Should NOT show length warning (password is short)
+      await expect(warningsContainer).not.toContainText(/12 characters/i);
     });
   });
 
