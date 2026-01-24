@@ -160,14 +160,27 @@ export class PurchaseFormComponent {
 
       // If the first name is Brecht and the last name is Billiet, set the age and passwords
       if (firstName() === 'Brecht' && lastName() === 'Billiet') {
-        this.formValue.update((val) => ({
-          ...val,
-          age: 35,
-          passwords: {
-            password: 'Test1234',
-            confirmPassword: 'Test12345',
-          },
-        }));
+        this.formValue.update((val) => {
+          let didUpdate = false;
+          const next = { ...val };
+
+          if (next.age === undefined || next.age === null) {
+            next.age = 35;
+            didUpdate = true;
+          }
+
+          const hasPassword = !!next.passwords?.password;
+          const hasConfirmPassword = !!next.passwords?.confirmPassword;
+          if (!hasPassword && !hasConfirmPassword) {
+            next.passwords = {
+              password: 'Test1234',
+              confirmPassword: 'Test12345',
+            };
+            didUpdate = true;
+          }
+
+          return didUpdate ? next : val;
+        });
       }
     });
 

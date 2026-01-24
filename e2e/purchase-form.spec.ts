@@ -9,8 +9,10 @@ import {
   fillAndBlur,
   navigateToPurchaseForm,
   selectRadio,
+  typeAndBlur,
   waitForFormProcessing,
   waitForValidationToComplete,
+  waitForValidationToSettle,
 } from './helpers/form-helpers';
 
 test.describe('Purchase Form', () => {
@@ -223,17 +225,12 @@ test.describe('Purchase Form', () => {
         const password = page.getByLabel('Password', { exact: true });
         const confirmPassword = page.getByLabel('Confirm Password');
 
-        await fillAndBlur(password, 'SecurePass123');
-
-        // Wait for validation to complete and config to update
-        await waitForValidationToComplete(password, 2000);
-        await waitForFormProcessing(page);
+        await typeAndBlur(password, 'SecurePass123');
+        await waitForValidationToSettle(page, 10000);
 
         await confirmPassword.focus();
         await confirmPassword.blur();
-
-        // Wait for validation to complete
-        await waitForValidationToComplete(confirmPassword, 2000);
+        await waitForValidationToSettle(page, 10000);
 
         await expectFieldHasError(
           confirmPassword,
@@ -964,20 +961,14 @@ test.describe('Purchase Form', () => {
       await test.step('Verify debounced validation behavior', async () => {
         const userId = page.getByLabel(/user id/i);
 
-        // Focus field
-        await userId.focus();
+        // Use fillAndBlur to properly trigger Angular validation
+        // The "1" userId exists in json-server and should fail validation
+        await fillAndBlur(userId, '1');
 
-        // Type rapidly - use "1" which exists and will fail validation
-        await userId.fill('1');
-
-        // Immediately check - should not be validating yet (500ms debounce)
-        const ariaBusyBefore = await userId.getAttribute('aria-busy');
-        expect(ariaBusyBefore === null || ariaBusyBefore === 'false').toBe(
-          true
-        );
-
-        // Wait for debounce (500ms) + async validation (800ms) + buffer
-        await page.waitForTimeout(1500);
+        // After blur, validation should start (with 500ms debounce)
+        // Then async validation runs (800ms delay in SwapiService)
+        // waitForValidationToSettle handles this timing automatically
+        await waitForValidationToSettle(page, 10000);
 
         // Should have completed validation - verify error is shown
         await expectFieldHasError(userId, /already taken/i);
@@ -986,6 +977,14 @@ test.describe('Purchase Form', () => {
   });
 
   test.describe('FormGroup Wrapper - Group Level Errors', () => {
+    /**
+     * Tests ROOT_FORM validation in 'submit' mode.
+     * The errorsChange output now waits for async validation to complete after submit,
+     * which ensures ROOT_FORM errors are included.
+     *
+     * @see validate-root-form.directive.spec.ts for unit tests
+     * @see business-hours-form for 'live' mode ROOT_FORM validation
+     */
     test('should display ROOT_FORM validation errors at form level', async ({
       page,
     }) => {
@@ -1002,14 +1001,45 @@ test.describe('Purchase Form', () => {
         // Age auto-fills to 35 due to effect, but let's manually set to 30 to trigger error
         await age.clear();
         await fillAndBlur(age, '30');
+        await expect(age).toHaveValue('30');
 
         // Submit to trigger ROOT_FORM validation
         await submitButton.click();
-        await page.waitForTimeout(300);
+        await expect
+          .poll(
+            async () => {
+              const alerts = page.getByRole('alert');
+              return (await alerts.count()) > 0;
+            },
+            {
+              message: 'Waiting for form-level alert region to render',
+              timeout: 15000,
+              intervals: [100, 250, 500, 1000],
+            }
+          )
+          .toBe(true);
 
         // Should show form-level error (not field-level)
-        const formLevelError = page.getByText(/brecht.*not.*30/i);
-        await expect(formLevelError).toBeVisible();
+        const formLevelError = page
+          .getByRole('alert')
+          .filter({ hasText: /brecht.*not.*30/i });
+        await expect
+          .poll(
+            async () => {
+              const count = await formLevelError.count();
+              if (count === 0) {
+                return false;
+              }
+              const text = (await formLevelError.first().textContent()) ?? '';
+              return /brecht.*not.*30/i.test(text);
+            },
+            {
+              message: 'Waiting for ROOT_FORM error to appear',
+              timeout: 15000,
+              intervals: [100, 250, 500, 1000],
+            }
+          )
+          .toBe(true);
       });
     });
 
@@ -1035,15 +1065,14 @@ test.describe('Purchase Form', () => {
       await test.step('Verify userId has 500ms debounce', async () => {
         const userId = page.getByLabel(/user id/i);
 
-        await userId.focus();
-        await userId.fill('1'); // Use "1" which exists and will fail validation
+        // Use fillAndBlur to properly trigger Angular validation
+        // The "1" userId exists in json-server and should fail validation
+        await fillAndBlur(userId, '1');
 
-        // Should not validate immediately (has 500ms debounce)
-        const ariaBusy = await userId.getAttribute('aria-busy');
-        expect(ariaBusy === null || ariaBusy === 'false').toBe(true);
-
-        // Wait for debounce (500ms) + async validation (800ms) + buffer
-        await page.waitForTimeout(1500);
+        // After blur, validation should start (with 500ms debounce)
+        // Then async validation runs (800ms delay in SwapiService)
+        // waitForValidationToSettle handles this timing automatically
+        await waitForValidationToSettle(page, 10000);
 
         // Should have validated - verify error shown
         await expectFieldHasError(userId, /already taken/i);

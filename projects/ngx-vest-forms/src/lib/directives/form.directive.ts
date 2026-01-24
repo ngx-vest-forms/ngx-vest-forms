@@ -277,13 +277,34 @@ export class FormDirective<T extends Record<string, unknown>> {
    * Emits an object with all the errors of the form
    * every time a form control or form groups changes its status to valid or invalid
    *
+   * For submit events, waits for async validation (including ROOT_FORM) to complete
+   * before emitting errors. This ensures ROOT_FORM errors are included in the output.
+   *
    * Cleanup is handled automatically by the directive when it's destroyed.
    */
   readonly errorsChange = outputFromObservable(
-    this.ngForm.form.events.pipe(
-      filter((v) => v instanceof StatusChangeEvent),
-      map((v) => (v as StatusChangeEvent).status),
-      filter((v) => v !== 'PENDING'),
+    rxMerge(
+      // Status change events (non-PENDING) - emit immediately
+      this.ngForm.form.events.pipe(
+        filter((v) => v instanceof StatusChangeEvent),
+        map((v) => (v as StatusChangeEvent).status),
+        filter((v) => v !== 'PENDING')
+      ),
+      // Submit events - wait for async validation to complete before emitting
+      this.ngForm.ngSubmit.pipe(
+        switchMap(() => {
+          // If form is PENDING (async validation in progress), wait for it to complete
+          if (this.ngForm.form.status === 'PENDING') {
+            return this.ngForm.form.statusChanges.pipe(
+              filter((status) => status !== 'PENDING'),
+              take(1)
+            );
+          }
+          // Form not pending, emit immediately
+          return of(this.ngForm.form.status);
+        })
+      )
+    ).pipe(
       map(() => getAllFormErrors(this.ngForm.form)),
       takeUntilDestroyed(this.destroyRef)
     )

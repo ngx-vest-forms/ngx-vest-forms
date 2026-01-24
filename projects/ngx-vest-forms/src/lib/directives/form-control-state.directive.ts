@@ -213,18 +213,21 @@ export class FormControlStateDirective {
       return () => sub?.unsubscribe();
     });
 
-    // Robustly sync touched/dirty after every render (Angular 18+ best practice)
+    // Robustly sync touched/dirty/pending after every render (Angular 18+ best practice)
+    // This handles cases where statusChanges events are missed or delayed
     afterEveryRender(
       () => {
         const control = this.#activeControl();
         if (control) {
-          const current = this.#interactionState();
+          const currentInteraction = this.#interactionState();
+          const currentState = this.#controlStateSignal();
           const newTouched = control.touched ?? false;
           const newDirty = control.dirty ?? false;
 
+          // Sync interaction state (touched/dirty)
           if (
-            newTouched !== current.isTouched ||
-            newDirty !== current.isDirty
+            newTouched !== currentInteraction.isTouched ||
+            newDirty !== currentInteraction.isDirty
           ) {
             this.#interactionState.set({
               isTouched: newTouched,
@@ -233,9 +236,29 @@ export class FormControlStateDirective {
 
             // Mark as validated when control becomes touched (e.g., user blurred the field)
             // This handles the case where blur doesn't trigger statusChanges (field already invalid)
-            if (newTouched && !current.isTouched) {
+            if (newTouched && !currentInteraction.isTouched) {
               this.#hasBeenValidated.set(true);
             }
+          }
+
+          // Sync pending state only when it transitions from true to false
+          // This fixes "Validating..." being stuck when statusChanges misses the transition
+          // We only sync when pending goes false to avoid interfering with async validation in progress
+          const controlPending = control.pending ?? false;
+          if (currentState.isPending && !controlPending) {
+            // Pending changed from true to false - update the full state
+            const newStatus = control.status as FormControlStatus | null;
+            this.#controlStateSignal.set({
+              status: newStatus,
+              isPending: false,
+              isValid: control.valid ?? false,
+              isInvalid: control.invalid ?? false,
+              isPristine: control.pristine ?? true,
+              isDisabled: control.disabled ?? false,
+              isTouched: newTouched,
+              isDirty: newDirty,
+              errors: control.errors as VestValidationErrors | null,
+            });
           }
         }
       },

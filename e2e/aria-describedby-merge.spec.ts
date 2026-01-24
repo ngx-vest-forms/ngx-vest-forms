@@ -51,10 +51,14 @@ test.describe('Accessibility - aria-describedby merge', () => {
         'aria-describedby',
         /password-hint/
       );
-      await expect(password).toHaveAttribute(
-        'aria-describedby',
-        /ngx-control-wrapper-.*-error/
-      );
+      await expect
+        .poll(
+          async () => {
+            return await password.getAttribute('aria-describedby');
+          },
+          { timeout: 10000 }
+        )
+        .toMatch(/ngx-control-wrapper-.*-error/);
     });
 
     await test.step('Fix validation error and verify wrapper token removed but hint remains', async () => {
@@ -63,10 +67,23 @@ test.describe('Accessibility - aria-describedby merge', () => {
       await fillAndBlur(password, 'LongEnough123');
       await expectFieldValid(password);
 
-      await expect(password).toHaveAttribute(
-        'aria-describedby',
-        /^password-hint$/
-      );
+      await expect
+        .poll(
+          async () => {
+            const describedBy = await password.getAttribute('aria-describedby');
+            const tokens = describedBy?.split(/\s+/).filter(Boolean) ?? [];
+            const hasHint = tokens.includes('password-hint');
+            const hasWrapperError = tokens.some((token) =>
+              token.includes('-error')
+            );
+            const hasWrapperWarning = tokens.some((token) =>
+              token.includes('-warning')
+            );
+            return hasHint && !hasWrapperError && !hasWrapperWarning;
+          },
+          { timeout: 10000 }
+        )
+        .toBe(true);
     });
   });
 });

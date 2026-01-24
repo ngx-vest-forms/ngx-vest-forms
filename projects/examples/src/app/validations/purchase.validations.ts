@@ -14,10 +14,11 @@ export const createPurchaseValidationSuite = (
       only(field);
 
       test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
+        const ageValue = Number(model.age);
         enforce(
           model.firstName === 'Brecht' &&
             model.lastName === 'Billiet' &&
-            model.age === 30
+            ageValue === 30
         ).isFalsy();
       });
 
