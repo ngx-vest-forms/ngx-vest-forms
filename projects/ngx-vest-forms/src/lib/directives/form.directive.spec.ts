@@ -325,10 +325,14 @@ describe('FormDirective - Async Validator', () => {
           only(field);
           // Warning - password should be longer than 12 characters (informational)
           // Runs FIRST so it gets captured before the error test
-          vestTest('password', 'Password should be longer than 12 characters', () => {
-            warn();
-            enforce(model.password ?? '').longerThan(12);
-          });
+          vestTest(
+            'password',
+            'Password should be longer than 12 characters',
+            () => {
+              warn();
+              enforce(model.password ?? '').longerThan(12);
+            }
+          );
           // Error - password must be at least 8 characters
           vestTest('password', 'Password must be at least 8 characters', () => {
             enforce(model.password ?? '').longerThanOrEquals(8);

@@ -287,12 +287,29 @@ export async function fillAndBlur(
     inputType === 'time' ||
     inputType === 'datetime-local'
   ) {
-    await field.fill(value);
-    await field.blur();
+    await setDateLikeValueAndBlur(field, value);
     return;
   }
 
   await typeAndBlur(field, value, 0);
+}
+
+/**
+ * Set value on date/time-like inputs and dispatch events to trigger Angular change detection.
+ * This avoids Playwright limitations with type="date" value setting across browsers.
+ */
+export async function setDateLikeValueAndBlur(
+  field: Locator,
+  value: string
+): Promise<void> {
+  await field.click();
+  await field.evaluate((el, nextValue) => {
+    const input = el as HTMLInputElement;
+    input.value = nextValue as string;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }, value);
+  await field.blur();
 }
 
 /**

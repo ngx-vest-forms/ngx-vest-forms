@@ -329,12 +329,7 @@ test.describe('Purchase Form', () => {
       });
     });
 
-    // FIXME: This test has timing issues with duplicate element IDs across
-    // billing/shipping address components. The locators get confused when
-    // filling multiple fields in sequence due to Angular change detection
-    // re-rendering between fills. The validation itself works - see the
-    // 'should preserve shipping address when toggling checkbox' test.
-    test.fixme('should validate that shipping address differs from billing address', async ({
+    test('should validate that shipping address differs from billing address', async ({
       page,
     }) => {
       await test.step('Set same address for both billing and shipping', async () => {
@@ -351,15 +346,12 @@ test.describe('Purchase Form', () => {
         });
         await expect(shippingHeading).toBeVisible();
 
-        // Fill ALL billing address fields
-        // Use first() since billing address comes before shipping in the DOM
-        const billingStreet = page.getByPlaceholder('Type street').first();
-        const billingNumber = page
-          .getByPlaceholder('Type street number')
-          .first();
-        const billingCity = page.getByPlaceholder('Type city').first();
-        const billingZipcode = page.getByPlaceholder('Type zipcode').first();
-        const billingCountry = page.getByPlaceholder('Type country').first();
+        // Fill ALL billing address fields using stable ids
+        const billingStreet = page.locator('#billing-address-street');
+        const billingNumber = page.locator('#billing-address-number');
+        const billingCity = page.locator('#billing-address-city');
+        const billingZipcode = page.locator('#billing-address-zipcode');
+        const billingCountry = page.locator('#billing-address-country');
 
         await fillAndBlur(billingStreet, '456 Main St');
         await fillAndBlur(billingNumber, '10');
@@ -367,15 +359,12 @@ test.describe('Purchase Form', () => {
         await fillAndBlur(billingZipcode, '1234AB');
         await fillAndBlur(billingCountry, 'Netherlands');
 
-        // Fill ALL shipping address fields with SAME values
-        // Use nth(1) to get the second instance (shipping address)
-        const shippingStreet = page.getByPlaceholder('Type street').nth(1);
-        const shippingNumber = page
-          .getByPlaceholder('Type street number')
-          .nth(1);
-        const shippingCity = page.getByPlaceholder('Type city').nth(1);
-        const shippingZipcode = page.getByPlaceholder('Type zipcode').nth(1);
-        const shippingCountry = page.getByPlaceholder('Type country').nth(1);
+        // Fill ALL shipping address fields with SAME values using stable ids
+        const shippingStreet = page.locator('#shipping-address-street');
+        const shippingNumber = page.locator('#shipping-address-number');
+        const shippingCity = page.locator('#shipping-address-city');
+        const shippingZipcode = page.locator('#shipping-address-zipcode');
+        const shippingCountry = page.locator('#shipping-address-country');
 
         // Wait for the shipping fields to be available
         await expect(shippingStreet).toBeVisible();
