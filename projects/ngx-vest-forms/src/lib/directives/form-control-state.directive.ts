@@ -65,7 +65,6 @@ const INITIAL_FORM_CONTROL_STATE = {
 @Directive({
   selector: '[formControlState], [ngxControlState]',
   exportAs: 'formControlState, ngxControlState',
-  standalone: true,
 })
 export class FormControlStateDirective {
   protected readonly contentNgModel = contentChild(NgModel);
@@ -97,17 +96,15 @@ export class FormControlStateDirective {
   );
 
   /**
-   * Internal signal for robust touched/dirty tracking (syncs after every render)
+   * Consolidated internal signal for interaction state tracking.
+   * Combines touched, dirty, and hasBeenValidated into a single signal
+   * to reduce signal overhead and simplify state updates.
    */
-  readonly #interactionState = signal({ isTouched: false, isDirty: false });
-
-  /**
-   * Track whether this control has been validated at least once.
-   * This is separate from touched - a field can be validated via validationConfig
-   * without being touched by the user. This flag enables showing errors for
-   * validationConfig-triggered validations even before user interaction.
-   */
-  readonly #hasBeenValidated = signal(false);
+  readonly #interactionState = signal({
+    isTouched: false,
+    isDirty: false,
+    hasBeenValidated: false,
+  });
 
   /**
    * Track the previous status to detect actual status changes (not just status emissions).
@@ -123,8 +120,8 @@ export class FormControlStateDirective {
   );
 
   constructor() {
-    // Update control state reactively
-    effect(() => {
+    // Update control state reactively with proper cleanup
+    effect((onCleanup) => {
       const control = this.#activeControl();
       const interaction = this.#interactionState();
 
@@ -172,7 +169,10 @@ export class FormControlStateDirective {
             currentStatus !== 'PENDING' &&
             dirty) // Or control value changed (typed)
         ) {
-          this.#hasBeenValidated.set(true);
+          this.#interactionState.update((state) => ({
+            ...state,
+            hasBeenValidated: true,
+          }));
         }
 
         // Track current status for next iteration
@@ -210,7 +210,8 @@ export class FormControlStateDirective {
         errors: errors as VestValidationErrors | null,
       });
 
-      return () => sub?.unsubscribe();
+      // Proper cleanup using onCleanup callback (Angular 21 best practice)
+      onCleanup(() => sub?.unsubscribe());
     });
 
     // Robustly sync touched/dirty/pending after every render (Angular 18+ best practice)
@@ -229,16 +230,19 @@ export class FormControlStateDirective {
             newTouched !== currentInteraction.isTouched ||
             newDirty !== currentInteraction.isDirty
           ) {
-            this.#interactionState.set({
-              isTouched: newTouched,
-              isDirty: newDirty,
-            });
-
             // Mark as validated when control becomes touched (e.g., user blurred the field)
             // This handles the case where blur doesn't trigger statusChanges (field already invalid)
-            if (newTouched && !currentInteraction.isTouched) {
-              this.#hasBeenValidated.set(true);
-            }
+            const shouldMarkValidated =
+              newTouched && !currentInteraction.isTouched;
+
+            this.#interactionState.update((state) => ({
+              ...state,
+              isTouched: newTouched,
+              isDirty: newDirty,
+              hasBeenValidated: shouldMarkValidated
+                ? true
+                : state.hasBeenValidated,
+            }));
           }
 
           // Sync pending state only when it transitions from true to false
@@ -404,7 +408,9 @@ export class FormControlStateDirective {
    * True after the first validation completes, even if the user hasn't touched the field.
    * This enables showing errors for validationConfig-triggered validations.
    */
-  readonly hasBeenValidated = computed(() => this.#hasBeenValidated());
+  readonly hasBeenValidated = computed(
+    () => this.#interactionState().hasBeenValidated
+  );
 }
 
 /**

@@ -1,7 +1,15 @@
-import { computed, Directive, effect, inject, input, Signal } from '@angular/core';
+import {
+  computed,
+  Directive,
+  effect,
+  inject,
+  input,
+  signal,
+  Signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NgForm } from '@angular/forms';
-import { map, merge, of, startWith } from 'rxjs';
+import { merge, of, startWith } from 'rxjs';
 import {
   NGX_ERROR_DISPLAY_MODE_TOKEN,
   SC_ERROR_DISPLAY_MODE_TOKEN,
@@ -16,7 +24,6 @@ export const SC_ERROR_DISPLAY_MODE_DEFAULT: ScErrorDisplayMode =
 @Directive({
   selector: '[formErrorDisplay], [ngxErrorDisplay]',
   exportAs: 'formErrorDisplay, ngxErrorDisplay',
-  standalone: true,
   hostDirectives: [FormControlStateDirective],
 })
 export class FormErrorDisplayDirective {
@@ -52,23 +59,32 @@ export class FormErrorDisplayDirective {
   readonly updateOn = this.#formControlState.updateOn;
 
   /**
+   * Internal trigger signal that updates whenever form submit or status changes.
+   * Used to ensure reactive tracking for the formSubmitted computed signal.
+   */
+  readonly #formEventTrigger = this.#ngForm
+    ? toSignal(
+        merge(this.#ngForm.ngSubmit, this.#ngForm.statusChanges ?? of()).pipe(
+          startWith(null)
+        ),
+        { initialValue: null }
+      )
+    : signal(null);
+
+  /**
    * Signal that tracks NgForm.submitted state reactively.
    *
-   * Uses toSignal() to convert ngSubmit events + statusChanges into a reactive signal.
+   * Uses a trigger signal pattern for cleaner reactive tracking:
    * - ngSubmit: fires when form is submitted (sets NgForm.submitted = true)
    * - statusChanges: fires after resetForm() (which sets NgForm.submitted = false)
    *
    * This ensures proper sync with both submit and reset operations.
    */
-  readonly formSubmitted: Signal<boolean> = this.#ngForm
-    ? toSignal(
-        merge(this.#ngForm.ngSubmit, this.#ngForm.statusChanges ?? of()).pipe(
-          startWith(null),
-          map(() => this.#ngForm?.submitted ?? false)
-        ),
-        { initialValue: this.#ngForm.submitted }
-      )
-    : toSignal(of(false), { initialValue: false });
+  readonly formSubmitted: Signal<boolean> = computed(() => {
+    // Trigger signal ensures this recomputes on submit/status changes
+    this.#formEventTrigger();
+    return this.#ngForm?.submitted ?? false;
+  });
 
   constructor() {
     // Warn about problematic combinations of updateOn and errorDisplayMode

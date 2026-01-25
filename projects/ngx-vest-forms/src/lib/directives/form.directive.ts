@@ -61,6 +61,13 @@ import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
 import { ValidationOptions } from './validation-options';
 
 /**
+ * Duration (in milliseconds) to keep fields marked as "in-progress" after validation.
+ * This prevents immediate re-triggering of bidirectional validations.
+ * Increased from 100ms to 500ms to give validators enough time to complete and propagate.
+ */
+const VALIDATION_IN_PROGRESS_TIMEOUT_MS = 500;
+
+/**
  * Type for validation configuration that accepts both the typed and untyped versions.
  * This ensures backward compatibility while supporting the new typed API.
  */
@@ -982,14 +989,11 @@ export class FormDirective<T extends Record<string, unknown>> {
 
     // Keep fields marked as in-progress for a short time to prevent immediate re-triggering
     // Use setTimeout to ensure async validators have time to complete before allowing new triggers
-    // INCREASED from 100ms to 500ms to fix bidirectional validation issues with password/date fields
-    // This gives validators enough time to complete and propagate before allowing re-triggering
-    // Bidirectional validations need more time because both fields validate each other
     setTimeout(() => {
       this.validationInProgress.delete(triggerField);
       for (const depField of dependents) {
         this.validationInProgress.delete(depField);
       }
-    }, 500);
+    }, VALIDATION_IN_PROGRESS_TIMEOUT_MS);
   }
 }
