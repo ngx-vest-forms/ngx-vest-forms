@@ -219,7 +219,7 @@ Access complete form and field state through the `FormErrorDisplayDirective` or 
 - Warnings are **non-blocking** and do not make a field invalid.
 - Warnings are stored separately from `control.errors` and are cleared on `resetForm()`.
 - Warnings may appear after `validationConfig` triggers validation, even if the field
-  was not touched yet.
+- was not touched yet. Use `NGX_WARNING_DISPLAY_MODE_TOKEN` to require touch-only display.
 
 **Tip**: For async validations, use `createDebouncedPendingState()` to prevent "Validating..." messages from flashing when validation completes quickly (< 200ms).
 

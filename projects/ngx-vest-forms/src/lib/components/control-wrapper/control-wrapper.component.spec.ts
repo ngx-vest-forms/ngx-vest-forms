@@ -766,6 +766,67 @@ describe('ScControlWrapperComponent', () => {
       });
     });
 
+    it('should allow warnings to be shown only after touch via warningDisplayMode', async () => {
+      const warningOnlySuite = staticSuite(
+        (data: TestModel = {}, field?: string) => {
+          only(field);
+          vestTest('username', 'Username is too short for comfort', () => {
+            warn();
+            enforce(data.username ?? '').longerThanOrEquals(5);
+          });
+        }
+      );
+
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper [warningDisplayMode]="'on-touch'">
+              <label for="username">Username</label>
+              <input
+                id="username"
+                name="username"
+                [ngModel]="model().username"
+              />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class WarningDisplayModeComponent {
+        model = signal({ username: '' });
+        suite = warningOnlySuite;
+      }
+
+      await render(WarningDisplayModeComponent);
+      const usernameInput = screen.getByLabelText('Username');
+
+      await userEvent.type(usernameInput, 'abc');
+
+      await waitFor(
+        () => {
+          expect(
+            screen.queryByText('Username is too short for comfort')
+          ).not.toBeInTheDocument();
+        },
+        { timeout: 500 }
+      );
+
+      await userEvent.tab();
+
+      await screen.findByText(
+        'Username is too short for comfort',
+        {},
+        {
+          timeout: 1000,
+        }
+      );
+    });
+
     it('should use role="status" with aria-live="polite" for pending state', async () => {
       // Use SlowAsyncTestComponent to reliably test pending state ARIA attributes
       await render(SlowAsyncTestComponent);

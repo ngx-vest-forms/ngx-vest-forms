@@ -232,6 +232,90 @@ All error display modes maintain WCAG 2.2 Level AA compliance. The `ngx-control-
 
 See [Accessibility Guide](./ACCESSIBILITY.md) for more details.
 
+### `NGX_WARNING_DISPLAY_MODE_TOKEN`
+
+Controls how non-blocking warnings are displayed in the `ngx-control-wrapper` component.
+
+**Type:** `InjectionToken<NgxWarningDisplayMode>`
+
+**Purpose:** Configure whether warnings should be displayed only after touch or also after validation runs (e.g., `validationConfig`-triggered).
+
+#### Warning Display Modes
+
+```typescript
+type NgxWarningDisplayMode = 'on-touch' | 'on-validated-or-touch';
+```
+
+- **`on-validated-or-touch`** (default): Show warnings after validation has run or after touch
+- **`on-touch`**: Show warnings only after the field loses focus (touched)
+
+#### Usage
+
+**Global Configuration:**
+
+```typescript
+import { bootstrapApplication } from '@angular/platform-browser';
+import { NGX_WARNING_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
+import { AppComponent } from './app/app.component';
+
+bootstrapApplication(AppComponent, {
+  providers: [
+    {
+      provide: NGX_WARNING_DISPLAY_MODE_TOKEN,
+      useValue: 'on-touch', // Only show warnings after touch
+    },
+  ],
+});
+```
+
+**Component-Level Configuration:**
+
+```typescript
+import { Component, signal } from '@angular/core';
+import { NGX_WARNING_DISPLAY_MODE_TOKEN, NgxDeepPartial } from 'ngx-vest-forms';
+
+type SignupModel = NgxDeepPartial<{
+  username: string;
+}>;
+
+@Component({
+  selector: 'ngx-signup-form',
+  template: `
+    <form
+      ngxVestForm
+      [formValue]="formValue()"
+      (formValueChange)="formValue.set($event)"
+    >
+      <ngx-control-wrapper>
+        <label for="username">Username</label>
+        <input id="username" name="username" [ngModel]="formValue().username" />
+      </ngx-control-wrapper>
+    </form>
+  `,
+  providers: [
+    {
+      provide: NGX_WARNING_DISPLAY_MODE_TOKEN,
+      useValue: 'on-touch',
+    },
+  ],
+})
+export class SignupFormComponent {
+  protected readonly formValue = signal<SignupModel>({});
+}
+```
+
+#### UX Considerations
+
+**Use `on-validated-or-touch` (default) when:**
+
+- Warnings are part of cross-field validation flows
+- You want warnings to appear when dependent validation runs
+
+**Use `on-touch` when:**
+
+- You want warnings only after explicit user interaction
+- You want to reduce non-blocking feedback before users focus a field
+
 ### Legacy Token: `SC_ERROR_DISPLAY_MODE_TOKEN`
 
 **Status:** ⚠️ Deprecated
@@ -298,6 +382,7 @@ import { ApplicationConfig } from '@angular/core';
 import {
   NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
   NGX_ERROR_DISPLAY_MODE_TOKEN,
+  NGX_WARNING_DISPLAY_MODE_TOKEN,
 } from 'ngx-vest-forms';
 
 export const appConfig: ApplicationConfig = {
@@ -311,6 +396,11 @@ export const appConfig: ApplicationConfig = {
     {
       provide: NGX_ERROR_DISPLAY_MODE_TOKEN,
       useValue: 'on-blur',
+    },
+    // Show warnings only after touch
+    {
+      provide: NGX_WARNING_DISPLAY_MODE_TOKEN,
+      useValue: 'on-touch',
     },
   ],
 };

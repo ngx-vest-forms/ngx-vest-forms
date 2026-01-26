@@ -76,8 +76,10 @@ let nextUniqueId = 0;
  *     keeping inline field errors non-disruptive. Follows WCAG ARIA21/ARIA22 guidance.
  *
  * Error & Warning Display Behavior:
- *   - The error display mode can be configured globally using the SC_ERROR_DISPLAY_MODE_TOKEN injection token (import from core), or per instance using the `errorDisplayMode` input on FormErrorDisplayDirective (which this component uses as a hostDirective).
+ *   - The error display mode can be configured globally using the NGX_ERROR_DISPLAY_MODE_TOKEN injection token, or per instance using the `errorDisplayMode` input on FormErrorDisplayDirective (which this component uses as a hostDirective).
  *   - Possible values: 'on-blur' | 'on-submit' | 'on-blur-or-submit' (default: 'on-blur-or-submit')
+ *   - The warning display mode can be configured globally using NGX_WARNING_DISPLAY_MODE_TOKEN, or per instance using the `warningDisplayMode` input on FormErrorDisplayDirective.
+ *   - Possible values: 'on-touch' | 'on-validated-or-touch' (default: 'on-validated-or-touch')
  *
  * Example (per instance):
  *   <div ngxControlWrapper>
@@ -98,10 +100,10 @@ let nextUniqueId = 0;
  *
  * Example (global config):
  *   import { provide } from '@angular/core';
- *   import { SC_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
+ *   import { NGX_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
  *   @Component({
  *     providers: [
- *       provide(SC_ERROR_DISPLAY_MODE_TOKEN, { useValue: 'submit' })
+ *       provide(NGX_ERROR_DISPLAY_MODE_TOKEN, { useValue: 'submit' })
  *     ]
  *   })
  *   export class MyComponent {}
@@ -134,7 +136,7 @@ let nextUniqueId = 0;
   hostDirectives: [
     {
       directive: FormErrorDisplayDirective,
-      inputs: ['errorDisplayMode'],
+      inputs: ['errorDisplayMode', 'warningDisplayMode'],
     },
   ],
 })
@@ -203,7 +205,10 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
     const hasBeenValidated = this.errorDisplay.hasBeenValidated();
     const isPending = this.errorDisplay.isPending();
     const hasWarnings = this.errorDisplay.warnings().length > 0;
-    return (isTouched || hasBeenValidated) && hasWarnings && !isPending;
+    const mode = this.errorDisplay.warningDisplayMode();
+    const shouldShowAfterInteraction =
+      mode === 'on-touch' ? isTouched : isTouched || hasBeenValidated;
+    return shouldShowAfterInteraction && hasWarnings && !isPending;
   });
 
   /**

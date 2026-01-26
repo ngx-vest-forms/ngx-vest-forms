@@ -15,7 +15,8 @@ The `ngx-control-wrapper` component uses **polite announcements** for inline fie
 - Prevents excessive screen reader chatter
 
 Warnings may also appear after `validationConfig`-triggered validation, even if the
-field was not touched yet.
+field was not touched yet. Use `NGX_WARNING_DISPLAY_MODE_TOKEN` or
+`warningDisplayMode="on-touch"` to require touch-only warning visibility.
 
 The wrapper also:
 

@@ -79,6 +79,7 @@ export { ROOT_FORM } from './lib/constants';
 // Tokens
 export {
   NGX_ERROR_DISPLAY_MODE_TOKEN,
+  NGX_WARNING_DISPLAY_MODE_TOKEN,
   SC_ERROR_DISPLAY_MODE_TOKEN,
 } from './lib/directives/error-display-mode.token';
 export { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from './lib/tokens/debounce.token';
@@ -91,7 +92,10 @@ export { FormGroupWrapperComponent } from './lib/components/form-group-wrapper/f
 export { FormControlStateDirective } from './lib/directives/form-control-state.directive';
 export { FormErrorControlDirective } from './lib/directives/form-error-control.directive';
 export { FormErrorDisplayDirective } from './lib/directives/form-error-display.directive';
-export type { ScErrorDisplayMode } from './lib/directives/form-error-display.directive';
+export type {
+  NgxWarningDisplayMode,
+  ScErrorDisplayMode,
+} from './lib/directives/form-error-display.directive';
 export { FormModelGroupDirective } from './lib/directives/form-model-group.directive';
 export { FormModelDirective } from './lib/directives/form-model.directive';
 export { FormDirective } from './lib/directives/form.directive';

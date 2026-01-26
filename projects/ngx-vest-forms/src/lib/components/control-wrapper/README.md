@@ -43,6 +43,17 @@ Accepted values:
 
 This input is provided by the composed `FormErrorDisplayDirective`.
 
+### `warningDisplayMode`
+
+Controls _when_ warnings become visible.
+
+Accepted values:
+
+- "on-validated-or-touch" (default)
+- "on-touch"
+
+This input is provided by the composed `FormErrorDisplayDirective`.
+
 ### `ariaAssociationMode`
 
 Controls how this wrapper applies `aria-describedby` / `aria-invalid` to descendant controls.
@@ -85,7 +96,8 @@ The pending region is positioned `absolute` in the top-right corner of the wrapp
 
 - Warnings are **non-blocking** and do not make a field invalid.
 - Warnings can show after validation has run due to `validationConfig` even if the
-  field was not touched yet.
+  field was not touched yet (default behavior). Use `warningDisplayMode="on-touch"`
+  to require explicit interaction before warnings appear.
 - Warnings are cleared on `resetForm()`.
 
 ### Styling dependency (Tailwind CSS)

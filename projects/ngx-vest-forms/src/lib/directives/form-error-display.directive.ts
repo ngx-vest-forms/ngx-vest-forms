@@ -12,14 +12,18 @@ import { NgForm } from '@angular/forms';
 import { merge, of, startWith } from 'rxjs';
 import {
   NGX_ERROR_DISPLAY_MODE_TOKEN,
+  NGX_WARNING_DISPLAY_MODE_TOKEN,
   SC_ERROR_DISPLAY_MODE_TOKEN,
 } from './error-display-mode.token';
 import { FormControlStateDirective } from './form-control-state.directive';
 
 export type ScErrorDisplayMode = 'on-blur' | 'on-submit' | 'on-blur-or-submit';
+export type NgxWarningDisplayMode = 'on-touch' | 'on-validated-or-touch';
 
 export const SC_ERROR_DISPLAY_MODE_DEFAULT: ScErrorDisplayMode =
   'on-blur-or-submit';
+export const SC_WARNING_DISPLAY_MODE_DEFAULT: NgxWarningDisplayMode =
+  'on-validated-or-touch';
 
 @Directive({
   selector: '[formErrorDisplay], [ngxErrorDisplay]',
@@ -39,6 +43,15 @@ export class FormErrorDisplayDirective {
     inject(NGX_ERROR_DISPLAY_MODE_TOKEN, { optional: true }) ??
       inject(SC_ERROR_DISPLAY_MODE_TOKEN, { optional: true }) ??
       SC_ERROR_DISPLAY_MODE_DEFAULT
+  );
+
+  /**
+   * Input signal for warning display mode.
+   * Controls whether warnings are shown only after touch or also after validation.
+   */
+  readonly warningDisplayMode = input<NgxWarningDisplayMode>(
+    inject(NGX_WARNING_DISPLAY_MODE_TOKEN, { optional: true }) ??
+      SC_WARNING_DISPLAY_MODE_DEFAULT
   );
 
   // Expose state signals from FormControlStateDirective
