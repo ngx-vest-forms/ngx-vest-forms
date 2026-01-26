@@ -49,7 +49,7 @@ let nextUniqueId = 0;
  * - Unique IDs for error/warning/pending regions
  * - `aria-describedby` linking errors to form controls
  * - `aria-invalid="true"` when errors are shown
- * - `role="status"` with `aria-live="polite"` for non-disruptive announcements
+ * - Uses `role="status"` with `aria-live="polite"` for non-disruptive announcements
  * - Debounced pending state to prevent flashing for quick validations
  *
  * ### WCAG 2.2 AA - Error Severity Levels
@@ -199,6 +199,11 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
    *
    * NOTE: Unlike errors, warnings can exist on VALID fields (warnings-only scenario).
    * We don't require isInvalid() because Vest warn() tests don't affect field validity.
+   *
+   * UX Note: We include `hasBeenValidated` here to support cross-field validation.
+   * If Field A triggers validation on Field B (via validationConfig), Field B should
+   * show warnings if it has them, even if the user hasn't touched Field B yet.
+   * Unlike errors (which block submission), warnings are informational and safe to safe to show.
    */
   protected readonly shouldShowWarnings = computed(() => {
     const isTouched = this.errorDisplay.isTouched();
