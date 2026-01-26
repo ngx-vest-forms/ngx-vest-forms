@@ -82,6 +82,8 @@
         @if (hasPasswordErrors()) {
           <div
             class="rounded border border-red-200 bg-red-50 p-3 dark:border-red-900/30 dark:bg-red-900/20"
+            role="alert"
+            aria-atomic="true"
           >
             <div
               class="mb-1 text-xs font-semibold tracking-wider text-red-800 uppercase dark:text-red-300"
@@ -99,6 +101,8 @@
         @if (hasLocationErrors()) {
           <div
             class="rounded border border-purple-200 bg-purple-50 p-3 dark:border-purple-900/30 dark:bg-purple-900/20"
+            role="alert"
+            aria-atomic="true"
           >
             <div
               class="mb-1 text-xs font-semibold tracking-wider text-purple-800 uppercase dark:text-purple-300"
@@ -114,6 +118,7 @@
         }
 
         @if (hasDateErrors()) {
+          role="alert" aria-atomic="true"
           <div
             class="rounded border border-orange-200 bg-orange-50 p-3 dark:border-orange-900/30 dark:bg-orange-900/20"
           >
