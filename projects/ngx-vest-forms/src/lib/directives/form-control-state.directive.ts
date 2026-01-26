@@ -315,7 +315,9 @@ export class FormControlStateDirective {
     // Vest errors are stored in the 'errors' property as an array
     const vestErrors = errors.errors;
     if (vestErrors) {
-      return [...vestErrors];
+      return (vestErrors as readonly unknown[])
+        .map((error) => normalizeErrorMessage(error))
+        .filter((error): error is string => Boolean(error));
     }
 
     // Fallback to flattened Angular error keys, excluding 'warnings' key
@@ -423,4 +425,28 @@ function isErrorWithMessage(value: unknown): value is { message: string } {
     'message' in value &&
     typeof (value as { message: unknown }).message === 'string'
   );
+}
+
+function normalizeErrorMessage(value: unknown): string | null {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (isErrorWithMessage(value)) {
+    return value.message;
+  }
+
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value === 'object') {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+
+  return String(value);
 }

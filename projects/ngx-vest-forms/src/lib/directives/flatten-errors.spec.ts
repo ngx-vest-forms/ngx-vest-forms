@@ -195,4 +195,32 @@ describe('FormControlStateDirective - #flattenAngularErrors bug fix', () => {
     expect(errorText).toContain('required');
     expect(errorText).toContain('minlength');
   });
+
+  it('should normalize non-string vest errors in errors array', async () => {
+    // Simulate Vest-style errors array containing objects
+    const mockErrors = {
+      errors: [
+        { message: 'Object error message' },
+        { code: 'ERR_CUSTOM', detail: 'Custom details' },
+        123,
+      ],
+    };
+
+    const ngModel = component.ngModelRef();
+    if (!ngModel) throw new Error('NgModel not found');
+
+    ngModel.control.setErrors(mockErrors);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const errorEl = fixture.nativeElement.querySelector('#error-messages');
+    const errorText = errorEl.textContent || '';
+
+    // Should extract message for objects with message
+    expect(errorText).toContain('Object error message');
+    // Should stringify other objects
+    expect(errorText).toContain('"code":"ERR_CUSTOM"');
+    // Should stringify primitives
+    expect(errorText).toContain('123');
+  });
 });
