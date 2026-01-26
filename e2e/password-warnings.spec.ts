@@ -78,11 +78,12 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
       );
 
       // Should NOT contain array indices (bug from issue #69)
-      const warningText = await warningsContainer.textContent();
-      expect(warningText).not.toMatch(/^\s*0\s*$/);
-      expect(warningText).not.toMatch(/^\s*1\s*$/);
-      expect(warningText).not.toContain('"0"');
-      expect(warningText).not.toContain('"1"');
+      const warningTexts = await warningsContainer
+        .locator('span')
+        .allTextContents();
+      expect(warningTexts.every((text) => !/^\s*\d+\s*$/.test(text))).toBe(
+        true
+      );
     });
 
     await test.step('Verify warnings have proper ARIA attributes', async () => {

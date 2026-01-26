@@ -374,7 +374,7 @@ export class FormControlStateDirective {
       // Get the field path from the control's path property
       // NgModel.path returns an array like ['passwords', 'password'] which needs to be joined
       const path = (activeControl as { path?: string[] }).path;
-      if (path) {
+      if (path?.length) {
         const fieldPath = path.join('.');
         const warnings = fieldWarnings.get(fieldPath);
         if (warnings) {
