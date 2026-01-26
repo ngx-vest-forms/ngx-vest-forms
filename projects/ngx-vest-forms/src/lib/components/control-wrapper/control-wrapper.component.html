@@ -3,8 +3,26 @@
 </div>
 
 <!--
-  Live regions are kept stable in the DOM to improve announcement reliability.
-  We update the inner content instead of relying on node mount/unmount.
+  WCAG 2.2 AA Compliance for Inline Field Validation:
+
+  IMPORTANT DISTINCTION - Field-level vs Form-level errors:
+  - FIELD-LEVEL errors (this component): Use role="status" with aria-live="polite"
+    These are inline validation messages that appear as users interact with fields.
+    Using "assertive" would be too disruptive when users are filling out multiple fields.
+  - FORM-LEVEL blocking errors (e.g., submission failed): Should use role="alert" with
+    aria-live="assertive" in a separate form-level error summary component.
+
+  This component handles FIELD-LEVEL messages:
+  - Errors: role="status" with aria-live="polite" (non-disruptive, field is already
+    marked with aria-invalid="true" and aria-describedby points here)
+  - Warnings: role="status" with aria-live="polite" (informational, doesn't block)
+  - Pending: role="status" with aria-live="polite" (status update)
+
+  The aria-invalid="true" + aria-describedby association on the input provides
+  the primary accessibility pathway; the live region is supplementary.
+
+  @see https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA21 - Using aria-invalid
+  @see https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA22 - Using role=status
 -->
 <div
   [id]="errorId"
@@ -14,14 +32,20 @@
   aria-atomic="true"
 >
   @if (errorDisplay.shouldShowErrors()) {
-    <ul>
+    <ul class="m-0 mt-1 list-none space-y-1 p-0">
       @for (error of errorDisplay.errors(); track error) {
-        <li>{{ error.message || error }}</li>
+        <li>{{ error }}</li>
       }
     </ul>
   }
 </div>
 
+<!--
+  Warnings: Non-blocking validation messages (Vest warn())
+  - Use role="status" with aria-live="polite" per WCAG ARIA22
+  - Default: show after validation runs or touch; configurable to require touch only
+  - Warnings do NOT affect field validity - they're informational only
+-->
 <div
   [id]="warningId"
   class="text-sm text-yellow-700"
@@ -29,8 +53,8 @@
   aria-live="polite"
   aria-atomic="true"
 >
-  @if (errorDisplay.warnings().length > 0) {
-    <ul>
+  @if (shouldShowWarnings()) {
+    <ul class="m-0 mt-1 list-none space-y-1 p-0">
       @for (warn of errorDisplay.warnings(); track warn) {
         <li>{{ warn }}</li>
       }

@@ -1,7 +1,6 @@
 import {
   AfterContentInit,
   computed,
-  DestroyRef,
   Directive,
   effect,
   ElementRef,
@@ -40,7 +39,6 @@ export class FormErrorControlDirective implements AfterContentInit, OnDestroy {
   });
 
   private readonly elementRef = inject(ElementRef<HTMLElement>);
-  private readonly destroyRef = inject(DestroyRef);
 
   /**
    * Controls how this directive applies ARIA attributes to descendant controls.
@@ -123,6 +121,7 @@ export class FormErrorControlDirective implements AfterContentInit, OnDestroy {
   }
 
   constructor() {
+    // Effect for ARIA attribute updates
     effect(() => {
       if (!this.contentInitialized()) return;
 
@@ -162,7 +161,8 @@ export class FormErrorControlDirective implements AfterContentInit, OnDestroy {
       }
     });
 
-    effect(() => {
+    // Effect for MutationObserver setup with proper cleanup
+    effect((onCleanup) => {
       if (!this.contentInitialized()) return;
 
       const mode = this.ariaAssociationMode();
@@ -188,11 +188,12 @@ export class FormErrorControlDirective implements AfterContentInit, OnDestroy {
           subtree: true,
         });
       }
-    });
 
-    this.destroyRef.onDestroy(() => {
-      this.mutationObserver?.disconnect();
-      this.mutationObserver = null;
+      // Proper cleanup using onCleanup callback (Angular 21 best practice)
+      onCleanup(() => {
+        this.mutationObserver?.disconnect();
+        this.mutationObserver = null;
+      });
     });
   }
 

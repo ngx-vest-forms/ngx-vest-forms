@@ -1,6 +1,6 @@
 import { FormFieldName, NgxTypedVestSuite, ROOT_FORM } from 'ngx-vest-forms';
 import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, only, staticSuite, test, warn } from 'vest';
 import { PurchaseFormModel } from '../models/purchase-form.model';
 import { SwapiService } from '../swapi.service';
 import { addressValidations } from './address.validations';
@@ -14,10 +14,11 @@ export const createPurchaseValidationSuite = (
       only(field);
 
       test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
+        const ageValue = Number(model.age);
         enforce(
           model.firstName === 'Brecht' &&
             model.lastName === 'Billiet' &&
-            model.age === 30
+            ageValue === 30
         ).isFalsy();
       });
 
@@ -101,6 +102,31 @@ export const createPurchaseValidationSuite = (
       );
       test('passwords.password', 'Password is not filled in', () => {
         enforce(model.passwords?.password).isNotBlank();
+      });
+      // Non-blocking password strength warnings
+      omitWhen(!model.passwords?.password, () => {
+        test(
+          'passwords.password',
+          'Password should be at least 12 characters for better security',
+          () => {
+            warn(); // Mark as non-blocking warning
+            enforce(model.passwords?.password).longerThanOrEquals(12);
+          }
+        );
+
+        test(
+          'passwords.password',
+          'Consider using a mix of uppercase, lowercase, numbers, and symbols',
+          () => {
+            warn(); // Mark as non-blocking warning
+            const password = model.passwords?.password || '';
+            const hasUpper = /[A-Z]/.test(password);
+            const hasLower = /[a-z]/.test(password);
+            const hasNumber = /[0-9]/.test(password);
+            const hasSymbol = /[^A-Za-z0-9]/.test(password);
+            enforce(hasUpper && hasLower && hasNumber && hasSymbol).isTruthy();
+          }
+        );
       });
       omitWhen(!model.passwords?.password, () => {
         test(

@@ -1,22 +1,33 @@
-import { computed, Directive, effect, inject, input } from '@angular/core';
+import {
+  computed,
+  Directive,
+  effect,
+  inject,
+  input,
+  signal,
+  Signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NgForm } from '@angular/forms';
-import { map, merge, of, startWith } from 'rxjs';
+import { merge, of, startWith } from 'rxjs';
 import {
   NGX_ERROR_DISPLAY_MODE_TOKEN,
+  NGX_WARNING_DISPLAY_MODE_TOKEN,
   SC_ERROR_DISPLAY_MODE_TOKEN,
 } from './error-display-mode.token';
 import { FormControlStateDirective } from './form-control-state.directive';
 
 export type ScErrorDisplayMode = 'on-blur' | 'on-submit' | 'on-blur-or-submit';
+export type NgxWarningDisplayMode = 'on-touch' | 'on-validated-or-touch';
 
 export const SC_ERROR_DISPLAY_MODE_DEFAULT: ScErrorDisplayMode =
   'on-blur-or-submit';
+export const SC_WARNING_DISPLAY_MODE_DEFAULT: NgxWarningDisplayMode =
+  'on-validated-or-touch';
 
 @Directive({
   selector: '[formErrorDisplay], [ngxErrorDisplay]',
   exportAs: 'formErrorDisplay, ngxErrorDisplay',
-
   hostDirectives: [FormControlStateDirective],
 })
 export class FormErrorDisplayDirective {
@@ -32,6 +43,15 @@ export class FormErrorDisplayDirective {
     inject(NGX_ERROR_DISPLAY_MODE_TOKEN, { optional: true }) ??
       inject(SC_ERROR_DISPLAY_MODE_TOKEN, { optional: true }) ??
       SC_ERROR_DISPLAY_MODE_DEFAULT
+  );
+
+  /**
+   * Input signal for warning display mode.
+   * Controls whether warnings are shown only after touch or also after validation.
+   */
+  readonly warningDisplayMode = input<NgxWarningDisplayMode>(
+    inject(NGX_WARNING_DISPLAY_MODE_TOKEN, { optional: true }) ??
+      SC_WARNING_DISPLAY_MODE_DEFAULT
   );
 
   // Expose state signals from FormControlStateDirective
@@ -52,23 +72,32 @@ export class FormErrorDisplayDirective {
   readonly updateOn = this.#formControlState.updateOn;
 
   /**
+   * Internal trigger signal that updates whenever form submit or status changes.
+   * Used to ensure reactive tracking for the formSubmitted computed signal.
+   */
+  readonly #formEventTrigger = this.#ngForm
+    ? toSignal(
+        merge(this.#ngForm.ngSubmit, this.#ngForm.statusChanges ?? of()).pipe(
+          startWith(null)
+        ),
+        { initialValue: null }
+      )
+    : signal(null);
+
+  /**
    * Signal that tracks NgForm.submitted state reactively.
    *
-   * Uses toSignal() to convert ngSubmit events + statusChanges into a reactive signal.
+   * Uses a trigger signal pattern for cleaner reactive tracking:
    * - ngSubmit: fires when form is submitted (sets NgForm.submitted = true)
    * - statusChanges: fires after resetForm() (which sets NgForm.submitted = false)
    *
    * This ensures proper sync with both submit and reset operations.
    */
-  readonly formSubmitted = this.#ngForm
-    ? toSignal(
-        merge(this.#ngForm.ngSubmit, this.#ngForm.statusChanges ?? of()).pipe(
-          startWith(null),
-          map(() => this.#ngForm?.submitted ?? false)
-        ),
-        { initialValue: this.#ngForm.submitted }
-      )
-    : toSignal(of(false), { initialValue: false });
+  readonly formSubmitted: Signal<boolean> = computed(() => {
+    // Trigger signal ensures this recomputes on submit/status changes
+    this.#formEventTrigger();
+    return this.#ngForm?.submitted ?? false;
+  });
 
   constructor() {
     // Warn about problematic combinations of updateOn and errorDisplayMode
@@ -96,7 +125,7 @@ export class FormErrorDisplayDirective {
    * (e.g., confirmPassword validated when password changes). We check hasBeenValidated to show
    * errors in these scenarios, providing better UX and proper ARIA attributes.
    */
-  readonly shouldShowErrors = computed(() => {
+  readonly shouldShowErrors: Signal<boolean> = computed(() => {
     const mode = this.errorDisplayMode();
     const isTouched = this.isTouched();
     const isInvalid = this.isInvalid();
@@ -127,7 +156,7 @@ export class FormErrorDisplayDirective {
   /**
    * Errors to display (filtered for pending state)
    */
-  readonly errors = computed(() => {
+  readonly errors: Signal<string[]> = computed(() => {
     if (this.hasPendingValidation()) return [];
     return this.errorMessages();
   });
@@ -135,7 +164,7 @@ export class FormErrorDisplayDirective {
   /**
    * Warnings to display (filtered for pending state)
    */
-  readonly warnings = computed(() => {
+  readonly warnings: Signal<string[]> = computed(() => {
     if (this.hasPendingValidation()) return [];
     return this.warningMessages();
   });
@@ -144,7 +173,7 @@ export class FormErrorDisplayDirective {
    * Whether the control is currently being validated (pending)
    * Excludes pristine+untouched controls to prevent "Validating..." on initial load
    */
-  readonly isPending = computed(() => {
+  readonly isPending: Signal<boolean> = computed(() => {
     // Don't show pending state for pristine untouched controls
     // This prevents "Validating..." message appearing on initial page load
     const state = this.#formControlState.controlState();

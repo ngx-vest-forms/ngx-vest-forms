@@ -355,6 +355,8 @@ describe('ScControlWrapperComponent', () => {
       // Wait for error to appear
       await screen.findByText('Email is required', {}, { timeout: 1000 });
       const errorElement = screen.getByText('Email is required');
+      // WCAG: Inline field-level errors use role="status" with aria-live="polite" for non-disruptive announcement
+      // The primary accessibility pathway is aria-invalid + aria-describedby on the input
       const errorContainer = errorElement.closest('[role="status"]');
       expect(errorContainer).toBeInTheDocument();
       expect(errorContainer).toHaveAttribute('aria-live', 'polite');
@@ -464,6 +466,7 @@ describe('ScControlWrapperComponent', () => {
       const emailError = screen.getByText('Email is required');
       const usernameError = screen.getByText('Username is required');
 
+      // WCAG: Inline field-level errors use role="status" for non-disruptive announcement
       const emailErrorContainer = emailError.closest('[role="status"]');
       const usernameErrorContainer = usernameError.closest('[role="status"]');
 
@@ -520,6 +523,7 @@ describe('ScControlWrapperComponent', () => {
 
           // Verify the error element has the matching ID
           const errorElement = screen.getByText('Email is required');
+          // WCAG: Inline field-level errors use role="status" for non-disruptive announcement
           const errorContainer = errorElement.closest('[role="status"]');
           expect(errorContainer?.id).toBe(describedBy);
 
@@ -659,7 +663,7 @@ describe('ScControlWrapperComponent', () => {
       );
     });
 
-    it('should use role="status" with aria-live="polite" for error messages', async () => {
+    it('should use role="status" with aria-live="polite" for inline field error messages (WCAG ARIA21)', async () => {
       await render(TestFormComponent);
       const emailInput = screen.getByLabelText('Email');
 
@@ -669,9 +673,11 @@ describe('ScControlWrapperComponent', () => {
 
       // Find error container using Testing Library
       const errorElement = screen.getByText('Email is required');
+      // WCAG ARIA21: Inline field-level errors use role="status" with aria-live="polite"
+      // The primary accessibility pathway is aria-invalid + aria-describedby on the input
       const errorContainer = errorElement.closest('[role="status"]');
 
-      // Verify all ARIA attributes for errors
+      // Verify all ARIA attributes for inline field errors
       expect(errorContainer).toHaveAttribute('role', 'status');
       expect(errorContainer).toHaveAttribute('aria-live', 'polite');
       expect(errorContainer).toHaveAttribute('aria-atomic', 'true');
@@ -679,19 +685,29 @@ describe('ScControlWrapperComponent', () => {
       expect(errorContainer?.id).toMatch(/^ngx-control-wrapper-\d+-error$/);
 
       // Verify the container is accessible by role
-      // Use getAllByRole since there might be multiple status regions on the page
       const statuses = screen.getAllByRole('status');
       expect(statuses).toContain(errorContainer);
     });
 
     it('should use role="status" with aria-live="polite" for warnings', async () => {
-      // Create suite with warnings
-      const warningSuite = staticSuite(
+      // Create suite with BOTH errors and warnings
+      // IMPORTANT: Warnings are only displayed when accompanied by errors
+      // because returning only warnings would affect field validity in Angular
+      // (Angular interprets any non-null ValidationErrors as invalid)
+      //
+      // To test warning ARIA attributes, we need a scenario that produces both
+      // Warning tests must come BEFORE error tests in Vest order
+      const warningAndErrorSuite = staticSuite(
         (data: TestModel = {}, field?: string) => {
           only(field);
+          // Warning test FIRST (so it gets captured before error)
           vestTest('username', 'Username looks weak', () => {
-            warn(); // Must be called synchronously at start
+            warn();
             enforce(data.username ?? '').longerThan(5);
+          });
+          // Error test SECOND (makes field invalid)
+          vestTest('username', 'Username must be at least 3 characters', () => {
+            enforce(data.username ?? '').longerThanOrEquals(3);
           });
         }
       );
@@ -718,14 +734,14 @@ describe('ScControlWrapperComponent', () => {
       })
       class WarningTestComponent {
         model = signal({ username: '' });
-        suite = warningSuite;
+        suite = warningAndErrorSuite;
       }
 
       await render(WarningTestComponent);
       const usernameInput = screen.getByLabelText('Username');
 
-      // Type short username to trigger warning
-      await userEvent.type(usernameInput, 'abc');
+      // Type 'ab' - triggers both error (< 3 chars) and warning (< 5 chars)
+      await userEvent.type(usernameInput, 'ab');
       await userEvent.tab();
 
       await screen.findByText('Username looks weak', {}, { timeout: 1000 });
@@ -748,6 +764,67 @@ describe('ScControlWrapperComponent', () => {
           expect(describedBy).toContain(warningContainer.id);
         }
       });
+    });
+
+    it('should allow warnings to be shown only after touch via warningDisplayMode', async () => {
+      const warningOnlySuite = staticSuite(
+        (data: TestModel = {}, field?: string) => {
+          only(field);
+          vestTest('username', 'Username is too short for comfort', () => {
+            warn();
+            enforce(data.username ?? '').longerThanOrEquals(5);
+          });
+        }
+      );
+
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper [warningDisplayMode]="'on-touch'">
+              <label for="username">Username</label>
+              <input
+                id="username"
+                name="username"
+                [ngModel]="model().username"
+              />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class WarningDisplayModeComponent {
+        model = signal({ username: '' });
+        suite = warningOnlySuite;
+      }
+
+      await render(WarningDisplayModeComponent);
+      const usernameInput = screen.getByLabelText('Username');
+
+      await userEvent.type(usernameInput, 'abc');
+
+      await waitFor(
+        () => {
+          expect(
+            screen.queryByText('Username is too short for comfort')
+          ).not.toBeInTheDocument();
+        },
+        { timeout: 500 }
+      );
+
+      await userEvent.tab();
+
+      await screen.findByText(
+        'Username is too short for comfort',
+        {},
+        {
+          timeout: 1000,
+        }
+      );
     });
 
     it('should use role="status" with aria-live="polite" for pending state', async () => {
@@ -854,6 +931,7 @@ describe('ScControlWrapperComponent', () => {
           // Verify the referenced element exists
           const errorElement = document.getElementById(describedBy);
           expect(errorElement).toBeInTheDocument();
+          // WCAG: Inline field-level errors use role="status" for non-disruptive announcement
           expect(errorElement).toHaveAttribute('role', 'status');
 
           // Verify format: should be a single ID

@@ -43,6 +43,17 @@ Accepted values:
 
 This input is provided by the composed `FormErrorDisplayDirective`.
 
+### `warningDisplayMode`
+
+Controls _when_ warnings become visible.
+
+Accepted values:
+
+- "on-validated-or-touch" (default)
+- "on-touch"
+
+This input is provided by the composed `FormErrorDisplayDirective`.
+
 ### `ariaAssociationMode`
 
 Controls how this wrapper applies `aria-describedby` / `aria-invalid` to descendant controls.
@@ -80,6 +91,26 @@ It renders three regions with generated IDs:
 - `...-pending` (pending)
 
 The pending region is positioned `absolute` in the top-right corner of the wrapper (host is `position: relative`).
+
+### Warnings visibility
+
+- Warnings are **non-blocking** and do not make a field invalid.
+- Warnings can show after validation has run due to `validationConfig` even if the
+  field was not touched yet (default behavior). Use `warningDisplayMode="on-touch"`
+  to require explicit interaction before warnings appear.
+- Warnings are cleared on `resetForm()`.
+
+### Styling dependency (Tailwind CSS)
+
+> **Note**: The default template uses **Tailwind CSS** utility classes for styling (colors, spacing, spinner animation).
+> If your project does not include Tailwind, the message regions will render but without visual styling.
+>
+> **Options for non-Tailwind projects**:
+>
+> 1. **Add equivalent CSS** targeting the wrapper classes (`.ngx-control-wrapper`, region elements)
+> 2. **Build a custom wrapper** using `FormErrorDisplayDirective` — see [Custom Control Wrappers](../../../../../../docs/CUSTOM-CONTROL-WRAPPERS.md)
+>
+> A future major version may replace Tailwind classes with framework-agnostic CSS custom properties.
 
 ### ARIA merging
 

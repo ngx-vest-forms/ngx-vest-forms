@@ -97,6 +97,14 @@ providers: [{ provide: NGX_ERROR_DISPLAY_MODE_TOKEN, useValue: 'on-blur' }];
 
 **Priority:** If both tokens are provided, `NGX_ERROR_DISPLAY_MODE_TOKEN` takes precedence.
 
+### Warning Display Mode
+
+```typescript
+import { NGX_WARNING_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
+
+providers: [{ provide: NGX_WARNING_DISPLAY_MODE_TOKEN, useValue: 'on-touch' }];
+```
+
 ### Validation Config Debounce
 
 ```typescript

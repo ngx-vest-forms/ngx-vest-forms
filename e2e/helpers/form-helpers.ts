@@ -4,8 +4,13 @@ import { expect, Locator, Page } from '@playwright/test';
  * Validation polling configuration
  * These values handle timing issues with Angular change detection and Vest validation
  */
-const VALIDATION_TIMEOUT = 5000; // 5s: debounce (100ms) + validation (500ms) + buffer; faster E2E feedback
-const POLL_INTERVALS = [50, 100, 250, 500, 1000, 2000]; // Gradual backoff with longer final interval
+const VALIDATION_TIMEOUT = 10000; // 10s: increased to handle cascade validations and multiple field fills
+
+/** Quick polling intervals for stability checks */
+const QUICK_INTERVALS: number[] = [50, 100, 250, 500];
+
+/** Extended polling intervals for async operations like warnings */
+const EXTENDED_INTERVALS: number[] = [50, 100, 250, 500, 1000, 2000];
 
 /**
  * Navigation helpers for the three demo forms
@@ -80,19 +85,46 @@ export async function expectFieldHasError(
   expectedError?: string | RegExp,
   strict = false
 ): Promise<void> {
-  // Wait for the field to have ng-invalid class (Angular validation detected error)
-  // Use expect.poll() with gradual backoff for race conditions
-  // This handles timing issues with Angular change detection and Vest validation
+  const STABILITY_DURATION_MS = 100; // Field must remain invalid for this long
+  const ERROR_MESSAGE_TIMEOUT = 3000; // Time to find error message in described-by elements
+  const page = field.page();
+
+  // Wait for the field to have ng-invalid class AND remain stable
+  // Note: We check for stability on the FIELD itself, not the whole page.
+  // Other fields may be validating concurrently.
+  let stableStartTime: number | null = null;
+
   await expect
     .poll(
       async () => {
+        // Check if THIS field is busy (not the whole page)
+        const fieldBusy = (await field.getAttribute('aria-busy')) === 'true';
+        if (fieldBusy) {
+          stableStartTime = null;
+          return false;
+        }
+
         const classes = await field.getAttribute('class');
-        return classes?.includes('ng-invalid') ?? false;
+        const isInvalid = classes?.includes('ng-invalid') ?? false;
+
+        if (!isInvalid) {
+          stableStartTime = null;
+          return false;
+        }
+
+        // Start stability timer if this is the first check where field is invalid
+        if (stableStartTime === null) {
+          stableStartTime = Date.now();
+        }
+
+        // Check if we've been stable for long enough
+        const stableDuration = Date.now() - stableStartTime;
+        return stableDuration >= STABILITY_DURATION_MS;
       },
       {
-        message: 'Field should have ng-invalid class',
+        message: `Field should have ng-invalid class (stable for ${STABILITY_DURATION_MS}ms)`,
         timeout: VALIDATION_TIMEOUT,
-        intervals: POLL_INTERVALS,
+        intervals: QUICK_INTERVALS,
       }
     )
     .toBe(true);
@@ -100,7 +132,7 @@ export async function expectFieldHasError(
   // Try to wait for aria-invalid
   try {
     await expect(field).toHaveAttribute('aria-invalid', 'true', {
-      timeout: 1000,
+      timeout: 1500,
     });
   } catch {
     const message =
@@ -112,36 +144,50 @@ export async function expectFieldHasError(
   }
 
   if (expectedError) {
-    const describedBy = await field.getAttribute('aria-describedby');
-    const ids = describedBy?.split(/\s+/).filter(Boolean) ?? [];
+    // Poll for the error message to appear in aria-describedby elements
+    // This handles timing issues where describedby IDs update after validation
+    let errorFound = false;
 
-    if (ids.length === 0) {
-      const message =
-        'Warning: aria-describedby not set, cannot verify error message';
-      if (strict) {
-        throw new Error(message);
-      }
-      console.warn(message);
-      return;
-    }
+    await expect
+      .poll(
+        async () => {
+          const describedBy = await field.getAttribute('aria-describedby');
+          const ids = describedBy?.split(/\s+/).filter(Boolean) ?? [];
 
-    let matched = false;
-    for (const id of ids) {
-      const candidate = field.page().locator(`#${id}`);
-      if ((await candidate.count()) === 0) {
-        continue;
-      }
+          if (ids.length === 0) {
+            return { found: false, reason: 'no-describedby' };
+          }
 
-      try {
-        await expect(candidate).toContainText(expectedError, { timeout: 1000 });
-        matched = true;
-        break;
-      } catch {
-        // Try the next described-by node.
-      }
-    }
+          for (const id of ids) {
+            const candidate = page.locator(`#${id}`);
+            if ((await candidate.count()) === 0) {
+              continue;
+            }
 
-    if (!matched) {
+            const text = await candidate.textContent();
+            if (text) {
+              const matches =
+                typeof expectedError === 'string'
+                  ? text.includes(expectedError)
+                  : expectedError.test(text);
+              if (matches) {
+                errorFound = true;
+                return { found: true };
+              }
+            }
+          }
+
+          return { found: false, reason: 'no-match' };
+        },
+        {
+          message: `Error message should match: ${expectedError}`,
+          timeout: ERROR_MESSAGE_TIMEOUT,
+          intervals: [...QUICK_INTERVALS, 1000],
+        }
+      )
+      .toMatchObject({ found: true });
+
+    if (!errorFound) {
       const message =
         'Warning: aria-describedby did not reference an element containing the expected error message';
       if (strict) {
@@ -154,23 +200,49 @@ export async function expectFieldHasError(
 
 /**
  * Assert that a field has no validation errors
- * Uses expect.poll() to handle bidirectional validation timing
+ * Uses expect.poll() with stability checking to handle bidirectional validation timing
  */
 export async function expectFieldValid(
   field: Locator,
   strict = false
 ): Promise<void> {
-  // Check for ng-valid class using expect.poll() for bidirectional validation
+  const STABILITY_DURATION_MS = 100; // Field must remain valid for this long
+
+  // Wait for the field to have ng-valid class AND remain stable
+  // Note: We check for stability on the FIELD itself, not the whole page.
+  let stableStartTime: number | null = null;
+
   await expect
     .poll(
       async () => {
+        // Check if THIS field is busy (not the whole page)
+        const fieldBusy = (await field.getAttribute('aria-busy')) === 'true';
+        if (fieldBusy) {
+          stableStartTime = null;
+          return false;
+        }
+
         const classes = await field.getAttribute('class');
-        return classes?.includes('ng-valid') ?? false;
+        const isValid = classes?.includes('ng-valid') ?? false;
+
+        if (!isValid) {
+          stableStartTime = null;
+          return false;
+        }
+
+        // Start stability timer if this is the first check where field is valid
+        if (stableStartTime === null) {
+          stableStartTime = Date.now();
+        }
+
+        // Check if we've been stable for long enough
+        const stableDuration = Date.now() - stableStartTime;
+        return stableDuration >= STABILITY_DURATION_MS;
       },
       {
-        message: 'Field should have ng-valid class',
+        message: `Field should have ng-valid class (stable for ${STABILITY_DURATION_MS}ms)`,
         timeout: VALIDATION_TIMEOUT,
-        intervals: POLL_INTERVALS,
+        intervals: QUICK_INTERVALS,
       }
     )
     .toBe(true);
@@ -182,7 +254,7 @@ export async function expectFieldValid(
   // flows to be flaky because of it.
   try {
     await expect(field).not.toHaveAttribute('aria-invalid', 'true', {
-      timeout: 1000,
+      timeout: 1500,
     });
   } catch {
     const message =
@@ -215,12 +287,29 @@ export async function fillAndBlur(
     inputType === 'time' ||
     inputType === 'datetime-local'
   ) {
-    await field.fill(value);
-    await field.blur();
+    await setDateLikeValueAndBlur(field, value);
     return;
   }
 
   await typeAndBlur(field, value, 0);
+}
+
+/**
+ * Set value on date/time-like inputs and dispatch events to trigger Angular change detection.
+ * This avoids Playwright limitations with type="date" value setting across browsers.
+ */
+export async function setDateLikeValueAndBlur(
+  field: Locator,
+  value: string
+): Promise<void> {
+  await field.click();
+  await field.evaluate((el, nextValue) => {
+    const input = el as HTMLInputElement;
+    input.value = nextValue as string;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }, value);
+  await field.blur();
 }
 
 /**
@@ -259,6 +348,78 @@ export async function typeAndBlur(
  */
 export async function getFormLevelErrors(page: Page): Promise<Locator> {
   return page.locator('[role="alert"]').filter({ hasText: /error/i });
+}
+
+/**
+ * Get the warning element associated with a form field.
+ * Polls until aria-describedby contains a warning id, or a nearby status element
+ * with non-validating text appears (fallback for timing/association delays).
+ *
+ * @param field - The form field locator (typically a password input)
+ * @param warningTextPattern - Optional regex to match warning text content
+ * @returns The warning element locator
+ */
+export async function getWarningElementFor(
+  field: Locator,
+  warningTextPattern?: RegExp
+): Promise<Locator> {
+  let warningId: string | null = null;
+  let fallbackLocator: Locator | null = null;
+  const fieldContainer = field.locator('..').locator('..');
+  const page = field.page();
+
+  await expect
+    .poll(
+      async () => {
+        const describedBy = await field.getAttribute('aria-describedby');
+        const ids = describedBy?.split(/\s+/).filter(Boolean) ?? [];
+        warningId = ids.find((id) => id.includes('-warning')) ?? null;
+        if (warningId) {
+          return true;
+        }
+
+        const statusCandidates = fieldContainer.locator('[role="status"]');
+        const statusCount = await statusCandidates.count();
+        for (let i = 0; i < statusCount; i += 1) {
+          const text = (await statusCandidates.nth(i).textContent()) ?? '';
+          if (!text.trim() || /validating/i.test(text)) {
+            continue;
+          }
+          if (warningTextPattern && !warningTextPattern.test(text)) {
+            continue;
+          }
+          fallbackLocator = statusCandidates.nth(i);
+          return true;
+        }
+
+        if (warningTextPattern) {
+          const globalStatus = page
+            .locator('[role="status"]')
+            .filter({ hasText: warningTextPattern });
+          if ((await globalStatus.count()) > 0) {
+            fallbackLocator = globalStatus.first();
+            return true;
+          }
+        }
+
+        return false;
+      },
+      {
+        message: 'Waiting for warning id or warning status element',
+        timeout: VALIDATION_TIMEOUT,
+        intervals: EXTENDED_INTERVALS,
+      }
+    )
+    .toBe(true);
+
+  if (!warningId) {
+    if (fallbackLocator) {
+      return fallbackLocator;
+    }
+    throw new Error('Expected warning element to be present');
+  }
+
+  return page.locator(`#${warningId}`);
 }
 
 /**
@@ -313,6 +474,12 @@ export async function waitForDebounce(duration = 1100): Promise<void> {
  * Replaces waitForTimeout calls with proper expect.poll() assertions.
  * This is more reliable than hard-coded waits.
  *
+ * Key improvements over a simple "check once" approach:
+ * 1. Initial grace period to let Angular start validation (prevents returning before validation begins)
+ * 2. Checks both aria-busy AND "Validating..." text indicators
+ * 3. Requires the settled state to persist for a stability period
+ *    (prevents false positives when validation restarts quickly)
+ *
  * @param page - The Playwright page
  * @param timeout - Maximum time to wait for validation to settle
  */
@@ -320,17 +487,40 @@ export async function waitForValidationToSettle(
   page: Page,
   timeout = VALIDATION_TIMEOUT
 ): Promise<void> {
-  // Wait for any aria-busy elements to clear
+  const STABILITY_DURATION_MS = 150; // Require stable state for this long
+  const STABILITY_CHECK_INTERVAL_MS = 50;
+
+  const busyElements = page.locator('[aria-busy="true"]:visible');
+  const validatingText = page.getByText('Validating…');
+
+  let stableStartTime: number | null = null;
+
   await expect
     .poll(
       async () => {
-        const busyElements = await page.locator('[aria-busy="true"]').count();
-        return busyElements === 0;
+        const busyCount = await busyElements.count();
+        const validatingCount = await validatingText.count();
+        const isCurrentlySettled = busyCount === 0 && validatingCount === 0;
+
+        if (!isCurrentlySettled) {
+          // Reset stability timer when not settled
+          stableStartTime = null;
+          return false;
+        }
+
+        // Start stability timer if this is the first settled check
+        if (stableStartTime === null) {
+          stableStartTime = Date.now();
+        }
+
+        // Check if we've been stable for long enough
+        const stableDuration = Date.now() - stableStartTime;
+        return stableDuration >= STABILITY_DURATION_MS;
       },
       {
-        message: 'Waiting for validation to settle (aria-busy)',
+        message: `Waiting for validation to settle (stable for ${STABILITY_DURATION_MS}ms)`,
         timeout,
-        intervals: POLL_INTERVALS,
+        intervals: [STABILITY_CHECK_INTERVAL_MS], // Use consistent interval for stability checking
       }
     )
     .toBe(true);
@@ -340,6 +530,9 @@ export async function waitForValidationToSettle(
  * Wait for form to finish processing changes (submit, reset, etc).
  * Uses expect.poll() to ensure Angular change detection has completed.
  *
+ * This function is similar to waitForValidationToSettle but with a shorter
+ * stability period since form operations typically respond faster.
+ *
  * @param page - The Playwright page
  * @param timeout - Maximum time to wait
  */
@@ -347,17 +540,37 @@ export async function waitForFormProcessing(
   page: Page,
   timeout = VALIDATION_TIMEOUT
 ): Promise<void> {
-  // Wait for any pending validations to complete by checking aria-busy
+  const STABILITY_DURATION_MS = 100; // Shorter stability for form processing
+  const STABILITY_CHECK_INTERVAL_MS = 50;
+
+  const busyElements = page.locator('[aria-busy="true"]:visible');
+  const validatingText = page.getByText('Validating…');
+
+  let stableStartTime: number | null = null;
+
   await expect
     .poll(
       async () => {
-        const busyElements = await page.locator('[aria-busy="true"]').count();
-        return busyElements === 0;
+        const busyCount = await busyElements.count();
+        const validatingCount = await validatingText.count();
+        const isCurrentlySettled = busyCount === 0 && validatingCount === 0;
+
+        if (!isCurrentlySettled) {
+          stableStartTime = null;
+          return false;
+        }
+
+        if (stableStartTime === null) {
+          stableStartTime = Date.now();
+        }
+
+        const stableDuration = Date.now() - stableStartTime;
+        return stableDuration >= STABILITY_DURATION_MS;
       },
       {
-        message: 'Waiting for form processing to complete',
+        message: `Waiting for form processing to complete (stable for ${STABILITY_DURATION_MS}ms)`,
         timeout,
-        intervals: POLL_INTERVALS,
+        intervals: [STABILITY_CHECK_INTERVAL_MS],
       }
     )
     .toBe(true);

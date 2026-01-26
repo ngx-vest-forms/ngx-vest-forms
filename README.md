@@ -172,6 +172,9 @@ For `ngModelGroup` containers, prefer using `<ngx-form-group-wrapper>` (group-sa
 - [Accessibility Guide](./docs/ACCESSIBILITY.md)
 - [`ControlWrapperComponent` docs](./projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md)
 
+> **Styling note**: `ngx-control-wrapper` uses Tailwind CSS utility classes for default styling.
+> If your project doesn't use Tailwind, see the [component docs](./projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md#styling-dependency-tailwind-css) for alternatives.
+
 **Available modes:**
 
 - **`on-blur-or-submit`** (default) — Show errors after field is touched OR form is submitted
@@ -210,6 +213,13 @@ Access complete form and field state through the `FormErrorDisplayDirective` or 
 - `isPending()` — Async validation in progress
 - `errorMessages()` / `warningMessages()` — Current validation messages
 - `shouldShowErrors()` — Computed based on display mode and state
+
+**Warnings behavior:**
+
+- Warnings are **non-blocking** and do not make a field invalid.
+- Warnings are stored separately from `control.errors` and are cleared on `resetForm()`.
+- Warnings may appear after `validationConfig` triggers validation, even if the field
+- was not touched yet. Use `NGX_WARNING_DISPLAY_MODE_TOKEN` to require touch-only display.
 
 **Tip**: For async validations, use `createDebouncedPendingState()` to prevent "Validating..." messages from flashing when validation completes quickly (< 200ms).
 

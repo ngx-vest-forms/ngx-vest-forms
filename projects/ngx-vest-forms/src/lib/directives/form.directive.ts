@@ -9,6 +9,7 @@ import {
   InputSignal,
   isDevMode,
   linkedSignal,
+  signal,
   untracked,
 } from '@angular/core';
 import {
@@ -58,6 +59,13 @@ import {
 import { validateShape } from '../utils/shape-validation';
 import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
 import { ValidationOptions } from './validation-options';
+
+/**
+ * Duration (in milliseconds) to keep fields marked as "in-progress" after validation.
+ * This prevents immediate re-triggering of bidirectional validations.
+ * Increased from 100ms to 500ms to give validators enough time to complete and propagate.
+ */
+const VALIDATION_IN_PROGRESS_TIMEOUT_MS = 500;
 
 /**
  * Type for validation configuration that accepts both the typed and untyped versions.
@@ -117,6 +125,14 @@ export class FormDirective<T extends Record<string, unknown>> {
   private readonly configDebounceTime = inject(
     NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN
   );
+
+  /**
+   * Public signal storing field warnings keyed by field path.
+   * This allows warnings to be stored and displayed without affecting field validity.
+   * Angular's control.errors !== null marks a field as invalid, so we store warnings
+   * separately when they exist without errors.
+   */
+  readonly fieldWarnings = signal<Map<string, readonly string[]>>(new Map());
 
   // Track last linked value to prevent unnecessary updates
   #lastLinkedValue: T | null = null;
@@ -268,13 +284,34 @@ export class FormDirective<T extends Record<string, unknown>> {
    * Emits an object with all the errors of the form
    * every time a form control or form groups changes its status to valid or invalid
    *
+   * For submit events, waits for async validation (including ROOT_FORM) to complete
+   * before emitting errors. This ensures ROOT_FORM errors are included in the output.
+   *
    * Cleanup is handled automatically by the directive when it's destroyed.
    */
   readonly errorsChange = outputFromObservable(
-    this.ngForm.form.events.pipe(
-      filter((v) => v instanceof StatusChangeEvent),
-      map((v) => (v as StatusChangeEvent).status),
-      filter((v) => v !== 'PENDING'),
+    rxMerge(
+      // Status change events (non-PENDING) - emit immediately
+      this.ngForm.form.events.pipe(
+        filter((v) => v instanceof StatusChangeEvent),
+        map((v) => (v as StatusChangeEvent).status),
+        filter((v) => v !== 'PENDING')
+      ),
+      // Submit events - wait for async validation to complete before emitting
+      this.ngForm.ngSubmit.pipe(
+        switchMap(() => {
+          // If form is PENDING (async validation in progress), wait for it to complete
+          if (this.ngForm.form.status === 'PENDING') {
+            return this.ngForm.form.statusChanges.pipe(
+              filter((status) => status !== 'PENDING'),
+              take(1)
+            );
+          }
+          // Form not pending, emit immediately
+          return of(this.ngForm.form.status);
+        })
+      )
+    ).pipe(
       map(() => getAllFormErrors(this.ngForm.form)),
       takeUntilDestroyed(this.destroyRef)
     )
@@ -323,6 +360,10 @@ export class FormDirective<T extends Record<string, unknown>> {
   private readonly validationInProgress = new Set<string>();
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.fieldWarnings.set(new Map());
+    });
+
     /**
      * Trigger shape validations if the form gets updated
      * This is how we can throw run-time errors
@@ -594,6 +635,9 @@ export class FormDirective<T extends Record<string, unknown>> {
     // Reset Angular's form to clear all controls and mark as pristine/untouched
     this.ngForm.resetForm(value ?? undefined);
 
+    // Clear any stored warnings to avoid stale messages after reset
+    this.fieldWarnings.set(new Map());
+
     // Clear the bidirectional sync tracking state so the next formValue change
     // is treated as a model change (not a conflict with stale form values)
     this.#lastSyncedFormValue = null;
@@ -653,13 +697,32 @@ export class FormDirective<T extends Record<string, unknown>> {
                   const errors = result.getErrors()[field];
                   const warnings = result.getWarnings()[field];
 
-                  const out =
-                    errors?.length || warnings?.length
-                      ? {
-                          ...(errors?.length && { errors }),
-                          ...(warnings?.length && { warnings }),
-                        }
-                      : null;
+                  // Store warnings in the fieldWarnings signal for access by control wrappers.
+                  // This is necessary because Angular marks a field as invalid when control.errors !== null.
+                  // By storing warnings separately, fields can remain valid while still displaying warnings.
+                  this.fieldWarnings.update((map) => {
+                    const newMap = new Map(map);
+                    if (warnings?.length) {
+                      newMap.set(field, warnings);
+                    } else {
+                      newMap.delete(field);
+                    }
+                    return newMap;
+                  });
+
+                  // Build the validation result:
+                  // - Errors exist → return { errors, warnings? } (field invalid, Angular shows ng-invalid)
+                  // - Only warnings → return null (field valid, warnings accessed via fieldWarnings signal)
+                  // - Neither → return null (field valid)
+                  //
+                  // When errors exist, we also include warnings in control.errors for backwards compatibility
+                  // with code that reads warnings from control.errors.warnings.
+                  const out = errors?.length
+                    ? {
+                        errors,
+                        ...(warnings?.length && { warnings }),
+                      }
+                    : null;
 
                   // CRITICAL: Ensure DOM validity classes update for OnPush components.
                   //
@@ -926,14 +989,11 @@ export class FormDirective<T extends Record<string, unknown>> {
 
     // Keep fields marked as in-progress for a short time to prevent immediate re-triggering
     // Use setTimeout to ensure async validators have time to complete before allowing new triggers
-    // INCREASED from 100ms to 500ms to fix bidirectional validation issues with password/date fields
-    // This gives validators enough time to complete and propagate before allowing re-triggering
-    // Bidirectional validations need more time because both fields validate each other
     setTimeout(() => {
       this.validationInProgress.delete(triggerField);
       for (const depField of dependents) {
         this.validationInProgress.delete(depField);
       }
-    }, 500);
+    }, VALIDATION_IN_PROGRESS_TIMEOUT_MS);
   }
 }

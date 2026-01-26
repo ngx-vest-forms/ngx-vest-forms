@@ -82,6 +82,8 @@
         @if (hasPasswordErrors()) {
           <div
             class="rounded border border-red-200 bg-red-50 p-3 dark:border-red-900/30 dark:bg-red-900/20"
+            role="alert"
+            aria-atomic="true"
           >
             <div
               class="mb-1 text-xs font-semibold tracking-wider text-red-800 uppercase dark:text-red-300"
@@ -99,6 +101,8 @@
         @if (hasLocationErrors()) {
           <div
             class="rounded border border-purple-200 bg-purple-50 p-3 dark:border-purple-900/30 dark:bg-purple-900/20"
+            role="alert"
+            aria-atomic="true"
           >
             <div
               class="mb-1 text-xs font-semibold tracking-wider text-purple-800 uppercase dark:text-purple-300"
@@ -114,6 +118,7 @@
         }
 
         @if (hasDateErrors()) {
+          role="alert" aria-atomic="true"
           <div
             class="rounded border border-orange-200 bg-orange-50 p-3 dark:border-orange-900/30 dark:bg-orange-900/20"
           >
@@ -161,6 +166,7 @@
     <ngx-card>
       <form
         ngxVestForm
+        #vestForm="ngxVestForm"
         [suite]="suite"
         [formShape]="shape"
         [formValue]="formValue()"
@@ -185,7 +191,11 @@
           </p>
 
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <div class="form-group" ngx-control-wrapper>
+            <div
+              class="form-group"
+              ngx-control-wrapper
+              #passwordWrapper="formControlState"
+            >
               <label>
                 <span class="label-text">Password</span>
                 <input
@@ -226,6 +236,10 @@
           </h2>
           <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
             Toggling the checkbox triggers justification validation.
+          </p>
+          <p class="mb-4 text-xs text-gray-500 dark:text-gray-400">
+            Warnings can appear after validationConfig-triggered validation,
+            even if the field was not touched yet.
           </p>
 
           <div class="space-y-4">
@@ -370,14 +384,11 @@
         </section>
 
         <!-- Submit Button -->
-        <div class="pt-4">
-          <button
-            type="submit"
-            [disabled]="!isValid()"
-            class="btn btn-primary w-full"
-          >
-            Submit Form
+        <div class="flex flex-col gap-3 pt-4 sm:flex-row sm:justify-end">
+          <button type="button" class="btn btn-secondary" (click)="reset()">
+            Reset Form
           </button>
+          <button type="submit" class="btn btn-primary">Submit Form</button>
         </div>
       </form>
     </ngx-card>

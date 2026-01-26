@@ -68,6 +68,7 @@
       <div
         class="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/30"
         role="alert"
+        aria-atomic="true"
       >
         <div class="flex">
           <div class="flex-shrink-0">
@@ -75,6 +76,8 @@
               class="h-5 w-5 text-red-400"
               viewBox="0 0 20 20"
               fill="currentColor"
+              aria-hidden="true"
+              focusable="false"
             >
               <path
                 fill-rule="evenodd"
@@ -293,7 +296,11 @@
             >
               <h3 class="section-title">Security</h3>
               <div class="grid gap-6 md:grid-cols-2" ngModelGroup="passwords">
-                <div class="form-group" ngx-control-wrapper>
+                <div
+                  class="form-group"
+                  ngx-control-wrapper
+                  #passwordWrapper="formControlState"
+                >
                   <label>
                     <span class="label-text">Password</span>
                     <input
@@ -376,7 +383,7 @@
             <div
               class="border-t border-gray-100 pt-6 md:col-span-2 dark:border-gray-700"
             >
-              <div ngModelGroup="addresses">
+              <ngx-form-group-wrapper ngModelGroup="addresses">
                 <div
                   class="form-group mb-6"
                   ngx-control-wrapper
@@ -421,7 +428,7 @@
                     ></ngx-address>
                   </div>
                 }
-              </div>
+              </ngx-form-group-wrapper>
             </div>
 
             <!-- Actions -->
