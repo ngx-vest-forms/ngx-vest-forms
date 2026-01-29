@@ -14,8 +14,7 @@ export class DisplayModesDemoComponent {
   protected readonly formValue = signal<DisplayModesDemoModel>({});
   protected readonly suite = displayModesDemoSuite;
 
-  save(event: Event) {
-    event.preventDefault();
+  save(): void {
     console.log('Form submitted:', this.formValue());
   }
 }
