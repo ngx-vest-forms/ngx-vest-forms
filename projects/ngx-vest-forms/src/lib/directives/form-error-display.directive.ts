@@ -17,8 +17,24 @@ import {
 } from './error-display-mode.token';
 import { FormControlStateDirective } from './form-control-state.directive';
 
-export type ScErrorDisplayMode = 'on-blur' | 'on-submit' | 'on-blur-or-submit';
-export type NgxWarningDisplayMode = 'on-touch' | 'on-validated-or-touch';
+/**
+ * Error display modes for form controls.
+ * - 'on-blur': Show errors after field is touched/blurred
+ * - 'on-submit': Show errors after form submission
+ * - 'on-blur-or-submit': Show errors after blur or form submission (default)
+ * - 'on-dirty': Show errors as soon as the field value changes
+ * - 'always': Show errors immediately, even on pristine fields
+ */
+export type ScErrorDisplayMode = 'on-blur' | 'on-submit' | 'on-blur-or-submit' | 'on-dirty' | 'always';
+
+/**
+ * Warning display modes for form controls.
+ * - 'on-touch': Show warnings after field is touched/blurred
+ * - 'on-validated-or-touch': Show warnings after validation runs or field is touched (default)
+ * - 'on-dirty': Show warnings as soon as the field value changes
+ * - 'always': Show warnings immediately, even on pristine fields
+ */
+export type NgxWarningDisplayMode = 'on-touch' | 'on-validated-or-touch' | 'on-dirty' | 'always';
 
 export const SC_ERROR_DISPLAY_MODE_DEFAULT: ScErrorDisplayMode =
   'on-blur-or-submit';
@@ -128,6 +144,7 @@ export class FormErrorDisplayDirective {
   readonly shouldShowErrors: Signal<boolean> = computed(() => {
     const mode = this.errorDisplayMode();
     const isTouched = this.isTouched();
+    const isDirty = this.isDirty();
     const isInvalid = this.isInvalid();
     const hasErrors = this.errorMessages().length > 0;
     const updateOn = this.updateOn();
@@ -141,16 +158,30 @@ export class FormErrorDisplayDirective {
     if (updateOn === 'submit') {
       return !!(formSubmitted && hasErrorState);
     }
-    // on-blur: show errors after blur (touch)
-    if (mode === 'on-blur') {
-      return !!(isTouched && hasErrorState);
+
+    // Handle the new display modes
+    switch (mode) {
+      case 'always':
+        // Always show errors immediately, even on pristine fields
+        return hasErrorState;
+
+      case 'on-dirty':
+        // Show when value has changed, OR when touched/submitted (for backwards compat)
+        return !!(isDirty || isTouched || formSubmitted) && hasErrorState;
+
+      case 'on-blur':
+        // Show only after blur or form submission
+        return !!(isTouched || formSubmitted) && hasErrorState;
+
+      case 'on-submit':
+        // Show only after form submission
+        return !!(formSubmitted && hasErrorState);
+
+      case 'on-blur-or-submit':
+      default:
+        // Show after blur (touch) OR submit (default behavior)
+        return !!((isTouched || formSubmitted) && hasErrorState);
     }
-    // on-submit: show errors after submit
-    if (mode === 'on-submit') {
-      return !!(formSubmitted && hasErrorState);
-    }
-    // on-blur-or-submit: show errors after blur (touch) OR submit
-    return !!((isTouched || formSubmitted) && hasErrorState);
   });
 
   /**
@@ -181,5 +212,52 @@ export class FormErrorDisplayDirective {
       return false;
     }
     return this.hasPendingValidation();
+  });
+
+  /**
+   * Determines if warnings should be shown based on the specified display mode
+   * and the control's state (touched/validated/dirty).
+   *
+   * NOTE: Unlike errors, warnings can exist on VALID fields (warnings-only scenario).
+   * We don't require isInvalid() because Vest warn() tests don't affect field validity.
+   *
+   * UX Note: We include `hasBeenValidated` for `on-validated-or-touch` mode to support
+   * cross-field validation. If Field A triggers validation on Field B (via validationConfig),
+   * Field B should show warnings if it has them, even if the user hasn't touched Field B yet.
+   * Unlike errors (which block submission), warnings are informational and safe to show.
+   */
+  readonly shouldShowWarnings: Signal<boolean> = computed(() => {
+    const mode = this.warningDisplayMode();
+    const isTouched = this.isTouched();
+    const isDirty = this.isDirty();
+    const hasBeenValidated = this.hasBeenValidated();
+    const hasWarnings = this.warningMessages().length > 0;
+    const isPending = this.hasPendingValidation();
+    const formSubmitted = this.formSubmitted();
+
+    // No warnings to show or still pending
+    if (!hasWarnings || isPending) {
+      return false;
+    }
+
+    // Handle the warning display modes
+    switch (mode) {
+      case 'always':
+        // Always show warnings immediately, even on pristine fields
+        return true;
+
+      case 'on-dirty':
+        // Show when value has changed, OR when touched/submitted (for backwards compat)
+        return isDirty || isTouched || formSubmitted;
+
+      case 'on-touch':
+        // Show only after blur or form submission
+        return isTouched || formSubmitted;
+
+      case 'on-validated-or-touch':
+      default:
+        // Show after validation runs or after touch/submit (default behavior)
+        return hasBeenValidated || isTouched || formSubmitted;
+    }
   });
 }
