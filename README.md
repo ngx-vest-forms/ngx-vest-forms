@@ -116,7 +116,8 @@ That's all you need. The directive automatically creates controls, wires validat
 - **Unidirectional state with signals** — Models are `NgxDeepPartial<T>` so values build up incrementally
 - **Type-safe with runtime shape validation** — Automatic control creation and validation wiring (dev mode checks)
 - **Vest.js validations** — Sync/async, conditional, composable patterns with `only(field)` optimization
-- **Error display modes** — Control when errors show: `on-blur`, `on-submit`, or `on-blur-or-submit` (default)
+- **Error display modes** — Control when errors show: `on-blur`, `on-submit`, `on-blur-or-submit` (default), `on-dirty`, or `always`
+- **Warning display modes** — Control when warnings show: `on-touch`, `on-validated-or-touch` (default), `on-dirty`, or `always`
 - **Form state tracking** — Access touched, dirty, valid/invalid states for individual fields or entire form
 - **Error display helpers** — `ngx-control-wrapper` component (recommended) plus directive building blocks for custom wrappers:
   - `ngx-form-group-wrapper` component (recommended for `ngModelGroup` containers)
@@ -125,23 +126,60 @@ That's all you need. The directive automatically creates controls, wires validat
 - **Cross-field dependencies** — `validationConfig` for field-to-field triggers, `ROOT_FORM` for form-level rules
 - **Utilities** — Field paths, field clearing, validation config builder
 
-### Error Display Modes
+### Error & Warning Display Modes
 
-Control when validation errors are shown to users with three built-in modes:
+Control when validation errors and warnings are shown to users with multiple built-in modes:
+
+#### Error Display Modes
 
 ```typescript
 // Global configuration via DI token
 import { NGX_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
 
 providers: [
-  { provide: NGX_ERROR_DISPLAY_MODE_TOKEN, useValue: 'on-blur-or-submit' }
+  { provide: NGX_ERROR_DISPLAY_MODE_TOKEN, useValue: 'on-dirty' }
 ]
 
 // Recommended: Use ngx-control-wrapper component
 <ngx-control-wrapper [errorDisplayMode]="'on-blur'">
   <input name="email" [ngModel]="formValue().email" />
 </ngx-control-wrapper>
+```
 
+| Mode                  | Behavior                                             |
+| --------------------- | ---------------------------------------------------- |
+| `'on-blur-or-submit'` | Show after blur OR form submit (default)             |
+| `'on-blur'`           | Show only after blur/touch                           |
+| `'on-submit'`         | Show only after form submission                      |
+| `'on-dirty'`          | Show as soon as value changes (or after blur/submit) |
+| `'always'`            | Show immediately, even on pristine fields            |
+
+#### Warning Display Modes
+
+```typescript
+// Global configuration via DI token
+import { NGX_WARNING_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
+
+providers: [
+  { provide: NGX_WARNING_DISPLAY_MODE_TOKEN, useValue: 'always' }
+]
+
+// Per-instance configuration
+<ngx-control-wrapper [warningDisplayMode]="'on-dirty'">
+  <input name="username" [ngModel]="formValue().username" />
+</ngx-control-wrapper>
+```
+
+| Mode                      | Behavior                                             |
+| ------------------------- | ---------------------------------------------------- |
+| `'on-validated-or-touch'` | Show after validation runs or touch (default)        |
+| `'on-touch'`              | Show only after blur/touch                           |
+| `'on-dirty'`              | Show as soon as value changes (or after blur/submit) |
+| `'always'`                | Show immediately, even on pristine fields            |
+
+#### Group-Safe Mode Example
+
+```html
 // Group-safe mode (use this on an ngModelGroup container)
 <ngx-form-group-wrapper ngModelGroup="address">
   <ngx-control-wrapper>
@@ -175,14 +213,6 @@ For `ngModelGroup` containers, prefer using `<ngx-form-group-wrapper>` (group-sa
 > **Styling note**: `ngx-control-wrapper` uses Tailwind CSS utility classes for default styling.
 > If your project doesn't use Tailwind, see the [component docs](./projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md#styling-dependency-tailwind-css) for alternatives.
 
-**Available modes:**
-
-- **`on-blur-or-submit`** (default) — Show errors after field is touched OR form is submitted
-- **`on-blur`** — Show errors only after field loses focus (touched)
-- **`on-submit`** — Show errors only after form submission
-
-**Tip**: Use `on-blur-or-submit` for best UX — users get immediate feedback on touched fields while preventing overwhelming errors on pristine forms.
-
 📖 **[Complete Guide: Custom Control Wrappers](./docs/CUSTOM-CONTROL-WRAPPERS.md)**
 
 ### Form State
@@ -212,14 +242,14 @@ Access complete form and field state through the `FormErrorDisplayDirective` or 
 - `isValid()` / `isInvalid()` — Validation state
 - `isPending()` — Async validation in progress
 - `errorMessages()` / `warningMessages()` — Current validation messages
-- `shouldShowErrors()` — Computed based on display mode and state
+- `shouldShowErrors()` / `shouldShowWarnings()` — Computed based on display mode and state
 
 **Warnings behavior:**
 
 - Warnings are **non-blocking** and do not make a field invalid.
-- Warnings are stored separately from `control.errors` and are cleared on `resetForm()`.
-- Warnings may appear after `validationConfig` triggers validation, even if the field
-- was not touched yet. Use `NGX_WARNING_DISPLAY_MODE_TOKEN` to require touch-only display.
+- They are stored separately from `control.errors` and are cleared on `resetForm()`.
+- These messages may appear after `validationConfig` triggers validation, even if the field was not touched yet.
+- Use `NGX_WARNING_DISPLAY_MODE_TOKEN` to control when warnings display (see [Warning Display Modes](#warning-display-modes)).
 
 **Tip**: For async validations, use `createDebouncedPendingState()` to prevent "Validating..." messages from flashing when validation completes quickly (< 200ms).
 

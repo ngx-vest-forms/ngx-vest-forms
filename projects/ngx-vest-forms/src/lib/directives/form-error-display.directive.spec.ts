@@ -333,4 +333,123 @@ describe('FormErrorDisplayDirective', () => {
       hostFixture.nativeElement.querySelector('#host-errors').textContent;
     expect(['', 'required']).toContain(hostErrors);
   });
+
+  describe('New error display modes', () => {
+    it('should show errors immediately in always mode', async () => {
+      host.mode = 'always';
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      // Errors should show immediately without any interaction
+      await expect
+        .poll(
+          () =>
+            fixture.nativeElement.querySelector('#should-show-errors')
+              ?.textContent
+        )
+        .toBe('true');
+
+      await expect
+        .poll(() => fixture.nativeElement.querySelector('#errors')?.textContent)
+        .toBe('required');
+    });
+
+    it('should show errors after value changes in on-dirty mode', async () => {
+      host.mode = 'on-dirty';
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      // Initially should not show errors
+      expect(
+        fixture.nativeElement.querySelector('#should-show-errors').textContent
+      ).toBe('false');
+
+      const input: HTMLInputElement =
+        fixture.nativeElement.querySelector('input');
+
+      // Type something to make it dirty
+      // Note: We need to focus first, then change value, then dispatch input event
+      // This mimics real user interaction which marks the control as dirty
+      input.focus();
+      input.value = 'test';
+      input.dispatchEvent(new Event('input'));
+      // NgModel needs time to process the input event
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      // Should show errors after value changes (dirty)
+      // Note: The field becomes valid when it has a value, so no error should show yet
+      // Clear the input to trigger the required error while keeping it dirty
+      input.value = '';
+      input.dispatchEvent(new Event('input'));
+
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      // Now it should be dirty AND have errors
+      await expect
+        .poll(
+          () =>
+            fixture.nativeElement.querySelector('#should-show-errors')
+              ?.textContent
+        )
+        .toBe('true');
+
+      await expect
+        .poll(() => fixture.nativeElement.querySelector('#errors')?.textContent)
+        .toBe('required');
+    });
+
+    it('should show errors after blur even in on-dirty mode', async () => {
+      host.mode = 'on-dirty';
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      const input: HTMLInputElement =
+        fixture.nativeElement.querySelector('input');
+
+      // Blur without changing value (touched but not dirty)
+      input.focus();
+      input.blur();
+      input.dispatchEvent(new Event('blur'));
+
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      // Should still show errors after blur (backwards compatibility)
+      await expect
+        .poll(
+          () =>
+            fixture.nativeElement.querySelector('#should-show-errors')
+              ?.textContent
+        )
+        .toBe('true');
+
+      await expect
+        .poll(() => fixture.nativeElement.querySelector('#errors')?.textContent)
+        .toBe('required');
+    });
+
+    it('should show errors after submit in on-dirty mode', async () => {
+      host.mode = 'on-dirty';
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      // Submit without any interaction
+      const submitBtn: HTMLButtonElement =
+        fixture.nativeElement.querySelector('#submit-btn');
+      submitBtn.click();
+
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      // Should show errors after submit (backwards compatibility)
+      await expect
+        .poll(
+          () =>
+            fixture.nativeElement.querySelector('#should-show-errors')
+              ?.textContent
+        )
+        .toBe('true');
+
+      await expect
+        .poll(
+          () =>
+            fixture.nativeElement.querySelector('#form-submitted')?.textContent
+        )
+        .toBe('true');
+    });
+  });
 });

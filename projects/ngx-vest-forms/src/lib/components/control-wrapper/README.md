@@ -37,9 +37,11 @@ Controls _when_ errors become visible (and therefore when `aria-invalid` may be 
 
 Accepted values:
 
-- `"on-blur-or-submit"` (default)
-- `"on-blur"`
-- `"on-submit"`
+- `"on-blur-or-submit"` (default) — Show after blur OR form submit
+- `"on-blur"` — Show only after blur/touch
+- `"on-submit"` — Show only after form submission
+- `"on-dirty"` — Show as soon as value changes (or after blur/submit)
+- `"always"` — Show immediately, even on pristine fields
 
 This input is provided by the composed `FormErrorDisplayDirective`.
 
@@ -49,8 +51,10 @@ Controls _when_ warnings become visible.
 
 Accepted values:
 
-- "on-validated-or-touch" (default)
-- "on-touch"
+- `"on-validated-or-touch"` (default) — Show after validation runs or touch
+- `"on-touch"` — Show only after blur/touch
+- `"on-dirty"` — Show as soon as value changes (or after blur/submit)
+- `"always"` — Show immediately, even on pristine fields
 
 This input is provided by the composed `FormErrorDisplayDirective`.
 
