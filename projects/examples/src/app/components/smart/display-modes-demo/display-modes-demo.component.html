@@ -1,0 +1,122 @@
+<div class="container mx-auto max-w-4xl p-6">
+  <h1 class="mb-6 text-3xl font-bold">Display Modes Demo</h1>
+  <p class="mb-8 text-gray-600 dark:text-gray-300">
+    This demo showcases the new 'on-dirty' and 'always' display modes for errors and warnings.
+  </p>
+
+  <form
+    ngxVestForm
+    [suite]="suite"
+    [formValue]="formValue()"
+    (formValueChange)="formValue.set($event)"
+    (submit)="save($event)"
+    class="space-y-8"
+  >
+    <!-- Always Error Mode -->
+    <section class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+      <h2 class="mb-4 text-xl font-semibold">Error Display Mode: 'always'</h2>
+      <p class="mb-4 text-sm text-gray-600 dark:text-gray-300">
+        Errors appear immediately, even on pristine fields. Notice the error shows up without any interaction.
+      </p>
+      <ngx-control-wrapper [errorDisplayMode]="'always'">
+        <label for="alwaysError" class="mb-2 block font-medium">
+          Username (Always Mode)
+        </label>
+        <input
+          id="alwaysError"
+          name="alwaysError"
+          [ngModel]="formValue().alwaysError"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+          placeholder="Start typing..."
+        />
+      </ngx-control-wrapper>
+    </section>
+
+    <!-- On-Dirty Error Mode -->
+    <section class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+      <h2 class="mb-4 text-xl font-semibold">Error Display Mode: 'on-dirty'</h2>
+      <p class="mb-4 text-sm text-gray-600 dark:text-gray-300">
+        Errors appear as soon as you type (field becomes dirty). No need to blur the field first.
+      </p>
+      <ngx-control-wrapper [errorDisplayMode]="'on-dirty'">
+        <label for="dirtyError" class="mb-2 block font-medium">
+          Username (On-Dirty Mode)
+        </label>
+        <input
+          id="dirtyError"
+          name="dirtyError"
+          [ngModel]="formValue().dirtyError"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+          placeholder="Start typing..."
+        />
+      </ngx-control-wrapper>
+    </section>
+
+    <!-- Always Warning Mode -->
+    <section class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+      <h2 class="mb-4 text-xl font-semibold">Warning Display Mode: 'always'</h2>
+      <p class="mb-4 text-sm text-gray-600 dark:text-gray-300">
+        Warnings appear immediately, even on pristine fields. Type less than 5 characters to see the warning.
+      </p>
+      <ngx-control-wrapper [warningDisplayMode]="'always'">
+        <label for="alwaysWarning" class="mb-2 block font-medium">
+          Username (Always Warning)
+        </label>
+        <input
+          id="alwaysWarning"
+          name="alwaysWarning"
+          [ngModel]="formValue().alwaysWarning"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+          placeholder="Type a short username..."
+        />
+      </ngx-control-wrapper>
+    </section>
+
+    <!-- On-Dirty Warning Mode -->
+    <section class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+      <h2 class="mb-4 text-xl font-semibold">Warning Display Mode: 'on-dirty'</h2>
+      <p class="mb-4 text-sm text-gray-600 dark:text-gray-300">
+        Warnings appear as soon as you type (field becomes dirty). No need to blur first.
+      </p>
+      <ngx-control-wrapper [warningDisplayMode]="'on-dirty'">
+        <label for="dirtyWarning" class="mb-2 block font-medium">
+          Username (On-Dirty Warning)
+        </label>
+        <input
+          id="dirtyWarning"
+          name="dirtyWarning"
+          [ngModel]="formValue().dirtyWarning"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+          placeholder="Type a short username..."
+        />
+      </ngx-control-wrapper>
+    </section>
+
+    <!-- On-Touch Warning Mode (for comparison) -->
+    <section class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+      <h2 class="mb-4 text-xl font-semibold">Warning Display Mode: 'on-touch' (for comparison)</h2>
+      <p class="mb-4 text-sm text-gray-600 dark:text-gray-300">
+        Warnings appear only after you blur the field (traditional behavior).
+      </p>
+      <ngx-control-wrapper [warningDisplayMode]="'on-touch'">
+        <label for="touchWarning" class="mb-2 block font-medium">
+          Username (On-Touch Warning)
+        </label>
+        <input
+          id="touchWarning"
+          name="touchWarning"
+          [ngModel]="formValue().touchWarning"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+          placeholder="Type a short username and blur..."
+        />
+      </ngx-control-wrapper>
+    </section>
+
+    <button
+      type="submit"
+      class="rounded-md bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+    >
+      Submit
+    </button>
+  </form>
+</div>
