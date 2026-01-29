@@ -4,7 +4,7 @@ import { DisplayModesDemoModel } from '../../../models/display-modes-demo.model'
 import { displayModesDemoSuite } from '../../../validations/display-modes-demo.validations';
 
 @Component({
-  selector: 'app-display-modes-demo',
+  selector: 'ngx-display-modes-demo',
   imports: [NgxVestForms],
   templateUrl: './display-modes-demo.component.html',
   styleUrls: ['./display-modes-demo.component.scss'],
