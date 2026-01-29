@@ -170,7 +170,7 @@ export class FormErrorDisplayDirective {
         return !!(isDirty || isTouched || formSubmitted) && hasErrorState;
 
       case 'on-blur':
-        // Show only after blur or form submission
+        // Show after touch (blur) or form submission (traditional behavior, not dirty-based)
         return !!(isTouched || formSubmitted) && hasErrorState;
 
       case 'on-submit':
@@ -251,7 +251,7 @@ export class FormErrorDisplayDirective {
         return isDirty || isTouched || formSubmitted;
 
       case 'on-touch':
-        // Show only after blur or form submission
+        // Show after touch (blur) or form submission (traditional behavior, not dirty-based)
         return isTouched || formSubmitted;
 
       case 'on-validated-or-touch':
