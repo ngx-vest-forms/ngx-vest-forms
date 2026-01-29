@@ -1210,7 +1210,11 @@ describe('ScControlWrapperComponent', () => {
           >
             <ngx-control-wrapper [warningDisplayMode]="'always'">
               <label for="username">Username</label>
-              <input id="username" name="username" [ngModel]="model().username" />
+              <input
+                id="username"
+                name="username"
+                [ngModel]="model().username"
+              />
             </ngx-control-wrapper>
           </form>
         `,
@@ -1227,11 +1231,12 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.type(usernameInput, 'abc');
 
       // Warning should appear immediately without needing to blur
-      await screen.findByText(
+      const warning = await screen.findByText(
         'Username is too short for comfort',
         {},
         { timeout: 1000 }
       );
+      expect(warning).toBeInTheDocument();
     });
 
     it('should show warnings after value changes in on-dirty mode', async () => {
@@ -1246,7 +1251,11 @@ describe('ScControlWrapperComponent', () => {
           >
             <ngx-control-wrapper [warningDisplayMode]="'on-dirty'">
               <label for="username">Username</label>
-              <input id="username" name="username" [ngModel]="model().username" />
+              <input
+                id="username"
+                name="username"
+                [ngModel]="model().username"
+              />
             </ngx-control-wrapper>
           </form>
         `,
@@ -1268,11 +1277,12 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.type(usernameInput, 'abc');
 
       // Warning should appear immediately after typing (dirty) without needing to blur
-      await screen.findByText(
+      const warning = await screen.findByText(
         'Username is too short for comfort',
         {},
         { timeout: 1000 }
       );
+      expect(warning).toBeInTheDocument();
     });
 
     it('should show warnings after blur in on-dirty mode (backwards compat)', async () => {
@@ -1287,7 +1297,11 @@ describe('ScControlWrapperComponent', () => {
           >
             <ngx-control-wrapper [warningDisplayMode]="'on-dirty'">
               <label for="username">Username</label>
-              <input id="username" name="username" [ngModel]="model().username" />
+              <input
+                id="username"
+                name="username"
+                [ngModel]="model().username"
+              />
             </ngx-control-wrapper>
           </form>
         `,
@@ -1310,11 +1324,12 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.tab();
 
       // Warning should appear after blur (backwards compatibility with on-touch)
-      await screen.findByText(
+      const warning = await screen.findByText(
         'Username is too short for comfort',
         {},
         { timeout: 1000 }
       );
+      expect(warning).toBeInTheDocument();
     });
 
     it('should show warnings only after touch in on-touch mode (not after typing)', async () => {
@@ -1329,7 +1344,11 @@ describe('ScControlWrapperComponent', () => {
           >
             <ngx-control-wrapper [warningDisplayMode]="'on-touch'">
               <label for="username">Username</label>
-              <input id="username" name="username" [ngModel]="model().username" />
+              <input
+                id="username"
+                name="username"
+                [ngModel]="model().username"
+              />
             </ngx-control-wrapper>
           </form>
         `,
@@ -1359,11 +1378,12 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.tab();
 
       // Now warning should appear
-      await screen.findByText(
+      const warning = await screen.findByText(
         'Username is too short for comfort',
         {},
         { timeout: 1000 }
       );
+      expect(warning).toBeInTheDocument();
     });
   });
 });
