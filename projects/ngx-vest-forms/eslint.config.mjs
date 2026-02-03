@@ -1,4 +1,5 @@
-// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+// ESLint configuration for ngx-vest-forms library
+// Story files (*.stories.ts) are linted using root config with vitest rules
 
 import { defineConfig } from 'eslint/config';
 import rootConfig from '../../eslint.config.mjs';
