@@ -1,10 +1,16 @@
-name: CD
+name: Release (Production)
+
 on:
-  push:
-    branches:
-      - master
-      - 'release/**'
-      - 'next'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to release from'
+        required: true
+        default: 'master'
+        type: choice
+        options:
+          - master
+          - release/v1.x
 
 permissions:
   contents: write  # For creating releases and updating changelog
@@ -14,14 +20,24 @@ permissions:
 
 jobs:
   cd:
-    concurrency: cd-${{ github.ref }}
+    concurrency: cd-${{ github.event.inputs.branch }}
     runs-on: ubuntu-latest
     environment: npm-publish  # Required for OIDC Trusted Publisher
     steps:
+      - name: Validate branch input
+        run: |
+          BRANCH="${{ github.event.inputs.branch }}"
+          if [ -z "$BRANCH" ]; then
+            echo "Error: No branch specified"
+            exit 1
+          fi
+          echo "Releasing from branch: $BRANCH"
+      
       - name: Checkout
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          ref: ${{ github.event.inputs.branch }}
           fetch-depth: 0
       - name: Setup
         uses: actions/setup-node@v4
@@ -51,4 +67,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true  # Enable provenance attestation with OIDC
-        run: npx semantic-release
+        run: |
+          echo "Publishing release from branch: ${{ github.event.inputs.branch }}"
+          npx semantic-release
