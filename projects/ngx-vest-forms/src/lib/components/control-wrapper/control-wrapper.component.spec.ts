@@ -1186,4 +1186,204 @@ describe('ScControlWrapperComponent', () => {
       });
     });
   });
+
+  describe('New warning display modes', () => {
+    const warningOnlySuite = staticSuite(
+      (data: TestModel = {}, field?: string) => {
+        only(field);
+        vestTest('username', 'Username is too short for comfort', () => {
+          warn();
+          enforce(data.username ?? '').longerThanOrEquals(5);
+        });
+      }
+    );
+
+    it('should show warnings immediately in always mode', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper [warningDisplayMode]="'always'">
+              <label for="username">Username</label>
+              <input
+                id="username"
+                name="username"
+                [ngModel]="model().username"
+              />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class AlwaysWarningComponent {
+        model = signal({ username: '' });
+        suite = warningOnlySuite;
+      }
+
+      await render(AlwaysWarningComponent);
+      const usernameInput = screen.getByLabelText('Username');
+
+      // Type a short username
+      await userEvent.type(usernameInput, 'abc');
+
+      // Warning should appear immediately without needing to blur
+      const warning = await screen.findByText(
+        'Username is too short for comfort',
+        {},
+        { timeout: 1000 }
+      );
+      expect(warning).toBeInTheDocument();
+    });
+
+    it('should show warnings after value changes in on-dirty mode', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper [warningDisplayMode]="'on-dirty'">
+              <label for="username">Username</label>
+              <input
+                id="username"
+                name="username"
+                [ngModel]="model().username"
+              />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class DirtyWarningComponent {
+        model = signal({ username: '' });
+        suite = warningOnlySuite;
+      }
+
+      await render(DirtyWarningComponent);
+      const usernameInput = screen.getByLabelText('Username');
+
+      // Warning should not be visible initially
+      expect(
+        screen.queryByText('Username is too short for comfort')
+      ).not.toBeInTheDocument();
+
+      // Type a short username
+      await userEvent.type(usernameInput, 'abc');
+
+      // Warning should appear immediately after typing (dirty) without needing to blur
+      const warning = await screen.findByText(
+        'Username is too short for comfort',
+        {},
+        { timeout: 1000 }
+      );
+      expect(warning).toBeInTheDocument();
+    });
+
+    it('should show warnings after blur in on-dirty mode (backwards compat)', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper [warningDisplayMode]="'on-dirty'">
+              <label for="username">Username</label>
+              <input
+                id="username"
+                name="username"
+                [ngModel]="model().username"
+              />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class DirtyWarningBlurComponent {
+        model = signal({ username: 'abc' }); // Start with short username
+        suite = warningOnlySuite;
+      }
+
+      await render(DirtyWarningBlurComponent);
+      const usernameInput = screen.getByLabelText('Username');
+
+      // Warning should not be visible initially (pristine)
+      expect(
+        screen.queryByText('Username is too short for comfort')
+      ).not.toBeInTheDocument();
+
+      // Click and blur without changing value (touched but not dirty)
+      await userEvent.click(usernameInput);
+      await userEvent.tab();
+
+      // Warning should appear after blur (backwards compatibility with on-touch)
+      const warning = await screen.findByText(
+        'Username is too short for comfort',
+        {},
+        { timeout: 1000 }
+      );
+      expect(warning).toBeInTheDocument();
+    });
+
+    it('should show warnings only after touch in on-touch mode (not after typing)', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper [warningDisplayMode]="'on-touch'">
+              <label for="username">Username</label>
+              <input
+                id="username"
+                name="username"
+                [ngModel]="model().username"
+              />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class TouchWarningComponent {
+        model = signal({ username: '' });
+        suite = warningOnlySuite;
+      }
+
+      await render(TouchWarningComponent);
+      const usernameInput = screen.getByLabelText('Username');
+
+      // Type a short username
+      await userEvent.type(usernameInput, 'abc');
+
+      // Warning should NOT appear yet (not touched)
+      await waitFor(
+        () => {
+          expect(
+            screen.queryByText('Username is too short for comfort')
+          ).not.toBeInTheDocument();
+        },
+        { timeout: 500 }
+      );
+
+      // Blur the field
+      await userEvent.tab();
+
+      // Now warning should appear
+      const warning = await screen.findByText(
+        'Username is too short for comfort',
+        {},
+        { timeout: 1000 }
+      );
+      expect(warning).toBeInTheDocument();
+    });
+  });
 });

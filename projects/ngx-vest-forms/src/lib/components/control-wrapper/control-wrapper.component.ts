@@ -38,9 +38,24 @@ let nextUniqueId = 0;
  * - `'on-blur-or-submit'` (default): Show errors after blur OR form submit
  * - `'on-blur'`: Show errors only after blur
  * - `'on-submit'`: Show errors only after form submit
+ * - `'on-dirty'`: Show errors as soon as the field value changes
+ * - `'always'`: Show errors immediately, even on pristine fields
  *
  * ```html
  * <ngx-control-wrapper [errorDisplayMode]="'on-submit'">
+ *   <input name="email" [ngModel]="formValue().email" />
+ * </ngx-control-wrapper>
+ * ```
+ *
+ * ### Warning Display Modes
+ * Control when warnings appear using the `warningDisplayMode` input:
+ * - `'on-validated-or-touch'` (default): Show warnings after validation runs or touch
+ * - `'on-touch'`: Show warnings only after touch/blur
+ * - `'on-dirty'`: Show warnings as soon as the field value changes
+ * - `'always'`: Show warnings immediately, even on pristine fields
+ *
+ * ```html
+ * <ngx-control-wrapper [warningDisplayMode]="'on-dirty'">
  *   <input name="email" [ngModel]="formValue().email" />
  * </ngx-control-wrapper>
  * ```
@@ -77,9 +92,9 @@ let nextUniqueId = 0;
  *
  * Error & Warning Display Behavior:
  *   - The error display mode can be configured globally using the NGX_ERROR_DISPLAY_MODE_TOKEN injection token, or per instance using the `errorDisplayMode` input on FormErrorDisplayDirective (which this component uses as a hostDirective).
- *   - Possible values: 'on-blur' | 'on-submit' | 'on-blur-or-submit' (default: 'on-blur-or-submit')
+ *   - Possible error display values: 'on-blur' | 'on-submit' | 'on-blur-or-submit' | 'on-dirty' | 'always' (default: 'on-blur-or-submit')
  *   - The warning display mode can be configured globally using NGX_WARNING_DISPLAY_MODE_TOKEN, or per instance using the `warningDisplayMode` input on FormErrorDisplayDirective.
- *   - Possible values: 'on-touch' | 'on-validated-or-touch' (default: 'on-validated-or-touch')
+ *   - Possible warning display values: 'on-touch' | 'on-validated-or-touch' | 'on-dirty' | 'always' (default: 'on-validated-or-touch')
  *
  * Example (per instance):
  *   <div ngxControlWrapper>
@@ -192,29 +207,12 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
 
   /**
    * Whether to display warnings.
-   * Warnings are shown when:
-   * 1. The field has been touched (user has interacted with it)
-   * 2. The field has warnings to display
-   * 3. The field is not currently pending validation
+   * Delegates to FormErrorDisplayDirective's centralized shouldShowWarnings signal.
    *
-   * NOTE: Unlike errors, warnings can exist on VALID fields (warnings-only scenario).
-   * We don't require isInvalid() because Vest warn() tests don't affect field validity.
-   *
-   * UX Note: We include `hasBeenValidated` here to support cross-field validation.
-   * If Field A triggers validation on Field B (via validationConfig), Field B should
-   * show warnings if it has them, even if the user hasn't touched Field B yet.
-   * Unlike errors (which block submission), warnings are informational and safe to safe to show.
+   * This ensures consistent warning display behavior across all form components
+   * and supports the new 'on-dirty' and 'always' display modes.
    */
-  protected readonly shouldShowWarnings = computed(() => {
-    const isTouched = this.errorDisplay.isTouched();
-    const hasBeenValidated = this.errorDisplay.hasBeenValidated();
-    const isPending = this.errorDisplay.isPending();
-    const hasWarnings = this.errorDisplay.warnings().length > 0;
-    const mode = this.errorDisplay.warningDisplayMode();
-    const shouldShowAfterInteraction =
-      mode === 'on-touch' ? isTouched : isTouched || hasBeenValidated;
-    return shouldShowAfterInteraction && hasWarnings && !isPending;
-  });
+  protected readonly shouldShowWarnings = this.errorDisplay.shouldShowWarnings;
 
   /**
    * Computed signal that builds aria-describedby string based on visible regions

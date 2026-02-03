@@ -179,13 +179,46 @@ protected readonly validationConfig = computed(() => {
 
 ### Error Display Modes
 
+Control when validation errors appear with five built-in modes:
+
 ```typescript
 // Global config
-providers: [{ provide: NGX_ERROR_DISPLAY_MODE_TOKEN, useValue: 'on-submit' }]
+providers: [{ provide: NGX_ERROR_DISPLAY_MODE_TOKEN, useValue: 'on-dirty' }]
 
-// Per-instance: 'on-blur' | 'on-submit' | 'on-blur-or-submit' (default)
-<div formErrorDisplay [errorDisplayMode]="'on-blur'">...</div>
+// Per-instance
+<ngx-control-wrapper [errorDisplayMode]="'on-blur'">
+  <input name="email" [ngModel]="formValue().email" />
+</ngx-control-wrapper>
 ```
+
+| Mode | Behavior |
+|------|----------|
+| `'on-blur-or-submit'` | Show after blur OR form submit (default) |
+| `'on-blur'` | Show only after blur/touch |
+| `'on-submit'` | Show only after form submission |
+| `'on-dirty'` | Show as soon as value changes (or after blur/submit) |
+| `'always'` | Show immediately, even on pristine fields |
+
+### Warning Display Modes
+
+Control when validation warnings appear with four built-in modes:
+
+```typescript
+// Global config
+providers: [{ provide: NGX_WARNING_DISPLAY_MODE_TOKEN, useValue: 'on-dirty' }]
+
+// Per-instance
+<ngx-control-wrapper [warningDisplayMode]="'always'">
+  <input name="username" [ngModel]="formValue().username" />
+</ngx-control-wrapper>
+```
+
+| Mode | Behavior |
+|------|----------|
+| `'on-validated-or-touch'` | Show after validation runs or touch (default) |
+| `'on-touch'` | Show only after blur/touch |
+| `'on-dirty'` | Show as soon as value changes (or after blur/submit) |
+| `'always'` | Show immediately, even on pristine fields |
 
 ### Custom Wrappers
 
@@ -212,7 +245,7 @@ export class CustomWrapperComponent {
 }
 ```
 
-**Available signals:** `shouldShowErrors()`, `errors()`, `warnings()`, `isPending()`, `isValid()`, `isInvalid()`, `isTouched()`, `isDirty()`
+**Available signals:** `shouldShowErrors()`, `shouldShowWarnings()`, `errors()`, `warnings()`, `isPending()`, `isValid()`, `isInvalid()`, `isTouched()`, `isDirty()`
 
 **Warnings behavior:**
 
