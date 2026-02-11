@@ -815,7 +815,6 @@ export class FormDirective<T extends Record<string, unknown>> {
    * 3. Waiting for form to be idle before triggering dependents
    * 4. Waiting for all dependent controls to exist
    * 5. Updating dependent field validity with loop prevention
-   * 6. Touch state propagation from trigger to dependents
    *
    * @param form - The NgForm instance
    * @param triggerField - Field path that triggers validation (e.g., 'password')
@@ -927,9 +926,8 @@ export class FormDirective<T extends Record<string, unknown>> {
    * Updates validation for all dependent fields.
    *
    * Handles:
-   * - Touch state propagation (mark dependents touched when trigger is touched)
    * - Loop prevention via validationInProgress set
-   * - Silent validation (emitEvent: false) to prevent feedback loops
+   * - Validation updates that avoid feedback loops
    *
    * @param form - The NgForm instance
    * @param control - The trigger control

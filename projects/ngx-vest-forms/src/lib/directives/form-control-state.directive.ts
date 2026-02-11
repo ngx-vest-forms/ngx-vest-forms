@@ -149,7 +149,6 @@ export class FormControlStateDirective {
         // 1. The control has been touched (user blurred the field).
         // 2. The control's status has actually changed (not the first status emission),
         //    AND the new status is not 'PENDING' (validation completed).
-        //    AND the new status is not 'PENDING' (validation completed).
         //
         // This ensures hasBeenValidated is true for:
         //   - User blur events (touched becomes true)

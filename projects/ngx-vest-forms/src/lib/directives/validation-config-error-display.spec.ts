@@ -122,7 +122,6 @@ describe('ValidationConfig Error Display', () => {
       '[role="status"][aria-live]'
     );
 
-    // Log current state for debugging
     const errorUl = errorContainer?.querySelector('ul');
 
     // ✅ EXPECTED BEHAVIOR (after fix): No errors yet

@@ -264,17 +264,12 @@ test.describe('ValidationConfig Demo', () => {
         // The user has not interacted with the justification field yet
         // With the fix (no touch propagation), errors only show after blur or submit
 
-        // Get the wrapper and look for error text
-        const wrapper = justification.locator(
-          'xpath=ancestor::div[contains(@class, "form-group")]'
-        );
-        await expect(wrapper).toHaveCount(1);
-        const errorText = wrapper
-          .locator('.text-red-600 li')
-          .filter({ hasText: /required/i });
+        const requiredError = page.getByRole('status').filter({
+          hasText: /required/i,
+        });
 
-        // Verify no error is displayed (no error list items yet)
-        await expect(errorText).toHaveCount(0);
+        // Verify no error is displayed (no error messages yet)
+        await expect(requiredError).toHaveCount(0);
 
         // Field should remain untouched until user interaction
         await expect(justification).toHaveClass(/ng-untouched/);
