@@ -191,6 +191,44 @@ test.describe('ValidationConfig Demo', () => {
       });
     });
 
+    test('should NOT show errors immediately when checkbox reveals justification field (on-blur-or-submit mode)', async ({
+      page,
+    }) => {
+      await test.step('Check checkbox and verify no immediate error display', async () => {
+        const checkbox = page.getByLabel(/requires justification/i);
+        
+        // Check the checkbox (this reveals the justification field)
+        await checkbox.check();
+        await waitForValidationToSettle(page);
+
+        const justification = page.getByRole('textbox', {
+          name: /justification.*min 20/i,
+        });
+
+        // Wait for field to be visible
+        await expect(justification).toBeVisible();
+
+        // ✅ CRITICAL: Errors should NOT show immediately after field appears
+        // The user has not interacted with the justification field yet
+        // With the fix (no touch propagation), errors only show after blur or submit
+        
+        // Get the wrapper and look for error text
+        const wrapper = justification.locator('xpath=ancestor::*[contains(@class, "ngx-control-wrapper")]');
+        const errorText = wrapper.locator('[role="status"]').filter({ hasText: /required/i });
+        
+        // Verify no error is displayed (should not be visible)
+        await expect(errorText).not.toBeVisible();
+
+        // Now blur the field (user interaction)
+        await justification.focus();
+        await justification.blur();
+        await waitForValidationToSettle(page);
+
+        // NOW errors should appear because user touched the field
+        await expectFieldHasError(justification, /required/i);
+      });
+    });
+
     test('should validate justification minimum length (20 characters)', async ({
       page,
     }) => {
