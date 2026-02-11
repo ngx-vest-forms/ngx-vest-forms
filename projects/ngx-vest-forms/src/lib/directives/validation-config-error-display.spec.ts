@@ -94,21 +94,28 @@ describe('ValidationConfig Error Display', () => {
     fixture.detectChanges();
     await TestBed.inject(ApplicationRef).whenStable();
 
-    // Wait for validationConfig debounce
-    await new Promise((resolve) =>
-      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-    );
-    fixture.detectChanges();
-    await TestBed.inject(ApplicationRef).whenStable();
+    // Wait for reason field to be visible
+    await expect
+      .poll(
+        () => {
+          fixture.detectChanges();
+          reasonTextarea = fixture.nativeElement.querySelector(
+            '#reason'
+          ) as HTMLTextAreaElement;
+          return reasonTextarea;
+        },
+        { timeout: 2000, interval: 100 }
+      )
+      .not.toBeNull();
 
-    // Now reason field should be visible
-    reasonTextarea = fixture.nativeElement.querySelector(
-      '#reason'
-    ) as HTMLTextAreaElement;
-    expect(reasonTextarea).not.toBeNull();
+    if (!reasonTextarea) {
+      throw new Error('reasonTextarea should be visible');
+    }
+    // Capture the non-null element for use in closures
+    const visibleReasonTextarea = reasonTextarea;
 
     await expect
-      .poll(() => reasonTextarea?.classList.contains('ng-invalid') ?? false, {
+      .poll(() => visibleReasonTextarea.classList.contains('ng-invalid'), {
         timeout: 2000,
         interval: 100,
       })
@@ -117,7 +124,7 @@ describe('ValidationConfig Error Display', () => {
     await TestBed.inject(ApplicationRef).whenStable();
 
     // Get error display element (errors are shown in a region with role="status")
-    const errorDisplay = reasonTextarea?.closest('ngx-control-wrapper');
+    const errorDisplay = visibleReasonTextarea.closest('ngx-control-wrapper');
     const errorContainer = errorDisplay?.querySelector(
       '[role="status"][aria-live]'
     );
@@ -165,20 +172,35 @@ describe('ValidationConfig Error Display', () => {
     fixture.detectChanges();
     await TestBed.inject(ApplicationRef).whenStable();
 
-    // Reason field visible but no errors yet
-    const reasonTextarea = fixture.nativeElement.querySelector(
-      '#reason'
-    ) as HTMLTextAreaElement;
+    // Wait for reason field to be visible
+    let reasonTextarea: HTMLTextAreaElement | null = null;
+    await expect
+      .poll(
+        () => {
+          fixture.detectChanges();
+          reasonTextarea = fixture.nativeElement.querySelector(
+            '#reason'
+          ) as HTMLTextAreaElement;
+          return reasonTextarea;
+        },
+        { timeout: 2000, interval: 100 }
+      )
+      .not.toBeNull();
+
+    if (!reasonTextarea) {
+      throw new Error('reasonTextarea should be visible');
+    }
+    const visibleReasonTextarea = reasonTextarea as HTMLTextAreaElement;
 
     await expect
-      .poll(() => reasonTextarea?.classList.contains('ng-invalid') ?? false, {
+      .poll(() => visibleReasonTextarea.classList.contains('ng-invalid'), {
         timeout: 2000,
         interval: 100,
       })
       .toBe(true);
     fixture.detectChanges();
     await TestBed.inject(ApplicationRef).whenStable();
-    let errorDisplay = reasonTextarea?.closest('ngx-control-wrapper');
+    let errorDisplay = visibleReasonTextarea.closest('ngx-control-wrapper');
     let errorContainer = errorDisplay?.querySelector(
       '[role="status"][aria-live]'
     );
@@ -195,7 +217,7 @@ describe('ValidationConfig Error Display', () => {
     await expect
       .poll(
         () => {
-          errorDisplay = reasonTextarea?.closest('ngx-control-wrapper');
+          errorDisplay = visibleReasonTextarea.closest('ngx-control-wrapper');
           errorContainer = errorDisplay?.querySelector(
             '[role="status"][aria-live]'
           );
