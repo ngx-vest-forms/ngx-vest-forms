@@ -1,7 +1,7 @@
 import { ApplicationRef, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { staticSuite, only, omitWhen, test, enforce } from 'vest';
 import { NgxVestForms } from '../exports';
 import type { NgxDeepPartial } from '../utils/deep-partial';
 
@@ -87,12 +87,7 @@ describe('ValidationConfig Error Display', () => {
     // Click checkbox to reveal reason field (this marks checkbox as touched via blur)
     checkbox.focus();
     checkbox.click();
-    checkbox.dispatchEvent(new Event('blur'));  // Mark as touched
-    fixture.detectChanges();
-    await TestBed.inject(ApplicationRef).whenStable();
-
-    // Wait for validationConfig debounce
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    checkbox.dispatchEvent(new Event('blur')); // Mark as touched
     fixture.detectChanges();
     await TestBed.inject(ApplicationRef).whenStable();
 
@@ -102,19 +97,21 @@ describe('ValidationConfig Error Display', () => {
     ) as HTMLTextAreaElement;
     expect(reasonTextarea).not.toBeNull();
 
+    await expect
+      .poll(() => reasonTextarea?.classList.contains('ng-invalid') ?? false, {
+        timeout: 2000,
+        intervals: [50, 100, 200],
+      })
+      .toBe(true);
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
     // Get error display element (errors are shown in a div with role="status")
     const errorDisplay = reasonTextarea?.closest('ngx-control-wrapper');
-    const errorContainer = errorDisplay?.querySelector('[role="status"].text-red-600');
-    
-    // Log current state for debugging
+    const errorContainer = errorDisplay?.querySelector(
+      '[role="status"].text-red-600'
+    );
     const errorUl = errorContainer?.querySelector('ul');
-    const reasonControl = fixture.componentInstance.formValue().reason;
-    console.log('Error UL found:', !!errorUl);
-    console.log('Error text content:', errorUl?.textContent?.trim());
-    console.log('Reason value:', reasonControl);
-    console.log('Checkbox touched:', checkbox.classList.contains('ng-touched'));
-    console.log('Reason textarea touched:', reasonTextarea.classList.contains('ng-touched'));
-    console.log('Reason textarea classes:', reasonTextarea.className);
 
     // ✅ EXPECTED BEHAVIOR (after fix): No errors yet
     // The reason field should NOT show errors because:
@@ -123,10 +120,10 @@ describe('ValidationConfig Error Display', () => {
     // 3. errorDisplayMode is 'on-blur-or-submit' (default)
     const errorsBefore = errorUl?.textContent?.trim() || '';
     expect(errorsBefore).toBe('');
-    
+
     // Verify reason field is untouched (no touch propagation)
     expect(reasonTextarea.classList.contains('ng-untouched')).toBe(true);
-    
+
     // But it should be invalid (validation ran)
     expect(reasonTextarea.classList.contains('ng-invalid')).toBe(true);
 
@@ -139,7 +136,7 @@ describe('ValidationConfig Error Display', () => {
     const errorUlAfterBlur = errorContainer?.querySelector('ul');
     const errorsAfter = errorUlAfterBlur?.textContent?.trim() || '';
     expect(errorsAfter).toContain('Reason is required');
-    
+
     // Verify reason field is now touched
     expect(reasonTextarea.classList.contains('ng-touched')).toBe(true);
   });
@@ -157,17 +154,23 @@ describe('ValidationConfig Error Display', () => {
     fixture.detectChanges();
     await TestBed.inject(ApplicationRef).whenStable();
 
-    // Wait for validationConfig debounce
-    await new Promise((resolve) => setTimeout(resolve, 200));
-    fixture.detectChanges();
-    await TestBed.inject(ApplicationRef).whenStable();
-
     // Reason field visible but no errors yet
     const reasonTextarea = fixture.nativeElement.querySelector(
       '#reason'
     ) as HTMLTextAreaElement;
+
+    await expect
+      .poll(() => reasonTextarea?.classList.contains('ng-invalid') ?? false, {
+        timeout: 2000,
+        intervals: [50, 100, 200],
+      })
+      .toBe(true);
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
     let errorDisplay = reasonTextarea?.closest('ngx-control-wrapper');
-    let errorContainer = errorDisplay?.querySelector('[role="status"].text-red-600');
+    let errorContainer = errorDisplay?.querySelector(
+      '[role="status"].text-red-600'
+    );
     let errorUl = errorContainer?.querySelector('ul');
     expect(errorUl?.textContent?.trim() || '').toBe('');
 
@@ -178,9 +181,18 @@ describe('ValidationConfig Error Display', () => {
     await TestBed.inject(ApplicationRef).whenStable();
 
     // NOW errors should appear because form was submitted
-    errorDisplay = reasonTextarea?.closest('ngx-control-wrapper');
-    errorContainer = errorDisplay?.querySelector('[role="status"].text-red-600');
-    errorUl = errorContainer?.querySelector('ul');
-    expect(errorUl?.textContent).toContain('Reason is required');
+    await expect
+      .poll(
+        () => {
+          errorDisplay = reasonTextarea?.closest('ngx-control-wrapper');
+          errorContainer = errorDisplay?.querySelector(
+            '[role="status"].text-red-600'
+          );
+          errorUl = errorContainer?.querySelector('ul');
+          return errorUl?.textContent?.includes('Reason is required') ?? false;
+        },
+        { timeout: 2000, intervals: [50, 100, 200] }
+      )
+      .toBe(true);
   });
 });
