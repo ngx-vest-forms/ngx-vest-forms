@@ -957,11 +957,20 @@ export class FormDirective<T extends Record<string, unknown>> {
         // This prevents the dependent field's valueChanges from triggering its own validationConfig
         this.validationInProgress.add(depField);
 
-        // Propagate touch state BEFORE validation to avoid duplicate class updates
-        // markAsTouched() triggers change detection, so we do it once before updateValueAndValidity
-        if (control.touched && !dependentControl.touched) {
-          dependentControl.markAsTouched({ onlySelf: true });
-        }
+        // NOTE: Touch propagation removed (PR #XXX)
+        // Previously, we propagated touch state from trigger to dependent fields.
+        // This caused UX issues where dependent fields showed errors immediately
+        // after being revealed by a toggle, even though the user never interacted with them.
+        //
+        // With this change:
+        // - Errors on dependent fields only show after the user directly touches/blurs them
+        // - ARIA attributes (aria-invalid) still work correctly via isInvalid check
+        // - Warnings still show after validation via hasBeenValidated check
+        //
+        // The removed code was:
+        // if (control.touched && !dependentControl.touched) {
+        //   dependentControl.markAsTouched({ onlySelf: true });
+        // }
 
         // emitEvent: true is REQUIRED for async validators to actually run
         // The validationInProgress Set prevents infinite loops:

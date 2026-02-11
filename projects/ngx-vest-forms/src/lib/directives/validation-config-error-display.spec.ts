@@ -116,37 +116,32 @@ describe('ValidationConfig Error Display', () => {
     console.log('Reason textarea touched:', reasonTextarea.classList.contains('ng-touched'));
     console.log('Reason textarea classes:', reasonTextarea.className);
 
-    // CURRENT BEHAVIOR (BUG): Errors show immediately because touch was propagated from checkbox
-    // EXPECTED BEHAVIOR: No errors yet because reason field was not touched/blurred by user
-    
-    // ✅ This assertion should FAIL with current code (demonstrating the bug)
-    // The reason field SHOULD show errors because:
-    // 1. Touch was propagated from checkbox to reason field
-    // 2. The field is invalid (empty but required)
-    // 3. shouldShowErrors checks (isTouched || formSubmitted) and isTouched is true
-    // BUT we WANT it to NOT show errors until user directly interacts with it
+    // ✅ EXPECTED BEHAVIOR (after fix): No errors yet
+    // The reason field should NOT show errors because:
+    // 1. The field was never blurred (user never interacted with it directly)
+    // 2. Touch is NOT propagated from checkbox via validationConfig
+    // 3. errorDisplayMode is 'on-blur-or-submit' (default)
     const errorsBefore = errorUl?.textContent?.trim() || '';
+    expect(errorsBefore).toBe('');
     
-    // If errors are showing (current bug), update the assertion to demonstrate it
-    if (errorsBefore.includes('Reason is required')) {
-      console.log('✗ BUG CONFIRMED: Errors are showing immediately after checkbox click');
-      console.log('  Reason field was touched via validationConfig propagation');
-      // This demonstrates the bug - errors show even though user never touched the field
-      expect(errorsBefore).toContain('Reason is required');
-    } else {
-      console.log('✓ No errors showing (expected behavior after fix)');
-      expect(errorsBefore).toBe('');
-    }
+    // Verify reason field is untouched (no touch propagation)
+    expect(reasonTextarea.classList.contains('ng-untouched')).toBe(true);
+    
+    // But it should be invalid (validation ran)
+    expect(reasonTextarea.classList.contains('ng-invalid')).toBe(true);
 
     // Now blur the reason field (user interaction)
     reasonTextarea.dispatchEvent(new Event('blur'));
     fixture.detectChanges();
     await TestBed.inject(ApplicationRef).whenStable();
 
-    // NOW errors should appear because field was blurred
+    // NOW errors should appear because field was blurred by user
     const errorUlAfterBlur = errorContainer?.querySelector('ul');
     const errorsAfter = errorUlAfterBlur?.textContent?.trim() || '';
     expect(errorsAfter).toContain('Reason is required');
+    
+    // Verify reason field is now touched
+    expect(reasonTextarea.classList.contains('ng-touched')).toBe(true);
   });
 
   it('should show errors after form submit even if field was not touched', async () => {
