@@ -165,6 +165,13 @@ describe('ValidationConfig Error Display', () => {
     fixture.detectChanges();
     await TestBed.inject(ApplicationRef).whenStable();
 
+    // Wait for validationConfig debounce
+    await new Promise((resolve) =>
+      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+    );
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
     // Reason field visible but no errors yet
     const reasonTextarea = fixture.nativeElement.querySelector(
       '#reason'
