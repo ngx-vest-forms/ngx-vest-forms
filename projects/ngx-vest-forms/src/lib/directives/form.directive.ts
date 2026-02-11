@@ -927,7 +927,10 @@ export class FormDirective<T extends Record<string, unknown>> {
    *
    * Handles:
    * - Loop prevention via validationInProgress set
-   * - Validation updates that avoid feedback loops
+   * - Silent validation updates that avoid feedback loops
+   *
+   * Note: Touch state is NOT propagated to prevent premature error display
+   * on conditionally revealed fields.
    *
    * Note: This method does NOT propagate touch state from trigger to dependent fields.
    * Dependent fields only show errors after the user directly interacts with them.
