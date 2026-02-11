@@ -1784,7 +1784,7 @@ describe('FormDirective - Comprehensive', () => {
       // This prevents UX issues where dependent fields show errors immediately after being revealed
       // by a toggle, even though the user never interacted with them.
       //
-      // Changed in PR #XXX: Previously, touch was propagated. Now it's not.
+      // Previously, touch was propagated. Now it's not.
       // The validation still runs (field2 becomes invalid), but it's not marked as touched.
       // This means errors won't show until the user directly interacts with field2.
 

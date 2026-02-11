@@ -5,6 +5,9 @@ import { staticSuite, only, omitWhen, test, enforce } from 'vest';
 import { NgxVestForms } from '../exports';
 import type { NgxDeepPartial } from '../utils/deep-partial';
 
+// Debounce wait time for validationConfig (same as used in validation-config.spec.ts)
+const TEST_DEBOUNCE_WAIT_TIME = 150;
+
 type TestModel = NgxDeepPartial<{ flag: boolean; reason: string }>;
 
 const testSuite = staticSuite((model: TestModel, field?: string) => {
@@ -92,7 +95,7 @@ describe('ValidationConfig Error Display', () => {
     await TestBed.inject(ApplicationRef).whenStable();
 
     // Wait for validationConfig debounce
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME));
     fixture.detectChanges();
     await TestBed.inject(ApplicationRef).whenStable();
 
@@ -105,16 +108,7 @@ describe('ValidationConfig Error Display', () => {
     // Get error display element (errors are shown in a div with role="status")
     const errorDisplay = reasonTextarea?.closest('ngx-control-wrapper');
     const errorContainer = errorDisplay?.querySelector('[role="status"].text-red-600');
-    
-    // Log current state for debugging
     const errorUl = errorContainer?.querySelector('ul');
-    const reasonControl = fixture.componentInstance.formValue().reason;
-    console.log('Error UL found:', !!errorUl);
-    console.log('Error text content:', errorUl?.textContent?.trim());
-    console.log('Reason value:', reasonControl);
-    console.log('Checkbox touched:', checkbox.classList.contains('ng-touched'));
-    console.log('Reason textarea touched:', reasonTextarea.classList.contains('ng-touched'));
-    console.log('Reason textarea classes:', reasonTextarea.className);
 
     // ✅ EXPECTED BEHAVIOR (after fix): No errors yet
     // The reason field should NOT show errors because:

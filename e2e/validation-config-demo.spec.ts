@@ -212,12 +212,13 @@ test.describe('ValidationConfig Demo', () => {
         // The user has not interacted with the justification field yet
         // With the fix (no touch propagation), errors only show after blur or submit
         
-        // Get the wrapper and look for error text
-        const wrapper = justification.locator('xpath=ancestor::*[contains(@class, "ngx-control-wrapper")]');
-        const errorText = wrapper.locator('[role="status"]').filter({ hasText: /required/i });
+        // Get the form-group wrapper that contains the justification field
+        // In the demo template, the wrapper is: <div class="form-group animate-fade-in" ngx-control-wrapper>
+        const formGroup = page.locator('div.form-group').filter({ has: justification });
+        const errorStatus = formGroup.locator('[role="status"]').filter({ hasText: /required/i });
         
         // Verify no error is displayed (should not be visible)
-        await expect(errorText).not.toBeVisible();
+        await expect(errorStatus).not.toBeVisible();
 
         // Now blur the field (user interaction)
         await justification.focus();
