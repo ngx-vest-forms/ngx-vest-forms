@@ -5,6 +5,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
 import type { NgxDeepPartial } from '../utils/deep-partial';
 
+// Debounce wait time for validationConfig (same as used in validation-config.spec.ts)
+const TEST_DEBOUNCE_WAIT_TIME = 150;
+
 type TestModel = NgxDeepPartial<{ flag: boolean; reason: string }>;
 
 const testSuite = staticSuite((model: TestModel, field?: string) => {
@@ -91,6 +94,13 @@ describe('ValidationConfig Error Display', () => {
     fixture.detectChanges();
     await TestBed.inject(ApplicationRef).whenStable();
 
+    // Wait for validationConfig debounce
+    await new Promise((resolve) =>
+      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
+    );
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
     // Now reason field should be visible
     reasonTextarea = fixture.nativeElement.querySelector(
       '#reason'
@@ -111,6 +121,8 @@ describe('ValidationConfig Error Display', () => {
     const errorContainer = errorDisplay?.querySelector(
       '[role="status"].text-red-600'
     );
+
+    // Log current state for debugging
     const errorUl = errorContainer?.querySelector('ul');
 
     // ✅ EXPECTED BEHAVIOR (after fix): No errors yet
