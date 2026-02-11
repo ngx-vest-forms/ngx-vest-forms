@@ -150,13 +150,13 @@ export class FormControlStateDirective {
         // 1. The control has been touched (user blurred the field).
         // 2. The control's status has actually changed (not the first status emission),
         //    AND the new status is not 'PENDING' (validation completed),
-        //    AND the control has been interacted with (dirty).
+        //    AND (the control has been interacted with (dirty) OR validation was triggered externally).
         //
         // This ensures hasBeenValidated is true for:
         //   - User blur events (touched becomes true)
         //   - User-triggered validations (dirty)
-        //   - ValidationConfig-triggered validations that result in the control becoming touched
-        // But NOT for initial page load validations.
+        //   - ValidationConfig-triggered validations (status changed without touch/dirty)
+        // But NOT for initial page load validations (previousStatus === null).
         //
         // Accessibility: The logic is structured for clarity and maintainability.
         // IMPORTANT: Read touched/dirty directly from control, not from signal,
@@ -166,8 +166,9 @@ export class FormControlStateDirective {
           (this.#previousStatus !== null && // Not the first status emission
             this.#previousStatus !== currentStatus && // Status actually changed
             currentStatus !== null &&
-            currentStatus !== 'PENDING' &&
-            dirty) // Or control value changed (typed)
+            currentStatus !== 'PENDING') // Validation completed (not pending)
+          // Note: We removed the `dirty` check here to support validationConfig-triggered validations
+          // This allows warnings to show even when the field hasn't been touched/dirtied by the user
         ) {
           this.#interactionState.update((state) => ({
             ...state,
