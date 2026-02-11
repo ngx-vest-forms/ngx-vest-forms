@@ -149,12 +149,11 @@ export class FormControlStateDirective {
         // Mark as validated when any of the following conditions are met:
         // 1. The control has been touched (user blurred the field).
         // 2. The control's status has actually changed (not the first status emission),
-        //    AND the new status is not 'PENDING' (validation completed),
-        //    AND (the control has been interacted with (dirty) OR validation was triggered externally).
+        //    AND the new status is not 'PENDING' (validation completed).
         //
         // This ensures hasBeenValidated is true for:
         //   - User blur events (touched becomes true)
-        //   - User-triggered validations (dirty)
+        //   - User-triggered validations that change status (e.g., typing then validation completes)
         //   - ValidationConfig-triggered validations (status changed without touch/dirty)
         // But NOT for initial page load validations (previousStatus === null).
         //

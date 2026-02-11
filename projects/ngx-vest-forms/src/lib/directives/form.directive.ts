@@ -957,7 +957,7 @@ export class FormDirective<T extends Record<string, unknown>> {
         // This prevents the dependent field's valueChanges from triggering its own validationConfig
         this.validationInProgress.add(depField);
 
-        // NOTE: Touch propagation removed (PR #XXX)
+        // NOTE: Touch propagation removed (PR #78)
         // Previously, we propagated touch state from trigger to dependent fields.
         // This caused UX issues where dependent fields showed errors immediately
         // after being revealed by a toggle, even though the user never interacted with them.
