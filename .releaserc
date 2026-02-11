@@ -33,6 +33,10 @@
     {
       "name": "fix/*",
       "prerelease": "fix-${((typeof name === 'string' && name.replace(/^fix\\//, '').replace(/[^a-zA-Z0-9-_]/g, '')) ? name.replace(/^fix\\//, '').replace(/[^a-zA-Z0-9-_]/g, '') : 'branch') || 'branch'}"
+    },
+    {
+      "name": "copilot/*",
+      "prerelease": "beta"
     }
   ],
   "plugins": [
