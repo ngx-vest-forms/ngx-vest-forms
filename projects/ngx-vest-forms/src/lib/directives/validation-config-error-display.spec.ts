@@ -5,9 +5,6 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
 import type { NgxDeepPartial } from '../utils/deep-partial';
 
-// Debounce wait time for validationConfig (same as used in validation-config.spec.ts)
-const TEST_DEBOUNCE_WAIT_TIME = 150;
-
 type TestModel = NgxDeepPartial<{ flag: boolean; reason: string }>;
 
 const testSuite = staticSuite((model: TestModel, field?: string) => {
