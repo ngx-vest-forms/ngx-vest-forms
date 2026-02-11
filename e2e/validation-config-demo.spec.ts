@@ -1190,14 +1190,24 @@ test.describe('ValidationConfig Demo', () => {
 
     test('should display key features callout', async ({ page }) => {
       await test.step('Verify key features box is visible', async () => {
-        await expect(page.locator('text=/key features/i')).toBeVisible();
-        await expect(page.locator('text=/no race condition/i')).toBeVisible();
-        await expect(page.locator('text=/debounced/i')).toBeVisible();
-        await expect(page.locator('text=/conditional field/i')).toBeVisible();
-        // Actual text is "Cross-field Validation" not "revalidation"
+        const keyFeaturesHeading = page.getByRole('heading', {
+          name: /key features/i,
+        });
+        await expect(keyFeaturesHeading).toBeVisible();
+
+        const keyFeaturesCard = page.locator('ngx-card', {
+          has: keyFeaturesHeading,
+        });
+        const keyFeaturesList = keyFeaturesCard.getByRole('list');
+
         await expect(
-          page.locator('text=/cross-field.*validation/i')
+          keyFeaturesList.getByText(/no race condition/i)
         ).toBeVisible();
+        await expect(keyFeaturesList.getByText(/debounced/i)).toBeVisible();
+        await expect(
+          keyFeaturesList.getByText(/conditional fields?/i)
+        ).toBeVisible();
+        await expect(keyFeaturesList.getByText(/cross-field/i)).toBeVisible();
       });
     });
   });

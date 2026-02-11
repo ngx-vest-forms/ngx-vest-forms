@@ -141,7 +141,6 @@ export class FormControlStateDirective {
           pristine,
           errors,
           touched,
-          dirty,
         } = control;
 
         const currentStatus = status as FormControlStatus | null;

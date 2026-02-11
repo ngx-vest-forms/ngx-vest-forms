@@ -110,16 +110,16 @@ describe('ValidationConfig Error Display', () => {
     await expect
       .poll(() => reasonTextarea?.classList.contains('ng-invalid') ?? false, {
         timeout: 2000,
-        intervals: [50, 100, 200],
+        interval: 100,
       })
       .toBe(true);
     fixture.detectChanges();
     await TestBed.inject(ApplicationRef).whenStable();
 
-    // Get error display element (errors are shown in a div with role="status")
+    // Get error display element (errors are shown in a region with role="status")
     const errorDisplay = reasonTextarea?.closest('ngx-control-wrapper');
     const errorContainer = errorDisplay?.querySelector(
-      '[role="status"].text-red-600'
+      '[role="status"][aria-live]'
     );
 
     // Log current state for debugging
@@ -174,14 +174,14 @@ describe('ValidationConfig Error Display', () => {
     await expect
       .poll(() => reasonTextarea?.classList.contains('ng-invalid') ?? false, {
         timeout: 2000,
-        intervals: [50, 100, 200],
+        interval: 100,
       })
       .toBe(true);
     fixture.detectChanges();
     await TestBed.inject(ApplicationRef).whenStable();
     let errorDisplay = reasonTextarea?.closest('ngx-control-wrapper');
     let errorContainer = errorDisplay?.querySelector(
-      '[role="status"].text-red-600'
+      '[role="status"][aria-live]'
     );
     let errorUl = errorContainer?.querySelector('ul');
     expect(errorUl?.textContent?.trim() || '').toBe('');
@@ -198,12 +198,12 @@ describe('ValidationConfig Error Display', () => {
         () => {
           errorDisplay = reasonTextarea?.closest('ngx-control-wrapper');
           errorContainer = errorDisplay?.querySelector(
-            '[role="status"].text-red-600'
+            '[role="status"][aria-live]'
           );
           errorUl = errorContainer?.querySelector('ul');
           return errorUl?.textContent?.includes('Reason is required') ?? false;
         },
-        { timeout: 2000, intervals: [50, 100, 200] }
+        { timeout: 2000, interval: 100 }
       )
       .toBe(true);
   });
