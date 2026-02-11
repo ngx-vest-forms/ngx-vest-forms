@@ -112,16 +112,6 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
       });
     });
 
-    /**
-     * Note: Bidirectional email/password confirmation validation tests are skipped
-     * because the wizard-form component does not have validationConfig set up for
-     * bidirectional re-validation. The feature requires:
-     *   validationConfig: { 'email': ['confirmEmail'], 'password': ['confirmPassword'] }
-     *
-     * Comprehensive bidirectional validation tests exist in validation-config-demo.spec.ts
-     * which demonstrates the pattern with proper validationConfig setup.
-     */
-
     test('should navigate to step 2 when step 1 is valid', async ({ page }) => {
       await test.step('Submit All triggers validation on all steps', async () => {
         await fillAndBlur(
@@ -702,6 +692,9 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         ).toBeVisible({ timeout: 20_000 });
 
         // Break email confirmation (mismatch)
+        const emailField = page.getByLabel(/email address/i);
+        await expect(emailField).toHaveValue('test@example.com');
+        
         await fillAndBlur(
           page.getByLabel(/confirm email/i),
           'broken@example.com'
