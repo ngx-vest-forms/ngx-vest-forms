@@ -39,6 +39,27 @@ export const validationDemoSuite = staticSuite(
       });
     });
 
+    // Cross-field requirement (quantity <-> justification)
+    omitWhen(!model.quantity, () => {
+      test(
+        'quantityJustification',
+        'Justification is required when quantity is provided',
+        () => {
+          enforce(model.quantityJustification).isNotBlank();
+        }
+      );
+    });
+
+    omitWhen(!model.quantityJustification, () => {
+      test(
+        'quantity',
+        'Quantity is required when justification is provided',
+        () => {
+          enforce(model.quantity).isNotBlank();
+        }
+      );
+    });
+
     // Justification (conditional)
     omitWhen(!model.requiresJustification, () => {
       test('justification', 'Justification is required when selected', () => {

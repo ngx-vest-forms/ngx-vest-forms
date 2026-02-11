@@ -5,6 +5,10 @@ export type ValidationDemoModel = DeepPartial<{
   password: string;
   confirmPassword: string;
 
+  // Cross-field requirement example
+  quantity: string;
+  quantityJustification: string;
+
   // Conditional validation example
   requiresJustification: boolean;
   justification: string;
@@ -22,6 +26,8 @@ export type ValidationDemoModel = DeepPartial<{
 export const validationDemoShape: DeepRequired<ValidationDemoModel> = {
   password: '',
   confirmPassword: '',
+  quantity: '',
+  quantityJustification: '',
   requiresJustification: false,
   justification: '',
   country: '',

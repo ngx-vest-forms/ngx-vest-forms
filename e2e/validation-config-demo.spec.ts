@@ -135,6 +135,58 @@ test.describe('ValidationConfig Demo', () => {
     });
   });
 
+  test.describe('Quantity Justification Validation', () => {
+    test('should require justification after quantity is filled (on blur)', async ({
+      page,
+    }) => {
+      await test.step('Fill quantity and confirm no immediate justification error', async () => {
+        const quantity = page.getByLabel('Quantity', { exact: true });
+        const justification = page.getByLabel('Justification', { exact: true });
+
+        await typeAndBlur(quantity, '5');
+        await waitForValidationToSettle(page);
+
+        const justificationError = page.getByRole('status').filter({
+          hasText: /justification is required when quantity is provided/i,
+        });
+        await expect(justificationError).toHaveCount(0);
+
+        await justification.focus();
+        await justification.blur();
+
+        await expectFieldHasError(
+          justification,
+          /justification is required when quantity is provided/i
+        );
+      });
+    });
+
+    test('should require quantity after justification is filled (on blur)', async ({
+      page,
+    }) => {
+      await test.step('Fill justification and confirm no immediate quantity error', async () => {
+        const quantity = page.getByLabel('Quantity', { exact: true });
+        const justification = page.getByLabel('Justification', { exact: true });
+
+        await fillAndBlur(justification, 'Needed for the project scope');
+        await waitForValidationToSettle(page);
+
+        const quantityError = page.getByRole('status').filter({
+          hasText: /quantity is required when justification is provided/i,
+        });
+        await expect(quantityError).toHaveCount(0);
+
+        await quantity.focus();
+        await quantity.blur();
+
+        await expectFieldHasError(
+          quantity,
+          /quantity is required when justification is provided/i
+        );
+      });
+    });
+  });
+
   test.describe('Conditional Justification Validation', () => {
     test('should show justification field when checkbox is checked', async ({
       page,
@@ -196,7 +248,7 @@ test.describe('ValidationConfig Demo', () => {
     }) => {
       await test.step('Check checkbox and verify no immediate error display', async () => {
         const checkbox = page.getByLabel(/requires justification/i);
-        
+
         // Check the checkbox (this reveals the justification field)
         await checkbox.check();
         await waitForValidationToSettle(page);
@@ -211,13 +263,21 @@ test.describe('ValidationConfig Demo', () => {
         // ✅ CRITICAL: Errors should NOT show immediately after field appears
         // The user has not interacted with the justification field yet
         // With the fix (no touch propagation), errors only show after blur or submit
-        
+
         // Get the wrapper and look for error text
-        const wrapper = justification.locator('xpath=ancestor::*[contains(@class, "ngx-control-wrapper")]');
-        const errorText = wrapper.locator('[role="status"]').filter({ hasText: /required/i });
-        
-        // Verify no error is displayed (should not be visible)
-        await expect(errorText).not.toBeVisible();
+        const wrapper = justification.locator(
+          'xpath=ancestor::div[contains(@class, "form-group")]'
+        );
+        await expect(wrapper).toHaveCount(1);
+        const errorText = wrapper
+          .locator('.text-red-600 li')
+          .filter({ hasText: /required/i });
+
+        // Verify no error is displayed (no error list items yet)
+        await expect(errorText).toHaveCount(0);
+
+        // Field should remain untouched until user interaction
+        await expect(justification).toHaveClass(/ng-untouched/);
 
         // Now blur the field (user interaction)
         await justification.focus();
@@ -1116,6 +1176,9 @@ test.describe('ValidationConfig Demo', () => {
         // Look for section headings
         await expect(
           page.locator('text=/bidirectional.*password/i')
+        ).toBeVisible();
+        await expect(
+          page.locator('text=/cross-field.*requirement/i')
         ).toBeVisible();
         await expect(
           page.locator('text=/conditional.*justification/i')

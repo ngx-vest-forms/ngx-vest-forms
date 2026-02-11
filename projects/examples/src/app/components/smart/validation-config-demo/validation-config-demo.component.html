@@ -225,6 +225,51 @@
           </div>
         </section>
 
+        <!-- Cross-Field Requirement Example -->
+        <section
+          class="relative rounded-lg border border-teal-100 bg-teal-50/30 p-6 dark:border-teal-900/30 dark:bg-teal-900/10"
+        >
+          <h2
+            class="absolute -top-3 left-4 bg-white px-2 text-sm font-semibold text-teal-700 dark:bg-gray-800 dark:text-teal-300"
+          >
+            Cross-Field Requirement
+          </h2>
+          <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            When either field has a value, the other becomes required. Errors
+            display only after blur or submit.
+          </p>
+
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div class="form-group" ngx-control-wrapper>
+              <label>
+                <span class="label-text">Quantity</span>
+                <input
+                  class="input-field"
+                  type="number"
+                  id="quantity"
+                  name="quantity"
+                  [ngModel]="formValue().quantity"
+                  placeholder="Enter quantity"
+                />
+              </label>
+            </div>
+
+            <div class="form-group" ngx-control-wrapper>
+              <label>
+                <span class="label-text">Justification</span>
+                <textarea
+                  class="input-field"
+                  id="quantityJustification"
+                  name="quantityJustification"
+                  [ngModel]="formValue().quantityJustification"
+                  rows="3"
+                  placeholder="Explain why the quantity is needed..."
+                ></textarea>
+              </label>
+            </div>
+          </div>
+        </section>
+
         <!-- Conditional Validation Example -->
         <section
           class="relative rounded-lg border border-green-100 bg-green-50/30 p-6 dark:border-green-900/30 dark:bg-green-900/10"
@@ -240,6 +285,13 @@
           <p class="mb-4 text-xs text-gray-500 dark:text-gray-400">
             Warnings can appear after validationConfig-triggered validation,
             even if the field was not touched yet.
+          </p>
+          <p class="mb-4 text-xs text-gray-500 dark:text-gray-400">
+            Errors appear only after blur or submit in the default
+            <code class="rounded bg-gray-100 px-1 dark:bg-gray-800"
+              >on-blur-or-submit</code
+            >
+            mode, even when validationConfig triggers validation.
           </p>
 
           <div class="space-y-4">

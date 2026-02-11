@@ -45,6 +45,8 @@ export class ValidationConfigDemoComponent {
     createValidationConfig<ValidationDemoModel>()
       // Bidirectional: when password changes, revalidate confirmPassword AND vice versa
       .bidirectional('password', 'confirmPassword')
+      // Cross-field requirement: quantity and justification revalidate each other
+      .bidirectional('quantity', 'quantityJustification')
       // Conditional: when checkbox changes, revalidate justification
       .whenChanged('requiresJustification', 'justification')
       // Cascade: when country changes, revalidate state and zipCode
