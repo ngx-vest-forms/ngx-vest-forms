@@ -152,7 +152,7 @@ export class FormControlStateDirective {
         //
         // This ensures hasBeenValidated is true for:
         //   - User blur events (touched becomes true)
-        //   - User-triggered validations that change status (e.g., typing then validation completes)
+        //   - Any validation that changes status (e.g., typing then validation completes)
         //   - ValidationConfig-triggered validations (status changed without touch/dirty)
         // But NOT for initial page load validations (previousStatus === null).
         //

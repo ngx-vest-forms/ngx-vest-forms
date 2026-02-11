@@ -929,6 +929,9 @@ export class FormDirective<T extends Record<string, unknown>> {
    * - Loop prevention via validationInProgress set
    * - Validation updates that avoid feedback loops
    *
+   * Note: This method does NOT propagate touch state from trigger to dependent fields.
+   * Dependent fields only show errors after the user directly interacts with them.
+   *
    * @param form - The NgForm instance
    * @param control - The trigger control
    * @param triggerField - Field path of the trigger

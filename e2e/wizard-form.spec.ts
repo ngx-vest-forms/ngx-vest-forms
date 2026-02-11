@@ -694,7 +694,7 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         // Break email confirmation (mismatch)
         const emailField = page.getByLabel(/email address/i);
         await expect(emailField).toHaveValue('test@example.com');
-        
+
         await fillAndBlur(
           page.getByLabel(/confirm email/i),
           'broken@example.com'
