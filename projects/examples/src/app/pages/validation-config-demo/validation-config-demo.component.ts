@@ -14,9 +14,9 @@ import {
 import {
   ValidationDemoModel,
   validationDemoShape,
-} from '../../../models/validation-demo.model';
-import { validationDemoSuite } from '../../../validations/validation-demo.validations';
+} from '../../models/validation-demo.model';
 import { CardComponent } from '../../ui/card/card.component';
+import { validationDemoSuite } from './validation-demo.validations';
 
 @Component({
   selector: 'ngx-validation-config-demo',

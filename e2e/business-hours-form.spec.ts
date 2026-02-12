@@ -64,9 +64,8 @@ async function addTimeSlot(
   fromValue: string,
   toValue: string
 ): Promise<void> {
-  const addNewSlot = getAddNewSlot(page);
-  const fromTime = addNewSlot.locator('input[name="from"]');
-  const toTime = addNewSlot.locator('input[name="to"]');
+  const fromTime = getAddFromTime(page);
+  const toTime = getAddToTime(page);
   const addButton = getAddButton(page);
 
   await fillMaskedTimeInput(fromTime, fromValue);
@@ -111,12 +110,16 @@ function readBusinessHoursValues(
   return [];
 }
 
-function getAddNewSlot(page: Page) {
-  return page.locator('[ngModelGroup="addValue"]');
+function getAddFromTime(page: Page) {
+  return page.locator('#business-hours-add-from');
+}
+
+function getAddToTime(page: Page) {
+  return page.locator('#business-hours-add-to');
 }
 
 function getAddButton(page: Page) {
-  return getAddNewSlot(page).getByRole('button', { name: /^Add$/i });
+  return page.getByRole('button', { name: /^Add$/i });
 }
 
 test.describe('Business Hours Form', () => {
@@ -148,9 +151,8 @@ test.describe('Business Hours Form', () => {
       page,
     }) => {
       await test.step('Add valid business hour', async () => {
-        const addNewSlot = getAddNewSlot(page);
-        const fromTime = addNewSlot.locator('input[name="from"]');
-        const toTime = addNewSlot.locator('input[name="to"]');
+        const fromTime = getAddFromTime(page);
+        const toTime = getAddToTime(page);
 
         await fillAndBlur(fromTime, '0900');
         await fillAndBlur(toTime, '1700');
@@ -177,9 +179,8 @@ test.describe('Business Hours Form', () => {
   test.describe('Time Field Validation', () => {
     test('should not show addValue errors when empty', async ({ page }) => {
       await test.step('Focus and blur without input', async () => {
-        const addNewSlot = getAddNewSlot(page);
-        const fromTime = addNewSlot.locator('input[name="from"]');
-        const toTime = addNewSlot.locator('input[name="to"]');
+        const fromTime = getAddFromTime(page);
+        const toTime = getAddToTime(page);
 
         await fromTime.focus();
         await fromTime.blur();
@@ -196,8 +197,7 @@ test.describe('Business Hours Form', () => {
       page,
     }) => {
       await test.step('Enter invalid time formats', async () => {
-        const addNewSlot = getAddNewSlot(page);
-        const fromTime = addNewSlot.locator('input[name="from"]');
+        const fromTime = getAddFromTime(page);
 
         // Invalid: too few digits
         await fillAndBlur(fromTime, '090');
@@ -221,9 +221,8 @@ test.describe('Business Hours Form', () => {
       page,
     }) => {
       await test.step('Enter "to" time before "from" time', async () => {
-        const addNewSlot = getAddNewSlot(page);
-        const fromTime = addNewSlot.locator('input[name="from"]');
-        const toTime = addNewSlot.locator('input[name="to"]');
+        const fromTime = getAddFromTime(page);
+        const toTime = getAddToTime(page);
 
         // Use typeAndBlur to better simulate real user typing so the bidirectional
         // validationConfig triggers reliably.
@@ -243,9 +242,8 @@ test.describe('Business Hours Form', () => {
       page,
     }) => {
       await test.step('Fix time order', async () => {
-        const addNewSlot = getAddNewSlot(page);
-        const fromTime = addNewSlot.locator('input[name="from"]');
-        const toTime = addNewSlot.locator('input[name="to"]');
+        const fromTime = getAddFromTime(page);
+        const toTime = getAddToTime(page);
 
         await typeAndBlur(fromTime, '1700');
         await typeAndBlur(toTime, '0900');
@@ -270,9 +268,8 @@ test.describe('Business Hours Form', () => {
   test.describe('Multiple Time Slots Validation', () => {
     test('should add multiple valid time slots', async ({ page }) => {
       await test.step('Add two valid, non-overlapping time slots', async () => {
-        const addNewSlot = getAddNewSlot(page);
-        const fromTime = addNewSlot.locator('input[name="from"]');
-        const toTime = addNewSlot.locator('input[name="to"]');
+        const fromTime = getAddFromTime(page);
+        const toTime = getAddToTime(page);
         const valuesGroup = page.locator('[ngModelGroup="values"]');
 
         // Add first slot
@@ -297,9 +294,8 @@ test.describe('Business Hours Form', () => {
 
     test('should detect overlapping time slots', async ({ page }) => {
       await test.step('Add overlapping time slots', async () => {
-        const addNewSlot = getAddNewSlot(page);
-        const fromTime = addNewSlot.locator('input[name="from"]');
-        const toTime = addNewSlot.locator('input[name="to"]');
+        const fromTime = getAddFromTime(page);
+        const toTime = getAddToTime(page);
         const valuesGroup = page.locator('[ngModelGroup="values"]');
 
         // Add first slot: 09:00 - 12:00
@@ -326,9 +322,8 @@ test.describe('Business Hours Form', () => {
 
     test('should invalidate out-of-order time slots', async ({ page }) => {
       await test.step('Add time slots out of order', async () => {
-        const addNewSlot = getAddNewSlot(page);
-        const fromTime = addNewSlot.locator('input[name="from"]');
-        const toTime = addNewSlot.locator('input[name="to"]');
+        const fromTime = getAddFromTime(page);
+        const toTime = getAddToTime(page);
         const valuesGroup = page.locator('[ngModelGroup="values"]');
 
         // Add first slot: 13:00 - 17:00
@@ -357,9 +352,8 @@ test.describe('Business Hours Form', () => {
       page,
     }) => {
       await test.step('Add overlapping slots, then remove one', async () => {
-        const addNewSlot = getAddNewSlot(page);
-        const fromTime = addNewSlot.locator('input[name="from"]');
-        const toTime = addNewSlot.locator('input[name="to"]');
+        const fromTime = getAddFromTime(page);
+        const toTime = getAddToTime(page);
         const valuesGroup = page.locator('[ngModelGroup="values"]');
 
         // Add first slot
@@ -399,9 +393,8 @@ test.describe('Business Hours Form', () => {
 
     test('should validate each added slot individually', async ({ page }) => {
       await test.step('Add slot with invalid time format', async () => {
-        const addNewSlot = getAddNewSlot(page);
-        const fromTime = addNewSlot.locator('input[name="from"]');
-        const toTime = addNewSlot.locator('input[name="to"]');
+        const fromTime = getAddFromTime(page);
+        const toTime = getAddToTime(page);
         const addButton = getAddButton(page);
 
         // Add slot with valid times
@@ -424,9 +417,8 @@ test.describe('Business Hours Form', () => {
   test.describe('Edit Business Hour', () => {
     test('should allow editing existing business hours', async ({ page }) => {
       await test.step('Add a business hour and edit it', async () => {
-        const addNewSlot = getAddNewSlot(page);
-        const fromTime = addNewSlot.locator('input[name="from"]');
-        const toTime = addNewSlot.locator('input[name="to"]');
+        const fromTime = getAddFromTime(page);
+        const toTime = getAddToTime(page);
         const addButton = getAddButton(page);
 
         await fillAndBlur(fromTime, '0900');
@@ -448,9 +440,8 @@ test.describe('Business Hours Form', () => {
 
     test('should maintain validation rules when editing', async ({ page }) => {
       await test.step('Edit business hour to create invalid state', async () => {
-        const addNewSlot = getAddNewSlot(page);
-        const fromTime = addNewSlot.locator('input[name="from"]');
-        const toTime = addNewSlot.locator('input[name="to"]');
+        const fromTime = getAddFromTime(page);
+        const toTime = getAddToTime(page);
         const addButton = getAddButton(page);
 
         await fillAndBlur(fromTime, '0900');
@@ -479,9 +470,8 @@ test.describe('Business Hours Form', () => {
       page,
     }) => {
       await test.step('Add two business hours and remove one', async () => {
-        const addNewSlot = getAddNewSlot(page);
-        const fromTime = addNewSlot.locator('input[name="from"]');
-        const toTime = addNewSlot.locator('input[name="to"]');
+        const fromTime = getAddFromTime(page);
+        const toTime = getAddToTime(page);
         const addButton = getAddButton(page);
 
         // Add first slot
@@ -515,9 +505,8 @@ test.describe('Business Hours Form', () => {
       page,
     }) => {
       await test.step('Add and then remove all business hours', async () => {
-        const addNewSlot = getAddNewSlot(page);
-        const fromTime = addNewSlot.locator('input[name="from"]');
-        const toTime = addNewSlot.locator('input[name="to"]');
+        const fromTime = getAddFromTime(page);
+        const toTime = getAddToTime(page);
         const addButton = getAddButton(page);
 
         await fillAndBlur(fromTime, '0900');
@@ -539,9 +528,8 @@ test.describe('Business Hours Form', () => {
   test.describe('Form State Display', () => {
     test('should successfully add a valid business hour', async ({ page }) => {
       await test.step('Add valid business hour and verify it appears in the list', async () => {
-        const addNewSlot = getAddNewSlot(page);
-        const fromTime = addNewSlot.locator('input[name="from"]');
-        const toTime = addNewSlot.locator('input[name="to"]');
+        const fromTime = getAddFromTime(page);
+        const toTime = getAddToTime(page);
         const addButton = getAddButton(page);
         const valuesGroup = page.locator('[ngModelGroup="values"]');
 

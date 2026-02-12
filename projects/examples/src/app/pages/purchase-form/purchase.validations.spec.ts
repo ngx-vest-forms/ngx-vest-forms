@@ -1,6 +1,6 @@
 import { delay, of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi, type Mocked } from 'vitest';
-import type { SwapiService } from '../swapi.service';
+import type { SwapiService } from '../../swapi.service';
 import { createPurchaseValidationSuite } from './purchase.validations';
 
 describe('Purchase Validations', () => {

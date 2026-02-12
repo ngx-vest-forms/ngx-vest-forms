@@ -3,7 +3,7 @@ import { each, enforce, omitWhen, only, staticSuite, test } from 'vest';
 import {
   BusinessHourFormModel,
   BusinessHoursFormModel,
-} from '../models/business-hours-form.model';
+} from '../../models/business-hours-form.model';
 
 export const businessHoursSuite: NgxTypedVestSuite<BusinessHoursFormModel> =
   staticSuite(

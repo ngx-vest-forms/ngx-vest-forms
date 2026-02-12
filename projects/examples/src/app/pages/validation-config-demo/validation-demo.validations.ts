@@ -1,5 +1,5 @@
 import { enforce, omitWhen, only, staticSuite, test, warn } from 'vest';
-import { ValidationDemoModel } from '../models/validation-demo.model';
+import { ValidationDemoModel } from '../../models/validation-demo.model';
 
 export const validationDemoSuite = staticSuite(
   (model: ValidationDemoModel, field?: string) => {

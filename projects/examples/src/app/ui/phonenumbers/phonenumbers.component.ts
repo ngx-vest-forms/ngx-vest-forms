@@ -11,7 +11,7 @@ import {
   NgxVestForms,
   vestFormsViewProviders,
 } from 'ngx-vest-forms';
-import type { PhoneNumberMap } from '../../../models/phonenumber.model';
+import type { PhoneNumberMap } from '../../models/phonenumber.model';
 
 /**
  * Phone numbers component that integrates with ngx-vest-forms parent form.

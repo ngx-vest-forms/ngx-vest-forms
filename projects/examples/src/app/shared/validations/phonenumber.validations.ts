@@ -1,5 +1,5 @@
 import { each, enforce, test } from 'vest';
-import { PhoneNumberModel } from '../models/phonenumber.model';
+import { PhoneNumberModel } from '../../models/phonenumber.model';
 
 export function phonenumberValidations(
   model: PhoneNumberModel | undefined,

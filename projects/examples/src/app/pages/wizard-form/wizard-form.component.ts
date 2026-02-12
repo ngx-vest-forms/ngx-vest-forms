@@ -18,18 +18,18 @@ import {
   wizardStep2Shape,
   WizardStep3Model,
   wizardStep3Shape,
-} from '../../../models/wizard-form.model';
-import {
-  wizardStep1Suite,
-  wizardStep2Suite,
-  wizardStep3Suite,
-} from '../../../validations/wizard.validations';
+} from '../../models/wizard-form.model';
 import { CardComponent } from '../../ui/card/card.component';
 import {
   WizardNavigationComponent,
   WizardStepConfig,
   WizardStepsComponent,
 } from '../../ui/wizard';
+import {
+  wizardStep1Suite,
+  wizardStep2Suite,
+  wizardStep3Suite,
+} from './wizard.validations';
 
 /**
  * Multi-Form Wizard Example

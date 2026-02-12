@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
-import { ThemeSwitcherComponent } from './components/ui/theme-switcher/theme-switcher.component';
+import { ThemeSwitcherComponent } from './ui/theme-switcher/theme-switcher.component';
 
 @Component({
   selector: 'ngx-root',

@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 
 import { NgxVestForms, vestFormsViewProviders } from 'ngx-vest-forms';
-import { AddressModel } from '../../../models/address.model';
+import { AddressModel } from '../../models/address.model';
 
 let nextAddressInstanceId = 0;
 

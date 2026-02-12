@@ -123,11 +123,11 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           'test@example.com'
         ); // Must match email
         await fillAndBlur(
-          page.getByRole('textbox', { name: 'Password', exact: true }),
+          page.getByLabel('Password', { exact: true }),
           'SecurePass123!'
         );
         await fillAndBlur(
-          page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
+          page.getByLabel('Confirm Password', { exact: true }),
           'SecurePass123!'
         );
         await waitForValidationsToSettle(page);
@@ -165,7 +165,7 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           /required/i
         );
         await expectFieldHasError(
-          page.getByRole('textbox', { name: 'Password', exact: true }),
+          page.getByLabel('Password', { exact: true }),
           /required/i
         );
 
@@ -216,11 +216,11 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
       await fillAndBlur(page.getByLabel(/email address/i), 'test@example.com');
       await fillAndBlur(page.getByLabel(/confirm email/i), 'test@example.com');
       await fillAndBlur(
-        page.getByRole('textbox', { name: 'Password', exact: true }),
+        page.getByLabel('Password', { exact: true }),
         'SecurePass123!'
       );
       await fillAndBlur(
-        page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
+        page.getByLabel('Confirm Password', { exact: true }),
         'SecurePass123!'
       );
 
@@ -398,11 +398,11 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
       await fillAndBlur(page.getByLabel(/email address/i), 'john@example.com');
       await fillAndBlur(page.getByLabel(/confirm email/i), 'john@example.com');
       await fillAndBlur(
-        page.getByRole('textbox', { name: 'Password', exact: true }),
+        page.getByLabel('Password', { exact: true }),
         'SecurePass123!'
       );
       await fillAndBlur(
-        page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
+        page.getByLabel('Confirm Password', { exact: true }),
         'SecurePass123!'
       );
 
@@ -546,11 +546,11 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           'test@example.com'
         );
         await fillAndBlur(
-          page.getByRole('textbox', { name: 'Password', exact: true }),
+          page.getByLabel('Password', { exact: true }),
           'SecurePass123!'
         );
         await fillAndBlur(
-          page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
+          page.getByLabel('Confirm Password', { exact: true }),
           'SecurePass123!'
         );
 
@@ -622,11 +622,11 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           'test@example.com'
         );
         await fillAndBlur(
-          page.getByRole('textbox', { name: 'Password', exact: true }),
+          page.getByLabel('Password', { exact: true }),
           'SecurePass123!'
         );
         await fillAndBlur(
-          page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
+          page.getByLabel('Confirm Password', { exact: true }),
           'SecurePass123!'
         );
 
@@ -637,10 +637,10 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         await expectFieldValid(page.getByLabel(/email address/i));
         await expectFieldValid(page.getByLabel(/confirm email/i));
         await expectFieldValid(
-          page.getByRole('textbox', { name: 'Password', exact: true })
+          page.getByLabel('Password', { exact: true })
         );
         await expectFieldValid(
-          page.getByRole('textbox', { name: 'Confirm Password', exact: true })
+          page.getByLabel('Confirm Password', { exact: true })
         );
 
         await waitForSidebarStepValidity(page, 'Step 1: Account', 'Valid');
@@ -741,11 +741,11 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           'john@example.com'
         );
         await fillAndBlur(
-          page.getByRole('textbox', { name: 'Password', exact: true }),
+          page.getByLabel('Password', { exact: true }),
           'SecurePass123!'
         );
         await fillAndBlur(
-          page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
+          page.getByLabel('Confirm Password', { exact: true }),
           'SecurePass123!'
         );
 
@@ -756,10 +756,10 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         await expectFieldValid(page.getByLabel(/email address/i));
         await expectFieldValid(page.getByLabel(/confirm email/i));
         await expectFieldValid(
-          page.getByRole('textbox', { name: 'Password', exact: true })
+          page.getByLabel('Password', { exact: true })
         );
         await expectFieldValid(
-          page.getByRole('textbox', { name: 'Confirm Password', exact: true })
+          page.getByLabel('Confirm Password', { exact: true })
         );
 
         // Wait for step 1 to become valid before navigating
@@ -824,11 +824,11 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           'test@example.com'
         );
         await fillAndBlur(
-          page.getByRole('textbox', { name: 'Password', exact: true }),
+          page.getByLabel('Password', { exact: true }),
           'SecurePass123!'
         );
         await fillAndBlur(
-          page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
+          page.getByLabel('Confirm Password', { exact: true }),
           'SecurePass123!'
         );
         await waitForValidationsToSettle(page);
@@ -884,11 +884,11 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           'persist@example.com'
         );
         await fillAndBlur(
-          page.getByRole('textbox', { name: 'Password', exact: true }),
+          page.getByLabel('Password', { exact: true }),
           'Persist123!'
         );
         await fillAndBlur(
-          page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
+          page.getByLabel('Confirm Password', { exact: true }),
           'Persist123!'
         );
 
@@ -896,10 +896,10 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         await expectFieldValid(page.getByLabel(/email address/i));
         await expectFieldValid(page.getByLabel(/confirm email/i));
         await expectFieldValid(
-          page.getByRole('textbox', { name: 'Password', exact: true })
+          page.getByLabel('Password', { exact: true })
         );
         await expectFieldValid(
-          page.getByRole('textbox', { name: 'Confirm Password', exact: true })
+          page.getByLabel('Confirm Password', { exact: true })
         );
 
         // Wait for step 1 to be valid before navigating
@@ -939,11 +939,11 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           'test@example.com'
         );
         await fillAndBlur(
-          page.getByRole('textbox', { name: 'Password', exact: true }),
+          page.getByLabel('Password', { exact: true }),
           'SecurePass123!'
         );
         await fillAndBlur(
-          page.getByRole('textbox', { name: 'Confirm Password', exact: true }),
+          page.getByLabel('Confirm Password', { exact: true }),
           'SecurePass123!'
         );
         await clickNext(page);

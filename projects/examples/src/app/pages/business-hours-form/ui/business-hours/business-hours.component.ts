@@ -11,7 +11,7 @@ import {
   NgxVestForms,
   vestFormsViewProviders,
 } from 'ngx-vest-forms';
-import { BusinessHourFormModel } from '../../../models/business-hours-form.model';
+import { BusinessHourFormModel } from '../../../../models/business-hours-form.model';
 import { BusinessHourComponent } from '../business-hour/business-hour.component';
 
 export type BusinessHoursMap = Record<string, BusinessHourFormModel>;

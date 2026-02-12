@@ -3,7 +3,7 @@ import {
   WizardStep1Model,
   WizardStep2Model,
   WizardStep3Model,
-} from '../models/wizard-form.model';
+} from '../../models/wizard-form.model';
 
 /**
  * Step 1: Account Setup Validation

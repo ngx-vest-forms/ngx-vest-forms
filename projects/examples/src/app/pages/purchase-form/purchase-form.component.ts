@@ -18,18 +18,18 @@ import {
   ROOT_FORM,
   setValueAtPath,
 } from 'ngx-vest-forms';
-import { AddressModel } from '../../../models/address.model';
+import { AddressModel } from '../../models/address.model';
 import {
   initialPurchaseFormValue,
   PurchaseFormModel,
   purchaseFormShape,
-} from '../../../models/purchase-form.model';
-import { ProductService } from '../../../product.service';
-import { SwapiService } from '../../../swapi.service';
-import { createPurchaseValidationSuite } from '../../../validations/purchase.validations';
+} from '../../models/purchase-form.model';
+import { ProductService } from '../../product.service';
+import { SwapiService } from '../../swapi.service';
 import { AddressComponent } from '../../ui/address/address.component';
 import { CardComponent } from '../../ui/card/card.component';
 import { PhoneNumbersComponent } from '../../ui/phonenumbers/phonenumbers.component';
+import { createPurchaseValidationSuite } from './purchase.validations';
 
 // API response type from json-server
 type LukeApiResponse = {

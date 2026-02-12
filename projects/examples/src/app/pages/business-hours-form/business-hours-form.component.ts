@@ -16,13 +16,13 @@ import {
   BusinessHoursFormModel,
   businessHoursFormShape,
   initialBusinessHoursFormValue,
-} from '../../../models/business-hours-form.model';
-import { businessHoursSuite } from '../../../validations/business-hours.validations';
+} from '../../models/business-hours-form.model';
+import { CardComponent } from '../../ui/card/card.component';
+import { businessHoursSuite } from './business-hours.validations';
 import {
   BusinessHoursComponent,
   BusinessHoursMap,
-} from '../../ui/business-hours/business-hours.component';
-import { CardComponent } from '../../ui/card/card.component';
+} from './ui/business-hours/business-hours.component';
 
 @Component({
   selector: 'ngx-business-hours-form',

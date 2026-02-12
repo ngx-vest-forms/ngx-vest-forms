@@ -1,5 +1,5 @@
 import { enforce, only, staticSuite, test, warn } from 'vest';
-import { DisplayModesDemoModel } from '../models/display-modes-demo.model';
+import { DisplayModesDemoModel } from '../../models/display-modes-demo.model';
 
 export const displayModesDemoSuite = staticSuite(
   (model: DisplayModesDemoModel, field?: string) => {

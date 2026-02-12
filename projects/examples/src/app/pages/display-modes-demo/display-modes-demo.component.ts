@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { NgxVestForms } from 'ngx-vest-forms';
-import { DisplayModesDemoModel } from '../../../models/display-modes-demo.model';
-import { displayModesDemoSuite } from '../../../validations/display-modes-demo.validations';
+import { DisplayModesDemoModel } from '../../models/display-modes-demo.model';
+import { displayModesDemoSuite } from './display-modes-demo.validations';
 
 @Component({
   selector: 'ngx-display-modes-demo',
