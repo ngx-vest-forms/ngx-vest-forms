@@ -48,6 +48,12 @@
     padding: 1rem; /* p-4 */
   }
 
+  .sidebar-card-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
   @media (min-width: 640px) {
     .page-container {
       padding: 1.5rem; /* sm:p-6 */
