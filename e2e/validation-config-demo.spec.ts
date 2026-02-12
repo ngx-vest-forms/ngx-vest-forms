@@ -337,9 +337,75 @@ test.describe('ValidationConfig Demo', () => {
         await expect(justification).toHaveValue('');
       });
     });
+
+    test('should not keep stale aria-describedby references when conditional field is hidden and shown again', async ({
+      page,
+    }) => {
+      await test.step('Create an error, then hide conditional field', async () => {
+        const checkbox = page.getByLabel(/requires justification/i);
+        const justification = page.getByRole('textbox', {
+          name: /justification.*min 20/i,
+        });
+
+        await checkbox.check();
+        await fillAndBlur(justification, 'Too short');
+        await expectFieldHasError(justification, /20/i);
+
+        const describedByBeforeHide =
+          (await justification.getAttribute('aria-describedby')) || '';
+        const describedByIdsBeforeHide = describedByBeforeHide
+          .split(/\s+/)
+          .filter(Boolean);
+
+        await checkbox.uncheck();
+        await expect(justification).not.toBeVisible();
+
+        // IDs attached to the hidden/destroyed field should not remain in the DOM
+        for (const id of describedByIdsBeforeHide) {
+          await expect(page.locator(`#${id}`)).toHaveCount(0);
+        }
+      });
+
+      await test.step('Re-show field and verify no stale linkage from previous instance', async () => {
+        const checkbox = page.getByLabel(/requires justification/i);
+        const justification = page.getByRole('textbox', {
+          name: /justification.*min 20/i,
+        });
+
+        await checkbox.check();
+        await expect(justification).toBeVisible();
+        await expect(justification).toHaveValue('');
+        await expect(justification).toHaveClass(/ng-untouched/);
+        await expect(justification).not.toHaveAttribute('aria-invalid', 'true');
+      });
+    });
   });
 
   test.describe('Cascade Country Validation', () => {
+    test('should NOT require state and zipCode before country is selected', async ({
+      page,
+    }) => {
+      await test.step('Blur dependent fields while country is empty', async () => {
+        const state = page.getByRole('textbox', { name: /state\/province/i });
+        const zipCode = page.getByLabel(/postal code/i);
+
+        await state.focus();
+        await state.blur();
+        await zipCode.focus();
+        await zipCode.blur();
+
+        const stateRequiredError = page.getByRole('status').filter({
+          hasText: /state\/province is required/i,
+        });
+        const zipRequiredError = page.getByRole('status').filter({
+          hasText: /postal code is required/i,
+        });
+
+        await expect(stateRequiredError).toHaveCount(0);
+        await expect(zipRequiredError).toHaveCount(0);
+      });
+    });
+
     test('should require state and zipCode when country is selected', async ({
       page,
     }) => {
@@ -425,6 +491,56 @@ test.describe('ValidationConfig Demo', () => {
         // Verify form still responds to input
         await fillAndBlur(state, 'Ontario');
         await expectFieldValid(state);
+      });
+    });
+
+    test('should omit state and zipCode required constraints again when country is cleared', async ({
+      page,
+    }) => {
+      await test.step('Make dependent fields required and show errors', async () => {
+        const country = page.getByLabel(/country/i);
+        const state = page.getByRole('textbox', { name: /state\/province/i });
+        const zipCode = page.getByLabel(/postal code/i);
+
+        await country.selectOption({ label: 'United States' });
+
+        await state.focus();
+        await state.blur();
+        await zipCode.focus();
+        await zipCode.blur();
+
+        await expectFieldHasError(state, /required/i);
+        await expectFieldHasError(zipCode, /required/i);
+      });
+
+      await test.step('Clear country and verify dependent required errors are omitted', async () => {
+        const country = page.getByLabel(/country/i);
+        const state = page.getByRole('textbox', { name: /state\/province/i });
+        const zipCode = page.getByLabel(/postal code/i);
+
+        await country.selectOption('');
+        await waitForValidationToSettle(page);
+
+        // Country itself is now required and invalid after blur
+        await country.focus();
+        await country.blur();
+        await expectFieldHasError(country, /required/i);
+
+        // State/zip should no longer be required when country is empty
+        await state.focus();
+        await state.blur();
+        await zipCode.focus();
+        await zipCode.blur();
+
+        const stateRequiredError = page.getByRole('status').filter({
+          hasText: /state\/province is required/i,
+        });
+        const zipRequiredError = page.getByRole('status').filter({
+          hasText: /postal code is required/i,
+        });
+
+        await expect(stateRequiredError).toHaveCount(0);
+        await expect(zipRequiredError).toHaveCount(0);
       });
     });
   });
@@ -524,6 +640,37 @@ test.describe('ValidationConfig Demo', () => {
         // Change startDate - endDate should show error via bidirectional config
         await setDateLikeValueAndBlur(startDate, '2025-01-20');
         await expectFieldHasError(endDate, /after/i);
+      });
+    });
+
+    test('should omit ordering error when one date is cleared and show relevant required error', async ({
+      page,
+    }) => {
+      await test.step('Create ordering error first', async () => {
+        const startDate = page.getByLabel(/start date/i);
+        const endDate = page.getByLabel(/end date/i);
+
+        await setDateLikeValueAndBlur(startDate, '2025-01-20');
+        await setDateLikeValueAndBlur(endDate, '2025-01-10');
+        await expectFieldHasError(endDate, /after/i);
+      });
+
+      await test.step('Clear start date and verify ordering error is omitted', async () => {
+        const startDate = page.getByLabel(/start date/i);
+        const endDate = page.getByLabel(/end date/i);
+
+        await setDateLikeValueAndBlur(startDate, '');
+        await waitForValidationToSettle(page);
+
+        await expectFieldHasError(startDate, /required/i);
+
+        const orderingError = page.getByRole('status').filter({
+          hasText: /end date must be after start date/i,
+        });
+        await expect(orderingError).toHaveCount(0);
+
+        // End date should be valid now (no ordering rule when start is empty)
+        await expectFieldValid(endDate);
       });
     });
   });

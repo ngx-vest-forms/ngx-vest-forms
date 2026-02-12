@@ -54,6 +54,130 @@ class TestComponent {
   };
 }
 
+type CascadeModel = NgxDeepPartial<{
+  country: string;
+  state: string;
+  zipCode: string;
+}>;
+
+const cascadeSuite = staticSuite((model: CascadeModel, field?: string) => {
+  only(field);
+
+  test('country', 'Country is required', () => {
+    enforce(model.country).isNotBlank();
+  });
+
+  omitWhen(!model.country, () => {
+    test('state', 'State/Province is required', () => {
+      enforce(model.state).isNotBlank();
+    });
+
+    test('zipCode', 'Postal code is required', () => {
+      enforce(model.zipCode).isNotBlank();
+    });
+  });
+});
+
+@Component({
+  imports: [NgxVestForms],
+  template: `
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      [validationConfig]="validationConfig"
+      (formValueChange)="formValue.set($event)"
+    >
+      <ngx-control-wrapper>
+        <label for="country">Country</label>
+        <select id="country" name="country" [ngModel]="formValue().country">
+          <option value="">Select country...</option>
+          <option value="US">United States</option>
+          <option value="CA">Canada</option>
+        </select>
+      </ngx-control-wrapper>
+
+      <ngx-control-wrapper>
+        <label for="state">State/Province</label>
+        <input id="state" name="state" [ngModel]="formValue().state" />
+      </ngx-control-wrapper>
+
+      <ngx-control-wrapper>
+        <label for="zipCode">Postal Code</label>
+        <input id="zipCode" name="zipCode" [ngModel]="formValue().zipCode" />
+      </ngx-control-wrapper>
+    </form>
+  `,
+})
+class CascadeValidationConfigComponent {
+  readonly formValue = signal<CascadeModel>({});
+  readonly suite = cascadeSuite;
+  readonly validationConfig = {
+    country: ['state', 'zipCode'],
+  };
+}
+
+type DateModel = NgxDeepPartial<{
+  startDate: string;
+  endDate: string;
+}>;
+
+const dateSuite = staticSuite((model: DateModel, field?: string) => {
+  only(field);
+
+  test('startDate', 'Start date is required', () => {
+    enforce(model.startDate).isNotEmpty();
+  });
+
+  test('endDate', 'End date is required', () => {
+    enforce(model.endDate).isNotEmpty();
+  });
+
+  omitWhen(!model.startDate || !model.endDate, () => {
+    test('endDate', 'End date must be after start date', () => {
+      if (!model.startDate || !model.endDate) return;
+      const start = new Date(model.startDate);
+      const end = new Date(model.endDate);
+      enforce(end.getTime()).greaterThan(start.getTime());
+    });
+  });
+});
+
+@Component({
+  imports: [NgxVestForms],
+  template: `
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      [validationConfig]="validationConfig"
+      (formValueChange)="formValue.set($event)"
+    >
+      <ngx-control-wrapper>
+        <label for="startDate">Start Date</label>
+        <input
+          id="startDate"
+          name="startDate"
+          [ngModel]="formValue().startDate"
+        />
+      </ngx-control-wrapper>
+
+      <ngx-control-wrapper>
+        <label for="endDate">End Date</label>
+        <input id="endDate" name="endDate" [ngModel]="formValue().endDate" />
+      </ngx-control-wrapper>
+    </form>
+  `,
+})
+class DateValidationConfigComponent {
+  readonly formValue = signal<DateModel>({});
+  readonly suite = dateSuite;
+  readonly validationConfig = {
+    startDate: ['endDate'],
+    endDate: ['startDate'],
+  };
+}
+
 describe('ValidationConfig Error Display', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -223,6 +347,130 @@ describe('ValidationConfig Error Display', () => {
         },
         { timeout: 2000, interval: 100 }
       )
+      .toBe(true);
+  });
+
+  it('should not require state/zip before country selection and should require them after country selection', async () => {
+    const fixture = TestBed.createComponent(CascadeValidationConfigComponent);
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const country = fixture.nativeElement.querySelector(
+      '#country'
+    ) as HTMLSelectElement;
+    const state = fixture.nativeElement.querySelector(
+      '#state'
+    ) as HTMLInputElement;
+    const zipCode = fixture.nativeElement.querySelector(
+      '#zipCode'
+    ) as HTMLInputElement;
+    const stateWrapper = state.closest('ngx-control-wrapper');
+    const zipWrapper = zipCode.closest('ngx-control-wrapper');
+
+    // Before country selected: state/zip should not show required errors
+    state.focus();
+    state.dispatchEvent(new Event('blur'));
+    zipCode.focus();
+    zipCode.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(
+      stateWrapper?.textContent?.includes('State/Province is required') ?? false
+    ).toBe(false);
+    expect(
+      zipWrapper?.textContent?.includes('Postal code is required') ?? false
+    ).toBe(false);
+
+    // Select country and blur dependent fields -> now they should be required/invalid
+    country.value = 'US';
+    country.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    state.focus();
+    state.dispatchEvent(new Event('blur'));
+    zipCode.focus();
+    zipCode.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    await expect
+      .poll(
+        () =>
+          stateWrapper?.textContent?.includes('State/Province is required') ??
+          false,
+        {
+          timeout: 2000,
+          interval: 100,
+        }
+      )
+      .toBe(true);
+
+    await expect
+      .poll(
+        () =>
+          zipWrapper?.textContent?.includes('Postal code is required') ?? false,
+        {
+          timeout: 2000,
+          interval: 100,
+        }
+      )
+      .toBe(true);
+  });
+
+  it('should show relevant required error when one date is cleared after an ordering error', async () => {
+    const fixture = TestBed.createComponent(DateValidationConfigComponent);
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const startDate = fixture.nativeElement.querySelector(
+      '#startDate'
+    ) as HTMLInputElement;
+    const endDate = fixture.nativeElement.querySelector(
+      '#endDate'
+    ) as HTMLInputElement;
+
+    // Create ordering error first (end before start)
+    startDate.value = '2025-01-20';
+    startDate.dispatchEvent(new Event('input'));
+    startDate.dispatchEvent(new Event('change'));
+    startDate.dispatchEvent(new Event('blur'));
+
+    endDate.value = '2025-01-10';
+    endDate.dispatchEvent(new Event('input'));
+    endDate.dispatchEvent(new Event('change'));
+    endDate.dispatchEvent(new Event('blur'));
+
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    await expect
+      .poll(() => {
+        const wrapper = endDate.closest('ngx-control-wrapper');
+        return (
+          wrapper?.textContent?.includes('End date must be after start date') ??
+          false
+        );
+      })
+      .toBe(true);
+
+    // Clear start date: relevant required error should be shown
+    startDate.value = '';
+    startDate.dispatchEvent(new Event('input'));
+    startDate.dispatchEvent(new Event('change'));
+    startDate.dispatchEvent(new Event('blur'));
+    endDate.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    await expect
+      .poll(() => {
+        const wrapper = startDate.closest('ngx-control-wrapper');
+        return (
+          wrapper?.textContent?.includes('Start date is required') ?? false
+        );
+      })
       .toBe(true);
   });
 });

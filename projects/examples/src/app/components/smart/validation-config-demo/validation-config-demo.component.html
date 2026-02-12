@@ -90,7 +90,7 @@
             >
               Password Issues
             </div>
-            @for (error of hasPasswordErrors(); track error) {
+            @for (error of hasPasswordErrors(); track $index) {
               <div class="text-xs text-red-600 dark:text-red-400">
                 • {{ error }}
               </div>
@@ -109,7 +109,7 @@
             >
               Location Issues
             </div>
-            @for (error of hasLocationErrors(); track error) {
+            @for (error of hasLocationErrors(); track $index) {
               <div class="text-xs text-purple-600 dark:text-purple-400">
                 • {{ error }}
               </div>
@@ -118,16 +118,17 @@
         }
 
         @if (hasDateErrors()) {
-          role="alert" aria-atomic="true"
           <div
             class="rounded border border-orange-200 bg-orange-50 p-3 dark:border-orange-900/30 dark:bg-orange-900/20"
+            role="alert"
+            aria-atomic="true"
           >
             <div
               class="mb-1 text-xs font-semibold tracking-wider text-orange-800 uppercase dark:text-orange-300"
             >
               Date Issues
             </div>
-            @for (error of hasDateErrors(); track error) {
+            @for (error of hasDateErrors(); track $index) {
               <div class="text-xs text-orange-600 dark:text-orange-400">
                 • {{ error }}
               </div>
