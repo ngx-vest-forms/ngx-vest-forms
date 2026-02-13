@@ -1,26 +1,29 @@
-<ngx-form-group-wrapper ngModelGroup="businessHours" class="space-y-4">
+<ngx-form-group-wrapper
+  ngModelGroup="businessHours"
+  class="business-hours-stack"
+>
   <!-- Existing Business Hours List -->
   <ngx-form-group-wrapper
     ngModelGroup="values"
     #valuesGroup="ngModelGroup"
-    class="space-y-3"
+    class="business-hours-list-stack"
   >
     @for (item of values() | keyvalue; track item.key) {
       <ngx-form-group-wrapper
         [ngModelGroup]="item.key"
-        class="group relative rounded-lg border border-gray-200 bg-gray-50 p-4 transition-colors hover:bg-white dark:border-gray-700 dark:bg-gray-800/50 dark:hover:bg-gray-800"
+        class="business-hours-item-card"
       >
-        <div class="flex items-start justify-between gap-4">
+        <div class="business-hours-item-layout">
           <ngx-business-hour
             [businessHour]="values()[item.key]"
             [idPrefix]="'business-hours-values-' + item.key"
-            class="flex-grow"
+            class="business-hours-item-main"
           ></ngx-business-hour>
 
           <button
             type="button"
             (click)="removeBusinessHour(item.key, valuesGroup)"
-            class="mt-7 inline-flex items-center rounded-md p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-hidden dark:hover:bg-red-900/20 dark:hover:text-red-400"
+            class="business-hours-remove-btn"
             title="Remove business hour"
           >
             <span class="sr-only">Remove</span>
@@ -32,15 +35,12 @@
   </ngx-form-group-wrapper>
 
   @if ((values() | keyvalue)?.length) {
-    <div class="relative py-4">
-      <div class="absolute inset-0 flex items-center" aria-hidden="true">
-        <div class="w-full border-t border-gray-200 dark:border-gray-700"></div>
+    <div class="business-hours-divider">
+      <div class="business-hours-divider-line" aria-hidden="true">
+        <div class="business-hours-divider-rule"></div>
       </div>
-      <div class="relative flex justify-center">
-        <span
-          class="bg-white px-2 text-sm text-gray-500 dark:bg-gray-800 dark:text-gray-400"
-          >Add New Time Slot</span
-        >
+      <div class="business-hours-divider-content">
+        <span class="business-hours-divider-label">Add New Time Slot</span>
       </div>
     </div>
   }
@@ -49,22 +49,25 @@
   <ngx-form-group-wrapper
     ngModelGroup="addValue"
     #group="ngModelGroup"
-    class="rounded-lg border-2 border-dashed border-gray-300 p-4 dark:border-gray-700"
+    class="business-hours-add-card"
   >
-    <div class="flex items-start justify-between gap-4">
+    <div class="business-hours-item-layout">
       <ngx-business-hour
         [businessHour]="addValue()"
         idPrefix="business-hours-add"
-        class="flex-grow"
+        class="business-hours-item-main"
       ></ngx-business-hour>
 
       <button
         type="button"
         [disabled]="isAddButtonDisabled(group)"
         (click)="addBusinessHour(group, valuesGroup)"
-        class="btn btn-secondary mt-7"
+        class="business-hours-add-btn"
       >
-        <i class="fa-solid fa-plus mr-2" aria-hidden="true"></i>
+        <i
+          class="fa-solid fa-plus business-hours-add-btn-icon"
+          aria-hidden="true"
+        ></i>
         Add
       </button>
     </div>

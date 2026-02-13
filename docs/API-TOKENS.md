@@ -357,7 +357,7 @@ export const appConfig: ApplicationConfig = {
   ],
 };
 
-// complex-form.component.ts - Override for specific component
+// complex-form.ts - Override for specific component
 import { Component } from '@angular/core';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
 

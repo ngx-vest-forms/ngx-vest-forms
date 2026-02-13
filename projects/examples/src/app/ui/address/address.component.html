@@ -1,5 +1,5 @@
-<div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
-  <div class="form-group" ngx-control-wrapper>
+<div class="address-grid">
+  <ngx-control-wrapper class="form-field address-field-wide">
     <label class="label-text" [attr.for]="fieldIds().street">Street</label>
     <input
       [id]="fieldIds().street"
@@ -9,8 +9,8 @@
       [ngModel]="address()?.street"
       name="street"
     />
-  </div>
-  <div class="form-group" ngx-control-wrapper>
+  </ngx-control-wrapper>
+  <ngx-control-wrapper class="form-field address-field-compact">
     <label class="label-text" [attr.for]="fieldIds().number">Number</label>
     <input
       [id]="fieldIds().number"
@@ -20,8 +20,8 @@
       [ngModel]="address()?.number"
       name="number"
     />
-  </div>
-  <div class="form-group" ngx-control-wrapper>
+  </ngx-control-wrapper>
+  <ngx-control-wrapper class="form-field address-field-wide">
     <label class="label-text" [attr.for]="fieldIds().city">City</label>
     <input
       [id]="fieldIds().city"
@@ -31,8 +31,8 @@
       [ngModel]="address()?.city"
       name="city"
     />
-  </div>
-  <div class="form-group" ngx-control-wrapper>
+  </ngx-control-wrapper>
+  <ngx-control-wrapper class="form-field address-field-compact">
     <label class="label-text" [attr.for]="fieldIds().zipcode">Zipcode</label>
     <input
       [id]="fieldIds().zipcode"
@@ -42,8 +42,8 @@
       [ngModel]="address()?.zipcode"
       name="zipcode"
     />
-  </div>
-  <div class="form-group sm:col-span-2" ngx-control-wrapper>
+  </ngx-control-wrapper>
+  <ngx-control-wrapper class="form-field address-field-country">
     <label class="label-text" [attr.for]="fieldIds().country">Country</label>
     <input
       [id]="fieldIds().country"
@@ -53,5 +53,5 @@
       [ngModel]="address()?.country"
       name="country"
     />
-  </div>
+  </ngx-control-wrapper>
 </div>

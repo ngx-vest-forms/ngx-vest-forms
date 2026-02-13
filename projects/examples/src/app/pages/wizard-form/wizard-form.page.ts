@@ -1,4 +1,3 @@
-import { JsonPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -6,11 +5,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import {
-  createValidationConfig,
-  FormDirective,
-  NgxVestForms,
-} from 'ngx-vest-forms';
+import { createValidationConfig } from 'ngx-vest-forms';
 import {
   WizardStep1Model,
   wizardStep1Shape,
@@ -19,55 +14,43 @@ import {
   WizardStep3Model,
   wizardStep3Shape,
 } from '../../models/wizard-form.model';
-import { CardComponent } from '../../ui/card/card.component';
-import {
-  WizardNavigationComponent,
-  WizardStepConfig,
-  WizardStepsComponent,
-} from '../../ui/wizard';
+import { Card } from '../../ui/card/card.component';
+import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
+import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
+import { PageTitle } from '../../ui/page-title/page-title.component';
+import { StatusBadge } from '../../ui/status-badge/status-badge.component';
+import { WizardStepConfig } from '../../ui/wizard';
+import { WizardFormBodyComponent } from './wizard.form';
 import {
   wizardStep1Suite,
   wizardStep2Suite,
   wizardStep3Suite,
 } from './wizard.validations';
 
-/**
- * Multi-Form Wizard Example
- *
- * Demonstrates:
- * - Multiple forms on one page (3-step wizard)
- * - Bidirectional validation (email ↔ confirmEmail, password ↔ confirmPassword)
- * - Conditional validation (newsletter → frequency)
- * - Per-step validation on blur
- * - Per-step submit saves data to store
- * - Final submit validates ALL forms using markAllAsTouched()
- */
 @Component({
-  selector: 'ngx-wizard-form',
+  selector: 'ngx-wizard-form-page',
   imports: [
-    NgxVestForms,
-    JsonPipe,
-    CardComponent,
-    WizardStepsComponent,
-    WizardNavigationComponent,
+    Card,
+    FormPageLayout,
+    FormStateCardComponent,
+    PageTitle,
+    StatusBadge,
+    WizardFormBodyComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './wizard-form.component.html',
-  styleUrl: './wizard-form.component.scss',
+  templateUrl: './wizard-form.page.html',
+  styleUrl: './wizard-form.page.scss',
 })
-export class WizardFormComponent {
-  // ========== Wizard State ==========
+export class WizardFormPageComponent {
   protected readonly currentStep = signal(1);
   protected readonly completedSteps = signal<number[]>([]);
 
-  // ========== Step Configuration ==========
   protected readonly steps: WizardStepConfig[] = [
     { id: 1, title: 'Account', description: 'Email & Password' },
     { id: 2, title: 'Profile', description: 'Personal Information' },
     { id: 3, title: 'Review', description: 'Confirm & Submit' },
   ];
 
-  // ========== Form Data (persisted across steps) ==========
   protected readonly step1Data = signal<WizardStep1Model>({});
   protected readonly step2Data = signal<WizardStep2Model>({
     subscribeNewsletter: false,
@@ -77,7 +60,6 @@ export class WizardFormComponent {
     acceptPrivacy: false,
   });
 
-  // ========== Validation Suites & Shapes ==========
   protected readonly step1Suite = wizardStep1Suite;
   protected readonly step2Suite = wizardStep2Suite;
   protected readonly step3Suite = wizardStep3Suite;
@@ -86,7 +68,6 @@ export class WizardFormComponent {
   protected readonly step2Shape = wizardStep2Shape;
   protected readonly step3Shape = wizardStep3Shape;
 
-  // ========== Validation Configs (bidirectional) ==========
   protected readonly step1ValidationConfig =
     createValidationConfig<WizardStep1Model>()
       .bidirectional('email', 'confirmEmail')
@@ -96,8 +77,6 @@ export class WizardFormComponent {
   protected readonly step2ValidationConfig = computed(() => {
     const builder = createValidationConfig<WizardStep2Model>();
 
-    // Bidirectional: checkbox and frequency field revalidate each other
-    // Only when checkbox is checked (to avoid "control not found" warnings)
     if (this.step2Data().subscribeNewsletter) {
       builder.bidirectional('subscribeNewsletter', 'newsletterFrequency');
     }
@@ -105,39 +84,45 @@ export class WizardFormComponent {
     return builder.build();
   });
 
-  // ========== Form References (for markAllAsTouched) ==========
-  protected readonly step1Form =
-    viewChild<FormDirective<WizardStep1Model>>('step1Form');
-  protected readonly step2Form =
-    viewChild<FormDirective<WizardStep2Model>>('step2Form');
-  protected readonly step3Form =
-    viewChild<FormDirective<WizardStep3Model>>('step3Form');
+  private readonly formBody = viewChild(WizardFormBodyComponent);
 
-  // ========== Validity State ==========
   protected readonly step1Valid = signal(false);
   protected readonly step2Valid = signal(false);
   protected readonly step3Valid = signal(false);
 
-  // ========== Error Collections ==========
   protected readonly step1Errors = signal<Record<string, string[]>>({});
   protected readonly step2Errors = signal<Record<string, string[]>>({});
   protected readonly step3Errors = signal<Record<string, string[]>>({});
 
-  // ========== Computed States ==========
   protected readonly allFormsValid = computed(
     () => this.step1Valid() && this.step2Valid() && this.step3Valid()
   );
 
-  /**
-   * Computed: true if any form has async validators running (PENDING state).
-   * Useful to show a loading indicator during async validation.
-   */
-  protected readonly isValidating = computed(
-    () =>
-      this.step1Form()?.ngForm?.form?.status === 'PENDING' ||
-      this.step2Form()?.ngForm?.form?.status === 'PENDING' ||
-      this.step3Form()?.ngForm?.form?.status === 'PENDING'
-  );
+  protected readonly currentStepData = computed(() => {
+    switch (this.currentStep()) {
+      case 1:
+        return this.step1Data();
+      case 2:
+        return this.step2Data();
+      default:
+        return this.step3Data();
+    }
+  });
+
+  protected readonly currentStepErrors = computed(() => {
+    switch (this.currentStep()) {
+      case 1:
+        return this.step1Errors();
+      case 2:
+        return this.step2Errors();
+      default:
+        return this.step3Errors();
+    }
+  });
+
+  protected readonly wizardInfo = computed(() => [
+    `Viewing Step ${this.currentStep()} model and feedback.`,
+  ]);
 
   protected readonly isFirstStep = computed(() => this.currentStep() === 1);
   protected readonly isLastStep = computed(() => this.currentStep() === 3);
@@ -155,12 +140,10 @@ export class WizardFormComponent {
     }
   });
 
-  // ========== Submission State ==========
   protected readonly isSubmitting = signal(false);
   protected readonly submitSuccess = signal(false);
   protected readonly submitError = signal<string | null>(null);
 
-  // ========== Navigation Methods ==========
   protected goToStep(step: number): void {
     if (step >= 1 && step <= 3) {
       this.currentStep.set(step);
@@ -179,14 +162,8 @@ export class WizardFormComponent {
     }
   }
 
-  // ========== Step Submit Handlers ==========
-  /**
-   * Step 1: Save account data and proceed
-   * Uses form's native submit which triggers validation
-   */
   protected onStep1Submit(): void {
     if (this.step1Valid()) {
-      // Mark step as completed
       this.completedSteps.update((steps) =>
         steps.includes(1) ? steps : [...steps, 1]
       );
@@ -194,9 +171,6 @@ export class WizardFormComponent {
     }
   }
 
-  /**
-   * Step 2: Save profile data and proceed
-   */
   protected onStep2Submit(): void {
     if (this.step2Valid()) {
       this.completedSteps.update((steps) =>
@@ -206,9 +180,6 @@ export class WizardFormComponent {
     }
   }
 
-  /**
-   * Step 3: Accept terms (just validates, doesn't auto-proceed)
-   */
   protected onStep3Submit(): void {
     if (this.step3Valid()) {
       this.completedSteps.update((steps) =>
@@ -217,24 +188,14 @@ export class WizardFormComponent {
     }
   }
 
-  // ========== Final Submit ==========
-  /**
-   * Final submit validates ALL forms and submits combined data
-   * This is where markAllAsTouched() is essential for multi-form scenarios
-   */
   protected async submitAll(): Promise<void> {
-    // Mark all forms as touched to show ALL validation errors
-    this.step1Form()?.markAllAsTouched();
-    this.step2Form()?.markAllAsTouched();
-    this.step3Form()?.markAllAsTouched();
+    this.formBody()?.markAllAsTouched();
 
-    // Check if all forms are valid
     if (!this.allFormsValid()) {
       this.submitError.set(
         'Please complete all steps before submitting. Check each step for errors.'
       );
 
-      // Navigate to first invalid step
       if (!this.step1Valid()) {
         this.goToStep(1);
       } else if (!this.step2Valid()) {
@@ -245,21 +206,17 @@ export class WizardFormComponent {
       return;
     }
 
-    // Clear any previous errors
     this.submitError.set(null);
     this.isSubmitting.set(true);
 
     try {
-      // Combine all form data
       const completeData = {
         step1: this.step1Data(),
         step2: this.step2Data(),
         step3: this.step3Data(),
       };
 
-      // Simulate API call
       await this.simulateApiSubmit(completeData);
-
       this.submitSuccess.set(true);
     } catch (error) {
       this.submitError.set(
@@ -270,13 +227,8 @@ export class WizardFormComponent {
     }
   }
 
-  // ========== Helper Methods ==========
-  private async simulateApiSubmit(data: unknown): Promise<void> {
-    // Simulate network delay
+  private async simulateApiSubmit(_data: unknown): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // Log data for demo purposes (in real app, send to API)
-    console.log('Wizard submitted:', data);
   }
 
   protected resetWizard(): void {

@@ -651,7 +651,7 @@ export const purchaseSuite: NgxTypedVestSuite<PurchaseFormModel> = staticSuite(
 
 // Type-safe validation config
 @Component({...})
-class PurchaseFormComponent {
+class PurchaseForm {
   protected readonly validationConfig: ValidationConfigMap<PurchaseFormModel> = {
     'passwords.password': ['passwords.confirmPassword'],
     'addresses.billing.street': ['addresses.billing.city'],

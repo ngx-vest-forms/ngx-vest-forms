@@ -342,7 +342,6 @@ test.describe('Purchase Form', () => {
         // Wait for shipping address section to appear (it's conditionally rendered)
         const shippingHeading = page.getByRole('heading', {
           name: /shipping address/i,
-          level: 3,
         });
         await expect(shippingHeading).toBeVisible();
 
@@ -387,7 +386,7 @@ test.describe('Purchase Form', () => {
 
         // Check for error message - the validation tests that billing and shipping addresses are different
         // when shippingAddressDifferentFromBillingAddress is checked
-        const errorMessage = page.getByText(/addresses.*same/i);
+        const errorMessage = page.locator('form').getByText(/addresses.*same/i);
         await expect(errorMessage).toBeVisible();
       });
     });

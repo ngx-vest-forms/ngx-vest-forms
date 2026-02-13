@@ -149,7 +149,7 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
       await submitButton.click();
 
       // No form-level errors should appear (warnings are non-blocking)
-      const rootError = page.locator('[role="alert"]').first();
+      const rootError = page.locator('form').locator('[role="alert"]').first();
       await expect(rootError).not.toBeVisible();
     });
   });

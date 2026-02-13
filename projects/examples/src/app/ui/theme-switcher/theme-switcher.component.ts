@@ -36,6 +36,7 @@ export class ThemeSwitcherComponent {
   private applyTheme(isDark: boolean): void {
     const theme = isDark ? 'dark' : 'light';
     document.documentElement.classList.toggle('dark', isDark);
+    document.body?.classList.toggle('dark', isDark);
     localStorage.setItem('theme', theme);
   }
 }

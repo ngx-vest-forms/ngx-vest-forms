@@ -4,7 +4,7 @@ import { enforce, omitWhen, only, staticSuite, test, warn } from 'vest';
 import { PurchaseFormModel } from '../../models/purchase-form.model';
 import { addressValidations } from '../../shared/validations/address.validations';
 import { phonenumberValidations } from '../../shared/validations/phonenumber.validations';
-import { SwapiService } from '../../swapi.service';
+import { SwapiService } from './swapi.service';
 
 export const createPurchaseValidationSuite = (
   swapiService: SwapiService

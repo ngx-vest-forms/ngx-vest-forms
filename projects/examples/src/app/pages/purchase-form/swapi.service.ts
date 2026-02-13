@@ -5,6 +5,7 @@ import { catchError, delay, map, Observable, of } from 'rxjs';
 @Injectable({ providedIn: 'root' })
 export class SwapiService {
   private readonly httpClient = inject(HttpClient);
+
   userIdExists(id: string): Observable<boolean> {
     return this.httpClient.get(`http://localhost:3000/people/${id}`).pipe(
       delay(800),
@@ -12,6 +13,7 @@ export class SwapiService {
       catchError(() => of(false))
     );
   }
+
   searchUserById(id: string): Observable<unknown> {
     return this.httpClient
       .get(`http://localhost:3000/people/${id}`)

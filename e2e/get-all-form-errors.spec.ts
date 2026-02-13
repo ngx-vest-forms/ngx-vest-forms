@@ -78,7 +78,7 @@ test.describe('getAllFormErrors() Field-Level Errors', () => {
       await waitForValidationToSettle(page);
 
       // Error should clear (though field may still be invalid due to other rules)
-      const takenError = page.getByText(/already taken/i);
+      const takenError = page.locator('form').getByText(/already taken/i);
       await expect(takenError).not.toBeVisible();
 
       await page.unroute('**/api/people/1', swapiUserRoute);

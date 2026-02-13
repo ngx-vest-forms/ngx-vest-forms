@@ -1,7 +1,7 @@
 <div class="space-y-3">
   <div ngModelGroup="values" class="space-y-3">
     @for (item of values() | keyvalue; track item.key) {
-      <div ngx-control-wrapper>
+      <ngx-control-wrapper>
         <div class="relative flex items-center gap-2">
           <input
             type="text"
@@ -19,11 +19,11 @@
             Remove
           </button>
         </div>
-      </div>
+      </ngx-control-wrapper>
     }
   </div>
 
-  <div ngx-control-wrapper>
+  <ngx-control-wrapper>
     <div class="relative flex items-center gap-2">
       <input
         type="text"
@@ -42,5 +42,5 @@
         Add
       </button>
     </div>
-  </div>
+  </ngx-control-wrapper>
 </div>

@@ -14,10 +14,10 @@ export class AppComponent {
   private readonly router = inject(Router);
 
   protected readonly menuItems = [
-    { label: 'Purchase form', link: 'purchase' },
-    { label: 'Business hours form', link: 'business-hours' },
-    { label: 'ValidationConfig Demo', link: 'validation-config-demo' },
-    { label: 'Wizard Form', link: 'wizard' },
+    { label: 'Purchase Form', link: 'purchase' },
+    { label: 'Business Hours Form', link: 'business-hours' },
+    { label: 'Validation Config Demo', link: 'validation-config-demo' },
+    { label: 'Multi-Form Wizard', link: 'wizard' },
     { label: 'Display Modes Demo', link: 'display-modes-demo' },
   ].map((item) => ({
     ...item,

@@ -1,55 +1,50 @@
-import { JsonPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   signal,
   viewChild,
 } from '@angular/core';
-import {
-  createValidationConfig,
-  FormDirective,
-  NgxVestForms,
-  ROOT_FORM,
-  ValidateRootFormDirective,
-} from 'ngx-vest-forms';
+import { createValidationConfig, ROOT_FORM } from 'ngx-vest-forms';
 import {
   BusinessHoursFormModel,
   businessHoursFormShape,
   initialBusinessHoursFormValue,
 } from '../../models/business-hours-form.model';
-import { CardComponent } from '../../ui/card/card.component';
+import { Card } from '../../ui/card/card.component';
+import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
+import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
+import { PageTitle } from '../../ui/page-title/page-title.component';
+import { BusinessHoursFormBody } from './business-hours.form';
 import { businessHoursSuite } from './business-hours.validations';
-import {
-  BusinessHoursComponent,
-  BusinessHoursMap,
-} from './ui/business-hours/business-hours.component';
+import { BusinessHoursMap } from './ui/business-hours/business-hours.component';
 
 @Component({
-  selector: 'ngx-business-hours-form',
+  selector: 'ngx-business-hours-page',
   imports: [
-    JsonPipe,
-    NgxVestForms,
-    ValidateRootFormDirective,
-    BusinessHoursComponent,
-    CardComponent,
+    Card,
+    FormPageLayout,
+    FormStateCardComponent,
+    PageTitle,
+    BusinessHoursFormBody,
   ],
-  templateUrl: './business-hours-form.component.html',
-  styleUrls: ['./business-hours-form.component.scss'],
+  templateUrl: './business-hours.page.html',
+  styleUrls: ['./business-hours.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BusinessHoursFormComponent {
-  /** Reference to the form directive for triggering validation after structural changes */
-  protected readonly vestFormRef =
-    viewChild<FormDirective<BusinessHoursFormModel>>('vestForm');
+export class BusinessHoursPageComponent {
+  /** Reference to form-body for triggering validation after structural changes */
+  private readonly formBody = viewChild(BusinessHoursFormBody);
 
   protected readonly formValue = signal<BusinessHoursFormModel>(
     initialBusinessHoursFormValue
   );
-  protected readonly formValid = signal<boolean>(false);
-  protected readonly errors = signal<Record<string, string>>({});
   protected readonly businessHoursSuite = businessHoursSuite;
   protected readonly shape = businessHoursFormShape;
   protected readonly ROOT_FORM = ROOT_FORM;
+  protected readonly rootFormError = computed(
+    () => this.formBody()?.formState()?.errors[ROOT_FORM]?.[0]
+  );
 
   protected readonly validationConfig =
     createValidationConfig<BusinessHoursFormModel>()
@@ -93,6 +88,6 @@ export class BusinessHoursFormComponent {
     // - Form-level overlap detection (ROOT_FORM tests)
     // - Field-level validations with allowEmptyPair logic for cleared addValue inputs
     // - Any conditional validations that depend on the structure
-    this.vestFormRef()?.triggerFormValidation();
+    this.formBody()?.triggerValidation();
   }
 }

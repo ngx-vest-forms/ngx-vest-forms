@@ -1,6 +1,6 @@
 import eslint from '@eslint/js';
-import angular from 'angular-eslint';
 import vitest from '@vitest/eslint-plugin';
+import angular from 'angular-eslint';
 import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 
@@ -100,11 +100,14 @@ export default defineConfig([
     rules: {
       '@angular-eslint/component-selector': 'off', // Example components don't need ngx prefix
       '@angular-eslint/directive-selector': 'off', // Example directives don't need ngx prefix
+      '@angular-eslint/prefer-signals': ['error'],
       '@typescript-eslint/explicit-member-accessibility': 'off', // Allow public in examples
       '@typescript-eslint/consistent-indexed-object-style': 'off', // Allow index signatures
       '@typescript-eslint/no-explicit-any': 'warn', // Warn but don't error on any
       '@typescript-eslint/no-unused-vars': 'warn', // Warn on unused vars
       'prefer-const': 'warn', // Warn on const usage
+      '@angular-eslint/sort-keys-in-type-decorator': ['error'],
+      '@angular-eslint/no-duplicates-in-metadata-arrays': ['error'],
     },
   },
 

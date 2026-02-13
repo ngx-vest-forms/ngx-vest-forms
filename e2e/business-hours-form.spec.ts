@@ -76,23 +76,32 @@ async function addTimeSlot(
   await addButton.click();
 }
 
-async function readJsonPanel(
-  page: Page,
-  panelHeading: 'Form Value' | 'Errors'
-) {
+async function readJsonPanel(page: Page) {
   const pre = page
-    .getByRole('heading', { name: panelHeading })
+    .getByRole('heading', { name: 'Form Value' })
     .locator('..')
     .locator('pre');
   const text = await pre.innerText();
   return JSON.parse(text) as Record<string, any>;
 }
 
-function firstErrorMessage(value: unknown): string | null {
-  if (Array.isArray(value)) {
-    return typeof value[0] === 'string' ? value[0] : null;
-  }
-  return typeof value === 'string' ? value : null;
+/**
+ * Read all error messages from the sidebar error panel.
+ * After form-state card refactoring, errors render as <ul><li> list items
+ * inside an alert panel in the sidebar (instead of a JSON <pre> block).
+ */
+async function readSidebarErrors(page: Page): Promise<string[]> {
+  const items = page.locator('aside [role="alert"] li');
+  const count = await items.count();
+  if (count === 0) return [];
+  return items.allInnerTexts();
+}
+
+/**
+ * Find the first sidebar error matching a pattern, or null if not found.
+ */
+function findSidebarError(errors: string[], pattern: RegExp): string | null {
+  return errors.find((e) => pattern.test(e)) ?? null;
 }
 
 function normalizeTime(value: unknown): string | null {
@@ -133,15 +142,17 @@ test.describe('Business Hours Form', () => {
     }) => {
       await test.step('Verify empty form shows ROOT_FORM error', async () => {
         await expect(
-          page.getByText('You should have at least one business hour', {
-            exact: true,
-          })
+          page
+            .locator('form')
+            .getByText('You should have at least one business hour', {
+              exact: true,
+            })
         ).toBeVisible();
 
         await expect
           .poll(async () => {
-            const errors = await readJsonPanel(page, 'Errors');
-            return firstErrorMessage(errors['rootForm']);
+            const errors = await readSidebarErrors(page);
+            return findSidebarError(errors, /at least one business hour/i);
           })
           .toMatch(/at least one business hour/i);
       });
@@ -161,14 +172,14 @@ test.describe('Business Hours Form', () => {
 
         await expect
           .poll(async () => {
-            const errors = await readJsonPanel(page, 'Errors');
-            return errors['rootForm'] ?? null;
+            const errors = await readSidebarErrors(page);
+            return findSidebarError(errors, /at least one business hour/i);
           })
-          .toBeFalsy();
+          .toBeNull();
 
         // Verify the business hour was added successfully
         // Check that the form value now contains the added business hour
-        const formValue = await readJsonPanel(page, 'Form Value');
+        const formValue = await readJsonPanel(page);
         const values = readBusinessHoursValues(formValue);
         await expect(normalizeTime(values[0]?.['from'])).toBe('0900');
         await expect(normalizeTime(values[0]?.['to'])).toBe('1700');
@@ -187,9 +198,9 @@ test.describe('Business Hours Form', () => {
         await toTime.focus();
         await toTime.blur();
 
-        const errors = await readJsonPanel(page, 'Errors');
-        await expect(errors['businessHours.addValue.from']).toBeUndefined();
-        await expect(errors['businessHours.addValue.to']).toBeUndefined();
+        // addValue fields should remain valid when untouched/empty
+        await expectFieldValid(fromTime);
+        await expectFieldValid(toTime);
       });
     });
 
@@ -231,8 +242,8 @@ test.describe('Business Hours Form', () => {
 
         await expect
           .poll(async () => {
-            const errors = await readJsonPanel(page, 'Errors');
-            return firstErrorMessage(errors['businessHours.addValue']);
+            const errors = await readSidebarErrors(page);
+            return findSidebarError(errors, /earlier/i);
           })
           .toMatch(/earlier/i);
       });
@@ -249,16 +260,16 @@ test.describe('Business Hours Form', () => {
         await typeAndBlur(toTime, '0900');
         await expect
           .poll(async () => {
-            const errors = await readJsonPanel(page, 'Errors');
-            return errors['businessHours.addValue'] ?? null;
+            const errors = await readSidebarErrors(page);
+            return findSidebarError(errors, /earlier/i);
           })
           .not.toBeNull();
 
         await typeAndBlur(toTime, '1800');
         await expect
           .poll(async () => {
-            const errors = await readJsonPanel(page, 'Errors');
-            return errors['businessHours.addValue'] ?? null;
+            const errors = await readSidebarErrors(page);
+            return findSidebarError(errors, /earlier/i);
           })
           .toBeNull();
       });
@@ -285,7 +296,7 @@ test.describe('Business Hours Form', () => {
 
         await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(2);
 
-        const formValue = await readJsonPanel(page, 'Form Value');
+        const formValue = await readJsonPanel(page);
         const values = readBusinessHoursValues(formValue);
         await expect(normalizeTime(values[0]?.['from'])).toBe('0900');
         await expect(normalizeTime(values[1]?.['from'])).toBe('1300');
@@ -313,8 +324,8 @@ test.describe('Business Hours Form', () => {
 
         await expect
           .poll(async () => {
-            const errors = await readJsonPanel(page, 'Errors');
-            return firstErrorMessage(errors['businessHours.values']);
+            const errors = await readSidebarErrors(page);
+            return findSidebarError(errors, /overlap/i);
           })
           .toMatch(/overlap/i);
       });
@@ -341,8 +352,8 @@ test.describe('Business Hours Form', () => {
 
         await expect
           .poll(async () => {
-            const errors = await readJsonPanel(page, 'Errors');
-            return firstErrorMessage(errors['businessHours.values']);
+            const errors = await readSidebarErrors(page);
+            return findSidebarError(errors, /overlap/i);
           })
           .toMatch(/overlap/i);
       });
@@ -371,8 +382,8 @@ test.describe('Business Hours Form', () => {
 
         await expect
           .poll(async () => {
-            const errors = await readJsonPanel(page, 'Errors');
-            return firstErrorMessage(errors['businessHours.values']);
+            const errors = await readSidebarErrors(page);
+            return findSidebarError(errors, /overlap/i);
           })
           .toMatch(/overlap/i);
 
@@ -384,8 +395,8 @@ test.describe('Business Hours Form', () => {
 
         await expect
           .poll(async () => {
-            const errors = await readJsonPanel(page, 'Errors');
-            return errors['businessHours.values'] ?? null;
+            const errors = await readSidebarErrors(page);
+            return findSidebarError(errors, /overlap/i);
           })
           .toBeNull();
       });
@@ -457,8 +468,8 @@ test.describe('Business Hours Form', () => {
 
         await expect
           .poll(async () => {
-            const errors = await readJsonPanel(page, 'Errors');
-            return firstErrorMessage(errors['businessHours.values[0]']);
+            const errors = await readSidebarErrors(page);
+            return findSidebarError(errors, /earlier/i);
           })
           .toMatch(/earlier/i);
       });
@@ -492,7 +503,7 @@ test.describe('Business Hours Form', () => {
         // Wait for form value to update after removal
         await expect
           .poll(async () => {
-            const formValue = await readJsonPanel(page, 'Form Value');
+            const formValue = await readJsonPanel(page);
             return normalizeTime(
               formValue['businessHours']?.['values']?.['0']?.['from']
             );
@@ -517,8 +528,8 @@ test.describe('Business Hours Form', () => {
 
         await expect
           .poll(async () => {
-            const errors = await readJsonPanel(page, 'Errors');
-            return firstErrorMessage(errors['rootForm']);
+            const errors = await readSidebarErrors(page);
+            return findSidebarError(errors, /at least one business hour/i);
           })
           .toMatch(/at least one business hour/i);
       });
@@ -539,7 +550,7 @@ test.describe('Business Hours Form', () => {
 
         await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(1);
 
-        const formValue = await readJsonPanel(page, 'Form Value');
+        const formValue = await readJsonPanel(page);
         const values = readBusinessHoursValues(formValue);
         await expect(normalizeTime(values[0]?.['from'])).toBe('0900');
         await expect(normalizeTime(values[0]?.['to'])).toBe('1700');

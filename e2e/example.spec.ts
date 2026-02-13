@@ -11,7 +11,7 @@ test.describe('Smoke Tests', () => {
     await page.getByRole('link', { name: /purchase form/i }).click();
     await expect(page).toHaveURL(/\/purchase/);
     await expect(
-      page.getByRole('heading', { name: /purchase form/i, level: 3 })
+      page.getByRole('heading', { name: /purchase form/i, level: 1 })
     ).toBeVisible();
   });
 
@@ -20,16 +20,19 @@ test.describe('Smoke Tests', () => {
     await page.getByRole('link', { name: /business hours form/i }).click();
     await expect(page).toHaveURL(/\/business-hours/);
     await expect(
-      page.getByRole('heading', { name: /complex validations/i, level: 3 })
+      page.getByRole('heading', {
+        name: /business hours form|business hours/i,
+        level: 1,
+      })
     ).toBeVisible();
   });
 
   test('should navigate to validation config demo', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('link', { name: /validationconfig demo/i }).click();
+    await page.getByRole('link', { name: /validation\s*config demo/i }).click();
     await expect(page).toHaveURL(/\/validation-config-demo/);
     await expect(
-      page.getByRole('heading', { name: /validationconfig demo/i, level: 1 })
+      page.getByRole('heading', { name: /validation\s*config demo/i })
     ).toBeVisible();
   });
 
@@ -43,7 +46,7 @@ test.describe('Smoke Tests', () => {
       page.getByRole('link', { name: /business hours form/i })
     ).toBeVisible();
     await expect(
-      page.getByRole('link', { name: /validationconfig demo/i })
+      page.getByRole('link', { name: /validation\s*config demo/i })
     ).toBeVisible();
   });
 

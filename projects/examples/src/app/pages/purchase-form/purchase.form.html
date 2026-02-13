@@ -1,0 +1,308 @@
+<form
+  ngxVestForm
+  #vestForm="ngxVestForm"
+  (ngSubmit)="onSubmit()"
+  [formValue]="formValue()"
+  ngxValidateRootForm
+  [ngxValidateRootFormMode]="'submit'"
+  [formShape]="shape"
+  [suite]="purchaseValidationSuite"
+  [validationConfig]="validationConfig()"
+  (formValueChange)="onFormValueChange($event)"
+  (errorsChange)="currentErrors.set($event)"
+  [validationOptions]="{ debounceTime: 300 }"
+>
+  <fieldset [disabled]="loading()" class="form-shell form-stack">
+    <ngx-form-section title="Order Details" tone="neutral">
+      <div class="form-stack">
+        <div class="form-grid">
+          <ngx-control-wrapper class="form-field">
+            <label>
+              <span class="label-text">Product</span>
+              <select
+                class="input-field"
+                [ngModel]="formValue().productId"
+                name="productId"
+              >
+                @for (product of products(); track product.id) {
+                <option [value]="product.id">{{ product.name }}</option>
+                }
+              </select>
+            </label>
+          </ngx-control-wrapper>
+          <ngx-control-wrapper class="form-field">
+            <label>
+              <span class="label-text">Quantity</span>
+              <input
+                class="input-field"
+                placeholder="Enter quantity"
+                type="number"
+                [ngModel]="formValue().quantity"
+                name="quantity"
+              />
+            </label>
+          </ngx-control-wrapper>
+        </div>
+
+        @if (showJustification()) {
+        <ngx-control-wrapper class="form-field form-grid-full">
+          <label>
+            <span class="label-text"
+              >Justification (required when quantity > 5)</span
+            >
+            <textarea
+              class="input-field"
+              rows="3"
+              placeholder="Please justify your large order"
+              [ngModel]="formValue().justification"
+              name="justification"
+            ></textarea>
+          </label>
+        </ngx-control-wrapper>
+        }
+      </div>
+    </ngx-form-section>
+
+    <div class="form-divider" aria-hidden="true"></div>
+
+    <ngx-form-section title="Personal Information" tone="neutral">
+      <div class="form-grid">
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">First Name</span>
+            <input
+              class="input-field"
+              placeholder="Type your first name"
+              type="text"
+              [ngModel]="formValue().firstName"
+              [disabled]="fetchedDataDisabled()"
+              name="firstName"
+            />
+          </label>
+        </ngx-control-wrapper>
+
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">Last Name</span>
+            <input
+              class="input-field"
+              placeholder="Type your last name"
+              type="text"
+              [ngModel]="formValue().lastName"
+              [disabled]="fetchedDataDisabled()"
+              name="lastName"
+            />
+          </label>
+        </ngx-control-wrapper>
+
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">Birth Date</span>
+            <input
+              class="input-field"
+              placeholder="Select birth date"
+              type="date"
+              [ngModel]="formValue().birthDate"
+              name="birthDate"
+            />
+          </label>
+        </ngx-control-wrapper>
+
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">Age</span>
+            <input
+              class="input-field"
+              placeholder="Choose your age"
+              type="number"
+              [ngModel]="formValue().age"
+              name="age"
+            />
+          </label>
+        </ngx-control-wrapper>
+
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">User ID</span>
+            <input
+              class="input-field"
+              placeholder="Type user id"
+              type="text"
+              [validationOptions]="{ debounceTime: 500 }"
+              [ngModel]="formValue().userId"
+              [disabled]="fetchedDataDisabled()"
+              name="userId"
+            />
+          </label>
+        </ngx-control-wrapper>
+
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">Emergency Contact</span>
+            <input
+              class="input-field"
+              placeholder="Type your emergency contact"
+              type="text"
+              [disabled]="emergencyContactDisabled()"
+              [ngModel]="formValue().emergencyContact"
+              name="emergencyContact"
+            />
+          </label>
+        </ngx-control-wrapper>
+      </div>
+    </ngx-form-section>
+
+    <ngx-form-section title="Contact Details" tone="neutral">
+      <div class="form-stack">
+        <ngx-form-group-wrapper class="form-stack" ngModelGroup="phonenumbers">
+          <div class="label">
+            <span class="label-text">Phone Numbers</span>
+            <ngx-phonenumbers
+              [values]="formValue().phonenumbers?.values || {}"
+              (valuesChange)="onPhoneNumbersChange($event)"
+            />
+          </div>
+        </ngx-form-group-wrapper>
+
+        <div class="form-divider" aria-hidden="true"></div>
+
+        <div class="form-stack">
+          <fieldset class="form-field">
+            <legend class="label-text radio-group-label">Select gender</legend>
+            <div class="radio-group" role="radiogroup" aria-label="Gender">
+              <div class="radio-item">
+                <input
+                  id="gender-male"
+                  type="radio"
+                  [ngModel]="formValue().gender"
+                  [disabled]="fetchedDataDisabled()"
+                  name="gender"
+                  value="male"
+                />
+                <label for="gender-male">Male</label>
+              </div>
+              <div class="radio-item">
+                <input
+                  id="gender-female"
+                  type="radio"
+                  [ngModel]="formValue().gender"
+                  [disabled]="fetchedDataDisabled()"
+                  name="gender"
+                  value="female"
+                />
+                <label for="gender-female">Female</label>
+              </div>
+              <div class="radio-item">
+                <input
+                  id="gender-other"
+                  type="radio"
+                  [ngModel]="formValue().gender"
+                  [disabled]="fetchedDataDisabled()"
+                  name="gender"
+                  value="other"
+                />
+                <label for="gender-other">Other</label>
+              </div>
+            </div>
+          </fieldset>
+
+          @if (showGenderOther()) {
+          <ngx-control-wrapper class="form-field form-grid-full">
+            <label>
+              <span class="label-text">Specify gender</span>
+              <input
+                class="input-field"
+                placeholder="Specify gender"
+                type="text"
+                [ngModel]="formValue().genderOther"
+                name="genderOther"
+              />
+            </label>
+          </ngx-control-wrapper>
+          }
+        </div>
+      </div>
+    </ngx-form-section>
+
+    <ngx-form-section title="Addresses" tone="neutral">
+      <div class="form-stack">
+        <ngx-form-group-wrapper ngModelGroup="addresses">
+          <ngx-form-group-wrapper
+            class="form-field mb-6"
+            ngModelGroup="billingAddress"
+          >
+            <h3 class="section-title">Billing Address</h3>
+            <ngx-address
+              idPrefix="billing-address"
+              [address]="formValue().addresses?.billingAddress"
+            />
+          </ngx-form-group-wrapper>
+
+          <ngx-control-wrapper class="inline-checkbox-row">
+            <input
+              id="shipping-checkbox"
+              type="checkbox"
+              class="inline-checkbox"
+              [ngModel]="
+              formValue().addresses?.shippingAddressDifferentFromBillingAddress
+            "
+              name="shippingAddressDifferentFromBillingAddress"
+            />
+            <label for="shipping-checkbox" class="inline-checkbox-label">
+              Shipping address is different from billing address
+            </label>
+          </ngx-control-wrapper>
+
+          @if (showShippingAddress()) {
+          <ngx-form-group-wrapper
+            class="animate-fade-in form-field"
+            ngModelGroup="shippingAddress"
+          >
+            <h3 class="section-title">Shipping Address</h3>
+            <ngx-address
+              idPrefix="shipping-address"
+              [address]="currentShippingAddress()"
+            />
+          </ngx-form-group-wrapper>
+          }
+        </ngx-form-group-wrapper>
+      </div>
+    </ngx-form-section>
+
+    <ngx-form-section title="Security" tone="neutral">
+      <ngx-form-group-wrapper class="form-grid" ngModelGroup="passwords">
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">Password</span>
+            <input
+              class="input-field"
+              placeholder="Type password"
+              type="password"
+              [ngModel]="formValue().passwords?.password"
+              name="password"
+            />
+          </label>
+        </ngx-control-wrapper>
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">Confirm Password</span>
+            <input
+              class="input-field"
+              placeholder="Confirm password"
+              type="password"
+              [ngModel]="formValue().passwords?.confirmPassword"
+              name="confirmPassword"
+            />
+          </label>
+        </ngx-control-wrapper>
+      </ngx-form-group-wrapper>
+    </ngx-form-section>
+
+    <div class="form-actions">
+      <button type="button" (click)="onReset()" class="btn btn-secondary">
+        Reset
+      </button>
+      <button type="submit" class="btn btn-primary">Submit Order</button>
+    </div>
+  </fieldset>
+</form>

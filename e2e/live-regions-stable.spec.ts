@@ -34,9 +34,9 @@ test.describe('Accessibility - stable live regions', () => {
     await test.step('Locate wrapper and stable error region before errors are shown', async () => {
       const password = page.getByLabel('Password', { exact: true });
 
-      // Find the wrapper host by its attribute selector to avoid brittle DOM traversal.
+      // Find the wrapper host by its element selector.
       const wrapper = page
-        .locator('[ngx-control-wrapper]')
+        .locator('ngx-control-wrapper')
         .filter({ has: password });
       await expect(wrapper).toHaveCount(1);
 
@@ -65,7 +65,7 @@ test.describe('Accessibility - stable live regions', () => {
     await test.step('Trigger an error and verify the same region contains text and is referenced', async () => {
       const password = page.getByLabel('Password', { exact: true });
       const wrapper = page
-        .locator('[ngx-control-wrapper]')
+        .locator('ngx-control-wrapper')
         .filter({ has: password });
       // WCAG ARIA21: Inline field-level errors use role="status" for non-disruptive announcement
       const errorRegion = wrapper.locator('[role="status"][id$="-error"]');

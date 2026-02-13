@@ -1,6 +1,9 @@
 /* You can add global styles to this file, and also import other style files */
 @use 'tailwindcss';
 
+/* Use explicit class-driven dark mode (not system media-only) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Theme customization - Tailwind CSS v4 */
 @theme {
   /* Primary color palette (teal) */
@@ -29,7 +32,7 @@
     color: oklch(0.278 0.029 256.848);
   }
 
-  body.dark {
+  html.dark body {
     background: linear-gradient(
       to bottom right,
       oklch(0.175 0.028 264.052),
@@ -45,7 +48,7 @@
     margin-left: auto;
     margin-right: auto;
     max-width: 80rem; /* max-w-7xl */
-    padding: 1rem; /* p-4 */
+    padding: 0.75rem; /* small-screen friendly */
   }
 
   .sidebar-card-stack {
@@ -56,18 +59,14 @@
 
   @media (min-width: 640px) {
     .page-container {
-      padding: 1.5rem; /* sm:p-6 */
+      padding: 1.25rem; /* sm */
     }
   }
 
   @media (min-width: 1024px) {
     .page-container {
-      padding: 2rem; /* lg:p-8 */
+      padding: 2rem; /* lg */
     }
-  }
-
-  .card {
-    @apply rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800;
   }
 
   .section-title {
@@ -132,6 +131,7 @@
     @apply mt-1 text-sm text-red-600 dark:text-red-500;
   }
 
+  .form-field,
   .form-group {
     @apply w-full;
   }
@@ -160,10 +160,147 @@
       @apply ml-2 text-sm font-medium text-gray-900 dark:text-gray-300;
     }
   }
+
+  .form-stack {
+    @apply space-y-8;
+  }
+
+  .form-shell {
+    display: block;
+  }
+
+  .form-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 30rem) {
+    .form-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .form-grid-full {
+    @apply sm:col-span-2;
+  }
+
+  .form-divider {
+    @apply border-t border-gray-100 dark:border-gray-700;
+  }
+
+  .inline-checkbox-row {
+    @apply mb-6 flex items-center;
+  }
+
+  .inline-checkbox {
+    @apply text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 h-4 w-4 rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800;
+  }
+
+  .inline-checkbox-label {
+    @apply ml-2 text-sm font-medium text-gray-900 dark:text-gray-300;
+  }
+
+  .form-actions {
+    @apply mt-6 flex justify-end gap-3 border-t border-gray-100 pt-6 dark:border-gray-700;
+  }
+
+  .radio-group-label {
+    @apply mb-3 block;
+  }
+
+  .address-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+
+  .business-hours-item-card {
+    @apply relative rounded-lg border border-gray-200 bg-gray-50 p-4 transition-colors hover:bg-white dark:border-gray-700 dark:bg-gray-800/50 dark:hover:bg-gray-800;
+  }
+
+  .business-hours-stack {
+    @apply space-y-4;
+  }
+
+  .business-hours-list-stack {
+    @apply space-y-3;
+  }
+
+  .business-hours-item-layout {
+    @apply flex items-start justify-between gap-4;
+  }
+
+  .business-hours-item-main {
+    @apply flex-grow;
+  }
+
+  .business-hours-remove-btn {
+    @apply mt-7 inline-flex items-center rounded-md p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-hidden dark:hover:bg-red-900/20 dark:hover:text-red-400;
+  }
+
+  .business-hours-divider {
+    @apply relative py-4;
+  }
+
+  .business-hours-divider-line {
+    @apply absolute inset-0 flex items-center;
+  }
+
+  .business-hours-divider-rule {
+    @apply w-full border-t border-gray-200 dark:border-gray-700;
+  }
+
+  .business-hours-divider-content {
+    @apply relative flex justify-center;
+  }
+
+  .business-hours-divider-label {
+    @apply bg-white px-2 text-sm text-gray-500 dark:bg-gray-800 dark:text-gray-400;
+  }
+
+  .business-hours-add-card {
+    @apply rounded-lg border-2 border-dashed border-gray-300 p-4 dark:border-gray-700;
+  }
+
+  .business-hours-add-btn {
+    @apply mt-7 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-center text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-4 focus:ring-gray-200 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:border-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-700;
+  }
+
+  .business-hours-add-btn-icon {
+    @apply mr-2;
+  }
+
+  @media (min-width: 30rem) {
+    .address-grid {
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .address-field-wide {
+      grid-column: span 1 / span 1;
+    }
+
+    .address-field-compact {
+      grid-column: span 1 / span 1;
+      justify-self: start;
+      width: 100%;
+      max-width: 11rem;
+    }
+
+    .address-field-country {
+      grid-column: 1 / -1;
+      max-width: 16rem;
+    }
+  }
 }
 
 /* Legacy support for existing components until fully migrated */
-fieldset {
+ngx-form-section {
+  display: block;
+}
+
+fieldset:not(.form-shell) {
   @apply grid gap-6 sm:grid-cols-2;
 
   label span,

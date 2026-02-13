@@ -146,9 +146,12 @@ test.describe('ValidationConfig Demo', () => {
         await typeAndBlur(quantity, '5');
         await waitForValidationToSettle(page);
 
-        const justificationError = page.getByRole('status').filter({
-          hasText: /justification is required when quantity is provided/i,
-        });
+        const justificationError = page
+          .locator('form')
+          .getByRole('status')
+          .filter({
+            hasText: /justification is required when quantity is provided/i,
+          });
         await expect(justificationError).toHaveCount(0);
 
         await justification.focus();
@@ -171,9 +174,12 @@ test.describe('ValidationConfig Demo', () => {
         await fillAndBlur(justification, 'Needed for the project scope');
         await waitForValidationToSettle(page);
 
-        const quantityError = page.getByRole('status').filter({
-          hasText: /quantity is required when justification is provided/i,
-        });
+        const quantityError = page
+          .locator('form')
+          .getByRole('status')
+          .filter({
+            hasText: /quantity is required when justification is provided/i,
+          });
         await expect(quantityError).toHaveCount(0);
 
         await quantity.focus();
@@ -264,9 +270,12 @@ test.describe('ValidationConfig Demo', () => {
         // The user has not interacted with the justification field yet
         // With the fix (no touch propagation), errors only show after blur or submit
 
-        const requiredError = page.getByRole('status').filter({
-          hasText: /required/i,
-        });
+        const requiredError = page
+          .locator('form')
+          .getByRole('status')
+          .filter({
+            hasText: /required/i,
+          });
 
         // Verify no error is displayed (no error messages yet)
         await expect(requiredError).toHaveCount(0);
@@ -394,12 +403,18 @@ test.describe('ValidationConfig Demo', () => {
         await zipCode.focus();
         await zipCode.blur();
 
-        const stateRequiredError = page.getByRole('status').filter({
-          hasText: /state\/province is required/i,
-        });
-        const zipRequiredError = page.getByRole('status').filter({
-          hasText: /postal code is required/i,
-        });
+        const stateRequiredError = page
+          .locator('form')
+          .getByRole('status')
+          .filter({
+            hasText: /state\/province is required/i,
+          });
+        const zipRequiredError = page
+          .locator('form')
+          .getByRole('status')
+          .filter({
+            hasText: /postal code is required/i,
+          });
 
         await expect(stateRequiredError).toHaveCount(0);
         await expect(zipRequiredError).toHaveCount(0);
@@ -532,12 +547,18 @@ test.describe('ValidationConfig Demo', () => {
         await zipCode.focus();
         await zipCode.blur();
 
-        const stateRequiredError = page.getByRole('status').filter({
-          hasText: /state\/province is required/i,
-        });
-        const zipRequiredError = page.getByRole('status').filter({
-          hasText: /postal code is required/i,
-        });
+        const stateRequiredError = page
+          .locator('form')
+          .getByRole('status')
+          .filter({
+            hasText: /state\/province is required/i,
+          });
+        const zipRequiredError = page
+          .locator('form')
+          .getByRole('status')
+          .filter({
+            hasText: /postal code is required/i,
+          });
 
         await expect(stateRequiredError).toHaveCount(0);
         await expect(zipRequiredError).toHaveCount(0);
@@ -664,9 +685,12 @@ test.describe('ValidationConfig Demo', () => {
 
         await expectFieldHasError(startDate, /required/i);
 
-        const orderingError = page.getByRole('status').filter({
-          hasText: /end date must be after start date/i,
-        });
+        const orderingError = page
+          .locator('form')
+          .getByRole('status')
+          .filter({
+            hasText: /end date must be after start date/i,
+          });
         await expect(orderingError).toHaveCount(0);
 
         // End date should be valid now (no ordering rule when start is empty)
@@ -696,8 +720,10 @@ test.describe('ValidationConfig Demo', () => {
         await fillAndBlur(startDate, '2025-01-10');
         await fillAndBlur(endDate, '2025-01-20');
 
-        // Look for success indicator - check for valid state text
-        await expect(page.locator('text=/✓.*valid/i').first()).toBeVisible();
+        // Look for success indicator - check sidebar status badge shows valid
+        await expect(
+          page.locator('aside ngx-status-badge').getByText('Valid')
+        ).toBeVisible();
       });
     });
 

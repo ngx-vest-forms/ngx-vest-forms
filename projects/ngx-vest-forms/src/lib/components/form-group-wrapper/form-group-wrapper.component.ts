@@ -21,8 +21,8 @@ let nextUniqueId = 0;
  */
 @Component({
   selector:
-    'ngx-form-group-wrapper, sc-form-group-wrapper, [ngxFormGroupWrapper], [scFormGroupWrapper], [ngx-form-group-wrapper], [sc-form-group-wrapper]',
-  exportAs: 'formGroupWrapper, ngxFormGroupWrapper',
+    'ngx-form-group-wrapper, sc-form-group-wrapper, [ngxFormGroupWrapper], [scFormGroupWrapper]',
+  exportAs: 'ngxFormGroupWrapper',
   templateUrl: './form-group-wrapper.component.html',
   // Minimal structural styling: custom elements are inline by default.
   styles: `
@@ -40,7 +40,7 @@ let nextUniqueId = 0;
   hostDirectives: [
     {
       directive: FormErrorDisplayDirective,
-      inputs: ['errorDisplayMode'],
+      inputs: ['errorDisplayMode', 'warningDisplayMode'],
     },
   ],
 })
