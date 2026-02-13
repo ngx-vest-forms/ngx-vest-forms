@@ -9,7 +9,6 @@
   [suite]="purchaseValidationSuite"
   [validationConfig]="validationConfig()"
   (formValueChange)="onFormValueChange($event)"
-  (errorsChange)="currentErrors.set($event)"
   [validationOptions]="{ debounceTime: 300 }"
 >
   <fieldset [disabled]="loading()" class="form-shell form-stack">

@@ -21,6 +21,7 @@ import {
 import {
   AbstractControl,
   AsyncValidatorFn,
+  FormArray,
   FormGroup,
   NgForm,
   PristineChangeEvent,
@@ -50,6 +51,7 @@ import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import { DeepRequired } from '../utils/deep-required';
 import { fastDeepEqual } from '../utils/equality';
 import type { ValidationConfigMap } from '../utils/field-path-types';
+import { stringifyFieldPath } from '../utils/field-path.utils';
 import { NgxFormState } from '../utils/form-state.utils';
 import {
   getAllFormErrors,
@@ -117,6 +119,9 @@ export type NgxValidationConfig<T = unknown> =
 @Directive({
   selector: 'form[scVestForm], form[ngxVestForm]',
   exportAs: 'scVestForm, ngxVestForm',
+  host: {
+    '(focusout)': 'onFormFocusOut()',
+  },
 })
 export class FormDirective<T extends Record<string, unknown>> {
   readonly ngForm = inject(NgForm, { self: true });
@@ -169,6 +174,28 @@ export class FormDirective<T extends Record<string, unknown>> {
     this.ngForm.form.statusChanges.pipe(startWith(this.ngForm.form.status)),
     { initialValue: this.ngForm.form.status }
   );
+
+  /**
+   * Reactive counter incremented on any focusout within the form.
+   * This guarantees recomputation for every blur/tab interaction,
+   * even when the form's aggregate touched flag is already true.
+   */
+  readonly #blurTick = signal(0);
+
+  /**
+   * Computed signal that returns field paths for all touched (or submitted) leaf controls.
+   * Updates reactively when controls are touched (blur) or when form status changes.
+   *
+   * This enables consumers to determine which fields the user has interacted with,
+   * useful for filtering errors/warnings to match the form's visible validation state.
+   *
+   * @publicApi
+   */
+  readonly touchedFieldPaths = computed(() => {
+    this.#blurTick();
+    this.#statusSignal();
+    return this.#collectTouchedPaths(this.ngForm.form, this.ngForm.submitted);
+  });
 
   /**
    * Computed signal for form state with validity and errors.
@@ -384,6 +411,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.ngForm.form.markAllAsTouched();
+        this.#blurTick.update((v) => v + 1);
       });
 
     /**
@@ -578,6 +606,19 @@ export class FormDirective<T extends Record<string, unknown>> {
    */
   markAllAsTouched(): void {
     this.ngForm.form.markAllAsTouched();
+    this.#blurTick.update((v) => v + 1);
+  }
+
+  /**
+   * Host handler: called whenever any descendant field loses focus.
+   * Used to make touched-path tracking react immediately on blur/tab.
+   */
+  onFormFocusOut(): void {
+    // Run on the next microtask to ensure Angular has already applied
+    // control.touched changes for the field that just blurred.
+    queueMicrotask(() => {
+      this.#blurTick.update((v) => v + 1);
+    });
   }
 
   /**
@@ -654,6 +695,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     // Trigger validation update to clear any stale errors
     // Now synchronous since detectChanges() has flushed DOM updates
     this.ngForm.form.updateValueAndValidity({ emitEvent: true });
+    this.#blurTick.update((v) => v + 1);
   }
 
   /**
@@ -1008,5 +1050,39 @@ export class FormDirective<T extends Record<string, unknown>> {
         this.validationInProgress.delete(depField);
       }
     }, VALIDATION_IN_PROGRESS_TIMEOUT_MS);
+  }
+
+  /**
+   * Collects field paths of all touched (or submitted) leaf controls
+   * by walking the form control tree.
+   */
+  #collectTouchedPaths(control: AbstractControl, submitted: boolean): string[] {
+    const fields: string[] = [];
+
+    const collect = (
+      current: AbstractControl,
+      path: Array<string | number>
+    ): void => {
+      if (current instanceof FormGroup) {
+        for (const [name, child] of Object.entries(current.controls)) {
+          collect(child, [...path, name]);
+        }
+        return;
+      }
+
+      if (current instanceof FormArray) {
+        current.controls.forEach((child, index) => {
+          collect(child, [...path, index]);
+        });
+        return;
+      }
+
+      if ((submitted || current.touched) && path.length > 0) {
+        fields.push(stringifyFieldPath(path));
+      }
+    };
+
+    collect(control, []);
+    return fields;
   }
 }

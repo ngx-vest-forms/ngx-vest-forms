@@ -11,6 +11,10 @@ import { Card } from '../../ui/card/card.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { PurchaseForm } from './purchase.form';
+import {
+  purchaseValidationErrorRulesByField,
+  purchaseValidationWarningRulesByField,
+} from './purchase.validations';
 
 @Component({
   selector: 'ngx-purchase-page',
@@ -23,6 +27,9 @@ export class PurchasePageComponent {
   private readonly purchaseForm = viewChild(PurchaseForm);
 
   protected readonly ROOT_FORM = ROOT_FORM;
+  protected readonly validationErrorRules = purchaseValidationErrorRulesByField;
+  protected readonly validationWarningRules =
+    purchaseValidationWarningRulesByField;
   protected readonly rootFormErrors = computed(
     () => this.purchaseForm()?.formState()?.errors[ROOT_FORM] || []
   );

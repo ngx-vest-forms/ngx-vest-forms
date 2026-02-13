@@ -73,23 +73,25 @@ export class PurchaseForm {
   readonly formValueChange = output<PurchaseFormModel>();
   readonly saveRequested = output<PurchaseFormModel>();
 
-  /**
-   * Errors updated via the directive's (errorsChange) event binding.
-   * The event fires on *every* StatusChangeEvent, making it more reactive
-   * than formState.errors when the form's overall status stays the same.
-   */
-  protected readonly currentErrors = signal<Record<string, string[]>>({});
-
-  /** Exposes the directive's packaged form state with up-to-date errors. */
+  /** Exposes the directive's packaged form state. */
   readonly formState = computed(() => {
     const state = this.vestForm()?.formState();
     if (!state) return createEmptyFormState<PurchaseFormModel>();
-    return { ...state, errors: this.currentErrors() };
+    return state;
   });
 
   /** Exposes field warnings as a plain Record for presentational components. */
   readonly warnings = computed(() =>
     mapWarningsToRecord(this.vestForm()?.fieldWarnings() ?? new Map())
+  );
+
+  /**
+   * Field paths that have been validated (touched/blurred or submitted).
+   * Delegates to the FormDirective's touchedFieldPaths signal which
+   * reactively tracks TouchedChangeEvent from the form tree.
+   */
+  readonly validatedFields = computed(
+    () => this.vestForm()?.touchedFieldPaths() ?? []
   );
 
   /**

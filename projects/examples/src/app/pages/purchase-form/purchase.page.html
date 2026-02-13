@@ -43,6 +43,9 @@
       <ngx-form-state-card
         [formState]="purchaseForm.formState()"
         [warnings]="purchaseForm.warnings()"
+        [validationErrorRules]="validationErrorRules"
+        [validationWarningRules]="validationWarningRules"
+        [validatedFields]="purchaseForm.validatedFields()"
       />
     </aside>
 

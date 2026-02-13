@@ -151,3 +151,47 @@ export const createPurchaseValidationSuite = (
     }
   );
 };
+
+export const purchaseValidationErrorRulesByField: Record<string, string[]> = {
+  firstName: ['First name is required'],
+  lastName: ['Last name is required'],
+  birthDate: ['Birth date is required'],
+  age: ['Age is required'],
+  emergencyContact: ['Emergency contact is required'],
+  gender: ['Gender is required'],
+  genderOther: ['If gender is other, you have to specify the gender'],
+  productId: ['Product is required'],
+  quantity: ['Quantity is required', 'Quantity must be at least 1'],
+  justification: ['Justification is required when quantity exceeds 5'],
+  'addresses.billingAddress.street': ['Street is required'],
+  'addresses.billingAddress.city': ['City is required'],
+  'addresses.billingAddress.zipcode': ['Zipcode is required'],
+  'addresses.billingAddress.number': ['Number is required'],
+  'addresses.billingAddress.country': ['Country is required'],
+  'addresses.shippingAddress.street': ['Street is required'],
+  'addresses.shippingAddress.city': ['City is required'],
+  'addresses.shippingAddress.zipcode': ['Zipcode is required'],
+  'addresses.shippingAddress.number': ['Number is required'],
+  'addresses.shippingAddress.country': ['Country is required'],
+  addresses: ['The addresses appear to be the same'],
+  'passwords.password': ['Password is not filled in'],
+  'passwords.confirmPassword': ['Confirm password is not filled in'],
+  passwords: ['Passwords do not match'],
+  phonenumbers: ['You should have at least one phonenumber'],
+  _flat: ['Should be a valid phonenumber'],
+};
+
+export const purchaseValidationWarningRulesByField: Record<string, string[]> = {
+  'passwords.password': [
+    'Password should be at least 12 characters for better security',
+    'Consider using a mix of uppercase, lowercase, numbers, and symbols',
+  ],
+};
+
+export const purchaseValidationRulesByField: Record<string, string[]> = {
+  ...purchaseValidationErrorRulesByField,
+  'passwords.password': [
+    ...(purchaseValidationErrorRulesByField['passwords.password'] ?? []),
+    ...(purchaseValidationWarningRulesByField['passwords.password'] ?? []),
+  ],
+};
