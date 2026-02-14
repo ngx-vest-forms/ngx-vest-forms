@@ -5,8 +5,9 @@ import {
   NG_ASYNC_VALIDATORS,
   ValidationErrors,
 } from '@angular/forms';
-import { Observable, from, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { getFormGroupField } from '../utils/form-utils';
+import { runAsyncValidationBridge } from './async-validator-bridge';
 import { FormDirective } from './form.directive';
 import { ValidationOptions } from './validation-options';
 
@@ -31,31 +32,16 @@ export class FormModelGroupDirective implements AsyncValidator {
   > | null = inject(FormDirective, { optional: true });
 
   validate(control: AbstractControl): Observable<ValidationErrors | null> {
-    // Null check for control
-    if (!control) {
-      return of(null);
-    }
-    // Null check for form context
-    const context = this.formDirective;
-    if (!context) {
-      return of(null);
-    }
-    const { ngForm } = context;
-    const field = getFormGroupField(ngForm.control, control);
-    if (!field) {
-      return of(null);
-    }
-    const asyncValidator = context.createAsyncValidator(
-      field,
-      this.validationOptions()
+    return runAsyncValidationBridge(
+      control,
+      this.formDirective,
+      (currentControl) => {
+        const context = this.formDirective;
+        if (!context) return '';
+        return getFormGroupField(context.ngForm.control, currentControl);
+      },
+      this.validationOptions(),
+      'FormModelGroupDirective'
     );
-    const validationResult = asyncValidator(control);
-    if (validationResult instanceof Observable) {
-      return validationResult;
-    } else if (validationResult instanceof Promise) {
-      return from(validationResult);
-    } else {
-      return of(null);
-    }
   }
 }
