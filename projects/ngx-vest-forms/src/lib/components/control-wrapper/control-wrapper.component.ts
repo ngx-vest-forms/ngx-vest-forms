@@ -182,9 +182,7 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
    *   across multiple child controls.
    * - This does not affect whether messages render; it only affects ARIA wiring.
    */
-  readonly ariaAssociationMode = input<
-    AriaAssociationMode
-  >('all-controls');
+  readonly ariaAssociationMode = input<AriaAssociationMode>('all-controls');
 
   // Generate unique IDs for ARIA associations
   protected readonly uniqueId = `ngx-control-wrapper-${nextUniqueId++}`;

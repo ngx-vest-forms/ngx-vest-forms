@@ -928,7 +928,15 @@ export class FormDirective<T extends Record<string, unknown>> {
       take(1)
     );
 
-    const timeout$ = timer(2000);
+    const timeout$ = timer(2000).pipe(
+      tap(() => {
+        if (isDevMode()) {
+          console.warn(
+            '[ngx-vest-forms] validationConfig: timed out waiting for form to leave PENDING state (2s). Continuing dependent validation to avoid stalling.'
+          );
+        }
+      })
+    );
 
     return race(idle$, timeout$).pipe(map(() => control));
   }
@@ -955,13 +963,27 @@ export class FormDirective<T extends Record<string, unknown>> {
       return of(control);
     }
 
-    // Wait for dependent controls to be added to the form
-    return form.statusChanges.pipe(
+    // Wait for dependent controls to be added to the form, but bound the wait to avoid silent stalls.
+    const dependentControlsReady$ = form.statusChanges.pipe(
       startWith(form.status),
       filter(() => dependents.every((depField) => !!form.get(depField))),
       take(1),
       map(() => control)
     );
+
+    const timeout$ = timer(2000).pipe(
+      tap(() => {
+        if (isDevMode()) {
+          const unresolved = dependents.filter((depField) => !form.get(depField));
+          console.warn(
+            `[ngx-vest-forms] validationConfig: timed out waiting for dependent controls (2s): ${unresolved.join(', ')}. Continuing without waiting further.`
+          );
+        }
+      }),
+      map(() => control)
+    );
+
+    return race(dependentControlsReady$, timeout$).pipe(take(1));
   }
 
   /**

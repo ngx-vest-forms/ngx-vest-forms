@@ -7,7 +7,11 @@ import {
   ValidationErrors,
 } from '@angular/forms';
 import { ROOT_FORM } from '../constants';
-import { stringifyFieldPath } from './field-path.utils';
+import {
+  isUnsafePathSegment,
+  parseFieldPath,
+  stringifyFieldPath,
+} from './field-path.utils';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -166,6 +170,10 @@ export function mergeValuesAndRawValues<T>(form: FormGroup): T {
   // Recursive function to merge rawValue into value
   function mergeRecursive(target: UnknownRecord, source: UnknownRecord): void {
     for (const key of Object.keys(source)) {
+      if (isUnsafePathSegment(key)) {
+        continue;
+      }
+
       const sourceValue = source[key];
       const targetValue = target[key];
 
@@ -255,14 +263,23 @@ export function setValueAtPath(
   path: string,
   value: unknown
 ): void {
-  const keys = path.split('.');
+  const keys = parseFieldPath(path);
+  if (keys.length === 0) {
+    return;
+  }
+
   let current: UnknownRecord = obj as UnknownRecord;
 
   for (let i = 0; i < keys.length - 1; i++) {
-    const key = keys[i];
-    if (key === undefined) {
+    const segment = keys[i];
+    if (segment === undefined) {
       continue;
     }
+    if (isUnsafePathSegment(segment)) {
+      return;
+    }
+
+    const key = String(segment);
 
     const next = current[key];
     if (!isRecord(next)) {
@@ -271,10 +288,12 @@ export function setValueAtPath(
     current = current[key] as UnknownRecord;
   }
 
-  const lastKey = keys[keys.length - 1];
-  if (lastKey !== undefined) {
-    current[lastKey] = value;
+  const lastSegment = keys[keys.length - 1];
+  if (lastSegment === undefined || isUnsafePathSegment(lastSegment)) {
+    return;
   }
+
+  current[String(lastSegment)] = value;
 }
 
 /**

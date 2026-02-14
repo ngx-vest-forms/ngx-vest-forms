@@ -499,6 +499,28 @@ describe('setValueAtPath function', () => {
       },
     });
   });
+
+  it('should ignore unsafe prototype pollution segments in dot notation', () => {
+    const object: Record<string, unknown> = {};
+
+    setValueAtPath(object, '__proto__.polluted', 'yes');
+    setValueAtPath(object, 'constructor.prototype.polluted', 'yes');
+
+    expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();
+    expect(object).toEqual({});
+  });
+
+  it('should ignore unsafe prototype pollution segments in bracket notation', () => {
+    const object: Record<string, unknown> = {};
+
+    setValueAtPath(object, '__proto__[0].polluted', 'yes');
+    setValueAtPath(object, 'safe.constructor[0].value', 'yes');
+
+    expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();
+    expect(
+      Object.prototype.hasOwnProperty.call(object.safe ?? {}, 'constructor')
+    ).toBe(false);
+  });
 });
 
 describe('set function (deprecated)', () => {
@@ -687,5 +709,26 @@ describe('getAllFormErrors', () => {
     expect((errors['field'] as ErrorListWithWarnings).warnings).toEqual([
       'Valid warning',
     ]);
+  });
+
+  it('should skip unsafe prototype keys while merging value and rawValue', () => {
+    const fakeForm = {
+      value: {
+        safe: { value: 'ok' },
+      },
+      getRawValue: () => ({
+        safe: { value: 'ok', nested: true },
+        __proto__: { polluted: 'yes' },
+        constructor: { prototype: { hacked: true } },
+      }),
+    } as unknown as FormGroup;
+
+    const merged = mergeValuesAndRawValues<{ safe: { value: string; nested?: boolean } }>(
+      fakeForm
+    );
+
+    expect(merged.safe).toEqual({ value: 'ok', nested: true });
+    expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();
+    expect(({} as Record<string, unknown>)['hacked']).toBeUndefined();
   });
 });

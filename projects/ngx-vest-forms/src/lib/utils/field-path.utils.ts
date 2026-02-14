@@ -17,6 +17,13 @@
  * ```
  */
 
+const UNSAFE_PATH_SEGMENTS = new Set(['__proto__', 'prototype', 'constructor']);
+
+/** @internal */
+export function isUnsafePathSegment(segment: string | number): boolean {
+  return typeof segment === 'string' && UNSAFE_PATH_SEGMENTS.has(segment);
+}
+
 /**
  * @internal
  * Internal utility for parsing field path strings.

@@ -6,8 +6,8 @@ import {
   ValidationErrors,
 } from '@angular/forms';
 import { Observable } from 'rxjs';
-import { runAsyncValidationBridge } from './async-validator-bridge';
 import { getFormControlField } from '../utils/form-utils';
+import { runAsyncValidationBridge } from './async-validator-bridge';
 import { FormDirective } from './form.directive';
 import { ValidationOptions } from './validation-options';
 

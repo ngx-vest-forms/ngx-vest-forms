@@ -53,9 +53,7 @@ export class FormErrorControlDirective implements AfterContentInit, OnDestroy {
    * - `single-control`: apply ARIA attributes only when exactly one control is found.
    * - `none`: do not mutate descendant controls.
    */
-  readonly ariaAssociationMode = input<
-    AriaAssociationMode
-  >('all-controls');
+  readonly ariaAssociationMode = input<AriaAssociationMode>('all-controls');
 
   /**
    * Unique ID prefix for this instance.
