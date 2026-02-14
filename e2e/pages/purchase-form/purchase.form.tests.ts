@@ -232,10 +232,13 @@ test.describe('Purchase Form', () => {
         await confirmPassword.blur();
         await waitForValidationToSettle(page, 10000);
 
-        await expectFieldHasError(
-          confirmPassword,
-          /confirm password is not filled in/i
-        );
+        // Assert user-visible validation feedback instead of class timing internals.
+        await expect(
+          page
+            .locator('form')
+            .getByText(/confirm password is not filled in/i)
+            .first()
+        ).toBeVisible();
       });
     });
   });

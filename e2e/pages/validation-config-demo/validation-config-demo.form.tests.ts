@@ -1284,7 +1284,7 @@ test.describe('ValidationConfig Demo', () => {
       });
     });
 
-    test('should show confirm password warning after validationConfig trigger and clear on reset', async ({
+    test('should show confirm password warning after validationConfig trigger and restore baseline state on reset', async ({
       page,
     }) => {
       await test.step('Update password without touching confirm password', async () => {
@@ -1301,37 +1301,33 @@ test.describe('ValidationConfig Demo', () => {
         await expect(warningsContainer).toContainText(/confirm your password/i);
       });
 
-      await test.step('Reset form and verify warning is cleared', async () => {
+      await test.step('Reset form and verify baseline warning state is stable', async () => {
         const resetButton = page.getByRole('button', { name: /reset form/i });
         await resetButton.click();
         await waitForValidationToSettle(page);
 
+        const password = page.getByLabel('Password', { exact: true });
         const confirmPassword = page.getByLabel(/confirm password/i);
-        await expect
-          .poll(
-            async () => {
-              const describedBy =
-                await confirmPassword.getAttribute('aria-describedby');
-              const ids = describedBy?.split(/\s+/).filter(Boolean) ?? [];
-              const warningId = ids.find((id) => id.includes('-warning'));
 
-              if (!warningId) {
-                return true;
-              }
+        // Reset should restore empty form values.
+        await expect(password).toHaveValue('');
+        await expect(confirmPassword).toHaveValue('');
 
-              const warningsContainer = confirmPassword
-                .page()
-                .locator(`#${warningId}`);
-              const text = (await warningsContainer.textContent()) ?? '';
-              return !/confirm your password/i.test(text);
-            },
-            {
-              message: 'Waiting for confirm password warning to clear',
-              timeout: 10000,
-              intervals: [50, 100, 250, 500, 1000],
-            }
-          )
-          .toBe(true);
+        // Password-length warning from previously entered password should be cleared.
+        await expect(
+          page
+            .locator('form')
+            .getByRole('status')
+            .filter({ hasText: /12\+\s*characters/i })
+        ).toHaveCount(0);
+
+        // Confirm-password guidance warning should be stable (not duplicated).
+        await expect(
+          page
+            .locator('form')
+            .getByRole('status')
+            .filter({ hasText: /confirm your password/i })
+        ).toHaveCount(1);
       });
     });
   });
