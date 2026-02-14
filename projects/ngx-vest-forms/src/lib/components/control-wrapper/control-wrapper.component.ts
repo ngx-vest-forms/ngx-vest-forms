@@ -12,6 +12,12 @@ import {
   signal,
 } from '@angular/core';
 import { FormErrorDisplayDirective } from '../../directives/form-error-display.directive';
+import {
+  AriaAssociationMode,
+  mergeAriaDescribedBy,
+  parseAriaIdTokens,
+  resolveAssociationTargets,
+} from '../../utils/aria-association.utils';
 import { createDebouncedPendingState } from '../../utils/pending-state.utils';
 
 // Counter for unique IDs
@@ -177,7 +183,7 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
    * - This does not affect whether messages render; it only affects ARIA wiring.
    */
   readonly ariaAssociationMode = input<
-    'all-controls' | 'single-control' | 'none'
+    AriaAssociationMode
   >('all-controls');
 
   // Generate unique IDs for ARIA associations
@@ -244,31 +250,6 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
     this.pendingId,
   ];
 
-  private mergeAriaDescribedBy(
-    existing: string | null,
-    wrapperActiveIds: string[]
-  ): string | null {
-    const existingTokens = (existing ?? '')
-      .split(/\s+/)
-      .map((t) => t.trim())
-      .filter(Boolean);
-
-    // Remove any previous wrapper-owned IDs from the existing list.
-    const existingWithoutWrapper = existingTokens.filter(
-      (t) => !this.wrapperOwnedDescribedByIds.includes(t)
-    );
-
-    // Append current wrapper IDs, preserving existing order and uniqueness.
-    const merged: string[] = [...existingWithoutWrapper];
-    for (const id of wrapperActiveIds) {
-      if (!merged.includes(id)) {
-        merged.push(id);
-      }
-    }
-
-    return merged.length > 0 ? merged.join(' ') : null;
-  }
-
   constructor() {
     // Effect to update aria-describedby and aria-invalid on form controls
     effect(() => {
@@ -280,24 +261,17 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
       }
 
       const describedBy = this.ariaDescribedBy();
-      const wrapperActiveIds = describedBy
-        ? describedBy.split(/\s+/).filter(Boolean)
-        : [];
+      const wrapperActiveIds = parseAriaIdTokens(describedBy);
       const shouldShowErrors = this.errorDisplay.shouldShowErrors();
 
-      const targets = (() => {
-        const controls = this.formControls();
-        if (mode === 'single-control') {
-          return controls.length === 1 ? controls : [];
-        }
-        return controls;
-      })();
+      const targets = resolveAssociationTargets(this.formControls(), mode);
 
       targets.forEach((control) => {
         // Update aria-describedby (merge, don't overwrite)
-        const nextDescribedBy = this.mergeAriaDescribedBy(
+        const nextDescribedBy = mergeAriaDescribedBy(
           control.getAttribute('aria-describedby'),
-          wrapperActiveIds
+          wrapperActiveIds,
+          this.wrapperOwnedDescribedByIds
         );
         if (nextDescribedBy) {
           control.setAttribute('aria-describedby', nextDescribedBy);
