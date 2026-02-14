@@ -151,8 +151,11 @@ export function getFormGroupField(
  * to include disabled field values in form submissions. Use Angular's `getRawValue()`
  * method on your form if you need to access disabled field values.
  *
- * This RxJS operator merges the value of the form with the raw value.
+ * This utility merges the value of the form with the raw value.
  * By doing this we can assure that we don't lose values of disabled form fields
+ *
+ * Security: Unsafe prototype-related keys (`__proto__`, `prototype`, `constructor`)
+ * are skipped during recursive merge.
  * @param form
  */
 export function mergeValuesAndRawValues<T>(form: FormGroup): T {
@@ -253,10 +256,17 @@ export function cloneDeep<T>(object: T): T {
 }
 
 /**
- * Sets a value in an object in the correct path
- * @param obj
- * @param path
- * @param value
+ * Sets a value in an object at the provided field path.
+ *
+ * Supports dot and bracket notation via `parseFieldPath()`.
+ * Examples: `user.profile.name`, `addresses[0].street`.
+ *
+ * Security: If any path segment matches an unsafe prototype-related key
+ * (`__proto__`, `prototype`, `constructor`), the write is ignored.
+ *
+ * @param obj - Target object to mutate.
+ * @param path - Dot/bracket field path.
+ * @param value - Value to assign at the resolved path.
  */
 export function setValueAtPath(
   obj: object,

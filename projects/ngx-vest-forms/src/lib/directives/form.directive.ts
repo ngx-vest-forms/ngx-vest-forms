@@ -699,15 +699,15 @@ export class FormDirective<T extends Record<string, unknown>> {
   }
 
   /**
-   * This will feed the formValueCache, debounce it till the next tick
-   * and create an asynchronous validator that runs a vest suite
-   * @param field
-   * @param validationOptions
-   * @returns an asynchronous validator function
-   */
-  /**
-   * V2 async validator pattern: uses timer() + switchMap for proper re-validation.
-   * Each invocation builds a fresh one-shot observable, ensuring progressive validation.
+   * Creates a one-shot async validator function for a specific field path.
+   *
+   * The returned validator:
+   * - snapshots the current form model,
+   * - injects the candidate control value at `field`,
+   * - runs the Vest suite with debouncing,
+   * - maps Vest errors/warnings into Angular `ValidationErrors | null`.
+   *
+   * Warnings are stored in `fieldWarnings` to keep warnings non-blocking when no errors exist.
    */
   createAsyncValidator(
     field: string,
@@ -974,7 +974,9 @@ export class FormDirective<T extends Record<string, unknown>> {
     const timeout$ = timer(2000).pipe(
       tap(() => {
         if (isDevMode()) {
-          const unresolved = dependents.filter((depField) => !form.get(depField));
+          const unresolved = dependents.filter(
+            (depField) => !form.get(depField)
+          );
           console.warn(
             `[ngx-vest-forms] validationConfig: timed out waiting for dependent controls (2s): ${unresolved.join(', ')}. Continuing without waiting further.`
           );

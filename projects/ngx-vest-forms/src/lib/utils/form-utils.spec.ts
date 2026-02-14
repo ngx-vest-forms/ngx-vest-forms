@@ -518,7 +518,7 @@ describe('setValueAtPath function', () => {
 
     expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();
     expect(
-      Object.prototype.hasOwnProperty.call(object.safe ?? {}, 'constructor')
+      Object.prototype.hasOwnProperty.call(object['safe'] ?? {}, 'constructor')
     ).toBe(false);
   });
 });
@@ -723,9 +723,9 @@ describe('getAllFormErrors', () => {
       }),
     } as unknown as FormGroup;
 
-    const merged = mergeValuesAndRawValues<{ safe: { value: string; nested?: boolean } }>(
-      fakeForm
-    );
+    const merged = mergeValuesAndRawValues<{
+      safe: { value: string; nested?: boolean };
+    }>(fakeForm);
 
     expect(merged.safe).toEqual({ value: 'ok', nested: true });
     expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();

@@ -12,8 +12,8 @@ import { FormDirective } from './form.directive';
 import { ValidationOptions } from './validation-options';
 
 /**
- * Hooks into the ngModel selector and triggers an asynchronous validation for a form model
- * It will use a vest suite behind the scenes
+ * Hooks into `ngModel`/`ngxModel` and runs async field-level validation
+ * through the parent `FormDirective` Vest suite bridge.
  */
 @Directive({
   selector: '[ngModel],[ngxModel]',
@@ -27,6 +27,11 @@ import { ValidationOptions } from './validation-options';
   ],
 })
 export class FormModelDirective implements AsyncValidator {
+  /**
+   * Per-control async validation options.
+   *
+   * Defaults to no debounce (`{ debounceTime: 0 }`).
+   */
   validationOptions = input<ValidationOptions>({ debounceTime: 0 });
   /**
    * Reference to the form that needs to be validated
@@ -39,6 +44,11 @@ export class FormModelDirective implements AsyncValidator {
     optional: true,
   });
 
+  /**
+   * Runs field-level async validation for this control.
+   *
+   * Returns `null` (fail-open) when used outside an `ngxVestForm` context.
+   */
   validate(control: AbstractControl): Observable<ValidationErrors | null> {
     return runAsyncValidationBridge(
       control,

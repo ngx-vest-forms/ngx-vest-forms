@@ -19,7 +19,12 @@
 
 const UNSAFE_PATH_SEGMENTS = new Set(['__proto__', 'prototype', 'constructor']);
 
-/** @internal */
+/**
+ * @internal
+ * Returns whether a path segment is unsafe for object writes/merges.
+ *
+ * Unsafe segments are blocked to prevent prototype pollution vectors.
+ */
 export function isUnsafePathSegment(segment: string | number): boolean {
   return typeof segment === 'string' && UNSAFE_PATH_SEGMENTS.has(segment);
 }

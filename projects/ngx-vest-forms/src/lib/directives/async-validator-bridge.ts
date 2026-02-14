@@ -13,8 +13,15 @@ type ValidationResult =
   | null;
 
 /**
+ * @internal
  * Shared bridge for resolving a field path and invoking FormDirective async validation.
  * Keeps fail-open semantics for missing context/path while consolidating behavior.
+ *
+ * @param control - Control being validated by Angular forms.
+ * @param context - Optional parent form directive context.
+ * @param resolveField - Resolver that maps the control to a field path.
+ * @param validationOptions - Per-control validation options.
+ * @param source - Caller identifier for diagnostics.
  */
 export function runAsyncValidationBridge(
   control: AbstractControl,

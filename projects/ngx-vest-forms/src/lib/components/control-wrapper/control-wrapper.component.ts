@@ -24,7 +24,7 @@ import { createDebouncedPendingState } from '../../utils/pending-state.utils';
 let nextUniqueId = 0;
 
 /**
- * Accessible form control wrapper with WCAG 2.2 AA compliance.
+ * Accessible form control wrapper built with WCAG 2.2 AA considerations.
  *
  * Wrap form fields to automatically display validation errors, warnings, and pending states
  * with proper accessibility attributes.
@@ -115,7 +115,7 @@ let nextUniqueId = 0;
  *   <ngx-control-wrapper>
  *     <input name="username" ngModel />
  *   </ngx-control-wrapper>
- *   /// If async validation is running for >200ms, a spinner and 'Validating…' will be shown.
+ *   /// If async validation is running for >500ms, a spinner and 'Validating…' will be shown.
  *   /// Once shown, the validation message stays visible for minimum 500ms to prevent flashing.
  *   /// If Vest warnings are present, they will be shown below errors.
  *
@@ -124,13 +124,14 @@ let nextUniqueId = 0;
  *   import { NGX_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
  *   @Component({
  *     providers: [
- *       provide(NGX_ERROR_DISPLAY_MODE_TOKEN, { useValue: 'submit' })
+ *       provide(NGX_ERROR_DISPLAY_MODE_TOKEN, { useValue: 'on-submit' })
  *     ]
  *   })
  *   export class MyComponent {}
  *
  * Best Practices:
- *   - Use for every input or group in your forms.
+ *   - Use for single-control wrappers.
+ *   - For multi-control/group containers, prefer `ngx-form-group-wrapper`.
  *   - Do not manually display errors for individual fields; rely on this wrapper.
  *   - Validate with tools like Accessibility Insights and real screen reader testing.
  *
