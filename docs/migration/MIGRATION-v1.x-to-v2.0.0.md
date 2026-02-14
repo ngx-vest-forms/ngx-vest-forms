@@ -25,6 +25,16 @@ This guide covers migration from v1.x (mostly v1.4) to v2.0.0, which includes cr
 - ✨ **New**: Suite typing helpers (`NgxVestSuite`, `NgxTypedVestSuite<T>`, `NgxFieldKey<T>`)
 - ✨ **New**: WCAG 2.2 AA accessibility compliance
 
+### Deprecated-but-Retained Compatibility Exports
+
+The following exports are intentionally retained for backward compatibility in v2.x and are planned for a future major cleanup:
+
+- `vestForms` (use `NgxVestForms`)
+- `ROOT_FORM_CONSTANT` (use `ROOT_FORM`)
+- `cloneDeep` and `set` (use `structuredClone` and `setValueAtPath`)
+
+These remain non-breaking in patch/minor releases.
+
 ### Improvements
 
 - ♿ **Enhanced**: Smart ARIA management for polite/assertive announcements
