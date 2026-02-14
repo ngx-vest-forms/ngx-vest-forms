@@ -82,6 +82,13 @@ This document is a comprehensive checklist of items to verify during web design 
 - [ ] Charts and diagrams consider color vision diversity
 - [ ] Error messages don't rely solely on color
 
+### Modern Color & Theme
+
+- [ ] Uses `color-scheme: light dark` on `:root` for native dark mode support
+- [ ] Colors specified in oklch for perceptual uniformity where possible
+- [ ] `prefers-color-scheme` media query respects user OS preference
+- [ ] `prefers-contrast` media query provides high-contrast alternatives
+
 ---
 
 ## 4. Responsive Verification
@@ -115,6 +122,12 @@ This document is a comprehensive checklist of items to verify during web design 
 - [ ] Layout doesn't break at intermediate sizes
 - [ ] No content disappears or duplicates
 
+### Container Queries
+
+- [ ] Components that depend on parent size use `container-type: inline-size`
+- [ ] `@container` queries used for component-level responsiveness
+- [ ] Avoids viewport-only responsive design when container queries are more appropriate
+
 ---
 
 ## 5. Interactive Element Verification
@@ -143,6 +156,14 @@ This document is a comprehensive checklist of items to verify during web design 
 - [ ] Error state display
 - [ ] Required field indication
 - [ ] Dropdowns function correctly
+- [ ] `inputmode` attribute used for mobile keyboards (e.g., `inputmode="numeric"`, `inputmode="email"`)
+
+### Dialogs & Popovers
+
+- [ ] Native `<dialog>` element used for modal dialogs (avoids z-index issues)
+- [ ] Popover API (`popover` attribute) used for non-modal overlays
+- [ ] Light-dismiss behavior works correctly for popovers
+- [ ] Focus management correct when opening/closing dialogs
 
 ---
 
@@ -184,7 +205,9 @@ This document is a comprehensive checklist of items to verify during web design 
 ### Motion
 
 - [ ] Animations are not excessive
-- [ ] prefers-reduced-motion is supported (if possible)
+- [ ] `prefers-reduced-motion` is supported
+- [ ] `prefers-reduced-transparency` is respected where applicable
+- [ ] View Transitions API used for page/route transitions where supported
 
 ---
 
@@ -234,3 +257,32 @@ This document is a comprehensive checklist of items to verify during web design 
 
 - Playwright (screenshot comparison)
 - Percy / Chromatic (Visual Regression Testing)
+
+---
+
+## 9. Modern Baseline (2025/2026)
+
+### CSS Features
+
+- [ ] Container queries used for component-level responsiveness
+- [ ] CSS layers (`@layer`) used for specificity management
+- [ ] oklch / oklch() used for perceptually uniform colors
+- [ ] Native `<dialog>` element replaces custom modal implementations
+- [ ] Popover API replaces custom tooltip/dropdown overlay logic
+- [ ] `color-scheme` property set for automatic dark mode primitives
+- [ ] `@scope` used where beneficial for style encapsulation
+- [ ] Anchor positioning considered for tooltips/popovers (progressive enhancement)
+- [ ] View Transitions API used for route transitions (progressive enhancement)
+
+### HTML Features
+
+- [ ] `inputmode` attribute on form inputs for mobile keyboard optimization
+- [ ] `<search>` element used for search landmarks
+- [ ] `loading="lazy"` on off-screen images and iframes
+- [ ] `fetchpriority="high"` on LCP images
+
+### Performance
+
+- [ ] No layout shift from dynamic content (CLS target < 0.1)
+- [ ] Fonts use `font-display: swap` or `optional`
+- [ ] Critical CSS inlined or loaded early
