@@ -56,7 +56,7 @@ type SearchFormModel = NgxDeepPartial<{
   template: `
     <form
       ngxVestForm
-      [validationSuite]="validationSuite"
+      [suite]="validationSuite"
       (formValueChange)="formValue.set($event)"
     >
       <input
@@ -106,7 +106,7 @@ You can override debounce at the field level using `validationOptions`:
 <input
   name="email"
   [ngModel]="formValue().email"
-  [validationOptions]="{ debounce: 500 }"
+  [validationOptions]="{ debounceTime: 500 }"
 />
 ```
 
@@ -125,12 +125,19 @@ Controls how validation errors are displayed in the `ngx-control-wrapper` compon
 #### Error Display Modes
 
 ```typescript
-type ScErrorDisplayMode = 'on-blur' | 'on-submit' | 'on-blur-or-submit';
+type ScErrorDisplayMode =
+  | 'on-blur'
+  | 'on-submit'
+  | 'on-blur-or-submit'
+  | 'on-dirty'
+  | 'always';
 ```
 
 - **`on-blur-or-submit`** (default): Show errors after field loses focus OR after form submission
 - **`on-blur`**: Show errors only after the field loses focus
 - **`on-submit`**: Show errors only after form submission attempt
+- **`on-dirty`**: Show errors as soon as value changes (or after blur/submit)
+- **`always`**: Show errors immediately, including pristine fields
 
 #### Usage
 
@@ -167,7 +174,7 @@ type LoginFormModel = NgxDeepPartial<{
   template: `
     <form
       ngxVestForm
-      [validationSuite]="validationSuite"
+      [suite]="validationSuite"
       (formValueChange)="formValue.set($event)"
     >
       <ngx-control-wrapper>
@@ -226,6 +233,16 @@ export class LoginFormComponent {
 - You want minimal UI disruption during data entry
 - Errors are only relevant when user attempts to submit
 
+**Use `on-dirty` when:**
+
+- You want immediate feedback while users type
+- You are validating short/simple fields where fast iteration helps
+
+**Use `always` when:**
+
+- You need persistent visibility (e.g. demos, audits, guided flows)
+- You intentionally want validation state visible before interaction
+
 #### Accessibility Note
 
 All error display modes maintain WCAG 2.2 Level AA compliance. The `ngx-control-wrapper` component uses `role="status"` with `aria-live="polite"` to announce errors to screen readers regardless of the display mode.
@@ -243,11 +260,17 @@ Controls how non-blocking warnings are displayed in the `ngx-control-wrapper` co
 #### Warning Display Modes
 
 ```typescript
-type NgxWarningDisplayMode = 'on-touch' | 'on-validated-or-touch';
+type NgxWarningDisplayMode =
+  | 'on-touch'
+  | 'on-validated-or-touch'
+  | 'on-dirty'
+  | 'always';
 ```
 
 - **`on-validated-or-touch`** (default): Show warnings after validation has run or after touch
 - **`on-touch`**: Show warnings only after the field loses focus (touched)
+- **`on-dirty`**: Show warnings as soon as value changes (or after blur/submit)
+- **`always`**: Show warnings immediately, including pristine fields
 
 #### Usage
 
@@ -315,6 +338,16 @@ export class SignupFormComponent {
 
 - You want warnings only after explicit user interaction
 - You want to reduce non-blocking feedback before users focus a field
+
+**Use `on-dirty` when:**
+
+- Warnings should appear during active editing
+- You want non-blocking guidance quickly without waiting for blur
+
+**Use `always` when:**
+
+- You want persistent advisory guidance visible at all times
+- You are running a guided/demo flow where warnings should be explicit
 
 ### Legacy Token: `SC_ERROR_DISPLAY_MODE_TOKEN`
 
