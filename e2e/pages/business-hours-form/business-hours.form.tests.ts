@@ -252,6 +252,40 @@ test.describe('Business Hours Form', () => {
       });
     });
 
+    test('should require the missing pair field when only one addValue time is provided', async ({
+      page,
+    }) => {
+      await test.step('Fill only from time and verify to time becomes required', async () => {
+        const fromTime = getAddFromTime(page);
+        const toTime = getAddToTime(page);
+
+        await fillAndBlur(fromTime, '0900');
+        await toTime.focus();
+        await toTime.blur();
+
+        await expectFieldHasError(toTime, /required/i);
+      });
+
+      await test.step('Fill only to time and verify from time becomes required', async () => {
+        const fromTime = getAddFromTime(page);
+        const toTime = getAddToTime(page);
+        const addButton = getAddButton(page);
+
+        await fillAndBlur(fromTime, '');
+        await fillAndBlur(toTime, '1700');
+        await fromTime.focus();
+        await fromTime.blur();
+
+        await expect(addButton).toBeDisabled();
+        await expect
+          .poll(async () => {
+            const errors = await readSidebarErrors(page);
+            return findSidebarError(errors, /required/i);
+          })
+          .toMatch(/required/i);
+      });
+    });
+
     test('should clear error when "to" time is corrected to be after "from" time', async ({
       page,
     }) => {

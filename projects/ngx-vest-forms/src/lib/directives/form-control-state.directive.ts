@@ -235,13 +235,25 @@ export class FormControlStateDirective {
             const shouldMarkValidated =
               newTouched && !currentInteraction.isTouched;
 
+            // Reset hasBeenValidated when a control transitions back to pristine interaction state
+            // (e.g., after form.resetForm()).
+            //
+            // This prevents stale warning display on untouched fields after reset while preserving
+            // validationConfig-triggered behavior during normal interaction.
+            const wasResetToPristineInteraction =
+              !newTouched &&
+              !newDirty &&
+              (currentInteraction.isTouched || currentInteraction.isDirty);
+
             this.#interactionState.update((state) => ({
               ...state,
               isTouched: newTouched,
               isDirty: newDirty,
-              hasBeenValidated: shouldMarkValidated
-                ? true
-                : state.hasBeenValidated,
+              hasBeenValidated: wasResetToPristineInteraction
+                ? false
+                : shouldMarkValidated
+                  ? true
+                  : state.hasBeenValidated,
             }));
           }
 
