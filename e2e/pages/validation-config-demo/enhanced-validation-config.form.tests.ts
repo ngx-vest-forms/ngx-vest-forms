@@ -7,7 +7,7 @@ import {
   fillAndBlur,
   navigateToValidationConfigDemo,
   waitForValidationToSettle,
-} from './helpers/form-helpers';
+} from '../../helpers/form-helpers';
 
 /**
  * Enhanced ValidationConfig Tests

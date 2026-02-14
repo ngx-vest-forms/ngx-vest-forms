@@ -5,7 +5,7 @@ import {
   navigateToPurchaseForm,
   waitForValidationToComplete,
   waitForValidationToSettle,
-} from './helpers/form-helpers';
+} from '../../helpers/form-helpers';
 
 /**
  * getAllFormErrors() Integration Tests
@@ -24,7 +24,7 @@ test.describe('getAllFormErrors() Field-Level Errors', () => {
     await navigateToPurchaseForm(page);
   });
 
-  test('should properly collect nested field errors', async ({ page }) => {
+  test('should properly collect nested field errors', async () => {
     await test.step('Verify nested address field errors are collected', async () => {
       /**
        * Purchase form has nested fields like:

@@ -13,7 +13,7 @@ import {
   waitForFormProcessing,
   waitForValidationToComplete,
   waitForValidationToSettle,
-} from './helpers/form-helpers';
+} from '../../helpers/form-helpers';
 
 test.describe('Purchase Form', () => {
   test.beforeEach(async ({ page }) => {

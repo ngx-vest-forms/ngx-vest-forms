@@ -5,7 +5,7 @@ import {
   fillAndBlur,
   navigateToBusinessHoursForm,
   typeAndBlur,
-} from './helpers/form-helpers';
+} from '../../helpers/form-helpers';
 
 function digitsToMaskedTime(value: string): string {
   // Expect 4 digits: HHMM -> HH:MM
@@ -82,7 +82,7 @@ async function readJsonPanel(page: Page) {
     .locator('..')
     .locator('pre');
   const text = await pre.innerText();
-  return JSON.parse(text) as Record<string, any>;
+  return JSON.parse(text) as Record<string, unknown>;
 }
 
 /**
@@ -110,9 +110,12 @@ function normalizeTime(value: unknown): string | null {
 }
 
 function readBusinessHoursValues(
-  formValue: Record<string, any>
+  formValue: Record<string, unknown>
 ): Array<Record<string, unknown>> | [] {
-  const values = formValue['businessHours']?.['values'];
+  const businessHours = formValue['businessHours'];
+  if (!businessHours || typeof businessHours !== 'object') return [];
+
+  const values = (businessHours as Record<string, unknown>)['values'];
   if (!values) return [];
   if (Array.isArray(values)) return values;
   if (typeof values === 'object') return Object.values(values);
@@ -504,9 +507,22 @@ test.describe('Business Hours Form', () => {
         await expect
           .poll(async () => {
             const formValue = await readJsonPanel(page);
-            return normalizeTime(
-              formValue['businessHours']?.['values']?.['0']?.['from']
-            );
+            const businessHours = formValue['businessHours'];
+            if (!businessHours || typeof businessHours !== 'object') {
+              return null;
+            }
+
+            const values = (businessHours as Record<string, unknown>)['values'];
+            if (!values || typeof values !== 'object') {
+              return null;
+            }
+
+            const first = (values as Record<string, unknown>)['0'];
+            if (!first || typeof first !== 'object') {
+              return null;
+            }
+
+            return normalizeTime((first as Record<string, unknown>)['from']);
           })
           .toBe('1300');
       });

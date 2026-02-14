@@ -3,7 +3,7 @@ import {
   fillAndBlur,
   getWarningElementFor,
   waitForValidationToSettle,
-} from './helpers/form-helpers';
+} from '../../helpers/form-helpers';
 
 /**
  * E2E Tests for Vest warn() functionality and warningMessages() signal

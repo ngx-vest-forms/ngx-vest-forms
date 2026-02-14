@@ -11,7 +11,7 @@ import {
   setDateLikeValueAndBlur,
   typeAndBlur,
   waitForValidationToSettle,
-} from './helpers/form-helpers';
+} from '../../helpers/form-helpers';
 
 test.describe('ValidationConfig Demo', () => {
   test.beforeEach(async ({ page }) => {
@@ -727,7 +727,7 @@ test.describe('ValidationConfig Demo', () => {
       });
     });
 
-    test('should display real-time validation summary', async ({ page }) => {
+    test('should display real-time validation summary', async () => {
       // Note: Validation summary step removed as the UI doesn't have a specific
       // "Form Status" or "Form Valid" heading/text to verify
     });

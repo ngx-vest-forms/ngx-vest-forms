@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import {
   fillAndBlur,
   navigateToValidationConfigDemo,
-} from './helpers/form-helpers';
+} from '../../helpers/form-helpers';
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

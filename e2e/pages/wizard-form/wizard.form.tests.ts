@@ -5,7 +5,7 @@ import {
   expectFieldValid,
   expectUnchecked,
   fillAndBlur,
-} from './helpers/form-helpers';
+} from '../../helpers/form-helpers';
 
 /**
  * Helper: Navigate to wizard form

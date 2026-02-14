@@ -3,7 +3,7 @@ import {
   navigateToPurchaseForm,
   waitForConsoleCheck,
   waitForFormProcessing,
-} from './helpers/form-helpers';
+} from '../../helpers/form-helpers';
 
 test.describe('Date Field Shape Validation', () => {
   test.beforeEach(async ({ page }) => {

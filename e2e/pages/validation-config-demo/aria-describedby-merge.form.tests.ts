@@ -4,7 +4,7 @@ import {
   expectFieldValid,
   fillAndBlur,
   navigateToValidationConfigDemo,
-} from './helpers/form-helpers';
+} from '../../helpers/form-helpers';
 
 test.describe('Accessibility - aria-describedby merge', () => {
   test.beforeEach(async ({ page }) => {
