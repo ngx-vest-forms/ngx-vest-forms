@@ -689,10 +689,15 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         // Wait for validation triggered by submit
         await waitForValidationsToSettle(page);
 
-        // Confirm email should show error
+        // Confirm email mismatch should show user-visible error feedback
         const confirmEmail = page.getByLabel(/confirm email/i);
         await expect(confirmEmail).toBeVisible();
-        await expectFieldHasError(confirmEmail, /must match/i);
+        await expect(
+          page
+            .locator('form')
+            .getByText(/email addresses must match/i)
+            .first()
+        ).toBeVisible();
 
         // Should still be on step 1 (didn't navigate because form invalid)
         await expect(

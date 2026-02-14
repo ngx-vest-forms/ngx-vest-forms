@@ -124,6 +124,10 @@ function areBusinessHoursValid(
     const currentHour = businessHours[i];
     const nextHour = businessHours[i + 1];
 
+    if (!currentHour || !nextHour) {
+      return false;
+    }
+
     if (
       !isValidTime(currentHour.from) ||
       !isValidTime(currentHour.to) ||
@@ -143,6 +147,10 @@ function areBusinessHoursValid(
   }
 
   const lastHour = businessHours[businessHours.length - 1];
+  if (!lastHour) {
+    return false;
+  }
+
   return (
     isValidTime(lastHour.from) &&
     isValidTime(lastHour.to) &&
