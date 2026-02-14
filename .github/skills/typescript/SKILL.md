@@ -1,7 +1,6 @@
 ---
 name: typescript
-description: >-
-  TypeScript and JavaScript language expert for type-level programming,
+description: TypeScript and JavaScript language expert for type-level programming,
   advanced patterns, performance optimization, error handling, and modern
   TS 5.x best practices. Use proactively for any TypeScript/JavaScript work
   including: complex type design, generics, discriminated unions, branded types,
