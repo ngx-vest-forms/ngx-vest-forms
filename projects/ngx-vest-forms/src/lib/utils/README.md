@@ -5,11 +5,11 @@ This directory contains all utility types and functions provided by ngx-vest-for
 ## Table of Contents
 
 - [Type Utilities](#type-utilities)
-  - [NgxDeepPartial<T>](#ngxdeeppartialt)
-  - [NgxDeepRequired<T>](#ngxdeeprequiredt)
-  - [NgxFormCompatibleDeepRequired<T>](#ngxformcompatibledeeprequiredt)
-  - [NgxVestSuite<T>](#ngxvestsuitet)
-  - [NgxFieldKey<T>](#ngxfieldkeyt)
+  - [NgxDeepPartial\<T\>](#ngxdeeppartialt)
+  - [NgxDeepRequired\<T\>](#ngxdeeprequiredt)
+  - [NgxFormCompatibleDeepRequired\<T\>](#ngxformcompatibledeeprequiredt)
+  - [NgxVestSuite\<T\>](#ngxvestsuitet-and-ngxtypedvestsuitet)
+  - [NgxFieldKey\<T\>](#ngxfieldkeyt)
 - [Form Utilities](#form-utilities)
   - [setValueAtPath()](#setvalueatpath)
   - [createDebouncedPendingState()](#createdebouncedpendingstate)
@@ -40,7 +40,7 @@ This directory contains all utility types and functions provided by ngx-vest-for
 
 ## Type Utilities
 
-### NgxDeepPartial<T>
+### NgxDeepPartial\<T\>
 
 **Recommended** - Makes every property and child property partial recursively.
 
@@ -81,7 +81,7 @@ const formValue = signal<NgxDeepPartial<UserModel>>({});
 
 ---
 
-### NgxDeepRequired<T>
+### NgxDeepRequired\<T\>
 
 Makes every property required recursively (opposite of `NgxDeepPartial`).
 
@@ -112,7 +112,7 @@ const formShape: NgxDeepRequired<FormModel> = {
 
 ---
 
-### NgxFormCompatibleDeepRequired<T>
+### NgxFormCompatibleDeepRequired\<T\>
 
 **Recommended for Date fields** - Makes properties required while converting `Date` to `Date | string`.
 
@@ -164,11 +164,11 @@ const formData: FormUser = {
 
 ---
 
-### NgxVestSuite<T> and NgxTypedVestSuite<T>
+### NgxVestSuite\<T\> and NgxTypedVestSuite\<T\>
 
 Type-safe wrappers for Vest.js StaticSuite with cleaner API and optional autocomplete.
 
-#### NgxVestSuite<T> - Flexible, Component-Friendly
+#### NgxVestSuite\<T\> - Flexible, Component-Friendly
 
 **Use for**: Component properties, function parameters, public APIs that need flexibility.
 
@@ -191,7 +191,7 @@ class MyFormComponent {
 }
 ```
 
-#### NgxTypedVestSuite<T> - Type-Safe with Autocomplete
+#### NgxTypedVestSuite\<T\> - Type-Safe with Autocomplete
 
 **Use for**: Validation suite definitions where you want IDE autocomplete for field names.
 
@@ -255,7 +255,7 @@ class MyFormComponent {
 
 ---
 
-### NgxFieldKey<T>
+### NgxFieldKey\<T\>
 
 Type-safe field parameter for validation suites (provides autocomplete).
 
@@ -938,8 +938,8 @@ Both versions work identically; the `Ngx`-prefixed versions are recommended for 
 
 - **Main README**: [/README.md](../../../../../README.md)
 - **Instructions**: [/.github/instructions/ngx-vest-forms.instructions.md](../../../../../.github/instructions/ngx-vest-forms.instructions.md)
-- **Vest.js Documentation**: https://vestjs.dev/
-- **Angular Forms Guide**: https://angular.dev/guide/forms/template-driven-forms
+- **Vest.js Documentation**: <https://vestjs.dev/>
+- **Angular Forms Guide**: <https://angular.dev/guide/forms/template-driven-forms>
 
 ---
 

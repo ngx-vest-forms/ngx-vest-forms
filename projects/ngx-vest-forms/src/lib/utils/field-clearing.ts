@@ -39,7 +39,7 @@
  * Uses `Object.entries()` for efficient field clearing without mutation.
  * Only processes fields that need to be cleared, preserving other field values.
  *
- * @template T - The form model type, must extend Record<string, any>
+ * @template T - The form model type, must extend Record<string, unknown>
  * @param currentState - The current form state object
  * @param conditions - Object mapping field names to boolean conditions (true = clear field)
  * @returns New state object with specified fields cleared (set to undefined)
@@ -94,15 +94,15 @@ export function clearFieldsWhen<T extends Record<string, unknown>>(
   currentState: T,
   conditions: Partial<Record<keyof T, boolean>>
 ): T {
-  const result = { ...currentState };
+  const result: Record<string, unknown> = { ...currentState };
 
-  Object.entries(conditions).forEach(([fieldName, shouldClear]) => {
+  for (const [fieldName, shouldClear] of Object.entries(conditions)) {
     if (shouldClear) {
-      (result as Record<string, unknown>)[fieldName] = undefined;
+      result[fieldName] = undefined;
     }
-  });
+  }
 
-  return result;
+  return result as T;
 }
 
 /**
@@ -117,7 +117,7 @@ export function clearFieldsWhen<T extends Record<string, unknown>>(
  * **Note:** Unlike `clearFieldsWhen`, this function always clears the specified fields
  * regardless of conditions. Use this when you want unconditional field removal.
  *
- * @template T - The form model type, must extend Record<string, any>
+ * @template T - The form model type, must extend Record<string, unknown>
  * @param currentState - The current form state object
  * @param fieldsToClear - Array of field names to clear (set to undefined)
  * @returns New state object with specified fields cleared
@@ -143,15 +143,15 @@ export function clearFieldsWhen<T extends Record<string, unknown>>(
  */
 export function clearFields<T extends Record<string, unknown>>(
   currentState: T,
-  fieldsToClear: Array<keyof T>
+  fieldsToClear: ReadonlyArray<keyof T>
 ): T {
-  const result = { ...currentState };
+  const result: Record<string, unknown> = { ...currentState };
 
-  fieldsToClear.forEach((fieldName) => {
-    (result as Record<string, unknown>)[fieldName as string] = undefined;
-  });
+  for (const fieldName of fieldsToClear) {
+    result[fieldName as string] = undefined;
+  }
 
-  return result;
+  return result as T;
 }
 
 /**
@@ -168,7 +168,7 @@ export function clearFields<T extends Record<string, unknown>>(
  *
  * **Returns:** `Partial<T>` because the result may not contain all original fields.
  *
- * @template T - The form model type, must extend Record<string, any>
+ * @template T - The form model type, must extend Record<string, unknown>
  * @param currentState - The current form state object
  * @param conditions - Object mapping field names to boolean conditions (true = keep field)
  * @returns New state object containing only fields where condition is true
@@ -207,12 +207,13 @@ export function keepFieldsWhen<T extends Record<string, unknown>>(
   currentState: T,
   conditions: Partial<Record<keyof T, boolean>>
 ): Partial<T> {
-  const result: Partial<T> = {};
-  Object.entries(conditions).forEach(([fieldName, shouldKeep]) => {
+  const result: Record<string, unknown> = {};
+
+  for (const [fieldName, shouldKeep] of Object.entries(conditions)) {
     if (shouldKeep && fieldName in currentState) {
-      (result as Record<string, unknown>)[fieldName] =
-        currentState[fieldName as keyof T];
+      result[fieldName] = currentState[fieldName];
     }
-  });
-  return result;
+  }
+
+  return result as Partial<T>;
 }

@@ -1,4 +1,5 @@
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormArray, FormControl, FormGroup } from '@angular/forms';
+import { describe, expect, it } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import {
   cloneDeep,
@@ -9,6 +10,8 @@ import {
   set,
   setValueAtPath,
 } from './form-utils';
+
+type ErrorListWithWarnings = string[] & { warnings?: string[] };
 
 describe('getFormControlField function', () => {
   it('should return correct field name for FormControl in root FormGroup', () => {
@@ -33,6 +36,34 @@ describe('getFormControlField function', () => {
         expect(getFormControlField(form, nameControl)).toBe('personal.name');
       }
     }
+  });
+
+  it('should return correct field path for controls nested inside FormArray', () => {
+    const form = new FormGroup({
+      users: new FormArray([
+        new FormGroup({
+          name: new FormControl('John'),
+        }),
+      ]),
+    });
+
+    const nameControl = form.get('users.0.name');
+    expect(nameControl).not.toBeNull();
+    if (nameControl) {
+      expect(getFormControlField(form, nameControl)).toBe('users.0.name');
+    }
+  });
+
+  it('should fallback to control.name for detached controls', () => {
+    const form = new FormGroup({
+      name: new FormControl('John'),
+    });
+
+    const detachedControl = new FormControl('detached');
+    (detachedControl as FormControl & { name?: string }).name =
+      'custom.detached';
+
+    expect(getFormControlField(form, detachedControl)).toBe('custom.detached');
   });
 });
 
@@ -452,6 +483,22 @@ describe('setValueAtPath function', () => {
       },
     });
   });
+
+  it('should replace non-object intermediate values when creating nested path', () => {
+    const object: Record<string, unknown> = {
+      user: 'John Doe',
+    };
+
+    setValueAtPath(object, 'user.profile.age', 30);
+
+    expect(object).toEqual({
+      user: {
+        profile: {
+          age: 30,
+        },
+      },
+    });
+  });
 });
 
 describe('set function (deprecated)', () => {
@@ -545,7 +592,7 @@ describe('getAllFormErrors', () => {
         }),
       }),
     });
-    form.updateValueAndValidity();
+    form.get('user.name')?.updateValueAndValidity();
     const errors = getAllFormErrors(form);
     expect(errors['user.name']).toEqual(['Name error']);
   });
@@ -572,8 +619,10 @@ describe('getAllFormErrors', () => {
     control.updateValueAndValidity();
     const errors = getAllFormErrors(form);
     expect(errors['field']).toEqual(['Error']);
-    expect((errors['field'] as any).warnings).toEqual(['Warning']);
-    expect(Object.keys(errors['field'])).not.toContain('warnings');
+    expect((errors['field'] as ErrorListWithWarnings).warnings).toEqual([
+      'Warning',
+    ]);
+    expect(Object.keys(errors['field'] ?? {})).not.toContain('warnings');
   });
 
   it('should handle controls with only warnings', () => {
@@ -584,7 +633,9 @@ describe('getAllFormErrors', () => {
     control.updateValueAndValidity();
     const errors = getAllFormErrors(form);
     expect(errors['field']).toEqual([]);
-    expect((errors['field'] as any).warnings).toEqual(['Warning']);
+    expect((errors['field'] as ErrorListWithWarnings).warnings).toEqual([
+      'Warning',
+    ]);
   });
 
   it('should collect errors from deeply nested structures', () => {
@@ -601,5 +652,40 @@ describe('getAllFormErrors', () => {
     deepControl.updateValueAndValidity();
     const errors = getAllFormErrors(form);
     expect(errors['level1.level2.level3']).toEqual(['Deep error']);
+  });
+
+  it('should collect errors from controls inside FormArray using numeric path segments', () => {
+    const form = new FormGroup({
+      users: new FormArray([
+        new FormGroup({
+          name: new FormControl('', {
+            validators: () => ({ errors: ['Name error'] }),
+          }),
+        }),
+      ]),
+    });
+
+    form.updateValueAndValidity();
+    const errors = getAllFormErrors(form);
+
+    expect(errors['users[0].name']).toEqual(['Name error']);
+  });
+
+  it('should keep only string values from errors and warnings arrays', () => {
+    const control = new FormControl('', {
+      validators: () => ({
+        errors: ['Valid error', 123, true],
+        warnings: ['Valid warning', { invalid: true }],
+      }),
+    });
+    const form = new FormGroup({ field: control });
+
+    control.updateValueAndValidity();
+    const errors = getAllFormErrors(form);
+
+    expect(errors['field']).toEqual(['Valid error']);
+    expect((errors['field'] as ErrorListWithWarnings).warnings).toEqual([
+      'Valid warning',
+    ]);
   });
 });
