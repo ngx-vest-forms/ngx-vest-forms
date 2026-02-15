@@ -152,6 +152,7 @@ export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
 // - The model parameter (T) remains fully typed for type safety
 // - Runtime behavior is identical (string is string, regardless of literal type)
 // - Allows NgxTypedVestSuite to be used where NgxVestSuite is expected
+/** @internal Do not use outside ngx-vest-forms. The `any` is architecturally required. */
 type NgxSuiteCallback<T> = {
   // Method syntax yields bivariant parameters under strictFunctionTypes
   // IMPORTANT: this is intentionally `any`.
@@ -207,6 +208,7 @@ export type NgxVestSuite<T = unknown> = StaticSuite<
  * @see {@link NgxVestSuite} For the base suite type (accepts any string field)
  * @see {@link FormFieldName} For the field name type with autocomplete
  */
+/** @internal Do not use outside ngx-vest-forms. */
 type NgxTypedSuiteCallback<T> = {
   bivarianceHack(model: T, field?: FormFieldName<T>): void;
 }['bivarianceHack'];

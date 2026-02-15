@@ -89,7 +89,7 @@ export class AddressFormComponent {
 import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgxVestForms, NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
 import { staticSuite, test, enforce, only } from 'vest';
-import { AddressFormComponent } from './address-form.component';
+import { AddressFormComponent } from './address-form';
 
 type OrderFormModel = NgxDeepPartial<{
   customerName: string;

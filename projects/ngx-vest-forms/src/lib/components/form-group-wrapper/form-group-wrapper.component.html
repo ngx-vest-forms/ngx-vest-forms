@@ -17,7 +17,7 @@
 </div>
 
 <div [id]="warningId" role="status" aria-live="polite" aria-atomic="true">
-  @if (errorDisplay.warnings().length > 0) {
+  @if (errorDisplay.shouldShowWarnings()) {
     <ul>
       @for (warn of errorDisplay.warnings(); track warn) {
         <li>{{ warn }}</li>

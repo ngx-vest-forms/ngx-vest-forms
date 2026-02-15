@@ -125,6 +125,39 @@ class TestHostDirectiveComponent {
   mode: 'on-submit' | 'on-blur' | 'on-blur-or-submit' = 'on-submit';
 }
 
+@Component({
+  imports: [FormsModule, FormErrorControlDirective],
+  template: `
+    <form #form="ngForm">
+      <button type="button" (click)="toggle()">Toggle</button>
+
+      @if (showWrapper) {
+        <div formErrorControl #ec="formErrorControl">
+          <label for="dynamic">Dynamic</label>
+          <input id="dynamic" name="dynamic" [(ngModel)]="model" required />
+          <div data-testid="dynamic-error-region" [id]="ec.errorId">
+            Error region
+          </div>
+          <div data-testid="dynamic-warning-region" [id]="ec.warningId">
+            Warning region
+          </div>
+          <div data-testid="dynamic-pending-region" [id]="ec.pendingId">
+            Pending region
+          </div>
+        </div>
+      }
+    </form>
+  `,
+})
+class ConditionalWrapperHostComponent {
+  model = '';
+  showWrapper = true;
+
+  toggle(): void {
+    this.showWrapper = !this.showWrapper;
+  }
+}
+
 describe('FormErrorControlDirective', () => {
   it('stamps aria-describedby and aria-invalid after blur (touched)', async () => {
     await render(TestHostComponent);
@@ -248,6 +281,55 @@ describe('FormErrorControlDirective', () => {
     await waitFor(() => {
       expect(input.getAttribute('aria-describedby')).toBe(`hint ${errorId}`);
       expect(input.getAttribute('aria-invalid')).toBe('true');
+    });
+  });
+
+  it('removes old owned IDs from DOM and uses fresh IDs when wrapper is destroyed and recreated', async () => {
+    await render(ConditionalWrapperHostComponent);
+
+    let input = screen.getByLabelText('Dynamic') as HTMLInputElement;
+
+    // Trigger an error so aria-describedby includes owned error ID
+    await userEvent.click(input);
+    await userEvent.tab();
+
+    let oldErrorId = '';
+    await waitFor(() => {
+      const describedBy = input.getAttribute('aria-describedby') ?? '';
+      const ownedErrorToken = describedBy
+        .split(/\s+/)
+        .find((token) => /^ngx-error-control-\d+-error$/.test(token));
+
+      expect(ownedErrorToken).toBeTruthy();
+      oldErrorId = ownedErrorToken!;
+      expect(document.getElementById(oldErrorId)).toBeInTheDocument();
+    });
+
+    // Destroy wrapper subtree
+    await userEvent.click(screen.getByRole('button', { name: 'Toggle' }));
+
+    await waitFor(() => {
+      expect(screen.queryByLabelText('Dynamic')).not.toBeInTheDocument();
+      expect(document.getElementById(oldErrorId)).toBeNull();
+    });
+
+    // Recreate wrapper subtree
+    await userEvent.click(screen.getByRole('button', { name: 'Toggle' }));
+    input = screen.getByLabelText('Dynamic') as HTMLInputElement;
+
+    await userEvent.click(input);
+    await userEvent.tab();
+
+    await waitFor(() => {
+      const describedBy = input.getAttribute('aria-describedby') ?? '';
+      const newErrorToken = describedBy
+        .split(/\s+/)
+        .find((token) => /^ngx-error-control-\d+-error$/.test(token));
+
+      expect(newErrorToken).toBeTruthy();
+      expect(newErrorToken).not.toBe(oldErrorId);
+      expect(document.getElementById(newErrorToken!)).toBeInTheDocument();
+      expect(document.getElementById(oldErrorId)).toBeNull();
     });
   });
 });

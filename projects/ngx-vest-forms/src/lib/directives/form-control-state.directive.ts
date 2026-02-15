@@ -141,7 +141,6 @@ export class FormControlStateDirective {
           pristine,
           errors,
           touched,
-          dirty,
         } = control;
 
         const currentStatus = status as FormControlStatus | null;
@@ -149,14 +148,16 @@ export class FormControlStateDirective {
         // Mark as validated when any of the following conditions are met:
         // 1. The control has been touched (user blurred the field).
         // 2. The control's status has actually changed (not the first status emission),
-        //    AND the new status is not 'PENDING' (validation completed),
-        //    AND the control has been interacted with (dirty).
+        //    AND the new status is not 'PENDING' (validation completed).
         //
         // This ensures hasBeenValidated is true for:
         //   - User blur events (touched becomes true)
-        //   - User-triggered validations (dirty)
-        //   - ValidationConfig-triggered validations that result in the control becoming touched
-        // But NOT for initial page load validations.
+        //   - Any validation that changes status (e.g., typing then validation completes)
+        //   - ValidationConfig-triggered validations (status changed without touch/dirty)
+        // But NOT for initial page load validations (previousStatus === null).
+        //
+        // Note: The dirty check was removed to support validationConfig-triggered validations.
+        // This allows warnings to show even when the field hasn't been touched/dirtied by the user.
         //
         // Accessibility: The logic is structured for clarity and maintainability.
         // IMPORTANT: Read touched/dirty directly from control, not from signal,
@@ -166,8 +167,7 @@ export class FormControlStateDirective {
           (this.#previousStatus !== null && // Not the first status emission
             this.#previousStatus !== currentStatus && // Status actually changed
             currentStatus !== null &&
-            currentStatus !== 'PENDING' &&
-            dirty) // Or control value changed (typed)
+            currentStatus !== 'PENDING') // Validation completed (not pending)
         ) {
           this.#interactionState.update((state) => ({
             ...state,
@@ -235,13 +235,25 @@ export class FormControlStateDirective {
             const shouldMarkValidated =
               newTouched && !currentInteraction.isTouched;
 
+            // Reset hasBeenValidated when a control transitions back to pristine interaction state
+            // (e.g., after form.resetForm()).
+            //
+            // This prevents stale warning display on untouched fields after reset while preserving
+            // validationConfig-triggered behavior during normal interaction.
+            const wasResetToPristineInteraction =
+              !newTouched &&
+              !newDirty &&
+              (currentInteraction.isTouched || currentInteraction.isDirty);
+
             this.#interactionState.update((state) => ({
               ...state,
               isTouched: newTouched,
               isDirty: newDirty,
-              hasBeenValidated: shouldMarkValidated
-                ? true
-                : state.hasBeenValidated,
+              hasBeenValidated: wasResetToPristineInteraction
+                ? false
+                : shouldMarkValidated
+                  ? true
+                  : state.hasBeenValidated,
             }));
           }
 

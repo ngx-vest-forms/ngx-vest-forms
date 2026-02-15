@@ -5,14 +5,15 @@ import {
   NG_ASYNC_VALIDATORS,
   ValidationErrors,
 } from '@angular/forms';
-import { Observable, from, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { getFormGroupField } from '../utils/form-utils';
+import { runAsyncValidationBridge } from './async-validator-bridge';
 import { FormDirective } from './form.directive';
 import { ValidationOptions } from './validation-options';
 
 /**
- * Hooks into the ngModelGroup selector and triggers an asynchronous validation for a form group
- * It will use a vest suite behind the scenes
+ * Hooks into `ngModelGroup`/`ngxModelGroup` and runs async group-level validation
+ * through the parent `FormDirective` Vest suite bridge.
  */
 @Directive({
   selector: '[ngModelGroup],[ngxModelGroup]',
@@ -25,37 +26,32 @@ import { ValidationOptions } from './validation-options';
   ],
 })
 export class FormModelGroupDirective implements AsyncValidator {
+  /**
+   * Per-group async validation options.
+   *
+   * Defaults to no debounce (`{ debounceTime: 0 }`).
+   */
   validationOptions = input<ValidationOptions>({ debounceTime: 0 });
   private readonly formDirective: FormDirective<
     Record<string, unknown>
   > | null = inject(FormDirective, { optional: true });
 
+  /**
+   * Runs async validation for the current model-group control.
+   *
+   * Returns `null` (fail-open) when used outside an `ngxVestForm` context.
+   */
   validate(control: AbstractControl): Observable<ValidationErrors | null> {
-    // Null check for control
-    if (!control) {
-      return of(null);
-    }
-    // Null check for form context
-    const context = this.formDirective;
-    if (!context) {
-      return of(null);
-    }
-    const { ngForm } = context;
-    const field = getFormGroupField(ngForm.control, control);
-    if (!field) {
-      return of(null);
-    }
-    const asyncValidator = context.createAsyncValidator(
-      field,
-      this.validationOptions()
+    return runAsyncValidationBridge(
+      control,
+      this.formDirective,
+      (currentControl) => {
+        const context = this.formDirective;
+        if (!context) return '';
+        return getFormGroupField(context.ngForm.control, currentControl);
+      },
+      this.validationOptions(),
+      'FormModelGroupDirective'
     );
-    const validationResult = asyncValidator(control);
-    if (validationResult instanceof Observable) {
-      return validationResult;
-    } else if (validationResult instanceof Promise) {
-      return from(validationResult);
-    } else {
-      return of(null);
-    }
   }
 }

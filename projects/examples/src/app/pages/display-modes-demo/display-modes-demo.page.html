@@ -1,0 +1,36 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Display Modes Demo"
+    subtitle="Compare error and warning visibility timing across supported display modes."
+  />
+
+  <ngx-form-page-layout>
+    <div layout-aside class="sidebar-card-stack">
+      <ngx-card title="What this page demonstrates">
+        <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+          <li><strong>always</strong>: feedback appears immediately.</li>
+          <li>
+            <strong>on-dirty</strong>: feedback appears after value changes.
+          </li>
+          <li><strong>on-touch</strong>: feedback appears after blur.</li>
+          <li>Same form model with per-field mode overrides.</li>
+        </ul>
+      </ngx-card>
+
+      <ngx-form-state-card
+        [formState]="formBody.formState()"
+        [warnings]="formBody.warnings()"
+      />
+    </div>
+
+    <div layout-main>
+      <ngx-display-modes-demo-form-body
+        #formBody
+        [formValue]="formValue()"
+        [suite]="suite"
+        (formValueChange)="formValue.set($event)"
+        (submitted)="save()"
+      />
+    </div>
+  </ngx-form-page-layout>
+</div>

@@ -7,11 +7,11 @@ import {
 import { provideEnvironmentNgxMask } from 'ngx-mask';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
 import { AppComponent } from './app/app.component';
-import { BusinessHoursFormComponent } from './app/components/smart/business-hours-form/business-hours-form.component';
-import { DisplayModesDemoComponent } from './app/components/smart/display-modes-demo/display-modes-demo.component';
-import { PurchaseFormComponent } from './app/components/smart/purchase-form/purchase-form.component';
-import { ValidationConfigDemoComponent } from './app/components/smart/validation-config-demo/validation-config-demo.component';
-import { WizardFormComponent } from './app/components/smart/wizard-form/wizard-form.component';
+import { BusinessHoursPageComponent } from './app/pages/business-hours-form/business-hours.page';
+import { DisplayModesDemoPageComponent } from './app/pages/display-modes-demo/display-modes-demo.page';
+import { PurchasePageComponent } from './app/pages/purchase-form/purchase.page';
+import { ValidationConfigDemoPageComponent } from './app/pages/validation-config-demo/validation-config-demo.page';
+import { WizardFormPageComponent } from './app/pages/wizard-form/wizard-form.page';
 
 const appRoutes: Routes = [
   {
@@ -21,23 +21,48 @@ const appRoutes: Routes = [
   },
   {
     path: 'purchase',
-    component: PurchaseFormComponent,
+    component: PurchasePageComponent,
+    data: {
+      title: 'Purchase Form',
+      subtitle:
+        'Complete a full checkout flow with conditional and cross-field validation.',
+    },
   },
   {
     path: 'business-hours',
-    component: BusinessHoursFormComponent,
+    component: BusinessHoursPageComponent,
+    data: {
+      title: 'Business Hours Form',
+      subtitle:
+        'Validate dynamic time ranges with cross-field and form-level rules.',
+    },
   },
   {
     path: 'validation-config-demo',
-    component: ValidationConfigDemoComponent,
+    component: ValidationConfigDemoPageComponent,
+    data: {
+      title: 'Validation Config Demo',
+      subtitle:
+        'Explore dependency-aware revalidation patterns with a configuration map.',
+    },
   },
   {
     path: 'wizard',
-    component: WizardFormComponent,
+    component: WizardFormPageComponent,
+    data: {
+      title: 'Multi-Form Wizard',
+      subtitle:
+        'Run three coordinated forms with per-step validation and one final submission flow.',
+    },
   },
   {
     path: 'display-modes-demo',
-    component: DisplayModesDemoComponent,
+    component: DisplayModesDemoPageComponent,
+    data: {
+      title: 'Display Modes Demo',
+      subtitle:
+        'Compare error and warning visibility timing across display modes.',
+    },
   },
 ];
 bootstrapApplication(AppComponent, {

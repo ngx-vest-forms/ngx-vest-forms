@@ -21,6 +21,7 @@ import {
 import {
   AbstractControl,
   AsyncValidatorFn,
+  FormArray,
   FormGroup,
   NgForm,
   PristineChangeEvent,
@@ -50,6 +51,7 @@ import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import { DeepRequired } from '../utils/deep-required';
 import { fastDeepEqual } from '../utils/equality';
 import type { ValidationConfigMap } from '../utils/field-path-types';
+import { stringifyFieldPath } from '../utils/field-path.utils';
 import { NgxFormState } from '../utils/form-state.utils';
 import {
   getAllFormErrors,
@@ -117,6 +119,9 @@ export type NgxValidationConfig<T = unknown> =
 @Directive({
   selector: 'form[scVestForm], form[ngxVestForm]',
   exportAs: 'scVestForm, ngxVestForm',
+  host: {
+    '(focusout)': 'onFormFocusOut()',
+  },
 })
 export class FormDirective<T extends Record<string, unknown>> {
   readonly ngForm = inject(NgForm, { self: true });
@@ -169,6 +174,28 @@ export class FormDirective<T extends Record<string, unknown>> {
     this.ngForm.form.statusChanges.pipe(startWith(this.ngForm.form.status)),
     { initialValue: this.ngForm.form.status }
   );
+
+  /**
+   * Reactive counter incremented on any focusout within the form.
+   * This guarantees recomputation for every blur/tab interaction,
+   * even when the form's aggregate touched flag is already true.
+   */
+  readonly #blurTick = signal(0);
+
+  /**
+   * Computed signal that returns field paths for all touched (or submitted) leaf controls.
+   * Updates reactively when controls are touched (blur) or when form status changes.
+   *
+   * This enables consumers to determine which fields the user has interacted with,
+   * useful for filtering errors/warnings to match the form's visible validation state.
+   *
+   * @publicApi
+   */
+  readonly touchedFieldPaths = computed(() => {
+    this.#blurTick();
+    this.#statusSignal();
+    return this.#collectTouchedPaths(this.ngForm.form, this.ngForm.submitted);
+  });
 
   /**
    * Computed signal for form state with validity and errors.
@@ -384,6 +411,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.ngForm.form.markAllAsTouched();
+        this.#blurTick.update((v) => v + 1);
       });
 
     /**
@@ -578,6 +606,19 @@ export class FormDirective<T extends Record<string, unknown>> {
    */
   markAllAsTouched(): void {
     this.ngForm.form.markAllAsTouched();
+    this.#blurTick.update((v) => v + 1);
+  }
+
+  /**
+   * Host handler: called whenever any descendant field loses focus.
+   * Used to make touched-path tracking react immediately on blur/tab.
+   */
+  onFormFocusOut(): void {
+    // Run on the next microtask to ensure Angular has already applied
+    // control.touched changes for the field that just blurred.
+    queueMicrotask(() => {
+      this.#blurTick.update((v) => v + 1);
+    });
   }
 
   /**
@@ -654,18 +695,19 @@ export class FormDirective<T extends Record<string, unknown>> {
     // Trigger validation update to clear any stale errors
     // Now synchronous since detectChanges() has flushed DOM updates
     this.ngForm.form.updateValueAndValidity({ emitEvent: true });
+    this.#blurTick.update((v) => v + 1);
   }
 
   /**
-   * This will feed the formValueCache, debounce it till the next tick
-   * and create an asynchronous validator that runs a vest suite
-   * @param field
-   * @param validationOptions
-   * @returns an asynchronous validator function
-   */
-  /**
-   * V2 async validator pattern: uses timer() + switchMap for proper re-validation.
-   * Each invocation builds a fresh one-shot observable, ensuring progressive validation.
+   * Creates a one-shot async validator function for a specific field path.
+   *
+   * The returned validator:
+   * - snapshots the current form model,
+   * - injects the candidate control value at `field`,
+   * - runs the Vest suite with debouncing,
+   * - maps Vest errors/warnings into Angular `ValidationErrors | null`.
+   *
+   * Warnings are stored in `fieldWarnings` to keep warnings non-blocking when no errors exist.
    */
   createAsyncValidator(
     field: string,
@@ -815,7 +857,6 @@ export class FormDirective<T extends Record<string, unknown>> {
    * 3. Waiting for form to be idle before triggering dependents
    * 4. Waiting for all dependent controls to exist
    * 5. Updating dependent field validity with loop prevention
-   * 6. Touch state propagation from trigger to dependents
    *
    * @param form - The NgForm instance
    * @param triggerField - Field path that triggers validation (e.g., 'password')
@@ -887,7 +928,15 @@ export class FormDirective<T extends Record<string, unknown>> {
       take(1)
     );
 
-    const timeout$ = timer(2000);
+    const timeout$ = timer(2000).pipe(
+      tap(() => {
+        if (isDevMode()) {
+          console.warn(
+            '[ngx-vest-forms] validationConfig: timed out waiting for form to leave PENDING state (2s). Continuing dependent validation to avoid stalling.'
+          );
+        }
+      })
+    );
 
     return race(idle$, timeout$).pipe(map(() => control));
   }
@@ -914,22 +963,43 @@ export class FormDirective<T extends Record<string, unknown>> {
       return of(control);
     }
 
-    // Wait for dependent controls to be added to the form
-    return form.statusChanges.pipe(
+    // Wait for dependent controls to be added to the form, but bound the wait to avoid silent stalls.
+    const dependentControlsReady$ = form.statusChanges.pipe(
       startWith(form.status),
       filter(() => dependents.every((depField) => !!form.get(depField))),
       take(1),
       map(() => control)
     );
+
+    const timeout$ = timer(2000).pipe(
+      tap(() => {
+        if (isDevMode()) {
+          const unresolved = dependents.filter(
+            (depField) => !form.get(depField)
+          );
+          console.warn(
+            `[ngx-vest-forms] validationConfig: timed out waiting for dependent controls (2s): ${unresolved.join(', ')}. Continuing without waiting further.`
+          );
+        }
+      }),
+      map(() => control)
+    );
+
+    return race(dependentControlsReady$, timeout$).pipe(take(1));
   }
 
   /**
    * Updates validation for all dependent fields.
    *
    * Handles:
-   * - Touch state propagation (mark dependents touched when trigger is touched)
    * - Loop prevention via validationInProgress set
-   * - Silent validation (emitEvent: false) to prevent feedback loops
+   * - Silent validation updates that avoid feedback loops
+   *
+   * Note: Touch state is NOT propagated to prevent premature error display
+   * on conditionally revealed fields.
+   *
+   * Note: This method does NOT propagate touch state from trigger to dependent fields.
+   * Dependent fields only show errors after the user directly interacts with them.
    *
    * @param form - The NgForm instance
    * @param control - The trigger control
@@ -957,11 +1027,20 @@ export class FormDirective<T extends Record<string, unknown>> {
         // This prevents the dependent field's valueChanges from triggering its own validationConfig
         this.validationInProgress.add(depField);
 
-        // Propagate touch state BEFORE validation to avoid duplicate class updates
-        // markAsTouched() triggers change detection, so we do it once before updateValueAndValidity
-        if (control.touched && !dependentControl.touched) {
-          dependentControl.markAsTouched({ onlySelf: true });
-        }
+        // NOTE: Touch propagation removed (PR #78)
+        // Previously, we propagated touch state from trigger to dependent fields.
+        // This caused UX issues where dependent fields showed errors immediately
+        // after being revealed by a toggle, even though the user never interacted with them.
+        //
+        // With this change:
+        // - Errors on dependent fields only show after the user directly touches/blurs them
+        // - ARIA attributes (aria-invalid) still work correctly via isInvalid check
+        // - Warnings still show after validation via hasBeenValidated check
+        //
+        // The removed code was:
+        // if (control.touched && !dependentControl.touched) {
+        //   dependentControl.markAsTouched({ onlySelf: true });
+        // }
 
         // emitEvent: true is REQUIRED for async validators to actually run
         // The validationInProgress Set prevents infinite loops:
@@ -995,5 +1074,39 @@ export class FormDirective<T extends Record<string, unknown>> {
         this.validationInProgress.delete(depField);
       }
     }, VALIDATION_IN_PROGRESS_TIMEOUT_MS);
+  }
+
+  /**
+   * Collects field paths of all touched (or submitted) leaf controls
+   * by walking the form control tree.
+   */
+  #collectTouchedPaths(control: AbstractControl, submitted: boolean): string[] {
+    const fields: string[] = [];
+
+    const collect = (
+      current: AbstractControl,
+      path: Array<string | number>
+    ): void => {
+      if (current instanceof FormGroup) {
+        for (const [name, child] of Object.entries(current.controls)) {
+          collect(child, [...path, name]);
+        }
+        return;
+      }
+
+      if (current instanceof FormArray) {
+        current.controls.forEach((child, index) => {
+          collect(child, [...path, index]);
+        });
+        return;
+      }
+
+      if ((submitted || current.touched) && path.length > 0) {
+        fields.push(stringifyFieldPath(path));
+      }
+    };
+
+    collect(control, []);
+    return fields;
   }
 }

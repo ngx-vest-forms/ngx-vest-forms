@@ -1,0 +1,31 @@
+<ngx-card
+  title="Business Hours"
+  subtitle="Configure your opening hours for the week."
+>
+  <form
+    ngxVestForm
+    #vestForm="ngxVestForm"
+    ngxValidateRootForm
+    [ngxValidateRootFormMode]="'live'"
+    [formValue]="formValue()"
+    [formShape]="shape()"
+    [suite]="suite()"
+    [validationConfig]="validationConfig()"
+    (formValueChange)="formValueChange.emit($event)"
+    (errorsChange)="currentErrors.set($event)"
+  >
+    @if (rootFormError()) {
+    <ngx-alert-panel tone="error" title="Validation Error">
+      {{ rootFormError() }}
+    </ngx-alert-panel>
+    }
+
+    <fieldset class="space-y-6">
+      <ngx-business-hours
+        [values]="businessHoursValues()"
+        [addValue]="formValue().businessHours?.addValue"
+        (valuesChange)="onBusinessHoursChange($event)"
+      />
+    </fieldset>
+  </form>
+</ngx-card>

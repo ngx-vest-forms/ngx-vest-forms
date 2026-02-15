@@ -1,9 +1,13 @@
-import { DeepPartial, DeepRequired } from 'ngx-vest-forms';
+import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
 
-export type ValidationDemoModel = DeepPartial<{
+export type ValidationDemoModel = NgxDeepPartial<{
   // Bidirectional example
   password: string;
   confirmPassword: string;
+
+  // Cross-field requirement example
+  quantity: string;
+  quantityJustification: string;
 
   // Conditional validation example
   requiresJustification: boolean;
@@ -19,9 +23,11 @@ export type ValidationDemoModel = DeepPartial<{
   endDate: string;
 }>;
 
-export const validationDemoShape: DeepRequired<ValidationDemoModel> = {
+export const validationDemoShape: NgxDeepRequired<ValidationDemoModel> = {
   password: '',
   confirmPassword: '',
+  quantity: '',
+  quantityJustification: '',
   requiresJustification: false,
   justification: '',
   country: '',

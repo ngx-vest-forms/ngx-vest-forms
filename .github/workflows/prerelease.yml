@@ -66,6 +66,11 @@ jobs:
           ref: ${{ steps.branch.outputs.branch }}
           fetch-depth: 0  # Fetch full history for semantic-release
 
+      - name: Ensure master branch exists
+        run: |
+          # Semantic release needs the master branch to be available locally to calculate the version
+          git fetch origin master:master
+
       - name: Fetch tags for semantic-release
         run: |
           # Fetch only recent tags needed for version calculation

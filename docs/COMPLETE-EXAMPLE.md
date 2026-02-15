@@ -207,6 +207,6 @@ Now that you understand the basics, explore more advanced features:
 
 Check out these complete, real-world examples:
 
-- **[Purchase Form Demo](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/projects/examples/src/app/components/smart/purchase-form)** - Complex form with nested objects and conditional logic
-- **[Business Hours Demo](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/projects/examples/src/app/components/smart/business-hours-form)** - Dynamic form arrays with validation
+- **[Purchase Form Demo](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/projects/examples/src/app/pages/purchase-form)** - Complex form with nested objects and conditional logic
+- **[Business Hours Demo](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/projects/examples/src/app/pages/business-hours-form)** - Dynamic form arrays with validation
 - **[Interactive Stackblitz Demo](https://stackblitz.com/~/github.com/simplifiedcourses/ngx-vest-forms-stackblitz)** - Try it in your browser

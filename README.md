@@ -126,6 +126,11 @@ That's all you need. The directive automatically creates controls, wires validat
 - **Cross-field dependencies** — `validationConfig` for field-to-field triggers, `ROOT_FORM` for form-level rules
 - **Utilities** — Field paths, field clearing, validation config builder
 
+### Compatibility & Safety Notes (v2.x)
+
+- `ROOT_FORM_CONSTANT` is retained for compatibility but deprecated; prefer `ROOT_FORM`.
+- `set` / `cloneDeep` are retained for compatibility; prefer `setValueAtPath` / `structuredClone` in new code.
+
 ### Error & Warning Display Modes
 
 Control when validation errors and warnings are shown to users with multiple built-in modes:

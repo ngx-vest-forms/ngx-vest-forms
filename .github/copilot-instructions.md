@@ -224,7 +224,7 @@ When adding new features to the library:
 ### Examples & Patterns
 - `projects/examples/src/app/validations/` - Example validation suites
 - `projects/examples/src/app/models/` - Form model patterns
-- `projects/examples/src/app/components/smart/purchase-form/` - Complex form example
+- `projects/examples/src/app/pages/purchase-form/` - Complex form example
 
 ## Integration Points
 

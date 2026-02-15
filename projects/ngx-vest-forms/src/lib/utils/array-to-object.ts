@@ -3,7 +3,14 @@
  * Does not recurse into nested arrays or objects.
  * Uses reduce() for optimal single-pass conversion.
  */
-export function arrayToObject<T>(array: T[]): Record<number, T> {
+export type DeepArrayToObject<T> =
+  T extends ReadonlyArray<infer U>
+    ? Record<number, DeepArrayToObject<U>>
+    : T extends object
+      ? { [K in keyof T]: DeepArrayToObject<T[K]> }
+      : T;
+
+export function arrayToObject<T>(array: readonly T[]): Record<number, T> {
   return array.reduce(
     (acc, value, index) => {
       acc[index] = value;
@@ -17,7 +24,9 @@ export function arrayToObject<T>(array: T[]): Record<number, T> {
  * Recursively converts arrays to objects with numeric keys, including nested arrays in objects.
  * Useful for template-driven forms that require object structure for nested arrays.
  */
-export function deepArrayToObject<T>(array: T[]): Record<number, unknown> {
+export function deepArrayToObject<T>(
+  array: readonly T[]
+): Record<number, DeepArrayToObject<T>> {
   return Object.fromEntries(
     array.map((value, index) => [
       index,
@@ -27,15 +36,15 @@ export function deepArrayToObject<T>(array: T[]): Record<number, unknown> {
           ? recursivelyConvertArrays(value)
           : value,
     ])
-  );
+  ) as Record<number, DeepArrayToObject<T>>;
 }
 
 /**
  * Recursively traverses an object and converts any nested arrays to objects.
  */
-function recursivelyConvertArrays(object: unknown): unknown {
+function recursivelyConvertArrays<T>(object: T): DeepArrayToObject<T> {
   if (Array.isArray(object)) {
-    return deepArrayToObject(object as unknown[]);
+    return deepArrayToObject(object as unknown[]) as DeepArrayToObject<T>;
   }
   if (object && typeof object === 'object') {
     return Object.fromEntries(
@@ -47,9 +56,9 @@ function recursivelyConvertArrays(object: unknown): unknown {
             ? recursivelyConvertArrays(value)
             : value,
       ])
-    );
+    ) as DeepArrayToObject<T>;
   }
-  return object;
+  return object as DeepArrayToObject<T>;
 }
 
 /**
@@ -63,12 +72,21 @@ function recursivelyConvertArrays(object: unknown): unknown {
  * Note: Conversion is explicit (by key) but will cascade inside converted branches
  * so nested numeric objects representing arrays become real arrays recursively.
  */
-export function objectToArray(object: unknown, keys: string[]): unknown {
+export function objectToArray<const K extends readonly string[]>(
+  object: unknown,
+  keys: K
+): unknown {
   const processed = objectToArrayInternal(object, keys);
   if (processed && typeof processed === 'object' && !Array.isArray(processed)) {
-    const entries = Object.entries(processed as Record<string, unknown>);
+    const entries: Array<[string, unknown]> = Object.entries(
+      processed as Record<string, unknown>
+    );
     if (entries.length === 1) {
-      const [k, v] = entries[0];
+      const firstEntry = entries[0];
+      if (!firstEntry) {
+        return processed;
+      }
+      const [k, v] = firstEntry;
       if (
         keys.includes(k) &&
         Array.isArray(v) &&
@@ -88,7 +106,7 @@ export function objectToArray(object: unknown, keys: string[]): unknown {
  */
 function objectToArrayInternal(
   object: unknown,
-  keys: string[],
+  keys: readonly string[],
   currentKey?: string,
   parentCascade = false
 ): unknown {
@@ -146,7 +164,7 @@ function objectToArrayInternal(
 /**
  * Checks if a value is an object with only numeric keys (not an array).
  */
-function isNumericObject(value: unknown): value is Record<number, unknown> {
+function isNumericObject(value: unknown): value is Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   return Object.keys(value).every((k) => /^\d+$/.test(k));
 }

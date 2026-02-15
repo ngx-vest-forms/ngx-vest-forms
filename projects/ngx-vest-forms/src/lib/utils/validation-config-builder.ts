@@ -1,5 +1,10 @@
 import type { FieldPath, ValidationConfigMap } from './field-path-types';
 
+// NOTE: `typeof ngDevMode !== 'undefined' && ngDevMode` is kept inline
+// (not extracted to a helper) because Angular's build optimizer relies on
+// this exact pattern for tree-shaking dev-only code from production bundles.
+const LOG_PREFIX = '[ngx-vest-forms] ValidationConfigBuilder';
+
 /**
  * Fluent builder for creating type-safe validation configurations.
  *
@@ -83,7 +88,7 @@ export class ValidationConfigBuilder<T> {
    */
   whenChanged<K extends FieldPath<T>>(
     trigger: K,
-    revalidate: FieldPath<T> | Array<FieldPath<T>>
+    revalidate: FieldPath<T> | ReadonlyArray<FieldPath<T>>
   ): this {
     const deps = Array.isArray(revalidate) ? revalidate : [revalidate];
     const existing = this.config[trigger] || [];
@@ -93,7 +98,7 @@ export class ValidationConfigBuilder<T> {
       const duplicates = deps.filter((d) => existing.includes(d));
       if (duplicates.length > 0) {
         console.warn(
-          `[ngx-vest-forms] ValidationConfigBuilder: Duplicate dependencies detected.\n` +
+          `${LOG_PREFIX}: Duplicate dependencies detected.\n` +
             `  Trigger: '${trigger}'\n` +
             `  Duplicates: ${duplicates.map((d) => `'${d}'`).join(', ')}\n` +
             `  These will be automatically deduplicated.`
@@ -172,7 +177,7 @@ export class ValidationConfigBuilder<T> {
 
       if (hasField1ToField2 && hasField2ToField1) {
         console.warn(
-          `[ngx-vest-forms] ValidationConfigBuilder: Duplicate bidirectional relationship detected.\n` +
+          `${LOG_PREFIX}: Duplicate bidirectional relationship detected.\n` +
             `  Fields: '${field1}' ↔ '${field2}'\n` +
             `  This bidirectional relationship was already configured.`
         );
@@ -240,7 +245,7 @@ export class ValidationConfigBuilder<T> {
    * builder.group(['street', 'city', 'state', 'zipCode']);
    * ```
    */
-  group<K extends FieldPath<T>>(fields: K[]): this {
+  group<K extends FieldPath<T>>(fields: readonly K[]): this {
     // Each field triggers validation of all other fields in the group
     for (const field of fields) {
       const others = fields.filter((f) => f !== field);

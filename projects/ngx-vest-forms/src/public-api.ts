@@ -12,6 +12,7 @@ export type {
   NgxDeepRequired,
   NgxFormCompatibleDeepRequired,
 } from './lib/utils/deep-required';
+/** @deprecated Use ROOT_FORM from 'ngx-vest-forms' instead */
 export { ROOT_FORM as ROOT_FORM_CONSTANT } from './lib/utils/field-path-types';
 export type {
   FieldPath,
