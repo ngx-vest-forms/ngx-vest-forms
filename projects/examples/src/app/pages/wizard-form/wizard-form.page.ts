@@ -14,12 +14,13 @@ import {
   WizardStep3Model,
   wizardStep3Shape,
 } from '../../models/wizard-form.model';
+import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { StatusBadge } from '../../ui/status-badge/status-badge.component';
-import { WizardStepConfig } from '../../ui/wizard';
+import { WizardStepConfig, WizardStepsComponent } from '../../ui/wizard';
 import { WizardFormBodyComponent } from './wizard.form';
 import {
   wizardStep1Suite,
@@ -33,13 +34,15 @@ import {
     Card,
     FormPageLayout,
     FormStateCardComponent,
+    AlertPanel,
     PageTitle,
     StatusBadge,
+    WizardStepsComponent,
     WizardFormBodyComponent,
   ],
   templateUrl: './wizard-form.page.html',
   styleUrl: './wizard-form.page.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WizardFormPageComponent {
   protected readonly currentStep = signal(1);
@@ -123,6 +126,23 @@ export class WizardFormPageComponent {
   protected readonly wizardInfo = computed(() => [
     `Viewing Step ${this.currentStep()} model and feedback.`,
   ]);
+
+  protected readonly stepStatusRows = computed(() => [
+    { id: 1, label: 'Step 1: Account', valid: this.step1Valid() },
+    { id: 2, label: 'Step 2: Profile', valid: this.step2Valid() },
+    { id: 3, label: 'Step 3: Confirm', valid: this.step3Valid() },
+  ]);
+
+  protected readonly currentStepTitle = computed(() => {
+    switch (this.currentStep()) {
+      case 1:
+        return 'Step 1: Account Setup';
+      case 2:
+        return 'Step 2: Profile Information';
+      default:
+        return 'Step 3: Review & Confirm';
+    }
+  });
 
   protected readonly isFirstStep = computed(() => this.currentStep() === 1);
   protected readonly isLastStep = computed(() => this.currentStep() === 3);

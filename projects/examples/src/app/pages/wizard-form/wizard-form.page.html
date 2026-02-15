@@ -5,27 +5,17 @@
   />
 
   <ngx-form-page-layout>
-    <div layout-aside class="sidebar-card-stack">
+    <aside layout-aside class="sidebar-card-stack">
       <ngx-card title="Wizard State">
         <div class="space-y-3">
+          @for (step of stepStatusRows(); track step.id) {
           <div class="flex items-center justify-between text-sm">
             <span class="text-gray-600 dark:text-gray-300"
-              >Step 1: Account</span
+              >{{ step.label }}</span
             >
-            <ngx-status-badge [valid]="step1Valid()" />
+            <ngx-status-badge [valid]="step.valid" />
           </div>
-          <div class="flex items-center justify-between text-sm">
-            <span class="text-gray-600 dark:text-gray-300"
-              >Step 2: Profile</span
-            >
-            <ngx-status-badge [valid]="step2Valid()" />
-          </div>
-          <div class="flex items-center justify-between text-sm">
-            <span class="text-gray-600 dark:text-gray-300"
-              >Step 3: Confirm</span
-            >
-            <ngx-status-badge [valid]="step3Valid()" />
-          </div>
+          }
         </div>
 
         <div class="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
@@ -57,47 +47,79 @@
           <li>Step state persists while navigating.</li>
         </ul>
       </ngx-card>
-    </div>
+    </aside>
 
-    <div layout-main>
-      <ngx-wizard-form-body
+    <section layout-main>
+      @if (submitSuccess()) {
+      <ngx-card>
+        <div class="text-center">
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+            Registration Complete!
+          </h2>
+          <p class="mt-2 text-gray-600 dark:text-gray-400">
+            Your wizard submission was successful.
+          </p>
+          <button
+            type="button"
+            class="btn btn-primary mt-6"
+            (click)="resetWizard()"
+          >
+            Start New Registration
+          </button>
+        </div>
+      </ngx-card>
+      } @else {
+      <ngx-wizard-steps
+        class="mb-8"
         [steps]="steps"
         [currentStep]="currentStep()"
         [completedSteps]="completedSteps()"
-        [submitSuccess]="submitSuccess()"
-        [submitError]="submitError()"
-        [isSubmitting]="isSubmitting()"
-        [step1Data]="step1Data()"
-        [step2Data]="step2Data()"
-        [step3Data]="step3Data()"
-        [step1Suite]="step1Suite"
-        [step2Suite]="step2Suite"
-        [step3Suite]="step3Suite"
-        [step1Shape]="step1Shape"
-        [step2Shape]="step2Shape"
-        [step3Shape]="step3Shape"
-        [step1ValidationConfig]="step1ValidationConfig"
-        [step2ValidationConfig]="step2ValidationConfig()"
-        [step1Valid]="step1Valid()"
-        [step2Valid]="step2Valid()"
-        [step3Valid]="step3Valid()"
-        (step1DataChange)="step1Data.set($event)"
-        (step2DataChange)="step2Data.set($event)"
-        (step3DataChange)="step3Data.set($event)"
-        (step1ValidChange)="step1Valid.set($event)"
-        (step2ValidChange)="step2Valid.set($event)"
-        (step3ValidChange)="step3Valid.set($event)"
-        (step1ErrorsChange)="step1Errors.set($event)"
-        (step2ErrorsChange)="step2Errors.set($event)"
-        (step3ErrorsChange)="step3Errors.set($event)"
-        (resetWizard)="resetWizard()"
-        (goToStep)="goToStep($event)"
-        (previousStep)="previousStep()"
-        (step1Submit)="onStep1Submit()"
-        (step2Submit)="onStep2Submit()"
-        (step3Submit)="onStep3Submit()"
-        (submitAll)="submitAll()"
       />
-    </div>
+
+      @if (submitError()) {
+      <ngx-alert-panel tone="error">{{ submitError() }}</ngx-alert-panel>
+      }
+
+      <ngx-card>
+        <h2 class="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
+          {{ currentStepTitle() }}
+        </h2>
+
+        <ngx-wizard-form-body
+          [currentStep]="currentStep()"
+          [isSubmitting]="isSubmitting()"
+          [step1Data]="step1Data()"
+          [step2Data]="step2Data()"
+          [step3Data]="step3Data()"
+          [step1Suite]="step1Suite"
+          [step2Suite]="step2Suite"
+          [step3Suite]="step3Suite"
+          [step1Shape]="step1Shape"
+          [step2Shape]="step2Shape"
+          [step3Shape]="step3Shape"
+          [step1ValidationConfig]="step1ValidationConfig"
+          [step2ValidationConfig]="step2ValidationConfig()"
+          [step1Valid]="step1Valid()"
+          [step2Valid]="step2Valid()"
+          [step3Valid]="step3Valid()"
+          (step1DataChange)="step1Data.set($event)"
+          (step2DataChange)="step2Data.set($event)"
+          (step3DataChange)="step3Data.set($event)"
+          (step1ValidChange)="step1Valid.set($event)"
+          (step2ValidChange)="step2Valid.set($event)"
+          (step3ValidChange)="step3Valid.set($event)"
+          (step1ErrorsChange)="step1Errors.set($event)"
+          (step2ErrorsChange)="step2Errors.set($event)"
+          (step3ErrorsChange)="step3Errors.set($event)"
+          (goToStep)="goToStep($event)"
+          (previousStep)="previousStep()"
+          (step1Submit)="onStep1Submit()"
+          (step2Submit)="onStep2Submit()"
+          (step3Submit)="onStep3Submit()"
+          (submitAll)="submitAll()"
+        />
+      </ngx-card>
+      }
+    </section>
   </ngx-form-page-layout>
 </div>

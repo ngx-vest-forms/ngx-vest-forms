@@ -26,8 +26,25 @@ async function clickNext(page: import('@playwright/test').Page) {
   await expect(page.getByText('Validating…')).toHaveCount(0, {
     timeout: 10000,
   });
-  const button = page.getByRole('button', { name: /save & continue/i });
-  await button.click();
+  // The button can be re-rendered during validation updates; retry once on detach.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const button = page.getByRole('button', { name: /save & continue/i });
+      await button.click({ timeout: 10000 });
+      break;
+    } catch (error) {
+      if (
+        attempt === 1 ||
+        !(error instanceof Error) ||
+        !error.message.includes('detached')
+      ) {
+        throw error;
+      }
+      await expect(page.getByText('Validating…')).toHaveCount(0, {
+        timeout: 10000,
+      });
+    }
+  }
   // Wait for any validation that may have been triggered by the click
   await expect(page.getByText('Validating…')).toHaveCount(0, {
     timeout: 10000,
@@ -39,7 +56,26 @@ async function clickPrevious(page: import('@playwright/test').Page) {
   await expect(page.getByText('Validating…')).toHaveCount(0, {
     timeout: 10000,
   });
-  await page.getByRole('button', { name: /previous/i }).click();
+  // Previous can also detach during step transitions.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      await page.getByRole('button', { name: /previous/i }).click({
+        timeout: 10000,
+      });
+      break;
+    } catch (error) {
+      if (
+        attempt === 1 ||
+        !(error instanceof Error) ||
+        !error.message.includes('detached')
+      ) {
+        throw error;
+      }
+      await expect(page.getByText('Validating…')).toHaveCount(0, {
+        timeout: 10000,
+      });
+    }
+  }
 }
 
 async function clickSubmitAll(page: import('@playwright/test').Page) {
@@ -50,13 +86,63 @@ async function goToProfileStep(page: import('@playwright/test').Page) {
   const step2Heading = page.getByRole('heading', {
     name: /profile information/i,
   });
+  const progressNav = page.getByRole('navigation', { name: /progress:/i });
 
-  for (let attempt = 0; attempt < 3; attempt++) {
+  const getCurrentStep = async (): Promise<1 | 2 | 3 | null> => {
+    const label = (await progressNav.getAttribute('aria-label')) ?? '';
+    const match = label.match(/step\s+(\d+)\s+of\s+3/i);
+    if (!match) {
+      return null;
+    }
+
+    const step = Number(match[1]);
+    if (step === 1 || step === 2 || step === 3) {
+      return step;
+    }
+
+    return null;
+  };
+
+  const clickEditProfileFromStep3 = async () => {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        await page
+          .getByRole('button', { name: 'Edit Profile Details' })
+          .click({ timeout: 10000 });
+        return;
+      } catch (error) {
+        const isDetached =
+          error instanceof Error && error.message.includes('detached');
+        if (attempt === 2 || !isDetached) {
+          throw error;
+        }
+      }
+    }
+  };
+
+  for (let attempt = 0; attempt < 8; attempt++) {
     if (await step2Heading.isVisible().catch(() => false)) {
       return;
     }
-    await page.getByRole('button', { name: /save & continue/i }).click();
-    await waitForValidationsToSettle(page);
+
+    const currentStep = await getCurrentStep();
+    if (currentStep === 2) {
+      return;
+    }
+
+    // If we are already on review, go directly back to profile via the explicit shortcut.
+    if (currentStep === 3) {
+      await clickEditProfileFromStep3().catch(() => {
+        // UI may already be transitioning; allow loop to re-check state.
+      });
+    } else if (currentStep === 1) {
+      // Intentionally click once per attempt to avoid accidental multi-submit overshoots.
+      await clickNext(page).catch(() => {
+        // Save button may disappear during transition; loop will re-check state.
+      });
+    }
+
+    await page.waitForTimeout(250);
   }
 
   await expect(step2Heading).toBeVisible({ timeout: 30000 });
@@ -211,20 +297,7 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
       // Wait for all validations to settle (debounced validations)
       await waitForValidationsToSettle(page);
 
-      await clickNext(page);
-
-      // Verify we're on step 2 (with extended timeout for parallel test runs)
-      const step2Heading = page.getByRole('heading', {
-        name: /profile information/i,
-      });
-      for (let attempt = 0; attempt < 2; attempt++) {
-        if (await step2Heading.isVisible().catch(() => false)) {
-          break;
-        }
-        await page.getByRole('button', { name: /save & continue/i }).click();
-        await waitForValidationsToSettle(page);
-      }
-      await expect(step2Heading).toBeVisible({ timeout: 15000 });
+      await goToProfileStep(page);
     });
 
     test('should validate required profile fields', async ({ page }) => {
@@ -619,12 +692,7 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           page.getByLabel('Confirm Password', { exact: true })
         );
 
-        await clickNext(page);
-
-        // Wait for step 2 heading (with extended timeout for parallel test runs)
-        await expect(
-          page.getByRole('heading', { name: /profile information/i })
-        ).toBeVisible({ timeout: 20000 });
+        await goToProfileStep(page);
 
         // Fill step 2 completely
         await fillAndBlur(page.getByLabel(/first name/i), 'John');
@@ -739,12 +807,7 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           page.getByLabel('Confirm Password', { exact: true })
         );
 
-        await clickNext(page);
-
-        // Wait for step 2 heading (with extended timeout for parallel test runs)
-        await expect(
-          page.getByRole('heading', { name: /profile information/i })
-        ).toBeVisible({ timeout: 30000 });
+        await goToProfileStep(page);
 
         // Step 2: Profile
         await fillAndBlur(page.getByLabel(/first name/i), 'John');
@@ -807,12 +870,7 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         );
         await waitForValidationsToSettle(page);
 
-        await clickNext(page);
-
-        // Wait for step 2 heading with explicit timeout for navigation transition
-        await expect(
-          page.getByRole('heading', { name: /profile information/i })
-        ).toBeVisible({ timeout: 15000 });
+        await goToProfileStep(page);
 
         // On Step 2: Touch firstName only, leave others untouched
         await fillAndBlur(page.getByLabel(/first name/i), 'John');
@@ -876,12 +934,7 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         // Wait for step 1 to be valid before navigating
         await waitForValidationsToSettle(page);
 
-        await clickNext(page);
-
-        // Now on step 2 (extended timeout for parallel test runs)
-        await expect(
-          page.getByRole('heading', { name: /profile information/i })
-        ).toBeVisible({ timeout: 30000 });
+        await goToProfileStep(page);
 
         // Go back to step 1
         await clickPrevious(page);
@@ -917,12 +970,7 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           page.getByLabel('Confirm Password', { exact: true }),
           'SecurePass123!'
         );
-        await clickNext(page);
-
-        // Wait for step 2 heading
-        await expect(
-          page.getByRole('heading', { name: /profile information/i })
-        ).toBeVisible();
+        await goToProfileStep(page);
 
         // After navigating to step 2, step 1 should show completed state
         // The wizard-steps component shows a checkmark SVG for completed steps

@@ -6,10 +6,8 @@ import {
   viewChild,
 } from '@angular/core';
 import {
-  FormDirective,
   NgxDeepRequired,
   NgxValidationConfig,
-  NgxVestForms,
   NgxVestSuite,
 } from 'ngx-vest-forms';
 import {
@@ -17,33 +15,23 @@ import {
   WizardStep2Model,
   WizardStep3Model,
 } from '../../models/wizard-form.model';
-import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
-import { Card } from '../../ui/card/card.component';
-import {
-  WizardNavigationComponent,
-  WizardStepConfig,
-  WizardStepsComponent,
-} from '../../ui/wizard';
+import { WizardStep1FormComponent } from './wizard-step1.form';
+import { WizardStep2FormComponent } from './wizard-step2.form';
+import { WizardStep3FormComponent } from './wizard-step3.form';
 
 @Component({
   selector: 'ngx-wizard-form-body',
   imports: [
-    NgxVestForms,
-    AlertPanel,
-    Card,
-    WizardStepsComponent,
-    WizardNavigationComponent,
+    WizardStep1FormComponent,
+    WizardStep2FormComponent,
+    WizardStep3FormComponent,
   ],
   templateUrl: './wizard.form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WizardFormBodyComponent {
-  readonly steps = input.required<WizardStepConfig[]>();
   readonly currentStep = input.required<number>();
-  readonly completedSteps = input<number[]>([]);
 
-  readonly submitSuccess = input(false);
-  readonly submitError = input<string | null>(null);
   readonly isSubmitting = input(false);
 
   readonly step1Data = input.required<WizardStep1Model>();
@@ -79,7 +67,6 @@ export class WizardFormBodyComponent {
   readonly step2ErrorsChange = output<Record<string, string[]>>();
   readonly step3ErrorsChange = output<Record<string, string[]>>();
 
-  readonly resetWizard = output();
   readonly goToStep = output<number>();
   readonly previousStep = output();
   readonly step1Submit = output();
@@ -87,16 +74,9 @@ export class WizardFormBodyComponent {
   readonly step3Submit = output();
   readonly submitAll = output();
 
-  private readonly step1Form =
-    viewChild<FormDirective<WizardStep1Model>>('step1Form');
-  private readonly step2Form =
-    viewChild<FormDirective<WizardStep2Model>>('step2Form');
-  private readonly step3Form =
-    viewChild<FormDirective<WizardStep3Model>>('step3Form');
-
-  protected emitResetWizard(): void {
-    this.resetWizard.emit();
-  }
+  private readonly step1Form = viewChild(WizardStep1FormComponent);
+  private readonly step2Form = viewChild(WizardStep2FormComponent);
+  private readonly step3Form = viewChild(WizardStep3FormComponent);
 
   protected emitGoToStep(step: number): void {
     this.goToStep.emit(step);
@@ -123,8 +103,16 @@ export class WizardFormBodyComponent {
   }
 
   markAllAsTouched(): void {
-    this.step1Form()?.markAllAsTouched();
-    this.step2Form()?.markAllAsTouched();
-    this.step3Form()?.markAllAsTouched();
+    switch (this.currentStep()) {
+      case 1:
+        this.step1Form()?.markAllAsTouched();
+        break;
+      case 2:
+        this.step2Form()?.markAllAsTouched();
+        break;
+      default:
+        this.step3Form()?.markAllAsTouched();
+        break;
+    }
   }
 }

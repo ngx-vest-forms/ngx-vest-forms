@@ -1,352 +1,40 @@
-@if (submitSuccess()) {
-<ngx-card>
-  <div class="text-center">
-    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-      Registration Complete!
-    </h2>
-    <p class="mt-2 text-gray-600 dark:text-gray-400">
-      Your wizard submission was successful.
-    </p>
-    <button
-      type="button"
-      class="btn btn-primary mt-6"
-      (click)="emitResetWizard()"
-    >
-      Start New Registration
-    </button>
-  </div>
-</ngx-card>
-} @else {
-<ngx-wizard-steps
-  class="mb-8"
-  [steps]="steps()"
-  [currentStep]="currentStep()"
-  [completedSteps]="completedSteps()"
+@if (currentStep() === 1) {
+<ngx-wizard-step1-form
+  [data]="step1Data()"
+  [suite]="step1Suite()"
+  [shape]="step1Shape()"
+  [validationConfig]="step1ValidationConfig()"
+  (dataChange)="step1DataChange.emit($event)"
+  (validChange)="step1ValidChange.emit($event)"
+  (errorsChange)="step1ErrorsChange.emit($event)"
+  (submit)="emitStep1Submit()"
 />
-
-@if (submitError()) {
-<ngx-alert-panel tone="error"> {{ submitError() }} </ngx-alert-panel>
-} @if (currentStep() === 1) {
-<ngx-card>
-  <h2 class="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
-    Step 1: Account Setup
-  </h2>
-
-  <form
-    #step1Form="ngxVestForm"
-    ngxVestForm
-    [suite]="step1Suite()"
-    [formShape]="step1Shape()"
-    [formValue]="step1Data()"
-    [validationConfig]="step1ValidationConfig()"
-    (formValueChange)="step1DataChange.emit($event)"
-    (validChange)="step1ValidChange.emit($event)"
-    (errorsChange)="step1ErrorsChange.emit($event)"
-    (ngSubmit)="emitStep1Submit()"
-  >
-    <div class="space-y-6">
-      <ngx-control-wrapper>
-        <label for="email" class="label-text">Email Address</label>
-        <input
-          id="email"
-          type="email"
-          name="email"
-          autocomplete="email"
-          class="input-field"
-          [ngModel]="step1Data().email"
-        />
-      </ngx-control-wrapper>
-
-      <ngx-control-wrapper>
-        <label for="confirmEmail" class="label-text">Confirm Email</label>
-        <input
-          id="confirmEmail"
-          type="email"
-          name="confirmEmail"
-          autocomplete="email"
-          class="input-field"
-          [ngModel]="step1Data().confirmEmail"
-        />
-      </ngx-control-wrapper>
-
-      <ngx-control-wrapper>
-        <label for="password" class="label-text">Password</label>
-        <input
-          id="password"
-          type="password"
-          name="password"
-          autocomplete="new-password"
-          class="input-field"
-          [ngModel]="step1Data().password"
-        />
-      </ngx-control-wrapper>
-
-      <ngx-control-wrapper>
-        <label for="confirmPassword" class="label-text">Confirm Password</label>
-        <input
-          id="confirmPassword"
-          type="password"
-          name="confirmPassword"
-          autocomplete="new-password"
-          class="input-field"
-          [ngModel]="step1Data().confirmPassword"
-        />
-      </ngx-control-wrapper>
-    </div>
-
-    <ngx-wizard-navigation
-      [showPrevious]="false"
-      [showSaveAndContinue]="true"
-      [showSubmit]="false"
-    />
-  </form>
-</ngx-card>
 } @if (currentStep() === 2) {
-<ngx-card>
-  <h2 class="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
-    Step 2: Profile Information
-  </h2>
-
-  <form
-    #step2Form="ngxVestForm"
-    ngxVestForm
-    [suite]="step2Suite()"
-    [formShape]="step2Shape()"
-    [formValue]="step2Data()"
-    [validationConfig]="step2ValidationConfig()"
-    (formValueChange)="step2DataChange.emit($event)"
-    (validChange)="step2ValidChange.emit($event)"
-    (errorsChange)="step2ErrorsChange.emit($event)"
-    (ngSubmit)="emitStep2Submit()"
-  >
-    <div class="space-y-6">
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <ngx-control-wrapper>
-          <label for="firstName" class="label-text">First Name</label>
-          <input
-            id="firstName"
-            type="text"
-            name="firstName"
-            autocomplete="given-name"
-            class="input-field"
-            [ngModel]="step2Data().firstName"
-          />
-        </ngx-control-wrapper>
-
-        <ngx-control-wrapper>
-          <label for="lastName" class="label-text">Last Name</label>
-          <input
-            id="lastName"
-            type="text"
-            name="lastName"
-            autocomplete="family-name"
-            class="input-field"
-            [ngModel]="step2Data().lastName"
-          />
-        </ngx-control-wrapper>
-      </div>
-
-      <ngx-control-wrapper>
-        <label for="phone" class="label-text">Phone Number</label>
-        <input
-          id="phone"
-          type="tel"
-          name="phone"
-          autocomplete="tel"
-          class="input-field"
-          [ngModel]="step2Data().phone"
-        />
-      </ngx-control-wrapper>
-
-      <ngx-control-wrapper>
-        <label for="dateOfBirth" class="label-text">Date of Birth</label>
-        <input
-          id="dateOfBirth"
-          type="date"
-          name="dateOfBirth"
-          autocomplete="bday"
-          class="input-field"
-          [ngModel]="step2Data().dateOfBirth"
-        />
-      </ngx-control-wrapper>
-
-      <div
-        class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
-      >
-        <div class="flex items-start gap-3">
-          <input
-            id="subscribeNewsletter"
-            type="checkbox"
-            name="subscribeNewsletter"
-            class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            [ngModel]="step2Data().subscribeNewsletter"
-          />
-          <div class="flex-1">
-            <label
-              for="subscribeNewsletter"
-              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Subscribe to Newsletter
-            </label>
-          </div>
-        </div>
-
-        @if (step2Data().subscribeNewsletter) {
-        <div class="mt-4">
-          <ngx-control-wrapper>
-            <label for="newsletterFrequency" class="label-text"
-              >Newsletter Frequency</label
-            >
-            <select
-              id="newsletterFrequency"
-              name="newsletterFrequency"
-              class="input-field"
-              [ngModel]="step2Data().newsletterFrequency"
-            >
-              <option value="">Select frequency...</option>
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-            </select>
-          </ngx-control-wrapper>
-        </div>
-        }
-      </div>
-    </div>
-
-    <ngx-wizard-navigation
-      [showPrevious]="true"
-      [showSaveAndContinue]="true"
-      [showSubmit]="false"
-      (previous)="emitPreviousStep()"
-    />
-  </form>
-</ngx-card>
+<ngx-wizard-step2-form
+  [data]="step2Data()"
+  [suite]="step2Suite()"
+  [shape]="step2Shape()"
+  [validationConfig]="step2ValidationConfig()"
+  (dataChange)="step2DataChange.emit($event)"
+  (validChange)="step2ValidChange.emit($event)"
+  (errorsChange)="step2ErrorsChange.emit($event)"
+  (previous)="emitPreviousStep()"
+  (submit)="emitStep2Submit()"
+/>
 } @if (currentStep() === 3) {
-<ngx-card>
-  <h2 class="mb-6 text-xl font-semibold text-gray-900 dark:text-white">
-    Step 3: Review & Confirm
-  </h2>
-
-  <div class="mb-6 space-y-4">
-    <div
-      class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
-    >
-      <div class="flex items-center justify-between">
-        <h3 class="text-sm font-medium text-gray-900 dark:text-white">
-          Account Details
-        </h3>
-        <button
-          type="button"
-          class="text-xs text-blue-600 hover:underline dark:text-blue-400"
-          (click)="emitGoToStep(1)"
-        >
-          Edit
-        </button>
-      </div>
-      <dl class="mt-2 grid grid-cols-2 gap-2 text-sm">
-        <dt class="text-gray-500 dark:text-gray-400">Email:</dt>
-        <dd class="text-gray-900 dark:text-white">
-          {{ step1Data().email || '-' }}
-        </dd>
-      </dl>
-    </div>
-
-    <div
-      class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
-    >
-      <div class="flex items-center justify-between">
-        <h3 class="text-sm font-medium text-gray-900 dark:text-white">
-          Profile Details
-        </h3>
-        <button
-          type="button"
-          class="text-xs text-blue-600 hover:underline dark:text-blue-400"
-          (click)="emitGoToStep(2)"
-        >
-          Edit
-        </button>
-      </div>
-      <dl class="mt-2 grid grid-cols-2 gap-2 text-sm">
-        <dt class="text-gray-500 dark:text-gray-400">Name:</dt>
-        <dd class="text-gray-900 dark:text-white">
-          {{ step2Data().firstName }} {{ step2Data().lastName }}
-        </dd>
-      </dl>
-    </div>
-  </div>
-
-  <form
-    #step3Form="ngxVestForm"
-    ngxVestForm
-    [suite]="step3Suite()"
-    [formShape]="step3Shape()"
-    [formValue]="step3Data()"
-    (formValueChange)="step3DataChange.emit($event)"
-    (validChange)="step3ValidChange.emit($event)"
-    (errorsChange)="step3ErrorsChange.emit($event)"
-    (ngSubmit)="emitStep3Submit()"
-  >
-    <div class="space-y-4">
-      <ngx-control-wrapper>
-        <div class="flex items-start gap-3">
-          <input
-            id="acceptTerms"
-            type="checkbox"
-            name="acceptTerms"
-            class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            [ngModel]="step3Data().acceptTerms"
-          />
-          <label
-            for="acceptTerms"
-            class="text-sm text-gray-700 dark:text-gray-300"
-          >
-            I accept the Terms of Service
-          </label>
-        </div>
-      </ngx-control-wrapper>
-
-      <ngx-control-wrapper>
-        <div class="flex items-start gap-3">
-          <input
-            id="acceptPrivacy"
-            type="checkbox"
-            name="acceptPrivacy"
-            class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            [ngModel]="step3Data().acceptPrivacy"
-          />
-          <label
-            for="acceptPrivacy"
-            class="text-sm text-gray-700 dark:text-gray-300"
-          >
-            I accept the Privacy Policy
-          </label>
-        </div>
-      </ngx-control-wrapper>
-
-      <ngx-control-wrapper>
-        <label for="comments" class="label-text"
-          >Additional Comments (optional)</label
-        >
-        <textarea
-          id="comments"
-          name="comments"
-          rows="3"
-          class="input-field"
-          [ngModel]="step3Data().comments"
-        ></textarea>
-      </ngx-control-wrapper>
-    </div>
-
-    <ngx-wizard-navigation
-      [showPrevious]="true"
-      [showSaveAndContinue]="false"
-      [showSubmit]="true"
-      [isSubmitting]="isSubmitting()"
-      [submitLabel]="isSubmitting() ? 'Saving...' : 'Submit All'"
-      (previous)="emitPreviousStep()"
-      (submitAll)="emitSubmitAll()"
-    />
-  </form>
-</ngx-card>
-} }
+<ngx-wizard-step3-form
+  [step1Data]="step1Data()"
+  [step2Data]="step2Data()"
+  [data]="step3Data()"
+  [suite]="step3Suite()"
+  [shape]="step3Shape()"
+  [isSubmitting]="isSubmitting()"
+  (dataChange)="step3DataChange.emit($event)"
+  (validChange)="step3ValidChange.emit($event)"
+  (errorsChange)="step3ErrorsChange.emit($event)"
+  (goToStep)="emitGoToStep($event)"
+  (previous)="emitPreviousStep()"
+  (submit)="emitStep3Submit()"
+  (submitAll)="emitSubmitAll()"
+/>
+}

@@ -89,18 +89,15 @@
       description="Toggling the checkbox triggers justification validation."
     >
       <div class="space-y-4">
-        <div class="flex items-center">
+        <div class="inline-checkbox-row">
           <input
             id="requiresJustification"
             type="checkbox"
             name="requiresJustification"
             [ngModel]="formValue().requiresJustification"
-            class="h-4 w-4 rounded-sm border-gray-300 text-green-600 focus:ring-green-500 dark:border-gray-600 dark:bg-gray-700"
+            class="inline-checkbox"
           />
-          <label
-            for="requiresJustification"
-            class="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
+          <label for="requiresJustification" class="inline-checkbox-label">
             Requires Justification
           </label>
         </div>
