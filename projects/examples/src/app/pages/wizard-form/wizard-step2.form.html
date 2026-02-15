@@ -1,0 +1,114 @@
+<form
+  #step2Form="ngxVestForm"
+  ngxVestForm
+  [suite]="suite()"
+  [formShape]="shape()"
+  [formValue]="data()"
+  [validationConfig]="validationConfig()"
+  (formValueChange)="dataChange.emit($event)"
+  (validChange)="validChange.emit($event)"
+  (errorsChange)="errorsChange.emit($event)"
+  (ngSubmit)="stepSubmit.emit()"
+>
+  <div class="space-y-6">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <ngx-control-wrapper>
+        <label for="firstName" class="label-text">First Name</label>
+        <input
+          id="firstName"
+          type="text"
+          name="firstName"
+          autocomplete="given-name"
+          class="input-field"
+          [ngModel]="data().firstName"
+        />
+      </ngx-control-wrapper>
+
+      <ngx-control-wrapper>
+        <label for="lastName" class="label-text">Last Name</label>
+        <input
+          id="lastName"
+          type="text"
+          name="lastName"
+          autocomplete="family-name"
+          class="input-field"
+          [ngModel]="data().lastName"
+        />
+      </ngx-control-wrapper>
+    </div>
+
+    <ngx-control-wrapper>
+      <label for="phone" class="label-text">Phone Number</label>
+      <input
+        id="phone"
+        type="tel"
+        name="phone"
+        autocomplete="tel"
+        class="input-field"
+        [ngModel]="data().phone"
+      />
+    </ngx-control-wrapper>
+
+    <ngx-control-wrapper>
+      <label for="dateOfBirth" class="label-text">Date of Birth</label>
+      <input
+        id="dateOfBirth"
+        type="date"
+        name="dateOfBirth"
+        autocomplete="bday"
+        class="input-field"
+        [ngModel]="data().dateOfBirth"
+      />
+    </ngx-control-wrapper>
+
+    <div
+      class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
+    >
+      <div class="flex items-start gap-3">
+        <input
+          id="subscribeNewsletter"
+          type="checkbox"
+          name="subscribeNewsletter"
+          class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          [ngModel]="data().subscribeNewsletter"
+        />
+        <div class="flex-1">
+          <label
+            for="subscribeNewsletter"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Subscribe to Newsletter
+          </label>
+        </div>
+      </div>
+
+      @if (data().subscribeNewsletter) {
+      <div class="mt-4">
+        <ngx-control-wrapper>
+          <label for="newsletterFrequency" class="label-text"
+            >Newsletter Frequency</label
+          >
+          <select
+            id="newsletterFrequency"
+            name="newsletterFrequency"
+            class="input-field"
+            [ngModel]="data().newsletterFrequency"
+          >
+            <option value="">Select frequency...</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+        </ngx-control-wrapper>
+      </div>
+      }
+    </div>
+  </div>
+
+  <ngx-wizard-navigation
+    [showPrevious]="true"
+    [showSaveAndContinue]="true"
+    [showSubmit]="false"
+    (previous)="previous.emit()"
+  />
+</form>

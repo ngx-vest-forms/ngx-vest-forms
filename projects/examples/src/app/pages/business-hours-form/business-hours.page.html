@@ -1,0 +1,52 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Business Hours Form"
+    subtitle="Validate dynamic time ranges with cross-field and form-level rules."
+  />
+
+  <ngx-form-page-layout>
+    <div layout-aside class="sidebar-card-stack">
+      <ngx-card title="Complex Validations">
+        <p class="text-sm text-gray-600 dark:text-gray-300">
+          This example demonstrates form-array validation with complex
+          cross-field rules:
+        </p>
+        <ul
+          class="mt-3 list-disc space-y-2 pl-4 text-sm text-gray-600 dark:text-gray-300"
+        >
+          <li>
+            <strong>Required:</strong> At least one business hour must be added.
+          </li>
+          <li><strong>Format:</strong> 'From' and 'To' must be valid times.</li>
+          <li>
+            <strong>Logic:</strong> 'To' time must be later than 'From' time.
+          </li>
+          <li>
+            <strong>Overlap:</strong> Multiple time ranges cannot overlap.
+          </li>
+        </ul>
+      </ngx-card>
+
+      <ngx-form-state-card
+        [formState]="formBody.formState()"
+        [warnings]="formBody.warnings()"
+        [validatedFields]="formBody.validatedFields()"
+        [pending]="formBody.pending()"
+      />
+    </div>
+
+    <div layout-main>
+      <ngx-business-hours-form-body
+        #formBody
+        [formValue]="formValue()"
+        [shape]="shape"
+        [suite]="businessHoursSuite"
+        [validationConfig]="validationConfig"
+        [rootFormError]="rootFormError()"
+        [businessHoursValues]="getBusinessHoursValues()"
+        (formValueChange)="formValue.set($event)"
+        (businessHoursChange)="onBusinessHoursChange($event)"
+      />
+    </div>
+  </ngx-form-page-layout>
+</div>

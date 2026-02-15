@@ -25,7 +25,12 @@ import { FormControlStateDirective } from './form-control-state.directive';
  * - 'on-dirty': Show errors as soon as the field value changes
  * - 'always': Show errors immediately, even on pristine fields
  */
-export type ScErrorDisplayMode = 'on-blur' | 'on-submit' | 'on-blur-or-submit' | 'on-dirty' | 'always';
+export type ScErrorDisplayMode =
+  | 'on-blur'
+  | 'on-submit'
+  | 'on-blur-or-submit'
+  | 'on-dirty'
+  | 'always';
 
 /**
  * Warning display modes for form controls.
@@ -34,7 +39,11 @@ export type ScErrorDisplayMode = 'on-blur' | 'on-submit' | 'on-blur-or-submit' |
  * - 'on-dirty': Show warnings as soon as the field value changes
  * - 'always': Show warnings immediately, even on pristine fields
  */
-export type NgxWarningDisplayMode = 'on-touch' | 'on-validated-or-touch' | 'on-dirty' | 'always';
+export type NgxWarningDisplayMode =
+  | 'on-touch'
+  | 'on-validated-or-touch'
+  | 'on-dirty'
+  | 'always';
 
 export const SC_ERROR_DISPLAY_MODE_DEFAULT: ScErrorDisplayMode =
   'on-blur-or-submit';

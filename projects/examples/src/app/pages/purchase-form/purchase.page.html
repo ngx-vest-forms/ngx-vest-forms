@@ -1,0 +1,72 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Purchase Form"
+    subtitle="Complete a full checkout flow with conditional and cross-field validation."
+  />
+
+  <div class="grid gap-8 xl:grid-cols-[280px_minmax(0,1fr)]">
+    <aside class="sidebar-card-stack">
+      <ngx-card title="Form Features">
+        <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+          <li>Show validation errors on blur/submit</li>
+          <li><strong>NgxDeepPartial</strong> for form model types</li>
+          <li>
+            <strong>Bidirectional validationConfig</strong> (quantity ↔
+            justification)
+          </li>
+          <li><strong>clearFields()</strong> utility</li>
+          <li><strong>setValueAtPath()</strong> utility</li>
+          <li>Conditional logic based on First Name (Brecht/Luke)</li>
+          <li>Async validation (User ID)</li>
+          <li>Cross-field validation (Passwords, Address)</li>
+        </ul>
+
+        <div class="mt-6 flex flex-col gap-2">
+          <button class="btn btn-primary w-full" (click)="fetchData()">
+            Fetch Data (Luke)
+          </button>
+          <button
+            class="btn btn-secondary w-full"
+            (click)="clearSensitiveData()"
+          >
+            Clear Sensitive Data
+          </button>
+          <button
+            class="btn btn-secondary w-full"
+            (click)="prefillBillingAddress()"
+          >
+            Prefill Billing Address
+          </button>
+        </div>
+      </ngx-card>
+
+      <ngx-form-state-card
+        [formState]="purchaseForm.formState()"
+        [warnings]="purchaseForm.warnings()"
+        [validationErrorRules]="validationErrorRules"
+        [validationWarningRules]="validationWarningRules"
+        [validatedFields]="purchaseForm.validatedFields()"
+        [pending]="purchaseForm.pending()"
+      />
+    </aside>
+
+    <section class="space-y-6">
+      @if (rootFormErrors().length > 0) {
+      <ngx-alert-panel tone="error" title="Form Errors">
+        <ul class="list-disc space-y-1 pl-5">
+          @for (error of rootFormErrors(); track error) {
+          <li>{{ error }}</li>
+          }
+        </ul>
+      </ngx-alert-panel>
+      }
+
+      <ngx-card
+        title="Purchase Form"
+        subtitle="Please fill in your details below."
+      >
+        <ngx-purchase-form #purchaseForm (saveRequested)="save($event)" />
+      </ngx-card>
+    </section>
+  </div>
+</div>

@@ -1,0 +1,40 @@
+@if (currentStep() === 1) {
+<ngx-wizard-step1-form
+  [data]="step1Data()"
+  [suite]="step1Suite()"
+  [shape]="step1Shape()"
+  [validationConfig]="step1ValidationConfig()"
+  (dataChange)="step1DataChange.emit($event)"
+  (validChange)="step1ValidChange.emit($event)"
+  (errorsChange)="step1ErrorsChange.emit($event)"
+  (stepSubmit)="emitStep1Submit()"
+/>
+} @if (currentStep() === 2) {
+<ngx-wizard-step2-form
+  [data]="step2Data()"
+  [suite]="step2Suite()"
+  [shape]="step2Shape()"
+  [validationConfig]="step2ValidationConfig()"
+  (dataChange)="step2DataChange.emit($event)"
+  (validChange)="step2ValidChange.emit($event)"
+  (errorsChange)="step2ErrorsChange.emit($event)"
+  (previous)="emitPreviousStep()"
+  (stepSubmit)="emitStep2Submit()"
+/>
+} @if (currentStep() === 3) {
+<ngx-wizard-step3-form
+  [step1Data]="step1Data()"
+  [step2Data]="step2Data()"
+  [data]="step3Data()"
+  [suite]="step3Suite()"
+  [shape]="step3Shape()"
+  [isSubmitting]="isSubmitting()"
+  (dataChange)="step3DataChange.emit($event)"
+  (validChange)="step3ValidChange.emit($event)"
+  (errorsChange)="step3ErrorsChange.emit($event)"
+  (goToStep)="emitGoToStep($event)"
+  (previous)="emitPreviousStep()"
+  (stepSubmit)="emitStep3Submit()"
+  (submitAll)="emitSubmitAll()"
+/>
+}

@@ -1,0 +1,75 @@
+<ngx-form-group-wrapper
+  ngModelGroup="businessHours"
+  class="business-hours-stack"
+>
+  <!-- Existing Business Hours List -->
+  <ngx-form-group-wrapper
+    ngModelGroup="values"
+    #valuesGroup="ngModelGroup"
+    class="business-hours-list-stack"
+  >
+    @for (item of values() | keyvalue; track item.key) {
+      <ngx-form-group-wrapper
+        [ngModelGroup]="item.key"
+        class="business-hours-item-card"
+      >
+        <div class="business-hours-item-layout">
+          <ngx-business-hour
+            [businessHour]="values()[item.key]"
+            [idPrefix]="'business-hours-values-' + item.key"
+            class="business-hours-item-main"
+          ></ngx-business-hour>
+
+          <button
+            type="button"
+            (click)="removeBusinessHour(item.key, valuesGroup)"
+            class="business-hours-remove-btn"
+            title="Remove business hour"
+          >
+            <span class="sr-only">Remove</span>
+            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+          </button>
+        </div>
+      </ngx-form-group-wrapper>
+    }
+  </ngx-form-group-wrapper>
+
+  @if ((values() | keyvalue)?.length) {
+    <div class="business-hours-divider">
+      <div class="business-hours-divider-line" aria-hidden="true">
+        <div class="business-hours-divider-rule"></div>
+      </div>
+      <div class="business-hours-divider-content">
+        <span class="business-hours-divider-label">Add New Time Slot</span>
+      </div>
+    </div>
+  }
+
+  <!-- Add New Business Hour -->
+  <ngx-form-group-wrapper
+    ngModelGroup="addValue"
+    #group="ngModelGroup"
+    class="business-hours-add-card"
+  >
+    <div class="business-hours-item-layout">
+      <ngx-business-hour
+        [businessHour]="addValue()"
+        idPrefix="business-hours-add"
+        class="business-hours-item-main"
+      ></ngx-business-hour>
+
+      <button
+        type="button"
+        [disabled]="isAddButtonDisabled(group)"
+        (click)="addBusinessHour(group, valuesGroup)"
+        class="business-hours-add-btn"
+      >
+        <i
+          class="fa-solid fa-plus business-hours-add-btn-icon"
+          aria-hidden="true"
+        ></i>
+        Add
+      </button>
+    </div>
+  </ngx-form-group-wrapper>
+</ngx-form-group-wrapper>

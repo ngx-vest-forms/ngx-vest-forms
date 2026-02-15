@@ -1,0 +1,51 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Validation Config Demo"
+    subtitle="Explore dependency-aware revalidation patterns with a single configuration map."
+  />
+
+  <ngx-form-page-layout>
+    <div layout-aside class="sidebar-card-stack">
+      <ngx-card title="Key Features">
+        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
+          <li>
+            <strong>No race conditions:</strong> dependency updates are stable.
+          </li>
+          <li>
+            <strong>Debounced validation:</strong> reduces validation noise.
+          </li>
+          <li>
+            <strong>Conditional fields:</strong> works with
+            <code>&#64;if</code> sections.
+          </li>
+          <li>
+            <strong>Cross-field revalidation:</strong> dependencies update
+            automatically.
+          </li>
+        </ul>
+      </ngx-card>
+
+      <ngx-form-state-card
+        [formState]="formBody.formState()"
+        [errors]="formErrors()"
+        [warnings]="formBody.warnings()"
+        [info]="formInfo()"
+        [validatedFields]="formBody.validatedFields()"
+        [pending]="formBody.pending()"
+      />
+    </div>
+
+    <div layout-main>
+      <ngx-validation-config-demo-form-body
+        #formBody
+        [formValue]="formValue()"
+        [shape]="shape"
+        [suite]="suite"
+        [validationConfig]="validationConfig"
+        (formValueChange)="formValue.set($event)"
+        (submitted)="save()"
+        (resetRequested)="reset()"
+      />
+    </div>
+  </ngx-form-page-layout>
+</div>

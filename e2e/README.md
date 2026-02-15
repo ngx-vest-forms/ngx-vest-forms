@@ -4,12 +4,33 @@ Comprehensive end-to-end tests for the three demo forms showcasing ngx-vest-form
 
 ## Test Structure
 
-### Test Files
+E2E tests now follow the same page/form naming pattern used in
+`projects/examples/src/app/pages/*`.
 
-- **`example.spec.ts`** - Smoke tests for basic navigation and routing
-- **`purchase-form.spec.ts`** - Comprehensive tests for the complex purchase form
-- **`business-hours-form.spec.ts`** - Tests for array-based business hours form
-- **`validation-config-demo.spec.ts`** - Tests for validationConfig patterns and race condition fixes
+### Page-aligned files
+
+All active Playwright specs live under `e2e/pages/` and are grouped per page:
+
+- **`pages/<page>/<page>.page.spec.ts`** - Layout/navigation/form-state sidebar checks
+- **`pages/<page>/<page>.form.spec.ts`** - Form functionality and validation behavior
+
+Current page groups:
+
+- `pages/app/app.page.spec.ts`
+- `pages/purchase-form/purchase.page.spec.ts`
+- `pages/purchase-form/purchase.form.spec.ts`
+- `pages/business-hours-form/business-hours.page.spec.ts`
+- `pages/business-hours-form/business-hours.form.spec.ts`
+- `pages/validation-config-demo/validation-config-demo.page.spec.ts`
+- `pages/validation-config-demo/validation-config-demo.form.spec.ts`
+- `pages/wizard-form/wizard-form.page.spec.ts`
+- `pages/wizard-form/wizard.form.spec.ts`
+- `pages/display-modes-demo/display-modes-demo.page.spec.ts`
+- `pages/display-modes-demo/display-modes-demo.form.spec.ts`
+
+Legacy root `e2e/*.spec.ts` files for migrated pages have been removed.
+Form coverage now lives fully under `e2e/pages/*/*.form.spec.ts` through
+page-local support files.
 
 ### Helper Functions
 
@@ -36,8 +57,8 @@ npm run ng e2e
 # Or using Playwright directly
 npx playwright test
 
-# Run specific test file
-npx playwright test e2e/purchase-form.spec.ts
+# Run specific page-aligned test file
+npx playwright test e2e/pages/purchase-form/purchase.form.spec.ts
 
 # Run tests in headed mode (see browser)
 npx playwright test --headed

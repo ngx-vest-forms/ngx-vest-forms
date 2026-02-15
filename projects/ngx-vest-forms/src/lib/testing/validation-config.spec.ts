@@ -1779,10 +1779,14 @@ describe('FormDirective - Comprehensive', () => {
       expect(field2ValidationCount).toBeLessThan(5);
     });
 
-    it('should batch markAsTouched with updateValueAndValidity to reduce class updates', async () => {
-      // This test verifies the optimization where markAsTouched is called
-      // BEFORE updateValueAndValidity with { onlySelf: true } to reduce
-      // duplicate class attribute updates
+    it('should NOT propagate touch state to dependent fields (improved UX)', async () => {
+      // This test verifies that touch state is NOT propagated from trigger to dependent fields.
+      // This prevents UX issues where dependent fields show errors immediately after being revealed
+      // by a toggle, even though the user never interacted with them.
+      //
+      // Changed in PR #78: Previously, touch was propagated. Now it's not.
+      // The validation still runs (field2 becomes invalid), but it's not marked as touched.
+      // This means errors won't show until the user directly interacts with field2.
 
       @Component({
         template: `
@@ -1849,11 +1853,16 @@ describe('FormDirective - Comprehensive', () => {
       fixture.detectChanges();
       await fixture.whenStable();
 
-      // Verify that field2 is also marked as touched (touch propagation works)
-      expect(field2Input.classList.contains('ng-touched')).toBe(true);
+      // Verify that field2 is NOT marked as touched (touch propagation removed)
+      // ✅ NEW BEHAVIOR: field2 stays untouched even though validation ran
+      expect(field2Input.classList.contains('ng-touched')).toBe(false);
 
-      // Verify validation ran (field2 should be invalid because it's empty)
+      // Verify validation still ran (field2 should be invalid because it's empty)
+      // This is important: validation runs, but touch is not propagated
       expect(field2Input.classList.contains('ng-invalid')).toBe(true);
+
+      // Verify field2 is marked as untouched (pristine untouched state)
+      expect(field2Input.classList.contains('ng-untouched')).toBe(true);
     });
   });
 });

@@ -1,0 +1,101 @@
+<form
+  #step3Form="ngxVestForm"
+  ngxVestForm
+  [suite]="suite()"
+  [formShape]="shape()"
+  [formValue]="data()"
+  (formValueChange)="dataChange.emit($event)"
+  (validChange)="validChange.emit($event)"
+  (errorsChange)="errorsChange.emit($event)"
+  (ngSubmit)="stepSubmit.emit()"
+>
+  <div class="mb-6 space-y-4">
+    @for (section of reviewSections(); track section.id) {
+    <section
+      class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
+      [attr.aria-label]="section.title"
+    >
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-medium text-gray-900 dark:text-white">
+          {{ section.title }}
+        </h3>
+        <button
+          type="button"
+          class="text-xs text-blue-600 hover:underline dark:text-blue-400"
+          [attr.aria-label]="'Edit ' + section.title"
+          (click)="goToStep.emit(section.id)"
+        >
+          Edit
+        </button>
+      </div>
+      <dl class="mt-2 grid grid-cols-2 gap-2 text-sm">
+        <dt class="text-gray-500 dark:text-gray-400">
+          {{ section.fieldLabel }}:
+        </dt>
+        <dd class="text-gray-900 dark:text-white">{{ section.fieldValue }}</dd>
+      </dl>
+    </section>
+    }
+  </div>
+
+  <div class="space-y-4">
+    <ngx-control-wrapper>
+      <div class="flex items-start gap-3">
+        <input
+          id="acceptTerms"
+          type="checkbox"
+          name="acceptTerms"
+          class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          [ngModel]="data().acceptTerms"
+        />
+        <label
+          for="acceptTerms"
+          class="text-sm text-gray-700 dark:text-gray-300"
+        >
+          I accept the Terms of Service
+        </label>
+      </div>
+    </ngx-control-wrapper>
+
+    <ngx-control-wrapper>
+      <div class="flex items-start gap-3">
+        <input
+          id="acceptPrivacy"
+          type="checkbox"
+          name="acceptPrivacy"
+          class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          [ngModel]="data().acceptPrivacy"
+        />
+        <label
+          for="acceptPrivacy"
+          class="text-sm text-gray-700 dark:text-gray-300"
+        >
+          I accept the Privacy Policy
+        </label>
+      </div>
+    </ngx-control-wrapper>
+
+    <ngx-control-wrapper>
+      <label for="comments" class="label-text"
+        >Additional Comments (optional)</label
+      >
+      <textarea
+        id="comments"
+        name="comments"
+        rows="3"
+        class="input-field"
+        [ngModel]="data().comments"
+      ></textarea>
+    </ngx-control-wrapper>
+  </div>
+
+  <ngx-wizard-navigation
+    [showPrevious]="true"
+    [showSaveAndContinue]="false"
+    [showSubmit]="true"
+    [isSubmitting]="isSubmitting()"
+    [submitLabel]="isSubmitting() ? 'Saving...' : 'Submit All'"
+    (previous)="previous.emit()"
+    (submitAll)="submitAll.emit()"
+  />
+</form>

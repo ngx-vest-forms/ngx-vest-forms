@@ -1,0 +1,218 @@
+<ngx-card>
+  <form
+    ngxVestForm
+    #vestForm="ngxVestForm"
+    [suite]="suite()"
+    [formShape]="shape()"
+    [formValue]="formValue()"
+    [validationConfig]="validationConfig()"
+    (formValueChange)="formValueChange.emit($event)"
+    (errorsChange)="currentErrors.set($event)"
+    (ngSubmit)="onSubmit()"
+    class="space-y-8"
+  >
+    <ngx-form-section
+      tone="blue"
+      title="Bidirectional Validation"
+      description="Changing either password field revalidates the other automatically."
+    >
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">Password</span>
+            <input
+              class="input-field"
+              type="password"
+              id="password"
+              name="password"
+              [ngModel]="formValue().password"
+              placeholder="Enter password (min 8 chars)"
+            />
+          </label>
+        </ngx-control-wrapper>
+
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">Confirm Password</span>
+            <input
+              class="input-field"
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              [ngModel]="formValue().confirmPassword"
+              placeholder="Confirm password"
+            />
+          </label>
+        </ngx-control-wrapper>
+      </div>
+    </ngx-form-section>
+
+    <ngx-form-section
+      tone="teal"
+      title="Cross-Field Requirement"
+      description="When either field has a value, the other becomes required."
+    >
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">Quantity</span>
+            <input
+              class="input-field"
+              type="number"
+              id="quantity"
+              name="quantity"
+              [ngModel]="formValue().quantity"
+              placeholder="Enter quantity"
+            />
+          </label>
+        </ngx-control-wrapper>
+
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">Justification</span>
+            <textarea
+              class="input-field"
+              id="quantityJustification"
+              name="quantityJustification"
+              [ngModel]="formValue().quantityJustification"
+              rows="3"
+              placeholder="Explain why the quantity is needed..."
+            ></textarea>
+          </label>
+        </ngx-control-wrapper>
+      </div>
+    </ngx-form-section>
+
+    <ngx-form-section
+      tone="green"
+      title="Conditional Validation"
+      description="Toggling the checkbox triggers justification validation."
+    >
+      <div class="space-y-4">
+        <div class="inline-checkbox-row">
+          <input
+            id="requiresJustification"
+            type="checkbox"
+            name="requiresJustification"
+            [ngModel]="formValue().requiresJustification"
+            class="inline-checkbox"
+          />
+          <label for="requiresJustification" class="inline-checkbox-label">
+            Requires Justification
+          </label>
+        </div>
+
+        @if (formValue().requiresJustification) {
+        <ngx-control-wrapper class="form-field animate-fade-in">
+          <label>
+            <span class="label-text">Justification (min 20 characters)</span>
+            <textarea
+              class="input-field"
+              id="justification"
+              name="justification"
+              [ngModel]="formValue().justification"
+              rows="3"
+              placeholder="Explain why justification is needed..."
+            ></textarea>
+          </label>
+        </ngx-control-wrapper>
+        }
+      </div>
+    </ngx-form-section>
+
+    <ngx-form-section
+      tone="purple"
+      title="Cascade Validation"
+      description="Changing country triggers state and zip code validation."
+    >
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">Country</span>
+            <select
+              class="input-field"
+              id="country"
+              name="country"
+              [ngModel]="formValue().country"
+            >
+              <option value="">Select country...</option>
+              <option value="US">United States</option>
+              <option value="CA">Canada</option>
+              <option value="UK">United Kingdom</option>
+              <option value="NL">Netherlands</option>
+            </select>
+          </label>
+        </ngx-control-wrapper>
+
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">State/Province</span>
+            <input
+              class="input-field"
+              type="text"
+              id="state"
+              name="state"
+              [ngModel]="formValue().state"
+              placeholder="Enter state/province"
+            />
+          </label>
+        </ngx-control-wrapper>
+
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">Postal Code</span>
+            <input
+              class="input-field"
+              type="text"
+              id="zipCode"
+              name="zipCode"
+              [ngModel]="formValue().zipCode"
+              placeholder="Enter postal code"
+            />
+          </label>
+        </ngx-control-wrapper>
+      </div>
+    </ngx-form-section>
+
+    <ngx-form-section
+      tone="orange"
+      title="Date Range Validation"
+      description="Start and end dates validate against each other."
+    >
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">Start Date</span>
+            <input
+              class="input-field"
+              type="date"
+              id="startDate"
+              name="startDate"
+              [ngModel]="formValue().startDate"
+            />
+          </label>
+        </ngx-control-wrapper>
+
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">End Date</span>
+            <input
+              class="input-field"
+              type="date"
+              id="endDate"
+              name="endDate"
+              [ngModel]="formValue().endDate"
+            />
+          </label>
+        </ngx-control-wrapper>
+      </div>
+    </ngx-form-section>
+
+    <div class="flex justify-end gap-3 pt-4">
+      <button type="button" class="btn btn-secondary" (click)="onReset()">
+        Reset Form
+      </button>
+      <button type="submit" class="btn btn-primary">Submit Form</button>
+    </div>
+  </form>
+</ngx-card>

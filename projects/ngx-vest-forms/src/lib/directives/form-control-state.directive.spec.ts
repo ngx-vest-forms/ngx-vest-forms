@@ -1,6 +1,6 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { enforce, only, staticSuite, test as vestTest, warn } from 'vest';
 import { NgxVestForms } from '../exports';
 import { FormControlStateDirective } from './form-control-state.directive';
@@ -54,6 +54,28 @@ class WarningOnlyHostComponent {
   );
 }
 
+@Component({
+  imports: [FormsModule, FormControlStateDirective],
+  template: `
+    <form #form="ngForm">
+      <div formControlState #state="formControlState">
+        <input name="test" [(ngModel)]="model" required />
+        <span id="has-been-validated-reset">{{
+          state.hasBeenValidated()
+        }}</span>
+      </div>
+    </form>
+  `,
+})
+class ResettableHostComponent {
+  model = '';
+  readonly form = viewChild<NgForm>('form');
+
+  reset(): void {
+    this.form()?.resetForm();
+  }
+}
+
 describe('FormControlStateDirective', () => {
   let fixture: ComponentFixture<TestHostComponent>;
 
@@ -62,6 +84,7 @@ describe('FormControlStateDirective', () => {
       imports: [
         TestHostComponent,
         WarningOnlyHostComponent,
+        ResettableHostComponent,
         FormsModule,
         FormControlStateDirective,
       ],
@@ -170,5 +193,38 @@ describe('FormControlStateDirective', () => {
     const warningText =
       warningFixture.nativeElement.querySelector('#warning-only').textContent;
     expect(warningText).toContain('Test warning');
+  });
+
+  it('should reset hasBeenValidated to false after form reset', async () => {
+    const resetFixture = TestBed.createComponent(ResettableHostComponent);
+    resetFixture.detectChanges();
+    await resetFixture.whenStable();
+
+    const input: HTMLInputElement =
+      resetFixture.nativeElement.querySelector('input');
+    const hasBeenValidatedEl = resetFixture.nativeElement.querySelector(
+      '#has-been-validated-reset'
+    );
+
+    // Initially false
+    expect(hasBeenValidatedEl.textContent).toBe('false');
+
+    // Interact so control becomes touched and validated
+    input.value = 'abc';
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new Event('blur'));
+    resetFixture.detectChanges();
+    await resetFixture.whenStable();
+    resetFixture.detectChanges();
+
+    expect(hasBeenValidatedEl.textContent).toBe('true');
+
+    // Reset should restore pristine interaction state and clear hasBeenValidated
+    resetFixture.componentInstance.reset();
+    resetFixture.detectChanges();
+    await resetFixture.whenStable();
+    resetFixture.detectChanges();
+
+    expect(hasBeenValidatedEl.textContent).toBe('false');
   });
 });

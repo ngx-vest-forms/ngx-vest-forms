@@ -1,0 +1,57 @@
+<div class="address-grid">
+  <ngx-control-wrapper class="form-field address-field-wide">
+    <label class="label-text" [attr.for]="fieldIds().street">Street</label>
+    <input
+      [id]="fieldIds().street"
+      class="input-field"
+      placeholder="Type street"
+      type="text"
+      [ngModel]="address()?.street"
+      name="street"
+    />
+  </ngx-control-wrapper>
+  <ngx-control-wrapper class="form-field address-field-compact">
+    <label class="label-text" [attr.for]="fieldIds().number">Number</label>
+    <input
+      [id]="fieldIds().number"
+      class="input-field"
+      placeholder="Type street number"
+      type="text"
+      [ngModel]="address()?.number"
+      name="number"
+    />
+  </ngx-control-wrapper>
+  <ngx-control-wrapper class="form-field address-field-wide">
+    <label class="label-text" [attr.for]="fieldIds().city">City</label>
+    <input
+      [id]="fieldIds().city"
+      class="input-field"
+      placeholder="Type city"
+      type="text"
+      [ngModel]="address()?.city"
+      name="city"
+    />
+  </ngx-control-wrapper>
+  <ngx-control-wrapper class="form-field address-field-compact">
+    <label class="label-text" [attr.for]="fieldIds().zipcode">Zipcode</label>
+    <input
+      [id]="fieldIds().zipcode"
+      class="input-field"
+      placeholder="Type zipcode"
+      type="text"
+      [ngModel]="address()?.zipcode"
+      name="zipcode"
+    />
+  </ngx-control-wrapper>
+  <ngx-control-wrapper class="form-field address-field-country">
+    <label class="label-text" [attr.for]="fieldIds().country">Country</label>
+    <input
+      [id]="fieldIds().country"
+      class="input-field"
+      placeholder="Type country"
+      type="text"
+      [ngModel]="address()?.country"
+      name="country"
+    />
+  </ngx-control-wrapper>
+</div>

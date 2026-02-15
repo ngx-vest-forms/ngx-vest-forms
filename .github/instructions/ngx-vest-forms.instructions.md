@@ -177,6 +177,16 @@ protected readonly validationConfig = computed(() => {
 </ngx-form-group-wrapper>
 ```
 
+### Wrapper usage conventions (project best practice)
+
+- Prefer the element form `<ngx-control-wrapper>` for single-control wrappers.
+  - ✅ Preferred: `<ngx-control-wrapper>...</ngx-control-wrapper>`
+  - ⚠️ Avoid by default: `<div ngx-control-wrapper>...</div>`
+- Use `ngxFormGroupWrapper` for group/container wrappers (especially `fieldset` + `ngModelGroup`).
+  - ✅ Example: `<fieldset ngxFormGroupWrapper ngModelGroup="addresses">...</fieldset>`
+- Use `ngx-form-group-wrapper` element when a dedicated group wrapper element improves readability.
+- For groups with multiple descendant controls, use group wrappers (not control wrappers) to avoid accidental control-level ARIA association.
+
 ### Error Display Modes
 
 Control when validation errors appear with five built-in modes:

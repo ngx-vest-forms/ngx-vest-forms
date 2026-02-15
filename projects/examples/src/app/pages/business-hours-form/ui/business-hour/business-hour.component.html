@@ -1,0 +1,27 @@
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+  <ngx-control-wrapper class="form-field">
+    <label class="label-text" [attr.for]="idPrefix() + '-from'">From</label>
+    <input
+      [id]="idPrefix() + '-from'"
+      mask="00:00"
+      placeholder="00:00"
+      type="text"
+      [ngModel]="businessHour()?.from"
+      name="from"
+      class="input-field"
+    />
+  </ngx-control-wrapper>
+
+  <ngx-control-wrapper class="form-field">
+    <label class="label-text" [attr.for]="idPrefix() + '-to'">To</label>
+    <input
+      [id]="idPrefix() + '-to'"
+      mask="00:00"
+      placeholder="00:00"
+      type="text"
+      [ngModel]="businessHour()?.to"
+      name="to"
+      class="input-field"
+    />
+  </ngx-control-wrapper>
+</div>
