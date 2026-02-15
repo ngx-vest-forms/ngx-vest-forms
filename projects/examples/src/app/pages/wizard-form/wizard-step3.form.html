@@ -7,7 +7,7 @@
   (formValueChange)="dataChange.emit($event)"
   (validChange)="validChange.emit($event)"
   (errorsChange)="errorsChange.emit($event)"
-  (ngSubmit)="submit.emit()"
+  (ngSubmit)="stepSubmit.emit()"
 >
   <div class="mb-6 space-y-4">
     @for (section of reviewSections(); track section.id) {

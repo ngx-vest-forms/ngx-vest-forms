@@ -7,7 +7,7 @@
   (dataChange)="step1DataChange.emit($event)"
   (validChange)="step1ValidChange.emit($event)"
   (errorsChange)="step1ErrorsChange.emit($event)"
-  (submit)="emitStep1Submit()"
+  (stepSubmit)="emitStep1Submit()"
 />
 } @if (currentStep() === 2) {
 <ngx-wizard-step2-form
@@ -19,7 +19,7 @@
   (validChange)="step2ValidChange.emit($event)"
   (errorsChange)="step2ErrorsChange.emit($event)"
   (previous)="emitPreviousStep()"
-  (submit)="emitStep2Submit()"
+  (stepSubmit)="emitStep2Submit()"
 />
 } @if (currentStep() === 3) {
 <ngx-wizard-step3-form
@@ -34,7 +34,7 @@
   (errorsChange)="step3ErrorsChange.emit($event)"
   (goToStep)="emitGoToStep($event)"
   (previous)="emitPreviousStep()"
-  (submit)="emitStep3Submit()"
+  (stepSubmit)="emitStep3Submit()"
   (submitAll)="emitSubmitAll()"
 />
 }
