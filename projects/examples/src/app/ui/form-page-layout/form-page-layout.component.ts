@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
   selector: 'ngx-form-page-layout',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="grid gap-8 lg:grid-cols-[320px_1fr]">
       <aside class="flex flex-col gap-8">
@@ -14,6 +13,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
       </section>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class FormPageLayout {}

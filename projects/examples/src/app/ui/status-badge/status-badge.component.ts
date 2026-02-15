@@ -7,7 +7,6 @@ import {
 
 @Component({
   selector: 'ngx-status-badge',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <span
       class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
@@ -32,6 +31,7 @@ import {
       }
     </span>
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StatusBadge {
   readonly valid = input.required<boolean>();

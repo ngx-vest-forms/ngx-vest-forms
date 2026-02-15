@@ -8,8 +8,8 @@ import { BusinessHourFormModel } from '../../../../models/business-hours-form.mo
   imports: [NgxVestForms, NgxMaskDirective],
   templateUrl: './business-hour.component.html',
   styleUrls: ['./business-hour.component.scss'],
-  viewProviders: [vestFormsViewProviders],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  viewProviders: [vestFormsViewProviders]
 })
 export class BusinessHourComponent {
   private static nextInstanceId = 0;

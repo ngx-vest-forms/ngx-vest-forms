@@ -301,7 +301,10 @@ describe('FormErrorControlDirective', () => {
         .find((token) => /^ngx-error-control-\d+-error$/.test(token));
 
       expect(ownedErrorToken).toBeTruthy();
-      oldErrorId = ownedErrorToken!;
+      if (!ownedErrorToken) {
+        throw new Error('Expected owned error token to be present');
+      }
+      oldErrorId = ownedErrorToken;
       expect(document.getElementById(oldErrorId)).toBeInTheDocument();
     });
 
@@ -327,8 +330,11 @@ describe('FormErrorControlDirective', () => {
         .find((token) => /^ngx-error-control-\d+-error$/.test(token));
 
       expect(newErrorToken).toBeTruthy();
+      if (!newErrorToken) {
+        throw new Error('Expected new error token to be present');
+      }
       expect(newErrorToken).not.toBe(oldErrorId);
-      expect(document.getElementById(newErrorToken!)).toBeInTheDocument();
+      expect(document.getElementById(newErrorToken)).toBeInTheDocument();
       expect(document.getElementById(oldErrorId)).toBeNull();
     });
   });

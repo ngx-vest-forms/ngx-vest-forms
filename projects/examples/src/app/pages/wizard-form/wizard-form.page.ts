@@ -37,9 +37,9 @@ import {
     StatusBadge,
     WizardFormBodyComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './wizard-form.page.html',
   styleUrl: './wizard-form.page.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WizardFormPageComponent {
   protected readonly currentStep = signal(1);

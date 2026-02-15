@@ -26,9 +26,9 @@ import { validationDemoSuite } from './validation-demo.validations';
     PageTitle,
     ValidationConfigDemoFormBody,
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './validation-config-demo.page.html',
   styleUrls: ['./validation-config-demo.page.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ValidationConfigDemoPageComponent {
   private readonly initialFormValue: ValidationDemoModel = {

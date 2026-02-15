@@ -10,7 +10,6 @@ type FormSectionTone =
 
 @Component({
   selector: 'ngx-form-section',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section
       class="relative rounded-lg border p-6"
@@ -66,6 +65,7 @@ type FormSectionTone =
       <ng-content></ng-content>
     </section>
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FormSectionComponent {
   readonly title = input.required<string>();

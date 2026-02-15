@@ -19,7 +19,6 @@ export type WizardStepConfig = {
  */
 @Component({
   selector: 'ngx-wizard-steps',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <nav
       [attr.aria-label]="
@@ -156,6 +155,7 @@ export type WizardStepConfig = {
       display: block;
     }
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WizardStepsComponent {
   readonly steps = input.required<WizardStepConfig[]>();

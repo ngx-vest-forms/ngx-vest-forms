@@ -31,8 +31,8 @@ export type BusinessHoursMap = Record<string, BusinessHourFormModel>;
   imports: [NgxVestForms, KeyValuePipe, BusinessHourComponent],
   templateUrl: './business-hours.component.html',
   styleUrls: ['./business-hours.component.scss'],
-  viewProviders: [vestFormsViewProviders],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  viewProviders: [vestFormsViewProviders]
 })
 export class BusinessHoursComponent {
   /**

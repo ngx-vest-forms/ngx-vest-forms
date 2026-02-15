@@ -9,7 +9,6 @@ import {
 @Component({
   selector: 'ngx-json-preview',
   imports: [JsonPipe],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (title()) {
       <h2
@@ -28,6 +27,7 @@ import {
       >{{ isStringValue() ? value() : (value() | json) }}</pre
     >
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class JsonPreviewComponent {
   readonly title = input<string>();

@@ -13,10 +13,10 @@ let nextAddressInstanceId = 0;
 @Component({
   selector: 'ngx-address',
   imports: [NgxVestForms],
-  viewProviders: [vestFormsViewProviders],
   templateUrl: './address.component.html',
   styleUrls: ['./address.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  viewProviders: [vestFormsViewProviders]
 })
 export class AddressComponent {
   private readonly defaultIdPrefix = `ngx-address-${nextAddressInstanceId++}`;
@@ -27,7 +27,7 @@ export class AddressComponent {
    */
   readonly idPrefix = input<string>(this.defaultIdPrefix);
 
-  address = input<AddressModel>();
+  readonly address = input<AddressModel>();
 
   protected readonly idFor = (field: string) => `${this.idPrefix()}-${field}`;
 

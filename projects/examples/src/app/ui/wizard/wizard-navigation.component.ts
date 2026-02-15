@@ -17,7 +17,6 @@ import {
  */
 @Component({
   selector: 'ngx-wizard-navigation',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
       class="flex items-center justify-between pt-6"
@@ -130,6 +129,7 @@ import {
       display: block;
     }
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WizardNavigationComponent {
   readonly showPrevious = input(true);

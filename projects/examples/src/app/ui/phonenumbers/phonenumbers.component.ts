@@ -28,8 +28,8 @@ import type { PhoneNumberMap } from '../../models/phonenumber.model';
   imports: [NgxVestForms, KeyValuePipe],
   templateUrl: './phonenumbers.component.html',
   styleUrls: ['./phonenumbers.component.scss'],
-  viewProviders: [vestFormsViewProviders],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  viewProviders: [vestFormsViewProviders]
 })
 export class PhoneNumbersComponent {
   /**

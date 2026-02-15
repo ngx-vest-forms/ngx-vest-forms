@@ -4,10 +4,6 @@ type AlertTone = 'error' | 'warning' | 'info' | 'success';
 
 @Component({
   selector: 'ngx-alert-panel',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  host: {
-    class: 'block',
-  },
   template: `
     <section
       class="rounded-lg border p-4"
@@ -47,6 +43,10 @@ type AlertTone = 'error' | 'warning' | 'info' | 'success';
       </div>
     </section>
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    class: 'block',
+  }
 })
 export class AlertPanel {
   readonly tone = input<AlertTone>('info');

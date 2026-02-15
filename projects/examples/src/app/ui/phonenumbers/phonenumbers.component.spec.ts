@@ -20,7 +20,7 @@ import { PhoneNumbersComponent } from './phonenumbers.component';
   `,
 })
 class TestWrapperComponent {
-  formValue = signal<{ phonenumbers?: Record<string, string> }>({});
+  readonly formValue = signal<{ phonenumbers?: Record<string, string> }>({});
 
   onPhoneNumbersChange(values: Record<string, string>): void {
     this.formValue.update((current) => ({ ...current, phonenumbers: values }));

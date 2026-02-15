@@ -19,7 +19,6 @@ type MessageInput = readonly string[] | Record<string, string[]>;
 @Component({
   selector: 'ngx-form-state-card',
   imports: [Card, StatusBadge, AlertPanel, JsonPreviewComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ngx-card>
       <div class="mb-4 border-b border-gray-200 pb-4 dark:border-gray-700">
@@ -149,6 +148,7 @@ type MessageInput = readonly string[] | Record<string, string[]>;
       }
     </ngx-card>
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FormStateCardComponent {
   readonly title = input('Form State');
@@ -181,8 +181,6 @@ export class FormStateCardComponent {
   readonly validationErrorRulesTitle = input('Error rules');
   readonly validationWarningRulesTitle = input('Warning rules');
   readonly resolvedTitle = input('Passing');
-
-  constructor() {}
 
   // ── Internals: Record-form of current errors/warnings ──────────────
 
