@@ -52,6 +52,16 @@ export class DisplayModesDemoFormBody {
     mapWarningsToRecord(this.vestForm()?.fieldWarnings() ?? new Map())
   );
 
+  /** Field paths that have been validated (touched/blurred or submitted). */
+  readonly validatedFields = computed(
+    () => this.vestForm()?.touchedFieldPaths() ?? []
+  );
+
+  /** True while async validation is in progress. */
+  readonly pending = computed(
+    () => this.vestForm()?.ngForm.form.pending ?? false
+  );
+
   protected onSubmit(): void {
     this.submitted.emit();
   }

@@ -13,6 +13,9 @@ test.describe('Validation Config Demo Page', () => {
     await expect(page.locator('aside')).toBeVisible();
     await expect(page.locator('aside')).toContainText(/form value/i);
     await expect(page.locator('aside')).toContainText(/form state/i);
+    await expect(
+      page.locator('aside span[aria-label="Pristine"]').first()
+    ).toBeVisible();
 
     await expect(page.locator('text=/bidirectional.*password/i')).toBeVisible();
     await expect(page.locator('text=/date range/i')).toBeVisible();

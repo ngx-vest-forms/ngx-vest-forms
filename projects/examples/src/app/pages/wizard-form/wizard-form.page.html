@@ -37,6 +37,8 @@
         [formValue]="currentStepData()"
         [errors]="currentStepErrors()"
         [info]="wizardInfo()"
+        [validatedFields]="currentStepValidatedFields()"
+        [pending]="currentStepPending()"
       />
 
       <ngx-card title="Key Features">

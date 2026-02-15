@@ -11,7 +11,10 @@ test.describe('Wizard Form Page', () => {
     ).toBeVisible();
 
     await expect(page.locator('ngx-wizard-steps nav')).toBeVisible();
-    await expect(page.locator('aside')).toBeVisible();
-    await expect(page.locator('aside')).toContainText(/form value/i);
+    await expect(page.locator('aside').first()).toBeVisible();
+    await expect(page.locator('aside').first()).toContainText(/form value/i);
+    await expect(
+      page.locator('aside span[aria-label="Pristine"]').first()
+    ).toBeVisible();
   });
 });

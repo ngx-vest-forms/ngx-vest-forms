@@ -94,6 +94,11 @@ export class PurchaseForm {
     () => this.vestForm()?.touchedFieldPaths() ?? []
   );
 
+  /** True while async validation is in progress. */
+  readonly pending = computed(
+    () => this.vestForm()?.ngForm.form.pending ?? false
+  );
+
   /**
    * Reactive fetch trigger derived from firstName.
    * Automatically becomes `true` when firstName is "Luke".

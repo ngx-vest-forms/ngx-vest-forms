@@ -10,5 +10,8 @@ test.describe('Display Modes Demo Page', () => {
     await expect(page.locator('aside')).toBeVisible();
     await expect(page.locator('aside')).toContainText(/form value/i);
     await expect(page.locator('aside')).toContainText(/form state/i);
+    await expect(
+      page.locator('aside span[aria-label="Pristine"]').first()
+    ).toBeVisible();
   });
 });

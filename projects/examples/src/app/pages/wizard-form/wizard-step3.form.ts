@@ -67,4 +67,12 @@ export class WizardStep3FormComponent {
   markAllAsTouched(): void {
     this.form()?.markAllAsTouched();
   }
+
+  validatedFields(): readonly string[] {
+    return this.form()?.touchedFieldPaths() ?? [];
+  }
+
+  pending(): boolean {
+    return this.form()?.ngForm.form.pending ?? false;
+  }
 }

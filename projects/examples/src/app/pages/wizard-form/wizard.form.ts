@@ -115,4 +115,26 @@ export class WizardFormBodyComponent {
         break;
     }
   }
+
+  currentStepValidatedFields(): readonly string[] {
+    switch (this.currentStep()) {
+      case 1:
+        return this.step1Form()?.validatedFields() ?? [];
+      case 2:
+        return this.step2Form()?.validatedFields() ?? [];
+      default:
+        return this.step3Form()?.validatedFields() ?? [];
+    }
+  }
+
+  currentStepPending(): boolean {
+    switch (this.currentStep()) {
+      case 1:
+        return this.step1Form()?.pending() ?? false;
+      case 2:
+        return this.step2Form()?.pending() ?? false;
+      default:
+        return this.step3Form()?.pending() ?? false;
+    }
+  }
 }

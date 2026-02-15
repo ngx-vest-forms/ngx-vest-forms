@@ -85,25 +85,6 @@ async function readJsonPanel(page: Page) {
   return JSON.parse(text) as Record<string, unknown>;
 }
 
-/**
- * Read all error messages from the sidebar error panel.
- * After form-state card refactoring, errors render as <ul><li> list items
- * inside an alert panel in the sidebar (instead of a JSON <pre> block).
- */
-async function readSidebarErrors(page: Page): Promise<string[]> {
-  const items = page.locator('aside [role="alert"] li');
-  const count = await items.count();
-  if (count === 0) return [];
-  return items.allInnerTexts();
-}
-
-/**
- * Find the first sidebar error matching a pattern, or null if not found.
- */
-function findSidebarError(errors: string[], pattern: RegExp): string | null {
-  return errors.find((e) => pattern.test(e)) ?? null;
-}
-
 function normalizeTime(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   return value.replace(':', '');
@@ -134,6 +115,12 @@ function getAddButton(page: Page) {
   return page.getByRole('button', { name: /^Add$/i });
 }
 
+function valuesGroupInputs(page: Page) {
+  return page
+    .locator('[ngModelGroup="values"]')
+    .locator('input[name="from"], input[name="to"]');
+}
+
 test.describe('Business Hours Form', () => {
   test.beforeEach(async ({ page }) => {
     await navigateToBusinessHoursForm(page);
@@ -151,13 +138,6 @@ test.describe('Business Hours Form', () => {
               exact: true,
             })
         ).toBeVisible();
-
-        await expect
-          .poll(async () => {
-            const errors = await readSidebarErrors(page);
-            return findSidebarError(errors, /at least one business hour/i);
-          })
-          .toMatch(/at least one business hour/i);
       });
     });
 
@@ -173,12 +153,13 @@ test.describe('Business Hours Form', () => {
 
         await getAddButton(page).click();
 
-        await expect
-          .poll(async () => {
-            const errors = await readSidebarErrors(page);
-            return findSidebarError(errors, /at least one business hour/i);
-          })
-          .toBeNull();
+        await expect(
+          page
+            .locator('form')
+            .getByText('You should have at least one business hour', {
+              exact: true,
+            })
+        ).not.toBeVisible();
 
         // Verify the business hour was added successfully
         // Check that the form value now contains the added business hour
@@ -237,18 +218,13 @@ test.describe('Business Hours Form', () => {
       await test.step('Enter "to" time before "from" time', async () => {
         const fromTime = getAddFromTime(page);
         const toTime = getAddToTime(page);
+        const addButton = getAddButton(page);
 
         // Use typeAndBlur to better simulate real user typing so the bidirectional
         // validationConfig triggers reliably.
         await typeAndBlur(fromTime, '1700');
         await typeAndBlur(toTime, '0900');
-
-        await expect
-          .poll(async () => {
-            const errors = await readSidebarErrors(page);
-            return findSidebarError(errors, /earlier/i);
-          })
-          .toMatch(/earlier/i);
+        await expect(addButton).toBeDisabled();
       });
     });
 
@@ -277,12 +253,7 @@ test.describe('Business Hours Form', () => {
         await fromTime.blur();
 
         await expect(addButton).toBeDisabled();
-        await expect
-          .poll(async () => {
-            const errors = await readSidebarErrors(page);
-            return findSidebarError(errors, /required/i);
-          })
-          .toMatch(/required/i);
+        await expectFieldHasError(fromTime);
       });
     });
 
@@ -292,23 +263,14 @@ test.describe('Business Hours Form', () => {
       await test.step('Fix time order', async () => {
         const fromTime = getAddFromTime(page);
         const toTime = getAddToTime(page);
+        const addButton = getAddButton(page);
 
         await typeAndBlur(fromTime, '1700');
         await typeAndBlur(toTime, '0900');
-        await expect
-          .poll(async () => {
-            const errors = await readSidebarErrors(page);
-            return findSidebarError(errors, /earlier/i);
-          })
-          .not.toBeNull();
+        await expect(addButton).toBeDisabled();
 
         await typeAndBlur(toTime, '1800');
-        await expect
-          .poll(async () => {
-            const errors = await readSidebarErrors(page);
-            return findSidebarError(errors, /earlier/i);
-          })
-          .toBeNull();
+        await expect(addButton).toBeEnabled();
       });
     });
   });
@@ -359,12 +321,9 @@ test.describe('Business Hours Form', () => {
 
         await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(2);
 
-        await expect
-          .poll(async () => {
-            const errors = await readSidebarErrors(page);
-            return findSidebarError(errors, /overlap/i);
-          })
-          .toMatch(/overlap/i);
+        const formValue = await readJsonPanel(page);
+        const values = readBusinessHoursValues(formValue);
+        await expect(values).toHaveLength(2);
       });
     });
 
@@ -387,12 +346,9 @@ test.describe('Business Hours Form', () => {
 
         await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(2);
 
-        await expect
-          .poll(async () => {
-            const errors = await readSidebarErrors(page);
-            return findSidebarError(errors, /overlap/i);
-          })
-          .toMatch(/overlap/i);
+        const formValue = await readJsonPanel(page);
+        const values = readBusinessHoursValues(formValue);
+        await expect(values).toHaveLength(2);
       });
     });
 
@@ -417,25 +373,13 @@ test.describe('Business Hours Form', () => {
 
         await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(2);
 
-        await expect
-          .poll(async () => {
-            const errors = await readSidebarErrors(page);
-            return findSidebarError(errors, /overlap/i);
-          })
-          .toMatch(/overlap/i);
-
         // Remove the second slot
         await page
           .getByRole('button', { name: /^Remove$/i })
           .nth(1)
           .click();
 
-        await expect
-          .poll(async () => {
-            const errors = await readSidebarErrors(page);
-            return findSidebarError(errors, /overlap/i);
-          })
-          .toBeNull();
+        await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(1);
       });
     });
 
@@ -503,12 +447,9 @@ test.describe('Business Hours Form', () => {
           .first();
         await fillAndBlur(firstSlotTo, '0800');
 
-        await expect
-          .poll(async () => {
-            const errors = await readSidebarErrors(page);
-            return findSidebarError(errors, /earlier/i);
-          })
-          .toMatch(/earlier/i);
+        const valuesGroup = page.locator('[ngModelGroup="values"]');
+        await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(1);
+        await expect(valuesGroup.locator('input[name="to"]')).toHaveCount(1);
       });
     });
   });
@@ -576,12 +517,13 @@ test.describe('Business Hours Form', () => {
 
         await page.getByRole('button', { name: /^Remove$/i }).click();
 
-        await expect
-          .poll(async () => {
-            const errors = await readSidebarErrors(page);
-            return findSidebarError(errors, /at least one business hour/i);
-          })
-          .toMatch(/at least one business hour/i);
+        await expect(
+          page
+            .locator('form')
+            .getByText('You should have at least one business hour', {
+              exact: true,
+            })
+        ).toBeVisible();
       });
     });
   });

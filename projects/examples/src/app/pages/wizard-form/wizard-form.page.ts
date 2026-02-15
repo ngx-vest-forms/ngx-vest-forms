@@ -123,6 +123,14 @@ export class WizardFormPageComponent {
     }
   });
 
+  protected readonly currentStepValidatedFields = computed(
+    () => this.formBody()?.currentStepValidatedFields() ?? []
+  );
+
+  protected readonly currentStepPending = computed(
+    () => this.formBody()?.currentStepPending() ?? false
+  );
+
   protected readonly wizardInfo = computed(() => [
     `Viewing Step ${this.currentStep()} model and feedback.`,
   ]);

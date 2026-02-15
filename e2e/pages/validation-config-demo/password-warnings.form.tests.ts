@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import {
   fillAndBlur,
   getWarningElementFor,
+  navigateToPurchaseForm,
   waitForValidationToSettle,
 } from '../../helpers/form-helpers';
 
@@ -28,7 +29,7 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
         console.log('BROWSER:', msg.text());
       }
     });
-    await page.goto('http://localhost:4200/');
+    await navigateToPurchaseForm(page);
   });
 
   /**

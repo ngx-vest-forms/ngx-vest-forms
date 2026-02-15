@@ -29,6 +29,7 @@ type MessageInput = readonly string[] | Record<string, string[]>;
           <ngx-status-badge
             [valid]="effectiveIsValid()"
             [pending]="isPending()"
+            [pristine]="isPristine()"
           />
         </div>
       </div>
@@ -148,7 +149,7 @@ type MessageInput = readonly string[] | Record<string, string[]>;
       }
     </ngx-card>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FormStateCardComponent {
   readonly title = input('Form State');
@@ -156,6 +157,8 @@ export class FormStateCardComponent {
   readonly formState = input<NgxFormState<unknown> | null>(null);
   readonly isValid = input<boolean | null>(null);
   readonly formValue = input<unknown | null>(null);
+  /** True when async validation is currently in progress. */
+  readonly pending = input(false);
 
   /** Accepts a flat `string[]` or a `Record<string, string[]>` (flattened internally). */
   readonly errors = input<MessageInput | null>(null);
@@ -186,7 +189,9 @@ export class FormStateCardComponent {
 
   readonly #errorsRecord = computed(() => {
     const explicit = this.errors();
-    if (explicit !== null) return this.#toRecord(explicit);
+    if (explicit !== null) {
+      return this.#filterByValidatedFields(this.#toRecord(explicit));
+    }
     return this.#filterByValidatedFields(this.resolvedFormState().errors);
   });
 
@@ -295,9 +300,17 @@ export class FormStateCardComponent {
       this.uniqueWarnings().length > 0
   );
 
-  protected readonly isPending = computed(
-    () => !this.effectiveIsValid() && !this.hasDisplayableValidationMessages()
-  );
+  protected readonly isPending = computed(() => this.pending());
+
+  protected readonly isPristine = computed(() => {
+    const validated = this.validatedFields();
+    return (
+      !this.isPending() &&
+      Array.isArray(validated) &&
+      validated.length === 0 &&
+      !this.hasDisplayableValidationMessages()
+    );
+  });
 
   protected readonly hasMessages = computed(
     () =>
@@ -324,7 +337,7 @@ export class FormStateCardComponent {
   /**
    * Filters a record to only include entries for validated fields.
    * When `validatedFields` is not provided (null), returns the full record.
-   * ROOT_FORM entries are always included (form-level messages).
+   * ROOT_FORM entries are shown only after at least one field has been validated.
    */
   #filterByValidatedFields(
     record: Record<string, string[]>
@@ -334,12 +347,8 @@ export class FormStateCardComponent {
       return record;
     }
     if (validatedFieldsList.length === 0) {
-      // No fields validated yet — only show ROOT_FORM entries
-      const filtered: Record<string, string[]> = {};
-      if (record[ROOT_FORM]) {
-        filtered[ROOT_FORM] = record[ROOT_FORM];
-      }
-      return filtered;
+      // No fields validated yet — keep UI neutral.
+      return {};
     }
     const validated = new Set(validatedFieldsList);
     const filtered: Record<string, string[]> = {};
