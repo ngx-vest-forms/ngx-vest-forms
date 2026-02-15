@@ -18,18 +18,21 @@ export function parseAriaIdTokens(value: string | null): string[] {
  */
 export function mergeAriaDescribedBy(
   existing: string | null,
-  activeIds: string[],
-  ownedIds: string[]
+  activeIds: readonly string[],
+  ownedIds: readonly string[]
 ): string | null {
+  const ownedIdSet = new Set(ownedIds);
   const existingTokens = parseAriaIdTokens(existing);
   const existingWithoutOwned = existingTokens.filter(
-    (token) => !ownedIds.includes(token)
+    (token) => !ownedIdSet.has(token)
   );
 
   const merged: string[] = [...existingWithoutOwned];
+  const mergedIdSet = new Set(merged);
   for (const id of activeIds) {
-    if (!merged.includes(id)) {
+    if (!mergedIdSet.has(id)) {
       merged.push(id);
+      mergedIdSet.add(id);
     }
   }
 
@@ -40,12 +43,16 @@ export function mergeAriaDescribedBy(
  * Resolves control targets based on ARIA association mode.
  */
 export function resolveAssociationTargets(
-  controls: HTMLElement[],
+  controls: readonly HTMLElement[],
   mode: AriaAssociationMode
 ): HTMLElement[] {
-  if (mode === 'single-control') {
-    return controls.length === 1 ? controls : [];
+  if (mode === 'none') {
+    return [];
   }
 
-  return controls;
+  if (mode === 'single-control') {
+    return controls.length === 1 ? [...controls] : [];
+  }
+
+  return [...controls];
 }
