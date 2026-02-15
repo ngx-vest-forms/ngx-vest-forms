@@ -232,7 +232,9 @@ test.describe('Purchase Form', () => {
         await confirmPassword.blur();
         await waitForValidationToSettle(page, 10000);
 
-        // Assert user-visible validation feedback instead of class timing internals.
+        // Assert user-visible feedback instead of relying on ng-valid/ng-invalid
+        // class timing. Those classes can briefly lag during async/debounced
+        // validation propagation, which makes class-based checks flaky in CI.
         await expect(
           page
             .locator('form')
@@ -309,6 +311,7 @@ test.describe('Purchase Form', () => {
         // Wait for shipping section to appear and verify it's visible
         const shippingHeading = page.getByRole('heading', {
           name: 'Shipping Address',
+          level: 3,
         });
         await expect(shippingHeading).toBeVisible();
 
@@ -345,6 +348,7 @@ test.describe('Purchase Form', () => {
         // Wait for shipping address section to appear (it's conditionally rendered)
         const shippingHeading = page.getByRole('heading', {
           name: /shipping address/i,
+          level: 3,
         });
         await expect(shippingHeading).toBeVisible();
 

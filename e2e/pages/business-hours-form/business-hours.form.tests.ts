@@ -115,12 +115,6 @@ function getAddButton(page: Page) {
   return page.getByRole('button', { name: /^Add$/i });
 }
 
-function valuesGroupInputs(page: Page) {
-  return page
-    .locator('[ngModelGroup="values"]')
-    .locator('input[name="from"], input[name="to"]');
-}
-
 test.describe('Business Hours Form', () => {
   test.beforeEach(async ({ page }) => {
     await navigateToBusinessHoursForm(page);
