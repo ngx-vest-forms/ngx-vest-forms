@@ -7,7 +7,11 @@ import {
   ValidationErrors,
 } from '@angular/forms';
 import { ROOT_FORM } from '../constants';
-import { stringifyFieldPath } from './field-path.utils';
+import {
+  isUnsafePathSegment,
+  parseFieldPath,
+  stringifyFieldPath,
+} from './field-path.utils';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -147,8 +151,11 @@ export function getFormGroupField(
  * to include disabled field values in form submissions. Use Angular's `getRawValue()`
  * method on your form if you need to access disabled field values.
  *
- * This RxJS operator merges the value of the form with the raw value.
+ * This utility merges the value of the form with the raw value.
  * By doing this we can assure that we don't lose values of disabled form fields
+ *
+ * Security: Unsafe prototype-related keys (`__proto__`, `prototype`, `constructor`)
+ * are skipped during recursive merge.
  * @param form
  */
 export function mergeValuesAndRawValues<T>(form: FormGroup): T {
@@ -166,6 +173,10 @@ export function mergeValuesAndRawValues<T>(form: FormGroup): T {
   // Recursive function to merge rawValue into value
   function mergeRecursive(target: UnknownRecord, source: UnknownRecord): void {
     for (const key of Object.keys(source)) {
+      if (isUnsafePathSegment(key)) {
+        continue;
+      }
+
       const sourceValue = source[key];
       const targetValue = target[key];
 
@@ -245,24 +256,40 @@ export function cloneDeep<T>(object: T): T {
 }
 
 /**
- * Sets a value in an object in the correct path
- * @param obj
- * @param path
- * @param value
+ * Sets a value in an object at the provided field path.
+ *
+ * Supports dot and bracket notation via `parseFieldPath()`.
+ * Examples: `user.profile.name`, `addresses[0].street`.
+ *
+ * Security: If any path segment matches an unsafe prototype-related key
+ * (`__proto__`, `prototype`, `constructor`), the write is ignored.
+ *
+ * @param obj - Target object to mutate.
+ * @param path - Dot/bracket field path.
+ * @param value - Value to assign at the resolved path.
  */
 export function setValueAtPath(
   obj: object,
   path: string,
   value: unknown
 ): void {
-  const keys = path.split('.');
+  const keys = parseFieldPath(path);
+  if (keys.length === 0) {
+    return;
+  }
+
   let current: UnknownRecord = obj as UnknownRecord;
 
   for (let i = 0; i < keys.length - 1; i++) {
-    const key = keys[i];
-    if (key === undefined) {
+    const segment = keys[i];
+    if (segment === undefined) {
       continue;
     }
+    if (isUnsafePathSegment(segment)) {
+      return;
+    }
+
+    const key = String(segment);
 
     const next = current[key];
     if (!isRecord(next)) {
@@ -271,10 +298,12 @@ export function setValueAtPath(
     current = current[key] as UnknownRecord;
   }
 
-  const lastKey = keys[keys.length - 1];
-  if (lastKey !== undefined) {
-    current[lastKey] = value;
+  const lastSegment = keys[keys.length - 1];
+  if (lastSegment === undefined || isUnsafePathSegment(lastSegment)) {
+    return;
   }
+
+  current[String(lastSegment)] = value;
 }
 
 /**

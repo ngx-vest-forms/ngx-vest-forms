@@ -9,6 +9,12 @@ import {
   OnDestroy,
   signal,
 } from '@angular/core';
+import {
+  AriaAssociationMode,
+  mergeAriaDescribedBy,
+  parseAriaIdTokens,
+  resolveAssociationTargets,
+} from '../utils/aria-association.utils';
 import { createDebouncedPendingState } from '../utils/pending-state.utils';
 import { FormErrorDisplayDirective } from './form-error-display.directive';
 
@@ -29,7 +35,7 @@ let nextUniqueId = 0;
   hostDirectives: [
     {
       directive: FormErrorDisplayDirective,
-      inputs: ['errorDisplayMode'],
+      inputs: ['errorDisplayMode', 'warningDisplayMode'],
     },
   ],
 })
@@ -47,9 +53,7 @@ export class FormErrorControlDirective implements AfterContentInit, OnDestroy {
    * - `single-control`: apply ARIA attributes only when exactly one control is found.
    * - `none`: do not mutate descendant controls.
    */
-  readonly ariaAssociationMode = input<
-    'all-controls' | 'single-control' | 'none'
-  >('all-controls');
+  readonly ariaAssociationMode = input<AriaAssociationMode>('all-controls');
 
   /**
    * Unique ID prefix for this instance.
@@ -80,7 +84,7 @@ export class FormErrorControlDirective implements AfterContentInit, OnDestroy {
       ids.push(this.errorId);
     }
 
-    if (this.errorDisplay.warnings().length > 0) {
+    if (this.errorDisplay.shouldShowWarnings()) {
       ids.push(this.warningId);
     }
 
@@ -91,34 +95,11 @@ export class FormErrorControlDirective implements AfterContentInit, OnDestroy {
     return ids.length > 0 ? ids.join(' ') : null;
   });
 
-  private readonly ownedDescribedByIds = [
+  private readonly ownedDescribedByIds: string[] = [
     this.errorId,
     this.warningId,
     this.pendingId,
   ];
-
-  private mergeAriaDescribedBy(
-    existing: string | null,
-    activeIds: string[]
-  ): string | null {
-    const existingTokens = (existing ?? '')
-      .split(/\s+/)
-      .map((t) => t.trim())
-      .filter(Boolean);
-
-    const existingWithoutOwned = existingTokens.filter(
-      (t) => !this.ownedDescribedByIds.includes(t)
-    );
-
-    const merged: string[] = [...existingWithoutOwned];
-    for (const id of activeIds) {
-      if (!merged.includes(id)) {
-        merged.push(id);
-      }
-    }
-
-    return merged.length > 0 ? merged.join(' ') : null;
-  }
 
   constructor() {
     // Effect for ARIA attribute updates
@@ -129,23 +110,16 @@ export class FormErrorControlDirective implements AfterContentInit, OnDestroy {
       if (mode === 'none') return;
 
       const describedBy = this.ariaDescribedBy();
-      const activeIds = describedBy
-        ? describedBy.split(/\s+/).filter(Boolean)
-        : [];
+      const activeIds = parseAriaIdTokens(describedBy);
       const shouldShowErrors = this.errorDisplay.shouldShowErrors();
 
-      const targets = (() => {
-        const controls = this.formControls();
-        if (mode === 'single-control') {
-          return controls.length === 1 ? controls : [];
-        }
-        return controls;
-      })();
+      const targets = resolveAssociationTargets(this.formControls(), mode);
 
       for (const control of targets) {
-        const nextDescribedBy = this.mergeAriaDescribedBy(
+        const nextDescribedBy = mergeAriaDescribedBy(
           control.getAttribute('aria-describedby'),
-          activeIds
+          activeIds,
+          this.ownedDescribedByIds
         );
         if (nextDescribedBy) {
           control.setAttribute('aria-describedby', nextDescribedBy);

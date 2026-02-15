@@ -88,7 +88,7 @@ export class ValidationConfigBuilder<T> {
    */
   whenChanged<K extends FieldPath<T>>(
     trigger: K,
-    revalidate: FieldPath<T> | Array<FieldPath<T>>
+    revalidate: FieldPath<T> | ReadonlyArray<FieldPath<T>>
   ): this {
     const deps = Array.isArray(revalidate) ? revalidate : [revalidate];
     const existing = this.config[trigger] || [];
@@ -245,7 +245,7 @@ export class ValidationConfigBuilder<T> {
    * builder.group(['street', 'city', 'state', 'zipCode']);
    * ```
    */
-  group<K extends FieldPath<T>>(fields: K[]): this {
+  group<K extends FieldPath<T>>(fields: readonly K[]): this {
     // Each field triggers validation of all other fields in the group
     for (const field of fields) {
       const others = fields.filter((f) => f !== field);

@@ -412,6 +412,16 @@ protected validationConfig = computed<ValidationConfigMap<FormModel>>(() => {
 
 ## Best Practices
 
+### Security: Dynamic Path Inputs
+
+When receiving path strings from dynamic sources (for example server-driven schemas or custom builders), treat them as untrusted input.
+
+- `setValueAtPath()` now rejects unsafe prototype-related segments by default: `__proto__`, `prototype`, and `constructor`.
+- Deep merge utilities used internally also skip those keys.
+- Prefer typed paths (`FieldPath<T>`) whenever possible to catch invalid paths at compile time.
+
+This design keeps defaults safe while preserving backward compatibility for valid field paths.
+
 ### ✅ DO: Use NgxTypedVestSuite for TypeScript Code
 
 When defining validation suites in TypeScript files, use `NgxTypedVestSuite` for better type safety:

@@ -92,13 +92,14 @@
  */
 export function clearFieldsWhen<T extends Record<string, unknown>>(
   currentState: T,
-  conditions: Partial<Record<keyof T, boolean>>
+  conditions: Readonly<Partial<Record<keyof T, boolean>>>
 ): T {
   const result: Record<string, unknown> = { ...currentState };
 
-  for (const [fieldName, shouldClear] of Object.entries(conditions)) {
+  for (const fieldName of Object.keys(conditions) as Array<keyof T>) {
+    const shouldClear = conditions[fieldName];
     if (shouldClear) {
-      result[fieldName] = undefined;
+      result[fieldName as string] = undefined;
     }
   }
 
@@ -205,13 +206,14 @@ export function clearFields<T extends Record<string, unknown>>(
  */
 export function keepFieldsWhen<T extends Record<string, unknown>>(
   currentState: T,
-  conditions: Partial<Record<keyof T, boolean>>
+  conditions: Readonly<Partial<Record<keyof T, boolean>>>
 ): Partial<T> {
   const result: Record<string, unknown> = {};
 
-  for (const [fieldName, shouldKeep] of Object.entries(conditions)) {
+  for (const fieldName of Object.keys(conditions) as Array<keyof T>) {
+    const shouldKeep = conditions[fieldName];
     if (shouldKeep && fieldName in currentState) {
-      result[fieldName] = currentState[fieldName];
+      result[fieldName as string] = currentState[fieldName];
     }
   }
 

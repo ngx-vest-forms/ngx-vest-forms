@@ -82,7 +82,7 @@ export class FormGroupWrapperComponent {
       ids.push(this.errorId);
     }
 
-    if (this.errorDisplay.warnings().length > 0) {
+    if (this.errorDisplay.shouldShowWarnings()) {
       ids.push(this.warningId);
     }
 
