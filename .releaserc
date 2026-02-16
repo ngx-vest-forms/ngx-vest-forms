@@ -11,12 +11,8 @@
       "prerelease": "next"
     },
     {
-      "name": "next",
-      "prerelease": true
-    },
-    {
       "name": "beta",
-      "prerelease": true
+      "prerelease": "beta"
     },
     {
       "name": "rc",
@@ -24,7 +20,7 @@
     },
     {
       "name": "alpha",
-      "prerelease": true
+      "prerelease": "alpha"
     },
     {
       "name": "feat/*",
@@ -36,7 +32,7 @@
     },
     {
       "name": "copilot/*",
-      "prerelease": "beta"
+      "prerelease": "copilot-${((typeof name === 'string' && name.replace(/^copilot\\//, '').replace(/[^a-zA-Z0-9-_]/g, '')) ? name.replace(/^copilot\\//, '').replace(/[^a-zA-Z0-9-_]/g, '') : 'branch') || 'branch'}"
     }
   ],
   "plugins": [
