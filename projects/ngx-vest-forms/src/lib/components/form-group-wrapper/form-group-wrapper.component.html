@@ -6,9 +6,15 @@
   Keep regions stable in the DOM so IDs are always valid targets.
   This wrapper does NOT modify descendant controls.
 -->
-<div [id]="errorId" role="status" aria-live="polite" aria-atomic="true">
+<div
+  [id]="errorId"
+  class="ngx-form-group-wrapper__errors"
+  role="status"
+  aria-live="polite"
+  aria-atomic="true"
+>
   @if (errorDisplay.shouldShowErrors() && errorDisplay.errors().length > 0) {
-    <ul>
+    <ul class="ngx-form-group-wrapper__messages">
       @for (error of errorDisplay.errors(); track error) {
         <li>{{ error }}</li>
       }
@@ -16,9 +22,15 @@
   }
 </div>
 
-<div [id]="warningId" role="status" aria-live="polite" aria-atomic="true">
+<div
+  [id]="warningId"
+  class="ngx-form-group-wrapper__warnings"
+  role="status"
+  aria-live="polite"
+  aria-atomic="true"
+>
   @if (errorDisplay.shouldShowWarnings()) {
-    <ul>
+    <ul class="ngx-form-group-wrapper__messages">
       @for (warn of errorDisplay.warnings(); track warn) {
         <li>{{ warn }}</li>
       }
@@ -26,7 +38,13 @@
   }
 </div>
 
-<div [id]="pendingId" role="status" aria-live="polite" aria-atomic="true">
+<div
+  [id]="pendingId"
+  class="ngx-form-group-wrapper__pending"
+  role="status"
+  aria-live="polite"
+  aria-atomic="true"
+>
   @if (showPendingMessage()) {
     <span aria-hidden="true">Validating…</span>
   }

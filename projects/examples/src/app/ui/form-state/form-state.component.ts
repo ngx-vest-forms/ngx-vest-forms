@@ -353,7 +353,16 @@ export class FormStateCardComponent {
     const validated = new Set(validatedFieldsList);
     const filtered: Record<string, string[]> = {};
     for (const [field, messages] of Object.entries(record)) {
-      if (field === ROOT_FORM || validated.has(field)) {
+      if (
+        field === '_flat' ||
+        (field === ROOT_FORM && validated.size > 0) ||
+        validated.has(field) ||
+        [...validated].some(
+          (validatedField) =>
+            validatedField.startsWith(`${field}.`) ||
+            field.startsWith(`${validatedField}.`)
+        )
+      ) {
         filtered[field] = messages;
       }
     }

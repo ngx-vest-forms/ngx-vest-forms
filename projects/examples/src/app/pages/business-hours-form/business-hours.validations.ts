@@ -107,7 +107,7 @@ function validateBusinessHourModel(
     // Cross-field validation - only when both times are valid
     // NOTE: Requires validationConfig.bidirectional() in component!
     omitWhen(!isValidTime(model?.from) || !isValidTime(model?.to), () => {
-      test(field, 'The from should be earlier than the to', () => {
+      test(field, 'From time should be earlier than to time', () => {
         enforce(isFromEarlierThanTo(model?.from, model?.to)).isTruthy();
       });
     });

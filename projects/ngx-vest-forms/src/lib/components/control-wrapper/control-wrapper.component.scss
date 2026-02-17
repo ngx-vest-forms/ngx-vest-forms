@@ -1,4 +1,102 @@
 :host {
   display: block;
   position: relative;
+
+  /*
+   * Control wrapper style tokens.
+   *
+   * Consumers can override these CSS custom properties to align the wrapper
+   * with their design system without changing library source styles.
+   */
+  --ngx-control-wrapper-message-margin-top: 0.25rem;
+  --ngx-control-wrapper-message-font-size: 0.875rem;
+  --ngx-control-wrapper-message-line-height: 1.25rem;
+  --ngx-control-wrapper-message-gap: 0.25rem;
+
+  --ngx-control-wrapper-error-color: #dc2626;
+  --ngx-control-wrapper-warning-color: #b45309;
+  --ngx-control-wrapper-pending-color: #6b7280;
+
+  --ngx-control-wrapper-error-color-dark: #f87171;
+  --ngx-control-wrapper-warning-color-dark: #f59e0b;
+  --ngx-control-wrapper-pending-color-dark: #9ca3af;
+
+  --ngx-control-wrapper-pending-top: 0;
+  --ngx-control-wrapper-pending-right: 0;
+  --ngx-control-wrapper-pending-gap: 0.25rem;
+  --ngx-control-wrapper-pending-font-size: 0.75rem;
+  --ngx-control-wrapper-pending-line-height: 1rem;
+
+  --ngx-control-wrapper-spinner-size: 0.75rem;
+  --ngx-control-wrapper-spinner-border-width: 2px;
+  --ngx-control-wrapper-spinner-color: #9ca3af;
+  --ngx-control-wrapper-spinner-radius: 9999px;
+}
+
+.ngx-control-wrapper__errors,
+.ngx-control-wrapper__warnings {
+  margin-top: var(--ngx-control-wrapper-message-margin-top);
+  font-size: var(--ngx-control-wrapper-message-font-size);
+  line-height: var(--ngx-control-wrapper-message-line-height);
+}
+
+.ngx-control-wrapper__errors {
+  color: var(--ngx-control-wrapper-error-color);
+}
+
+.ngx-control-wrapper__warnings {
+  color: var(--ngx-control-wrapper-warning-color);
+}
+
+.ngx-control-wrapper__messages {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ngx-control-wrapper__messages li + li {
+  margin-top: var(--ngx-control-wrapper-message-gap);
+}
+
+.ngx-control-wrapper__pending {
+  position: absolute;
+  top: var(--ngx-control-wrapper-pending-top);
+  right: var(--ngx-control-wrapper-pending-right);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ngx-control-wrapper-pending-gap);
+  font-size: var(--ngx-control-wrapper-pending-font-size);
+  line-height: var(--ngx-control-wrapper-pending-line-height);
+  color: var(--ngx-control-wrapper-pending-color);
+}
+
+.ngx-control-wrapper__spinner {
+  display: inline-block;
+  width: var(--ngx-control-wrapper-spinner-size);
+  height: var(--ngx-control-wrapper-spinner-size);
+  border-radius: var(--ngx-control-wrapper-spinner-radius);
+  border: var(--ngx-control-wrapper-spinner-border-width) solid
+    var(--ngx-control-wrapper-spinner-color);
+  border-top-color: transparent;
+  animation: ngx-control-wrapper-spin 1s linear infinite;
+}
+
+@keyframes ngx-control-wrapper-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .ngx-control-wrapper__errors {
+    color: var(--ngx-control-wrapper-error-color-dark);
+  }
+
+  .ngx-control-wrapper__warnings {
+    color: var(--ngx-control-wrapper-warning-color-dark);
+  }
+
+  .ngx-control-wrapper__pending {
+    color: var(--ngx-control-wrapper-pending-color-dark);
+  }
 }
