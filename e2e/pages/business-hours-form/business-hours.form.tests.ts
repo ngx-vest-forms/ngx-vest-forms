@@ -129,6 +129,28 @@ function getRootFormError(page: Page) {
     });
 }
 
+async function getDescribedByElementTexts(
+  container: ReturnType<Page['locator']>
+): Promise<string[]> {
+  const describedBy = await container.getAttribute('aria-describedby');
+  if (!describedBy) return [];
+
+  const ids = describedBy
+    .split(/\s+/)
+    .map((id) => id.trim())
+    .filter(Boolean);
+
+  const texts: string[] = [];
+  for (const id of ids) {
+    const element = container.page().locator(`#${id}`);
+    if (await element.count()) {
+      texts.push((await element.innerText()).trim());
+    }
+  }
+
+  return texts;
+}
+
 test.describe('Business Hours Form', () => {
   test.beforeEach(async ({ page }) => {
     await navigateToBusinessHoursForm(page);
@@ -279,6 +301,35 @@ test.describe('Business Hours Form', () => {
 
         await typeAndBlur(toTime, '1800');
         await expect(addButton).toBeEnabled();
+      });
+    });
+
+    test('should associate addValue cross-field message via aria-describedby', async ({
+      page,
+    }) => {
+      await test.step('Trigger addValue cross-field error and verify group describedby target', async () => {
+        const fromTime = getAddFromTime(page);
+        const toTime = getAddToTime(page);
+
+        await typeAndBlur(fromTime, '1700');
+        await typeAndBlur(toTime, '0900');
+
+        const addValueGroupFieldset = page.locator(
+          'fieldset[ngModelGroup="addValue"]'
+        );
+        await expect(addValueGroupFieldset).toHaveAttribute(
+          'aria-describedby',
+          /\S+/
+        );
+
+        await expect
+          .poll(async () => {
+            const texts = await getDescribedByElementTexts(
+              addValueGroupFieldset
+            );
+            return texts.join(' | ');
+          })
+          .toContain('From time should be earlier than to time');
       });
     });
   });

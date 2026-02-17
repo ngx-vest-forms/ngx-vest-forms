@@ -1,0 +1,66 @@
+:host {
+  display: block;
+
+  /*
+   * Group wrapper style tokens.
+   *
+   * Consumers can override these CSS custom properties to align the wrapper
+   * with their design system without changing library source styles.
+   */
+  --ngx-form-group-wrapper-message-margin-top: 0.25rem;
+  --ngx-form-group-wrapper-message-font-size: 0.875rem;
+  --ngx-form-group-wrapper-message-line-height: 1.25rem;
+  --ngx-form-group-wrapper-message-gap: 0.25rem;
+
+  --ngx-form-group-wrapper-error-color: #dc2626;
+  --ngx-form-group-wrapper-warning-color: #b45309;
+  --ngx-form-group-wrapper-pending-color: #6b7280;
+
+  --ngx-form-group-wrapper-error-color-dark: #f87171;
+  --ngx-form-group-wrapper-warning-color-dark: #f59e0b;
+  --ngx-form-group-wrapper-pending-color-dark: #9ca3af;
+}
+
+.ngx-form-group-wrapper__errors,
+.ngx-form-group-wrapper__warnings,
+.ngx-form-group-wrapper__pending {
+  margin-top: var(--ngx-form-group-wrapper-message-margin-top);
+  font-size: var(--ngx-form-group-wrapper-message-font-size);
+  line-height: var(--ngx-form-group-wrapper-message-line-height);
+}
+
+.ngx-form-group-wrapper__errors {
+  color: var(--ngx-form-group-wrapper-error-color);
+}
+
+.ngx-form-group-wrapper__warnings {
+  color: var(--ngx-form-group-wrapper-warning-color);
+}
+
+.ngx-form-group-wrapper__pending {
+  color: var(--ngx-form-group-wrapper-pending-color);
+}
+
+.ngx-form-group-wrapper__messages {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ngx-form-group-wrapper__messages li + li {
+  margin-top: var(--ngx-form-group-wrapper-message-gap);
+}
+
+@media (prefers-color-scheme: dark) {
+  .ngx-form-group-wrapper__errors {
+    color: var(--ngx-form-group-wrapper-error-color-dark);
+  }
+
+  .ngx-form-group-wrapper__warnings {
+    color: var(--ngx-form-group-wrapper-warning-color-dark);
+  }
+
+  .ngx-form-group-wrapper__pending {
+    color: var(--ngx-form-group-wrapper-pending-color-dark);
+  }
+}

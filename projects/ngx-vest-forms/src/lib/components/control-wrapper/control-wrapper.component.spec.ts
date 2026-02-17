@@ -283,7 +283,7 @@ describe('ControlWrapperComponent', () => {
       await waitFor(
         () => {
           expect(wrapper).toHaveAttribute('aria-busy', 'true');
-          const spinner = wrapper?.querySelector('.animate-spin');
+          const spinner = wrapper?.querySelector('.ngx-control-wrapper__spinner');
           expect(spinner).toBeInTheDocument();
         },
         { timeout: 4000 }
@@ -293,7 +293,7 @@ describe('ControlWrapperComponent', () => {
       await waitFor(
         () => {
           expect(wrapper).not.toHaveAttribute('aria-busy');
-          const spinner = wrapper?.querySelector('.animate-spin');
+          const spinner = wrapper?.querySelector('.ngx-control-wrapper__spinner');
           expect(spinner).not.toBeInTheDocument();
         },
         { timeout: 5000 }
@@ -1004,7 +1004,7 @@ describe('ControlWrapperComponent', () => {
       await waitFor(
         () => {
           const wrapper = emailInput.closest('.ngx-control-wrapper');
-          const spinner = wrapper?.querySelector('.animate-spin');
+          const spinner = wrapper?.querySelector('.ngx-control-wrapper__spinner');
           expect(spinner).toHaveAttribute('aria-hidden', 'true');
         },
         { timeout: 4000 }

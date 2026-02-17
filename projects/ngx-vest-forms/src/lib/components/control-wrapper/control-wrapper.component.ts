@@ -150,12 +150,7 @@ let nextUniqueId = 0;
 @Component({
   selector: 'ngx-control-wrapper, [ngxControlWrapper]',
   templateUrl: './control-wrapper.component.html',
-  styles: `
-    :host {
-      display: block;
-      position: relative;
-    }
-  `,
+  styleUrls: ['./control-wrapper.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 
   host: {
