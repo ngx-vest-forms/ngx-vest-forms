@@ -160,6 +160,84 @@ wrapper does not stamp `aria-describedby` / `aria-invalid` onto every descendant
 `ariaAssociationMode="single-control"` is mainly useful when your wrapper _usually_ contains one control, but
 may sometimes contain additional focusable elements (for example, an input with an adjacent “Clear” button).
 
+
+## ARIA Association Utilities (Public API)
+
+For advanced use cases or custom wrapper implementations, ngx-vest-forms exposes the underlying ARIA association utilities as a public API. These utilities are used internally by `FormErrorControlDirective` and can help maintain consistent accessibility behavior across your custom wrappers.
+
+### Available Utilities
+
+```typescript
+import {
+  AriaAssociationMode,
+  parseAriaIdTokens,
+  mergeAriaDescribedBy,
+  resolveAssociationTargets,
+} from 'ngx-vest-forms';
+```
+
+### parseAriaIdTokens
+
+Splits an `aria-describedby` attribute value into normalized token IDs:
+
+```typescript
+function parseAriaIdTokens(value: string | null): string[];
+
+// Example
+const tokens = parseAriaIdTokens('hint-id error-id warning-id');
+// Returns: ['hint-id', 'error-id', 'warning-id']
+```
+
+### mergeAriaDescribedBy
+
+Merges currently-active wrapper IDs into an existing `aria-describedby` value. Existing tokens owned by the wrapper are removed first, then current active IDs are appended while preserving non-owned tokens and token uniqueness:
+
+```typescript
+function mergeAriaDescribedBy(
+  existing: string | null,
+  activeIds: readonly string[],
+  ownedIds: readonly string[]
+): string | null;
+
+// Example: Preserve consumer-provided IDs while managing wrapper IDs
+const merged = mergeAriaDescribedBy(
+  'help-text field-error',     // existing value
+  ['field-error'],             // currently active IDs
+  ['field-error', 'field-warning'] // all IDs owned by wrapper
+);
+// Returns: 'help-text field-error'
+// (preserved 'help-text', removed stale 'field-warning', kept active 'field-error')
+```
+
+### resolveAssociationTargets
+
+Resolves control targets based on ARIA association mode:
+
+```typescript
+function resolveAssociationTargets(
+  controls: readonly HTMLElement[],
+  mode: AriaAssociationMode
+): HTMLElement[];
+
+// Example
+const controls = [inputElement, textareaElement];
+
+resolveAssociationTargets(controls, 'all-controls');    // Returns: [inputElement, textareaElement]
+resolveAssociationTargets(controls, 'single-control');  // Returns: [] (more than one control)
+resolveAssociationTargets(controls, 'none');            // Returns: []
+```
+
+### Use Cases
+
+These utilities are particularly useful when:
+
+- Building custom wrapper components that need to maintain ARIA associations
+- Creating wrapper libraries that need to match ngx-vest-forms accessibility behavior
+- Implementing custom ARIA management logic while staying consistent with the library
+- Testing accessibility implementations in downstream projects
+
+The utilities help prevent logic duplication and ensure consistent ARIA behavior across different wrapper implementations.
+
 ## Preventing Flashing Validation Messages
 
 For async validations, you may want to prevent the "Validating..." message from flashing when validation completes quickly. Use the `createDebouncedPendingState` utility:

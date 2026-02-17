@@ -54,6 +54,14 @@ export type {
 } from './lib/utils/pending-state.utils';
 export { validateShape } from './lib/utils/shape-validation';
 
+// ARIA association utilities
+export type { AriaAssociationMode } from './lib/utils/aria-association.utils';
+export {
+  parseAriaIdTokens,
+  mergeAriaDescribedBy,
+  resolveAssociationTargets,
+} from './lib/utils/aria-association.utils';
+
 // Internal utilities - exported for advanced use cases but not part of the primary API
 // These are marked with @internal in their source files and may change without notice
 /** @internal */ export {
