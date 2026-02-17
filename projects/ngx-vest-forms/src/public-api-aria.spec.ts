@@ -2,12 +2,13 @@
  * Tests for ARIA association utilities exported via public API.
  * These tests verify that the utilities are properly exported and accessible.
  */
+import type { AriaAssociationMode } from 'ngx-vest-forms';
 import {
-  AriaAssociationMode,
   parseAriaIdTokens,
   mergeAriaDescribedBy,
   resolveAssociationTargets,
 } from 'ngx-vest-forms';
+import { describe, it, expect } from 'vitest';
 
 describe('Public API: ARIA association utilities', () => {
   describe('parseAriaIdTokens', () => {
