@@ -104,17 +104,29 @@ The pending region is positioned `absolute` in the top-right corner of the wrapp
   to require explicit interaction before warnings appear.
 - Warnings are cleared on `resetForm()`.
 
-### Styling dependency (Tailwind CSS)
+### Styling and theming
 
-> **Note**: The default template uses **Tailwind CSS** utility classes for styling (colors, spacing, spinner animation).
-> If your project does not include Tailwind, the message regions will render but without visual styling.
->
-> **Options for non-Tailwind projects**:
->
-> 1. **Add equivalent CSS** targeting the wrapper classes (`.ngx-control-wrapper`, region elements)
-> 2. **Build a custom wrapper** using `FormErrorDisplayDirective` — see [Custom Control Wrappers](../../../../../../docs/CUSTOM-CONTROL-WRAPPERS.md)
->
-> A future major version may replace Tailwind classes with framework-agnostic CSS custom properties.
+`ngx-control-wrapper` ships with built-in, framework-agnostic baseline styling via its component stylesheet.
+No Tailwind dependency is required for default message presentation.
+
+The wrapper is themeable through CSS custom properties defined on `:host`, including tokens for:
+
+- error/warning/pending colors (light + dark)
+- message spacing and typography
+- pending layout
+- spinner size and border color
+
+You can override these tokens from your app/theme stylesheet without replacing the wrapper:
+
+```css
+ngx-control-wrapper {
+  --ngx-control-wrapper-error-color: #b91c1c;
+  --ngx-control-wrapper-warning-color: #92400e;
+}
+```
+
+If you need fully custom markup/layout, you can still build a custom wrapper using
+`FormErrorDisplayDirective` — see [Custom Control Wrappers](../../../../../../docs/CUSTOM-CONTROL-WRAPPERS.md).
 
 ### ARIA merging
 

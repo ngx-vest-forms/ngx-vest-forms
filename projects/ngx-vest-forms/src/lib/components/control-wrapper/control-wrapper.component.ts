@@ -142,12 +142,7 @@ let nextUniqueId = 0;
   selector:
     'ngx-control-wrapper, sc-control-wrapper, [scControlWrapper], [ngxControlWrapper], [ngx-control-wrapper], [sc-control-wrapper]',
   templateUrl: './control-wrapper.component.html',
-  styles: `
-    :host {
-      display: block;
-      position: relative;
-    }
-  `,
+  styleUrls: ['./control-wrapper.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 
   host: {
