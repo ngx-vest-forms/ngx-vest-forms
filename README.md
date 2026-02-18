@@ -217,7 +217,7 @@ For `ngModelGroup` containers, prefer using `<ngx-form-group-wrapper>` (group-sa
 
 > **Styling note**: `ngx-control-wrapper` and `ngx-form-group-wrapper` include built-in, framework-agnostic baseline styles.
 > They are themeable via CSS custom properties. See the [component docs](./projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md#styling-and-theming).
-
+>
 > **Upgrade note (wrappers)**: This is not a breaking API change for wrapper consumers (selectors/inputs/behavior remain stable).
 > If you previously targeted internal wrapper markup/classes with custom CSS, review and update those selectors as needed.
 > Preferred customization path: override exposed CSS custom properties before building a fully custom wrapper.

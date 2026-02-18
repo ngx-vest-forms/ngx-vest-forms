@@ -304,9 +304,9 @@ test.describe('Business Hours Form', () => {
         await typeAndBlur(fromTime, '1700');
         await typeAndBlur(toTime, '0900');
 
-        const addValueGroupFieldset = page.locator(
-          'fieldset[ngModelGroup="addValue"]'
-        );
+        const addValueGroupFieldset = page.getByRole('group', {
+          name: /add new business hour slot/i,
+        });
         await expect(addValueGroupFieldset).toHaveAttribute(
           'aria-describedby',
           /\S+/

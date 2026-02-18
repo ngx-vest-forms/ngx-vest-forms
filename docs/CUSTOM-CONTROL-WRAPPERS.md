@@ -26,6 +26,9 @@ Both built-in wrappers expose CSS custom properties with sensible defaults:
 - `ngx-control-wrapper` tokens (for field-level wrappers)
 - `ngx-form-group-wrapper` tokens (for `NgModelGroup` containers)
 
+Token surface includes colors, spacing, typography, pending layout, and spinner sizing.
+See the full token list in each component SCSS for complete theming options.
+
 Example:
 
 ```css
@@ -33,12 +36,15 @@ Example:
 ngx-control-wrapper {
   --ngx-control-wrapper-error-color: #b91c1c;
   --ngx-control-wrapper-warning-color: #92400e;
+  --ngx-control-wrapper-message-margin-top: 0.375rem;
+  --ngx-control-wrapper-spinner-size: 0.875rem;
 }
 
 ngx-form-group-wrapper,
 [ngxFormGroupWrapper] {
   --ngx-form-group-wrapper-error-color: #b91c1c;
   --ngx-form-group-wrapper-warning-color: #92400e;
+  --ngx-form-group-wrapper-message-margin-top: 0.375rem;
 }
 ```
 
