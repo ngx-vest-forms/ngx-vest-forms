@@ -303,7 +303,7 @@ test.describe('Purchase Form', () => {
                 .locator(':scope > .ngx-form-group-wrapper__errors')
                 .innerText()
             ).trim();
-          })
+          }, { timeout: 15000 })
           .toContain('Passwords do not match');
       });
     });

@@ -29,10 +29,9 @@
             type="button"
             (click)="removeBusinessHour(item.key, valuesGroup)"
             class="business-hours-remove-btn"
+            [title]="'Remove business hour slot ' + (+item.key + 1)"
             [attr.aria-label]="'Remove business hour slot ' + (+item.key + 1)"
-            title="Remove business hour"
           >
-            <span class="sr-only">Remove</span>
             <i class="fa-solid fa-trash" aria-hidden="true"></i>
           </button>
         </div>
