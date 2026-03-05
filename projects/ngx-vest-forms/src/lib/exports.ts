@@ -1,4 +1,4 @@
-import { Optional, Provider } from '@angular/core';
+import { inject, Provider } from '@angular/core';
 import {
   ControlContainer,
   FormsModule,
@@ -50,16 +50,12 @@ import { ValidateRootFormDirective } from './directives/validate-root-form.direc
  */
 const formViewProvider: Provider = {
   provide: ControlContainer,
-  useFactory: _formViewProviderFactory,
-  deps: [
-    [new Optional(), NgForm],
-    [new Optional(), NgModelGroup],
-  ],
+  useFactory: () => {
+    const ngModelGroup = inject(NgModelGroup, { optional: true });
+    const ngForm = inject(NgForm, { optional: true });
+    return ngModelGroup || ngForm || null;
+  },
 };
-
-function _formViewProviderFactory(ngForm: NgForm, ngModelGroup: NgModelGroup) {
-  return ngModelGroup || ngForm || null;
-}
 
 /**
  * The providers we need in every child component that holds an ngModelGroup

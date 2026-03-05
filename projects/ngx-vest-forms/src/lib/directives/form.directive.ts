@@ -46,6 +46,7 @@ import {
   tap,
   timer,
 } from 'rxjs';
+import type { SuiteResult } from 'vest';
 import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import { DeepRequired } from '../utils/deep-required';
@@ -59,7 +60,7 @@ import {
   setValueAtPath,
 } from '../utils/form-utils';
 import { validateShape } from '../utils/shape-validation';
-import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
+import { NgxVestSuite } from '../utils/validation-suite';
 import { ValidationOptions } from './validation-options';
 
 /**
@@ -239,11 +240,9 @@ export class FormDirective<T extends Record<string, unknown>> {
 
   /**
    * Static vest suite that will be used to feed our angular validators.
-   * Accepts both NgxVestSuite and NgxTypedVestSuite through compatible type signatures.
-   * NgxTypedVestSuite<T> is assignable to NgxVestSuite<T> due to bivariance and
-   * FormFieldName<T> (string literal union) being assignable to string.
+   * Accepts NgxVestSuite<T> (the canonical type) or its deprecated alias NgxTypedVestSuite<T>.
    */
-  readonly suite = input<NgxVestSuite<T> | NgxTypedVestSuite<T> | null>(null);
+  readonly suite = input<NgxVestSuite<T> | null>(null);
 
   /**
    * The shape of our form model. This is a deep required version of the form model
@@ -676,6 +675,12 @@ export class FormDirective<T extends Record<string, unknown>> {
     // Reset Angular's form to clear all controls and mark as pristine/untouched
     this.ngForm.resetForm(value ?? undefined);
 
+    // Vest 6: reset the suite's accumulated validation state.
+    // Since we use stateful suite.only(field).run() (not runStatic), the suite
+    // accumulates results across runs. Resetting clears all persisted errors/warnings
+    // so the form starts fresh.
+    this.suite()?.reset();
+
     // Clear any stored warnings to avoid stale messages after reset
     this.fieldWarnings.set(new Map());
 
@@ -696,6 +701,107 @@ export class FormDirective<T extends Record<string, unknown>> {
     // Now synchronous since detectChanges() has flushed DOM updates
     this.ngForm.form.updateValueAndValidity({ emitEvent: true });
     this.#blurTick.update((v) => v + 1);
+  }
+
+  /**
+   * Resets validation state for a specific field in the Vest suite.
+   *
+   * This clears all accumulated errors and warnings for the given field
+   * without affecting other fields. Useful when a field's value is
+   * programmatically reset or cleared.
+   *
+   * **What it does:**
+   * 1. Calls Vest 6's `suite.resetField(field)` to clear accumulated validation state
+   * 2. Clears any stored warnings for the field
+   * 3. Resets the Angular control to clear validation errors
+   *
+   * **When to use:**
+   * - Resetting individual field values programmatically
+   * - Clearing validation after a field's context changes (e.g., toggling a feature)
+   * - When you need per-field reset instead of full form reset
+   *
+   * @param field - The field path to reset (e.g., 'email' or 'addresses.billing.street')
+   *
+   * @example
+   * ```typescript
+   * vestForm = viewChild.required('vestForm', { read: FormDirective });
+   *
+   * clearEmail(): void {
+   *   this.formValue.update(v => ({ ...v, email: '' }));
+   *   this.vestForm().resetField('email');
+   * }
+   * ```
+   *
+   * @see {@link resetForm} for resetting the entire form
+   * @see {@link removeField} for permanently removing a field from validation state
+   */
+  resetField(field: string): void {
+    this.suite()?.resetField(field);
+
+    // Clear warnings for this field
+    this.fieldWarnings.update((map) => {
+      const newMap = new Map(map);
+      newMap.delete(field);
+      return newMap;
+    });
+
+    // Reset Angular control validation state
+    const control = this.ngForm.form.get(field);
+    if (control) {
+      control.updateValueAndValidity({ emitEvent: false });
+    }
+  }
+
+  /**
+   * Removes a field from the Vest suite's accumulated validation state.
+   *
+   * This permanently removes all validation history for the given field,
+   * including errors, warnings, and test results. Unlike `resetField()`,
+   * `remove()` is intended for fields that are being destroyed (e.g.,
+   * conditionally hidden via `@if`).
+   *
+   * **What it does:**
+   * 1. Calls Vest 6's `suite.remove(field)` to purge all test history for the field
+   * 2. Clears any stored warnings for the field
+   *
+   * **Why this matters:**
+   * Vest 6 suites are stateful — `suite.only(field).run()` accumulates results.
+   * When a form control is destroyed (e.g., hidden by `@if`), the suite still holds
+   * stale results for that field. This can cause incorrect form-level validity
+   * or ghost errors. Calling `removeField()` cleans up this stale state.
+   *
+   * **When to use:**
+   * - Dynamic form controls removed from the DOM (e.g., `@if` toggling sections)
+   * - Removing fields from a form array
+   * - Any scenario where a field no longer exists in the form
+   *
+   * @param field - The field path to remove (e.g., 'email' or 'addresses.shipping.street')
+   *
+   * @example
+   * ```typescript
+   * vestForm = viewChild.required('vestForm', { read: FormDirective });
+   *
+   * onToggleShipping(enabled: boolean): void {
+   *   if (!enabled) {
+   *     // Clean up Vest state for removed shipping fields
+   *     this.vestForm().removeField('addresses.shipping.street');
+   *     this.vestForm().removeField('addresses.shipping.city');
+   *   }
+   * }
+   * ```
+   *
+   * @see {@link resetField} for resetting a field without removing it
+   * @see {@link resetForm} for resetting the entire form
+   */
+  removeField(field: string): void {
+    this.suite()?.remove(field);
+
+    // Clear warnings for this field
+    this.fieldWarnings.update((map) => {
+      const newMap = new Map(map);
+      newMap.delete(field);
+      return newMap;
+    });
   }
 
   /**
@@ -732,12 +838,18 @@ export class FormDirective<T extends Record<string, unknown>> {
           (snap) =>
             new Observable<ValidationErrors | null>((observer) => {
               try {
-                // Cast to NgxVestSuite to accept string field parameter
-                // Both NgxVestSuite and NgxTypedVestSuite work with string at runtime
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (suite as NgxVestSuite<T>)(snap, field).done((result: any) => {
-                  const errors = result.getErrors()[field];
-                  const warnings = result.getWarnings()[field];
+                // Vest 6: use suite.only(field).run() for focused, stateful validation.
+                // suite.only(field) returns FocusedMethods which only runs tests for
+                // the specified field, while preserving results from previous runs.
+                // This is the v6 recommended pattern — field focus is handled at the
+                // call site, not inside the suite callback.
+                const result = (suite as NgxVestSuite<T>).only(field).run(snap);
+
+                const processResult = (
+                  suiteResult: SuiteResult<string, string>
+                ) => {
+                  const errors = suiteResult.getErrors()[field];
+                  const warnings = suiteResult.getWarnings()[field];
 
                   // Store warnings in the fieldWarnings signal for access by control wrappers.
                   // This is necessary because Angular marks a field as invalid when control.errors !== null.
@@ -787,7 +899,24 @@ export class FormDirective<T extends Record<string, unknown>> {
 
                   observer.next(out);
                   observer.complete();
-                });
+                };
+
+                // For synchronous suites (no pending async tests), use the result
+                // immediately. This preserves the synchronous Observable chain that
+                // Angular's async validator pipeline expects — deferring to a microtask
+                // via Promise.resolve().then() would allow Angular to cancel the
+                // subscription before the result is emitted.
+                if (!result.isPending()) {
+                  processResult(result);
+                } else {
+                  // Async tests are pending — wait for the thenable to resolve.
+                  // Vest's SuiteResult is thenable at runtime but the TS types
+                  // don't expose .then(), so a cast is needed here.
+                  Promise.resolve(
+                    result as SuiteResult<string, string> &
+                      PromiseLike<SuiteResult<string, string>>
+                  ).then(processResult);
+                }
               } catch {
                 observer.next({ vestInternalError: 'Validation failed' });
                 observer.complete();

@@ -166,7 +166,7 @@ const formData: FormUser = {
 
 ### NgxVestSuite\<T\> and NgxTypedVestSuite\<T\>
 
-Type-safe wrappers for Vest.js StaticSuite with cleaner API and optional autocomplete.
+Type-safe wrappers for Vest.js Suite with cleaner API and optional autocomplete.
 
 #### NgxVestSuite\<T\> - Flexible, Component-Friendly
 
@@ -174,15 +174,15 @@ Type-safe wrappers for Vest.js StaticSuite with cleaner API and optional autocom
 
 ```typescript
 import { NgxVestSuite } from 'ngx-vest-forms';
-import { staticSuite, test, enforce, only } from 'vest';
+import { create, test, enforce } from 'vest';
 
 type FormModel = { email: string; password: string };
 
 // ✅ Simple: Using NgxVestSuite (no autocomplete, but works everywhere)
-export const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
-  only(field);
+export const suite: NgxVestSuite<FormModel> = create((model) => {
   test('email', 'Required', () => enforce(model.email).isNotBlank());
 });
+// Field focus at call site: suite.only('email').run(model)
 
 // Component - works seamlessly
 @Component({...})
@@ -196,13 +196,12 @@ class MyFormComponent {
 **Use for**: Validation suite definitions where you want IDE autocomplete for field names.
 
 ```typescript
-import { NgxTypedVestSuite, FormFieldName } from 'ngx-vest-forms';
+import { NgxTypedVestSuite } from 'ngx-vest-forms';
 
 // ✅ With autocomplete: Using NgxTypedVestSuite
-export const suite: NgxTypedVestSuite<FormModel> = staticSuite(
-  (model: FormModel, field?: FormFieldName<FormModel>) => {
-    only(field);
-    // IDE suggests: 'email' | 'password' | typeof ROOT_FORM
+export const suite: NgxTypedVestSuite<FormModel> = create(
+  (model: FormModel) => {
+    // IDE suggests field names for test() calls: 'email' | 'password' | typeof ROOT_FORM
     test('email', 'Required', () => enforce(model.email).isNotBlank());
   }
 );
@@ -210,25 +209,21 @@ export const suite: NgxTypedVestSuite<FormModel> = staticSuite(
 
 #### Recommended Pattern: Best of Both Worlds
 
-**Why this pattern?** TypeScript's contravariance rules prevent `NgxTypedVestSuite<T>` from being directly assignable to `NgxVestSuite<T>` because:
+**Why this pattern?** `NgxTypedVestSuite<T>` provides autocomplete for field names in `test()` calls and stricter typing, while `NgxVestSuite<T>` is more flexible for component properties.
 
-- `NgxTypedVestSuite` expects `field?: FormFieldName<T>` (more specific)
-- `NgxVestSuite` accepts `field?: any` (less specific)
-- Contravariance: more specific → less specific = type error
-
-**Solution**: Define with `NgxTypedVestSuite`, assign to `NgxVestSuite` property:
+**Solution**: Define with `NgxTypedVestSuite` for autocomplete, assign to `NgxVestSuite` property in component:
 
 ```typescript
-import { NgxVestSuite, NgxTypedVestSuite, FormFieldName } from 'ngx-vest-forms';
+import { NgxVestSuite, NgxTypedVestSuite } from 'ngx-vest-forms';
 
 // Step 1: Define with NgxTypedVestSuite for autocomplete
-export const userSuite: NgxTypedVestSuite<FormModel> = staticSuite(
-  (model: FormModel, field?: FormFieldName<FormModel>) => {
-    only(field);
-    // ✅ IDE autocomplete: 'email' | 'password' | typeof ROOT_FORM
+export const userSuite: NgxTypedVestSuite<FormModel> = create(
+  (model: FormModel) => {
+    // ✅ IDE autocomplete for test() field names: 'email' | 'password' | typeof ROOT_FORM
     test('email', 'Required', () => enforce(model.email).isNotBlank());
   }
 );
+// Field focus at call site: userSuite.only('email').run(model)
 
 // Step 2: Use NgxVestSuite in component (no type assertion needed)
 @Component({...})
@@ -261,17 +256,16 @@ Type-safe field parameter for validation suites (provides autocomplete).
 
 ```typescript
 import { NgxFieldKey } from 'ngx-vest-forms';
-import { staticSuite, only } from 'vest';
+import { create } from 'vest';
 
 type FormModel = { email: string; password: string };
 
-// ✅ With NgxFieldKey: Get autocomplete for field names
-export const suite = staticSuite(
-  (model: FormModel, field?: NgxFieldKey<FormModel>) => {
-    only(field); // TypeScript knows field is 'email' | 'password' | undefined
-    // ... validations
-  }
-);
+// NgxFieldKey provides type-safe field keys: 'email' | 'password'
+// In Vest 6, field focus is at the call site — not in the callback
+// Example: suite.only('email' as NgxFieldKey<FormModel>).run(model)
+export const suite = create((model: FormModel) => {
+  // ... validations
+});
 ```
 
 **When to use:**

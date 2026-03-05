@@ -93,9 +93,7 @@ import { ValidationOptions } from './validation-options';
  * ```typescript
  * import { ROOT_FORM } from 'ngx-vest-forms';
  *
- * export const suite = staticSuite((model, field?) => {
- *   only(field);
- *
+ * export const suite = create((model) => {
  *   test(ROOT_FORM, 'Passwords must match', () => {
  *     enforce(model.confirmPassword).equals(model.password);
  *   });
@@ -286,28 +284,31 @@ export class ValidateRootFormDirective<T>
                 observer.complete();
                 return;
               }
-              // NOTE: `suite` can be a union of typed and untyped suite functions.
-              // When calling a union of functions, TypeScript requires arguments
-              // to satisfy all call signatures, which can produce overly-strict
-              // errors in template type-checking. At runtime this is always the
-              // ROOT_FORM field ('rootForm'), which is valid for both variants.
-              const runSuite = suite as unknown as (
-                model: T,
-                field?: unknown
-              ) => {
-                done: (
-                  cb: (result: {
-                    getErrors: () => Record<string, string[]>;
-                  }) => void
-                ) => void;
-              };
+              // Vest 6: use suite.only(field).run() for focused, stateful validation.
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const result = (suite as any).only(field).run(model);
 
-              runSuite(model, field).done((result) => {
+              // For synchronous suites (no pending async tests), use the result
+              // immediately. This preserves the synchronous Observable chain that
+              // Angular's async validator pipeline expects — deferring to a microtask
+              // via Promise.resolve().then() would allow Angular to cancel the
+              // subscription before the result is emitted.
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              if (!(result as any).isPending()) {
                 const errors = result.getErrors()[field];
-                // Return { errors: string[] } format expected by getAllFormErrors()
                 observer.next(errors ? { errors } : null);
                 observer.complete();
-              });
+              } else {
+                // Async tests are pending — wait for the thenable to resolve.
+                // SuiteResult is thenable (Promise-like at runtime) — use
+                // Promise.resolve() since the TS types don't expose .then().
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                Promise.resolve(result as any).then((finalResult: any) => {
+                  const errors = finalResult.getErrors()[field];
+                  observer.next(errors ? { errors } : null);
+                  observer.complete();
+                });
+              }
             } catch (err) {
               console.error(
                 '[validate-root-form] Validation suite error:',
