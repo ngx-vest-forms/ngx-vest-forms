@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { fireEvent, render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { enforce, only, staticSuite, test as vestTest, warn } from 'vest';
+import { create, enforce, test as vestTest, warn } from 'vest';
 import { describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../../exports';
 
@@ -11,8 +11,7 @@ type TestModel = {
   username?: string;
 };
 
-const testSuite = staticSuite((data: TestModel = {}, field?: string) => {
-  only(field); // ✅ Call unconditionally
+const testSuite = create((data: TestModel = {}) => {
   vestTest('email', 'Email is required', () => {
     enforce(data.email ?? '').isNotBlank();
   });
@@ -74,9 +73,7 @@ class DirectiveAttributeComponent {
 }
 
 // Async validation suite for pending state tests
-const asyncSuite = staticSuite((data: TestModel = {}, field?: string) => {
-  // ✅ CRITICAL: Always call only() unconditionally (PR #60 requirement)
-  only(field);
+const asyncSuite = create((data: TestModel = {}) => {
   vestTest('email', 'Email must be available', () => {
     return new Promise<void>((resolve, reject) => {
       setTimeout(() => {
@@ -91,8 +88,7 @@ const asyncSuite = staticSuite((data: TestModel = {}, field?: string) => {
 });
 
 // Slow async validation suite to test @defer behavior (800ms delay ensures pending message shows)
-const slowAsyncSuite = staticSuite((data: TestModel = {}, field?: string) => {
-  only(field);
+const slowAsyncSuite = create((data: TestModel = {}) => {
   vestTest('email', 'Email must be available', () => {
     return new Promise<void>((resolve, reject) => {
       setTimeout(() => {
@@ -385,9 +381,8 @@ describe('ScControlWrapperComponent', () => {
 
   describe('ARIA Enhancements', () => {
     it('should allow opting out of descendant ARIA stamping (group-safe mode)', async () => {
-      const multiSuite = staticSuite(
-        (data: { firstName?: string; lastName?: string }, field?: string) => {
-          only(field);
+      const multiSuite = create(
+        (data: { firstName?: string; lastName?: string }) => {
           vestTest('firstName', 'First name is required', () => {
             enforce(data.firstName ?? '').isNotBlank();
           });
@@ -697,20 +692,17 @@ describe('ScControlWrapperComponent', () => {
       //
       // To test warning ARIA attributes, we need a scenario that produces both
       // Warning tests must come BEFORE error tests in Vest order
-      const warningAndErrorSuite = staticSuite(
-        (data: TestModel = {}, field?: string) => {
-          only(field);
-          // Warning test FIRST (so it gets captured before error)
-          vestTest('username', 'Username looks weak', () => {
-            warn();
-            enforce(data.username ?? '').longerThan(5);
-          });
-          // Error test SECOND (makes field invalid)
-          vestTest('username', 'Username must be at least 3 characters', () => {
-            enforce(data.username ?? '').longerThanOrEquals(3);
-          });
-        }
-      );
+      const warningAndErrorSuite = create((data: TestModel = {}) => {
+        // Warning test FIRST (so it gets captured before error)
+        vestTest('username', 'Username looks weak', () => {
+          warn();
+          enforce(data.username ?? '').longerThan(5);
+        });
+        // Error test SECOND (makes field invalid)
+        vestTest('username', 'Username must be at least 3 characters', () => {
+          enforce(data.username ?? '').longerThanOrEquals(3);
+        });
+      });
 
       @Component({
         imports: [NgxVestForms],
@@ -767,15 +759,12 @@ describe('ScControlWrapperComponent', () => {
     });
 
     it('should allow warnings to be shown only after touch via warningDisplayMode', async () => {
-      const warningOnlySuite = staticSuite(
-        (data: TestModel = {}, field?: string) => {
-          only(field);
-          vestTest('username', 'Username is too short for comfort', () => {
-            warn();
-            enforce(data.username ?? '').longerThanOrEquals(5);
-          });
-        }
-      );
+      const warningOnlySuite = create((data: TestModel = {}) => {
+        vestTest('username', 'Username is too short for comfort', () => {
+          warn();
+          enforce(data.username ?? '').longerThanOrEquals(5);
+        });
+      });
 
       @Component({
         imports: [NgxVestForms],
@@ -881,8 +870,7 @@ describe('ScControlWrapperComponent', () => {
 
     it('should update aria-describedby to include multiple regions when applicable', async () => {
       // Create suite that can show both errors and warnings
-      const mixedSuite = staticSuite((data: TestModel = {}, field?: string) => {
-        only(field);
+      const mixedSuite = create((data: TestModel = {}) => {
         vestTest('username', 'Username is required', () => {
           enforce(data.username ?? '').isNotBlank();
         });
@@ -941,9 +929,8 @@ describe('ScControlWrapperComponent', () => {
     });
 
     it('should handle multiple controls in one wrapper with proper ARIA associations', async () => {
-      const multiSuite = staticSuite(
-        (data: { firstName?: string; lastName?: string }, field?: string) => {
-          only(field);
+      const multiSuite = create(
+        (data: { firstName?: string; lastName?: string }) => {
           vestTest('firstName', 'First name is required', () => {
             enforce(data.firstName ?? '').isNotBlank();
           });
@@ -1071,12 +1058,8 @@ describe('ScControlWrapperComponent', () => {
 
     it('should update ARIA associations for dynamically added controls via @if', async () => {
       // Suite with validation for dynamically added field
-      const dynamicSuite = staticSuite(
-        (
-          data: { showField?: boolean; dynamicValue?: string },
-          field?: string
-        ) => {
-          only(field);
+      const dynamicSuite = create(
+        (data: { showField?: boolean; dynamicValue?: string }) => {
           vestTest('dynamicValue', 'Dynamic field is required', () => {
             enforce(data.dynamicValue ?? '').isNotBlank();
           });
@@ -1188,15 +1171,12 @@ describe('ScControlWrapperComponent', () => {
   });
 
   describe('New warning display modes', () => {
-    const warningOnlySuite = staticSuite(
-      (data: TestModel = {}, field?: string) => {
-        only(field);
-        vestTest('username', 'Username is too short for comfort', () => {
-          warn();
-          enforce(data.username ?? '').longerThanOrEquals(5);
-        });
-      }
-    );
+    const warningOnlySuite = create((data: TestModel = {}) => {
+      vestTest('username', 'Username is too short for comfort', () => {
+        warn();
+        enforce(data.username ?? '').longerThanOrEquals(5);
+      });
+    });
 
     it('should show warnings immediately in always mode', async () => {
       @Component({

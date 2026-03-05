@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { enforce, only, staticSuite, test as vestTest } from 'vest';
+import { create, enforce, test as vestTest } from 'vest';
 import { describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
 
@@ -33,18 +33,14 @@ describe('FormModelDirective', () => {
       email: '',
       password: '',
     });
-    suite = staticSuite(
-      (data: { email?: string; password?: string } = {}, field?: string) => {
-        only(field); // Add only() pattern for performance
-
-        vestTest('email', 'Email is required', () => {
-          enforce(data.email).isNotEmpty();
-        });
-        vestTest('password', 'Password too short', () => {
-          enforce(data.password).longerThanOrEquals(8);
-        });
-      }
-    );
+    suite = create((data: { email?: string; password?: string } = {}) => {
+      vestTest('email', 'Email is required', () => {
+        enforce(data.email).isNotEmpty();
+      });
+      vestTest('password', 'Password too short', () => {
+        enforce(data.password).longerThanOrEquals(8);
+      });
+    });
   }
 
   it('should validate field and return errors when invalid', async () => {
@@ -87,7 +83,7 @@ describe('FormModelDirective', () => {
     })
     class PrepopulatedHost {
       model = signal<{ email: string }>({ email: 'preset@example.com' });
-      suite = staticSuite((data: { email?: string } = {}) => {
+      suite = create((data: { email?: string } = {}) => {
         vestTest('email', 'Email required', () => {
           enforce(data.email).isNotEmpty();
         });

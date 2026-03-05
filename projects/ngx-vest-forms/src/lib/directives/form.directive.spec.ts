@@ -2,7 +2,7 @@
 import { Component, signal, ViewChild } from '@angular/core';
 import { render } from '@testing-library/angular';
 import { isObservable, Observable } from 'rxjs';
-import { enforce, only, staticSuite, test as vestTest, warn } from 'vest';
+import { create, enforce, test as vestTest, warn } from 'vest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FormDirective } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
@@ -43,13 +43,10 @@ class TestFormComponent {
   formValue = signal({ username: '' });
   count = signal(0);
   suite = signal(
-    staticSuite(
-      (model: { username: string } = { username: '' }, field?: string) => {
-        only(field); // ✅ Call unconditionally
-        this.count.update((count) => count + 1);
-        enforce(model.username).isNotEmpty();
-      }
-    )
+    create((model: { username: string } = { username: '' }) => {
+      this.count.update((count) => count + 1);
+      enforce(model.username).isNotEmpty();
+    })
   );
 }
 
@@ -103,8 +100,21 @@ describe('FormDirective - Async Validator', () => {
   })
   class TestParallelValidationHost {
     formValue = signal({ username: '' });
-    mockSuite = vi.fn();
-    suite = signal(this.mockSuite);
+    // Vest 6: suite.only(field).run(model) pattern
+    mockRun = vi.fn().mockReturnValue({
+      getErrors: () => ({}),
+      getWarnings: () => ({}),
+      isPending: () => false,
+      isValid: () => true,
+      then: (cb: any) =>
+        Promise.resolve().then(() =>
+          cb({ getErrors: () => ({}), getWarnings: () => ({}) })
+        ),
+    });
+    suite = signal({
+      only: () => ({ run: this.mockRun }),
+      reset: vi.fn(),
+    } as any);
     @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
   }
 
@@ -122,7 +132,7 @@ describe('FormDirective - Async Validator', () => {
     ]);
     vi.runOnlyPendingTimers();
     await pending;
-    expect(instance.mockSuite).toHaveBeenCalled();
+    expect(instance.mockRun).toHaveBeenCalled();
   });
 
   @Component({
@@ -164,7 +174,7 @@ describe('FormDirective - Async Validator', () => {
   class TestFormThrowComponent {
     formValue = signal({ username: '' });
     suite = signal(
-      staticSuite(() => {
+      create(() => {
         throw new Error('Vest suite execution error');
       })
     );
@@ -219,10 +229,9 @@ describe('FormDirective - Async Validator', () => {
       imports: [NgxVestForms],
     })
     class TestUndefinedValueHost {
-      // Provide a proper Vest suite that calls .done() callback
+      // Provide a proper Vest suite that resolves validation
       suite = signal(
-        staticSuite((model: any = {}, field?: string) => {
-          only(field);
+        create((model: any = {}) => {
           // Suite runs but produces no errors (valid)
         })
       );
@@ -263,8 +272,7 @@ describe('FormDirective - Async Validator', () => {
     class TestWarningsOnlyHost {
       // Suite that only produces warnings (via warn()), no errors
       suite = signal(
-        staticSuite((model: { password?: string } = {}, field?: string) => {
-          only(field);
+        create((model: { password?: string } = {}) => {
           // Only a warning - should NOT make field invalid
           vestTest('password', 'Password is weak', () => {
             warn();
@@ -321,8 +329,7 @@ describe('FormDirective - Async Validator', () => {
       // IMPORTANT: Warning tests must come BEFORE error tests in Vest
       // because Vest stops processing after a field fails a non-warning test
       suite = signal(
-        staticSuite((model: { password?: string } = {}, field?: string) => {
-          only(field);
+        create((model: { password?: string } = {}) => {
           // Warning - password should be longer than 12 characters (informational)
           // Runs FIRST so it gets captured before the error test
           vestTest(
@@ -488,9 +495,8 @@ describe('FormDirective - Model to Form Synchronization', () => {
         user: { firstName: '', lastName: '' },
       });
       suite = signal(
-        staticSuite((model: unknown = {}, field?: string) => {
+        create((model: unknown = {}) => {
           // No validations required for this test; keep suite well-formed.
-          only(field);
         })
       );
     }
@@ -647,11 +653,7 @@ describe('FormDirective - FormState Memoization', () => {
   })
   class TestMemoizationHost {
     formValue = signal<{ field1?: string }>({});
-    suite = signal(
-      staticSuite((model: { field1?: string } = {}, field?: string) => {
-        only(field);
-      })
-    );
+    suite = signal(create((model: { field1?: string } = {}) => {}));
     @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
   }
 

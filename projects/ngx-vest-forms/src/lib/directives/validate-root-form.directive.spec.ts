@@ -3,7 +3,7 @@ import { Component, signal, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { enforce, only, staticSuite, test } from 'vest';
+import { create, enforce, test } from 'vest';
 import { describe, expect, it } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import { NgxVestForms } from '../exports';
@@ -12,10 +12,8 @@ import { getAllFormErrors } from '../utils/form-utils';
 /**
  * Test validation suite for root form validation tests
  */
-const createTestValidationSuite = staticSuite(
-  (data: Record<string, unknown> = {}, field?: string) => {
-    only(field);
-
+const createTestValidationSuite = create(
+  (data: Record<string, unknown> = {}) => {
     test('password', 'Password is required', () => {
       enforce(data['password']).isNotBlank();
     });
@@ -39,20 +37,18 @@ const createTestValidationSuite = staticSuite(
 /**
  * Test validation suite with multiple ROOT_FORM tests (like Brecht example)
  */
-const createMultiRootFormValidationSuite = staticSuite(
-  (data: Record<string, unknown> = {}, field?: string) => {
-    only(field);
-
+const createMultiRootFormValidationSuite = create(
+  (data: Record<string, unknown> = {}) => {
     test('firstName', 'First name is required', () => {
-      enforce(data['firstName']).isNotBlank();
+      enforce(String(data['firstName'] ?? '')).isNotBlank();
     });
 
     test('lastName', 'Last name is required', () => {
-      enforce(data['lastName']).isNotBlank();
+      enforce(String(data['lastName'] ?? '')).isNotBlank();
     });
 
     test('age', 'Age is required', () => {
-      enforce(data['age']).isNotBlank();
+      enforce(String(data['age'] ?? '')).isNotBlank();
     });
 
     // Cross-field validation (like "Brecht is not 30 anymore")
@@ -208,7 +204,6 @@ describe('ValidateRootFormDirective', () => {
       await waitFor(
         () => {
           const allErrors = getAllFormErrors(component.ngForm.control);
-
           expect(allErrors[ROOT_FORM]).toBeDefined();
           expect(allErrors[ROOT_FORM]).toContain('Brecht is not 30 anymore');
         },
