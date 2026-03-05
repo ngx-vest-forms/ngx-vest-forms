@@ -19,6 +19,7 @@ export class AppComponent {
     { label: 'Validation Config Demo', link: 'validation-config-demo' },
     { label: 'Multi-Form Wizard', link: 'wizard' },
     { label: 'Display Modes Demo', link: 'display-modes-demo' },
+    { label: 'Zod Schema Demo', link: 'zod-schema-demo' },
   ].map((item) => ({
     ...item,
     isActive: isActive('/' + item.link, this.router, {

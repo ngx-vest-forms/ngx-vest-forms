@@ -1,0 +1,54 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Zod Schema Demo"
+    subtitle="Combine Zod structural validation with Vest per-field business rules via Standard Schema."
+  />
+
+  <ngx-form-page-layout>
+    <div layout-aside class="sidebar-card-stack">
+      <ngx-card title="How Zod + Vest Works">
+        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
+          <li>
+            <strong>Zod schema:</strong> passed as the 2nd argument to Vest's
+            <code>create()</code> via Standard Schema V1.
+          </li>
+          <li>
+            <strong>Per-field rules:</strong> <code>test()</code> callbacks
+            using <code>enforce</code> handle field-level validation.
+          </li>
+          <li>
+            <strong>Full runs:</strong> <code>suite.run(model)</code> executes
+            both the Zod schema and all <code>test()</code> callbacks.
+          </li>
+          <li>
+            <strong>Focused runs:</strong>
+            <code>suite.only(field).run(model)</code> runs only the matching
+            <code>test()</code> — the Zod schema is skipped by design.
+          </li>
+          <li>
+            ngx-vest-forms uses focused runs for per-field validation, so the
+            Zod schema acts as a structural safety net on full validation.
+          </li>
+        </ul>
+      </ngx-card>
+
+      <ngx-form-state-card
+        [formState]="formBody.formState()"
+        [warnings]="formBody.warnings()"
+        [validatedFields]="formBody.validatedFields()"
+        [pending]="formBody.pending()"
+      />
+    </div>
+
+    <div layout-main>
+      <ngx-zod-schema-demo-form-body
+        #formBody
+        [formValue]="formValue()"
+        [shape]="shape"
+        [suite]="suite"
+        (formValueChange)="formValue.set($event)"
+        (submitted)="save()"
+      />
+    </div>
+  </ngx-form-page-layout>
+</div>

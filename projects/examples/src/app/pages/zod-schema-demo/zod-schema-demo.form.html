@@ -1,0 +1,138 @@
+<ngx-card>
+  <form
+    ngxVestForm
+    #vestForm="ngxVestForm"
+    [suite]="suite()"
+    [formShape]="shape()"
+    [formValue]="formValue()"
+    (formValueChange)="formValueChange.emit($event)"
+    (errorsChange)="currentErrors.set($event)"
+    (submitted)="onSubmit()"
+    class="space-y-8"
+  >
+    <ngx-form-section
+      tone="blue"
+      title="Personal Information"
+      description="Basic personal details validated by both Zod schema and Vest test() rules."
+    >
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <ngx-control-wrapper class="form-field">
+          <label for="firstName">
+            <span class="label-text">First Name</span>
+            <input
+              class="input-field"
+              type="text"
+              id="firstName"
+              name="firstName"
+              [ngModel]="formValue().firstName"
+              placeholder="Enter first name"
+              aria-required="true"
+            />
+          </label>
+        </ngx-control-wrapper>
+
+        <ngx-control-wrapper class="form-field">
+          <label for="lastName">
+            <span class="label-text">Last Name</span>
+            <input
+              class="input-field"
+              type="text"
+              id="lastName"
+              name="lastName"
+              [ngModel]="formValue().lastName"
+              placeholder="Enter last name"
+              aria-required="true"
+            />
+          </label>
+        </ngx-control-wrapper>
+      </div>
+
+      <ngx-control-wrapper class="form-field">
+        <label for="email">
+          <span class="label-text">Email</span>
+          <input
+            class="input-field"
+            type="email"
+            id="email"
+            name="email"
+            [ngModel]="formValue().email"
+            placeholder="user&#64;example.com"
+            aria-required="true"
+          />
+        </label>
+      </ngx-control-wrapper>
+
+      <ngx-control-wrapper class="form-field">
+        <label for="age">
+          <span class="label-text">Age</span>
+          <input
+            class="input-field"
+            type="number"
+            id="age"
+            name="age"
+            [ngModel]="formValue().age"
+            placeholder="Must be 18-120"
+            aria-required="true"
+          />
+        </label>
+      </ngx-control-wrapper>
+    </ngx-form-section>
+
+    <ngx-form-section
+      tone="teal"
+      title="Address"
+      description="Nested object validated at both the schema and field level."
+    >
+      <ngx-form-group-wrapper ngModelGroup="address">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <ngx-control-wrapper class="form-field sm:col-span-2">
+            <label for="street">
+              <span class="label-text">Street</span>
+              <input
+                class="input-field"
+                type="text"
+                id="street"
+                name="street"
+                [ngModel]="formValue().address?.street"
+                placeholder="Enter street address"
+                aria-required="true"
+              />
+            </label>
+          </ngx-control-wrapper>
+
+          <ngx-control-wrapper class="form-field">
+            <label for="city">
+              <span class="label-text">City</span>
+              <input
+                class="input-field"
+                type="text"
+                id="city"
+                name="city"
+                [ngModel]="formValue().address?.city"
+                placeholder="Enter city"
+                aria-required="true"
+              />
+            </label>
+          </ngx-control-wrapper>
+
+          <ngx-control-wrapper class="form-field">
+            <label for="zipCode">
+              <span class="label-text">ZIP Code</span>
+              <input
+                class="input-field"
+                type="text"
+                id="zipCode"
+                name="zipCode"
+                [ngModel]="formValue().address?.zipCode"
+                placeholder="4-6 digits"
+                aria-required="true"
+              />
+            </label>
+          </ngx-control-wrapper>
+        </div>
+      </ngx-form-group-wrapper>
+    </ngx-form-section>
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+</ngx-card>
