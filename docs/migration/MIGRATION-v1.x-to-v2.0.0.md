@@ -1,5 +1,7 @@
 # Migration Guide: v1.x → v2.0.0
 
+> **⚠️ NOTE (Vest 6 Update):** This guide documents migration to v2.x, which used **Vest.js 5.x**. If you're upgrading to **v3.0.0+ with Vest.js 6.x**, see [MIGRATION-v2.x-to-v3.0.0.md](./MIGRATION-v2.x-to-v3.0.0.md) for the field-focus pattern change (`only()` now called at the call site, not in the suite callback).
+
 This guide covers migration from v1.x (mostly v1.4) to v2.0.0, which includes critical bug fixes, type-safe APIs, and accessibility enhancements.
 
 ## Overview of Changes
@@ -45,9 +47,11 @@ These remain non-breaking in patch/minor releases.
 
 ## Detailed Breaking Changes
 
-### 1. Unconditional `only()` Pattern Required (CRITICAL)
+### 1. Unconditional `only()` Pattern (v2.x with Vest 5)
 
-**Status:** ⚠️ **BREAKING CHANGE** - Code changes required
+> **Note for Vest 6 Users (v3.0.0+):** This pattern applies to v2.x using **Vest.js 5.x**. If upgrading to **v3.0.0+ with Vest.js 6.x**, the pattern has changed significantly — field focus is now handled **at the call site** via `suite.only(field).run(model)`, not inside the suite callback. See [MIGRATION-v2.x-to-v3.0.0.md](./MIGRATION-v2.x-to-v3.0.0.md) for details.
+
+**Status:** ⚠️ **BREAKING CHANGE** - Code changes required (Vest 5 only)
 
 **What Changed:**
 

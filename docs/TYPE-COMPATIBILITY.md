@@ -1,8 +1,10 @@
 # Type Compatibility - NgxTypedVestSuite vs NgxVestSuite
 
+> **Vest 6 Documentation:** This guide uses the modern Vest 6 pattern where suite callbacks take only the model parameter. Field focus is handled at the call site via `suite.only(field).run(model)`. For Vest 5 (v2.x), see [MIGRATION-v2.x-to-v3.0.0.md](./migration/MIGRATION-v2.x-to-v3.0.0.md).
+
 ## Overview
 
-This document explains the relationship between `NgxTypedVestSuite` and `NgxVestSuite`, and shows how to use strong typing with `FormFieldName<T>` autocomplete in your validation suites.
+This document explains the relationship between `NgxTypedVestSuite` and `NgxVestSuite`, and shows how to use strong typing with `FieldPath<T>` autocomplete in your validation suites.
 
 ## Table of Contents
 

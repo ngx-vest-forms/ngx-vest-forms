@@ -1,6 +1,6 @@
 # Complete Example: User Form
 
-This guide shows a complete, working ngx-vest-forms implementation from start to finish.
+> **Vest 6 Example:** This guide demonstrates the modern Vest 6 pattern with model-only callbacks and call-site field focus. For Vest 5 patterns (v2.x), see the [v2.x-to-v3.0.0 migration guide](./migration/MIGRATION-v2.x-to-v3.0.0.md).
 
 ## Full Working Example
 

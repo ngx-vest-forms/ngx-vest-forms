@@ -1,5 +1,7 @@
 # Child Form Components
 
+> **Vest 6 Architecture:** This guide shows how to split forms into child components while maintaining Vest 6 validation patterns. All examples use the modern suite callback pattern (model-only, call-site field focus).
+
 Split large forms into smaller, reusable child components while maintaining access to the parent form's validation context.
 
 ## Why Use Child Components?

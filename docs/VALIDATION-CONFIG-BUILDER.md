@@ -1,5 +1,7 @@
 # ValidationConfig Fluent Builder API
 
+> **Vest 6 Recommended:** `validationConfig` works seamlessly with Vest 6's `omitWhen`/`skipWhen`. These patterns ensure dependent fields revalidate when conditions change. This guide assumes Vest 6 (`suite.only(field).run(model)` pattern).
+
 The `ValidationConfigBuilder` provides a type-safe, fluent API for creating validation configuration objects. This builder simplifies the process of defining field dependencies and ensures correctness through compile-time type checking.
 
 > **💡 Critical Insight**: `validationConfig` is **essential** when using Vest.js's `omitWhen`/`skipWhen` for conditional validations. It ensures Angular re-validates dependent fields when conditions change, preventing stale validation states in dynamic forms.

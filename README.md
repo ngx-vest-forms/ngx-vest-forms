@@ -45,38 +45,47 @@ See the full guides under [Documentation](#documentation).
 npm install ngx-vest-forms
 ```
 
-> **v.2.0.0 NOTE:**
+> **Vest 6+ NOTE:**
 >
-> You must call `only()` **unconditionally** in Vest suites.
+> With Vest 6+, field focus is done at the call site via `suite.only(field).run(model)`, not inside the suite callback.
 >
 > ```ts
-> // ✅ Correct
-> only(field); // only(undefined) safely runs all tests
+> // ✅ Correct (Vest 6+)
+> await suite.only(fieldName).run(model); // Focus on a single field
+> await suite.run(model); // Validate all fields
 > ```
 >
-> Why: Conditional `only()` breaks Vest's change detection mechanism and causes timing issues with `omitWhen` + `validationConfig` in ngx-vest-forms.
-> See the [Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md#1-unconditional-only-pattern-required-critical).
+> See the [Vest.js Docs](https://vestjs.dev) and [Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md#1-unconditional-only-pattern-required-critical) for more details.
 >
 > Selector prefix: use `ngx-` (recommended). The legacy `sc-` works in v2.x but is deprecated and will be removed in v3.
 
 ### Quick Start
 
-Start simple (with validations):
+Start simple (with Vest 6 validations):
 
 ```ts
 import { Component, signal } from '@angular/core';
-import { NgxVestForms, NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
-import { create, only, test, enforce } from 'vest';
+import {
+  NgxVestForms,
+  NgxDeepPartial,
+  NgxTypedVestSuite,
+} from 'ngx-vest-forms';
+import { create, test, enforce } from 'vest';
 
 type MyFormModel = NgxDeepPartial<{ email: string; name: string }>;
 
-// Minimal validation suite (always call only(field) unconditionally)
-const suite: NgxVestSuite<MyFormModel> = create((model, field?) => {
-  only(field);
+// Vest 6: Suite callback takes only the model — field focus at call site
+const suite: NgxTypedVestSuite<MyFormModel> = create((model) => {
   test('email', 'Email is required', () => {
     enforce(model.email).isNotBlank();
   });
+  test('name', 'Name is required', () => {
+    enforce(model.name).isNotBlank();
+  });
 });
+// Field-level validation at call site:
+// suite.only('email').run(model); // Validate only 'email'
+// suite.run(model);               // Validate all fields
 
 @Component({
   imports: [NgxVestForms],
@@ -115,7 +124,7 @@ That's all you need. The directive automatically creates controls, wires validat
 
 - **Unidirectional state with signals** — Models are `NgxDeepPartial<T>` so values build up incrementally
 - **Type-safe with runtime shape validation** — Automatic control creation and validation wiring (dev mode checks)
-- **Vest.js validations** — Sync/async, conditional, composable patterns with `only(field)` optimization
+- **Vest.js 6+ validations** — Sync/async, conditional, composable patterns with `suite.only(field).run(model)` optimization at call site
 - **Error display modes** — Control when errors show: `on-blur`, `on-submit`, `on-blur-or-submit` (default), `on-dirty`, or `always`
 - **Warning display modes** — Control when warnings show: `on-touch`, `on-validated-or-touch` (default), `on-dirty`, or `always`
 - **Form state tracking** — Access touched, dirty, valid/invalid states for individual fields or entire form
@@ -126,10 +135,20 @@ That's all you need. The directive automatically creates controls, wires validat
 - **Cross-field dependencies** — `validationConfig` for field-to-field triggers, `ROOT_FORM` for form-level rules
 - **Utilities** — Field paths, field clearing, validation config builder
 
-### Compatibility & Safety Notes (v2.x)
+### Compatibility Notes (v3.0.0+ with Vest 6)
 
-- `ROOT_FORM_CONSTANT` is retained for compatibility but deprecated; prefer `ROOT_FORM`.
-- `set` / `cloneDeep` are retained for compatibility; prefer `setValueAtPath` / `structuredClone` in new code.
+**ngx-vest-forms v3.0.0+ uses Vest.js 6.x** with the following patterns:
+
+- ✅ Suite callbacks take only the model: `create((model) => { ... })`
+- ✅ Field focus at call site: `suite.only(field).run(model)`
+- ✅ Full validation: `suite.run(model)`
+- ✅ Suite reset: `suite.reset()` on form reset
+- ✅ Async handling: `await result` or `.then()`
+
+**Deprecated v2.x Compatibility:**
+
+- `ROOT_FORM_CONSTANT` (use `ROOT_FORM`)
+- `set` / `cloneDeep` (use `setValueAtPath` / `structuredClone`)
 
 ### Error & Warning Display Modes
 

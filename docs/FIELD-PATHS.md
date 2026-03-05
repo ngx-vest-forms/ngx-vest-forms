@@ -1,5 +1,7 @@
 # Field Path Types - Type-Safe Field References
 
+> **Vest 6 Note:** This guide uses the modern Vest 6 pattern where suite callbacks take only the model parameter, and field focus is handled at the call site via `suite.only(field).run(model)`. See [MIGRATION-v2.x-to-v3.0.0.md](./migration/MIGRATION-v2.x-to-v3.0.0.md) for upgrade details.
+
 ## Overview
 
 The field path types feature provides compile-time type safety and IDE autocomplete for field names throughout ngx-vest-forms. This eliminates typos, enables refactoring support, and makes your code more maintainable.
@@ -172,11 +174,12 @@ protected validationConfig: ValidationConfigMap<PurchaseFormModel> = {
 
 ### 2. Type-Safe Vest Suites
 
-**Before:**
+**Before (Vest 5 - legacy):**
 
 ```typescript
 import { NgxVestSuite, NgxFieldKey } from 'ngx-vest-forms';
 
+// ⚠️ LEGACY: Vest 5 model with field parameter + only(field)
 export const suite: NgxVestSuite<UserModel> = create(
   (model: UserModel, field?: NgxFieldKey<UserModel>) => {
     only(field);
@@ -189,12 +192,12 @@ export const suite: NgxVestSuite<UserModel> = create(
 );
 ```
 
-**After:**
+**After (Vest 6 - recommended):**
 
 ```typescript
 import { NgxVestSuite, NgxTypedVestSuite } from 'ngx-vest-forms';
 
-// ✅ RECOMMENDED: Define with NgxTypedVestSuite for autocomplete
+// ✅ RECOMMENDED: Vest 6 model-only callback with autocomplete
 export const suite: NgxTypedVestSuite<UserModel> = create(
   (model: UserModel) => {
     // ✅ Autocomplete for field names!
@@ -204,11 +207,19 @@ export const suite: NgxTypedVestSuite<UserModel> = create(
   }
 );
 
-// Component - use NgxVestSuite type (no type assertion needed)
+// Component - field focus via suite.only(field).run(model)
 @Component({...})
 class MyFormComponent {
   // ✅ Types are compatible - no type assertion needed
   protected readonly suite: NgxVestSuite<UserModel> = suite;
+
+  validate(fieldName?: keyof UserModel) {
+    // ✅ Field focus at call site, not in callback
+    if (fieldName) {
+      return this.suite.only(fieldName).run(this.model);
+    }
+    return this.suite.run(this.model);
+  }
 }
 ```
 

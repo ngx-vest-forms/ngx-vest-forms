@@ -1,5 +1,7 @@
 # Accessibility Guide
 
+> **Vest 6 Compliant:** This guide documents accessibility patterns for ngx-vest-forms v3.0.0+ with Vest.js 6.x. All examples assume the modern Vest 6 pattern where suite callbacks take only the model and field focus is at the call site.
+
 ngx-vest-forms is built with accessibility in mind, following WCAG 2.2 Level AA guidelines.
 
 ## Quick Reference

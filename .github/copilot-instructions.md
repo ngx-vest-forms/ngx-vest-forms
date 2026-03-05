@@ -61,7 +61,7 @@ When context files don't provide specific guidance:
    - Naming conventions (camelCase for properties, kebab-case for component selectors)
    - Code organization (barrel exports in public-api.ts, feature-based organization)
    - Error handling (signal-based error state management)
-   - Validation patterns (create with only() optimization)
+   - Validation patterns (`create` suites with model-only callback; focus fields via `suite.only(field).run(model)` at call site)
    - Testing patterns (Jest with interaction tests in Storybook)
 
 3. Follow the most consistent patterns found in the codebase
@@ -233,7 +233,7 @@ The library hooks into Angular's template-driven forms via:
 
 ### Vest.js Integration
 - Uses `create()` for performance optimization
-- Supports `only()` for field-specific validation
+- Supports field-specific validation via `suite.only(field).run(model)`
 - Built-in async validation with signal support
 - Error mapping from Vest results to Angular form errors
 
