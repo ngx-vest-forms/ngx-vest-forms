@@ -1,18 +1,29 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
-import { playwright } from '@vitest/browser-playwright';
 import angular from '@analogjs/vite-plugin-angular';
+import { playwright } from '@vitest/browser-playwright';
 import { resolve } from 'path';
+import { defineConfig } from 'vite';
 
 export default defineConfig(({ mode }) => ({
   plugins: [angular()],
   resolve: {
     alias: {
-      'ngx-vest-forms': resolve(__dirname, 'projects/ngx-vest-forms/src/public-api.ts'),
+      'ngx-vest-forms': resolve(
+        __dirname,
+        'projects/ngx-vest-forms/src/public-api.ts'
+      ),
     },
+    dedupe: ['vest', 'n4s', 'vest-utils', 'vestjs-runtime', 'context'],
   },
   optimizeDeps: {
     include: [
+      'vest',
+      'vest/memo',
+      'vest/email',
+      'n4s',
+      'vest-utils',
+      'vestjs-runtime',
+      'context',
       'rxjs',
       '@testing-library/jest-dom',
       '@testing-library/jest-dom/matchers',
