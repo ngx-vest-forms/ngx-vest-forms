@@ -6,13 +6,12 @@ This guide shows a complete, working ngx-vest-forms implementation from start to
 
 ```typescript
 import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
-import { staticSuite, test, enforce, only } from 'vest';
+import { create, test, enforce } from 'vest';
 import {
   NgxVestForms,
   NgxDeepPartial,
   NgxDeepRequired,
   NgxTypedVestSuite,
-  FormFieldName,
 } from 'ngx-vest-forms';
 
 // 1. Define your form model (always NgxDeepPartial)
@@ -30,11 +29,8 @@ const userFormShape: NgxDeepRequired<UserFormModel> = {
 };
 
 // 3. Create a Vest validation suite
-const userValidationSuite: NgxTypedVestSuite<UserFormModel> = staticSuite(
-  (model: UserFormModel, field?: FormFieldName<UserFormModel>) => {
-    // CRITICAL: Always call only() unconditionally (only(undefined) is safe)
-    only(field); // When field is undefined, all tests run
-
+const userValidationSuite: NgxTypedVestSuite<UserFormModel> = create(
+  (model: UserFormModel) => {
     test('firstName', 'First name is required', () => {
       enforce(model.firstName).isNotBlank();
     });
@@ -48,6 +44,7 @@ const userValidationSuite: NgxTypedVestSuite<UserFormModel> = staticSuite(
     });
   }
 );
+// Call site: userValidationSuite.only('firstName').run(model) for field-level validation
 
 // 4. Create the component
 @Component({
@@ -110,7 +107,7 @@ export class UserFormComponent {
 - ✅ **Error display** with built-in `ngx-control-wrapper`
 - ✅ **Runtime shape validation** - Catches typos in development mode
 - ✅ **Unidirectional data flow** - Using `[ngModel]` (not `[(ngModel)]`)
-- ✅ **Performance optimized** - Using `only(field)` for field-level validation
+- ✅ **Performance optimized** — Field-level validation via `suite.only(field).run(model)` at call site
 
 ## Key Points to Remember
 
@@ -138,27 +135,31 @@ const myFormShape: NgxDeepRequired<MyFormModel> = {
 
 This enables shape validation in development mode to catch typos in `name` attributes.
 
-### 3. Always Call `only()` Unconditionally
+### 3. Suite Callbacks Take Only the Model
 
-The `only()` function from Vest.js optimizes validation by running only the tests for a specific field:
+In Vest 6, suite callbacks take only the model parameter. Field focus is handled at the call site:
 
 ```typescript
-const suite = staticSuite((model, field?) => {
-  only(field); // ✅ CORRECT - Call unconditionally at the top
-
+const suite = create((model) => {
   test('firstName', 'Required', () => {
     enforce(model.firstName).isNotBlank();
   });
 });
+
+// Field-level validation at the call site:
+suite.only('firstName').run(model); // Validate only 'firstName'
+suite.run(model); // Validate all fields
+suite.reset(); // Reset accumulated state
 ```
 
-**Never** call `only()` conditionally:
+**Never** use the old Vest 5 pattern with `field?` parameter and `only()` inside the callback:
 
 ```typescript
-// ❌ WRONG - Don't call only() conditionally
-if (field) {
+// ❌ WRONG — old Vest 5 pattern
+const suite = create((model, field?) => {
   only(field);
-}
+  ...
+});
 ```
 
 ### 4. Use `[ngModel]` Not `[(ngModel)]`

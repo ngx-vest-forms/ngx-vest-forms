@@ -359,12 +359,10 @@ protected onStructureChange(newValue: string): void {
 Use `omitWhen` in your validation suite to skip validation for cleared fields:
 
 ```typescript
-import { staticSuite, test, enforce, omitWhen, only } from 'vest';
+import { create, test, enforce, omitWhen } from 'vest';
 
-export const procedureSuite: NgxVestSuite<ProcedureFormModel> = staticSuite(
-  (model, field?) => {
-    only(field);
-
+export const procedureSuite: NgxVestSuite<ProcedureFormModel> = create(
+  (model) => {
     test('procedureType', 'Procedure type is required', () => {
       enforce(model.procedureType).isNotBlank();
     });

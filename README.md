@@ -35,7 +35,7 @@ See the full guides under [Documentation](#documentation).
 ### Prerequisites
 
 - **Angular**: >=19.0.0 minimum, 20.x recommended (all used APIs stable)
-- **Vest.js**: >=5.4.6 (Validation engine)
+- **Vest.js**: >=6.0.0 (Validation engine)
 - **TypeScript**: >=5.8.0 (Modern Angular features)
 - **Node.js**: >=20 (Maintenance release)
 
@@ -66,12 +66,12 @@ Start simple (with validations):
 ```ts
 import { Component, signal } from '@angular/core';
 import { NgxVestForms, NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
-import { staticSuite, only, test, enforce } from 'vest';
+import { create, only, test, enforce } from 'vest';
 
 type MyFormModel = NgxDeepPartial<{ email: string; name: string }>;
 
 // Minimal validation suite (always call only(field) unconditionally)
-const suite: NgxVestSuite<MyFormModel> = staticSuite((model, field?) => {
+const suite: NgxVestSuite<MyFormModel> = create((model, field?) => {
   only(field);
   test('email', 'Email is required', () => {
     enforce(model.email).isNotBlank();
@@ -423,6 +423,7 @@ const shape: NgxDeepRequired<MyFormModel> = {
 
 ## Migration
 
+- v2.x → v3.0.0: **[Migration Guide](./docs/migration/MIGRATION-v2.x-to-v3.0.0.md)** (Vest 6 upgrade)
 - v1.x → v2.0.0: **[Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md)**
 - Selector prefixes: **[Dual Selector Support](./docs/DUAL-SELECTOR-SUPPORT.md)**
 

@@ -345,6 +345,7 @@ If you encounter issues during migration:
 
 - [Dual Selector Support Technical Details](./DUAL-SELECTOR-SUPPORT.md)
 - [Complete Example](./COMPLETE-EXAMPLE.md) - Full working example with new selectors
+- [Migration Guide (v2.x → v3.0.0)](./migration/MIGRATION-v2.x-to-v3.0.0.md) - Vest 6 migration guide
 - [Migration Guide (v1.x → v2.0.0)](./migration/MIGRATION-v1.x-to-v2.0.0.md) - Complete migration guide for v2.0.0 upgrade
 - [Main README](../README.md) - Library overview and quick start
 

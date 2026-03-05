@@ -88,7 +88,7 @@ export class AddressFormComponent {
 ```typescript
 import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgxVestForms, NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
-import { staticSuite, test, enforce, only } from 'vest';
+import { create, test, enforce } from 'vest';
 import { AddressFormComponent } from './address-form';
 
 type OrderFormModel = NgxDeepPartial<{
@@ -354,24 +354,20 @@ export class CheckoutFormComponent {
 Validation suites can use composable validations for child component fields:
 
 ```typescript
-import { staticSuite, only } from 'vest';
+import { create } from 'vest';
 import { addressValidations } from './address.validations';
 
-export const orderSuite: NgxVestSuite<OrderFormModel> = staticSuite(
-  (model, field?) => {
-    only(field);
+export const orderSuite: NgxVestSuite<OrderFormModel> = create((model) => {
+  test('customerName', 'Customer name is required', () => {
+    enforce(model.customerName).isNotBlank();
+  });
 
-    test('customerName', 'Customer name is required', () => {
-      enforce(model.customerName).isNotBlank();
-    });
+  // Validate billing address fields
+  addressValidations(model.billingAddress, 'billingAddress');
 
-    // Validate billing address fields
-    addressValidations(model.billingAddress, 'billingAddress');
-
-    // Validate shipping address fields
-    addressValidations(model.shippingAddress, 'shippingAddress');
-  }
-);
+  // Validate shipping address fields
+  addressValidations(model.shippingAddress, 'shippingAddress');
+});
 ```
 
 ## Common Patterns

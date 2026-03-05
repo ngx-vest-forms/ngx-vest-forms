@@ -78,7 +78,7 @@ Type-safe field names for Vest test() calls, combining field paths with the ROOT
 
 ```typescript
 import { FormFieldName, ROOT_FORM } from 'ngx-vest-forms';
-import { staticSuite, test, only, enforce } from 'vest';
+import { create, test, enforce } from 'vest';
 
 type FormModel = {
   email: string;
@@ -87,25 +87,21 @@ type FormModel = {
   };
 };
 
-export const suite = staticSuite(
-  (data: FormModel, field?: FormFieldName<FormModel>) => {
-    only(field);
+export const suite = create((data: FormModel) => {
+  // ✅ Autocomplete suggests: 'email' | 'user' | 'user.name' | typeof ROOT_FORM
+  test('email', 'Required', () => {
+    enforce(data.email).isNotBlank();
+  });
 
-    // ✅ Autocomplete suggests: 'email' | 'user' | 'user.name' | typeof ROOT_FORM
-    test('email', 'Required', () => {
-      enforce(data.email).isNotBlank();
-    });
+  test('user.name', 'Required', () => {
+    enforce(data.user?.name).isNotBlank();
+  });
 
-    test('user.name', 'Required', () => {
-      enforce(data.user?.name).isNotBlank();
-    });
-
-    // Form-level validation
-    test(ROOT_FORM, 'At least one field required', () => {
-      enforce(data.email || data.user?.name).isTruthy();
-    });
-  }
-);
+  // Form-level validation
+  test(ROOT_FORM, 'At least one field required', () => {
+    enforce(data.email || data.user?.name).isTruthy();
+  });
+});
 ```
 
 ### `FieldPathValue<T, Path>`
@@ -181,7 +177,7 @@ protected validationConfig: ValidationConfigMap<PurchaseFormModel> = {
 ```typescript
 import { NgxVestSuite, NgxFieldKey } from 'ngx-vest-forms';
 
-export const suite: NgxVestSuite<UserModel> = staticSuite(
+export const suite: NgxVestSuite<UserModel> = create(
   (model: UserModel, field?: NgxFieldKey<UserModel>) => {
     only(field);
 
@@ -196,13 +192,11 @@ export const suite: NgxVestSuite<UserModel> = staticSuite(
 **After:**
 
 ```typescript
-import { NgxVestSuite, NgxTypedVestSuite, FormFieldName } from 'ngx-vest-forms';
+import { NgxVestSuite, NgxTypedVestSuite } from 'ngx-vest-forms';
 
 // ✅ RECOMMENDED: Define with NgxTypedVestSuite for autocomplete
-export const suite: NgxTypedVestSuite<UserModel> = staticSuite(
-  (model: UserModel, field?: FormFieldName<UserModel>) => {
-    only(field);
-
+export const suite: NgxTypedVestSuite<UserModel> = create(
+  (model: UserModel) => {
     // ✅ Autocomplete for field names!
     test('email', 'Required', () => {
       enforce(model.email).isNotBlank();
@@ -325,13 +319,9 @@ function validateAddress(
 }
 
 // Use in main suite with type safety
-export const suite = staticSuite(
-  (data: FormModel, field?: FormFieldName<FormModel>) => {
-    only(field);
-
-    validateAddress(data.addresses?.billing, 'addresses.billing');
-  }
-);
+export const suite = create((data: FormModel) => {
+  validateAddress(data.addresses?.billing, 'addresses.billing');
+});
 ```
 
 ---
@@ -345,7 +335,7 @@ export const suite = staticSuite(
 ```typescript
 import { NgxVestSuite, NgxFieldKey } from 'ngx-vest-forms';
 
-const suite: NgxVestSuite<Model> = staticSuite(
+const suite: NgxVestSuite<Model> = create(
   (model: Model, field?: NgxFieldKey<Model>) => {
     // ...
   }
@@ -355,13 +345,11 @@ const suite: NgxVestSuite<Model> = staticSuite(
 **After:**
 
 ```typescript
-import { NgxTypedVestSuite, FormFieldName } from 'ngx-vest-forms';
+import { NgxTypedVestSuite } from 'ngx-vest-forms';
 
-const suite: NgxTypedVestSuite<Model> = staticSuite(
-  (model: Model, field?: FormFieldName<Model>) => {
-    // ...
-  }
-);
+const suite: NgxTypedVestSuite<Model> = create((model: Model) => {
+  // ...
+});
 ```
 
 ### Step 2: Add Types to Validation Configs
@@ -427,9 +415,8 @@ This design keeps defaults safe while preserving backward compatibility for vali
 When defining validation suites in TypeScript files, use `NgxTypedVestSuite` for better type safety:
 
 ```typescript
-export const suite: NgxTypedVestSuite<FormModel> = staticSuite(
-  (model: FormModel, field?: FormFieldName<FormModel>) => {
-    only(field);
+export const suite: NgxTypedVestSuite<FormModel> = create(
+  (model: FormModel) => {
     // Full autocomplete for field names
   }
 );
@@ -483,10 +470,10 @@ While `NgxVestSuite` still works, prefer `NgxTypedVestSuite` for better type saf
 
 ```typescript
 // ❌ Less type-safe
-suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => { ... });
+suite: NgxVestSuite<FormModel> = create((model) => { ... });
 
 // ✅ More type-safe
-suite: NgxTypedVestSuite<FormModel> = staticSuite((model, field?: FormFieldName<FormModel>) => { ... });
+suite: NgxTypedVestSuite<FormModel> = create((model: FormModel) => { ... });
 ```
 
 ---
@@ -602,7 +589,7 @@ import {
   ValidationConfigMap,
   ROOT_FORM,
 } from 'ngx-vest-forms';
-import { staticSuite, test, only, enforce } from 'vest';
+import { create, test, enforce } from 'vest';
 
 type PurchaseFormModel = NgxDeepPartial<{
   firstName: string;
@@ -625,10 +612,8 @@ type PurchaseFormModel = NgxDeepPartial<{
 }>;
 
 // Type-safe validation suite
-export const purchaseSuite: NgxTypedVestSuite<PurchaseFormModel> = staticSuite(
-  (model: PurchaseFormModel, field?: FormFieldName<PurchaseFormModel>) => {
-    only(field);
-
+export const purchaseSuite: NgxTypedVestSuite<PurchaseFormModel> = create(
+  (model: PurchaseFormModel) => {
     test('firstName', 'Required', () => {
       enforce(model.firstName).isNotBlank();
     });
@@ -720,6 +705,7 @@ For working with field paths at runtime, see:
 - [Validation Config vs Root Form](./VALIDATION-CONFIG-VS-ROOT-FORM.md) - When to use each approach
 - [Vest.js Instructions](../.github/instructions/vest.instructions.md) - Best practices for Vest.js
 - [ngx-vest-forms Instructions](../.github/instructions/ngx-vest-forms.instructions.md) - Complete library guide
+- [Migration Guide (v2.x → v3.0.0)](./migration/MIGRATION-v2.x-to-v3.0.0.md) - Upgrading to v3.0.0 (Vest 6)
 - [Migration Guide (v1.x → v2.0.0)](./migration/MIGRATION-v1.x-to-v2.0.0.md) - Upgrading to v2.0.0
 - [Selector Prefix Migration Guide](./SELECTOR-PREFIX-MIGRATION.md)
 

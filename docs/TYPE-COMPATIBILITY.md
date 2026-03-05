@@ -19,11 +19,10 @@ This document explains the relationship between `NgxTypedVestSuite` and `NgxVest
 Use `NgxTypedVestSuite` to get autocomplete for field names:
 
 ```typescript
-import { staticSuite, test, enforce, only } from 'vest';
+import { create, test, enforce } from 'vest';
 import {
   NgxVestSuite,
   NgxTypedVestSuite,
-  FormFieldName,
   NgxDeepPartial,
 } from 'ngx-vest-forms';
 
@@ -36,16 +35,16 @@ type UserModel = NgxDeepPartial<{
 }>;
 
 // ✅ BEST: Define with NgxTypedVestSuite for strong typing
-export const userSuite: NgxTypedVestSuite<UserModel> = staticSuite(
-  (model: UserModel, field?: FormFieldName<UserModel>) => {
-    only(field);
-    // ✅ IDE autocomplete for: 'email' | 'password' | 'profile' | 'profile.age' | typeof ROOT_FORM
+export const userSuite: NgxTypedVestSuite<UserModel> = create(
+  (model: UserModel) => {
+    // ✅ IDE autocomplete for field names in test() calls
     test('email', 'Required', () => enforce(model.email).isNotBlank());
     test('profile.age', 'Must be 18+', () =>
       enforce(model.profile?.age).greaterThanOrEquals(18)
     );
   }
 );
+// Call site: userSuite.only('email').run(model) for field-level validation
 
 // Component - use type inference (no explicit type needed)
 @Component({...})
@@ -59,17 +58,18 @@ class UserFormComponent {
 
 ## Why Two Types?
 
-**`NgxTypedVestSuite<T>`**: Strong typing with `FormFieldName<T>` autocomplete
+**`NgxTypedVestSuite<T>`**: Strong typing with model type `T`
 
 - Use when **defining** validation suites
-- Provides IDE autocomplete for all valid field paths
+- Callback takes only the model: `(model: T) => void`
+- Provides IDE autocomplete for field names in `test()` calls
 - Catches typos at compile time
 
-**`NgxVestSuite<T>`**: Flexible base type with `any` field parameter
+**`NgxVestSuite<T>`**: Flexible base type
 
 - Used internally by the form directive
 - Accepts **both** typed and untyped suites seamlessly
-- The `any` is safe because model parameter remains fully typed
+- The model parameter remains fully typed
 
 ---
 
@@ -79,13 +79,13 @@ class UserFormComponent {
 
 ```typescript
 // ✅ RECOMMENDED: Strong typing at definition
-export const userValidation: NgxTypedVestSuite<UserModel> = staticSuite(
-  (model: UserModel, field?: FormFieldName<UserModel>) => {
-    only(field);
-    // Full autocomplete for field names
+export const userValidation: NgxTypedVestSuite<UserModel> = create(
+  (model: UserModel) => {
+    // Full autocomplete for field names in test() calls
     test('email', 'Required', () => enforce(model.email).isNotBlank());
   }
 );
+// Call site: userValidation.only('email').run(model)
 
 // ✅ In component: Use type inference
 @Component({...})
@@ -97,8 +97,8 @@ class MyFormComponent {
 
 **Why this works:**
 
-- `NgxVestSuite` uses `any` for field parameter
-- Accepts both `string` and `FormFieldName<T>`
+- `NgxVestSuite` callback takes `(model: T) => void`
+- Accepts both typed and untyped suites
 - No type compatibility issues
 - Full type safety where it matters (validation definition)
 
@@ -123,28 +123,24 @@ class MyFormComponent {
 
 ## Technical Explanation
 
-### Why `any` for Field Parameter?
+### Why Model-Only Callback?
 
-`NgxVestSuite` uses `any` for the field parameter to accept both:
+In Vest 6, suites take only the model parameter. Field focus is handled at the call site via `suite.only(field).run(model)`. Both `NgxVestSuite` and `NgxTypedVestSuite` use the callback signature `(model: T) => void`.
 
-1. Plain `string` field names
-2. `FormFieldName<T>` from `NgxTypedVestSuite` (string literal union with autocomplete)
+This is safe because:
 
-This strategic use of `any` is safe because:
-
-- **Model parameter `T` remains fully typed** - This is where type safety matters most
-- **Field validation happens at definition site** - Errors caught when writing validation logic
-- **Runtime behavior is identical** - `string` and `FormFieldName<T>` are both strings at runtime
-- **Enables type compatibility** - `NgxTypedVestSuite` works where `NgxVestSuite` is expected
+- **Model parameter `T` remains fully typed** — This is where type safety matters most
+- **Field validation happens at the call site** — `suite.only('email').run(model)` focuses on a single field
+- **Runtime behavior is identical** — `suite.run(model)` validates all fields
+- **Enables type compatibility** — `NgxTypedVestSuite` works where `NgxVestSuite` is expected
 
 ### Type System Flow
 
 ```typescript
 // 1. Define with strong typing
-export const suite: NgxTypedVestSuite<UserModel> = staticSuite(
-  (model: UserModel, field?: FormFieldName<UserModel>) => {
-    // FormFieldName<UserModel> = 'email' | 'password' | 'profile' | 'profile.age' | typeof ROOT_FORM
-    only(field); // ✅ Type-safe autocomplete
+export const suite: NgxTypedVestSuite<UserModel> = create(
+  (model: UserModel) => {
+    test('email', 'Required', () => enforce(model.email).isNotBlank());
   }
 );
 
@@ -152,21 +148,23 @@ export const suite: NgxTypedVestSuite<UserModel> = staticSuite(
 @Directive(...)
 class FormDirective<T> {
   suite = input<NgxVestSuite<T> | NgxTypedVestSuite<T> | null>(null);
-  //             ^^^^^^^^^^^^^ - accepts any field parameter
-  //                             ^^^^^^^^^^^^^^^^^^^ - strong typed field parameter
+  //             ^^^^^^^^^^^^^ - base type
+  //                             ^^^^^^^^^^^^^^^^^^^ - strong typed
 }
 
-// 3. Runtime execution (both use same code path)
-(suite as NgxVestSuite<T>)(model, field).done(...);
-// Cast to NgxVestSuite for uniform execution
+// 3. Runtime execution
+suite.only(field).run(model);  // Field-level validation
+suite.run(model);              // Full validation
+suite.reset();                 // Reset accumulated state
 ```
 
 ### Benefits
 
-✅ **Strong typing where you write code** - `FormFieldName<T>` autocomplete when defining validations
-✅ **Flexibility where you use code** - Works seamlessly in templates and components
-✅ **Type safety** - Model parameter `T` remains fully typed throughout
-✅ **No type assertions needed** - Everything just works
+✅ **Strong typing where you write code** — IDE autocomplete for field names in `test()` calls
+✅ **Flexibility where you use code** — Works seamlessly in templates and components
+✅ **Type safety** — Model parameter `T` remains fully typed throughout
+✅ **No type assertions needed** — Everything just works
+✅ **Clean callbacks** — No extra `field?` parameter or `only()` call needed
 
 ---
 

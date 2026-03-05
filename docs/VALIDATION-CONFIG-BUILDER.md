@@ -52,9 +52,7 @@ When using Vest.js's `omitWhen` or `skipWhen` for conditional validations, Angul
 
 ```typescript
 // Vest validation suite with conditional logic
-export const suite = staticSuite((model, field?) => {
-  only(field);
-
+export const suite = create((model) => {
   test('country', 'Required', () => {
     enforce(model.country).isNotBlank();
   });

@@ -7,22 +7,22 @@ description: Build Angular Template-Driven Forms with ngx-vest-forms and Vest.js
 
 Build type-safe, validated Angular forms using template-driven forms (`FormsModule`, `NgModel`, `ngModelGroup`) with Vest.js validation suites via the ngx-vest-forms library.
 
-**Key principle:** Unidirectional data flow with `[ngModel]` (never `[(ngModel)]`), signals for state, and `staticSuite` with `only(field)` for performant validation.
+**Key principle:** Unidirectional data flow with `[ngModel]` (never `[(ngModel)]`), signals for state, and `create` with model-only callback for validation (`suite.only(field).run(model)` at call site).
 
 ## Quick Start
 
 ```typescript
 import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgxVestForms, NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
-import { staticSuite, test, enforce, only } from 'vest';
+import { create, test, enforce } from 'vest';
 
 type FormModel = NgxDeepPartial<{ firstName: string; email: string }>;
 
-const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
-  only(field);  // ALWAYS unconditional
+const suite: NgxVestSuite<FormModel> = create((model) => {
   test('firstName', 'Required', () => enforce(model.firstName).isNotBlank());
   test('email', 'Invalid email', () => enforce(model.email).isEmail());
 });
+// Call site: suite.only('firstName').run(model) for field-level, suite.run(model) for all
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,7 +56,7 @@ export class MyFormComponent {
 | Binding | `[ngModel]="formValue().name"` | `[(ngModel)]="formValue().name"` |
 | Name = Path | `name="address.street"` | `name="street"` for nested |
 | Optional chaining | `formValue().address?.street` | `formValue().address.street` |
-| `only()` call | `only(field);` (unconditional) | `if(field){only(field)}` |
+| Suite callback | `create((model) => { ... })` | `create((model, field?) => { only(field); ... })` |
 | Nested components | `viewProviders: [vestFormsViewProviders]` | Missing viewProviders |
 | Form model type | `NgxDeepPartial<T>` | Plain interface |
 
@@ -65,7 +65,7 @@ export class MyFormComponent {
 For detailed patterns on each topic, see [references/form-patterns.md](references/form-patterns.md):
 
 - **Form Models & Types** — `NgxDeepPartial<T>`, `NgxDeepRequired<T>`, form shapes
-- **Validation Suites** — `staticSuite`, `only()`, `omitWhen`, async, composable
+- **Validation Suites** — `create`, `omitWhen`, async, composable; field focus via `suite.only(field).run(model)` at call site
 - **Error Display** — `ngx-control-wrapper`, `ngx-form-group-wrapper`, display modes
 - **Nested Forms** — `ngModelGroup`, `vestFormsViewProviders`, child components
 - **Cross-field Validation** — `validationConfig`, `createValidationConfig()` builder
