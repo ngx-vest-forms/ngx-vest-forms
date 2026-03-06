@@ -143,13 +143,47 @@ export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
  * without requiring {@code $any()} casts.
  */
 
+/**
+ * Structural type for the result returned by Vest 6's `suite.run()`.
+ *
+ * Vest 6's SuiteResult exposes sync selectors (`isPending`, `getErrors`, etc.)
+ * immediately after `run()`, and may also be thenable depending on the exact
+ * Vest typings/runtime version in use.
+ *
+ * This structural interface avoids direct coupling to Vest's internal
+ * `SuiteResult<F, G, S>` generics while preserving the methods used by ngx-vest-forms.
+ *
+ * @see {@link https://vestjs.dev/docs/writing_your_suite/handling_completion}
+ * @publicApi
+ */
+export type NgxSuiteRunResult = {
+  isPending(field?: string): boolean;
+  isValid(field?: string): boolean;
+  hasErrors(field?: string): boolean;
+  hasWarnings(field?: string): boolean;
+  isTested(field: string): boolean;
+  getErrors(): Record<string, string[]>;
+  getErrors(field: string): string[];
+  getWarnings(): Record<string, string[]>;
+  getWarnings(field: string): string[];
+  /**
+   * Optional thenable support for Vest versions/runtime shapes that expose it.
+   * Keep this optional so purely synchronous SuiteResult shapes remain assignable.
+   */
+  then?<TResult1 = NgxSuiteRunResult, TResult2 = never>(
+    onfulfilled?:
+      | ((value: NgxSuiteRunResult) => TResult1 | PromiseLike<TResult1>)
+      | null,
+    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
+  ): PromiseLike<TResult1 | TResult2>;
+};
+
 export type NgxVestSuite<T = unknown> = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  only(match: string | string[] | null | undefined): { run(model: T): any };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  run(model: T): any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  get(): any;
+  only(match: string | string[] | null | undefined): {
+    run(model: T): NgxSuiteRunResult;
+  };
+  run(model: T): NgxSuiteRunResult;
+  get(): NgxSuiteRunResult;
   reset(): void;
   resetField(field: string): void;
   remove(field: string): void;

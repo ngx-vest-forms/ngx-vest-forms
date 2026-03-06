@@ -356,7 +356,7 @@ export class CheckoutFormComponent {
 Validation suites can use composable validations for child component fields:
 
 ```typescript
-import { create } from 'vest';
+import { create, test, enforce } from 'vest';
 import { addressValidations } from './address.validations';
 
 export const orderSuite: NgxVestSuite<OrderFormModel> = create((model) => {

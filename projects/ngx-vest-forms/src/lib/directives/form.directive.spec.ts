@@ -378,6 +378,84 @@ describe('FormDirective - Async Validator', () => {
       'Password should be longer than 12 characters'
     );
   });
+
+  it('should ignore stale async completions after a validator subscription is cancelled', async () => {
+    @Component({
+      selector: 'test-cancelled-validation-host',
+      template: `<form
+        ngxVestForm
+        [suite]="suite()"
+        #vest="ngxVestForm"
+      ></form>`,
+
+      imports: [NgxVestForms],
+    })
+    class TestCancelledValidationHost {
+      private resolvePendingRun: (() => void) | undefined;
+
+      private readonly finalResult = {
+        isPending: () => false,
+        isValid: () => true,
+        hasErrors: () => false,
+        hasWarnings: () => true,
+        isTested: () => true,
+        getErrors: () => ({}),
+        getWarnings: () => ({ username: ['Username looks weak'] }),
+      };
+
+      private readonly pendingResult = {
+        ...this.finalResult,
+        isPending: () => true,
+        then: (onfulfilled?: ((value: unknown) => unknown) | null) =>
+          new Promise((resolve) => {
+            this.resolvePendingRun = () => {
+              const value = onfulfilled
+                ? onfulfilled(this.finalResult)
+                : this.finalResult;
+              resolve(value);
+            };
+          }),
+      };
+
+      readonly suite = signal({
+        only: () => ({ run: () => this.pendingResult }),
+        get: () => this.finalResult,
+        reset: vi.fn(),
+        resetField: vi.fn(),
+        remove: vi.fn(),
+        subscribe: vi.fn(),
+        dump: vi.fn(),
+        resume: vi.fn(),
+      } as any);
+
+      flushPendingRun(): void {
+        this.resolvePendingRun?.();
+      }
+
+      @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
+    }
+
+    const { fixture } = await render(TestCancelledValidationHost);
+    const instance = fixture.componentInstance;
+    const validator = instance.vestForm.createAsyncValidator('username', {
+      debounceTime: 0,
+    });
+    const nextSpy = vi.fn();
+
+    const subscription = (
+      validator({ value: 'abc' } as any) as Observable<any>
+    ).subscribe(nextSpy);
+
+    vi.runAllTimers();
+    await Promise.resolve();
+
+    subscription.unsubscribe();
+    instance.flushPendingRun();
+    await Promise.resolve();
+
+    expect(nextSpy).not.toHaveBeenCalled();
+    expect(instance.vestForm.fieldWarnings().has('username')).toBe(false);
+  });
 });
 
 describe.todo('FormDirective - Validator Cache');

@@ -6,17 +6,17 @@ ngx-vest-forms v3.0.0 upgrades the underlying validation engine from **Vest.js 5
 
 **At a glance:**
 
-| Area                   | v2.x (Vest 5)                             | v3.0.0 (Vest 6)                                       |
-| ---------------------- | ----------------------------------------- | ----------------------------------------------------- |
-| Vest dependency        | `~5.4.6`                                  | `~6.0.3`                                              |
-| Suite factory          | `staticSuite` or `create`                 | `create` only                                         |
-| Suite callback         | `(model, field?) => { only(field); ... }` | `(model) => { ... }`                                  |
-| Field-level validation | `only(field)` inside callback             | `suite.only(field).run(model)` at call site           |
-| Suite execution        | `suite(model, field)` (callable)          | `suite.run(model)` or `suite.only(field).run(model)`  |
-| Async handling         | `.done(callback)`                         | `await result` or `Promise.resolve(result).then(...)` |
-| Suite reset            | Not required                              | `suite.reset()` on form reset                         |
-| Suite type             | `StaticSuite`                             | `Suite`                                               |
-| Performance            | `test.memo(...)`                          | `memo(() => { ... }, [deps])` from `vest/memo`        |
+| Area                   | v2.x (Vest 5)                             | v3.0.0 (Vest 6)                                      |
+| ---------------------- | ----------------------------------------- | ---------------------------------------------------- |
+| Vest dependency        | `~5.4.6`                                  | `~6.0.3`                                             |
+| Suite factory          | `staticSuite` or `create`                 | `create` only                                        |
+| Suite callback         | `(model, field?) => { only(field); ... }` | `(model) => { ... }`                                 |
+| Field-level validation | `only(field)` inside callback             | `suite.only(field).run(model)` at call site          |
+| Suite execution        | `suite(model, field)` (callable)          | `suite.run(model)` or `suite.only(field).run(model)` |
+| Async handling         | `.done(callback)`                         | `await result` or `result.then(...)`                 |
+| Suite reset            | Not required                              | `suite.reset()` on form reset                        |
+| Suite type             | `StaticSuite`                             | `Suite`                                              |
+| Performance            | `test.memo(...)`                          | `memo(() => { ... }, [deps])` from `vest/memo`       |
 
 **Effort estimate:** Low-to-medium. Most changes are mechanical find-and-replace operations in validation suite files. The ngx-vest-forms library handles the runtime changes internally.
 
@@ -197,8 +197,10 @@ const result = (suite as NgxVestSuite<T>).only(field).run(snap);
 if (!result.isPending()) {
   processResult(result); // Synchronous suites: process immediately
 } else {
-  Promise.resolve(result).then(processResult); // Async: wait for completion
+  result.then(processResult); // Async: wait for completion
 }
+
+// Angular/RxJS integration can also use `from(result)` for cancellation-aware flows.
 ```
 
 ### Form Reset
@@ -396,7 +398,7 @@ suite.run(model).done((result) => { ... });
 const result = suite.run(model);
 await result;
 // or
-Promise.resolve(result).then((res) => { ... });
+result.then((res) => { ... });
 ```
 
 ### Issue: "runStatic is not a function on suite.only()"

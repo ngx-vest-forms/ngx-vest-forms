@@ -10,7 +10,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   AsyncValidator,
@@ -30,6 +30,7 @@ import {
   timer,
 } from 'rxjs';
 import { ROOT_FORM } from '../constants';
+import type { NgxSuiteRunResult } from '../utils/validation-suite';
 import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
 import { ValidationOptions } from './validation-options';
 
@@ -121,8 +122,6 @@ export class ValidateRootFormDirective<T>
   private readonly lastControl = signal<NgForm | null>(null);
   validationOptions = input<ValidationOptions>({ debounceTime: 0 });
   private readonly hasSubmitted = signal(false);
-  private readonly hasSubmitted$: Observable<boolean>;
-  private readonly formValue$: Observable<T | null>;
 
   readonly formValue = input<T | null>(null);
   readonly suite = input<NgxVestSuite<T> | NgxTypedVestSuite<T> | null>(null);
@@ -149,10 +148,6 @@ export class ValidateRootFormDirective<T>
   readonly ngxValidateRootFormMode = input<'submit' | 'live'>('submit');
 
   constructor() {
-    // Convert signals to Observables in injection context
-    this.hasSubmitted$ = toObservable(this.hasSubmitted);
-    this.formValue$ = toObservable(this.formValue);
-
     // Trigger validation when hasSubmitted or formValue changes
     effect(() => {
       // Track dependencies
@@ -275,50 +270,102 @@ export class ValidateRootFormDirective<T>
         debounce > 0 ? timer(debounce).pipe(map(() => mod)) : of(mod);
 
       return source$.pipe(
-        switchMap((model) => {
-          return new Observable((observer) => {
-            try {
-              const suite = this.suite();
-              if (!suite) {
+        switchMap(
+          (model) =>
+            new Observable<ValidationErrors | null>((observer) => {
+              let cancelled = false;
+              observer.add(() => {
+                cancelled = true;
+              });
+
+              try {
+                const suite = this.suite();
+                if (!suite) {
+                  observer.next(null);
+                  observer.complete();
+                  return;
+                }
+
+                // Vest 6: suite.only(field).run() for focused, stateful validation.
+                const result = (suite as NgxVestSuite<T>)
+                  .only(field)
+                  .run(model);
+
+                const extractErrors = (
+                  suiteResult: NgxSuiteRunResult
+                ): ValidationErrors | null => {
+                  if (cancelled) {
+                    return null;
+                  }
+
+                  const errors = suiteResult.getErrors()[field];
+                  return errors ? { errors } : null;
+                };
+
+                const emitAndComplete = (suiteResult: NgxSuiteRunResult) => {
+                  if (cancelled) {
+                    return;
+                  }
+
+                  observer.next(extractErrors(suiteResult));
+                  observer.complete();
+                };
+
+                const getLatestResult = (): NgxSuiteRunResult =>
+                  (suite as NgxVestSuite<T>).get?.() ?? result;
+
+                // Sync path: emit immediately to avoid PENDING status flash.
+                if (!result.isPending()) {
+                  emitAndComplete(result);
+                  return;
+                }
+
+                // Async path: use thenable completion when available.
+                if (typeof result.then === 'function') {
+                  result.then(
+                    () => {
+                      emitAndComplete(getLatestResult());
+                    },
+                    () => {
+                      // Rejected thenables can still represent validation failures.
+                      // Use the suite's latest state immediately to avoid long-lived
+                      // polling timers that can keep tests/processes alive.
+                      emitAndComplete(getLatestResult());
+                    }
+                  );
+                  return;
+                }
+
+                // Fallback path: poll pending state for non-thenable results.
+                const intervalId = setInterval(() => {
+                  if (!result.isPending()) {
+                    clearInterval(intervalId);
+                    clearTimeout(timeoutId);
+                    emitAndComplete(getLatestResult());
+                  }
+                }, 25);
+
+                const timeoutId = setTimeout(() => {
+                  clearInterval(intervalId);
+                  emitAndComplete(getLatestResult());
+                }, 5000);
+
+                observer.add(() => {
+                  clearInterval(intervalId);
+                  clearTimeout(timeoutId);
+                });
+                return;
+              } catch (err) {
+                console.error(
+                  '[validate-root-form] Validation suite error:',
+                  err
+                );
                 observer.next(null);
                 observer.complete();
                 return;
               }
-              // Vest 6: use suite.only(field).run() for focused, stateful validation.
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const result = (suite as any).only(field).run(model);
-
-              // For synchronous suites (no pending async tests), use the result
-              // immediately. This preserves the synchronous Observable chain that
-              // Angular's async validator pipeline expects — deferring to a microtask
-              // via Promise.resolve().then() would allow Angular to cancel the
-              // subscription before the result is emitted.
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              if (!(result as any).isPending()) {
-                const errors = result.getErrors()[field];
-                observer.next(errors ? { errors } : null);
-                observer.complete();
-              } else {
-                // Async tests are pending — wait for the thenable to resolve.
-                // SuiteResult is thenable (Promise-like at runtime) — use
-                // Promise.resolve() since the TS types don't expose .then().
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                Promise.resolve(result as any).then((finalResult: any) => {
-                  const errors = finalResult.getErrors()[field];
-                  observer.next(errors ? { errors } : null);
-                  observer.complete();
-                });
-              }
-            } catch (err) {
-              console.error(
-                '[validate-root-form] Validation suite error:',
-                err
-              );
-              observer.next(null);
-              observer.complete();
-            }
-          }) as Observable<ValidationErrors | null>;
-        }),
+            })
+        ),
         catchError((err) => {
           console.error('[validate-root-form] Observable error:', err);
           return of(null);

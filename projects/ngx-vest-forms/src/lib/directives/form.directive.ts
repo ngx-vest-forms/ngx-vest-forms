@@ -46,7 +46,6 @@ import {
   tap,
   timer,
 } from 'rxjs';
-import type { SuiteResult } from 'vest';
 import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import { DeepRequired } from '../utils/deep-required';
@@ -60,6 +59,7 @@ import {
   setValueAtPath,
 } from '../utils/form-utils';
 import { validateShape } from '../utils/shape-validation';
+import type { NgxSuiteRunResult } from '../utils/validation-suite';
 import { NgxVestSuite } from '../utils/validation-suite';
 import { ValidationOptions } from './validation-options';
 
@@ -837,23 +837,26 @@ export class FormDirective<T extends Record<string, unknown>> {
         switchMap(
           (snap) =>
             new Observable<ValidationErrors | null>((observer) => {
+              let cancelled = false;
+              observer.add(() => {
+                cancelled = true;
+              });
+
               try {
-                // Vest 6: use suite.only(field).run() for focused, stateful validation.
-                // suite.only(field) returns FocusedMethods which only runs tests for
-                // the specified field, while preserving results from previous runs.
-                // This is the v6 recommended pattern — field focus is handled at the
-                // call site, not inside the suite callback.
-                const result = (suite as NgxVestSuite<T>).only(field).run(snap);
+                // Vest 6: suite.only(field).run() for focused, stateful validation.
+                const result = suite.only(field).run(snap);
 
                 const processResult = (
-                  suiteResult: SuiteResult<string, string>
-                ) => {
+                  suiteResult: NgxSuiteRunResult
+                ): ValidationErrors | null => {
+                  if (cancelled) {
+                    return null;
+                  }
+
                   const errors = suiteResult.getErrors()[field];
                   const warnings = suiteResult.getWarnings()[field];
 
-                  // Store warnings in the fieldWarnings signal for access by control wrappers.
-                  // This is necessary because Angular marks a field as invalid when control.errors !== null.
-                  // By storing warnings separately, fields can remain valid while still displaying warnings.
+                  // Store warnings separately so fields can remain valid while displaying warnings.
                   this.fieldWarnings.update((map) => {
                     const newMap = new Map(map);
                     if (warnings?.length) {
@@ -864,13 +867,8 @@ export class FormDirective<T extends Record<string, unknown>> {
                     return newMap;
                   });
 
-                  // Build the validation result:
-                  // - Errors exist → return { errors, warnings? } (field invalid, Angular shows ng-invalid)
-                  // - Only warnings → return null (field valid, warnings accessed via fieldWarnings signal)
-                  // - Neither → return null (field valid)
-                  //
-                  // When errors exist, we also include warnings in control.errors for backwards compatibility
-                  // with code that reads warnings from control.errors.warnings.
+                  // Errors exist → { errors, warnings? } (field invalid)
+                  // Only warnings or neither → null (field valid, warnings via fieldWarnings signal)
                   const out = errors?.length
                     ? {
                         errors,
@@ -878,48 +876,99 @@ export class FormDirective<T extends Record<string, unknown>> {
                       }
                     : null;
 
-                  // CRITICAL: Ensure DOM validity classes update for OnPush components.
-                  //
-                  // Angular's template-driven forms update `ng-valid`/`ng-invalid` host classes
-                  // during change detection. When async validation completes, there may be no
-                  // follow-up change detection pass for OnPush hosts, leaving the DOM in a stale
-                  // visual state (even though the control status has updated).
-                  //
-                  // We schedule a detectChanges() on the next microtask to avoid calling it
-                  // synchronously inside Angular's own validation pipeline.
                   queueMicrotask(() => {
+                    if (cancelled) {
+                      return;
+                    }
+
                     try {
                       this.cdr.detectChanges();
                     } catch {
-                      // Fallback: mark for check when immediate detectChanges isn't safe.
-                      // This keeps behavior resilient in edge cases.
                       this.cdr.markForCheck();
                     }
                   });
 
-                  observer.next(out);
+                  return out;
+                };
+
+                const emitAndComplete = (suiteResult: NgxSuiteRunResult) => {
+                  if (cancelled) {
+                    return;
+                  }
+
+                  observer.next(processResult(suiteResult));
                   observer.complete();
                 };
 
-                // For synchronous suites (no pending async tests), use the result
-                // immediately. This preserves the synchronous Observable chain that
-                // Angular's async validator pipeline expects — deferring to a microtask
-                // via Promise.resolve().then() would allow Angular to cancel the
-                // subscription before the result is emitted.
+                const getLatestResult = (): NgxSuiteRunResult =>
+                  suite.get?.() ?? result;
+
+                // Sync path: emit immediately to avoid PENDING flash.
                 if (!result.isPending()) {
-                  processResult(result);
-                } else {
-                  // Async tests are pending — wait for the thenable to resolve.
-                  // Vest's SuiteResult is thenable at runtime but the TS types
-                  // don't expose .then(), so a cast is needed here.
-                  Promise.resolve(
-                    result as SuiteResult<string, string> &
-                      PromiseLike<SuiteResult<string, string>>
-                  ).then(processResult);
+                  emitAndComplete(result);
+                  return;
                 }
+
+                // Async path: handle thenable results when available.
+                if (typeof result.then === 'function') {
+                  Promise.resolve(result)
+                    .then(() => {
+                      emitAndComplete(getLatestResult());
+                    })
+                    .catch(() => {
+                      // Rejected thenables can still represent validation failures.
+                      // Read the suite's latest state when available instead of
+                      // relying on the original thenable result object, which can
+                      // remain stale across runtimes after rejection.
+                      if (!result.isPending()) {
+                        emitAndComplete(getLatestResult());
+                        return;
+                      }
+
+                      const intervalId = setInterval(() => {
+                        if (!result.isPending()) {
+                          clearInterval(intervalId);
+                          clearTimeout(timeoutId);
+                          emitAndComplete(getLatestResult());
+                        }
+                      }, 25);
+
+                      const timeoutId = setTimeout(() => {
+                        clearInterval(intervalId);
+                        emitAndComplete(getLatestResult());
+                      }, 5000);
+
+                      observer.add(() => {
+                        clearInterval(intervalId);
+                        clearTimeout(timeoutId);
+                      });
+                    });
+                  return;
+                }
+
+                // Fallback path: poll pending state for non-thenable results.
+                const intervalId = setInterval(() => {
+                  if (!result.isPending()) {
+                    clearInterval(intervalId);
+                    clearTimeout(timeoutId);
+                    emitAndComplete(getLatestResult());
+                  }
+                }, 25);
+
+                const timeoutId = setTimeout(() => {
+                  clearInterval(intervalId);
+                  emitAndComplete(getLatestResult());
+                }, 5000);
+
+                observer.add(() => {
+                  clearInterval(intervalId);
+                  clearTimeout(timeoutId);
+                });
+                return;
               } catch {
                 observer.next({ vestInternalError: 'Validation failed' });
                 observer.complete();
+                return;
               }
             })
         ),

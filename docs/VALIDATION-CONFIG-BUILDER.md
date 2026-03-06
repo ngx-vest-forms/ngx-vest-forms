@@ -748,11 +748,16 @@ The validation config respects the debounce token configuration:
 
 ```typescript
 // ngx-level debounce configuration
+import {
+  NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+  NGX_VALIDATION_DEBOUNCE_PRESETS,
+} from 'ngx-vest-forms';
+
 bootstrapApplication(AppComponent, {
   providers: [
     {
       provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
-      useValue: 150, // ms
+      useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.relaxed,
     },
   ],
 });

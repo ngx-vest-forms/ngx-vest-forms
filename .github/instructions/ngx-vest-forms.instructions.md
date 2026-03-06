@@ -1,5 +1,5 @@
 ---
-description: ngx-vest-forms v2.0 - Angular Template-Driven Forms with Vest.js validation
+description: ngx-vest-forms v3.0 - Angular Template-Driven Forms with Vest.js validation
 applyTo: '**/*.ts, **/*.html'
 ---
 

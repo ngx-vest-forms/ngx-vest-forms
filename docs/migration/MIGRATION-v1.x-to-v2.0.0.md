@@ -168,17 +168,28 @@ const debounce = VALIDATION_CONFIG_DEBOUNCE_TIME; // 100ms
 
 ```typescript
 // ✅ Use injection token
-import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
+import {
+  NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+  NGX_VALIDATION_DEBOUNCE_PRESETS,
+} from 'ngx-vest-forms';
 
 // Global configuration (ngx-level)
 export const appConfig: ApplicationConfig = {
-  providers: [{ provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 100 }],
+  providers: [
+    {
+      provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+      useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.default,
+    },
+  ],
 };
 
 // Component-level override
 @Component({
   providers: [
-    { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 0 }, // Instant validation
+    {
+      provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+      useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.immediate,
+    }, // Instant validation
   ],
 })
 export class MyFormComponent {}
@@ -223,7 +234,12 @@ import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
 ```typescript
 // Test environment - disable debouncing for synchronous tests
 TestBed.configureTestingModule({
-  providers: [{ provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 0 }],
+  providers: [
+    {
+      provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+      useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.immediate,
+    },
+  ],
 });
 ```
 
@@ -941,7 +957,12 @@ expect(errors).toContain('error message');
 
 ```typescript
 TestBed.configureTestingModule({
-  providers: [{ provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 0 }],
+  providers: [
+    {
+      provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+      useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.immediate,
+    },
+  ],
 });
 ```
 

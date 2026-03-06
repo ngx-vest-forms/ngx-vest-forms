@@ -109,9 +109,17 @@ providers: [{ provide: NGX_WARNING_DISPLAY_MODE_TOKEN, useValue: 'on-touch' }];
 
 ```typescript
 // Already uses ngx prefix
-import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
+import {
+  NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+  NGX_VALIDATION_DEBOUNCE_PRESETS,
+} from 'ngx-vest-forms';
 
-providers: [{ provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 150 }];
+providers: [
+  {
+    provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+    useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.relaxed,
+  },
+];
 ```
 
 ## Migration Strategy
