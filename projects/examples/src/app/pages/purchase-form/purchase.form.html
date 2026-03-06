@@ -9,7 +9,7 @@
   [suite]="purchaseValidationSuite"
   [validationConfig]="validationConfig()"
   (formValueChange)="onFormValueChange($event)"
-  [validationOptions]="{ debounceTime: 300 }"
+  [validationOptions]="formValidationOptions"
 >
   <fieldset [disabled]="loading()" class="form-shell form-stack">
     <ngx-form-section title="Order Details" tone="neutral">
@@ -65,89 +65,102 @@
     <div class="form-divider" aria-hidden="true"></div>
 
     <ngx-form-section title="Personal Information" tone="neutral">
-      <div class="form-grid">
-        <ngx-control-wrapper class="form-field">
-          <label>
-            <span class="label-text">First Name</span>
-            <input
-              class="input-field"
-              placeholder="Type your first name"
-              type="text"
-              [ngModel]="formValue().firstName"
-              [disabled]="fetchedDataDisabled()"
-              name="firstName"
-            />
-          </label>
-        </ngx-control-wrapper>
+      <div class="form-stack">
+        @if (fetchErrorNotice(); as fetchError) {
+        <ngx-alert-panel tone="error" [title]="fetchError.title">
+          <div class="space-y-1">
+            <p>{{ fetchError.message }}</p>
+            @if (fetchError.detail) {
+            <p class="text-xs opacity-80">{{ fetchError.detail }}</p>
+            }
+          </div>
+        </ngx-alert-panel>
+        }
 
-        <ngx-control-wrapper class="form-field">
-          <label>
-            <span class="label-text">Last Name</span>
-            <input
-              class="input-field"
-              placeholder="Type your last name"
-              type="text"
-              [ngModel]="formValue().lastName"
-              [disabled]="fetchedDataDisabled()"
-              name="lastName"
-            />
-          </label>
-        </ngx-control-wrapper>
+        <div class="form-grid">
+          <ngx-control-wrapper class="form-field">
+            <label>
+              <span class="label-text">User ID</span>
+              <input
+                class="input-field"
+                placeholder="Type user id"
+                type="text"
+                [validationOptions]="userIdValidationOptions"
+                [ngModel]="formValue().userId"
+                [disabled]="fetchedDataDisabled()"
+                name="userId"
+              />
+            </label>
+          </ngx-control-wrapper>
 
-        <ngx-control-wrapper class="form-field">
-          <label>
-            <span class="label-text">Birth Date</span>
-            <input
-              class="input-field"
-              placeholder="Select birth date"
-              type="date"
-              [ngModel]="formValue().birthDate"
-              name="birthDate"
-            />
-          </label>
-        </ngx-control-wrapper>
+          <ngx-control-wrapper class="form-field">
+            <label>
+              <span class="label-text">First Name</span>
+              <input
+                class="input-field"
+                placeholder="Type your first name"
+                type="text"
+                [ngModel]="formValue().firstName"
+                [disabled]="fetchedDataDisabled()"
+                name="firstName"
+              />
+            </label>
+          </ngx-control-wrapper>
 
-        <ngx-control-wrapper class="form-field">
-          <label>
-            <span class="label-text">Age</span>
-            <input
-              class="input-field"
-              placeholder="Choose your age"
-              type="number"
-              [ngModel]="formValue().age"
-              name="age"
-            />
-          </label>
-        </ngx-control-wrapper>
+          <ngx-control-wrapper class="form-field">
+            <label>
+              <span class="label-text">Last Name</span>
+              <input
+                class="input-field"
+                placeholder="Type your last name"
+                type="text"
+                [ngModel]="formValue().lastName"
+                [disabled]="fetchedDataDisabled()"
+                name="lastName"
+              />
+            </label>
+          </ngx-control-wrapper>
 
-        <ngx-control-wrapper class="form-field">
-          <label>
-            <span class="label-text">User ID</span>
-            <input
-              class="input-field"
-              placeholder="Type user id"
-              type="text"
-              [validationOptions]="{ debounceTime: 500 }"
-              [ngModel]="formValue().userId"
-              [disabled]="fetchedDataDisabled()"
-              name="userId"
-            />
-          </label>
-        </ngx-control-wrapper>
+          <ngx-control-wrapper class="form-field">
+            <label>
+              <span class="label-text">Birth Date</span>
+              <input
+                class="input-field"
+                placeholder="Select birth date"
+                type="date"
+                [ngModel]="formValue().birthDate"
+                name="birthDate"
+              />
+            </label>
+          </ngx-control-wrapper>
 
-        <ngx-control-wrapper class="form-field">
-          <label>
-            <span class="label-text">Emergency Contact</span>
-            <input
-              class="input-field"
-              placeholder="Type your emergency contact"
-              type="text"
-              [disabled]="emergencyContactDisabled()"
-              [ngModel]="formValue().emergencyContact"
-              name="emergencyContact"
-            />
-          </label>
-        </ngx-control-wrapper>
+          <ngx-control-wrapper class="form-field">
+            <label>
+              <span class="label-text">Age</span>
+              <input
+                class="input-field"
+                placeholder="Choose your age"
+                type="number"
+                [ngModel]="formValue().age"
+                name="age"
+              />
+            </label>
+          </ngx-control-wrapper>
+
+          <ngx-control-wrapper class="form-field">
+            <label>
+              <span class="label-text">Emergency Contact</span>
+              <input
+                class="input-field"
+                placeholder="Type your emergency contact"
+                type="text"
+                [disabled]="emergencyContactDisabled()"
+                [ngModel]="formValue().emergencyContact"
+                name="emergencyContact"
+              />
+            </label>
+          </ngx-control-wrapper>
+        </div>
       </div>
     </ngx-form-section>
 

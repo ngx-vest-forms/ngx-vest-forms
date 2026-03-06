@@ -10,6 +10,7 @@ export const businessHoursSuite: NgxVestSuite<BusinessHoursFormModel> = create(
     const values = model.businessHours?.values
       ? Object.values(model.businessHours.values)
       : [];
+    const entries = Object.entries(model.businessHours?.values ?? {});
     const addValue = model.businessHours?.addValue;
 
     test(ROOT_FORM, 'You should have at least one business hour', () => {
@@ -26,10 +27,10 @@ export const businessHoursSuite: NgxVestSuite<BusinessHoursFormModel> = create(
         }
       );
     });
-    each(values, (businessHour, index) => {
+    each(entries, ([key, businessHour]) => {
       validateBusinessHourModel(
-        `businessHours.values.${index}`,
-        model.businessHours?.values?.[index]
+        `businessHours.values.${key}`,
+        businessHour as BusinessHourFormModel
       );
     });
 

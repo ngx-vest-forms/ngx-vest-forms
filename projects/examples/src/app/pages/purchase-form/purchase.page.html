@@ -21,17 +21,62 @@
           <li>Cross-field validation (Passwords, Address)</li>
         </ul>
 
-        <div class="mt-6 flex flex-col gap-2">
-          <button class="btn btn-primary w-full" (click)="fetchData()">
-            Fetch Data (Luke)
-          </button>
+        <section class="mt-6 space-y-4" aria-labelledby="fetch-luke-title">
+          <div class="space-y-1">
+            <h3
+              id="fetch-luke-title"
+              class="text-sm font-semibold tracking-wide text-gray-900 dark:text-white"
+            >
+              Fetch Luke demo
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-300">
+              Choose whether the demo should load Luke successfully or simulate
+              a realistic request failure.
+            </p>
+          </div>
+
+          <div class="space-y-3">
+            <div class="space-y-2">
+              <label
+                class="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400"
+                for="fetchLukeMode"
+              >
+                Response mode
+              </label>
+              <select
+                id="fetchLukeMode"
+                #fetchLukeModeSelect
+                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-blue-400 dark:focus:ring-blue-400/25"
+                [value]="fetchLukeMode()"
+                (change)="onFetchLukeModeChange(fetchLukeModeSelect.value)"
+              >
+                @for (mode of fetchLukeModes; track mode.value) {
+                <option [value]="mode.value">{{ mode.label }}</option>
+                }
+              </select>
+            </div>
+
+            <button
+              type="button"
+              [class]="fetchLukeButtonClass()"
+              (click)="fetchLuke(fetchLukeMode())"
+            >
+              Fetch Luke
+            </button>
+          </div>
+        </section>
+
+        <div class="mt-6 space-y-3">
           <button
+            type="button"
             class="btn btn-secondary w-full"
             (click)="clearSensitiveData()"
           >
             Clear Sensitive Data
           </button>
+
           <button
+            type="button"
             class="btn btn-secondary w-full"
             (click)="prefillBillingAddress()"
           >

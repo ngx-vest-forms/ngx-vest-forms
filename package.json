@@ -8,7 +8,6 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "api": "json-server projects/examples/src/backend/db.json",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "vitest run --config vitest.config.ts",
@@ -81,7 +80,6 @@
     "http-server": "~14.1.1",
     "husky": "~9.1.7",
     "jsdom": "^28.0.0",
-    "json-server": "~0.17.4",
     "ng-packagr": "~21.1.0",
     "ngx-mask": "~21.0.1",
     "playwright": "~1.58.2",

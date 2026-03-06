@@ -33,8 +33,9 @@ export class ZodSchemaDemoFormBody {
   readonly formValueChange = output<ZodSchemaDemoModel>();
   readonly submitted = output();
 
-  private readonly vestForm =
-    viewChild<FormDirective<ZodSchemaDemoModel>>('vestForm');
+  private readonly vestForm = viewChild('vestForm', {
+    read: FormDirective<ZodSchemaDemoModel>,
+  });
 
   /**
    * Errors updated via the directive's (errorsChange) event binding.

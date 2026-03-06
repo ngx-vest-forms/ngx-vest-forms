@@ -1,4 +1,4 @@
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { bootstrapApplication } from '@angular/platform-browser';
 import {
   provideRouter,
@@ -6,8 +6,12 @@ import {
   withEnabledBlockingInitialNavigation,
 } from '@angular/router';
 import { provideEnvironmentNgxMask } from 'ngx-mask';
-import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
+import {
+  NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+  NGX_VALIDATION_DEBOUNCE_PRESETS,
+} from 'ngx-vest-forms';
 import { AppComponent } from './app/app.component';
+import { mockPeopleApiInterceptor } from './app/services/mock-people-api.interceptor';
 
 const appRoutes: Routes = [
   {
@@ -90,11 +94,14 @@ const appRoutes: Routes = [
 ];
 bootstrapApplication(AppComponent, {
   providers: [
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([mockPeopleApiInterceptor])),
     provideEnvironmentNgxMask({ validation: false }),
     provideRouter(appRoutes, withEnabledBlockingInitialNavigation()),
     // Global configuration for validation config debounce timing
     // Using 150ms instead of default 100ms to reduce validation frequency during rapid typing
-    { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 150 },
+    {
+      provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+      useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.relaxed,
+    },
   ],
 });

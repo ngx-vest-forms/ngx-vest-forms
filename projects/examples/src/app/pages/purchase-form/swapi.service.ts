@@ -5,9 +5,10 @@ import { catchError, delay, map, Observable, of } from 'rxjs';
 @Injectable({ providedIn: 'root' })
 export class SwapiService {
   private readonly httpClient = inject(HttpClient);
+  private readonly peopleUrl = '/api/people';
 
   userIdExists(id: string): Observable<boolean> {
-    return this.httpClient.get(`http://localhost:3000/people/${id}`).pipe(
+    return this.httpClient.get(`${this.peopleUrl}/${id}`).pipe(
       delay(800),
       map(() => true),
       catchError(() => of(false))
@@ -15,8 +16,6 @@ export class SwapiService {
   }
 
   searchUserById(id: string): Observable<unknown> {
-    return this.httpClient
-      .get(`http://localhost:3000/people/${id}`)
-      .pipe(delay(800));
+    return this.httpClient.get(`${this.peopleUrl}/${id}`).pipe(delay(800));
   }
 }

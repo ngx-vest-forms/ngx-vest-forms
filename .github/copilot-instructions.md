@@ -145,7 +145,7 @@ protected readonly formValue = signal<MyFormModel>({});
 Always structure validation suites with a model-only callback. Field focus is handled at the call site.
 
 > **CRITICAL**: In Vest 6, suites take only the model parameter. To validate a single field, use `suite.only(field).run(model)` at the call site. Never add a `field` parameter or call `only()` inside the callback.
-
+>
 > **Complete Validation Patterns**: See `.github/instructions/vest.instructions.md` for comprehensive validation patterns and performance optimization.
 
 ```typescript
@@ -196,7 +196,7 @@ protected readonly showShippingAddress = computed(() =>
 - `npm run build:lib` - Build the library package
 - `npm run build:app` - Build the examples application
 - `npm start` - Serve examples app (port 4200)
-- `npm run api` - Start JSON server backend for examples
+- Examples app mock API is handled in-app via an HTTP interceptor; no separate backend is required
 
 ### Testing
 - `npm test` or `npm run test:lib` - Run Jest unit tests

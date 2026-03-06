@@ -37,7 +37,9 @@ test.describe('Zod Schema Demo Form', () => {
       });
     });
 
-    test('should validate regex and structural types on field fill', async ({ page }) => {
+    test('should validate regex and structural types on field fill', async ({
+      page,
+    }) => {
       await test.step('Fill email with invalid format', async () => {
         const email = page.getByLabel(/email/i);
         await fillAndBlur(email, 'not-an-email');
@@ -62,10 +64,8 @@ test.describe('Zod Schema Demo Form', () => {
         await expectFieldHasError(zipCode, /4-6 digits/i);
       });
     });
-    
-    test('should show all validation errors on submit', async ({
-      page,
-    }) => {
+
+    test('should show all validation errors on submit', async ({ page }) => {
       await test.step('Submit empty form to trigger full Zod and Vest validation', async () => {
         const submitButton = page.getByRole('button', { name: /submit/i });
         await submitButton.click();
@@ -84,13 +84,15 @@ test.describe('Zod Schema Demo Form', () => {
       });
     });
 
-    test('should allow successful form submission with valid data', async ({ page }) => {
+    test('should allow successful form submission with valid data', async ({
+      page,
+    }) => {
       await test.step('Fill out entire form correctly', async () => {
         await fillAndBlur(page.getByLabel(/first name/i), 'Arjen');
         await fillAndBlur(page.getByLabel(/last name/i), 'Robben');
         await fillAndBlur(page.getByLabel(/email/i), 'arjen@example.com');
         await fillAndBlur(page.getByLabel(/age/i), '40');
-        
+
         await fillAndBlur(page.getByLabel(/street/i), 'Allianz Arena 1');
         await fillAndBlur(page.getByLabel(/city/i), 'Munich');
         await fillAndBlur(page.getByLabel(/zip code/i), '80939');
@@ -105,10 +107,13 @@ test.describe('Zod Schema Demo Form', () => {
         await submitButton.click();
         await waitForFormProcessing(page);
 
-        // At this point, no fields should have errors, meaning validation passed
+        // At this point, field-level validations should pass for entered values.
         await expectFieldValid(page.getByLabel(/zip code/i));
-        // We can check if the form state says valid
-        await expect(page.locator('ngx-status-badge')).toContainText('Valid');
+
+        // The sidebar form state should also reflect a valid submitted form.
+        await expect(
+          page.locator('ngx-form-state-card').getByLabel('Valid')
+        ).toBeVisible();
       });
     });
   });
