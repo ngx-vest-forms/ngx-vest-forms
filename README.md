@@ -55,9 +55,9 @@ npm install ngx-vest-forms
 > await suite.run(model); // Validate all fields
 > ```
 >
-> See the [Vest.js Docs](https://vestjs.dev) and [Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md#1-unconditional-only-pattern-required-critical) for more details.
+> See the [Vest.js Docs](https://vestjs.dev) and the [v2.x → v3.0.0 Migration Guide](./docs/migration/MIGRATION-v2.x-to-v3.0.0.md) for more details.
 >
-> Selector prefix: use `ngx-` (recommended). The legacy `sc-` works in v2.x but is deprecated and will be removed in v3.
+> Selector prefix: use `ngx-` (recommended). The legacy `sc-` prefix is still supported for compatibility, but it is deprecated and planned for removal in a future major version.
 
 ### Quick Start
 
@@ -65,17 +65,13 @@ Start simple (with Vest 6 validations):
 
 ```ts
 import { Component, signal } from '@angular/core';
-import {
-  NgxVestForms,
-  NgxDeepPartial,
-  NgxTypedVestSuite,
-} from 'ngx-vest-forms';
+import { NgxVestForms, NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
 import { create, test, enforce } from 'vest';
 
 type MyFormModel = NgxDeepPartial<{ email: string; name: string }>;
 
 // Vest 6: Suite callback takes only the model — field focus at call site
-const suite: NgxTypedVestSuite<MyFormModel> = create((model) => {
+const suite: NgxVestSuite<MyFormModel> = create((model) => {
   test('email', 'Email is required', () => {
     enforce(model.email).isNotBlank();
   });
@@ -90,7 +86,12 @@ const suite: NgxTypedVestSuite<MyFormModel> = create((model) => {
 @Component({
   imports: [NgxVestForms],
   template: `
-    <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      (formValueChange)="formValue.set($event)"
+    >
       <ngx-control-wrapper>
         <label for="email">Email</label>
         <input id="email" name="email" [ngModel]="formValue().email" />
@@ -133,6 +134,9 @@ That's all you need. The directive automatically creates controls, wires validat
   - `FormErrorDisplayDirective` (state + display policy)
   - `FormErrorControlDirective` (adds ARIA wiring + stable region IDs)
 - **Cross-field dependencies** — `validationConfig` for field-to-field triggers, `ROOT_FORM` for form-level rules
+- **Dynamic form helpers** — `resetField(field)` and `removeField(field)` help keep dynamic form state tidy
+- **Schema-friendly demos** — The examples app includes a Zod/Standard Schema integration example alongside classic Vest suites
+- **Accessibility-minded defaults** — Polite field announcements, opt-in `ariaRequired`, and first-invalid focus after submit
 - **Utilities** — Field paths, field clearing, validation config builder
 
 ### Compatibility Notes (v3.0.0+ with Vest 6)
@@ -144,6 +148,9 @@ That's all you need. The directive automatically creates controls, wires validat
 - ✅ Full validation: `suite.run(model)`
 - ✅ Suite reset: `suite.reset()` on form reset
 - ✅ Async handling: `await result` or `.then()`
+- ✅ Canonical suite type: `NgxVestSuite<T>`
+
+`NgxTypedVestSuite<T>` still works, but it is now a deprecated alias of `NgxVestSuite<T>` and should be avoided in new code.
 
 **Deprecated v2.x Compatibility:**
 
@@ -436,7 +443,7 @@ const shape: NgxDeepRequired<MyFormModel> = {
 
 ### Examples
 
-- **[Examples Project](./projects/examples)** - Working code examples with business hours forms, purchase forms, and validation config demos
+- **[Examples Project](./projects/examples)** - Working code examples with business hours forms, purchase forms, validation config demos, wizard flows, and a Zod schema demo
   - Run locally: `npm install && npm start`
   - Includes smart components, UI components, and complete validation patterns
 

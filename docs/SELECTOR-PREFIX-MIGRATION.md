@@ -2,31 +2,31 @@
 
 ## Overview
 
-As of **v2.0.0**, ngx-vest-forms recommends using the `ngx-` prefix for all selectors. The legacy `sc-` prefix is **deprecated** and will be **removed in v3.0.0**.
+As of **v2.0.0**, ngx-vest-forms recommends using the `ngx-` prefix for all selectors. The legacy `sc-` prefix is **deprecated** and is planned for removal in a **future major version**.
 
 **Timeline:**
 
 - ✅ **v2.0+**: Both prefixes supported (dual selector support)
-- ⚠️ **v2.x**: `sc-` prefix deprecated (warnings in console)
-- ❌ **v3.0**: `sc-` prefix removed (breaking change)
+- ⚠️ **Current releases**: `sc-` prefix deprecated; prefer `ngx-` in all new code
+- ❌ **Future major**: `sc-` prefix removal remains planned, but it has not happened yet
 
 ## What Changed
 
 ### Components
 
-| Old (Deprecated)       | New (Recommended)       | Status            |
-| ---------------------- | ----------------------- | ----------------- |
-| `<sc-control-wrapper>` | `<ngx-control-wrapper>` | Both work in v2.x |
-| `[scControlWrapper]`   | `[ngxControlWrapper]`   | Both work in v2.x |
-| `[sc-control-wrapper]` | `[ngx-control-wrapper]` | Both work in v2.x |
+| Old (Deprecated)       | New (Recommended)       | Status              |
+| ---------------------- | ----------------------- | ------------------- |
+| `<sc-control-wrapper>` | `<ngx-control-wrapper>` | Both currently work |
+| `[scControlWrapper]`   | `[ngxControlWrapper]`   | Both currently work |
+| `[sc-control-wrapper]` | `[ngx-control-wrapper]` | Both currently work |
 
 ### Directives
 
-| Old (Deprecated)     | New (Recommended)     | Status            |
-| -------------------- | --------------------- | ----------------- |
-| `scVestForm`         | `ngxVestForm`         | Both work in v2.x |
-| `validateRootForm`   | `ngxValidateRootForm` | Both work in v2.x |
-| `[formControlState]` | `[ngxControlState]`   | Both work in v2.x |
+| Old (Deprecated)     | New (Recommended)     | Status              |
+| -------------------- | --------------------- | ------------------- |
+| `scVestForm`         | `ngxVestForm`         | Both currently work |
+| `validateRootForm`   | `ngxValidateRootForm` | Both currently work |
+| `[formControlState]` | `[ngxControlState]`   | Both currently work |
 
 ### Template References
 
@@ -56,7 +56,7 @@ grep -r '"scVestForm"' --include="*.html" --include="*.ts"
 
 ### Step 2: Replace Selectors
 
-You can do a global search and replace, or migrate gradually since both prefixes work in v2.x:
+You can do a global search and replace, or migrate gradually since both prefixes still work today:
 
 #### Component Selectors
 
@@ -207,7 +207,7 @@ chmod +x migrate-selectors.sh
 
 ## Gradual Migration Strategy
 
-You don't have to migrate everything at once. Both prefixes work in v2.x:
+You don't have to migrate everything at once. Both prefixes are still supported:
 
 ### Phase 1: New Code (Immediate)
 
@@ -225,7 +225,7 @@ You don't have to migrate everything at once. Both prefixes work in v2.x:
 - Migrate less frequently used forms
 - Update documentation and examples
 
-### Phase 4: Final Cleanup (Before v3.0)
+### Phase 4: Final Cleanup (Before the legacy selectors are removed)
 
 - Search for any remaining `sc-` prefixes
 - Remove any commented-out old code
@@ -304,7 +304,7 @@ After migration, verify:
 - [ ] Error messages display properly
 - [ ] Conditional logic still works
 - [ ] Tests pass (unit, integration, e2e)
-- [ ] No console warnings about deprecated selectors
+- [ ] No lingering uses of deprecated selectors in your codebase
 - [ ] CSS styles still apply correctly
 - [ ] Template references work
 - [ ] Form submission works

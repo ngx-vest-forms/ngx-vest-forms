@@ -38,6 +38,7 @@
                 type="number"
                 [ngModel]="formValue().quantity"
                 name="quantity"
+                inputmode="numeric"
               />
             </label>
           </ngx-control-wrapper>
@@ -89,6 +90,8 @@
                 [ngModel]="formValue().userId"
                 [disabled]="fetchedDataDisabled()"
                 name="userId"
+                autocomplete="off"
+                spellcheck="false"
               />
             </label>
           </ngx-control-wrapper>
@@ -103,6 +106,7 @@
                 [ngModel]="formValue().firstName"
                 [disabled]="fetchedDataDisabled()"
                 name="firstName"
+                autocomplete="given-name"
               />
             </label>
           </ngx-control-wrapper>
@@ -117,6 +121,7 @@
                 [ngModel]="formValue().lastName"
                 [disabled]="fetchedDataDisabled()"
                 name="lastName"
+                autocomplete="family-name"
               />
             </label>
           </ngx-control-wrapper>
@@ -130,6 +135,7 @@
                 type="date"
                 [ngModel]="formValue().birthDate"
                 name="birthDate"
+                autocomplete="bday"
               />
             </label>
           </ngx-control-wrapper>
@@ -143,6 +149,7 @@
                 type="number"
                 [ngModel]="formValue().age"
                 name="age"
+                inputmode="numeric"
               />
             </label>
           </ngx-control-wrapper>
@@ -292,6 +299,7 @@
               type="password"
               [ngModel]="formValue().passwords?.password"
               name="password"
+              autocomplete="new-password"
             />
           </label>
         </ngx-control-wrapper>
@@ -304,6 +312,7 @@
               type="password"
               [ngModel]="formValue().passwords?.confirmPassword"
               name="confirmPassword"
+              autocomplete="new-password"
             />
           </label>
         </ngx-control-wrapper>

@@ -178,9 +178,10 @@ protected validationConfig: ValidationConfigMap<PurchaseFormModel> = {
 
 ```typescript
 import { NgxVestSuite, NgxFieldKey } from 'ngx-vest-forms';
+import { staticSuite, test, enforce, only } from 'vest';
 
 // ⚠️ LEGACY: Vest 5 model with field parameter + only(field)
-export const suite: NgxVestSuite<UserModel> = create(
+export const suite: NgxVestSuite<UserModel> = staticSuite(
   (model: UserModel, field?: NgxFieldKey<UserModel>) => {
     only(field);
 
@@ -195,10 +196,10 @@ export const suite: NgxVestSuite<UserModel> = create(
 **After (Vest 6 - recommended):**
 
 ```typescript
-import { NgxVestSuite, NgxTypedVestSuite } from 'ngx-vest-forms';
+import { NgxVestSuite } from 'ngx-vest-forms';
 
 // ✅ RECOMMENDED: Vest 6 model-only callback with autocomplete
-export const suite: NgxTypedVestSuite<UserModel> = create(
+export const suite: NgxVestSuite<UserModel> = create(
   (model: UserModel) => {
     // ✅ Autocomplete for field names!
     test('email', 'Required', () => {
@@ -356,9 +357,9 @@ const suite: NgxVestSuite<Model> = create(
 **After:**
 
 ```typescript
-import { NgxTypedVestSuite } from 'ngx-vest-forms';
+import { NgxVestSuite } from 'ngx-vest-forms';
 
-const suite: NgxTypedVestSuite<Model> = create((model: Model) => {
+const suite: NgxVestSuite<Model> = create((model: Model) => {
   // ...
 });
 ```
@@ -421,17 +422,17 @@ When receiving path strings from dynamic sources (for example server-driven sche
 
 This design keeps defaults safe while preserving backward compatibility for valid field paths.
 
-### ✅ DO: Use NgxTypedVestSuite for TypeScript Code
+### ✅ DO: Use NgxVestSuite for TypeScript Code
 
-When defining validation suites in TypeScript files, use `NgxTypedVestSuite` for better type safety:
+When defining validation suites in TypeScript files, use `NgxVestSuite` in new code. It is the canonical public type in v3.x:
 
 ```typescript
-export const suite: NgxTypedVestSuite<FormModel> = create(
-  (model: FormModel) => {
-    // Full autocomplete for field names
-  }
-);
+export const suite: NgxVestSuite<FormModel> = create((model: FormModel) => {
+  // Full autocomplete for field names
+});
 ```
+
+`NgxTypedVestSuite<T>` still works, but it is a deprecated alias of `NgxVestSuite<T>`.
 
 ### ✅ DO: Type Your Validation Configs
 
@@ -475,16 +476,16 @@ protected config1: ValidationConfigMap<FormModel> = { password: ['confirmPasswor
 protected config2: ValidationConfigMap<FormModel> = { email: ['password'] };
 ```
 
-### ❌ DON'T: Use NgxVestSuite in Templates
+### ❌ DON'T: Introduce New Uses of NgxTypedVestSuite
 
-While `NgxVestSuite` still works, prefer `NgxTypedVestSuite` for better type safety:
+Prefer the canonical `NgxVestSuite<T>` type in new code:
 
 ```typescript
-// ❌ Less type-safe
-suite: NgxVestSuite<FormModel> = create((model) => { ... });
-
-// ✅ More type-safe
+// ❌ Avoid in new code (deprecated alias)
 suite: NgxTypedVestSuite<FormModel> = create((model: FormModel) => { ... });
+
+// ✅ Preferred
+suite: NgxVestSuite<FormModel> = create((model: FormModel) => { ... });
 ```
 
 ---
@@ -595,7 +596,7 @@ The field path types use complex TypeScript features. For very large models:
 
 ```typescript
 import {
-  NgxTypedVestSuite,
+  NgxVestSuite,
   FormFieldName,
   ValidationConfigMap,
   ROOT_FORM,
@@ -623,7 +624,7 @@ type PurchaseFormModel = NgxDeepPartial<{
 }>;
 
 // Type-safe validation suite
-export const purchaseSuite: NgxTypedVestSuite<PurchaseFormModel> = create(
+export const purchaseSuite: NgxVestSuite<PurchaseFormModel> = create(
   (model: PurchaseFormModel) => {
     test('firstName', 'Required', () => {
       enforce(model.firstName).isNotBlank();
@@ -690,11 +691,11 @@ export type ValidateFieldPath<T, Path>;
 // Extract only leaf paths
 export type LeafFieldPath<T, Prefix = '', Depth = []>;
 
-// Typed vest suite (recommended for TypeScript)
-export type NgxTypedVestSuite<T>;
-
-// Original vest suite (for template compatibility)
+// Canonical suite type (recommended)
 export type NgxVestSuite<T>;
+
+// Deprecated alias kept for backward compatibility
+export type NgxTypedVestSuite<T>;
 ```
 
 ---
@@ -732,6 +733,6 @@ Found an issue or have a suggestion? Please:
 
 ---
 
-**Version:** 1.0.0
-**Last Updated:** November 8, 2025
+**Version:** 3.0.0
+**Last Updated:** March 6, 2026
 **Status:** Stable

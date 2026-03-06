@@ -11,7 +11,7 @@ import {
   NgxVestForms,
   NgxDeepPartial,
   NgxDeepRequired,
-  NgxTypedVestSuite,
+  NgxVestSuite,
 } from 'ngx-vest-forms';
 
 // 1. Define your form model (always NgxDeepPartial)
@@ -29,7 +29,7 @@ const userFormShape: NgxDeepRequired<UserFormModel> = {
 };
 
 // 3. Create a Vest validation suite
-const userValidationSuite: NgxTypedVestSuite<UserFormModel> = create(
+const userValidationSuite: NgxVestSuite<UserFormModel> = create(
   (model: UserFormModel) => {
     test('firstName', 'First name is required', () => {
       enforce(model.firstName).isNotBlank();
@@ -56,6 +56,7 @@ const userValidationSuite: NgxTypedVestSuite<UserFormModel> = create(
       ngxVestForm
       [suite]="suite"
       [formShape]="shape"
+      [formValue]="formValue()"
       (formValueChange)="formValue.set($event)"
       (ngSubmit)="save()"
     >
@@ -108,6 +109,9 @@ export class UserFormComponent {
 - ✅ **Runtime shape validation** - Catches typos in development mode
 - ✅ **Unidirectional data flow** - Using `[ngModel]` (not `[(ngModel)]`)
 - ✅ **Performance optimized** — Field-level validation via `suite.only(field).run(model)` at call site
+- ✅ **Canonical suite typing** — Uses `NgxVestSuite<T>` in new code
+
+`NgxTypedVestSuite<T>` still works, but it is a deprecated alias of `NgxVestSuite<T>` and should be avoided in new examples.
 
 ## Key Points to Remember
 

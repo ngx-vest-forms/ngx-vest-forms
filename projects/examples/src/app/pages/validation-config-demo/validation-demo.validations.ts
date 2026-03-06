@@ -1,4 +1,4 @@
-import { create, enforce, include, omitWhen, test, warn } from 'vest';
+import { create, enforce, omitWhen, test, warn } from 'vest';
 import { ValidationDemoModel } from '../../models/validation-demo.model';
 
 export const validationDemoSuite = create((model: ValidationDemoModel) => {
@@ -19,10 +19,6 @@ export const validationDemoSuite = create((model: ValidationDemoModel) => {
     });
   });
 
-  // Confirm password (depends on password)
-  // Use include() to ensure confirmPassword revalidates when password changes
-  include('confirmPassword').when('password');
-
   omitWhen(!model.password, () => {
     test('confirmPassword', 'Please confirm your password', () => {
       enforce(model.confirmPassword).isNotBlank();
@@ -32,11 +28,6 @@ export const validationDemoSuite = create((model: ValidationDemoModel) => {
       enforce(model.confirmPassword).equals(model.password);
     });
   });
-
-  // Cross-field requirement (quantity <-> justification)
-  // Use include() to link bidirectional cross-field deps
-  include('quantityJustification').when('quantity');
-  include('quantity').when('quantityJustification');
 
   omitWhen(!model.quantity, () => {
     test(
@@ -88,10 +79,6 @@ export const validationDemoSuite = create((model: ValidationDemoModel) => {
     });
   });
 
-  // Date range validation
-  // Use include() so endDate revalidates when startDate changes
-  include('endDate').when('startDate');
-
   test('startDate', 'Start date is required', () => {
     enforce(model.startDate).isNotEmpty();
   });
@@ -102,8 +89,14 @@ export const validationDemoSuite = create((model: ValidationDemoModel) => {
 
   omitWhen(!model.startDate || !model.endDate, () => {
     test('endDate', 'End date must be after start date', () => {
-      const start = new Date(model.startDate!);
-      const end = new Date(model.endDate!);
+      const { startDate, endDate } = model;
+
+      if (!startDate || !endDate) {
+        return;
+      }
+
+      const start = new Date(startDate);
+      const end = new Date(endDate);
       enforce(end.getTime()).greaterThan(start.getTime());
     });
   });

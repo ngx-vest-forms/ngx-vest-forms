@@ -624,6 +624,65 @@ describe('ScControlWrapperComponent', () => {
       });
     });
 
+    it('should apply aria-required when ariaRequired is enabled on the wrapper', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper ariaRequired>
+              <label for="email">Email</label>
+              <input id="email" name="email" [ngModel]="model().email" />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class AriaRequiredComponent {
+        model = signal({ email: '' });
+        suite = testSuite;
+      }
+
+      await render(AriaRequiredComponent);
+
+      expect(screen.getByLabelText('Email')).toHaveAttribute(
+        'aria-required',
+        'true'
+      );
+    });
+
+    it('should not stamp aria-required when ariaAssociationMode is none', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper ariaRequired ariaAssociationMode="none">
+              <label for="email">Email</label>
+              <input id="email" name="email" [ngModel]="model().email" />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class AriaRequiredNoneComponent {
+        model = signal({ email: '' });
+        suite = testSuite;
+      }
+
+      await render(AriaRequiredNoneComponent);
+
+      expect(screen.getByLabelText('Email')).not.toHaveAttribute(
+        'aria-required'
+      );
+    });
+
     it('should remove aria-invalid when field becomes valid', async () => {
       const fixture = await render(TestFormComponent);
       const emailInput = screen.getByLabelText('Email');

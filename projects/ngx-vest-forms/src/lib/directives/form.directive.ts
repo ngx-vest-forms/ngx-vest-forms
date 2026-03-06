@@ -4,6 +4,7 @@ import {
   DestroyRef,
   Directive,
   effect,
+  ElementRef,
   inject,
   input,
   InputSignal,
@@ -128,6 +129,7 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly ngForm = inject(NgForm, { self: true });
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly elementRef = inject<ElementRef<HTMLFormElement>>(ElementRef);
   private readonly configDebounceTime = inject(
     NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN
   );
@@ -413,6 +415,24 @@ export class FormDirective<T extends Record<string, unknown>> {
         this.#blurTick.update((v) => v + 1);
       });
 
+    this.ngForm.ngSubmit
+      .pipe(
+        switchMap(() => {
+          if (this.ngForm.form.status === 'PENDING') {
+            return this.ngForm.form.statusChanges.pipe(
+              filter((status) => status !== 'PENDING'),
+              take(1)
+            );
+          }
+
+          return of(this.ngForm.form.status);
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => {
+        this.#focusFirstInvalidField();
+      });
+
     /**
      * Single bidirectional synchronization effect using linkedSignal.
      * Uses proper deep comparison and change tracking for correct sync direction.
@@ -617,6 +637,59 @@ export class FormDirective<T extends Record<string, unknown>> {
     // control.touched changes for the field that just blurred.
     queueMicrotask(() => {
       this.#blurTick.update((v) => v + 1);
+    });
+  }
+
+  /**
+   * Moves keyboard focus to the first invalid, visible form control after submit.
+   * This keeps error recovery predictable for keyboard and assistive-technology users.
+   */
+  #focusFirstInvalidField(): void {
+    if (this.ngForm.form.valid) {
+      return;
+    }
+
+    const focusFirstInvalid = () => {
+      const form = this.elementRef.nativeElement;
+      const candidates = Array.from(
+        form.querySelectorAll<HTMLElement>(
+          [
+            '[aria-invalid="true"]:not([disabled]):not([type="hidden"])',
+            'input.ng-invalid:not([disabled]):not([type="hidden"])',
+            'select.ng-invalid:not([disabled])',
+            'textarea.ng-invalid:not([disabled])',
+          ].join(', ')
+        )
+      );
+
+      const firstInvalid = candidates.find((candidate) => {
+        if (candidate.getAttribute('aria-hidden') === 'true') {
+          return false;
+        }
+
+        return candidate.getClientRects().length > 0;
+      });
+
+      if (!firstInvalid) {
+        return;
+      }
+
+      firstInvalid.focus({ preventScroll: true });
+      firstInvalid.scrollIntoView?.({
+        block: 'center',
+        inline: 'nearest',
+      });
+    };
+
+    if (typeof globalThis.requestAnimationFrame === 'function') {
+      globalThis.requestAnimationFrame(() => {
+        focusFirstInvalid();
+      });
+      return;
+    }
+
+    queueMicrotask(() => {
+      focusFirstInvalid();
     });
   }
 

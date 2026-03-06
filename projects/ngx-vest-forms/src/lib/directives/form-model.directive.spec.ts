@@ -2,7 +2,7 @@ import { Component, signal } from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { create, enforce, test as vestTest } from 'vest';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { NgxVestForms } from '../exports';
 
 describe('FormModelDirective', () => {
@@ -92,5 +92,48 @@ describe('FormModelDirective', () => {
     await render(PrepopulatedHost);
     const email = screen.getByPlaceholderText('email') as HTMLInputElement;
     expect(email.value).toBe('preset@example.com');
+  });
+
+  it('should not warn for standalone helper inputs inside an ngxVestForm', async () => {
+    const consoleWarnSpy = vi
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {});
+
+    @Component({
+      template: `
+        <form
+          ngxVestForm
+          [suite]="suite"
+          [formValue]="model()"
+          (formValueChange)="model.set($event)"
+        >
+          <input name="email" [ngModel]="model().email" placeholder="email" />
+          <input
+            [ngModel]="helperValue()"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="helperValue.set($event)"
+            placeholder="helper"
+          />
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class StandaloneHelperHostComponent {
+      model = signal<{ email: string }>({ email: '' });
+      helperValue = signal('');
+      suite = create((data: { email?: string } = {}) => {
+        vestTest('email', 'Email is required', () => {
+          enforce(data.email).isNotEmpty();
+        });
+      });
+    }
+
+    await render(StandaloneHelperHostComponent);
+
+    expect(consoleWarnSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining('Could not resolve control path')
+    );
+
+    consoleWarnSpy.mockRestore();
   });
 });

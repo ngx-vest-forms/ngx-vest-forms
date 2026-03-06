@@ -8,7 +8,7 @@ This directory contains all utility types and functions provided by ngx-vest-for
   - [NgxDeepPartial\<T\>](#ngxdeeppartialt)
   - [NgxDeepRequired\<T\>](#ngxdeeprequiredt)
   - [NgxFormCompatibleDeepRequired\<T\>](#ngxformcompatibledeeprequiredt)
-  - [NgxVestSuite\<T\>](#ngxvestsuitet-and-ngxtypedvestsuitet)
+  - [NgxVestSuite\<T\>](#ngxvestsuitet-and-deprecated-ngxtypedvestsuitet)
   - [NgxFieldKey\<T\>](#ngxfieldkeyt)
 - [Form Utilities](#form-utilities)
   - [setValueAtPath()](#setvalueatpath)
@@ -164,13 +164,11 @@ const formData: FormUser = {
 
 ---
 
-### NgxVestSuite\<T\> and NgxTypedVestSuite\<T\>
+### NgxVestSuite\<T\> (and deprecated NgxTypedVestSuite\<T\>)
 
-Type-safe wrappers for Vest.js Suite with cleaner API and optional autocomplete.
+`NgxVestSuite<T>` is the canonical public suite type in v3.x.
 
-#### NgxVestSuite\<T\> - Flexible, Component-Friendly
-
-**Use for**: Component properties, function parameters, public APIs that need flexibility.
+**Use for**: suite definitions, component properties, helper function parameters, and public APIs.
 
 ```typescript
 import { NgxVestSuite } from 'ngx-vest-forms';
@@ -191,14 +189,14 @@ class MyFormComponent {
 }
 ```
 
-#### NgxTypedVestSuite\<T\> - Type-Safe with Autocomplete
+#### NgxTypedVestSuite\<T\> - Deprecated alias
 
-**Use for**: Validation suite definitions where you want IDE autocomplete for field names.
+`NgxTypedVestSuite<T>` still works, but it is a deprecated alias of `NgxVestSuite<T>`.
 
 ```typescript
 import { NgxTypedVestSuite } from 'ngx-vest-forms';
 
-// ✅ With autocomplete: Using NgxTypedVestSuite
+// ✅ Backward-compatible, but deprecated naming
 export const suite: NgxTypedVestSuite<FormModel> = create(
   (model: FormModel) => {
     // IDE suggests field names for test() calls: 'email' | 'password' | typeof ROOT_FORM
@@ -207,46 +205,40 @@ export const suite: NgxTypedVestSuite<FormModel> = create(
 );
 ```
 
-#### Recommended Pattern: Best of Both Worlds
+#### Recommended Pattern
 
-**Why this pattern?** `NgxTypedVestSuite<T>` provides autocomplete for field names in `test()` calls and stricter typing, while `NgxVestSuite<T>` is more flexible for component properties.
-
-**Solution**: Define with `NgxTypedVestSuite` for autocomplete, assign to `NgxVestSuite` property in component:
+Define and consume suites with `NgxVestSuite<T>` unless you are keeping an older file stable during migration:
 
 ```typescript
-import { NgxVestSuite, NgxTypedVestSuite } from 'ngx-vest-forms';
+import { NgxVestSuite } from 'ngx-vest-forms';
 
-// Step 1: Define with NgxTypedVestSuite for autocomplete
-export const userSuite: NgxTypedVestSuite<FormModel> = create(
+export const userSuite: NgxVestSuite<FormModel> = create(
   (model: FormModel) => {
     // ✅ IDE autocomplete for test() field names: 'email' | 'password' | typeof ROOT_FORM
     test('email', 'Required', () => enforce(model.email).isNotBlank());
   }
 );
-// Field focus at call site: userSuite.only('email').run(model)
 
-// Step 2: Use NgxVestSuite in component (no type assertion needed)
 @Component({...})
 class MyFormComponent {
-  // ✅ Types are compatible - NgxVestSuite accepts both typed and untyped
   protected readonly suite: NgxVestSuite<FormModel> = userSuite;
 }
 ```
 
 #### Three Usage Options Compared
 
-| Approach                                                                 | Autocomplete       | Explicit Type    | Flexible             | Recommended              |
-| ------------------------------------------------------------------------ | ------------------ | ---------------- | -------------------- | ------------------------ |
-| **Recommended Pattern** (define `NgxTypedVestSuite`, use `NgxVestSuite`) | ✅ At definition   | ✅ In component  | ✅ Accepts any suite | ✅ **Best**              |
-| **Type Inference** (`const suite = ...`)                                 | ✅ At definition   | ❌ Inferred only | ❌ Too specific      | ⚠️ Works but less clear  |
-| **Simple NgxVestSuite** (`NgxVestSuite<T>`)                              | ❌ No autocomplete | ✅ Explicit      | ✅ Accepts any suite | ✅ Good for simple forms |
+| Approach                                                | Autocomplete     | Explicit Type    | Flexible             | Recommended             |
+| ------------------------------------------------------- | ---------------- | ---------------- | -------------------- | ----------------------- |
+| **Recommended Pattern** (use `NgxVestSuite` everywhere) | ✅ At definition | ✅ In component  | ✅ Accepts any suite | ✅ **Best**             |
+| **Type Inference** (`const suite = ...`)                | ✅ At definition | ❌ Inferred only | ❌ Too specific      | ⚠️ Works but less clear |
+| **Deprecated Alias** (`NgxTypedVestSuite<T>`)           | ✅ At definition | ✅ Explicit      | ✅ Accepts any suite | ⚠️ Back-compat only     |
 
 **When to use:**
 
-- ✅ **NgxTypedVestSuite**: Validation suite definitions (get autocomplete)
 - ✅ **NgxVestSuite**: Component properties (template compatibility)
-- ✅ **Recommended Pattern**: Complex forms needing autocomplete + flexibility
+- ✅ **Recommended Pattern**: New code and updated examples
 - ✅ **Simple NgxVestSuite**: Simple forms without autocomplete needs
+- ⚠️ **NgxTypedVestSuite**: Older code you have not renamed yet
 
 ---
 

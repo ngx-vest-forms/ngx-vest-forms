@@ -1,5 +1,6 @@
 import {
   AfterContentInit,
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -72,6 +73,14 @@ let nextUniqueId = 0;
  * - `aria-invalid="true"` when errors are shown
  * - Uses `role="status"` with `aria-live="polite"` for non-disruptive announcements
  * - Debounced pending state to prevent flashing for quick validations
+ *
+ * ### Accessibility Features (Not Inferred Automatically)
+ * - `required` / `aria-required` are **not** derived from Vest rules.
+ *   Required-ness is often conditional business logic, so ngx-vest-forms only manages
+ *   validation-state associations (`aria-invalid`, `aria-describedby`) and message regions.
+ * - Prefer native `required` only for controls that are semantically always required.
+ * - For conditional requirements, communicate requirement in the label/help text and let
+ *   validation messages + `aria-invalid` describe the current state.
  *
  * ### WCAG 2.2 AA - Error Severity Levels
  * This component uses `role="status"` for **field-level** validation messages:
@@ -185,6 +194,14 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
    */
   readonly ariaAssociationMode = input<AriaAssociationMode>('all-controls');
 
+  /**
+   * Explicitly applies `aria-required="true"` to associated descendant controls.
+   *
+   * This is intentionally opt-in and is **not** inferred from Vest rules because
+   * required-ness is often conditional business logic.
+   */
+  readonly ariaRequired = input(false, { transform: booleanAttribute });
+
   // Generate unique IDs for ARIA associations
   protected readonly uniqueId = `ngx-control-wrapper-${nextUniqueId++}`;
   protected readonly errorId = `${this.uniqueId}-error`;
@@ -262,6 +279,7 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
       const describedBy = this.ariaDescribedBy();
       const wrapperActiveIds = parseAriaIdTokens(describedBy);
       const shouldShowErrors = this.errorDisplay.shouldShowErrors();
+      const ariaRequired = this.ariaRequired();
 
       const targets = resolveAssociationTargets(this.formControls(), mode);
 
@@ -283,6 +301,12 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
           control.setAttribute('aria-invalid', 'true');
         } else {
           control.removeAttribute('aria-invalid');
+        }
+
+        if (ariaRequired) {
+          control.setAttribute('aria-required', 'true');
+        } else {
+          control.removeAttribute('aria-required');
         }
       });
     });

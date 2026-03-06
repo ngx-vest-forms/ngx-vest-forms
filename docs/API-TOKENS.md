@@ -424,10 +424,10 @@ export class SignupFormComponent {
 
 **Status:** ⚠️ Deprecated
 
-The `SC_ERROR_DISPLAY_MODE_TOKEN` is an alias for `NGX_ERROR_DISPLAY_MODE_TOKEN` maintained for backward compatibility. It will be removed in v3.0.
+The `SC_ERROR_DISPLAY_MODE_TOKEN` is an alias for `NGX_ERROR_DISPLAY_MODE_TOKEN` maintained for backward compatibility. It is still available in the current major version, but it is deprecated and should be replaced with `NGX_ERROR_DISPLAY_MODE_TOKEN` in new code.
 
 ```typescript
-// ❌ Legacy (works in v2.x but will be removed)
+// ❌ Legacy (still works for compatibility, but deprecated)
 import { SC_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
 
 // ✅ Recommended

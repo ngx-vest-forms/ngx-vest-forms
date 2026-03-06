@@ -1,6 +1,7 @@
 /* eslint-disable @angular-eslint/component-selector */
 import { Component, signal, ViewChild } from '@angular/core';
-import { render } from '@testing-library/angular';
+import { render, screen, waitFor } from '@testing-library/angular';
+import userEvent from '@testing-library/user-event';
 import { isObservable, Observable } from 'rxjs';
 import { create, enforce, test as vestTest, warn } from 'vest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -709,6 +710,65 @@ describe('FormDirective - Shape Validation', () => {
     instance.formValue.set({ username: 'ok' });
     fixture.detectChanges();
     expect(consoleWarnSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe('FormDirective - Submit Accessibility', () => {
+  it('should focus the first invalid field after form submit', async () => {
+    @Component({
+      selector: 'test-submit-focus-host',
+      template: `
+        <form
+          ngxVestForm
+          [suite]="suite()"
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+        >
+          <label for="firstName">First name</label>
+          <input
+            id="firstName"
+            name="firstName"
+            [ngModel]="formValue().firstName"
+          />
+
+          <label for="lastName">Last name</label>
+          <input
+            id="lastName"
+            name="lastName"
+            [ngModel]="formValue().lastName"
+          />
+
+          <button type="submit">Submit</button>
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestSubmitFocusHost {
+      readonly formValue = signal<{ firstName: string; lastName: string }>({
+        firstName: '',
+        lastName: '',
+      });
+
+      readonly suite = signal(
+        create((model: { firstName?: string; lastName?: string } = {}) => {
+          vestTest('firstName', 'First name is required', () => {
+            enforce(model.firstName).isNotBlank();
+          });
+
+          vestTest('lastName', 'Last name is required', () => {
+            enforce(model.lastName).isNotBlank();
+          });
+        })
+      );
+    }
+
+    await render(TestSubmitFocusHost);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('First name')).toHaveFocus();
+    });
   });
 });
 

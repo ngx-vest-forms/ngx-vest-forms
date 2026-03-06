@@ -1,4 +1,5 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -61,6 +62,12 @@ export class DisplayModesDemoFormBody {
   readonly pending = computed(
     () => this.vestForm()?.ngForm.form.pending ?? false
   );
+
+  constructor() {
+    afterNextRender(() => {
+      this.vestForm()?.triggerFormValidation();
+    });
+  }
 
   protected onSubmit(): void {
     this.submitted.emit();
