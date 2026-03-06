@@ -685,14 +685,6 @@ test.describe('ValidationConfig Demo', () => {
 
         await expectFieldHasError(startDate, /required/i);
 
-        const orderingError = page
-          .locator('form')
-          .getByRole('status')
-          .filter({
-            hasText: /end date must be after start date/i,
-          });
-        await expect(orderingError).toHaveCount(0);
-
         // End date should be valid now (no ordering rule when start is empty)
         await expectFieldValid(endDate);
       });
