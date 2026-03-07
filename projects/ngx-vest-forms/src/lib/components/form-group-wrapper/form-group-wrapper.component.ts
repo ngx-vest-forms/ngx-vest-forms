@@ -24,12 +24,7 @@ let nextUniqueId = 0;
     'ngx-form-group-wrapper, sc-form-group-wrapper, [ngxFormGroupWrapper], [scFormGroupWrapper]',
   exportAs: 'ngxFormGroupWrapper',
   templateUrl: './form-group-wrapper.component.html',
-  // Minimal structural styling: custom elements are inline by default.
-  styles: `
-    :host {
-      display: block;
-    }
-  `,
+  styleUrls: ['./form-group-wrapper.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'ngx-form-group-wrapper sc-form-group-wrapper',

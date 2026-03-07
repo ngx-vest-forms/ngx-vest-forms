@@ -11,6 +11,52 @@ The **recommended approach** for error display is to use `FormErrorDisplayDirect
 
 If the default `ngx-control-wrapper` doesn't meet your design requirements, you can easily create your own custom wrapper component using this pattern.
 
+## Choose the right level of customization
+
+Before creating a custom wrapper, decide whether you only need visual theming or a different UI structure/behavior.
+
+### Prefer CSS token overrides when
+
+- You want different colors, spacing, typography, or spinner sizing.
+- You want to align built-in wrappers with a design system theme.
+- You want to keep built-in semantics and behavior (error/warning/pending regions, ARIA behavior, debounced pending state).
+
+Both built-in wrappers expose CSS custom properties with sensible defaults:
+
+- `ngx-control-wrapper` tokens (for field-level wrappers)
+- `ngx-form-group-wrapper` tokens (for `NgModelGroup` containers)
+
+Token surface includes colors, spacing, typography, pending layout, and spinner sizing.
+See the full token list in each component SCSS for complete theming options.
+
+Example:
+
+```css
+/* App/theme stylesheet */
+ngx-control-wrapper {
+  --ngx-control-wrapper-error-color: #b91c1c;
+  --ngx-control-wrapper-warning-color: #92400e;
+  --ngx-control-wrapper-message-margin-top: 0.375rem;
+  --ngx-control-wrapper-spinner-size: 0.875rem;
+}
+
+ngx-form-group-wrapper,
+[ngxFormGroupWrapper] {
+  --ngx-form-group-wrapper-error-color: #b91c1c;
+  --ngx-form-group-wrapper-warning-color: #92400e;
+  --ngx-form-group-wrapper-message-margin-top: 0.375rem;
+}
+```
+
+### Create a custom wrapper when
+
+- You need different markup/layout (tooltip/popover errors, inline icons, custom containers).
+- You need different message ordering or grouping.
+- You need framework-specific UI composition (Material/PrimeNG/etc.) beyond token-level styling.
+- You need custom ARIA wiring behavior not covered by built-ins.
+
+In those cases, build a wrapper with `FormErrorDisplayDirective` (or `FormErrorControlDirective` when you also want automatic ARIA association).
+
 ## Basic Custom Wrapper (Recommended Pattern)
 
 ````typescript

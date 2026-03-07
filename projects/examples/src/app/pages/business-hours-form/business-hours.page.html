@@ -36,17 +36,22 @@
     </div>
 
     <div layout-main>
-      <ngx-business-hours-form-body
-        #formBody
-        [formValue]="formValue()"
-        [shape]="shape"
-        [suite]="businessHoursSuite"
-        [validationConfig]="validationConfig"
-        [rootFormError]="rootFormError()"
-        [businessHoursValues]="getBusinessHoursValues()"
-        (formValueChange)="formValue.set($event)"
-        (businessHoursChange)="onBusinessHoursChange($event)"
-      />
+      <ngx-card
+        title="Business Hours"
+        subtitle="Configure your opening hours for the week."
+      >
+        <ngx-business-hours-form-body
+          #formBody
+          [formValue]="formValue()"
+          [shape]="shape"
+          [suite]="businessHoursSuite"
+          [validationConfig]="validationConfig"
+          [rootFormError]="rootFormError()"
+          [businessHoursValues]="getBusinessHoursValues()"
+          (formValueChange)="formValue.set($event)"
+          (businessHoursChange)="onBusinessHoursChange($event)"
+        />
+      </ngx-card>
     </div>
   </ngx-form-page-layout>
 </div>

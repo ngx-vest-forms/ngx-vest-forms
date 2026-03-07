@@ -243,6 +243,34 @@ test.describe('Purchase Form', () => {
         ).toBeVisible();
       });
     });
+
+    test('should render passwords mismatch in group wrapper error region', async ({
+      page,
+    }) => {
+      await test.step('Enter mismatched passwords and verify group-level wrapper error text', async () => {
+        const password = page.getByLabel('Password', { exact: true });
+        const confirmPassword = page.getByLabel('Confirm Password');
+
+        await typeAndBlur(password, 'SecurePass123');
+        await typeAndBlur(confirmPassword, 'DifferentPass123');
+        await waitForValidationToSettle(page, 10000);
+
+        const passwordsGroupWrapper = page.locator(
+          'ngx-form-group-wrapper[ngmodelgroup="passwords"]'
+        );
+        await expect(passwordsGroupWrapper).toHaveCount(1);
+
+        await expect
+          .poll(async () => {
+            return (
+              await passwordsGroupWrapper
+                .locator(':scope > .ngx-form-group-wrapper__errors')
+                .innerText()
+            ).trim();
+          }, { timeout: 15000 })
+          .toContain('Passwords do not match');
+      });
+    });
   });
 
   test.describe('Async Validation - UserId', () => {

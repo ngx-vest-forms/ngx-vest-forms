@@ -215,8 +215,12 @@ For `ngModelGroup` containers, prefer using `<ngx-form-group-wrapper>` (group-sa
 - [Accessibility Guide](./docs/ACCESSIBILITY.md)
 - [`ControlWrapperComponent` docs](./projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md)
 
-> **Styling note**: `ngx-control-wrapper` uses Tailwind CSS utility classes for default styling.
-> If your project doesn't use Tailwind, see the [component docs](./projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md#styling-dependency-tailwind-css) for alternatives.
+> **Styling note**: `ngx-control-wrapper` and `ngx-form-group-wrapper` include built-in, framework-agnostic baseline styles.
+> They are themeable via CSS custom properties. See the [component docs](./projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md#styling-and-theming).
+>
+> **Upgrade note (wrappers)**: This is not a breaking API change for wrapper consumers (selectors/inputs/behavior remain stable).
+> If you previously targeted internal wrapper markup/classes with custom CSS, review and update those selectors as needed.
+> Preferred customization path: override exposed CSS custom properties before building a fully custom wrapper.
 
 📖 **[Complete Guide: Custom Control Wrappers](./docs/CUSTOM-CONTROL-WRAPPERS.md)**
 

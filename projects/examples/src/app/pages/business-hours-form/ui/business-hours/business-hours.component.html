@@ -1,18 +1,23 @@
-<ngx-form-group-wrapper
-  ngModelGroup="businessHours"
-  class="business-hours-stack"
->
+<div ngModelGroup="businessHours" class="business-hours-stack">
   <!-- Existing Business Hours List -->
-  <ngx-form-group-wrapper
+  <fieldset
+    ngxFormGroupWrapper
     ngModelGroup="values"
     #valuesGroup="ngModelGroup"
+    #valuesWrapper="ngxFormGroupWrapper"
+    [attr.aria-describedby]="valuesWrapper.describedByIds()"
     class="business-hours-list-stack"
   >
+    <legend class="sr-only">Configured business hour slots</legend>
+
     @for (item of values() | keyvalue; track item.key) {
-      <ngx-form-group-wrapper
+      <fieldset
+        ngxFormGroupWrapper
         [ngModelGroup]="item.key"
-        class="business-hours-item-card"
+        class="form-shell business-hours-item-card"
       >
+        <legend class="sr-only">Business hour slot {{ item.key }}</legend>
+
         <div class="business-hours-item-layout">
           <ngx-business-hour
             [businessHour]="values()[item.key]"
@@ -24,15 +29,15 @@
             type="button"
             (click)="removeBusinessHour(item.key, valuesGroup)"
             class="business-hours-remove-btn"
-            title="Remove business hour"
+            [title]="'Remove business hour slot ' + item.key"
+            [attr.aria-label]="'Remove business hour slot ' + item.key"
           >
-            <span class="sr-only">Remove</span>
             <i class="fa-solid fa-trash" aria-hidden="true"></i>
           </button>
         </div>
-      </ngx-form-group-wrapper>
+      </fieldset>
     }
-  </ngx-form-group-wrapper>
+  </fieldset>
 
   @if ((values() | keyvalue)?.length) {
     <div class="business-hours-divider">
@@ -46,11 +51,16 @@
   }
 
   <!-- Add New Business Hour -->
-  <ngx-form-group-wrapper
+  <fieldset
+    ngxFormGroupWrapper
     ngModelGroup="addValue"
     #group="ngModelGroup"
-    class="business-hours-add-card"
+    #addValueWrapper="ngxFormGroupWrapper"
+    [attr.aria-describedby]="addValueWrapper.describedByIds()"
+    class="form-shell business-hours-add-card"
   >
+    <legend class="sr-only">Add new business hour slot</legend>
+
     <div class="business-hours-item-layout">
       <ngx-business-hour
         [businessHour]="addValue()"
@@ -71,5 +81,5 @@
         Add
       </button>
     </div>
-  </ngx-form-group-wrapper>
-</ngx-form-group-wrapper>
+  </fieldset>
+</div>
