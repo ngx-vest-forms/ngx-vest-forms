@@ -633,6 +633,26 @@ describe('FormDirective - first invalid helpers', () => {
     readonly vestForm = viewChild.required<FormDirective<any>>('vest');
   }
 
+  @Component({
+    selector: 'test-group-invalid-host',
+    template: `
+      <form ngxVestForm #vest="ngxVestForm">
+        <fieldset class="ngx-form-group-wrapper--invalid">
+          <input id="group-first-valid" name="groupFirstValid" />
+          <input
+            id="group-first-invalid"
+            name="groupFirstInvalid"
+            aria-invalid="true"
+          />
+        </fieldset>
+      </form>
+    `,
+    imports: [NgxVestForms],
+  })
+  class TestGroupInvalidHost {
+    readonly vestForm = viewChild.required<FormDirective<any>>('vest');
+  }
+
   it('focuses and scrolls the first invalid descendant in an invalid wrapper', async () => {
     const { fixture } = await render(TestFirstInvalidHost);
     fixture.detectChanges();
@@ -729,6 +749,34 @@ describe('FormDirective - first invalid helpers', () => {
     const resolved =
       fixture.componentInstance.vestForm().focusFirstInvalidControl();
     expect(resolved).toBeNull();
+  });
+
+  it('prefers an invalid descendant over the first focusable control in an invalid group wrapper', async () => {
+    const { fixture } = await render(TestGroupInvalidHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const invalidTarget = fixture.nativeElement.querySelector(
+      '#group-first-invalid'
+    ) as HTMLElement | null;
+    const safeInvalidTarget = expectElement(
+      invalidTarget,
+      '#group-first-invalid'
+    );
+    const validTarget = fixture.nativeElement.querySelector(
+      '#group-first-valid'
+    ) as HTMLElement | null;
+    const safeValidTarget = expectElement(validTarget, '#group-first-valid');
+
+    const invalidFocusSpy = vi.spyOn(safeInvalidTarget, 'focus');
+    const validFocusSpy = vi.spyOn(safeValidTarget, 'focus');
+
+    const resolved =
+      fixture.componentInstance.vestForm().focusFirstInvalidControl();
+
+    expect(resolved).toBe(safeInvalidTarget);
+    expect(invalidFocusSpy).toHaveBeenCalled();
+    expect(validFocusSpy).not.toHaveBeenCalled();
   });
 });
 

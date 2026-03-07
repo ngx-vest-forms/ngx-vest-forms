@@ -61,6 +61,14 @@ import {
 } from '../utils/form-utils';
 import { validateShape } from '../utils/shape-validation';
 import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
+import {
+  DEFAULT_FOCUS_SELECTOR,
+  DEFAULT_INVALID_SELECTOR,
+  NgxFirstInvalidOptions,
+  openCollapsedDetailsAncestors,
+  resolveFirstInvalidElement,
+  resolveFirstInvalidFocusTarget,
+} from '../utils/first-invalid.utils';
 import { ValidationOptions } from './validation-options';
 
 /**
@@ -69,24 +77,6 @@ import { ValidationOptions } from './validation-options';
  * Increased from 100ms to 500ms to give validators enough time to complete and propagate.
  */
 const VALIDATION_IN_PROGRESS_TIMEOUT_MS = 500;
-
-const DEFAULT_INVALID_SELECTOR = [
-  '.ngx-control-wrapper--invalid',
-  '.ngx-form-group-wrapper--invalid',
-  '[formErrorControl][data-invalid="true"]',
-  'input[aria-invalid="true"]',
-  'textarea[aria-invalid="true"]',
-  'select[aria-invalid="true"]',
-].join(', ');
-
-const DEFAULT_FOCUS_SELECTOR = [
-  'input:not([type="hidden"]):not([disabled])',
-  'textarea:not([disabled])',
-  'select:not([disabled])',
-  'button:not([disabled])',
-  'a[href]',
-  '[tabindex]:not([tabindex="-1"]):not([disabled])',
-].join(', ');
 
 /**
  * Type for validation configuration that accepts both the typed and untyped versions.
@@ -97,24 +87,7 @@ export type NgxValidationConfig<T = unknown> =
   | ValidationConfigMap<T>
   | null;
 
-export type NgxFirstInvalidOptions = {
-  /** Scroll animation behavior (default: `'smooth'`). */
-  behavior?: ScrollBehavior;
-  /** Vertical alignment when scrolling (default: `'center'`). */
-  block?: ScrollLogicalPosition;
-  /** Horizontal alignment when scrolling (default: `'nearest'`). */
-  inline?: ScrollLogicalPosition;
-  /** Whether to focus after scrolling (default: `true`). */
-  focus?: boolean;
-  /** Passed to `focus()` when focusing (default: `true`). */
-  preventScrollOnFocus?: boolean;
-  /** Opens ancestor `<details>` elements before scroll/focus (default: `true`). */
-  openCollapsedParents?: boolean;
-  /** Selector used to locate the first invalid element. */
-  invalidSelector?: string;
-  /** Selector used to resolve the best focus target within the invalid element. */
-  focusSelector?: string;
-};
+export type { NgxFirstInvalidOptions };
 
 /**
  * Main form directive for ngx-vest-forms that bridges Angular template-driven forms with Vest.js validation.
@@ -673,35 +646,19 @@ export class FormDirective<T extends Record<string, unknown>> {
     } = options;
 
     const root: HTMLFormElement = this.elementRef.nativeElement;
-    const firstInvalid: HTMLElement | null = root.querySelector(invalidSelector);
+    const firstInvalid = resolveFirstInvalidElement(root, invalidSelector);
     if (!firstInvalid) {
       return null;
     }
 
     if (openCollapsedParents) {
-      let current: HTMLElement | null = firstInvalid;
-      while (current !== root) {
-        const parentElement: HTMLElement | null = current.parentElement;
-        if (!parentElement) {
-          break;
-        }
-
-        if (parentElement instanceof HTMLDetailsElement) {
-          parentElement.open = true;
-        }
-
-        current = parentElement;
-      }
+      openCollapsedDetailsAncestors(root, firstInvalid);
     }
 
-    let focusTarget: HTMLElement | null = null;
-    if (firstInvalid.matches(focusSelector)) {
-      focusTarget = firstInvalid;
-    } else {
-      const queriedFocusTarget = firstInvalid.querySelector(focusSelector);
-      focusTarget =
-        queriedFocusTarget instanceof HTMLElement ? queriedFocusTarget : null;
-    }
+    const focusTarget = resolveFirstInvalidFocusTarget(
+      firstInvalid,
+      focusSelector
+    );
 
     const scrollTarget = focusTarget ?? firstInvalid;
     scrollTarget.scrollIntoView({ behavior, block, inline });
