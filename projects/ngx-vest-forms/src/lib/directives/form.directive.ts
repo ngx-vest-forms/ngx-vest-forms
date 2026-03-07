@@ -98,13 +98,21 @@ export type NgxValidationConfig<T = unknown> =
   | null;
 
 export type NgxFirstInvalidOptions = {
+  /** Scroll animation behavior (default: `'smooth'`). */
   behavior?: ScrollBehavior;
+  /** Vertical alignment when scrolling (default: `'center'`). */
   block?: ScrollLogicalPosition;
+  /** Horizontal alignment when scrolling (default: `'nearest'`). */
   inline?: ScrollLogicalPosition;
+  /** Whether to focus after scrolling (default: `true`). */
   focus?: boolean;
+  /** Passed to `focus()` when focusing (default: `true`). */
   preventScrollOnFocus?: boolean;
+  /** Opens ancestor `<details>` elements before scroll/focus (default: `true`). */
   openCollapsedParents?: boolean;
+  /** Selector used to locate the first invalid element. */
   invalidSelector?: string;
+  /** Selector used to resolve the best focus target within the invalid element. */
   focusSelector?: string;
 };
 
@@ -672,13 +680,14 @@ export class FormDirective<T extends Record<string, unknown>> {
 
     if (openCollapsedParents) {
       let current: HTMLElement | null = firstInvalid;
-      while (current) {
+      while (current && current !== root) {
         const details = current.closest('details') as HTMLDetailsElement | null;
         if (!details) {
           break;
         }
         details.open = true;
-        current = details.parentElement;
+        const parentElement = details.parentElement;
+        current = parentElement instanceof HTMLElement ? parentElement : null;
       }
     }
 

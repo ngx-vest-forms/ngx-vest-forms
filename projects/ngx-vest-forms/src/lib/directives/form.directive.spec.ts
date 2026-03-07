@@ -16,6 +16,11 @@ async function awaitResult<T>(result: Promise<T> | Observable<T>) {
 
 import { firstValueFrom } from 'rxjs';
 
+function expectElement<T extends Element>(value: T | null, selector: string): T {
+  expect(value).toBeTruthy();
+  return value as T;
+}
+
 @Component({
   selector: 'test-form',
   imports: [NgxVestForms],
@@ -635,13 +640,14 @@ describe('FormDirective - first invalid helpers', () => {
 
     const target = fixture.nativeElement.querySelector(
       '#wrapper-input'
-    ) as HTMLElement;
-    const focusSpy = vi.spyOn(target, 'focus');
-    const scrollSpy = vi.spyOn(target, 'scrollIntoView');
+    ) as HTMLElement | null;
+    const safeTarget = expectElement(target, '#wrapper-input');
+    const focusSpy = vi.spyOn(safeTarget, 'focus');
+    const scrollSpy = vi.spyOn(safeTarget, 'scrollIntoView');
 
     const resolved = fixture.componentInstance.vestForm.focusFirstInvalidControl();
 
-    expect(resolved).toBe(target);
+    expect(resolved).toBe(safeTarget);
     expect(scrollSpy).toHaveBeenCalledWith({
       behavior: 'smooth',
       block: 'center',
@@ -657,7 +663,8 @@ describe('FormDirective - first invalid helpers', () => {
 
     const target = fixture.nativeElement.querySelector(
       '#details-invalid-input'
-    ) as HTMLElement;
+    ) as HTMLElement | null;
+    const safeTarget = expectElement(target, '#details-invalid-input');
     const details = Array.from(
       fixture.nativeElement.querySelectorAll('details')
     ) as HTMLDetailsElement[];
@@ -669,7 +676,7 @@ describe('FormDirective - first invalid helpers', () => {
     fixture.componentInstance.vestForm.focusFirstInvalidControl();
 
     expect(details.every((detail) => detail.open)).toBe(true);
-    expect(document.activeElement).toBe(target);
+    expect(document.activeElement).toBe(safeTarget);
   });
 
   it('falls back to aria-invalid controls and does not focus when focus is disabled', async () => {
@@ -679,9 +686,10 @@ describe('FormDirective - first invalid helpers', () => {
 
     const target = fixture.nativeElement.querySelector(
       '#aria-invalid-input'
-    ) as HTMLElement;
-    const focusSpy = vi.spyOn(target, 'focus');
-    const scrollSpy = vi.spyOn(target, 'scrollIntoView');
+    ) as HTMLElement | null;
+    const safeTarget = expectElement(target, '#aria-invalid-input');
+    const focusSpy = vi.spyOn(safeTarget, 'focus');
+    const scrollSpy = vi.spyOn(safeTarget, 'scrollIntoView');
 
     const resolved = fixture.componentInstance.vestForm.focusFirstInvalidControl(
       {
@@ -690,7 +698,7 @@ describe('FormDirective - first invalid helpers', () => {
       }
     );
 
-    expect(resolved).toBe(target);
+    expect(resolved).toBe(safeTarget);
     expect(scrollSpy).toHaveBeenCalledOnce();
     expect(focusSpy).not.toHaveBeenCalled();
   });
@@ -702,12 +710,13 @@ describe('FormDirective - first invalid helpers', () => {
 
     const target = fixture.nativeElement.querySelector(
       '#wrapper-input'
-    ) as HTMLElement;
-    const focusSpy = vi.spyOn(target, 'focus');
+    ) as HTMLElement | null;
+    const safeTarget = expectElement(target, '#wrapper-input');
+    const focusSpy = vi.spyOn(safeTarget, 'focus');
 
     const resolved = fixture.componentInstance.vestForm.scrollToFirstInvalidControl();
 
-    expect(resolved).toBe(target);
+    expect(resolved).toBe(safeTarget);
     expect(focusSpy).not.toHaveBeenCalled();
   });
 
