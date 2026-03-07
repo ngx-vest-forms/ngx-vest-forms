@@ -1,7 +1,10 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
+  Injector,
+  inject,
   signal,
   viewChild,
 } from '@angular/core';
@@ -45,6 +48,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WizardFormPageComponent {
+  private readonly injector = inject(Injector);
   protected readonly currentStep = signal(1);
   protected readonly completedSteps = signal<number[]>([]);
 
@@ -199,11 +203,9 @@ export class WizardFormPageComponent {
       return;
     }
 
-    // Defer to the next macrotask so ngSubmit touch/validation state and
-    // wrapper invalid classes are fully reflected in the DOM before focusing.
-    setTimeout(() => {
+    afterNextRender(() => {
       this.formBody()?.focusCurrentStepFirstInvalidControl();
-    }, 0);
+    }, { injector: this.injector });
   }
 
   protected onStep2Submit(): void {
@@ -215,16 +217,14 @@ export class WizardFormPageComponent {
       return;
     }
 
-    // Step 2 demonstrates custom first-invalid configuration: align to top
-    // for longer profile sections while still preventing extra focus scrolling.
-    setTimeout(() => {
+    afterNextRender(() => {
       this.formBody()?.focusCurrentStepFirstInvalidControl({
         behavior: 'auto',
         block: 'start',
         inline: 'nearest',
         preventScrollOnFocus: true,
       });
-    }, 0);
+    }, { injector: this.injector });
   }
 
   protected onStep3Submit(): void {
@@ -235,11 +235,9 @@ export class WizardFormPageComponent {
       return;
     }
 
-    // Defer to the next macrotask so ngSubmit touch/validation state and
-    // wrapper invalid classes are fully reflected in the DOM before focusing.
-    setTimeout(() => {
+    afterNextRender(() => {
       this.formBody()?.focusCurrentStepFirstInvalidControl();
-    }, 0);
+    }, { injector: this.injector });
   }
 
   protected async submitAll(): Promise<void> {
@@ -258,11 +256,9 @@ export class WizardFormPageComponent {
         this.goToStep(3);
       }
 
-      // Wait one macrotask for the step change and form validation state to
-      // settle before focusing the first invalid control in the active step.
-      setTimeout(() => {
+      afterNextRender(() => {
         this.formBody()?.focusCurrentStepFirstInvalidControl();
-      }, 0);
+      }, { injector: this.injector });
       return;
     }
 

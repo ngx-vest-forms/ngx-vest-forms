@@ -1,5 +1,5 @@
 /* eslint-disable @angular-eslint/component-selector */
-import { Component, signal, ViewChild } from '@angular/core';
+import { Component, signal, ViewChild, viewChild } from '@angular/core';
 import { render } from '@testing-library/angular';
 import { isObservable, Observable } from 'rxjs';
 import { enforce, only, staticSuite, test as vestTest, warn } from 'vest';
@@ -598,7 +598,7 @@ describe('FormDirective - first invalid helpers', () => {
     imports: [NgxVestForms],
   })
   class TestFirstInvalidHost {
-    @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
+    readonly vestForm = viewChild.required<FormDirective<any>>('vest');
   }
 
   @Component({
@@ -617,7 +617,7 @@ describe('FormDirective - first invalid helpers', () => {
     imports: [NgxVestForms],
   })
   class TestDetailsFirstInvalidHost {
-    @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
+    readonly vestForm = viewChild.required<FormDirective<any>>('vest');
   }
 
   @Component({
@@ -630,7 +630,7 @@ describe('FormDirective - first invalid helpers', () => {
     imports: [NgxVestForms],
   })
   class TestNoInvalidHost {
-    @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
+    readonly vestForm = viewChild.required<FormDirective<any>>('vest');
   }
 
   it('focuses and scrolls the first invalid descendant in an invalid wrapper', async () => {
@@ -645,7 +645,8 @@ describe('FormDirective - first invalid helpers', () => {
     const focusSpy = vi.spyOn(safeTarget, 'focus');
     const scrollSpy = vi.spyOn(safeTarget, 'scrollIntoView');
 
-    const resolved = fixture.componentInstance.vestForm.focusFirstInvalidControl();
+    const resolved =
+      fixture.componentInstance.vestForm().focusFirstInvalidControl();
 
     expect(resolved).toBe(safeTarget);
     expect(scrollSpy).toHaveBeenCalledWith({
@@ -673,7 +674,7 @@ describe('FormDirective - first invalid helpers', () => {
       detail.open = false;
     }
 
-    fixture.componentInstance.vestForm.focusFirstInvalidControl();
+    fixture.componentInstance.vestForm().focusFirstInvalidControl();
 
     expect(details.every((detail) => detail.open)).toBe(true);
     expect(document.activeElement).toBe(safeTarget);
@@ -691,12 +692,11 @@ describe('FormDirective - first invalid helpers', () => {
     const focusSpy = vi.spyOn(safeTarget, 'focus');
     const scrollSpy = vi.spyOn(safeTarget, 'scrollIntoView');
 
-    const resolved = fixture.componentInstance.vestForm.focusFirstInvalidControl(
-      {
+    const resolved =
+      fixture.componentInstance.vestForm().focusFirstInvalidControl({
         focus: false,
         invalidSelector: 'input[aria-invalid="true"]',
-      }
-    );
+      });
 
     expect(resolved).toBe(safeTarget);
     expect(scrollSpy).toHaveBeenCalledOnce();
@@ -714,7 +714,8 @@ describe('FormDirective - first invalid helpers', () => {
     const safeTarget = expectElement(target, '#wrapper-input');
     const focusSpy = vi.spyOn(safeTarget, 'focus');
 
-    const resolved = fixture.componentInstance.vestForm.scrollToFirstInvalidControl();
+    const resolved =
+      fixture.componentInstance.vestForm().scrollToFirstInvalidControl();
 
     expect(resolved).toBe(safeTarget);
     expect(focusSpy).not.toHaveBeenCalled();
@@ -725,7 +726,8 @@ describe('FormDirective - first invalid helpers', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const resolved = fixture.componentInstance.vestForm.focusFirstInvalidControl();
+    const resolved =
+      fixture.componentInstance.vestForm().focusFirstInvalidControl();
     expect(resolved).toBeNull();
   });
 });

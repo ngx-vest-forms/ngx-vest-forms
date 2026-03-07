@@ -672,8 +672,8 @@ export class FormDirective<T extends Record<string, unknown>> {
       focusSelector = DEFAULT_FOCUS_SELECTOR,
     } = options;
 
-    const root = this.elementRef.nativeElement as HTMLFormElement;
-    const firstInvalid = root.querySelector(invalidSelector) as HTMLElement | null;
+    const root: HTMLFormElement = this.elementRef.nativeElement;
+    const firstInvalid: HTMLElement | null = root.querySelector(invalidSelector);
     if (!firstInvalid) {
       return null;
     }
@@ -681,19 +681,27 @@ export class FormDirective<T extends Record<string, unknown>> {
     if (openCollapsedParents) {
       let current: HTMLElement | null = firstInvalid;
       while (current && current !== root) {
-        const details = current.closest('details') as HTMLDetailsElement | null;
-        if (!details) {
+        const parentElement: HTMLElement | null = current.parentElement;
+        if (!parentElement) {
           break;
         }
-        details.open = true;
-        const parentElement = details.parentElement;
-        current = parentElement instanceof HTMLElement ? parentElement : null;
+
+        if (parentElement instanceof HTMLDetailsElement) {
+          parentElement.open = true;
+        }
+
+        current = parentElement;
       }
     }
 
-    const focusTarget = firstInvalid.matches(focusSelector)
-      ? firstInvalid
-      : (firstInvalid.querySelector(focusSelector) as HTMLElement | null);
+    let focusTarget: HTMLElement | null = null;
+    if (firstInvalid.matches(focusSelector)) {
+      focusTarget = firstInvalid;
+    } else {
+      const queriedFocusTarget = firstInvalid.querySelector(focusSelector);
+      focusTarget =
+        queriedFocusTarget instanceof HTMLElement ? queriedFocusTarget : null;
+    }
 
     const scrollTarget = focusTarget ?? firstInvalid;
     scrollTarget.scrollIntoView({ behavior, block, inline });

@@ -1,9 +1,11 @@
 import { httpResource } from '@angular/common/http';
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
+  Injector,
   inject,
   linkedSignal,
   output,
@@ -53,6 +55,7 @@ type LukeApiResponse = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PurchaseForm {
+  private readonly injector = inject(Injector);
   private readonly swapiService = inject(SwapiService);
   private readonly productService = inject(ProductService);
   readonly products = toSignal(this.productService.getAll());
@@ -283,10 +286,9 @@ export class PurchaseForm {
       return;
     }
 
-    setTimeout(() => {
+    afterNextRender(() => {
       const firstInvalid = formDirective.focusFirstInvalidControl({
-        invalidSelector:
-          '[aria-invalid="true"]',
+        invalidSelector: '[aria-invalid="true"]',
       });
 
       if (firstInvalid) {
@@ -294,7 +296,7 @@ export class PurchaseForm {
       }
 
       this.saveRequested.emit(this.formValue());
-    }, 0);
+    }, { injector: this.injector });
   }
 
   protected onReset(): void {
