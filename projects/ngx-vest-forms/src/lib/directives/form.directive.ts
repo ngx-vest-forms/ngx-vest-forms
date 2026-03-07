@@ -3,6 +3,7 @@ import {
   computed,
   DestroyRef,
   Directive,
+  ElementRef,
   effect,
   inject,
   input,
@@ -69,6 +70,24 @@ import { ValidationOptions } from './validation-options';
  */
 const VALIDATION_IN_PROGRESS_TIMEOUT_MS = 500;
 
+const DEFAULT_INVALID_SELECTOR = [
+  '.ngx-control-wrapper--invalid',
+  '.ngx-form-group-wrapper--invalid',
+  '[formErrorControl][data-invalid="true"]',
+  'input[aria-invalid="true"]',
+  'textarea[aria-invalid="true"]',
+  'select[aria-invalid="true"]',
+].join(', ');
+
+const DEFAULT_FOCUS_SELECTOR = [
+  'input:not([type="hidden"]):not([disabled])',
+  'textarea:not([disabled])',
+  'select:not([disabled])',
+  'button:not([disabled])',
+  'a[href]',
+  '[tabindex]:not([tabindex="-1"]):not([disabled])',
+].join(', ');
+
 /**
  * Type for validation configuration that accepts both the typed and untyped versions.
  * This ensures backward compatibility while supporting the new typed API.
@@ -77,6 +96,17 @@ export type NgxValidationConfig<T = unknown> =
   | Record<string, string[]>
   | ValidationConfigMap<T>
   | null;
+
+export type NgxFirstInvalidOptions = {
+  behavior?: ScrollBehavior;
+  block?: ScrollLogicalPosition;
+  inline?: ScrollLogicalPosition;
+  focus?: boolean;
+  preventScrollOnFocus?: boolean;
+  openCollapsedParents?: boolean;
+  invalidSelector?: string;
+  focusSelector?: string;
+};
 
 /**
  * Main form directive for ngx-vest-forms that bridges Angular template-driven forms with Vest.js validation.
@@ -125,6 +155,7 @@ export type NgxValidationConfig<T = unknown> =
 })
 export class FormDirective<T extends Record<string, unknown>> {
   readonly ngForm = inject(NgForm, { self: true });
+  private readonly elementRef = inject(ElementRef<HTMLFormElement>);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly configDebounceTime = inject(
@@ -607,6 +638,76 @@ export class FormDirective<T extends Record<string, unknown>> {
   markAllAsTouched(): void {
     this.ngForm.form.markAllAsTouched();
     this.#blurTick.update((v) => v + 1);
+  }
+
+  /**
+   * Finds the first invalid element in this form, scrolls it into view, and focuses it.
+   *
+   * Useful in custom submit flows where `markAllAsTouched()` is triggered externally
+   * and the app then wants to guide keyboard and assistive-technology users to the
+   * first failing field.
+   *
+   * @returns The focused element when a focusable target exists, otherwise the first
+   *          matched invalid element. Returns `null` when no invalid element is found.
+   */
+  focusFirstInvalidControl(
+    options: NgxFirstInvalidOptions = {}
+  ): HTMLElement | null {
+    const {
+      behavior = 'smooth',
+      block = 'center',
+      inline = 'nearest',
+      focus = true,
+      preventScrollOnFocus = true,
+      openCollapsedParents = true,
+      invalidSelector = DEFAULT_INVALID_SELECTOR,
+      focusSelector = DEFAULT_FOCUS_SELECTOR,
+    } = options;
+
+    const root = this.elementRef.nativeElement as HTMLFormElement;
+    const firstInvalid = root.querySelector(invalidSelector) as HTMLElement | null;
+    if (!firstInvalid) {
+      return null;
+    }
+
+    if (openCollapsedParents) {
+      let current: HTMLElement | null = firstInvalid;
+      while (current) {
+        const details = current.closest('details') as HTMLDetailsElement | null;
+        if (!details) {
+          break;
+        }
+        details.open = true;
+        current = details.parentElement;
+      }
+    }
+
+    const focusTarget = firstInvalid.matches(focusSelector)
+      ? firstInvalid
+      : (firstInvalid.querySelector(focusSelector) as HTMLElement | null);
+
+    const scrollTarget = focusTarget ?? firstInvalid;
+    scrollTarget.scrollIntoView({ behavior, block, inline });
+
+    if (focus && focusTarget) {
+      focusTarget.focus({ preventScroll: preventScrollOnFocus });
+    }
+
+    return focusTarget ?? firstInvalid;
+  }
+
+  /**
+   * Finds and scrolls the first invalid element into view without moving focus.
+   *
+   * @returns The resolved element, or `null` when no invalid element is found.
+   */
+  scrollToFirstInvalidControl(
+    options: NgxFirstInvalidOptions = {}
+  ): HTMLElement | null {
+    return this.focusFirstInvalidControl({
+      ...options,
+      focus: false,
+    });
   }
 
   /**

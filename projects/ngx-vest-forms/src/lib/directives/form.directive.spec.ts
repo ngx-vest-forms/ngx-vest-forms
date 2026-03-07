@@ -579,6 +579,148 @@ describe('FormDirective - triggerFormValidation', () => {
   });
 });
 
+describe('FormDirective - first invalid helpers', () => {
+  @Component({
+    selector: 'test-first-invalid-host',
+    template: `
+      <form ngxVestForm #vest="ngxVestForm">
+        <div class="ngx-control-wrapper--invalid" data-testid="wrapper-invalid">
+          <input id="wrapper-input" name="wrapperInput" />
+        </div>
+        <input id="aria-invalid-input" name="ariaInvalidInput" aria-invalid="true" />
+      </form>
+    `,
+    imports: [NgxVestForms],
+  })
+  class TestFirstInvalidHost {
+    @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
+  }
+
+  @Component({
+    selector: 'test-details-first-invalid-host',
+    template: `
+      <form ngxVestForm #vest="ngxVestForm">
+        <details>
+          <details>
+            <div class="ngx-control-wrapper--invalid">
+              <input id="details-invalid-input" name="detailsInvalidInput" />
+            </div>
+          </details>
+        </details>
+      </form>
+    `,
+    imports: [NgxVestForms],
+  })
+  class TestDetailsFirstInvalidHost {
+    @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
+  }
+
+  @Component({
+    selector: 'test-no-invalid-host',
+    template: `
+      <form ngxVestForm #vest="ngxVestForm">
+        <input id="valid-input" name="validInput" />
+      </form>
+    `,
+    imports: [NgxVestForms],
+  })
+  class TestNoInvalidHost {
+    @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
+  }
+
+  it('focuses and scrolls the first invalid descendant in an invalid wrapper', async () => {
+    const { fixture } = await render(TestFirstInvalidHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const target = fixture.nativeElement.querySelector(
+      '#wrapper-input'
+    ) as HTMLElement;
+    const focusSpy = vi.spyOn(target, 'focus');
+    const scrollSpy = vi.spyOn(target, 'scrollIntoView');
+
+    const resolved = fixture.componentInstance.vestForm.focusFirstInvalidControl();
+
+    expect(resolved).toBe(target);
+    expect(scrollSpy).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'nearest',
+    });
+    expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true });
+  });
+
+  it('opens ancestor details before scrolling and focusing', async () => {
+    const { fixture } = await render(TestDetailsFirstInvalidHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const target = fixture.nativeElement.querySelector(
+      '#details-invalid-input'
+    ) as HTMLElement;
+    const details = Array.from(
+      fixture.nativeElement.querySelectorAll('details')
+    ) as HTMLDetailsElement[];
+
+    for (const detail of details) {
+      detail.open = false;
+    }
+
+    fixture.componentInstance.vestForm.focusFirstInvalidControl();
+
+    expect(details.every((detail) => detail.open)).toBe(true);
+    expect(document.activeElement).toBe(target);
+  });
+
+  it('falls back to aria-invalid controls and does not focus when focus is disabled', async () => {
+    const { fixture } = await render(TestFirstInvalidHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const target = fixture.nativeElement.querySelector(
+      '#aria-invalid-input'
+    ) as HTMLElement;
+    const focusSpy = vi.spyOn(target, 'focus');
+    const scrollSpy = vi.spyOn(target, 'scrollIntoView');
+
+    const resolved = fixture.componentInstance.vestForm.focusFirstInvalidControl(
+      {
+        focus: false,
+        invalidSelector: 'input[aria-invalid="true"]',
+      }
+    );
+
+    expect(resolved).toBe(target);
+    expect(scrollSpy).toHaveBeenCalledOnce();
+    expect(focusSpy).not.toHaveBeenCalled();
+  });
+
+  it('scrollToFirstInvalidControl does not move focus', async () => {
+    const { fixture } = await render(TestFirstInvalidHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const target = fixture.nativeElement.querySelector(
+      '#wrapper-input'
+    ) as HTMLElement;
+    const focusSpy = vi.spyOn(target, 'focus');
+
+    const resolved = fixture.componentInstance.vestForm.scrollToFirstInvalidControl();
+
+    expect(resolved).toBe(target);
+    expect(focusSpy).not.toHaveBeenCalled();
+  });
+
+  it('returns null when no invalid control is found', async () => {
+    const { fixture } = await render(TestNoInvalidHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const resolved = fixture.componentInstance.vestForm.focusFirstInvalidControl();
+    expect(resolved).toBeNull();
+  });
+});
+
 describe('FormDirective - Shape Validation', () => {
   @Component({
     selector: 'test-shape-validation-host',

@@ -108,6 +108,9 @@ export type {
 export { FormModelGroupDirective } from './lib/directives/form-model-group.directive';
 export { FormModelDirective } from './lib/directives/form-model.directive';
 export { FormDirective } from './lib/directives/form.directive';
-export type { NgxValidationConfig } from './lib/directives/form.directive';
+export type {
+  NgxFirstInvalidOptions,
+  NgxValidationConfig,
+} from './lib/directives/form.directive';
 export { ValidateRootFormDirective } from './lib/directives/validate-root-form.directive';
 export type { ValidationOptions } from './lib/directives/validation-options';
