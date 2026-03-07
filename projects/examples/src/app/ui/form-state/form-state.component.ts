@@ -335,7 +335,8 @@ export class FormStateCardComponent {
   }
 
   /**
-   * Filters a record to only include entries for validated fields.
+   * Filters a record to include entries for validated fields and their
+   * hierarchical relatives (parent paths and child paths via `startsWith`).
    * When `validatedFields` is not provided (null), returns the full record.
    * ROOT_FORM entries are shown only after at least one field has been validated.
    */
