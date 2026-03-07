@@ -680,7 +680,7 @@ export class FormDirective<T extends Record<string, unknown>> {
 
     if (openCollapsedParents) {
       let current: HTMLElement | null = firstInvalid;
-      while (current && current !== root) {
+      while (current !== root) {
         const parentElement: HTMLElement | null = current.parentElement;
         if (!parentElement) {
           break;
