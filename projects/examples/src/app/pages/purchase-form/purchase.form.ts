@@ -278,7 +278,23 @@ export class PurchaseForm {
   }
 
   protected onSubmit(): void {
-    this.saveRequested.emit(this.formValue());
+    const formDirective = this.vestForm();
+    if (!formDirective) {
+      return;
+    }
+
+    setTimeout(() => {
+      const firstInvalid = formDirective.focusFirstInvalidControl({
+        invalidSelector:
+          '[aria-invalid="true"]',
+      });
+
+      if (firstInvalid) {
+        return;
+      }
+
+      this.saveRequested.emit(this.formValue());
+    }, 0);
   }
 
   protected onReset(): void {

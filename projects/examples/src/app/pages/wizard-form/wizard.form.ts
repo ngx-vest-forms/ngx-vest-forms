@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import {
   NgxDeepRequired,
+  NgxFirstInvalidOptions,
   NgxValidationConfig,
   NgxVestSuite,
 } from 'ngx-vest-forms';
@@ -135,6 +136,19 @@ export class WizardFormBodyComponent {
         return this.step2Form()?.pending() ?? false;
       default:
         return this.step3Form()?.pending() ?? false;
+    }
+  }
+
+  focusCurrentStepFirstInvalidControl(
+    options?: NgxFirstInvalidOptions
+  ): HTMLElement | null {
+    switch (this.currentStep()) {
+      case 1:
+        return this.step1Form()?.focusFirstInvalidControl(options) ?? null;
+      case 2:
+        return this.step2Form()?.focusFirstInvalidControl(options) ?? null;
+      default:
+        return this.step3Form()?.focusFirstInvalidControl(options) ?? null;
     }
   }
 }

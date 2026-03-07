@@ -331,6 +331,25 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
       });
     });
 
+    test('should focus first invalid field with configured helper options on step submit', async ({
+      page,
+    }) => {
+      await test.step('Click Save & Continue on empty step 2 and focus first name', async () => {
+        const nextButton = page.getByRole('button', {
+          name: /save & continue/i,
+        });
+        const firstName = page.getByLabel(/first name/i);
+
+        await nextButton.click();
+
+        await expect(
+          page.getByRole('heading', { name: /step 2: profile information/i })
+        ).toBeVisible();
+        await expectFieldHasError(firstName, /required/i);
+        await expect(firstName).toBeFocused();
+      });
+    });
+
     test('should validate phone number format', async ({ page }) => {
       await test.step('Invalid phone format shows error', async () => {
         const phone = page.getByLabel(/phone number/i);

@@ -196,7 +196,14 @@ export class WizardFormPageComponent {
         steps.includes(1) ? steps : [...steps, 1]
       );
       this.nextStep();
+      return;
     }
+
+    // Defer to the next macrotask so ngSubmit touch/validation state and
+    // wrapper invalid classes are fully reflected in the DOM before focusing.
+    setTimeout(() => {
+      this.formBody()?.focusCurrentStepFirstInvalidControl();
+    }, 0);
   }
 
   protected onStep2Submit(): void {
@@ -205,7 +212,19 @@ export class WizardFormPageComponent {
         steps.includes(2) ? steps : [...steps, 2]
       );
       this.nextStep();
+      return;
     }
+
+    // Step 2 demonstrates custom first-invalid configuration: align to top
+    // for longer profile sections while still preventing extra focus scrolling.
+    setTimeout(() => {
+      this.formBody()?.focusCurrentStepFirstInvalidControl({
+        behavior: 'auto',
+        block: 'start',
+        inline: 'nearest',
+        preventScrollOnFocus: true,
+      });
+    }, 0);
   }
 
   protected onStep3Submit(): void {
@@ -213,7 +232,14 @@ export class WizardFormPageComponent {
       this.completedSteps.update((steps) =>
         steps.includes(3) ? steps : [...steps, 3]
       );
+      return;
     }
+
+    // Defer to the next macrotask so ngSubmit touch/validation state and
+    // wrapper invalid classes are fully reflected in the DOM before focusing.
+    setTimeout(() => {
+      this.formBody()?.focusCurrentStepFirstInvalidControl();
+    }, 0);
   }
 
   protected async submitAll(): Promise<void> {
@@ -231,6 +257,12 @@ export class WizardFormPageComponent {
       } else if (!this.step3Valid()) {
         this.goToStep(3);
       }
+
+      // Wait one macrotask for the step change and form validation state to
+      // settle before focusing the first invalid control in the active step.
+      setTimeout(() => {
+        this.formBody()?.focusCurrentStepFirstInvalidControl();
+      }, 0);
       return;
     }
 

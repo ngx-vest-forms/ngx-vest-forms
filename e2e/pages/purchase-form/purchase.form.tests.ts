@@ -931,6 +931,19 @@ test.describe('Purchase Form', () => {
       });
     });
 
+    test('should focus first invalid control after submit', async ({ page }) => {
+      await test.step('Submit empty form and move focus to first invalid field', async () => {
+        const submitButton = page.getByRole('button', { name: /submit/i });
+        const productSelect = page.getByLabel(/product/i);
+
+        await submitButton.click();
+        await waitForFormProcessing(page);
+
+        await expectFieldHasError(productSelect, /required/i);
+        await expect(productSelect).toBeFocused();
+      });
+    });
+
     test('should clear error when field is fixed after blur', async ({
       page,
     }) => {
