@@ -848,6 +848,53 @@ describe('FormDirective - first invalid helpers', () => {
     expect(resolved).toBeNull();
   });
 
+  it('returns null without throwing when invalidSelector is not a valid CSS selector', async () => {
+    const { fixture } = await render(TestFirstInvalidHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(() =>
+      fixture.componentInstance.vestForm().focusFirstInvalidControl({
+        invalidSelector: 'input:not(',
+      })
+    ).not.toThrow();
+
+    const resolved = fixture.componentInstance
+      .vestForm()
+      .focusFirstInvalidControl({
+        invalidSelector: 'input:not(',
+      });
+    expect(resolved).toBeNull();
+  });
+
+  it('returns first invalid element without throwing when focusSelector is not a valid CSS selector', async () => {
+    const { fixture } = await render(TestFirstInvalidHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(() =>
+      fixture.componentInstance.vestForm().focusFirstInvalidControl({
+        focusSelector: 'input:not(',
+      })
+    ).not.toThrow();
+
+    const wrapper = fixture.nativeElement.querySelector(
+      '[data-testid="wrapper-invalid"]'
+    ) as HTMLElement | null;
+    const safeWrapper = expectElement(
+      wrapper,
+      '[data-testid="wrapper-invalid"]'
+    );
+
+    const resolved = fixture.componentInstance
+      .vestForm()
+      .focusFirstInvalidControl({
+        focusSelector: 'input:not(',
+      });
+
+    expect(resolved).toBe(safeWrapper);
+  });
+
   it('prefers an invalid descendant over the first focusable control in an invalid group wrapper', async () => {
     const { fixture } = await render(TestGroupInvalidHost);
     fixture.detectChanges();

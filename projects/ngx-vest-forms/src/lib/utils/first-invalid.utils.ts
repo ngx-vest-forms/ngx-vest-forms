@@ -67,8 +67,12 @@ export function resolveFirstInvalidElement(
   root: HTMLFormElement,
   invalidSelector: string
 ): HTMLElement | null {
-  const firstInvalid = root.querySelector(invalidSelector);
-  return firstInvalid instanceof HTMLElement ? firstInvalid : null;
+  try {
+    const firstInvalid = root.querySelector(invalidSelector);
+    return firstInvalid instanceof HTMLElement ? firstInvalid : null;
+  } catch {
+    return null;
+  }
 }
 
 export function openCollapsedDetailsAncestors(
@@ -101,10 +105,14 @@ export function resolveFirstInvalidFocusTarget(
     return preferredInvalidTarget;
   }
 
-  if (firstInvalid.matches(focusSelector)) {
-    return firstInvalid;
-  }
+  try {
+    if (firstInvalid.matches(focusSelector)) {
+      return firstInvalid;
+    }
 
-  const fallbackTarget = firstInvalid.querySelector(focusSelector);
-  return fallbackTarget instanceof HTMLElement ? fallbackTarget : null;
+    const fallbackTarget = firstInvalid.querySelector(focusSelector);
+    return fallbackTarget instanceof HTMLElement ? fallbackTarget : null;
+  } catch {
+    return null;
+  }
 }

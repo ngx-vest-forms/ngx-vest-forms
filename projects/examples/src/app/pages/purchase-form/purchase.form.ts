@@ -282,11 +282,12 @@ export class PurchaseForm {
 
     afterNextRender(
       () => {
-        const firstInvalid = formDirective.focusFirstInvalidControl({
-          invalidSelector: '[aria-invalid="true"]',
-        });
+        formDirective.focusFirstInvalidControl();
 
-        if (firstInvalid) {
+        if (
+          !formDirective.ngForm.form.valid ||
+          formDirective.ngForm.form.pending
+        ) {
           return;
         }
 
