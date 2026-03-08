@@ -5,8 +5,8 @@ import {
   Component,
   computed,
   effect,
-  Injector,
   inject,
+  Injector,
   linkedSignal,
   output,
   signal,
@@ -22,7 +22,6 @@ import {
   NgxVestForms,
   setValueAtPath,
 } from 'ngx-vest-forms';
-import { AddressModel } from '../../models/address.model';
 import {
   initialPurchaseFormValue,
   PurchaseFormModel,
@@ -62,8 +61,6 @@ export class PurchaseForm {
 
   private readonly vestForm =
     viewChild<FormDirective<PurchaseFormModel>>('vestForm');
-
-  private readonly shippingAddress = signal<AddressModel>({});
 
   protected readonly formValue = signal<PurchaseFormModel>(
     initialPurchaseFormValue
@@ -158,7 +155,7 @@ export class PurchaseForm {
   );
 
   protected readonly currentShippingAddress = computed(
-    () => this.formValue().addresses?.shippingAddress || this.shippingAddress()
+    () => this.formValue().addresses?.shippingAddress
   );
 
   protected readonly validationConfig = computed(() => {
@@ -264,9 +261,6 @@ export class PurchaseForm {
 
   protected onFormValueChange(value: PurchaseFormModel): void {
     this.formValue.set(value);
-    if (value.addresses?.shippingAddress) {
-      this.shippingAddress.set(value.addresses.shippingAddress);
-    }
     this.formValueChange.emit(value);
   }
 
@@ -286,22 +280,24 @@ export class PurchaseForm {
       return;
     }
 
-    afterNextRender(() => {
-      const firstInvalid = formDirective.focusFirstInvalidControl({
-        invalidSelector: '[aria-invalid="true"]',
-      });
+    afterNextRender(
+      () => {
+        const firstInvalid = formDirective.focusFirstInvalidControl({
+          invalidSelector: '[aria-invalid="true"]',
+        });
 
-      if (firstInvalid) {
-        return;
-      }
+        if (firstInvalid) {
+          return;
+        }
 
-      this.saveRequested.emit(this.formValue());
-    }, { injector: this.injector });
+        this.saveRequested.emit(this.formValue());
+      },
+      { injector: this.injector }
+    );
   }
 
   protected onReset(): void {
     this.formValue.set(initialPurchaseFormValue);
-    this.shippingAddress.set({});
     // resetForm() handles everything: clears controls, fieldWarnings, triggers
     // re-validation, which causes formValueChange to emit.
     this.vestForm()?.resetForm(initialPurchaseFormValue);
@@ -315,9 +311,6 @@ export class PurchaseForm {
       return;
     }
     this.formValue.set(next);
-    if (next.addresses?.shippingAddress) {
-      this.shippingAddress.set(next.addresses.shippingAddress);
-    }
     this.formValueChange.emit(next);
   }
 }

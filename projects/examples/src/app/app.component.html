@@ -9,9 +9,17 @@
       @for (item of menuItems; track item.link) {
         <li>
           <a
+            routerLinkActive
+            #activeLink="routerLinkActive"
             [routerLink]="item.link"
+            [routerLinkActiveOptions]="{
+              paths: 'subset',
+              queryParams: 'ignored',
+              fragment: 'ignored',
+              matrixParams: 'ignored',
+            }"
             [class]="
-              item.isActive()
+              activeLink.isActive
                 ? 'font-semibold text-blue-600 dark:text-blue-500'
                 : 'text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-500'
             "
