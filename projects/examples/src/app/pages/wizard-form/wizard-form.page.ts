@@ -1,7 +1,10 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
+  Injector,
+  inject,
   signal,
   viewChild,
 } from '@angular/core';
@@ -45,6 +48,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WizardFormPageComponent {
+  private readonly injector = inject(Injector);
   protected readonly currentStep = signal(1);
   protected readonly completedSteps = signal<number[]>([]);
 
@@ -196,7 +200,12 @@ export class WizardFormPageComponent {
         steps.includes(1) ? steps : [...steps, 1]
       );
       this.nextStep();
+      return;
     }
+
+    afterNextRender(() => {
+      this.formBody()?.focusCurrentStepFirstInvalidControl();
+    }, { injector: this.injector });
   }
 
   protected onStep2Submit(): void {
@@ -205,7 +214,17 @@ export class WizardFormPageComponent {
         steps.includes(2) ? steps : [...steps, 2]
       );
       this.nextStep();
+      return;
     }
+
+    afterNextRender(() => {
+      this.formBody()?.focusCurrentStepFirstInvalidControl({
+        behavior: 'auto',
+        block: 'start',
+        inline: 'nearest',
+        preventScrollOnFocus: true,
+      });
+    }, { injector: this.injector });
   }
 
   protected onStep3Submit(): void {
@@ -213,7 +232,12 @@ export class WizardFormPageComponent {
       this.completedSteps.update((steps) =>
         steps.includes(3) ? steps : [...steps, 3]
       );
+      return;
     }
+
+    afterNextRender(() => {
+      this.formBody()?.focusCurrentStepFirstInvalidControl();
+    }, { injector: this.injector });
   }
 
   protected async submitAll(): Promise<void> {
@@ -231,6 +255,10 @@ export class WizardFormPageComponent {
       } else if (!this.step3Valid()) {
         this.goToStep(3);
       }
+
+      afterNextRender(() => {
+        this.formBody()?.focusCurrentStepFirstInvalidControl();
+      }, { injector: this.injector });
       return;
     }
 

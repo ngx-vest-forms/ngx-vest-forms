@@ -1,10 +1,12 @@
 import { httpResource } from '@angular/common/http';
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
   inject,
+  Injector,
   linkedSignal,
   output,
   signal,
@@ -20,7 +22,6 @@ import {
   NgxVestForms,
   setValueAtPath,
 } from 'ngx-vest-forms';
-import { AddressModel } from '../../models/address.model';
 import {
   initialPurchaseFormValue,
   PurchaseFormModel,
@@ -53,14 +54,13 @@ type LukeApiResponse = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PurchaseForm {
+  private readonly injector = inject(Injector);
   private readonly swapiService = inject(SwapiService);
   private readonly productService = inject(ProductService);
   readonly products = toSignal(this.productService.getAll());
 
   private readonly vestForm =
     viewChild<FormDirective<PurchaseFormModel>>('vestForm');
-
-  private readonly shippingAddress = signal<AddressModel>({});
 
   protected readonly formValue = signal<PurchaseFormModel>(
     initialPurchaseFormValue
@@ -155,7 +155,7 @@ export class PurchaseForm {
   );
 
   protected readonly currentShippingAddress = computed(
-    () => this.formValue().addresses?.shippingAddress || this.shippingAddress()
+    () => this.formValue().addresses?.shippingAddress
   );
 
   protected readonly validationConfig = computed(() => {
@@ -261,9 +261,6 @@ export class PurchaseForm {
 
   protected onFormValueChange(value: PurchaseFormModel): void {
     this.formValue.set(value);
-    if (value.addresses?.shippingAddress) {
-      this.shippingAddress.set(value.addresses.shippingAddress);
-    }
     this.formValueChange.emit(value);
   }
 
@@ -278,12 +275,30 @@ export class PurchaseForm {
   }
 
   protected onSubmit(): void {
-    this.saveRequested.emit(this.formValue());
+    const formDirective = this.vestForm();
+    if (!formDirective) {
+      return;
+    }
+
+    afterNextRender(
+      () => {
+        formDirective.focusFirstInvalidControl();
+
+        if (
+          !formDirective.ngForm.form.valid ||
+          formDirective.ngForm.form.pending
+        ) {
+          return;
+        }
+
+        this.saveRequested.emit(this.formValue());
+      },
+      { injector: this.injector }
+    );
   }
 
   protected onReset(): void {
     this.formValue.set(initialPurchaseFormValue);
-    this.shippingAddress.set({});
     // resetForm() handles everything: clears controls, fieldWarnings, triggers
     // re-validation, which causes formValueChange to emit.
     this.vestForm()?.resetForm(initialPurchaseFormValue);
@@ -297,9 +312,6 @@ export class PurchaseForm {
       return;
     }
     this.formValue.set(next);
-    if (next.addresses?.shippingAddress) {
-      this.shippingAddress.set(next.addresses.shippingAddress);
-    }
     this.formValueChange.emit(next);
   }
 }

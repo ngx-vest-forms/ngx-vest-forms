@@ -4,6 +4,7 @@ import {
   DestroyRef,
   Directive,
   effect,
+  ElementRef,
   inject,
   input,
   InputSignal,
@@ -40,6 +41,7 @@ import {
   of,
   race,
   merge as rxMerge,
+  scan,
   startWith,
   switchMap,
   take,
@@ -52,6 +54,15 @@ import { DeepRequired } from '../utils/deep-required';
 import { fastDeepEqual } from '../utils/equality';
 import type { ValidationConfigMap } from '../utils/field-path-types';
 import { stringifyFieldPath } from '../utils/field-path.utils';
+import {
+  DEFAULT_FOCUS_SELECTOR,
+  DEFAULT_INVALID_SELECTOR,
+  type NgxFirstInvalidOptions,
+  openCollapsedDetailsAncestors,
+  resolveFirstInvalidElement,
+  resolveFirstInvalidFocusTarget,
+  resolveFirstInvalidScrollBehavior,
+} from '../utils/first-invalid.utils';
 import { NgxFormState } from '../utils/form-state.utils';
 import {
   getAllFormErrors,
@@ -125,6 +136,7 @@ export type NgxValidationConfig<T = unknown> =
 })
 export class FormDirective<T extends Record<string, unknown>> {
   readonly ngForm = inject(NgForm, { self: true });
+  private readonly elementRef = inject(ElementRef<HTMLFormElement>);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly configDebounceTime = inject(
@@ -206,8 +218,9 @@ export class FormDirective<T extends Record<string, unknown>> {
    */
   readonly formState = computed<NgxFormState<T>>(
     () => {
-      // Tie to status signal to ensure recomputation on validation changes
-      this.#statusSignal();
+      // Tie to validation feedback instead of aggregate status so errors update
+      // even when the root form remains INVALID -> INVALID.
+      this.#validationFeedbackTick();
       return {
         valid: this.ngForm.form.valid,
         errors: getAllFormErrors(this.ngForm.form),
@@ -269,6 +282,42 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly validationConfig: InputSignal<NgxValidationConfig<T>> =
     input<NgxValidationConfig<T>>(null);
 
+  /**
+   * Emits whenever validation feedback may have changed, even if the aggregate
+   * root form status string stays the same.
+   */
+  private readonly validationFeedback$ = rxMerge(
+    this.ngForm.form.events.pipe(
+      filter((v) => v instanceof StatusChangeEvent),
+      map((v) => (v as StatusChangeEvent).status),
+      filter((v) => v !== 'PENDING')
+    ),
+    this.ngForm.ngSubmit.pipe(
+      switchMap(() => {
+        if (this.ngForm.form.status === 'PENDING') {
+          return this.ngForm.form.statusChanges.pipe(
+            filter((status) => status !== 'PENDING'),
+            take(1)
+          );
+        }
+
+        return of(this.ngForm.form.status);
+      })
+    )
+  );
+
+  /**
+   * Counter signal tied to validation feedback updates so `formState()` can
+   * recompute whenever the underlying error set changes.
+   */
+  readonly #validationFeedbackTick = toSignal(
+    this.validationFeedback$.pipe(
+      scan((count) => count + 1, 0),
+      startWith(0)
+    ),
+    { initialValue: 0 }
+  );
+
   private readonly pending$ = this.ngForm.form.events.pipe(
     filter((v) => v instanceof StatusChangeEvent),
     map((v) => (v as StatusChangeEvent).status),
@@ -317,28 +366,7 @@ export class FormDirective<T extends Record<string, unknown>> {
    * Cleanup is handled automatically by the directive when it's destroyed.
    */
   readonly errorsChange = outputFromObservable(
-    rxMerge(
-      // Status change events (non-PENDING) - emit immediately
-      this.ngForm.form.events.pipe(
-        filter((v) => v instanceof StatusChangeEvent),
-        map((v) => (v as StatusChangeEvent).status),
-        filter((v) => v !== 'PENDING')
-      ),
-      // Submit events - wait for async validation to complete before emitting
-      this.ngForm.ngSubmit.pipe(
-        switchMap(() => {
-          // If form is PENDING (async validation in progress), wait for it to complete
-          if (this.ngForm.form.status === 'PENDING') {
-            return this.ngForm.form.statusChanges.pipe(
-              filter((status) => status !== 'PENDING'),
-              take(1)
-            );
-          }
-          // Form not pending, emit immediately
-          return of(this.ngForm.form.status);
-        })
-      )
-    ).pipe(
+    this.validationFeedback$.pipe(
       map(() => getAllFormErrors(this.ngForm.form)),
       takeUntilDestroyed(this.destroyRef)
     )
@@ -607,6 +635,69 @@ export class FormDirective<T extends Record<string, unknown>> {
   markAllAsTouched(): void {
     this.ngForm.form.markAllAsTouched();
     this.#blurTick.update((v) => v + 1);
+  }
+
+  /**
+   * Finds the first invalid element in this form, scrolls it into view, and focuses it.
+   *
+   * Useful in custom submit flows where `markAllAsTouched()` is triggered externally
+   * and the app then wants to guide keyboard and assistive-technology users to the
+   * first failing field.
+   *
+   * @returns The focused element when a focusable target exists, otherwise the first
+   *          matched invalid element. Returns `null` when no invalid element is found.
+   */
+  focusFirstInvalidControl(
+    options: NgxFirstInvalidOptions = {}
+  ): HTMLElement | null {
+    const {
+      block = 'center',
+      inline = 'nearest',
+      focus = true,
+      preventScrollOnFocus = true,
+      openCollapsedParents = true,
+      invalidSelector = DEFAULT_INVALID_SELECTOR,
+      focusSelector = DEFAULT_FOCUS_SELECTOR,
+    } = options;
+    const behavior = resolveFirstInvalidScrollBehavior(options.behavior);
+
+    const root: HTMLFormElement = this.elementRef.nativeElement;
+    const firstInvalid = resolveFirstInvalidElement(root, invalidSelector);
+    if (!firstInvalid) {
+      return null;
+    }
+
+    if (openCollapsedParents) {
+      openCollapsedDetailsAncestors(root, firstInvalid);
+    }
+
+    const focusTarget = resolveFirstInvalidFocusTarget(
+      firstInvalid,
+      focusSelector
+    );
+
+    const scrollTarget = focusTarget ?? firstInvalid;
+    scrollTarget.scrollIntoView({ behavior, block, inline });
+
+    if (focus && focusTarget) {
+      focusTarget.focus({ preventScroll: preventScrollOnFocus });
+    }
+
+    return focusTarget ?? firstInvalid;
+  }
+
+  /**
+   * Finds and scrolls the first invalid element into view without moving focus.
+   *
+   * @returns The resolved element, or `null` when no invalid element is found.
+   */
+  scrollToFirstInvalidControl(
+    options: NgxFirstInvalidOptions = {}
+  ): HTMLElement | null {
+    return this.focusFirstInvalidControl({
+      ...options,
+      focus: false,
+    });
   }
 
   /**

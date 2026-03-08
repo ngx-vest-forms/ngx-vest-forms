@@ -8,6 +8,7 @@ import {
 import {
   FormDirective,
   NgxDeepRequired,
+  NgxFirstInvalidOptions,
   NgxValidationConfig,
   NgxVestForms,
   NgxVestSuite,
@@ -46,5 +47,11 @@ export class WizardStep1FormComponent {
 
   pending(): boolean {
     return this.form()?.ngForm.form.pending ?? false;
+  }
+
+  focusFirstInvalidControl(
+    options?: NgxFirstInvalidOptions
+  ): HTMLElement | null {
+    return this.form()?.focusFirstInvalidControl(options) ?? null;
   }
 }
