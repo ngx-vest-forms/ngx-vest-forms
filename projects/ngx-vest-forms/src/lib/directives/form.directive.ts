@@ -3,8 +3,8 @@ import {
   computed,
   DestroyRef,
   Directive,
-  ElementRef,
   effect,
+  ElementRef,
   inject,
   input,
   InputSignal,
@@ -53,14 +53,6 @@ import { DeepRequired } from '../utils/deep-required';
 import { fastDeepEqual } from '../utils/equality';
 import type { ValidationConfigMap } from '../utils/field-path-types';
 import { stringifyFieldPath } from '../utils/field-path.utils';
-import { NgxFormState } from '../utils/form-state.utils';
-import {
-  getAllFormErrors,
-  mergeValuesAndRawValues,
-  setValueAtPath,
-} from '../utils/form-utils';
-import { validateShape } from '../utils/shape-validation';
-import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
 import {
   DEFAULT_FOCUS_SELECTOR,
   DEFAULT_INVALID_SELECTOR,
@@ -70,6 +62,14 @@ import {
   resolveFirstInvalidFocusTarget,
   resolveFirstInvalidScrollBehavior,
 } from '../utils/first-invalid.utils';
+import { NgxFormState } from '../utils/form-state.utils';
+import {
+  getAllFormErrors,
+  mergeValuesAndRawValues,
+  setValueAtPath,
+} from '../utils/form-utils';
+import { validateShape } from '../utils/shape-validation';
+import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
 import { ValidationOptions } from './validation-options';
 
 /**
@@ -87,8 +87,6 @@ export type NgxValidationConfig<T = unknown> =
   | Record<string, string[]>
   | ValidationConfigMap<T>
   | null;
-
-export type { NgxFirstInvalidOptions };
 
 /**
  * Main form directive for ngx-vest-forms that bridges Angular template-driven forms with Vest.js validation.

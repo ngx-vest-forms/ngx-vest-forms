@@ -55,12 +55,12 @@ export type {
 export { validateShape } from './lib/utils/shape-validation';
 
 // ARIA association utilities
-export type { AriaAssociationMode } from './lib/utils/aria-association.utils';
 export {
-  parseAriaIdTokens,
   mergeAriaDescribedBy,
+  parseAriaIdTokens,
   resolveAssociationTargets,
 } from './lib/utils/aria-association.utils';
+export type { AriaAssociationMode } from './lib/utils/aria-association.utils';
 
 // Internal utilities - exported for advanced use cases but not part of the primary API
 // These are marked with @internal in their source files and may change without notice
@@ -108,9 +108,7 @@ export type {
 export { FormModelGroupDirective } from './lib/directives/form-model-group.directive';
 export { FormModelDirective } from './lib/directives/form-model.directive';
 export { FormDirective } from './lib/directives/form.directive';
-export type {
-  NgxFirstInvalidOptions,
-  NgxValidationConfig,
-} from './lib/directives/form.directive';
+export type { NgxValidationConfig } from './lib/directives/form.directive';
 export { ValidateRootFormDirective } from './lib/directives/validate-root-form.directive';
 export type { ValidationOptions } from './lib/directives/validation-options';
+export type { NgxFirstInvalidOptions } from './lib/utils/first-invalid.utils';
