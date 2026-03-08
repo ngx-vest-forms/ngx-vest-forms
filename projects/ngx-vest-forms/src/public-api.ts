@@ -111,4 +111,8 @@ export { FormDirective } from './lib/directives/form.directive';
 export type { NgxValidationConfig } from './lib/directives/form.directive';
 export { ValidateRootFormDirective } from './lib/directives/validate-root-form.directive';
 export type { ValidationOptions } from './lib/directives/validation-options';
+export {
+  DEFAULT_FOCUS_SELECTOR,
+  DEFAULT_INVALID_SELECTOR,
+} from './lib/utils/first-invalid.utils';
 export type { NgxFirstInvalidOptions } from './lib/utils/first-invalid.utils';

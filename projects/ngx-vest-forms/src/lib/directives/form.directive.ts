@@ -41,6 +41,7 @@ import {
   of,
   race,
   merge as rxMerge,
+  scan,
   startWith,
   switchMap,
   take,
@@ -56,7 +57,7 @@ import { stringifyFieldPath } from '../utils/field-path.utils';
 import {
   DEFAULT_FOCUS_SELECTOR,
   DEFAULT_INVALID_SELECTOR,
-  NgxFirstInvalidOptions,
+  type NgxFirstInvalidOptions,
   openCollapsedDetailsAncestors,
   resolveFirstInvalidElement,
   resolveFirstInvalidFocusTarget,
@@ -217,8 +218,9 @@ export class FormDirective<T extends Record<string, unknown>> {
    */
   readonly formState = computed<NgxFormState<T>>(
     () => {
-      // Tie to status signal to ensure recomputation on validation changes
-      this.#statusSignal();
+      // Tie to validation feedback instead of aggregate status so errors update
+      // even when the root form remains INVALID -> INVALID.
+      this.#validationFeedbackTick();
       return {
         valid: this.ngForm.form.valid,
         errors: getAllFormErrors(this.ngForm.form),
@@ -280,6 +282,42 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly validationConfig: InputSignal<NgxValidationConfig<T>> =
     input<NgxValidationConfig<T>>(null);
 
+  /**
+   * Emits whenever validation feedback may have changed, even if the aggregate
+   * root form status string stays the same.
+   */
+  private readonly validationFeedback$ = rxMerge(
+    this.ngForm.form.events.pipe(
+      filter((v) => v instanceof StatusChangeEvent),
+      map((v) => (v as StatusChangeEvent).status),
+      filter((v) => v !== 'PENDING')
+    ),
+    this.ngForm.ngSubmit.pipe(
+      switchMap(() => {
+        if (this.ngForm.form.status === 'PENDING') {
+          return this.ngForm.form.statusChanges.pipe(
+            filter((status) => status !== 'PENDING'),
+            take(1)
+          );
+        }
+
+        return of(this.ngForm.form.status);
+      })
+    )
+  );
+
+  /**
+   * Counter signal tied to validation feedback updates so `formState()` can
+   * recompute whenever the underlying error set changes.
+   */
+  readonly #validationFeedbackTick = toSignal(
+    this.validationFeedback$.pipe(
+      scan((count) => count + 1, 0),
+      startWith(0)
+    ),
+    { initialValue: 0 }
+  );
+
   private readonly pending$ = this.ngForm.form.events.pipe(
     filter((v) => v instanceof StatusChangeEvent),
     map((v) => (v as StatusChangeEvent).status),
@@ -328,28 +366,7 @@ export class FormDirective<T extends Record<string, unknown>> {
    * Cleanup is handled automatically by the directive when it's destroyed.
    */
   readonly errorsChange = outputFromObservable(
-    rxMerge(
-      // Status change events (non-PENDING) - emit immediately
-      this.ngForm.form.events.pipe(
-        filter((v) => v instanceof StatusChangeEvent),
-        map((v) => (v as StatusChangeEvent).status),
-        filter((v) => v !== 'PENDING')
-      ),
-      // Submit events - wait for async validation to complete before emitting
-      this.ngForm.ngSubmit.pipe(
-        switchMap(() => {
-          // If form is PENDING (async validation in progress), wait for it to complete
-          if (this.ngForm.form.status === 'PENDING') {
-            return this.ngForm.form.statusChanges.pipe(
-              filter((status) => status !== 'PENDING'),
-              take(1)
-            );
-          }
-          // Form not pending, emit immediately
-          return of(this.ngForm.form.status);
-        })
-      )
-    ).pipe(
+    this.validationFeedback$.pipe(
       map(() => getAllFormErrors(this.ngForm.form)),
       takeUntilDestroyed(this.destroyRef)
     )

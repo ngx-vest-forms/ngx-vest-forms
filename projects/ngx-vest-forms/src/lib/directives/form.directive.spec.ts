@@ -20,8 +20,14 @@ function expectElement<T extends Element>(
   value: T | null,
   selector: string
 ): T {
-  expect(value).toBeTruthy();
-  return value as T;
+  expect(
+    value,
+    `Expected element matching "${selector}" to be present`
+  ).toBeTruthy();
+  if (!value) {
+    throw new Error(`Expected element matching "${selector}" to be present`);
+  }
+  return value;
 }
 
 @Component({
@@ -113,7 +119,8 @@ describe('FormDirective - Async Validator', () => {
     formValue = signal({ username: '' });
     mockSuite = vi.fn();
     suite = signal(this.mockSuite);
-    readonly vestForm = viewChild.required<FormDirective<any>>('vest');
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
   }
 
   it('should not run multiple validations in parallel for the same field', async () => {
@@ -149,7 +156,8 @@ describe('FormDirective - Async Validator', () => {
   class TestDebounceCacheHost {
     formValue = signal({ username: '', email: '' });
     suite = signal(vi.fn());
-    readonly vestForm = viewChild.required<FormDirective<any>>('vest');
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
   }
 
   @Component({
@@ -176,7 +184,8 @@ describe('FormDirective - Async Validator', () => {
         throw new Error('Vest suite execution error');
       })
     );
-    readonly vestForm = viewChild.required<FormDirective<any>>('vest');
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
   }
 
   it('should return vestInternalError if suite throws', async () => {
@@ -202,7 +211,8 @@ describe('FormDirective - Async Validator', () => {
       imports: [NgxVestForms],
     })
     class TestNullSuiteHost {
-      readonly vestForm = viewChild.required<FormDirective<any>>('vest');
+      readonly vestForm =
+        viewChild.required<FormDirective<Record<string, unknown>>>('vest');
     }
     const { fixture } = await render(TestNullSuiteHost);
     const instance = fixture.componentInstance;
@@ -233,7 +243,8 @@ describe('FormDirective - Async Validator', () => {
           // Suite runs but produces no errors (valid)
         })
       );
-      readonly vestForm = viewChild.required<FormDirective<any>>('vest');
+      readonly vestForm =
+        viewChild.required<FormDirective<Record<string, unknown>>>('vest');
     }
     const { fixture } = await render(TestUndefinedValueHost);
     const instance = fixture.componentInstance;
@@ -279,7 +290,8 @@ describe('FormDirective - Async Validator', () => {
           });
         })
       );
-      readonly vestForm = viewChild.required<FormDirective<any>>('vest');
+      readonly vestForm =
+        viewChild.required<FormDirective<Record<string, unknown>>>('vest');
     }
     const { fixture } = await render(TestWarningsOnlyHost);
     const instance = fixture.componentInstance;
@@ -346,7 +358,8 @@ describe('FormDirective - Async Validator', () => {
           });
         })
       );
-      readonly vestForm = viewChild.required<FormDirective<any>>('vest');
+      readonly vestForm =
+        viewChild.required<FormDirective<Record<string, unknown>>>('vest');
     }
     const { fixture } = await render(TestErrorsAndWarningsHost);
     const instance = fixture.componentInstance;
@@ -371,10 +384,12 @@ describe('FormDirective - Async Validator', () => {
     // and warnings should be included for display purposes
     expect(result).not.toBeNull();
     expect(result).toHaveProperty('errors');
-    expect(result?.errors).toContain('Password must be at least 8 characters');
+    expect(result?.['errors']).toContain(
+      'Password must be at least 8 characters'
+    );
     // Warnings should also be present for the control-wrapper to display
     expect(result).toHaveProperty('warnings');
-    expect(result?.warnings).toContain(
+    expect(result?.['warnings']).toContain(
       'Password should be longer than 12 characters'
     );
   });
@@ -394,8 +409,10 @@ describe('FormDirective - Composability & Host Bindings', () => {
       imports: [NgxVestForms],
     })
     class TestMultiDirectiveHost {
-      readonly vestForm1 = viewChild.required<FormDirective<any>>('vest1');
-      readonly vestForm2 = viewChild.required<FormDirective<any>>('vest2');
+      readonly vestForm1 =
+        viewChild.required<FormDirective<Record<string, unknown>>>('vest1');
+      readonly vestForm2 =
+        viewChild.required<FormDirective<Record<string, unknown>>>('vest2');
     }
     const { fixture } = await render(TestMultiDirectiveHost);
     const instance = fixture.componentInstance;
@@ -420,7 +437,8 @@ describe('FormDirective - ValidationConfig', () => {
     validationConfig = signal<{ [key: string]: string[] }>({
       username: ['email'],
     });
-    readonly vestForm = viewChild.required<FormDirective<any>>('vest');
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
   }
 
   it('should debounce dependent field validation', async () => {
@@ -448,7 +466,8 @@ describe('FormDirective - ValidationConfig', () => {
         username: ['email'],
         email: ['username'],
       });
-      readonly vestForm = viewChild.required<FormDirective<any>>('vest');
+      readonly vestForm =
+        viewChild.required<FormDirective<Record<string, unknown>>>('vest');
     }
     const { fixture } = await render(TestValidationConfigLoop);
     const instance = fixture.componentInstance;
@@ -547,7 +566,8 @@ describe('FormDirective - Signals/Outputs', () => {
       imports: [NgxVestForms],
     })
     class TestSignalsOutputsHost {
-      readonly vestForm = viewChild.required<FormDirective<any>>('vest');
+      readonly vestForm =
+        viewChild.required<FormDirective<Record<string, unknown>>>('vest');
     }
     const { fixture } = await render(TestSignalsOutputsHost);
     const instance = fixture.componentInstance;
@@ -566,7 +586,8 @@ describe('FormDirective - triggerFormValidation', () => {
     imports: [NgxVestForms],
   })
   class TestTriggerValidationHost {
-    readonly vestForm = viewChild.required<FormDirective<any>>('vest');
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
   }
 
   it('should force validation of all fields when called', async () => {
@@ -620,7 +641,8 @@ describe('FormDirective - first invalid helpers', () => {
     imports: [NgxVestForms],
   })
   class TestFirstInvalidHost {
-    readonly vestForm = viewChild.required<FormDirective<any>>('vest');
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
   }
 
   @Component({
@@ -639,7 +661,8 @@ describe('FormDirective - first invalid helpers', () => {
     imports: [NgxVestForms],
   })
   class TestDetailsFirstInvalidHost {
-    readonly vestForm = viewChild.required<FormDirective<any>>('vest');
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
   }
 
   @Component({
@@ -652,7 +675,8 @@ describe('FormDirective - first invalid helpers', () => {
     imports: [NgxVestForms],
   })
   class TestNoInvalidHost {
-    readonly vestForm = viewChild.required<FormDirective<any>>('vest');
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
   }
 
   @Component({
@@ -672,7 +696,8 @@ describe('FormDirective - first invalid helpers', () => {
     imports: [NgxVestForms],
   })
   class TestGroupInvalidHost {
-    readonly vestForm = viewChild.required<FormDirective<any>>('vest');
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
   }
 
   it('focuses and scrolls the first invalid descendant in an invalid wrapper', async () => {
@@ -868,7 +893,8 @@ describe('FormDirective - Shape Validation', () => {
   class TestShapeValidationHost {
     formShape = signal<{ username: string }>({ username: '' });
     formValue = signal<any>({ username: 'initial' });
-    readonly vestForm = viewChild.required<FormDirective<any>>('vest');
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
   }
 
   let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
@@ -926,7 +952,8 @@ describe('FormDirective - FormState Memoization', () => {
         only(field);
       })
     );
-    readonly vestForm = viewChild.required<FormDirective<any>>('vest');
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
   }
 
   it('should memoize formState when status changes but values/errors/valid remain the same', async () => {
@@ -993,5 +1020,59 @@ describe('FormDirective - FormState Memoization', () => {
     // Should still be the same reference, meaning getAllFormErrors was not called
     // for each status change - the memoization prevented unnecessary recalculations
     expect(state2).toBe(state1);
+  });
+
+  it('should update formState errors when the error set changes but status stays invalid', async () => {
+    @Component({
+      selector: 'test-form-state-errors-host',
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          #vest="ngxVestForm"
+        >
+          <input name="email" [ngModel]="formValue().email" />
+          <input name="username" [ngModel]="formValue().username" />
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestFormStateErrorsHost {
+      formValue = signal<{ email?: string; username?: string }>({});
+      readonly vestForm =
+        viewChild.required<FormDirective<Record<string, unknown>>>('vest');
+    }
+
+    const { fixture } = await render(TestFormStateErrorsHost);
+    const instance = fixture.componentInstance;
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const emailControl = instance.vestForm().ngForm.form.get('email');
+    const usernameControl = instance.vestForm().ngForm.form.get('username');
+
+    expect(emailControl).toBeTruthy();
+    expect(usernameControl).toBeTruthy();
+
+    emailControl?.setErrors({ errors: ['Email is required'] });
+    usernameControl?.setErrors({ errors: ['Username is required'] });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const initialErrors = instance.vestForm().formState().errors;
+    expect(initialErrors['email']).toContain('Email is required');
+    expect(initialErrors['username']).toContain('Username is required');
+    expect(instance.vestForm().formState().valid).toBe(false);
+
+    emailControl?.setErrors(null);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const updatedErrors = instance.vestForm().formState().errors;
+    expect(updatedErrors['email']).toBeUndefined();
+    expect(updatedErrors['username']).toContain('Username is required');
+    expect(instance.vestForm().formState().valid).toBe(false);
   });
 });
