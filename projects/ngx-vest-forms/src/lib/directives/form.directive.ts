@@ -68,6 +68,7 @@ import {
   openCollapsedDetailsAncestors,
   resolveFirstInvalidElement,
   resolveFirstInvalidFocusTarget,
+  resolveFirstInvalidScrollBehavior,
 } from '../utils/first-invalid.utils';
 import { ValidationOptions } from './validation-options';
 
@@ -635,7 +636,6 @@ export class FormDirective<T extends Record<string, unknown>> {
     options: NgxFirstInvalidOptions = {}
   ): HTMLElement | null {
     const {
-      behavior = 'smooth',
       block = 'center',
       inline = 'nearest',
       focus = true,
@@ -644,6 +644,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       invalidSelector = DEFAULT_INVALID_SELECTOR,
       focusSelector = DEFAULT_FOCUS_SELECTOR,
     } = options;
+    const behavior = resolveFirstInvalidScrollBehavior(options.behavior);
 
     const root: HTMLFormElement = this.elementRef.nativeElement;
     const firstInvalid = resolveFirstInvalidElement(root, invalidSelector);

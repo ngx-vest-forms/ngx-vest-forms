@@ -585,6 +585,22 @@ describe('FormDirective - triggerFormValidation', () => {
 });
 
 describe('FormDirective - first invalid helpers', () => {
+  function mockMatchMedia(matches: boolean): ReturnType<typeof vi.spyOn> {
+    return vi.spyOn(window, 'matchMedia').mockImplementation(
+      (query: string): MediaQueryList =>
+        ({
+          matches,
+          media: query,
+          onchange: null,
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        }) as MediaQueryList
+    );
+  }
+
   @Component({
     selector: 'test-first-invalid-host',
     template: `
@@ -675,6 +691,52 @@ describe('FormDirective - first invalid helpers', () => {
       inline: 'nearest',
     });
     expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true });
+  });
+
+  it('uses auto scrolling when reduced-motion is preferred and behavior is not provided', async () => {
+    const matchMediaSpy = mockMatchMedia(true);
+    const { fixture } = await render(TestFirstInvalidHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const target = fixture.nativeElement.querySelector(
+      '#wrapper-input'
+    ) as HTMLElement | null;
+    const safeTarget = expectElement(target, '#wrapper-input');
+    const scrollSpy = vi.spyOn(safeTarget, 'scrollIntoView');
+
+    fixture.componentInstance.vestForm().focusFirstInvalidControl();
+
+    expect(scrollSpy).toHaveBeenCalledWith({
+      behavior: 'auto',
+      block: 'center',
+      inline: 'nearest',
+    });
+    matchMediaSpy.mockRestore();
+  });
+
+  it('keeps explicit behavior even when reduced-motion is preferred', async () => {
+    const matchMediaSpy = mockMatchMedia(true);
+    const { fixture } = await render(TestFirstInvalidHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const target = fixture.nativeElement.querySelector(
+      '#wrapper-input'
+    ) as HTMLElement | null;
+    const safeTarget = expectElement(target, '#wrapper-input');
+    const scrollSpy = vi.spyOn(safeTarget, 'scrollIntoView');
+
+    fixture.componentInstance.vestForm().focusFirstInvalidControl({
+      behavior: 'smooth',
+    });
+
+    expect(scrollSpy).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'nearest',
+    });
+    matchMediaSpy.mockRestore();
   });
 
   it('opens ancestor details before scrolling and focusing', async () => {

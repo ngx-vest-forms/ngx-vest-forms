@@ -1,5 +1,5 @@
 export type NgxFirstInvalidOptions = {
-  /** Scroll animation behavior (default: `'smooth'`). */
+  /** Scroll animation behavior (default: `'smooth'`, or `'auto'` when reduced motion is preferred). */
   behavior?: ScrollBehavior;
   /** Vertical alignment when scrolling (default: `'center'`). */
   block?: ScrollLogicalPosition;
@@ -44,6 +44,24 @@ const INVALID_FOCUS_PREFERRED_SELECTOR = [
   'select[aria-invalid="true"]:not([disabled])',
   '[aria-invalid="true"][tabindex]:not([tabindex="-1"]):not([disabled])',
 ].join(', ');
+
+const REDUCED_MOTION_MEDIA_QUERY = '(prefers-reduced-motion: reduce)';
+
+function prefersReducedMotion(): boolean {
+  return (
+    typeof globalThis.matchMedia === 'function' &&
+    globalThis.matchMedia(REDUCED_MOTION_MEDIA_QUERY).matches
+  );
+}
+
+export function resolveFirstInvalidScrollBehavior(
+  behavior?: ScrollBehavior
+): ScrollBehavior {
+  if (behavior !== undefined) {
+    return behavior;
+  }
+  return prefersReducedMotion() ? 'auto' : 'smooth';
+}
 
 export function resolveFirstInvalidElement(
   root: HTMLFormElement,
