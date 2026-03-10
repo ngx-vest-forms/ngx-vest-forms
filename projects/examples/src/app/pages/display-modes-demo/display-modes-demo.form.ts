@@ -5,7 +5,6 @@ import {
   computed,
   input,
   output,
-  signal,
   viewChild,
 } from '@angular/core';
 import {
@@ -34,18 +33,11 @@ export class DisplayModesDemoFormBody {
   private readonly vestForm =
     viewChild<FormDirective<DisplayModesDemoModel>>('vestForm');
 
-  /**
-   * Errors updated via the directive's (errorsChange) event binding.
-   * The event fires on *every* StatusChangeEvent, making it more reactive
-   * than formState.errors when the form's overall status stays the same.
-   */
-  protected readonly currentErrors = signal<Record<string, string[]>>({});
-
   /** Exposes the directive's packaged form state with up-to-date errors. */
   readonly formState = computed(() => {
     const state = this.vestForm()?.formState();
     if (!state) return createEmptyFormState<DisplayModesDemoModel>();
-    return { ...state, errors: this.currentErrors() };
+    return state;
   });
 
   /** Exposes field warnings as a plain Record for presentational components. */

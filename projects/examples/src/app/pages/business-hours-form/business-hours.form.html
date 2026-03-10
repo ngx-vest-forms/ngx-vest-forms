@@ -12,7 +12,6 @@
     [suite]="suite()"
     [validationConfig]="validationConfig()"
     (formValueChange)="formValueChange.emit($event)"
-    (errorsChange)="currentErrors.set($event)"
   >
     @if (rootFormError()) {
     <ngx-alert-panel tone="error" title="Validation Error">
