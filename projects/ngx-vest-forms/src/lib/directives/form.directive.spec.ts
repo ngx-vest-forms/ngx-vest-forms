@@ -1,7 +1,6 @@
 /* eslint-disable @angular-eslint/component-selector */
 import { Component, signal, viewChild, ViewChild } from '@angular/core';
-import { render } from '@testing-library/angular';
-import { screen, waitFor } from '@testing-library/angular';
+import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { isObservable, Observable } from 'rxjs';
 import { create, enforce, test as vestTest, warn } from 'vest';
