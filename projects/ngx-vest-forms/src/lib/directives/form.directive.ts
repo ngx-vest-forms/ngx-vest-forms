@@ -137,7 +137,6 @@ export type NgxValidationConfig<T = unknown> =
 })
 export class FormDirective<T extends Record<string, unknown>> {
   readonly ngForm = inject(NgForm, { self: true });
-  private readonly elementRef = inject(ElementRef<HTMLFormElement>);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly elementRef = inject<ElementRef<HTMLFormElement>>(ElementRef);

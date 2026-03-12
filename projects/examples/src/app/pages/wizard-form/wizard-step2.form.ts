@@ -50,6 +50,10 @@ export class WizardStep2FormComponent {
     return this.form()?.ngForm.form.pending ?? false;
   }
 
+  isValid(): boolean {
+    return this.form()?.ngForm.form.valid ?? false;
+  }
+
   focusFirstInvalidControl(
     options?: NgxFirstInvalidOptions
   ): HTMLElement | null {

@@ -3,8 +3,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  Injector,
   inject,
+  Injector,
   signal,
   viewChild,
 } from '@angular/core';
@@ -195,7 +195,10 @@ export class WizardFormPageComponent {
   }
 
   protected onStep1Submit(): void {
-    if (this.step1Valid()) {
+    const step1IsValid =
+      this.formBody()?.currentStepIsValid() ?? this.step1Valid();
+
+    if (step1IsValid) {
       this.completedSteps.update((steps) =>
         steps.includes(1) ? steps : [...steps, 1]
       );
@@ -203,13 +206,19 @@ export class WizardFormPageComponent {
       return;
     }
 
-    afterNextRender(() => {
-      this.formBody()?.focusCurrentStepFirstInvalidControl();
-    }, { injector: this.injector });
+    afterNextRender(
+      () => {
+        this.formBody()?.focusCurrentStepFirstInvalidControl();
+      },
+      { injector: this.injector }
+    );
   }
 
   protected onStep2Submit(): void {
-    if (this.step2Valid()) {
+    const step2IsValid =
+      this.formBody()?.currentStepIsValid() ?? this.step2Valid();
+
+    if (step2IsValid) {
       this.completedSteps.update((steps) =>
         steps.includes(2) ? steps : [...steps, 2]
       );
@@ -217,48 +226,78 @@ export class WizardFormPageComponent {
       return;
     }
 
-    afterNextRender(() => {
-      this.formBody()?.focusCurrentStepFirstInvalidControl({
-        behavior: 'auto',
-        block: 'start',
-        inline: 'nearest',
-        preventScrollOnFocus: true,
-      });
-    }, { injector: this.injector });
+    afterNextRender(
+      () => {
+        this.formBody()?.focusCurrentStepFirstInvalidControl({
+          behavior: 'auto',
+          block: 'start',
+          inline: 'nearest',
+          preventScrollOnFocus: true,
+        });
+      },
+      { injector: this.injector }
+    );
   }
 
   protected onStep3Submit(): void {
-    if (this.step3Valid()) {
+    const step3IsValid =
+      this.formBody()?.currentStepIsValid() ?? this.step3Valid();
+
+    if (step3IsValid) {
       this.completedSteps.update((steps) =>
         steps.includes(3) ? steps : [...steps, 3]
       );
       return;
     }
 
-    afterNextRender(() => {
-      this.formBody()?.focusCurrentStepFirstInvalidControl();
-    }, { injector: this.injector });
+    afterNextRender(
+      () => {
+        this.formBody()?.focusCurrentStepFirstInvalidControl();
+      },
+      { injector: this.injector }
+    );
   }
 
   protected async submitAll(): Promise<void> {
     this.formBody()?.markAllAsTouched();
 
-    if (!this.allFormsValid()) {
+    await this.waitForNextRender();
+
+    const currentStep = this.currentStep();
+    const currentStepIsValid =
+      this.formBody()?.currentStepIsValid() ??
+      (currentStep === 1
+        ? this.step1Valid()
+        : currentStep === 2
+          ? this.step2Valid()
+          : this.step3Valid());
+
+    const step1IsValid =
+      currentStep === 1 ? currentStepIsValid : this.step1Valid();
+    const step2IsValid =
+      currentStep === 2 ? currentStepIsValid : this.step2Valid();
+    const step3IsValid =
+      currentStep === 3 ? currentStepIsValid : this.step3Valid();
+
+    if (!(step1IsValid && step2IsValid && step3IsValid)) {
       this.submitError.set(
         'Please complete all steps before submitting. Check each step for errors.'
       );
 
-      if (!this.step1Valid()) {
+      if (!step1IsValid) {
         this.goToStep(1);
-      } else if (!this.step2Valid()) {
+      } else if (!step2IsValid) {
         this.goToStep(2);
-      } else if (!this.step3Valid()) {
+      } else if (!step3IsValid) {
         this.goToStep(3);
       }
 
-      afterNextRender(() => {
-        this.formBody()?.focusCurrentStepFirstInvalidControl();
-      }, { injector: this.injector });
+      afterNextRender(
+        () => {
+          this.formBody()?.focusCurrentStepFirstInvalidControl();
+        },
+        { injector: this.injector }
+      );
       return;
     }
 
@@ -281,6 +320,17 @@ export class WizardFormPageComponent {
     } finally {
       this.isSubmitting.set(false);
     }
+  }
+
+  private waitForNextRender(): Promise<void> {
+    return new Promise((resolve) => {
+      afterNextRender(
+        () => {
+          resolve();
+        },
+        { injector: this.injector }
+      );
+    });
   }
 
   private async simulateApiSubmit(_data: unknown): Promise<void> {

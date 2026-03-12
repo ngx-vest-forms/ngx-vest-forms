@@ -139,6 +139,17 @@ export class WizardFormBodyComponent {
     }
   }
 
+  currentStepIsValid(): boolean {
+    switch (this.currentStep()) {
+      case 1:
+        return this.step1Form()?.isValid() ?? false;
+      case 2:
+        return this.step2Form()?.isValid() ?? false;
+      default:
+        return this.step3Form()?.isValid() ?? false;
+    }
+  }
+
   focusCurrentStepFirstInvalidControl(
     options?: NgxFirstInvalidOptions
   ): HTMLElement | null {
