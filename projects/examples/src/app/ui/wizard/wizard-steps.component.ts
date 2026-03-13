@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
 
 export type WizardStepStatus = 'completed' | 'current' | 'upcoming';
 
@@ -53,14 +58,22 @@ export type WizardStepConfig = {
           }
         </div>
 
-        <ol role="list" class="grid grid-cols-3 items-start">
+        <ol
+          class="grid items-start"
+          [style.grid-template-columns]="gridTemplateColumns()"
+        >
           @for (
             step of steps();
             track step.id;
             let i = $index;
             let last = $last
           ) {
-            <li class="relative min-w-0">
+            <li
+              class="relative min-w-0"
+              [attr.aria-current]="
+                getStepStatus(step.id) === 'current' ? 'step' : null
+              "
+            >
               <div
                 class="group relative flex flex-col"
                 [class.items-start]="i === 0"
@@ -97,11 +110,7 @@ export type WizardStepConfig = {
                   [class.dark:text-gray-400]="
                     getStepStatus(step.id) === 'upcoming'
                   "
-                  [attr.aria-current]="
-                    getStepStatus(step.id) === 'current' ? 'step' : null
-                  "
-                  [attr.aria-label]="getStepAriaLabel(step)"
-                  role="img"
+                  aria-hidden="true"
                 >
                   @if (getStepStatus(step.id) === 'completed') {
                     <svg
@@ -139,10 +148,22 @@ export type WizardStepConfig = {
                   [class.dark:text-gray-400]="
                     getStepStatus(step.id) === 'upcoming'
                   "
-                  aria-hidden="true"
                 >
                   {{ step.title }}
                 </span>
+
+                @if (step.description) {
+                  <span
+                    class="mt-1 text-[11px] text-gray-500 dark:text-gray-400"
+                    [class.text-left]="i === 0"
+                    [class.text-center]="i > 0 && !last"
+                    [class.text-right]="last"
+                  >
+                    {{ step.description }}
+                  </span>
+                }
+
+                <span class="sr-only">{{ getStepAriaLabel(step) }}</span>
               </div>
             </li>
           }
@@ -155,12 +176,16 @@ export type WizardStepConfig = {
       display: block;
     }
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WizardStepsComponent {
   readonly steps = input.required<WizardStepConfig[]>();
   readonly currentStep = input.required<number>();
   readonly completedSteps = input<number[]>([]);
+
+  protected readonly gridTemplateColumns = computed(
+    () => `repeat(${Math.max(this.steps().length, 1)}, minmax(0, 1fr))`
+  );
 
   protected getStepStatus(stepId: number): WizardStepStatus {
     if (this.completedSteps().includes(stepId)) {
@@ -184,6 +209,6 @@ export class WizardStepsComponent {
         : status === 'current'
           ? 'Current step'
           : 'Not started';
-    return `Step ${step.id}: ${step.title} - ${statusText}`;
+    return `Step ${step.id} of ${this.steps().length}: ${step.title} - ${statusText}`;
   }
 }

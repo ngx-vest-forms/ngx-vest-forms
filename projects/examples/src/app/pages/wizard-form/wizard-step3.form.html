@@ -13,10 +13,13 @@
     @for (section of reviewSections(); track section.id) {
     <section
       class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
-      [attr.aria-label]="section.title"
+      [attr.aria-labelledby]="'review-section-title-' + section.id"
     >
       <div class="flex items-center justify-between">
-        <h3 class="text-sm font-medium text-gray-900 dark:text-white">
+        <h3
+          class="text-sm font-medium text-gray-900 dark:text-white"
+          [id]="'review-section-title-' + section.id"
+        >
           {{ section.title }}
         </h3>
         <button
@@ -46,6 +49,7 @@
           type="checkbox"
           name="acceptTerms"
           class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          aria-required="true"
           [ngModel]="data().acceptTerms"
         />
         <label
@@ -64,6 +68,7 @@
           type="checkbox"
           name="acceptPrivacy"
           class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          aria-required="true"
           [ngModel]="data().acceptPrivacy"
         />
         <label

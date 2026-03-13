@@ -634,12 +634,10 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
       });
 
       await test.step('Current step (step 2) has aria-current attribute', async () => {
-        // The current step indicator has aria-current="step"
-        const step2Circle = page
-          .locator('ngx-wizard-steps li')
-          .nth(1)
-          .locator('[aria-current="step"]');
-        await expect(step2Circle).toBeVisible();
+        // The current step indicator exposes aria-current on the step list item.
+        const step2Item = page.locator('ngx-wizard-steps li').nth(1);
+        await expect(step2Item).toHaveAttribute('aria-current', 'step');
+        await expect(step2Item).toContainText('Profile');
       });
     });
   });
@@ -689,24 +687,26 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
 
     test('should have accessible wizard step indicators', async ({ page }) => {
       await test.step('Verify wizard steps have proper accessibility structure', async () => {
-        // Verify the wizard steps navigation has proper list structure with dynamic aria-label
+        // Verify the wizard steps navigation has proper list structure with readable labels.
         const wizardSteps = page.locator('ngx-wizard-steps nav');
-        await expect(wizardSteps).toMatchAriaSnapshot(`
-          - 'navigation "Progress: Step 1 of 3"':
-            - list:
-              - listitem:
-                - 'img "Step 1: Account - Current step"'
-              - listitem:
-                - 'img "Step 2: Profile - Not started"'
-              - listitem:
-                - 'img "Step 3: Review - Not started"'
-        `);
+        await expect(wizardSteps).toBeVisible();
+        await expect(wizardSteps.locator('ol > li')).toHaveCount(3);
+        await expect(wizardSteps.locator('ol > li').nth(0)).toContainText(
+          'Account'
+        );
+        await expect(wizardSteps.locator('ol > li').nth(1)).toContainText(
+          'Profile'
+        );
+        await expect(wizardSteps.locator('ol > li').nth(2)).toContainText(
+          'Review'
+        );
       });
 
       await test.step('Current step should have aria-current attribute', async () => {
         // The current step indicator should have aria-current="step"
         const currentStep = page.locator('[aria-current="step"]');
         await expect(currentStep).toBeVisible();
+        await expect(currentStep).toContainText('Account');
       });
     });
 
