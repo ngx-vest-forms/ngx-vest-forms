@@ -570,12 +570,25 @@ function itemValidations(model: FormModel, itemIndex: number) {
 **Safe state management with utilities:**
 
 ```typescript
-import { NgxFormState, createEmptyFormState } from 'ngx-vest-forms';
+import {
+  createEmptyFormState,
+  createFormFeedbackSignals,
+  type FormDirective,
+  type NgxFormState,
+} from 'ngx-vest-forms';
 
-// Safe fallback for parent components
+// Minimal fallback when you only need packaged form state
 protected readonly formState = computed(
   () => this.childForm()?.vestForm?.formState() ?? createEmptyFormState()
 );
+
+// Preferred boilerplate reducer when a presenter needs multiple feedback signals
+protected readonly vestForm = viewChild(FormDirective<MyFormModel>);
+
+protected readonly feedback = createFormFeedbackSignals(this.vestForm);
+protected readonly warnings = this.feedback.warnings;
+protected readonly validatedFields = this.feedback.validatedFields;
+protected readonly pending = this.feedback.pending;
 
 // NgxFormState<T> structure:
 // {
@@ -584,6 +597,11 @@ protected readonly formState = computed(
 //   value: T | null;
 // }
 ```
+
+Use `createEmptyFormState()` when you only need a safe fallback value. Use
+`createFormFeedbackSignals()` when your component would otherwise repeat manual
+`computed()` wrappers for packaged state, warnings, validated field paths, and
+pending status.
 
 ### Field Clearing Utilities
 

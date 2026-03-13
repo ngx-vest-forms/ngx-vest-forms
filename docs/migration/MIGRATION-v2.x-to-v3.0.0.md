@@ -136,6 +136,51 @@ The library handles the runtime migration internally. Your templates remain unch
 </form>
 ```
 
+### Step 4.1: Optional Cleanup for Presenter Components
+
+No migration is required here, but if your form-body components manually derive
+multiple feedback signals from a `FormDirective` reference, v3.x now exposes a
+small utility to reduce repeated boilerplate.
+
+**Before (still valid):**
+
+```typescript
+protected readonly formState = computed(
+  () => this.vestForm()?.formState() ?? createEmptyFormState()
+);
+protected readonly warnings = computed(() =>
+  fieldWarningsToRecord(this.vestForm()?.fieldWarnings() ?? new Map())
+);
+protected readonly validatedFields = computed(
+  () => this.vestForm()?.touchedFieldPaths() ?? []
+);
+protected readonly pending = computed(() => this.vestForm()?.pending() ?? false);
+```
+
+**After (recommended when exposing presenter-friendly feedback):**
+
+```typescript
+protected readonly feedback = createFormFeedbackSignals(this.vestForm);
+
+protected readonly formState = this.feedback.formState;
+protected readonly warnings = this.feedback.warnings;
+protected readonly validatedFields = this.feedback.validatedFields;
+protected readonly pending = this.feedback.pending;
+```
+
+Imports for the cleanup pattern:
+
+```typescript
+import {
+  createEmptyFormState,
+  createFormFeedbackSignals,
+  fieldWarningsToRecord,
+} from 'ngx-vest-forms';
+```
+
+This is strictly optional, but it is the preferred pattern when building
+package-consumer presenter components, sidebars, or form shells.
+
 ### Step 5: Update Direct Suite Calls in Tests
 
 If your tests call the suite directly (e.g., for unit testing validation logic), update the call pattern:

@@ -12,6 +12,9 @@ This directory contains all utility types and functions provided by ngx-vest-for
   - [NgxFieldKey\<T\>](#ngxfieldkeyt)
 - [Form Utilities](#form-utilities)
   - [setValueAtPath()](#setvalueatpath)
+  - [createEmptyFormState()](#createemptyformstate)
+  - [fieldWarningsToRecord()](#fieldwarningstorecord)
+  - [createFormFeedbackSignals()](#createformfeedbacksignals)
   - [createDebouncedPendingState()](#createdebouncedpendingstate)
 - [Internal Form Utilities](#internal-form-utilities) ⚠️
   - [getAllFormErrors()](#getallformerrors)
@@ -292,6 +295,136 @@ setValueAtPath(obj, 'addresses[0].street', 'Main St');
 - ✅ Dynamic form value updates
 - ✅ Programmatic form population
 - ✅ Handling deeply nested structures
+
+---
+
+### createEmptyFormState()
+
+Creates a safe fallback packaged form state for components that need a stable
+`NgxFormState` before a form directive is available.
+
+```typescript
+import { createEmptyFormState, type NgxFormState } from 'ngx-vest-forms';
+
+type CheckoutFormModel = {
+  email?: string;
+};
+
+const emptyState: NgxFormState<CheckoutFormModel> =
+  createEmptyFormState<CheckoutFormModel>();
+// { valid: true, errors: {}, value: null }
+```
+
+**When to use:**
+
+- ✅ Fallbacks for `viewChild()` form references
+- ✅ Parent/presenter components that render before the form is initialized
+- ✅ Defensive defaults for reusable form UIs
+
+---
+
+### fieldWarningsToRecord()
+
+Converts the directive's `ReadonlyMap<string, readonly string[]>` warning store
+into a plain object keyed by field path.
+
+```typescript
+import { fieldWarningsToRecord } from 'ngx-vest-forms';
+
+const warnings = fieldWarningsToRecord(this.vestForm().fieldWarnings());
+// {
+//   username: ['Consider a longer username'],
+//   'profile.bio': ['This bio is getting long']
+// }
+```
+
+**When to use:**
+
+- ✅ Passing warnings into presentational components
+- ✅ Serializing form feedback for dev panels or demos
+- ✅ Adapting map-based warnings to object-based component APIs
+
+---
+
+### createFormFeedbackSignals()
+
+Creates the most common presenter-facing form feedback signals from a form
+directive (or any compatible adapter object).
+
+You do **not** need this helper to use the library. Deriving signals directly
+from `this.vestForm()` with your own `computed()` expressions is fully valid and
+often clearer when a component only needs one derived value.
+
+```typescript
+import {
+  createFormFeedbackSignals,
+  type FormDirective,
+  type NgxDeepPartial,
+} from 'ngx-vest-forms';
+import { Component, computed, viewChild } from '@angular/core';
+
+type ProfileFormModel = NgxDeepPartial<{
+  email: string;
+  username: string;
+}>;
+
+@Component({
+  // ...
+})
+export class ProfileFormComponent {
+  protected readonly vestForm = viewChild(FormDirective<ProfileFormModel>);
+
+  protected readonly feedback = createFormFeedbackSignals(this.vestForm);
+  protected readonly formState = this.feedback.formState;
+  protected readonly warnings = this.feedback.warnings;
+  protected readonly validatedFields = this.feedback.validatedFields;
+  protected readonly pending = this.feedback.pending;
+}
+```
+
+Why is this a **function** instead of a directive or service?
+
+Because it is only signal composition. You already have a
+`Signal<FormDirective | undefined>` from `viewChild()`, and the helper simply
+returns a stable bundle of derived `computed()` signals without introducing
+extra providers, lifecycle hooks, or directive instances.
+
+**What it returns:**
+
+- `formState` — packaged `NgxFormState<T>` with a safe empty fallback
+- `warnings` — plain object version of `fieldWarnings`
+- `validatedFields` — current validated/touched field paths
+- `pending` — async validation state
+
+**Optional override:**
+
+Use `options.formState` when you need to augment or replace the packaged state,
+for example when combining schema-generated errors with the library's form state.
+
+```typescript
+protected readonly feedback = createFormFeedbackSignals(this.vestForm, {
+  formState: computed(
+    () => this.customFormState() ?? this.vestForm()?.formState()
+  ),
+});
+```
+
+**When to use:**
+
+- ✅ Reducing repeated `computed(() => this.vestForm()?....)` boilerplate
+- ✅ Keeping form-body/container components small
+- ✅ Sharing a consistent feedback contract with presentational components
+
+**When not to use it:**
+
+- ✅ Skip it when you only need one derived signal such as `formState`
+- ✅ Skip it when direct `computed()` expressions are clearer in that file
+
+```typescript
+protected readonly formState = computed(
+  () => this.vestForm()?.formState() ?? createEmptyFormState()
+);
+```
 
 ---
 
@@ -874,7 +1007,14 @@ import { stringifyFieldPath } from 'ngx-vest-forms';
 import { clearFieldsWhen, clearFields, keepFieldsWhen } from 'ngx-vest-forms';
 
 // Form state utilities
-import { createEmptyFormState, NgxFormState } from 'ngx-vest-forms';
+import {
+  createEmptyFormState,
+  createFormFeedbackSignals,
+  fieldWarningsToRecord,
+  NgxFormState,
+  NgxFormFeedbackSource,
+  NgxFormFeedbackSignals,
+} from 'ngx-vest-forms';
 ```
 
 ### Internal API (Advanced Use Only)

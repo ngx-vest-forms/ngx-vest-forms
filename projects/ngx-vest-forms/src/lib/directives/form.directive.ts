@@ -50,7 +50,7 @@ import {
 } from 'rxjs';
 import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
-import { DeepRequired } from '../utils/deep-required';
+import { DeepRequired, type NgxDeepRequired } from '../utils/deep-required';
 import { fastDeepEqual } from '../utils/equality';
 import type { ValidationConfigMap } from '../utils/field-path-types';
 import { stringifyFieldPath } from '../utils/field-path.utils';
@@ -189,6 +189,17 @@ export class FormDirective<T extends Record<string, unknown>> {
   );
 
   /**
+   * Reactive status helpers for template consumption without reaching into `ngForm.form`.
+   * These stay aligned with Angular's form status lifecycle, including async validation.
+   *
+   * @publicApi
+   */
+  readonly status = computed(() => this.#statusSignal());
+  readonly pending = computed(() => this.status() === 'PENDING');
+  readonly valid = computed(() => this.status() === 'VALID');
+  readonly invalid = computed(() => this.status() === 'INVALID');
+
+  /**
    * Reactive counter incremented on any focusout within the form.
    * This guarantees recomputation for every blur/tab interaction,
    * even when the form's aggregate touched flag is already true.
@@ -209,6 +220,14 @@ export class FormDirective<T extends Record<string, unknown>> {
     this.#statusSignal();
     return this.#collectTouchedPaths(this.ngForm.form, this.ngForm.submitted);
   });
+
+  /**
+   * Alias for `touchedFieldPaths` using wording that better matches validation UIs.
+   * Returns the field paths that have been validated for display purposes.
+   *
+   * @publicApi
+   */
+  readonly validatedFields = this.touchedFieldPaths;
 
   /**
    * Computed signal for form state with validity and errors.
@@ -263,7 +282,7 @@ export class FormDirective<T extends Record<string, unknown>> {
    * contains values that shouldn't be there (typo's) that the developer gets run-time
    * errors in dev mode
    */
-  readonly formShape = input<DeepRequired<T> | null>(null);
+  readonly formShape = input<NgxDeepRequired<T> | null>(null);
 
   /**
    * Updates the validation config which is a dynamic object that will be used to

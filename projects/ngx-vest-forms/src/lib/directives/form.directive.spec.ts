@@ -661,6 +661,57 @@ describe('FormDirective - Signals/Outputs', () => {
     expect(instance.vestForm().dirtyChange).toBeDefined();
     expect(instance.vestForm().validChange).toBeDefined();
   });
+
+  it('should expose pending/valid/invalid helpers and validatedFields alias', async () => {
+    @Component({
+      selector: 'test-state-helpers-host',
+      template: `
+        <form
+          ngxVestForm
+          [suite]="suite()"
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          #vest="ngxVestForm"
+        >
+          <label for="email">Email</label>
+          <input id="email" name="email" [ngModel]="formValue().email" />
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestStateHelpersHost {
+      readonly formValue = signal<{ email?: string }>({});
+      readonly suite = signal(
+        create((model: { email?: string } = {}) => {
+          vestTest('email', 'Email is required', () => {
+            enforce(model.email).isNotBlank();
+          });
+        })
+      );
+
+      readonly vestForm =
+        viewChild.required<FormDirective<Record<string, unknown>>>('vest');
+    }
+
+    const { fixture } = await render(TestStateHelpersHost);
+    const instance = fixture.componentInstance;
+
+    await userEvent.click(screen.getByLabelText('Email'));
+    await userEvent.tab();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Email')).toHaveClass('ng-invalid');
+    });
+
+    expect(instance.vestForm().pending()).toBe(false);
+    expect(instance.vestForm().valid()).toBe(false);
+    expect(instance.vestForm().invalid()).toBe(true);
+    expect(instance.vestForm().status()).toBe('INVALID');
+    expect(instance.vestForm().validatedFields()).toContain('email');
+    expect(instance.vestForm().validatedFields()).toEqual(
+      instance.vestForm().touchedFieldPaths()
+    );
+  });
 });
 
 describe('FormDirective - triggerFormValidation', () => {

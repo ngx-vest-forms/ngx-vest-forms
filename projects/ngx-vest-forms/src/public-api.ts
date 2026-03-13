@@ -22,8 +22,16 @@ export type {
   ValidateFieldPath,
   ValidationConfigMap,
 } from './lib/utils/field-path-types';
-export { createEmptyFormState } from './lib/utils/form-state.utils';
-export type { NgxFormState } from './lib/utils/form-state.utils';
+export {
+  createEmptyFormState,
+  createFormFeedbackSignals,
+  fieldWarningsToRecord,
+} from './lib/utils/form-state.utils';
+export type {
+  NgxFormFeedbackSignals,
+  NgxFormFeedbackSource,
+  NgxFormState,
+} from './lib/utils/form-state.utils';
 export {
   ValidationConfigBuilder,
   createValidationConfig,

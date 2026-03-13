@@ -199,6 +199,96 @@ The `name` attribute must exactly match the property path in your `[ngModel]` bi
 <input name="first_name" [ngModel]="formValue().firstName" />
 ```
 
+## Optional: Derived Feedback Signals for Presenter Components
+
+If your form body passes state into a presentational component (for example, a
+sidebar summary, sticky footer, or debug panel), derive those signals once with
+`createFormFeedbackSignals()` instead of repeating several `computed()` wrappers.
+
+You do **not** need this helper to use ngx-vest-forms. Direct derivation from
+`this.vestForm()` is still a first-class option and is often clearer when you
+only need one signal.
+
+```typescript
+import { Component, signal, viewChild } from '@angular/core';
+import {
+  create,
+  test,
+  enforce,
+} from 'vest';
+import {
+  createFormFeedbackSignals,
+  FormDirective,
+  NgxDeepPartial,
+  NgxVestForms,
+  NgxVestSuite,
+} from 'ngx-vest-forms';
+
+type UserFormModel = NgxDeepPartial<{
+  firstName: string;
+  email: string;
+}>;
+
+const suite: NgxVestSuite<UserFormModel> = create((model) => {
+  test('firstName', 'First name is required', () => {
+    enforce(model.firstName).isNotBlank();
+  });
+
+  test('email', 'Email is required', () => {
+    enforce(model.email).isNotBlank();
+  });
+});
+
+@Component({
+  imports: [NgxVestForms],
+  template: `
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      (formValueChange)="formValue.set($event)"
+    >
+      <input name="firstName" [ngModel]="formValue().firstName" />
+      <input name="email" [ngModel]="formValue().email" />
+    </form>
+
+    <aside>
+      <p>Valid: {{ formState().valid ? 'yes' : 'no' }}</p>
+      <p>Pending: {{ pending() ? 'yes' : 'no' }}</p>
+      <pre>{{ warnings() | json }}</pre>
+      <pre>{{ validatedFields() | json }}</pre>
+    </aside>
+  `,
+})
+export class UserFormComponent {
+  protected readonly formValue = signal<UserFormModel>({});
+  protected readonly suite = suite;
+  protected readonly vestForm = viewChild(FormDirective<UserFormModel>);
+
+  private readonly feedback = createFormFeedbackSignals(this.vestForm);
+
+  protected readonly formState = this.feedback.formState;
+  protected readonly warnings = this.feedback.warnings;
+  protected readonly validatedFields = this.feedback.validatedFields;
+  protected readonly pending = this.feedback.pending;
+}
+```
+
+Why is this exposed as a **function**? Because it only packages signal
+composition around the `viewChild()` result you already have. No extra
+directive, provider, or lifecycle abstraction is necessary.
+
+If you only need one derived value, direct derivation is usually simpler:
+
+```typescript
+protected readonly formState = computed(
+  () => this.vestForm()?.formState() ?? createEmptyFormState()
+);
+```
+
+Use `fieldWarningsToRecord()` when you only need the warnings conversion, and
+`createEmptyFormState()` when you only need a safe fallback packaged state.
+
 ## Next Steps
 
 Now that you understand the basics, explore more advanced features:

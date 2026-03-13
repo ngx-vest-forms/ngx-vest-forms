@@ -28,7 +28,13 @@ import { create, test, enforce, omitWhen } from 'vest';
 import { NgxDeepPartial, NgxDeepRequired, NgxVestSuite, ValidationConfigMap, FieldPath } from 'ngx-vest-forms';
 
 // Utilities
-import { createValidationConfig, createEmptyFormState, createDebouncedPendingState } from 'ngx-vest-forms';
+import {
+  createValidationConfig,
+  createEmptyFormState,
+  createDebouncedPendingState,
+  createFormFeedbackSignals,
+  fieldWarningsToRecord,
+} from 'ngx-vest-forms';
 import { arrayToObject, objectToArray, setValueAtPath, clearFieldsWhen } from 'ngx-vest-forms';
 
 // Tokens
@@ -267,6 +273,40 @@ export class CustomWrapperComponent {
 - Warnings may appear after `validationConfig` triggers validation, even if the field
   was not touched yet.
 
+### Presenter-friendly feedback signals (optional)
+
+You do **not** need a helper to read state from the form directive. Direct
+derivation from `this.vestForm()` with `computed()` is always valid and is often
+the clearest choice when you only need one value:
+
+```typescript
+protected readonly formState = computed(
+  () => this.vestForm()?.formState() ?? createEmptyFormState()
+);
+```
+
+Use `createFormFeedbackSignals()` when a form body needs to expose **multiple**
+presenter-friendly signals, such as packaged state, warnings, validated fields,
+and pending status for a sidebar, summary component, sticky footer, or other
+shell/presenter UI.
+
+```typescript
+protected readonly vestForm = viewChild(FormDirective<MyFormModel>);
+
+protected readonly feedback = createFormFeedbackSignals(this.vestForm);
+protected readonly formState = this.feedback.formState;
+protected readonly warnings = this.feedback.warnings;
+protected readonly validatedFields = this.feedback.validatedFields;
+protected readonly pending = this.feedback.pending;
+```
+
+Why is this a **function** instead of a directive/class/service? Because it is
+just signal composition over the `viewChild()` result you already have. It does
+not need its own directive instance, DI provider, or lifecycle API.
+
+Use `fieldWarningsToRecord()` when you only want the warning-map conversion
+without the full helper.
+
 ## Root Form Validation
 
 For form-level validations (errors not tied to a specific field):
@@ -376,6 +416,8 @@ onStructureChange() {
 |----------|---------|
 | `createValidationConfig<T>()` | Fluent builder for validation config |
 | `createEmptyFormState<T>()` | Safe initial form state |
+| `createFormFeedbackSignals()` | Optional helper for multiple presenter-facing feedback signals |
+| `fieldWarningsToRecord()` | Convert warning map to plain object |
 | `createDebouncedPendingState()` | Debounced pending indicator |
 | `arrayToObject()` / `objectToArray()` | Array ↔ object conversion |
 | `setValueAtPath()` | Set nested value |

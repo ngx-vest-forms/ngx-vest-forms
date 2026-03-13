@@ -137,7 +137,7 @@ That's all you need. The directive automatically creates controls, wires validat
 - **Dynamic form helpers** — `resetField(field)` and `removeField(field)` help keep dynamic form state tidy
 - **Schema-friendly demos** — The examples app includes a Zod/Standard Schema integration example alongside classic Vest suites
 - **Accessibility-minded defaults** — Polite field announcements, opt-in `ariaRequired`, and first-invalid focus after submit
-- **Utilities** — Field paths, field clearing, validation config builder
+- **Utilities** — Field paths, field clearing, form feedback helpers, validation config builder
 
 ### Compatibility Notes (v3.0.0+ with Vest 6)
 
@@ -283,6 +283,64 @@ Access complete form and field state through the `FormErrorDisplayDirective` or 
 - Use `NGX_WARNING_DISPLAY_MODE_TOKEN` to control when warnings display (see [Warning Display Modes](#warning-display-modes)).
 
 **Tip**: For async validations, use `createDebouncedPendingState()` to prevent "Validating..." messages from flashing when validation completes quickly (< 200ms).
+
+**Presenter-friendly form feedback signals:**
+
+You do **not** need `createFormFeedbackSignals()` to use ngx-vest-forms. You can
+always derive `formState`, `warnings`, `validatedFields`, and `pending`
+directly from `this.vestForm()` with your own `computed()` signals.
+
+Use `createFormFeedbackSignals()` when you want a small convenience helper that:
+
+- reduces repeated `computed(() => this.vestForm()?....)` boilerplate
+- gives you safe fallbacks while the `FormDirective` view query is still undefined
+- converts warning `Map`s into a plain object shape that is easier to pass to presentational components
+- keeps form-body components lean when they feed a sidebar, summary panel, sticky footer, or shell component
+
+Why is it a **function** instead of another directive or class? Because this is
+just signal composition. You already have a `Signal<FormDirective | undefined>`
+from `viewChild()`, and the helper simply accepts that signal and returns a
+bundle of derived `computed()` signals. No extra directive instance, provider,
+or lifecycle API is required.
+
+Use it when a component needs **multiple** presenter-friendly feedback signals:
+
+```typescript
+import {
+  createFormFeedbackSignals,
+  type FormDirective,
+  type NgxDeepPartial,
+} from 'ngx-vest-forms';
+import { Component, viewChild } from '@angular/core';
+
+type ProfileFormModel = NgxDeepPartial<{
+  email: string;
+  username: string;
+}>;
+
+@Component({
+  // ...
+})
+export class ProfileFormComponent {
+  protected readonly vestForm = viewChild(FormDirective<ProfileFormModel>);
+
+  protected readonly feedback = createFormFeedbackSignals(this.vestForm);
+  protected readonly formState = this.feedback.formState;
+  protected readonly warnings = this.feedback.warnings;
+  protected readonly validatedFields = this.feedback.validatedFields;
+  protected readonly pending = this.feedback.pending;
+}
+```
+
+If you only need **one** signal, direct derivation is often clearer:
+
+```typescript
+protected readonly formState = computed(
+  () => this.vestForm()?.formState() ?? createEmptyFormState()
+);
+```
+
+If you only need a stable fallback packaged state, `createEmptyFormState()` remains the simplest option. For low-level map-to-object conversion, use `fieldWarningsToRecord()`.
 
 📖 **[Complete Guide: Custom Control Wrappers](./docs/CUSTOM-CONTROL-WRAPPERS.md)**
 
@@ -430,6 +488,7 @@ const shape: NgxDeepRequired<MyFormModel> = {
 - **[Field Path Types](./docs/FIELD-PATHS.md)** - Type-safe dot-notation paths for nested properties
 - **[Structure Change Detection](./docs/STRUCTURE_CHANGE_DETECTION.md)** - Handle dynamic form structure updates
 - **[Field Clearing Utilities](./docs/FIELD-CLEARING-UTILITIES.md)** - Type-safe utilities for clearing nested form values
+- **[Complete Example](./docs/COMPLETE-EXAMPLE.md#optional-derived-feedback-signals-for-presenter-components)** - Derive reusable presenter-friendly feedback signals
 
 ### UI & Integration
 
