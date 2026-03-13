@@ -7,7 +7,7 @@
     [formValue]="formValue()"
     (formValueChange)="formValueChange.emit($event)"
     (errorsChange)="currentErrors.set($event)"
-    (submitted)="onSubmit()"
+    (ngSubmit)="onSubmit()"
     class="space-y-8"
   >
     <ngx-form-section

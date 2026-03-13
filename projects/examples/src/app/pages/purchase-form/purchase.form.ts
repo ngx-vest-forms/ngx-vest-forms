@@ -17,6 +17,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import {
   clearFields,
   createEmptyFormState,
+  createFormFeedbackSignals,
   createValidationConfig,
   FormDirective,
   NGX_VALIDATION_DEBOUNCE_PRESETS,
@@ -33,7 +34,6 @@ import { AddressComponent } from '../../ui/address/address.component';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
 import { PhoneNumbersComponent } from '../../ui/phonenumbers/phonenumbers.component';
-import { mapWarningsToRecord } from '../../utils/form-warnings.util';
 import { ProductService } from './product.service';
 import { createPurchaseValidationSuite } from './purchase.validations';
 import { SwapiService } from './swapi.service';
@@ -98,6 +98,7 @@ export class PurchaseForm {
 
   private readonly vestForm =
     viewChild<FormDirective<PurchaseFormModel>>('vestForm');
+  private readonly formFeedback = createFormFeedbackSignals(this.vestForm);
 
   protected readonly formValue = signal<PurchaseFormModel>(
     initialPurchaseFormValue
@@ -111,30 +112,20 @@ export class PurchaseForm {
   readonly saveRequested = output<PurchaseFormModel>();
 
   /** Exposes the directive's packaged form state. */
-  readonly formState = computed(() => {
-    const state = this.vestForm()?.formState();
-    if (!state) return createEmptyFormState<PurchaseFormModel>();
-    return state;
-  });
+  readonly formState = this.formFeedback.formState;
 
   /** Exposes field warnings as a plain Record for presentational components. */
-  readonly warnings = computed(() =>
-    mapWarningsToRecord(this.vestForm()?.fieldWarnings() ?? new Map())
-  );
+  readonly warnings = this.formFeedback.warnings;
 
   /**
    * Field paths that have been validated (touched/blurred or submitted).
    * Delegates to the FormDirective's touchedFieldPaths signal which
    * reactively tracks TouchedChangeEvent from the form tree.
    */
-  readonly validatedFields = computed(
-    () => this.vestForm()?.touchedFieldPaths() ?? []
-  );
+  readonly validatedFields = this.formFeedback.validatedFields;
 
   /** True while async validation is in progress. */
-  readonly pending = computed(
-    () => this.vestForm()?.ngForm.form.pending ?? false
-  );
+  readonly pending = this.formFeedback.pending;
 
   /**
    * Automatically fetch demo data when the first name becomes "Luke".
