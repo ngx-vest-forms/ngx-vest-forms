@@ -342,19 +342,21 @@ export const suite = create((data: FormModel) => {
 
 ### Step 1: Update Validation Suites
 
-**Before:**
+**Before (Vest 5 / ngx-vest-forms v2):**
 
 ```typescript
 import { NgxVestSuite, NgxFieldKey } from 'ngx-vest-forms';
+import { staticSuite } from 'vest';
 
-const suite: NgxVestSuite<Model> = create(
+// ⚠️ LEGACY: Vest 5 two-parameter callback + only(field) inside callback
+const suite: NgxVestSuite<Model> = staticSuite(
   (model: Model, field?: NgxFieldKey<Model>) => {
     // ...
   }
 );
 ```
 
-**After:**
+**After (Vest 6 / ngx-vest-forms v3):**
 
 ```typescript
 import { NgxVestSuite } from 'ngx-vest-forms';

@@ -145,7 +145,6 @@ protected readonly formValue = signal<MyFormModel>({});
 Always structure validation suites with a model-only callback. Field focus is handled at the call site.
 
 > **CRITICAL**: In Vest 6, suites take only the model parameter. To validate a single field, use `suite.only(field).run(model)` at the call site. Never add a `field` parameter or call `only()` inside the callback.
->
 > **Complete Validation Patterns**: See `.github/instructions/vest.instructions.md` for comprehensive validation patterns and performance optimization.
 
 ```typescript
