@@ -18,7 +18,7 @@ export const businessHoursSuite: NgxVestSuite<BusinessHoursFormModel> = create(
     });
     omitWhen(values?.length < 2, () => {
       test(
-        `businessHours.values`,
+        ROOT_FORM,
         'There should be no overlap between business hours',
         () => {
           enforce(
