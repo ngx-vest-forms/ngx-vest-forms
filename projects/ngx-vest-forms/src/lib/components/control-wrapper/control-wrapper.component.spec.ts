@@ -683,6 +683,80 @@ describe('ScControlWrapperComponent', () => {
       );
     });
 
+    it('should not remove consumer-provided aria-required when wrapper input is false', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper>
+              <label for="email">Email</label>
+              <input
+                id="email"
+                name="email"
+                aria-required="true"
+                [ngModel]="model().email"
+              />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class ConsumerAriaRequiredComponent {
+        model = signal({ email: '' });
+        suite = testSuite;
+      }
+
+      await render(ConsumerAriaRequiredComponent);
+
+      // Consumer set aria-required; wrapper has no ariaRequired input
+      // so consumer attr must survive
+      expect(screen.getByLabelText('Email')).toHaveAttribute(
+        'aria-required',
+        'true'
+      );
+    });
+
+    it('should remove wrapper-owned aria-required when wrapper input toggles to false', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper [ariaRequired]="required()">
+              <label for="email">Email</label>
+              <input id="email" name="email" [ngModel]="model().email" />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class ToggleAriaRequiredComponent {
+        model = signal({ email: '' });
+        suite = testSuite;
+        required = signal(true);
+      }
+
+      const { fixture } = await render(ToggleAriaRequiredComponent);
+      const input = screen.getByLabelText('Email');
+
+      expect(input).toHaveAttribute('aria-required', 'true');
+
+      // Toggle wrapper input off → wrapper-owned attr should be removed
+      fixture.componentInstance.required.set(false);
+      fixture.detectChanges();
+
+      await waitFor(() => {
+        expect(input).not.toHaveAttribute('aria-required');
+      });
+    });
+
     it('should remove aria-invalid when field becomes valid', async () => {
       const fixture = await render(TestFormComponent);
       const emailInput = screen.getByLabelText('Email');

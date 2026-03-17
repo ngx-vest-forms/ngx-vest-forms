@@ -211,6 +211,13 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
   // Track form controls found in the wrapper
   private readonly formControls = signal<HTMLElement[]>([]);
 
+  /**
+   * Tracks whether a control already had `aria-required` before this wrapper
+   * first touched it. This prevents the wrapper from clobbering a
+   * consumer-provided attribute when the wrapper input toggles to false.
+   */
+  private readonly consumerAriaRequired = new WeakMap<HTMLElement, boolean>();
+
   // Signals when content is initialized so effects can safely touch the DOM.
   private readonly contentInitialized = signal(false);
 
@@ -303,9 +310,17 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
           control.removeAttribute('aria-invalid');
         }
 
+        // Track original consumer state once, then manage wrapper ownership.
+        if (!this.consumerAriaRequired.has(control)) {
+          this.consumerAriaRequired.set(
+            control,
+            control.hasAttribute('aria-required')
+          );
+        }
         if (ariaRequired) {
           control.setAttribute('aria-required', 'true');
-        } else {
+        } else if (!this.consumerAriaRequired.get(control)) {
+          // Only remove when the consumer didn't provide it originally
           control.removeAttribute('aria-required');
         }
       });
