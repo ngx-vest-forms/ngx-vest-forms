@@ -121,6 +121,14 @@ function getRemoveButtons(page: Page) {
   });
 }
 
+function getRootFormError(page: Page) {
+  return page
+    .locator('form')
+    .getByText('There should be no overlap between business hours', {
+      exact: true,
+    });
+}
+
 test.describe('Business Hours Form', () => {
   test.beforeEach(async ({ page }) => {
     await navigateToBusinessHoursForm(page);
@@ -324,6 +332,7 @@ test.describe('Business Hours Form', () => {
         const formValue = await readJsonPanel(page);
         const values = readBusinessHoursValues(formValue);
         await expect(values).toHaveLength(2);
+        await expect(getRootFormError(page)).toBeVisible();
       });
     });
 
@@ -349,6 +358,7 @@ test.describe('Business Hours Form', () => {
         const formValue = await readJsonPanel(page);
         const values = readBusinessHoursValues(formValue);
         await expect(values).toHaveLength(2);
+        await expect(getRootFormError(page)).toBeVisible();
       });
     });
 
@@ -376,10 +386,13 @@ test.describe('Business Hours Form', () => {
         const removeButtons = getRemoveButtons(page);
         await expect(removeButtons).toHaveCount(2);
 
+        await expect(getRootFormError(page)).toBeVisible();
+
         // Remove the second slot
         await removeButtons.nth(1).click();
 
         await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(1);
+        await expect(getRootFormError(page)).not.toBeVisible();
       });
     });
 
