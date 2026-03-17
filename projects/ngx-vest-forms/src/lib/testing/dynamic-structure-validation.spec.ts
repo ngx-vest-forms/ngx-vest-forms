@@ -3,7 +3,7 @@
  */
 import { Component, signal, ViewChild } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { create, enforce, omitWhen, test } from 'vest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { NgxDeepPartial, ValidationConfigMap } from '../../public-api';
 import { FormDirective } from '../directives/form.directive';
@@ -15,31 +15,27 @@ type DynamicFormModel = NgxDeepPartial<{
   fieldB?: string;
 }>;
 
-const dynamicFormValidationSuite = staticSuite(
-  (model: DynamicFormModel, field?: string) => {
-    only(field); // ✅ Call unconditionally
+const dynamicFormValidationSuite = create((model: DynamicFormModel) => {
+  test('procedureType', 'Procedure type is required', () => {
+    enforce(model.procedureType).isNotBlank();
+  });
 
-    test('procedureType', 'Procedure type is required', () => {
-      enforce(model.procedureType).isNotBlank();
+  // Only validate fieldA when procedureType is 'typeA'
+  omitWhen(model.procedureType !== 'typeA', () => {
+    test('fieldA', 'Field A is required for Type A procedure', () => {
+      enforce(model.fieldA).isNotUndefined().isNotBlank();
     });
+  });
 
-    // Only validate fieldA when procedureType is 'typeA'
-    omitWhen(model.procedureType !== 'typeA', () => {
-      test('fieldA', 'Field A is required for Type A procedure', () => {
-        enforce(model.fieldA).isNotUndefined().isNotBlank();
-      });
+  // Only validate fieldB when procedureType is 'typeB'
+  omitWhen(model.procedureType !== 'typeB', () => {
+    test('fieldB', 'Field B is required for Type B procedure', () => {
+      enforce(model.fieldB).isNotBlank();
     });
+  });
 
-    // Only validate fieldB when procedureType is 'typeB'
-    omitWhen(model.procedureType !== 'typeB', () => {
-      test('fieldB', 'Field B is required for Type B procedure', () => {
-        enforce(model.fieldB).isNotBlank();
-      });
-    });
-
-    // TypeC has no additional validation requirements
-  }
-);
+  // TypeC has no additional validation requirements
+});
 
 const waitForValidation = async (): Promise<void> => {
   await new Promise(

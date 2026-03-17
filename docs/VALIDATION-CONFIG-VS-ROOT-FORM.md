@@ -399,26 +399,22 @@ export class MyFormComponent {
     return config;
   });
 
-  protected readonly suite = staticSuite(
-    (model: MyFormModel, field?: string) => {
-      only(field);
-
-      // Field-level validations
-      omitWhen(model.type !== 'typeA', () => {
-        test('password', 'Password required', () => {
-          enforce(model.password).isNotBlank();
-        });
-        test('confirmPassword', 'Passwords must match', () => {
-          enforce(model.confirmPassword).equals(model.password);
-        });
+  protected readonly suite = create((model: MyFormModel) => {
+    // Field-level validations
+    omitWhen(model.type !== 'typeA', () => {
+      test('password', 'Password required', () => {
+        enforce(model.password).isNotBlank();
       });
-
-      // Form-level validation using ROOT_FORM
-      test(ROOT_FORM, 'At least one contact method required', () => {
-        enforce(model.email || model.phone).isTruthy();
+      test('confirmPassword', 'Passwords must match', () => {
+        enforce(model.confirmPassword).equals(model.password);
       });
-    }
-  );
+    });
+
+    // Form-level validation using ROOT_FORM
+    test(ROOT_FORM, 'At least one contact method required', () => {
+      enforce(model.email || model.phone).isTruthy();
+    });
+  });
 
   // triggerFormValidation(): After structure changes
   onTypeChange(type: string) {
@@ -596,5 +592,6 @@ validationConfig = { password: ['confirmPassword'] };
 - **[README: Dependent Field Validation](../README.md#dependent-field-validation-with-conditional-rendering)** - validationConfig patterns
 - **[README: Root Form Validation](../README.md#validations-on-the-root-form)** - validateRootForm usage
 - **[Complete Example](./COMPLETE-EXAMPLE.md)** - Full working example
+- **[Migration Guide (v2.x → v3.0.0)](./migration/MIGRATION-v2.x-to-v3.0.0.md)** - Upgrading to v3.0.0 (Vest 6)
 - **[Migration Guide (v1.x → v2.0.0)](./migration/MIGRATION-v1.x-to-v2.0.0.md)** - Upgrading guide (validateRootFormMode change)
 - **[Vest.js Documentation](https://vestjs.dev)** - Validation framework docs

@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { create, enforce, omitWhen, test } from 'vest';
 import type { NgxDeepPartial, NgxDeepRequired } from '../../public-api';
 import { FormDirective } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
@@ -26,33 +26,27 @@ const formShape: NgxDeepRequired<DynamicFormModel> = {
   fieldB: '',
 };
 
-const dynamicFormValidationSuite = staticSuite(
-  (model: DynamicFormModel, field?: string) => {
-    // ✅ CRITICAL: Always call only() unconditionally (PR #60 requirement)
-    // Calling only() conditionally corrupts Vest's execution tracking
-    only(field);
+const dynamicFormValidationSuite = create((model: DynamicFormModel) => {
+  test('procedureType', 'Procedure type is required', () => {
+    enforce(model.procedureType).isNotBlank();
+  });
 
-    test('procedureType', 'Procedure type is required', () => {
-      enforce(model.procedureType).isNotBlank();
+  // Only validate fieldA when procedureType is 'typeA'
+  omitWhen(model.procedureType !== 'typeA', () => {
+    test('fieldA', 'Field A is required for Type A procedure', () => {
+      enforce(model.fieldA).isNotBlank();
     });
+  });
 
-    // Only validate fieldA when procedureType is 'typeA'
-    omitWhen(model.procedureType !== 'typeA', () => {
-      test('fieldA', 'Field A is required for Type A procedure', () => {
-        enforce(model.fieldA).isNotBlank();
-      });
+  // Only validate fieldB when procedureType is 'typeB'
+  omitWhen(model.procedureType !== 'typeB', () => {
+    test('fieldB', 'Field B is required for Type B procedure', () => {
+      enforce(model.fieldB).isNotBlank();
     });
+  });
 
-    // Only validate fieldB when procedureType is 'typeB'
-    omitWhen(model.procedureType !== 'typeB', () => {
-      test('fieldB', 'Field B is required for Type B procedure', () => {
-        enforce(model.fieldB).isNotBlank();
-      });
-    });
-
-    // TypeC has no additional validation requirements - just procedureType
-  }
-);
+  // TypeC has no additional validation requirements - just procedureType
+});
 
 @Component({
   selector: 'ngx-dynamic-structure',

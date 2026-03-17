@@ -8,10 +8,13 @@ This directory contains all utility types and functions provided by ngx-vest-for
   - [NgxDeepPartial\<T\>](#ngxdeeppartialt)
   - [NgxDeepRequired\<T\>](#ngxdeeprequiredt)
   - [NgxFormCompatibleDeepRequired\<T\>](#ngxformcompatibledeeprequiredt)
-  - [NgxVestSuite\<T\>](#ngxvestsuitet-and-ngxtypedvestsuitet)
+  - [NgxVestSuite\<T\>](#ngxvestsuitet-and-deprecated-ngxtypedvestsuitet)
   - [NgxFieldKey\<T\>](#ngxfieldkeyt)
 - [Form Utilities](#form-utilities)
   - [setValueAtPath()](#setvalueatpath)
+  - [createEmptyFormState()](#createemptyformstate)
+  - [fieldWarningsToRecord()](#fieldwarningstorecord)
+  - [createFormFeedbackSignals()](#createformfeedbacksignals)
   - [createDebouncedPendingState()](#createdebouncedpendingstate)
 - [Internal Form Utilities](#internal-form-utilities) ⚠️
   - [getAllFormErrors()](#getallformerrors)
@@ -164,25 +167,23 @@ const formData: FormUser = {
 
 ---
 
-### NgxVestSuite\<T\> and NgxTypedVestSuite\<T\>
+### NgxVestSuite\<T\> (and deprecated NgxTypedVestSuite\<T\>)
 
-Type-safe wrappers for Vest.js StaticSuite with cleaner API and optional autocomplete.
+`NgxVestSuite<T>` is the canonical public suite type in v3.x.
 
-#### NgxVestSuite\<T\> - Flexible, Component-Friendly
-
-**Use for**: Component properties, function parameters, public APIs that need flexibility.
+**Use for**: suite definitions, component properties, helper function parameters, and public APIs.
 
 ```typescript
 import { NgxVestSuite } from 'ngx-vest-forms';
-import { staticSuite, test, enforce, only } from 'vest';
+import { create, test, enforce } from 'vest';
 
 type FormModel = { email: string; password: string };
 
 // ✅ Simple: Using NgxVestSuite (no autocomplete, but works everywhere)
-export const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
-  only(field);
+export const suite: NgxVestSuite<FormModel> = create((model) => {
   test('email', 'Required', () => enforce(model.email).isNotBlank());
 });
+// Field focus at call site: suite.only('email').run(model)
 
 // Component - works seamlessly
 @Component({...})
@@ -191,67 +192,56 @@ class MyFormComponent {
 }
 ```
 
-#### NgxTypedVestSuite\<T\> - Type-Safe with Autocomplete
+#### NgxTypedVestSuite\<T\> - Deprecated alias
 
-**Use for**: Validation suite definitions where you want IDE autocomplete for field names.
+`NgxTypedVestSuite<T>` still works, but it is a deprecated alias of `NgxVestSuite<T>`.
 
 ```typescript
-import { NgxTypedVestSuite, FormFieldName } from 'ngx-vest-forms';
+import { NgxTypedVestSuite } from 'ngx-vest-forms';
 
-// ✅ With autocomplete: Using NgxTypedVestSuite
-export const suite: NgxTypedVestSuite<FormModel> = staticSuite(
-  (model: FormModel, field?: FormFieldName<FormModel>) => {
-    only(field);
-    // IDE suggests: 'email' | 'password' | typeof ROOT_FORM
+// ✅ Backward-compatible, but deprecated naming
+export const suite: NgxTypedVestSuite<FormModel> = create(
+  (model: FormModel) => {
+    // IDE suggests field names for test() calls: 'email' | 'password' | typeof ROOT_FORM
     test('email', 'Required', () => enforce(model.email).isNotBlank());
   }
 );
 ```
 
-#### Recommended Pattern: Best of Both Worlds
+#### Recommended Pattern
 
-**Why this pattern?** TypeScript's contravariance rules prevent `NgxTypedVestSuite<T>` from being directly assignable to `NgxVestSuite<T>` because:
-
-- `NgxTypedVestSuite` expects `field?: FormFieldName<T>` (more specific)
-- `NgxVestSuite` accepts `field?: any` (less specific)
-- Contravariance: more specific → less specific = type error
-
-**Solution**: Define with `NgxTypedVestSuite`, assign to `NgxVestSuite` property:
+Define and consume suites with `NgxVestSuite<T>` unless you are keeping an older file stable during migration:
 
 ```typescript
-import { NgxVestSuite, NgxTypedVestSuite, FormFieldName } from 'ngx-vest-forms';
+import { NgxVestSuite } from 'ngx-vest-forms';
 
-// Step 1: Define with NgxTypedVestSuite for autocomplete
-export const userSuite: NgxTypedVestSuite<FormModel> = staticSuite(
-  (model: FormModel, field?: FormFieldName<FormModel>) => {
-    only(field);
-    // ✅ IDE autocomplete: 'email' | 'password' | typeof ROOT_FORM
+export const userSuite: NgxVestSuite<FormModel> = create(
+  (model: FormModel) => {
+    // ✅ IDE autocomplete for test() field names: 'email' | 'password' | typeof ROOT_FORM
     test('email', 'Required', () => enforce(model.email).isNotBlank());
   }
 );
 
-// Step 2: Use NgxVestSuite in component (no type assertion needed)
 @Component({...})
 class MyFormComponent {
-  // ✅ Types are compatible - NgxVestSuite accepts both typed and untyped
   protected readonly suite: NgxVestSuite<FormModel> = userSuite;
 }
 ```
 
 #### Three Usage Options Compared
 
-| Approach                                                                 | Autocomplete       | Explicit Type    | Flexible             | Recommended              |
-| ------------------------------------------------------------------------ | ------------------ | ---------------- | -------------------- | ------------------------ |
-| **Recommended Pattern** (define `NgxTypedVestSuite`, use `NgxVestSuite`) | ✅ At definition   | ✅ In component  | ✅ Accepts any suite | ✅ **Best**              |
-| **Type Inference** (`const suite = ...`)                                 | ✅ At definition   | ❌ Inferred only | ❌ Too specific      | ⚠️ Works but less clear  |
-| **Simple NgxVestSuite** (`NgxVestSuite<T>`)                              | ❌ No autocomplete | ✅ Explicit      | ✅ Accepts any suite | ✅ Good for simple forms |
+| Approach                                                | Autocomplete     | Explicit Type    | Flexible             | Recommended             |
+| ------------------------------------------------------- | ---------------- | ---------------- | -------------------- | ----------------------- |
+| **Recommended Pattern** (use `NgxVestSuite` everywhere) | ✅ At definition | ✅ In component  | ✅ Accepts any suite | ✅ **Best**             |
+| **Type Inference** (`const suite = ...`)                | ✅ At definition | ❌ Inferred only | ❌ Too specific      | ⚠️ Works but less clear |
+| **Deprecated Alias** (`NgxTypedVestSuite<T>`)           | ✅ At definition | ✅ Explicit      | ✅ Accepts any suite | ⚠️ Back-compat only     |
 
 **When to use:**
 
-- ✅ **NgxTypedVestSuite**: Validation suite definitions (get autocomplete)
 - ✅ **NgxVestSuite**: Component properties (template compatibility)
-- ✅ **Recommended Pattern**: Complex forms needing autocomplete + flexibility
+- ✅ **Recommended Pattern**: New code and updated examples
 - ✅ **Simple NgxVestSuite**: Simple forms without autocomplete needs
+- ⚠️ **NgxTypedVestSuite**: Older code you have not renamed yet
 
 ---
 
@@ -261,17 +251,16 @@ Type-safe field parameter for validation suites (provides autocomplete).
 
 ```typescript
 import { NgxFieldKey } from 'ngx-vest-forms';
-import { staticSuite, only } from 'vest';
+import { create } from 'vest';
 
 type FormModel = { email: string; password: string };
 
-// ✅ With NgxFieldKey: Get autocomplete for field names
-export const suite = staticSuite(
-  (model: FormModel, field?: NgxFieldKey<FormModel>) => {
-    only(field); // TypeScript knows field is 'email' | 'password' | undefined
-    // ... validations
-  }
-);
+// NgxFieldKey provides type-safe field keys: 'email' | 'password'
+// In Vest 6, field focus is at the call site — not in the callback
+// Example: suite.only('email' as NgxFieldKey<FormModel>).run(model)
+export const suite = create((model: FormModel) => {
+  // ... validations
+});
 ```
 
 **When to use:**
@@ -306,6 +295,136 @@ setValueAtPath(obj, 'addresses[0].street', 'Main St');
 - ✅ Dynamic form value updates
 - ✅ Programmatic form population
 - ✅ Handling deeply nested structures
+
+---
+
+### createEmptyFormState()
+
+Creates a safe fallback packaged form state for components that need a stable
+`NgxFormState` before a form directive is available.
+
+```typescript
+import { createEmptyFormState, type NgxFormState } from 'ngx-vest-forms';
+
+type CheckoutFormModel = {
+  email?: string;
+};
+
+const emptyState: NgxFormState<CheckoutFormModel> =
+  createEmptyFormState<CheckoutFormModel>();
+// { valid: true, errors: {}, value: null }
+```
+
+**When to use:**
+
+- ✅ Fallbacks for `viewChild()` form references
+- ✅ Parent/presenter components that render before the form is initialized
+- ✅ Defensive defaults for reusable form UIs
+
+---
+
+### fieldWarningsToRecord()
+
+Converts the directive's `ReadonlyMap<string, readonly string[]>` warning store
+into a plain object keyed by field path.
+
+```typescript
+import { fieldWarningsToRecord } from 'ngx-vest-forms';
+
+const warnings = fieldWarningsToRecord(this.vestForm().fieldWarnings());
+// {
+//   username: ['Consider a longer username'],
+//   'profile.bio': ['This bio is getting long']
+// }
+```
+
+**When to use:**
+
+- ✅ Passing warnings into presentational components
+- ✅ Serializing form feedback for dev panels or demos
+- ✅ Adapting map-based warnings to object-based component APIs
+
+---
+
+### createFormFeedbackSignals()
+
+Creates the most common presenter-facing form feedback signals from a form
+directive (or any compatible adapter object).
+
+You do **not** need this helper to use the library. Deriving signals directly
+from `this.vestForm()` with your own `computed()` expressions is fully valid and
+often clearer when a component only needs one derived value.
+
+```typescript
+import {
+  createFormFeedbackSignals,
+  type FormDirective,
+  type NgxDeepPartial,
+} from 'ngx-vest-forms';
+import { Component, computed, viewChild } from '@angular/core';
+
+type ProfileFormModel = NgxDeepPartial<{
+  email: string;
+  username: string;
+}>;
+
+@Component({
+  // ...
+})
+export class ProfileFormComponent {
+  protected readonly vestForm = viewChild(FormDirective<ProfileFormModel>);
+
+  protected readonly feedback = createFormFeedbackSignals(this.vestForm);
+  protected readonly formState = this.feedback.formState;
+  protected readonly warnings = this.feedback.warnings;
+  protected readonly validatedFields = this.feedback.validatedFields;
+  protected readonly pending = this.feedback.pending;
+}
+```
+
+Why is this a **function** instead of a directive or service?
+
+Because it is only signal composition. You already have a
+`Signal<FormDirective | undefined>` from `viewChild()`, and the helper simply
+returns a stable bundle of derived `computed()` signals without introducing
+extra providers, lifecycle hooks, or directive instances.
+
+**What it returns:**
+
+- `formState` — packaged `NgxFormState<T>` with a safe empty fallback
+- `warnings` — plain object version of `fieldWarnings`
+- `validatedFields` — current validated/touched field paths
+- `pending` — async validation state
+
+**Optional override:**
+
+Use `options.formState` when you need to augment or replace the packaged state,
+for example when combining schema-generated errors with the library's form state.
+
+```typescript
+protected readonly feedback = createFormFeedbackSignals(this.vestForm, {
+  formState: computed(
+    () => this.customFormState() ?? this.vestForm()?.formState()
+  ),
+});
+```
+
+**When to use:**
+
+- ✅ Reducing repeated `computed(() => this.vestForm()?....)` boilerplate
+- ✅ Keeping form-body/container components small
+- ✅ Sharing a consistent feedback contract with presentational components
+
+**When not to use it:**
+
+- ✅ Skip it when you only need one derived signal such as `formState`
+- ✅ Skip it when direct `computed()` expressions are clearer in that file
+
+```typescript
+protected readonly formState = computed(
+  () => this.vestForm()?.formState() ?? createEmptyFormState()
+);
+```
 
 ---
 
@@ -888,7 +1007,14 @@ import { stringifyFieldPath } from 'ngx-vest-forms';
 import { clearFieldsWhen, clearFields, keepFieldsWhen } from 'ngx-vest-forms';
 
 // Form state utilities
-import { createEmptyFormState, NgxFormState } from 'ngx-vest-forms';
+import {
+  createEmptyFormState,
+  createFormFeedbackSignals,
+  fieldWarningsToRecord,
+  NgxFormState,
+  NgxFormFeedbackSource,
+  NgxFormFeedbackSignals,
+} from 'ngx-vest-forms';
 ```
 
 ### Internal API (Advanced Use Only)

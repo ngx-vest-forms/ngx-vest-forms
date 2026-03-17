@@ -1,21 +1,19 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
-  computed,
   input,
   output,
-  signal,
   viewChild,
 } from '@angular/core';
 import {
-  createEmptyFormState,
+  createFormFeedbackSignals,
   FormDirective,
   NgxVestForms,
   NgxVestSuite,
 } from 'ngx-vest-forms';
 import { DisplayModesDemoModel } from '../../models/display-modes-demo.model';
 import { Card } from '../../ui/card/card.component';
-import { mapWarningsToRecord } from '../../utils/form-warnings.util';
 
 @Component({
   selector: 'ngx-display-modes-demo-form-body',
@@ -32,35 +30,27 @@ export class DisplayModesDemoFormBody {
 
   private readonly vestForm =
     viewChild<FormDirective<DisplayModesDemoModel>>('vestForm');
-
-  /**
-   * Errors updated via the directive's (errorsChange) event binding.
-   * The event fires on *every* StatusChangeEvent, making it more reactive
-   * than formState.errors when the form's overall status stays the same.
-   */
-  protected readonly currentErrors = signal<Record<string, string[]>>({});
+  private readonly formFeedback = createFormFeedbackSignals(this.vestForm);
 
   /** Exposes the directive's packaged form state with up-to-date errors. */
-  readonly formState = computed(() => {
-    const state = this.vestForm()?.formState();
-    if (!state) return createEmptyFormState<DisplayModesDemoModel>();
-    return { ...state, errors: this.currentErrors() };
-  });
+  readonly formState = this.formFeedback.formState;
 
   /** Exposes field warnings as a plain Record for presentational components. */
-  readonly warnings = computed(() =>
-    mapWarningsToRecord(this.vestForm()?.fieldWarnings() ?? new Map())
-  );
+  readonly warnings = this.formFeedback.warnings;
 
   /** Field paths that have been validated (touched/blurred or submitted). */
-  readonly validatedFields = computed(
-    () => this.vestForm()?.touchedFieldPaths() ?? []
-  );
+  readonly validatedFields = this.formFeedback.validatedFields;
 
   /** True while async validation is in progress. */
-  readonly pending = computed(
-    () => this.vestForm()?.ngForm.form.pending ?? false
-  );
+  readonly pending = this.formFeedback.pending;
+
+  constructor() {
+    afterNextRender(() => {
+      // This demo intentionally shows display modes against an already-validated
+      // form state so the differences are immediately visible on first render.
+      this.vestForm()?.triggerFormValidation();
+    });
+  }
 
   protected onSubmit(): void {
     this.submitted.emit();

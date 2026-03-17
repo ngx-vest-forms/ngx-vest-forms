@@ -1,14 +1,13 @@
 import { ApplicationRef, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { create, enforce, omitWhen, test } from 'vest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
 import type { NgxDeepPartial } from '../utils/deep-partial';
 
 type TestModel = NgxDeepPartial<{ flag: boolean; reason: string }>;
 
-const testSuite = staticSuite((model: TestModel, field?: string) => {
-  only(field);
+const testSuite = create((model: TestModel) => {
   omitWhen(!model.flag, () => {
     test('reason', 'Reason is required', () => {
       enforce(model.reason).isNotBlank();
@@ -60,9 +59,7 @@ type CascadeModel = NgxDeepPartial<{
   zipCode: string;
 }>;
 
-const cascadeSuite = staticSuite((model: CascadeModel, field?: string) => {
-  only(field);
-
+const cascadeSuite = create((model: CascadeModel) => {
   test('country', 'Country is required', () => {
     enforce(model.country).isNotBlank();
   });
@@ -122,9 +119,7 @@ type DateModel = NgxDeepPartial<{
   endDate: string;
 }>;
 
-const dateSuite = staticSuite((model: DateModel, field?: string) => {
-  only(field);
-
+const dateSuite = create((model: DateModel) => {
   test('startDate', 'Start date is required', () => {
     enforce(model.startDate).isNotEmpty();
   });

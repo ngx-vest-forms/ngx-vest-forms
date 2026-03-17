@@ -72,39 +72,36 @@ If a control's `name` doesn't match a path in the shape, a dev-mode console warn
 ### Basic Suite
 
 ```typescript
-import { staticSuite, test, enforce, only } from 'vest';
+import { create, test, enforce } from 'vest';
 import { NgxVestSuite, NgxDeepPartial } from 'ngx-vest-forms';
 
 type FormModel = NgxDeepPartial<{ email: string; age: number }>;
 
-export const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
-  only(field);  // CRITICAL: Always unconditional. only(undefined) runs all tests.
-
+export const suite: NgxVestSuite<FormModel> = create((model) => {
   test('email', 'Email is required', () => enforce(model.email).isNotBlank());
   test('email', 'Invalid email', () => enforce(model.email).isEmail());
   test('age', 'Must be at least 18', () => enforce(model.age).greaterThanOrEquals(18));
 });
+// Call site: suite.only('email').run(model) for field-level, suite.run(model) for all
 ```
 
 ### Typed Suite (compile-time field name checking)
 
 ```typescript
-import { NgxTypedVestSuite, FormFieldName } from 'ngx-vest-forms';
+import { NgxTypedVestSuite } from 'ngx-vest-forms';
 
-const suite: NgxTypedVestSuite<FormModel> = staticSuite(
-  (model: FormModel, field?: FormFieldName<FormModel>) => {
-    only(field);
+const suite: NgxTypedVestSuite<FormModel> = create(
+  (model: FormModel) => {
     test('email', 'Required', () => enforce(model.email).isNotBlank());
   }
 );
+// Call site: suite.only('email').run(model)
 ```
 
 ### Conditional Validation with omitWhen
 
 ```typescript
-export const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
-  only(field);
-
+export const suite: NgxVestSuite<FormModel> = create((model) => {
   test('email', 'Required', () => enforce(model.email).isNotBlank());
 
   // Only validate shipping when checkbox is checked
@@ -121,9 +118,7 @@ export const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
 ```typescript
 import { optional } from 'vest';
 
-export const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
-  only(field);
-
+export const suite: NgxVestSuite<FormModel> = create((model) => {
   optional({ alternateEmail: !model.alternateEmail });
 
   test('alternateEmail', 'Invalid format', () =>
@@ -362,9 +357,7 @@ Vest supports async tests with automatic cancellation via `AbortSignal`:
 ```typescript
 import { skipWhen } from 'vest';
 
-export const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
-  only(field);
-
+export const suite: NgxVestSuite<FormModel> = create((model) => {
   test('username', 'Required', () => enforce(model.username).isNotBlank());
 
   // Guard expensive async call with skipWhen
@@ -410,8 +403,7 @@ export function addressValidations(address: AddressModel | undefined, prefix: st
 }
 
 // Main suite
-export const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
-  only(field);
+export const suite: NgxVestSuite<FormModel> = create((model) => {
   addressValidations(model.billing, 'billing');
   addressValidations(model.shipping, 'shipping');
 });
@@ -424,9 +416,7 @@ Use `each()` from Vest to validate arrays:
 ```typescript
 import { each } from 'vest';
 
-export const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
-  only(field);
-
+export const suite: NgxVestSuite<FormModel> = create((model) => {
   each(model.phoneNumbers, (phone, index) => {
     test(`phoneNumbers.${index}.number`, 'Phone is required', () =>
       enforce(phone?.number).isNotBlank()
@@ -542,7 +532,7 @@ Available signals: `shouldShowErrors()`, `shouldShowWarnings()`, `errors()`, `wa
 |---------|-----|
 | `[(ngModel)]` | Use `[ngModel]` with `(formValueChange)` |
 | `formValue().address.street` | Use `formValue().address?.street` (optional chaining) |
-| `if(field){only(field)}` | Call `only(field)` unconditionally |
+| `create((model, field?) => { only(field); ... })` | Use `create((model) => { ... })` — Vest 6 handles focus at call site |
 | Missing `viewProviders` in child | Add `viewProviders: [vestFormsViewProviders]` |
 | `name="street"` for nested path | Use `name="address.street"` (full path within group) |
 | Plain interface for model | Use `NgxDeepPartial<T>` |
@@ -555,7 +545,7 @@ Available signals: `shouldShowErrors()`, `shouldShowWarnings()`, `errors()`, `wa
 ```typescript
 // Core
 import { NgxVestForms, vestFormsViewProviders, ROOT_FORM } from 'ngx-vest-forms';
-import { staticSuite, test, enforce, only, omitWhen, skipWhen, warn } from 'vest';
+import { create, test, enforce, omitWhen, skipWhen, warn } from 'vest';
 
 // Types
 import { NgxDeepPartial, NgxDeepRequired, NgxVestSuite, NgxTypedVestSuite,

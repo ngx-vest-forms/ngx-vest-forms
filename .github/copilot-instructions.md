@@ -26,7 +26,7 @@ Before generating code, scan the codebase to identify:
 2. **Framework Versions**: Identify the exact versions of all frameworks
    - **Angular**: 21.0.1 with standalone components and signals
    - **RxJS**: ~7.8.2 for reactive programming
-   - **Vest.js**: ~5.4.6 for validation (critical: use `staticSuite` and `only()` pattern)
+   - **Vest.js**: ~6.0.3 for validation (critical: use `create` with model-only callback; focus fields at call site with `suite.only(field).run(model)`)
    - Respect version constraints when generating code
 
 3. **Library Versions**: Note the exact versions of key libraries and dependencies
@@ -61,7 +61,7 @@ When context files don't provide specific guidance:
    - Naming conventions (camelCase for properties, kebab-case for component selectors)
    - Code organization (barrel exports in public-api.ts, feature-based organization)
    - Error handling (signal-based error state management)
-   - Validation patterns (staticSuite with only() optimization)
+   - Validation patterns (`create` suites with model-only callback; focus fields via `suite.only(field).run(model)` at call site)
    - Testing patterns (Jest with interaction tests in Storybook)
 
 3. Follow the most consistent patterns found in the codebase
@@ -133,33 +133,29 @@ protected readonly formValue = signal<MyFormModel>({});
 ```
 
 ### Validation Architecture
-- **Vest Suites**: Reusable validation functions using `staticSuite()` from vest.js
+- **Vest Suites**: Reusable validation functions using `create()` from vest.js
 - **Field-based**: Use dot notation (`addresses.billingAddress.street`) for nested validation
 - **Conditional**: Use `omitWhen()` for conditional validations
 - **Async Support**: Built-in support for async validations with AbortController
-- **Performance Optimization**: Always use `only(field)` pattern for field-level validation
+- **Performance Optimization**: Always use `suite.only(field).run(model)` pattern for field-level validation
 
 ## Key Development Patterns
 
 ### Validation Suite Pattern
-Always structure validation suites with the unconditional `only()` pattern for optimal performance.
+Always structure validation suites with a model-only callback. Field focus is handled at the call site.
 
-> **CRITICAL**: Call `only(field)` unconditionally at the top of your suite. Never wrap it in `if (field)` as this breaks Vest's change detection mechanism.
->
-> **Vest.js Official Warning**: "skip() and only() should not be called conditionally - i.e. inside of an if statement."
-
+> **CRITICAL**: In Vest 6, suites take only the model parameter. To validate a single field, use `suite.only(field).run(model)` at the call site. Never add a `field` parameter or call `only()` inside the callback.
 > **Complete Validation Patterns**: See `.github/instructions/vest.instructions.md` for comprehensive validation patterns and performance optimization.
 
 ```typescript
-export const validationSuite = staticSuite(
-  (model: FormModel, field?: string) => {
-    only(field); // ✅ CORRECT: Call unconditionally (safe: only(undefined) runs all tests)
-
+export const validationSuite = create(
+  (model: FormModel) => {
     test('firstName', 'First name is required', () => {
       enforce(model.firstName).isNotBlank();
     });
   }
 );
+// Call site: validationSuite.only('firstName').run(model)
 ```
 
 ### Creating Composable Validations
@@ -199,7 +195,7 @@ protected readonly showShippingAddress = computed(() =>
 - `npm run build:lib` - Build the library package
 - `npm run build:app` - Build the examples application
 - `npm start` - Serve examples app (port 4200)
-- `npm run api` - Start JSON server backend for examples
+- Examples app mock API is handled in-app via an HTTP interceptor; no separate backend is required
 
 ### Testing
 - `npm test` or `npm run test:lib` - Run Jest unit tests
@@ -235,8 +231,8 @@ The library hooks into Angular's template-driven forms via:
 - Automatic validator creation from Vest suites
 
 ### Vest.js Integration
-- Uses `staticSuite()` for performance optimization
-- Supports `only()` for field-specific validation
+- Uses `create()` for performance optimization
+- Supports field-specific validation via `suite.only(field).run(model)`
 - Built-in async validation with signal support
 - Error mapping from Vest results to Angular form errors
 
@@ -249,7 +245,7 @@ The library hooks into Angular's template-driven forms via:
 - Limit function complexity and length to match existing patterns
 
 ### Performance
-- Always use `only(field)` pattern in validation suites for optimal performance
+- Always use `suite.only(field).run(model)` pattern for field-level validation performance
 - Follow existing patterns for memory and resource management
 - Apply signal-based state management consistently with existing patterns
 - Use computed signals for derived state matching existing code
@@ -287,8 +283,7 @@ The library hooks into Angular's template-driven forms via:
 - Form controls are created dynamically - avoid direct form control references
 - Use `ROOT_FORM` constant for form-level validations
 - Validation options can be set at form, group, or control level for debouncing
-- Always include `field?: string` parameter and `only(field)` pattern in validation suites
-- Never call `only()` or `skip()` conditionally - use conditional arguments instead
+- Suite callbacks take only the model — field focus is handled at the call site via `suite.only(field).run(model)`
 - **CRITICAL**: The `name` attribute must exactly match the property path in `[ngModel]`
 
 ## References

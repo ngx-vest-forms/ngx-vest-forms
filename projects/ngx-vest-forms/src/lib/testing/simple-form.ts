@@ -1,4 +1,4 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { create, enforce, omitWhen, test } from 'vest';
 import type { NgxDeepPartial, NgxDeepRequired } from '../../public-api';
 import { ROOT_FORM } from '../constants';
 
@@ -20,53 +20,40 @@ export const formShape: NgxDeepRequired<FormModel> = {
   },
 };
 
-export const formValidationSuite = staticSuite(
-  (model: FormModel, field?: string) => {
-    /**
-     * CRITICAL: Call only() unconditionally, even when field is undefined.
-     *
-     * Why: Calling only(undefined) is safe and runs all tests. Conditional calls like
-     * `if (field) { only(field); }` corrupt Vest's internal execution order tracking,
-     * causing issues with omitWhen + validationConfig combinations where tests may be
-     * incorrectly omitted even when conditions are false.
-     *
-     * @see https://github.com/ngx-vest-forms/ngx-vest-forms/pull/60
-     */
-    only(field); // ✅ Call unconditionally
-    test(ROOT_FORM, 'Brecht his pass is not 1234', () => {
-      enforce(
-        model.firstName === 'Brecht' &&
-          model.lastName === 'Billiet' &&
-          model.passwords?.password === '1234'
-      ).isFalsy();
-    });
+export const formValidationSuite = create((model: FormModel) => {
+  test(ROOT_FORM, 'Brecht his pass is not 1234', () => {
+    enforce(
+      model.firstName === 'Brecht' &&
+        model.lastName === 'Billiet' &&
+        model.passwords?.password === '1234'
+    ).isFalsy();
+  });
 
-    test('firstName', 'First name is required', () => {
-      enforce(model.firstName).isNotBlank();
+  test('firstName', 'First name is required', () => {
+    enforce(model.firstName).isNotBlank();
+  });
+  test('lastName', 'Last name is required', () => {
+    enforce(model.lastName).isNotBlank();
+  });
+  test('passwords.password', 'Password is required', () => {
+    enforce(model.passwords?.password).isNotBlank();
+  });
+  omitWhen(!model.passwords?.password, () => {
+    test('passwords.confirmPassword', 'Confirm password is required', () => {
+      enforce(model.passwords?.confirmPassword).isNotBlank();
     });
-    test('lastName', 'Last name is required', () => {
-      enforce(model.lastName).isNotBlank();
-    });
-    test('passwords.password', 'Password is required', () => {
-      enforce(model.passwords?.password).isNotBlank();
-    });
-    omitWhen(!model.passwords?.password, () => {
-      test('passwords.confirmPassword', 'Confirm password is required', () => {
-        enforce(model.passwords?.confirmPassword).isNotBlank();
+  });
+  omitWhen(
+    !model.passwords?.password || !model.passwords?.confirmPassword,
+    () => {
+      test('passwords', 'Passwords do not match', () => {
+        enforce(model.passwords?.confirmPassword).equals(
+          model.passwords?.password
+        );
       });
-    });
-    omitWhen(
-      !model.passwords?.password || !model.passwords?.confirmPassword,
-      () => {
-        test('passwords', 'Passwords do not match', () => {
-          enforce(model.passwords?.confirmPassword).equals(
-            model.passwords?.password
-          );
-        });
-      }
-    );
-  }
-);
+    }
+  );
+});
 
 export const selectors = {
   scControlWrapperFirstName: 'ngx-control-wrapper__first-name',

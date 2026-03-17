@@ -1,5 +1,7 @@
 # ValidationConfig Fluent Builder API
 
+> **Vest 6 Recommended:** `validationConfig` works seamlessly with Vest 6's `omitWhen`/`skipWhen`. These patterns ensure dependent fields revalidate when conditions change. This guide assumes Vest 6 (`suite.only(field).run(model)` pattern).
+
 The `ValidationConfigBuilder` provides a type-safe, fluent API for creating validation configuration objects. This builder simplifies the process of defining field dependencies and ensures correctness through compile-time type checking.
 
 > **💡 Critical Insight**: `validationConfig` is **essential** when using Vest.js's `omitWhen`/`skipWhen` for conditional validations. It ensures Angular re-validates dependent fields when conditions change, preventing stale validation states in dynamic forms.
@@ -52,9 +54,7 @@ When using Vest.js's `omitWhen` or `skipWhen` for conditional validations, Angul
 
 ```typescript
 // Vest validation suite with conditional logic
-export const suite = staticSuite((model, field?) => {
-  only(field);
-
+export const suite = create((model) => {
   test('country', 'Required', () => {
     enforce(model.country).isNotBlank();
   });
@@ -748,11 +748,16 @@ The validation config respects the debounce token configuration:
 
 ```typescript
 // ngx-level debounce configuration
+import {
+  NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+  NGX_VALIDATION_DEBOUNCE_PRESETS,
+} from 'ngx-vest-forms';
+
 bootstrapApplication(AppComponent, {
   providers: [
     {
       provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
-      useValue: 150, // ms
+      useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.relaxed,
     },
   ],
 });

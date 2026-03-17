@@ -2,7 +2,7 @@
 
 ## Overview
 
-As of v2.0.0, ngx-vest-forms supports **both** the legacy `sc-` prefix and the new `ngx-` prefix for all components and directives. This allows for gradual migration without breaking existing applications.
+ngx-vest-forms currently supports **both** the legacy `sc-` prefix and the newer `ngx-` prefix for components, directives, and legacy token aliases. This allows gradual migration without breaking existing applications.
 
 ## Supported Selectors
 
@@ -109,19 +109,27 @@ providers: [{ provide: NGX_WARNING_DISPLAY_MODE_TOKEN, useValue: 'on-touch' }];
 
 ```typescript
 // Already uses ngx prefix
-import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
+import {
+  NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+  NGX_VALIDATION_DEBOUNCE_PRESETS,
+} from 'ngx-vest-forms';
 
-providers: [{ provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 150 }];
+providers: [
+  {
+    provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+    useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.relaxed,
+  },
+];
 ```
 
 ## Migration Strategy
 
 ### Recommended Approach (Gradual)
 
-1. **Start with imports** - Update TypeScript imports to use `ngx-` prefixed types where available
+1. **Start with imports** - Update TypeScript imports to use `ngx-` prefixed tokens and helpers where available
 2. **Update templates gradually** - Change selectors on a per-component basis
 3. **Update tokens** - Switch to `NGX_*` tokens in providers
-4. **Remove deprecated usage** - Before upgrading to v3.0 (when `sc-` support will be removed)
+4. **Remove deprecated usage** - Before the future major version that removes `sc-` compatibility
 
 ### Example Migration
 
@@ -165,9 +173,9 @@ import { NgxVestForms, NGX_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
 
 ## Deprecation Timeline
 
-- **v2.0.0** (Current): Both `sc-` and `ngx-` prefixes supported
-- **v2.x** (6-12 months): Deprecation warnings added in dev mode when `sc-` is used
-- **v3.0.0** (Future): `sc-` prefix support removed entirely
+- **Current major version**: Both `sc-` and `ngx-` prefixes are supported
+- **Current guidance**: Prefer `ngx-` in all new code and migrations
+- **Future major version**: `sc-` compatibility is expected to be removed
 
 ## Benefits of ngx- Prefix
 

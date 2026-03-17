@@ -2,6 +2,17 @@
 /* Add application styles & imports to this file! */
 @use 'tailwindcss';
 
+/*
+ * Tailwind v4 scans the repository by default. Exclude non-Storybook sources
+ * that contain bracketed tokens and selector fragments which can be misdetected
+ * as utilities and generate invalid CSS warnings.
+ */
+@source not '../../../.github';
+@source not '../../../docs';
+@source not '../../../e2e';
+@source not '../../../playwright-report';
+@source not '../../../test-results';
+
 /* Theme customization - Tailwind CSS v4 */
 @theme {
   /* Primary color palette (teal) */

@@ -3,29 +3,29 @@ import { Component, signal, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { enforce, only, staticSuite, test } from 'vest';
-import { describe, expect, it } from 'vitest';
+import { firstValueFrom, from } from 'rxjs';
+import { create, enforce, test } from 'vest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import { NgxVestForms } from '../exports';
 import { getAllFormErrors } from '../utils/form-utils';
+import { ValidateRootFormDirective } from './validate-root-form.directive';
 
 /**
  * Test validation suite for root form validation tests
  */
-const createTestValidationSuite = staticSuite(
-  (data: Record<string, unknown> = {}, field?: string) => {
-    only(field);
-
+const createTestValidationSuite = create(
+  (data: Record<string, unknown> = {}) => {
     test('password', 'Password is required', () => {
-      enforce(data['password']).isNotBlank();
+      enforce(String(data['password'] ?? '')).isNotBlank();
     });
 
     test('password', 'Password must be at least 8 characters', () => {
-      enforce(data['password']).longerThanOrEquals(8);
+      enforce(String(data['password'] ?? '')).longerThanOrEquals(8);
     });
 
     test('confirmPassword', 'Confirm password is required', () => {
-      enforce(data['confirmPassword']).isNotBlank();
+      enforce(String(data['confirmPassword'] ?? '')).isNotBlank();
     });
 
     test(ROOT_FORM, 'Passwords must match', () => {
@@ -39,20 +39,18 @@ const createTestValidationSuite = staticSuite(
 /**
  * Test validation suite with multiple ROOT_FORM tests (like Brecht example)
  */
-const createMultiRootFormValidationSuite = staticSuite(
-  (data: Record<string, unknown> = {}, field?: string) => {
-    only(field);
-
+const createMultiRootFormValidationSuite = create(
+  (data: Record<string, unknown> = {}) => {
     test('firstName', 'First name is required', () => {
-      enforce(data['firstName']).isNotBlank();
+      enforce(String(data['firstName'] ?? '')).isNotBlank();
     });
 
     test('lastName', 'Last name is required', () => {
-      enforce(data['lastName']).isNotBlank();
+      enforce(String(data['lastName'] ?? '')).isNotBlank();
     });
 
     test('age', 'Age is required', () => {
-      enforce(data['age']).isNotBlank();
+      enforce(String(data['age'] ?? '')).isNotBlank();
     });
 
     // Cross-field validation (like "Brecht is not 30 anymore")
@@ -74,6 +72,11 @@ const createMultiRootFormValidationSuite = staticSuite(
 );
 
 describe('ValidateRootFormDirective', () => {
+  afterEach(() => {
+    createTestValidationSuite.reset();
+    createMultiRootFormValidationSuite.reset();
+  });
+
   describe('integration with getAllFormErrors', () => {
     it('should expose ROOT_FORM errors via getAllFormErrors after submit', async () => {
       @Component({
@@ -208,7 +211,6 @@ describe('ValidateRootFormDirective', () => {
       await waitFor(
         () => {
           const allErrors = getAllFormErrors(component.ngForm.control);
-
           expect(allErrors[ROOT_FORM]).toBeDefined();
           expect(allErrors[ROOT_FORM]).toContain('Brecht is not 30 anymore');
         },
@@ -649,49 +651,169 @@ describe('ValidateRootFormDirective', () => {
             ngxVestForm
             ngxValidateRootForm
             [ngxValidateRootFormMode]="'live'"
-            [validationOptions]="{ debounceTime: 500 }"
-            [suite]="suite"
+            [suite]="suite()"
             [formValue]="model()"
-            (formValueChange)="model.set($event)"
-            (errorsChange)="errors.set($event)"
-            #vest="ngxVestForm"
           >
-            <input
-              name="password"
-              [ngModel]="model().password"
-              data-testid="password"
-            />
-            <input
-              name="confirmPassword"
-              [ngModel]="model().confirmPassword"
-              data-testid="confirm-password"
-            />
-            @if (errors()[ROOT_FORM]) {
-              <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
-            }
-            <button type="submit" data-testid="submit">Submit</button>
+            <input name="password" [ngModel]="model().password" />
           </form>
         `,
       })
-      class TestComponent {
-        ROOT_FORM = ROOT_FORM;
-        model = signal<Record<string, unknown>>({
-          password: 'password123',
-          confirmPassword: 'mismatch',
-        });
-        errors = signal<Record<string, string[]>>({});
-        suite = createTestValidationSuite;
+      class TestDebounceHost {
+        model = signal<Record<string, unknown>>({ password: 'abc12345' });
+        suite = signal<unknown>(null);
+
+        @ViewChild(ValidateRootFormDirective, { static: true })
+        rootValidator!: ValidateRootFormDirective<Record<string, unknown>>;
       }
 
-      await render(TestComponent);
+      const syncResult = {
+        isPending: () => false,
+        isValid: () => false,
+        hasErrors: () => true,
+        hasWarnings: () => false,
+        isTested: () => true,
+        getErrors: () => ({ [ROOT_FORM]: ['debounced root error'] }),
+        getWarnings: () => ({}),
+      };
 
-      // Error should appear after debounce delay
-      await waitFor(
-        () => {
-          expect(screen.queryByTestId('root-error')).toBeInTheDocument();
+      const mockRun = vi.fn().mockReturnValue(syncResult);
+      const suiteMock = {
+        only: () => ({ run: mockRun }),
+        run: mockRun,
+        get: () => syncResult,
+        reset: vi.fn(),
+        resetField: vi.fn(),
+        remove: vi.fn(),
+        subscribe: vi.fn(),
+        dump: vi.fn(),
+        resume: vi.fn(),
+      };
+
+      const { fixture } = await render(TestDebounceHost);
+      const instance = fixture.componentInstance;
+      instance.suite.set(suiteMock);
+      fixture.detectChanges();
+
+      const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {
+        debounceTime: 500,
+      });
+
+      const start = Date.now();
+      const result = await firstValueFrom(from(validator({} as never)));
+      const elapsed = Date.now() - start;
+
+      expect(mockRun).toHaveBeenCalled();
+      expect(result).toEqual({ errors: ['debounced root error'] });
+      expect(elapsed).toBeGreaterThanOrEqual(450);
+    });
+  });
+
+  describe('createAsyncValidator completion handling', () => {
+    @Component({
+      imports: [NgxVestForms],
+      template: `
+        <form
+          ngxVestForm
+          ngxValidateRootForm
+          [ngxValidateRootFormMode]="'live'"
+          [suite]="suite()"
+          [formValue]="model()"
+        >
+          <input name="password" [ngModel]="model().password" />
+        </form>
+      `,
+    })
+    class TestCreateAsyncValidatorHost {
+      model = signal<Record<string, unknown>>({ password: 'abc12345' });
+      suite = signal<unknown>(null);
+
+      @ViewChild(ValidateRootFormDirective, { static: true })
+      rootValidator!: ValidateRootFormDirective<Record<string, unknown>>;
+    }
+
+    it('returns ROOT_FORM errors immediately for non-pending suite results', async () => {
+      const syncResult = {
+        isPending: () => false,
+        isValid: () => false,
+        hasErrors: () => true,
+        hasWarnings: () => false,
+        isTested: () => true,
+        getErrors: () => ({ [ROOT_FORM]: ['sync root error'] }),
+        getWarnings: () => ({}),
+      };
+
+      const mockRun = vi.fn().mockReturnValue(syncResult);
+      const suiteMock = {
+        only: () => ({ run: mockRun }),
+        run: mockRun,
+        get: () => syncResult,
+        reset: vi.fn(),
+        resetField: vi.fn(),
+        remove: vi.fn(),
+        subscribe: vi.fn(),
+        dump: vi.fn(),
+        resume: vi.fn(),
+      };
+
+      const { fixture } = await render(TestCreateAsyncValidatorHost);
+      const instance = fixture.componentInstance;
+      instance.suite.set(suiteMock);
+      fixture.detectChanges();
+
+      const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {
+        debounceTime: 0,
+      });
+      const result = await firstValueFrom(from(validator({} as never)));
+
+      expect(mockRun).toHaveBeenCalled();
+      expect(result).toEqual({ errors: ['sync root error'] });
+    });
+
+    it('awaits thenable suite results when pending and returns resolved ROOT_FORM errors', async () => {
+      const finalResult = {
+        isPending: () => false,
+        isValid: () => false,
+        hasErrors: () => true,
+        hasWarnings: () => false,
+        isTested: () => true,
+        getErrors: () => ({ [ROOT_FORM]: ['async root error'] }),
+        getWarnings: () => ({}),
+      };
+
+      const pendingResult = {
+        ...finalResult,
+        isPending: () => true,
+        then: (onfulfilled?: ((value: unknown) => unknown) | null) => {
+          const value = onfulfilled ? onfulfilled(finalResult) : finalResult;
+          return Promise.resolve(value);
         },
-        { timeout: 1500 }
-      );
+      };
+
+      const mockRun = vi.fn().mockReturnValue(pendingResult);
+      const suiteMock = {
+        only: () => ({ run: mockRun }),
+        run: mockRun,
+        get: () => finalResult,
+        reset: vi.fn(),
+        resetField: vi.fn(),
+        remove: vi.fn(),
+        subscribe: vi.fn(),
+        dump: vi.fn(),
+        resume: vi.fn(),
+      };
+
+      const { fixture } = await render(TestCreateAsyncValidatorHost);
+      const instance = fixture.componentInstance;
+      instance.suite.set(suiteMock);
+      fixture.detectChanges();
+
+      const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {
+        debounceTime: 0,
+      });
+      const result = await firstValueFrom(from(validator({} as never)));
+
+      expect(mockRun).toHaveBeenCalled();
+      expect(result).toEqual({ errors: ['async root error'] });
     });
   });
 });

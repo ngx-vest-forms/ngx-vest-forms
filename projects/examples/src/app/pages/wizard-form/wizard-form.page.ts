@@ -1,7 +1,10 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
+  Injector,
   signal,
   viewChild,
 } from '@angular/core';
@@ -45,8 +48,8 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WizardFormPageComponent {
+  private readonly injector = inject(Injector);
   protected readonly currentStep = signal(1);
-  protected readonly completedSteps = signal<number[]>([]);
 
   protected readonly steps: WizardStepConfig[] = [
     { id: 1, title: 'Account', description: 'Email & Password' },
@@ -81,7 +84,7 @@ export class WizardFormPageComponent {
     const builder = createValidationConfig<WizardStep2Model>();
 
     if (this.step2Data().subscribeNewsletter) {
-      builder.bidirectional('subscribeNewsletter', 'newsletterFrequency');
+      builder.whenChanged('subscribeNewsletter', 'newsletterFrequency');
     }
 
     return builder.build();
@@ -99,6 +102,12 @@ export class WizardFormPageComponent {
 
   protected readonly allFormsValid = computed(
     () => this.step1Valid() && this.step2Valid() && this.step3Valid()
+  );
+
+  protected readonly completedSteps = computed(() =>
+    this.steps
+      .filter((step) => this.isStepCompleted(step.id))
+      .map((step) => step.id)
   );
 
   protected readonly currentStepData = computed(() => {
@@ -152,11 +161,12 @@ export class WizardFormPageComponent {
     }
   });
 
-  protected readonly isFirstStep = computed(() => this.currentStep() === 1);
-  protected readonly isLastStep = computed(() => this.currentStep() === 3);
+  protected readonly isSubmitting = signal(false);
+  protected readonly submitSuccess = signal(false);
+  protected readonly submitError = signal<string | null>(null);
 
-  protected readonly canProceed = computed(() => {
-    switch (this.currentStep()) {
+  private getStepValid(step: number): boolean {
+    switch (step) {
       case 1:
         return this.step1Valid();
       case 2:
@@ -166,11 +176,11 @@ export class WizardFormPageComponent {
       default:
         return false;
     }
-  });
+  }
 
-  protected readonly isSubmitting = signal(false);
-  protected readonly submitSuccess = signal(false);
-  protected readonly submitError = signal<string | null>(null);
+  private isStepCompleted(step: number): boolean {
+    return step !== this.currentStep() && this.getStepValid(step);
+  }
 
   protected goToStep(step: number): void {
     if (step >= 1 && step <= 3) {
@@ -190,47 +200,107 @@ export class WizardFormPageComponent {
     }
   }
 
-  protected onStep1Submit(): void {
-    if (this.step1Valid()) {
-      this.completedSteps.update((steps) =>
-        steps.includes(1) ? steps : [...steps, 1]
-      );
+  protected async onStep1Submit(): Promise<void> {
+    await this.waitForNextRender();
+
+    const step1IsValid =
+      this.formBody()?.currentStepIsValid() ?? this.step1Valid();
+
+    if (step1IsValid) {
       this.nextStep();
+      return;
     }
+
+    afterNextRender(
+      () => {
+        this.formBody()?.focusCurrentStepFirstInvalidControl();
+      },
+      { injector: this.injector }
+    );
   }
 
-  protected onStep2Submit(): void {
-    if (this.step2Valid()) {
-      this.completedSteps.update((steps) =>
-        steps.includes(2) ? steps : [...steps, 2]
-      );
+  protected async onStep2Submit(): Promise<void> {
+    await this.waitForNextRender();
+
+    const step2IsValid =
+      this.formBody()?.currentStepIsValid() ?? this.step2Valid();
+
+    if (step2IsValid) {
       this.nextStep();
+      return;
     }
+
+    afterNextRender(
+      () => {
+        this.formBody()?.focusCurrentStepFirstInvalidControl({
+          behavior: 'auto',
+          block: 'start',
+          inline: 'nearest',
+          preventScrollOnFocus: true,
+        });
+      },
+      { injector: this.injector }
+    );
   }
 
-  protected onStep3Submit(): void {
-    if (this.step3Valid()) {
-      this.completedSteps.update((steps) =>
-        steps.includes(3) ? steps : [...steps, 3]
-      );
+  protected async onStep3Submit(): Promise<void> {
+    await this.waitForNextRender();
+
+    const step3IsValid =
+      this.formBody()?.currentStepIsValid() ?? this.step3Valid();
+
+    if (step3IsValid) {
+      return;
     }
+
+    afterNextRender(
+      () => {
+        this.formBody()?.focusCurrentStepFirstInvalidControl();
+      },
+      { injector: this.injector }
+    );
   }
 
   protected async submitAll(): Promise<void> {
     this.formBody()?.markAllAsTouched();
 
-    if (!this.allFormsValid()) {
+    await this.waitForNextRender();
+
+    const currentStep = this.currentStep();
+    const currentStepIsValid =
+      this.formBody()?.currentStepIsValid() ??
+      (currentStep === 1
+        ? this.step1Valid()
+        : currentStep === 2
+          ? this.step2Valid()
+          : this.step3Valid());
+
+    const step1IsValid =
+      currentStep === 1 ? currentStepIsValid : this.step1Valid();
+    const step2IsValid =
+      currentStep === 2 ? currentStepIsValid : this.step2Valid();
+    const step3IsValid =
+      currentStep === 3 ? currentStepIsValid : this.step3Valid();
+
+    if (!(step1IsValid && step2IsValid && step3IsValid)) {
       this.submitError.set(
         'Please complete all steps before submitting. Check each step for errors.'
       );
 
-      if (!this.step1Valid()) {
+      if (!step1IsValid) {
         this.goToStep(1);
-      } else if (!this.step2Valid()) {
+      } else if (!step2IsValid) {
         this.goToStep(2);
-      } else if (!this.step3Valid()) {
+      } else if (!step3IsValid) {
         this.goToStep(3);
       }
+
+      afterNextRender(
+        () => {
+          this.formBody()?.focusCurrentStepFirstInvalidControl();
+        },
+        { injector: this.injector }
+      );
       return;
     }
 
@@ -255,6 +325,17 @@ export class WizardFormPageComponent {
     }
   }
 
+  private waitForNextRender(): Promise<void> {
+    return new Promise((resolve) => {
+      afterNextRender(
+        () => {
+          resolve();
+        },
+        { injector: this.injector }
+      );
+    });
+  }
+
   private async simulateApiSubmit(_data: unknown): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, 1500));
   }
@@ -263,7 +344,6 @@ export class WizardFormPageComponent {
     this.step1Data.set({});
     this.step2Data.set({ subscribeNewsletter: false });
     this.step3Data.set({ acceptTerms: false, acceptPrivacy: false });
-    this.completedSteps.set([]);
     this.currentStep.set(1);
     this.submitSuccess.set(false);
     this.submitError.set(null);

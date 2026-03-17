@@ -1,6 +1,3 @@
-import { StaticSuite } from 'vest';
-import { FormFieldName } from './field-path-types';
-
 /**
  * FieldKey<T> gives you autocompletion for known string keys of T,
  * but also allows any string (for dynamic/nested/cyclic field names).
@@ -42,19 +39,18 @@ export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
  * Represents a Vest validation suite for use with ngx-vest-forms.
  *
  * @description
- * This type wraps Vest's `StaticSuite` with the specific generic parameters
+ * This type wraps Vest 6's `Suite` with the specific generic parameters
  * required for form validation in this library.
  *
  * **Why use this type?**
  * - Simplifies the API by hiding complex generic parameters
- * - Ensures type safety for model and field parameters
- * - Accepts both string and FormFieldName<T> field parameters (from NgxTypedVestSuite)
+ * - Ensures type safety for model parameter
  * - Provides better template compatibility (no `$any()` casts needed)
  * - Makes suite signatures consistent across the codebase
  *
  * **What it wraps:**
  * ```typescript
- * StaticSuite<string, string, (model: T, field?: string) => void>
+ * Suite<string, string, (model: T) => void>
  * ```
  *
  * **Type parameters explained:**
@@ -62,11 +58,10 @@ export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
  * - Second `string`: Group names (for organizing tests, e.g., 'step1', 'step2')
  * - Third parameter: The validation function signature with bivariance trick
  *
- * **Field parameter:**
- * The field parameter accepts `string | undefined` for:
- * - Plain string field names like 'email'
- * - Nested paths like 'addresses.billing.street'
- * - undefined to run all tests
+ * **Vest 6 field focus:**
+ * Field-specific validation is handled externally via `suite.only(field).run(model)`.
+ * The suite callback only receives the model — no `field` parameter needed.
+ * This is the Vest 6 recommended pattern for cleaner separation of concerns.
  *
  * **Bivariance for template compatibility:**
  * The callback type uses a bivariant method parameter trick to make
@@ -83,7 +78,7 @@ export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
  * @example
  * ```typescript
  * import { NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
- * import { staticSuite, test, enforce, only } from 'vest';
+ * import { create, test, enforce } from 'vest';
  *
  * type UserModel = NgxDeepPartial<{
  *   name: string;
@@ -91,10 +86,9 @@ export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
  *   age: number;
  * }>;
  *
- * /// Create validation suite
- * export const userValidation: NgxVestSuite<UserModel> = staticSuite((model, field?) => {
- *   only(field); // Always call unconditionally
- *
+ * /// Vest 6: suite callback only receives the model.
+ * /// Field focus is handled via suite.only(field).run(model) at the call site.
+ * export const userValidation: NgxVestSuite<UserModel> = create((model: UserModel) => {
  *   test('name', 'Name is required', () => {
  *     enforce(model.name).isNotBlank();
  *   });
@@ -116,19 +110,9 @@ export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
  * }
  * ```
  *
- * @example
- * ```typescript
- * /// For dynamic/untyped scenarios, use unknown
- * const dynamicSuite: NgxVestSuite = create((model, field) => {
- *   only(field);
- *   /// Validation logic for any model structure
- * });
- * ```
- *
  * **Type design notes:**
  * - Default generic is `unknown` (safer than `any`) for opt-in typing
  * - Uses bivariant method parameter trick for better template assignability
- * - Field parameter accepts any string for nested/dynamic paths
  * - Return type is fully typed (void) to catch errors at call sites
  *
  * @see {@link https://vestjs.dev/docs/writing_your_suite | Vest Documentation}
@@ -139,82 +123,84 @@ export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
 // Allows NgxVestSuite<SpecificModel> to be assignable to NgxVestSuite<unknown>
 // without leaking $any() casts into consumer templates.
 //
-// Field parameter uses a deliberately *wide* type to preserve assignment compatibility:
-// 1. Plain string field names ('email', 'addresses.billing.street')
-// 2. FormFieldName<T> from NgxTypedVestSuite (string literal union with autocomplete)
-// 3. undefined to run all tests
-//
-// CRITICAL: This parameter must be as wide as (or wider than) `string | undefined`
-// so NgxTypedVestSuite<T> (which uses FormFieldName<T>) stays assignable to
-// NgxVestSuite<T>.
-//
 // This is safe because:
 // - The model parameter (T) remains fully typed for type safety
 // - Runtime behavior is identical (string is string, regardless of literal type)
 // - Allows NgxTypedVestSuite to be used where NgxVestSuite is expected
-/** @internal Do not use outside ngx-vest-forms. The `any` is architecturally required. */
-type NgxSuiteCallback<T> = {
-  // Method syntax yields bivariant parameters under strictFunctionTypes
-  // IMPORTANT: this is intentionally `any`.
-  // Angular template type-checking (and the bivariant method trick) effectively
-  // requires mutual assignability between this callback and the typed variant
-  // that uses `FormFieldName<T>`. Using `unknown` (safer) or even `string`
-  // breaks production builds because `string` is not assignable to
-  // `FormFieldName<T>` (a string-literal union of known paths).
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  bivarianceHack(model: T, field?: any): void;
-}['bivarianceHack'];
 
-export type NgxVestSuite<T = unknown> = StaticSuite<
-  string,
-  string,
-  NgxSuiteCallback<T>
->;
+/**
+ * Minimal structural type that any Vest suite (with or without a Standard
+ * Schema provider like Zod, Valibot, or n4s enforce.shape) satisfies.
+ *
+ * Uses a structural interface rather than a direct alias for Vest's
+ * {@code Suite<F, G, CB, S>} to avoid type incompatibilities caused by
+ * the schema generic parameter ({@code S}) flowing through Vest's
+ * conditional {@code SuiteResult} and {@code run} parameter types.
+ *
+ * Method syntax in this type provides bivariant parameter checking under
+ * {@code strictFunctionTypes}, so {@code NgxVestSuite<SpecificModel>}
+ * remains assignable to {@code NgxVestSuite<unknown>} in Angular templates
+ * without requiring {@code $any()} casts.
+ */
+
+/**
+ * Structural type for the result returned by Vest 6's `suite.run()`.
+ *
+ * Vest 6's SuiteResult exposes sync selectors (`isPending`, `getErrors`, etc.)
+ * immediately after `run()`, and may also be thenable depending on the exact
+ * Vest typings/runtime version in use.
+ *
+ * This structural interface avoids direct coupling to Vest's internal
+ * `SuiteResult<F, G, S>` generics while preserving the methods used by ngx-vest-forms.
+ *
+ * @see {@link https://vestjs.dev/docs/writing_your_suite/handling_completion}
+ * @publicApi
+ */
+export type NgxSuiteRunResult = {
+  isPending(field?: string): boolean;
+  isValid(field?: string): boolean;
+  hasErrors(field?: string): boolean;
+  hasWarnings(field?: string): boolean;
+  isTested(field: string): boolean;
+  getErrors(): Record<string, string[]>;
+  getErrors(field: string): string[];
+  getWarnings(): Record<string, string[]>;
+  getWarnings(field: string): string[];
+  /**
+   * Optional thenable support for Vest versions/runtime shapes that expose it.
+   * Keep this optional so purely synchronous SuiteResult shapes remain assignable.
+   */
+  then?<TResult1 = NgxSuiteRunResult, TResult2 = never>(
+    onfulfilled?:
+      | ((value: NgxSuiteRunResult) => TResult1 | PromiseLike<TResult1>)
+      | null,
+    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
+  ): PromiseLike<TResult1 | TResult2>;
+};
+
+export type NgxVestSuite<T = unknown> = {
+  only(match: string | string[] | null | undefined): {
+    run(model: T): NgxSuiteRunResult;
+  };
+  run(model: T): NgxSuiteRunResult;
+  get(): NgxSuiteRunResult;
+  reset(): void;
+  resetField(field: string): void;
+  remove(field: string): void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  subscribe: (...args: any[]) => any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dump(): any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  resume(state: any): void;
+};
 
 /**
  * Type-safe validation suite with autocomplete for field paths.
- * Use this when defining validation suites to get IDE autocomplete for field names.
  *
- * **Recommended Pattern:**
- * Always define validation suites with `NgxTypedVestSuite<T>` and let TypeScript infer the type in components:
- *
- * ```typescript
- * import { NgxTypedVestSuite, FormFieldName } from 'ngx-vest-forms';
- *
- * /// ✅ RECOMMENDED: Define with NgxTypedVestSuite for autocomplete
- * export const userSuite: NgxTypedVestSuite<UserModel> = staticSuite(
- *   (model: UserModel, field?: FormFieldName<UserModel>) => {
- *     only(field);
- *     /// ✅ IDE autocomplete for: 'email' | 'password' | 'profile.age' | typeof ROOT_FORM
- *     test('email', 'Required', () => enforce(model.email).isNotBlank());
- *   }
- * );
- *
- * /// ✅ In component: Use type inference (no explicit type)
- * @Component({...})
- * class MyFormComponent {
- *   protected readonly suite = userSuite; // ✅ Type inferred automatically
- *   protected readonly formValue = signal<UserModel>({});
- * }
- * ```
- *
- * **Why this pattern?**
- * - **Strong typing at definition**: `FormFieldName<T>` gives autocomplete for all field paths
- * - **Type inference in components**: No need for explicit types, avoids compatibility issues
- * - **Best of both worlds**: Type safety where you write validation logic, convenience in components
+ * @deprecated Use {@link NgxVestSuite}<T> instead — both types are structurally
+ * identical. This alias will be removed in a future major version.
  *
  * @template T The model type that the validation suite operates on
- *
- * @see {@link NgxVestSuite} For the base suite type (accepts any string field)
- * @see {@link FormFieldName} For the field name type with autocomplete
  */
-/** @internal Do not use outside ngx-vest-forms. */
-type NgxTypedSuiteCallback<T> = {
-  bivarianceHack(model: T, field?: FormFieldName<T>): void;
-}['bivarianceHack'];
-
-export type NgxTypedVestSuite<T> = StaticSuite<
-  string,
-  string,
-  NgxTypedSuiteCallback<T>
->;
+export type NgxTypedVestSuite<T> = NgxVestSuite<T>;

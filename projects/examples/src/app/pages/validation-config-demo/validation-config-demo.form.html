@@ -7,7 +7,6 @@
     [formValue]="formValue()"
     [validationConfig]="validationConfig()"
     (formValueChange)="formValueChange.emit($event)"
-    (errorsChange)="currentErrors.set($event)"
     (ngSubmit)="onSubmit()"
     class="space-y-8"
   >
@@ -27,6 +26,7 @@
               name="password"
               [ngModel]="formValue().password"
               placeholder="Enter password (min 8 chars)"
+              autocomplete="new-password"
             />
           </label>
         </ngx-control-wrapper>
@@ -41,6 +41,7 @@
               name="confirmPassword"
               [ngModel]="formValue().confirmPassword"
               placeholder="Confirm password"
+              autocomplete="new-password"
             />
           </label>
         </ngx-control-wrapper>
@@ -63,6 +64,7 @@
               name="quantity"
               [ngModel]="formValue().quantity"
               placeholder="Enter quantity"
+              inputmode="numeric"
             />
           </label>
         </ngx-control-wrapper>
@@ -154,6 +156,7 @@
               name="state"
               [ngModel]="formValue().state"
               placeholder="Enter state/province"
+              autocomplete="address-level1"
             />
           </label>
         </ngx-control-wrapper>
@@ -168,6 +171,8 @@
               name="zipCode"
               [ngModel]="formValue().zipCode"
               placeholder="Enter postal code"
+              autocomplete="postal-code"
+              spellcheck="false"
             />
           </label>
         </ngx-control-wrapper>

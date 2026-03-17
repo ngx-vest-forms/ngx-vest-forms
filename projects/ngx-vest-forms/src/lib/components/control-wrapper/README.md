@@ -18,7 +18,7 @@ For `ngModelGroup` containers, prefer using `ngx-form-group-wrapper` (it renders
 
 ## Selectors (legacy + modern)
 
-All of these are supported in v2.x:
+All of these selectors are currently supported for compatibility:
 
 - Elements: `<ngx-control-wrapper>`, `<sc-control-wrapper>`
 - Attributes: `[ngxControlWrapper]`, `[scControlWrapper]`
@@ -28,6 +28,8 @@ The host element automatically receives both CSS classes:
 
 - `ngx-control-wrapper`
 - `sc-control-wrapper`
+
+The `sc-` prefix remains deprecated; prefer `ngx-` in new code.
 
 ## Public inputs
 
@@ -83,6 +85,27 @@ Accepted values:
 - Most forms: **omit `ariaAssociationMode`** and use one wrapper per input. The default behaves as expected when there’s only one descendant control.
 - `ngModelGroup` containers: prefer **`ngx-form-group-wrapper`** instead of using `ngx-control-wrapper` as a group wrapper.
 - Multi-control container (advanced/custom): use `ariaAssociationMode="none"` and wire ARIA explicitly.
+
+### `ariaRequired`
+
+Explicitly applies `aria-required="true"` to associated descendant controls.
+
+- Default: `false`
+- Intended for controls that are semantically always required
+- Not inferred from Vest validation rules
+- Prefer adding native `required` as well when the control is always required
+
+Example:
+
+```html
+<ngx-control-wrapper ariaRequired>
+  <label for="email">Email</label>
+  <input id="email" name="email" [ngModel]="formValue().email" />
+</ngx-control-wrapper>
+```
+
+Use this when you want the wrapper to own required-state ARIA without manually stamping
+the input element itself.
 
 ## Rendering and styling behavior
 

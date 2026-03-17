@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { fireEvent, render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { enforce, only, staticSuite, test as vestTest, warn } from 'vest';
+import { create, enforce, test as vestTest, warn } from 'vest';
 import { describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../../exports';
 
@@ -11,8 +11,7 @@ type TestModel = {
   username?: string;
 };
 
-const testSuite = staticSuite((data: TestModel = {}, field?: string) => {
-  only(field); // ✅ Call unconditionally
+const testSuite = create((data: TestModel = {}) => {
   vestTest('email', 'Email is required', () => {
     enforce(data.email ?? '').isNotBlank();
   });
@@ -74,9 +73,7 @@ class DirectiveAttributeComponent {
 }
 
 // Async validation suite for pending state tests
-const asyncSuite = staticSuite((data: TestModel = {}, field?: string) => {
-  // ✅ CRITICAL: Always call only() unconditionally (PR #60 requirement)
-  only(field);
+const asyncSuite = create((data: TestModel = {}) => {
   vestTest('email', 'Email must be available', () => {
     return new Promise<void>((resolve, reject) => {
       setTimeout(() => {
@@ -91,8 +88,7 @@ const asyncSuite = staticSuite((data: TestModel = {}, field?: string) => {
 });
 
 // Slow async validation suite to test @defer behavior (800ms delay ensures pending message shows)
-const slowAsyncSuite = staticSuite((data: TestModel = {}, field?: string) => {
-  only(field);
+const slowAsyncSuite = create((data: TestModel = {}) => {
   vestTest('email', 'Email must be available', () => {
     return new Promise<void>((resolve, reject) => {
       setTimeout(() => {
@@ -385,9 +381,8 @@ describe('ScControlWrapperComponent', () => {
 
   describe('ARIA Enhancements', () => {
     it('should allow opting out of descendant ARIA stamping (group-safe mode)', async () => {
-      const multiSuite = staticSuite(
-        (data: { firstName?: string; lastName?: string }, field?: string) => {
-          only(field);
+      const multiSuite = create(
+        (data: { firstName?: string; lastName?: string }) => {
           vestTest('firstName', 'First name is required', () => {
             enforce(data.firstName ?? '').isNotBlank();
           });
@@ -629,6 +624,139 @@ describe('ScControlWrapperComponent', () => {
       });
     });
 
+    it('should apply aria-required when ariaRequired is enabled on the wrapper', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper ariaRequired>
+              <label for="email">Email</label>
+              <input id="email" name="email" [ngModel]="model().email" />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class AriaRequiredComponent {
+        model = signal({ email: '' });
+        suite = testSuite;
+      }
+
+      await render(AriaRequiredComponent);
+
+      expect(screen.getByLabelText('Email')).toHaveAttribute(
+        'aria-required',
+        'true'
+      );
+    });
+
+    it('should not stamp aria-required when ariaAssociationMode is none', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper ariaRequired ariaAssociationMode="none">
+              <label for="email">Email</label>
+              <input id="email" name="email" [ngModel]="model().email" />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class AriaRequiredNoneComponent {
+        model = signal({ email: '' });
+        suite = testSuite;
+      }
+
+      await render(AriaRequiredNoneComponent);
+
+      expect(screen.getByLabelText('Email')).not.toHaveAttribute(
+        'aria-required'
+      );
+    });
+
+    it('should not remove consumer-provided aria-required when wrapper input is false', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper>
+              <label for="email">Email</label>
+              <input
+                id="email"
+                name="email"
+                aria-required="true"
+                [ngModel]="model().email"
+              />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class ConsumerAriaRequiredComponent {
+        model = signal({ email: '' });
+        suite = testSuite;
+      }
+
+      await render(ConsumerAriaRequiredComponent);
+
+      // Consumer set aria-required; wrapper has no ariaRequired input
+      // so consumer attr must survive
+      expect(screen.getByLabelText('Email')).toHaveAttribute(
+        'aria-required',
+        'true'
+      );
+    });
+
+    it('should remove wrapper-owned aria-required when wrapper input toggles to false', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper [ariaRequired]="required()">
+              <label for="email">Email</label>
+              <input id="email" name="email" [ngModel]="model().email" />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class ToggleAriaRequiredComponent {
+        model = signal({ email: '' });
+        suite = testSuite;
+        required = signal(true);
+      }
+
+      const { fixture } = await render(ToggleAriaRequiredComponent);
+      const input = screen.getByLabelText('Email');
+
+      expect(input).toHaveAttribute('aria-required', 'true');
+
+      // Toggle wrapper input off → wrapper-owned attr should be removed
+      fixture.componentInstance.required.set(false);
+      fixture.detectChanges();
+
+      await waitFor(() => {
+        expect(input).not.toHaveAttribute('aria-required');
+      });
+    });
+
     it('should remove aria-invalid when field becomes valid', async () => {
       const fixture = await render(TestFormComponent);
       const emailInput = screen.getByLabelText('Email');
@@ -697,20 +825,17 @@ describe('ScControlWrapperComponent', () => {
       //
       // To test warning ARIA attributes, we need a scenario that produces both
       // Warning tests must come BEFORE error tests in Vest order
-      const warningAndErrorSuite = staticSuite(
-        (data: TestModel = {}, field?: string) => {
-          only(field);
-          // Warning test FIRST (so it gets captured before error)
-          vestTest('username', 'Username looks weak', () => {
-            warn();
-            enforce(data.username ?? '').longerThan(5);
-          });
-          // Error test SECOND (makes field invalid)
-          vestTest('username', 'Username must be at least 3 characters', () => {
-            enforce(data.username ?? '').longerThanOrEquals(3);
-          });
-        }
-      );
+      const warningAndErrorSuite = create((data: TestModel = {}) => {
+        // Warning test FIRST (so it gets captured before error)
+        vestTest('username', 'Username looks weak', () => {
+          warn();
+          enforce(data.username ?? '').longerThan(5);
+        });
+        // Error test SECOND (makes field invalid)
+        vestTest('username', 'Username must be at least 3 characters', () => {
+          enforce(data.username ?? '').longerThanOrEquals(3);
+        });
+      });
 
       @Component({
         imports: [NgxVestForms],
@@ -767,15 +892,12 @@ describe('ScControlWrapperComponent', () => {
     });
 
     it('should allow warnings to be shown only after touch via warningDisplayMode', async () => {
-      const warningOnlySuite = staticSuite(
-        (data: TestModel = {}, field?: string) => {
-          only(field);
-          vestTest('username', 'Username is too short for comfort', () => {
-            warn();
-            enforce(data.username ?? '').longerThanOrEquals(5);
-          });
-        }
-      );
+      const warningOnlySuite = create((data: TestModel = {}) => {
+        vestTest('username', 'Username is too short for comfort', () => {
+          warn();
+          enforce(data.username ?? '').longerThanOrEquals(5);
+        });
+      });
 
       @Component({
         imports: [NgxVestForms],
@@ -881,8 +1003,7 @@ describe('ScControlWrapperComponent', () => {
 
     it('should update aria-describedby to include multiple regions when applicable', async () => {
       // Create suite that can show both errors and warnings
-      const mixedSuite = staticSuite((data: TestModel = {}, field?: string) => {
-        only(field);
+      const mixedSuite = create((data: TestModel = {}) => {
         vestTest('username', 'Username is required', () => {
           enforce(data.username ?? '').isNotBlank();
         });
@@ -941,9 +1062,8 @@ describe('ScControlWrapperComponent', () => {
     });
 
     it('should handle multiple controls in one wrapper with proper ARIA associations', async () => {
-      const multiSuite = staticSuite(
-        (data: { firstName?: string; lastName?: string }, field?: string) => {
-          only(field);
+      const multiSuite = create(
+        (data: { firstName?: string; lastName?: string }) => {
           vestTest('firstName', 'First name is required', () => {
             enforce(data.firstName ?? '').isNotBlank();
           });
@@ -1071,12 +1191,8 @@ describe('ScControlWrapperComponent', () => {
 
     it('should update ARIA associations for dynamically added controls via @if', async () => {
       // Suite with validation for dynamically added field
-      const dynamicSuite = staticSuite(
-        (
-          data: { showField?: boolean; dynamicValue?: string },
-          field?: string
-        ) => {
-          only(field);
+      const dynamicSuite = create(
+        (data: { showField?: boolean; dynamicValue?: string }) => {
           vestTest('dynamicValue', 'Dynamic field is required', () => {
             enforce(data.dynamicValue ?? '').isNotBlank();
           });
@@ -1188,15 +1304,12 @@ describe('ScControlWrapperComponent', () => {
   });
 
   describe('New warning display modes', () => {
-    const warningOnlySuite = staticSuite(
-      (data: TestModel = {}, field?: string) => {
-        only(field);
-        vestTest('username', 'Username is too short for comfort', () => {
-          warn();
-          enforce(data.username ?? '').longerThanOrEquals(5);
-        });
-      }
-    );
+    const warningOnlySuite = create((data: TestModel = {}) => {
+      vestTest('username', 'Username is too short for comfort', () => {
+        warn();
+        enforce(data.username ?? '').longerThanOrEquals(5);
+      });
+    });
 
     it('should show warnings immediately in always mode', async () => {
       @Component({

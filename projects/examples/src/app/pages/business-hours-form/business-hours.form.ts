@@ -4,11 +4,10 @@ import {
   computed,
   input,
   output,
-  signal,
   viewChild,
 } from '@angular/core';
 import {
-  createEmptyFormState,
+  createFormFeedbackSignals,
   FormDirective,
   NgxDeepRequired,
   NgxValidationConfig,
@@ -18,7 +17,6 @@ import {
 import { BusinessHoursFormModel } from '../../models/business-hours-form.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
-import { mapWarningsToRecord } from '../../utils/form-warnings.util';
 import {
   BusinessHoursComponent,
   BusinessHoursMap,
@@ -44,35 +42,19 @@ export class BusinessHoursFormBody {
 
   private readonly vestForm =
     viewChild<FormDirective<BusinessHoursFormModel>>('vestForm');
-
-  /**
-   * Errors updated via the directive's (errorsChange) event binding.
-   * The event fires on *every* StatusChangeEvent, making it more reactive
-   * than formState.errors when the form's overall status stays the same.
-   */
-  protected readonly currentErrors = signal<Record<string, string[]>>({});
+  private readonly formFeedback = createFormFeedbackSignals(this.vestForm);
 
   /** Exposes the directive's packaged form state with up-to-date errors. */
-  readonly formState = computed(() => {
-    const state = this.vestForm()?.formState();
-    if (!state) return createEmptyFormState<BusinessHoursFormModel>();
-    return { ...state, errors: this.currentErrors() };
-  });
+  readonly formState = this.formFeedback.formState;
 
   /** Exposes field warnings as a plain Record for presentational components. */
-  readonly warnings = computed(() =>
-    mapWarningsToRecord(this.vestForm()?.fieldWarnings() ?? new Map())
-  );
+  readonly warnings = this.formFeedback.warnings;
 
   /** Field paths that have been validated (touched/blurred or submitted). */
-  readonly validatedFields = computed(
-    () => this.vestForm()?.touchedFieldPaths() ?? []
-  );
+  readonly validatedFields = this.formFeedback.validatedFields;
 
   /** True while async validation is in progress. */
-  readonly pending = computed(
-    () => this.vestForm()?.ngForm.form.pending ?? false
-  );
+  readonly pending = this.formFeedback.pending;
 
   protected onBusinessHoursChange(values: BusinessHoursMap): void {
     this.businessHoursChange.emit(values);

@@ -35,7 +35,7 @@ See the full guides under [Documentation](#documentation).
 ### Prerequisites
 
 - **Angular**: >=19.0.0 minimum, 20.x recommended (all used APIs stable)
-- **Vest.js**: >=5.4.6 (Validation engine)
+- **Vest.js**: >=6.0.0 (Validation engine)
 - **TypeScript**: >=5.8.0 (Modern Angular features)
 - **Node.js**: >=20 (Maintenance release)
 
@@ -45,43 +45,53 @@ See the full guides under [Documentation](#documentation).
 npm install ngx-vest-forms
 ```
 
-> **v.2.0.0 NOTE:**
+> **Vest 6+ NOTE:**
 >
-> You must call `only()` **unconditionally** in Vest suites.
+> With Vest 6+, field focus is done at the call site via `suite.only(field).run(model)`, not inside the suite callback.
 >
 > ```ts
-> // ✅ Correct
-> only(field); // only(undefined) safely runs all tests
+> // ✅ Correct (Vest 6+)
+> await suite.only(fieldName).run(model); // Focus on a single field
+> await suite.run(model); // Validate all fields
 > ```
 >
-> Why: Conditional `only()` breaks Vest's change detection mechanism and causes timing issues with `omitWhen` + `validationConfig` in ngx-vest-forms.
-> See the [Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md#1-unconditional-only-pattern-required-critical).
+> See the [Vest.js Docs](https://vestjs.dev) and the [v2.x → v3.0.0 Migration Guide](./docs/migration/MIGRATION-v2.x-to-v3.0.0.md) for more details.
 >
-> Selector prefix: use `ngx-` (recommended). The legacy `sc-` works in v2.x but is deprecated and will be removed in v3.
+> Selector prefix: use `ngx-` (recommended). The legacy `sc-` prefix is still supported for compatibility, but it is deprecated and planned for removal in a future major version.
 
 ### Quick Start
 
-Start simple (with validations):
+Start simple (with Vest 6 validations):
 
 ```ts
 import { Component, signal } from '@angular/core';
 import { NgxVestForms, NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
-import { staticSuite, only, test, enforce } from 'vest';
+import { create, test, enforce } from 'vest';
 
 type MyFormModel = NgxDeepPartial<{ email: string; name: string }>;
 
-// Minimal validation suite (always call only(field) unconditionally)
-const suite: NgxVestSuite<MyFormModel> = staticSuite((model, field?) => {
-  only(field);
+// Vest 6: Suite callback takes only the model — field focus at call site
+const suite: NgxVestSuite<MyFormModel> = create((model) => {
   test('email', 'Email is required', () => {
     enforce(model.email).isNotBlank();
   });
+  test('name', 'Name is required', () => {
+    enforce(model.name).isNotBlank();
+  });
 });
+// Field-level validation at call site:
+// suite.only('email').run(model); // Validate only 'email'
+// suite.run(model);               // Validate all fields
 
 @Component({
   imports: [NgxVestForms],
   template: `
-    <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      (formValueChange)="formValue.set($event)"
+    >
       <ngx-control-wrapper>
         <label for="email">Email</label>
         <input id="email" name="email" [ngModel]="formValue().email" />
@@ -115,7 +125,7 @@ That's all you need. The directive automatically creates controls, wires validat
 
 - **Unidirectional state with signals** — Models are `NgxDeepPartial<T>` so values build up incrementally
 - **Type-safe with runtime shape validation** — Automatic control creation and validation wiring (dev mode checks)
-- **Vest.js validations** — Sync/async, conditional, composable patterns with `only(field)` optimization
+- **Vest.js 6+ validations** — Sync/async, conditional, composable patterns with `suite.only(field).run(model)` optimization at call site
 - **Error display modes** — Control when errors show: `on-blur`, `on-submit`, `on-blur-or-submit` (default), `on-dirty`, or `always`
 - **Warning display modes** — Control when warnings show: `on-touch`, `on-validated-or-touch` (default), `on-dirty`, or `always`
 - **Form state tracking** — Access touched, dirty, valid/invalid states for individual fields or entire form
@@ -124,12 +134,28 @@ That's all you need. The directive automatically creates controls, wires validat
   - `FormErrorDisplayDirective` (state + display policy)
   - `FormErrorControlDirective` (adds ARIA wiring + stable region IDs)
 - **Cross-field dependencies** — `validationConfig` for field-to-field triggers, `ROOT_FORM` for form-level rules
-- **Utilities** — Field paths, field clearing, validation config builder
+- **Dynamic form helpers** — `resetField(field)` and `removeField(field)` help keep dynamic form state tidy
+- **Schema-friendly demos** — The examples app includes a Zod/Standard Schema integration example alongside classic Vest suites
+- **Accessibility-minded defaults** — Polite field announcements, opt-in `ariaRequired`, and first-invalid focus after submit
+- **Utilities** — Field paths, field clearing, form feedback helpers, validation config builder
 
-### Compatibility & Safety Notes (v2.x)
+### Compatibility Notes (v3.0.0+ with Vest 6)
 
-- `ROOT_FORM_CONSTANT` is retained for compatibility but deprecated; prefer `ROOT_FORM`.
-- `set` / `cloneDeep` are retained for compatibility; prefer `setValueAtPath` / `structuredClone` in new code.
+**ngx-vest-forms v3.0.0+ uses Vest.js 6.x** with the following patterns:
+
+- ✅ Suite callbacks take only the model: `create((model) => { ... })`
+- ✅ Field focus at call site: `suite.only(field).run(model)`
+- ✅ Full validation: `suite.run(model)`
+- ✅ Suite reset: `suite.reset()` on form reset
+- ✅ Async handling: `await result` or `.then()`
+- ✅ Canonical suite type: `NgxVestSuite<T>`
+
+`NgxTypedVestSuite<T>` still works, but it is now a deprecated alias of `NgxVestSuite<T>` and should be avoided in new code.
+
+**Deprecated v2.x Compatibility:**
+
+- `ROOT_FORM_CONSTANT` (use `ROOT_FORM`)
+- `set` / `cloneDeep` (use `setValueAtPath` / `structuredClone`)
 
 ### Error & Warning Display Modes
 
@@ -257,6 +283,64 @@ Access complete form and field state through the `FormErrorDisplayDirective` or 
 - Use `NGX_WARNING_DISPLAY_MODE_TOKEN` to control when warnings display (see [Warning Display Modes](#warning-display-modes)).
 
 **Tip**: For async validations, use `createDebouncedPendingState()` to prevent "Validating..." messages from flashing when validation completes quickly (< 200ms).
+
+**Presenter-friendly form feedback signals:**
+
+You do **not** need `createFormFeedbackSignals()` to use ngx-vest-forms. You can
+always derive `formState`, `warnings`, `validatedFields`, and `pending`
+directly from `this.vestForm()` with your own `computed()` signals.
+
+Use `createFormFeedbackSignals()` when you want a small convenience helper that:
+
+- reduces repeated `computed(() => this.vestForm()?....)` boilerplate
+- gives you safe fallbacks while the `FormDirective` view query is still undefined
+- converts warning `Map`s into a plain object shape that is easier to pass to presentational components
+- keeps form-body components lean when they feed a sidebar, summary panel, sticky footer, or shell component
+
+Why is it a **function** instead of another directive or class? Because this is
+just signal composition. You already have a `Signal<FormDirective | undefined>`
+from `viewChild()`, and the helper simply accepts that signal and returns a
+bundle of derived `computed()` signals. No extra directive instance, provider,
+or lifecycle API is required.
+
+Use it when a component needs **multiple** presenter-friendly feedback signals:
+
+```typescript
+import {
+  createFormFeedbackSignals,
+  type FormDirective,
+  type NgxDeepPartial,
+} from 'ngx-vest-forms';
+import { Component, viewChild } from '@angular/core';
+
+type ProfileFormModel = NgxDeepPartial<{
+  email: string;
+  username: string;
+}>;
+
+@Component({
+  // ...
+})
+export class ProfileFormComponent {
+  protected readonly vestForm = viewChild(FormDirective<ProfileFormModel>);
+
+  protected readonly feedback = createFormFeedbackSignals(this.vestForm);
+  protected readonly formState = this.feedback.formState;
+  protected readonly warnings = this.feedback.warnings;
+  protected readonly validatedFields = this.feedback.validatedFields;
+  protected readonly pending = this.feedback.pending;
+}
+```
+
+If you only need **one** signal, direct derivation is often clearer:
+
+```typescript
+protected readonly formState = computed(
+  () => this.vestForm()?.formState() ?? createEmptyFormState()
+);
+```
+
+If you only need a stable fallback packaged state, `createEmptyFormState()` remains the simplest option. For low-level map-to-object conversion, use `fieldWarningsToRecord()`.
 
 📖 **[Complete Guide: Custom Control Wrappers](./docs/CUSTOM-CONTROL-WRAPPERS.md)**
 
@@ -404,6 +488,7 @@ const shape: NgxDeepRequired<MyFormModel> = {
 - **[Field Path Types](./docs/FIELD-PATHS.md)** - Type-safe dot-notation paths for nested properties
 - **[Structure Change Detection](./docs/STRUCTURE_CHANGE_DETECTION.md)** - Handle dynamic form structure updates
 - **[Field Clearing Utilities](./docs/FIELD-CLEARING-UTILITIES.md)** - Type-safe utilities for clearing nested form values
+- **[Complete Example](./docs/COMPLETE-EXAMPLE.md#optional-derived-feedback-signals-for-presenter-components)** - Derive reusable presenter-friendly feedback signals
 
 ### UI & Integration
 
@@ -417,12 +502,13 @@ const shape: NgxDeepRequired<MyFormModel> = {
 
 ### Examples
 
-- **[Examples Project](./projects/examples)** - Working code examples with business hours forms, purchase forms, and validation config demos
+- **[Examples Project](./projects/examples)** - Working code examples with business hours forms, purchase forms, validation config demos, wizard flows, and a Zod schema demo
   - Run locally: `npm install && npm start`
   - Includes smart components, UI components, and complete validation patterns
 
 ## Migration
 
+- v2.x → v3.0.0: **[Migration Guide](./docs/migration/MIGRATION-v2.x-to-v3.0.0.md)** (Vest 6 upgrade)
 - v1.x → v2.0.0: **[Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md)**
 - Selector prefixes: **[Dual Selector Support](./docs/DUAL-SELECTOR-SUPPORT.md)**
 

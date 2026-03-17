@@ -23,20 +23,12 @@ describe('Purchase Validations', () => {
       mockSwapiService as unknown as SwapiService
     );
 
-    return new Promise<void>((resolve, reject) => {
-      suite({ userId: '1' }, 'userId').done((result) => {
-        try {
-          // Should fail because user exists ("userId is already taken")
-          expect(result.hasErrors('userId')).toBe(true);
-          expect(result.getErrors('userId')).toContain(
-            'userId is already taken'
-          );
-          resolve();
-        } catch (error) {
-          reject(error);
-        }
-      });
-    });
+    // Vest 6: use suite.only(field).run() for focused validation
+    // SuiteResult is thenable at runtime, so await resolves after async tests complete
+    const result = await (suite.only('userId').run({ userId: '1' }) as any);
+    // Should fail because user exists ("userId is already taken")
+    expect(result.hasErrors('userId')).toBe(true);
+    expect(result.getErrors('userId')).toContain('userId is already taken');
   });
 
   it('should pass validation when userId does not exist (async)', async () => {
@@ -47,21 +39,15 @@ describe('Purchase Validations', () => {
       mockSwapiService as unknown as SwapiService
     );
 
-    return new Promise<void>((resolve, reject) => {
-      const result = suite({ userId: '999' }, 'userId');
-      // In browser mode, sync observables complete immediately, so check pending only with delay
-      expect(result.isPending('userId')).toBe(true);
+    // Vest 6: use suite.only(field).run() for focused validation
+    const syncResult = suite.only('userId').run({ userId: '999' });
+    // In browser mode, sync observables complete immediately, so check pending only with delay
+    expect(syncResult.isPending('userId')).toBe(true);
 
-      result.done((finalResult) => {
-        try {
-          // Should pass because user does not exist
-          expect(finalResult.hasErrors('userId')).toBe(false);
-          resolve();
-        } catch (error) {
-          reject(error);
-        }
-      });
-    });
+    // SuiteResult is thenable — await resolves after async tests complete
+    const finalResult = await (syncResult as any);
+    // Should pass because user does not exist
+    expect(finalResult.hasErrors('userId')).toBe(false);
   });
 
   it('should be pending while async validation is running', async () => {
@@ -71,15 +57,36 @@ describe('Purchase Validations', () => {
     const suite = createPurchaseValidationSuite(
       mockSwapiService as unknown as SwapiService
     );
-    const result = suite({ userId: '1' }, 'userId');
+    // Vest 6: use suite.only(field).run() for focused validation
+    const result = suite.only('userId').run({ userId: '1' });
 
     // With proper delay, we should catch the pending state
     expect(result.isPending('userId')).toBe(true);
     expect(result.isValid('userId')).toBe(false); // Not valid yet
 
-    // Wait for completion
-    return new Promise<void>((resolve) => {
-      result.done(() => resolve());
-    });
+    // Wait for completion — SuiteResult is thenable in Vest 6
+    await (result as any);
+  });
+
+  it('should memoize userId validation across repeated suite.only() runs', async () => {
+    mockSwapiService.userIdExists.mockReturnValue(of(false).pipe(delay(10)));
+
+    const suite = createPurchaseValidationSuite(
+      mockSwapiService as unknown as SwapiService
+    );
+
+    const firstResult = await (suite
+      .only('userId')
+      .run({ userId: '42' }) as any);
+    expect(firstResult.hasErrors('userId')).toBe(false);
+
+    const secondResult = await (suite
+      .only('userId')
+      .run({ userId: '42' }) as any);
+    expect(secondResult.hasErrors('userId')).toBe(false);
+
+    // Regression guard: memo() should reuse previous result for unchanged dependency.
+    expect(mockSwapiService.userIdExists).toHaveBeenCalledTimes(1);
+    expect(mockSwapiService.userIdExists).toHaveBeenCalledWith('42');
   });
 });

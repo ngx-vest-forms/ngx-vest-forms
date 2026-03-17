@@ -1,11 +1,11 @@
 ---
-description: ngx-vest-forms v2.0 - Angular Template-Driven Forms with Vest.js validation
+description: ngx-vest-forms v3.0 - Angular Template-Driven Forms with Vest.js validation
 applyTo: '**/*.ts, **/*.html'
 ---
 
 # ngx-vest-forms Quick Reference
 
-> **v2.0** | Angular 21+ | Vest.js 5.x | **See `vest.instructions.md` for validation patterns**
+> **v2.0** | Angular 21+ | Vest.js 6.x | **See `vest.instructions.md` for validation patterns**
 
 ## Core Rules
 
@@ -14,7 +14,7 @@ applyTo: '**/*.ts, **/*.html'
 | Binding | `[ngModel]="formValue().name"` | `[(ngModel)]="formValue().name"` |
 | Name = Path | `name="address.street"` | `name="street"` (missing path) |
 | Optional chaining | `formValue().address?.street` | `formValue().address.street` |
-| `only()` call | `only(field);` (unconditional) | `if(field){only(field)}` (breaks Vest!) |
+| Suite callback | `create((model) => { ... })` | `create((model, field?) => { only(field); ... })` |
 | Nested components | `viewProviders: [vestFormsViewProviders]` | Missing viewProviders |
 
 ## Imports
@@ -22,13 +22,19 @@ applyTo: '**/*.ts, **/*.html'
 ```typescript
 // Core
 import { NgxVestForms, vestFormsViewProviders, ROOT_FORM } from 'ngx-vest-forms';
-import { staticSuite, test, enforce, only, omitWhen } from 'vest';
+import { create, test, enforce, omitWhen } from 'vest';
 
 // Types
 import { NgxDeepPartial, NgxDeepRequired, NgxVestSuite, ValidationConfigMap, FieldPath } from 'ngx-vest-forms';
 
 // Utilities
-import { createValidationConfig, createEmptyFormState, createDebouncedPendingState } from 'ngx-vest-forms';
+import {
+  createValidationConfig,
+  createEmptyFormState,
+  createDebouncedPendingState,
+  createFormFeedbackSignals,
+  fieldWarningsToRecord,
+} from 'ngx-vest-forms';
 import { arrayToObject, objectToArray, setValueAtPath, clearFieldsWhen } from 'ngx-vest-forms';
 
 // Tokens
@@ -40,15 +46,15 @@ import { NGX_ERROR_DISPLAY_MODE_TOKEN, NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } fr
 ```typescript
 import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgxVestForms, NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
-import { staticSuite, test, enforce, only } from 'vest';
+import { create, test, enforce } from 'vest';
 
 type FormModel = NgxDeepPartial<{ firstName: string; email: string }>;
 
-export const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
-  only(field);  // ✅ ALWAYS unconditional
+export const suite: NgxVestSuite<FormModel> = create((model) => {
   test('firstName', 'Required', () => enforce(model.firstName).isNotBlank());
   test('email', 'Invalid', () => enforce(model.email).isEmail());
 });
+// Call site: suite.only('firstName').run(model) for field-level, suite.run(model) for all
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -94,9 +100,7 @@ import { NgxFormCompatibleDeepRequired } from 'ngx-vest-forms';
 > **Full details in `vest.instructions.md`**
 
 ```typescript
-export const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
-  only(field);  // ✅ CRITICAL: Never wrap in if()
-
+export const suite: NgxVestSuite<FormModel> = create((model) => {
   test('email', 'Required', () => enforce(model.email).isNotBlank());
   test('email', 'Invalid', () => enforce(model.email).isEmail());
 
@@ -110,6 +114,11 @@ export const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
     await api.checkUsername(model.username, { signal });
   });
 });
+
+// Call sites:
+// suite.only('email').run(model)     — field-level validation
+// suite.run(model)                   — full validation (e.g. on submit)
+// suite.reset()                      — reset accumulated state (on form reset)
 
 // Composable validations
 function addressValidations(address: AddressModel | undefined, prefix: string) {
@@ -264,6 +273,40 @@ export class CustomWrapperComponent {
 - Warnings may appear after `validationConfig` triggers validation, even if the field
   was not touched yet.
 
+### Presenter-friendly feedback signals (optional)
+
+You do **not** need a helper to read state from the form directive. Direct
+derivation from `this.vestForm()` with `computed()` is always valid and is often
+the clearest choice when you only need one value:
+
+```typescript
+protected readonly formState = computed(
+  () => this.vestForm()?.formState() ?? createEmptyFormState()
+);
+```
+
+Use `createFormFeedbackSignals()` when a form body needs to expose **multiple**
+presenter-friendly signals, such as packaged state, warnings, validated fields,
+and pending status for a sidebar, summary component, sticky footer, or other
+shell/presenter UI.
+
+```typescript
+protected readonly vestForm = viewChild(FormDirective<MyFormModel>);
+
+protected readonly feedback = createFormFeedbackSignals(this.vestForm);
+protected readonly formState = this.feedback.formState;
+protected readonly warnings = this.feedback.warnings;
+protected readonly validatedFields = this.feedback.validatedFields;
+protected readonly pending = this.feedback.pending;
+```
+
+Why is this a **function** instead of a directive/class/service? Because it is
+just signal composition over the `viewChild()` result you already have. It does
+not need its own directive instance, DI provider, or lifecycle API.
+
+Use `fieldWarningsToRecord()` when you only want the warning-map conversion
+without the full helper.
+
 ## Root Form Validation
 
 For form-level validations (errors not tied to a specific field):
@@ -373,6 +416,8 @@ onStructureChange() {
 |----------|---------|
 | `createValidationConfig<T>()` | Fluent builder for validation config |
 | `createEmptyFormState<T>()` | Safe initial form state |
+| `createFormFeedbackSignals()` | Optional helper for multiple presenter-facing feedback signals |
+| `fieldWarningsToRecord()` | Convert warning map to plain object |
 | `createDebouncedPendingState()` | Debounced pending indicator |
 | `arrayToObject()` / `objectToArray()` | Array ↔ object conversion |
 | `setValueAtPath()` | Set nested value |
@@ -384,13 +429,14 @@ onStructureChange() {
 |---------|-----|
 | `[(ngModel)]` | Use `[ngModel]` with `(formValueChange)` |
 | `formValue().address.street` | Use `formValue().address?.street` (optional chaining) |
-| `if(field){only(field)}` | Call `only(field)` unconditionally |
+| `create((model, field?) => { only(field); ... })` | Use `create((model) => { ... })` — Vest 6 handles focus at call site |
 | Missing `viewProviders` in nested component | Add `viewProviders: [vestFormsViewProviders]` |
 | `name="street"` for nested path | Use `name="address.street"` (full path) |
 
 ## Resources
 
 - [Vest.js Docs](https://vestjs.dev/)
+- [Migration Guide v2→v3](../../docs/migration/MIGRATION-v2.x-to-v3.0.0.md)
 - [Migration Guide v1→v2](../../docs/migration/MIGRATION-v1.x-to-v2.0.0.md)
 - [Complete Example](../../docs/COMPLETE-EXAMPLE.md)
 - [Accessibility Guide](../../.github/instructions/a11y.instructions.md)

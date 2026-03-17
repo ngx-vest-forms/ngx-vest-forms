@@ -1,51 +1,47 @@
-import { FormFieldName, NgxTypedVestSuite, ROOT_FORM } from 'ngx-vest-forms';
-import { each, enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { NgxVestSuite, ROOT_FORM } from 'ngx-vest-forms';
+import { create, each, enforce, omitWhen, test } from 'vest';
 import {
   BusinessHourFormModel,
   BusinessHoursFormModel,
 } from '../../models/business-hours-form.model';
 
-export const businessHoursSuite: NgxTypedVestSuite<BusinessHoursFormModel> =
-  staticSuite(
-    (
-      model: BusinessHoursFormModel,
-      field?: FormFieldName<BusinessHoursFormModel>
-    ) => {
-      only(field);
-      const values = model.businessHours?.values
-        ? Object.values(model.businessHours.values)
-        : [];
-      const addValue = model.businessHours?.addValue;
+export const businessHoursSuite: NgxVestSuite<BusinessHoursFormModel> = create(
+  (model: BusinessHoursFormModel) => {
+    const values = model.businessHours?.values
+      ? Object.values(model.businessHours.values)
+      : [];
+    const entries = Object.entries(model.businessHours?.values ?? {});
+    const addValue = model.businessHours?.addValue;
 
-      test(ROOT_FORM, 'You should have at least one business hour', () => {
-        enforce((values?.length || 0) > 0).isTruthy();
-      });
-      omitWhen(values?.length < 2, () => {
-        test(
-          `businessHours.values`,
-          'There should be no overlap between business hours',
-          () => {
-            enforce(
-              areBusinessHoursValid(values as BusinessHourFormModel[])
-            ).isTruthy();
-          }
-        );
-      });
-      each(values, (businessHour, index) => {
-        validateBusinessHourModel(
-          `businessHours.values.${index}`,
-          model.businessHours?.values?.[index]
-        );
-      });
+    test(ROOT_FORM, 'You should have at least one business hour', () => {
+      enforce((values?.length || 0) > 0).isTruthy();
+    });
+    omitWhen(values?.length < 2, () => {
+      test(
+        ROOT_FORM,
+        'There should be no overlap between business hours',
+        () => {
+          enforce(
+            areBusinessHoursValid(values as BusinessHourFormModel[])
+          ).isTruthy();
+        }
+      );
+    });
+    each(entries, ([key, businessHour]) => {
+      validateBusinessHourModel(
+        `businessHours.values.${key}`,
+        businessHour as BusinessHourFormModel
+      );
+    });
 
-      // The add-new fields are an optional entry area.
-      // If both are empty, they should not make the whole form invalid.
-      // Once the user starts typing in either field, we validate the pair.
-      validateBusinessHourModel('businessHours.addValue', addValue, {
-        allowEmptyPair: true,
-      });
-    }
-  );
+    // The add-new fields are an optional entry area.
+    // If both are empty, they should not make the whole form invalid.
+    // Once the user starts typing in either field, we validate the pair.
+    validateBusinessHourModel('businessHours.addValue', addValue, {
+      allowEmptyPair: true,
+    });
+  }
+);
 
 function isBlank(value: unknown): boolean {
   return typeof value !== 'string' || value.trim().length === 0;

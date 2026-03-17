@@ -10,7 +10,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   AsyncValidator,
@@ -30,6 +30,7 @@ import {
   timer,
 } from 'rxjs';
 import { ROOT_FORM } from '../constants';
+import type { NgxSuiteRunResult } from '../utils/validation-suite';
 import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
 import { ValidationOptions } from './validation-options';
 
@@ -93,9 +94,7 @@ import { ValidationOptions } from './validation-options';
  * ```typescript
  * import { ROOT_FORM } from 'ngx-vest-forms';
  *
- * export const suite = staticSuite((model, field?) => {
- *   only(field);
- *
+ * export const suite = create((model) => {
  *   test(ROOT_FORM, 'Passwords must match', () => {
  *     enforce(model.confirmPassword).equals(model.password);
  *   });
@@ -123,8 +122,6 @@ export class ValidateRootFormDirective<T>
   private readonly lastControl = signal<NgForm | null>(null);
   validationOptions = input<ValidationOptions>({ debounceTime: 0 });
   private readonly hasSubmitted = signal(false);
-  private readonly hasSubmitted$: Observable<boolean>;
-  private readonly formValue$: Observable<T | null>;
 
   readonly formValue = input<T | null>(null);
   readonly suite = input<NgxVestSuite<T> | NgxTypedVestSuite<T> | null>(null);
@@ -151,10 +148,6 @@ export class ValidateRootFormDirective<T>
   readonly ngxValidateRootFormMode = input<'submit' | 'live'>('submit');
 
   constructor() {
-    // Convert signals to Observables in injection context
-    this.hasSubmitted$ = toObservable(this.hasSubmitted);
-    this.formValue$ = toObservable(this.formValue);
-
     // Trigger validation when hasSubmitted or formValue changes
     effect(() => {
       // Track dependencies
@@ -277,47 +270,102 @@ export class ValidateRootFormDirective<T>
         debounce > 0 ? timer(debounce).pipe(map(() => mod)) : of(mod);
 
       return source$.pipe(
-        switchMap((model) => {
-          return new Observable((observer) => {
-            try {
-              const suite = this.suite();
-              if (!suite) {
+        switchMap(
+          (model) =>
+            new Observable<ValidationErrors | null>((observer) => {
+              let cancelled = false;
+              observer.add(() => {
+                cancelled = true;
+              });
+
+              try {
+                const suite = this.suite();
+                if (!suite) {
+                  observer.next(null);
+                  observer.complete();
+                  return;
+                }
+
+                // Vest 6: suite.only(field).run() for focused, stateful validation.
+                const result = (suite as NgxVestSuite<T>)
+                  .only(field)
+                  .run(model);
+
+                const extractErrors = (
+                  suiteResult: NgxSuiteRunResult
+                ): ValidationErrors | null => {
+                  if (cancelled) {
+                    return null;
+                  }
+
+                  const errors = suiteResult.getErrors()[field];
+                  return errors ? { errors } : null;
+                };
+
+                const emitAndComplete = (suiteResult: NgxSuiteRunResult) => {
+                  if (cancelled) {
+                    return;
+                  }
+
+                  observer.next(extractErrors(suiteResult));
+                  observer.complete();
+                };
+
+                const getLatestResult = (): NgxSuiteRunResult =>
+                  (suite as NgxVestSuite<T>).get?.() ?? result;
+
+                // Sync path: emit immediately to avoid PENDING status flash.
+                if (!result.isPending()) {
+                  emitAndComplete(result);
+                  return;
+                }
+
+                // Async path: use thenable completion when available.
+                if (typeof result.then === 'function') {
+                  result.then(
+                    () => {
+                      emitAndComplete(getLatestResult());
+                    },
+                    () => {
+                      // Rejected thenables can still represent validation failures.
+                      // Use the suite's latest state immediately to avoid long-lived
+                      // polling timers that can keep tests/processes alive.
+                      emitAndComplete(getLatestResult());
+                    }
+                  );
+                  return;
+                }
+
+                // Fallback path: poll pending state for non-thenable results.
+                const intervalId = setInterval(() => {
+                  if (!result.isPending()) {
+                    clearInterval(intervalId);
+                    clearTimeout(timeoutId);
+                    emitAndComplete(getLatestResult());
+                  }
+                }, 25);
+
+                const timeoutId = setTimeout(() => {
+                  clearInterval(intervalId);
+                  emitAndComplete(getLatestResult());
+                }, 5000);
+
+                observer.add(() => {
+                  clearInterval(intervalId);
+                  clearTimeout(timeoutId);
+                });
+                return;
+              } catch (err) {
+                console.error(
+                  '[validate-root-form] Validation suite error:',
+                  err
+                );
                 observer.next(null);
                 observer.complete();
                 return;
               }
-              // NOTE: `suite` can be a union of typed and untyped suite functions.
-              // When calling a union of functions, TypeScript requires arguments
-              // to satisfy all call signatures, which can produce overly-strict
-              // errors in template type-checking. At runtime this is always the
-              // ROOT_FORM field ('rootForm'), which is valid for both variants.
-              const runSuite = suite as unknown as (
-                model: T,
-                field?: unknown
-              ) => {
-                done: (
-                  cb: (result: {
-                    getErrors: () => Record<string, string[]>;
-                  }) => void
-                ) => void;
-              };
-
-              runSuite(model, field).done((result) => {
-                const errors = result.getErrors()[field];
-                // Return { errors: string[] } format expected by getAllFormErrors()
-                observer.next(errors ? { errors } : null);
-                observer.complete();
-              });
-            } catch (err) {
-              console.error(
-                '[validate-root-form] Validation suite error:',
-                err
-              );
-              observer.next(null);
-              observer.complete();
-            }
-          }) as Observable<ValidationErrors | null>;
-        }),
+            })
+        ),
         catchError((err) => {
           console.error('[validate-root-form] Observable error:', err);
           return of(null);

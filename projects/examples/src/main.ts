@@ -1,3 +1,4 @@
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { bootstrapApplication } from '@angular/platform-browser';
 import {
   provideRouter,
@@ -5,13 +6,12 @@ import {
   withEnabledBlockingInitialNavigation,
 } from '@angular/router';
 import { provideEnvironmentNgxMask } from 'ngx-mask';
-import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
+import {
+  NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+  NGX_VALIDATION_DEBOUNCE_PRESETS,
+} from 'ngx-vest-forms';
 import { AppComponent } from './app/app.component';
-import { BusinessHoursPageComponent } from './app/pages/business-hours-form/business-hours.page';
-import { DisplayModesDemoPageComponent } from './app/pages/display-modes-demo/display-modes-demo.page';
-import { PurchasePageComponent } from './app/pages/purchase-form/purchase.page';
-import { ValidationConfigDemoPageComponent } from './app/pages/validation-config-demo/validation-config-demo.page';
-import { WizardFormPageComponent } from './app/pages/wizard-form/wizard-form.page';
+import { mockPeopleApiInterceptor } from './app/services/mock-people-api.interceptor';
 
 const appRoutes: Routes = [
   {
@@ -21,7 +21,10 @@ const appRoutes: Routes = [
   },
   {
     path: 'purchase',
-    component: PurchasePageComponent,
+    loadComponent: () =>
+      import('./app/pages/purchase-form/purchase.page').then(
+        (m) => m.PurchasePageComponent
+      ),
     data: {
       title: 'Purchase Form',
       subtitle:
@@ -30,7 +33,10 @@ const appRoutes: Routes = [
   },
   {
     path: 'business-hours',
-    component: BusinessHoursPageComponent,
+    loadComponent: () =>
+      import('./app/pages/business-hours-form/business-hours.page').then(
+        (m) => m.BusinessHoursPageComponent
+      ),
     data: {
       title: 'Business Hours Form',
       subtitle:
@@ -39,7 +45,10 @@ const appRoutes: Routes = [
   },
   {
     path: 'validation-config-demo',
-    component: ValidationConfigDemoPageComponent,
+    loadComponent: () =>
+      import('./app/pages/validation-config-demo/validation-config-demo.page').then(
+        (m) => m.ValidationConfigDemoPageComponent
+      ),
     data: {
       title: 'Validation Config Demo',
       subtitle:
@@ -48,7 +57,10 @@ const appRoutes: Routes = [
   },
   {
     path: 'wizard',
-    component: WizardFormPageComponent,
+    loadComponent: () =>
+      import('./app/pages/wizard-form/wizard-form.page').then(
+        (m) => m.WizardFormPageComponent
+      ),
     data: {
       title: 'Multi-Form Wizard',
       subtitle:
@@ -57,20 +69,39 @@ const appRoutes: Routes = [
   },
   {
     path: 'display-modes-demo',
-    component: DisplayModesDemoPageComponent,
+    loadComponent: () =>
+      import('./app/pages/display-modes-demo/display-modes-demo.page').then(
+        (m) => m.DisplayModesDemoPageComponent
+      ),
     data: {
       title: 'Display Modes Demo',
       subtitle:
         'Compare error and warning visibility timing across display modes.',
     },
   },
+  {
+    path: 'zod-schema-demo',
+    loadComponent: () =>
+      import('./app/pages/zod-schema-demo/zod-schema-demo.page').then(
+        (m) => m.ZodSchemaDemoPageComponent
+      ),
+    data: {
+      title: 'Zod Schema Demo',
+      subtitle:
+        'Combine Zod structural validation with Vest per-field business rules via Standard Schema.',
+    },
+  },
 ];
 bootstrapApplication(AppComponent, {
   providers: [
+    provideHttpClient(withInterceptors([mockPeopleApiInterceptor])),
     provideEnvironmentNgxMask({ validation: false }),
     provideRouter(appRoutes, withEnabledBlockingInitialNavigation()),
     // Global configuration for validation config debounce timing
     // Using 150ms instead of default 100ms to reduce validation frequency during rapid typing
-    { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 150 },
+    {
+      provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+      useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.relaxed,
+    },
   ],
 });

@@ -8,7 +8,6 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "api": "json-server projects/examples/src/backend/db.json",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "vitest run --config vitest.config.ts",
@@ -41,7 +40,8 @@
     "@angular/router": "21.1.3",
     "rxjs": "~7.8.2",
     "tslib": "~2.8.1",
-    "vest": "~5.4.6"
+    "vest": "~6.0.3",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@analogjs/vite-plugin-angular": "^2.2.3",
@@ -80,7 +80,6 @@
     "http-server": "~14.1.1",
     "husky": "~9.1.7",
     "jsdom": "^28.0.0",
-    "json-server": "~0.17.4",
     "ng-packagr": "~21.1.0",
     "ngx-mask": "~21.0.1",
     "playwright": "~1.58.2",

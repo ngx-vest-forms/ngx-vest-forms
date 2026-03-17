@@ -1,6 +1,18 @@
 /* You can add global styles to this file, and also import other style files */
 @use 'tailwindcss';
 
+/*
+ * Tailwind v4 scans the whole repository by default. Exclude non-app sources that
+ * contain bracketed tokens like `[file:line]` or Playwright selectors such as
+ * `[aria-busy="true"]:visible`, which would otherwise be misdetected as utility
+ * classes and produce invalid generated CSS warnings during builds.
+ */
+@source not '../../../.github';
+@source not '../../../docs';
+@source not '../../../e2e';
+@source not '../../../playwright-report';
+@source not '../../../test-results';
+
 /* Use explicit class-driven dark mode (not system media-only) */
 @custom-variant dark (&:where(.dark, .dark *));
 

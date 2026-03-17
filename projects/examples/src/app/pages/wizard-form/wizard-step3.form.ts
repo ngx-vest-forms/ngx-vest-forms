@@ -9,6 +9,7 @@ import {
 import {
   FormDirective,
   NgxDeepRequired,
+  NgxFirstInvalidOptions,
   NgxVestForms,
   NgxVestSuite,
 } from 'ngx-vest-forms';
@@ -69,10 +70,20 @@ export class WizardStep3FormComponent {
   }
 
   validatedFields(): readonly string[] {
-    return this.form()?.touchedFieldPaths() ?? [];
+    return this.form()?.validatedFields() ?? [];
   }
 
   pending(): boolean {
-    return this.form()?.ngForm.form.pending ?? false;
+    return this.form()?.pending() ?? false;
+  }
+
+  isValid(): boolean {
+    return this.form()?.valid() ?? false;
+  }
+
+  focusFirstInvalidControl(
+    options?: NgxFirstInvalidOptions
+  ): HTMLElement | null {
+    return this.form()?.focusFirstInvalidControl(options) ?? null;
   }
 }

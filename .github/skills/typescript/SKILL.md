@@ -1,13 +1,6 @@
 ---
 name: typescript
-description: TypeScript and JavaScript language expert for type-level programming,
-  advanced patterns, performance optimization, error handling, and modern
-  TS 5.x best practices. Use proactively for any TypeScript/JavaScript work
-  including: complex type design, generics, discriminated unions, branded types,
-  type guards, conditional types, template literal types, mapped types,
-  satisfies operator, as const, using/await using, Result types, tsconfig
-  configuration, module systems, migration strategies, and code review.
-  Covers TypeScript 5.0 through 5.9+.
+description: "TypeScript and JavaScript language expert for type-level programming, advanced patterns, performance optimization, error handling, and modern TS 5.x best practices. Use proactively for any TypeScript/JavaScript work including complex type design, generics, discriminated unions, branded types, type guards, conditional types, template literal types, mapped types, satisfies operator, as const, using/await using, Result types, tsconfig configuration, module systems, migration strategies, and code review. Covers TypeScript 5.0 through 5.9+."
 ---
 
 # TypeScript Expert

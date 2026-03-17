@@ -1,10 +1,12 @@
-import { httpResource } from '@angular/common/http';
+import { HttpErrorResponse, httpResource } from '@angular/common/http';
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
   inject,
+  Injector,
   linkedSignal,
   output,
   signal,
@@ -15,36 +17,64 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import {
   clearFields,
   createEmptyFormState,
+  createFormFeedbackSignals,
   createValidationConfig,
   FormDirective,
+  NGX_VALIDATION_DEBOUNCE_PRESETS,
   NgxVestForms,
   setValueAtPath,
+  type ValidationOptions,
 } from 'ngx-vest-forms';
-import { AddressModel } from '../../models/address.model';
 import {
   initialPurchaseFormValue,
   PurchaseFormModel,
   purchaseFormShape,
 } from '../../models/purchase-form.model';
 import { AddressComponent } from '../../ui/address/address.component';
+import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
 import { PhoneNumbersComponent } from '../../ui/phonenumbers/phonenumbers.component';
-import { mapWarningsToRecord } from '../../utils/form-warnings.util';
 import { ProductService } from './product.service';
 import { createPurchaseValidationSuite } from './purchase.validations';
 import { SwapiService } from './swapi.service';
 
-// API response type from json-server
+// Response shape for the examples app's mock people API.
 type LukeApiResponse = {
   id: string;
   name: string;
   gender: 'male' | 'female' | 'other';
 };
 
+type FetchErrorNotice = {
+  title: string;
+  message: string;
+  detail?: string;
+};
+
+export type FetchErrorScenario =
+  | 'random'
+  | 'not-found'
+  | 'unauthorized'
+  | 'server-error'
+  | 'network-error';
+
+type FetchRequest = {
+  personId: string;
+  errorScenario?: Exclude<FetchErrorScenario, 'random'>;
+};
+
+const FETCH_ERROR_SCENARIOS: Array<Exclude<FetchErrorScenario, 'random'>> = [
+  'not-found',
+  'unauthorized',
+  'server-error',
+  'network-error',
+];
+
 @Component({
   selector: 'ngx-purchase-form',
   imports: [
     NgxVestForms,
+    AlertPanel,
     AddressComponent,
     FormSectionComponent,
     PhoneNumbersComponent,
@@ -53,14 +83,22 @@ type LukeApiResponse = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PurchaseForm {
+  protected readonly validationDebouncePresets =
+    NGX_VALIDATION_DEBOUNCE_PRESETS;
+  protected readonly formValidationOptions: ValidationOptions = {
+    debounceTime: this.validationDebouncePresets.typing,
+  };
+  protected readonly userIdValidationOptions: ValidationOptions = {
+    debounceTime: this.validationDebouncePresets.async,
+  };
+  private readonly injector = inject(Injector);
   private readonly swapiService = inject(SwapiService);
   private readonly productService = inject(ProductService);
   readonly products = toSignal(this.productService.getAll());
 
   private readonly vestForm =
     viewChild<FormDirective<PurchaseFormModel>>('vestForm');
-
-  private readonly shippingAddress = signal<AddressModel>({});
+  private readonly formFeedback = createFormFeedbackSignals(this.vestForm);
 
   protected readonly formValue = signal<PurchaseFormModel>(
     initialPurchaseFormValue
@@ -74,52 +112,74 @@ export class PurchaseForm {
   readonly saveRequested = output<PurchaseFormModel>();
 
   /** Exposes the directive's packaged form state. */
-  readonly formState = computed(() => {
-    const state = this.vestForm()?.formState();
-    if (!state) return createEmptyFormState<PurchaseFormModel>();
-    return state;
-  });
+  readonly formState = this.formFeedback.formState;
 
   /** Exposes field warnings as a plain Record for presentational components. */
-  readonly warnings = computed(() =>
-    mapWarningsToRecord(this.vestForm()?.fieldWarnings() ?? new Map())
-  );
+  readonly warnings = this.formFeedback.warnings;
 
   /**
    * Field paths that have been validated (touched/blurred or submitted).
    * Delegates to the FormDirective's touchedFieldPaths signal which
    * reactively tracks TouchedChangeEvent from the form tree.
    */
-  readonly validatedFields = computed(
-    () => this.vestForm()?.touchedFieldPaths() ?? []
-  );
+  readonly validatedFields = this.formFeedback.validatedFields;
 
   /** True while async validation is in progress. */
-  readonly pending = computed(
-    () => this.vestForm()?.ngForm.form.pending ?? false
-  );
+  readonly pending = this.formFeedback.pending;
 
   /**
-   * Reactive fetch trigger derived from firstName.
-   * Automatically becomes `true` when firstName is "Luke".
-   * Writable so the "Fetch Data" button can trigger a manual fetch.
-   * Resets when firstName changes away from "Luke".
+   * Automatically fetch demo data when the first name becomes "Luke".
+   * A manual request can temporarily override this to demonstrate both
+   * success and failure flows from the page toolbar.
    */
-  private readonly fetchLukeRequested = linkedSignal({
+  private readonly autoFetchLukeRequested = linkedSignal({
     source: () => this.formValue().firstName,
     computation: (firstName) => firstName === 'Luke',
   });
 
+  private readonly manualFetchRequest = signal<FetchRequest | undefined>(
+    undefined
+  );
+  private readonly fetchedPersonId = signal<string | null>(null);
+  private readonly fetchErrorNoticeSignal = signal<
+    FetchErrorNotice | undefined
+  >(undefined);
+
+  private readonly requestedPersonId = computed(() => {
+    const manualRequest = this.manualFetchRequest();
+    if (manualRequest) {
+      return manualRequest;
+    }
+
+    return this.autoFetchLukeRequested() ? { personId: '1' } : undefined;
+  });
+
   private readonly lukeResource = httpResource<LukeApiResponse>(() => {
-    if (!this.fetchLukeRequested()) {
+    const request = this.requestedPersonId();
+
+    if (!request) {
       return undefined;
     }
-    return 'http://localhost:3000/people/1';
+
+    const requestUrl = new URL(
+      `/api/people/${request.personId}`,
+      globalThis.location.origin
+    );
+
+    if (request.errorScenario) {
+      requestUrl.searchParams.set('errorScenario', request.errorScenario);
+    }
+
+    return `${requestUrl.pathname}${requestUrl.search}`;
   });
 
   private readonly lukeData = computed(() => {
-    const data = this.lukeResource.value();
+    const data = this.lukeResource.hasValue()
+      ? this.lukeResource.value()
+      : undefined;
+
     if (!data) return undefined;
+
     const nameParts = data.name.split(' ');
     return {
       userId: data.id,
@@ -130,11 +190,15 @@ export class PurchaseForm {
   });
 
   protected readonly fetchedDataDisabled = computed(
-    () => this.lukeResource.value() !== undefined
+    () => this.fetchedPersonId() !== null
   );
 
   protected readonly loading = computed(
     () => this.lukeResource.status() === 'loading'
+  );
+
+  protected readonly fetchErrorNotice = computed(() =>
+    this.fetchErrorNoticeSignal()
   );
 
   protected readonly emergencyContactDisabled = computed(
@@ -155,7 +219,7 @@ export class PurchaseForm {
   );
 
   protected readonly currentShippingAddress = computed(
-    () => this.formValue().addresses?.shippingAddress || this.shippingAddress()
+    () => this.formValue().addresses?.shippingAddress
   );
 
   protected readonly validationConfig = computed(() => {
@@ -223,18 +287,60 @@ export class PurchaseForm {
       const luke = this.lukeData();
       if (luke) {
         untracked(() => {
+          this.fetchErrorNoticeSignal.set(undefined);
+          this.manualFetchRequest.set(undefined);
+          this.fetchedPersonId.set(luke.userId);
           this.updateFormValue((v) => ({ ...v, ...luke }));
         });
       }
     });
+
+    effect(() => {
+      if (this.lukeResource.status() !== 'error') {
+        return;
+      }
+
+      const request = this.requestedPersonId();
+      const requestError = this.lukeResource.error();
+
+      untracked(() => {
+        const hadFetchedData = this.fetchedPersonId() !== null;
+
+        this.manualFetchRequest.set(undefined);
+        this.fetchedPersonId.set(null);
+        this.fetchErrorNoticeSignal.set(
+          this.buildFetchErrorNotice(requestError, request)
+        );
+
+        if (hadFetchedData) {
+          this.updateFormValue((value) =>
+            clearFields(value, ['userId', 'firstName', 'lastName', 'gender'])
+          );
+        }
+      });
+    });
   }
 
   fetchData(): void {
-    this.fetchLukeRequested.set(true);
+    this.fetchErrorNoticeSignal.set(undefined);
+    this.manualFetchRequest.set({ personId: '1' });
+  }
+
+  fetchDataWithFailure(errorScenario: FetchErrorScenario = 'not-found'): void {
+    const resolvedErrorScenario = this.resolveErrorScenario(errorScenario);
+
+    this.fetchErrorNoticeSignal.set(undefined);
+    this.manualFetchRequest.set({
+      personId: resolvedErrorScenario === 'not-found' ? '404' : '1',
+      errorScenario: resolvedErrorScenario,
+    });
   }
 
   clearSensitiveData(): void {
-    this.fetchLukeRequested.set(false);
+    this.manualFetchRequest.set(undefined);
+    this.fetchErrorNoticeSignal.set(undefined);
+    this.fetchedPersonId.set(null);
+    this.autoFetchLukeRequested.set(false);
     this.updateFormValue((v) =>
       clearFields(v, [
         'passwords',
@@ -260,10 +366,11 @@ export class PurchaseForm {
   }
 
   protected onFormValueChange(value: PurchaseFormModel): void {
-    this.formValue.set(value);
-    if (value.addresses?.shippingAddress) {
-      this.shippingAddress.set(value.addresses.shippingAddress);
+    if (this.didFetchFieldsChange(value)) {
+      this.fetchErrorNoticeSignal.set(undefined);
     }
+
+    this.formValue.set(value);
     this.formValueChange.emit(value);
   }
 
@@ -278,15 +385,125 @@ export class PurchaseForm {
   }
 
   protected onSubmit(): void {
-    this.saveRequested.emit(this.formValue());
+    const formDirective = this.vestForm();
+    if (!formDirective) {
+      return;
+    }
+
+    afterNextRender(
+      () => {
+        formDirective.focusFirstInvalidControl();
+
+        if (
+          !formDirective.ngForm.form.valid ||
+          formDirective.ngForm.form.pending
+        ) {
+          return;
+        }
+
+        this.saveRequested.emit(this.formValue());
+      },
+      { injector: this.injector }
+    );
   }
 
   protected onReset(): void {
+    this.manualFetchRequest.set(undefined);
+    this.fetchErrorNoticeSignal.set(undefined);
+    this.fetchedPersonId.set(null);
+    this.autoFetchLukeRequested.set(false);
     this.formValue.set(initialPurchaseFormValue);
-    this.shippingAddress.set({});
     // resetForm() handles everything: clears controls, fieldWarnings, triggers
     // re-validation, which causes formValueChange to emit.
     this.vestForm()?.resetForm(initialPurchaseFormValue);
+  }
+
+  private didFetchFieldsChange(nextValue: PurchaseFormModel): boolean {
+    const currentValue = this.formValue();
+
+    return (
+      nextValue.userId !== currentValue.userId ||
+      nextValue.firstName !== currentValue.firstName ||
+      nextValue.lastName !== currentValue.lastName ||
+      nextValue.gender !== currentValue.gender
+    );
+  }
+
+  private buildFetchErrorNotice(
+    error: unknown,
+    request: FetchRequest | undefined
+  ): FetchErrorNotice {
+    if (error instanceof HttpErrorResponse) {
+      const detail = this.getHttpErrorDetail(error);
+
+      if (error.status === 404) {
+        return {
+          title: 'Person not found',
+          message: 'No person was found for this request.',
+          detail,
+        };
+      }
+
+      if (error.status === 0) {
+        return {
+          title: 'Network error',
+          message:
+            'We could not reach the people service. Please check your connection and try again.',
+          detail,
+        };
+      }
+
+      return {
+        title: error.statusText || 'Request failed',
+        message: `The request failed with status ${error.status}.`,
+        detail,
+      };
+    }
+
+    if (error instanceof Error) {
+      return {
+        title: 'Request failed',
+        message: error.message,
+      };
+    }
+
+    return {
+      title: 'Request failed',
+      message:
+        request?.personId === '1'
+          ? 'We could not load Luke Skywalker right now. Please try again.'
+          : 'We could not load demo data for this request. Please try again.',
+    };
+  }
+
+  private resolveErrorScenario(
+    errorScenario: FetchErrorScenario
+  ): Exclude<FetchErrorScenario, 'random'> {
+    if (errorScenario !== 'random') {
+      return errorScenario;
+    }
+
+    const randomIndex = Math.floor(
+      Math.random() * FETCH_ERROR_SCENARIOS.length
+    );
+    return FETCH_ERROR_SCENARIOS[randomIndex] ?? 'not-found';
+  }
+
+  private getHttpErrorDetail(error: HttpErrorResponse): string | undefined {
+    if (
+      typeof error.error === 'object' &&
+      error.error !== null &&
+      'message' in error.error &&
+      typeof error.error.message === 'string'
+    ) {
+      return error.error.message;
+    }
+
+    if (typeof error.message === 'string' && error.message.length > 0) {
+      return error.message;
+    }
+
+    return undefined;
   }
 
   private updateFormValue(
@@ -297,9 +514,6 @@ export class PurchaseForm {
       return;
     }
     this.formValue.set(next);
-    if (next.addresses?.shippingAddress) {
-      this.shippingAddress.set(next.addresses.shippingAddress);
-    }
     this.formValueChange.emit(next);
   }
 }
