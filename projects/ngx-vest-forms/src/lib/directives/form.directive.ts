@@ -1112,26 +1112,25 @@ export class FormDirective<T extends Record<string, unknown>> {
                       // Register cleanup BEFORE starting intervals so that if the
                       // subscription was already closed, teardown fires immediately
                       // and prevents any polling callbacks from running.
-                      let intervalId: ReturnType<typeof setInterval>;
-                      let timeoutId: ReturnType<typeof setTimeout>;
+                      const intervalId: ReturnType<typeof setInterval> =
+                        setInterval(() => {
+                          if (cancelled || !result.isPending()) {
+                            clearInterval(intervalId);
+                            clearTimeout(timeoutId);
+                            emitAndComplete(getLatestResult());
+                          }
+                        }, 25);
+
+                      const timeoutId: ReturnType<typeof setTimeout> =
+                        setTimeout(() => {
+                          clearInterval(intervalId);
+                          emitAndComplete(getLatestResult());
+                        }, 5000);
 
                       observer.add(() => {
                         clearInterval(intervalId);
                         clearTimeout(timeoutId);
                       });
-
-                      intervalId = setInterval(() => {
-                        if (cancelled || !result.isPending()) {
-                          clearInterval(intervalId);
-                          clearTimeout(timeoutId);
-                          emitAndComplete(getLatestResult());
-                        }
-                      }, 25);
-
-                      timeoutId = setTimeout(() => {
-                        clearInterval(intervalId);
-                        emitAndComplete(getLatestResult());
-                      }, 5000);
                     });
                   return;
                 }
