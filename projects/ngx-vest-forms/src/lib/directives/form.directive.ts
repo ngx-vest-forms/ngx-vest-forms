@@ -929,7 +929,8 @@ export class FormDirective<T extends Record<string, unknown>> {
     // Reset Angular control validation state
     const control = this.ngForm.form.get(field);
     if (control) {
-      control.updateValueAndValidity({ emitEvent: false });
+      control.updateValueAndValidity({ emitEvent: true });
+      this.#blurTick.update((v) => v + 1);
     }
   }
 
@@ -1094,9 +1095,11 @@ export class FormDirective<T extends Record<string, unknown>> {
                 if (typeof result.then === 'function') {
                   Promise.resolve(result)
                     .then(() => {
+                      if (cancelled) return;
                       emitAndComplete(getLatestResult());
                     })
                     .catch(() => {
+                      if (cancelled) return;
                       // Rejected thenables can still represent validation failures.
                       // Read the suite's latest state when available instead of
                       // relying on the original thenable result object, which can
@@ -1106,23 +1109,29 @@ export class FormDirective<T extends Record<string, unknown>> {
                         return;
                       }
 
-                      const intervalId = setInterval(() => {
-                        if (!result.isPending()) {
+                      // Register cleanup BEFORE starting intervals so that if the
+                      // subscription was already closed, teardown fires immediately
+                      // and prevents any polling callbacks from running.
+                      let intervalId: ReturnType<typeof setInterval>;
+                      let timeoutId: ReturnType<typeof setTimeout>;
+
+                      observer.add(() => {
+                        clearInterval(intervalId);
+                        clearTimeout(timeoutId);
+                      });
+
+                      intervalId = setInterval(() => {
+                        if (cancelled || !result.isPending()) {
                           clearInterval(intervalId);
                           clearTimeout(timeoutId);
                           emitAndComplete(getLatestResult());
                         }
                       }, 25);
 
-                      const timeoutId = setTimeout(() => {
+                      timeoutId = setTimeout(() => {
                         clearInterval(intervalId);
                         emitAndComplete(getLatestResult());
                       }, 5000);
-
-                      observer.add(() => {
-                        clearInterval(intervalId);
-                        clearTimeout(timeoutId);
-                      });
                     });
                   return;
                 }

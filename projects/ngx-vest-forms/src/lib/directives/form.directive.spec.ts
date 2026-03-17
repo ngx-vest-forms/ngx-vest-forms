@@ -479,6 +479,149 @@ describe('FormDirective - Async Validator', () => {
     expect(nextSpy).not.toHaveBeenCalled();
     expect(instance.vestForm.fieldWarnings().has('username')).toBe(false);
   });
+
+  it('should not leak stale fieldWarnings when a rejected thenable is cancelled', async () => {
+    @Component({
+      selector: 'test-rejected-cancel-host',
+      template: `<form
+        ngxVestForm
+        [suite]="suite()"
+        #vest="ngxVestForm"
+      ></form>`,
+      imports: [NgxVestForms],
+    })
+    class TestRejectedCancelHost {
+      private rejectPendingRun: (() => void) | undefined;
+
+      private readonly finalResult = {
+        isPending: () => false,
+        isValid: () => true,
+        hasErrors: () => false,
+        hasWarnings: () => true,
+        isTested: () => true,
+        getErrors: () => ({}),
+        getWarnings: () => ({ username: ['Username looks weak'] }),
+      };
+
+      private readonly pendingResult = {
+        ...this.finalResult,
+        isPending: () => true,
+        then: (
+          _onfulfilled?: ((value: unknown) => unknown) | null,
+          onrejected?: ((reason: unknown) => unknown) | null
+        ) =>
+          new Promise((_resolve, reject) => {
+            this.rejectPendingRun = () => {
+              if (onrejected) onrejected(new Error('rejected'));
+              reject(new Error('rejected'));
+            };
+          }),
+      };
+
+      readonly suite = signal({
+        only: () => ({ run: () => this.pendingResult }),
+        get: () => this.finalResult,
+        reset: vi.fn(),
+        resetField: vi.fn(),
+        remove: vi.fn(),
+        subscribe: vi.fn(),
+        dump: vi.fn(),
+        resume: vi.fn(),
+      } as any);
+
+      flushPendingRun(): void {
+        this.rejectPendingRun?.();
+      }
+
+      @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
+    }
+
+    const { fixture } = await render(TestRejectedCancelHost);
+    const instance = fixture.componentInstance;
+    const validator = instance.vestForm.createAsyncValidator('username', {
+      debounceTime: 0,
+    });
+    const nextSpy = vi.fn();
+
+    const subscription = (
+      validator({ value: 'abc' } as any) as Observable<any>
+    ).subscribe(nextSpy);
+
+    vi.runAllTimers();
+    await Promise.resolve();
+
+    // Cancel before promise rejection is handled
+    subscription.unsubscribe();
+    instance.flushPendingRun();
+    await Promise.resolve();
+    vi.runAllTimers();
+    await Promise.resolve();
+
+    expect(nextSpy).not.toHaveBeenCalled();
+    expect(instance.vestForm.fieldWarnings().has('username')).toBe(false);
+  });
+
+  it('should only emit the latest result when rapid field changes overlap', async () => {
+    let runCount = 0;
+    @Component({
+      selector: 'test-rapid-overlap-host',
+      template: `<form
+        ngxVestForm
+        [suite]="suite()"
+        #vest="ngxVestForm"
+      ></form>`,
+      imports: [NgxVestForms],
+    })
+    class TestRapidOverlapHost {
+      readonly suite = signal({
+        only: () => ({
+          run: () => {
+            runCount++;
+            return {
+              isPending: () => false,
+              isValid: () => true,
+              getErrors: () => ({}),
+              getWarnings: () => ({}),
+            };
+          },
+        }),
+        get: () => ({
+          isPending: () => false,
+          isValid: () => true,
+          getErrors: () => ({}),
+          getWarnings: () => ({}),
+        }),
+        reset: vi.fn(),
+      } as any);
+
+      @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
+    }
+
+    const { fixture } = await render(TestRapidOverlapHost);
+    const instance = fixture.componentInstance;
+    const validator = instance.vestForm.createAsyncValidator('username', {
+      debounceTime: 0,
+    });
+
+    runCount = 0;
+    const results: unknown[] = [];
+
+    // Start first validation, then immediately start second (supersedes first)
+    const sub1 = (
+      validator({ value: 'a' } as any) as Observable<any>
+    ).subscribe((v: unknown) => results.push(v));
+    sub1.unsubscribe(); // Superseded by next call
+
+    const result2 = awaitResult(validator({ value: 'ab' } as any));
+    vi.runAllTimers();
+    await Promise.resolve();
+    const finalResult = await result2;
+
+    // First subscription was cancelled, so it should not have emitted
+    expect(results).toHaveLength(0);
+    // Second validation should produce a result
+    expect(finalResult).toBeNull(); // no errors → null
+  });
 });
 
 describe.todo('FormDirective - Validator Cache');
