@@ -4,10 +4,7 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { create, enforce, test as vestTest, warn } from 'vest';
 import { NgxVestForms } from '../exports';
 import { FormControlStateDirective } from './form-control-state.directive';
-import { beforeEach,
-describe,
-expect,
-it} from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 @Component({
   imports: [FormsModule, FormControlStateDirective],
