@@ -111,14 +111,8 @@ class DependentBlurDisplayModeComponent {
   readonly formValue = signal<DependentBlurModel>({});
   readonly suite = dependentBlurSuite;
   readonly validationConfig = {
-    quantity: {
-      revalidate: ['justification'],
-      displayMode: 'respect-target-interaction',
-    },
-    justification: {
-      revalidate: ['quantity'],
-      displayMode: 'respect-target-interaction',
-    },
+    quantity: ['justification'],
+    justification: ['quantity'],
   } as const;
 }
 
@@ -418,7 +412,7 @@ describe('ValidationConfig Error Display', () => {
       .toBe(true);
   });
 
-  it('should support respect-target-interaction config entries with on-blur error display', async () => {
+  it('should keep dependent errors quiet with on-blur error display', async () => {
     await TestBed.resetTestingModule()
       .configureTestingModule({
         imports: [DependentBlurDisplayModeComponent],

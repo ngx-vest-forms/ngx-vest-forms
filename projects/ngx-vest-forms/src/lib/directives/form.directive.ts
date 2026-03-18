@@ -53,11 +53,7 @@ import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import { DeepRequired } from '../utils/deep-required';
 import { fastDeepEqual } from '../utils/equality';
-import type {
-  NgxDependentValidationDisplayMode,
-  ValidationConfigEntry,
-  ValidationConfigMap,
-} from '../utils/field-path-types';
+import type { ValidationConfigMap } from '../utils/field-path-types';
 import { stringifyFieldPath } from '../utils/field-path.utils';
 import {
   DEFAULT_FOCUS_SELECTOR,
@@ -85,32 +81,6 @@ import { ValidationOptions } from './validation-options';
  */
 const VALIDATION_IN_PROGRESS_TIMEOUT_MS = 500;
 
-type ResolvedValidationConfigEntry = {
-  dependents: string[];
-  displayMode?: NgxDependentValidationDisplayMode;
-};
-
-function resolveValidationConfigEntry<T>(
-  entry: ValidationConfigEntry<T> | undefined
-): ResolvedValidationConfigEntry {
-  if (!entry) {
-    return {
-      dependents: [],
-    };
-  }
-
-  if (Array.isArray(entry)) {
-    return {
-      dependents: [...entry],
-    };
-  }
-
-  return {
-    dependents: [...entry.revalidate],
-    displayMode: entry.displayMode,
-  };
-}
-
 /**
  * Type for validation configuration that accepts both the typed and untyped versions.
  * This ensures backward compatibility while supporting the new typed API.
@@ -124,6 +94,9 @@ export type NgxValidationConfig<T = unknown> =
  * Payload emitted when a named control inside the form loses focus.
  *
  * This is intentionally low-level so app code can build workflows such as
+  * It is not intended as a blur-time workaround for dependent field validation;
+  * for that pattern, prefer `validationConfig` plus each target field's own
+  * `errorDisplayMode`.
  * draft auto-save, analytics, or blur-driven side effects without the form
  * library taking ownership of persistence behavior.
  *
@@ -781,10 +754,16 @@ export class FormDirective<T extends Record<string, unknown>> {
       return;
     }
 
+    // Prefer the cached snapshots first and only recompute as a fallback.
+    // This keeps the common path cheap while still providing a current value
+    // for blur listeners in edge cases where the linked signal has not updated yet.
     this.fieldBlur.emit({
       field,
       value: control.value,
-      formValue: mergeValuesAndRawValues<T>(this.ngForm.form),
+      formValue:
+        this.#formValueSignal() ??
+        this.formValue() ??
+        mergeValuesAndRawValues<T>(this.ngForm.form),
       dirty: control.dirty,
       touched: control.touched,
       valid: control.valid,
@@ -1025,12 +1004,10 @@ export class FormDirective<T extends Record<string, unknown>> {
       return EMPTY;
     }
 
-    const streams = Object.entries(
-      config as Record<string, ValidationConfigEntry<T>>
-    ).map(([triggerField, entry]) => {
-      const { dependents } = resolveValidationConfigEntry(entry);
-      return this.#createTriggerStream(form, triggerField, dependents);
-    });
+    const streams = Object.entries(config as Record<string, string[]>).map(
+      ([triggerField, dependents]) =>
+        this.#createTriggerStream(form, triggerField, dependents || [])
+    );
 
     return streams.length > 0 ? rxMerge(...streams) : EMPTY;
   }
@@ -1213,21 +1190,6 @@ export class FormDirective<T extends Record<string, unknown>> {
         // CRITICAL: Mark the dependent field as in-progress BEFORE calling updateValueAndValidity
         // This prevents the dependent field's valueChanges from triggering its own validationConfig
         this.validationInProgress.add(depField);
-
-        // NOTE: Touch propagation removed (PR #78)
-        // Previously, we propagated touch state from trigger to dependent fields.
-        // This caused UX issues where dependent fields showed errors immediately
-        // after being revealed by a toggle, even though the user never interacted with them.
-        //
-        // With this change:
-        // - Errors on dependent fields only show after the user directly touches/blurs them
-        // - ARIA attributes (aria-invalid) still work correctly via isInvalid check
-        // - Warnings still show after validation via hasBeenValidated check
-        //
-        // The removed code was:
-        // if (control.touched && !dependentControl.touched) {
-        //   dependentControl.markAsTouched({ onlySelf: true });
-        // }
 
         // emitEvent: true is REQUIRED for async validators to actually run
         // The validationInProgress Set prevents infinite loops:

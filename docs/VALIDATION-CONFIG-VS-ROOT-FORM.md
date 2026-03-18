@@ -82,9 +82,7 @@ test('confirmPassword', 'Passwords must match', () => {
 
 ```typescript
 validationConfig = createValidationConfig<FormModel>()
-  .bidirectional('quantity', 'justification', {
-    displayMode: 'respect-target-interaction',
-  })
+  .bidirectional('quantity', 'justification')
   .build();
 
 // Vest suite (field-level tests with omitWhen)
@@ -95,7 +93,7 @@ omitWhen(!model.quantity, () => {
 });
 ```
 
-Use this object form when the dependent field should revalidate immediately, but error visibility
+Use this pattern when the dependent field should revalidate immediately, but error visibility
 should still wait for the target field's own blur/submission policy (for example
 `<ngx-control-wrapper [errorDisplayMode]="'on-blur'">`).
 
@@ -104,6 +102,11 @@ This is especially useful in blur-driven workflows such as draft auto-save:
 - the dependent field becomes logically invalid immediately
 - the draft can still be persisted
 - the untouched dependent field stays visually quiet until its own blur
+
+Avoid adding `(blur)` handlers that call `triggerFormValidation()` just to enforce this
+pattern. `validationConfig` already handles the revalidation side, while
+`errorDisplayMode="on-blur"` keeps error visibility tied to the dependent field's own
+interaction timing.
 
 Use the form's `fieldBlur` output to trigger the save side, and keep
 `validationConfig` focused on revalidation timing.

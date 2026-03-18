@@ -4,7 +4,7 @@ import { render } from '@testing-library/angular';
 import { isObservable, Observable } from 'rxjs';
 import { enforce, only, staticSuite, test as vestTest, warn } from 'vest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FormDirective } from '../directives/form.directive';
+import { FormDirective, NgxFieldBlurEvent } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
 // Helper to await either a Promise or Observable
 async function awaitResult<T>(result: Promise<T> | Observable<T>) {
@@ -602,9 +602,9 @@ describe('FormDirective - Signals/Outputs', () => {
       readonly formValue = signal<{ projectName?: string }>({
         projectName: '',
       });
-      readonly blurEvents = signal<Array<Record<string, unknown>>>([]);
+      readonly blurEvents = signal<Array<NgxFieldBlurEvent<{ projectName?: string }>>>([]);
 
-      handleFieldBlur(event: Record<string, unknown>): void {
+      handleFieldBlur(event: NgxFieldBlurEvent<{ projectName?: string }>): void {
         this.blurEvents.update((events) => [...events, event]);
       }
     }
@@ -634,11 +634,11 @@ describe('FormDirective - Signals/Outputs', () => {
 
     const [blurEvent] = fixture.componentInstance.blurEvents();
     expect(blurEvent).toBeTruthy();
-    expect(blurEvent?.['field']).toBe('projectName');
-    expect(blurEvent?.['value']).toBe('Angular course');
-    expect(blurEvent?.['touched']).toBe(true);
-    expect(blurEvent?.['dirty']).toBe(true);
-    expect(blurEvent?.['formValue']).toEqual({
+    expect(blurEvent?.field).toBe('projectName');
+    expect(blurEvent?.value).toBe('Angular course');
+    expect(blurEvent?.touched).toBe(true);
+    expect(blurEvent?.dirty).toBe(true);
+    expect(blurEvent?.formValue).toEqual({
       projectName: 'Angular course',
     });
   });

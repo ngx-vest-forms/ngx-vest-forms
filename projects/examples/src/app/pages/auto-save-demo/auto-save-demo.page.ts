@@ -75,12 +75,8 @@ export class AutoSaveDemoPageComponent {
   protected readonly shape = autoSaveDemoShape;
   protected readonly validationConfig =
     createValidationConfig<AutoSaveDemoModel>()
-      .bidirectional('quantity', 'quantityJustification', {
-        displayMode: 'respect-target-interaction',
-      })
-      .whenChanged('preferredContactMethod', 'email', {
-        displayMode: 'respect-target-interaction',
-      })
+      .bidirectional('quantity', 'quantityJustification')
+      .whenChanged('preferredContactMethod', 'email')
       .build();
 
   protected readonly saveStatus = signal<AutoSaveStatus>({ kind: 'idle' });

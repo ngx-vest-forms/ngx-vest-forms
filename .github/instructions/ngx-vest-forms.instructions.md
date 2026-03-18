@@ -142,6 +142,30 @@ protected readonly validationConfig: ValidationConfigMap<FormModel> = {
 <form ngxVestForm [validationConfig]="validationConfig" ...>
 ```
 
+For the common “dependent field becomes invalid immediately but should stay visually quiet until
+its own blur” UX, pair `validationConfig` with wrappers that use
+`[errorDisplayMode]="'on-blur'"` on the dependent field(s).
+
+```html
+<ngx-control-wrapper [errorDisplayMode]="'on-blur'">
+  <label for="quantity">Quantity</label>
+  <input id="quantity" name="quantity" [ngModel]="formValue().quantity" />
+</ngx-control-wrapper>
+
+<ngx-control-wrapper [errorDisplayMode]="'on-blur'">
+  <label for="justification">Justification</label>
+  <textarea
+    id="justification"
+    name="justification"
+    [ngModel]="formValue().justification"
+  ></textarea>
+</ngx-control-wrapper>
+```
+
+**Important:** do **not** add `(blur)` handlers that call `triggerFormValidation()` just to force
+dependent-field error timing. `validationConfig` already handles revalidation; the wrapper's
+`errorDisplayMode` controls when errors become visible.
+
 **Reactive config** for conditionally rendered fields:
 
 ```typescript
@@ -336,6 +360,22 @@ onStructureChange() {
 }
 ```
 
+Use `triggerFormValidation()` for structure changes or other explicit revalidation cases where no
+value change occurred. Do not use it as a blur-time workaround for dependent-field UX.
+
+For application-side blur workflows such as draft auto-save, analytics, or field-level side
+effects, use the form's `fieldBlur` output instead:
+
+```typescript
+protected handleFieldBlur(event: NgxFieldBlurEvent<FormModel>): void {
+  if (!event.formValue || !event.dirty || event.pending) {
+    return;
+  }
+
+  this.saveDraft(event.formValue);
+}
+```
+
 ## API Reference
 
 ### Form Directive Inputs
@@ -355,6 +395,7 @@ onStructureChange() {
 | `formValueChange` | `T` | Emits on any value change |
 | `validChange` | `boolean` | Emits when validity changes |
 | `errorsChange` | `Record<string, string[]>` | Emits form-level errors (with ngxValidateRootForm) |
+| `fieldBlur` | `NgxFieldBlurEvent<T>` | Emits when a named field loses focus; useful for app-level side effects |
 
 ### Type Utilities
 
@@ -366,6 +407,7 @@ onStructureChange() {
 | `ValidationConfigMap<T>` | Type-safe validation config |
 | `FieldPath<T>` | All valid field paths for autocomplete |
 | `NgxFormState<T>` | Form state type |
+| `NgxFieldBlurEvent<T>` | Blur event payload with field, value, formValue, and control state |
 
 ### Utility Functions
 
@@ -387,6 +429,7 @@ onStructureChange() {
 | `if(field){only(field)}` | Call `only(field)` unconditionally |
 | Missing `viewProviders` in nested component | Add `viewProviders: [vestFormsViewProviders]` |
 | `name="street"` for nested path | Use `name="address.street"` (full path) |
+| `(blur)="vestForm.triggerFormValidation(...)"` for dependent UX | Use `validationConfig` + wrapper `errorDisplayMode` instead |
 
 ## Resources
 

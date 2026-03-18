@@ -279,17 +279,22 @@ protected readonly validationConfig = {
 **Important**: `validationConfig` only triggers re-validation—validation logic is always defined in your Vest suite.
 
 For dependent fields that should become invalid immediately but stay visually quiet until the
-target field's own blur/display policy allows errors, use the opt-in object form:
+target field's own blur/display policy allows errors, combine `validationConfig` with
+`errorDisplayMode="on-blur"` on the target wrappers:
 
 ```typescript
 protected readonly validationConfig = createValidationConfig<FormModel>()
-  .bidirectional('quantity', 'justification', {
-    displayMode: 'respect-target-interaction',
-  })
+  .bidirectional('quantity', 'justification')
   .build();
 ```
 
 This pairs well with `<ngx-control-wrapper [errorDisplayMode]="'on-blur'">`.
+
+Avoid calling `triggerFormValidation()` from field-level blur handlers to force this UX.
+`validationConfig` already re-runs the dependent validation, and the wrapper's
+`errorDisplayMode` decides when the dependent field becomes visibly noisy.
+Extra blur-triggered validation can restart async validators unnecessarily and make
+the flow harder to reason about.
 
 If you also want draft auto-save on blur, keep persistence separate from validation and
 listen to the form's `fieldBlur` output. That gives you immediate dependent validity,

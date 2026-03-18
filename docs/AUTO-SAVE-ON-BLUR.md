@@ -119,13 +119,11 @@ If field **A** makes field **B** required, a good blur-save UX usually wants:
 2. the draft can still be saved
 3. field **B** stays visually quiet until the user blurs **B**
 
-That is exactly what the opt-in `validationConfig` object form is for:
+That works well with the regular `validationConfig` dependency map:
 
 ```ts
 protected readonly validationConfig = createValidationConfig<FormModel>()
-  .bidirectional('quantity', 'quantityJustification', {
-    displayMode: 'respect-target-interaction',
-  })
+  .bidirectional('quantity', 'quantityJustification')
   .build();
 ```
 
@@ -153,6 +151,12 @@ This gives you the calm UX discussed in issue #93:
 - accurate required state
 - no premature inline error on untouched dependent fields
 
+Avoid calling `triggerFormValidation()` from field blur handlers as part of this pattern.
+That method is meant for structure changes and other explicit revalidation cases, not for
+re-implementing dependent-field blur timing. For dependent fields, prefer the built-in
+combination of `validationConfig` and wrapper display modes, and use `fieldBlur` only for
+application-level side effects such as draft persistence.
+
 ## Example in this repository
 
 See the examples app:
@@ -167,7 +171,7 @@ The demo stores the draft temporarily in:
 It also demonstrates:
 
 - blur-triggered draft persistence
-- dependent validation with `respect-target-interaction`
+- dependent validation with on-blur error display
 - reload restore behavior
 - save failure + retry behavior
 
