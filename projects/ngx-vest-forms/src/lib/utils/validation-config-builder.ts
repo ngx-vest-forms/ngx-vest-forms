@@ -1,4 +1,9 @@
-import type { FieldPath, ValidationConfigMap } from './field-path-types';
+import type {
+  FieldPath,
+  NgxDependentValidationDisplayMode,
+  ValidationConfigEntry,
+  ValidationConfigMap,
+} from './field-path-types';
 
 // NOTE: `typeof ngDevMode !== 'undefined' && ngDevMode` is kept inline
 // (not extracted to a helper) because Angular's build optimizer relies on
@@ -35,7 +40,58 @@ const LOG_PREFIX = '[ngx-vest-forms] ValidationConfigBuilder';
  * ```
  */
 export class ValidationConfigBuilder<T> {
-  private config: Partial<Record<string, string[]>> = {};
+  private config: Partial<
+    Record<
+      string,
+      {
+        revalidate: string[];
+        displayMode?: NgxDependentValidationDisplayMode;
+      }
+    >
+  > = {};
+
+  private normalizeEntry(
+    entry: ValidationConfigEntry<T> | undefined
+  ): {
+    revalidate: string[];
+    displayMode?: NgxDependentValidationDisplayMode;
+  } {
+    if (!entry) {
+      return {
+        revalidate: [],
+      };
+    }
+
+    if (Array.isArray(entry)) {
+      return {
+        revalidate: [...entry],
+      };
+    }
+
+    return {
+      revalidate: [...entry.revalidate],
+      displayMode: entry.displayMode,
+    };
+  }
+
+  private updateEntry(
+    trigger: string,
+    revalidate: string[],
+    displayMode?: NgxDependentValidationDisplayMode
+  ): void {
+    const existingEntry = this.config[trigger] ?? {
+      revalidate: [],
+    };
+    const merged = Array.from(new Set([...existingEntry.revalidate, ...revalidate]));
+    this.config[trigger] = {
+      revalidate: merged,
+      ...(displayMode ?? existingEntry.displayMode
+        ? {
+            displayMode: displayMode ?? existingEntry.displayMode,
+          }
+        : {}),
+    };
+  }
 
   /**
    * Add a one-way dependency: when `trigger` changes, revalidate `dependents`.
@@ -88,10 +144,15 @@ export class ValidationConfigBuilder<T> {
    */
   whenChanged<K extends FieldPath<T>>(
     trigger: K,
-    revalidate: FieldPath<T> | ReadonlyArray<FieldPath<T>>
+    revalidate: FieldPath<T> | ReadonlyArray<FieldPath<T>>,
+    options?: {
+      displayMode?: NgxDependentValidationDisplayMode;
+    }
   ): this {
     const deps = Array.isArray(revalidate) ? revalidate : [revalidate];
-    const existing = this.config[trigger] || [];
+    const existing = (this.config[trigger]?.revalidate ?? []) as Array<
+      FieldPath<T>
+    >;
 
     // Development mode warning for duplicate dependents
     if (typeof ngDevMode !== 'undefined' && ngDevMode) {
@@ -107,8 +168,7 @@ export class ValidationConfigBuilder<T> {
     }
 
     // Deduplicate dependents
-    const merged = [...existing, ...deps];
-    this.config[trigger] = Array.from(new Set(merged));
+    this.updateEntry(trigger, deps as string[], options?.displayMode);
 
     return this;
   }
@@ -166,14 +226,17 @@ export class ValidationConfigBuilder<T> {
    */
   bidirectional<K1 extends FieldPath<T>, K2 extends FieldPath<T>>(
     field1: K1,
-    field2: K2
+    field2: K2,
+    options?: {
+      displayMode?: NgxDependentValidationDisplayMode;
+    }
   ): this {
     // Development mode warning for exact duplicate
     if (typeof ngDevMode !== 'undefined' && ngDevMode) {
       const hasField1ToField2 =
-        this.config[field1]?.includes(field2 as string) ?? false;
+        this.config[field1]?.revalidate.includes(field2 as string) ?? false;
       const hasField2ToField1 =
-        this.config[field2]?.includes(field1 as string) ?? false;
+        this.config[field2]?.revalidate.includes(field1 as string) ?? false;
 
       if (hasField1ToField2 && hasField2ToField1) {
         console.warn(
@@ -184,8 +247,8 @@ export class ValidationConfigBuilder<T> {
       }
     }
 
-    this.whenChanged(field1, field2);
-    this.whenChanged(field2, field1);
+    this.whenChanged(field1, field2, options);
+    this.whenChanged(field2, field1, options);
     return this;
   }
 
@@ -332,11 +395,8 @@ export class ValidationConfigBuilder<T> {
    */
   merge(other: ValidationConfigMap<T>): this {
     for (const [key, deps] of Object.entries(other)) {
-      if (deps && Array.isArray(deps)) {
-        const existing = this.config[key] || [];
-        const merged = [...existing, ...deps];
-        this.config[key] = Array.from(new Set(merged));
-      }
+      const entry = this.normalizeEntry(deps as ValidationConfigEntry<T>);
+      this.updateEntry(key, entry.revalidate, entry.displayMode);
     }
     return this;
   }
@@ -358,12 +418,18 @@ export class ValidationConfigBuilder<T> {
    * ```
    */
   build(): ValidationConfigMap<T> {
-    // Return a deep copy to prevent external mutations affecting the builder
-    const copy: Partial<Record<string, string[]>> = {};
+    const copy: Partial<Record<string, ValidationConfigEntry<T>>> = {};
     for (const [key, deps] of Object.entries(this.config)) {
-      if (deps && Array.isArray(deps)) {
-        copy[key] = [...deps];
+      if (!deps) {
+        continue;
       }
+
+      copy[key] = deps.displayMode
+        ? {
+            revalidate: [...deps.revalidate] as Array<FieldPath<T>>,
+            displayMode: deps.displayMode,
+          }
+        : ([...deps.revalidate] as Array<FieldPath<T>>);
     }
     return copy as ValidationConfigMap<T>;
   }

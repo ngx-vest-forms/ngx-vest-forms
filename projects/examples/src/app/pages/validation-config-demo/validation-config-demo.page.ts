@@ -47,7 +47,9 @@ export class ValidationConfigDemoPageComponent {
   protected readonly validationConfig =
     createValidationConfig<ValidationDemoModel>()
       .bidirectional('password', 'confirmPassword')
-      .bidirectional('quantity', 'quantityJustification')
+      .bidirectional('quantity', 'quantityJustification', {
+        displayMode: 'respect-target-interaction',
+      })
       .whenChanged('requiresJustification', 'justification')
       .whenChanged('country', ['state', 'zipCode'])
       .bidirectional('startDate', 'endDate')

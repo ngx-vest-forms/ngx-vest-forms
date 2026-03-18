@@ -19,7 +19,10 @@ export type {
   FieldPathValue,
   FormFieldName,
   LeafFieldPath,
+  NgxDependentValidationDisplayMode,
   ValidateFieldPath,
+  ValidationConfigDependency,
+  ValidationConfigEntry,
   ValidationConfigMap,
 } from './lib/utils/field-path-types';
 export { createEmptyFormState } from './lib/utils/form-state.utils';

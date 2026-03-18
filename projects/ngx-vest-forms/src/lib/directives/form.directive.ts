@@ -52,7 +52,11 @@ import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import { DeepRequired } from '../utils/deep-required';
 import { fastDeepEqual } from '../utils/equality';
-import type { ValidationConfigMap } from '../utils/field-path-types';
+import type {
+  NgxDependentValidationDisplayMode,
+  ValidationConfigEntry,
+  ValidationConfigMap,
+} from '../utils/field-path-types';
 import { stringifyFieldPath } from '../utils/field-path.utils';
 import {
   DEFAULT_FOCUS_SELECTOR,
@@ -79,6 +83,32 @@ import { ValidationOptions } from './validation-options';
  * Increased from 100ms to 500ms to give validators enough time to complete and propagate.
  */
 const VALIDATION_IN_PROGRESS_TIMEOUT_MS = 500;
+
+type ResolvedValidationConfigEntry = {
+  dependents: string[];
+  displayMode?: NgxDependentValidationDisplayMode;
+};
+
+function resolveValidationConfigEntry<T>(
+  entry: ValidationConfigEntry<T> | undefined
+): ResolvedValidationConfigEntry {
+  if (!entry) {
+    return {
+      dependents: [],
+    };
+  }
+
+  if (Array.isArray(entry)) {
+    return {
+      dependents: [...entry],
+    };
+  }
+
+  return {
+    dependents: [...entry.revalidate],
+    displayMode: entry.displayMode,
+  };
+}
 
 /**
  * Type for validation configuration that accepts both the typed and untyped versions.
@@ -930,9 +960,10 @@ export class FormDirective<T extends Record<string, unknown>> {
       return EMPTY;
     }
 
-    const streams = Object.keys(config).map((triggerField) => {
-      const dependents =
-        (config as Record<string, string[]>)[triggerField] || [];
+    const streams = Object.entries(
+      config as Record<string, ValidationConfigEntry<T>>
+    ).map(([triggerField, entry]) => {
+      const { dependents } = resolveValidationConfigEntry(entry);
       return this.#createTriggerStream(form, triggerField, dependents);
     });
 

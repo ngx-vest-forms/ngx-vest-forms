@@ -101,6 +101,21 @@ describe('ValidationConfigBuilder', () => {
       });
     });
 
+    it('should support dependent display options', () => {
+      const config = createValidationConfig<TestFormModel>()
+        .whenChanged('firstName', 'email', {
+          displayMode: 'respect-target-interaction',
+        } as const)
+        .build();
+
+      expect(config).toEqual({
+        firstName: {
+          revalidate: ['email'],
+          displayMode: 'respect-target-interaction',
+        },
+      });
+    });
+
     describe('duplicate detection warnings', () => {
       let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
 
@@ -205,6 +220,25 @@ describe('ValidationConfigBuilder', () => {
       expect(config).toEqual({
         'addresses.billing.street': ['addresses.shipping.street'],
         'addresses.shipping.street': ['addresses.billing.street'],
+      });
+    });
+
+    it('should apply dependent display options in both directions', () => {
+      const config = createValidationConfig<TestFormModel>()
+        .bidirectional('password', 'confirmPassword', {
+          displayMode: 'respect-target-interaction',
+        })
+        .build();
+
+      expect(config).toEqual({
+        password: {
+          revalidate: ['confirmPassword'],
+          displayMode: 'respect-target-interaction',
+        },
+        confirmPassword: {
+          revalidate: ['password'],
+          displayMode: 'respect-target-interaction',
+        },
       });
     });
 

@@ -92,8 +92,35 @@ export type FieldPath<
         }[keyof T & string];
 
 /**
+ * Display policy for dependent validation feedback.
+ *
+ * Use `'respect-target-interaction'` when you want a dependent field to become
+ * logically invalid immediately, while still letting the target field's own
+ * interaction state and `errorDisplayMode` decide when errors become visible.
+ */
+export type NgxDependentValidationDisplayMode = 'respect-target-interaction';
+
+/**
+ * Object-shaped validation config entry for advanced dependency behavior.
+ */
+export type ValidationConfigDependency<T> = {
+  revalidate: Array<FieldPath<T>>;
+  displayMode?: NgxDependentValidationDisplayMode;
+};
+
+/**
+ * A single validation configuration entry.
+ *
+ * The array form is the original, backwards-compatible shorthand.
+ * The object form adds opt-in dependent display behavior.
+ */
+export type ValidationConfigEntry<T> =
+  | Array<FieldPath<T>>
+  | ValidationConfigDependency<T>;
+
+/**
  * Type-safe validation configuration map.
- * Maps trigger field paths to arrays of dependent field paths that should be revalidated.
+ * Maps trigger field paths to dependent field paths that should be revalidated.
  *
  * **Use Case:**
  * Define which fields should trigger validation of other fields when they change.
@@ -123,6 +150,14 @@ export type FieldPath<
  *   'addresses.billing.city': ['password'],
  * };
  *
+ * /// ✅ Opt-in dependent display policy
+ * const configWithDisplayMode: ValidationConfigMap<FormModel> = {
+ *   password: {
+ *     revalidate: ['confirmPassword'],
+ *     displayMode: 'respect-target-interaction',
+ *   },
+ * };
+ *
  * /// ❌ TypeScript error - invalid field name
  * const badConfig: ValidationConfigMap<FormModel> = {
  *   passwordd: ['confirmPassword'], // Typo caught at compile time
@@ -130,7 +165,7 @@ export type FieldPath<
  * ```
  */
 export type ValidationConfigMap<T> = Partial<
-  Record<FieldPath<T>, Array<FieldPath<T>>>
+  Record<FieldPath<T>, ValidationConfigEntry<T>>
 >;
 
 /**

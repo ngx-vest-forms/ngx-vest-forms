@@ -81,10 +81,11 @@ test('confirmPassword', 'Passwords must match', () => {
 ✅ **Bidirectional dependencies** - Quantity ↔ Justification
 
 ```typescript
-validationConfig = {
-  quantity: ['justification'],
-  justification: ['quantity'],
-};
+validationConfig = createValidationConfig<FormModel>()
+  .bidirectional('quantity', 'justification', {
+    displayMode: 'respect-target-interaction',
+  })
+  .build();
 
 // Vest suite (field-level tests with omitWhen)
 omitWhen(!model.quantity, () => {
@@ -93,6 +94,10 @@ omitWhen(!model.quantity, () => {
   });
 });
 ```
+
+Use this object form when the dependent field should revalidate immediately, but error visibility
+should still wait for the target field's own blur/submission policy (for example
+`<ngx-control-wrapper [errorDisplayMode]="'on-blur'">`).
 
 ✅ **Conditional field requirements** - Age triggers emergency contact
 

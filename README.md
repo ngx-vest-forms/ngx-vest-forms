@@ -277,6 +277,19 @@ protected readonly validationConfig = {
 
 **Important**: `validationConfig` only triggers re-validation—validation logic is always defined in your Vest suite.
 
+For dependent fields that should become invalid immediately but stay visually quiet until the
+target field's own blur/display policy allows errors, use the opt-in object form:
+
+```typescript
+protected readonly validationConfig = createValidationConfig<FormModel>()
+  .bidirectional('quantity', 'justification', {
+    displayMode: 'respect-target-interaction',
+  })
+  .build();
+```
+
+This pairs well with `<ngx-control-wrapper [errorDisplayMode]="'on-blur'">`.
+
 📖 **[Complete Guide: ValidationConfig vs Root-Form](./docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)**
 
 ### Root-Form Validation

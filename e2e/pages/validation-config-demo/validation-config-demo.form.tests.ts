@@ -136,7 +136,7 @@ test.describe('ValidationConfig Demo', () => {
   });
 
   test.describe('Quantity Justification Validation', () => {
-    test('should require justification after quantity is filled (on blur)', async ({
+    test('should keep justification quiet until its own blur in on-blur mode', async ({
       page,
     }) => {
       await test.step('Fill quantity and confirm no immediate justification error', async () => {
@@ -153,6 +153,7 @@ test.describe('ValidationConfig Demo', () => {
             hasText: /justification is required when quantity is provided/i,
           });
         await expect(justificationError).toHaveCount(0);
+        await expect(justification).toHaveClass(/ng-untouched/);
 
         await justification.focus();
         await justification.blur();
@@ -164,7 +165,7 @@ test.describe('ValidationConfig Demo', () => {
       });
     });
 
-    test('should require quantity after justification is filled (on blur)', async ({
+    test('should keep quantity quiet until its own blur in on-blur mode', async ({
       page,
     }) => {
       await test.step('Fill justification and confirm no immediate quantity error', async () => {
@@ -181,6 +182,7 @@ test.describe('ValidationConfig Demo', () => {
             hasText: /quantity is required when justification is provided/i,
           });
         await expect(quantityError).toHaveCount(0);
+        await expect(quantity).toHaveClass(/ng-untouched/);
 
         await quantity.focus();
         await quantity.blur();
