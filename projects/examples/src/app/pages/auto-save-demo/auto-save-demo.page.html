@@ -1,0 +1,60 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Auto-Save Draft Demo"
+    subtitle="Persist drafts on blur without conflating draft persistence and final validation."
+  />
+
+  <ngx-form-page-layout>
+    <div layout-aside class="sidebar-card-stack">
+      <ngx-card title="Key Features">
+        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
+          <li>
+            <strong>Draft auto-save on blur:</strong> blur a changed field to queue a save.
+          </li>
+          <li>
+            <strong>Calm dependent errors:</strong> each side of the quantity and justification pair can become required immediately, while untouched dependents stay quiet until their own blur.
+          </li>
+          <li>
+            <strong>Warnings stay non-blocking:</strong> draft notes can nudge without blocking save.
+          </li>
+          <li>
+            <strong>Failure simulation:</strong> use project name <code>fail</code> to test retry behavior.
+          </li>
+        </ul>
+      </ngx-card>
+
+      <ngx-card title="Draft status">
+        <ngx-alert-panel [tone]="saveTone()" [title]="saveTitle()">
+          <ul class="list-disc space-y-1 pl-5">
+            @for (message of saveMessages(); track $index) {
+              <li>{{ message }}</li>
+            }
+          </ul>
+        </ngx-alert-panel>
+      </ngx-card>
+
+      <ngx-form-state-card
+        [formState]="formBody.formState()"
+        [warnings]="formBody.warnings()"
+        [info]="formInfo()"
+        [validationErrorRules]="validationErrorRules"
+        [validationWarningRules]="validationWarningRules"
+        [validatedFields]="formBody.validatedFields()"
+        [pending]="formBody.pending()"
+      />
+    </div>
+
+    <div layout-main>
+      <ngx-auto-save-demo-form-body
+        #formBody
+        [formValue]="formValue()"
+        [suite]="suite"
+        [validationConfig]="validationConfig"
+        (formValueChange)="formValue.set($event)"
+        (fieldBlurred)="handleFieldBlur($event)"
+        (submitted)="save()"
+        (resetRequested)="reset()"
+      />
+    </div>
+  </ngx-form-page-layout>
+</div>

@@ -38,6 +38,13 @@ export async function navigateToValidationConfigDemo(
   ).toBeVisible();
 }
 
+export async function navigateToAutoSaveDemo(page: Page): Promise<void> {
+  await page.goto('/auto-save-demo');
+  await expect(
+    page.getByRole('heading', { name: /auto-save draft demo/i, level: 1 })
+  ).toBeVisible();
+}
+
 /**
  * Wait for async validation to complete by monitoring aria-busy attribute
  */
