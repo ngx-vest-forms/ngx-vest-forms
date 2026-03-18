@@ -575,6 +575,72 @@ describe('FormDirective - Signals/Outputs', () => {
     expect(instance.vestForm().errorsChange).toBeDefined();
     expect(instance.vestForm().dirtyChange).toBeDefined();
     expect(instance.vestForm().validChange).toBeDefined();
+    expect(instance.vestForm().fieldBlur).toBeDefined();
+  });
+
+  it('should emit field blur metadata for named controls', async () => {
+    @Component({
+      selector: 'test-field-blur-host',
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          (fieldBlur)="handleFieldBlur($event)"
+        >
+          <label for="projectName">Project name</label>
+          <input
+            id="projectName"
+            name="projectName"
+            [ngModel]="formValue().projectName"
+          />
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestFieldBlurHost {
+      readonly formValue = signal<{ projectName?: string }>({
+        projectName: '',
+      });
+      readonly blurEvents = signal<Array<Record<string, unknown>>>([]);
+
+      handleFieldBlur(event: Record<string, unknown>): void {
+        this.blurEvents.update((events) => [...events, event]);
+      }
+    }
+
+    const { fixture } = await render(TestFieldBlurHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const input = fixture.nativeElement.querySelector(
+      '#projectName'
+    ) as HTMLInputElement | null;
+    expect(input).toBeTruthy();
+
+    if (!input) {
+      throw new Error('Expected #projectName input to exist');
+    }
+
+    input.value = 'Angular course';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    input.dispatchEvent(new Event('blur'));
+    input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    const [blurEvent] = fixture.componentInstance.blurEvents();
+    expect(blurEvent).toBeTruthy();
+    expect(blurEvent?.['field']).toBe('projectName');
+    expect(blurEvent?.['value']).toBe('Angular course');
+    expect(blurEvent?.['touched']).toBe(true);
+    expect(blurEvent?.['dirty']).toBe(true);
+    expect(blurEvent?.['formValue']).toEqual({
+      projectName: 'Angular course',
+    });
   });
 });
 

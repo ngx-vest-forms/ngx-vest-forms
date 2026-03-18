@@ -10,6 +10,7 @@ import {
   InputSignal,
   isDevMode,
   linkedSignal,
+  output,
   signal,
   untracked,
 } from '@angular/core';
@@ -120,6 +121,25 @@ export type NgxValidationConfig<T = unknown> =
   | null;
 
 /**
+ * Payload emitted when a named control inside the form loses focus.
+ *
+ * This is intentionally low-level so app code can build workflows such as
+ * draft auto-save, analytics, or blur-driven side effects without the form
+ * library taking ownership of persistence behavior.
+ *
+ * @publicApi
+ */
+export type NgxFieldBlurEvent<T = unknown> = {
+  field: string;
+  value: unknown;
+  formValue: T | null;
+  dirty: boolean;
+  touched: boolean;
+  valid: boolean;
+  pending: boolean;
+};
+
+/**
  * Main form directive for ngx-vest-forms that bridges Angular template-driven forms with Vest.js validation.
  *
  * This directive provides:
@@ -161,7 +181,7 @@ export type NgxValidationConfig<T = unknown> =
   selector: 'form[scVestForm], form[ngxVestForm]',
   exportAs: 'scVestForm, ngxVestForm',
   host: {
-    '(focusout)': 'onFormFocusOut()',
+    '(focusout)': 'onFormFocusOut($event)',
   },
 })
 export class FormDirective<T extends Record<string, unknown>> {
@@ -438,6 +458,13 @@ export class FormDirective<T extends Record<string, unknown>> {
       takeUntilDestroyed(this.destroyRef)
     )
   );
+
+  /**
+   * Emits when a named control inside the form loses focus.
+   *
+   * Useful for application-level workflows such as draft auto-save on blur.
+   */
+  readonly fieldBlur = output<NgxFieldBlurEvent<T>>();
 
   /**
    * Track validation in progress to prevent circular triggering (Issue #19)
@@ -734,12 +761,50 @@ export class FormDirective<T extends Record<string, unknown>> {
    * Host handler: called whenever any descendant field loses focus.
    * Used to make touched-path tracking react immediately on blur/tab.
    */
-  onFormFocusOut(): void {
+  onFormFocusOut(event: FocusEvent): void {
     // Run on the next microtask to ensure Angular has already applied
     // control.touched changes for the field that just blurred.
     queueMicrotask(() => {
       this.#blurTick.update((v) => v + 1);
+      this.#emitFieldBlurEvent(event);
     });
+  }
+
+  #emitFieldBlurEvent(event: FocusEvent): void {
+    const field = this.#resolveFieldPathFromFocusEvent(event);
+    if (!field) {
+      return;
+    }
+
+    const control = this.ngForm.form.get(field);
+    if (!control) {
+      return;
+    }
+
+    this.fieldBlur.emit({
+      field,
+      value: control.value,
+      formValue: mergeValuesAndRawValues<T>(this.ngForm.form),
+      dirty: control.dirty,
+      touched: control.touched,
+      valid: control.valid,
+      pending: control.pending,
+    });
+  }
+
+  #resolveFieldPathFromFocusEvent(event: FocusEvent): string | null {
+    const target = event.target;
+    if (!(target instanceof Element)) {
+      return null;
+    }
+
+    const fieldElement = target.closest('[name]');
+    if (!(fieldElement instanceof HTMLElement)) {
+      return null;
+    }
+
+    const field = fieldElement.getAttribute('name')?.trim();
+    return field || null;
   }
 
   /**

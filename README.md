@@ -124,6 +124,7 @@ That's all you need. The directive automatically creates controls, wires validat
   - `FormErrorDisplayDirective` (state + display policy)
   - `FormErrorControlDirective` (adds ARIA wiring + stable region IDs)
 - **Cross-field dependencies** — `validationConfig` for field-to-field triggers, `ROOT_FORM` for form-level rules
+- **Field blur events** — `fieldBlur` output for blur-driven draft auto-save, analytics, and field-level side effects
 - **Utilities** — Field paths, field clearing, validation config builder
 
 ### Compatibility & Safety Notes (v2.x)
@@ -290,7 +291,52 @@ protected readonly validationConfig = createValidationConfig<FormModel>()
 
 This pairs well with `<ngx-control-wrapper [errorDisplayMode]="'on-blur'">`.
 
+If you also want draft auto-save on blur, keep persistence separate from validation and
+listen to the form's `fieldBlur` output. That gives you immediate dependent validity,
+quiet untouched dependents, and blur-triggered save orchestration without coupling the
+library to persistence policy.
+
 📖 **[Complete Guide: ValidationConfig vs Root-Form](./docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)**
+
+### Field Blur Events & Draft Auto-Save
+
+Use the form's `fieldBlur` output to build blur-driven workflows such as draft auto-save.
+
+```typescript
+protected handleFieldBlur(event: NgxFieldBlurEvent<FormModel>): void {
+  if (!event.formValue || !event.dirty || event.pending) {
+    return;
+  }
+
+  this.saveDraft(event.formValue);
+}
+```
+
+```html
+<form
+  ngxVestForm
+  [formValue]="formValue()"
+  (formValueChange)="formValue.set($event)"
+  (fieldBlur)="handleFieldBlur($event)"
+>
+  <ngx-control-wrapper>
+    <label for="projectName">Project name</label>
+    <input id="projectName" name="projectName" [ngModel]="formValue().projectName" />
+  </ngx-control-wrapper>
+</form>
+```
+
+The output payload includes:
+
+- `field`
+- `value`
+- `formValue`
+- `dirty`
+- `touched`
+- `valid`
+- `pending`
+
+📖 **[Guide: Auto-Save on Blur](./docs/AUTO-SAVE-ON-BLUR.md)**
 
 ### Root-Form Validation
 
@@ -414,6 +460,7 @@ const shape: NgxDeepRequired<MyFormModel> = {
 ### Advanced Patterns
 
 - **[ValidationConfig vs Root-Form](./docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)** - Cross-field dependencies and form-level rules
+- **[Auto-Save on Blur](./docs/AUTO-SAVE-ON-BLUR.md)** - Build draft persistence with `fieldBlur` and calm dependent validation
 - **[Field Path Types](./docs/FIELD-PATHS.md)** - Type-safe dot-notation paths for nested properties
 - **[Structure Change Detection](./docs/STRUCTURE_CHANGE_DETECTION.md)** - Handle dynamic form structure updates
 - **[Field Clearing Utilities](./docs/FIELD-CLEARING-UTILITIES.md)** - Type-safe utilities for clearing nested form values
@@ -430,7 +477,7 @@ const shape: NgxDeepRequired<MyFormModel> = {
 
 ### Examples
 
-- **[Examples Project](./projects/examples)** - Working code examples with business hours forms, purchase forms, and validation config demos
+- **[Examples Project](./projects/examples)** - Working code examples with business hours forms, purchase forms, validation config demos, and blur-driven draft auto-save
   - Run locally: `npm install && npm start`
   - Includes smart components, UI components, and complete validation patterns
 

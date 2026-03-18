@@ -99,6 +99,17 @@ Use this object form when the dependent field should revalidate immediately, but
 should still wait for the target field's own blur/submission policy (for example
 `<ngx-control-wrapper [errorDisplayMode]="'on-blur'">`).
 
+This is especially useful in blur-driven workflows such as draft auto-save:
+
+- the dependent field becomes logically invalid immediately
+- the draft can still be persisted
+- the untouched dependent field stays visually quiet until its own blur
+
+Use the form's `fieldBlur` output to trigger the save side, and keep
+`validationConfig` focused on revalidation timing.
+
+See also: [Auto-Save on Blur](./AUTO-SAVE-ON-BLUR.md)
+
 ✅ **Conditional field requirements** - Age triggers emergency contact
 
 ```typescript
@@ -598,8 +609,10 @@ validationConfig = { password: ['confirmPassword'] };
 ## Additional Resources
 
 - **[README: Validation](../README.md#validation)** - Core validation concepts
+- **[README: Field Blur Events & Draft Auto-Save](../README.md#field-blur-events--draft-auto-save)** - Blur-driven persistence pattern
 - **[README: Dependent Field Validation](../README.md#dependent-field-validation-with-conditional-rendering)** - validationConfig patterns
 - **[README: Root Form Validation](../README.md#validations-on-the-root-form)** - validateRootForm usage
+- **[Auto-Save on Blur](./AUTO-SAVE-ON-BLUR.md)** - Draft persistence pattern with `fieldBlur`
 - **[Complete Example](./COMPLETE-EXAMPLE.md)** - Full working example
 - **[Migration Guide (v1.x → v2.0.0)](./migration/MIGRATION-v1.x-to-v2.0.0.md)** - Upgrading guide (validateRootFormMode change)
 - **[Vest.js Documentation](https://vestjs.dev)** - Validation framework docs
