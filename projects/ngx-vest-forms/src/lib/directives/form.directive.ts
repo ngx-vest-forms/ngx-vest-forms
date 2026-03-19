@@ -94,11 +94,12 @@ export type NgxValidationConfig<T = unknown> =
  * Payload emitted when a named control inside the form loses focus.
  *
  * This is intentionally low-level so app code can build workflows such as
-  * It is not intended as a blur-time workaround for dependent field validation;
-  * for that pattern, prefer `validationConfig` plus each target field's own
-  * `errorDisplayMode`.
  * draft auto-save, analytics, or blur-driven side effects without the form
  * library taking ownership of persistence behavior.
+ *
+ * It is not intended as a blur-time workaround for dependent field validation;
+ * for that pattern, prefer `validationConfig` plus each target field's own
+ * `errorDisplayMode`.
  *
  * @publicApi
  */

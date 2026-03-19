@@ -13,7 +13,6 @@ import {
 } from 'ngx-vest-forms';
 import { EMPTY, Subject, catchError, concatMap, defer, tap } from 'rxjs';
 import {
-  autoSaveDemoShape,
   AutoSaveDemoModel,
   initialAutoSaveDemoValue,
 } from '../../models/auto-save-demo.model';
@@ -72,7 +71,6 @@ export class AutoSaveDemoPageComponent {
     this.restoredDraft?.draft ?? initialAutoSaveDemoValue
   );
   protected readonly suite = autoSaveDemoSuite;
-  protected readonly shape = autoSaveDemoShape;
   protected readonly validationConfig =
     createValidationConfig<AutoSaveDemoModel>()
       .bidirectional('quantity', 'quantityJustification')

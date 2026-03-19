@@ -1,4 +1,4 @@
-import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
+import { NgxDeepPartial } from 'ngx-vest-forms';
 
 export type AutoSaveDemoModel = NgxDeepPartial<{
   projectName: string;
@@ -11,13 +11,4 @@ export type AutoSaveDemoModel = NgxDeepPartial<{
 
 export const initialAutoSaveDemoValue: AutoSaveDemoModel = {
   preferredContactMethod: 'email',
-};
-
-export const autoSaveDemoShape: NgxDeepRequired<AutoSaveDemoModel> = {
-  projectName: '',
-  quantity: '',
-  quantityJustification: '',
-  preferredContactMethod: 'email',
-  email: '',
-  notes: '',
 };
