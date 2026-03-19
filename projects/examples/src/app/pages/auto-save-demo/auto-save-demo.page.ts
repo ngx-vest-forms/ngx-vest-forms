@@ -204,7 +204,7 @@ export class AutoSaveDemoPageComponent {
   protected handleFieldBlur(
     event: NgxFieldBlurEvent<AutoSaveDemoModel>
   ): void {
-    if (!event.formValue || !event.dirty || event.pending) {
+    if (!event.formValue || !event.dirty) {
       return;
     }
 

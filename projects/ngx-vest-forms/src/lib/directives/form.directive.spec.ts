@@ -642,6 +642,72 @@ describe('FormDirective - Signals/Outputs', () => {
       projectName: 'Angular course',
     });
   });
+
+  it('should emit the latest blur snapshot even when model sync is delayed', async () => {
+    @Component({
+      selector: 'test-field-blur-delayed-sync-host',
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="delayFormValueUpdate($event)"
+          (fieldBlur)="handleFieldBlur($event)"
+        >
+          <label for="projectName">Project name</label>
+          <input
+            id="projectName"
+            name="projectName"
+            [ngModel]="formValue().projectName"
+          />
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestFieldBlurDelayedSyncHost {
+      readonly formValue = signal<{ projectName?: string }>({
+        projectName: '',
+      });
+      readonly blurEvents = signal<Array<NgxFieldBlurEvent<{ projectName?: string }>>>([]);
+
+      delayFormValueUpdate(value: { projectName?: string }): void {
+        setTimeout(() => {
+          this.formValue.set(value);
+        }, 0);
+      }
+
+      handleFieldBlur(event: NgxFieldBlurEvent<{ projectName?: string }>): void {
+        this.blurEvents.update((events) => [...events, event]);
+      }
+    }
+
+    const { fixture } = await render(TestFieldBlurDelayedSyncHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const input = fixture.nativeElement.querySelector(
+      '#projectName'
+    ) as HTMLInputElement | null;
+    expect(input).toBeTruthy();
+
+    if (!input) {
+      throw new Error('Expected #projectName input to exist');
+    }
+
+    input.value = 'Recovered draft';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+
+    input.dispatchEvent(new Event('blur'));
+    input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    const [blurEvent] = fixture.componentInstance.blurEvents();
+    expect(blurEvent).toBeTruthy();
+    expect(blurEvent?.value).toBe('Recovered draft');
+    expect(blurEvent?.formValue).toEqual({
+      projectName: 'Recovered draft',
+    });
+  });
 });
 
 describe('FormDirective - triggerFormValidation', () => {

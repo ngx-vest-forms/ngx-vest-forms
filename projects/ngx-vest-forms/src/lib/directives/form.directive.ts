@@ -755,16 +755,18 @@ export class FormDirective<T extends Record<string, unknown>> {
       return;
     }
 
-    // Prefer the cached snapshots first and only recompute as a fallback.
-    // This keeps the common path cheap while still providing a current value
-    // for blur listeners in edge cases where the linked signal has not updated yet.
+    // Recompute the form snapshot at blur time instead of relying on the
+    // cached linked signal or external model input. The blur event is used for
+    // app-level side effects such as draft auto-save, so it must reflect the
+    // value that just blurred even when the host component has not processed
+    // formValueChange yet.
+    const formValue = mergeValuesAndRawValues<T>(this.ngForm.form);
+    setValueAtPath(formValue as object, field, control.value);
+
     this.fieldBlur.emit({
       field,
       value: control.value,
-      formValue:
-        this.#formValueSignal() ??
-        this.formValue() ??
-        mergeValuesAndRawValues<T>(this.ngForm.form),
+      formValue,
       dirty: control.dirty,
       touched: control.touched,
       valid: control.valid,
