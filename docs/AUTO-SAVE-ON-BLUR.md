@@ -86,7 +86,7 @@ export class DraftFormComponent {
   protected readonly formValue = signal<DraftFormModel>({});
 
   protected handleFieldBlur(event: NgxFieldBlurEvent<DraftFormModel>): void {
-    if (!event.formValue || !event.dirty || event.pending) {
+    if (!event.formValue || !event.dirty) {
       return;
     }
 
@@ -99,6 +99,18 @@ export class DraftFormComponent {
   }
 }
 ```
+
+The important bit is that draft persistence should usually key off `formValue`
+and `dirty`, not `pending`. Async validation may still be in progress when the
+user blurs a field, and blocking persistence on `pending` turns auto-save into a
+validation gate instead of a draft-saving workflow.
+
+In practice, a solid baseline is:
+
+- require `event.formValue`
+- require `event.dirty`
+- optionally dedupe against the last saved/queued snapshot
+- allow save + validation to proceed independently
 
 ## Recommended persistence strategy
 
@@ -171,9 +183,16 @@ The demo stores the draft temporarily in:
 It also demonstrates:
 
 - blur-triggered draft persistence
+- deduping queued saves by serialized draft snapshot
 - dependent validation with on-blur error display
 - reload restore behavior
 - save failure + retry behavior
+
+Relevant files:
+
+- `projects/examples/src/app/pages/auto-save-demo/auto-save-demo.page.ts`
+- `projects/examples/src/app/pages/auto-save-demo/auto-save-demo.form.ts`
+- `projects/examples/src/app/pages/auto-save-demo/auto-save-demo.service.ts`
 
 ## Accessibility notes
 

@@ -309,7 +309,7 @@ Use the form's `fieldBlur` output to build blur-driven workflows such as draft a
 
 ```typescript
 protected handleFieldBlur(event: NgxFieldBlurEvent<FormModel>): void {
-  if (!event.formValue || !event.dirty || event.pending) {
+  if (!event.formValue || !event.dirty) {
     return;
   }
 
@@ -340,6 +340,15 @@ The output payload includes:
 - `touched`
 - `valid`
 - `pending`
+
+For draft persistence, prefer treating `pending` as informational metadata rather
+than a blocker. If you gate blur saves on `pending`, async validation can prevent
+the latest draft from being persisted even though the user has finished editing.
+
+The examples app includes a complete blur-driven draft persistence implementation:
+
+- route: `/auto-save-demo`
+- source: `projects/examples/src/app/pages/auto-save-demo/`
 
 📖 **[Guide: Auto-Save on Blur](./docs/AUTO-SAVE-ON-BLUR.md)**
 
