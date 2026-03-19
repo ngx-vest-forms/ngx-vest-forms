@@ -345,10 +345,29 @@ For draft persistence, prefer treating `pending` as informational metadata rathe
 than a blocker. If you gate blur saves on `pending`, async validation can prevent
 the latest draft from being persisted even though the user has finished editing.
 
+Both blur-save policies are supported:
+
+- **Always save drafts** — recommended for draft persistence and recovery-oriented UX
+- **Only save if valid** — useful when blur triggers stricter side effects instead of draft saves
+
+For the valid-only variant, layer app policy on top of `fieldBlur`, for example:
+
+```typescript
+protected handleFieldBlur(event: NgxFieldBlurEvent<FormModel>): void {
+  if (!event.formValue || !event.dirty || !event.valid || event.pending) {
+    return;
+  }
+
+  this.saveDraft(event.formValue);
+}
+```
+
 The examples app includes a complete blur-driven draft persistence implementation:
 
 - route: `/auto-save-demo`
 - source: `projects/examples/src/app/pages/auto-save-demo/`
+
+That example intentionally demonstrates the **always-save draft** policy.
 
 📖 **[Guide: Auto-Save on Blur](./docs/AUTO-SAVE-ON-BLUR.md)**
 

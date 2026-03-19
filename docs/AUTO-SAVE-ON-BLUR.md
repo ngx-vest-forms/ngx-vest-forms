@@ -112,6 +112,76 @@ In practice, a solid baseline is:
 - optionally dedupe against the last saved/queued snapshot
 - allow save + validation to proceed independently
 
+## Choose a persistence policy
+
+`fieldBlur` supports both common blur-save policies. The right choice depends on
+whether you are persisting a **draft** or persisting only **acceptable state**.
+
+### Policy A: always save drafts on blur
+
+Use this when the saved value is explicitly a draft and may be incomplete.
+
+```ts
+protected handleFieldBlur(event: NgxFieldBlurEvent<DraftFormModel>): void {
+  if (!event.formValue || !event.dirty) {
+    return;
+  }
+
+  this.saveDraft(event.formValue);
+}
+```
+
+This is the recommended default for:
+
+- auto-save drafts
+- long forms
+- multi-step flows
+- recovery-oriented UX
+
+### Policy B: save only if valid
+
+Use this when persistence should happen only after the relevant validation has passed.
+
+```ts
+protected handleFieldBlur(event: NgxFieldBlurEvent<DraftFormModel>): void {
+  if (!event.formValue || !event.dirty || !event.valid || event.pending) {
+    return;
+  }
+
+  this.saveDraft(event.formValue);
+}
+```
+
+This variant is better when:
+
+- the blur action triggers side effects that require valid data
+- your backend rejects partial values and you do not want draft semantics
+- you are treating blur-save more like a field-level commit than a draft save
+
+### Whole-form valid variant
+
+If your policy is “save only when the whole form is valid”, check the form state
+instead of relying only on `event.valid`, which refers to the blurred control.
+
+```ts
+protected handleFieldBlur(event: NgxFieldBlurEvent<DraftFormModel>): void {
+  if (!event.formValue || !event.dirty || event.pending) {
+    return;
+  }
+
+  if (!this.formBody()?.formState().valid) {
+    return;
+  }
+
+  this.saveDraft(event.formValue);
+}
+```
+
+In short:
+
+- **drafts** → usually save even if incomplete
+- **commits/strict side effects** → consider valid-only gating
+
 ## Recommended persistence strategy
 
 For demos and simple workflows, temporary draft persistence in browser storage is
@@ -182,11 +252,14 @@ The demo stores the draft temporarily in:
 
 It also demonstrates:
 
-- blur-triggered draft persistence
+- blur-triggered draft persistence using the **always-save draft** policy
 - deduping queued saves by serialized draft snapshot
 - dependent validation with on-blur error display
 - reload restore behavior
 - save failure + retry behavior
+
+The docs above also show how to switch to a valid-only policy when your product
+needs stricter persistence rules.
 
 Relevant files:
 
