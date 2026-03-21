@@ -59,11 +59,15 @@
           id="submitError"
           name="submitError"
           [ngModel]="formValue().submitError"
+          aria-describedby="submit-error-help"
           class="input-field"
           placeholder="Leave empty, then use the external submit button..."
         />
       </ngx-control-wrapper>
-      <p class="mt-3 text-sm text-gray-600 dark:text-gray-300">
+      <p
+        id="submit-error-help"
+        class="mt-3 text-sm text-gray-600 dark:text-gray-300"
+      >
         Use the external button below to simulate a parent component calling
         <code>NgForm.onSubmit()</code>, then marking controls as touched and
         retriggering validation.
@@ -128,16 +132,20 @@
   </form>
 
   <div class="mt-4 flex flex-wrap gap-3">
+    <p
+      id="programmatic-submit-help"
+      class="text-sm text-gray-600 dark:text-gray-300"
+    >
+      This mirrors a parent-controlled submit flow where the child form has no
+      native submit button of its own.
+    </p>
     <button
       type="button"
       class="btn btn-secondary"
+      aria-describedby="programmatic-submit-help"
       (click)="submitProgrammatically()"
     >
       Programmatically submit demo form
     </button>
-    <p class="text-sm text-gray-600 dark:text-gray-300">
-      This mirrors a parent-controlled submit flow where the child form has no
-      native submit button of its own.
-    </p>
   </div>
 </ngx-card>

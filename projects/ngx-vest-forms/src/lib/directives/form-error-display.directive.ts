@@ -8,8 +8,8 @@ import {
   Signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NgForm } from '@angular/forms';
-import { startWith } from 'rxjs';
+import { ControlEvent, NgForm } from '@angular/forms';
+import { filter, startWith } from 'rxjs';
 import {
   NGX_ERROR_DISPLAY_MODE_TOKEN,
   NGX_WARNING_DISPLAY_MODE_TOKEN,
@@ -103,10 +103,16 @@ export class FormErrorDisplayDirective {
    * in zoneless mode.
    */
   readonly #formEventTrigger = this.#ngForm
-    ? toSignal(
-        this.#ngForm.form.events.pipe(startWith(null)),
-        { initialValue: null }
-      )
+    ? (() => {
+        const ngForm = this.#ngForm;
+        return toSignal(
+          ngForm.form.events.pipe(
+            filter((event: ControlEvent) => event.source === ngForm.form),
+            startWith(null)
+          ),
+          { initialValue: null }
+        );
+      })()
     : signal(null);
 
   /**
