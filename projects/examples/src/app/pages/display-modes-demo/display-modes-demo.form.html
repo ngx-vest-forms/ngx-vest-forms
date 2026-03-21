@@ -48,6 +48,29 @@
     </ngx-card>
 
     <ngx-card
+      title="Error Display Mode: 'on-submit'"
+      subtitle="This field stays quiet until the parent container submits the form programmatically."
+    >
+      <ngx-control-wrapper [errorDisplayMode]="'on-submit'">
+        <label for="submitError" class="label-text"
+          >Username (On-Submit Mode)</label
+        >
+        <input
+          id="submitError"
+          name="submitError"
+          [ngModel]="formValue().submitError"
+          class="input-field"
+          placeholder="Leave empty, then use the external submit button..."
+        />
+      </ngx-control-wrapper>
+      <p class="mt-3 text-sm text-gray-600 dark:text-gray-300">
+        Use the external button below to simulate a parent component calling
+        <code>NgForm.onSubmit()</code>, then marking controls as touched and
+        retriggering validation.
+      </p>
+    </ngx-card>
+
+    <ngx-card
       title="Warning Display Mode: 'always'"
       subtitle="Warnings appear immediately on pristine fields."
     >
@@ -103,4 +126,18 @@
 
     <button type="submit" class="btn btn-primary">Submit</button>
   </form>
+
+  <div class="mt-4 flex flex-wrap gap-3">
+    <button
+      type="button"
+      class="btn btn-secondary"
+      (click)="submitProgrammatically()"
+    >
+      Programmatically submit demo form
+    </button>
+    <p class="text-sm text-gray-600 dark:text-gray-300">
+      This mirrors a parent-controlled submit flow where the child form has no
+      native submit button of its own.
+    </p>
+  </div>
 </ngx-card>
