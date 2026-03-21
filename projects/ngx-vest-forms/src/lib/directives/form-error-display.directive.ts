@@ -8,8 +8,8 @@ import {
   Signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormResetEvent, FormSubmittedEvent, NgForm } from '@angular/forms';
-import { filter, map, startWith } from 'rxjs';
+import { NgForm } from '@angular/forms';
+import { startWith } from 'rxjs';
 import {
   NGX_ERROR_DISPLAY_MODE_TOKEN,
   NGX_WARNING_DISPLAY_MODE_TOKEN,
@@ -97,26 +97,30 @@ export class FormErrorDisplayDirective {
   readonly updateOn = this.#formControlState.updateOn;
 
   /**
+   * Internal trigger signal that updates on form lifecycle events.
+   *
+   * Using AbstractControl.events keeps programmatic NgForm.onSubmit() reactive
+   * in zoneless mode.
+   */
+  readonly #formEventTrigger = this.#ngForm
+    ? toSignal(
+        this.#ngForm.form.events.pipe(startWith(null)),
+        { initialValue: null }
+      )
+    : signal(null);
+
+  /**
    * Signal that tracks NgForm.submitted state reactively.
    *
-   * Angular exposes submit/reset events on AbstractControl.events. Mapping those
-   * events directly to the current NgForm.submitted state keeps this signal in
-   * sync for both native and programmatic form submission flows.
+   * In addition to the form event trigger, this also depends on the control
+   * state signal so reset flows that re-mark controls as pristine/touched are
+   * reflected immediately.
    */
-  readonly formSubmitted: Signal<boolean> = this.#ngForm
-    ? toSignal(
-        this.#ngForm.form.events.pipe(
-          filter(
-            (event) =>
-              event instanceof FormSubmittedEvent ||
-              event instanceof FormResetEvent
-          ),
-          map(() => this.#ngForm!.submitted),
-          startWith(this.#ngForm.submitted)
-        ),
-        { initialValue: this.#ngForm.submitted }
-      )
-    : signal(false);
+  readonly formSubmitted: Signal<boolean> = computed(() => {
+    this.#formEventTrigger();
+    this.controlState();
+    return this.#ngForm?.submitted ?? false;
+  });
 
   constructor() {
     // Warn about problematic combinations of updateOn and errorDisplayMode
