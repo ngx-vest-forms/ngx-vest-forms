@@ -91,7 +91,7 @@ export class ValidationConfigBuilder<T> {
     revalidate: FieldPath<T> | ReadonlyArray<FieldPath<T>>
   ): this {
     const deps = Array.isArray(revalidate) ? revalidate : [revalidate];
-    const existing = this.config[trigger] || [];
+    const existing = (this.config[trigger] || []) as Array<FieldPath<T>>;
 
     // Development mode warning for duplicate dependents
     if (typeof ngDevMode !== 'undefined' && ngDevMode) {

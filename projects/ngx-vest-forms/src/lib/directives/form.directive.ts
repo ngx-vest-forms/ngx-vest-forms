@@ -10,6 +10,7 @@ import {
   InputSignal,
   isDevMode,
   linkedSignal,
+  output,
   signal,
   untracked,
 } from '@angular/core';
@@ -90,6 +91,29 @@ export type NgxValidationConfig<T = unknown> =
   | null;
 
 /**
+ * Payload emitted when a named control inside the form loses focus.
+ *
+ * This is intentionally low-level so app code can build workflows such as
+ * draft auto-save, analytics, or blur-driven side effects without the form
+ * library taking ownership of persistence behavior.
+ *
+ * It is not intended as a blur-time workaround for dependent field validation;
+ * for that pattern, prefer `validationConfig` plus each target field's own
+ * `errorDisplayMode`.
+ *
+ * @publicApi
+ */
+export type NgxFieldBlurEvent<T = unknown> = {
+  field: string;
+  value: unknown;
+  formValue: T | null;
+  dirty: boolean;
+  touched: boolean;
+  valid: boolean;
+  pending: boolean;
+};
+
+/**
  * Main form directive for ngx-vest-forms that bridges Angular template-driven forms with Vest.js validation.
  *
  * This directive provides:
@@ -131,7 +155,7 @@ export type NgxValidationConfig<T = unknown> =
   selector: 'form[scVestForm], form[ngxVestForm]',
   exportAs: 'scVestForm, ngxVestForm',
   host: {
-    '(focusout)': 'onFormFocusOut()',
+    '(focusout)': 'onFormFocusOut($event)',
   },
 })
 export class FormDirective<T extends Record<string, unknown>> {
@@ -408,6 +432,13 @@ export class FormDirective<T extends Record<string, unknown>> {
       takeUntilDestroyed(this.destroyRef)
     )
   );
+
+  /**
+   * Emits when a named control inside the form loses focus.
+   *
+   * Useful for application-level workflows such as draft auto-save on blur.
+   */
+  readonly fieldBlur = output<NgxFieldBlurEvent<T>>();
 
   /**
    * Track validation in progress to prevent circular triggering (Issue #19)
@@ -704,12 +735,58 @@ export class FormDirective<T extends Record<string, unknown>> {
    * Host handler: called whenever any descendant field loses focus.
    * Used to make touched-path tracking react immediately on blur/tab.
    */
-  onFormFocusOut(): void {
+  onFormFocusOut(event: FocusEvent): void {
     // Run on the next microtask to ensure Angular has already applied
     // control.touched changes for the field that just blurred.
     queueMicrotask(() => {
       this.#blurTick.update((v) => v + 1);
+      this.#emitFieldBlurEvent(event);
     });
+  }
+
+  #emitFieldBlurEvent(event: FocusEvent): void {
+    const field = this.#resolveFieldPathFromFocusEvent(event);
+    if (!field) {
+      return;
+    }
+
+    const control = this.ngForm.form.get(field);
+    if (!control) {
+      return;
+    }
+
+    // Recompute the form snapshot at blur time instead of relying on the
+    // cached linked signal or external model input. The blur event is used for
+    // app-level side effects such as draft auto-save, so it must reflect the
+    // value that just blurred even when the host component has not processed
+    // formValueChange yet.
+    const formValue = mergeValuesAndRawValues<T>(this.ngForm.form);
+    setValueAtPath(formValue as object, field, control.value);
+
+    this.fieldBlur.emit({
+      field,
+      value: control.value,
+      formValue,
+      dirty: control.dirty,
+      touched: control.touched,
+      valid: control.valid,
+      pending: control.pending,
+    });
+  }
+
+  #resolveFieldPathFromFocusEvent(event: FocusEvent): string | null {
+    const target = event.target;
+    if (!(target instanceof Element)) {
+      return null;
+    }
+
+    const fieldElement = target.closest('[name]');
+    if (!(fieldElement instanceof HTMLElement)) {
+      return null;
+    }
+
+    const field = fieldElement.getAttribute('name')?.trim();
+    return field || null;
   }
 
   /**
@@ -930,11 +1007,10 @@ export class FormDirective<T extends Record<string, unknown>> {
       return EMPTY;
     }
 
-    const streams = Object.keys(config).map((triggerField) => {
-      const dependents =
-        (config as Record<string, string[]>)[triggerField] || [];
-      return this.#createTriggerStream(form, triggerField, dependents);
-    });
+    const streams = Object.entries(config as Record<string, string[]>).map(
+      ([triggerField, dependents]) =>
+        this.#createTriggerStream(form, triggerField, dependents || [])
+    );
 
     return streams.length > 0 ? rxMerge(...streams) : EMPTY;
   }
@@ -1117,21 +1193,6 @@ export class FormDirective<T extends Record<string, unknown>> {
         // CRITICAL: Mark the dependent field as in-progress BEFORE calling updateValueAndValidity
         // This prevents the dependent field's valueChanges from triggering its own validationConfig
         this.validationInProgress.add(depField);
-
-        // NOTE: Touch propagation removed (PR #78)
-        // Previously, we propagated touch state from trigger to dependent fields.
-        // This caused UX issues where dependent fields showed errors immediately
-        // after being revealed by a toggle, even though the user never interacted with them.
-        //
-        // With this change:
-        // - Errors on dependent fields only show after the user directly touches/blurs them
-        // - ARIA attributes (aria-invalid) still work correctly via isInvalid check
-        // - Warnings still show after validation via hasBeenValidated check
-        //
-        // The removed code was:
-        // if (control.touched && !dependentControl.touched) {
-        //   dependentControl.markAsTouched({ onlySelf: true });
-        // }
 
         // emitEvent: true is REQUIRED for async validators to actually run
         // The validationInProgress Set prevents infinite loops:

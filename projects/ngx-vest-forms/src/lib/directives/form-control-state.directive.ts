@@ -420,7 +420,8 @@ export class FormControlStateDirective {
   /**
    * Whether this control has been validated at least once.
    * True after the first validation completes, even if the user hasn't touched the field.
-   * This enables showing errors for validationConfig-triggered validations.
+   * This is primarily used for warning display and other derived state that should react
+   * to validationConfig-triggered validation even before the user touches the field.
    */
   readonly hasBeenValidated = computed(
     () => this.#interactionState().hasBeenValidated
