@@ -401,6 +401,7 @@ const shape: NgxDeepRequired<MyFormModel> = {
 ### Advanced Patterns
 
 - **[ValidationConfig vs Root-Form](./docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)** - Cross-field dependencies and form-level rules
+- **[Clear Submitted State](./docs/CLEAR-SUBMITTED-STATE.md)** - End a submit cycle without resetting values or control metadata
 - **[Field Path Types](./docs/FIELD-PATHS.md)** - Type-safe dot-notation paths for nested properties
 - **[Structure Change Detection](./docs/STRUCTURE_CHANGE_DETECTION.md)** - Handle dynamic form structure updates
 - **[Field Clearing Utilities](./docs/FIELD-CLEARING-UTILITIES.md)** - Type-safe utilities for clearing nested form values

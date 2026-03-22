@@ -365,6 +365,31 @@ describe('FormErrorDisplayDirective', () => {
       .toBe('false');
   });
 
+  it('should unsubscribe from form submit/reset events when the directive is destroyed', async () => {
+    host.mode = 'on-submit';
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const ngForm = fixture.debugElement.query(By.directive(NgForm)).injector.get(
+      NgForm
+    );
+    const display = fixture.debugElement
+      .query(By.directive(FormErrorDisplayDirective))
+      .injector.get(FormErrorDisplayDirective);
+
+    expect(display.formSubmitted()).toBe(false);
+
+    fixture.destroy();
+
+    ngForm.onSubmit(new Event('submit'));
+    await TestBed.inject(ApplicationRef).whenStable();
+    expect(display.formSubmitted()).toBe(false);
+
+    ngForm.resetForm({ test: '' });
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(display.formSubmitted()).toBe(false);
+  });
+
   // Host directive usage test
   @Component({
     selector: 'ngx-host-field',
