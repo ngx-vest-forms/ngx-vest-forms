@@ -5,8 +5,9 @@ import {
   inject,
   input,
 } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ScErrorDisplayMode } from './form-error-display.directive';
 import { FormErrorDisplayDirective } from './form-error-display.directive';
@@ -302,6 +303,66 @@ describe('FormErrorDisplayDirective', () => {
     expect(
       fixture.nativeElement.querySelector('#form-submitted').textContent
     ).toBe('true');
+  });
+
+  it('should react to programmatic NgForm.onSubmit() in on-submit mode', async () => {
+    host.mode = 'on-submit';
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const ngForm = fixture.debugElement.query(By.directive(NgForm)).injector.get(
+      NgForm
+    );
+
+    expect(
+      fixture.nativeElement.querySelector('#should-show-errors').textContent
+    ).toBe('false');
+
+    ngForm.onSubmit(new Event('submit'));
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('#form-submitted')?.textContent
+      )
+      .toBe('true');
+
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('#should-show-errors')
+            ?.textContent
+      )
+      .toBe('true');
+  });
+
+  it('should reset formSubmitted after programmatic submit when form resets', async () => {
+    host.mode = 'on-submit';
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const ngForm = fixture.debugElement.query(By.directive(NgForm)).injector.get(
+      NgForm
+    );
+
+    ngForm.onSubmit(new Event('submit'));
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('#form-submitted')?.textContent
+      )
+      .toBe('true');
+
+    ngForm.resetForm({ test: '' });
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('#form-submitted')?.textContent
+      )
+      .toBe('false');
   });
 
   // Host directive usage test
