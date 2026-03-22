@@ -15,6 +15,10 @@ export const displayModesDemoSuite = staticSuite(
       enforce(model.dirtyError).isNotBlank();
     });
 
+    test('submitError', 'This field is required', () => {
+      enforce(model.submitError).isNotBlank();
+    });
+
     // Warning validations
     test('alwaysWarning', 'Username should be at least 5 characters', () => {
       warn();

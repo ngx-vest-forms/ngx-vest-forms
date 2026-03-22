@@ -8,8 +8,8 @@ import {
   Signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NgForm } from '@angular/forms';
-import { merge, of, startWith } from 'rxjs';
+import { FormResetEvent, FormSubmittedEvent, NgForm } from '@angular/forms';
+import { filter, map, startWith } from 'rxjs';
 import {
   NGX_ERROR_DISPLAY_MODE_TOKEN,
   NGX_WARNING_DISPLAY_MODE_TOKEN,
@@ -97,32 +97,32 @@ export class FormErrorDisplayDirective {
   readonly updateOn = this.#formControlState.updateOn;
 
   /**
-   * Internal trigger signal that updates whenever form submit or status changes.
-   * Used to ensure reactive tracking for the formSubmitted computed signal.
-   */
-  readonly #formEventTrigger = this.#ngForm
-    ? toSignal(
-        merge(this.#ngForm.ngSubmit, this.#ngForm.statusChanges ?? of()).pipe(
-          startWith(null)
-        ),
-        { initialValue: null }
-      )
-    : signal(null);
-
-  /**
    * Signal that tracks NgForm.submitted state reactively.
    *
-   * Uses a trigger signal pattern for cleaner reactive tracking:
-   * - ngSubmit: fires when form is submitted (sets NgForm.submitted = true)
-   * - statusChanges: fires after resetForm() (which sets NgForm.submitted = false)
+   * Map form-level submit/reset events directly to boolean state.
    *
-   * This ensures proper sync with both submit and reset operations.
+   * This keeps programmatic `NgForm.onSubmit()` reactive in zoneless mode and
+   * avoids depending on `NgForm.submitted`, whose getter intentionally reads an
+   * internal signal with `untracked()`.
    */
-  readonly formSubmitted: Signal<boolean> = computed(() => {
-    // Trigger signal ensures this recomputes on submit/status changes
-    this.#formEventTrigger();
-    return this.#ngForm?.submitted ?? false;
-  });
+  readonly formSubmitted: Signal<boolean> = this.#ngForm
+    ? (() => {
+        const ngForm = this.#ngForm;
+        return toSignal(
+          ngForm.form.events.pipe(
+            filter(
+              (event) =>
+                event.source === ngForm.form &&
+                (event instanceof FormSubmittedEvent ||
+                  event instanceof FormResetEvent)
+            ),
+            map((event) => event instanceof FormSubmittedEvent),
+            startWith(ngForm.submitted)
+          ),
+          { initialValue: ngForm.submitted }
+        );
+      })()
+    : signal(false);
 
   constructor() {
     // Warn about problematic combinations of updateOn and errorDisplayMode
