@@ -8,8 +8,8 @@ import {
   Signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ControlEvent, NgForm } from '@angular/forms';
-import { filter, startWith } from 'rxjs';
+import { FormResetEvent, FormSubmittedEvent, NgForm } from '@angular/forms';
+import { filter, map, startWith } from 'rxjs';
 import {
   NGX_ERROR_DISPLAY_MODE_TOKEN,
   NGX_WARNING_DISPLAY_MODE_TOKEN,
@@ -97,36 +97,32 @@ export class FormErrorDisplayDirective {
   readonly updateOn = this.#formControlState.updateOn;
 
   /**
-   * Internal trigger signal that updates on form lifecycle events.
+   * Signal that tracks NgForm.submitted state reactively.
    *
-   * Using AbstractControl.events keeps programmatic NgForm.onSubmit() reactive
-   * in zoneless mode.
+   * Map form-level submit/reset events directly to boolean state.
+   *
+   * This keeps programmatic `NgForm.onSubmit()` reactive in zoneless mode and
+   * avoids depending on `NgForm.submitted`, whose getter intentionally reads an
+   * internal signal with `untracked()`.
    */
-  readonly #formEventTrigger = this.#ngForm
+  readonly formSubmitted: Signal<boolean> = this.#ngForm
     ? (() => {
         const ngForm = this.#ngForm;
         return toSignal(
           ngForm.form.events.pipe(
-            filter((event: ControlEvent) => event.source === ngForm.form),
-            startWith(null)
+            filter(
+              (event) =>
+                event.source === ngForm.form &&
+                (event instanceof FormSubmittedEvent ||
+                  event instanceof FormResetEvent)
+            ),
+            map((event) => event instanceof FormSubmittedEvent),
+            startWith(ngForm.submitted)
           ),
-          { initialValue: null }
+          { initialValue: ngForm.submitted }
         );
       })()
-    : signal(null);
-
-  /**
-   * Signal that tracks NgForm.submitted state reactively.
-   *
-   * In addition to the form event trigger, this also depends on the control
-   * state signal so reset flows that re-mark controls as pristine/touched are
-   * reflected immediately.
-   */
-  readonly formSubmitted: Signal<boolean> = computed(() => {
-    this.#formEventTrigger();
-    this.controlState();
-    return this.#ngForm?.submitted ?? false;
-  });
+    : signal(false);
 
   constructor() {
     // Warn about problematic combinations of updateOn and errorDisplayMode
