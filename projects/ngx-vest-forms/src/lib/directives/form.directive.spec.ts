@@ -647,7 +647,6 @@ describe('FormDirective - clearSubmittedState', () => {
     ) as HTMLInputElement;
     input.focus();
     input.blur();
-    input.dispatchEvent(new Event('blur'));
     await fixture.whenStable();
 
     await expect
