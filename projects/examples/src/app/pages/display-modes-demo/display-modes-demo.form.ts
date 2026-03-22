@@ -54,6 +54,17 @@ export class DisplayModesDemoFormBody {
     () => this.vestForm()?.ngForm.form.pending ?? false
   );
 
+  submitProgrammatically(): void {
+    const form = this.vestForm();
+    if (!form) {
+      return;
+    }
+
+    form.ngForm.onSubmit(new Event('submit'));
+    form.markAllAsTouched();
+    form.triggerFormValidation();
+  }
+
   protected onSubmit(): void {
     this.submitted.emit();
   }
