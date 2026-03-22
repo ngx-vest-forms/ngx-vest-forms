@@ -72,6 +72,10 @@ import {
 import { validateShape } from '../utils/shape-validation';
 import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
 import { ValidationOptions } from './validation-options';
+import {
+  getFormSubmittedSignal,
+  setAngularFormSubmittedState,
+} from './form-submitted-state';
 
 /**
  * Duration (in milliseconds) to keep fields marked as "in-progress" after validation.
@@ -634,6 +638,19 @@ export class FormDirective<T extends Record<string, unknown>> {
    */
   markAllAsTouched(): void {
     this.ngForm.form.markAllAsTouched();
+    this.#blurTick.update((v) => v + 1);
+  }
+
+  /**
+   * Clears the current submit cycle without resetting control values or metadata.
+   *
+   * Unlike {@link resetForm}, this only flips the submitted gate back to `false`.
+   * Touched/dirty/pristine state is preserved so consumers can end `'on-submit'`
+   * error visibility without a full form reset.
+   */
+  clearSubmittedState(): void {
+    setAngularFormSubmittedState(this.ngForm, false);
+    getFormSubmittedSignal(this.ngForm).set(false);
     this.#blurTick.update((v) => v + 1);
   }
 
