@@ -471,6 +471,26 @@ This library was originally created by [Brecht Billiet](https://twitter.com/brec
 
 ## Developer Resources
 
+### Agent Skills
+
+This repository ships an installable agent skill for ngx-vest-forms guidance.
+
+Install it from the repository root with the `skills` CLI:
+
+```bash
+npx skills add ngx-vest-forms/ngx-vest-forms --skill ngx-vest-forms
+```
+
+This repository also ships an installable agent skill for **Vest.js 5.4 guidance**.
+
+Install it from the repository root with the `skills` CLI:
+
+```bash
+npx skills add ngx-vest-forms/ngx-vest-forms --skill vestjs
+```
+
+See also: **[Vest.js 5.4 Agent Skill Guide](./docs/VESTJS-SKILL.md)**
+
 ### Comprehensive Instruction Files
 
 This project includes detailed instruction files designed to help developers master ngx-vest-forms and Vest.js patterns:

@@ -1,0 +1,29 @@
+{
+  "skill_name": "ngx-vest-forms",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I’m adding ngx-vest-forms to a small Angular 21 app and want the most idiomatic first example for a profile form with first name, last name, and email. Please show the component and template using signals, explain whether I should use [ngModel] or [(ngModel)], and keep the imports on the public API only.",
+      "expected_output": "Routes to the `core` sub-skill guidance, uses public API imports from 'ngx-vest-forms', models the form with NgxDeepPartial, uses [ngModel] with matching name paths, and includes an unconditional only(field) Vest suite.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "My confirm password field only revalidates when I type in it, not when the original password changes. I’m using ngx-vest-forms with omitWhen in the suite. Should this be validationConfig or ROOT_FORM? I’d like the answer to use the builder API and any example imports should come from the library’s public package.",
+      "expected_output": "Routes to the `validation-config-builder` sub-skill guidance, explains field ownership vs form ownership, keeps the rule in the Vest suite, uses createValidationConfig from the public API, and avoids suggesting internal imports.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "We have our own design-system field shell and don’t want to use ngx-control-wrapper visually, but we still want ngx-vest-forms errors, warnings, aria-describedby merging, and pending-state behavior. Can you show a custom wrapper approach and please avoid private library imports because this is for consumers of the package?",
+      "expected_output": "Routes to the `custom-wrapper-patterns` sub-skill guidance, prefers FormErrorControlDirective or FormErrorDisplayDirective from the public API, preserves ARIA behavior, mentions createDebouncedPendingState when appropriate, and does not use src/lib imports.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "I have a checkout form where changing delivery method hides the address fields and sometimes replaces them with static text. Errors stick around after the UI changes. I’m not sure whether I need clearFieldsWhen, triggerFormValidation, or ROOT_FORM, and I also split the shipping section into a child component. Please steer me to the right ngx-vest-forms APIs only.",
+      "expected_output": "Routes across the `dynamic-form-behavior`, `child-components`, and possibly `root-form-validation` sub-skills, distinguishes stale state from form-level ownership, recommends public APIs like clearFieldsWhen and vestFormsViewProviders, and avoids cargo-culting triggerFormValidation.",
+      "files": []
+    }
+  ]
+}

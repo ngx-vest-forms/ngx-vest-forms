@@ -1,0 +1,35 @@
+{
+  "skill_name": "vestjs",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'm writing a Vest 5.4 validation suite for a signup form and I'm confused about when to use create versus staticSuite. Can you show me the idiomatic setup for interactive client-side validation with only(field)?",
+      "expected_output": "Routes to the core Vest.js 5.4 workflow, explains create vs staticSuite correctly, and shows only(field) called unconditionally in a stateful suite.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "My promo code section is hidden unless a checkbox is enabled. Right now the form still stays invalid when the section is hidden. Should I use skipWhen, omitWhen, or optional in Vest 5.4?",
+      "expected_output": "Routes to conditional control flow guidance, distinguishes skipWhen from omitWhen and optional, and recommends omitWhen for hidden branches that should not count against validity.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "How do I do async username availability checks in Vest 5.4 without stale requests, and where should warn() and done() go if I also want password strength warnings?",
+      "expected_output": "Routes to async and warnings guidance, uses AbortSignal in async tests, keeps warn() synchronous at the top of the test body, and explains that done() must not be registered conditionally.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "We keep repeating the same age and address shape checks across several Vest 5.4 suites. Should I use enforce.condition, enforce.extend, or compose to make this reusable, and how do I type the custom matcher?",
+      "expected_output": "Routes to enforce-and-custom-rules guidance, distinguishes one-off condition logic from extend and compose, and includes TypeScript matcher declaration guidance.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "I'm using Vest 5.4 in a Node API to validate request bodies. Should I keep one shared suite instance, reset it every request, or use staticSuite, and which mode fits fast-fail validation?",
+      "expected_output": "Routes to server-side-validation guidance, prefers staticSuite for request isolation, explains reset as a fallback, and recommends execution mode based on fast-fail versus full error needs.",
+      "files": []
+    }
+  ]
+}
