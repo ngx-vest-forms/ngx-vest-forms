@@ -61,6 +61,7 @@ These rules live in the invariant instruction file; correct violations instead o
 - Need `validationConfig` guidance: use the `validation-config-builder/` workflow sub-skill under `ngx-vest-forms`
 - Need `ROOT_FORM`: use the `root-form-validation/` workflow sub-skill under `ngx-vest-forms`
 - Need wrappers: use the `built-in-wrappers/` or `custom-wrapper-patterns/` workflow sub-skill under `ngx-vest-forms`
+- Need composite adapter (one widget, multiple fields): use the `composite-adapter/` workflow sub-skill under `ngx-vest-forms`
 - Need nested sections: use the `child-components/` workflow sub-skill under `ngx-vest-forms`
 - Need dynamic structure changes: use the `dynamic-form-behavior/` workflow sub-skill under `ngx-vest-forms`
 
