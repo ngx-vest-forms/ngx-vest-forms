@@ -1,0 +1,151 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Composite Adapter Recipe"
+    subtitle="Map one composite UI control to multiple form fields with split-field validation."
+  />
+
+  <fieldset class="mb-6">
+    <legend class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">
+      Form approach
+    </legend>
+
+    <div class="flex flex-wrap items-center gap-3">
+      <label
+        class="flex cursor-pointer items-center gap-3 rounded-md border px-4 py-2 text-sm font-medium transition-colors"
+        [class.border-blue-600]="approach() === 'split-wrappers'"
+        [class.bg-blue-50]="approach() === 'split-wrappers'"
+        [class.text-blue-900]="approach() === 'split-wrappers'"
+        [class.dark:border-blue-400]="approach() === 'split-wrappers'"
+        [class.dark:bg-blue-950]="approach() === 'split-wrappers'"
+        [class.dark:text-blue-100]="approach() === 'split-wrappers'"
+        [class.border-gray-300]="approach() !== 'split-wrappers'"
+        [class.bg-white]="approach() !== 'split-wrappers'"
+        [class.text-gray-700]="approach() !== 'split-wrappers'"
+        [class.dark:border-gray-600]="approach() !== 'split-wrappers'"
+        [class.dark:bg-gray-800]="approach() !== 'split-wrappers'"
+        [class.dark:text-gray-200]="approach() !== 'split-wrappers'"
+      >
+        <input
+          type="radio"
+          name="travelFormApproach"
+          class="h-4 w-4 accent-blue-600"
+          [checked]="approach() === 'split-wrappers'"
+          (change)="selectApproach('split-wrappers')"
+        />
+        <span>Split Wrappers</span>
+      </label>
+
+      <label
+        class="flex cursor-pointer items-center gap-3 rounded-md border px-4 py-2 text-sm font-medium transition-colors"
+        [class.border-orange-600]="approach() === 'composite-adapter'"
+        [class.bg-orange-50]="approach() === 'composite-adapter'"
+        [class.text-orange-900]="approach() === 'composite-adapter'"
+        [class.dark:border-orange-400]="approach() === 'composite-adapter'"
+        [class.dark:bg-orange-950]="approach() === 'composite-adapter'"
+        [class.dark:text-orange-100]="approach() === 'composite-adapter'"
+        [class.border-gray-300]="approach() !== 'composite-adapter'"
+        [class.bg-white]="approach() !== 'composite-adapter'"
+        [class.text-gray-700]="approach() !== 'composite-adapter'"
+        [class.dark:border-gray-600]="approach() !== 'composite-adapter'"
+        [class.dark:bg-gray-800]="approach() !== 'composite-adapter'"
+        [class.dark:text-gray-200]="approach() !== 'composite-adapter'"
+      >
+        <input
+          type="radio"
+          name="travelFormApproach"
+          class="h-4 w-4 accent-orange-600"
+          [checked]="approach() === 'composite-adapter'"
+          (change)="selectApproach('composite-adapter')"
+        />
+        <span>Composite Adapter</span>
+      </label>
+    </div>
+  </fieldset>
+
+  <ngx-form-page-layout>
+    <div layout-aside class="sidebar-card-stack">
+      <ngx-card title="How It Works">
+        @if (approach() === 'split-wrappers') {
+          <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
+            <li>
+              Each field uses <code>&lt;ngx-control-wrapper&gt;</code> for
+              <strong>automatic ARIA wiring</strong>, error display, and warning
+              support.
+            </li>
+            <li>
+              <strong>No hidden proxies</strong> — each <code>[ngModel]</code>
+              binding registers its own field path directly.
+            </li>
+            <li>
+              <strong>No manual error aggregation</strong> — the library handles
+              error/warning display per field.
+            </li>
+            <li>
+              <strong>Bidirectional validation</strong> via
+              <code>validationConfig</code> still cross-validates both dates.
+            </li>
+            <li>
+              <strong>Trade-off:</strong> fields appear as separate controls
+              instead of a unified date-range widget.
+            </li>
+          </ul>
+        } @else {
+          <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
+            <li>
+              <strong>Hidden proxy fields</strong> register
+              <code>departureDate</code> and <code>returnDate</code> in the form
+              tree.
+            </li>
+            <li>
+              <strong>Adapter component</strong> provides a single composite date
+              range UI.
+            </li>
+            <li>
+              <strong>Fan-out</strong> via <code>setValueAtPath</code> writes the
+              adapter value back to separate model fields.
+            </li>
+            <li>
+              <strong>Error aggregation</strong> merges errors from both fields
+              into the adapter display.
+            </li>
+            <li>
+              <strong>Display mode gating</strong> — the adapter tracks
+              touched/submitted state to match <code>on-blur-or-submit</code>
+              behavior.
+            </li>
+            <li>
+              <strong>Bidirectional validation</strong> via
+              <code>validationConfig</code> ensures each date change revalidates
+              the other.
+            </li>
+          </ul>
+        }
+      </ngx-card>
+
+      <ngx-form-state-card
+        [formState]="formBody.formState()"
+        [formValue]="formValue()"
+        [errors]="formErrors()"
+        [warnings]="formBody.warnings()"
+        [validatedFields]="formBody.validatedFields()"
+        [pending]="formBody.pending()"
+      />
+    </div>
+
+    <div layout-main>
+      <ngx-travel-form-body
+        #formBody
+        [approach]="approach()"
+        [formValue]="formValue()"
+        [shape]="shape"
+        [suite]="suite"
+        [validationConfig]="validationConfig"
+        [rangeErrors]="rangeErrors()"
+        [rangeWarnings]="rangeWarnings()"
+        (formValueChange)="formValue.set($event)"
+        (submitted)="save()"
+        (resetRequested)="reset()"
+      />
+    </div>
+  </ngx-form-page-layout>
+</div>
