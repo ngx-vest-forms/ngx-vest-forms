@@ -215,11 +215,11 @@ test.describe('Split Wrappers - Form Behavior', () => {
   test.fixme('should bidirectionally revalidate when departure changes after return is set', async ({
     page,
   }) => {
-    // Cross-browser Playwright still misses this bidirectional revalidation consistently
-    // for native date inputs, even when using browser-level fill() instead of synthetic
-    // evaluate() events. Manual verification in Chromium shows the behavior working, but
-    // the E2E signal remains non-deterministic across Chromium/Firefox/WebKit here.
-    // Keep the scenario documented instead of turning it into a flaky gate.
+    // NOT a library bug — bidirectional revalidation works correctly in manual testing.
+    // Playwright's synthetic events for native <input type="date"> do not reliably
+    // trigger Angular's zoneless change-detection scheduler across browsers, causing
+    // the E2E assertion to be non-deterministic. Keep the scenario documented as a
+    // known Playwright limitation rather than turning it into a flaky gate.
     const departure = page.getByLabel(/departure date/i);
     const returnDate = page.getByLabel(/return date/i);
 

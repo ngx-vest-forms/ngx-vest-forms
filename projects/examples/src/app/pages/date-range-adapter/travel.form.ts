@@ -102,6 +102,11 @@ export class TravelFormBody {
    *
    * This method forces the FormGroup to re-evaluate after validators settle,
    * ensuring `formState.errors` reflects the current validation state.
+   *
+   * **Recipe trade-off:** The 100 ms delay is a pragmatic workaround specific to
+   * the hidden-proxy pattern. Production code should profile this timing against
+   * its own async-validator latency and consider replacing the fixed delay with
+   * an observable that waits for the status change event.
    */
   #proxyRefreshTimer?: ReturnType<typeof setTimeout>;
 
