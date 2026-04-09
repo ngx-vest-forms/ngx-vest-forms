@@ -54,10 +54,12 @@
           Errors and warnings are aggregated manually because no single NgModel exists for
           the wrapper to bind to."
       >
-        <app-date-range-adapter
+        <ngx-date-range-adapter
           [value]="{ departureDate: formValue().departureDate, returnDate: formValue().returnDate }"
-          [errors]="rangeErrors()"
-          [warnings]="rangeWarnings()"
+          [departureErrors]="departureErrors()"
+          [returnErrors]="returnErrors()"
+          [departureWarnings]="departureWarnings()"
+          [returnWarnings]="returnWarnings()"
           [formSubmitted]="formSubmitted()"
           (valueChange)="onRangeChange($event)"
         />

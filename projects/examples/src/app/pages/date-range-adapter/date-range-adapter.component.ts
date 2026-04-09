@@ -38,7 +38,7 @@ let nextId = 0;
  * display modes, pending states, and warnings automatically.
  */
 @Component({
-  selector: 'app-date-range-adapter',
+  selector: 'ngx-date-range-adapter',
   template: `
     <fieldset class="space-y-4" role="group" [attr.aria-labelledby]="legendId">
       <legend [id]="legendId" class="label-text font-semibold">
@@ -53,10 +53,10 @@ let nextId = 0;
               [id]="departureInputId"
               type="date"
               class="input-field"
-              [class.input-field--invalid]="isInvalid()"
+              [class.input-field--invalid]="isDepartureInvalid()"
               [value]="departureValue()"
-              [attr.aria-invalid]="isInvalid() || null"
-              [attr.aria-describedby]="ariaDescribedBy()"
+              [attr.aria-invalid]="isDepartureInvalid() || null"
+              [attr.aria-describedby]="departureAriaDescribedBy()"
               (input)="onDepartureChange($event)"
               (blur)="onBlur()"
             />
@@ -70,10 +70,10 @@ let nextId = 0;
               [id]="returnInputId"
               type="date"
               class="input-field"
-              [class.input-field--invalid]="isInvalid()"
+              [class.input-field--invalid]="isReturnInvalid()"
               [value]="returnValue()"
-              [attr.aria-invalid]="isInvalid() || null"
-              [attr.aria-describedby]="ariaDescribedBy()"
+              [attr.aria-invalid]="isReturnInvalid() || null"
+              [attr.aria-describedby]="returnAriaDescribedBy()"
               (input)="onReturnChange($event)"
               (blur)="onBlur()"
             />
@@ -116,37 +116,75 @@ export class DateRangeAdapterComponent {
   protected readonly warningRegionId = `date-range-warnings-${this.uid}`;
 
   readonly value = input<DateRangeValue>({});
-  readonly errors = input<string[]>([]);
-  readonly warnings = input<string[]>([]);
+  readonly departureErrors = input<string[]>([]);
+  readonly returnErrors = input<string[]>([]);
+  readonly departureWarnings = input<string[]>([]);
+  readonly returnWarnings = input<string[]>([]);
   readonly formSubmitted = input(false);
 
   private readonly touched = signal(false);
 
   /** Mimics the library's default `on-blur-or-submit` display mode. */
-  protected readonly shouldShowErrors = computed(
+  protected readonly shouldShowDepartureErrors = computed(
     () =>
-      (this.touched() || this.formSubmitted()) && this.errors().length > 0
+      (this.touched() || this.formSubmitted()) &&
+      this.departureErrors().length > 0
   );
 
-  protected readonly shouldShowWarnings = computed(
+  protected readonly shouldShowReturnErrors = computed(
     () =>
-      (this.touched() || this.formSubmitted()) && this.warnings().length > 0
+      (this.touched() || this.formSubmitted()) && this.returnErrors().length > 0
+  );
+
+  protected readonly shouldShowDepartureWarnings = computed(
+    () =>
+      (this.touched() || this.formSubmitted()) &&
+      this.departureWarnings().length > 0
+  );
+
+  protected readonly shouldShowReturnWarnings = computed(
+    () =>
+      (this.touched() || this.formSubmitted()) &&
+      this.returnWarnings().length > 0
   );
 
   protected readonly displayErrors = computed(() =>
-    this.shouldShowErrors() ? this.errors() : []
+    Array.from(
+      new Set([
+        ...(this.shouldShowDepartureErrors() ? this.departureErrors() : []),
+        ...(this.shouldShowReturnErrors() ? this.returnErrors() : []),
+      ])
+    )
   );
 
   protected readonly displayWarnings = computed(() =>
-    this.shouldShowWarnings() ? this.warnings() : []
+    Array.from(
+      new Set([
+        ...(this.shouldShowDepartureWarnings() ? this.departureWarnings() : []),
+        ...(this.shouldShowReturnWarnings() ? this.returnWarnings() : []),
+      ])
+    )
   );
 
-  protected readonly isInvalid = computed(() => this.shouldShowErrors());
+  protected readonly isDepartureInvalid = computed(
+    () => this.shouldShowDepartureErrors()
+  );
 
-  protected readonly ariaDescribedBy = computed(() => {
+  protected readonly isReturnInvalid = computed(
+    () => this.shouldShowReturnErrors()
+  );
+
+  protected readonly departureAriaDescribedBy = computed(() => {
     const ids: string[] = [];
-    if (this.displayErrors().length > 0) ids.push(this.errorRegionId);
-    if (this.displayWarnings().length > 0) ids.push(this.warningRegionId);
+    if (this.shouldShowDepartureErrors()) ids.push(this.errorRegionId);
+    if (this.shouldShowDepartureWarnings()) ids.push(this.warningRegionId);
+    return ids.length > 0 ? ids.join(' ') : null;
+  });
+
+  protected readonly returnAriaDescribedBy = computed(() => {
+    const ids: string[] = [];
+    if (this.shouldShowReturnErrors()) ids.push(this.errorRegionId);
+    if (this.shouldShowReturnWarnings()) ids.push(this.warningRegionId);
     return ids.length > 0 ? ids.join(' ') : null;
   });
 

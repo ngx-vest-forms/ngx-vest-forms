@@ -2,6 +2,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
+  inject,
   input,
   output,
   signal,
@@ -41,6 +43,8 @@ export type TravelFormApproach = 'composite-adapter' | 'split-wrappers';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TravelFormBody {
+  readonly #destroyRef = inject(DestroyRef);
+
   readonly approach = input<TravelFormApproach>('split-wrappers');
   readonly formValue = input.required<TravelFormModel>();
   readonly shape = input.required<NgxDeepRequired<TravelFormModel>>();
@@ -52,16 +56,22 @@ export class TravelFormBody {
   readonly submitted = output();
   readonly resetRequested = output();
 
-  /** Aggregated errors for the composite adapter, provided by the page. */
-  readonly rangeErrors = input<string[]>([]);
-  /** Aggregated warnings for the composite adapter, provided by the page. */
-  readonly rangeWarnings = input<string[]>([]);
+  readonly departureErrors = input<string[]>([]);
+  readonly returnErrors = input<string[]>([]);
+  readonly departureWarnings = input<string[]>([]);
+  readonly returnWarnings = input<string[]>([]);
 
   private readonly vestForm =
     viewChild<FormDirective<TravelFormModel>>('vestForm');
   private readonly dateRangeAdapter = viewChild(DateRangeAdapterComponent);
 
   readonly formSubmitted = signal(false);
+
+  constructor() {
+    this.#destroyRef.onDestroy(() => {
+      clearTimeout(this.#proxyRefreshTimer);
+    });
+  }
 
   /** Exposes the directive's packaged form state with up-to-date errors. */
   readonly formState = computed(() => {

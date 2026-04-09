@@ -9,21 +9,6 @@ import {
 } from '../../helpers/form-helpers';
 
 /**
- * Helper to switch to the Split Wrappers approach.
- * Clicks the toggle and waits for the form section heading to confirm the switch.
- */
-async function switchToSplitWrappers(
-  page: import('@playwright/test').Page
-): Promise<void> {
-  await page
-    .getByRole('radio', { name: /split wrappers/i })
-    .click();
-  await expect(
-    page.getByRole('heading', { name: /split wrappers/i, level: 2 })
-  ).toBeVisible();
-}
-
-/**
  * Tests for the Split Wrappers approach.
  *
  * In this approach, each date field is wrapped individually with
@@ -158,16 +143,15 @@ test.describe('Split Wrappers - Form Behavior', () => {
     await test.step('Verify referenced element contains error text', async () => {
       const describedBy = await departure.getAttribute('aria-describedby');
       const ids = describedBy!.split(/\s+/);
-      let foundError = false;
-      for (const id of ids) {
-        const el = page.locator(`#${id}`);
-        if ((await el.count()) === 0) continue;
-        const text = await el.textContent();
-        if (text && /required/i.test(text)) {
-          foundError = true;
-          break;
-        }
-      }
+      const errorTexts = await Promise.all(
+        ids.map(async (id) => {
+          const el = page.locator(`#${id}`);
+          return (await el.count()) > 0 ? await el.textContent() : null;
+        })
+      );
+      const foundError = errorTexts.some(
+        (text) => !!text && /required/i.test(text)
+      );
       expect(foundError).toBe(true);
     });
   });

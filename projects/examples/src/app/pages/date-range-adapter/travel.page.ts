@@ -58,24 +58,42 @@ export class TravelPageComponent {
 
   /** Aggregated errors from departure + return for the adapter UI. */
   protected readonly rangeErrors = computed(() => {
-    const errors = this.formBody()?.formState()?.errors ?? {};
     return [
       ...new Set([
-        ...(errors['departureDate'] ?? []),
-        ...(errors['returnDate'] ?? []),
+        ...this.departureErrors(),
+        ...this.returnErrors(),
       ]),
     ];
   });
 
+  protected readonly departureErrors = computed(() => {
+    const errors = this.formBody()?.formState()?.errors ?? {};
+    return errors['departureDate'] ?? [];
+  });
+
+  protected readonly returnErrors = computed(() => {
+    const errors = this.formBody()?.formState()?.errors ?? {};
+    return errors['returnDate'] ?? [];
+  });
+
   /** Merged warnings from departure + return for the adapter UI. */
   protected readonly rangeWarnings = computed(() => {
-    const warnings = this.formBody()?.warnings() ?? {};
     return [
       ...new Set([
-        ...(warnings['departureDate'] ?? []),
-        ...(warnings['returnDate'] ?? []),
+        ...this.departureWarnings(),
+        ...this.returnWarnings(),
       ]),
     ];
+  });
+
+  protected readonly departureWarnings = computed(() => {
+    const warnings = this.formBody()?.warnings() ?? {};
+    return warnings['departureDate'] ?? [];
+  });
+
+  protected readonly returnWarnings = computed(() => {
+    const warnings = this.formBody()?.warnings() ?? {};
+    return warnings['returnDate'] ?? [];
   });
 
   protected save(): void {
