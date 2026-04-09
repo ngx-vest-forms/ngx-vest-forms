@@ -1,7 +1,10 @@
 # Composite Adapter Recipe
 
 > **Status**: Official recipe — no library runtime changes required.
-> **Related**: [GitHub Issue #100](https://github.com/ngx-vest-forms/ngx-vest-forms/issues/100)
+> **Related**:
+> - [GitHub Issue #100](https://github.com/ngx-vest-forms/ngx-vest-forms/issues/100)
+> - [Maintainer direction: official adapter pattern, not a core runtime API](https://github.com/ngx-vest-forms/ngx-vest-forms/issues/100#issuecomment-4207068952)
+> - [Follow-up question from Matt Attalla about reusable child components, grouped paths, and standalone PrimeNG wiring](https://github.com/ngx-vest-forms/ngx-vest-forms/issues/100#issuecomment-4211960869)
 
 ## Problem
 
@@ -443,6 +446,130 @@ export class PrimeDateRangeAdapterComponent {
 This keeps the PrimeNG widget as a single composite UI control while preserving
 flat field paths in the form shape.
 
+### Reusable child component variant (`JsnDatePicker`)
+
+This variant specifically addresses the follow-up question in
+[Matt Attalla's Issue #100 reply](https://github.com/ngx-vest-forms/ngx-vest-forms/issues/100#issuecomment-4211960869)
+about:
+
+- keeping hidden proxy inputs out of the root form template
+- supporting both flat and grouped field paths
+- preventing the visible PrimeNG widget from registering as the wrong control
+
+If you want to keep the **root form template clean**, you can move the hidden
+proxy inputs into a reusable child component. The key idea does **not** change:
+
+- the visible PrimeNG widget stays **standalone**
+- the hidden proxy inputs remain the **real registered form controls**
+- the proxy input `name` values must be the **full form field paths**
+
+This means the parent form can stay free of top-level hidden inputs while the
+child component still participates in the same `NgForm` tree.
+
+#### Parent form usage — flat model
+
+```html
+<jsn-date-picker
+  label="Travel Dates"
+  [startDate]="formValue().departureDate"
+  startDatePath="departureDate"
+  [endDate]="formValue().returnDate"
+  endDatePath="returnDate"
+/>
+```
+
+#### Parent form usage — grouped model
+
+```html
+<jsn-date-picker
+  label="Travel Dates"
+  [startDate]="formValue().travelDates?.departureDate"
+  startDatePath="travelDates.departureDate"
+  [endDate]="formValue().travelDates?.returnDate"
+  endDatePath="travelDates.returnDate"
+/>
+```
+
+For grouped models, pass the **absolute dotted field paths**. Do **not** pass
+relative names such as `departureDate` / `returnDate` when the real model paths
+are `travelDates.departureDate` / `travelDates.returnDate`.
+
+#### Child component wiring
+
+```ts
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  model,
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { vestFormsViewProviders } from 'ngx-vest-forms';
+import { DatePickerModule } from 'primeng/datepicker';
+
+@Component({
+  selector: 'jsn-date-picker',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FormsModule, DatePickerModule],
+  viewProviders: [vestFormsViewProviders],
+  template: `
+    <p-datepicker
+      selectionMode="range"
+      [readonlyInput]="true"
+      [ngModel]="pickerValue()"
+      [ngModelOptions]="{ standalone: true }"
+      (ngModelChange)="onPickerValueChange($event)"
+    />
+
+    <input type="hidden" [name]="startDatePath()" [ngModel]="startDate()" />
+    <input type="hidden" [name]="endDatePath()" [ngModel]="endDate()" />
+  `,
+})
+export class JsnDatePicker {
+  readonly label = input.required<string>();
+
+  readonly startDate = model<Date | undefined>(undefined);
+  readonly endDate = model<Date | undefined>(undefined);
+
+  readonly startDatePath = input.required<string>();
+  readonly endDatePath = input.required<string>();
+
+  protected readonly pickerValue = computed(() => {
+    const start = this.startDate();
+    const end = this.endDate();
+    if (!start && !end) return undefined;
+    return [start, end].filter(Boolean) as Date[];
+  });
+
+  protected onPickerValueChange(value: Date[] | undefined): void {
+    this.startDate.set(value?.[0]);
+    this.endDate.set(value?.[1]);
+  }
+}
+```
+
+This variant answers two common questions from Issue #100:
+
+- **Can the hidden inputs live inside the reusable child component?** Yes.
+- **Can the parent avoid a custom `onRangeChange()` fan-out handler?** Also yes,
+  as long as the child updates the proxy-backed field signals directly.
+
+#### Important rules for this child-component variant
+
+- Add `viewProviders: [vestFormsViewProviders]` so the hidden proxy inputs join
+  the parent form tree.
+- Keep the visible PrimeNG `ngModel` **standalone** with
+  `[ngModelOptions]="{ standalone: true }"`.
+- Do **not** register the visible `p-datepicker` as `name="travelDates"` (or
+  any other real form path) when it represents a composite `Date[]` value.
+- Register only the hidden proxy fields against the real form paths.
+- Use full dotted field paths for grouped forms.
+
+If you skip the standalone `ngModelOptions`, Angular may try to register the
+visible widget into the form tree, which leads to the exact shape/path mismatch
+warnings this recipe is meant to avoid.
+
 ### Display mode considerations
 
 The library's `<ngx-control-wrapper>` uses `FormErrorDisplayDirective` to gate error display based on configurable modes (`on-blur`, `on-submit`, `on-blur-or-submit`, etc.). The composite adapter **cannot use this directive** because it has no `NgModel` for the directive to bind to.
@@ -502,8 +629,22 @@ Use the PrimeNG widget inside the adapter as standalone composite state, keep
 hidden proxy inputs for the real field paths, and fan out the selected range to
 the flat form model fields.
 
+### Can the hidden proxy inputs live inside a reusable child component?
+
+Yes. A reusable child component such as `JsnDatePicker` can host both the
+visible standalone PrimeNG widget and the hidden proxy inputs.
+
+The important part is that the proxy input `name` values still point to the
+real field paths in the parent form model:
+
+- flat: `departureDate`, `returnDate`
+- grouped: `travelDates.departureDate`, `travelDates.returnDate`
+
+Use `viewProviders: [vestFormsViewProviders]` in the child so those hidden
+inputs still participate in the parent `ngxVestForm` tree.
+
 ### Why not a runtime API?
 
-The library's core invariant is that one registered Angular control maps to one field path. A runtime mapping API would raise complex design questions around field ownership, error display, touched state, `focusFirstInvalidControl` behavior, and wrapper/ARIA associations. See the [maintainer comment on Issue #100](https://github.com/ngx-vest-forms/ngx-vest-forms/issues/100#issuecomment-4207068952) for the full reasoning.
+The library's core invariant is that one registered Angular control maps to one field path. A runtime mapping API would raise complex design questions around field ownership, error display, touched state, `focusFirstInvalidControl` behavior, and wrapper/ARIA associations. See the [maintainer direction on Issue #100](https://github.com/ngx-vest-forms/ngx-vest-forms/issues/100#issuecomment-4207068952) for the full reasoning.
 
 If the adapter recipe proves insufficient in real-world usage, a dedicated runtime API can be reconsidered in a future major version.

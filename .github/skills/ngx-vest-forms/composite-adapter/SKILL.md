@@ -199,6 +199,26 @@ Recommended integration:
 - Fan out `value?.[0]` and `value?.[1]` to the real form model fields in the
   adapter's change handler.
 
+If the user wants a **reusable child component** (for example `JsnDatePicker`)
+and wants to avoid hidden inputs in the root form template, that is still the
+same recipe — just move the proxy inputs into the child component.
+
+In that variant:
+
+- add `viewProviders: [vestFormsViewProviders]` in the child
+- keep the visible PrimeNG widget standalone
+- register only the hidden proxy inputs as the real form controls
+- pass **full field paths** into the child, not relative leaf names
+
+Examples:
+
+- flat model: `departureDate`, `returnDate`
+- grouped model: `travelDates.departureDate`, `travelDates.returnDate`
+
+Do **not** register the visible `p-datepicker` as `name="travelDates"` when it
+actually emits a composite `Date[]`. That path belongs to neither the split
+field registrations nor the shape expected by the form.
+
 Example adapter wiring:
 
 ```html
@@ -248,6 +268,7 @@ If your composite can be decomposed into completely independent labeled fields, 
 - Using `ngModelGroup` when flat fields with hidden proxies are simpler and keep field paths correct.
 - Making the adapter form-aware (injecting `NgForm`, using `ngModel`) instead of keeping it pure.
 - Registering a third-party widget's internal `ngModel` in the parent form instead of marking it standalone.
+- Passing `departureDate` / `returnDate` into a grouped child component when the real paths are `travelDates.departureDate` / `travelDates.returnDate`.
 - Using `field?: string` instead of `FormFieldName<T>` for the Vest suite parameter.
 
 ## When to reach for something else
