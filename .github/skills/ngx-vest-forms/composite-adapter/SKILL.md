@@ -101,12 +101,12 @@ Key points:
 
 - Define a named value type (not positional tuples).
 - Use `fieldset` + `legend` for accessible grouping.
-- Accept `errors`, `warnings`, and `formSubmitted` inputs.
-- Track `touched` state internally (set `true` on blur of either visible input).
-- Gate error/warning display: show only when `(touched || formSubmitted) && hasErrors`. This mimics the library's default `on-blur-or-submit` display mode and prevents errors from flashing on page load.
-- Compute `isInvalid` from `shouldShowErrors` — gates both `aria-invalid` and CSS classes.
-- Provide an `aria-live="polite"` region for error announcements.
-- Wire `aria-describedby` from visible inputs to the error region.
+- Accept **per-field** `departureErrors`, `returnErrors`, `departureWarnings`, `returnWarnings` inputs and `formSubmitted`. Do **not** pre-merge errors in the parent — keep them separate so each visible input's `aria-invalid` can be gated independently.
+- Track **per-field** touched state (`departureTouched`, `returnTouched`) set on blur of each visible input separately.
+- Gate error/warning display per field: show only when `(fieldTouched || formSubmitted) && fieldHasErrors`. This mimics the library's default `on-blur-or-submit` display mode and prevents an untouched sibling from showing errors prematurely.
+- Compute `shouldShowDepartureErrors` / `shouldShowReturnErrors` separately — gates each input's `aria-invalid` and CSS class independently.
+- Provide a shared visible `aria-live="polite"` summary that aggregates currently displayed errors from both fields.
+- Wire each input's `aria-describedby` to **its own** sr-only error/warning region, not to the shared summary.
 - Expose `resetTouched()` so the form body can clear touched state on form reset.
 
 ### 4. Hidden proxy fields + fan-out in the form body
@@ -118,11 +118,13 @@ Register each real field path via hidden `<input>` elements so the Angular form 
 <input type="hidden" name="departureDate" [ngModel]="formValue().departureDate" />
 <input type="hidden" name="returnDate" [ngModel]="formValue().returnDate" />
 
-<!-- Adapter component uses the composite value -->
+<!-- Adapter component receives per-field errors/warnings -->
 <app-date-range-adapter
   [value]="{ departureDate: formValue().departureDate, returnDate: formValue().returnDate }"
-  [errors]="rangeErrors()"
-  [warnings]="rangeWarnings()"
+  [departureErrors]="departureErrors()"
+  [returnErrors]="returnErrors()"
+  [departureWarnings]="departureWarnings()"
+  [returnWarnings]="returnWarnings()"
   [formSubmitted]="formSubmitted()"
   (valueChange)="onRangeChange($event)"
 />
@@ -139,7 +141,7 @@ protected onRangeChange(range: DateRangeValue): void {
 }
 ```
 
-### 5. Error aggregation, formSubmitted tracking, and validationConfig
+### 5. Per-field error slicing, formSubmitted tracking, and validationConfig
 
 The form body tracks submitted state and passes it to the adapter:
 
@@ -158,17 +160,27 @@ resetFormState(value: TravelFormModel): void {
 }
 ```
 
-Merge errors from the component fields into a single list for the adapter:
+Slice errors **per field** — do **not** merge them before passing to the adapter. The adapter aggregates them for the visible summary internally, but needs them separate to gate `aria-invalid` and display independently per input:
 
 ```typescript
-readonly rangeErrors = computed(() => {
+readonly departureErrors = computed(() => {
   const errors = this.formState().errors ?? {};
-  return [
-    ...new Set([
-      ...(errors['departureDate'] ?? []),
-      ...(errors['returnDate'] ?? []),
-    ]),
-  ];
+  return errors['departureDate'] ?? [];
+});
+
+readonly returnErrors = computed(() => {
+  const errors = this.formState().errors ?? {};
+  return errors['returnDate'] ?? [];
+});
+
+readonly departureWarnings = computed(() => {
+  const warnings = this.warnings() ?? {};
+  return warnings['departureDate'] ?? [];
+});
+
+readonly returnWarnings = computed(() => {
+  const warnings = this.warnings() ?? {};
+  return warnings['returnDate'] ?? [];
 });
 ```
 
@@ -250,14 +262,15 @@ If your composite can be decomposed into completely independent labeled fields, 
 
 - Use `<fieldset>` with `<legend>` to group the composite controls.
 - Generate unique IDs for each rendered instance (counter or `crypto.randomUUID()`).
-- Wire `aria-describedby` from each visible input to the shared error region.
-- Set `aria-invalid` only when errors are actually displayed (gated by `shouldShowErrors`).
-- Use `role="status"` with `aria-live="polite"` for the error region.
+- Wire each input's `aria-describedby` to **its own** per-field sr-only error/warning region — not to the shared visible summary.
+- Set `aria-invalid` per field, gated by that field's `shouldShowErrors` only — do not share a single `isInvalid` flag across both inputs.
+- Use `role="status"` with `aria-live="polite"` for the visible error summary region.
 - Do not use `aria-live="assertive"` — these are field-level messages, not blocking alerts.
 
 ## Common mistakes to correct
 
 - Passing `formState().errors` directly to the adapter without display-mode gating — errors appear on page load.
+- Pre-merging errors into a single list before passing to the adapter — this loses per-field granularity and causes a valid field to be marked `aria-invalid` when only its sibling has errors.
 - Using `[(ngModel)]` instead of `[ngModel]` on the proxy inputs.
 - Forgetting hidden proxy fields entirely — the adapter inputs are not in the Angular form tree.
 - Using positional tuples instead of named value types.

@@ -2,6 +2,7 @@
 
 > **Status**: Official recipe — no library runtime changes required.
 > **Related**:
+>
 > - [GitHub Issue #100](https://github.com/ngx-vest-forms/ngx-vest-forms/issues/100)
 > - [Maintainer direction: official adapter pattern, not a core runtime API](https://github.com/ngx-vest-forms/ngx-vest-forms/issues/100#issuecomment-4207068952)
 > - [Follow-up question from Matt Attalla about reusable child components, grouped paths, and standalone PrimeNG wiring](https://github.com/ngx-vest-forms/ngx-vest-forms/issues/100#issuecomment-4211960869)
@@ -12,13 +13,13 @@
 
 Common examples:
 
-| Composite control | Model fields |
-| --- | --- |
-| Date range picker | `departureDate` + `returnDate` |
-| Amount/currency control | `amount` + `currency` |
-| Full-name control | `firstName` + `lastName` |
-| Geo picker | `lat` + `lng` |
-| Address autocomplete | `street` + `city` + `zip` + ... |
+| Composite control       | Model fields                    |
+| ----------------------- | ------------------------------- |
+| Date range picker       | `departureDate` + `returnDate`  |
+| Amount/currency control | `amount` + `currency`           |
+| Full-name control       | `firstName` + `lastName`        |
+| Geo picker              | `lat` + `lng`                   |
+| Address autocomplete    | `street` + `city` + `zip` + ... |
 
 ## Recommended: Split Wrappers
 
@@ -126,14 +127,14 @@ Use this pattern only when a **single composite UI widget** is mandatory — for
 
 ### Trade-offs vs Split Wrappers
 
-| Concern | Split Wrappers | Composite Adapter |
-| ------- | :------------: | :---------------: |
-| Display modes | Library-managed | Manual (`on-blur-or-submit` hardcoded) |
-| Focus management | Library-managed | Works via `aria-invalid` on adapter inputs |
-| ARIA wiring | Library-managed | Manual |
-| Error aggregation | Not needed | Manual |
-| Pending states | Library-managed | Not supported |
-| Warning display | Library-managed | Manual |
+| Concern           | Split Wrappers  |                     Composite Adapter                     |
+| ----------------- | :-------------: | :-------------------------------------------------------: |
+| Display modes     | Library-managed | Manual (example implements per-input `on-blur-or-submit`) |
+| Focus management  | Library-managed |        Works via `aria-invalid` on adapter inputs         |
+| ARIA wiring       | Library-managed |                          Manual                           |
+| Error aggregation |   Not needed    |                          Manual                           |
+| Pending states    | Library-managed |                       Not supported                       |
+| Warning display   | Library-managed |                          Manual                           |
 
 ### The pattern — five parts
 
@@ -153,11 +154,13 @@ Key design decisions:
 
 - Define a **named value type** (not positional tuples)
 - Use `<fieldset>` + `<legend>` for accessible grouping
-- Accept `errors`, `warnings`, and `formSubmitted` inputs
-- Track `touched` state internally (set on blur of either visible input)
-- Gate error display: show only when `(touched || formSubmitted) && hasErrors`
-- Wire `aria-invalid` and `aria-describedby` to the visible inputs
-- Provide an `aria-live="polite"` region for error announcements
+- Accept **per-field** `errors` and `warnings` inputs (not merged) — this ensures only the specific input that has errors gets `aria-invalid`, so an untouched sibling is never marked invalid prematurely
+- Track **per-field** `touched` state (set on blur of each visible input separately)
+- Gate error display per field: show only when `(fieldTouched || formSubmitted) && fieldHasErrors`
+- Wire each input's `aria-invalid` and `aria-describedby` to **its own** error/warning regions only
+- Provide an `aria-live="polite"` visible region for the shared visible summary (aggregates displayed errors from both fields)
+- Provide sr-only per-field regions pointed to by each input's `aria-describedby`
+- Expose `resetTouched()` so the form body can clear touched state on form reset
 
 ```ts
 export type DateRangeValue = {
@@ -178,10 +181,10 @@ export type DateRangeValue = {
           [id]="departureInputId"
           type="date"
           [value]="departureValue()"
-          [attr.aria-invalid]="isInvalid() || null"
-          [attr.aria-describedby]="ariaDescribedBy()"
+          [attr.aria-invalid]="shouldShowDepartureErrors() || null"
+          [attr.aria-describedby]="departureAriaDescribedBy()"
           (input)="onDepartureChange($event)"
-          (blur)="onBlur()"
+          (blur)="onBlur('departure')"
         />
       </label>
 
@@ -191,47 +194,83 @@ export type DateRangeValue = {
           [id]="returnInputId"
           type="date"
           [value]="returnValue()"
-          [attr.aria-invalid]="isInvalid() || null"
-          [attr.aria-describedby]="ariaDescribedBy()"
+          [attr.aria-invalid]="shouldShowReturnErrors() || null"
+          [attr.aria-describedby]="returnAriaDescribedBy()"
           (input)="onReturnChange($event)"
-          (blur)="onBlur()"
+          (blur)="onBlur('return')"
         />
       </label>
 
-      <div [id]="errorRegionId" role="status" aria-live="polite" aria-atomic="true">
-        @for (error of displayErrors(); track error) {
+      <!-- Visible shared summary — aggregates displayed errors from both fields -->
+      <div [id]="visibleErrorRegionId" role="status" aria-live="polite" aria-atomic="true">
+        @for (error of visibleErrors(); track error) {
           <p>{{ error }}</p>
         }
+      </div>
+
+      <!-- sr-only per-field error regions wired via aria-describedby -->
+      <div [id]="departureErrorRegionId" class="sr-only">
+        @for (error of departureDisplayErrors(); track error) { <p>{{ error }}</p> }
+      </div>
+      <div [id]="returnErrorRegionId" class="sr-only">
+        @for (error of returnDisplayErrors(); track error) { <p>{{ error }}</p> }
       </div>
     </fieldset>
   `,
 })
 export class DateRangeAdapterComponent {
   readonly value = input<DateRangeValue>({});
-  readonly errors = input<string[]>([]);
-  readonly warnings = input<string[]>([]);
+  readonly departureErrors = input<string[]>([]);
+  readonly returnErrors = input<string[]>([]);
+  readonly departureWarnings = input<string[]>([]);
+  readonly returnWarnings = input<string[]>([]);
   readonly formSubmitted = input(false);
 
-  private readonly touched = signal(false);
+  private readonly departureTouched = signal(false);
+  private readonly returnTouched = signal(false);
 
-  protected readonly shouldShowErrors = computed(
-    () => (this.touched() || this.formSubmitted()) && this.errors().length > 0
+  protected readonly shouldShowDepartureErrors = computed(
+    () => (this.departureTouched() || this.formSubmitted()) && this.departureErrors().length > 0
   );
 
-  protected readonly displayErrors = computed(() =>
-    this.shouldShowErrors() ? this.errors() : []
+  protected readonly shouldShowReturnErrors = computed(
+    () => (this.returnTouched() || this.formSubmitted()) && this.returnErrors().length > 0
   );
 
-  protected readonly isInvalid = computed(() => this.shouldShowErrors());
+  protected readonly departureDisplayErrors = computed(() =>
+    Array.from(new Set(this.shouldShowDepartureErrors() ? this.departureErrors() : []))
+  );
+
+  protected readonly returnDisplayErrors = computed(() =>
+    Array.from(new Set(this.shouldShowReturnErrors() ? this.returnErrors() : []))
+  );
+
+  protected readonly visibleErrors = computed(() =>
+    Array.from(new Set([...this.departureDisplayErrors(), ...this.returnDisplayErrors()]))
+  );
+
+  protected readonly departureAriaDescribedBy = computed(() => {
+    const ids: string[] = [];
+    if (this.departureDisplayErrors().length > 0) ids.push(this.departureErrorRegionId);
+    return ids.length > 0 ? ids.join(' ') : null;
+  });
+
+  protected readonly returnAriaDescribedBy = computed(() => {
+    const ids: string[] = [];
+    if (this.returnDisplayErrors().length > 0) ids.push(this.returnErrorRegionId);
+    return ids.length > 0 ? ids.join(' ') : null;
+  });
 
   readonly valueChange = output<DateRangeValue>();
 
-  protected onBlur(): void {
-    this.touched.set(true);
+  protected onBlur(field: 'departure' | 'return'): void {
+    if (field === 'departure') this.departureTouched.set(true);
+    else this.returnTouched.set(true);
   }
 
   resetTouched(): void {
-    this.touched.set(false);
+    this.departureTouched.set(false);
+    this.returnTouched.set(false);
   }
 
   // ... unique IDs, computed values, event handlers
@@ -244,14 +283,20 @@ Register each real field path via hidden `<input>` elements so the Angular form 
 
 ```html
 <!-- Hidden proxy fields: register real field paths in the form tree -->
-<input type="hidden" name="departureDate" [ngModel]="formValue().departureDate" />
+<input
+  type="hidden"
+  name="departureDate"
+  [ngModel]="formValue().departureDate"
+/>
 <input type="hidden" name="returnDate" [ngModel]="formValue().returnDate" />
 
-<!-- Adapter component uses the composite value -->
+<!-- Adapter component receives per-field errors/warnings -->
 <app-date-range-adapter
   [value]="{ departureDate: formValue().departureDate, returnDate: formValue().returnDate }"
-  [errors]="rangeErrors()"
-  [warnings]="rangeWarnings()"
+  [departureErrors]="departureErrors()"
+  [returnErrors]="returnErrors()"
+  [departureWarnings]="departureWarnings()"
+  [returnWarnings]="returnWarnings()"
   [formSubmitted]="formSubmitted()"
   (valueChange)="onRangeChange($event)"
 />
@@ -268,9 +313,9 @@ protected onRangeChange(range: DateRangeValue): void {
 }
 ```
 
-#### 5. Error aggregation, formSubmitted tracking, and validationConfig
+#### 5. Per-field error slicing, formSubmitted tracking, and validationConfig
 
-The form body tracks submitted state and passes it to the adapter:
+The parent form body slices errors **per field** and passes them separately to the adapter. This allows the adapter to gate `aria-invalid` and display independently for each visible input.
 
 ```ts
 readonly formSubmitted = signal(false);
@@ -285,19 +330,27 @@ resetFormState(value: TravelFormModel): void {
   this.dateRangeAdapter()?.resetTouched();
   this.vestForm()?.resetForm(value);
 }
-```
 
-Merge errors from the component fields into a single list for the adapter:
-
-```ts
-readonly rangeErrors = computed(() => {
+// Slice errors per field — do NOT merge them here.
+// The adapter aggregates them for the visible summary internally.
+readonly departureErrors = computed(() => {
   const errors = this.formState().errors ?? {};
-  return [
-    ...new Set([
-      ...(errors['departureDate'] ?? []),
-      ...(errors['returnDate'] ?? []),
-    ]),
-  ];
+  return errors['departureDate'] ?? [];
+});
+
+readonly returnErrors = computed(() => {
+  const errors = this.formState().errors ?? {};
+  return errors['returnDate'] ?? [];
+});
+
+readonly departureWarnings = computed(() => {
+  const warnings = this.warnings() ?? {};
+  return warnings['departureDate'] ?? [];
+});
+
+readonly returnWarnings = computed(() => {
+  const warnings = this.warnings() ?? {};
+  return warnings['returnDate'] ?? [];
 });
 ```
 
@@ -381,7 +434,12 @@ import { DatePickerModule } from 'primeng/datepicker';
         [attr.aria-describedby]="ariaDescribedBy()"
       />
 
-      <div [id]="errorRegionId" role="status" aria-live="polite" aria-atomic="true">
+      <div
+        [id]="errorRegionId"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         @for (error of displayErrors(); track $index) {
           <p>{{ error }}</p>
         }
@@ -432,7 +490,11 @@ export class PrimeDateRangeAdapterComponent {
 
 ```html
 <!-- Hidden proxy fields: these remain the real ngx-vest-forms registrations -->
-<input type="hidden" name="departureDate" [ngModel]="formValue().departureDate" />
+<input
+  type="hidden"
+  name="departureDate"
+  [ngModel]="formValue().departureDate"
+/>
 <input type="hidden" name="returnDate" [ngModel]="formValue().returnDate" />
 
 <app-primeng-date-range-adapter
@@ -576,14 +638,15 @@ The library's `<ngx-control-wrapper>` uses `FormErrorDisplayDirective` to gate e
 
 Instead, the adapter mimics the library's default `on-blur-or-submit` mode:
 
-- Tracks its own `touched` state (set to `true` on blur of either visible input)
+- Tracks touched state per visible input
 - Accepts a `formSubmitted` input from the parent
-- Shows errors/warnings only when `(touched || formSubmitted) && hasErrors`
+- Shows errors/warnings only when `(fieldTouched || formSubmitted) && hasErrors`
+- Uses a shared visible summary plus per-input `aria-describedby` text so each input announces only its own messages
 
 This means:
 
 - Errors are **hidden on page load** (matches library behavior)
-- Errors appear **after the user blurs an adapter input** or **after form submission**
+- Errors appear **for the blurred adapter input** or **for all inputs after form submission**
 - Errors clear when the form is reset (via `resetTouched()`)
 - Other display modes (`on-dirty`, `always`, `on-submit`) are **not supported** — if needed, extend the adapter's gating logic
 
