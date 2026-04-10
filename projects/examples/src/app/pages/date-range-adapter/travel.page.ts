@@ -14,7 +14,7 @@ import { Card } from '../../ui/card/card.component';
 import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import { PageTitle } from '../../ui/page-title/page-title.component';
-import { TravelFormBody, TravelFormApproach } from './travel.form';
+import { TravelFormApproach, TravelFormBody } from './travel.form';
 import { travelValidationSuite } from './travel.validations';
 
 @Component({
@@ -32,9 +32,7 @@ import { travelValidationSuite } from './travel.validations';
 export class TravelPageComponent {
   private readonly initialFormValue: TravelFormModel = {};
 
-  protected readonly formValue = signal<TravelFormModel>(
-    this.initialFormValue
-  );
+  protected readonly formValue = signal<TravelFormModel>(this.initialFormValue);
 
   protected readonly approach = signal<TravelFormApproach>('split-wrappers');
 
@@ -51,19 +49,7 @@ export class TravelPageComponent {
   /** Merged errors from both date fields for the sidebar card. */
   protected readonly formErrors = computed(() => {
     const errors = this.formBody()?.formState()?.errors ?? {};
-    return [
-      ...new Set(Object.values(errors).flat()),
-    ];
-  });
-
-  /** Aggregated errors from departure + return for the adapter UI. */
-  protected readonly rangeErrors = computed(() => {
-    return [
-      ...new Set([
-        ...this.departureErrors(),
-        ...this.returnErrors(),
-      ]),
-    ];
+    return [...new Set(Object.values(errors).flat())];
   });
 
   protected readonly departureErrors = computed(() => {
@@ -74,16 +60,6 @@ export class TravelPageComponent {
   protected readonly returnErrors = computed(() => {
     const errors = this.formBody()?.formState()?.errors ?? {};
     return errors['returnDate'] ?? [];
-  });
-
-  /** Merged warnings from departure + return for the adapter UI. */
-  protected readonly rangeWarnings = computed(() => {
-    return [
-      ...new Set([
-        ...this.departureWarnings(),
-        ...this.returnWarnings(),
-      ]),
-    ];
   });
 
   protected readonly departureWarnings = computed(() => {

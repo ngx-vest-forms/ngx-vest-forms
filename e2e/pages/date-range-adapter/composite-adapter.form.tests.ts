@@ -1,4 +1,4 @@
-import { expect, Locator, test } from '@playwright/test';
+import { expect, Locator, Page, test } from '@playwright/test';
 import {
   navigateToDateRangeAdapter,
   waitForValidationToSettle,
@@ -27,15 +27,15 @@ async function setAdapterDate(field: Locator, value: string): Promise<void> {
  * Helper to switch to the Composite Adapter approach.
  * Split Wrappers is now the default — tests must explicitly switch.
  */
-async function switchToCompositeAdapter(
-  page: import('@playwright/test').Page
-): Promise<void> {
-  await page
-    .getByRole('radio', { name: /composite adapter/i })
-    .check();
+async function switchToCompositeAdapter(page: Page): Promise<void> {
+  await page.getByRole('radio', { name: /composite adapter/i }).check();
   await expect(
     page.getByRole('heading', { name: /composite adapter/i, level: 2 })
   ).toBeVisible();
+}
+
+function getAdapterErrorRegion(page: Page): Locator {
+  return page.locator('[id*="date-range-errors"]');
 }
 
 /**
@@ -53,9 +53,7 @@ test.describe('Composite Adapter - Form Behavior', () => {
   });
 
   test('should NOT show errors on initial page load', async ({ page }) => {
-    const errorRegion = page
-      .locator('[role="status"][aria-live="polite"]')
-      .first();
+    const errorRegion = getAdapterErrorRegion(page);
     await expect(errorRegion).not.toContainText(/required/i);
 
     const departure = page.getByLabel(/departure date/i);
@@ -72,10 +70,12 @@ test.describe('Composite Adapter - Form Behavior', () => {
     await page.keyboard.press('Escape');
     await waitForValidationToSettle(page);
 
-    const errorRegion = page
-      .locator('[role="status"][aria-live="polite"]')
-      .first();
-    await expect(errorRegion).toContainText(/required/i);
+    const errorRegion = getAdapterErrorRegion(page);
+    await expect(errorRegion).toContainText('Departure date is required');
+    await expect(page.getByLabel(/return date/i)).not.toHaveAttribute(
+      'aria-invalid',
+      'true'
+    );
   });
 
   test('should update form model when departure date is entered', async ({
@@ -104,9 +104,7 @@ test.describe('Composite Adapter - Form Behavior', () => {
     await page.getByRole('button', { name: /submit/i }).click();
     await waitForValidationToSettle(page);
 
-    const errorRegion = page
-      .locator('[role="status"][aria-live="polite"]')
-      .first();
+    const errorRegion = getAdapterErrorRegion(page);
     await expect(errorRegion).toContainText(/required/i);
   });
 
@@ -120,9 +118,7 @@ test.describe('Composite Adapter - Form Behavior', () => {
     await setAdapterDate(returnDate, '2026-07-01');
     await waitForValidationToSettle(page);
 
-    const errorRegion = page
-      .locator('[role="status"][aria-live="polite"]')
-      .first();
+    const errorRegion = getAdapterErrorRegion(page);
     await expect(errorRegion).toContainText(/after/i);
   });
 
@@ -134,9 +130,7 @@ test.describe('Composite Adapter - Form Behavior', () => {
     await setAdapterDate(returnDate, '2026-07-01');
     await waitForValidationToSettle(page);
 
-    const errorRegion = page
-      .locator('[role="status"][aria-live="polite"]')
-      .first();
+    const errorRegion = getAdapterErrorRegion(page);
     await expect(errorRegion).toContainText(/after/i);
 
     await setAdapterDate(returnDate, '2026-07-20');
@@ -226,9 +220,7 @@ test.describe('Composite Adapter - Form Behavior', () => {
     const departure = page.getByLabel(/departure date/i);
     await expect(departure).toHaveAttribute('aria-invalid', 'true');
 
-    const errorRegion = page
-      .locator('[role="status"][aria-live="polite"]')
-      .first();
+    const errorRegion = getAdapterErrorRegion(page);
     await expect(errorRegion).toContainText(/required/i);
 
     // Reset the form

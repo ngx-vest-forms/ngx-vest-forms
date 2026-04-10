@@ -71,11 +71,11 @@ import {
 } from '../utils/form-utils';
 import { validateShape } from '../utils/shape-validation';
 import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
-import { ValidationOptions } from './validation-options';
 import {
   getFormSubmittedSignal,
   setAngularFormSubmittedState,
 } from './form-submitted-state';
+import { ValidationOptions } from './validation-options';
 
 /**
  * Duration (in milliseconds) to keep fields marked as "in-progress" after validation.

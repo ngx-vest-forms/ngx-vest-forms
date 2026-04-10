@@ -1,5 +1,5 @@
-import { enforce, omitWhen, only, staticSuite, test, warn } from 'vest';
 import { FormFieldName } from 'ngx-vest-forms';
+import { enforce, omitWhen, only, staticSuite, test, warn } from 'vest';
 import { TravelFormModel } from '../../models/travel-form.model';
 
 const MIN_DAYS_ADVANCE = 3;

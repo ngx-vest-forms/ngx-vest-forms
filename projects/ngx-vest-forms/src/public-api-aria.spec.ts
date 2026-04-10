@@ -4,11 +4,11 @@
  */
 import type { AriaAssociationMode } from 'ngx-vest-forms';
 import {
-  parseAriaIdTokens,
   mergeAriaDescribedBy,
+  parseAriaIdTokens,
   resolveAssociationTargets,
 } from 'ngx-vest-forms';
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('Public API: ARIA association utilities', () => {
   describe('parseAriaIdTokens', () => {

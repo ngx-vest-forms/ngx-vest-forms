@@ -65,7 +65,7 @@ type FormSectionTone =
       <ng-content></ng-content>
     </section>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FormSectionComponent {
   readonly title = input.required<string>();

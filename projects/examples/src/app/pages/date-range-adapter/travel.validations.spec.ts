@@ -13,9 +13,7 @@ describe('Travel Validations', () => {
   it('should require returnDate', () => {
     const result = travelValidationSuite({}, 'returnDate');
     expect(result.hasErrors('returnDate')).toBe(true);
-    expect(result.getErrors('returnDate')).toContain(
-      'Return date is required'
-    );
+    expect(result.getErrors('returnDate')).toContain('Return date is required');
   });
 
   it('should pass when both dates are valid and in correct order', () => {

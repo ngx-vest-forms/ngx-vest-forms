@@ -27,7 +27,7 @@ import {
       >{{ isStringValue() ? value() : (value() | json) }}</pre
     >
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class JsonPreviewComponent {
   readonly title = input<string>();

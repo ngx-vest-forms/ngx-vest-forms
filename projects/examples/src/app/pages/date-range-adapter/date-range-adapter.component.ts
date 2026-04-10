@@ -25,13 +25,14 @@ let nextId = 0;
  * `<ngx-control-wrapper>` discovers a single `NgModel` child via `contentChild(NgModel)`.
  * A composite adapter maps one UI widget to _multiple_ flat model fields
  * (`departureDate` + `returnDate`), so there is no single NgModel for the wrapper
- * to bind to. The parent form body aggregates errors from both fields and passes
- * them in via the `errors` input.
+ * to bind to. The parent form body passes field-specific errors and warnings into
+ * the adapter, which renders a shared visible summary plus input-specific
+ * descriptions for assistive technology.
  *
  * **Display mode gating:** The adapter mimics the library's default `on-blur-or-submit`
- * display mode. Errors and warnings are only shown after the user has interacted with
- * the adapter (blur) or after form submission. This prevents errors from flashing on
- * page load — matching the behavior of `<ngx-control-wrapper>`.
+ * display mode. Errors and warnings are only shown for the specific input that has
+ * been blurred, or for all inputs after form submission. This prevents untouched
+ * sibling fields from showing errors too early.
  *
  * If your date fields can be presented as two independent controls, prefer wrapping
  * each in its own `<ngx-control-wrapper>` instead — the library handles ARIA wiring,
@@ -53,12 +54,12 @@ let nextId = 0;
               [id]="departureInputId"
               type="date"
               class="input-field"
-              [class.input-field--invalid]="isDepartureInvalid()"
+              [class.input-field--invalid]="shouldShowDepartureErrors()"
               [value]="departureValue()"
-              [attr.aria-invalid]="isDepartureInvalid() || null"
+              [attr.aria-invalid]="shouldShowDepartureErrors() || null"
               [attr.aria-describedby]="departureAriaDescribedBy()"
               (input)="onDepartureChange($event)"
-              (blur)="onBlur()"
+              (blur)="onBlur('departure')"
             />
           </label>
         </div>
@@ -70,36 +71,62 @@ let nextId = 0;
               [id]="returnInputId"
               type="date"
               class="input-field"
-              [class.input-field--invalid]="isReturnInvalid()"
+              [class.input-field--invalid]="shouldShowReturnErrors()"
               [value]="returnValue()"
-              [attr.aria-invalid]="isReturnInvalid() || null"
+              [attr.aria-invalid]="shouldShowReturnErrors() || null"
               [attr.aria-describedby]="returnAriaDescribedBy()"
               (input)="onReturnChange($event)"
-              (blur)="onBlur()"
+              (blur)="onBlur('return')"
             />
           </label>
         </div>
       </div>
 
       <div
-        [id]="errorRegionId"
+        [id]="visibleErrorRegionId"
         role="status"
         aria-live="polite"
         aria-atomic="true"
       >
-        @for (error of displayErrors(); track $index) {
+        @for (error of visibleErrors(); track error) {
           <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ error }}</p>
         }
       </div>
 
       <div
-        [id]="warningRegionId"
+        [id]="visibleWarningRegionId"
         role="status"
         aria-live="polite"
         aria-atomic="true"
       >
-        @for (warning of displayWarnings(); track $index) {
-          <p class="mt-1 text-sm text-yellow-700 dark:text-yellow-400">{{ warning }}</p>
+        @for (warning of visibleWarnings(); track warning) {
+          <p class="mt-1 text-sm text-yellow-700 dark:text-yellow-400">
+            {{ warning }}
+          </p>
+        }
+      </div>
+
+      <div [id]="departureErrorRegionId" class="sr-only">
+        @for (error of departureDisplayErrors(); track error) {
+          <p>{{ error }}</p>
+        }
+      </div>
+
+      <div [id]="departureWarningRegionId" class="sr-only">
+        @for (warning of departureDisplayWarnings(); track warning) {
+          <p>{{ warning }}</p>
+        }
+      </div>
+
+      <div [id]="returnErrorRegionId" class="sr-only">
+        @for (error of returnDisplayErrors(); track error) {
+          <p>{{ error }}</p>
+        }
+      </div>
+
+      <div [id]="returnWarningRegionId" class="sr-only">
+        @for (warning of returnDisplayWarnings(); track warning) {
+          <p>{{ warning }}</p>
         }
       </div>
     </fieldset>
@@ -112,8 +139,12 @@ export class DateRangeAdapterComponent {
   protected readonly legendId = `date-range-legend-${this.uid}`;
   protected readonly departureInputId = `departure-date-${this.uid}`;
   protected readonly returnInputId = `return-date-${this.uid}`;
-  protected readonly errorRegionId = `date-range-errors-${this.uid}`;
-  protected readonly warningRegionId = `date-range-warnings-${this.uid}`;
+  protected readonly visibleErrorRegionId = `date-range-errors-${this.uid}`;
+  protected readonly visibleWarningRegionId = `date-range-warnings-${this.uid}`;
+  protected readonly departureErrorRegionId = `departure-errors-${this.uid}`;
+  protected readonly departureWarningRegionId = `departure-warnings-${this.uid}`;
+  protected readonly returnErrorRegionId = `return-errors-${this.uid}`;
+  protected readonly returnWarningRegionId = `return-warnings-${this.uid}`;
 
   readonly value = input<DateRangeValue>({});
   readonly departureErrors = input<string[]>([]);
@@ -122,69 +153,94 @@ export class DateRangeAdapterComponent {
   readonly returnWarnings = input<string[]>([]);
   readonly formSubmitted = input(false);
 
-  private readonly touched = signal(false);
+  private readonly departureTouched = signal(false);
+  private readonly returnTouched = signal(false);
 
   /** Mimics the library's default `on-blur-or-submit` display mode. */
   protected readonly shouldShowDepartureErrors = computed(
     () =>
-      (this.touched() || this.formSubmitted()) &&
+      (this.departureTouched() || this.formSubmitted()) &&
       this.departureErrors().length > 0
   );
 
   protected readonly shouldShowReturnErrors = computed(
     () =>
-      (this.touched() || this.formSubmitted()) && this.returnErrors().length > 0
+      (this.returnTouched() || this.formSubmitted()) &&
+      this.returnErrors().length > 0
   );
 
   protected readonly shouldShowDepartureWarnings = computed(
     () =>
-      (this.touched() || this.formSubmitted()) &&
+      (this.departureTouched() || this.formSubmitted()) &&
       this.departureWarnings().length > 0
   );
 
   protected readonly shouldShowReturnWarnings = computed(
     () =>
-      (this.touched() || this.formSubmitted()) &&
+      (this.returnTouched() || this.formSubmitted()) &&
       this.returnWarnings().length > 0
   );
 
-  protected readonly displayErrors = computed(() =>
+  protected readonly departureDisplayErrors = computed(() =>
     Array.from(
-      new Set([
-        ...(this.shouldShowDepartureErrors() ? this.departureErrors() : []),
-        ...(this.shouldShowReturnErrors() ? this.returnErrors() : []),
-      ])
+      new Set(this.shouldShowDepartureErrors() ? this.departureErrors() : [])
     )
   );
 
-  protected readonly displayWarnings = computed(() =>
+  protected readonly returnDisplayErrors = computed(() =>
     Array.from(
-      new Set([
-        ...(this.shouldShowDepartureWarnings() ? this.departureWarnings() : []),
-        ...(this.shouldShowReturnWarnings() ? this.returnWarnings() : []),
-      ])
+      new Set(this.shouldShowReturnErrors() ? this.returnErrors() : [])
     )
   );
 
-  protected readonly isDepartureInvalid = computed(
-    () => this.shouldShowDepartureErrors()
+  protected readonly departureDisplayWarnings = computed(() =>
+    Array.from(
+      new Set(
+        this.shouldShowDepartureWarnings() ? this.departureWarnings() : []
+      )
+    )
   );
 
-  protected readonly isReturnInvalid = computed(
-    () => this.shouldShowReturnErrors()
+  protected readonly returnDisplayWarnings = computed(() =>
+    Array.from(
+      new Set(this.shouldShowReturnWarnings() ? this.returnWarnings() : [])
+    )
+  );
+
+  protected readonly visibleErrors = computed(() =>
+    Array.from(
+      new Set([...this.departureDisplayErrors(), ...this.returnDisplayErrors()])
+    )
+  );
+
+  protected readonly visibleWarnings = computed(() =>
+    Array.from(
+      new Set([
+        ...this.departureDisplayWarnings(),
+        ...this.returnDisplayWarnings(),
+      ])
+    )
   );
 
   protected readonly departureAriaDescribedBy = computed(() => {
     const ids: string[] = [];
-    if (this.shouldShowDepartureErrors()) ids.push(this.errorRegionId);
-    if (this.shouldShowDepartureWarnings()) ids.push(this.warningRegionId);
+    if (this.departureDisplayErrors().length > 0) {
+      ids.push(this.departureErrorRegionId);
+    }
+    if (this.departureDisplayWarnings().length > 0) {
+      ids.push(this.departureWarningRegionId);
+    }
     return ids.length > 0 ? ids.join(' ') : null;
   });
 
   protected readonly returnAriaDescribedBy = computed(() => {
     const ids: string[] = [];
-    if (this.shouldShowReturnErrors()) ids.push(this.errorRegionId);
-    if (this.shouldShowReturnWarnings()) ids.push(this.warningRegionId);
+    if (this.returnDisplayErrors().length > 0) {
+      ids.push(this.returnErrorRegionId);
+    }
+    if (this.returnDisplayWarnings().length > 0) {
+      ids.push(this.returnWarningRegionId);
+    }
     return ids.length > 0 ? ids.join(' ') : null;
   });
 
@@ -197,13 +253,19 @@ export class DateRangeAdapterComponent {
     () => this.value().returnDate ?? ''
   );
 
-  protected onBlur(): void {
-    this.touched.set(true);
+  protected onBlur(field: 'departure' | 'return'): void {
+    if (field === 'departure') {
+      this.departureTouched.set(true);
+      return;
+    }
+
+    this.returnTouched.set(true);
   }
 
   /** Reset touched state (called by form body on form reset). */
   resetTouched(): void {
-    this.touched.set(false);
+    this.departureTouched.set(false);
+    this.returnTouched.set(false);
   }
 
   protected onDepartureChange(event: Event): void {

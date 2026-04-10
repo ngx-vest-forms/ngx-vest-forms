@@ -66,59 +66,59 @@
     <div layout-aside class="sidebar-card-stack">
       <ngx-card title="How It Works">
         @if (approach() === 'split-wrappers') {
-          <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
-            <li>
-              Each field uses <code>&lt;ngx-control-wrapper&gt;</code> for
-              <strong>automatic ARIA wiring</strong>, error display, and warning
-              support.
-            </li>
-            <li>
-              <strong>No hidden proxies</strong> — each <code>[ngModel]</code>
-              binding registers its own field path directly.
-            </li>
-            <li>
-              <strong>No manual error aggregation</strong> — the library handles
-              error/warning display per field.
-            </li>
-            <li>
-              <strong>Bidirectional validation</strong> via
-              <code>validationConfig</code> still cross-validates both dates.
-            </li>
-            <li>
-              <strong>Trade-off:</strong> fields appear as separate controls
-              instead of a unified date-range widget.
-            </li>
-          </ul>
+        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
+          <li>
+            Each field uses <code>&lt;ngx-control-wrapper&gt;</code> for
+            <strong>automatic ARIA wiring</strong>, error display, and warning
+            support.
+          </li>
+          <li>
+            <strong>No hidden proxies</strong> — each <code>[ngModel]</code>
+            binding registers its own field path directly.
+          </li>
+          <li>
+            <strong>No manual error aggregation</strong> — the library handles
+            error/warning display per field.
+          </li>
+          <li>
+            <strong>Bidirectional validation</strong> via
+            <code>validationConfig</code> still cross-validates both dates.
+          </li>
+          <li>
+            <strong>Trade-off:</strong> fields appear as separate controls
+            instead of a unified date-range widget.
+          </li>
+        </ul>
         } @else {
-          <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
-            <li>
-              <strong>Hidden proxy fields</strong> register
-              <code>departureDate</code> and <code>returnDate</code> in the form
-              tree.
-            </li>
-            <li>
-              <strong>Adapter component</strong> provides a single composite date
-              range UI.
-            </li>
-            <li>
-              <strong>Fan-out</strong> via <code>setValueAtPath</code> writes the
-              adapter value back to separate model fields.
-            </li>
-            <li>
-              <strong>Error aggregation</strong> merges errors from both fields
-              into the adapter display.
-            </li>
-            <li>
-              <strong>Display mode gating</strong> — the adapter tracks
-              touched/submitted state to match <code>on-blur-or-submit</code>
-              behavior.
-            </li>
-            <li>
-              <strong>Bidirectional validation</strong> via
-              <code>validationConfig</code> ensures each date change revalidates
-              the other.
-            </li>
-          </ul>
+        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
+          <li>
+            <strong>Hidden proxy fields</strong> register
+            <code>departureDate</code> and <code>returnDate</code> in the form
+            tree.
+          </li>
+          <li>
+            <strong>Adapter component</strong> provides a single composite date
+            range UI.
+          </li>
+          <li>
+            <strong>Fan-out</strong> via <code>setValueAtPath</code> writes the
+            adapter value back to separate model fields.
+          </li>
+          <li>
+            <strong>Error aggregation</strong> merges errors from both fields
+            into the adapter display.
+          </li>
+          <li>
+            <strong>Display mode gating</strong> — the adapter tracks
+            touched/submitted state to match <code>on-blur-or-submit</code>
+            behavior.
+          </li>
+          <li>
+            <strong>Bidirectional validation</strong> via
+            <code>validationConfig</code> ensures each date change revalidates
+            the other.
+          </li>
+        </ul>
         }
       </ngx-card>
 

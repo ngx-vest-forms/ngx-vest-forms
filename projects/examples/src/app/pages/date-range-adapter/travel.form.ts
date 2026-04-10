@@ -1,9 +1,11 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   DestroyRef,
   inject,
+  Injector,
   input,
   output,
   signal,
@@ -14,9 +16,9 @@ import {
   createEmptyFormState,
   FormDirective,
   NgxDeepRequired,
+  NgxTypedVestSuite,
   NgxValidationConfig,
   NgxVestForms,
-  NgxVestSuite,
   setValueAtPath,
 } from 'ngx-vest-forms';
 import { TravelFormModel } from '../../models/travel-form.model';
@@ -44,11 +46,13 @@ export type TravelFormApproach = 'composite-adapter' | 'split-wrappers';
 })
 export class TravelFormBody {
   readonly #destroyRef = inject(DestroyRef);
+  readonly #injector = inject(Injector);
+  #validationRefreshTimer?: ReturnType<typeof setTimeout>;
 
   readonly approach = input<TravelFormApproach>('split-wrappers');
   readonly formValue = input.required<TravelFormModel>();
   readonly shape = input.required<NgxDeepRequired<TravelFormModel>>();
-  readonly suite = input.required<NgxVestSuite<TravelFormModel>>();
+  readonly suite = input.required<NgxTypedVestSuite<TravelFormModel>>();
   readonly validationConfig =
     input.required<NgxValidationConfig<TravelFormModel>>();
 
@@ -69,7 +73,7 @@ export class TravelFormBody {
 
   constructor() {
     this.#destroyRef.onDestroy(() => {
-      clearTimeout(this.#proxyRefreshTimer);
+      clearTimeout(this.#validationRefreshTimer);
     });
   }
 
@@ -100,33 +104,18 @@ export class TravelFormBody {
     setValueAtPath(next, 'departureDate', range.departureDate);
     setValueAtPath(next, 'returnDate', range.returnDate);
     this.formValueChange.emit(next);
-    this.#refreshFormGroupAfterProxyValidation();
-  }
 
-  /**
-   * After proxy `[ngModel]` bindings propagate new values to their FormControls
-   * (via NgModel's deferred `_updateValue` microtask) and the async validators
-   * complete (via `timer(0)`), the validator's `setErrors()` uses `onlySelf: true`.
-   * This prevents `StatusChangeEvent` from propagating to the NgForm FormGroup,
-   * so `formState.errors` stays stale.
-   *
-   * This method forces the FormGroup to re-evaluate after validators settle,
-   * ensuring `formState.errors` reflects the current validation state.
-   *
-   * **Recipe trade-off:** The 100 ms delay is a pragmatic workaround specific to
-   * the hidden-proxy pattern. Production code should profile this timing against
-   * its own async-validator latency and consider replacing the fixed delay with
-   * an observable that waits for the status change event.
-   */
-  #proxyRefreshTimer?: ReturnType<typeof setTimeout>;
-
-  #refreshFormGroupAfterProxyValidation(): void {
-    clearTimeout(this.#proxyRefreshTimer);
-    this.#proxyRefreshTimer = setTimeout(() => {
-      const form = this.vestForm()?.ngForm?.form;
-      if (!form) return;
-      form.updateValueAndValidity({ emitEvent: true });
-    }, 100);
+    // Wait for the hidden proxy `[ngModel]` inputs to render, then schedule one
+    // macrotask so NgModel's deferred sync has completed before we refresh validation.
+    afterNextRender(
+      () => {
+        clearTimeout(this.#validationRefreshTimer);
+        this.#validationRefreshTimer = setTimeout(() => {
+          this.vestForm()?.triggerFormValidation();
+        }, 0);
+      },
+      { injector: this.#injector }
+    );
   }
 
   protected onSubmit(): void {
