@@ -3,8 +3,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  Injector,
   inject,
+  Injector,
   signal,
   viewChild,
 } from '@angular/core';
@@ -203,9 +203,12 @@ export class WizardFormPageComponent {
       return;
     }
 
-    afterNextRender(() => {
-      this.formBody()?.focusCurrentStepFirstInvalidControl();
-    }, { injector: this.injector });
+    afterNextRender(
+      () => {
+        this.formBody()?.focusCurrentStepFirstInvalidControl();
+      },
+      { injector: this.injector }
+    );
   }
 
   protected onStep2Submit(): void {
@@ -217,14 +220,17 @@ export class WizardFormPageComponent {
       return;
     }
 
-    afterNextRender(() => {
-      this.formBody()?.focusCurrentStepFirstInvalidControl({
-        behavior: 'auto',
-        block: 'start',
-        inline: 'nearest',
-        preventScrollOnFocus: true,
-      });
-    }, { injector: this.injector });
+    afterNextRender(
+      () => {
+        this.formBody()?.focusCurrentStepFirstInvalidControl({
+          behavior: 'auto',
+          block: 'start',
+          inline: 'nearest',
+          preventScrollOnFocus: true,
+        });
+      },
+      { injector: this.injector }
+    );
   }
 
   protected onStep3Submit(): void {
@@ -235,9 +241,12 @@ export class WizardFormPageComponent {
       return;
     }
 
-    afterNextRender(() => {
-      this.formBody()?.focusCurrentStepFirstInvalidControl();
-    }, { injector: this.injector });
+    afterNextRender(
+      () => {
+        this.formBody()?.focusCurrentStepFirstInvalidControl();
+      },
+      { injector: this.injector }
+    );
   }
 
   protected async submitAll(): Promise<void> {
@@ -256,9 +265,12 @@ export class WizardFormPageComponent {
         this.goToStep(3);
       }
 
-      afterNextRender(() => {
-        this.formBody()?.focusCurrentStepFirstInvalidControl();
-      }, { injector: this.injector });
+      afterNextRender(
+        () => {
+          this.formBody()?.focusCurrentStepFirstInvalidControl();
+        },
+        { injector: this.injector }
+      );
       return;
     }
 

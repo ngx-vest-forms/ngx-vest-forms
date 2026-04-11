@@ -29,7 +29,7 @@ import type { PhoneNumberMap } from '../../models/phonenumber.model';
   templateUrl: './phonenumbers.component.html',
   styleUrls: ['./phonenumbers.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [vestFormsViewProviders]
+  viewProviders: [vestFormsViewProviders],
 })
 export class PhoneNumbersComponent {
   /**

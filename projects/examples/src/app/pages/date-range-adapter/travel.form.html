@@ -1,0 +1,80 @@
+<ngx-card>
+  <form
+    ngxVestForm
+    #vestForm="ngxVestForm"
+    [suite]="suite()"
+    [formShape]="shape()"
+    [formValue]="formValue()"
+    [validationConfig]="validationConfig()"
+    (formValueChange)="formValueChange.emit($event)"
+    (ngSubmit)="onSubmit()"
+    class="space-y-8"
+  >
+    @if (approach() === 'split-wrappers') {
+    <ngx-form-section
+      tone="blue"
+      title="Date Range (Split Wrappers)"
+      description="Each date field is wrapped individually with &lt;ngx-control-wrapper&gt;.
+          The library handles ARIA wiring, error display modes, warnings, and pending states
+          automatically — no manual error aggregation needed."
+    >
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <ngx-control-wrapper>
+          <label for="departureDate" class="label-text">Departure Date</label>
+          <input
+            id="departureDate"
+            type="date"
+            name="departureDate"
+            class="input-field"
+            [ngModel]="formValue().departureDate"
+          />
+        </ngx-control-wrapper>
+
+        <ngx-control-wrapper>
+          <label for="returnDate" class="label-text">Return Date</label>
+          <input
+            id="returnDate"
+            type="date"
+            name="returnDate"
+            class="input-field"
+            [ngModel]="formValue().returnDate"
+          />
+        </ngx-control-wrapper>
+      </div>
+    </ngx-form-section>
+    } @else {
+    <!-- Hidden proxy fields: register real field paths in the form tree -->
+    <input
+      type="hidden"
+      name="departureDate"
+      [ngModel]="formValue().departureDate"
+    />
+    <input type="hidden" name="returnDate" [ngModel]="formValue().returnDate" />
+
+    <ngx-form-section
+      tone="orange"
+      title="Date Range (Composite Adapter)"
+      description="A single composite UI control maps to two separate form model fields.
+          Errors and warnings are aggregated manually because no single NgModel exists for
+          the wrapper to bind to."
+    >
+      <ngx-date-range-adapter
+        [value]="{ departureDate: formValue().departureDate, returnDate: formValue().returnDate }"
+        [departureErrors]="departureErrors()"
+        [returnErrors]="returnErrors()"
+        [departureWarnings]="departureWarnings()"
+        [returnWarnings]="returnWarnings()"
+        [formSubmitted]="formSubmitted()"
+        (valueChange)="onRangeChange($event)"
+      />
+    </ngx-form-section>
+    }
+
+    <div class="flex justify-end gap-3 pt-4">
+      <button type="button" class="btn btn-secondary" (click)="onReset()">
+        Reset Form
+      </button>
+      <button type="submit" class="btn btn-primary">Submit Form</button>
+    </div>
+  </form>
+</ngx-card>

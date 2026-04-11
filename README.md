@@ -409,6 +409,7 @@ const shape: NgxDeepRequired<MyFormModel> = {
 ### UI & Integration
 
 - **[Child Components](./docs/CHILD-COMPONENTS.md)** - Split large forms into smaller, maintainable components
+- **[Composite Adapter Recipe](./docs/COMPOSITE-ADAPTER-RECIPE.md)** - Map one composite widget to multiple real form field paths
 - **[Custom Control Wrappers](./docs/CUSTOM-CONTROL-WRAPPERS.md)** - Build consistent error display patterns
 - **[API Tokens](./docs/API-TOKENS.md)** - Configure error display modes and other global settings
 

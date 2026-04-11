@@ -155,7 +155,7 @@ export type WizardStepConfig = {
       display: block;
     }
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WizardStepsComponent {
   readonly steps = input.required<WizardStepConfig[]>();
