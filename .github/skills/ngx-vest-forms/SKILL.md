@@ -37,6 +37,7 @@ Use these nested workflow sub-skills when the feature area is clear:
 | `built-in-wrappers` | built-in wrapper selection, display modes, `ariaAssociationMode` | `built-in-wrappers/SKILL.md` |
 | `custom-wrapper-patterns` | design-system wrappers, `FormErrorDisplayDirective`, `FormErrorControlDirective` | `custom-wrapper-patterns/SKILL.md` |
 | `child-components` | nested `ngModelGroup`, reusable form sections, `vestFormsViewProviders` | `child-components/SKILL.md` |
+| `composite-adapter` | one UI widget mapping to multiple flat form fields, hidden proxy fields, fan-out, error aggregation | `composite-adapter/SKILL.md` |
 | `dynamic-form-behavior` | clearing hidden values, structure changes, `triggerFormValidation()` | `dynamic-form-behavior/SKILL.md` |
 
 ## Route to the right workflow
@@ -89,6 +90,16 @@ Read `child-components/SKILL.md` when the user is:
 - splitting a large form into reusable sections
 - working with nested `ngModelGroup`
 - debugging missing `vestFormsViewProviders`
+
+### Composite adapters
+
+Read `composite-adapter/SKILL.md` when the user is:
+
+- mapping one UI widget to multiple flat form model fields
+- asking about date range pickers, name splitters, or multi-field composites
+- using hidden proxy fields with `setValueAtPath` fan-out
+- aggregating errors from multiple fields into a single UI region
+- asking why `<ngx-control-wrapper>` does not work for their composite control
 
 ### Dynamic structure changes
 

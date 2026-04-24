@@ -13,7 +13,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
       </section>
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class FormPageLayout {}

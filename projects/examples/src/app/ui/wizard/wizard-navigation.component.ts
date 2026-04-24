@@ -129,7 +129,7 @@ import {
       display: block;
     }
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WizardNavigationComponent {
   readonly showPrevious = input(true);

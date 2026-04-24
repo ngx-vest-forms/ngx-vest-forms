@@ -9,7 +9,7 @@ import { BusinessHourFormModel } from '../../../../models/business-hours-form.mo
   templateUrl: './business-hour.component.html',
   styleUrls: ['./business-hour.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [vestFormsViewProviders]
+  viewProviders: [vestFormsViewProviders],
 })
 export class BusinessHourComponent {
   private static nextInstanceId = 0;
