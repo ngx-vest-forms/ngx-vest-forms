@@ -494,6 +494,7 @@ const shape: NgxDeepRequired<MyFormModel> = {
 
 - **[ValidationConfig vs Root-Form](./docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)** - Cross-field dependencies and form-level rules
 - **[Auto-Save on Blur](./docs/AUTO-SAVE-ON-BLUR.md)** - Build draft persistence with `fieldBlur` and calm dependent validation
+- **[Clear Submitted State](./docs/CLEAR-SUBMITTED-STATE.md)** - End a submit cycle without resetting values or control metadata
 - **[Field Path Types](./docs/FIELD-PATHS.md)** - Type-safe dot-notation paths for nested properties
 - **[Structure Change Detection](./docs/STRUCTURE_CHANGE_DETECTION.md)** - Handle dynamic form structure updates
 - **[Field Clearing Utilities](./docs/FIELD-CLEARING-UTILITIES.md)** - Type-safe utilities for clearing nested form values
@@ -501,6 +502,7 @@ const shape: NgxDeepRequired<MyFormModel> = {
 ### UI & Integration
 
 - **[Child Components](./docs/CHILD-COMPONENTS.md)** - Split large forms into smaller, maintainable components
+- **[Composite Adapter Recipe](./docs/COMPOSITE-ADAPTER-RECIPE.md)** - Map one composite widget to multiple real form field paths
 - **[Custom Control Wrappers](./docs/CUSTOM-CONTROL-WRAPPERS.md)** - Build consistent error display patterns
 - **[API Tokens](./docs/API-TOKENS.md)** - Configure error display modes and other global settings
 
@@ -562,6 +564,26 @@ This library was originally created by [Brecht Billiet](https://twitter.com/brec
 - **[Template-Driven Forms with Form Arrays](https://blog.simplified.courses/template-driven-forms-with-form-arrays/)** - Dynamic form arrays implementation
 
 ## Developer Resources
+
+### Agent Skills
+
+This repository ships an installable agent skill for ngx-vest-forms guidance.
+
+Install it from the repository root with the `skills` CLI:
+
+```bash
+npx skills add ngx-vest-forms/ngx-vest-forms --skill ngx-vest-forms
+```
+
+This repository also ships an installable agent skill for **Vest.js 5.4 guidance**.
+
+Install it from the repository root with the `skills` CLI:
+
+```bash
+npx skills add ngx-vest-forms/ngx-vest-forms --skill vestjs
+```
+
+See also: **[Vest.js 5.4 Agent Skill Guide](./docs/VESTJS-SKILL.md)**
 
 ### Comprehensive Instruction Files
 

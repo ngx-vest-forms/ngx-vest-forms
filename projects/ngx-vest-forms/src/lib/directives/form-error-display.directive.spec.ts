@@ -5,9 +5,9 @@ import {
   inject,
   input,
 } from '@angular/core';
-import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, NgForm } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ScErrorDisplayMode } from './form-error-display.directive';
 import { FormErrorDisplayDirective } from './form-error-display.directive';
@@ -309,9 +309,9 @@ describe('FormErrorDisplayDirective', () => {
     host.mode = 'on-submit';
     await TestBed.inject(ApplicationRef).whenStable();
 
-    const ngForm = fixture.debugElement.query(By.directive(NgForm)).injector.get(
-      NgForm
-    );
+    const ngForm = fixture.debugElement
+      .query(By.directive(NgForm))
+      .injector.get(NgForm);
 
     expect(
       fixture.nativeElement.querySelector('#should-show-errors').textContent
@@ -340,9 +340,9 @@ describe('FormErrorDisplayDirective', () => {
     host.mode = 'on-submit';
     await TestBed.inject(ApplicationRef).whenStable();
 
-    const ngForm = fixture.debugElement.query(By.directive(NgForm)).injector.get(
-      NgForm
-    );
+    const ngForm = fixture.debugElement
+      .query(By.directive(NgForm))
+      .injector.get(NgForm);
 
     ngForm.onSubmit(new Event('submit'));
     await TestBed.inject(ApplicationRef).whenStable();
@@ -363,6 +363,31 @@ describe('FormErrorDisplayDirective', () => {
           fixture.nativeElement.querySelector('#form-submitted')?.textContent
       )
       .toBe('false');
+  });
+
+  it('should unsubscribe from form submit/reset events when the directive is destroyed', async () => {
+    host.mode = 'on-submit';
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const ngForm = fixture.debugElement
+      .query(By.directive(NgForm))
+      .injector.get(NgForm);
+    const display = fixture.debugElement
+      .query(By.directive(FormErrorDisplayDirective))
+      .injector.get(FormErrorDisplayDirective);
+
+    expect(display.formSubmitted()).toBe(false);
+
+    fixture.destroy();
+
+    ngForm.onSubmit(new Event('submit'));
+    await TestBed.inject(ApplicationRef).whenStable();
+    expect(display.formSubmitted()).toBe(false);
+
+    ngForm.resetForm({ test: '' });
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(display.formSubmitted()).toBe(false);
   });
 
   // Host directive usage test

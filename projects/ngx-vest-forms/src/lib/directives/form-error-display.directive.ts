@@ -7,7 +7,7 @@ import {
   signal,
   Signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormResetEvent, FormSubmittedEvent, NgForm } from '@angular/forms';
 import { filter, map, startWith } from 'rxjs';
 import {
@@ -16,6 +16,7 @@ import {
   SC_ERROR_DISPLAY_MODE_TOKEN,
 } from './error-display-mode.token';
 import { FormControlStateDirective } from './form-control-state.directive';
+import { getFormSubmittedSignal } from './form-submitted-state';
 
 /**
  * Error display modes for form controls.
@@ -59,6 +60,9 @@ export class FormErrorDisplayDirective {
   readonly #formControlState = inject(FormControlStateDirective);
   // Optionally inject NgForm for form submission tracking
   readonly #ngForm = inject(NgForm, { optional: true });
+  readonly #formSubmittedState = this.#ngForm
+    ? getFormSubmittedSignal(this.#ngForm)
+    : signal(false);
 
   /**
    * Input signal for error display mode.
@@ -105,26 +109,28 @@ export class FormErrorDisplayDirective {
    * avoids depending on `NgForm.submitted`, whose getter intentionally reads an
    * internal signal with `untracked()`.
    */
-  readonly formSubmitted: Signal<boolean> = this.#ngForm
-    ? (() => {
-        const ngForm = this.#ngForm;
-        return toSignal(
-          ngForm.form.events.pipe(
-            filter(
-              (event) =>
-                event.source === ngForm.form &&
-                (event instanceof FormSubmittedEvent ||
-                  event instanceof FormResetEvent)
-            ),
-            map((event) => event instanceof FormSubmittedEvent),
-            startWith(ngForm.submitted)
-          ),
-          { initialValue: ngForm.submitted }
-        );
-      })()
-    : signal(false);
+  readonly formSubmitted: Signal<boolean> = this.#formSubmittedState;
 
   constructor() {
+    const ngForm = this.#ngForm;
+    if (ngForm) {
+      ngForm.form.events
+        .pipe(
+          filter(
+            (event) =>
+              event.source === ngForm.form &&
+              (event instanceof FormSubmittedEvent ||
+                event instanceof FormResetEvent)
+          ),
+          map((event) => event instanceof FormSubmittedEvent),
+          startWith(ngForm.submitted),
+          takeUntilDestroyed()
+        )
+        .subscribe((submitted) => {
+          this.#formSubmittedState.set(submitted);
+        });
+    }
+
     // Warn about problematic combinations of updateOn and errorDisplayMode
     effect(() => {
       const mode = this.errorDisplayMode();

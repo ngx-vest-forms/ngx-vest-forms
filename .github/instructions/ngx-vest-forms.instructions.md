@@ -3,451 +3,123 @@ description: ngx-vest-forms v2.0 - Angular Template-Driven Forms with Vest.js va
 applyTo: '**/*.ts, **/*.html'
 ---
 
-# ngx-vest-forms Quick Reference
+# ngx-vest-forms invariants
 
-> **v2.0** | Angular 21+ | Vest.js 5.x | **See `vest.instructions.md` for validation patterns**
+Use this file as the **always-on guardrail sheet** for ngx-vest-forms.
+Keep detailed examples and feature-specific workflows in the docs and the
+`.github/skills/ngx-vest-forms/` workflow sub-skills.
 
-## Core Rules
+> **v2.0** | Angular 21+ | Vest.js 5.x | See `vest.instructions.md` for deeper Vest validation patterns.
+
+## Non-negotiable rules
 
 | Rule | Correct | Wrong |
 |------|---------|-------|
 | Binding | `[ngModel]="formValue().name"` | `[(ngModel)]="formValue().name"` |
-| Name = Path | `name="address.street"` | `name="street"` (missing path) |
+| Name = Path | `name="address.street"` | `name="street"` |
 | Optional chaining | `formValue().address?.street` | `formValue().address.street` |
-| `only()` call | `only(field);` (unconditional) | `if(field){only(field)}` (breaks Vest!) |
-| Nested components | `viewProviders: [vestFormsViewProviders]` | Missing viewProviders |
+| `only()` call | `only(field);` | `if (field) { only(field); }` |
+| Child form components | `viewProviders: [vestFormsViewProviders]` | Missing `viewProviders` |
+| Single-control wrapper | `<ngx-control-wrapper>` | Group-level misuse of control wrapper |
+| Group wrapper | `<ngx-form-group-wrapper ngModelGroup="..."></ngx-form-group-wrapper>` | `ngx-control-wrapper` around a full `ngModelGroup` |
 
-## Imports
-
-```typescript
-// Core
-import { NgxVestForms, vestFormsViewProviders, ROOT_FORM } from 'ngx-vest-forms';
-import { staticSuite, test, enforce, only, omitWhen } from 'vest';
-
-// Types
-import { NgxDeepPartial, NgxDeepRequired, NgxVestSuite, ValidationConfigMap, FieldPath } from 'ngx-vest-forms';
-
-// Utilities
-import { createValidationConfig, createEmptyFormState, createDebouncedPendingState } from 'ngx-vest-forms';
-import { arrayToObject, objectToArray, setValueAtPath, clearFieldsWhen } from 'ngx-vest-forms';
-
-// Tokens
-import { NGX_ERROR_DISPLAY_MODE_TOKEN, NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
-```
-
-## Quick Start
+## Canonical default pattern
 
 ```typescript
-import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
-import { NgxVestForms, NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
-import { staticSuite, test, enforce, only } from 'vest';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import {
+  FormFieldName,
+  NgxDeepPartial,
+  NgxTypedVestSuite,
+  NgxVestForms,
+} from 'ngx-vest-forms';
+import { enforce, only, staticSuite, test } from 'vest';
 
 type FormModel = NgxDeepPartial<{ firstName: string; email: string }>;
 
-export const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
-  only(field);  // ✅ ALWAYS unconditional
-  test('firstName', 'Required', () => enforce(model.firstName).isNotBlank());
-  test('email', 'Invalid', () => enforce(model.email).isEmail());
-});
+const suite: NgxTypedVestSuite<FormModel> = staticSuite(
+  (model: FormModel, field?: FormFieldName<FormModel>) => {
+    only(field);
+    test('firstName', 'First name is required', () => {
+      enforce(model.firstName).isNotBlank();
+    });
+    test('email', 'Valid email is required', () => {
+      enforce(model.email).isEmail();
+    });
+  }
+);
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgxVestForms],
   template: `
-    <form ngxVestForm [suite]="suite" [formValue]="formValue()" (formValueChange)="formValue.set($event)">
+    <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
       <ngx-control-wrapper>
-        <label for="firstName">First Name</label>
+        <label for="firstName">First name</label>
         <input id="firstName" name="firstName" [ngModel]="formValue().firstName" />
       </ngx-control-wrapper>
-      <button type="submit">Submit</button>
     </form>
-  `
+  `,
 })
-export class MyFormComponent {
-  protected readonly suite = suite;
+export class ExampleComponent {
   protected readonly formValue = signal<FormModel>({});
+  protected readonly suite = suite;
 }
 ```
 
-## Type-Safe Models
-
-```typescript
-// Form model: all optional (forms build incrementally)
-type FormModel = NgxDeepPartial<{
-  user: { firstName: string; email: string };
-  addresses: { billing: { street: string; city: string } };
-}>;
-
-// Shape: all required (dev-mode validation)
-export const formShape: NgxDeepRequired<FormModel> = {
-  user: { firstName: '', email: '' },
-  addresses: { billing: { street: '', city: '' } }
-};
-
-// For date fields
-import { NgxFormCompatibleDeepRequired } from 'ngx-vest-forms';
-// Date becomes Date | string in the shape
-```
-
-## Validation Patterns
-
-> **Full details in `vest.instructions.md`**
-
-```typescript
-export const suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => {
-  only(field);  // ✅ CRITICAL: Never wrap in if()
-
-  test('email', 'Required', () => enforce(model.email).isNotBlank());
-  test('email', 'Invalid', () => enforce(model.email).isEmail());
-
-  // Conditional validation
-  omitWhen((model.age || 0) >= 18, () => {
-    test('guardian', 'Required for minors', () => enforce(model.guardian).isNotBlank());
-  });
-
-  // Async validation
-  test('username', 'Taken', async ({ signal }) => {
-    await api.checkUsername(model.username, { signal });
-  });
-});
-
-// Composable validations
-function addressValidations(address: AddressModel | undefined, prefix: string) {
-  test(`${prefix}.street`, 'Required', () => enforce(address?.street).isNotBlank());
-  test(`${prefix}.city`, 'Required', () => enforce(address?.city).isNotBlank());
-}
-addressValidations(model.addresses?.billing, 'addresses.billing');
-```
-
-## validationConfig: Dependent Field Revalidation
-
-When field A's value affects field B's validation, use `validationConfig`:
-
-```typescript
-import { createValidationConfig, ValidationConfigMap } from 'ngx-vest-forms';
-
-// ✅ Builder API (recommended)
-protected readonly validationConfig = createValidationConfig<FormModel>()
-  .bidirectional('password', 'confirmPassword')  // Revalidate each other
-  .whenChanged('age', 'emergencyContact')        // age change triggers emergencyContact
-  .build();
-
-// OR manual object
-protected readonly validationConfig: ValidationConfigMap<FormModel> = {
-  'password': ['confirmPassword'],
-  'confirmPassword': ['password'],
-};
-
-// Template
-<form ngxVestForm [validationConfig]="validationConfig" ...>
-```
-
-For the common “dependent field becomes invalid immediately but should stay visually quiet until
-its own blur” UX, pair `validationConfig` with wrappers that use
-`[errorDisplayMode]="'on-blur'"` on the dependent field(s).
-
-```html
-<ngx-control-wrapper [errorDisplayMode]="'on-blur'">
-  <label for="quantity">Quantity</label>
-  <input id="quantity" name="quantity" [ngModel]="formValue().quantity" />
-</ngx-control-wrapper>
-
-<ngx-control-wrapper [errorDisplayMode]="'on-blur'">
-  <label for="justification">Justification</label>
-  <textarea
-    id="justification"
-    name="justification"
-    [ngModel]="formValue().justification"
-  ></textarea>
-</ngx-control-wrapper>
-```
-
-**Important:** do **not** add `(blur)` handlers that call `triggerFormValidation()` just to force
-dependent-field error timing. `validationConfig` already handles revalidation; the wrapper's
-`errorDisplayMode` controls when errors become visible.
-
-**Reactive config** for conditionally rendered fields:
-
-```typescript
-protected readonly validationConfig = computed(() => {
-  const builder = createValidationConfig<FormModel>();
-  if (this.formValue().gender === 'Other') {
-    builder.whenChanged('gender', 'genderOther');
-  }
-  return builder.build();
-});
-```
-
-## Error Display Components
-
-### Control Wrapper (single controls)
-
-```html
-<ngx-control-wrapper>
-  <label for="email">Email</label>
-  <input id="email" name="email" [ngModel]="formValue().email" />
-  <!-- Errors display automatically with ARIA attributes -->
-</ngx-control-wrapper>
-```
-
-### Form Group Wrapper (ngModelGroup containers)
-
-```html
-<!-- ngModelGroup directly on wrapper (recommended) -->
-<ngx-form-group-wrapper ngModelGroup="addresses">
-  <ngx-control-wrapper>
-    <input name="street" [ngModel]="formValue().addresses?.street" />
-  </ngx-control-wrapper>
-</ngx-form-group-wrapper>
-```
-
-### Wrapper usage conventions (project best practice)
-
-- Prefer the element form `<ngx-control-wrapper>` for single-control wrappers.
-  - ✅ Preferred: `<ngx-control-wrapper>...</ngx-control-wrapper>`
-  - ⚠️ Avoid by default: `<div ngx-control-wrapper>...</div>`
-- Use `ngxFormGroupWrapper` for group/container wrappers (especially `fieldset` + `ngModelGroup`).
-  - ✅ Example: `<fieldset ngxFormGroupWrapper ngModelGroup="addresses">...</fieldset>`
-- Use `ngx-form-group-wrapper` element when a dedicated group wrapper element improves readability.
-- For groups with multiple descendant controls, use group wrappers (not control wrappers) to avoid accidental control-level ARIA association.
-
-### Error Display Modes
-
-Control when validation errors appear with five built-in modes:
-
-```typescript
-// Global config
-providers: [{ provide: NGX_ERROR_DISPLAY_MODE_TOKEN, useValue: 'on-dirty' }]
-
-// Per-instance
-<ngx-control-wrapper [errorDisplayMode]="'on-blur'">
-  <input name="email" [ngModel]="formValue().email" />
-</ngx-control-wrapper>
-```
-
-| Mode | Behavior |
-|------|----------|
-| `'on-blur-or-submit'` | Show after blur OR form submit (default) |
-| `'on-blur'` | Show only after blur/touch |
-| `'on-submit'` | Show only after form submission |
-| `'on-dirty'` | Show as soon as value changes (or after blur/submit) |
-| `'always'` | Show immediately, even on pristine fields |
-
-### Warning Display Modes
-
-Control when validation warnings appear with four built-in modes:
-
-```typescript
-// Global config
-providers: [{ provide: NGX_WARNING_DISPLAY_MODE_TOKEN, useValue: 'on-dirty' }]
-
-// Per-instance
-<ngx-control-wrapper [warningDisplayMode]="'always'">
-  <input name="username" [ngModel]="formValue().username" />
-</ngx-control-wrapper>
-```
-
-| Mode | Behavior |
-|------|----------|
-| `'on-validated-or-touch'` | Show after validation runs or touch (default) |
-| `'on-touch'` | Show only after blur/touch |
-| `'on-dirty'` | Show as soon as value changes (or after blur/submit) |
-| `'always'` | Show immediately, even on pristine fields |
-
-### Custom Wrappers
-
-```typescript
-import { FormErrorDisplayDirective, createDebouncedPendingState } from 'ngx-vest-forms';
-
-@Component({
-  selector: 'app-custom-wrapper',
-  hostDirectives: [{ directive: FormErrorDisplayDirective, inputs: ['errorDisplayMode'] }],
-  template: `
-    <ng-content />
-    @if (errorDisplay.shouldShowErrors()) {
-      <div role="alert" aria-live="assertive">
-        @for (error of errorDisplay.errors(); track error) { <span>{{ error }}</span> }
-      </div>
-    }
-    @if (showPending()) { <div role="status" aria-live="polite">Validating...</div> }
-  `
-})
-export class CustomWrapperComponent {
-  protected readonly errorDisplay = inject(FormErrorDisplayDirective, { self: true });
-  private readonly pending = createDebouncedPendingState(this.errorDisplay.isPending, { showAfter: 200, minimumDisplay: 500 });
-  protected readonly showPending = this.pending.showPendingMessage;
-}
-```
-
-**Available signals:** `shouldShowErrors()`, `shouldShowWarnings()`, `errors()`, `warnings()`, `isPending()`, `isValid()`, `isInvalid()`, `isTouched()`, `isDirty()`
-
-**Warnings behavior:**
-
-- Warnings are **non-blocking** and do not make a field invalid.
-- Warnings are stored separately from `control.errors` and are cleared on `resetForm()`.
-- Warnings may appear after `validationConfig` triggers validation, even if the field
-  was not touched yet.
-
-## Root Form Validation
-
-For form-level validations (errors not tied to a specific field):
-
-```typescript
-import { ROOT_FORM } from 'ngx-vest-forms';
-
-// Suite
-test(ROOT_FORM, 'Passwords must match', () => {
-  enforce(model.password).equals(model.confirmPassword);
-});
-
-// Template
-<form ngxVestForm ngxValidateRootForm [ngxValidateRootFormMode]="'submit'" (errorsChange)="errors.set($event)">
-  @if (errors()[ROOT_FORM]) {
-    <div role="alert">{{ errors()[ROOT_FORM][0] }}</div>
-  }
-</form>
-```
-
-**Modes:** `'submit'` (default, recommended) | `'live'` (validates on every change)
-
-## Nested Components
-
-```typescript
-@Component({
-  selector: 'app-address-form',
-  imports: [NgxVestForms],
-  viewProviders: [vestFormsViewProviders],  // ✅ REQUIRED
-  template: `
-    <ngx-form-group-wrapper [ngModelGroup]="groupName()">
-      <ngx-control-wrapper>
-        <input name="street" [ngModel]="address()?.street" />
-      </ngx-control-wrapper>
-    </ngx-form-group-wrapper>
-  `
-})
-export class AddressFormComponent {
-  readonly groupName = input.required<string>();
-  readonly address = input<AddressModel>();
-}
-```
-
-## Array Utilities
-
-```typescript
-import { arrayToObject, objectToArray } from 'ngx-vest-forms';
-
-// Load: array → object for ngModelGroup
-const formModel = { phones: arrayToObject(['123', '456']) }; // { phones: { 0: '123', 1: '456' } }
-
-// Submit: object → array for backend
-const backendData = objectToArray(formModel, ['phones']); // { phones: ['123', '456'] }
-```
-
-## Form Control Methods
-
-```typescript
-protected readonly vestForm = viewChild.required('vestForm', { read: FormDirective });
-
-// Reset form
-reset() {
-  this.formValue.set({});
-  this.vestForm().resetForm();
-}
-
-// Trigger validation manually (structure changes without value changes)
-onStructureChange() {
-  this.vestForm().triggerFormValidation();
-}
-```
-
-Use `triggerFormValidation()` for structure changes or other explicit revalidation cases where no
-value change occurred. Do not use it as a blur-time workaround for dependent-field UX.
-
-For application-side blur workflows such as draft auto-save, analytics, or field-level side
-effects, use the form's `fieldBlur` output instead:
-
-```typescript
-// Draft auto-save: persist incomplete drafts even while async validation runs.
-protected handleFieldBlur(event: NgxFieldBlurEvent<FormModel>): void {
-  if (!event.formValue || !event.dirty) {
-    return;
-  }
-  this.saveDraft(event.formValue);
-}
-
-// Valid-only side effects (e.g. analytics, network calls that require a
-// validated payload): additionally gate on `valid` and skip while async
-// validation is still pending.
-protected handleValidatedBlur(event: NgxFieldBlurEvent<FormModel>): void {
-  if (!event.formValue || !event.dirty || event.pending || !event.valid) {
-    return;
-  }
-  this.trackFieldChange(event.field, event.value);
-}
-```
-
-Do not gate draft auto-save on `event.pending` — that blocks persistence in exactly the case
-auto-save exists for (the user typed, blurred, and async validation is still resolving).
-
-## API Reference
-
-### Form Directive Inputs
-
-| Input | Type | Description |
-|-------|------|-------------|
-| `suite` | `NgxVestSuite<T>` | Vest validation suite |
-| `formValue` | `T` | Current form model value |
-| `formShape` | `NgxDeepRequired<T>` | Dev-mode shape validation |
-| `validationConfig` | `ValidationConfigMap<T>` | Dependent field revalidation map |
-| `validationOptions` | `{ debounceTime?: number }` | Validation debounce options |
-
-### Form Directive Outputs
-
-| Output | Type | Description |
-|--------|------|-------------|
-| `formValueChange` | `T` | Emits on any value change |
-| `validChange` | `boolean` | Emits when validity changes |
-| `errorsChange` | `Record<string, string[]>` | Emits form-level errors (with ngxValidateRootForm) |
-| `fieldBlur` | `NgxFieldBlurEvent<T>` | Emits when a named field loses focus; useful for app-level side effects |
-
-### Type Utilities
-
-| Type | Purpose |
-|------|---------|
-| `NgxDeepPartial<T>` | All properties optional (form models) |
-| `NgxDeepRequired<T>` | All properties required (shapes) |
-| `NgxVestSuite<T>` | Typed validation suite |
-| `ValidationConfigMap<T>` | Type-safe validation config |
-| `FieldPath<T>` | All valid field paths for autocomplete |
-| `NgxFormState<T>` | Form state type |
-| `NgxFieldBlurEvent<T>` | Blur event payload with field, value, formValue, and control state |
-
-### Utility Functions
-
-| Function | Purpose |
-|----------|---------|
-| `createValidationConfig<T>()` | Fluent builder for validation config |
-| `createEmptyFormState<T>()` | Safe initial form state |
-| `createDebouncedPendingState()` | Debounced pending indicator |
-| `arrayToObject()` / `objectToArray()` | Array ↔ object conversion |
-| `setValueAtPath()` | Set nested value |
-| `clearFieldsWhen()` / `clearFields()` | Field clearing utilities |
-
-## Common Mistakes
-
-| Mistake | Fix |
-|---------|-----|
-| `[(ngModel)]` | Use `[ngModel]` with `(formValueChange)` |
-| `formValue().address.street` | Use `formValue().address?.street` (optional chaining) |
-| `if(field){only(field)}` | Call `only(field)` unconditionally |
-| Missing `viewProviders` in nested component | Add `viewProviders: [vestFormsViewProviders]` |
-| `name="street"` for nested path | Use `name="address.street"` (full path) |
-| `(blur)="vestForm.triggerFormValidation(...)"` for dependent UX | Use `validationConfig` + wrapper `errorDisplayMode` instead |
-
-## Resources
-
-- [Vest.js Docs](https://vestjs.dev/)
-- [Migration Guide v1→v2](../../docs/migration/MIGRATION-v1.x-to-v2.0.0.md)
-- [Complete Example](../../docs/COMPLETE-EXAMPLE.md)
-- [Accessibility Guide](../../.github/instructions/a11y.instructions.md)
-
+## Use these defaults unless the user’s intent clearly differs
+
+- Model forms with `NgxDeepPartial<T>`.
+- Recommend a `NgxDeepRequired<T>` shape for real nested forms where path mistakes are easy.
+- Prefer `NgxTypedVestSuite<T>` plus `FormFieldName<T>` in TypeScript.
+- Use `ChangeDetectionStrategy.OnPush` with signals.
+- Prefer `<ngx-control-wrapper>` for single controls.
+- Prefer `<ngx-form-group-wrapper>` for `ngModelGroup` containers and multi-control sections.
+
+## Decision hints
+
+- If field A changing should revalidate field B, use `validationConfig`.
+  - See `docs/VALIDATION-CONFIG-BUILDER.md`
+  - See `docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`
+- If a dependent field becomes invalid immediately but should stay visually quiet
+  until its own blur, pair `validationConfig` with `[errorDisplayMode]="'on-blur'"`
+  on the dependent wrapper(s). Do **not** add `(blur)` handlers that call
+  `triggerFormValidation()` to force this timing.
+- If the error belongs to the whole form rather than one field, use `ROOT_FORM` with `ngxValidateRootForm`.
+  - See `docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`
+- If the form is split into child components, every participating child needs `vestFormsViewProviders`.
+  - See `docs/CHILD-COMPONENTS.md`
+- If the UI swaps controls for static content or clears hidden values, pair field clearing with `triggerFormValidation()` when needed.
+  - See `docs/FIELD-CLEARING-UTILITIES.md`
+  - See `docs/STRUCTURE_CHANGE_DETECTION.md`
+- If the app needs blur-driven side effects (draft auto-save, analytics,
+  field-level persistence), use the form's `fieldBlur` output with
+  `NgxFieldBlurEvent<T>` — not `(blur)` handlers that re-trigger validation.
+  - See `docs/AUTO-SAVE-ON-BLUR.md`
+- If the built-in wrappers are not enough, use the custom wrapper directives instead of hand-rolling validation state.
+  - See `docs/CUSTOM-CONTROL-WRAPPERS.md`
+
+## Common mistakes to correct immediately
+
+- `[(ngModel)]` in ngx-vest-forms examples
+- `name` values that do not match the bound property path
+- direct property access on partial models without `?.`
+- conditional `only()` calls
+- missing `vestFormsViewProviders` in nested child form components
+- using `ROOT_FORM` for what should be a field-level error
+- treating `validationConfig` as validation logic instead of revalidation timing
+- `(blur)="vestForm.triggerFormValidation(...)"` to force dependent-field error timing — use `validationConfig` + wrapper `errorDisplayMode` instead
+- gating draft auto-save on `event.pending` — that blocks persistence in exactly the case auto-save exists for
+
+## Deep references
+
+- `README.md`
+- `docs/COMPLETE-EXAMPLE.md`
+- `docs/VALIDATION-CONFIG-BUILDER.md`
+- `docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`
+- `docs/CHILD-COMPONENTS.md`
+- `docs/CUSTOM-CONTROL-WRAPPERS.md`
+- `docs/FIELD-CLEARING-UTILITIES.md`
+- `docs/STRUCTURE_CHANGE_DETECTION.md`
+- `docs/AUTO-SAVE-ON-BLUR.md`
+- `projects/ngx-vest-forms/src/public-api.ts`

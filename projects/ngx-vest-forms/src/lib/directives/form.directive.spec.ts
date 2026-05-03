@@ -862,6 +862,108 @@ describe('FormDirective - triggerFormValidation', () => {
   });
 });
 
+describe('FormDirective - clearSubmittedState', () => {
+  @Component({
+    selector: 'test-clear-submitted-state-host',
+    template: `
+      <form ngxVestForm #vest="ngxVestForm">
+        <input
+          formErrorDisplay
+          [errorDisplayMode]="'on-submit'"
+          #display="formErrorDisplay"
+          name="username"
+          [ngModel]="model"
+          required
+        />
+        <span data-testid="form-submitted">{{ display.formSubmitted() }}</span>
+        <span data-testid="should-show-errors">{{
+          display.shouldShowErrors()
+        }}</span>
+        <span data-testid="is-touched">{{ display.isTouched() }}</span>
+        <button type="submit">Submit</button>
+      </form>
+    `,
+    imports: [NgxVestForms],
+  })
+  class TestClearSubmittedStateHost {
+    model = '';
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
+  }
+
+  it('should clear submitted state without resetting touched controls', async () => {
+    const { fixture } = await render(TestClearSubmittedStateHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const input = expectElement(
+      fixture.nativeElement.querySelector('input'),
+      'input'
+    ) as HTMLInputElement;
+    input.focus();
+    input.blur();
+    await fixture.whenStable();
+
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('[data-testid="is-touched"]')
+            ?.textContent
+      )
+      .toBe('true');
+
+    const submitButton = expectElement(
+      fixture.nativeElement.querySelector('button[type="submit"]'),
+      'button[type="submit"]'
+    ) as HTMLButtonElement;
+    submitButton.click();
+    await fixture.whenStable();
+
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('[data-testid="form-submitted"]')
+            ?.textContent
+      )
+      .toBe('true');
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector(
+            '[data-testid="should-show-errors"]'
+          )?.textContent
+      )
+      .toBe('true');
+
+    fixture.componentInstance.vestForm().clearSubmittedState();
+    await fixture.whenStable();
+
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('[data-testid="form-submitted"]')
+            ?.textContent
+      )
+      .toBe('false');
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector(
+            '[data-testid="should-show-errors"]'
+          )?.textContent
+      )
+      .toBe('false');
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('[data-testid="is-touched"]')
+            ?.textContent
+      )
+      .toBe('true');
+    expect(input.classList.contains('ng-touched')).toBe(true);
+  });
+});
+
 describe('FormDirective - first invalid helpers', () => {
   function mockMatchMedia(matches: boolean): ReturnType<typeof vi.spyOn> {
     return vi.spyOn(window, 'matchMedia').mockImplementation(

@@ -9,6 +9,7 @@ import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
 import { AppComponent } from './app/app.component';
 import { AutoSaveDemoPageComponent } from './app/pages/auto-save-demo/auto-save-demo.page';
 import { BusinessHoursPageComponent } from './app/pages/business-hours-form/business-hours.page';
+import { TravelPageComponent } from './app/pages/date-range-adapter/travel.page';
 import { DisplayModesDemoPageComponent } from './app/pages/display-modes-demo/display-modes-demo.page';
 import { PurchasePageComponent } from './app/pages/purchase-form/purchase.page';
 import { ValidationConfigDemoPageComponent } from './app/pages/validation-config-demo/validation-config-demo.page';
@@ -72,6 +73,15 @@ const appRoutes: Routes = [
       title: 'Display Modes Demo',
       subtitle:
         'Compare error and warning visibility timing across display modes.',
+    },
+  },
+  {
+    path: 'date-range-adapter',
+    component: TravelPageComponent,
+    data: {
+      title: 'Composite Adapter Recipe',
+      subtitle:
+        'Map one composite UI control to multiple form fields with split-field validation.',
     },
   },
 ];

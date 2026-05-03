@@ -45,6 +45,18 @@ export async function navigateToAutoSaveDemo(page: Page): Promise<void> {
   ).toBeVisible();
 }
 
+export async function navigateToDateRangeAdapter(
+  page: Page
+): Promise<void> {
+  await page.goto('/date-range-adapter');
+  await expect(
+    page.getByRole('heading', {
+      name: /composite adapter recipe/i,
+      level: 1,
+    })
+  ).toBeVisible();
+}
+
 /**
  * Wait for async validation to complete by monitoring aria-busy attribute
  */
@@ -316,6 +328,19 @@ export async function setDateLikeValueAndBlur(
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dispatchEvent(new Event('change', { bubbles: true }));
   }, value);
+  await field.blur();
+}
+
+/**
+ * Fill a native date input using Playwright's browser-level interaction helpers.
+ * This is more reliable than synthetic event dispatch for ngModel-backed date fields
+ * when validating bidirectional revalidation behavior.
+ */
+export async function fillNativeDateInputAndBlur(
+  field: Locator,
+  value: string
+): Promise<void> {
+  await field.fill(value);
   await field.blur();
 }
 

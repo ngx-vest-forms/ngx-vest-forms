@@ -72,6 +72,10 @@ import {
 } from '../utils/form-utils';
 import { validateShape } from '../utils/shape-validation';
 import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
+import {
+  getFormSubmittedSignal,
+  setAngularFormSubmittedState,
+} from './form-submitted-state';
 import { ValidationOptions } from './validation-options';
 
 /**
@@ -665,6 +669,53 @@ export class FormDirective<T extends Record<string, unknown>> {
    */
   markAllAsTouched(): void {
     this.ngForm.form.markAllAsTouched();
+    this.#blurTick.update((v) => v + 1);
+  }
+
+  /**
+   * Clears the current submit cycle without resetting control values or metadata.
+   *
+   * Unlike {@link resetForm}, this only flips the submitted gate back to `false`.
+   * Touched/dirty/pristine state is preserved so consumers can end `'on-submit'`
+   * error visibility without a full form reset.
+   *
+   * **When to use:**
+   * - You use submit-gated error visibility such as `'on-submit'`
+   * - A submit attempt already happened
+   * - The user resolved the current submit-time errors
+   * - You want future untouched fields to wait for the next submit before showing errors
+   *
+   * **Why this exists:**
+   * `resetForm()` would also clear touched/dirty/pristine metadata, which is often
+   * too disruptive for long-form, multi-form, or mixed error-display flows.
+   *
+   * **What it does NOT do:**
+   * - Does not change field values
+   * - Does not mark controls pristine or untouched
+   * - Does not re-run validation
+   *
+   * @example
+   * ```typescript
+   * submitAll(): void {
+   *   for (const form of this.submitForms()) {
+   *     form.ngForm.onSubmit(new Event('submit'));
+   *   }
+   *
+   *   if (this.submitForms().every((form) => form.formState().valid)) {
+   *     for (const form of this.submitForms()) {
+   *       form.clearSubmittedState();
+   *     }
+   *   }
+   * }
+   * ```
+   *
+   * @see {@link resetForm} to fully reset values and control metadata
+   * @see {@link markAllAsTouched} to manually show all errors
+   * @see {@link triggerFormValidation} to re-run validation after structure changes
+   */
+  clearSubmittedState(): void {
+    setAngularFormSubmittedState(this.ngForm, false);
+    getFormSubmittedSignal(this.ngForm).set(false);
     this.#blurTick.update((v) => v + 1);
   }
 
