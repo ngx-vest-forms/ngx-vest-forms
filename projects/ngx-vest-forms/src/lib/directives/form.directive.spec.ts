@@ -667,9 +667,8 @@ describe('FormDirective - clearSubmittedState', () => {
     await expect
       .poll(
         () =>
-          fixture.nativeElement.querySelector(
-            '[data-testid="form-submitted"]'
-          )?.textContent
+          fixture.nativeElement.querySelector('[data-testid="form-submitted"]')
+            ?.textContent
       )
       .toBe('true');
     await expect
@@ -687,9 +686,8 @@ describe('FormDirective - clearSubmittedState', () => {
     await expect
       .poll(
         () =>
-          fixture.nativeElement.querySelector(
-            '[data-testid="form-submitted"]'
-          )?.textContent
+          fixture.nativeElement.querySelector('[data-testid="form-submitted"]')
+            ?.textContent
       )
       .toBe('false');
     await expect
