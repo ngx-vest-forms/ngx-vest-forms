@@ -11,7 +11,7 @@ import {
   createValidationConfig,
   NgxFieldBlurEvent,
 } from 'ngx-vest-forms';
-import { EMPTY, Subject, catchError, concatMap, defer, tap } from 'rxjs';
+import { EMPTY, Subject, catchError, concatMap, defer, filter, tap } from 'rxjs';
 import {
   AutoSaveDemoModel,
   initialAutoSaveDemoValue,
@@ -45,6 +45,7 @@ type AutoSaveRequest = {
   field: string;
   key: string;
   draft: AutoSaveDemoModel;
+  generation: number;
 };
 
 @Component({
@@ -66,6 +67,10 @@ export class AutoSaveDemoPageComponent {
   private readonly formBody = viewChild(AutoSaveDemoFormBody);
   private readonly autoSaveRequests = new Subject<AutoSaveRequest>();
   private readonly restoredDraft = this.autoSaveService.loadDraft();
+  // Bumped on reset; queued requests carrying an older generation are
+  // dropped before the network call runs so a Reset clicked while a save
+  // is queued cannot rewrite sessionStorage with stale draft data.
+  #saveGeneration = 0;
 
   protected readonly formValue = signal<AutoSaveDemoModel>(
     this.restoredDraft?.draft ?? initialAutoSaveDemoValue
@@ -183,13 +188,21 @@ export class AutoSaveDemoPageComponent {
       .pipe(
         concatMap((request) =>
           defer(() => {
+            // Drop requests queued before the most recent reset.
+            if (request.generation !== this.#saveGeneration) {
+              return EMPTY;
+            }
             this.saveStatus.set({ kind: 'saving', field: request.field });
             return this.autoSaveService.saveDraft(
               request.draft,
               request.field
             ).pipe(
+              filter(() => request.generation === this.#saveGeneration),
               tap((result) => this.#handleSaveSuccess(request, result)),
               catchError((error: unknown) => {
+                if (request.generation !== this.#saveGeneration) {
+                  return EMPTY;
+                }
                 this.#handleSaveError(request, error);
                 return EMPTY;
               })
@@ -219,6 +232,7 @@ export class AutoSaveDemoPageComponent {
       field: event.field,
       key,
       draft,
+      generation: this.#saveGeneration,
     });
   }
 
@@ -236,6 +250,10 @@ export class AutoSaveDemoPageComponent {
   }
 
   protected reset(): void {
+    // Bump the generation FIRST so any in-flight or queued save observed
+    // by the concatMap stream is discarded before it can rewrite the
+    // cleared draft.
+    this.#saveGeneration++;
     this.formBody()?.resetFormState(initialAutoSaveDemoValue);
     this.formValue.set(initialAutoSaveDemoValue);
     this.autoSaveService.clearDraft();

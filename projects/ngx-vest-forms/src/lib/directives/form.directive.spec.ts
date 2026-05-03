@@ -772,6 +772,65 @@ describe('FormDirective - Signals/Outputs', () => {
       passwords: { password: 'hunter2' },
     });
   });
+
+  it('should emit the selected radio group value, not the focused option', async () => {
+    type Model = { gender?: string };
+
+    @Component({
+      selector: 'test-field-blur-radio-host',
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          (fieldBlur)="handleFieldBlur($event)"
+        >
+          <label
+            ><input
+              type="radio"
+              name="gender"
+              value="female"
+              [ngModel]="formValue().gender" />Female</label
+          >
+          <label
+            ><input
+              id="male"
+              type="radio"
+              name="gender"
+              value="male"
+              [ngModel]="formValue().gender" />Male</label
+          >
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestFieldBlurRadioHost {
+      readonly formValue = signal<Model>({ gender: 'female' });
+      readonly blurEvents = signal<Array<NgxFieldBlurEvent<Model>>>([]);
+
+      handleFieldBlur(event: NgxFieldBlurEvent<Model>): void {
+        this.blurEvents.update((events) => [...events, event]);
+      }
+    }
+
+    const { fixture } = await render(TestFieldBlurRadioHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const unselectedRadio = fixture.nativeElement.querySelector(
+      '#male'
+    ) as HTMLInputElement;
+    // The "male" radio is focused but NOT checked — the bound value remains "female".
+    unselectedRadio.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    const [blurEvent] = fixture.componentInstance.blurEvents();
+    expect(blurEvent).toBeTruthy();
+    // Must reflect the *selected* group value, not the focused unchecked option.
+    expect(blurEvent?.value).toBe('female');
+    expect(blurEvent?.formValue).toEqual({ gender: 'female' });
+  });
 });
 
 describe('FormDirective - triggerFormValidation', () => {
