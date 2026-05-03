@@ -7,6 +7,7 @@ import {
 import { provideEnvironmentNgxMask } from 'ngx-mask';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
 import { AppComponent } from './app/app.component';
+import { AutoSaveDemoPageComponent } from './app/pages/auto-save-demo/auto-save-demo.page';
 import { BusinessHoursPageComponent } from './app/pages/business-hours-form/business-hours.page';
 import { TravelPageComponent } from './app/pages/date-range-adapter/travel.page';
 import { DisplayModesDemoPageComponent } from './app/pages/display-modes-demo/display-modes-demo.page';
@@ -45,6 +46,15 @@ const appRoutes: Routes = [
       title: 'Validation Config Demo',
       subtitle:
         'Explore dependency-aware revalidation patterns with a configuration map.',
+    },
+  },
+  {
+    path: 'auto-save-demo',
+    component: AutoSaveDemoPageComponent,
+    data: {
+      title: 'Auto-Save Draft Demo',
+      subtitle:
+        'Persist draft changes on blur while keeping validation and final submission separate.',
     },
   },
   {

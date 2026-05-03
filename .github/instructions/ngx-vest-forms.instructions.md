@@ -81,6 +81,10 @@ export class ExampleComponent {
 - If field A changing should revalidate field B, use `validationConfig`.
   - See `docs/VALIDATION-CONFIG-BUILDER.md`
   - See `docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`
+- If a dependent field becomes invalid immediately but should stay visually quiet
+  until its own blur, pair `validationConfig` with `[errorDisplayMode]="'on-blur'"`
+  on the dependent wrapper(s). Do **not** add `(blur)` handlers that call
+  `triggerFormValidation()` to force this timing.
 - If the error belongs to the whole form rather than one field, use `ROOT_FORM` with `ngxValidateRootForm`.
   - See `docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`
 - If the form is split into child components, every participating child needs `vestFormsViewProviders`.
@@ -88,6 +92,10 @@ export class ExampleComponent {
 - If the UI swaps controls for static content or clears hidden values, pair field clearing with `triggerFormValidation()` when needed.
   - See `docs/FIELD-CLEARING-UTILITIES.md`
   - See `docs/STRUCTURE_CHANGE_DETECTION.md`
+- If the app needs blur-driven side effects (draft auto-save, analytics,
+  field-level persistence), use the form's `fieldBlur` output with
+  `NgxFieldBlurEvent<T>` — not `(blur)` handlers that re-trigger validation.
+  - See `docs/AUTO-SAVE-ON-BLUR.md`
 - If the built-in wrappers are not enough, use the custom wrapper directives instead of hand-rolling validation state.
   - See `docs/CUSTOM-CONTROL-WRAPPERS.md`
 
@@ -100,6 +108,8 @@ export class ExampleComponent {
 - missing `vestFormsViewProviders` in nested child form components
 - using `ROOT_FORM` for what should be a field-level error
 - treating `validationConfig` as validation logic instead of revalidation timing
+- `(blur)="vestForm.triggerFormValidation(...)"` to force dependent-field error timing — use `validationConfig` + wrapper `errorDisplayMode` instead
+- gating draft auto-save on `event.pending` — that blocks persistence in exactly the case auto-save exists for
 
 ## Deep references
 
@@ -111,5 +121,5 @@ export class ExampleComponent {
 - `docs/CUSTOM-CONTROL-WRAPPERS.md`
 - `docs/FIELD-CLEARING-UTILITIES.md`
 - `docs/STRUCTURE_CHANGE_DETECTION.md`
+- `docs/AUTO-SAVE-ON-BLUR.md`
 - `projects/ngx-vest-forms/src/public-api.ts`
-

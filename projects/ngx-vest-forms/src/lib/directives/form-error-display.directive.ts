@@ -145,16 +145,16 @@ export class FormErrorDisplayDirective {
 
   /**
    * Determines if errors should be shown based on the specified display mode
-   * and the control's state (touched/submitted/validated).
+    * and the control's state (touched/submitted/dirty).
    *
    * Note: We check both hasErrors (extracted error messages) AND isInvalid (Angular's validation state)
    * because in some cases (like conditional validations via validationConfig), the control is marked
    * as invalid by Angular before error messages are extracted from Vest. This ensures aria-invalid
    * is set correctly even during the validation propagation delay.
    *
-   * For validationConfig-triggered validations: A field can be validated without being touched
-   * (e.g., confirmPassword validated when password changes). We check hasBeenValidated to show
-   * errors in these scenarios, providing better UX and proper ARIA attributes.
+    * For validationConfig-triggered validations, a field may become invalid before it has been
+    * touched. Error visibility still respects the field's own `errorDisplayMode`, so untouched
+    * dependent fields can remain visually quiet until blur or submit.
    */
   readonly shouldShowErrors: Signal<boolean> = computed(() => {
     const mode = this.errorDisplayMode();

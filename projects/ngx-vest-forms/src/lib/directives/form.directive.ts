@@ -10,6 +10,7 @@ import {
   InputSignal,
   isDevMode,
   linkedSignal,
+  output,
   signal,
   untracked,
 } from '@angular/core';
@@ -94,6 +95,29 @@ export type NgxValidationConfig<T = unknown> =
   | null;
 
 /**
+ * Payload emitted when a named control inside the form loses focus.
+ *
+ * This is intentionally low-level so app code can build workflows such as
+ * draft auto-save, analytics, or blur-driven side effects without the form
+ * library taking ownership of persistence behavior.
+ *
+ * It is not intended as a blur-time workaround for dependent field validation;
+ * for that pattern, prefer `validationConfig` plus each target field's own
+ * `errorDisplayMode`.
+ *
+ * @publicApi
+ */
+export type NgxFieldBlurEvent<T = unknown> = {
+  field: string;
+  value: unknown;
+  formValue: T | null;
+  dirty: boolean;
+  touched: boolean;
+  valid: boolean;
+  pending: boolean;
+};
+
+/**
  * Main form directive for ngx-vest-forms that bridges Angular template-driven forms with Vest.js validation.
  *
  * This directive provides:
@@ -135,7 +159,7 @@ export type NgxValidationConfig<T = unknown> =
   selector: 'form[scVestForm], form[ngxVestForm]',
   exportAs: 'scVestForm, ngxVestForm',
   host: {
-    '(focusout)': 'onFormFocusOut()',
+    '(focusout)': 'onFormFocusOut($event)',
   },
 })
 export class FormDirective<T extends Record<string, unknown>> {
@@ -412,6 +436,13 @@ export class FormDirective<T extends Record<string, unknown>> {
       takeUntilDestroyed(this.destroyRef)
     )
   );
+
+  /**
+   * Emits when a named control inside the form loses focus.
+   *
+   * Useful for application-level workflows such as draft auto-save on blur.
+   */
+  readonly fieldBlur = output<NgxFieldBlurEvent<T>>();
 
   /**
    * Track validation in progress to prevent circular triggering (Issue #19)
@@ -755,12 +786,106 @@ export class FormDirective<T extends Record<string, unknown>> {
    * Host handler: called whenever any descendant field loses focus.
    * Used to make touched-path tracking react immediately on blur/tab.
    */
-  onFormFocusOut(): void {
+  onFormFocusOut(event: FocusEvent): void {
     // Run on the next microtask to ensure Angular has already applied
     // control.touched changes for the field that just blurred.
     queueMicrotask(() => {
       this.#blurTick.update((v) => v + 1);
+      this.#emitFieldBlurEvent(event);
     });
+  }
+
+  #emitFieldBlurEvent(event: FocusEvent): void {
+    const resolved = this.#resolveFieldFromFocusEvent(event);
+    if (!resolved) {
+      return;
+    }
+    const { field, control, element } = resolved;
+
+    // Read the latest value directly from the DOM element when it can be
+    // trusted. For radio groups Angular keeps the bound `control.value` in
+    // sync with the *selected* option, while a focused-but-unchecked radio
+    // would expose its own option value via the DOM — so radios must always
+    // fall back to `control.value`. For text/textarea/select we prefer the
+    // element value to avoid `ngModelOptions.updateOn: 'submit'` staleness.
+    const domValue = readElementValueForBlur(element);
+    const value = domValue !== undefined ? domValue : control.value;
+
+    // Prefer the cached linked-signal snapshot when it exists. Both code
+    // paths produce a deep-cloned snapshot, but reusing the cached value
+    // saves one of the two `structuredClone` passes performed by
+    // `mergeValuesAndRawValues()` on every blur.
+    const cachedSnapshot = this.#formValueSignal();
+    const formValue =
+      cachedSnapshot !== null
+        ? (structuredClone(cachedSnapshot) as T)
+        : mergeValuesAndRawValues<T>(this.ngForm.form);
+    setValueAtPath(formValue as object, field, value);
+
+    this.fieldBlur.emit({
+      field,
+      value,
+      formValue,
+      dirty: control.dirty,
+      touched: control.touched,
+      valid: control.valid,
+      pending: control.pending,
+    });
+  }
+
+  #resolveFieldFromFocusEvent(event: FocusEvent): {
+    field: string;
+    control: AbstractControl;
+    element: HTMLElement;
+  } | null {
+    const target = event.target;
+    if (!(target instanceof Element)) {
+      return null;
+    }
+
+    const fieldElement = target.closest('[name]');
+    if (!(fieldElement instanceof HTMLElement)) {
+      return null;
+    }
+
+    const name = fieldElement.getAttribute('name')?.trim();
+    if (!name) {
+      return null;
+    }
+
+    const formEl = this.elementRef.nativeElement;
+
+    // Walk DOM ancestors collecting any `ngModelGroup` attribute values.
+    // This produces the canonical dotted path for the static attribute form
+    // (e.g. `<div ngModelGroup="passwords"><input name="password">` →
+    // `passwords.password`).
+    const staticGroups = collectNgModelGroupAttributes(fieldElement, formEl);
+    const staticPath = [...staticGroups, name].join('.');
+    const staticControl = this.ngForm.form.get(staticPath);
+    if (staticControl) {
+      return { field: staticPath, control: staticControl, element: fieldElement };
+    }
+
+    // Fallback for dynamically-bound `[ngModelGroup]="expr"` (Angular does
+    // not always preserve the attribute on the DOM) and for repeated leaf
+    // names inside dynamic groups (e.g. multiple `from`/`to` slots): probe
+    // each ancestor element as a potential group boundary, querying the
+    // form tree until we find a child that owns this DOM element.
+    const dynamicMatch = resolveControlPathByDomAncestors(
+      this.ngForm.form,
+      fieldElement,
+      formEl,
+      name
+    );
+    if (dynamicMatch) {
+      return {
+        field: dynamicMatch.path,
+        control: dynamicMatch.control,
+        element: fieldElement,
+      };
+    }
+
+    return null;
   }
 
   /**
@@ -981,11 +1106,10 @@ export class FormDirective<T extends Record<string, unknown>> {
       return EMPTY;
     }
 
-    const streams = Object.keys(config).map((triggerField) => {
-      const dependents =
-        (config as Record<string, string[]>)[triggerField] || [];
-      return this.#createTriggerStream(form, triggerField, dependents);
-    });
+    const streams = Object.entries(config as Record<string, string[]>).map(
+      ([triggerField, dependents]) =>
+        this.#createTriggerStream(form, triggerField, dependents || [])
+    );
 
     return streams.length > 0 ? rxMerge(...streams) : EMPTY;
   }
@@ -1169,21 +1293,6 @@ export class FormDirective<T extends Record<string, unknown>> {
         // This prevents the dependent field's valueChanges from triggering its own validationConfig
         this.validationInProgress.add(depField);
 
-        // NOTE: Touch propagation removed (PR #78)
-        // Previously, we propagated touch state from trigger to dependent fields.
-        // This caused UX issues where dependent fields showed errors immediately
-        // after being revealed by a toggle, even though the user never interacted with them.
-        //
-        // With this change:
-        // - Errors on dependent fields only show after the user directly touches/blurs them
-        // - ARIA attributes (aria-invalid) still work correctly via isInvalid check
-        // - Warnings still show after validation via hasBeenValidated check
-        //
-        // The removed code was:
-        // if (control.touched && !dependentControl.touched) {
-        //   dependentControl.markAsTouched({ onlySelf: true });
-        // }
-
         // emitEvent: true is REQUIRED for async validators to actually run
         // The validationInProgress Set prevents infinite loops:
         // 1. Field A changes → triggers validation on dependent field B
@@ -1251,4 +1360,129 @@ export class FormDirective<T extends Record<string, unknown>> {
     collect(control, []);
     return fields;
   }
+}
+
+/**
+ * Reads the user-entered value from a blurred form element. Returns
+ * `undefined` for radio inputs (caller must fall back to the bound
+ * `control.value`, since the focused radio is not necessarily the
+ * group's selected option) and for elements we don't handle.
+ */
+function readElementValueForBlur(element: HTMLElement): unknown {
+  if (element instanceof HTMLInputElement) {
+    if (element.type === 'radio') return undefined;
+    if (element.type === 'checkbox') return element.checked;
+    if (element.type === 'number') {
+      return element.value === '' ? null : element.valueAsNumber;
+    }
+    return element.value;
+  }
+  if (
+    element instanceof HTMLTextAreaElement ||
+    element instanceof HTMLSelectElement
+  ) {
+    return element.value;
+  }
+  return undefined;
+}
+
+/**
+ * Walks DOM ancestors between `start` (exclusive) and `formEl` (exclusive),
+ * collecting any preserved `ngModelGroup` attribute values into a path
+ * suitable for `FormGroup.get()`. Only the static attribute form is
+ * preserved on the DOM; dynamically-bound `[ngModelGroup]` is handled by
+ * `resolveControlPathByDomAncestors`.
+ */
+function collectNgModelGroupAttributes(
+  start: HTMLElement,
+  formEl: HTMLElement
+): string[] {
+  const groups: string[] = [];
+  let current: Element | null = start.parentElement;
+  while (current && current !== formEl && formEl.contains(current)) {
+    const groupName = current.getAttribute('ngModelGroup')?.trim();
+    if (groupName) {
+      groups.unshift(groupName);
+    }
+    current = current.parentElement;
+  }
+  return groups;
+}
+
+/**
+ * Resolves the dotted control path for a blurred element when the static
+ * `ngModelGroup` attribute walk failed (typically because the host used
+ * `[ngModelGroup]="expr"`, which Angular does not always preserve as a
+ * DOM attribute). Walks the control tree top-down and at each FormGroup
+ * boundary tries to descend into a child whose subtree contains an element
+ * with the matching `name` — disambiguating repeated leaf names by DOM
+ * containment instead of giving up.
+ */
+function resolveControlPathByDomAncestors(
+  root: FormGroup,
+  fieldElement: HTMLElement,
+  formEl: HTMLElement,
+  leafName: string
+): { path: string; control: AbstractControl } | null {
+  type Frame = { control: AbstractControl; path: Array<string | number> };
+
+  const descend = (frame: Frame): Frame | null => {
+    if (frame.control instanceof FormGroup) {
+      for (const [key, child] of Object.entries(frame.control.controls)) {
+        if (key === leafName && !(child instanceof FormGroup)) {
+          return { control: child, path: [...frame.path, key] };
+        }
+      }
+      const candidates: Frame[] = [];
+      for (const [key, child] of Object.entries(frame.control.controls)) {
+        if (child instanceof FormGroup || child instanceof FormArray) {
+          if (subtreeContainsElement(child, fieldElement, formEl, key)) {
+            candidates.push({ control: child, path: [...frame.path, key] });
+          }
+        }
+      }
+      if (candidates.length === 1 && candidates[0])
+        return descend(candidates[0]);
+      return null;
+    }
+    if (frame.control instanceof FormArray) {
+      const candidates: Frame[] = [];
+      frame.control.controls.forEach((child, index) => {
+        if (child instanceof FormGroup || child instanceof FormArray) {
+          if (subtreeContainsElement(child, fieldElement, formEl, index)) {
+            candidates.push({ control: child, path: [...frame.path, index] });
+          }
+        }
+      });
+      if (candidates.length === 1 && candidates[0])
+        return descend(candidates[0]);
+    }
+    return null;
+  };
+
+  const result = descend({ control: root, path: [] });
+  if (!result) return null;
+  return { path: stringifyFieldPath(result.path), control: result.control };
+}
+
+/**
+ * Best-effort check: does the DOM subtree rooted at any element annotated
+ * with `ngModelGroup="<key>"` contain `fieldElement`? Used by
+ * `resolveControlPathByDomAncestors` to disambiguate repeated leaf names.
+ * For dynamic `[ngModelGroup]` with no preserved attribute we cannot
+ * disambiguate from DOM alone — those cases return `false`, matching the
+ * documented limitation.
+ */
+function subtreeContainsElement(
+  _child: AbstractControl,
+  fieldElement: HTMLElement,
+  formEl: HTMLElement,
+  key: string | number
+): boolean {
+  if (typeof key !== 'string') return false;
+  const candidates = formEl.querySelectorAll(`[ngModelGroup="${key}"]`);
+  for (const candidate of Array.from(candidates)) {
+    if (candidate.contains(fieldElement)) return true;
+  }
+  return false;
 }
