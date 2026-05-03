@@ -708,6 +708,70 @@ describe('FormDirective - Signals/Outputs', () => {
       projectName: 'Recovered draft',
     });
   });
+
+  it('should emit the full dotted path for controls inside ngModelGroup', async () => {
+    type Model = { passwords?: { password?: string; confirm?: string } };
+
+    @Component({
+      selector: 'test-field-blur-group-host',
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          (fieldBlur)="handleFieldBlur($event)"
+        >
+          <div ngModelGroup="passwords">
+            <label for="password">Password</label>
+            <input
+              id="password"
+              name="password"
+              [ngModel]="formValue().passwords?.password"
+            />
+            <label for="confirm">Confirm</label>
+            <input
+              id="confirm"
+              name="confirm"
+              [ngModel]="formValue().passwords?.confirm"
+            />
+          </div>
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestFieldBlurGroupHost {
+      readonly formValue = signal<Model>({ passwords: {} });
+      readonly blurEvents = signal<Array<NgxFieldBlurEvent<Model>>>([]);
+
+      handleFieldBlur(event: NgxFieldBlurEvent<Model>): void {
+        this.blurEvents.update((events) => [...events, event]);
+      }
+    }
+
+    const { fixture } = await render(TestFieldBlurGroupHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const input = fixture.nativeElement.querySelector(
+      '#password'
+    ) as HTMLInputElement;
+    input.value = 'hunter2';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    const [blurEvent] = fixture.componentInstance.blurEvents();
+    expect(blurEvent).toBeTruthy();
+    expect(blurEvent?.field).toBe('passwords.password');
+    expect(blurEvent?.value).toBe('hunter2');
+    expect(blurEvent?.formValue).toEqual({
+      passwords: { password: 'hunter2' },
+    });
+  });
 });
 
 describe('FormDirective - triggerFormValidation', () => {

@@ -367,14 +367,27 @@ For application-side blur workflows such as draft auto-save, analytics, or field
 effects, use the form's `fieldBlur` output instead:
 
 ```typescript
+// Draft auto-save: persist incomplete drafts even while async validation runs.
 protected handleFieldBlur(event: NgxFieldBlurEvent<FormModel>): void {
-  if (!event.formValue || !event.dirty || event.pending) {
+  if (!event.formValue || !event.dirty) {
     return;
   }
-
   this.saveDraft(event.formValue);
 }
+
+// Valid-only side effects (e.g. analytics, network calls that require a
+// validated payload): additionally gate on `valid` and skip while async
+// validation is still pending.
+protected handleValidatedBlur(event: NgxFieldBlurEvent<FormModel>): void {
+  if (!event.formValue || !event.dirty || event.pending || !event.valid) {
+    return;
+  }
+  this.trackFieldChange(event.field, event.value);
+}
 ```
+
+Do not gate draft auto-save on `event.pending` — that blocks persistence in exactly the case
+auto-save exists for (the user typed, blurred, and async validation is still resolving).
 
 ## API Reference
 

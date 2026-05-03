@@ -745,27 +745,27 @@ export class FormDirective<T extends Record<string, unknown>> {
   }
 
   #emitFieldBlurEvent(event: FocusEvent): void {
-    const field = this.#resolveFieldPathFromFocusEvent(event);
-    if (!field) {
+    const resolved = this.#resolveFieldFromFocusEvent(event);
+    if (!resolved) {
       return;
     }
+    const { field, control, element } = resolved;
 
-    const control = this.ngForm.form.get(field);
-    if (!control) {
-      return;
-    }
+    // Read the latest value directly from the DOM element when available.
+    // `control.value` lags behind for `ngModelOptions.updateOn: 'submit'`,
+    // so falling back to the element keeps the emitted payload consistent
+    // with the value that just blurred.
+    const value = readElementValue(element) ?? control.value;
 
-    // Recompute the form snapshot at blur time instead of relying on the
-    // cached linked signal or external model input. The blur event is used for
-    // app-level side effects such as draft auto-save, so it must reflect the
-    // value that just blurred even when the host component has not processed
-    // formValueChange yet.
+    // Recompute the form snapshot at blur time so app-level side effects
+    // (e.g. draft auto-save) see the value that just blurred even when the
+    // host component has not processed formValueChange yet.
     const formValue = mergeValuesAndRawValues<T>(this.ngForm.form);
-    setValueAtPath(formValue as object, field, control.value);
+    setValueAtPath(formValue as object, field, value);
 
     this.fieldBlur.emit({
       field,
-      value: control.value,
+      value,
       formValue,
       dirty: control.dirty,
       touched: control.touched,
@@ -774,7 +774,11 @@ export class FormDirective<T extends Record<string, unknown>> {
     });
   }
 
-  #resolveFieldPathFromFocusEvent(event: FocusEvent): string | null {
+  #resolveFieldFromFocusEvent(event: FocusEvent): {
+    field: string;
+    control: AbstractControl;
+    element: HTMLElement;
+  } | null {
     const target = event.target;
     if (!(target instanceof Element)) {
       return null;
@@ -785,8 +789,50 @@ export class FormDirective<T extends Record<string, unknown>> {
       return null;
     }
 
-    const field = fieldElement.getAttribute('name')?.trim();
-    return field || null;
+    const name = fieldElement.getAttribute('name')?.trim();
+    if (!name) {
+      return null;
+    }
+
+    // Build the dotted path by walking up `ngModelGroup` ancestors. This is
+    // required for nested forms — `form.get(name)` alone returns null for
+    // controls registered under an ngModelGroup (e.g. `passwords.password`).
+    const groups = this.#collectNgModelGroupAncestors(fieldElement);
+    const candidatePath = [...groups, name].join('.');
+
+    const control = this.ngForm.form.get(candidatePath);
+    if (control) {
+      return { field: candidatePath, control, element: fieldElement };
+    }
+
+    // Fallback: dynamically-bound `[ngModelGroup]` does not always preserve
+    // the attribute on the DOM. Search the form tree for a unique control
+    // whose leaf name matches; if ambiguous, give up rather than emit the
+    // wrong field.
+    const treeMatch = findControlByLeafName(this.ngForm.form, name);
+    if (treeMatch) {
+      return {
+        field: treeMatch.path,
+        control: treeMatch.control,
+        element: fieldElement,
+      };
+    }
+
+    return null;
+  }
+
+  #collectNgModelGroupAncestors(start: HTMLElement): string[] {
+    const groups: string[] = [];
+    const formEl = this.elementRef.nativeElement;
+    let current: Element | null = start.parentElement;
+    while (current && current !== formEl && formEl.contains(current)) {
+      const groupName = current.getAttribute('ngModelGroup')?.trim();
+      if (groupName) {
+        groups.unshift(groupName);
+      }
+      current = current.parentElement;
+    }
+    return groups;
   }
 
   /**
@@ -1261,4 +1307,52 @@ export class FormDirective<T extends Record<string, unknown>> {
     collect(control, []);
     return fields;
   }
+}
+
+function readElementValue(element: HTMLElement): unknown {
+  if (
+    element instanceof HTMLInputElement ||
+    element instanceof HTMLTextAreaElement ||
+    element instanceof HTMLSelectElement
+  ) {
+    if (element instanceof HTMLInputElement) {
+      if (element.type === 'checkbox') return element.checked;
+      if (element.type === 'number') {
+        return element.value === '' ? null : element.valueAsNumber;
+      }
+    }
+    return element.value;
+  }
+  return undefined;
+}
+
+function findControlByLeafName(
+  root: FormGroup,
+  leafName: string
+): { path: string; control: AbstractControl } | null {
+  const matches: Array<{ path: string; control: AbstractControl }> = [];
+
+  const walk = (
+    current: AbstractControl,
+    path: Array<string | number>
+  ): void => {
+    if (current instanceof FormGroup) {
+      for (const [name, child] of Object.entries(current.controls)) {
+        if (name === leafName && !(child instanceof FormGroup)) {
+          matches.push({
+            path: stringifyFieldPath([...path, name]),
+            control: child,
+          });
+        }
+        walk(child, [...path, name]);
+      }
+      return;
+    }
+    if (current instanceof FormArray) {
+      current.controls.forEach((child, index) => walk(child, [...path, index]));
+    }
+  };
+
+  walk(root, []);
+  return matches.length === 1 ? matches[0]! : null;
 }
