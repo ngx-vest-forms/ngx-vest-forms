@@ -241,11 +241,18 @@ export class AutoSaveDemoPageComponent {
       return;
     }
 
-    this.saveStatus.set({
-      kind: 'saved',
-      field: 'form submit',
-      savedAtLabel: this.#formatTimestamp(new Date().toISOString()),
-      version: 0,
+    const draft = structuredClone(this.formValue());
+    const key = this.#createDraftKey(draft);
+    if (key === this.lastSavedDraftKey() || key === this.lastQueuedDraftKey()) {
+      return;
+    }
+
+    this.lastQueuedDraftKey.set(key);
+    this.autoSaveRequests.next({
+      field: 'submit',
+      key,
+      draft,
+      generation: this.#saveGeneration,
     });
   }
 

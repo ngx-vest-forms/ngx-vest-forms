@@ -900,6 +900,76 @@ describe('FormDirective - Signals/Outputs', () => {
       to: { day: '2026-05-10' },
     });
   });
+
+  it('should resolve paths through dynamic [ngModelGroup] with numeric keys', async () => {
+    type Slot = { from?: string; to?: string };
+    type Model = { slots?: Record<string, Slot> };
+
+    @Component({
+      selector: 'test-field-blur-dynamic-group-host',
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          (fieldBlur)="handleFieldBlur($event)"
+        >
+          <div ngModelGroup="slots">
+            @for (item of items; track item) {
+              <div [ngModelGroup]="item">
+                <input
+                  [id]="'from-' + item"
+                  name="from"
+                  [ngModel]="formValue().slots?.[item]?.from"
+                />
+                <input
+                  [id]="'to-' + item"
+                  name="to"
+                  [ngModel]="formValue().slots?.[item]?.to"
+                />
+              </div>
+            }
+          </div>
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestFieldBlurDynamicGroupHost {
+      readonly items = ['0', '1'];
+      readonly formValue = signal<Model>({ slots: { '0': {}, '1': {} } });
+      readonly blurEvents = signal<Array<NgxFieldBlurEvent<Model>>>([]);
+
+      handleFieldBlur(event: NgxFieldBlurEvent<Model>): void {
+        this.blurEvents.update((events) => [...events, event]);
+      }
+    }
+
+    const { fixture } = await render(TestFieldBlurDynamicGroupHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Blur the second slot's `to` input — identical name+structure as slot 0,
+    // distinguished only by the dynamic `[ngModelGroup]="'1'"` ancestor.
+    const target = fixture.nativeElement.querySelector(
+      '#to-1'
+    ) as HTMLInputElement;
+    target.value = '17:30';
+    target.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    target.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    const [blurEvent] = fixture.componentInstance.blurEvents();
+    expect(blurEvent).toBeTruthy();
+    expect(blurEvent?.field).toBe('slots.1.to');
+    expect(blurEvent?.value).toBe('17:30');
+    expect(blurEvent?.formValue).toEqual({
+      slots: { '0': {}, '1': { to: '17:30' } },
+    });
+  });
 });
 
 describe('FormDirective - triggerFormValidation', () => {

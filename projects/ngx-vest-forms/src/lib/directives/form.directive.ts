@@ -23,9 +23,11 @@ import {
 import {
   AbstractControl,
   AsyncValidatorFn,
+  ControlValueAccessor,
   FormArray,
   FormGroup,
   NgForm,
+  NgModel,
   PristineChangeEvent,
   StatusChangeEvent,
   ValidationErrors,
@@ -105,12 +107,11 @@ export type NgxValidationConfig<T = unknown> =
  * for that pattern, prefer `validationConfig` plus each target field's own
  * `errorDisplayMode`.
  *
- * Limitations: when a control lives inside a dynamically-bound
- * `[ngModelGroup]="expr"` group (no static `ngModelGroup` attribute on the
- * DOM) and the group sits inside a `FormArray`, repeated leaf names cannot be
- * disambiguated from the DOM alone. In that case `fieldBlur` does not emit
- * for those controls. Adding a static `ngModelGroup="<key>"` attribute on the
- * group host element resolves the ambiguity.
+ * The emitted `field` is the full dotted control path (e.g.
+ * `passwords.confirm`, `businessHours.values.0.from`) regardless of whether
+ * the surrounding groups use static `ngModelGroup="key"` or dynamic
+ * `[ngModelGroup]="expr"` bindings, because the path is read from the live
+ * `NgModel` directive registered with the form.
  *
  * @publicApi
  */
@@ -862,10 +863,28 @@ export class FormDirective<T extends Record<string, unknown>> {
 
     const formEl = this.elementRef.nativeElement;
 
-    // Walk DOM ancestors collecting any `ngModelGroup` attribute values.
-    // This produces the canonical dotted path for the static attribute form
-    // (e.g. `<div ngModelGroup="passwords"><input name="password">` →
-    // `passwords.password`).
+    // Authoritative path: ask the registered NgModel directive whose value
+    // accessor is bound to this exact element. This handles all forms of
+    // grouping uniformly — static `ngModelGroup="key"`, dynamic
+    // `[ngModelGroup]="expr"`, repeated leaf names across siblings — because
+    // the directive's `path` is computed from the live ControlContainer tree.
+    const directiveMatch = resolveControlPathByNgModelDirective(
+      this.ngForm,
+      fieldElement
+    );
+    if (directiveMatch) {
+      return {
+        field: directiveMatch.path,
+        control: directiveMatch.control,
+        element: fieldElement,
+      };
+    }
+
+    // Fallback: walk DOM ancestors collecting any `ngModelGroup` attribute
+    // values, producing the canonical dotted path for the static attribute
+    // form (e.g. `<div ngModelGroup="passwords"><input name="password">` →
+    // `passwords.password`). Used when the directive lookup misses (e.g. the
+    // value accessor doesn't expose its element ref in some custom CVAs).
     const staticGroups = collectNgModelGroupAttributes(fieldElement, formEl);
     const staticPath = [...staticGroups, name].join('.');
     const staticControl = this.ngForm.form.get(staticPath);
@@ -873,11 +892,9 @@ export class FormDirective<T extends Record<string, unknown>> {
       return { field: staticPath, control: staticControl, element: fieldElement };
     }
 
-    // Fallback for dynamically-bound `[ngModelGroup]="expr"` (Angular does
-    // not always preserve the attribute on the DOM) and for repeated leaf
-    // names inside dynamic groups (e.g. multiple `from`/`to` slots): probe
-    // each ancestor element as a potential group boundary, querying the
-    // form tree until we find a child that owns this DOM element.
+    // Last-resort fallback for ambiguous DOM structures: probe each ancestor
+    // element as a potential group boundary, querying the form tree until we
+    // find a child that owns this DOM element.
     const dynamicMatch = resolveControlPathByDomAncestors(
       this.ngForm.form,
       fieldElement,
@@ -1493,4 +1510,61 @@ function subtreeContainsElement(
     if (candidate.contains(fieldElement)) return true;
   }
   return false;
+}
+
+/**
+ * Resolves the control + dotted path for a blurred element by consulting the
+ * `NgModel` directives Angular registered with this `NgForm`. Each registered
+ * directive carries a live `path` (the full ControlContainer chain) and a
+ * value accessor whose element ref is the input the directive is hosted on.
+ *
+ * This handles all grouping shapes uniformly — static `ngModelGroup="key"`,
+ * dynamic `[ngModelGroup]="expr"`, and repeated leaf names across siblings —
+ * because the path comes from the live form tree rather than DOM heuristics.
+ * Returns `null` when the directive can't be matched (e.g. a custom CVA that
+ * doesn't store an element ref), so the caller can fall back to DOM probes.
+ */
+function resolveControlPathByNgModelDirective(
+  ngForm: NgForm,
+  fieldElement: HTMLElement
+): { path: string; control: AbstractControl } | null {
+  const directives = readNgFormDirectives(ngForm);
+  if (!directives) return null;
+
+  for (const directive of directives) {
+    const accessorEl = readValueAccessorElement(directive.valueAccessor);
+    if (accessorEl !== fieldElement) continue;
+    const control = directive.control ?? ngForm.form.get(directive.path);
+    if (!control) return null;
+    return { path: directive.path.join('.'), control };
+  }
+  return null;
+}
+
+/**
+ * Reads the registered `NgModel` directives from `NgForm`. Angular forms keeps
+ * them in a private `_directives: Set<NgModel>`. The field name is stable
+ * across all Angular versions that ship `ngModel`, but is not part of the
+ * public type — callers must tolerate `null`.
+ */
+function readNgFormDirectives(ngForm: NgForm): Iterable<NgModel> | null {
+  const set = (ngForm as unknown as { _directives?: Set<NgModel> })._directives;
+  return set ?? null;
+}
+
+/**
+ * Reads the host element of a `ControlValueAccessor`. The standard accessors
+ * shipped by Angular forms (default, number, select, radio, checkbox, range)
+ * all store an `ElementRef` injected at construction as `_elementRef`. This
+ * is private but stable; custom accessors that don't follow the convention
+ * will simply miss the fast path.
+ */
+function readValueAccessorElement(
+  accessor: ControlValueAccessor | null | undefined
+): HTMLElement | null {
+  if (!accessor) return null;
+  const elementRef = (accessor as { _elementRef?: { nativeElement?: unknown } })
+    ._elementRef;
+  const native = elementRef?.nativeElement;
+  return native instanceof HTMLElement ? native : null;
 }
