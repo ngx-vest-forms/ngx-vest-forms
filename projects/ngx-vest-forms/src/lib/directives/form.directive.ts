@@ -105,6 +105,13 @@ export type NgxValidationConfig<T = unknown> =
  * for that pattern, prefer `validationConfig` plus each target field's own
  * `errorDisplayMode`.
  *
+ * Limitations: when a control lives inside a dynamically-bound
+ * `[ngModelGroup]="expr"` group (no static `ngModelGroup` attribute on the
+ * DOM) and the group sits inside a `FormArray`, repeated leaf names cannot be
+ * disambiguated from the DOM alone. In that case `fieldBlur` does not emit
+ * for those controls. Adding a static `ngModelGroup="<key>"` attribute on the
+ * group host element resolves the ambiguity.
+ *
  * @publicApi
  */
 export type NgxFieldBlurEvent<T = unknown> = {
@@ -1480,8 +1487,9 @@ function subtreeContainsElement(
   key: string | number
 ): boolean {
   if (typeof key !== 'string') return false;
-  const candidates = formEl.querySelectorAll(`[ngModelGroup="${key}"]`);
-  for (const candidate of Array.from(candidates)) {
+  const selector = `[ngModelGroup="${CSS.escape(key)}"]`;
+  const candidates = formEl.querySelectorAll(selector);
+  for (const candidate of candidates) {
     if (candidate.contains(fieldElement)) return true;
   }
   return false;

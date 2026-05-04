@@ -831,6 +831,75 @@ describe('FormDirective - Signals/Outputs', () => {
     expect(blurEvent?.value).toBe('female');
     expect(blurEvent?.formValue).toEqual({ gender: 'female' });
   });
+
+  it('should disambiguate repeated leaf names across sibling ngModelGroups', async () => {
+    type Range = { day?: string };
+    type Model = { from?: Range; to?: Range };
+
+    @Component({
+      selector: 'test-field-blur-repeated-leaf-host',
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          (fieldBlur)="handleFieldBlur($event)"
+        >
+          <div ngModelGroup="from">
+            <label for="from-day">From day</label>
+            <input
+              id="from-day"
+              name="day"
+              [ngModel]="formValue().from?.day"
+            />
+          </div>
+          <div ngModelGroup="to">
+            <label for="to-day">To day</label>
+            <input
+              id="to-day"
+              name="day"
+              [ngModel]="formValue().to?.day"
+            />
+          </div>
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestFieldBlurRepeatedLeafHost {
+      readonly formValue = signal<Model>({ from: {}, to: {} });
+      readonly blurEvents = signal<Array<NgxFieldBlurEvent<Model>>>([]);
+
+      handleFieldBlur(event: NgxFieldBlurEvent<Model>): void {
+        this.blurEvents.update((events) => [...events, event]);
+      }
+    }
+
+    const { fixture } = await render(TestFieldBlurRepeatedLeafHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const toDay = fixture.nativeElement.querySelector(
+      '#to-day'
+    ) as HTMLInputElement;
+    toDay.value = '2026-05-10';
+    toDay.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    toDay.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    const [blurEvent] = fixture.componentInstance.blurEvents();
+    expect(blurEvent).toBeTruthy();
+    // Must resolve to `to.day`, not `from.day` — both leaves share the same name.
+    expect(blurEvent?.field).toBe('to.day');
+    expect(blurEvent?.value).toBe('2026-05-10');
+    expect(blurEvent?.formValue).toEqual({
+      from: {},
+      to: { day: '2026-05-10' },
+    });
+  });
 });
 
 describe('FormDirective - triggerFormValidation', () => {
