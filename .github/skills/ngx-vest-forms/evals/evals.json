@@ -5,25 +5,62 @@
       "id": 1,
       "prompt": "I’m adding ngx-vest-forms to a small Angular 21 app and want the most idiomatic first example for a profile form with first name, last name, and email. Please show the component and template using signals, explain whether I should use [ngModel] or [(ngModel)], and keep the imports on the public API only.",
       "expected_output": "Routes to the `core` sub-skill guidance, uses public API imports from 'ngx-vest-forms', models the form with NgxDeepPartial, uses [ngModel] with matching name paths, and includes an unconditional only(field) Vest suite.",
-      "files": []
+      "files": [],
+      "expectations": [
+        "Uses public API imports from 'ngx-vest-forms' and does not recommend internal src/lib paths.",
+        "Uses [ngModel] rather than [(ngModel)] and keeps the name attribute aligned with the bound path.",
+        "Models the form with NgxDeepPartial and signal-based component state.",
+        "Shows an unconditional only(field) call in the Vest suite."
+      ]
     },
     {
       "id": 2,
       "prompt": "My confirm password field only revalidates when I type in it, not when the original password changes. I’m using ngx-vest-forms with omitWhen in the suite. Should this be validationConfig or ROOT_FORM? I’d like the answer to use the builder API and any example imports should come from the library’s public package.",
       "expected_output": "Routes to the `validation-config-builder` sub-skill guidance, explains field ownership vs form ownership, keeps the rule in the Vest suite, uses createValidationConfig from the public API, and avoids suggesting internal imports.",
-      "files": []
+      "files": [],
+      "expectations": [
+        "Explains that this is a field dependency timing problem better suited to validationConfig than ROOT_FORM.",
+        "Keeps the validation rule in the Vest suite rather than treating validationConfig as the rule definition.",
+        "Uses the createValidationConfig builder API from the public package.",
+        "Avoids internal library imports."
+      ]
     },
     {
       "id": 3,
       "prompt": "We have our own design-system field shell and don’t want to use ngx-control-wrapper visually, but we still want ngx-vest-forms errors, warnings, aria-describedby merging, and pending-state behavior. Can you show a custom wrapper approach and please avoid private library imports because this is for consumers of the package?",
       "expected_output": "Routes to the `custom-wrapper-patterns` sub-skill guidance, prefers FormErrorControlDirective or FormErrorDisplayDirective from the public API, preserves ARIA behavior, mentions createDebouncedPendingState when appropriate, and does not use src/lib imports.",
-      "files": []
+      "files": [],
+      "expectations": [
+        "Recommends a custom wrapper approach using public API directives such as FormErrorControlDirective or FormErrorDisplayDirective.",
+        "Preserves ARIA behavior such as aria-describedby merging or equivalent accessible message association.",
+        "Mentions pending-state handling such as createDebouncedPendingState when it fits the use case.",
+        "Avoids internal src/lib imports."
+      ]
     },
     {
       "id": 4,
       "prompt": "I have a checkout form where changing delivery method hides the address fields and sometimes replaces them with static text. Errors stick around after the UI changes. I’m not sure whether I need clearFieldsWhen, triggerFormValidation, or ROOT_FORM, and I also split the shipping section into a child component. Please steer me to the right ngx-vest-forms APIs only.",
       "expected_output": "Routes across the `dynamic-form-behavior`, `child-components`, and possibly `root-form-validation` sub-skills, distinguishes stale state from form-level ownership, recommends public APIs like clearFieldsWhen and vestFormsViewProviders, and avoids cargo-culting triggerFormValidation.",
-      "files": []
+      "files": [],
+      "expectations": [
+        "Recommends field-clearing utilities such as clearFieldsWhen, clearFields, or keepFieldsWhen for hidden or irrelevant values.",
+        "Explains that triggerFormValidation is only needed for real structure-change cases rather than ordinary field changes.",
+        "Mentions vestFormsViewProviders for the child shipping section.",
+        "Uses ROOT_FORM only for true form-level rules rather than stale field cleanup."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "I’m building a long purchase request form with ngx-vest-forms and want to auto-save the draft whenever a field blurs. Quantity should make quantityJustification required immediately, but I do not want the justification error to show until that field itself blurs. Should I listen to `(blur)`, use `triggerFormValidation()`, or something else? Please keep the answer on the public API and show the right pattern.",
+      "expected_output": "Routes to the `field-blur-events` workflow and also brings in `validation-config-builder` and built-in wrapper guidance, uses `fieldBlur` with `NgxFieldBlurEvent`, keeps persistence separate from validation, pairs dependent revalidation with `errorDisplayMode='on-blur'`, and avoids `(blur)` handlers that call `triggerFormValidation()` or gating draft saves on `event.pending`.",
+      "files": [],
+      "expectations": [
+        "Recommends the form-level fieldBlur output with NgxFieldBlurEvent instead of native per-control blur handlers.",
+        "Keeps draft persistence separate from validation and does not gate draft auto-save on event.pending.",
+        "Pairs dependent revalidation with validationConfig and on-blur wrapper display modes for quiet dependent errors.",
+        "Avoids using triggerFormValidation from blur handlers to force this UX.",
+        "Anchors the answer to the repo’s canonical blur-save guidance by mentioning docs/AUTO-SAVE-ON-BLUR.md or the /auto-save-demo example."
+      ]
     }
   ]
 }

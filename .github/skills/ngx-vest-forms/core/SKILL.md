@@ -27,6 +27,7 @@ Recommend these imports from `'ngx-vest-forms'` when they fit the example:
 - `NgxDeepRequired`
 - `NgxTypedVestSuite`
 - `FormFieldName`
+- `NgxFieldBlurEvent`
 - `ROOT_FORM`
 
 Do not teach consumers to import from internal `src/lib/**` paths. If a symbol is missing from the public API, that is a library-maintenance task, not a consumer workaround.
@@ -63,6 +64,7 @@ Correct these immediately if they appear:
 - `name` values that do not match the bound path
 - direct property access like `formValue().address.street` instead of `formValue().address?.street`
 - missing `formShape` on complex nested forms where path mistakes are easy
+- `(blur)` handlers that re-trigger validation to fake dependent-field timing or draft auto-save
 - imports from `projects/ngx-vest-forms/src/lib/**` in consumer examples
 
 Do not paper over these mistakes. They break the mental model of the library and usually create subtle bugs instead of quick wins.
@@ -71,6 +73,7 @@ Do not paper over these mistakes. They break the mental model of the library and
 
 - Prefer `ROOT_FORM` only for true form-level business rules, not as a shortcut for field errors.
 - If fields depend on each other, move to the validation-config skill logic rather than cramming everything into the base example.
+- If the user wants blur-driven persistence, analytics, or field-level side effects, move to the field-blur-events skill instead of inventing custom `(blur)` validation flows.
 - If the user is splitting the form into child components, apply the child-components skill guidance.
 - If the user wants custom message UI, apply the custom-wrapper-patterns skill guidance.
 

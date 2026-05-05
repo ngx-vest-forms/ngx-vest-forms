@@ -50,6 +50,7 @@ Do not oversell it as a “show errors” API. It only re-runs validation logic.
 ## Interactions with other features
 
 - If a field depends on another field’s value, use `validationConfig` as well.
+- If the user wants blur-driven draft persistence or analytics, use `fieldBlur` and `NgxFieldBlurEvent` instead of treating `triggerFormValidation()` as a blur workflow API.
 - If the rule belongs to the whole form, use `ROOT_FORM`.
 - Dynamic forms commonly need all three concepts in different places: field clearing, revalidation timing, and form-level rules.
 
@@ -59,6 +60,7 @@ Do not oversell it as a “show errors” API. It only re-runs validation logic.
 - calling `triggerFormValidation()` for ordinary field changes that Angular already handles
 - clearing fields without matching the suite’s conditional `omitWhen(...)` logic
 - assuming `triggerFormValidation()` will also mark fields touched or force visible errors
+- using blur handlers plus `triggerFormValidation()` for draft auto-save or quiet dependent validation timing
 - importing dynamic-form helpers from internal library paths
 
 Do not cargo-cult `triggerFormValidation()` into every conditional form. Most dynamic form bugs come from stale state ownership, not from a missing manual rerun.
@@ -86,4 +88,4 @@ Start with `references/decision-guide.md` when the user is unsure whether a layo
 
 ## Fast heuristic
 
-If the user says “conditional form”, “hide this field”, “replace this section with text”, “clear hidden values”, or “triggerFormValidation”, this skill should trigger.
+If the user says “conditional form”, “hide this field”, “replace this section with text”, “clear hidden values”, or “triggerFormValidation”, this skill should trigger. If they say “save on blur” or “draft auto-save”, route to the field-blur-events skill instead unless a real structure-change problem is also present.

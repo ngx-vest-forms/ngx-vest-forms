@@ -84,6 +84,17 @@ Use it proactively when the suite contains:
 
 Without it, ngx-vest-forms may leave stale validation results because Angular will not know which dependent fields to rerun.
 
+## Interaction with blur-driven persistence
+
+If the user also wants draft auto-save or analytics on blur:
+
+1. keep the dependency graph in `validationConfig`
+2. keep the validation rule in the Vest suite
+3. use wrapper display modes such as `errorDisplayMode="on-blur"` to keep untouched dependents visually calm
+4. use the form's `fieldBlur` output for persistence or other side effects
+
+Do not recommend `(blur)` handlers that call `triggerFormValidation()` to manufacture this UX. That mixes validation timing with application policy and usually makes async behavior harder to reason about.
+
 ## Pitfalls to fix immediately
 
 - using `validationConfig` as if it defined validation rules
@@ -91,6 +102,7 @@ Without it, ngx-vest-forms may leave stale validation results because Angular wi
 - forgetting dependencies when `omitWhen` or `skipWhen` hides/shows a rule
 - creating very large `group()` graphs when one-way dependencies would be cheaper and clearer
 - using untyped string paths when the model type is available
+- using `triggerFormValidation()` from blur handlers to force dependent-field timing
 - importing builder helpers from internal library paths
 
 Do not describe `validationConfig` as optional polish when stale cross-field errors are part of the bug. In those cases it is the missing wiring, not a nice-to-have.
@@ -109,6 +121,7 @@ When answering the user:
 - `references/decision-guide.md`
 - `../../../../docs/VALIDATION-CONFIG-BUILDER.md`
 - `../../../../docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`
+- `../../../../docs/AUTO-SAVE-ON-BLUR.md`
 - `../../../../docs/FIELD-PATHS.md`
 - `../../../../README.md`
 - `../../../../projects/ngx-vest-forms/src/public-api.ts`
