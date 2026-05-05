@@ -804,6 +804,10 @@ const notEqual = shallowEqual({ a: 1, b: { c: 3 } }, { a: 1, b: { c: 3 } }); // 
 
 Compares two values deeply (recursive comparison) - internal utility.
 
+- Cyclic arrays and plain objects are compared structurally using visited-pair tracking.
+- `Date` and `RegExp` values compare structurally.
+- `Map` and `Set` values compare by reference only.
+
 ```typescript
 import { fastDeepEqual } from 'ngx-vest-forms';
 
