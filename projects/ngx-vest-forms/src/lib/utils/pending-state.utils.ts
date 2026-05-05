@@ -1,4 +1,4 @@
-import { effect, Signal, signal } from '@angular/core';
+import { effect, isSignal, Signal, signal } from '@angular/core';
 
 /**
  * Options for configuring debounced pending state behavior.
@@ -18,6 +18,15 @@ export type DebouncedPendingStateOptions = {
    */
   minimumDisplay?: number;
 };
+
+/**
+ * Accepts either a static options object or a reactive `Signal` (e.g. an
+ * `input()` accessor) so consumers can update debounce timings at runtime
+ * without recreating the pending-state machine.
+ */
+export type DebouncedPendingStateOptionsInput =
+  | DebouncedPendingStateOptions
+  | Signal<DebouncedPendingStateOptions>;
 
 /**
  * Result of createDebouncedPendingState containing the debounced signal
@@ -72,9 +81,19 @@ export type DebouncedPendingStateResult = {
  */
 export function createDebouncedPendingState(
   isPending: Signal<boolean>,
-  options: DebouncedPendingStateOptions = {}
+  options: DebouncedPendingStateOptionsInput = {}
 ): DebouncedPendingStateResult {
-  const { showAfter = 200, minimumDisplay = 500 } = options;
+  // Reading the options inside the effect makes the timings reactive: when
+  // a consumer passes an `input()` accessor (a Signal), changes propagate at
+  // runtime rather than getting captured once at construction.
+  const optionsSignal: Signal<DebouncedPendingStateOptions> | null = isSignal(
+    options
+  )
+    ? (options as Signal<DebouncedPendingStateOptions>)
+    : null;
+  const staticOptions: DebouncedPendingStateOptions = optionsSignal
+    ? {}
+    : (options as DebouncedPendingStateOptions);
 
   // Create writable signal for debounced state
   const showPendingMessageSignal = signal(false);
@@ -98,6 +117,9 @@ export function createDebouncedPendingState(
   // Effect to manage debounced pending message display
   effect((onCleanup) => {
     const pending = isPending();
+    const current = optionsSignal ? optionsSignal() : staticOptions;
+    const showAfter = current.showAfter ?? 200;
+    const minimumDisplay = current.minimumDisplay ?? 500;
 
     if (pending) {
       // Clear any existing minimum display timeout

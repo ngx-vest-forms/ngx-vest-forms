@@ -144,12 +144,20 @@ export class ValidateRootFormDirective<T>
 
   /**
    * Validation mode:
-   * - 'submit' (default): Only validates after form submission
-   * - 'live': Validates on every value change
-   * Accepts both validateRootFormMode and ngxValidateRootFormMode
+   * - `'submit'` (effective default): Only validates after form submission.
+   * - `'live'`: Validates on every value change.
+   *
+   * Both inputs default to `undefined` so we can detect whether the consumer
+   * set them explicitly. Precedence is `ngx ?? legacy ?? 'submit'`, which
+   * matches the documented behavior — observable only when both attributes
+   * are set explicitly on the same form.
    */
-  readonly validateRootFormMode = input<'submit' | 'live'>('submit');
-  readonly ngxValidateRootFormMode = input<'submit' | 'live'>('submit');
+  readonly validateRootFormMode = input<'submit' | 'live' | undefined>(
+    undefined
+  );
+  readonly ngxValidateRootFormMode = input<'submit' | 'live' | undefined>(
+    undefined
+  );
 
   constructor() {
     // Convert signals to Observables in injection context
@@ -233,11 +241,13 @@ export class ValidateRootFormDirective<T>
       return of(null);
     }
 
-    // Get mode from either input (ngx prefix takes precedence if both set)
+    // Mode precedence: ngx-prefixed input wins over legacy input; both default
+    // to `undefined` so the precedence rule is implementable without losing
+    // the legacy attribute when the new one is not set.
     const mode =
-      this.ngxValidateRootFormMode() !== 'submit'
-        ? this.ngxValidateRootFormMode()
-        : this.validateRootFormMode();
+      this.ngxValidateRootFormMode() ??
+      this.validateRootFormMode() ??
+      'submit';
 
     // In 'submit' mode, skip validation until form is submitted
     if (mode === 'submit' && !this.hasSubmitted()) {
