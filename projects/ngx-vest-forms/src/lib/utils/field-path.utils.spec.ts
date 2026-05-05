@@ -2,8 +2,6 @@ import { vi } from 'vitest';
 import { parseFieldPath, stringifyFieldPath } from './field-path.utils';
 
 describe('field-path.utils', () => {
-  const originalNgDevMode = (globalThis as { ngDevMode?: boolean }).ngDevMode;
-
   describe('parseFieldPath', () => {
     it('should handle empty string', () => {
       expect(parseFieldPath('')).toEqual([]);
@@ -89,7 +87,16 @@ describe('field-path.utils', () => {
     });
 
     describe('malformed paths', () => {
+      const originalNgDevMode = (globalThis as { ngDevMode?: boolean }).ngDevMode;
       let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
+
+      function restoreNgDevMode(): void {
+        if (originalNgDevMode === undefined) {
+          delete (globalThis as { ngDevMode?: boolean }).ngDevMode;
+        } else {
+          (globalThis as { ngDevMode?: boolean }).ngDevMode = originalNgDevMode;
+        }
+      }
 
       beforeEach(() => {
         consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -97,11 +104,7 @@ describe('field-path.utils', () => {
 
       afterEach(() => {
         consoleWarnSpy.mockRestore();
-        if (originalNgDevMode === undefined) {
-          delete (globalThis as { ngDevMode?: boolean }).ngDevMode;
-        } else {
-          (globalThis as { ngDevMode?: boolean }).ngDevMode = originalNgDevMode;
-        }
+        restoreNgDevMode();
       });
 
       it.each(['a..b', '.a', 'a.', '.'])(
