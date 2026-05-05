@@ -255,6 +255,24 @@ export class FormControlStateDirective {
                   ? true
                   : state.hasBeenValidated,
             }));
+
+            // Keep the derived control-state signal in sync even when blur/dirty
+            // changes do not produce a statusChanges emission.
+            //
+            // This happens when a control is already INVALID due to dependent-field
+            // validation and the user then blurs it. Error display modes that depend
+            // on `isTouched()` must still update immediately in that case.
+            this.#controlStateSignal.set({
+              status: control.status as FormControlStatus | null,
+              isValid: control.valid ?? false,
+              isInvalid: control.invalid ?? false,
+              isPending: control.pending ?? false,
+              isDisabled: control.disabled ?? false,
+              isTouched: newTouched,
+              isDirty: newDirty,
+              isPristine: control.pristine ?? true,
+              errors: control.errors as VestValidationErrors | null,
+            });
           }
 
           // Sync pending state only when it transitions from true to false

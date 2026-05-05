@@ -203,4 +203,34 @@ test.describe('Auto-Save Draft Demo', () => {
       expect(storedDraft?.draft?.projectName).toBe('Recovered draft');
     });
   });
+
+  test('should discard an in-flight blur save when the form is reset', async ({
+    page,
+  }) => {
+    await test.step('Start a blur save and reset before it completes', async () => {
+      const projectName = page.getByLabel('Project name', { exact: true });
+      const resetButton = page.getByRole('button', { name: /reset form/i });
+
+      await typeAndBlur(projectName, 'Transient draft', 0);
+
+      await expect(
+        page.getByRole('heading', { name: /saving draft/i })
+      ).toBeVisible();
+
+      await resetButton.click();
+
+      await expect(projectName).toHaveValue('');
+      await expect(
+        page.getByRole('heading', { name: /auto-save ready/i })
+      ).toBeVisible();
+
+      await expect
+        .poll(async () => {
+          return await page.evaluate((key) => sessionStorage.getItem(key), STORAGE_KEY);
+        })
+        .toBeNull();
+
+      await expect(page.locator('aside')).not.toContainText(/transient draft/i);
+    });
+  });
 });
