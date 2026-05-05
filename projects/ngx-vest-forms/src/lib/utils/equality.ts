@@ -12,6 +12,23 @@ export function isPrimitive(
   );
 }
 
+type VisitedPairs = WeakMap<object, WeakSet<object>>;
+
+/**
+ * Records that we've started comparing the pair (a, b). Re-entering the same
+ * pair during recursion (cycle, or repeated DAG path) short-circuits to `true`
+ * — correct because if the prior descent had returned `false`, the outer call
+ * would already have short-circuited before we reach the second visit.
+ */
+function rememberPair(seen: VisitedPairs, a: object, b: object): void {
+  let targets = seen.get(a);
+  if (!targets) {
+    targets = new WeakSet<object>();
+    seen.set(a, targets);
+  }
+  targets.add(b);
+}
+
 /**
  * @internal
  * Internal utility for shallow equality checks.
@@ -115,17 +132,13 @@ export function shallowEqual(obj1: unknown, obj2: unknown): boolean {
  * - Plain objects (with recursive deep comparison)
  * - Date objects (by timestamp comparison)
  * - RegExp objects (by source and flags comparison)
- * - Set objects (by size and value membership)
- * - Map objects (by size and key-value pairs)
+ * - Set objects (reference equality only)
+ * - Map objects (reference equality only)
+ * - Functions (reference equality only — distinct function instances are never equal,
+ *   even if their source code is identical)
  *
  * **Safety Features:**
- * - **Recursion depth cap**: `maxDepth` (default 10) prevents stack-overflow on
- *   accidental cycles by falling back to reference equality (`===`) at the limit.
- *   This is NOT true cycle detection — two distinct objects that share identical
- *   cyclic structure compare unequal, and legitimate trees deeper than `maxDepth`
- *   compare via reference identity rather than structure. Pass a larger
- *   `maxDepth` for deep form models. Tracked in #107 for a `WeakMap`-based
- *   cycle-tracking replacement.
+ * - **Circular reference handling**: Tracks visited object pairs with `WeakMap<object, WeakSet<object>>`
  * - **Type coercion prevention**: Strict type checking before comparison
  * - **Null safety**: Proper handling of null and undefined values
  *
@@ -137,7 +150,8 @@ export function shallowEqual(obj1: unknown, obj2: unknown): boolean {
  * ///
  * /// Memory usage:
  * /// JSON.stringify:    Creates temporary strings (high GC pressure)
- * /// fastDeepEqual:     Zero allocations during comparison
+ * /// fastDeepEqual:     One small WeakMap of visited object pairs is allocated lazily on
+ * ///                    first nested-container descent; primitive-only comparisons allocate nothing.
  * ```
  *
  * **Typical Usage in Forms:**
@@ -153,117 +167,120 @@ export function shallowEqual(obj1: unknown, obj2: unknown): boolean {
  *
  * @param obj1 - First object to compare
  * @param obj2 - Second object to compare
- * @param maxDepth - Maximum recursion depth to prevent infinite loops (default: 10)
+ *
+ * Cyclic arrays and plain objects are compared structurally by tracking visited object
+ * pairs. Distinct cyclic graphs with the same structure compare equal. `Date` and
+ * `RegExp` values compare structurally. `Map` and `Set` values compare by reference
+ * only, so distinct instances are considered different even if their contents match.
+ *
  * @returns true if objects are deeply equal by value
  */
-export function fastDeepEqual(
+export function fastDeepEqual(obj1: unknown, obj2: unknown): boolean {
+  return fastDeepEqualInternal(obj1, obj2, undefined);
+}
+
+function fastDeepEqualInternal(
   obj1: unknown,
   obj2: unknown,
-  maxDepth = 10
+  seen: VisitedPairs | undefined
 ): boolean {
-  if (maxDepth <= 0) {
-    // Fallback to shallow comparison at max depth to prevent infinite recursion
-    return obj1 === obj2;
-  }
-
-  if (obj1 === obj2) {
+  // Object.is gives correct semantics for NaN and ±0 — important for numeric
+  // form values where `fastDeepEqual(NaN, NaN)` should be true.
+  if (Object.is(obj1, obj2)) {
     return true;
   }
 
   if (obj1 == null || obj2 == null) {
-    return obj1 === obj2;
+    return false;
   }
 
   if (typeof obj1 !== typeof obj2) {
     return false;
   }
 
-  if (isPrimitive(obj1) || isPrimitive(obj2)) {
-    return obj1 === obj2;
-  }
-
-  // Handle arrays early for performance (common in forms)
-  if (Array.isArray(obj1) !== Array.isArray(obj2)) {
+  // Functions use reference-only equality. Object.is at the top already returned
+  // true for identical references, so reaching here means the references differ.
+  if (typeof obj1 === 'function') {
     return false;
   }
 
-  if (Array.isArray(obj1)) {
-    // We know obj2 is also an array here
-    const arr2 = obj2 as unknown[];
-    if (obj1.length !== arr2.length) {
-      return false;
-    }
-    for (let i = 0; i < obj1.length; i++) {
-      if (!fastDeepEqual(obj1[i], arr2[i], maxDepth - 1)) {
-        return false;
-      }
-    }
-    return true;
+  if (isPrimitive(obj1) || isPrimitive(obj2)) {
+    return false;
   }
 
-  // Handle Date objects
-  if (obj1 instanceof Date) {
-    return obj2 instanceof Date && obj1.getTime() === obj2.getTime();
-  }
-
-  // Handle RegExp objects
-  if (obj1 instanceof RegExp) {
+  // Handle Date / RegExp first — they have value semantics and can't contain cycles,
+  // so they don't need pair tracking.
+  if (obj1 instanceof Date || obj2 instanceof Date) {
     return (
+      obj1 instanceof Date &&
+      obj2 instanceof Date &&
+      obj1.getTime() === obj2.getTime()
+    );
+  }
+
+  if (obj1 instanceof RegExp || obj2 instanceof RegExp) {
+    return (
+      obj1 instanceof RegExp &&
       obj2 instanceof RegExp &&
       obj1.source === obj2.source &&
       obj1.flags === obj2.flags
     );
   }
 
-  // Handle Set objects (common in forms)
-  if (obj1 instanceof Set) {
-    if (!(obj2 instanceof Set) || obj1.size !== obj2.size) {
-      return false;
-    }
-    for (const value of obj1) {
-      if (!obj2.has(value)) {
-        return false;
-      }
-    }
-    return true;
+  // Intentional contract: distinct Set / Map instances compare by reference only.
+  if (obj1 instanceof Set || obj2 instanceof Set) {
+    return false;
   }
-
-  // Handle Map objects (common in forms)
-  if (obj1 instanceof Map) {
-    if (!(obj2 instanceof Map) || obj1.size !== obj2.size) {
-      return false;
-    }
-    for (const [key, value] of obj1) {
-      if (
-        !obj2.has(key) ||
-        !fastDeepEqual(value, obj2.get(key), maxDepth - 1)
-      ) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  // Handle plain objects
-  const keys1 = Object.keys(obj1);
-  const keys2 = Object.keys(obj2);
-
-  if (keys1.length !== keys2.length) {
+  if (obj1 instanceof Map || obj2 instanceof Map) {
     return false;
   }
 
+  if (Array.isArray(obj1) !== Array.isArray(obj2)) {
+    return false;
+  }
+
+  // Cycle / repeated-pair guard for traversable containers.
+  // Allocates lazily on first nested-object descent.
+  const a = obj1 as object;
+  const b = obj2 as object;
+  if (seen?.get(a)?.has(b)) {
+    return true;
+  }
+  seen ??= new WeakMap<object, WeakSet<object>>();
+  rememberPair(seen, a, b);
+
+  if (Array.isArray(obj1)) {
+    const arr2 = obj2 as unknown[];
+    if (obj1.length !== arr2.length) {
+      return false;
+    }
+    for (let i = 0; i < obj1.length; i++) {
+      if (!fastDeepEqualInternal(obj1[i], arr2[i], seen)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Plain objects
+  const keys1 = Object.keys(a);
+  const o2 = b as Record<string, unknown>;
+  if (keys1.length !== Object.keys(o2).length) {
+    return false;
+  }
   for (const key of keys1) {
+    if (!Object.hasOwn(o2, key)) {
+      return false;
+    }
     if (
-      !Object.hasOwn(obj2 as object, key) ||
-      !fastDeepEqual(
-        (obj1 as Record<string, unknown>)[key],
-        (obj2 as Record<string, unknown>)[key],
-        maxDepth - 1
+      !fastDeepEqualInternal(
+        (a as Record<string, unknown>)[key],
+        o2[key],
+        seen
       )
     ) {
       return false;
     }
   }
-
   return true;
 }
