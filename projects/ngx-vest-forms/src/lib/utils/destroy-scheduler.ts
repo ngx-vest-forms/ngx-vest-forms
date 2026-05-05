@@ -16,30 +16,25 @@ export function scheduleTimeout(
   destroyRef: DestroyRef
 ): () => void {
   let cancelled = false;
+  let unregisterDestroy: (() => void) | undefined;
 
-  // `handle` is captured by the onDestroy closure below; it is always assigned
-  // before `onDestroy` can fire because `destroy()` can only run after the
-  // current synchronous execution context completes.
-  // eslint-disable-next-line prefer-const
-  let handle: ReturnType<typeof setTimeout>;
-
-  const unregisterDestroy = destroyRef.onDestroy(() => {
-    cancelled = true;
-    clearTimeout(handle);
-  });
-
-  handle = setTimeout(() => {
-    unregisterDestroy();
+  const handle = setTimeout(() => {
+    unregisterDestroy?.();
     if (!cancelled) {
       callback();
     }
   }, delayMs);
 
+  unregisterDestroy = destroyRef.onDestroy(() => {
+    cancelled = true;
+    clearTimeout(handle);
+  });
+
   return () => {
     if (!cancelled) {
       cancelled = true;
       clearTimeout(handle);
-      unregisterDestroy();
+      unregisterDestroy?.();
     }
   };
 }

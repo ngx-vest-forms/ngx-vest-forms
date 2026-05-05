@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-### fix
+### feat
 
 - **destroy-aware async scheduling**: Add `scheduleTimeout` and `scheduleMicrotask` utilities in
   `utils/destroy-scheduler` that auto-cancel when the supplied `DestroyRef` fires. Replace all

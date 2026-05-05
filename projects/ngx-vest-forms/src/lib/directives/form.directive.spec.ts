@@ -1745,7 +1745,9 @@ describe('FormDirective - Destroy-aware async scheduling', () => {
       suite = signal(
         staticSuite((model: { username?: string } = {}, field?: string) => {
           only(field);
-          enforce(model.username).isNotEmpty();
+          vestTest('username', 'Username is required', () => {
+            enforce(model.username).isNotEmpty();
+          });
         })
       );
     }
