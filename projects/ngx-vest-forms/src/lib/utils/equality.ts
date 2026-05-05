@@ -237,10 +237,11 @@ function fastDeepEqualInternal(obj1: unknown, obj2: unknown, state: TraversalSta
       return false;
     }
 
-    if (
-      (state.visitedPairs && hasVisitedPair(state.visitedPairs, obj1, arr2)) ||
-      hasAncestorPair(state, obj1, arr2)
-    ) {
+    if (state.visitedPairs && hasVisitedPair(state.visitedPairs, obj1, arr2)) {
+      return true;
+    }
+
+    if (hasAncestorPair(state, obj1, arr2)) {
       state.visitedPairs = markVisitedPair(state.visitedPairs, obj1, arr2);
       return true;
     }
@@ -283,11 +284,13 @@ function fastDeepEqualInternal(obj1: unknown, obj2: unknown, state: TraversalSta
 
   // Handle Set objects (common in forms)
   if (obj1 instanceof Set || obj2 instanceof Set) {
+    // Intentional contract: distinct Set instances compare by reference only.
     return false;
   }
 
   // Handle Map objects (common in forms)
   if (obj1 instanceof Map || obj2 instanceof Map) {
+    // Intentional contract: distinct Map instances compare by reference only.
     return false;
   }
 
@@ -299,11 +302,11 @@ function fastDeepEqualInternal(obj1: unknown, obj2: unknown, state: TraversalSta
     return false;
   }
 
-  if (
-    (state.visitedPairs &&
-      hasVisitedPair(state.visitedPairs, obj1 as object, obj2 as object)) ||
-    hasAncestorPair(state, obj1 as object, obj2 as object)
-  ) {
+  if (state.visitedPairs && hasVisitedPair(state.visitedPairs, obj1 as object, obj2 as object)) {
+    return true;
+  }
+
+  if (hasAncestorPair(state, obj1 as object, obj2 as object)) {
     state.visitedPairs = markVisitedPair(
       state.visitedPairs,
       obj1 as object,
