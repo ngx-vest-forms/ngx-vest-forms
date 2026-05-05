@@ -231,9 +231,13 @@ function getStringArrayError(
 let cloneDeepDeprecationWarned = false;
 
 export function cloneDeep<T>(object: T): T {
+  // NOTE: `typeof ngDevMode !== 'undefined' && ngDevMode` is kept inline
+  // (not extracted to a helper) because Angular's build optimizer relies on
+  // this exact pattern for tree-shaking dev-only code from production bundles.
   if (
     !cloneDeepDeprecationWarned &&
-    (globalThis as { ngDevMode?: unknown }).ngDevMode
+    typeof ngDevMode !== 'undefined' &&
+    ngDevMode
   ) {
     cloneDeepDeprecationWarned = true;
     console.warn(
