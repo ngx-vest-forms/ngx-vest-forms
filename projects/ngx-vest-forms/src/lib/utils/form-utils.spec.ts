@@ -632,7 +632,7 @@ describe('cloneDeep', () => {
 
     afterEach(() => {
       if (originalNgDevMode === undefined) {
-        delete globalRef[ngDevModeKey];
+        Reflect.deleteProperty(globalRef, ngDevModeKey);
       } else {
         globalRef[ngDevModeKey] = originalNgDevMode;
       }
