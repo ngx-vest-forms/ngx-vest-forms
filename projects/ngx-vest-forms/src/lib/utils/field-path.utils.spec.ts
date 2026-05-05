@@ -107,7 +107,7 @@ describe('field-path.utils', () => {
         restoreNgDevMode();
       });
 
-      it.each(['a..b', '.a', 'a.', '.'])(
+      it.each(['a..b', '.a', 'a.', '.', 'a.[0]', 'a.[0].b', '[0].'])(
         'should reject %s and warn in development mode',
         (path) => {
           (globalThis as { ngDevMode?: boolean }).ngDevMode = true;
@@ -119,7 +119,7 @@ describe('field-path.utils', () => {
         }
       );
 
-      it.each(['a..b', '.a', 'a.', '.'])(
+      it.each(['a..b', '.a', 'a.', '.', 'a.[0]', 'a.[0].b', '[0].'])(
         'should reject %s without warning in production mode',
         (path) => {
           (globalThis as { ngDevMode?: boolean }).ngDevMode = false;
@@ -128,6 +128,15 @@ describe('field-path.utils', () => {
           expect(consoleWarnSpy).not.toHaveBeenCalled();
         }
       );
+
+      it('should still accept legitimate leading-bracket paths', () => {
+        (globalThis as { ngDevMode?: boolean }).ngDevMode = true;
+
+        expect(parseFieldPath('[0]')).toEqual([0]);
+        expect(parseFieldPath('[0].x')).toEqual([0, 'x']);
+        expect(parseFieldPath('[0][1]')).toEqual([0, 1]);
+        expect(consoleWarnSpy).not.toHaveBeenCalled();
+      });
     });
   });
 

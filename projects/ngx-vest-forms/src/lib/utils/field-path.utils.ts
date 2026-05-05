@@ -67,25 +67,30 @@ export function isUnsafePathSegment(segment: string | number): boolean {
 export function parseFieldPath(path: string): Array<string | number> {
   if (!path) return [];
 
-  if (
-    path === '.' ||
-    path.startsWith('.') ||
-    path.endsWith('.') ||
-    path.includes('..')
-  ) {
-    if (typeof ngDevMode !== 'undefined' && ngDevMode) {
-      console.warn(
-        `${LOG_PREFIX}: Invalid field path '${path}'. Leading dots, trailing dots, and consecutive dots are not allowed.`
-      );
+  // Normalize bracket notation to dot notation first so malformed inputs like
+  // 'a.[0]' (which becomes 'a..0') are caught alongside 'a..b', '.a', 'a.', '.'.
+  const startsWithBracket = path.startsWith('[');
+  const segments = path
+    .replaceAll(/\[(\d+)\]/g, '.$1')
+    .split('.');
+
+  // Empty segments after normalization signal a malformed path. The single
+  // legitimate case is a leading empty produced by a path that originally
+  // started with '[' (e.g. '[0].x' → '.0.x' → ['', '0', 'x']).
+  for (let i = 0; i < segments.length; i++) {
+    if (segments[i] === '' && !(i === 0 && startsWithBracket)) {
+      if (typeof ngDevMode !== 'undefined' && ngDevMode) {
+        console.warn(
+          `${LOG_PREFIX}: Invalid field path '${path}'. Leading dots, trailing dots, consecutive dots, and '.[' separators are not allowed.`
+        );
+      }
+      return [];
     }
-    return [];
   }
 
-  return path
-    .replaceAll(/\[(\d+)\]/g, '.$1') // Convert brackets to dots: items[0] → items.0
-    .split('.') // Split by dots
-    .filter((part) => part !== '') // Remove empty strings from leading brackets
-    .map((part) => (/^\d+$/.test(part) ? Number(part) : part)); // Convert numeric strings to numbers
+  return segments
+    .filter((part) => part !== '')
+    .map((part) => (/^\d+$/.test(part) ? Number(part) : part));
 }
 
 /**
