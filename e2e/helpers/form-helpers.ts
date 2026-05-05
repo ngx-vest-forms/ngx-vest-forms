@@ -38,6 +38,13 @@ export async function navigateToValidationConfigDemo(
   ).toBeVisible();
 }
 
+export async function navigateToAutoSaveDemo(page: Page): Promise<void> {
+  await page.goto('/auto-save-demo');
+  await expect(
+    page.getByRole('heading', { name: /auto-save draft demo/i, level: 1 })
+  ).toBeVisible();
+}
+
 export async function navigateToDateRangeAdapter(
   page: Page
 ): Promise<void> {
