@@ -2,6 +2,7 @@ import { isDevMode } from '@angular/core';
 import { NGX_VEST_FORMS_ERRORS, logWarning } from '../errors/error-catalog';
 
 const NUMERIC_PATH_SEGMENT = /^\d+$/;
+type TraversableShapeValue = Record<string, unknown> | unknown[];
 
 function isOpaqueLeafValue(value: unknown): boolean {
   return (
@@ -14,7 +15,7 @@ function isOpaqueLeafValue(value: unknown): boolean {
   );
 }
 
-function isTraversableValue(value: unknown): value is Record<string, unknown> {
+function isTraversableValue(value: unknown): value is TraversableShapeValue {
   return typeof value === 'object' && value !== null && !isOpaqueLeafValue(value);
 }
 
@@ -64,6 +65,7 @@ function validateFormValueAgainstShape(
     // For array items (numeric keys > 0), compare against the first item in shape
     // since we only define one example item in the shape for arrays
     const isNumericKey = NUMERIC_PATH_SEGMENT.test(key);
+    // Array shapes provide one example item at index 0, so every numeric key maps to '0'.
     const shapeKey = isNumericKey && key !== '0' ? '0' : key;
     const shapeValue = shape?.[shapeKey];
     const hasShapeKey = shape != null && shapeKey in shape;
@@ -95,9 +97,7 @@ function validateFormValueAgainstShape(
       // Recurse into nested object
       validateFormValueAgainstShape(
         value as Record<string, unknown>,
-        isTraversableValue(shapeValue)
-          ? (shapeValue as Record<string, unknown>)
-          : {},
+        isTraversableValue(shapeValue) ? (shapeValue as Record<string, unknown>) : {},
         fieldPath
       );
       continue;

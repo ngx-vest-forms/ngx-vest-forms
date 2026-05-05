@@ -469,9 +469,7 @@ describe('setValueAtPath function', () => {
         },
       },
     });
-    expect(Array.isArray((object as { addresses?: unknown[] }).addresses)).toBe(
-      true
-    );
+    expect(Array.isArray(object.addresses)).toBe(true);
   });
 
   it('should handle numeric values', () => {
