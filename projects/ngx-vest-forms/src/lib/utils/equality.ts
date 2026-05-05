@@ -163,6 +163,8 @@ export function shallowEqual(obj1: unknown, obj2: unknown): boolean {
  * - RegExp objects (by source and flags comparison)
  * - Set objects (reference equality only)
  * - Map objects (reference equality only)
+ * - Functions (reference equality only — distinct function instances are never equal,
+ *   even if their source code is identical)
  *
  * **Safety Features:**
  * - **Circular reference handling**: Tracks visited object pairs with `WeakMap<object, WeakSet<object>>`
@@ -177,7 +179,8 @@ export function shallowEqual(obj1: unknown, obj2: unknown): boolean {
  * ///
  * /// Memory usage:
  * /// JSON.stringify:    Creates temporary strings (high GC pressure)
- * /// fastDeepEqual:     Small WeakMap/WeakSet allocations for traversed object graphs
+ * /// fastDeepEqual:     Acyclic graphs allocate nothing; cyclic graphs allocate a small
+ * ///                    WeakMap of visited object pairs lazily on first cycle detection.
  * ```
  *
  * **Typical Usage in Forms:**
@@ -218,6 +221,12 @@ function fastDeepEqualInternal(obj1: unknown, obj2: unknown, state: TraversalSta
   }
 
   if (typeof obj1 !== typeof obj2) {
+    return false;
+  }
+
+  // Functions use reference-only equality. obj1 === obj2 was short-circuited
+  // at the top, so reaching here means the references differ.
+  if (typeof obj1 === 'function') {
     return false;
   }
 

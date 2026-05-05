@@ -182,6 +182,76 @@ describe('Equality Utils', () => {
       expect(fastDeepEqual(obj, obj)).toBe(true);
     });
 
+    it('should compare distinct cyclic arrays with the same structure', () => {
+      const a: any[] = [1];
+      a.push(a);
+      const b: any[] = [1];
+      b.push(b);
+
+      expect(fastDeepEqual(a, b)).toBe(true);
+    });
+
+    it('should compare self-referential arrays equal to themselves', () => {
+      const a: any[] = [1];
+      a.push(a);
+
+      expect(fastDeepEqual(a, a)).toBe(true);
+    });
+
+    it('should detect when cyclic arrays differ in non-cycle elements', () => {
+      const a: any[] = [1];
+      a.push(a);
+      const b: any[] = [2];
+      b.push(b);
+
+      expect(fastDeepEqual(a, b)).toBe(false);
+    });
+
+    it('should detect when cyclic arrays differ in cycle position', () => {
+      // `a` has the cycle at index 1 (after a primitive).
+      const a: any[] = [1];
+      a.push(a);
+
+      // `b` has the cycle at index 0 (before a primitive).
+      const b: any[] = [];
+      b.push(b, 1);
+
+      expect(fastDeepEqual(a, b)).toBe(false);
+    });
+
+    it('should compare mixed cyclic structures (object containing self-referential array)', () => {
+      const a: any = { name: 'root', items: [1, 2] as any[] };
+      a.items.push(a.items);
+      const b: any = { name: 'root', items: [1, 2] as any[] };
+      b.items.push(b.items);
+
+      expect(fastDeepEqual(a, b)).toBe(true);
+
+      const c: any = { name: 'root', items: [1, 2] as any[] };
+      c.items.push(c.items);
+      const d: any = { name: 'root', items: [1, 3] as any[] };
+      d.items.push(d.items);
+
+      expect(fastDeepEqual(c, d)).toBe(false);
+    });
+
+    it('should compare functions by reference only', () => {
+      const fn = () => 1;
+      expect(fastDeepEqual(fn, fn)).toBe(true);
+
+      // Distinct function instances with identical source compare unequal.
+      expect(fastDeepEqual(() => 1, () => 1)).toBe(false);
+
+      function namedA() {
+        return 42;
+      }
+      function namedB() {
+        return 42;
+      }
+      expect(fastDeepEqual(namedA, namedB)).toBe(false);
+      expect(fastDeepEqual(namedA, namedA)).toBe(true);
+    });
+
     it('should compare deep trees beyond 10 levels structurally', () => {
       const createDeepTree = (depth: number, leafValue: string) => {
         const root: Record<string, unknown> = { level: 0 };
