@@ -55,6 +55,10 @@ import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import { DeepRequired } from '../utils/deep-required';
 import { NGX_EQUALITY_FN } from '../tokens/equality.token';
+import {
+  scheduleMicrotask,
+  scheduleTimeout,
+} from '../utils/destroy-scheduler';
 import type { ValidationConfigMap } from '../utils/field-path-types';
 import { stringifyFieldPath } from '../utils/field-path.utils';
 import {
@@ -191,6 +195,12 @@ export class FormDirective<T extends Record<string, unknown>> {
    * separately when they exist without errors.
    */
   readonly fieldWarnings = signal<Map<string, readonly string[]>>(new Map());
+
+  /**
+   * Set to true by the onDestroy hook. Used to guard async callbacks
+   * (e.g. Vest `done()`) that cannot be cancelled via RxJS operators.
+   */
+  #destroyed = false;
 
   // Track last linked value to prevent unnecessary updates
   #lastLinkedValue: T | null = null;
@@ -473,6 +483,7 @@ export class FormDirective<T extends Record<string, unknown>> {
 
   constructor() {
     this.destroyRef.onDestroy(() => {
+      this.#destroyed = true;
       this.fieldWarnings.set(new Map());
     });
 
@@ -811,10 +822,10 @@ export class FormDirective<T extends Record<string, unknown>> {
   onFormFocusOut(event: FocusEvent): void {
     // Run on the next microtask to ensure Angular has already applied
     // control.touched changes for the field that just blurred.
-    queueMicrotask(() => {
+    scheduleMicrotask(() => {
       this.#blurTick.update((v) => v + 1);
       this.#emitFieldBlurEvent(event);
-    });
+    }, this.destroyRef);
   }
 
   #emitFieldBlurEvent(event: FocusEvent): void {
@@ -1041,6 +1052,19 @@ export class FormDirective<T extends Record<string, unknown>> {
                 // Both NgxVestSuite and NgxTypedVestSuite work with string at runtime
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (suite as NgxVestSuite<T>)(snap, field).done((result: any) => {
+                  // Guard: bail out if the directive was destroyed while
+                  // validation was in flight to avoid writing to disposed
+                  // signals or a torn-down view.
+                  if (this.#destroyed) {
+                    // Emit a neutral `null` before completing so async
+                    // validators always emit exactly once. Completing without
+                    // emission can leave consumers (e.g. a control's status)
+                    // in an unexpected `PENDING` state.
+                    observer.next(null);
+                    observer.complete();
+                    return;
+                  }
+
                   const errors = result.getErrors()[field];
                   const warnings = result.getWarnings()[field];
 
@@ -1079,8 +1103,9 @@ export class FormDirective<T extends Record<string, unknown>> {
                   // visual state (even though the control status has updated).
                   //
                   // We schedule a detectChanges() on the next microtask to avoid calling it
-                  // synchronously inside Angular's own validation pipeline.
-                  queueMicrotask(() => {
+                  // synchronously inside Angular's own validation pipeline. The scheduleMicrotask
+                  // primitive auto-cancels if the directive is destroyed before it fires.
+                  scheduleMicrotask(() => {
                     try {
                       this.cdr.detectChanges();
                     } catch {
@@ -1088,7 +1113,7 @@ export class FormDirective<T extends Record<string, unknown>> {
                       // This keeps behavior resilient in edge cases.
                       this.cdr.markForCheck();
                     }
-                  });
+                  }, this.destroyRef);
 
                   observer.next(out);
                   observer.complete();
@@ -1356,13 +1381,14 @@ export class FormDirective<T extends Record<string, unknown>> {
     }
 
     // Keep fields marked as in-progress for a short time to prevent immediate re-triggering
-    // Use setTimeout to ensure async validators have time to complete before allowing new triggers
-    setTimeout(() => {
+    // Use scheduleTimeout to ensure async validators have time to complete before allowing
+    // new triggers. The timer auto-cancels on directive destroy so no timers leak.
+    scheduleTimeout(() => {
       this.validationInProgress.delete(triggerField);
       for (const depField of dependents) {
         this.validationInProgress.delete(depField);
       }
-    }, VALIDATION_IN_PROGRESS_TIMEOUT_MS);
+    }, VALIDATION_IN_PROGRESS_TIMEOUT_MS, this.destroyRef);
   }
 
   /**
