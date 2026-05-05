@@ -119,7 +119,13 @@ export function shallowEqual(obj1: unknown, obj2: unknown): boolean {
  * - Map objects (by size and key-value pairs)
  *
  * **Safety Features:**
- * - **Circular reference protection**: MaxDepth parameter prevents infinite recursion
+ * - **Recursion depth cap**: `maxDepth` (default 10) prevents stack-overflow on
+ *   accidental cycles by falling back to reference equality (`===`) at the limit.
+ *   This is NOT true cycle detection — two distinct objects that share identical
+ *   cyclic structure compare unequal, and legitimate trees deeper than `maxDepth`
+ *   compare via reference identity rather than structure. Pass a larger
+ *   `maxDepth` for deep form models. Tracked in #107 for a `WeakMap`-based
+ *   cycle-tracking replacement.
  * - **Type coercion prevention**: Strict type checking before comparison
  * - **Null safety**: Proper handling of null and undefined values
  *

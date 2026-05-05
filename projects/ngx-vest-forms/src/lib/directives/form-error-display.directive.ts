@@ -108,6 +108,11 @@ export class FormErrorDisplayDirective {
    * This keeps programmatic `NgForm.onSubmit()` reactive in zoneless mode and
    * avoids depending on `NgForm.submitted`, whose getter intentionally reads an
    * internal signal with `untracked()`.
+   *
+   * Note: when this directive is used outside an `NgForm` (no parent form), no
+   * subscription is wired up and this signal stays `false` for the lifetime of
+   * the directive. Consumers relying on submitted state must host the field
+   * inside an `NgForm` (or `ngxVestForm`).
    */
   readonly formSubmitted: Signal<boolean> = this.#formSubmittedState;
 
