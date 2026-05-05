@@ -1714,3 +1714,108 @@ describe('FormDirective - FormState Memoization', () => {
     expect(instance.vestForm().formState().valid).toBe(false);
   });
 });
+
+describe('FormDirective - Destroy-aware async scheduling', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+  });
+
+  it('destroying directive mid-async-validation produces no errors and no leaked timers', async () => {
+    @Component({
+      selector: 'test-destroy-mid-validation',
+      imports: [NgxVestForms],
+      template: `
+        <form
+          ngxVestForm
+          [suite]="suite()"
+          [formValue]="formValue()"
+          #vest="ngxVestForm"
+        >
+          <input name="username" [ngModel]="formValue().username" [validationOptions]="{ debounceTime: 200 }" />
+        </form>
+      `,
+    })
+    class TestDestroyMidValidationComponent {
+      formValue = signal({ username: '' });
+      suite = signal(
+        staticSuite((model: { username?: string } = {}, field?: string) => {
+          only(field);
+          enforce(model.username).isNotEmpty();
+        })
+      );
+    }
+
+    const { fixture } = await render(TestDestroyMidValidationComponent);
+    const instance = fixture.componentInstance;
+
+    // Trigger validation by changing the value
+    instance.formValue.set({ username: 'test' });
+    fixture.detectChanges();
+
+    // Destroy the component before the debounce timer fires (validation in flight)
+    fixture.destroy();
+
+    // Advance timers past the debounce window - should NOT throw
+    expect(() => {
+      vi.advanceTimersByTime(500);
+    }).not.toThrow();
+
+    // Flush any remaining microtasks - should NOT throw
+    await expect(Promise.resolve()).resolves.toBeUndefined();
+  });
+
+  it('validationInProgress Set is not leaked when directive destroyed before timeout fires', async () => {
+    @Component({
+      selector: 'test-destroy-validation-config',
+      imports: [NgxVestForms],
+      template: `
+        <form
+          ngxVestForm
+          [suite]="suite()"
+          [formValue]="formValue()"
+          [validationConfig]="validationConfig"
+          #vest="ngxVestForm"
+        >
+          <input name="password" [ngModel]="formValue().password" />
+          <input name="confirmPassword" [ngModel]="formValue().confirmPassword" />
+        </form>
+      `,
+    })
+    class TestDestroyValidationConfigComponent {
+      formValue = signal({ password: '', confirmPassword: '' });
+      validationConfig = { password: ['confirmPassword'] };
+      suite = signal(
+        staticSuite(
+          (
+            model: { password?: string; confirmPassword?: string } = {},
+            field?: string
+          ) => {
+            only(field);
+          }
+        )
+      );
+      readonly vestForm =
+        viewChild.required<FormDirective<Record<string, unknown>>>('vest');
+    }
+
+    const { fixture } = await render(TestDestroyValidationConfigComponent);
+    const instance = fixture.componentInstance;
+
+    // Trigger validation config processing by changing the trigger field value
+    instance.formValue.set({ password: 'changed', confirmPassword: '' });
+    fixture.detectChanges();
+
+    // Destroy before the VALIDATION_IN_PROGRESS_TIMEOUT_MS fires
+    fixture.destroy();
+
+    // Advancing timers should NOT throw (the scheduleTimeout callback is suppressed)
+    expect(() => {
+      vi.advanceTimersByTime(1000);
+    }).not.toThrow();
+  });
+});
