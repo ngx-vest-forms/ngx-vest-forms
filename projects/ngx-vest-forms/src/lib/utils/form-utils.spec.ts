@@ -476,6 +476,42 @@ describe('setValueAtPath function', () => {
     });
   });
 
+  it('should preserve existing arrays when descending bracket notation paths', () => {
+    const object = {
+      addresses: [
+        { street: '123 Main St', city: 'Boston' },
+        { street: '500 Market St', city: 'San Francisco' },
+      ],
+    };
+
+    setValueAtPath(object, 'addresses[0].street', '1 Updated St');
+
+    expect(object).toEqual({
+      addresses: [
+        { street: '1 Updated St', city: 'Boston' },
+        { street: '500 Market St', city: 'San Francisco' },
+      ],
+    });
+    expect(Array.isArray(object.addresses)).toBe(true);
+  });
+
+  it('should choose array or object containers based on the next path segment', () => {
+    const object = {};
+
+    setValueAtPath(object, 'addresses[0].street', '123 Main St');
+    setValueAtPath(object, 'metadata.version.label', 'v1');
+
+    expect(object).toEqual({
+      addresses: [{ street: '123 Main St' }],
+      metadata: {
+        version: {
+          label: 'v1',
+        },
+      },
+    });
+    expect(Array.isArray(object.addresses)).toBe(true);
+  });
+
   it('should handle numeric values', () => {
     const object = {};
     setValueAtPath(object, 'user.age', 25);
