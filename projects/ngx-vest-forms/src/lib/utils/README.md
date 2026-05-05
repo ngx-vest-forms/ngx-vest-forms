@@ -804,9 +804,10 @@ const notEqual = shallowEqual({ a: 1, b: { c: 3 } }, { a: 1, b: { c: 3 } }); // 
 
 Compares two values deeply (recursive comparison) - internal utility.
 
+- Top-level equality uses `Object.is` semantics (`fastDeepEqual(NaN, NaN)` is `true`, `fastDeepEqual(0, -0)` is `false`).
 - Cyclic arrays and plain objects are compared structurally using visited-pair tracking.
 - `Date` and `RegExp` values compare structurally.
-- `Map` and `Set` values compare by reference only.
+- `Map`, `Set`, and functions compare by reference only.
 
 ```typescript
 import { fastDeepEqual } from 'ngx-vest-forms';
@@ -819,6 +820,8 @@ const equal = fastDeepEqual({ a: 1, b: { c: 3 } }, { a: 1, b: { c: 3 } }); // tr
 - ⚠️ Advanced performance optimization only
 - ⚠️ Used internally for form value comparison
 - ✅ Consider using your own comparison logic instead
+
+> **Swap the comparator the directive uses:** to override the equality function `FormDirective` uses internally (without forking it), provide the [`NGX_EQUALITY_FN`](../../../../docs/API-TOKENS.md#ngx_equality_fn) injection token. Useful for plugging in `dequal/lite`, `lodash.isEqual`, or a domain-specific comparator.
 
 ---
 
