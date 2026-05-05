@@ -184,26 +184,28 @@ function fastDeepEqualInternal(
   obj2: unknown,
   seen: VisitedPairs | undefined
 ): boolean {
-  if (obj1 === obj2) {
+  // Object.is gives correct semantics for NaN and ±0 — important for numeric
+  // form values where `fastDeepEqual(NaN, NaN)` should be true.
+  if (Object.is(obj1, obj2)) {
     return true;
   }
 
   if (obj1 == null || obj2 == null) {
-    return obj1 === obj2;
+    return false;
   }
 
   if (typeof obj1 !== typeof obj2) {
     return false;
   }
 
-  // Functions use reference-only equality. obj1 === obj2 was short-circuited
-  // at the top, so reaching here means the references differ.
+  // Functions use reference-only equality. Object.is at the top already returned
+  // true for identical references, so reaching here means the references differ.
   if (typeof obj1 === 'function') {
     return false;
   }
 
   if (isPrimitive(obj1) || isPrimitive(obj2)) {
-    return obj1 === obj2;
+    return false;
   }
 
   // Handle Date / RegExp first — they have value semantics and can't contain cycles,

@@ -54,7 +54,7 @@ import {
 import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import { DeepRequired } from '../utils/deep-required';
-import { fastDeepEqual } from '../utils/equality';
+import { NGX_EQUALITY_FN } from '../tokens/equality.token';
 import type { ValidationConfigMap } from '../utils/field-path-types';
 import { stringifyFieldPath } from '../utils/field-path.utils';
 import {
@@ -178,6 +178,11 @@ export class FormDirective<T extends Record<string, unknown>> {
   private readonly configDebounceTime = inject(
     NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN
   );
+  /**
+   * Deep-equality comparator. Defaults to `fastDeepEqual`; can be overridden
+   * application-wide or per-component via {@link NGX_EQUALITY_FN}.
+   */
+  readonly #equal = inject(NGX_EQUALITY_FN);
 
   /**
    * Public signal storing field warnings keyed by field path.
@@ -281,8 +286,8 @@ export class FormDirective<T extends Record<string, unknown>> {
         // Deep equality check for form state properties
         return (
           a.valid === b.valid &&
-          fastDeepEqual(a.errors, b.errors) &&
-          fastDeepEqual(a.value, b.value)
+          this.#equal(a.errors, b.errors) &&
+          this.#equal(a.value, b.value)
         );
       },
     }
@@ -394,7 +399,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       map((v) => (v as ValueChangeEvent<unknown>).value),
       distinctUntilChanged((prev, curr) => {
         // Use efficient deep equality instead of JSON.stringify for better performance
-        return fastDeepEqual(prev, curr);
+        return this.#equal(prev, curr);
       }),
       map(() => mergeValuesAndRawValues<T>(this.ngForm.form)),
       takeUntilDestroyed(this.destroyRef)
@@ -507,8 +512,8 @@ export class FormDirective<T extends Record<string, unknown>> {
       if (!formValue && !modelValue) return;
 
       // Compute change flags first
-      const formChanged = !fastDeepEqual(formValue, this.#lastSyncedFormValue);
-      const modelChanged = !fastDeepEqual(
+      const formChanged = !this.#equal(formValue, this.#lastSyncedFormValue);
+      const modelChanged = !this.#equal(
         modelValue,
         this.#lastSyncedModelValue
       );
@@ -545,7 +550,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       } else if (formChanged && modelChanged) {
         // Both form and model changed simultaneously
         // Check if they changed to the same value (synchronized change) or different values (conflict)
-        const valuesEqual = fastDeepEqual(formValue, modelValue);
+        const valuesEqual = this.#equal(formValue, modelValue);
 
         if (valuesEqual) {
           // Both changed to the same value - this is a synchronized change, not a conflict

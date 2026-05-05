@@ -166,6 +166,17 @@ describe('Equality Utils', () => {
       expect(fastDeepEqual(new Date(), new RegExp(''))).toBe(false);
     });
 
+    it('should treat NaN as equal to NaN (Object.is semantics)', () => {
+      expect(fastDeepEqual(NaN, NaN)).toBe(true);
+      expect(fastDeepEqual({ x: NaN }, { x: NaN })).toBe(true);
+      expect(fastDeepEqual([NaN, 1], [NaN, 1])).toBe(true);
+    });
+
+    it('should distinguish +0 from -0 (Object.is semantics)', () => {
+      expect(fastDeepEqual(0, -0)).toBe(false);
+      expect(fastDeepEqual({ x: 0 }, { x: -0 })).toBe(false);
+    });
+
     it('should compare distinct cyclic objects with the same structure', () => {
       const obj1: any = { a: 1 };
       const obj2: any = { a: 1 };
