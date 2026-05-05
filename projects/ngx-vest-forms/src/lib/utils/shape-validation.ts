@@ -80,6 +80,20 @@ function validateFormValueAgainstShape(
       if (!isTraversableValue(value)) {
         if (!isNumericKey && !hasShapeKey) {
           logWarning(NGX_VEST_FORMS_ERRORS.EXTRA_PROPERTY, fieldPath);
+        } else if (
+          !isNumericKey &&
+          hasShapeKey &&
+          (shapeValue === null || typeof shapeValue !== 'object')
+        ) {
+          // Type mismatch: formValue holds an opaque object (Date, Map, etc.)
+          // but shape declares a primitive. Recursion is intentionally skipped
+          // for opaque leaves, but the user still benefits from a warning.
+          logWarning(
+            NGX_VEST_FORMS_ERRORS.TYPE_MISMATCH,
+            fieldPath,
+            'primitive',
+            'object'
+          );
         }
         continue;
       }

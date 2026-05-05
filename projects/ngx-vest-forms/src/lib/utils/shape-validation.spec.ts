@@ -145,6 +145,27 @@ describe('validateShape function', () => {
       validateShape(formValue, shape);
       expect(consoleWarnSpy).toHaveBeenCalled();
     });
+
+    it('should warn when formValue has opaque leaf (Date) but shape expects primitive', () => {
+      const formValue = {
+        birthDate: new Date(),
+      };
+
+      const shape = {
+        birthDate: '', // Shape declares a string primitive
+      };
+
+      validateShape(formValue, shape);
+      expect(consoleWarnSpy).toHaveBeenCalled();
+      const calls = consoleWarnSpy.mock.calls.map((call: unknown[]) => call[0]);
+      expect(
+        calls.some(
+          (msg) =>
+            String(msg).includes('birthDate') &&
+            String(msg).toLowerCase().includes('type')
+        )
+      ).toBe(true);
+    });
   });
 
   describe('Date field handling', () => {
