@@ -66,8 +66,14 @@ export const validationDemoSuite = staticSuite(
 
     omitWhen(!model.startDate || !model.endDate, () => {
       test('endDate', 'End date must be after start date', () => {
-        const start = new Date(model.startDate!);
-        const end = new Date(model.endDate!);
+        const { startDate, endDate } = model;
+
+        if (!startDate || !endDate) {
+          return;
+        }
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
         enforce(end.getTime()).isGreaterThan(start.getTime());
       });
     });
