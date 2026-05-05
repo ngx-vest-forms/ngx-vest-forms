@@ -16,25 +16,30 @@ export function scheduleTimeout(
   destroyRef: DestroyRef
 ): () => void {
   let cancelled = false;
-  let unregisterDestroy: (() => void) | undefined;
 
-  const handle = setTimeout(() => {
-    unregisterDestroy?.();
+  // `handle` is captured by the onDestroy closure below; it is always assigned
+  // before `onDestroy` can fire because `destroy()` can only run after the
+  // current synchronous execution context completes.
+  // eslint-disable-next-line prefer-const
+  let handle: ReturnType<typeof setTimeout>;
+
+  const unregisterDestroy = destroyRef.onDestroy(() => {
+    cancelled = true;
+    clearTimeout(handle);
+  });
+
+  handle = setTimeout(() => {
+    unregisterDestroy();
     if (!cancelled) {
       callback();
     }
   }, delayMs);
 
-  unregisterDestroy = destroyRef.onDestroy(() => {
-    cancelled = true;
-    clearTimeout(handle);
-  });
-
   return () => {
     if (!cancelled) {
       cancelled = true;
       clearTimeout(handle);
-      unregisterDestroy?.();
+      unregisterDestroy();
     }
   };
 }
@@ -56,23 +61,26 @@ export function scheduleMicrotask(
   destroyRef: DestroyRef
 ): () => void {
   let cancelled = false;
-  let unregisterDestroy: (() => void) | undefined;
+
+  // Register the onDestroy listener before queuing the microtask so that
+  // `unregisterDestroy` is always defined when the microtask fires.
+  const unregisterDestroy = destroyRef.onDestroy(() => {
+    cancelled = true;
+  });
 
   queueMicrotask(() => {
-    unregisterDestroy?.();
+    // Always clean up the destroy listener when the microtask fires,
+    // regardless of whether the callback is suppressed.
+    unregisterDestroy();
     if (!cancelled) {
       callback();
     }
   });
 
-  unregisterDestroy = destroyRef.onDestroy(() => {
-    cancelled = true;
-  });
-
   return () => {
     if (!cancelled) {
       cancelled = true;
-      unregisterDestroy?.();
+      unregisterDestroy();
     }
   };
 }

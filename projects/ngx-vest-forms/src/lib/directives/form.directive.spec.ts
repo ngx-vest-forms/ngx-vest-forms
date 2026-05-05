@@ -1766,7 +1766,7 @@ describe('FormDirective - Destroy-aware async scheduling', () => {
     }).not.toThrow();
 
     // Flush any remaining microtasks - should NOT throw
-    await expect(Promise.resolve()).resolves.toBeUndefined();
+    await Promise.resolve();
   });
 
   it('validationInProgress Set is not leaked when directive destroyed before timeout fires', async () => {
