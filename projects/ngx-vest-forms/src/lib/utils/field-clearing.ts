@@ -212,7 +212,7 @@ export function keepFieldsWhen<T extends Record<string, unknown>>(
 
   for (const fieldName of Object.keys(conditions) as Array<keyof T>) {
     const shouldKeep = conditions[fieldName];
-    if (shouldKeep && Object.hasOwn(currentState, fieldName as PropertyKey)) {
+    if (shouldKeep && Object.hasOwn(currentState, fieldName)) {
       result[fieldName as string] = currentState[fieldName];
     }
   }
