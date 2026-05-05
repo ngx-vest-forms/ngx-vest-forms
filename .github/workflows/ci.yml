@@ -35,8 +35,21 @@ jobs:
       - name: Verify SWC installation
         run: |
           node -e "try { require('@swc/core'); console.log('SWC loaded successfully'); } catch(e) { console.error('SWC failed to load:', e.message); process.exit(1); }"
-      - name: Playwright install
-        run: npx playwright install --with-deps
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+      - name: Install Playwright browser (chromium only)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - name: Install Playwright system deps (cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
       - name: Lint
         run: npm run lint
       - name: Build library
