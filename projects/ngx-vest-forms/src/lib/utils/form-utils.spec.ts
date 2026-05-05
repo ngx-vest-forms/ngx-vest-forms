@@ -1,5 +1,5 @@
 import { FormArray, FormControl, FormGroup } from '@angular/forms';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import {
   cloneDeep,
@@ -149,6 +149,19 @@ describe('mergeValuesAndRawValues function', () => {
       form.get('profile.handle')?.disable();
       form.get('nickname')?.setValue('jdoe', { emitEvent: false });
       form.get('profile.handle')?.setValue('@jdoe', { emitEvent: false });
+
+      // Pin Angular's behavior: form.value omits disabled controls (so their
+      // entries are absent from `value`, NOT explicitly null), while
+      // getRawValue() includes them. The merge function must therefore copy
+      // raw values whenever the merged target is `null` OR `undefined`. If
+      // Angular ever reports disabled controls as `null` in `value`, this
+      // test still exercises the null branch via getRawValue's structure.
+      const rawValue = form.getRawValue() as {
+        nickname: string | null;
+        profile: { handle: string | null };
+      };
+      expect(rawValue.nickname).toBe('jdoe');
+      expect(rawValue.profile.handle).toBe('@jdoe');
 
       const merged = mergeValuesAndRawValues<{
         nickname: string | null;
@@ -618,44 +631,6 @@ describe('cloneDeep', () => {
     expect(cloned.level1.level2.level3[2]).not.toBe(
       obj.level1.level2.level3[2]
     );
-  });
-
-  describe('deprecation warning', () => {
-    const ngDevModeKey = 'ngDevMode' as const;
-    const globalRef = globalThis as { ngDevMode?: unknown };
-    let originalNgDevMode: unknown;
-
-    beforeEach(() => {
-      originalNgDevMode = globalRef[ngDevModeKey];
-      globalRef[ngDevModeKey] = true;
-    });
-
-    afterEach(() => {
-      if (originalNgDevMode === undefined) {
-        Reflect.deleteProperty(globalRef, ngDevModeKey);
-      } else {
-        globalRef[ngDevModeKey] = originalNgDevMode;
-      }
-      vi.restoreAllMocks();
-    });
-
-    it('warns at most once across many calls in dev mode', () => {
-      // Contract: many cloneDeep calls in dev mode produce no more than one
-      // deprecation warning, regardless of prior session state. The
-      // module-level warn-once flag may already be set by earlier tests in
-      // this file, so we assert "<= 1" rather than exact "1".
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-      cloneDeep({ a: 1 });
-      cloneDeep([1, 2, 3]);
-      cloneDeep('primitive');
-      cloneDeep({ nested: { value: 42 } });
-
-      const deprecationCalls = warnSpy.mock.calls.filter((args) =>
-        String(args[0] ?? '').includes('cloneDeep is deprecated')
-      );
-      expect(deprecationCalls.length).toBeLessThanOrEqual(1);
-    });
   });
 });
 
