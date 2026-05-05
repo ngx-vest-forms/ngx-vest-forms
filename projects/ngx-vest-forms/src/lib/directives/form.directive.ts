@@ -1051,6 +1051,11 @@ export class FormDirective<T extends Record<string, unknown>> {
                   // validation was in flight to avoid writing to disposed
                   // signals or a torn-down view.
                   if (this.#destroyed) {
+                    // Emit a neutral `null` before completing so async
+                    // validators always emit exactly once. Completing without
+                    // emission can leave consumers (e.g. a control's status)
+                    // in an unexpected `PENDING` state.
+                    observer.next(null);
                     observer.complete();
                     return;
                   }

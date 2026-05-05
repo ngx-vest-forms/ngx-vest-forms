@@ -16,10 +16,20 @@ export function scheduleTimeout(
   destroyRef: DestroyRef
 ): () => void {
   let cancelled = false;
+  let unregisterCalled = false;
+  // eslint-disable-next-line prefer-const -- assigned after onDestroy returns
   let unregisterDestroy: (() => void) | undefined;
 
-  const handle = setTimeout(() => {
+  // Idempotent unregister wrapper so all paths (timer-fires, explicit-cancel,
+  // and onDestroy) can call it safely without double-removal.
+  const safeUnregister = () => {
+    if (unregisterCalled) return;
+    unregisterCalled = true;
     unregisterDestroy?.();
+  };
+
+  const handle = setTimeout(() => {
+    safeUnregister();
     if (!cancelled) {
       callback();
     }
@@ -28,13 +38,14 @@ export function scheduleTimeout(
   unregisterDestroy = destroyRef.onDestroy(() => {
     cancelled = true;
     clearTimeout(handle);
+    safeUnregister();
   });
 
   return () => {
     if (!cancelled) {
       cancelled = true;
       clearTimeout(handle);
-      unregisterDestroy?.();
+      safeUnregister();
     }
   };
 }
@@ -56,17 +67,27 @@ export function scheduleMicrotask(
   destroyRef: DestroyRef
 ): () => void {
   let cancelled = false;
+  let unregisterCalled = false;
 
   // Register the onDestroy listener before queuing the microtask so that
   // `unregisterDestroy` is always defined when the microtask fires.
   const unregisterDestroy = destroyRef.onDestroy(() => {
     cancelled = true;
+    safeUnregister();
   });
+
+  // Idempotent unregister wrapper so all paths (microtask-fires, explicit-cancel,
+  // and onDestroy) can call it safely without double-removal.
+  function safeUnregister() {
+    if (unregisterCalled) return;
+    unregisterCalled = true;
+    unregisterDestroy();
+  }
 
   queueMicrotask(() => {
     // Always clean up the destroy listener when the microtask fires,
     // regardless of whether the callback is suppressed.
-    unregisterDestroy();
+    safeUnregister();
     if (!cancelled) {
       callback();
     }
@@ -75,7 +96,7 @@ export function scheduleMicrotask(
   return () => {
     if (!cancelled) {
       cancelled = true;
-      unregisterDestroy();
+      safeUnregister();
     }
   };
 }

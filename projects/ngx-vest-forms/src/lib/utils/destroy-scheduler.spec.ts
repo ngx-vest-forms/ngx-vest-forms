@@ -3,7 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { scheduleMicrotask, scheduleTimeout } from './destroy-scheduler';
 
 /** Minimal DestroyRef mock that lets tests trigger the destroy lifecycle. */
-function createMockDestroyRef(): { destroyRef: DestroyRef; destroy: () => void } {
+function createMockDestroyRef(): {
+  destroyRef: DestroyRef;
+  destroy: () => void;
+  listenerCount: () => number;
+} {
   const listeners: Array<() => void> = [];
 
   const destroyRef = {
@@ -23,6 +27,7 @@ function createMockDestroyRef(): { destroyRef: DestroyRef; destroy: () => void }
         listener();
       }
     },
+    listenerCount: () => listeners.length,
   };
 }
 
@@ -97,6 +102,63 @@ describe('destroy-scheduler', () => {
       expect(cb1).not.toHaveBeenCalled();
       expect(cb2).not.toHaveBeenCalled();
     });
+
+    describe('listener cleanup', () => {
+      it('removes onDestroy listener after timer fires naturally', () => {
+        const { destroyRef, listenerCount } = createMockDestroyRef();
+
+        scheduleTimeout(() => {}, 100, destroyRef);
+        expect(listenerCount()).toBe(1);
+
+        vi.advanceTimersByTime(100);
+
+        expect(listenerCount()).toBe(0);
+      });
+
+      it('removes onDestroy listener after explicit cancel', () => {
+        const { destroyRef, listenerCount } = createMockDestroyRef();
+
+        const cancel = scheduleTimeout(() => {}, 100, destroyRef);
+        expect(listenerCount()).toBe(1);
+
+        cancel();
+
+        expect(listenerCount()).toBe(0);
+      });
+
+      it('removes onDestroy listener after destroy-driven cancellation', () => {
+        const { destroyRef, destroy, listenerCount } = createMockDestroyRef();
+
+        scheduleTimeout(() => {}, 100, destroyRef);
+        expect(listenerCount()).toBe(1);
+
+        destroy();
+
+        expect(listenerCount()).toBe(0);
+      });
+
+      it('does not double-unregister when cancel is called multiple times', () => {
+        const { destroyRef, listenerCount } = createMockDestroyRef();
+
+        const cancel = scheduleTimeout(() => {}, 100, destroyRef);
+        cancel();
+        cancel();
+        cancel();
+
+        expect(listenerCount()).toBe(0);
+      });
+
+      it('does not leak listeners across many schedule/cancel cycles', () => {
+        const { destroyRef, listenerCount } = createMockDestroyRef();
+
+        for (let i = 0; i < 10; i++) {
+          const cancel = scheduleTimeout(() => {}, 100, destroyRef);
+          cancel();
+        }
+
+        expect(listenerCount()).toBe(0);
+      });
+    });
   });
 
   describe('scheduleMicrotask', () => {
@@ -160,6 +222,63 @@ describe('destroy-scheduler', () => {
 
       expect(cb1).not.toHaveBeenCalled();
       expect(cb2).not.toHaveBeenCalled();
+    });
+
+    describe('listener cleanup', () => {
+      it('removes onDestroy listener after microtask fires naturally', async () => {
+        const { destroyRef, listenerCount } = createMockDestroyRef();
+
+        scheduleMicrotask(() => {}, destroyRef);
+        expect(listenerCount()).toBe(1);
+
+        await Promise.resolve();
+
+        expect(listenerCount()).toBe(0);
+      });
+
+      it('removes onDestroy listener after explicit cancel', () => {
+        const { destroyRef, listenerCount } = createMockDestroyRef();
+
+        const cancel = scheduleMicrotask(() => {}, destroyRef);
+        expect(listenerCount()).toBe(1);
+
+        cancel();
+
+        expect(listenerCount()).toBe(0);
+      });
+
+      it('removes onDestroy listener after destroy-driven cancellation', () => {
+        const { destroyRef, destroy, listenerCount } = createMockDestroyRef();
+
+        scheduleMicrotask(() => {}, destroyRef);
+        expect(listenerCount()).toBe(1);
+
+        destroy();
+
+        expect(listenerCount()).toBe(0);
+      });
+
+      it('does not double-unregister when cancel is called multiple times', () => {
+        const { destroyRef, listenerCount } = createMockDestroyRef();
+
+        const cancel = scheduleMicrotask(() => {}, destroyRef);
+        cancel();
+        cancel();
+        cancel();
+
+        expect(listenerCount()).toBe(0);
+      });
+
+      it('does not leak listeners across many schedule/cancel cycles', () => {
+        const { destroyRef, listenerCount } = createMockDestroyRef();
+
+        for (let i = 0; i < 10; i++) {
+          const cancel = scheduleMicrotask(() => {}, destroyRef);
+          cancel();
+        }
+
+        expect(listenerCount()).toBe(0);
+      });
     });
   });
 });
