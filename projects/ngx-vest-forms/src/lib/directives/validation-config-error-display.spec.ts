@@ -54,6 +54,68 @@ class TestComponent {
   };
 }
 
+type DependentBlurModel = NgxDeepPartial<{
+  quantity: string;
+  justification: string;
+}>;
+
+const dependentBlurSuite = staticSuite(
+  (model: DependentBlurModel, field?: string) => {
+    only(field);
+
+    omitWhen(!model.quantity, () => {
+      test('justification', 'Justification is required', () => {
+        enforce(model.justification).isNotBlank();
+      });
+    });
+
+    omitWhen(!model.justification, () => {
+      test('quantity', 'Quantity is required', () => {
+        enforce(model.quantity).isNotBlank();
+      });
+    });
+  }
+);
+
+@Component({
+  imports: [NgxVestForms],
+  template: `
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      [validationConfig]="validationConfig"
+      (formValueChange)="formValue.set($event)"
+    >
+      <ngx-control-wrapper [errorDisplayMode]="'on-blur'">
+        <label for="quantity">Quantity</label>
+        <input
+          id="quantity"
+          name="quantity"
+          [ngModel]="formValue().quantity"
+        />
+      </ngx-control-wrapper>
+
+      <ngx-control-wrapper [errorDisplayMode]="'on-blur'">
+        <label for="justification">Justification</label>
+        <textarea
+          id="justification"
+          name="justification"
+          [ngModel]="formValue().justification"
+        ></textarea>
+      </ngx-control-wrapper>
+    </form>
+  `,
+})
+class DependentBlurDisplayModeComponent {
+  readonly formValue = signal<DependentBlurModel>({});
+  readonly suite = dependentBlurSuite;
+  readonly validationConfig = {
+    quantity: ['justification'],
+    justification: ['quantity'],
+  } as const;
+}
+
 type CascadeModel = NgxDeepPartial<{
   country: string;
   state: string;
@@ -345,6 +407,60 @@ describe('ValidationConfig Error Display', () => {
           errorUl = errorContainer?.querySelector('ul');
           return errorUl?.textContent?.includes('Reason is required') ?? false;
         },
+        { timeout: 2000, interval: 100 }
+      )
+      .toBe(true);
+  });
+
+  it('should keep dependent errors quiet with on-blur error display', async () => {
+    await TestBed.resetTestingModule()
+      .configureTestingModule({
+        imports: [DependentBlurDisplayModeComponent],
+      })
+      .compileComponents();
+
+    const fixture = TestBed.createComponent(DependentBlurDisplayModeComponent);
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    const quantityInput = fixture.nativeElement.querySelector(
+      '#quantity'
+    ) as HTMLInputElement;
+    const justificationTextarea = fixture.nativeElement.querySelector(
+      '#justification'
+    ) as HTMLTextAreaElement;
+
+    quantityInput.value = '12';
+    quantityInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    await expect
+      .poll(
+        () => justificationTextarea.classList.contains('ng-invalid'),
+        { timeout: 2000, interval: 100 }
+      )
+      .toBe(true);
+
+    const justificationWrapper =
+      justificationTextarea.closest('ngx-control-wrapper');
+
+    expect(
+      justificationWrapper?.textContent?.includes('Justification is required') ??
+        false
+    ).toBe(false);
+    expect(justificationTextarea.classList.contains('ng-untouched')).toBe(true);
+
+    justificationTextarea.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    await expect
+      .poll(
+        () =>
+          justificationWrapper?.textContent?.includes(
+            'Justification is required'
+          ) ?? false,
         { timeout: 2000, interval: 100 }
       )
       .toBe(true);

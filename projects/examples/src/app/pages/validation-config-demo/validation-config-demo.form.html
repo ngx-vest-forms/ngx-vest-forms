@@ -49,10 +49,13 @@
     <ngx-form-section
       tone="teal"
       title="Cross-Field Requirement"
-      description="When either field has a value, the other becomes required."
+      description="This pair uses on-blur wrappers so dependent errors wait for the target field's own blur."
     >
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <ngx-control-wrapper class="form-field">
+        <ngx-control-wrapper
+          class="form-field"
+          [errorDisplayMode]="'on-blur'"
+        >
           <label>
             <span class="label-text">Quantity</span>
             <input
@@ -66,7 +69,10 @@
           </label>
         </ngx-control-wrapper>
 
-        <ngx-control-wrapper class="form-field">
+        <ngx-control-wrapper
+          class="form-field"
+          [errorDisplayMode]="'on-blur'"
+        >
           <label>
             <span class="label-text">Justification</span>
             <textarea

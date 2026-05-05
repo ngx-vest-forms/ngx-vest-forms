@@ -171,6 +171,22 @@ describe('FormControlStateDirective', () => {
     expect(hasBeenValidatedEl.textContent).toBe('true');
   });
 
+  it('should mark the control as touched when blur does not change status', async () => {
+    const input: HTMLInputElement =
+      fixture.nativeElement.querySelector('input');
+    const isTouchedEl = fixture.nativeElement.querySelector('#is-touched');
+
+    // Required input starts INVALID, so blur will not change status.
+    expect(isTouchedEl.textContent).toBe('false');
+
+    input.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(isTouchedEl.textContent).toBe('true');
+  });
+
   it('should surface warning-only messages from fieldWarnings', async () => {
     const warningFixture = TestBed.createComponent(WarningOnlyHostComponent);
     warningFixture.detectChanges();

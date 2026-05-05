@@ -1,6 +1,6 @@
 ---
 name: ngx-vest-forms
-description: Routes general ngx-vest-forms requests to the right workflow. Use this whenever the user broadly asks about ngx-vest-forms, wants help with the library but the feature area is not obvious yet, asks for best practices, migration help, or says things like “how should I build this with ngx-vest-forms?” even when they do not mention `validationConfig`, wrappers, child components, or root-form validation explicitly.
+description: Routes general ngx-vest-forms requests to the right workflow. Use this whenever the user broadly asks about ngx-vest-forms, wants help with the library but the feature area is not obvious yet, asks for best practices, migration help, blur-driven draft auto-save, `fieldBlur`, or says things like “how should I build this with ngx-vest-forms?” even when they do not mention `validationConfig`, wrappers, child components, root-form validation, or field-level persistence explicitly.
 ---
 
 # ngx-vest-forms router skill
@@ -16,6 +16,8 @@ Assume the repo instruction file already enforces the baseline guardrails:
 - use optional chaining for partial models
 - call `only(field)` unconditionally
 - use `vestFormsViewProviders` in nested child form components
+- use the form's `fieldBlur` output with `NgxFieldBlurEvent<T>` for blur-driven persistence, analytics, and field-level side effects
+- do not gate draft auto-save on `event.pending`
 
 Do not repeat those basics unless they are directly relevant to the user’s issue.
 
@@ -33,6 +35,7 @@ Use these nested workflow sub-skills when the feature area is clear:
 |---|---|---|
 | `core` | first examples, form structure, `[ngModel]`, `NgxDeepPartial`, typed suites | `core/SKILL.md` |
 | `validation-config-builder` | dependent field revalidation, `createValidationConfig()`, `whenChanged`, `bidirectional` | `validation-config-builder/SKILL.md` |
+| `field-blur-events` | draft auto-save, blur-driven persistence, analytics, `fieldBlur`, `NgxFieldBlurEvent` | `field-blur-events/SKILL.md` |
 | `root-form-validation` | `ROOT_FORM`, `ngxValidateRootForm`, summary-level business rules | `root-form-validation/SKILL.md` |
 | `built-in-wrappers` | built-in wrapper selection, display modes, `ariaAssociationMode` | `built-in-wrappers/SKILL.md` |
 | `custom-wrapper-patterns` | design-system wrappers, `FormErrorDisplayDirective`, `FormErrorControlDirective` | `custom-wrapper-patterns/SKILL.md` |
@@ -58,6 +61,16 @@ Read `validation-config-builder/SKILL.md` when the user is:
 - asking why one field does not revalidate when another changes
 - dealing with confirm-password, date ranges, country/state, or `omitWhen`
 - mentioning `validationConfig`, `createValidationConfig()`, `whenChanged`, `bidirectional`, or `group`
+
+### Field blur events and draft persistence
+
+Read `field-blur-events/SKILL.md` when the user is:
+
+- asking for draft auto-save, blur-save, or recovery-oriented persistence
+- mentioning `fieldBlur` or `NgxFieldBlurEvent`
+- wiring analytics or side effects to a field blur event
+- trying to save on blur without turning validation into a persistence gate
+- asking how to keep dependent fields logically invalid but visually quiet until their own blur
 
 ### Form-level rules
 
@@ -113,6 +126,7 @@ Read `dynamic-form-behavior/SKILL.md` when the user is:
 ## Routing heuristics
 
 - If the user mentions several of these at once, combine the relevant sub-skills instead of forcing a single lens.
+- Draft auto-save with quiet dependent errors usually combines `field-blur-events`, `validation-config-builder`, and `built-in-wrappers`.
 - If the issue is specifically about Vest semantics, also consult `vest.instructions.md`.
 - If the issue is generic Angular rather than library-specific, prefer the Angular skill instead of overfitting ngx-vest-forms guidance.
 

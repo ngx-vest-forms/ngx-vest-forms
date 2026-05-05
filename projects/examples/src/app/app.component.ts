@@ -16,6 +16,7 @@ export class AppComponent {
     { label: 'Purchase Form', link: 'purchase' },
     { label: 'Business Hours Form', link: 'business-hours' },
     { label: 'Validation Config Demo', link: 'validation-config-demo' },
+    { label: 'Auto-Save Draft Demo', link: 'auto-save-demo' },
     { label: 'Multi-Form Wizard', link: 'wizard' },
     { label: 'Display Modes Demo', link: 'display-modes-demo' },
     { label: 'Composite Adapter', link: 'date-range-adapter' },

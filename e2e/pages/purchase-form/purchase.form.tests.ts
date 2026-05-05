@@ -175,6 +175,35 @@ test.describe('Purchase Form', () => {
       });
     });
 
+    test('should keep justification quiet until it is blurred after quantity reveals it', async ({
+      page,
+    }) => {
+      await test.step('Reveal justification and verify no immediate error is shown', async () => {
+        const quantity = page.getByRole('spinbutton', { name: /quantity/i });
+
+        await fillAndBlur(quantity, '6');
+        await waitForValidationToSettle(page);
+
+        const justification = page.getByLabel(/justification/i);
+        const justificationWrapper = page
+          .locator('ngx-control-wrapper')
+          .filter({ has: justification });
+
+        await expect(justification).toBeVisible();
+        await expect(justification).toHaveClass(/ng-untouched/);
+        await expect(
+          justificationWrapper.getByRole('status').filter({
+            hasText: /justification is required when quantity exceeds 5/i,
+          })
+        ).toHaveCount(0);
+
+        await justification.focus();
+        await justification.blur();
+
+        await expectFieldHasError(justification, /required/i);
+      });
+    });
+
     test('should hide justification when quantity <= 5', async ({ page }) => {
       await test.step('Set quantity to 6 then change to 5', async () => {
         const quantity = page.getByRole('spinbutton', { name: /quantity/i });
@@ -232,14 +261,12 @@ test.describe('Purchase Form', () => {
         await confirmPassword.blur();
         await waitForValidationToSettle(page, 10000);
 
-        // Assert user-visible feedback instead of relying on ng-valid/ng-invalid
-        // class timing. Those classes can briefly lag during async/debounced
-        // validation propagation, which makes class-based checks flaky in CI.
+        // This example page currently surfaces the password pair validation as
+        // a group-level rule in the form-state sidebar. The dedicated
+        // validation-config demo covers the canonical inline field-error
+        // behavior in depth.
         await expect(
-          page
-            .locator('form')
-            .getByText(/confirm password is not filled in/i)
-            .first()
+          page.locator('aside').getByText(/passwords do not match/i)
         ).toBeVisible();
       });
     });
