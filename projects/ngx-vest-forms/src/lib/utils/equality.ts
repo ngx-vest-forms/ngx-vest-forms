@@ -12,50 +12,21 @@ export function isPrimitive(
   );
 }
 
-type VisitedObjectPairs = WeakMap<object, WeakSet<object>>;
-type TraversalState = {
-  visitedPairs?: VisitedObjectPairs;
-  leftAncestors: object[];
-  rightAncestors: object[];
-};
+type VisitedPairs = WeakMap<object, WeakSet<object>>;
 
-function hasVisitedPair(
-  visitedPairs: VisitedObjectPairs | undefined,
-  obj1: object,
-  obj2: object
-): boolean {
-  return visitedPairs?.get(obj1)?.has(obj2) ?? false;
-}
-
-function markVisitedPair(
-  visitedPairs: VisitedObjectPairs | undefined,
-  obj1: object,
-  obj2: object
-): VisitedObjectPairs {
-  const pairs = visitedPairs ?? new WeakMap<object, WeakSet<object>>();
-  let visitedTargets = pairs.get(obj1);
-
-  if (!visitedTargets) {
-    visitedTargets = new WeakSet<object>();
-    pairs.set(obj1, visitedTargets);
+/**
+ * Records that we've started comparing the pair (a, b). Re-entering the same
+ * pair during recursion (cycle, or repeated DAG path) short-circuits to `true`
+ * — correct because if the prior descent had returned `false`, the outer call
+ * would already have short-circuited before we reach the second visit.
+ */
+function rememberPair(seen: VisitedPairs, a: object, b: object): void {
+  let targets = seen.get(a);
+  if (!targets) {
+    targets = new WeakSet<object>();
+    seen.set(a, targets);
   }
-
-  visitedTargets.add(obj2);
-  return pairs;
-}
-
-function hasAncestorPair(
-  state: TraversalState,
-  obj1: object,
-  obj2: object
-): boolean {
-  for (let i = state.leftAncestors.length - 1; i >= 0; i--) {
-    if (state.leftAncestors[i] === obj1 && state.rightAncestors[i] === obj2) {
-      return true;
-    }
-  }
-
-  return false;
+  targets.add(b);
 }
 
 /**
@@ -179,8 +150,8 @@ export function shallowEqual(obj1: unknown, obj2: unknown): boolean {
  * ///
  * /// Memory usage:
  * /// JSON.stringify:    Creates temporary strings (high GC pressure)
- * /// fastDeepEqual:     Acyclic graphs allocate nothing; cyclic graphs allocate a small
- * ///                    WeakMap of visited object pairs lazily on first cycle detection.
+ * /// fastDeepEqual:     One small WeakMap of visited object pairs is allocated lazily on
+ * ///                    first nested-container descent; primitive-only comparisons allocate nothing.
  * ```
  *
  * **Typical Usage in Forms:**
@@ -205,13 +176,14 @@ export function shallowEqual(obj1: unknown, obj2: unknown): boolean {
  * @returns true if objects are deeply equal by value
  */
 export function fastDeepEqual(obj1: unknown, obj2: unknown): boolean {
-  return fastDeepEqualInternal(obj1, obj2, {
-    leftAncestors: [],
-    rightAncestors: [],
-  });
+  return fastDeepEqualInternal(obj1, obj2, undefined);
 }
 
-function fastDeepEqualInternal(obj1: unknown, obj2: unknown, state: TraversalState): boolean {
+function fastDeepEqualInternal(
+  obj1: unknown,
+  obj2: unknown,
+  seen: VisitedPairs | undefined
+): boolean {
   if (obj1 === obj2) {
     return true;
   }
@@ -234,45 +206,8 @@ function fastDeepEqualInternal(obj1: unknown, obj2: unknown, state: TraversalSta
     return obj1 === obj2;
   }
 
-  // Handle arrays early for performance (common in forms)
-  if (Array.isArray(obj1) !== Array.isArray(obj2)) {
-    return false;
-  }
-
-  if (Array.isArray(obj1)) {
-    // We know obj2 is also an array here
-    const arr2 = obj2 as unknown[];
-    if (obj1.length !== arr2.length) {
-      return false;
-    }
-
-    if (state.visitedPairs && hasVisitedPair(state.visitedPairs, obj1, arr2)) {
-      return true;
-    }
-
-    if (hasAncestorPair(state, obj1, arr2)) {
-      state.visitedPairs = markVisitedPair(state.visitedPairs, obj1, arr2);
-      return true;
-    }
-
-    state.leftAncestors.push(obj1);
-    state.rightAncestors.push(arr2);
-
-    try {
-      for (let i = 0; i < obj1.length; i++) {
-        if (!fastDeepEqualInternal(obj1[i], arr2[i], state)) {
-          return false;
-        }
-      }
-
-      return true;
-    } finally {
-      state.leftAncestors.pop();
-      state.rightAncestors.pop();
-    }
-  }
-
-  // Handle Date objects
+  // Handle Date / RegExp first — they have value semantics and can't contain cycles,
+  // so they don't need pair tracking.
   if (obj1 instanceof Date || obj2 instanceof Date) {
     return (
       obj1 instanceof Date &&
@@ -281,7 +216,6 @@ function fastDeepEqualInternal(obj1: unknown, obj2: unknown, state: TraversalSta
     );
   }
 
-  // Handle RegExp objects
   if (obj1 instanceof RegExp || obj2 instanceof RegExp) {
     return (
       obj1 instanceof RegExp &&
@@ -291,59 +225,60 @@ function fastDeepEqualInternal(obj1: unknown, obj2: unknown, state: TraversalSta
     );
   }
 
-  // Handle Set objects (common in forms)
+  // Intentional contract: distinct Set / Map instances compare by reference only.
   if (obj1 instanceof Set || obj2 instanceof Set) {
-    // Intentional contract: distinct Set instances compare by reference only.
     return false;
   }
-
-  // Handle Map objects (common in forms)
   if (obj1 instanceof Map || obj2 instanceof Map) {
-    // Intentional contract: distinct Map instances compare by reference only.
     return false;
   }
 
-  // Handle plain objects
-  const keys1 = Object.keys(obj1 as object);
-  const keys2 = Object.keys(obj2 as object);
-
-  if (keys1.length !== keys2.length) {
+  if (Array.isArray(obj1) !== Array.isArray(obj2)) {
     return false;
   }
 
-  if (state.visitedPairs && hasVisitedPair(state.visitedPairs, obj1 as object, obj2 as object)) {
+  // Cycle / repeated-pair guard for traversable containers.
+  // Allocates lazily on first nested-object descent.
+  const a = obj1 as object;
+  const b = obj2 as object;
+  if (seen?.get(a)?.has(b)) {
     return true;
   }
+  seen ??= new WeakMap<object, WeakSet<object>>();
+  rememberPair(seen, a, b);
 
-  if (hasAncestorPair(state, obj1 as object, obj2 as object)) {
-    state.visitedPairs = markVisitedPair(
-      state.visitedPairs,
-      obj1 as object,
-      obj2 as object
-    );
-    return true;
-  }
-
-  state.leftAncestors.push(obj1 as object);
-  state.rightAncestors.push(obj2 as object);
-
-  try {
-    for (const key of keys1) {
-      const value1 = (obj1 as Record<string, unknown>)[key];
-      const value2 = (obj2 as Record<string, unknown>)[key];
-
-      if (!Object.hasOwn(obj2 as object, key)) {
-        return false;
-      }
-
-      if (!fastDeepEqualInternal(value1, value2, state)) {
+  if (Array.isArray(obj1)) {
+    const arr2 = obj2 as unknown[];
+    if (obj1.length !== arr2.length) {
+      return false;
+    }
+    for (let i = 0; i < obj1.length; i++) {
+      if (!fastDeepEqualInternal(obj1[i], arr2[i], seen)) {
         return false;
       }
     }
-
     return true;
-  } finally {
-    state.leftAncestors.pop();
-    state.rightAncestors.pop();
   }
+
+  // Plain objects
+  const keys1 = Object.keys(a);
+  const o2 = b as Record<string, unknown>;
+  if (keys1.length !== Object.keys(o2).length) {
+    return false;
+  }
+  for (const key of keys1) {
+    if (!Object.hasOwn(o2, key)) {
+      return false;
+    }
+    if (
+      !fastDeepEqualInternal(
+        (a as Record<string, unknown>)[key],
+        o2[key],
+        seen
+      )
+    ) {
+      return false;
+    }
+  }
+  return true;
 }
