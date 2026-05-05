@@ -30,6 +30,7 @@ import {
   timer,
 } from 'rxjs';
 import { ROOT_FORM } from '../constants';
+import { scheduleMicrotask } from '../utils/destroy-scheduler';
 import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
 import { ValidationOptions } from './validation-options';
 
@@ -178,7 +179,9 @@ export class ValidateRootFormDirective<T>
       if (ngForm?.control) {
         // Defer to the next microtask so Angular has a chance to finish
         // wiring up controls/groups (ngModel/ngModelGroup) on initial render.
-        queueMicrotask(() => ngForm.control.updateValueAndValidity());
+        // The scheduleMicrotask primitive auto-cancels if the directive is
+        // destroyed before the microtask fires.
+        scheduleMicrotask(() => ngForm.control.updateValueAndValidity(), this.destroyRef);
       }
     });
   }
@@ -205,7 +208,7 @@ export class ValidateRootFormDirective<T>
     // Ensure we run at least one validation pass after the form is ready.
     // This matters for 'live' mode root-form errors that should appear
     // without requiring a user interaction.
-    queueMicrotask(() => ngForm.control.updateValueAndValidity());
+    scheduleMicrotask(() => ngForm.control.updateValueAndValidity(), this.destroyRef);
 
     // Subscribe to form submission to set hasSubmitted flag
     ngForm.ngSubmit
