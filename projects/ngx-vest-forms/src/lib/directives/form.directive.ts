@@ -192,10 +192,19 @@ export class FormDirective<T extends Record<string, unknown>> {
   #lastSyncedFormValue: T | null = null;
   #lastSyncedModelValue: T | null = null;
 
-  // Internal signal tracking form value changes via statusChanges
-  readonly #value = toSignal(
-    this.ngForm.form.statusChanges.pipe(startWith(this.ngForm.form.status)),
-    { initialValue: this.ngForm.form.status }
+  // Internal signal tracking changes that can affect the merged form snapshot.
+  // ValueChangeEvent keeps the cache fresh for blur-driven consumers like
+  // draft auto-save, even when a value update doesn't change form validity.
+  readonly #formSnapshotTick = toSignal(
+    this.ngForm.form.events.pipe(
+      filter(
+        (event) =>
+          event instanceof ValueChangeEvent || event instanceof StatusChangeEvent
+      ),
+      scan((count) => count + 1, 0),
+      startWith(0)
+    ),
+    { initialValue: 0 }
   );
 
   /**
@@ -203,8 +212,8 @@ export class FormDirective<T extends Record<string, unknown>> {
    * This eliminates timing issues with the previous dual-effect pattern.
    */
   readonly #formValueSignal = linkedSignal(() => {
-    // Track form value changes
-    this.#value();
+    // Track changes that affect the merged form snapshot.
+    this.#formSnapshotTick();
     const raw = mergeValuesAndRawValues<T>(this.ngForm.form);
     if (Object.keys(this.ngForm.form.controls).length > 0) {
       this.#lastLinkedValue = raw;

@@ -709,6 +709,101 @@ describe('FormDirective - Signals/Outputs', () => {
     });
   });
 
+  it('should include recent edits from other fields in later blur snapshots', async () => {
+    @Component({
+      selector: 'test-field-blur-cross-field-snapshot-host',
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          (fieldBlur)="handleFieldBlur($event)"
+        >
+          <label for="projectName">Project name</label>
+          <input
+            id="projectName"
+            name="projectName"
+            [ngModel]="formValue().projectName"
+          />
+
+          <label for="notes">Notes</label>
+          <textarea
+            id="notes"
+            name="notes"
+            [ngModel]="formValue().notes"
+          ></textarea>
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestFieldBlurCrossFieldSnapshotHost {
+      readonly formValue = signal<{
+        projectName?: string;
+        notes?: string;
+      }>({
+        projectName: 'Release checklist',
+        notes: '',
+      });
+      readonly blurEvents = signal<
+        Array<
+          NgxFieldBlurEvent<{
+            projectName?: string;
+            notes?: string;
+          }>
+        >
+      >([]);
+
+      handleFieldBlur(
+        event: NgxFieldBlurEvent<{
+          projectName?: string;
+          notes?: string;
+        }>
+      ): void {
+        this.blurEvents.update((events) => [...events, event]);
+      }
+    }
+
+    const { fixture } = await render(TestFieldBlurCrossFieldSnapshotHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const projectName = fixture.nativeElement.querySelector(
+      '#projectName'
+    ) as HTMLInputElement | null;
+    const notes = fixture.nativeElement.querySelector(
+      '#notes'
+    ) as HTMLTextAreaElement | null;
+
+    expect(projectName).toBeTruthy();
+    expect(notes).toBeTruthy();
+
+    if (!projectName || !notes) {
+      throw new Error('Expected projectName and notes controls to exist');
+    }
+
+    notes.value = 'Add deployment notes for the production team.';
+    notes.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    projectName.focus();
+    projectName.blur();
+    projectName.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    const blurEvent = fixture
+      .componentInstance
+      .blurEvents()
+      .find((event) => event.field === 'projectName');
+
+    expect(blurEvent).toBeTruthy();
+    expect(blurEvent?.formValue).toEqual({
+      projectName: 'Release checklist',
+      notes: 'Add deployment notes for the production team.',
+    });
+  });
+
   it('should emit the full dotted path for controls inside ngModelGroup', async () => {
     type Model = { passwords?: { password?: string; confirm?: string } };
 
