@@ -234,6 +234,68 @@ describe('validateShape function', () => {
       validateShape(formValue, shape);
       expect(consoleWarnSpy).toHaveBeenCalled();
     });
+
+    it('should treat opaque leaf values as non-recursive objects', () => {
+      const opaqueLeafCases: Array<{
+        label: string;
+        value: unknown;
+        shape: unknown;
+      }> = [
+        {
+          label: 'Date',
+          value: Object.assign(new Date('2000-01-01'), {
+            accidental: { deep: 'value' },
+          }),
+          shape: new Date(),
+        },
+        {
+          label: 'Map',
+          value: Object.assign(new Map([['key', 'value']]), {
+            accidental: { deep: 'value' },
+          }),
+          shape: new Map(),
+        },
+        {
+          label: 'Set',
+          value: Object.assign(new Set(['value']), {
+            accidental: { deep: 'value' },
+          }),
+          shape: new Set(),
+        },
+        {
+          label: 'RegExp',
+          value: Object.assign(/test/u, {
+            accidental: { deep: 'value' },
+          }),
+          shape: /shape/u,
+        },
+      ];
+
+      if (typeof File !== 'undefined') {
+        opaqueLeafCases.push({
+          label: 'File',
+          value: Object.assign(new File(['value'], 'test.txt'), {
+            accidental: { deep: 'value' },
+          }),
+          shape: new File(['shape'], 'shape.txt'),
+        });
+      }
+
+      if (typeof Blob !== 'undefined') {
+        opaqueLeafCases.push({
+          label: 'Blob',
+          value: Object.assign(new Blob(['value']), {
+            accidental: { deep: 'value' },
+          }),
+          shape: new Blob(['shape']),
+        });
+      }
+
+      opaqueLeafCases.forEach(({ value, shape }) => {
+        validateShape({ leaf: value }, { leaf: shape });
+        expect(consoleWarnSpy.mock.calls).toHaveLength(0);
+      });
+    });
   });
 
   describe('null and undefined handling', () => {
@@ -339,6 +401,28 @@ describe('validateShape function', () => {
 
       validateShape(formValue, shape);
       expect(consoleWarnSpy).toHaveBeenCalled();
+    });
+
+    it("should not treat partially numeric keys like '123abc' as array indices", () => {
+      const formValue = {
+        items: {
+          '123abc': { name: 'Item 123' },
+        },
+      };
+
+      const shape = {
+        items: {
+          '0': { name: '' },
+        },
+      };
+
+      validateShape(formValue, shape);
+
+      expect(consoleWarnSpy).toHaveBeenCalled();
+      const calls = consoleWarnSpy.mock.calls.map((call: unknown[]) => call[0]);
+      expect(calls.some((msg) => String(msg).includes('items.123abc'))).toBe(
+        true
+      );
     });
   });
 

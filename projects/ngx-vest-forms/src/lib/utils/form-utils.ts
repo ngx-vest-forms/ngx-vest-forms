@@ -282,6 +282,7 @@ export function setValueAtPath(
 
   for (let i = 0; i < keys.length - 1; i++) {
     const segment = keys[i];
+    const nextSegment = keys[i + 1];
     if (segment === undefined) {
       continue;
     }
@@ -292,8 +293,11 @@ export function setValueAtPath(
     const key = String(segment);
 
     const next = current[key];
-    if (!isRecord(next)) {
-      current[key] = {};
+    if (!Array.isArray(next) && !isRecord(next)) {
+      const shouldCreateArray =
+        typeof nextSegment === 'number' ||
+        (typeof nextSegment === 'string' && /^\d+$/.test(nextSegment));
+      current[key] = shouldCreateArray ? [] : {};
     }
     current = current[key] as UnknownRecord;
   }

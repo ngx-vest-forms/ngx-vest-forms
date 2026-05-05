@@ -18,6 +18,7 @@
  */
 
 const UNSAFE_PATH_SEGMENTS = new Set(['__proto__', 'prototype', 'constructor']);
+const LOG_PREFIX = '[ngx-vest-forms] field-path.utils';
 
 /**
  * @internal
@@ -65,6 +66,20 @@ export function isUnsafePathSegment(segment: string | number): boolean {
  */
 export function parseFieldPath(path: string): Array<string | number> {
   if (!path) return [];
+
+  if (
+    path === '.' ||
+    path.startsWith('.') ||
+    path.endsWith('.') ||
+    path.includes('..')
+  ) {
+    if (typeof ngDevMode !== 'undefined' && ngDevMode) {
+      console.warn(
+        `${LOG_PREFIX}: Invalid field path '${path}'. Leading dots, trailing dots, and consecutive dots are not allowed.`
+      );
+    }
+    return [];
+  }
 
   return path
     .replaceAll(/\[(\d+)\]/g, '.$1') // Convert brackets to dots: items[0] → items.0
