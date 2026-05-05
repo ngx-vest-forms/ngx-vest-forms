@@ -180,8 +180,9 @@ export function mergeValuesAndRawValues<T>(form: FormGroup): T {
       const sourceValue = source[key];
       const targetValue = target[key];
 
-      if (targetValue === undefined) {
-        // If the key is not in the target, add it directly (for disabled fields)
+      if (targetValue === undefined || targetValue === null) {
+        // Key missing from target (e.g. disabled field) or set to null —
+        // copy source so raw values from disabled controls aren't dropped.
         target[key] = sourceValue;
       } else if (isRecord(sourceValue) && isRecord(targetValue)) {
         // If the value is an object, merge it recursively
@@ -215,15 +216,36 @@ function getStringArrayError(
 }
 
 /**
- * Performs a deep-clone of an object
- * @param obj
+ * Performs a deep-clone of an object.
  *
- * @deprecated Use official ES {@link https://developer.mozilla.org/en-US/docs/Web/API/Window/structuredClone structuredClone} instead
+ * @deprecated Use the standard {@link https://developer.mozilla.org/en-US/docs/Web/API/Window/structuredClone structuredClone} instead.
  *
- * Browser Support: structuredClone is available in all modern browsers (Chrome 98+, Firefox 94+, Safari 15.4+, Edge 98+)
- * and Node.js 17+. A polyfill is provided in test-setup.ts for Jest test environments.
+ * `structuredClone` correctly handles `Map`, `Set`, `RegExp`, typed arrays, and
+ * cyclic references; this implementation silently drops `Map` / `Set` / `RegExp`
+ * data and produces incorrect results on cycles. Scheduled for removal in a
+ * future major; see `PRD-bug-sweep.md` (Bundle D) for tracking.
+ *
+ * Browser Support: `structuredClone` is available in all modern browsers
+ * (Chrome 98+, Firefox 94+, Safari 15.4+, Edge 98+) and Node.js 17+.
  */
+let cloneDeepDeprecationWarned = false;
+
 export function cloneDeep<T>(object: T): T {
+  // NOTE: `typeof ngDevMode !== 'undefined' && ngDevMode` is kept inline
+  // (not extracted to a helper) because Angular's build optimizer relies on
+  // this exact pattern for tree-shaking dev-only code from production bundles.
+  if (
+    !cloneDeepDeprecationWarned &&
+    typeof ngDevMode !== 'undefined' &&
+    ngDevMode
+  ) {
+    cloneDeepDeprecationWarned = true;
+    console.warn(
+      '[ngx-vest-forms] cloneDeep is deprecated and silently drops Map/Set/RegExp values. ' +
+        'Use the standard structuredClone() instead.'
+    );
+  }
+
   // Handle primitives (null, undefined, boolean, string, number, function)
   if (isPrimitive(object)) {
     return object;
