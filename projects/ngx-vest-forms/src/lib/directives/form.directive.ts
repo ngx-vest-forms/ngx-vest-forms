@@ -202,8 +202,6 @@ export class FormDirective<T extends Record<string, unknown>> {
    */
   #destroyed = false;
 
-  // Track last linked value to prevent unnecessary updates
-  #lastLinkedValue: T | null = null;
   #lastSyncedFormValue: T | null = null;
   #lastSyncedModelValue: T | null = null;
 
@@ -229,14 +227,12 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly #formValueSignal = linkedSignal(() => {
     // Track changes that affect the merged form snapshot.
     this.#formSnapshotTick();
-    const raw = mergeValuesAndRawValues<T>(this.ngForm.form);
-    if (Object.keys(this.ngForm.form.controls).length > 0) {
-      this.#lastLinkedValue = raw;
-      return raw;
-    } else if (this.#lastLinkedValue !== null) {
-      return this.#lastLinkedValue;
+    if (Object.keys(this.ngForm.form.controls).length === 0) {
+      // No controls remain (e.g. dynamic group removal): expose `null` so
+      // consumers don't see ghost data from a previous form shape.
+      return null;
     }
-    return null;
+    return mergeValuesAndRawValues<T>(this.ngForm.form);
   });
 
   /**
@@ -999,7 +995,6 @@ export class FormDirective<T extends Record<string, unknown>> {
     // is treated as a model change (not a conflict with stale form values)
     this.#lastSyncedFormValue = null;
     this.#lastSyncedModelValue = null;
-    this.#lastLinkedValue = null;
 
     // Force change detection to ensure DOM updates are reflected
     // Note: This is still needed even with signals because we're modifying NgForm

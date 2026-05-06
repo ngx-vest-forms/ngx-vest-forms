@@ -406,5 +406,59 @@ describe('pending-state.utils', () => {
         await expect(vi.runAllTimersAsync()).resolves.not.toThrow();
       });
     });
+
+    describe('Signal<DebouncedPendingStateOptions> input (runtime-reactive)', () => {
+      // The wrapper component forwards an `input()` accessor as the options
+      // arg, so the function must read those timings reactively rather than
+      // capturing them at construction. Regression coverage for issue #106.
+      it('honors a Signal whose value changes BEFORE pending starts', async () => {
+        await TestBed.runInInjectionContext(async () => {
+          const isPending = signal(false);
+          const opts = signal({ showAfter: 100, minimumDisplay: 50 });
+          const result = createDebouncedPendingState(isPending, opts);
+
+          // Bump the threshold while idle. A static-options implementation
+          // would have captured 100ms at construction time and ignored this.
+          opts.set({ showAfter: 1500, minimumDisplay: 50 });
+          await vi.advanceTimersByTimeAsync(0);
+
+          isPending.set(true);
+          await vi.advanceTimersByTimeAsync(0);
+
+          // Old 100ms has long passed; new 1500ms hasn't.
+          await vi.advanceTimersByTimeAsync(400);
+          expect(result.showPendingMessage()).toBe(false);
+
+          // Past the new threshold → message must now be visible.
+          await vi.advanceTimersByTimeAsync(1200);
+          expect(result.showPendingMessage()).toBe(true);
+        });
+      });
+
+      it('honors a Signal whose value changes DURING a pending cycle', async () => {
+        await TestBed.runInInjectionContext(async () => {
+          const isPending = signal(false);
+          const opts = signal({ showAfter: 100, minimumDisplay: 50 });
+          const result = createDebouncedPendingState(isPending, opts);
+
+          isPending.set(true);
+          await vi.advanceTimersByTimeAsync(50); // partway to original 100ms
+          expect(result.showPendingMessage()).toBe(false);
+
+          // Update options mid-flight; effect must restart the timer with
+          // the new threshold rather than honoring the original.
+          opts.set({ showAfter: 1000, minimumDisplay: 50 });
+          await vi.advanceTimersByTimeAsync(0);
+
+          // Crossing the original 100ms is no longer enough.
+          await vi.advanceTimersByTimeAsync(100);
+          expect(result.showPendingMessage()).toBe(false);
+
+          // Cross the new 1000ms threshold from the restart point.
+          await vi.advanceTimersByTimeAsync(1000);
+          expect(result.showPendingMessage()).toBe(true);
+        });
+      });
+    });
   });
 });
