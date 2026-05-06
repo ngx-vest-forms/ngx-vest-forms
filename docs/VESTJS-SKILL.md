@@ -2,6 +2,8 @@
 
 This repository ships an installable agent skill for **Vest.js guidance**.
 
+The repository-local skill lives at `.agents/skills/vestjs/`. Compatible agent clients can discover it automatically when this repository is open.
+
 Use it when you want repo-local, documentation-backed guidance for writing or reviewing Vest suites in the same style as the existing `ngx-vest-forms` skill family.
 
 ## Install
@@ -56,9 +58,9 @@ Version-specific material is organized internally so the skill can grow without 
 
 ### Current internal versioned layout
 
-- `.github/skills/vestjs/references/version-selection.md`
-- `.github/skills/vestjs/references/5.x/source-map.md`
-- `.github/skills/vestjs/evals/5.x.json`
+- `.agents/skills/vestjs/references/version-selection.md`
+- `.agents/skills/vestjs/references/5.x/source-map.md`
+- `.agents/skills/vestjs/evals/5.x.json`
 
 This means:
 
@@ -80,11 +82,11 @@ If a question involves both raw Vest behavior and Angular template-driven integr
 
 ## Main source files
 
-- `.github/skills/vestjs/SKILL.md`
-- `.github/skills/vestjs/references/version-selection.md`
-- `.github/skills/vestjs/references/5.x/source-map.md`
+- `.agents/skills/vestjs/SKILL.md`
+- `.agents/skills/vestjs/references/version-selection.md`
+- `.agents/skills/vestjs/references/5.x/source-map.md`
 - `.github/instructions/vest.instructions.md`
-- `.github/skills/ngx-vest-forms/`
+- `.agents/skills/ngx-vest-forms/`
 
 ## Upstream references
 

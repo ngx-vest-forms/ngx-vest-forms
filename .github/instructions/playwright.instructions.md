@@ -5,7 +5,7 @@ applyTo: 'e2e/**/*.{spec,test}.{ts,tsx,js,jsx}, tests/**/*.{spec,test}.{ts,tsx,j
 
 # Playwright testing instructions (minimal)
 
-Use the detailed skill at `.github/skills/playwright/SKILL.md` for full guidance.
+Use a dedicated Playwright skill if one is installed in the active agent client. This repository currently keeps only the minimal Playwright guardrails in this file.
 
 Non-negotiables for this repository:
 

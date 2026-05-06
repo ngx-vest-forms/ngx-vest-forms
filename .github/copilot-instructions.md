@@ -31,7 +31,7 @@ Do not suggest code that depends on newer language or framework features than th
 - Library public surface: `projects/ngx-vest-forms/src/public-api.ts`
 - Domain docs: `docs/`
 - Always-on instructions: `.github/instructions/`
-- Umbrella skill: `.github/skills/ngx-vest-forms/`
+- Umbrella skill: `.agents/skills/ngx-vest-forms/`
 
 ## Public API first
 
