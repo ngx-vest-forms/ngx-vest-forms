@@ -223,7 +223,7 @@ function getStringArrayError(
  * `structuredClone` correctly handles `Map`, `Set`, `RegExp`, typed arrays, and
  * cyclic references; this implementation silently drops `Map` / `Set` / `RegExp`
  * data and produces incorrect results on cycles. Scheduled for removal in a
- * future major; see `PRD-bug-sweep.md` (Bundle D) for tracking.
+ * future major; see `docs/prd/PRD-bug-sweep.md` (Bundle D) for tracking.
  *
  * Browser Support: `structuredClone` is available in all modern browsers
  * (Chrome 98+, Firefox 94+, Safari 15.4+, Edge 98+) and Node.js 17+.

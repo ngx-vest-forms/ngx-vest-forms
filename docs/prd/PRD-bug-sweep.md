@@ -1,5 +1,12 @@
 # PRD: Bug fix sweep — lifecycle safety, path utility hardening, state-sync correctness, equality polish
 
+> **Status: Archived (2026-05-06).** Bundles A/B/C/D shipped via #104 / #105 / #106 / #107 (+ follow-ups in #108 / #109 / #110 / #112) and will land in **v2.7.0**. Two non-breaking items from Bundle D were intentionally **deferred to v3.x** to keep this release minor:
+>
+> - `cloneDeep` removal (currently `@deprecated`, still exported).
+> - `getAllFormErrors` discriminated-union return shape (still returns `Record<string, string[]>`).
+>
+> These two are tracked separately as v3 breaking-change issues — see the milestone for current status. This document is kept for historical context.
+
 > Synthesized from a code review covering all 30 source files in `projects/ngx-vest-forms/src/lib/`. 12 medium-to-high findings + 7 low. Spot-verified the four highest-impact items against current `master`.
 
 ## Problem Statement
