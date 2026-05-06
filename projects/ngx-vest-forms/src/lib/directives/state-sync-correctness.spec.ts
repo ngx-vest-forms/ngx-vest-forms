@@ -1,28 +1,22 @@
 /* eslint-disable @angular-eslint/component-selector */
-import { Component, signal, viewChild } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { Component, signal, viewChild, type WritableSignal } from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import { enforce, only, staticSuite, test as vestTest } from 'vest';
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import { NgxVestForms } from '../exports';
-import { createDebouncedPendingState } from '../utils/pending-state.utils';
 import { FormDirective } from './form.directive';
 
 /**
  * Acceptance tests for issue #106 — "State-sync correctness" bundle:
  *   1. `formState().value` resets to `null` when all controls are dynamically removed.
- *   2. `[pendingDebounce]` reflects runtime input changes on `<ngx-form-group-wrapper>`.
- *   3. `form-control-state` tracks late-attached `NgModel.control`.
- *   4. `ngxValidateRootFormMode` precedence is `ngx ?? legacy ?? 'submit'`
+ *   2. `form-control-state` tracks late-attached `NgModel.control`.
+ *   3. `ngxValidateRootFormMode` precedence is `ngx ?? legacy ?? 'submit'`
  *      across all four default-vs-explicit combinations.
+ *
+ * Reactive `[pendingDebounce]` propagation is covered as unit tests in
+ * `../utils/pending-state.utils.spec.ts` (the wrapper just forwards the
+ * signal to `createDebouncedPendingState`).
  */
 
 describe('Issue #106 — state-sync correctness', () => {
@@ -79,81 +73,22 @@ describe('Issue #106 — state-sync correctness', () => {
     });
   });
 
-  describe('[pendingDebounce] propagates runtime changes', () => {
-    // Direct unit test against `createDebouncedPendingState` with fake timers.
-    // This is what the wrapper passes its `input()` accessor into, so proving
-    // the function honors a `Signal<DebouncedPendingStateOptions>` proves the
-    // wrapper does too (the wrapper just forwards the signal — TypeScript +
-    // the `pending-state.utils` API surface are the contract).
-    beforeEach(() => {
-      vi.useFakeTimers();
-    });
-    afterEach(() => {
-      vi.useRealTimers();
-    });
-
-    it('honors a Signal<DebouncedPendingStateOptions> at runtime (showAfter changes propagate)', async () => {
-      await TestBed.runInInjectionContext(async () => {
-        const isPending = signal(false);
-        const opts = signal({ showAfter: 100, minimumDisplay: 50 });
-        const result = createDebouncedPendingState(isPending, opts);
-
-        // Bump the debounce BEFORE pending starts. A static-options
-        // implementation would have captured 100ms at construction time and
-        // ignored the change.
-        opts.set({ showAfter: 1500, minimumDisplay: 50 });
-        await vi.advanceTimersByTimeAsync(0); // flush effects
-
-        isPending.set(true);
-        await vi.advanceTimersByTimeAsync(0); // flush effects
-
-        // Old 100ms threshold has long passed; new 1500ms hasn't.
-        await vi.advanceTimersByTimeAsync(400);
-        expect(result.showPendingMessage()).toBe(false);
-
-        // Past the new threshold → message must now be visible.
-        await vi.advanceTimersByTimeAsync(1200);
-        expect(result.showPendingMessage()).toBe(true);
-      });
-    });
-
-    it('honors a runtime change DURING a pending cycle', async () => {
-      await TestBed.runInInjectionContext(async () => {
-        const isPending = signal(false);
-        const opts = signal({ showAfter: 100, minimumDisplay: 50 });
-        const result = createDebouncedPendingState(isPending, opts);
-
-        // Start with the short threshold.
-        isPending.set(true);
-        await vi.advanceTimersByTimeAsync(50); // partway to original 100ms
-        expect(result.showPendingMessage()).toBe(false);
-
-        // Update options mid-flight to a much larger threshold. The effect
-        // must restart the timer with the new value, NOT honor the original.
-        opts.set({ showAfter: 1000, minimumDisplay: 50 });
-        await vi.advanceTimersByTimeAsync(0); // flush effects
-
-        // Crossing the original 100ms threshold is no longer enough.
-        await vi.advanceTimersByTimeAsync(100);
-        expect(result.showPendingMessage()).toBe(false);
-
-        // Cross the new 1000ms threshold (timer was restarted on options
-        // change, so we need a full 1000ms from that restart point).
-        await vi.advanceTimersByTimeAsync(1000);
-        expect(result.showPendingMessage()).toBe(true);
-      });
-    });
-  });
-
   describe('form-control-state tracks late-attached NgModel.control', () => {
+    // Uses the documented one-way binding pattern (`[ngModel]` driven by a
+    // signal, updates flow through `(formValueChange)`) so this test
+    // doubles as a faithful usage example, not just a regression assertion.
     @Component({
       selector: 'test-late-attach-host',
       imports: [NgxVestForms],
       template: `
-        <form ngxVestForm>
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+        >
           @if (showInput()) {
             <div formControlState #state="formControlState">
-              <input name="email" [(ngModel)]="email" required />
+              <input name="email" [ngModel]="formValue().email" required />
               <span data-testid="is-invalid">{{ state.isInvalid() }}</span>
               <span data-testid="error-count">{{
                 state.errorMessages().length
@@ -165,7 +100,7 @@ describe('Issue #106 — state-sync correctness', () => {
     })
     class HostComponent {
       readonly showInput = signal(false);
-      email = '';
+      readonly formValue = signal<{ email?: string }>({ email: '' });
     }
 
     it('reflects the control state once NgModel registers asynchronously', async () => {
@@ -233,7 +168,7 @@ describe('Issue #106 — state-sync correctness', () => {
     }
 
     it('combo 1 — neither attribute set → effective default is "submit" (no live error)', async () => {
-      await makeMisMatchedForm(`
+      const { fixture } = await makeMisMatchedForm(`
         <form
           ngxVestForm
           ngxValidateRootForm
@@ -250,8 +185,18 @@ describe('Issue #106 — state-sync correctness', () => {
         </form>
       `);
 
-      // Give the suite a chance to run; in submit mode the error must NOT be present.
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      // Drive the form through a value change. In `live` mode this would
+      // fire the suite and surface the mismatch error; in `submit` mode it
+      // must stay silent. Awaiting stability twice (once for the value
+      // change, once for any reactive cascade) is deterministic and
+      // strictly faster than a fixed-duration setTimeout.
+      const host = fixture.componentInstance as { model: WritableSignal<Record<string, unknown>> };
+      host.model.update((m) => ({ ...m, confirmPassword: 'still-mismatched' }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
       expect(screen.queryByTestId('root-error')).not.toBeInTheDocument();
     });
 
@@ -310,7 +255,7 @@ describe('Issue #106 — state-sync correctness', () => {
     });
 
     it('combo 4 — both set → ngx-prefixed input takes precedence over legacy', async () => {
-      await makeMisMatchedForm(`
+      const { fixture } = await makeMisMatchedForm(`
         <form
           ngxVestForm
           ngxValidateRootForm
@@ -329,8 +274,15 @@ describe('Issue #106 — state-sync correctness', () => {
         </form>
       `);
 
-      // ngx says 'submit' → no error before submit even though legacy says 'live'.
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      // Trigger a value change that *would* fire validation if the legacy
+      // 'live' mode were honored. ngx says 'submit', so it must stay silent.
+      const host = fixture.componentInstance as { model: WritableSignal<Record<string, unknown>> };
+      host.model.update((m) => ({ ...m, confirmPassword: 'still-mismatched' }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
       expect(screen.queryByTestId('root-error')).not.toBeInTheDocument();
     });
   });

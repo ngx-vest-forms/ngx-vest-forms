@@ -50,6 +50,7 @@ export { setValueAtPath } from './lib/utils/form-utils';
 export { createDebouncedPendingState } from './lib/utils/pending-state.utils';
 export type {
   DebouncedPendingStateOptions,
+  DebouncedPendingStateOptionsInput,
   DebouncedPendingStateResult,
 } from './lib/utils/pending-state.utils';
 export { validateShape } from './lib/utils/shape-validation';

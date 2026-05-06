@@ -128,10 +128,11 @@ export class FormControlStateDirective {
    * only schedule a single retry — no permanent polling.
    */
   readonly #controlAttachTick = signal(0);
-  // Per-directive-instance latch: not re-armed if #activeControl later
-  // transitions to a different directive. Acceptable because contentChild
-  // resolves stably for a given directive lifetime.
+  // Latch is scoped to the *current* `#activeControl` instance. When the
+  // active control changes (e.g. host swaps an `@if` block, NgModel
+  // recreates), the latch resets so a fresh late-attach gets one retry.
   #controlAttachRetryScheduled = false;
+  #lastSeenActiveControl: AbstractControlDirective | null = null;
 
   constructor() {
     // Update control state reactively with proper cleanup
@@ -141,6 +142,15 @@ export class FormControlStateDirective {
       // Track the retry tick so a late-attached `control.control` re-runs this
       // effect after the next render.
       this.#controlAttachTick();
+
+      // Re-arm the late-attach latch whenever the active control identity
+      // changes — including transitions to/from null — so a newly mounted
+      // directive whose `FormControl` registers asynchronously gets its own
+      // single retry.
+      if (control !== this.#lastSeenActiveControl) {
+        this.#lastSeenActiveControl = control;
+        this.#controlAttachRetryScheduled = false;
+      }
 
       if (!control) {
         this.#controlStateSignal.set(INITIAL_FORM_CONTROL_STATE);

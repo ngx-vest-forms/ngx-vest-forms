@@ -54,7 +54,6 @@
     "@commitlint/cli": "~20.5.3",
     "@commitlint/config-conventional": "~20.5.3",
     "@playwright/test": "1.59.1",
-    "@semantic-release/changelog": "~6.0.3",
     "@semantic-release/git": "~10.0.1",
     "@storybook/addon-coverage": "~3.0.1",
     "@storybook/addon-docs": "10.3.6",
