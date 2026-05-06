@@ -128,6 +128,9 @@ export class FormControlStateDirective {
    * only schedule a single retry — no permanent polling.
    */
   readonly #controlAttachTick = signal(0);
+  // Per-directive-instance latch: not re-armed if #activeControl later
+  // transitions to a different directive. Acceptable because contentChild
+  // resolves stably for a given directive lifetime.
   #controlAttachRetryScheduled = false;
 
   constructor() {

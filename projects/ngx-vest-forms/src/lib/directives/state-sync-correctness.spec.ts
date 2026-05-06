@@ -1,10 +1,19 @@
 /* eslint-disable @angular-eslint/component-selector */
 import { Component, signal, viewChild } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { render, screen, waitFor } from '@testing-library/angular';
 import { enforce, only, staticSuite, test as vestTest } from 'vest';
-import { describe, expect, it } from 'vitest';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 import { ROOT_FORM } from '../constants';
 import { NgxVestForms } from '../exports';
+import { createDebouncedPendingState } from '../utils/pending-state.utils';
 import { FormDirective } from './form.directive';
 
 /**
@@ -71,67 +80,68 @@ describe('Issue #106 — state-sync correctness', () => {
   });
 
   describe('[pendingDebounce] propagates runtime changes', () => {
-    @Component({
-      selector: 'test-pending-debounce-host',
-      imports: [NgxVestForms],
-      template: `
-        <form
-          ngxVestForm
-          [suite]="suite"
-          [formValue]="formValue()"
-          (formValueChange)="formValue.set($event)"
-        >
-          <ngx-form-group-wrapper
-            ngModelGroup="profile"
-            [pendingDebounce]="pendingDebounce()"
-          >
-            <input name="email" [ngModel]="formValue().profile?.email" />
-          </ngx-form-group-wrapper>
-        </form>
-      `,
-    })
-    class HostComponent {
-      readonly formValue = signal<{ profile?: { email?: string } }>({
-        profile: { email: '' },
+    // Direct unit test against `createDebouncedPendingState` with fake timers.
+    // This is what the wrapper passes its `input()` accessor into, so proving
+    // the function honors a `Signal<DebouncedPendingStateOptions>` proves the
+    // wrapper does too (the wrapper just forwards the signal — TypeScript +
+    // the `pending-state.utils` API surface are the contract).
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('honors a Signal<DebouncedPendingStateOptions> at runtime (showAfter changes propagate)', async () => {
+      await TestBed.runInInjectionContext(async () => {
+        const isPending = signal(false);
+        const opts = signal({ showAfter: 100, minimumDisplay: 50 });
+        const result = createDebouncedPendingState(isPending, opts);
+
+        // Bump the debounce BEFORE pending starts. A static-options
+        // implementation would have captured 100ms at construction time and
+        // ignored the change.
+        opts.set({ showAfter: 1500, minimumDisplay: 50 });
+        await vi.advanceTimersByTimeAsync(0); // flush effects
+
+        isPending.set(true);
+        await vi.advanceTimersByTimeAsync(0); // flush effects
+
+        // Old 100ms threshold has long passed; new 1500ms hasn't.
+        await vi.advanceTimersByTimeAsync(400);
+        expect(result.showPendingMessage()).toBe(false);
+
+        // Past the new threshold → message must now be visible.
+        await vi.advanceTimersByTimeAsync(1200);
+        expect(result.showPendingMessage()).toBe(true);
       });
-      readonly pendingDebounce = signal({
-        showAfter: 100,
-        minimumDisplay: 50,
+    });
+
+    it('honors a runtime change DURING a pending cycle', async () => {
+      await TestBed.runInInjectionContext(async () => {
+        const isPending = signal(false);
+        const opts = signal({ showAfter: 100, minimumDisplay: 50 });
+        const result = createDebouncedPendingState(isPending, opts);
+
+        // Start with the short threshold.
+        isPending.set(true);
+        await vi.advanceTimersByTimeAsync(50); // partway to original 100ms
+        expect(result.showPendingMessage()).toBe(false);
+
+        // Update options mid-flight to a much larger threshold. The effect
+        // must restart the timer with the new value, NOT honor the original.
+        opts.set({ showAfter: 1000, minimumDisplay: 50 });
+        await vi.advanceTimersByTimeAsync(0); // flush effects
+
+        // Crossing the original 100ms threshold is no longer enough.
+        await vi.advanceTimersByTimeAsync(100);
+        expect(result.showPendingMessage()).toBe(false);
+
+        // Cross the new 1000ms threshold (timer was restarted on options
+        // change, so we need a full 1000ms from that restart point).
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(result.showPendingMessage()).toBe(true);
       });
-      readonly suite = staticSuite(
-        (
-          model: { profile?: { email?: string } } = {},
-          field?: string
-        ) => {
-          only(field);
-          vestTest('profile.email', 'Email is required', () => {
-            enforce(model.profile?.email ?? '').isNotBlank();
-          });
-        }
-      );
-    }
-
-    it('updates the showAfter timing when the input changes at runtime', async () => {
-      const { fixture } = await render(HostComponent);
-      const host = fixture.componentInstance;
-
-      // Bump the debounce so a fresh validation cycle waits 1500ms before
-      // marking the pending message as visible. With the bug, the original
-      // 100ms value is still in effect.
-      host.pendingDebounce.set({ showAfter: 1500, minimumDisplay: 50 });
-      fixture.detectChanges();
-
-      // Wait long enough for the *old* showAfter (100ms) to expire while still
-      // below the *new* one (1500ms). The form has just rendered and validation
-      // is pending, so a stale config would have already shown the message.
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      fixture.detectChanges();
-
-      const wrapper = fixture.nativeElement.querySelector(
-        'ngx-form-group-wrapper'
-      ) as HTMLElement | null;
-      expect(wrapper).toBeTruthy();
-      expect(wrapper?.getAttribute('aria-busy')).not.toBe('true');
     });
   });
 
@@ -170,7 +180,8 @@ describe('Issue #106 — state-sync correctness', () => {
       await fixture.whenStable();
       fixture.detectChanges();
 
-      // Required input starts as invalid; the directive must reflect that.
+      // Required input starts as invalid; the directive must reflect that
+      // AND surface the validator error rather than just flipping isInvalid.
       const isInvalidEl = await waitFor(() => {
         const el = fixture.nativeElement.querySelector(
           '[data-testid="is-invalid"]'
@@ -179,6 +190,16 @@ describe('Issue #106 — state-sync correctness', () => {
         return el as HTMLElement;
       });
       expect(isInvalidEl.textContent).toBe('true');
+
+      // Positive proof the late-attach retry actually wired up the
+      // FormControl: the `required` validator's error must surface via the
+      // directive's exposed `errorMessages()` signal. Without the retry the
+      // status subscription never attaches and this count stays 0.
+      const errorCountEl = fixture.nativeElement.querySelector(
+        '[data-testid="error-count"]'
+      ) as HTMLElement | null;
+      expect(errorCountEl).toBeTruthy();
+      expect(Number(errorCountEl?.textContent)).toBeGreaterThan(0);
     });
   });
 
