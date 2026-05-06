@@ -5,7 +5,7 @@ applyTo: "projects/**/*.{spec,test}.{ts,tsx,js,jsx}, tests/**/*.{spec,test}.{ts,
 
 # Vitest testing instructions (minimal)
 
-Use the detailed skill at `.github/skills/vitest/SKILL.md` for full guidance.
+Use a dedicated Vitest skill if one is installed in the active agent client. This repository currently keeps only the minimal Vitest guardrails in this file.
 
 Non-negotiables for this repository:
 
