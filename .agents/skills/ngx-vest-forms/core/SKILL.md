@@ -30,6 +30,12 @@ Recommend these imports from `'ngx-vest-forms'` when they fit the example:
 - `NgxFieldBlurEvent`
 - `ROOT_FORM`
 
+Optional advanced exports worth knowing about:
+
+- `NGX_EQUALITY_FN`, `NgxEqualityFn` — swap the comparator the form uses for `formValueChange` `distinctUntilChanged`, two-way sync, and `formState` equality. Default is `fastDeepEqual` with cycle detection. Reach for it for bundle size (`dequal/lite`), tests (reference equality), or domain rules. See `docs/API-TOKENS.md`.
+- `setValueAtPath` — array-safe path writes (v2.7+ no longer overwrites populated arrays via bracket notation).
+- `cloneDeep` — **deprecated**, warns once in dev; use `structuredClone`. Will be removed in v3.
+
 Do not teach consumers to import from internal `src/lib/**` paths. If a symbol is missing from the public API, that is a library-maintenance task, not a consumer workaround.
 
 ## Default implementation pattern
@@ -94,4 +100,5 @@ Assume the repo-level `ngx-vest-forms.instructions.md` file already enforces the
 
 - ngx-vest-forms is a template-driven forms adapter, not a reactive forms abstraction.
 - `validationConfig` controls when dependent fields revalidate; it does not define validation logic.
-- The library’s sweet spot is typed template-driven forms with Vest suites, signals, and explicit structure.
+- The library's sweet spot is typed template-driven forms with Vest suites, signals, and explicit structure.
+- v2.7.x targets Angular `>=19`, RxJS `>=7.8`, Vest `>=5.4.6`. `parseFieldPath` warns in dev mode for malformed segments (`'a..b'`, `'.a'`, `'a.'`); production behavior unchanged.

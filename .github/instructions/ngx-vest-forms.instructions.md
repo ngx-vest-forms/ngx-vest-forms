@@ -7,7 +7,7 @@ applyTo: '**/*.ts, **/*.html'
 
 Use this file as the **always-on guardrail sheet** for ngx-vest-forms.
 Keep detailed examples and feature-specific workflows in the docs and the
-`.github/skills/ngx-vest-forms/` workflow sub-skills.
+`.agents/skills/ngx-vest-forms/` workflow sub-skills.
 
 > **v2.0** | Angular 21+ | Vest.js 5.x | See `vest.instructions.md` for deeper Vest validation patterns.
 

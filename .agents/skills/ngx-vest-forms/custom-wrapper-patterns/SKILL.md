@@ -21,6 +21,9 @@ Recommend these imports from `'ngx-vest-forms'` when building custom wrappers:
 - `FormErrorDisplayDirective`
 - `FormErrorControlDirective`
 - `createDebouncedPendingState`
+- `DebouncedPendingStateOptions` (input shape)
+- `DebouncedPendingStateOptionsInput` (signal-accessor input shape, v2.7+)
+- `DebouncedPendingStateResult`
 - `mergeAriaDescribedBy`
 - `parseAriaIdTokens`
 - `resolveAssociationTargets`
@@ -39,7 +42,9 @@ Do not tell consumers to import custom-wrapper primitives from internal library 
 ## Pending state guidance
 
 Use `createDebouncedPendingState()` when async validation can flash quickly.
-That keeps “Validating…” from flickering and gives users steadier feedback.
+That keeps "Validating…" from flickering and gives users steadier feedback.
+
+In v2.7.0, `[pendingDebounce]` on `<ngx-form-group-wrapper>` is a **signal-accessor input**, so runtime changes propagate. Type the binding as `DebouncedPendingStateOptionsInput` when consumers want to swap delays from a `signal` or `computed`. Previously the value was read once at construction.
 
 ## ARIA behavior to preserve
 

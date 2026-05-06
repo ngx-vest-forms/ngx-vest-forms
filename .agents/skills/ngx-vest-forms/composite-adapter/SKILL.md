@@ -141,6 +141,8 @@ protected onRangeChange(range: DateRangeValue): void {
 }
 ```
 
+> v2.7.0: `setValueAtPath` is now array-safe. Writes like `setValueAtPath(next, 'addresses[0].street', 'x')` preserve sibling array entries instead of replacing the array with `{}`. Bracket notation chooses container shape from the segment (numeric → array, string → object). Prefer `structuredClone` over the deprecated `cloneDeep` (which warns once in dev and is removed in v3).
+
 ### 5. Per-field error slicing, formSubmitted tracking, and validationConfig
 
 The form body tracks submitted state and passes it to the adapter:

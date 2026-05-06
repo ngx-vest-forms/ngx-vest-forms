@@ -1,11 +1,11 @@
 ---
 name: ngx-vest-forms
-description: Routes general ngx-vest-forms requests to the right workflow. Use this whenever the user broadly asks about ngx-vest-forms, wants help with the library but the feature area is not obvious yet, asks for best practices, migration help, blur-driven draft auto-save, `fieldBlur`, or says things like “how should I build this with ngx-vest-forms?” even when they do not mention `validationConfig`, wrappers, child components, root-form validation, or field-level persistence explicitly.
+description: Routes general ngx-vest-forms requests to the right workflow. Use this whenever the user broadly asks about ngx-vest-forms, wants help with the library but the feature area is not obvious yet, asks for best practices, migration help, blur-driven draft auto-save, `fieldBlur`, swapping the equality function with `NGX_EQUALITY_FN`, or says things like "how should I build this with ngx-vest-forms?" even when they do not mention `validationConfig`, wrappers, child components, root-form validation, or field-level persistence explicitly.
 ---
 
 # ngx-vest-forms router skill
 
-Use this as the broad entry point for ngx-vest-forms questions.
+Use this as the broad entry point for ngx-vest-forms questions. Tracks library v2.7.x (Angular `>=19`, RxJS `>=7.8`, Vest `>=5.4.6`).
 
 ## Start with the invariant layer
 
@@ -18,8 +18,23 @@ Assume the repo instruction file already enforces the baseline guardrails:
 - use `vestFormsViewProviders` in nested child form components
 - use the form's `fieldBlur` output with `NgxFieldBlurEvent<T>` for blur-driven persistence, analytics, and field-level side effects
 - do not gate draft auto-save on `event.pending`
+- pair `validationConfig` with `[errorDisplayMode]="'on-blur'"` on dependent wrappers when a field becomes logically invalid as soon as its trigger changes but should stay visually quiet until its own blur — do **not** add `(blur)` handlers that call `triggerFormValidation()` to manufacture this timing
 
-Do not repeat those basics unless they are directly relevant to the user’s issue.
+Do not repeat those basics unless they are directly relevant to the user's issue.
+
+## v2.7.0 deltas to keep in mind
+
+Non-breaking but worth knowing when the user mentions related symptoms:
+
+- **`(fieldBlur)` is the supported blur primitive.** Emits a freshly validated snapshot of the blurred control's value plus the full form value. Handles nested control paths, dynamic groups, radios, and repeated leaf names. Cancels in-flight emissions on form reset. Route to `field-blur-events`.
+- **Pluggable equality** via the `NGX_EQUALITY_FN` injection token (`NgxEqualityFn = (a, b) => boolean`). Lets consumers swap the comparator used by `formValueChange` `distinctUntilChanged`, the form↔model two-way sync, and the `formState` signal's structural equality. Default is the library's `fastDeepEqual` with real cycle detection. Reach for it for bundle-size (e.g. `dequal/lite`), test instrumentation, or domain rules. See `docs/API-TOKENS.md`.
+- **Reactive `[pendingDebounce]`** on `<ngx-form-group-wrapper>` — now a signal-accessor input, runtime changes propagate. New public type: `DebouncedPendingStateOptionsInput`. Route to `custom-wrapper-patterns` when the user is wiring async pending UI.
+- **Lifecycle safety.** `form.directive` and `validate-root-form.directive` route async work through an internal `destroy-scheduler` tied to `DestroyRef`. No more `ViewDestroyedError` after destroy-mid-async-validation; async validators emit cleanly even when torn down. Symptom-only — no API change.
+- **`setValueAtPath` array-safe.** `setValueAtPath(form, 'addresses[0].street', 'x')` no longer overwrites a populated array with `{}`. Bracket notation now chooses container shape from the segment (numeric → array, string → object). Relevant to `composite-adapter` fan-out.
+- **`parseFieldPath` strict mode** logs a dev warning (`ngDevMode`-gated, tree-shakable) for malformed segments like `'a..b'`, `'.a'`, `'a.'`, instead of silently truncating. Production behavior is unchanged for previously valid paths.
+- **`validateShape` opaque-value fix.** `Date`, `Map`, `Set`, `RegExp`, `File`, `Blob` short-circuit recursion. Numeric-key detection switched to `^\d+$`, so `'123abc'` now flags as `TYPE_MISMATCH` instead of becoming array index 0.
+- **Touched syncs to dependents.** Blurring a trigger field propagates touched into its `validationConfig`-tracked dependents on the same tick — pair with `errorDisplayMode="on-blur"` on dependent wrappers for calm UX.
+- **`cloneDeep` is deprecated** and warns once in dev. Scheduled for removal in v3. Use `structuredClone`.
 
 ## Stay on the public API surface
 
@@ -127,7 +142,7 @@ Read `dynamic-form-behavior/SKILL.md` when the user is:
 
 - If the user mentions several of these at once, combine the relevant sub-skills instead of forcing a single lens.
 - Draft auto-save with quiet dependent errors usually combines `field-blur-events`, `validation-config-builder`, and `built-in-wrappers`.
-- If the issue is specifically about Vest semantics, also consult `vest.instructions.md`.
+- If the issue is specifically about Vest semantics, also consult `vest.instructions.md` (and the sibling `vestjs` agent skill if installed — see `docs/VESTJS-SKILL.md`).
 - If the issue is generic Angular rather than library-specific, prefer the Angular skill instead of overfitting ngx-vest-forms guidance.
 
 ## Core repo references

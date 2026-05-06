@@ -84,6 +84,16 @@ Use it proactively when the suite contains:
 
 Without it, ngx-vest-forms may leave stale validation results because Angular will not know which dependent fields to rerun.
 
+## Calm dependents pattern (v2.7+)
+
+When a dependent field becomes logically invalid as soon as its trigger changes, but should stay visually quiet until the dependent's own blur, **do not** add `(blur)` handlers calling `triggerFormValidation()`. Instead pair:
+
+- `validationConfig` (or the builder) — wires the dependency graph
+- `[errorDisplayMode]="'on-blur'"` on the dependent's `<ngx-control-wrapper>` — gates the visible message
+- the Vest suite — owns the actual rule
+
+In v2.7.0, blurring the trigger propagates touched into its `validationConfig`-tracked dependents on the same tick, so the dependent's error UI flips on the trigger's blur when its wrapper is in `on-blur` mode. No manual revalidation call needed.
+
 ## Interaction with blur-driven persistence
 
 If the user also wants draft auto-save or analytics on blur:
