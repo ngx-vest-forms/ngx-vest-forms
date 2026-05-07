@@ -65,15 +65,14 @@ export const travelFormShape: NgxDeepRequired<TravelFormModel> = {
 
 ### 2. Vest suite with type-safe field names
 
-Use `FormFieldName<T>` for compile-time path safety. Call `only(field)` unconditionally.
+Use `NgxVestSuite<T>` for a typed suite object. If you need typed field-path hints elsewhere, use `FormFieldName<T>` or `NgxFieldKey<T>` — but keep the suite callback model-only.
 
 ```typescript
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
-import { FormFieldName } from 'ngx-vest-forms';
+import { create, enforce, omitWhen, test } from 'vest';
+import { type NgxVestSuite } from 'ngx-vest-forms';
 
-export const travelValidationSuite = staticSuite(
-  (model: TravelFormModel, field?: FormFieldName<TravelFormModel>) => {
-    only(field);
+export const travelValidationSuite: NgxVestSuite<TravelFormModel> = create(
+  (model: TravelFormModel) => {
 
     test('departureDate', 'Departure date is required', () => {
       enforce(model.departureDate).isNotEmpty();
@@ -91,6 +90,12 @@ export const travelValidationSuite = staticSuite(
     });
   }
 );
+```
+
+When the caller needs field-scoped validation, do it at the call site:
+
+```typescript
+travelValidationSuite.only('returnDate').run(model);
 ```
 
 ### 3. Presentational adapter component with display mode gating

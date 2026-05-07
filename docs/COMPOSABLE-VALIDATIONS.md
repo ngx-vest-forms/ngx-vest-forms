@@ -1,5 +1,7 @@
 # Composable Validations
 
+> **Vest 6 Pattern:** All examples use the modern Vest 6 approach where suite callbacks take only the model, and field focus is handled at the call site. See [MIGRATION-v2.x-to-v3.0.0.md](./migration/MIGRATION-v2.x-to-v3.0.0.md) for details on upgrading from Vest 5.
+
 Compose validation suites with reusable sub-functions to keep your validation logic maintainable, testable, and DRY (Don't Repeat Yourself).
 
 ## Why Composable Validations?
@@ -42,7 +44,7 @@ export function addressValidations(
 Call your reusable functions from the main suite:
 
 ```typescript
-import { enforce, only, staticSuite } from 'vest';
+import { enforce, create } from 'vest';
 import { NgxVestSuite, NgxDeepPartial } from 'ngx-vest-forms';
 import { addressValidations } from './address.validations';
 
@@ -53,10 +55,8 @@ type PurchaseFormModel = NgxDeepPartial<{
   };
 }>;
 
-export const purchaseSuite: NgxVestSuite<PurchaseFormModel> = staticSuite(
-  (model, field?) => {
-    only(field);
-
+export const purchaseSuite: NgxVestSuite<PurchaseFormModel> = create(
+  (model) => {
     addressValidations(
       model.addresses?.billingAddress,
       'addresses.billingAddress'
@@ -74,12 +74,10 @@ export const purchaseSuite: NgxVestSuite<PurchaseFormModel> = staticSuite(
 Use `omitWhen` with composable validations for conditional logic:
 
 ```typescript
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, create, test } from 'vest';
 
-export const purchaseSuite: NgxVestSuite<PurchaseFormModel> = staticSuite(
-  (model, field?) => {
-    only(field);
-
+export const purchaseSuite: NgxVestSuite<PurchaseFormModel> = create(
+  (model) => {
     // Always validate billing address
     addressValidations(
       model.addresses?.billingAddress,
@@ -157,7 +155,7 @@ export function contactValidations(
 ### Example: Main suite composing multiple validations
 
 ```typescript
-import { staticSuite, only } from 'vest';
+import { create } from 'vest';
 import { NgxVestSuite, NgxDeepPartial } from 'ngx-vest-forms';
 import { addressValidations } from './address.validations';
 import { contactValidations } from './contact.validations';
@@ -170,16 +168,12 @@ type OrderFormModel = NgxDeepPartial<{
   payment: PaymentModel;
 }>;
 
-export const orderSuite: NgxVestSuite<OrderFormModel> = staticSuite(
-  (model, field?) => {
-    only(field);
-
-    contactValidations(model.contact, 'contact');
-    addressValidations(model.billing, 'billing');
-    addressValidations(model.shipping, 'shipping');
-    paymentValidations(model.payment, 'payment');
-  }
-);
+export const orderSuite: NgxVestSuite<OrderFormModel> = create((model) => {
+  contactValidations(model.contact, 'contact');
+  addressValidations(model.billing, 'billing');
+  addressValidations(model.shipping, 'shipping');
+  paymentValidations(model.payment, 'payment');
+});
 ```
 
 ## Advanced Pattern: Nested Composable Validations

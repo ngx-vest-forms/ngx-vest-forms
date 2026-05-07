@@ -2,7 +2,7 @@ import { JsonPipe } from '@angular/common';
 import { Component, computed, signal, viewChild } from '@angular/core';
 import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { create, enforce, omitWhen, test } from 'vest';
 import type { NgxDeepPartial } from '../../public-api';
 import { FormDirective } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
@@ -22,14 +22,9 @@ type OmitWhenFormModel = NgxDeepPartial<{
 
 /**
  * Validation suite demonstrating omitWhen with bidirectional dependencies.
- *
- * CRITICAL: Notice the unconditional `only(field)` call at the top.
- * This is required for PR #60's fix to work correctly.
  */
-const omitWhenValidationSuite: NgxVestSuite<OmitWhenFormModel> = staticSuite(
-  (model, field?) => {
-    only(field); // ✅ CORRECT: Unconditional call
-
+const omitWhenValidationSuite: NgxVestSuite<OmitWhenFormModel> = create(
+  (model) => {
     // Require onderbouwing ONLY when aantal has a value
     omitWhen(!model.berekendeAftrekVoorarrest?.aantal, () => {
       test(

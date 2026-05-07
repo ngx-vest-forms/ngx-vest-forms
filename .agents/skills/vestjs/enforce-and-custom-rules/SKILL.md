@@ -1,9 +1,9 @@
 ---
 name: enforce-and-custom-rules
-description: Helps developers design reusable Vest.js 5.4 `enforce` rules and custom validators. Use this whenever the user mentions `enforce.condition`, `enforce.extend`, `compose`, custom matchers, reusable domain rules, schema-like validation, `enforce.context()`, or asks how to type custom `enforce` rules in TypeScript.
+description: Helps developers design reusable Vest.js 6 `enforce` rules and custom validators. Use this whenever the user mentions `enforce.condition`, `enforce.extend`, `compose`, custom matchers, reusable domain rules, schema-like validation, `enforce.context()`, or asks how to type custom `enforce` rules in TypeScript.
 ---
 
-# Vest.js 5.4 enforce and custom-rule guidance
+# Vest.js 6 enforce and custom-rule guidance
 
 Use this skill when the question is about **reusable rule design**, not just individual `test(...)` blocks.
 
@@ -83,6 +83,6 @@ Start with `references/design-guide.md` when the user is unsure whether to build
 
 - `references/design-guide.md`
 - `../../../instructions/vest.instructions.md`
-- `https://vestjs.dev/docs/5.x/enforce/composing_enforce_rules`
-- `https://vestjs.dev/docs/5.x/enforce/creating_custom_rules`
-- `https://vestjs.dev/docs/5.x/typescript_support`
+- `https://vestjs.dev/docs/enforce/composing_enforce_rules`
+- `https://vestjs.dev/docs/enforce/creating_custom_rules`
+- `https://vestjs.dev/docs/typescript_support`

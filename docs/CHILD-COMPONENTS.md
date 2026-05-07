@@ -1,5 +1,7 @@
 # Child Form Components
 
+> **Vest 6 Architecture:** This guide shows how to split forms into child components while maintaining Vest 6 validation patterns. All examples use the modern suite callback pattern (model-only, call-site field focus).
+
 Split large forms into smaller, reusable child components while maintaining access to the parent form's validation context.
 
 ## Why Use Child Components?
@@ -88,7 +90,7 @@ export class AddressFormComponent {
 ```typescript
 import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgxVestForms, NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
-import { staticSuite, test, enforce, only } from 'vest';
+import { create, test, enforce } from 'vest';
 import { AddressFormComponent } from './address-form';
 
 type OrderFormModel = NgxDeepPartial<{
@@ -101,7 +103,12 @@ type OrderFormModel = NgxDeepPartial<{
   selector: 'ngx-order-form',
   imports: [NgxVestForms, AddressFormComponent],
   template: `
-    <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      (formValueChange)="formValue.set($event)"
+    >
       <label>Customer Name</label>
       <input name="customerName" [ngModel]="formValue().customerName" />
 
@@ -257,13 +264,11 @@ export class AddressFormComponent {
 - **Per-field errors** - Each `ngx-control-wrapper` handles its own field's errors
 - **Accessible** - Group wrapper doesn't stamp ARIA attributes on descendant controls
 
-````
-
 ## Nested Child Components
 
 Child components can contain other child components - all need `vestFormsViewProviders`:
 
-```typescript
+````typescript
 // Grandchild component
 @Component({
   selector: 'ngx-phone-input',
@@ -310,8 +315,6 @@ export class PhoneInputComponent {
 export class ContactFormComponent {
   readonly contact = input<ContactModel>();
 }
-````
-
 ## Conditional Child Components
 
 Child components work seamlessly with conditional rendering:
@@ -319,7 +322,12 @@ Child components work seamlessly with conditional rendering:
 ```typescript
 @Component({
   template: `
-    <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      (formValueChange)="formValue.set($event)"
+    >
       <label>
         <input
           type="checkbox"
@@ -347,31 +355,66 @@ export class CheckoutFormComponent {
   protected readonly formValue = signal<CheckoutFormModel>({});
   protected readonly suite = checkoutSuite;
 }
+````
+
+## Standalone helper inputs inside child components
+
+Sometimes a child component needs an auxiliary input that should **not** be registered in the parent form tree — for example, an "add phone number" input, search box, or temporary row editor.
+
+Use Angular's standalone `ngModel` mode for those controls:
+
+```typescript
+@Component({
+  selector: 'ngx-phone-manager',
+  imports: [NgxVestForms],
+  viewProviders: [vestFormsViewProviders],
+  template: `
+    <div [ngModelGroup]="groupName()">
+      <!-- Form-aware controls -->
+      <input name="primary" [ngModel]="phones()?.primary" />
+
+      <!-- Helper control: not part of parent form tree -->
+      <input
+        [ngModel]="draftPhone()"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="draftPhone.set($event)"
+        placeholder="Add another phone"
+      />
+    </div>
+  `,
+})
+export class PhoneManagerComponent {
+  readonly groupName = input.required<string>();
+  readonly phones = input<{ primary?: string }>();
+  readonly draftPhone = signal('');
+}
 ```
+
+Standalone helper inputs:
+
+- do **not** register with the parent `NgForm`
+- do **not** participate in validation or path resolution
+- are useful for local child-component UI state
 
 ## Validation with Child Components
 
 Validation suites can use composable validations for child component fields:
 
 ```typescript
-import { staticSuite, only } from 'vest';
+import { create, test, enforce } from 'vest';
 import { addressValidations } from './address.validations';
 
-export const orderSuite: NgxVestSuite<OrderFormModel> = staticSuite(
-  (model, field?) => {
-    only(field);
+export const orderSuite: NgxVestSuite<OrderFormModel> = create((model) => {
+  test('customerName', 'Customer name is required', () => {
+    enforce(model.customerName).isNotBlank();
+  });
 
-    test('customerName', 'Customer name is required', () => {
-      enforce(model.customerName).isNotBlank();
-    });
+  // Validate billing address fields
+  addressValidations(model.billingAddress, 'billingAddress');
 
-    // Validate billing address fields
-    addressValidations(model.billingAddress, 'billingAddress');
-
-    // Validate shipping address fields
-    addressValidations(model.shippingAddress, 'shippingAddress');
-  }
-);
+  // Validate shipping address fields
+  addressValidations(model.shippingAddress, 'shippingAddress');
+});
 ```
 
 ## Common Patterns
@@ -460,6 +503,7 @@ test('billingAddress.street', 'Street is required', () => {
 5. **Document inputs** - Make it clear what data structure the component expects
 6. **Use ChangeDetection.OnPush** - Better performance with signals
 7. **Test independently** - Child components should be testable in isolation
+8. **Use standalone `ngModel` for helper inputs** - Search/add-row fields should not be registered in the parent form tree
 
 ## When to Use Child Components
 

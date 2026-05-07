@@ -1,16 +1,16 @@
 ---
 name: async-and-warnings
-description: Helps developers write safe async and warning-based validations in Vest.js 5.4. Use this whenever the user mentions async tests, server checks, username/email availability, `AbortSignal`, stale requests, `warn()`, non-blocking guidance, `.done()`, pending state, or asks how to keep async validation responsive and correct.
+description: Helps developers write safe async and warning-based validations in Vest.js 6. Use this whenever the user mentions async tests, server checks, username/email availability, `AbortSignal`, stale requests, `warn()`, non-blocking guidance, `.done()`, pending state, or asks how to keep async validation responsive and correct.
 ---
 
-# Vest.js 5.4 async and warning guidance
+# Vest.js 6 async and warning guidance
 
 Use this skill when the suite needs **remote work, cancellation, pending state, or non-blocking warnings**.
 
 ## Core rules
 
 1. An async Vest test returns a promise or is declared `async`.
-2. In Vest 5.4, each async test receives an `AbortSignal` via the test context.
+2. In Vest 6, each async test receives an `AbortSignal` via the test context.
 3. Pass that `signal` into async work when supported.
 4. Guard expensive async checks behind prerequisite sync validation.
 5. Call `warn()` synchronously at the top of the test body.
@@ -77,6 +77,6 @@ When answering:
 ## References to consult when needed
 
 - `../../../instructions/vest.instructions.md`
-- `https://vestjs.dev/docs/5.x/writing_tests/async_tests`
-- `https://vestjs.dev/docs/5.x/writing_tests/warn_only_tests`
-- `https://vestjs.dev/docs/5.x/writing_your_suite/accessing_the_result`
+- `https://vestjs.dev/docs/writing_tests/async_tests`
+- `https://vestjs.dev/docs/writing_tests/warn_only_tests`
+- `https://vestjs.dev/docs/writing_your_suite/accessing_the_result`

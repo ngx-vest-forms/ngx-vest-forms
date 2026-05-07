@@ -1,18 +1,17 @@
 # Complete Example: User Form
 
-This guide shows a complete, working ngx-vest-forms implementation from start to finish.
+> **Vest 6 Example:** This guide demonstrates the modern Vest 6 pattern with model-only callbacks and call-site field focus. For Vest 5 patterns (v2.x), see the [v2.x-to-v3.0.0 migration guide](./migration/MIGRATION-v2.x-to-v3.0.0.md).
 
 ## Full Working Example
 
 ```typescript
 import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
-import { staticSuite, test, enforce, only } from 'vest';
+import { create, test, enforce } from 'vest';
 import {
   NgxVestForms,
   NgxDeepPartial,
   NgxDeepRequired,
-  NgxTypedVestSuite,
-  FormFieldName,
+  NgxVestSuite,
 } from 'ngx-vest-forms';
 
 // 1. Define your form model (always NgxDeepPartial)
@@ -30,11 +29,8 @@ const userFormShape: NgxDeepRequired<UserFormModel> = {
 };
 
 // 3. Create a Vest validation suite
-const userValidationSuite: NgxTypedVestSuite<UserFormModel> = staticSuite(
-  (model: UserFormModel, field?: FormFieldName<UserFormModel>) => {
-    // CRITICAL: Always call only() unconditionally (only(undefined) is safe)
-    only(field); // When field is undefined, all tests run
-
+const userValidationSuite: NgxVestSuite<UserFormModel> = create(
+  (model: UserFormModel) => {
     test('firstName', 'First name is required', () => {
       enforce(model.firstName).isNotBlank();
     });
@@ -48,6 +44,7 @@ const userValidationSuite: NgxTypedVestSuite<UserFormModel> = staticSuite(
     });
   }
 );
+// Call site: userValidationSuite.only('firstName').run(model) for field-level validation
 
 // 4. Create the component
 @Component({
@@ -59,6 +56,7 @@ const userValidationSuite: NgxTypedVestSuite<UserFormModel> = staticSuite(
       ngxVestForm
       [suite]="suite"
       [formShape]="shape"
+      [formValue]="formValue()"
       (formValueChange)="formValue.set($event)"
       (ngSubmit)="save()"
     >
@@ -110,7 +108,10 @@ export class UserFormComponent {
 - ✅ **Error display** with built-in `ngx-control-wrapper`
 - ✅ **Runtime shape validation** - Catches typos in development mode
 - ✅ **Unidirectional data flow** - Using `[ngModel]` (not `[(ngModel)]`)
-- ✅ **Performance optimized** - Using `only(field)` for field-level validation
+- ✅ **Performance optimized** — Field-level validation via `suite.only(field).run(model)` at call site
+- ✅ **Canonical suite typing** — Uses `NgxVestSuite<T>` in new code
+
+`NgxTypedVestSuite<T>` still works, but it is a deprecated alias of `NgxVestSuite<T>` and should be avoided in new examples.
 
 ## Key Points to Remember
 
@@ -138,27 +139,31 @@ const myFormShape: NgxDeepRequired<MyFormModel> = {
 
 This enables shape validation in development mode to catch typos in `name` attributes.
 
-### 3. Always Call `only()` Unconditionally
+### 3. Suite Callbacks Take Only the Model
 
-The `only()` function from Vest.js optimizes validation by running only the tests for a specific field:
+In Vest 6, suite callbacks take only the model parameter. Field focus is handled at the call site:
 
 ```typescript
-const suite = staticSuite((model, field?) => {
-  only(field); // ✅ CORRECT - Call unconditionally at the top
-
+const suite = create((model) => {
   test('firstName', 'Required', () => {
     enforce(model.firstName).isNotBlank();
   });
 });
+
+// Field-level validation at the call site:
+suite.only('firstName').run(model); // Validate only 'firstName'
+suite.run(model); // Validate all fields
+suite.reset(); // Reset accumulated state
 ```
 
-**Never** call `only()` conditionally:
+**Never** use the old Vest 5 pattern with `field?` parameter and `only()` inside the callback:
 
 ```typescript
-// ❌ WRONG - Don't call only() conditionally
-if (field) {
+// ❌ WRONG — old Vest 5 pattern
+const suite = create((model, field?) => {
   only(field);
-}
+  ...
+});
 ```
 
 ### 4. Use `[ngModel]` Not `[(ngModel)]`
@@ -193,6 +198,96 @@ The `name` attribute must exactly match the property path in your `[ngModel]` bi
 // ❌ WRONG - name doesn't match property path
 <input name="first_name" [ngModel]="formValue().firstName" />
 ```
+
+## Optional: Derived Feedback Signals for Presenter Components
+
+If your form body passes state into a presentational component (for example, a
+sidebar summary, sticky footer, or debug panel), derive those signals once with
+`createFormFeedbackSignals()` instead of repeating several `computed()` wrappers.
+
+You do **not** need this helper to use ngx-vest-forms. Direct derivation from
+`this.vestForm()` is still a first-class option and is often clearer when you
+only need one signal.
+
+```typescript
+import { Component, signal, viewChild } from '@angular/core';
+import {
+  create,
+  test,
+  enforce,
+} from 'vest';
+import {
+  createFormFeedbackSignals,
+  FormDirective,
+  NgxDeepPartial,
+  NgxVestForms,
+  NgxVestSuite,
+} from 'ngx-vest-forms';
+
+type UserFormModel = NgxDeepPartial<{
+  firstName: string;
+  email: string;
+}>;
+
+const suite: NgxVestSuite<UserFormModel> = create((model) => {
+  test('firstName', 'First name is required', () => {
+    enforce(model.firstName).isNotBlank();
+  });
+
+  test('email', 'Email is required', () => {
+    enforce(model.email).isNotBlank();
+  });
+});
+
+@Component({
+  imports: [NgxVestForms],
+  template: `
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      (formValueChange)="formValue.set($event)"
+    >
+      <input name="firstName" [ngModel]="formValue().firstName" />
+      <input name="email" [ngModel]="formValue().email" />
+    </form>
+
+    <aside>
+      <p>Valid: {{ formState().valid ? 'yes' : 'no' }}</p>
+      <p>Pending: {{ pending() ? 'yes' : 'no' }}</p>
+      <pre>{{ warnings() | json }}</pre>
+      <pre>{{ validatedFields() | json }}</pre>
+    </aside>
+  `,
+})
+export class UserFormComponent {
+  protected readonly formValue = signal<UserFormModel>({});
+  protected readonly suite = suite;
+  protected readonly vestForm = viewChild(FormDirective<UserFormModel>);
+
+  private readonly feedback = createFormFeedbackSignals(this.vestForm);
+
+  protected readonly formState = this.feedback.formState;
+  protected readonly warnings = this.feedback.warnings;
+  protected readonly validatedFields = this.feedback.validatedFields;
+  protected readonly pending = this.feedback.pending;
+}
+```
+
+Why is this exposed as a **function**? Because it only packages signal
+composition around the `viewChild()` result you already have. No extra
+directive, provider, or lifecycle abstraction is necessary.
+
+If you only need one derived value, direct derivation is usually simpler:
+
+```typescript
+protected readonly formState = computed(
+  () => this.vestForm()?.formState() ?? createEmptyFormState()
+);
+```
+
+Use `fieldWarningsToRecord()` when you only need the warnings conversion, and
+`createEmptyFormState()` when you only need a safe fallback packaged state.
 
 ## Next Steps
 

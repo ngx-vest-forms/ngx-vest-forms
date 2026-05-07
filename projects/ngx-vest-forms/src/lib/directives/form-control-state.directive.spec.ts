@@ -1,9 +1,10 @@
 import { Component, signal, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, NgForm } from '@angular/forms';
-import { enforce, only, staticSuite, test as vestTest, warn } from 'vest';
+import { create, enforce, test as vestTest, warn } from 'vest';
 import { NgxVestForms } from '../exports';
 import { FormControlStateDirective } from './form-control-state.directive';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 @Component({
   imports: [FormsModule, FormControlStateDirective],
@@ -43,15 +44,12 @@ class TestHostComponent {
 })
 class WarningOnlyHostComponent {
   readonly formValue = signal<{ test?: string }>({});
-  readonly suite = staticSuite(
-    (model: { test?: string } = {}, field?: string) => {
-      only(field);
-      vestTest('test', 'Test warning', () => {
-        warn();
-        enforce(model.test ?? '').longerThan(3);
-      });
-    }
-  );
+  readonly suite = create((model: { test?: string } = {}) => {
+    vestTest('test', 'Test warning', () => {
+      warn();
+      enforce(model.test ?? '').longerThan(3);
+    });
+  });
 }
 
 @Component({

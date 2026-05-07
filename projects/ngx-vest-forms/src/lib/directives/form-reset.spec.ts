@@ -68,7 +68,7 @@
 import { Component, signal, viewChild } from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { enforce, only, staticSuite, test } from 'vest';
+import { create, enforce, test } from 'vest';
 import { describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
 import { DeepPartial } from '../utils/deep-partial';
@@ -120,8 +120,7 @@ describe('FormDirective - Reset Functionality', () => {
           gender: 'male',
         });
 
-        suite = staticSuite((model: any, field?: string) => {
-          only(field);
+        suite = create((model: any) => {
           test('firstName', 'First name is required', () => {
             enforce(model.firstName).isNotBlank();
           });
@@ -211,8 +210,7 @@ describe('FormDirective - Reset Functionality', () => {
 
         clickCount = signal(0);
 
-        suite = staticSuite((model: any, field?: string) => {
-          only(field);
+        suite = create((model: any) => {
           test('field1', 'Required', () => {
             enforce(model.field1).isNotBlank();
           });
@@ -307,8 +305,7 @@ describe('FormDirective - Reset Functionality', () => {
           passwords: { password: 'pass123', confirmPassword: 'pass123' },
         });
 
-        suite = staticSuite((model: any, field?: string) => {
-          only(field);
+        suite = create((model: any) => {
           test('topLevel', 'Required', () => {
             enforce(model.topLevel).isNotBlank();
           });
@@ -396,8 +393,7 @@ describe('FormDirective - Reset Functionality', () => {
           lastName: 'Doe',
         });
 
-        suite = staticSuite((model: any, field?: string) => {
-          only(field);
+        suite = create((model: any) => {
           test('firstName', 'Required', () => {
             enforce(model.firstName).isNotBlank();
           });
@@ -490,8 +486,7 @@ describe('FormDirective - Reset Functionality', () => {
           }>
         >({});
 
-        suite = staticSuite((model: any, field?: string) => {
-          only(field);
+        suite = create((model: any) => {
           test('firstName', 'First name is required', () => {
             enforce(model.firstName).isNotBlank();
           });
@@ -599,8 +594,7 @@ describe('FormDirective - Reset Functionality', () => {
         });
         errors = signal<Record<string, string[]>>({});
 
-        suite = staticSuite((model: any, field?: string) => {
-          only(field);
+        suite = create((model: any) => {
           test('email', 'Valid email required', () => {
             enforce(model.email).matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
           });
@@ -666,8 +660,7 @@ describe('FormDirective - Reset Functionality', () => {
         formValue = signal<DeepPartial<{ testField?: string }>>({});
         resetCount = signal(0);
 
-        suite = staticSuite((model: any, field?: string) => {
-          only(field);
+        suite = create((model: any) => {
           test('testField', 'Required', () => {
             enforce(model.testField).isNotBlank();
           });
@@ -739,8 +732,7 @@ describe('FormDirective - Reset Functionality', () => {
           firstName: 'John',
         });
 
-        suite = staticSuite((model: any, field?: string) => {
-          only(field);
+        suite = create((model: any) => {
           test('firstName', 'Required', () => {
             enforce(model.firstName).isNotBlank();
           });

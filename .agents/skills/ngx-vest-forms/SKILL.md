@@ -5,7 +5,7 @@ description: Routes general ngx-vest-forms requests to the right workflow. Use t
 
 # ngx-vest-forms router skill
 
-Use this as the broad entry point for ngx-vest-forms questions. Tracks library v2.7.x (Angular `>=19`, RxJS `>=7.8`, Vest `>=5.4.6`).
+Use this as the broad entry point for ngx-vest-forms questions. Track the current branch baseline: v3.x-era guidance on Angular 21+, RxJS ~7.8, and Vest 6.x.
 
 ## Start with the invariant layer
 
@@ -14,7 +14,7 @@ Assume the repo instruction file already enforces the baseline guardrails:
 - use `[ngModel]`, not `[(ngModel)]`
 - keep `name` aligned with the bound path
 - use optional chaining for partial models
-- call `only(field)` unconditionally
+- handle field-focused validation at the call site via `suite.only(field).run(model)` when needed
 - use `vestFormsViewProviders` in nested child form components
 - use the form's `fieldBlur` output with `NgxFieldBlurEvent<T>` for blur-driven persistence, analytics, and field-level side effects
 - do not gate draft auto-save on `event.pending`
@@ -22,7 +22,7 @@ Assume the repo instruction file already enforces the baseline guardrails:
 
 Do not repeat those basics unless they are directly relevant to the user's issue.
 
-## v2.7.0 deltas to keep in mind
+## Current branch deltas to keep in mind
 
 Non-breaking but worth knowing when the user mentions related symptoms:
 
@@ -34,7 +34,7 @@ Non-breaking but worth knowing when the user mentions related symptoms:
 - **`parseFieldPath` strict mode** logs a dev warning (`ngDevMode`-gated, tree-shakable) for malformed segments like `'a..b'`, `'.a'`, `'a.'`, instead of silently truncating. Production behavior is unchanged for previously valid paths.
 - **`validateShape` opaque-value fix.** `Date`, `Map`, `Set`, `RegExp`, `File`, `Blob` short-circuit recursion. Numeric-key detection switched to `^\d+$`, so `'123abc'` now flags as `TYPE_MISMATCH` instead of becoming array index 0.
 - **Touched syncs to dependents.** Blurring a trigger field propagates touched into its `validationConfig`-tracked dependents on the same tick — pair with `errorDisplayMode="on-blur"` on dependent wrappers for calm UX.
-- **`cloneDeep` is deprecated** and warns once in dev. Scheduled for removal in v3. Use `structuredClone`.
+- **`cloneDeep` is deprecated** and warns once in dev. Prefer `structuredClone` in new guidance.
 
 ## Stay on the public API surface
 

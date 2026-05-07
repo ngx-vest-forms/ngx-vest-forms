@@ -1,14 +1,12 @@
-import { FormFieldName } from 'ngx-vest-forms';
-import { enforce, omitWhen, only, staticSuite, test, warn } from 'vest';
+import { type NgxVestSuite } from 'ngx-vest-forms';
+import { create, enforce, omitWhen, test, warn } from 'vest';
 import { TravelFormModel } from '../../models/travel-form.model';
 
 const MIN_DAYS_ADVANCE = 3;
 const MS_PER_DAY = 86_400_000;
 
-export const travelValidationSuite = staticSuite(
-  (model: TravelFormModel, field?: FormFieldName<TravelFormModel>) => {
-    only(field);
-
+export const travelValidationSuite: NgxVestSuite<TravelFormModel> = create(
+  (model: TravelFormModel) => {
     test('departureDate', 'Departure date is required', () => {
       enforce(model.departureDate).isNotEmpty();
     });

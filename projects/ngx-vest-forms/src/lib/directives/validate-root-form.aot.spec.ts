@@ -1,6 +1,6 @@
 import { Component, signal, Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { enforce, only, staticSuite, test } from 'vest';
+import { create, enforce, test } from 'vest';
 import { afterEach, describe, expect, it } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import { NgxVestForms } from '../exports';
@@ -13,51 +13,43 @@ type PasswordFormModel = {
   age?: number;
 };
 
-const passwordSuite = staticSuite(
-  (model: PasswordFormModel = {}, field?: string) => {
-    only(field);
+const passwordSuite = create((model: PasswordFormModel = {}) => {
+  test('password', 'Password is required', () => {
+    enforce(model.password).isNotBlank();
+  });
 
-    test('password', 'Password is required', () => {
-      enforce(model.password).isNotBlank();
-    });
+  test('confirmPassword', 'Confirm password is required', () => {
+    enforce(model.confirmPassword).isNotBlank();
+  });
 
-    test('confirmPassword', 'Confirm password is required', () => {
-      enforce(model.confirmPassword).isNotBlank();
-    });
+  test(ROOT_FORM, 'Passwords must match', () => {
+    if (model.password && model.confirmPassword) {
+      enforce(model.confirmPassword).equals(model.password);
+    }
+  });
+});
 
-    test(ROOT_FORM, 'Passwords must match', () => {
-      if (model.password && model.confirmPassword) {
-        enforce(model.confirmPassword).equals(model.password);
-      }
-    });
-  }
-);
+const brechtSuite = create((model: PasswordFormModel = {}) => {
+  test('firstName', 'First name is required', () => {
+    enforce(model.firstName).isNotBlank();
+  });
 
-const brechtSuite = staticSuite(
-  (model: PasswordFormModel = {}, field?: string) => {
-    only(field);
+  test('lastName', 'Last name is required', () => {
+    enforce(model.lastName).isNotBlank();
+  });
 
-    test('firstName', 'First name is required', () => {
-      enforce(model.firstName).isNotBlank();
-    });
+  test('age', 'Age is required', () => {
+    enforce(String(model.age ?? '')).isNotBlank();
+  });
 
-    test('lastName', 'Last name is required', () => {
-      enforce(model.lastName).isNotBlank();
-    });
-
-    test('age', 'Age is required', () => {
-      enforce(model.age).isNotBlank();
-    });
-
-    test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
-      enforce(
-        model.firstName === 'Brecht' &&
-          model.lastName === 'Billiet' &&
-          model.age === 30
-      ).isFalsy();
-    });
-  }
-);
+  test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
+    enforce(
+      model.firstName === 'Brecht' &&
+        model.lastName === 'Billiet' &&
+        model.age === 30
+    ).isFalsy();
+  });
+});
 
 async function compileStandaloneComponent(
   component: Type<unknown>

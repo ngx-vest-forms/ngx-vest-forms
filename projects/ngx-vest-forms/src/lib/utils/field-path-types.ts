@@ -156,10 +156,8 @@ export type ValidationConfigMap<T> = Partial<
  *   user: { name: string; }
  * }>;
  *
- * export const suite = staticSuite(
- *   (data: FormModel, field?: FormFieldName<FormModel>) => {
- *     only(field);
- *
+ * export const suite = create(
+ *   (data: FormModel) => {
  *     /// ✅ Autocomplete works
  *     test('email', 'Required', () => {
  *       enforce(data.email).isNotBlank();

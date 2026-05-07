@@ -2,7 +2,7 @@ import { JsonPipe } from '@angular/common';
 import { Component, signal, viewChild } from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { enforce, only, staticSuite, test as vestTest } from 'vest';
+import { create, enforce, test as vestTest } from 'vest';
 import { describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
 import { FormDirective } from './form.directive';
@@ -14,18 +14,14 @@ type AddressFormModel = {
   };
 };
 
-const addressFormSuite = staticSuite(
-  (data: Partial<AddressFormModel> = {}, field?: string) => {
-    only(field); // ✅ Call unconditionally
-
-    vestTest('address.street', 'Street is required', () => {
-      enforce(data.address?.street).isNotEmpty();
-    });
-    vestTest('address.city', 'City is required', () => {
-      enforce(data.address?.city).isNotEmpty();
-    });
-  }
-);
+const addressFormSuite = create((data: Partial<AddressFormModel> = {}) => {
+  vestTest('address.street', 'Street is required', () => {
+    enforce(data.address?.street).isNotEmpty();
+  });
+  vestTest('address.city', 'City is required', () => {
+    enforce(data.address?.city).isNotEmpty();
+  });
+});
 
 @Component({
   imports: [NgxVestForms, JsonPipe],

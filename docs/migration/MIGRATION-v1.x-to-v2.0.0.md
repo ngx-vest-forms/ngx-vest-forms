@@ -1,5 +1,7 @@
 # Migration Guide: v1.x → v2.0.0
 
+> **⚠️ NOTE (Vest 6 Update):** This guide documents migration to v2.x, which used **Vest.js 5.x**. If you're upgrading to **v3.0.0+ with Vest.js 6.x**, see [MIGRATION-v2.x-to-v3.0.0.md](./MIGRATION-v2.x-to-v3.0.0.md) for the field-focus pattern change (`only()` now called at the call site, not in the suite callback).
+
 This guide covers migration from v1.x (mostly v1.4) to v2.0.0, which includes critical bug fixes, type-safe APIs, and accessibility enhancements.
 
 ## Overview of Changes
@@ -45,9 +47,11 @@ These remain non-breaking in patch/minor releases.
 
 ## Detailed Breaking Changes
 
-### 1. Unconditional `only()` Pattern Required (CRITICAL)
+### 1. Unconditional `only()` Pattern (v2.x with Vest 5)
 
-**Status:** ⚠️ **BREAKING CHANGE** - Code changes required
+> **Note for Vest 6 Users (v3.0.0+):** This pattern applies to v2.x using **Vest.js 5.x**. If upgrading to **v3.0.0+ with Vest.js 6.x**, the pattern has changed significantly — field focus is now handled **at the call site** via `suite.only(field).run(model)`, not inside the suite callback. See [MIGRATION-v2.x-to-v3.0.0.md](./MIGRATION-v2.x-to-v3.0.0.md) for details.
+
+**Status:** ⚠️ **BREAKING CHANGE** - Code changes required (Vest 5 only)
 
 **What Changed:**
 
@@ -164,17 +168,28 @@ const debounce = VALIDATION_CONFIG_DEBOUNCE_TIME; // 100ms
 
 ```typescript
 // ✅ Use injection token
-import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
+import {
+  NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+  NGX_VALIDATION_DEBOUNCE_PRESETS,
+} from 'ngx-vest-forms';
 
 // Global configuration (ngx-level)
 export const appConfig: ApplicationConfig = {
-  providers: [{ provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 100 }],
+  providers: [
+    {
+      provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+      useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.default,
+    },
+  ],
 };
 
 // Component-level override
 @Component({
   providers: [
-    { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 0 }, // Instant validation
+    {
+      provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+      useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.immediate,
+    }, // Instant validation
   ],
 })
 export class MyFormComponent {}
@@ -219,7 +234,12 @@ import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
 ```typescript
 // Test environment - disable debouncing for synchronous tests
 TestBed.configureTestingModule({
-  providers: [{ provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 0 }],
+  providers: [
+    {
+      provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+      useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.immediate,
+    },
+  ],
 });
 ```
 
@@ -550,12 +570,25 @@ function itemValidations(model: FormModel, itemIndex: number) {
 **Safe state management with utilities:**
 
 ```typescript
-import { NgxFormState, createEmptyFormState } from 'ngx-vest-forms';
+import {
+  createEmptyFormState,
+  createFormFeedbackSignals,
+  type FormDirective,
+  type NgxFormState,
+} from 'ngx-vest-forms';
 
-// Safe fallback for parent components
+// Minimal fallback when you only need packaged form state
 protected readonly formState = computed(
   () => this.childForm()?.vestForm?.formState() ?? createEmptyFormState()
 );
+
+// Preferred boilerplate reducer when a presenter needs multiple feedback signals
+protected readonly vestForm = viewChild(FormDirective<MyFormModel>);
+
+protected readonly feedback = createFormFeedbackSignals(this.vestForm);
+protected readonly warnings = this.feedback.warnings;
+protected readonly validatedFields = this.feedback.validatedFields;
+protected readonly pending = this.feedback.pending;
 
 // NgxFormState<T> structure:
 // {
@@ -564,6 +597,11 @@ protected readonly formState = computed(
 //   value: T | null;
 // }
 ```
+
+Use `createEmptyFormState()` when you only need a safe fallback value. Use
+`createFormFeedbackSignals()` when your component would otherwise repeat manual
+`computed()` wrappers for packaged state, warnings, validated field paths, and
+pending status.
 
 ### Field Clearing Utilities
 
@@ -937,7 +975,12 @@ expect(errors).toContain('error message');
 
 ```typescript
 TestBed.configureTestingModule({
-  providers: [{ provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 0 }],
+  providers: [
+    {
+      provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+      useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.immediate,
+    },
+  ],
 });
 ```
 

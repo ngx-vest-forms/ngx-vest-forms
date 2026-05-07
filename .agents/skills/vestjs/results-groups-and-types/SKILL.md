@@ -1,9 +1,9 @@
 ---
 name: results-groups-and-types
-description: Helps developers inspect Vest.js 5.4 results and structure larger typed suites. Use this whenever the user mentions `isValid`, `hasErrors`, `getErrors`, `getWarnings`, `isPending`, `isTested`, `group`, `each`, execution `mode`, multi-step forms, dynamic collections, or asks how to type suites and result APIs in TypeScript.
+description: Helps developers inspect Vest.js 6 results and structure larger typed suites. Use this whenever the user mentions `isValid`, `hasErrors`, `getErrors`, `getWarnings`, `isPending`, `isTested`, `group`, `each`, execution `mode`, multi-step forms, dynamic collections, or asks how to type suites and result APIs in TypeScript.
 ---
 
-# Vest.js 5.4 results, groups, and type guidance
+# Vest.js 6 results, groups, and type guidance
 
 Use this skill when the question is about **reading suite state, organizing larger suites, or adding type safety**.
 
@@ -11,7 +11,7 @@ Use this skill when the question is about **reading suite state, organizing larg
 
 Vest exposes the same suite state in three equivalent ways:
 
-1. the immediate result object returned by `suite(...)`
+1. the immediate result object returned by `suite.run(model)` (or `suite.only(field).run(model)` for focused runs)
 2. methods called directly on the suite
 3. `suite.get()`
 
@@ -30,7 +30,7 @@ If the user only wants to know whether a field currently has problems, prefer `h
 
 ## Execution modes
 
-Vest 5.4 supports three execution modes:
+Vest 6 supports three execution modes:
 
 - `Modes.EAGER` — default; stop after the first failure for a field
 - `Modes.ALL` — collect all failures for a field
@@ -62,7 +62,7 @@ Important rule: provide a **stable key** to each dynamic test when ordering or m
 
 ## TypeScript guidance
 
-Vest 5.4 supports typed suites through `create<FieldName, GroupName, Callback>(...)`.
+Vest 6 supports typed suites through `create(...)` and typed result access on the returned suite object.
 
 Use typed suites when:
 
@@ -70,7 +70,7 @@ Use typed suites when:
 - result access should reject impossible field names
 - group names should stay constrained
 
-If the user wants typed runtime helpers like `only`, `group`, or `test`, destructure them from the typed suite so they inherit the suite’s type information.
+If the user wants typed runtime helpers like `group` or `test`, keep the suite typed and let the suite-object methods (`run`, `only`, `focus`, `get`) carry the field/group information.
 
 ## Pitfalls to fix immediately
 
@@ -78,8 +78,8 @@ If the user wants typed runtime helpers like `only`, `group`, or `test`, destruc
 - using `getErrors()` when `hasErrors()` would be simpler and less fragile
 - naming groups even though the user never needs group-level results
 - forgetting stable keys in `each(...)`
-- claiming only `EAGER` and `ALL` exist in Vest 5.4 when `ONE` also exists
-- typing result access but leaving runtime helper calls untyped when the suite can provide them
+- claiming only `EAGER` and `ALL` exist when `ONE` also exists
+- teaching direct callable suite execution like `suite(model, field)` instead of `run()`/`only(...).run()`
 
 ## Output style
 
@@ -92,9 +92,9 @@ When answering:
 ## References to consult when needed
 
 - `../../../instructions/vest.instructions.md`
-- `https://vestjs.dev/docs/5.x/writing_your_suite/accessing_the_result`
-- `https://vestjs.dev/docs/5.x/writing_your_suite/execution_modes`
-- `https://vestjs.dev/docs/5.x/writing_tests/advanced_test_features/grouping_tests`
-- `https://vestjs.dev/docs/5.x/writing_tests/advanced_test_features/dynamic_tests`
-- `https://vestjs.dev/docs/5.x/typescript_support`
-- `https://vestjs.dev/docs/5.x/api_reference`
+- `https://vestjs.dev/docs/writing_your_suite/accessing_the_result`
+- `https://vestjs.dev/docs/writing_your_suite/execution_modes`
+- `https://vestjs.dev/docs/writing_tests/advanced_test_features/grouping_tests`
+- `https://vestjs.dev/docs/writing_tests/advanced_test_features/dynamic_tests`
+- `https://vestjs.dev/docs/typescript_support`
+- `https://vestjs.dev/docs/api_reference`

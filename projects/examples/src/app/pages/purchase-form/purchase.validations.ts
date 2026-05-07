@@ -1,6 +1,7 @@
-import { FormFieldName, NgxTypedVestSuite, ROOT_FORM } from 'ngx-vest-forms';
+import { NgxVestSuite, ROOT_FORM } from 'ngx-vest-forms';
 import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
-import { enforce, omitWhen, only, staticSuite, test, warn } from 'vest';
+import { create, enforce, omitWhen, test, warn } from 'vest';
+import { memo } from 'vest/memo';
 import { PurchaseFormModel } from '../../models/purchase-form.model';
 import { addressValidations } from '../../shared/validations/address.validations';
 import { phonenumberValidations } from '../../shared/validations/phonenumber.validations';
@@ -8,11 +9,9 @@ import { SwapiService } from './swapi.service';
 
 export const createPurchaseValidationSuite = (
   swapiService: SwapiService
-): NgxTypedVestSuite<PurchaseFormModel> => {
-  return staticSuite(
-    (model: PurchaseFormModel, field?: FormFieldName<PurchaseFormModel>) => {
-      only(field);
-
+): NgxVestSuite<PurchaseFormModel> => {
+  const suite: NgxVestSuite<PurchaseFormModel> = create(
+    (model: PurchaseFormModel) => {
       test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
         const ageValue = Number(model.age);
         enforce(
@@ -23,16 +22,22 @@ export const createPurchaseValidationSuite = (
       });
 
       omitWhen(!model.userId || (model.userId as string).trim() === '', () => {
-        test('userId', 'userId is already taken', async ({ signal }) => {
-          const exists = await lastValueFrom(
-            swapiService
-              .userIdExists(model.userId as string)
-              .pipe(takeUntil(fromEvent(signal, 'abort')))
-          );
-          if (exists) {
-            return Promise.reject();
-          }
-        });
+        memo(
+          () => {
+            test('userId', 'userId is already taken', async ({ signal }) => {
+              const exists = await lastValueFrom(
+                swapiService
+                  .userIdExists(model.userId as string)
+                  .pipe(takeUntil(fromEvent(signal, 'abort')))
+              );
+
+              if (exists) {
+                return Promise.reject();
+              }
+            });
+          },
+          [model.userId]
+        );
       });
 
       test('firstName', 'First name is required', () => {
@@ -45,7 +50,8 @@ export const createPurchaseValidationSuite = (
         enforce(model.birthDate).isNotEmpty();
       });
       test('age', 'Age is required', () => {
-        enforce(model.age).isNotBlank();
+        // Vest 6: isNotBlank is typed for string; form inputs are strings at runtime
+        enforce(String(model.age ?? '')).isNotBlank();
       });
       omitWhen((model.age || 0) >= 18, () => {
         test('emergencyContact', 'Emergency contact is required', () => {
@@ -68,7 +74,8 @@ export const createPurchaseValidationSuite = (
         enforce(model.productId).isNotBlank();
       });
       test('quantity', 'Quantity is required', () => {
-        enforce(model.quantity).isNotBlank();
+        // Vest 6: isNotBlank is typed for string; form inputs are strings at runtime
+        enforce(String(model.quantity ?? '')).isNotBlank();
       });
       test('quantity', 'Quantity must be at least 1', () => {
         enforce(model.quantity).greaterThan(0);
@@ -109,7 +116,7 @@ export const createPurchaseValidationSuite = (
           'passwords.password',
           'Password should be at least 12 characters for better security',
           () => {
-            warn(); // Mark as non-blocking warning
+            warn();
             enforce(model.passwords?.password).longerThanOrEquals(12);
           }
         );
@@ -118,7 +125,7 @@ export const createPurchaseValidationSuite = (
           'passwords.password',
           'Consider using a mix of uppercase, lowercase, numbers, and symbols',
           () => {
-            warn(); // Mark as non-blocking warning
+            warn();
             const password = model.passwords?.password || '';
             const hasUpper = /[A-Z]/.test(password);
             const hasLower = /[a-z]/.test(password);
@@ -150,6 +157,8 @@ export const createPurchaseValidationSuite = (
       phonenumberValidations(model?.phonenumbers, 'phonenumbers');
     }
   );
+
+  return suite;
 };
 
 export const purchaseValidationErrorRulesByField: Record<string, string[]> = {

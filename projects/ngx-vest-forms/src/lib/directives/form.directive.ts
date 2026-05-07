@@ -53,7 +53,7 @@ import {
 } from 'rxjs';
 import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
-import { DeepRequired } from '../utils/deep-required';
+import { DeepRequired, type NgxDeepRequired } from '../utils/deep-required';
 import { NGX_EQUALITY_FN } from '../tokens/equality.token';
 import {
   scheduleMicrotask,
@@ -77,6 +77,7 @@ import {
   setValueAtPath,
 } from '../utils/form-utils';
 import { validateShape } from '../utils/shape-validation';
+import type { NgxSuiteRunResult } from '../utils/validation-suite';
 import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
 import {
   getFormSubmittedSignal,
@@ -176,9 +177,9 @@ export type NgxFieldBlurEvent<T = unknown> = {
 })
 export class FormDirective<T extends Record<string, unknown>> {
   readonly ngForm = inject(NgForm, { self: true });
-  private readonly elementRef = inject(ElementRef<HTMLFormElement>);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly elementRef = inject<ElementRef<HTMLFormElement>>(ElementRef);
   private readonly configDebounceTime = inject(
     NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN
   );
@@ -244,6 +245,17 @@ export class FormDirective<T extends Record<string, unknown>> {
   );
 
   /**
+   * Reactive status helpers for template consumption without reaching into `ngForm.form`.
+   * These stay aligned with Angular's form status lifecycle, including async validation.
+   *
+   * @publicApi
+   */
+  readonly status = computed(() => this.#statusSignal());
+  readonly pending = computed(() => this.status() === 'PENDING');
+  readonly valid = computed(() => this.status() === 'VALID');
+  readonly invalid = computed(() => this.status() === 'INVALID');
+
+  /**
    * Reactive counter incremented on any focusout within the form.
    * This guarantees recomputation for every blur/tab interaction,
    * even when the form's aggregate touched flag is already true.
@@ -264,6 +276,14 @@ export class FormDirective<T extends Record<string, unknown>> {
     this.#statusSignal();
     return this.#collectTouchedPaths(this.ngForm.form, this.ngForm.submitted);
   });
+
+  /**
+   * Alias for `touchedFieldPaths` using wording that better matches validation UIs.
+   * Returns the field paths that have been validated for display purposes.
+   *
+   * @publicApi
+   */
+  readonly validatedFields = this.touchedFieldPaths;
 
   /**
    * Computed signal for form state with validity and errors.
@@ -308,9 +328,7 @@ export class FormDirective<T extends Record<string, unknown>> {
 
   /**
    * Static vest suite that will be used to feed our angular validators.
-   * Accepts both NgxVestSuite and NgxTypedVestSuite through compatible type signatures.
-   * NgxTypedVestSuite<T> is assignable to NgxVestSuite<T> due to bivariance and
-   * FormFieldName<T> (string literal union) being assignable to string.
+   * Accepts NgxVestSuite<T> (the canonical type) or its deprecated alias NgxTypedVestSuite<T>.
    */
   readonly suite = input<NgxVestSuite<T> | NgxTypedVestSuite<T> | null>(null);
 
@@ -320,7 +338,7 @@ export class FormDirective<T extends Record<string, unknown>> {
    * contains values that shouldn't be there (typo's) that the developer gets run-time
    * errors in dev mode
    */
-  readonly formShape = input<DeepRequired<T> | null>(null);
+  readonly formShape = input<NgxDeepRequired<T> | null>(null);
 
   /**
    * Updates the validation config which is a dynamic object that will be used to
@@ -504,6 +522,24 @@ export class FormDirective<T extends Record<string, unknown>> {
       .subscribe(() => {
         this.ngForm.form.markAllAsTouched();
         this.#blurTick.update((v) => v + 1);
+      });
+
+    this.ngForm.ngSubmit
+      .pipe(
+        switchMap(() => {
+          if (this.ngForm.form.status === 'PENDING') {
+            return this.ngForm.form.statusChanges.pipe(
+              filter((status) => status !== 'PENDING'),
+              take(1)
+            );
+          }
+
+          return of(this.ngForm.form.status);
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => {
+        this.#focusFirstInvalidField();
       });
 
     /**
@@ -934,6 +970,59 @@ export class FormDirective<T extends Record<string, unknown>> {
   }
 
   /**
+   * Moves keyboard focus to the first invalid, visible form control after submit.
+   * This keeps error recovery predictable for keyboard and assistive-technology users.
+   */
+  #focusFirstInvalidField(): void {
+    if (this.ngForm.form.valid) {
+      return;
+    }
+
+    const focusFirstInvalid = () => {
+      const form = this.elementRef.nativeElement;
+      const candidates = Array.from(
+        form.querySelectorAll<HTMLElement>(
+          [
+            '[aria-invalid="true"]:not([disabled]):not([type="hidden"])',
+            'input.ng-invalid:not([disabled]):not([type="hidden"])',
+            'select.ng-invalid:not([disabled])',
+            'textarea.ng-invalid:not([disabled])',
+          ].join(', ')
+        )
+      );
+
+      const firstInvalid = candidates.find((candidate) => {
+        if (candidate.getAttribute('aria-hidden') === 'true') {
+          return false;
+        }
+
+        return candidate.getClientRects().length > 0;
+      });
+
+      if (!firstInvalid) {
+        return;
+      }
+
+      firstInvalid.focus({ preventScroll: true });
+      firstInvalid.scrollIntoView?.({
+        block: 'center',
+        inline: 'nearest',
+      });
+    };
+
+    if (typeof globalThis.requestAnimationFrame === 'function') {
+      globalThis.requestAnimationFrame(() => {
+        focusFirstInvalid();
+      });
+      return;
+    }
+
+    queueMicrotask(() => {
+      focusFirstInvalid();
+    });
+  }
+
+  /**
    * Resets the form to a pristine, untouched state with optional new values.
    *
    * This method properly resets the form by:
@@ -988,6 +1077,12 @@ export class FormDirective<T extends Record<string, unknown>> {
     // Reset Angular's form to clear all controls and mark as pristine/untouched
     this.ngForm.resetForm(value ?? undefined);
 
+    // Vest 6: reset the suite's accumulated validation state.
+    // Since we use stateful suite.only(field).run() (not runStatic), the suite
+    // accumulates results across runs. Resetting clears all persisted errors/warnings
+    // so the form starts fresh.
+    this.suite()?.reset();
+
     // Clear any stored warnings to avoid stale messages after reset
     this.fieldWarnings.set(new Map());
 
@@ -1007,6 +1102,108 @@ export class FormDirective<T extends Record<string, unknown>> {
     // Now synchronous since detectChanges() has flushed DOM updates
     this.ngForm.form.updateValueAndValidity({ emitEvent: true });
     this.#blurTick.update((v) => v + 1);
+  }
+
+  /**
+   * Resets validation state for a specific field in the Vest suite.
+   *
+   * This clears all accumulated errors and warnings for the given field
+   * without affecting other fields. Useful when a field's value is
+   * programmatically reset or cleared.
+   *
+   * **What it does:**
+   * 1. Calls Vest 6's `suite.resetField(field)` to clear accumulated validation state
+   * 2. Clears any stored warnings for the field
+   * 3. Resets the Angular control to clear validation errors
+   *
+   * **When to use:**
+   * - Resetting individual field values programmatically
+   * - Clearing validation after a field's context changes (e.g., toggling a feature)
+   * - When you need per-field reset instead of full form reset
+   *
+   * @param field - The field path to reset (e.g., 'email' or 'addresses.billing.street')
+   *
+   * @example
+   * ```typescript
+   * vestForm = viewChild.required('vestForm', { read: FormDirective });
+   *
+   * clearEmail(): void {
+   *   this.formValue.update(v => ({ ...v, email: '' }));
+   *   this.vestForm().resetField('email');
+   * }
+   * ```
+   *
+   * @see {@link resetForm} for resetting the entire form
+   * @see {@link removeField} for permanently removing a field from validation state
+   */
+  resetField(field: string): void {
+    this.suite()?.resetField(field);
+
+    // Clear warnings for this field
+    this.fieldWarnings.update((map) => {
+      const newMap = new Map(map);
+      newMap.delete(field);
+      return newMap;
+    });
+
+    // Reset Angular control validation state
+    const control = this.ngForm.form.get(field);
+    if (control) {
+      control.updateValueAndValidity({ emitEvent: true });
+      this.#blurTick.update((v) => v + 1);
+    }
+  }
+
+  /**
+   * Removes a field from the Vest suite's accumulated validation state.
+   *
+   * This permanently removes all validation history for the given field,
+   * including errors, warnings, and test results. Unlike `resetField()`,
+   * `remove()` is intended for fields that are being destroyed (e.g.,
+   * conditionally hidden via `@if`).
+   *
+   * **What it does:**
+   * 1. Calls Vest 6's `suite.remove(field)` to purge all test history for the field
+   * 2. Clears any stored warnings for the field
+   *
+   * **Why this matters:**
+   * Vest 6 suites are stateful — `suite.only(field).run()` accumulates results.
+   * When a form control is destroyed (e.g., hidden by `@if`), the suite still holds
+   * stale results for that field. This can cause incorrect form-level validity
+   * or ghost errors. Calling `removeField()` cleans up this stale state.
+   *
+   * **When to use:**
+   * - Dynamic form controls removed from the DOM (e.g., `@if` toggling sections)
+   * - Removing fields from a form array
+   * - Any scenario where a field no longer exists in the form
+   *
+   * @param field - The field path to remove (e.g., 'email' or 'addresses.shipping.street')
+   *
+   * @example
+   * ```typescript
+   * vestForm = viewChild.required('vestForm', { read: FormDirective });
+   *
+   * onToggleShipping(enabled: boolean): void {
+   *   if (!enabled) {
+   *     // Clean up Vest state for removed shipping fields
+   *     this.vestForm().removeField('addresses.shipping.street');
+   *     this.vestForm().removeField('addresses.shipping.city');
+   *   }
+   * }
+   * ```
+   *
+   * @see {@link resetField} for resetting a field without removing it
+   * @see {@link resetForm} for resetting the entire form
+   */
+  removeField(field: string): void {
+    this.suite()?.remove(field);
+
+    // Clear warnings for this field
+    this.fieldWarnings.update((map) => {
+      const newMap = new Map(map);
+      newMap.delete(field);
+      return newMap;
+    });
   }
 
   /**
@@ -1042,30 +1239,26 @@ export class FormDirective<T extends Record<string, unknown>> {
         switchMap(
           (snap) =>
             new Observable<ValidationErrors | null>((observer) => {
+              let cancelled = false;
+              observer.add(() => {
+                cancelled = true;
+              });
+
               try {
-                // Cast to NgxVestSuite to accept string field parameter
-                // Both NgxVestSuite and NgxTypedVestSuite work with string at runtime
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (suite as NgxVestSuite<T>)(snap, field).done((result: any) => {
-                  // Guard: bail out if the directive was destroyed while
-                  // validation was in flight to avoid writing to disposed
-                  // signals or a torn-down view.
-                  if (this.#destroyed) {
-                    // Emit a neutral `null` before completing so async
-                    // validators always emit exactly once. Completing without
-                    // emission can leave consumers (e.g. a control's status)
-                    // in an unexpected `PENDING` state.
-                    observer.next(null);
-                    observer.complete();
-                    return;
+                // Vest 6: suite.only(field).run() for focused, stateful validation.
+                const result = suite.only(field).run(snap);
+
+                const processResult = (
+                  suiteResult: NgxSuiteRunResult
+                ): ValidationErrors | null => {
+                  if (cancelled || this.#destroyed) {
+                    return null;
                   }
 
-                  const errors = result.getErrors()[field];
-                  const warnings = result.getWarnings()[field];
+                  const errors = suiteResult.getErrors()[field];
+                  const warnings = suiteResult.getWarnings()[field];
 
-                  // Store warnings in the fieldWarnings signal for access by control wrappers.
-                  // This is necessary because Angular marks a field as invalid when control.errors !== null.
-                  // By storing warnings separately, fields can remain valid while still displaying warnings.
+                  // Store warnings separately so fields can remain valid while displaying warnings.
                   this.fieldWarnings.update((map) => {
                     const newMap = new Map(map);
                     if (warnings?.length) {
@@ -1076,13 +1269,8 @@ export class FormDirective<T extends Record<string, unknown>> {
                     return newMap;
                   });
 
-                  // Build the validation result:
-                  // - Errors exist → return { errors, warnings? } (field invalid, Angular shows ng-invalid)
-                  // - Only warnings → return null (field valid, warnings accessed via fieldWarnings signal)
-                  // - Neither → return null (field valid)
-                  //
-                  // When errors exist, we also include warnings in control.errors for backwards compatibility
-                  // with code that reads warnings from control.errors.warnings.
+                  // Errors exist → { errors, warnings? } (field invalid)
+                  // Only warnings or neither → null (field valid, warnings via fieldWarnings signal)
                   const out = errors?.length
                     ? {
                         errors,
@@ -1101,21 +1289,110 @@ export class FormDirective<T extends Record<string, unknown>> {
                   // synchronously inside Angular's own validation pipeline. The scheduleMicrotask
                   // primitive auto-cancels if the directive is destroyed before it fires.
                   scheduleMicrotask(() => {
+                    if (cancelled || this.#destroyed) {
+                      return;
+                    }
                     try {
                       this.cdr.detectChanges();
                     } catch {
-                      // Fallback: mark for check when immediate detectChanges isn't safe.
-                      // This keeps behavior resilient in edge cases.
                       this.cdr.markForCheck();
                     }
                   }, this.destroyRef);
 
-                  observer.next(out);
+                  return out;
+                };
+
+                const emitAndComplete = (suiteResult: NgxSuiteRunResult) => {
+                  if (cancelled) {
+                    return;
+                  }
+
+                  if (this.#destroyed) {
+                    observer.next(null);
+                    observer.complete();
+                    return;
+                  }
+
+                  observer.next(processResult(suiteResult));
                   observer.complete();
+                };
+
+                const getLatestResult = (): NgxSuiteRunResult =>
+                  suite.get?.() ?? result;
+
+                // Sync path: emit immediately to avoid PENDING flash.
+                if (!result.isPending()) {
+                  emitAndComplete(result);
+                  return;
+                }
+
+                // Async path: handle thenable results when available.
+                if (typeof result.then === 'function') {
+                  Promise.resolve(result)
+                    .then(() => {
+                      if (cancelled) return;
+                      emitAndComplete(getLatestResult());
+                    })
+                    .catch(() => {
+                      if (cancelled) return;
+                      // Rejected thenables can still represent validation failures.
+                      // Read the suite's latest state when available instead of
+                      // relying on the original thenable result object, which can
+                      // remain stale across runtimes after rejection.
+                      if (!result.isPending()) {
+                        emitAndComplete(getLatestResult());
+                        return;
+                      }
+
+                      // Register cleanup BEFORE starting intervals so that if the
+                      // subscription was already closed, teardown fires immediately
+                      // and prevents any polling callbacks from running.
+                      const intervalId: ReturnType<typeof setInterval> =
+                        setInterval(() => {
+                          if (cancelled || !result.isPending()) {
+                            clearInterval(intervalId);
+                            clearTimeout(timeoutId);
+                            emitAndComplete(getLatestResult());
+                          }
+                        }, 25);
+
+                      const timeoutId: ReturnType<typeof setTimeout> =
+                        setTimeout(() => {
+                          clearInterval(intervalId);
+                          emitAndComplete(getLatestResult());
+                        }, 5000);
+
+                      observer.add(() => {
+                        clearInterval(intervalId);
+                        clearTimeout(timeoutId);
+                      });
+                    });
+                  return;
+                }
+
+                // Fallback path: poll pending state for non-thenable results.
+                const intervalId = setInterval(() => {
+                  if (!result.isPending()) {
+                    clearInterval(intervalId);
+                    clearTimeout(timeoutId);
+                    emitAndComplete(getLatestResult());
+                  }
+                }, 25);
+
+                const timeoutId = setTimeout(() => {
+                  clearInterval(intervalId);
+                  emitAndComplete(getLatestResult());
+                }, 5000);
+
+                observer.add(() => {
+                  clearInterval(intervalId);
+                  clearTimeout(timeoutId);
                 });
+                return;
               } catch {
                 observer.next({ vestInternalError: 'Validation failed' });
                 observer.complete();
+                return;
               }
             })
         ),

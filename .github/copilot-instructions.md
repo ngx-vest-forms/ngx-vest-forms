@@ -6,21 +6,21 @@ When generating code for this repository:
 
 1. Respect the exact toolchain versions in `package.json`.
 2. Treat `.github/instructions/ngx-vest-forms.instructions.md` as the always-on invariant sheet for ngx-vest-forms usage.
-3. Treat `.github/instructions/vest.instructions.md` as the deeper Vest validation guide.
-4. Use the umbrella `ngx-vest-forms` skill and its nested workflow sub-skills for feature workflows instead of restating library docs from memory.
-5. Prefer patterns already present in the repo over generic framework advice.
+3. Treat `.github/instructions/vest.instructions.md` as the deeper Vest 6 validation guide.
+4. Prefer the local skills under `.agents/skills/ngx-vest-forms/` and `.agents/skills/vestjs/` over generic framework advice.
+5. Prefer patterns already present in the repo over generic best practices.
 
 ## Version baseline
 
-- Angular framework packages: `21.2.5`
-- Angular CLI/build tooling: `21.2.3`
-- TypeScript: `~6.0.2`
+- Angular framework packages: `21.2.11`
+- Angular CLI/build tooling: `21.2.9`
+- TypeScript: `~5.9.3`
 - Node.js: `>=22.0.0`
 - RxJS: `~7.8.2`
-- Vest.js: `~5.4.6`
-- Vitest: `^4.1.1`
-- Playwright: `1.58.2`
-- Storybook: `10.3.3`
+- Vest.js: `~6.0.3`
+- Vitest: `^4.1.5`
+- Playwright: `1.59.1`
+- Storybook: `10.3.6`
 
 Do not suggest code that depends on newer language or framework features than these versions support.
 
@@ -31,7 +31,7 @@ Do not suggest code that depends on newer language or framework features than th
 - Library public surface: `projects/ngx-vest-forms/src/public-api.ts`
 - Domain docs: `docs/`
 - Always-on instructions: `.github/instructions/`
-- Umbrella skill: `.agents/skills/ngx-vest-forms/`
+- Local skills: `.agents/skills/`
 
 ## Public API first
 
@@ -45,25 +45,25 @@ If a new library feature is added, export it in `projects/ngx-vest-forms/src/pub
 
 ## Working rules
 
-- Keep `name` aligned with the `[ngModel]` path.
+- Keep the `name` attribute aligned with the `[ngModel]` path.
 - Use `[ngModel]`, not `[(ngModel)]`, for ngx-vest-forms examples.
 - Use optional chaining with partial form models.
-- Call `only(field)` unconditionally in Vest suites.
+- Use Vest 6 suite callbacks with a model-only signature: `create((model) => { ... })`.
+- Handle field-focused validation at the call site with `suite.only(field).run(model)`.
 - Use `vestFormsViewProviders` in child form components that participate in the parent form tree.
-
-These rules live in the invariant instruction file; correct violations instead of arguing with them.
+- Prefer `<ngx-control-wrapper>` for single controls and group wrappers for `ngModelGroup` containers.
+- The examples app mocks the people API in-app via `mockPeopleApiInterceptor`; no separate backend is required.
 
 ## How to choose guidance sources
 
-- Need the baseline rules: read `.github/instructions/ngx-vest-forms.instructions.md`
+- Need baseline usage rules: read `.github/instructions/ngx-vest-forms.instructions.md`
 - Need Vest suite semantics: read `.github/instructions/vest.instructions.md`
-- Need default form setup: use the `core/` workflow sub-skill under `ngx-vest-forms`
-- Need `validationConfig` guidance: use the `validation-config-builder/` workflow sub-skill under `ngx-vest-forms`
-- Need `ROOT_FORM`: use the `root-form-validation/` workflow sub-skill under `ngx-vest-forms`
-- Need wrappers: use the `built-in-wrappers/` or `custom-wrapper-patterns/` workflow sub-skill under `ngx-vest-forms`
-- Need composite adapter (one widget, multiple fields): use the `composite-adapter/` workflow sub-skill under `ngx-vest-forms`
-- Need nested sections: use the `child-components/` workflow sub-skill under `ngx-vest-forms`
-- Need dynamic structure changes: use the `dynamic-form-behavior/` workflow sub-skill under `ngx-vest-forms`
+- Need default form setup: use `.agents/skills/ngx-vest-forms/core/`
+- Need `validationConfig`: use `.agents/skills/ngx-vest-forms/validation-config-builder/`
+- Need `ROOT_FORM`: use `.agents/skills/ngx-vest-forms/root-form-validation/`
+- Need wrappers: use `.agents/skills/ngx-vest-forms/built-in-wrappers/` or `custom-wrapper-patterns/`
+- Need composite widgets mapped to multiple fields: use `.agents/skills/ngx-vest-forms/composite-adapter/`
+- Need blur-driven autosave: use the examples and docs around `fieldBlur`
 
 ## Library maintenance workflow
 
@@ -77,13 +77,14 @@ When changing the library itself:
 
 ## Style and quality
 
-- Keep code aligned with existing Angular 21 + signals patterns.
+- Keep code aligned with Angular 21 + signals patterns already used in the repo.
 - Prefer clear, typed examples over clever abstractions.
 - Follow repository naming and file-organization patterns.
-- Do not introduce new architectural styles unless the task requires it.
+- Keep accessibility and predictable validation UX in mind.
+- Do not reintroduce legacy Vest 5 callback-field patterns into Vest 6 code.
 
 ## Chat guidelines
 
-- Do not use emojis in chat responses, except for checking off tasks.
 - Verify version compatibility before suggesting code changes.
-- Prefer concise repo-specific guidance over long repeated tutorials.
+- Prioritize consistency with existing codebase patterns over external best practices.
+- Avoid stale Vest 5 guidance such as `staticSuite((model, field?) => ...)`, callable suites, or `only()` inside the suite callback.

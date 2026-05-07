@@ -12,7 +12,7 @@ Vest.js is a declarative validation framework inspired by unit testing libraries
 **Core Philosophy:**
 - **Declarative Syntax**: Write validations like unit tests for clarity
 - **Framework Agnostic**: Works with any frontend or backend framework
-- **Performance Optimized**: Selective validation with `only()` for optimal performance
+- **Performance Optimized**: Selective validation with `suite.only(field).run()` at the call site
 - **Asynchronous First**: Built-in support for async validations with cancellation
 - **Composable**: Modular and reusable validation logic
 
@@ -22,61 +22,54 @@ Equip you with crisp guardrails when generating Vest.js code, focusing on: selec
 
 ## Golden Rules (Follow These First)
 
-1. **CRITICAL**: Call `only()` **unconditionally** at the top of your suite - `only(undefined)` is safe and runs all tests
-2. **Never call `only()`, `skip()`, or `.done()` conditionally** - this corrupts Vest's execution order tracking
-3. Drive touch state from `result.isTested(field)` - never maintain parallel dirty flags
-4. Prefer `skipWhen`/`omitWhen`/`include.when` over ad-hoc conditionals
-5. Keep async validations cancellable via `AbortSignal` and guard expensive work with `skipWhen`
-6. Use `warn()` only for non-blocking guidance; call it synchronously at test start
-7. Use typed suites so invalid field names fail at compile time
-8. When unsure, copy patterns from this file
+1. **Suite callbacks receive only the model** — no `field` parameter or `only()` call inside the callback
+2. **Field focus is handled at the call site** via `suite.only(field).run(model)` — not inside the suite
+3. **`suite.run()` is stateful** — it accumulates results across runs. Call `suite.reset()` on form reset
+4. Drive touch state from `result.isTested(field)` — never maintain parallel dirty flags
+5. Prefer `skipWhen`/`omitWhen`/`include.when` over ad-hoc conditionals
+6. Keep async validations cancellable via `AbortSignal` and guard expensive work with `skipWhen`
+7. Use `warn()` only for non-blocking guidance; call it synchronously at test start
+8. Use typed suites so invalid field names fail at compile time
+9. When unsure, copy patterns from this file
 
 ## Recommended Suite Pattern
 
-**✅ CORRECT: Call `only()` unconditionally**
+**Vest 6 handles field focus at the call site via `suite.only(field).run(model)`. Suite callbacks only receive the model — no `field` parameter or `only()` call needed.**
+
+**✅ CORRECT: Vest 6 pattern — model-only callback**
 
 ```typescript
-import { staticSuite, only, test, enforce } from 'vest';
+import { create, test, enforce } from 'vest';
 
-export const contactSuite = staticSuite((data = {}, field?: string) => {
-  // ✅ CORRECT: Call only() unconditionally (passing undefined is safe)
-  only(field); // When field is undefined, all tests run
-
+export const contactSuite = create((data = {}) => {
   test('email', 'Email is required', () => enforce(data.email).isNotBlank());
   test('email', 'Email format is invalid', () => enforce(data.email).isEmail());
   test('username', 'Username is required', () => enforce(data.username).isNotBlank());
 });
+
+// Call sites:
+contactSuite.only('email').run(data);   // Run only email tests (field-level)
+contactSuite.run(data);                  // Run all tests (e.g. on submit)
+contactSuite.reset();                    // Reset accumulated state (e.g. on form reset)
 ```
 
 **Why this matters:**
-- `only(undefined)` is **safe** - Vest ignores it and runs all tests
-- `only('email')` runs only email tests (performance optimization)
-- Vest relies on consistent function execution to detect changes between runs - **conditional calls break this detection mechanism**
+- `suite.only('email').run(data)` runs only email tests (performance optimization)
+- `suite.run(data)` runs all tests (full validation, e.g. on submit)
+- `.run()` is **stateful** — results accumulate across runs. Call `suite.reset()` on form reset
+- `suite.runStatic(data)` is available for **stateless** one-off use (server-side validation)
 
-**❌ WRONG: Conditional `only()` call**
+**❌ WRONG: Old v5 pattern with field parameter and `only()` inside callback**
 
 ```typescript
-// ❌ WRONG: Calling only() conditionally breaks execution order tracking!
-export const contactSuite = staticSuite((data = {}, field?: string) => {
-  if (field) {
-    only(field); // BUG: Conditional call breaks Vest's internal state!
-  }
+// ❌ WRONG: Vest 5 pattern — do not use with Vest 6
+import { create, only, test, enforce } from 'vest';
+
+export const contactSuite = create((data = {}, field?: string) => {
+  only(field); // ❌ Not needed in Vest 6 — handle at the call site
   test('email', 'Email is required', () => enforce(data.email).isNotBlank());
 });
 ```
-
-**Alternative correct patterns:**
-```typescript
-only(field);               // ✅ Recommended
-only(field ?? false);      // ✅ Explicit fallback
-only(condition ? 'email' : false); // ✅ Conditional argument, not call
-```
-
-> **Critical Rule**: `only()`, `skip()`, and `.done()` must **NEVER** be called conditionally. The function call itself must always execute - only the *arguments* can be conditional. Vest relies on consistent function execution to detect changes between runs. Conditional calls break this detection mechanism, causing unpredictable behavior with async tests, subscriptions, and memoization.
->
-> **Vest.js Official Warning**: "skip() and only() should not be called conditionally - i.e. inside of an if statement. Vest relies on the consistent execution of these functions in the suite to detect changes between runs."
->
-> Source: [Vest.js - Skip and Only](https://vestjs.dev/docs/writing_your_suite/including_and_excluding/skip_and_only)
 
 ## TypeScript Support
 
@@ -87,15 +80,17 @@ type FieldName = 'email' | 'password';
 type GroupName = 'signIn' | 'signUp';
 type Model = { email: string; password: string };
 
-export const authSuite = create<FieldName, GroupName, (data: Model, field?: FieldName) => void>(
-  (data, field) => {
-    only(field); // TypeScript enforces field must be FieldName | undefined
+export const authSuite = create<FieldName, GroupName, (data: Model) => void>(
+  (data) => {
     test('password', 'Password is required', () => enforce(data.password).isNotBlank());
   }
 );
 
+// Field focus at call site:
+authSuite.only('password').run(data); // TypeScript enforces field must be FieldName
+
 // Destructured helpers are type-aware
-const { test, group, only: onlyTyped } = authSuite;
+const { test, group } = authSuite;
 ```
 
 ## Conditional Validation
@@ -153,31 +148,74 @@ skipWhen(res => res.hasErrors('username'), () => {
 
 ### Performance Optimization
 
-```typescript
-// Cache deterministic async results
-test.memo(
-  'username',
-  'Username already exists',
-  () => checkUsername(data.username),
-  [data.username] // Re-run only when username changes
-);
+#### Memoize Expensive Tests with `memo`
 
-// Debounce live-typing fields
-test.debounce('search', 'No results found', () => searchAPI(data.query), 300);
+Use `memo` from `vest/memo` to cache blocks of tests. If the dependency array hasn't changed since the last run, the entire block is skipped and previous results are restored:
+
+```typescript
+import { create, test, enforce, skipWhen } from 'vest';
+import { memo } from 'vest/memo';
+
+const suite = create((data) => {
+  test('username', 'Username is required', () => {
+    enforce(data.username).isNotBlank();
+  });
+
+  // Memoize expensive async check — only re-runs when username changes
+  memo(() => {
+    skipWhen(res => res.hasErrors('username'), () => {
+      test('username', 'Username is taken', async ({ signal }) => {
+        await checkAvailability(data.username, { signal });
+      });
+    });
+  }, [data.username]);
+
+  // Memoize an entire group of related validations
+  memo(() => {
+    test('address.street', 'Required', () => enforce(data.address?.street).isNotBlank());
+    test('address.city', 'Required', () => enforce(data.address?.city).isNotBlank());
+  }, [data.address]);
+});
 ```
+
+**When to use `memo`:**
+- Async validations with API calls (username/email availability checks)
+- Expensive validations that depend on specific field values
+- Groups of related validations that share the same dependencies
+
+### Advanced Focus Control with `suite.focus()`
+
+`suite.only(field)` is shorthand for `suite.focus({ only: field })`. For more complex scenarios, use `focus()` directly:
+
+```typescript
+// Skip a specific field
+suite.focus({ skip: 'password' }).run(data);
+
+// Only validate a specific group
+suite.focus({ onlyGroup: 'step1' }).run(data);
+
+// Skip entire groups
+suite.focus({ skipGroup: ['step2', 'step3'] }).run(data);
+
+// Combine field and group focus
+suite.focus({ only: 'username', skipGroup: 'billing' }).run(data);
+```
+
+**In ngx-vest-forms**, `suite.only(field).run(model)` is used automatically for field-level validation. Use `focus()` for custom scenarios like multi-step wizard forms.
 
 ## Execution Modes
 
 ```typescript
-import { create, mode, Modes, only } from 'vest';
+import { create, mode, Modes } from 'vest';
 
-const suite = create((data, field) => {
-  if (!field) mode(Modes.ALL); // Show all errors on submit
-  only(field);
-
+const suite = create((data) => {
   test('displayName', 'Required', () => enforce(data.displayName).isNotBlank());
   test('displayName', 'Min 3 chars', () => enforce(data.displayName).longerThan(2));
 });
+
+// Switch mode at call site:
+mode(Modes.ALL); // Show all errors on submit
+suite.run(data);
 ```
 
 - **EAGER** (default): Stop after first failure per field - best for live validation
@@ -187,11 +225,9 @@ const suite = create((data, field) => {
 ## Grouped Validations
 
 ```typescript
-import { group, only } from 'vest';
+import { group } from 'vest';
 
-const suite = create((data, currentStep) => {
-  only.group(currentStep);
-
+const suite = create((data) => {
   group('personal_info', () => {
     test('firstName', 'First name is required', () => enforce(data.firstName).isNotBlank());
   });
@@ -201,7 +237,7 @@ const suite = create((data, currentStep) => {
   });
 });
 
-suite(formData, 'personal_info'); // Only validate personal info step
+suite.only.group('personal_info').run(formData); // Only validate personal info step
 ```
 
 ## Dynamic Collections
@@ -233,8 +269,8 @@ test('password', 'Password strength: WEAK', () => {
 ### Three Ways to Access Suite State
 
 ```typescript
-// 1. Direct result (from suite call)
-const result = suite(data);
+// 1. Direct result (from suite.run() call)
+const result = suite.run(data);
 result.hasErrors();
 
 // 2. Suite method (latest state)
@@ -260,36 +296,43 @@ result.isTested('email');            // Touch detection - use this!
 
 ### Async Completion
 
+In Vest 6, `SuiteResult` is a **thenable** (has a `.then()` method). Use `await` or `.then()` to handle async completion:
+
 ```typescript
-suite(data)
-  .done('username', (res) => {
-    if (res.hasErrors('username')) {
-      // Handle username validation completion
-    }
-  })
-  .done((res) => {
-    // Handle overall suite completion
-    if (res.isValid()) submitForm();
-  });
+// Using await
+const result = suite.run(data);
+await result; // Resolves when all async tests complete
+if (result.isValid()) submitForm();
+
+// Using .then()
+suite.run(data).then((res) => {
+  if (res.isValid()) submitForm();
+});
 ```
 
-**Never call `.done()` conditionally** - it breaks async tracking.
+**Note:** `.then()` always defers to a microtask, even for fully synchronous suites. Check `result.isPending()` to determine if async tests are still running.
 
 ## State Management
 
 ```typescript
-// Stateless (server-side, creates new result each time)
-import { staticSuite } from 'vest';
-const suite = staticSuite((data) => { /* tests */ });
-
-// Stateful (client-side, maintains state between runs)
 import { create } from 'vest';
 const suite = create((data) => { /* tests */ });
 
-// Manual reset
+// Stateful execution (client-side, accumulates state between runs)
+suite.run(data);
+
+// Field-focused stateful execution (run only specific field tests)
+suite.only('username').run(data);
+
+// Stateless execution (server-side, fresh result each call)
+suite.runStatic(data);
+
+// Manual reset (for stateful suites — call on form reset)
 suite.reset(); // Clears all validation state
 suite.resetField('username'); // Clear specific field
 ```
+
+> **Important**: `suite.run()` is stateful — results accumulate across runs. Always call `suite.reset()` when resetting a form to clear stale validation state.
 
 ## Composable Validations
 
@@ -301,27 +344,34 @@ export function emailValidations(value: string | undefined, fieldName: string) {
 }
 
 // Use in suite
-export const contactSuite = staticSuite((model, field?: string) => {
-  only(field);
+export const contactSuite = create((model) => {
   emailValidations(model.email, 'email');
 });
 ```
 
 ## Common Mistakes
 
-### ❌ Mistake #1: Calling `only()`, `skip()`, or `.done()` Conditionally
+### ❌ Mistake #1: Using Old v5 Pattern with `only()` Inside Callback
 
 ```typescript
-// ❌ WRONG - Breaks Vest's change detection!
-if (field) {
-  only(field); // Conditional call breaks consistent execution
-}
+// ❌ WRONG - Vest 5 pattern, not recommended in Vest 6
+import { create, only, test, enforce } from 'vest';
 
-// ✅ CORRECT - Always call unconditionally
-only(field); // Safe: only(undefined) runs all tests
+export const suite = create((data, field?) => {
+  only(field); // ❌ Not needed — Vest 6 handles focus at the call site
+  test('email', 'Required', () => enforce(data.email).isNotBlank());
+});
+
+// ✅ CORRECT - Vest 6 pattern
+import { create, test, enforce } from 'vest';
+
+export const suite = create((data) => {
+  test('email', 'Required', () => enforce(data.email).isNotBlank());
+});
+
+// Focus at call site:
+suite.only('email').run(data);
 ```
-
-> **Vest.js Official Warning**: "skip() and only() should not be called conditionally - i.e. inside of an if statement."
 
 ### ❌ Mistake #2: Maintaining Separate Touch State
 
@@ -366,29 +416,30 @@ skipWhen(res => res.hasErrors('email'), () => {
 
 ## Performance Checklist
 
-- Use `only(field)` in every suite to avoid whole-form re-validation on keystrokes
+- Use `suite.only(field).run(model)` to avoid whole-form re-validation on keystrokes
 - Guard async calls with `skipWhen` (prerequisite errors) or `omitWhen` (feature toggles)
-- Memoize deterministic async work with `test.memo` and provide dependency arrays
-- Debounce live feedback fields with `test.debounce` to reduce chatter
+- Memoize expensive async work with `memo` from `vest/memo` and provide dependency arrays
+- Use `skipWhen` to avoid running async tests until prerequisite validations pass
 - Avoid cloning large data objects; read values immutably inside `test` bodies
 - Use `suite.resetField(path)` when replacing nested objects to clear stale errors
+- Call `suite.reset()` on form reset to clear accumulated stateful results
 
 ## Server-Side Usage
 
 ```typescript
-import { staticSuite, enforce, test } from 'vest';
+import { create, enforce, test } from 'vest';
 
-const serverSuite = staticSuite((data) => {
+const serverSuite = create((data) => {
   test('email', 'Email is required', () => enforce(data.email).isNotBlank());
 });
 
 export async function validatePayload(payload: unknown) {
-  const result = serverSuite(payload);
+  const result = serverSuite.runStatic(payload);
   return { valid: result.isValid(), errors: result.getErrors() };
 }
 ```
 
-`staticSuite` is naturally stateless—no manual `reset()` required between requests. Switch to `mode(Modes.ONE)` when the API should bail after the first error.
+Use `suite.runStatic(payload)` for stateless execution—each call produces a fresh result without accumulating state. Note that `.only()` chaining is not available with `.runStatic()`. Switch to `mode(Modes.ONE)` when the API should bail after the first error.
 
 ## Reference Links
 

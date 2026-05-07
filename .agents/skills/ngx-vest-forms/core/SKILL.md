@@ -10,8 +10,8 @@ Use this skill to produce the default, idiomatic ngx-vest-forms setup.
 ## Start from these rules
 
 1. Model the form with `NgxDeepPartial<T>` because template-driven forms are built incrementally.
-2. Prefer `NgxTypedVestSuite<T>` plus `FormFieldName<T>` for typed Vest suites.
-3. Always call `only(field)` unconditionally at the top of the suite.
+2. Prefer `NgxVestSuite<T>` for typed Vest suites; reach for `FormFieldName<T>` or `NgxFieldKey<T>` when you need typed field-path hints.
+3. Keep the suite callback model-only. Handle field-focused validation later via `suite.only(field).run(model)`.
 4. Use `[ngModel]` with `(formValueChange)` for unidirectional data flow. Do not default to `[(ngModel)]`.
 5. The `name` attribute must exactly match the bound property path.
 6. Use optional chaining in templates because the model is partial.
@@ -25,8 +25,9 @@ Recommend these imports from `'ngx-vest-forms'` when they fit the example:
 - `NgxVestForms`
 - `NgxDeepPartial`
 - `NgxDeepRequired`
-- `NgxTypedVestSuite`
+- `NgxVestSuite`
 - `FormFieldName`
+- `NgxFieldKey`
 - `NgxFieldBlurEvent`
 - `ROOT_FORM`
 
@@ -44,7 +45,7 @@ Build answers and code in this order:
 
 1. Define a `NgxDeepPartial<T>` form model.
 2. Define an optional `NgxDeepRequired<T>` shape.
-3. Create a Vest suite with `staticSuite((model, field?) => { only(field); ... })`.
+3. Create a Vest suite with `create((model) => { ... })`.
 4. Expose a signal-based `formValue` in the component.
 5. Bind the form with `ngxVestForm`, `[suite]`, optional `[formShape]`, and `(formValueChange)`.
 6. Bind each control with `[ngModel]` and the exact matching `name`.
@@ -58,6 +59,7 @@ When generating code or guidance, prefer:
 - typed imports from `ngx-vest-forms`
 - signals for local component state
 - wrappers that keep error display and ARIA straightforward
+- call-site focused validation examples such as `suite.only('email').run(model)` only when the user explicitly needs field-scoped execution
 
 If the user asks for “the right way” or “a proper example”, give a minimal but production-ready component.
 
@@ -66,7 +68,7 @@ If the user asks for “the right way” or “a proper example”, give a minim
 Correct these immediately if they appear:
 
 - `[(ngModel)]` on ngx-vest-forms controls
-- conditional `only(field)` calls
+- two-parameter suite callbacks or `only(field)` inside the suite callback
 - `name` values that do not match the bound path
 - direct property access like `formValue().address.street` instead of `formValue().address?.street`
 - missing `formShape` on complex nested forms where path mistakes are easy
@@ -101,4 +103,4 @@ Assume the repo-level `ngx-vest-forms.instructions.md` file already enforces the
 - ngx-vest-forms is a template-driven forms adapter, not a reactive forms abstraction.
 - `validationConfig` controls when dependent fields revalidate; it does not define validation logic.
 - The library's sweet spot is typed template-driven forms with Vest suites, signals, and explicit structure.
-- v2.7.x targets Angular `>=19`, RxJS `>=7.8`, Vest `>=5.4.6`. `parseFieldPath` warns in dev mode for malformed segments (`'a..b'`, `'.a'`, `'a.'`); production behavior unchanged.
+- The current branch targets Angular 21+, RxJS ~7.8, and Vest 6.x. `parseFieldPath` warns in dev mode for malformed segments (`'a..b'`, `'.a'`, `'a.'`); production behavior unchanged.
