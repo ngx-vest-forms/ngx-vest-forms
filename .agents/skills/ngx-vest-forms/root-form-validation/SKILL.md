@@ -1,6 +1,6 @@
 ---
 name: root-form-validation
-description: Helps developers model form-level validation with `ROOT_FORM` and `ngxValidateRootForm` in ngx-vest-forms. Use this whenever the user mentions form-wide business rules, submission summaries, “at least one field required”, `ROOT_FORM`, `validateRootForm`, `validateRootFormMode`, or is unsure whether a cross-field rule belongs at field level or the whole-form level.
+description: Helps developers model form-level validation with `ROOT_FORM` and `ngxValidateRootForm` in ngx-vest-forms. Use this whenever the user mentions form-wide business rules, submission summaries, “at least one field required”, `ROOT_FORM`, `ngxValidateRootForm`, `ngxValidateRootFormMode`, or is unsure whether a cross-field rule belongs at field level or the whole-form level.
 ---
 
 # ngx-vest-forms root-form validation guidance

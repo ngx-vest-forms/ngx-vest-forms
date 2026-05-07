@@ -10,58 +10,29 @@ Injection tokens allow you to configure library behavior at different levels of 
 
 ### `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN`
 
-Controls the debounce timing for `validationConfig`-triggered dependent-field revalidation across your application or specific component subtrees.
+Controls the debounce timing for validation execution across your application or specific component subtrees.
 
 **Type:** `InjectionToken<number>`
 
-**Purpose:** Set the debounce delay (in milliseconds) for dependent-field revalidation triggered by `validationConfig`.
+**Purpose:** Set the debounce delay (in milliseconds) for validation to reduce excessive validation calls while users type.
 
-#### What this token affects
-
-- Revalidation of dependent fields configured through `validationConfig`
-- Cross-field dependency updates such as `password -> confirmPassword`
-
-#### What this token does **not** affect
-
-- Direct field validation
-- Direct group validation
-- Root form validation via `ngxValidateRootForm`
-
-Use `validationOptions.debounceTime` for direct field/group/root validation debounce.
-
-#### Error display usage
+#### Usage
 
 **Global Configuration (Application-Level):**
 
 ```typescript
 import { bootstrapApplication } from '@angular/platform-browser';
-import {
-  NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
-  NGX_VALIDATION_DEBOUNCE_PRESETS,
-} from 'ngx-vest-forms';
+import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
 import { AppComponent } from './app/app.component';
 
 bootstrapApplication(AppComponent, {
   providers: [
     {
       provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
-      useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.relaxed, // 150ms
+      useValue: 300, // 300ms debounce for all forms
     },
   ],
 });
-```
-
-**Named Presets:**
-
-```typescript
-import { NGX_VALIDATION_DEBOUNCE_PRESETS } from 'ngx-vest-forms';
-
-NGX_VALIDATION_DEBOUNCE_PRESETS.immediate; // 0
-NGX_VALIDATION_DEBOUNCE_PRESETS.fast; // 100
-NGX_VALIDATION_DEBOUNCE_PRESETS.default; // 100
-NGX_VALIDATION_DEBOUNCE_PRESETS.relaxed; // 150
-NGX_VALIDATION_DEBOUNCE_PRESETS.typing; // 300
-NGX_VALIDATION_DEBOUNCE_PRESETS.async; // 500
 ```
 
 **Component-Level Configuration:**
@@ -70,7 +41,6 @@ NGX_VALIDATION_DEBOUNCE_PRESETS.async; // 500
 import { Component, signal } from '@angular/core';
 import {
   NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
-  NGX_VALIDATION_DEBOUNCE_PRESETS,
   NgxDeepPartial,
 } from 'ngx-vest-forms';
 
@@ -104,7 +74,7 @@ type SearchFormModel = NgxDeepPartial<{
   providers: [
     {
       provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
-      useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.typing, // 300ms debounce only for this search form
+      useValue: 500, // 500ms debounce only for this search form
     },
   ],
 })
@@ -118,70 +88,29 @@ export class SearchFormComponent {
 
 If `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN` is not provided:
 
-- `validationConfig` dependent-field revalidation uses the library default of **100ms**
-- Direct field/group/root validation is still **immediate by default** unless `validationOptions.debounceTime` is configured
-
-The built-in default is also exported as `NGX_VALIDATION_CONFIG_DEBOUNCE_DEFAULT`.
-
-#### Recommended timings
-
-##### For `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN`
-
-| Use case                         | Recommended value | Notes                                       |
-| -------------------------------- | ----------------- | ------------------------------------------- |
-| Tests / instant feedback         | `0ms`             | Best for deterministic tests and tiny forms |
-| General-purpose library default  | `100ms`           | Current built-in default                    |
-| App-level default                | `150ms`           | Slightly calmer typing experience           |
-| Noisy dependency revalidation    | `300ms`           | Use when cross-field updates are heavy      |
-| Very expensive dependency chains | `500ms`           | Rare; may feel sluggish                     |
-
-##### For `validationOptions.debounceTime`
-
-| Use case                              | Recommended value | Notes                                       |
-| ------------------------------------- | ----------------- | ------------------------------------------- |
-| Blur/submit or synchronous validation | `0ms`             | Keeps direct validation responsive          |
-| Live validation while typing          | `150-300ms`       | Good for continuous local validation        |
-| Async/API-backed field validation     | `300-500ms`       | Helps avoid excess remote calls             |
-| Expensive availability checks         | `500ms`           | Good for username/email/userId style checks |
+- Validation executes **immediately** on value changes (no debounce)
+- This is suitable for simple forms but may cause performance issues with complex async validations
 
 #### Best Practices
 
-- Keep `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN` focused on dependency revalidation
-- Keep `validationOptions.debounceTime` focused on direct field/group/root validation
-- Prefer `100-150ms` for general dependency revalidation defaults
-- Use `300-500ms` only when direct validation is genuinely expensive or async-backed
+- **Fast Forms (< 10 fields, no async):** 0-100ms or no debounce
+- **Medium Forms (10-30 fields, some async):** 150-300ms
+- **Complex Forms (> 30 fields, heavy async):** 300-500ms
+- **Search/Filter Forms:** 300-500ms for better UX
 
 #### Per-Field Override
 
-You can override direct validation debounce at the field level using `validationOptions`:
+You can override debounce at the field level using `validationOptions`:
 
 ```typescript
-import {
-  NGX_VALIDATION_DEBOUNCE_PRESETS,
-  type ValidationOptions,
-} from 'ngx-vest-forms';
-
-protected readonly emailValidationOptions: ValidationOptions = {
-  debounceTime: NGX_VALIDATION_DEBOUNCE_PRESETS.async,
-};
-```
-
-```html
 <input
   name="email"
   [ngModel]="formValue().email"
-  [validationOptions]="emailValidationOptions"
+  [validationOptions]="{ debounceTime: 500 }"
 />
 ```
 
-This field-level configuration is separate from `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN`.
-
-#### Recommended split of responsibilities
-
-Use this rule of thumb:
-
-- `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN` → debounce **dependent-field revalidation**
-- `validationOptions.debounceTime` → debounce **direct field/group/root validation**
+This field-level configuration takes precedence over the token value.
 
 ## Error Display Configuration
 
@@ -284,7 +213,7 @@ export class LoginFormComponent {
 }
 ```
 
-#### Error display UX considerations
+#### UX Considerations
 
 **Use `on-blur-or-submit` (default) when:**
 
@@ -343,7 +272,7 @@ type NgxWarningDisplayMode =
 - **`on-dirty`**: Show warnings as soon as value changes (or after blur/submit)
 - **`always`**: Show warnings immediately, including pristine fields
 
-#### Warning display usage
+#### Usage
 
 **Global Configuration:**
 
@@ -398,7 +327,7 @@ export class SignupFormComponent {
 }
 ```
 
-#### Warning display UX considerations
+#### UX Considerations
 
 **Use `on-validated-or-touch` (default) when:**
 
@@ -420,17 +349,11 @@ export class SignupFormComponent {
 - You want persistent advisory guidance visible at all times
 - You are running a guided/demo flow where warnings should be explicit
 
-### Legacy Token: `SC_ERROR_DISPLAY_MODE_TOKEN`
+### Error display mode token
 
-**Status:** ⚠️ Deprecated
-
-The `SC_ERROR_DISPLAY_MODE_TOKEN` is an alias for `NGX_ERROR_DISPLAY_MODE_TOKEN` maintained for backward compatibility. It is still available in the current major version, but it is deprecated and should be replaced with `NGX_ERROR_DISPLAY_MODE_TOKEN` in new code.
+Use `NGX_ERROR_DISPLAY_MODE_TOKEN` to configure the default error display mode. The legacy `SC_ERROR_DISPLAY_MODE_TOKEN` was removed in v3.0.0.
 
 ```typescript
-// ❌ Legacy (still works for compatibility, but deprecated)
-import { SC_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
-
-// ✅ Recommended
 import { NGX_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
 ```
 
@@ -508,7 +431,7 @@ Most applications never need to override this token. Reach for the override when
 
 Injection tokens follow Angular's hierarchical dependency injection. More specific providers override more general ones:
 
-```text
+```
 Application Level (lowest priority)
   ↓
 Module Level
@@ -520,38 +443,32 @@ Component Level (highest priority)
 
 ```typescript
 // app.config.ts - Application-wide defaults
-import {
-  NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
-  NGX_VALIDATION_DEBOUNCE_PRESETS,
-} from 'ngx-vest-forms';
+import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     {
       provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
-      useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.relaxed,
+      useValue: 200, // Default 200ms debounce for all forms
     },
   ],
 };
 
 // complex-form.ts - Override for specific component
 import { Component } from '@angular/core';
-import {
-  NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
-  NGX_VALIDATION_DEBOUNCE_PRESETS,
-} from 'ngx-vest-forms';
+import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
 
 @Component({
   selector: 'ngx-complex-form',
   providers: [
     {
       provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
-      useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.async,
+      useValue: 500, // 500ms debounce for this complex form only
     },
   ],
 })
 export class ComplexFormComponent {
-  // This component uses a slower debounce, overriding the app-level relaxed default.
+  // This component uses 500ms debounce, overriding ngx-wide 200ms
 }
 ```
 
@@ -561,17 +478,16 @@ export class ComplexFormComponent {
 import { ApplicationConfig } from '@angular/core';
 import {
   NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
-  NGX_VALIDATION_DEBOUNCE_PRESETS,
   NGX_ERROR_DISPLAY_MODE_TOKEN,
   NGX_WARNING_DISPLAY_MODE_TOKEN,
 } from 'ngx-vest-forms';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    // Debounce validation-config dependency updates with a relaxed preset
+    // Debounce validation by 250ms globally
     {
       provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
-      useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.relaxed,
+      useValue: 250,
     },
     // Show errors on blur by default
     {
@@ -586,8 +502,6 @@ export const appConfig: ApplicationConfig = {
   ],
 };
 ```
-
-For direct field/group/root validation, keep using `validationOptions.debounceTime`.
 
 ## See Also
 

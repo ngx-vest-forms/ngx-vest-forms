@@ -60,7 +60,7 @@ class TestFormComponent {
       [formValue]="model()"
       (formValueChange)="model.set($event)"
     >
-      <div scControlWrapper>
+      <div ngxControlWrapper>
         <label for="email">Email</label>
         <input id="email" name="email" [ngModel]="model().email" />
       </div>
@@ -175,7 +175,7 @@ class MultipleControlsComponent {
   model = signal({ firstName: '', lastName: '' });
 }
 
-describe('ScControlWrapperComponent', () => {
+describe('ControlWrapperComponent', () => {
   describe('Core Functionality', () => {
     it('should render component correctly with element selector', async () => {
       await render(TestFormComponent);

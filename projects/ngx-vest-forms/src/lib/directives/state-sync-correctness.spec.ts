@@ -1,5 +1,10 @@
 /* eslint-disable @angular-eslint/component-selector */
-import { Component, signal, viewChild, type WritableSignal } from '@angular/core';
+import {
+  Component,
+  signal,
+  viewChild,
+  type WritableSignal,
+} from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import { create, enforce, test as vestTest } from 'vest';
 import { describe, expect, it } from 'vitest';
@@ -11,8 +16,7 @@ import { FormDirective } from './form.directive';
  * Acceptance tests for issue #106 — "State-sync correctness" bundle:
  *   1. `formState().value` resets to `null` when all controls are dynamically removed.
  *   2. `form-control-state` tracks late-attached `NgModel.control`.
- *   3. `ngxValidateRootFormMode` precedence is `ngx ?? legacy ?? 'submit'`
- *      across all four default-vs-explicit combinations.
+ *   3. `ngxValidateRootFormMode` defaults to `'submit'` and accepts `'live'`.
  *
  * Reactive `[pendingDebounce]` propagation is covered as unit tests in
  * `../utils/pending-state.utils.spec.ts` (the wrapper just forwards the
@@ -87,7 +91,7 @@ describe('Issue #106 — state-sync correctness', () => {
           (formValueChange)="formValue.set($event)"
         >
           @if (showInput()) {
-            <div formControlState #state="formControlState">
+            <div ngxControlState #state="ngxControlState">
               <input name="email" [ngModel]="formValue().email" required />
               <span data-testid="is-invalid">{{ state.isInvalid() }}</span>
               <span data-testid="error-count">{{
@@ -138,7 +142,7 @@ describe('Issue #106 — state-sync correctness', () => {
     });
   });
 
-  describe('ngxValidateRootFormMode precedence: ngx ?? legacy ?? "submit"', () => {
+  describe('ngxValidateRootFormMode behavior', () => {
     function createRootFormSuite() {
       return create((data: Record<string, unknown> = {}) => {
         vestTest(ROOT_FORM, 'Passwords must match', () => {
@@ -189,7 +193,9 @@ describe('Issue #106 — state-sync correctness', () => {
       // must stay silent. Awaiting stability twice (once for the value
       // change, once for any reactive cascade) is deterministic and
       // strictly faster than a fixed-duration setTimeout.
-      const host = fixture.componentInstance as { model: WritableSignal<Record<string, unknown>> };
+      const host = fixture.componentInstance as {
+        model: WritableSignal<Record<string, unknown>>;
+      };
       host.model.update((m) => ({ ...m, confirmPassword: 'still-mismatched' }));
       fixture.detectChanges();
       await fixture.whenStable();
@@ -199,34 +205,7 @@ describe('Issue #106 — state-sync correctness', () => {
       expect(screen.queryByTestId('root-error')).not.toBeInTheDocument();
     });
 
-    it('combo 2 — only legacy `validateRootFormMode` set → legacy wins', async () => {
-      await makeMisMatchedForm(`
-        <form
-          ngxVestForm
-          ngxValidateRootForm
-          [validateRootFormMode]="'live'"
-          [suite]="suite"
-          [formValue]="model()"
-          (formValueChange)="model.set($event)"
-          (errorsChange)="errors.set($event)"
-        >
-          <input name="password" [ngModel]="model().password" />
-          <input name="confirmPassword" [ngModel]="model().confirmPassword" />
-          @if (errors()[ROOT_FORM]) {
-            <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
-          }
-        </form>
-      `);
-
-      await waitFor(
-        () => {
-          expect(screen.queryByTestId('root-error')).toBeInTheDocument();
-        },
-        { timeout: 2000 }
-      );
-    });
-
-    it('combo 3 — only `ngxValidateRootFormMode` set → ngx wins', async () => {
+    it('shows live root-form errors when `ngxValidateRootFormMode` is set to "live"', async () => {
       await makeMisMatchedForm(`
         <form
           ngxVestForm
@@ -251,38 +230,6 @@ describe('Issue #106 — state-sync correctness', () => {
         },
         { timeout: 2000 }
       );
-    });
-
-    it('combo 4 — both set → ngx-prefixed input takes precedence over legacy', async () => {
-      const { fixture } = await makeMisMatchedForm(`
-        <form
-          ngxVestForm
-          ngxValidateRootForm
-          [ngxValidateRootFormMode]="'submit'"
-          [validateRootFormMode]="'live'"
-          [suite]="suite"
-          [formValue]="model()"
-          (formValueChange)="model.set($event)"
-          (errorsChange)="errors.set($event)"
-        >
-          <input name="password" [ngModel]="model().password" />
-          <input name="confirmPassword" [ngModel]="model().confirmPassword" />
-          @if (errors()[ROOT_FORM]) {
-            <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
-          }
-        </form>
-      `);
-
-      // Trigger a value change that *would* fire validation if the legacy
-      // 'live' mode were honored. ngx says 'submit', so it must stay silent.
-      const host = fixture.componentInstance as { model: WritableSignal<Record<string, unknown>> };
-      host.model.update((m) => ({ ...m, confirmPassword: 'still-mismatched' }));
-      fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
-      await fixture.whenStable();
-
-      expect(screen.queryByTestId('root-error')).not.toBeInTheDocument();
     });
   });
 });

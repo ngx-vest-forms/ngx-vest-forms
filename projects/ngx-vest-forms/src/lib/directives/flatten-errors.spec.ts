@@ -12,7 +12,7 @@ import { FormControlStateDirective } from './form-control-state.directive';
 @Component({
   imports: [FormsModule, FormControlStateDirective],
   template: `
-    <div formControlState #state="formControlState">
+    <div ngxControlState #state="ngxControlState">
       <input name="test" [(ngModel)]="model" #ngModelRef="ngModel" />
       <div id="error-messages">{{ state.errorMessages().join(',') }}</div>
       <div id="warning-messages">{{ state.warningMessages().join(',') }}</div>

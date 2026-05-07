@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 @Component({
   imports: [FormsModule, FormControlStateDirective],
   template: `
-    <div formControlState #state="formControlState">
+    <div ngxControlState #state="ngxControlState">
       <input name="test" [(ngModel)]="model" required />
       <span id="is-valid">{{ state.isValid() }}</span>
       <span id="is-touched">{{ state.isTouched() }}</span>
@@ -35,7 +35,7 @@ class TestHostComponent {
       [formValue]="formValue()"
       (formValueChange)="formValue.set($event)"
     >
-      <div formControlState #state="formControlState">
+      <div ngxControlState #state="ngxControlState">
         <input name="test" [ngModel]="formValue().test" />
         <span id="warning-only">{{ state.warningMessages().join(',') }}</span>
       </div>
@@ -56,7 +56,7 @@ class WarningOnlyHostComponent {
   imports: [FormsModule, FormControlStateDirective],
   template: `
     <form #form="ngForm">
-      <div formControlState #state="formControlState">
+      <div ngxControlState #state="ngxControlState">
         <input name="test" [(ngModel)]="model" required />
         <span id="has-been-validated-reset">{{
           state.hasBeenValidated()

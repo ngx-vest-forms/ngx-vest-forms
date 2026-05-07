@@ -30,9 +30,9 @@ class DummyDirective {
     <form #form="ngForm">
       <div ngxDummy [testInput]="'test'"></div>
       <input
-        formErrorDisplay
+        ngxErrorDisplay
         [errorDisplayMode]="mode"
-        #display="formErrorDisplay"
+        #display="ngxErrorDisplay"
         name="test"
         [ngModel]="model"
         required
@@ -60,8 +60,8 @@ class TestErrorDisplayHostComponent {
   template: `
     <form #form="ngForm">
       <input
-        formErrorDisplay
-        #display="formErrorDisplay"
+        ngxErrorDisplay
+        #display="ngxErrorDisplay"
         name="test"
         [ngModel]="model"
         required
@@ -397,12 +397,12 @@ describe('FormErrorDisplayDirective', () => {
     hostDirectives: [FormErrorDisplayDirective],
     template: `
       <input name="test" [ngModel]="value" required />
-      <span id="host-errors">{{ formErrorDisplay.errors().join(',') }}</span>
+      <span id="host-errors">{{ errorDisplay.errors().join(',') }}</span>
     `,
   })
   class HostFieldComponent {
     value = '';
-    formErrorDisplay = inject(FormErrorDisplayDirective);
+    errorDisplay = inject(FormErrorDisplayDirective);
   }
 
   it('should work as a host directive', async () => {

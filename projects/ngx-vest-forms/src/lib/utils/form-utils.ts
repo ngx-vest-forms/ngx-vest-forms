@@ -266,7 +266,7 @@ export function setValueAtPath(
  * Internal utility for collecting all form errors by field path.
  *
  * **Not intended for external use.** This function is used internally by the library
- * to generate the form state. Use the `formState()` signal from the `scVestForm` directive
+ * to generate the form state. Use the `formState()` signal from the `ngxVestForm` directive
  * to access form errors in your components.
  *
  * Traverses the form and returns the errors by path

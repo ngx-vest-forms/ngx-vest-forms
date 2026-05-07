@@ -78,11 +78,11 @@ import { ValidationOptions } from './validation-options';
  *
  * @example
  * ```html
- * <form scVestForm
- *       validateRootForm
+ * <form ngxVestForm
+ *       ngxValidateRootForm
  *       [suite]="suite"
  *       [formValue]="formValue()"
- *       [validateRootFormMode]="'submit'"
+ *       [ngxValidateRootFormMode]="'submit'"
  *       (errorsChange)="errors.set($event)"
  *       #form="ngForm">
  *   <!-- form fields -->
@@ -107,7 +107,7 @@ import { ValidationOptions } from './validation-options';
  * @publicApi
  */
 @Directive({
-  selector: 'form[validateRootForm], form[ngxValidateRootForm]',
+  selector: 'form[ngxValidateRootForm]',
 
   providers: [
     {
@@ -129,14 +129,6 @@ export class ValidateRootFormDirective<T>
   readonly formValue = input<T | null>(null);
   readonly suite = input<NgxVestSuite<T> | null>(null);
 
-  /**
-   * Whether the root form should be validated or not
-   * This will use the field rootForm
-   * Accepts both validateRootForm and ngxValidateRootForm
-   */
-  readonly validateRootForm = input(false, {
-    transform: booleanAttribute,
-  });
   readonly ngxValidateRootForm = input(false, {
     transform: booleanAttribute,
   });
@@ -145,15 +137,7 @@ export class ValidateRootFormDirective<T>
    * Validation mode:
    * - `'submit'` (effective default): Only validates after form submission.
    * - `'live'`: Validates on every value change.
-   *
-   * Both inputs default to `undefined` so we can detect whether the consumer
-   * set them explicitly. Precedence is `ngx ?? legacy ?? 'submit'`, which
-   * matches the documented behavior — observable only when both attributes
-   * are set explicitly on the same form.
    */
-  readonly validateRootFormMode = input<'submit' | 'live' | undefined>(
-    undefined
-  );
   readonly ngxValidateRootFormMode = input<'submit' | 'live' | undefined>(
     undefined
   );
@@ -169,9 +153,7 @@ export class ValidateRootFormDirective<T>
       // These can be set after the first validation pass and we want the
       // root form to re-evaluate once they become available.
       this.suite();
-      this.validateRootForm();
       this.ngxValidateRootForm();
-      this.validateRootFormMode();
       this.ngxValidateRootFormMode();
       this.validationOptions();
 
@@ -205,8 +187,8 @@ export class ValidateRootFormDirective<T>
 
     if (!ngForm) {
       console.error(
-        '[ValidateRootFormDirective] NgForm not found. Ensure the directive is used on a <form> element with the scVestForm directive. ' +
-          'Common setup mistakes: (1) Missing scVestForm directive, (2) Directive on non-form element, (3) NgForm not imported in module/component.'
+        '[ValidateRootFormDirective] NgForm not found. Ensure the directive is used on a <form> element with the ngxVestForm directive. ' +
+          'Common setup mistakes: (1) Missing ngxVestForm directive, (2) Directive on non-form element, (3) NgForm not imported in module/component.'
       );
       return;
     }
@@ -236,17 +218,11 @@ export class ValidateRootFormDirective<T>
       return of(null);
     }
 
-    // Check both validateRootForm and ngxValidateRootForm inputs
-    const isEnabled = this.validateRootForm() || this.ngxValidateRootForm();
-    if (!isEnabled) {
+    if (!this.ngxValidateRootForm()) {
       return of(null);
     }
 
-    // Mode precedence: ngx-prefixed input wins over legacy input; both default
-    // to `undefined` so the precedence rule is implementable without losing
-    // the legacy attribute when the new one is not set.
-    const mode =
-      this.ngxValidateRootFormMode() ?? this.validateRootFormMode() ?? 'submit';
+    const mode = this.ngxValidateRootFormMode() ?? 'submit';
 
     // In 'submit' mode, skip validation until form is submitted
     if (mode === 'submit' && !this.hasSubmitted()) {

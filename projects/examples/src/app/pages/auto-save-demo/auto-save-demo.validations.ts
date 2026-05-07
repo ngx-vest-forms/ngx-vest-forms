@@ -2,21 +2,22 @@ import { type NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test, warn } from 'vest';
 import { AutoSaveDemoModel } from '../../models/auto-save-demo.model';
 
-export const autoSaveDemoValidationErrorRulesByField: Record<string, string[]> = {
-  projectName: [
-    'Project name is required',
-    'Project name must be at least 3 characters',
-  ],
-  quantity: ['Quantity is required when a justification is provided'],
-  quantityJustification: [
-    'Justification is required when quantity is provided',
-  ],
-  preferredContactMethod: ['Choose how draft updates should reach you'],
-  email: [
-    'Email is required when email updates are selected',
-    'Enter a valid email address',
-  ],
-};
+export const autoSaveDemoValidationErrorRulesByField: Record<string, string[]> =
+  {
+    projectName: [
+      'Project name is required',
+      'Project name must be at least 3 characters',
+    ],
+    quantity: ['Quantity is required when a justification is provided'],
+    quantityJustification: [
+      'Justification is required when quantity is provided',
+    ],
+    preferredContactMethod: ['Choose how draft updates should reach you'],
+    email: [
+      'Email is required when email updates are selected',
+      'Enter a valid email address',
+    ],
+  };
 
 export const autoSaveDemoValidationWarningRulesByField: Record<
   string,
@@ -55,9 +56,13 @@ export const autoSaveDemoSuite: NgxVestSuite<AutoSaveDemoModel> = create(
       );
     });
 
-    test('preferredContactMethod', 'Choose how draft updates should reach you', () => {
-      enforce(model.preferredContactMethod).isNotBlank();
-    });
+    test(
+      'preferredContactMethod',
+      'Choose how draft updates should reach you',
+      () => {
+        enforce(model.preferredContactMethod).isNotBlank();
+      }
+    );
 
     omitWhen(model.preferredContactMethod !== 'email', () => {
       test('email', 'Email is required when email updates are selected', () => {

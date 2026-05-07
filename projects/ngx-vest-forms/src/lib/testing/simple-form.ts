@@ -56,18 +56,13 @@ export const formValidationSuite = create((model: FormModel) => {
 });
 
 export const selectors = {
-  scControlWrapperFirstName: 'ngx-control-wrapper__first-name',
   ngxControlWrapperFirstName: 'ngx-control-wrapper__first-name',
   inputFirstName: 'input__first-name',
-  scControlWrapperLastName: 'ngx-control-wrapper__last-name',
   ngxControlWrapperLastName: 'ngx-control-wrapper__last-name',
   inputLastName: 'input__last-name',
-  scControlWrapperPasswords: 'ngx-control-wrapper__passwords',
   ngxControlWrapperPasswords: 'ngx-control-wrapper__passwords',
-  scControlWrapperPassword: 'ngx-control-wrapper__password',
   ngxControlWrapperPassword: 'ngx-control-wrapper__password',
   inputPassword: 'input__password',
-  scControlWrapperConfirmPassword: 'ngx-control-wrapper__confirm-password',
   ngxControlWrapperConfirmPassword: 'ngx-control-wrapper__confirm-password',
   inputConfirmPassword: 'input__confirm-password',
   btnSubmit: 'btn__submit',

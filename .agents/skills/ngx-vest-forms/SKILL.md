@@ -93,7 +93,7 @@ Read `root-form-validation/SKILL.md` when the user is:
 
 - asking for a message that belongs to the entire form
 - comparing `ROOT_FORM` versus field-level validation
-- working with `ngxValidateRootForm` or `validateRootFormMode`
+- working with `ngxValidateRootForm` or `ngxValidateRootFormMode`
 
 ### Built-in wrappers
 

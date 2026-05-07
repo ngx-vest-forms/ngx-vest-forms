@@ -88,7 +88,6 @@ export { ROOT_FORM } from './lib/constants';
 export {
   NGX_ERROR_DISPLAY_MODE_TOKEN,
   NGX_WARNING_DISPLAY_MODE_TOKEN,
-  SC_ERROR_DISPLAY_MODE_TOKEN,
 } from './lib/directives/error-display-mode.token';
 export {
   NGX_VALIDATION_CONFIG_DEBOUNCE_DEFAULT,

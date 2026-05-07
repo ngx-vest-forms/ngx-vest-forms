@@ -16,7 +16,9 @@ function isOpaqueLeafValue(value: unknown): boolean {
 }
 
 function isTraversableValue(value: unknown): value is TraversableShapeValue {
-  return typeof value === 'object' && value !== null && !isOpaqueLeafValue(value);
+  return (
+    typeof value === 'object' && value !== null && !isOpaqueLeafValue(value)
+  );
 }
 
 /**
@@ -111,7 +113,9 @@ function validateFormValueAgainstShape(
       // Recurse into nested object
       validateFormValueAgainstShape(
         value as Record<string, unknown>,
-        isTraversableValue(shapeValue) ? (shapeValue as Record<string, unknown>) : {},
+        isTraversableValue(shapeValue)
+          ? (shapeValue as Record<string, unknown>)
+          : {},
         fieldPath
       );
       continue;

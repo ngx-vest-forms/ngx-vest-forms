@@ -5,14 +5,14 @@
 ngx-vest-forms provides three complementary features for handling validation in complex, dynamic forms:
 
 - **`validationConfig`**: Triggers **re-validation** of dependent fields (when field X changes, also validate field Y)
-- **`validateRootForm`**: Enables **form-level** validation (cross-field rules at the form level)
+- **`ngxValidateRootForm`**: Enables **form-level** validation (cross-field rules at the form level)
 - **`triggerFormValidation()`**: Manually triggers validation when switching from **input fields to non-input content** (structure changes without value changes)
 
 **Key Insight**: These are **not alternatives** - they solve different problems and often work together!
 
 ## Quick Comparison
 
-| Feature                 | `validationConfig`                            | `validateRootForm`                                  | `triggerFormValidation()`                                     |
+| Feature                 | `validationConfig`                            | `ngxValidateRootForm`                                  | `triggerFormValidation()`                                     |
 | ----------------------- | --------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------- |
 | **Purpose**             | Re-validation trigger                         | Create form-level validations                       | Manual validation trigger                                     |
 | **What it does**        | When field X changes, re-validate field Y     | Runs ROOT_FORM tests from Vest suite                | Forces validation update when form structure changes          |
@@ -20,7 +20,7 @@ ngx-vest-forms provides three complementary features for handling validation in 
 | **Use for**             | Field validations that depend on other fields | Form-wide business rules                            | Structure changes without value changes                       |
 | **When to call**        | Automatic (via config)                        | Automatic (on blur/submit)                          | Manual (after structure change)                               |
 | **Directive/Method**    | `FormDirective` (`ngxVestForm`)               | `ValidateRootFormDirective` (`ngxValidateRootForm`) | `FormDirective.triggerFormValidation()` (public method)       |
-| **Works with**          | Field-level tests (`test()`)                  | ROOT_FORM tests (`test(ROOT_FORM, ...)`)            | All validations (validationConfig + validateRootForm + tests) |
+| **Works with**          | Field-level tests (`test()`)                  | ROOT_FORM tests (`test(ROOT_FORM, ...)`)            | All validations (validationConfig + ngxValidateRootForm + tests) |
 
 ## Understanding validationConfig
 
@@ -143,7 +143,7 @@ validationConfig = {
   }
   ```
 
-## Understanding validateRootForm
+## Understanding ngxValidateRootForm
 
 ### Purpose
 
@@ -168,8 +168,8 @@ test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
 <!-- Template -->
 <form
   ngxVestForm
-  validateRootForm
-  [validateRootFormMode]="'submit'"
+  ngxValidateRootForm
+  [ngxValidateRootFormMode]="'submit'"
   (errorsChange)="errors.set($event)"
 >
   <!-- Fields... -->
@@ -362,8 +362,8 @@ These features complement each other in complex, dynamic forms:
     <form
       ngxVestForm
       [validationConfig]="validationConfig()"
-      validateRootForm
-      [validateRootFormMode]="'submit'"
+      ngxValidateRootForm
+      [ngxValidateRootFormMode]="'submit'"
       (errorsChange)="errors.set($event)"
       #vestForm="ngxVestForm"
     >
@@ -418,22 +418,26 @@ export class MyFormComponent {
     return config;
   });
 
-  protected readonly suite = create((model: MyFormModel) => {
-    // Field-level validations
-    omitWhen(model.type !== 'typeA', () => {
-      test('password', 'Password required', () => {
-        enforce(model.password).isNotBlank();
-      });
-      test('confirmPassword', 'Passwords must match', () => {
-        enforce(model.confirmPassword).equals(model.password);
-      });
-    });
+  protected readonly suite = staticSuite(
+    (model: MyFormModel, field?: string) => {
+      only(field);
 
-    // Form-level validation using ROOT_FORM
-    test(ROOT_FORM, 'At least one contact method required', () => {
-      enforce(model.email || model.phone).isTruthy();
-    });
-  });
+      // Field-level validations
+      omitWhen(model.type !== 'typeA', () => {
+        test('password', 'Password required', () => {
+          enforce(model.password).isNotBlank();
+        });
+        test('confirmPassword', 'Passwords must match', () => {
+          enforce(model.confirmPassword).equals(model.password);
+        });
+      });
+
+      // Form-level validation using ROOT_FORM
+      test(ROOT_FORM, 'At least one contact method required', () => {
+        enforce(model.email || model.phone).isTruthy();
+      });
+    }
+  );
 
   // triggerFormValidation(): After structure changes
   onTypeChange(type: string) {
@@ -454,7 +458,7 @@ export class MyFormComponent {
 **This example demonstrates:**
 
 1. **`validationConfig`**: When `password` changes, automatically revalidate `confirmPassword`
-2. **`validateRootForm`**: Form-level rule ("at least one contact method") appears at form level
+2. **`ngxValidateRootForm`**: Form-level rule ("at least one contact method") appears at form level
 3. **`triggerFormValidation()`**: Called after type change to update validation when structure changes
 
 ## Decision Tree: Which Features to Use?
@@ -474,7 +478,7 @@ export class MyFormComponent {
 - Age triggers emergency contact requirement
 - End date must be after start date (error on end date field)
 
-### Use `validateRootForm` when:
+### Use `ngxValidateRootForm` when:
 
 - ✅ Error belongs to the **entire form**, not a specific field
 - ✅ Rule validates **multiple fields together** as a business constraint
@@ -511,7 +515,7 @@ export class MyFormComponent {
 
 - ✅ Complex **dynamic forms** with multiple concerns:
   - Field-level dependencies (`validationConfig`)
-  - Form-level business rules (`validateRootForm`)
+  - Form-level business rules (`ngxValidateRootForm`)
   - Dynamic structure changes (`triggerFormValidation()`)
 - ✅ Forms with **conditional layouts** and **cross-field validation**
 - ✅ Need **comprehensive validation** at all levels
@@ -519,7 +523,7 @@ export class MyFormComponent {
 **Example:** Purchase form with:
 
 - Field-level: Password confirmation (`validationConfig`)
-- Form-level: "Brecht is not 30 anymore" (`validateRootForm`)
+- Form-level: "Brecht is not 30 anymore" (`ngxValidateRootForm`)
 - Structure changes: Switching between form types (`triggerFormValidation()`)
 
 ## Common Mistakes
@@ -593,14 +597,14 @@ validationConfig = { password: ['confirmPassword'] };
 | Scenario                                 | Solution                     | Why                                                         |
 | ---------------------------------------- | ---------------------------- | ----------------------------------------------------------- |
 | Password confirmation                    | `validationConfig`           | Field-level validation - error belongs to `confirmPassword` |
-| "Brecht is not 30"                       | `validateRootForm`           | Form-level rule - doesn't belong to any single field        |
+| "Brecht is not 30"                       | `ngxValidateRootForm`           | Form-level rule - doesn't belong to any single field        |
 | Switching input → paragraph/text         | `triggerFormValidation()`    | Structure change from input to non-input content            |
 | Switching between different inputs       | **Not needed (automatic)**   | Value changes trigger validation automatically              |
 | Quantity ↔ Justification                 | `validationConfig`           | Bidirectional field-level validations                       |
-| At least one contact method              | `validateRootForm`           | Form-level constraint across multiple fields                |
+| At least one contact method              | `ngxValidateRootForm`           | Form-level constraint across multiple fields                |
 | Clearing fields to non-input content     | `triggerFormValidation()`    | After structure change with field clearing utilities        |
 | Age triggers emergency contact           | `validationConfig`           | Conditional field requirement                               |
-| Addresses must differ                    | `validateRootForm`           | Form-wide business rule                                     |
+| Addresses must differ                    | `ngxValidateRootForm`           | Form-wide business rule                                     |
 | Dynamic layout (inputs ↔ static content) | `triggerFormValidation()`    | Controls replaced with non-input elements                   |
 | End date after start date                | `validationConfig` (usually) | Field-level validation on `endDate` field                   |
 | Complex dynamic purchase form            | **ALL THREE**                | Field dependencies + form-level rules + structure changes   |
@@ -610,9 +614,8 @@ validationConfig = { password: ['confirmPassword'] };
 - **[README: Validation](../README.md#validation)** - Core validation concepts
 - **[README: Field Blur Events & Draft Auto-Save](../README.md#field-blur-events--draft-auto-save)** - Blur-driven persistence pattern
 - **[README: Dependent Field Validation](../README.md#dependent-field-validation-with-conditional-rendering)** - validationConfig patterns
-- **[README: Root Form Validation](../README.md#validations-on-the-root-form)** - validateRootForm usage
+- **[README: Root Form Validation](../README.md#validations-on-the-root-form)** - ngxValidateRootForm usage
 - **[Auto-Save on Blur](./AUTO-SAVE-ON-BLUR.md)** - Draft persistence pattern with `fieldBlur`
 - **[Complete Example](./COMPLETE-EXAMPLE.md)** - Full working example
-- **[Migration Guide (v2.x → v3.0.0)](./migration/MIGRATION-v2.x-to-v3.0.0.md)** - Upgrading to v3.0.0 (Vest 6)
-- **[Migration Guide (v1.x → v2.0.0)](./migration/MIGRATION-v1.x-to-v2.0.0.md)** - Upgrading guide (validateRootFormMode change)
+- **[Migration Guide (v1.x → v2.0.0)](./migration/MIGRATION-v1.x-to-v2.0.0.md)** - Upgrading guide (ngxValidateRootFormMode change)
 - **[Vest.js Documentation](https://vestjs.dev)** - Validation framework docs
