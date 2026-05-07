@@ -386,9 +386,9 @@ export class ValidationConfigBuilder<T> {
  *   .build();
  * ```
  *
- * @example With DeepPartial form model
+ * @example With NgxDeepPartial form model
  * ```typescript
- * type FormModel = DeepPartial<{
+ * type FormModel = NgxDeepPartial<{
  *   user: {
  *     profile: {
  *       email: string;

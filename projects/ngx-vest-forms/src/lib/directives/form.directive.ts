@@ -53,7 +53,7 @@ import {
 } from 'rxjs';
 import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
-import { DeepRequired, type NgxDeepRequired } from '../utils/deep-required';
+import { NgxDeepRequired } from '../utils/deep-required';
 import { NGX_EQUALITY_FN } from '../tokens/equality.token';
 import {
   scheduleMicrotask,
@@ -78,7 +78,7 @@ import {
 } from '../utils/form-utils';
 import { validateShape } from '../utils/shape-validation';
 import type { NgxSuiteRunResult } from '../utils/validation-suite';
-import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
+import { NgxVestSuite } from '../utils/validation-suite';
 import {
   getFormSubmittedSignal,
   setAngularFormSubmittedState,
@@ -328,9 +328,9 @@ export class FormDirective<T extends Record<string, unknown>> {
 
   /**
    * Static vest suite that will be used to feed our angular validators.
-   * Accepts NgxVestSuite<T> (the canonical type) or its deprecated alias NgxTypedVestSuite<T>.
+   * Use `suite.only(field).run(model)` when you need field-focused validation.
    */
-  readonly suite = input<NgxVestSuite<T> | NgxTypedVestSuite<T> | null>(null);
+  readonly suite = input<NgxVestSuite<T> | null>(null);
 
   /**
    * The shape of our form model. This is a deep required version of the form model
@@ -509,7 +509,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       effect(() => {
         const v = this.formValue();
         if (v && this.formShape()) {
-          validateShape(v, this.formShape() as DeepRequired<T>);
+          validateShape(v, this.formShape() as NgxDeepRequired<T>);
         }
       });
     }
@@ -583,7 +583,7 @@ export class FormDirective<T extends Record<string, unknown>> {
           if (modelValue) {
             // IMPORTANT: Use root patchValue instead of per-key setValue.
             // - Supports nested objects (ngModelGroup) without throwing when partial objects are provided.
-            // - patchValue ignores missing controls/keys, which is compatible with DeepPartial form models.
+            // - patchValue ignores missing controls/keys, which is compatible with NgxDeepPartial form models.
             // - emitEvent:false prevents feedback loops; validation still updates internally.
             this.ngForm.form.patchValue(modelValue, { emitEvent: false });
           }

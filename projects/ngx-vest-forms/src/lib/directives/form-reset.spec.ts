@@ -71,7 +71,7 @@ import userEvent from '@testing-library/user-event';
 import { create, enforce, test } from 'vest';
 import { describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
-import { DeepPartial } from '../utils/deep-partial';
+import { NgxDeepPartial } from '../utils/deep-partial';
 import { FormDirective } from './form.directive';
 
 describe('FormDirective - Reset Functionality', () => {
@@ -113,7 +113,7 @@ describe('FormDirective - Reset Functionality', () => {
         vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
 
         formValue = signal<
-          DeepPartial<{ firstName?: string; age?: number; gender?: string }>
+          NgxDeepPartial<{ firstName?: string; age?: number; gender?: string }>
         >({
           firstName: 'John',
           age: 30,
@@ -203,7 +203,9 @@ describe('FormDirective - Reset Functionality', () => {
       class TestComponent {
         vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
 
-        formValue = signal<DeepPartial<{ field1?: string; field2?: string }>>({
+        formValue = signal<
+          NgxDeepPartial<{ field1?: string; field2?: string }>
+        >({
           field1: 'value1',
           field2: 'value2',
         });
@@ -294,7 +296,7 @@ describe('FormDirective - Reset Functionality', () => {
         vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
 
         formValue = signal<
-          DeepPartial<{
+          NgxDeepPartial<{
             topLevel?: string;
             nested?: { field1?: string; field2?: string };
             passwords?: { password?: string; confirmPassword?: string };
@@ -387,7 +389,7 @@ describe('FormDirective - Reset Functionality', () => {
         vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
 
         formValue = signal<
-          DeepPartial<{ firstName?: string; lastName?: string }>
+          NgxDeepPartial<{ firstName?: string; lastName?: string }>
         >({
           firstName: 'John',
           lastName: 'Doe',
@@ -478,7 +480,7 @@ describe('FormDirective - Reset Functionality', () => {
         vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
 
         formValue = signal<
-          DeepPartial<{
+          NgxDeepPartial<{
             firstName?: string;
             lastName?: string;
             age?: number;
@@ -589,7 +591,7 @@ describe('FormDirective - Reset Functionality', () => {
       class TestComponent {
         vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
 
-        formValue = signal<DeepPartial<{ email?: string }>>({
+        formValue = signal<NgxDeepPartial<{ email?: string }>>({
           email: 'invalid',
         });
         errors = signal<Record<string, string[]>>({});
@@ -657,7 +659,7 @@ describe('FormDirective - Reset Functionality', () => {
       class TestComponent {
         vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
 
-        formValue = signal<DeepPartial<{ testField?: string }>>({});
+        formValue = signal<NgxDeepPartial<{ testField?: string }>>({});
         resetCount = signal(0);
 
         suite = create((model: any) => {
@@ -728,7 +730,7 @@ describe('FormDirective - Reset Functionality', () => {
         imports: [NgxVestForms],
       })
       class TestComponent {
-        formValue = signal<DeepPartial<{ firstName?: string }>>({
+        formValue = signal<NgxDeepPartial<{ firstName?: string }>>({
           firstName: 'John',
         });
 

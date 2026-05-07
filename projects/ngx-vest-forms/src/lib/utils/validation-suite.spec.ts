@@ -1,11 +1,8 @@
+import type { StaticSuite } from 'vest';
 import { describe, expect, it } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import type { FormFieldName } from './field-path-types';
-import type {
-  NgxFieldKey,
-  NgxTypedVestSuite,
-  NgxVestSuite,
-} from './validation-suite';
+import type { NgxFieldKey, NgxVestSuite } from './validation-suite';
 
 describe('validation-suite types', () => {
   interface TestModel {
@@ -33,10 +30,14 @@ describe('validation-suite types', () => {
     expect(rootField).toBe(ROOT_FORM);
   });
 
-  it('should keep NgxTypedVestSuite assignable to NgxVestSuite', () => {
+  it('should keep FormFieldName-typed suites assignable to NgxVestSuite', () => {
     // Compile-time contract test: this assignment is the key compatibility guarantee.
-    const typedSuite = (() =>
-      undefined) as unknown as NgxTypedVestSuite<TestModel>;
+    type TypedFieldSuite = StaticSuite<
+      string,
+      string,
+      (model: TestModel, field?: FormFieldName<TestModel>) => void
+    >;
+    const typedSuite = (() => undefined) as unknown as TypedFieldSuite;
     const baseSuite: NgxVestSuite<TestModel> = typedSuite;
 
     expect(typeof baseSuite).toBe('function');

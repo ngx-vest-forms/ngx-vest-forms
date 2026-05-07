@@ -32,7 +32,7 @@ import {
 import { ROOT_FORM } from '../constants';
 import { scheduleMicrotask } from '../utils/destroy-scheduler';
 import type { NgxSuiteRunResult } from '../utils/validation-suite';
-import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
+import { NgxVestSuite } from '../utils/validation-suite';
 import { ValidationOptions } from './validation-options';
 
 /**
@@ -125,7 +125,7 @@ export class ValidateRootFormDirective<T>
   private readonly hasSubmitted = signal(false);
 
   readonly formValue = input<T | null>(null);
-  readonly suite = input<NgxVestSuite<T> | NgxTypedVestSuite<T> | null>(null);
+  readonly suite = input<NgxVestSuite<T> | null>(null);
 
   /**
    * Whether the root form should be validated or not

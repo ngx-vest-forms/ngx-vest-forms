@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DeepPartial } from './deep-partial';
+import type { NgxDeepPartial } from './deep-partial';
 import type { ValidationConfigMap } from './field-path-types';
 import {
   createValidationConfig,
@@ -9,7 +9,7 @@ import {
 /**
  * Test form model for validation config builder tests
  */
-type TestFormModel = DeepPartial<{
+type TestFormModel = NgxDeepPartial<{
   firstName: string;
   lastName: string;
   email: string;

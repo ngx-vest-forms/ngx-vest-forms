@@ -584,6 +584,24 @@ result.then((res) => { ... });
 
 ---
 
+## v3 deprecation removals
+
+v3 also removes deprecated compatibility exports that were kept throughout v2.x. If your app already uses the recommended `Ngx`-prefixed names and newer helpers, no code changes are required.
+
+| Removed symbol | Replacement | Migration tip |
+| --- | --- | --- |
+| `cloneDeep` | `structuredClone` | Replace `cloneDeep(value)` with `structuredClone(value)` to preserve modern built-in clone behavior. |
+| `set` | `setValueAtPath` | Replace `set(obj, path, value)` with `setValueAtPath(obj, path, value)`. |
+| `vestForms` | `NgxVestForms` | Update standalone component imports to `imports: [NgxVestForms]`. |
+| `ROOT_FORM_CONSTANT` | `ROOT_FORM` | Import `ROOT_FORM` directly from `ngx-vest-forms`. |
+| `DeepPartial` | `NgxDeepPartial` | Rename your form-model helper import to `NgxDeepPartial`. |
+| `DeepRequired` | `NgxDeepRequired` | Rename your shape helper import to `NgxDeepRequired`. |
+| `FormCompatibleDeepRequired` | `NgxFormCompatibleDeepRequired` | Rename the form-shape helper import to `NgxFormCompatibleDeepRequired`. |
+| `NgxTypedVestSuite<T>` | `NgxVestSuite<T>` | Use `suite.only(field).run(model)` for field-focused validation in Vest 6. |
+| `SC_ERROR_DISPLAY_MODE_DEFAULT` | None | Remove the import; this internal constant is no longer part of the supported API surface. |
+
+---
+
 **Version:** 3.0.0
 **Last Updated:** March 17, 2026
 **Status:** Stable

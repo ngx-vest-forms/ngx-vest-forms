@@ -56,7 +56,7 @@ export class BusinessHoursPageComponent {
     const values = this.formValue().businessHours?.values;
     if (!values) return {};
 
-    // Filter out any undefined values from DeepPartial
+    // Filter out any undefined values from the partial form model
     const result: BusinessHoursMap = {};
     for (const [key, value] of Object.entries(values)) {
       if (value) {
