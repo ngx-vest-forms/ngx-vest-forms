@@ -58,10 +58,8 @@ type DependentBlurModel = NgxDeepPartial<{
   justification: string;
 }>;
 
-const dependentBlurSuite = staticSuite(
-  (model: DependentBlurModel, field?: string) => {
-    only(field);
-
+function createDependentBlurSuite() {
+  return create((model: DependentBlurModel = {}) => {
     omitWhen(!model.quantity, () => {
       test('justification', 'Justification is required', () => {
         enforce(model.justification).isNotBlank();
@@ -73,8 +71,8 @@ const dependentBlurSuite = staticSuite(
         enforce(model.quantity).isNotBlank();
       });
     });
-  }
-);
+  });
+}
 
 @Component({
   imports: [NgxVestForms],
@@ -108,7 +106,7 @@ const dependentBlurSuite = staticSuite(
 })
 class DependentBlurDisplayModeComponent {
   readonly formValue = signal<DependentBlurModel>({});
-  readonly suite = dependentBlurSuite;
+  readonly suite = createDependentBlurSuite();
   readonly validationConfig = {
     quantity: ['justification'],
     justification: ['quantity'],

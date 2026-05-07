@@ -25,7 +25,7 @@ describe('Purchase Validations', () => {
 
     // Vest 6: use suite.only(field).run() for focused validation
     // SuiteResult is thenable at runtime, so await resolves after async tests complete
-    const result = await (suite.only('userId').run({ userId: '1' }) as any);
+    const result = await suite.only('userId').run({ userId: '1' });
     // Should fail because user exists ("userId is already taken")
     expect(result.hasErrors('userId')).toBe(true);
     expect(result.getErrors('userId')).toContain('userId is already taken');
@@ -45,7 +45,7 @@ describe('Purchase Validations', () => {
     expect(syncResult.isPending('userId')).toBe(true);
 
     // SuiteResult is thenable — await resolves after async tests complete
-    const finalResult = await (syncResult as any);
+    const finalResult = await syncResult;
     // Should pass because user does not exist
     expect(finalResult.hasErrors('userId')).toBe(false);
   });
@@ -65,7 +65,7 @@ describe('Purchase Validations', () => {
     expect(result.isValid('userId')).toBe(false); // Not valid yet
 
     // Wait for completion — SuiteResult is thenable in Vest 6
-    await (result as any);
+    await result;
   });
 
   it('should memoize userId validation across repeated suite.only() runs', async () => {
@@ -75,14 +75,10 @@ describe('Purchase Validations', () => {
       mockSwapiService as unknown as SwapiService
     );
 
-    const firstResult = await (suite
-      .only('userId')
-      .run({ userId: '42' }) as any);
+    const firstResult = await suite.only('userId').run({ userId: '42' });
     expect(firstResult.hasErrors('userId')).toBe(false);
 
-    const secondResult = await (suite
-      .only('userId')
-      .run({ userId: '42' }) as any);
+    const secondResult = await suite.only('userId').run({ userId: '42' });
     expect(secondResult.hasErrors('userId')).toBe(false);
 
     // Regression guard: memo() should reuse previous result for unchanged dependency.

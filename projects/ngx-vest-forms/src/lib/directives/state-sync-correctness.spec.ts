@@ -1,7 +1,7 @@
 /* eslint-disable @angular-eslint/component-selector */
 import { Component, signal, viewChild, type WritableSignal } from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
-import { enforce, only, staticSuite, test as vestTest } from 'vest';
+import { create, enforce, test as vestTest } from 'vest';
 import { describe, expect, it } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import { NgxVestForms } from '../exports';
@@ -139,16 +139,15 @@ describe('Issue #106 — state-sync correctness', () => {
   });
 
   describe('ngxValidateRootFormMode precedence: ngx ?? legacy ?? "submit"', () => {
-    const suite = staticSuite(
-      (data: Record<string, unknown> = {}, field?: string) => {
-        only(field);
+    function createRootFormSuite() {
+      return create((data: Record<string, unknown> = {}) => {
         vestTest(ROOT_FORM, 'Passwords must match', () => {
           if (data['password'] && data['confirmPassword']) {
             enforce(data['confirmPassword']).equals(data['password']);
           }
         });
-      }
-    );
+      });
+    }
 
     async function makeMisMatchedForm(template: string) {
       @Component({
@@ -162,7 +161,7 @@ describe('Issue #106 — state-sync correctness', () => {
           confirmPassword: 'mismatch',
         });
         errors = signal<Record<string, string[]>>({});
-        suite = suite;
+        suite = createRootFormSuite();
       }
       return render(TestComponent);
     }

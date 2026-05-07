@@ -510,10 +510,16 @@ describe('FormDirective - Async Validator', () => {
           _onfulfilled?: ((value: unknown) => unknown) | null,
           onrejected?: ((reason: unknown) => unknown) | null
         ) =>
-          new Promise((_resolve, reject) => {
+          new Promise((resolve, reject) => {
             this.rejectPendingRun = () => {
-              if (onrejected) onrejected(new Error('rejected'));
-              reject(new Error('rejected'));
+              const rejection = new Error('rejected');
+
+              if (onrejected) {
+                resolve(onrejected(rejection));
+                return;
+              }
+
+              reject(rejection);
             };
           }),
       };
@@ -2077,8 +2083,7 @@ describe('FormDirective - Destroy-aware async scheduling', () => {
     class TestDestroyMidValidationComponent {
       formValue = signal({ username: '' });
       suite = signal(
-        staticSuite((model: { username?: string } = {}, field?: string) => {
-          only(field);
+        create((model: { username?: string } = {}) => {
           vestTest('username', 'Username is required', () => {
             enforce(model.username).isNotEmpty();
           });
@@ -2126,14 +2131,7 @@ describe('FormDirective - Destroy-aware async scheduling', () => {
       formValue = signal({ password: '', confirmPassword: '' });
       validationConfig = { password: ['confirmPassword'] };
       suite = signal(
-        staticSuite(
-          (
-            model: { password?: string; confirmPassword?: string } = {},
-            field?: string
-          ) => {
-            only(field);
-          }
-        )
+        create((_model: { password?: string; confirmPassword?: string } = {}) => {})
       );
       readonly vestForm =
         viewChild.required<FormDirective<Record<string, unknown>>>('vest');
