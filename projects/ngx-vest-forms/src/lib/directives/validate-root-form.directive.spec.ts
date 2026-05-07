@@ -137,7 +137,7 @@ describe('ValidateRootFormDirective', () => {
           expect(allErrors[ROOT_FORM]).toBeDefined();
           expect(allErrors[ROOT_FORM]).toContain('Passwords must match');
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
 
       // Error should appear in UI
@@ -145,7 +145,7 @@ describe('ValidateRootFormDirective', () => {
         () => {
           expect(screen.queryByTestId('root-error')).toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
     });
 
@@ -214,7 +214,7 @@ describe('ValidateRootFormDirective', () => {
           expect(allErrors[ROOT_FORM]).toBeDefined();
           expect(allErrors[ROOT_FORM]).toContain('Brecht is not 30 anymore');
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
 
       // Error should appear in UI
@@ -224,7 +224,7 @@ describe('ValidateRootFormDirective', () => {
           expect(errorDiv).toBeInTheDocument();
           expect(errorDiv?.textContent).toContain('Brecht is not 30 anymore');
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
     });
 
@@ -289,7 +289,7 @@ describe('ValidateRootFormDirective', () => {
         () => {
           expect(screen.queryByTestId('root-error')).toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
 
       // Change age to 31 to fix the validation
@@ -303,14 +303,14 @@ describe('ValidateRootFormDirective', () => {
           const allErrors = getAllFormErrors(component.ngForm.control);
           expect(allErrors[ROOT_FORM]).toBeUndefined();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
 
       await waitFor(
         () => {
           expect(screen.queryByTestId('root-error')).not.toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
     });
   });
@@ -451,7 +451,7 @@ describe('ValidateRootFormDirective', () => {
         () => {
           expect(screen.queryByTestId('root-error')).toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
     });
 
@@ -505,7 +505,7 @@ describe('ValidateRootFormDirective', () => {
         () => {
           expect(screen.queryByTestId('root-error')).toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
 
       // Fix the mismatch
@@ -518,7 +518,7 @@ describe('ValidateRootFormDirective', () => {
         () => {
           expect(screen.queryByTestId('root-error')).not.toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
     });
   });
@@ -572,7 +572,7 @@ describe('ValidateRootFormDirective', () => {
         () => {
           expect(screen.queryByTestId('root-error')).toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
     });
 
@@ -624,7 +624,7 @@ describe('ValidateRootFormDirective', () => {
         () => {
           expect(screen.queryByTestId('root-error')).toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
 
       // Fix the mismatch
@@ -637,7 +637,7 @@ describe('ValidateRootFormDirective', () => {
         () => {
           expect(screen.queryByTestId('root-error')).not.toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
     });
   });

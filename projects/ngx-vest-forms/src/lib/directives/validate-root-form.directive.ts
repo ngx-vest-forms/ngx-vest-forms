@@ -31,8 +31,10 @@ import {
 } from 'rxjs';
 import { ROOT_FORM } from '../constants';
 import { scheduleMicrotask } from '../utils/destroy-scheduler';
-import type { NgxSuiteRunResult } from '../utils/validation-suite';
-import { NgxVestSuite } from '../utils/validation-suite';
+import type {
+  NgxSuiteRunResult,
+  NgxVestSuite,
+} from '../utils/validation-suite';
 import { ValidationOptions } from './validation-options';
 
 /**

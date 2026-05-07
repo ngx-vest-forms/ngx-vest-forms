@@ -54,7 +54,7 @@ import {
 import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import { NGX_EQUALITY_FN } from '../tokens/equality.token';
-import { NgxDeepRequired } from '../utils/deep-required';
+import type { NgxDeepRequired } from '../utils/deep-required';
 import { scheduleMicrotask, scheduleTimeout } from '../utils/destroy-scheduler';
 import type { ValidationConfigMap } from '../utils/field-path-types';
 import { stringifyFieldPath } from '../utils/field-path.utils';
@@ -74,8 +74,10 @@ import {
   setValueAtPath,
 } from '../utils/form-utils';
 import { validateShape } from '../utils/shape-validation';
-import type { NgxSuiteRunResult } from '../utils/validation-suite';
-import { NgxVestSuite } from '../utils/validation-suite';
+import type {
+  NgxSuiteRunResult,
+  NgxVestSuite,
+} from '../utils/validation-suite';
 import {
   getFormSubmittedSignal,
   setAngularFormSubmittedState,

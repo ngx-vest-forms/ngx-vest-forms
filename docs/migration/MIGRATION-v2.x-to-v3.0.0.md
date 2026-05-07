@@ -603,5 +603,5 @@ v3 also removes deprecated compatibility exports that were kept throughout v2.x.
 ---
 
 **Version:** 3.0.0
-**Last Updated:** March 17, 2026
+**Last Updated:** May 7, 2026
 **Status:** Stable

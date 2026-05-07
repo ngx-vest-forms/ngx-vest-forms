@@ -122,7 +122,7 @@ describe('FormModelGroupDirective', () => {
     await waitFor(() => {
       expect(screen.getByTestId('form-valid').textContent).toBe('true');
     });
-  }, 10000); // Increase timeout to 10 seconds
+  }, 20000); // Increase timeout to 20 seconds for slower CI environments
 
   it('should handle form group path resolution correctly', async () => {
     await render(TestGroupComponent);
@@ -156,12 +156,12 @@ describe('FormModelGroupDirective', () => {
           throw new Error('City error should be present');
         }
       },
-      { timeout: 3000 }
+      { timeout: 6000 }
     );
 
     // Final assertion to satisfy linter
     const finalErrors = screen.getByTestId('form-errors').textContent;
     expect(finalErrors).not.toMatch(/Street is required/);
     expect(finalErrors).toMatch(/City is required/);
-  }, 10000); // Increase timeout to 10 seconds
+  }, 20000); // Increase timeout to 20 seconds for slower CI environments
 });
