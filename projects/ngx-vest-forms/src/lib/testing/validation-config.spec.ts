@@ -10,8 +10,10 @@ import type { NgxDeepPartial } from '../../public-api';
 import { FormDirective } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
 
-// Wait time for tests should be slightly longer than debounce to ensure completion
-// Default debounce is 100ms, so we add 50ms buffer
+// Wait time for tests should be longer than debounce to ensure completion.
+// Default debounce is 100ms; the larger buffer absorbs CI runner slowness
+// (browser-mode tests under GitHub Actions Ubuntu run several times slower
+// than local).
 const TEST_DEBOUNCE_WAIT_TIME = 300;
 
 describe('FormDirective - Comprehensive', () => {

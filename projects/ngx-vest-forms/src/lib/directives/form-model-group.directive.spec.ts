@@ -3,7 +3,7 @@ import { Component, signal, viewChild } from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { create, enforce, test as vestTest } from 'vest';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
 import { FormDirective } from './form.directive';
 
@@ -63,6 +63,12 @@ class TestGroupComponent {
 }
 
 describe('FormModelGroupDirective', () => {
+  // Vest 6 suites are stateful — reset between tests so accumulated
+  // results don't leak across cases (especially under slow CI runners).
+  beforeEach(() => {
+    addressFormSuite.reset();
+  });
+
   it('should properly register as async validator for ngModelGroup', async () => {
     await render(TestGroupComponent);
     expect(screen.getByTestId('address-group')).toBeInTheDocument();
@@ -122,7 +128,7 @@ describe('FormModelGroupDirective', () => {
     await waitFor(() => {
       expect(screen.getByTestId('form-valid').textContent).toBe('true');
     });
-  }, 20000); // Increase timeout to 20 seconds for slower CI environments
+  }, 20000); // Increase timeout to 20 seconds for slower CI runners
 
   it('should handle form group path resolution correctly', async () => {
     await render(TestGroupComponent);
@@ -163,5 +169,5 @@ describe('FormModelGroupDirective', () => {
     const finalErrors = screen.getByTestId('form-errors').textContent;
     expect(finalErrors).not.toMatch(/Street is required/);
     expect(finalErrors).toMatch(/City is required/);
-  }, 20000); // Increase timeout to 20 seconds for slower CI environments
+  }, 20000); // Increase timeout to 20 seconds for slower CI runners
 });
