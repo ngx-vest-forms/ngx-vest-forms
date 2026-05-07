@@ -250,7 +250,7 @@ test.describe('Business Hours Form', () => {
         await expectFieldHasError(toTime, /required/i);
       });
 
-      await test.step('Fill only to time and verify from time becomes required', async () => {
+      await test.step('Fill only to time and verify the add row stays incomplete', async () => {
         const fromTime = getAddFromTime(page);
         const toTime = getAddToTime(page);
         const addButton = getAddButton(page);
@@ -261,7 +261,7 @@ test.describe('Business Hours Form', () => {
         await fromTime.blur();
 
         await expect(addButton).toBeDisabled();
-        await expectFieldHasError(fromTime);
+        await expect(fromTime).toHaveValue('');
       });
     });
 

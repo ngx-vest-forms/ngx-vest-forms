@@ -59,6 +59,7 @@ export { setValueAtPath } from './lib/utils/form-utils';
 export { createDebouncedPendingState } from './lib/utils/pending-state.utils';
 export type {
   DebouncedPendingStateOptions,
+  DebouncedPendingStateOptionsInput,
   DebouncedPendingStateResult,
 } from './lib/utils/pending-state.utils';
 export { validateShape } from './lib/utils/shape-validation';
@@ -106,6 +107,8 @@ export {
 } from './lib/tokens/debounce.token';
 export { NGX_VALIDATION_DEBOUNCE_PRESETS } from './lib/tokens/validation-debounce-presets';
 export type { NgxValidationDebouncePreset } from './lib/tokens/validation-debounce-presets';
+export { NGX_EQUALITY_FN } from './lib/tokens/equality.token';
+export type { NgxEqualityFn } from './lib/tokens/equality.token';
 
 // Components
 export { ControlWrapperComponent } from './lib/components/control-wrapper/control-wrapper.component';
@@ -122,7 +125,10 @@ export type {
 export { FormModelGroupDirective } from './lib/directives/form-model-group.directive';
 export { FormModelDirective } from './lib/directives/form-model.directive';
 export { FormDirective } from './lib/directives/form.directive';
-export type { NgxValidationConfig } from './lib/directives/form.directive';
+export type {
+  NgxFieldBlurEvent,
+  NgxValidationConfig,
+} from './lib/directives/form.directive';
 export { ValidateRootFormDirective } from './lib/directives/validate-root-form.directive';
 export type { ValidationOptions } from './lib/directives/validation-options';
 export {

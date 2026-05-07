@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { parseFieldPath, stringifyFieldPath } from './field-path.utils';
 
 describe('field-path.utils', () => {
@@ -83,6 +84,59 @@ describe('field-path.utils', () => {
       expect(typeof result[0]).toBe('string');
       expect(typeof result[1]).toBe('string');
       expect(typeof result[2]).toBe('string');
+    });
+
+    describe('malformed paths', () => {
+      const originalNgDevMode = (globalThis as { ngDevMode?: boolean }).ngDevMode;
+      let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
+
+      function restoreNgDevMode(): void {
+        if (originalNgDevMode === undefined) {
+          delete (globalThis as { ngDevMode?: boolean }).ngDevMode;
+        } else {
+          (globalThis as { ngDevMode?: boolean }).ngDevMode = originalNgDevMode;
+        }
+      }
+
+      beforeEach(() => {
+        consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      });
+
+      afterEach(() => {
+        consoleWarnSpy.mockRestore();
+        restoreNgDevMode();
+      });
+
+      it.each(['a..b', '.a', 'a.', '.', 'a.[0]', 'a.[0].b', '[0].'])(
+        'should reject %s and warn in development mode',
+        (path) => {
+          (globalThis as { ngDevMode?: boolean }).ngDevMode = true;
+
+          expect(parseFieldPath(path)).toEqual([]);
+          expect(consoleWarnSpy).toHaveBeenCalledWith(
+            expect.stringContaining(`Invalid field path '${path}'`)
+          );
+        }
+      );
+
+      it.each(['a..b', '.a', 'a.', '.', 'a.[0]', 'a.[0].b', '[0].'])(
+        'should reject %s without warning in production mode',
+        (path) => {
+          (globalThis as { ngDevMode?: boolean }).ngDevMode = false;
+
+          expect(parseFieldPath(path)).toEqual([]);
+          expect(consoleWarnSpy).not.toHaveBeenCalled();
+        }
+      );
+
+      it('should still accept legitimate leading-bracket paths', () => {
+        (globalThis as { ngDevMode?: boolean }).ngDevMode = true;
+
+        expect(parseFieldPath('[0]')).toEqual([0]);
+        expect(parseFieldPath('[0].x')).toEqual([0, 'x']);
+        expect(parseFieldPath('[0][1]')).toEqual([0, 1]);
+        expect(consoleWarnSpy).not.toHaveBeenCalled();
+      });
     });
   });
 

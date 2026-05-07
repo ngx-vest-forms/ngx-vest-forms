@@ -36,20 +36,8 @@ export default defineConfig(({ mode }) => ({
   },
   test: {
     globals: true,
+    isolate: true,
     setupFiles: ['projects/ngx-vest-forms/src/test-setup.ts'],
-    // Browser mode configuration (no jsdom needed)
-    browser: {
-      enabled: true,
-      provider: playwright(),
-      instances: [{ browser: 'chromium' }],
-      headless: true, // set to false for debugging
-      fileParallelism: false, // Run test files sequentially to avoid NG0912 component ID collisions
-      isolate: true, // Each test file runs in its own isolated context
-    },
-    include: [
-      'projects/ngx-vest-forms/src/**/*.spec.ts',
-      'projects/examples/src/**/*.spec.ts',
-    ],
     exclude: ['node_modules', 'dist', 'e2e'],
     reporters: ['default'],
     coverage: {
@@ -71,6 +59,40 @@ export default defineConfig(({ mode }) => ({
     sequence: {
       hooks: 'list',
     },
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: { label: 'node', color: 'green' },
+          include: ['projects/examples/src/app/pages/**/*.validations.spec.ts'],
+          environment: 'node',
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: { label: 'browser', color: 'blue' },
+          // Browser mode configuration (no jsdom needed)
+          browser: {
+            enabled: true,
+            provider: playwright(),
+            instances: [{ browser: 'chromium' }],
+            headless: true, // set to false for debugging
+            fileParallelism: false, // Run test files sequentially to avoid NG0912 component ID collisions
+          },
+          include: [
+            'projects/ngx-vest-forms/src/**/*.spec.ts',
+            'projects/examples/src/**/*.spec.ts',
+          ],
+          exclude: [
+            'node_modules',
+            'dist',
+            'e2e',
+            'projects/examples/src/app/pages/**/*.validations.spec.ts',
+          ],
+        },
+      },
+    ],
   },
   define: {
     'import.meta.vitest': mode !== 'production',

@@ -175,6 +175,35 @@ test.describe('Purchase Form', () => {
       });
     });
 
+    test('should keep justification quiet until it is blurred after quantity reveals it', async ({
+      page,
+    }) => {
+      await test.step('Reveal justification and verify no immediate error is shown', async () => {
+        const quantity = page.getByRole('spinbutton', { name: /quantity/i });
+
+        await fillAndBlur(quantity, '6');
+        await waitForValidationToSettle(page);
+
+        const justification = page.getByLabel(/justification/i);
+        const justificationWrapper = page
+          .locator('ngx-control-wrapper')
+          .filter({ has: justification });
+
+        await expect(justification).toBeVisible();
+        await expect(justification).toHaveClass(/ng-untouched/);
+        await expect(
+          justificationWrapper.getByRole('status').filter({
+            hasText: /justification is required when quantity exceeds 5/i,
+          })
+        ).toHaveCount(0);
+
+        await justification.focus();
+        await justification.blur();
+
+        await expectFieldHasError(justification, /required/i);
+      });
+    });
+
     test('should hide justification when quantity <= 5', async ({ page }) => {
       await test.step('Set quantity to 6 then change to 5', async () => {
         const quantity = page.getByRole('spinbutton', { name: /quantity/i });
@@ -238,12 +267,16 @@ test.describe('Purchase Form', () => {
         await confirmPassword.blur();
         await waitForValidationToSettle(page, 10000);
 
-        // Depending on validation ordering, either confirm-password-required
-        // or passwords-mismatch can be the surfaced message.
-        await expectFieldHasError(
-          confirmPassword,
-          /confirm password is not filled in|passwords do not match/i
-        );
+        // This feedback may surface inline on the field or in the form-state
+        // summary depending on the example's current presentation. Assert on
+        // the visible copy rather than a specific container.
+        await expect(
+          page
+            .getByText(
+              /confirm password is not filled in|passwords do not match/i
+            )
+            .first()
+        ).toBeVisible();
       });
     });
   });

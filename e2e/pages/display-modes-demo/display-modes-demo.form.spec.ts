@@ -44,6 +44,35 @@ test.describe('Display Modes Demo Form', () => {
     await expect(dirtyError).toHaveAttribute('aria-invalid', 'true');
   });
 
+  test('should show on-submit error after programmatic parent submission', async ({
+    page,
+  }) => {
+    const submitError = page.getByLabel(/username \(on-submit mode\)/i);
+    const submitErrorWrapper = submitError.locator(
+      'xpath=ancestor::ngx-control-wrapper[1]'
+    );
+
+    await submitError.focus();
+    await submitError.blur();
+
+    await expect(
+      submitErrorWrapper.getByRole('status').filter({
+        hasText: /this field is required/i,
+      })
+    ).toHaveCount(0);
+
+    await page
+      .getByRole('button', { name: /programmatically submit demo form/i })
+      .click();
+
+    await expect(
+      submitErrorWrapper.getByRole('status').filter({
+        hasText: /this field is required/i,
+      })
+    ).toHaveCount(1);
+    await expect(submitError).toHaveAttribute('aria-invalid', 'true');
+  });
+
   test('should show always warning for short value', async ({ page }) => {
     const alwaysWarning = page.getByLabel(/username \(always warning\)/i);
     const alwaysWarningWrapper = alwaysWarning.locator(

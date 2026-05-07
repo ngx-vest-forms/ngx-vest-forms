@@ -2,6 +2,7 @@ import {
   Directive,
   Injector,
   afterEveryRender,
+  afterNextRender,
   computed,
   contentChild,
   effect,
@@ -119,14 +120,55 @@ export class FormControlStateDirective {
     INITIAL_FORM_CONTROL_STATE
   );
 
+  /**
+   * Tick bumped once via `afterNextRender` if `control.control` is undefined
+   * at the first effect run (NgModel registers asynchronously). Reading this
+   * signal inside the effect causes a re-evaluation after the next render so
+   * we pick up the late-attached `FormControl`. Bookkeeping below ensures we
+   * only schedule a single retry — no permanent polling.
+   */
+  readonly #controlAttachTick = signal(0);
+  // Latch is scoped to the *current* `#activeControl` instance. When the
+  // active control changes (e.g. host swaps an `@if` block, NgModel
+  // recreates), the latch resets so a fresh late-attach gets one retry.
+  #controlAttachRetryScheduled = false;
+  #lastSeenActiveControl: AbstractControlDirective | null = null;
+
   constructor() {
     // Update control state reactively with proper cleanup
     effect((onCleanup) => {
       const control = this.#activeControl();
       const interaction = this.#interactionState();
+      // Track the retry tick so a late-attached `control.control` re-runs this
+      // effect after the next render.
+      this.#controlAttachTick();
+
+      // Re-arm the late-attach latch whenever the active control identity
+      // changes — including transitions to/from null — so a newly mounted
+      // directive whose `FormControl` registers asynchronously gets its own
+      // single retry.
+      if (control !== this.#lastSeenActiveControl) {
+        this.#lastSeenActiveControl = control;
+        this.#controlAttachRetryScheduled = false;
+      }
 
       if (!control) {
         this.#controlStateSignal.set(INITIAL_FORM_CONTROL_STATE);
+        return;
+      }
+
+      // NgModel attaches its `FormControl` during its own ngOnInit, which can
+      // run after this effect's first execution in some host orderings. If
+      // `control.control` isn't there yet, schedule a single `afterNextRender`
+      // retry so we re-evaluate once Angular finishes wiring directives.
+      if (!control.control && !this.#controlAttachRetryScheduled) {
+        this.#controlAttachRetryScheduled = true;
+        afterNextRender(
+          () => {
+            this.#controlAttachTick.update((v) => v + 1);
+          },
+          { injector: this.#injector }
+        );
         return;
       }
 
@@ -255,6 +297,24 @@ export class FormControlStateDirective {
                   ? true
                   : state.hasBeenValidated,
             }));
+
+            // Keep the derived control-state signal in sync even when blur/dirty
+            // changes do not produce a statusChanges emission.
+            //
+            // This happens when a control is already INVALID due to dependent-field
+            // validation and the user then blurs it. Error display modes that depend
+            // on `isTouched()` must still update immediately in that case.
+            this.#controlStateSignal.set({
+              status: control.status as FormControlStatus | null,
+              isValid: control.valid ?? false,
+              isInvalid: control.invalid ?? false,
+              isPending: control.pending ?? false,
+              isDisabled: control.disabled ?? false,
+              isTouched: newTouched,
+              isDirty: newDirty,
+              isPristine: control.pristine ?? true,
+              errors: control.errors as VestValidationErrors | null,
+            });
           }
 
           // Sync pending state only when it transitions from true to false
@@ -420,7 +480,8 @@ export class FormControlStateDirective {
   /**
    * Whether this control has been validated at least once.
    * True after the first validation completes, even if the user hasn't touched the field.
-   * This enables showing errors for validationConfig-triggered validations.
+   * This is primarily used for warning display and other derived state that should react
+   * to validationConfig-triggered validation even before the user touches the field.
    */
   readonly hasBeenValidated = computed(
     () => this.#interactionState().hasBeenValidated

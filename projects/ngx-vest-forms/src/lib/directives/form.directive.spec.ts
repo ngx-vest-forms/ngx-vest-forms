@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { isObservable, Observable } from 'rxjs';
 import { create, enforce, test as vestTest, warn } from 'vest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FormDirective } from '../directives/form.directive';
+import { FormDirective, NgxFieldBlurEvent } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
 // Helper to await either a Promise or Observable
 async function awaitResult<T>(result: Promise<T> | Observable<T>) {
@@ -803,6 +803,495 @@ describe('FormDirective - Signals/Outputs', () => {
     expect(instance.vestForm().errorsChange).toBeDefined();
     expect(instance.vestForm().dirtyChange).toBeDefined();
     expect(instance.vestForm().validChange).toBeDefined();
+    expect(instance.vestForm().fieldBlur).toBeDefined();
+  });
+
+  it('should emit field blur metadata for named controls', async () => {
+    @Component({
+      selector: 'test-field-blur-host',
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          (fieldBlur)="handleFieldBlur($event)"
+        >
+          <label for="projectName">Project name</label>
+          <input
+            id="projectName"
+            name="projectName"
+            [ngModel]="formValue().projectName"
+          />
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestFieldBlurHost {
+      readonly formValue = signal<{ projectName?: string }>({
+        projectName: '',
+      });
+      readonly blurEvents = signal<Array<NgxFieldBlurEvent<{ projectName?: string }>>>([]);
+
+      handleFieldBlur(event: NgxFieldBlurEvent<{ projectName?: string }>): void {
+        this.blurEvents.update((events) => [...events, event]);
+      }
+    }
+
+    const { fixture } = await render(TestFieldBlurHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const input = fixture.nativeElement.querySelector(
+      '#projectName'
+    ) as HTMLInputElement | null;
+    expect(input).toBeTruthy();
+
+    if (!input) {
+      throw new Error('Expected #projectName input to exist');
+    }
+
+    input.value = 'Angular course';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    input.dispatchEvent(new Event('blur'));
+    input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    const [blurEvent] = fixture.componentInstance.blurEvents();
+    expect(blurEvent).toBeTruthy();
+    expect(blurEvent?.field).toBe('projectName');
+    expect(blurEvent?.value).toBe('Angular course');
+    expect(blurEvent?.touched).toBe(true);
+    expect(blurEvent?.dirty).toBe(true);
+    expect(blurEvent?.formValue).toEqual({
+      projectName: 'Angular course',
+    });
+  });
+
+  it('should emit the latest blur snapshot even when model sync is delayed', async () => {
+    @Component({
+      selector: 'test-field-blur-delayed-sync-host',
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="delayFormValueUpdate($event)"
+          (fieldBlur)="handleFieldBlur($event)"
+        >
+          <label for="projectName">Project name</label>
+          <input
+            id="projectName"
+            name="projectName"
+            [ngModel]="formValue().projectName"
+          />
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestFieldBlurDelayedSyncHost {
+      readonly formValue = signal<{ projectName?: string }>({
+        projectName: '',
+      });
+      readonly blurEvents = signal<Array<NgxFieldBlurEvent<{ projectName?: string }>>>([]);
+
+      delayFormValueUpdate(value: { projectName?: string }): void {
+        setTimeout(() => {
+          this.formValue.set(value);
+        }, 0);
+      }
+
+      handleFieldBlur(event: NgxFieldBlurEvent<{ projectName?: string }>): void {
+        this.blurEvents.update((events) => [...events, event]);
+      }
+    }
+
+    const { fixture } = await render(TestFieldBlurDelayedSyncHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const input = fixture.nativeElement.querySelector(
+      '#projectName'
+    ) as HTMLInputElement | null;
+    expect(input).toBeTruthy();
+
+    if (!input) {
+      throw new Error('Expected #projectName input to exist');
+    }
+
+    input.value = 'Recovered draft';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+
+    input.dispatchEvent(new Event('blur'));
+    input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    const [blurEvent] = fixture.componentInstance.blurEvents();
+    expect(blurEvent).toBeTruthy();
+    expect(blurEvent?.value).toBe('Recovered draft');
+    expect(blurEvent?.formValue).toEqual({
+      projectName: 'Recovered draft',
+    });
+  });
+
+  it('should include recent edits from other fields in later blur snapshots', async () => {
+    @Component({
+      selector: 'test-field-blur-cross-field-snapshot-host',
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          (fieldBlur)="handleFieldBlur($event)"
+        >
+          <label for="projectName">Project name</label>
+          <input
+            id="projectName"
+            name="projectName"
+            [ngModel]="formValue().projectName"
+          />
+
+          <label for="notes">Notes</label>
+          <textarea
+            id="notes"
+            name="notes"
+            [ngModel]="formValue().notes"
+          ></textarea>
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestFieldBlurCrossFieldSnapshotHost {
+      readonly formValue = signal<{
+        projectName?: string;
+        notes?: string;
+      }>({
+        projectName: 'Release checklist',
+        notes: '',
+      });
+      readonly blurEvents = signal<
+        Array<
+          NgxFieldBlurEvent<{
+            projectName?: string;
+            notes?: string;
+          }>
+        >
+      >([]);
+
+      handleFieldBlur(
+        event: NgxFieldBlurEvent<{
+          projectName?: string;
+          notes?: string;
+        }>
+      ): void {
+        this.blurEvents.update((events) => [...events, event]);
+      }
+    }
+
+    const { fixture } = await render(TestFieldBlurCrossFieldSnapshotHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const projectName = fixture.nativeElement.querySelector(
+      '#projectName'
+    ) as HTMLInputElement | null;
+    const notes = fixture.nativeElement.querySelector(
+      '#notes'
+    ) as HTMLTextAreaElement | null;
+
+    expect(projectName).toBeTruthy();
+    expect(notes).toBeTruthy();
+
+    if (!projectName || !notes) {
+      throw new Error('Expected projectName and notes controls to exist');
+    }
+
+    notes.value = 'Add deployment notes for the production team.';
+    notes.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    projectName.focus();
+    projectName.blur();
+    projectName.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    const blurEvent = fixture
+      .componentInstance
+      .blurEvents()
+      .find((event) => event.field === 'projectName');
+
+    expect(blurEvent).toBeTruthy();
+    expect(blurEvent?.formValue).toEqual({
+      projectName: 'Release checklist',
+      notes: 'Add deployment notes for the production team.',
+    });
+  });
+
+  it('should emit the full dotted path for controls inside ngModelGroup', async () => {
+    type Model = { passwords?: { password?: string; confirm?: string } };
+
+    @Component({
+      selector: 'test-field-blur-group-host',
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          (fieldBlur)="handleFieldBlur($event)"
+        >
+          <div ngModelGroup="passwords">
+            <label for="password">Password</label>
+            <input
+              id="password"
+              name="password"
+              [ngModel]="formValue().passwords?.password"
+            />
+            <label for="confirm">Confirm</label>
+            <input
+              id="confirm"
+              name="confirm"
+              [ngModel]="formValue().passwords?.confirm"
+            />
+          </div>
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestFieldBlurGroupHost {
+      readonly formValue = signal<Model>({ passwords: {} });
+      readonly blurEvents = signal<Array<NgxFieldBlurEvent<Model>>>([]);
+
+      handleFieldBlur(event: NgxFieldBlurEvent<Model>): void {
+        this.blurEvents.update((events) => [...events, event]);
+      }
+    }
+
+    const { fixture } = await render(TestFieldBlurGroupHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const input = fixture.nativeElement.querySelector(
+      '#password'
+    ) as HTMLInputElement;
+    input.value = 'hunter2';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    const [blurEvent] = fixture.componentInstance.blurEvents();
+    expect(blurEvent).toBeTruthy();
+    expect(blurEvent?.field).toBe('passwords.password');
+    expect(blurEvent?.value).toBe('hunter2');
+    expect(blurEvent?.formValue).toEqual({
+      passwords: { password: 'hunter2' },
+    });
+  });
+
+  it('should emit the selected radio group value, not the focused option', async () => {
+    type Model = { gender?: string };
+
+    @Component({
+      selector: 'test-field-blur-radio-host',
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          (fieldBlur)="handleFieldBlur($event)"
+        >
+          <label
+            ><input
+              type="radio"
+              name="gender"
+              value="female"
+              [ngModel]="formValue().gender" />Female</label
+          >
+          <label
+            ><input
+              id="male"
+              type="radio"
+              name="gender"
+              value="male"
+              [ngModel]="formValue().gender" />Male</label
+          >
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestFieldBlurRadioHost {
+      readonly formValue = signal<Model>({ gender: 'female' });
+      readonly blurEvents = signal<Array<NgxFieldBlurEvent<Model>>>([]);
+
+      handleFieldBlur(event: NgxFieldBlurEvent<Model>): void {
+        this.blurEvents.update((events) => [...events, event]);
+      }
+    }
+
+    const { fixture } = await render(TestFieldBlurRadioHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const unselectedRadio = fixture.nativeElement.querySelector(
+      '#male'
+    ) as HTMLInputElement;
+    // The "male" radio is focused but NOT checked — the bound value remains "female".
+    unselectedRadio.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    const [blurEvent] = fixture.componentInstance.blurEvents();
+    expect(blurEvent).toBeTruthy();
+    // Must reflect the *selected* group value, not the focused unchecked option.
+    expect(blurEvent?.value).toBe('female');
+    expect(blurEvent?.formValue).toEqual({ gender: 'female' });
+  });
+
+  it('should disambiguate repeated leaf names across sibling ngModelGroups', async () => {
+    type Range = { day?: string };
+    type Model = { from?: Range; to?: Range };
+
+    @Component({
+      selector: 'test-field-blur-repeated-leaf-host',
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          (fieldBlur)="handleFieldBlur($event)"
+        >
+          <div ngModelGroup="from">
+            <label for="from-day">From day</label>
+            <input
+              id="from-day"
+              name="day"
+              [ngModel]="formValue().from?.day"
+            />
+          </div>
+          <div ngModelGroup="to">
+            <label for="to-day">To day</label>
+            <input
+              id="to-day"
+              name="day"
+              [ngModel]="formValue().to?.day"
+            />
+          </div>
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestFieldBlurRepeatedLeafHost {
+      readonly formValue = signal<Model>({ from: {}, to: {} });
+      readonly blurEvents = signal<Array<NgxFieldBlurEvent<Model>>>([]);
+
+      handleFieldBlur(event: NgxFieldBlurEvent<Model>): void {
+        this.blurEvents.update((events) => [...events, event]);
+      }
+    }
+
+    const { fixture } = await render(TestFieldBlurRepeatedLeafHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const toDay = fixture.nativeElement.querySelector(
+      '#to-day'
+    ) as HTMLInputElement;
+    toDay.value = '2026-05-10';
+    toDay.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    toDay.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    const [blurEvent] = fixture.componentInstance.blurEvents();
+    expect(blurEvent).toBeTruthy();
+    // Must resolve to `to.day`, not `from.day` — both leaves share the same name.
+    expect(blurEvent?.field).toBe('to.day');
+    expect(blurEvent?.value).toBe('2026-05-10');
+    expect(blurEvent?.formValue).toEqual({
+      from: {},
+      to: { day: '2026-05-10' },
+    });
+  });
+
+  it('should resolve paths through dynamic [ngModelGroup] with numeric keys', async () => {
+    type Slot = { from?: string; to?: string };
+    type Model = { slots?: Record<string, Slot> };
+
+    @Component({
+      selector: 'test-field-blur-dynamic-group-host',
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          (fieldBlur)="handleFieldBlur($event)"
+        >
+          <div ngModelGroup="slots">
+            @for (item of items; track item) {
+              <div [ngModelGroup]="item">
+                <input
+                  [id]="'from-' + item"
+                  name="from"
+                  [ngModel]="formValue().slots?.[item]?.from"
+                />
+                <input
+                  [id]="'to-' + item"
+                  name="to"
+                  [ngModel]="formValue().slots?.[item]?.to"
+                />
+              </div>
+            }
+          </div>
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestFieldBlurDynamicGroupHost {
+      readonly items = ['0', '1'];
+      readonly formValue = signal<Model>({ slots: { '0': {}, '1': {} } });
+      readonly blurEvents = signal<Array<NgxFieldBlurEvent<Model>>>([]);
+
+      handleFieldBlur(event: NgxFieldBlurEvent<Model>): void {
+        this.blurEvents.update((events) => [...events, event]);
+      }
+    }
+
+    const { fixture } = await render(TestFieldBlurDynamicGroupHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Blur the second slot's `to` input — identical name+structure as slot 0,
+    // distinguished only by the dynamic `[ngModelGroup]="'1'"` ancestor.
+    const target = fixture.nativeElement.querySelector(
+      '#to-1'
+    ) as HTMLInputElement;
+    target.value = '17:30';
+    target.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    target.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    const [blurEvent] = fixture.componentInstance.blurEvents();
+    expect(blurEvent).toBeTruthy();
+    expect(blurEvent?.field).toBe('slots.1.to');
+    expect(blurEvent?.value).toBe('17:30');
+    expect(blurEvent?.formValue).toEqual({
+      slots: { '0': {}, '1': { to: '17:30' } },
+    });
   });
 
   it('should expose pending/valid/invalid helpers and validatedFields alias', async () => {
@@ -883,6 +1372,108 @@ describe('FormDirective - triggerFormValidation', () => {
     );
     instance.vestForm().triggerFormValidation();
     expect(mockFn).toHaveBeenCalledWith({ emitEvent: true });
+  });
+});
+
+describe('FormDirective - clearSubmittedState', () => {
+  @Component({
+    selector: 'test-clear-submitted-state-host',
+    template: `
+      <form ngxVestForm #vest="ngxVestForm">
+        <input
+          formErrorDisplay
+          [errorDisplayMode]="'on-submit'"
+          #display="formErrorDisplay"
+          name="username"
+          [ngModel]="model"
+          required
+        />
+        <span data-testid="form-submitted">{{ display.formSubmitted() }}</span>
+        <span data-testid="should-show-errors">{{
+          display.shouldShowErrors()
+        }}</span>
+        <span data-testid="is-touched">{{ display.isTouched() }}</span>
+        <button type="submit">Submit</button>
+      </form>
+    `,
+    imports: [NgxVestForms],
+  })
+  class TestClearSubmittedStateHost {
+    model = '';
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
+  }
+
+  it('should clear submitted state without resetting touched controls', async () => {
+    const { fixture } = await render(TestClearSubmittedStateHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const input = expectElement(
+      fixture.nativeElement.querySelector('input'),
+      'input'
+    ) as HTMLInputElement;
+    input.focus();
+    input.blur();
+    await fixture.whenStable();
+
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('[data-testid="is-touched"]')
+            ?.textContent
+      )
+      .toBe('true');
+
+    const submitButton = expectElement(
+      fixture.nativeElement.querySelector('button[type="submit"]'),
+      'button[type="submit"]'
+    ) as HTMLButtonElement;
+    submitButton.click();
+    await fixture.whenStable();
+
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('[data-testid="form-submitted"]')
+            ?.textContent
+      )
+      .toBe('true');
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector(
+            '[data-testid="should-show-errors"]'
+          )?.textContent
+      )
+      .toBe('true');
+
+    fixture.componentInstance.vestForm().clearSubmittedState();
+    await fixture.whenStable();
+
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('[data-testid="form-submitted"]')
+            ?.textContent
+      )
+      .toBe('false');
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector(
+            '[data-testid="should-show-errors"]'
+          )?.textContent
+      )
+      .toBe('false');
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('[data-testid="is-touched"]')
+            ?.textContent
+      )
+      .toBe('true');
+    expect(input.classList.contains('ng-touched')).toBe(true);
   });
 });
 
@@ -1455,5 +2046,112 @@ describe('FormDirective - FormState Memoization', () => {
     expect(updatedErrors['email']).toBeUndefined();
     expect(updatedErrors['username']).toContain('Username is required');
     expect(instance.vestForm().formState().valid).toBe(false);
+  });
+});
+
+describe('FormDirective - Destroy-aware async scheduling', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+  });
+
+  it('destroying directive mid-async-validation produces no errors and no leaked timers', async () => {
+    @Component({
+      selector: 'test-destroy-mid-validation',
+      imports: [NgxVestForms],
+      template: `
+        <form
+          ngxVestForm
+          [suite]="suite()"
+          [formValue]="formValue()"
+          #vest="ngxVestForm"
+        >
+          <input name="username" [ngModel]="formValue().username" [validationOptions]="{ debounceTime: 200 }" />
+        </form>
+      `,
+    })
+    class TestDestroyMidValidationComponent {
+      formValue = signal({ username: '' });
+      suite = signal(
+        staticSuite((model: { username?: string } = {}, field?: string) => {
+          only(field);
+          vestTest('username', 'Username is required', () => {
+            enforce(model.username).isNotEmpty();
+          });
+        })
+      );
+    }
+
+    const { fixture } = await render(TestDestroyMidValidationComponent);
+    const instance = fixture.componentInstance;
+
+    // Trigger validation by changing the value
+    instance.formValue.set({ username: 'test' });
+    fixture.detectChanges();
+
+    // Destroy the component before the debounce timer fires (validation in flight)
+    fixture.destroy();
+
+    // Advance timers past the debounce window - should NOT throw
+    expect(() => {
+      vi.advanceTimersByTime(500);
+    }).not.toThrow();
+
+    // Flush any remaining microtasks - should NOT throw
+    await Promise.resolve();
+  });
+
+  it('validationInProgress Set is not leaked when directive destroyed before timeout fires', async () => {
+    @Component({
+      selector: 'test-destroy-validation-config',
+      imports: [NgxVestForms],
+      template: `
+        <form
+          ngxVestForm
+          [suite]="suite()"
+          [formValue]="formValue()"
+          [validationConfig]="validationConfig"
+          #vest="ngxVestForm"
+        >
+          <input name="password" [ngModel]="formValue().password" />
+          <input name="confirmPassword" [ngModel]="formValue().confirmPassword" />
+        </form>
+      `,
+    })
+    class TestDestroyValidationConfigComponent {
+      formValue = signal({ password: '', confirmPassword: '' });
+      validationConfig = { password: ['confirmPassword'] };
+      suite = signal(
+        staticSuite(
+          (
+            model: { password?: string; confirmPassword?: string } = {},
+            field?: string
+          ) => {
+            only(field);
+          }
+        )
+      );
+      readonly vestForm =
+        viewChild.required<FormDirective<Record<string, unknown>>>('vest');
+    }
+
+    const { fixture } = await render(TestDestroyValidationConfigComponent);
+    const instance = fixture.componentInstance;
+
+    // Trigger validation config processing by changing the trigger field value
+    instance.formValue.set({ password: 'changed', confirmPassword: '' });
+    fixture.detectChanges();
+
+    // Destroy before the VALIDATION_IN_PROGRESS_TIMEOUT_MS fires
+    fixture.destroy();
+
+    // Advancing timers should NOT throw (the scheduleTimeout callback is suppressed)
+    expect(() => {
+      vi.advanceTimersByTime(1000);
+    }).not.toThrow();
   });
 });

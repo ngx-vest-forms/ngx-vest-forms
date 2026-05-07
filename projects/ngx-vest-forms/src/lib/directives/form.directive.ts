@@ -10,6 +10,7 @@ import {
   InputSignal,
   isDevMode,
   linkedSignal,
+  output,
   signal,
   untracked,
 } from '@angular/core';
@@ -22,9 +23,11 @@ import {
 import {
   AbstractControl,
   AsyncValidatorFn,
+  ControlValueAccessor,
   FormArray,
   FormGroup,
   NgForm,
+  NgModel,
   PristineChangeEvent,
   StatusChangeEvent,
   ValidationErrors,
@@ -51,7 +54,11 @@ import {
 import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import { DeepRequired, type NgxDeepRequired } from '../utils/deep-required';
-import { fastDeepEqual } from '../utils/equality';
+import { NGX_EQUALITY_FN } from '../tokens/equality.token';
+import {
+  scheduleMicrotask,
+  scheduleTimeout,
+} from '../utils/destroy-scheduler';
 import type { ValidationConfigMap } from '../utils/field-path-types';
 import { stringifyFieldPath } from '../utils/field-path.utils';
 import {
@@ -71,7 +78,11 @@ import {
 } from '../utils/form-utils';
 import { validateShape } from '../utils/shape-validation';
 import type { NgxSuiteRunResult } from '../utils/validation-suite';
-import { NgxVestSuite } from '../utils/validation-suite';
+import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
+import {
+  getFormSubmittedSignal,
+  setAngularFormSubmittedState,
+} from './form-submitted-state';
 import { ValidationOptions } from './validation-options';
 
 /**
@@ -89,6 +100,35 @@ export type NgxValidationConfig<T = unknown> =
   | Record<string, string[]>
   | ValidationConfigMap<T>
   | null;
+
+/**
+ * Payload emitted when a named control inside the form loses focus.
+ *
+ * This is intentionally low-level so app code can build workflows such as
+ * draft auto-save, analytics, or blur-driven side effects without the form
+ * library taking ownership of persistence behavior.
+ *
+ * It is not intended as a blur-time workaround for dependent field validation;
+ * for that pattern, prefer `validationConfig` plus each target field's own
+ * `errorDisplayMode`.
+ *
+ * The emitted `field` is the full dotted control path (e.g.
+ * `passwords.confirm`, `businessHours.values.0.from`) regardless of whether
+ * the surrounding groups use static `ngModelGroup="key"` or dynamic
+ * `[ngModelGroup]="expr"` bindings, because the path is read from the live
+ * `NgModel` directive registered with the form.
+ *
+ * @publicApi
+ */
+export type NgxFieldBlurEvent<T = unknown> = {
+  field: string;
+  value: unknown;
+  formValue: T | null;
+  dirty: boolean;
+  touched: boolean;
+  valid: boolean;
+  pending: boolean;
+};
 
 /**
  * Main form directive for ngx-vest-forms that bridges Angular template-driven forms with Vest.js validation.
@@ -132,7 +172,7 @@ export type NgxValidationConfig<T = unknown> =
   selector: 'form[scVestForm], form[ngxVestForm]',
   exportAs: 'scVestForm, ngxVestForm',
   host: {
-    '(focusout)': 'onFormFocusOut()',
+    '(focusout)': 'onFormFocusOut($event)',
   },
 })
 export class FormDirective<T extends Record<string, unknown>> {
@@ -143,6 +183,11 @@ export class FormDirective<T extends Record<string, unknown>> {
   private readonly configDebounceTime = inject(
     NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN
   );
+  /**
+   * Deep-equality comparator. Defaults to `fastDeepEqual`; can be overridden
+   * application-wide or per-component via {@link NGX_EQUALITY_FN}.
+   */
+  readonly #equal = inject(NGX_EQUALITY_FN);
 
   /**
    * Public signal storing field warnings keyed by field path.
@@ -152,15 +197,28 @@ export class FormDirective<T extends Record<string, unknown>> {
    */
   readonly fieldWarnings = signal<Map<string, readonly string[]>>(new Map());
 
-  // Track last linked value to prevent unnecessary updates
-  #lastLinkedValue: T | null = null;
+  /**
+   * Set to true by the onDestroy hook. Used to guard async callbacks
+   * (e.g. Vest `done()`) that cannot be cancelled via RxJS operators.
+   */
+  #destroyed = false;
+
   #lastSyncedFormValue: T | null = null;
   #lastSyncedModelValue: T | null = null;
 
-  // Internal signal tracking form value changes via statusChanges
-  readonly #value = toSignal(
-    this.ngForm.form.statusChanges.pipe(startWith(this.ngForm.form.status)),
-    { initialValue: this.ngForm.form.status }
+  // Internal signal tracking changes that can affect the merged form snapshot.
+  // ValueChangeEvent keeps the cache fresh for blur-driven consumers like
+  // draft auto-save, even when a value update doesn't change form validity.
+  readonly #formSnapshotTick = toSignal(
+    this.ngForm.form.events.pipe(
+      filter(
+        (event) =>
+          event instanceof ValueChangeEvent || event instanceof StatusChangeEvent
+      ),
+      scan((count) => count + 1, 0),
+      startWith(0)
+    ),
+    { initialValue: 0 }
   );
 
   /**
@@ -168,16 +226,14 @@ export class FormDirective<T extends Record<string, unknown>> {
    * This eliminates timing issues with the previous dual-effect pattern.
    */
   readonly #formValueSignal = linkedSignal(() => {
-    // Track form value changes
-    this.#value();
-    const raw = mergeValuesAndRawValues<T>(this.ngForm.form);
-    if (Object.keys(this.ngForm.form.controls).length > 0) {
-      this.#lastLinkedValue = raw;
-      return raw;
-    } else if (this.#lastLinkedValue !== null) {
-      return this.#lastLinkedValue;
+    // Track changes that affect the merged form snapshot.
+    this.#formSnapshotTick();
+    if (Object.keys(this.ngForm.form.controls).length === 0) {
+      // No controls remain (e.g. dynamic group removal): expose `null` so
+      // consumers don't see ghost data from a previous form shape.
+      return null;
     }
-    return null;
+    return mergeValuesAndRawValues<T>(this.ngForm.form);
   });
 
   /**
@@ -256,8 +312,8 @@ export class FormDirective<T extends Record<string, unknown>> {
         // Deep equality check for form state properties
         return (
           a.valid === b.valid &&
-          fastDeepEqual(a.errors, b.errors) &&
-          fastDeepEqual(a.value, b.value)
+          this.#equal(a.errors, b.errors) &&
+          this.#equal(a.value, b.value)
         );
       },
     }
@@ -274,7 +330,7 @@ export class FormDirective<T extends Record<string, unknown>> {
    * Static vest suite that will be used to feed our angular validators.
    * Accepts NgxVestSuite<T> (the canonical type) or its deprecated alias NgxTypedVestSuite<T>.
    */
-  readonly suite = input<NgxVestSuite<T> | null>(null);
+  readonly suite = input<NgxVestSuite<T> | NgxTypedVestSuite<T> | null>(null);
 
   /**
    * The shape of our form model. This is a deep required version of the form model
@@ -367,7 +423,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       map((v) => (v as ValueChangeEvent<unknown>).value),
       distinctUntilChanged((prev, curr) => {
         // Use efficient deep equality instead of JSON.stringify for better performance
-        return fastDeepEqual(prev, curr);
+        return this.#equal(prev, curr);
       }),
       map(() => mergeValuesAndRawValues<T>(this.ngForm.form)),
       takeUntilDestroyed(this.destroyRef)
@@ -428,12 +484,20 @@ export class FormDirective<T extends Record<string, unknown>> {
   );
 
   /**
+   * Emits when a named control inside the form loses focus.
+   *
+   * Useful for application-level workflows such as draft auto-save on blur.
+   */
+  readonly fieldBlur = output<NgxFieldBlurEvent<T>>();
+
+  /**
    * Track validation in progress to prevent circular triggering (Issue #19)
    */
   private readonly validationInProgress = new Set<string>();
 
   constructor() {
     this.destroyRef.onDestroy(() => {
+      this.#destroyed = true;
       this.fieldWarnings.set(new Map());
     });
 
@@ -491,8 +555,8 @@ export class FormDirective<T extends Record<string, unknown>> {
       if (!formValue && !modelValue) return;
 
       // Compute change flags first
-      const formChanged = !fastDeepEqual(formValue, this.#lastSyncedFormValue);
-      const modelChanged = !fastDeepEqual(
+      const formChanged = !this.#equal(formValue, this.#lastSyncedFormValue);
+      const modelChanged = !this.#equal(
         modelValue,
         this.#lastSyncedModelValue
       );
@@ -529,7 +593,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       } else if (formChanged && modelChanged) {
         // Both form and model changed simultaneously
         // Check if they changed to the same value (synchronized change) or different values (conflict)
-        const valuesEqual = fastDeepEqual(formValue, modelValue);
+        const valuesEqual = this.#equal(formValue, modelValue);
 
         if (valuesEqual) {
           // Both changed to the same value - this is a synchronized change, not a conflict
@@ -674,6 +738,53 @@ export class FormDirective<T extends Record<string, unknown>> {
   }
 
   /**
+   * Clears the current submit cycle without resetting control values or metadata.
+   *
+   * Unlike {@link resetForm}, this only flips the submitted gate back to `false`.
+   * Touched/dirty/pristine state is preserved so consumers can end `'on-submit'`
+   * error visibility without a full form reset.
+   *
+   * **When to use:**
+   * - You use submit-gated error visibility such as `'on-submit'`
+   * - A submit attempt already happened
+   * - The user resolved the current submit-time errors
+   * - You want future untouched fields to wait for the next submit before showing errors
+   *
+   * **Why this exists:**
+   * `resetForm()` would also clear touched/dirty/pristine metadata, which is often
+   * too disruptive for long-form, multi-form, or mixed error-display flows.
+   *
+   * **What it does NOT do:**
+   * - Does not change field values
+   * - Does not mark controls pristine or untouched
+   * - Does not re-run validation
+   *
+   * @example
+   * ```typescript
+   * submitAll(): void {
+   *   for (const form of this.submitForms()) {
+   *     form.ngForm.onSubmit(new Event('submit'));
+   *   }
+   *
+   *   if (this.submitForms().every((form) => form.formState().valid)) {
+   *     for (const form of this.submitForms()) {
+   *       form.clearSubmittedState();
+   *     }
+   *   }
+   * }
+   * ```
+   *
+   * @see {@link resetForm} to fully reset values and control metadata
+   * @see {@link markAllAsTouched} to manually show all errors
+   * @see {@link triggerFormValidation} to re-run validation after structure changes
+   */
+  clearSubmittedState(): void {
+    setAngularFormSubmittedState(this.ngForm, false);
+    getFormSubmittedSignal(this.ngForm).set(false);
+    this.#blurTick.update((v) => v + 1);
+  }
+
+  /**
    * Finds the first invalid element in this form, scrolls it into view, and focuses it.
    *
    * Useful in custom submit flows where `markAllAsTouched()` is triggered externally
@@ -740,12 +851,122 @@ export class FormDirective<T extends Record<string, unknown>> {
    * Host handler: called whenever any descendant field loses focus.
    * Used to make touched-path tracking react immediately on blur/tab.
    */
-  onFormFocusOut(): void {
+  onFormFocusOut(event: FocusEvent): void {
     // Run on the next microtask to ensure Angular has already applied
     // control.touched changes for the field that just blurred.
-    queueMicrotask(() => {
+    scheduleMicrotask(() => {
       this.#blurTick.update((v) => v + 1);
+      this.#emitFieldBlurEvent(event);
+    }, this.destroyRef);
+  }
+
+  #emitFieldBlurEvent(event: FocusEvent): void {
+    const resolved = this.#resolveFieldFromFocusEvent(event);
+    if (!resolved) {
+      return;
+    }
+    const { field, control, element } = resolved;
+
+    // Read the latest value directly from the DOM element when it can be
+    // trusted. For radio groups Angular keeps the bound `control.value` in
+    // sync with the *selected* option, while a focused-but-unchecked radio
+    // would expose its own option value via the DOM — so radios must always
+    // fall back to `control.value`. For text/textarea/select we prefer the
+    // element value to avoid `ngModelOptions.updateOn: 'submit'` staleness.
+    const domValue = readElementValueForBlur(element);
+    const value = domValue !== undefined ? domValue : control.value;
+
+    // Prefer the cached linked-signal snapshot when it exists. Both code
+    // paths produce a deep-cloned snapshot, but reusing the cached value
+    // saves one of the two `structuredClone` passes performed by
+    // `mergeValuesAndRawValues()` on every blur.
+    const cachedSnapshot = this.#formValueSignal();
+    const formValue =
+      cachedSnapshot !== null
+        ? (structuredClone(cachedSnapshot) as T)
+        : mergeValuesAndRawValues<T>(this.ngForm.form);
+    setValueAtPath(formValue as object, field, value);
+
+    this.fieldBlur.emit({
+      field,
+      value,
+      formValue,
+      dirty: control.dirty,
+      touched: control.touched,
+      valid: control.valid,
+      pending: control.pending,
     });
+  }
+
+  #resolveFieldFromFocusEvent(event: FocusEvent): {
+    field: string;
+    control: AbstractControl;
+    element: HTMLElement;
+  } | null {
+    const target = event.target;
+    if (!(target instanceof Element)) {
+      return null;
+    }
+
+    const fieldElement = target.closest('[name]');
+    if (!(fieldElement instanceof HTMLElement)) {
+      return null;
+    }
+
+    const name = fieldElement.getAttribute('name')?.trim();
+    if (!name) {
+      return null;
+    }
+
+    const formEl = this.elementRef.nativeElement;
+
+    // Authoritative path: ask the registered NgModel directive whose value
+    // accessor is bound to this exact element. This handles all forms of
+    // grouping uniformly — static `ngModelGroup="key"`, dynamic
+    // `[ngModelGroup]="expr"`, repeated leaf names across siblings — because
+    // the directive's `path` is computed from the live ControlContainer tree.
+    const directiveMatch = resolveControlPathByNgModelDirective(
+      this.ngForm,
+      fieldElement
+    );
+    if (directiveMatch) {
+      return {
+        field: directiveMatch.path,
+        control: directiveMatch.control,
+        element: fieldElement,
+      };
+    }
+
+    // Fallback: walk DOM ancestors collecting any `ngModelGroup` attribute
+    // values, producing the canonical dotted path for the static attribute
+    // form (e.g. `<div ngModelGroup="passwords"><input name="password">` →
+    // `passwords.password`). Used when the directive lookup misses (e.g. the
+    // value accessor doesn't expose its element ref in some custom CVAs).
+    const staticGroups = collectNgModelGroupAttributes(fieldElement, formEl);
+    const staticPath = [...staticGroups, name].join('.');
+    const staticControl = this.ngForm.form.get(staticPath);
+    if (staticControl) {
+      return { field: staticPath, control: staticControl, element: fieldElement };
+    }
+
+    // Last-resort fallback for ambiguous DOM structures: probe each ancestor
+    // element as a potential group boundary, querying the form tree until we
+    // find a child that owns this DOM element.
+    const dynamicMatch = resolveControlPathByDomAncestors(
+      this.ngForm.form,
+      fieldElement,
+      formEl,
+      name
+    );
+    if (dynamicMatch) {
+      return {
+        field: dynamicMatch.path,
+        control: dynamicMatch.control,
+        element: fieldElement,
+      };
+    }
+
+    return null;
   }
 
   /**
@@ -869,7 +1090,6 @@ export class FormDirective<T extends Record<string, unknown>> {
     // is treated as a model change (not a conflict with stale form values)
     this.#lastSyncedFormValue = null;
     this.#lastSyncedModelValue = null;
-    this.#lastLinkedValue = null;
 
     // Force change detection to ensure DOM updates are reflected
     // Note: This is still needed even with signals because we're modifying NgForm
@@ -1031,7 +1251,7 @@ export class FormDirective<T extends Record<string, unknown>> {
                 const processResult = (
                   suiteResult: NgxSuiteRunResult
                 ): ValidationErrors | null => {
-                  if (cancelled) {
+                  if (cancelled || this.#destroyed) {
                     return null;
                   }
 
@@ -1058,23 +1278,38 @@ export class FormDirective<T extends Record<string, unknown>> {
                       }
                     : null;
 
-                  queueMicrotask(() => {
-                    if (cancelled) {
+                  // CRITICAL: Ensure DOM validity classes update for OnPush components.
+                  //
+                  // Angular's template-driven forms update `ng-valid`/`ng-invalid` host classes
+                  // during change detection. When async validation completes, there may be no
+                  // follow-up change detection pass for OnPush hosts, leaving the DOM in a stale
+                  // visual state (even though the control status has updated).
+                  //
+                  // We schedule a detectChanges() on the next microtask to avoid calling it
+                  // synchronously inside Angular's own validation pipeline. The scheduleMicrotask
+                  // primitive auto-cancels if the directive is destroyed before it fires.
+                  scheduleMicrotask(() => {
+                    if (cancelled || this.#destroyed) {
                       return;
                     }
-
                     try {
                       this.cdr.detectChanges();
                     } catch {
                       this.cdr.markForCheck();
                     }
-                  });
+                  }, this.destroyRef);
 
                   return out;
                 };
 
                 const emitAndComplete = (suiteResult: NgxSuiteRunResult) => {
                   if (cancelled) {
+                    return;
+                  }
+
+                  if (this.#destroyed) {
+                    observer.next(null);
+                    observer.complete();
                     return;
                   }
 
@@ -1206,11 +1441,10 @@ export class FormDirective<T extends Record<string, unknown>> {
       return EMPTY;
     }
 
-    const streams = Object.keys(config).map((triggerField) => {
-      const dependents =
-        (config as Record<string, string[]>)[triggerField] || [];
-      return this.#createTriggerStream(form, triggerField, dependents);
-    });
+    const streams = Object.entries(config as Record<string, string[]>).map(
+      ([triggerField, dependents]) =>
+        this.#createTriggerStream(form, triggerField, dependents || [])
+    );
 
     return streams.length > 0 ? rxMerge(...streams) : EMPTY;
   }
@@ -1394,21 +1628,6 @@ export class FormDirective<T extends Record<string, unknown>> {
         // This prevents the dependent field's valueChanges from triggering its own validationConfig
         this.validationInProgress.add(depField);
 
-        // NOTE: Touch propagation removed (PR #78)
-        // Previously, we propagated touch state from trigger to dependent fields.
-        // This caused UX issues where dependent fields showed errors immediately
-        // after being revealed by a toggle, even though the user never interacted with them.
-        //
-        // With this change:
-        // - Errors on dependent fields only show after the user directly touches/blurs them
-        // - ARIA attributes (aria-invalid) still work correctly via isInvalid check
-        // - Warnings still show after validation via hasBeenValidated check
-        //
-        // The removed code was:
-        // if (control.touched && !dependentControl.touched) {
-        //   dependentControl.markAsTouched({ onlySelf: true });
-        // }
-
         // emitEvent: true is REQUIRED for async validators to actually run
         // The validationInProgress Set prevents infinite loops:
         // 1. Field A changes → triggers validation on dependent field B
@@ -1434,13 +1653,14 @@ export class FormDirective<T extends Record<string, unknown>> {
     }
 
     // Keep fields marked as in-progress for a short time to prevent immediate re-triggering
-    // Use setTimeout to ensure async validators have time to complete before allowing new triggers
-    setTimeout(() => {
+    // Use scheduleTimeout to ensure async validators have time to complete before allowing
+    // new triggers. The timer auto-cancels on directive destroy so no timers leak.
+    scheduleTimeout(() => {
       this.validationInProgress.delete(triggerField);
       for (const depField of dependents) {
         this.validationInProgress.delete(depField);
       }
-    }, VALIDATION_IN_PROGRESS_TIMEOUT_MS);
+    }, VALIDATION_IN_PROGRESS_TIMEOUT_MS, this.destroyRef);
   }
 
   /**
@@ -1476,4 +1696,187 @@ export class FormDirective<T extends Record<string, unknown>> {
     collect(control, []);
     return fields;
   }
+}
+
+/**
+ * Reads the user-entered value from a blurred form element. Returns
+ * `undefined` for radio inputs (caller must fall back to the bound
+ * `control.value`, since the focused radio is not necessarily the
+ * group's selected option) and for elements we don't handle.
+ */
+function readElementValueForBlur(element: HTMLElement): unknown {
+  if (element instanceof HTMLInputElement) {
+    if (element.type === 'radio') return undefined;
+    if (element.type === 'checkbox') return element.checked;
+    if (element.type === 'number') {
+      return element.value === '' ? null : element.valueAsNumber;
+    }
+    return element.value;
+  }
+  if (
+    element instanceof HTMLTextAreaElement ||
+    element instanceof HTMLSelectElement
+  ) {
+    return element.value;
+  }
+  return undefined;
+}
+
+/**
+ * Walks DOM ancestors between `start` (exclusive) and `formEl` (exclusive),
+ * collecting any preserved `ngModelGroup` attribute values into a path
+ * suitable for `FormGroup.get()`. Only the static attribute form is
+ * preserved on the DOM; dynamically-bound `[ngModelGroup]` is handled by
+ * `resolveControlPathByDomAncestors`.
+ */
+function collectNgModelGroupAttributes(
+  start: HTMLElement,
+  formEl: HTMLElement
+): string[] {
+  const groups: string[] = [];
+  let current: Element | null = start.parentElement;
+  while (current && current !== formEl && formEl.contains(current)) {
+    const groupName = current.getAttribute('ngModelGroup')?.trim();
+    if (groupName) {
+      groups.unshift(groupName);
+    }
+    current = current.parentElement;
+  }
+  return groups;
+}
+
+/**
+ * Resolves the dotted control path for a blurred element when the static
+ * `ngModelGroup` attribute walk failed (typically because the host used
+ * `[ngModelGroup]="expr"`, which Angular does not always preserve as a
+ * DOM attribute). Walks the control tree top-down and at each FormGroup
+ * boundary tries to descend into a child whose subtree contains an element
+ * with the matching `name` — disambiguating repeated leaf names by DOM
+ * containment instead of giving up.
+ */
+function resolveControlPathByDomAncestors(
+  root: FormGroup,
+  fieldElement: HTMLElement,
+  formEl: HTMLElement,
+  leafName: string
+): { path: string; control: AbstractControl } | null {
+  type Frame = { control: AbstractControl; path: Array<string | number> };
+
+  const descend = (frame: Frame): Frame | null => {
+    if (frame.control instanceof FormGroup) {
+      for (const [key, child] of Object.entries(frame.control.controls)) {
+        if (key === leafName && !(child instanceof FormGroup)) {
+          return { control: child, path: [...frame.path, key] };
+        }
+      }
+      const candidates: Frame[] = [];
+      for (const [key, child] of Object.entries(frame.control.controls)) {
+        if (child instanceof FormGroup || child instanceof FormArray) {
+          if (subtreeContainsElement(child, fieldElement, formEl, key)) {
+            candidates.push({ control: child, path: [...frame.path, key] });
+          }
+        }
+      }
+      if (candidates.length === 1 && candidates[0])
+        return descend(candidates[0]);
+      return null;
+    }
+    if (frame.control instanceof FormArray) {
+      const candidates: Frame[] = [];
+      frame.control.controls.forEach((child, index) => {
+        if (child instanceof FormGroup || child instanceof FormArray) {
+          if (subtreeContainsElement(child, fieldElement, formEl, index)) {
+            candidates.push({ control: child, path: [...frame.path, index] });
+          }
+        }
+      });
+      if (candidates.length === 1 && candidates[0])
+        return descend(candidates[0]);
+    }
+    return null;
+  };
+
+  const result = descend({ control: root, path: [] });
+  if (!result) return null;
+  return { path: stringifyFieldPath(result.path), control: result.control };
+}
+
+/**
+ * Best-effort check: does the DOM subtree rooted at any element annotated
+ * with `ngModelGroup="<key>"` contain `fieldElement`? Used by
+ * `resolveControlPathByDomAncestors` to disambiguate repeated leaf names.
+ * For dynamic `[ngModelGroup]` with no preserved attribute we cannot
+ * disambiguate from DOM alone — those cases return `false`, matching the
+ * documented limitation.
+ */
+function subtreeContainsElement(
+  _child: AbstractControl,
+  fieldElement: HTMLElement,
+  formEl: HTMLElement,
+  key: string | number
+): boolean {
+  if (typeof key !== 'string') return false;
+  const selector = `[ngModelGroup="${CSS.escape(key)}"]`;
+  const candidates = formEl.querySelectorAll(selector);
+  for (const candidate of candidates) {
+    if (candidate.contains(fieldElement)) return true;
+  }
+  return false;
+}
+
+/**
+ * Resolves the control + dotted path for a blurred element by consulting the
+ * `NgModel` directives Angular registered with this `NgForm`. Each registered
+ * directive carries a live `path` (the full ControlContainer chain) and a
+ * value accessor whose element ref is the input the directive is hosted on.
+ *
+ * This handles all grouping shapes uniformly — static `ngModelGroup="key"`,
+ * dynamic `[ngModelGroup]="expr"`, and repeated leaf names across siblings —
+ * because the path comes from the live form tree rather than DOM heuristics.
+ * Returns `null` when the directive can't be matched (e.g. a custom CVA that
+ * doesn't store an element ref), so the caller can fall back to DOM probes.
+ */
+function resolveControlPathByNgModelDirective(
+  ngForm: NgForm,
+  fieldElement: HTMLElement
+): { path: string; control: AbstractControl } | null {
+  const directives = readNgFormDirectives(ngForm);
+  if (!directives) return null;
+
+  for (const directive of directives) {
+    const accessorEl = readValueAccessorElement(directive.valueAccessor);
+    if (accessorEl !== fieldElement) continue;
+    const control = directive.control ?? ngForm.form.get(directive.path);
+    if (!control) return null;
+    return { path: directive.path.join('.'), control };
+  }
+  return null;
+}
+
+/**
+ * Reads the registered `NgModel` directives from `NgForm`. Angular forms keeps
+ * them in a private `_directives: Set<NgModel>`. The field name is stable
+ * across all Angular versions that ship `ngModel`, but is not part of the
+ * public type — callers must tolerate `null`.
+ */
+function readNgFormDirectives(ngForm: NgForm): Iterable<NgModel> | null {
+  const set = (ngForm as unknown as { _directives?: Set<NgModel> })._directives;
+  return set ?? null;
+}
+
+/**
+ * Reads the host element of a `ControlValueAccessor`. The standard accessors
+ * shipped by Angular forms (default, number, select, radio, checkbox, range)
+ * all store an `ElementRef` injected at construction as `_elementRef`. This
+ * is private but stable; custom accessors that don't follow the convention
+ * will simply miss the fast path.
+ */
+function readValueAccessorElement(
+  accessor: ControlValueAccessor | null | undefined
+): HTMLElement | null {
+  if (!accessor) return null;
+  const elementRef = (accessor as { _elementRef?: { nativeElement?: unknown } })
+    ._elementRef;
+  const native = elementRef?.nativeElement;
+  return native instanceof HTMLElement ? native : null;
 }

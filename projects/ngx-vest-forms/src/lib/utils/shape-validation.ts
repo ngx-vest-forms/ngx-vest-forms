@@ -1,6 +1,24 @@
 import { isDevMode } from '@angular/core';
 import { NGX_VEST_FORMS_ERRORS, logWarning } from '../errors/error-catalog';
 
+const NUMERIC_PATH_SEGMENT = /^\d+$/;
+type TraversableShapeValue = Record<string, unknown> | unknown[];
+
+function isOpaqueLeafValue(value: unknown): boolean {
+  return (
+    value instanceof Date ||
+    value instanceof Map ||
+    value instanceof Set ||
+    value instanceof RegExp ||
+    (typeof File !== 'undefined' && value instanceof File) ||
+    (typeof Blob !== 'undefined' && value instanceof Blob)
+  );
+}
+
+function isTraversableValue(value: unknown): value is TraversableShapeValue {
+  return typeof value === 'object' && value !== null && !isOpaqueLeafValue(value);
+}
+
 /**
  * Validates a form value against a shape to catch typos in `name` or `ngModelGroup` attributes.
  *
@@ -46,9 +64,11 @@ function validateFormValueAgainstShape(
 
     // For array items (numeric keys > 0), compare against the first item in shape
     // since we only define one example item in the shape for arrays
-    const isNumericKey = !isNaN(parseFloat(key));
-    const shapeKey = isNumericKey && parseFloat(key) > 0 ? '0' : key;
+    const isNumericKey = NUMERIC_PATH_SEGMENT.test(key);
+    // Array shapes provide one example item at index 0, so every numeric key maps to '0'.
+    const shapeKey = isNumericKey && key !== '0' ? '0' : key;
     const shapeValue = shape?.[shapeKey];
+    const hasShapeKey = shape != null && shapeKey in shape;
 
     // Skip Date fields receiving empty strings (common in date picker libraries)
     if (shapeValue instanceof Date && value === '') {
@@ -57,11 +77,29 @@ function validateFormValueAgainstShape(
 
     // Handle object values (recurse into nested objects)
     if (typeof value === 'object') {
+      if (!isTraversableValue(value)) {
+        if (!isNumericKey && !hasShapeKey) {
+          logWarning(NGX_VEST_FORMS_ERRORS.EXTRA_PROPERTY, fieldPath);
+        } else if (
+          !isNumericKey &&
+          hasShapeKey &&
+          (shapeValue === null || typeof shapeValue !== 'object')
+        ) {
+          // Type mismatch: formValue holds an opaque object (Date, Map, etc.)
+          // but shape declares a primitive. Recursion is intentionally skipped
+          // for opaque leaves, but the user still benefits from a warning.
+          logWarning(
+            NGX_VEST_FORMS_ERRORS.TYPE_MISMATCH,
+            fieldPath,
+            'primitive',
+            'object'
+          );
+        }
+        continue;
+      }
+
       // Type mismatch: formValue has object, but shape expects primitive
-      if (
-        !isNumericKey &&
-        (typeof shapeValue !== 'object' || shapeValue === null)
-      ) {
+      if (!isNumericKey && !isTraversableValue(shapeValue)) {
         logWarning(
           NGX_VEST_FORMS_ERRORS.TYPE_MISMATCH,
           fieldPath,
@@ -73,14 +111,14 @@ function validateFormValueAgainstShape(
       // Recurse into nested object
       validateFormValueAgainstShape(
         value as Record<string, unknown>,
-        (shapeValue as Record<string, unknown>) ?? {},
+        isTraversableValue(shapeValue) ? (shapeValue as Record<string, unknown>) : {},
         fieldPath
       );
       continue;
     }
 
     // Extra property: key exists in formValue but not in shape (likely a typo)
-    if (!isNumericKey && shape && !(shapeKey in shape)) {
+    if (!isNumericKey && !hasShapeKey) {
       logWarning(NGX_VEST_FORMS_ERRORS.EXTRA_PROPERTY, fieldPath);
     }
   }

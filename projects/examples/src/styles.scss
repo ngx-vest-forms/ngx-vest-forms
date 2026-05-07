@@ -1,5 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
-@use 'tailwindcss';
+@import 'tailwindcss' source(none);
+@source './app';
+@source './index.html';
 
 /*
  * Tailwind v4 scans the whole repository by default. Exclude non-app sources that

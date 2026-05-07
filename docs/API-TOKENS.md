@@ -434,6 +434,76 @@ import { SC_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
 import { NGX_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
 ```
 
+## Equality Configuration
+
+### `NGX_EQUALITY_FN`
+
+Customizes the deep-equality function the library uses internally for change detection.
+
+**Type:** `InjectionToken<NgxEqualityFn>` where `NgxEqualityFn = (a: unknown, b: unknown) => boolean`
+
+**Purpose:** Swap the comparator that `FormDirective` uses for `formValueChange` `distinctUntilChanged`, the form↔model two-way sync effect, and the `formState` signal's structural equality. Defaults to the library's built-in `fastDeepEqual`.
+
+#### When to override
+
+- **Bundle size**: drop in a smaller library like `dequal/lite` (~300 B) if you don't need the cycle handling, function reference-equality, and `Object.is` semantics that `fastDeepEqual` provides.
+- **Tests**: stub with reference equality (`(a, b) => a === b`) to assert how often the directive emits.
+- **Domain rules**: project requires custom equality (e.g., ignore certain keys, treat unrelated objects as equal).
+
+This is purely additive — if you don't provide the token, behavior is unchanged.
+
+#### Usage
+
+**Global Configuration:**
+
+```typescript
+import { bootstrapApplication } from '@angular/platform-browser';
+import { NGX_EQUALITY_FN } from 'ngx-vest-forms';
+import { dequal } from 'dequal/lite';
+import { AppComponent } from './app/app.component';
+
+bootstrapApplication(AppComponent, {
+  providers: [
+    {
+      provide: NGX_EQUALITY_FN,
+      useValue: dequal,
+    },
+  ],
+});
+```
+
+**Component-Level Configuration (e.g. for tests):**
+
+```typescript
+import { Component } from '@angular/core';
+import { NGX_EQUALITY_FN } from 'ngx-vest-forms';
+
+@Component({
+  selector: 'ngx-test-form',
+  template: `<!-- ... -->`,
+  providers: [
+    {
+      provide: NGX_EQUALITY_FN,
+      // Strict reference equality — every distinct object emits.
+      useValue: (a: unknown, b: unknown) => a === b,
+    },
+  ],
+})
+export class TestFormComponent {}
+```
+
+#### Default behavior
+
+The default factory returns `fastDeepEqual`, which:
+
+- Compares primitives with `Object.is` semantics (`NaN === NaN`, `0 ≠ -0`)
+- Walks plain objects and arrays structurally
+- Compares `Date` by timestamp and `RegExp` by `source` + `flags`
+- Treats `Map`, `Set`, and functions as reference-only
+- Handles cyclic graphs by tracking visited object pairs
+
+Most applications never need to override this token. Reach for the override when you have a measured reason — bundle constraint, behavioral mismatch, or test instrumentation.
+
 ## Token Hierarchy
 
 Injection tokens follow Angular's hierarchical dependency injection. More specific providers override more general ones:

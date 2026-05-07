@@ -1,0 +1,137 @@
+<ngx-card>
+  <form
+    #vestForm="ngxVestForm"
+    ngxVestForm
+    [suite]="suite()"
+    [formValue]="formValue()"
+    [validationConfig]="validationConfig()"
+    (formValueChange)="formValueChange.emit($event)"
+    (fieldBlur)="fieldBlurred.emit($event)"
+    (ngSubmit)="onSubmit()"
+    class="space-y-8"
+  >
+    <ngx-form-section
+      tone="blue"
+      title="Project basics"
+      description="Project name is required. Setting it to fail simulates a save error so you can exercise retry behavior."
+    >
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <ngx-control-wrapper class="form-field">
+          <label for="projectName">
+            <span class="label-text">Project name</span>
+            <input
+              id="projectName"
+              name="projectName"
+              class="input-field"
+              [ngModel]="formValue().projectName"
+              placeholder="Try &quot;Website refresh&quot; or type &quot;fail&quot; to simulate an error"
+              aria-describedby="projectName-help"
+            />
+          </label>
+          <p
+            id="projectName-help"
+            class="mt-2 text-sm text-gray-600 dark:text-gray-300"
+          >
+            Blur this field to queue a draft save.
+          </p>
+        </ngx-control-wrapper>
+
+        <ngx-control-wrapper class="form-field">
+          <label for="preferredContactMethod">
+            <span class="label-text">Draft update preference</span>
+            <select
+              id="preferredContactMethod"
+              name="preferredContactMethod"
+              class="input-field"
+              [ngModel]="formValue().preferredContactMethod"
+            >
+              <option value="email">Email me</option>
+              <option value="phone">Keep it in-app only</option>
+            </select>
+          </label>
+        </ngx-control-wrapper>
+      </div>
+
+      @if (formValue().preferredContactMethod === 'email') {
+        <div class="mt-6">
+          <ngx-control-wrapper [errorDisplayMode]="'on-blur'" class="form-field">
+            <label for="email">
+              <span class="label-text">Notification email</span>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                class="input-field"
+                [ngModel]="formValue().email"
+                placeholder="team@example.com"
+              />
+            </label>
+          </ngx-control-wrapper>
+        </div>
+      }
+    </ngx-form-section>
+
+    <ngx-form-section
+      tone="teal"
+      title="Dependent validation with calm blur UX"
+      description="Either field can make the other required immediately, while the dependent error still waits for that field's own blur."
+    >
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <ngx-control-wrapper [errorDisplayMode]="'on-blur'" class="form-field">
+          <label for="quantity">
+            <span class="label-text">Quantity</span>
+            <input
+              id="quantity"
+              name="quantity"
+              type="number"
+              class="input-field"
+              [ngModel]="formValue().quantity"
+              placeholder="Enter quantity"
+            />
+          </label>
+        </ngx-control-wrapper>
+
+        <ngx-control-wrapper [errorDisplayMode]="'on-blur'" class="form-field">
+          <label for="quantityJustification">
+            <span class="label-text">Quantity justification</span>
+            <textarea
+              id="quantityJustification"
+              name="quantityJustification"
+              class="input-field"
+              [ngModel]="formValue().quantityJustification"
+              rows="3"
+              placeholder="Explain why the quantity matters..."
+            ></textarea>
+          </label>
+        </ngx-control-wrapper>
+      </div>
+    </ngx-form-section>
+
+    <ngx-form-section
+      tone="purple"
+      title="Notes"
+      description="Warnings are non-blocking, so they can guide better drafts without blocking auto-save."
+    >
+      <ngx-control-wrapper [warningDisplayMode]="'on-dirty'" class="form-field">
+        <label for="notes">
+          <span class="label-text">Draft notes</span>
+          <textarea
+            id="notes"
+            name="notes"
+            class="input-field"
+            [ngModel]="formValue().notes"
+            rows="4"
+            placeholder="Capture a bit of context for your team..."
+          ></textarea>
+        </label>
+      </ngx-control-wrapper>
+    </ngx-form-section>
+
+    <div class="flex justify-end gap-3 pt-4">
+      <button type="button" class="btn btn-secondary" (click)="onReset()">
+        Reset Form
+      </button>
+      <button type="submit" class="btn btn-primary">Submit Form</button>
+    </div>
+  </form>
+</ngx-card>

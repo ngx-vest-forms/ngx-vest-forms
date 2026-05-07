@@ -132,6 +132,46 @@ describe('mergeValuesAndRawValues function', () => {
       expect(merged).toEqual({});
     });
 
+    it('should copy raw value when target value is null (regression: disabled control with null public value)', () => {
+      // Repro: a disabled control whose value is `null` was previously
+      // skipped by mergeRecursive because the null-target branch fell
+      // through neither `=== undefined` nor the `isRecord` merge path.
+      const form = new FormGroup({
+        nickname: new FormControl<string | null>(null),
+        profile: new FormGroup({
+          handle: new FormControl<string | null>(null),
+        }),
+      });
+
+      // Disable BEFORE setting raw values, so form.value reports null while
+      // form.getRawValue() reports the underlying value.
+      form.get('nickname')?.disable();
+      form.get('profile.handle')?.disable();
+      form.get('nickname')?.setValue('jdoe', { emitEvent: false });
+      form.get('profile.handle')?.setValue('@jdoe', { emitEvent: false });
+
+      // Pin Angular's behavior: form.value omits disabled controls (so their
+      // entries are absent from `value`, NOT explicitly null), while
+      // getRawValue() includes them. The merge function must therefore copy
+      // raw values whenever the merged target is `null` OR `undefined`. If
+      // Angular ever reports disabled controls as `null` in `value`, this
+      // test still exercises the null branch via getRawValue's structure.
+      const rawValue = form.getRawValue() as {
+        nickname: string | null;
+        profile: { handle: string | null };
+      };
+      expect(rawValue.nickname).toBe('jdoe');
+      expect(rawValue.profile.handle).toBe('@jdoe');
+
+      const merged = mergeValuesAndRawValues<{
+        nickname: string | null;
+        profile: { handle: string | null };
+      }>(form);
+
+      expect(merged.nickname).toBe('jdoe');
+      expect(merged.profile.handle).toBe('@jdoe');
+    });
+
     it('should handle nested disabled fields', () => {
       const form = new FormGroup({
         address: new FormGroup({
@@ -434,6 +474,42 @@ describe('setValueAtPath function', () => {
         },
       },
     });
+  });
+
+  it('should preserve existing arrays when descending bracket notation paths', () => {
+    const object = {
+      addresses: [
+        { street: '123 Main St', city: 'Boston' },
+        { street: '500 Market St', city: 'San Francisco' },
+      ],
+    };
+
+    setValueAtPath(object, 'addresses[0].street', '1 Updated St');
+
+    expect(object).toEqual({
+      addresses: [
+        { street: '1 Updated St', city: 'Boston' },
+        { street: '500 Market St', city: 'San Francisco' },
+      ],
+    });
+    expect(Array.isArray(object.addresses)).toBe(true);
+  });
+
+  it('should choose array or object containers based on the next path segment', () => {
+    const object = {};
+
+    setValueAtPath(object, 'addresses[0].street', '123 Main St');
+    setValueAtPath(object, 'metadata.version.label', 'v1');
+
+    expect(object).toEqual({
+      addresses: [{ street: '123 Main St' }],
+      metadata: {
+        version: {
+          label: 'v1',
+        },
+      },
+    });
+    expect(Array.isArray(object.addresses)).toBe(true);
   });
 
   it('should handle numeric values', () => {

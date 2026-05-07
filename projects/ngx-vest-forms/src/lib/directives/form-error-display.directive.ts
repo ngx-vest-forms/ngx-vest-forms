@@ -7,15 +7,16 @@ import {
   signal,
   Signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { NgForm } from '@angular/forms';
-import { merge, of, startWith } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormResetEvent, FormSubmittedEvent, NgForm } from '@angular/forms';
+import { filter, map, startWith } from 'rxjs';
 import {
   NGX_ERROR_DISPLAY_MODE_TOKEN,
   NGX_WARNING_DISPLAY_MODE_TOKEN,
   SC_ERROR_DISPLAY_MODE_TOKEN,
 } from './error-display-mode.token';
 import { FormControlStateDirective } from './form-control-state.directive';
+import { getFormSubmittedSignal } from './form-submitted-state';
 
 /**
  * Error display modes for form controls.
@@ -59,6 +60,9 @@ export class FormErrorDisplayDirective {
   readonly #formControlState = inject(FormControlStateDirective);
   // Optionally inject NgForm for form submission tracking
   readonly #ngForm = inject(NgForm, { optional: true });
+  readonly #formSubmittedState = this.#ngForm
+    ? getFormSubmittedSignal(this.#ngForm)
+    : signal(false);
 
   /**
    * Input signal for error display mode.
@@ -97,34 +101,41 @@ export class FormErrorDisplayDirective {
   readonly updateOn = this.#formControlState.updateOn;
 
   /**
-   * Internal trigger signal that updates whenever form submit or status changes.
-   * Used to ensure reactive tracking for the formSubmitted computed signal.
-   */
-  readonly #formEventTrigger = this.#ngForm
-    ? toSignal(
-        merge(this.#ngForm.ngSubmit, this.#ngForm.statusChanges ?? of()).pipe(
-          startWith(null)
-        ),
-        { initialValue: null }
-      )
-    : signal(null);
-
-  /**
    * Signal that tracks NgForm.submitted state reactively.
    *
-   * Uses a trigger signal pattern for cleaner reactive tracking:
-   * - ngSubmit: fires when form is submitted (sets NgForm.submitted = true)
-   * - statusChanges: fires after resetForm() (which sets NgForm.submitted = false)
+   * Map form-level submit/reset events directly to boolean state.
    *
-   * This ensures proper sync with both submit and reset operations.
+   * This keeps programmatic `NgForm.onSubmit()` reactive in zoneless mode and
+   * avoids depending on `NgForm.submitted`, whose getter intentionally reads an
+   * internal signal with `untracked()`.
+   *
+   * Note: when this directive is used outside an `NgForm` (no parent form), no
+   * subscription is wired up and this signal stays `false` for the lifetime of
+   * the directive. Consumers relying on submitted state must host the field
+   * inside an `NgForm` (or `ngxVestForm`).
    */
-  readonly formSubmitted: Signal<boolean> = computed(() => {
-    // Trigger signal ensures this recomputes on submit/status changes
-    this.#formEventTrigger();
-    return this.#ngForm?.submitted ?? false;
-  });
+  readonly formSubmitted: Signal<boolean> = this.#formSubmittedState;
 
   constructor() {
+    const ngForm = this.#ngForm;
+    if (ngForm) {
+      ngForm.form.events
+        .pipe(
+          filter(
+            (event) =>
+              event.source === ngForm.form &&
+              (event instanceof FormSubmittedEvent ||
+                event instanceof FormResetEvent)
+          ),
+          map((event) => event instanceof FormSubmittedEvent),
+          startWith(ngForm.submitted),
+          takeUntilDestroyed()
+        )
+        .subscribe((submitted) => {
+          this.#formSubmittedState.set(submitted);
+        });
+    }
+
     // Warn about problematic combinations of updateOn and errorDisplayMode
     effect(() => {
       const mode = this.errorDisplayMode();
@@ -139,16 +150,16 @@ export class FormErrorDisplayDirective {
 
   /**
    * Determines if errors should be shown based on the specified display mode
-   * and the control's state (touched/submitted/validated).
+   * and the control's state (touched/submitted/dirty).
    *
    * Note: We check both hasErrors (extracted error messages) AND isInvalid (Angular's validation state)
    * because in some cases (like conditional validations via validationConfig), the control is marked
    * as invalid by Angular before error messages are extracted from Vest. This ensures aria-invalid
    * is set correctly even during the validation propagation delay.
    *
-   * For validationConfig-triggered validations: A field can be validated without being touched
-   * (e.g., confirmPassword validated when password changes). We check hasBeenValidated to show
-   * errors in these scenarios, providing better UX and proper ARIA attributes.
+   * For validationConfig-triggered validations, a field may become invalid before it has been
+   * touched. Error visibility still respects the field's own `errorDisplayMode`, so untouched
+   * dependent fields can remain visually quiet until blur or submit.
    */
   readonly shouldShowErrors: Signal<boolean> = computed(() => {
     const mode = this.errorDisplayMode();

@@ -46,7 +46,7 @@ type AlertTone = 'error' | 'warning' | 'info' | 'success';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'block',
-  }
+  },
 })
 export class AlertPanel {
   readonly tone = input<AlertTone>('info');

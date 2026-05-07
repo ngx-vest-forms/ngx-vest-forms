@@ -1,3 +1,4 @@
+import { type NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, test } from 'vest';
 import { z } from 'zod';
 import { ZodSchemaDemoModel } from '../../models/zod-schema-demo.model';
@@ -5,16 +6,15 @@ import { ZodSchemaDemoModel } from '../../models/zod-schema-demo.model';
 /**
  * Zod schema for structural/type validation.
  *
- * This schema is passed as the second argument to `create()`.
- * It validates the overall shape of the data model and runs only
- * during **full** suite execution (`suite.run(model)`).
+ * Vest 6.3.x supports schema-aware `create(..., schema)` suites when the schema
+ * is defined with Vest's native `n4s/enforce` schema primitives.
  *
- * **Important:** `suite.only(field).run()` (used by ngx-vest-forms
- * for per-field validation) intentionally skips schema execution.
- * This is Vest's design — schema validates the whole model, while
- * `test()` callbacks handle per-field business rules.
+ * This example intentionally keeps a Zod schema alongside the Vest suite to show
+ * how an external schema library can still act as a shared structural contract
+ * while Vest powers the form's field-level UI validation.
  *
- * @see https://vestjs.dev/docs/community_resources/standard_schema
+ * The Vest suite below still provides the field-level business rules that
+ * ngx-vest-forms runs through `suite.only(field).run(model)`.
  */
 export const zodFormSchema = z.object({
   firstName: z.string().min(1),
@@ -29,19 +29,22 @@ export const zodFormSchema = z.object({
 });
 
 /**
- * Vest validation suite with Zod schema integration.
+ * Vest validation suite that complements the exported Zod schema.
  *
  * **How it works:**
- * 1. The Zod schema (2nd argument) validates model structure on full runs
- * 2. The `test()` callbacks provide per-field business rule validation
- * 3. During per-field validation (`suite.only(field).run()`), only
- *    the `test()` callbacks run — the Zod schema is skipped
+ * 1. The Zod schema documents and can validate the structural model separately
+ * 2. The `test()` callbacks provide per-field business rule validation for the UI
+ * 3. During field-level validation (`suite.only(field).run(model)`), ngx-vest-forms
+ *    runs the Vest rules that back the form UI
+ * 4. If you want native Vest schema integration in 6.3.x, prefer
+ *    `create((model) => { ... }, enforce.shape(...))` in a dedicated example
  *
  * **Per-field rules** use `enforce` for the same validations that
  * the Zod schema covers at the structural level, plus additional
  * business rules that go beyond type/shape validation.
  */
-export const zodSchemaDemoSuite = create((model: ZodSchemaDemoModel) => {
+export const zodSchemaDemoSuite: NgxVestSuite<ZodSchemaDemoModel> = create(
+  (model: ZodSchemaDemoModel) => {
   // --- Personal info ---
   test('firstName', 'First name is required', () => {
     enforce(model.firstName).isNotBlank();
@@ -88,4 +91,5 @@ export const zodSchemaDemoSuite = create((model: ZodSchemaDemoModel) => {
   test('address.zipCode', 'ZIP code must be 4-6 digits', () => {
     enforce(model.address?.zipCode).matches(/^\d{4,6}$/);
   });
-}, zodFormSchema);
+  }
+);

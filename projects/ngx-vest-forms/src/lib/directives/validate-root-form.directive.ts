@@ -30,6 +30,7 @@ import {
   timer,
 } from 'rxjs';
 import { ROOT_FORM } from '../constants';
+import { scheduleMicrotask } from '../utils/destroy-scheduler';
 import type { NgxSuiteRunResult } from '../utils/validation-suite';
 import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
 import { ValidationOptions } from './validation-options';
@@ -140,12 +141,20 @@ export class ValidateRootFormDirective<T>
 
   /**
    * Validation mode:
-   * - 'submit' (default): Only validates after form submission
-   * - 'live': Validates on every value change
-   * Accepts both validateRootFormMode and ngxValidateRootFormMode
+   * - `'submit'` (effective default): Only validates after form submission.
+   * - `'live'`: Validates on every value change.
+   *
+   * Both inputs default to `undefined` so we can detect whether the consumer
+   * set them explicitly. Precedence is `ngx ?? legacy ?? 'submit'`, which
+   * matches the documented behavior — observable only when both attributes
+   * are set explicitly on the same form.
    */
-  readonly validateRootFormMode = input<'submit' | 'live'>('submit');
-  readonly ngxValidateRootFormMode = input<'submit' | 'live'>('submit');
+  readonly validateRootFormMode = input<'submit' | 'live' | undefined>(
+    undefined
+  );
+  readonly ngxValidateRootFormMode = input<'submit' | 'live' | undefined>(
+    undefined
+  );
 
   constructor() {
     // Trigger validation when hasSubmitted or formValue changes
@@ -171,7 +180,9 @@ export class ValidateRootFormDirective<T>
       if (ngForm?.control) {
         // Defer to the next microtask so Angular has a chance to finish
         // wiring up controls/groups (ngModel/ngModelGroup) on initial render.
-        queueMicrotask(() => ngForm.control.updateValueAndValidity());
+        // The scheduleMicrotask primitive auto-cancels if the directive is
+        // destroyed before the microtask fires.
+        scheduleMicrotask(() => ngForm.control.updateValueAndValidity(), this.destroyRef);
       }
     });
   }
@@ -198,7 +209,7 @@ export class ValidateRootFormDirective<T>
     // Ensure we run at least one validation pass after the form is ready.
     // This matters for 'live' mode root-form errors that should appear
     // without requiring a user interaction.
-    queueMicrotask(() => ngForm.control.updateValueAndValidity());
+    scheduleMicrotask(() => ngForm.control.updateValueAndValidity(), this.destroyRef);
 
     // Subscribe to form submission to set hasSubmitted flag
     ngForm.ngSubmit
@@ -223,11 +234,13 @@ export class ValidateRootFormDirective<T>
       return of(null);
     }
 
-    // Get mode from either input (ngx prefix takes precedence if both set)
+    // Mode precedence: ngx-prefixed input wins over legacy input; both default
+    // to `undefined` so the precedence rule is implementable without losing
+    // the legacy attribute when the new one is not set.
     const mode =
-      this.ngxValidateRootFormMode() !== 'submit'
-        ? this.ngxValidateRootFormMode()
-        : this.validateRootFormMode();
+      this.ngxValidateRootFormMode() ??
+      this.validateRootFormMode() ??
+      'submit';
 
     // In 'submit' mode, skip validation until form is submitted
     if (mode === 'submit' && !this.hasSubmitted()) {

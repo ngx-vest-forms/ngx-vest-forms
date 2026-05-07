@@ -1,296 +1,90 @@
 # GitHub Copilot Instructions
 
-## Priority Guidelines
+## What matters most in this repo
 
 When generating code for this repository:
 
-1. **Version Compatibility**: Always detect and respect the exact versions of languages, frameworks, and libraries used in this project
-2. **Specialized Instructions**: For detailed guidance, reference these comprehensive instruction files:
-   - **`.github/instructions/ngx-vest-forms.instructions.md`** - Complete guide for using ngx-vest-forms library
-   - **`.github/instructions/vest.instructions.md`** - Comprehensive Vest.js validation patterns and best practices
-3. **Context Files**: Prioritize patterns and standards defined in the .github/copilot directory
-4. **Codebase Patterns**: When context files don't provide specific guidance, scan the codebase for established patterns
-5. **Architectural Consistency**: Maintain our Layered architectural style and established boundaries
-6. **Code Quality**: Prioritize maintainability, performance, security, and testability in all generated code
+1. Respect the exact toolchain versions in `package.json`.
+2. Treat `.github/instructions/ngx-vest-forms.instructions.md` as the always-on invariant sheet for ngx-vest-forms usage.
+3. Treat `.github/instructions/vest.instructions.md` as the deeper Vest 6 validation guide.
+4. Prefer the local skills under `.agents/skills/ngx-vest-forms/` and `.agents/skills/vestjs/` over generic framework advice.
+5. Prefer patterns already present in the repo over generic best practices.
 
-## Technology Version Detection
+## Version baseline
 
-Before generating code, scan the codebase to identify:
+- Angular framework packages: `21.2.11`
+- Angular CLI/build tooling: `21.2.9`
+- TypeScript: `~5.9.3`
+- Node.js: `>=22.0.0`
+- RxJS: `~7.8.2`
+- Vest.js: `~6.0.3`
+- Vitest: `^4.1.5`
+- Playwright: `1.59.1`
+- Storybook: `10.3.6`
 
-1. **Language Versions**: Detect the exact versions of programming languages in use
-   - **Angular**: 21.0.1 (as specified in package.json dependencies and overrides)
-   - **TypeScript**: ~5.9.3 (for modern Angular features)
-   - **Node.js**: >=22.0.0 (required for Angular 21)
-   - Never use language features beyond the detected version
+Do not suggest code that depends on newer language or framework features than these versions support.
 
-2. **Framework Versions**: Identify the exact versions of all frameworks
-   - **Angular**: 21.0.1 with standalone components and signals
-   - **RxJS**: ~7.8.2 for reactive programming
-   - **Vest.js**: ~6.0.3 for validation (critical: use `create` with model-only callback; focus fields at call site with `suite.only(field).run(model)`)
-   - Respect version constraints when generating code
+## Repo shape
 
-3. **Library Versions**: Note the exact versions of key libraries and dependencies
-   - **Vitest**: ^4.0.14 for unit testing with `@analogjs/vitest-angular`
-   - **Playwright**: 1.57.0 for end-to-end testing
-   - **Storybook**: 10.0.8 for component testing and documentation
-   - Generate code compatible with these specific versions
+- Library source: `projects/ngx-vest-forms/`
+- Demo/examples app: `projects/examples/`
+- Library public surface: `projects/ngx-vest-forms/src/public-api.ts`
+- Domain docs: `docs/`
+- Always-on instructions: `.github/instructions/`
+- Local skills: `.agents/skills/`
 
-## Project Overview
-This is an Angular library that provides a lightweight adapter between Angular template-driven forms and Vest.js validation. The library enables unidirectional data flow in forms with sophisticated async validations and conditional logic.
+## Public API first
 
-**Key Architecture:**
-- **Library Project**: `projects/ngx-vest-forms/` - The exportable Angular library
-- **Examples Project**: `projects/examples/` - Demo application showcasing usage patterns
-- **Monorepo Structure**: Uses Angular CLI workspace with separate build targets
+When writing examples for developers using the library:
 
-## Workspace Structure
+- import from `'ngx-vest-forms'`
+- prefer symbols that exist in `projects/ngx-vest-forms/src/public-api.ts`
+- do not recommend imports from `projects/ngx-vest-forms/src/lib/**` or other internal paths unless the task is explicitly about maintaining the library itself
 
-This workspace follows Angular CLI monorepo patterns with:
-- **Root Configuration**: Angular workspace configuration and shared tooling
-- **Library Development**: Core ngx-vest-forms implementation in `projects/ngx-vest-forms/`
-- **Example Applications**: Demonstration and testing in `projects/examples/`
-- **Documentation**: Comprehensive guides in `.github/instructions/`
-- **Testing Infrastructure**: Jest for unit tests, Storybook for component testing
+If a new library feature is added, export it in `projects/ngx-vest-forms/src/public-api.ts` and then update the examples, docs, and skills.
 
-## Codebase Scanning Instructions
+## Working rules
 
-When context files don't provide specific guidance:
+- Keep the `name` attribute aligned with the `[ngModel]` path.
+- Use `[ngModel]`, not `[(ngModel)]`, for ngx-vest-forms examples.
+- Use optional chaining with partial form models.
+- Use Vest 6 suite callbacks with a model-only signature: `create((model) => { ... })`.
+- Handle field-focused validation at the call site with `suite.only(field).run(model)`.
+- Use `vestFormsViewProviders` in child form components that participate in the parent form tree.
+- Prefer `<ngx-control-wrapper>` for single controls and group wrappers for `ngModelGroup` containers.
+- The examples app mocks the people API in-app via `mockPeopleApiInterceptor`; no separate backend is required.
 
-1. Identify similar files to the one being modified or created
-2. Analyze patterns for:
-   - Naming conventions (camelCase for properties, kebab-case for component selectors)
-   - Code organization (barrel exports in public-api.ts, feature-based organization)
-   - Error handling (signal-based error state management)
-   - Validation patterns (`create` suites with model-only callback; focus fields via `suite.only(field).run(model)` at call site)
-   - Testing patterns (Jest with interaction tests in Storybook)
+## How to choose guidance sources
 
-3. Follow the most consistent patterns found in the codebase
-4. When conflicting patterns exist, prioritize patterns in newer files or files with higher test coverage
-5. Never introduce patterns not found in the existing codebase
+- Need baseline usage rules: read `.github/instructions/ngx-vest-forms.instructions.md`
+- Need Vest suite semantics: read `.github/instructions/vest.instructions.md`
+- Need default form setup: use `.agents/skills/ngx-vest-forms/core/`
+- Need `validationConfig`: use `.agents/skills/ngx-vest-forms/validation-config-builder/`
+- Need `ROOT_FORM`: use `.agents/skills/ngx-vest-forms/root-form-validation/`
+- Need wrappers: use `.agents/skills/ngx-vest-forms/built-in-wrappers/` or `custom-wrapper-patterns/`
+- Need composite widgets mapped to multiple fields: use `.agents/skills/ngx-vest-forms/composite-adapter/`
+- Need blur-driven autosave: use the examples and docs around `fieldBlur`
 
-## Workspace-Specific Guidelines
+## Library maintenance workflow
 
-### Library Development Workflow
-When working on the ngx-vest-forms library:
-1. **Implementation**: Add features in `projects/ngx-vest-forms/src/lib/`
-2. **Public API**: Export new functionality in `projects/ngx-vest-forms/src/public-api.ts`
-3. **Examples**: Create usage examples in `projects/examples/src/app/`
-4. **Testing**: Add Storybook stories in `projects/ngx-vest-forms/src/lib/testing/`
-5. **Documentation**: Update instruction files in `.github/instructions/`
+When changing the library itself:
 
-### Example Application Development
-When working on the examples project:
-1. **Component Structure**: Follow established smart/ui component patterns
-2. **Validation Patterns**: Reference `.github/instructions/vest.instructions.md`
-3. **Form Implementation**: Reference `.github/instructions/ngx-vest-forms.instructions.md`
-4. **Model Definitions**: Place in `projects/examples/src/app/models/`
-5. **Validation Suites**: Place in `projects/examples/src/app/validations/`
+1. Implement in `projects/ngx-vest-forms/src/lib/`
+2. Export the supported surface in `projects/ngx-vest-forms/src/public-api.ts`
+3. Add or update example usage in `projects/examples/`
+4. Add or update tests
+5. Update docs and any affected skill/reference files
 
-## Core Concepts
+## Style and quality
 
-### CRITICAL: Name Attribute Matching
-**The `name` attribute MUST exactly match the property path used in `[ngModel]` bindings.**
+- Keep code aligned with Angular 21 + signals patterns already used in the repo.
+- Prefer clear, typed examples over clever abstractions.
+- Follow repository naming and file-organization patterns.
+- Keep accessibility and predictable validation UX in mind.
+- Do not reintroduce legacy Vest 5 callback-field patterns into Vest 6 code.
 
-For comprehensive examples and patterns, see `.github/instructions/ngx-vest-forms.instructions.md`
+## Chat guidelines
 
-```typescript
-// ✅ CORRECT: name matches the property path
-<input name="firstName" [ngModel]="formValue().firstName" />
-<input name="addresses.billingAddress.street" [ngModel]="formValue().addresses?.billingAddress?.street" />
-
-// ❌ WRONG: name doesn't match property path
-<input name="first_name" [ngModel]="formValue().firstName" />
-```
-
-This is essential for:
-- Form control creation and binding
-- Validation error mapping
-- Shape validation in development mode
-- Proper unidirectional data flow### Form Models & Typing
-Always use `DeepPartial<T>` for form models since Angular template-driven forms build incrementally:
-```typescript
-type MyFormModel = DeepPartial<{
-  generalInfo: { firstName: string; lastName: string; }
-}>
-```
-
-Create corresponding shapes using `DeepRequired<T>` for runtime validation:
-```typescript
-export const myFormShape: DeepRequired<MyFormModel> = {
-  generalInfo: { firstName: '', lastName: '' }
-};
-```
-
-### Unidirectional Data Flow Pattern
-Use `[ngModel]` (NOT `[(ngModel)]`) with signals for unidirectional updates:
-```typescript
-// Component
-protected readonly formValue = signal<MyFormModel>({});
-
-// Template
-<input [ngModel]="formValue().generalInfo?.firstName" name="firstName"/>
-<form scVestForm (formValueChange)="formValue.set($event)">
-```
-
-### Validation Architecture
-- **Vest Suites**: Reusable validation functions using `create()` from vest.js
-- **Field-based**: Use dot notation (`addresses.billingAddress.street`) for nested validation
-- **Conditional**: Use `omitWhen()` for conditional validations
-- **Async Support**: Built-in support for async validations with AbortController
-- **Performance Optimization**: Always use `suite.only(field).run(model)` pattern for field-level validation
-
-## Key Development Patterns
-
-### Validation Suite Pattern
-Always structure validation suites with a model-only callback. Field focus is handled at the call site.
-
-> **CRITICAL**: In Vest 6, suites take only the model parameter. To validate a single field, use `suite.only(field).run(model)` at the call site. Never add a `field` parameter or call `only()` inside the callback.
-> **Complete Validation Patterns**: See `.github/instructions/vest.instructions.md` for comprehensive validation patterns and performance optimization.
-
-```typescript
-export const validationSuite = create(
-  (model: FormModel) => {
-    test('firstName', 'First name is required', () => {
-      enforce(model.firstName).isNotBlank();
-    });
-  }
-);
-// Call site: validationSuite.only('firstName').run(model)
-```
-
-### Creating Composable Validations
-Break validations into reusable functions:
-```typescript
-// address.validations.ts
-export function addressValidations(model: AddressModel | undefined, field: string): void {
-  test(`${field}.street`, 'Street is required', () => {
-    enforce(model?.street).isNotBlank();
-  });
-}
-
-// Main suite
-addressValidations(model.addresses?.billingAddress, 'addresses.billingAddress');
-```
-
-### Validation Configuration Dependencies
-Use `validationConfig` to trigger dependent field validations:
-```typescript
-protected readonly validationConfig = {
-  'passwords.password': ['passwords.confirmPassword'],
-  age: ['emergencyContact']
-};
-```
-
-### Conditional UI with Computed Signals
-Use computed signals for showing/hiding form sections:
-```typescript
-protected readonly showShippingAddress = computed(() =>
-  this.formValue().addresses?.shippingAddressDifferentFromBillingAddress
-);
-```
-
-## Development Workflow
-
-### Build Commands
-- `npm run build:lib` - Build the library package
-- `npm run build:app` - Build the examples application
-- `npm start` - Serve examples app (port 4200)
-- Examples app mock API is handled in-app via an HTTP interceptor; no separate backend is required
-
-### Testing
-- `npm test` or `npm run test:lib` - Run Jest unit tests
-- `npm run test:storybook` - Run Storybook interaction tests
-- Tests use Jest with `jest-preset-angular`
-
-### Library Development
-When adding new features to the library:
-1. Add implementation in `projects/ngx-vest-forms/src/lib/`
-2. Export in `projects/ngx-vest-forms/src/public-api.ts`
-3. Add usage examples in `projects/examples/`
-4. Update Storybook stories in `projects/ngx-vest-forms/src/lib/testing/`
-
-## Critical File Locations
-
-### Library Core
-- `projects/ngx-vest-forms/src/lib/directives/form.directive.ts` - Main `scVestForm` directive
-- `projects/ngx-vest-forms/src/lib/components/control-wrapper/` - Error display component
-- `projects/ngx-vest-forms/src/lib/utils/form-utils.ts` - Form manipulation utilities
-- `projects/ngx-vest-forms/src/lib/exports.ts` - Library exports and module definition
-
-### Examples & Patterns
-- `projects/examples/src/app/validations/` - Example validation suites
-- `projects/examples/src/app/models/` - Form model patterns
-- `projects/examples/src/app/pages/purchase-form/` - Complex form example
-
-## Integration Points
-
-### Angular Forms Integration
-The library hooks into Angular's template-driven forms via:
-- `FormDirective` extends `NgForm` functionality
-- `FormModelDirective` and `FormModelGroupDirective` implement `AsyncValidator`
-- Automatic validator creation from Vest suites
-
-### Vest.js Integration
-- Uses `create()` for performance optimization
-- Supports field-specific validation via `suite.only(field).run(model)`
-- Built-in async validation with signal support
-- Error mapping from Vest results to Angular form errors
-
-## Code Quality Standards
-
-### Maintainability
-- Write self-documenting code with clear naming following existing patterns
-- Follow the naming and organization conventions evident in the codebase
-- Keep functions focused on single responsibilities matching existing patterns
-- Limit function complexity and length to match existing patterns
-
-### Performance
-- Always use `suite.only(field).run(model)` pattern for field-level validation performance
-- Follow existing patterns for memory and resource management
-- Apply signal-based state management consistently with existing patterns
-- Use computed signals for derived state matching existing code
-
-### Security
-- Follow existing patterns for input validation
-- Apply the same sanitization techniques used in the codebase
-- Handle sensitive data according to existing patterns
-
-### Testability
-- Follow established patterns for testable code using Jest
-- Match dependency injection approaches used in the codebase
-- Apply the same patterns for managing dependencies
-- Follow established mocking and test double patterns in Storybook
-
-## Documentation Requirements
-
-- Match the level and style of comments found in existing code
-- Document according to patterns observed in the codebase
-- Follow existing patterns for documenting non-obvious behavior
-- Use the same format for parameter descriptions as existing code
-
-## Angular Guidelines
-
-- Detect and adhere to the specific Angular version in use (>=18.0.0)
-- Match component structure patterns from existing components
-- Follow the same signal and lifecycle patterns found in the codebase
-- Apply the same state management approach used in existing components
-- Use standalone components consistently with existing patterns
-- Follow template-driven forms patterns exactly as implemented
-
-## Common Gotchas
-- Always use `?` operator in templates due to `DeepPartial` typing
-- Shape validation only runs in development mode
-- Form controls are created dynamically - avoid direct form control references
-- Use `ROOT_FORM` constant for form-level validations
-- Validation options can be set at form, group, or control level for debouncing
-- Suite callbacks take only the model — field focus is handled at the call site via `suite.only(field).run(model)`
-- **CRITICAL**: The `name` attribute must exactly match the property path in `[ngModel]`
-
-## References
-- Original library concept: https://blog.simplified.courses/introducing-ngx-vest-forms/
-- Created by Brecht Billiet, evolved for Angular 18+ with signals
-
-## Chat Guidelines
-- Do not use emojis in the chat responses, except for checking off tasks
-- Always verify version compatibility before suggesting code changes
-- Prioritize consistency with existing codebase patterns over external best practices
+- Verify version compatibility before suggesting code changes.
+- Prioritize consistency with existing codebase patterns over external best practices.
+- Avoid stale Vest 5 guidance such as `staticSuite((model, field?) => ...)`, callable suites, or `only()` inside the suite callback.

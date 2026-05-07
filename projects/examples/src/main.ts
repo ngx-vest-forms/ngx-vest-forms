@@ -56,6 +56,18 @@ const appRoutes: Routes = [
     },
   },
   {
+    path: 'auto-save-demo',
+    loadComponent: () =>
+      import('./app/pages/auto-save-demo/auto-save-demo.page').then(
+        (m) => m.AutoSaveDemoPageComponent
+      ),
+    data: {
+      title: 'Auto-Save Draft Demo',
+      subtitle:
+        'Persist draft changes on blur while keeping validation and final submission separate.',
+    },
+  },
+  {
     path: 'wizard',
     loadComponent: () =>
       import('./app/pages/wizard-form/wizard-form.page').then(
@@ -89,6 +101,18 @@ const appRoutes: Routes = [
       title: 'Zod Schema Demo',
       subtitle:
         'Combine Zod structural validation with Vest per-field business rules via Standard Schema.',
+    },
+  },
+  {
+    path: 'date-range-adapter',
+    loadComponent: () =>
+      import('./app/pages/date-range-adapter/travel.page').then(
+        (m) => m.TravelPageComponent
+      ),
+    data: {
+      title: 'Composite Adapter Recipe',
+      subtitle:
+        'Map one composite UI control to multiple form fields with split-field validation.',
     },
   },
 ];

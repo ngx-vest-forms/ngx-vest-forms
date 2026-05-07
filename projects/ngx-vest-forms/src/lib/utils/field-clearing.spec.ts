@@ -541,6 +541,24 @@ describe('Field Clearing Utilities', () => {
         fieldB: null,
       } as any);
     });
+
+    it('does not pull keys from the prototype chain (Object.hasOwn check)', () => {
+      // Regression: previously used `fieldName in currentState`, which would
+      // succeed for inherited prototype keys like `toString`, leaking
+      // `Object.prototype.toString` into the result. With `Object.hasOwn`,
+      // such keys are skipped.
+      const initialState = { name: 'kept' } as Record<string, unknown>;
+
+      const result = keepFieldsWhen(initialState, {
+        name: true,
+        toString: true,
+        hasOwnProperty: true,
+      } as Partial<Record<string, boolean>>);
+
+      expect(result).toEqual({ name: 'kept' });
+      expect(Object.hasOwn(result, 'toString')).toBe(false);
+      expect(Object.hasOwn(result, 'hasOwnProperty')).toBe(false);
+    });
   });
 
   describe('Integration scenarios', () => {

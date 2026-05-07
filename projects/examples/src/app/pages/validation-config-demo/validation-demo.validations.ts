@@ -1,7 +1,9 @@
+import { type NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test, warn } from 'vest';
 import { ValidationDemoModel } from '../../models/validation-demo.model';
 
-export const validationDemoSuite = create((model: ValidationDemoModel) => {
+export const validationDemoSuite: NgxVestSuite<ValidationDemoModel> = create(
+  (model: ValidationDemoModel) => {
   // Password validation
   test('password', 'Password is required', () => {
     enforce(model.password).isNotBlank();
@@ -100,4 +102,5 @@ export const validationDemoSuite = create((model: ValidationDemoModel) => {
       enforce(end.getTime()).greaterThan(start.getTime());
     });
   });
-});
+  }
+);

@@ -1,10 +1,12 @@
+import { type NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, optional, test } from 'vest';
-import 'vest/email';
 import {
   WizardStep1Model,
   WizardStep2Model,
   WizardStep3Model,
 } from '../../models/wizard-form.model';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * Step 1: Account Setup Validation
@@ -12,16 +14,15 @@ import {
  * - email ↔ confirmEmail
  * - password ↔ confirmPassword
  */
-export const wizardStep1Suite = create((model: WizardStep1Model) => {
+export const wizardStep1Suite: NgxVestSuite<WizardStep1Model> = create(
+  (model: WizardStep1Model) => {
   // Email validation
   test('email', 'Email is required', () => {
     enforce(model.email).isNotBlank();
   });
 
-  // Vest 6 isEmail(): built-in email plugin (import 'vest/email')
-  // Cast needed: plugin types don't integrate with enforce's DeepPartial inference
   test('email', 'Please enter a valid email address', () => {
-    (enforce(model.email) as any).isEmail();
+    enforce(model.email ?? '').matches(EMAIL_REGEX);
   });
 
   // Confirm email (depends on email)
@@ -58,14 +59,16 @@ export const wizardStep1Suite = create((model: WizardStep1Model) => {
       enforce(model.confirmPassword).equals(model.password);
     });
   });
-});
+  }
+);
 
 /**
  * Step 2: Profile Information Validation
  * Demonstrates conditional validation:
  * - subscribeNewsletter → newsletterFrequency required
  */
-export const wizardStep2Suite = create((model: WizardStep2Model) => {
+export const wizardStep2Suite: NgxVestSuite<WizardStep2Model> = create(
+  (model: WizardStep2Model) => {
   test('firstName', 'First name is required', () => {
     enforce(model.firstName).isNotBlank();
   });
@@ -101,13 +104,15 @@ export const wizardStep2Suite = create((model: WizardStep2Model) => {
       enforce(model.newsletterFrequency).isNotBlank();
     });
   });
-});
+  }
+);
 
 /**
  * Step 3: Review & Confirmation Validation
  * Validates terms acceptance
  */
-export const wizardStep3Suite = create((model: WizardStep3Model) => {
+export const wizardStep3Suite: NgxVestSuite<WizardStep3Model> = create(
+  (model: WizardStep3Model) => {
   test('acceptTerms', 'You must accept the terms of service', () => {
     enforce(model.acceptTerms).isTruthy();
   });
@@ -123,4 +128,5 @@ export const wizardStep3Suite = create((model: WizardStep3Model) => {
   test('comments', 'Comments must be at least 10 characters', () => {
     enforce(model.comments).longerThanOrEquals(10);
   });
-});
+  }
+);

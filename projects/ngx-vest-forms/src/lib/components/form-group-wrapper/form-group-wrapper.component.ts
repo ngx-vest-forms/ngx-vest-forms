@@ -68,7 +68,7 @@ export class FormGroupWrapperComponent {
 
   private readonly pendingState = createDebouncedPendingState(
     this.errorDisplay.isPending,
-    this.pendingDebounce()
+    this.pendingDebounce
   );
   protected readonly showPendingMessage = this.pendingState.showPendingMessage;
 
