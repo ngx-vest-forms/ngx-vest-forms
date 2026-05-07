@@ -2,18 +2,14 @@
  * Public API Surface of ngx-vest-forms
  */
 
-export { NgxVestForms, vestForms, vestFormsViewProviders } from './lib/exports';
+export { NgxVestForms, vestFormsViewProviders } from './lib/exports';
 
 // Type utilities
-export type { DeepPartial, NgxDeepPartial } from './lib/utils/deep-partial';
+export type { NgxDeepPartial } from './lib/utils/deep-partial';
 export type {
-  DeepRequired,
-  FormCompatibleDeepRequired,
   NgxDeepRequired,
   NgxFormCompatibleDeepRequired,
 } from './lib/utils/deep-required';
-/** @deprecated Use ROOT_FORM from 'ngx-vest-forms' instead */
-export { ROOT_FORM as ROOT_FORM_CONSTANT } from './lib/utils/field-path-types';
 export type {
   FieldPath,
   FieldPathValue,
@@ -39,7 +35,6 @@ export {
 export type {
   NgxFieldKey,
   NgxSuiteRunResult,
-  NgxTypedVestSuite,
   NgxVestSuite,
 } from './lib/utils/validation-suite';
 
@@ -86,12 +81,6 @@ export type { AriaAssociationMode } from './lib/utils/aria-association.utils';
   mergeValuesAndRawValues,
 } from './lib/utils/form-utils';
 
-// Deprecated - kept for backward compatibility, will be removed in future major version
-/** @deprecated Use setValueAtPath instead */ export {
-  cloneDeep,
-  set,
-} from './lib/utils/form-utils';
-
 // Constants
 export { ROOT_FORM } from './lib/constants';
 
@@ -105,10 +94,10 @@ export {
   NGX_VALIDATION_CONFIG_DEBOUNCE_DEFAULT,
   NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
 } from './lib/tokens/debounce.token';
-export { NGX_VALIDATION_DEBOUNCE_PRESETS } from './lib/tokens/validation-debounce-presets';
-export type { NgxValidationDebouncePreset } from './lib/tokens/validation-debounce-presets';
 export { NGX_EQUALITY_FN } from './lib/tokens/equality.token';
 export type { NgxEqualityFn } from './lib/tokens/equality.token';
+export { NGX_VALIDATION_DEBOUNCE_PRESETS } from './lib/tokens/validation-debounce-presets';
+export type { NgxValidationDebouncePreset } from './lib/tokens/validation-debounce-presets';
 
 // Components
 export { ControlWrapperComponent } from './lib/components/control-wrapper/control-wrapper.component';

@@ -126,7 +126,7 @@ export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
 // This is safe because:
 // - The model parameter (T) remains fully typed for type safety
 // - Runtime behavior is identical (string is string, regardless of literal type)
-// - Allows NgxTypedVestSuite to be used where NgxVestSuite is expected
+// - Allows strongly typed suites to be used where NgxVestSuite is expected
 
 /**
  * Minimal structural type that any Vest suite (with or without a Standard
@@ -194,13 +194,3 @@ export type NgxVestSuite<T = unknown> = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   resume(state: any): void;
 };
-
-/**
- * Type-safe validation suite with autocomplete for field paths.
- *
- * @deprecated Use {@link NgxVestSuite}<T> instead — both types are structurally
- * identical. This alias will be removed in a future major version.
- *
- * @template T The model type that the validation suite operates on
- */
-export type NgxTypedVestSuite<T> = NgxVestSuite<T>;

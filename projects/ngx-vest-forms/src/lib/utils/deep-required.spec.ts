@@ -1,8 +1,5 @@
 import { vi } from 'vitest';
-// Fallback Jest-based type test for DeepRequired and FormCompatibleDeepRequired
 import {
-  DeepRequired,
-  FormCompatibleDeepRequired,
   NgxDeepRequired,
   NgxFormCompatibleDeepRequired,
 } from './deep-required';
@@ -292,39 +289,5 @@ describe('NgxFormCompatibleDeepRequired', () => {
     expect(typeof value.name).toBe('string');
     expect(typeof value.isActive).toBe('boolean');
     expect(typeof value.count).toBe('number');
-  });
-});
-
-// Backward compatibility tests
-describe('DeepRequired (legacy alias)', () => {
-  it('should work identically to NgxDeepRequired', () => {
-    type Model = {
-      a?: string;
-      b?: number;
-      c?: { d?: boolean; e?: string[] };
-    };
-    const value: DeepRequired<Model> = {
-      a: '',
-      b: 1,
-      c: { d: false, e: [] },
-    };
-    expect(value.a).toBeDefined();
-    expect(value.c.d).toBeDefined();
-  });
-});
-
-describe('FormCompatibleDeepRequired (legacy alias)', () => {
-  it('should work identically to NgxFormCompatibleDeepRequired', () => {
-    type Model = {
-      id?: number;
-      birthDate?: Date;
-    };
-    const value: FormCompatibleDeepRequired<Model> = {
-      id: 1,
-      birthDate: '',
-    };
-    expect(
-      typeof value.birthDate === 'string' || value.birthDate instanceof Date
-    ).toBe(true);
   });
 });

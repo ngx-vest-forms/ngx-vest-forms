@@ -53,12 +53,9 @@ import {
 } from 'rxjs';
 import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
-import { DeepRequired, type NgxDeepRequired } from '../utils/deep-required';
 import { NGX_EQUALITY_FN } from '../tokens/equality.token';
-import {
-  scheduleMicrotask,
-  scheduleTimeout,
-} from '../utils/destroy-scheduler';
+import type { NgxDeepRequired } from '../utils/deep-required';
+import { scheduleMicrotask, scheduleTimeout } from '../utils/destroy-scheduler';
 import type { ValidationConfigMap } from '../utils/field-path-types';
 import { stringifyFieldPath } from '../utils/field-path.utils';
 import {
@@ -77,8 +74,10 @@ import {
   setValueAtPath,
 } from '../utils/form-utils';
 import { validateShape } from '../utils/shape-validation';
-import type { NgxSuiteRunResult } from '../utils/validation-suite';
-import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
+import type {
+  NgxSuiteRunResult,
+  NgxVestSuite,
+} from '../utils/validation-suite';
 import {
   getFormSubmittedSignal,
   setAngularFormSubmittedState,
@@ -213,7 +212,8 @@ export class FormDirective<T extends Record<string, unknown>> {
     this.ngForm.form.events.pipe(
       filter(
         (event) =>
-          event instanceof ValueChangeEvent || event instanceof StatusChangeEvent
+          event instanceof ValueChangeEvent ||
+          event instanceof StatusChangeEvent
       ),
       scan((count) => count + 1, 0),
       startWith(0)
@@ -328,9 +328,9 @@ export class FormDirective<T extends Record<string, unknown>> {
 
   /**
    * Static vest suite that will be used to feed our angular validators.
-   * Accepts NgxVestSuite<T> (the canonical type) or its deprecated alias NgxTypedVestSuite<T>.
+   * Use `suite.only(field).run(model)` when you need field-focused validation.
    */
-  readonly suite = input<NgxVestSuite<T> | NgxTypedVestSuite<T> | null>(null);
+  readonly suite = input<NgxVestSuite<T> | null>(null);
 
   /**
    * The shape of our form model. This is a deep required version of the form model
@@ -509,7 +509,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       effect(() => {
         const v = this.formValue();
         if (v && this.formShape()) {
-          validateShape(v, this.formShape() as DeepRequired<T>);
+          validateShape(v, this.formShape() as NgxDeepRequired<T>);
         }
       });
     }
@@ -556,10 +556,7 @@ export class FormDirective<T extends Record<string, unknown>> {
 
       // Compute change flags first
       const formChanged = !this.#equal(formValue, this.#lastSyncedFormValue);
-      const modelChanged = !this.#equal(
-        modelValue,
-        this.#lastSyncedModelValue
-      );
+      const modelChanged = !this.#equal(modelValue, this.#lastSyncedModelValue);
 
       // Early return if nothing changed
       if (!formChanged && !modelChanged) {
@@ -583,7 +580,7 @@ export class FormDirective<T extends Record<string, unknown>> {
           if (modelValue) {
             // IMPORTANT: Use root patchValue instead of per-key setValue.
             // - Supports nested objects (ngModelGroup) without throwing when partial objects are provided.
-            // - patchValue ignores missing controls/keys, which is compatible with DeepPartial form models.
+            // - patchValue ignores missing controls/keys, which is compatible with NgxDeepPartial form models.
             // - emitEvent:false prevents feedback loops; validation still updates internally.
             this.ngForm.form.patchValue(modelValue, { emitEvent: false });
           }
@@ -946,7 +943,11 @@ export class FormDirective<T extends Record<string, unknown>> {
     const staticPath = [...staticGroups, name].join('.');
     const staticControl = this.ngForm.form.get(staticPath);
     if (staticControl) {
-      return { field: staticPath, control: staticControl, element: fieldElement };
+      return {
+        field: staticPath,
+        control: staticControl,
+        element: fieldElement,
+      };
     }
 
     // Last-resort fallback for ambiguous DOM structures: probe each ancestor
@@ -1655,12 +1656,16 @@ export class FormDirective<T extends Record<string, unknown>> {
     // Keep fields marked as in-progress for a short time to prevent immediate re-triggering
     // Use scheduleTimeout to ensure async validators have time to complete before allowing
     // new triggers. The timer auto-cancels on directive destroy so no timers leak.
-    scheduleTimeout(() => {
-      this.validationInProgress.delete(triggerField);
-      for (const depField of dependents) {
-        this.validationInProgress.delete(depField);
-      }
-    }, VALIDATION_IN_PROGRESS_TIMEOUT_MS, this.destroyRef);
+    scheduleTimeout(
+      () => {
+        this.validationInProgress.delete(triggerField);
+        for (const depField of dependents) {
+          this.validationInProgress.delete(depField);
+        }
+      },
+      VALIDATION_IN_PROGRESS_TIMEOUT_MS,
+      this.destroyRef
+    );
   }
 
   /**

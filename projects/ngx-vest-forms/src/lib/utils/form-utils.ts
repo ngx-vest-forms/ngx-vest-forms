@@ -196,15 +196,6 @@ export function mergeValuesAndRawValues<T>(form: FormGroup): T {
   return value;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-type Primitive = undefined | null | boolean | string | number | Function;
-
-function isPrimitive(value: unknown): value is Primitive {
-  return (
-    value === null || (typeof value !== 'object' && typeof value !== 'function')
-  );
-}
-
 function getStringArrayError(
   errors: ValidationErrors | null,
   key: string
@@ -213,68 +204,6 @@ function getStringArrayError(
   return Array.isArray(value)
     ? value.filter((v): v is string => typeof v === 'string')
     : undefined;
-}
-
-/**
- * Performs a deep-clone of an object.
- *
- * @deprecated Use the standard {@link https://developer.mozilla.org/en-US/docs/Web/API/Window/structuredClone structuredClone} instead.
- *
- * `structuredClone` correctly handles `Map`, `Set`, `RegExp`, typed arrays, and
- * cyclic references; this implementation silently drops `Map` / `Set` / `RegExp`
- * data and produces incorrect results on cycles. Scheduled for removal in a
- * future major; see `docs/prd/PRD-bug-sweep.md` (Bundle D) for tracking.
- *
- * Browser Support: `structuredClone` is available in all modern browsers
- * (Chrome 98+, Firefox 94+, Safari 15.4+, Edge 98+) and Node.js 17+.
- */
-let cloneDeepDeprecationWarned = false;
-
-export function cloneDeep<T>(object: T): T {
-  // NOTE: `typeof ngDevMode !== 'undefined' && ngDevMode` is kept inline
-  // (not extracted to a helper) because Angular's build optimizer relies on
-  // this exact pattern for tree-shaking dev-only code from production bundles.
-  if (
-    !cloneDeepDeprecationWarned &&
-    typeof ngDevMode !== 'undefined' &&
-    ngDevMode
-  ) {
-    cloneDeepDeprecationWarned = true;
-    console.warn(
-      '[ngx-vest-forms] cloneDeep is deprecated and silently drops Map/Set/RegExp values. ' +
-        'Use the standard structuredClone() instead.'
-    );
-  }
-
-  // Handle primitives (null, undefined, boolean, string, number, function)
-  if (isPrimitive(object)) {
-    return object;
-  }
-
-  // Handle Date
-  if (object instanceof Date) {
-    return new Date(object) as T;
-  }
-
-  // Handle Array
-  if (Array.isArray(object)) {
-    return object.map((item) => cloneDeep(item)) as T;
-  }
-
-  // Handle Object
-  if (object instanceof Object) {
-    const clonedObject: UnknownRecord = {};
-    for (const key in object) {
-      if (Object.prototype.hasOwnProperty.call(object, key)) {
-        clonedObject[key] = cloneDeep(
-          (object as UnknownRecord)[key] as unknown
-        );
-      }
-    }
-    return clonedObject as T;
-  }
-
-  throw new Error("Unable to copy object! Its type isn't supported.");
 }
 
 /**
@@ -330,13 +259,6 @@ export function setValueAtPath(
   }
 
   current[String(lastSegment)] = value;
-}
-
-/**
- * @deprecated Use {@link setValueAtPath} instead
- */
-export function set(obj: object, path: string, value: unknown): void {
-  return setValueAtPath(obj, path, value);
 }
 
 /**

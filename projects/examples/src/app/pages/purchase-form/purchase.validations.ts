@@ -7,8 +7,10 @@ import { addressValidations } from '../../shared/validations/address.validations
 import { phonenumberValidations } from '../../shared/validations/phonenumber.validations';
 import { SwapiService } from './swapi.service';
 
+type PurchaseValidationSwapi = Pick<SwapiService, 'userIdExists'>;
+
 export const createPurchaseValidationSuite = (
-  swapiService: SwapiService
+  swapiService: PurchaseValidationSwapi
 ): NgxVestSuite<PurchaseFormModel> => {
   const suite: NgxVestSuite<PurchaseFormModel> = create(
     (model: PurchaseFormModel) => {
@@ -22,22 +24,19 @@ export const createPurchaseValidationSuite = (
       });
 
       omitWhen(!model.userId || (model.userId as string).trim() === '', () => {
-        memo(
-          () => {
-            test('userId', 'userId is already taken', async ({ signal }) => {
-              const exists = await lastValueFrom(
-                swapiService
-                  .userIdExists(model.userId as string)
-                  .pipe(takeUntil(fromEvent(signal, 'abort')))
-              );
+        memo(() => {
+          test('userId', 'userId is already taken', async ({ signal }) => {
+            const exists = await lastValueFrom(
+              swapiService
+                .userIdExists(model.userId as string)
+                .pipe(takeUntil(fromEvent(signal, 'abort')))
+            );
 
-              if (exists) {
-                return Promise.reject();
-              }
-            });
-          },
-          [model.userId]
-        );
+            if (exists) {
+              return Promise.reject();
+            }
+          });
+        }, [model.userId]);
       });
 
       test('firstName', 'First name is required', () => {

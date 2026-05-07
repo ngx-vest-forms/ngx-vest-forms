@@ -95,8 +95,3 @@ export const NgxVestForms = [
   FormModelDirective,
   FormModelGroupDirective,
 ] as const;
-
-/**
- * @deprecated Use `NgxVestForms` instead
- */
-export const vestForms = NgxVestForms;

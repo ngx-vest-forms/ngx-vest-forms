@@ -18,8 +18,8 @@ import {
   FormDirective,
   NgxDeepRequired,
   NgxValidationConfig,
-  NgxVestSuite,
   NgxVestForms,
+  NgxVestSuite,
   setValueAtPath,
 } from 'ngx-vest-forms';
 import { TravelFormModel } from '../../models/travel-form.model';
