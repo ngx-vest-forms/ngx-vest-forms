@@ -92,6 +92,18 @@ const appRoutes: Routes = [
     },
   },
   {
+    path: 'native-schema-demo',
+    loadComponent: () =>
+      import('./app/pages/native-schema-demo/native-schema-demo.page').then(
+        (m) => m.NativeSchemaDemoPageComponent
+      ),
+    data: {
+      title: 'Native Vest Schema Demo',
+      subtitle:
+        'Use create(..., enforce.shape(...)) for built-in schema validation alongside field-level business rules.',
+    },
+  },
+  {
     path: 'zod-schema-demo',
     loadComponent: () =>
       import('./app/pages/zod-schema-demo/zod-schema-demo.page').then(
@@ -100,7 +112,7 @@ const appRoutes: Routes = [
     data: {
       title: 'Zod Schema Demo',
       subtitle:
-        'Combine Zod structural validation with Vest per-field business rules via Standard Schema.',
+        'Combine a Zod schema alongside Vest per-field business rules in one example flow.',
     },
   },
   {

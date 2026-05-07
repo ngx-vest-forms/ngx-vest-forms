@@ -19,6 +19,7 @@ export class AppComponent {
     { label: 'Auto-Save Draft Demo', link: 'auto-save-demo' },
     { label: 'Multi-Form Wizard', link: 'wizard' },
     { label: 'Display Modes Demo', link: 'display-modes-demo' },
+    { label: 'Native Schema Demo', link: 'native-schema-demo' },
     { label: 'Zod Schema Demo', link: 'zod-schema-demo' },
     { label: 'Composite Adapter', link: 'date-range-adapter' },
   ];
