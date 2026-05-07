@@ -1,16 +1,43 @@
 import { delay, of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi, type Mocked } from 'vitest';
+import type { NgxSuiteRunResult } from 'ngx-vest-forms';
 import { createPurchaseValidationSuite } from './purchase.validations';
 import type { SwapiService } from './swapi.service';
 
+type ThenableSuiteResult = NgxSuiteRunResult & {
+  then: NonNullable<NgxSuiteRunResult['then']>;
+};
+
+type ResolvedSuiteResult = {
+  result: NgxSuiteRunResult;
+};
+
+function isThenableSuiteResult(
+  result: NgxSuiteRunResult
+): result is ThenableSuiteResult {
+  return typeof result.then === 'function';
+}
+
+function waitForSuiteResult(
+  result: NgxSuiteRunResult
+): Promise<ResolvedSuiteResult> {
+  if (!isThenableSuiteResult(result)) {
+    return Promise.resolve({ result });
+  }
+
+  return new Promise((resolve, reject) => {
+    result.then(
+      (resolvedResult) => resolve({ result: resolvedResult }),
+      reject
+    );
+  });
+}
+
 describe('Purchase Validations', () => {
-  let mockSwapiService: Mocked<
-    Pick<SwapiService, 'searchUserById' | 'userIdExists'>
-  >;
+  let mockSwapiService: Mocked<Pick<SwapiService, 'userIdExists'>>;
 
   beforeEach(() => {
     mockSwapiService = {
-      searchUserById: vi.fn(),
       userIdExists: vi.fn(),
     };
   });
@@ -20,12 +47,14 @@ describe('Purchase Validations', () => {
     mockSwapiService.userIdExists.mockReturnValue(of(true).pipe(delay(10)));
 
     const suite = createPurchaseValidationSuite(
-      mockSwapiService as unknown as SwapiService
+      mockSwapiService
     );
 
     // Vest 6: use suite.only(field).run() for focused validation
     // SuiteResult is thenable at runtime, so await resolves after async tests complete
-    const result = await suite.only('userId').run({ userId: '1' });
+    const { result } = await waitForSuiteResult(
+      suite.only('userId').run({ userId: '1' })
+    );
     // Should fail because user exists ("userId is already taken")
     expect(result.hasErrors('userId')).toBe(true);
     expect(result.getErrors('userId')).toContain('userId is already taken');
@@ -36,7 +65,7 @@ describe('Purchase Validations', () => {
     mockSwapiService.userIdExists.mockReturnValue(of(false).pipe(delay(10)));
 
     const suite = createPurchaseValidationSuite(
-      mockSwapiService as unknown as SwapiService
+      mockSwapiService
     );
 
     // Vest 6: use suite.only(field).run() for focused validation
@@ -45,7 +74,7 @@ describe('Purchase Validations', () => {
     expect(syncResult.isPending('userId')).toBe(true);
 
     // SuiteResult is thenable — await resolves after async tests complete
-    const finalResult = await syncResult;
+    const { result: finalResult } = await waitForSuiteResult(syncResult);
     // Should pass because user does not exist
     expect(finalResult.hasErrors('userId')).toBe(false);
   });
@@ -55,7 +84,7 @@ describe('Purchase Validations', () => {
     mockSwapiService.userIdExists.mockReturnValue(of(true).pipe(delay(200)));
 
     const suite = createPurchaseValidationSuite(
-      mockSwapiService as unknown as SwapiService
+      mockSwapiService
     );
     // Vest 6: use suite.only(field).run() for focused validation
     const result = suite.only('userId').run({ userId: '1' });
@@ -65,20 +94,24 @@ describe('Purchase Validations', () => {
     expect(result.isValid('userId')).toBe(false); // Not valid yet
 
     // Wait for completion — SuiteResult is thenable in Vest 6
-    await result;
+    await waitForSuiteResult(result);
   });
 
   it('should memoize userId validation across repeated suite.only() runs', async () => {
     mockSwapiService.userIdExists.mockReturnValue(of(false).pipe(delay(10)));
 
     const suite = createPurchaseValidationSuite(
-      mockSwapiService as unknown as SwapiService
+      mockSwapiService
     );
 
-    const firstResult = await suite.only('userId').run({ userId: '42' });
+    const { result: firstResult } = await waitForSuiteResult(
+      suite.only('userId').run({ userId: '42' })
+    );
     expect(firstResult.hasErrors('userId')).toBe(false);
 
-    const secondResult = await suite.only('userId').run({ userId: '42' });
+    const { result: secondResult } = await waitForSuiteResult(
+      suite.only('userId').run({ userId: '42' })
+    );
     expect(secondResult.hasErrors('userId')).toBe(false);
 
     // Regression guard: memo() should reuse previous result for unchanged dependency.

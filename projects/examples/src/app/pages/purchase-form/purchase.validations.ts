@@ -7,8 +7,10 @@ import { addressValidations } from '../../shared/validations/address.validations
 import { phonenumberValidations } from '../../shared/validations/phonenumber.validations';
 import { SwapiService } from './swapi.service';
 
+type PurchaseValidationSwapi = Pick<SwapiService, 'userIdExists'>;
+
 export const createPurchaseValidationSuite = (
-  swapiService: SwapiService
+  swapiService: PurchaseValidationSwapi
 ): NgxVestSuite<PurchaseFormModel> => {
   const suite: NgxVestSuite<PurchaseFormModel> = create(
     (model: PurchaseFormModel) => {
