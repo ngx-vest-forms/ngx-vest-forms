@@ -519,7 +519,7 @@ const shape: NgxDeepRequired<MyFormModel> = {
 ## Migration
 
 - v1.x → v2.0.0: **[Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md)**
-- Selector prefixes: **[Dual Selector Support](./docs/DUAL-SELECTOR-SUPPORT.md)**
+- v2.x → v3.0.0: **[Selector/Token Removal Guide](./docs/migration/MIGRATION-v2.x-to-v3.0.0.md)**
 
 Browser support follows Angular 19+ targets (no `structuredClone` polyfill required).
 

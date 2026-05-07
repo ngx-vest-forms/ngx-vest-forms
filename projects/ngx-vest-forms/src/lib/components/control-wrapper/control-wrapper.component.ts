@@ -148,7 +148,7 @@ let nextUniqueId = 0;
  * @see https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA22 - ARIA22: Using role=status
  */
 @Component({
-  selector: 'ngx-control-wrapper, [ngxControlWrapper], [ngx-control-wrapper]',
+  selector: 'ngx-control-wrapper, [ngxControlWrapper]',
   templateUrl: './control-wrapper.component.html',
   styles: `
     :host {

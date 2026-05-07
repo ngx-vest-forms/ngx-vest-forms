@@ -18,6 +18,7 @@ v3.0.0 removes the legacy `sc-` selectors, duplicate directive aliases, duplicat
 - `[formErrorControl]`
 - `exportAs: 'formErrorControl'`
 - `sc-control-wrapper`, `[scControlWrapper]`, `[sc-control-wrapper]`
+- `[ngx-control-wrapper]`
 - `sc-form-group-wrapper`, `[scFormGroupWrapper]`
 - `SC_ERROR_DISPLAY_MODE_TOKEN`
 
@@ -29,7 +30,7 @@ v3.0.0 removes the legacy `sc-` selectors, duplicate directive aliases, duplicat
 - `ngxControlState`
 - `ngxErrorDisplay`
 - `ngxErrorControl`
-- `ngx-control-wrapper`, `[ngxControlWrapper]`, `[ngx-control-wrapper]`
+- `ngx-control-wrapper`, `[ngxControlWrapper]`
 - `ngx-form-group-wrapper`, `[ngxFormGroupWrapper]`
 - `NGX_ERROR_DISPLAY_MODE_TOKEN`
 
@@ -45,8 +46,11 @@ v3.0.0 removes the legacy `sc-` selectors, duplicate directive aliases, duplicat
 4. Replace root-form bindings:
    - `validateRootForm` → `ngxValidateRootForm`
    - `validateRootFormMode` → `ngxValidateRootFormMode`
-5. Update any custom CSS that targets removed `sc-` host classes.
-6. Rebuild and rerun your tests.
+5. Replace kebab-case wrapper attributes with PascalCase:
+   - `ngx-control-wrapper` attribute → `ngxControlWrapper`
+   - `sc-control-wrapper` attribute → `ngxControlWrapper`
+6. Update any custom CSS that targets removed `sc-` host classes.
+7. Rebuild and rerun your tests.
 
 ### Example
 

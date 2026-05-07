@@ -22,7 +22,6 @@ Supported selectors:
 
 - Elements: `<ngx-control-wrapper>`
 - Attributes: `[ngxControlWrapper]`
-- Kebab attributes: `[ngx-control-wrapper]`
 
 The host element automatically receives the `ngx-control-wrapper` CSS class.
 
@@ -124,4 +123,3 @@ When ARIA stamping is enabled (anything except `"none"`), the wrapper:
 
 - [Accessibility Guide](../../../../../../docs/ACCESSIBILITY.md)
 - [Custom Control Wrappers](../../../../../../docs/CUSTOM-CONTROL-WRAPPERS.md)
-- [Dual selector support](../../../../../../docs/DUAL-SELECTOR-SUPPORT.md)
