@@ -106,10 +106,10 @@ export const suite: NgxTypedVestSuite<FormModel> = create(
 **After (v3.0.0):**
 
 ```typescript
-import { NgxTypedVestSuite } from 'ngx-vest-forms';
+import { NgxVestSuite } from 'ngx-vest-forms';
 import { create, test, enforce } from 'vest';
 
-export const suite: NgxTypedVestSuite<FormModel> = create(
+export const suite: NgxVestSuite<FormModel> = create(
   (model: FormModel) => {
     test('email', 'Required', () => enforce(model.email).isNotBlank());
   }

@@ -59,7 +59,7 @@ export class BusinessHoursPageComponent {
     // Filter out any undefined values from the partial form model
     const result: BusinessHoursMap = {};
     for (const [key, value] of Object.entries(values)) {
-      if (value) {
+      if (value !== undefined) {
         result[key] = value;
       }
     }
