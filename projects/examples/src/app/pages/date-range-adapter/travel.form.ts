@@ -18,7 +18,6 @@ import {
   FormDirective,
   NgxDeepRequired,
   NgxValidationConfig,
-  NgxVestSuite,
   NgxVestForms,
   NgxVestSuite,
   setValueAtPath,

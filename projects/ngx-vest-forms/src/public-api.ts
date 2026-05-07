@@ -81,7 +81,6 @@ export type { AriaAssociationMode } from './lib/utils/aria-association.utils';
   mergeValuesAndRawValues,
 } from './lib/utils/form-utils';
 
-
 // Constants
 export { ROOT_FORM } from './lib/constants';
 
@@ -95,10 +94,10 @@ export {
   NGX_VALIDATION_CONFIG_DEBOUNCE_DEFAULT,
   NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
 } from './lib/tokens/debounce.token';
-export { NGX_VALIDATION_DEBOUNCE_PRESETS } from './lib/tokens/validation-debounce-presets';
-export type { NgxValidationDebouncePreset } from './lib/tokens/validation-debounce-presets';
 export { NGX_EQUALITY_FN } from './lib/tokens/equality.token';
 export type { NgxEqualityFn } from './lib/tokens/equality.token';
+export { NGX_VALIDATION_DEBOUNCE_PRESETS } from './lib/tokens/validation-debounce-presets';
+export type { NgxValidationDebouncePreset } from './lib/tokens/validation-debounce-presets';
 
 // Components
 export { ControlWrapperComponent } from './lib/components/control-wrapper/control-wrapper.component';
