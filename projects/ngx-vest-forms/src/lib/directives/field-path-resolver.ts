@@ -157,6 +157,19 @@ function resolveControlPathByDomAncestors(
     return false;
   };
 
+  const selectNextCandidates = (candidates: Frame[]): Frame[] => {
+    const domCandidates = candidates.filter((candidate) =>
+      subtreeContainsElement(
+        candidate.control,
+        fieldElement,
+        formEl,
+        candidate.path[candidate.path.length - 1]!
+      )
+    );
+
+    return domCandidates.length > 0 ? domCandidates : candidates;
+  };
+
   const descend = (frame: Frame): Frame | null => {
     if (frame.control instanceof FormGroup) {
       for (const [key, child] of Object.entries(frame.control.controls)) {
@@ -176,15 +189,7 @@ function resolveControlPathByDomAncestors(
         }
       }
 
-      const domCandidates = candidates.filter((candidate) =>
-        subtreeContainsElement(
-          candidate.control,
-          fieldElement,
-          formEl,
-          candidate.path[candidate.path.length - 1]!
-        )
-      );
-      const next = domCandidates.length > 0 ? domCandidates : candidates;
+      const next = selectNextCandidates(candidates);
       if (next.length === 1 && next[0]) {
         return descend(next[0]);
       }
@@ -203,15 +208,7 @@ function resolveControlPathByDomAncestors(
         }
       });
 
-      const domCandidates = candidates.filter((candidate) =>
-        subtreeContainsElement(
-          candidate.control,
-          fieldElement,
-          formEl,
-          candidate.path[candidate.path.length - 1]!
-        )
-      );
-      const next = domCandidates.length > 0 ? domCandidates : candidates;
+      const next = selectNextCandidates(candidates);
       if (next.length === 1 && next[0]) {
         return descend(next[0]);
       }

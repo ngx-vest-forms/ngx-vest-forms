@@ -6,7 +6,10 @@ import {
   NgModel,
 } from '@angular/forms';
 import { describe, expect, it } from 'vitest';
-import { resolveFieldFromBlur } from './field-path-resolver';
+import {
+  readElementValueForBlur,
+  resolveFieldFromBlur,
+} from './field-path-resolver';
 
 function createNgForm(
   form: FormGroup,
@@ -199,5 +202,38 @@ describe('resolveFieldFromBlur', () => {
       control,
       element: toDay,
     });
+  });
+
+  it('reads checkbox, number, radio, textarea, select, and unsupported blur values', () => {
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = true;
+
+    const number = document.createElement('input');
+    number.type = 'number';
+    number.value = '42';
+
+    const radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.value = 'male';
+
+    const textarea = document.createElement('textarea');
+    textarea.value = 'Notes';
+
+    const select = document.createElement('select');
+    const option = document.createElement('option');
+    option.value = 'b';
+    option.text = 'B';
+    select.append(option);
+    select.value = 'b';
+
+    const div = document.createElement('div');
+
+    expect(readElementValueForBlur(checkbox)).toBe(true);
+    expect(readElementValueForBlur(number)).toBe(42);
+    expect(readElementValueForBlur(radio)).toBeUndefined();
+    expect(readElementValueForBlur(textarea)).toBe('Notes');
+    expect(readElementValueForBlur(select)).toBe('b');
+    expect(readElementValueForBlur(div)).toBeUndefined();
   });
 });
