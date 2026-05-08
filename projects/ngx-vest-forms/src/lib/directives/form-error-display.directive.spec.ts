@@ -9,7 +9,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, NgForm } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ScErrorDisplayMode } from './form-error-display.directive';
+import type { NgxErrorDisplayMode } from './form-error-display.directive';
 import { FormErrorDisplayDirective } from './form-error-display.directive';
 
 @Directive({
@@ -50,7 +50,7 @@ class DummyDirective {
 })
 class TestErrorDisplayHostComponent {
   model = '';
-  mode: ScErrorDisplayMode = 'on-blur-or-submit';
+  mode: NgxErrorDisplayMode = 'on-blur-or-submit';
   ngModelOptions: any = {};
 }
 

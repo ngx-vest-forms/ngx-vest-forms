@@ -61,21 +61,21 @@ const userValidationSuite: NgxVestSuite<UserFormModel> = create(
       (ngSubmit)="save()"
     >
       <!-- Each field wrapped for error display -->
-      <div ngx-control-wrapper>
+      <ngx-control-wrapper>
         <label for="firstName">First Name</label>
         <input
           id="firstName"
           name="firstName"
           [ngModel]="formValue().firstName"
         />
-      </div>
+      </ngx-control-wrapper>
 
-      <div ngx-control-wrapper>
+      <ngx-control-wrapper>
         <label for="lastName">Last Name</label>
         <input id="lastName" name="lastName" [ngModel]="formValue().lastName" />
-      </div>
+      </ngx-control-wrapper>
 
-      <div ngx-control-wrapper>
+      <ngx-control-wrapper>
         <label for="email">Email</label>
         <input
           id="email"
@@ -83,7 +83,7 @@ const userValidationSuite: NgxVestSuite<UserFormModel> = create(
           type="email"
           [ngModel]="formValue().email"
         />
-      </div>
+      </ngx-control-wrapper>
 
       <button type="submit">Submit</button>
     </form>

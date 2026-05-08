@@ -165,8 +165,8 @@ describe('ValidateRootFormDirective (template compilation)', () => {
           (validChange)="formValid.set($event)"
           (ngSubmit)="onSubmit()"
         >
-          <div class="w-full" ngModelGroup="generalInfo" ngx-control-wrapper>
-            <div ngx-control-wrapper>
+          <ngx-form-group-wrapper class="w-full" [ngModelGroup]="'generalInfo'">
+            <ngx-control-wrapper>
               <label for="name">First name</label>
               <input
                 id="name"
@@ -175,8 +175,8 @@ describe('ValidateRootFormDirective (template compilation)', () => {
                 name="generalInfo.firstName"
                 [ngModel]="formValue().generalInfo?.firstName"
               />
-            </div>
-          </div>
+            </ngx-control-wrapper>
+          </ngx-form-group-wrapper>
           <p>Valid: {{ formValid() }}</p>
         </form>
       `,

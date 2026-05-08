@@ -1,7 +1,7 @@
 import { InjectionToken } from '@angular/core';
 import {
+  NgxErrorDisplayMode,
   NgxWarningDisplayMode,
-  ScErrorDisplayMode,
 } from './form-error-display.directive';
 
 /**
@@ -14,7 +14,7 @@ import {
  * - 'always': Show errors immediately, even on pristine fields
  */
 export const NGX_ERROR_DISPLAY_MODE_TOKEN =
-  new InjectionToken<ScErrorDisplayMode>('NGX_ERROR_DISPLAY_MODE_TOKEN', {
+  new InjectionToken<NgxErrorDisplayMode>('NGX_ERROR_DISPLAY_MODE_TOKEN', {
     providedIn: 'root',
     factory: () => 'on-blur-or-submit',
   });

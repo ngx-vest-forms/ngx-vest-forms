@@ -22,6 +22,12 @@ v3.0.0 removes the legacy `sc-` selectors, duplicate directive aliases, duplicat
 - `sc-form-group-wrapper`, `[scFormGroupWrapper]`
 - `SC_ERROR_DISPLAY_MODE_TOKEN`
 
+### Renamed symbols
+
+- `ScErrorDisplayMode` → `NgxErrorDisplayMode`
+- `SC_ERROR_DISPLAY_MODE_DEFAULT` → `NGX_ERROR_DISPLAY_MODE_DEFAULT`
+- `SC_WARNING_DISPLAY_MODE_DEFAULT` → `NGX_WARNING_DISPLAY_MODE_DEFAULT`
+
 ### Keep using
 
 - `form[ngxVestForm]`
@@ -37,7 +43,7 @@ v3.0.0 removes the legacy `sc-` selectors, duplicate directive aliases, duplicat
 ### Migration steps
 
 1. Run the codemod in [../SELECTOR-PREFIX-MIGRATION.md](../SELECTOR-PREFIX-MIGRATION.md).
-2. Replace any remaining `SC_ERROR_DISPLAY_MODE_TOKEN` providers with `NGX_ERROR_DISPLAY_MODE_TOKEN`.
+2. Replace any remaining `SC_ERROR_DISPLAY_MODE_TOKEN` providers with `NGX_ERROR_DISPLAY_MODE_TOKEN`. If you imported `ScErrorDisplayMode`, `SC_ERROR_DISPLAY_MODE_DEFAULT`, or `SC_WARNING_DISPLAY_MODE_DEFAULT`, switch to the `Ngx*`/`NGX_*` names — the values are unchanged.
 3. Replace template refs and aliases:
    - `#form="scVestForm"` → `#form="ngxVestForm"`
    - `#state="formControlState"` → `#state="ngxControlState"`

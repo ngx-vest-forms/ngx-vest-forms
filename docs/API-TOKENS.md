@@ -118,14 +118,14 @@ This field-level configuration takes precedence over the token value.
 
 Controls how validation errors are displayed in the `ngx-control-wrapper` component.
 
-**Type:** `InjectionToken<ScErrorDisplayMode>`
+**Type:** `InjectionToken<NgxErrorDisplayMode>`
 
 **Purpose:** Configure whether errors should be displayed immediately or only after blur/submit.
 
 #### Error Display Modes
 
 ```typescript
-type ScErrorDisplayMode =
+type NgxErrorDisplayMode =
   | 'on-blur'
   | 'on-submit'
   | 'on-blur-or-submit'

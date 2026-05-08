@@ -107,8 +107,8 @@ export { FormControlStateDirective } from './lib/directives/form-control-state.d
 export { FormErrorControlDirective } from './lib/directives/form-error-control.directive';
 export { FormErrorDisplayDirective } from './lib/directives/form-error-display.directive';
 export type {
+  NgxErrorDisplayMode,
   NgxWarningDisplayMode,
-  ScErrorDisplayMode,
 } from './lib/directives/form-error-display.directive';
 export { FormModelGroupDirective } from './lib/directives/form-model-group.directive';
 export { FormModelDirective } from './lib/directives/form-model.directive';

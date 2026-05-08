@@ -25,7 +25,7 @@ import { getFormSubmittedSignal } from './form-submitted-state';
  * - 'on-dirty': Show errors as soon as the field value changes
  * - 'always': Show errors immediately, even on pristine fields
  */
-export type ScErrorDisplayMode =
+export type NgxErrorDisplayMode =
   | 'on-blur'
   | 'on-submit'
   | 'on-blur-or-submit'
@@ -45,9 +45,9 @@ export type NgxWarningDisplayMode =
   | 'on-dirty'
   | 'always';
 
-export const SC_ERROR_DISPLAY_MODE_DEFAULT: ScErrorDisplayMode =
+export const NGX_ERROR_DISPLAY_MODE_DEFAULT: NgxErrorDisplayMode =
   'on-blur-or-submit';
-export const SC_WARNING_DISPLAY_MODE_DEFAULT: NgxWarningDisplayMode =
+export const NGX_WARNING_DISPLAY_MODE_DEFAULT: NgxWarningDisplayMode =
   'on-validated-or-touch';
 
 @Directive({
@@ -67,9 +67,9 @@ export class FormErrorDisplayDirective {
    * Input signal for error display mode.
    * Works seamlessly with hostDirectives in Angular 19+.
    */
-  readonly errorDisplayMode = input<ScErrorDisplayMode>(
+  readonly errorDisplayMode = input<NgxErrorDisplayMode>(
     inject(NGX_ERROR_DISPLAY_MODE_TOKEN, { optional: true }) ??
-      SC_ERROR_DISPLAY_MODE_DEFAULT
+      NGX_ERROR_DISPLAY_MODE_DEFAULT
   );
 
   /**
@@ -78,7 +78,7 @@ export class FormErrorDisplayDirective {
    */
   readonly warningDisplayMode = input<NgxWarningDisplayMode>(
     inject(NGX_WARNING_DISPLAY_MODE_TOKEN, { optional: true }) ??
-      SC_WARNING_DISPLAY_MODE_DEFAULT
+      NGX_WARNING_DISPLAY_MODE_DEFAULT
   );
 
   // Expose state signals from FormControlStateDirective
