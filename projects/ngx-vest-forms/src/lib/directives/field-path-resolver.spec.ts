@@ -45,7 +45,7 @@ describe('resolveFieldFromBlur', () => {
       new FormGroup({ projectName: new FormControl('') })
     );
 
-    expect(resolveFieldFromBlur(ngForm, 'projectName')).toBeNull();
+    expect(resolveFieldFromBlur(ngForm, null)).toBeNull();
   });
 
   it('returns null for elements without a name attribute', () => {
