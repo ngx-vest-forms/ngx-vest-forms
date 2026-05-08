@@ -97,7 +97,7 @@ const selectors = {
         <div ngModelGroup="berekendeAftrekVoorarrest">
           <div
             class="w-full"
-            ngx-control-wrapper
+            ngxControlWrapper
             [attr.data-testid]="selectors.ngxControlWrapperAantal"
           >
             <label class="block">
@@ -115,7 +115,7 @@ const selectors = {
 
           <div
             class="w-full"
-            ngx-control-wrapper
+            ngxControlWrapper
             [attr.data-testid]="selectors.ngxControlWrapperOnderbouwing"
           >
             <label class="block">

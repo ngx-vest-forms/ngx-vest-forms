@@ -1,22 +1,17 @@
 # Suite Type Compatibility
 
-> **Current guidance:** Use `NgxVestSuite<T>` in new code. `NgxTypedVestSuite<T>` still works, but it is now a deprecated alias of the same structural type.
+> **v3 guidance:** Use `NgxVestSuite<T>` everywhere. The legacy `NgxTypedVestSuite<T>` alias was **removed in v3.0.0**.
 
 ## Overview
 
-In v3.x, `ngx-vest-forms` exposes one canonical public suite type: `NgxVestSuite<T>`.
-
-`NgxTypedVestSuite<T>` remains exported for backward compatibility, but it is no longer the recommended type to document or introduce in new examples.
+`ngx-vest-forms` v3.x exposes one canonical public suite type: `NgxVestSuite<T>`. The earlier `NgxTypedVestSuite<T>` alias is no longer exported — imports of it will fail to compile.
 
 ## Quick start
 
 ```typescript
 import { Component, signal } from '@angular/core';
 import { create, test, enforce } from 'vest';
-import {
-  NgxDeepPartial,
-  NgxVestSuite,
-} from 'ngx-vest-forms';
+import { NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
 
 type UserModel = NgxDeepPartial<{
   email: string;
@@ -36,7 +31,9 @@ export const userSuite: NgxVestSuite<UserModel> = create((model) => {
 // Field focus is handled at the call site.
 // userSuite.only('email').run(model)
 
-@Component({...})
+@Component({
+  /* ... */
+})
 class UserFormComponent {
   protected readonly suite = userSuite;
   protected readonly formValue = signal<UserModel>({});
@@ -45,46 +42,24 @@ class UserFormComponent {
 
 ## What changed in v3.x
 
-- Suite callbacks now take only the model: `create((model) => { ... })`
-- Field focus moved to the call site: `suite.only(field).run(model)`
-- `NgxVestSuite<T>` became the canonical public wrapper for Vest 6 suites
-- `NgxTypedVestSuite<T>` became a deprecated alias of `NgxVestSuite<T>`
+- Suite callbacks now take only the model: `create((model) => { ... })`.
+- Field focus moved to the call site: `suite.only(field).run(model)`.
+- `NgxVestSuite<T>` is the canonical public wrapper for Vest 6 suites.
+- `NgxTypedVestSuite<T>` was **removed**.
 
-## Which type should I use?
+## Migration from `NgxTypedVestSuite<T>`
 
-### `NgxVestSuite<T>`
-
-Use this for:
-
-- suite definitions
-- component properties
-- helper function parameters
-- public APIs in your own library/app code
-
-It gives you the current runtime shape and matches the library documentation.
-
-### `NgxTypedVestSuite<T>`
-
-Use this only when you are:
-
-- maintaining older code that already uses it
-- migrating incrementally and want to avoid churn in a single change
-
-It is structurally identical to `NgxVestSuite<T>`, so behavior does not change — only the recommended naming does.
-
-## Migration from the deprecated alias
-
-This is a mechanical rename:
+Mechanical rename — the public API surface of the two types was identical:
 
 ```typescript
-// Before
+// Before (v2.x)
 import { NgxTypedVestSuite } from 'ngx-vest-forms';
 
 export const suite: NgxTypedVestSuite<FormModel> = create((model) => {
   test('email', 'Required', () => enforce(model.email).isNotBlank());
 });
 
-// After
+// After (v3.x)
 import { NgxVestSuite } from 'ngx-vest-forms';
 
 export const suite: NgxVestSuite<FormModel> = create((model) => {
@@ -92,28 +67,19 @@ export const suite: NgxVestSuite<FormModel> = create((model) => {
 });
 ```
 
-## Technical note
+A repo-wide find-and-replace from `NgxTypedVestSuite` to `NgxVestSuite` is safe.
 
-Both exported names currently resolve to the same structural contract:
+## Public surface
+
+`NgxVestSuite<T>` exposes the Vest 6 contract used by the library:
 
 - `only(match).run(model)` for focused validation
 - `run(model)` for full validation
 - `get()`, `reset()`, `resetField(field)`, and `remove(field)`
 
-That means these assignments are valid:
-
-```typescript
-const suiteA: NgxVestSuite<FormModel> = create((model) => {
-  test('email', 'Required', () => enforce(model.email).isNotBlank());
-});
-
-const suiteB: NgxTypedVestSuite<FormModel> = suiteA; // Works, but deprecated alias
-const suiteC: NgxVestSuite<FormModel> = suiteB; // Also works
-```
-
 ## Date field compatibility
 
-When using `Date` fields in deep-partial form models, shape validation still supports the common pattern where form controls start with empty strings before a date is selected.
+When using `Date` fields in deep-partial form models, shape validation supports the common pattern where form controls start with empty strings before a date is selected:
 
 ```typescript
 import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
@@ -129,10 +95,10 @@ export const formShape: NgxDeepRequired<FormModel> = {
 };
 ```
 
-Your compile-time typing remains strict, while runtime shape validation tolerates empty-string initialization from form controls.
+Compile-time typing remains strict; runtime shape validation tolerates empty-string initialization from form controls.
 
 ## Summary
 
-- Prefer `NgxVestSuite<T>` in all new examples and application code
-- Treat `NgxTypedVestSuite<T>` as a backward-compatible alias
-- Keep using the Vest 6 execution model: `suite.only(field).run(model)` and `suite.run(model)`
+- Use `NgxVestSuite<T>` everywhere in v3.
+- If migrating from v2.x, rename `NgxTypedVestSuite` → `NgxVestSuite`; structural shape is unchanged.
+- Use the Vest 6 execution model: `suite.only(field).run(model)` and `suite.run(model)`.
