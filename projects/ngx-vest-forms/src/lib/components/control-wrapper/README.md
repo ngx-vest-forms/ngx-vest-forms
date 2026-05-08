@@ -121,6 +121,27 @@ ngx-control-wrapper {
 }
 ```
 
+#### Dark mode
+
+Built-in dark colors switch automatically via `@media (prefers-color-scheme: dark)`.
+This relies on the user's OS preference and does **not** react to a class- or
+attribute-based dark-mode toggle.
+
+If your app drives dark mode with a class or data attribute (e.g. `html.dark`,
+`[data-theme="dark"]`, the typical Tailwind / shadcn / Material setup), override
+the same tokens under your toggle selector:
+
+```css
+html.dark ngx-control-wrapper {
+  --ngx-control-wrapper-error-color: #f87171;
+  --ngx-control-wrapper-warning-color: #f59e0b;
+  --ngx-control-wrapper-pending-color: #9ca3af;
+}
+```
+
+Because each color is a single token (no separate `*-dark` companion), one
+override per concept is enough.
+
 If you need fully custom markup/layout, you can still build a custom wrapper using
 `FormErrorDisplayDirective` — see [Custom Control Wrappers](../../../../../../docs/CUSTOM-CONTROL-WRAPPERS.md).
 

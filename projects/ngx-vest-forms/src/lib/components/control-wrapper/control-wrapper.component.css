@@ -7,6 +7,15 @@
    *
    * Consumers can override these CSS custom properties to align the wrapper
    * with their design system without changing library source styles.
+   *
+   * Dark-mode values are applied automatically via `prefers-color-scheme: dark`
+   * (see media query at the bottom of this file). To support class-based dark
+   * mode (e.g. `html.dark`, `[data-theme="dark"]`), override the same tokens
+   * under your own selector, e.g.:
+   *
+   *   html.dark ngx-control-wrapper {
+   *     --ngx-control-wrapper-error-color: #f87171;
+   *   }
    */
   --ngx-control-wrapper-message-margin-top: 0.25rem;
   --ngx-control-wrapper-message-font-size: 0.875rem;
@@ -16,10 +25,6 @@
   --ngx-control-wrapper-error-color: #dc2626;
   --ngx-control-wrapper-warning-color: #b45309;
   --ngx-control-wrapper-pending-color: #6b7280;
-
-  --ngx-control-wrapper-error-color-dark: #f87171;
-  --ngx-control-wrapper-warning-color-dark: #f59e0b;
-  --ngx-control-wrapper-pending-color-dark: #9ca3af;
 
   --ngx-control-wrapper-pending-top: 0;
   --ngx-control-wrapper-pending-right: 0;
@@ -31,6 +36,14 @@
   --ngx-control-wrapper-spinner-border-width: 2px;
   --ngx-control-wrapper-spinner-color: #9ca3af;
   --ngx-control-wrapper-spinner-radius: 9999px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host {
+    --ngx-control-wrapper-error-color: #f87171;
+    --ngx-control-wrapper-warning-color: #f59e0b;
+    --ngx-control-wrapper-pending-color: #9ca3af;
+  }
 }
 
 .ngx-control-wrapper__errors,
@@ -84,19 +97,5 @@
 @keyframes ngx-control-wrapper-spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .ngx-control-wrapper__errors {
-    color: var(--ngx-control-wrapper-error-color-dark);
-  }
-
-  .ngx-control-wrapper__warnings {
-    color: var(--ngx-control-wrapper-warning-color-dark);
-  }
-
-  .ngx-control-wrapper__pending {
-    color: var(--ngx-control-wrapper-pending-color-dark);
   }
 }

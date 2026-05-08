@@ -6,6 +6,14 @@
    *
    * Consumers can override these CSS custom properties to align the wrapper
    * with their design system without changing library source styles.
+   *
+   * Dark-mode values are applied automatically via `prefers-color-scheme: dark`
+   * (see media query below). To support class-based dark mode (e.g. `html.dark`,
+   * `[data-theme="dark"]`), override the same tokens under your own selector:
+   *
+   *   html.dark ngx-form-group-wrapper {
+   *     --ngx-form-group-wrapper-error-color: #f87171;
+   *   }
    */
   --ngx-form-group-wrapper-message-margin-top: 0.25rem;
   --ngx-form-group-wrapper-message-font-size: 0.875rem;
@@ -15,10 +23,14 @@
   --ngx-form-group-wrapper-error-color: #dc2626;
   --ngx-form-group-wrapper-warning-color: #b45309;
   --ngx-form-group-wrapper-pending-color: #6b7280;
+}
 
-  --ngx-form-group-wrapper-error-color-dark: #f87171;
-  --ngx-form-group-wrapper-warning-color-dark: #f59e0b;
-  --ngx-form-group-wrapper-pending-color-dark: #9ca3af;
+@media (prefers-color-scheme: dark) {
+  :host {
+    --ngx-form-group-wrapper-error-color: #f87171;
+    --ngx-form-group-wrapper-warning-color: #f59e0b;
+    --ngx-form-group-wrapper-pending-color: #9ca3af;
+  }
 }
 
 .ngx-form-group-wrapper__errors,
@@ -49,18 +61,4 @@
 
 .ngx-form-group-wrapper__messages li + li {
   margin-top: var(--ngx-form-group-wrapper-message-gap);
-}
-
-@media (prefers-color-scheme: dark) {
-  .ngx-form-group-wrapper__errors {
-    color: var(--ngx-form-group-wrapper-error-color-dark);
-  }
-
-  .ngx-form-group-wrapper__warnings {
-    color: var(--ngx-form-group-wrapper-warning-color-dark);
-  }
-
-  .ngx-form-group-wrapper__pending {
-    color: var(--ngx-form-group-wrapper-pending-color-dark);
-  }
 }
