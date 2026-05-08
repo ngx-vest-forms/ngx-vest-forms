@@ -27,7 +27,7 @@ Both built-in wrappers expose CSS custom properties with sensible defaults:
 - `ngx-form-group-wrapper` tokens (for `NgModelGroup` containers)
 
 Token surface includes colors, spacing, typography, pending layout, and spinner sizing.
-See the full token list in each component SCSS for complete theming options.
+See the full token list in each component's stylesheet (`control-wrapper.component.css`, `form-group-wrapper.component.css`) for complete theming options.
 
 Example:
 
