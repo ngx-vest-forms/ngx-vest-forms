@@ -10,13 +10,12 @@ describe('simple-form-with-validation-config stories', () => {
 
   it('updates cross-field revalidation when the component swaps validationConfig references', async () => {
     const { fixture } = await render(FormDirectiveDemoComponent);
-    const settle = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+    const detectChanges = async () => {
       fixture.detectChanges();
       await fixture.whenStable();
     };
 
-    await settle();
+    await detectChanges();
 
     const passwordInput = screen.getByTestId(
       selectors.inputPassword
@@ -30,25 +29,27 @@ describe('simple-form-with-validation-config stories', () => {
     const toggleButton = screen.getByTestId(selectors.btnToggleValidationConfig);
 
     fireEvent.blur(confirmPasswordInput);
-    await settle();
+    await detectChanges();
 
     fireEvent.click(toggleButton);
-    await settle();
+    await detectChanges();
     fireEvent.input(passwordInput, { target: { value: 'f' } });
-    await settle();
 
-    await waitFor(() => {
+    await waitFor(async () => {
+      await fixture.whenStable();
+      fixture.detectChanges();
       expect(confirmPasswordWrapper).not.toHaveTextContent(
         'Confirm password is required'
       );
     });
 
     fireEvent.click(toggleButton);
-    await settle();
+    await detectChanges();
     fireEvent.input(passwordInput, { target: { value: 'fg' } });
-    await settle();
 
-    await waitFor(() => {
+    await waitFor(async () => {
+      await fixture.whenStable();
+      fixture.detectChanges();
       expect(confirmPasswordWrapper).toHaveTextContent(
         'Confirm password is required'
       );
