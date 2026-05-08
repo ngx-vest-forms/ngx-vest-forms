@@ -95,16 +95,16 @@ import { FormModel, formShape, formValidationSuite } from './simple-form';
         </div>
         <button data-testid="btn__submit" type="submit">Submit</button>
       </fieldset>
-      <pre data-testId="pre__form-value">
+      <pre data-testid="pre__form-value">
         {{ vm.formValue | json }}
       </pre
       >
-      <pre data-testId="pre__form-errors">
+      <pre data-testid="pre__form-errors">
         {{ vm.errors | json }}
       </pre
       >
-      <pre data-testId="pre__form-valid">{{ vm.formValid }}</pre>
-      <pre data-testId="pre__form-dirty">{{ vm.formDirty }}</pre>
+      <pre data-testid="pre__form-valid">{{ vm.formValid }}</pre>
+      <pre data-testid="pre__form-dirty">{{ vm.formDirty }}</pre>
     </form>
   `,
 })
@@ -134,7 +134,7 @@ export class FormDirectiveDemoComponent {
 
   protected save(): void {
     if (this.formValid()) {
-      // Intentionally left blank: avoid noisy console output in Storybook
+      // Intentionally left blank: avoid noisy console output in tests
     }
   }
 }
