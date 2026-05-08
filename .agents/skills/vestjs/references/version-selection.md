@@ -17,7 +17,7 @@ That default is correct when:
 Use a 5.x lane only when at least one of these is true:
 
 - the user explicitly asks for Vest 5 / 5.x / 5.4
-- the code uses `staticSuite((model, field?) => ...)`, `only(field)` inside callbacks, or direct callable suite execution
+- the code uses `staticSuite((model, field?) => ...)`, result `.done(...)`, `only(field)` inside callbacks, or direct callable suite execution
 - the user is working on a legacy migration and needs the old API explained accurately
 
 If the version is ambiguous and no repo context is available, ask for the target version or state the assumption clearly.

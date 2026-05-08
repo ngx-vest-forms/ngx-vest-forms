@@ -1,6 +1,6 @@
 ---
 name: vestjs
-description: Routes Vest.js 6 questions to the right workflow. Use this whenever the user broadly asks about Vest.js validation, wants help writing or refactoring a suite, asks for modern best practices, or mentions `only`, `focus`, `skip`, `include`, `skipWhen`, `omitWhen`, `optional`, `warn`, `useWarn`, `group`, `each`, `mode`, async validations, result access, typed suites, or native schema-aware suites without yet narrowing the exact problem.
+description: Routes Vest.js 6 questions to the right workflow. Use this whenever the user broadly asks about Vest.js validation, wants help writing or refactoring a suite, asks for modern best practices, or mentions `only`, `focus`, `skip`, `skipGroup`, `onlyGroup`, `include`, `skipWhen`, `omitWhen`, `optional`, `warn`, `useWarn`, `afterEach`, `afterField`, `group`, `each`, `mode`, async validations, result access, typed suites, or native schema-aware suites without yet narrowing the exact problem.
 license: MIT
 metadata:
   author: ngx-vest-forms
@@ -53,11 +53,11 @@ Use these nested workflow sub-skills when the feature area is clear:
 | Sub-skill | Use when | Path |
 |---|---|---|
 | `core` | first suites, `create`, `create(..., schema)`, `runStatic`, `test`, `enforce`, `suite.only`, stateful vs stateless usage | `core/SKILL.md` |
-| `conditional-control-flow` | `skip`, `focus`, `only`, `include`, `skipWhen`, `omitWhen`, `optional`, dependent fields, conditional validation | `conditional-control-flow/SKILL.md` |
-| `async-and-warnings` | async tests, `AbortSignal`, username availability checks, `warn()`, `useWarn()`, `.done()`, async hygiene | `async-and-warnings/SKILL.md` |
-| `results-groups-and-types` | result APIs, `isValid`, `hasErrors`, `group`, `each`, execution modes, TypeScript generics, typed runtime helpers | `results-groups-and-types/SKILL.md` |
+| `conditional-control-flow` | `skip`, `focus`, `only`, `skipGroup`, `onlyGroup`, `include`, `skipWhen`, `omitWhen`, `optional`, dependent fields, conditional validation | `conditional-control-flow/SKILL.md` |
+| `async-and-warnings` | async tests, `AbortSignal`, username availability checks, `warn()`, `useWarn()`, `afterEach()`, `afterField()`, pending state, async hygiene | `async-and-warnings/SKILL.md` |
+| `results-groups-and-types` | result APIs, `isValid`, `hasErrors`, `run.focus`, `group`, `each`, execution modes, TypeScript generics, typed runtime helpers | `results-groups-and-types/SKILL.md` |
 | `enforce-and-custom-rules` | reusable `enforce` logic, `condition`, `extend`, `compose`, native schema-aware suites, `enforce.shape`, `enforce.record`, `enforce.lazy`, `enforce.tuple`, custom matcher typing | `enforce-and-custom-rules/SKILL.md` |
-| `server-side-validation` | API validation, `runStatic`, optional `staticSuite`, request isolation, stateless server flows | `server-side-validation/SKILL.md` |
+| `server-side-validation` | API validation, `runStatic`, request isolation, stateless server flows, SSR hydration | `server-side-validation/SKILL.md` |
 
 ## Route to the right workflow
 
@@ -67,7 +67,7 @@ Read `core/SKILL.md` when the user is:
 
 - starting a Vest suite from scratch
 - asking for a “proper” or idiomatic Vest example
-- unsure when to use `create`, `create(..., schema)`, `runStatic`, or `staticSuite`
+- unsure when to use `create`, `create(..., schema)`, or `runStatic`
 - asking about how Vest fits into app code at all
 
 ### Conditional validation flow
@@ -86,7 +86,7 @@ Read `async-and-warnings/SKILL.md` when the user is:
 - validating against a server or remote service
 - asking how to cancel stale async work
 - using `warn()` or `useWarn()` for non-blocking guidance
-- asking where `.done()` belongs or why async callbacks are flaky
+- asking how to replace legacy `.done()` callbacks or why async completion callbacks are flaky
 
 ### Results, groups, collections, and types
 
@@ -115,7 +115,8 @@ Read `server-side-validation/SKILL.md` when the user is:
 
 - validating request payloads or backend DTOs
 - asking how to use Vest safely on Node/server runtimes
-- deciding between `suite.runStatic(...)` and `staticSuite(...)` on the server
+- deciding between stateful `suite.run(...)` and stateless `suite.runStatic(...)` on the server
+- migrating old `staticSuite(...)` examples to Vest 6
 - asking about fast-fail vs full error collection for API responses
 
 ## Routing heuristics

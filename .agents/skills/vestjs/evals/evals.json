@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "I'm writing a Vest 6 validation suite for a signup form and I'm confused about when to use create versus runStatic. Can you show me the idiomatic setup for interactive client-side validation and how focused field validation should work?",
-      "expected_output": "Routes to the core Vest.js 6 workflow, explains create versus runStatic or staticSuite correctly, and shows call-site focused validation with suite.only(field).run(model).",
+      "expected_output": "Routes to the core Vest.js 6 workflow, explains create versus runStatic correctly, and shows call-site focused validation with suite.only(field).run(model).",
       "files": []
     },
     {
@@ -15,8 +15,8 @@
     },
     {
       "id": 3,
-      "prompt": "How do I do async username availability checks in Vest 6 without stale requests, and where should warn() and done() go if I also want password strength warnings?",
-      "expected_output": "Routes to async and warnings guidance, uses AbortSignal in async tests, keeps warn() synchronous at the top of the test body, and explains that done() must not be registered conditionally.",
+      "prompt": "How do I do async username availability checks in Vest 6 without stale requests, and what replaces done() if I also want password strength warnings?",
+      "expected_output": "Routes to async and warnings guidance, uses AbortSignal in async tests, keeps warn() synchronous at the top of the test body or uses useWarn() after await, and replaces legacy done() guidance with await suite.run(), suite.afterEach(), or suite.afterField().",
       "files": []
     },
     {
@@ -27,8 +27,20 @@
     },
     {
       "id": 5,
-      "prompt": "I'm using Vest 6 in a Node API to validate request bodies. Should I keep one shared suite instance, use runStatic, or define a staticSuite, and which mode fits fast-fail validation?",
-      "expected_output": "Routes to server-side-validation guidance, prefers runStatic for request isolation, explains staticSuite as an option, and recommends execution mode based on fast-fail versus full error needs.",
+      "prompt": "I'm using Vest 6 in a Node API to validate request bodies. Should I keep one shared suite instance or use runStatic, and which mode fits fast-fail validation? I found an old staticSuite example online too.",
+      "expected_output": "Routes to server-side-validation guidance, prefers runStatic for request isolation, explains that staticSuite was removed in Vest 6 and should be migrated to create plus runStatic, and recommends execution mode based on fast-fail versus full error needs.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "I have a multi-step form with named Vest groups. For step-by-step validation, should I use skipGroup, onlyGroup, skipWhen, or omitWhen?",
+      "expected_output": "Routes to conditional control flow guidance, distinguishes group-level focus from skipWhen and omitWhen, recommends suite.focus({ skipGroup }) or suite.focus({ onlyGroup }) for step/tab flows, and explains the validity tradeoffs.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "prompt": "My schema-aware Vest suite uses enforce.isNumeric().toNumber(). Why does suite.run accept a string but the callback data and result.value look typed as numbers?",
+      "expected_output": "Routes to core or results/type guidance, explains schema parser input-versus-output typing, and mentions that result.value contains parsed output when the suite is valid.",
       "files": []
     }
   ]
