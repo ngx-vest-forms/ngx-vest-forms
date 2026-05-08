@@ -1,5 +1,23 @@
 # Migration Guide: v2.x to v3.0.0
 
+## v3 deprecation removals
+
+v3.0.0 deletes every `@deprecated` runtime helper, const alias, and type alias that v2.x kept around for backward compatibility. Consumers who migrated to the recommended `Ngx`-prefixed names need no changes; consumers still on the deprecated forms get a compile error pointing at the replacement.
+
+| Removed                          | Replacement                       | Migration tip                                                                          |
+| -------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------- |
+| `cloneDeep(value)`               | `structuredClone(value)`          | Native browser/Node API; no import needed.                                             |
+| `set(obj, path, value)`          | `setValueAtPath(obj, path, value)`| Already exported from `ngx-vest-forms`; identical signature.                            |
+| `vestForms` (const array)        | `NgxVestForms`                    | `import { NgxVestForms } from 'ngx-vest-forms';` — same array, renamed.                |
+| `ROOT_FORM_CONSTANT`             | `ROOT_FORM`                       | Single canonical export from `ngx-vest-forms`.                                         |
+| `DeepPartial<T>`                 | `NgxDeepPartial<T>`               | Structurally identical; rename the import.                                             |
+| `DeepRequired<T>`                | `NgxDeepRequired<T>`              | Structurally identical; rename the import.                                             |
+| `FormCompatibleDeepRequired<T>`  | `NgxFormCompatibleDeepRequired<T>`| Structurally identical; rename the import.                                             |
+| `NgxTypedVestSuite<T>`           | `NgxVestSuite<T>`                 | Structurally identical; rename the type reference.                                     |
+| `SC_ERROR_DISPLAY_MODE_DEFAULT` (re-export) | `NGX_ERROR_DISPLAY_MODE_DEFAULT` | Was an internal re-export; if you imported it, switch to the `NGX_*` name. |
+
+If you only used the recommended `Ngx*` / `NGX_*` names (or the canonical `setValueAtPath` / `structuredClone`), v3 is a no-op for this category.
+
 ## v3 selector + token removals
 
 v3.0.0 removes the legacy `sc-` selectors, duplicate directive aliases, duplicate root-form inputs, and `SC_ERROR_DISPLAY_MODE_TOKEN`.

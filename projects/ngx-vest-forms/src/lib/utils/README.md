@@ -8,7 +8,7 @@ This directory contains all utility types and functions provided by ngx-vest-for
   - [NgxDeepPartial\<T\>](#ngxdeeppartialt)
   - [NgxDeepRequired\<T\>](#ngxdeeprequiredt)
   - [NgxFormCompatibleDeepRequired\<T\>](#ngxformcompatibledeeprequiredt)
-  - [NgxVestSuite\<T\>](#ngxvestsuitet-and-deprecated-ngxtypedvestsuitet)
+  - [NgxVestSuite\<T\>](#ngxvestsuitet)
   - [NgxFieldKey\<T\>](#ngxfieldkeyt)
 - [Form Utilities](#form-utilities)
   - [setValueAtPath()](#setvalueatpath)
@@ -74,8 +74,6 @@ type PartialUser = NgxDeepPartial<UserModel>;
 const formValue = signal<NgxDeepPartial<UserModel>>({});
 ```
 
-**Backward Compatible Alias:** `DeepPartial<T>` (use `NgxDeepPartial<T>` in new code)
-
 **When to use:**
 
 - ✅ Form model types (forms build incrementally)
@@ -104,8 +102,6 @@ const formShape: NgxDeepRequired<FormModel> = {
   },
 };
 ```
-
-**Backward Compatible Alias:** `DeepRequired<T>` (use `NgxDeepRequired<T>` in new code)
 
 **When to use:**
 
@@ -157,8 +153,6 @@ const formData: FormUser = {
 };
 ```
 
-**Backward Compatible Alias:** `FormCompatibleDeepRequired<T>` (use `NgxFormCompatibleDeepRequired<T>` in new code)
-
 **When to use:**
 
 - ✅ Form models with Date fields
@@ -167,7 +161,7 @@ const formData: FormUser = {
 
 ---
 
-### NgxVestSuite\<T\> (and deprecated NgxTypedVestSuite\<T\>)
+### NgxVestSuite\<T\>
 
 `NgxVestSuite<T>` is the canonical public suite type in v3.x.
 
@@ -192,25 +186,9 @@ class MyFormComponent {
 }
 ```
 
-#### NgxTypedVestSuite\<T\> - Deprecated alias
-
-`NgxTypedVestSuite<T>` still works, but it is a deprecated alias of `NgxVestSuite<T>`.
-
-```typescript
-import { NgxTypedVestSuite } from 'ngx-vest-forms';
-
-// ✅ Backward-compatible, but deprecated naming
-export const suite: NgxTypedVestSuite<FormModel> = create(
-  (model: FormModel) => {
-    // IDE suggests field names for test() calls: 'email' | 'password' | typeof ROOT_FORM
-    test('email', 'Required', () => enforce(model.email).isNotBlank());
-  }
-);
-```
-
 #### Recommended Pattern
 
-Define and consume suites with `NgxVestSuite<T>` unless you are keeping an older file stable during migration:
+Define and consume suites with `NgxVestSuite<T>`:
 
 ```typescript
 import { NgxVestSuite } from 'ngx-vest-forms';
@@ -228,20 +206,18 @@ class MyFormComponent {
 }
 ```
 
-#### Three Usage Options Compared
+#### Two Usage Options Compared
 
 | Approach                                                | Autocomplete     | Explicit Type    | Flexible             | Recommended             |
 | ------------------------------------------------------- | ---------------- | ---------------- | -------------------- | ----------------------- |
 | **Recommended Pattern** (use `NgxVestSuite` everywhere) | ✅ At definition | ✅ In component  | ✅ Accepts any suite | ✅ **Best**             |
 | **Type Inference** (`const suite = ...`)                | ✅ At definition | ❌ Inferred only | ❌ Too specific      | ⚠️ Works but less clear |
-| **Deprecated Alias** (`NgxTypedVestSuite<T>`)           | ✅ At definition | ✅ Explicit      | ✅ Accepts any suite | ⚠️ Back-compat only     |
 
 **When to use:**
 
 - ✅ **NgxVestSuite**: Component properties (template compatibility)
 - ✅ **Recommended Pattern**: New code and updated examples
 - ✅ **Simple NgxVestSuite**: Simple forms without autocomplete needs
-- ⚠️ **NgxTypedVestSuite**: Older code you have not renamed yet
 
 ---
 
@@ -287,8 +263,6 @@ setValueAtPath(obj, 'user.profile.name', 'John');
 setValueAtPath(obj, 'addresses[0].street', 'Main St');
 // obj = { addresses: { 0: { street: 'Main St' } } }
 ```
-
-**Backward Compatible Alias:** `set()` (use `setValueAtPath()` in new code)
 
 **When to use:**
 
@@ -991,10 +965,6 @@ import {
   NgxFormCompatibleDeepRequired,
   NgxVestSuite,
   NgxFieldKey,
-  // Backward compatible aliases
-  DeepPartial,
-  DeepRequired,
-  FormCompatibleDeepRequired,
 } from 'ngx-vest-forms';
 
 // Public form utilities
@@ -1051,19 +1021,14 @@ import { validateShape } from 'ngx-vest-forms';
 
 ## Naming Convention
 
-**Recommended:** Use `Ngx` prefixed versions in new code:
+All public type utilities use the `Ngx` prefix to prevent naming conflicts and clearly identify library utilities:
 
-- ✅ `NgxDeepPartial<T>` (prevents naming conflicts with other libraries)
-- ✅ `NgxDeepRequired<T>` (clearly identifies ngx-vest-forms utilities)
-- ✅ `NgxFormCompatibleDeepRequired<T>` (explicit library association)
+- ✅ `NgxDeepPartial<T>`
+- ✅ `NgxDeepRequired<T>`
+- ✅ `NgxFormCompatibleDeepRequired<T>`
+- ✅ `NgxVestSuite<T>`
 
-**Backward Compatible:** Non-prefixed aliases available:
-
-- `DeepPartial<T>` → use `NgxDeepPartial<T>` in new code
-- `DeepRequired<T>` → use `NgxDeepRequired<T>` in new code
-- `FormCompatibleDeepRequired<T>` → use `NgxFormCompatibleDeepRequired<T>` in new code
-
-Both versions work identically; the `Ngx`-prefixed versions are recommended for new code to avoid conflicts and clearly identify library utilities.
+> **Migrating from v2.x?** The unprefixed aliases (`DeepPartial`, `DeepRequired`, `FormCompatibleDeepRequired`, `NgxTypedVestSuite`) and the legacy `set()` / `cloneDeep()` helpers were removed in v3. See [docs/migration/MIGRATION-v2.x-to-v3.0.0.md](../../../../../docs/migration/MIGRATION-v2.x-to-v3.0.0.md).
 
 ---
 
