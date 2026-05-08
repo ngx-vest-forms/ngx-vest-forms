@@ -2,7 +2,7 @@ import { Component, signal } from '@angular/core';
 import { fireEvent, render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { create, enforce, test as vestTest, warn } from 'vest';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../../exports';
 
 // Test validation suite for the component tests
@@ -176,6 +176,16 @@ class MultipleControlsComponent {
 }
 
 describe('ControlWrapperComponent', () => {
+  // Vest 6 `create()` returns a stateful suite — results from a prior run
+  // bleed into the next unless we reset between tests. This is especially
+  // visible on slower CI runners (GitHub Actions Ubuntu) where stale state
+  // produces cross-test failures that pass locally.
+  beforeEach(() => {
+    testSuite.reset();
+    asyncSuite.reset();
+    slowAsyncSuite.reset();
+  });
+
   describe('Core Functionality', () => {
     it('should render component correctly with element selector', async () => {
       await render(TestFormComponent);
@@ -204,7 +214,7 @@ describe('ControlWrapperComponent', () => {
       await userEvent.click(emailInput);
       await userEvent.tab(); // blur
       // Wait for error to appear
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
       expect(screen.getByText('Email is required')).toBeInTheDocument();
     });
 
@@ -214,7 +224,7 @@ describe('ControlWrapperComponent', () => {
       await userEvent.click(emailInput);
       await userEvent.tab();
       // Wait for error to appear
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
       const wrapper = emailInput.closest('.ngx-control-wrapper');
       expect(wrapper).toHaveClass('ngx-control-wrapper--invalid');
     });
@@ -225,7 +235,7 @@ describe('ControlWrapperComponent', () => {
       await userEvent.click(emailInput);
       await userEvent.tab();
       // Wait for error to appear
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
       const wrapper = emailInput.closest('.ngx-control-wrapper');
       expect(wrapper).toHaveClass('ngx-control-wrapper--invalid');
       // Type valid email
@@ -240,7 +250,7 @@ describe('ControlWrapperComponent', () => {
         () => {
           expect(wrapper).not.toHaveClass('ngx-control-wrapper--invalid');
         },
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
     });
 
@@ -249,7 +259,7 @@ describe('ControlWrapperComponent', () => {
       const emailInput = screen.getByLabelText('Email');
       await userEvent.click(emailInput);
       await userEvent.tab();
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
 
       await userEvent.type(emailInput, 'invalid');
       await userEvent.tab();
@@ -276,7 +286,7 @@ describe('ControlWrapperComponent', () => {
           const spinner = wrapper?.querySelector('.animate-spin');
           expect(spinner).toBeInTheDocument();
         },
-        { timeout: 1500 }
+        { timeout: 4000 }
       );
 
       // Wait for async validation to complete and minimum display time (500ms) to pass
@@ -286,7 +296,7 @@ describe('ControlWrapperComponent', () => {
           const spinner = wrapper?.querySelector('.animate-spin');
           expect(spinner).not.toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
     });
 
@@ -302,7 +312,7 @@ describe('ControlWrapperComponent', () => {
             screen.getByText('Email must be available')
           ).toBeInTheDocument();
         },
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
     });
 
@@ -339,7 +349,7 @@ describe('ControlWrapperComponent', () => {
       // Submit the form
       await userEvent.click(screen.getByText('Submit'));
       // Wait for error to appear
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
       expect(screen.getByText('Email is required')).toBeInTheDocument();
     });
 
@@ -349,7 +359,7 @@ describe('ControlWrapperComponent', () => {
       await userEvent.click(emailInput);
       await userEvent.tab();
       // Wait for error to appear
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
       const errorElement = screen.getByText('Email is required');
       // WCAG: Inline field-level errors use role="status" with aria-live="polite" for non-disruptive announcement
       // The primary accessibility pathway is aria-invalid + aria-describedby on the input
@@ -432,7 +442,7 @@ describe('ControlWrapperComponent', () => {
       await userEvent.click(firstNameInput);
       await userEvent.tab();
 
-      await screen.findByText('First name is required', {}, { timeout: 1000 });
+      await screen.findByText('First name is required', {}, { timeout: 3000 });
 
       // Wrapper should render messages, but must not mutate descendant controls
       await waitFor(() => {
@@ -451,11 +461,11 @@ describe('ControlWrapperComponent', () => {
       // Trigger errors
       await userEvent.click(emailInput);
       await userEvent.tab();
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
 
       await userEvent.click(usernameInput);
       await userEvent.tab();
-      await screen.findByText('Username is required', {}, { timeout: 1000 });
+      await screen.findByText('Username is required', {}, { timeout: 3000 });
 
       // Find error containers using Testing Library
       const emailError = screen.getByText('Email is required');
@@ -503,7 +513,7 @@ describe('ControlWrapperComponent', () => {
       // Trigger error
       await userEvent.click(emailInput);
       await userEvent.tab();
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
 
       // Verify aria-describedby points to error ID
       await waitFor(() => {
@@ -567,7 +577,7 @@ describe('ControlWrapperComponent', () => {
       // Trigger error
       await userEvent.click(emailInput);
       await userEvent.tab();
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
 
       await waitFor(() => {
         const describedBy = emailInput.getAttribute('aria-describedby');
@@ -602,7 +612,7 @@ describe('ControlWrapperComponent', () => {
             screen.queryByText('Email is required')
           ).not.toBeInTheDocument();
         },
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
     });
 
@@ -616,7 +626,7 @@ describe('ControlWrapperComponent', () => {
       // Trigger error
       await userEvent.click(emailInput);
       await userEvent.tab();
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
 
       // Verify aria-invalid is set
       await waitFor(() => {
@@ -764,7 +774,7 @@ describe('ControlWrapperComponent', () => {
       // Trigger error
       await userEvent.click(emailInput);
       await userEvent.tab();
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
       await waitFor(() => {
         expect(emailInput).toHaveAttribute('aria-invalid', 'true');
         expect(emailInput).toHaveAttribute('aria-describedby');
@@ -787,7 +797,7 @@ describe('ControlWrapperComponent', () => {
             screen.queryByText('Email is required')
           ).not.toBeInTheDocument();
         },
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
     });
 
@@ -797,7 +807,7 @@ describe('ControlWrapperComponent', () => {
 
       await userEvent.click(emailInput);
       await userEvent.tab();
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
 
       // Find error container using Testing Library
       const errorElement = screen.getByText('Email is required');
@@ -869,7 +879,7 @@ describe('ControlWrapperComponent', () => {
       await userEvent.type(usernameInput, 'ab');
       await userEvent.tab();
 
-      await screen.findByText('Username looks weak', {}, { timeout: 1000 });
+      await screen.findByText('Username looks weak', {}, { timeout: 3000 });
 
       // Find warning container using Testing Library
       const warningElement = screen.getByText('Username looks weak');
@@ -944,7 +954,7 @@ describe('ControlWrapperComponent', () => {
         'Username is too short for comfort',
         {},
         {
-          timeout: 1000,
+          timeout: 3000,
         }
       );
     });
@@ -978,7 +988,7 @@ describe('ControlWrapperComponent', () => {
             expect(describedBy).toContain(pendingContainer.id);
           }
         },
-        { timeout: 1500 }
+        { timeout: 4000 }
       );
     });
 
@@ -997,7 +1007,7 @@ describe('ControlWrapperComponent', () => {
           const spinner = wrapper?.querySelector('.animate-spin');
           expect(spinner).toHaveAttribute('aria-hidden', 'true');
         },
-        { timeout: 1500 }
+        { timeout: 4000 }
       );
     });
 
@@ -1040,7 +1050,7 @@ describe('ControlWrapperComponent', () => {
       // Trigger error
       await userEvent.click(usernameInput);
       await userEvent.tab();
-      await screen.findByText('Username is required', {}, { timeout: 1000 });
+      await screen.findByText('Username is required', {}, { timeout: 3000 });
 
       // Verify aria-describedby includes error ID
       await waitFor(() => {
@@ -1120,7 +1130,7 @@ describe('ControlWrapperComponent', () => {
             screen.queryByText('First name is required')
           ).toBeInTheDocument();
         },
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
 
       // Both controls should have aria-describedby and aria-invalid
@@ -1177,7 +1187,7 @@ describe('ControlWrapperComponent', () => {
           expect(pendingContainer).toHaveAttribute('aria-live', 'polite');
           expect(pendingContainer).toHaveAttribute('aria-atomic', 'true');
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
 
       // Wait for validation to complete (800ms total from start)
@@ -1185,7 +1195,7 @@ describe('ControlWrapperComponent', () => {
         () => {
           expect(screen.queryByText('Validating…')).not.toBeInTheDocument();
         },
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
     });
 
@@ -1256,7 +1266,7 @@ describe('ControlWrapperComponent', () => {
       await screen.findByText(
         'Dynamic field is required',
         {},
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
 
       // MutationObserver should have detected the new control and set up ARIA associations
@@ -1293,7 +1303,7 @@ describe('ControlWrapperComponent', () => {
       await screen.findByText(
         'Dynamic field is required',
         {},
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
 
       await waitFor(() => {
@@ -1309,6 +1319,13 @@ describe('ControlWrapperComponent', () => {
         warn();
         enforce(data.username ?? '').longerThanOrEquals(5);
       });
+    });
+
+    // Block-scoped suite is shared across all 4 tests in this describe; reset
+    // between tests so the warning state from one test does not leak into the
+    // next (root cause of CI flakiness in this block).
+    beforeEach(() => {
+      warningOnlySuite.reset();
     });
 
     it('should show warnings immediately in always mode', async () => {
@@ -1347,7 +1364,7 @@ describe('ControlWrapperComponent', () => {
       const warning = await screen.findByText(
         'Username is too short for comfort',
         {},
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
       expect(warning).toBeInTheDocument();
     });
@@ -1393,7 +1410,7 @@ describe('ControlWrapperComponent', () => {
       const warning = await screen.findByText(
         'Username is too short for comfort',
         {},
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
       expect(warning).toBeInTheDocument();
     });
@@ -1440,7 +1457,7 @@ describe('ControlWrapperComponent', () => {
       const warning = await screen.findByText(
         'Username is too short for comfort',
         {},
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
       expect(warning).toBeInTheDocument();
     });
@@ -1494,7 +1511,7 @@ describe('ControlWrapperComponent', () => {
       const warning = await screen.findByText(
         'Username is too short for comfort',
         {},
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
       expect(warning).toBeInTheDocument();
     });

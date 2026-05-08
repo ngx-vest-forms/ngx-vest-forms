@@ -12,7 +12,9 @@ import { NgxVestForms } from '../exports';
 
 // Wait time for tests should be slightly longer than debounce to ensure completion
 // Default debounce is 100ms, so we add 50ms buffer
-const TEST_DEBOUNCE_WAIT_TIME = 150;
+// Bumped from 150ms to absorb CI runner slowness (~7x slower than local)
+// without changing the directive's debounce token in production.
+const TEST_DEBOUNCE_WAIT_TIME = 300;
 
 describe('FormDirective - Comprehensive', () => {
   // Reset TestBed before each test to ensure clean state
