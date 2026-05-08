@@ -13,6 +13,10 @@ type ResolvedFieldPath = {
   control: AbstractControl;
 };
 
+function isLeafControl(control: AbstractControl): boolean {
+  return !(control instanceof FormGroup || control instanceof FormArray);
+}
+
 /**
  * @internal
  * Resolves a blurred event target to its dotted form path, Angular control,
@@ -41,7 +45,7 @@ export function resolveFieldFromBlur(
   }
 
   const formEl = fieldElement.closest('form');
-  if (!formEl) {
+  if (!(formEl instanceof HTMLFormElement)) {
     return null;
   }
 
@@ -106,15 +110,11 @@ export function readElementValueForBlur(element: HTMLElement): unknown {
 
 function collectNgModelGroupAttributes(
   start: HTMLElement,
-  formEl: Element | null
+  formEl: HTMLFormElement
 ): string[] {
   const groups: string[] = [];
   let current: Element | null = start.parentElement;
-  while (
-    current &&
-    current !== formEl &&
-    (!formEl || formEl.contains(current))
-  ) {
+  while (current && current !== formEl && formEl.contains(current)) {
     const groupName = current.getAttribute('ngModelGroup')?.trim();
     if (groupName) {
       groups.unshift(groupName);
@@ -127,7 +127,7 @@ function collectNgModelGroupAttributes(
 function resolveControlPathByDomAncestors(
   root: FormGroup,
   fieldElement: HTMLElement,
-  formEl: Element | null,
+  formEl: HTMLFormElement,
   leafName: string
 ): ResolvedFieldPath | null {
   type Frame = { control: AbstractControl; path: Array<string | number> };
@@ -135,16 +135,10 @@ function resolveControlPathByDomAncestors(
   const subtreeHasLeafName = (control: AbstractControl): boolean => {
     if (control instanceof FormGroup) {
       for (const [key, child] of Object.entries(control.controls)) {
-        if (
-          key === leafName &&
-          !(child instanceof FormGroup || child instanceof FormArray)
-        ) {
+        if (key === leafName && isLeafControl(child)) {
           return true;
         }
-        if (
-          (child instanceof FormGroup || child instanceof FormArray) &&
-          subtreeHasLeafName(child)
-        ) {
+        if (!isLeafControl(child) && subtreeHasLeafName(child)) {
           return true;
         }
       }
@@ -153,10 +147,7 @@ function resolveControlPathByDomAncestors(
 
     if (control instanceof FormArray) {
       for (const child of control.controls) {
-        if (
-          (child instanceof FormGroup || child instanceof FormArray) &&
-          subtreeHasLeafName(child)
-        ) {
+        if (!isLeafControl(child) && subtreeHasLeafName(child)) {
           return true;
         }
       }
@@ -169,17 +160,14 @@ function resolveControlPathByDomAncestors(
   const descend = (frame: Frame): Frame | null => {
     if (frame.control instanceof FormGroup) {
       for (const [key, child] of Object.entries(frame.control.controls)) {
-        if (
-          key === leafName &&
-          !(child instanceof FormGroup || child instanceof FormArray)
-        ) {
+        if (key === leafName && isLeafControl(child)) {
           return { control: child, path: [...frame.path, key] };
         }
       }
 
       const candidates: Frame[] = [];
       for (const [key, child] of Object.entries(frame.control.controls)) {
-        if (!(child instanceof FormGroup || child instanceof FormArray)) {
+        if (isLeafControl(child)) {
           continue;
         }
         const branch = { control: child, path: [...frame.path, key] };
@@ -206,7 +194,7 @@ function resolveControlPathByDomAncestors(
     if (frame.control instanceof FormArray) {
       const candidates: Frame[] = [];
       frame.control.controls.forEach((child, index) => {
-        if (!(child instanceof FormGroup || child instanceof FormArray)) {
+        if (isLeafControl(child)) {
           return;
         }
         const branch = { control: child, path: [...frame.path, index] };
@@ -240,10 +228,10 @@ function resolveControlPathByDomAncestors(
 function subtreeContainsElement(
   _child: AbstractControl,
   fieldElement: HTMLElement,
-  formEl: Element | null,
+  formEl: HTMLFormElement,
   key: string | number
 ): boolean {
-  if (!(formEl instanceof Element) || typeof key !== 'string') return false;
+  if (typeof key !== 'string') return false;
   const selector = `[ngModelGroup="${CSS.escape(key)}"]`;
   const candidates = formEl.querySelectorAll(selector);
   for (const candidate of candidates) {
