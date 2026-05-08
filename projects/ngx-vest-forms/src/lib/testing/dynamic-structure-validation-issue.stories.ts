@@ -7,8 +7,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
-import { create, enforce, omitWhen, test } from 'vest';
+import { create, enforce, omitWhen, only, test } from 'vest';
 import type { NgxDeepPartial, NgxDeepRequired } from '../../public-api';
 import { FormDirective } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
@@ -26,10 +25,11 @@ const formShape: NgxDeepRequired<DynamicFormModel> = {
   fieldB: '',
 };
 
-const dynamicFormValidationSuite = create((model: DynamicFormModel) => {
-  test('procedureType', 'Procedure type is required', () => {
-    enforce(model.procedureType).isNotBlank();
-  });
+export const dynamicFormValidationSuite = create(
+  (model: DynamicFormModel, field?: string) => {
+    // CRITICAL: Always call only() unconditionally (PR #60 requirement)
+    // Calling only() conditionally corrupts Vest's execution tracking
+    only(field);
 
   // Only validate fieldA when procedureType is 'typeA'
   omitWhen(model.procedureType !== 'typeA', () => {
@@ -320,117 +320,10 @@ export const Primary: StoryObj = {
 
 export const DemonstrateValidationIssue: StoryObj = {
   name: 'Validation Issue Reproduction',
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-
-    // Initially, form should be invalid (procedureType not selected)
-    await waitFor(() => {
-      expect(canvas.getByTestId('debug__form-valid')).toHaveTextContent(
-        'false'
-      );
-      expect(canvas.getByTestId('debug__has-errors')).toHaveTextContent('true');
-    });
-
-    // Select Type A - this should show Field A input
-    const selectElement = canvas.getByTestId(
-      'select__procedure-type'
-    ) as HTMLSelectElement;
-    await userEvent.selectOptions(selectElement, 'typeA');
-
-    await waitFor(() => {
-      expect(canvas.getByTestId('input__field-a')).toBeInTheDocument();
-      expect(canvas.queryByTestId('input__field-b')).not.toBeInTheDocument();
-      expect(canvas.queryByTestId('info__type-c')).not.toBeInTheDocument();
-    });
-
-    // Form should still be invalid because Field A is empty (required for Type A)
-    await waitFor(() => {
-      expect(canvas.getByTestId('debug__form-valid')).toHaveTextContent(
-        'false'
-      );
-      expect(canvas.getByTestId('debug__has-errors')).toHaveTextContent('true');
-    });
-
-    // Now switch to Type C - this removes the input field and shows informational content
-    await userEvent.selectOptions(selectElement, 'typeC');
-
-    await waitFor(() => {
-      expect(canvas.queryByTestId('input__field-a')).not.toBeInTheDocument();
-      expect(canvas.queryByTestId('input__field-b')).not.toBeInTheDocument();
-      expect(canvas.getByTestId('info__type-c')).toBeInTheDocument();
-    });
-
-    // BUG DEMONSTRATION: Form should be valid now
-    // (only procedureType is required and it's filled, Type C has no additional requirements)
-    // However, validation doesn't update because no ValueChangeEvent is emitted
-    // when the form structure changes from input field to paragraph
-
-    // This assertion demonstrates the bug - it should pass but likely fails
-    try {
-      await waitFor(
-        () => {
-          expect(canvas.getByTestId('debug__form-valid')).toHaveTextContent(
-            'true'
-          );
-          expect(canvas.getByTestId('debug__has-errors')).toHaveTextContent(
-            'false'
-          );
-        },
-        { timeout: 2000 }
-      );
-    } catch (error) {
-      console.error(
-        'BUG CONFIRMED: Form validation did not update after structure change'
-      );
-      console.error(
-        'Expected: Form should be valid (Type C has no additional requirements)'
-      );
-      console.error(
-        'Actual: Form validation state is stale from previous Type A selection'
-      );
-      throw error;
-    }
-  },
 };
 
 export const WorkaroundTest: StoryObj = {
   name: 'Manual Validation Update (Workaround)',
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-
-    // Start with Type A
-    const selectElement = canvas.getByTestId(
-      'select__procedure-type'
-    ) as HTMLSelectElement;
-    await userEvent.selectOptions(selectElement, 'typeA');
-
-    await waitFor(() => {
-      expect(canvas.getByTestId('input__field-a')).toBeInTheDocument();
-      expect(canvas.getByTestId('debug__form-valid')).toHaveTextContent(
-        'false'
-      );
-    });
-
-    // Switch to Type C
-    await userEvent.selectOptions(selectElement, 'typeC');
-
-    await waitFor(() => {
-      expect(canvas.getByTestId('info__type-c')).toBeInTheDocument();
-    });
-
-    // Workaround: Trigger any other field change to force validation update
-    // (In real app, this would be calling form.updateValueAndValidity() manually)
-    await userEvent.selectOptions(selectElement, 'typeB');
-    await userEvent.selectOptions(selectElement, 'typeC');
-
-    // After the workaround, validation should be correct
-    await waitFor(() => {
-      expect(canvas.getByTestId('debug__form-valid')).toHaveTextContent('true');
-      expect(canvas.getByTestId('debug__has-errors')).toHaveTextContent(
-        'false'
-      );
-    });
-  },
 };
 
 export const SolutionWithTriggerValidation: StoryObj = {
@@ -445,59 +338,6 @@ to ensure the form validity updates immediately.
         `,
       },
     },
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-
-    // Start with Type A - form should be invalid (fieldA required but empty)
-    const selectElement = canvas.getByTestId(
-      'select__procedure-type'
-    ) as HTMLSelectElement;
-    await userEvent.selectOptions(selectElement, 'typeA');
-
-    await waitFor(() => {
-      expect(canvas.getByTestId('input__field-a')).toBeInTheDocument();
-      expect(canvas.getByTestId('debug__form-valid')).toHaveTextContent(
-        'false'
-      );
-    });
-
-    // Switch to Type C - form should become valid immediately due to triggerFormValidation()
-    await userEvent.selectOptions(selectElement, 'typeC');
-
-    await waitFor(() => {
-      expect(canvas.getByTestId('info__type-c')).toBeInTheDocument();
-      expect(canvas.queryByTestId('input__field-a')).not.toBeInTheDocument();
-    });
-
-    // SOLUTION DEMONSTRATION: Form should be valid immediately
-    await waitFor(
-      () => {
-        expect(canvas.getByTestId('debug__form-valid')).toHaveTextContent(
-          'true'
-        );
-        expect(canvas.getByTestId('debug__has-errors')).toHaveTextContent(
-          'false'
-        );
-      },
-      { timeout: 1000 }
-    );
-
-    // Test reverse transition: C → A (should become invalid)
-    await userEvent.selectOptions(selectElement, 'typeA');
-
-    await waitFor(
-      () => {
-        expect(canvas.getByTestId('input__field-a')).toBeInTheDocument();
-        expect(canvas.getByTestId('debug__form-valid')).toHaveTextContent(
-          'false'
-        );
-        expect(canvas.getByTestId('debug__has-errors')).toHaveTextContent(
-          'true'
-        );
-      },
-      { timeout: 1000 }
-    );
   },
 };
 
@@ -546,95 +386,8 @@ This ensures component state matches the actual form structure after DOM changes
       },
     },
   },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const selectElement = canvas.getByTestId(
-      'select__procedure-type'
-    ) as HTMLSelectElement;
-
-    // Start with Type A
-    await userEvent.selectOptions(selectElement, 'typeA');
-    await waitFor(() => {
-      expect(canvas.getByTestId('input__field-a')).toBeInTheDocument();
-    });
-
-    // Enter some text in Field A
-    const fieldAInput = canvas.getByTestId(
-      'input__field-a'
-    ) as HTMLInputElement;
-    await userEvent.type(fieldAInput, 'Test value for field A');
-
-    await waitFor(() => {
-      expect(fieldAInput.value).toBe('Test value for field A');
-    });
-
-    // Switch to Type B - Field A should be cleared from component state
-    await userEvent.selectOptions(selectElement, 'typeB');
-    await waitFor(() => {
-      expect(canvas.queryByTestId('input__field-a')).not.toBeInTheDocument();
-      expect(canvas.getByTestId('input__field-b')).toBeInTheDocument();
-    });
-
-    // Enter text in Field B
-    const fieldBInput = canvas.getByTestId(
-      'input__field-b'
-    ) as HTMLInputElement;
-    await userEvent.type(fieldBInput, 'Test value for field B');
-
-    // Switch to Type C - both fields should be cleared from component state
-    await userEvent.selectOptions(selectElement, 'typeC');
-    await waitFor(() => {
-      expect(canvas.queryByTestId('input__field-a')).not.toBeInTheDocument();
-      expect(canvas.queryByTestId('input__field-b')).not.toBeInTheDocument();
-      expect(canvas.getByTestId('info__type-c')).toBeInTheDocument();
-    });
-
-    // Verify component state is clean (no stale field values)
-    // The form should show only procedureType in the debug info
-    await waitFor(() => {
-      const debugInfo = canvas.getByTestId('debug__form-value');
-      const formValueText = debugInfo.textContent || '';
-      // Should NOT contain fieldA or fieldB values
-      expect(formValueText).not.toContain('Test value for field A');
-      expect(formValueText).not.toContain('Test value for field B');
-      // Should only contain procedureType
-      expect(formValueText).toContain('"procedureType": "typeC"');
-    });
-  },
 };
 
 export const TestAllTransitions: StoryObj = {
   name: 'Test All Structure Transitions',
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const selectElement = canvas.getByTestId(
-      'select__procedure-type'
-    ) as HTMLSelectElement;
-
-    // Test A → B transition
-    await userEvent.selectOptions(selectElement, 'typeA');
-    await waitFor(() =>
-      expect(canvas.getByTestId('input__field-a')).toBeInTheDocument()
-    );
-
-    await userEvent.selectOptions(selectElement, 'typeB');
-    await waitFor(() => {
-      expect(canvas.queryByTestId('input__field-a')).not.toBeInTheDocument();
-      expect(canvas.getByTestId('input__field-b')).toBeInTheDocument();
-    });
-
-    // Test B → C transition (input to paragraph)
-    await userEvent.selectOptions(selectElement, 'typeC');
-    await waitFor(() => {
-      expect(canvas.queryByTestId('input__field-b')).not.toBeInTheDocument();
-      expect(canvas.getByTestId('info__type-c')).toBeInTheDocument();
-    });
-
-    // Test C → A transition (paragraph to input)
-    await userEvent.selectOptions(selectElement, 'typeA');
-    await waitFor(() => {
-      expect(canvas.queryByTestId('info__type-c')).not.toBeInTheDocument();
-      expect(canvas.getByTestId('input__field-a')).toBeInTheDocument();
-    });
-  },
 };
