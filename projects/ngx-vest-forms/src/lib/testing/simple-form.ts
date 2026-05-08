@@ -20,40 +20,44 @@ export const formShape: NgxDeepRequired<FormModel> = {
   },
 };
 
-export const formValidationSuite = create((model: FormModel) => {
-  test(ROOT_FORM, 'Brecht his pass is not 1234', () => {
-    enforce(
-      model.firstName === 'Brecht' &&
-        model.lastName === 'Billiet' &&
-        model.passwords?.password === '1234'
-    ).isFalsy();
-  });
-
-  test('firstName', 'First name is required', () => {
-    enforce(model.firstName).isNotBlank();
-  });
-  test('lastName', 'Last name is required', () => {
-    enforce(model.lastName).isNotBlank();
-  });
-  test('passwords.password', 'Password is required', () => {
-    enforce(model.passwords?.password).isNotBlank();
-  });
-  omitWhen(!model.passwords?.password, () => {
-    test('passwords.confirmPassword', 'Confirm password is required', () => {
-      enforce(model.passwords?.confirmPassword).isNotBlank();
+export function createFormValidationSuite() {
+  return create((model: FormModel) => {
+    test(ROOT_FORM, 'Brecht his pass is not 1234', () => {
+      enforce(
+        model.firstName === 'Brecht' &&
+          model.lastName === 'Billiet' &&
+          model.passwords?.password === '1234'
+      ).isFalsy();
     });
-  });
-  omitWhen(
-    !model.passwords?.password || !model.passwords?.confirmPassword,
-    () => {
-      test('passwords', 'Passwords do not match', () => {
-        enforce(model.passwords?.confirmPassword).equals(
-          model.passwords?.password
-        );
+
+    test('firstName', 'First name is required', () => {
+      enforce(model.firstName).isNotBlank();
+    });
+    test('lastName', 'Last name is required', () => {
+      enforce(model.lastName).isNotBlank();
+    });
+    test('passwords.password', 'Password is required', () => {
+      enforce(model.passwords?.password).isNotBlank();
+    });
+    omitWhen(!model.passwords?.password, () => {
+      test('passwords.confirmPassword', 'Confirm password is required', () => {
+        enforce(model.passwords?.confirmPassword).isNotBlank();
       });
-    }
-  );
-});
+    });
+    omitWhen(
+      !model.passwords?.password || !model.passwords?.confirmPassword,
+      () => {
+        test('passwords', 'Passwords do not match', () => {
+          enforce(model.passwords?.confirmPassword).equals(
+            model.passwords?.password
+          );
+        });
+      }
+    );
+  });
+}
+
+export const formValidationSuite = createFormValidationSuite();
 
 export const selectors = {
   ngxControlWrapperFirstName: 'ngx-control-wrapper__first-name',

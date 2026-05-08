@@ -1,6 +1,7 @@
+import { TestBed } from '@angular/core/testing';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { FormDirectiveDemoComponent } from './simple-form.demo.component';
 import { selectors } from './simple-form';
 
@@ -15,6 +16,14 @@ function getPreJson(testId: string) {
 }
 
 describe('simple-form stories', () => {
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+  });
+
+  afterEach(() => {
+    TestBed.resetTestingModule();
+  });
+
   it('shows errors on submit', async () => {
     await render(FormDirectiveDemoComponent);
 

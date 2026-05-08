@@ -1,7 +1,7 @@
 import { JsonPipe } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
 import { NgxVestForms } from '../exports';
-import { FormModel, formShape, formValidationSuite } from './simple-form';
+import { FormModel, createFormValidationSuite, formShape } from './simple-form';
 
 @Component({
   imports: [NgxVestForms, JsonPipe],
@@ -114,7 +114,7 @@ export class FormDirectiveDemoComponent {
   protected readonly formDirty = signal<boolean | null>(null);
   protected readonly errors = signal<Record<string, string>>({});
   protected readonly shape = formShape;
-  protected readonly suite = formValidationSuite;
+  protected readonly suite = createFormValidationSuite();
   private readonly viewModel = computed(() => {
     return {
       formValue: this.formValue(),
