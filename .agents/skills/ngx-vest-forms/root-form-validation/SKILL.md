@@ -67,6 +67,16 @@ It is normal to combine:
 
 These solve different problems.
 
+## Testing tip
+
+`ROOT_FORM` tests share suite state with field-level tests in the same Vest
+suite. When that suite is shared across multiple test cases (module-level
+`const suite = create(...)`), reset it in a `beforeEach` so a prior test's
+ROOT_FORM result does not bleed into the next. See the "Testing your forms
+(Vest 6)" section in `core/SKILL.md` for the full pattern; `runStatic(model)`
+is the simplest stateless alternative when a test only needs to assert on
+suite output for a given input.
+
 ## Red flags
 
 Correct these if they appear:
