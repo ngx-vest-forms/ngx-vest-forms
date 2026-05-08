@@ -44,10 +44,13 @@ describe('MyForm', () => {
 
 If tests pass locally but fail in CI with assertions against validation
 messages or `ng-invalid` classes seeing the *previous* test's value, suite
-state leakage is the most common cause. This was the root cause of 24 CI
-failures inherited from `release/v3` until reset hooks were added in
-`f25f3de`; the warning-display tests were silently sharing a
-`describe`-scoped `warningOnlySuite` that an earlier fix attempt missed.
+state leakage is one common cause — but **not the only one**. Empirically on
+this branch (commit `f25f3de`), full reset coverage of every shared suite
+combined with the timeout bumps below did **not** fix the 24 CI test
+failures inherited from `release/v3`; the residual cause is most likely a
+Vitest browser-mode + Playwright + Vest 6 thenable interaction that lives
+outside the test author's control. Reset hooks remain the right hygiene per
+Vest 6 docs even when they are not the smoking gun.
 
 Stateless alternative: when a test only asserts on suite output for a given
 input, use `suite.runStatic(model)` and skip the reset entirely — every
