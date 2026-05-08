@@ -249,9 +249,9 @@ protected readonly validationConfig = computed<ValidationConfigMap<FormModel>>((
 
 ## Advanced Usage
 
-### Working with DeepPartial Types
+### Working with NgxDeepPartial Types
 
-The field path types work seamlessly with `DeepPartial` form models:
+The field path types work seamlessly with `NgxDeepPartial` form models:
 
 ```typescript
 import { NgxDeepPartial, ValidationConfigMap } from 'ngx-vest-forms';
@@ -434,7 +434,7 @@ export const suite: NgxVestSuite<FormModel> = create((model: FormModel) => {
 });
 ```
 
-`NgxTypedVestSuite<T>` still works, but it is a deprecated alias of `NgxVestSuite<T>`.
+> **v3 note:** the older `NgxTypedVestSuite<T>` alias was removed in v3.0.0. Use `NgxVestSuite<T>` everywhere.
 
 ### ✅ DO: Type Your Validation Configs
 
@@ -476,18 +476,6 @@ protected config2: ValidationConfigMap<FormModel> = { email: ['password'] }; // 
 // ✅ Good - consistent
 protected config1: ValidationConfigMap<FormModel> = { password: ['confirmPassword'] };
 protected config2: ValidationConfigMap<FormModel> = { email: ['password'] };
-```
-
-### ❌ DON'T: Introduce New Uses of NgxTypedVestSuite
-
-Prefer the canonical `NgxVestSuite<T>` type in new code:
-
-```typescript
-// ❌ Avoid in new code (deprecated alias)
-suite: NgxTypedVestSuite<FormModel> = create((model: FormModel) => { ... });
-
-// ✅ Preferred
-suite: NgxVestSuite<FormModel> = create((model: FormModel) => { ... });
 ```
 
 ---
@@ -693,11 +681,8 @@ export type ValidateFieldPath<T, Path>;
 // Extract only leaf paths
 export type LeafFieldPath<T, Prefix = '', Depth = []>;
 
-// Canonical suite type (recommended)
+// Canonical suite type
 export type NgxVestSuite<T>;
-
-// Deprecated alias kept for backward compatibility
-export type NgxTypedVestSuite<T>;
 ```
 
 ---

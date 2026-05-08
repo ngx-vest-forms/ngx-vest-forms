@@ -34,7 +34,7 @@ Non-breaking but worth knowing when the user mentions related symptoms:
 - **`parseFieldPath` strict mode** logs a dev warning (`ngDevMode`-gated, tree-shakable) for malformed segments like `'a..b'`, `'.a'`, `'a.'`, instead of silently truncating. Production behavior is unchanged for previously valid paths.
 - **`validateShape` opaque-value fix.** `Date`, `Map`, `Set`, `RegExp`, `File`, `Blob` short-circuit recursion. Numeric-key detection switched to `^\d+$`, so `'123abc'` now flags as `TYPE_MISMATCH` instead of becoming array index 0.
 - **Touched syncs to dependents.** Blurring a trigger field propagates touched into its `validationConfig`-tracked dependents on the same tick — pair with `errorDisplayMode="on-blur"` on dependent wrappers for calm UX.
-- **`cloneDeep` is deprecated** and warns once in dev. Prefer `structuredClone` in new guidance.
+- **`cloneDeep` was removed in v3.0.0.** Use `structuredClone` in new guidance.
 
 ## Stay on the public API surface
 
@@ -46,17 +46,17 @@ Do not send library consumers to `projects/ngx-vest-forms/src/lib/**` imports. T
 
 Use these nested workflow sub-skills when the feature area is clear:
 
-| Sub-skill | Use when | Path |
-|---|---|---|
-| `core` | first examples, form structure, `[ngModel]`, `NgxDeepPartial`, typed suites | `core/SKILL.md` |
-| `validation-config-builder` | dependent field revalidation, `createValidationConfig()`, `whenChanged`, `bidirectional` | `validation-config-builder/SKILL.md` |
-| `field-blur-events` | draft auto-save, blur-driven persistence, analytics, `fieldBlur`, `NgxFieldBlurEvent` | `field-blur-events/SKILL.md` |
-| `root-form-validation` | `ROOT_FORM`, `ngxValidateRootForm`, summary-level business rules | `root-form-validation/SKILL.md` |
-| `built-in-wrappers` | built-in wrapper selection, display modes, `ariaAssociationMode` | `built-in-wrappers/SKILL.md` |
-| `custom-wrapper-patterns` | design-system wrappers, `FormErrorDisplayDirective`, `FormErrorControlDirective` | `custom-wrapper-patterns/SKILL.md` |
-| `child-components` | nested `ngModelGroup`, reusable form sections, `vestFormsViewProviders` | `child-components/SKILL.md` |
-| `composite-adapter` | one UI widget mapping to multiple flat form fields, hidden proxy fields, fan-out, error aggregation | `composite-adapter/SKILL.md` |
-| `dynamic-form-behavior` | clearing hidden values, structure changes, `triggerFormValidation()` | `dynamic-form-behavior/SKILL.md` |
+| Sub-skill                   | Use when                                                                                            | Path                                 |
+| --------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `core`                      | first examples, form structure, `[ngModel]`, `NgxDeepPartial`, typed suites                         | `core/SKILL.md`                      |
+| `validation-config-builder` | dependent field revalidation, `createValidationConfig()`, `whenChanged`, `bidirectional`            | `validation-config-builder/SKILL.md` |
+| `field-blur-events`         | draft auto-save, blur-driven persistence, analytics, `fieldBlur`, `NgxFieldBlurEvent`               | `field-blur-events/SKILL.md`         |
+| `root-form-validation`      | `ROOT_FORM`, `ngxValidateRootForm`, summary-level business rules                                    | `root-form-validation/SKILL.md`      |
+| `built-in-wrappers`         | built-in wrapper selection, display modes, `ariaAssociationMode`                                    | `built-in-wrappers/SKILL.md`         |
+| `custom-wrapper-patterns`   | design-system wrappers, `FormErrorDisplayDirective`, `FormErrorControlDirective`                    | `custom-wrapper-patterns/SKILL.md`   |
+| `child-components`          | nested `ngModelGroup`, reusable form sections, `vestFormsViewProviders`                             | `child-components/SKILL.md`          |
+| `composite-adapter`         | one UI widget mapping to multiple flat form fields, hidden proxy fields, fan-out, error aggregation | `composite-adapter/SKILL.md`         |
+| `dynamic-form-behavior`     | clearing hidden values, structure changes, `triggerFormValidation()`                                | `dynamic-form-behavior/SKILL.md`     |
 
 ## Route to the right workflow
 

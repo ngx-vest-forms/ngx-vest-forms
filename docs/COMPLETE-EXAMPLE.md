@@ -111,7 +111,7 @@ export class UserFormComponent {
 - ✅ **Performance optimized** — Field-level validation via `suite.only(field).run(model)` at call site
 - ✅ **Canonical suite typing** — Uses `NgxVestSuite<T>` in new code
 
-`NgxTypedVestSuite<T>` still works, but it is a deprecated alias of `NgxVestSuite<T>` and should be avoided in new examples.
+> **v3 note:** the older `NgxTypedVestSuite<T>` alias was removed in v3.0.0. Use `NgxVestSuite<T>` everywhere.
 
 ## Key Points to Remember
 
@@ -211,11 +211,7 @@ only need one signal.
 
 ```typescript
 import { Component, signal, viewChild } from '@angular/core';
-import {
-  create,
-  test,
-  enforce,
-} from 'vest';
+import { create, test, enforce } from 'vest';
 import {
   createFormFeedbackSignals,
   FormDirective,

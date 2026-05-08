@@ -35,9 +35,7 @@ Optional advanced exports worth knowing about:
 
 - `NGX_EQUALITY_FN`, `NgxEqualityFn` — swap the comparator the form uses for `formValueChange` `distinctUntilChanged`, two-way sync, and `formState` equality. Default is `fastDeepEqual` with cycle detection. Reach for it for bundle size (`dequal/lite`), tests (reference equality), or domain rules. See `docs/API-TOKENS.md`.
 - `setValueAtPath` — array-safe path writes (v2.7+ no longer overwrites populated arrays via bracket notation).
-- `cloneDeep` — **deprecated**, warns once in dev; use `structuredClone`. Will be removed in v3.
-
-Do not teach consumers to import from internal `src/lib/**` paths. If a symbol is missing from the public API, that is a library-maintenance task, not a consumer workaround.
+  Do not teach consumers to import from internal `src/lib/**` paths. If a symbol is missing from the public API, that is a library-maintenance task, not a consumer workaround.
 
 ## Default implementation pattern
 
@@ -94,7 +92,7 @@ When the user writes tests that exercise their Vest suite, route to
 - For shared `create()` suites, add `beforeEach(() => mySuite.reset())` —
   Vest 6 suites accumulate state across runs.
 - `staticSuite()` and `promisify()` were removed in Vest 6; use `create()`
-  + `runStatic()` or `await suite.run()`.
+  - `runStatic()` or `await suite.run()`.
 - Browser-mode Vitest CI is ~7× slower than local: `waitFor` / `findByText`
   windows under 3000ms flake on async-validator assertions.
 
