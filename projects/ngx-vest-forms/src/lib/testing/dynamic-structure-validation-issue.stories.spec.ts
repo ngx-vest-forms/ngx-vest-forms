@@ -3,12 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   DynamicStructureComponent,
-  dynamicFormValidationSuite,
+  DynamicFormValidationSuite,
 } from './dynamic-structure-validation-issue.stories';
 
 describe('dynamic-structure-validation-issue stories', () => {
   beforeEach(() => {
-    dynamicFormValidationSuite.reset();
+    DynamicFormValidationSuite.reset();
   });
 
   it('keeps the workaround transition flow valid after an extra structure change', async () => {

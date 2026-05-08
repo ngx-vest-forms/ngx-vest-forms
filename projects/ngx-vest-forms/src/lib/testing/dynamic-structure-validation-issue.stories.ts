@@ -25,7 +25,7 @@ const formShape: NgxDeepRequired<DynamicFormModel> = {
   fieldB: '',
 };
 
-export const dynamicFormValidationSuite = create(
+export const DynamicFormValidationSuite = create(
   (model: DynamicFormModel, field?: string) => {
     // CRITICAL: Always call only() unconditionally (PR #60 requirement)
     // Calling only() conditionally corrupts Vest's execution tracking
@@ -226,7 +226,7 @@ export class DynamicStructureComponent {
 
   // Static properties can remain as regular properties
   protected readonly shape = formShape;
-  protected readonly suite = dynamicFormValidationSuite;
+  protected readonly suite = DynamicFormValidationSuite;
 
   // Angular 20: Using computed() for derived state
   protected readonly hasErrors = computed(() => {

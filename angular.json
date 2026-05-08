@@ -46,6 +46,8 @@
           "options": {
             "configDir": "projects/ngx-vest-forms/.storybook",
             "port": 6006,
+            "browserTarget": "examples:build:development",
+            "assets": [],
             "styles": ["projects/ngx-vest-forms/.storybook/styles.scss"],
             "compodoc": false,
             "experimentalZoneless": true
