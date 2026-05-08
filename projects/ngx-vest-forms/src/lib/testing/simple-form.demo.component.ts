@@ -1,13 +1,7 @@
 import { JsonPipe } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
-import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
 import { NgxVestForms } from '../exports';
-import {
-  FormModel,
-  formShape,
-  formValidationSuite,
-  selectors,
-} from './simple-form';
+import { FormModel, formShape, formValidationSuite } from './simple-form';
 
 @Component({
   imports: [NgxVestForms, JsonPipe],
@@ -144,31 +138,3 @@ export class FormDirectiveDemoComponent {
     }
   }
 }
-
-const meta: Meta<FormDirectiveDemoComponent> = {
-  title: 'simple form',
-  component: FormDirectiveDemoComponent,
-  parameters: {
-    // More on how to position stories at: https://storybook.js.org/docs/configure/story-layout
-    layout: 'fullscreen',
-  },
-};
-
-export default meta;
-
-export const Primary: StoryObj = {
-  decorators: [componentWrapperDecorator(FormDirectiveDemoComponent)],
-};
-
-export const ShouldShowErrorsOnSubmit: StoryObj = {};
-
-export const ShouldHideErrorsWhenValid: StoryObj = {};
-export const ShouldShowErrorsOnBlur: StoryObj = {};
-
-export const ShouldValidateOnGroups: StoryObj = {};
-
-export const ShouldHaveCorrectStatussesAndFormValueInitially: StoryObj = {};
-
-export const ShouldHaveCorrectStatussesAndOnFormUpdate: StoryObj = {};
-
-export const ShouldValidateOnRootForm: StoryObj = {};

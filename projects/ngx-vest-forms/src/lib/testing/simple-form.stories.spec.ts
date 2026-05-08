@@ -1,11 +1,17 @@
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { FormDirectiveDemoComponent } from './simple-form.stories';
+import { FormDirectiveDemoComponent } from './simple-form.demo.component';
 import { selectors } from './simple-form';
 
 function getPreJson(testId: string) {
-  return JSON.parse(screen.getByTestId(testId).textContent?.trim() ?? '{}');
+  const textContent = screen.getByTestId(testId).textContent?.trim();
+
+  if (!textContent) {
+    throw new Error(`Expected ${testId} to contain JSON, but it was empty.`);
+  }
+
+  return JSON.parse(textContent);
 }
 
 describe('simple-form stories', () => {
