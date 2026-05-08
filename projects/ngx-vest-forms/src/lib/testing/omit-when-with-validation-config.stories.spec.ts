@@ -149,12 +149,12 @@ describe('omitWhen + validationConfig stories', () => {
       await userEvent.click(screen.getByTestId(selectors.btnSubmit));
       await waitForValidationCycle();
 
-      expect(screen.getByTestId(selectors.ngxControlWrapperAantal)).not.toHaveTextContent(
-        'verplicht'
-      );
+      expect(
+        screen.getByTestId(selectors.ngxControlWrapperAantal)
+      ).not.toHaveTextContent(REQUIRED_AANTAL_MESSAGE);
       expect(
         screen.getByTestId(selectors.ngxControlWrapperOnderbouwing)
-      ).not.toHaveTextContent('verplicht');
+      ).not.toHaveTextContent(REQUIRED_ONDERBOUWING_MESSAGE);
     },
     20000
   );
