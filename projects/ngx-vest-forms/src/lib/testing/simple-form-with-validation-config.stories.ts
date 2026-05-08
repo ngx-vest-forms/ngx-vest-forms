@@ -166,8 +166,6 @@ export const Primary: StoryObj = {
   decorators: [componentWrapperDecorator(FormDirectiveDemoComponent)],
 };
 
-// Test removed - validationConfig doesn't trigger properly in Storybook test environment
-// Use validation-config.spec.ts unit tests instead
+export const ShouldRetriggerByValidationConfig: StoryObj = {};
 
-// Test removed - validationConfig doesn't trigger properly in Storybook test environment
-// Use validation-config.spec.ts unit tests instead
+export const ShouldReactToDynamicValidationConfig: StoryObj = {};
