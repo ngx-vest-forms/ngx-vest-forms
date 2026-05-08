@@ -154,11 +154,19 @@ profileSuite.only('user.email').run(model);
 profileSuite.run(model);
 ```
 
+If async completion matters in Vest 6, use one of these patterns instead of
+legacy result callbacks:
+
+- `await profileSuite.run(model)`
+- `profileSuite.afterEach(() => { ... }).run(model)`
+- `profileSuite.afterField('user.email', () => { ... }).run(model)`
+
 Do **not** use legacy Vest 5 patterns such as:
 
-- `staticSuite((model, field?) => { ... })`
+- `staticSuite((model, field?) => { ... })` — removed in Vest 6; use `create((model) => { ... })` plus `suite.runStatic(model)` for stateless execution
 - `only(field)` inside the callback
 - direct callable suite execution like `suite(model, field)`
+- result `.done(...)` callbacks — use `await suite.run(...)`, `suite.afterEach(...)`, or `suite.afterField(...)`
 
 ## `validationConfig` for dependent fields
 

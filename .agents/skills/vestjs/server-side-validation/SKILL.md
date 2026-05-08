@@ -1,6 +1,6 @@
 ---
 name: server-side-validation
-description: Helps developers use Vest.js 6 safely in server and request-validation workflows. Use this whenever the user mentions API validation, Node/server-side Vest usage, `runStatic`, optional `staticSuite`, request isolation, fast-fail behavior, or asks how to structure Vest for backend or submit-only validation.
+description: Helps developers use Vest.js 6 safely in server and request-validation workflows. Use this whenever the user mentions API validation, Node/server-side Vest usage, `runStatic`, request isolation, fast-fail behavior, SSR hydration, or asks how to structure Vest for backend or submit-only validation.
 ---
 
 # Vest.js 6 server-side validation guidance
@@ -20,14 +20,15 @@ Use `suite.runStatic(data)` for server-side or request-style validation.
 - each run creates a fresh result
 - there is no cross-request state leakage
 - there is no need to `reset()` between calls
+- if async tests exist, the returned result may still be promise-like, so `await` it or handle the thenable result explicitly
 
-If a dedicated stateless suite is clearer for the use case, `staticSuite(...)` is still valid — but prefer `runStatic()` first when you want to keep one suite-object mental model across client and server guidance.
+In Vest 6, `staticSuite(...)` was removed. If the user shows older examples or code that still uses it, migrate them to `create(...)` plus `runStatic(...)`.
 
-## Fallback approach
+## Stateful fallback
 
-If a regular `create(...)` suite must be reused on the server in a stateful way, that should be an intentional choice. Most request validation should still call `suite.runStatic(data)`.
+If a regular `create(...)` suite must be reused on the server in a stateful way, that should be an intentional and well-contained choice. Most request validation should still call `suite.runStatic(data)`.
 
-That is a fallback, not the first choice.
+Stateful server usage is the exception, not the default.
 
 ## Execution mode guidance
 
@@ -46,16 +47,19 @@ For server-side flows, prefer examples that show:
 - `isValid()` or `hasErrors()`
 - structured `getErrors()` output for responses
 
+If the suite includes async tests, show either `await suite.runStatic(data)` or an explicit thenable branch so the response only uses the settled result.
+
 Keep the example stateless unless the user explicitly asks about shared suite instances.
 
 ## Full-stack note
 
-If the user is asking about client/server continuity rather than backend-only validation, mention that Vest also supports suite serialization and resumption. Do not drag that into a basic API validation answer unless it is relevant.
+If the user is asking about client/server continuity rather than backend-only validation, mention that Vest also supports suite serialization and resumption via `SuiteSerializer.serialize(...)` and `SuiteSerializer.resume(...)`. Do not drag that into a basic API validation answer unless it is relevant.
 
 ## Pitfalls to fix immediately
 
 - using one long-lived stateful suite instance across requests without resets
 - recommending stateful `.run(...)` when `suite.runStatic(...)` would avoid cross-request state entirely
+- recommending removed `staticSuite(...)` in Vest 6 code
 - pretending server-side validation needs interactive field-scoped patterns by default
 - using the reset workaround as the primary example instead of the stateless option
 
@@ -71,5 +75,6 @@ When answering:
 
 - `../../../instructions/vest.instructions.md`
 - `https://vestjs.dev/docs/server_side_validations`
+- `https://vestjs.dev/docs/suite_serialization`
 - `https://vestjs.dev/docs/writing_your_suite/execution_modes`
 - `https://vestjs.dev/docs/api_reference`
