@@ -1,6 +1,6 @@
 ---
 name: async-and-warnings
-description: Helps developers write safe async and warning-based validations in Vest.js 6. Use this whenever the user mentions async tests, server checks, username/email availability, `AbortSignal`, stale requests, `warn()`, non-blocking guidance, `.done()`, pending state, or asks how to keep async validation responsive and correct.
+description: Helps developers write safe async and warning-based validations in Vest.js 6. Use this whenever the user mentions async tests, server checks, username/email availability, `AbortSignal`, stale requests, `warn()`, `useWarn()`, non-blocking guidance, `.done()`, pending state, or asks how to keep async validation responsive and correct.
 ---
 
 # Vest.js 6 async and warning guidance
@@ -13,7 +13,7 @@ Use this skill when the suite needs **remote work, cancellation, pending state, 
 2. In Vest 6, each async test receives an `AbortSignal` via the test context.
 3. Pass that `signal` into async work when supported.
 4. Guard expensive async checks behind prerequisite sync validation.
-5. Call `warn()` synchronously at the top of the test body.
+5. Call `warn()` synchronously at the top of the test body, or use `useWarn()` when warning severity must be set after an `await`.
 6. Never call `.done()` conditionally.
 
 ## Recommended async pattern
@@ -48,6 +48,8 @@ Common examples:
 
 Important limitation: if the test is async, call `warn()` in the synchronous portion of the test body, ideally first. Calling it after `await` means it may not take effect.
 
+If the warning can only be determined after async work finishes, use `useWarn()` to capture a setter before `await` and call that setter later.
+
 ## `.done()` guidance
 
 Use `.done(...)` when the user needs a callback after:
@@ -62,6 +64,7 @@ Keep the `.done(...)` registration unconditional. Put branching logic inside the
 - async tests without `AbortSignal` handling
 - remote validation that runs before basic local validation passes
 - calling `warn()` after `await`
+- forgetting `useWarn()` when a warning should be set after async work resolves
 - treating warnings as blocking errors
 - conditional `.done(...)` registration around async runs
 - custom pending flags when `isPending()` already exists

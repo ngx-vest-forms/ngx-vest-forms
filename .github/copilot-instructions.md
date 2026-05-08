@@ -4,25 +4,26 @@
 
 When generating code for this repository:
 
-1. Respect the exact toolchain versions in `package.json`.
-2. Treat `.github/instructions/ngx-vest-forms.instructions.md` as the always-on invariant sheet for ngx-vest-forms usage.
-3. Treat `.github/instructions/vest.instructions.md` as the deeper Vest 6 validation guide.
-4. Prefer the local skills under `.agents/skills/ngx-vest-forms/` and `.agents/skills/vestjs/` over generic framework advice.
-5. Prefer patterns already present in the repo over generic best practices.
+1. Treat `.github/instructions/ngx-vest-forms.instructions.md` as the always-on invariant sheet for ngx-vest-forms usage.
+2. Treat `.github/instructions/vest.instructions.md` as the always-on Vest 6 invariant sheet, and use `.agents/skills/vestjs/` for deeper workflow guidance.
+3. Prefer the local skills under `.agents/skills/ngx-vest-forms/` and `.agents/skills/vestjs/` over generic framework advice.
+4. Prefer coding patterns already used in the repository's Angular components, examples, services, and public API over generic best-practice examples.
 
 ## Version baseline
+
+Use the versions in `package.json` and the baseline below as hard compatibility limits for generated code and advice.
 
 - Angular framework packages: `21.2.11`
 - Angular CLI/build tooling: `21.2.9`
 - TypeScript: `~5.9.3`
 - Node.js: `>=22.0.0`
 - RxJS: `~7.8.2`
-- Vest.js: `~6.0.3`
+- Vest.js: `~6.3.2`
 - Vitest: `^4.1.5`
 - Playwright: `1.59.1`
 - Storybook: `10.3.6`
 
-Do not suggest code that depends on newer language or framework features than these versions support.
+You can suggest code that depends on features introduced in versions of Angular, TypeScript, Node.js, RxJS, Vest, Vitest, Playwright, Storybook, or other dependencies newer than the versions listed here or in `package.json`. But come with a strong justification for why the newer feature is necessary and how it improves on the existing patterns in the repo. Do not suggest newer features just because they exist or are trendy if they do not clearly enhance the code quality, readability, or maintainability of the generated code in this specific repository context.
 
 ## Repo shape
 
@@ -57,7 +58,8 @@ If a new library feature is added, export it in `projects/ngx-vest-forms/src/pub
 ## How to choose guidance sources
 
 - Need baseline usage rules: read `.github/instructions/ngx-vest-forms.instructions.md`
-- Need Vest suite semantics: read `.github/instructions/vest.instructions.md`
+- Need baseline Vest suite invariants: read `.github/instructions/vest.instructions.md`
+- Need deeper Vest workflow guidance: use `.agents/skills/vestjs/`
 - Need default form setup: use `.agents/skills/ngx-vest-forms/core/`
 - Need `validationConfig`: use `.agents/skills/ngx-vest-forms/validation-config-builder/`
 - Need `ROOT_FORM`: use `.agents/skills/ngx-vest-forms/root-form-validation/`
