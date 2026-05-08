@@ -1,8 +1,139 @@
+import { JsonPipe } from '@angular/common';
+import { Component, computed, signal } from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { selectors } from './simple-form';
-import { FormDirectiveDemoComponent } from './simple-form-with-validation-options.stories';
+import { NgxVestForms } from '../exports';
+import {
+  createFormValidationSuite,
+  FormModel,
+  formShape,
+  selectors,
+} from './simple-form';
+
+@Component({
+  imports: [NgxVestForms, JsonPipe],
+  template: `
+    <form
+      class="p-4"
+      ngxVestForm
+      (ngSubmit)="save()"
+      [formValue]="formValue()"
+      ngxValidateRootForm
+      [formShape]="shape"
+      [suite]="suite"
+      (validChange)="formValid.set($event)"
+      (errorsChange)="errors.set($event)"
+      (formValueChange)="setFormValue($event)"
+      [validationOptions]="{ debounceTime: 500 }"
+    >
+      <fieldset>
+        <div
+          class="w-full"
+          ngx-control-wrapper
+          data-testid="ngx-control-wrapper__first-name"
+        >
+          <label>
+            <span>First name</span>
+            <input
+              placeholder="Type your first name"
+              data-testid="input__first-name"
+              type="text"
+              [ngModel]="vm.formValue.firstName"
+              name="firstName"
+              [validationOptions]="{ debounceTime: 500 }"
+            />
+          </label>
+        </div>
+        <div
+          class="w-full"
+          ngx-control-wrapper
+          data-testid="ngx-control-wrapper__last-name"
+        >
+          <label>
+            <span>Last name</span>
+            <input
+              placeholder="Type your last name"
+              data-testid="input__last-name"
+              type="text"
+              [ngModel]="vm.formValue.lastName"
+              name="lastName"
+            />
+          </label>
+        </div>
+        <div
+          class="sm:col-span-2"
+          ngx-control-wrapper
+          data-testid="ngx-control-wrapper__passwords"
+          ngModelGroup="passwords"
+          [validationOptions]="{ debounceTime: 900 }"
+        >
+          <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
+            <div
+              class="w-full"
+              ngx-control-wrapper
+              data-testid="ngx-control-wrapper__password"
+            >
+              <label>
+                <span>Password</span>
+                <input
+                  placeholder="Type password"
+                  type="password"
+                  data-testid="input__password"
+                  [ngModel]="vm.formValue.passwords?.password"
+                  name="password"
+                />
+              </label>
+            </div>
+            <div
+              class="w-full"
+              ngx-control-wrapper
+              data-testid="ngx-control-wrapper__confirm-password"
+            >
+              <label>
+                <span>Confirm</span>
+                <input
+                  placeholder="Confirm password"
+                  type="password"
+                  data-testid="input__confirm-password"
+                  [ngModel]="vm.formValue.passwords?.confirmPassword"
+                  name="confirmPassword"
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+        <button data-testid="btn__submit" type="submit">Submit</button>
+      </fieldset>
+      <pre data-testId="pre__form-errors">
+        {{ vm.errors | json }}
+      </pre
+      >
+    </form>
+  `,
+})
+class FormDirectiveDemoComponent {
+  protected readonly formValue = signal<FormModel>({});
+  protected readonly formValid = signal(false);
+  protected readonly errors = signal<Record<string, string>>({});
+  protected readonly shape = formShape;
+  protected readonly suite = createFormValidationSuite();
+  private readonly viewModel = computed(() => ({
+    formValue: this.formValue(),
+    errors: this.errors(),
+    formValid: this.formValid(),
+  }));
+
+  protected get vm() {
+    return this.viewModel();
+  }
+
+  protected setFormValue(v: FormModel): void {
+    this.formValue.set(v);
+  }
+
+  protected save(): void {}
+}
 
 describe('simple-form-with-validation-options stories', () => {
   it('ShouldShowFirstnameRequiredAfterDelayForNgModel', async () => {
@@ -13,7 +144,7 @@ describe('simple-form-with-validation-options stories', () => {
     ) as HTMLInputElement;
 
     await userEvent.click(firstNameInput);
-    firstNameInput.blur();
+    await userEvent.tab();
 
     expect(
       screen.getByTestId(selectors.ngxControlWrapperFirstName)
@@ -39,9 +170,8 @@ describe('simple-form-with-validation-options stories', () => {
     ) as HTMLInputElement;
 
     await userEvent.type(passwordInput, 'first');
-    await userEvent.type(confirmPasswordInput, 'second', { delay: 500 });
-    await userEvent.click(confirmPasswordInput);
-    confirmPasswordInput.blur();
+    await userEvent.type(confirmPasswordInput, 'second');
+    await userEvent.tab();
 
     expect(
       screen.getByTestId(selectors.ngxControlWrapperPasswords)
