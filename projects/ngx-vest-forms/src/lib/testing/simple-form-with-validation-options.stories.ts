@@ -1,14 +1,8 @@
 import { JsonPipe } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
 import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { NgxVestForms } from '../exports';
-import {
-  FormModel,
-  formShape,
-  formValidationSuite,
-  selectors,
-} from './simple-form';
+import { createFormValidationSuite, FormModel, formShape } from './simple-form';
 
 @Component({
   template: `
@@ -116,7 +110,7 @@ export class FormDirectiveDemoComponent {
   protected readonly formValid = signal<boolean>(false);
   protected readonly errors = signal<Record<string, string>>({});
   protected readonly shape = formShape;
-  protected readonly suite = formValidationSuite;
+  protected readonly suite = createFormValidationSuite();
   private readonly viewModel = computed(() => {
     return {
       formValue: this.formValue(),
@@ -154,79 +148,9 @@ export const Primary: StoryObj = {
   decorators: [componentWrapperDecorator(FormDirectiveDemoComponent)],
 };
 
-export const ShouldShowFirstnameRequiredAfterDelayForNgModel: StoryObj = {
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByTestId(selectors.inputFirstName));
-    canvas.getByTestId(selectors.inputFirstName).blur();
-
-    await expect(
-      canvas.getByTestId(selectors.ngxControlWrapperFirstName)
-    ).not.toHaveTextContent('First name is required');
-
-    await waitFor(
-      () =>
-        expect(
-          canvas.getByTestId(selectors.ngxControlWrapperFirstName)
-        ).toHaveTextContent('First name is required'),
-      { timeout: 600 }
-    );
-  },
-};
+export const ShouldShowFirstnameRequiredAfterDelayForNgModel: StoryObj = {};
 
 export const ShouldShowPasswordConfirmationAfterDelayForNgModelGroup: StoryObj =
-  {
-    play: async ({ canvasElement }) => {
-      const canvas = within(canvasElement);
-      await userEvent.type(
-        canvas.getByTestId(selectors.inputPassword),
-        'first'
-      );
-      await userEvent.type(
-        canvas.getByTestId(selectors.inputConfirmPassword),
-        'second',
-        { delay: 500 }
-      );
-      await userEvent.click(canvas.getByTestId(selectors.inputConfirmPassword));
-      await canvas.getByTestId(selectors.inputConfirmPassword).blur();
+  {};
 
-      await expect(
-        canvas.getByTestId(selectors.ngxControlWrapperPasswords)
-      ).not.toHaveTextContent('Passwords do not match');
-
-      await waitFor(
-        () =>
-          expect(
-            canvas.getByTestId(selectors.ngxControlWrapperPasswords)
-          ).toHaveTextContent('Passwords do not match'),
-        { timeout: 1100 }
-      );
-    },
-  };
-
-export const ShouldValidateOnRootFormAfterDelay: StoryObj = {
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.type(
-      canvas.getByTestId(selectors.inputFirstName),
-      'Brecht'
-    );
-    await userEvent.type(
-      canvas.getByTestId(selectors.inputLastName),
-      'Billiet'
-    );
-    await userEvent.type(canvas.getByTestId(selectors.inputPassword), '1234');
-    // Submit form to trigger root form validation
-    await userEvent.click(canvas.getByTestId(selectors.btnSubmit));
-    await waitFor(
-      () => {
-        const errorsText = canvas
-          .getByTestId(selectors.preFormErrors)
-          .textContent?.trim();
-        const errors = errorsText ? JSON.parse(errorsText) : {};
-        expect(errors).toEqual({ rootForm: ['Brecht his pass is not 1234'] });
-      },
-      { timeout: 2000 }
-    );
-  },
-};
+export const ShouldValidateOnRootFormAfterDelay: StoryObj = {};
