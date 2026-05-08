@@ -25,7 +25,7 @@ const formShape: NgxDeepRequired<DynamicFormModel> = {
   fieldB: '',
 };
 
-export const DynamicFormValidationSuite = create(
+const dynamicFormValidationSuite = create(
   (model: DynamicFormModel, field?: string) => {
     // CRITICAL: Always call only() unconditionally (PR #60 requirement)
     // Calling only() conditionally corrupts Vest's execution tracking
@@ -226,7 +226,7 @@ export class DynamicStructureComponent {
 
   // Static properties can remain as regular properties
   protected readonly shape = formShape;
-  protected readonly suite = DynamicFormValidationSuite;
+  protected readonly suite = dynamicFormValidationSuite;
 
   // Angular 20: Using computed() for derived state
   protected readonly hasErrors = computed(() => {
@@ -313,6 +313,8 @@ When form structure changes, use \`clearFieldsWhen\` utility and manually trigge
 };
 
 export default meta;
+
+export { dynamicFormValidationSuite as DynamicFormValidationSuite };
 
 export const Primary: StoryObj = {
   decorators: [componentWrapperDecorator(DynamicStructureComponent)],
