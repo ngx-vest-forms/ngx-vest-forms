@@ -56,3 +56,6 @@ Thumbs.db
 
 # Vitest
 /.vitest-attachments/
+
+# Git worktrees
+/.worktrees/
