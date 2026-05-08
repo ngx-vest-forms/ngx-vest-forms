@@ -160,7 +160,6 @@ function resolveControlPathByDomAncestors(
   const selectNextCandidates = (candidates: Frame[]): Frame[] => {
     const domCandidates = candidates.filter((candidate) =>
       subtreeContainsElement(
-        candidate.control,
         fieldElement,
         formEl,
         candidate.path[candidate.path.length - 1]!
@@ -223,7 +222,6 @@ function resolveControlPathByDomAncestors(
 }
 
 function subtreeContainsElement(
-  _child: AbstractControl,
   fieldElement: HTMLElement,
   formEl: HTMLFormElement,
   key: string | number
