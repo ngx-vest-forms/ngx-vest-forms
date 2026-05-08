@@ -177,7 +177,7 @@ describe('omitWhen + validationConfig stories', () => {
         () => {
           expect(
             screen.getByTestId(selectors.ngxControlWrapperAantal)
-          ).toHaveTextContent('verplicht');
+          ).toHaveTextContent(REQUIRED_AANTAL_MESSAGE);
         },
         { timeout: 5000 }
       );
