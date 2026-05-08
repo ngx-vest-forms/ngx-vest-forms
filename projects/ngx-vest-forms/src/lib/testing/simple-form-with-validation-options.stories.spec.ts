@@ -132,7 +132,9 @@ class FormDirectiveDemoComponent {
     this.formValue.set(v);
   }
 
-  protected save(): void {}
+  protected save(): void {
+    // Intentionally left blank: avoid noisy console output in tests
+  }
 }
 
 describe('simple-form-with-validation-options stories', () => {
