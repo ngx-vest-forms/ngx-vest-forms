@@ -209,7 +209,7 @@ const dynamicFormValidationSuite = create(
     </form>
   `,
 })
-class DynamicStructureComponent {
+export class DynamicStructureComponent {
   protected readonly vestFormRef =
     viewChild.required<FormDirective<DynamicFormModel>>('vestForm');
   protected readonly formValue = signal<DynamicFormModel>({});
