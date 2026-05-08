@@ -57,9 +57,7 @@
           "builder": "@storybook/angular:build-storybook",
           "options": {
             "configDir": "projects/ngx-vest-forms/.storybook",
-            "browserTarget": "examples:build:production",
             "outputDir": "dist/storybook/ngx-vest-forms",
-            "assets": [],
             "compodoc": false,
             "experimentalZoneless": true
           }
