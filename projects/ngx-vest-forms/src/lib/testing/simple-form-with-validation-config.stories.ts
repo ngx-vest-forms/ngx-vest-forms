@@ -21,7 +21,7 @@ import { FormModel, formShape, formValidationSuite } from './simple-form';
       <fieldset>
         <div
           class="w-full"
-          ngx-control-wrapper
+          ngxControlWrapper
           data-testid="ngx-control-wrapper__first-name"
         >
           <label>
@@ -37,7 +37,7 @@ import { FormModel, formShape, formValidationSuite } from './simple-form';
         </div>
         <div
           class="w-full"
-          ngx-control-wrapper
+          ngxControlWrapper
           data-testid="ngx-control-wrapper__last-name"
         >
           <label>
@@ -53,14 +53,14 @@ import { FormModel, formShape, formValidationSuite } from './simple-form';
         </div>
         <div
           class="sm:col-span-2"
-          ngx-control-wrapper
+          ngxControlWrapper
           data-testid="ngx-control-wrapper__passwords"
           ngModelGroup="passwords"
         >
           <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
             <div
               class="w-full"
-              ngx-control-wrapper
+              ngxControlWrapper
               data-testid="ngx-control-wrapper__password"
             >
               <label>
@@ -76,7 +76,7 @@ import { FormModel, formShape, formValidationSuite } from './simple-form';
             </div>
             <div
               class="w-full"
-              ngx-control-wrapper
+              ngxControlWrapper
               data-testid="ngx-control-wrapper__confirm-password"
             >
               <label>

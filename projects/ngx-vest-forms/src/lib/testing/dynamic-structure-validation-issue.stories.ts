@@ -69,7 +69,7 @@ const dynamicFormValidationSuite = create((model: DynamicFormModel) => {
         </legend>
 
         <div
-          ngx-control-wrapper
+          ngxControlWrapper
           data-testid="ngx-control-wrapper__procedure-type"
         >
           <label class="block">
@@ -93,7 +93,7 @@ const dynamicFormValidationSuite = create((model: DynamicFormModel) => {
         <!-- Using @if instead of *ngIf (Angular 20 best practice) -->
         @if (formValue().procedureType === 'typeA') {
           <div
-            ngx-control-wrapper
+            ngxControlWrapper
             data-testid="ngx-control-wrapper__field-a"
             class="rounded bg-blue-50 p-3"
           >
@@ -118,7 +118,7 @@ const dynamicFormValidationSuite = create((model: DynamicFormModel) => {
         <!-- Type B: Shows input field B -->
         @if (formValue().procedureType === 'typeB') {
           <div
-            ngx-control-wrapper
+            ngxControlWrapper
             data-testid="ngx-control-wrapper__field-b"
             class="rounded bg-green-50 p-3"
           >
