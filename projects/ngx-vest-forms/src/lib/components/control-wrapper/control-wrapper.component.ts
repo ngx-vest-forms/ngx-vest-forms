@@ -148,8 +148,7 @@ let nextUniqueId = 0;
  * @see https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA22 - ARIA22: Using role=status
  */
 @Component({
-  selector:
-    'ngx-control-wrapper, sc-control-wrapper, [scControlWrapper], [ngxControlWrapper], [ngx-control-wrapper], [sc-control-wrapper]',
+  selector: 'ngx-control-wrapper, [ngxControlWrapper]',
   templateUrl: './control-wrapper.component.html',
   styles: `
     :host {
@@ -160,7 +159,7 @@ let nextUniqueId = 0;
   changeDetection: ChangeDetectionStrategy.OnPush,
 
   host: {
-    class: 'ngx-control-wrapper sc-control-wrapper',
+    class: 'ngx-control-wrapper',
     '[class.ngx-control-wrapper--invalid]': 'errorDisplay.shouldShowErrors()',
     '[attr.aria-busy]': "errorDisplay.isPending() ? 'true' : null",
   },

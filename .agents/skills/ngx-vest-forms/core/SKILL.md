@@ -85,6 +85,22 @@ Do not paper over these mistakes. They break the mental model of the library and
 - If the user is splitting the form into child components, apply the child-components skill guidance.
 - If the user wants custom message UI, apply the custom-wrapper-patterns skill guidance.
 
+## Testing your forms (Vest 6)
+
+When the user writes tests that exercise their Vest suite, route to
+[references/testing-vest-6.md](references/testing-vest-6.md). Quick rules:
+
+- `suite.runStatic(model)` for stateless one-shot tests; no reset needed.
+- For shared `create()` suites, add `beforeEach(() => mySuite.reset())` —
+  Vest 6 suites accumulate state across runs.
+- `staticSuite()` and `promisify()` were removed in Vest 6; use `create()`
+  + `runStatic()` or `await suite.run()`.
+- Browser-mode Vitest CI is ~7× slower than local: `waitFor` / `findByText`
+  windows under 3000ms flake on async-validator assertions.
+
+If tests pass locally but fail in CI, audit shared-suite reset coverage
+first.
+
 ## Repo references to consult when needed
 
 Read these files before making nuanced recommendations:

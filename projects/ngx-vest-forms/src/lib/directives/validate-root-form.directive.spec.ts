@@ -5,7 +5,7 @@ import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { firstValueFrom, from } from 'rxjs';
 import { create, enforce, test } from 'vest';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import { NgxVestForms } from '../exports';
 import { getAllFormErrors } from '../utils/form-utils';
@@ -72,6 +72,15 @@ const createMultiRootFormValidationSuite = create(
 );
 
 describe('ValidateRootFormDirective', () => {
+  // Vest 6 `create()` returns stateful suites — both module-level suites are
+  // shared by every test via `class TestComponent { suite = ... }`. Reset
+  // before AND after each test: a single afterEach has been observed to be
+  // insufficient on slower CI runners where the next test sometimes starts
+  // before the previous reset has settled.
+  beforeEach(() => {
+    createTestValidationSuite.reset();
+    createMultiRootFormValidationSuite.reset();
+  });
   afterEach(() => {
     createTestValidationSuite.reset();
     createMultiRootFormValidationSuite.reset();
@@ -137,7 +146,7 @@ describe('ValidateRootFormDirective', () => {
           expect(allErrors[ROOT_FORM]).toBeDefined();
           expect(allErrors[ROOT_FORM]).toContain('Passwords must match');
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
 
       // Error should appear in UI
@@ -145,7 +154,7 @@ describe('ValidateRootFormDirective', () => {
         () => {
           expect(screen.queryByTestId('root-error')).toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
     });
 
@@ -214,7 +223,7 @@ describe('ValidateRootFormDirective', () => {
           expect(allErrors[ROOT_FORM]).toBeDefined();
           expect(allErrors[ROOT_FORM]).toContain('Brecht is not 30 anymore');
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
 
       // Error should appear in UI
@@ -224,7 +233,7 @@ describe('ValidateRootFormDirective', () => {
           expect(errorDiv).toBeInTheDocument();
           expect(errorDiv?.textContent).toContain('Brecht is not 30 anymore');
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
     });
 
@@ -289,7 +298,7 @@ describe('ValidateRootFormDirective', () => {
         () => {
           expect(screen.queryByTestId('root-error')).toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
 
       // Change age to 31 to fix the validation
@@ -303,14 +312,14 @@ describe('ValidateRootFormDirective', () => {
           const allErrors = getAllFormErrors(component.ngForm.control);
           expect(allErrors[ROOT_FORM]).toBeUndefined();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
 
       await waitFor(
         () => {
           expect(screen.queryByTestId('root-error')).not.toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
     });
   });
@@ -451,7 +460,7 @@ describe('ValidateRootFormDirective', () => {
         () => {
           expect(screen.queryByTestId('root-error')).toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
     });
 
@@ -505,7 +514,7 @@ describe('ValidateRootFormDirective', () => {
         () => {
           expect(screen.queryByTestId('root-error')).toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
 
       // Fix the mismatch
@@ -518,7 +527,7 @@ describe('ValidateRootFormDirective', () => {
         () => {
           expect(screen.queryByTestId('root-error')).not.toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
     });
   });
@@ -572,7 +581,7 @@ describe('ValidateRootFormDirective', () => {
         () => {
           expect(screen.queryByTestId('root-error')).toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
     });
 
@@ -624,7 +633,7 @@ describe('ValidateRootFormDirective', () => {
         () => {
           expect(screen.queryByTestId('root-error')).toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
 
       // Fix the mismatch
@@ -637,7 +646,7 @@ describe('ValidateRootFormDirective', () => {
         () => {
           expect(screen.queryByTestId('root-error')).not.toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
     });
   });

@@ -20,8 +20,7 @@ let nextUniqueId = 0;
  * For single inputs, prefer `<ngx-control-wrapper>`.
  */
 @Component({
-  selector:
-    'ngx-form-group-wrapper, sc-form-group-wrapper, [ngxFormGroupWrapper], [scFormGroupWrapper]',
+  selector: 'ngx-form-group-wrapper, [ngxFormGroupWrapper]',
   exportAs: 'ngxFormGroupWrapper',
   templateUrl: './form-group-wrapper.component.html',
   // Minimal structural styling: custom elements are inline by default.
@@ -32,7 +31,7 @@ let nextUniqueId = 0;
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    class: 'ngx-form-group-wrapper sc-form-group-wrapper',
+    class: 'ngx-form-group-wrapper',
     '[class.ngx-form-group-wrapper--invalid]':
       'errorDisplay.shouldShowErrors()',
     '[attr.aria-busy]': "errorDisplay.isPending() ? 'true' : null",

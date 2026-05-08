@@ -68,6 +68,8 @@ Read `core/SKILL.md` when the user is:
 - asking for a proper example
 - unsure how to structure a component around ngx-vest-forms
 - asking about `NgxDeepPartial`, form shapes, or signal-based form state
+- writing tests for a form/Vest suite, asking about `staticSuite`, `runStatic`,
+  resetting stateful suites between tests, or "tests pass locally but fail in CI"
 
 ### Dependent field revalidation
 
@@ -93,7 +95,7 @@ Read `root-form-validation/SKILL.md` when the user is:
 
 - asking for a message that belongs to the entire form
 - comparing `ROOT_FORM` versus field-level validation
-- working with `ngxValidateRootForm` or `validateRootFormMode`
+- working with `ngxValidateRootForm` or `ngxValidateRootFormMode`
 
 ### Built-in wrappers
 

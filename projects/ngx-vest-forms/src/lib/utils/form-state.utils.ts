@@ -1,7 +1,7 @@
 import { computed, type Signal } from '@angular/core';
 
 /**
- * Packaged snapshot of the current form state exposed by the form directive.
+ * Packaged snapshot of the current form state exposed by the ngxVestForm directive.
  *
  * This shape is intentionally presentation-friendly: it combines the latest
  * validity flag, field-level errors, and the merged form value in one object so

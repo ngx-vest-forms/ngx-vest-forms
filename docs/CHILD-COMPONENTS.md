@@ -275,7 +275,7 @@ Child components can contain other child components - all need `vestFormsViewPro
   imports: [NgxVestForms],
   viewProviders: [vestFormsViewProviders], // Required
   template: `
-    <div ngx-control-wrapper>
+    <ngx-control-wrapper>
       <label [for]="fieldName()">{{ label() }}</label>
       <input
         [id]="fieldName()"
@@ -283,7 +283,7 @@ Child components can contain other child components - all need `vestFormsViewPro
         type="tel"
         [ngModel]="value()"
       />
-    </div>
+    </ngx-control-wrapper>
   `,
 })
 export class PhoneInputComponent {

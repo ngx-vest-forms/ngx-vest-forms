@@ -65,13 +65,13 @@ async function compileStandaloneComponent(
 describe('ValidateRootFormDirective (template compilation)', () => {
   afterEach(() => TestBed.resetTestingModule());
 
-  it('compiles templates that use validateRootForm attribute', async () => {
+  it('compiles templates that use ngxValidateRootForm attribute', async () => {
     @Component({
       imports: [NgxVestForms],
       template: `
         <form
-          scVestForm
-          validateRootForm
+          ngxVestForm
+          ngxValidateRootForm
           [suite]="suite"
           [formValue]="formValue()"
           (formValueChange)="formValue.set($event)"
@@ -94,14 +94,14 @@ describe('ValidateRootFormDirective (template compilation)', () => {
     ).resolves.toBeUndefined();
   });
 
-  it('compiles templates that bind validateRootForm inputs', async () => {
+  it('compiles templates that bind ngxValidateRootForm inputs', async () => {
     @Component({
       imports: [NgxVestForms],
       template: `
         <form
-          scVestForm
-          [validateRootForm]="shouldValidate()"
-          [validateRootFormMode]="mode"
+          ngxVestForm
+          [ngxValidateRootForm]="shouldValidate()"
+          [ngxValidateRootFormMode]="mode"
           [suite]="suite"
           [formValue]="formValue()"
           (formValueChange)="formValue.set($event)"
@@ -157,16 +157,16 @@ describe('ValidateRootFormDirective (template compilation)', () => {
       imports: [NgxVestForms],
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [formShape]="shape"
           [suite]="suite"
-          [validateRootForm]="true"
+          [ngxValidateRootForm]="true"
           (formValueChange)="formValue.set($event)"
           (validChange)="formValid.set($event)"
           (ngSubmit)="onSubmit()"
         >
-          <div class="w-full" ngModelGroup="generalInfo" ngx-control-wrapper>
-            <div ngx-control-wrapper>
+          <ngx-form-group-wrapper class="w-full" [ngModelGroup]="'generalInfo'">
+            <ngx-control-wrapper>
               <label for="name">First name</label>
               <input
                 id="name"
@@ -175,8 +175,8 @@ describe('ValidateRootFormDirective (template compilation)', () => {
                 name="generalInfo.firstName"
                 [ngModel]="formValue().generalInfo?.firstName"
               />
-            </div>
-          </div>
+            </ngx-control-wrapper>
+          </ngx-form-group-wrapper>
           <p>Valid: {{ formValid() }}</p>
         </form>
       `,

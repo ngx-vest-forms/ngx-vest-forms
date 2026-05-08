@@ -13,9 +13,9 @@ import { FormErrorControlDirective } from './form-error-control.directive';
       <p id="hint">Hint text</p>
 
       <div
-        formErrorControl
+        ngxErrorControl
         [ariaAssociationMode]="ariaMode"
-        #ec="formErrorControl"
+        #ec="ngxErrorControl"
       >
         <input
           id="test"
@@ -53,9 +53,9 @@ class TestHostComponent {
       <p id="hint">Hint text</p>
 
       <div
-        formErrorControl
+        ngxErrorControl
         [ariaAssociationMode]="ariaMode"
-        #ec="formErrorControl"
+        #ec="ngxErrorControl"
       >
         <input
           id="a"
@@ -101,7 +101,7 @@ class TestErrorControlWrapperComponent {}
       <p id="hint">Hint text</p>
 
       <ngx-test-error-control-wrapper
-        #ec="formErrorControl"
+        #ec="ngxErrorControl"
         [errorDisplayMode]="mode"
       >
         <label for="host-test">Test</label>
@@ -132,7 +132,7 @@ class TestHostDirectiveComponent {
       <button type="button" (click)="toggle()">Toggle</button>
 
       @if (showWrapper) {
-        <div formErrorControl #ec="formErrorControl">
+        <div ngxErrorControl #ec="ngxErrorControl">
           <label for="dynamic">Dynamic</label>
           <input id="dynamic" name="dynamic" [(ngModel)]="model" required />
           <div data-testid="dynamic-error-region" [id]="ec.errorId">

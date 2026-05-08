@@ -836,9 +836,13 @@ describe('FormDirective - Signals/Outputs', () => {
       readonly formValue = signal<{ projectName?: string }>({
         projectName: '',
       });
-      readonly blurEvents = signal<Array<NgxFieldBlurEvent<{ projectName?: string }>>>([]);
+      readonly blurEvents = signal<
+        Array<NgxFieldBlurEvent<{ projectName?: string }>>
+      >([]);
 
-      handleFieldBlur(event: NgxFieldBlurEvent<{ projectName?: string }>): void {
+      handleFieldBlur(
+        event: NgxFieldBlurEvent<{ projectName?: string }>
+      ): void {
         this.blurEvents.update((events) => [...events, event]);
       }
     }
@@ -901,7 +905,9 @@ describe('FormDirective - Signals/Outputs', () => {
       readonly formValue = signal<{ projectName?: string }>({
         projectName: '',
       });
-      readonly blurEvents = signal<Array<NgxFieldBlurEvent<{ projectName?: string }>>>([]);
+      readonly blurEvents = signal<
+        Array<NgxFieldBlurEvent<{ projectName?: string }>>
+      >([]);
 
       delayFormValueUpdate(value: { projectName?: string }): void {
         setTimeout(() => {
@@ -909,7 +915,9 @@ describe('FormDirective - Signals/Outputs', () => {
         }, 0);
       }
 
-      handleFieldBlur(event: NgxFieldBlurEvent<{ projectName?: string }>): void {
+      handleFieldBlur(
+        event: NgxFieldBlurEvent<{ projectName?: string }>
+      ): void {
         this.blurEvents.update((events) => [...events, event]);
       }
     }
@@ -1026,8 +1034,7 @@ describe('FormDirective - Signals/Outputs', () => {
     await Promise.resolve();
     fixture.detectChanges();
 
-    const blurEvent = fixture
-      .componentInstance
+    const blurEvent = fixture.componentInstance
       .blurEvents()
       .find((event) => event.field === 'projectName');
 
@@ -1119,7 +1126,8 @@ describe('FormDirective - Signals/Outputs', () => {
               type="radio"
               name="gender"
               value="female"
-              [ngModel]="formValue().gender" />Female</label
+              [ngModel]="formValue().gender"
+            />Female</label
           >
           <label
             ><input
@@ -1127,7 +1135,8 @@ describe('FormDirective - Signals/Outputs', () => {
               type="radio"
               name="gender"
               value="male"
-              [ngModel]="formValue().gender" />Male</label
+              [ngModel]="formValue().gender"
+            />Male</label
           >
         </form>
       `,
@@ -1150,7 +1159,9 @@ describe('FormDirective - Signals/Outputs', () => {
       '#male'
     ) as HTMLInputElement;
     // The "male" radio is focused but NOT checked — the bound value remains "female".
-    unselectedRadio.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    unselectedRadio.dispatchEvent(
+      new FocusEvent('focusout', { bubbles: true })
+    );
     await Promise.resolve();
     fixture.detectChanges();
 
@@ -1176,19 +1187,11 @@ describe('FormDirective - Signals/Outputs', () => {
         >
           <div ngModelGroup="from">
             <label for="from-day">From day</label>
-            <input
-              id="from-day"
-              name="day"
-              [ngModel]="formValue().from?.day"
-            />
+            <input id="from-day" name="day" [ngModel]="formValue().from?.day" />
           </div>
           <div ngModelGroup="to">
             <label for="to-day">To day</label>
-            <input
-              id="to-day"
-              name="day"
-              [ngModel]="formValue().to?.day"
-            />
+            <input id="to-day" name="day" [ngModel]="formValue().to?.day" />
           </div>
         </form>
       `,
@@ -1387,9 +1390,9 @@ describe('FormDirective - clearSubmittedState', () => {
     template: `
       <form ngxVestForm #vest="ngxVestForm">
         <input
-          formErrorDisplay
+          ngxErrorDisplay
           [errorDisplayMode]="'on-submit'"
-          #display="formErrorDisplay"
+          #display="ngxErrorDisplay"
           name="username"
           [ngModel]="model"
           required
@@ -2076,7 +2079,11 @@ describe('FormDirective - Destroy-aware async scheduling', () => {
           [formValue]="formValue()"
           #vest="ngxVestForm"
         >
-          <input name="username" [ngModel]="formValue().username" [validationOptions]="{ debounceTime: 200 }" />
+          <input
+            name="username"
+            [ngModel]="formValue().username"
+            [validationOptions]="{ debounceTime: 200 }"
+          />
         </form>
       `,
     })
@@ -2123,7 +2130,10 @@ describe('FormDirective - Destroy-aware async scheduling', () => {
           #vest="ngxVestForm"
         >
           <input name="password" [ngModel]="formValue().password" />
-          <input name="confirmPassword" [ngModel]="formValue().confirmPassword" />
+          <input
+            name="confirmPassword"
+            [ngModel]="formValue().confirmPassword"
+          />
         </form>
       `,
     })

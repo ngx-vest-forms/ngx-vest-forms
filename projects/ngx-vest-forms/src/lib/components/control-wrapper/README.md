@@ -16,20 +16,14 @@ Use one wrapper per control:
 
 For `ngModelGroup` containers, prefer using `ngx-form-group-wrapper` (it renders group-level regions and does **not** stamp ARIA onto descendant controls).
 
-## Selectors (legacy + modern)
+## Selectors
 
-All of these selectors are currently supported for compatibility:
+Supported selectors:
 
-- Elements: `<ngx-control-wrapper>`, `<sc-control-wrapper>`
-- Attributes: `[ngxControlWrapper]`, `[scControlWrapper]`
-- Kebab attributes: `[ngx-control-wrapper]`, `[sc-control-wrapper]`
+- Elements: `<ngx-control-wrapper>`
+- Attributes: `[ngxControlWrapper]`
 
-The host element automatically receives both CSS classes:
-
-- `ngx-control-wrapper`
-- `sc-control-wrapper`
-
-The `sc-` prefix remains deprecated; prefer `ngx-` in new code.
+The host element automatically receives the `ngx-control-wrapper` CSS class.
 
 ## Public inputs
 
@@ -86,27 +80,6 @@ Accepted values:
 - `ngModelGroup` containers: prefer **`ngx-form-group-wrapper`** instead of using `ngx-control-wrapper` as a group wrapper.
 - Multi-control container (advanced/custom): use `ariaAssociationMode="none"` and wire ARIA explicitly.
 
-### `ariaRequired`
-
-Explicitly applies `aria-required="true"` to associated descendant controls.
-
-- Default: `false`
-- Intended for controls that are semantically always required
-- Not inferred from Vest validation rules
-- Prefer adding native `required` as well when the control is always required
-
-Example:
-
-```html
-<ngx-control-wrapper ariaRequired>
-  <label for="email">Email</label>
-  <input id="email" name="email" [ngModel]="formValue().email" />
-</ngx-control-wrapper>
-```
-
-Use this when you want the wrapper to own required-state ARIA without manually stamping
-the input element itself.
-
 ## Rendering and styling behavior
 
 This component always keeps its message regions stable in the DOM (to improve announcement reliability), but only renders message content when relevant.
@@ -150,4 +123,3 @@ When ARIA stamping is enabled (anything except `"none"`), the wrapper:
 
 - [Accessibility Guide](../../../../../../docs/ACCESSIBILITY.md)
 - [Custom Control Wrappers](../../../../../../docs/CUSTOM-CONTROL-WRAPPERS.md)
-- [Dual selector support](../../../../../../docs/DUAL-SELECTOR-SUPPORT.md)

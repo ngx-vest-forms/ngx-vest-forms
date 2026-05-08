@@ -168,8 +168,8 @@ export type NgxFieldBlurEvent<T = unknown> = {
  * @publicApi
  */
 @Directive({
-  selector: 'form[scVestForm], form[ngxVestForm]',
-  exportAs: 'scVestForm, ngxVestForm',
+  selector: 'form[ngxVestForm]',
+  exportAs: 'ngxVestForm',
   host: {
     '(focusout)': 'onFormFocusOut($event)',
   },
