@@ -1,9 +1,13 @@
 import { ApplicationRef } from '@angular/core';
+import { Component, signal, viewChild } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { OmitWhenValidationConfigComponent } from './omit-when-with-validation-config.stories';
+import type { NgxDeepPartial } from '../../public-api';
+import { FormDirective } from '../directives/form.directive';
+import { NgxVestForms } from '../exports';
 
 const REQUIRED_AANTAL_MESSAGE =
   'Aantal is verplicht wanneer onderbouwing is ingevuld';
@@ -19,6 +23,187 @@ const selectors = {
   btnClearAantal: 'btn__clear-aantal',
   btnClearOnderbouwing: 'btn__clear-onderbouwing',
 } as const;
+
+type OmitWhenFormModel = NgxDeepPartial<{
+  berekendeAftrekVoorarrest: {
+    aantal: number;
+    onderbouwing: string;
+  };
+}>;
+
+const omitWhenValidationSuite = staticSuite(
+  (model: OmitWhenFormModel, field?: string) => {
+    only(field);
+
+    omitWhen(!model.berekendeAftrekVoorarrest?.aantal, () => {
+      test(
+        'berekendeAftrekVoorarrest.onderbouwing',
+        REQUIRED_ONDERBOUWING_MESSAGE,
+        () => {
+          enforce(model.berekendeAftrekVoorarrest?.onderbouwing).isNotBlank();
+        }
+      );
+    });
+
+    omitWhen(!model.berekendeAftrekVoorarrest?.onderbouwing, () => {
+      test(
+        'berekendeAftrekVoorarrest.aantal',
+        REQUIRED_AANTAL_MESSAGE,
+        () => {
+          enforce(model.berekendeAftrekVoorarrest?.aantal).isNotEmpty();
+        }
+      );
+    });
+  }
+);
+
+const formShape: OmitWhenFormModel = {
+  berekendeAftrekVoorarrest: {
+    aantal: 0,
+    onderbouwing: '',
+  },
+};
+
+@Component({
+  imports: [NgxVestForms],
+  template: `
+    <div class="p-4">
+      <form
+        #vestForm="ngxVestForm"
+        ngxVestForm
+        (ngSubmit)="save()"
+        [formValue]="formValue()"
+        [formShape]="shape"
+        [validationConfig]="validationConfig"
+        [suite]="suite"
+        (formValueChange)="setFormValue($event)"
+        class="space-y-4"
+      >
+        <div ngModelGroup="berekendeAftrekVoorarrest">
+          <div
+            class="w-full"
+            ngx-control-wrapper
+            [attr.data-testid]="selectors.ngxControlWrapperAantal"
+          >
+            <label class="block">
+              <span class="text-sm font-medium">Aantal</span>
+              <input
+                placeholder="Voer aantal in"
+                [attr.data-testid]="selectors.inputAantal"
+                type="number"
+                [ngModel]="formValue().berekendeAftrekVoorarrest?.aantal"
+                name="aantal"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+              />
+            </label>
+          </div>
+
+          <div
+            class="w-full"
+            ngx-control-wrapper
+            [attr.data-testid]="selectors.ngxControlWrapperOnderbouwing"
+          >
+            <label class="block">
+              <span class="text-sm font-medium">Onderbouwing</span>
+              <textarea
+                placeholder="Voer onderbouwing in"
+                [attr.data-testid]="selectors.inputOnderbouwing"
+                [ngModel]="formValue().berekendeAftrekVoorarrest?.onderbouwing"
+                name="onderbouwing"
+                rows="3"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+              ></textarea>
+            </label>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <button
+            [attr.data-testid]="selectors.btnSubmit"
+            type="submit"
+            class="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          >
+            Submit
+          </button>
+          <button
+            [attr.data-testid]="selectors.btnClearAantal"
+            type="button"
+            (click)="clearAantal()"
+            class="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
+          >
+            Clear Aantal
+          </button>
+          <button
+            [attr.data-testid]="selectors.btnClearOnderbouwing"
+            type="button"
+            (click)="clearOnderbouwing()"
+            class="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
+          >
+            Clear Onderbouwing
+          </button>
+        </div>
+      </form>
+    </div>
+  `,
+})
+class OmitWhenValidationConfigComponent {
+  private readonly vestFormRef = viewChild.required('vestForm', {
+    read: FormDirective,
+  });
+
+  protected readonly formValue = signal<OmitWhenFormModel>({});
+  protected readonly shape = formShape;
+  protected readonly suite = omitWhenValidationSuite;
+  protected readonly selectors = selectors;
+  protected readonly validationConfig = {
+    'berekendeAftrekVoorarrest.aantal': [
+      'berekendeAftrekVoorarrest.onderbouwing',
+    ],
+    'berekendeAftrekVoorarrest.onderbouwing': [
+      'berekendeAftrekVoorarrest.aantal',
+    ],
+  };
+
+  protected setFormValue(v: OmitWhenFormModel): void {
+    this.formValue.set(v);
+  }
+
+  protected clearAantal(): void {
+    this.formValue.update((v) => ({
+      ...v,
+      berekendeAftrekVoorarrest: {
+        ...v.berekendeAftrekVoorarrest,
+        aantal: null as any,
+      },
+    }));
+    const aantalControl = this.vestFormRef().ngForm.form.get(
+      'berekendeAftrekVoorarrest.aantal'
+    );
+    if (aantalControl) {
+      aantalControl.setValue(null, { emitEvent: true });
+    }
+    this.vestFormRef().resetForm(this.formValue());
+  }
+
+  protected clearOnderbouwing(): void {
+    this.formValue.update((v) => ({
+      ...v,
+      berekendeAftrekVoorarrest: {
+        ...v.berekendeAftrekVoorarrest,
+        onderbouwing: '' as any,
+      },
+    }));
+    const onderbouwingControl = this.vestFormRef().ngForm.form.get(
+      'berekendeAftrekVoorarrest.onderbouwing'
+    );
+    if (onderbouwingControl) {
+      onderbouwingControl.setValue('', { emitEvent: true });
+    }
+    this.vestFormRef().resetForm(this.formValue());
+  }
+
+  protected save(): void {}
+}
 
 const waitForValidationCycle = async (): Promise<void> => {
   await TestBed.inject(ApplicationRef).whenStable();
