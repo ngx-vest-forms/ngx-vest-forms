@@ -57,6 +57,7 @@ import { NGX_EQUALITY_FN } from '../tokens/equality.token';
 import type { NgxDeepRequired } from '../utils/deep-required';
 import { scheduleMicrotask, scheduleTimeout } from '../utils/destroy-scheduler';
 import type { ValidationConfigMap } from '../utils/field-path-types';
+import { collectTouchedPaths } from '../utils/collect-touched-paths';
 import { stringifyFieldPath } from '../utils/field-path.utils';
 import {
   DEFAULT_FOCUS_SELECTOR,
@@ -274,7 +275,7 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly touchedFieldPaths = computed(() => {
     this.#blurTick();
     this.#statusSignal();
-    return this.#collectTouchedPaths(this.ngForm.form, this.ngForm.submitted);
+    return collectTouchedPaths(this.ngForm.form, this.ngForm.submitted);
   });
 
   /**
@@ -1668,39 +1669,6 @@ export class FormDirective<T extends Record<string, unknown>> {
     );
   }
 
-  /**
-   * Collects field paths of all touched (or submitted) leaf controls
-   * by walking the form control tree.
-   */
-  #collectTouchedPaths(control: AbstractControl, submitted: boolean): string[] {
-    const fields: string[] = [];
-
-    const collect = (
-      current: AbstractControl,
-      path: Array<string | number>
-    ): void => {
-      if (current instanceof FormGroup) {
-        for (const [name, child] of Object.entries(current.controls)) {
-          collect(child, [...path, name]);
-        }
-        return;
-      }
-
-      if (current instanceof FormArray) {
-        current.controls.forEach((child, index) => {
-          collect(child, [...path, index]);
-        });
-        return;
-      }
-
-      if ((submitted || current.touched) && path.length > 0) {
-        fields.push(stringifyFieldPath(path));
-      }
-    };
-
-    collect(control, []);
-    return fields;
-  }
 }
 
 /**
