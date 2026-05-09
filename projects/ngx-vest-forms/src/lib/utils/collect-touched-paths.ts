@@ -1,40 +1,47 @@
 import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
 import { stringifyFieldPath } from './field-path.utils';
 
+type FieldPathSegment = string | number;
+
 /**
  * @internal
- * Collects field paths for all touched leaf controls, or all leaf controls once
- * the form has been submitted.
+ * Collects field paths for all touched leaf controls, or all leaf controls
+ * once the form has been submitted.
+ *
+ * Walks the control tree iteratively over a shared segment stack, so each
+ * leaf path costs O(1) extra allocation instead of O(depth).
  */
 export function collectTouchedPaths(
   form: AbstractControl,
   submitted: boolean
 ): readonly string[] {
   const fields: string[] = [];
+  const segments: FieldPathSegment[] = [];
 
-  const collect = (
-    control: AbstractControl,
-    path: Array<string | number>
-  ): void => {
+  const visit = (control: AbstractControl): void => {
     if (control instanceof FormGroup) {
       for (const [name, child] of Object.entries(control.controls)) {
-        collect(child, [...path, name]);
+        segments.push(name);
+        visit(child);
+        segments.pop();
       }
       return;
     }
 
     if (control instanceof FormArray) {
-      control.controls.forEach((child, index) => {
-        collect(child, [...path, index]);
-      });
+      for (const [index, child] of control.controls.entries()) {
+        segments.push(index);
+        visit(child);
+        segments.pop();
+      }
       return;
     }
 
-    if ((submitted || control.touched) && path.length > 0) {
-      fields.push(stringifyFieldPath(path));
+    if ((submitted || control.touched) && segments.length > 0) {
+      fields.push(stringifyFieldPath(segments));
     }
   };
 
-  collect(form, []);
+  visit(form);
   return fields;
 }
