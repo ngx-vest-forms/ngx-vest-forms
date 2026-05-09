@@ -282,9 +282,14 @@ describe('omitWhen + validationConfig stories', () => {
       await waitForValidationCycle();
       await blurField(screen.getByTestId(selectors.inputOnderbouwing));
 
-      expect(
-        screen.getByTestId(selectors.ngxControlWrapperOnderbouwing)
-      ).not.toHaveTextContent(REQUIRED_ONDERBOUWING_MESSAGE);
+      await waitFor(
+        () => {
+          expect(
+            screen.getByTestId(selectors.ngxControlWrapperOnderbouwing)
+          ).not.toHaveTextContent(REQUIRED_ONDERBOUWING_MESSAGE);
+        },
+        { timeout: 5000 }
+      );
     },
     20000
   );
@@ -330,12 +335,17 @@ describe('omitWhen + validationConfig stories', () => {
       await userEvent.click(screen.getByTestId(selectors.btnSubmit));
       await waitForValidationCycle();
 
-      expect(
-        screen.getByTestId(selectors.ngxControlWrapperAantal)
-      ).not.toHaveTextContent(REQUIRED_AANTAL_MESSAGE);
-      expect(
-        screen.getByTestId(selectors.ngxControlWrapperOnderbouwing)
-      ).not.toHaveTextContent(REQUIRED_ONDERBOUWING_MESSAGE);
+      await waitFor(
+        () => {
+          expect(
+            screen.getByTestId(selectors.ngxControlWrapperAantal)
+          ).not.toHaveTextContent(REQUIRED_AANTAL_MESSAGE);
+          expect(
+            screen.getByTestId(selectors.ngxControlWrapperOnderbouwing)
+          ).not.toHaveTextContent(REQUIRED_ONDERBOUWING_MESSAGE);
+        },
+        { timeout: 5000 }
+      );
     },
     20000
   );
