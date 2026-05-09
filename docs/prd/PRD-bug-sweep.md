@@ -110,7 +110,7 @@ The library uses Vitest + Angular TestBed. See existing `*.spec.ts` files adjace
 - Migrating the library from template-driven forms to Angular signal forms (separate PRD; major architectural shift).
 - Replacing `NgForm._directives` and CVA `_elementRef` private-API usage. Tracked separately; document with TODOs in this PRD's PRs.
 - Branded `FieldPath` type as a **public** API change.
-- Storybook / docs-site updates beyond CHANGELOG entries.
+- Example/demo documentation updates beyond CHANGELOG entries.
 - Performance benchmarking of `fastDeepEqual` after cycle-tracking changes (worth a follow-up if hot-path regressions surface).
 - Items not in the original bug review (no scope creep).
 

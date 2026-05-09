@@ -837,9 +837,10 @@ it('should validate root form after submit', () => {
 });
 ```
 
-### Storybook/Integration Tests
+### Browser Integration Tests
 
-Update test assertions to trigger form submission:
+Update browser-spec assertions to trigger form submission. These scenarios now
+run with the Vitest browser suite (`npm run test:lib`) instead of Storybook:
 
 ```typescript
 // Before
@@ -916,9 +917,9 @@ it('validates root form after submit', () => {
 });
 ```
 
-### Storybook and E2E Test Updates
+### Browser Test and E2E Updates
 
-**Update test assertions:**
+**Update browser-test assertions:**
 
 ```typescript
 // Before

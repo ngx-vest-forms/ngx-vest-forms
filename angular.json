@@ -41,25 +41,6 @@
             "eslintConfig": "projects/ngx-vest-forms/eslint.config.mjs"
           }
         },
-        "storybook": {
-          "builder": "@storybook/angular:start-storybook",
-          "options": {
-            "configDir": "projects/ngx-vest-forms/.storybook",
-            "port": 6006,
-            "styles": ["projects/ngx-vest-forms/.storybook/styles.scss"],
-            "compodoc": false,
-            "experimentalZoneless": true
-          }
-        },
-        "build-storybook": {
-          "builder": "@storybook/angular:build-storybook",
-          "options": {
-            "configDir": "projects/ngx-vest-forms/.storybook",
-            "outputDir": "dist/storybook/ngx-vest-forms",
-            "compodoc": false,
-            "experimentalZoneless": true
-          }
-        },
         "e2e": {
           "builder": "playwright-ng-schematics:playwright",
           "options": {
