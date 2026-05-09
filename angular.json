@@ -45,8 +45,8 @@
           "builder": "@storybook/angular:start-storybook",
           "options": {
             "configDir": "projects/ngx-vest-forms/.storybook",
-            "port": 6006,
             "browserTarget": "examples:build:development",
+            "port": 6006,
             "assets": [],
             "styles": ["projects/ngx-vest-forms/.storybook/styles.scss"],
             "compodoc": false,
