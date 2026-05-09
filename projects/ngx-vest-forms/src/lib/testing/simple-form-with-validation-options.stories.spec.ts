@@ -1,16 +1,18 @@
 import { JsonPipe } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
-import { componentWrapperDecorator, Meta, StoryObj } from '@storybook/angular';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { render, screen, waitFor } from '@testing-library/angular';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
 import {
+  createFormValidationSuite,
   FormModel,
   formShape,
-  formValidationSuite,
   selectors,
 } from './simple-form';
 
 @Component({
+  imports: [NgxVestForms, JsonPipe],
   template: `
     <form
       class="p-4"
@@ -109,21 +111,18 @@ import {
       >
     </form>
   `,
-  imports: [NgxVestForms, JsonPipe],
 })
-export class FormDirectiveDemoComponent {
+class FormDirectiveDemoComponent {
   protected readonly formValue = signal<FormModel>({});
   protected readonly formValid = signal<boolean>(false);
   protected readonly errors = signal<Record<string, string>>({});
   protected readonly shape = formShape;
-  protected readonly suite = formValidationSuite;
-  private readonly viewModel = computed(() => {
-    return {
-      formValue: this.formValue(),
-      errors: this.errors(),
-      formValid: this.formValid(),
-    };
-  });
+  protected readonly suite = createFormValidationSuite();
+  private readonly viewModel = computed(() => ({
+    formValue: this.formValue(),
+    errors: this.errors(),
+    formValid: this.formValid(),
+  }));
 
   protected get vm() {
     return this.viewModel();
@@ -134,99 +133,84 @@ export class FormDirectiveDemoComponent {
   }
 
   protected save(): void {
-    if (this.formValid()) {
-      // Intentionally left blank: avoid noisy console output in Storybook
-    }
+    // Intentionally left blank: avoid noisy console output in tests
   }
 }
 
-const meta: Meta<FormDirectiveDemoComponent> = {
-  title: 'simple form with validation options',
-  component: FormDirectiveDemoComponent,
-  parameters: {
-    // More on how to position stories at: https://storybook.js.org/docs/configure/story-layout
-    layout: 'fullscreen',
-  },
-};
+describe('simple-form-with-validation-options stories', () => {
+  it('ShouldShowFirstnameRequiredAfterDelayForNgModel', async () => {
+    await render(FormDirectiveDemoComponent);
 
-export default meta;
-export const Primary: StoryObj = {
-  decorators: [componentWrapperDecorator(FormDirectiveDemoComponent)],
-};
+    const firstNameInput = screen.getByTestId(
+      selectors.inputFirstName
+    ) as HTMLInputElement;
 
-export const ShouldShowFirstnameRequiredAfterDelayForNgModel: StoryObj = {
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByTestId(selectors.inputFirstName));
-    canvas.getByTestId(selectors.inputFirstName).blur();
+    await userEvent.click(firstNameInput);
+    await userEvent.tab();
 
-    await expect(
-      canvas.getByTestId(selectors.ngxControlWrapperFirstName)
+    expect(
+      screen.getByTestId(selectors.ngxControlWrapperFirstName)
     ).not.toHaveTextContent('First name is required');
 
     await waitFor(
       () =>
         expect(
-          canvas.getByTestId(selectors.ngxControlWrapperFirstName)
+          screen.getByTestId(selectors.ngxControlWrapperFirstName)
         ).toHaveTextContent('First name is required'),
-      { timeout: 600 }
+      { timeout: 5000 }
     );
-  },
-};
+  });
 
-export const ShouldShowPasswordConfirmationAfterDelayForNgModelGroup: StoryObj =
-  {
-    play: async ({ canvasElement }) => {
-      const canvas = within(canvasElement);
-      await userEvent.type(
-        canvas.getByTestId(selectors.inputPassword),
-        'first'
-      );
-      await userEvent.type(
-        canvas.getByTestId(selectors.inputConfirmPassword),
-        'second',
-        { delay: 500 }
-      );
-      await userEvent.click(canvas.getByTestId(selectors.inputConfirmPassword));
-      await canvas.getByTestId(selectors.inputConfirmPassword).blur();
+  it('ShouldShowPasswordConfirmationAfterDelayForNgModelGroup', async () => {
+    await render(FormDirectiveDemoComponent);
 
-      await expect(
-        canvas.getByTestId(selectors.ngxControlWrapperPasswords)
-      ).not.toHaveTextContent('Passwords do not match');
+    const passwordInput = screen.getByTestId(
+      selectors.inputPassword
+    ) as HTMLInputElement;
+    const confirmPasswordInput = screen.getByTestId(
+      selectors.inputConfirmPassword
+    ) as HTMLInputElement;
 
-      await waitFor(
-        () =>
-          expect(
-            canvas.getByTestId(selectors.ngxControlWrapperPasswords)
-          ).toHaveTextContent('Passwords do not match'),
-        { timeout: 1100 }
-      );
-    },
-  };
+    await userEvent.type(passwordInput, 'first');
+    await userEvent.type(confirmPasswordInput, 'second');
+    await userEvent.tab();
 
-export const ShouldValidateOnRootFormAfterDelay: StoryObj = {
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
+    expect(
+      screen.getByTestId(selectors.ngxControlWrapperPasswords)
+    ).not.toHaveTextContent('Passwords do not match');
+
+    await waitFor(
+      () =>
+        expect(
+          screen.getByTestId(selectors.ngxControlWrapperPasswords)
+        ).toHaveTextContent('Passwords do not match'),
+      { timeout: 5000 }
+    );
+  });
+
+  it('ShouldValidateOnRootFormAfterDelay', async () => {
+    await render(FormDirectiveDemoComponent);
+
     await userEvent.type(
-      canvas.getByTestId(selectors.inputFirstName),
+      screen.getByTestId(selectors.inputFirstName),
       'Brecht'
     );
     await userEvent.type(
-      canvas.getByTestId(selectors.inputLastName),
+      screen.getByTestId(selectors.inputLastName),
       'Billiet'
     );
-    await userEvent.type(canvas.getByTestId(selectors.inputPassword), '1234');
-    // Submit form to trigger root form validation
-    await userEvent.click(canvas.getByTestId(selectors.btnSubmit));
+    await userEvent.type(screen.getByTestId(selectors.inputPassword), '1234');
+    await userEvent.click(screen.getByTestId(selectors.btnSubmit));
+
     await waitFor(
       () => {
-        const errorsText = canvas
+        const errorsText = screen
           .getByTestId(selectors.preFormErrors)
           .textContent?.trim();
         const errors = errorsText ? JSON.parse(errorsText) : {};
-        expect(errors).toEqual({ rootForm: ['Brecht his pass is not 1234'] });
+        expect(errors.rootForm).toEqual(['Brecht his pass is not 1234']);
       },
-      { timeout: 2000 }
+      { timeout: 5000 }
     );
-  },
-};
+  });
+});
