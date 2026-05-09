@@ -15,7 +15,6 @@ import {
 } from 'ngx-vest-forms';
 import { BusinessHoursFormModel } from '../../models/business-hours-form.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
-import { Card } from '../../ui/card/card.component';
 import {
   BusinessHoursComponent,
   BusinessHoursMap,
@@ -23,7 +22,7 @@ import {
 
 @Component({
   selector: 'ngx-business-hours-form-body',
-  imports: [NgxVestForms, BusinessHoursComponent, Card, AlertPanel],
+  imports: [NgxVestForms, BusinessHoursComponent, AlertPanel],
   templateUrl: './business-hours.form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
