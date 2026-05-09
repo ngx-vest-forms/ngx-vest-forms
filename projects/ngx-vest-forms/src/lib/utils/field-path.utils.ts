@@ -117,7 +117,9 @@ export function parseFieldPath(path: string): Array<string | number> {
  * // 'users[0].addresses[1].street'
  * ```
  */
-export function stringifyFieldPath(path: Array<string | number>): string {
+export function stringifyFieldPath(
+  path: ReadonlyArray<string | number>
+): string {
   if (!path || path.length === 0) return '';
 
   let result = '';
