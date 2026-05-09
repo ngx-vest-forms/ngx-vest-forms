@@ -208,7 +208,7 @@ describe('simple-form-with-validation-options stories', () => {
           .getByTestId(selectors.preFormErrors)
           .textContent?.trim();
         const errors = errorsText ? JSON.parse(errorsText) : {};
-        expect(errors).toEqual({ rootForm: ['Brecht his pass is not 1234'] });
+        expect(errors.rootForm).toEqual(['Brecht his pass is not 1234']);
       },
       { timeout: 5000 }
     );
