@@ -118,7 +118,7 @@ export function parseFieldPath(path: string): Array<string | number> {
  * ```
  */
 export function stringifyFieldPath(
-  path: readonly (string | number)[]
+  path: ReadonlyArray<string | number>
 ): string {
   if (!path || path.length === 0) return '';
 

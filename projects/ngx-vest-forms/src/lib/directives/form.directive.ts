@@ -23,7 +23,6 @@ import {
 import {
   AbstractControl,
   AsyncValidatorFn,
-  FormArray,
   FormGroup,
   NgForm,
   PristineChangeEvent,
@@ -56,7 +55,6 @@ import type { NgxDeepRequired } from '../utils/deep-required';
 import { scheduleMicrotask, scheduleTimeout } from '../utils/destroy-scheduler';
 import type { ValidationConfigMap } from '../utils/field-path-types';
 import { collectTouchedPaths } from '../utils/collect-touched-paths';
-import { stringifyFieldPath } from '../utils/field-path.utils';
 import {
   DEFAULT_FOCUS_SELECTOR,
   DEFAULT_INVALID_SELECTOR,
