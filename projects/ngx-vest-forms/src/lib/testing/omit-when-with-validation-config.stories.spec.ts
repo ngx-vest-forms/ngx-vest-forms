@@ -178,6 +178,11 @@ class OmitWhenValidationConfigComponent {
     if (aantalControl) {
       aantalControl.setValue(null, { emitEvent: true });
     }
+    // Clearing aantal moves the onderbouwing test into an omitWhen branch.
+    // Vest retains the prior result of an omitted test, so without an
+    // explicit resetField the wrapper would keep showing a stale "required"
+    // error from the time aantal had a value.
+    this.suite.resetField('berekendeAftrekVoorarrest.onderbouwing');
     this.vestFormRef().resetForm(this.formValue());
   }
 
@@ -195,6 +200,9 @@ class OmitWhenValidationConfigComponent {
     if (onderbouwingControl) {
       onderbouwingControl.setValue('', { emitEvent: true });
     }
+    // Mirror of clearAantal: clearing onderbouwing omits the aantal test,
+    // so reset its retained prior result.
+    this.suite.resetField('berekendeAftrekVoorarrest.aantal');
     this.vestFormRef().resetForm(this.formValue());
   }
 
@@ -220,6 +228,11 @@ const blurField = async (element: HTMLElement): Promise<void> => {
 
 describe('omitWhen + validationConfig stories', () => {
   beforeEach(() => {
+    // The stateful suite is module-level; clear retained per-field results
+    // so a prior test's failure doesn't leak into a later test where the
+    // same field is now inside an omitWhen branch (which retains rather
+    // than re-runs prior state).
+    omitWhenValidationSuite.reset();
     TestBed.resetTestingModule();
   });
 
