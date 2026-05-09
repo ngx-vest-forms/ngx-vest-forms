@@ -3,7 +3,7 @@ import { Component, signal, viewChild } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { create, enforce, omitWhen, test } from 'vest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { NgxDeepPartial } from '../../public-api';
 import { FormDirective } from '../directives/form.directive';
@@ -31,31 +31,27 @@ type OmitWhenFormModel = NgxDeepPartial<{
   };
 }>;
 
-const omitWhenValidationSuite = staticSuite(
-  (model: OmitWhenFormModel, field?: string) => {
-    only(field);
+const omitWhenValidationSuite = create((model: OmitWhenFormModel) => {
+  omitWhen(!model.berekendeAftrekVoorarrest?.aantal, () => {
+    test(
+      'berekendeAftrekVoorarrest.onderbouwing',
+      REQUIRED_ONDERBOUWING_MESSAGE,
+      () => {
+        enforce(model.berekendeAftrekVoorarrest?.onderbouwing).isNotBlank();
+      }
+    );
+  });
 
-    omitWhen(!model.berekendeAftrekVoorarrest?.aantal, () => {
-      test(
-        'berekendeAftrekVoorarrest.onderbouwing',
-        REQUIRED_ONDERBOUWING_MESSAGE,
-        () => {
-          enforce(model.berekendeAftrekVoorarrest?.onderbouwing).isNotBlank();
-        }
-      );
-    });
-
-    omitWhen(!model.berekendeAftrekVoorarrest?.onderbouwing, () => {
-      test(
-        'berekendeAftrekVoorarrest.aantal',
-        REQUIRED_AANTAL_MESSAGE,
-        () => {
-          enforce(model.berekendeAftrekVoorarrest?.aantal).isNotEmpty();
-        }
-      );
-    });
-  }
-);
+  omitWhen(!model.berekendeAftrekVoorarrest?.onderbouwing, () => {
+    test(
+      'berekendeAftrekVoorarrest.aantal',
+      REQUIRED_AANTAL_MESSAGE,
+      () => {
+        enforce(model.berekendeAftrekVoorarrest?.aantal).isNotEmpty();
+      }
+    );
+  });
+});
 
 const formShape: OmitWhenFormModel = {
   berekendeAftrekVoorarrest: {
