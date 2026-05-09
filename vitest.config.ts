@@ -25,6 +25,7 @@ export default defineConfig(({ mode }) => ({
   },
   test: {
     globals: true,
+    isolate: true, // Keep each spec file isolated; `browser.isolate` is deprecated in Vitest 4.1+
     setupFiles: ['projects/ngx-vest-forms/src/test-setup.ts'],
     // Browser mode configuration (no jsdom needed)
     browser: {
@@ -33,7 +34,6 @@ export default defineConfig(({ mode }) => ({
       instances: [{ browser: 'chromium' }],
       headless: true, // set to false for debugging
       fileParallelism: false, // Run test files sequentially to avoid NG0912 component ID collisions
-      isolate: true, // Each test file runs in its own isolated context
     },
     include: [
       'projects/ngx-vest-forms/src/**/*.spec.ts',

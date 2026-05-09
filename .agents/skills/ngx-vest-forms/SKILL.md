@@ -35,6 +35,7 @@ Non-breaking but worth knowing when the user mentions related symptoms:
 - **`validateShape` opaque-value fix.** `Date`, `Map`, `Set`, `RegExp`, `File`, `Blob` short-circuit recursion. Numeric-key detection switched to `^\d+$`, so `'123abc'` now flags as `TYPE_MISMATCH` instead of becoming array index 0.
 - **Touched syncs to dependents.** Blurring a trigger field propagates touched into its `validationConfig`-tracked dependents on the same tick — pair with `errorDisplayMode="on-blur"` on dependent wrappers for calm UX.
 - **`cloneDeep` is deprecated** and warns once in dev. Scheduled for removal in v3. Use `structuredClone`.
+- **Current test baseline.** `npm run test:lib` is a single `vitest run --config vitest.config.ts projects/ngx-vest-forms` browser-mode Chromium invocation. Do not assume or reintroduce the older 3-shard workaround unless the current branch reproduces a fresh browser-session regression first.
 
 ## Stay on the public API surface
 
