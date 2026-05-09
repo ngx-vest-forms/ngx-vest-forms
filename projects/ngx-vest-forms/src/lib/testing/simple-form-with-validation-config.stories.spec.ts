@@ -16,14 +16,14 @@ import { type FormModel, formValidationSuite, selectors } from './simple-form';
     >
       <div
         class="sm:col-span-2"
-        ngx-control-wrapper
+        ngxControlWrapper
         data-testid="ngx-control-wrapper__passwords"
         ngModelGroup="passwords"
       >
         <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
           <div
             class="w-full"
-            ngx-control-wrapper
+            ngxControlWrapper
             data-testid="ngx-control-wrapper__password"
           >
             <label>
@@ -39,7 +39,7 @@ import { type FormModel, formValidationSuite, selectors } from './simple-form';
           </div>
           <div
             class="w-full"
-            ngx-control-wrapper
+            ngxControlWrapper
             data-testid="ngx-control-wrapper__confirm-password"
           >
             <label>
