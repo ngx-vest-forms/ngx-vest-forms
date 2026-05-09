@@ -23,11 +23,9 @@ import {
 import {
   AbstractControl,
   AsyncValidatorFn,
-  ControlValueAccessor,
   FormArray,
   FormGroup,
   NgForm,
-  NgModel,
   PristineChangeEvent,
   StatusChangeEvent,
   ValidationErrors,
@@ -57,6 +55,7 @@ import { NGX_EQUALITY_FN } from '../tokens/equality.token';
 import type { NgxDeepRequired } from '../utils/deep-required';
 import { scheduleMicrotask, scheduleTimeout } from '../utils/destroy-scheduler';
 import type { ValidationConfigMap } from '../utils/field-path-types';
+import { collectTouchedPaths } from '../utils/collect-touched-paths';
 import { stringifyFieldPath } from '../utils/field-path.utils';
 import {
   DEFAULT_FOCUS_SELECTOR,
@@ -78,6 +77,10 @@ import type {
   NgxSuiteRunResult,
   NgxVestSuite,
 } from '../utils/validation-suite';
+import {
+  readElementValueForBlur,
+  resolveFieldFromBlur,
+} from './field-path-resolver';
 import {
   getFormSubmittedSignal,
   setAngularFormSubmittedState,
@@ -274,7 +277,7 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly touchedFieldPaths = computed(() => {
     this.#blurTick();
     this.#statusSignal();
-    return this.#collectTouchedPaths(this.ngForm.form, this.ngForm.submitted);
+    return collectTouchedPaths(this.ngForm.form, this.ngForm.submitted);
   });
 
   /**
@@ -900,74 +903,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     control: AbstractControl;
     element: HTMLElement;
   } | null {
-    const target = event.target;
-    if (!(target instanceof Element)) {
-      return null;
-    }
-
-    const fieldElement = target.closest('[name]');
-    if (!(fieldElement instanceof HTMLElement)) {
-      return null;
-    }
-
-    const name = fieldElement.getAttribute('name')?.trim();
-    if (!name) {
-      return null;
-    }
-
-    const formEl = this.elementRef.nativeElement;
-
-    // Authoritative path: ask the registered NgModel directive whose value
-    // accessor is bound to this exact element. This handles all forms of
-    // grouping uniformly — static `ngModelGroup="key"`, dynamic
-    // `[ngModelGroup]="expr"`, repeated leaf names across siblings — because
-    // the directive's `path` is computed from the live ControlContainer tree.
-    const directiveMatch = resolveControlPathByNgModelDirective(
-      this.ngForm,
-      fieldElement
-    );
-    if (directiveMatch) {
-      return {
-        field: directiveMatch.path,
-        control: directiveMatch.control,
-        element: fieldElement,
-      };
-    }
-
-    // Fallback: walk DOM ancestors collecting any `ngModelGroup` attribute
-    // values, producing the canonical dotted path for the static attribute
-    // form (e.g. `<div ngModelGroup="passwords"><input name="password">` →
-    // `passwords.password`). Used when the directive lookup misses (e.g. the
-    // value accessor doesn't expose its element ref in some custom CVAs).
-    const staticGroups = collectNgModelGroupAttributes(fieldElement, formEl);
-    const staticPath = [...staticGroups, name].join('.');
-    const staticControl = this.ngForm.form.get(staticPath);
-    if (staticControl) {
-      return {
-        field: staticPath,
-        control: staticControl,
-        element: fieldElement,
-      };
-    }
-
-    // Last-resort fallback for ambiguous DOM structures: probe each ancestor
-    // element as a potential group boundary, querying the form tree until we
-    // find a child that owns this DOM element.
-    const dynamicMatch = resolveControlPathByDomAncestors(
-      this.ngForm.form,
-      fieldElement,
-      formEl,
-      name
-    );
-    if (dynamicMatch) {
-      return {
-        field: dynamicMatch.path,
-        control: dynamicMatch.control,
-        element: fieldElement,
-      };
-    }
-
-    return null;
+    return resolveFieldFromBlur(this.ngForm, event.target);
   }
 
   /**
@@ -1668,220 +1604,4 @@ export class FormDirective<T extends Record<string, unknown>> {
     );
   }
 
-  /**
-   * Collects field paths of all touched (or submitted) leaf controls
-   * by walking the form control tree.
-   */
-  #collectTouchedPaths(control: AbstractControl, submitted: boolean): string[] {
-    const fields: string[] = [];
-
-    const collect = (
-      current: AbstractControl,
-      path: Array<string | number>
-    ): void => {
-      if (current instanceof FormGroup) {
-        for (const [name, child] of Object.entries(current.controls)) {
-          collect(child, [...path, name]);
-        }
-        return;
-      }
-
-      if (current instanceof FormArray) {
-        current.controls.forEach((child, index) => {
-          collect(child, [...path, index]);
-        });
-        return;
-      }
-
-      if ((submitted || current.touched) && path.length > 0) {
-        fields.push(stringifyFieldPath(path));
-      }
-    };
-
-    collect(control, []);
-    return fields;
-  }
-}
-
-/**
- * Reads the user-entered value from a blurred form element. Returns
- * `undefined` for radio inputs (caller must fall back to the bound
- * `control.value`, since the focused radio is not necessarily the
- * group's selected option) and for elements we don't handle.
- */
-function readElementValueForBlur(element: HTMLElement): unknown {
-  if (element instanceof HTMLInputElement) {
-    if (element.type === 'radio') return undefined;
-    if (element.type === 'checkbox') return element.checked;
-    if (element.type === 'number') {
-      return element.value === '' ? null : element.valueAsNumber;
-    }
-    return element.value;
-  }
-  if (
-    element instanceof HTMLTextAreaElement ||
-    element instanceof HTMLSelectElement
-  ) {
-    return element.value;
-  }
-  return undefined;
-}
-
-/**
- * Walks DOM ancestors between `start` (exclusive) and `formEl` (exclusive),
- * collecting any preserved `ngModelGroup` attribute values into a path
- * suitable for `FormGroup.get()`. Only the static attribute form is
- * preserved on the DOM; dynamically-bound `[ngModelGroup]` is handled by
- * `resolveControlPathByDomAncestors`.
- */
-function collectNgModelGroupAttributes(
-  start: HTMLElement,
-  formEl: HTMLElement
-): string[] {
-  const groups: string[] = [];
-  let current: Element | null = start.parentElement;
-  while (current && current !== formEl && formEl.contains(current)) {
-    const groupName = current.getAttribute('ngModelGroup')?.trim();
-    if (groupName) {
-      groups.unshift(groupName);
-    }
-    current = current.parentElement;
-  }
-  return groups;
-}
-
-/**
- * Resolves the dotted control path for a blurred element when the static
- * `ngModelGroup` attribute walk failed (typically because the host used
- * `[ngModelGroup]="expr"`, which Angular does not always preserve as a
- * DOM attribute). Walks the control tree top-down and at each FormGroup
- * boundary tries to descend into a child whose subtree contains an element
- * with the matching `name` — disambiguating repeated leaf names by DOM
- * containment instead of giving up.
- */
-function resolveControlPathByDomAncestors(
-  root: FormGroup,
-  fieldElement: HTMLElement,
-  formEl: HTMLElement,
-  leafName: string
-): { path: string; control: AbstractControl } | null {
-  type Frame = { control: AbstractControl; path: Array<string | number> };
-
-  const descend = (frame: Frame): Frame | null => {
-    if (frame.control instanceof FormGroup) {
-      for (const [key, child] of Object.entries(frame.control.controls)) {
-        if (key === leafName && !(child instanceof FormGroup)) {
-          return { control: child, path: [...frame.path, key] };
-        }
-      }
-      const candidates: Frame[] = [];
-      for (const [key, child] of Object.entries(frame.control.controls)) {
-        if (child instanceof FormGroup || child instanceof FormArray) {
-          if (subtreeContainsElement(child, fieldElement, formEl, key)) {
-            candidates.push({ control: child, path: [...frame.path, key] });
-          }
-        }
-      }
-      if (candidates.length === 1 && candidates[0])
-        return descend(candidates[0]);
-      return null;
-    }
-    if (frame.control instanceof FormArray) {
-      const candidates: Frame[] = [];
-      frame.control.controls.forEach((child, index) => {
-        if (child instanceof FormGroup || child instanceof FormArray) {
-          if (subtreeContainsElement(child, fieldElement, formEl, index)) {
-            candidates.push({ control: child, path: [...frame.path, index] });
-          }
-        }
-      });
-      if (candidates.length === 1 && candidates[0])
-        return descend(candidates[0]);
-    }
-    return null;
-  };
-
-  const result = descend({ control: root, path: [] });
-  if (!result) return null;
-  return { path: stringifyFieldPath(result.path), control: result.control };
-}
-
-/**
- * Best-effort check: does the DOM subtree rooted at any element annotated
- * with `ngModelGroup="<key>"` contain `fieldElement`? Used by
- * `resolveControlPathByDomAncestors` to disambiguate repeated leaf names.
- * For dynamic `[ngModelGroup]` with no preserved attribute we cannot
- * disambiguate from DOM alone — those cases return `false`, matching the
- * documented limitation.
- */
-function subtreeContainsElement(
-  _child: AbstractControl,
-  fieldElement: HTMLElement,
-  formEl: HTMLElement,
-  key: string | number
-): boolean {
-  if (typeof key !== 'string') return false;
-  const selector = `[ngModelGroup="${CSS.escape(key)}"]`;
-  const candidates = formEl.querySelectorAll(selector);
-  for (const candidate of candidates) {
-    if (candidate.contains(fieldElement)) return true;
-  }
-  return false;
-}
-
-/**
- * Resolves the control + dotted path for a blurred element by consulting the
- * `NgModel` directives Angular registered with this `NgForm`. Each registered
- * directive carries a live `path` (the full ControlContainer chain) and a
- * value accessor whose element ref is the input the directive is hosted on.
- *
- * This handles all grouping shapes uniformly — static `ngModelGroup="key"`,
- * dynamic `[ngModelGroup]="expr"`, and repeated leaf names across siblings —
- * because the path comes from the live form tree rather than DOM heuristics.
- * Returns `null` when the directive can't be matched (e.g. a custom CVA that
- * doesn't store an element ref), so the caller can fall back to DOM probes.
- */
-function resolveControlPathByNgModelDirective(
-  ngForm: NgForm,
-  fieldElement: HTMLElement
-): { path: string; control: AbstractControl } | null {
-  const directives = readNgFormDirectives(ngForm);
-  if (!directives) return null;
-
-  for (const directive of directives) {
-    const accessorEl = readValueAccessorElement(directive.valueAccessor);
-    if (accessorEl !== fieldElement) continue;
-    const control = directive.control ?? ngForm.form.get(directive.path);
-    if (!control) return null;
-    return { path: directive.path.join('.'), control };
-  }
-  return null;
-}
-
-/**
- * Reads the registered `NgModel` directives from `NgForm`. Angular forms keeps
- * them in a private `_directives: Set<NgModel>`. The field name is stable
- * across all Angular versions that ship `ngModel`, but is not part of the
- * public type — callers must tolerate `null`.
- */
-function readNgFormDirectives(ngForm: NgForm): Iterable<NgModel> | null {
-  const set = (ngForm as unknown as { _directives?: Set<NgModel> })._directives;
-  return set ?? null;
-}
-
-/**
- * Reads the host element of a `ControlValueAccessor`. The standard accessors
- * shipped by Angular forms (default, number, select, radio, checkbox, range)
- * all store an `ElementRef` injected at construction as `_elementRef`. This
- * is private but stable; custom accessors that don't follow the convention
- * will simply miss the fast path.
- */
-function readValueAccessorElement(
-  accessor: ControlValueAccessor | null | undefined
-): HTMLElement | null {
-  if (!accessor) return null;
-  const elementRef = (accessor as { _elementRef?: { nativeElement?: unknown } })
-    ._elementRef;
-  const native = elementRef?.nativeElement;
-  return native instanceof HTMLElement ? native : null;
 }
