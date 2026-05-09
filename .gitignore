@@ -46,7 +46,6 @@ ngx-vest-forms-workspace/
 .DS_Store
 Thumbs.db
 
-*storybook.log
 /.playwright-mcp
 
 # Playwright
