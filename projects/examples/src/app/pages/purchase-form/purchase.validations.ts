@@ -1,4 +1,4 @@
-import { FormFieldName, NgxTypedVestSuite, ROOT_FORM } from 'ngx-vest-forms';
+import { FormFieldName, NgxVestSuite, ROOT_FORM } from 'ngx-vest-forms';
 import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
 import { enforce, omitWhen, only, staticSuite, test, warn } from 'vest';
 import { PurchaseFormModel } from '../../models/purchase-form.model';
@@ -8,7 +8,7 @@ import { SwapiService } from './swapi.service';
 
 export const createPurchaseValidationSuite = (
   swapiService: SwapiService
-): NgxTypedVestSuite<PurchaseFormModel> => {
+): NgxVestSuite<PurchaseFormModel> => {
   return staticSuite(
     (model: PurchaseFormModel, field?: FormFieldName<PurchaseFormModel>) => {
       only(field);
