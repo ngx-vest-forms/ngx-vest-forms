@@ -10,6 +10,26 @@ When generating code for this repository:
 4. Use the umbrella `ngx-vest-forms` skill and its nested workflow sub-skills for feature workflows instead of restating library docs from memory.
 5. Prefer patterns already present in the repo over generic framework advice.
 
+## Branch policy (read before opening PRs)
+
+This repo maintains parallel release lines. Pick the right base branch before
+proposing changes.
+
+- **`master`** — current stable v2 maintenance line. Only target master for v2
+  bug fixes, security patches, or repo-wide governance/tooling changes that
+  must apply to the default branch (PR templates, dependabot config,
+  copilot instructions, CI policy). Do not target master for new v3 features
+  or refactors.
+- **`release/v3`** — active v3 development. All v3 features, refactors, test
+  migrations, and v3-specific dependency upgrades target this branch. Merging
+  here does **not** auto-publish; v3 only ships via manual
+  `workflow_dispatch` of `.github/workflows/prerelease.yml` (snapshot
+  prereleases) — never on PR merge.
+- Other `release/*` branches are maintenance-only for their respective majors.
+
+When uncertain, default to `release/v3` and call out the choice in the PR
+description so a reviewer can redirect if needed.
+
 ## Version baseline
 
 - Angular framework packages: `21.2.5`

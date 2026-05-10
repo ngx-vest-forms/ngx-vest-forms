@@ -7,6 +7,11 @@
       "channel": "release-v1"
     },
     {
+      "name": "release/v3",
+      "prerelease": "v3-snapshot",
+      "channel": "v3-snapshot"
+    },
+    {
       "name": "next",
       "prerelease": "next"
     },
