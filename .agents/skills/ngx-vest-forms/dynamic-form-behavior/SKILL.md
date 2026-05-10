@@ -54,6 +54,53 @@ Do not oversell it as a “show errors” API. It only re-runs validation logic.
 - If the rule belongs to the whole form, use `ROOT_FORM`.
 - Dynamic forms commonly need all three concepts in different places: field clearing, revalidation timing, and form-level rules.
 
+## Wizard steps: pair structure changes with `[validationFocus]`
+
+In v3, `[validationFocus]` scopes which Vest groups or fields run while the current step is active. Use it together with field clearing when hidden sections should stop participating entirely.
+
+```typescript
+import { clearFieldsWhen, FormDirective } from 'ngx-vest-forms';
+import { create, group, omitWhen, test } from 'vest';
+
+export const wizardSuite = create((model: WizardModel) => {
+  group('account', () => {
+    test('account.email', 'Email is required', () => {
+      /* ... */
+    });
+  });
+
+  omitWhen(model.sameAsBilling, () => {
+    group('shipping', () => {
+      test('shipping.address.line1', 'Street is required', () => {
+        /* ... */
+      });
+    });
+  });
+});
+
+readonly validationFocus = computed(() => ({
+  onlyGroup: this.currentStep(),
+  skipGroup: this.sameAsBilling() ? 'shipping' : undefined,
+}));
+
+hideShippingSection() {
+  this.formValue.update((value) =>
+    clearFieldsWhen(value, ['shipping'], this.sameAsBilling())
+  );
+  this.form()?.triggerFormValidation();
+}
+```
+
+```html
+<form
+  ngxVestForm
+  [suite]="wizardSuite"
+  [validationFocus]="validationFocus()"
+>
+```
+
+Use `[validationFocus]` for run scoping and `triggerFormValidation()` for structural reruns. They solve different problems.
+
 ## Common mistakes to fix
 
 - keeping stale values in the signal model after the UI removed the corresponding controls
@@ -61,6 +108,7 @@ Do not oversell it as a “show errors” API. It only re-runs validation logic.
 - clearing fields without matching the suite’s conditional `omitWhen(...)` logic
 - assuming `triggerFormValidation()` will also mark fields touched or force visible errors
 - using blur handlers plus `triggerFormValidation()` for draft auto-save or quiet dependent validation timing
+- treating `[validationFocus]` as a replacement for field clearing when the hidden branch should drop old values
 - importing dynamic-form helpers from internal library paths
 
 Do not cargo-cult `triggerFormValidation()` into every conditional form. Most dynamic form bugs come from stale state ownership, not from a missing manual rerun.

@@ -12,6 +12,8 @@ export const createPurchaseValidationSuite = (
   return staticSuite(
     (model: PurchaseFormModel, field?: FormFieldName<PurchaseFormModel>) => {
       only(field);
+      const userId =
+        typeof model.userId === 'string' ? model.userId.trim() : '';
 
       test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
         const ageValue = Number(model.age);
@@ -22,17 +24,22 @@ export const createPurchaseValidationSuite = (
         ).isFalsy();
       });
 
-      omitWhen(!model.userId || (model.userId as string).trim() === '', () => {
-        test('userId', 'userId is already taken', async ({ signal }) => {
-          const exists = await lastValueFrom(
-            swapiService
-              .userIdExists(model.userId as string)
-              .pipe(takeUntil(fromEvent(signal, 'abort')))
-          );
-          if (exists) {
-            return Promise.reject();
-          }
-        });
+      omitWhen(!userId, () => {
+        test.memo(
+          'userId',
+          'userId is already taken',
+          async ({ signal }) => {
+            const exists = await lastValueFrom(
+              swapiService
+                .userIdExists(userId)
+                .pipe(takeUntil(fromEvent(signal, 'abort')))
+            );
+            if (exists) {
+              return Promise.reject();
+            }
+          },
+          [userId]
+        );
       });
 
       test('firstName', 'First name is required', () => {

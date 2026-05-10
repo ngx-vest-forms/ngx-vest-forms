@@ -3,6 +3,20 @@ import { beforeEach, describe, expect, it, vi, type Mocked } from 'vitest';
 import { createPurchaseValidationSuite } from './purchase.validations';
 import type { SwapiService } from './swapi.service';
 
+function waitForResult<T>(
+  runValidation: () => {
+    done: (callback: (result: T) => void) => unknown;
+  }
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    try {
+      runValidation().done((result) => resolve(result));
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
 describe('Purchase Validations', () => {
   let mockSwapiService: Mocked<
     Pick<SwapiService, 'searchUserById' | 'userIdExists'>
@@ -81,5 +95,21 @@ describe('Purchase Validations', () => {
     return new Promise<void>((resolve) => {
       result.done(() => resolve());
     });
+  });
+
+  it('should trim userId before the async availability check runs', async () => {
+    mockSwapiService.userIdExists.mockReturnValue(of(false).pipe(delay(10)));
+
+    const suite = createPurchaseValidationSuite(
+      mockSwapiService as unknown as SwapiService
+    );
+
+    const firstResult = await waitForResult(() =>
+      suite({ userId: ' 42 ' }, 'userId')
+    );
+    expect(firstResult.hasErrors('userId')).toBe(false);
+
+    expect(mockSwapiService.userIdExists).toHaveBeenCalledTimes(1);
+    expect(mockSwapiService.userIdExists).toHaveBeenCalledWith('42');
   });
 });

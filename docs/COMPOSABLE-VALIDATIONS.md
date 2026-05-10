@@ -1,5 +1,7 @@
 # Composable Validations
 
+> **Vest 6 Pattern:** All examples use the modern Vest 6 approach where suite callbacks take only the model, and field focus is handled at the call site. See [MIGRATION-v2.x-to-v3.0.0.md](./migration/MIGRATION-v2.x-to-v3.0.0.md) for details on upgrading from Vest 5.
+
 Compose validation suites with reusable sub-functions to keep your validation logic maintainable, testable, and DRY (Don't Repeat Yourself).
 
 ## Why Composable Validations?
@@ -42,8 +44,8 @@ export function addressValidations(
 Call your reusable functions from the main suite:
 
 ```typescript
-import { enforce, only, staticSuite } from 'vest';
-import { NgxVestSuite, NgxDeepPartial } from 'ngx-vest-forms';
+import { create } from 'vest';
+import { NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
 import { addressValidations } from './address.validations';
 
 type PurchaseFormModel = NgxDeepPartial<{
@@ -53,10 +55,8 @@ type PurchaseFormModel = NgxDeepPartial<{
   };
 }>;
 
-export const purchaseSuite: NgxVestSuite<PurchaseFormModel> = staticSuite(
-  (model, field?) => {
-    only(field);
-
+export const purchaseSuite: NgxVestSuite<PurchaseFormModel> = create(
+  (model) => {
     addressValidations(
       model.addresses?.billingAddress,
       'addresses.billingAddress'
@@ -74,19 +74,15 @@ export const purchaseSuite: NgxVestSuite<PurchaseFormModel> = staticSuite(
 Use `omitWhen` with composable validations for conditional logic:
 
 ```typescript
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { create, enforce, omitWhen, test } from 'vest';
 
-export const purchaseSuite: NgxVestSuite<PurchaseFormModel> = staticSuite(
-  (model, field?) => {
-    only(field);
-
-    // Always validate billing address
+export const purchaseSuite: NgxVestSuite<PurchaseFormModel> = create(
+  (model) => {
     addressValidations(
       model.addresses?.billingAddress,
       'addresses.billingAddress'
     );
 
-    // Only validate shipping address when checkbox is checked
     omitWhen(
       !model.addresses?.shippingAddressDifferentFromBillingAddress,
       () => {
@@ -95,7 +91,6 @@ export const purchaseSuite: NgxVestSuite<PurchaseFormModel> = staticSuite(
           'addresses.shippingAddress'
         );
 
-        // Ensure addresses are different
         test('addresses', 'The addresses appear to be the same', () => {
           enforce(JSON.stringify(model.addresses?.billingAddress)).notEquals(
             JSON.stringify(model.addresses?.shippingAddress)
@@ -113,6 +108,49 @@ This gives you validation on:
 - ✅ The shipping address field (only required when checkbox is checked)
 - ✅ All the address fields (street, number, etc) on both addresses
 
+## Memoize expensive composable blocks
+
+Use `memo()` when a composable block wraps deterministic work that should only rerun when a dependency changes.
+
+```typescript
+import { create, enforce, skipWhen, test } from 'vest';
+import { memo } from 'vest/memo';
+
+export function userIdAvailabilityValidations(
+  userId: string | undefined,
+  field: 'userId'
+): void {
+  test(field, 'User ID is required', () => {
+    enforce(userId).isNotBlank();
+  });
+
+  skipWhen((res) => res.hasErrors(field) || !userId?.trim(), () => {
+    memo(() => {
+      test(field, 'User ID is already taken', async ({ signal }) => {
+        const response = await fetch(
+          `/api/users/${encodeURIComponent(userId!)}`,
+          { signal }
+        );
+        const { exists } = await response.json();
+        enforce(exists).isFalsy();
+      });
+    }, [userId]);
+  });
+}
+
+export const profileSuite = create((model: ProfileModel) => {
+  userIdAvailabilityValidations(model.userId, 'userId');
+});
+```
+
+Why this pattern is useful:
+
+- repeated runs for the same input can reuse the previous result
+- the async test still respects Vest's `{ signal }` cancellation model
+- the memoized block stays composable, so larger suites can call it like any other reusable validator
+
+When ngx-vest-forms hosts the suite, keep focus at the run site or use `[validationFocus]` on the form instead of moving `memo()` behind ad-hoc branching.
+
 ## Organizing Validation Files
 
 Structure your validations by domain or entity:
@@ -129,7 +167,7 @@ src/
 ### Example: contact.validations.ts
 
 ```typescript
-import { test, enforce } from 'vest';
+import { enforce, test } from 'vest';
 import { ContactModel } from '../models/contact.model';
 
 export function contactValidations(
@@ -157,8 +195,8 @@ export function contactValidations(
 ### Example: Main suite composing multiple validations
 
 ```typescript
-import { staticSuite, only } from 'vest';
-import { NgxVestSuite, NgxDeepPartial } from 'ngx-vest-forms';
+import { create } from 'vest';
+import { NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
 import { addressValidations } from './address.validations';
 import { contactValidations } from './contact.validations';
 import { paymentValidations } from './payment.validations';
@@ -170,16 +208,12 @@ type OrderFormModel = NgxDeepPartial<{
   payment: PaymentModel;
 }>;
 
-export const orderSuite: NgxVestSuite<OrderFormModel> = staticSuite(
-  (model, field?) => {
-    only(field);
-
-    contactValidations(model.contact, 'contact');
-    addressValidations(model.billing, 'billing');
-    addressValidations(model.shipping, 'shipping');
-    paymentValidations(model.payment, 'payment');
-  }
-);
+export const orderSuite: NgxVestSuite<OrderFormModel> = create((model) => {
+  contactValidations(model.contact, 'contact');
+  addressValidations(model.billing, 'billing');
+  addressValidations(model.shipping, 'shipping');
+  paymentValidations(model.payment, 'payment');
+});
 ```
 
 ## Advanced Pattern: Nested Composable Validations
@@ -187,7 +221,6 @@ export const orderSuite: NgxVestSuite<OrderFormModel> = staticSuite(
 Composable functions can call other composable functions:
 
 ```typescript
-// Base validation
 export function phoneNumberValidation(
   phone: string | undefined,
   field: string
@@ -201,7 +234,6 @@ export function phoneNumberValidation(
   });
 }
 
-// Composite validation that uses the base
 export function businessContactValidations(
   model: BusinessContactModel | undefined,
   field: string
@@ -210,7 +242,6 @@ export function businessContactValidations(
     enforce(model?.companyName).isNotBlank();
   });
 
-  // Reuse phone validation
   phoneNumberValidation(model?.officePhone, `${field}.officePhone`);
   phoneNumberValidation(model?.mobilePhone, `${field}.mobilePhone`);
 }
@@ -221,6 +252,8 @@ export function businessContactValidations(
 Composable functions work seamlessly with async validations:
 
 ```typescript
+import { enforce, skipWhen, test } from 'vest';
+
 export function emailValidations(
   email: string | undefined,
   field: string,
@@ -235,14 +268,11 @@ export function emailValidations(
   });
 
   if (checkAvailability) {
-    skipWhen(
-      (res) => res.hasErrors(field),
-      () => {
-        test(field, 'Email is already taken', async ({ signal }) => {
-          await checkEmailAvailability(email, { signal });
-        });
-      }
-    );
+    skipWhen((res) => res.hasErrors(field), () => {
+      test(field, 'Email is already taken', async ({ signal }) => {
+        await checkEmailAvailability(email, { signal });
+      });
+    });
   }
 }
 ```
@@ -252,7 +282,7 @@ export function emailValidations(
 Test your validation functions in isolation:
 
 ```typescript
-import { create, test, enforce } from 'vest';
+import { create } from 'vest';
 import { addressValidations } from './address.validations';
 
 describe('addressValidations', () => {
@@ -261,7 +291,7 @@ describe('addressValidations', () => {
       addressValidations(model, 'address');
     });
 
-    const result = suite({ street: '' });
+    const result = suite.run({ street: '' });
     expect(result.hasErrors('address.street')).toBe(true);
   });
 
@@ -270,7 +300,7 @@ describe('addressValidations', () => {
       addressValidations(model, 'address');
     });
 
-    const result = suite({
+    const result = suite.run({
       street: '123 Main St',
       city: 'New York',
       zipcode: '10001',
@@ -301,4 +331,5 @@ describe('addressValidations', () => {
 3. **Use field parameter** - Pass the field prefix for nested validations
 4. **Document parameters** - Make it clear what each validation function expects
 5. **Export for testing** - Make composable functions easy to test independently
-6. **Consistent naming** - Use `*Validations` suffix for composable functions
+6. **Keep focus at the run site** - Use `suite.only(...).run(...)` or `[validationFocus]`, not `only(field)` inside composable helpers
+7. **Use `memo()` sparingly** - Memoize deterministic expensive blocks, not every test by default
