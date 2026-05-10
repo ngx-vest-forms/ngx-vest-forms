@@ -10,7 +10,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   AsyncValidator,
@@ -124,8 +124,6 @@ export class ValidateRootFormDirective<T>
   readonly #lastControl = signal<NgForm | null>(null);
   validationOptions = input<ValidationOptions>({ debounceTime: 0 });
   readonly #hasSubmitted = signal(false);
-  readonly #hasSubmitted$: Observable<boolean>;
-  readonly #formValue$: Observable<T | null>;
 
   readonly formValue = input<T | null>(null);
   readonly suite = input<NgxVestSuite<T> | NgxTypedVestSuite<T> | null>(null);
@@ -160,10 +158,6 @@ export class ValidateRootFormDirective<T>
   );
 
   constructor() {
-    // Convert signals to Observables in injection context
-    this.#hasSubmitted$ = toObservable(this.#hasSubmitted);
-    this.#formValue$ = toObservable(this.formValue);
-
     // Trigger validation when hasSubmitted or formValue changes
     effect(() => {
       // Track dependencies

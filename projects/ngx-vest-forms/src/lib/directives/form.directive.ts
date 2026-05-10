@@ -374,13 +374,6 @@ export class FormDirective<T extends Record<string, unknown>> {
     { initialValue: 0 }
   );
 
-  readonly #pending$ = this.ngForm.form.events.pipe(
-    filter((v) => v instanceof StatusChangeEvent),
-    map((v) => (v as StatusChangeEvent).status),
-    filter((v) => v === 'PENDING'),
-    distinctUntilChanged()
-  );
-
   /**
    * Emits every time the form status changes in a state
    * that is not PENDING
