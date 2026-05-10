@@ -28,13 +28,6 @@ jobs:
           cache: 'npm'
       - name: Install
         run: npm install
-      - name: Rebuild native dependencies
-        run: |
-          npm rebuild @swc/core
-          npm install --force @swc/core-linux-x64-gnu @swc/core-linux-x64-musl
-      - name: Verify SWC installation
-        run: |
-          node -e "try { require('@swc/core'); console.log('SWC loaded successfully'); } catch(e) { console.error('SWC failed to load:', e.message); process.exit(1); }"
       - name: Get Playwright version
         id: playwright-version
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
