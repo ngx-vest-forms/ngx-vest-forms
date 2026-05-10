@@ -16,8 +16,8 @@ proposing changes.
 
 - **`master`** — current stable v2 maintenance line. Only target master for v2
   bug fixes, security patches, or repo-wide governance/tooling changes that
-  must apply to the default branch (PR templates, dependabot config,
-  copilot instructions, CI policy). Do not target master for new v3 features
+  must apply to the default branch (PR templates, Dependabot config,
+  Copilot instructions, CI policy). Do not target master for new v3 features
   or refactors.
 - **`release/v3`** — active v3 development. All v3 features, refactors, test
   migrations, and v3-specific dependency upgrades target this branch. Merging
