@@ -176,10 +176,10 @@ export type NgxFieldBlurEvent<T = unknown> = {
 })
 export class FormDirective<T extends Record<string, unknown>> {
   readonly ngForm = inject(NgForm, { self: true });
-  private readonly elementRef = inject(ElementRef<HTMLFormElement>);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly cdr = inject(ChangeDetectorRef);
-  private readonly configDebounceTime = inject(
+  readonly #elementRef = inject(ElementRef<HTMLFormElement>);
+  readonly #destroyRef = inject(DestroyRef);
+  readonly #cdr = inject(ChangeDetectorRef);
+  readonly #configDebounceTime = inject(
     NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN
   );
   /**
@@ -342,7 +342,7 @@ export class FormDirective<T extends Record<string, unknown>> {
    * Emits whenever validation feedback may have changed, even if the aggregate
    * root form status string stays the same.
    */
-  private readonly validationFeedback$ = rxMerge(
+  readonly #validationFeedback$ = rxMerge(
     this.ngForm.form.events.pipe(
       filter((v) => v instanceof StatusChangeEvent),
       map((v) => (v as StatusChangeEvent).status),
@@ -367,14 +367,14 @@ export class FormDirective<T extends Record<string, unknown>> {
    * recompute whenever the underlying error set changes.
    */
   readonly #validationFeedbackTick = toSignal(
-    this.validationFeedback$.pipe(
+    this.#validationFeedback$.pipe(
       scan((count) => count + 1, 0),
       startWith(0)
     ),
     { initialValue: 0 }
   );
 
-  private readonly pending$ = this.ngForm.form.events.pipe(
+  readonly #pending$ = this.ngForm.form.events.pipe(
     filter((v) => v instanceof StatusChangeEvent),
     map((v) => (v as StatusChangeEvent).status),
     filter((v) => v === 'PENDING'),
@@ -408,7 +408,7 @@ export class FormDirective<T extends Record<string, unknown>> {
         return this.#equal(prev, curr);
       }),
       map(() => mergeValuesAndRawValues<T>(this.ngForm.form)),
-      takeUntilDestroyed(this.destroyRef)
+      takeUntilDestroyed(this.#destroyRef)
     )
   );
 
@@ -422,9 +422,9 @@ export class FormDirective<T extends Record<string, unknown>> {
    * Cleanup is handled automatically by the directive when it's destroyed.
    */
   readonly errorsChange = outputFromObservable(
-    this.validationFeedback$.pipe(
+    this.#validationFeedback$.pipe(
       map(() => getAllFormErrors(this.ngForm.form)),
-      takeUntilDestroyed(this.destroyRef)
+      takeUntilDestroyed(this.#destroyRef)
     )
   );
 
@@ -439,14 +439,14 @@ export class FormDirective<T extends Record<string, unknown>> {
       map((v) => !(v as PristineChangeEvent).pristine),
       startWith(this.ngForm.form.dirty),
       distinctUntilChanged(),
-      takeUntilDestroyed(this.destroyRef)
+      takeUntilDestroyed(this.#destroyRef)
     )
   );
 
   /**
    * Fired when the status of the root form changes.
    */
-  private readonly statusChanges$ = this.ngForm.form.statusChanges.pipe(
+  readonly #statusChanges$ = this.ngForm.form.statusChanges.pipe(
     startWith(this.ngForm.form.status),
     distinctUntilChanged()
   );
@@ -457,11 +457,11 @@ export class FormDirective<T extends Record<string, unknown>> {
    * Cleanup is handled automatically by the directive when it's destroyed.
    */
   readonly validChange = outputFromObservable(
-    this.statusChanges$.pipe(
+    this.#statusChanges$.pipe(
       filter((e) => e === 'VALID' || e === 'INVALID'),
       map((v) => v === 'VALID'),
       distinctUntilChanged(),
-      takeUntilDestroyed(this.destroyRef)
+      takeUntilDestroyed(this.#destroyRef)
     )
   );
 
@@ -475,10 +475,10 @@ export class FormDirective<T extends Record<string, unknown>> {
   /**
    * Track validation in progress to prevent circular triggering (Issue #19)
    */
-  private readonly validationInProgress = new Set<string>();
+  readonly #validationInProgress = new Set<string>();
 
   constructor() {
-    this.destroyRef.onDestroy(() => {
+    this.#destroyRef.onDestroy(() => {
       this.#destroyed = true;
       this.fieldWarnings.set(new Map());
     });
@@ -500,7 +500,7 @@ export class FormDirective<T extends Record<string, unknown>> {
      * Mark all the fields as touched when the form is submitted
      */
     this.ngForm.ngSubmit
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(takeUntilDestroyed(this.#destroyRef))
       .subscribe(() => {
         this.ngForm.form.markAllAsTouched();
         this.#blurTick.update((v) => v + 1);
@@ -772,7 +772,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     } = options;
     const behavior = resolveFirstInvalidScrollBehavior(options.behavior);
 
-    const root: HTMLFormElement = this.elementRef.nativeElement;
+    const root: HTMLFormElement = this.#elementRef.nativeElement;
     const firstInvalid = resolveFirstInvalidElement(root, invalidSelector);
     if (!firstInvalid) {
       return null;
@@ -821,7 +821,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     scheduleMicrotask(() => {
       this.#blurTick.update((v) => v + 1);
       this.#emitFieldBlurEvent(event);
-    }, this.destroyRef);
+    }, this.#destroyRef);
   }
 
   #emitFieldBlurEvent(event: FocusEvent): void {
@@ -882,7 +882,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       return null;
     }
 
-    const formEl = this.elementRef.nativeElement;
+    const formEl = this.#elementRef.nativeElement;
 
     // Authoritative path: ask the registered NgModel directive whose value
     // accessor is bound to this exact element. This handles all forms of
@@ -1001,7 +1001,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     // (reactive forms), not signals. The formValue signal updates happen in the
     // consumer component. detectChanges() ensures NgForm's reset is reflected in
     // the DOM before we update validity.
-    this.cdr.detectChanges();
+    this.#cdr.detectChanges();
 
     // Trigger validation update to clear any stale errors
     // Now synchronous since detectChanges() has flushed DOM updates
@@ -1102,13 +1102,13 @@ export class FormDirective<T extends Record<string, unknown>> {
                   // primitive auto-cancels if the directive is destroyed before it fires.
                   scheduleMicrotask(() => {
                     try {
-                      this.cdr.detectChanges();
+                      this.#cdr.detectChanges();
                     } catch {
                       // Fallback: mark for check when immediate detectChanges isn't safe.
                       // This keeps behavior resilient in edge cases.
-                      this.cdr.markForCheck();
+                      this.#cdr.markForCheck();
                     }
-                  }, this.destroyRef);
+                  }, this.#destroyRef);
 
                   observer.next(out);
                   observer.complete();
@@ -1142,7 +1142,7 @@ export class FormDirective<T extends Record<string, unknown>> {
             | undefined;
           return this.#createValidationStreams(form, typedConfig);
         }),
-        takeUntilDestroyed(this.destroyRef)
+        takeUntilDestroyed(this.#destroyRef)
       )
       .subscribe();
   }
@@ -1160,7 +1160,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     config: ValidationConfigMap<T> | null | undefined
   ): Observable<unknown> {
     if (!config) {
-      this.validationInProgress.clear();
+      this.#validationInProgress.clear();
       return EMPTY;
     }
 
@@ -1208,8 +1208,8 @@ export class FormDirective<T extends Record<string, unknown>> {
         return control.valueChanges.pipe(
           // CRITICAL: Filter out changes when this field is being validated by another field's config
           // This prevents circular triggers in bidirectional validationConfig
-          filter(() => !this.validationInProgress.has(triggerField)),
-          debounceTime(this.configDebounceTime),
+          filter(() => !this.#validationInProgress.has(triggerField)),
+          debounceTime(this.#configDebounceTime),
           switchMap(() => {
             return this.#waitForFormIdle(form, control);
           }),
@@ -1337,7 +1337,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     dependents: string[]
   ): void {
     // Mark trigger field as in-progress to prevent it from being re-triggered
-    this.validationInProgress.add(triggerField);
+    this.#validationInProgress.add(triggerField);
 
     for (const depField of dependents) {
       const dependentControl = form.get(depField);
@@ -1346,10 +1346,10 @@ export class FormDirective<T extends Record<string, unknown>> {
       }
 
       // Only validate if not already in progress (prevents bidirectional loops)
-      if (!this.validationInProgress.has(depField)) {
+      if (!this.#validationInProgress.has(depField)) {
         // CRITICAL: Mark the dependent field as in-progress BEFORE calling updateValueAndValidity
         // This prevents the dependent field's valueChanges from triggering its own validationConfig
-        this.validationInProgress.add(depField);
+        this.#validationInProgress.add(depField);
 
         // emitEvent: true is REQUIRED for async validators to actually run
         // The validationInProgress Set prevents infinite loops:
@@ -1371,7 +1371,7 @@ export class FormDirective<T extends Record<string, unknown>> {
         // trigger change detection. Components using OnPush won't see the ng-invalid class
         // update in the DOM without this. Using detectChanges() instead of markForCheck()
         // to force immediate synchronous update rather than waiting for next CD cycle.
-        this.cdr.detectChanges();
+        this.#cdr.detectChanges();
       }
     }
 
@@ -1379,11 +1379,11 @@ export class FormDirective<T extends Record<string, unknown>> {
     // Use scheduleTimeout to ensure async validators have time to complete before allowing
     // new triggers. The timer auto-cancels on directive destroy so no timers leak.
     scheduleTimeout(() => {
-      this.validationInProgress.delete(triggerField);
+      this.#validationInProgress.delete(triggerField);
       for (const depField of dependents) {
-        this.validationInProgress.delete(depField);
+        this.#validationInProgress.delete(depField);
       }
-    }, VALIDATION_IN_PROGRESS_TIMEOUT_MS, this.destroyRef);
+    }, VALIDATION_IN_PROGRESS_TIMEOUT_MS, this.#destroyRef);
   }
 
   /**

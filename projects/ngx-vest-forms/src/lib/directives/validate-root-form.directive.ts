@@ -119,13 +119,13 @@ import { ValidationOptions } from './validation-options';
 export class ValidateRootFormDirective<T>
   implements AsyncValidator, AfterViewInit
 {
-  private readonly injector = inject(Injector);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly lastControl = signal<NgForm | null>(null);
+  readonly #injector = inject(Injector);
+  readonly #destroyRef = inject(DestroyRef);
+  readonly #lastControl = signal<NgForm | null>(null);
   validationOptions = input<ValidationOptions>({ debounceTime: 0 });
-  private readonly hasSubmitted = signal(false);
-  private readonly hasSubmitted$: Observable<boolean>;
-  private readonly formValue$: Observable<T | null>;
+  readonly #hasSubmitted = signal(false);
+  readonly #hasSubmitted$: Observable<boolean>;
+  readonly #formValue$: Observable<T | null>;
 
   readonly formValue = input<T | null>(null);
   readonly suite = input<NgxVestSuite<T> | NgxTypedVestSuite<T> | null>(null);
@@ -161,13 +161,13 @@ export class ValidateRootFormDirective<T>
 
   constructor() {
     // Convert signals to Observables in injection context
-    this.hasSubmitted$ = toObservable(this.hasSubmitted);
-    this.formValue$ = toObservable(this.formValue);
+    this.#hasSubmitted$ = toObservable(this.#hasSubmitted);
+    this.#formValue$ = toObservable(this.formValue);
 
     // Trigger validation when hasSubmitted or formValue changes
     effect(() => {
       // Track dependencies
-      this.hasSubmitted();
+      this.#hasSubmitted();
       this.formValue();
 
       // Also track inputs that affect whether validation should run.
@@ -183,13 +183,16 @@ export class ValidateRootFormDirective<T>
       // Trigger revalidation if form exists
       // Use emitEvent: true so the form directive can update its errors
       // Use untracked() to avoid making the effect reactive to lastControl changes
-      const ngForm = untracked(() => this.lastControl());
+      const ngForm = untracked(() => this.#lastControl());
       if (ngForm?.control) {
         // Defer to the next microtask so Angular has a chance to finish
         // wiring up controls/groups (ngModel/ngModelGroup) on initial render.
         // The scheduleMicrotask primitive auto-cancels if the directive is
         // destroyed before the microtask fires.
-        scheduleMicrotask(() => ngForm.control.updateValueAndValidity(), this.destroyRef);
+        scheduleMicrotask(
+          () => ngForm.control.updateValueAndValidity(),
+          this.#destroyRef
+        );
       }
     });
   }
@@ -202,8 +205,8 @@ export class ValidateRootFormDirective<T>
    */
   ngAfterViewInit(): void {
     // Lazily inject NgForm to avoid circular dependency
-    const ngForm = this.injector.get(NgForm, null);
-    this.lastControl.set(ngForm);
+    const ngForm = this.#injector.get(NgForm, null);
+    this.#lastControl.set(ngForm);
 
     if (!ngForm) {
       console.error(
@@ -216,15 +219,18 @@ export class ValidateRootFormDirective<T>
     // Ensure we run at least one validation pass after the form is ready.
     // This matters for 'live' mode root-form errors that should appear
     // without requiring a user interaction.
-    scheduleMicrotask(() => ngForm.control.updateValueAndValidity(), this.destroyRef);
+    scheduleMicrotask(
+      () => ngForm.control.updateValueAndValidity(),
+      this.#destroyRef
+    );
 
     // Subscribe to form submission to set hasSubmitted flag
     ngForm.ngSubmit
       .pipe(
         tap(() => {
-          this.hasSubmitted.set(true);
+          this.#hasSubmitted.set(true);
         }),
-        takeUntilDestroyed(this.destroyRef)
+        takeUntilDestroyed(this.#destroyRef)
       )
       .subscribe();
   }
@@ -250,7 +256,7 @@ export class ValidateRootFormDirective<T>
       'submit';
 
     // In 'submit' mode, skip validation until form is submitted
-    if (mode === 'submit' && !this.hasSubmitted()) {
+    if (mode === 'submit' && !this.#hasSubmitted()) {
       return of(null);
     }
 
@@ -336,7 +342,7 @@ export class ValidateRootFormDirective<T>
           return of(null);
         }),
         take(1),
-        takeUntilDestroyed(this.destroyRef)
+        takeUntilDestroyed(this.#destroyRef)
       );
     };
   }
