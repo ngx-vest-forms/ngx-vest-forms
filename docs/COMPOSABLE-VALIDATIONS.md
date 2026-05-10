@@ -1,6 +1,6 @@
 # Composable Validations
 
-> **Vest 6 Pattern:** All examples use the modern Vest 6 approach where suite callbacks take only the model, and field focus is handled at the call site. See [MIGRATION-v2.x-to-v3.0.0.md](./migration/MIGRATION-v2.x-to-v3.0.0.md) for details on upgrading from Vest 5.
+> **Vest 6 target pattern:** These examples show the v3-style approach where suite callbacks take only the model and field focus is handled at the call site. See [MIGRATION-v2.x-to-v3.0.0.md](./migration/MIGRATION-v2.x-to-v3.0.0.md) for the step-by-step migration from Vest 5 patterns such as callback `field` parameters and `only(field)` inside the suite.
 
 Compose validation suites with reusable sub-functions to keep your validation logic maintainable, testable, and DRY (Don't Repeat Yourself).
 

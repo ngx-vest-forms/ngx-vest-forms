@@ -12,8 +12,7 @@ export const createPurchaseValidationSuite = (
   return staticSuite(
     (model: PurchaseFormModel, field?: FormFieldName<PurchaseFormModel>) => {
       only(field);
-      const userId =
-        typeof model.userId === 'string' ? model.userId.trim() : '';
+      const userId = model.userId?.trim() ?? '';
 
       test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
         const ageValue = Number(model.age);

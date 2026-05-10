@@ -95,7 +95,7 @@ Migration takeaway: stop teaching “ignore late async results” as the primary
 
 Vest 6.3 exposes top-level `memo()` from `vest/memo`. Use it to wrap expensive validation blocks whose result should be reused until a dependency changes.
 
-If you are reading v2.x-era examples in this repository, you may still see the older Vest 5 `test.memo(...)` form. The structural migration is to move that test body into a `memo(() => { test(...) }, deps)` block.
+If you are reading v2.x-era examples in this repository, you may still see the older Vest 5 `test.memo(...)` form. The live purchase-form example on this branch intentionally keeps that pre-v3 pattern because the runnable example app still targets the current Vest 5 line; when you migrate that code to v3, move the test body into `memo(() => { test(...) }, deps)`.
 
 ```typescript
 import { create, skipWhen, test } from 'vest';
