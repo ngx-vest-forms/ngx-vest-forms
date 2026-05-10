@@ -14,17 +14,17 @@ import {
 import {
   ControlWrapperComponent,
   createEmptyFormState,
+  fieldWarningsToRecord,
   FormDirective,
   NgxDeepRequired,
-  NgxTypedVestSuite,
   NgxValidationConfig,
   NgxVestForms,
+  NgxVestSuite,
   setValueAtPath,
 } from 'ngx-vest-forms';
 import { TravelFormModel } from '../../models/travel-form.model';
 import { Card } from '../../ui/card/card.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
-import { mapWarningsToRecord } from '../../utils/form-warnings.util';
 import {
   DateRangeAdapterComponent,
   DateRangeValue,
@@ -52,7 +52,7 @@ export class TravelFormBody {
   readonly approach = input<TravelFormApproach>('split-wrappers');
   readonly formValue = input.required<TravelFormModel>();
   readonly shape = input.required<NgxDeepRequired<TravelFormModel>>();
-  readonly suite = input.required<NgxTypedVestSuite<TravelFormModel>>();
+  readonly suite = input.required<NgxVestSuite<TravelFormModel>>();
   readonly validationConfig =
     input.required<NgxValidationConfig<TravelFormModel>>();
 
@@ -86,7 +86,7 @@ export class TravelFormBody {
 
   /** Exposes field warnings as a plain Record for presentational components. */
   readonly warnings = computed(() =>
-    mapWarningsToRecord(this.vestForm()?.fieldWarnings() ?? new Map())
+    fieldWarningsToRecord(this.vestForm()?.fieldWarnings() ?? new Map())
   );
 
   /** Field paths that have been validated (touched/blurred or submitted). */

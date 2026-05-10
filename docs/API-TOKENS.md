@@ -118,14 +118,14 @@ This field-level configuration takes precedence over the token value.
 
 Controls how validation errors are displayed in the `ngx-control-wrapper` component.
 
-**Type:** `InjectionToken<ScErrorDisplayMode>`
+**Type:** `InjectionToken<NgxErrorDisplayMode>`
 
 **Purpose:** Configure whether errors should be displayed immediately or only after blur/submit.
 
 #### Error Display Modes
 
 ```typescript
-type ScErrorDisplayMode =
+type NgxErrorDisplayMode =
   | 'on-blur'
   | 'on-submit'
   | 'on-blur-or-submit'
@@ -349,17 +349,11 @@ export class SignupFormComponent {
 - You want persistent advisory guidance visible at all times
 - You are running a guided/demo flow where warnings should be explicit
 
-### Legacy Token: `SC_ERROR_DISPLAY_MODE_TOKEN`
+### Error display mode token
 
-**Status:** ⚠️ Deprecated
-
-The `SC_ERROR_DISPLAY_MODE_TOKEN` is an alias for `NGX_ERROR_DISPLAY_MODE_TOKEN` maintained for backward compatibility. It will be removed in v3.0.
+Use `NGX_ERROR_DISPLAY_MODE_TOKEN` to configure the default error display mode. The legacy `SC_ERROR_DISPLAY_MODE_TOKEN` was removed in v3.0.0.
 
 ```typescript
-// ❌ Legacy (works in v2.x but will be removed)
-import { SC_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
-
-// ✅ Recommended
 import { NGX_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
 ```
 

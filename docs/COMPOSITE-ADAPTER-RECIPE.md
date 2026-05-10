@@ -50,13 +50,12 @@ export const travelFormShape: NgxDeepRequired<TravelFormModel> = {
 ### Validation suite
 
 ```ts
-import { enforce, omitWhen, only, staticSuite, test, warn } from 'vest';
-import { FormFieldName } from 'ngx-vest-forms';
+import { create, enforce, omitWhen, test, warn } from 'vest';
+import { type NgxVestSuite } from 'ngx-vest-forms';
 import { TravelFormModel } from '../../models/travel-form.model';
 
-export const travelValidationSuite = staticSuite(
-  (model: TravelFormModel, field?: FormFieldName<TravelFormModel>) => {
-    only(field);
+export const travelValidationSuite: NgxVestSuite<TravelFormModel> = create(
+  (model: TravelFormModel) => {
 
     test('departureDate', 'Departure date is required', () => {
       enforce(model.departureDate).isNotEmpty();
@@ -76,6 +75,12 @@ export const travelValidationSuite = staticSuite(
     });
   }
 );
+```
+
+When you need field-scoped validation, focus it at the call site:
+
+```ts
+travelValidationSuite.only('returnDate').run(model);
 ```
 
 ### Cross-field revalidation

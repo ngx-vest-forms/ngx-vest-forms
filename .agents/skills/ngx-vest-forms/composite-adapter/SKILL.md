@@ -1,6 +1,6 @@
 ---
 name: composite-adapter
-description: "Helps developers build composite adapter components that map one UI widget to multiple flat form model fields in ngx-vest-forms. Use this whenever the user mentions date range pickers, name splitters, address composites, multi-field adapters, hidden proxy fields, fan-out with `setValueAtPath`, error aggregation across fields, or asks how to wire a single control to several `ngModel` paths without `ControlValueAccessor`."
+description: 'Helps developers build composite adapter components that map one UI widget to multiple flat form model fields in ngx-vest-forms. Use this whenever the user mentions date range pickers, name splitters, address composites, multi-field adapters, hidden proxy fields, fan-out with `setValueAtPath`, error aggregation across fields, or asks how to wire a single control to several `ngModel` paths without `ControlValueAccessor`.'
 ---
 
 # ngx-vest-forms composite adapter guidance
@@ -29,14 +29,22 @@ If fields can have independent labels, wrap each in its own `<ngx-control-wrappe
 <div class="grid grid-cols-2 gap-6">
   <ngx-control-wrapper>
     <label for="departureDate">Departure Date</label>
-    <input id="departureDate" type="date" name="departureDate"
-           [ngModel]="formValue().departureDate" />
+    <input
+      id="departureDate"
+      type="date"
+      name="departureDate"
+      [ngModel]="formValue().departureDate"
+    />
   </ngx-control-wrapper>
 
   <ngx-control-wrapper>
     <label for="returnDate">Return Date</label>
-    <input id="returnDate" type="date" name="returnDate"
-           [ngModel]="formValue().returnDate" />
+    <input
+      id="returnDate"
+      type="date"
+      name="returnDate"
+      [ngModel]="formValue().returnDate"
+    />
   </ngx-control-wrapper>
 </div>
 ```
@@ -65,16 +73,14 @@ export const travelFormShape: NgxDeepRequired<TravelFormModel> = {
 
 ### 2. Vest suite with type-safe field names
 
-Use `FormFieldName<T>` for compile-time path safety. Call `only(field)` unconditionally.
+Use `NgxVestSuite<T>` for a typed suite object. If you need typed field-path hints elsewhere, use `FormFieldName<T>` or `NgxFieldKey<T>` — but keep the suite callback model-only.
 
 ```typescript
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
-import { FormFieldName } from 'ngx-vest-forms';
+import { create, enforce, omitWhen, test } from 'vest';
+import { type NgxVestSuite } from 'ngx-vest-forms';
 
-export const travelValidationSuite = staticSuite(
-  (model: TravelFormModel, field?: FormFieldName<TravelFormModel>) => {
-    only(field);
-
+export const travelValidationSuite: NgxVestSuite<TravelFormModel> = create(
+  (model: TravelFormModel) => {
     test('departureDate', 'Departure date is required', () => {
       enforce(model.departureDate).isNotEmpty();
     });
@@ -85,12 +91,19 @@ export const travelValidationSuite = staticSuite(
 
     omitWhen(!model.departureDate || !model.returnDate, () => {
       test('returnDate', 'Return date must be after departure', () => {
-        enforce(new Date(model.returnDate!).getTime())
-          .greaterThan(new Date(model.departureDate!).getTime());
+        enforce(new Date(model.returnDate!).getTime()).greaterThan(
+          new Date(model.departureDate!).getTime()
+        );
       });
     });
   }
 );
+```
+
+When the caller needs field-scoped validation, do it at the call site:
+
+```typescript
+travelValidationSuite.only('returnDate').run(model);
 ```
 
 ### 3. Presentational adapter component with display mode gating
@@ -115,7 +128,11 @@ Register each real field path via hidden `<input>` elements so the Angular form 
 
 ```html
 <!-- Hidden proxy fields: register real field paths in the form tree -->
-<input type="hidden" name="departureDate" [ngModel]="formValue().departureDate" />
+<input
+  type="hidden"
+  name="departureDate"
+  [ngModel]="formValue().departureDate"
+/>
 <input type="hidden" name="returnDate" [ngModel]="formValue().returnDate" />
 
 <!-- Adapter component receives per-field errors/warnings -->
@@ -141,7 +158,7 @@ protected onRangeChange(range: DateRangeValue): void {
 }
 ```
 
-> v2.7.0: `setValueAtPath` is now array-safe. Writes like `setValueAtPath(next, 'addresses[0].street', 'x')` preserve sibling array entries instead of replacing the array with `{}`. Bracket notation chooses container shape from the segment (numeric → array, string → object). Prefer `structuredClone` over the deprecated `cloneDeep` (which warns once in dev and is removed in v3).
+> v2.7.0: `setValueAtPath` is now array-safe. Writes like `setValueAtPath(next, 'addresses[0].street', 'x')` preserve sibling array entries instead of replacing the array with `{}`. Bracket notation chooses container shape from the segment (numeric → array, string → object). Use `structuredClone`; the legacy `cloneDeep` helper was removed in v3.0.0.
 
 ### 5. Per-field error slicing, formSubmitted tracking, and validationConfig
 
@@ -288,12 +305,12 @@ If your composite can be decomposed into completely independent labeled fields, 
 
 ## When to reach for something else
 
-| Situation | Better approach |
-|-----------|----------------|
-| Fields are independent and can have separate labels | Individual `<ngx-control-wrapper>` per field **(Recommended)** |
-| Composite is a reusable design-system primitive | `ControlValueAccessor` |
-| Error belongs to the whole form, not to specific fields | `ROOT_FORM` + `ngxValidateRootForm` |
-| Fields share a common path prefix | `ngModelGroup` + `<ngx-form-group-wrapper>` |
+| Situation                                               | Better approach                                                |
+| ------------------------------------------------------- | -------------------------------------------------------------- |
+| Fields are independent and can have separate labels     | Individual `<ngx-control-wrapper>` per field **(Recommended)** |
+| Composite is a reusable design-system primitive         | `ControlValueAccessor`                                         |
+| Error belongs to the whole form, not to specific fields | `ROOT_FORM` + `ngxValidateRootForm`                            |
+| Fields share a common path prefix                       | `ngModelGroup` + `<ngx-form-group-wrapper>`                    |
 
 ## Repo references to consult when needed
 

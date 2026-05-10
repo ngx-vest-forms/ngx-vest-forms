@@ -23,11 +23,8 @@ import {
 import {
   AbstractControl,
   AsyncValidatorFn,
-  ControlValueAccessor,
-  FormArray,
   FormGroup,
   NgForm,
-  NgModel,
   PristineChangeEvent,
   StatusChangeEvent,
   ValidationErrors,
@@ -53,14 +50,11 @@ import {
 } from 'rxjs';
 import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
-import { DeepRequired } from '../utils/deep-required';
 import { NGX_EQUALITY_FN } from '../tokens/equality.token';
-import {
-  scheduleMicrotask,
-  scheduleTimeout,
-} from '../utils/destroy-scheduler';
+import type { NgxDeepRequired } from '../utils/deep-required';
+import { scheduleMicrotask, scheduleTimeout } from '../utils/destroy-scheduler';
 import type { ValidationConfigMap } from '../utils/field-path-types';
-import { stringifyFieldPath } from '../utils/field-path.utils';
+import { collectTouchedPaths } from '../utils/collect-touched-paths';
 import {
   DEFAULT_FOCUS_SELECTOR,
   DEFAULT_INVALID_SELECTOR,
@@ -77,7 +71,14 @@ import {
   setValueAtPath,
 } from '../utils/form-utils';
 import { validateShape } from '../utils/shape-validation';
-import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
+import type {
+  NgxSuiteRunResult,
+  NgxVestSuite,
+} from '../utils/validation-suite';
+import {
+  readElementValueForBlur,
+  resolveFieldFromBlur,
+} from './field-path-resolver';
 import {
   getFormSubmittedSignal,
   setAngularFormSubmittedState,
@@ -168,17 +169,17 @@ export type NgxFieldBlurEvent<T = unknown> = {
  * @publicApi
  */
 @Directive({
-  selector: 'form[scVestForm], form[ngxVestForm]',
-  exportAs: 'scVestForm, ngxVestForm',
+  selector: 'form[ngxVestForm]',
+  exportAs: 'ngxVestForm',
   host: {
     '(focusout)': 'onFormFocusOut($event)',
   },
 })
 export class FormDirective<T extends Record<string, unknown>> {
   readonly ngForm = inject(NgForm, { self: true });
-  readonly #elementRef = inject(ElementRef<HTMLFormElement>);
   readonly #destroyRef = inject(DestroyRef);
   readonly #cdr = inject(ChangeDetectorRef);
+  readonly #elementRef = inject<ElementRef<HTMLFormElement>>(ElementRef);
   readonly #configDebounceTime = inject(
     NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN
   );
@@ -212,7 +213,8 @@ export class FormDirective<T extends Record<string, unknown>> {
     this.ngForm.form.events.pipe(
       filter(
         (event) =>
-          event instanceof ValueChangeEvent || event instanceof StatusChangeEvent
+          event instanceof ValueChangeEvent ||
+          event instanceof StatusChangeEvent
       ),
       scan((count) => count + 1, 0),
       startWith(0)
@@ -244,6 +246,17 @@ export class FormDirective<T extends Record<string, unknown>> {
   );
 
   /**
+   * Reactive status helpers for template consumption without reaching into `ngForm.form`.
+   * These stay aligned with Angular's form status lifecycle, including async validation.
+   *
+   * @publicApi
+   */
+  readonly status = computed(() => this.#statusSignal());
+  readonly pending = computed(() => this.status() === 'PENDING');
+  readonly valid = computed(() => this.status() === 'VALID');
+  readonly invalid = computed(() => this.status() === 'INVALID');
+
+  /**
    * Reactive counter incremented on any focusout within the form.
    * This guarantees recomputation for every blur/tab interaction,
    * even when the form's aggregate touched flag is already true.
@@ -262,8 +275,16 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly touchedFieldPaths = computed(() => {
     this.#blurTick();
     this.#statusSignal();
-    return this.#collectTouchedPaths(this.ngForm.form, this.ngForm.submitted);
+    return collectTouchedPaths(this.ngForm.form, this.ngForm.submitted);
   });
+
+  /**
+   * Alias for `touchedFieldPaths` using wording that better matches validation UIs.
+   * Returns the field paths that have been validated for display purposes.
+   *
+   * @publicApi
+   */
+  readonly validatedFields = this.touchedFieldPaths;
 
   /**
    * Computed signal for form state with validity and errors.
@@ -308,11 +329,9 @@ export class FormDirective<T extends Record<string, unknown>> {
 
   /**
    * Static vest suite that will be used to feed our angular validators.
-   * Accepts both NgxVestSuite and NgxTypedVestSuite through compatible type signatures.
-   * NgxTypedVestSuite<T> is assignable to NgxVestSuite<T> due to bivariance and
-   * FormFieldName<T> (string literal union) being assignable to string.
+   * Use `suite.only(field).run(model)` when you need field-focused validation.
    */
-  readonly suite = input<NgxVestSuite<T> | NgxTypedVestSuite<T> | null>(null);
+  readonly suite = input<NgxVestSuite<T> | null>(null);
 
   /**
    * The shape of our form model. This is a deep required version of the form model
@@ -320,7 +339,7 @@ export class FormDirective<T extends Record<string, unknown>> {
    * contains values that shouldn't be there (typo's) that the developer gets run-time
    * errors in dev mode
    */
-  readonly formShape = input<DeepRequired<T> | null>(null);
+  readonly formShape = input<NgxDeepRequired<T> | null>(null);
 
   /**
    * Updates the validation config which is a dynamic object that will be used to
@@ -374,11 +393,6 @@ export class FormDirective<T extends Record<string, unknown>> {
     { initialValue: 0 }
   );
 
-  /**
-   * Emits every time the form status changes in a state
-   * that is not PENDING
-   * We need this to assure that the form is in 'idle' state
-   */
   readonly idle$ = this.ngForm.form.events.pipe(
     filter((v) => v instanceof StatusChangeEvent),
     map((v) => (v as StatusChangeEvent).status),
@@ -484,7 +498,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       effect(() => {
         const v = this.formValue();
         if (v && this.formShape()) {
-          validateShape(v, this.formShape() as DeepRequired<T>);
+          validateShape(v, this.formShape() as NgxDeepRequired<T>);
         }
       });
     }
@@ -497,6 +511,24 @@ export class FormDirective<T extends Record<string, unknown>> {
       .subscribe(() => {
         this.ngForm.form.markAllAsTouched();
         this.#blurTick.update((v) => v + 1);
+      });
+
+    this.ngForm.ngSubmit
+      .pipe(
+        switchMap(() => {
+          if (this.ngForm.form.status === 'PENDING') {
+            return this.ngForm.form.statusChanges.pipe(
+              filter((status) => status !== 'PENDING'),
+              take(1)
+            );
+          }
+
+          return of(this.ngForm.form.status);
+        }),
+        takeUntilDestroyed(this.#destroyRef)
+      )
+      .subscribe(() => {
+        this.#focusFirstInvalidField();
       });
 
     /**
@@ -513,10 +545,7 @@ export class FormDirective<T extends Record<string, unknown>> {
 
       // Compute change flags first
       const formChanged = !this.#equal(formValue, this.#lastSyncedFormValue);
-      const modelChanged = !this.#equal(
-        modelValue,
-        this.#lastSyncedModelValue
-      );
+      const modelChanged = !this.#equal(modelValue, this.#lastSyncedModelValue);
 
       // Early return if nothing changed
       if (!formChanged && !modelChanged) {
@@ -540,7 +569,7 @@ export class FormDirective<T extends Record<string, unknown>> {
           if (modelValue) {
             // IMPORTANT: Use root patchValue instead of per-key setValue.
             // - Supports nested objects (ngModelGroup) without throwing when partial objects are provided.
-            // - patchValue ignores missing controls/keys, which is compatible with DeepPartial form models.
+            // - patchValue ignores missing controls/keys, which is compatible with NgxDeepPartial form models.
             // - emitEvent:false prevents feedback loops; validation still updates internally.
             this.ngForm.form.patchValue(modelValue, { emitEvent: false });
           }
@@ -860,70 +889,60 @@ export class FormDirective<T extends Record<string, unknown>> {
     control: AbstractControl;
     element: HTMLElement;
   } | null {
-    const target = event.target;
-    if (!(target instanceof Element)) {
-      return null;
+    return resolveFieldFromBlur(this.ngForm, event.target);
+  }
+
+  /**
+   * Moves keyboard focus to the first invalid, visible form control after submit.
+   * This keeps error recovery predictable for keyboard and assistive-technology users.
+   */
+  #focusFirstInvalidField(): void {
+    if (this.ngForm.form.valid) {
+      return;
     }
 
-    const fieldElement = target.closest('[name]');
-    if (!(fieldElement instanceof HTMLElement)) {
-      return null;
+    const focusFirstInvalid = () => {
+      const form = this.#elementRef.nativeElement;
+      const candidates = Array.from(
+        form.querySelectorAll<HTMLElement>(
+          [
+            '[aria-invalid="true"]:not([disabled]):not([type="hidden"])',
+            'input.ng-invalid:not([disabled]):not([type="hidden"])',
+            'select.ng-invalid:not([disabled])',
+            'textarea.ng-invalid:not([disabled])',
+          ].join(', ')
+        )
+      );
+
+      const firstInvalid = candidates.find((candidate) => {
+        if (candidate.getAttribute('aria-hidden') === 'true') {
+          return false;
+        }
+
+        return candidate.getClientRects().length > 0;
+      });
+
+      if (!firstInvalid) {
+        return;
+      }
+
+      firstInvalid.focus({ preventScroll: true });
+      firstInvalid.scrollIntoView?.({
+        block: 'center',
+        inline: 'nearest',
+      });
+    };
+
+    if (typeof globalThis.requestAnimationFrame === 'function') {
+      globalThis.requestAnimationFrame(() => {
+        focusFirstInvalid();
+      });
+      return;
     }
 
-    const name = fieldElement.getAttribute('name')?.trim();
-    if (!name) {
-      return null;
-    }
-
-    const formEl = this.#elementRef.nativeElement;
-
-    // Authoritative path: ask the registered NgModel directive whose value
-    // accessor is bound to this exact element. This handles all forms of
-    // grouping uniformly — static `ngModelGroup="key"`, dynamic
-    // `[ngModelGroup]="expr"`, repeated leaf names across siblings — because
-    // the directive's `path` is computed from the live ControlContainer tree.
-    const directiveMatch = resolveControlPathByNgModelDirective(
-      this.ngForm,
-      fieldElement
-    );
-    if (directiveMatch) {
-      return {
-        field: directiveMatch.path,
-        control: directiveMatch.control,
-        element: fieldElement,
-      };
-    }
-
-    // Fallback: walk DOM ancestors collecting any `ngModelGroup` attribute
-    // values, producing the canonical dotted path for the static attribute
-    // form (e.g. `<div ngModelGroup="passwords"><input name="password">` →
-    // `passwords.password`). Used when the directive lookup misses (e.g. the
-    // value accessor doesn't expose its element ref in some custom CVAs).
-    const staticGroups = collectNgModelGroupAttributes(fieldElement, formEl);
-    const staticPath = [...staticGroups, name].join('.');
-    const staticControl = this.ngForm.form.get(staticPath);
-    if (staticControl) {
-      return { field: staticPath, control: staticControl, element: fieldElement };
-    }
-
-    // Last-resort fallback for ambiguous DOM structures: probe each ancestor
-    // element as a potential group boundary, querying the form tree until we
-    // find a child that owns this DOM element.
-    const dynamicMatch = resolveControlPathByDomAncestors(
-      this.ngForm.form,
-      fieldElement,
-      formEl,
-      name
-    );
-    if (dynamicMatch) {
-      return {
-        field: dynamicMatch.path,
-        control: dynamicMatch.control,
-        element: fieldElement,
-      };
-    }
-
-    return null;
+    queueMicrotask(() => {
+      focusFirstInvalid();
+    });
   }
 
   /**
@@ -981,6 +1000,12 @@ export class FormDirective<T extends Record<string, unknown>> {
     // Reset Angular's form to clear all controls and mark as pristine/untouched
     this.ngForm.resetForm(value ?? undefined);
 
+    // Vest 6: reset the suite's accumulated validation state.
+    // Since we use stateful suite.only(field).run() (not runStatic), the suite
+    // accumulates results across runs. Resetting clears all persisted errors/warnings
+    // so the form starts fresh.
+    this.suite()?.reset();
+
     // Clear any stored warnings to avoid stale messages after reset
     this.fieldWarnings.set(new Map());
 
@@ -1000,6 +1025,108 @@ export class FormDirective<T extends Record<string, unknown>> {
     // Now synchronous since detectChanges() has flushed DOM updates
     this.ngForm.form.updateValueAndValidity({ emitEvent: true });
     this.#blurTick.update((v) => v + 1);
+  }
+
+  /**
+   * Resets validation state for a specific field in the Vest suite.
+   *
+   * This clears all accumulated errors and warnings for the given field
+   * without affecting other fields. Useful when a field's value is
+   * programmatically reset or cleared.
+   *
+   * **What it does:**
+   * 1. Calls Vest 6's `suite.resetField(field)` to clear accumulated validation state
+   * 2. Clears any stored warnings for the field
+   * 3. Resets the Angular control to clear validation errors
+   *
+   * **When to use:**
+   * - Resetting individual field values programmatically
+   * - Clearing validation after a field's context changes (e.g., toggling a feature)
+   * - When you need per-field reset instead of full form reset
+   *
+   * @param field - The field path to reset (e.g., 'email' or 'addresses.billing.street')
+   *
+   * @example
+   * ```typescript
+   * vestForm = viewChild.required('vestForm', { read: FormDirective });
+   *
+   * clearEmail(): void {
+   *   this.formValue.update(v => ({ ...v, email: '' }));
+   *   this.vestForm().resetField('email');
+   * }
+   * ```
+   *
+   * @see {@link resetForm} for resetting the entire form
+   * @see {@link removeField} for permanently removing a field from validation state
+   */
+  resetField(field: string): void {
+    this.suite()?.resetField(field);
+
+    // Clear warnings for this field
+    this.fieldWarnings.update((map) => {
+      const newMap = new Map(map);
+      newMap.delete(field);
+      return newMap;
+    });
+
+    // Reset Angular control validation state
+    const control = this.ngForm.form.get(field);
+    if (control) {
+      control.updateValueAndValidity({ emitEvent: true });
+      this.#blurTick.update((v) => v + 1);
+    }
+  }
+
+  /**
+   * Removes a field from the Vest suite's accumulated validation state.
+   *
+   * This permanently removes all validation history for the given field,
+   * including errors, warnings, and test results. Unlike `resetField()`,
+   * `remove()` is intended for fields that are being destroyed (e.g.,
+   * conditionally hidden via `@if`).
+   *
+   * **What it does:**
+   * 1. Calls Vest 6's `suite.remove(field)` to purge all test history for the field
+   * 2. Clears any stored warnings for the field
+   *
+   * **Why this matters:**
+   * Vest 6 suites are stateful — `suite.only(field).run()` accumulates results.
+   * When a form control is destroyed (e.g., hidden by `@if`), the suite still holds
+   * stale results for that field. This can cause incorrect form-level validity
+   * or ghost errors. Calling `removeField()` cleans up this stale state.
+   *
+   * **When to use:**
+   * - Dynamic form controls removed from the DOM (e.g., `@if` toggling sections)
+   * - Removing fields from a form array
+   * - Any scenario where a field no longer exists in the form
+   *
+   * @param field - The field path to remove (e.g., 'email' or 'addresses.shipping.street')
+   *
+   * @example
+   * ```typescript
+   * vestForm = viewChild.required('vestForm', { read: FormDirective });
+   *
+   * onToggleShipping(enabled: boolean): void {
+   *   if (!enabled) {
+   *     // Clean up Vest state for removed shipping fields
+   *     this.vestForm().removeField('addresses.shipping.street');
+   *     this.vestForm().removeField('addresses.shipping.city');
+   *   }
+   * }
+   * ```
+   *
+   * @see {@link resetField} for resetting a field without removing it
+   * @see {@link resetForm} for resetting the entire form
+   */
+  removeField(field: string): void {
+    this.suite()?.remove(field);
+
+    // Clear warnings for this field
+    this.fieldWarnings.update((map) => {
+      const newMap = new Map(map);
+      newMap.delete(field);
+      return newMap;
+    });
   }
 
   /**
@@ -1035,30 +1162,26 @@ export class FormDirective<T extends Record<string, unknown>> {
         switchMap(
           (snap) =>
             new Observable<ValidationErrors | null>((observer) => {
+              let cancelled = false;
+              observer.add(() => {
+                cancelled = true;
+              });
+
               try {
-                // Cast to NgxVestSuite to accept string field parameter
-                // Both NgxVestSuite and NgxTypedVestSuite work with string at runtime
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (suite as NgxVestSuite<T>)(snap, field).done((result: any) => {
-                  // Guard: bail out if the directive was destroyed while
-                  // validation was in flight to avoid writing to disposed
-                  // signals or a torn-down view.
-                  if (this.#destroyed) {
-                    // Emit a neutral `null` before completing so async
-                    // validators always emit exactly once. Completing without
-                    // emission can leave consumers (e.g. a control's status)
-                    // in an unexpected `PENDING` state.
-                    observer.next(null);
-                    observer.complete();
-                    return;
+                // Vest 6: suite.only(field).run() for focused, stateful validation.
+                const result = suite.only(field).run(snap);
+
+                const processResult = (
+                  suiteResult: NgxSuiteRunResult
+                ): ValidationErrors | null => {
+                  if (cancelled || this.#destroyed) {
+                    return null;
                   }
 
-                  const errors = result.getErrors()[field];
-                  const warnings = result.getWarnings()[field];
+                  const errors = suiteResult.getErrors()[field];
+                  const warnings = suiteResult.getWarnings()[field];
 
-                  // Store warnings in the fieldWarnings signal for access by control wrappers.
-                  // This is necessary because Angular marks a field as invalid when control.errors !== null.
-                  // By storing warnings separately, fields can remain valid while still displaying warnings.
+                  // Store warnings separately so fields can remain valid while displaying warnings.
                   this.fieldWarnings.update((map) => {
                     const newMap = new Map(map);
                     if (warnings?.length) {
@@ -1069,13 +1192,8 @@ export class FormDirective<T extends Record<string, unknown>> {
                     return newMap;
                   });
 
-                  // Build the validation result:
-                  // - Errors exist → return { errors, warnings? } (field invalid, Angular shows ng-invalid)
-                  // - Only warnings → return null (field valid, warnings accessed via fieldWarnings signal)
-                  // - Neither → return null (field valid)
-                  //
-                  // When errors exist, we also include warnings in control.errors for backwards compatibility
-                  // with code that reads warnings from control.errors.warnings.
+                  // Errors exist → { errors, warnings? } (field invalid)
+                  // Only warnings or neither → null (field valid, warnings via fieldWarnings signal)
                   const out = errors?.length
                     ? {
                         errors,
@@ -1094,21 +1212,110 @@ export class FormDirective<T extends Record<string, unknown>> {
                   // synchronously inside Angular's own validation pipeline. The scheduleMicrotask
                   // primitive auto-cancels if the directive is destroyed before it fires.
                   scheduleMicrotask(() => {
+                    if (cancelled || this.#destroyed) {
+                      return;
+                    }
                     try {
                       this.#cdr.detectChanges();
                     } catch {
-                      // Fallback: mark for check when immediate detectChanges isn't safe.
-                      // This keeps behavior resilient in edge cases.
                       this.#cdr.markForCheck();
                     }
                   }, this.#destroyRef);
 
-                  observer.next(out);
+                  return out;
+                };
+
+                const emitAndComplete = (suiteResult: NgxSuiteRunResult) => {
+                  if (cancelled) {
+                    return;
+                  }
+
+                  if (this.#destroyed) {
+                    observer.next(null);
+                    observer.complete();
+                    return;
+                  }
+
+                  observer.next(processResult(suiteResult));
                   observer.complete();
+                };
+
+                const getLatestResult = (): NgxSuiteRunResult =>
+                  suite.get?.() ?? result;
+
+                // Sync path: emit immediately to avoid PENDING flash.
+                if (!result.isPending()) {
+                  emitAndComplete(result);
+                  return;
+                }
+
+                // Async path: handle thenable results when available.
+                if (typeof result.then === 'function') {
+                  Promise.resolve(result)
+                    .then(() => {
+                      if (cancelled) return;
+                      emitAndComplete(getLatestResult());
+                    })
+                    .catch(() => {
+                      if (cancelled) return;
+                      // Rejected thenables can still represent validation failures.
+                      // Read the suite's latest state when available instead of
+                      // relying on the original thenable result object, which can
+                      // remain stale across runtimes after rejection.
+                      if (!result.isPending()) {
+                        emitAndComplete(getLatestResult());
+                        return;
+                      }
+
+                      // Register cleanup BEFORE starting intervals so that if the
+                      // subscription was already closed, teardown fires immediately
+                      // and prevents any polling callbacks from running.
+                      const intervalId: ReturnType<typeof setInterval> =
+                        setInterval(() => {
+                          if (cancelled || !result.isPending()) {
+                            clearInterval(intervalId);
+                            clearTimeout(timeoutId);
+                            emitAndComplete(getLatestResult());
+                          }
+                        }, 25);
+
+                      const timeoutId: ReturnType<typeof setTimeout> =
+                        setTimeout(() => {
+                          clearInterval(intervalId);
+                          emitAndComplete(getLatestResult());
+                        }, 5000);
+
+                      observer.add(() => {
+                        clearInterval(intervalId);
+                        clearTimeout(timeoutId);
+                      });
+                    });
+                  return;
+                }
+
+                // Fallback path: poll pending state for non-thenable results.
+                const intervalId = setInterval(() => {
+                  if (!result.isPending()) {
+                    clearInterval(intervalId);
+                    clearTimeout(timeoutId);
+                    emitAndComplete(getLatestResult());
+                  }
+                }, 25);
+
+                const timeoutId = setTimeout(() => {
+                  clearInterval(intervalId);
+                  emitAndComplete(getLatestResult());
+                }, 5000);
+
+                observer.add(() => {
+                  clearInterval(intervalId);
+                  clearTimeout(timeoutId);
                 });
+                return;
               } catch {
                 observer.next({ vestInternalError: 'Validation failed' });
                 observer.complete();
+                return;
               }
             })
         ),
@@ -1371,228 +1578,16 @@ export class FormDirective<T extends Record<string, unknown>> {
     // Keep fields marked as in-progress for a short time to prevent immediate re-triggering
     // Use scheduleTimeout to ensure async validators have time to complete before allowing
     // new triggers. The timer auto-cancels on directive destroy so no timers leak.
-    scheduleTimeout(() => {
-      this.#validationInProgress.delete(triggerField);
-      for (const depField of dependents) {
-        this.#validationInProgress.delete(depField);
-      }
-    }, VALIDATION_IN_PROGRESS_TIMEOUT_MS, this.#destroyRef);
-  }
-
-  /**
-   * Collects field paths of all touched (or submitted) leaf controls
-   * by walking the form control tree.
-   */
-  #collectTouchedPaths(control: AbstractControl, submitted: boolean): string[] {
-    const fields: string[] = [];
-
-    const collect = (
-      current: AbstractControl,
-      path: Array<string | number>
-    ): void => {
-      if (current instanceof FormGroup) {
-        for (const [name, child] of Object.entries(current.controls)) {
-          collect(child, [...path, name]);
+    scheduleTimeout(
+      () => {
+        this.#validationInProgress.delete(triggerField);
+        for (const depField of dependents) {
+          this.#validationInProgress.delete(depField);
         }
-        return;
-      }
-
-      if (current instanceof FormArray) {
-        current.controls.forEach((child, index) => {
-          collect(child, [...path, index]);
-        });
-        return;
-      }
-
-      if ((submitted || current.touched) && path.length > 0) {
-        fields.push(stringifyFieldPath(path));
-      }
-    };
-
-    collect(control, []);
-    return fields;
+      },
+      VALIDATION_IN_PROGRESS_TIMEOUT_MS,
+      this.#destroyRef
+    );
   }
-}
 
-/**
- * Reads the user-entered value from a blurred form element. Returns
- * `undefined` for radio inputs (caller must fall back to the bound
- * `control.value`, since the focused radio is not necessarily the
- * group's selected option) and for elements we don't handle.
- */
-function readElementValueForBlur(element: HTMLElement): unknown {
-  if (element instanceof HTMLInputElement) {
-    if (element.type === 'radio') return undefined;
-    if (element.type === 'checkbox') return element.checked;
-    if (element.type === 'number') {
-      return element.value === '' ? null : element.valueAsNumber;
-    }
-    return element.value;
-  }
-  if (
-    element instanceof HTMLTextAreaElement ||
-    element instanceof HTMLSelectElement
-  ) {
-    return element.value;
-  }
-  return undefined;
-}
-
-/**
- * Walks DOM ancestors between `start` (exclusive) and `formEl` (exclusive),
- * collecting any preserved `ngModelGroup` attribute values into a path
- * suitable for `FormGroup.get()`. Only the static attribute form is
- * preserved on the DOM; dynamically-bound `[ngModelGroup]` is handled by
- * `resolveControlPathByDomAncestors`.
- */
-function collectNgModelGroupAttributes(
-  start: HTMLElement,
-  formEl: HTMLElement
-): string[] {
-  const groups: string[] = [];
-  let current: Element | null = start.parentElement;
-  while (current && current !== formEl && formEl.contains(current)) {
-    const groupName = current.getAttribute('ngModelGroup')?.trim();
-    if (groupName) {
-      groups.unshift(groupName);
-    }
-    current = current.parentElement;
-  }
-  return groups;
-}
-
-/**
- * Resolves the dotted control path for a blurred element when the static
- * `ngModelGroup` attribute walk failed (typically because the host used
- * `[ngModelGroup]="expr"`, which Angular does not always preserve as a
- * DOM attribute). Walks the control tree top-down and at each FormGroup
- * boundary tries to descend into a child whose subtree contains an element
- * with the matching `name` — disambiguating repeated leaf names by DOM
- * containment instead of giving up.
- */
-function resolveControlPathByDomAncestors(
-  root: FormGroup,
-  fieldElement: HTMLElement,
-  formEl: HTMLElement,
-  leafName: string
-): { path: string; control: AbstractControl } | null {
-  type Frame = { control: AbstractControl; path: Array<string | number> };
-
-  const descend = (frame: Frame): Frame | null => {
-    if (frame.control instanceof FormGroup) {
-      for (const [key, child] of Object.entries(frame.control.controls)) {
-        if (key === leafName && !(child instanceof FormGroup)) {
-          return { control: child, path: [...frame.path, key] };
-        }
-      }
-      const candidates: Frame[] = [];
-      for (const [key, child] of Object.entries(frame.control.controls)) {
-        if (child instanceof FormGroup || child instanceof FormArray) {
-          if (subtreeContainsElement(child, fieldElement, formEl, key)) {
-            candidates.push({ control: child, path: [...frame.path, key] });
-          }
-        }
-      }
-      if (candidates.length === 1 && candidates[0])
-        return descend(candidates[0]);
-      return null;
-    }
-    if (frame.control instanceof FormArray) {
-      const candidates: Frame[] = [];
-      frame.control.controls.forEach((child, index) => {
-        if (child instanceof FormGroup || child instanceof FormArray) {
-          if (subtreeContainsElement(child, fieldElement, formEl, index)) {
-            candidates.push({ control: child, path: [...frame.path, index] });
-          }
-        }
-      });
-      if (candidates.length === 1 && candidates[0])
-        return descend(candidates[0]);
-    }
-    return null;
-  };
-
-  const result = descend({ control: root, path: [] });
-  if (!result) return null;
-  return { path: stringifyFieldPath(result.path), control: result.control };
-}
-
-/**
- * Best-effort check: does the DOM subtree rooted at any element annotated
- * with `ngModelGroup="<key>"` contain `fieldElement`? Used by
- * `resolveControlPathByDomAncestors` to disambiguate repeated leaf names.
- * For dynamic `[ngModelGroup]` with no preserved attribute we cannot
- * disambiguate from DOM alone — those cases return `false`, matching the
- * documented limitation.
- */
-function subtreeContainsElement(
-  _child: AbstractControl,
-  fieldElement: HTMLElement,
-  formEl: HTMLElement,
-  key: string | number
-): boolean {
-  if (typeof key !== 'string') return false;
-  const selector = `[ngModelGroup="${CSS.escape(key)}"]`;
-  const candidates = formEl.querySelectorAll(selector);
-  for (const candidate of candidates) {
-    if (candidate.contains(fieldElement)) return true;
-  }
-  return false;
-}
-
-/**
- * Resolves the control + dotted path for a blurred element by consulting the
- * `NgModel` directives Angular registered with this `NgForm`. Each registered
- * directive carries a live `path` (the full ControlContainer chain) and a
- * value accessor whose element ref is the input the directive is hosted on.
- *
- * This handles all grouping shapes uniformly — static `ngModelGroup="key"`,
- * dynamic `[ngModelGroup]="expr"`, and repeated leaf names across siblings —
- * because the path comes from the live form tree rather than DOM heuristics.
- * Returns `null` when the directive can't be matched (e.g. a custom CVA that
- * doesn't store an element ref), so the caller can fall back to DOM probes.
- */
-function resolveControlPathByNgModelDirective(
-  ngForm: NgForm,
-  fieldElement: HTMLElement
-): { path: string; control: AbstractControl } | null {
-  const directives = readNgFormDirectives(ngForm);
-  if (!directives) return null;
-
-  for (const directive of directives) {
-    const accessorEl = readValueAccessorElement(directive.valueAccessor);
-    if (accessorEl !== fieldElement) continue;
-    const control = directive.control ?? ngForm.form.get(directive.path);
-    if (!control) return null;
-    return { path: directive.path.join('.'), control };
-  }
-  return null;
-}
-
-/**
- * Reads the registered `NgModel` directives from `NgForm`. Angular forms keeps
- * them in a private `_directives: Set<NgModel>`. The field name is stable
- * across all Angular versions that ship `ngModel`, but is not part of the
- * public type — callers must tolerate `null`.
- */
-function readNgFormDirectives(ngForm: NgForm): Iterable<NgModel> | null {
-  const set = (ngForm as unknown as { _directives?: Set<NgModel> })._directives;
-  return set ?? null;
-}
-
-/**
- * Reads the host element of a `ControlValueAccessor`. The standard accessors
- * shipped by Angular forms (default, number, select, radio, checkbox, range)
- * all store an `ElementRef` injected at construction as `_elementRef`. This
- * is private but stable; custom accessors that don't follow the convention
- * will simply miss the fast path.
- */
-function readValueAccessorElement(
-  accessor: ControlValueAccessor | null | undefined
-): HTMLElement | null {
-  if (!accessor) return null;
-  const elementRef = (accessor as { _elementRef?: { nativeElement?: unknown } })
-    ._elementRef;
-  const native = elementRef?.nativeElement;
-  return native instanceof HTMLElement ? native : null;
 }

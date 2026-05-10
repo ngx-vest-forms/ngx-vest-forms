@@ -4,11 +4,10 @@
 
 When generating code for this repository:
 
-1. Respect the exact toolchain versions in `package.json`.
-2. Treat `.github/instructions/ngx-vest-forms.instructions.md` as the always-on invariant sheet for ngx-vest-forms usage.
-3. Treat `.github/instructions/vest.instructions.md` as the deeper Vest validation guide.
-4. Use the umbrella `ngx-vest-forms` skill and its nested workflow sub-skills for feature workflows instead of restating library docs from memory.
-5. Prefer patterns already present in the repo over generic framework advice.
+1. Treat `.github/instructions/ngx-vest-forms.instructions.md` as the always-on invariant sheet for ngx-vest-forms usage.
+2. Treat `.github/instructions/vest.instructions.md` as the always-on Vest 6 invariant sheet, and use `.agents/skills/vestjs/` for deeper workflow guidance.
+3. Prefer the local skills under `.agents/skills/ngx-vest-forms/` and `.agents/skills/vestjs/` over generic framework advice.
+4. Prefer coding patterns already used in the repository's Angular components, examples, services, and public API over generic best-practice examples.
 
 ## Branch policy (read before opening PRs)
 
@@ -17,14 +16,14 @@ proposing changes.
 
 - **`master`** — current stable v2 maintenance line. Only target master for v2
   bug fixes, security patches, or repo-wide governance/tooling changes that
-  must apply to the default branch (PR templates, dependabot config,
-  copilot instructions, CI policy). Do not target master for new v3 features
+  must apply to the default branch (PR templates, Dependabot config,
+  Copilot instructions, CI policy). Do not target master for new v3 features
   or refactors.
 - **`release/v3`** — active v3 development. All v3 features, refactors, test
   migrations, and v3-specific dependency upgrades target this branch. Merging
   here does **not** auto-publish; v3 only ships via manual
   `workflow_dispatch` of `.github/workflows/prerelease.yml` (snapshot
-  prereleases) — never on PR merge.
+  prereleases on the `v3-snapshot` npm dist-tag) — never on PR merge.
 - Other `release/*` branches are maintenance-only for their respective majors.
 
 When uncertain, default to `release/v3` and call out the choice in the PR
@@ -32,17 +31,19 @@ description so a reviewer can redirect if needed.
 
 ## Version baseline
 
-- Angular framework packages: `21.2.5`
-- Angular CLI/build tooling: `21.2.3`
-- TypeScript: `~6.0.2`
+Use the versions in `package.json` and the baseline below as hard compatibility limits for generated code and advice.
+
+- Angular framework packages: `21.2.11`
+- Angular CLI/build tooling: `21.2.9`
+- TypeScript: `~5.9.3`
 - Node.js: `>=22.0.0`
 - RxJS: `~7.8.2`
-- Vest.js: `~5.4.6`
-- Vitest: `^4.1.1`
-- Playwright: `1.58.2`
-- Storybook: `10.3.3`
+- Vest.js: `~6.3.2`
+- Vitest: `^4.1.5`
+- Playwright: `1.59.1`
+- Storybook: `10.3.6`
 
-Do not suggest code that depends on newer language or framework features than these versions support.
+You can suggest code that depends on features introduced in versions of Angular, TypeScript, Node.js, RxJS, Vest, Vitest, Playwright, Storybook, or other dependencies newer than the versions listed here or in `package.json`. But come with a strong justification for why the newer feature is necessary and how it improves on the existing patterns in the repo. Do not suggest newer features just because they exist or are trendy if they do not clearly enhance the code quality, readability, or maintainability of the generated code in this specific repository context.
 
 ## Repo shape
 
@@ -51,7 +52,7 @@ Do not suggest code that depends on newer language or framework features than th
 - Library public surface: `projects/ngx-vest-forms/src/public-api.ts`
 - Domain docs: `docs/`
 - Always-on instructions: `.github/instructions/`
-- Umbrella skill: `.agents/skills/ngx-vest-forms/`
+- Local skills: `.agents/skills/`
 
 ## Public API first
 
@@ -65,25 +66,26 @@ If a new library feature is added, export it in `projects/ngx-vest-forms/src/pub
 
 ## Working rules
 
-- Keep `name` aligned with the `[ngModel]` path.
+- Keep the `name` attribute aligned with the `[ngModel]` path.
 - Use `[ngModel]`, not `[(ngModel)]`, for ngx-vest-forms examples.
 - Use optional chaining with partial form models.
-- Call `only(field)` unconditionally in Vest suites.
+- Use Vest 6 suite callbacks with a model-only signature: `create((model) => { ... })`.
+- Handle field-focused validation at the call site with `suite.only(field).run(model)`.
 - Use `vestFormsViewProviders` in child form components that participate in the parent form tree.
-
-These rules live in the invariant instruction file; correct violations instead of arguing with them.
+- Prefer `<ngx-control-wrapper>` for single controls and group wrappers for `ngModelGroup` containers.
+- The examples app mocks the people API in-app via `mockPeopleApiInterceptor`; no separate backend is required.
 
 ## How to choose guidance sources
 
-- Need the baseline rules: read `.github/instructions/ngx-vest-forms.instructions.md`
-- Need Vest suite semantics: read `.github/instructions/vest.instructions.md`
-- Need default form setup: use the `core/` workflow sub-skill under `ngx-vest-forms`
-- Need `validationConfig` guidance: use the `validation-config-builder/` workflow sub-skill under `ngx-vest-forms`
-- Need `ROOT_FORM`: use the `root-form-validation/` workflow sub-skill under `ngx-vest-forms`
-- Need wrappers: use the `built-in-wrappers/` or `custom-wrapper-patterns/` workflow sub-skill under `ngx-vest-forms`
-- Need composite adapter (one widget, multiple fields): use the `composite-adapter/` workflow sub-skill under `ngx-vest-forms`
-- Need nested sections: use the `child-components/` workflow sub-skill under `ngx-vest-forms`
-- Need dynamic structure changes: use the `dynamic-form-behavior/` workflow sub-skill under `ngx-vest-forms`
+- Need baseline usage rules: read `.github/instructions/ngx-vest-forms.instructions.md`
+- Need baseline Vest suite invariants: read `.github/instructions/vest.instructions.md`
+- Need deeper Vest workflow guidance: use `.agents/skills/vestjs/`
+- Need default form setup: use `.agents/skills/ngx-vest-forms/core/`
+- Need `validationConfig`: use `.agents/skills/ngx-vest-forms/validation-config-builder/`
+- Need `ROOT_FORM`: use `.agents/skills/ngx-vest-forms/root-form-validation/`
+- Need wrappers: use `.agents/skills/ngx-vest-forms/built-in-wrappers/` or `custom-wrapper-patterns/`
+- Need composite widgets mapped to multiple fields: use `.agents/skills/ngx-vest-forms/composite-adapter/`
+- Need blur-driven autosave: use the examples and docs around `fieldBlur`
 
 ## Library maintenance workflow
 
@@ -97,13 +99,14 @@ When changing the library itself:
 
 ## Style and quality
 
-- Keep code aligned with existing Angular 21 + signals patterns.
+- Keep code aligned with Angular 21 + signals patterns already used in the repo.
 - Prefer clear, typed examples over clever abstractions.
 - Follow repository naming and file-organization patterns.
-- Do not introduce new architectural styles unless the task requires it.
+- Keep accessibility and predictable validation UX in mind.
+- Do not reintroduce legacy Vest 5 callback-field patterns into Vest 6 code.
 
 ## Chat guidelines
 
-- Do not use emojis in chat responses, except for checking off tasks.
 - Verify version compatibility before suggesting code changes.
-- Prefer concise repo-specific guidance over long repeated tutorials.
+- Prioritize consistency with existing codebase patterns over external best practices.
+- Avoid stale Vest 5 guidance such as `staticSuite((model, field?) => ...)`, callable suites, or `only()` inside the suite callback.

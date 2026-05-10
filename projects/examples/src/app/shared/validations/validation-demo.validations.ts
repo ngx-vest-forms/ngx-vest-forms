@@ -1,10 +1,9 @@
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { type NgxVestSuite } from 'ngx-vest-forms';
+import { create, enforce, omitWhen, test } from 'vest';
 import { ValidationDemoModel } from '../models/validation-demo.model';
 
-export const validationDemoSuite = staticSuite(
-  (model: ValidationDemoModel, field?: string) => {
-    only(field);
-
+export const validationDemoSuite: NgxVestSuite<ValidationDemoModel> = create(
+  (model: ValidationDemoModel) => {
     // Password validation
     test('password', 'Password is required', () => {
       enforce(model.password).isNotBlank();

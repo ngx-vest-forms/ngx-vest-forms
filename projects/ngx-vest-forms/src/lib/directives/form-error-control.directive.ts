@@ -30,8 +30,8 @@ let nextUniqueId = 0;
  * It does not render any UI; you can use the generated IDs to render messages.
  */
 @Directive({
-  selector: '[formErrorControl], [ngxErrorControl]',
-  exportAs: 'formErrorControl, ngxErrorControl',
+  selector: '[ngxErrorControl]',
+  exportAs: 'ngxErrorControl',
   hostDirectives: [
     {
       directive: FormErrorDisplayDirective,

@@ -18,9 +18,8 @@ import {
 @Component({
   selector: 'ngx-wizard-navigation',
   template: `
-    <div
+    <nav
       class="flex items-center justify-between pt-6"
-      role="navigation"
       aria-label="Form navigation"
     >
       <!-- Previous button -->
@@ -122,7 +121,7 @@ import {
           </button>
         }
       </div>
-    </div>
+    </nav>
   `,
   styles: `
     :host {

@@ -5,7 +5,7 @@ description: Routes general ngx-vest-forms requests to the right workflow. Use t
 
 # ngx-vest-forms router skill
 
-Use this as the broad entry point for ngx-vest-forms questions. Tracks library v2.7.x (Angular `>=19`, RxJS `>=7.8`, Vest `>=5.4.6`).
+Use this as the broad entry point for ngx-vest-forms questions. Track the current branch baseline: v3.x-era guidance on Angular 21+, RxJS ~7.8, and Vest 6.x.
 
 ## Start with the invariant layer
 
@@ -14,7 +14,7 @@ Assume the repo instruction file already enforces the baseline guardrails:
 - use `[ngModel]`, not `[(ngModel)]`
 - keep `name` aligned with the bound path
 - use optional chaining for partial models
-- call `only(field)` unconditionally
+- handle field-focused validation at the call site via `suite.only(field).run(model)` when needed
 - use `vestFormsViewProviders` in nested child form components
 - use the form's `fieldBlur` output with `NgxFieldBlurEvent<T>` for blur-driven persistence, analytics, and field-level side effects
 - do not gate draft auto-save on `event.pending`
@@ -22,7 +22,7 @@ Assume the repo instruction file already enforces the baseline guardrails:
 
 Do not repeat those basics unless they are directly relevant to the user's issue.
 
-## v2.7.0 deltas to keep in mind
+## Current branch deltas to keep in mind
 
 Non-breaking but worth knowing when the user mentions related symptoms:
 
@@ -34,7 +34,7 @@ Non-breaking but worth knowing when the user mentions related symptoms:
 - **`parseFieldPath` strict mode** logs a dev warning (`ngDevMode`-gated, tree-shakable) for malformed segments like `'a..b'`, `'.a'`, `'a.'`, instead of silently truncating. Production behavior is unchanged for previously valid paths.
 - **`validateShape` opaque-value fix.** `Date`, `Map`, `Set`, `RegExp`, `File`, `Blob` short-circuit recursion. Numeric-key detection switched to `^\d+$`, so `'123abc'` now flags as `TYPE_MISMATCH` instead of becoming array index 0.
 - **Touched syncs to dependents.** Blurring a trigger field propagates touched into its `validationConfig`-tracked dependents on the same tick — pair with `errorDisplayMode="on-blur"` on dependent wrappers for calm UX.
-- **`cloneDeep` is deprecated** and warns once in dev. Scheduled for removal in v3. Use `structuredClone`.
+- **`cloneDeep` was removed in v3.0.0.** Use `structuredClone` in new guidance.
 
 ## Stay on the public API surface
 
@@ -46,17 +46,17 @@ Do not send library consumers to `projects/ngx-vest-forms/src/lib/**` imports. T
 
 Use these nested workflow sub-skills when the feature area is clear:
 
-| Sub-skill | Use when | Path |
-|---|---|---|
-| `core` | first examples, form structure, `[ngModel]`, `NgxDeepPartial`, typed suites | `core/SKILL.md` |
-| `validation-config-builder` | dependent field revalidation, `createValidationConfig()`, `whenChanged`, `bidirectional` | `validation-config-builder/SKILL.md` |
-| `field-blur-events` | draft auto-save, blur-driven persistence, analytics, `fieldBlur`, `NgxFieldBlurEvent` | `field-blur-events/SKILL.md` |
-| `root-form-validation` | `ROOT_FORM`, `ngxValidateRootForm`, summary-level business rules | `root-form-validation/SKILL.md` |
-| `built-in-wrappers` | built-in wrapper selection, display modes, `ariaAssociationMode` | `built-in-wrappers/SKILL.md` |
-| `custom-wrapper-patterns` | design-system wrappers, `FormErrorDisplayDirective`, `FormErrorControlDirective` | `custom-wrapper-patterns/SKILL.md` |
-| `child-components` | nested `ngModelGroup`, reusable form sections, `vestFormsViewProviders` | `child-components/SKILL.md` |
-| `composite-adapter` | one UI widget mapping to multiple flat form fields, hidden proxy fields, fan-out, error aggregation | `composite-adapter/SKILL.md` |
-| `dynamic-form-behavior` | clearing hidden values, structure changes, `triggerFormValidation()` | `dynamic-form-behavior/SKILL.md` |
+| Sub-skill                   | Use when                                                                                            | Path                                 |
+| --------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `core`                      | first examples, form structure, `[ngModel]`, `NgxDeepPartial`, typed suites                         | `core/SKILL.md`                      |
+| `validation-config-builder` | dependent field revalidation, `createValidationConfig()`, `whenChanged`, `bidirectional`            | `validation-config-builder/SKILL.md` |
+| `field-blur-events`         | draft auto-save, blur-driven persistence, analytics, `fieldBlur`, `NgxFieldBlurEvent`               | `field-blur-events/SKILL.md`         |
+| `root-form-validation`      | `ROOT_FORM`, `ngxValidateRootForm`, summary-level business rules                                    | `root-form-validation/SKILL.md`      |
+| `built-in-wrappers`         | built-in wrapper selection, display modes, `ariaAssociationMode`                                    | `built-in-wrappers/SKILL.md`         |
+| `custom-wrapper-patterns`   | design-system wrappers, `FormErrorDisplayDirective`, `FormErrorControlDirective`                    | `custom-wrapper-patterns/SKILL.md`   |
+| `child-components`          | nested `ngModelGroup`, reusable form sections, `vestFormsViewProviders`                             | `child-components/SKILL.md`          |
+| `composite-adapter`         | one UI widget mapping to multiple flat form fields, hidden proxy fields, fan-out, error aggregation | `composite-adapter/SKILL.md`         |
+| `dynamic-form-behavior`     | clearing hidden values, structure changes, `triggerFormValidation()`                                | `dynamic-form-behavior/SKILL.md`     |
 
 ## Route to the right workflow
 
@@ -68,6 +68,8 @@ Read `core/SKILL.md` when the user is:
 - asking for a proper example
 - unsure how to structure a component around ngx-vest-forms
 - asking about `NgxDeepPartial`, form shapes, or signal-based form state
+- writing tests for a form/Vest suite, asking about `staticSuite`, `runStatic`,
+  resetting stateful suites between tests, or "tests pass locally but fail in CI"
 
 ### Dependent field revalidation
 
@@ -93,7 +95,7 @@ Read `root-form-validation/SKILL.md` when the user is:
 
 - asking for a message that belongs to the entire form
 - comparing `ROOT_FORM` versus field-level validation
-- working with `ngxValidateRootForm` or `validateRootFormMode`
+- working with `ngxValidateRootForm` or `ngxValidateRootFormMode`
 
 ### Built-in wrappers
 

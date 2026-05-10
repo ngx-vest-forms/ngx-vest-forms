@@ -31,7 +31,10 @@ import {
 } from 'rxjs';
 import { ROOT_FORM } from '../constants';
 import { scheduleMicrotask } from '../utils/destroy-scheduler';
-import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
+import type {
+  NgxSuiteRunResult,
+  NgxVestSuite,
+} from '../utils/validation-suite';
 import { ValidationOptions } from './validation-options';
 
 /**
@@ -75,11 +78,11 @@ import { ValidationOptions } from './validation-options';
  *
  * @example
  * ```html
- * <form scVestForm
- *       validateRootForm
+ * <form ngxVestForm
+ *       ngxValidateRootForm
  *       [suite]="suite"
  *       [formValue]="formValue()"
- *       [validateRootFormMode]="'submit'"
+ *       [ngxValidateRootFormMode]="'submit'"
  *       (errorsChange)="errors.set($event)"
  *       #form="ngForm">
  *   <!-- form fields -->
@@ -94,9 +97,7 @@ import { ValidationOptions } from './validation-options';
  * ```typescript
  * import { ROOT_FORM } from 'ngx-vest-forms';
  *
- * export const suite = staticSuite((model, field?) => {
- *   only(field);
- *
+ * export const suite = create((model) => {
  *   test(ROOT_FORM, 'Passwords must match', () => {
  *     enforce(model.confirmPassword).equals(model.password);
  *   });
@@ -106,7 +107,7 @@ import { ValidationOptions } from './validation-options';
  * @publicApi
  */
 @Directive({
-  selector: 'form[validateRootForm], form[ngxValidateRootForm]',
+  selector: 'form[ngxValidateRootForm]',
 
   providers: [
     {
@@ -126,16 +127,8 @@ export class ValidateRootFormDirective<T>
   readonly #hasSubmitted = signal(false);
 
   readonly formValue = input<T | null>(null);
-  readonly suite = input<NgxVestSuite<T> | NgxTypedVestSuite<T> | null>(null);
+  readonly suite = input<NgxVestSuite<T> | null>(null);
 
-  /**
-   * Whether the root form should be validated or not
-   * This will use the field rootForm
-   * Accepts both validateRootForm and ngxValidateRootForm
-   */
-  readonly validateRootForm = input(false, {
-    transform: booleanAttribute,
-  });
   readonly ngxValidateRootForm = input(false, {
     transform: booleanAttribute,
   });
@@ -144,15 +137,7 @@ export class ValidateRootFormDirective<T>
    * Validation mode:
    * - `'submit'` (effective default): Only validates after form submission.
    * - `'live'`: Validates on every value change.
-   *
-   * Both inputs default to `undefined` so we can detect whether the consumer
-   * set them explicitly. Precedence is `ngx ?? legacy ?? 'submit'`, which
-   * matches the documented behavior — observable only when both attributes
-   * are set explicitly on the same form.
    */
-  readonly validateRootFormMode = input<'submit' | 'live' | undefined>(
-    undefined
-  );
   readonly ngxValidateRootFormMode = input<'submit' | 'live' | undefined>(
     undefined
   );
@@ -168,9 +153,7 @@ export class ValidateRootFormDirective<T>
       // These can be set after the first validation pass and we want the
       // root form to re-evaluate once they become available.
       this.suite();
-      this.validateRootForm();
       this.ngxValidateRootForm();
-      this.validateRootFormMode();
       this.ngxValidateRootFormMode();
       this.validationOptions();
 
@@ -204,8 +187,8 @@ export class ValidateRootFormDirective<T>
 
     if (!ngForm) {
       console.error(
-        '[ValidateRootFormDirective] NgForm not found. Ensure the directive is used on a <form> element with the scVestForm directive. ' +
-          'Common setup mistakes: (1) Missing scVestForm directive, (2) Directive on non-form element, (3) NgForm not imported in module/component.'
+        '[ValidateRootFormDirective] NgForm not found. Ensure the directive is used on a <form> element with the ngxVestForm directive. ' +
+          'Common setup mistakes: (1) Missing ngxVestForm directive, (2) Directive on non-form element, (3) NgForm not imported in module/component.'
       );
       return;
     }
@@ -235,19 +218,11 @@ export class ValidateRootFormDirective<T>
       return of(null);
     }
 
-    // Check both validateRootForm and ngxValidateRootForm inputs
-    const isEnabled = this.validateRootForm() || this.ngxValidateRootForm();
-    if (!isEnabled) {
+    if (!this.ngxValidateRootForm()) {
       return of(null);
     }
 
-    // Mode precedence: ngx-prefixed input wins over legacy input; both default
-    // to `undefined` so the precedence rule is implementable without losing
-    // the legacy attribute when the new one is not set.
-    const mode =
-      this.ngxValidateRootFormMode() ??
-      this.validateRootFormMode() ??
-      'submit';
+    const mode = this.ngxValidateRootFormMode() ?? 'submit';
 
     // In 'submit' mode, skip validation until form is submitted
     if (mode === 'submit' && !this.#hasSubmitted()) {
@@ -290,47 +265,102 @@ export class ValidateRootFormDirective<T>
         debounce > 0 ? timer(debounce).pipe(map(() => mod)) : of(mod);
 
       return source$.pipe(
-        switchMap((model) => {
-          return new Observable((observer) => {
-            try {
-              const suite = this.suite();
-              if (!suite) {
+        switchMap(
+          (model) =>
+            new Observable<ValidationErrors | null>((observer) => {
+              let cancelled = false;
+              observer.add(() => {
+                cancelled = true;
+              });
+
+              try {
+                const suite = this.suite();
+                if (!suite) {
+                  observer.next(null);
+                  observer.complete();
+                  return;
+                }
+
+                // Vest 6: suite.only(field).run() for focused, stateful validation.
+                const result = (suite as NgxVestSuite<T>)
+                  .only(field)
+                  .run(model);
+
+                const extractErrors = (
+                  suiteResult: NgxSuiteRunResult
+                ): ValidationErrors | null => {
+                  if (cancelled) {
+                    return null;
+                  }
+
+                  const errors = suiteResult.getErrors()[field];
+                  return errors ? { errors } : null;
+                };
+
+                const emitAndComplete = (suiteResult: NgxSuiteRunResult) => {
+                  if (cancelled) {
+                    return;
+                  }
+
+                  observer.next(extractErrors(suiteResult));
+                  observer.complete();
+                };
+
+                const getLatestResult = (): NgxSuiteRunResult =>
+                  (suite as NgxVestSuite<T>).get?.() ?? result;
+
+                // Sync path: emit immediately to avoid PENDING status flash.
+                if (!result.isPending()) {
+                  emitAndComplete(result);
+                  return;
+                }
+
+                // Async path: use thenable completion when available.
+                if (typeof result.then === 'function') {
+                  result.then(
+                    () => {
+                      emitAndComplete(getLatestResult());
+                    },
+                    () => {
+                      // Rejected thenables can still represent validation failures.
+                      // Use the suite's latest state immediately to avoid long-lived
+                      // polling timers that can keep tests/processes alive.
+                      emitAndComplete(getLatestResult());
+                    }
+                  );
+                  return;
+                }
+
+                // Fallback path: poll pending state for non-thenable results.
+                const intervalId = setInterval(() => {
+                  if (!result.isPending()) {
+                    clearInterval(intervalId);
+                    clearTimeout(timeoutId);
+                    emitAndComplete(getLatestResult());
+                  }
+                }, 25);
+
+                const timeoutId = setTimeout(() => {
+                  clearInterval(intervalId);
+                  emitAndComplete(getLatestResult());
+                }, 5000);
+
+                observer.add(() => {
+                  clearInterval(intervalId);
+                  clearTimeout(timeoutId);
+                });
+                return;
+              } catch (err) {
+                console.error(
+                  '[validate-root-form] Validation suite error:',
+                  err
+                );
                 observer.next(null);
                 observer.complete();
                 return;
               }
-              // NOTE: `suite` can be a union of typed and untyped suite functions.
-              // When calling a union of functions, TypeScript requires arguments
-              // to satisfy all call signatures, which can produce overly-strict
-              // errors in template type-checking. At runtime this is always the
-              // ROOT_FORM field ('rootForm'), which is valid for both variants.
-              const runSuite = suite as unknown as (
-                model: T,
-                field?: unknown
-              ) => {
-                done: (
-                  cb: (result: {
-                    getErrors: () => Record<string, string[]>;
-                  }) => void
-                ) => void;
-              };
-
-              runSuite(model, field).done((result) => {
-                const errors = result.getErrors()[field];
-                // Return { errors: string[] } format expected by getAllFormErrors()
-                observer.next(errors ? { errors } : null);
-                observer.complete();
-              });
-            } catch (err) {
-              console.error(
-                '[validate-root-form] Validation suite error:',
-                err
-              );
-              observer.next(null);
-              observer.complete();
-            }
-          }) as Observable<ValidationErrors | null>;
-        }),
+            })
+        ),
         catchError((err) => {
           console.error('[validate-root-form] Observable error:', err);
           return of(null);
