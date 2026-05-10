@@ -11,7 +11,7 @@ Use this skill to produce the default, idiomatic Vest 6 setup.
 
 1. Keep the validation suite separate from feature or UI code.
 2. Use `create(...)` for most suites, and use `create(..., schema)` when native Vest schema validation and typed parsed input belong with the suite.
-3. Use `suite.runStatic(data)` for stateless executions. If you encounter `staticSuite(...)` in older code or docs, migrate it to `create(...)` plus `runStatic(...)`.
+3. Use `suite.runStatic(data)` for stateless executions. If you encounter `staticSuite(...)` in older code or docs, treat it as a legacy pattern to migrate toward `create(...)` plus `runStatic(...)` so the suite stays aligned with the current run APIs.
 4. Keep selective validation outside the callback: use `suite.only(field).run(model)` or `suite.focus(...)` at the call site.
 5. Use `test(fieldName, message, body)` for human-readable validations.
 6. Use `enforce(...)` for clear assertions instead of hand-rolled boolean pyramids.

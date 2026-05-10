@@ -120,7 +120,30 @@ Adoption guidance:
 
 - use `memo()` around deterministic blocks that would otherwise rerun on unrelated fields or repeated identical input
 - keep `memo()` outside ad-hoc `if` trees; pair it with stable suite structure and `skipWhen(...)` / `omitWhen(...)`
-- if you are migrating older `test.memo(...)` examples, move the block into `memo(() => { test(...) }, deps)`
+- if you are migrating older Vest 5 `test.memo(...)` examples, move the block into `memo(() => { test(...) }, deps)`
+
+Before:
+
+```typescript
+test.memo(
+  'userId',
+  'User ID is already taken',
+  async ({ signal }) => {
+    await checkUserId(model.userId, { signal });
+  },
+  [model.userId]
+);
+```
+
+After:
+
+```typescript
+memo(() => {
+  test('userId', 'User ID is already taken', async ({ signal }) => {
+    await checkUserId(model.userId, { signal });
+  });
+}, [model.userId]);
+```
 
 ## v3 selector + token removals
 

@@ -120,21 +120,23 @@ export function userIdAvailabilityValidations(
   userId: string | undefined,
   field: 'userId'
 ): void {
+  const normalizedUserId = userId?.trim();
+
   test(field, 'User ID is required', () => {
-    enforce(userId).isNotBlank();
+    enforce(normalizedUserId).isNotBlank();
   });
 
-  skipWhen((res) => res.hasErrors(field) || !userId?.trim(), () => {
+  skipWhen((res) => res.hasErrors(field) || !normalizedUserId, () => {
     memo(() => {
       test(field, 'User ID is already taken', async ({ signal }) => {
         const response = await fetch(
-          `/api/users/${encodeURIComponent(userId!)}`,
+          `/api/users/${encodeURIComponent(normalizedUserId!)}`,
           { signal }
         );
         const { exists } = await response.json();
         enforce(exists).isFalsy();
       });
-    }, [userId]);
+    }, [normalizedUserId]);
   });
 }
 
