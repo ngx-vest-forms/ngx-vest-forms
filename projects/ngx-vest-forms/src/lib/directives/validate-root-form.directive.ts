@@ -24,14 +24,13 @@ import {
   map,
   Observable,
   of,
-  switchMap,
   take,
   tap,
-  timer,
 } from 'rxjs';
 import { ROOT_FORM } from '../constants';
 import { scheduleMicrotask } from '../utils/destroy-scheduler';
 import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
+import { extractFieldErrors, runFieldValidation } from '../utils/vest-runner';
 import { ValidationOptions } from './validation-options';
 
 /**
@@ -278,6 +277,11 @@ export class ValidateRootFormDirective<T>
     // not individual control values. The underscore prefix indicates intentional non-use.
 
     return (_control: AbstractControl) => {
+      const suite = this.suite();
+      if (!suite) {
+        return of(null);
+      }
+
       const currentFormValue = this.formValue();
       if (!currentFormValue) {
         return of(null);
@@ -285,52 +289,14 @@ export class ValidateRootFormDirective<T>
       // Use the formValue input which contains the actual model data
       const mod = structuredClone(currentFormValue) as T;
 
-      const debounce = validationOptions.debounceTime ?? 0;
-      const source$ =
-        debounce > 0 ? timer(debounce).pipe(map(() => mod)) : of(mod);
-
-      return source$.pipe(
-        switchMap((model) => {
-          return new Observable((observer) => {
-            try {
-              const suite = this.suite();
-              if (!suite) {
-                observer.next(null);
-                observer.complete();
-                return;
-              }
-              // NOTE: `suite` can be a union of typed and untyped suite functions.
-              // When calling a union of functions, TypeScript requires arguments
-              // to satisfy all call signatures, which can produce overly-strict
-              // errors in template type-checking. At runtime this is always the
-              // ROOT_FORM field ('rootForm'), which is valid for both variants.
-              const runSuite = suite as unknown as (
-                model: T,
-                field?: unknown
-              ) => {
-                done: (
-                  cb: (result: {
-                    getErrors: () => Record<string, string[]>;
-                  }) => void
-                ) => void;
-              };
-
-              runSuite(model, field).done((result) => {
-                const errors = result.getErrors()[field];
-                // Return { errors: string[] } format expected by getAllFormErrors()
-                observer.next(errors ? { errors } : null);
-                observer.complete();
-              });
-            } catch (err) {
-              console.error(
-                '[validate-root-form] Validation suite error:',
-                err
-              );
-              observer.next(null);
-              observer.complete();
-            }
-          }) as Observable<ValidationErrors | null>;
-        }),
+      return runFieldValidation(
+        suite,
+        { only: field },
+        mod,
+        validationOptions,
+        this.destroyRef
+      ).pipe(
+        map((result) => extractFieldErrors(result, field)),
         catchError((err) => {
           console.error('[validate-root-form] Observable error:', err);
           return of(null);
