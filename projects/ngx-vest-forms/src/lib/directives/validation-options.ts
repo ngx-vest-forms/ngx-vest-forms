@@ -16,9 +16,4 @@ export type ValidationOptions = {
    * - `300-500` for async/API-backed validation
    */
   debounceTime: number;
-  /**
-   * Internal hook reserved for wiring AbortController-based cancellation into
-   * async Vest runs without reshaping the runner API in future slices.
-   */
-  abortControllerHook?: (controller: AbortController) => void;
 };

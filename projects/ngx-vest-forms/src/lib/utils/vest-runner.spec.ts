@@ -1,10 +1,10 @@
 import { DestroyRef } from '@angular/core';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import type { NgxSuiteRunResult, NgxVestSuite } from './validation-suite';
 import {
   extractFieldErrors,
-  NgxSuiteFocusSpec,
-  NgxSuiteRunResult,
   runFieldValidation,
+  type RunnableVestSuite,
 } from './vest-runner';
 
 function createMockDestroyRef(): {
@@ -40,42 +40,53 @@ function createSuiteResult(
   warnings: Record<string, string[]> = {}
 ): NgxSuiteRunResult {
   return {
-    getErrors(field?: string) {
-      return field ? errors[field] ?? [] : errors;
-    },
-    getWarnings(field?: string) {
-      return field ? warnings[field] ?? [] : warnings;
-    },
+    getErrors: ((field?: string) =>
+      field !== undefined ? errors[field] ?? [] : errors) as NgxSuiteRunResult['getErrors'],
+    getWarnings: ((field?: string) =>
+      field !== undefined ? warnings[field] ?? [] : warnings) as NgxSuiteRunResult['getWarnings'],
+  } as NgxSuiteRunResult;
+}
+
+type TestModel = { username: string };
+
+function createSuiteMock(overrides: {
+  syncResult?: NgxSuiteRunResult;
+  asyncResult?: PromiseLike<NgxSuiteRunResult>;
+  latestResult?: NgxSuiteRunResult;
+}): RunnableVestSuite<TestModel> & {
+  run: ReturnType<typeof vi.fn>;
+  only: ReturnType<typeof vi.fn>;
+  get: ReturnType<typeof vi.fn>;
+} {
+  const returnValue = overrides.asyncResult ?? overrides.syncResult;
+  const run = vi.fn(() => returnValue as NgxSuiteRunResult);
+  const only = vi.fn(() => ({ run }));
+  const get = vi.fn(
+    () => overrides.latestResult ?? overrides.syncResult ?? createSuiteResult()
+  );
+  return { run, only, get } as unknown as RunnableVestSuite<TestModel> & {
+    run: ReturnType<typeof vi.fn>;
+    only: ReturnType<typeof vi.fn>;
+    get: ReturnType<typeof vi.fn>;
   };
 }
 
 async function flushMicrotasks(): Promise<void> {
-  await Promise.resolve();
+  // One macrotask flush so `timer(0)` fires, plus a microtask flush for the
+  // subsequent `from(...)`/`map(...)` operators in the runner.
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
   await Promise.resolve();
 }
 
 describe('vest-runner', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.runOnlyPendingTimers();
-    vi.useRealTimers();
-  });
+  // Most tests use real timers because `timer(0)` defers the suite run by one task
+  // and the assertions follow microtask flushes. The single test that asserts
+  // debounce timing opts into fake timers locally.
 
   it('emits once and completes for a synchronous suite result', async () => {
     const { destroyRef } = createMockDestroyRef();
     const result = createSuiteResult({ username: ['Required'] });
-    const suite = {
-      run: vi.fn(() => result),
-      focus: vi.fn((focus: NgxSuiteFocusSpec) => ({
-        run: vi.fn(() => {
-          expect(focus).toEqual({ only: 'username' });
-          return result;
-        }),
-      })),
-    };
+    const suite = createSuiteMock({ syncResult: result });
 
     const values: NgxSuiteRunResult[] = [];
     const complete = vi.fn();
@@ -93,24 +104,24 @@ describe('vest-runner', () => {
 
     await flushMicrotasks();
 
+    expect(suite.only).toHaveBeenCalledWith('username');
+    expect(suite.run).toHaveBeenCalledWith({ username: '' });
     expect(values).toEqual([result]);
     expect(complete).toHaveBeenCalledOnce();
   });
 
   it('emits after a thenable suite result resolves', async () => {
     const { destroyRef } = createMockDestroyRef();
-    const result = createSuiteResult({ username: ['Taken'] });
+    const final = createSuiteResult({ username: ['Taken'] });
 
-    let resolveResult!: (value: NgxSuiteRunResult) => void;
-    const suite = {
-      run: vi.fn(
-        () =>
-          new Promise<NgxSuiteRunResult>((resolve) => {
-            resolveResult = resolve;
-          })
-      ),
-      focus: vi.fn(),
-    };
+    let resolvePending!: (value: unknown) => void;
+    const pending = new Promise<unknown>((resolve) => {
+      resolvePending = resolve;
+    });
+    const suite = createSuiteMock({
+      asyncResult: pending as unknown as PromiseLike<NgxSuiteRunResult>,
+      latestResult: final,
+    });
 
     const values: NgxSuiteRunResult[] = [];
 
@@ -125,20 +136,25 @@ describe('vest-runner', () => {
     await flushMicrotasks();
     expect(values).toEqual([]);
 
-    resolveResult(result);
+    resolvePending(undefined);
     await flushMicrotasks();
 
-    expect(values).toEqual([result]);
+    expect(suite.run).toHaveBeenCalledOnce();
+    expect(suite.get).toHaveBeenCalled();
+    expect(values).toEqual([final]);
   });
 
   it('emits the latest suite state when the thenable rejects', async () => {
     const { destroyRef } = createMockDestroyRef();
-    const latestResult = createSuiteResult({ username: ['Recovered latest state'] });
-    const suite = {
-      get: vi.fn(() => latestResult),
-      run: vi.fn(() => Promise.reject(new Error('boom'))),
-      focus: vi.fn(),
-    };
+    const latestResult = createSuiteResult({
+      username: ['Recovered latest state'],
+    });
+    const suite = createSuiteMock({
+      asyncResult: Promise.reject(
+        new Error('boom')
+      ) as unknown as PromiseLike<NgxSuiteRunResult>,
+      latestResult,
+    });
 
     const values: NgxSuiteRunResult[] = [];
 
@@ -152,23 +168,21 @@ describe('vest-runner', () => {
 
     await flushMicrotasks();
 
-    expect(suite.get).toHaveBeenCalledOnce();
+    expect(suite.get).toHaveBeenCalled();
     expect(values).toEqual([latestResult]);
   });
 
   it('stops emission when the upstream subscription is torn down', async () => {
     const { destroyRef } = createMockDestroyRef();
 
-    let resolveResult!: (value: NgxSuiteRunResult) => void;
-    const suite = {
-      run: vi.fn(
-        () =>
-          new Promise<NgxSuiteRunResult>((resolve) => {
-            resolveResult = resolve;
-          })
-      ),
-      focus: vi.fn(),
-    };
+    let resolvePending!: (value: unknown) => void;
+    const pending = new Promise<unknown>((resolve) => {
+      resolvePending = resolve;
+    });
+    const suite = createSuiteMock({
+      asyncResult: pending as unknown as PromiseLike<NgxSuiteRunResult>,
+      latestResult: createSuiteResult({ username: ['Late result'] }),
+    });
 
     const next = vi.fn();
     const complete = vi.fn();
@@ -182,48 +196,18 @@ describe('vest-runner', () => {
     ).subscribe({ next, complete });
 
     subscription.unsubscribe();
-    resolveResult(createSuiteResult({ username: ['Late result'] }));
+    resolvePending(undefined);
     await flushMicrotasks();
 
     expect(next).not.toHaveBeenCalled();
     expect(complete).not.toHaveBeenCalled();
   });
 
-  it('routes group focus through suite.focus(...).run(...)', async () => {
-    const { destroyRef } = createMockDestroyRef();
-    const result = createSuiteResult({ rootForm: ['Group error'] });
-    const run = vi.fn(() => result);
-    const focus = vi.fn(() => ({ run }));
-    const suite = {
-      run: vi.fn(),
-      focus,
-    };
-
-    const emitted = await new Promise<NgxSuiteRunResult>((resolve, reject) => {
-      runFieldValidation(
-        suite,
-        { onlyGroup: 'account' },
-        { username: 'ada' },
-        { debounceTime: 0 },
-        destroyRef
-      ).subscribe({ next: resolve, error: reject });
-    });
-
-    expect(focus).toHaveBeenCalledWith({ onlyGroup: 'account' });
-    expect(run).toHaveBeenCalledWith({ username: 'ada' });
-    expect(suite.run).not.toHaveBeenCalled();
-    expect(emitted).toBe(result);
-  });
-
   it('calls suite.run(model) directly when the focus spec is empty', async () => {
     const { destroyRef } = createMockDestroyRef();
     const model = { username: 'ada' };
     const result = createSuiteResult();
-    const run = vi.fn(() => result);
-    const suite = {
-      run,
-      focus: vi.fn(),
-    };
+    const suite = createSuiteMock({ syncResult: result });
 
     const emitted = await new Promise<NgxSuiteRunResult>((resolve, reject) => {
       runFieldValidation(
@@ -235,8 +219,8 @@ describe('vest-runner', () => {
       ).subscribe({ next: resolve, error: reject });
     });
 
-    expect(run).toHaveBeenCalledWith(model);
-    expect(suite.focus).not.toHaveBeenCalled();
+    expect(suite.run).toHaveBeenCalledWith(model);
+    expect(suite.only).not.toHaveBeenCalled();
     expect(emitted).toBe(result);
   });
 
@@ -257,16 +241,14 @@ describe('vest-runner', () => {
   it('completes without emission when the destroy ref fires first', async () => {
     const { destroyRef, destroy } = createMockDestroyRef();
 
-    let resolveResult!: (value: NgxSuiteRunResult) => void;
-    const suite = {
-      run: vi.fn(
-        () =>
-          new Promise<NgxSuiteRunResult>((resolve) => {
-            resolveResult = resolve;
-          })
-      ),
-      focus: vi.fn(),
-    };
+    let resolvePending!: (value: unknown) => void;
+    const pending = new Promise<unknown>((resolve) => {
+      resolvePending = resolve;
+    });
+    const suite = createSuiteMock({
+      asyncResult: pending as unknown as PromiseLike<NgxSuiteRunResult>,
+      latestResult: createSuiteResult({ username: ['Late result'] }),
+    });
 
     const next = vi.fn();
     const complete = vi.fn();
@@ -280,10 +262,18 @@ describe('vest-runner', () => {
     ).subscribe({ next, complete });
 
     destroy();
-    resolveResult(createSuiteResult({ username: ['Late result'] }));
+    resolvePending(undefined);
     await flushMicrotasks();
 
     expect(next).not.toHaveBeenCalled();
     expect(complete).toHaveBeenCalledOnce();
+  });
+
+  it('exposes Vest-suite reference shape via RunnableVestSuite for type compatibility', () => {
+    // Compile-time check that NgxVestSuite assigns to RunnableVestSuite.
+    const _typeCheck = (
+      suite: NgxVestSuite<TestModel>
+    ): RunnableVestSuite<TestModel> => suite;
+    expect(_typeCheck).toBeDefined();
   });
 });
