@@ -95,6 +95,11 @@ import { ValidationOptions } from './validation-options';
  */
 const VALIDATION_IN_PROGRESS_TIMEOUT_MS = 500;
 
+type VestValidationResult = {
+  getErrors: () => Record<string, string[]>;
+  getWarnings: () => Record<string, string[]>;
+};
+
 /**
  * Type for validation configuration that accepts both the typed and untyped versions.
  * This ensures backward compatibility while supporting the new typed API.
@@ -344,6 +349,14 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly validationConfig: InputSignal<NgxValidationConfig<T>> =
     input<NgxValidationConfig<T>>(null);
 
+  /**
+   * Optional Vest focus options forwarded into field-level async validation.
+   *
+   * Useful for step-based flows (for example wizard forms) where only a subset
+   * of suite groups should run while validating a control. The active field path
+   * always overrides `only` so field-level validation remains scoped to the
+   * current control.
+   */
   readonly validationFocus = input<NgxValidationFocus | null>(null);
 
   /**
@@ -1057,10 +1070,7 @@ export class FormDirective<T extends Record<string, unknown>> {
                   field,
                   this.validationFocus()
                 ).done((result: unknown) => {
-                  const vestResult = result as {
-                    getErrors: () => Record<string, string[]>;
-                    getWarnings: () => Record<string, string[]>;
-                  };
+                  const vestResult = result as VestValidationResult;
                   // Guard: bail out if the directive was destroyed while
                   // validation was in flight to avoid writing to disposed
                   // signals or a torn-down view.

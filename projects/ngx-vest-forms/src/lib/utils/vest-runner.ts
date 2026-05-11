@@ -1,5 +1,12 @@
 import { NgxTypedVestSuite, NgxVestSuite } from './validation-suite';
 
+/**
+ * Vest focus options exposed by ngx-vest-forms for field-level async validation.
+ *
+ * `only` and `skip` target field names while `onlyGroup` and `skipGroup` target
+ * suite groups (useful for multi-step flows). During field-level validation,
+ * ngx-vest-forms always overrides `only` with the active field path.
+ */
 export type NgxValidationFocus = {
   only?: string;
   skip?: string;
@@ -32,6 +39,14 @@ function isFocusedRunner<T>(value: unknown): value is VestFocusedRunner<T> {
   );
 }
 
+/**
+ * Runs a field-level Vest validation with API compatibility across Vest versions.
+ *
+ * Resolution order:
+ * 1. `suite.focus({...validationFocus, only: field}).run(model)` when focus API exists
+ * 2. `suite.only(field).run(model)` when only API exists
+ * 3. Legacy invocation `suite(model, field)` as a final fallback
+ */
 export function runVestFieldValidation<T>(
   suite: NgxVestSuite<T> | NgxTypedVestSuite<T>,
   model: T,

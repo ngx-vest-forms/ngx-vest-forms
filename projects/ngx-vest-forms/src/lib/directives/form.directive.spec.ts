@@ -1,5 +1,6 @@
 /* eslint-disable @angular-eslint/component-selector */
 import { Component, signal, viewChild } from '@angular/core';
+import { AbstractControl } from '@angular/forms';
 import { render } from '@testing-library/angular';
 import { isObservable, Observable } from 'rxjs';
 import { enforce, only, staticSuite, test as vestTest, warn } from 'vest';
@@ -197,7 +198,9 @@ describe('FormDirective - Async Validator', () => {
     const validator = fixture.componentInstance
       .vestForm()
       .createAsyncValidator('username', { debounceTime: 0 });
-    const resultPromise = awaitResult(validator({ value: 'abc' } as any));
+    const resultPromise = awaitResult(
+      validator({ value: 'abc' } as AbstractControl)
+    );
     vi.runOnlyPendingTimers();
     await Promise.resolve();
     const result = await resultPromise;
@@ -444,7 +447,9 @@ describe('FormDirective - Async Validator', () => {
     const validator = instance.vestForm().createAsyncValidator('username', {
       debounceTime: 0,
     });
-    const resultPromise = awaitResult(validator({ value: 'abc' } as any));
+    const resultPromise = awaitResult(
+      validator({ value: 'abc' } as AbstractControl)
+    );
     vi.runAllTimers();
     await Promise.resolve();
     await resultPromise;
@@ -469,7 +474,9 @@ describe('FormDirective - Async Validator', () => {
     const validator = instance.vestForm().createAsyncValidator('username', {
       debounceTime: 0,
     });
-    const resultPromise = awaitResult(validator({ value: 'abc' } as any));
+    const resultPromise = awaitResult(
+      validator({ value: 'abc' } as AbstractControl)
+    );
     vi.runAllTimers();
     await Promise.resolve();
     await resultPromise;
@@ -492,7 +499,9 @@ describe('FormDirective - Async Validator', () => {
     const validator = instance.vestForm().createAsyncValidator('username', {
       debounceTime: 0,
     });
-    const resultPromise = awaitResult(validator({ value: 'abc' } as any));
+    const resultPromise = awaitResult(
+      validator({ value: 'abc' } as AbstractControl)
+    );
     vi.runAllTimers();
     await Promise.resolve();
     await resultPromise;
