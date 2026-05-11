@@ -140,7 +140,7 @@ function createTriggerStream(
             options.dependentExistenceTimeoutMs
           )
         ),
-        tap((ctrl) =>
+        tap(() =>
           updateDependentFields(
             form,
             triggerField,
@@ -148,7 +148,6 @@ function createTriggerStream(
             validationInProgress,
             cdr,
             options.validationInProgressCooldownMs,
-            ctrl,
             destroyRef
           )
         ),
@@ -251,7 +250,6 @@ function updateDependentFields(
   validationInProgress: Set<string>,
   cdr: ChangeDetectorRef,
   cooldownMs: number,
-  _control: AbstractControl,
   destroyRef: DestroyRef
 ): void {
   // Mark the trigger field in-progress first so that bidirectional configs
