@@ -675,14 +675,18 @@ describe('ValidateRootFormDirective', () => {
         rootValidator!: ValidateRootFormDirective<Record<string, unknown>>;
       }
 
+      const errors: Record<string, string[]> = {
+        [ROOT_FORM]: ['debounced root error'],
+      };
       const syncResult = {
         isPending: () => false,
         isValid: () => false,
         hasErrors: () => true,
         hasWarnings: () => false,
         isTested: () => true,
-        getErrors: () => ({ [ROOT_FORM]: ['debounced root error'] }),
-        getWarnings: () => ({}),
+        getErrors: (field?: string) =>
+          field !== undefined ? errors[field] ?? [] : errors,
+        getWarnings: (field?: string) => (field !== undefined ? [] : {}),
       };
 
       const mockRun = vi.fn().mockReturnValue(syncResult);
@@ -741,14 +745,18 @@ describe('ValidateRootFormDirective', () => {
     }
 
     it('returns ROOT_FORM errors immediately for non-pending suite results', async () => {
+      const errors: Record<string, string[]> = {
+        [ROOT_FORM]: ['sync root error'],
+      };
       const syncResult = {
         isPending: () => false,
         isValid: () => false,
         hasErrors: () => true,
         hasWarnings: () => false,
         isTested: () => true,
-        getErrors: () => ({ [ROOT_FORM]: ['sync root error'] }),
-        getWarnings: () => ({}),
+        getErrors: (field?: string) =>
+          field !== undefined ? errors[field] ?? [] : errors,
+        getWarnings: (field?: string) => (field !== undefined ? [] : {}),
       };
 
       const mockRun = vi.fn().mockReturnValue(syncResult);
@@ -779,14 +787,18 @@ describe('ValidateRootFormDirective', () => {
     });
 
     it('awaits thenable suite results when pending and returns resolved ROOT_FORM errors', async () => {
+      const errors: Record<string, string[]> = {
+        [ROOT_FORM]: ['async root error'],
+      };
       const finalResult = {
         isPending: () => false,
         isValid: () => false,
         hasErrors: () => true,
         hasWarnings: () => false,
         isTested: () => true,
-        getErrors: () => ({ [ROOT_FORM]: ['async root error'] }),
-        getWarnings: () => ({}),
+        getErrors: (field?: string) =>
+          field !== undefined ? errors[field] ?? [] : errors,
+        getWarnings: (field?: string) => (field !== undefined ? [] : {}),
       };
 
       const pendingResult = {
