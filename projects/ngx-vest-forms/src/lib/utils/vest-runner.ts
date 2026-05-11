@@ -93,18 +93,20 @@ function isThenable(
   return typeof value.then === 'function';
 }
 
+function isEmptyFocusValue(
+  value: string | readonly string[] | undefined
+): boolean {
+  if (value === undefined) return true;
+  if (Array.isArray(value)) return value.length === 0;
+  return value === '';
+}
+
 function isEmptyFocusSpec(focus: NgxSuiteFocusSpec): boolean {
-  const onlyGroup = Array.isArray(focus.onlyGroup)
-    ? focus.onlyGroup.length
-    : focus.onlyGroup;
-  const skipGroup = Array.isArray(focus.skipGroup)
-    ? focus.skipGroup.length
-    : focus.skipGroup;
   return (
-    focus.only === undefined &&
-    focus.skip === undefined &&
-    onlyGroup === undefined &&
-    skipGroup === undefined
+    isEmptyFocusValue(focus.only) &&
+    isEmptyFocusValue(focus.skip) &&
+    isEmptyFocusValue(focus.onlyGroup) &&
+    isEmptyFocusValue(focus.skipGroup)
   );
 }
 

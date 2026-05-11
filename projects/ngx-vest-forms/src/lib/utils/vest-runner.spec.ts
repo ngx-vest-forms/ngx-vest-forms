@@ -66,7 +66,7 @@ function createSuiteMock(overrides: {
 }): RunnableVestSuite<TestModel> & {
   run: ReturnType<typeof vi.fn>;
   only: ReturnType<typeof vi.fn>;
-  focus: ReturnType<typeof vi.fn>;
+  focus?: ReturnType<typeof vi.fn>;
   get: ReturnType<typeof vi.fn>;
 } {
   const returnValue = overrides.asyncResult ?? overrides.syncResult;
@@ -79,10 +79,12 @@ function createSuiteMock(overrides: {
   const suite = { run, only, get } as RunnableVestSuite<TestModel> & {
     run: ReturnType<typeof vi.fn>;
     only: ReturnType<typeof vi.fn>;
-    focus: ReturnType<typeof vi.fn>;
+    focus?: ReturnType<typeof vi.fn>;
     get: ReturnType<typeof vi.fn>;
   };
-  suite.focus = overrides.enableFocus ? focus : undefined;
+  if (overrides.enableFocus) {
+    suite.focus = focus;
+  }
   return suite;
 }
 
@@ -94,7 +96,14 @@ function createFocusSuiteMock(
   focus: ReturnType<typeof vi.fn>;
   get: ReturnType<typeof vi.fn>;
 } {
-  return createSuiteMock({ syncResult: result, enableFocus: true });
+  const suite = createSuiteMock({ syncResult: result, enableFocus: true });
+  // enableFocus: true guarantees focus is assigned; assert non-optional for callers.
+  return suite as RunnableVestSuite<TestModel> & {
+    run: ReturnType<typeof vi.fn>;
+    only: ReturnType<typeof vi.fn>;
+    focus: ReturnType<typeof vi.fn>;
+    get: ReturnType<typeof vi.fn>;
+  };
 }
 
 async function flushMicrotasks(): Promise<void> {
