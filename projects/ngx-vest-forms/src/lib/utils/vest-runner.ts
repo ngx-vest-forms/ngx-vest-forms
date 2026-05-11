@@ -14,7 +14,7 @@ import {
   timer,
 } from 'rxjs';
 import type { ValidationOptions } from '../directives/validation-options';
-import type { NgxSuiteRunResult, NgxVestSuite } from './validation-suite';
+import type { NgxSuiteRunResult } from './validation-suite';
 
 /**
  * Focus spec describing which subset of the suite to run.
@@ -38,9 +38,9 @@ export type NgxSuiteRunHooks = {
  */
 export type RunnableVestSuite<T> = {
   only(match: string | string[] | null | undefined): {
-    run(model: T, hooks?: NgxSuiteRunHooks): NgxSuiteRunResult;
+    run(model: T, field?: unknown, hooks?: NgxSuiteRunHooks): NgxSuiteRunResult;
   };
-  run(model: T, hooks?: NgxSuiteRunHooks): NgxSuiteRunResult;
+  run(model: T, field?: unknown, hooks?: NgxSuiteRunHooks): NgxSuiteRunResult;
   get(): NgxSuiteRunResult;
 };
 
@@ -119,8 +119,8 @@ function runSuite<T>(
 ): Observable<NgxSuiteRunResult> {
   const result =
     focus.only !== undefined
-      ? suite.only(focus.only).run(model, { signal })
-      : suite.run(model, { signal });
+      ? suite.only(focus.only).run(model, undefined, { signal })
+      : suite.run(model, undefined, { signal });
 
   if (!isThenable(result)) {
     return of(result);

@@ -69,10 +69,12 @@ function createSuiteMock(overrides: {
   get: ReturnType<typeof vi.fn>;
 } {
   const returnValue = overrides.asyncResult ?? overrides.syncResult;
-  const run = vi.fn((_model: TestModel, hooks?: NgxSuiteRunHooks) => {
+  const run = vi.fn(
+    (_model: TestModel, _field?: unknown, hooks?: NgxSuiteRunHooks) => {
     overrides.onRun?.(hooks);
     return returnValue as NgxSuiteRunResult;
-  });
+    }
+  );
   const only = vi.fn(() => ({ run }));
   const get = vi.fn(
     () => overrides.latestResult ?? overrides.syncResult ?? createSuiteResult()
@@ -120,6 +122,7 @@ describe('vest-runner', () => {
     expect(suite.only).toHaveBeenCalledWith('username');
     expect(suite.run).toHaveBeenCalledWith(
       { username: '' },
+      undefined,
       expect.objectContaining({
         signal: expect.any(AbortSignal),
       })
@@ -273,6 +276,7 @@ describe('vest-runner', () => {
 
     expect(suite.run).toHaveBeenCalledWith(
       model,
+      undefined,
       expect.objectContaining({
         signal: expect.any(AbortSignal),
       })
