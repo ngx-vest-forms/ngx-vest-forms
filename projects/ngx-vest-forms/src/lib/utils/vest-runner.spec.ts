@@ -258,6 +258,70 @@ describe('vest-runner', () => {
     expect(receivedSignal?.aborted).toBe(true);
   });
 
+  it('aborts the provided signal when the destroy ref fires after the suite has started', async () => {
+    const { destroyRef, destroy } = createMockDestroyRef();
+    let receivedSignal: AbortSignal | undefined;
+
+    let resolvePending!: (value: unknown) => void;
+    const pending = new Promise<unknown>((resolve) => {
+      resolvePending = resolve;
+    });
+    const suite = createSuiteMock({
+      asyncResult: pending as unknown as PromiseLike<NgxSuiteRunResult>,
+      latestResult: createSuiteResult({ username: ['Late result'] }),
+      onRun: (hooks) => {
+        receivedSignal = hooks?.signal;
+      },
+    });
+
+    runFieldValidation(
+      suite,
+      {},
+      { username: 'ada' },
+      { debounceTime: 0 },
+      destroyRef
+    ).subscribe();
+
+    await flushMicrotasks();
+    expect(receivedSignal?.aborted).toBe(false);
+
+    // DestroyRef path (distinct from manual unsubscribe).
+    destroy();
+    resolvePending(undefined);
+    await flushMicrotasks();
+
+    expect(receivedSignal?.aborted).toBe(true);
+  });
+
+  it('does NOT abort the signal on successful completion', async () => {
+    const { destroyRef } = createMockDestroyRef();
+    let receivedSignal: AbortSignal | undefined;
+
+    const result = createSuiteResult({ username: ['Required'] });
+    const suite = createSuiteMock({
+      syncResult: result,
+      onRun: (hooks) => {
+        receivedSignal = hooks?.signal;
+      },
+    });
+
+    runFieldValidation(
+      suite,
+      { only: 'username' },
+      { username: '' },
+      { debounceTime: 0 },
+      destroyRef
+    ).subscribe();
+
+    await flushMicrotasks();
+
+    // The run emitted-and-completed normally; the signal must remain unaborted
+    // so consumers can rely on `signal.aborted` as a "was this run cancelled?"
+    // check.
+    expect(receivedSignal).toBeDefined();
+    expect(receivedSignal?.aborted).toBe(false);
+  });
+
   it('calls suite.run(model) directly when the focus spec is empty', async () => {
     const { destroyRef } = createMockDestroyRef();
     const model = { username: 'ada' };

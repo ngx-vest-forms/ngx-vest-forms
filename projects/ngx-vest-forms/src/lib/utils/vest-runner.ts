@@ -11,6 +11,7 @@ import {
   of,
   switchMap,
   take,
+  tap,
   timer,
 } from 'rxjs';
 import type { ValidationOptions } from '../directives/validation-options';
@@ -67,6 +68,11 @@ export function runFieldValidation<T>(
 ): Observable<NgxSuiteRunResult> {
   return defer(() => {
     const controller = new AbortController();
+    // `finalize` runs on completion as well as unsubscribe/error, so naively
+    // aborting there flips `signal.aborted` to `true` even for successful runs.
+    // Track whether the run emitted; only abort when teardown happens *before*
+    // emission (unsubscribe, destroy, or superseded run via outer `switchMap`).
+    let emitted = false;
 
     // `timer(0)` (not `of(0)`) so that even at zero debounce the suite
     // invocation is deferred to the next task. That lets superseded validators
@@ -79,8 +85,15 @@ export function runFieldValidation<T>(
         defer(() => runSuite(suite, focus, model, controller.signal))
       ),
       take(1),
+      tap(() => {
+        emitted = true;
+      }),
       takeUntilDestroyed(destroyRef),
-      finalize(() => controller.abort())
+      finalize(() => {
+        if (!emitted) {
+          controller.abort();
+        }
+      })
     );
   });
 }
