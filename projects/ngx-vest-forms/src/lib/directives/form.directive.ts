@@ -34,7 +34,6 @@ import {
   ValueChangeEvent,
 } from '@angular/forms';
 import {
-  catchError,
   debounceTime,
   distinctUntilChanged,
   EMPTY,
@@ -77,6 +76,7 @@ import {
   setValueAtPath,
 } from '../utils/form-utils';
 import { validateShape } from '../utils/shape-validation';
+import { runVestSuite } from '../utils/vest-runner';
 import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
 import {
   getFormSubmittedSignal,
@@ -1036,92 +1036,86 @@ export class FormDirective<T extends Record<string, unknown>> {
       const snapshot = model;
       setValueAtPath(snapshot as object, field, control.value);
 
-      // Use timer() instead of ReplaySubject for proper debouncing
-      return timer(validationOptions.debounceTime ?? 0).pipe(
-        map(() => snapshot),
-        switchMap(
-          (snap) =>
-            new Observable<ValidationErrors | null>((observer) => {
-              try {
-                // Cast to NgxVestSuite to accept string field parameter
-                // Both NgxVestSuite and NgxTypedVestSuite work with string at runtime
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (suite as NgxVestSuite<T>)(snap, field).done((result: any) => {
-                  // Guard: bail out if the directive was destroyed while
-                  // validation was in flight to avoid writing to disposed
-                  // signals or a torn-down view.
-                  if (this.#destroyed) {
-                    // Emit a neutral `null` before completing so async
-                    // validators always emit exactly once. Completing without
-                    // emission can leave consumers (e.g. a control's status)
-                    // in an unexpected `PENDING` state.
-                    observer.next(null);
-                    observer.complete();
-                    return;
-                  }
+      return runVestSuite<T, ValidationErrors | null>({
+        // Cast to NgxVestSuite to accept string field parameter.
+        // Both NgxVestSuite and NgxTypedVestSuite work with string at runtime.
+        suite: suite as unknown as (
+          model: T,
+          runField?: string,
+          options?: { signal: AbortSignal }
+        ) => {
+          done: (cb: (result: unknown) => void) => void;
+        },
+        model: snapshot,
+        field,
+        debounceTime: validationOptions.debounceTime ?? 0,
+        destroyRef: this.destroyRef,
+        mapResult: (rawResult) => {
+          // Guard: bail out if the directive was destroyed while
+          // validation was in flight to avoid writing to disposed
+          // signals or a torn-down view.
+          if (this.#destroyed) {
+            return null;
+          }
 
-                  const errors = result.getErrors()[field];
-                  const warnings = result.getWarnings()[field];
+          const result = rawResult as {
+            getErrors: () => Record<string, string[]>;
+            getWarnings: () => Record<string, string[]>;
+          };
+          const errors = result.getErrors()[field];
+          const warnings = result.getWarnings()[field];
 
-                  // Store warnings in the fieldWarnings signal for access by control wrappers.
-                  // This is necessary because Angular marks a field as invalid when control.errors !== null.
-                  // By storing warnings separately, fields can remain valid while still displaying warnings.
-                  this.fieldWarnings.update((map) => {
-                    const newMap = new Map(map);
-                    if (warnings?.length) {
-                      newMap.set(field, warnings);
-                    } else {
-                      newMap.delete(field);
-                    }
-                    return newMap;
-                  });
+          // Store warnings in the fieldWarnings signal for access by control wrappers.
+          // This is necessary because Angular marks a field as invalid when control.errors !== null.
+          // By storing warnings separately, fields can remain valid while still displaying warnings.
+          this.fieldWarnings.update((map) => {
+            const newMap = new Map(map);
+            if (warnings?.length) {
+              newMap.set(field, warnings);
+            } else {
+              newMap.delete(field);
+            }
+            return newMap;
+          });
 
-                  // Build the validation result:
-                  // - Errors exist → return { errors, warnings? } (field invalid, Angular shows ng-invalid)
-                  // - Only warnings → return null (field valid, warnings accessed via fieldWarnings signal)
-                  // - Neither → return null (field valid)
-                  //
-                  // When errors exist, we also include warnings in control.errors for backwards compatibility
-                  // with code that reads warnings from control.errors.warnings.
-                  const out = errors?.length
-                    ? {
-                        errors,
-                        ...(warnings?.length && { warnings }),
-                      }
-                    : null;
-
-                  // CRITICAL: Ensure DOM validity classes update for OnPush components.
-                  //
-                  // Angular's template-driven forms update `ng-valid`/`ng-invalid` host classes
-                  // during change detection. When async validation completes, there may be no
-                  // follow-up change detection pass for OnPush hosts, leaving the DOM in a stale
-                  // visual state (even though the control status has updated).
-                  //
-                  // We schedule a detectChanges() on the next microtask to avoid calling it
-                  // synchronously inside Angular's own validation pipeline. The scheduleMicrotask
-                  // primitive auto-cancels if the directive is destroyed before it fires.
-                  scheduleMicrotask(() => {
-                    try {
-                      this.cdr.detectChanges();
-                    } catch {
-                      // Fallback: mark for check when immediate detectChanges isn't safe.
-                      // This keeps behavior resilient in edge cases.
-                      this.cdr.markForCheck();
-                    }
-                  }, this.destroyRef);
-
-                  observer.next(out);
-                  observer.complete();
-                });
-              } catch {
-                observer.next({ vestInternalError: 'Validation failed' });
-                observer.complete();
+          // Build the validation result:
+          // - Errors exist → return { errors, warnings? } (field invalid, Angular shows ng-invalid)
+          // - Only warnings → return null (field valid, warnings accessed via fieldWarnings signal)
+          // - Neither → return null (field valid)
+          //
+          // When errors exist, we also include warnings in control.errors for backwards compatibility
+          // with code that reads warnings from control.errors.warnings.
+          const out = errors?.length
+            ? {
+                errors,
+                ...(warnings?.length && { warnings }),
               }
-            })
-        ),
-        catchError(() => of({ vestInternalError: 'Validation failed' })),
-        take(1)
-      );
+            : null;
+
+          // CRITICAL: Ensure DOM validity classes update for OnPush components.
+          //
+          // Angular's template-driven forms update `ng-valid`/`ng-invalid` host classes
+          // during change detection. When async validation completes, there may be no
+          // follow-up change detection pass for OnPush hosts, leaving the DOM in a stale
+          // visual state (even though the control status has updated).
+          //
+          // We schedule a detectChanges() on the next microtask to avoid calling it
+          // synchronously inside Angular's own validation pipeline. The scheduleMicrotask
+          // primitive auto-cancels if the directive is destroyed before it fires.
+          scheduleMicrotask(() => {
+            try {
+              this.cdr.detectChanges();
+            } catch {
+              // Fallback: mark for check when immediate detectChanges isn't safe.
+              // This keeps behavior resilient in edge cases.
+              this.cdr.markForCheck();
+            }
+          }, this.destroyRef);
+
+          return out;
+        },
+        onError: () => ({ vestInternalError: 'Validation failed' }),
+      });
     };
   }
 

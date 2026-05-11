@@ -28,6 +28,10 @@ Use this skill when the suite needs **remote work, cancellation, pending state, 
 
 Vest cancels stale async tests when the same test reruns before completion.
 
+In `ngx-vest-forms` v3, the internal vest-runner now also forwards an
+`AbortSignal` to suite runs and aborts it when async-validator subscriptions are
+torn down (unsubscribe, destroy, or superseded runs).
+
 Use that signal to:
 
 - abort `fetch` requests
