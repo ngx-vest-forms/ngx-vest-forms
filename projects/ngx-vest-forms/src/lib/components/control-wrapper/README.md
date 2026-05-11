@@ -16,18 +16,14 @@ Use one wrapper per control:
 
 For `ngModelGroup` containers, prefer using `ngx-form-group-wrapper` (it renders group-level regions and does **not** stamp ARIA onto descendant controls).
 
-## Selectors (legacy + modern)
+## Selectors
 
-All of these are supported in v2.x:
+Supported selectors:
 
-- Elements: `<ngx-control-wrapper>`, `<sc-control-wrapper>`
-- Attributes: `[ngxControlWrapper]`, `[scControlWrapper]`
-- Kebab attributes: `[ngx-control-wrapper]`, `[sc-control-wrapper]`
+- Elements: `<ngx-control-wrapper>`
+- Attributes: `[ngxControlWrapper]`
 
-The host element automatically receives both CSS classes:
-
-- `ngx-control-wrapper`
-- `sc-control-wrapper`
+The host element automatically receives the `ngx-control-wrapper` CSS class.
 
 ## Public inputs
 
@@ -104,17 +100,50 @@ The pending region is positioned `absolute` in the top-right corner of the wrapp
   to require explicit interaction before warnings appear.
 - Warnings are cleared on `resetForm()`.
 
-### Styling dependency (Tailwind CSS)
+### Styling and theming
 
-> **Note**: The default template uses **Tailwind CSS** utility classes for styling (colors, spacing, spinner animation).
-> If your project does not include Tailwind, the message regions will render but without visual styling.
->
-> **Options for non-Tailwind projects**:
->
-> 1. **Add equivalent CSS** targeting the wrapper classes (`.ngx-control-wrapper`, region elements)
-> 2. **Build a custom wrapper** using `FormErrorDisplayDirective` — see [Custom Control Wrappers](../../../../../../docs/CUSTOM-CONTROL-WRAPPERS.md)
->
-> A future major version may replace Tailwind classes with framework-agnostic CSS custom properties.
+`ngx-control-wrapper` ships with built-in, framework-agnostic baseline styling via its component stylesheet.
+No Tailwind dependency is required for default message presentation.
+
+The wrapper is themeable through CSS custom properties defined on `:host`, including tokens for:
+
+- error/warning/pending colors (light + dark)
+- message spacing and typography
+- pending layout
+- spinner size and border color
+
+You can override these tokens from your app/theme stylesheet without replacing the wrapper:
+
+```css
+ngx-control-wrapper {
+  --ngx-control-wrapper-error-color: #b91c1c;
+  --ngx-control-wrapper-warning-color: #92400e;
+}
+```
+
+#### Dark mode
+
+Built-in dark colors switch automatically via `@media (prefers-color-scheme: dark)`.
+This relies on the user's OS preference and does **not** react to a class- or
+attribute-based dark-mode toggle.
+
+If your app drives dark mode with a class or data attribute (e.g. `html.dark`,
+`[data-theme="dark"]`, the typical Tailwind / shadcn / Material setup), override
+the same tokens under your toggle selector:
+
+```css
+html.dark ngx-control-wrapper {
+  --ngx-control-wrapper-error-color: #f87171;
+  --ngx-control-wrapper-warning-color: #f59e0b;
+  --ngx-control-wrapper-pending-color: #9ca3af;
+}
+```
+
+Because each color is a single token (no separate `*-dark` companion), one
+override per concept is enough.
+
+If you need fully custom markup/layout, you can still build a custom wrapper using
+`FormErrorDisplayDirective` — see [Custom Control Wrappers](../../../../../../docs/CUSTOM-CONTROL-WRAPPERS.md).
 
 ### ARIA merging
 
@@ -127,4 +156,3 @@ When ARIA stamping is enabled (anything except `"none"`), the wrapper:
 
 - [Accessibility Guide](../../../../../../docs/ACCESSIBILITY.md)
 - [Custom Control Wrappers](../../../../../../docs/CUSTOM-CONTROL-WRAPPERS.md)
-- [Dual selector support](../../../../../../docs/DUAL-SELECTOR-SUPPORT.md)

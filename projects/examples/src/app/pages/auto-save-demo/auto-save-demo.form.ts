@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import {
   createEmptyFormState,
+  fieldWarningsToRecord,
   FormDirective,
   NgxFieldBlurEvent,
   NgxValidationConfig,
@@ -17,7 +18,6 @@ import {
 import { AutoSaveDemoModel } from '../../models/auto-save-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
-import { mapWarningsToRecord } from '../../utils/form-warnings.util';
 
 @Component({
   selector: 'ngx-auto-save-demo-form-body',
@@ -46,7 +46,7 @@ export class AutoSaveDemoFormBody {
   });
 
   readonly warnings = computed(() =>
-    mapWarningsToRecord(this.vestForm()?.fieldWarnings() ?? new Map())
+    fieldWarningsToRecord(this.vestForm()?.fieldWarnings() ?? new Map())
   );
 
   readonly validatedFields = computed(

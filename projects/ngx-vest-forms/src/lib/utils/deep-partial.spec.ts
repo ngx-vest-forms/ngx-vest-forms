@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { DeepPartial, NgxDeepPartial } from './deep-partial';
+import { NgxDeepPartial } from './deep-partial';
 
-describe('NgxDeepPartial / DeepPartial', () => {
+describe('NgxDeepPartial', () => {
   it('should correctly handle nested objects', () => {
     type MyType = {
       a: string;
@@ -64,7 +64,7 @@ describe('NgxDeepPartial / DeepPartial', () => {
       };
     };
 
-    // All properties are optional with DeepPartial
+    // All properties are optional with NgxDeepPartial
     const empty: NgxDeepPartial<MyType> = {};
     const onlyNested: NgxDeepPartial<MyType> = {
       nested: {},
@@ -130,22 +130,6 @@ describe('NgxDeepPartial / DeepPartial', () => {
     expect(partial.num).toBe(42);
     expect(partial.bool).toBe(true);
     expect(partial.date).toEqual(new Date('2025-01-01'));
-  });
-
-  it('should work with backward compatible alias', () => {
-    type MyType = {
-      name: string;
-      age: number;
-    };
-
-    // DeepPartial is backward compatible alias
-    const partial1: DeepPartial<MyType> = { name: 'Alice' };
-    const partial2: NgxDeepPartial<MyType> = { name: 'Bob' };
-
-    expect(partial1.name).toBe('Alice');
-    expect(partial2.name).toBe('Bob');
-    expect(partial1.age).toBeUndefined();
-    expect(partial2.age).toBeUndefined();
   });
 
   it('should handle mixed nested structures with arrays and objects', () => {

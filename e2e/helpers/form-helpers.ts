@@ -16,14 +16,14 @@ const EXTENDED_INTERVALS: number[] = [50, 100, 250, 500, 1000, 2000];
  * Navigation helpers for the three demo forms
  */
 export async function navigateToPurchaseForm(page: Page): Promise<void> {
-  await page.goto('/purchase');
+  await page.goto('/purchase', { waitUntil: 'domcontentloaded' });
   await expect(
     page.getByRole('heading', { name: /purchase form/i, level: 1 })
   ).toBeVisible();
 }
 
 export async function navigateToBusinessHoursForm(page: Page): Promise<void> {
-  await page.goto('/business-hours');
+  await page.goto('/business-hours', { waitUntil: 'domcontentloaded' });
   await expect(
     page.getByRole('heading', { name: /business hours form/i, level: 1 })
   ).toBeVisible();
@@ -32,7 +32,7 @@ export async function navigateToBusinessHoursForm(page: Page): Promise<void> {
 export async function navigateToValidationConfigDemo(
   page: Page
 ): Promise<void> {
-  await page.goto('/validation-config-demo');
+  await page.goto('/validation-config-demo', { waitUntil: 'domcontentloaded' });
   await expect(
     page.getByRole('heading', { name: /validation config demo/i, level: 1 })
   ).toBeVisible();

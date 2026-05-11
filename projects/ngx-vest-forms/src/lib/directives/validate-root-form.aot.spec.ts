@@ -1,6 +1,6 @@
 import { Component, signal, Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { enforce, only, staticSuite, test } from 'vest';
+import { create, enforce, test } from 'vest';
 import { afterEach, describe, expect, it } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import { NgxVestForms } from '../exports';
@@ -13,51 +13,43 @@ type PasswordFormModel = {
   age?: number;
 };
 
-const passwordSuite = staticSuite(
-  (model: PasswordFormModel = {}, field?: string) => {
-    only(field);
+const passwordSuite = create((model: PasswordFormModel = {}) => {
+  test('password', 'Password is required', () => {
+    enforce(model.password).isNotBlank();
+  });
 
-    test('password', 'Password is required', () => {
-      enforce(model.password).isNotBlank();
-    });
+  test('confirmPassword', 'Confirm password is required', () => {
+    enforce(model.confirmPassword).isNotBlank();
+  });
 
-    test('confirmPassword', 'Confirm password is required', () => {
-      enforce(model.confirmPassword).isNotBlank();
-    });
+  test(ROOT_FORM, 'Passwords must match', () => {
+    if (model.password && model.confirmPassword) {
+      enforce(model.confirmPassword).equals(model.password);
+    }
+  });
+});
 
-    test(ROOT_FORM, 'Passwords must match', () => {
-      if (model.password && model.confirmPassword) {
-        enforce(model.confirmPassword).equals(model.password);
-      }
-    });
-  }
-);
+const brechtSuite = create((model: PasswordFormModel = {}) => {
+  test('firstName', 'First name is required', () => {
+    enforce(model.firstName).isNotBlank();
+  });
 
-const brechtSuite = staticSuite(
-  (model: PasswordFormModel = {}, field?: string) => {
-    only(field);
+  test('lastName', 'Last name is required', () => {
+    enforce(model.lastName).isNotBlank();
+  });
 
-    test('firstName', 'First name is required', () => {
-      enforce(model.firstName).isNotBlank();
-    });
+  test('age', 'Age is required', () => {
+    enforce(String(model.age ?? '')).isNotBlank();
+  });
 
-    test('lastName', 'Last name is required', () => {
-      enforce(model.lastName).isNotBlank();
-    });
-
-    test('age', 'Age is required', () => {
-      enforce(model.age).isNotBlank();
-    });
-
-    test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
-      enforce(
-        model.firstName === 'Brecht' &&
-          model.lastName === 'Billiet' &&
-          model.age === 30
-      ).isFalsy();
-    });
-  }
-);
+  test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
+    enforce(
+      model.firstName === 'Brecht' &&
+        model.lastName === 'Billiet' &&
+        model.age === 30
+    ).isFalsy();
+  });
+});
 
 async function compileStandaloneComponent(
   component: Type<unknown>
@@ -73,13 +65,13 @@ async function compileStandaloneComponent(
 describe('ValidateRootFormDirective (template compilation)', () => {
   afterEach(() => TestBed.resetTestingModule());
 
-  it('compiles templates that use validateRootForm attribute', async () => {
+  it('compiles templates that use ngxValidateRootForm attribute', async () => {
     @Component({
       imports: [NgxVestForms],
       template: `
         <form
-          scVestForm
-          validateRootForm
+          ngxVestForm
+          ngxValidateRootForm
           [suite]="suite"
           [formValue]="formValue()"
           (formValueChange)="formValue.set($event)"
@@ -102,14 +94,14 @@ describe('ValidateRootFormDirective (template compilation)', () => {
     ).resolves.toBeUndefined();
   });
 
-  it('compiles templates that bind validateRootForm inputs', async () => {
+  it('compiles templates that bind ngxValidateRootForm inputs', async () => {
     @Component({
       imports: [NgxVestForms],
       template: `
         <form
-          scVestForm
-          [validateRootForm]="shouldValidate()"
-          [validateRootFormMode]="mode"
+          ngxVestForm
+          [ngxValidateRootForm]="shouldValidate()"
+          [ngxValidateRootFormMode]="mode"
           [suite]="suite"
           [formValue]="formValue()"
           (formValueChange)="formValue.set($event)"
@@ -165,16 +157,16 @@ describe('ValidateRootFormDirective (template compilation)', () => {
       imports: [NgxVestForms],
       template: `
         <form
-          scVestForm
+          ngxVestForm
           [formShape]="shape"
           [suite]="suite"
-          [validateRootForm]="true"
+          [ngxValidateRootForm]="true"
           (formValueChange)="formValue.set($event)"
           (validChange)="formValid.set($event)"
           (ngSubmit)="onSubmit()"
         >
-          <div class="w-full" ngModelGroup="generalInfo" ngx-control-wrapper>
-            <div ngx-control-wrapper>
+          <ngx-form-group-wrapper class="w-full" [ngModelGroup]="'generalInfo'">
+            <ngx-control-wrapper>
               <label for="name">First name</label>
               <input
                 id="name"
@@ -183,8 +175,8 @@ describe('ValidateRootFormDirective (template compilation)', () => {
                 name="generalInfo.firstName"
                 [ngModel]="formValue().generalInfo?.firstName"
               />
-            </div>
-          </div>
+            </ngx-control-wrapper>
+          </ngx-form-group-wrapper>
           <p>Valid: {{ formValid() }}</p>
         </form>
       `,

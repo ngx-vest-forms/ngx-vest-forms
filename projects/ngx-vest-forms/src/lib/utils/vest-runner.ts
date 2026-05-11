@@ -13,7 +13,7 @@ import {
   timer,
 } from 'rxjs';
 import { ValidationOptions } from '../directives/validation-options';
-import { NgxTypedVestSuite, NgxVestSuite } from './validation-suite';
+import { NgxVestSuite } from './validation-suite';
 
 export type NgxSuiteFocusSpec = {
   only?: string;
@@ -35,10 +35,7 @@ type NgxFocusedVestSuite<T> = {
   get?(): NgxSuiteRunResult;
 };
 
-type NgxRunnableVestSuite<T> =
-  | NgxVestSuite<T>
-  | NgxTypedVestSuite<T>
-  | NgxFocusedVestSuite<T>;
+type NgxRunnableVestSuite<T> = NgxVestSuite<T> | NgxFocusedVestSuite<T>;
 
 export function runFieldValidation<T>(
   suite: NgxRunnableVestSuite<T>,

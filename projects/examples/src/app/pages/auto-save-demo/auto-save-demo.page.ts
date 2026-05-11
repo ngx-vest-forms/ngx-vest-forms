@@ -7,11 +7,16 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { createValidationConfig, NgxFieldBlurEvent } from 'ngx-vest-forms';
 import {
-  createValidationConfig,
-  NgxFieldBlurEvent,
-} from 'ngx-vest-forms';
-import { EMPTY, Subject, catchError, concatMap, defer, filter, tap } from 'rxjs';
+  catchError,
+  concatMap,
+  defer,
+  EMPTY,
+  filter,
+  Subject,
+  tap,
+} from 'rxjs';
 import {
   AutoSaveDemoModel,
   initialAutoSaveDemoValue,
@@ -23,15 +28,15 @@ import { FormStateCardComponent } from '../../ui/form-state/form-state.component
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { AutoSaveDemoFormBody } from './auto-save-demo.form';
 import {
-  autoSaveDemoValidationErrorRulesByField,
-  autoSaveDemoValidationWarningRulesByField,
-  autoSaveDemoSuite,
-} from './auto-save-demo.validations';
-import {
   AutoSaveDemoService,
   AutoSaveDraftResult,
   StoredAutoSaveDraft,
 } from './auto-save-demo.service';
+import {
+  autoSaveDemoSuite,
+  autoSaveDemoValidationErrorRulesByField,
+  autoSaveDemoValidationWarningRulesByField,
+} from './auto-save-demo.validations';
 
 type AlertTone = 'error' | 'info' | 'success' | 'warning';
 
@@ -90,13 +95,13 @@ export class AutoSaveDemoPageComponent {
   protected readonly storageKey = this.autoSaveService.storageKey;
   protected readonly restoredFromSession = signal(!!this.restoredDraft);
 
-  protected readonly validationErrorRules = autoSaveDemoValidationErrorRulesByField;
+  protected readonly validationErrorRules =
+    autoSaveDemoValidationErrorRulesByField;
   protected readonly validationWarningRules =
     autoSaveDemoValidationWarningRulesByField;
 
   protected readonly hasUnsavedChanges = computed(
-    () =>
-      this.#createDraftKey(this.formValue()) !== this.lastSavedDraftKey()
+    () => this.#createDraftKey(this.formValue()) !== this.lastSavedDraftKey()
   );
 
   protected readonly saveTone = computed<AlertTone>(() => {
@@ -171,11 +176,15 @@ export class AutoSaveDemoPageComponent {
     }
 
     if (status.kind === 'error') {
-      messages.push('The last save attempt failed, but validation state is still intact.');
+      messages.push(
+        'The last save attempt failed, but validation state is still intact.'
+      );
     }
 
     if (this.restoredFromSession()) {
-      messages.push('A previous draft was restored from sessionStorage for this browser tab.');
+      messages.push(
+        'A previous draft was restored from sessionStorage for this browser tab.'
+      );
     }
 
     return messages;
@@ -193,20 +202,19 @@ export class AutoSaveDemoPageComponent {
               return EMPTY;
             }
             this.saveStatus.set({ kind: 'saving', field: request.field });
-            return this.autoSaveService.saveDraft(
-              request.draft,
-              request.field
-            ).pipe(
-              filter(() => request.generation === this.#saveGeneration),
-              tap((result) => this.#handleSaveSuccess(request, result)),
-              catchError((error: unknown) => {
-                if (request.generation !== this.#saveGeneration) {
+            return this.autoSaveService
+              .saveDraft(request.draft, request.field)
+              .pipe(
+                filter(() => request.generation === this.#saveGeneration),
+                tap((result) => this.#handleSaveSuccess(request, result)),
+                catchError((error: unknown) => {
+                  if (request.generation !== this.#saveGeneration) {
+                    return EMPTY;
+                  }
+                  this.#handleSaveError(request, error);
                   return EMPTY;
-                }
-                this.#handleSaveError(request, error);
-                return EMPTY;
-              })
-            );
+                })
+              );
           })
         ),
         takeUntilDestroyed()
@@ -214,9 +222,7 @@ export class AutoSaveDemoPageComponent {
       .subscribe();
   }
 
-  protected handleFieldBlur(
-    event: NgxFieldBlurEvent<AutoSaveDemoModel>
-  ): void {
+  protected handleFieldBlur(event: NgxFieldBlurEvent<AutoSaveDemoModel>): void {
     if (!event.formValue || !event.dirty) {
       return;
     }

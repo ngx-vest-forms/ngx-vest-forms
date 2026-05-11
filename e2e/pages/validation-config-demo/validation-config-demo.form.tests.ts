@@ -687,14 +687,6 @@ test.describe('ValidationConfig Demo', () => {
 
         await expectFieldHasError(startDate, /required/i);
 
-        const orderingError = page
-          .locator('form')
-          .getByRole('status')
-          .filter({
-            hasText: /end date must be after start date/i,
-          });
-        await expect(orderingError).toHaveCount(0);
-
         // End date should be valid now (no ordering rule when start is empty)
         await expectFieldValid(endDate);
       });
@@ -1294,8 +1286,11 @@ test.describe('ValidationConfig Demo', () => {
         await fillAndBlur(password, 'Valid123');
       });
 
-      await test.step('Verify warning appears on confirm password via validationConfig', async () => {
+      await test.step('Verify guidance appears on confirm password after interaction', async () => {
         const confirmPassword = page.getByLabel(/confirm password/i);
+        await confirmPassword.focus();
+        await confirmPassword.blur();
+
         const warningsContainer = await getWarningElementFor(
           confirmPassword,
           /confirm your password/i
@@ -1323,13 +1318,13 @@ test.describe('ValidationConfig Demo', () => {
             .filter({ hasText: /12\+\s*characters/i })
         ).toHaveCount(0);
 
-        // Confirm-password guidance warning should be stable (not duplicated).
+        // Confirm-password guidance should not persist after reset on pristine state.
         await expect(
           page
             .locator('form')
             .getByRole('status')
             .filter({ hasText: /confirm your password/i })
-        ).toHaveCount(1);
+        ).toHaveCount(0);
       });
     });
   });

@@ -1,14 +1,15 @@
 import { Component, signal, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, NgForm } from '@angular/forms';
-import { enforce, only, staticSuite, test as vestTest, warn } from 'vest';
+import { create, enforce, test as vestTest, warn } from 'vest';
 import { NgxVestForms } from '../exports';
 import { FormControlStateDirective } from './form-control-state.directive';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 @Component({
   imports: [FormsModule, FormControlStateDirective],
   template: `
-    <div formControlState #state="formControlState">
+    <div ngxControlState #state="ngxControlState">
       <input name="test" [(ngModel)]="model" required />
       <span id="is-valid">{{ state.isValid() }}</span>
       <span id="is-touched">{{ state.isTouched() }}</span>
@@ -34,7 +35,7 @@ class TestHostComponent {
       [formValue]="formValue()"
       (formValueChange)="formValue.set($event)"
     >
-      <div formControlState #state="formControlState">
+      <div ngxControlState #state="ngxControlState">
         <input name="test" [ngModel]="formValue().test" />
         <span id="warning-only">{{ state.warningMessages().join(',') }}</span>
       </div>
@@ -43,22 +44,19 @@ class TestHostComponent {
 })
 class WarningOnlyHostComponent {
   readonly formValue = signal<{ test?: string }>({});
-  readonly suite = staticSuite(
-    (model: { test?: string } = {}, field?: string) => {
-      only(field);
-      vestTest('test', 'Test warning', () => {
-        warn();
-        enforce(model.test ?? '').longerThan(3);
-      });
-    }
-  );
+  readonly suite = create((model: { test?: string } = {}) => {
+    vestTest('test', 'Test warning', () => {
+      warn();
+      enforce(model.test ?? '').longerThan(3);
+    });
+  });
 }
 
 @Component({
   imports: [FormsModule, FormControlStateDirective],
   template: `
     <form #form="ngForm">
-      <div formControlState #state="formControlState">
+      <div ngxControlState #state="ngxControlState">
         <input name="test" [(ngModel)]="model" required />
         <span id="has-been-validated-reset">{{
           state.hasBeenValidated()

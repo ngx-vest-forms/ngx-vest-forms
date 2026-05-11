@@ -1,4 +1,4 @@
-# Vest.js 5.4 custom rule design guide
+# Vest.js 6 custom rule design guide
 
 Use this guide to choose the right `enforce` extension mechanism.
 

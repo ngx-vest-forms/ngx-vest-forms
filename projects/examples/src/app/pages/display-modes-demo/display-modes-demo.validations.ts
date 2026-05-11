@@ -1,11 +1,9 @@
-import { enforce, only, staticSuite, test, warn } from 'vest';
+import { type NgxVestSuite } from 'ngx-vest-forms';
+import { create, enforce, test, warn } from 'vest';
 import { DisplayModesDemoModel } from '../../models/display-modes-demo.model';
 
-export const displayModesDemoSuite = staticSuite(
-  (model: DisplayModesDemoModel, field?: string) => {
-    // CRITICAL: Must call unconditionally to prevent Vest execution tracking corruption
-    only(field);
-
+export const displayModesDemoSuite: NgxVestSuite<DisplayModesDemoModel> = create(
+  (model: DisplayModesDemoModel) => {
     // Error validations
     test('alwaysError', 'This field is required', () => {
       enforce(model.alwaysError).isNotBlank();

@@ -1,9 +1,9 @@
 ---
 name: conditional-control-flow
-description: Helps developers choose the right Vest.js 5.4 control-flow primitive for conditional validation. Use this whenever the user mentions `skip`, `only`, `include`, `skipWhen`, `omitWhen`, `optional`, linked fields, dependent validations, conditional sections, feature flags, or asks why skipped tests still affect validity.
+description: Helps developers choose the right Vest.js 6 control-flow primitive for conditional validation. Use this whenever the user mentions `skip`, `focus`, `only`, `skipGroup`, `onlyGroup`, `include`, `skipWhen`, `omitWhen`, `optional`, linked fields, dependent validations, conditional sections, feature flags, or asks why skipped tests still affect validity.
 ---
 
-# Vest.js 5.4 conditional control-flow guidance
+# Vest.js 6 conditional control-flow guidance
 
 Use this skill when the problem is about **what should run, when it should run, and whether skipped tests still count**.
 
@@ -11,23 +11,30 @@ Use this skill when the problem is about **what should run, when it should run, 
 
 Ask yourself:
 
-- Should only the active field run? Use `only(...)`.
+- Should only the active field run? Use `suite.only(...).run(model)` or `suite.focus(...)` at the call site.
+- Should a whole named section be skipped for this run? Use `suite.focus({ skipGroup: ... }).run(model)`.
+- Should only one named section run? Use `suite.focus({ onlyGroup: ... }).run(model)`.
 - Should another field run with it? Use `include(...).when(...)`.
 - Should some fields be excluded from this run but still count toward validity? Use `skip(...)` or `skipWhen(...)`.
 - Should some tests disappear from validity and messages entirely while a condition holds? Use `omitWhen(...)`.
 - Should a field be allowed to stay empty without making the suite invalid? Use `optional(...)`.
 
-Do not treat these as interchangeable. In Vest 5.4, they have meaningfully different result semantics.
+Do not treat these as interchangeable. In Vest 6, they still have meaningfully different result semantics.
 
 ## Core distinctions
 
-### `only(field)`
+### `suite.only(field)` / `suite.focus(...)`
 
 Use for interactive, field-scoped validation.
 
-- Call it unconditionally.
-- Pass `undefined` or `false` when nothing should be narrowed.
-- Put it near the top of the suite.
+- Apply it at the call site, not inside the suite callback.
+- `suite.only(field).run(model)` is shorthand for `suite.focus({ only: field }).run(model)`.
+- Use `suite.focus(...)` instead of `suite.only(...)` when you need to combine modifiers such as `only` + `skipGroup`, `skip`, or `onlyGroup`.
+- `skip` filters by field name wherever that field appears; `skipGroup` filters by named group.
+- `onlyGroup` restricts the run to named groups and excludes top-level tests.
+- Focus modifier precedence is `skipGroup` → `onlyGroup` → `skip` → `only`.
+- Focus modifiers apply to the immediately following run.
+- Focused runs are non-persistent and preserve prior results for unfocused fields.
 
 ### `include(field).when(...)`
 
@@ -68,13 +75,16 @@ Use when a field may be empty without making the suite invalid.
 
 1. Decide whether the rule is about **selection**, **linking**, **skipping**, **omission**, or **optionality**.
 2. Keep the suite structure stable.
-3. Prefer `.when(...)`, `skipWhen(...)`, or `omitWhen(...)` over raw `if` trees around test registration.
-4. Use `include(...)` for linked fields instead of manually overvalidating everything.
-5. Reach for `omitWhen(...)` instead of `skipWhen(...)` when hidden sections should stop affecting validity.
+3. Keep the suite callback model-only; apply focus/selection at the run site.
+4. Prefer `.when(...)`, `skipWhen(...)`, or `omitWhen(...)` over raw `if` trees around test registration.
+5. Use `include(...)` for linked fields instead of manually overvalidating everything.
+6. Reach for `omitWhen(...)` instead of `skipWhen(...)` when hidden sections should stop affecting validity.
+7. When the question is really about tabs, steps, or named sections, consider `skipGroup` / `onlyGroup` before inventing extra branching inside the suite.
 
 ## Pitfalls to fix immediately
 
-- `if (field) only(field)`
+- adding `field` parameters or `only(field)` calls inside the suite callback
+- using `skip(...)` when the intent is to disable a named group rather than a field everywhere it appears
 - using `skipWhen(...)` when the user really wants omitted tests not to affect validity
 - using `optional(...)` when the field is not actually optional, just temporarily hidden
 - using `include(...).when('otherField')` when the linked field should only run under extra conditions
@@ -96,8 +106,10 @@ Start with `references/decision-guide.md` when the user is mixing several of the
 
 - `references/decision-guide.md`
 - `../../../instructions/vest.instructions.md`
-- `https://vestjs.dev/docs/5.x/writing_your_suite/including_and_excluding/skip_and_only`
-- `https://vestjs.dev/docs/5.x/writing_your_suite/including_and_excluding/skipWhen`
-- `https://vestjs.dev/docs/5.x/writing_your_suite/including_and_excluding/omitWhen`
-- `https://vestjs.dev/docs/5.x/writing_your_suite/including_and_excluding/include`
-- `https://vestjs.dev/docs/5.x/writing_your_suite/optional_fields`
+- `https://vestjs.dev/docs/writing_your_suite/focused_updates`
+- `https://vestjs.dev/docs/writing_your_suite/including_and_excluding/skip_and_only`
+- `https://vestjs.dev/docs/writing_your_suite/including_and_excluding/skipWhen`
+- `https://vestjs.dev/docs/writing_your_suite/including_and_excluding/omitWhen`
+- `https://vestjs.dev/docs/writing_your_suite/including_and_excluding/include`
+- `https://vestjs.dev/docs/writing_your_suite/optional_fields`
+- `https://vestjs.dev/docs/recipes/focus_skipgroup_recipes`
