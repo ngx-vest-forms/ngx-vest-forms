@@ -40,6 +40,36 @@ Use that signal to:
 
 Do not ignore the signal when the underlying API can accept it.
 
+Vest fires the prior run's `AbortSignal` when a new run for the same test ID starts. In ngx-vest-forms v3, each user edit triggers a fresh `suite.only(field).run(model)` through the directive's async validator, so Vest's internal stale-cancellation aborts the in-flight async test automatically — provided the test body passes `signal` to its underlying request.
+
+## Memoize deterministic async checks
+
+Wrap expensive async blocks in `memo()` when the result should be reused until a dependency changes.
+
+```typescript
+import { create, enforce, skipWhen, test } from 'vest';
+import { memo } from 'vest/memo';
+
+export const profileSuite = create((model: ProfileModel) => {
+  test('userId', 'User ID is required', () => {
+    enforce(model.userId).isNotBlank();
+  });
+
+  skipWhen((res) => res.hasErrors('userId'), () => {
+    memo(() => {
+      test('userId', 'User ID is already taken', async ({ signal }) => {
+        const response = await fetch(
+          `/api/users/${encodeURIComponent(model.userId!)}`,
+          { signal }
+        );
+        const { exists } = await response.json();
+        enforce(exists).isFalsy();
+      });
+    }, [model.userId]);
+  });
+});
+```
+
 ## `warn()` guidance
 
 Use `warn()` when the message is useful but should **not** block validity or submission.
@@ -57,6 +87,8 @@ If the warning can only be determined after async work finishes, use `useWarn()`
 ## Completion guidance
 
 In Vest 6, result `.done(...)` was removed.
+
+The model changed because results are now hybrid run outputs: you can inspect sync state immediately, `await` the same run for async completion, or subscribe through suite-level completion hooks. That removes the extra result-level callback API and keeps completion handling on the suite itself.
 
 Use these patterns instead:
 
