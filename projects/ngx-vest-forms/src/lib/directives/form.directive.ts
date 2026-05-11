@@ -79,6 +79,10 @@ import {
 import { validateShape } from '../utils/shape-validation';
 import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
 import {
+  NgxValidationFocus,
+  runVestFieldValidation,
+} from '../utils/vest-runner';
+import {
   getFormSubmittedSignal,
   setAngularFormSubmittedState,
 } from './form-submitted-state';
@@ -99,6 +103,8 @@ export type NgxValidationConfig<T = unknown> =
   | Record<string, string[]>
   | ValidationConfigMap<T>
   | null;
+
+export type { NgxValidationFocus };
 
 /**
  * Payload emitted when a named control inside the form loses focus.
@@ -337,6 +343,8 @@ export class FormDirective<T extends Record<string, unknown>> {
    */
   readonly validationConfig: InputSignal<NgxValidationConfig<T>> =
     input<NgxValidationConfig<T>>(null);
+
+  readonly validationFocus = input<NgxValidationFocus | null>(null);
 
   /**
    * Emits whenever validation feedback may have changed, even if the aggregate
@@ -1043,10 +1051,16 @@ export class FormDirective<T extends Record<string, unknown>> {
           (snap) =>
             new Observable<ValidationErrors | null>((observer) => {
               try {
-                // Cast to NgxVestSuite to accept string field parameter
-                // Both NgxVestSuite and NgxTypedVestSuite work with string at runtime
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (suite as NgxVestSuite<T>)(snap, field).done((result: any) => {
+                runVestFieldValidation(
+                  suite,
+                  snap,
+                  field,
+                  this.validationFocus()
+                ).done((result: unknown) => {
+                  const vestResult = result as {
+                    getErrors: () => Record<string, string[]>;
+                    getWarnings: () => Record<string, string[]>;
+                  };
                   // Guard: bail out if the directive was destroyed while
                   // validation was in flight to avoid writing to disposed
                   // signals or a torn-down view.
@@ -1060,8 +1074,8 @@ export class FormDirective<T extends Record<string, unknown>> {
                     return;
                   }
 
-                  const errors = result.getErrors()[field];
-                  const warnings = result.getWarnings()[field];
+                  const errors = vestResult.getErrors()[field];
+                  const warnings = vestResult.getWarnings()[field];
 
                   // Store warnings in the fieldWarnings signal for access by control wrappers.
                   // This is necessary because Angular marks a field as invalid when control.errors !== null.

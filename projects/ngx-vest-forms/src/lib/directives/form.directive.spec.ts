@@ -4,7 +4,11 @@ import { render } from '@testing-library/angular';
 import { isObservable, Observable } from 'rxjs';
 import { enforce, only, staticSuite, test as vestTest, warn } from 'vest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FormDirective, NgxFieldBlurEvent } from '../directives/form.directive';
+import {
+  FormDirective,
+  NgxFieldBlurEvent,
+  NgxValidationFocus,
+} from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
 // Helper to await either a Promise or Observable
 async function awaitResult<T>(result: Promise<T> | Observable<T>) {
@@ -392,6 +396,111 @@ describe('FormDirective - Async Validator', () => {
     expect(result?.['warnings']).toContain(
       'Password should be longer than 12 characters'
     );
+  });
+
+  @Component({
+    selector: 'test-validation-focus-host',
+    template: `<form
+      ngxVestForm
+      [suite]="suite()"
+      [validationFocus]="validationFocus()"
+      #vest="ngxVestForm"
+    ></form>`,
+    imports: [NgxVestForms],
+  })
+  class TestValidationFocusHost {
+    validationFocus = signal<NgxValidationFocus | null>(null);
+    readonly doneResult = {
+      getErrors: () => ({}),
+      getWarnings: () => ({}),
+    };
+    readonly run = vi.fn().mockReturnValue({
+      done: (callback: (result: unknown) => void) => callback(this.doneResult),
+    });
+    readonly only = vi.fn().mockReturnValue({ run: this.run });
+    readonly focus = vi.fn().mockReturnValue({ run: this.run });
+    readonly suiteFn = vi.fn().mockReturnValue({
+      done: (callback: (result: unknown) => void) => callback(this.doneResult),
+    });
+    readonly suite = signal(
+      Object.assign(this.suiteFn, {
+        only: this.only,
+        focus: this.focus,
+      })
+    );
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
+  }
+
+  it('should pass onlyGroup to suite.focus with field-only precedence', async () => {
+    const { fixture } = await render(TestValidationFocusHost);
+    const instance = fixture.componentInstance;
+    instance.validationFocus.set({
+      only: 'email',
+      onlyGroup: 'step-1',
+    });
+    fixture.detectChanges();
+
+    const validator = instance.vestForm().createAsyncValidator('username', {
+      debounceTime: 0,
+    });
+    const resultPromise = awaitResult(validator({ value: 'abc' } as any));
+    vi.runAllTimers();
+    await Promise.resolve();
+    await resultPromise;
+
+    expect(instance.focus).toHaveBeenCalledWith({
+      only: 'username',
+      onlyGroup: 'step-1',
+    });
+    expect(instance.run).toHaveBeenCalled();
+    expect(instance.only).not.toHaveBeenCalled();
+  });
+
+  it('should pass skipGroup to suite.focus with field-only precedence', async () => {
+    const { fixture } = await render(TestValidationFocusHost);
+    const instance = fixture.componentInstance;
+    instance.validationFocus.set({
+      skip: 'username',
+      skipGroup: 'step-2',
+    });
+    fixture.detectChanges();
+
+    const validator = instance.vestForm().createAsyncValidator('username', {
+      debounceTime: 0,
+    });
+    const resultPromise = awaitResult(validator({ value: 'abc' } as any));
+    vi.runAllTimers();
+    await Promise.resolve();
+    await resultPromise;
+
+    expect(instance.focus).toHaveBeenCalledWith({
+      only: 'username',
+      skip: 'username',
+      skipGroup: 'step-2',
+    });
+    expect(instance.run).toHaveBeenCalled();
+    expect(instance.only).not.toHaveBeenCalled();
+  });
+
+  it('should call suite.only(field).run(model) when validationFocus is null', async () => {
+    const { fixture } = await render(TestValidationFocusHost);
+    const instance = fixture.componentInstance;
+    instance.validationFocus.set(null);
+    fixture.detectChanges();
+
+    const validator = instance.vestForm().createAsyncValidator('username', {
+      debounceTime: 0,
+    });
+    const resultPromise = awaitResult(validator({ value: 'abc' } as any));
+    vi.runAllTimers();
+    await Promise.resolve();
+    await resultPromise;
+
+    expect(instance.only).toHaveBeenCalledWith('username');
+    expect(instance.run).toHaveBeenCalled();
+    expect(instance.focus).not.toHaveBeenCalled();
+    expect(instance.suiteFn).not.toHaveBeenCalled();
   });
 });
 

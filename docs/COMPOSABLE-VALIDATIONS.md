@@ -294,6 +294,37 @@ describe('addressValidations', () => {
 | **Scalability**     | Easily add new validations without bloating suites |
 | **Cross-framework** | Use same logic on frontend/backend, Angular/React  |
 
+## Validation focus for wizard and step-scoped validation
+
+`ngxVestForm` exposes a `validationFocus` input that forwards Vest focus options to
+field-level async validation:
+
+```typescript
+type NgxValidationFocus = {
+  only?: string;
+  skip?: string;
+  onlyGroup?: string | readonly string[];
+  skipGroup?: string | readonly string[];
+};
+```
+
+When `validationFocus` is provided, ngx-vest-forms merges it with the current field
+validation (`only` is always forced to the current field path).
+
+```html
+<form
+  ngxVestForm
+  [suite]="suite"
+  [formValue]="formValue()"
+  [validationFocus]="{ onlyGroup: currentStep() }"
+  (formValueChange)="formValue.set($event)"
+>
+  <!-- controls -->
+</form>
+```
+
+Use this pattern in multi-step flows to scope which Vest groups execute during each step.
+
 ## Best Practices
 
 1. **One entity per file** - Keep validation functions focused on a single domain concept
