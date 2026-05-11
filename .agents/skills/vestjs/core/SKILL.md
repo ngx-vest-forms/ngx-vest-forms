@@ -86,7 +86,7 @@ export const accountSuite = create((model: AccountModel) => {
 accountSuite.focus({ only: 'username', onlyGroup: 'account' }).run(model);
 ```
 
-In ngx-vest-forms v3, the same focus object can flow through the form directive with `[validationFocus]="{ onlyGroup: currentStep() }"`, so the suite callback stays model-only.
+Apply focus at the call site (or wherever the app decides what to run). Keep the suite callback model-only.
 
 ## Pitfalls to correct immediately
 

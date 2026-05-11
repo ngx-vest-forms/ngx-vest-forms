@@ -20,47 +20,11 @@ If you only used the recommended `Ngx*` / `NGX_*` names (or the canonical `setVa
 
 ## What's new in v3 beyond Vest 6
 
-Migrating to Vest 6 gets you model-only suites, `suite.run(...)`, and `suite.only(...).run(...)`. ngx-vest-forms v3 adds a few library-level integrations on top of that baseline.
+Migrating to Vest 6 gets you model-only suites, `suite.run(...)`, `suite.only(...).run(...)`, top-level `memo()`, hybrid run results, and async-test `AbortSignal`. ngx-vest-forms v3 adopts that baseline and the directive's async validator drives the suite via `suite.only(field).run(model)`, so the Vest-6 patterns below compose with the form without extra wiring.
 
-### `[validationFocus]` forwards `suite.focus(...)`
+### Use Vest 6's async-test `AbortSignal` to cancel in-flight requests
 
-Use `[validationFocus]` when the form already knows which field or group should run, such as step-based wizards or tabbed editors.
-
-```typescript
-import { create, group, test } from 'vest';
-
-export const onboardingSuite = create((model: OnboardingModel) => {
-  group('account', () => {
-    test('account.email', 'Email is required', () => {
-      /* ... */
-    });
-  });
-
-  group('profile', () => {
-    test('profile.displayName', 'Display name is required', () => {
-      /* ... */
-    });
-  });
-});
-```
-
-```html
-<form
-  ngxVestForm
-  [suite]="onboardingSuite"
-  [validationFocus]="{ onlyGroup: currentStep(), only: focusedField() }"
->
-```
-
-Notes:
-
-- `suite.only(field).run(model)` is equivalent to `suite.focus({ only: field }).run(model)`.
-- `[validationFocus]` is the bridge for the richer form: `{ only, skip, onlyGroup, skipGroup }`.
-- Keep conditional business rules in the suite with `omitWhen(...)`, `skipWhen(...)`, or `include(...).when(...)`; use `[validationFocus]` for run scoping.
-
-### AbortSignal cancellation is wired end-to-end
-
-v3 now forwards Vest's async test `AbortSignal` through ngx-vest-forms, so stale validations abort at the source when the run is superseded, debounced away, or torn down.
+Each async test receives an `AbortSignal` via its test context. Vest fires the prior run's signal when a new run for the same test ID starts. Because the form directive issues a fresh `suite.only(field).run(model)` on every relevant edit, Vest's own stale-cancellation aborts the in-flight async test automatically — provided the test body passes `signal` into its underlying request.
 
 ```typescript
 test('username', 'Username is already taken', async ({ signal }) => {
@@ -93,9 +57,9 @@ Migration takeaway: stop teaching “ignore late async results” as the primary
 
 ### Prefer `memo()` for expensive deterministic blocks
 
-Vest 6.3 exposes top-level `memo()` from `vest/memo`. Use it to wrap expensive validation blocks whose result should be reused until a dependency changes.
+Vest 6.3 exposes top-level `memo()` from `vest/memo`. Use it to wrap expensive validation blocks whose result should be reused until a dependency changes. The runnable purchase-form example in this repo uses this pattern; see `projects/examples/src/app/pages/purchase-form/purchase.validations.ts`.
 
-If you are reading v2.x-era examples in this repository, you may still see the older Vest 5 `test.memo(...)` form. The live purchase-form example on this branch intentionally keeps that pre-v3 pattern because the runnable example app still targets the current Vest 5 line; when you migrate that code to v3, move the test body into `memo(() => { test(...) }, deps)`.
+If you are migrating older code, the Vest 5 `test.memo(...)` form is removed — move the test body into `memo(() => { test(...) }, deps)`.
 
 ```typescript
 import { create, skipWhen, test } from 'vest';

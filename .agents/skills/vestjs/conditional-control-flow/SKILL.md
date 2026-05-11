@@ -81,40 +81,6 @@ Use when a field may be empty without making the suite invalid.
 6. Reach for `omitWhen(...)` instead of `skipWhen(...)` when hidden sections should stop affecting validity.
 7. When the question is really about tabs, steps, or named sections, consider `skipGroup` / `onlyGroup` before inventing extra branching inside the suite.
 
-## ngx-vest-forms v3 bridge: `[validationFocus]`
-
-Use the same focus object at the form boundary when the app already knows which step or group is active.
-
-```typescript
-import { create, group, test } from 'vest';
-
-export const checkoutSuite = create((model: CheckoutModel) => {
-  group('shipping', () => {
-    test('shipping.address.line1', 'Street is required', () => {
-      /* ... */
-    });
-  });
-
-  group('payment', () => {
-    test('payment.cardNumber', 'Card number is required', () => {
-      /* ... */
-    });
-  });
-});
-
-checkoutSuite.focus({ onlyGroup: 'shipping', only: 'shipping.address.line1' }).run(model);
-```
-
-```html
-<form
-  ngxVestForm
-  [suite]="checkoutSuite"
-  [validationFocus]="{ onlyGroup: currentStep(), skipGroup: hiddenSteps() }"
->
-```
-
-Keep field linking (`include(...).when(...)`) and omission (`omitWhen(...)`) inside the suite. Use `[validationFocus]` for run-scoping, not for business-rule branching.
-
 ## Pitfalls to fix immediately
 
 - adding `field` parameters or `only(field)` calls inside the suite callback

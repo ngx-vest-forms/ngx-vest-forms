@@ -40,7 +40,7 @@ Use that signal to:
 
 Do not ignore the signal when the underlying API can accept it.
 
-ngx-vest-forms v3 now wires that `AbortSignal` through the form directive as well, so stale validations triggered by debounce, teardown, or a newer run abort the underlying request instead of merely ignoring a late result.
+Vest fires the prior run's `AbortSignal` when a new run for the same test ID starts. In ngx-vest-forms v3, each user edit triggers a fresh `suite.only(field).run(model)` through the directive's async validator, so Vest's internal stale-cancellation aborts the in-flight async test automatically — provided the test body passes `signal` to its underlying request.
 
 ## Memoize deterministic async checks
 
@@ -70,16 +70,6 @@ export const profileSuite = create((model: ProfileModel) => {
 });
 ```
 
-When the same suite is hosted by ngx-vest-forms v3, pair this with `[validationFocus]` if only the current step or group should run:
-
-```html
-<form
-  ngxVestForm
-  [suite]="profileSuite"
-  [validationFocus]="{ only: 'userId', onlyGroup: currentStep() }"
->
-```
-
 ## `warn()` guidance
 
 Use `warn()` when the message is useful but should **not** block validity or submission.
@@ -98,11 +88,8 @@ If the warning can only be determined after async work finishes, use `useWarn()`
 
 In Vest 6, result `.done(...)` was removed.
 
-<<<<<<< HEAD
 The model changed because results are now hybrid run outputs: you can inspect sync state immediately, `await` the same run for async completion, or subscribe through suite-level completion hooks. That removes the extra result-level callback API and keeps completion handling on the suite itself.
 
-=======
->>>>>>> origin/release/v3
 Use these patterns instead:
 
 - `await suite.run(data)` when the caller can wait for one final result

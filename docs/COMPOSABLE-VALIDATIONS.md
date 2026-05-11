@@ -151,7 +151,7 @@ Why this pattern is useful:
 - the async test still respects Vest's `{ signal }` cancellation model
 - the memoized block stays composable, so larger suites can call it like any other reusable validator
 
-When ngx-vest-forms hosts the suite, keep focus at the run site or use `[validationFocus]` on the form instead of moving `memo()` behind ad-hoc branching.
+When ngx-vest-forms hosts the suite, keep focus at the run site (`suite.only(field).run(model)` happens inside the directive's async validator); avoid moving `memo()` behind ad-hoc branching.
 
 ## Organizing Validation Files
 
@@ -333,5 +333,5 @@ describe('addressValidations', () => {
 3. **Use field parameter** - Pass the field prefix for nested validations
 4. **Document parameters** - Make it clear what each validation function expects
 5. **Export for testing** - Make composable functions easy to test independently
-6. **Keep focus at the run site** - Use `suite.only(...).run(...)` or `[validationFocus]`, not `only(field)` inside composable helpers
+6. **Keep focus at the run site** - Use `suite.only(...).run(...)` at the call site, not `only(field)` inside composable helpers
 7. **Use `memo()` sparingly** - Memoize deterministic expensive blocks, not every test by default
