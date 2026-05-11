@@ -98,8 +98,11 @@ If the warning can only be determined after async work finishes, use `useWarn()`
 
 In Vest 6, result `.done(...)` was removed.
 
+<<<<<<< HEAD
 The model changed because results are now hybrid run outputs: you can inspect sync state immediately, `await` the same run for async completion, or subscribe through suite-level completion hooks. That removes the extra result-level callback API and keeps completion handling on the suite itself.
 
+=======
+>>>>>>> origin/release/v3
 Use these patterns instead:
 
 - `await suite.run(data)` when the caller can wait for one final result

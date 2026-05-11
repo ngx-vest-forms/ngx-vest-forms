@@ -133,33 +133,29 @@ Call `triggerFormValidation()` in these scenarios:
 ### Validation Suite Pattern
 
 ```typescript
-import { staticSuite, test, enforce, omitWhen, only } from 'vest';
+import { create, test, enforce, omitWhen } from 'vest';
 
-export const myValidationSuite = staticSuite(
-  (model: MyFormModel, field?: string) => {
-    only(field); // CRITICAL: Always call unconditionally
+export const myValidationSuite = create((model: MyFormModel) => {
+  // Always validate procedure type
+  test('procedureType', 'Procedure type is required', () => {
+    enforce(model.procedureType).isNotBlank();
+  });
 
-    // Always validate procedure type
-    test('procedureType', 'Procedure type is required', () => {
-      enforce(model.procedureType).isNotBlank();
+  // Conditional validations
+  omitWhen(model.procedureType !== 'typeA', () => {
+    test('fieldA', 'Field A is required for Type A', () => {
+      enforce(model.fieldA).isNotBlank();
     });
+  });
 
-    // Conditional validations
-    omitWhen(model.procedureType !== 'typeA', () => {
-      test('fieldA', 'Field A is required for Type A', () => {
-        enforce(model.fieldA).isNotBlank();
-      });
+  omitWhen(model.procedureType !== 'typeB', () => {
+    test('fieldB', 'Field B is required for Type B', () => {
+      enforce(model.fieldB).isNotBlank();
     });
+  });
 
-    omitWhen(model.procedureType !== 'typeB', () => {
-      test('fieldB', 'Field B is required for Type B', () => {
-        enforce(model.fieldB).isNotBlank();
-      });
-    });
-
-    // Note: No validation needed for typeC as it has no input fields
-  }
-);
+  // Note: No validation needed for typeC as it has no input fields
+});
 ```
 
 ## Alternative Approaches (Not Recommended)

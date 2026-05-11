@@ -1,11 +1,8 @@
+import { create } from 'vest';
 import { describe, expect, it } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import type { FormFieldName } from './field-path-types';
-import type {
-  NgxFieldKey,
-  NgxTypedVestSuite,
-  NgxVestSuite,
-} from './validation-suite';
+import type { NgxFieldKey, NgxVestSuite } from './validation-suite';
 
 describe('validation-suite types', () => {
   interface TestModel {
@@ -33,33 +30,20 @@ describe('validation-suite types', () => {
     expect(rootField).toBe(ROOT_FORM);
   });
 
-  it('should keep NgxTypedVestSuite assignable to NgxVestSuite', () => {
-    // Compile-time contract test: this assignment is the key compatibility guarantee.
-    const typedSuite = (() =>
-      undefined) as unknown as NgxTypedVestSuite<TestModel>;
+  it('should keep actual Vest 6 suites assignable to NgxVestSuite', () => {
+    const typedSuite = create((_model: TestModel = {}) => {
+      // No-op: compile-time contract test against the real Vest 6 suite shape.
+    });
     const baseSuite: NgxVestSuite<TestModel> = typedSuite;
 
-    expect(typeof baseSuite).toBe('function');
+    expect(typeof baseSuite.run).toBe('function');
   });
 
   it('should keep default NgxVestSuite generic as unknown', () => {
-    const suite = (() => undefined) as unknown as NgxVestSuite;
+    const suite: NgxVestSuite = create((_model: unknown = {}) => {
+      // No-op: compile-time contract test for the default generic.
+    });
 
-    expect(typeof suite).toBe('function');
-  });
-
-  it('should allow suite-parameter style callbacks with typed fields', () => {
-    const callWithField = (
-      _model: TestModel,
-      _field?: FormFieldName<TestModel>
-    ): void => {
-      // No-op: compile-time type contract test.
-    };
-
-    expect(() =>
-      callWithField({ firstName: 'Ada' }, 'firstName')
-    ).not.toThrow();
-    expect(() => callWithField({ firstName: 'Ada' }, ROOT_FORM)).not.toThrow();
-    expect(() => callWithField({ firstName: 'Ada' }, undefined)).not.toThrow();
+    expect(typeof suite.run).toBe('function');
   });
 });

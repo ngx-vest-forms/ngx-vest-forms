@@ -2,8 +2,8 @@ import { JsonPipe } from '@angular/common';
 import { Component, signal, viewChild } from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { enforce, only, staticSuite, test as vestTest } from 'vest';
-import { describe, expect, it } from 'vitest';
+import { create, enforce, test as vestTest } from 'vest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
 import { FormDirective } from './form.directive';
 
@@ -14,18 +14,14 @@ type AddressFormModel = {
   };
 };
 
-const addressFormSuite = staticSuite(
-  (data: Partial<AddressFormModel> = {}, field?: string) => {
-    only(field); // ✅ Call unconditionally
-
-    vestTest('address.street', 'Street is required', () => {
-      enforce(data.address?.street).isNotEmpty();
-    });
-    vestTest('address.city', 'City is required', () => {
-      enforce(data.address?.city).isNotEmpty();
-    });
-  }
-);
+const addressFormSuite = create((data: Partial<AddressFormModel> = {}) => {
+  vestTest('address.street', 'Street is required', () => {
+    enforce(data.address?.street).isNotEmpty();
+  });
+  vestTest('address.city', 'City is required', () => {
+    enforce(data.address?.city).isNotEmpty();
+  });
+});
 
 @Component({
   imports: [NgxVestForms, JsonPipe],
@@ -67,6 +63,13 @@ class TestGroupComponent {
 }
 
 describe('FormModelGroupDirective', () => {
+  // Vest 6 `create()` returns a stateful suite — `addressFormSuite` is shared
+  // across every test in this file via the module-level `TestGroupComponent`,
+  // so without a reset the second test reads stale results from the first.
+  beforeEach(() => {
+    addressFormSuite.reset();
+  });
+
   it('should properly register as async validator for ngModelGroup', async () => {
     await render(TestGroupComponent);
     expect(screen.getByTestId('address-group')).toBeInTheDocument();
@@ -126,7 +129,7 @@ describe('FormModelGroupDirective', () => {
     await waitFor(() => {
       expect(screen.getByTestId('form-valid').textContent).toBe('true');
     });
-  }, 10000); // Increase timeout to 10 seconds
+  }, 20000); // Increase timeout for slower CI runners
 
   it('should handle form group path resolution correctly', async () => {
     await render(TestGroupComponent);
@@ -160,12 +163,12 @@ describe('FormModelGroupDirective', () => {
           throw new Error('City error should be present');
         }
       },
-      { timeout: 3000 }
+      { timeout: 6000 }
     );
 
     // Final assertion to satisfy linter
     const finalErrors = screen.getByTestId('form-errors').textContent;
     expect(finalErrors).not.toMatch(/Street is required/);
     expect(finalErrors).toMatch(/City is required/);
-  }, 10000); // Increase timeout to 10 seconds
+  }, 20000); // Increase timeout for slower CI runners
 });

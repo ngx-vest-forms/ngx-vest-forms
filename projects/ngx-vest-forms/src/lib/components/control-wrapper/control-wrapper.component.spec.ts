@@ -1,8 +1,8 @@
 import { Component, signal } from '@angular/core';
 import { fireEvent, render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { enforce, only, staticSuite, test as vestTest, warn } from 'vest';
-import { describe, expect, it } from 'vitest';
+import { create, enforce, test as vestTest, warn } from 'vest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../../exports';
 
 // Test validation suite for the component tests
@@ -11,8 +11,7 @@ type TestModel = {
   username?: string;
 };
 
-const testSuite = staticSuite((data: TestModel = {}, field?: string) => {
-  only(field); // ✅ Call unconditionally
+const testSuite = create((data: TestModel = {}) => {
   vestTest('email', 'Email is required', () => {
     enforce(data.email ?? '').isNotBlank();
   });
@@ -61,7 +60,7 @@ class TestFormComponent {
       [formValue]="model()"
       (formValueChange)="model.set($event)"
     >
-      <div scControlWrapper>
+      <div ngxControlWrapper>
         <label for="email">Email</label>
         <input id="email" name="email" [ngModel]="model().email" />
       </div>
@@ -74,9 +73,7 @@ class DirectiveAttributeComponent {
 }
 
 // Async validation suite for pending state tests
-const asyncSuite = staticSuite((data: TestModel = {}, field?: string) => {
-  // ✅ CRITICAL: Always call only() unconditionally (PR #60 requirement)
-  only(field);
+const asyncSuite = create((data: TestModel = {}) => {
   vestTest('email', 'Email must be available', () => {
     return new Promise<void>((resolve, reject) => {
       setTimeout(() => {
@@ -91,8 +88,7 @@ const asyncSuite = staticSuite((data: TestModel = {}, field?: string) => {
 });
 
 // Slow async validation suite to test @defer behavior (800ms delay ensures pending message shows)
-const slowAsyncSuite = staticSuite((data: TestModel = {}, field?: string) => {
-  only(field);
+const slowAsyncSuite = create((data: TestModel = {}) => {
   vestTest('email', 'Email must be available', () => {
     return new Promise<void>((resolve, reject) => {
       setTimeout(() => {
@@ -179,7 +175,17 @@ class MultipleControlsComponent {
   model = signal({ firstName: '', lastName: '' });
 }
 
-describe('ScControlWrapperComponent', () => {
+describe('ControlWrapperComponent', () => {
+  // Vest 6 `create()` returns a stateful suite — results from a prior run
+  // bleed into the next unless we reset between tests. This is especially
+  // visible on slower CI runners (GitHub Actions Ubuntu) where stale state
+  // produces cross-test failures that pass locally.
+  beforeEach(() => {
+    testSuite.reset();
+    asyncSuite.reset();
+    slowAsyncSuite.reset();
+  });
+
   describe('Core Functionality', () => {
     it('should render component correctly with element selector', async () => {
       await render(TestFormComponent);
@@ -208,7 +214,7 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.click(emailInput);
       await userEvent.tab(); // blur
       // Wait for error to appear
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
       expect(screen.getByText('Email is required')).toBeInTheDocument();
     });
 
@@ -218,7 +224,7 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.click(emailInput);
       await userEvent.tab();
       // Wait for error to appear
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
       const wrapper = emailInput.closest('.ngx-control-wrapper');
       expect(wrapper).toHaveClass('ngx-control-wrapper--invalid');
     });
@@ -229,7 +235,7 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.click(emailInput);
       await userEvent.tab();
       // Wait for error to appear
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
       const wrapper = emailInput.closest('.ngx-control-wrapper');
       expect(wrapper).toHaveClass('ngx-control-wrapper--invalid');
       // Type valid email
@@ -244,7 +250,7 @@ describe('ScControlWrapperComponent', () => {
         () => {
           expect(wrapper).not.toHaveClass('ngx-control-wrapper--invalid');
         },
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
     });
 
@@ -253,7 +259,7 @@ describe('ScControlWrapperComponent', () => {
       const emailInput = screen.getByLabelText('Email');
       await userEvent.click(emailInput);
       await userEvent.tab();
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
 
       await userEvent.type(emailInput, 'invalid');
       await userEvent.tab();
@@ -277,20 +283,20 @@ describe('ScControlWrapperComponent', () => {
       await waitFor(
         () => {
           expect(wrapper).toHaveAttribute('aria-busy', 'true');
-          const spinner = wrapper?.querySelector('.animate-spin');
+          const spinner = wrapper?.querySelector('.ngx-control-wrapper__spinner');
           expect(spinner).toBeInTheDocument();
         },
-        { timeout: 1500 }
+        { timeout: 4000 }
       );
 
       // Wait for async validation to complete and minimum display time (500ms) to pass
       await waitFor(
         () => {
           expect(wrapper).not.toHaveAttribute('aria-busy');
-          const spinner = wrapper?.querySelector('.animate-spin');
+          const spinner = wrapper?.querySelector('.ngx-control-wrapper__spinner');
           expect(spinner).not.toBeInTheDocument();
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
     });
 
@@ -306,7 +312,7 @@ describe('ScControlWrapperComponent', () => {
             screen.getByText('Email must be available')
           ).toBeInTheDocument();
         },
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
     });
 
@@ -343,7 +349,7 @@ describe('ScControlWrapperComponent', () => {
       // Submit the form
       await userEvent.click(screen.getByText('Submit'));
       // Wait for error to appear
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
       expect(screen.getByText('Email is required')).toBeInTheDocument();
     });
 
@@ -353,7 +359,7 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.click(emailInput);
       await userEvent.tab();
       // Wait for error to appear
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
       const errorElement = screen.getByText('Email is required');
       // WCAG: Inline field-level errors use role="status" with aria-live="polite" for non-disruptive announcement
       // The primary accessibility pathway is aria-invalid + aria-describedby on the input
@@ -385,9 +391,8 @@ describe('ScControlWrapperComponent', () => {
 
   describe('ARIA Enhancements', () => {
     it('should allow opting out of descendant ARIA stamping (group-safe mode)', async () => {
-      const multiSuite = staticSuite(
-        (data: { firstName?: string; lastName?: string }, field?: string) => {
-          only(field);
+      const multiSuite = create(
+        (data: { firstName?: string; lastName?: string }) => {
           vestTest('firstName', 'First name is required', () => {
             enforce(data.firstName ?? '').isNotBlank();
           });
@@ -437,7 +442,7 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.click(firstNameInput);
       await userEvent.tab();
 
-      await screen.findByText('First name is required', {}, { timeout: 1000 });
+      await screen.findByText('First name is required', {}, { timeout: 3000 });
 
       // Wrapper should render messages, but must not mutate descendant controls
       await waitFor(() => {
@@ -456,11 +461,11 @@ describe('ScControlWrapperComponent', () => {
       // Trigger errors
       await userEvent.click(emailInput);
       await userEvent.tab();
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
 
       await userEvent.click(usernameInput);
       await userEvent.tab();
-      await screen.findByText('Username is required', {}, { timeout: 1000 });
+      await screen.findByText('Username is required', {}, { timeout: 3000 });
 
       // Find error containers using Testing Library
       const emailError = screen.getByText('Email is required');
@@ -508,7 +513,7 @@ describe('ScControlWrapperComponent', () => {
       // Trigger error
       await userEvent.click(emailInput);
       await userEvent.tab();
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
 
       // Verify aria-describedby points to error ID
       await waitFor(() => {
@@ -572,7 +577,7 @@ describe('ScControlWrapperComponent', () => {
       // Trigger error
       await userEvent.click(emailInput);
       await userEvent.tab();
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
 
       await waitFor(() => {
         const describedBy = emailInput.getAttribute('aria-describedby');
@@ -607,7 +612,7 @@ describe('ScControlWrapperComponent', () => {
             screen.queryByText('Email is required')
           ).not.toBeInTheDocument();
         },
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
     });
 
@@ -621,11 +626,144 @@ describe('ScControlWrapperComponent', () => {
       // Trigger error
       await userEvent.click(emailInput);
       await userEvent.tab();
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
 
       // Verify aria-invalid is set
       await waitFor(() => {
         expect(emailInput).toHaveAttribute('aria-invalid', 'true');
+      });
+    });
+
+    it('should apply aria-required when ariaRequired is enabled on the wrapper', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper ariaRequired>
+              <label for="email">Email</label>
+              <input id="email" name="email" [ngModel]="model().email" />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class AriaRequiredComponent {
+        model = signal({ email: '' });
+        suite = testSuite;
+      }
+
+      await render(AriaRequiredComponent);
+
+      expect(screen.getByLabelText('Email')).toHaveAttribute(
+        'aria-required',
+        'true'
+      );
+    });
+
+    it('should not stamp aria-required when ariaAssociationMode is none', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper ariaRequired ariaAssociationMode="none">
+              <label for="email">Email</label>
+              <input id="email" name="email" [ngModel]="model().email" />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class AriaRequiredNoneComponent {
+        model = signal({ email: '' });
+        suite = testSuite;
+      }
+
+      await render(AriaRequiredNoneComponent);
+
+      expect(screen.getByLabelText('Email')).not.toHaveAttribute(
+        'aria-required'
+      );
+    });
+
+    it('should not remove consumer-provided aria-required when wrapper input is false', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper>
+              <label for="email">Email</label>
+              <input
+                id="email"
+                name="email"
+                aria-required="true"
+                [ngModel]="model().email"
+              />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class ConsumerAriaRequiredComponent {
+        model = signal({ email: '' });
+        suite = testSuite;
+      }
+
+      await render(ConsumerAriaRequiredComponent);
+
+      // Consumer set aria-required; wrapper has no ariaRequired input
+      // so consumer attr must survive
+      expect(screen.getByLabelText('Email')).toHaveAttribute(
+        'aria-required',
+        'true'
+      );
+    });
+
+    it('should remove wrapper-owned aria-required when wrapper input toggles to false', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+          >
+            <ngx-control-wrapper [ariaRequired]="required()">
+              <label for="email">Email</label>
+              <input id="email" name="email" [ngModel]="model().email" />
+            </ngx-control-wrapper>
+          </form>
+        `,
+      })
+      class ToggleAriaRequiredComponent {
+        model = signal({ email: '' });
+        suite = testSuite;
+        required = signal(true);
+      }
+
+      const { fixture } = await render(ToggleAriaRequiredComponent);
+      const input = screen.getByLabelText('Email');
+
+      expect(input).toHaveAttribute('aria-required', 'true');
+
+      // Toggle wrapper input off → wrapper-owned attr should be removed
+      fixture.componentInstance.required.set(false);
+      fixture.detectChanges();
+
+      await waitFor(() => {
+        expect(input).not.toHaveAttribute('aria-required');
       });
     });
 
@@ -636,7 +774,7 @@ describe('ScControlWrapperComponent', () => {
       // Trigger error
       await userEvent.click(emailInput);
       await userEvent.tab();
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
       await waitFor(() => {
         expect(emailInput).toHaveAttribute('aria-invalid', 'true');
         expect(emailInput).toHaveAttribute('aria-describedby');
@@ -659,7 +797,7 @@ describe('ScControlWrapperComponent', () => {
             screen.queryByText('Email is required')
           ).not.toBeInTheDocument();
         },
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
     });
 
@@ -669,7 +807,7 @@ describe('ScControlWrapperComponent', () => {
 
       await userEvent.click(emailInput);
       await userEvent.tab();
-      await screen.findByText('Email is required', {}, { timeout: 1000 });
+      await screen.findByText('Email is required', {}, { timeout: 3000 });
 
       // Find error container using Testing Library
       const errorElement = screen.getByText('Email is required');
@@ -697,20 +835,17 @@ describe('ScControlWrapperComponent', () => {
       //
       // To test warning ARIA attributes, we need a scenario that produces both
       // Warning tests must come BEFORE error tests in Vest order
-      const warningAndErrorSuite = staticSuite(
-        (data: TestModel = {}, field?: string) => {
-          only(field);
-          // Warning test FIRST (so it gets captured before error)
-          vestTest('username', 'Username looks weak', () => {
-            warn();
-            enforce(data.username ?? '').longerThan(5);
-          });
-          // Error test SECOND (makes field invalid)
-          vestTest('username', 'Username must be at least 3 characters', () => {
-            enforce(data.username ?? '').longerThanOrEquals(3);
-          });
-        }
-      );
+      const warningAndErrorSuite = create((data: TestModel = {}) => {
+        // Warning test FIRST (so it gets captured before error)
+        vestTest('username', 'Username looks weak', () => {
+          warn();
+          enforce(data.username ?? '').longerThan(5);
+        });
+        // Error test SECOND (makes field invalid)
+        vestTest('username', 'Username must be at least 3 characters', () => {
+          enforce(data.username ?? '').longerThanOrEquals(3);
+        });
+      });
 
       @Component({
         imports: [NgxVestForms],
@@ -744,7 +879,7 @@ describe('ScControlWrapperComponent', () => {
       await userEvent.type(usernameInput, 'ab');
       await userEvent.tab();
 
-      await screen.findByText('Username looks weak', {}, { timeout: 1000 });
+      await screen.findByText('Username looks weak', {}, { timeout: 3000 });
 
       // Find warning container using Testing Library
       const warningElement = screen.getByText('Username looks weak');
@@ -767,15 +902,12 @@ describe('ScControlWrapperComponent', () => {
     });
 
     it('should allow warnings to be shown only after touch via warningDisplayMode', async () => {
-      const warningOnlySuite = staticSuite(
-        (data: TestModel = {}, field?: string) => {
-          only(field);
-          vestTest('username', 'Username is too short for comfort', () => {
-            warn();
-            enforce(data.username ?? '').longerThanOrEquals(5);
-          });
-        }
-      );
+      const warningOnlySuite = create((data: TestModel = {}) => {
+        vestTest('username', 'Username is too short for comfort', () => {
+          warn();
+          enforce(data.username ?? '').longerThanOrEquals(5);
+        });
+      });
 
       @Component({
         imports: [NgxVestForms],
@@ -822,7 +954,7 @@ describe('ScControlWrapperComponent', () => {
         'Username is too short for comfort',
         {},
         {
-          timeout: 1000,
+          timeout: 3000,
         }
       );
     });
@@ -856,7 +988,7 @@ describe('ScControlWrapperComponent', () => {
             expect(describedBy).toContain(pendingContainer.id);
           }
         },
-        { timeout: 1500 }
+        { timeout: 4000 }
       );
     });
 
@@ -872,17 +1004,16 @@ describe('ScControlWrapperComponent', () => {
       await waitFor(
         () => {
           const wrapper = emailInput.closest('.ngx-control-wrapper');
-          const spinner = wrapper?.querySelector('.animate-spin');
+          const spinner = wrapper?.querySelector('.ngx-control-wrapper__spinner');
           expect(spinner).toHaveAttribute('aria-hidden', 'true');
         },
-        { timeout: 1500 }
+        { timeout: 4000 }
       );
     });
 
     it('should update aria-describedby to include multiple regions when applicable', async () => {
       // Create suite that can show both errors and warnings
-      const mixedSuite = staticSuite((data: TestModel = {}, field?: string) => {
-        only(field);
+      const mixedSuite = create((data: TestModel = {}) => {
         vestTest('username', 'Username is required', () => {
           enforce(data.username ?? '').isNotBlank();
         });
@@ -919,7 +1050,7 @@ describe('ScControlWrapperComponent', () => {
       // Trigger error
       await userEvent.click(usernameInput);
       await userEvent.tab();
-      await screen.findByText('Username is required', {}, { timeout: 1000 });
+      await screen.findByText('Username is required', {}, { timeout: 3000 });
 
       // Verify aria-describedby includes error ID
       await waitFor(() => {
@@ -941,9 +1072,8 @@ describe('ScControlWrapperComponent', () => {
     });
 
     it('should handle multiple controls in one wrapper with proper ARIA associations', async () => {
-      const multiSuite = staticSuite(
-        (data: { firstName?: string; lastName?: string }, field?: string) => {
-          only(field);
+      const multiSuite = create(
+        (data: { firstName?: string; lastName?: string }) => {
           vestTest('firstName', 'First name is required', () => {
             enforce(data.firstName ?? '').isNotBlank();
           });
@@ -1000,7 +1130,7 @@ describe('ScControlWrapperComponent', () => {
             screen.queryByText('First name is required')
           ).toBeInTheDocument();
         },
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
 
       // Both controls should have aria-describedby and aria-invalid
@@ -1057,7 +1187,7 @@ describe('ScControlWrapperComponent', () => {
           expect(pendingContainer).toHaveAttribute('aria-live', 'polite');
           expect(pendingContainer).toHaveAttribute('aria-atomic', 'true');
         },
-        { timeout: 2000 }
+        { timeout: 5000 }
       );
 
       // Wait for validation to complete (800ms total from start)
@@ -1065,18 +1195,14 @@ describe('ScControlWrapperComponent', () => {
         () => {
           expect(screen.queryByText('Validating…')).not.toBeInTheDocument();
         },
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
     });
 
     it('should update ARIA associations for dynamically added controls via @if', async () => {
       // Suite with validation for dynamically added field
-      const dynamicSuite = staticSuite(
-        (
-          data: { showField?: boolean; dynamicValue?: string },
-          field?: string
-        ) => {
-          only(field);
+      const dynamicSuite = create(
+        (data: { showField?: boolean; dynamicValue?: string }) => {
           vestTest('dynamicValue', 'Dynamic field is required', () => {
             enforce(data.dynamicValue ?? '').isNotBlank();
           });
@@ -1140,7 +1266,7 @@ describe('ScControlWrapperComponent', () => {
       await screen.findByText(
         'Dynamic field is required',
         {},
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
 
       // MutationObserver should have detected the new control and set up ARIA associations
@@ -1177,7 +1303,7 @@ describe('ScControlWrapperComponent', () => {
       await screen.findByText(
         'Dynamic field is required',
         {},
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
 
       await waitFor(() => {
@@ -1188,15 +1314,19 @@ describe('ScControlWrapperComponent', () => {
   });
 
   describe('New warning display modes', () => {
-    const warningOnlySuite = staticSuite(
-      (data: TestModel = {}, field?: string) => {
-        only(field);
-        vestTest('username', 'Username is too short for comfort', () => {
-          warn();
-          enforce(data.username ?? '').longerThanOrEquals(5);
-        });
-      }
-    );
+    const warningOnlySuite = create((data: TestModel = {}) => {
+      vestTest('username', 'Username is too short for comfort', () => {
+        warn();
+        enforce(data.username ?? '').longerThanOrEquals(5);
+      });
+    });
+
+    // Block-scoped suite is shared across all 4 tests in this describe; reset
+    // between tests so the warning state from one test does not leak into the
+    // next (root cause of CI flakiness in this block).
+    beforeEach(() => {
+      warningOnlySuite.reset();
+    });
 
     it('should show warnings immediately in always mode', async () => {
       @Component({
@@ -1234,7 +1364,7 @@ describe('ScControlWrapperComponent', () => {
       const warning = await screen.findByText(
         'Username is too short for comfort',
         {},
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
       expect(warning).toBeInTheDocument();
     });
@@ -1280,7 +1410,7 @@ describe('ScControlWrapperComponent', () => {
       const warning = await screen.findByText(
         'Username is too short for comfort',
         {},
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
       expect(warning).toBeInTheDocument();
     });
@@ -1327,7 +1457,7 @@ describe('ScControlWrapperComponent', () => {
       const warning = await screen.findByText(
         'Username is too short for comfort',
         {},
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
       expect(warning).toBeInTheDocument();
     });
@@ -1381,7 +1511,7 @@ describe('ScControlWrapperComponent', () => {
       const warning = await screen.findByText(
         'Username is too short for comfort',
         {},
-        { timeout: 1000 }
+        { timeout: 3000 }
       );
       expect(warning).toBeInTheDocument();
     });

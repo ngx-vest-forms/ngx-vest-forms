@@ -1,0 +1,98 @@
+:host {
+  display: block;
+
+  /*
+   * Public theming tokens (override these from your app/theme stylesheet):
+   *
+   *   ngx-form-group-wrapper { --ngx-form-group-wrapper-error-color: ...; }
+   *   html.dark ngx-form-group-wrapper { --ngx-form-group-wrapper-error-color: ...; }
+   *
+   *   --ngx-form-group-wrapper-message-margin-top
+   *   --ngx-form-group-wrapper-message-font-size
+   *   --ngx-form-group-wrapper-message-line-height
+   *   --ngx-form-group-wrapper-message-gap
+   *   --ngx-form-group-wrapper-error-color
+   *   --ngx-form-group-wrapper-warning-color
+   *   --ngx-form-group-wrapper-pending-color
+   *
+   * Public tokens are intentionally NOT declared on :host. Under Angular's
+   * emulated encapsulation, :host rewrites to an attribute selector with
+   * specificity (0,1,0), which would beat a consumer's element-selector
+   * override `ngx-form-group-wrapper { ... }` (0,0,1). Defaults are stored
+   * in the private `--_ngx-form-group-wrapper-*` tokens below and used as
+   * fallbacks at the consumption site, so consumer overrides win cleanly.
+   *
+   * Dark-mode defaults switch automatically via prefers-color-scheme. For
+   * class- or attribute-based dark mode, override the public tokens under
+   * your toggle selector.
+   */
+
+  /* Private defaults — do not override these directly. */
+  --_ngx-form-group-wrapper-message-margin-top: 0.25rem;
+  --_ngx-form-group-wrapper-message-font-size: 0.875rem;
+  --_ngx-form-group-wrapper-message-line-height: 1.25rem;
+  --_ngx-form-group-wrapper-message-gap: 0.25rem;
+
+  --_ngx-form-group-wrapper-error-color: #dc2626;
+  --_ngx-form-group-wrapper-warning-color: #b45309;
+  --_ngx-form-group-wrapper-pending-color: #6b7280;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host {
+    --_ngx-form-group-wrapper-error-color: #f87171;
+    --_ngx-form-group-wrapper-warning-color: #f59e0b;
+    --_ngx-form-group-wrapper-pending-color: #9ca3af;
+  }
+}
+
+.ngx-form-group-wrapper__errors,
+.ngx-form-group-wrapper__warnings,
+.ngx-form-group-wrapper__pending {
+  margin-top: var(
+    --ngx-form-group-wrapper-message-margin-top,
+    var(--_ngx-form-group-wrapper-message-margin-top)
+  );
+  font-size: var(
+    --ngx-form-group-wrapper-message-font-size,
+    var(--_ngx-form-group-wrapper-message-font-size)
+  );
+  line-height: var(
+    --ngx-form-group-wrapper-message-line-height,
+    var(--_ngx-form-group-wrapper-message-line-height)
+  );
+}
+
+.ngx-form-group-wrapper__errors {
+  color: var(
+    --ngx-form-group-wrapper-error-color,
+    var(--_ngx-form-group-wrapper-error-color)
+  );
+}
+
+.ngx-form-group-wrapper__warnings {
+  color: var(
+    --ngx-form-group-wrapper-warning-color,
+    var(--_ngx-form-group-wrapper-warning-color)
+  );
+}
+
+.ngx-form-group-wrapper__pending {
+  color: var(
+    --ngx-form-group-wrapper-pending-color,
+    var(--_ngx-form-group-wrapper-pending-color)
+  );
+}
+
+.ngx-form-group-wrapper__messages {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ngx-form-group-wrapper__messages li + li {
+  margin-top: var(
+    --ngx-form-group-wrapper-message-gap,
+    var(--_ngx-form-group-wrapper-message-gap)
+  );
+}
