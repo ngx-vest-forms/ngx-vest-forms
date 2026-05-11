@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   input,
   output,
   viewChild,
@@ -33,9 +32,6 @@ import { WizardStep3FormComponent } from './wizard-step3.form';
 })
 export class WizardFormBodyComponent {
   readonly currentStep = input.required<number>();
-  readonly stepValidationFocus = computed(() => ({
-    onlyGroup: `step-${this.currentStep()}`,
-  }));
 
   readonly isSubmitting = input(false);
 

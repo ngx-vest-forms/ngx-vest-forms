@@ -10,7 +10,6 @@ import {
   NgxDeepRequired,
   NgxFirstInvalidOptions,
   NgxValidationConfig,
-  NgxValidationFocus,
   NgxVestForms,
   NgxVestSuite,
 } from 'ngx-vest-forms';
@@ -29,7 +28,6 @@ export class WizardStep2FormComponent {
   readonly shape = input.required<NgxDeepRequired<WizardStep2Model>>();
   readonly validationConfig =
     input.required<NgxValidationConfig<WizardStep2Model>>();
-  readonly validationFocus = input<NgxValidationFocus | null>(null);
 
   readonly dataChange = output<WizardStep2Model>();
   readonly validChange = output<boolean>();
