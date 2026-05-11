@@ -5,6 +5,7 @@ import {
   Observable,
   catchError,
   defer,
+  finalize,
   from,
   map,
   of,
@@ -27,11 +28,21 @@ export type NgxSuiteFocusSpec = {
   only?: string;
 };
 
+export type NgxSuiteRunHooks = {
+  signal: AbortSignal;
+};
+
 /**
  * Structural subset of `NgxVestSuite` the runner depends on. Keeps the runner
  * decoupled from method names the call sites do not need (reset, dump, etc.).
  */
-export type RunnableVestSuite<T> = Pick<NgxVestSuite<T>, 'only' | 'run' | 'get'>;
+export type RunnableVestSuite<T> = {
+  only(match: string | string[] | null | undefined): {
+    run(model: T, hooks?: NgxSuiteRunHooks): NgxSuiteRunResult;
+  };
+  run(model: T, hooks?: NgxSuiteRunHooks): NgxSuiteRunResult;
+  get(): NgxSuiteRunResult;
+};
 
 /**
  * Run a Vest suite for one field (or the whole form when `focus.only` is
@@ -54,16 +65,24 @@ export function runFieldValidation<T>(
   options: ValidationOptions,
   destroyRef: DestroyRef
 ): Observable<NgxSuiteRunResult> {
-  // `timer(0)` (not `of(0)`) so that even at zero debounce the suite invocation
-  // is deferred to the next task. That lets superseded validators be unsubscribed
-  // by Angular's switchMap-style cancellation before the suite runs.
-  const debounce = options.debounceTime ?? 0;
+  return defer(() => {
+    const controller = new AbortController();
 
-  return timer(debounce).pipe(
-    switchMap(() => defer(() => runSuite(suite, focus, model))),
-    take(1),
-    takeUntilDestroyed(destroyRef)
-  );
+    // `timer(0)` (not `of(0)`) so that even at zero debounce the suite
+    // invocation is deferred to the next task. That lets superseded validators
+    // be unsubscribed by Angular's switchMap-style cancellation before the
+    // suite runs.
+    const debounce = options.debounceTime ?? 0;
+
+    return timer(debounce).pipe(
+      switchMap(() =>
+        defer(() => runSuite(suite, focus, model, controller.signal))
+      ),
+      take(1),
+      takeUntilDestroyed(destroyRef),
+      finalize(() => controller.abort())
+    );
+  });
 }
 
 export function extractFieldErrors(
@@ -95,12 +114,13 @@ function isThenable(
 function runSuite<T>(
   suite: RunnableVestSuite<T>,
   focus: NgxSuiteFocusSpec,
-  model: T
+  model: T,
+  signal: AbortSignal
 ): Observable<NgxSuiteRunResult> {
   const result =
     focus.only !== undefined
-      ? suite.only(focus.only).run(model)
-      : suite.run(model);
+      ? suite.only(focus.only).run(model, { signal })
+      : suite.run(model, { signal });
 
   if (!isThenable(result)) {
     return of(result);
