@@ -312,6 +312,7 @@ export class ValidateRootFormDirective<T>
           // Return { errors: string[] } format expected by getAllFormErrors()
           return errors ? { errors } : null;
         },
+        onAbort: () => null,
         onError: (err) => {
           console.error('[validate-root-form] Validation suite error:', err);
           return null;

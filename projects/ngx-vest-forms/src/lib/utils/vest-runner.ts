@@ -19,6 +19,7 @@ export type VestRunnerOptions<TModel, TResult> = {
   destroyRef: DestroyRef;
   mapResult: (result: unknown) => TResult;
   onError: (error: unknown) => TResult;
+  onAbort?: () => TResult;
 };
 
 export function runVestSuite<TModel, TResult>({
@@ -29,6 +30,7 @@ export function runVestSuite<TModel, TResult>({
   destroyRef,
   mapResult,
   onError,
+  onAbort,
 }: VestRunnerOptions<TModel, TResult>): Observable<TResult> {
   return timer(debounceTime).pipe(
     map(() => model),
@@ -36,31 +38,47 @@ export function runVestSuite<TModel, TResult>({
       (snapshot) =>
         new Observable<TResult>((observer) => {
           const controller = new AbortController();
-          const unregisterDestroy = destroyRef.onDestroy(() => {
-            controller.abort();
-          });
-
-          const complete = (value: TResult): void => {
-            observer.next(value);
+          let settled = false;
+          const settle = (value: TResult, emit: boolean): void => {
+            if (settled || observer.closed) return;
+            settled = true;
+            if (emit) {
+              observer.next(value);
+            }
             observer.complete();
           };
+
+          const unregisterDestroy = destroyRef.onDestroy(() => {
+            controller.abort();
+            if (onAbort) {
+              settle(onAbort(), true);
+              return;
+            }
+            settle(undefined as TResult, false);
+          });
 
           try {
             suite(snapshot, field, { signal: controller.signal }).done(
               (result) => {
-                if (controller.signal.aborted) return;
-                complete(mapResult(result));
+                if (controller.signal.aborted) {
+                  settle(undefined as TResult, false);
+                  return;
+                }
+                settle(mapResult(result), true);
               }
             );
           } catch (error) {
-            if (!controller.signal.aborted) {
-              complete(onError(error));
+            if (controller.signal.aborted) {
+              settle(undefined as TResult, false);
+              return;
             }
+            settle(onError(error), true);
           }
 
           return () => {
             unregisterDestroy();
             controller.abort();
+            settle(undefined as TResult, false);
           };
         })
     ),

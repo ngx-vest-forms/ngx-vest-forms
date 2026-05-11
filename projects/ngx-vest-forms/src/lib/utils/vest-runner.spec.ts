@@ -2,6 +2,14 @@ import { DestroyRef } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runVestSuite } from './vest-runner';
 
+type MockVestSuite = ((
+  model: { username: string },
+  field?: string,
+  options?: { signal: AbortSignal }
+) => { done: (cb: (result: unknown) => void) => void }) & {
+  get: () => { isPending: () => boolean };
+};
+
 function createMockDestroyRef(): {
   destroyRef: DestroyRef;
   destroy: () => void;
@@ -41,9 +49,11 @@ describe('runVestSuite', () => {
   it('aborts async test signal on teardown and leaves suite.get() non-pending', async () => {
     let latestSignal: AbortSignal | undefined;
     let pending = false;
-    const suite = ((_: { username: string }, __?: string, context?: {
-      signal: AbortSignal;
-    }) => {
+    const suite: MockVestSuite = ((
+      _model: { username: string },
+      _field?: string,
+      context?: { signal: AbortSignal }
+    ) => {
       latestSignal = context?.signal;
       pending = true;
 
@@ -58,13 +68,7 @@ describe('runVestSuite', () => {
           );
         },
       };
-    }) as ((
-      model: { username: string },
-      field?: string,
-      options?: { signal: AbortSignal }
-    ) => { done: (cb: (result: unknown) => void) => void }) & {
-      get: () => { isPending: () => boolean };
-    };
+    }) as MockVestSuite;
 
     suite.get = () => ({
       isPending: () => pending,

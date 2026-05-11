@@ -196,12 +196,6 @@ export class FormDirective<T extends Record<string, unknown>> {
    */
   readonly fieldWarnings = signal<Map<string, readonly string[]>>(new Map());
 
-  /**
-   * Set to true by the onDestroy hook. Used to guard async callbacks
-   * (e.g. Vest `done()`) that cannot be cancelled via RxJS operators.
-   */
-  #destroyed = false;
-
   #lastSyncedFormValue: T | null = null;
   #lastSyncedModelValue: T | null = null;
 
@@ -479,7 +473,6 @@ export class FormDirective<T extends Record<string, unknown>> {
 
   constructor() {
     this.destroyRef.onDestroy(() => {
-      this.#destroyed = true;
       this.fieldWarnings.set(new Map());
     });
 
@@ -1041,7 +1034,7 @@ export class FormDirective<T extends Record<string, unknown>> {
         // Both NgxVestSuite and NgxTypedVestSuite work with string at runtime.
         suite: suite as unknown as (
           model: T,
-          runField?: string,
+          field?: string,
           options?: { signal: AbortSignal }
         ) => {
           done: (cb: (result: unknown) => void) => void;
@@ -1051,13 +1044,6 @@ export class FormDirective<T extends Record<string, unknown>> {
         debounceTime: validationOptions.debounceTime ?? 0,
         destroyRef: this.destroyRef,
         mapResult: (rawResult) => {
-          // Guard: bail out if the directive was destroyed while
-          // validation was in flight to avoid writing to disposed
-          // signals or a torn-down view.
-          if (this.#destroyed) {
-            return null;
-          }
-
           const result = rawResult as {
             getErrors: () => Record<string, string[]>;
             getWarnings: () => Record<string, string[]>;
@@ -1114,6 +1100,7 @@ export class FormDirective<T extends Record<string, unknown>> {
 
           return out;
         },
+        onAbort: () => null,
         onError: () => ({ vestInternalError: 'Validation failed' }),
       });
     };
