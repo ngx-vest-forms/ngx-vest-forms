@@ -11,7 +11,7 @@ Use this skill to produce the default, idiomatic Vest 6 setup.
 
 1. Keep the validation suite separate from feature or UI code.
 2. Use `create(...)` for most suites, and use `create(..., schema)` when native Vest schema validation and typed parsed input belong with the suite.
-3. Use `suite.runStatic(data)` for stateless executions. If you encounter `staticSuite(...)` in older code or docs, migrate it to `create(...)` plus `runStatic(...)`.
+3. Use `suite.runStatic(data)` for stateless executions. If you encounter `staticSuite(...)` in older code or docs, treat it as a legacy pattern to migrate toward `create(...)` plus `runStatic(...)` so the suite stays aligned with the current run APIs.
 4. Keep selective validation outside the callback: use `suite.only(field).run(model)` or `suite.focus(...)` at the call site.
 5. Use `test(fieldName, message, body)` for human-readable validations.
 6. Use `enforce(...)` for clear assertions instead of hand-rolled boolean pyramids.
@@ -52,6 +52,41 @@ If interactive validation should focus on a subset of fields, keep the suite cal
 - `suite.focus({ only: ['fieldA', 'fieldB'] }).run(model)` for more complex subsets
 
 Focused runs are non-persistent modifiers applied to the immediately following `run()`.
+
+## Concrete example: memoized async validation inside a focused group
+
+```typescript
+import { create, enforce, group, skipWhen, test } from 'vest';
+import { memo } from 'vest/memo';
+
+export const accountSuite = create((model: AccountModel) => {
+  group('account', () => {
+    test('username', 'Username is required', () => {
+      enforce(model.username).isNotBlank();
+    });
+
+    skipWhen(
+      (res) => res.hasErrors('username') || !model.username?.trim(),
+      () => {
+        memo(() => {
+          test('username', 'Username is already taken', async ({ signal }) => {
+            const response = await fetch(
+              `/api/users/check-username?value=${encodeURIComponent(model.username!)}`,
+              { signal }
+            );
+            const { taken } = await response.json();
+            enforce(taken).isFalsy();
+          });
+        }, [model.username]);
+      }
+    );
+  });
+});
+
+accountSuite.focus({ only: 'username', onlyGroup: 'account' }).run(model);
+```
+
+Apply focus at the call site (or wherever the app decides what to run). Keep the suite callback model-only.
 
 ## Pitfalls to correct immediately
 
