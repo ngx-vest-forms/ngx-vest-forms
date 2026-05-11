@@ -127,10 +127,12 @@ export class FormControlStateDirective {
    * the retry completes.
    *
    * It also acts as the retry latch: once set to a given control instance, any
-   * further effect runs for that same instance skip re-scheduling. Because
-   * Angular creates a new directive instance on every `@if` remount, a new
-   * `#activeControl` reference automatically differs from the stored value,
-   * resetting the latch without any explicit identity tracking.
+   * further effect runs for that same instance skip re-scheduling. When
+   * `#activeControl` resolves to a different control — whether the directive
+   * is remounted by an outer `@if` or the host's inner `NgModel` /
+   * `NgModelGroup` is swapped while this directive stays mounted — the
+   * `lateAttachFor !== control` identity check in the effect naturally fails
+   * for the new instance, re-allowing exactly one retry.
    */
   readonly #lateAttachFor = signal<AbstractControlDirective | null>(null);
 
