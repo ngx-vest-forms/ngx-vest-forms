@@ -52,19 +52,13 @@ export default defineConfig({
     timeout: 10000,
   },
 
-  /* Start dev server and API server before running tests */
+  /* Start the examples app before running tests */
   webServer: [
     {
       command: 'npm start -- --port 4400',
       url: 'http://localhost:4400',
       reuseExistingServer: !process.env['CI'],
       timeout: 120000,
-    },
-    {
-      command: 'npm run api',
-      url: 'http://localhost:3000',
-      reuseExistingServer: !process.env['CI'],
-      timeout: 30000,
     },
   ],
 

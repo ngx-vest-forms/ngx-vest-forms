@@ -11,6 +11,7 @@ on:
         options:
           - master
           - release/v1.x
+          - release/v2.x
 
 permissions:
   contents: write  # For creating releases and updating changelog
@@ -32,7 +33,7 @@ jobs:
             exit 1
           fi
           echo "Releasing from branch: $BRANCH"
-      
+
       - name: Checkout
         uses: actions/checkout@v4
         with:

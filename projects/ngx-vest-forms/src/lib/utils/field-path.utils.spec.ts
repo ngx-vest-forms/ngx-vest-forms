@@ -87,7 +87,8 @@ describe('field-path.utils', () => {
     });
 
     describe('malformed paths', () => {
-      const originalNgDevMode = (globalThis as { ngDevMode?: boolean }).ngDevMode;
+      const originalNgDevMode = (globalThis as { ngDevMode?: boolean })
+        .ngDevMode;
       let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
 
       function restoreNgDevMode(): void {

@@ -24,7 +24,7 @@
               name="projectName"
               class="input-field"
               [ngModel]="formValue().projectName"
-              placeholder="Try &quot;Website refresh&quot; or type &quot;fail&quot; to simulate an error"
+              placeholder='Try "Website refresh" or type "fail" to simulate an error'
               aria-describedby="projectName-help"
             />
           </label>
@@ -53,21 +53,21 @@
       </div>
 
       @if (formValue().preferredContactMethod === 'email') {
-        <div class="mt-6">
-          <ngx-control-wrapper [errorDisplayMode]="'on-blur'" class="form-field">
-            <label for="email">
-              <span class="label-text">Notification email</span>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                class="input-field"
-                [ngModel]="formValue().email"
-                placeholder="team@example.com"
-              />
-            </label>
-          </ngx-control-wrapper>
-        </div>
+      <div class="mt-6">
+        <ngx-control-wrapper [errorDisplayMode]="'on-blur'" class="form-field">
+          <label for="email">
+            <span class="label-text">Notification email</span>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              class="input-field"
+              [ngModel]="formValue().email"
+              placeholder="team@example.com"
+            />
+          </label>
+        </ngx-control-wrapper>
+      </div>
       }
     </ngx-form-section>
 

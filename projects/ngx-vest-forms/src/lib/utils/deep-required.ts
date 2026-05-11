@@ -112,21 +112,3 @@ export type NgxFormCompatibleDeepRequired<T> = {
             ? NgxFormCompatibleDeepRequired<NonNullable<T[K]>> // Recursively apply to nested objects, removing undefined
             : T[K]; // All other types remain unchanged
 };
-
-// Legacy aliases for backward compatibility
-/**
- * @deprecated
- * Deprecated since v1.2.0 (2024-06).
- * Use {@link NgxDeepRequired} instead for deep required types.
- * Migration: Replace `DeepRequired<T>` with `NgxDeepRequired<T>`.
- */
-export type DeepRequired<T> = NgxDeepRequired<T>;
-
-/**
- * @deprecated
- * Deprecated since v1.2.0 (2024-06).
- * Use {@link NgxFormCompatibleDeepRequired} instead for form-compatible deep required types.
- * Migration: Replace `FormCompatibleDeepRequired<T>` with `NgxFormCompatibleDeepRequired<T>`.
- * Rationale: The new name is more consistent and descriptive.
- */
-export type FormCompatibleDeepRequired<T> = NgxFormCompatibleDeepRequired<T>;

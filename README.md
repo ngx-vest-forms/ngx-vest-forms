@@ -57,7 +57,7 @@ npm install ngx-vest-forms
 > Why: Conditional `only()` breaks Vest's change detection mechanism and causes timing issues with `omitWhen` + `validationConfig` in ngx-vest-forms.
 > See the [Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md#1-unconditional-only-pattern-required-critical).
 >
-> Selector prefix: use `ngx-` (recommended). The legacy `sc-` works in v2.x but is deprecated and will be removed in v3.
+> Selector prefix: use `ngx-`. The legacy `sc-` prefix was removed in v3. See the [selector migration guide](./docs/SELECTOR-PREFIX-MIGRATION.md) if you are upgrading from v2.x.
 
 ### Quick Start
 
@@ -216,8 +216,12 @@ For `ngModelGroup` containers, prefer using `<ngx-form-group-wrapper>` (group-sa
 - [Accessibility Guide](./docs/ACCESSIBILITY.md)
 - [`ControlWrapperComponent` docs](./projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md)
 
-> **Styling note**: `ngx-control-wrapper` uses Tailwind CSS utility classes for default styling.
-> If your project doesn't use Tailwind, see the [component docs](./projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md#styling-dependency-tailwind-css) for alternatives.
+> **Styling note**: `ngx-control-wrapper` and `ngx-form-group-wrapper` include built-in, framework-agnostic baseline styles.
+> They are themeable via CSS custom properties. See the [component docs](./projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md#styling-and-theming).
+>
+> **Upgrade note (wrappers)**: This is not a breaking API change for wrapper consumers (selectors/inputs/behavior remain stable).
+> If you previously targeted internal wrapper markup/classes with custom CSS, review and update those selectors as needed.
+> Preferred customization path: override exposed CSS custom properties before building a fully custom wrapper.
 
 📖 **[Complete Guide: Custom Control Wrappers](./docs/CUSTOM-CONTROL-WRAPPERS.md)**
 
@@ -519,7 +523,7 @@ const shape: NgxDeepRequired<MyFormModel> = {
 ## Migration
 
 - v1.x → v2.0.0: **[Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md)**
-- Selector prefixes: **[Dual Selector Support](./docs/DUAL-SELECTOR-SUPPORT.md)**
+- v2.x → v3.0.0: **[Selector/Token Removal Guide](./docs/migration/MIGRATION-v2.x-to-v3.0.0.md)**
 
 Browser support follows Angular 19+ targets (no `structuredClone` polyfill required).
 

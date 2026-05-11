@@ -4,6 +4,7 @@ import {
   debounceTime,
   EMPTY,
   filter,
+  finalize,
   map,
   merge as rxMerge,
   Observable,
@@ -125,8 +126,13 @@ function createTriggerStream(
   );
 
   return triggerControl$.pipe(
-    switchMap((control) =>
-      control.valueChanges.pipe(
+    switchMap((control) => {
+      // Holds the cancel function of the most-recently-scheduled cooldown timer.
+      // Cancelled when the inner observable tears down (config switch or unsubscribe)
+      // so pending timers do not fire after the pipeline is gone.
+      let cancelCooldown: (() => void) | undefined;
+
+      return control.valueChanges.pipe(
         // CRITICAL: block emissions while this trigger field is being processed
         // by another field's validation config (prevents bidirectional loops).
         filter(() => !validationInProgress.has(triggerField)),
@@ -140,8 +146,11 @@ function createTriggerStream(
             options.dependentExistenceTimeoutMs
           )
         ),
-        tap(() =>
-          updateDependentFields(
+        tap(() => {
+          // Cancel the previous cooldown before scheduling a new one so back-to-back
+          // trigger firings don't accumulate stale cleanup timers.
+          cancelCooldown?.();
+          cancelCooldown = updateDependentFields(
             form,
             triggerField,
             dependents,
@@ -149,11 +158,12 @@ function createTriggerStream(
             cdr,
             options.validationInProgressCooldownMs,
             destroyRef
-          )
-        ),
+          );
+        }),
+        finalize(() => cancelCooldown?.()),
         map(() => undefined)
-      )
-    )
+      );
+    })
   ) as Observable<void>;
 }
 
@@ -251,7 +261,7 @@ function updateDependentFields(
   cdr: ChangeDetectorRef,
   cooldownMs: number,
   destroyRef: DestroyRef
-): void {
+): () => void {
   // Mark the trigger field in-progress first so that bidirectional configs
   // cannot create a loop via the filter in createTriggerStream.
   validationInProgress.add(triggerField);
@@ -284,8 +294,9 @@ function updateDependentFields(
 
   // Keep the in-progress markers alive for `cooldownMs` so that async
   // validators have time to complete and any resulting valueChanges emissions
-  // are still gated.  The timer auto-cancels on directive destroy.
-  scheduleTimeout(
+  // are still gated.  The cancel function is returned so callers can wire it
+  // into observable teardown (e.g. finalize) to avoid timer leaks on unsub.
+  return scheduleTimeout(
     () => {
       validationInProgress.delete(triggerField);
       for (const depField of dependents) {

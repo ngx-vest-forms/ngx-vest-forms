@@ -8,7 +8,7 @@
  */
 import { ChangeDetectorRef, DestroyRef } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import { Observable, Subscription } from 'rxjs';
+import { Observable } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createValidationConfigPipeline,

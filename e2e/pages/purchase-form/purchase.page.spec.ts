@@ -16,5 +16,11 @@ test.describe('Purchase Page', () => {
     await expect(
       page.locator('aside span[aria-label="Pristine"]').first()
     ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /fetch luke/i })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('combobox', { name: /response mode/i })
+    ).toBeVisible();
   });
 });

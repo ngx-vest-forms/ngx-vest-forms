@@ -4,17 +4,21 @@
       <ngx-control-wrapper>
         <div class="relative flex items-center gap-2">
           <input
-            type="text"
+            type="tel"
             name="{{ item.key }}"
             [ngModel]="values()[item.key]"
             placeholder="Type phone number"
             class="input-field pr-20"
             [attr.aria-label]="'Phone number ' + (+item.key + 1)"
+            autocomplete="tel"
+            inputmode="tel"
+            spellcheck="false"
           />
           <button
             type="button"
             (click)="removePhoneNumber(item.key)"
             class="btn-input-action btn-input-action-danger"
+            [attr.aria-label]="'Remove phone number ' + (+item.key + 1)"
           >
             Remove
           </button>
@@ -26,13 +30,16 @@
   <ngx-control-wrapper>
     <div class="relative flex items-center gap-2">
       <input
-        type="text"
+        type="tel"
         [ngModel]="newPhoneNumber()"
         [ngModelOptions]="{ standalone: true }"
         (ngModelChange)="onNewPhoneNumberChange($event)"
         placeholder="Type phone number"
         class="input-field pr-20"
         aria-label="Add new phone number"
+        autocomplete="tel"
+        inputmode="tel"
+        spellcheck="false"
       />
       <button
         type="button"
