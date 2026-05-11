@@ -19,22 +19,11 @@ import {
   NgForm,
   ValidationErrors,
 } from '@angular/forms';
-import {
-  catchError,
-  map,
-  Observable,
-  of,
-  switchMap,
-  take,
-  tap,
-  timer,
-} from 'rxjs';
+import { catchError, map, Observable, of, tap } from 'rxjs';
 import { ROOT_FORM } from '../constants';
 import { scheduleMicrotask } from '../utils/destroy-scheduler';
-import type {
-  NgxSuiteRunResult,
-  NgxVestSuite,
-} from '../utils/validation-suite';
+import type { NgxVestSuite } from '../utils/validation-suite';
+import { extractFieldErrors, runFieldValidation } from '../utils/vest-runner';
 import { ValidationOptions } from './validation-options';
 
 /**
@@ -253,6 +242,11 @@ export class ValidateRootFormDirective<T>
     // not individual control values. The underscore prefix indicates intentional non-use.
 
     return (_control: AbstractControl) => {
+      const suite = this.suite();
+      if (!suite) {
+        return of(null);
+      }
+
       const currentFormValue = this.formValue();
       if (!currentFormValue) {
         return of(null);
@@ -260,113 +254,20 @@ export class ValidateRootFormDirective<T>
       // Use the formValue input which contains the actual model data
       const mod = structuredClone(currentFormValue) as T;
 
-      const debounce = validationOptions.debounceTime ?? 0;
-      const source$ =
-        debounce > 0 ? timer(debounce).pipe(map(() => mod)) : of(mod);
-
-      return source$.pipe(
-        switchMap(
-          (model) =>
-            new Observable<ValidationErrors | null>((observer) => {
-              let cancelled = false;
-              observer.add(() => {
-                cancelled = true;
-              });
-
-              try {
-                const suite = this.suite();
-                if (!suite) {
-                  observer.next(null);
-                  observer.complete();
-                  return;
-                }
-
-                // Vest 6: suite.only(field).run() for focused, stateful validation.
-                const result = (suite as NgxVestSuite<T>)
-                  .only(field)
-                  .run(model);
-
-                const extractErrors = (
-                  suiteResult: NgxSuiteRunResult
-                ): ValidationErrors | null => {
-                  if (cancelled) {
-                    return null;
-                  }
-
-                  const errors = suiteResult.getErrors()[field];
-                  return errors ? { errors } : null;
-                };
-
-                const emitAndComplete = (suiteResult: NgxSuiteRunResult) => {
-                  if (cancelled) {
-                    return;
-                  }
-
-                  observer.next(extractErrors(suiteResult));
-                  observer.complete();
-                };
-
-                const getLatestResult = (): NgxSuiteRunResult =>
-                  (suite as NgxVestSuite<T>).get?.() ?? result;
-
-                // Sync path: emit immediately to avoid PENDING status flash.
-                if (!result.isPending()) {
-                  emitAndComplete(result);
-                  return;
-                }
-
-                // Async path: use thenable completion when available.
-                if (typeof result.then === 'function') {
-                  result.then(
-                    () => {
-                      emitAndComplete(getLatestResult());
-                    },
-                    () => {
-                      // Rejected thenables can still represent validation failures.
-                      // Use the suite's latest state immediately to avoid long-lived
-                      // polling timers that can keep tests/processes alive.
-                      emitAndComplete(getLatestResult());
-                    }
-                  );
-                  return;
-                }
-
-                // Fallback path: poll pending state for non-thenable results.
-                const intervalId = setInterval(() => {
-                  if (!result.isPending()) {
-                    clearInterval(intervalId);
-                    clearTimeout(timeoutId);
-                    emitAndComplete(getLatestResult());
-                  }
-                }, 25);
-
-                const timeoutId = setTimeout(() => {
-                  clearInterval(intervalId);
-                  emitAndComplete(getLatestResult());
-                }, 5000);
-
-                observer.add(() => {
-                  clearInterval(intervalId);
-                  clearTimeout(timeoutId);
-                });
-                return;
-              } catch (err) {
-                console.error(
-                  '[validate-root-form] Validation suite error:',
-                  err
-                );
-                observer.next(null);
-                observer.complete();
-                return;
-              }
-            })
-        ),
+      return runFieldValidation(
+        suite,
+        { only: field },
+        mod,
+        validationOptions,
+        this.#destroyRef
+      ).pipe(
+        map((result) => extractFieldErrors(result, field)),
+        // `runFieldValidation` already applies `take(1)` and `takeUntilDestroyed`,
+        // so no additional terminal operators are needed here.
         catchError((err) => {
           console.error('[validate-root-form] Observable error:', err);
           return of(null);
-        }),
-        take(1),
-        takeUntilDestroyed(this.#destroyRef)
+        })
       );
     };
   }

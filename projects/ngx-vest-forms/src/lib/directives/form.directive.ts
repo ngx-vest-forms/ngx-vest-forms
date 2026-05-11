@@ -27,7 +27,6 @@ import {
   NgForm,
   PristineChangeEvent,
   StatusChangeEvent,
-  ValidationErrors,
   ValueChangeEvent,
 } from '@angular/forms';
 import {
@@ -71,14 +70,16 @@ import {
   setValueAtPath,
 } from '../utils/form-utils';
 import { validateShape } from '../utils/shape-validation';
-import type {
-  NgxSuiteRunResult,
-  NgxVestSuite,
-} from '../utils/validation-suite';
+import type { NgxVestSuite } from '../utils/validation-suite';
 import {
   readElementValueForBlur,
   resolveFieldFromBlur,
 } from './field-path-resolver';
+import {
+  extractFieldErrors,
+  extractFieldWarnings,
+  runFieldValidation,
+} from '../utils/vest-runner';
 import {
   getFormSubmittedSignal,
   setAngularFormSubmittedState,
@@ -196,12 +197,6 @@ export class FormDirective<T extends Record<string, unknown>> {
    * separately when they exist without errors.
    */
   readonly fieldWarnings = signal<Map<string, readonly string[]>>(new Map());
-
-  /**
-   * Set to true by the onDestroy hook. Used to guard async callbacks
-   * (e.g. Vest `done()`) that cannot be cancelled via RxJS operators.
-   */
-  #destroyed = false;
 
   #lastSyncedFormValue: T | null = null;
   #lastSyncedModelValue: T | null = null;
@@ -486,7 +481,6 @@ export class FormDirective<T extends Record<string, unknown>> {
 
   constructor() {
     this.#destroyRef.onDestroy(() => {
-      this.#destroyed = true;
       this.fieldWarnings.set(new Map());
     });
 
@@ -1156,171 +1150,56 @@ export class FormDirective<T extends Record<string, unknown>> {
       const snapshot = model;
       setValueAtPath(snapshot as object, field, control.value);
 
-      // Use timer() instead of ReplaySubject for proper debouncing
-      return timer(validationOptions.debounceTime ?? 0).pipe(
-        map(() => snapshot),
-        switchMap(
-          (snap) =>
-            new Observable<ValidationErrors | null>((observer) => {
-              let cancelled = false;
-              observer.add(() => {
-                cancelled = true;
-              });
+      return runFieldValidation(
+        suite,
+        { only: field },
+        snapshot,
+        validationOptions,
+        this.#destroyRef
+      ).pipe(
+        map((result) => {
+          const warnings = extractFieldWarnings(result, field);
 
-              try {
-                // Vest 6: suite.only(field).run() for focused, stateful validation.
-                const result = suite.only(field).run(snap);
+          // Store warnings in the fieldWarnings signal for access by control wrappers.
+          // This is necessary because Angular marks a field as invalid when control.errors !== null.
+          // By storing warnings separately, fields can remain valid while still displaying warnings.
+          this.fieldWarnings.update((map) => {
+            const newMap = new Map(map);
+            if (warnings?.length) {
+              newMap.set(field, warnings);
+            } else {
+              newMap.delete(field);
+            }
+            return newMap;
+          });
 
-                const processResult = (
-                  suiteResult: NgxSuiteRunResult
-                ): ValidationErrors | null => {
-                  if (cancelled || this.#destroyed) {
-                    return null;
-                  }
+          const out = extractFieldErrors(result, field);
 
-                  const errors = suiteResult.getErrors()[field];
-                  const warnings = suiteResult.getWarnings()[field];
+          // CRITICAL: Ensure DOM validity classes update for OnPush components.
+          //
+          // Angular's template-driven forms update `ng-valid`/`ng-invalid` host classes
+          // during change detection. When async validation completes, there may be no
+          // follow-up change detection pass for OnPush hosts, leaving the DOM in a stale
+          // visual state (even though the control status has updated).
+          //
+          // We schedule a detectChanges() on the next microtask to avoid calling it
+          // synchronously inside Angular's own validation pipeline. The scheduleMicrotask
+          // primitive auto-cancels if the directive is destroyed before it fires.
+          scheduleMicrotask(() => {
+            try {
+              this.#cdr.detectChanges();
+            } catch {
+              // Fallback: mark for check when immediate detectChanges isn't safe.
+              // This keeps behavior resilient in edge cases.
+              this.#cdr.markForCheck();
+            }
+          }, this.#destroyRef);
 
-                  // Store warnings separately so fields can remain valid while displaying warnings.
-                  this.fieldWarnings.update((map) => {
-                    const newMap = new Map(map);
-                    if (warnings?.length) {
-                      newMap.set(field, warnings);
-                    } else {
-                      newMap.delete(field);
-                    }
-                    return newMap;
-                  });
-
-                  // Errors exist → { errors, warnings? } (field invalid)
-                  // Only warnings or neither → null (field valid, warnings via fieldWarnings signal)
-                  const out = errors?.length
-                    ? {
-                        errors,
-                        ...(warnings?.length && { warnings }),
-                      }
-                    : null;
-
-                  // CRITICAL: Ensure DOM validity classes update for OnPush components.
-                  //
-                  // Angular's template-driven forms update `ng-valid`/`ng-invalid` host classes
-                  // during change detection. When async validation completes, there may be no
-                  // follow-up change detection pass for OnPush hosts, leaving the DOM in a stale
-                  // visual state (even though the control status has updated).
-                  //
-                  // We schedule a detectChanges() on the next microtask to avoid calling it
-                  // synchronously inside Angular's own validation pipeline. The scheduleMicrotask
-                  // primitive auto-cancels if the directive is destroyed before it fires.
-                  scheduleMicrotask(() => {
-                    if (cancelled || this.#destroyed) {
-                      return;
-                    }
-                    try {
-                      this.#cdr.detectChanges();
-                    } catch {
-                      this.#cdr.markForCheck();
-                    }
-                  }, this.#destroyRef);
-
-                  return out;
-                };
-
-                const emitAndComplete = (suiteResult: NgxSuiteRunResult) => {
-                  if (cancelled) {
-                    return;
-                  }
-
-                  if (this.#destroyed) {
-                    observer.next(null);
-                    observer.complete();
-                    return;
-                  }
-
-                  observer.next(processResult(suiteResult));
-                  observer.complete();
-                };
-
-                const getLatestResult = (): NgxSuiteRunResult =>
-                  suite.get?.() ?? result;
-
-                // Sync path: emit immediately to avoid PENDING flash.
-                if (!result.isPending()) {
-                  emitAndComplete(result);
-                  return;
-                }
-
-                // Async path: handle thenable results when available.
-                if (typeof result.then === 'function') {
-                  Promise.resolve(result)
-                    .then(() => {
-                      if (cancelled) return;
-                      emitAndComplete(getLatestResult());
-                    })
-                    .catch(() => {
-                      if (cancelled) return;
-                      // Rejected thenables can still represent validation failures.
-                      // Read the suite's latest state when available instead of
-                      // relying on the original thenable result object, which can
-                      // remain stale across runtimes after rejection.
-                      if (!result.isPending()) {
-                        emitAndComplete(getLatestResult());
-                        return;
-                      }
-
-                      // Register cleanup BEFORE starting intervals so that if the
-                      // subscription was already closed, teardown fires immediately
-                      // and prevents any polling callbacks from running.
-                      const intervalId: ReturnType<typeof setInterval> =
-                        setInterval(() => {
-                          if (cancelled || !result.isPending()) {
-                            clearInterval(intervalId);
-                            clearTimeout(timeoutId);
-                            emitAndComplete(getLatestResult());
-                          }
-                        }, 25);
-
-                      const timeoutId: ReturnType<typeof setTimeout> =
-                        setTimeout(() => {
-                          clearInterval(intervalId);
-                          emitAndComplete(getLatestResult());
-                        }, 5000);
-
-                      observer.add(() => {
-                        clearInterval(intervalId);
-                        clearTimeout(timeoutId);
-                      });
-                    });
-                  return;
-                }
-
-                // Fallback path: poll pending state for non-thenable results.
-                const intervalId = setInterval(() => {
-                  if (!result.isPending()) {
-                    clearInterval(intervalId);
-                    clearTimeout(timeoutId);
-                    emitAndComplete(getLatestResult());
-                  }
-                }, 25);
-
-                const timeoutId = setTimeout(() => {
-                  clearInterval(intervalId);
-                  emitAndComplete(getLatestResult());
-                }, 5000);
-
-                observer.add(() => {
-                  clearInterval(intervalId);
-                  clearTimeout(timeoutId);
-                });
-                return;
-              } catch {
-                observer.next({ vestInternalError: 'Validation failed' });
-                observer.complete();
-                return;
-              }
-            })
-        ),
-        catchError(() => of({ vestInternalError: 'Validation failed' })),
-        take(1)
+          return out;
+        }),
+        // `runFieldValidation` already applies `take(1)` and `takeUntilDestroyed`,
+        // so no additional terminal operators are needed here.
+        catchError(() => of({ vestInternalError: 'Validation failed' }))
       );
     };
   }
