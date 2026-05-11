@@ -70,9 +70,7 @@ export function parseFieldPath(path: string): Array<string | number> {
   // Normalize bracket notation to dot notation first so malformed inputs like
   // 'a.[0]' (which becomes 'a..0') are caught alongside 'a..b', '.a', 'a.', '.'.
   const startsWithBracket = path.startsWith('[');
-  const segments = path
-    .replaceAll(/\[(\d+)\]/g, '.$1')
-    .split('.');
+  const segments = path.replaceAll(/\[(\d+)\]/g, '.$1').split('.');
 
   // Empty segments after normalization signal a malformed path. The single
   // legitimate case is a leading empty produced by a path that originally
@@ -119,7 +117,9 @@ export function parseFieldPath(path: string): Array<string | number> {
  * // 'users[0].addresses[1].street'
  * ```
  */
-export function stringifyFieldPath(path: Array<string | number>): string {
+export function stringifyFieldPath(
+  path: ReadonlyArray<string | number>
+): string {
   if (!path || path.length === 0) return '';
 
   let result = '';

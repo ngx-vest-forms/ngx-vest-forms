@@ -26,6 +26,7 @@
               name="password"
               [ngModel]="formValue().password"
               placeholder="Enter password (min 8 chars)"
+              autocomplete="new-password"
             />
           </label>
         </ngx-control-wrapper>
@@ -40,6 +41,7 @@
               name="confirmPassword"
               [ngModel]="formValue().confirmPassword"
               placeholder="Confirm password"
+              autocomplete="new-password"
             />
           </label>
         </ngx-control-wrapper>
@@ -52,10 +54,7 @@
       description="This pair uses on-blur wrappers so dependent errors wait for the target field's own blur."
     >
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <ngx-control-wrapper
-          class="form-field"
-          [errorDisplayMode]="'on-blur'"
-        >
+        <ngx-control-wrapper class="form-field" [errorDisplayMode]="'on-blur'">
           <label>
             <span class="label-text">Quantity</span>
             <input
@@ -65,14 +64,12 @@
               name="quantity"
               [ngModel]="formValue().quantity"
               placeholder="Enter quantity"
+              inputmode="numeric"
             />
           </label>
         </ngx-control-wrapper>
 
-        <ngx-control-wrapper
-          class="form-field"
-          [errorDisplayMode]="'on-blur'"
-        >
+        <ngx-control-wrapper class="form-field" [errorDisplayMode]="'on-blur'">
           <label>
             <span class="label-text">Justification</span>
             <textarea
@@ -159,6 +156,7 @@
               name="state"
               [ngModel]="formValue().state"
               placeholder="Enter state/province"
+              autocomplete="address-level1"
             />
           </label>
         </ngx-control-wrapper>
@@ -173,6 +171,8 @@
               name="zipCode"
               [ngModel]="formValue().zipCode"
               placeholder="Enter postal code"
+              autocomplete="postal-code"
+              spellcheck="false"
             />
           </label>
         </ngx-control-wrapper>

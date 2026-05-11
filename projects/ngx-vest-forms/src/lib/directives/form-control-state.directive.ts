@@ -64,8 +64,8 @@ const INITIAL_FORM_CONTROL_STATE = {
 } as const satisfies FormControlState;
 
 @Directive({
-  selector: '[formControlState], [ngxControlState]',
-  exportAs: 'formControlState, ngxControlState',
+  selector: '[ngxControlState]',
+  exportAs: 'ngxControlState',
 })
 export class FormControlStateDirective {
   protected readonly contentNgModel = contentChild(NgModel);

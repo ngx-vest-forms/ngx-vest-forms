@@ -1,5 +1,6 @@
 import {
   AfterContentInit,
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -73,6 +74,14 @@ let nextUniqueId = 0;
  * - Uses `role="status"` with `aria-live="polite"` for non-disruptive announcements
  * - Debounced pending state to prevent flashing for quick validations
  *
+ * ### Accessibility Features (Not Inferred Automatically)
+ * - `required` / `aria-required` are **not** derived from Vest rules.
+ *   Required-ness is often conditional business logic, so ngx-vest-forms only manages
+ *   validation-state associations (`aria-invalid`, `aria-describedby`) and message regions.
+ * - Prefer native `required` only for controls that are semantically always required.
+ * - For conditional requirements, communicate requirement in the label/help text and let
+ *   validation messages + `aria-invalid` describe the current state.
+ *
  * ### WCAG 2.2 AA - Error Severity Levels
  * This component uses `role="status"` for **field-level** validation messages:
  * - **Errors**: Non-disruptive announcement (user can continue filling other fields)
@@ -139,19 +148,13 @@ let nextUniqueId = 0;
  * @see https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA22 - ARIA22: Using role=status
  */
 @Component({
-  selector:
-    'ngx-control-wrapper, sc-control-wrapper, [scControlWrapper], [ngxControlWrapper], [ngx-control-wrapper], [sc-control-wrapper]',
+  selector: 'ngx-control-wrapper, [ngxControlWrapper]',
   templateUrl: './control-wrapper.component.html',
-  styles: `
-    :host {
-      display: block;
-      position: relative;
-    }
-  `,
+  styleUrls: ['./control-wrapper.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 
   host: {
-    class: 'ngx-control-wrapper sc-control-wrapper',
+    class: 'ngx-control-wrapper',
     '[class.ngx-control-wrapper--invalid]': 'errorDisplay.shouldShowErrors()',
     '[attr.aria-busy]': "errorDisplay.isPending() ? 'true' : null",
   },
@@ -185,6 +188,14 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
    */
   readonly ariaAssociationMode = input<AriaAssociationMode>('all-controls');
 
+  /**
+   * Explicitly applies `aria-required="true"` to associated descendant controls.
+   *
+   * This is intentionally opt-in and is **not** inferred from Vest rules because
+   * required-ness is often conditional business logic.
+   */
+  readonly ariaRequired = input(false, { transform: booleanAttribute });
+
   // Generate unique IDs for ARIA associations
   protected readonly uniqueId = `ngx-control-wrapper-${nextUniqueId++}`;
   protected readonly errorId = `${this.uniqueId}-error`;
@@ -193,6 +204,13 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
 
   // Track form controls found in the wrapper
   private readonly formControls = signal<HTMLElement[]>([]);
+
+  /**
+   * Tracks whether a control already had `aria-required` before this wrapper
+   * first touched it. This prevents the wrapper from clobbering a
+   * consumer-provided attribute when the wrapper input toggles to false.
+   */
+  private readonly consumerAriaRequired = new WeakMap<HTMLElement, boolean>();
 
   // Signals when content is initialized so effects can safely touch the DOM.
   private readonly contentInitialized = signal(false);
@@ -262,6 +280,7 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
       const describedBy = this.ariaDescribedBy();
       const wrapperActiveIds = parseAriaIdTokens(describedBy);
       const shouldShowErrors = this.errorDisplay.shouldShowErrors();
+      const ariaRequired = this.ariaRequired();
 
       const targets = resolveAssociationTargets(this.formControls(), mode);
 
@@ -283,6 +302,20 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
           control.setAttribute('aria-invalid', 'true');
         } else {
           control.removeAttribute('aria-invalid');
+        }
+
+        // Track original consumer state once, then manage wrapper ownership.
+        if (!this.consumerAriaRequired.has(control)) {
+          this.consumerAriaRequired.set(
+            control,
+            control.hasAttribute('aria-required')
+          );
+        }
+        if (ariaRequired) {
+          control.setAttribute('aria-required', 'true');
+        } else if (!this.consumerAriaRequired.get(control)) {
+          // Only remove when the consumer didn't provide it originally
+          control.removeAttribute('aria-required');
         }
       });
     });

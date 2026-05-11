@@ -68,10 +68,10 @@
 import { Component, signal, viewChild } from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { enforce, only, staticSuite, test } from 'vest';
+import { create, enforce, test } from 'vest';
 import { describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
-import { DeepPartial } from '../utils/deep-partial';
+import { NgxDeepPartial } from '../utils/deep-partial';
 import { FormDirective } from './form.directive';
 
 describe('FormDirective - Reset Functionality', () => {
@@ -113,15 +113,14 @@ describe('FormDirective - Reset Functionality', () => {
         vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
 
         formValue = signal<
-          DeepPartial<{ firstName?: string; age?: number; gender?: string }>
+          NgxDeepPartial<{ firstName?: string; age?: number; gender?: string }>
         >({
           firstName: 'John',
           age: 30,
           gender: 'male',
         });
 
-        suite = staticSuite((model: any, field?: string) => {
-          only(field);
+        suite = create((model: any) => {
           test('firstName', 'First name is required', () => {
             enforce(model.firstName).isNotBlank();
           });
@@ -204,15 +203,16 @@ describe('FormDirective - Reset Functionality', () => {
       class TestComponent {
         vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
 
-        formValue = signal<DeepPartial<{ field1?: string; field2?: string }>>({
+        formValue = signal<
+          NgxDeepPartial<{ field1?: string; field2?: string }>
+        >({
           field1: 'value1',
           field2: 'value2',
         });
 
         clickCount = signal(0);
 
-        suite = staticSuite((model: any, field?: string) => {
-          only(field);
+        suite = create((model: any) => {
           test('field1', 'Required', () => {
             enforce(model.field1).isNotBlank();
           });
@@ -296,7 +296,7 @@ describe('FormDirective - Reset Functionality', () => {
         vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
 
         formValue = signal<
-          DeepPartial<{
+          NgxDeepPartial<{
             topLevel?: string;
             nested?: { field1?: string; field2?: string };
             passwords?: { password?: string; confirmPassword?: string };
@@ -307,8 +307,7 @@ describe('FormDirective - Reset Functionality', () => {
           passwords: { password: 'pass123', confirmPassword: 'pass123' },
         });
 
-        suite = staticSuite((model: any, field?: string) => {
-          only(field);
+        suite = create((model: any) => {
           test('topLevel', 'Required', () => {
             enforce(model.topLevel).isNotBlank();
           });
@@ -390,14 +389,13 @@ describe('FormDirective - Reset Functionality', () => {
         vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
 
         formValue = signal<
-          DeepPartial<{ firstName?: string; lastName?: string }>
+          NgxDeepPartial<{ firstName?: string; lastName?: string }>
         >({
           firstName: 'John',
           lastName: 'Doe',
         });
 
-        suite = staticSuite((model: any, field?: string) => {
-          only(field);
+        suite = create((model: any) => {
           test('firstName', 'Required', () => {
             enforce(model.firstName).isNotBlank();
           });
@@ -482,7 +480,7 @@ describe('FormDirective - Reset Functionality', () => {
         vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
 
         formValue = signal<
-          DeepPartial<{
+          NgxDeepPartial<{
             firstName?: string;
             lastName?: string;
             age?: number;
@@ -490,8 +488,7 @@ describe('FormDirective - Reset Functionality', () => {
           }>
         >({});
 
-        suite = staticSuite((model: any, field?: string) => {
-          only(field);
+        suite = create((model: any) => {
           test('firstName', 'First name is required', () => {
             enforce(model.firstName).isNotBlank();
           });
@@ -594,13 +591,12 @@ describe('FormDirective - Reset Functionality', () => {
       class TestComponent {
         vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
 
-        formValue = signal<DeepPartial<{ email?: string }>>({
+        formValue = signal<NgxDeepPartial<{ email?: string }>>({
           email: 'invalid',
         });
         errors = signal<Record<string, string[]>>({});
 
-        suite = staticSuite((model: any, field?: string) => {
-          only(field);
+        suite = create((model: any) => {
           test('email', 'Valid email required', () => {
             enforce(model.email).matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
           });
@@ -663,11 +659,10 @@ describe('FormDirective - Reset Functionality', () => {
       class TestComponent {
         vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
 
-        formValue = signal<DeepPartial<{ testField?: string }>>({});
+        formValue = signal<NgxDeepPartial<{ testField?: string }>>({});
         resetCount = signal(0);
 
-        suite = staticSuite((model: any, field?: string) => {
-          only(field);
+        suite = create((model: any) => {
           test('testField', 'Required', () => {
             enforce(model.testField).isNotBlank();
           });
@@ -735,12 +730,11 @@ describe('FormDirective - Reset Functionality', () => {
         imports: [NgxVestForms],
       })
       class TestComponent {
-        formValue = signal<DeepPartial<{ firstName?: string }>>({
+        formValue = signal<NgxDeepPartial<{ firstName?: string }>>({
           firstName: 'John',
         });
 
-        suite = staticSuite((model: any, field?: string) => {
-          only(field);
+        suite = create((model: any) => {
           test('firstName', 'Required', () => {
             enforce(model.firstName).isNotBlank();
           });

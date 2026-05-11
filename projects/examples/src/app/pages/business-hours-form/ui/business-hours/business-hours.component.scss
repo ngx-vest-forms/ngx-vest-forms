@@ -1,0 +1,15 @@
+:host {
+  display: block;
+}
+
+.business-hours-item-card,
+.business-hours-add-card {
+  margin: 0;
+  min-inline-size: 0;
+}
+
+.business-hours-item-card > legend,
+.business-hours-add-card > legend {
+  margin: 0;
+  padding: 0;
+}

@@ -30,8 +30,8 @@ let nextUniqueId = 0;
  * It does not render any UI; you can use the generated IDs to render messages.
  */
 @Directive({
-  selector: '[formErrorControl], [ngxErrorControl]',
-  exportAs: 'formErrorControl, ngxErrorControl',
+  selector: '[ngxErrorControl]',
+  exportAs: 'ngxErrorControl',
   hostDirectives: [
     {
       directive: FormErrorDisplayDirective,
@@ -44,7 +44,7 @@ export class FormErrorControlDirective implements AfterContentInit, OnDestroy {
     self: true,
   });
 
-  private readonly elementRef = inject(ElementRef<HTMLElement>);
+  readonly #elementRef = inject(ElementRef<HTMLElement>);
 
   /**
    * Controls how this directive applies ARIA attributes to descendant controls.
@@ -64,15 +64,15 @@ export class FormErrorControlDirective implements AfterContentInit, OnDestroy {
   readonly warningId = `${this.uniqueId}-warning`;
   readonly pendingId = `${this.uniqueId}-pending`;
 
-  private readonly formControls = signal<HTMLElement[]>([]);
-  private readonly contentInitialized = signal(false);
-  private mutationObserver: MutationObserver | null = null;
+  readonly #formControls = signal<HTMLElement[]>([]);
+  readonly #contentInitialized = signal(false);
+  #mutationObserver: MutationObserver | null = null;
 
-  private readonly pendingState = createDebouncedPendingState(
+  readonly #pendingState = createDebouncedPendingState(
     this.errorDisplay.isPending,
     { showAfter: 500, minimumDisplay: 500 }
   );
-  readonly showPendingMessage = this.pendingState.showPendingMessage;
+  readonly showPendingMessage = this.#pendingState.showPendingMessage;
 
   /**
    * aria-describedby value representing the *currently relevant* message regions.
@@ -95,7 +95,7 @@ export class FormErrorControlDirective implements AfterContentInit, OnDestroy {
     return ids.length > 0 ? ids.join(' ') : null;
   });
 
-  private readonly ownedDescribedByIds: string[] = [
+  readonly #ownedDescribedByIds: string[] = [
     this.errorId,
     this.warningId,
     this.pendingId,
@@ -104,7 +104,7 @@ export class FormErrorControlDirective implements AfterContentInit, OnDestroy {
   constructor() {
     // Effect for ARIA attribute updates
     effect(() => {
-      if (!this.contentInitialized()) return;
+      if (!this.#contentInitialized()) return;
 
       const mode = this.ariaAssociationMode();
       if (mode === 'none') return;
@@ -113,13 +113,13 @@ export class FormErrorControlDirective implements AfterContentInit, OnDestroy {
       const activeIds = parseAriaIdTokens(describedBy);
       const shouldShowErrors = this.errorDisplay.shouldShowErrors();
 
-      const targets = resolveAssociationTargets(this.formControls(), mode);
+      const targets = resolveAssociationTargets(this.#formControls(), mode);
 
       for (const control of targets) {
         const nextDescribedBy = mergeAriaDescribedBy(
           control.getAttribute('aria-describedby'),
           activeIds,
-          this.ownedDescribedByIds
+          this.#ownedDescribedByIds
         );
         if (nextDescribedBy) {
           control.setAttribute('aria-describedby', nextDescribedBy);
@@ -137,27 +137,27 @@ export class FormErrorControlDirective implements AfterContentInit, OnDestroy {
 
     // Effect for MutationObserver setup with proper cleanup
     effect((onCleanup) => {
-      if (!this.contentInitialized()) return;
+      if (!this.#contentInitialized()) return;
 
       const mode = this.ariaAssociationMode();
 
       if (mode === 'none') {
-        this.mutationObserver?.disconnect();
-        this.mutationObserver = null;
-        if (this.formControls().length > 0) {
-          this.formControls.set([]);
+        this.#mutationObserver?.disconnect();
+        this.#mutationObserver = null;
+        if (this.#formControls().length > 0) {
+          this.#formControls.set([]);
         }
         return;
       }
 
       this.updateFormControls();
 
-      if (!this.mutationObserver) {
-        this.mutationObserver = new MutationObserver(() => {
+      if (!this.#mutationObserver) {
+        this.#mutationObserver = new MutationObserver(() => {
           this.updateFormControls();
         });
 
-        this.mutationObserver.observe(this.elementRef.nativeElement, {
+        this.#mutationObserver.observe(this.#elementRef.nativeElement, {
           childList: true,
           subtree: true,
         });
@@ -165,25 +165,25 @@ export class FormErrorControlDirective implements AfterContentInit, OnDestroy {
 
       // Proper cleanup using onCleanup callback (Angular 21 best practice)
       onCleanup(() => {
-        this.mutationObserver?.disconnect();
-        this.mutationObserver = null;
+        this.#mutationObserver?.disconnect();
+        this.#mutationObserver = null;
       });
     });
   }
 
   ngAfterContentInit(): void {
-    this.contentInitialized.set(true);
+    this.#contentInitialized.set(true);
   }
 
   ngOnDestroy(): void {
-    this.mutationObserver?.disconnect();
-    this.mutationObserver = null;
+    this.#mutationObserver?.disconnect();
+    this.#mutationObserver = null;
   }
 
   private updateFormControls(): void {
-    const controls = this.elementRef.nativeElement.querySelectorAll(
+    const controls = this.#elementRef.nativeElement.querySelectorAll(
       'input, select, textarea'
     );
-    this.formControls.set(Array.from(controls) as HTMLElement[]);
+    this.#formControls.set(Array.from(controls) as HTMLElement[]);
   }
 }

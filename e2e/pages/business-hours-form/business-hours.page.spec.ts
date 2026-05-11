@@ -10,11 +10,11 @@ test.describe('Business Hours Page', () => {
     await expect(
       page.getByRole('heading', { name: /business hours form/i, level: 1 })
     ).toBeVisible();
-    await expect(page.locator('aside')).toBeVisible();
-    await expect(page.locator('aside')).toContainText(/form value/i);
-    await expect(page.locator('aside')).toContainText(/form state/i);
-    await expect(
-      page.locator('aside span[aria-label="Pristine"]').first()
-    ).toBeVisible();
+
+    const sidebar = page.getByRole('complementary').first();
+    await expect(sidebar).toBeVisible();
+    await expect(sidebar).toContainText(/form value/i);
+    await expect(sidebar).toContainText(/form state/i);
+    await expect(sidebar.getByLabel('Pristine').first()).toBeVisible();
   });
 });

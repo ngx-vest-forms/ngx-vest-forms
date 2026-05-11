@@ -1,8 +1,9 @@
 /* eslint-disable @angular-eslint/component-selector */
-import { Component, signal, viewChild } from '@angular/core';
-import { render } from '@testing-library/angular';
+import { Component, signal, viewChild, ViewChild } from '@angular/core';
+import { render, screen, waitFor } from '@testing-library/angular';
+import userEvent from '@testing-library/user-event';
 import { isObservable, Observable } from 'rxjs';
-import { enforce, only, staticSuite, test as vestTest, warn } from 'vest';
+import { create, enforce, test as vestTest, warn } from 'vest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FormDirective, NgxFieldBlurEvent } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
@@ -57,13 +58,10 @@ class TestFormComponent {
   formValue = signal({ username: '' });
   count = signal(0);
   suite = signal(
-    staticSuite(
-      (model: { username: string } = { username: '' }, field?: string) => {
-        only(field); // ✅ Call unconditionally
-        this.count.update((count) => count + 1);
-        enforce(model.username).isNotEmpty();
-      }
-    )
+    create((model: { username: string } = { username: '' }) => {
+      this.count.update((count) => count + 1);
+      enforce(model.username).isNotEmpty();
+    })
   );
 }
 
@@ -117,8 +115,21 @@ describe('FormDirective - Async Validator', () => {
   })
   class TestParallelValidationHost {
     formValue = signal({ username: '' });
-    mockSuite = vi.fn();
-    suite = signal(this.mockSuite);
+    // Vest 6: suite.only(field).run(model) pattern
+    mockRun = vi.fn().mockReturnValue({
+      getErrors: () => ({}),
+      getWarnings: () => ({}),
+      isPending: () => false,
+      isValid: () => true,
+      then: (cb: any) =>
+        Promise.resolve().then(() =>
+          cb({ getErrors: () => ({}), getWarnings: () => ({}) })
+        ),
+    });
+    suite = signal({
+      only: () => ({ run: this.mockRun }),
+      reset: vi.fn(),
+    } as any);
     readonly vestForm =
       viewChild.required<FormDirective<Record<string, unknown>>>('vest');
   }
@@ -137,7 +148,7 @@ describe('FormDirective - Async Validator', () => {
     ]);
     vi.runOnlyPendingTimers();
     await pending;
-    expect(instance.mockSuite).toHaveBeenCalled();
+    expect(instance.mockRun).toHaveBeenCalled();
   });
 
   @Component({
@@ -180,7 +191,7 @@ describe('FormDirective - Async Validator', () => {
   class TestFormThrowComponent {
     formValue = signal({ username: '' });
     suite = signal(
-      staticSuite(() => {
+      create(() => {
         throw new Error('Vest suite execution error');
       })
     );
@@ -236,10 +247,9 @@ describe('FormDirective - Async Validator', () => {
       imports: [NgxVestForms],
     })
     class TestUndefinedValueHost {
-      // Provide a proper Vest suite that calls .done() callback
+      // Provide a proper Vest suite that resolves validation
       suite = signal(
-        staticSuite((model: any = {}, field?: string) => {
-          only(field);
+        create((model: any = {}) => {
           // Suite runs but produces no errors (valid)
         })
       );
@@ -281,8 +291,7 @@ describe('FormDirective - Async Validator', () => {
     class TestWarningsOnlyHost {
       // Suite that only produces warnings (via warn()), no errors
       suite = signal(
-        staticSuite((model: { password?: string } = {}, field?: string) => {
-          only(field);
+        create((model: { password?: string } = {}) => {
           // Only a warning - should NOT make field invalid
           vestTest('password', 'Password is weak', () => {
             warn();
@@ -340,8 +349,7 @@ describe('FormDirective - Async Validator', () => {
       // IMPORTANT: Warning tests must come BEFORE error tests in Vest
       // because Vest stops processing after a field fails a non-warning test
       suite = signal(
-        staticSuite((model: { password?: string } = {}, field?: string) => {
-          only(field);
+        create((model: { password?: string } = {}) => {
           // Warning - password should be longer than 12 characters (informational)
           // Runs FIRST so it gets captured before the error test
           vestTest(
@@ -392,6 +400,233 @@ describe('FormDirective - Async Validator', () => {
     expect(result?.['warnings']).toContain(
       'Password should be longer than 12 characters'
     );
+  });
+
+  it('should ignore stale async completions after a validator subscription is cancelled', async () => {
+    @Component({
+      selector: 'test-cancelled-validation-host',
+      template: `<form
+        ngxVestForm
+        [suite]="suite()"
+        #vest="ngxVestForm"
+      ></form>`,
+
+      imports: [NgxVestForms],
+    })
+    class TestCancelledValidationHost {
+      private resolvePendingRun: (() => void) | undefined;
+
+      private readonly finalResult = {
+        isPending: () => false,
+        isValid: () => true,
+        hasErrors: () => false,
+        hasWarnings: () => true,
+        isTested: () => true,
+        getErrors: () => ({}),
+        getWarnings: () => ({ username: ['Username looks weak'] }),
+      };
+
+      private readonly pendingResult = {
+        ...this.finalResult,
+        isPending: () => true,
+        then: (onfulfilled?: ((value: unknown) => unknown) | null) =>
+          new Promise((resolve) => {
+            this.resolvePendingRun = () => {
+              const value = onfulfilled
+                ? onfulfilled(this.finalResult)
+                : this.finalResult;
+              resolve(value);
+            };
+          }),
+      };
+
+      readonly suite = signal({
+        only: () => ({ run: () => this.pendingResult }),
+        get: () => this.finalResult,
+        reset: vi.fn(),
+        resetField: vi.fn(),
+        remove: vi.fn(),
+        subscribe: vi.fn(),
+        dump: vi.fn(),
+        resume: vi.fn(),
+      } as any);
+
+      flushPendingRun(): void {
+        this.resolvePendingRun?.();
+      }
+
+      @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
+    }
+
+    const { fixture } = await render(TestCancelledValidationHost);
+    const instance = fixture.componentInstance;
+    const validator = instance.vestForm.createAsyncValidator('username', {
+      debounceTime: 0,
+    });
+    const nextSpy = vi.fn();
+
+    const subscription = (
+      validator({ value: 'abc' } as any) as Observable<any>
+    ).subscribe(nextSpy);
+
+    vi.runAllTimers();
+    await Promise.resolve();
+
+    subscription.unsubscribe();
+    instance.flushPendingRun();
+    await Promise.resolve();
+
+    expect(nextSpy).not.toHaveBeenCalled();
+    expect(instance.vestForm.fieldWarnings().has('username')).toBe(false);
+  });
+
+  it('should not leak stale fieldWarnings when a rejected thenable is cancelled', async () => {
+    @Component({
+      selector: 'test-rejected-cancel-host',
+      template: `<form
+        ngxVestForm
+        [suite]="suite()"
+        #vest="ngxVestForm"
+      ></form>`,
+      imports: [NgxVestForms],
+    })
+    class TestRejectedCancelHost {
+      private rejectPendingRun: (() => void) | undefined;
+
+      private readonly finalResult = {
+        isPending: () => false,
+        isValid: () => true,
+        hasErrors: () => false,
+        hasWarnings: () => true,
+        isTested: () => true,
+        getErrors: () => ({}),
+        getWarnings: () => ({ username: ['Username looks weak'] }),
+      };
+
+      private readonly pendingResult = {
+        ...this.finalResult,
+        isPending: () => true,
+        then: (
+          _onfulfilled?: ((value: unknown) => unknown) | null,
+          onrejected?: ((reason: unknown) => unknown) | null
+        ) =>
+          new Promise((resolve, reject) => {
+            this.rejectPendingRun = () => {
+              const rejection = new Error('rejected');
+
+              if (onrejected) {
+                resolve(onrejected(rejection));
+                return;
+              }
+
+              reject(rejection);
+            };
+          }),
+      };
+
+      readonly suite = signal({
+        only: () => ({ run: () => this.pendingResult }),
+        get: () => this.finalResult,
+        reset: vi.fn(),
+        resetField: vi.fn(),
+        remove: vi.fn(),
+        subscribe: vi.fn(),
+        dump: vi.fn(),
+        resume: vi.fn(),
+      } as any);
+
+      flushPendingRun(): void {
+        this.rejectPendingRun?.();
+      }
+
+      @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
+    }
+
+    const { fixture } = await render(TestRejectedCancelHost);
+    const instance = fixture.componentInstance;
+    const validator = instance.vestForm.createAsyncValidator('username', {
+      debounceTime: 0,
+    });
+    const nextSpy = vi.fn();
+
+    const subscription = (
+      validator({ value: 'abc' } as any) as Observable<any>
+    ).subscribe(nextSpy);
+
+    vi.runAllTimers();
+    await Promise.resolve();
+
+    // Cancel before promise rejection is handled
+    subscription.unsubscribe();
+    instance.flushPendingRun();
+    await Promise.resolve();
+    vi.runAllTimers();
+    await Promise.resolve();
+
+    expect(nextSpy).not.toHaveBeenCalled();
+    expect(instance.vestForm.fieldWarnings().has('username')).toBe(false);
+  });
+
+  it('should only emit the latest result when rapid field changes overlap', async () => {
+    let runCount = 0;
+    @Component({
+      selector: 'test-rapid-overlap-host',
+      template: `<form
+        ngxVestForm
+        [suite]="suite()"
+        #vest="ngxVestForm"
+      ></form>`,
+      imports: [NgxVestForms],
+    })
+    class TestRapidOverlapHost {
+      readonly suite = signal({
+        only: () => ({
+          run: () => {
+            runCount++;
+            return {
+              isPending: () => false,
+              isValid: () => true,
+              getErrors: () => ({}),
+              getWarnings: () => ({}),
+            };
+          },
+        }),
+        get: () => ({
+          isPending: () => false,
+          isValid: () => true,
+          getErrors: () => ({}),
+          getWarnings: () => ({}),
+        }),
+        reset: vi.fn(),
+      } as any);
+
+      @ViewChild('vest', { static: true }) vestForm!: FormDirective<any>;
+    }
+
+    const { fixture } = await render(TestRapidOverlapHost);
+    const instance = fixture.componentInstance;
+    const validator = instance.vestForm.createAsyncValidator('username', {
+      debounceTime: 0,
+    });
+
+    runCount = 0;
+    const results: unknown[] = [];
+
+    // Start first validation, then immediately start second (supersedes first)
+    const sub1 = (
+      validator({ value: 'a' } as any) as Observable<any>
+    ).subscribe((v: unknown) => results.push(v));
+    sub1.unsubscribe(); // Superseded by next call
+
+    const result2 = awaitResult(validator({ value: 'ab' } as any));
+    vi.runAllTimers();
+    await Promise.resolve();
+    const finalResult = await result2;
+
+    // First subscription was cancelled, so it should not have emitted
+    expect(results).toHaveLength(0);
+    // Second validation should produce a result
+    expect(finalResult).toBeNull(); // no errors → null
   });
 });
 
@@ -514,9 +749,8 @@ describe('FormDirective - Model to Form Synchronization', () => {
         user: { firstName: '', lastName: '' },
       });
       suite = signal(
-        staticSuite((model: unknown = {}, field?: string) => {
+        create((model: unknown = {}) => {
           // No validations required for this test; keep suite well-formed.
-          only(field);
         })
       );
     }
@@ -602,9 +836,13 @@ describe('FormDirective - Signals/Outputs', () => {
       readonly formValue = signal<{ projectName?: string }>({
         projectName: '',
       });
-      readonly blurEvents = signal<Array<NgxFieldBlurEvent<{ projectName?: string }>>>([]);
+      readonly blurEvents = signal<
+        Array<NgxFieldBlurEvent<{ projectName?: string }>>
+      >([]);
 
-      handleFieldBlur(event: NgxFieldBlurEvent<{ projectName?: string }>): void {
+      handleFieldBlur(
+        event: NgxFieldBlurEvent<{ projectName?: string }>
+      ): void {
         this.blurEvents.update((events) => [...events, event]);
       }
     }
@@ -667,7 +905,9 @@ describe('FormDirective - Signals/Outputs', () => {
       readonly formValue = signal<{ projectName?: string }>({
         projectName: '',
       });
-      readonly blurEvents = signal<Array<NgxFieldBlurEvent<{ projectName?: string }>>>([]);
+      readonly blurEvents = signal<
+        Array<NgxFieldBlurEvent<{ projectName?: string }>>
+      >([]);
 
       delayFormValueUpdate(value: { projectName?: string }): void {
         setTimeout(() => {
@@ -675,7 +915,9 @@ describe('FormDirective - Signals/Outputs', () => {
         }, 0);
       }
 
-      handleFieldBlur(event: NgxFieldBlurEvent<{ projectName?: string }>): void {
+      handleFieldBlur(
+        event: NgxFieldBlurEvent<{ projectName?: string }>
+      ): void {
         this.blurEvents.update((events) => [...events, event]);
       }
     }
@@ -792,8 +1034,7 @@ describe('FormDirective - Signals/Outputs', () => {
     await Promise.resolve();
     fixture.detectChanges();
 
-    const blurEvent = fixture
-      .componentInstance
+    const blurEvent = fixture.componentInstance
       .blurEvents()
       .find((event) => event.field === 'projectName');
 
@@ -885,7 +1126,8 @@ describe('FormDirective - Signals/Outputs', () => {
               type="radio"
               name="gender"
               value="female"
-              [ngModel]="formValue().gender" />Female</label
+              [ngModel]="formValue().gender"
+            />Female</label
           >
           <label
             ><input
@@ -893,7 +1135,8 @@ describe('FormDirective - Signals/Outputs', () => {
               type="radio"
               name="gender"
               value="male"
-              [ngModel]="formValue().gender" />Male</label
+              [ngModel]="formValue().gender"
+            />Male</label
           >
         </form>
       `,
@@ -916,7 +1159,9 @@ describe('FormDirective - Signals/Outputs', () => {
       '#male'
     ) as HTMLInputElement;
     // The "male" radio is focused but NOT checked — the bound value remains "female".
-    unselectedRadio.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    unselectedRadio.dispatchEvent(
+      new FocusEvent('focusout', { bubbles: true })
+    );
     await Promise.resolve();
     fixture.detectChanges();
 
@@ -942,19 +1187,11 @@ describe('FormDirective - Signals/Outputs', () => {
         >
           <div ngModelGroup="from">
             <label for="from-day">From day</label>
-            <input
-              id="from-day"
-              name="day"
-              [ngModel]="formValue().from?.day"
-            />
+            <input id="from-day" name="day" [ngModel]="formValue().from?.day" />
           </div>
           <div ngModelGroup="to">
             <label for="to-day">To day</label>
-            <input
-              id="to-day"
-              name="day"
-              [ngModel]="formValue().to?.day"
-            />
+            <input id="to-day" name="day" [ngModel]="formValue().to?.day" />
           </div>
         </form>
       `,
@@ -1065,6 +1302,57 @@ describe('FormDirective - Signals/Outputs', () => {
       slots: { '0': {}, '1': { to: '17:30' } },
     });
   });
+
+  it('should expose pending/valid/invalid helpers and validatedFields alias', async () => {
+    @Component({
+      selector: 'test-state-helpers-host',
+      template: `
+        <form
+          ngxVestForm
+          [suite]="suite()"
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          #vest="ngxVestForm"
+        >
+          <label for="email">Email</label>
+          <input id="email" name="email" [ngModel]="formValue().email" />
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestStateHelpersHost {
+      readonly formValue = signal<{ email?: string }>({});
+      readonly suite = signal(
+        create((model: { email?: string } = {}) => {
+          vestTest('email', 'Email is required', () => {
+            enforce(model.email).isNotBlank();
+          });
+        })
+      );
+
+      readonly vestForm =
+        viewChild.required<FormDirective<Record<string, unknown>>>('vest');
+    }
+
+    const { fixture } = await render(TestStateHelpersHost);
+    const instance = fixture.componentInstance;
+
+    await userEvent.click(screen.getByLabelText('Email'));
+    await userEvent.tab();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Email')).toHaveClass('ng-invalid');
+    });
+
+    expect(instance.vestForm().pending()).toBe(false);
+    expect(instance.vestForm().valid()).toBe(false);
+    expect(instance.vestForm().invalid()).toBe(true);
+    expect(instance.vestForm().status()).toBe('INVALID');
+    expect(instance.vestForm().validatedFields()).toContain('email');
+    expect(instance.vestForm().validatedFields()).toEqual(
+      instance.vestForm().touchedFieldPaths()
+    );
+  });
 });
 
 describe('FormDirective - triggerFormValidation', () => {
@@ -1102,9 +1390,9 @@ describe('FormDirective - clearSubmittedState', () => {
     template: `
       <form ngxVestForm #vest="ngxVestForm">
         <input
-          formErrorDisplay
+          ngxErrorDisplay
           [errorDisplayMode]="'on-submit'"
-          #display="formErrorDisplay"
+          #display="ngxErrorDisplay"
           name="username"
           [ngModel]="model"
           required
@@ -1566,6 +1854,65 @@ describe('FormDirective - Shape Validation', () => {
   });
 });
 
+describe('FormDirective - Submit Accessibility', () => {
+  it('should focus the first invalid field after form submit', async () => {
+    @Component({
+      selector: 'test-submit-focus-host',
+      template: `
+        <form
+          ngxVestForm
+          [suite]="suite()"
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+        >
+          <label for="firstName">First name</label>
+          <input
+            id="firstName"
+            name="firstName"
+            [ngModel]="formValue().firstName"
+          />
+
+          <label for="lastName">Last name</label>
+          <input
+            id="lastName"
+            name="lastName"
+            [ngModel]="formValue().lastName"
+          />
+
+          <button type="submit">Submit</button>
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestSubmitFocusHost {
+      readonly formValue = signal<{ firstName: string; lastName: string }>({
+        firstName: '',
+        lastName: '',
+      });
+
+      readonly suite = signal(
+        create((model: { firstName?: string; lastName?: string } = {}) => {
+          vestTest('firstName', 'First name is required', () => {
+            enforce(model.firstName).isNotBlank();
+          });
+
+          vestTest('lastName', 'Last name is required', () => {
+            enforce(model.lastName).isNotBlank();
+          });
+        })
+      );
+    }
+
+    await render(TestSubmitFocusHost);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('First name')).toHaveFocus();
+    });
+  });
+});
+
 describe('FormDirective - FormState Memoization', () => {
   @Component({
     selector: 'test-memoization-host',
@@ -1585,11 +1932,7 @@ describe('FormDirective - FormState Memoization', () => {
   })
   class TestMemoizationHost {
     formValue = signal<{ field1?: string }>({});
-    suite = signal(
-      staticSuite((model: { field1?: string } = {}, field?: string) => {
-        only(field);
-      })
-    );
+    suite = signal(create((model: { field1?: string } = {}) => {}));
     readonly vestForm =
       viewChild.required<FormDirective<Record<string, unknown>>>('vest');
   }
@@ -1736,15 +2079,18 @@ describe('FormDirective - Destroy-aware async scheduling', () => {
           [formValue]="formValue()"
           #vest="ngxVestForm"
         >
-          <input name="username" [ngModel]="formValue().username" [validationOptions]="{ debounceTime: 200 }" />
+          <input
+            name="username"
+            [ngModel]="formValue().username"
+            [validationOptions]="{ debounceTime: 200 }"
+          />
         </form>
       `,
     })
     class TestDestroyMidValidationComponent {
       formValue = signal({ username: '' });
       suite = signal(
-        staticSuite((model: { username?: string } = {}, field?: string) => {
-          only(field);
+        create((model: { username?: string } = {}) => {
           vestTest('username', 'Username is required', () => {
             enforce(model.username).isNotEmpty();
           });
@@ -1784,7 +2130,10 @@ describe('FormDirective - Destroy-aware async scheduling', () => {
           #vest="ngxVestForm"
         >
           <input name="password" [ngModel]="formValue().password" />
-          <input name="confirmPassword" [ngModel]="formValue().confirmPassword" />
+          <input
+            name="confirmPassword"
+            [ngModel]="formValue().confirmPassword"
+          />
         </form>
       `,
     })
@@ -1792,14 +2141,7 @@ describe('FormDirective - Destroy-aware async scheduling', () => {
       formValue = signal({ password: '', confirmPassword: '' });
       validationConfig = { password: ['confirmPassword'] };
       suite = signal(
-        staticSuite(
-          (
-            model: { password?: string; confirmPassword?: string } = {},
-            field?: string
-          ) => {
-            only(field);
-          }
-        )
+        create((_model: { password?: string; confirmPassword?: string } = {}) => {})
       );
       readonly vestForm =
         viewChild.required<FormDirective<Record<string, unknown>>>('vest');

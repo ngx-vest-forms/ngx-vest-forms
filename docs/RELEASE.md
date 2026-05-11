@@ -6,16 +6,21 @@ This document describes how to release new versions of ngx-vest-forms. All relea
 
 ### 1. Production Release (Stable)
 
-Production releases are created from the `master` or `release/v1.x` branches and publish stable versions to npm.
+Production releases are created from the `master`, `release/v1.x`, or `release/v2.x` branches and publish stable versions to npm.
 
 **How to trigger:**
+
 1. Go to [Actions > Release (Production)](../../actions/workflows/cd.yml)
 2. Click "Run workflow"
 3. Select the branch to release from:
-   - `master` - Latest stable version (v2.x)
+   - `master` - Latest stable version (v3.x after the Vest 6 migration lands)
    - `release/v1.x` - Maintenance releases for v1.x
+   - `release/v2.x` - Maintenance releases for v2.x after `master` moves to v3.x
+
+Use maintenance branches for supported release lines. For example, prefer `release/v2.x` over a fixed branch name like `release/2.0.0`. A future `release/v3.x` branch would only be needed once `master` moves beyond the v3 line.
 
 The workflow will:
+
 - Run all tests, lints, and builds
 - Analyze commits using [Conventional Commits](https://www.conventionalcommits.org/)
 - Generate version bump (major/minor/patch) automatically
@@ -28,13 +33,15 @@ The workflow will:
 Prereleases are used for testing new features before stable release. They can be created from various branches.
 
 **How to trigger:**
+
 1. Go to [Actions > Release (Prerelease/Beta)](../../actions/workflows/prerelease.yml)
 2. Click "Run workflow"
 3. Choose branch type:
-   - **Stable**: Select from predefined branches (next, alpha, beta, rc, release/v1.x)
+   - **Stable**: Select from predefined branches (next, alpha, beta, rc, release/v1.x, release/v2.x)
    - **Custom**: Enter a custom branch name (e.g., `feat/awesome-feature`, `fix/critical-bug`)
 
 The workflow will:
+
 - Run all tests, lints, and builds
 - Publish as a prerelease version (e.g., `2.1.0-beta.1`)
 - Add appropriate dist-tag in npm
@@ -43,11 +50,12 @@ The workflow will:
 #### Prerelease Branches
 
 | Branch Pattern | npm Tag | Version Example | Use Case |
-|---------------|---------|-----------------|----------|
+| -------------- | ------- | --------------- | -------- |
 | `next` | next | 2.1.0-next.1 | Next major version features |
 | `beta` | beta | 2.1.0-beta.1 | Beta testing before stable |
 | `alpha` | alpha | 2.1.0-alpha.1 | Early alpha testing |
 | `rc` | rc | 2.1.0-rc.1 | Release candidate |
+| `release/v2.x` | release-v2 | 2.5.1 | v2 maintenance releases after v3 becomes current |
 | `feat/*` | feat-{name} | 2.1.0-feat-name.1 | Feature branch testing |
 | `fix/*` | fix-{name} | 2.1.0-fix-name.1 | Fix branch testing |
 
@@ -66,7 +74,7 @@ Version bumps are determined automatically based on commit messages:
 
 Follow the Conventional Commits specification:
 
-```
+```text
 <type>(<scope>): <subject>
 
 <body>
@@ -75,7 +83,8 @@ Follow the Conventional Commits specification:
 ```
 
 Examples:
-```
+
+```text
 feat(core): add support for async validation
 
 fix(control-wrapper): resolve aria-describedby issue
@@ -107,6 +116,7 @@ Before releasing:
 ### No version bump
 
 If semantic-release skips releasing:
+
 - Check commit messages follow Conventional Commits format
 - Ensure there are releasable commits since last release
 - Verify branch is configured in `.releaserc`
@@ -114,6 +124,7 @@ If semantic-release skips releasing:
 ### Publish fails
 
 If npm publish fails:
+
 - Check npm permissions in the repository settings
 - Verify OIDC Trusted Publisher is configured
 - Check npm registry status

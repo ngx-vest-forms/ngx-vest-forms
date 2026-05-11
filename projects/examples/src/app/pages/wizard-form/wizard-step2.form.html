@@ -20,6 +20,7 @@
           name="firstName"
           autocomplete="given-name"
           class="input-field"
+          aria-required="true"
           [ngModel]="data().firstName"
         />
       </ngx-control-wrapper>
@@ -32,6 +33,7 @@
           name="lastName"
           autocomplete="family-name"
           class="input-field"
+          aria-required="true"
           [ngModel]="data().lastName"
         />
       </ngx-control-wrapper>
@@ -45,6 +47,7 @@
         name="phone"
         autocomplete="tel"
         class="input-field"
+        aria-required="true"
         [ngModel]="data().phone"
       />
     </ngx-control-wrapper>
@@ -57,6 +60,7 @@
         name="dateOfBirth"
         autocomplete="bday"
         class="input-field"
+        aria-required="true"
         [ngModel]="data().dateOfBirth"
       />
     </ngx-control-wrapper>
@@ -92,6 +96,7 @@
             id="newsletterFrequency"
             name="newsletterFrequency"
             class="input-field"
+            aria-required="true"
             [ngModel]="data().newsletterFrequency"
           >
             <option value="">Select frequency...</option>

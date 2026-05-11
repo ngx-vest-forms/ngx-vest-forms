@@ -2,12 +2,10 @@ import { FormArray, FormControl, FormGroup } from '@angular/forms';
 import { describe, expect, it } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import {
-  cloneDeep,
   getAllFormErrors,
   getFormControlField,
   getFormGroupField,
   mergeValuesAndRawValues,
-  set,
   setValueAtPath,
 } from './form-utils';
 
@@ -329,22 +327,6 @@ describe('mergeValuesAndRawValues function', () => {
   });
 });
 
-describe('cloneDeep function', () => {
-  it('should deep clone an object', () => {
-    const original = {
-      name: 'John',
-      age: 30,
-      address: {
-        city: 'New York',
-        zip: 12345,
-      },
-    };
-    const cloned = cloneDeep(original);
-    expect(cloned).toEqual(original);
-    expect(cloned).not.toBe(original); // Ensure it's a deep clone, not a reference
-  });
-});
-
 describe('setValueAtPath function', () => {
   it('should set a value in an object at the correct path', () => {
     const object = {};
@@ -596,77 +578,6 @@ describe('setValueAtPath function', () => {
     expect(
       Object.prototype.hasOwnProperty.call(object['safe'] ?? {}, 'constructor')
     ).toBe(false);
-  });
-});
-
-describe('set function (deprecated)', () => {
-  it('should set a value in an object at the correct path', () => {
-    const obj = {};
-    set(obj, 'address.city', 'New York');
-    expect(obj).toEqual({
-      address: {
-        city: 'New York',
-      },
-    });
-  });
-
-  it('should work identically to setValueAtPath', () => {
-    const obj1 = {};
-    const obj2 = {};
-
-    set(obj1, 'user.profile.name', 'John');
-    setValueAtPath(obj2, 'user.profile.name', 'John');
-
-    expect(obj1).toEqual(obj2);
-  });
-});
-
-describe('cloneDeep', () => {
-  it('should clone primitive values', () => {
-    expect(cloneDeep(42)).toBe(42);
-    expect(cloneDeep('test')).toBe('test');
-    expect(cloneDeep(true)).toBe(true);
-    expect(cloneDeep(null)).toBe(null);
-    expect(cloneDeep(undefined)).toBeUndefined();
-  });
-
-  it('should clone Date objects', () => {
-    const date = new Date('2025-01-01');
-    const cloned = cloneDeep(date);
-    expect(cloned).toBeInstanceOf(Date);
-    expect(cloned).toEqual(date);
-    expect(cloned).not.toBe(date);
-  });
-
-  it('should clone arrays', () => {
-    const arr = [1, 2, { nested: 'value' }];
-    const cloned = cloneDeep(arr);
-    expect(cloned).toEqual(arr);
-    expect(cloned).not.toBe(arr);
-    expect(cloned[2]).not.toBe(arr[2]);
-  });
-
-  it('should clone objects', () => {
-    const obj = { a: 1, b: { nested: 'value' } };
-    const cloned = cloneDeep(obj);
-    expect(cloned).toEqual(obj);
-    expect(cloned).not.toBe(obj);
-    expect(cloned.b).not.toBe(obj.b);
-  });
-
-  it('should handle deeply nested structures', () => {
-    const obj = {
-      level1: {
-        level2: {
-          level3: [1, 2, { deep: 'value' }],
-        },
-      },
-    };
-    const cloned = cloneDeep(obj);
-    expect(cloned).toEqual(obj);
-    expect(cloned.level1.level2.level3[2]).not.toBe(
-      obj.level1.level2.level3[2]
-    );
   });
 });
 

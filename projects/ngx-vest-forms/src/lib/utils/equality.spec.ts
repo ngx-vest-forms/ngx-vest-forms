@@ -251,7 +251,12 @@ describe('Equality Utils', () => {
       expect(fastDeepEqual(fn, fn)).toBe(true);
 
       // Distinct function instances with identical source compare unequal.
-      expect(fastDeepEqual(() => 1, () => 1)).toBe(false);
+      expect(
+        fastDeepEqual(
+          () => 1,
+          () => 1
+        )
+      ).toBe(false);
 
       function namedA() {
         return 42;
@@ -277,11 +282,14 @@ describe('Equality Utils', () => {
         return root;
       };
 
-      expect(fastDeepEqual(createDeepTree(20, 'leaf'), createDeepTree(20, 'leaf'))).toBe(
-        true
-      );
       expect(
-        fastDeepEqual(createDeepTree(20, 'leaf'), createDeepTree(20, 'different'))
+        fastDeepEqual(createDeepTree(20, 'leaf'), createDeepTree(20, 'leaf'))
+      ).toBe(true);
+      expect(
+        fastDeepEqual(
+          createDeepTree(20, 'leaf'),
+          createDeepTree(20, 'different')
+        )
       ).toBe(false);
     });
 

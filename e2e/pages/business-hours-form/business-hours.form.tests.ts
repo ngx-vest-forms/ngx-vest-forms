@@ -115,6 +115,42 @@ function getAddButton(page: Page) {
   return page.getByRole('button', { name: /^Add$/i });
 }
 
+function getRemoveButtons(page: Page) {
+  return page.getByRole('button', {
+    name: /remove business hour slot/i,
+  });
+}
+
+function getRootFormError(page: Page) {
+  return page
+    .locator('form')
+    .getByText('There should be no overlap between business hours', {
+      exact: true,
+    });
+}
+
+async function getDescribedByElementTexts(
+  container: ReturnType<Page['locator']>
+): Promise<string[]> {
+  const describedBy = await container.getAttribute('aria-describedby');
+  if (!describedBy) return [];
+
+  const ids = describedBy
+    .split(/\s+/)
+    .map((id) => id.trim())
+    .filter(Boolean);
+
+  const texts: string[] = [];
+  for (const id of ids) {
+    const element = container.page().locator(`#${id}`);
+    if (await element.count()) {
+      texts.push((await element.innerText()).trim());
+    }
+  }
+
+  return texts;
+}
+
 test.describe('Business Hours Form', () => {
   test.beforeEach(async ({ page }) => {
     await navigateToBusinessHoursForm(page);
@@ -267,6 +303,35 @@ test.describe('Business Hours Form', () => {
         await expect(addButton).toBeEnabled();
       });
     });
+
+    test('should associate addValue cross-field message via aria-describedby', async ({
+      page,
+    }) => {
+      await test.step('Trigger addValue cross-field error and verify group describedby target', async () => {
+        const fromTime = getAddFromTime(page);
+        const toTime = getAddToTime(page);
+
+        await typeAndBlur(fromTime, '1700');
+        await typeAndBlur(toTime, '0900');
+
+        const addValueGroupFieldset = page.getByRole('group', {
+          name: /add new business hour slot/i,
+        });
+        await expect(addValueGroupFieldset).toHaveAttribute(
+          'aria-describedby',
+          /\S+/
+        );
+
+        await expect
+          .poll(async () => {
+            const texts = await getDescribedByElementTexts(
+              addValueGroupFieldset
+            );
+            return texts.join(' | ');
+          })
+          .toContain('From time should be earlier than to time');
+      });
+    });
   });
 
   test.describe('Multiple Time Slots Validation', () => {
@@ -318,6 +383,7 @@ test.describe('Business Hours Form', () => {
         const formValue = await readJsonPanel(page);
         const values = readBusinessHoursValues(formValue);
         await expect(values).toHaveLength(2);
+        await expect(getRootFormError(page)).toBeVisible();
       });
     });
 
@@ -343,6 +409,7 @@ test.describe('Business Hours Form', () => {
         const formValue = await readJsonPanel(page);
         const values = readBusinessHoursValues(formValue);
         await expect(values).toHaveLength(2);
+        await expect(getRootFormError(page)).toBeVisible();
       });
     });
 
@@ -367,13 +434,16 @@ test.describe('Business Hours Form', () => {
 
         await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(2);
 
+        const removeButtons = getRemoveButtons(page);
+        await expect(removeButtons).toHaveCount(2);
+
+        await expect(getRootFormError(page)).toBeVisible();
+
         // Remove the second slot
-        await page
-          .getByRole('button', { name: /^Remove$/i })
-          .nth(1)
-          .click();
+        await removeButtons.nth(1).click();
 
         await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(1);
+        await expect(getRootFormError(page)).not.toBeVisible();
       });
     });
 
@@ -467,10 +537,9 @@ test.describe('Business Hours Form', () => {
         await fillAndBlur(toTime, '1700');
         await addButton.click();
 
-        await page
-          .getByRole('button', { name: /^Remove$/i })
-          .first()
-          .click();
+        const removeButtons = getRemoveButtons(page);
+        await expect(removeButtons).toHaveCount(2);
+        await removeButtons.first().click();
 
         // Wait for form value to update after removal
         await expect
@@ -509,7 +578,9 @@ test.describe('Business Hours Form', () => {
         await fillAndBlur(toTime, '1200');
         await addButton.click();
 
-        await page.getByRole('button', { name: /^Remove$/i }).click();
+        const removeButtons = getRemoveButtons(page);
+        await expect(removeButtons).toHaveCount(1);
+        await removeButtons.first().click();
 
         await expect(
           page
