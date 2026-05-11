@@ -37,11 +37,13 @@ export type RunnableVestSuite<T> = Pick<NgxVestSuite<T>, 'only' | 'run' | 'get'>
  * Run a Vest suite for one field (or the whole form when `focus.only` is
  * omitted) and emit the resulting suite state exactly once.
  *
- * - Synchronous suite results are emitted immediately to avoid a PENDING flash
- *   in the form status.
- * - Thenable (async) results are awaited; on resolution the canonical state is
- *   read back from `suite.get()`. On rejection the same fallback applies so
- *   consumers always receive a result object.
+ * - Even at zero debounce the suite invocation is deferred by one task so
+ *   superseded validators can be unsubscribed before the suite runs.
+ * - Synchronous suite results emit on the next task without going through a
+ *   PENDING phase.
+ * - Thenable (async) results are awaited; on resolution the canonical state
+ *   is read back from `suite.get()`. On rejection the same fallback applies
+ *   so consumers always receive a result object.
  * - Subscription is automatically torn down on `destroyRef` so callers do not
  *   need a separate `takeUntilDestroyed`.
  */
