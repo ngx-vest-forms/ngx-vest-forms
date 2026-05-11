@@ -345,13 +345,13 @@ describe('createValidationConfigPipeline', () => {
     let countB = 0;
 
     const origA = ctrlA.updateValueAndValidity.bind(ctrlA);
-    ctrlA.updateValueAndValidity = (...args) => {
+    ctrlA.updateValueAndValidity = (...args: Parameters<typeof origA>) => {
       countA++;
       return origA(...args);
     };
 
     const origB = ctrlB.updateValueAndValidity.bind(ctrlB);
-    ctrlB.updateValueAndValidity = (...args) => {
+    ctrlB.updateValueAndValidity = (...args: Parameters<typeof origB>) => {
       countB++;
       return origB(...args);
     };
