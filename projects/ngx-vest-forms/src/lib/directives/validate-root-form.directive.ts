@@ -120,11 +120,11 @@ import { ValidationOptions } from './validation-options';
 export class ValidateRootFormDirective<T>
   implements AsyncValidator, AfterViewInit
 {
-  private readonly injector = inject(Injector);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly lastControl = signal<NgForm | null>(null);
+  readonly #injector = inject(Injector);
+  readonly #destroyRef = inject(DestroyRef);
+  readonly #lastControl = signal<NgForm | null>(null);
   validationOptions = input<ValidationOptions>({ debounceTime: 0 });
-  private readonly hasSubmitted = signal(false);
+  readonly #hasSubmitted = signal(false);
 
   readonly formValue = input<T | null>(null);
   readonly suite = input<NgxVestSuite<T> | null>(null);
@@ -146,7 +146,7 @@ export class ValidateRootFormDirective<T>
     // Trigger validation when hasSubmitted or formValue changes
     effect(() => {
       // Track dependencies
-      this.hasSubmitted();
+      this.#hasSubmitted();
       this.formValue();
 
       // Also track inputs that affect whether validation should run.
@@ -160,7 +160,7 @@ export class ValidateRootFormDirective<T>
       // Trigger revalidation if form exists
       // Use emitEvent: true so the form directive can update its errors
       // Use untracked() to avoid making the effect reactive to lastControl changes
-      const ngForm = untracked(() => this.lastControl());
+      const ngForm = untracked(() => this.#lastControl());
       if (ngForm?.control) {
         // Defer to the next microtask so Angular has a chance to finish
         // wiring up controls/groups (ngModel/ngModelGroup) on initial render.
@@ -168,7 +168,7 @@ export class ValidateRootFormDirective<T>
         // destroyed before the microtask fires.
         scheduleMicrotask(
           () => ngForm.control.updateValueAndValidity(),
-          this.destroyRef
+          this.#destroyRef
         );
       }
     });
@@ -182,8 +182,8 @@ export class ValidateRootFormDirective<T>
    */
   ngAfterViewInit(): void {
     // Lazily inject NgForm to avoid circular dependency
-    const ngForm = this.injector.get(NgForm, null);
-    this.lastControl.set(ngForm);
+    const ngForm = this.#injector.get(NgForm, null);
+    this.#lastControl.set(ngForm);
 
     if (!ngForm) {
       console.error(
@@ -198,16 +198,16 @@ export class ValidateRootFormDirective<T>
     // without requiring a user interaction.
     scheduleMicrotask(
       () => ngForm.control.updateValueAndValidity(),
-      this.destroyRef
+      this.#destroyRef
     );
 
     // Subscribe to form submission to set hasSubmitted flag
     ngForm.ngSubmit
       .pipe(
         tap(() => {
-          this.hasSubmitted.set(true);
+          this.#hasSubmitted.set(true);
         }),
-        takeUntilDestroyed(this.destroyRef)
+        takeUntilDestroyed(this.#destroyRef)
       )
       .subscribe();
   }
@@ -225,7 +225,7 @@ export class ValidateRootFormDirective<T>
     const mode = this.ngxValidateRootFormMode() ?? 'submit';
 
     // In 'submit' mode, skip validation until form is submitted
-    if (mode === 'submit' && !this.hasSubmitted()) {
+    if (mode === 'submit' && !this.#hasSubmitted()) {
       return of(null);
     }
 
@@ -366,7 +366,7 @@ export class ValidateRootFormDirective<T>
           return of(null);
         }),
         take(1),
-        takeUntilDestroyed(this.destroyRef)
+        takeUntilDestroyed(this.#destroyRef)
       );
     };
   }
