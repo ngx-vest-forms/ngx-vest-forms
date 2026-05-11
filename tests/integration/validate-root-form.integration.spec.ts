@@ -1,7 +1,7 @@
 import { Component, signal, Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NgxVestForms, ROOT_FORM } from 'ngx-vest-forms';
-import { enforce, only, staticSuite, test } from 'vest';
+import { create, enforce, test } from 'vest';
 
 type GeneralInfoForm = {
   generalInfo?: {
@@ -10,22 +10,17 @@ type GeneralInfoForm = {
   };
 };
 
-const issueThirteenSuite = staticSuite(
-  (model: GeneralInfoForm = {}, field?: string) => {
-    only(field);
+const issueThirteenSuite = create((model: GeneralInfoForm = {}) => {
+  test('generalInfo.firstName', 'First name is required', () => {
+    enforce(model.generalInfo?.firstName).isNotBlank();
+  });
 
-    test('generalInfo.firstName', 'First name is required', () => {
-      enforce(model.generalInfo?.firstName).isNotBlank();
-    });
-
-    test(ROOT_FORM, 'General info must be complete', () => {
-      enforce(model.generalInfo?.firstName).isNotBlank();
-    });
-  }
-);
+  test(ROOT_FORM, 'General info must be complete', () => {
+    enforce(model.generalInfo?.firstName).isNotBlank();
+  });
+});
 
 @Component({
-
   imports: [NgxVestForms],
   template: `
     <form

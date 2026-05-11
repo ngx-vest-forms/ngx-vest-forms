@@ -10,7 +10,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   AsyncValidator,
@@ -19,19 +19,11 @@ import {
   NgForm,
   ValidationErrors,
 } from '@angular/forms';
-import {
-  catchError,
-  map,
-  Observable,
-  of,
-  switchMap,
-  take,
-  tap,
-  timer,
-} from 'rxjs';
+import { catchError, map, Observable, of, tap } from 'rxjs';
 import { ROOT_FORM } from '../constants';
 import { scheduleMicrotask } from '../utils/destroy-scheduler';
-import { NgxTypedVestSuite, NgxVestSuite } from '../utils/validation-suite';
+import type { NgxVestSuite } from '../utils/validation-suite';
+import { extractFieldErrors, runFieldValidation } from '../utils/vest-runner';
 import { ValidationOptions } from './validation-options';
 
 /**
@@ -75,11 +67,11 @@ import { ValidationOptions } from './validation-options';
  *
  * @example
  * ```html
- * <form scVestForm
- *       validateRootForm
+ * <form ngxVestForm
+ *       ngxValidateRootForm
  *       [suite]="suite"
  *       [formValue]="formValue()"
- *       [validateRootFormMode]="'submit'"
+ *       [ngxValidateRootFormMode]="'submit'"
  *       (errorsChange)="errors.set($event)"
  *       #form="ngForm">
  *   <!-- form fields -->
@@ -94,9 +86,7 @@ import { ValidationOptions } from './validation-options';
  * ```typescript
  * import { ROOT_FORM } from 'ngx-vest-forms';
  *
- * export const suite = staticSuite((model, field?) => {
- *   only(field);
- *
+ * export const suite = create((model) => {
  *   test(ROOT_FORM, 'Passwords must match', () => {
  *     enforce(model.confirmPassword).equals(model.password);
  *   });
@@ -106,7 +96,7 @@ import { ValidationOptions } from './validation-options';
  * @publicApi
  */
 @Directive({
-  selector: 'form[validateRootForm], form[ngxValidateRootForm]',
+  selector: 'form[ngxValidateRootForm]',
 
   providers: [
     {
@@ -119,25 +109,15 @@ import { ValidationOptions } from './validation-options';
 export class ValidateRootFormDirective<T>
   implements AsyncValidator, AfterViewInit
 {
-  private readonly injector = inject(Injector);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly lastControl = signal<NgForm | null>(null);
+  readonly #injector = inject(Injector);
+  readonly #destroyRef = inject(DestroyRef);
+  readonly #lastControl = signal<NgForm | null>(null);
   validationOptions = input<ValidationOptions>({ debounceTime: 0 });
-  private readonly hasSubmitted = signal(false);
-  private readonly hasSubmitted$: Observable<boolean>;
-  private readonly formValue$: Observable<T | null>;
+  readonly #hasSubmitted = signal(false);
 
   readonly formValue = input<T | null>(null);
-  readonly suite = input<NgxVestSuite<T> | NgxTypedVestSuite<T> | null>(null);
+  readonly suite = input<NgxVestSuite<T> | null>(null);
 
-  /**
-   * Whether the root form should be validated or not
-   * This will use the field rootForm
-   * Accepts both validateRootForm and ngxValidateRootForm
-   */
-  readonly validateRootForm = input(false, {
-    transform: booleanAttribute,
-  });
   readonly ngxValidateRootForm = input(false, {
     transform: booleanAttribute,
   });
@@ -146,50 +126,39 @@ export class ValidateRootFormDirective<T>
    * Validation mode:
    * - `'submit'` (effective default): Only validates after form submission.
    * - `'live'`: Validates on every value change.
-   *
-   * Both inputs default to `undefined` so we can detect whether the consumer
-   * set them explicitly. Precedence is `ngx ?? legacy ?? 'submit'`, which
-   * matches the documented behavior — observable only when both attributes
-   * are set explicitly on the same form.
    */
-  readonly validateRootFormMode = input<'submit' | 'live' | undefined>(
-    undefined
-  );
   readonly ngxValidateRootFormMode = input<'submit' | 'live' | undefined>(
     undefined
   );
 
   constructor() {
-    // Convert signals to Observables in injection context
-    this.hasSubmitted$ = toObservable(this.hasSubmitted);
-    this.formValue$ = toObservable(this.formValue);
-
     // Trigger validation when hasSubmitted or formValue changes
     effect(() => {
       // Track dependencies
-      this.hasSubmitted();
+      this.#hasSubmitted();
       this.formValue();
 
       // Also track inputs that affect whether validation should run.
       // These can be set after the first validation pass and we want the
       // root form to re-evaluate once they become available.
       this.suite();
-      this.validateRootForm();
       this.ngxValidateRootForm();
-      this.validateRootFormMode();
       this.ngxValidateRootFormMode();
       this.validationOptions();
 
       // Trigger revalidation if form exists
       // Use emitEvent: true so the form directive can update its errors
       // Use untracked() to avoid making the effect reactive to lastControl changes
-      const ngForm = untracked(() => this.lastControl());
+      const ngForm = untracked(() => this.#lastControl());
       if (ngForm?.control) {
         // Defer to the next microtask so Angular has a chance to finish
         // wiring up controls/groups (ngModel/ngModelGroup) on initial render.
         // The scheduleMicrotask primitive auto-cancels if the directive is
         // destroyed before the microtask fires.
-        scheduleMicrotask(() => ngForm.control.updateValueAndValidity(), this.destroyRef);
+        scheduleMicrotask(
+          () => ngForm.control.updateValueAndValidity(),
+          this.#destroyRef
+        );
       }
     });
   }
@@ -202,13 +171,13 @@ export class ValidateRootFormDirective<T>
    */
   ngAfterViewInit(): void {
     // Lazily inject NgForm to avoid circular dependency
-    const ngForm = this.injector.get(NgForm, null);
-    this.lastControl.set(ngForm);
+    const ngForm = this.#injector.get(NgForm, null);
+    this.#lastControl.set(ngForm);
 
     if (!ngForm) {
       console.error(
-        '[ValidateRootFormDirective] NgForm not found. Ensure the directive is used on a <form> element with the scVestForm directive. ' +
-          'Common setup mistakes: (1) Missing scVestForm directive, (2) Directive on non-form element, (3) NgForm not imported in module/component.'
+        '[ValidateRootFormDirective] NgForm not found. Ensure the directive is used on a <form> element with the ngxVestForm directive. ' +
+          'Common setup mistakes: (1) Missing ngxVestForm directive, (2) Directive on non-form element, (3) NgForm not imported in module/component.'
       );
       return;
     }
@@ -216,15 +185,18 @@ export class ValidateRootFormDirective<T>
     // Ensure we run at least one validation pass after the form is ready.
     // This matters for 'live' mode root-form errors that should appear
     // without requiring a user interaction.
-    scheduleMicrotask(() => ngForm.control.updateValueAndValidity(), this.destroyRef);
+    scheduleMicrotask(
+      () => ngForm.control.updateValueAndValidity(),
+      this.#destroyRef
+    );
 
     // Subscribe to form submission to set hasSubmitted flag
     ngForm.ngSubmit
       .pipe(
         tap(() => {
-          this.hasSubmitted.set(true);
+          this.#hasSubmitted.set(true);
         }),
-        takeUntilDestroyed(this.destroyRef)
+        takeUntilDestroyed(this.#destroyRef)
       )
       .subscribe();
   }
@@ -235,22 +207,14 @@ export class ValidateRootFormDirective<T>
       return of(null);
     }
 
-    // Check both validateRootForm and ngxValidateRootForm inputs
-    const isEnabled = this.validateRootForm() || this.ngxValidateRootForm();
-    if (!isEnabled) {
+    if (!this.ngxValidateRootForm()) {
       return of(null);
     }
 
-    // Mode precedence: ngx-prefixed input wins over legacy input; both default
-    // to `undefined` so the precedence rule is implementable without losing
-    // the legacy attribute when the new one is not set.
-    const mode =
-      this.ngxValidateRootFormMode() ??
-      this.validateRootFormMode() ??
-      'submit';
+    const mode = this.ngxValidateRootFormMode() ?? 'submit';
 
     // In 'submit' mode, skip validation until form is submitted
-    if (mode === 'submit' && !this.hasSubmitted()) {
+    if (mode === 'submit' && !this.#hasSubmitted()) {
       return of(null);
     }
 
@@ -278,6 +242,11 @@ export class ValidateRootFormDirective<T>
     // not individual control values. The underscore prefix indicates intentional non-use.
 
     return (_control: AbstractControl) => {
+      const suite = this.suite();
+      if (!suite) {
+        return of(null);
+      }
+
       const currentFormValue = this.formValue();
       if (!currentFormValue) {
         return of(null);
@@ -285,58 +254,20 @@ export class ValidateRootFormDirective<T>
       // Use the formValue input which contains the actual model data
       const mod = structuredClone(currentFormValue) as T;
 
-      const debounce = validationOptions.debounceTime ?? 0;
-      const source$ =
-        debounce > 0 ? timer(debounce).pipe(map(() => mod)) : of(mod);
-
-      return source$.pipe(
-        switchMap((model) => {
-          return new Observable((observer) => {
-            try {
-              const suite = this.suite();
-              if (!suite) {
-                observer.next(null);
-                observer.complete();
-                return;
-              }
-              // NOTE: `suite` can be a union of typed and untyped suite functions.
-              // When calling a union of functions, TypeScript requires arguments
-              // to satisfy all call signatures, which can produce overly-strict
-              // errors in template type-checking. At runtime this is always the
-              // ROOT_FORM field ('rootForm'), which is valid for both variants.
-              const runSuite = suite as unknown as (
-                model: T,
-                field?: unknown
-              ) => {
-                done: (
-                  cb: (result: {
-                    getErrors: () => Record<string, string[]>;
-                  }) => void
-                ) => void;
-              };
-
-              runSuite(model, field).done((result) => {
-                const errors = result.getErrors()[field];
-                // Return { errors: string[] } format expected by getAllFormErrors()
-                observer.next(errors ? { errors } : null);
-                observer.complete();
-              });
-            } catch (err) {
-              console.error(
-                '[validate-root-form] Validation suite error:',
-                err
-              );
-              observer.next(null);
-              observer.complete();
-            }
-          }) as Observable<ValidationErrors | null>;
-        }),
+      return runFieldValidation(
+        suite,
+        { only: field },
+        mod,
+        validationOptions,
+        this.#destroyRef
+      ).pipe(
+        map((result) => extractFieldErrors(result, field)),
+        // `runFieldValidation` already applies `take(1)` and `takeUntilDestroyed`,
+        // so no additional terminal operators are needed here.
         catchError((err) => {
           console.error('[validate-root-form] Observable error:', err);
           return of(null);
-        }),
-        take(1),
-        takeUntilDestroyed(this.destroyRef)
+        })
       );
     };
   }

@@ -13,7 +13,6 @@ import { filter, map, startWith } from 'rxjs';
 import {
   NGX_ERROR_DISPLAY_MODE_TOKEN,
   NGX_WARNING_DISPLAY_MODE_TOKEN,
-  SC_ERROR_DISPLAY_MODE_TOKEN,
 } from './error-display-mode.token';
 import { FormControlStateDirective } from './form-control-state.directive';
 import { getFormSubmittedSignal } from './form-submitted-state';
@@ -26,7 +25,7 @@ import { getFormSubmittedSignal } from './form-submitted-state';
  * - 'on-dirty': Show errors as soon as the field value changes
  * - 'always': Show errors immediately, even on pristine fields
  */
-export type ScErrorDisplayMode =
+export type NgxErrorDisplayMode =
   | 'on-blur'
   | 'on-submit'
   | 'on-blur-or-submit'
@@ -46,18 +45,18 @@ export type NgxWarningDisplayMode =
   | 'on-dirty'
   | 'always';
 
-export const SC_ERROR_DISPLAY_MODE_DEFAULT: ScErrorDisplayMode =
+export const NGX_ERROR_DISPLAY_MODE_DEFAULT: NgxErrorDisplayMode =
   'on-blur-or-submit';
-export const SC_WARNING_DISPLAY_MODE_DEFAULT: NgxWarningDisplayMode =
+export const NGX_WARNING_DISPLAY_MODE_DEFAULT: NgxWarningDisplayMode =
   'on-validated-or-touch';
 
 @Directive({
-  selector: '[formErrorDisplay], [ngxErrorDisplay]',
-  exportAs: 'formErrorDisplay, ngxErrorDisplay',
+  selector: '[ngxErrorDisplay]',
+  exportAs: 'ngxErrorDisplay',
   hostDirectives: [FormControlStateDirective],
 })
 export class FormErrorDisplayDirective {
-  readonly #formControlState = inject(FormControlStateDirective);
+  readonly #controlStateDirective = inject(FormControlStateDirective);
   // Optionally inject NgForm for form submission tracking
   readonly #ngForm = inject(NgForm, { optional: true });
   readonly #formSubmittedState = this.#ngForm
@@ -68,10 +67,9 @@ export class FormErrorDisplayDirective {
    * Input signal for error display mode.
    * Works seamlessly with hostDirectives in Angular 19+.
    */
-  readonly errorDisplayMode = input<ScErrorDisplayMode>(
+  readonly errorDisplayMode = input<NgxErrorDisplayMode>(
     inject(NGX_ERROR_DISPLAY_MODE_TOKEN, { optional: true }) ??
-      inject(SC_ERROR_DISPLAY_MODE_TOKEN, { optional: true }) ??
-      SC_ERROR_DISPLAY_MODE_DEFAULT
+      NGX_ERROR_DISPLAY_MODE_DEFAULT
   );
 
   /**
@@ -80,25 +78,26 @@ export class FormErrorDisplayDirective {
    */
   readonly warningDisplayMode = input<NgxWarningDisplayMode>(
     inject(NGX_WARNING_DISPLAY_MODE_TOKEN, { optional: true }) ??
-      SC_WARNING_DISPLAY_MODE_DEFAULT
+      NGX_WARNING_DISPLAY_MODE_DEFAULT
   );
 
   // Expose state signals from FormControlStateDirective
-  readonly controlState = this.#formControlState.controlState;
-  readonly errorMessages = this.#formControlState.errorMessages;
-  readonly warningMessages = this.#formControlState.warningMessages;
-  readonly hasPendingValidation = this.#formControlState.hasPendingValidation;
-  readonly isTouched = this.#formControlState.isTouched;
-  readonly isDirty = this.#formControlState.isDirty;
-  readonly isValid = this.#formControlState.isValid;
-  readonly isInvalid = this.#formControlState.isInvalid;
-  readonly hasBeenValidated = this.#formControlState.hasBeenValidated;
+  readonly controlState = this.#controlStateDirective.controlState;
+  readonly errorMessages = this.#controlStateDirective.errorMessages;
+  readonly warningMessages = this.#controlStateDirective.warningMessages;
+  readonly hasPendingValidation =
+    this.#controlStateDirective.hasPendingValidation;
+  readonly isTouched = this.#controlStateDirective.isTouched;
+  readonly isDirty = this.#controlStateDirective.isDirty;
+  readonly isValid = this.#controlStateDirective.isValid;
+  readonly isInvalid = this.#controlStateDirective.isInvalid;
+  readonly hasBeenValidated = this.#controlStateDirective.hasBeenValidated;
   /**
    * Expose updateOn and formSubmitted as public signals for advanced consumers.
    * updateOn: The ngModelOptions.updateOn value for the control (change/blur/submit)
    * formSubmitted: true after the form is submitted (if NgForm is present)
    */
-  readonly updateOn = this.#formControlState.updateOn;
+  readonly updateOn = this.#controlStateDirective.updateOn;
 
   /**
    * Signal that tracks NgForm.submitted state reactively.
@@ -227,7 +226,7 @@ export class FormErrorDisplayDirective {
   readonly isPending: Signal<boolean> = computed(() => {
     // Don't show pending state for pristine untouched controls
     // This prevents "Validating..." message appearing on initial page load
-    const state = this.#formControlState.controlState();
+    const state = this.#controlStateDirective.controlState();
     if (state.isPristine && !state.isTouched) {
       return false;
     }

@@ -21,7 +21,7 @@ type Primitive = string | number | boolean | Date | null | undefined;
  *
  * **Key Features:**
  * - Supports nested objects with dot notation (e.g., 'user.address.city')
- * - Works with optional properties from DeepPartial types
+ * - Works with optional properties from NgxDeepPartial types
  * - Handles arrays and readonly arrays
  * - Stops recursion at primitive types
  * - Maximum depth of 10 levels to prevent infinite recursion
@@ -52,9 +52,9 @@ type Primitive = string | number | boolean | Date | null | undefined;
  * /// Result: 'name' | 'profile' | 'profile.age' | 'profile.address' | 'profile.address.city'
  * ```
  *
- * @example With DeepPartial
+ * @example With NgxDeepPartial
  * ```typescript
- * type FormModel = DeepPartial<{
+ * type FormModel = NgxDeepPartial<{
  *   user: {
  *     email: string;
  *     phone: string;
@@ -109,7 +109,7 @@ export type FieldPath<
  *
  * @example
  * ```typescript
- * type FormModel = DeepPartial<{
+ * type FormModel = NgxDeepPartial<{
  *   password: string;
  *   confirmPassword: string;
  *   addresses: {
@@ -151,15 +151,13 @@ export type ValidationConfigMap<T> = Partial<
  * ```typescript
  * import { ROOT_FORM } from 'ngx-vest-forms';
  *
- * type FormModel = DeepPartial<{
+ * type FormModel = NgxDeepPartial<{
  *   email: string;
  *   user: { name: string; }
  * }>;
  *
- * export const suite = staticSuite(
- *   (data: FormModel, field?: FormFieldName<FormModel>) => {
- *     only(field);
- *
+ * export const suite = create(
+ *   (data: FormModel) => {
  *     /// ✅ Autocomplete works
  *     test('email', 'Required', () => {
  *       enforce(data.email).isNotBlank();

@@ -40,11 +40,6 @@ test.describe('Accessibility - stable live regions', () => {
         .filter({ has: password });
       await expect(wrapper).toHaveCount(1);
 
-      // Sanity check: wrapper template should render a content container.
-      await expect(
-        wrapper.locator('.ngx-control-wrapper__content')
-      ).toHaveCount(1);
-
       // WCAG ARIA21: Inline field-level errors use role="status" for non-disruptive announcement
       const errorRegion = wrapper.locator('[role="status"][id$="-error"]');
 

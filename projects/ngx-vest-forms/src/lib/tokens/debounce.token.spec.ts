@@ -1,7 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
-import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from './debounce.token';
+import {
+  NGX_VALIDATION_CONFIG_DEBOUNCE_DEFAULT,
+  NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+} from './debounce.token';
+import { NGX_VALIDATION_DEBOUNCE_PRESETS } from './validation-debounce-presets';
 
 describe('NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN', () => {
   it('should have default value from constant', () => {
@@ -15,7 +19,24 @@ describe('NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN', () => {
     const fixture = TestBed.createComponent(TestComponent);
     const component = fixture.componentInstance;
 
-    expect(component.debounceTime).toBe(100);
+    expect(component.debounceTime).toBe(NGX_VALIDATION_CONFIG_DEBOUNCE_DEFAULT);
+  });
+
+  it('should align the default constant with the documented preset', () => {
+    expect(NGX_VALIDATION_CONFIG_DEBOUNCE_DEFAULT).toBe(
+      NGX_VALIDATION_DEBOUNCE_PRESETS.default
+    );
+  });
+
+  it('should expose named debounce presets for common use cases', () => {
+    expect(NGX_VALIDATION_DEBOUNCE_PRESETS).toEqual({
+      immediate: 0,
+      fast: 100,
+      default: 100,
+      relaxed: 150,
+      typing: 300,
+      async: 500,
+    });
   });
 
   it('should allow global configuration via providers', () => {

@@ -1,84 +1,134 @@
-import { NgxTypedVestSuite, NgxVestSuite } from './validation-suite';
+import { DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ValidationErrors } from '@angular/forms';
+import {
+  Observable,
+  catchError,
+  defer,
+  from,
+  map,
+  of,
+  switchMap,
+  take,
+  timer,
+} from 'rxjs';
+import type { ValidationOptions } from '../directives/validation-options';
+import type { NgxSuiteRunResult, NgxVestSuite } from './validation-suite';
 
 /**
- * Vest focus options exposed by ngx-vest-forms for field-level async validation.
- *
- * `only` and `skip` target field names while `onlyGroup` and `skipGroup` target
- * suite groups (useful for multi-step flows). During field-level validation,
- * ngx-vest-forms always overrides `only` with the active field path.
+ * Focus spec describing which subset of the suite to run.
  */
-export type NgxValidationFocus = {
+export type NgxSuiteFocusSpec = {
   only?: string;
   skip?: string;
   onlyGroup?: string | readonly string[];
   skipGroup?: string | readonly string[];
 };
 
-type VestDoneResult = {
-  done(callback: (result: unknown) => void): void;
+type FocusRunResult<T> = {
+  run(model: T): NgxSuiteRunResult;
 };
 
-type VestFocusedRunner<T> = {
-  run(model: T): VestDoneResult;
+/**
+ * Structural subset of `NgxVestSuite` the runner depends on. Keeps the runner
+ * decoupled from method names the call sites do not need (reset, dump, etc.).
+ */
+export type RunnableVestSuite<T> = Pick<NgxVestSuite<T>, 'only' | 'run' | 'get'> & {
+  focus?: (focus: NgxSuiteFocusSpec) => FocusRunResult<T>;
 };
 
-type VestFocusCapableSuite<T> = {
-  focus(focus: NgxValidationFocus): VestFocusedRunner<T>;
-};
+/**
+ * Run a Vest suite for one field (or the whole form when the focus spec is empty)
+ * and emit the resulting suite state exactly once.
+ *
+ * - Even at zero debounce the suite invocation is deferred by one task so
+ *   superseded validators can be unsubscribed before the suite runs.
+ * - Synchronous suite results emit on the next task without going through a
+ *   PENDING phase.
+ * - Thenable (async) results are awaited; on resolution the canonical state
+ *   is read back from `suite.get()`. On rejection the same fallback applies
+ *   so consumers always receive a result object.
+ * - Subscription is automatically torn down on `destroyRef` so callers do not
+ *   need a separate `takeUntilDestroyed`.
+ */
+export function runFieldValidation<T>(
+  suite: RunnableVestSuite<T>,
+  focus: NgxSuiteFocusSpec,
+  model: T,
+  options: ValidationOptions,
+  destroyRef: DestroyRef
+): Observable<NgxSuiteRunResult> {
+  const debounce = options.debounceTime ?? 0;
 
-type VestOnlyCapableSuite<T> = {
-  only(field: string): VestFocusedRunner<T>;
-};
-
-function isFocusedRunner<T>(value: unknown): value is VestFocusedRunner<T> {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'run' in value &&
-    typeof (value as { run?: unknown }).run === 'function'
+  return timer(debounce).pipe(
+    switchMap(() => defer(() => runSuite(suite, focus, model))),
+    take(1),
+    takeUntilDestroyed(destroyRef)
   );
 }
 
-/**
- * Runs a field-level Vest validation with API compatibility across Vest versions.
- *
- * Resolution order:
- * 1. `suite.focus({...validationFocus, only: field}).run(model)` when focus API exists
- * 2. `suite.only(field).run(model)` when only API exists
- * 3. Legacy invocation `suite(model, field)` as a final fallback
- */
-export function runVestFieldValidation<T>(
-  suite: NgxVestSuite<T> | NgxTypedVestSuite<T>,
-  model: T,
-  field: string,
-  validationFocus: NgxValidationFocus | null | undefined
-): VestDoneResult {
-  const focusCapableSuite = suite as unknown as VestFocusCapableSuite<T>;
-  if (validationFocus && typeof focusCapableSuite.focus === 'function') {
-    try {
-      const focused = focusCapableSuite.focus({
-        ...validationFocus,
-        only: field,
-      });
-      if (isFocusedRunner<T>(focused)) {
-        return focused.run(model);
-      }
-    } catch {
-      // Fall back to the legacy invocation below.
-    }
+export function extractFieldErrors(
+  result: NgxSuiteRunResult,
+  field: string
+): ValidationErrors | null {
+  const errors = result.getErrors(field);
+  if (!errors?.length) {
+    return null;
+  }
+  const warnings = extractFieldWarnings(result, field);
+  return warnings?.length ? { errors, warnings } : { errors };
+}
+
+export function extractFieldWarnings(
+  result: NgxSuiteRunResult,
+  field: string
+): string[] | undefined {
+  const warnings = result.getWarnings(field);
+  return warnings?.length ? warnings : undefined;
+}
+
+function isThenable(
+  value: NgxSuiteRunResult
+): value is NgxSuiteRunResult & PromiseLike<NgxSuiteRunResult> {
+  return typeof value.then === 'function';
+}
+
+function isEmptyFocusSpec(focus: NgxSuiteFocusSpec): boolean {
+  const onlyGroup = Array.isArray(focus.onlyGroup)
+    ? focus.onlyGroup.length
+    : focus.onlyGroup;
+  const skipGroup = Array.isArray(focus.skipGroup)
+    ? focus.skipGroup.length
+    : focus.skipGroup;
+  return (
+    focus.only === undefined &&
+    focus.skip === undefined &&
+    onlyGroup === undefined &&
+    skipGroup === undefined
+  );
+}
+
+function runSuite<T>(
+  suite: RunnableVestSuite<T>,
+  focus: NgxSuiteFocusSpec,
+  model: T
+): Observable<NgxSuiteRunResult> {
+  let result: NgxSuiteRunResult;
+
+  if (!isEmptyFocusSpec(focus) && typeof suite.focus === 'function') {
+    result = suite.focus(focus).run(model);
+  } else if (focus.only !== undefined) {
+    result = suite.only(focus.only).run(model);
+  } else {
+    result = suite.run(model);
   }
 
-  const onlyCapableSuite = suite as unknown as VestOnlyCapableSuite<T>;
-  if (typeof onlyCapableSuite.only === 'function') {
-    try {
-      const focused = onlyCapableSuite.only(field);
-      if (isFocusedRunner<T>(focused)) {
-        return focused.run(model);
-      }
-    } catch {
-      // Fall back to the legacy invocation below.
-    }
+  if (!isThenable(result)) {
+    return of(result);
   }
 
-  return (suite as NgxVestSuite<T>)(model, field);
+  return from(result).pipe(
+    map(() => suite.get()),
+    catchError(() => of(suite.get()))
+  );
 }

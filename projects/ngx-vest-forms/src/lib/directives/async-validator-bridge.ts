@@ -45,6 +45,13 @@ export function runAsyncValidationBridge(
 
   const field = resolveField(control);
   if (!field) {
+    // Standalone helper inputs (for example search/add rows inside form-aware child
+    // components) intentionally do not participate in the parent form tree.
+    // Treat them as a silent fail-open case instead of logging a confusing warning.
+    if (!control.parent) {
+      return of(null);
+    }
+
     if (isDevMode()) {
       console.warn(
         `[ngx-vest-forms] ${source}: Could not resolve control path. Ensure the control has a valid name/path and is registered in the form tree.`

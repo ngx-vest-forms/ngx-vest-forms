@@ -1,14 +1,13 @@
 import { ApplicationRef, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
+import { create, enforce, omitWhen, test } from 'vest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
 import type { NgxDeepPartial } from '../utils/deep-partial';
 
 type TestModel = NgxDeepPartial<{ flag: boolean; reason: string }>;
 
-const testSuite = staticSuite((model: TestModel, field?: string) => {
-  only(field);
+const testSuite = create((model: TestModel) => {
   omitWhen(!model.flag, () => {
     test('reason', 'Reason is required', () => {
       enforce(model.reason).isNotBlank();
@@ -59,10 +58,8 @@ type DependentBlurModel = NgxDeepPartial<{
   justification: string;
 }>;
 
-const dependentBlurSuite = staticSuite(
-  (model: DependentBlurModel, field?: string) => {
-    only(field);
-
+function createDependentBlurSuite() {
+  return create((model: DependentBlurModel = {}) => {
     omitWhen(!model.quantity, () => {
       test('justification', 'Justification is required', () => {
         enforce(model.justification).isNotBlank();
@@ -74,8 +71,8 @@ const dependentBlurSuite = staticSuite(
         enforce(model.quantity).isNotBlank();
       });
     });
-  }
-);
+  });
+}
 
 @Component({
   imports: [NgxVestForms],
@@ -89,11 +86,7 @@ const dependentBlurSuite = staticSuite(
     >
       <ngx-control-wrapper [errorDisplayMode]="'on-blur'">
         <label for="quantity">Quantity</label>
-        <input
-          id="quantity"
-          name="quantity"
-          [ngModel]="formValue().quantity"
-        />
+        <input id="quantity" name="quantity" [ngModel]="formValue().quantity" />
       </ngx-control-wrapper>
 
       <ngx-control-wrapper [errorDisplayMode]="'on-blur'">
@@ -109,7 +102,7 @@ const dependentBlurSuite = staticSuite(
 })
 class DependentBlurDisplayModeComponent {
   readonly formValue = signal<DependentBlurModel>({});
-  readonly suite = dependentBlurSuite;
+  readonly suite = createDependentBlurSuite();
   readonly validationConfig = {
     quantity: ['justification'],
     justification: ['quantity'],
@@ -122,9 +115,7 @@ type CascadeModel = NgxDeepPartial<{
   zipCode: string;
 }>;
 
-const cascadeSuite = staticSuite((model: CascadeModel, field?: string) => {
-  only(field);
-
+const cascadeSuite = create((model: CascadeModel) => {
   test('country', 'Country is required', () => {
     enforce(model.country).isNotBlank();
   });
@@ -184,9 +175,7 @@ type DateModel = NgxDeepPartial<{
   endDate: string;
 }>;
 
-const dateSuite = staticSuite((model: DateModel, field?: string) => {
-  only(field);
-
+const dateSuite = create((model: DateModel) => {
   test('startDate', 'Start date is required', () => {
     enforce(model.startDate).isNotEmpty();
   });
@@ -436,18 +425,20 @@ describe('ValidationConfig Error Display', () => {
     await TestBed.inject(ApplicationRef).whenStable();
 
     await expect
-      .poll(
-        () => justificationTextarea.classList.contains('ng-invalid'),
-        { timeout: 2000, interval: 100 }
-      )
+      .poll(() => justificationTextarea.classList.contains('ng-invalid'), {
+        timeout: 2000,
+        interval: 100,
+      })
       .toBe(true);
 
-    const justificationWrapper =
-      justificationTextarea.closest('ngx-control-wrapper');
+    const justificationWrapper = justificationTextarea.closest(
+      'ngx-control-wrapper'
+    );
 
     expect(
-      justificationWrapper?.textContent?.includes('Justification is required') ??
-        false
+      justificationWrapper?.textContent?.includes(
+        'Justification is required'
+      ) ?? false
     ).toBe(false);
     expect(justificationTextarea.classList.contains('ng-untouched')).toBe(true);
 

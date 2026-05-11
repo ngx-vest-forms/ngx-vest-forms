@@ -2,18 +2,14 @@
  * Public API Surface of ngx-vest-forms
  */
 
-export { NgxVestForms, vestForms, vestFormsViewProviders } from './lib/exports';
+export { NgxVestForms, vestFormsViewProviders } from './lib/exports';
 
 // Type utilities
-export type { DeepPartial, NgxDeepPartial } from './lib/utils/deep-partial';
+export type { NgxDeepPartial } from './lib/utils/deep-partial';
 export type {
-  DeepRequired,
-  FormCompatibleDeepRequired,
   NgxDeepRequired,
   NgxFormCompatibleDeepRequired,
 } from './lib/utils/deep-required';
-/** @deprecated Use ROOT_FORM from 'ngx-vest-forms' instead */
-export { ROOT_FORM as ROOT_FORM_CONSTANT } from './lib/utils/field-path-types';
 export type {
   FieldPath,
   FieldPathValue,
@@ -22,15 +18,23 @@ export type {
   ValidateFieldPath,
   ValidationConfigMap,
 } from './lib/utils/field-path-types';
-export { createEmptyFormState } from './lib/utils/form-state.utils';
-export type { NgxFormState } from './lib/utils/form-state.utils';
+export {
+  createEmptyFormState,
+  createFormFeedbackSignals,
+  fieldWarningsToRecord,
+} from './lib/utils/form-state.utils';
+export type {
+  NgxFormFeedbackSignals,
+  NgxFormFeedbackSource,
+  NgxFormState,
+} from './lib/utils/form-state.utils';
 export {
   ValidationConfigBuilder,
   createValidationConfig,
 } from './lib/utils/validation-config-builder';
 export type {
   NgxFieldKey,
-  NgxTypedVestSuite,
+  NgxSuiteRunResult,
   NgxVestSuite,
 } from './lib/utils/validation-suite';
 
@@ -77,12 +81,6 @@ export type { AriaAssociationMode } from './lib/utils/aria-association.utils';
   mergeValuesAndRawValues,
 } from './lib/utils/form-utils';
 
-// Deprecated - kept for backward compatibility, will be removed in future major version
-/** @deprecated Use setValueAtPath instead */ export {
-  cloneDeep,
-  set,
-} from './lib/utils/form-utils';
-
 // Constants
 export { ROOT_FORM } from './lib/constants';
 
@@ -90,11 +88,15 @@ export { ROOT_FORM } from './lib/constants';
 export {
   NGX_ERROR_DISPLAY_MODE_TOKEN,
   NGX_WARNING_DISPLAY_MODE_TOKEN,
-  SC_ERROR_DISPLAY_MODE_TOKEN,
 } from './lib/directives/error-display-mode.token';
-export { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from './lib/tokens/debounce.token';
+export {
+  NGX_VALIDATION_CONFIG_DEBOUNCE_DEFAULT,
+  NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+} from './lib/tokens/debounce.token';
 export { NGX_EQUALITY_FN } from './lib/tokens/equality.token';
 export type { NgxEqualityFn } from './lib/tokens/equality.token';
+export { NGX_VALIDATION_DEBOUNCE_PRESETS } from './lib/tokens/validation-debounce-presets';
+export type { NgxValidationDebouncePreset } from './lib/tokens/validation-debounce-presets';
 
 // Components
 export { ControlWrapperComponent } from './lib/components/control-wrapper/control-wrapper.component';
@@ -105,8 +107,8 @@ export { FormControlStateDirective } from './lib/directives/form-control-state.d
 export { FormErrorControlDirective } from './lib/directives/form-error-control.directive';
 export { FormErrorDisplayDirective } from './lib/directives/form-error-display.directive';
 export type {
+  NgxErrorDisplayMode,
   NgxWarningDisplayMode,
-  ScErrorDisplayMode,
 } from './lib/directives/form-error-display.directive';
 export { FormModelGroupDirective } from './lib/directives/form-model-group.directive';
 export { FormModelDirective } from './lib/directives/form-model.directive';

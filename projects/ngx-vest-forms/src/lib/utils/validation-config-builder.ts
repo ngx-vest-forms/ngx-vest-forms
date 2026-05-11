@@ -345,7 +345,7 @@ export class ValidationConfigBuilder<T> {
    * Build the final validation configuration object.
    *
    * Returns a deep copy of the configuration to prevent accidental mutations.
-   * The returned object can be used with the `validationConfig` input of `scVestForm`.
+   * The returned object can be used with the `validationConfig` input of `ngxVestForm`.
    *
    * @returns Immutable ValidationConfigMap ready for use
    *
@@ -386,9 +386,9 @@ export class ValidationConfigBuilder<T> {
  *   .build();
  * ```
  *
- * @example With DeepPartial form model
+ * @example With NgxDeepPartial form model
  * ```typescript
- * type FormModel = DeepPartial<{
+ * type FormModel = NgxDeepPartial<{
  *   user: {
  *     profile: {
  *       email: string;
