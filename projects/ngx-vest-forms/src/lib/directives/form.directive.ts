@@ -1197,8 +1197,9 @@ export class FormDirective<T extends Record<string, unknown>> {
 
           return out;
         }),
-        catchError(() => of({ vestInternalError: 'Validation failed' })),
-        take(1)
+        // `runFieldValidation` already applies `take(1)` and `takeUntilDestroyed`,
+        // so no additional terminal operators are needed here.
+        catchError(() => of({ vestInternalError: 'Validation failed' }))
       );
     };
   }

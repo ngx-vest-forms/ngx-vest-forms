@@ -19,14 +19,7 @@ import {
   NgForm,
   ValidationErrors,
 } from '@angular/forms';
-import {
-  catchError,
-  map,
-  Observable,
-  of,
-  take,
-  tap,
-} from 'rxjs';
+import { catchError, map, Observable, of, tap } from 'rxjs';
 import { ROOT_FORM } from '../constants';
 import { scheduleMicrotask } from '../utils/destroy-scheduler';
 import type { NgxVestSuite } from '../utils/validation-suite';
@@ -269,12 +262,12 @@ export class ValidateRootFormDirective<T>
         this.#destroyRef
       ).pipe(
         map((result) => extractFieldErrors(result, field)),
+        // `runFieldValidation` already applies `take(1)` and `takeUntilDestroyed`,
+        // so no additional terminal operators are needed here.
         catchError((err) => {
           console.error('[validate-root-form] Observable error:', err);
           return of(null);
-        }),
-        take(1),
-        takeUntilDestroyed(this.#destroyRef)
+        })
       );
     };
   }

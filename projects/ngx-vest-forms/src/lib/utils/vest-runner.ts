@@ -70,7 +70,7 @@ export function extractFieldErrors(
   result: NgxSuiteRunResult,
   field: string
 ): ValidationErrors | null {
-  const errors = pickFieldMessages(result.getErrors(field), field);
+  const errors = result.getErrors(field);
   if (!errors?.length) {
     return null;
   }
@@ -82,21 +82,14 @@ export function extractFieldWarnings(
   result: NgxSuiteRunResult,
   field: string
 ): string[] | undefined {
-  const warnings = pickFieldMessages(result.getWarnings(field), field);
+  const warnings = result.getWarnings(field);
   return warnings?.length ? warnings : undefined;
 }
 
-// Defensive: Vest's typed overload returns `string[]` when called with a field,
-// but some suite shapes (and test doubles) return the whole `Record<string, string[]>`
-// regardless of arguments. Normalize both into `string[]` for the requested field.
-function pickFieldMessages(
-  messages: string[] | Record<string, string[]> | undefined,
-  field: string
-): string[] | undefined {
-  if (!messages) {
-    return undefined;
-  }
-  return Array.isArray(messages) ? messages : messages[field];
+function isThenable(
+  value: NgxSuiteRunResult
+): value is NgxSuiteRunResult & PromiseLike<NgxSuiteRunResult> {
+  return typeof value.then === 'function';
 }
 
 function runSuite<T>(
@@ -109,11 +102,15 @@ function runSuite<T>(
       ? suite.only(focus.only).run(model)
       : suite.run(model);
 
-  if (typeof result.then !== 'function') {
+  if (!isThenable(result)) {
     return of(result);
   }
 
-  return from(result as unknown as PromiseLike<NgxSuiteRunResult>).pipe(
+  // The resolved value is intentionally discarded — `suite.get()` returns the
+  // canonical post-run state (including any sync tests that completed after
+  // the async ones started). Same fallback applies on rejection so consumers
+  // always receive a result object.
+  return from(result).pipe(
     map(() => suite.get()),
     catchError(() => of(suite.get()))
   );

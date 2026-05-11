@@ -7,6 +7,14 @@ import {
   type RunnableVestSuite,
 } from './vest-runner';
 
+// Compile-time check that `NgxVestSuite` is assignable to `RunnableVestSuite`.
+// No runtime assertion is needed: if the assignment fails type-checking, the
+// build breaks. Kept at module scope so the check runs once per file.
+const _assertAssignable: (
+  suite: NgxVestSuite<{ username: string }>
+) => RunnableVestSuite<{ username: string }> = (suite) => suite;
+void _assertAssignable;
+
 function createMockDestroyRef(): {
   destroyRef: DestroyRef;
   destroy: () => void;
@@ -269,11 +277,4 @@ describe('vest-runner', () => {
     expect(complete).toHaveBeenCalledOnce();
   });
 
-  it('exposes Vest-suite reference shape via RunnableVestSuite for type compatibility', () => {
-    // Compile-time check that NgxVestSuite assigns to RunnableVestSuite.
-    const _typeCheck = (
-      suite: NgxVestSuite<TestModel>
-    ): RunnableVestSuite<TestModel> => suite;
-    expect(_typeCheck).toBeDefined();
-  });
 });
