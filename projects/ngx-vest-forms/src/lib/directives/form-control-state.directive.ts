@@ -121,36 +121,29 @@ export class FormControlStateDirective {
   );
 
   /**
-   * Tick bumped once via `afterNextRender` if `control.control` is undefined
-   * at the first effect run (NgModel registers asynchronously). Reading this
-   * signal inside the effect causes a re-evaluation after the next render so
-   * we pick up the late-attached `FormControl`. Bookkeeping below ensures we
-   * only schedule a single retry — no permanent polling.
+   * Holds the `#activeControl` instance for which the most recent
+   * `afterNextRender` late-attach retry has fired. Reading this signal inside
+   * the effect creates a reactive dependency so the effect re-evaluates once
+   * the retry completes.
+   *
+   * It also acts as the retry latch: once set to a given control instance, any
+   * further effect runs for that same instance skip re-scheduling. When
+   * `#activeControl` resolves to a different control — whether the directive
+   * is remounted by an outer `@if` or the host's inner `NgModel` /
+   * `NgModelGroup` is swapped while this directive stays mounted — the
+   * `lateAttachFor !== control` identity check in the effect naturally fails
+   * for the new instance, re-allowing exactly one retry.
    */
-  readonly #controlAttachTick = signal(0);
-  // Latch is scoped to the *current* `#activeControl` instance. When the
-  // active control changes (e.g. host swaps an `@if` block, NgModel
-  // recreates), the latch resets so a fresh late-attach gets one retry.
-  #controlAttachRetryScheduled = false;
-  #lastSeenActiveControl: AbstractControlDirective | null = null;
+  readonly #lateAttachFor = signal<AbstractControlDirective | null>(null);
 
   constructor() {
     // Update control state reactively with proper cleanup
     effect((onCleanup) => {
       const control = this.#activeControl();
       const interaction = this.#interactionState();
-      // Track the retry tick so a late-attached `control.control` re-runs this
-      // effect after the next render.
-      this.#controlAttachTick();
-
-      // Re-arm the late-attach latch whenever the active control identity
-      // changes — including transitions to/from null — so a newly mounted
-      // directive whose `FormControl` registers asynchronously gets its own
-      // single retry.
-      if (control !== this.#lastSeenActiveControl) {
-        this.#lastSeenActiveControl = control;
-        this.#controlAttachRetryScheduled = false;
-      }
+      // Read the late-attach signal to establish a reactive dependency so the
+      // effect re-runs once the afterNextRender retry fires.
+      const lateAttachFor = this.#lateAttachFor();
 
       if (!control) {
         this.#controlStateSignal.set(INITIAL_FORM_CONTROL_STATE);
@@ -159,16 +152,25 @@ export class FormControlStateDirective {
 
       // NgModel attaches its `FormControl` during its own ngOnInit, which can
       // run after this effect's first execution in some host orderings. If
-      // `control.control` isn't there yet, schedule a single `afterNextRender`
+      // `control.control` isn't there yet, schedule one `afterNextRender`
       // retry so we re-evaluate once Angular finishes wiring directives.
-      if (!control.control && !this.#controlAttachRetryScheduled) {
-        this.#controlAttachRetryScheduled = true;
-        afterNextRender(
-          () => {
-            this.#controlAttachTick.update((v) => v + 1);
-          },
-          { injector: this.#injector }
-        );
+      //
+      // The `lateAttachFor !== control` guard is the latch: once the retry
+      // has fired and set the signal to `control`, subsequent runs for that
+      // same instance skip re-scheduling, preventing infinite loops if
+      // `control.control` is still null after the retry (edge case).
+      // A new `#activeControl` identity automatically resets the latch.
+      if (!control.control) {
+        if (lateAttachFor !== control) {
+          afterNextRender(
+            () => {
+              if (this.#activeControl() === control) {
+                this.#lateAttachFor.set(control);
+              }
+            },
+            { injector: this.#injector }
+          );
+        }
         return;
       }
 

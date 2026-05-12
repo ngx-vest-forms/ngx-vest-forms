@@ -23,7 +23,6 @@ import {
 import {
   AbstractControl,
   AsyncValidatorFn,
-  FormGroup,
   NgForm,
   PristineChangeEvent,
   StatusChangeEvent,
@@ -31,29 +30,27 @@ import {
 } from '@angular/forms';
 import {
   catchError,
-  debounceTime,
   distinctUntilChanged,
-  EMPTY,
   filter,
   map,
-  Observable,
   of,
-  race,
   merge as rxMerge,
   scan,
   startWith,
   switchMap,
   take,
-  tap,
-  timer,
 } from 'rxjs';
 import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import { NGX_EQUALITY_FN } from '../tokens/equality.token';
 import type { NgxDeepRequired } from '../utils/deep-required';
-import { scheduleMicrotask, scheduleTimeout } from '../utils/destroy-scheduler';
+import { scheduleMicrotask } from '../utils/destroy-scheduler';
 import type { ValidationConfigMap } from '../utils/field-path-types';
 import { collectTouchedPaths } from '../utils/collect-touched-paths';
+import {
+  createValidationConfigPipeline,
+  type ValidationConfigPipelineOptions,
+} from '../utils/validation-config-pipeline';
 import {
   DEFAULT_FOCUS_SELECTOR,
   DEFAULT_INVALID_SELECTOR,
@@ -88,11 +85,15 @@ import {
 import { ValidationOptions } from './validation-options';
 
 /**
- * Duration (in milliseconds) to keep fields marked as "in-progress" after validation.
- * This prevents immediate re-triggering of bidirectional validations.
- * Increased from 100ms to 500ms to give validators enough time to complete and propagate.
+ * Timing options passed to the validation-config pipeline.
+ * These are the concrete values for the named knobs defined in
+ * {@link ValidationConfigPipelineOptions}.
  */
-const VALIDATION_IN_PROGRESS_TIMEOUT_MS = 500;
+const PIPELINE_OPTIONS = {
+  idleWaitTimeoutMs: 2000,
+  dependentExistenceTimeoutMs: 2000,
+  validationInProgressCooldownMs: 500,
+} as const satisfies Omit<ValidationConfigPipelineOptions, 'configDebounceTime'>;
 
 /**
  * Type for validation configuration that accepts both the typed and untyped versions.
@@ -485,11 +486,6 @@ export class FormDirective<T extends Record<string, unknown>> {
    */
   readonly fieldBlur = output<NgxFieldBlurEvent<T>>();
 
-  /**
-   * Track validation in progress to prevent circular triggering (Issue #19)
-   */
-  readonly #validationInProgress = new Set<string>();
-
   constructor() {
     this.#destroyRef.onDestroy(() => {
       this.fieldWarnings.set(new Map());
@@ -603,8 +599,28 @@ export class FormDirective<T extends Record<string, unknown>> {
       }
     });
 
-    // Set up validation config reactively
-    this.#setupValidationConfig();
+    // Compose the validation-config pipeline.  Switching on every config change
+    // automatically tears down the previous pipeline instance (and its fresh
+    // validationInProgress Set) before creating the new one.
+    const form = this.ngForm.form;
+    toObservable(this.validationConfig)
+      .pipe(
+        distinctUntilChanged(),
+        switchMap((config) =>
+          createValidationConfigPipeline(
+            form,
+            config as ValidationConfigMap<T> | null | undefined,
+            {
+              configDebounceTime: this.#configDebounceTime,
+              ...PIPELINE_OPTIONS,
+            },
+            this.#cdr,
+            this.#destroyRef
+          )
+        ),
+        takeUntilDestroyed(this.#destroyRef)
+      )
+      .subscribe();
   }
 
   /**
@@ -1218,271 +1234,6 @@ export class FormDirective<T extends Record<string, unknown>> {
         catchError(() => of({ vestInternalError: 'Validation failed' }))
       );
     };
-  }
-
-  /**
-   * Set up validation config reactively using v2 pattern with toObservable + switchMap.
-   * This provides automatic cleanup when config changes.
-   */
-  #setupValidationConfig(): void {
-    const form = this.ngForm.form;
-    toObservable(this.validationConfig)
-      .pipe(
-        distinctUntilChanged(),
-        switchMap((config) => {
-          // Cast to the expected type for the helper method
-          const typedConfig = config as
-            | ValidationConfigMap<T>
-            | null
-            | undefined;
-          return this.#createValidationStreams(form, typedConfig);
-        }),
-        takeUntilDestroyed(this.#destroyRef)
-      )
-      .subscribe();
-  }
-
-  /**
-   * Creates validation streams for the provided configuration.
-   * Returns EMPTY if config is null/undefined, otherwise merges all trigger field streams.
-   *
-   * @param form - The NgForm instance
-   * @param config - The validation configuration mapping trigger fields to dependent fields
-   * @returns Observable that emits when any trigger field changes and dependent fields need validation
-   */
-  #createValidationStreams(
-    form: FormGroup,
-    config: ValidationConfigMap<T> | null | undefined
-  ): Observable<unknown> {
-    if (!config) {
-      this.#validationInProgress.clear();
-      return EMPTY;
-    }
-
-    const streams = Object.entries(config as Record<string, string[]>).map(
-      ([triggerField, dependents]) =>
-        this.#createTriggerStream(form, triggerField, dependents || [])
-    );
-
-    return streams.length > 0 ? rxMerge(...streams) : EMPTY;
-  }
-
-  /**
-   * Creates a stream for a single trigger field that revalidates its dependent fields.
-   *
-   * This method handles:
-   * 1. Waiting for the trigger control to exist in the form (for @if scenarios)
-   * 2. Listening to value changes with debouncing
-   * 3. Waiting for form to be idle before triggering dependents
-   * 4. Waiting for all dependent controls to exist
-   * 5. Updating dependent field validity with loop prevention
-   *
-   * @param form - The NgForm instance
-   * @param triggerField - Field path that triggers validation (e.g., 'password')
-   * @param dependents - Array of dependent field paths to revalidate (e.g., ['confirmPassword'])
-   * @returns Observable that completes after dependent fields are validated
-   */
-  #createTriggerStream(
-    form: FormGroup,
-    triggerField: string,
-    dependents: string[]
-  ): Observable<unknown> {
-    // Wait for trigger control to exist, then stop listening (take(1) prevents feedback loops)
-    const triggerControl$ = form.statusChanges.pipe(
-      startWith(form.status),
-      map(() => form.get(triggerField)),
-      filter((c): c is AbstractControl => !!c),
-      // CRITICAL: take(1) to stop listening after control is found
-      // Without this, the pipeline continues to listen to statusChanges,
-      // creating a feedback loop where validation triggers re-trigger the pipeline
-      take(1)
-    );
-
-    return triggerControl$.pipe(
-      switchMap((control) => {
-        return control.valueChanges.pipe(
-          // CRITICAL: Filter out changes when this field is being validated by another field's config
-          // This prevents circular triggers in bidirectional validationConfig
-          filter(() => !this.#validationInProgress.has(triggerField)),
-          debounceTime(this.#configDebounceTime),
-          switchMap(() => {
-            return this.#waitForFormIdle(form, control);
-          }),
-          switchMap(() =>
-            this.#waitForDependentControls(form, dependents, control)
-          ),
-          tap(() =>
-            this.#updateDependentFields(form, control, triggerField, dependents)
-          )
-        );
-      })
-    );
-  }
-
-  /**
-   * Waits for the form to reach a non-PENDING state before proceeding.
-   * This prevents validation race conditions where dependent field validation
-   * triggers while the trigger field's validation is still running.
-   *
-   * If the form stays PENDING for longer than 2 seconds (e.g., slow async validators),
-   * proceeds anyway to prevent blocking the validation pipeline.
-   *
-   * @param form - The NgForm instance
-   * @param control - The trigger control to pass through
-   * @returns Observable that emits the control once form is idle or timeout
-   */
-  #waitForFormIdle(
-    form: FormGroup,
-    control: AbstractControl
-  ): Observable<AbstractControl> {
-    // If form is already non-PENDING, return immediately
-    if (form.status !== 'PENDING') {
-      return of(control);
-    }
-
-    // Form is PENDING, wait for it to become idle
-
-    const idle$ = form.statusChanges.pipe(
-      filter((s) => s !== 'PENDING'),
-      take(1)
-    );
-
-    const timeout$ = timer(2000).pipe(
-      tap(() => {
-        if (isDevMode()) {
-          console.warn(
-            '[ngx-vest-forms] validationConfig: timed out waiting for form to leave PENDING state (2s). Continuing dependent validation to avoid stalling.'
-          );
-        }
-      })
-    );
-
-    return race(idle$, timeout$).pipe(map(() => control));
-  }
-
-  /**
-   * Waits for all dependent controls to exist in the form.
-   * This handles @if scenarios where controls are conditionally rendered.
-   *
-   * @param form - The NgForm instance
-   * @param dependents - Array of dependent field paths
-   * @param control - The trigger control to pass through
-   * @returns Observable that emits the control once all dependents exist
-   */
-  #waitForDependentControls(
-    form: FormGroup,
-    dependents: string[],
-    control: AbstractControl
-  ): Observable<AbstractControl> {
-    const allDependentsExist = dependents.every(
-      (depField) => !!form.get(depField)
-    );
-
-    if (allDependentsExist) {
-      return of(control);
-    }
-
-    // Wait for dependent controls to be added to the form, but bound the wait to avoid silent stalls.
-    const dependentControlsReady$ = form.statusChanges.pipe(
-      startWith(form.status),
-      filter(() => dependents.every((depField) => !!form.get(depField))),
-      take(1),
-      map(() => control)
-    );
-
-    const timeout$ = timer(2000).pipe(
-      tap(() => {
-        if (isDevMode()) {
-          const unresolved = dependents.filter(
-            (depField) => !form.get(depField)
-          );
-          console.warn(
-            `[ngx-vest-forms] validationConfig: timed out waiting for dependent controls (2s): ${unresolved.join(', ')}. Continuing without waiting further.`
-          );
-        }
-      }),
-      map(() => control)
-    );
-
-    return race(dependentControlsReady$, timeout$).pipe(take(1));
-  }
-
-  /**
-   * Updates validation for all dependent fields.
-   *
-   * Handles:
-   * - Loop prevention via validationInProgress set
-   * - Silent validation updates that avoid feedback loops
-   *
-   * Note: Touch state is NOT propagated to prevent premature error display
-   * on conditionally revealed fields.
-   *
-   * Note: This method does NOT propagate touch state from trigger to dependent fields.
-   * Dependent fields only show errors after the user directly interacts with them.
-   *
-   * @param form - The NgForm instance
-   * @param control - The trigger control
-   * @param triggerField - Field path of the trigger
-   * @param dependents - Array of dependent field paths to update
-   */
-  #updateDependentFields(
-    form: FormGroup,
-    control: AbstractControl,
-    triggerField: string,
-    dependents: string[]
-  ): void {
-    // Mark trigger field as in-progress to prevent it from being re-triggered
-    this.#validationInProgress.add(triggerField);
-
-    for (const depField of dependents) {
-      const dependentControl = form.get(depField);
-      if (!dependentControl) {
-        continue;
-      }
-
-      // Only validate if not already in progress (prevents bidirectional loops)
-      if (!this.#validationInProgress.has(depField)) {
-        // CRITICAL: Mark the dependent field as in-progress BEFORE calling updateValueAndValidity
-        // This prevents the dependent field's valueChanges from triggering its own validationConfig
-        this.#validationInProgress.add(depField);
-
-        // emitEvent: true is REQUIRED for async validators to actually run
-        // The validationInProgress Set prevents infinite loops:
-        // 1. Field A changes → triggers validation on dependent field B
-        // 2. B is added to validationInProgress Set
-        // 3. B's statusChanges emits → #handleValueChange checks validationInProgress
-        // 4. Since B is in validationInProgress, its validationConfig is not triggered
-        // 5. After 500ms timeout, B is removed from validationInProgress
-        // This way:
-        // - Async validators CAN run (emitEvent: true)
-        // - BUT circular triggers are prevented (validationInProgress check)
-        dependentControl.updateValueAndValidity({
-          onlySelf: true,
-          emitEvent: true, // Changed from false - REQUIRED for validators to run!
-        });
-
-        // CRITICAL: Force immediate change detection for OnPush components
-        // updateValueAndValidity updates the control's status, but doesn't automatically
-        // trigger change detection. Components using OnPush won't see the ng-invalid class
-        // update in the DOM without this. Using detectChanges() instead of markForCheck()
-        // to force immediate synchronous update rather than waiting for next CD cycle.
-        this.#cdr.detectChanges();
-      }
-    }
-
-    // Keep fields marked as in-progress for a short time to prevent immediate re-triggering
-    // Use scheduleTimeout to ensure async validators have time to complete before allowing
-    // new triggers. The timer auto-cancels on directive destroy so no timers leak.
-    scheduleTimeout(
-      () => {
-        this.#validationInProgress.delete(triggerField);
-        for (const depField of dependents) {
-          this.#validationInProgress.delete(depField);
-        }
-      },
-      VALIDATION_IN_PROGRESS_TIMEOUT_MS,
-      this.#destroyRef
-    );
   }
 
 }
