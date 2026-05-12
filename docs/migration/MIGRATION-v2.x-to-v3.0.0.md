@@ -111,7 +111,7 @@ memo(() => {
 }, [model.userId]);
 ```
 
-## `getAllFormErrors` returns a discriminated union
+## `getAllFormErrors` returns `{ errors, warnings }`
 
 v2 returned `Record<string, string[]>` and attached field-level warnings as a non-enumerable `warnings` property on each errors array. That side-channel was invisible to `Object.keys`, spreads, `JSON.stringify`, and `structuredClone`, which made it easy to miss and impossible to serialise.
 

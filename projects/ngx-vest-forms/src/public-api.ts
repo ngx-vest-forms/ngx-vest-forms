@@ -74,13 +74,13 @@ export type { AriaAssociationMode } from './lib/utils/aria-association.utils';
   shallowEqual,
 } from './lib/utils/equality';
 /** @internal */ export { parseFieldPath } from './lib/utils/field-path.utils';
+export { getAllFormErrors } from './lib/utils/form-utils';
+export type { NgxFormErrorsByPath } from './lib/utils/form-utils';
 /** @internal */ export {
-  getAllFormErrors,
   getFormControlField,
   getFormGroupField,
   mergeValuesAndRawValues,
 } from './lib/utils/form-utils';
-export type { NgxFormErrorsByPath } from './lib/utils/form-utils';
 
 // Constants
 export { ROOT_FORM } from './lib/constants';

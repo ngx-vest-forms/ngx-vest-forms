@@ -275,15 +275,20 @@ export function setValueAtPath(
 }
 
 /**
- * @internal
- * Internal utility for collecting all form errors by field path.
+ * Collects all errors and warnings reachable from `form` keyed by dotted
+ * field path.
  *
- * **Not intended for external use.** This function is used internally by the library
- * to generate the form state. Use the `formState()` signal from the `ngxVestForm` directive
- * to access form errors in your components.
+ * Root-form (`ROOT_FORM`) entries come from `form.errors.errors` and
+ * `form.errors.warnings` — the shape `ValidateRootFormDirective` writes.
+ * Field-level entries come from each descendant control's `errors.errors`
+ * and `errors.warnings`. Disabled controls are skipped.
  *
- * Traverses the form and returns the errors by path
- * @param form
+ * Inside templates and components, prefer the directive's `formState()` and
+ * `fieldWarnings()` signals — they're reactive and already memoised. Reach
+ * for this function when you need a one-shot snapshot, e.g. for logging or
+ * structured-clone-friendly serialisation.
+ *
+ * @publicApi
  */
 export function getAllFormErrors(
   form?: AbstractControl
@@ -294,11 +299,19 @@ export function getAllFormErrors(
     return { errors, warnings };
   }
 
-  // Collect root form errors (from ValidateRootFormDirective) before processing children
+  // Collect root form errors / warnings (from ValidateRootFormDirective) before
+  // processing children so they appear under the ROOT_FORM key.
   if (form.enabled) {
     const rootErrors = getStringArrayError(form.errors, ERROR_MESSAGES_KEY);
     if (rootErrors) {
       errors[ROOT_FORM] = rootErrors;
+    }
+    const rootWarnings = getStringArrayError(
+      form.errors,
+      WARNING_MESSAGES_KEY
+    );
+    if (rootWarnings) {
+      warnings[ROOT_FORM] = rootWarnings;
     }
   }
 
@@ -354,9 +367,6 @@ export function getAllFormErrors(
   }
 
   collect(form, []);
-
-  // Root form errors (form.errors) are no longer processed here.
-  // They are handled directly in NgxFormDirective to populate formState.root.
 
   return { errors, warnings };
 }

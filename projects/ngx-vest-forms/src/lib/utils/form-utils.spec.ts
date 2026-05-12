@@ -592,6 +592,25 @@ describe('getAllFormErrors', () => {
     expect(result.warnings).toEqual({});
   });
 
+  it('should collect root form warnings under ROOT_FORM', () => {
+    const form = new FormGroup({});
+    form.setErrors({
+      errors: ['Root error'],
+      warnings: ['Root warning'],
+    });
+    const result = getAllFormErrors(form);
+    expect(result.errors[ROOT_FORM]).toEqual(['Root error']);
+    expect(result.warnings[ROOT_FORM]).toEqual(['Root warning']);
+  });
+
+  it('should collect root form warnings even when no root errors are present', () => {
+    const form = new FormGroup({});
+    form.setErrors({ warnings: ['Root-only warning'] });
+    const result = getAllFormErrors(form);
+    expect(result.errors[ROOT_FORM]).toBeUndefined();
+    expect(result.warnings[ROOT_FORM]).toEqual(['Root-only warning']);
+  });
+
   it('should collect errors from nested FormGroups', () => {
     const form = new FormGroup({
       user: new FormGroup({
