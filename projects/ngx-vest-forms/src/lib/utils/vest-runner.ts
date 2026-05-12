@@ -19,23 +19,29 @@ import type { NgxSuiteRunResult } from './validation-suite';
 
 /**
  * Focus spec describing which subset of the suite to run.
- *
- * Currently honours `only` via `suite.only(field).run(model)`. Group focus
- * (`onlyGroup`/`skipGroup`) and `skip` need Vest's `suite.focus(...)` API,
- * which `NgxVestSuite` does not expose yet; reserved here for forward
- * compatibility with the planned `[validationFocus]` directive.
  */
 export type NgxSuiteFocusSpec = {
   only?: string;
+  skip?: string;
+  onlyGroup?: string | readonly string[];
+  skipGroup?: string | readonly string[];
 };
 
 export type NgxSuiteRunHooks = {
   signal: AbortSignal;
 };
 
+type FocusRunResult<T> = {
+  run(model: T, field?: unknown, hooks?: NgxSuiteRunHooks): NgxSuiteRunResult;
+};
+
 /**
  * Structural subset of `NgxVestSuite` the runner depends on. Keeps the runner
  * decoupled from method names the call sites do not need (reset, dump, etc.).
+ *
+ * The `hooks` parameter is optional on `only(...).run` and `run(...)` so plain
+ * `NgxVestSuite<T>` (whose declared signatures don't include hooks) remains
+ * assignable; Vest 6.3 accepts the hooks object at runtime regardless.
  */
 export type RunnableVestSuite<T> = {
   only(match: string | string[] | null | undefined): {
@@ -43,11 +49,12 @@ export type RunnableVestSuite<T> = {
   };
   run(model: T, field?: unknown, hooks?: NgxSuiteRunHooks): NgxSuiteRunResult;
   get(): NgxSuiteRunResult;
+  focus?: (focus: NgxSuiteFocusSpec) => FocusRunResult<T>;
 };
 
 /**
- * Run a Vest suite for one field (or the whole form when `focus.only` is
- * omitted) and emit the resulting suite state exactly once.
+ * Run a Vest suite for one field (or the whole form when the focus spec is empty)
+ * and emit the resulting suite state exactly once.
  *
  * - Even at zero debounce the suite invocation is deferred by one task so
  *   superseded validators can be unsubscribed before the suite runs.
@@ -124,25 +131,44 @@ function isThenable(
   return typeof value.then === 'function';
 }
 
+function isEmptyFocusValue(
+  value: string | readonly string[] | undefined
+): boolean {
+  if (value === undefined) return true;
+  if (Array.isArray(value)) return value.length === 0;
+  return value === '';
+}
+
+function isEmptyFocusSpec(focus: NgxSuiteFocusSpec): boolean {
+  return (
+    isEmptyFocusValue(focus.only) &&
+    isEmptyFocusValue(focus.skip) &&
+    isEmptyFocusValue(focus.onlyGroup) &&
+    isEmptyFocusValue(focus.skipGroup)
+  );
+}
+
 function runSuite<T>(
   suite: RunnableVestSuite<T>,
   focus: NgxSuiteFocusSpec,
   model: T,
   signal: AbortSignal
 ): Observable<NgxSuiteRunResult> {
-  const result =
-    focus.only !== undefined
-      ? suite.only(focus.only).run(model, undefined, { signal })
-      : suite.run(model, undefined, { signal });
+  const hooks: NgxSuiteRunHooks = { signal };
+  let result: NgxSuiteRunResult;
+
+  if (!isEmptyFocusSpec(focus) && typeof suite.focus === 'function') {
+    result = suite.focus(focus).run(model, undefined, hooks);
+  } else if (focus.only !== undefined) {
+    result = suite.only(focus.only).run(model, undefined, hooks);
+  } else {
+    result = suite.run(model, undefined, hooks);
+  }
 
   if (!isThenable(result)) {
     return of(result);
   }
 
-  // The resolved value is intentionally discarded — `suite.get()` returns the
-  // canonical post-run state (including any sync tests that completed after
-  // the async ones started). Same fallback applies on rejection so consumers
-  // always receive a result object.
   return from(result).pipe(
     map(() => suite.get()),
     catchError(() => of(suite.get()))

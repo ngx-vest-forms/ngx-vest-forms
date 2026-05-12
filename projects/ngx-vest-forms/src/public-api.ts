@@ -115,6 +115,7 @@ export { FormModelDirective } from './lib/directives/form-model.directive';
 export { FormDirective } from './lib/directives/form.directive';
 export type {
   NgxFieldBlurEvent,
+  NgxValidationFocus,
   NgxValidationConfig,
 } from './lib/directives/form.directive';
 export { ValidateRootFormDirective } from './lib/directives/validate-root-form.directive';
