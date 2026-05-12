@@ -143,8 +143,8 @@ describe('ValidateRootFormDirective', () => {
       await waitFor(
         () => {
           const allErrors = getAllFormErrors(component.ngForm.control);
-          expect(allErrors[ROOT_FORM]).toBeDefined();
-          expect(allErrors[ROOT_FORM]).toContain('Passwords must match');
+          expect(allErrors.errors[ROOT_FORM]).toBeDefined();
+          expect(allErrors.errors[ROOT_FORM]).toContain('Passwords must match');
         },
         { timeout: 5000 }
       );
@@ -220,8 +220,10 @@ describe('ValidateRootFormDirective', () => {
       await waitFor(
         () => {
           const allErrors = getAllFormErrors(component.ngForm.control);
-          expect(allErrors[ROOT_FORM]).toBeDefined();
-          expect(allErrors[ROOT_FORM]).toContain('Brecht is not 30 anymore');
+          expect(allErrors.errors[ROOT_FORM]).toBeDefined();
+          expect(allErrors.errors[ROOT_FORM]).toContain(
+            'Brecht is not 30 anymore'
+          );
         },
         { timeout: 5000 }
       );
@@ -310,7 +312,7 @@ describe('ValidateRootFormDirective', () => {
       await waitFor(
         () => {
           const allErrors = getAllFormErrors(component.ngForm.control);
-          expect(allErrors[ROOT_FORM]).toBeUndefined();
+          expect(allErrors.errors[ROOT_FORM]).toBeUndefined();
         },
         { timeout: 5000 }
       );

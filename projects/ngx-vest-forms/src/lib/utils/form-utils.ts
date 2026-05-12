@@ -20,7 +20,20 @@ type ControlWithOptionalName = AbstractControl & {
 };
 
 type FormContainer = FormGroup | FormArray;
-type ErrorList = string[] & { warnings?: string[] };
+
+/**
+ * Result of {@link getAllFormErrors}. Errors and warnings are exposed as
+ * sibling records keyed by dotted field path so consumers can iterate either
+ * independently — no non-enumerable side-channels.
+ *
+ * @publicApi
+ */
+export type NgxFormErrorsByPath = {
+  /** Blocking validation errors keyed by field path. */
+  errors: Record<string, string[]>;
+  /** Non-blocking validation warnings keyed by field path. */
+  warnings: Record<string, string[]>;
+};
 
 const ERROR_MESSAGES_KEY = 'errors';
 const WARNING_MESSAGES_KEY = 'warnings';
@@ -262,29 +275,43 @@ export function setValueAtPath(
 }
 
 /**
- * @internal
- * Internal utility for collecting all form errors by field path.
+ * Collects all errors and warnings reachable from `form` keyed by dotted
+ * field path.
  *
- * **Not intended for external use.** This function is used internally by the library
- * to generate the form state. Use the `formState()` signal from the `ngxVestForm` directive
- * to access form errors in your components.
+ * Root-form (`ROOT_FORM`) entries come from `form.errors.errors` and
+ * `form.errors.warnings` — the shape `ValidateRootFormDirective` writes.
+ * Field-level entries come from each descendant control's `errors.errors`
+ * and `errors.warnings`. Disabled controls are skipped.
  *
- * Traverses the form and returns the errors by path
- * @param form
+ * Inside templates and components, prefer the directive's `formState()` and
+ * `fieldWarnings()` signals — they're reactive and already memoised. Reach
+ * for this function when you need a one-shot snapshot, e.g. for logging or
+ * structured-clone-friendly serialisation.
+ *
+ * @publicApi
  */
 export function getAllFormErrors(
   form?: AbstractControl
-): Record<string, string[]> {
-  const errors: Record<string, ErrorList> = {};
+): NgxFormErrorsByPath {
+  const errors: Record<string, string[]> = {};
+  const warnings: Record<string, string[]> = {};
   if (!form) {
-    return errors;
+    return { errors, warnings };
   }
 
-  // Collect root form errors (from ValidateRootFormDirective) before processing children
+  // Collect root form errors / warnings (from ValidateRootFormDirective) before
+  // processing children so they appear under the ROOT_FORM key.
   if (form.enabled) {
     const rootErrors = getStringArrayError(form.errors, ERROR_MESSAGES_KEY);
     if (rootErrors) {
       errors[ROOT_FORM] = rootErrors;
+    }
+    const rootWarnings = getStringArrayError(
+      form.errors,
+      WARNING_MESSAGES_KEY
+    );
+    if (rootWarnings) {
+      warnings[ROOT_FORM] = rootWarnings;
     }
   }
 
@@ -321,7 +348,6 @@ export function getAllFormErrors(
       }
     }
 
-    // Attach control errors (both errors and warnings)
     if (control.enabled) {
       const fieldErrors = getStringArrayError(
         control.errors,
@@ -330,31 +356,17 @@ export function getAllFormErrors(
       if (fieldErrors) {
         errors[pathString] = fieldErrors;
       }
-      // Optionally, add warnings if present
       const fieldWarnings = getStringArrayError(
         control.errors,
         WARNING_MESSAGES_KEY
       );
       if (fieldWarnings) {
-        // Attach warnings as a property on the error array (non-enumerable)
-        // This is still done here for field-specific warnings, but not for root warnings.
-        if (!errors[pathString]) {
-          errors[pathString] = []; // Ensure array exists if only warnings are present
-        }
-        Object.defineProperty(errors[pathString], 'warnings', {
-          value: fieldWarnings,
-          enumerable: false, // Keep it non-enumerable as per previous behavior for field warnings
-          configurable: true,
-          writable: true,
-        });
+        warnings[pathString] = fieldWarnings;
       }
     }
   }
 
   collect(form, []);
 
-  // Root form errors (form.errors) are no longer processed here.
-  // They are handled directly in NgxFormDirective to populate formState.root.
-
-  return errors;
+  return { errors, warnings };
 }

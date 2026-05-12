@@ -299,7 +299,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       this.#validationFeedbackTick();
       return {
         valid: this.ngForm.form.valid,
-        errors: getAllFormErrors(this.ngForm.form),
+        errors: getAllFormErrors(this.ngForm.form).errors,
         value: this.#formValueSignal(),
       };
     },
@@ -437,7 +437,7 @@ export class FormDirective<T extends Record<string, unknown>> {
    */
   readonly errorsChange = outputFromObservable(
     this.#validationFeedback$.pipe(
-      map(() => getAllFormErrors(this.ngForm.form)),
+      map(() => getAllFormErrors(this.ngForm.form).errors),
       takeUntilDestroyed(this.#destroyRef)
     )
   );
