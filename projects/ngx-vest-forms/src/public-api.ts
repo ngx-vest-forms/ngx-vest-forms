@@ -80,6 +80,7 @@ export type { AriaAssociationMode } from './lib/utils/aria-association.utils';
   getFormGroupField,
   mergeValuesAndRawValues,
 } from './lib/utils/form-utils';
+export type { NgxFormErrorsByPath } from './lib/utils/form-utils';
 
 // Constants
 export { ROOT_FORM } from './lib/constants';

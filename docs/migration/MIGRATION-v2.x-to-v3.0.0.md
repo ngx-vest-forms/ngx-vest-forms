@@ -111,6 +111,40 @@ memo(() => {
 }, [model.userId]);
 ```
 
+## `getAllFormErrors` returns a discriminated union
+
+v2 returned `Record<string, string[]>` and attached field-level warnings as a non-enumerable `warnings` property on each errors array. That side-channel was invisible to `Object.keys`, spreads, `JSON.stringify`, and `structuredClone`, which made it easy to miss and impossible to serialise.
+
+v3 returns a sibling-record shape so errors and warnings are first-class:
+
+```typescript
+export type NgxFormErrorsByPath = {
+  errors: Record<string, string[]>;
+  warnings: Record<string, string[]>;
+};
+
+export function getAllFormErrors(form?: AbstractControl): NgxFormErrorsByPath;
+```
+
+Before:
+
+```typescript
+const all = getAllFormErrors(form);
+const fieldErrors = all['user.name']; // string[]
+const fieldWarnings = (all['user.name'] as string[] & { warnings?: string[] })
+  .warnings;
+```
+
+After:
+
+```typescript
+const all = getAllFormErrors(form);
+const fieldErrors = all.errors['user.name']; // string[] | undefined
+const fieldWarnings = all.warnings['user.name']; // string[] | undefined
+```
+
+The `errorsChange` output on `FormDirective` still emits `Record<string, string[]>` (the `errors` slice of the new shape), so templates consuming `(errorsChange)="errors.set($event)"` and reading `errors()['field']` continue to work unchanged. For warnings inside templates, prefer the existing `fieldWarnings()` signal on the directive — it is per-field, reactive, and the recommended path for warning display.
+
 ## v3 selector + token removals
 
 v3.0.0 removes the legacy `sc-` selectors, duplicate directive aliases, duplicate root-form inputs, and `SC_ERROR_DISPLAY_MODE_TOKEN`.

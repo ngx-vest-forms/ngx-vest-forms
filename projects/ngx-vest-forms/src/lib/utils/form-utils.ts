@@ -20,7 +20,20 @@ type ControlWithOptionalName = AbstractControl & {
 };
 
 type FormContainer = FormGroup | FormArray;
-type ErrorList = string[] & { warnings?: string[] };
+
+/**
+ * Result of {@link getAllFormErrors}. Errors and warnings are exposed as
+ * sibling records keyed by dotted field path so consumers can iterate either
+ * independently — no non-enumerable side-channels.
+ *
+ * @publicApi
+ */
+export type NgxFormErrorsByPath = {
+  /** Blocking validation errors keyed by field path. */
+  errors: Record<string, string[]>;
+  /** Non-blocking validation warnings keyed by field path. */
+  warnings: Record<string, string[]>;
+};
 
 const ERROR_MESSAGES_KEY = 'errors';
 const WARNING_MESSAGES_KEY = 'warnings';
@@ -274,10 +287,11 @@ export function setValueAtPath(
  */
 export function getAllFormErrors(
   form?: AbstractControl
-): Record<string, string[]> {
-  const errors: Record<string, ErrorList> = {};
+): NgxFormErrorsByPath {
+  const errors: Record<string, string[]> = {};
+  const warnings: Record<string, string[]> = {};
   if (!form) {
-    return errors;
+    return { errors, warnings };
   }
 
   // Collect root form errors (from ValidateRootFormDirective) before processing children
@@ -321,7 +335,6 @@ export function getAllFormErrors(
       }
     }
 
-    // Attach control errors (both errors and warnings)
     if (control.enabled) {
       const fieldErrors = getStringArrayError(
         control.errors,
@@ -330,23 +343,12 @@ export function getAllFormErrors(
       if (fieldErrors) {
         errors[pathString] = fieldErrors;
       }
-      // Optionally, add warnings if present
       const fieldWarnings = getStringArrayError(
         control.errors,
         WARNING_MESSAGES_KEY
       );
       if (fieldWarnings) {
-        // Attach warnings as a property on the error array (non-enumerable)
-        // This is still done here for field-specific warnings, but not for root warnings.
-        if (!errors[pathString]) {
-          errors[pathString] = []; // Ensure array exists if only warnings are present
-        }
-        Object.defineProperty(errors[pathString], 'warnings', {
-          value: fieldWarnings,
-          enumerable: false, // Keep it non-enumerable as per previous behavior for field warnings
-          configurable: true,
-          writable: true,
-        });
+        warnings[pathString] = fieldWarnings;
       }
     }
   }
@@ -356,5 +358,5 @@ export function getAllFormErrors(
   // Root form errors (form.errors) are no longer processed here.
   // They are handled directly in NgxFormDirective to populate formState.root.
 
-  return errors;
+  return { errors, warnings };
 }

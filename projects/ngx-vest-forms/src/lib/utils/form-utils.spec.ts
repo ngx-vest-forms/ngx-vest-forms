@@ -9,8 +9,6 @@ import {
   setValueAtPath,
 } from './form-utils';
 
-type ErrorListWithWarnings = string[] & { warnings?: string[] };
-
 describe('getFormControlField function', () => {
   it('should return correct field name for FormControl in root FormGroup', () => {
     const form = new FormGroup({
@@ -582,15 +580,16 @@ describe('setValueAtPath function', () => {
 });
 
 describe('getAllFormErrors', () => {
-  it('should return empty object when form is undefined', () => {
-    expect(getAllFormErrors(undefined)).toEqual({});
+  it('should return empty errors and warnings when form is undefined', () => {
+    expect(getAllFormErrors(undefined)).toEqual({ errors: {}, warnings: {} });
   });
 
   it('should collect root form errors', () => {
     const form = new FormGroup({});
     form.setErrors({ errors: ['Root error'] });
-    const errors = getAllFormErrors(form);
-    expect(errors[ROOT_FORM]).toEqual(['Root error']);
+    const result = getAllFormErrors(form);
+    expect(result.errors[ROOT_FORM]).toEqual(['Root error']);
+    expect(result.warnings).toEqual({});
   });
 
   it('should collect errors from nested FormGroups', () => {
@@ -602,8 +601,8 @@ describe('getAllFormErrors', () => {
       }),
     });
     form.get('user.name')?.updateValueAndValidity();
-    const errors = getAllFormErrors(form);
-    expect(errors['user.name']).toEqual(['Name error']);
+    const result = getAllFormErrors(form);
+    expect(result.errors['user.name']).toEqual(['Name error']);
   });
 
   it('should not collect errors from disabled controls', () => {
@@ -613,11 +612,12 @@ describe('getAllFormErrors', () => {
     const form = new FormGroup({ field: control });
     control.disable();
     control.updateValueAndValidity();
-    const errors = getAllFormErrors(form);
-    expect(errors['field']).toBeUndefined();
+    const result = getAllFormErrors(form);
+    expect(result.errors['field']).toBeUndefined();
+    expect(result.warnings['field']).toBeUndefined();
   });
 
-  it('should collect warnings as non-enumerable property', () => {
+  it('should expose warnings as a sibling record keyed by field path', () => {
     const control = new FormControl('', {
       validators: () => ({
         errors: ['Error'],
@@ -626,12 +626,14 @@ describe('getAllFormErrors', () => {
     });
     const form = new FormGroup({ field: control });
     control.updateValueAndValidity();
-    const errors = getAllFormErrors(form);
-    expect(errors['field']).toEqual(['Error']);
-    expect((errors['field'] as ErrorListWithWarnings).warnings).toEqual([
-      'Warning',
-    ]);
-    expect(Object.keys(errors['field'] ?? {})).not.toContain('warnings');
+    const result = getAllFormErrors(form);
+    expect(result.errors['field']).toEqual(['Error']);
+    expect(result.warnings['field']).toEqual(['Warning']);
+    // No leakage of warnings onto the errors array (regression: old API
+    // attached warnings as a non-enumerable property on the errors array).
+    expect(
+      Object.getOwnPropertyDescriptor(result.errors['field'] ?? [], 'warnings')
+    ).toBeUndefined();
   });
 
   it('should handle controls with only warnings', () => {
@@ -640,11 +642,9 @@ describe('getAllFormErrors', () => {
     });
     const form = new FormGroup({ field: control });
     control.updateValueAndValidity();
-    const errors = getAllFormErrors(form);
-    expect(errors['field']).toEqual([]);
-    expect((errors['field'] as ErrorListWithWarnings).warnings).toEqual([
-      'Warning',
-    ]);
+    const result = getAllFormErrors(form);
+    expect(result.errors['field']).toBeUndefined();
+    expect(result.warnings['field']).toEqual(['Warning']);
   });
 
   it('should collect errors from deeply nested structures', () => {
@@ -659,8 +659,8 @@ describe('getAllFormErrors', () => {
       }),
     });
     deepControl.updateValueAndValidity();
-    const errors = getAllFormErrors(form);
-    expect(errors['level1.level2.level3']).toEqual(['Deep error']);
+    const result = getAllFormErrors(form);
+    expect(result.errors['level1.level2.level3']).toEqual(['Deep error']);
   });
 
   it('should collect errors from controls inside FormArray using numeric path segments', () => {
@@ -675,9 +675,9 @@ describe('getAllFormErrors', () => {
     });
 
     form.updateValueAndValidity();
-    const errors = getAllFormErrors(form);
+    const result = getAllFormErrors(form);
 
-    expect(errors['users[0].name']).toEqual(['Name error']);
+    expect(result.errors['users[0].name']).toEqual(['Name error']);
   });
 
   it('should keep only string values from errors and warnings arrays', () => {
@@ -690,12 +690,10 @@ describe('getAllFormErrors', () => {
     const form = new FormGroup({ field: control });
 
     control.updateValueAndValidity();
-    const errors = getAllFormErrors(form);
+    const result = getAllFormErrors(form);
 
-    expect(errors['field']).toEqual(['Valid error']);
-    expect((errors['field'] as ErrorListWithWarnings).warnings).toEqual([
-      'Valid warning',
-    ]);
+    expect(result.errors['field']).toEqual(['Valid error']);
+    expect(result.warnings['field']).toEqual(['Valid warning']);
   });
 
   it('should skip unsafe prototype keys while merging value and rawValue', () => {
