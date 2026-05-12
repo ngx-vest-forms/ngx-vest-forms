@@ -20,6 +20,9 @@ export type NgxFirstInvalidOptions = {
 export const DEFAULT_INVALID_SELECTOR = [
   '.ngx-control-wrapper--invalid',
   '.ngx-form-group-wrapper--invalid',
+  'input.ng-invalid:not([type="hidden"]):not([disabled])',
+  'textarea.ng-invalid:not([disabled])',
+  'select.ng-invalid:not([disabled])',
   'input[aria-invalid="true"]',
   'textarea[aria-invalid="true"]',
   'select[aria-invalid="true"]',
