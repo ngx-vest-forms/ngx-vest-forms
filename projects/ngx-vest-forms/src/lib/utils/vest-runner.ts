@@ -5,15 +5,17 @@ import {
   Observable,
   catchError,
   defer,
+  finalize,
   from,
   map,
   of,
   switchMap,
   take,
+  tap,
   timer,
 } from 'rxjs';
 import type { ValidationOptions } from '../directives/validation-options';
-import type { NgxSuiteRunResult, NgxVestSuite } from './validation-suite';
+import type { NgxSuiteRunResult } from './validation-suite';
 
 /**
  * Focus spec describing which subset of the suite to run.
@@ -25,15 +27,28 @@ export type NgxSuiteFocusSpec = {
   skipGroup?: string | readonly string[];
 };
 
+export type NgxSuiteRunHooks = {
+  signal: AbortSignal;
+};
+
 type FocusRunResult<T> = {
-  run(model: T): NgxSuiteRunResult;
+  run(model: T, field?: unknown, hooks?: NgxSuiteRunHooks): NgxSuiteRunResult;
 };
 
 /**
  * Structural subset of `NgxVestSuite` the runner depends on. Keeps the runner
  * decoupled from method names the call sites do not need (reset, dump, etc.).
+ *
+ * The `hooks` parameter is optional on `only(...).run` and `run(...)` so plain
+ * `NgxVestSuite<T>` (whose declared signatures don't include hooks) remains
+ * assignable; Vest 6.3 accepts the hooks object at runtime regardless.
  */
-export type RunnableVestSuite<T> = Pick<NgxVestSuite<T>, 'only' | 'run' | 'get'> & {
+export type RunnableVestSuite<T> = {
+  only(match: string | string[] | null | undefined): {
+    run(model: T, field?: unknown, hooks?: NgxSuiteRunHooks): NgxSuiteRunResult;
+  };
+  run(model: T, field?: unknown, hooks?: NgxSuiteRunHooks): NgxSuiteRunResult;
+  get(): NgxSuiteRunResult;
   focus?: (focus: NgxSuiteFocusSpec) => FocusRunResult<T>;
 };
 
@@ -58,13 +73,36 @@ export function runFieldValidation<T>(
   options: ValidationOptions,
   destroyRef: DestroyRef
 ): Observable<NgxSuiteRunResult> {
-  const debounce = options.debounceTime ?? 0;
+  return defer(() => {
+    const controller = new AbortController();
+    // `finalize` runs on completion as well as unsubscribe/error, so naively
+    // aborting there flips `signal.aborted` to `true` even for successful runs.
+    // Track whether the run emitted; only abort when teardown happens *before*
+    // emission (unsubscribe, destroy, or superseded run via outer `switchMap`).
+    let emitted = false;
 
-  return timer(debounce).pipe(
-    switchMap(() => defer(() => runSuite(suite, focus, model))),
-    take(1),
-    takeUntilDestroyed(destroyRef)
-  );
+    // `timer(0)` (not `of(0)`) so that even at zero debounce the suite
+    // invocation is deferred to the next task. That lets superseded validators
+    // be unsubscribed by Angular's switchMap-style cancellation before the
+    // suite runs.
+    const debounce = options.debounceTime ?? 0;
+
+    return timer(debounce).pipe(
+      switchMap(() =>
+        defer(() => runSuite(suite, focus, model, controller.signal))
+      ),
+      take(1),
+      tap(() => {
+        emitted = true;
+      }),
+      takeUntilDestroyed(destroyRef),
+      finalize(() => {
+        if (!emitted) {
+          controller.abort();
+        }
+      })
+    );
+  });
 }
 
 export function extractFieldErrors(
@@ -113,16 +151,18 @@ function isEmptyFocusSpec(focus: NgxSuiteFocusSpec): boolean {
 function runSuite<T>(
   suite: RunnableVestSuite<T>,
   focus: NgxSuiteFocusSpec,
-  model: T
+  model: T,
+  signal: AbortSignal
 ): Observable<NgxSuiteRunResult> {
+  const hooks: NgxSuiteRunHooks = { signal };
   let result: NgxSuiteRunResult;
 
   if (!isEmptyFocusSpec(focus) && typeof suite.focus === 'function') {
-    result = suite.focus(focus).run(model);
+    result = suite.focus(focus).run(model, undefined, hooks);
   } else if (focus.only !== undefined) {
-    result = suite.only(focus.only).run(model);
+    result = suite.only(focus.only).run(model, undefined, hooks);
   } else {
-    result = suite.run(model);
+    result = suite.run(model, undefined, hooks);
   }
 
   if (!isThenable(result)) {
