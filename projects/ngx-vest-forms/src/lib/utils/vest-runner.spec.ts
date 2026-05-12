@@ -4,6 +4,7 @@ import type { NgxSuiteRunResult, NgxVestSuite } from './validation-suite';
 import {
   extractFieldErrors,
   runFieldValidation,
+  type NgxSuiteFocusSpec,
   type RunnableVestSuite,
 } from './vest-runner';
 
@@ -61,20 +62,46 @@ function createSuiteMock(overrides: {
   syncResult?: NgxSuiteRunResult;
   asyncResult?: PromiseLike<NgxSuiteRunResult>;
   latestResult?: NgxSuiteRunResult;
+  enableFocus?: boolean;
 }): RunnableVestSuite<TestModel> & {
   run: ReturnType<typeof vi.fn>;
   only: ReturnType<typeof vi.fn>;
+  focus?: ReturnType<typeof vi.fn>;
   get: ReturnType<typeof vi.fn>;
 } {
   const returnValue = overrides.asyncResult ?? overrides.syncResult;
   const run = vi.fn(() => returnValue as NgxSuiteRunResult);
   const only = vi.fn(() => ({ run }));
+  const focus = vi.fn((_focus: NgxSuiteFocusSpec) => ({ run }));
   const get = vi.fn(
     () => overrides.latestResult ?? overrides.syncResult ?? createSuiteResult()
   );
-  return { run, only, get } as unknown as RunnableVestSuite<TestModel> & {
+  const suite = { run, only, get } as RunnableVestSuite<TestModel> & {
     run: ReturnType<typeof vi.fn>;
     only: ReturnType<typeof vi.fn>;
+    focus?: ReturnType<typeof vi.fn>;
+    get: ReturnType<typeof vi.fn>;
+  };
+  if (overrides.enableFocus) {
+    suite.focus = focus;
+  }
+  return suite;
+}
+
+function createFocusSuiteMock(
+  result: NgxSuiteRunResult
+): RunnableVestSuite<TestModel> & {
+  run: ReturnType<typeof vi.fn>;
+  only: ReturnType<typeof vi.fn>;
+  focus: ReturnType<typeof vi.fn>;
+  get: ReturnType<typeof vi.fn>;
+} {
+  const suite = createSuiteMock({ syncResult: result, enableFocus: true });
+  // enableFocus: true guarantees focus is assigned; assert non-optional for callers.
+  return suite as RunnableVestSuite<TestModel> & {
+    run: ReturnType<typeof vi.fn>;
+    only: ReturnType<typeof vi.fn>;
+    focus: ReturnType<typeof vi.fn>;
     get: ReturnType<typeof vi.fn>;
   };
 }
@@ -229,6 +256,56 @@ describe('vest-runner', () => {
 
     expect(suite.run).toHaveBeenCalledWith(model);
     expect(suite.only).not.toHaveBeenCalled();
+    expect(emitted).toBe(result);
+  });
+
+  it('routes onlyGroup focus through suite.focus and keeps field-only precedence', async () => {
+    const { destroyRef } = createMockDestroyRef();
+    const model = { username: 'ada' };
+    const result = createSuiteResult();
+    const suite = createFocusSuiteMock(result);
+
+    const emitted = await new Promise<NgxSuiteRunResult>((resolve, reject) => {
+      runFieldValidation(
+        suite,
+        { onlyGroup: 'step-1', only: 'ignored-by-caller' },
+        model,
+        { debounceTime: 0 },
+        destroyRef
+      ).subscribe({ next: resolve, error: reject });
+    });
+
+    expect(suite.focus).toHaveBeenCalledWith({
+      onlyGroup: 'step-1',
+      only: 'ignored-by-caller',
+    });
+    expect(suite.only).not.toHaveBeenCalled();
+    expect(suite.run).toHaveBeenCalledWith(model);
+    expect(emitted).toBe(result);
+  });
+
+  it('routes skipGroup focus through suite.focus', async () => {
+    const { destroyRef } = createMockDestroyRef();
+    const model = { username: 'ada' };
+    const result = createSuiteResult();
+    const suite = createFocusSuiteMock(result);
+
+    const emitted = await new Promise<NgxSuiteRunResult>((resolve, reject) => {
+      runFieldValidation(
+        suite,
+        { skipGroup: 'step-2', only: 'username' },
+        model,
+        { debounceTime: 0 },
+        destroyRef
+      ).subscribe({ next: resolve, error: reject });
+    });
+
+    expect(suite.focus).toHaveBeenCalledWith({
+      skipGroup: 'step-2',
+      only: 'username',
+    });
+    expect(suite.only).not.toHaveBeenCalled();
+    expect(suite.run).toHaveBeenCalledWith(model);
     expect(emitted).toBe(result);
   });
 

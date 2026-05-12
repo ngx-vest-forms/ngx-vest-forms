@@ -75,6 +75,7 @@ import {
 import {
   extractFieldErrors,
   extractFieldWarnings,
+  type NgxSuiteFocusSpec,
   runFieldValidation,
 } from '../utils/vest-runner';
 import {
@@ -102,6 +103,8 @@ export type NgxValidationConfig<T = unknown> =
   | Record<string, string[]>
   | ValidationConfigMap<T>
   | null;
+
+export type NgxValidationFocus = NgxSuiteFocusSpec;
 
 /**
  * Payload emitted when a named control inside the form loses focus.
@@ -352,6 +355,14 @@ export class FormDirective<T extends Record<string, unknown>> {
    */
   readonly validationConfig: InputSignal<NgxValidationConfig<T>> =
     input<NgxValidationConfig<T>>(null);
+
+  /**
+   * Optional focus options forwarded to the Vest runner for field validation.
+   *
+   * Useful for step-based flows where group focus should be applied on top of
+   * the field-level `only` focus.
+   */
+  readonly validationFocus = input<NgxValidationFocus | null>(null);
 
   /**
    * Emits whenever validation feedback may have changed, even if the aggregate
@@ -1166,9 +1177,14 @@ export class FormDirective<T extends Record<string, unknown>> {
       const snapshot = model;
       setValueAtPath(snapshot as object, field, control.value);
 
+      const focus: NgxSuiteFocusSpec = {
+        ...(this.validationFocus() ?? {}),
+        only: field,
+      };
+
       return runFieldValidation(
         suite,
-        { only: field },
+        focus,
         snapshot,
         validationOptions,
         this.#destroyRef
