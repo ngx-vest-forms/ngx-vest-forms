@@ -42,7 +42,7 @@ Use the versions in `package.json` and the baseline below as hard compatibility 
 - Vitest: `^4.1.5`
 - Playwright: `1.59.1`
 
-You can suggest code that depends on features introduced in versions of Angular, TypeScript, Node.js, RxJS, Vest, Vitest, Playwright, Storybook, or other dependencies newer than the versions listed here or in `package.json`. But come with a strong justification for why the newer feature is necessary and how it improves on the existing patterns in the repo. Do not suggest newer features just because they exist or are trendy if they do not clearly enhance the code quality, readability, or maintainability of the generated code in this specific repository context.
+You can suggest code that depends on features introduced in versions of Angular, TypeScript, Node.js, RxJS, Vest, Vitest, Playwright, or other dependencies newer than the versions listed here or in `package.json`. But come with a strong justification for why the newer feature is necessary and how it improves on the existing patterns in the repo. Do not suggest newer features just because they exist or are trendy if they do not clearly enhance the code quality, readability, or maintainability of the generated code in this specific repository context.
 
 ## Repo shape
 
