@@ -326,6 +326,74 @@ describe('addressValidations', () => {
 | **Scalability**     | Easily add new validations without bloating suites |
 | **Cross-framework** | Use same logic on frontend/backend, Angular/React  |
 
+## Validation focus for wizard and step-scoped validation
+
+`ngxVestForm` exposes a `validationFocus` input that forwards Vest focus options to
+field-level async validation:
+
+```typescript
+type NgxValidationFocus = {
+  only?: string;
+  skip?: string;
+  onlyGroup?: string | readonly string[];
+  skipGroup?: string | readonly string[];
+};
+```
+
+When `validationFocus` is provided, ngx-vest-forms merges it with the current field
+validation (`only` is always forced to the current field path).
+
+`onlyGroup` / `skipGroup` are typed as `string | readonly string[]`, and must match
+group names defined inside the suite via Vest's `group(...)` block — they are not
+arbitrary identifiers like a step index. Example with a single suite whose tests are
+partitioned into `group('account', ...)`, `group('profile', ...)`, `group('review', ...)`:
+
+```ts
+import { create, group, test, enforce } from 'vest';
+
+export const wizardSuite = create((model: WizardModel) => {
+  group('account', () => {
+    test('email', 'Email is required', () => enforce(model.email).isNotBlank());
+  });
+  group('profile', () => {
+    test('firstName', 'First name is required', () =>
+      enforce(model.firstName).isNotBlank(),
+    );
+  });
+  group('review', () => {
+    test('acceptTerms', 'You must accept the terms', () =>
+      enforce(model.acceptTerms).equals(true),
+    );
+  });
+});
+
+// In the component
+readonly currentGroup = computed(() => {
+  switch (this.currentStep()) {
+    case 1: return 'account';
+    case 2: return 'profile';
+    default: return 'review';
+  }
+});
+```
+
+```html
+<form
+  ngxVestForm
+  [suite]="suite"
+  [formValue]="formValue()"
+  [validationFocus]="{ onlyGroup: currentGroup() }"
+  (formValueChange)="formValue.set($event)"
+>
+  <!-- controls -->
+</form>
+```
+
+Use this pattern when one suite spans multiple steps or sections and you need to scope
+which group runs at a given time. If each step already has its own dedicated suite (as
+in the `wizard-form` example), `validationFocus` is unnecessary — pass the per-step
+suite into the per-step form instead.
+
 ## Best Practices
 
 1. **One entity per file** - Keep validation functions focused on a single domain concept
