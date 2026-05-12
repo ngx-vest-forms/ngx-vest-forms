@@ -23,9 +23,9 @@ export const DEFAULT_INVALID_SELECTOR = [
   'input.ng-invalid:not([type="hidden"]):not([disabled])',
   'textarea.ng-invalid:not([disabled])',
   'select.ng-invalid:not([disabled])',
-  'input[aria-invalid="true"]',
-  'textarea[aria-invalid="true"]',
-  'select[aria-invalid="true"]',
+  'input[aria-invalid="true"]:not([type="hidden"]):not([disabled])',
+  'textarea[aria-invalid="true"]:not([disabled])',
+  'select[aria-invalid="true"]:not([disabled])',
 ].join(', ');
 
 export const DEFAULT_FOCUS_SELECTOR = [
@@ -46,6 +46,9 @@ const INVALID_FOCUS_PREFERRED_SELECTOR = [
   'textarea[aria-invalid="true"]:not([disabled])',
   'select[aria-invalid="true"]:not([disabled])',
   '[aria-invalid="true"][tabindex]:not([tabindex="-1"]):not([disabled])',
+  'input.ng-invalid:not([type="hidden"]):not([disabled])',
+  'textarea.ng-invalid:not([disabled])',
+  'select.ng-invalid:not([disabled])',
 ].join(', ');
 
 const REDUCED_MOTION_MEDIA_QUERY = '(prefers-reduced-motion: reduce)';
@@ -66,13 +69,25 @@ export function resolveFirstInvalidScrollBehavior(
   return prefersReducedMotion() ? 'auto' : 'smooth';
 }
 
+function isElementVisible(element: HTMLElement): boolean {
+  if (element.closest('[aria-hidden="true"]')) {
+    return false;
+  }
+  return element.getClientRects().length > 0;
+}
+
 export function resolveFirstInvalidElement(
   root: HTMLFormElement,
   invalidSelector: string
 ): HTMLElement | null {
   try {
-    const firstInvalid = root.querySelector(invalidSelector);
-    return firstInvalid instanceof HTMLElement ? firstInvalid : null;
+    const candidates = root.querySelectorAll<HTMLElement>(invalidSelector);
+    for (const candidate of candidates) {
+      if (isElementVisible(candidate)) {
+        return candidate;
+      }
+    }
+    return null;
   } catch {
     return null;
   }
@@ -97,24 +112,37 @@ export function openCollapsedDetailsAncestors(
   }
 }
 
+function firstVisibleMatch(
+  root: HTMLElement,
+  selector: string
+): HTMLElement | null {
+  const candidates = root.querySelectorAll<HTMLElement>(selector);
+  for (const candidate of candidates) {
+    if (isElementVisible(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
 export function resolveFirstInvalidFocusTarget(
   firstInvalid: HTMLElement,
   focusSelector: string
 ): HTMLElement | null {
-  const preferredInvalidTarget = firstInvalid.querySelector(
+  const preferredInvalidTarget = firstVisibleMatch(
+    firstInvalid,
     INVALID_FOCUS_PREFERRED_SELECTOR
   );
-  if (preferredInvalidTarget instanceof HTMLElement) {
+  if (preferredInvalidTarget) {
     return preferredInvalidTarget;
   }
 
   try {
-    if (firstInvalid.matches(focusSelector)) {
+    if (firstInvalid.matches(focusSelector) && isElementVisible(firstInvalid)) {
       return firstInvalid;
     }
 
-    const fallbackTarget = firstInvalid.querySelector(focusSelector);
-    return fallbackTarget instanceof HTMLElement ? fallbackTarget : null;
+    return firstVisibleMatch(firstInvalid, focusSelector);
   } catch {
     return null;
   }
