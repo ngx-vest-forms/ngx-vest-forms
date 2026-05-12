@@ -529,7 +529,12 @@ export class FormDirective<T extends Record<string, unknown>> {
         takeUntilDestroyed(this.#destroyRef)
       )
       .subscribe(() => {
-        this.#focusFirstInvalidField();
+        scheduleMicrotask(() => {
+          if (this.ngForm.form.valid) {
+            return;
+          }
+          this.focusFirstInvalidControl();
+        }, this.#destroyRef);
       });
 
     /**
@@ -911,59 +916,6 @@ export class FormDirective<T extends Record<string, unknown>> {
     element: HTMLElement;
   } | null {
     return resolveFieldFromBlur(this.ngForm, event.target);
-  }
-
-  /**
-   * Moves keyboard focus to the first invalid, visible form control after submit.
-   * This keeps error recovery predictable for keyboard and assistive-technology users.
-   */
-  #focusFirstInvalidField(): void {
-    if (this.ngForm.form.valid) {
-      return;
-    }
-
-    const focusFirstInvalid = () => {
-      const form = this.#elementRef.nativeElement;
-      const candidates = Array.from(
-        form.querySelectorAll<HTMLElement>(
-          [
-            '[aria-invalid="true"]:not([disabled]):not([type="hidden"])',
-            'input.ng-invalid:not([disabled]):not([type="hidden"])',
-            'select.ng-invalid:not([disabled])',
-            'textarea.ng-invalid:not([disabled])',
-          ].join(', ')
-        )
-      );
-
-      const firstInvalid = candidates.find((candidate) => {
-        if (candidate.getAttribute('aria-hidden') === 'true') {
-          return false;
-        }
-
-        return candidate.getClientRects().length > 0;
-      });
-
-      if (!firstInvalid) {
-        return;
-      }
-
-      firstInvalid.focus({ preventScroll: true });
-      firstInvalid.scrollIntoView?.({
-        block: 'center',
-        inline: 'nearest',
-      });
-    };
-
-    if (typeof globalThis.requestAnimationFrame === 'function') {
-      globalThis.requestAnimationFrame(() => {
-        focusFirstInvalid();
-      });
-      return;
-    }
-
-    queueMicrotask(() => {
-      focusFirstInvalid();
-    });
   }
 
   /**
