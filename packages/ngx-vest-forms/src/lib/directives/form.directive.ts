@@ -331,7 +331,7 @@ export class FormDirective<T extends Record<string, unknown>> {
    * Static vest suite that will be used to feed our angular validators.
    * Use `suite.only(field).run(model)` when you need field-focused validation.
    */
-  readonly suite = input<NgxVestSuite<T> | null>(null);
+  readonly suite = input<NgxVestSuite<NoInfer<T>> | null>(null);
 
   /**
    * The shape of our form model. This is a deep required version of the form model

@@ -1,4 +1,4 @@
-import { FormArray, FormControl, FormGroup } from '@angular/forms';
+import { AbstractControl, FormArray, FormControl, FormGroup } from '@angular/forms';
 import { describe, expect, it } from 'vitest';
 import { collectTouchedPaths } from './collect-touched-paths';
 
@@ -40,7 +40,7 @@ describe('collectTouchedPaths', () => {
 
     const contacts = form.controls.contacts;
     contacts.at(0).markAsTouched();
-    contacts.at(1).get('label')?.markAsTouched();
+    (contacts.at(1) as AbstractControl).get('label')?.markAsTouched();
 
     expect(collectTouchedPaths(form, false)).toEqual([
       'contacts[0]',

@@ -7,6 +7,7 @@ import { create, enforce, test as vestTest, warn } from 'vest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FormDirective, NgxFieldBlurEvent } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
+import type { NgxVestSuite } from '../utils/validation-suite';
 // Helper to await either a Promise or Observable
 async function awaitResult<T>(result: Promise<T> | Observable<T>) {
   if (isObservable(result)) {
@@ -166,7 +167,7 @@ describe('FormDirective - Async Validator', () => {
   })
   class TestDebounceCacheHost {
     formValue = signal({ username: '', email: '' });
-    suite = signal(vi.fn());
+    suite = signal(vi.fn() as unknown as NgxVestSuite<Record<string, unknown>>);
     readonly vestForm =
       viewChild.required<FormDirective<Record<string, unknown>>>('vest');
   }

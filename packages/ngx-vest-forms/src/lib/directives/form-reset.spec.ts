@@ -578,7 +578,7 @@ describe('FormDirective - Reset Functionality', () => {
                 vestForm.ngForm.controls['email']?.touched) &&
               errors()['email']
             ) {
-              <div data-testid="email-error">{{ errors()['email'][0] }}</div>
+              <div data-testid="email-error">{{ errors()['email']![0] }}</div>
             }
             <button type="button" (click)="reset()" data-testid="reset">
               Reset

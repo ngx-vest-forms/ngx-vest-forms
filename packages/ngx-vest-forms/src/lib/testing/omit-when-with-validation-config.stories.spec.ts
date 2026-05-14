@@ -4,7 +4,7 @@ import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { create, enforce, omitWhen, test } from 'vest';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { NgxDeepPartial } from '../../public-api';
+import type { NgxDeepPartial, NgxDeepRequired } from '../../public-api';
 import { FormDirective } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
 
@@ -48,7 +48,7 @@ const omitWhenValidationSuite = create((model: OmitWhenFormModel) => {
   });
 });
 
-const formShape: OmitWhenFormModel = {
+const formShape: NgxDeepRequired<OmitWhenFormModel> = {
   berekendeAftrekVoorarrest: {
     aantal: 0,
     onderbouwing: '',

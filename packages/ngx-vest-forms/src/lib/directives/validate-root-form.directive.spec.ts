@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import { NgxVestForms } from '../exports';
 import { getAllFormErrors } from '../utils/form-utils';
+import type { NgxVestSuite } from '../utils/validation-suite';
 import { ValidateRootFormDirective } from './validate-root-form.directive';
 
 /**
@@ -112,7 +113,7 @@ describe('ValidateRootFormDirective', () => {
               data-testid="confirm-password"
             />
             @if (errors()[ROOT_FORM]) {
-              <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
             }
             <button type="submit" data-testid="submit">Submit</button>
           </form>
@@ -270,7 +271,7 @@ describe('ValidateRootFormDirective', () => {
               data-testid="age"
             />
             @if (errors()[ROOT_FORM]) {
-              <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
             }
             <button type="submit" data-testid="submit">Submit</button>
           </form>
@@ -387,7 +388,7 @@ describe('ValidateRootFormDirective', () => {
               data-testid="confirm-password"
             />
             @if (errors()[ROOT_FORM]) {
-              <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
             }
             <button type="submit" data-testid="submit">Submit</button>
           </form>
@@ -433,7 +434,7 @@ describe('ValidateRootFormDirective', () => {
               data-testid="confirm-password"
             />
             @if (errors()[ROOT_FORM]) {
-              <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
             }
             <button type="submit" data-testid="submit">Submit</button>
           </form>
@@ -490,7 +491,7 @@ describe('ValidateRootFormDirective', () => {
               data-testid="confirm-password"
             />
             @if (errors()[ROOT_FORM]) {
-              <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
             }
             <button type="submit" data-testid="submit">Submit</button>
           </form>
@@ -560,7 +561,7 @@ describe('ValidateRootFormDirective', () => {
               data-testid="confirm-password"
             />
             @if (errors()[ROOT_FORM]) {
-              <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
             }
             <button type="submit" data-testid="submit">Submit</button>
           </form>
@@ -612,7 +613,7 @@ describe('ValidateRootFormDirective', () => {
               data-testid="confirm-password"
             />
             @if (errors()[ROOT_FORM]) {
-              <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
             }
             <button type="submit" data-testid="submit">Submit</button>
           </form>
@@ -671,7 +672,7 @@ describe('ValidateRootFormDirective', () => {
       })
       class TestDebounceHost {
         model = signal<Record<string, unknown>>({ password: 'abc12345' });
-        suite = signal<unknown>(null);
+        suite = signal<NgxVestSuite<Record<string, unknown>> | null>(null);
 
         @ViewChild(ValidateRootFormDirective, { static: true })
         rootValidator!: ValidateRootFormDirective<Record<string, unknown>>;
@@ -706,7 +707,7 @@ describe('ValidateRootFormDirective', () => {
 
       const { fixture } = await render(TestDebounceHost);
       const instance = fixture.componentInstance;
-      instance.suite.set(suiteMock);
+      instance.suite.set(suiteMock as unknown as NgxVestSuite<Record<string, unknown>>);
       fixture.detectChanges();
 
       const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {
@@ -740,7 +741,7 @@ describe('ValidateRootFormDirective', () => {
     })
     class TestCreateAsyncValidatorHost {
       model = signal<Record<string, unknown>>({ password: 'abc12345' });
-      suite = signal<unknown>(null);
+      suite = signal<NgxVestSuite<Record<string, unknown>> | null>(null);
 
       @ViewChild(ValidateRootFormDirective, { static: true })
       rootValidator!: ValidateRootFormDirective<Record<string, unknown>>;
@@ -776,7 +777,7 @@ describe('ValidateRootFormDirective', () => {
 
       const { fixture } = await render(TestCreateAsyncValidatorHost);
       const instance = fixture.componentInstance;
-      instance.suite.set(suiteMock);
+      instance.suite.set(suiteMock as unknown as NgxVestSuite<Record<string, unknown>>);
       fixture.detectChanges();
 
       const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {
@@ -827,7 +828,7 @@ describe('ValidateRootFormDirective', () => {
 
       const { fixture } = await render(TestCreateAsyncValidatorHost);
       const instance = fixture.componentInstance;
-      instance.suite.set(suiteMock);
+      instance.suite.set(suiteMock as unknown as NgxVestSuite<Record<string, unknown>>);
       fixture.detectChanges();
 
       const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {

@@ -106,7 +106,7 @@ class DependentBlurDisplayModeComponent {
   readonly validationConfig = {
     quantity: ['justification'],
     justification: ['quantity'],
-  } as const;
+  };
 }
 
 type CascadeModel = NgxDeepPartial<{

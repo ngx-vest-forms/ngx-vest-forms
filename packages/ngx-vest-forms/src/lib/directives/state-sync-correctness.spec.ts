@@ -153,12 +153,27 @@ describe('Issue #106 — state-sync correctness', () => {
       });
     }
 
-    async function makeMisMatchedForm(template: string) {
+    it('combo 1 — neither attribute set → effective default is "submit" (no live error)', async () => {
       @Component({
         imports: [NgxVestForms],
-        template,
+        template: `
+          <form
+            ngxVestForm
+            ngxValidateRootForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+            (errorsChange)="errors.set($event)"
+          >
+            <input name="password" [ngModel]="model().password" />
+            <input name="confirmPassword" [ngModel]="model().confirmPassword" />
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
+            }
+          </form>
+        `,
       })
-      class TestComponent {
+      class TestSubmitComponent {
         ROOT_FORM = ROOT_FORM;
         model = signal<Record<string, unknown>>({
           password: 'password123',
@@ -167,26 +182,8 @@ describe('Issue #106 — state-sync correctness', () => {
         errors = signal<Record<string, string[]>>({});
         suite = createRootFormSuite();
       }
-      return render(TestComponent);
-    }
 
-    it('combo 1 — neither attribute set → effective default is "submit" (no live error)', async () => {
-      const { fixture } = await makeMisMatchedForm(`
-        <form
-          ngxVestForm
-          ngxValidateRootForm
-          [suite]="suite"
-          [formValue]="model()"
-          (formValueChange)="model.set($event)"
-          (errorsChange)="errors.set($event)"
-        >
-          <input name="password" [ngModel]="model().password" />
-          <input name="confirmPassword" [ngModel]="model().confirmPassword" />
-          @if (errors()[ROOT_FORM]) {
-            <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
-          }
-        </form>
-      `);
+      const { fixture } = await render(TestSubmitComponent);
 
       // Drive the form through a value change. In `live` mode this would
       // fire the suite and surface the mismatch error; in `submit` mode it
@@ -206,23 +203,37 @@ describe('Issue #106 — state-sync correctness', () => {
     });
 
     it('shows live root-form errors when `ngxValidateRootFormMode` is set to "live"', async () => {
-      await makeMisMatchedForm(`
-        <form
-          ngxVestForm
-          ngxValidateRootForm
-          [ngxValidateRootFormMode]="'live'"
-          [suite]="suite"
-          [formValue]="model()"
-          (formValueChange)="model.set($event)"
-          (errorsChange)="errors.set($event)"
-        >
-          <input name="password" [ngModel]="model().password" />
-          <input name="confirmPassword" [ngModel]="model().confirmPassword" />
-          @if (errors()[ROOT_FORM]) {
-            <div data-testid="root-error">{{ errors()[ROOT_FORM][0] }}</div>
-          }
-        </form>
-      `);
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            ngxValidateRootForm
+            [ngxValidateRootFormMode]="'live'"
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+            (errorsChange)="errors.set($event)"
+          >
+            <input name="password" [ngModel]="model().password" />
+            <input name="confirmPassword" [ngModel]="model().confirmPassword" />
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
+            }
+          </form>
+        `,
+      })
+      class TestLiveComponent {
+        ROOT_FORM = ROOT_FORM;
+        model = signal<Record<string, unknown>>({
+          password: 'password123',
+          confirmPassword: 'mismatch',
+        });
+        errors = signal<Record<string, string[]>>({});
+        suite = createRootFormSuite();
+      }
+
+      await render(TestLiveComponent);
 
       await waitFor(
         () => {

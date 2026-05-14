@@ -476,7 +476,7 @@ describe('setValueAtPath function', () => {
   });
 
   it('should choose array or object containers based on the next path segment', () => {
-    const object = {};
+    const object: Record<string, unknown> = {};
 
     setValueAtPath(object, 'addresses[0].street', '123 Main St');
     setValueAtPath(object, 'metadata.version.label', 'v1');

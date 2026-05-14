@@ -61,7 +61,7 @@ describe('validateShape function', () => {
       validateShape(formValue, shape);
       expect(consoleWarnSpy).toHaveBeenCalled();
       const calls = consoleWarnSpy.mock.calls.map((call: unknown[]) => call[0]);
-      expect(calls.some((msg) => String(msg).includes('addresss'))).toBe(true);
+      expect(calls.some((msg: unknown) => String(msg).includes('addresss'))).toBe(true);
     });
 
     it('should warn when nested property has typo', () => {
@@ -80,7 +80,7 @@ describe('validateShape function', () => {
       validateShape(formValue, shape);
       expect(consoleWarnSpy).toHaveBeenCalled();
       const calls = consoleWarnSpy.mock.calls.map((call: unknown[]) => call[0]);
-      expect(calls.some((msg) => String(msg).includes('address.citty'))).toBe(
+      expect(calls.some((msg: unknown) => String(msg).includes('address.citty'))).toBe(
         true
       );
     });
@@ -160,7 +160,7 @@ describe('validateShape function', () => {
       const calls = consoleWarnSpy.mock.calls.map((call: unknown[]) => call[0]);
       expect(
         calls.some(
-          (msg) =>
+          (msg: unknown) =>
             String(msg).includes('birthDate') &&
             String(msg).toLowerCase().includes('type')
         )
@@ -441,7 +441,7 @@ describe('validateShape function', () => {
 
       expect(consoleWarnSpy).toHaveBeenCalled();
       const calls = consoleWarnSpy.mock.calls.map((call: unknown[]) => call[0]);
-      expect(calls.some((msg) => String(msg).includes('items.123abc'))).toBe(
+      expect(calls.some((msg: unknown) => String(msg).includes('items.123abc'))).toBe(
         true
       );
     });

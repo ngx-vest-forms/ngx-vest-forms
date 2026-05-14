@@ -231,7 +231,7 @@ describe('deepArrayToObject', () => {
     >;
 
     expect(array).toEqual(originalCopy);
-    expect(result[1][0]).not.toBe(nestedObj);
+    expect(result[1]![0]).not.toBe(nestedObj);
   });
 
   it('should handle arrays with complex objects', () => {

@@ -98,10 +98,10 @@ describe('simple-form-with-validation-config stories', () => {
       fixture.detectChanges();
       await fixture.whenStable();
     };
-    const waitForFixture = async (assertion: () => void | Promise<void>) => {
-      await waitFor(async () => {
-        await syncFixture();
-        await assertion();
+    const waitForFixture = async (assertion: () => void) => {
+      await waitFor(() => {
+        fixture.detectChanges();
+        assertion();
       });
     };
 

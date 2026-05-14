@@ -321,7 +321,7 @@ describe('createValidationConfigPipeline', () => {
     expect(getCount()).toBe(0);
 
     // Add the dependent control before the timeout
-    form.addControl('dependent', dependentCtrl);
+    (form as FormGroup).addControl('dependent', dependentCtrl);
     // statusChanges emits → pipeline wakes up
     await vi.advanceTimersByTimeAsync(0);
 

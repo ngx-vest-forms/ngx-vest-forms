@@ -201,10 +201,10 @@ describe('vest-runner', () => {
     const latestResult = createSuiteResult({
       username: ['Recovered latest state'],
     });
+    const rejectedPromise = Promise.reject(new Error('boom'));
+    rejectedPromise.catch(() => {}); // suppress unhandled rejection before suite consumes it
     const suite = createSuiteMock({
-      asyncResult: Promise.reject(
-        new Error('boom')
-      ) as unknown as PromiseLike<NgxSuiteRunResult>,
+      asyncResult: rejectedPromise as unknown as PromiseLike<NgxSuiteRunResult>,
       latestResult,
     });
 
@@ -359,7 +359,7 @@ describe('vest-runner', () => {
     const result = createSuiteResult();
     const suite = createSuiteMock({ syncResult: result });
 
-    const emitted = await new Promise<NgxSuiteRunResult>((resolve, reject) => {
+    const emitted = await new Promise<unknown>((resolve, reject) => {
       runFieldValidation(
         suite,
         {},
@@ -386,7 +386,7 @@ describe('vest-runner', () => {
     const result = createSuiteResult();
     const suite = createFocusSuiteMock(result);
 
-    const emitted = await new Promise<NgxSuiteRunResult>((resolve, reject) => {
+    const emitted = await new Promise<unknown>((resolve, reject) => {
       runFieldValidation(
         suite,
         { onlyGroup: 'step-1', only: 'ignored-by-caller' },
@@ -415,7 +415,7 @@ describe('vest-runner', () => {
     const result = createSuiteResult();
     const suite = createFocusSuiteMock(result);
 
-    const emitted = await new Promise<NgxSuiteRunResult>((resolve, reject) => {
+    const emitted = await new Promise<unknown>((resolve, reject) => {
       runFieldValidation(
         suite,
         { skipGroup: 'step-2', only: 'username' },

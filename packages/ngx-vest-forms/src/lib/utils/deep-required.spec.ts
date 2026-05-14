@@ -76,8 +76,8 @@ describe('NgxDeepRequired', () => {
       ],
     };
     expect(Array.isArray(value.items)).toBe(true);
-    expect(value.items[0].name).toBeDefined();
-    expect(value.items[0].value).toBeDefined();
+    expect(value.items[0]!.name).toBeDefined();
+    expect(value.items[0]!.value).toBeDefined();
   });
 
   it('should recursively process readonly array element types', () => {
@@ -88,7 +88,7 @@ describe('NgxDeepRequired', () => {
       tags: [{ label: 'important' }],
     };
     expect(Array.isArray(value.tags)).toBe(true);
-    expect(value.tags[0].label).toBeDefined();
+    expect(value.tags[0]!.label).toBeDefined();
   });
 
   it('should handle deeply nested structures with arrays', () => {
@@ -111,9 +111,9 @@ describe('NgxDeepRequired', () => {
       ],
     };
     expect(value.users.length).toBe(2);
-    expect(value.users[0].name).toBe('John');
-    expect(value.users[0].tags).toEqual(['admin', 'user']);
-    expect(value.users[1].name).toBe('Jane');
+    expect(value.users[0]!.name).toBe('John');
+    expect(value.users[0]!.tags).toEqual(['admin', 'user']);
+    expect(value.users[1]!.name).toBe('Jane');
   });
 
   it('should handle mixed types correctly', () => {
@@ -207,12 +207,12 @@ describe('NgxFormCompatibleDeepRequired', () => {
     };
     expect(Array.isArray(value.events)).toBe(true);
     expect(
-      typeof value.events[0].date === 'string' ||
-        value.events[0].date instanceof Date
+      typeof value.events[0]!.date === 'string' ||
+        value.events[0]!.date instanceof Date
     ).toBe(true);
     expect(
-      typeof value.events[1].date === 'string' ||
-        value.events[1].date instanceof Date
+      typeof value.events[1]!.date === 'string' ||
+        value.events[1]!.date instanceof Date
     ).toBe(true);
   });
 
@@ -261,14 +261,14 @@ describe('NgxFormCompatibleDeepRequired', () => {
         },
       ],
     };
-    expect(value.users[0].name).toBe('John');
+    expect(value.users[0]!.name).toBe('John');
     expect(
-      typeof value.users[0].registeredAt === 'string' ||
-        value.users[0].registeredAt instanceof Date
+      typeof value.users[0]!.registeredAt === 'string' ||
+        value.users[0]!.registeredAt instanceof Date
     ).toBe(true);
     expect(
-      typeof value.users[0].events[0].date === 'string' ||
-        value.users[0].events[0].date instanceof Date
+      typeof value.users[0]!.events[0]!.date === 'string' ||
+        value.users[0]!.events[0]!.date instanceof Date
     ).toBe(true);
   });
 

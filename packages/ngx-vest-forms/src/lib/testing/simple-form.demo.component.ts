@@ -112,7 +112,7 @@ export class FormDirectiveDemoComponent {
   protected readonly formValue = signal<FormModel>({});
   protected readonly formValid = signal<boolean | null>(null);
   protected readonly formDirty = signal<boolean | null>(null);
-  protected readonly errors = signal<Record<string, string>>({});
+  protected readonly errors = signal<Record<string, string[]>>({});
   protected readonly shape = formShape;
   protected readonly suite = createFormValidationSuite();
   private readonly viewModel = computed(() => {

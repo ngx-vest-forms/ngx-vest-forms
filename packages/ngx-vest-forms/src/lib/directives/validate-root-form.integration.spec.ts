@@ -1,4 +1,4 @@
-import { Component, signal, Type } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NgxVestForms, ROOT_FORM } from 'ngx-vest-forms';
 import { create, enforce, test } from 'vest';
@@ -24,22 +24,23 @@ const issueThirteenSuite = create((model: GeneralInfoForm = {}) => {
   imports: [NgxVestForms],
   template: `
     <form
-      scVestForm
+      ngxVestForm
+      ngxValidateRootForm
+      [formValue]="formValue()"
       [formShape]="shape"
       [suite]="suite"
-      [validateRootForm]="true"
       (formValueChange)="formValue.set($event)"
       (validChange)="formValid.set($event)"
       (ngSubmit)="onSubmit()"
     >
-      <div class="w-full" ngModelGroup="generalInfo" ngx-control-wrapper>
-        <div ngx-control-wrapper>
+      <div ngModelGroup="generalInfo">
+        <div ngxControlWrapper>
           <label for="firstName">First name</label>
           <input
             id="firstName"
             class="input input-bordered input-primary"
             type="text"
-            name="generalInfo.firstName"
+            name="firstName"
             [ngModel]="formValue().generalInfo?.firstName"
           />
         </div>
@@ -64,21 +65,18 @@ class PackageConsumerComponent {
   }
 }
 
-async function compilePackageConsumer(component: Type<unknown>): Promise<void> {
-  await TestBed.configureTestingModule({
-    imports: [component],
-  }).compileComponents();
-
-  const fixture = TestBed.createComponent(component);
-  fixture.detectChanges();
-}
-
-describe('validateRootForm integration (dist consumer)', () => {
+describe('validateRootForm integration', () => {
   afterEach(() => TestBed.resetTestingModule());
 
-  it('compiles when consumers import NgxVestForms from the built package', async () => {
-    await expect(
-      compilePackageConsumer(PackageConsumerComponent)
-    ).resolves.toBeUndefined();
+  it('compiles correctly with NgxVestForms directives', async () => {
+    await TestBed.configureTestingModule({
+      imports: [PackageConsumerComponent],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(PackageConsumerComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement).toBeTruthy();
   });
 });

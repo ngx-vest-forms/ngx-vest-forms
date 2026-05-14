@@ -1635,7 +1635,7 @@ describe('FormDirective - Comprehensive', () => {
 
       // Spy on form.statusChanges after initialization
       const formDirective =
-        fixture.debugElement.children[0].injector.get(FormDirective);
+        fixture.debugElement.children[0]!.injector.get(FormDirective);
       const originalStatusChanges = formDirective.ngForm.form.statusChanges;
       let subscribeCallCount = 0;
 
