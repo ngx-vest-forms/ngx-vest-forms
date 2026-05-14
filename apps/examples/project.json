@@ -86,16 +86,5 @@
         "buildTarget": "examples:build"
       }
     },
-    "e2e": {
-      "executor": "playwright-ng-schematics:playwright",
-      "options": {
-        "devServerTarget": "examples:serve"
-      },
-      "configurations": {
-        "production": {
-          "devServerTarget": "examples:serve:production"
-        }
-      }
-    }
   }
 }

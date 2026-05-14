@@ -4,9 +4,7 @@
   "compilerOptions": {
     "outDir": "../../out-tsc/spec",
     "types": ["vitest/globals"],
-    "paths": {
-      "ngx-vest-forms": ["projects/ngx-vest-forms/src/public-api.ts"]
-    }
+
   },
   "include": ["src/**/*.spec.ts", "src/**/*.d.ts"]
 }

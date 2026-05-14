@@ -1,15 +1,11 @@
 {
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "name": "examples-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "sourceRoot": "apps/examples-e2e",
   "implicitDependencies": ["examples"],
   "targets": {
     "e2e": {
-      "executor": "@nx/playwright:playwright",
-      "options": {
-        "config": "apps/examples-e2e/playwright.config.ts"
-      },
       "configurations": {
         "ci": {
           "ci": true,

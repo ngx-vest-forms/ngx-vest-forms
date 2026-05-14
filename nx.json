@@ -3,45 +3,42 @@
   "targetDefaults": {
     "build": {
       "cache": true,
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "production",
-        "^production"
-      ]
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
     },
     "test": {
       "cache": true,
-      "inputs": [
-        "default",
-        "^production"
-      ]
+      "inputs": ["default", "^production"]
     },
     "lint": {
       "cache": true,
-      "inputs": [
-        "default"
-      ]
+      "inputs": ["default"]
     },
     "e2e": {
-      "inputs": [
-        "default",
-        "^production"
-      ]
+      "cache": true,
+      "inputs": ["default", "^production"]
     }
   },
   "defaultBase": "master",
   "namedInputs": {
     "sharedGlobals": [],
-    "default": [
-      "{projectRoot}/**/*",
-      "sharedGlobals"
-    ],
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "production": [
       "default",
+      "!{projectRoot}/**/*.spec.ts",
+      "!{projectRoot}/**/*.test.ts",
       "!{projectRoot}/.eslintrc.json",
-      "!{projectRoot}/eslint.config.cjs"
+      "!{projectRoot}/eslint.config.cjs",
+      "!{projectRoot}/eslint.config.mjs"
     ]
-  }
+  },
+  "plugins": [
+    {
+      "plugin": "@nx/playwright/plugin",
+      "options": {
+        "targetName": "e2e",
+        "ciTargetName": "e2e-ci"
+      }
+    }
+  ]
 }

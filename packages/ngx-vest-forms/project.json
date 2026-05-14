@@ -39,16 +39,5 @@
       },
       "outputs": ["{options.outputFile}"]
     },
-    "e2e": {
-      "executor": "playwright-ng-schematics:playwright",
-      "options": {
-        "devServerTarget": "ngx-vest-forms:serve"
-      },
-      "configurations": {
-        "production": {
-          "devServerTarget": "ngx-vest-forms:serve:production"
-        }
-      }
-    }
   }
 }

@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
     alias: {
       'ngx-vest-forms': resolve(
         __dirname,
-        'projects/ngx-vest-forms/src/public-api.ts'
+        'packages/ngx-vest-forms/src/public-api.ts'
       ),
     },
     dedupe: ['vest', 'n4s', 'vest-utils', 'vestjs-runtime', 'context'],
@@ -37,20 +37,20 @@ export default defineConfig(({ mode }) => ({
   test: {
     globals: true,
     isolate: true,
-    setupFiles: ['projects/ngx-vest-forms/src/test-setup.ts'],
-    exclude: ['node_modules', 'dist', 'e2e'],
+    setupFiles: ['packages/ngx-vest-forms/src/test-setup.ts'],
+    exclude: ['node_modules', 'dist', 'apps/examples-e2e'],
     reporters: ['default'],
     coverage: {
       provider: 'v8',
       reporter: ['html', 'lcov', 'text-summary'],
       include: [
-        'projects/ngx-vest-forms/src/lib/**/*.ts',
-        'projects/examples/src/app/**/*.ts',
+        'packages/ngx-vest-forms/src/lib/**/*.ts',
+        'apps/examples/src/app/**/*.ts',
       ],
       exclude: [
-        'projects/ngx-vest-forms/src/lib/**/*.spec.ts',
-        'projects/ngx-vest-forms/src/lib/testing/**',
-        'projects/examples/src/app/**/*.spec.ts',
+        'packages/ngx-vest-forms/src/lib/**/*.spec.ts',
+        'packages/ngx-vest-forms/src/lib/testing/**',
+        'apps/examples/src/app/**/*.spec.ts',
         '**/node_modules/**',
         '**/dist/**',
       ],
@@ -64,7 +64,7 @@ export default defineConfig(({ mode }) => ({
         extends: true,
         test: {
           name: { label: 'node', color: 'green' },
-          include: ['projects/examples/src/app/pages/**/*.validations.spec.ts'],
+          include: ['apps/examples/src/app/pages/**/*.validations.spec.ts'],
           environment: 'node',
         },
       },
@@ -81,14 +81,14 @@ export default defineConfig(({ mode }) => ({
             fileParallelism: false, // Run test files sequentially to avoid NG0912 component ID collisions
           },
           include: [
-            'projects/ngx-vest-forms/src/**/*.spec.ts',
-            'projects/examples/src/**/*.spec.ts',
+            'packages/ngx-vest-forms/src/**/*.spec.ts',
+            'apps/examples/src/**/*.spec.ts',
           ],
           exclude: [
             'node_modules',
             'dist',
-            'e2e',
-            'projects/examples/src/app/pages/**/*.validations.spec.ts',
+            'apps/examples-e2e',
+            'apps/examples/src/app/pages/**/*.validations.spec.ts',
           ],
         },
       },
