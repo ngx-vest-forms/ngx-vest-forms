@@ -7,7 +7,6 @@ This directory contains all utility types and functions provided by ngx-vest-for
 - [Type Utilities](#type-utilities)
   - [NgxDeepPartial\<T\>](#ngxdeeppartialt)
   - [NgxDeepRequired\<T\>](#ngxdeeprequiredt)
-  - [NgxFormCompatibleDeepRequired\<T\>](#ngxformcompatibledeeprequiredt)
   - [NgxVestSuite\<T\>](#ngxvestsuitet)
   - [NgxFieldKey\<T\>](#ngxfieldkeyt)
 - [Form Utilities](#form-utilities)
@@ -112,53 +111,11 @@ const formShape: NgxDeepRequired<FormModel> = {
 
 ---
 
-### NgxFormCompatibleDeepRequired\<T\>
+### NgxFormCompatibleDeepRequired\<T\> _(Removed in v3)_
 
-**Recommended for Date fields** - Makes properties required while converting `Date` to `Date | string`.
+This helper was removed in v3. The `[formContract]` input now accepts any [Standard Schema v1](https://standardschema.dev) value (Zod, Valibot, ArkType, …), so Date coercion (e.g., `Date | ''` for date pickers) belongs in your schema, not a form-shape type.
 
-**Why?** Solves the `Date !== string` type mismatch that occurs in form initialization.
-
-```typescript
-import { NgxFormCompatibleDeepRequired } from 'ngx-vest-forms';
-
-interface UserModel {
-  id?: number;
-  name?: string;
-  birthDate?: Date;
-  profile?: {
-    createdAt?: Date;
-    isActive?: boolean;
-  };
-}
-
-type FormUser = NgxFormCompatibleDeepRequired<UserModel>;
-// Result: {
-//   id: number;
-//   name: string;
-//   birthDate: Date | string;  // <-- Date gets union treatment
-//   profile: {
-//     createdAt: Date | string;  // <-- Recursive application
-//     isActive: boolean;         // <-- Other types unchanged
-//   };
-// }
-
-// Now you can safely initialize with empty strings for dates
-const formData: FormUser = {
-  id: 0,
-  name: '',
-  birthDate: '', // ✅ Valid: string allowed for Date properties
-  profile: {
-    createdAt: '', // ✅ Valid: works recursively
-    isActive: false,
-  },
-};
-```
-
-**When to use:**
-
-- ✅ Form models with Date fields
-- ✅ Avoiding type errors on form initialization
-- ✅ Creating form shapes that accept both Date objects and date strings
+If you still need the original type as-is, see the copy-paste snippet in **[docs/migration/MIGRATION-v2.x-to-v3.0.0.md](../../../../../docs/migration/MIGRATION-v2.x-to-v3.0.0.md)**.
 
 ---
 
@@ -969,7 +926,6 @@ const formContract: StandardSchemaV1<FormModel> = toFormContract(formShape);
 import {
   NgxDeepPartial,
   NgxDeepRequired,
-  NgxFormCompatibleDeepRequired,
   NgxVestSuite,
   NgxFieldKey,
 } from 'ngx-vest-forms';
@@ -1032,7 +988,6 @@ All public type utilities use the `Ngx` prefix to prevent naming conflicts and c
 
 - ✅ `NgxDeepPartial<T>`
 - ✅ `NgxDeepRequired<T>`
-- ✅ `NgxFormCompatibleDeepRequired<T>`
 - ✅ `NgxVestSuite<T>`
 
 > **Migrating from v2.x?** The unprefixed aliases (`DeepPartial`, `DeepRequired`, `FormCompatibleDeepRequired`, `NgxTypedVestSuite`) and the legacy `set()` / `cloneDeep()` helpers were removed in v3. See [docs/migration/MIGRATION-v2.x-to-v3.0.0.md](../../../../../docs/migration/MIGRATION-v2.x-to-v3.0.0.md).

@@ -6,10 +6,7 @@ export { NgxVestForms, vestFormsViewProviders } from './lib/exports';
 
 // Type utilities
 export type { NgxDeepPartial } from './lib/utils/deep-partial';
-export type {
-  NgxDeepRequired,
-  NgxFormCompatibleDeepRequired,
-} from './lib/utils/deep-required';
+export type { NgxDeepRequired } from './lib/utils/deep-required';
 export type {
   FieldPath,
   FieldPathValue,

@@ -12,11 +12,68 @@ v3.0.0 deletes every `@deprecated` runtime helper, const alias, and type alias t
 | `ROOT_FORM_CONSTANT`                        | `ROOT_FORM`                        | Single canonical export from `ngx-vest-forms`.                           |
 | `DeepPartial<T>`                            | `NgxDeepPartial<T>`                | Structurally identical; rename the import.                               |
 | `DeepRequired<T>`                           | `NgxDeepRequired<T>`               | Structurally identical; rename the import.                               |
-| `FormCompatibleDeepRequired<T>`             | `NgxFormCompatibleDeepRequired<T>` | Structurally identical; rename the import.                               |
+| `FormCompatibleDeepRequired<T>`             | _(removed)_                        | See "Replacing `NgxFormCompatibleDeepRequired`" below for a copy-paste snippet, or express Date coercion in your schema (e.g., `z.union([z.date(), z.literal('')])`). |
 | `NgxTypedVestSuite<T>`                      | `NgxVestSuite<T>`                  | Structurally identical; rename the type reference.                       |
 | `SC_ERROR_DISPLAY_MODE_DEFAULT` (re-export) | `NGX_ERROR_DISPLAY_MODE_DEFAULT`   | Was an internal re-export; if you imported it, switch to the `NGX_*` name. |
 
 If you only used the recommended `Ngx*` / `NGX_*` names (or the canonical `setValueAtPath` / `structuredClone`), v3 is a no-op for this category.
+
+### Replacing `NgxFormCompatibleDeepRequired`
+
+`NgxFormCompatibleDeepRequired<T>` was a project-specific helper that mapped `Date` (and `Date | undefined`) to `Date | string` so date-picker components could use `''` as a no-selection placeholder. v3 removes it for two reasons:
+
+1. The `[formContract]` input now accepts any [Standard Schema v1](https://standardschema.dev) value. Schema validators (Zod, Valibot, ArkType) express Date coercion natively — e.g., `z.union([z.date(), z.literal('')])` or `z.coerce.date()` — so you don't need a TypeScript-only workaround.
+2. It had no equivalent in `ts-essentials` or any standard library, making it surprising in a Standard-Schema-first API surface.
+
+**Recommended migration:** move Date coercion into your schema. **Fallback:** if you still need the type as-is, copy this snippet into your project (it depends only on `_Primitive`, `_Builtin`, `_IsNever`, `_IsTuple` helpers — included below):
+
+```typescript
+// Adapted from ts-essentials DeepRequired (MIT License).
+// https://github.com/ts-essentials/ts-essentials
+type _Primitive =
+  | string
+  | number
+  | boolean
+  | bigint
+  | symbol
+  | undefined
+  | null;
+type _Builtin = _Primitive | Function | Date | Error | RegExp;
+type _IsNever<T> = [T] extends [never] ? true : false;
+type _IsTuple<T extends ReadonlyArray<any>> = number extends T['length']
+  ? false
+  : true;
+
+export type FormCompatibleDeepRequired<T> = T extends Date
+  ? Date | string
+  : T extends Error
+  ? Required<T>
+  : T extends _Builtin
+  ? T
+  : T extends Map<infer K, infer V>
+  ? Map<FormCompatibleDeepRequired<K>, FormCompatibleDeepRequired<V>>
+  : T extends ReadonlyMap<infer K, infer V>
+  ? ReadonlyMap<FormCompatibleDeepRequired<K>, FormCompatibleDeepRequired<V>>
+  : T extends WeakMap<infer K, infer V>
+  ? WeakMap<FormCompatibleDeepRequired<K> & object, FormCompatibleDeepRequired<V>>
+  : T extends Set<infer U>
+  ? Set<FormCompatibleDeepRequired<U>>
+  : T extends ReadonlySet<infer U>
+  ? ReadonlySet<FormCompatibleDeepRequired<U>>
+  : T extends WeakSet<infer U>
+  ? WeakSet<FormCompatibleDeepRequired<U> & object>
+  : T extends Promise<infer U>
+  ? Promise<FormCompatibleDeepRequired<U>>
+  : T extends ReadonlyArray<infer U>
+  ? _IsNever<_IsTuple<T>> extends false
+    ? { [K in keyof T]-?: FormCompatibleDeepRequired<T[K]> }
+    : T extends Array<U>
+    ? Array<Exclude<FormCompatibleDeepRequired<U>, undefined>>
+    : ReadonlyArray<Exclude<FormCompatibleDeepRequired<U>, undefined>>
+  : T extends {}
+  ? { [K in keyof T]-?: FormCompatibleDeepRequired<T[K]> }
+  : Required<T>;
+```
 
 ## What's new in v3 beyond Vest 6
 
