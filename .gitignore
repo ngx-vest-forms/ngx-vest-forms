@@ -58,3 +58,7 @@ Thumbs.db
 
 # Git worktrees
 /.worktrees/
+
+.nx/polygraph
+.claude/worktrees
+.claude/settings.local.json
