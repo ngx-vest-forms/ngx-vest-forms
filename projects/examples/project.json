@@ -1,0 +1,110 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "examples",
+  "projectType": "application",
+  "generators": {
+    "@schematics/angular:component": {
+      "style": "scss"
+    }
+  },
+  "sourceRoot": "projects/examples/src",
+  "prefix": "app",
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "options": {
+        "outputPath": {
+          "base": "dist/examples"
+        },
+        "index": "projects/examples/src/index.html",
+        "tsConfig": "projects/examples/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
+        "assets": [
+          "projects/examples/src/favicon.ico",
+          "projects/examples/src/assets"
+        ],
+        "styles": [
+          "projects/examples/src/styles.scss"
+        ],
+        "scripts": [],
+        "browser": "projects/examples/src/main.ts"
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "650kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "4kb",
+              "maximumError": "6kb"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "namedChunks": true
+        }
+      },
+      "defaultConfiguration": "production",
+      "outputs": [
+        "{options.outputPath.base}"
+      ]
+    },
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "tsConfig": "tsconfig.spec.json",
+        "runnerConfig": "vitest.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@angular-eslint/builder:lint",
+      "options": {
+        "lintFilePatterns": [
+          "projects/examples/**/*.ts",
+          "projects/examples/**/*.html"
+        ],
+        "eslintConfig": "projects/examples/eslint.config.mjs"
+      },
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    },
+    "serve": {
+      "executor": "@angular/build:dev-server",
+      "configurations": {
+        "production": {
+          "buildTarget": "examples:build:production"
+        },
+        "development": {
+          "buildTarget": "examples:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "extract-i18n": {
+      "executor": "@angular/build:extract-i18n",
+      "options": {
+        "buildTarget": "examples:build"
+      }
+    },
+    "e2e": {
+      "executor": "playwright-ng-schematics:playwright",
+      "options": {
+        "devServerTarget": "examples:serve"
+      },
+      "configurations": {
+        "production": {
+          "devServerTarget": "examples:serve:production"
+        }
+      }
+    }
+  }
+}
