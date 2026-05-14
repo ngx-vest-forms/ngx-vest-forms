@@ -1,114 +1,105 @@
-/**
- * Sometimes we want to make every property of a type
- * required, but also child properties recursively
- *
- * @template T The type to make deeply required
- * @example
- * ```typescript
- * interface User {
- *   name?: string;
- *   profile?: {
- *     age?: number;
- *   };
- * }
- *
- * type RequiredUser = NgxDeepRequired<User>;
- * /// Result: { name: string; profile: { age: number; } }
- * ```
- */
-export type NgxDeepRequired<T> = {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-  [K in keyof T]-?: T[K] extends Date | Function
-    ? T[K]
-    : T[K] extends Array<infer U>
-      ? Array<NgxDeepRequired<U>>
-      : T[K] extends ReadonlyArray<infer U>
-        ? ReadonlyArray<NgxDeepRequired<U>>
-        : T[K] extends object
-          ? NgxDeepRequired<T[K]>
-          : T[K];
-};
+// Helper types adapted from ts-essentials (MIT, https://github.com/ts-essentials/ts-essentials).
+// Inlined to avoid a runtime dependency. See https://www.npmjs.com/package/ts-essentials.
+type _Primitive = string | number | boolean | bigint | symbol | undefined | null;
+type _Builtin = _Primitive | Function | Date | Error | RegExp;
+type _IsNever<T> = [T] extends [never] ? true : false;
+// Returns T when T is a tuple type, never for plain arrays.
+type _IsTuple<T> = T extends ReadonlyArray<infer U>
+  ? Array<U> extends T
+    ? _IsNever<keyof T & `${number}`> extends true
+      ? never
+      : T
+    : T
+  : never;
 
 /**
- * A specialized version of NgxDeepRequired that handles form compatibility issues,
- * specifically the Date/string type mismatch that occurs in form initialization.
+ * Makes every property required recursively, including nested objects and arrays.
+ * Treats Date, Function, RegExp, Error, and primitives as opaque leaf types (no recursion).
+ * Handles Map, Set, WeakMap, WeakSet, Promise, and tuples correctly.
  *
- * **Problem this solves:**
- * - Model interfaces often use `Date` types for semantic correctness
- * - UI libraries (like PrimeNG p-calendar) require empty string `''` for placeholder display
- * - This creates a `Date !== string` type mismatch during form initialization
+ * Adapted from ts-essentials `DeepRequired` (MIT License).
+ * @see https://github.com/ts-essentials/ts-essentials
  *
- * **Solution:**
- * - Makes all properties required (removes optional `?` modifiers)
- * - Recursively processes nested objects
- * - **Only** adds `string` as an allowed type for `Date` properties
- * - All other types remain unchanged to maintain type safety
+ * @deprecated Use `DeepRequired` from `ts-essentials` instead.
+ * `npm install ts-essentials` then `import { DeepRequired } from 'ts-essentials'`.
+ * This export will be removed in a future major version.
  *
- * **Usage Example:**
- * ```typescript
- * interface UserModel {
- *   id?: number;
- *   name?: string;
- *   birthDate?: Date;
- *   profile?: {
- *     createdAt?: Date;
- *     isActive?: boolean;
- *   };
- * }
+ * @template T The type to make deeply required
+ */
+export type NgxDeepRequired<T> = T extends Error
+  ? Required<T>
+  : T extends _Builtin
+  ? T
+  : T extends Map<infer K, infer V>
+  ? Map<NgxDeepRequired<K>, NgxDeepRequired<V>>
+  : T extends ReadonlyMap<infer K, infer V>
+  ? ReadonlyMap<NgxDeepRequired<K>, NgxDeepRequired<V>>
+  : T extends WeakMap<infer K, infer V>
+  ? WeakMap<NgxDeepRequired<K>, NgxDeepRequired<V>>
+  : T extends Set<infer U>
+  ? Set<NgxDeepRequired<U>>
+  : T extends ReadonlySet<infer U>
+  ? ReadonlySet<NgxDeepRequired<U>>
+  : T extends WeakSet<infer U>
+  ? WeakSet<NgxDeepRequired<U>>
+  : T extends Promise<infer U>
+  ? Promise<NgxDeepRequired<U>>
+  : T extends ReadonlyArray<infer U>
+  ? _IsNever<_IsTuple<T>> extends false
+    ? { [K in keyof T]-?: NgxDeepRequired<T[K]> }
+    : T extends Array<U>
+    ? Array<Exclude<NgxDeepRequired<U>, undefined>>
+    : ReadonlyArray<Exclude<NgxDeepRequired<U>, undefined>>
+  : T extends {}
+  ? { [K in keyof T]-?: NgxDeepRequired<T[K]> }
+  : Required<T>;
+
+/**
+ * A form-compatible variant of NgxDeepRequired where Date fields also accept an empty
+ * string, accommodating date-picker components that use `''` as a no-selection placeholder.
  *
- * /// Result type:
- * type FormCompatibleUser = NgxFormCompatibleDeepRequired<UserModel>;
- * /// {
- * ///   id: number;
- * ///   name: string;
- * ///   birthDate: Date | string;  /// <-- Only Date gets union treatment
- * ///   profile: {
- * ///     createdAt: Date | string; /// <-- Date properties at all levels
- * ///     isActive: boolean;        /// <-- Other types unchanged
- * ///   };
- * /// }
+ * All non-Date properties behave identically to NgxDeepRequired.
  *
- * /// Usage in component:
- * const formShape: FormCompatibleUser = {
- *   id: 0,
- *   name: '',
- *   birthDate: '',  // ✅ Valid! Can use empty string for placeholder
- *   profile: {
- *     createdAt: '', // ✅ Valid! Empty string for date inputs
- *     isActive: false
- *   }
- * };
- * ```
+ * Adapted from ts-essentials `DeepRequired` (MIT License).
+ * @see https://github.com/ts-essentials/ts-essentials
  *
- * **Why not just make everything `T | string`?**
- * - That would sacrifice type safety for non-Date fields
- * - This approach only relaxes types where the form-compatibility issue exists
- * - Maintains strict typing for booleans, numbers, strings, etc.
- *
- * **When to use:**
- * - Creating form shapes for `formShape` validation
- * - Initializing form models that may have empty date inputs
- * - Working with date picker components that accept empty strings
- *
- * **When NOT to use:**
- * - For API response types (use the original model interface)
- * - For non-form data structures
- * - When you don't have Date fields that need empty string support
+ * @deprecated Prefer schema-based form contracts via the `[formContract]` input.
+ * Schemas (Zod, Valibot, ArkType) express Date coercion natively and remove the need
+ * for this type. If you still need this pattern, copy the implementation into your project.
+ * This export will be removed in a future major version.
  *
  * @template T The type to make form-compatible with required properties
- * @see {@link NgxDeepRequired} For the base deep required functionality without form compatibility
- * @see {@link https://github.com/ngx-vest-forms/ngx-vest-forms/issues/12 | Issue #12}
+ * @see {@link NgxDeepRequired}
  */
-export type NgxFormCompatibleDeepRequired<T> = {
-  [K in keyof T]-?: T[K] extends Date | undefined
-    ? Date | string // Date properties (including optional ones) get the union treatment
-    : T[K] extends (...args: unknown[]) => unknown
-      ? T[K] // Functions are leaf types
-      : T[K] extends Array<infer U>
-        ? Array<NgxFormCompatibleDeepRequired<U>> // Recursively process array elements
-        : T[K] extends ReadonlyArray<infer U>
-          ? ReadonlyArray<NgxFormCompatibleDeepRequired<U>> // Recursively process readonly array elements
-          : T[K] extends object | undefined
-            ? NgxFormCompatibleDeepRequired<NonNullable<T[K]>> // Recursively apply to nested objects, removing undefined
-            : T[K]; // All other types remain unchanged
-};
+export type NgxFormCompatibleDeepRequired<T> =
+  // Date (including optional Date) becomes `Date | string` for date-picker compatibility.
+  // Uses distributive `T extends Date` so `Date | undefined` maps to `Date | string | undefined`.
+  T extends Date
+    ? Date | string
+    : T extends Error
+    ? Required<T>
+    : T extends _Builtin
+    ? T
+    : T extends Map<infer K, infer V>
+    ? Map<NgxFormCompatibleDeepRequired<K>, NgxFormCompatibleDeepRequired<V>>
+    : T extends ReadonlyMap<infer K, infer V>
+    ? ReadonlyMap<NgxFormCompatibleDeepRequired<K>, NgxFormCompatibleDeepRequired<V>>
+    : T extends WeakMap<infer K, infer V>
+    ? WeakMap<NgxFormCompatibleDeepRequired<K> & object, NgxFormCompatibleDeepRequired<V>>
+    : T extends Set<infer U>
+    ? Set<NgxFormCompatibleDeepRequired<U>>
+    : T extends ReadonlySet<infer U>
+    ? ReadonlySet<NgxFormCompatibleDeepRequired<U>>
+    : T extends WeakSet<infer U>
+    ? WeakSet<NgxFormCompatibleDeepRequired<U> & object>
+    : T extends Promise<infer U>
+    ? Promise<NgxFormCompatibleDeepRequired<U>>
+    : T extends ReadonlyArray<infer U>
+    ? _IsNever<_IsTuple<T>> extends false
+      ? { [K in keyof T]-?: NgxFormCompatibleDeepRequired<T[K]> }
+      : T extends Array<U>
+      ? Array<Exclude<NgxFormCompatibleDeepRequired<U>, undefined>>
+      : ReadonlyArray<Exclude<NgxFormCompatibleDeepRequired<U>, undefined>>
+    : T extends {}
+    ? { [K in keyof T]-?: NgxFormCompatibleDeepRequired<T[K]> }
+    : Required<T>;
