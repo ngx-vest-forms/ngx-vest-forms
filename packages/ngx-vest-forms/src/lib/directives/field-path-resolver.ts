@@ -162,7 +162,7 @@ function resolveControlPathByDomAncestors(
       subtreeContainsElement(
         fieldElement,
         formEl,
-        candidate.path[candidate.path.length - 1]!
+        candidate.path.at(-1) ?? ''
       )
     );
 

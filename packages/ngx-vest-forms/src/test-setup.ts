@@ -7,7 +7,9 @@ import { expect } from 'vitest';
 expect.extend(matchers);
 
 // JSDOM stubs: no layout engine, so provide minimal implementations so tests can spy on them
-Element.prototype.scrollIntoView = () => {};
+Element.prototype.scrollIntoView = function () {
+  // JSDOM stub: no layout engine
+};
 Element.prototype.getClientRects = () => [{ width: 1, height: 1 }] as unknown as DOMRectList;
 
 if (typeof window.matchMedia !== 'function') {
@@ -19,10 +21,18 @@ if (typeof window.matchMedia !== 'function') {
         matches: false,
         media: _query,
         onchange: null,
-        addListener: () => {},
-        removeListener: () => {},
-        addEventListener: () => {},
-        removeEventListener: () => {},
+        addListener: (_listener: unknown) => {
+          // JSDOM stub
+        },
+        removeListener: (_listener: unknown) => {
+          // JSDOM stub
+        },
+        addEventListener: (_type: string, _listener: unknown) => {
+          // JSDOM stub
+        },
+        removeEventListener: (_type: string, _listener: unknown) => {
+          // JSDOM stub
+        },
         dispatchEvent: () => false,
       }) as MediaQueryList,
   });

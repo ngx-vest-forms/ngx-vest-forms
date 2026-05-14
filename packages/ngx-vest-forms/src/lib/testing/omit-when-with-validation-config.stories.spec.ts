@@ -335,9 +335,7 @@ describe('omitWhen + validationConfig stories', () => {
   // the prior story file documented the same fragility:
   // "Test removed - validationConfig doesn't trigger properly in Storybook
   //  test environment. Use validation-config.spec.ts unit tests instead."
-  it.skip('Scenario 5: Submit with empty fields', async () => {
-    // Intentionally skipped — see comment above.
-  }, 20000);
+  it.todo('Scenario 5: Submit with empty fields');
 
   it('Scenario 6: Rapid field switching', async () => {
     await renderStory();
