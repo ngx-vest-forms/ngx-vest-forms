@@ -20,7 +20,7 @@ import {
       (ngSubmit)="save()"
       [formValue]="formValue()"
       ngxValidateRootForm
-      [formShape]="shape"
+      [formContract]="shape"
       [suite]="suite"
       (validChange)="formValid.set($event)"
       (errorsChange)="errors.set($event)"

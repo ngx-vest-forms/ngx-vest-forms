@@ -1,5 +1,6 @@
 // Helper types adapted from ts-essentials (MIT, https://github.com/ts-essentials/ts-essentials).
 // Inlined to avoid a runtime dependency. See https://www.npmjs.com/package/ts-essentials.
+/* eslint-disable @typescript-eslint/no-unsafe-function-type, @typescript-eslint/no-empty-object-type, @typescript-eslint/array-type */
 type _Primitive = string | number | boolean | bigint | symbol | undefined | null;
 type _Builtin = _Primitive | Function | Date | Error | RegExp;
 type _IsNever<T> = [T] extends [never] ? true : false;

@@ -158,7 +158,7 @@ describe('ValidateRootFormDirective (template compilation)', () => {
       template: `
         <form
           ngxVestForm
-          [formShape]="shape"
+          [formContract]="shape"
           [suite]="suite"
           [ngxValidateRootForm]="true"
           (formValueChange)="formValue.set($event)"

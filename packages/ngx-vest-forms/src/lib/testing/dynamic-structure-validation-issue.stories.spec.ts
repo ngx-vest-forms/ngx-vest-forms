@@ -58,7 +58,7 @@ const dynamicFormValidationSuite = create(
       class="max-w-lg p-4"
       ngxVestForm
       [formValue]="formValue()"
-      [formShape]="shape"
+      [formContract]="shape"
       [suite]="suite"
       (formValueChange)="handleFormChange($event)"
       (validChange)="formValid.set($event)"

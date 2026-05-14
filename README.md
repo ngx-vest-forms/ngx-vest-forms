@@ -463,7 +463,7 @@ const shape: NgxDeepRequired<MyFormModel> = {
 ```
 
 ```html
-<form ngxVestForm [suite]="suite" [formShape]="shape">
+<form ngxVestForm [suite]="suite" [formContract]="shape">
   <!-- ✅ Correct: matches shape -->
   <input name="email" [ngModel]="formValue().email" />
   <input name="address.street" [ngModel]="formValue().address?.street" />
@@ -524,6 +524,26 @@ const shape: NgxDeepRequired<MyFormModel> = {
 
 - v1.x → v2.0.0: **[Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md)**
 - v2.x → v3.0.0: **[Selector/Token Removal Guide](./docs/migration/MIGRATION-v2.x-to-v3.0.0.md)**
+
+### `[formShape]` → `[formContract]` (v3)
+
+The `[formShape]` input on `<form ngxVestForm>` is replaced by `[formContract]`, which accepts any [Standard Schema v1](https://standardschema.dev) value (Zod v4, Valibot, hand-rolled, …) **or** a legacy `NgxDeepRequired<T>` shape for back-compat:
+
+```html
+<!-- v2 -->
+<form ngxVestForm [suite]="suite" [formShape]="shape"></form>
+
+<!-- v3: shape still works (recommended for incremental migration) -->
+<form ngxVestForm [suite]="suite" [formContract]="shape"></form>
+
+<!-- v3: explicit conversion to StandardSchemaV1 -->
+<form ngxVestForm [suite]="suite" [formContract]="toFormContract(shape)"></form>
+
+<!-- v3: real Standard Schema (recommended for new code) -->
+<form ngxVestForm [suite]="suite" [formContract]="zodSchema"></form>
+```
+
+`@standard-schema/spec` is now declared as a `peerDependency` (`>=1.0.0`). Most consumers don't need to install it directly — bring it in only if you author your own `StandardSchemaV1<T>` literals. The internal `validateShape()` helper has been removed; use `toFormContract()` if you need explicit shape→schema conversion.
 
 Browser support follows Angular 19+ targets (no `structuredClone` polyfill required).
 

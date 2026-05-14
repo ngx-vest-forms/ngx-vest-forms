@@ -1,5 +1,7 @@
 import { create, enforce, omitWhen, test } from 'vest';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 import type { NgxDeepPartial, NgxDeepRequired } from '../../public-api';
+import { toFormContract } from '../utils/to-form-contract';
 import { ROOT_FORM } from '../constants';
 
 export type FormModel = NgxDeepPartial<{
@@ -19,6 +21,9 @@ export const formShape: NgxDeepRequired<FormModel> = {
     confirmPassword: '',
   },
 };
+
+export const formContract: StandardSchemaV1<FormModel> =
+  toFormContract<FormModel>(formShape);
 
 export function createFormValidationSuite() {
   return create((model: FormModel) => {

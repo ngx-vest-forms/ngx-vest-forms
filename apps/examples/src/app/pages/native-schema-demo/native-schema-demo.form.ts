@@ -11,9 +11,9 @@ import {
   createEmptyFormState,
   createFormFeedbackSignals,
   FormDirective,
-  NgxDeepRequired,
   NgxVestForms,
   NgxVestSuite,
+  StandardSchemaV1,
 } from 'ngx-vest-forms';
 import { NativeSchemaDemoModel } from '../../models/native-schema-demo.model';
 import { Card } from '../../ui/card/card.component';
@@ -27,7 +27,7 @@ import { FormSectionComponent } from '../../ui/form-section/form-section.compone
 })
 export class NativeSchemaDemoFormBody {
   readonly formValue = input.required<NativeSchemaDemoModel>();
-  readonly shape = input.required<NgxDeepRequired<NativeSchemaDemoModel>>();
+  readonly contract = input.required<StandardSchemaV1<NativeSchemaDemoModel>>();
   readonly suite = input.required<NgxVestSuite<NativeSchemaDemoModel>>();
 
   readonly formValueChange = output<NativeSchemaDemoModel>();

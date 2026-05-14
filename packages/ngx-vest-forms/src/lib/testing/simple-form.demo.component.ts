@@ -1,7 +1,7 @@
 import { JsonPipe } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
 import { NgxVestForms } from '../exports';
-import { FormModel, createFormValidationSuite, formShape } from './simple-form';
+import { FormModel, createFormValidationSuite, formContract } from './simple-form';
 
 @Component({
   imports: [NgxVestForms, JsonPipe],
@@ -12,7 +12,7 @@ import { FormModel, createFormValidationSuite, formShape } from './simple-form';
       (ngSubmit)="save()"
       [formValue]="formValue()"
       ngxValidateRootForm
-      [formShape]="shape"
+      [formContract]="contract"
       [suite]="suite"
       (dirtyChange)="formDirty.set($event)"
       (validChange)="formValid.set($event)"
@@ -113,7 +113,7 @@ export class FormDirectiveDemoComponent {
   protected readonly formValid = signal<boolean | null>(null);
   protected readonly formDirty = signal<boolean | null>(null);
   protected readonly errors = signal<Record<string, string[]>>({});
-  protected readonly shape = formShape;
+  protected readonly contract = formContract;
   protected readonly suite = createFormValidationSuite();
   private readonly viewModel = computed(() => {
     return {

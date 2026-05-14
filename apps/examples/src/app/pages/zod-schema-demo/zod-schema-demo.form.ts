@@ -11,9 +11,9 @@ import {
   createEmptyFormState,
   createFormFeedbackSignals,
   FormDirective,
-  NgxDeepRequired,
   NgxVestForms,
   NgxVestSuite,
+  StandardSchemaV1,
 } from 'ngx-vest-forms';
 import { ZodSchemaDemoModel } from '../../models/zod-schema-demo.model';
 import { Card } from '../../ui/card/card.component';
@@ -27,7 +27,7 @@ import { FormSectionComponent } from '../../ui/form-section/form-section.compone
 })
 export class ZodSchemaDemoFormBody {
   readonly formValue = input.required<ZodSchemaDemoModel>();
-  readonly shape = input.required<NgxDeepRequired<ZodSchemaDemoModel>>();
+  readonly contract = input.required<StandardSchemaV1<ZodSchemaDemoModel>>();
   readonly suite = input.required<NgxVestSuite<ZodSchemaDemoModel>>();
 
   readonly formValueChange = output<ZodSchemaDemoModel>();

@@ -1,5 +1,6 @@
 // Helper types adapted from ts-essentials (MIT, https://github.com/ts-essentials/ts-essentials).
 // Inlined to avoid a runtime dependency. See https://www.npmjs.com/package/ts-essentials.
+/* eslint-disable @typescript-eslint/no-unsafe-function-type, @typescript-eslint/no-empty-object-type */
 type _IsAny<T> = 0 extends 1 & T ? true : false;
 type _IsUnknown<T> = _IsAny<T> extends true ? false : unknown extends T ? true : false;
 type _Primitive = string | number | boolean | bigint | symbol | undefined | null;

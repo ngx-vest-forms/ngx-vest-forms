@@ -57,7 +57,8 @@ export type {
   DebouncedPendingStateOptionsInput,
   DebouncedPendingStateResult,
 } from './lib/utils/pending-state.utils';
-export { validateShape } from './lib/utils/shape-validation';
+export { toFormContract } from './lib/utils/to-form-contract';
+export type { StandardSchemaV1 } from '@standard-schema/spec';
 
 // ARIA association utilities
 export {

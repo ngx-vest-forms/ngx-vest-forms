@@ -14,6 +14,11 @@ export const NGX_VEST_FORMS_ERRORS = {
     message: (path: string) =>
       `Control not found: Could not find form control at path '${path}'. Check your [ngModel] name attributes.`,
   },
+  SCHEMA_ISSUE: {
+    code: 'NGX-004',
+    message: (path: string, message: string) =>
+      `Schema issue at '${path}': ${message}`,
+  },
 } as const;
 
 export function logWarning<T extends unknown[]>(
@@ -21,6 +26,6 @@ export function logWarning<T extends unknown[]>(
   ...args: T
 ): void {
   console.warn(
-    `[${error.code}] ${error.message(...args)}\nCheck your [formShape] input and the initial [formValue].`
+    `[${error.code}] ${error.message(...args)}\nCheck your [formContract] input and the initial [formValue].`
   );
 }

@@ -40,6 +40,7 @@ import {
   switchMap,
   take,
 } from 'rxjs';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import { NGX_EQUALITY_FN } from '../tokens/equality.token';
@@ -62,7 +63,7 @@ import {
   mergeValuesAndRawValues,
   setValueAtPath,
 } from '../utils/form-utils';
-import { validateShape } from '../utils/shape-validation';
+import { toFormContract } from '../utils/to-form-contract';
 import {
   createValidationConfigPipeline,
   type ValidationConfigPipelineOptions,
@@ -334,12 +335,20 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly suite = input<NgxVestSuite<NoInfer<T>> | null>(null);
 
   /**
-   * The shape of our form model. This is a deep required version of the form model
-   * The goal is to add default values to the shape so when the template-driven form
-   * contains values that shouldn't be there (typo's) that the developer gets run-time
-   * errors in dev mode
+   * Optional structural contract for the form model. Accepts either:
+   * - A {@link StandardSchemaV1} schema (e.g. a Zod schema, or any
+   *   spec-compliant validator) — used in dev-mode for typo/structure
+   *   warnings via the existing error catalog logger
+   * - A legacy "shape" object ({@link NgxDeepRequired}) describing the
+   *   expected form structure with default values — internally normalized
+   *   via `toFormContract`
+   *
+   * The contract is a typing carrier and dev-mode lint only; it does not
+   * affect runtime form validity (validity comes from the Vest `suite`).
    */
-  readonly formShape = input<NgxDeepRequired<T> | null>(null);
+  readonly formContract = input<
+    StandardSchemaV1<NoInfer<T>> | NgxDeepRequired<T> | null
+  >(null);
 
   /**
    * Updates the validation config which is a dynamic object that will be used to
@@ -493,14 +502,47 @@ export class FormDirective<T extends Record<string, unknown>> {
     });
 
     /**
-     * Trigger shape validations if the form gets updated
-     * This is how we can throw run-time errors
+     * Trigger contract validation if the form gets updated.
+     * In dev mode, runs the StandardSchema `~standard.validate(value)` for
+     * structural / typo lints. Legacy shape objects are normalized via
+     * `toFormContract`. Issues are logged via `logWarning`; form validity
+     * is unaffected.
      */
     if (isDevMode()) {
       effect(() => {
         const v = this.formValue();
-        if (v && this.formShape()) {
-          validateShape(v, this.formShape() as NgxDeepRequired<T>);
+        const contract = this.formContract();
+        if (!v || !contract) {
+          return;
+        }
+        const schema =
+          typeof contract === 'object' && '~standard' in contract
+            ? (contract as StandardSchemaV1<NoInfer<T>>)
+            : toFormContract<T>(contract as NgxDeepRequired<T>);
+        const result = schema['~standard'].validate(v);
+        if (result instanceof Promise) {
+          // Async schemas: do not block; validateShape sync path covers
+          // the legacy case. Async schema authors are responsible for
+          // surfacing their own diagnostics.
+          return;
+        }
+        if ('issues' in result && result.issues) {
+          for (const issue of result.issues) {
+            const path = issue.path
+              ? issue.path
+                  .map((seg) =>
+                    typeof seg === 'object' && seg !== null && 'key' in seg
+                      ? String(seg.key)
+                      : String(seg)
+                  )
+                  .join('.')
+              : '<root>';
+            logWarning(
+              NGX_VEST_FORMS_ERRORS.SCHEMA_ISSUE,
+              path,
+              issue.message
+            );
+          }
         }
       });
     }

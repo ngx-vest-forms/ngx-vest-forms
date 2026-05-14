@@ -36,8 +36,9 @@ This directory contains all utility types and functions provided by ngx-vest-for
 - [Internal Equality Utilities](#internal-equality-utilities) ⚠️
   - [shallowEqual()](#shallowequal)
   - [fastDeepEqual()](#fastdeepequal)
-- [Internal Shape Validation](#internal-shape-validation) ⚠️
-  - [validateShape()](#validateshape)
+- [Internal Shape Validation](#internal-shape-validation) ⚠️ (removed in v3 — see [`toFormContract`](#toformcontract))
+- [Standard Schema Adapter](#standard-schema-adapter)
+  - [toFormContract()](#toformcontract)
 
 ---
 
@@ -918,16 +919,19 @@ const equal = fastDeepEqual({ a: 1, b: { c: 3 } }, { a: 1, b: { c: 3 } }); // tr
 
 ---
 
-## Internal Shape Validation
+## Standard Schema Adapter
 
-> **⚠️ Internal API**: This utility is used internally by the library and may change without notice.
+### toFormContract()
 
-### validateShape()
-
-Validates form value matches expected shape.
+Wraps a legacy `NgxDeepRequired<T>` shape into a [Standard Schema v1](https://standardschema.dev) compatible value, so it can be passed to `FormDirective`'s `[formContract]` input alongside real schemas (Zod v4, Valibot, hand-rolled, etc.).
 
 ```typescript
-import { validateShape, NgxDeepRequired, NgxDeepPartial } from 'ngx-vest-forms';
+import {
+  toFormContract,
+  StandardSchemaV1,
+  NgxDeepPartial,
+  NgxDeepRequired,
+} from 'ngx-vest-forms';
 
 type FormModel = NgxDeepPartial<{
   name: string;
@@ -939,17 +943,20 @@ const formShape: NgxDeepRequired<FormModel> = {
   profile: { age: 0 },
 };
 
-// Logs a warning if structure doesn't match in dev mode
-validateShape(formValue, formShape, 'formValue');
+// Use directly — `formContract` accepts both shapes and StandardSchemaV1
+// <form ngxVestForm [formContract]="formShape" ...>
+
+// Or convert explicitly to StandardSchemaV1<T>:
+const formContract: StandardSchemaV1<FormModel> = toFormContract(formShape);
 ```
 
 **When to use:**
 
-- ⚠️ Used internally by `ngxVestForm` directive
-- ⚠️ Development mode validation only
-- ✅ The directive handles this automatically
+- ✅ You have an existing `NgxDeepRequired<T>` shape from v2 and want explicit conversion
+- ✅ You want a single Standard Schema-typed contract through your whole codebase
+- 💡 New code should prefer authoring a real `StandardSchemaV1<T>` (Zod v4 schemas implement it natively)
 
-**Note:** Only runs in development mode (Angular `isDevMode()`).
+> **`validateShape` removed in v3.** The previous internal `validateShape()` utility is no longer exported. Shape diagnostics in dev mode now run through the unified Standard Schema validation path.
 
 ---
 
@@ -1013,8 +1020,8 @@ import { parseFieldPath } from 'ngx-vest-forms';
 // Internal equality utilities (consider lodash or custom logic)
 import { shallowEqual, fastDeepEqual } from 'ngx-vest-forms';
 
-// Internal shape validation (automatic via directive)
-import { validateShape } from 'ngx-vest-forms';
+// Standard Schema adapter for legacy shapes
+import { toFormContract, StandardSchemaV1 } from 'ngx-vest-forms';
 ```
 
 ---

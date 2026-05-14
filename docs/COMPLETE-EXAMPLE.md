@@ -55,7 +55,7 @@ const userValidationSuite: NgxVestSuite<UserFormModel> = create(
     <form
       ngxVestForm
       [suite]="suite"
-      [formShape]="shape"
+      [formContract]="shape"
       [formValue]="formValue()"
       (formValueChange)="formValue.set($event)"
       (ngSubmit)="save()"

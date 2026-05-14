@@ -64,7 +64,7 @@ const formShape: NgxDeepRequired<OmitWhenFormModel> = {
         ngxVestForm
         (ngSubmit)="save()"
         [formValue]="formValue()"
-        [formShape]="shape"
+        [formContract]="shape"
         [validationConfig]="validationConfig"
         [suite]="suite"
         (formValueChange)="setFormValue($event)"

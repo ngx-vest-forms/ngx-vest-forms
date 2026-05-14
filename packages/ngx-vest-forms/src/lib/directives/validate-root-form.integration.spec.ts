@@ -27,7 +27,7 @@ const issueThirteenSuite = create((model: GeneralInfoForm = {}) => {
       ngxVestForm
       ngxValidateRootForm
       [formValue]="formValue()"
-      [formShape]="shape"
+      [formContract]="shape"
       [suite]="suite"
       (formValueChange)="formValue.set($event)"
       (validChange)="formValid.set($event)"

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import {
   ZodSchemaDemoModel,
-  zodSchemaDemoShape,
+  zodSchemaDemoContract,
 } from '../../models/zod-schema-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
@@ -27,7 +27,7 @@ export class ZodSchemaDemoPageComponent {
   protected readonly formValue = signal<ZodSchemaDemoModel>({});
 
   protected readonly suite = zodSchemaDemoSuite;
-  protected readonly shape = zodSchemaDemoShape;
+  protected readonly contract = zodSchemaDemoContract;
 
   protected save(): void {
     // Intentionally no console output in examples to keep CI and demos quiet

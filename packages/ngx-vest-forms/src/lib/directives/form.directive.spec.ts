@@ -1810,7 +1810,7 @@ describe('FormDirective - Shape Validation', () => {
     selector: 'test-shape-validation-host',
     template: `<form
       ngxVestForm
-      [formShape]="formShape()"
+      [formContract]="formShape()"
       [formValue]="formValue()"
       #vest="ngxVestForm"
     ></form>`,
