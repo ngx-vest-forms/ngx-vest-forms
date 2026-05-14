@@ -50,7 +50,8 @@ export {
   keepFieldsWhen,
 } from './lib/utils/field-clearing';
 export { stringifyFieldPath } from './lib/utils/field-path.utils';
-export { setValueAtPath } from './lib/utils/form-utils';
+export { getAllFormErrors, setValueAtPath } from './lib/utils/form-utils';
+export type { NgxFormErrorsByPath } from './lib/utils/form-utils';
 export { createDebouncedPendingState } from './lib/utils/pending-state.utils';
 export type {
   DebouncedPendingStateOptions,
@@ -74,8 +75,6 @@ export type { AriaAssociationMode } from './lib/utils/aria-association.utils';
   shallowEqual,
 } from './lib/utils/equality';
 /** @internal */ export { parseFieldPath } from './lib/utils/field-path.utils';
-export { getAllFormErrors } from './lib/utils/form-utils';
-export type { NgxFormErrorsByPath } from './lib/utils/form-utils';
 /** @internal */ export {
   getFormControlField,
   getFormGroupField,

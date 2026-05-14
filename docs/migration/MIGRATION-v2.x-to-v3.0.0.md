@@ -143,6 +143,8 @@ const fieldErrors = all.errors['user.name']; // string[] | undefined
 const fieldWarnings = all.warnings['user.name']; // string[] | undefined
 ```
 
+**Warnings-only fields**: In v2, a field with only warnings produced `all['field'] === []` — an empty array carrying a non-enumerable `warnings` property. In v3 that field is absent from `all.errors` entirely (`all.errors['field'] === undefined`). If you iterate `Object.keys(all.errors)` to find "fields with messages", warnings-only fields will not appear; iterate `Object.keys(all.warnings)` separately to include them.
+
 The `errorsChange` output on `FormDirective` still emits `Record<string, string[]>` (the `errors` slice of the new shape), so templates consuming `(errorsChange)="errors.set($event)"` and reading `errors()['field']` continue to work unchanged. For warnings inside templates, prefer the existing `fieldWarnings()` signal on the directive — it is per-field, reactive, and the recommended path for warning display.
 
 ## v3 selector + token removals
