@@ -70,7 +70,7 @@ jobs:
       - name: Test
         run: npm run test:ci
       - name: E2E tests
-        run: npx playwright test --project=chromium
+        run: npm exec nx -- run examples-e2e:e2e -- --project=chromium
         env:
           CI: true
       - name: Publish

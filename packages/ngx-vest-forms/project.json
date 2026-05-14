@@ -1,0 +1,43 @@
+{
+  "name": "ngx-vest-forms",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/ngx-vest-forms/src",
+  "prefix": "lib",
+  "targets": {
+    "build": {
+      "executor": "@angular/build:ng-packagr",
+      "options": {
+        "project": "packages/ngx-vest-forms/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "packages/ngx-vest-forms/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "packages/ngx-vest-forms/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production",
+      "outputs": ["{workspaceRoot}/dist/ngx-vest-forms"]
+    },
+    "test": {
+      "executor": "@angular/build:unit-test",
+      "options": {
+        "tsConfig": "tsconfig.spec.json",
+        "runnerConfig": "vitest.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@angular-eslint/builder:lint",
+      "options": {
+        "lintFilePatterns": [
+          "packages/ngx-vest-forms/**/*.ts",
+          "packages/ngx-vest-forms/**/*.html"
+        ],
+        "eslintConfig": "packages/ngx-vest-forms/eslint.config.mjs"
+      },
+      "outputs": ["{options.outputFile}"]
+    },
+  }
+}

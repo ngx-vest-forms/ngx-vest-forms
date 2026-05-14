@@ -1,0 +1,843 @@
+import { JsonPipe } from '@angular/common';
+import { Component, signal, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
+import { render, screen, waitFor } from '@testing-library/angular';
+import userEvent from '@testing-library/user-event';
+import { firstValueFrom, from } from 'rxjs';
+import { create, enforce, test } from 'vest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ROOT_FORM } from '../constants';
+import { NgxVestForms } from '../exports';
+import { getAllFormErrors } from '../utils/form-utils';
+import type { NgxVestSuite } from '../utils/validation-suite';
+import { ValidateRootFormDirective } from './validate-root-form.directive';
+
+/**
+ * Test validation suite for root form validation tests
+ */
+const createTestValidationSuite = create(
+  (data: Record<string, unknown> = {}) => {
+    test('password', 'Password is required', () => {
+      enforce(String(data['password'] ?? '')).isNotBlank();
+    });
+
+    test('password', 'Password must be at least 8 characters', () => {
+      enforce(String(data['password'] ?? '')).longerThanOrEquals(8);
+    });
+
+    test('confirmPassword', 'Confirm password is required', () => {
+      enforce(String(data['confirmPassword'] ?? '')).isNotBlank();
+    });
+
+    test(ROOT_FORM, 'Passwords must match', () => {
+      if (data['password'] && data['confirmPassword']) {
+        enforce(data['confirmPassword']).equals(data['password']);
+      }
+    });
+  }
+);
+
+/**
+ * Test validation suite with multiple ROOT_FORM tests (like Brecht example)
+ */
+const createMultiRootFormValidationSuite = create(
+  (data: Record<string, unknown> = {}) => {
+    test('firstName', 'First name is required', () => {
+      enforce(String(data['firstName'] ?? '')).isNotBlank();
+    });
+
+    test('lastName', 'Last name is required', () => {
+      enforce(String(data['lastName'] ?? '')).isNotBlank();
+    });
+
+    test('age', 'Age is required', () => {
+      enforce(String(data['age'] ?? '')).isNotBlank();
+    });
+
+    // Cross-field validation (like "Brecht is not 30 anymore")
+    test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
+      enforce(
+        data['firstName'] === 'Brecht' &&
+          data['lastName'] === 'Billiet' &&
+          data['age'] === 30
+      ).isFalsy();
+    });
+
+    // Another root form test
+    test(ROOT_FORM, 'Age must be numeric', () => {
+      if (data['age']) {
+        enforce(Number(data['age'])).greaterThan(0);
+      }
+    });
+  }
+);
+
+describe('ValidateRootFormDirective', () => {
+  // Vest 6 `create()` returns stateful suites — both module-level suites are
+  // shared by every test via `class TestComponent { suite = ... }`. Reset
+  // before AND after each test: a single afterEach has been observed to be
+  // insufficient on slower CI runners where the next test sometimes starts
+  // before the previous reset has settled.
+  beforeEach(() => {
+    createTestValidationSuite.reset();
+    createMultiRootFormValidationSuite.reset();
+  });
+  afterEach(() => {
+    createTestValidationSuite.reset();
+    createMultiRootFormValidationSuite.reset();
+  });
+
+  describe('integration with getAllFormErrors', () => {
+    it('should expose ROOT_FORM errors via getAllFormErrors after submit', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            ngxValidateRootForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+            (errorsChange)="errors.set($event)"
+            #vest="ngxVestForm"
+            #ngForm="ngForm"
+          >
+            <input
+              name="password"
+              [ngModel]="model().password"
+              data-testid="password"
+            />
+            <input
+              name="confirmPassword"
+              [ngModel]="model().confirmPassword"
+              data-testid="confirm-password"
+            />
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
+            }
+            <button type="submit" data-testid="submit">Submit</button>
+          </form>
+        `,
+      })
+      class TestComponent {
+        ROOT_FORM = ROOT_FORM;
+        model = signal<Record<string, unknown>>({
+          password: 'password123',
+          confirmPassword: 'mismatch',
+        });
+        errors = signal<Record<string, string[]>>({});
+        suite = createTestValidationSuite;
+
+        @ViewChild('ngForm', { static: false }) ngForm!: NgForm;
+      }
+
+      const fixture = await render(TestComponent);
+      const component = fixture.fixture.componentInstance;
+
+      // No error before submit
+      expect(screen.queryByTestId('root-error')).toBeNull();
+
+      // Submit form
+      await userEvent.click(screen.getByTestId('submit'));
+
+      // Wait for async validation to complete
+      await waitFor(
+        () => {
+          const allErrors = getAllFormErrors(component.ngForm.control);
+          expect(allErrors.errors[ROOT_FORM]).toBeDefined();
+          expect(allErrors.errors[ROOT_FORM]).toContain('Passwords must match');
+        },
+        { timeout: 5000 }
+      );
+
+      // Error should appear in UI
+      await waitFor(
+        () => {
+          expect(screen.queryByTestId('root-error')).toBeInTheDocument();
+        },
+        { timeout: 5000 }
+      );
+    });
+
+    it('should handle multiple ROOT_FORM errors (Brecht scenario)', async () => {
+      @Component({
+        imports: [NgxVestForms, JsonPipe],
+        template: `
+          <form
+            ngxVestForm
+            ngxValidateRootForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+            (errorsChange)="errors.set($event)"
+            #vest="ngxVestForm"
+            #ngForm="ngForm"
+          >
+            <input
+              name="firstName"
+              [ngModel]="model().firstName"
+              data-testid="firstName"
+            />
+            <input
+              name="lastName"
+              [ngModel]="model().lastName"
+              data-testid="lastName"
+            />
+            <input
+              name="age"
+              type="number"
+              [ngModel]="model().age"
+              data-testid="age"
+            />
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">
+                {{ errors()[ROOT_FORM] | json }}
+              </div>
+            }
+            <button type="submit" data-testid="submit">Submit</button>
+          </form>
+        `,
+      })
+      class TestComponent {
+        ROOT_FORM = ROOT_FORM;
+        model = signal<Record<string, unknown>>({
+          firstName: 'Brecht',
+          lastName: 'Billiet',
+          age: 30,
+        });
+        errors = signal<Record<string, string[]>>({});
+        suite = createMultiRootFormValidationSuite;
+
+        @ViewChild('ngForm', { static: false }) ngForm!: NgForm;
+      }
+
+      const fixture = await render(TestComponent);
+      const component = fixture.fixture.componentInstance;
+
+      // Submit form
+      await userEvent.click(screen.getByTestId('submit'));
+
+      // Wait for async validation to complete
+      await waitFor(
+        () => {
+          const allErrors = getAllFormErrors(component.ngForm.control);
+          expect(allErrors.errors[ROOT_FORM]).toBeDefined();
+          expect(allErrors.errors[ROOT_FORM]).toContain(
+            'Brecht is not 30 anymore'
+          );
+        },
+        { timeout: 5000 }
+      );
+
+      // Error should appear in UI
+      await waitFor(
+        () => {
+          const errorDiv = screen.queryByTestId('root-error');
+          expect(errorDiv).toBeInTheDocument();
+          expect(errorDiv?.textContent).toContain('Brecht is not 30 anymore');
+        },
+        { timeout: 5000 }
+      );
+    });
+
+    it('should clear ROOT_FORM errors when condition no longer applies', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            ngxValidateRootForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+            (errorsChange)="errors.set($event)"
+            #vest="ngxVestForm"
+            #ngForm="ngForm"
+          >
+            <input
+              name="firstName"
+              [ngModel]="model().firstName"
+              data-testid="firstName"
+            />
+            <input
+              name="lastName"
+              [ngModel]="model().lastName"
+              data-testid="lastName"
+            />
+            <input
+              name="age"
+              type="number"
+              [ngModel]="model().age"
+              data-testid="age"
+            />
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
+            }
+            <button type="submit" data-testid="submit">Submit</button>
+          </form>
+        `,
+      })
+      class TestComponent {
+        ROOT_FORM = ROOT_FORM;
+        model = signal<Record<string, unknown>>({
+          firstName: 'Brecht',
+          lastName: 'Billiet',
+          age: 30,
+        });
+        errors = signal<Record<string, string[]>>({});
+        suite = createMultiRootFormValidationSuite;
+
+        @ViewChild('ngForm', { static: false }) ngForm!: NgForm;
+      }
+
+      const fixture = await render(TestComponent);
+      const component = fixture.fixture.componentInstance;
+
+      // Submit form to trigger validation
+      await userEvent.click(screen.getByTestId('submit'));
+
+      // Wait for error to appear
+      await waitFor(
+        () => {
+          expect(screen.queryByTestId('root-error')).toBeInTheDocument();
+        },
+        { timeout: 5000 }
+      );
+
+      // Change age to 31 to fix the validation
+      const ageInput = screen.getByTestId('age');
+      await userEvent.clear(ageInput);
+      await userEvent.type(ageInput, '31');
+
+      // Wait for error to disappear
+      await waitFor(
+        () => {
+          const allErrors = getAllFormErrors(component.ngForm.control);
+          expect(allErrors.errors[ROOT_FORM]).toBeUndefined();
+        },
+        { timeout: 5000 }
+      );
+
+      await waitFor(
+        () => {
+          expect(screen.queryByTestId('root-error')).not.toBeInTheDocument();
+        },
+        { timeout: 5000 }
+      );
+    });
+  });
+
+  describe('disabled by default', () => {
+    it('should not validate when ngxValidateRootForm is false', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+            #vest="ngxVestForm"
+          >
+            <input
+              name="password"
+              [ngModel]="model().password"
+              data-testid="password"
+            />
+            <button type="submit">Submit</button>
+          </form>
+        `,
+      })
+      class TestComponent {
+        model = signal<Record<string, unknown>>({});
+        suite = createTestValidationSuite;
+      }
+
+      await render(TestComponent);
+      const passwordInput = screen.getByTestId('password');
+
+      // Form should be valid (no root validation)
+      await waitFor(() => {
+        expect(passwordInput).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('submit mode (default)', () => {
+    it('should not validate before form submission', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            ngxValidateRootForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+            (errorsChange)="errors.set($event)"
+            #vest="ngxVestForm"
+          >
+            <input
+              name="password"
+              [ngModel]="model().password"
+              data-testid="password"
+            />
+            <input
+              name="confirmPassword"
+              [ngModel]="model().confirmPassword"
+              data-testid="confirm-password"
+            />
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
+            }
+            <button type="submit" data-testid="submit">Submit</button>
+          </form>
+        `,
+      })
+      class TestComponent {
+        ROOT_FORM = ROOT_FORM;
+        model = signal<Record<string, unknown>>({
+          password: 'password123',
+          confirmPassword: 'mismatch',
+        });
+        errors = signal<Record<string, string[]>>({});
+        suite = createTestValidationSuite;
+      }
+
+      await render(TestComponent);
+
+      // No error should appear before submit
+      expect(screen.queryByTestId('root-error')).toBeNull();
+    });
+
+    it('should validate on form submission', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            ngxValidateRootForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+            (errorsChange)="errors.set($event)"
+            #vest="ngxVestForm"
+          >
+            <input
+              name="password"
+              [ngModel]="model().password"
+              data-testid="password"
+            />
+            <input
+              name="confirmPassword"
+              [ngModel]="model().confirmPassword"
+              data-testid="confirm-password"
+            />
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
+            }
+            <button type="submit" data-testid="submit">Submit</button>
+          </form>
+        `,
+      })
+      class TestComponent {
+        ROOT_FORM = ROOT_FORM;
+        model = signal<Record<string, unknown>>({
+          password: 'password123',
+          confirmPassword: 'mismatch',
+        });
+        errors = signal<Record<string, string[]>>({});
+        suite = createTestValidationSuite;
+      }
+
+      await render(TestComponent);
+
+      // No error before submit
+      expect(screen.queryByTestId('root-error')).toBeNull();
+
+      // Click submit button
+      await userEvent.click(screen.getByTestId('submit'));
+
+      // Error should appear after submit
+      await waitFor(
+        () => {
+          expect(screen.queryByTestId('root-error')).toBeInTheDocument();
+        },
+        { timeout: 5000 }
+      );
+    });
+
+    it('should revalidate after submit when values change', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            ngxValidateRootForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+            (errorsChange)="errors.set($event)"
+            #vest="ngxVestForm"
+          >
+            <input
+              name="password"
+              [ngModel]="model().password"
+              data-testid="password"
+            />
+            <input
+              name="confirmPassword"
+              [ngModel]="model().confirmPassword"
+              data-testid="confirm-password"
+            />
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
+            }
+            <button type="submit" data-testid="submit">Submit</button>
+          </form>
+        `,
+      })
+      class TestComponent {
+        ROOT_FORM = ROOT_FORM;
+        model = signal<Record<string, unknown>>({
+          password: 'password123',
+          confirmPassword: 'mismatch',
+        });
+        errors = signal<Record<string, string[]>>({});
+        suite = createTestValidationSuite;
+      }
+
+      await render(TestComponent);
+
+      // Submit to enable validation
+      await userEvent.click(screen.getByTestId('submit'));
+
+      // Wait for error
+      await waitFor(
+        () => {
+          expect(screen.queryByTestId('root-error')).toBeInTheDocument();
+        },
+        { timeout: 5000 }
+      );
+
+      // Fix the mismatch
+      const confirmInput = screen.getByTestId('confirm-password');
+      await userEvent.clear(confirmInput);
+      await userEvent.type(confirmInput, 'password123');
+
+      // Error should disappear
+      await waitFor(
+        () => {
+          expect(screen.queryByTestId('root-error')).not.toBeInTheDocument();
+        },
+        { timeout: 5000 }
+      );
+    });
+  });
+
+  describe('live mode', () => {
+    it('should validate without submit in live mode', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            ngxValidateRootForm
+            [ngxValidateRootFormMode]="'live'"
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+            (errorsChange)="errors.set($event)"
+            #vest="ngxVestForm"
+          >
+            <input
+              name="password"
+              [ngModel]="model().password"
+              data-testid="password"
+            />
+            <input
+              name="confirmPassword"
+              [ngModel]="model().confirmPassword"
+              data-testid="confirm-password"
+            />
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
+            }
+            <button type="submit" data-testid="submit">Submit</button>
+          </form>
+        `,
+      })
+      class TestComponent {
+        ROOT_FORM = ROOT_FORM;
+        model = signal<Record<string, unknown>>({
+          password: 'password123',
+          confirmPassword: 'mismatch',
+        });
+        errors = signal<Record<string, string[]>>({});
+        suite = createTestValidationSuite;
+      }
+
+      await render(TestComponent);
+
+      // Error should appear immediately in live mode
+      await waitFor(
+        () => {
+          expect(screen.queryByTestId('root-error')).toBeInTheDocument();
+        },
+        { timeout: 5000 }
+      );
+    });
+
+    it('should revalidate immediately when values change in live mode', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            ngxValidateRootForm
+            [ngxValidateRootFormMode]="'live'"
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+            (errorsChange)="errors.set($event)"
+            #vest="ngxVestForm"
+          >
+            <input
+              name="password"
+              [ngModel]="model().password"
+              data-testid="password"
+            />
+            <input
+              name="confirmPassword"
+              [ngModel]="model().confirmPassword"
+              data-testid="confirm-password"
+            />
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
+            }
+            <button type="submit" data-testid="submit">Submit</button>
+          </form>
+        `,
+      })
+      class TestComponent {
+        ROOT_FORM = ROOT_FORM;
+        model = signal<Record<string, unknown>>({
+          password: 'password123',
+          confirmPassword: 'mismatch',
+        });
+        errors = signal<Record<string, string[]>>({});
+        suite = createTestValidationSuite;
+      }
+
+      await render(TestComponent);
+
+      // Error should appear
+      await waitFor(
+        () => {
+          expect(screen.queryByTestId('root-error')).toBeInTheDocument();
+        },
+        { timeout: 5000 }
+      );
+
+      // Fix the mismatch
+      const confirmInput = screen.getByTestId('confirm-password');
+      await userEvent.clear(confirmInput);
+      await userEvent.type(confirmInput, 'password123');
+
+      // Error should disappear
+      await waitFor(
+        () => {
+          expect(screen.queryByTestId('root-error')).not.toBeInTheDocument();
+        },
+        { timeout: 5000 }
+      );
+    });
+  });
+
+  describe('debouncing', () => {
+    it('should respect debounceTime in validation options', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            ngxValidateRootForm
+            [ngxValidateRootFormMode]="'live'"
+            [suite]="suite()"
+            [formValue]="model()"
+          >
+            <input name="password" [ngModel]="model().password" />
+          </form>
+        `,
+      })
+      class TestDebounceHost {
+        model = signal<Record<string, unknown>>({ password: 'abc12345' });
+        suite = signal<NgxVestSuite<Record<string, unknown>> | null>(null);
+
+        @ViewChild(ValidateRootFormDirective, { static: true })
+        rootValidator!: ValidateRootFormDirective<Record<string, unknown>>;
+      }
+
+      const errors: Record<string, string[]> = {
+        [ROOT_FORM]: ['debounced root error'],
+      };
+      const syncResult = {
+        isPending: () => false,
+        isValid: () => false,
+        hasErrors: () => true,
+        hasWarnings: () => false,
+        isTested: () => true,
+        getErrors: (field?: string) =>
+          field !== undefined ? (errors[field] ?? []) : errors,
+        getWarnings: (field?: string) => (field !== undefined ? [] : {}),
+      };
+
+      const mockRun = vi.fn().mockReturnValue(syncResult);
+      const suiteMock = {
+        only: () => ({ run: mockRun }),
+        run: mockRun,
+        get: () => syncResult,
+        reset: vi.fn(),
+        resetField: vi.fn(),
+        remove: vi.fn(),
+        subscribe: vi.fn(),
+        dump: vi.fn(),
+        resume: vi.fn(),
+      };
+
+      const { fixture } = await render(TestDebounceHost);
+      const instance = fixture.componentInstance;
+      instance.suite.set(suiteMock as unknown as NgxVestSuite<Record<string, unknown>>);
+      fixture.detectChanges();
+
+      const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {
+        debounceTime: 500,
+      });
+
+      const start = Date.now();
+      const result = await firstValueFrom(from(validator({} as never)));
+      const elapsed = Date.now() - start;
+
+      expect(mockRun).toHaveBeenCalled();
+      expect(result).toEqual({ errors: ['debounced root error'] });
+      expect(elapsed).toBeGreaterThanOrEqual(450);
+    });
+  });
+
+  describe('createAsyncValidator completion handling', () => {
+    @Component({
+      imports: [NgxVestForms],
+      template: `
+        <form
+          ngxVestForm
+          ngxValidateRootForm
+          [ngxValidateRootFormMode]="'live'"
+          [suite]="suite()"
+          [formValue]="model()"
+        >
+          <input name="password" [ngModel]="model().password" />
+        </form>
+      `,
+    })
+    class TestCreateAsyncValidatorHost {
+      model = signal<Record<string, unknown>>({ password: 'abc12345' });
+      suite = signal<NgxVestSuite<Record<string, unknown>> | null>(null);
+
+      @ViewChild(ValidateRootFormDirective, { static: true })
+      rootValidator!: ValidateRootFormDirective<Record<string, unknown>>;
+    }
+
+    it('returns ROOT_FORM errors immediately for non-pending suite results', async () => {
+      const errors: Record<string, string[]> = {
+        [ROOT_FORM]: ['sync root error'],
+      };
+      const syncResult = {
+        isPending: () => false,
+        isValid: () => false,
+        hasErrors: () => true,
+        hasWarnings: () => false,
+        isTested: () => true,
+        getErrors: (field?: string) =>
+          field !== undefined ? (errors[field] ?? []) : errors,
+        getWarnings: (field?: string) => (field !== undefined ? [] : {}),
+      };
+
+      const mockRun = vi.fn().mockReturnValue(syncResult);
+      const suiteMock = {
+        only: () => ({ run: mockRun }),
+        run: mockRun,
+        get: () => syncResult,
+        reset: vi.fn(),
+        resetField: vi.fn(),
+        remove: vi.fn(),
+        subscribe: vi.fn(),
+        dump: vi.fn(),
+        resume: vi.fn(),
+      };
+
+      const { fixture } = await render(TestCreateAsyncValidatorHost);
+      const instance = fixture.componentInstance;
+      instance.suite.set(suiteMock as unknown as NgxVestSuite<Record<string, unknown>>);
+      fixture.detectChanges();
+
+      const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {
+        debounceTime: 0,
+      });
+      const result = await firstValueFrom(from(validator({} as never)));
+
+      expect(mockRun).toHaveBeenCalled();
+      expect(result).toEqual({ errors: ['sync root error'] });
+    });
+
+    it('awaits thenable suite results when pending and returns resolved ROOT_FORM errors', async () => {
+      const errors: Record<string, string[]> = {
+        [ROOT_FORM]: ['async root error'],
+      };
+      const finalResult = {
+        isPending: () => false,
+        isValid: () => false,
+        hasErrors: () => true,
+        hasWarnings: () => false,
+        isTested: () => true,
+        getErrors: (field?: string) =>
+          field !== undefined ? (errors[field] ?? []) : errors,
+        getWarnings: (field?: string) => (field !== undefined ? [] : {}),
+      };
+
+      const pendingResult = {
+        ...finalResult,
+        isPending: () => true,
+        then: (onfulfilled?: ((value: unknown) => unknown) | null) => {
+          const value = onfulfilled ? onfulfilled(finalResult) : finalResult;
+          return Promise.resolve(value);
+        },
+      };
+
+      const mockRun = vi.fn().mockReturnValue(pendingResult);
+      const suiteMock = {
+        only: () => ({ run: mockRun }),
+        run: mockRun,
+        get: () => finalResult,
+        reset: vi.fn(),
+        resetField: vi.fn(),
+        remove: vi.fn(),
+        subscribe: vi.fn(),
+        dump: vi.fn(),
+        resume: vi.fn(),
+      };
+
+      const { fixture } = await render(TestCreateAsyncValidatorHost);
+      const instance = fixture.componentInstance;
+      instance.suite.set(suiteMock as unknown as NgxVestSuite<Record<string, unknown>>);
+      fixture.detectChanges();
+
+      const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {
+        debounceTime: 0,
+      });
+      const result = await firstValueFrom(from(validator({} as never)));
+
+      expect(mockRun).toHaveBeenCalled();
+      expect(result).toEqual({ errors: ['async root error'] });
+    });
+  });
+});

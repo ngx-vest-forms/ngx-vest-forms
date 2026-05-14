@@ -1,0 +1,102 @@
+import { defineConfig, devices } from '@playwright/test';
+
+/**
+ * Read environment variables from file.
+ * https://github.com/motdotla/dotenv
+ */
+// require('dotenv').config();
+
+/**
+ * See https://playwright.dev/docs/test-configuration.
+ */
+export default defineConfig({
+  testDir: '.',
+  testMatch: ['**/pages/**/*.spec.ts'],
+  /* Run tests in files in parallel */
+  fullyParallel: true,
+  /* Fail the build on CI if you accidentally left test.only in the source code. */
+  forbidOnly: !!process.env['CI'],
+  /* Retry on failure - some tests involve async validations that can be flaky */
+  retries: process.env['CI'] ? 2 : 1,
+  /* Opt out of parallel tests on CI. */
+  workers: process.env['CI'] ? 1 : undefined,
+  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+  /* open: 'never' prevents auto-opening browser after test run */
+  reporter: [['html', { open: 'never' }]],
+  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  use: {
+    /* Base URL to use in actions like `await page.goto('/')`. */
+    baseURL: process.env['PLAYWRIGHT_TEST_BASE_URL'] ?? 'http://localhost:4400',
+
+    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+    trace: 'on-first-retry',
+
+    /* Screenshot only on failure */
+    screenshot: 'only-on-failure',
+
+    /* Video on first retry */
+    video: 'retain-on-failure',
+
+    /* Timeout for actions like click, fill, etc. (increased for async validations) */
+    actionTimeout: 10000,
+
+    /* Timeout for navigation actions (increased for debounced validations) */
+    navigationTimeout: 15000,
+  },
+
+  /* Test timeout (increased to accommodate debounced validations and async operations) */
+  timeout: 30000,
+
+  /* Expect timeout for assertions (handles async validation completion) */
+  expect: {
+    timeout: 10000,
+  },
+
+  /* Start the examples app before running tests */
+  webServer: [
+    {
+      command: 'npm exec nx -- run examples:serve -- --port 4400',
+      url: 'http://localhost:4400',
+      reuseExistingServer: !process.env['CI'],
+      timeout: 120000,
+    },
+  ],
+
+  /* Configure projects for major browsers */
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+
+    /* Test against mobile viewports. */
+    // {
+    //   name: 'Mobile Chrome',
+    //   use: { ...devices['Pixel 5'] },
+    // },
+    // {
+    //   name: 'Mobile Safari',
+    //   use: { ...devices['iPhone 12'] },
+    // },
+
+    /* Test against branded browsers. */
+    // {
+    //   name: 'Microsoft Edge',
+    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
+    // },
+    // {
+    //   name: 'Google Chrome',
+    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+    // },
+  ],
+});
