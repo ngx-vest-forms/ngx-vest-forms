@@ -1,0 +1,27 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "examples-e2e",
+  "projectType": "application",
+  "sourceRoot": "apps/examples-e2e",
+  "implicitDependencies": ["examples"],
+  "targets": {
+    "e2e": {
+      "executor": "@nx/playwright:playwright",
+      "options": {
+        "config": "apps/examples-e2e/playwright.config.ts"
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "reporter": "dot"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@angular-eslint/builder:lint",
+      "options": {
+        "lintFilePatterns": ["apps/examples-e2e/**/*.ts"]
+      }
+    }
+  }
+}

@@ -1,0 +1,128 @@
+/*
+ * Public API Surface of ngx-vest-forms
+ */
+
+export { NgxVestForms, vestFormsViewProviders } from './lib/exports';
+
+// Type utilities
+export type { NgxDeepPartial } from './lib/utils/deep-partial';
+export type {
+  NgxDeepRequired,
+  NgxFormCompatibleDeepRequired,
+} from './lib/utils/deep-required';
+export type {
+  FieldPath,
+  FieldPathValue,
+  FormFieldName,
+  LeafFieldPath,
+  ValidateFieldPath,
+  ValidationConfigMap,
+} from './lib/utils/field-path-types';
+export {
+  createEmptyFormState,
+  createFormFeedbackSignals,
+  fieldWarningsToRecord,
+} from './lib/utils/form-state.utils';
+export type {
+  NgxFormFeedbackSignals,
+  NgxFormFeedbackSource,
+  NgxFormState,
+} from './lib/utils/form-state.utils';
+export {
+  ValidationConfigBuilder,
+  createValidationConfig,
+} from './lib/utils/validation-config-builder';
+export type {
+  NgxFieldKey,
+  NgxSuiteRunResult,
+  NgxVestSuite,
+} from './lib/utils/validation-suite';
+
+// Form utilities
+export {
+  arrayToObject,
+  deepArrayToObject,
+  objectToArray,
+} from './lib/utils/array-to-object';
+export {
+  clearFields,
+  clearFieldsWhen,
+  keepFieldsWhen,
+} from './lib/utils/field-clearing';
+export { stringifyFieldPath } from './lib/utils/field-path.utils';
+export { setValueAtPath } from './lib/utils/form-utils';
+export { createDebouncedPendingState } from './lib/utils/pending-state.utils';
+export type {
+  DebouncedPendingStateOptions,
+  DebouncedPendingStateOptionsInput,
+  DebouncedPendingStateResult,
+} from './lib/utils/pending-state.utils';
+export { validateShape } from './lib/utils/shape-validation';
+
+// ARIA association utilities
+export {
+  mergeAriaDescribedBy,
+  parseAriaIdTokens,
+  resolveAssociationTargets,
+} from './lib/utils/aria-association.utils';
+export type { AriaAssociationMode } from './lib/utils/aria-association.utils';
+
+// Internal utilities - exported for advanced use cases but not part of the primary API
+// These are marked with @internal in their source files and may change without notice
+/** @internal */ export {
+  fastDeepEqual,
+  shallowEqual,
+} from './lib/utils/equality';
+/** @internal */ export { parseFieldPath } from './lib/utils/field-path.utils';
+export {
+  getAllFormErrors,
+  getFormControlField,
+  getFormGroupField,
+  mergeValuesAndRawValues,
+} from './lib/utils/form-utils';
+export type { NgxFormErrorsByPath } from './lib/utils/form-utils';
+
+// Constants
+export { ROOT_FORM } from './lib/constants';
+
+// Tokens
+export {
+  NGX_ERROR_DISPLAY_MODE_TOKEN,
+  NGX_WARNING_DISPLAY_MODE_TOKEN,
+} from './lib/directives/error-display-mode.token';
+export {
+  NGX_VALIDATION_CONFIG_DEBOUNCE_DEFAULT,
+  NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+} from './lib/tokens/debounce.token';
+export { NGX_EQUALITY_FN } from './lib/tokens/equality.token';
+export type { NgxEqualityFn } from './lib/tokens/equality.token';
+export { NGX_VALIDATION_DEBOUNCE_PRESETS } from './lib/tokens/validation-debounce-presets';
+export type { NgxValidationDebouncePreset } from './lib/tokens/validation-debounce-presets';
+
+// Components
+export { ControlWrapperComponent } from './lib/components/control-wrapper/control-wrapper.component';
+export { FormGroupWrapperComponent } from './lib/components/form-group-wrapper/form-group-wrapper.component';
+
+// Directives
+export { FormControlStateDirective } from './lib/directives/form-control-state.directive';
+export { FormErrorControlDirective } from './lib/directives/form-error-control.directive';
+export { FormErrorDisplayDirective } from './lib/directives/form-error-display.directive';
+export type {
+  NgxErrorDisplayMode,
+  NgxWarningDisplayMode,
+} from './lib/directives/form-error-display.directive';
+export { FormModelGroupDirective } from './lib/directives/form-model-group.directive';
+export { FormModelDirective } from './lib/directives/form-model.directive';
+export { FormDirective } from './lib/directives/form.directive';
+export type {
+  NgxFieldBlurEvent,
+  NgxValidationConfig,
+  NgxValidationFocus,
+} from './lib/directives/form.directive';
+export { ValidateRootFormDirective } from './lib/directives/validate-root-form.directive';
+export type { ValidationOptions } from './lib/directives/validation-options';
+export {
+  DEFAULT_FOCUS_SELECTOR,
+  DEFAULT_INVALID_SELECTOR,
+} from './lib/utils/first-invalid.utils';
+export type { NgxFirstInvalidOptions } from './lib/utils/first-invalid.utils';
