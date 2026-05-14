@@ -65,7 +65,7 @@ export type TravelFormModel = NgxDeepPartial<{
   returnDate: string;
 }>;
 
-export const travelFormShape: NgxDeepRequired<TravelFormModel> = {
+export const travelFormContract: NgxDeepRequired<TravelFormModel> = {
   departureDate: '',
   returnDate: '',
 };

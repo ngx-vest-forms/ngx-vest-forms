@@ -28,7 +28,7 @@ import {
 })
 export class BusinessHoursFormBody {
   readonly formValue = input.required<BusinessHoursFormModel>();
-  readonly shape = input.required<NgxDeepRequired<BusinessHoursFormModel>>();
+  readonly contract = input.required<NgxDeepRequired<BusinessHoursFormModel>>();
   readonly suite = input.required<NgxVestSuite<BusinessHoursFormModel>>();
   readonly validationConfig =
     input.required<NgxValidationConfig<BusinessHoursFormModel>>();

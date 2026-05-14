@@ -11,7 +11,7 @@ export type WizardStep1Model = NgxDeepPartial<{
   confirmPassword: string;
 }>;
 
-export const wizardStep1Shape: NgxDeepRequired<WizardStep1Model> = {
+export const wizardStep1Contract: NgxDeepRequired<WizardStep1Model> = {
   email: '',
   confirmEmail: '',
   password: '',
@@ -31,7 +31,7 @@ export type WizardStep2Model = NgxDeepPartial<{
   newsletterFrequency: string;
 }>;
 
-export const wizardStep2Shape: NgxDeepRequired<WizardStep2Model> = {
+export const wizardStep2Contract: NgxDeepRequired<WizardStep2Model> = {
   firstName: '',
   lastName: '',
   phone: '',
@@ -50,7 +50,7 @@ export type WizardStep3Model = NgxDeepPartial<{
   comments: string;
 }>;
 
-export const wizardStep3Shape: NgxDeepRequired<WizardStep3Model> = {
+export const wizardStep3Contract: NgxDeepRequired<WizardStep3Model> = {
   acceptTerms: false,
   acceptPrivacy: false,
   comments: '',

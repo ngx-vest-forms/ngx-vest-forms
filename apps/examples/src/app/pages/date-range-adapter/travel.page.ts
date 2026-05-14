@@ -8,7 +8,7 @@ import {
 import { createValidationConfig } from 'ngx-vest-forms';
 import {
   TravelFormModel,
-  travelFormShape,
+  travelFormContract,
 } from '../../models/travel-form.model';
 import { Card } from '../../ui/card/card.component';
 import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
@@ -39,7 +39,7 @@ export class TravelPageComponent {
   private readonly formBody = viewChild(TravelFormBody);
 
   protected readonly suite = travelValidationSuite;
-  protected readonly shape = travelFormShape;
+  protected readonly contract = travelFormContract;
 
   protected readonly validationConfig =
     createValidationConfig<TravelFormModel>()

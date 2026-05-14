@@ -2,7 +2,7 @@
 <ngx-wizard-step1-form
   [data]="step1Data()"
   [suite]="step1Suite()"
-  [shape]="step1Shape()"
+  [contract]="step1Contract()"
   [validationConfig]="step1ValidationConfig()"
   (dataChange)="step1DataChange.emit($event)"
   (validChange)="step1ValidChange.emit($event)"
@@ -13,7 +13,7 @@
 <ngx-wizard-step2-form
   [data]="step2Data()"
   [suite]="step2Suite()"
-  [shape]="step2Shape()"
+  [contract]="step2Contract()"
   [validationConfig]="step2ValidationConfig()"
   (dataChange)="step2DataChange.emit($event)"
   (validChange)="step2ValidChange.emit($event)"
@@ -27,7 +27,7 @@
   [step2Data]="step2Data()"
   [data]="step3Data()"
   [suite]="step3Suite()"
-  [shape]="step3Shape()"
+  [contract]="step3Contract()"
   [isSubmitting]="isSubmitting()"
   (dataChange)="step3DataChange.emit($event)"
   (validChange)="step3ValidChange.emit($event)"

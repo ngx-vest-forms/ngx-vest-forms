@@ -25,7 +25,7 @@ import { WizardNavigationComponent } from '../../ui/wizard';
 export class WizardStep2FormComponent {
   readonly data = input.required<WizardStep2Model>();
   readonly suite = input.required<NgxVestSuite<WizardStep2Model>>();
-  readonly shape = input.required<NgxDeepRequired<WizardStep2Model>>();
+  readonly contract = input.required<NgxDeepRequired<WizardStep2Model>>();
   readonly validationConfig =
     input.required<NgxValidationConfig<WizardStep2Model>>();
 

@@ -43,9 +43,9 @@ export class WizardFormBodyComponent {
   readonly step2Suite = input.required<NgxVestSuite<WizardStep2Model>>();
   readonly step3Suite = input.required<NgxVestSuite<WizardStep3Model>>();
 
-  readonly step1Shape = input.required<NgxDeepRequired<WizardStep1Model>>();
-  readonly step2Shape = input.required<NgxDeepRequired<WizardStep2Model>>();
-  readonly step3Shape = input.required<NgxDeepRequired<WizardStep3Model>>();
+  readonly step1Contract = input.required<NgxDeepRequired<WizardStep1Model>>();
+  readonly step2Contract = input.required<NgxDeepRequired<WizardStep2Model>>();
+  readonly step3Contract = input.required<NgxDeepRequired<WizardStep3Model>>();
 
   readonly step1ValidationConfig =
     input.required<NgxValidationConfig<WizardStep1Model>>();

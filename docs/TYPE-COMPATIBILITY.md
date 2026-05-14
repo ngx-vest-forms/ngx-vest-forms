@@ -89,7 +89,7 @@ type FormModel = NgxDeepPartial<{
   appointmentDate: Date;
 }>;
 
-export const formShape: NgxDeepRequired<FormModel> = {
+export const formContract: NgxDeepRequired<FormModel> = {
   birthDate: new Date(),
   appointmentDate: new Date(),
 };

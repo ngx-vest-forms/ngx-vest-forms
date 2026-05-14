@@ -10,7 +10,7 @@ export type PhoneNumberModel = Partial<{
   addValue: string;
   values: PhoneNumberMap;
 }>;
-export const phoneNumberShape: NgxDeepRequired<PhoneNumberModel> = {
+export const phoneNumberContract: NgxDeepRequired<PhoneNumberModel> = {
   addValue: '',
   values: {
     '0': '',

@@ -27,7 +27,7 @@ import {
 import {
   initialPurchaseFormValue,
   PurchaseFormModel,
-  purchaseFormShape,
+  purchaseFormContract,
 } from '../../models/purchase-form.model';
 import { AddressComponent } from '../../ui/address/address.component';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
@@ -102,7 +102,7 @@ export class PurchaseForm {
   protected readonly formValue = signal<PurchaseFormModel>(
     initialPurchaseFormValue
   );
-  protected readonly shape = purchaseFormShape;
+  protected readonly contract = purchaseFormContract;
   protected readonly purchaseValidationSuite = createPurchaseValidationSuite(
     this.swapiService
   );

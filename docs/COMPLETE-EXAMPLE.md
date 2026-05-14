@@ -22,7 +22,7 @@ type UserFormModel = NgxDeepPartial<{
 }>;
 
 // 2. Create a shape for runtime validation (recommended)
-const userFormShape: NgxDeepRequired<UserFormModel> = {
+const userFormContract: NgxDeepRequired<UserFormModel> = {
   firstName: '',
   lastName: '',
   email: '',
@@ -55,7 +55,7 @@ const userValidationSuite: NgxVestSuite<UserFormModel> = create(
     <form
       ngxVestForm
       [suite]="suite"
-      [formContract]="shape"
+      [formContract]="contract"
       [formValue]="formValue()"
       (formValueChange)="formValue.set($event)"
       (ngSubmit)="save()"
@@ -92,7 +92,7 @@ const userValidationSuite: NgxVestSuite<UserFormModel> = create(
 export class UserFormComponent {
   protected readonly formValue = signal<UserFormModel>({});
   protected readonly suite = userValidationSuite;
-  protected readonly shape = userFormShape;
+  protected readonly contract = userFormContract;
 
   protected save() {
     console.log('Form submitted:', this.formValue());
@@ -131,7 +131,7 @@ type MyFormModel = NgxDeepPartial<{
 Use `NgxDeepRequired` to create a shape that matches your model structure:
 
 ```typescript
-const myFormShape: NgxDeepRequired<MyFormModel> = {
+const myFormContract: NgxDeepRequired<MyFormModel> = {
   firstName: '',
   lastName: '',
 };

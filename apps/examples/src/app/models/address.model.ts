@@ -7,7 +7,7 @@ export type AddressModel = NgxDeepPartial<{
   zipcode: string;
   country: string;
 }>;
-export const addressShape: NgxDeepRequired<AddressModel> = {
+export const addressContract: NgxDeepRequired<AddressModel> = {
   street: '',
   number: '',
   city: '',

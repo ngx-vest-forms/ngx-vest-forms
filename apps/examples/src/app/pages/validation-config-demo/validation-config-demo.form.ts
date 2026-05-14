@@ -25,7 +25,7 @@ import { FormSectionComponent } from '../../ui/form-section/form-section.compone
 })
 export class ValidationConfigDemoFormBody {
   readonly formValue = input.required<ValidationDemoModel>();
-  readonly shape = input.required<NgxDeepRequired<ValidationDemoModel>>();
+  readonly contract = input.required<NgxDeepRequired<ValidationDemoModel>>();
   readonly suite = input.required<NgxVestSuite<ValidationDemoModel>>();
   readonly validationConfig =
     input.required<NgxValidationConfig<ValidationDemoModel>>();

@@ -1,6 +1,6 @@
 import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
-import { AddressModel, addressShape } from './address.model';
-import { PhoneNumberModel, phoneNumberShape } from './phonenumber.model';
+import { AddressModel, addressContract } from './address.model';
+import { PhoneNumberModel, phoneNumberContract } from './phonenumber.model';
 
 export type PurchaseFormModel = NgxDeepPartial<{
   userId: string;
@@ -26,9 +26,9 @@ export type PurchaseFormModel = NgxDeepPartial<{
   };
 }>;
 
-// Using NgxDeepRequired for the shape (standard approach)
+// Using NgxDeepRequired for the contract (standard approach)
 // Note: birthDate is initialized with a Date object for type safety
-export const purchaseFormShape: NgxDeepRequired<PurchaseFormModel> = {
+export const purchaseFormContract: NgxDeepRequired<PurchaseFormModel> = {
   userId: '',
   firstName: '',
   lastName: '',
@@ -36,15 +36,15 @@ export const purchaseFormShape: NgxDeepRequired<PurchaseFormModel> = {
   age: 0,
   emergencyContact: '',
   addresses: {
-    shippingAddress: addressShape,
-    billingAddress: addressShape,
+    shippingAddress: addressContract,
+    billingAddress: addressContract,
     shippingAddressDifferentFromBillingAddress: true,
   },
   passwords: {
     password: '',
     confirmPassword: '',
   },
-  phonenumbers: phoneNumberShape,
+  phonenumbers: phoneNumberContract,
   gender: 'other',
   genderOther: '',
   productId: '',

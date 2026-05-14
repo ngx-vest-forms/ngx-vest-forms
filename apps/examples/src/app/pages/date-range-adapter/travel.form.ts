@@ -51,7 +51,7 @@ export class TravelFormBody {
 
   readonly approach = input<TravelFormApproach>('split-wrappers');
   readonly formValue = input.required<TravelFormModel>();
-  readonly shape = input.required<NgxDeepRequired<TravelFormModel>>();
+  readonly contract = input.required<NgxDeepRequired<TravelFormModel>>();
   readonly suite = input.required<NgxVestSuite<TravelFormModel>>();
   readonly validationConfig =
     input.required<NgxValidationConfig<TravelFormModel>>();

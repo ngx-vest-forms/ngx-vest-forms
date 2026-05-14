@@ -12,16 +12,16 @@ export type BusinessHourFormModel = NgxDeepPartial<{
   to: string;
 }>;
 
-export const businessHourFormShape: NgxDeepRequired<BusinessHourFormModel> = {
+export const businessHourFormContract: NgxDeepRequired<BusinessHourFormModel> = {
   from: '00:00',
   to: '00:00',
 };
 
-export const businessHoursFormShape: NgxDeepRequired<BusinessHoursFormModel> = {
+export const businessHoursFormContract: NgxDeepRequired<BusinessHoursFormModel> = {
   businessHours: {
-    addValue: { ...businessHourFormShape },
+    addValue: { ...businessHourFormContract },
     values: {
-      '0': { ...businessHourFormShape },
+      '0': { ...businessHourFormContract },
     },
   },
 };

@@ -11,11 +11,11 @@ import {
 import { createValidationConfig } from 'ngx-vest-forms';
 import {
   WizardStep1Model,
-  wizardStep1Shape,
+  wizardStep1Contract,
   WizardStep2Model,
-  wizardStep2Shape,
+  wizardStep2Contract,
   WizardStep3Model,
-  wizardStep3Shape,
+  wizardStep3Contract,
 } from '../../models/wizard-form.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
@@ -70,9 +70,9 @@ export class WizardFormPageComponent {
   protected readonly step2Suite = wizardStep2Suite;
   protected readonly step3Suite = wizardStep3Suite;
 
-  protected readonly step1Shape = wizardStep1Shape;
-  protected readonly step2Shape = wizardStep2Shape;
-  protected readonly step3Shape = wizardStep3Shape;
+  protected readonly step1Contract = wizardStep1Contract;
+  protected readonly step2Contract = wizardStep2Contract;
+  protected readonly step3Contract = wizardStep3Contract;
 
   protected readonly step1ValidationConfig =
     createValidationConfig<WizardStep1Model>()

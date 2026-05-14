@@ -9,7 +9,7 @@ export type DisplayModesDemoModel = NgxDeepPartial<{
   touchWarning: string;
 }>;
 
-export const displayModesDemoShape: NgxDeepRequired<DisplayModesDemoModel> = {
+export const displayModesDemoContract: NgxDeepRequired<DisplayModesDemoModel> = {
   alwaysError: '',
   dirtyError: '',
   submitError: '',

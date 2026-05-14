@@ -8,7 +8,7 @@ import {
 import { createValidationConfig } from 'ngx-vest-forms';
 import {
   ValidationDemoModel,
-  validationDemoShape,
+  validationDemoContract,
 } from '../../models/validation-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
@@ -42,7 +42,7 @@ export class ValidationConfigDemoPageComponent {
   private readonly formBody = viewChild(ValidationConfigDemoFormBody);
 
   protected readonly suite = validationDemoSuite;
-  protected readonly shape = validationDemoShape;
+  protected readonly contract = validationDemoContract;
 
   protected readonly validationConfig =
     createValidationConfig<ValidationDemoModel>()

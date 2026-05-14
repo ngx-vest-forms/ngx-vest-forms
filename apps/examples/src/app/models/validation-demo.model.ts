@@ -23,7 +23,7 @@ export type ValidationDemoModel = NgxDeepPartial<{
   endDate: string;
 }>;
 
-export const validationDemoShape: NgxDeepRequired<ValidationDemoModel> = {
+export const validationDemoContract: NgxDeepRequired<ValidationDemoModel> = {
   password: '',
   confirmPassword: '',
   quantity: '',

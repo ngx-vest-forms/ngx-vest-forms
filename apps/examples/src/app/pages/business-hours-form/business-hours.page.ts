@@ -8,7 +8,7 @@ import {
 import { createValidationConfig, ROOT_FORM } from 'ngx-vest-forms';
 import {
   BusinessHoursFormModel,
-  businessHoursFormShape,
+  businessHoursFormContract,
   initialBusinessHoursFormValue,
 } from '../../models/business-hours-form.model';
 import { Card } from '../../ui/card/card.component';
@@ -40,7 +40,7 @@ export class BusinessHoursPageComponent {
     initialBusinessHoursFormValue
   );
   protected readonly businessHoursSuite = businessHoursSuite;
-  protected readonly shape = businessHoursFormShape;
+  protected readonly contract = businessHoursFormContract;
   protected readonly ROOT_FORM = ROOT_FORM;
   protected readonly rootFormError = computed(
     () => this.formBody()?.formState()?.errors[ROOT_FORM]?.[0]

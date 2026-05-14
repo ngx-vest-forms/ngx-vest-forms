@@ -31,7 +31,7 @@ export class WizardStep3FormComponent {
   readonly step2Data = input.required<WizardStep2Model>();
   readonly data = input.required<WizardStep3Model>();
   readonly suite = input.required<NgxVestSuite<WizardStep3Model>>();
-  readonly shape = input.required<NgxDeepRequired<WizardStep3Model>>();
+  readonly contract = input.required<NgxDeepRequired<WizardStep3Model>>();
   readonly isSubmitting = input(false);
 
   readonly dataChange = output<WizardStep3Model>();

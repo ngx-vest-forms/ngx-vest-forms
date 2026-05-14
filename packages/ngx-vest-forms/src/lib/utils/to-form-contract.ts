@@ -14,7 +14,7 @@ import { validateShape } from './shape-validation';
  * - In dev mode, walks the value with `validateShape` to surface typo and
  *   structural warnings via the existing error catalog logger
  *
- * Useful for incrementally migrating from the deprecated `[formShape]` input
+ * Useful for incrementally migrating from the removed `[formShape]` input
  * to the new `[formContract]` input without rewriting existing shape objects.
  *
  * @example
