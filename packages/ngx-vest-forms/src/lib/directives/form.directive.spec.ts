@@ -1891,12 +1891,21 @@ describe('FormDirective - Shape Validation', () => {
 
   it('should prefer explicit [formContract] over an injected form contract', async () => {
     const { fixture } = await render(TestFormContractOverrideHost);
-    const instance = fixture.componentInstance;
+    await fixture.whenStable();
 
+    // Initial value matches the explicit contract — no warning yet
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+
+    // Set a value valid for the *injected* contract but invalid for the *explicit* one.
+    // If the explicit contract wins (correct), we get a warning about 'providerOnly'.
+    // If the injected contract were used instead, no warning would fire.
+    const instance = fixture.componentInstance;
     instance.formValue.set({ providerOnly: 'bar' });
     fixture.detectChanges();
+    await fixture.whenStable();
 
-    expect(consoleWarnSpy).toHaveBeenCalled();
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+    expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining("'providerOnly'"));
   });
 
   it('should not warn in production mode', async () => {
