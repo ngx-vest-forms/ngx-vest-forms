@@ -15,8 +15,30 @@ v3.0.0 deletes every `@deprecated` runtime helper, const alias, and type alias t
 | `FormCompatibleDeepRequired<T>`             | _(removed)_                        | See "Replacing `NgxFormCompatibleDeepRequired`" below for a copy-paste snippet, or express Date coercion in your schema (e.g., `z.union([z.date(), z.literal('')])`). |
 | `NgxTypedVestSuite<T>`                      | `NgxVestSuite<T>`                  | Structurally identical; rename the type reference.                       |
 | `SC_ERROR_DISPLAY_MODE_DEFAULT` (re-export) | `NGX_ERROR_DISPLAY_MODE_DEFAULT`   | Was an internal re-export; if you imported it, switch to the `NGX_*` name. |
+| `[formShape]` input                         | `[formContract]`                   | See "`[formShape]` → `[formContract]`" below. Raw `NgxDeepRequired<T>` shapes are still accepted; wrap with `toFormContract(shape)` for explicit conversion. |
+| `NgxFormCompatibleDeepRequired<T>`          | _(removed)_                        | See "Replacing `NgxFormCompatibleDeepRequired`" below.                   |
 
 If you only used the recommended `Ngx*` / `NGX_*` names (or the canonical `setValueAtPath` / `structuredClone`), v3 is a no-op for this category.
+
+### `[formShape]` → `[formContract]`
+
+The `[formShape]` input on `<form ngxVestForm>` is removed in v3 and replaced by `[formContract]`, which accepts any [Standard Schema v1](https://standardschema.dev) value (Zod v4, Valibot, hand-rolled, …) **or** a legacy `NgxDeepRequired<T>` shape object for back-compat.
+
+```html
+<!-- v2 -->
+<form ngxVestForm [suite]="suite" [formShape]="myContract"></form>
+
+<!-- v3: raw NgxDeepRequired<T> shape still accepted (back-compat) -->
+<form ngxVestForm [suite]="suite" [formContract]="myContract"></form>
+
+<!-- v3: explicit conversion to StandardSchemaV1 -->
+<form ngxVestForm [suite]="suite" [formContract]="toFormContract(myContract)"></form>
+
+<!-- v3: real Standard Schema (recommended for new code) -->
+<form ngxVestForm [suite]="suite" [formContract]="zodSchema"></form>
+```
+
+`@standard-schema/spec` is now a `peerDependency` (`>=1.0.0`). Most consumers don't need to install it directly — bring it in only if you author your own `StandardSchemaV1<T>` literals. The internal `validateShape()` helper has been removed; use `toFormContract()` from `ngx-vest-forms` if you need explicit shape→schema conversion.
 
 ### Replacing `NgxFormCompatibleDeepRequired`
 
