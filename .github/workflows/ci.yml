@@ -20,38 +20,39 @@ jobs:
       CI: true
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Setup
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24'
-          cache: 'npm'
+      - name: Enable Corepack
+        run: corepack enable
       - name: Install
-        run: npm install
+        run: pnpm install --frozen-lockfile
       - name: Get Playwright version
         id: playwright-version
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browsers
         id: playwright-cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
       - name: Install Playwright browser (chromium only)
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
       - name: Install Playwright system deps (cache hit)
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
+        run: pnpm exec playwright install-deps chromium
       - name: Lint
-        run: npm run lint
+        run: pnpm nx run-many --target=lint
       - name: Build library
-        run: npm run build:lib
+        run: pnpm nx run ngx-vest-forms:build --configuration=production
       - name: Test
-        run: npm run test:ci
+        run: pnpm nx run-many --target=test
       - name: E2E tests
-        run: npm exec nx -- run examples-e2e:e2e -- --project=chromium
+        run: pnpm nx run examples-e2e:e2e -- --project=chromium
         env:
           CI: true
       - name: Build examples app
-        run: npm run build:app
+        run: pnpm nx run examples:build --configuration=production --base-href=/ngx-vest-forms/

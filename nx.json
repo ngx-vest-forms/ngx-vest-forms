@@ -40,5 +40,6 @@
         "ciTargetName": "e2e-ci"
       }
     }
-  ]
+  ],
+  "analytics": false
 }

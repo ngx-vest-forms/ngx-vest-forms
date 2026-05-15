@@ -1,0 +1,21 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+minimumReleaseAge: 1440
+minimumReleaseAgeStrict: true
+minimumReleaseAgeIgnoreMissingTime: false
+trustPolicy: no-downgrade
+overrides:
+  chokidar: 4.0.1
+  detect-port: 1.6.0
+  semver: 6.3.0
+strictDepBuilds: true
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true
+  fsevents: true
+  less: false
+  lmdb: false
+  msgpackr-extract: false
+  nx: true
