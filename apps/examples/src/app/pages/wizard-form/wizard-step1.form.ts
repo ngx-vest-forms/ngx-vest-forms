@@ -7,25 +7,28 @@ import {
 } from '@angular/core';
 import {
   FormDirective,
-  NgxDeepRequired,
   NgxFirstInvalidOptions,
   NgxValidationConfig,
   NgxVestForms,
   NgxVestSuite,
+  provideFormContract,
 } from 'ngx-vest-forms';
-import { WizardStep1Model } from '../../models/wizard-form.model';
+import {
+  wizardStep1Contract,
+  WizardStep1Model,
+} from '../../models/wizard-form.model';
 import { WizardNavigationComponent } from '../../ui/wizard';
 
 @Component({
   selector: 'ngx-wizard-step1-form',
   imports: [NgxVestForms, WizardNavigationComponent],
   templateUrl: './wizard-step1.form.html',
+  providers: [provideFormContract(wizardStep1Contract)],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WizardStep1FormComponent {
   readonly data = input.required<WizardStep1Model>();
   readonly suite = input.required<NgxVestSuite<WizardStep1Model>>();
-  readonly contract = input.required<NgxDeepRequired<WizardStep1Model>>();
   readonly validationConfig =
     input.required<NgxValidationConfig<WizardStep1Model>>();
 

@@ -13,9 +13,12 @@ import {
   FormDirective,
   NgxVestForms,
   NgxVestSuite,
-  StandardSchemaV1,
+  provideFormContract,
 } from 'ngx-vest-forms';
-import { NativeSchemaDemoModel } from '../../models/native-schema-demo.model';
+import {
+  NativeSchemaDemoModel,
+  nativeSchemaDemoContract,
+} from '../../models/native-schema-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
 
@@ -23,11 +26,11 @@ import { FormSectionComponent } from '../../ui/form-section/form-section.compone
   selector: 'ngx-native-schema-demo-form-body',
   imports: [NgxVestForms, Card, FormSectionComponent],
   templateUrl: './native-schema-demo.form.html',
+  providers: [provideFormContract(nativeSchemaDemoContract)],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NativeSchemaDemoFormBody {
   readonly formValue = input.required<NativeSchemaDemoModel>();
-  readonly contract = input.required<StandardSchemaV1<NativeSchemaDemoModel>>();
   readonly suite = input.required<NgxVestSuite<NativeSchemaDemoModel>>();
 
   readonly formValueChange = output<NativeSchemaDemoModel>();

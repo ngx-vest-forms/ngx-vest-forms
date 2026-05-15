@@ -6,10 +6,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { createValidationConfig } from 'ngx-vest-forms';
-import {
-  ValidationDemoModel,
-  validationDemoContract,
-} from '../../models/validation-demo.model';
+import { ValidationDemoModel } from '../../models/validation-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
@@ -42,7 +39,6 @@ export class ValidationConfigDemoPageComponent {
   private readonly formBody = viewChild(ValidationConfigDemoFormBody);
 
   protected readonly suite = validationDemoSuite;
-  protected readonly contract = validationDemoContract;
 
   protected readonly validationConfig =
     createValidationConfig<ValidationDemoModel>()

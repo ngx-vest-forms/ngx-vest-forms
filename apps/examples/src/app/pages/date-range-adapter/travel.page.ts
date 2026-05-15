@@ -6,10 +6,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { createValidationConfig } from 'ngx-vest-forms';
-import {
-  TravelFormModel,
-  travelFormContract,
-} from '../../models/travel-form.model';
+import { TravelFormModel } from '../../models/travel-form.model';
 import { Card } from '../../ui/card/card.component';
 import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
@@ -39,7 +36,6 @@ export class TravelPageComponent {
   private readonly formBody = viewChild(TravelFormBody);
 
   protected readonly suite = travelValidationSuite;
-  protected readonly contract = travelFormContract;
 
   protected readonly validationConfig =
     createValidationConfig<TravelFormModel>()

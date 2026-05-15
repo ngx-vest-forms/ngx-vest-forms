@@ -94,6 +94,16 @@ export {
 } from './lib/tokens/debounce.token';
 export { NGX_EQUALITY_FN } from './lib/tokens/equality.token';
 export type { NgxEqualityFn } from './lib/tokens/equality.token';
+export {
+  NGX_FORM_CONTRACT,
+  provideFormContract,
+  provideFormContractFactory,
+  readFormContract,
+} from './lib/tokens/form-contract.token';
+export type {
+  NgxFormContract,
+  NgxFormContractSource,
+} from './lib/tokens/form-contract.token';
 export { NGX_VALIDATION_DEBOUNCE_PRESETS } from './lib/tokens/validation-debounce-presets';
 export type { NgxValidationDebouncePreset } from './lib/tokens/validation-debounce-presets';
 

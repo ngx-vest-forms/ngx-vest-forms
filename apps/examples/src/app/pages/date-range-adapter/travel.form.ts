@@ -16,13 +16,16 @@ import {
   createEmptyFormState,
   fieldWarningsToRecord,
   FormDirective,
-  NgxDeepRequired,
   NgxValidationConfig,
   NgxVestForms,
   NgxVestSuite,
+  provideFormContract,
   setValueAtPath,
 } from 'ngx-vest-forms';
-import { TravelFormModel } from '../../models/travel-form.model';
+import {
+  travelFormContract,
+  TravelFormModel,
+} from '../../models/travel-form.model';
 import { Card } from '../../ui/card/card.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
 import {
@@ -42,6 +45,7 @@ export type TravelFormApproach = 'composite-adapter' | 'split-wrappers';
     ControlWrapperComponent,
   ],
   templateUrl: './travel.form.html',
+  providers: [provideFormContract(travelFormContract)],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TravelFormBody {
@@ -51,7 +55,6 @@ export class TravelFormBody {
 
   readonly approach = input<TravelFormApproach>('split-wrappers');
   readonly formValue = input.required<TravelFormModel>();
-  readonly contract = input.required<NgxDeepRequired<TravelFormModel>>();
   readonly suite = input.required<NgxVestSuite<TravelFormModel>>();
   readonly validationConfig =
     input.required<NgxValidationConfig<TravelFormModel>>();

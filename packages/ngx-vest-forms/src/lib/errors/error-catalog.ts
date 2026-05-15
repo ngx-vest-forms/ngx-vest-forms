@@ -26,6 +26,6 @@ export function logWarning<T extends unknown[]>(
   ...args: T
 ): void {
   console.warn(
-    `[${error.code}] ${error.message(...args)}\nCheck your [formContract] input and the initial [formValue].`
+    `[${error.code}] ${error.message(...args)}\nCheck your [formContract] input, provideFormContract(...) provider, and the initial [formValue].`
   );
 }

@@ -1,8 +1,5 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import {
-  NativeSchemaDemoModel,
-  nativeSchemaDemoContract,
-} from '../../models/native-schema-demo.model';
+import { NativeSchemaDemoModel } from '../../models/native-schema-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
@@ -26,7 +23,6 @@ export class NativeSchemaDemoPageComponent {
   protected readonly formValue = signal<NativeSchemaDemoModel>({});
 
   protected readonly suite = nativeSchemaDemoSuite;
-  protected readonly contract = nativeSchemaDemoContract;
 
   protected save(): void {
     // Intentionally no console output in examples to keep CI and demos quiet

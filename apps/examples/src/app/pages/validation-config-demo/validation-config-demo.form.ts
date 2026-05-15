@@ -8,12 +8,15 @@ import {
 import {
   createFormFeedbackSignals,
   FormDirective,
-  NgxDeepRequired,
   NgxValidationConfig,
   NgxVestForms,
   NgxVestSuite,
+  provideFormContract,
 } from 'ngx-vest-forms';
-import { ValidationDemoModel } from '../../models/validation-demo.model';
+import {
+  validationDemoContract,
+  ValidationDemoModel,
+} from '../../models/validation-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
 
@@ -21,11 +24,11 @@ import { FormSectionComponent } from '../../ui/form-section/form-section.compone
   selector: 'ngx-validation-config-demo-form-body',
   imports: [NgxVestForms, Card, FormSectionComponent],
   templateUrl: './validation-config-demo.form.html',
+  providers: [provideFormContract(validationDemoContract)],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ValidationConfigDemoFormBody {
   readonly formValue = input.required<ValidationDemoModel>();
-  readonly contract = input.required<NgxDeepRequired<ValidationDemoModel>>();
   readonly suite = input.required<NgxVestSuite<ValidationDemoModel>>();
   readonly validationConfig =
     input.required<NgxValidationConfig<ValidationDemoModel>>();
