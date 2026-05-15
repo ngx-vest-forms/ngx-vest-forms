@@ -8,14 +8,15 @@ import {
 } from '@angular/core';
 import {
   FormDirective,
-  NgxDeepRequired,
   NgxFirstInvalidOptions,
   NgxVestForms,
   NgxVestSuite,
+  provideFormContract,
 } from 'ngx-vest-forms';
 import {
   WizardStep1Model,
   WizardStep2Model,
+  wizardStep3Contract,
   WizardStep3Model,
 } from '../../models/wizard-form.model';
 import { WizardNavigationComponent } from '../../ui/wizard';
@@ -24,6 +25,7 @@ import { WizardNavigationComponent } from '../../ui/wizard';
   selector: 'ngx-wizard-step3-form',
   imports: [NgxVestForms, WizardNavigationComponent],
   templateUrl: './wizard-step3.form.html',
+  providers: [provideFormContract(wizardStep3Contract)],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WizardStep3FormComponent {
@@ -31,7 +33,6 @@ export class WizardStep3FormComponent {
   readonly step2Data = input.required<WizardStep2Model>();
   readonly data = input.required<WizardStep3Model>();
   readonly suite = input.required<NgxVestSuite<WizardStep3Model>>();
-  readonly contract = input.required<NgxDeepRequired<WizardStep3Model>>();
   readonly isSubmitting = input(false);
 
   readonly dataChange = output<WizardStep3Model>();

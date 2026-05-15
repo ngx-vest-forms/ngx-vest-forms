@@ -44,6 +44,11 @@ import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import { NGX_EQUALITY_FN } from '../tokens/equality.token';
+import {
+  NGX_FORM_CONTRACT,
+  readFormContract,
+  type NgxFormContractSource,
+} from '../tokens/form-contract.token';
 import { collectTouchedPaths } from '../utils/collect-touched-paths';
 import type { NgxDeepRequired } from '../utils/deep-required';
 import { scheduleMicrotask } from '../utils/destroy-scheduler';
@@ -190,6 +195,7 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly #cdr = inject(ChangeDetectorRef);
   readonly #elementRef = inject<ElementRef<HTMLFormElement>>(ElementRef);
   readonly #configDebounceTime = inject(NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN);
+  readonly #injectedFormContract = inject(NGX_FORM_CONTRACT, { optional: true });
   /**
    * Deep-equality comparator. Defaults to `fastDeepEqual`; can be overridden
    * application-wide or per-component via {@link NGX_EQUALITY_FN}.
@@ -345,10 +351,26 @@ export class FormDirective<T extends Record<string, unknown>> {
    *
    * The contract is a typing carrier and dev-mode lint only; it does not
    * affect runtime form validity (validity comes from the Vest `suite`).
+   *
+   * When omitted, the directive falls back to any `provideFormContract(...)`
+   * provider in scope. Binding `null` disables that fallback explicitly.
    */
   readonly formContract = input<
+    StandardSchemaV1<NoInfer<T>> | NgxDeepRequired<T> | null | undefined
+  >(undefined);
+
+  readonly #resolvedFormContract = computed<
     StandardSchemaV1<NoInfer<T>> | NgxDeepRequired<T> | null
-  >(null);
+  >(() => {
+    const explicitContract = this.formContract();
+    if (explicitContract !== undefined) {
+      return explicitContract;
+    }
+
+    return readFormContract(
+      this.#injectedFormContract as NgxFormContractSource<T> | undefined
+    );
+  });
 
   /**
    * Updates the validation config which is a dynamic object that will be used to
@@ -511,7 +533,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     if (isDevMode()) {
       effect(() => {
         const v = this.formValue();
-        const contract = this.formContract();
+        const contract = this.#resolvedFormContract();
         if (!v || !contract) {
           return;
         }

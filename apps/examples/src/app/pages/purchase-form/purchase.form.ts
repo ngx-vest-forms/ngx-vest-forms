@@ -21,6 +21,7 @@ import {
   FormDirective,
   NGX_VALIDATION_DEBOUNCE_PRESETS,
   NgxVestForms,
+  provideFormContract,
   setValueAtPath,
   type ValidationOptions,
 } from 'ngx-vest-forms';
@@ -79,6 +80,7 @@ const FETCH_ERROR_SCENARIOS: Array<Exclude<FetchErrorScenario, 'random'>> = [
     PhoneNumbersComponent,
   ],
   templateUrl: './purchase.form.html',
+  providers: [provideFormContract(purchaseFormContract)],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PurchaseForm {
@@ -102,7 +104,6 @@ export class PurchaseForm {
   protected readonly formValue = signal<PurchaseFormModel>(
     initialPurchaseFormValue
   );
-  protected readonly contract = purchaseFormContract;
   protected readonly purchaseValidationSuite = createPurchaseValidationSuite(
     this.swapiService
   );

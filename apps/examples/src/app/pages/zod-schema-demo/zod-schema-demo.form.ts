@@ -13,9 +13,12 @@ import {
   FormDirective,
   NgxVestForms,
   NgxVestSuite,
-  StandardSchemaV1,
+  provideFormContract,
 } from 'ngx-vest-forms';
-import { ZodSchemaDemoModel } from '../../models/zod-schema-demo.model';
+import {
+  ZodSchemaDemoModel,
+  zodSchemaDemoContract,
+} from '../../models/zod-schema-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
 
@@ -23,11 +26,11 @@ import { FormSectionComponent } from '../../ui/form-section/form-section.compone
   selector: 'ngx-zod-schema-demo-form-body',
   imports: [NgxVestForms, Card, FormSectionComponent],
   templateUrl: './zod-schema-demo.form.html',
+  providers: [provideFormContract(zodSchemaDemoContract)],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ZodSchemaDemoFormBody {
   readonly formValue = input.required<ZodSchemaDemoModel>();
-  readonly contract = input.required<StandardSchemaV1<ZodSchemaDemoModel>>();
   readonly suite = input.required<NgxVestSuite<ZodSchemaDemoModel>>();
 
   readonly formValueChange = output<ZodSchemaDemoModel>();

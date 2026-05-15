@@ -462,19 +462,27 @@ const shape: NgxDeepRequired<MyFormModel> = {
 };
 ```
 
-```html
-<form ngxVestForm [suite]="suite" [formContract]="shape">
-  <!-- ✅ Correct: matches shape -->
-  <input name="email" [ngModel]="formValue().email" />
-  <input name="address.street" [ngModel]="formValue().address?.street" />
+```typescript
+@Component({
+  providers: [provideFormContract(shape)],
+  template: `
+    <form ngxVestForm [suite]="suite">
+      <!-- ✅ Correct: matches shape -->
+      <input name="email" [ngModel]="formValue().email" />
+      <input name="address.street" [ngModel]="formValue().address?.street" />
 
-  <!-- ❌ Error in dev mode: typo detected -->
-  <input name="emial" [ngModel]="formValue().email" />
+      <!-- ❌ Error in dev mode: typo detected -->
+      <input name="emial" [ngModel]="formValue().email" />
 
-  <!-- ❌ Error in dev mode: path doesn't exist in shape -->
-  <input name="address.zipcode" [ngModel]="formValue().address?.zipcode" />
-</form>
+      <!-- ❌ Error in dev mode: path doesn't exist in shape -->
+      <input name="address.zipcode" [ngModel]="formValue().address?.zipcode" />
+    </form>
+  `,
+})
+export class MyFormComponent {}
 ```
+
+If the contract genuinely varies per usage site, `[formContract]` still works as an explicit override.
 
 **Benefits:**
 

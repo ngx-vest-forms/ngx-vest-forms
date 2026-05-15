@@ -8,12 +8,15 @@ import {
 import {
   createFormFeedbackSignals,
   FormDirective,
-  NgxDeepRequired,
   NgxValidationConfig,
   NgxVestForms,
   NgxVestSuite,
+  provideFormContract,
 } from 'ngx-vest-forms';
-import { BusinessHoursFormModel } from '../../models/business-hours-form.model';
+import {
+  businessHoursFormContract,
+  BusinessHoursFormModel,
+} from '../../models/business-hours-form.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import {
   BusinessHoursComponent,
@@ -24,11 +27,11 @@ import {
   selector: 'ngx-business-hours-form-body',
   imports: [NgxVestForms, BusinessHoursComponent, AlertPanel],
   templateUrl: './business-hours.form.html',
+  providers: [provideFormContract(businessHoursFormContract)],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BusinessHoursFormBody {
   readonly formValue = input.required<BusinessHoursFormModel>();
-  readonly contract = input.required<NgxDeepRequired<BusinessHoursFormModel>>();
   readonly suite = input.required<NgxVestSuite<BusinessHoursFormModel>>();
   readonly validationConfig =
     input.required<NgxValidationConfig<BusinessHoursFormModel>>();

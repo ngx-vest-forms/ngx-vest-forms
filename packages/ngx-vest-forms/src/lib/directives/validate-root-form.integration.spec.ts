@@ -1,6 +1,10 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { NgxVestForms, ROOT_FORM } from 'ngx-vest-forms';
+import {
+  NgxVestForms,
+  provideFormContract,
+  ROOT_FORM,
+} from 'ngx-vest-forms';
 import { create, enforce, test } from 'vest';
 
 type GeneralInfoForm = {
@@ -22,12 +26,19 @@ const issueThirteenSuite = create((model: GeneralInfoForm = {}) => {
 
 @Component({
   imports: [NgxVestForms],
+  providers: [
+    provideFormContract({
+      generalInfo: {
+        firstName: '',
+        lastName: '',
+      },
+    }),
+  ],
   template: `
     <form
       ngxVestForm
       ngxValidateRootForm
       [formValue]="formValue()"
-      [formContract]="shape"
       [suite]="suite"
       (formValueChange)="formValue.set($event)"
       (validChange)="formValid.set($event)"
@@ -53,12 +64,6 @@ class PackageConsumerComponent {
   protected readonly suite = issueThirteenSuite;
   protected readonly formValue = signal<GeneralInfoForm>({ generalInfo: {} });
   protected readonly formValid = signal(false);
-  protected readonly shape = {
-    generalInfo: {
-      firstName: '',
-      lastName: '',
-    },
-  };
 
   protected onSubmit(): void {
     // no-op

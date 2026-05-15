@@ -1,8 +1,5 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import {
-  ZodSchemaDemoModel,
-  zodSchemaDemoContract,
-} from '../../models/zod-schema-demo.model';
+import { ZodSchemaDemoModel } from '../../models/zod-schema-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
@@ -27,7 +24,6 @@ export class ZodSchemaDemoPageComponent {
   protected readonly formValue = signal<ZodSchemaDemoModel>({});
 
   protected readonly suite = zodSchemaDemoSuite;
-  protected readonly contract = zodSchemaDemoContract;
 
   protected save(): void {
     // Intentionally no console output in examples to keep CI and demos quiet

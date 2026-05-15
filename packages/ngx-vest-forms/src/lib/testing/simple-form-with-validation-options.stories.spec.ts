@@ -4,15 +4,17 @@ import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
+import { provideFormContract } from '../tokens/form-contract.token';
 import {
   createFormValidationSuite,
   FormModel,
-  formShape,
+  formContract,
   selectors,
 } from './simple-form';
 
 @Component({
   imports: [NgxVestForms, JsonPipe],
+  providers: [provideFormContract(formContract)],
   template: `
     <form
       class="p-4"
@@ -20,7 +22,6 @@ import {
       (ngSubmit)="save()"
       [formValue]="formValue()"
       ngxValidateRootForm
-      [formContract]="shape"
       [suite]="suite"
       (validChange)="formValid.set($event)"
       (errorsChange)="errors.set($event)"
@@ -116,7 +117,6 @@ class FormDirectiveDemoComponent {
   protected readonly formValue = signal<FormModel>({});
   protected readonly formValid = signal<boolean>(false);
   protected readonly errors = signal<Record<string, string[]>>({});
-  protected readonly shape = formShape;
   protected readonly suite = createFormValidationSuite();
   private readonly viewModel = computed(() => ({
     formValue: this.formValue(),

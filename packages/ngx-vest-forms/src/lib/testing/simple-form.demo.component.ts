@@ -1,10 +1,16 @@
 import { JsonPipe } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
 import { NgxVestForms } from '../exports';
-import { FormModel, createFormValidationSuite, formContract } from './simple-form';
+import { provideFormContract } from '../tokens/form-contract.token';
+import {
+  FormModel,
+  createFormValidationSuite,
+  formContract,
+} from './simple-form';
 
 @Component({
   imports: [NgxVestForms, JsonPipe],
+  providers: [provideFormContract(formContract)],
   template: `
     <form
       class="p-4"
@@ -12,7 +18,6 @@ import { FormModel, createFormValidationSuite, formContract } from './simple-for
       (ngSubmit)="save()"
       [formValue]="formValue()"
       ngxValidateRootForm
-      [formContract]="contract"
       [suite]="suite"
       (dirtyChange)="formDirty.set($event)"
       (validChange)="formValid.set($event)"
@@ -113,7 +118,6 @@ export class FormDirectiveDemoComponent {
   protected readonly formValid = signal<boolean | null>(null);
   protected readonly formDirty = signal<boolean | null>(null);
   protected readonly errors = signal<Record<string, string[]>>({});
-  protected readonly contract = formContract;
   protected readonly suite = createFormValidationSuite();
   private readonly viewModel = computed(() => {
     return {
