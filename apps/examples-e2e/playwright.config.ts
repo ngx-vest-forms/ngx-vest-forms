@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const baseURL = process.env['PLAYWRIGHT_TEST_BASE_URL'] ?? 'http://localhost:4400';
+const webServerPort = new URL(baseURL).port || '4400';
+
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
@@ -26,7 +29,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env['PLAYWRIGHT_TEST_BASE_URL'] ?? 'http://localhost:4400',
+    baseURL,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -55,8 +58,8 @@ export default defineConfig({
   /* Start the examples app before running tests */
   webServer: [
     {
-      command: 'npm exec nx -- run examples:serve -- --port 4400',
-      url: 'http://localhost:4400',
+      command: `pnpm nx run examples:serve -- --port ${webServerPort}`,
+      url: baseURL,
       reuseExistingServer: !process.env['CI'],
       timeout: 120000,
     },

@@ -214,10 +214,10 @@ For `ngModelGroup` containers, prefer using `<ngx-form-group-wrapper>` (group-sa
 📖 See also:
 
 - [Accessibility Guide](./docs/ACCESSIBILITY.md)
-- [`ControlWrapperComponent` docs](./projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md)
+- [`ControlWrapperComponent` docs](./packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md)
 
 > **Styling note**: `ngx-control-wrapper` and `ngx-form-group-wrapper` include built-in, framework-agnostic baseline styles.
-> They are themeable via CSS custom properties. See the [component docs](./projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md#styling-and-theming).
+> They are themeable via CSS custom properties. See the [component docs](./packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md#styling-and-theming).
 >
 > **Upgrade note (wrappers)**: This is not a breaking API change for wrapper consumers (selectors/inputs/behavior remain stable).
 > If you previously targeted internal wrapper markup/classes with custom CSS, review and update those selectors as needed.
@@ -369,7 +369,7 @@ protected handleFieldBlur(event: NgxFieldBlurEvent<FormModel>): void {
 The examples app includes a complete blur-driven draft persistence implementation:
 
 - route: `/auto-save-demo`
-- source: `projects/examples/src/app/pages/auto-save-demo/`
+- source: `apps/examples/src/app/pages/auto-save-demo/`
 
 That example intentionally demonstrates the **always-save draft** policy.
 
@@ -520,12 +520,12 @@ If the contract genuinely varies per usage site, `[formContract]` still works as
 
 ### Reference
 
-- **[Utilities README](./projects/ngx-vest-forms/src/lib/utils/README.md)** - Canonical reference for all utility functions
+- **[Utilities README](./packages/ngx-vest-forms/src/lib/utils/README.md)** - Canonical reference for all utility functions
 
 ### Examples
 
-- **[Examples Project](./projects/examples)** - Working code examples with business hours forms, purchase forms, validation config demos, and blur-driven draft auto-save
-  - Run locally: `npm install && npm start`
+- **[Examples Project](./apps/examples)** - Working code examples with business hours forms, purchase forms, validation config demos, and blur-driven draft auto-save
+  - Run locally: `corepack enable && pnpm install && pnpm start`
   - Includes smart components, UI components, and complete validation patterns
 
 ## Migration
@@ -573,13 +573,14 @@ You can add a Vest suite at any time by binding `[suite]` on the form.
 
 - **[Angular Official Documentation](https://angular.dev/guide/forms)** - Template-driven forms guide
 - **[Vest.js Documentation](https://vestjs.dev)** - Validation framework used by ngx-vest-forms
-- **[Live Examples Repository](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/projects/examples)** - Complex form examples and patterns
+- **[Live Examples Repository](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/apps/examples)** - Complex form examples and patterns
 
 ### Running Examples Locally
 
 ```bash
-npm install
-npm start
+corepack enable
+pnpm install
+pnpm start
 ```
 
 ### Learning Resources
