@@ -98,7 +98,6 @@ export {
   NGX_FORM_CONTRACT,
   provideFormContract,
   provideFormContractFactory,
-  readFormContract,
 } from './lib/tokens/form-contract.token';
 export type {
   NgxFormContract,
