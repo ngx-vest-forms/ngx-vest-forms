@@ -11,7 +11,7 @@
     "build": "nx run-many --target=build",
     "build:lib": "nx run ngx-vest-forms:build --configuration=production",
     "build:app": "nx run examples:build --configuration=production --base-href=/ngx-vest-forms/",
-    "build:ci": "nx run ngx-vest-forms:build --configuration=production && nx run examples:build --configuration=production --base-href=/ngx-vest-forms/",
+    "build:ci": "pnpm run build:lib && pnpm run build:app",
     "postbuild:lib": "copyfiles README.md dist/ngx-vest-forms",
     "test": "nx run-many --target=test",
     "test:ci": "nx run-many --target=test",

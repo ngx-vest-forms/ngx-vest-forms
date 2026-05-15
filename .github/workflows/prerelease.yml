@@ -119,7 +119,7 @@ jobs:
       - name: Lint
         run: pnpm nx run-many --target=lint
       - name: Build
-        run: pnpm nx run ngx-vest-forms:build --configuration=production && pnpm nx run examples:build --configuration=production --base-href=/ngx-vest-forms/
+        run: pnpm run build:ci
       - name: Test
         run: pnpm nx run-many --target=test
       - name: E2E tests
