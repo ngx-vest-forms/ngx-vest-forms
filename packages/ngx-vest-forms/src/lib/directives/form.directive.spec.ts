@@ -1859,6 +1859,24 @@ describe('FormDirective - Shape Validation', () => {
       viewChild.required<FormDirective<Record<string, unknown>>>('vest');
   }
 
+  @Component({
+    selector: 'test-form-contract-null-override-host',
+    template: `<form
+      ngxVestForm
+      [formContract]="formContract()"
+      [formValue]="formValue()"
+      #vest="ngxVestForm"
+    ></form>`,
+    imports: [NgxVestForms],
+    providers: [provideFormContract({ providerOnly: '' })],
+  })
+  class TestFormContractNullOverrideHost {
+    formContract = signal<null>(null);
+    formValue = signal<any>({ providerOnly: 'initial' });
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
+  }
+
   let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
@@ -1906,6 +1924,20 @@ describe('FormDirective - Shape Validation', () => {
 
     expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
     expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining("'providerOnly'"));
+  });
+
+  it('should allow explicit [formContract]="null" to disable an injected form contract', async () => {
+    const { fixture } = await render(TestFormContractNullOverrideHost);
+    await fixture.whenStable();
+
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+
+    const instance = fixture.componentInstance;
+    instance.formValue.set({ anotherField: 'bar' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
   });
 
   it('should not warn in production mode', async () => {

@@ -351,16 +351,19 @@ export class FormDirective<T extends Record<string, unknown>> {
    *
    * The contract is a typing carrier and dev-mode lint only; it does not
    * affect runtime form validity (validity comes from the Vest `suite`).
+   *
+   * When omitted, the directive falls back to any `provideFormContract(...)`
+   * provider in scope. Binding `null` disables that fallback explicitly.
    */
   readonly formContract = input<
-    StandardSchemaV1<NoInfer<T>> | NgxDeepRequired<T> | null
-  >(null);
+    StandardSchemaV1<NoInfer<T>> | NgxDeepRequired<T> | null | undefined
+  >(undefined);
 
   readonly #resolvedFormContract = computed<
     StandardSchemaV1<NoInfer<T>> | NgxDeepRequired<T> | null
   >(() => {
     const explicitContract = this.formContract();
-    if (explicitContract) {
+    if (explicitContract !== undefined) {
       return explicitContract;
     }
 
