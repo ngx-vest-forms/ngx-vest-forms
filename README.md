@@ -34,10 +34,10 @@ See the full guides under [Documentation](#documentation).
 
 ### Prerequisites
 
-- **Angular**: >=19.0.0 minimum, 20.x recommended (all used APIs stable)
-- **Vest.js**: >=5.4.6 (Validation engine)
-- **TypeScript**: >=5.8.0 (Modern Angular features)
-- **Node.js**: >=20 (Maintenance release)
+- **Angular**: `>=19.0.0` peer range; the examples and guidance in this repo target Angular 21.x
+- **Vest.js**: `>=6.0.0`; the documentation assumes modern Vest 6 APIs
+- **TypeScript**: `>=5.8.0`; this repo currently uses TypeScript 5.9.x
+- **Node.js**: use an Angular-supported LTS for your app; this repo is developed on Node 22+
 
 ### Installation
 
@@ -45,43 +45,59 @@ See the full guides under [Documentation](#documentation).
 npm install ngx-vest-forms
 ```
 
-> **v.2.0.0 NOTE:**
+> **v3 guidance:**
 >
-> You must call `only()` **unconditionally** in Vest suites.
+> - Write suites with Vest 6's model-only callback: `create((model) => { ... })`
+> - Handle field focus at the call site with `suite.only(field).run(model)`; `ngx-vest-forms` does this internally for field-level validation
+> - Use the `ngx-` selector family; the legacy `sc-` prefix was removed in v3
 >
 > ```ts
-> // ✅ Correct
-> only(field); // only(undefined) safely runs all tests
+> import { create, enforce, test } from 'vest';
+>
+> const suite = create((model) => {
+>   test('email', 'Email is required', () => {
+>     enforce(model.email).isNotBlank();
+>   });
+> });
 > ```
 >
-> Why: Conditional `only()` breaks Vest's change detection mechanism and causes timing issues with `omitWhen` + `validationConfig` in ngx-vest-forms.
-> See the [Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md#1-unconditional-only-pattern-required-critical).
->
-> Selector prefix: use `ngx-`. The legacy `sc-` prefix was removed in v3. See the [selector migration guide](./docs/SELECTOR-PREFIX-MIGRATION.md) if you are upgrading from v2.x.
+> If you're upgrading older code that still uses callback `field?` parameters or `staticSuite(...)`, see the [v2.x → v3 migration guide](./docs/migration/MIGRATION-v2.x-to-v3.0.0.md).
 
 ### Quick Start
 
 Start simple (with validations):
 
 ```ts
-import { Component, signal } from '@angular/core';
-import { NgxVestForms, NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
-import { staticSuite, only, test, enforce } from 'vest';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import {
+  NgxVestForms,
+  type NgxDeepPartial,
+  type NgxVestSuite,
+} from 'ngx-vest-forms';
+import { create, enforce, test } from 'vest';
 
 type MyFormModel = NgxDeepPartial<{ email: string; name: string }>;
 
-// Minimal validation suite (always call only(field) unconditionally)
-const suite: NgxVestSuite<MyFormModel> = staticSuite((model, field?) => {
-  only(field);
+const suite: NgxVestSuite<MyFormModel> = create((model) => {
   test('email', 'Email is required', () => {
     enforce(model.email).isNotBlank();
+  });
+
+  test('name', 'Name is required', () => {
+    enforce(model.name).isNotBlank();
   });
 });
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgxVestForms],
   template: `
-    <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      (formValueChange)="formValue.set($event)"
+    >
       <ngx-control-wrapper>
         <label for="email">Email</label>
         <input id="email" name="email" [ngModel]="formValue().email" />
@@ -103,11 +119,12 @@ export class MyComponent {
 }
 ```
 
-Notes.
+Notes:
 
 - Use `[ngModel]` (not `[(ngModel)]`) for unidirectional data flow
-- The `?` operator is required because template-driven forms build values incrementally (`NgxDeepPartial`)
+- Use optional chaining for nested partial values because template-driven forms build values incrementally (`NgxDeepPartial`)
 - The `name` attribute MUST exactly match the property path used in `[ngModel]` — see [Field Paths](./docs/FIELD-PATHS.md)
+- For field-level validation, ngx-vest-forms drives the Vest 6 suite with `suite.only(field).run(model)` internally
 
 That's all you need. The directive automatically creates controls, wires validation, and manages state.
 
@@ -115,7 +132,7 @@ That's all you need. The directive automatically creates controls, wires validat
 
 - **Unidirectional state with signals** — Models are `NgxDeepPartial<T>` so values build up incrementally
 - **Type-safe with development-time contract diagnostics** — Automatic control creation and validation wiring (dev mode checks)
-- **Vest.js validations** — Sync/async, conditional, composable patterns with `only(field)` optimization
+- **Vest.js validations** — Sync/async, conditional, composable patterns with Vest 6 model-only suites and `only(field)` optimization
 - **Error display modes** — Control when errors show: `on-blur`, `on-submit`, `on-blur-or-submit` (default), `on-dirty`, or `always`
 - **Warning display modes** — Control when warnings show: `on-touch`, `on-validated-or-touch` (default), `on-dirty`, or `always`
 - **Form state tracking** — Access touched, dirty, valid/invalid states for individual fields or entire form
@@ -125,12 +142,13 @@ That's all you need. The directive automatically creates controls, wires validat
   - `FormErrorControlDirective` (adds ARIA wiring + stable region IDs)
 - **Cross-field dependencies** — `validationConfig` for field-to-field triggers, `ROOT_FORM` for form-level rules
 - **Field blur events** — `fieldBlur` output for blur-driven draft auto-save, analytics, and field-level side effects
-- **Utilities** — Field paths, field clearing, validation config builder
+- **Utilities** — Field paths, field clearing, validation config builder, pending-state helpers, and Standard Schema adapters
 
-### Compatibility & Safety Notes (v2.x)
+### v3 cleanup notes
 
-- `ROOT_FORM_CONSTANT` is retained for compatibility but deprecated; prefer `ROOT_FORM`.
-- `set` / `cloneDeep` are retained for compatibility; prefer `setValueAtPath` / `structuredClone` in new code.
+- Legacy v2 aliases such as `ROOT_FORM_CONSTANT`, `set()`, and `cloneDeep()` were removed in v3.
+- Use `ROOT_FORM`, `setValueAtPath()`, and `structuredClone()` in current code.
+- `[formShape]` was replaced by `[formContract]`; raw `NgxDeepRequired<T>` shapes still work for incremental migration.
 
 ### Error & Warning Display Modes
 
@@ -540,7 +558,7 @@ If the contract genuinely varies per usage site, `[formContract]` still works as
 ## Migration
 
 - v1.x → v2.0.0: **[Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md)**
-- v2.x → v3.0.0: **[Selector/Token Removal Guide](./docs/migration/MIGRATION-v2.x-to-v3.0.0.md)**
+- v2.x → v3.0.0: **[Migration Guide](./docs/migration/MIGRATION-v2.x-to-v3.0.0.md)**
 
 ### `[formShape]` → `[formContract]` (v3)
 
@@ -562,7 +580,7 @@ The `[formShape]` input on `<form ngxVestForm>` is replaced by `[formContract]`,
 
 `@standard-schema/spec` is now declared as a `peerDependency` (`>=1.0.0`). Most consumers don't need to install it directly — bring it in only if you author your own `StandardSchemaV1<T>` literals. The internal `validateShape()` helper has been removed; use `toFormContract()` if you need explicit shape→schema conversion.
 
-Browser support follows Angular 19+ targets (no `structuredClone` polyfill required).
+Browser support follows Angular's supported browser targets for the Angular version you run. No `structuredClone` polyfill is required for the Angular-supported environments covered by v3.
 
 ## FAQ
 

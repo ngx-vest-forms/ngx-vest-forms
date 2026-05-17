@@ -18,15 +18,15 @@ npx skills add ngx-vest-forms/ngx-vest-forms --skill vestjs
 
 The top-level `vestjs` skill is a **router**. It points the model toward the right focused sub-skill instead of answering every Vest question with one giant catch-all prompt.
 
-It is also the **stable public entry point** for versioning. Right now, that router defaults to the **Vest 5.4 / 5.x** lane used by this repository.
+It is also the **stable public entry point** for versioning. In this repository, that router now defaults to the **Vest 6.x** lane used by `ngx-vest-forms` v3.
 
 ### Core workflow sub-skills
 
 | Sub-skill                  | What it covers                                                                                   |
 | -------------------------- | ------------------------------------------------------------------------------------------------ |
-| `core`                     | first suites, `create` vs `staticSuite`, `test`, `enforce`, `only`, stateful vs stateless design |
-| `conditional-control-flow` | `skip`, `only`, `include`, `skipWhen`, `omitWhen`, `optional`, linked fields, hidden branches    |
-| `async-and-warnings`       | async tests, `AbortSignal`, stale request avoidance, `warn()`, `.done()`, pending state          |
+| `core`                     | first suites, `create`, native schema-aware suites, `test`, `enforce`, `suite.only(...).run(...)`, stateful vs stateless design |
+| `conditional-control-flow` | `skip`, `focus`, `only`, `include`, `skipWhen`, `omitWhen`, `optional`, linked fields, hidden branches |
+| `async-and-warnings`       | async tests, `AbortSignal`, stale request avoidance, `warn()`, `useWarn()`, `afterEach()`, `afterField()`, pending state |
 | `results-groups-and-types` | result access, `group`, `each`, execution modes, typed suites, group-specific result queries     |
 
 ### Advanced workflow sub-skills
@@ -34,14 +34,14 @@ It is also the **stable public entry point** for versioning. Right now, that rou
 | Sub-skill                  | What it covers                                                                               |
 | -------------------------- | -------------------------------------------------------------------------------------------- |
 | `enforce-and-custom-rules` | `enforce.condition`, `enforce.extend`, `compose`, custom rule design, matcher typing         |
-| `server-side-validation`   | request isolation, `staticSuite`, server-oriented execution modes, backend validation output |
+| `server-side-validation`   | request isolation, `runStatic()`, server-oriented execution modes, backend validation output |
 
 ## How it is intended to be used
 
 Use `vestjs` for broad or ambiguous requests like:
 
 - “How should I structure this Vest suite?”
-- “What’s the right 5.x pattern for conditional validation?”
+- “What’s the right Vest 6 pattern for conditional validation?”
 - “Why is this skipped field still making my form invalid?”
 - “How do I type a Vest suite in TypeScript?”
 - “How should I do server-side request validation with Vest?”
@@ -59,20 +59,18 @@ Version-specific material is organized internally so the skill can grow without 
 ### Current internal versioned layout
 
 - `.agents/skills/vestjs/references/version-selection.md`
-- `.agents/skills/vestjs/references/5.x/source-map.md`
-- `.agents/skills/vestjs/evals/5.x.json`
+- `.agents/skills/vestjs/references/5.x/source-map.md` (historical migration reference)
+- `.agents/skills/vestjs/evals/evals.json` (current supported lane)
 
 This means:
 
 - the **public skill stays stable**
-- the **current default lane is 5.x**
-- a future `6.x` lane can be added without forcing users to switch install names immediately
+- the **current default lane is 6.x**
+- historical 5.x material is still available for migration guidance
 
-### When to add a separate 6.x lane
+### Historical 5.x material
 
-Add internal `6.x` references and evals when Vest 6 support is actually needed.
-
-Only consider separate public skills like `vestjs-5x` and `vestjs-6x` if both majors later become actively maintained and materially divergent in practice.
+The repo keeps 5.x source maps and evals for migration work, but current guidance should not present Vest 5 patterns as the default. If you're maintaining legacy code, use that material to explain the migration path rather than teaching callback `field?` parameters, `staticSuite(...)`, or result `.done()` as current practice.
 
 ## Repo alignment
 
@@ -85,14 +83,15 @@ If a question involves both raw Vest behavior and Angular template-driven integr
 - `.agents/skills/vestjs/SKILL.md`
 - `.agents/skills/vestjs/references/version-selection.md`
 - `.agents/skills/vestjs/references/5.x/source-map.md`
+- `.agents/skills/vestjs/evals/evals.json`
 - `.github/instructions/vest.instructions.md`
 - `.agents/skills/ngx-vest-forms/`
 
 ## Upstream references
 
-- [Vest 5.x docs](https://vestjs.dev/docs/5.x/get_started)
-- [Vest 5.x API reference](https://vestjs.dev/docs/5.x/api_reference)
-- [Vest 5.x TypeScript support](https://vestjs.dev/docs/5.x/typescript_support)
+- [Vest docs](https://vestjs.dev/docs/get_started)
+- [Vest API reference](https://vestjs.dev/docs/api_reference)
+- [Vest TypeScript support](https://vestjs.dev/docs/typescript_support)
 
 ## Manual review reminder
 
