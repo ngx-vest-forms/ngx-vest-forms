@@ -10,7 +10,9 @@ import { ValidationDemoModel } from '../../models/validation-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
+import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { PageTitle } from '../../ui/page-title/page-title.component';
+import { validationConfigDemoContent } from './validation-config-demo.content';
 import { ValidationConfigDemoFormBody } from './validation-config-demo.form';
 import { validationDemoSuite } from './validation-demo.validations';
 
@@ -22,6 +24,7 @@ import { validationDemoSuite } from './validation-demo.validations';
     FormStateCardComponent,
     PageTitle,
     ValidationConfigDemoFormBody,
+    ExampleCardsComponent,
   ],
   templateUrl: './validation-config-demo.page.html',
   styleUrls: ['./validation-config-demo.page.scss'],
@@ -37,6 +40,8 @@ export class ValidationConfigDemoPageComponent {
   );
 
   private readonly formBody = viewChild(ValidationConfigDemoFormBody);
+
+  protected readonly exampleContent = validationConfigDemoContent;
 
   protected readonly suite = validationDemoSuite;
 

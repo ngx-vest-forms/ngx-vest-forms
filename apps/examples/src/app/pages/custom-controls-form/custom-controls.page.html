@@ -1,0 +1,98 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Custom Controls (ControlValueAccessor)"
+    subtitle="A non-native control participating in validation, warnings, touched state, and submission."
+  />
+
+  <ngx-example-cards [content]="exampleContent" class="mb-8 block" />
+
+  <ngx-form-page-layout>
+    <div layout-aside class="sidebar-card-stack">
+      <ngx-card title="Why this works">
+        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
+          <li>
+            Each control is a <code>ControlValueAccessor</code> registered via
+            <code>NG_VALUE_ACCESSOR</code>.
+          </li>
+          <li>
+            <code>[ngModel]</code> binds them — ngx-vest-forms can't tell
+            they're not native inputs.
+          </li>
+          <li>
+            <code>onTouched</code> fires on blur, so errors appear on blur just
+            like native fields.
+          </li>
+          <li>
+            The Vest suite is a plain spec — it never knows the control is
+            custom.
+          </li>
+        </ul>
+      </ngx-card>
+
+      <ngx-form-state-card
+        [formState]="formState()"
+        [warnings]="warnings()"
+        [validatedFields]="validatedFields()"
+        [pending]="pending()"
+      />
+    </div>
+
+    <div layout-main>
+      @if (submittedValue(); as submitted) {
+        <ngx-alert-panel tone="success" title="Submitted">
+          <p>
+            Rated <strong>{{ submitted.rating }}/5</strong> as a
+            <strong>{{ submitted.experience }}</strong> developer with
+            {{ submitted.tags?.length ?? 0 }} tag(s).
+          </p>
+        </ngx-alert-panel>
+      }
+
+      <ngx-card
+        title="Custom controls"
+        subtitle="Rating, experience and tags are all non-native controls. Try submitting empty to see validation."
+      >
+        <form
+          ngxVestForm
+          #vestForm="ngxVestForm"
+          [suite]="suite"
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          (ngSubmit)="onSubmit()"
+          class="space-y-6"
+        >
+          <ngx-control-wrapper class="form-field">
+            <div role="group" aria-label="Rating">
+              <span class="label-text">Rating</span>
+              <ngx-star-rating name="rating" [ngModel]="formValue().rating" />
+            </div>
+          </ngx-control-wrapper>
+
+          <ngx-control-wrapper class="form-field">
+            <div role="group" aria-label="Experience level">
+              <span class="label-text">Experience level</span>
+              <ngx-segmented-control
+                name="experience"
+                [ngModel]="formValue().experience"
+              />
+            </div>
+          </ngx-control-wrapper>
+
+          <ngx-control-wrapper class="form-field">
+            <div role="group" aria-label="Tags">
+              <span class="label-text">Tags</span>
+              <ngx-tag-input name="tags" [ngModel]="formValue().tags" />
+            </div>
+          </ngx-control-wrapper>
+
+          <div class="flex justify-end gap-3 pt-2">
+            <button type="button" class="btn btn-secondary" (click)="reset()">
+              Reset
+            </button>
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </div>
+        </form>
+      </ngx-card>
+    </div>
+  </ngx-form-page-layout>
+</div>

@@ -23,9 +23,11 @@ import {
 } from '../../models/auto-save-demo.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
+import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import { PageTitle } from '../../ui/page-title/page-title.component';
+import { autoSaveContent } from './auto-save-demo.content';
 import { AutoSaveDemoFormBody } from './auto-save-demo.form';
 import {
   AutoSaveDemoService,
@@ -58,6 +60,7 @@ type AutoSaveRequest = {
   imports: [
     AlertPanel,
     Card,
+    ExampleCardsComponent,
     FormPageLayout,
     FormStateCardComponent,
     PageTitle,
@@ -80,6 +83,7 @@ export class AutoSaveDemoPageComponent {
   protected readonly formValue = signal<AutoSaveDemoModel>(
     this.restoredDraft?.draft ?? initialAutoSaveDemoValue
   );
+  protected readonly exampleContent = autoSaveContent;
   protected readonly suite = autoSaveDemoSuite;
   protected readonly validationConfig =
     createValidationConfig<AutoSaveDemoModel>()

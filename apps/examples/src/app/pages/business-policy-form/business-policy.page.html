@@ -1,0 +1,65 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Vest-First Business Policy"
+    subtitle="Conditional rules and advisory warnings that stay native to Vest — guidance modelled separately from errors."
+  />
+
+  <ngx-example-cards [content]="exampleContent" class="mb-8 block" />
+
+  <ngx-form-page-layout>
+    <div layout-aside class="sidebar-card-stack">
+      <ngx-card title="Policy at a glance">
+        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
+          <li>
+            <strong>Errors block submit:</strong> required fields, EU VAT ID,
+            credit-limit floor, allowed payment terms.
+          </li>
+          <li>
+            <strong>Cross-field rule:</strong> low-revenue business cannot
+            request a high credit limit (<code>ROOT_FORM</code>).
+          </li>
+          <li>
+            <strong>Warnings never block:</strong> advisory
+            <code>warn()</code> guidance about manual review.
+          </li>
+          <li>
+            <strong>Conditional VAT ID:</strong> shown only for EU-based
+            business accounts via <code>omitWhen</code> + <code>&#64;if</code>.
+          </li>
+        </ul>
+      </ngx-card>
+
+      <ngx-form-state-card
+        [formState]="formBody.formState()"
+        [warnings]="formBody.warnings()"
+        [errors]="formBody.formState().errors"
+        [validationErrorRules]="errorRules"
+        [validationWarningRules]="warningRules"
+        [validatedFields]="formBody.validatedFields()"
+        [pending]="formBody.pending()"
+      />
+    </div>
+
+    <div layout-main>
+      @if (submittedValue(); as submitted) {
+        <ngx-alert-panel tone="success" title="Application submitted">
+          <p>
+            Thanks — the application for
+            <strong>{{ submitted.legalName }}</strong> was accepted. Any
+            advisory warnings above did not block submission.
+          </p>
+        </ngx-alert-panel>
+      }
+
+      <ngx-business-policy-form-body
+        #formBody
+        [formValue]="formValue()"
+        [suite]="suite"
+        [validationConfig]="validationConfig"
+        (formValueChange)="formValue.set($event)"
+        (submitted)="onSubmit()"
+        (resetRequested)="reset()"
+      />
+    </div>
+  </ngx-form-page-layout>
+</div>

@@ -13,7 +13,9 @@ import {
 import { Card } from '../../ui/card/card.component';
 import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
+import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { PageTitle } from '../../ui/page-title/page-title.component';
+import { businessHoursContent } from './business-hours.content';
 import { BusinessHoursFormBody } from './business-hours.form';
 import { businessHoursSuite } from './business-hours.validations';
 import { BusinessHoursMap } from './ui/business-hours/business-hours.component';
@@ -26,6 +28,7 @@ import { BusinessHoursMap } from './ui/business-hours/business-hours.component';
     FormStateCardComponent,
     PageTitle,
     BusinessHoursFormBody,
+    ExampleCardsComponent,
   ],
   templateUrl: './business-hours.page.html',
   styleUrls: ['./business-hours.page.scss'],
@@ -34,6 +37,8 @@ import { BusinessHoursMap } from './ui/business-hours/business-hours.component';
 export class BusinessHoursPageComponent {
   /** Reference to form-body for triggering validation after structural changes */
   private readonly formBody = viewChild(BusinessHoursFormBody);
+
+  protected readonly exampleContent = businessHoursContent;
 
   protected readonly formValue = signal<BusinessHoursFormModel>(
     initialBusinessHoursFormValue

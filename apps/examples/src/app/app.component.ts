@@ -1,7 +1,28 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  NavigationEnd,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
+import { filter } from 'rxjs';
+import { buildNavGroups } from './shared/routes.metadata';
 import { ThemeSwitcherComponent } from './ui/theme-switcher/theme-switcher.component';
 
+/**
+ * Examples App shell.
+ *
+ * The categorized sidebar is rendered entirely from {@link buildNavGroups} —
+ * re-grouping or adding a demo is a data change in `routes.metadata.ts`, never
+ * a template change here.
+ */
 @Component({
   selector: 'ngx-root',
   imports: [RouterLink, RouterLinkActive, RouterOutlet, ThemeSwitcherComponent],
@@ -10,17 +31,26 @@ import { ThemeSwitcherComponent } from './ui/theme-switcher/theme-switcher.compo
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
-  title = 'purchase';
+  protected readonly navGroups = buildNavGroups();
 
-  protected readonly menuItems = [
-    { label: 'Purchase Form', link: 'purchase' },
-    { label: 'Business Hours Form', link: 'business-hours' },
-    { label: 'Validation Config Demo', link: 'validation-config-demo' },
-    { label: 'Auto-Save Draft Demo', link: 'auto-save-demo' },
-    { label: 'Multi-Form Wizard', link: 'wizard' },
-    { label: 'Display Modes Demo', link: 'display-modes-demo' },
-    { label: 'Native Schema Demo', link: 'native-schema-demo' },
-    { label: 'Zod Schema Demo', link: 'zod-schema-demo' },
-    { label: 'Composite Adapter', link: 'date-range-adapter' },
-  ];
+  /** Mobile drawer visibility; ignored at `lg` breakpoint and above. */
+  protected readonly drawerOpen = signal(false);
+
+  constructor() {
+    // Close the mobile drawer whenever navigation completes.
+    inject(Router)
+      .events.pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntilDestroyed()
+      )
+      .subscribe(() => this.drawerOpen.set(false));
+  }
+
+  protected toggleDrawer(): void {
+    this.drawerOpen.update((open) => !open);
+  }
+
+  protected closeDrawer(): void {
+    this.drawerOpen.set(false);
+  }
 }

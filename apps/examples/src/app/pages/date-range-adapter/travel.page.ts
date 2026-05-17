@@ -10,7 +10,9 @@ import { TravelFormModel } from '../../models/travel-form.model';
 import { Card } from '../../ui/card/card.component';
 import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
+import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { PageTitle } from '../../ui/page-title/page-title.component';
+import { travelContent } from './travel.content';
 import { TravelFormApproach, TravelFormBody } from './travel.form';
 import { travelValidationSuite } from './travel.validations';
 
@@ -18,6 +20,7 @@ import { travelValidationSuite } from './travel.validations';
   selector: 'ngx-travel-page',
   imports: [
     Card,
+    ExampleCardsComponent,
     FormPageLayout,
     FormStateCardComponent,
     PageTitle,
@@ -36,6 +39,8 @@ export class TravelPageComponent {
   private readonly formBody = viewChild(TravelFormBody);
 
   protected readonly suite = travelValidationSuite;
+
+  protected readonly exampleContent = travelContent;
 
   protected readonly validationConfig =
     createValidationConfig<TravelFormModel>()

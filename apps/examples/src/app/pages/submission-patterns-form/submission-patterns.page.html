@@ -1,0 +1,177 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Submission Patterns"
+    subtitle="Submit-time invalid handling, server-error messaging, success state, and retry — modelled distinctly."
+  />
+
+  <ngx-example-cards [content]="exampleContent" class="mb-8 block" />
+
+  <ngx-form-page-layout>
+    <div layout-aside class="sidebar-card-stack">
+      <ngx-card title="Simulated outcome">
+        <p class="mb-3 text-sm text-gray-600 dark:text-gray-300">
+          Pick how the mock server should respond so each path is
+          deterministic.
+        </p>
+        <label class="block">
+          <span
+            class="mb-1 block text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400"
+          >
+            Server response
+          </span>
+          <select
+            #scenarioSelect
+            class="input-field"
+            [value]="scenario()"
+            (change)="onScenarioChange(scenarioSelect.value)"
+          >
+            @for (option of scenarios; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </label>
+        <ul
+          class="mt-4 space-y-2 text-sm text-gray-600 dark:text-gray-300"
+        >
+          <li>(a) Field errors appear on blur — pure Vest suite.</li>
+          <li>(b) Submitting invalid focuses the first bad field.</li>
+          <li>(c) Server failures surface in an alert with Retry.</li>
+          <li>(d) Success shows the new account id + Create another.</li>
+        </ul>
+      </ngx-card>
+
+      <ngx-form-state-card
+        [formState]="formState()"
+        [warnings]="warnings()"
+        [validatedFields]="validatedFields()"
+        [pending]="pending()"
+      />
+    </div>
+
+    <div layout-main>
+      @if (state() === 'success') {
+        <ngx-alert-panel tone="success" title="Account created">
+          <p>
+            Your account was created with id
+            <strong>{{ createdId() }}</strong
+            >.
+          </p>
+          <button
+            type="button"
+            class="btn btn-secondary mt-3"
+            (click)="reset()"
+          >
+            Create another
+          </button>
+        </ngx-alert-panel>
+      }
+
+      @if (state() === 'server-error') {
+        <ngx-alert-panel tone="error" title="Couldn't create your account">
+          <p>{{ serverError() }}</p>
+          <button
+            type="button"
+            class="btn btn-primary mt-3"
+            (click)="retry()"
+          >
+            Retry
+          </button>
+        </ngx-alert-panel>
+      }
+
+      <ngx-card
+        title="Create account"
+        subtitle="All fields are required. Submit while invalid to see focus jump to the first error."
+      >
+        <form
+          ngxVestForm
+          #vestForm="ngxVestForm"
+          [suite]="suite"
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          (ngSubmit)="onSubmit()"
+          class="space-y-6"
+        >
+          <ngx-control-wrapper class="form-field">
+            <label>
+              <span class="label-text">Full name</span>
+              <input
+                class="input-field"
+                type="text"
+                id="fullName"
+                name="fullName"
+                [ngModel]="formValue().fullName"
+                placeholder="Ada Lovelace"
+                autocomplete="name"
+              />
+            </label>
+          </ngx-control-wrapper>
+
+          <ngx-control-wrapper class="form-field">
+            <label>
+              <span class="label-text">Email</span>
+              <input
+                class="input-field"
+                type="email"
+                id="email"
+                name="email"
+                [ngModel]="formValue().email"
+                placeholder="ada@example.com"
+                autocomplete="email"
+                inputmode="email"
+              />
+            </label>
+          </ngx-control-wrapper>
+
+          <ngx-control-wrapper class="form-field">
+            <label>
+              <span class="label-text">Password</span>
+              <input
+                class="input-field"
+                type="password"
+                id="password"
+                name="password"
+                [ngModel]="formValue().password"
+                placeholder="At least 8 characters"
+                autocomplete="new-password"
+              />
+            </label>
+          </ngx-control-wrapper>
+
+          <ngx-control-wrapper class="form-field">
+            <label class="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="acceptTerms"
+                name="acceptTerms"
+                [ngModel]="formValue().acceptTerms"
+              />
+              <span class="label-text">I accept the terms of service</span>
+            </label>
+          </ngx-control-wrapper>
+
+          <div class="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              (click)="reset()"
+            >
+              Reset
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="state() === 'submitting'"
+            >
+              @if (state() === 'submitting') {
+                Creating account…
+              } @else {
+                Create account
+              }
+            </button>
+          </div>
+        </form>
+      </ngx-card>
+    </div>
+  </ngx-form-page-layout>
+</div>

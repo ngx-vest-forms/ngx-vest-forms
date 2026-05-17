@@ -1,0 +1,120 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Starter Contact Form"
+    subtitle="The canonical ngx-vest-forms setup — copy this as a trustworthy baseline."
+  />
+
+  <ngx-example-cards [content]="exampleContent" class="mb-8 block" />
+
+  <ngx-form-page-layout>
+    <div layout-aside class="sidebar-card-stack">
+      <ngx-card title="Why start here">
+        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
+          <li>One <code>ngxVestForm</code>, one Vest suite — nothing else.</li>
+          <li>Public API only. Safe to copy into your app.</li>
+          <li>Errors appear on blur; the message hint is advisory.</li>
+          <li>The form value is a signal the page owns.</li>
+        </ul>
+      </ngx-card>
+
+      <ngx-form-state-card
+        [formState]="formState()"
+        [warnings]="warnings()"
+        [validatedFields]="validatedFields()"
+        [pending]="pending()"
+      />
+    </div>
+
+    <div layout-main>
+      @if (submittedValue(); as submitted) {
+        <ngx-alert-panel tone="success" title="Message sent">
+          <p>
+            Thanks {{ submitted.name }} — we'll reply to
+            <strong>{{ submitted.email }}</strong> shortly.
+          </p>
+        </ngx-alert-panel>
+      }
+
+      <ngx-card
+        title="Contact us"
+        subtitle="All fields are required. Try submitting empty to see validation."
+      >
+        <form
+          ngxVestForm
+          #vestForm="ngxVestForm"
+          [suite]="suite"
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          (ngSubmit)="onSubmit()"
+          class="space-y-6"
+        >
+          <ngx-control-wrapper class="form-field">
+            <label>
+              <span class="label-text">Name</span>
+              <input
+                class="input-field"
+                type="text"
+                id="name"
+                name="name"
+                [ngModel]="formValue().name"
+                placeholder="Ada Lovelace"
+                autocomplete="name"
+              />
+            </label>
+          </ngx-control-wrapper>
+
+          <ngx-control-wrapper class="form-field">
+            <label>
+              <span class="label-text">Email</span>
+              <input
+                class="input-field"
+                type="email"
+                id="email"
+                name="email"
+                [ngModel]="formValue().email"
+                placeholder="ada@example.com"
+                autocomplete="email"
+                inputmode="email"
+              />
+            </label>
+          </ngx-control-wrapper>
+
+          <ngx-control-wrapper class="form-field">
+            <label>
+              <span class="label-text">Subject</span>
+              <input
+                class="input-field"
+                type="text"
+                id="subject"
+                name="subject"
+                [ngModel]="formValue().subject"
+                placeholder="How can we help?"
+              />
+            </label>
+          </ngx-control-wrapper>
+
+          <ngx-control-wrapper class="form-field">
+            <label>
+              <span class="label-text">Message</span>
+              <textarea
+                class="input-field"
+                id="message"
+                name="message"
+                rows="4"
+                [ngModel]="formValue().message"
+                placeholder="Tell us a little about what you need…"
+              ></textarea>
+            </label>
+          </ngx-control-wrapper>
+
+          <div class="flex justify-end gap-3 pt-2">
+            <button type="button" class="btn btn-secondary" (click)="reset()">
+              Reset
+            </button>
+            <button type="submit" class="btn btn-primary">Send message</button>
+          </div>
+        </form>
+      </ngx-card>
+    </div>
+  </ngx-form-page-layout>
+</div>
