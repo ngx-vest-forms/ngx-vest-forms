@@ -28,5 +28,20 @@ test.describe('App Page', () => {
     await expect(
       page.getByRole('link', { name: /display modes demo/i })
     ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: /async username/i })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: /business policy/i })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: /complex nested/i })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: /custom controls/i })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: /submission patterns/i })
+    ).toBeVisible();
   });
 });
