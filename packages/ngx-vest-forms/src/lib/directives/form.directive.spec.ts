@@ -1,5 +1,6 @@
 /* eslint-disable @angular-eslint/component-selector */
-import { Component, signal, viewChild, ViewChild } from '@angular/core';
+import { Component, signal, Type, viewChild, ViewChild } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { isObservable, Observable } from 'rxjs';
@@ -7,7 +8,10 @@ import { create, enforce, test as vestTest, warn } from 'vest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FormDirective, NgxFieldBlurEvent } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
-import { provideFormContract } from '../tokens/form-contract.token';
+import {
+  provideFormContract,
+  provideFormContractFactory,
+} from '../tokens/form-contract.token';
 import type { NgxVestSuite } from '../utils/validation-suite';
 // Helper to await either a Promise or Observable
 async function awaitResult<T>(result: Promise<T> | Observable<T>) {
@@ -1842,6 +1846,22 @@ describe('FormDirective - Shape Validation', () => {
   }
 
   @Component({
+    selector: 'test-factory-form-contract-host',
+    template: `<form
+      ngxVestForm
+      [formValue]="formValue()"
+      #vest="ngxVestForm"
+    ></form>`,
+    imports: [NgxVestForms],
+    providers: [provideFormContractFactory(() => ({ username: '' }))],
+  })
+  class TestFactoryFormContractHost {
+    formValue = signal<any>({ username: 'initial' });
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
+  }
+
+  @Component({
     selector: 'test-form-contract-override-host',
     template: `<form
       ngxVestForm
@@ -1879,56 +1899,77 @@ describe('FormDirective - Shape Validation', () => {
 
   let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
 
+  async function createHost<T>(component: Type<T>) {
+    await TestBed.configureTestingModule({
+      imports: [component],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(component);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    return fixture;
+  }
+
   beforeEach(() => {
     consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
     consoleWarnSpy.mockRestore();
+    TestBed.resetTestingModule();
   });
 
   it('should warn in dev mode if form value shape does not match formShape', async () => {
-    // Only run this test if isDevMode is true
-    const { fixture } = await render(TestShapeValidationHost);
+    const fixture = await createHost(TestShapeValidationHost);
     const instance = fixture.componentInstance;
-    // Simulate a value change that triggers shape validation
+
     instance.formValue.set({ foo: 'bar' });
     fixture.detectChanges();
+    await fixture.whenStable();
+
     expect(consoleWarnSpy).toHaveBeenCalled();
   });
 
   it('should use an injected form contract when the template omits [formContract]', async () => {
-    const { fixture } = await render(TestInjectedFormContractHost);
+    const fixture = await createHost(TestInjectedFormContractHost);
     const instance = fixture.componentInstance;
 
     instance.formValue.set({ foo: 'bar' });
     fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(consoleWarnSpy).toHaveBeenCalled();
+  });
+
+  it('should use a factory-provided form contract when the template omits [formContract]', async () => {
+    const fixture = await createHost(TestFactoryFormContractHost);
+    const instance = fixture.componentInstance;
+
+    instance.formValue.set({ foo: 'bar' });
+    fixture.detectChanges();
+    await fixture.whenStable();
 
     expect(consoleWarnSpy).toHaveBeenCalled();
   });
 
   it('should prefer explicit [formContract] over an injected form contract', async () => {
-    const { fixture } = await render(TestFormContractOverrideHost);
-    await fixture.whenStable();
+    const fixture = await createHost(TestFormContractOverrideHost);
 
-    // Initial value matches the explicit contract — no warning yet
     expect(consoleWarnSpy).not.toHaveBeenCalled();
 
-    // Set a value valid for the *injected* contract but invalid for the *explicit* one.
-    // If the explicit contract wins (correct), we get a warning about 'providerOnly'.
-    // If the injected contract were used instead, no warning would fire.
     const instance = fixture.componentInstance;
     instance.formValue.set({ providerOnly: 'bar' });
     fixture.detectChanges();
     await fixture.whenStable();
 
     expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-    expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining("'providerOnly'"));
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("'providerOnly'")
+    );
   });
 
   it('should allow explicit [formContract]="null" to disable an injected form contract', async () => {
-    const { fixture } = await render(TestFormContractNullOverrideHost);
-    await fixture.whenStable();
+    const fixture = await createHost(TestFormContractNullOverrideHost);
 
     expect(consoleWarnSpy).not.toHaveBeenCalled();
 
@@ -1941,12 +1982,11 @@ describe('FormDirective - Shape Validation', () => {
   });
 
   it('should not warn in production mode', async () => {
-    // This test is skipped in prod builds; in real prod, shape validation is a no-op
-    // Here, we just ensure no warning if shape is correct
-    const { fixture } = await render(TestShapeValidationHost);
+    const fixture = await createHost(TestShapeValidationHost);
     const instance = fixture.componentInstance;
     instance.formValue.set({ username: 'ok' });
     fixture.detectChanges();
+    await fixture.whenStable();
     expect(consoleWarnSpy).not.toHaveBeenCalled();
   });
 });

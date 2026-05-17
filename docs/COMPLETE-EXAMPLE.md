@@ -12,6 +12,7 @@ import {
   NgxDeepPartial,
   NgxDeepRequired,
   NgxVestSuite,
+  provideFormContract,
 } from 'ngx-vest-forms';
 
 // 1. Define your form model (always NgxDeepPartial)
@@ -51,11 +52,11 @@ const userValidationSuite: NgxVestSuite<UserFormModel> = create(
   selector: 'ngx-user-form',
   imports: [NgxVestForms],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [provideFormContract(userFormContract)],
   template: `
     <form
       ngxVestForm
       [suite]="suite"
-      [formContract]="contract"
       [formValue]="formValue()"
       (formValueChange)="formValue.set($event)"
       (ngSubmit)="save()"
@@ -92,7 +93,6 @@ const userValidationSuite: NgxVestSuite<UserFormModel> = create(
 export class UserFormComponent {
   protected readonly formValue = signal<UserFormModel>({});
   protected readonly suite = userValidationSuite;
-  protected readonly contract = userFormContract;
 
   protected save() {
     console.log('Form submitted:', this.formValue());
@@ -138,6 +138,9 @@ const myFormContract: NgxDeepRequired<MyFormModel> = {
 ```
 
 This enables shape validation in development mode to catch typos in `name` attributes.
+
+If the contract is fixed for the component, prefer `providers: [provideFormContract(...)]`.
+Reserve `[formContract]` for cases where the contract genuinely changes per usage site.
 
 ### 3. Suite Callbacks Take Only the Model
 
