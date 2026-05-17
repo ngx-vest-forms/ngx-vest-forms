@@ -32,14 +32,6 @@ export class DisplayModesDemoFormBody {
     viewChild<FormDirective<DisplayModesDemoModel>>('vestForm');
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
-  /** Exposes the directive's packaged form state with up-to-date errors. */
-  
-  /** Exposes field warnings as a plain Record for presentational components. */
-  
-  /** Field paths that have been validated (touched/blurred or submitted). */
-  
-  /** True while async validation is in progress. */
-  
   constructor() {
     afterNextRender(() => {
       // This demo intentionally shows display modes against an already-validated

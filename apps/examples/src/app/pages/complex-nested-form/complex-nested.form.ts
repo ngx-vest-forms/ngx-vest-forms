@@ -54,14 +54,6 @@ export class ComplexNestedFormBody {
     viewChild<FormDirective<ComplexNestedModel>>('vestForm');
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
-  /** Exposes the directive's packaged form state with up-to-date errors. */
-  
-  /** Exposes field warnings as a plain Record for presentational components. */
-  
-  /** Field paths that have been validated (touched/blurred or submitted). */
-  
-  /** True while async validation is in progress. */
-  
   /**
    * Ordered list of `[key, member]` pairs for the @for loop. Keys are a pure
    * function of the current model (contiguous numeric), so the stateless Vest

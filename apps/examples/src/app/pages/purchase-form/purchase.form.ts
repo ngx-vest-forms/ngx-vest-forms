@@ -111,18 +111,6 @@ export class PurchaseForm {
   readonly formValueChange = output<PurchaseFormModel>();
   readonly saveRequested = output<PurchaseFormModel>();
 
-  /** Exposes the directive's packaged form state. */
-  
-  /** Exposes field warnings as a plain Record for presentational components. */
-  
-  /**
-   * Field paths that have been validated (touched/blurred or submitted).
-   * Delegates to the FormDirective's touchedFieldPaths signal which
-   * reactively tracks TouchedChangeEvent from the form tree.
-   */
-  
-  /** True while async validation is in progress. */
-  
   /**
    * Automatically fetch demo data when the first name becomes "Luke".
    * A manual request can temporarily override this to demonstrate both

@@ -41,14 +41,6 @@ export class ValidationConfigDemoFormBody {
     viewChild<FormDirective<ValidationDemoModel>>('vestForm');
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
-  /** Exposes the directive's packaged form state with up-to-date errors. */
-  
-  /** Exposes field warnings as a plain Record for presentational components. */
-  
-  /** Field paths that have been validated (touched/blurred or submitted). */
-  
-  /** True while async validation is in progress. */
-  
   protected onSubmit(): void {
     this.submitted.emit();
   }
