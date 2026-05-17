@@ -35,7 +35,7 @@ This directory contains all utility types and functions provided by ngx-vest-for
 - [Internal Equality Utilities](#internal-equality-utilities) ⚠️
   - [shallowEqual()](#shallowequal)
   - [fastDeepEqual()](#fastdeepequal)
-- [Internal Shape Validation](#internal-shape-validation) ⚠️ (removed in v3 — see [`toFormContract`](#toformcontract))
+- [Internal Shape Validation](#internal-shape-validation) ⚠️ (removed in v3 — legacy fallback only; see [`toFormContract`](#toformcontract))
 - [Standard Schema Adapter](#standard-schema-adapter)
   - [toFormContract()](#toformcontract)
 
@@ -94,7 +94,7 @@ type FormModel = NgxDeepPartial<{
   profile: { age: number };
 }>;
 
-// For runtime validation shapes
+// For fallback object contracts
 const formShape: NgxDeepRequired<FormModel> = {
   name: '',
   profile: {
@@ -105,7 +105,7 @@ const formShape: NgxDeepRequired<FormModel> = {
 
 **When to use:**
 
-- ✅ Creating form shapes for runtime validation
+- ✅ Defining fallback object contracts when you do not already have a schema
 - ✅ Ensuring complete data before API submission
 - ✅ Default values or initial state
 
@@ -880,7 +880,7 @@ const equal = fastDeepEqual({ a: 1, b: { c: 3 } }, { a: 1, b: { c: 3 } }); // tr
 
 ### toFormContract()
 
-Wraps a legacy `NgxDeepRequired<T>` shape into a [Standard Schema v1](https://standardschema.dev) compatible value, so it can be passed to `FormDirective`'s `[formContract]` input alongside real schemas (Zod v4, Valibot, hand-rolled, etc.).
+Wraps a legacy `NgxDeepRequired<T>` object contract into a [Standard Schema v1](https://standardschema.dev) compatible value, so it can be passed to `FormDirective`'s `[formContract]` input alongside real schemas (Zod v4, Valibot, hand-rolled, etc.).
 
 ```typescript
 import {
@@ -909,11 +909,11 @@ const formContract: StandardSchemaV1<FormModel> = toFormContract(formShape);
 
 **When to use:**
 
-- ✅ You have an existing `NgxDeepRequired<T>` shape from v2 and want explicit conversion
+- ✅ You have an existing `NgxDeepRequired<T>` contract from v2 and want explicit conversion
 - ✅ You want a single Standard Schema-typed contract through your whole codebase
 - 💡 New code should prefer authoring a real `StandardSchemaV1<T>` (Zod v4 schemas implement it natively)
 
-> **`validateShape` removed in v3.** The previous internal `validateShape()` utility is no longer exported. Shape diagnostics in dev mode now run through the unified Standard Schema validation path.
+> **`validateShape` removed in v3.** The previous internal `validateShape()` utility is no longer exported. Contract diagnostics in dev mode now run through the unified Standard Schema validation path. Unknown-key behavior depends on the supplied schema's strictness, and the directive only consumes synchronous contract results.
 
 ---
 

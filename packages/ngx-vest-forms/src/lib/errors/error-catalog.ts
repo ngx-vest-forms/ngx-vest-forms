@@ -2,7 +2,7 @@ export const NGX_VEST_FORMS_ERRORS = {
   EXTRA_PROPERTY: {
     code: 'NGX-001',
     message: (path: string) =>
-      `Shape mismatch: Property '${path}' is present in the form value but not defined in the form shape.`,
+      `Contract mismatch: Property '${path}' is present in the form value but not defined in the form contract.`,
   },
   TYPE_MISMATCH: {
     code: 'NGX-002',
@@ -17,7 +17,7 @@ export const NGX_VEST_FORMS_ERRORS = {
   SCHEMA_ISSUE: {
     code: 'NGX-004',
     message: (path: string, message: string) =>
-      `Schema issue at '${path}': ${message}`,
+      `Form contract issue at '${path}': ${message}`,
   },
 } as const;
 

@@ -28,6 +28,7 @@ import {
   StatusChangeEvent,
   ValueChangeEvent,
 } from '@angular/forms';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 import {
   catchError,
   distinctUntilChanged,
@@ -40,14 +41,13 @@ import {
   switchMap,
   take,
 } from 'rxjs';
-import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import { NGX_EQUALITY_FN } from '../tokens/equality.token';
 import {
   NGX_FORM_CONTRACT,
-  readFormContract,
   type NgxFormContractSource,
+  readFormContract,
 } from '../tokens/form-contract.token';
 import { collectTouchedPaths } from '../utils/collect-touched-paths';
 import type { NgxDeepRequired } from '../utils/deep-required';
@@ -62,13 +62,13 @@ import {
   resolveFirstInvalidFocusTarget,
   resolveFirstInvalidScrollBehavior,
 } from '../utils/first-invalid.utils';
+import { validateFormContract } from '../utils/form-contract';
 import { NgxFormState } from '../utils/form-state.utils';
 import {
   getAllFormErrors,
   mergeValuesAndRawValues,
   setValueAtPath,
 } from '../utils/form-utils';
-import { toFormContract } from '../utils/to-form-contract';
 import {
   createValidationConfigPipeline,
   type ValidationConfigPipelineOptions,
@@ -195,7 +195,9 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly #cdr = inject(ChangeDetectorRef);
   readonly #elementRef = inject<ElementRef<HTMLFormElement>>(ElementRef);
   readonly #configDebounceTime = inject(NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN);
-  readonly #injectedFormContract = inject(NGX_FORM_CONTRACT, { optional: true });
+  readonly #injectedFormContract = inject(NGX_FORM_CONTRACT, {
+    optional: true,
+  });
   /**
    * Deep-equality comparator. Defaults to `fastDeepEqual`; can be overridden
    * application-wide or per-component via {@link NGX_EQUALITY_FN}.
@@ -238,7 +240,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     this.#formSnapshotTick();
     if (Object.keys(this.ngForm.form.controls).length === 0) {
       // No controls remain (e.g. dynamic group removal): expose `null` so
-      // consumers don't see ghost data from a previous form shape.
+      // consumers don't see ghost data from a previous form contract.
       return null;
     }
     return mergeValuesAndRawValues<T>(this.ngForm.form);
@@ -525,10 +527,10 @@ export class FormDirective<T extends Record<string, unknown>> {
 
     /**
      * Trigger contract validation if the form gets updated.
-     * In dev mode, runs the StandardSchema `~standard.validate(value)` for
-     * structural / typo lints. Legacy shape objects are normalized via
-     * `toFormContract`. Issues are logged via `logWarning`; form validity
-     * is unaffected.
+     * In dev mode, runs the contract through one Standard Schema-based
+     * diagnostic seam. Legacy `NgxDeepRequired<T>` contracts are normalized
+     * internally, synchronous issues are logged as warnings, and runtime
+     * form validity is unaffected.
      */
     if (isDevMode()) {
       effect(() => {
@@ -537,35 +539,7 @@ export class FormDirective<T extends Record<string, unknown>> {
         if (!v || !contract) {
           return;
         }
-        const schema =
-          typeof contract === 'object' && '~standard' in contract
-            ? (contract as StandardSchemaV1<NoInfer<T>>)
-            : toFormContract<T>(contract as NgxDeepRequired<T>);
-        const result = schema['~standard'].validate(v);
-        if (result instanceof Promise) {
-          // Async schemas: do not block; validateShape sync path covers
-          // the legacy case. Async schema authors are responsible for
-          // surfacing their own diagnostics.
-          return;
-        }
-        if ('issues' in result && result.issues) {
-          for (const issue of result.issues) {
-            const path = issue.path
-              ? issue.path
-                  .map((seg) =>
-                    typeof seg === 'object' && seg !== null && 'key' in seg
-                      ? String(seg.key)
-                      : String(seg)
-                  )
-                  .join('.')
-              : '<root>';
-            logWarning(
-              NGX_VEST_FORMS_ERRORS.SCHEMA_ISSUE,
-              path,
-              issue.message
-            );
-          }
-        }
+        validateFormContract(v, contract);
       });
     }
 

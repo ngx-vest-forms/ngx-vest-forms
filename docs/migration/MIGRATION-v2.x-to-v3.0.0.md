@@ -4,19 +4,19 @@
 
 v3.0.0 deletes every `@deprecated` runtime helper, const alias, and type alias that v2.x kept around for backward compatibility. Consumers who migrated to the recommended `Ngx`-prefixed names need no changes; consumers still on the deprecated forms get a compile error pointing at the replacement.
 
-| Removed                                     | Replacement                        | Migration tip                                                            |
-| ------------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------ |
-| `cloneDeep(value)`                          | `structuredClone(value)`           | Native browser/Node API; no import needed.                               |
-| `set(obj, path, value)`                     | `setValueAtPath(obj, path, value)` | Already exported from `ngx-vest-forms`; identical signature.             |
-| `vestForms` (const array)                   | `NgxVestForms`                     | `import { NgxVestForms } from 'ngx-vest-forms';` — same array, renamed.  |
-| `ROOT_FORM_CONSTANT`                        | `ROOT_FORM`                        | Single canonical export from `ngx-vest-forms`.                           |
-| `DeepPartial<T>`                            | `NgxDeepPartial<T>`                | Structurally identical; rename the import.                               |
-| `DeepRequired<T>`                           | `NgxDeepRequired<T>`               | Structurally identical; rename the import.                               |
+| Removed                                     | Replacement                        | Migration tip                                                                                                                                                         |
+| ------------------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cloneDeep(value)`                          | `structuredClone(value)`           | Native browser/Node API; no import needed.                                                                                                                            |
+| `set(obj, path, value)`                     | `setValueAtPath(obj, path, value)` | Already exported from `ngx-vest-forms`; identical signature.                                                                                                          |
+| `vestForms` (const array)                   | `NgxVestForms`                     | `import { NgxVestForms } from 'ngx-vest-forms';` — same array, renamed.                                                                                               |
+| `ROOT_FORM_CONSTANT`                        | `ROOT_FORM`                        | Single canonical export from `ngx-vest-forms`.                                                                                                                        |
+| `DeepPartial<T>`                            | `NgxDeepPartial<T>`                | Structurally identical; rename the import.                                                                                                                            |
+| `DeepRequired<T>`                           | `NgxDeepRequired<T>`               | Structurally identical; rename the import.                                                                                                                            |
 | `FormCompatibleDeepRequired<T>`             | _(removed)_                        | See "Replacing `NgxFormCompatibleDeepRequired`" below for a copy-paste snippet, or express Date coercion in your schema (e.g., `z.union([z.date(), z.literal('')])`). |
-| `NgxTypedVestSuite<T>`                      | `NgxVestSuite<T>`                  | Structurally identical; rename the type reference.                       |
-| `SC_ERROR_DISPLAY_MODE_DEFAULT` (re-export) | `NGX_ERROR_DISPLAY_MODE_DEFAULT`   | Was an internal re-export; if you imported it, switch to the `NGX_*` name. |
-| `[formShape]` input                         | `[formContract]`                   | See "`[formShape]` → `[formContract]`" below. Raw `NgxDeepRequired<T>` shapes are still accepted; wrap with `toFormContract(shape)` for explicit conversion. |
-| `NgxFormCompatibleDeepRequired<T>`          | _(removed)_                        | See "Replacing `NgxFormCompatibleDeepRequired`" below.                   |
+| `NgxTypedVestSuite<T>`                      | `NgxVestSuite<T>`                  | Structurally identical; rename the type reference.                                                                                                                    |
+| `SC_ERROR_DISPLAY_MODE_DEFAULT` (re-export) | `NGX_ERROR_DISPLAY_MODE_DEFAULT`   | Was an internal re-export; if you imported it, switch to the `NGX_*` name.                                                                                            |
+| `[formShape]` input                         | `[formContract]`                   | See "`[formShape]` → `[formContract]`" below. Raw `NgxDeepRequired<T>` shapes are still accepted; wrap with `toFormContract(shape)` for explicit conversion.          |
+| `NgxFormCompatibleDeepRequired<T>`          | _(removed)_                        | See "Replacing `NgxFormCompatibleDeepRequired`" below.                                                                                                                |
 
 If you only used the recommended `Ngx*` / `NGX_*` names (or the canonical `setValueAtPath` / `structuredClone`), v3 is a no-op for this category.
 
@@ -32,13 +32,19 @@ The `[formShape]` input on `<form ngxVestForm>` is removed in v3 and replaced by
 <form ngxVestForm [suite]="suite" [formContract]="myContract"></form>
 
 <!-- v3: explicit conversion to StandardSchemaV1 -->
-<form ngxVestForm [suite]="suite" [formContract]="toFormContract(myContract)"></form>
+<form
+  ngxVestForm
+  [suite]="suite"
+  [formContract]="toFormContract(myContract)"
+></form>
 
 <!-- v3: real Standard Schema (recommended for new code) -->
 <form ngxVestForm [suite]="suite" [formContract]="zodSchema"></form>
 ```
 
 `@standard-schema/spec` is now a `peerDependency` (`>=1.0.0`). Most consumers don't need to install it directly — bring it in only if you author your own `StandardSchemaV1<T>` literals. The internal `validateShape()` helper has been removed; use `toFormContract()` from `ngx-vest-forms` if you need explicit shape→schema conversion.
+
+Unknown-key warnings now depend on the strictness of the supplied Standard Schema. If you keep using a raw `NgxDeepRequired<T>` contract, the legacy extra-property typo checks still apply. The directive only consumes **synchronous** contract results for its development-only diagnostics; async schema results are ignored by that pass.
 
 ### Replacing `NgxFormCompatibleDeepRequired`
 
@@ -69,32 +75,42 @@ type _IsTuple<T extends ReadonlyArray<any>> = number extends T['length']
 export type FormCompatibleDeepRequired<T> = T extends Date
   ? Date | string
   : T extends Error
-  ? Required<T>
-  : T extends _Builtin
-  ? T
-  : T extends Map<infer K, infer V>
-  ? Map<FormCompatibleDeepRequired<K>, FormCompatibleDeepRequired<V>>
-  : T extends ReadonlyMap<infer K, infer V>
-  ? ReadonlyMap<FormCompatibleDeepRequired<K>, FormCompatibleDeepRequired<V>>
-  : T extends WeakMap<infer K, infer V>
-  ? WeakMap<FormCompatibleDeepRequired<K> & object, FormCompatibleDeepRequired<V>>
-  : T extends Set<infer U>
-  ? Set<FormCompatibleDeepRequired<U>>
-  : T extends ReadonlySet<infer U>
-  ? ReadonlySet<FormCompatibleDeepRequired<U>>
-  : T extends WeakSet<infer U>
-  ? WeakSet<FormCompatibleDeepRequired<U> & object>
-  : T extends Promise<infer U>
-  ? Promise<FormCompatibleDeepRequired<U>>
-  : T extends ReadonlyArray<infer U>
-  ? _IsNever<_IsTuple<T>> extends false
-    ? { [K in keyof T]-?: FormCompatibleDeepRequired<T[K]> }
-    : T extends Array<U>
-    ? Array<Exclude<FormCompatibleDeepRequired<U>, undefined>>
-    : ReadonlyArray<Exclude<FormCompatibleDeepRequired<U>, undefined>>
-  : T extends {}
-  ? { [K in keyof T]-?: FormCompatibleDeepRequired<T[K]> }
-  : Required<T>;
+    ? Required<T>
+    : T extends _Builtin
+      ? T
+      : T extends Map<infer K, infer V>
+        ? Map<FormCompatibleDeepRequired<K>, FormCompatibleDeepRequired<V>>
+        : T extends ReadonlyMap<infer K, infer V>
+          ? ReadonlyMap<
+              FormCompatibleDeepRequired<K>,
+              FormCompatibleDeepRequired<V>
+            >
+          : T extends WeakMap<infer K, infer V>
+            ? WeakMap<
+                FormCompatibleDeepRequired<K> & object,
+                FormCompatibleDeepRequired<V>
+              >
+            : T extends Set<infer U>
+              ? Set<FormCompatibleDeepRequired<U>>
+              : T extends ReadonlySet<infer U>
+                ? ReadonlySet<FormCompatibleDeepRequired<U>>
+                : T extends WeakSet<infer U>
+                  ? WeakSet<FormCompatibleDeepRequired<U> & object>
+                  : T extends Promise<infer U>
+                    ? Promise<FormCompatibleDeepRequired<U>>
+                    : T extends ReadonlyArray<infer U>
+                      ? _IsNever<_IsTuple<T>> extends false
+                        ? { [K in keyof T]-?: FormCompatibleDeepRequired<T[K]> }
+                        : T extends Array<U>
+                          ? Array<
+                              Exclude<FormCompatibleDeepRequired<U>, undefined>
+                            >
+                          : ReadonlyArray<
+                              Exclude<FormCompatibleDeepRequired<U>, undefined>
+                            >
+                      : T extends {}
+                        ? { [K in keyof T]-?: FormCompatibleDeepRequired<T[K]> }
+                        : Required<T>;
 ```
 
 ## What's new in v3 beyond Vest 6
@@ -123,9 +139,9 @@ import { fromEvent, lastValueFrom, takeUntil } from 'rxjs';
 
 test('userId', 'User ID is already taken', async ({ signal }) => {
   const exists = await lastValueFrom(
-    swapiService.userIdExists(model.userId!).pipe(
-      takeUntil(fromEvent(signal, 'abort'))
-    )
+    swapiService
+      .userIdExists(model.userId!)
+      .pipe(takeUntil(fromEvent(signal, 'abort')))
   );
 
   enforce(exists).isFalsy();
@@ -149,15 +165,20 @@ export const profileSuite = create((model: ProfileModel) => {
     enforce(model.userId).isNotBlank();
   });
 
-  skipWhen((res) => res.hasErrors('userId'), () => {
-    memo(() => {
-      test('userId', 'User ID is already taken', async ({ signal }) => {
-        const response = await fetch(`/api/users/${model.userId}`, { signal });
-        const { exists } = await response.json();
-        enforce(exists).isFalsy();
-      });
-    }, [model.userId]);
-  });
+  skipWhen(
+    (res) => res.hasErrors('userId'),
+    () => {
+      memo(() => {
+        test('userId', 'User ID is already taken', async ({ signal }) => {
+          const response = await fetch(`/api/users/${model.userId}`, {
+            signal,
+          });
+          const { exists } = await response.json();
+          enforce(exists).isFalsy();
+        });
+      }, [model.userId]);
+    }
+  );
 });
 ```
 
