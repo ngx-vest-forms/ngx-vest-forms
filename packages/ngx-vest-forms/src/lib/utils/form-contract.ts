@@ -78,16 +78,14 @@ export function logFormContractIssues(
 export function validateFormContract<T>(
   value: T,
   contract: NgxFormContract<T>
-): 'sync' | 'async' {
+): void {
   const result = normalizeFormContract(contract)['~standard'].validate(value);
 
   if (result instanceof Promise) {
-    return 'async';
+    return;
   }
 
   if ('issues' in result) {
     logFormContractIssues(result.issues as readonly StandardSchemaIssue[]);
   }
-
-  return 'sync';
 }
