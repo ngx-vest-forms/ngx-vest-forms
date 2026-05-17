@@ -12,6 +12,7 @@ import {
   NgxDeepPartial,
   NgxDeepRequired,
   NgxVestSuite,
+  provideFormContract,
 } from 'ngx-vest-forms';
 
 // 1. Define your form model (always NgxDeepPartial)
@@ -21,12 +22,14 @@ type UserFormModel = NgxDeepPartial<{
   email: string;
 }>;
 
-// 2. Create a shape for runtime validation (recommended)
+// 2. Define a form contract
 const userFormContract: NgxDeepRequired<UserFormModel> = {
   firstName: '',
   lastName: '',
   email: '',
 };
+
+// New code can also reuse an existing Standard Schema here.
 
 // 3. Create a Vest validation suite
 const userValidationSuite: NgxVestSuite<UserFormModel> = create(
@@ -51,11 +54,11 @@ const userValidationSuite: NgxVestSuite<UserFormModel> = create(
   selector: 'ngx-user-form',
   imports: [NgxVestForms],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [provideFormContract(userFormContract)],
   template: `
     <form
       ngxVestForm
       [suite]="suite"
-      [formContract]="contract"
       [formValue]="formValue()"
       (formValueChange)="formValue.set($event)"
       (ngSubmit)="save()"
@@ -92,7 +95,6 @@ const userValidationSuite: NgxVestSuite<UserFormModel> = create(
 export class UserFormComponent {
   protected readonly formValue = signal<UserFormModel>({});
   protected readonly suite = userValidationSuite;
-  protected readonly contract = userFormContract;
 
   protected save() {
     console.log('Form submitted:', this.formValue());
@@ -106,7 +108,7 @@ export class UserFormComponent {
 - ✅ **Automatic form control creation** - No manual FormControl definitions
 - ✅ **Validation on blur and submit** - Default error display modes
 - ✅ **Error display** with built-in `ngx-control-wrapper`
-- ✅ **Runtime shape validation** - Catches typos in development mode
+- ✅ **Development-time contract diagnostics** - Catches path typos in development mode
 - ✅ **Unidirectional data flow** - Using `[ngModel]` (not `[(ngModel)]`)
 - ✅ **Performance optimized** — Field-level validation via `suite.only(field).run(model)` at call site
 - ✅ **Canonical suite typing** — Uses `NgxVestSuite<T>` in new code
@@ -126,9 +128,9 @@ type MyFormModel = NgxDeepPartial<{
 }>;
 ```
 
-### 2. Create a Shape for Runtime Validation
+### 2. Define a Form Contract
 
-Use `NgxDeepRequired` to create a shape that matches your model structure:
+Use `NgxDeepRequired` for a lightweight fallback contract when you do not already have a schema to reuse:
 
 ```typescript
 const myFormContract: NgxDeepRequired<MyFormModel> = {
@@ -137,7 +139,10 @@ const myFormContract: NgxDeepRequired<MyFormModel> = {
 };
 ```
 
-This enables shape validation in development mode to catch typos in `name` attributes.
+This enables development-time contract diagnostics to catch typos in `name` attributes. If you already have a Standard Schema (for example Zod), prefer reusing that instead of maintaining a separate object contract.
+
+If the contract is fixed for the component, prefer `providers: [provideFormContract(...)]`.
+Reserve `[formContract]` for cases where the contract genuinely changes per usage site.
 
 ### 3. Suite Callbacks Take Only the Model
 

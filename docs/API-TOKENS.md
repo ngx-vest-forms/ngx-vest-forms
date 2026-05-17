@@ -112,6 +112,133 @@ You can override debounce at the field level using `validationOptions`:
 
 This field-level configuration takes precedence over the token value.
 
+## Form Contract Configuration
+
+### `NGX_FORM_CONTRACT`
+
+Provides a structural contract to `FormDirective` through Angular DI.
+
+**Type:** `InjectionToken<NgxFormContractSource<unknown>>`
+
+**Purpose:** Register a fixed form contract once at the component or subtree level so forms can omit `[formContract]` when the contract does not vary per usage site.
+
+#### When to Use It
+
+- **Prefer `provideFormContract(...)`** when a component always uses the same contract
+- **Prefer `provideFormContractFactory(...)`** when the contract depends on injected services or should be created lazily
+- **Use `[formContract]`** only when the contract genuinely varies per template usage
+
+#### Static Provider
+
+```typescript
+import { Component, signal } from '@angular/core';
+import {
+  NgxDeepPartial,
+  NgxDeepRequired,
+  NgxVestForms,
+  provideFormContract,
+} from 'ngx-vest-forms';
+
+type ProfileFormModel = NgxDeepPartial<{
+  email: string;
+  profile: {
+    firstName: string;
+  };
+}>;
+
+const profileContract: NgxDeepRequired<ProfileFormModel> = {
+  email: '',
+  profile: {
+    firstName: '',
+  },
+};
+
+@Component({
+  selector: 'ngx-profile-form',
+  imports: [NgxVestForms],
+  providers: [provideFormContract(profileContract)],
+  template: `
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      (formValueChange)="formValue.set($event)"
+    >
+      <input name="email" [ngModel]="formValue().email" />
+      <input
+        name="profile.firstName"
+        [ngModel]="formValue().profile?.firstName"
+      />
+    </form>
+  `,
+})
+export class ProfileFormComponent {
+  protected readonly formValue = signal<ProfileFormModel>({});
+  protected readonly suite = profileValidationSuite;
+}
+```
+
+#### Factory Provider
+
+```typescript
+import { Component, inject, signal } from '@angular/core';
+import {
+  NgxVestForms,
+  provideFormContractFactory,
+  type StandardSchemaV1,
+} from 'ngx-vest-forms';
+
+type CheckoutFormModel = {
+  billingAddress?: {
+    postcode?: string;
+  };
+};
+
+declare class CheckoutSchemaService {
+  readonly contract: StandardSchemaV1<CheckoutFormModel>;
+}
+
+@Component({
+  selector: 'ngx-checkout-form',
+  imports: [NgxVestForms],
+  providers: [
+    provideFormContractFactory(
+      () =>
+        inject(CheckoutSchemaService)
+          .contract as StandardSchemaV1<CheckoutFormModel>
+    ),
+  ],
+  template: `
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      (formValueChange)="formValue.set($event)"
+    >
+      <!-- fields -->
+    </form>
+  `,
+})
+export class CheckoutFormComponent {
+  protected readonly formValue = signal<CheckoutFormModel>({});
+  protected readonly suite = checkoutValidationSuite;
+}
+```
+
+#### Interaction with `[formContract]`
+
+- If `[formContract]` is omitted, the directive falls back to `NGX_FORM_CONTRACT`
+- If `[formContract]` is bound, the explicit input wins over the provider
+- If `[formContract]="null"`, the explicit `null` disables the injected fallback
+
+#### Development Behavior
+
+The provider path has the same behavior as `[formContract]`:
+
+- runs structural checks only in development mode
+- logs schema/shape mismatch warnings without affecting form validity
+- supports either a `StandardSchemaV1<T>` contract or a legacy `NgxDeepRequired<T>` shape
+
 ## Error Display Configuration
 
 ### `NGX_ERROR_DISPLAY_MODE_TOKEN`
