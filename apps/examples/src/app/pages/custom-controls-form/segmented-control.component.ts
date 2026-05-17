@@ -125,7 +125,13 @@ export class SegmentedControlComponent implements ControlValueAccessor {
     event.preventDefault();
     const next = this.segments[nextIndex]?.value;
     if (next === undefined) return;
-    this.select(next);
+    // Boundary keys resolve to the current segment — only emit on real change.
+    if (next !== this.value()) {
+      this.select(next);
+    }
+    // Direct id lookup keeps the demo dependency-free; this app is CSR-only so
+    // `document` access is safe (a viewChildren()-based query would be the
+    // SSR-safe alternative).
     document.getElementById(`${this.groupId}-${next}`)?.focus();
   }
 

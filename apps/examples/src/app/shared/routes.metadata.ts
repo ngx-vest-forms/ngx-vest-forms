@@ -1,3 +1,4 @@
+import type { Type } from '@angular/core';
 import type { Routes } from '@angular/router';
 
 /**
@@ -46,7 +47,7 @@ export type ExampleRouteMeta = {
   /** Optional nav badge. */
   readonly badge?: ExampleBadge;
   /** Lazy component loader for the router. */
-  readonly loadComponent: () => Promise<unknown>;
+  readonly loadComponent: () => Promise<Type<unknown>>;
 }
 
 /**
@@ -314,7 +315,7 @@ export function toAppRoutes(): Routes {
     },
     ...EXAMPLE_ROUTES.map((route) => ({
       path: route.path,
-      loadComponent: route.loadComponent as () => Promise<never>,
+      loadComponent: route.loadComponent,
       data: { title: route.title, subtitle: route.subtitle },
     })),
     {

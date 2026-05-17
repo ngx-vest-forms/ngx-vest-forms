@@ -117,7 +117,15 @@ export class StarRatingComponent implements ControlValueAccessor {
         return;
     }
     event.preventDefault();
-    this.select(next);
+    // Boundary keys (e.g. ArrowLeft on the first star) resolve to the current
+    // value — only emit when it actually changes so we don't mark the control
+    // dirty on a no-op.
+    if (next !== star) {
+      this.select(next);
+    }
+    // Direct id lookup keeps the demo dependency-free; this app is CSR-only so
+    // `document` access is safe (a viewChildren()-based query would be the
+    // SSR-safe alternative).
     const el = document.getElementById(`${this.groupId}-${next}`);
     el?.focus();
   }

@@ -27,20 +27,22 @@ export const createAsyncUsernameSuite = (
 ): NgxVestSuite<AsyncUsernameModel> => {
   const suite: NgxVestSuite<AsyncUsernameModel> = create(
     (model: AsyncUsernameModel) => {
+      const username = model.username ?? '';
+
       test('username', 'Username is required', () => {
         enforce(model.username).isNotBlank();
       });
 
-      omitWhen(!model.username, () => {
+      omitWhen(!username, () => {
         test('username', 'Username must be at least 3 characters', () => {
-          enforce(model.username).longerThanOrEquals(3);
+          enforce(username).longerThanOrEquals(3);
         });
 
         test(
           'username',
           'Use only lowercase letters, digits, and underscores',
           () => {
-            enforce(model.username ?? '').matches(USERNAME_PATTERN);
+            enforce(username).matches(USERNAME_PATTERN);
           }
         );
       });
@@ -49,9 +51,7 @@ export const createAsyncUsernameSuite = (
       // synchronous rules above. `omitWhen` short-circuits the async test
       // while the value is blank / too short / malformed.
       omitWhen(
-        !model.username ||
-          (model.username as string).length < 3 ||
-          !USERNAME_PATTERN.test(model.username as string),
+        !username || username.length < 3 || !USERNAME_PATTERN.test(username),
         () => {
           memo(
             () => {
@@ -61,7 +61,7 @@ export const createAsyncUsernameSuite = (
                 async ({ signal }) => {
                   const taken = await lastValueFrom(
                     service
-                      .isUsernameTaken(model.username as string)
+                      .isUsernameTaken(username)
                       .pipe(takeUntil(fromEvent(signal, 'abort')))
                   );
 
@@ -71,7 +71,7 @@ export const createAsyncUsernameSuite = (
                 }
               );
             },
-            [model.username]
+            [username]
           );
         }
       );

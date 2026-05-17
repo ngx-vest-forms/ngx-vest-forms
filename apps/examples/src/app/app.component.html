@@ -6,6 +6,7 @@
     class="sticky top-0 z-30 flex items-center justify-between border-b border-gray-200/70 bg-white/80 px-4 py-3 backdrop-blur-md lg:hidden dark:border-gray-700/70 dark:bg-gray-900/80"
   >
     <button
+      #menuToggle
       type="button"
       class="btn btn-secondary !px-3 !py-2"
       [attr.aria-expanded]="drawerOpen()"
@@ -40,9 +41,13 @@
 
   <!-- Sidebar -->
   <aside
+    #sidebar
     id="app-sidebar"
+    tabindex="-1"
     class="fixed inset-y-0 left-0 z-40 flex w-72 -translate-x-full flex-col border-r border-gray-200/70 bg-white/95 transition-transform duration-300 ease-out lg:sticky lg:top-0 lg:z-0 lg:h-screen lg:translate-x-0 lg:bg-white/60 lg:backdrop-blur-xl dark:border-gray-700/70 dark:bg-gray-900/95 lg:dark:bg-gray-900/50"
     [class.translate-x-0]="drawerOpen()"
+    [inert]="!isDesktop() && !drawerOpen()"
+    (keydown.escape)="closeDrawer()"
   >
     <div class="border-b border-gray-200/70 px-6 py-6 dark:border-gray-700/70">
       <p
