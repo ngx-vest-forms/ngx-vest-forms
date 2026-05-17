@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { isObservable, Observable } from 'rxjs';
 import { create, enforce, test as vestTest, warn } from 'vest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { StandardSchemaV1 } from '../../public-api';
 import { FormDirective, NgxFieldBlurEvent } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
 import { provideFormContract } from '../tokens/form-contract.token';
@@ -31,6 +32,44 @@ function expectElement<T extends Element>(
     throw new Error(`Expected element matching "${selector}" to be present`);
   }
   return value;
+}
+
+type TestContractIssuePathSegment = string | number | { key: string | number };
+type TestContractIssue = {
+  message: string;
+  path?: ReadonlyArray<TestContractIssuePathSegment>;
+};
+
+function createIssueContract(
+  issues: readonly TestContractIssue[] = []
+): StandardSchemaV1<Record<string, unknown>> {
+  return {
+    '~standard': {
+      version: 1,
+      vendor: 'ngx-vest-forms-tests',
+      validate(value) {
+        return issues.length > 0
+          ? { issues: [...issues] }
+          : { value: value as Record<string, unknown> };
+      },
+    },
+  };
+}
+
+function createAsyncIssueContract(
+  issues: readonly TestContractIssue[]
+): StandardSchemaV1<Record<string, unknown>> {
+  return {
+    '~standard': {
+      version: 1,
+      vendor: 'ngx-vest-forms-tests',
+      async validate(value) {
+        return issues.length > 0
+          ? { issues: [...issues] }
+          : { value: value as Record<string, unknown> };
+      },
+    },
+  };
 }
 
 @Component({
@@ -1806,20 +1845,20 @@ describe('FormDirective - first invalid helpers', () => {
   });
 });
 
-describe('FormDirective - Shape Validation', () => {
+describe('FormDirective - Form Contracts', () => {
   @Component({
-    selector: 'test-shape-validation-host',
+    selector: 'test-legacy-shape-contract-host',
     template: `<form
       ngxVestForm
-      [formContract]="formShape()"
+      [formContract]="legacyContract()"
       [formValue]="formValue()"
       #vest="ngxVestForm"
     ></form>`,
 
     imports: [NgxVestForms],
   })
-  class TestShapeValidationHost {
-    formShape = signal<{ username: string }>({ username: '' });
+  class TestLegacyShapeContractHost {
+    legacyContract = signal<{ username: string }>({ username: '' });
     formValue = signal<any>({ username: 'initial' });
     readonly vestForm =
       viewChild.required<FormDirective<Record<string, unknown>>>('vest');
@@ -1877,6 +1916,51 @@ describe('FormDirective - Shape Validation', () => {
       viewChild.required<FormDirective<Record<string, unknown>>>('vest');
   }
 
+  @Component({
+    selector: 'test-schema-issue-contract-host',
+    template: `<form
+      ngxVestForm
+      [formContract]="formContract()"
+      [formValue]="formValue()"
+      #vest="ngxVestForm"
+    ></form>`,
+    imports: [NgxVestForms],
+  })
+  class TestSchemaIssueContractHost {
+    formContract = signal<StandardSchemaV1<Record<string, unknown>>>(
+      createIssueContract()
+    );
+    formValue = signal<Record<string, unknown>>({});
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
+  }
+
+  @Component({
+    selector: 'test-partial-legacy-contract-host',
+    template: `<form
+      ngxVestForm
+      [formContract]="formContract()"
+      [formValue]="formValue()"
+      #vest="ngxVestForm"
+    ></form>`,
+    imports: [NgxVestForms],
+  })
+  class TestPartialLegacyContractHost {
+    formContract = signal({
+      user: {
+        name: '',
+        email: '',
+      },
+    });
+    formValue = signal<Record<string, unknown>>({
+      user: {
+        name: 'Ada',
+      },
+    });
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
+  }
+
   let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
@@ -1887,11 +1971,9 @@ describe('FormDirective - Shape Validation', () => {
     consoleWarnSpy.mockRestore();
   });
 
-  it('should warn in dev mode if form value shape does not match formShape', async () => {
-    // Only run this test if isDevMode is true
-    const { fixture } = await render(TestShapeValidationHost);
+  it('should warn in dev mode if a legacy shape contract does not match the form value', async () => {
+    const { fixture } = await render(TestLegacyShapeContractHost);
     const instance = fixture.componentInstance;
-    // Simulate a value change that triggers shape validation
     instance.formValue.set({ foo: 'bar' });
     fixture.detectChanges();
     expect(consoleWarnSpy).toHaveBeenCalled();
@@ -1923,7 +2005,9 @@ describe('FormDirective - Shape Validation', () => {
     await fixture.whenStable();
 
     expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-    expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining("'providerOnly'"));
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("'providerOnly'")
+    );
   });
 
   it('should allow explicit [formContract]="null" to disable an injected form contract', async () => {
@@ -1943,11 +2027,122 @@ describe('FormDirective - Shape Validation', () => {
   it('should not warn in production mode', async () => {
     // This test is skipped in prod builds; in real prod, shape validation is a no-op
     // Here, we just ensure no warning if shape is correct
-    const { fixture } = await render(TestShapeValidationHost);
+    const { fixture } = await render(TestLegacyShapeContractHost);
     const instance = fixture.componentInstance;
     instance.formValue.set({ username: 'ok' });
     fixture.detectChanges();
     expect(consoleWarnSpy).not.toHaveBeenCalled();
+  });
+
+  it('should format nested and root Standard Schema issue paths using Angular field syntax', async () => {
+    const { fixture } = await render(TestSchemaIssueContractHost);
+    const instance = fixture.componentInstance;
+    await fixture.whenStable();
+    consoleWarnSpy.mockClear();
+
+    instance.formContract.set(
+      createIssueContract([
+        {
+          message: 'Invalid user email',
+          path: ['users', { key: 0 }, 'email'],
+        },
+        {
+          message: 'Whole contract failed',
+        },
+      ])
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(2);
+    expect(consoleWarnSpy).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('users[0].email')
+    );
+    expect(consoleWarnSpy).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('<root>')
+    );
+  });
+
+  it('should allow partial values with a legacy shape contract', async () => {
+    await render(TestPartialLegacyContractHost);
+
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+  });
+
+  it('should rely on schema strictness for unknown-key warnings', async () => {
+    const { fixture } = await render(TestSchemaIssueContractHost);
+    const instance = fixture.componentInstance;
+    instance.formValue.set({ known: 'ok', unexpected: 'value' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    consoleWarnSpy.mockClear();
+
+    instance.formContract.set(
+      createIssueContract([
+        {
+          message: 'Unexpected key',
+          path: ['unexpected'],
+        },
+      ])
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("'unexpected'")
+    );
+
+    consoleWarnSpy.mockClear();
+    instance.formContract.set(createIssueContract());
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+  });
+
+  it('should keep runtime validity independent from contract warnings', async () => {
+    const { fixture } = await render(TestSchemaIssueContractHost);
+    const instance = fixture.componentInstance;
+    await fixture.whenStable();
+    consoleWarnSpy.mockClear();
+
+    instance.formContract.set(
+      createIssueContract([
+        {
+          message: 'Unexpected key',
+          path: ['unexpected'],
+        },
+      ])
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(consoleWarnSpy).toHaveBeenCalled();
+    expect(instance.vestForm().valid()).toBe(true);
+  });
+
+  it('should ignore async schema issues in the directive diagnostic pass', async () => {
+    const { fixture } = await render(TestSchemaIssueContractHost);
+    const instance = fixture.componentInstance;
+    await fixture.whenStable();
+    consoleWarnSpy.mockClear();
+
+    instance.formContract.set(
+      createAsyncIssueContract([
+        {
+          message: 'Async issue',
+          path: ['username'],
+        },
+      ])
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+    await Promise.resolve();
+
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+    expect(instance.vestForm().valid()).toBe(true);
   });
 });
 
