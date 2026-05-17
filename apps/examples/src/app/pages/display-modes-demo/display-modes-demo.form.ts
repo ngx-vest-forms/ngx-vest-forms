@@ -30,19 +30,7 @@ export class DisplayModesDemoFormBody {
 
   private readonly vestForm =
     viewChild<FormDirective<DisplayModesDemoModel>>('vestForm');
-  private readonly formFeedback = createFormFeedbackSignals(this.vestForm);
-
-  /** Exposes the directive's packaged form state with up-to-date errors. */
-  readonly formState = this.formFeedback.formState;
-
-  /** Exposes field warnings as a plain Record for presentational components. */
-  readonly warnings = this.formFeedback.warnings;
-
-  /** Field paths that have been validated (touched/blurred or submitted). */
-  readonly validatedFields = this.formFeedback.validatedFields;
-
-  /** True while async validation is in progress. */
-  readonly pending = this.formFeedback.pending;
+  readonly feedback = createFormFeedbackSignals(this.vestForm);
 
   constructor() {
     afterNextRender(() => {

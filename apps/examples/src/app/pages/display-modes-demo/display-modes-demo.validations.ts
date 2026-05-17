@@ -5,6 +5,10 @@ import { DisplayModesDemoModel } from '../../models/display-modes-demo.model';
 export const displayModesDemoSuite: NgxVestSuite<DisplayModesDemoModel> =
   create((model: DisplayModesDemoModel) => {
     // Error validations
+    test('tokenDefaultError', 'This field is required', () => {
+      enforce(model.tokenDefaultError).isNotBlank();
+    });
+
     test('alwaysError', 'This field is required', () => {
       enforce(model.alwaysError).isNotBlank();
     });
@@ -18,6 +22,11 @@ export const displayModesDemoSuite: NgxVestSuite<DisplayModesDemoModel> =
     });
 
     // Warning validations
+    test('tokenDefaultWarning', 'Username should be at least 5 characters', () => {
+      warn();
+      enforce(model.tokenDefaultWarning).longerThanOrEquals(5);
+    });
+
     test('alwaysWarning', 'Username should be at least 5 characters', () => {
       warn();
       enforce(model.alwaysWarning).longerThanOrEquals(5);

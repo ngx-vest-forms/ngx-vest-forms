@@ -1,8 +1,10 @@
 <div class="page-container">
   <ngx-page-title
     title="Auto-Save Draft Demo"
-    subtitle="Persist drafts on blur without conflating draft persistence and final validation."
+    subtitle="Persist draft changes on blur while keeping validation and final submission separate."
   />
+
+  <ngx-example-cards [content]="exampleContent" class="mb-8 block" />
 
   <ngx-form-page-layout>
     <div layout-aside class="sidebar-card-stack">
@@ -43,14 +45,11 @@
       </ngx-card>
 
       <ngx-form-state-card
-        [formState]="formBody.formState()"
-        [warnings]="formBody.warnings()"
+        [feedback]="feedback()"
         [info]="formInfo()"
         [validationErrorRules]="validationErrorRules"
         [validationWarningRules]="validationWarningRules"
-        [validatedFields]="formBody.validatedFields()"
-        [pending]="formBody.pending()"
-      />
+        />
     </div>
 
     <div layout-main>

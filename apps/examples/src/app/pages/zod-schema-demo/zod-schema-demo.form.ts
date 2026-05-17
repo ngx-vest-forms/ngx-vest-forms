@@ -13,7 +13,6 @@ import {
   FormDirective,
   NgxVestForms,
   NgxVestSuite,
-  provideFormContract,
 } from 'ngx-vest-forms';
 import {
   ZodSchemaDemoModel,
@@ -26,12 +25,12 @@ import { FormSectionComponent } from '../../ui/form-section/form-section.compone
   selector: 'ngx-zod-schema-demo-form-body',
   imports: [NgxVestForms, Card, FormSectionComponent],
   templateUrl: './zod-schema-demo.form.html',
-  providers: [provideFormContract(zodSchemaDemoContract)],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ZodSchemaDemoFormBody {
   readonly formValue = input.required<ZodSchemaDemoModel>();
   readonly suite = input.required<NgxVestSuite<ZodSchemaDemoModel>>();
+  readonly formContract = zodSchemaDemoContract;
 
   readonly formValueChange = output<ZodSchemaDemoModel>();
   readonly submitted = output();
@@ -46,25 +45,13 @@ export class ZodSchemaDemoFormBody {
    * than formState.errors when the form's overall status stays the same.
    */
   protected readonly currentErrors = signal<Record<string, string[]>>({});
-  private readonly formFeedback = createFormFeedbackSignals(this.vestForm, {
+  readonly feedback = createFormFeedbackSignals(this.vestForm, {
     formState: computed(() => {
       const state = this.vestForm()?.formState();
       if (!state) return createEmptyFormState<ZodSchemaDemoModel>();
       return { ...state, errors: this.currentErrors() };
     }),
   });
-
-  /** Exposes the directive's packaged form state with up-to-date errors. */
-  readonly formState = this.formFeedback.formState;
-
-  /** Exposes field warnings as a plain Record for presentational components. */
-  readonly warnings = this.formFeedback.warnings;
-
-  /** Field paths that have been validated (touched/blurred or submitted). */
-  readonly validatedFields = this.formFeedback.validatedFields;
-
-  /** True while async validation is in progress. */
-  readonly pending = this.formFeedback.pending;
 
   protected onSubmit(): void {
     this.submitted.emit();

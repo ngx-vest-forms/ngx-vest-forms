@@ -1,0 +1,56 @@
+<form
+  ngxVestForm
+  #vestForm="ngxVestForm"
+  [suite]="suite()"
+  [formValue]="formValue()"
+  (formValueChange)="formValueChange.emit($event)"
+  (ngSubmit)="onSubmit()"
+  class="space-y-6"
+>
+  <ngx-control-wrapper class="form-field">
+    <label for="username" class="label-text">Username</label>
+    <input
+      class="input-field"
+      type="text"
+      id="username"
+      name="username"
+      [ngModel]="formValue().username"
+      placeholder="ada_lovelace"
+      autocomplete="off"
+      autocapitalize="none"
+      spellcheck="false"
+    />
+
+    <p aria-live="polite" class="mt-1 min-h-[1.25rem] text-sm">
+      @if (feedback.pending()) {
+        <span class="text-blue-600 dark:text-blue-400">
+          Checking availability…
+        </span>
+      } @else if (usernameResolved()) {
+        <span class="text-green-600 dark:text-green-400">
+          That username is available.
+        </span>
+      }
+    </p>
+  </ngx-control-wrapper>
+
+  <ngx-control-wrapper class="form-field">
+    <label for="displayName" class="label-text">Display name</label>
+    <input
+      class="input-field"
+      type="text"
+      id="displayName"
+      name="displayName"
+      [ngModel]="formValue().displayName"
+      placeholder="Ada Lovelace"
+      autocomplete="name"
+    />
+  </ngx-control-wrapper>
+
+  <div class="flex justify-end gap-3 pt-2">
+    <button type="button" class="btn btn-secondary" (click)="onReset()">
+      Reset
+    </button>
+    <button type="submit" class="btn btn-primary">Reserve username</button>
+  </div>
+</form>

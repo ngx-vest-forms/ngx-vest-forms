@@ -4,6 +4,8 @@
     subtitle="Use create(..., enforce.shape(...)) for built-in schema validation alongside field-level business rules."
   />
 
+  <ngx-example-cards [content]="exampleContent" class="mb-8 block" />
+
   <ngx-form-page-layout>
     <div layout-aside class="sidebar-card-stack">
       <ngx-card title="How Native Schemas Work">
@@ -35,11 +37,8 @@
       </ngx-card>
 
       <ngx-form-state-card
-        [formState]="formBody.formState()"
-        [warnings]="formBody.warnings()"
-        [validatedFields]="formBody.validatedFields()"
-        [pending]="formBody.pending()"
-      />
+        [feedback]="formBody.feedback"
+        />
     </div>
 
     <div layout-main>

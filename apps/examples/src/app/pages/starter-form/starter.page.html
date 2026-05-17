@@ -1,0 +1,47 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Starter Contact Form"
+    subtitle="The canonical ngx-vest-forms setup — copy this as a trustworthy baseline."
+  />
+
+  <ngx-example-cards [content]="exampleContent" class="mb-8 block" />
+
+  <ngx-form-page-layout>
+    <div layout-aside class="sidebar-card-stack">
+      <ngx-card title="Why start here">
+        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
+          <li>One <code>ngxVestForm</code>, one Vest suite — nothing else.</li>
+          <li>Public API only. Safe to copy into your app.</li>
+          <li>Errors appear on blur; the message hint is advisory.</li>
+          <li>The form value is a signal the page owns.</li>
+        </ul>
+      </ngx-card>
+
+      <ngx-form-state-card [feedback]="feedback()" />
+    </div>
+
+    <div layout-main>
+      @if (submittedValue(); as submitted) {
+        <ngx-alert-panel tone="success" title="Message sent">
+          <p>
+            Thanks {{ submitted.name }} — we'll reply to
+            <strong>{{ submitted.email }}</strong> shortly.
+          </p>
+        </ngx-alert-panel>
+      }
+
+      <ngx-card
+        title="Contact us"
+        subtitle="All fields are required. Try submitting empty to see validation."
+      >
+        <ngx-starter-form-body
+          [formValue]="formValue()"
+          [suite]="suite"
+          (formValueChange)="formValue.set($event)"
+          (submitted)="onSubmit()"
+          (resetRequested)="reset()"
+        />
+      </ngx-card>
+    </div>
+  </ngx-form-page-layout>
+</div>

@@ -3,6 +3,7 @@ import {
   expectFieldHasError,
   expectFieldValid,
   fillNativeDateInputAndBlur,
+  getMainContentSidebar,
   getWarningElementFor,
   navigateToDateRangeAdapter,
   waitForValidationToSettle,
@@ -38,21 +39,23 @@ test.describe('Split Wrappers - Form Behavior', () => {
   test('should update form model when departure date is entered', async ({
     page,
   }) => {
+    const sidebar = getMainContentSidebar(page);
     const departure = page.getByLabel(/departure date/i);
     await fillNativeDateInputAndBlur(departure, '2026-07-01');
     await waitForValidationToSettle(page);
 
-    await expect(page.locator('aside')).toContainText('2026-07-01');
+    await expect(sidebar).toContainText('2026-07-01');
   });
 
   test('should update form model when return date is entered', async ({
     page,
   }) => {
+    const sidebar = getMainContentSidebar(page);
     const returnDate = page.getByLabel(/return date/i);
     await fillNativeDateInputAndBlur(returnDate, '2026-07-15');
     await waitForValidationToSettle(page);
 
-    await expect(page.locator('aside')).toContainText('2026-07-15');
+    await expect(sidebar).toContainText('2026-07-15');
   });
 
   test('should show required error on departure field after submit', async ({

@@ -357,3 +357,15 @@ fieldset:not(.form-shell) {
     }
   }
 }
+
+/* Shell nav reveal — staggered per category group via inline animation-delay. */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

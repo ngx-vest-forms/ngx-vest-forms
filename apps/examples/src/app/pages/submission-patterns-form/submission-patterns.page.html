@@ -1,0 +1,112 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Submission Patterns"
+    subtitle="Submit-time invalid handling, server-error messaging, success state, and retry — modelled distinctly."
+  />
+
+  <ngx-example-cards [content]="exampleContent" class="mb-8 block" />
+
+  <ngx-form-page-layout>
+    <div layout-aside class="sidebar-card-stack">
+      <ngx-card title="Simulated outcome">
+        <p class="mb-3 text-sm text-gray-600 dark:text-gray-300">
+          Pick how the mock server should respond so each path is
+          deterministic.
+        </p>
+        <label class="block">
+          <span
+            class="mb-1 block text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400"
+          >
+            Server response
+          </span>
+          <select
+            #scenarioSelect
+            class="input-field"
+            [value]="scenario()"
+            (change)="onScenarioChange(scenarioSelect.value)"
+          >
+            @for (option of scenarios; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </label>
+        <ul
+          class="mt-4 space-y-2 text-sm text-gray-600 dark:text-gray-300"
+        >
+          <li>
+            (a) Field rules are plain Vest, while this demo intentionally keeps
+            error visibility submit-gated.
+          </li>
+          <li>(b) Submitting invalid focuses the first bad field.</li>
+          <li>(c) Server failures surface in an alert with Retry.</li>
+          <li>(d) Success shows the new account id + Create another.</li>
+        </ul>
+      </ngx-card>
+
+      <ngx-form-state-card [feedback]="feedback()" />
+    </div>
+
+    <div layout-main>
+      @if (showClearSubmitCycle()) {
+        <ngx-alert-panel tone="info" title="Submit cycle active">
+          <p>
+            The form is still in a submitted state, so submit-gated errors stay
+            visible. Clear the submit cycle to return to editing without
+            resetting values, touched state, or dirty state.
+          </p>
+          <button
+            type="button"
+            class="btn btn-secondary mt-3"
+            (click)="clearSubmitCycle()"
+          >
+            Clear submitted state
+          </button>
+        </ngx-alert-panel>
+      }
+
+      @if (state() === 'success') {
+        <ngx-alert-panel tone="success" title="Account created">
+          <p>
+            Your account was created with id
+            <strong>{{ createdId() }}</strong
+            >.
+          </p>
+          <button
+            type="button"
+            class="btn btn-secondary mt-3"
+            (click)="reset()"
+          >
+            Create another
+          </button>
+        </ngx-alert-panel>
+      }
+
+      @if (state() === 'server-error') {
+        <ngx-alert-panel tone="error" title="Couldn't create your account">
+          <p>{{ serverError() }}</p>
+          <button
+            type="button"
+            class="btn btn-primary mt-3"
+            (click)="retry()"
+          >
+            Retry
+          </button>
+        </ngx-alert-panel>
+      }
+
+      <ngx-card
+        title="Create account"
+        subtitle="All fields are required. This demo uses a form-scoped submit-gated error display default so you can inspect clearSubmittedState() after an invalid submit."
+      >
+        <ngx-submission-patterns-form-body
+          [formValue]="formValue()"
+          [suite]="suite"
+          [submitting]="state() === 'submitting'"
+          (formValueChange)="formValue.set($event)"
+          (submitted)="onSubmit()"
+          (resetRequested)="reset()"
+        />
+      </ngx-card>
+    </div>
+  </ngx-form-page-layout>
+</div>

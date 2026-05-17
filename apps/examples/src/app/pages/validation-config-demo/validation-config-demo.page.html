@@ -4,6 +4,8 @@
     subtitle="Explore dependency-aware revalidation patterns with a single configuration map."
   />
 
+  <ngx-example-cards [content]="exampleContent" class="mb-8 block" />
+
   <ngx-form-page-layout>
     <div layout-aside class="sidebar-card-stack">
       <ngx-card title="Key Features">
@@ -26,13 +28,10 @@
       </ngx-card>
 
       <ngx-form-state-card
-        [formState]="formBody.formState()"
+        [feedback]="formBody.feedback"
         [errors]="formErrors()"
-        [warnings]="formBody.warnings()"
         [info]="formInfo()"
-        [validatedFields]="formBody.validatedFields()"
-        [pending]="formBody.pending()"
-      />
+        />
     </div>
 
     <div layout-main>

@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { navigateToDateRangeAdapter } from '../../helpers/form-helpers';
+import {
+  getMainContentSidebar,
+  navigateToDateRangeAdapter,
+} from '../../helpers/form-helpers';
 
 test.describe('Composite Adapter Recipe Page', () => {
   test.beforeEach(async ({ page }) => {
@@ -7,15 +10,17 @@ test.describe('Composite Adapter Recipe Page', () => {
   });
 
   test('should render page layout and key sections', async ({ page }) => {
+    const sidebar = getMainContentSidebar(page);
+
     await expect(
       page.getByRole('heading', {
         name: /composite adapter recipe/i,
         level: 1,
       })
     ).toBeVisible();
-    await expect(page.locator('aside')).toBeVisible();
-    await expect(page.locator('aside')).toContainText(/form state/i);
-    await expect(page.locator('aside')).toContainText(/how it works/i);
+    await expect(sidebar).toBeVisible();
+    await expect(sidebar).toContainText(/form state/i);
+    await expect(sidebar).toContainText(/how it works/i);
   });
 
   test('should render approach toggle with two options', async ({ page }) => {
@@ -88,17 +93,15 @@ test.describe('Composite Adapter Recipe Page', () => {
   test('should update How It Works sidebar on approach switch', async ({
     page,
   }) => {
+    const sidebar = getMainContentSidebar(page);
+
     // Default: split wrappers
-    await expect(page.locator('aside')).toContainText(/no hidden proxies/i);
-    await expect(page.locator('aside')).toContainText(
-      /no manual error aggregation/i
-    );
+    await expect(sidebar).toContainText(/no hidden proxies/i);
+    await expect(sidebar).toContainText(/no manual error aggregation/i);
 
     // Switch to composite adapter
     await page.getByRole('radio', { name: /composite adapter/i }).check();
-    await expect(page.locator('aside')).toContainText(
-      /hidden proxy fields/i
-    );
+    await expect(sidebar).toContainText(/hidden proxy fields/i);
   });
 
   test('should render date range fields in both approaches', async ({

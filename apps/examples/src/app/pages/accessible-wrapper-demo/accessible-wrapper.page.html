@@ -1,0 +1,57 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Accessible Custom Wrapper"
+    subtitle="Use directive-based ARIA wiring when the built-in wrapper markup is not the right fit."
+  />
+
+  <ngx-example-cards [content]="exampleContent" class="mb-8 block" />
+
+  <ngx-form-page-layout>
+    <div layout-aside class="sidebar-card-stack">
+      <ngx-card title="What to inspect">
+        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
+          <li>
+            The first field starts with a static hint in
+            <code>aria-describedby</code> and the directive merges its own error
+            ID when needed.
+          </li>
+          <li>
+            The second wrapper contains an input plus a button, so only the
+            input gets manual validation attributes.
+          </li>
+          <li>
+            The adjacent helper button stays free of <code>aria-invalid</code>
+            and validation descriptions.
+          </li>
+        </ul>
+      </ngx-card>
+
+      <ngx-form-state-card [feedback]="feedback()" />
+    </div>
+
+    <div layout-main>
+      @if (submittedValue(); as submitted) {
+        <ngx-alert-panel tone="success" title="Preferences saved">
+          <p>
+            Saved custom-wrapper preferences for
+            <strong>{{ submitted.preferredName }}</strong>.
+          </p>
+        </ngx-alert-panel>
+      }
+
+      <ngx-card
+        title="Directive-based custom wrappers"
+        subtitle="These fields use ngxErrorControl instead of ngx-control-wrapper so the ARIA behavior is visible in plain markup."
+      >
+        <ngx-accessible-wrapper-form-body
+          [formValue]="formValue()"
+          [suite]="suite"
+          (formValueChange)="formValue.set($event)"
+          (submitted)="onSubmit()"
+          (resetRequested)="reset()"
+          (clearSearchRequested)="clearSearchQuery()"
+        />
+      </ngx-card>
+    </div>
+  </ngx-form-page-layout>
+</div>

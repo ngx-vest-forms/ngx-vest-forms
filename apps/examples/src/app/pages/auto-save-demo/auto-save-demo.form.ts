@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import {
   createEmptyFormState,
+  createFormFeedbackSignals,
   fieldWarningsToRecord,
   FormDirective,
   NgxFieldBlurEvent,
@@ -39,23 +40,7 @@ export class AutoSaveDemoFormBody {
   private readonly vestForm =
     viewChild<FormDirective<AutoSaveDemoModel>>('vestForm');
 
-  readonly formState = computed(() => {
-    const state = this.vestForm()?.formState();
-    if (!state) return createEmptyFormState<AutoSaveDemoModel>();
-    return state;
-  });
-
-  readonly warnings = computed(() =>
-    fieldWarningsToRecord(this.vestForm()?.fieldWarnings() ?? new Map())
-  );
-
-  readonly validatedFields = computed(
-    () => this.vestForm()?.touchedFieldPaths() ?? []
-  );
-
-  readonly pending = computed(
-    () => this.vestForm()?.ngForm.form.pending ?? false
-  );
+  readonly feedback = createFormFeedbackSignals(this.vestForm);
 
   protected onSubmit(): void {
     this.submitted.emit();

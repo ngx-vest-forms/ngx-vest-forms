@@ -1,36 +1,143 @@
-<a href="#main-content" class="sr-only focus:not-sr-only"
-  >Skip to main content</a
->
-<nav
-  class="border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
->
-  <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-    <ul class="flex gap-6">
-      @for (item of menuItems; track item.link) {
-        <li>
-          <a
-            routerLinkActive
-            #activeLink="routerLinkActive"
-            [routerLink]="item.link"
-            [routerLinkActiveOptions]="{
-              paths: 'subset',
-              queryParams: 'ignored',
-              fragment: 'ignored',
-              matrixParams: 'ignored',
-            }"
-            [class]="
-              activeLink.isActive
-                ? 'font-semibold text-blue-600 dark:text-blue-500'
-                : 'text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-500'
-            "
-            >{{ item.label }}</a
-          >
-        </li>
-      }
-    </ul>
+<a href="#main-content" class="sr-only focus:not-sr-only">Skip to main content</a>
+
+<div class="lg:flex lg:min-h-screen">
+  <!-- Mobile top bar -->
+  <header
+    class="sticky top-0 z-30 flex items-center justify-between border-b border-gray-200/70 bg-white/80 px-4 py-3 backdrop-blur-md lg:hidden dark:border-gray-700/70 dark:bg-gray-900/80"
+  >
+    <button
+      #menuToggle
+      type="button"
+      class="btn btn-secondary !px-3 !py-2"
+      [attr.aria-expanded]="drawerOpen()"
+      aria-controls="app-sidebar"
+      aria-label="Toggle navigation"
+      (click)="toggleDrawer()"
+    >
+      <svg class="size-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M4 6h16M4 12h16M4 18h16"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+      </svg>
+    </button>
+    <span class="font-mono text-sm font-semibold tracking-tight">
+      ngx-vest-forms
+    </span>
     <ngx-theme-switcher />
-  </div>
-</nav>
-<main id="main-content">
-  <router-outlet></router-outlet>
-</main>
+  </header>
+
+  <!-- Backdrop (mobile, when drawer open) -->
+  @if (drawerOpen()) {
+    <button
+      type="button"
+      class="fixed inset-0 z-30 bg-gray-900/40 backdrop-blur-[2px] lg:hidden"
+      aria-label="Close navigation"
+      (click)="closeDrawer()"
+    ></button>
+  }
+
+  <!-- Sidebar -->
+  <aside
+    #sidebar
+    id="app-sidebar"
+    tabindex="-1"
+    class="fixed inset-y-0 left-0 z-40 flex w-72 -translate-x-full flex-col border-r border-gray-200/70 bg-white/95 transition-transform duration-300 ease-out lg:sticky lg:top-0 lg:z-0 lg:h-screen lg:translate-x-0 lg:bg-white/60 lg:backdrop-blur-xl dark:border-gray-700/70 dark:bg-gray-900/95 lg:dark:bg-gray-900/50"
+    [class.translate-x-0]="drawerOpen()"
+    [inert]="!isDesktop() && !drawerOpen()"
+    (keydown.escape)="closeDrawer()"
+  >
+    <div class="border-b border-gray-200/70 px-6 py-6 dark:border-gray-700/70">
+      <p
+        class="font-mono text-base font-semibold tracking-tight text-gray-950 dark:text-gray-50"
+      >
+        ngx-vest-forms
+      </p>
+      <p
+        class="text-primary-700 dark:text-primary-400 mt-0.5 text-xs font-medium tracking-[0.2em] uppercase"
+      >
+        Examples
+      </p>
+    </div>
+
+    <nav
+      class="flex-1 overflow-y-auto px-3 py-5"
+      aria-label="Demo navigation"
+    >
+      @for (group of navGroups; track group.category; let g = $index) {
+        <div
+          class="mb-6 motion-safe:animate-[fade-in-up_0.4s_ease-out_both]"
+          [style.animation-delay.ms]="g * 60"
+        >
+          <h2
+            class="px-3 pb-2 text-[0.7rem] font-semibold tracking-[0.18em] text-gray-400 uppercase dark:text-gray-500"
+          >
+            {{ group.category }}
+          </h2>
+          <ul class="space-y-0.5">
+            @for (item of group.items; track item.path) {
+              <li>
+                <a
+                  routerLinkActive
+                  #rla="routerLinkActive"
+                  [routerLink]="['/', item.path]"
+                  [routerLinkActiveOptions]="{
+                    paths: 'subset',
+                    queryParams: 'ignored',
+                    fragment: 'ignored',
+                    matrixParams: 'ignored',
+                  }"
+                  [attr.aria-current]="rla.isActive ? 'page' : null"
+                  class="group flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm transition-colors"
+                  [class]="
+                    rla.isActive
+                      ? 'bg-primary-50 font-semibold text-primary-800 dark:bg-primary-900/30 dark:text-primary-200'
+                      : 'text-gray-600 hover:bg-gray-100/70 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800/60 dark:hover:text-white'
+                  "
+                >
+                  <span class="flex items-center gap-2">
+                    <span
+                      class="h-4 w-0.5 rounded-full transition-colors"
+                      [class]="
+                        rla.isActive
+                          ? 'bg-primary-600 dark:bg-primary-400'
+                          : 'bg-transparent group-hover:bg-gray-300 dark:group-hover:bg-gray-600'
+                      "
+                      aria-hidden="true"
+                    ></span>
+                    {{ item.label }}
+                  </span>
+                  @if (item.badge === 'start-here') {
+                    <span
+                      class="bg-primary-600 rounded-full px-1.5 py-0.5 text-[0.6rem] font-semibold tracking-wide text-white uppercase"
+                      >Start</span
+                    >
+                  } @else if (item.badge === 'new') {
+                    <span
+                      class="rounded-full bg-amber-100 px-1.5 py-0.5 text-[0.6rem] font-semibold tracking-wide text-amber-700 uppercase dark:bg-amber-900/40 dark:text-amber-300"
+                      >New</span
+                    >
+                  }
+                </a>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </nav>
+
+    <div
+      class="hidden items-center justify-between border-t border-gray-200/70 px-6 py-4 lg:flex dark:border-gray-700/70"
+    >
+      <span class="text-xs text-gray-400 dark:text-gray-500">Theme</span>
+      <ngx-theme-switcher />
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main id="main-content" class="min-w-0 flex-1">
+    <router-outlet />
+  </main>
+</div>

@@ -10,7 +10,9 @@ import { PurchaseFormModel } from '../../models/purchase-form.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
+import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { PageTitle } from '../../ui/page-title/page-title.component';
+import { purchaseContent } from './purchase.content';
 import { FetchErrorScenario, PurchaseForm } from './purchase.form';
 import {
   purchaseValidationErrorRulesByField,
@@ -21,13 +23,23 @@ type FetchLukeMode = 'normal' | FetchErrorScenario;
 
 @Component({
   selector: 'ngx-purchase-page',
-  imports: [Card, PageTitle, AlertPanel, FormStateCardComponent, PurchaseForm],
+  imports: [
+    Card,
+    PageTitle,
+    AlertPanel,
+    FormStateCardComponent,
+    PurchaseForm,
+    ExampleCardsComponent,
+  ],
   templateUrl: './purchase.page.html',
   styleUrls: ['./purchase.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PurchasePageComponent {
+  protected readonly feedback = computed(() => this.purchaseForm()?.feedback);
   private readonly purchaseForm = viewChild(PurchaseForm);
+
+  protected readonly exampleContent = purchaseContent;
 
   protected readonly fetchLukeModes: Array<{
     label: string;
@@ -56,7 +68,7 @@ export class PurchasePageComponent {
   protected readonly validationWarningRules =
     purchaseValidationWarningRulesByField;
   protected readonly rootFormErrors = computed(
-    () => this.purchaseForm()?.formState()?.errors[ROOT_FORM] || []
+    () => this.feedback()?.formState()?.errors[ROOT_FORM] || []
   );
 
   protected fetchLuke(mode: string): void {

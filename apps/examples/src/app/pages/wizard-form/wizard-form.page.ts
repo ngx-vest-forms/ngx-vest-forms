@@ -16,11 +16,13 @@ import {
 } from '../../models/wizard-form.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
+import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { StatusBadge } from '../../ui/status-badge/status-badge.component';
 import { WizardStepConfig, WizardStepsComponent } from '../../ui/wizard';
+import { wizardContent } from './wizard-form.content';
 import { WizardFormBodyComponent } from './wizard.form';
 import {
   wizardStep1Suite,
@@ -37,6 +39,7 @@ import {
     AlertPanel,
     PageTitle,
     StatusBadge,
+    ExampleCardsComponent,
     WizardStepsComponent,
     WizardFormBodyComponent,
   ],
@@ -46,6 +49,7 @@ import {
 })
 export class WizardFormPageComponent {
   private readonly injector = inject(Injector);
+  protected readonly exampleContent = wizardContent;
   protected readonly currentStep = signal(1);
 
   protected readonly steps: WizardStepConfig[] = [

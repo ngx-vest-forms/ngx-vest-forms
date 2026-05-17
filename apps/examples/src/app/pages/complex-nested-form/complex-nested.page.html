@@ -1,0 +1,50 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Complex Nested & Repeatable Form"
+    subtitle="Nested ngModelGroup sections and dynamic add/remove rows composed from reusable child components."
+  />
+
+  <ngx-example-cards [content]="exampleContent" class="mb-8 block" />
+
+  <ngx-form-page-layout>
+    <div layout-aside class="sidebar-card-stack">
+      <ngx-card title="Key features">
+        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
+          <li>
+            Deep <code>ngModelGroup</code> nesting:
+            <code>company.address</code>.
+          </li>
+          <li>Reusable <code>ngx-address</code> &amp; child member sections.</li>
+          <li>Repeatable rows in a stable id-keyed record.</li>
+          <li>Validation refreshes correctly after add/remove.</li>
+          <li><code>ROOT_FORM</code> rule + non-blocking warning.</li>
+        </ul>
+      </ngx-card>
+
+      <ngx-form-state-card
+        [feedback]="formBody.feedback"
+        />
+    </div>
+
+    <div layout-main>
+      <ngx-complex-nested-form-body
+        #formBody
+        [formValue]="formValue()"
+        [suite]="suite"
+        [submittedValue]="submittedValue()"
+        (formValueChange)="onFormValueChange($event)"
+        (submitted)="onSubmit()"
+        (resetRequested)="onReset()"
+      />
+
+      @if (submittedPayload(); as payload) {
+        <ngx-card
+          title="Submitted payload"
+          subtitle="teamMembers converted back to an array with objectToArray() — the shape you'd POST to a backend."
+        >
+          <ngx-json-preview title="Payload" [value]="payload" />
+        </ngx-card>
+      }
+    </div>
+  </ngx-form-page-layout>
+</div>

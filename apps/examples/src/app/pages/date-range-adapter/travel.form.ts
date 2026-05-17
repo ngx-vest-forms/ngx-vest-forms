@@ -14,6 +14,7 @@ import {
 import {
   ControlWrapperComponent,
   createEmptyFormState,
+  createFormFeedbackSignals,
   fieldWarningsToRecord,
   FormDirective,
   NgxValidationConfig,
@@ -80,27 +81,7 @@ export class TravelFormBody {
     });
   }
 
-  /** Exposes the directive's packaged form state with up-to-date errors. */
-  readonly formState = computed(() => {
-    const state = this.vestForm()?.formState();
-    if (!state) return createEmptyFormState<TravelFormModel>();
-    return state;
-  });
-
-  /** Exposes field warnings as a plain Record for presentational components. */
-  readonly warnings = computed(() =>
-    fieldWarningsToRecord(this.vestForm()?.fieldWarnings() ?? new Map())
-  );
-
-  /** Field paths that have been validated (touched/blurred or submitted). */
-  readonly validatedFields = computed(
-    () => this.vestForm()?.touchedFieldPaths() ?? []
-  );
-
-  /** True while async validation is in progress. */
-  readonly pending = computed(
-    () => this.vestForm()?.ngForm.form.pending ?? false
-  );
+  readonly feedback = createFormFeedbackSignals(this.vestForm);
 
   protected onRangeChange(range: DateRangeValue): void {
     const next = structuredClone(this.formValue());

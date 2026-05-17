@@ -8,6 +8,7 @@
    *   ngx-control-wrapper { --ngx-control-wrapper-error-color: ...; }
    *   html.dark ngx-control-wrapper { --ngx-control-wrapper-error-color: ...; }
    *
+   *   --ngx-control-wrapper-feedback-min-height
    *   --ngx-control-wrapper-message-margin-top
    *   --ngx-control-wrapper-message-font-size
    *   --ngx-control-wrapper-message-line-height
@@ -38,6 +39,7 @@
    */
 
   /* Private defaults — do not override these directly. */
+  --_ngx-control-wrapper-feedback-min-height: 1.25rem; /* By default, reserving enough space for one line of text using --_ngx-control-wrapper-message-line-height */
   --_ngx-control-wrapper-message-margin-top: 0.25rem;
   --_ngx-control-wrapper-message-font-size: 0.875rem;
   --_ngx-control-wrapper-message-line-height: 1.25rem;
@@ -67,12 +69,25 @@
   }
 }
 
-.ngx-control-wrapper__errors,
-.ngx-control-wrapper__warnings {
+.ngx-control-wrapper__feedback-container {
+  display: flex;
+  flex-direction: column;
+  min-height: var(
+    --ngx-control-wrapper-feedback-min-height,
+    var(--_ngx-control-wrapper-feedback-min-height)
+  );
   margin-top: var(
     --ngx-control-wrapper-message-margin-top,
     var(--_ngx-control-wrapper-message-margin-top)
   );
+  gap: var(
+    --ngx-control-wrapper-message-gap,
+    var(--_ngx-control-wrapper-message-gap)
+  );
+}
+
+.ngx-control-wrapper__errors,
+.ngx-control-wrapper__warnings {
   font-size: var(
     --ngx-control-wrapper-message-font-size,
     var(--_ngx-control-wrapper-message-font-size)

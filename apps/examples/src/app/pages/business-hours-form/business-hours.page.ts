@@ -13,7 +13,9 @@ import {
 import { Card } from '../../ui/card/card.component';
 import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
+import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { PageTitle } from '../../ui/page-title/page-title.component';
+import { businessHoursContent } from './business-hours.content';
 import { BusinessHoursFormBody } from './business-hours.form';
 import { businessHoursSuite } from './business-hours.validations';
 import { BusinessHoursMap } from './ui/business-hours/business-hours.component';
@@ -26,14 +28,18 @@ import { BusinessHoursMap } from './ui/business-hours/business-hours.component';
     FormStateCardComponent,
     PageTitle,
     BusinessHoursFormBody,
+    ExampleCardsComponent,
   ],
   templateUrl: './business-hours.page.html',
   styleUrls: ['./business-hours.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BusinessHoursPageComponent {
+  protected readonly feedback = computed(() => this.formBody()?.feedback);
   /** Reference to form-body for triggering validation after structural changes */
   private readonly formBody = viewChild(BusinessHoursFormBody);
+
+  protected readonly exampleContent = businessHoursContent;
 
   protected readonly formValue = signal<BusinessHoursFormModel>(
     initialBusinessHoursFormValue
@@ -41,7 +47,7 @@ export class BusinessHoursPageComponent {
   protected readonly businessHoursSuite = businessHoursSuite;
   protected readonly ROOT_FORM = ROOT_FORM;
   protected readonly rootFormError = computed(
-    () => this.formBody()?.formState()?.errors[ROOT_FORM]?.[0]
+    () => this.feedback()?.formState()?.errors[ROOT_FORM]?.[0]
   );
 
   protected readonly validationConfig =
