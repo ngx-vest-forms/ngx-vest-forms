@@ -57,6 +57,10 @@ export async function navigateToDateRangeAdapter(
   ).toBeVisible();
 }
 
+export function getMainContentSidebar(page: Page): Locator {
+  return page.getByRole('main').getByRole('complementary').first();
+}
+
 /**
  * Wait for async validation to complete by monitoring aria-busy attribute
  */

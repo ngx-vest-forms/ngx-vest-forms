@@ -24,6 +24,34 @@ test.describe('Display Modes Demo Form', () => {
     ).toHaveCount(1);
   });
 
+  test('should use the token-provided error mode for wrappers without overrides', async ({
+    page,
+  }) => {
+    const tokenDefaultError = page.getByLabel(/username \(token default error\)/i);
+    const tokenDefaultWrapper = tokenDefaultError.locator(
+      'xpath=ancestor::ngx-control-wrapper[1]'
+    );
+
+    await tokenDefaultError.focus();
+    await tokenDefaultError.blur();
+
+    await expect(
+      tokenDefaultWrapper.getByRole('status').filter({
+        hasText: /this field is required/i,
+      })
+    ).toHaveCount(0);
+
+    await page
+      .getByRole('button', { name: /programmatically submit demo form/i })
+      .click();
+
+    await expect(
+      tokenDefaultWrapper.getByRole('status').filter({
+        hasText: /this field is required/i,
+      })
+    ).toHaveCount(1);
+  });
+
   test('should show on-dirty error after typing in dirty error field', async ({
     page,
   }) => {
@@ -84,6 +112,33 @@ test.describe('Display Modes Demo Form', () => {
 
     await expect(
       alwaysWarningWrapper.getByRole('status').filter({
+        hasText: /username should be at least 5 characters/i,
+      })
+    ).toHaveCount(1);
+  });
+
+  test('should use the token-provided warning mode for wrappers without overrides', async ({
+    page,
+  }) => {
+    const tokenDefaultWarning = page.getByLabel(
+      /username \(token default warning\)/i
+    );
+    const tokenDefaultWrapper = tokenDefaultWarning.locator(
+      'xpath=ancestor::ngx-control-wrapper[1]'
+    );
+
+    await tokenDefaultWarning.fill('abc');
+
+    await expect(
+      tokenDefaultWrapper.getByRole('status').filter({
+        hasText: /username should be at least 5 characters/i,
+      })
+    ).toHaveCount(0);
+
+    await tokenDefaultWarning.blur();
+
+    await expect(
+      tokenDefaultWrapper.getByRole('status').filter({
         hasText: /username should be at least 5 characters/i,
       })
     ).toHaveCount(1);

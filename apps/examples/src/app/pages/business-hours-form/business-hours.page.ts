@@ -35,6 +35,7 @@ import { BusinessHoursMap } from './ui/business-hours/business-hours.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BusinessHoursPageComponent {
+  protected readonly feedback = computed(() => this.formBody()?.feedback);
   /** Reference to form-body for triggering validation after structural changes */
   private readonly formBody = viewChild(BusinessHoursFormBody);
 
@@ -46,7 +47,7 @@ export class BusinessHoursPageComponent {
   protected readonly businessHoursSuite = businessHoursSuite;
   protected readonly ROOT_FORM = ROOT_FORM;
   protected readonly rootFormError = computed(
-    () => this.formBody()?.formState()?.errors[ROOT_FORM]?.[0]
+    () => this.feedback()?.formState()?.errors[ROOT_FORM]?.[0]
   );
 
   protected readonly validationConfig =

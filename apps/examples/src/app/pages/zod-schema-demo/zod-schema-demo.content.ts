@@ -29,7 +29,7 @@ export const zodSchemaContent = defineExampleContent({
         title: 'Field vs. full runs',
         points: [
           'suite.run(model) executes the whole suite; suite.only(field).run(model) runs only that field’s tests',
-          'ngx-vest-forms uses focused runs for per-field feedback, keeping the Zod schema available for structural checks',
+          'ngx-vest-forms uses focused runs for per-field feedback, with the Zod schema bound directly via [formContract] for structural checks',
         ],
       },
     ],

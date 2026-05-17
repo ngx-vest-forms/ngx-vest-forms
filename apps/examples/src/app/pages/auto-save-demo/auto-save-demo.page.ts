@@ -71,6 +71,7 @@ type AutoSaveRequest = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AutoSaveDemoPageComponent {
+  protected readonly feedback = computed(() => this.formBody()?.feedback);
   private readonly autoSaveService = inject(AutoSaveDemoService);
   private readonly formBody = viewChild(AutoSaveDemoFormBody);
   private readonly autoSaveRequests = new Subject<AutoSaveRequest>();
@@ -247,7 +248,7 @@ export class AutoSaveDemoPageComponent {
   }
 
   protected save(): void {
-    if (!this.formBody()?.formState().valid) {
+    if (!this.feedback()?.formState().valid) {
       return;
     }
 

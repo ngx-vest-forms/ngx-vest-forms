@@ -1,6 +1,7 @@
 import {
   afterNextRender,
   ChangeDetectionStrategy,
+  computed,
   Component,
   DestroyRef,
   inject,
@@ -11,15 +12,11 @@ import {
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-  createFormFeedbackSignals,
-  FormDirective,
-  NgxVestForms,
-  provideFormContract,
+  createEmptyFormState,
 } from 'ngx-vest-forms';
 import { catchError, EMPTY, finalize } from 'rxjs';
 import {
   SubmissionPatternsModel,
-  submissionPatternsShape,
 } from '../../models/submission-patterns.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
@@ -29,6 +26,7 @@ import { FormStateCardComponent } from '../../ui/form-state/form-state.component
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { AccountService } from './account.service';
 import { submissionPatternsContent } from './submission-patterns.content';
+import { SubmissionPatternsFormBody } from './submission-patterns.form';
 import { submissionPatternsSuite } from './submission-patterns.validations';
 
 /** Deterministic outcomes the demo can force through the mock API. */
@@ -51,16 +49,15 @@ type SubmissionState = 'editing' | 'submitting' | 'server-error' | 'success';
 @Component({
   selector: 'ngx-submission-patterns-page',
   imports: [
-    NgxVestForms,
     PageTitle,
     Card,
     AlertPanel,
     FormPageLayout,
     FormStateCardComponent,
     ExampleCardsComponent,
+    SubmissionPatternsFormBody,
   ],
   templateUrl: './submission-patterns.page.html',
-  providers: [provideFormContract(submissionPatternsShape)],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SubmissionPatternsPageComponent {
@@ -78,7 +75,7 @@ export class SubmissionPatternsPageComponent {
   protected readonly state = signal<SubmissionState>('editing');
   protected readonly serverError = signal<string | null>(null);
   protected readonly createdId = signal<string | null>(null);
-
+  protected readonly submitCycleActive = signal(false);
   protected readonly scenarios: ReadonlyArray<{
     label: string;
     value: Scenario;
@@ -90,34 +87,33 @@ export class SubmissionPatternsPageComponent {
   ];
   protected readonly scenario = signal<Scenario>('normal');
 
-  private readonly vestForm =
-    viewChild<FormDirective<SubmissionPatternsModel>>('vestForm');
-  private readonly feedback = createFormFeedbackSignals(this.vestForm);
+  private readonly formBody = viewChild(SubmissionPatternsFormBody);
 
-  protected readonly formState = this.feedback.formState;
-  protected readonly warnings = this.feedback.warnings;
-  protected readonly validatedFields = this.feedback.validatedFields;
-  protected readonly pending = this.feedback.pending;
+  protected readonly feedback = computed(() => this.formBody()?.feedback);
 
+  protected readonly showClearSubmitCycle = computed(
+    () => this.state() === 'editing' && this.submitCycleActive()
+  );
   protected onScenarioChange(value: string): void {
     this.scenario.set(this.isScenario(value) ? value : 'normal');
   }
 
   protected onSubmit(): void {
-    const formDirective = this.vestForm();
-    if (!formDirective) {
+    if (!this.formBody()) {
       return;
     }
+
+    this.submitCycleActive.set(true);
 
     // (b) Submit-time INVALID handling: never call the server, surface
     // errors, and move focus to the first invalid control. Deferred so the
     // submit-driven validation has flushed before we resolve the target.
     afterNextRender(
       () => {
-        if (!this.formState()?.valid) {
+        if (!this.feedback()?.formState()?.valid) {
           this.state.set('editing');
           this.serverError.set(null);
-          formDirective.focusFirstInvalidControl();
+          this.formBody()?.focusFirstInvalidControl();
           return;
         }
 
@@ -149,6 +145,8 @@ export class SubmissionPatternsPageComponent {
       .createAccount(value, errorScenario ? { errorScenario } : undefined)
       .pipe(
         catchError((error: unknown) => {
+          this.formBody()?.clearSubmittedState();
+          this.submitCycleActive.set(false);
           this.state.set('server-error');
           this.serverError.set(this.toErrorMessage(error));
           return EMPTY;
@@ -163,6 +161,8 @@ export class SubmissionPatternsPageComponent {
       )
       .subscribe((result) => {
         this.createdId.set(result.id);
+        this.formBody()?.clearSubmittedState();
+        this.submitCycleActive.set(false);
         this.state.set('success');
       });
   }
@@ -172,12 +172,19 @@ export class SubmissionPatternsPageComponent {
     this.callServer();
   }
 
+  /** End the current submit cycle while preserving values and control metadata. */
+  protected clearSubmitCycle(): void {
+    this.formBody()?.clearSubmittedState();
+    this.submitCycleActive.set(false);
+  }
+
   /** Create another: reset cleanly back to the editing state. */
   protected reset(): void {
     this.state.set('editing');
     this.serverError.set(null);
     this.createdId.set(null);
-    this.vestForm()?.resetForm({});
+    this.submitCycleActive.set(false);
+    this.formBody()?.resetFormState({});
     this.formValue.set({});
   }
 

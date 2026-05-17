@@ -7,14 +7,10 @@ import {
   viewChild,
 } from '@angular/core';
 import {
-  createFormFeedbackSignals,
-  FormDirective,
-  NgxVestForms,
-  provideFormContract,
+  createEmptyFormState,
 } from 'ngx-vest-forms';
 import {
   AsyncUsernameModel,
-  asyncUsernameShape,
 } from '../../models/async-username.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
@@ -23,6 +19,7 @@ import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.compo
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { asyncUsernameContent } from './async-username.content';
+import { AsyncUsernameFormBody } from './async-username.form';
 import { createAsyncUsernameSuite } from './async-username.validations';
 import { UsernameAvailabilityService } from './username-availability.service';
 
@@ -30,8 +27,8 @@ import { UsernameAvailabilityService } from './username-availability.service';
  * Async Username Availability — a self-contained demo that validates a
  * username against a mock remote endpoint.
  *
- * It mirrors the canonical starter wiring (one `ngxVestForm`, a form
- * contract, packaged feedback signals) and layers the async validation
+ * It mirrors the canonical starter wiring (page-owned state + focused form
+ * markup in `async-username.form.html`) and layers the async validation
  * pattern from the purchase demo on top: cheap synchronous rules gate an
  * `omitWhen`-wrapped, `memo`-keyed async test that aborts in-flight requests
  * when the username changes. Pending and submission state are kept separate
@@ -40,16 +37,15 @@ import { UsernameAvailabilityService } from './username-availability.service';
 @Component({
   selector: 'ngx-async-username-page',
   imports: [
-    NgxVestForms,
     PageTitle,
     Card,
     AlertPanel,
     FormPageLayout,
     FormStateCardComponent,
     ExampleCardsComponent,
+    AsyncUsernameFormBody,
   ],
   templateUrl: './async-username.page.html',
-  providers: [provideFormContract(asyncUsernameShape)],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AsyncUsernamePageComponent {
@@ -64,37 +60,14 @@ export class AsyncUsernamePageComponent {
   protected readonly formValue = signal<AsyncUsernameModel>({});
   protected readonly submittedValue = signal<AsyncUsernameModel | null>(null);
 
-  private readonly vestForm =
-    viewChild<FormDirective<AsyncUsernameModel>>('vestForm');
-  private readonly feedback = createFormFeedbackSignals(this.vestForm);
+  private readonly formBody = viewChild(AsyncUsernameFormBody);
 
-  protected readonly formState = this.feedback.formState;
-  protected readonly warnings = this.feedback.warnings;
-  protected readonly validatedFields = this.feedback.validatedFields;
-  protected readonly pending = this.feedback.pending;
-
-  /** Errors currently attached to the username field. */
-  private readonly usernameErrors = computed(
-    () => this.formState()?.errors['username'] ?? []
-  );
-
-  /**
-   * Show the calm success hint only once the username has been validated,
-   * has no errors, and no async check is in flight.
-   */
-  protected readonly usernameResolved = computed(() => {
-    const validated = this.validatedFields() ?? [];
-    return (
-      !this.pending() &&
-      validated.includes('username') &&
-      this.usernameErrors().length === 0 &&
-      !!this.formValue().username
-    );
-  });
+  protected readonly feedback = computed(() => this.formBody()?.feedback);
 
   protected onSubmit(): void {
-    if (!this.formState()?.valid) {
+    if (!this.feedback()?.formState()?.valid) {
       this.submittedValue.set(null);
+      this.formBody()?.focusFirstInvalidControl();
       return;
     }
     this.submittedValue.set(structuredClone(this.formValue()));
@@ -102,7 +75,7 @@ export class AsyncUsernamePageComponent {
 
   protected reset(): void {
     this.submittedValue.set(null);
-    this.vestForm()?.resetForm({});
+    this.formBody()?.resetFormState({});
     this.formValue.set({});
   }
 }

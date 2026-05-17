@@ -140,6 +140,20 @@ export const EXAMPLE_ROUTES: readonly ExampleRouteMeta[] = [
         (m) => m.BusinessPolicyPageComponent
       ),
   },
+  {
+    path: 'conditional-structure',
+    label: 'Conditional Structure',
+    title: 'Conditional Structure & Field Clearing',
+    subtitle:
+      'Keep model state and validation aligned when inputs disappear or turn into static content.',
+    category: 'Validation',
+    order: 6,
+    badge: 'new',
+    loadComponent: () =>
+      import(
+        '../pages/conditional-structure-demo/conditional-structure.page'
+      ).then((m) => m.ConditionalStructurePageComponent),
+  },
 
   // ── Schema ────────────────────────────────────────────────────────────────
   {
@@ -211,6 +225,20 @@ export const EXAMPLE_ROUTES: readonly ExampleRouteMeta[] = [
     loadComponent: () =>
       import('../pages/custom-controls-form/custom-controls.page').then(
         (m) => m.CustomControlsPageComponent
+      ),
+  },
+  {
+    path: 'accessible-wrapper',
+    label: 'Accessible Wrapper',
+    title: 'Accessible Custom Wrapper',
+    subtitle:
+      'Use directive-based ARIA wiring when the built-in wrapper markup is not the right fit.',
+    category: 'Controls',
+    order: 2,
+    badge: 'new',
+    loadComponent: () =>
+      import('../pages/accessible-wrapper-demo/accessible-wrapper.page').then(
+        (m) => m.AccessibleWrapperPageComponent
       ),
   },
 

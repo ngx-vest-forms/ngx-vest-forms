@@ -5,6 +5,7 @@ export const displayModesContent = defineExampleContent({
     icon: '👁️',
     title: 'What this demonstrates',
     points: [
+      'Page-level NGX_ERROR_DISPLAY_MODE_TOKEN and NGX_WARNING_DISPLAY_MODE_TOKEN defaults, then per-field overrides on ngx-control-wrapper.',
       'Per-field errorDisplayMode and warningDisplayMode on ngx-control-wrapper, all bound to one form and model.',
       'Error timing compared side by side: "always" (immediate, even pristine), "on-dirty" (after typing), and "on-submit" (only after programmatic submit).',
       'Warning timing compared: "always", "on-dirty", and "on-touch" (after blur).',
@@ -19,6 +20,7 @@ export const displayModesContent = defineExampleContent({
       {
         title: 'Display mode mechanics',
         points: [
+          'Set default modes for a whole subtree with NGX_ERROR_DISPLAY_MODE_TOKEN and NGX_WARNING_DISPLAY_MODE_TOKEN.',
           'Set errorDisplayMode / warningDisplayMode per field on ngx-control-wrapper.',
           'Choose timing per field: always, on-dirty, on-touch, or on-submit.',
           'Errors and warnings have independent display modes on the same control.',

@@ -20,12 +20,7 @@
         </ul>
       </ngx-card>
 
-      <ngx-form-state-card
-        [formState]="formState()"
-        [warnings]="warnings()"
-        [validatedFields]="validatedFields()"
-        [pending]="pending()"
-      />
+      <ngx-form-state-card [feedback]="feedback()" />
     </div>
 
     <div layout-main>
@@ -42,71 +37,13 @@
         title="Choose a username"
         subtitle="Try “ada”, “admin”, or “taken” to see the availability check fail."
       >
-        <form
-          ngxVestForm
-          #vestForm="ngxVestForm"
-          [suite]="suite"
+        <ngx-async-username-form-body
           [formValue]="formValue()"
+          [suite]="suite"
           (formValueChange)="formValue.set($event)"
-          (ngSubmit)="onSubmit()"
-          class="space-y-6"
-        >
-          <ngx-control-wrapper class="form-field">
-            <label>
-              <span class="label-text">Username</span>
-              <input
-                class="input-field"
-                type="text"
-                id="username"
-                name="username"
-                [ngModel]="formValue().username"
-                placeholder="ada_lovelace"
-                autocomplete="off"
-                autocapitalize="none"
-                spellcheck="false"
-              />
-            </label>
-
-            <p
-              aria-live="polite"
-              class="mt-1 min-h-[1.25rem] text-sm"
-            >
-              @if (pending()) {
-                <span class="text-blue-600 dark:text-blue-400">
-                  Checking availability…
-                </span>
-              } @else if (usernameResolved()) {
-                <span class="text-green-600 dark:text-green-400">
-                  That username is available.
-                </span>
-              }
-            </p>
-          </ngx-control-wrapper>
-
-          <ngx-control-wrapper class="form-field">
-            <label>
-              <span class="label-text">Display name</span>
-              <input
-                class="input-field"
-                type="text"
-                id="displayName"
-                name="displayName"
-                [ngModel]="formValue().displayName"
-                placeholder="Ada Lovelace"
-                autocomplete="name"
-              />
-            </label>
-          </ngx-control-wrapper>
-
-          <div class="flex justify-end gap-3 pt-2">
-            <button type="button" class="btn btn-secondary" (click)="reset()">
-              Reset
-            </button>
-            <button type="submit" class="btn btn-primary">
-              Reserve username
-            </button>
-          </div>
-        </form>
+          (submitted)="onSubmit()"
+          (resetRequested)="reset()"
+        />
       </ngx-card>
     </div>
   </ngx-form-page-layout>

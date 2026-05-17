@@ -1,5 +1,6 @@
 import { expect, Locator, Page, test } from '@playwright/test';
 import {
+  getMainContentSidebar,
   navigateToDateRangeAdapter,
   waitForValidationToSettle,
 } from '../../helpers/form-helpers';
@@ -81,21 +82,23 @@ test.describe('Composite Adapter - Form Behavior', () => {
   test('should update form model when departure date is entered', async ({
     page,
   }) => {
+    const sidebar = getMainContentSidebar(page);
     const departure = page.getByLabel(/departure date/i);
     await setAdapterDate(departure, '2026-07-01');
     await waitForValidationToSettle(page);
 
-    await expect(page.locator('aside')).toContainText('2026-07-01');
+    await expect(sidebar).toContainText('2026-07-01');
   });
 
   test('should update form model when return date is entered', async ({
     page,
   }) => {
+    const sidebar = getMainContentSidebar(page);
     const returnDate = page.getByLabel(/return date/i);
     await setAdapterDate(returnDate, '2026-07-15');
     await waitForValidationToSettle(page);
 
-    await expect(page.locator('aside')).toContainText('2026-07-15');
+    await expect(sidebar).toContainText('2026-07-15');
   });
 
   test('should show required errors on submit with empty fields', async ({

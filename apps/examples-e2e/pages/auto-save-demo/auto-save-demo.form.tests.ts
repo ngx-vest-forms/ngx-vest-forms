@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import {
   expectFieldHasError,
+  getMainContentSidebar,
   navigateToAutoSaveDemo,
   typeAndBlur,
   waitForValidationToSettle,
@@ -19,6 +20,8 @@ test.describe('Auto-Save Draft Demo', () => {
   test('should save a draft on blur and keep the saved value in sessionStorage', async ({
     page,
   }) => {
+    const sidebar = getMainContentSidebar(page);
+
     await test.step('Blur a changed field to trigger draft save', async () => {
       const projectName = page.getByLabel('Project name', { exact: true });
 
@@ -30,7 +33,7 @@ test.describe('Auto-Save Draft Demo', () => {
       await expect(
         page.getByRole('heading', { name: /draft saved/i })
       ).toBeVisible();
-      await expect(page.locator('aside')).toContainText(/website refresh/i);
+      await expect(sidebar).toContainText(/website refresh/i);
     });
 
     await test.step('Verify temporary storage contains the saved draft', async () => {
@@ -76,16 +79,18 @@ test.describe('Auto-Save Draft Demo', () => {
       await page.reload();
       await navigateToAutoSaveDemo(page);
 
+      const sidebar = getMainContentSidebar(page);
+
       await expect(page.getByLabel('Project name', { exact: true })).toHaveValue(
         'Release checklist'
       );
       await expect(page.getByLabel('Draft notes', { exact: true })).toHaveValue(
         'Add deployment notes for the production team.'
       );
-      await expect(page.locator('aside')).toContainText(
+      await expect(sidebar).toContainText(
         /restored from sessionstorage for this browser tab/i
       );
-      await expect(page.locator('aside')).toContainText(/sessionstorage/i);
+      await expect(sidebar).toContainText(/sessionstorage/i);
     });
   });
 
@@ -160,6 +165,8 @@ test.describe('Auto-Save Draft Demo', () => {
   test('should show save failure and retry successfully on the next blur', async ({
     page,
   }) => {
+    const sidebar = getMainContentSidebar(page);
+
     await test.step('Trigger a simulated save failure', async () => {
       const projectName = page.getByLabel('Project name', { exact: true });
 
@@ -168,9 +175,7 @@ test.describe('Auto-Save Draft Demo', () => {
       await expect(
         page.getByRole('heading', { name: /draft save failed/i })
       ).toBeVisible();
-      await expect(page.locator('aside')).toContainText(
-        /simulated save failure/i
-      );
+      await expect(sidebar).toContainText(/simulated save failure/i);
     });
 
     await test.step('Fix the draft and retry via blur', async () => {
@@ -207,6 +212,8 @@ test.describe('Auto-Save Draft Demo', () => {
   test('should discard an in-flight blur save when the form is reset', async ({
     page,
   }) => {
+    const sidebar = getMainContentSidebar(page);
+
     await test.step('Start a blur save and reset before it completes', async () => {
       const projectName = page.getByLabel('Project name', { exact: true });
       const resetButton = page.getByRole('button', { name: /reset form/i });
@@ -230,7 +237,7 @@ test.describe('Auto-Save Draft Demo', () => {
         })
         .toBeNull();
 
-      await expect(page.locator('aside')).not.toContainText(/transient draft/i);
+      await expect(sidebar).not.toContainText(/transient draft/i);
     });
   });
 });

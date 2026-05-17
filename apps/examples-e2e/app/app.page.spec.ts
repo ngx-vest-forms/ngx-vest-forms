@@ -14,6 +14,9 @@ test.describe('App Page', () => {
     await page.goto('/');
 
     await expect(
+      page.getByRole('link', { name: /starter contact form/i })
+    ).toBeVisible();
+    await expect(
       page.getByRole('link', { name: /purchase form/i })
     ).toBeVisible();
     await expect(
@@ -35,10 +38,16 @@ test.describe('App Page', () => {
       page.getByRole('link', { name: /business policy/i })
     ).toBeVisible();
     await expect(
+      page.getByRole('link', { name: /conditional structure/i })
+    ).toBeVisible();
+    await expect(
       page.getByRole('link', { name: /complex nested/i })
     ).toBeVisible();
     await expect(
       page.getByRole('link', { name: /custom controls/i })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: /accessible wrapper/i })
     ).toBeVisible();
     await expect(
       page.getByRole('link', { name: /submission patterns/i })

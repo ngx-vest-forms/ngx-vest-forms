@@ -51,20 +51,16 @@ export class BusinessPolicyFormBody {
 
   private readonly vestForm =
     viewChild<FormDirective<BusinessPolicyModel>>('vestForm');
-  private readonly formFeedback = createFormFeedbackSignals(this.vestForm);
+  readonly feedback = createFormFeedbackSignals(this.vestForm);
 
   /** Exposes the directive's packaged form state with up-to-date errors. */
-  readonly formState = this.formFeedback.formState;
-
+  
   /** Exposes field warnings as a plain Record for presentational components. */
-  readonly warnings = this.formFeedback.warnings;
-
+  
   /** Field paths that have been validated (touched/blurred or submitted). */
-  readonly validatedFields = this.formFeedback.validatedFields;
-
+  
   /** True while async validation is in progress. */
-  readonly pending = this.formFeedback.pending;
-
+  
   /** True when the EU country set contains the selected country. */
   protected isEuCountry(country: string | undefined): boolean {
     return !!country && (this.euCountries as readonly string[]).includes(

@@ -1,6 +1,8 @@
 import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
 
 export type DisplayModesDemoModel = NgxDeepPartial<{
+  tokenDefaultError: string;
+  tokenDefaultWarning: string;
   alwaysError: string;
   dirtyError: string;
   submitError: string;
@@ -10,6 +12,8 @@ export type DisplayModesDemoModel = NgxDeepPartial<{
 }>;
 
 export const displayModesDemoContract: NgxDeepRequired<DisplayModesDemoModel> = {
+  tokenDefaultError: '',
+  tokenDefaultWarning: '',
   alwaysError: '',
   dirtyError: '',
   submitError: '',

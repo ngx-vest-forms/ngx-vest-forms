@@ -4,7 +4,12 @@ import {
   computed,
   input,
 } from '@angular/core';
-import { createEmptyFormState, NgxFormState, ROOT_FORM } from 'ngx-vest-forms';
+import {
+  createEmptyFormState,
+  NgxFormFeedbackSignals,
+  NgxFormState,
+  ROOT_FORM,
+} from 'ngx-vest-forms';
 import { AlertPanel } from '../alert-panel/alert-panel.component';
 import { Card } from '../card/card.component';
 import { JsonPreviewComponent } from '../json-preview/json-preview.component';
@@ -154,11 +159,21 @@ type MessageInput = readonly string[] | Record<string, string[]>;
 export class FormStateCardComponent {
   readonly title = input('Form State');
   readonly formValueTitle = input('Form Value');
+
+  /**
+   * Packaged feedback signals from a form.
+   * If provided, `formState`, `warnings`, `validatedFields`, and `pending` will
+   * fallback to reading from this object.
+   */
+  readonly feedback = input<NgxFormFeedbackSignals<unknown> | null | undefined>(
+    undefined
+  );
+
   readonly formState = input<NgxFormState<unknown> | null>(null);
   readonly isValid = input<boolean | null>(null);
   readonly formValue = input<unknown | null>(null);
   /** True when async validation is currently in progress. */
-  readonly pending = input(false);
+  readonly pending = input<boolean | null>(null);
 
   /** Accepts a flat `string[]` or a `Record<string, string[]>` (flattened internally). */
   readonly errors = input<MessageInput | null>(null);
@@ -196,8 +211,15 @@ export class FormStateCardComponent {
   });
 
   readonly #warningsRecord = computed(() => {
-    const raw = this.#toRecord(this.warnings());
-    return this.#filterByValidatedFields(raw);
+    const explicit = this.warnings();
+    if (explicit !== null) {
+      return this.#filterByValidatedFields(this.#toRecord(explicit));
+    }
+    const feedbackWarnings = this.feedback()?.warnings();
+    if (feedbackWarnings) {
+      return this.#filterByValidatedFields(feedbackWarnings);
+    }
+    return {};
   });
 
   readonly #validationWarningRulesRecord = computed(() =>
@@ -230,7 +252,7 @@ export class FormStateCardComponent {
   // ── Passing: validated fields without visible issues ───────────────
 
   protected readonly resolvedMessages = computed(() => {
-    const validated = new Set(this.validatedFields() ?? []);
+    const validated = new Set(this.resolvedValidatedFields() ?? []);
     if (validated.size === 0) {
       return [];
     }
@@ -251,7 +273,10 @@ export class FormStateCardComponent {
   // ── Display computeds ─────────────────────────────────────────────
 
   protected readonly resolvedFormState = computed(
-    () => this.formState() ?? createEmptyFormState<unknown>()
+    () =>
+      this.formState() ??
+      this.feedback()?.formState() ??
+      createEmptyFormState<unknown>()
   );
 
   protected readonly effectiveIsValid = computed(
@@ -300,10 +325,16 @@ export class FormStateCardComponent {
       this.uniqueWarnings().length > 0
   );
 
-  protected readonly isPending = computed(() => this.pending());
+  protected readonly isPending = computed(
+    () => this.pending() ?? this.feedback()?.pending() ?? false
+  );
+
+  protected readonly resolvedValidatedFields = computed(
+    () => this.validatedFields() ?? this.feedback()?.validatedFields() ?? null
+  );
 
   protected readonly isPristine = computed(() => {
-    const validated = this.validatedFields();
+    const validated = this.resolvedValidatedFields();
     return (
       !this.isPending() &&
       Array.isArray(validated) &&
@@ -343,7 +374,7 @@ export class FormStateCardComponent {
   #filterByValidatedFields(
     record: Record<string, string[]>
   ): Record<string, string[]> {
-    const validatedFieldsList = this.validatedFields();
+    const validatedFieldsList = this.resolvedValidatedFields();
     if (validatedFieldsList === null || validatedFieldsList === undefined) {
       return record;
     }
@@ -376,7 +407,7 @@ export class FormStateCardComponent {
   }
 
   #collectUnusedRules(rules: Record<string, string[]>): string[] {
-    const validated = new Set(this.validatedFields() ?? []);
+    const validated = new Set(this.resolvedValidatedFields() ?? []);
     const messages = Object.entries(rules)
       .filter(([field]) => field === '_flat' || !validated.has(field))
       .flatMap(([field, fieldRules]) => {

@@ -31,6 +31,7 @@ import { validationDemoSuite } from './validation-demo.validations';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ValidationConfigDemoPageComponent {
+  protected readonly feedback = computed(() => this.formBody()?.feedback);
   private readonly initialFormValue: ValidationDemoModel = {
     requiresJustification: false,
   };
@@ -55,7 +56,7 @@ export class ValidationConfigDemoPageComponent {
       .build();
 
   protected readonly formInfo = computed(() =>
-    this.#getMessagesByFields(this.formBody()?.formState()?.errors ?? {}, [
+    this.#getMessagesByFields(this.feedback()?.formState()?.errors ?? {}, [
       'startDate',
       'endDate',
     ])
@@ -63,13 +64,13 @@ export class ValidationConfigDemoPageComponent {
 
   protected readonly formErrors = computed(() =>
     this.#getMessagesExcludingFields(
-      this.formBody()?.formState()?.errors ?? {},
+      this.feedback()?.formState()?.errors ?? {},
       ['startDate', 'endDate']
     )
   );
 
   protected save(): void {
-    if (this.formBody()?.formState()?.valid) {
+    if (this.feedback()?.formState()?.valid) {
       // Intentionally no console output or alerts in examples to keep CI and demos quiet
     }
   }

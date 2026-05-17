@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { navigateToBusinessHoursForm } from '../../helpers/form-helpers';
+import {
+  getMainContentSidebar,
+  navigateToBusinessHoursForm,
+} from '../../helpers/form-helpers';
 
 test.describe('Business Hours Page', () => {
   test.beforeEach(async ({ page }) => {
@@ -11,7 +14,7 @@ test.describe('Business Hours Page', () => {
       page.getByRole('heading', { name: /business hours form/i, level: 1 })
     ).toBeVisible();
 
-    const sidebar = page.getByRole('complementary').first();
+    const sidebar = getMainContentSidebar(page);
     await expect(sidebar).toBeVisible();
     await expect(sidebar).toContainText(/form value/i);
     await expect(sidebar).toContainText(/form state/i);

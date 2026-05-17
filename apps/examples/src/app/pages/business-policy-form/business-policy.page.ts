@@ -1,3 +1,4 @@
+import { computed } from "@angular/core";
 import {
   ChangeDetectionStrategy,
   Component,
@@ -43,6 +44,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BusinessPolicyPageComponent {
+  protected readonly feedback = computed(() => this.formBody()?.feedback);
   protected readonly exampleContent = businessPolicyContent;
   protected readonly suite = businessPolicySuite;
   protected readonly errorRules = businessPolicyErrorRulesByField;
@@ -68,7 +70,7 @@ export class BusinessPolicyPageComponent {
 
   protected onSubmit(): void {
     // Warnings are advisory and never block submit — only errors gate it.
-    if (!this.formBody()?.formState()?.valid) {
+    if (!this.feedback()?.formState()?.valid) {
       this.submittedValue.set(null);
       return;
     }

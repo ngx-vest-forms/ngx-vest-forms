@@ -12,10 +12,46 @@
     class="space-y-8"
   >
     <ngx-card
+      title="Token default: errorDisplayMode='on-submit'"
+      subtitle="This wrapper does not set errorDisplayMode itself — the page-level NGX_ERROR_DISPLAY_MODE_TOKEN provides the default."
+    >
+      <ngx-control-wrapper>
+        <label for="tokenDefaultError" class="label-text"
+          >Username (Token Default Error)</label
+        >
+        <input
+          id="tokenDefaultError"
+          name="tokenDefaultError"
+          [ngModel]="formValue().tokenDefaultError"
+          class="input-field"
+          placeholder="Leave empty, then use the external submit button..."
+        />
+      </ngx-control-wrapper>
+    </ngx-card>
+
+    <ngx-card
+      title="Token default: warningDisplayMode='on-touch'"
+      subtitle="This wrapper relies on the page-level NGX_WARNING_DISPLAY_MODE_TOKEN, then the explicit examples below override it per field."
+    >
+      <ngx-control-wrapper>
+        <label for="tokenDefaultWarning" class="label-text"
+          >Username (Token Default Warning)</label
+        >
+        <input
+          id="tokenDefaultWarning"
+          name="tokenDefaultWarning"
+          [ngModel]="formValue().tokenDefaultWarning"
+          class="input-field"
+          placeholder="Type a short username, then blur..."
+        />
+      </ngx-control-wrapper>
+    </ngx-card>
+
+    <ngx-card
       title="Error Display Mode: 'always'"
       subtitle="Errors appear immediately, even on pristine fields."
     >
-      <ngx-control-wrapper [errorDisplayMode]="'always'">
+      <ngx-control-wrapper errorDisplayMode="always">
         <label for="alwaysError" class="label-text"
           >Username (Always Mode)</label
         >
@@ -33,7 +69,7 @@
       title="Error Display Mode: 'on-dirty'"
       subtitle="Errors appear as soon as you type."
     >
-      <ngx-control-wrapper [errorDisplayMode]="'on-dirty'">
+      <ngx-control-wrapper errorDisplayMode="on-dirty">
         <label for="dirtyError" class="label-text"
           >Username (On-Dirty Mode)</label
         >
@@ -51,7 +87,7 @@
       title="Error Display Mode: 'on-submit'"
       subtitle="This field stays quiet until the parent container submits the form programmatically."
     >
-      <ngx-control-wrapper [errorDisplayMode]="'on-submit'">
+      <ngx-control-wrapper errorDisplayMode="on-submit">
         <label for="submitError" class="label-text"
           >Username (On-Submit Mode)</label
         >
@@ -78,7 +114,7 @@
       title="Warning Display Mode: 'always'"
       subtitle="Warnings appear immediately on pristine fields."
     >
-      <ngx-control-wrapper [warningDisplayMode]="'always'">
+      <ngx-control-wrapper warningDisplayMode="always">
         <label for="alwaysWarning" class="label-text"
           >Username (Always Warning)</label
         >
@@ -96,7 +132,7 @@
       title="Warning Display Mode: 'on-dirty'"
       subtitle="Warnings appear as soon as you type."
     >
-      <ngx-control-wrapper [warningDisplayMode]="'on-dirty'">
+      <ngx-control-wrapper warningDisplayMode="on-dirty">
         <label for="dirtyWarning" class="label-text"
           >Username (On-Dirty Warning)</label
         >
@@ -114,7 +150,7 @@
       title="Warning Display Mode: 'on-touch'"
       subtitle="Warnings appear after blur (traditional behavior)."
     >
-      <ngx-control-wrapper [warningDisplayMode]="'on-touch'">
+      <ngx-control-wrapper warningDisplayMode="on-touch">
         <label for="touchWarning" class="label-text"
           >Username (On-Touch Warning)</label
         >
@@ -137,7 +173,8 @@
       class="text-sm text-gray-600 dark:text-gray-300"
     >
       This mirrors a parent-controlled submit flow where submission is triggered
-      externally/programmatically.
+      externally/programmatically. The token-default submit field above relies
+      entirely on this provider-driven path.
     </p>
     <button
       type="button"

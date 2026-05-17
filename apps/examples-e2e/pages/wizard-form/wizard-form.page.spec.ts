@@ -1,9 +1,12 @@
 import { expect, test } from '@playwright/test';
+import { getMainContentSidebar } from '../../helpers/form-helpers';
 
 test.describe('Wizard Form Page', () => {
   test('should render wizard page layout and step navigation', async ({
     page,
   }) => {
+    const sidebar = getMainContentSidebar(page);
+
     await page.goto('/wizard');
 
     await expect(
@@ -11,10 +14,8 @@ test.describe('Wizard Form Page', () => {
     ).toBeVisible();
 
     await expect(page.locator('ngx-wizard-steps nav')).toBeVisible();
-    await expect(page.locator('aside').first()).toBeVisible();
-    await expect(page.locator('aside').first()).toContainText(/form value/i);
-    await expect(
-      page.locator('aside span[aria-label="Pristine"]').first()
-    ).toBeVisible();
+    await expect(sidebar).toBeVisible();
+    await expect(sidebar).toContainText(/form value/i);
+    await expect(sidebar.locator('span[aria-label="Pristine"]').first()).toBeVisible();
   });
 });

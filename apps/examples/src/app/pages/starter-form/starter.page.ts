@@ -1,18 +1,15 @@
 import {
   ChangeDetectionStrategy,
+  computed,
   Component,
   signal,
   viewChild,
 } from '@angular/core';
 import {
-  createFormFeedbackSignals,
-  FormDirective,
-  NgxVestForms,
-  provideFormContract,
+  createEmptyFormState,
 } from 'ngx-vest-forms';
 import {
   StarterFormModel,
-  starterFormShape,
 } from '../../models/starter-form.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
@@ -21,29 +18,28 @@ import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.compo
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { starterContent } from './starter.content';
+import { StarterFormBody } from './starter.form';
 import { starterFormSuite } from './starter.validations';
 
 /**
  * Canonical starter contact form — the default "start here" demo.
  *
- * Intentionally one self-contained component so it reads as a trustworthy
- * baseline a developer can copy: a single `ngxVestForm`, a plain Vest suite,
- * a form contract, and the standard control-wrapper markup. Uses the
- * ngx-vest-forms public API only.
+ * The page owns state, examples, and outcomes while the focused form markup
+ * lives beside it in `starter.form.html` so developers can inspect the form
+ * wiring without scanning page chrome. Uses the ngx-vest-forms public API only.
  */
 @Component({
   selector: 'ngx-starter-page',
   imports: [
-    NgxVestForms,
     PageTitle,
     Card,
     AlertPanel,
     FormPageLayout,
     FormStateCardComponent,
     ExampleCardsComponent,
+    StarterFormBody,
   ],
   templateUrl: './starter.page.html',
-  providers: [provideFormContract(starterFormShape)],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StarterPageComponent {
@@ -54,18 +50,14 @@ export class StarterPageComponent {
   protected readonly formValue = signal<StarterFormModel>({});
   protected readonly submittedValue = signal<StarterFormModel | null>(null);
 
-  private readonly vestForm =
-    viewChild<FormDirective<StarterFormModel>>('vestForm');
-  private readonly feedback = createFormFeedbackSignals(this.vestForm);
+  private readonly formBody = viewChild(StarterFormBody);
 
-  protected readonly formState = this.feedback.formState;
-  protected readonly warnings = this.feedback.warnings;
-  protected readonly validatedFields = this.feedback.validatedFields;
-  protected readonly pending = this.feedback.pending;
+  protected readonly feedback = computed(() => this.formBody()?.feedback);
 
   protected onSubmit(): void {
-    if (!this.formState()?.valid) {
+    if (!this.feedback()?.formState()?.valid) {
       this.submittedValue.set(null);
+      this.formBody()?.focusFirstInvalidControl();
       return;
     }
     this.submittedValue.set(structuredClone(this.formValue()));
@@ -73,7 +65,7 @@ export class StarterPageComponent {
 
   protected reset(): void {
     this.submittedValue.set(null);
-    this.vestForm()?.resetForm({});
+    this.formBody()?.resetFormState({});
     this.formValue.set({});
   }
 }

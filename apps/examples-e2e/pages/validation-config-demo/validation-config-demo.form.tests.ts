@@ -1334,18 +1334,36 @@ test.describe('ValidationConfig Demo', () => {
       page,
     }) => {
       await test.step('Verify all sections are visible', async () => {
-        // Look for section headings
         await expect(
-          page.locator('text=/bidirectional.*password/i')
+          page.getByRole('heading', {
+            name: /bidirectional validation/i,
+            level: 2,
+          })
         ).toBeVisible();
         await expect(
-          page.locator('text=/cross-field.*requirement/i')
+          page.getByRole('heading', {
+            name: /cross-field requirement/i,
+            level: 2,
+          })
         ).toBeVisible();
         await expect(
-          page.locator('text=/conditional.*justification/i')
+          page.getByRole('heading', {
+            name: /conditional validation/i,
+            level: 2,
+          })
         ).toBeVisible();
-        await expect(page.locator('text=/cascade.*country/i')).toBeVisible();
-        await expect(page.locator('text=/date range/i')).toBeVisible();
+        await expect(
+          page.getByRole('heading', {
+            name: /cascade validation/i,
+            level: 2,
+          })
+        ).toBeVisible();
+        await expect(
+          page.getByRole('heading', {
+            name: /date range validation/i,
+            level: 2,
+          })
+        ).toBeVisible();
       });
     });
 

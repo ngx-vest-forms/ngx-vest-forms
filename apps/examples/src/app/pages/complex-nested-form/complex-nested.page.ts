@@ -1,3 +1,4 @@
+import { computed } from "@angular/core";
 import {
   ChangeDetectionStrategy,
   Component,
@@ -42,6 +43,7 @@ import { complexNestedSuite } from './complex-nested.validations';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ComplexNestedPageComponent {
+  protected readonly feedback = computed(() => this.formBody()?.feedback);
   protected readonly exampleContent = complexNestedContent;
   protected readonly suite = complexNestedSuite;
 
@@ -65,7 +67,7 @@ export class ComplexNestedPageComponent {
   }
 
   protected onSubmit(): void {
-    if (!this.formBody()?.formState()?.valid) {
+    if (!this.feedback()?.formState()?.valid) {
       this.submittedValue.set(null);
       this.submittedPayload.set(null);
       return;

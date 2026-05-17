@@ -54,7 +54,7 @@
 
       @if (formValue().preferredContactMethod === 'email') {
       <div class="mt-6">
-        <ngx-control-wrapper [errorDisplayMode]="'on-blur'" class="form-field">
+        <ngx-control-wrapper errorDisplayMode="on-blur" class="form-field">
           <label for="email">
             <span class="label-text">Notification email</span>
             <input
@@ -77,7 +77,7 @@
       description="Either field can make the other required immediately, while the dependent error still waits for that field's own blur."
     >
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <ngx-control-wrapper [errorDisplayMode]="'on-blur'" class="form-field">
+        <ngx-control-wrapper errorDisplayMode="on-blur" class="form-field">
           <label for="quantity">
             <span class="label-text">Quantity</span>
             <input
@@ -91,7 +91,7 @@
           </label>
         </ngx-control-wrapper>
 
-        <ngx-control-wrapper [errorDisplayMode]="'on-blur'" class="form-field">
+        <ngx-control-wrapper errorDisplayMode="on-blur" class="form-field">
           <label for="quantityJustification">
             <span class="label-text">Quantity justification</span>
             <textarea
@@ -112,7 +112,7 @@
       title="Notes"
       description="Warnings are non-blocking, so they can guide better drafts without blocking auto-save."
     >
-      <ngx-control-wrapper [warningDisplayMode]="'on-dirty'" class="form-field">
+      <ngx-control-wrapper warningDisplayMode="on-dirty" class="form-field">
         <label for="notes">
           <span class="label-text">Draft notes</span>
           <textarea

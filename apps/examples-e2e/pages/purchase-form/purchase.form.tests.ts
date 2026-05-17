@@ -803,7 +803,7 @@ test.describe('Purchase Form', () => {
             timeout: 5000,
           }
         );
-        await expect(fetchError).toContainText(/mock person 404 not found/i, {
+        await expect(fetchError).toContainText(/not found: person 404/i, {
           timeout: 5000,
         });
         await expect(userId).toBeEmpty();
@@ -1014,9 +1014,7 @@ test.describe('Purchase Form', () => {
             timeout: 5000,
           }
         );
-        await expect(fetchError).toContainText(
-          /mock server failed while loading person 1/i
-        );
+        await expect(fetchError).toContainText(/mock server failed: person 1/i);
       });
     });
 
@@ -1041,9 +1039,7 @@ test.describe('Purchase Form', () => {
             timeout: 5000,
           }
         );
-        await expect(fetchError).toContainText(
-          /you are not authorized to load mock person 1/i
-        );
+        await expect(fetchError).toContainText(/you are not authorized: person 1/i);
         await expect(fetchError).not.toContainText(
           /no person was found for this request/i
         );
@@ -1072,7 +1068,7 @@ test.describe('Purchase Form', () => {
           /we could not reach the people service/i
         );
         await expect(fetchError).toContainText(
-          /simulated network outage while contacting the mock people api/i
+          /simulated network outage while contacting the mock api \(person 1\)/i
         );
       });
     });

@@ -125,13 +125,10 @@
       </ngx-card>
 
       <ngx-form-state-card
-        [formState]="formBody.formState()"
+        [feedback]="feedback()"
         [formValue]="formValue()"
         [errors]="formErrors()"
-        [warnings]="formBody.warnings()"
-        [validatedFields]="formBody.validatedFields()"
-        [pending]="formBody.pending()"
-      />
+        />
     </div>
 
     <div layout-main>

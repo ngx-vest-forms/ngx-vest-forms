@@ -27,6 +27,37 @@ test.describe('Submission Patterns Form', () => {
     ).toBeVisible();
   });
 
+  test('should clear the submit cycle without resetting current values', async ({
+    page,
+  }) => {
+    const fullName = page.getByLabel('Full name', { exact: true });
+    const email = page.getByLabel('Email', { exact: true });
+    const emailWrapper = email.locator('xpath=ancestor::ngx-control-wrapper[1]');
+    const clearSubmittedState = page.getByRole('button', {
+      name: /clear submitted state/i,
+    });
+    const errorSummary = page.getByRole('alert').filter({
+      hasText: /email is required/i,
+    });
+
+    await fillAndBlur(fullName, 'Ada Lovelace');
+    await page.getByRole('button', { name: /create account/i }).click();
+    await waitForValidationToSettle(page);
+
+    await expect(clearSubmittedState).toBeVisible();
+    await expect(errorSummary).toContainText(/email is required/i);
+
+    await clearSubmittedState.click();
+
+    await expect(clearSubmittedState).toHaveCount(0);
+    await expect(fullName).toHaveValue('Ada Lovelace');
+    await expect(
+      emailWrapper.getByRole('status').filter({
+        hasText: /email is required/i,
+      })
+    ).toHaveCount(0);
+  });
+
   test('should retry a server failure and reach the success state', async ({
     page,
   }) => {

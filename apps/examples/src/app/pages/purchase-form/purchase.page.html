@@ -92,13 +92,10 @@
       </ngx-card>
 
       <ngx-form-state-card
-        [formState]="purchaseForm.formState()"
-        [warnings]="purchaseForm.warnings()"
+        [feedback]="purchaseForm.feedback"
         [validationErrorRules]="validationErrorRules"
         [validationWarningRules]="validationWarningRules"
-        [validatedFields]="purchaseForm.validatedFields()"
-        [pending]="purchaseForm.pending()"
-      />
+        />
     </aside>
 
     <section class="space-y-6">

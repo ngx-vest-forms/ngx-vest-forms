@@ -3,6 +3,7 @@
     ngxVestForm
     #vestForm="ngxVestForm"
     [suite]="suite()"
+    [formContract]="formContract"
     [formValue]="formValue()"
     (formValueChange)="formValueChange.emit($event)"
     (errorsChange)="currentErrors.set($event)"

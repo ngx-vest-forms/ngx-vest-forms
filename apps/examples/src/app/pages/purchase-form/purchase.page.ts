@@ -36,6 +36,7 @@ type FetchLukeMode = 'normal' | FetchErrorScenario;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PurchasePageComponent {
+  protected readonly feedback = computed(() => this.purchaseForm()?.feedback);
   private readonly purchaseForm = viewChild(PurchaseForm);
 
   protected readonly exampleContent = purchaseContent;
@@ -67,7 +68,7 @@ export class PurchasePageComponent {
   protected readonly validationWarningRules =
     purchaseValidationWarningRulesByField;
   protected readonly rootFormErrors = computed(
-    () => this.purchaseForm()?.formState()?.errors[ROOT_FORM] || []
+    () => this.feedback()?.formState()?.errors[ROOT_FORM] || []
   );
 
   protected fetchLuke(mode: string): void {

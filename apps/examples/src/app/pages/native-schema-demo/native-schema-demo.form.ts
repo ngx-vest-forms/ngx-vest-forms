@@ -13,7 +13,6 @@ import {
   FormDirective,
   NgxVestForms,
   NgxVestSuite,
-  provideFormContract,
 } from 'ngx-vest-forms';
 import {
   NativeSchemaDemoModel,
@@ -26,12 +25,12 @@ import { FormSectionComponent } from '../../ui/form-section/form-section.compone
   selector: 'ngx-native-schema-demo-form-body',
   imports: [NgxVestForms, Card, FormSectionComponent],
   templateUrl: './native-schema-demo.form.html',
-  providers: [provideFormContract(nativeSchemaDemoContract)],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NativeSchemaDemoFormBody {
   readonly formValue = input.required<NativeSchemaDemoModel>();
   readonly suite = input.required<NgxVestSuite<NativeSchemaDemoModel>>();
+  readonly formContract = nativeSchemaDemoContract;
 
   readonly formValueChange = output<NativeSchemaDemoModel>();
   readonly submitted = output();
@@ -41,7 +40,7 @@ export class NativeSchemaDemoFormBody {
   });
 
   protected readonly currentErrors = signal<Record<string, string[]>>({});
-  private readonly formFeedback = createFormFeedbackSignals(this.vestForm, {
+  readonly feedback = createFormFeedbackSignals(this.vestForm, {
     formState: computed(() => {
       const state = this.vestForm()?.formState();
       if (!state) return createEmptyFormState<NativeSchemaDemoModel>();
@@ -49,11 +48,7 @@ export class NativeSchemaDemoFormBody {
     }),
   });
 
-  readonly formState = this.formFeedback.formState;
-  readonly warnings = this.formFeedback.warnings;
-  readonly validatedFields = this.formFeedback.validatedFields;
-  readonly pending = this.formFeedback.pending;
-
+        
   protected onSubmit(): void {
     this.submitted.emit();
   }

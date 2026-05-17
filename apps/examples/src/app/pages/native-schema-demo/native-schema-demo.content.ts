@@ -29,7 +29,7 @@ export const nativeSchemaContent = defineExampleContent({
         title: 'Schema vs. business rules',
         points: [
           'Keep the schema for shape/type safety and reserve test() callbacks for user-facing business messages',
-          'Wire the suite into the form with provideFormContract so each field validates via suite.only(field).run(model)',
+          'Bind the schema directly through [formContract] so the example showcases the v3 public API instead of a DI-only pattern',
         ],
       },
     ],

@@ -30,6 +30,7 @@ import { travelValidationSuite } from './travel.validations';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TravelPageComponent {
+  protected readonly feedback = computed(() => this.formBody()?.feedback);
   private readonly initialFormValue: TravelFormModel = {};
 
   protected readonly formValue = signal<TravelFormModel>(this.initialFormValue);
@@ -49,32 +50,32 @@ export class TravelPageComponent {
 
   /** Merged errors from both date fields for the sidebar card. */
   protected readonly formErrors = computed(() => {
-    const errors = this.formBody()?.formState()?.errors ?? {};
-    return [...new Set(Object.values(errors).flat())];
+    const errors = this.feedback()?.formState()?.errors ?? {};
+    return [...new Set(Object.values(errors).flat())] as string[];
   });
 
   protected readonly departureErrors = computed(() => {
-    const errors = this.formBody()?.formState()?.errors ?? {};
+    const errors = this.feedback()?.formState()?.errors ?? {};
     return errors['departureDate'] ?? [];
   });
 
   protected readonly returnErrors = computed(() => {
-    const errors = this.formBody()?.formState()?.errors ?? {};
+    const errors = this.feedback()?.formState()?.errors ?? {};
     return errors['returnDate'] ?? [];
   });
 
   protected readonly departureWarnings = computed(() => {
-    const warnings = this.formBody()?.warnings() ?? {};
+    const warnings = this.feedback()?.warnings() ?? {};
     return warnings['departureDate'] ?? [];
   });
 
   protected readonly returnWarnings = computed(() => {
-    const warnings = this.formBody()?.warnings() ?? {};
+    const warnings = this.feedback()?.warnings() ?? {};
     return warnings['returnDate'] ?? [];
   });
 
   protected save(): void {
-    if (this.formBody()?.formState()?.valid) {
+    if (this.feedback()?.formState()?.valid) {
       // Intentionally quiet in examples
     }
   }

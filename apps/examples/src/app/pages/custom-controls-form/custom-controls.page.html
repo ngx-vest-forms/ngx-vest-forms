@@ -29,12 +29,7 @@
         </ul>
       </ngx-card>
 
-      <ngx-form-state-card
-        [formState]="formState()"
-        [warnings]="warnings()"
-        [validatedFields]="validatedFields()"
-        [pending]="pending()"
-      />
+      <ngx-form-state-card [feedback]="feedback()" />
     </div>
 
     <div layout-main>
@@ -52,46 +47,13 @@
         title="Custom controls"
         subtitle="Rating, experience and tags are all non-native controls. Try submitting empty to see validation."
       >
-        <form
-          ngxVestForm
-          #vestForm="ngxVestForm"
-          [suite]="suite"
+        <ngx-custom-controls-form-body
           [formValue]="formValue()"
+          [suite]="suite"
           (formValueChange)="formValue.set($event)"
-          (ngSubmit)="onSubmit()"
-          class="space-y-6"
-        >
-          <ngx-control-wrapper class="form-field">
-            <div role="group" aria-label="Rating">
-              <span class="label-text">Rating</span>
-              <ngx-star-rating name="rating" [ngModel]="formValue().rating" />
-            </div>
-          </ngx-control-wrapper>
-
-          <ngx-control-wrapper class="form-field">
-            <div role="group" aria-label="Experience level">
-              <span class="label-text">Experience level</span>
-              <ngx-segmented-control
-                name="experience"
-                [ngModel]="formValue().experience"
-              />
-            </div>
-          </ngx-control-wrapper>
-
-          <ngx-control-wrapper class="form-field">
-            <div role="group" aria-label="Tags">
-              <span class="label-text">Tags</span>
-              <ngx-tag-input name="tags" [ngModel]="formValue().tags" />
-            </div>
-          </ngx-control-wrapper>
-
-          <div class="flex justify-end gap-3 pt-2">
-            <button type="button" class="btn btn-secondary" (click)="reset()">
-              Reset
-            </button>
-            <button type="submit" class="btn btn-primary">Submit</button>
-          </div>
-        </form>
+          (submitted)="onSubmit()"
+          (resetRequested)="reset()"
+        />
       </ngx-card>
     </div>
   </ngx-form-page-layout>

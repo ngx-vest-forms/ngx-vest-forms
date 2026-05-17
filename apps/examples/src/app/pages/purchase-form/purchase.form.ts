@@ -99,7 +99,7 @@ export class PurchaseForm {
 
   private readonly vestForm =
     viewChild<FormDirective<PurchaseFormModel>>('vestForm');
-  private readonly formFeedback = createFormFeedbackSignals(this.vestForm);
+  readonly feedback = createFormFeedbackSignals(this.vestForm);
 
   protected readonly formValue = signal<PurchaseFormModel>(
     initialPurchaseFormValue
@@ -112,21 +112,17 @@ export class PurchaseForm {
   readonly saveRequested = output<PurchaseFormModel>();
 
   /** Exposes the directive's packaged form state. */
-  readonly formState = this.formFeedback.formState;
-
+  
   /** Exposes field warnings as a plain Record for presentational components. */
-  readonly warnings = this.formFeedback.warnings;
-
+  
   /**
    * Field paths that have been validated (touched/blurred or submitted).
    * Delegates to the FormDirective's touchedFieldPaths signal which
    * reactively tracks TouchedChangeEvent from the form tree.
    */
-  readonly validatedFields = this.formFeedback.validatedFields;
-
+  
   /** True while async validation is in progress. */
-  readonly pending = this.formFeedback.pending;
-
+  
   /**
    * Automatically fetch demo data when the first name becomes "Luke".
    * A manual request can temporarily override this to demonstrate both

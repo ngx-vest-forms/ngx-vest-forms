@@ -28,13 +28,10 @@
       </ngx-card>
 
       <ngx-form-state-card
-        [formState]="formBody.formState()"
+        [feedback]="formBody.feedback"
         [errors]="formErrors()"
-        [warnings]="formBody.warnings()"
         [info]="formInfo()"
-        [validatedFields]="formBody.validatedFields()"
-        [pending]="formBody.pending()"
-      />
+        />
     </div>
 
     <div layout-main>

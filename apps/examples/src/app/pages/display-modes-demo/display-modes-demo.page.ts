@@ -1,4 +1,8 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import {
+  NGX_ERROR_DISPLAY_MODE_TOKEN,
+  NGX_WARNING_DISPLAY_MODE_TOKEN,
+} from 'ngx-vest-forms';
 import { DisplayModesDemoModel } from '../../models/display-modes-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
@@ -21,6 +25,16 @@ import { displayModesDemoSuite } from './display-modes-demo.validations';
   ],
   templateUrl: './display-modes-demo.page.html',
   styleUrls: ['./display-modes-demo.page.scss'],
+  providers: [
+    {
+      provide: NGX_ERROR_DISPLAY_MODE_TOKEN,
+      useValue: 'on-submit',
+    },
+    {
+      provide: NGX_WARNING_DISPLAY_MODE_TOKEN,
+      useValue: 'on-touch',
+    },
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DisplayModesDemoPageComponent {
