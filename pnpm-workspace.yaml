@@ -9,7 +9,7 @@ trustPolicy: no-downgrade
 overrides:
   chokidar: 4.0.1
   detect-port: 1.6.0
-  semver: 6.3.0
+  semver: 7.7.1
 strictDepBuilds: true
 allowBuilds:
   '@parcel/watcher': true
