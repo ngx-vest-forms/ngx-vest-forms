@@ -24,11 +24,18 @@ on:
           - rc
           - release/v1.x
           - release/v2.x
+          - release/v3
 
       custom_branch:
         description: 'Custom branch name (when branch_type = custom, e.g., feat/awesome-feature, fix/critical-bug)'
         required: false
         type: string
+
+      dry_run:
+        description: 'Dry run: compute and print the next version/channel without publishing, tagging, or creating a release'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write  # For creating releases and updating changelog
@@ -130,6 +137,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true  # Enable provenance attestation with OIDC
+          RELEASE_BRANCH: ${{ steps.branch.outputs.branch }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
         run: |
-          echo "Publishing prerelease from branch: ${{ steps.branch.outputs.branch }}"
-          pnpm exec semantic-release
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "DRY RUN: computing next version/channel for branch '$RELEASE_BRANCH' (no publish)"
+            pnpm exec semantic-release --dry-run
+          else
+            echo "Publishing prerelease from branch: $RELEASE_BRANCH"
+            pnpm exec semantic-release
+          fi
