@@ -330,6 +330,13 @@ describe('createValidationConfigPipeline', () => {
     sub.unsubscribe();
   });
 
+  // NOTE: trigger-control recreation (an `@if`-toggled trigger destroyed and
+  // recreated as a new AbstractControl instance) is a documented KNOWN
+  // LIMITATION — the pipeline stays bound to the first instance by design
+  // (the `take(1)` that prevents a statusChanges feedback loop). See the
+  // deferred ADR. No test asserts rebind because the behaviour is
+  // intentionally not supported in this release.
+
   // -------------------------------------------------------------------------
   // 5. Circular config (A → B and B → A) does not loop indefinitely
   // -------------------------------------------------------------------------

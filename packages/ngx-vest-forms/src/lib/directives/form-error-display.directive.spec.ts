@@ -284,8 +284,15 @@ describe('FormErrorDisplayDirective', () => {
 
     await TestBed.inject(ApplicationRef).whenStable();
 
+    // Routed through the shared error catalog as a dev-only diagnostic
+    // (isDevMode-guarded). The message carries the NGX-105 code prefix.
     expect(consoleSpy).toHaveBeenCalledWith(
-      '[ngx-vest-forms] Potential UX issue: errorDisplayMode is "on-blur" but updateOn is "submit". Errors will only show after form submission, not after blur.'
+      expect.stringContaining('[NGX-105]')
+    );
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'errorDisplayMode is "on-blur" but updateOn is "submit"'
+      )
     );
     consoleSpy.mockRestore();
   });

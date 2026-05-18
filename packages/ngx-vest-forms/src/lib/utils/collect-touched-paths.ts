@@ -1,4 +1,8 @@
-import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
+import {
+  type AbstractControl,
+  isFormArray,
+  isFormGroup,
+} from '@angular/forms';
 import { stringifyFieldPath } from './field-path.utils';
 
 type FieldPathSegment = string | number;
@@ -19,7 +23,7 @@ export function collectTouchedPaths(
   const segments: FieldPathSegment[] = [];
 
   const visit = (control: AbstractControl): void => {
-    if (control instanceof FormGroup) {
+    if (isFormGroup(control)) {
       for (const [name, child] of Object.entries(control.controls)) {
         segments.push(name);
         visit(child);
@@ -28,7 +32,7 @@ export function collectTouchedPaths(
       return;
     }
 
-    if (control instanceof FormArray) {
+    if (isFormArray(control)) {
       for (const [index, child] of control.controls.entries()) {
         segments.push(index);
         visit(child);

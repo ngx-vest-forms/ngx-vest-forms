@@ -1,33 +1,32 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import type { NgxFormContract } from '../tokens/form-contract.token';
+import type { NgxDeepPartial } from './deep-partial';
 import type { NgxDeepRequired } from './deep-required';
 import { stringifyFieldPath } from './field-path.utils';
 import { toFormContract } from './to-form-contract';
 
+type StandardSchemaIssue = StandardSchemaV1.Issue;
 type StandardSchemaIssuePathSegment =
-  | string
-  | number
-  | { key: string | number };
-type StandardSchemaIssue = {
-  message: string;
-  path?: readonly StandardSchemaIssuePathSegment[];
-};
+  | PropertyKey
+  | StandardSchemaV1.PathSegment;
 
 /**
  * Normalizes legacy `NgxDeepRequired<T>` contracts and real Standard Schema
  * values behind one Standard Schema seam.
+ *
+ * The shape branch goes through {@link toFormContract}, which always yields a
+ * `StandardSchemaV1<NgxDeepPartial<T>>` (it never narrows back to the required
+ * `T`), so the honest return type is `StandardSchemaV1<NgxDeepPartial<T>>`.
  */
 export function normalizeFormContract<T>(
   contract: NgxFormContract<T>
-): StandardSchemaV1<T> {
+): StandardSchemaV1<NgxDeepPartial<T>> {
   return typeof contract === 'object' &&
     contract !== null &&
     '~standard' in contract
-    ? (contract as StandardSchemaV1<T>)
-    : (toFormContract<T>(
-        contract as NgxDeepRequired<T>
-      ) as StandardSchemaV1<T>);
+    ? (contract as StandardSchemaV1<NgxDeepPartial<T>>)
+    : toFormContract<T>(contract as NgxDeepRequired<T>);
 }
 
 /**
@@ -41,11 +40,15 @@ export function stringifyFormContractIssuePath(
     return '<root>';
   }
 
-  const normalizedPath = path.map((segment) =>
-    typeof segment === 'object' && segment !== null && 'key' in segment
-      ? segment.key
-      : segment
-  );
+  const normalizedPath = path.map((segment) => {
+    const key =
+      typeof segment === 'object' && segment !== null && 'key' in segment
+        ? segment.key
+        : segment;
+    // `stringifyFieldPath` works with string | number; coerce symbols (rare in
+    // Standard Schema issue paths) to their string form for a readable label.
+    return typeof key === 'symbol' ? key.toString() : key;
+  });
 
   return stringifyFieldPath(normalizedPath) || '<root>';
 }
@@ -85,7 +88,7 @@ export function validateFormContract<T>(
     return;
   }
 
-  if ('issues' in result) {
-    logFormContractIssues(result.issues as readonly StandardSchemaIssue[]);
+  if (result.issues) {
+    logFormContractIssues(result.issues);
   }
 }

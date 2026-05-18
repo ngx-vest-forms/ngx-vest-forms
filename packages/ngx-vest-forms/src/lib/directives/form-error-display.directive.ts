@@ -4,9 +4,14 @@ import {
   effect,
   inject,
   input,
+  isDevMode,
   signal,
   Signal,
 } from '@angular/core';
+import {
+  logDiagnostic,
+  NGX_VEST_FORMS_DIAGNOSTICS,
+} from '../errors/error-catalog';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormResetEvent, FormSubmittedEvent, NgForm } from '@angular/forms';
 import { filter, map, startWith } from 'rxjs';
@@ -139,10 +144,8 @@ export class FormErrorDisplayDirective {
     effect(() => {
       const mode = this.errorDisplayMode();
       const updateOn = this.updateOn();
-      if (updateOn === 'submit' && mode === 'on-blur') {
-        console.warn(
-          '[ngx-vest-forms] Potential UX issue: errorDisplayMode is "on-blur" but updateOn is "submit". Errors will only show after form submission, not after blur.'
-        );
+      if (updateOn === 'submit' && mode === 'on-blur' && isDevMode()) {
+        logDiagnostic(NGX_VEST_FORMS_DIAGNOSTICS.ERROR_DISPLAY_MODE_CONFLICT);
       }
     });
   }

@@ -666,7 +666,7 @@ describe('ValidateRootFormDirective', () => {
             [suite]="suite()"
             [formValue]="model()"
           >
-            <input name="password" [ngModel]="model().password" />
+            <input name="password" [ngModel]="model()?.password" />
           </form>
         `,
       })
@@ -735,7 +735,7 @@ describe('ValidateRootFormDirective', () => {
           [suite]="suite()"
           [formValue]="model()"
         >
-          <input name="password" [ngModel]="model().password" />
+          <input name="password" [ngModel]="model()?.password" />
         </form>
       `,
     })
@@ -838,6 +838,65 @@ describe('ValidateRootFormDirective', () => {
 
       expect(mockRun).toHaveBeenCalled();
       expect(result).toEqual({ errors: ['async root error'] });
+    });
+
+    // Regression for #3: a falsy (null/undefined) formValue must NOT suppress
+    // root-form cross-field rules. These rules (e.g. "at least one contact
+    // method required") are precisely the ones that must run when the model
+    // is empty. The model is normalised to `{}` and the suite still runs.
+    it('runs ROOT_FORM rules against an empty model when formValue is null', async () => {
+      const errors: Record<string, string[]> = {
+        [ROOT_FORM]: ['At least one contact method is required'],
+      };
+      const result = {
+        isPending: () => false,
+        isValid: () => false,
+        hasErrors: () => true,
+        hasWarnings: () => false,
+        isTested: () => true,
+        getErrors: (field?: string) =>
+          field !== undefined ? (errors[field] ?? []) : errors,
+        getWarnings: (field?: string) => (field !== undefined ? [] : {}),
+      };
+
+      const mockRun = vi.fn().mockReturnValue(result);
+      const suiteMock = {
+        only: () => ({ run: mockRun }),
+        run: mockRun,
+        get: () => result,
+        reset: vi.fn(),
+        resetField: vi.fn(),
+        remove: vi.fn(),
+        subscribe: vi.fn(),
+        dump: vi.fn(),
+        resume: vi.fn(),
+      };
+
+      const { fixture } = await render(TestCreateAsyncValidatorHost);
+      const instance = fixture.componentInstance;
+      instance.suite.set(
+        suiteMock as unknown as NgxVestSuite<Record<string, unknown>>
+      );
+      // Explicitly null model — the previous falsy gate returned of(null)
+      // here and the cross-field rule never ran.
+      instance.model.set(null as unknown as Record<string, unknown>);
+      fixture.detectChanges();
+
+      const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {
+        debounceTime: 0,
+      });
+      const validationResult = await firstValueFrom(
+        from(validator({} as never))
+      );
+
+      // The suite must have been invoked with an empty-object model...
+      expect(mockRun).toHaveBeenCalled();
+      const runArg = mockRun.mock.calls[0]?.[0];
+      expect(runArg).toEqual({});
+      // ...and the root-form error must be surfaced (not suppressed to null).
+      expect(validationResult).toEqual({
+        errors: ['At least one contact method is required'],
+      });
     });
   });
 });

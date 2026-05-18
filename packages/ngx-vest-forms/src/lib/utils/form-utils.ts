@@ -228,9 +228,22 @@ function getStringArrayError(
  * Security: If any path segment matches an unsafe prototype-related key
  * (`__proto__`, `prototype`, `constructor`), the write is ignored.
  *
+ * Intermediate containers are created on demand: a numeric next segment
+ * creates an array, otherwise a plain object.
+ *
  * @param obj - Target object to mutate.
  * @param path - Dot/bracket field path.
  * @param value - Value to assign at the resolved path.
+ *
+ * @example
+ * ```ts
+ * const model: Record<string, unknown> = {};
+ * setValueAtPath(model, 'user.profile.name', 'Ada');
+ * // model === { user: { profile: { name: 'Ada' } } }
+ *
+ * setValueAtPath(model, 'addresses[0].street', 'Main St');
+ * // model.addresses === [{ street: 'Main St' }]
+ * ```
  */
 export function setValueAtPath(
   obj: object,

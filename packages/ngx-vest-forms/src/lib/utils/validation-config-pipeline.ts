@@ -118,6 +118,14 @@ function createTriggerStream(
   // take(1) is CRITICAL: without it the pipeline would re-subscribe on every
   // statusChanges emission, creating a feedback loop where validation triggers
   // re-trigger the pipeline.
+  //
+  // KNOWN LIMITATION (deferred — see docs/adr): if an `@if`-toggled trigger
+  // control is destroyed and recreated as a brand-new AbstractControl
+  // instance, the pipeline stays bound to the first instance and the
+  // recreated trigger's changes no longer revalidate its dependents. A
+  // statusChanges-identity rebind was prototyped but could not be made
+  // reliable without risking the feedback-loop regression this `take(1)`
+  // prevents, so the safe known-good behaviour is retained.
   const triggerControl$ = form.statusChanges.pipe(
     startWith(form.status),
     map(() => form.get(triggerField)),

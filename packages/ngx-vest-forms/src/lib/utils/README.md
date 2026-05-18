@@ -17,9 +17,9 @@ This directory contains all utility types and functions provided by ngx-vest-for
   - [createDebouncedPendingState()](#createdebouncedpendingstate)
 - [Internal Form Utilities](#internal-form-utilities) ⚠️
   - [getAllFormErrors()](#getallformerrors)
-  - [getFormControlField()](#getformcontrolfield)
-  - [getFormGroupField()](#getformgroupfield)
-  - [mergeValuesAndRawValues()](#mergevaluesandrawvalues)
+  - [getFormControlField()](#getformcontrolfield) — `ngx-vest-forms/internal`
+  - [getFormGroupField()](#getformgroupfield) — `ngx-vest-forms/internal`
+  - [mergeValuesAndRawValues()](#mergevaluesandrawvalues) — `ngx-vest-forms/internal`
 - [Array/Object Conversion](#arrayobject-conversion)
   - [arrayToObject()](#arraytoobject)
   - [deepArrayToObject()](#deeparraytoobject)
@@ -27,14 +27,14 @@ This directory contains all utility types and functions provided by ngx-vest-for
 - [Field Path Utilities](#field-path-utilities)
   - [stringifyFieldPath()](#stringifyfieldpath)
 - [Internal Path Utilities](#internal-path-utilities) ⚠️
-  - [parseFieldPath()](#parsefieldpath)
+  - [parseFieldPath()](#parsefieldpath) — `ngx-vest-forms/internal`
 - [Field Clearing Utilities](#field-clearing-utilities)
   - [clearFieldsWhen()](#clearfieldswhen)
   - [clearFields()](#clearfields)
   - [keepFieldsWhen()](#keepfieldswhen)
 - [Internal Equality Utilities](#internal-equality-utilities) ⚠️
-  - [shallowEqual()](#shallowequal)
-  - [fastDeepEqual()](#fastdeepequal)
+  - [shallowEqual()](#shallowequal) — `ngx-vest-forms/internal`
+  - [fastDeepEqual()](#fastdeepequal) — `ngx-vest-forms/internal`
 - [Internal Shape Validation](#internal-shape-validation) ⚠️ (removed in v3 — legacy fallback only; see [`toFormContract`](#toformcontract))
 - [Standard Schema Adapter](#standard-schema-adapter)
   - [toFormContract()](#toformcontract)
@@ -427,6 +427,8 @@ export class CustomWrapperComponent {
 ## Internal Form Utilities
 
 > **⚠️ Internal API**: These utilities are marked with `@internal` in their source files and are not part of the primary public API. They are exported for advanced use cases but may change without notice. Consider using alternative approaches or Angular's built-in form APIs instead.
+>
+> **`getFormControlField`, `getFormGroupField`, and `mergeValuesAndRawValues` moved to `ngx-vest-forms/internal` in v3.** They are no longer importable from `'ngx-vest-forms'`; import them from the `'ngx-vest-forms/internal'` secondary entry point, which carries **no semver guarantees**. `getAllFormErrors` stays on the primary `'ngx-vest-forms'` entry.
 
 ### getAllFormErrors()
 
@@ -456,7 +458,7 @@ const errors = getAllFormErrors(form);
 Gets the dot-notation path of a form control relative to root form.
 
 ```typescript
-import { getFormControlField } from 'ngx-vest-forms';
+import { getFormControlField } from 'ngx-vest-forms/internal';
 
 const path = getFormControlField(rootForm, control);
 // 'addresses.billing.street'
@@ -475,7 +477,7 @@ const path = getFormControlField(rootForm, control);
 Gets the dot-notation path of a form group relative to root form.
 
 ```typescript
-import { getFormGroupField } from 'ngx-vest-forms';
+import { getFormGroupField } from 'ngx-vest-forms/internal';
 
 const path = getFormGroupField(rootForm, group);
 // 'addresses.billing'
@@ -494,7 +496,7 @@ const path = getFormGroupField(rootForm, group);
 Merges enabled and disabled field values (includes disabled fields in result).
 
 ```typescript
-import { mergeValuesAndRawValues } from 'ngx-vest-forms';
+import { mergeValuesAndRawValues } from 'ngx-vest-forms/internal';
 
 const allValues = mergeValuesAndRawValues(form);
 // Includes both enabled and disabled field values
@@ -568,6 +570,12 @@ const converted = deepArrayToObject(addresses);
 ### objectToArray()
 
 Converts specified object properties back to arrays (selective reverse conversion).
+
+```typescript
+function objectToArray(object: object, keys: string[]): unknown;
+```
+
+The return type is `unknown` — callers assert the concrete shape. Behavior is unchanged.
 
 ```typescript
 import { objectToArray } from 'ngx-vest-forms';
@@ -736,13 +744,15 @@ stringifyFieldPath(['form', 'sections', 0, 'fields', 'name']);
 ## Internal Path Utilities
 
 > **⚠️ Internal API**: This utility is marked with `@internal` and is not part of the primary public API. It's exported for advanced use cases but may change without notice.
+>
+> **`parseFieldPath` moved to `ngx-vest-forms/internal` in v3.** It is no longer importable from `'ngx-vest-forms'`; import it from the `'ngx-vest-forms/internal'` secondary entry point, which carries **no semver guarantees**.
 
 ### parseFieldPath()
 
 Parses path string into segments array (internal utility).
 
 ```typescript
-import { parseFieldPath } from 'ngx-vest-forms';
+import { parseFieldPath } from 'ngx-vest-forms/internal';
 
 const segments = parseFieldPath('addresses[0].street');
 // ['addresses', 0, 'street']
@@ -831,13 +841,15 @@ this.formValue.update((v) =>
 ## Internal Equality Utilities
 
 > **⚠️ Internal API**: These utilities are marked with `@internal` and are not part of the primary public API. They are exported for advanced use cases but may change without notice. Consider using your own comparison logic or a library like lodash if you need equality checks in your application.
+>
+> **`shallowEqual` and `fastDeepEqual` moved to `ngx-vest-forms/internal` in v3.** They are no longer importable from `'ngx-vest-forms'`; import them from the `'ngx-vest-forms/internal'` secondary entry point, which carries **no semver guarantees**.
 
 ### shallowEqual()
 
 Compares two objects shallowly (only first level) - internal utility.
 
 ```typescript
-import { shallowEqual } from 'ngx-vest-forms';
+import { shallowEqual } from 'ngx-vest-forms/internal';
 
 const equal = shallowEqual({ a: 1, b: 2 }, { a: 1, b: 2 }); // true
 const notEqual = shallowEqual({ a: 1, b: { c: 3 } }, { a: 1, b: { c: 3 } }); // false (different object references)
@@ -861,7 +873,7 @@ Compares two values deeply (recursive comparison) - internal utility.
 - `Map`, `Set`, and functions compare by reference only.
 
 ```typescript
-import { fastDeepEqual } from 'ngx-vest-forms';
+import { fastDeepEqual } from 'ngx-vest-forms/internal';
 
 const equal = fastDeepEqual({ a: 1, b: { c: 3 } }, { a: 1, b: { c: 3 } }); // true
 ```
@@ -960,23 +972,27 @@ import {
 ### Internal API (Advanced Use Only)
 
 > **⚠️ Warning**: These are marked with `@internal` and may change without notice.
+>
+> **v3:** `getFormControlField`, `getFormGroupField`, `mergeValuesAndRawValues`, `parseFieldPath`, `shallowEqual`, and `fastDeepEqual` moved to the `'ngx-vest-forms/internal'` secondary entry point (no semver guarantees). `getAllFormErrors` and `toFormContract` remain on the primary `'ngx-vest-forms'` entry.
 
 ```typescript
-// Internal form utilities (consider alternatives)
+// getAllFormErrors stays on the primary entry
+import { getAllFormErrors } from 'ngx-vest-forms';
+
+// Internal form utilities — moved to the internal entry (no semver guarantees)
 import {
-  getAllFormErrors,
   getFormControlField,
   getFormGroupField,
   mergeValuesAndRawValues,
-} from 'ngx-vest-forms';
+} from 'ngx-vest-forms/internal';
 
 // Internal path utilities (consider alternatives)
-import { parseFieldPath } from 'ngx-vest-forms';
+import { parseFieldPath } from 'ngx-vest-forms/internal';
 
 // Internal equality utilities (consider lodash or custom logic)
-import { shallowEqual, fastDeepEqual } from 'ngx-vest-forms';
+import { shallowEqual, fastDeepEqual } from 'ngx-vest-forms/internal';
 
-// Standard Schema adapter for legacy shapes
+// Standard Schema adapter for legacy shapes (primary entry)
 import { toFormContract, StandardSchemaV1 } from 'ngx-vest-forms';
 ```
 

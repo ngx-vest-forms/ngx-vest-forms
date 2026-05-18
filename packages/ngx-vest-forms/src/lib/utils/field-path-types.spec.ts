@@ -1,4 +1,6 @@
+import { expectTypeOf } from 'vitest';
 import { ROOT_FORM } from '../constants';
+import type { NgxDeepPartial } from './deep-partial';
 import type {
   FieldPath,
   FieldPathValue,
@@ -242,9 +244,101 @@ describe('field-path-types', () => {
       const age: AgeType = 42;
       const email: EmailType = 'test@example.com';
 
+      expectTypeOf<NameType>().toEqualTypeOf<string>();
+      expectTypeOf<AgeType>().toEqualTypeOf<number>();
+      expectTypeOf<EmailType>().toEqualTypeOf<string>();
+
       expect(typeof name).toBe('string');
       expect(typeof age).toBe('number');
       expect(typeof email).toBe('string');
+    });
+
+    it('should resolve array-traversing paths in flattened form (consistent with FieldPath)', () => {
+      type TestModel = {
+        addresses: Array<{
+          street: string;
+          geo: { lat: number };
+        }>;
+      };
+
+      // Flattened form is what FieldPath<TestModel> produces.
+      type StreetType = FieldPathValue<TestModel, 'addresses.street'>;
+      type LatType = FieldPathValue<TestModel, 'addresses.geo.lat'>;
+      type ArrType = FieldPathValue<TestModel, 'addresses'>;
+
+      expectTypeOf<StreetType>().toEqualTypeOf<string>();
+      expectTypeOf<LatType>().toEqualTypeOf<number>();
+      expectTypeOf<ArrType>().toEqualTypeOf<
+        Array<{ street: string; geo: { lat: number } }>
+      >();
+
+      // Previously this resolved to `never`; assert it no longer does.
+      const street: StreetType = 'Main St';
+      expect(typeof street).toBe('string');
+    });
+
+    it('should resolve array-traversing paths in bracket form (runtime form)', () => {
+      type TestModel = {
+        addresses: Array<{ street: string }>;
+        tags: string[];
+      };
+
+      type StreetType = FieldPathValue<TestModel, 'addresses[0].street'>;
+      type ElementType = FieldPathValue<TestModel, 'addresses[0]'>;
+      type TagType = FieldPathValue<TestModel, 'tags[3]'>;
+
+      expectTypeOf<StreetType>().toEqualTypeOf<string>();
+      expectTypeOf<ElementType>().toEqualTypeOf<{ street: string }>();
+      expectTypeOf<TagType>().toEqualTypeOf<string>();
+
+      // Runtime anchor (matches this file's typed-const convention so the
+      // type assertions also carry a recognized runtime assertion).
+      const street: StreetType = 'Main St';
+      const tag: TagType = 't';
+      expect(typeof street).toBe('string');
+      expect(typeof tag).toBe('string');
+    });
+
+    it('should strip the partial `| undefined` consistently for nested paths', () => {
+      type FormModel = NgxDeepPartial<{
+        user: {
+          profile: {
+            age: number;
+          };
+        };
+        addresses: Array<{ street: string }>;
+      }>;
+
+      type AgeType = FieldPathValue<FormModel, 'user.profile.age'>;
+      type StreetType = FieldPathValue<FormModel, 'addresses.street'>;
+
+      // NonNullable stripping means these are the bare leaf types, not
+      // `number | undefined` / `string | undefined`.
+      expectTypeOf<AgeType>().toEqualTypeOf<number>();
+      expectTypeOf<StreetType>().toEqualTypeOf<string>();
+
+      // Runtime anchor (matches this file's typed-const convention).
+      const age: AgeType = 42;
+      const street: StreetType = 'Main St';
+      expect(typeof age).toBe('number');
+      expect(typeof street).toBe('string');
+    });
+
+    it('should not produce traversal paths for bigint/symbol fields', () => {
+      const sym: unique symbol = Symbol('s');
+      type Sym = typeof sym;
+      type TestModel = {
+        id: bigint;
+        tag: Sym;
+        name: string;
+      };
+
+      // bigint/symbol are leaves: FieldPath only yields the field names.
+      const paths: FieldPath<TestModel>[] = ['id', 'tag', 'name'];
+      expect(paths.length).toBe(3);
+
+      expectTypeOf<FieldPathValue<TestModel, 'id'>>().toEqualTypeOf<bigint>();
+      expectTypeOf<FieldPathValue<TestModel, 'tag'>>().toEqualTypeOf<Sym>();
     });
   });
 

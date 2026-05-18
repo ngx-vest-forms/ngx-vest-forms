@@ -41,7 +41,12 @@ import {
   switchMap,
   take,
 } from 'rxjs';
-import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
+import {
+  logDiagnostic,
+  logWarning,
+  NGX_VEST_FORMS_DIAGNOSTICS,
+  NGX_VEST_FORMS_ERRORS,
+} from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import { NGX_EQUALITY_FN } from '../tokens/equality.token';
 import {
@@ -633,12 +638,42 @@ export class FormDirective<T extends Record<string, unknown>> {
             this.#lastSyncedFormValue = formValue;
             this.#lastSyncedModelValue = formValue;
           });
+        } else if (!formValue) {
+          // The merged form snapshot is null (e.g. an empty form with no
+          // controls yet, or all controls removed) while the model changed.
+          // This is NOT a real divergence between two live values — there is
+          // no form value to conflict with — so let the model win and apply
+          // it, mirroring the `modelChanged && !formChanged` branch. This
+          // also prevents a false-positive conflict warning during the
+          // initial render of forms whose controls are not registered yet.
+          untracked(() => {
+            if (modelValue) {
+              this.ngForm.form.patchValue(modelValue, { emitEvent: false });
+            }
+            this.#lastSyncedFormValue = formValue;
+            this.#lastSyncedModelValue = modelValue;
+          });
         } else {
-          // Both changed to different values - this is a true conflict
-          // This is an edge case that should rarely happen in practice.
-          // We intentionally do nothing here to avoid breaking the Angular event flow.
-          // The form will continue with its current values, and validation will run normally.
-          // The next change (either form or model) will trigger proper synchronization.
+          // Both sides hold distinct, non-null live values - this is a true
+          // conflict. It is an edge case that should rarely happen in
+          // practice.
+          //
+          // We keep the form's current values (form wins, consistent with the
+          // `formChanged && !modelChanged` branch) but we MUST advance BOTH
+          // tracking baselines. Previously this branch did nothing, so
+          // `#lastSyncedFormValue`/`#lastSyncedModelValue` stayed stale and
+          // every subsequent effect run was re-classified as a conflict
+          // forever — permanently dropping later programmatic `formValue`
+          // updates. Advancing the baselines lets the next single-sided
+          // change synchronize correctly.
+          untracked(() => {
+            this.#lastSyncedFormValue = formValue;
+            this.#lastSyncedModelValue = formValue;
+          });
+
+          if (isDevMode()) {
+            logDiagnostic(NGX_VEST_FORMS_DIAGNOSTICS.SYNC_CONFLICT_DROPPED);
+          }
         }
       }
     });
@@ -911,7 +946,34 @@ export class FormDirective<T extends Record<string, unknown>> {
     }, this.#destroyRef);
   }
 
+  /**
+   * Whether a consumer is actually subscribed to `fieldBlur`.
+   *
+   * `OutputEmitterRef` keeps `listeners` as `null` until the first
+   * `subscribe()` (template `(fieldBlur)=` binding or `outputToObservable`).
+   * When nobody listens we can skip resolving the field and the
+   * `structuredClone` of the entire form snapshot on every blur. Accessed
+   * defensively so an internal Angular shape change degrades to "emit
+   * anyway" rather than throwing.
+   */
+  #hasFieldBlurSubscriber(): boolean {
+    const listeners = (
+      this.fieldBlur as unknown as { listeners?: unknown[] | null }
+    ).listeners;
+    // If the internal field is absent (API changed), fall back to emitting.
+    if (listeners === undefined) {
+      return true;
+    }
+    return listeners !== null && listeners.length > 0;
+  }
+
   #emitFieldBlurEvent(event: FocusEvent): void {
+    // No consumer is subscribed to `fieldBlur` — skip the field resolution
+    // and the deep `structuredClone` of the form snapshot entirely.
+    if (!this.#hasFieldBlurSubscriber()) {
+      return;
+    }
+
     const resolved = this.#resolveFieldFromFocusEvent(event);
     if (!resolved) {
       return;

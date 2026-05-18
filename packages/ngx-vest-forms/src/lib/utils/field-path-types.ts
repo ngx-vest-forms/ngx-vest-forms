@@ -1,19 +1,20 @@
 /**
- * Primitive types that should not be traversed for nested paths
- */
-type Primitive = string | number | boolean | Date | null | undefined;
-
-/**
- * Helper type to extract the element type from an array.
- * Used internally for type inference with array paths.
+ * Primitive types that should not be traversed for nested paths.
  *
- * @template T - The array type to extract from
- * @example
- * ```typescript
- * type Element = ArrayElement<string[]>; // Result: string
- * type Element2 = ArrayElement<NotArray>; // Result: never
- * ```
+ * Aligned with the `_Primitive` definitions used by `equality.ts`,
+ * `deep-partial.ts`, and `deep-required.ts` (which include `bigint | symbol`)
+ * plus `Date`, so `bigint`/`symbol`/`Date` fields are treated as leaves and
+ * do not generate junk traversal paths.
  */
+type Primitive =
+  | string
+  | number
+  | boolean
+  | bigint
+  | symbol
+  | Date
+  | null
+  | undefined;
 
 /**
  * Recursively generates all valid field paths for a type as string literals.
@@ -65,8 +66,22 @@ type Primitive = string | number | boolean | Date | null | undefined;
  * /// Result: 'user' | 'user.email' | 'user.phone'
  * ```
  */
-export type FieldPath<
+/**
+ * @internal
+ * Single shared generator for {@link FieldPath} and {@link LeafFieldPath}.
+ *
+ * `Leaves` toggles whether intermediate (object/array) container paths are
+ * emitted. Both public types derive from this so their traversal logic can
+ * never drift apart.
+ *
+ * @template T - The model type to extract field paths from
+ * @template Leaves - When `true`, only primitive-leaf paths are emitted
+ * @template Prefix - Internal recursion prefix (do not use directly)
+ * @template Depth - Internal depth counter to prevent infinite recursion
+ */
+type FieldPathInternal<
   T,
+  Leaves extends boolean,
   Prefix extends string = '',
   Depth extends readonly number[] = [],
 > = Depth['length'] extends 10
@@ -75,21 +90,37 @@ export type FieldPath<
     ? never // Don't traverse primitives
     : T extends ReadonlyArray<infer U>
       ? // For arrays, generate paths for the element type
-        FieldPath<U, Prefix, [...Depth, 1]>
+        FieldPathInternal<U, Leaves, Prefix, [...Depth, 1]>
       : {
           [K in keyof T & string]: T[K] extends Primitive
-            ? // Primitive property: just the field name
+            ? // Primitive property: just the field name (always a leaf)
               `${Prefix}${K}`
             : T[K] extends ReadonlyArray<infer U>
-              ? // Array property: field name plus element paths
-                  | `${Prefix}${K}`
+              ? // Array property: optionally the container path, plus element paths
+                  | (Leaves extends true ? never : `${Prefix}${K}`)
                   | (U extends Primitive
                       ? never
-                      : FieldPath<U, `${Prefix}${K}.`, [...Depth, 1]>)
-              : // Object property: field name plus nested paths
-                  | `${Prefix}${K}`
-                  | FieldPath<T[K], `${Prefix}${K}.`, [...Depth, 1]>;
+                      : FieldPathInternal<
+                          U,
+                          Leaves,
+                          `${Prefix}${K}.`,
+                          [...Depth, 1]
+                        >)
+              : // Object property: optionally the container path, plus nested paths
+                  | (Leaves extends true ? never : `${Prefix}${K}`)
+                  | FieldPathInternal<
+                      T[K],
+                      Leaves,
+                      `${Prefix}${K}.`,
+                      [...Depth, 1]
+                    >;
         }[keyof T & string];
+
+export type FieldPath<
+  T,
+  Prefix extends string = '',
+  Depth extends readonly number[] = [],
+> = FieldPathInternal<T, false, Prefix, Depth>;
 
 /**
  * Type-safe validation configuration map.
@@ -201,14 +232,71 @@ export { ROOT_FORM };
  * type AgeType = FieldPathValue<Model, 'user.profile.age'>;
  * /// Result: number
  * ```
+ *
+ * @example Array paths (consistent with {@link FieldPath})
+ * ```typescript
+ * type Model = { addresses: { street: string }[] };
+ *
+ * /// Flattened form (as produced by FieldPath):
+ * type S1 = FieldPathValue<Model, 'addresses.street'>; // string
+ * /// Bracket form (as produced at runtime):
+ * type S2 = FieldPathValue<Model, 'addresses[0].street'>; // string
+ * ```
  */
-export type FieldPathValue<T, Path extends string> = Path extends keyof T
-  ? T[Path]
-  : Path extends `${infer K}.${infer Rest}`
-    ? K extends keyof T
-      ? FieldPathValue<NonNullable<T[K]>, Rest>
+export type FieldPathValue<T, Path extends string> = NonNullable<
+  FieldPathValueRaw<T, Path>
+>;
+
+/**
+ * Internal resolver for {@link FieldPathValue}. Walks the path and returns the
+ * raw leaf type; the public {@link FieldPathValue} strips the partial-model
+ * `| undefined` from the leaf via `NonNullable`.
+ *
+ * @internal
+ */
+type FieldPathValueRaw<
+  T,
+  Path extends string,
+> = NonNullable<T> extends infer NT
+  ? // Bracket index segment at the head: `[0]` / `[0].rest` → array element.
+    Path extends `[${number}]${infer Rest}`
+    ? NT extends ReadonlyArray<infer U>
+      ? Rest extends `.${infer AfterDot}`
+        ? FieldPathValueRaw<U, AfterDot>
+        : Rest extends ''
+          ? U
+          : FieldPathValueRaw<U, Rest>
       : never
-    : never;
+    : // Exact own-key match.
+      Path extends keyof NT
+      ? NT[Path]
+      : // Split on the first dot.
+        Path extends `${infer K}.${infer Rest}`
+        ? // `key[0]...` — bracket immediately after a key segment.
+          K extends `${infer Base}[${number}]`
+          ? Base extends keyof NT
+            ? NonNullable<NT[Base]> extends ReadonlyArray<infer U>
+              ? FieldPathValueRaw<U, Rest>
+              : never
+            : never
+          : K extends keyof NT
+            ? FieldPathValueRaw<NonNullable<NT[K]>, Rest>
+            : // Array-traversing flattened path: `arrayKey.rest`.
+              NT extends ReadonlyArray<infer U>
+              ? FieldPathValueRaw<U, Path>
+              : never
+        : // No dot left: a bare `key[0]` head segment.
+          Path extends `${infer Base}[${number}]`
+          ? Base extends keyof NT
+            ? NonNullable<NT[Base]> extends ReadonlyArray<infer U>
+              ? U
+              : never
+            : never
+          : // Final flattened array hop (e.g. `street` against `Address[]`).
+            NT extends ReadonlyArray<infer U>
+            ? FieldPathValueRaw<U, Path>
+            : never
+  : never;
 
 /**
  * Utility type to check if a path is valid for a given model.
@@ -254,18 +342,4 @@ export type LeafFieldPath<
   T,
   Prefix extends string = '',
   Depth extends readonly number[] = [],
-> = Depth['length'] extends 10
-  ? never
-  : T extends Primitive
-    ? never
-    : T extends ReadonlyArray<infer U>
-      ? LeafFieldPath<U, Prefix, [...Depth, 1]>
-      : {
-          [K in keyof T & string]: T[K] extends Primitive
-            ? `${Prefix}${K}`
-            : T[K] extends ReadonlyArray<infer U>
-              ? U extends Primitive
-                ? never
-                : LeafFieldPath<U, `${Prefix}${K}.`, [...Depth, 1]>
-              : LeafFieldPath<T[K], `${Prefix}${K}.`, [...Depth, 1]>;
-        }[keyof T & string];
+> = FieldPathInternal<T, true, Prefix, Depth>;

@@ -245,6 +245,36 @@ const fieldWarnings = all.warnings['user.name']; // string[] | undefined
 
 The `errorsChange` output on `FormDirective` still emits `Record<string, string[]>` (the `errors` slice of the new shape), so templates consuming `(errorsChange)="errors.set($event)"` and reading `errors()['field']` continue to work unchanged. For warnings inside templates, prefer the existing `fieldWarnings()` signal on the directive — it is per-field, reactive, and the recommended path for warning display.
 
+## Internal helpers moved to `ngx-vest-forms/internal`
+
+Six previously `@internal` symbols have been **removed from the primary `'ngx-vest-forms'` entry point** and are now only reachable from the new `'ngx-vest-forms/internal'` secondary entry point:
+
+| Symbol                    | v2.x import                | v3 import                            |
+| ------------------------- | -------------------------- | ------------------------------------ |
+| `fastDeepEqual`           | `from 'ngx-vest-forms'`    | `from 'ngx-vest-forms/internal'`     |
+| `shallowEqual`            | `from 'ngx-vest-forms'`    | `from 'ngx-vest-forms/internal'`     |
+| `parseFieldPath`          | `from 'ngx-vest-forms'`    | `from 'ngx-vest-forms/internal'`     |
+| `getFormControlField`     | `from 'ngx-vest-forms'`    | `from 'ngx-vest-forms/internal'`     |
+| `getFormGroupField`       | `from 'ngx-vest-forms'`    | `from 'ngx-vest-forms/internal'`     |
+| `mergeValuesAndRawValues` | `from 'ngx-vest-forms'`    | `from 'ngx-vest-forms/internal'`     |
+
+```typescript
+// Before (v2.x)
+import { parseFieldPath } from 'ngx-vest-forms';
+
+// After (v3)
+import { parseFieldPath } from 'ngx-vest-forms/internal';
+```
+
+The `ngx-vest-forms/internal` entry point carries **no semver guarantees** — it is for advanced use only and may change in any release. `getAllFormErrors` and `NgxFormErrorsByPath` are **not** affected; they remain on the primary `'ngx-vest-forms'` entry along with all other documented public API.
+
+## Known limitations (v3)
+
+These are accepted, documented limitations in the v3 line. Each links to an Architecture Decision Record (ADR) with the full rationale and the conditions under which it will be revisited.
+
+- **`validationConfig` cooldown can drop rapid trigger-field input.** The time-based re-entry guard that prevents bidirectional validation loops can also suppress a genuine, very rapid user edit to a trigger field that lands inside the cooldown window; the dependent field reconciles on the next qualifying change. See [docs/adr/0003-validation-config-cooldown-can-drop-rapid-input.md](../adr/0003-validation-config-cooldown-can-drop-rapid-input.md).
+- **`validationConfig` trigger-control recreation is not supported.** If a `validationConfig` trigger control is destroyed and recreated (e.g. behind `@if`), the pipeline stays bound to the original control instance and the recreated control no longer drives dependent-field revalidation. **Workaround:** keep the trigger control mounted and toggle it via `disabled`/hidden styling instead of `@if`-destroying it, or re-create the whole form group so the dependent field and its `validationConfig` are re-wired together. See [docs/adr/0004-validation-config-trigger-control-recreation-unsupported.md](../adr/0004-validation-config-trigger-control-recreation-unsupported.md).
+
 ## v3 selector + token removals
 
 v3.0.0 removes the legacy `sc-` selectors, duplicate directive aliases, duplicate root-form inputs, and `SC_ERROR_DISPLAY_MODE_TOKEN`.

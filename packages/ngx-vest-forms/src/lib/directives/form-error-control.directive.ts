@@ -2,20 +2,14 @@ import {
   AfterContentInit,
   computed,
   Directive,
-  effect,
   ElementRef,
   inject,
   input,
-  OnDestroy,
   signal,
 } from '@angular/core';
-import {
-  AriaAssociationMode,
-  mergeAriaDescribedBy,
-  parseAriaIdTokens,
-  resolveAssociationTargets,
-} from '../utils/aria-association.utils';
+import { AriaAssociationMode } from '../utils/aria-association.utils';
 import { createDebouncedPendingState } from '../utils/pending-state.utils';
+import { createAriaAssociationController } from './aria-association-controller';
 import { FormErrorDisplayDirective } from './form-error-display.directive';
 
 let nextUniqueId = 0;
@@ -39,7 +33,7 @@ let nextUniqueId = 0;
     },
   ],
 })
-export class FormErrorControlDirective implements AfterContentInit, OnDestroy {
+export class FormErrorControlDirective implements AfterContentInit {
   protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
     self: true,
   });
@@ -64,9 +58,7 @@ export class FormErrorControlDirective implements AfterContentInit, OnDestroy {
   readonly warningId = `${this.uniqueId}-warning`;
   readonly pendingId = `${this.uniqueId}-pending`;
 
-  readonly #formControls = signal<HTMLElement[]>([]);
   readonly #contentInitialized = signal(false);
-  #mutationObserver: MutationObserver | null = null;
 
   readonly #pendingState = createDebouncedPendingState(
     this.errorDisplay.isPending,
@@ -101,89 +93,20 @@ export class FormErrorControlDirective implements AfterContentInit, OnDestroy {
     this.pendingId,
   ];
 
-  constructor() {
-    // Effect for ARIA attribute updates
-    effect(() => {
-      if (!this.#contentInitialized()) return;
-
-      const mode = this.ariaAssociationMode();
-      if (mode === 'none') return;
-
-      const describedBy = this.ariaDescribedBy();
-      const activeIds = parseAriaIdTokens(describedBy);
-      const shouldShowErrors = this.errorDisplay.shouldShowErrors();
-
-      const targets = resolveAssociationTargets(this.#formControls(), mode);
-
-      for (const control of targets) {
-        const nextDescribedBy = mergeAriaDescribedBy(
-          control.getAttribute('aria-describedby'),
-          activeIds,
-          this.#ownedDescribedByIds
-        );
-        if (nextDescribedBy) {
-          control.setAttribute('aria-describedby', nextDescribedBy);
-        } else {
-          control.removeAttribute('aria-describedby');
-        }
-
-        if (shouldShowErrors) {
-          control.setAttribute('aria-invalid', 'true');
-        } else {
-          control.removeAttribute('aria-invalid');
-        }
-      }
-    });
-
-    // Effect for MutationObserver setup with proper cleanup
-    effect((onCleanup) => {
-      if (!this.#contentInitialized()) return;
-
-      const mode = this.ariaAssociationMode();
-
-      if (mode === 'none') {
-        this.#mutationObserver?.disconnect();
-        this.#mutationObserver = null;
-        if (this.#formControls().length > 0) {
-          this.#formControls.set([]);
-        }
-        return;
-      }
-
-      this.updateFormControls();
-
-      if (!this.#mutationObserver) {
-        this.#mutationObserver = new MutationObserver(() => {
-          this.updateFormControls();
-        });
-
-        this.#mutationObserver.observe(this.#elementRef.nativeElement, {
-          childList: true,
-          subtree: true,
-        });
-      }
-
-      // Proper cleanup using onCleanup callback (Angular 21 best practice)
-      onCleanup(() => {
-        this.#mutationObserver?.disconnect();
-        this.#mutationObserver = null;
-      });
-    });
-  }
+  /**
+   * Shared MutationObserver + ARIA-association controller. DOM reads/writes
+   * run in the render phase via afterRenderEffect (see the controller).
+   */
+  private readonly aria = createAriaAssociationController({
+    host: this.#elementRef.nativeElement,
+    mode: this.ariaAssociationMode,
+    contentInitialized: this.#contentInitialized,
+    shouldShowErrors: this.errorDisplay.shouldShowErrors,
+    ariaDescribedBy: this.ariaDescribedBy,
+    ownedDescribedByIds: this.#ownedDescribedByIds,
+  });
 
   ngAfterContentInit(): void {
     this.#contentInitialized.set(true);
-  }
-
-  ngOnDestroy(): void {
-    this.#mutationObserver?.disconnect();
-    this.#mutationObserver = null;
-  }
-
-  private updateFormControls(): void {
-    const controls = this.#elementRef.nativeElement.querySelectorAll(
-      'input, select, textarea'
-    );
-    this.#formControls.set(Array.from(controls) as HTMLElement[]);
   }
 }

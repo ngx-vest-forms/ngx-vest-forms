@@ -4,21 +4,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
-  effect,
   ElementRef,
   inject,
   input,
-  OnDestroy,
   signal,
 } from '@angular/core';
+import { createAriaAssociationController } from '../../directives/aria-association-controller';
 import { FormErrorDisplayDirective } from '../../directives/form-error-display.directive';
-import {
-  AriaAssociationMode,
-  mergeAriaDescribedBy,
-  parseAriaIdTokens,
-  resolveAssociationTargets,
-} from '../../utils/aria-association.utils';
+import { AriaAssociationMode } from '../../utils/aria-association.utils';
 import { createDebouncedPendingState } from '../../utils/pending-state.utils';
 
 // Counter for unique IDs
@@ -165,12 +158,11 @@ let nextUniqueId = 0;
     },
   ],
 })
-export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
+export class ControlWrapperComponent implements AfterContentInit {
   protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
     self: true,
   });
   private readonly elementRef = inject(ElementRef);
-  private readonly destroyRef = inject(DestroyRef);
 
   /**
    * Controls how this wrapper applies ARIA attributes to descendant controls.
@@ -202,21 +194,8 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
   protected readonly warningId = `${this.uniqueId}-warning`;
   protected readonly pendingId = `${this.uniqueId}-pending`;
 
-  // Track form controls found in the wrapper
-  private readonly formControls = signal<HTMLElement[]>([]);
-
-  /**
-   * Tracks whether a control already had `aria-required` before this wrapper
-   * first touched it. This prevents the wrapper from clobbering a
-   * consumer-provided attribute when the wrapper input toggles to false.
-   */
-  private readonly consumerAriaRequired = new WeakMap<HTMLElement, boolean>();
-
   // Signals when content is initialized so effects can safely touch the DOM.
   private readonly contentInitialized = signal(false);
-
-  // MutationObserver to detect dynamically added/removed controls
-  private mutationObserver: MutationObserver | null = null;
 
   /**
    * Debounced pending state to prevent flashing for quick async validations.
@@ -267,118 +246,26 @@ export class ControlWrapperComponent implements AfterContentInit, OnDestroy {
     this.pendingId,
   ];
 
-  constructor() {
-    // Effect to update aria-describedby and aria-invalid on form controls
-    effect(() => {
-      if (!this.contentInitialized()) return;
-
-      const mode = this.ariaAssociationMode();
-      if (mode === 'none') {
-        return;
-      }
-
-      const describedBy = this.ariaDescribedBy();
-      const wrapperActiveIds = parseAriaIdTokens(describedBy);
-      const shouldShowErrors = this.errorDisplay.shouldShowErrors();
-      const ariaRequired = this.ariaRequired();
-
-      const targets = resolveAssociationTargets(this.formControls(), mode);
-
-      targets.forEach((control) => {
-        // Update aria-describedby (merge, don't overwrite)
-        const nextDescribedBy = mergeAriaDescribedBy(
-          control.getAttribute('aria-describedby'),
-          wrapperActiveIds,
-          this.wrapperOwnedDescribedByIds
-        );
-        if (nextDescribedBy) {
-          control.setAttribute('aria-describedby', nextDescribedBy);
-        } else {
-          control.removeAttribute('aria-describedby');
-        }
-
-        // Update aria-invalid
-        if (shouldShowErrors) {
-          control.setAttribute('aria-invalid', 'true');
-        } else {
-          control.removeAttribute('aria-invalid');
-        }
-
-        // Track original consumer state once, then manage wrapper ownership.
-        if (!this.consumerAriaRequired.has(control)) {
-          this.consumerAriaRequired.set(
-            control,
-            control.hasAttribute('aria-required')
-          );
-        }
-        if (ariaRequired) {
-          control.setAttribute('aria-required', 'true');
-        } else if (!this.consumerAriaRequired.get(control)) {
-          // Only remove when the consumer didn't provide it originally
-          control.removeAttribute('aria-required');
-        }
-      });
-    });
-
-    // Clean up MutationObserver when component is destroyed
-    this.destroyRef.onDestroy(() => {
-      this.mutationObserver?.disconnect();
-      this.mutationObserver = null;
-    });
-
-    // Effect to enable/disable DOM observation based on ariaAssociationMode.
-    // This keeps the wrapper cheap in group-safe mode.
-    effect(() => {
-      if (!this.contentInitialized()) return;
-
-      const mode = this.ariaAssociationMode();
-
-      if (mode === 'none') {
-        this.mutationObserver?.disconnect();
-        this.mutationObserver = null;
-        if (this.formControls().length > 0) {
-          this.formControls.set([]);
-        }
-        return;
-      }
-
-      // Ensure controls list is up to date.
-      this.updateFormControls();
-
-      // Ensure MutationObserver is installed (dynamic @if/@for support).
-      if (!this.mutationObserver) {
-        this.mutationObserver = new MutationObserver(() => {
-          this.updateFormControls();
-        });
-
-        this.mutationObserver.observe(this.elementRef.nativeElement, {
-          childList: true,
-          subtree: true,
-        });
-      }
-    });
-  }
+  /**
+   * Shared MutationObserver + ARIA-association controller. DOM reads/writes
+   * run in the render phase via afterRenderEffect (zoneless-safe). The wrapper
+   * opts into `aria-required` management; group-safe mode is handled inside
+   * the controller.
+   */
+  private readonly aria = createAriaAssociationController({
+    host: this.elementRef.nativeElement,
+    mode: this.ariaAssociationMode,
+    contentInitialized: this.contentInitialized,
+    shouldShowErrors: this.errorDisplay.shouldShowErrors,
+    ariaDescribedBy: this.ariaDescribedBy,
+    ownedDescribedByIds: this.wrapperOwnedDescribedByIds,
+    ariaRequired: this.ariaRequired,
+  });
 
   ngAfterContentInit(): void {
     this.contentInitialized.set(true);
 
-    // ARIA wiring + observer setup is managed by effects so that the wrapper can
-    // opt out (ariaAssociationMode="none").
-  }
-
-  ngOnDestroy(): void {
-    this.mutationObserver?.disconnect();
-    this.mutationObserver = null;
-  }
-
-  /**
-   * Query and update the list of form controls within this wrapper.
-   * Called on init and whenever the DOM structure changes.
-   */
-  private updateFormControls(): void {
-    const controls = this.elementRef.nativeElement.querySelectorAll(
-      'input, select, textarea'
-    );
-    this.formControls.set(Array.from(controls) as HTMLElement[]);
+    // ARIA wiring + observer setup is managed by the shared controller so the
+    // wrapper can opt out (ariaAssociationMode="none").
   }
 }

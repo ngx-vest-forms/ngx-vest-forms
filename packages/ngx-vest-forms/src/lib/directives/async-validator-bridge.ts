@@ -1,6 +1,10 @@
 import { isDevMode } from '@angular/core';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 import { Observable, from, of } from 'rxjs';
+import {
+  logDiagnostic,
+  NGX_VEST_FORMS_DIAGNOSTICS,
+} from '../errors/error-catalog';
 import { FormDirective } from './form.directive';
 import { ValidationOptions } from './validation-options';
 
@@ -36,8 +40,9 @@ export function runAsyncValidationBridge(
 
   if (!context) {
     if (isDevMode()) {
-      console.warn(
-        `[ngx-vest-forms] ${source}: No FormDirective context found. Validation skipped (fail-open).`
+      logDiagnostic(
+        NGX_VEST_FORMS_DIAGNOSTICS.ASYNC_BRIDGE_NO_CONTEXT,
+        source
       );
     }
     return of(null);
@@ -53,8 +58,9 @@ export function runAsyncValidationBridge(
     }
 
     if (isDevMode()) {
-      console.warn(
-        `[ngx-vest-forms] ${source}: Could not resolve control path. Ensure the control has a valid name/path and is registered in the form tree.`
+      logDiagnostic(
+        NGX_VEST_FORMS_DIAGNOSTICS.ASYNC_BRIDGE_UNRESOLVED_PATH,
+        source
       );
     }
     return of(null);

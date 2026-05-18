@@ -2,7 +2,13 @@
 {
   "extends": "./tsconfig.lib.json",
   "compilerOptions": {
-    "declarationMap": false
+    "declarationMap": false,
+    // Keep `false`: ng-packagr shares this prod tsconfig across every entry
+    // point, so `stripInternal: true` would also erase the `@internal`
+    // symbols from the dedicated `ngx-vest-forms/internal` entry that exists
+    // precisely to expose them. The primary `ngx-vest-forms` entry stays
+    // clean because `public-api.ts` no longer re-exports those symbols.
+    "stripInternal": false
   },
   "angularCompilerOptions": {
     "compilationMode": "partial"

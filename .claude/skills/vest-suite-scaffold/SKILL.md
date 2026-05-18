@@ -22,6 +22,20 @@ and the **field list** if not given.
 - Blocking rules use `test(...)`; advisory rules add `warn()` and never block
   submit. Conditional rules use `omitWhen(...)`. Cross-field rules use the
   `ROOT_FORM` constant as the field key.
+- Advisory rules must call `warn()` **before any `await`** — after the test
+  suspends on `await`, `warn()` no longer registers the warning severity. If
+  severity must be decided after async work, use `useWarn()` instead.
+- Async-test cancellation is **automatic** in Vest 6 via the per-test `signal`
+  payload — no manual abort wiring. Destructure `signal` from the test context
+  and forward it into the request. Callers do **not** pass an `AbortSignal` or
+  hooks into `suite.run()`; in Vest 6.3 `run()`/`runStatic()` take only the
+  model. Canonical pattern:
+
+  ```ts
+  test('email', 'Email is already taken', async ({ signal }) => {
+    await check(model.email, { signal });
+  });
+  ```
 - Spec uses Vitest (`describe/it/expect`) and drives the suite with
   `suite.only('<field>').run(model)` asserting `hasErrors` / `getErrors` /
   `hasWarnings` / `getWarnings`.

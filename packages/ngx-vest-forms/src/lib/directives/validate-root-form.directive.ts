@@ -7,6 +7,7 @@ import {
   inject,
   Injector,
   input,
+  isDevMode,
   signal,
   untracked,
 } from '@angular/core';
@@ -21,6 +22,10 @@ import {
 } from '@angular/forms';
 import { catchError, map, Observable, of, tap } from 'rxjs';
 import { ROOT_FORM } from '../constants';
+import {
+  logDiagnostic,
+  NGX_VEST_FORMS_DIAGNOSTICS,
+} from '../errors/error-catalog';
 import { scheduleMicrotask } from '../utils/destroy-scheduler';
 import type { NgxVestSuite } from '../utils/validation-suite';
 import { extractFieldErrors, runFieldValidation } from '../utils/vest-runner';
@@ -175,10 +180,9 @@ export class ValidateRootFormDirective<T>
     this.#lastControl.set(ngForm);
 
     if (!ngForm) {
-      console.error(
-        '[ValidateRootFormDirective] NgForm not found. Ensure the directive is used on a <form> element with the ngxVestForm directive. ' +
-          'Common setup mistakes: (1) Missing ngxVestForm directive, (2) Directive on non-form element, (3) NgForm not imported in module/component.'
-      );
+      if (isDevMode()) {
+        logDiagnostic(NGX_VEST_FORMS_DIAGNOSTICS.ROOT_FORM_NGFORM_MISSING);
+      }
       return;
     }
 
@@ -202,8 +206,11 @@ export class ValidateRootFormDirective<T>
   }
 
   validate(control: AbstractControl): Observable<ValidationErrors | null> {
-    // Skip validation if suite or formValue not set
-    if (!this.suite() || !this.formValue()) {
+    // Skip validation only if the suite is not set. We deliberately do NOT
+    // gate on `formValue()` being falsy: cross-field root-form rules (e.g.
+    // "at least one contact method required") must still run on submit even
+    // when the model is empty/null — that is exactly the case they guard.
+    if (!this.suite()) {
       return of(null);
     }
 
@@ -247,12 +254,11 @@ export class ValidateRootFormDirective<T>
         return of(null);
       }
 
-      const currentFormValue = this.formValue();
-      if (!currentFormValue) {
-        return of(null);
-      }
-      // Use the formValue input which contains the actual model data
-      const mod = structuredClone(currentFormValue) as T;
+      // Use the formValue input which contains the actual model data.
+      // A null/undefined model is normalised to an empty object so cross-field
+      // root-form rules still evaluate (they must run precisely when fields
+      // are missing — e.g. "at least one contact method required").
+      const mod = structuredClone(this.formValue() ?? ({} as T)) as T;
 
       return runFieldValidation(
         suite,
@@ -265,7 +271,12 @@ export class ValidateRootFormDirective<T>
         // `runFieldValidation` already applies `take(1)` and `takeUntilDestroyed`,
         // so no additional terminal operators are needed here.
         catchError((err) => {
-          console.error('[validate-root-form] Observable error:', err);
+          if (isDevMode()) {
+            logDiagnostic(
+              NGX_VEST_FORMS_DIAGNOSTICS.ROOT_FORM_VALIDATION_ERROR,
+              err instanceof Error ? err.message : String(err)
+            );
+          }
           return of(null);
         })
       );

@@ -3,9 +3,9 @@ import { describe, expect, it, vi } from 'vitest';
 import type { NgxSuiteRunResult, NgxVestSuite } from './validation-suite';
 import {
   extractFieldErrors,
+  extractFieldWarnings,
   runFieldValidation,
   type NgxSuiteFocusSpec,
-  type NgxSuiteRunHooks,
   type RunnableVestSuite,
 } from './vest-runner';
 
@@ -45,11 +45,26 @@ function createMockDestroyRef(): {
   };
 }
 
+/**
+ * Builds a structural `NgxSuiteRunResult`. Vest 6.3 `run()` is ALWAYS
+ * thenable (a promise merged with the sync selectors), but — crucially —
+ * the value it RESOLVES TO is a concrete result snapshot, NOT the thenable
+ * itself. Modelling the thenable as resolving to itself would make
+ * `Promise.resolve(result)` / `from(result)` adopt it forever (JS heap OOM).
+ * So the returned object carries the selectors + a `then`, and that `then`
+ * resolves to a separate, NON-thenable `snapshot`. `resolvesTo`/`rejects`
+ * override the resolution behaviour to simulate async (de)resolution.
+ */
 function createSuiteResult(
   errors: Record<string, string[]> = {},
-  warnings: Record<string, string[]> = {}
+  warnings: Record<string, string[]> = {},
+  opts: {
+    resolvesTo?: NgxSuiteRunResult | undefined;
+    rejects?: unknown;
+    pending?: Promise<unknown>;
+  } = {}
 ): NgxSuiteRunResult {
-  return {
+  const selectors = {
     getErrors: ((field?: string) =>
       field !== undefined
         ? (errors[field] ?? [])
@@ -58,16 +73,54 @@ function createSuiteResult(
       field !== undefined
         ? (warnings[field] ?? [])
         : warnings) as NgxSuiteRunResult['getWarnings'],
-  } as NgxSuiteRunResult;
+  };
+
+  // The plain, NON-thenable snapshot the thenable resolves to (mirrors the
+  // value Vest's merged promise actually resolves with).
+  const snapshot: NgxSuiteRunResult = { ...selectors } as NgxSuiteRunResult;
+
+  const thenable: NgxSuiteRunResult = { ...selectors } as NgxSuiteRunResult;
+  thenable.then = (<TResult1, TResult2>(
+    onfulfilled?:
+      | ((value: NgxSuiteRunResult) => TResult1 | PromiseLike<TResult1>)
+      | null,
+    onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
+  ): PromiseLike<TResult1 | TResult2> => {
+    if (opts.pending) {
+      return opts.pending.then(
+        () =>
+          (onfulfilled
+            ? onfulfilled(
+                'resolvesTo' in opts
+                  ? (opts.resolvesTo as NgxSuiteRunResult)
+                  : snapshot
+              )
+            : undefined) as TResult1,
+        (r) => (onrejected ? onrejected(r) : Promise.reject(r)) as TResult2
+      );
+    }
+    if (opts.rejects !== undefined) {
+      return Promise.reject(opts.rejects).then(
+        undefined,
+        onrejected ?? undefined
+      ) as PromiseLike<TResult2>;
+    }
+    const resolved =
+      'resolvesTo' in opts ? (opts.resolvesTo as NgxSuiteRunResult) : snapshot;
+    return Promise.resolve(resolved).then(
+      onfulfilled ?? undefined
+    ) as PromiseLike<TResult1>;
+  }) as NgxSuiteRunResult['then'];
+
+  return thenable;
 }
 
 type TestModel = { username: string };
 
 function createSuiteMock(overrides: {
-  syncResult?: NgxSuiteRunResult;
-  asyncResult?: PromiseLike<NgxSuiteRunResult>;
+  runResult?: NgxSuiteRunResult;
   latestResult?: NgxSuiteRunResult;
-  onRun?: (hooks?: NgxSuiteRunHooks) => void;
+  onRun?: () => void;
   enableFocus?: boolean;
 }): RunnableVestSuite<TestModel> & {
   run: ReturnType<typeof vi.fn>;
@@ -75,18 +128,14 @@ function createSuiteMock(overrides: {
   focus?: ReturnType<typeof vi.fn>;
   get: ReturnType<typeof vi.fn>;
 } {
-  const returnValue = overrides.asyncResult ?? overrides.syncResult;
-  const run = vi.fn(
-    (_model: TestModel, _field?: unknown, hooks?: NgxSuiteRunHooks) => {
-      overrides.onRun?.(hooks);
-      return returnValue as NgxSuiteRunResult;
-    }
-  );
+  const returnValue = overrides.runResult ?? createSuiteResult();
+  const run = vi.fn((_model: TestModel) => {
+    overrides.onRun?.();
+    return returnValue;
+  });
   const only = vi.fn(() => ({ run }));
   const focus = vi.fn((_focus: NgxSuiteFocusSpec) => ({ run }));
-  const get = vi.fn(
-    () => overrides.latestResult ?? overrides.syncResult ?? createSuiteResult()
-  );
+  const get = vi.fn(() => overrides.latestResult ?? createSuiteResult());
   const suite = { run, only, get } as RunnableVestSuite<TestModel> & {
     run: ReturnType<typeof vi.fn>;
     only: ReturnType<typeof vi.fn>;
@@ -107,8 +156,7 @@ function createFocusSuiteMock(
   focus: ReturnType<typeof vi.fn>;
   get: ReturnType<typeof vi.fn>;
 } {
-  const suite = createSuiteMock({ syncResult: result, enableFocus: true });
-  // enableFocus: true guarantees focus is assigned; assert non-optional for callers.
+  const suite = createSuiteMock({ runResult: result, enableFocus: true });
   return suite as RunnableVestSuite<TestModel> & {
     run: ReturnType<typeof vi.fn>;
     only: ReturnType<typeof vi.fn>;
@@ -118,21 +166,18 @@ function createFocusSuiteMock(
 }
 
 async function flushMicrotasks(): Promise<void> {
-  // One macrotask flush so `timer(0)` fires, plus a microtask flush for the
-  // subsequent `from(...)`/`map(...)` operators in the runner.
+  // One macrotask flush so `timer(0)` fires, plus microtask flushes for the
+  // subsequent `from(Promise.resolve(...))`/`map(...)` operators.
   await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  await Promise.resolve();
   await Promise.resolve();
 }
 
 describe('vest-runner', () => {
-  // Most tests use real timers because `timer(0)` defers the suite run by one task
-  // and the assertions follow microtask flushes. The single test that asserts
-  // debounce timing opts into fake timers locally.
-
-  it('emits once and completes for a synchronous suite result', async () => {
+  it('emits the resolved per-run snapshot and completes', async () => {
     const { destroyRef } = createMockDestroyRef();
     const result = createSuiteResult({ username: ['Required'] });
-    const suite = createSuiteMock({ syncResult: result });
+    const suite = createSuiteMock({ runResult: result });
 
     const values: NgxSuiteRunResult[] = [];
     const complete = vi.fn();
@@ -151,28 +196,30 @@ describe('vest-runner', () => {
     await flushMicrotasks();
 
     expect(suite.only).toHaveBeenCalledWith('username');
-    expect(suite.run).toHaveBeenCalledWith(
-      { username: '' },
-      undefined,
-      expect.objectContaining({
-        signal: expect.any(AbortSignal),
-      })
-    );
-    expect(values).toEqual([result]);
+    expect(suite.run).toHaveBeenCalledWith({ username: '' });
+    // The model is the ONLY arg — no dead {signal}/hooks transport.
+    expect(suite.run.mock.calls[0]).toHaveLength(1);
+    // `from(result)` emits the value the thenable RESOLVES TO (the per-run
+    // snapshot), not the thenable wrapper itself. The snapshot shares the
+    // result's selector functions, so assert via selector identity.
+    expect(values).toHaveLength(1);
+    expect(values[0]?.getErrors).toBe(result.getErrors);
+    expect(values[0]?.getErrors('username')).toEqual(['Required']);
     expect(complete).toHaveBeenCalledOnce();
   });
 
-  it('emits after a thenable suite result resolves', async () => {
+  it('emits the value the run promise RESOLVES to, not shared suite.get()', async () => {
+    // Cross-field contamination guard (#1): the resolved per-run snapshot must
+    // win over the shared, mutable `suite.get()` state.
     const { destroyRef } = createMockDestroyRef();
-    const final = createSuiteResult({ username: ['Taken'] });
-
-    let resolvePending!: (value: unknown) => void;
-    const pending = new Promise<unknown>((resolve) => {
-      resolvePending = resolve;
+    const perRunSnapshot = createSuiteResult({ username: ['Per-run'] });
+    const sharedState = createSuiteResult({ username: ['Contaminated'] });
+    const runResult = createSuiteResult({}, {}, {
+      resolvesTo: perRunSnapshot,
     });
     const suite = createSuiteMock({
-      asyncResult: pending as unknown as PromiseLike<NgxSuiteRunResult>,
-      latestResult: final,
+      runResult,
+      latestResult: sharedState,
     });
 
     const values: NgxSuiteRunResult[] = [];
@@ -186,25 +233,50 @@ describe('vest-runner', () => {
     ).subscribe((value) => values.push(value));
 
     await flushMicrotasks();
-    expect(values).toEqual([]);
 
-    resolvePending(undefined);
-    await flushMicrotasks();
-
-    expect(suite.run).toHaveBeenCalledOnce();
-    expect(suite.get).toHaveBeenCalled();
-    expect(values).toEqual([final]);
+    expect(values).toHaveLength(1);
+    expect(values[0]?.getErrors('username')).toEqual(['Per-run']);
+    // suite.get() must NOT be used on the happy path.
+    expect(suite.get).not.toHaveBeenCalled();
   });
 
-  it('emits the latest suite state when the thenable rejects', async () => {
+  it('falls back to suite.get() when the run promise resolves to nothing', async () => {
+    const { destroyRef } = createMockDestroyRef();
+    const fallback = createSuiteResult({ username: ['Fallback'] });
+    const runResult = createSuiteResult({}, {}, {
+      resolvesTo: undefined,
+    });
+    const suite = createSuiteMock({
+      runResult,
+      latestResult: fallback,
+    });
+
+    const values: NgxSuiteRunResult[] = [];
+
+    runFieldValidation(
+      suite,
+      {},
+      { username: 'ada' },
+      { debounceTime: 0 },
+      destroyRef
+    ).subscribe((value) => values.push(value));
+
+    await flushMicrotasks();
+
+    expect(suite.get).toHaveBeenCalled();
+    expect(values).toEqual([fallback]);
+  });
+
+  it('emits the latest suite state when the run promise rejects', async () => {
     const { destroyRef } = createMockDestroyRef();
     const latestResult = createSuiteResult({
       username: ['Recovered latest state'],
     });
-    const rejectedPromise = Promise.reject(new Error('boom'));
-    rejectedPromise.catch(() => {}); // suppress unhandled rejection before suite consumes it
+    const runResult = createSuiteResult({}, {}, {
+      rejects: new Error('boom'),
+    });
     const suite = createSuiteMock({
-      asyncResult: rejectedPromise as unknown as PromiseLike<NgxSuiteRunResult>,
+      runResult,
       latestResult,
     });
 
@@ -232,7 +304,7 @@ describe('vest-runner', () => {
       resolvePending = resolve;
     });
     const suite = createSuiteMock({
-      asyncResult: pending as unknown as PromiseLike<NgxSuiteRunResult>,
+      runResult: createSuiteResult({}, {}, { pending }),
       latestResult: createSuiteResult({ username: ['Late result'] }),
     });
 
@@ -255,109 +327,11 @@ describe('vest-runner', () => {
     expect(complete).not.toHaveBeenCalled();
   });
 
-  it('aborts the provided signal when the upstream subscription is torn down', async () => {
-    const { destroyRef } = createMockDestroyRef();
-    let receivedSignal: AbortSignal | undefined;
-
-    let resolvePending!: (value: unknown) => void;
-    const pending = new Promise<unknown>((resolve) => {
-      resolvePending = resolve;
-    });
-    const suite = createSuiteMock({
-      asyncResult: pending as unknown as PromiseLike<NgxSuiteRunResult>,
-      latestResult: createSuiteResult({ username: ['Late result'] }),
-      onRun: (hooks) => {
-        receivedSignal = hooks?.signal;
-      },
-    });
-
-    const subscription = runFieldValidation(
-      suite,
-      {},
-      { username: 'ada' },
-      { debounceTime: 0 },
-      destroyRef
-    ).subscribe();
-
-    await flushMicrotasks();
-    expect(receivedSignal?.aborted).toBe(false);
-
-    subscription.unsubscribe();
-    resolvePending(undefined);
-    await flushMicrotasks();
-
-    expect(receivedSignal?.aborted).toBe(true);
-  });
-
-  it('aborts the provided signal when the destroy ref fires after the suite has started', async () => {
-    const { destroyRef, destroy } = createMockDestroyRef();
-    let receivedSignal: AbortSignal | undefined;
-
-    let resolvePending!: (value: unknown) => void;
-    const pending = new Promise<unknown>((resolve) => {
-      resolvePending = resolve;
-    });
-    const suite = createSuiteMock({
-      asyncResult: pending as unknown as PromiseLike<NgxSuiteRunResult>,
-      latestResult: createSuiteResult({ username: ['Late result'] }),
-      onRun: (hooks) => {
-        receivedSignal = hooks?.signal;
-      },
-    });
-
-    runFieldValidation(
-      suite,
-      {},
-      { username: 'ada' },
-      { debounceTime: 0 },
-      destroyRef
-    ).subscribe();
-
-    await flushMicrotasks();
-    expect(receivedSignal?.aborted).toBe(false);
-
-    // DestroyRef path (distinct from manual unsubscribe).
-    destroy();
-    resolvePending(undefined);
-    await flushMicrotasks();
-
-    expect(receivedSignal?.aborted).toBe(true);
-  });
-
-  it('does NOT abort the signal on successful completion', async () => {
-    const { destroyRef } = createMockDestroyRef();
-    let receivedSignal: AbortSignal | undefined;
-
-    const result = createSuiteResult({ username: ['Required'] });
-    const suite = createSuiteMock({
-      syncResult: result,
-      onRun: (hooks) => {
-        receivedSignal = hooks?.signal;
-      },
-    });
-
-    runFieldValidation(
-      suite,
-      { only: 'username' },
-      { username: '' },
-      { debounceTime: 0 },
-      destroyRef
-    ).subscribe();
-
-    await flushMicrotasks();
-
-    // The run emitted-and-completed normally; the signal must remain unaborted
-    // so consumers can rely on `signal.aborted` as a "was this run cancelled?"
-    // check.
-    expect(receivedSignal).toBeDefined();
-    expect(receivedSignal?.aborted).toBe(false);
-  });
-
   it('calls suite.run(model) directly when the focus spec is empty', async () => {
     const { destroyRef } = createMockDestroyRef();
     const model = { username: 'ada' };
     const result = createSuiteResult();
-    const suite = createSuiteMock({ syncResult: result });
+    const suite = createSuiteMock({ runResult: result });
 
     const emitted = await new Promise<unknown>((resolve, reject) => {
       runFieldValidation(
@@ -369,15 +343,12 @@ describe('vest-runner', () => {
       ).subscribe({ next: resolve, error: reject });
     });
 
-    expect(suite.run).toHaveBeenCalledWith(
-      model,
-      undefined,
-      expect.objectContaining({
-        signal: expect.any(AbortSignal),
-      })
-    );
+    expect(suite.run).toHaveBeenCalledWith(model);
+    expect(suite.run.mock.calls[0]).toHaveLength(1);
     expect(suite.only).not.toHaveBeenCalled();
-    expect(emitted).toBe(result);
+    // Emitted value is the resolved per-run snapshot (shares the result's
+    // selector functions), not the thenable wrapper itself.
+    expect((emitted as NgxSuiteRunResult).getErrors).toBe(result.getErrors);
   });
 
   it('routes onlyGroup focus through suite.focus and keeps field-only precedence', async () => {
@@ -401,12 +372,10 @@ describe('vest-runner', () => {
       only: 'ignored-by-caller',
     });
     expect(suite.only).not.toHaveBeenCalled();
-    expect(suite.run).toHaveBeenCalledWith(
-      model,
-      undefined,
-      expect.objectContaining({ signal: expect.any(AbortSignal) })
-    );
-    expect(emitted).toBe(result);
+    expect(suite.run).toHaveBeenCalledWith(model);
+    // Emitted value is the resolved per-run snapshot (shares the result's
+    // selector functions), not the thenable wrapper itself.
+    expect((emitted as NgxSuiteRunResult).getErrors).toBe(result.getErrors);
   });
 
   it('routes skipGroup focus through suite.focus', async () => {
@@ -430,26 +399,39 @@ describe('vest-runner', () => {
       only: 'username',
     });
     expect(suite.only).not.toHaveBeenCalled();
-    expect(suite.run).toHaveBeenCalledWith(
-      model,
-      undefined,
-      expect.objectContaining({ signal: expect.any(AbortSignal) })
-    );
-    expect(emitted).toBe(result);
+    expect(suite.run).toHaveBeenCalledWith(model);
+    // Emitted value is the resolved per-run snapshot (shares the result's
+    // selector functions), not the thenable wrapper itself.
+    expect((emitted as NgxSuiteRunResult).getErrors).toBe(result.getErrors);
   });
 
-  it('extractFieldErrors returns errors plus warnings, but null for warnings only', () => {
+  it('embeds warnings alongside errors, and stays null for warnings-only', () => {
     const result = createSuiteResult(
       { username: ['Required'] },
       { username: ['Heads up'] }
     );
     const warningsOnly = createSuiteResult({}, { username: ['Heads up'] });
 
+    // Vest M1 (deferred, see ADR-0002): warnings ARE embedded alongside
+    // errors so consumers reading `control.errors.warnings` keep working.
+    // Validity is unaffected because we only embed when real errors exist.
     expect(extractFieldErrors(result, 'username')).toEqual({
       errors: ['Required'],
       warnings: ['Heads up'],
     });
+    // Warning-only field has no errors → null (warnings never block validity).
     expect(extractFieldErrors(warningsOnly, 'username')).toBeNull();
+  });
+
+  it('extractFieldWarnings still surfaces warnings as a separate source', () => {
+    const result = createSuiteResult(
+      { username: ['Required'] },
+      { username: ['Heads up'] }
+    );
+    expect(extractFieldWarnings(result, 'username')).toEqual(['Heads up']);
+    expect(
+      extractFieldWarnings(createSuiteResult(), 'username')
+    ).toBeUndefined();
   });
 
   it('completes without emission when the destroy ref fires first', async () => {
@@ -460,7 +442,7 @@ describe('vest-runner', () => {
       resolvePending = resolve;
     });
     const suite = createSuiteMock({
-      asyncResult: pending as unknown as PromiseLike<NgxSuiteRunResult>,
+      runResult: createSuiteResult({}, {}, { pending }),
       latestResult: createSuiteResult({ username: ['Late result'] }),
     });
 
@@ -487,7 +469,7 @@ describe('vest-runner', () => {
     vi.useFakeTimers();
     try {
       const { destroyRef, destroy } = createMockDestroyRef();
-      const suite = createSuiteMock({ syncResult: createSuiteResult() });
+      const suite = createSuiteMock({ runResult: createSuiteResult() });
       const next = vi.fn();
       const complete = vi.fn();
 

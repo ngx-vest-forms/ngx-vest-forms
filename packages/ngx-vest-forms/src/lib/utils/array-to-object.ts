@@ -1,7 +1,8 @@
 /**
- * Converts a flat array to an object with numeric keys.
- * Does not recurse into nested arrays or objects.
- * Uses reduce() for optimal single-pass conversion.
+ * Recursively maps array element types to records keyed by numeric index.
+ *
+ * This is the type-level counterpart of {@link deepArrayToObject}: arrays
+ * become `Record<number, ...>` while non-array objects keep their keys.
  */
 export type DeepArrayToObject<T> =
   T extends ReadonlyArray<infer U>
@@ -10,6 +11,21 @@ export type DeepArrayToObject<T> =
       ? { [K in keyof T]: DeepArrayToObject<T[K]> }
       : T;
 
+/**
+ * Converts a flat array to an object with numeric keys.
+ *
+ * Does not recurse into nested arrays or objects. Useful for template-driven
+ * forms that require an object structure (numeric keys) instead of an array.
+ *
+ * @param array - The flat array to convert.
+ * @returns An object whose keys are the original array indices.
+ *
+ * @example
+ * ```ts
+ * arrayToObject(['a', 'b', 'c']);
+ * // => { 0: 'a', 1: 'b', 2: 'c' }
+ * ```
+ */
 export function arrayToObject<T>(array: readonly T[]): Record<number, T> {
   return array.reduce(
     (acc, value, index) => {
@@ -23,6 +39,15 @@ export function arrayToObject<T>(array: readonly T[]): Record<number, T> {
 /**
  * Recursively converts arrays to objects with numeric keys, including nested arrays in objects.
  * Useful for template-driven forms that require object structure for nested arrays.
+ *
+ * @param array - The (possibly nested) array to convert.
+ * @returns A deeply converted object where every array level is keyed by index.
+ *
+ * @example
+ * ```ts
+ * deepArrayToObject([{ tags: ['x', 'y'] }]);
+ * // => { 0: { tags: { 0: 'x', 1: 'y' } } }
+ * ```
  */
 export function deepArrayToObject<T>(
   array: readonly T[]
@@ -69,11 +94,37 @@ function recursivelyConvertArrays<T>(object: T): DeepArrayToObject<T> {
 
 /**
  * Public API: Convert selected numeric-keyed object properties back to arrays.
- * Note: Conversion is explicit (by key) but will cascade inside converted branches
- * so nested numeric objects representing arrays become real arrays recursively.
+ *
+ * Conversion is *explicit by key* (only `keys` are converted) and cascades
+ * inside converted branches, so nested numeric-keyed objects representing
+ * arrays become real arrays recursively. As a convenience the result is
+ * unwrapped to the bare converted array when the input is a single-entry
+ * wrapper whose only key was converted.
+ *
+ * A sound precise return type is not expressible here: the runtime shape
+ * depends on the runtime `keys` values and the single-entry unwrap, neither of
+ * which is recoverable in the type system. The return is therefore `unknown`;
+ * callers that know the concrete result shape should assert it
+ * (e.g. `objectToArray(model, ['list']) as { list: string[] }`).
+ *
+ * @typeParam K - The literal keys whose numeric-keyed sub-objects become arrays.
+ * @param object - The (object-shaped) form model being converted.
+ * @param keys - The keys whose numeric-keyed sub-objects become arrays.
+ * @returns The converted value as `unknown` (assert the concrete shape).
+ *
+ * @example
+ * ```ts
+ * const model = { addresses: { 0: { city: 'A' }, 1: { city: 'B' } } };
+ * objectToArray(model, ['addresses']) as { addresses: { city: string }[] };
+ * // => { addresses: [{ city: 'A' }, { city: 'B' }] }
+ *
+ * // Single-entry wrapper is unwrapped to the bare array:
+ * objectToArray({ list: { 0: { id: 1 } } }, ['list']);
+ * // => [{ id: 1 }]
+ * ```
  */
 export function objectToArray<const K extends readonly string[]>(
-  object: unknown,
+  object: object,
   keys: K
 ): unknown {
   const processed = objectToArrayInternal(object, keys);

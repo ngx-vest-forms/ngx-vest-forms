@@ -125,6 +125,27 @@ type Model = {
 type AgeType = FieldPathValue<Model, 'user.profile.age'>;
 ```
 
+`FieldPathValue` also resolves array-traversing paths, in both the flattened `FieldPath` form and the runtime bracket form, and strips the `NgxDeepPartial` `| undefined` from the leaf:
+
+```typescript
+type Model = {
+  addresses: Array<{
+    street: string;
+    city: string;
+  }>;
+};
+
+// Flattened FieldPath form → element property type
+type StreetA = FieldPathValue<Model, 'addresses.street'>; // string
+
+// Runtime bracket form → element property type
+type StreetB = FieldPathValue<Model, 'addresses[0].street'>; // string
+
+// Bracket index on the array itself → element type
+type Address = FieldPathValue<Model, 'addresses[0]'>;
+// { street: string; city: string }
+```
+
 ### `LeafFieldPath<T>`
 
 Extracts only the leaf paths (paths to primitive values), excluding intermediate objects.

@@ -2498,3 +2498,89 @@ describe('FormDirective - Destroy-aware async scheduling', () => {
     }).not.toThrow();
   });
 });
+
+describe('FormDirective - bidirectional sync conflict recovery', () => {
+  @Component({
+    selector: 'sc-conflict-host',
+    imports: [NgxVestForms],
+    template: `
+      <form
+        ngxVestForm
+        [formValue]="formValue()"
+        (formValueChange)="onFormValueChange($event)"
+      >
+        <input
+          id="name"
+          name="name"
+          [ngModel]="formValue().name"
+          aria-label="name"
+        />
+      </form>
+    `,
+  })
+  class ConflictHostComponent {
+    readonly formValue = signal<{ name?: string }>({ name: '' });
+    onFormValueChange(value: { name?: string } | null): void {
+      // Intentionally do NOT mirror back into formValue() — this keeps the
+      // model fixed while the user edits the input, so a later programmatic
+      // model change can diverge from the form (the conflict scenario).
+      void value;
+    }
+  }
+
+  it('still applies later programmatic formValue updates after a prior true conflict', async () => {
+    const { fixture } = await render(ConflictHostComponent);
+    const instance = fixture.componentInstance;
+    const input = screen.getByLabelText('name') as HTMLInputElement;
+
+    // 1. User edits the input -> form changes (model stays {name:''}).
+    await userEvent.type(input, 'user-typed');
+    fixture.detectChanges();
+
+    // 2. Simultaneously change the model to a DIFFERENT value before the
+    //    sync effect reconciles -> formChanged && modelChanged with unequal
+    //    values == the "true conflict" branch.
+    instance.formValue.set({ name: 'model-A' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // 3. A LATER, single-sided programmatic formValue update must still take
+    //    effect (pre-fix this was permanently dropped because the conflict
+    //    branch never advanced the sync baselines).
+    instance.formValue.set({ name: 'model-B' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    await waitFor(() => {
+      expect(input.value).toBe('model-B');
+    });
+  });
+
+  it('does not throw and keeps syncing across repeated conflicts', async () => {
+    const { fixture } = await render(ConflictHostComponent);
+    const instance = fixture.componentInstance;
+    const input = screen.getByLabelText('name') as HTMLInputElement;
+
+    await userEvent.type(input, 'abc');
+    fixture.detectChanges();
+    instance.formValue.set({ name: 'conflict-1' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    await userEvent.clear(input);
+    await userEvent.type(input, 'def');
+    fixture.detectChanges();
+    instance.formValue.set({ name: 'conflict-2' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Final clean programmatic update must still propagate to the DOM.
+    instance.formValue.set({ name: 'final' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    await waitFor(() => {
+      expect(input.value).toBe('final');
+    });
+  });
+});

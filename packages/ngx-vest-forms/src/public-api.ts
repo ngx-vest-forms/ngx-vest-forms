@@ -65,18 +65,13 @@ export {
 } from './lib/utils/aria-association.utils';
 export type { AriaAssociationMode } from './lib/utils/aria-association.utils';
 
-// Internal utilities - exported for advanced use cases but not part of the primary API
-// These are marked with @internal in their source files and may change without notice
-/** @internal */ export {
-  fastDeepEqual,
-  shallowEqual,
-} from './lib/utils/equality';
-/** @internal */ export { parseFieldPath } from './lib/utils/field-path.utils';
+// Internal-only utilities (`fastDeepEqual`, `shallowEqual`, `parseFieldPath`,
+// `getFormControlField`, `getFormGroupField`, `mergeValuesAndRawValues`) are
+// `@internal` and intentionally NOT part of this primary entry point. They are
+// available via the dedicated `ngx-vest-forms/internal` secondary entry point
+// for advanced use cases (no semver guarantees).
 export {
   getAllFormErrors,
-  getFormControlField,
-  getFormGroupField,
-  mergeValuesAndRawValues,
 } from './lib/utils/form-utils';
 export type { NgxFormErrorsByPath } from './lib/utils/form-utils';
 
