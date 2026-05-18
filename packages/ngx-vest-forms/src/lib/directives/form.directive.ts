@@ -936,8 +936,11 @@ export class FormDirective<T extends Record<string, unknown>> {
   /**
    * Host handler: called whenever any descendant field loses focus.
    * Used to make touched-path tracking react immediately on blur/tab.
+   *
+   * @internal Wired only via the `(focusout)` host binding. Not part of the
+   * public API; consume the `fieldBlur` output instead.
    */
-  onFormFocusOut(event: FocusEvent): void {
+  protected onFormFocusOut(event: FocusEvent): void {
     // Run on the next microtask to ensure Angular has already applied
     // control.touched changes for the field that just blurred.
     scheduleMicrotask(() => {

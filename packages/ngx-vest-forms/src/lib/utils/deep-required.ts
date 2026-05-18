@@ -21,9 +21,11 @@ type _IsTuple<T> = T extends ReadonlyArray<infer U>
  * Adapted from ts-essentials `DeepRequired` (MIT License).
  * @see https://github.com/ts-essentials/ts-essentials
  *
- * @deprecated Use `DeepRequired` from `ts-essentials` instead.
- * `npm install ts-essentials` then `import { DeepRequired } from 'ts-essentials'`.
- * This export will be removed in a future major version.
+ * Fully supported and the canonical development-time shape type for
+ * ngx-vest-forms (see the library's instruction sheet and migration guide). It
+ * is rebuilt on the same patterns as `ts-essentials`' `DeepRequired`, so if you
+ * already depend on `ts-essentials` you may prefer its `DeepRequired` to avoid a
+ * near-duplicate type — but doing so is optional, not required.
  *
  * @template T The type to make deeply required
  */

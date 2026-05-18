@@ -17,9 +17,11 @@ type _Builtin = _Primitive | Function | Date | Error | RegExp;
  * Adapted from ts-essentials `DeepPartial` (MIT License).
  * @see https://github.com/ts-essentials/ts-essentials
  *
- * @deprecated Use `DeepPartial` from `ts-essentials` instead.
- * `npm install ts-essentials` then `import { DeepPartial } from 'ts-essentials'`.
- * This export will be removed in a future major version.
+ * Fully supported and the canonical form-model type for ngx-vest-forms
+ * (see the library's instruction sheet and migration guide). It is rebuilt on
+ * the same patterns as `ts-essentials`' `DeepPartial`, so if you already depend
+ * on `ts-essentials` you may prefer its `DeepPartial` to avoid a near-duplicate
+ * type — but doing so is optional, not required.
  *
  * @template T The type to make deeply partial
  */
