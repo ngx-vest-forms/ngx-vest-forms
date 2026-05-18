@@ -47,12 +47,32 @@ The workflow will:
 - Add appropriate dist-tag in npm
 - Create GitHub prerelease
 
+#### v3 beta line (`release/v3`)
+
+The v3 line is developed on the long-lived `release/v3` branch and published
+as a beta prerelease. Every commit landing on `release/v3` makes
+semantic-release publish a `3.0.0-beta.N` package on the npm `@beta` dist-tag
+(`.releaserc` → `{ "name": "release/v3", "prerelease": "beta", "channel": "beta" }`).
+
+`3.0.0-beta.0` is **not** Phase 1 only: by the time the channel is cut, the
+Phase 1 internal refactors and cleanup (#118–#123, #130, #131) **and** the
+Phase 2 feature work (#125–#128: `validationFocus`, `AbortSignal`
+plumbing, docs, private-field style) have all merged into `release/v3`. So the
+first beta carries the full Vest 5→6 migration + deprecation removals +
+internal refactors + Phase 2 features in one coherent prerelease. Subsequent
+`release/v3` commits roll forward as `3.0.0-beta.1`, `beta.2`, ….
+
+`npm install ngx-vest-forms@beta` resolves to the latest `3.0.0-beta.N`.
+Once v3 is stabilised, the final `3.0.0` ships from `master` and a
+`release/v3.x` maintenance channel is added (see issue #129).
+
 #### Prerelease Branches
 
 | Branch Pattern | npm Tag | Version Example | Use Case |
 | -------------- | ------- | --------------- | -------- |
+| `release/v3` | beta | 3.0.0-beta.1 | v3 beta line (Vest 6 migration + cleanup + Phase 1/2) |
 | `next` | next | 2.1.0-next.1 | Next major version features |
-| `beta` | beta | 2.1.0-beta.1 | Beta testing before stable |
+| `beta` | beta | 2.1.0-beta.1 | Generic beta testing before stable |
 | `alpha` | alpha | 2.1.0-alpha.1 | Early alpha testing |
 | `rc` | rc | 2.1.0-rc.1 | Release candidate |
 | `release/v2.x` | release-v2 | 2.5.1 | v2 maintenance releases after v3 becomes current |

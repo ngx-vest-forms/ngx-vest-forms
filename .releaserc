@@ -13,9 +13,8 @@
     },
     {
       "name": "release/v3",
-      "range": "3.x",
-      "prerelease": "v3-snapshot",
-      "channel": "v3-snapshot"
+      "prerelease": "beta",
+      "channel": "beta"
     },
     {
       "name": "next",
