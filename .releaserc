@@ -21,10 +21,6 @@
       "prerelease": "next"
     },
     {
-      "name": "beta",
-      "prerelease": "beta"
-    },
-    {
       "name": "rc",
       "prerelease": "rc"
     },

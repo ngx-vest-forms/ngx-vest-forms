@@ -69,7 +69,7 @@ Prereleases are used for testing new features before stable release. They can be
 1. Go to [Actions > Release (Prerelease/Beta)](../../actions/workflows/prerelease.yml)
 2. Click "Run workflow"
 3. Choose branch type:
-   - **Stable**: Select from predefined branches (next, alpha, beta, rc, release/v1.x, release/v2.x)
+   - **Stable**: Select from predefined branches (next, alpha, rc, release/v1.x, release/v2.x, release/v3)
    - **Custom**: Enter a custom branch name (e.g., `feat/awesome-feature`, `fix/critical-bug`)
 
 The workflow will:
@@ -82,9 +82,15 @@ The workflow will:
 #### v3 beta line (`release/v3`)
 
 The v3 line is developed on the long-lived `release/v3` branch and published
-as a beta prerelease. Every commit landing on `release/v3` makes
-semantic-release publish a `3.0.0-beta.N` package on the npm `@beta` dist-tag
+as a beta prerelease. Publishing is **manual only**, like every other release
+here: a maintainer dispatches the **Release (Prerelease/Beta)** workflow with
+`stable_branch = release/v3` (merging or pushing to `release/v3` does **not**
+publish — there is no `push` trigger). Each dispatched run makes
+semantic-release publish the next `3.0.0-beta.N` package on the npm `@beta`
+dist-tag, derived from the commits on `release/v3` since the last beta
 (`.releaserc` → `{ "name": "release/v3", "prerelease": "beta", "channel": "beta" }`).
+Use the workflow's `dry_run` input to compute the next version/channel
+without publishing.
 
 `3.0.0-beta.0` is **not** Phase 1 only: by the time the channel is cut, the
 Phase 1 internal refactors and cleanup (#118–#123, #130, #131) **and** the
@@ -92,7 +98,7 @@ Phase 2 feature work (#125–#128: `validationFocus`, `AbortSignal`
 plumbing, docs, private-field style) have all merged into `release/v3`. So the
 first beta carries the full Vest 5→6 migration + deprecation removals +
 internal refactors + Phase 2 features in one coherent prerelease. Subsequent
-`release/v3` commits roll forward as `3.0.0-beta.1`, `beta.2`, ….
+dispatched runs roll forward as `3.0.0-beta.1`, `beta.2`, ….
 
 `npm install ngx-vest-forms@beta` resolves to the latest `3.0.0-beta.N`.
 Once v3 is stabilised, the final `3.0.0` ships from `master` and a
@@ -104,7 +110,6 @@ Once v3 is stabilised, the final `3.0.0` ships from `master` and a
 | -------------- | ------- | --------------- | -------- |
 | `release/v3` | beta | 3.0.0-beta.1 | v3 beta line (Vest 6 migration + cleanup + Phase 1/2) |
 | `next` | next | 2.1.0-next.1 | Next major version features |
-| `beta` | beta | 2.1.0-beta.1 | Generic beta testing before stable |
 | `alpha` | alpha | 2.1.0-alpha.1 | Early alpha testing |
 | `rc` | rc | 2.1.0-rc.1 | Release candidate |
 | `release/v2.x` | release-v2 | 2.5.1 | v2 maintenance releases after v3 becomes current |

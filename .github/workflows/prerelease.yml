@@ -15,12 +15,11 @@ on:
       stable_branch:
         description: 'Stable branch (when branch_type = stable)'
         required: false
-        default: 'beta'
+        default: 'release/v3'
         type: choice
         options:
           - next
           - alpha
-          - beta
           - rc
           - release/v1.x
           - release/v2.x
