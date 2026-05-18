@@ -19,6 +19,38 @@ Production releases are created from the `master`, `release/v1.x`, or `release/v
 
 Use maintenance branches for supported release lines. For example, prefer `release/v2.x` over a fixed branch name like `release/2.0.0`. A future `release/v3.x` branch would only be needed once `master` moves beyond the v3 line.
 
+### Branch lifecycle & the v2 → v3 transition
+
+The v3 line is developed on `release/v3` and published as a `@beta`
+prerelease **before** it becomes the stable `@latest`. The topology that
+makes this safe (verified):
+
+- **`release/v2.x` fully captures the v2 line.** It contains every v2 tag
+  through the latest `v2.7.0`, so v2 maintenance is independent of v3. A
+  `fix:` commit on `release/v2.x` cuts a `2.7.x` patch on the `release-v2`
+  dist-tag with no effect on v3. Forward-port such fixes into `release/v3`
+  (and later `master`) via cherry-pick.
+- **`master` is the stable `@latest` channel.** It currently sits at the v2
+  line plus infra/chore commits. Merging `release/v3` → `master` and pushing
+  makes semantic-release publish a **stable `3.0.0` to `@latest`** (the v3
+  commits carry `BREAKING CHANGE`). That merge therefore *is* the "declare v3
+  GA" action — it is **not** done to cut betas.
+- **`master` is already an ancestor of `release/v3`** (zero divergent
+  commits), so the eventual merge is effectively a fast-forward whenever it
+  happens — there is no benefit to merging early and every reason to wait.
+
+Sequence:
+
+1. **Beta phase:** ship `3.0.0-beta.N` from `release/v3` on `@beta` (this
+   config change). Do **not** merge `release/v3` → `master` during this phase
+   — that would skip beta and publish v3 as stable `@latest`.
+2. **v2 maintenance (in parallel):** cut `2.7.x` from `release/v2.x` as
+   needed; forward-port fixes into `release/v3`.
+3. **v3 GA:** once the beta is validated, merge `release/v3` → `master`;
+   semantic-release publishes stable `3.0.0` on `@latest`.
+4. **Post-GA:** add a `release/v3.x` maintenance channel to `.releaserc`
+   (issue #129) and treat `release/v2.x` as the prior-major maintenance line.
+
 The workflow will:
 
 - Run all tests, lints, and builds
