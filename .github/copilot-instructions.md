@@ -23,7 +23,7 @@ proposing changes.
   migrations, and v3-specific dependency upgrades target this branch. Merging
   here does **not** auto-publish; v3 only ships via manual
   `workflow_dispatch` of `.github/workflows/prerelease.yml` (snapshot
-  prereleases on the `v3-snapshot` npm dist-tag) — never on PR merge.
+  prereleases on the `@beta` npm dist-tag) — never on PR merge.
 - Other `release/*` branches are maintenance-only for their respective majors.
 
 When uncertain, default to `release/v3` and call out the choice in the PR
