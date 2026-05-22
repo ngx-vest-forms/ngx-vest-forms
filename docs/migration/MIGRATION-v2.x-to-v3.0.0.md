@@ -24,21 +24,19 @@ If you only used the recommended `Ngx*` / `NGX_*` names (or the canonical `setVa
 
 The `[formShape]` input on `<form ngxVestForm>` is removed in v3 and replaced by `[formContract]`, which accepts any [Standard Schema v1](https://standardschema.dev) value (Zod v4, Valibot, hand-rolled, …) **or** a legacy `NgxDeepRequired<T>` shape object for back-compat.
 
+If you already have a schema, pass it directly and let that remain your structural contract. Keep raw `NgxDeepRequired<T>` shapes for migration or for apps that want a low-dependency fallback without bringing in a schema library.
+
 ```html
 <!-- v2 -->
 <form ngxVestForm [suite]="suite" [formShape]="myContract"></form>
 
-<!-- v3: raw NgxDeepRequired<T> shape still accepted (back-compat) -->
+<!-- v3: raw NgxDeepRequired<T> shape still accepted (migration/fallback) -->
 <form ngxVestForm [suite]="suite" [formContract]="myContract"></form>
 
-<!-- v3: explicit conversion to StandardSchemaV1 -->
-<form
-  ngxVestForm
-  [suite]="suite"
-  [formContract]="toFormContract(myContract)"
-></form>
+<!-- v3: explicit conversion from legacy shape to Standard Schema -->
+<form ngxVestForm [suite]="suite" [formContract]="toFormContract(myContract)"></form>
 
-<!-- v3: real Standard Schema (recommended for new code) -->
+<!-- v3: real Standard Schema (preferred when your app already has one) -->
 <form ngxVestForm [suite]="suite" [formContract]="zodSchema"></form>
 ```
 

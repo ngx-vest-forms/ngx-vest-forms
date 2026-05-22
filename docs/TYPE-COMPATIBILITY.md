@@ -79,7 +79,7 @@ A repo-wide find-and-replace from `NgxTypedVestSuite` to `NgxVestSuite` is safe.
 
 ## Date field compatibility
 
-When using `Date` fields in deep-partial form models, legacy `NgxDeepRequired<T>` contracts support the common pattern where form controls start with empty strings before a date is selected:
+When using `Date` fields in deep-partial form models, prefer expressing the contract in your Standard Schema if you already have one. For schema-less forms, the legacy `NgxDeepRequired<T>` fallback still supports the common pattern where form controls start with empty strings before a date is selected:
 
 ```typescript
 import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
