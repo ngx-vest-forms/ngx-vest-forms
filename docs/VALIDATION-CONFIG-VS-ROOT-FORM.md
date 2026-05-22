@@ -415,7 +415,7 @@ export class MyFormComponent {
       ? createValidationConfig<MyFormModel>()
           .whenChanged('password', 'confirmPassword')
           .build()
-      : {}
+      : null
   );
 
   protected readonly suite = create((model: MyFormModel) => {

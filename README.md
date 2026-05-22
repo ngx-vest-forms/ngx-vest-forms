@@ -7,7 +7,7 @@ A lightweight, type-safe adapter between Angular template-driven forms and [Vest
 
 [![npm version](https://img.shields.io/npm/v/ngx-vest-forms.svg?style=flat-square)](https://www.npmjs.com/package/ngx-vest-forms)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/ngx-vest-forms/ngx-vest-forms/cd.yml?branch=master&style=flat-square&label=Build)](https://github.com/ngx-vest-forms/ngx-vest-forms/actions/workflows/cd.yml)
-[![Angular](<https://img.shields.io/badge/Angular-19+%20(min)%20%E2%80%94%2020%20recommended-dd0031?style=flat-square&logo=angular>)](https://angular.dev)
+[![Angular](<https://img.shields.io/badge/Angular-19+%20(min)%20%E2%80%94%2021%20recommended-dd0031?style=flat-square&logo=angular>)](https://angular.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
@@ -48,7 +48,7 @@ npm install ngx-vest-forms
 > **v3 guidance:**
 >
 > - Write suites with Vest 6's model-only callback: `create((model) => { ... })`
-> - Handle field focus at the call site with `suite.only(field).run(model)`; `ngx-vest-forms` does this internally for field-level validation
+> - ngx-vest-forms uses `suite.only(field).run(model)` internally for field-level validation; your suite callback should be model-only
 > - Use the `ngx-` selector family; the legacy `sc-` prefix was removed in v3
 >
 > ```ts
@@ -89,6 +89,7 @@ const suite: NgxVestSuite<MyFormModel> = create((model) => {
 });
 
 @Component({
+  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgxVestForms],
   template: `
