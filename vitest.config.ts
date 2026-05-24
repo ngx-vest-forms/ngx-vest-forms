@@ -54,6 +54,14 @@ export default defineConfig(({ mode }) => ({
         '**/node_modules/**',
         '**/dist/**',
       ],
+      thresholds: {
+        'packages/ngx-vest-forms/src/lib/**': {
+          lines: 85,
+          branches: 80,
+          functions: 85,
+          statements: 85,
+        },
+      },
     },
     // Sequence hooks to match Jest behavior
     sequence: {
