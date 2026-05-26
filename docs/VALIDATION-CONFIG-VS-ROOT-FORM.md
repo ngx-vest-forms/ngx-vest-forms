@@ -355,6 +355,8 @@ onTypeChange(type: string) {
 
 These features complement each other in complex, dynamic forms:
 
+> **Note:** `createValidationConfig` is exported from `ngx-vest-forms`. Add it to your imports alongside `FormDirective` (e.g. `import { createValidationConfig, FormDirective } from 'ngx-vest-forms';`) before using it in the example below.
+
 ```typescript
 // Component
 @Component({

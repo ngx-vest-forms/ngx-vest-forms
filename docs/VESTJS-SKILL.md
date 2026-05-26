@@ -34,7 +34,7 @@ It is also the **stable public entry point** for versioning. In this repository,
 | Sub-skill                  | What it covers                                                                               |
 | -------------------------- | -------------------------------------------------------------------------------------------- |
 | `enforce-and-custom-rules` | `enforce.condition`, `enforce.extend`, `compose`, custom rule design, matcher typing         |
-| `server-side-validation`   | request isolation, `runStatic()`, server-oriented execution modes, backend validation output |
+| `server-side-validation`   | request isolation, `suite.runStatic(...)`, server-oriented execution modes, backend validation output |
 
 ## How it is intended to be used
 
