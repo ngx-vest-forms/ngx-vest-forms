@@ -355,6 +355,8 @@ onTypeChange(type: string) {
 
 These features complement each other in complex, dynamic forms:
 
+> **Note:** `createValidationConfig` is exported from `ngx-vest-forms`. Add it to your imports alongside `FormDirective` (e.g. `import { createValidationConfig, FormDirective } from 'ngx-vest-forms';`) before using it in the example below.
+
 ```typescript
 // Component
 @Component({
@@ -410,34 +412,30 @@ export class MyFormComponent {
   protected readonly errors = signal<Record<string, string[]>>({});
 
   // validationConfig: Field dependency timing
-  protected readonly validationConfig = computed(() => {
-    const config: Record<string, string[]> = {};
-    if (this.formValue().type === 'typeA') {
-      config['password'] = ['confirmPassword']; // When password changes, revalidate confirm
-    }
-    return config;
-  });
-
-  protected readonly suite = staticSuite(
-    (model: MyFormModel, field?: string) => {
-      only(field);
-
-      // Field-level validations
-      omitWhen(model.type !== 'typeA', () => {
-        test('password', 'Password required', () => {
-          enforce(model.password).isNotBlank();
-        });
-        test('confirmPassword', 'Passwords must match', () => {
-          enforce(model.confirmPassword).equals(model.password);
-        });
-      });
-
-      // Form-level validation using ROOT_FORM
-      test(ROOT_FORM, 'At least one contact method required', () => {
-        enforce(model.email || model.phone).isTruthy();
-      });
-    }
+  protected readonly validationConfig = computed(() =>
+    this.formValue().type === 'typeA'
+      ? createValidationConfig<MyFormModel>()
+          .whenChanged('password', 'confirmPassword')
+          .build()
+      : null
   );
+
+  protected readonly suite = create((model: MyFormModel) => {
+    // Field-level validations
+    omitWhen(model.type !== 'typeA', () => {
+      test('password', 'Password required', () => {
+        enforce(model.password).isNotBlank();
+      });
+      test('confirmPassword', 'Passwords must match', () => {
+        enforce(model.confirmPassword).equals(model.password);
+      });
+    });
+
+    // Form-level validation using ROOT_FORM
+    test(ROOT_FORM, 'At least one contact method required', () => {
+      enforce(model.email || model.phone).isTruthy();
+    });
+  });
 
   // triggerFormValidation(): After structure changes
   onTypeChange(type: string) {
