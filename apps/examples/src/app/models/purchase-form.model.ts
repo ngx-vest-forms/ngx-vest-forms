@@ -26,8 +26,10 @@ export type PurchaseFormModel = NgxDeepPartial<{
   };
 }>;
 
-// Using NgxDeepRequired for the contract (standard approach)
-// Note: birthDate is initialized with a Date object for type safety
+// Low-dependency fallback contract for an example that does not already own a
+// schema. If your app already has a Standard Schema contract, prefer passing
+// that directly to [formContract].
+// Note: birthDate is initialized with a Date object for type safety.
 export const purchaseFormContract: NgxDeepRequired<PurchaseFormModel> = {
   userId: '',
   firstName: '',

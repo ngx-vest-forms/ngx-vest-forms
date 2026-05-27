@@ -552,7 +552,7 @@ If the contract genuinely varies per usage site, `[formContract]` still works as
 
 ### Examples
 
-- **[Examples Project](./apps/examples)** - Working code examples with business hours forms, purchase forms, validation config demos, and blur-driven draft auto-save
+- **[Examples Project](./apps/examples)** - Working code examples with business hours forms, purchase forms, validation config demos, blur-driven draft auto-save, and schema-backed `formContract` demos (Zod + hand-rolled Standard Schema)
   - Run locally: `corepack enable && pnpm install && pnpm start`
   - Includes smart components, UI components, and complete validation patterns
 
@@ -563,19 +563,21 @@ If the contract genuinely varies per usage site, `[formContract]` still works as
 
 ### `[formShape]` → `[formContract]` (v3)
 
-The `[formShape]` input on `<form ngxVestForm>` is replaced by `[formContract]`, which accepts any [Standard Schema v1](https://standardschema.dev) value (Zod v4, Valibot, hand-rolled, …) **or** a legacy `NgxDeepRequired<T>` shape for back-compat:
+The `[formShape]` input on `<form ngxVestForm>` is replaced by `[formContract]`, which accepts any [Standard Schema v1](https://standardschema.dev) value (Zod v4, Valibot, hand-rolled, …) **or** a legacy `NgxDeepRequired<T>` shape for back-compat.
+
+If you already have a schema, pass it directly and keep that as the structural source of truth. Reach for a raw `NgxDeepRequired<T>` shape only as a low-dependency fallback or during incremental migration:
 
 ```html
 <!-- v2 -->
 <form ngxVestForm [suite]="suite" [formShape]="shape"></form>
 
-<!-- v3: legacy shape fallback still works -->
+<!-- v3: shape still works as a migration/fallback path -->
 <form ngxVestForm [suite]="suite" [formContract]="shape"></form>
 
-<!-- v3: explicit conversion to StandardSchemaV1 -->
+<!-- v3: explicit migration from legacy shape to Standard Schema -->
 <form ngxVestForm [suite]="suite" [formContract]="toFormContract(shape)"></form>
 
-<!-- v3: real Standard Schema (recommended for new code) -->
+<!-- v3: real Standard Schema (preferred when your app already has one) -->
 <form ngxVestForm [suite]="suite" [formContract]="zodSchema"></form>
 ```
 
