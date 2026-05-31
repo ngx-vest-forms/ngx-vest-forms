@@ -277,7 +277,7 @@ describe('FormErrorDisplayDirective', () => {
   });
 
   it('should warn on updateOn submit + on-blur mismatch', async () => {
-    const consoleSpy = vi.spyOn(console, 'warn');
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const fixture = TestBed.createComponent(TestErrorDisplayHostComponent);
     fixture.componentInstance.mode = 'on-blur';
     fixture.componentInstance.ngModelOptions = { updateOn: 'submit' };
@@ -400,7 +400,7 @@ describe('FormErrorDisplayDirective', () => {
   // Host directive usage test
   @Component({
     selector: 'ngx-host-field',
-    imports: [FormsModule, FormErrorDisplayDirective],
+    imports: [FormsModule],
     hostDirectives: [FormErrorDisplayDirective],
     template: `
       <input name="test" [ngModel]="value" required />

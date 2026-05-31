@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { create, enforce, omitWhen, only, test } from 'vest';
+import { create, enforce, omitWhen, test } from 'vest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { NgxDeepPartial, NgxDeepRequired } from '../../public-api';
 import { FormDirective } from '../directives/form.directive';
@@ -27,27 +27,23 @@ const formShape: NgxDeepRequired<DynamicFormModel> = {
   fieldB: '',
 };
 
-const dynamicFormValidationSuite = create(
-  (model: DynamicFormModel, field?: string) => {
-    only(field);
+const dynamicFormValidationSuite = create((model: DynamicFormModel) => {
+  test('procedureType', 'Procedure type is required', () => {
+    enforce(model.procedureType).isNotBlank();
+  });
 
-    test('procedureType', 'Procedure type is required', () => {
-      enforce(model.procedureType).isNotBlank();
+  omitWhen(model.procedureType !== 'typeA', () => {
+    test('fieldA', 'Field A is required for Type A procedure', () => {
+      enforce(model.fieldA).isNotBlank();
     });
+  });
 
-    omitWhen(model.procedureType !== 'typeA', () => {
-      test('fieldA', 'Field A is required for Type A procedure', () => {
-        enforce(model.fieldA).isNotBlank();
-      });
+  omitWhen(model.procedureType !== 'typeB', () => {
+    test('fieldB', 'Field B is required for Type B procedure', () => {
+      enforce(model.fieldB).isNotBlank();
     });
-
-    omitWhen(model.procedureType !== 'typeB', () => {
-      test('fieldB', 'Field B is required for Type B procedure', () => {
-        enforce(model.fieldB).isNotBlank();
-      });
-    });
-  }
-);
+  });
+});
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -80,7 +76,6 @@ const dynamicFormValidationSuite = create(
               [ngModel]="formValue().procedureType"
               data-testid="select__procedure-type"
               class="w-full rounded border border-gray-300 p-2"
-              (change)="onProcedureTypeChange($event)"
             >
               <option value="">Select a procedure type...</option>
               <option value="typeA">Type A (requires input field A)</option>
@@ -221,26 +216,29 @@ export class DynamicStructureComponent {
     return Object.keys(this.errors()).length > 0;
   });
 
-  protected handleFormChange(value: DynamicFormModel): void {
-    this.formValue.set(value);
-  }
+  protected handleFormChange(value: DynamicFormModel | null): void {
+    const nextValue = value ?? {};
+    const previousProcedureType = this.formValue().procedureType;
 
-  protected onProcedureTypeChange(event: Event): void {
-    const target = event.target as HTMLSelectElement;
-    const rawValue = target.value as 'typeA' | 'typeB' | 'typeC' | '';
-    const newValue = rawValue === '' ? undefined : rawValue;
+    // First accept ngxVestForm's emitted snapshot unchanged. Transforming it
+    // synchronously would create two divergent same-tick writers for the form
+    // model and trigger the NGX-100 conflict diagnostic.
+    this.formValue.set(nextValue);
 
-    this.formValue.update((current) =>
-      clearFieldsWhen(
-        { ...current, procedureType: newValue },
-        {
-          fieldA: newValue !== 'typeA',
-          fieldB: newValue !== 'typeB',
-        }
-      )
-    );
+    if (previousProcedureType === nextValue.procedureType) {
+      return;
+    }
 
-    this.vestFormRef().triggerFormValidation();
+    setTimeout(() => {
+      const current = this.formValue();
+      const normalized = clearFieldsWhen(current, {
+        fieldA: current.procedureType !== 'typeA',
+        fieldB: current.procedureType !== 'typeB',
+      });
+
+      this.formValue.set(normalized);
+      this.vestFormRef().triggerFormValidation();
+    }, 0);
   }
 }
 

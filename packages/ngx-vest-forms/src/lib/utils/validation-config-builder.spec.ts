@@ -69,14 +69,23 @@ describe('ValidationConfigBuilder', () => {
     });
 
     it('should deduplicate dependents', () => {
+      const consoleWarnSpy = vi
+        .spyOn(console, 'warn')
+        .mockImplementation(() => {});
+
       const config = createValidationConfig<TestFormModel>()
         .whenChanged('password', ['confirmPassword', 'email'])
         .whenChanged('password', ['email', 'firstName'])
         .build();
 
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Duplicate dependencies detected')
+      );
       expect(config).toEqual({
         password: ['confirmPassword', 'email', 'firstName'],
       });
+
+      consoleWarnSpy.mockRestore();
     });
 
     it('should work with nested field paths', () => {
@@ -643,15 +652,24 @@ describe('ValidationConfigBuilder', () => {
     });
 
     it('should handle repeated bidirectional calls on same fields', () => {
+      const consoleWarnSpy = vi
+        .spyOn(console, 'warn')
+        .mockImplementation(() => {});
+
       const config = createValidationConfig<TestFormModel>()
         .bidirectional('password', 'confirmPassword')
         .bidirectional('password', 'confirmPassword')
         .build();
 
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Duplicate bidirectional relationship detected')
+      );
       expect(config).toEqual({
         password: ['confirmPassword'],
         confirmPassword: ['password'],
       });
+
+      consoleWarnSpy.mockRestore();
     });
 
     it('should handle empty array in whenChanged', () => {

@@ -9,7 +9,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 type Segment = {
   readonly value: string;
   readonly label: string;
-}
+};
 
 let nextId = 0;
 
@@ -28,8 +28,7 @@ let nextId = 0;
     <div
       role="radiogroup"
       aria-label="Experience level"
-      class="inline-flex rounded-lg border border-gray-300 bg-gray-50 p-1
-             dark:border-gray-600 dark:bg-gray-800"
+      class="inline-flex rounded-lg border border-gray-300 bg-gray-50 p-1 dark:border-gray-600 dark:bg-gray-800"
       (focusout)="onBlur()"
     >
       @for (segment of segments; track segment.value) {
@@ -42,17 +41,12 @@ let nextId = 0;
           [disabled]="disabled()"
           (click)="select(segment.value)"
           (keydown)="onKeydown($event, segment.value)"
-          class="rounded-md px-4 py-1.5 text-sm font-medium transition-colors
-                 focus:outline-none focus-visible:ring-2
-                 focus-visible:ring-primary-500
-                 disabled:cursor-not-allowed disabled:opacity-50"
+          class="focus-visible:ring-primary-500 rounded-md px-4 py-1.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
           [class.bg-primary-600]="value() === segment.value"
           [class.text-white]="value() === segment.value"
           [class.text-gray-600]="value() !== segment.value"
           [class.dark:text-gray-300]="value() !== segment.value"
-          [class.hover:bg-gray-200]="
-            value() !== segment.value && !disabled()
-          "
+          [class.hover:bg-gray-200]="value() !== segment.value && !disabled()"
           [class.dark:hover:bg-gray-700]="
             value() !== segment.value && !disabled()
           "
@@ -69,7 +63,7 @@ let nextId = 0;
       multi: true,
     },
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SegmentedControlComponent implements ControlValueAccessor {
   protected readonly groupId = `ngx-segmented-${nextId++}`;
@@ -103,25 +97,23 @@ export class SegmentedControlComponent implements ControlValueAccessor {
   protected onKeydown(event: KeyboardEvent, segmentValue: string): void {
     if (this.disabled()) return;
     const index = this.segments.findIndex((s) => s.value === segmentValue);
-    let nextIndex: number | null = null;
-    switch (event.key) {
-      case 'ArrowRight':
-      case 'ArrowDown':
-        nextIndex = Math.min(this.segments.length - 1, index + 1);
-        break;
-      case 'ArrowLeft':
-      case 'ArrowUp':
-        nextIndex = Math.max(0, index - 1);
-        break;
-      case 'Home':
-        nextIndex = 0;
-        break;
-      case 'End':
-        nextIndex = this.segments.length - 1;
-        break;
-      default:
-        return;
-    }
+    const nextIndex = (() => {
+      switch (event.key) {
+        case 'ArrowRight':
+        case 'ArrowDown':
+          return Math.min(this.segments.length - 1, index + 1);
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          return Math.max(0, index - 1);
+        case 'Home':
+          return 0;
+        case 'End':
+          return this.segments.length - 1;
+        default:
+          return null;
+      }
+    })();
+    if (nextIndex === null) return;
     event.preventDefault();
     const next = this.segments[nextIndex]?.value;
     if (next === undefined) return;

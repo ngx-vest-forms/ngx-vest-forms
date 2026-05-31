@@ -653,6 +653,20 @@ export class FormDirective<T extends Record<string, unknown>> {
             this.#lastSyncedFormValue = formValue;
             this.#lastSyncedModelValue = modelValue;
           });
+        } else if (this.ngForm.form.pristine) {
+          // If Angular still considers the form pristine, the divergent form
+          // snapshot was not produced by user input. This happens during
+          // programmatic signal updates and initial control registration, where
+          // a stale form snapshot can be observed in the same turn as the new
+          // model input. Let the model win instead of reporting a user-edit
+          // conflict.
+          untracked(() => {
+            if (modelValue) {
+              this.ngForm.form.patchValue(modelValue, { emitEvent: false });
+            }
+            this.#lastSyncedFormValue = modelValue;
+            this.#lastSyncedModelValue = modelValue;
+          });
         } else {
           // Both sides hold distinct, non-null live values - this is a true
           // conflict. It is an edge case that should rarely happen in

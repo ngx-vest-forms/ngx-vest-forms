@@ -192,6 +192,9 @@ describe('createValidationConfigPipeline', () => {
   // 3. PENDING form waits up to idleWaitTimeoutMs then proceeds
   // -------------------------------------------------------------------------
   it('waits up to idleWaitTimeoutMs for PENDING form then revalidates dependent', async () => {
+    const consoleWarnSpy = vi
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {});
     const triggerCtrl = new FormControl('');
     const dependentCtrl = new FormControl('');
     const form = new FormGroup(
@@ -240,14 +243,23 @@ describe('createValidationConfigPipeline', () => {
     // After idleWaitTimeoutMs (50ms total) → pipeline proceeds
     await vi.advanceTimersByTimeAsync(10);
     expect(getCount()).toBeGreaterThanOrEqual(1);
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'timed out waiting for form to leave PENDING state'
+      )
+    );
 
     sub.unsubscribe();
+    consoleWarnSpy.mockRestore();
   });
 
   // -------------------------------------------------------------------------
   // 4. Absent dependent controls wait up to dependentExistenceTimeoutMs
   // -------------------------------------------------------------------------
   it('waits up to dependentExistenceTimeoutMs then proceeds when dependent is absent', async () => {
+    const consoleWarnSpy = vi
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {});
     const triggerCtrl = new FormControl('');
     // Form does NOT contain the dependent control yet
     const form = new FormGroup({ trigger: triggerCtrl });
@@ -286,8 +298,14 @@ describe('createValidationConfigPipeline', () => {
     // After dependentExistenceTimeoutMs → pipeline emits (proceeds without dependent)
     await vi.advanceTimersByTimeAsync(10);
     expect(proceededAfterTimeout).toBe(true);
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'timed out waiting for dependent controls: dependent'
+      )
+    );
 
     sub.unsubscribe();
+    consoleWarnSpy.mockRestore();
   });
 
   it('revalidates when dependent control appears before the timeout', async () => {

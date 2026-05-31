@@ -37,14 +37,14 @@ const addressFormSuite = create((data: Partial<AddressFormModel> = {}) => {
         <input
           id="street"
           name="street"
-          [ngModel]="model().address?.street"
+          [ngModel]="model().address.street"
           data-testid="street-input"
         />
         <label for="city">City</label>
         <input
           id="city"
           name="city"
-          [ngModel]="model().address?.city"
+          [ngModel]="model().address.city"
           data-testid="city-input"
         />
       </div>

@@ -38,10 +38,7 @@ let nextId = 0;
           [disabled]="disabled()"
           (click)="select(star)"
           (keydown)="onKeydown($event, star)"
-          class="rounded p-1 text-2xl leading-none transition-colors
-                 focus:outline-none focus-visible:ring-2
-                 focus-visible:ring-primary-500
-                 disabled:cursor-not-allowed disabled:opacity-50"
+          class="focus-visible:ring-primary-500 rounded p-1 text-2xl leading-none transition-colors focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
           [class.text-primary-500]="star <= (hovered() ?? value() ?? 0)"
           [class.text-gray-300]="star > (hovered() ?? value() ?? 0)"
           [class.dark:text-gray-600]="star > (hovered() ?? value() ?? 0)"
@@ -66,7 +63,7 @@ let nextId = 0;
       multi: true,
     },
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StarRatingComponent implements ControlValueAccessor {
   protected readonly groupId = `ngx-star-rating-${nextId++}`;
@@ -97,25 +94,23 @@ export class StarRatingComponent implements ControlValueAccessor {
 
   protected onKeydown(event: KeyboardEvent, star: number): void {
     if (this.disabled()) return;
-    let next: number | null = null;
-    switch (event.key) {
-      case 'ArrowRight':
-      case 'ArrowUp':
-        next = Math.min(5, star + 1);
-        break;
-      case 'ArrowLeft':
-      case 'ArrowDown':
-        next = Math.max(1, star - 1);
-        break;
-      case 'Home':
-        next = 1;
-        break;
-      case 'End':
-        next = 5;
-        break;
-      default:
-        return;
-    }
+    const next = (() => {
+      switch (event.key) {
+        case 'ArrowRight':
+        case 'ArrowUp':
+          return Math.min(5, star + 1);
+        case 'ArrowLeft':
+        case 'ArrowDown':
+          return Math.max(1, star - 1);
+        case 'Home':
+          return 1;
+        case 'End':
+          return 5;
+        default:
+          return null;
+      }
+    })();
+    if (next === null) return;
     event.preventDefault();
     // Boundary keys (e.g. ArrowLeft on the first star) resolve to the current
     // value — only emit when it actually changes so we don't mark the control

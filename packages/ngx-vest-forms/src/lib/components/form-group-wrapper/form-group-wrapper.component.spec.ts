@@ -3,10 +3,10 @@ import { FormsModule } from '@angular/forms';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { NgxVestForms } from '../../exports';
+import { FormGroupWrapperComponent } from './form-group-wrapper.component';
 
 @Component({
-  imports: [FormsModule, NgxVestForms],
+  imports: [FormsModule, FormGroupWrapperComponent],
   template: `
     <form #form="ngForm">
       <ngx-form-group-wrapper ngModelGroup="group">
@@ -27,7 +27,7 @@ class HostComponent {
 }
 
 @Component({
-  imports: [FormsModule, NgxVestForms],
+  imports: [FormsModule, FormGroupWrapperComponent],
   template: `
     <form #form="ngForm">
       <fieldset ngxFormGroupWrapper ngModelGroup="group">
