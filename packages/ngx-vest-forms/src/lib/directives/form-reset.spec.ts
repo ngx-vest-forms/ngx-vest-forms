@@ -488,22 +488,46 @@ describe('FormDirective - Reset Functionality', () => {
           }>
         >({});
 
-        suite = create((model: any) => {
-          test('firstName', 'First name is required', () => {
-            enforce(model.firstName).isNotBlank();
-          });
-        });
-
-        handleFormChange(value: any): void {
-          // Simulate auto-fill logic (like the Brecht example in purchase form)
-          if (value.firstName === 'Brecht' && value.lastName === 'Billiet') {
-            this.formValue.set({
-              ...value,
-              age: 35,
-              gender: 'male',
+        suite = create(
+          (
+            model: NgxDeepPartial<{
+              firstName?: string;
+              lastName?: string;
+              age?: number;
+              gender?: string;
+            }>
+          ) => {
+            test('firstName', 'First name is required', () => {
+              enforce(model.firstName).isNotBlank();
             });
-          } else {
-            this.formValue.set(value);
+          }
+        );
+
+        handleFormChange(
+          value: NgxDeepPartial<{
+            firstName?: string;
+            lastName?: string;
+            age?: number;
+            gender?: string;
+          }> | null
+        ): void {
+          const nextValue = value ?? {};
+          this.formValue.set(nextValue);
+
+          // Simulate auto-fill logic (like the Brecht example in purchase form)
+          // after accepting ngxVestForm's snapshot. This avoids creating a
+          // same-tick divergent writer that triggers NGX-100.
+          if (
+            nextValue.firstName === 'Brecht' &&
+            nextValue.lastName === 'Billiet'
+          ) {
+            setTimeout(() => {
+              this.formValue.set({
+                ...this.formValue(),
+                age: 35,
+                gender: 'male',
+              });
+            }, 0);
           }
         }
 

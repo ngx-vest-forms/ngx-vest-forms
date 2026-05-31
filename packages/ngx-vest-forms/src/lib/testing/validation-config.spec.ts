@@ -5,7 +5,7 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { create, enforce, omitWhen, test } from 'vest';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NgxDeepPartial } from '../../public-api';
 import { FormDirective } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
@@ -358,6 +358,10 @@ describe('FormDirective - Comprehensive', () => {
 
   // Test for separate input and output signals (Issue #11)
   it('should work with separate input and output signals (Issue #11)', async () => {
+    const consoleWarnSpy = vi
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {});
+
     @Component({
       template: `
         <form
@@ -447,9 +451,13 @@ describe('FormDirective - Comprehensive', () => {
       'different'
     );
 
-    // ValidationConfig should have triggered confirmPassword validation
-    // (we can't easily test the internal validation state, but the important thing
-    // is that no errors were thrown and the form continues to work)
+    // This regression intentionally keeps input and output signals separate.
+    // That works, but it is not the recommended unidirectional ownership model,
+    // so the dev-mode NGX-100 diagnostic is expected.
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[NGX-100]')
+    );
+    consoleWarnSpy.mockRestore();
   });
 
   // Test for bidirectional dependencies with omitWhen (moved from omit-when-validation-config.spec.ts)
@@ -1634,8 +1642,9 @@ describe('FormDirective - Comprehensive', () => {
       fixture.detectChanges();
 
       // Spy on form.statusChanges after initialization
-      const formDirective =
-        (fixture.debugElement.children[0] as typeof fixture.debugElement).injector.get(FormDirective);
+      const formDirective = (
+        fixture.debugElement.children[0] as typeof fixture.debugElement
+      ).injector.get(FormDirective);
       const originalStatusChanges = formDirective.ngForm.form.statusChanges;
       let subscribeCallCount = 0;
 

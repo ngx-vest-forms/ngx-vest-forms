@@ -8,7 +8,6 @@
     "e2e": {
       "configurations": {
         "ci": {
-          "ci": true,
           "reporter": "dot"
         }
       }

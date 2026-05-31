@@ -1,4 +1,4 @@
-import { expect, Locator, Page } from '@playwright/test';
+import { expect, Locator, Page, type ConsoleMessage } from '@playwright/test';
 
 /**
  * Validation polling configuration
@@ -45,9 +45,7 @@ export async function navigateToAutoSaveDemo(page: Page): Promise<void> {
   ).toBeVisible();
 }
 
-export async function navigateToDateRangeAdapter(
-  page: Page
-): Promise<void> {
+export async function navigateToDateRangeAdapter(page: Page): Promise<void> {
   await page.goto('/date-range-adapter');
   await expect(
     page.getByRole('heading', {
@@ -612,12 +610,50 @@ export async function waitForFormProcessing(
     .toBe(true);
 }
 
+const NGX_DIAGNOSTIC_PATTERN =
+  /\[NGX-\d{3}\]|ValidationConfigBuilder:|validationConfig: timed out/;
+
+export type NgxDiagnosticCapture = {
+  readonly messages: string[];
+  readonly dispose: () => void;
+  readonly expectNoUnexpectedDiagnostics: (
+    allowedPatterns?: readonly RegExp[]
+  ) => void;
+};
+
+/**
+ * Capture browser-side ngx-vest-forms development diagnostics during an E2E flow.
+ * Use this around demo interactions that should follow recommended ownership and
+ * wrapper patterns. Expected diagnostics can be allowed explicitly per test.
+ */
+export function captureNgxVestDiagnostics(page: Page): NgxDiagnosticCapture {
+  const messages: string[] = [];
+  const onConsole = (message: ConsoleMessage): void => {
+    const text = message.text();
+    if (NGX_DIAGNOSTIC_PATTERN.test(text)) {
+      messages.push(text);
+    }
+  };
+
+  page.on('console', onConsole);
+
+  return {
+    messages,
+    dispose: () => page.off('console', onConsole),
+    expectNoUnexpectedDiagnostics: (allowedPatterns = []) => {
+      const unexpected = messages.filter(
+        (message) => !allowedPatterns.some((pattern) => pattern.test(message))
+      );
+      expect(unexpected).toEqual([]);
+    },
+  };
+}
+
 /**
  * Wait for console errors to be captured (for shape validation tests).
  * Uses a polling approach instead of hard-coded timeout.
  *
  * @param page - The Playwright page
- * @param checkFn - Function to check console errors
  * @param timeout - Maximum time to wait
  */
 export async function waitForConsoleCheck(

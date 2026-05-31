@@ -671,7 +671,9 @@ describe('ValidateRootFormDirective', () => {
         `,
       })
       class TestDebounceHost {
-        model = signal<Record<string, unknown>>({ password: 'abc12345' });
+        model = signal<Record<string, unknown> | null>({
+          password: 'abc12345',
+        });
         suite = signal<NgxVestSuite<Record<string, unknown>> | null>(null);
 
         @ViewChild(ValidateRootFormDirective, { static: true })
@@ -707,7 +709,9 @@ describe('ValidateRootFormDirective', () => {
 
       const { fixture } = await render(TestDebounceHost);
       const instance = fixture.componentInstance;
-      instance.suite.set(suiteMock as unknown as NgxVestSuite<Record<string, unknown>>);
+      instance.suite.set(
+        suiteMock as unknown as NgxVestSuite<Record<string, unknown>>
+      );
       fixture.detectChanges();
 
       const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {
@@ -740,7 +744,7 @@ describe('ValidateRootFormDirective', () => {
       `,
     })
     class TestCreateAsyncValidatorHost {
-      model = signal<Record<string, unknown>>({ password: 'abc12345' });
+      model = signal<Record<string, unknown> | null>({ password: 'abc12345' });
       suite = signal<NgxVestSuite<Record<string, unknown>> | null>(null);
 
       @ViewChild(ValidateRootFormDirective, { static: true })
@@ -777,7 +781,9 @@ describe('ValidateRootFormDirective', () => {
 
       const { fixture } = await render(TestCreateAsyncValidatorHost);
       const instance = fixture.componentInstance;
-      instance.suite.set(suiteMock as unknown as NgxVestSuite<Record<string, unknown>>);
+      instance.suite.set(
+        suiteMock as unknown as NgxVestSuite<Record<string, unknown>>
+      );
       fixture.detectChanges();
 
       const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {
@@ -828,7 +834,9 @@ describe('ValidateRootFormDirective', () => {
 
       const { fixture } = await render(TestCreateAsyncValidatorHost);
       const instance = fixture.componentInstance;
-      instance.suite.set(suiteMock as unknown as NgxVestSuite<Record<string, unknown>>);
+      instance.suite.set(
+        suiteMock as unknown as NgxVestSuite<Record<string, unknown>>
+      );
       fixture.detectChanges();
 
       const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {

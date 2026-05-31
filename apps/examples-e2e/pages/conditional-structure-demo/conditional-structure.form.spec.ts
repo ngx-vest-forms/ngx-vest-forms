@@ -1,14 +1,20 @@
 import { expect, test } from '@playwright/test';
-import { fillAndBlur, waitForValidationToSettle } from '../../helpers/form-helpers';
+import {
+  captureNgxVestDiagnostics,
+  fillAndBlur,
+  waitForFormProcessing,
+  waitForValidationToSettle,
+} from '../../helpers/form-helpers';
 
 test.describe('Conditional Structure Demo Form', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/conditional-structure');
   });
 
-  test('should clear stale values when an input branch becomes static content', async ({
+  test('should clear stale values when an input branch becomes static content without diagnostics', async ({
     page,
   }) => {
+    const diagnostics = captureNgxVestDiagnostics(page);
     const contactName = page.getByLabel(/contact name/i);
     const deliveryMethod = page.getByRole('combobox', {
       name: /delivery method/i,
@@ -27,9 +33,7 @@ test.describe('Conditional Structure Demo Form', () => {
     await expect(
       page.getByText(/no extra delivery field is required for pickup orders/i)
     ).toBeVisible();
-    await expect(
-      page.getByText(/123 Analytical Engine Way/i)
-    ).toHaveCount(0);
+    await expect(page.getByText(/123 Analytical Engine Way/i)).toHaveCount(0);
 
     await page.getByRole('button', { name: /save delivery plan/i }).click();
 
@@ -40,8 +44,14 @@ test.describe('Conditional Structure Demo Form', () => {
     await expect(
       page.getByRole('status').filter({ hasText: /delivery plan submitted/i })
     ).toBeVisible();
-    await expect(submittedPayloadCard).toContainText('"deliveryMode": "pickup"');
+    await expect(submittedPayloadCard).toContainText(
+      '"deliveryMode": "pickup"'
+    );
     await expect(submittedPayloadCard).not.toContainText('shippingAddress');
+
+    await waitForFormProcessing(page);
+    diagnostics.expectNoUnexpectedDiagnostics();
+    diagnostics.dispose();
   });
 
   test('should switch validation to the active branch after a structure change', async ({

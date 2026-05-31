@@ -88,7 +88,6 @@ class TestMultipleControlsComponent {
 // Wrapper component that consumes the directive as a host directive.
 @Component({
   selector: 'ngx-test-error-control-wrapper',
-  imports: [FormErrorControlDirective],
   hostDirectives: [FormErrorControlDirective],
   template: ` <ng-content /> `,
 })

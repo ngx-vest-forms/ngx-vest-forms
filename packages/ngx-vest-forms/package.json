@@ -5,8 +5,8 @@
   "author": "Brecht Billiet, Arjen Althoff",
   "description": "Opinionated template-driven forms library for Angular with Vest.js integration",
   "peerDependencies": {
-    "@angular/core": ">=19.0.0",
     "@angular/common": ">=19.0.0",
+    "@angular/core": ">=19.0.0",
     "@standard-schema/spec": ">=1.0.0",
     "rxjs": ">=7.8.0",
     "vest": ">=6.0.0"
@@ -32,5 +32,10 @@
     "type": "git",
     "url": "https://github.com/ngx-vest-forms/ngx-vest-forms.git"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "devDependencies": {
+    "@angular/common": "21.2.15",
+    "@angular/compiler": "21.2.15",
+    "@angular/core": "21.2.15"
+  }
 }

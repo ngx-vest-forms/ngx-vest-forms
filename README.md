@@ -6,8 +6,8 @@
 A lightweight, type-safe adapter between Angular template-driven forms and [Vest.js](https://vestjs.dev) validation. Build complex forms with unidirectional data flow, sophisticated async validations, and minimal boilerplate.
 
 [![npm version](https://img.shields.io/npm/v/ngx-vest-forms.svg?style=flat-square)](https://www.npmjs.com/package/ngx-vest-forms)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/ngx-vest-forms/ngx-vest-forms/ci.yml?branch=release/v3&style=flat-square&label=Build)](https://github.com/ngx-vest-forms/ngx-vest-forms/actions/workflows/ci.yml)
-[![Angular](<https://img.shields.io/badge/Angular-19+%20(min)%20%E2%80%94%2021%20recommended-dd0031?style=flat-square&logo=angular>)](https://angular.dev)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/ngx-vest-forms/ngx-vest-forms/cd.yml?branch=master&style=flat-square&label=Build)](https://github.com/ngx-vest-forms/ngx-vest-forms/actions/workflows/cd.yml)
+[![Angular](<https://img.shields.io/badge/Angular-19+%20(min)%20%E2%80%94%2020%20recommended-dd0031?style=flat-square&logo=angular>)](https://angular.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
@@ -34,10 +34,10 @@ See the full guides under [Documentation](#documentation).
 
 ### Prerequisites
 
-- **Angular**: `>=19.0.0` peer range; the examples and guidance in this repo target Angular 21.x
-- **Vest.js**: `>=6.0.0`; the documentation assumes modern Vest 6 APIs
-- **TypeScript**: `>=5.8.0`; this repo currently uses TypeScript 5.9.x
-- **Node.js**: use an Angular-supported LTS for your app; this repo is developed on Node 22+
+- **Angular**: >=19.0.0 minimum, 20.x recommended (all used APIs stable)
+- **Vest.js**: >=5.4.6 (Validation engine)
+- **TypeScript**: >=5.8.0 (Modern Angular features)
+- **Node.js**: >=20 (Maintenance release)
 
 ### Installation
 
@@ -45,30 +45,26 @@ See the full guides under [Documentation](#documentation).
 npm install ngx-vest-forms
 ```
 
-> **v3 guidance:**
+> **v.2.0.0 NOTE:**
 >
-> - Write suites with Vest 6's model-only callback: `create((model) => { ... })`
-> - ngx-vest-forms uses `suite.only(field).run(model)` internally for field-level validation; your suite callback should be model-only
-> - Use the `ngx-` selector family; the legacy `sc-` prefix was removed in v3
+> You must call `only()` **unconditionally** in Vest suites.
 >
 > ```ts
-> import { create, enforce, test } from 'vest';
->
-> const suite = create((model) => {
->   test('email', 'Email is required', () => {
->     enforce(model.email).isNotBlank();
->   });
-> });
+> // ✅ Correct
+> only(field); // only(undefined) safely runs all tests
 > ```
 >
-> If you're upgrading older code that still uses callback `field?` parameters or `staticSuite(...)`, see the [v2.x → v3 migration guide](./docs/migration/MIGRATION-v2.x-to-v3.0.0.md).
+> Why: Conditional `only()` breaks Vest's change detection mechanism and causes timing issues with `omitWhen` + `validationConfig` in ngx-vest-forms.
+> See the [Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md#1-unconditional-only-pattern-required-critical).
+>
+> Selector prefix: use `ngx-`. The legacy `sc-` prefix was removed in v3. See the [selector migration guide](./docs/SELECTOR-PREFIX-MIGRATION.md) if you are upgrading from v2.x.
 
 ### Quick Start
 
 Start simple (with validations):
 
 ```ts
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import {
   NgxVestForms,
   type NgxDeepPartial,
@@ -78,27 +74,18 @@ import { create, enforce, test } from 'vest';
 
 type MyFormModel = NgxDeepPartial<{ email: string; name: string }>;
 
+// Minimal Vest 6 suite. Field focus is handled by ngx-vest-forms at the call site
+// with suite.only(field).run(model), so the callback only receives the model.
 const suite: NgxVestSuite<MyFormModel> = create((model) => {
   test('email', 'Email is required', () => {
     enforce(model.email).isNotBlank();
   });
-
-  test('name', 'Name is required', () => {
-    enforce(model.name).isNotBlank();
-  });
 });
 
 @Component({
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgxVestForms],
   template: `
-    <form
-      ngxVestForm
-      [suite]="suite"
-      [formValue]="formValue()"
-      (formValueChange)="formValue.set($event)"
-    >
+    <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
       <ngx-control-wrapper>
         <label for="email">Email</label>
         <input id="email" name="email" [ngModel]="formValue().email" />
@@ -120,12 +107,12 @@ export class MyComponent {
 }
 ```
 
-Notes:
+Notes.
 
 - Use `[ngModel]` (not `[(ngModel)]`) for unidirectional data flow
-- Use optional chaining for nested partial values because template-driven forms build values incrementally (`NgxDeepPartial`)
+- The `?` operator is required because template-driven forms build values incrementally (`NgxDeepPartial`)
+- Keep Vest suite callbacks model-only (`create((model) => { ... })`); ngx-vest-forms performs focused runs with `suite.only(field).run(model)`
 - The `name` attribute MUST exactly match the property path used in `[ngModel]` — see [Field Paths](./docs/FIELD-PATHS.md)
-- For field-level validation, ngx-vest-forms drives the Vest 6 suite with `suite.only(field).run(model)` internally
 
 That's all you need. The directive automatically creates controls, wires validation, and manages state.
 
@@ -133,7 +120,7 @@ That's all you need. The directive automatically creates controls, wires validat
 
 - **Unidirectional state with signals** — Models are `NgxDeepPartial<T>` so values build up incrementally
 - **Type-safe with development-time contract diagnostics** — Automatic control creation and validation wiring (dev mode checks)
-- **Vest.js validations** — Sync/async, conditional, composable patterns with Vest 6 model-only suites and `only(field)` optimization
+- **Vest.js validations** — Sync/async, conditional, composable patterns with `only(field)` optimization
 - **Error display modes** — Control when errors show: `on-blur`, `on-submit`, `on-blur-or-submit` (default), `on-dirty`, or `always`
 - **Warning display modes** — Control when warnings show: `on-touch`, `on-validated-or-touch` (default), `on-dirty`, or `always`
 - **Form state tracking** — Access touched, dirty, valid/invalid states for individual fields or entire form
@@ -143,13 +130,12 @@ That's all you need. The directive automatically creates controls, wires validat
   - `FormErrorControlDirective` (adds ARIA wiring + stable region IDs)
 - **Cross-field dependencies** — `validationConfig` for field-to-field triggers, `ROOT_FORM` for form-level rules
 - **Field blur events** — `fieldBlur` output for blur-driven draft auto-save, analytics, and field-level side effects
-- **Utilities** — Field paths, field clearing, validation config builder, pending-state helpers, and Standard Schema adapters
+- **Utilities** — Field paths, field clearing, validation config builder
 
-### v3 cleanup notes
+### Compatibility & Safety Notes (v2.x)
 
-- Legacy v2 aliases such as `ROOT_FORM_CONSTANT`, `set()`, and `cloneDeep()` were removed in v3.
-- Use `ROOT_FORM`, `setValueAtPath()`, and `structuredClone()` in current code.
-- `[formShape]` was replaced by `[formContract]`; raw `NgxDeepRequired<T>` shapes still work for incremental migration.
+- `ROOT_FORM_CONSTANT` is retained for compatibility but deprecated; prefer `ROOT_FORM`.
+- `set` / `cloneDeep` are retained for compatibility; prefer `setValueAtPath` / `structuredClone` in new code.
 
 ### Error & Warning Display Modes
 
@@ -545,6 +531,7 @@ If the contract genuinely varies per usage site, `[formContract]` still works as
 - **[Composite Adapter Recipe](./docs/COMPOSITE-ADAPTER-RECIPE.md)** - Map one composite widget to multiple real form field paths
 - **[Custom Control Wrappers](./docs/CUSTOM-CONTROL-WRAPPERS.md)** - Build consistent error display patterns
 - **[API Tokens](./docs/API-TOKENS.md)** - Configure error display modes and other global settings
+- **[Troubleshooting Diagnostics](./docs/TROUBLESHOOTING.md)** - Understand and fix development-mode diagnostics such as `NGX-100`, `NGX-103`, and `NGX-105`
 
 ### Reference
 
@@ -552,38 +539,36 @@ If the contract genuinely varies per usage site, `[formContract]` still works as
 
 ### Examples
 
-- **[Examples Project](./apps/examples)** - Working code examples with business hours forms, purchase forms, validation config demos, blur-driven draft auto-save, and schema-backed `formContract` demos (Zod + hand-rolled Standard Schema)
+- **[Examples Project](./apps/examples)** - Working code examples with business hours forms, purchase forms, validation config demos, and blur-driven draft auto-save
   - Run locally: `corepack enable && pnpm install && pnpm start`
   - Includes smart components, UI components, and complete validation patterns
 
 ## Migration
 
 - v1.x → v2.0.0: **[Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md)**
-- v2.x → v3.0.0: **[Migration Guide](./docs/migration/MIGRATION-v2.x-to-v3.0.0.md)**
+- v2.x → v3.0.0: **[Selector/Token Removal Guide](./docs/migration/MIGRATION-v2.x-to-v3.0.0.md)**
 
 ### `[formShape]` → `[formContract]` (v3)
 
-The `[formShape]` input on `<form ngxVestForm>` is replaced by `[formContract]`, which accepts any [Standard Schema v1](https://standardschema.dev) value (Zod v4, Valibot, hand-rolled, …) **or** a legacy `NgxDeepRequired<T>` shape for back-compat.
-
-If you already have a schema, pass it directly and keep that as the structural source of truth. Reach for a raw `NgxDeepRequired<T>` shape only as a low-dependency fallback or during incremental migration:
+The `[formShape]` input on `<form ngxVestForm>` is replaced by `[formContract]`, which accepts any [Standard Schema v1](https://standardschema.dev) value (Zod v4, Valibot, hand-rolled, …) **or** a legacy `NgxDeepRequired<T>` shape for back-compat:
 
 ```html
 <!-- v2 -->
 <form ngxVestForm [suite]="suite" [formShape]="shape"></form>
 
-<!-- v3: shape still works as a migration/fallback path -->
+<!-- v3: legacy shape fallback still works -->
 <form ngxVestForm [suite]="suite" [formContract]="shape"></form>
 
-<!-- v3: explicit migration from legacy shape to Standard Schema -->
+<!-- v3: explicit conversion to StandardSchemaV1 -->
 <form ngxVestForm [suite]="suite" [formContract]="toFormContract(shape)"></form>
 
-<!-- v3: real Standard Schema (preferred when your app already has one) -->
+<!-- v3: real Standard Schema (recommended for new code) -->
 <form ngxVestForm [suite]="suite" [formContract]="zodSchema"></form>
 ```
 
 `@standard-schema/spec` is now declared as a `peerDependency` (`>=1.0.0`). Most consumers don't need to install it directly — bring it in only if you author your own `StandardSchemaV1<T>` literals. The internal `validateShape()` helper has been removed; use `toFormContract()` if you need explicit shape→schema conversion.
 
-Browser support follows Angular's supported browser targets for the Angular version you run. No `structuredClone` polyfill is required for the Angular-supported environments covered by v3.
+Browser support follows Angular 19+ targets (no `structuredClone` polyfill required).
 
 ## FAQ
 

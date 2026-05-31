@@ -2528,7 +2528,55 @@ describe('FormDirective - bidirectional sync conflict recovery', () => {
     }
   }
 
+  @Component({
+    selector: 'sc-pristine-programmatic-host',
+    imports: [NgxVestForms],
+    template: `
+      <form
+        ngxVestForm
+        [formValue]="formValue()"
+        (formValueChange)="formValue.set($event)"
+      >
+        <input
+          id="programmatic-name"
+          name="name"
+          [ngModel]="formValue().name"
+          aria-label="programmatic name"
+        />
+      </form>
+    `,
+  })
+  class PristineProgrammaticHostComponent {
+    readonly formValue = signal<{ name?: string }>({ name: '' });
+  }
+
+  it('does not report pristine programmatic formValue updates as sync conflicts', async () => {
+    const consoleWarnSpy = vi
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {});
+    const { fixture } = await render(PristineProgrammaticHostComponent);
+    const instance = fixture.componentInstance;
+    const input = screen.getByLabelText(
+      'programmatic name'
+    ) as HTMLInputElement;
+
+    instance.formValue.set({ name: 'model-only' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    await waitFor(() => {
+      expect(input.value).toBe('model-only');
+    });
+    expect(consoleWarnSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining('[NGX-100]')
+    );
+    consoleWarnSpy.mockRestore();
+  });
+
   it('still applies later programmatic formValue updates after a prior true conflict', async () => {
+    const consoleWarnSpy = vi
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {});
     const { fixture } = await render(ConflictHostComponent);
     const instance = fixture.componentInstance;
     const input = screen.getByLabelText('name') as HTMLInputElement;
@@ -2554,9 +2602,16 @@ describe('FormDirective - bidirectional sync conflict recovery', () => {
     await waitFor(() => {
       expect(input.value).toBe('model-B');
     });
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[NGX-100]')
+    );
+    consoleWarnSpy.mockRestore();
   });
 
   it('does not throw and keeps syncing across repeated conflicts', async () => {
+    const consoleWarnSpy = vi
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {});
     const { fixture } = await render(ConflictHostComponent);
     const instance = fixture.componentInstance;
     const input = screen.getByLabelText('name') as HTMLInputElement;
@@ -2582,5 +2637,9 @@ describe('FormDirective - bidirectional sync conflict recovery', () => {
     await waitFor(() => {
       expect(input.value).toBe('final');
     });
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[NGX-100]')
+    );
+    consoleWarnSpy.mockRestore();
   });
 });

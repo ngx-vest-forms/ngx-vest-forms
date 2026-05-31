@@ -5,11 +5,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import {
-  clearFieldsWhen,
-  createEmptyFormState,
-  keepFieldsWhen,
-} from 'ngx-vest-forms';
+import { clearFieldsWhen, keepFieldsWhen } from 'ngx-vest-forms';
 import {
   ConditionalStructureModel,
   DeliveryMode,
@@ -47,9 +43,8 @@ export class ConditionalStructurePageComponent {
   protected readonly formValue = signal<ConditionalStructureModel>(
     initialConditionalStructureValue
   );
-  protected readonly submittedPayload = signal<ConditionalStructureModel | null>(
-    null
-  );
+  protected readonly submittedPayload =
+    signal<ConditionalStructureModel | null>(null);
 
   private readonly formBody = viewChild(ConditionalStructureFormBody);
 
@@ -67,24 +62,29 @@ export class ConditionalStructurePageComponent {
 
   protected onFormValueChange(value: ConditionalStructureModel): void {
     const previousDeliveryMode = this.formValue().deliveryMode ?? 'pickup';
-    const nextDeliveryMode = this.asDeliveryMode(value.deliveryMode ?? 'pickup');
-
-    this.formValue.set(
-      clearFieldsWhen(
-        {
-          ...value,
-          deliveryMode: nextDeliveryMode,
-        },
-        {
-          shippingAddress: nextDeliveryMode !== 'shipment',
-          deliveryEmail: nextDeliveryMode !== 'digital',
-        }
-      )
+    const nextDeliveryMode = this.asDeliveryMode(
+      value.deliveryMode ?? 'pickup'
     );
+    const nextValue = {
+      ...value,
+      deliveryMode: nextDeliveryMode,
+    };
+
+    // Accept the ngxVestForm snapshot first. Derived clearing happens in the
+    // next turn so the form and model don't become divergent same-tick writers.
+    this.formValue.set(nextValue);
 
     if (previousDeliveryMode !== nextDeliveryMode) {
       this.submittedPayload.set(null);
-      this.formBody()?.triggerValidation();
+      setTimeout(() => {
+        this.formValue.set(
+          clearFieldsWhen(this.formValue(), {
+            shippingAddress: this.formValue().deliveryMode !== 'shipment',
+            deliveryEmail: this.formValue().deliveryMode !== 'digital',
+          })
+        );
+        this.formBody()?.triggerValidation();
+      }, 0);
     }
   }
 
