@@ -79,7 +79,7 @@ A repo-wide find-and-replace from `NgxTypedVestSuite` to `NgxVestSuite` is safe.
 
 ## Date field compatibility
 
-When using `Date` fields in deep-partial form models, shape validation supports the common pattern where form controls start with empty strings before a date is selected:
+When using `Date` fields in deep-partial form models, prefer expressing the contract in your Standard Schema if you already have one. For schema-less forms, the legacy `NgxDeepRequired<T>` fallback still supports the common pattern where form controls start with empty strings before a date is selected:
 
 ```typescript
 import { NgxDeepPartial, NgxDeepRequired } from 'ngx-vest-forms';
@@ -89,13 +89,13 @@ type FormModel = NgxDeepPartial<{
   appointmentDate: Date;
 }>;
 
-export const formShape: NgxDeepRequired<FormModel> = {
+export const formContract: NgxDeepRequired<FormModel> = {
   birthDate: new Date(),
   appointmentDate: new Date(),
 };
 ```
 
-Compile-time typing remains strict; runtime shape validation tolerates empty-string initialization from form controls.
+Compile-time typing remains strict; development-time contract diagnostics tolerate empty-string initialization from form controls for this legacy contract style. If you already use Standard Schema, prefer modeling the date coercion directly in the schema.
 
 ## Summary
 

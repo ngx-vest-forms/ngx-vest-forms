@@ -1,0 +1,54 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Native Vest Schema Demo"
+    subtitle="Use create(..., enforce.shape(...)) for built-in schema validation alongside field-level business rules."
+  />
+
+  <ngx-example-cards [content]="exampleContent" class="mb-8 block" />
+
+  <ngx-form-page-layout>
+    <div layout-aside class="sidebar-card-stack">
+      <ngx-card title="How Native Schemas Work">
+        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
+          <li>
+            <strong>Native schema:</strong> passed directly as the 2nd argument
+            to <code>create()</code> via <code>enforce.shape(...)</code>.
+          </li>
+          <li>
+            <strong>Focused runs stay safe:</strong>
+            <code>suite.only(field).run(model)</code> narrows the schema to the
+            focused field so partial models still validate correctly.
+          </li>
+          <li>
+            <strong>Per-field rules:</strong> <code>test()</code> callbacks keep
+            user-facing business messages close to the form UI.
+          </li>
+          <li>
+            <strong>Nested structures:</strong> the address object is described
+            once in the schema instead of being repeated in an external
+            contract.
+          </li>
+          <li>
+            Compare this page with <strong>Zod Schema Demo</strong> when you
+            want to decide between a native Vest schema and an external schema
+            library.
+          </li>
+        </ul>
+      </ngx-card>
+
+      <ngx-form-state-card
+        [feedback]="formBody.feedback"
+        />
+    </div>
+
+    <div layout-main>
+      <ngx-native-schema-demo-form-body
+        #formBody
+        [formValue]="formValue()"
+        [suite]="suite"
+        (formValueChange)="formValue.set($event)"
+        (submitted)="save()"
+      />
+    </div>
+  </ngx-form-page-layout>
+</div>

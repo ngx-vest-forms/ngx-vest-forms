@@ -1,0 +1,67 @@
+<form
+  ngxVestForm
+  #vestForm="ngxVestForm"
+  [suite]="suite()"
+  [formValue]="formValue()"
+  (formValueChange)="formValueChange.emit($event)"
+  (ngSubmit)="onSubmit()"
+  class="space-y-6"
+>
+  <ngx-control-wrapper class="form-field">
+    <label for="name" class="label-text">Name</label>
+    <input
+      class="input-field"
+      type="text"
+      id="name"
+      name="name"
+      [ngModel]="formValue().name"
+      placeholder="Ada Lovelace"
+      autocomplete="name"
+    />
+  </ngx-control-wrapper>
+
+  <ngx-control-wrapper class="form-field">
+    <label for="email" class="label-text">Email</label>
+    <input
+      class="input-field"
+      type="email"
+      id="email"
+      name="email"
+      [ngModel]="formValue().email"
+      placeholder="ada@example.com"
+      autocomplete="email"
+      inputmode="email"
+    />
+  </ngx-control-wrapper>
+
+  <ngx-control-wrapper class="form-field">
+    <label for="subject" class="label-text">Subject</label>
+    <input
+      class="input-field"
+      type="text"
+      id="subject"
+      name="subject"
+      [ngModel]="formValue().subject"
+      placeholder="How can we help?"
+    />
+  </ngx-control-wrapper>
+
+  <ngx-control-wrapper class="form-field">
+    <label for="message" class="label-text">Message</label>
+    <textarea
+      class="input-field"
+      id="message"
+      name="message"
+      rows="4"
+      [ngModel]="formValue().message"
+      placeholder="Tell us a little about what you need…"
+    ></textarea>
+  </ngx-control-wrapper>
+
+  <div class="flex justify-end gap-3 pt-2">
+    <button type="button" class="btn btn-secondary" (click)="onReset()">
+      Reset
+    </button>
+    <button type="submit" class="btn btn-primary">Send message</button>
+  </div>
+</form>

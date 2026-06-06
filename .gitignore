@@ -8,6 +8,7 @@
 
 # Node
 /node_modules
+node_modules/
 npm-debug.log
 yarn-error.log
 
@@ -58,3 +59,16 @@ Thumbs.db
 
 # Git worktrees
 /.worktrees/
+
+.nx/polygraph
+.claude/worktrees
+.claude/settings.local.json
+
+
+.nx/cache
+.nx/workspace-data
+
+# Agent/assistant metadata policy: keep only .agents in-repo
+/.codex/
+/.opencode/
+/opencode.json

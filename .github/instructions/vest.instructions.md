@@ -14,8 +14,16 @@ Non-negotiables for this repository:
 3. Treat `suite.run()` as stateful. Call `suite.reset()` on form reset, and use `suite.runStatic()` for stateless or server-style execution. Do not suggest `staticSuite(...)`; it was removed in Vest 6.
 4. Prefer result APIs such as `result.isTested(field)`, `hasErrors`, `getErrors`, and `isPending` instead of parallel dirty, touched, or pending state.
 5. Prefer `skipWhen`, `omitWhen`, `include.when`, and `optional` over ad-hoc branching. Use `omitWhen` when a hidden or inactive branch should stop affecting validity entirely.
-6. Keep async tests cancellable with `{ signal }`, guard expensive async work with `skipWhen`, and use `await suite.run(data)`, `suite.afterEach()`, or `suite.afterField()` when completion matters. Do not suggest result `.done()` in Vest 6.
-7. Use `warn()` only for guidance that must not block submission. Call `warn()` before any `await`; if warning severity must be set after async work, use `useWarn()`.
+6. Async-test cancellation is automatic in Vest 6 via the per-test `signal` payload — there is no manual abort wiring. Destructure `signal` from the test context and forward it into the underlying request; Vest aborts the prior run's signal when a new run for the same test ID starts. Callers do **not** pass an `AbortSignal` (or any hooks) into `suite.run()`: in Vest 6.3 `run()` takes only the model. Canonical pattern:
+
+   ```ts
+   test('email', 'Email is already taken', async ({ signal }) => {
+     await check(model.email, { signal });
+   });
+   ```
+
+   Guard expensive async work with `skipWhen`, and use `await suite.run(model)`, `suite.afterEach()`, or `suite.afterField()` when completion matters. Do not suggest result `.done()` in Vest 6.
+7. Use `warn()` only for guidance that must not block submission. Call `warn()` **before any `await`** — once execution suspends on `await`, calling `warn()` no longer registers the warning severity. If warning severity must be set after async work, use `useWarn()` instead.
 8. When native schema validation is useful, prefer `create((data) => { ... }, enforce.shape(...))`. Focused runs subset the schema automatically. Advanced schema helpers such as `enforce.record`, `enforce.lazy`, and `enforce.tuple` belong in deeper skill guidance, not in baseline examples.
 9. Prefer patterns already used in this repository’s examples, docs, and skills over generic Vest snippets.
 

@@ -15,20 +15,26 @@ on:
       stable_branch:
         description: 'Stable branch (when branch_type = stable)'
         required: false
-        default: 'beta'
+        default: 'release/v3'
         type: choice
         options:
           - next
           - alpha
-          - beta
           - rc
           - release/v1.x
           - release/v2.x
+          - release/v3
 
       custom_branch:
         description: 'Custom branch name (when branch_type = custom, e.g., feat/awesome-feature, fix/critical-bug)'
         required: false
         type: string
+
+      dry_run:
+        description: 'Dry run: compute and print the next version/channel without publishing, tagging, or creating a release'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write  # For creating releases and updating changelog
@@ -61,7 +67,7 @@ jobs:
           echo "Releasing from branch: $BRANCH"
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
           ref: ${{ steps.branch.outputs.branch }}
@@ -93,42 +99,50 @@ jobs:
             fi
           fi
       - name: Setup
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24'
-          cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
+      - name: Enable Corepack
+        run: corepack enable
       - name: Install
-        run: npm install
+        run: pnpm install --frozen-lockfile
       - name: Get Playwright version
         id: playwright-version
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browsers
         id: playwright-cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
       - name: Install Playwright browser (chromium only)
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
       - name: Install Playwright system deps (cache hit)
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
+        run: pnpm exec playwright install-deps chromium
       - name: Lint
-        run: npm run lint
+        run: pnpm nx run-many --target=lint
       - name: Build
-        run: npm run build:ci
+        run: pnpm run build:ci
       - name: Test
-        run: npm run test:ci
+        run: pnpm nx run-many --target=test
       - name: E2E tests
-        run: npx playwright test --project=chromium
+        run: pnpm nx run examples-e2e:e2e -- --project=chromium
         env:
           CI: true
       - name: Publish prerelease
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true  # Enable provenance attestation with OIDC
+          RELEASE_BRANCH: ${{ steps.branch.outputs.branch }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
         run: |
-          echo "Publishing prerelease from branch: ${{ steps.branch.outputs.branch }}"
-          npx semantic-release
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "DRY RUN: computing next version/channel for branch '$RELEASE_BRANCH' (no publish)"
+            pnpm exec semantic-release --dry-run
+          else
+            echo "Publishing prerelease from branch: $RELEASE_BRANCH"
+            pnpm exec semantic-release
+          fi

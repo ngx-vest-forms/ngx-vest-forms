@@ -42,10 +42,10 @@ Optional advanced exports worth knowing about:
 Build answers and code in this order:
 
 1. Define a `NgxDeepPartial<T>` form model.
-2. Define an optional `NgxDeepRequired<T>` shape.
+2. Define an optional structural contract — either an `NgxDeepRequired<T>` shape (legacy, accepted for back-compat), a hand-written `StandardSchemaV1<T>`, or a Zod v4 schema (recommended).
 3. Create a Vest suite with `create((model) => { ... })`.
 4. Expose a signal-based `formValue` in the component.
-5. Bind the form with `ngxVestForm`, `[suite]`, optional `[formShape]`, and `(formValueChange)`.
+5. Bind the form with `ngxVestForm`, `[suite]`, and `(formValueChange)`. Prefer `provideFormContract(...)` in the component when the contract is fixed; use `[formContract]` only for true per-usage overrides.
 6. Bind each control with `[ngModel]` and the exact matching `name`.
 7. Use `ChangeDetectionStrategy.OnPush` unless there is a compelling reason not to.
 
@@ -69,7 +69,7 @@ Correct these immediately if they appear:
 - two-parameter suite callbacks or `only(field)` inside the suite callback
 - `name` values that do not match the bound path
 - direct property access like `formValue().address.street` instead of `formValue().address?.street`
-- missing `formShape` on complex nested forms where path mistakes are easy
+- missing a fixed `provideFormContract(...)` or explicit `[formContract]` on complex nested forms where path mistakes are easy
 - `(blur)` handlers that re-trigger validation to fake dependent-field timing or draft auto-save
 - imports from `projects/ngx-vest-forms/src/lib/**` in consumer examples
 

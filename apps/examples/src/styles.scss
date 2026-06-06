@@ -1,0 +1,371 @@
+/* You can add global styles to this file, and also import other style files */
+@import 'tailwindcss' source(none);
+@source './app';
+@source './index.html';
+
+/*
+ * Tailwind v4 scans the whole repository by default. Exclude non-app sources that
+ * contain bracketed tokens like `[file:line]` or Playwright selectors such as
+ * `[aria-busy="true"]:visible`, which would otherwise be misdetected as utility
+ * classes and produce invalid generated CSS warnings during builds.
+ */
+@source not '../../../.github';
+@source not '../../../docs';
+@source not '../../../e2e';
+@source not '../../../playwright-report';
+@source not '../../../test-results';
+
+/* Use explicit class-driven dark mode (not system media-only) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Theme customization - Tailwind CSS v4 */
+@theme {
+  /* Primary color palette (teal) */
+  --color-primary-50: oklch(0.978 0.014 180.744);
+  --color-primary-100: oklch(0.952 0.027 180.899);
+  --color-primary-200: oklch(0.905 0.054 181.072);
+  --color-primary-300: oklch(0.831 0.096 182.361);
+  --color-primary-400: oklch(0.742 0.131 183.563);
+  --color-primary-500: oklch(0.647 0.138 186.42);
+  --color-primary-600: oklch(0.551 0.128 189.206);
+  --color-primary-700: oklch(0.473 0.111 191.25);
+  --color-primary-800: oklch(0.406 0.09 192.846);
+  --color-primary-900: oklch(0.356 0.07 194.893);
+  --color-primary-950: oklch(0.253 0.048 198.286);
+}
+
+@layer base {
+  body {
+    min-height: 100vh;
+    background: linear-gradient(
+      to bottom right,
+      oklch(0.924 0.018 267.416),
+      white,
+      oklch(0.954 0.05 195.365)
+    );
+    color: oklch(0.278 0.029 256.848);
+  }
+
+  html.dark body {
+    background: linear-gradient(
+      to bottom right,
+      oklch(0.175 0.028 264.052),
+      oklch(0.264 0.055 293.357),
+      oklch(0.175 0.028 264.052)
+    );
+    color: white;
+  }
+}
+
+@layer components {
+  .page-container {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 80rem; /* max-w-7xl */
+    padding: 0.75rem; /* small-screen friendly */
+  }
+
+  .sidebar-card-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  @media (min-width: 640px) {
+    .page-container {
+      padding: 1.25rem; /* sm */
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .page-container {
+      padding: 2rem; /* lg */
+    }
+  }
+
+  .section-title {
+    @apply mb-4 text-lg font-medium text-gray-900 dark:text-white;
+  }
+
+  .label-text {
+    @apply mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300;
+  }
+
+  .input-field {
+    @apply focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-500 dark:focus:ring-primary-500 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400;
+
+    /* Apply error styling when aria-invalid is true */
+    &[aria-invalid='true'] {
+      @apply border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500;
+    }
+
+    /* Disabled state styling */
+    &:disabled {
+      @apply cursor-not-allowed border-gray-200 bg-gray-100 text-gray-500 opacity-70 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400;
+    }
+  }
+
+  .input-field-error {
+    @apply border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-center text-sm font-medium focus:ring-4 focus:outline-hidden;
+  }
+
+  .btn-primary {
+    @apply bg-primary-700 hover:bg-primary-800 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 text-white;
+  }
+
+  .btn-secondary {
+    @apply border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:border-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-700;
+  }
+
+  .btn-danger {
+    @apply border border-red-300 bg-white text-red-700 hover:bg-red-50 focus:ring-red-200 dark:border-red-600 dark:bg-gray-800 dark:text-red-500 dark:hover:border-red-500 dark:hover:bg-gray-700 dark:focus:ring-red-900;
+  }
+
+  .btn-success {
+    @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-green-500 dark:hover:bg-green-600;
+  }
+
+  .btn-input-action {
+    @apply absolute top-1 right-1 rounded-md px-3 py-1.5 text-xs font-medium focus:ring-2 focus:outline-hidden;
+  }
+
+  .btn-input-action-danger {
+    @apply bg-red-100 text-red-700 hover:bg-red-200 focus:ring-red-500 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50;
+  }
+
+  .btn-input-action-primary {
+    @apply bg-blue-100 text-blue-700 hover:bg-blue-200 focus:ring-blue-500 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50;
+  }
+
+  .error-message {
+    @apply mt-1 text-sm text-red-600 dark:text-red-500;
+  }
+
+  .form-field,
+  .form-group {
+    @apply w-full;
+  }
+
+  .radio-group {
+    @apply flex gap-6;
+  }
+
+  .radio-item {
+    @apply flex items-center gap-2;
+
+    input[type='radio'] {
+      @apply text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 h-4 w-4 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800;
+
+      /* Disabled state styling for radio buttons */
+      &:disabled {
+        @apply cursor-not-allowed opacity-50;
+
+        + label {
+          @apply cursor-not-allowed text-gray-400 dark:text-gray-500;
+        }
+      }
+    }
+
+    label {
+      @apply ml-2 text-sm font-medium text-gray-900 dark:text-gray-300;
+    }
+  }
+
+  .form-stack {
+    @apply space-y-8;
+  }
+
+  .form-shell {
+    display: block;
+  }
+
+  .form-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 30rem) {
+    .form-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .form-grid-full {
+    @apply sm:col-span-2;
+  }
+
+  .form-divider {
+    @apply border-t border-gray-100 dark:border-gray-700;
+  }
+
+  .inline-checkbox-row {
+    @apply mb-6 flex items-center;
+  }
+
+  .inline-checkbox {
+    @apply text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 h-4 w-4 rounded-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800;
+  }
+
+  .inline-checkbox-label {
+    @apply ml-2 text-sm font-medium text-gray-900 dark:text-gray-300;
+  }
+
+  .form-actions {
+    @apply mt-6 flex justify-end gap-3 border-t border-gray-100 pt-6 dark:border-gray-700;
+  }
+
+  .radio-group-label {
+    @apply mb-3 block;
+  }
+
+  .address-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+  }
+
+  .business-hours-item-card {
+    @apply relative rounded-lg border border-gray-200 bg-gray-50 p-4 transition-colors hover:bg-white dark:border-gray-700 dark:bg-gray-800/50 dark:hover:bg-gray-800;
+  }
+
+  .business-hours-stack {
+    @apply space-y-4;
+  }
+
+  .business-hours-list-stack {
+    @apply space-y-3;
+  }
+
+  .business-hours-item-layout {
+    @apply flex items-start justify-between gap-4;
+  }
+
+  .business-hours-item-main {
+    @apply flex-grow;
+  }
+
+  .business-hours-remove-btn {
+    @apply mt-7 inline-flex items-center rounded-md p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-hidden dark:hover:bg-red-900/20 dark:hover:text-red-400;
+  }
+
+  .business-hours-divider {
+    @apply relative py-4;
+  }
+
+  .business-hours-divider-line {
+    @apply absolute inset-0 flex items-center;
+  }
+
+  .business-hours-divider-rule {
+    @apply w-full border-t border-gray-200 dark:border-gray-700;
+  }
+
+  .business-hours-divider-content {
+    @apply relative flex justify-center;
+  }
+
+  .business-hours-divider-label {
+    @apply bg-white px-2 text-sm text-gray-500 dark:bg-gray-800 dark:text-gray-400;
+  }
+
+  .business-hours-add-card {
+    @apply rounded-lg border-2 border-dashed border-gray-300 p-4 dark:border-gray-700;
+  }
+
+  .business-hours-add-btn {
+    @apply mt-7 inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-center text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-4 focus:ring-gray-200 focus:outline-hidden dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:border-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-700;
+  }
+
+  .business-hours-add-btn-icon {
+    @apply mr-2;
+  }
+
+  @media (min-width: 30rem) {
+    .address-grid {
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .address-field-wide {
+      grid-column: span 1 / span 1;
+    }
+
+    .address-field-compact {
+      grid-column: span 1 / span 1;
+      justify-self: start;
+      width: 100%;
+      max-width: 11rem;
+    }
+
+    .address-field-country {
+      grid-column: 1 / -1;
+      max-width: 16rem;
+    }
+  }
+}
+
+/* Legacy support for existing components until fully migrated */
+ngx-form-section {
+  display: block;
+}
+
+fieldset:not(.form-shell) {
+  @apply grid gap-6 sm:grid-cols-2;
+
+  label span,
+  .label span {
+    @apply mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300;
+  }
+
+  .ngx-control-wrapper {
+    select,
+    input[type='text'],
+    input[type='number'],
+    input[type='password'],
+    input[type='date'],
+    textarea {
+      @apply focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-500 dark:focus:ring-primary-500 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400;
+
+      /* Disabled state styling */
+      &:disabled {
+        @apply cursor-not-allowed border-gray-200 bg-gray-100 text-gray-500 opacity-70 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400;
+      }
+    }
+
+    &--invalid {
+      label span {
+        @apply text-red-600 dark:text-red-500;
+      }
+
+      select,
+      input[type='text'],
+      input[type='number'],
+      input[type='password'],
+      input[type='date'],
+      textarea {
+        @apply border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500;
+      }
+    }
+
+    &__errors {
+      @apply mt-1 text-sm text-red-600 dark:text-red-500;
+    }
+  }
+}
+
+/* Shell nav reveal — staggered per category group via inline animation-delay. */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -98,7 +98,7 @@ It only re-runs validation logic to update validity state.
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyFormComponent {
-  // Modern Angular 20+: Use viewChild() instead of @ViewChild
+  // Modern Angular: use viewChild() instead of @ViewChild when available
   private readonly vestForm =
     viewChild.required<FormDirective<MyFormModel>>('vestForm');
 

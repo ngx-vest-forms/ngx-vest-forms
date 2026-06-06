@@ -1,0 +1,188 @@
+<ngx-card
+  title="Display Mode Examples"
+  subtitle="Compare immediate and interaction-based error/warning timing."
+>
+  <form
+    #vestForm="ngxVestForm"
+    ngxVestForm
+    [suite]="suite()"
+    [formValue]="formValue()"
+    (formValueChange)="formValueChange.emit($event)"
+    (submitted)="onSubmit()"
+    class="space-y-8"
+  >
+    <ngx-card
+      title="Token default: errorDisplayMode='on-submit'"
+      subtitle="This wrapper does not set errorDisplayMode itself — the page-level NGX_ERROR_DISPLAY_MODE_TOKEN provides the default."
+    >
+      <ngx-control-wrapper>
+        <label for="tokenDefaultError" class="label-text"
+          >Username (Token Default Error)</label
+        >
+        <input
+          id="tokenDefaultError"
+          name="tokenDefaultError"
+          [ngModel]="formValue().tokenDefaultError"
+          class="input-field"
+          placeholder="Leave empty, then use the external submit button..."
+        />
+      </ngx-control-wrapper>
+    </ngx-card>
+
+    <ngx-card
+      title="Token default: warningDisplayMode='on-touch'"
+      subtitle="This wrapper relies on the page-level NGX_WARNING_DISPLAY_MODE_TOKEN, then the explicit examples below override it per field."
+    >
+      <ngx-control-wrapper>
+        <label for="tokenDefaultWarning" class="label-text"
+          >Username (Token Default Warning)</label
+        >
+        <input
+          id="tokenDefaultWarning"
+          name="tokenDefaultWarning"
+          [ngModel]="formValue().tokenDefaultWarning"
+          class="input-field"
+          placeholder="Type a short username, then blur..."
+        />
+      </ngx-control-wrapper>
+    </ngx-card>
+
+    <ngx-card
+      title="Error Display Mode: 'always'"
+      subtitle="Errors appear immediately, even on pristine fields."
+    >
+      <ngx-control-wrapper errorDisplayMode="always">
+        <label for="alwaysError" class="label-text"
+          >Username (Always Mode)</label
+        >
+        <input
+          id="alwaysError"
+          name="alwaysError"
+          [ngModel]="formValue().alwaysError"
+          class="input-field"
+          placeholder="Start typing..."
+        />
+      </ngx-control-wrapper>
+    </ngx-card>
+
+    <ngx-card
+      title="Error Display Mode: 'on-dirty'"
+      subtitle="Errors appear as soon as you type."
+    >
+      <ngx-control-wrapper errorDisplayMode="on-dirty">
+        <label for="dirtyError" class="label-text"
+          >Username (On-Dirty Mode)</label
+        >
+        <input
+          id="dirtyError"
+          name="dirtyError"
+          [ngModel]="formValue().dirtyError"
+          class="input-field"
+          placeholder="Start typing..."
+        />
+      </ngx-control-wrapper>
+    </ngx-card>
+
+    <ngx-card
+      title="Error Display Mode: 'on-submit'"
+      subtitle="This field stays quiet until the parent container submits the form programmatically."
+    >
+      <ngx-control-wrapper errorDisplayMode="on-submit">
+        <label for="submitError" class="label-text"
+          >Username (On-Submit Mode)</label
+        >
+        <input
+          id="submitError"
+          name="submitError"
+          [ngModel]="formValue().submitError"
+          aria-describedby="submit-error-help"
+          class="input-field"
+          placeholder="Leave empty, then use the external submit button..."
+        />
+      </ngx-control-wrapper>
+      <p
+        id="submit-error-help"
+        class="mt-3 text-sm text-gray-600 dark:text-gray-300"
+      >
+        Use the external button below to simulate a parent component calling
+        <code>NgForm.onSubmit()</code>, then marking controls as touched and
+        retriggering validation.
+      </p>
+    </ngx-card>
+
+    <ngx-card
+      title="Warning Display Mode: 'always'"
+      subtitle="Warnings appear immediately on pristine fields."
+    >
+      <ngx-control-wrapper warningDisplayMode="always">
+        <label for="alwaysWarning" class="label-text"
+          >Username (Always Warning)</label
+        >
+        <input
+          id="alwaysWarning"
+          name="alwaysWarning"
+          [ngModel]="formValue().alwaysWarning"
+          class="input-field"
+          placeholder="Type a short username..."
+        />
+      </ngx-control-wrapper>
+    </ngx-card>
+
+    <ngx-card
+      title="Warning Display Mode: 'on-dirty'"
+      subtitle="Warnings appear as soon as you type."
+    >
+      <ngx-control-wrapper warningDisplayMode="on-dirty">
+        <label for="dirtyWarning" class="label-text"
+          >Username (On-Dirty Warning)</label
+        >
+        <input
+          id="dirtyWarning"
+          name="dirtyWarning"
+          [ngModel]="formValue().dirtyWarning"
+          class="input-field"
+          placeholder="Type a short username..."
+        />
+      </ngx-control-wrapper>
+    </ngx-card>
+
+    <ngx-card
+      title="Warning Display Mode: 'on-touch'"
+      subtitle="Warnings appear after blur (traditional behavior)."
+    >
+      <ngx-control-wrapper warningDisplayMode="on-touch">
+        <label for="touchWarning" class="label-text"
+          >Username (On-Touch Warning)</label
+        >
+        <input
+          id="touchWarning"
+          name="touchWarning"
+          [ngModel]="formValue().touchWarning"
+          class="input-field"
+          placeholder="Type a short username and blur..."
+        />
+      </ngx-control-wrapper>
+    </ngx-card>
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+
+  <div class="mt-4 flex flex-wrap gap-3">
+    <p
+      id="programmatic-submit-help"
+      class="text-sm text-gray-600 dark:text-gray-300"
+    >
+      This mirrors a parent-controlled submit flow where submission is triggered
+      externally/programmatically. The token-default submit field above relies
+      entirely on this provider-driven path.
+    </p>
+    <button
+      type="button"
+      class="btn btn-secondary"
+      aria-describedby="programmatic-submit-help"
+      (click)="submitProgrammatically()"
+    >
+      Programmatically submit demo form
+    </button>
+  </div>
+</ngx-card>

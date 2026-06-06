@@ -1,0 +1,285 @@
+import {
+  computed,
+  Directive,
+  effect,
+  inject,
+  input,
+  isDevMode,
+  signal,
+  Signal,
+} from '@angular/core';
+import {
+  logDiagnostic,
+  NGX_VEST_FORMS_DIAGNOSTICS,
+} from '../errors/error-catalog';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormResetEvent, FormSubmittedEvent, NgForm } from '@angular/forms';
+import { filter, map, startWith } from 'rxjs';
+import {
+  NGX_ERROR_DISPLAY_MODE_TOKEN,
+  NGX_WARNING_DISPLAY_MODE_TOKEN,
+} from './error-display-mode.token';
+import { FormControlStateDirective } from './form-control-state.directive';
+import { getFormSubmittedSignal } from './form-submitted-state';
+
+/**
+ * Error display modes for form controls.
+ * - 'on-blur': Show errors after field is touched/blurred
+ * - 'on-submit': Show errors after form submission
+ * - 'on-blur-or-submit': Show errors after blur or form submission (default)
+ * - 'on-dirty': Show errors as soon as the field value changes
+ * - 'always': Show errors immediately, even on pristine fields
+ */
+export type NgxErrorDisplayMode =
+  | 'on-blur'
+  | 'on-submit'
+  | 'on-blur-or-submit'
+  | 'on-dirty'
+  | 'always';
+
+/**
+ * Warning display modes for form controls.
+ * - 'on-touch': Show warnings after field is touched/blurred
+ * - 'on-validated-or-touch': Show warnings after validation runs or field is touched (default)
+ * - 'on-dirty': Show warnings as soon as the field value changes
+ * - 'always': Show warnings immediately, even on pristine fields
+ */
+export type NgxWarningDisplayMode =
+  | 'on-touch'
+  | 'on-validated-or-touch'
+  | 'on-dirty'
+  | 'always';
+
+export const NGX_ERROR_DISPLAY_MODE_DEFAULT: NgxErrorDisplayMode =
+  'on-blur-or-submit';
+export const NGX_WARNING_DISPLAY_MODE_DEFAULT: NgxWarningDisplayMode =
+  'on-validated-or-touch';
+
+@Directive({
+  selector: '[ngxErrorDisplay]',
+  exportAs: 'ngxErrorDisplay',
+  hostDirectives: [FormControlStateDirective],
+})
+export class FormErrorDisplayDirective {
+  readonly #controlStateDirective = inject(FormControlStateDirective);
+  // Optionally inject NgForm for form submission tracking
+  readonly #ngForm = inject(NgForm, { optional: true });
+  readonly #formSubmittedState = this.#ngForm
+    ? getFormSubmittedSignal(this.#ngForm)
+    : signal(false);
+
+  /**
+   * Input signal for error display mode.
+   * Works seamlessly with hostDirectives in Angular 19+.
+   */
+  readonly errorDisplayMode = input<NgxErrorDisplayMode>(
+    inject(NGX_ERROR_DISPLAY_MODE_TOKEN, { optional: true }) ??
+      NGX_ERROR_DISPLAY_MODE_DEFAULT
+  );
+
+  /**
+   * Input signal for warning display mode.
+   * Controls whether warnings are shown only after touch or also after validation.
+   */
+  readonly warningDisplayMode = input<NgxWarningDisplayMode>(
+    inject(NGX_WARNING_DISPLAY_MODE_TOKEN, { optional: true }) ??
+      NGX_WARNING_DISPLAY_MODE_DEFAULT
+  );
+
+  // Expose state signals from FormControlStateDirective
+  readonly controlState = this.#controlStateDirective.controlState;
+  readonly errorMessages = this.#controlStateDirective.errorMessages;
+  readonly warningMessages = this.#controlStateDirective.warningMessages;
+  readonly hasPendingValidation =
+    this.#controlStateDirective.hasPendingValidation;
+  readonly isTouched = this.#controlStateDirective.isTouched;
+  readonly isDirty = this.#controlStateDirective.isDirty;
+  readonly isValid = this.#controlStateDirective.isValid;
+  readonly isInvalid = this.#controlStateDirective.isInvalid;
+  readonly hasBeenValidated = this.#controlStateDirective.hasBeenValidated;
+  /**
+   * Expose updateOn and formSubmitted as public signals for advanced consumers.
+   * updateOn: The ngModelOptions.updateOn value for the control (change/blur/submit)
+   * formSubmitted: true after the form is submitted (if NgForm is present)
+   */
+  readonly updateOn = this.#controlStateDirective.updateOn;
+
+  /**
+   * Signal that tracks NgForm.submitted state reactively.
+   *
+   * Map form-level submit/reset events directly to boolean state.
+   *
+   * This keeps programmatic `NgForm.onSubmit()` reactive in zoneless mode and
+   * avoids depending on `NgForm.submitted`, whose getter intentionally reads an
+   * internal signal with `untracked()`.
+   *
+   * Note: when this directive is used outside an `NgForm` (no parent form), no
+   * subscription is wired up and this signal stays `false` for the lifetime of
+   * the directive. Consumers relying on submitted state must host the field
+   * inside an `NgForm` (or `ngxVestForm`).
+   */
+  readonly formSubmitted: Signal<boolean> = this.#formSubmittedState;
+
+  constructor() {
+    const ngForm = this.#ngForm;
+    if (ngForm) {
+      ngForm.form.events
+        .pipe(
+          filter(
+            (event) =>
+              event.source === ngForm.form &&
+              (event instanceof FormSubmittedEvent ||
+                event instanceof FormResetEvent)
+          ),
+          map((event) => event instanceof FormSubmittedEvent),
+          startWith(ngForm.submitted),
+          takeUntilDestroyed()
+        )
+        .subscribe((submitted) => {
+          this.#formSubmittedState.set(submitted);
+        });
+    }
+
+    // Warn about problematic combinations of updateOn and errorDisplayMode
+    effect(() => {
+      const mode = this.errorDisplayMode();
+      const updateOn = this.updateOn();
+      if (updateOn === 'submit' && mode === 'on-blur' && isDevMode()) {
+        logDiagnostic(NGX_VEST_FORMS_DIAGNOSTICS.ERROR_DISPLAY_MODE_CONFLICT);
+      }
+    });
+  }
+
+  /**
+   * Determines if errors should be shown based on the specified display mode
+   * and the control's state (touched/submitted/dirty).
+   *
+   * Note: We check both hasErrors (extracted error messages) AND isInvalid (Angular's validation state)
+   * because in some cases (like conditional validations via validationConfig), the control is marked
+   * as invalid by Angular before error messages are extracted from Vest. This ensures aria-invalid
+   * is set correctly even during the validation propagation delay.
+   *
+   * For validationConfig-triggered validations, a field may become invalid before it has been
+   * touched. Error visibility still respects the field's own `errorDisplayMode`, so untouched
+   * dependent fields can remain visually quiet until blur or submit.
+   */
+  readonly shouldShowErrors: Signal<boolean> = computed(() => {
+    const mode = this.errorDisplayMode();
+    const isTouched = this.isTouched();
+    const isDirty = this.isDirty();
+    const isInvalid = this.isInvalid();
+    const hasErrors = this.errorMessages().length > 0;
+    const updateOn = this.updateOn();
+    const formSubmitted = this.formSubmitted();
+
+    // Consider errors present if either we have error messages OR the control is invalid
+    // This handles the race condition where Angular marks control invalid before Vest errors propagate
+    const hasErrorState = hasErrors || isInvalid;
+
+    // Always only show errors after submit if updateOn is 'submit'
+    if (updateOn === 'submit') {
+      return !!(formSubmitted && hasErrorState);
+    }
+
+    // Handle the new display modes
+    switch (mode) {
+      case 'always':
+        // Always show errors immediately, even on pristine fields
+        return hasErrorState;
+
+      case 'on-dirty':
+        // Show when value has changed, OR when touched/submitted (for backwards compat)
+        return !!(isDirty || isTouched || formSubmitted) && hasErrorState;
+
+      case 'on-blur':
+        // Show after touch (blur) or form submission (traditional behavior, not dirty-based)
+        return !!(isTouched || formSubmitted) && hasErrorState;
+
+      case 'on-submit':
+        // Show only after form submission
+        return !!(formSubmitted && hasErrorState);
+
+      case 'on-blur-or-submit':
+      default:
+        // Show after blur (touch) OR submit (default behavior)
+        return !!((isTouched || formSubmitted) && hasErrorState);
+    }
+  });
+
+  /**
+   * Errors to display (filtered for pending state)
+   */
+  readonly errors: Signal<string[]> = computed(() => {
+    if (this.hasPendingValidation()) return [];
+    return this.errorMessages();
+  });
+
+  /**
+   * Warnings to display (filtered for pending state)
+   */
+  readonly warnings: Signal<string[]> = computed(() => {
+    if (this.hasPendingValidation()) return [];
+    return this.warningMessages();
+  });
+
+  /**
+   * Whether the control is currently being validated (pending)
+   * Excludes pristine+untouched controls to prevent "Validating..." on initial load
+   */
+  readonly isPending: Signal<boolean> = computed(() => {
+    // Don't show pending state for pristine untouched controls
+    // This prevents "Validating..." message appearing on initial page load
+    const state = this.#controlStateDirective.controlState();
+    if (state.isPristine && !state.isTouched) {
+      return false;
+    }
+    return this.hasPendingValidation();
+  });
+
+  /**
+   * Determines if warnings should be shown based on the specified display mode
+   * and the control's state (touched/validated/dirty).
+   *
+   * NOTE: Unlike errors, warnings can exist on VALID fields (warnings-only scenario).
+   * We don't require isInvalid() because Vest warn() tests don't affect field validity.
+   *
+   * UX Note: We include `hasBeenValidated` for `on-validated-or-touch` mode to support
+   * cross-field validation. If Field A triggers validation on Field B (via validationConfig),
+   * Field B should show warnings if it has them, even if the user hasn't touched Field B yet.
+   * Unlike errors (which block submission), warnings are informational and safe to show.
+   */
+  readonly shouldShowWarnings: Signal<boolean> = computed(() => {
+    const mode = this.warningDisplayMode();
+    const isTouched = this.isTouched();
+    const isDirty = this.isDirty();
+    const hasBeenValidated = this.hasBeenValidated();
+    const hasWarnings = this.warningMessages().length > 0;
+    const isPending = this.hasPendingValidation();
+    const formSubmitted = this.formSubmitted();
+
+    // No warnings to show or still pending
+    if (!hasWarnings || isPending) {
+      return false;
+    }
+
+    // Handle the warning display modes
+    switch (mode) {
+      case 'always':
+        // Always show warnings immediately, even on pristine fields
+        return true;
+
+      case 'on-dirty':
+        // Show when value has changed, OR when touched/submitted (for backwards compat)
+        return isDirty || isTouched || formSubmitted;
+
+      case 'on-touch':
+        // Show after touch (blur) or form submission (traditional behavior, not dirty-based)
+        return isTouched || formSubmitted;
+
+      case 'on-validated-or-touch':
+      default:
+        // Show after validation runs or after touch/submit (default behavior)
+        return hasBeenValidated || isTouched || formSubmitted;
+    }
+  });
+}

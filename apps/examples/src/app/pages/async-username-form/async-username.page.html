@@ -1,0 +1,50 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Async Username Availability"
+    subtitle="Validate a username against a mock remote endpoint with calm pending, success, and failure states."
+  />
+
+  <ngx-example-cards [content]="exampleContent" class="mb-8 block" />
+
+  <ngx-form-page-layout>
+    <div layout-aside class="sidebar-card-stack">
+      <ngx-card title="How async validation behaves">
+        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
+          <li>Cheap rules run first — the network is only hit when valid.</li>
+          <li>
+            Typing again aborts the in-flight request via an
+            <code>AbortSignal</code>.
+          </li>
+          <li><code>memo</code> avoids re-running the check needlessly.</li>
+          <li>Pending state is separate from submission state.</li>
+        </ul>
+      </ngx-card>
+
+      <ngx-form-state-card [feedback]="feedback()" />
+    </div>
+
+    <div layout-main>
+      @if (submittedValue(); as submitted) {
+        <ngx-alert-panel tone="success" title="Username reserved">
+          <p>
+            Nice — <strong>{{ submitted.username }}</strong> is available and
+            reserved for {{ submitted.displayName }}.
+          </p>
+        </ngx-alert-panel>
+      }
+
+      <ngx-card
+        title="Choose a username"
+        subtitle="Try “ada”, “admin”, or “taken” to see the availability check fail."
+      >
+        <ngx-async-username-form-body
+          [formValue]="formValue()"
+          [suite]="suite"
+          (formValueChange)="formValue.set($event)"
+          (submitted)="onSubmit()"
+          (resetRequested)="reset()"
+        />
+      </ngx-card>
+    </div>
+  </ngx-form-page-layout>
+</div>
