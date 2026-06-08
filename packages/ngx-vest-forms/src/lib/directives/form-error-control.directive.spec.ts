@@ -7,6 +7,7 @@ import { FormErrorControlDirective } from './form-error-control.directive';
 
 @Component({
   imports: [FormsModule, FormErrorControlDirective],
+
   template: `
     <form #form="ngForm">
       <label for="test">Test</label>
@@ -46,6 +47,7 @@ class TestHostComponent {
 
 @Component({
   imports: [FormsModule, FormErrorControlDirective],
+
   template: `
     <form #form="ngForm">
       <label for="a">A</label>
@@ -89,6 +91,7 @@ class TestMultipleControlsComponent {
 @Component({
   selector: 'ngx-test-error-control-wrapper',
   hostDirectives: [FormErrorControlDirective],
+
   template: ` <ng-content /> `,
 })
 class TestErrorControlWrapperComponent {}
@@ -126,6 +129,7 @@ class TestHostDirectiveComponent {
 
 @Component({
   imports: [FormsModule, FormErrorControlDirective],
+
   template: `
     <form #form="ngForm">
       <button type="button" (click)="toggle()">Toggle</button>

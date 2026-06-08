@@ -57,6 +57,7 @@ class TestErrorDisplayHostComponent {
 // Component for testing injected default mode (no [errorDisplayMode] binding)
 @Component({
   imports: [FormsModule, FormErrorDisplayDirective],
+
   template: `
     <form #form="ngForm">
       <input
