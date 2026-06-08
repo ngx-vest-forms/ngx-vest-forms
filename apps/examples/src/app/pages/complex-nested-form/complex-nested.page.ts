@@ -1,7 +1,7 @@
-import { computed } from "@angular/core";
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   signal,
   viewChild,
 } from '@angular/core';

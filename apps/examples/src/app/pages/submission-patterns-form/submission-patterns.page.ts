@@ -1,23 +1,18 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   afterNextRender,
   ChangeDetectionStrategy,
-  computed,
   Component,
+  computed,
   DestroyRef,
   inject,
   Injector,
   signal,
   viewChild,
 } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-  createEmptyFormState,
-} from 'ngx-vest-forms';
 import { catchError, EMPTY, finalize } from 'rxjs';
-import {
-  SubmissionPatternsModel,
-} from '../../models/submission-patterns.model';
+import { SubmissionPatternsModel } from '../../models/submission-patterns.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';

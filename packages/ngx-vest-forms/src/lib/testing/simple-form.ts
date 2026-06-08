@@ -1,8 +1,8 @@
-import { create, enforce, omitWhen, test } from 'vest';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
+import { create, enforce, omitWhen, test } from 'vest';
 import type { NgxDeepPartial, NgxDeepRequired } from '../../public-api';
-import { toFormContract } from '../utils/to-form-contract';
 import { ROOT_FORM } from '../constants';
+import { toFormContract } from '../utils/to-form-contract';
 
 export type FormModel = NgxDeepPartial<{
   firstName: string;

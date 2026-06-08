@@ -18,8 +18,8 @@
       id="preferred-name-hint"
       class="mt-1 text-sm text-gray-600 dark:text-gray-300"
     >
-      This field already has a static hint. The directive appends its
-      validation region automatically when errors appear.
+      This field already has a static hint. The directive appends its validation
+      region automatically when errors appear.
     </p>
     <input
       class="input-field mt-3"
@@ -38,11 +38,10 @@
       aria-atomic="true"
       class="mt-3 text-sm text-red-700 dark:text-red-300"
     >
-      @if (shouldShowErrors(preferredControl)) {
-        @for (message of controlErrors(preferredControl); track message) {
-          <p>{{ message }}</p>
-        }
-      }
+      @if (shouldShowErrors(preferredControl)) { @for (message of
+      controlErrors(preferredControl); track message) {
+      <p>{{ message }}</p>
+      } }
     </div>
   </div>
 
@@ -87,11 +86,10 @@
       aria-atomic="true"
       class="mt-3 text-sm text-red-700 dark:text-red-300"
     >
-      @if (shouldShowErrors(searchControl)) {
-        @for (message of controlErrors(searchControl); track message) {
-          <p>{{ message }}</p>
-        }
-      }
+      @if (shouldShowErrors(searchControl)) { @for (message of
+      controlErrors(searchControl); track message) {
+      <p>{{ message }}</p>
+      } }
     </div>
   </div>
 

@@ -9,7 +9,9 @@ test.describe('Accessible Wrapper Demo Form', () => {
   test('should wire ARIA correctly for single-control and manual modes', async ({
     page,
   }) => {
-    const preferredName = page.getByRole('textbox', { name: /preferred name/i });
+    const preferredName = page.getByRole('textbox', {
+      name: /preferred name/i,
+    });
     const searchQuery = page.getByRole('searchbox', { name: /search query/i });
     const clearSearch = page.getByRole('button', {
       name: /clear search query/i,
@@ -25,13 +27,13 @@ test.describe('Accessible Wrapper Demo Form', () => {
     await expect(errorSummary).toContainText(/search query is required/i);
     await expect(searchQuery).toHaveAttribute('aria-invalid', 'true');
 
-    const preferredDescribedBy = await preferredName.getAttribute(
-      'aria-describedby'
-    );
+    const preferredDescribedBy =
+      await preferredName.getAttribute('aria-describedby');
     expect(preferredDescribedBy).toMatch(/preferred-name-hint/);
     expect(preferredDescribedBy).toMatch(/ngx-error-control-\d+-error/);
 
-    const searchDescribedBy = await searchQuery.getAttribute('aria-describedby');
+    const searchDescribedBy =
+      await searchQuery.getAttribute('aria-describedby');
     expect(searchDescribedBy).toMatch(/search-query-hint/);
     expect(searchDescribedBy).toMatch(/ngx-error-control-\d+-error/);
     expect(await clearSearch.getAttribute('aria-describedby')).toBeNull();
@@ -41,7 +43,9 @@ test.describe('Accessible Wrapper Demo Form', () => {
   test('should keep validation on the input while the helper button stays neutral', async ({
     page,
   }) => {
-    const preferredName = page.getByRole('textbox', { name: /preferred name/i });
+    const preferredName = page.getByRole('textbox', {
+      name: /preferred name/i,
+    });
     const searchQuery = page.getByRole('searchbox', { name: /search query/i });
 
     await fillAndBlur(preferredName, 'Ada');

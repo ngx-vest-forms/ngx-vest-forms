@@ -32,7 +32,9 @@ test.describe('Submission Patterns Form', () => {
   }) => {
     const fullName = page.getByLabel('Full name', { exact: true });
     const email = page.getByLabel('Email', { exact: true });
-    const emailWrapper = email.locator('xpath=ancestor::ngx-control-wrapper[1]');
+    const emailWrapper = email.locator(
+      'xpath=ancestor::ngx-control-wrapper[1]'
+    );
     const clearSubmittedState = page.getByRole('button', {
       name: /clear submitted state/i,
     });

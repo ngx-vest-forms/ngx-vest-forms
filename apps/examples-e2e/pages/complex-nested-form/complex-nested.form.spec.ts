@@ -24,19 +24,26 @@ test.describe('Complex Nested Form', () => {
     await registerButton.click();
 
     await addMemberButton.click();
-    await expect(page.getByRole('heading', { name: /member 1/i })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /member 1/i })
+    ).toBeVisible();
 
     await fillAndBlur(
       page.getByLabel('Company name', { exact: true }),
       'Acme Corp'
     );
-    await fillAndBlur(page.getByLabel('Street', { exact: true }), 'Main Street');
+    await fillAndBlur(
+      page.getByLabel('Street', { exact: true }),
+      'Main Street'
+    );
     await fillAndBlur(page.getByLabel('Number', { exact: true }), '42');
     await fillAndBlur(page.getByLabel('City', { exact: true }), 'Amsterdam');
     await fillAndBlur(page.getByLabel('Zipcode', { exact: true }), '1011AB');
     await fillAndBlur(page.getByLabel('Country', { exact: true }), 'NL');
 
-    const firstMemberFullName = page.getByLabel('Full name', { exact: true }).first();
+    const firstMemberFullName = page
+      .getByLabel('Full name', { exact: true })
+      .first();
     const firstMemberEmail = page.getByLabel('Email', { exact: true }).first();
     const firstMemberRole = page.getByLabel('Role', { exact: true }).first();
 

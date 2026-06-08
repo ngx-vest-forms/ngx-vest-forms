@@ -61,7 +61,9 @@ describe('validateShape function', () => {
       validateShape(formValue, shape);
       expect(consoleWarnSpy).toHaveBeenCalled();
       const calls = consoleWarnSpy.mock.calls.map((call: unknown[]) => call[0]);
-      expect(calls.some((msg: unknown) => String(msg).includes('addresss'))).toBe(true);
+      expect(
+        calls.some((msg: unknown) => String(msg).includes('addresss'))
+      ).toBe(true);
     });
 
     it('should warn when nested property has typo', () => {
@@ -80,9 +82,9 @@ describe('validateShape function', () => {
       validateShape(formValue, shape);
       expect(consoleWarnSpy).toHaveBeenCalled();
       const calls = consoleWarnSpy.mock.calls.map((call: unknown[]) => call[0]);
-      expect(calls.some((msg: unknown) => String(msg).includes('address.citty'))).toBe(
-        true
-      );
+      expect(
+        calls.some((msg: unknown) => String(msg).includes('address.citty'))
+      ).toBe(true);
     });
   });
 
@@ -441,9 +443,9 @@ describe('validateShape function', () => {
 
       expect(consoleWarnSpy).toHaveBeenCalled();
       const calls = consoleWarnSpy.mock.calls.map((call: unknown[]) => call[0]);
-      expect(calls.some((msg: unknown) => String(msg).includes('items.123abc'))).toBe(
-        true
-      );
+      expect(
+        calls.some((msg: unknown) => String(msg).includes('items.123abc'))
+      ).toBe(true);
     });
   });
 

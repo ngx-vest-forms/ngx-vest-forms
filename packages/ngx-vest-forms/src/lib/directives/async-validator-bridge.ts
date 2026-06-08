@@ -1,6 +1,6 @@
 import { isDevMode } from '@angular/core';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
-import { Observable, from, of } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 import {
   logDiagnostic,
   NGX_VEST_FORMS_DIAGNOSTICS,
@@ -40,10 +40,7 @@ export function runAsyncValidationBridge(
 
   if (!context) {
     if (isDevMode()) {
-      logDiagnostic(
-        NGX_VEST_FORMS_DIAGNOSTICS.ASYNC_BRIDGE_NO_CONTEXT,
-        source
-      );
+      logDiagnostic(NGX_VEST_FORMS_DIAGNOSTICS.ASYNC_BRIDGE_NO_CONTEXT, source);
     }
     return of(null);
   }

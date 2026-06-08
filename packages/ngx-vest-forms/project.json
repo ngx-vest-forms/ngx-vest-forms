@@ -38,6 +38,6 @@
         "eslintConfig": "packages/ngx-vest-forms/eslint.config.mjs"
       },
       "outputs": ["{options.outputFile}"]
-    },
+    }
   }
 }

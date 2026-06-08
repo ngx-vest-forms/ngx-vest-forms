@@ -1,4 +1,9 @@
-import { AbstractControl, FormArray, FormControl, FormGroup } from '@angular/forms';
+import {
+  AbstractControl,
+  FormArray,
+  FormControl,
+  FormGroup,
+} from '@angular/forms';
 import { describe, expect, it } from 'vitest';
 import { collectTouchedPaths } from './collect-touched-paths';
 

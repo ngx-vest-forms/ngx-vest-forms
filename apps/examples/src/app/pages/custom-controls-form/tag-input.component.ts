@@ -26,9 +26,7 @@ let nextId = 0;
         <ul class="mb-2 flex flex-wrap gap-2" role="list">
           @for (tag of tags(); track tag; let i = $index) {
             <li
-              class="inline-flex items-center gap-1 rounded-full
-                     bg-primary-100 px-3 py-1 text-sm text-primary-800
-                     dark:bg-primary-900/40 dark:text-primary-200"
+              class="bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-200 inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm"
             >
               <span>{{ tag }}</span>
               <button
@@ -36,11 +34,7 @@ let nextId = 0;
                 [attr.aria-label]="'Remove tag ' + tag"
                 [disabled]="disabled()"
                 (click)="remove(i)"
-                class="rounded-full leading-none text-primary-600
-                       hover:text-primary-900 focus:outline-none
-                       focus-visible:ring-2 focus-visible:ring-primary-500
-                       disabled:cursor-not-allowed disabled:opacity-50
-                       dark:text-primary-300"
+                class="text-primary-600 hover:text-primary-900 focus-visible:ring-primary-500 dark:text-primary-300 rounded-full leading-none focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <span aria-hidden="true">×</span>
               </button>
@@ -68,7 +62,7 @@ let nextId = 0;
       multi: true,
     },
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TagInputComponent implements ControlValueAccessor {
   protected readonly inputId = `ngx-tag-input-${nextId++}`;

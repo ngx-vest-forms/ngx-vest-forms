@@ -159,11 +159,7 @@ function resolveControlPathByDomAncestors(
 
   const selectNextCandidates = (candidates: Frame[]): Frame[] => {
     const domCandidates = candidates.filter((candidate) =>
-      subtreeContainsElement(
-        fieldElement,
-        formEl,
-        candidate.path.at(-1) ?? ''
-      )
+      subtreeContainsElement(fieldElement, formEl, candidate.path.at(-1) ?? '')
     );
 
     return domCandidates.length > 0 ? domCandidates : candidates;

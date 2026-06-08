@@ -31,12 +31,12 @@
 
     <div layout-main>
       @if (submittedValue(); as submitted) {
-        <ngx-alert-panel tone="success" title="Preferences saved">
-          <p>
-            Saved custom-wrapper preferences for
-            <strong>{{ submitted.preferredName }}</strong>.
-          </p>
-        </ngx-alert-panel>
+      <ngx-alert-panel tone="success" title="Preferences saved">
+        <p>
+          Saved custom-wrapper preferences for
+          <strong>{{ submitted.preferredName }}</strong>.
+        </p>
+      </ngx-alert-panel>
       }
 
       <ngx-card

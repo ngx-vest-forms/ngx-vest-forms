@@ -18,9 +18,10 @@ export class UsernameAvailabilityService {
   /** Resolves `true` when the username is already taken. */
   isUsernameTaken(name: string): Observable<boolean> {
     return this.httpClient
-      .get<{ username: string; available: boolean }>(
-        `${this.baseUrl}/${encodeURIComponent(name)}`
-      )
+      .get<{
+        username: string;
+        available: boolean;
+      }>(`${this.baseUrl}/${encodeURIComponent(name)}`)
       .pipe(map((res) => res.available === false));
   }
 }

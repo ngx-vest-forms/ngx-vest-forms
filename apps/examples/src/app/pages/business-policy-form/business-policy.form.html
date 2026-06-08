@@ -62,31 +62,29 @@
                 <option value="GB">United Kingdom (non-EU)</option>
                 <option value="US">United States (non-EU)</option>
                 @for (code of euCountries; track code) {
-                  <option [value]="code">{{ code }} (EU)</option>
+                <option [value]="code">{{ code }} (EU)</option>
                 }
               </select>
             </label>
           </ngx-control-wrapper>
 
-          @if (
-            formValue().accountType === 'business' &&
-            isEuCountry(formValue().country)
-          ) {
-            <ngx-control-wrapper class="form-field animate-fade-in">
-              <label>
-                <span class="label-text">VAT ID</span>
-                <input
-                  class="input-field"
-                  type="text"
-                  id="vatId"
-                  name="vatId"
-                  [ngModel]="formValue().vatId"
-                  placeholder="e.g. NL123456789B01"
-                  autocomplete="off"
-                  spellcheck="false"
-                />
-              </label>
-            </ngx-control-wrapper>
+          @if ( formValue().accountType === 'business' &&
+          isEuCountry(formValue().country) ) {
+          <ngx-control-wrapper class="form-field animate-fade-in">
+            <label>
+              <span class="label-text">VAT ID</span>
+              <input
+                class="input-field"
+                type="text"
+                id="vatId"
+                name="vatId"
+                [ngModel]="formValue().vatId"
+                placeholder="e.g. NL123456789B01"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </label>
+          </ngx-control-wrapper>
           }
         </div>
       </div>

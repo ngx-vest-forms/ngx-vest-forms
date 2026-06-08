@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { fillAndBlur, waitForValidationToSettle } from '../../helpers/form-helpers';
+import {
+  fillAndBlur,
+  waitForValidationToSettle,
+} from '../../helpers/form-helpers';
 
 test.describe('Starter Form', () => {
   test.beforeEach(async ({ page }) => {

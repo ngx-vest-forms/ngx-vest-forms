@@ -49,13 +49,19 @@ test.describe('Auto-Save Draft Demo', () => {
     });
   });
 
-  test('should restore the latest draft after a page reload', async ({ page }) => {
+  test('should restore the latest draft after a page reload', async ({
+    page,
+  }) => {
     await test.step('Save a draft first', async () => {
       const projectName = page.getByLabel('Project name', { exact: true });
       const notes = page.getByLabel('Draft notes', { exact: true });
 
       await typeAndBlur(projectName, 'Release checklist', 0);
-      await typeAndBlur(notes, 'Add deployment notes for the production team.', 0);
+      await typeAndBlur(
+        notes,
+        'Add deployment notes for the production team.',
+        0
+      );
       await waitForValidationToSettle(page);
 
       await projectName.focus();
@@ -69,7 +75,7 @@ test.describe('Auto-Save Draft Demo', () => {
         .poll(async () => {
           return await page.evaluate((key) => {
             const raw = sessionStorage.getItem(key);
-            return raw ? JSON.parse(raw)?.draft?.notes ?? '' : '';
+            return raw ? (JSON.parse(raw)?.draft?.notes ?? '') : '';
           }, STORAGE_KEY);
         })
         .toBe('Add deployment notes for the production team.');
@@ -81,9 +87,9 @@ test.describe('Auto-Save Draft Demo', () => {
 
       const sidebar = getMainContentSidebar(page);
 
-      await expect(page.getByLabel('Project name', { exact: true })).toHaveValue(
-        'Release checklist'
-      );
+      await expect(
+        page.getByLabel('Project name', { exact: true })
+      ).toHaveValue('Release checklist');
       await expect(page.getByLabel('Draft notes', { exact: true })).toHaveValue(
         'Add deployment notes for the production team.'
       );
@@ -191,7 +197,7 @@ test.describe('Auto-Save Draft Demo', () => {
         .poll(async () => {
           return await page.evaluate((key) => {
             const raw = sessionStorage.getItem(key);
-            return raw ? JSON.parse(raw)?.draft?.projectName ?? '' : '';
+            return raw ? (JSON.parse(raw)?.draft?.projectName ?? '') : '';
           }, STORAGE_KEY);
         })
         .toBe('Recovered draft');
@@ -233,7 +239,10 @@ test.describe('Auto-Save Draft Demo', () => {
 
       await expect
         .poll(async () => {
-          return await page.evaluate((key) => sessionStorage.getItem(key), STORAGE_KEY);
+          return await page.evaluate(
+            (key) => sessionStorage.getItem(key),
+            STORAGE_KEY
+          );
         })
         .toBeNull();
 

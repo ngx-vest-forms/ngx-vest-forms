@@ -9,12 +9,13 @@ export type ConditionalStructureModel = NgxDeepPartial<{
   deliveryEmail: string;
 }>;
 
-export const conditionalStructureContract: NgxDeepRequired<ConditionalStructureModel> = {
-  contactName: '',
-  deliveryMode: 'pickup',
-  shippingAddress: '',
-  deliveryEmail: '',
-};
+export const conditionalStructureContract: NgxDeepRequired<ConditionalStructureModel> =
+  {
+    contactName: '',
+    deliveryMode: 'pickup',
+    shippingAddress: '',
+    deliveryEmail: '',
+  };
 
 export const initialConditionalStructureValue: ConditionalStructureModel = {
   deliveryMode: 'pickup',

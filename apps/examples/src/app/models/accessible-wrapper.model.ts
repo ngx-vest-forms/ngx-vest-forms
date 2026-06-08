@@ -5,7 +5,8 @@ export type AccessibleWrapperModel = NgxDeepPartial<{
   searchQuery: string;
 }>;
 
-export const accessibleWrapperContract: NgxDeepRequired<AccessibleWrapperModel> = {
-  preferredName: '',
-  searchQuery: '',
-};
+export const accessibleWrapperContract: NgxDeepRequired<AccessibleWrapperModel> =
+  {
+    preferredName: '',
+    searchQuery: '',
+  };

@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('Async Username Page', () => {
-  test('should render the async validation example layout', async ({ page }) => {
+  test('should render the async validation example layout', async ({
+    page,
+  }) => {
     await page.goto('/async-username', { waitUntil: 'domcontentloaded' });
 
     await expect(

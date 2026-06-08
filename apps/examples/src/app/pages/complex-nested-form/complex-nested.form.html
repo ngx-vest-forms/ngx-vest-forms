@@ -1,11 +1,11 @@
 @if (submittedValue(); as submitted) {
-  <ngx-alert-panel tone="success" title="Team registered">
-    <p>
-      Registered
-      <strong>{{ submitted.company?.name }}</strong> with
-      {{ ((submitted.teamMembers ?? {}) | keyvalue).length }} team member(s).
-    </p>
-  </ngx-alert-panel>
+<ngx-alert-panel tone="success" title="Team registered">
+  <p>
+    Registered
+    <strong>{{ submitted.company?.name }}</strong> with {{
+    ((submitted.teamMembers ?? {}) | keyvalue).length }} team member(s).
+  </p>
+</ngx-alert-panel>
 }
 
 <form
@@ -52,41 +52,35 @@
       <div class="form-stack">
         <ngx-form-group-wrapper class="form-stack" ngModelGroup="teamMembers">
           @for (entry of memberEntries(); track entry[0]) {
-            <ngx-form-group-wrapper
-              class="form-field rounded-lg border border-gray-200 p-4 dark:border-gray-700"
-              [ngModelGroup]="entry[0]"
-            >
-              <div class="mb-3 flex items-center justify-between gap-2">
-                <h3 class="section-title">
-                  Member {{ $index + 1 }}
-                </h3>
-                <button
-                  type="button"
-                  class="btn-input-action btn-input-action-danger"
-                  (click)="removeMember(entry[0])"
-                  [attr.aria-label]="'Remove member ' + ($index + 1)"
-                >
-                  Remove
-                </button>
-              </div>
-              <ngx-team-member
-                [idPrefix]="memberIdPrefix(entry[0])"
-                [member]="entry[1]"
-              />
-            </ngx-form-group-wrapper>
+          <ngx-form-group-wrapper
+            class="form-field rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+            [ngModelGroup]="entry[0]"
+          >
+            <div class="mb-3 flex items-center justify-between gap-2">
+              <h3 class="section-title">Member {{ $index + 1 }}</h3>
+              <button
+                type="button"
+                class="btn-input-action btn-input-action-danger"
+                (click)="removeMember(entry[0])"
+                [attr.aria-label]="'Remove member ' + ($index + 1)"
+              >
+                Remove
+              </button>
+            </div>
+            <ngx-team-member
+              [idPrefix]="memberIdPrefix(entry[0])"
+              [member]="entry[1]"
+            />
+          </ngx-form-group-wrapper>
           } @empty {
-            <p class="text-sm text-gray-500 dark:text-gray-400">
-              No team members yet. Add at least one to register the team.
-            </p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            No team members yet. Add at least one to register the team.
+          </p>
           }
         </ngx-form-group-wrapper>
 
         <div>
-          <button
-            type="button"
-            class="btn btn-secondary"
-            (click)="addMember()"
-          >
+          <button type="button" class="btn btn-secondary" (click)="addMember()">
             Add member
           </button>
         </div>

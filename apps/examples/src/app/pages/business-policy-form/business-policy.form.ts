@@ -55,8 +55,8 @@ export class BusinessPolicyFormBody {
 
   /** True when the EU country set contains the selected country. */
   protected isEuCountry(country: string | undefined): boolean {
-    return !!country && (this.euCountries as readonly string[]).includes(
-      country
+    return (
+      !!country && (this.euCountries as readonly string[]).includes(country)
     );
   }
 

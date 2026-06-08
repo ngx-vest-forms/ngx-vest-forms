@@ -27,7 +27,9 @@ test.describe('Display Modes Demo Form', () => {
   test('should use the token-provided error mode for wrappers without overrides', async ({
     page,
   }) => {
-    const tokenDefaultError = page.getByLabel(/username \(token default error\)/i);
+    const tokenDefaultError = page.getByLabel(
+      /username \(token default error\)/i
+    );
     const tokenDefaultWrapper = tokenDefaultError.locator(
       'xpath=ancestor::ngx-control-wrapper[1]'
     );

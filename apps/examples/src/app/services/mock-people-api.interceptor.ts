@@ -161,7 +161,11 @@ export const mockPeopleApiInterceptor: HttpInterceptorFn = (request, next) => {
           delay(MOCK_RESPONSE_DELAY_MS),
           mergeMap(() =>
             throwError(() =>
-              createErrorResponse(request.url, 'account creation', errorScenario)
+              createErrorResponse(
+                request.url,
+                'account creation',
+                errorScenario
+              )
             )
           )
         );
@@ -176,7 +180,9 @@ export const mockPeopleApiInterceptor: HttpInterceptorFn = (request, next) => {
                   url: request.url,
                   status: 409,
                   statusText: 'Conflict',
-                  error: { message: 'An account with that email already exists.' },
+                  error: {
+                    message: 'An account with that email already exists.',
+                  },
                 })
             )
           )

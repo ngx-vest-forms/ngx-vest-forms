@@ -158,4 +158,3 @@ describe('NgxDeepRequired', () => {
     expect(value.booleans.length).toBe(2);
   });
 });
-

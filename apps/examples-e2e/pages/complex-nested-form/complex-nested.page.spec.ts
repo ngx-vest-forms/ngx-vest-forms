@@ -18,7 +18,9 @@ test.describe('Complex Nested Page', () => {
     await expect(contentAside).toContainText(/form state/i);
     await expect(contentAside).toContainText(/form value/i);
 
-    await expect(page.getByRole('button', { name: /add member/i })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /add member/i })
+    ).toBeVisible();
     await expect(
       page.getByRole('button', { name: /register team/i })
     ).toBeVisible();

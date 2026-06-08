@@ -34,18 +34,18 @@
         [errors]="formBody.feedback.formState().errors"
         [validationErrorRules]="errorRules"
         [validationWarningRules]="warningRules"
-        />
+      />
     </div>
 
     <div layout-main>
       @if (submittedValue(); as submitted) {
-        <ngx-alert-panel tone="success" title="Application submitted">
-          <p>
-            Thanks — the application for
-            <strong>{{ submitted.legalName }}</strong> was accepted. Any
-            advisory warnings above did not block submission.
-          </p>
-        </ngx-alert-panel>
+      <ngx-alert-panel tone="success" title="Application submitted">
+        <p>
+          Thanks — the application for
+          <strong>{{ submitted.legalName }}</strong> was accepted. Any advisory
+          warnings above did not block submission.
+        </p>
+      </ngx-alert-panel>
       }
 
       <ngx-business-policy-form-body

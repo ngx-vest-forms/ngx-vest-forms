@@ -14,7 +14,8 @@
             <code>shipment</code> keeps <code>shippingAddress</code> active.
           </li>
           <li>
-            <code>digital</code> swaps that field for <code>deliveryEmail</code>.
+            <code>digital</code> swaps that field for
+            <code>deliveryEmail</code>.
           </li>
           <li>
             <code>pickup</code> removes the extra input entirely and leaves only
@@ -39,19 +40,19 @@
 
     <div layout-main>
       @if (submittedPayload(); as payload) {
-        <ngx-alert-panel tone="success" title="Delivery plan submitted">
-          <p>
-            The current branch is valid and the submitted payload has been
-            filtered to match it.
-          </p>
-        </ngx-alert-panel>
+      <ngx-alert-panel tone="success" title="Delivery plan submitted">
+        <p>
+          The current branch is valid and the submitted payload has been
+          filtered to match it.
+        </p>
+      </ngx-alert-panel>
 
-        <ngx-card
-          title="Submitted payload"
-          subtitle="This snapshot is captured from the filtered preview, not the raw form object."
-        >
-          <ngx-json-preview title="Submitted payload" [value]="payload" />
-        </ngx-card>
+      <ngx-card
+        title="Submitted payload"
+        subtitle="This snapshot is captured from the filtered preview, not the raw form object."
+      >
+        <ngx-json-preview title="Submitted payload" [value]="payload" />
+      </ngx-card>
       }
 
       <ngx-card

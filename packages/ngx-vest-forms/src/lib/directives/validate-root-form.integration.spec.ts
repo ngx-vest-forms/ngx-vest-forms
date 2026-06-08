@@ -1,10 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import {
-  NgxVestForms,
-  provideFormContract,
-  ROOT_FORM,
-} from 'ngx-vest-forms';
+import { NgxVestForms, provideFormContract, ROOT_FORM } from 'ngx-vest-forms';
 import { create, enforce, test } from 'vest';
 
 type GeneralInfoForm = {

@@ -53,26 +53,23 @@ export const createAsyncUsernameSuite = (
       omitWhen(
         !username || username.length < 3 || !USERNAME_PATTERN.test(username),
         () => {
-          memo(
-            () => {
-              test(
-                'username',
-                'Username is already taken',
-                async ({ signal }) => {
-                  const taken = await lastValueFrom(
-                    service
-                      .isUsernameTaken(username)
-                      .pipe(takeUntil(fromEvent(signal, 'abort')))
-                  );
+          memo(() => {
+            test(
+              'username',
+              'Username is already taken',
+              async ({ signal }) => {
+                const taken = await lastValueFrom(
+                  service
+                    .isUsernameTaken(username)
+                    .pipe(takeUntil(fromEvent(signal, 'abort')))
+                );
 
-                  if (taken) {
-                    return Promise.reject();
-                  }
+                if (taken) {
+                  return Promise.reject();
                 }
-              );
-            },
-            [username]
-          );
+              }
+            );
+          }, [username]);
         }
       );
 

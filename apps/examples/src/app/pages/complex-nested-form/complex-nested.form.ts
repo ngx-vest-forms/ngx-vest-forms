@@ -16,8 +16,8 @@ import {
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
-  ComplexNestedModel,
   complexNestedContract,
+  ComplexNestedModel,
   TeamMemberModel,
 } from '../../models/complex-nested.model';
 import { AddressComponent } from '../../ui/address/address.component';

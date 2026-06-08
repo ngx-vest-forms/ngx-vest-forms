@@ -21,10 +21,14 @@ export const complexNestedSuite: NgxVestSuite<ComplexNestedModel> = create(
       enforce(memberEntries.length).greaterThan(0);
     });
 
-    test(ROOT_FORM, 'Large teams are harder to manage — keep it under 9', () => {
-      warn();
-      enforce(memberEntries.length).lessThanOrEquals(8);
-    });
+    test(
+      ROOT_FORM,
+      'Large teams are harder to manage — keep it under 9',
+      () => {
+        warn();
+        enforce(memberEntries.length).lessThanOrEquals(8);
+      }
+    );
 
     test('company.name', 'Company name is required', () => {
       enforce(model.company?.name).isNotBlank();
@@ -33,13 +37,9 @@ export const complexNestedSuite: NgxVestSuite<ComplexNestedModel> = create(
     addressValidations(model.company?.address, 'company.address');
 
     for (const [key, member] of memberEntries) {
-      test(
-        `teamMembers.${key}.fullName`,
-        'Full name is required',
-        () => {
-          enforce(member?.fullName).isNotBlank();
-        }
-      );
+      test(`teamMembers.${key}.fullName`, 'Full name is required', () => {
+        enforce(member?.fullName).isNotBlank();
+      });
 
       test(`teamMembers.${key}.email`, 'Email is required', () => {
         enforce(member?.email).isNotBlank();

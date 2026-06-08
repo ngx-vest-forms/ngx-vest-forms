@@ -25,7 +25,8 @@ export const nativeSchemaDemoContract: StandardSchemaV1<NativeSchemaDemoModel> =
       version: 1,
       vendor: 'ngx-vest-forms-examples',
       validate(input) {
-        const issues: Array<{ message: string; path: Array<string | number> }> = [];
+        const issues: Array<{ message: string; path: Array<string | number> }> =
+          [];
         const value = (input ?? {}) as NativeSchemaDemoModel;
 
         const expectString = (key: keyof NativeSchemaDemoModel) => {

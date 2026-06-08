@@ -11,13 +11,14 @@ export type DisplayModesDemoModel = NgxDeepPartial<{
   touchWarning: string;
 }>;
 
-export const displayModesDemoContract: NgxDeepRequired<DisplayModesDemoModel> = {
-  tokenDefaultError: '',
-  tokenDefaultWarning: '',
-  alwaysError: '',
-  dirtyError: '',
-  submitError: '',
-  alwaysWarning: '',
-  dirtyWarning: '',
-  touchWarning: '',
-};
+export const displayModesDemoContract: NgxDeepRequired<DisplayModesDemoModel> =
+  {
+    tokenDefaultError: '',
+    tokenDefaultWarning: '',
+    alwaysError: '',
+    dirtyError: '',
+    submitError: '',
+    alwaysWarning: '',
+    dirtyWarning: '',
+    touchWarning: '',
+  };

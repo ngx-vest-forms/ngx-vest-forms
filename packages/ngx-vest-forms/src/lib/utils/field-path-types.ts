@@ -254,49 +254,47 @@ export type FieldPathValue<T, Path extends string> = NonNullable<
  *
  * @internal
  */
-type FieldPathValueRaw<
-  T,
-  Path extends string,
-> = NonNullable<T> extends infer NT
-  ? // Bracket index segment at the head: `[0]` / `[0].rest` → array element.
-    Path extends `[${number}]${infer Rest}`
-    ? NT extends ReadonlyArray<infer U>
-      ? Rest extends `.${infer AfterDot}`
-        ? FieldPathValueRaw<U, AfterDot>
-        : Rest extends ''
-          ? U
-          : FieldPathValueRaw<U, Rest>
-      : never
-    : // Exact own-key match.
-      Path extends keyof NT
-      ? NT[Path]
-      : // Split on the first dot.
-        Path extends `${infer K}.${infer Rest}`
-        ? // `key[0]...` — bracket immediately after a key segment.
-          K extends `${infer Base}[${number}]`
-          ? Base extends keyof NT
-            ? NonNullable<NT[Base]> extends ReadonlyArray<infer U>
-              ? FieldPathValueRaw<U, Rest>
+type FieldPathValueRaw<T, Path extends string> =
+  NonNullable<T> extends infer NT
+    ? // Bracket index segment at the head: `[0]` / `[0].rest` → array element.
+      Path extends `[${number}]${infer Rest}`
+      ? NT extends ReadonlyArray<infer U>
+        ? Rest extends `.${infer AfterDot}`
+          ? FieldPathValueRaw<U, AfterDot>
+          : Rest extends ''
+            ? U
+            : FieldPathValueRaw<U, Rest>
+        : never
+      : // Exact own-key match.
+        Path extends keyof NT
+        ? NT[Path]
+        : // Split on the first dot.
+          Path extends `${infer K}.${infer Rest}`
+          ? // `key[0]...` — bracket immediately after a key segment.
+            K extends `${infer Base}[${number}]`
+            ? Base extends keyof NT
+              ? NonNullable<NT[Base]> extends ReadonlyArray<infer U>
+                ? FieldPathValueRaw<U, Rest>
+                : never
               : never
-            : never
-          : K extends keyof NT
-            ? FieldPathValueRaw<NonNullable<NT[K]>, Rest>
-            : // Array-traversing flattened path: `arrayKey.rest`.
+            : K extends keyof NT
+              ? FieldPathValueRaw<NonNullable<NT[K]>, Rest>
+              : // Array-traversing flattened path: `arrayKey.rest`.
+                NT extends ReadonlyArray<infer U>
+                ? FieldPathValueRaw<U, Path>
+                : never
+          : // No dot left: a bare `key[0]` head segment.
+            Path extends `${infer Base}[${number}]`
+            ? Base extends keyof NT
+              ? NonNullable<NT[Base]> extends ReadonlyArray<infer U>
+                ? U
+                : never
+              : never
+            : // Final flattened array hop (e.g. `street` against `Address[]`).
               NT extends ReadonlyArray<infer U>
               ? FieldPathValueRaw<U, Path>
               : never
-        : // No dot left: a bare `key[0]` head segment.
-          Path extends `${infer Base}[${number}]`
-          ? Base extends keyof NT
-            ? NonNullable<NT[Base]> extends ReadonlyArray<infer U>
-              ? U
-              : never
-            : never
-          : // Final flattened array hop (e.g. `street` against `Address[]`).
-            NT extends ReadonlyArray<infer U>
-            ? FieldPathValueRaw<U, Path>
-            : never
-  : never;
+    : never;
 
 /**
  * Utility type to check if a path is valid for a given model.

@@ -1,5 +1,5 @@
-import { z } from 'zod';
 import { NgxDeepPartial, StandardSchemaV1 } from 'ngx-vest-forms';
+import { z } from 'zod';
 
 /**
  * Zod schema demo using Zod v4's built-in Standard Schema (~v1) support.
@@ -25,7 +25,9 @@ export const zodSchemaDemoContract = z.object({
     .optional(),
 });
 
-export type ZodSchemaDemoModel = NgxDeepPartial<z.infer<typeof zodSchemaDemoContract>>;
+export type ZodSchemaDemoModel = NgxDeepPartial<
+  z.infer<typeof zodSchemaDemoContract>
+>;
 
 // Compile-time assertion that the Zod schema satisfies StandardSchemaV1.
 // Compile-time check: Zod v4 schemas implement StandardSchemaV1 natively.

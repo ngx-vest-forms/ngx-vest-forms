@@ -13,8 +13,8 @@ import {
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
-  CustomControlsModel,
   customControlsContract,
+  CustomControlsModel,
 } from '../../models/custom-controls.model';
 import { SegmentedControlComponent } from './segmented-control.component';
 import { StarRatingComponent } from './star-rating.component';
@@ -44,7 +44,6 @@ export class CustomControlsFormBody {
     viewChild<FormDirective<CustomControlsModel>>('vestForm');
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
-        
   protected onSubmit(): void {
     this.submitted.emit();
   }

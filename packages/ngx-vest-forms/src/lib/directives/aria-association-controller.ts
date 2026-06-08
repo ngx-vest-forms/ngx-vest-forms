@@ -45,7 +45,7 @@ export type AriaAssociationControllerConfig = {
    * untouched (the directive variant does not manage it).
    */
   readonly ariaRequired?: Signal<boolean>;
-}
+};
 
 /**
  * @internal
@@ -79,9 +79,7 @@ export function createAriaAssociationController(
   let mutationObserver: MutationObserver | null = null;
 
   const updateFormControls = (): void => {
-    const controls = config.host.querySelectorAll(
-      'input, select, textarea'
-    );
+    const controls = config.host.querySelectorAll('input, select, textarea');
     formControls.set(Array.from(controls) as HTMLElement[]);
   };
 

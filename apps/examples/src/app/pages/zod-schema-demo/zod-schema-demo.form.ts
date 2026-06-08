@@ -15,8 +15,8 @@ import {
   NgxVestSuite,
 } from 'ngx-vest-forms';
 import {
-  ZodSchemaDemoModel,
   zodSchemaDemoContract,
+  ZodSchemaDemoModel,
 } from '../../models/zod-schema-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';

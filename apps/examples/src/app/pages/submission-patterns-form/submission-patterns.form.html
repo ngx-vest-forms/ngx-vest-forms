@@ -64,11 +64,7 @@
       Reset
     </button>
     <button type="submit" class="btn btn-primary" [disabled]="submitting()">
-      @if (submitting()) {
-        Creating account…
-      } @else {
-        Create account
-      }
+      @if (submitting()) { Creating account… } @else { Create account }
     </button>
   </div>
 </form>

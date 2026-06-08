@@ -48,7 +48,7 @@ export type ExampleRouteMeta = {
   readonly badge?: ExampleBadge;
   /** Lazy component loader for the router. */
   readonly loadComponent: () => Promise<Type<unknown>>;
-}
+};
 
 /**
  * The curated demo catalog. Keep it intentionally lean — each entry must earn
@@ -82,9 +82,9 @@ export const EXAMPLE_ROUTES: readonly ExampleRouteMeta[] = [
     category: 'Validation',
     order: 1,
     loadComponent: () =>
-      import(
-        '../pages/validation-config-demo/validation-config-demo.page'
-      ).then((m) => m.ValidationConfigDemoPageComponent),
+      import('../pages/validation-config-demo/validation-config-demo.page').then(
+        (m) => m.ValidationConfigDemoPageComponent
+      ),
   },
   {
     path: 'display-modes-demo',
@@ -150,9 +150,9 @@ export const EXAMPLE_ROUTES: readonly ExampleRouteMeta[] = [
     order: 6,
     badge: 'new',
     loadComponent: () =>
-      import(
-        '../pages/conditional-structure-demo/conditional-structure.page'
-      ).then((m) => m.ConditionalStructurePageComponent),
+      import('../pages/conditional-structure-demo/conditional-structure.page').then(
+        (m) => m.ConditionalStructurePageComponent
+      ),
   },
 
   // ── Schema ────────────────────────────────────────────────────────────────
@@ -302,7 +302,7 @@ export const EXAMPLE_ROUTES: readonly ExampleRouteMeta[] = [
 export type NavGroup = {
   readonly category: ExampleCategory;
   readonly items: readonly ExampleRouteMeta[];
-}
+};
 
 /** Demos sorted by category order, then by intra-category `order`. */
 function sortedRoutes(): ExampleRouteMeta[] {

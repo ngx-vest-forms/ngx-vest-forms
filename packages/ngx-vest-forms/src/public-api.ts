@@ -36,6 +36,7 @@ export type {
 } from './lib/utils/validation-suite';
 
 // Form utilities
+export type { StandardSchemaV1 } from '@standard-schema/spec';
 export {
   arrayToObject,
   deepArrayToObject,
@@ -55,7 +56,6 @@ export type {
   DebouncedPendingStateResult,
 } from './lib/utils/pending-state.utils';
 export { toFormContract } from './lib/utils/to-form-contract';
-export type { StandardSchemaV1 } from '@standard-schema/spec';
 
 // ARIA association utilities
 export {
@@ -70,9 +70,7 @@ export type { AriaAssociationMode } from './lib/utils/aria-association.utils';
 // `@internal` and intentionally NOT part of this primary entry point. They are
 // available via the dedicated `ngx-vest-forms/internal` secondary entry point
 // for advanced use cases (no semver guarantees).
-export {
-  getAllFormErrors,
-} from './lib/utils/form-utils';
+export { getAllFormErrors } from './lib/utils/form-utils';
 export type { NgxFormErrorsByPath } from './lib/utils/form-utils';
 
 // Constants

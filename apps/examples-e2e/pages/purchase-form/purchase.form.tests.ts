@@ -297,13 +297,16 @@ test.describe('Purchase Form', () => {
         await expect(passwordsGroupWrapper).toHaveCount(1);
 
         await expect
-          .poll(async () => {
-            return (
-              await passwordsGroupWrapper
-                .locator(':scope > .ngx-form-group-wrapper__errors')
-                .innerText()
-            ).trim();
-          }, { timeout: 15000 })
+          .poll(
+            async () => {
+              return (
+                await passwordsGroupWrapper
+                  .locator(':scope > .ngx-form-group-wrapper__errors')
+                  .innerText()
+              ).trim();
+            },
+            { timeout: 15000 }
+          )
           .toContain('Passwords do not match');
       });
     });
@@ -1039,7 +1042,9 @@ test.describe('Purchase Form', () => {
             timeout: 5000,
           }
         );
-        await expect(fetchError).toContainText(/you are not authorized: person 1/i);
+        await expect(fetchError).toContainText(
+          /you are not authorized: person 1/i
+        );
         await expect(fetchError).not.toContainText(
           /no person was found for this request/i
         );
@@ -1180,7 +1185,9 @@ test.describe('Purchase Form', () => {
       });
     });
 
-    test('should focus first invalid control after submit', async ({ page }) => {
+    test('should focus first invalid control after submit', async ({
+      page,
+    }) => {
       await test.step('Submit empty form and move focus to first invalid field', async () => {
         const submitButton = page.getByRole('button', { name: /submit/i });
         const productSelect = page.getByLabel(/product/i);

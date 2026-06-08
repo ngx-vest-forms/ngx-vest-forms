@@ -34,13 +34,13 @@
 
     <div layout-main>
       @if (submittedValue(); as submitted) {
-        <ngx-alert-panel tone="success" title="Submitted">
-          <p>
-            Rated <strong>{{ submitted.rating }}/5</strong> as a
-            <strong>{{ submitted.experience }}</strong> developer with
-            {{ submitted.tags?.length ?? 0 }} tag(s).
-          </p>
-        </ngx-alert-panel>
+      <ngx-alert-panel tone="success" title="Submitted">
+        <p>
+          Rated <strong>{{ submitted.rating }}/5</strong> as a
+          <strong>{{ submitted.experience }}</strong> developer with {{
+          submitted.tags?.length ?? 0 }} tag(s).
+        </p>
+      </ngx-alert-panel>
       }
 
       <ngx-card

@@ -44,7 +44,6 @@ export class SubmissionPatternsFormBody {
     viewChild<FormDirective<SubmissionPatternsModel>>('vestForm');
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
-        
   protected onSubmit(): void {
     this.submitted.emit();
   }

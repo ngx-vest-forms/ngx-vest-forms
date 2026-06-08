@@ -47,8 +47,7 @@ export class AppComponent {
    */
   protected readonly isDesktop = signal(true);
 
-  private readonly sidebar =
-    viewChild<ElementRef<HTMLElement>>('sidebar');
+  private readonly sidebar = viewChild<ElementRef<HTMLElement>>('sidebar');
   private readonly menuToggle =
     viewChild<ElementRef<HTMLElement>>('menuToggle');
 

@@ -35,46 +35,44 @@
   </ngx-control-wrapper>
 
   @if (formValue().deliveryMode === 'shipment') {
-    <ngx-control-wrapper class="form-field">
-      <label for="shippingAddress" class="label-text">Shipping address</label>
-      <input
-        class="input-field"
-        type="text"
-        id="shippingAddress"
-        name="shippingAddress"
-        [ngModel]="formValue().shippingAddress"
-        autocomplete="street-address"
-        placeholder="123 Analytical Engine Way"
-      />
-    </ngx-control-wrapper>
+  <ngx-control-wrapper class="form-field">
+    <label for="shippingAddress" class="label-text">Shipping address</label>
+    <input
+      class="input-field"
+      type="text"
+      id="shippingAddress"
+      name="shippingAddress"
+      [ngModel]="formValue().shippingAddress"
+      autocomplete="street-address"
+      placeholder="123 Analytical Engine Way"
+    />
+  </ngx-control-wrapper>
   } @else if (formValue().deliveryMode === 'digital') {
-    <ngx-control-wrapper class="form-field">
-      <label for="deliveryEmail" class="label-text">Delivery email</label>
-      <input
-        class="input-field"
-        type="email"
-        id="deliveryEmail"
-        name="deliveryEmail"
-        [ngModel]="formValue().deliveryEmail"
-        autocomplete="email"
-        inputmode="email"
-        placeholder="ada@example.com"
-      />
-    </ngx-control-wrapper>
+  <ngx-control-wrapper class="form-field">
+    <label for="deliveryEmail" class="label-text">Delivery email</label>
+    <input
+      class="input-field"
+      type="email"
+      id="deliveryEmail"
+      name="deliveryEmail"
+      [ngModel]="formValue().deliveryEmail"
+      autocomplete="email"
+      inputmode="email"
+      placeholder="ada@example.com"
+    />
+  </ngx-control-wrapper>
   } @else {
-    <div
-      class="rounded-xl border border-dashed border-sky-300 bg-sky-50/80 px-4 py-3 text-sm text-sky-900 dark:border-sky-700 dark:bg-sky-950/40 dark:text-sky-100"
-    >
-      No extra delivery field is required for pickup orders.
-    </div>
+  <div
+    class="rounded-xl border border-dashed border-sky-300 bg-sky-50/80 px-4 py-3 text-sm text-sky-900 dark:border-sky-700 dark:bg-sky-950/40 dark:text-sky-100"
+  >
+    No extra delivery field is required for pickup orders.
+  </div>
   }
 
   <div class="flex justify-end gap-3 pt-2">
     <button type="button" class="btn btn-secondary" (click)="onReset()">
       Reset
     </button>
-    <button type="submit" class="btn btn-primary">
-      Save delivery plan
-    </button>
+    <button type="submit" class="btn btn-primary">Save delivery plan</button>
   </div>
 </form>

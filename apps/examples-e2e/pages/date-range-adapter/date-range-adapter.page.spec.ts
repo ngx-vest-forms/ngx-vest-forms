@@ -120,19 +120,11 @@ test.describe('Composite Adapter Recipe Page', () => {
   test('should render submit and reset buttons in both approaches', async ({
     page,
   }) => {
-    await expect(
-      page.getByRole('button', { name: /submit/i })
-    ).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: /reset/i })
-    ).toBeVisible();
+    await expect(page.getByRole('button', { name: /submit/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /reset/i })).toBeVisible();
 
     await page.getByRole('radio', { name: /composite adapter/i }).check();
-    await expect(
-      page.getByRole('button', { name: /submit/i })
-    ).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: /reset/i })
-    ).toBeVisible();
+    await expect(page.getByRole('button', { name: /submit/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /reset/i })).toBeVisible();
   });
 });

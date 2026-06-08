@@ -13,8 +13,8 @@ import {
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
-  ConditionalStructureModel,
   conditionalStructureContract,
+  ConditionalStructureModel,
 } from '../../models/conditional-structure.model';
 
 @Component({
@@ -36,7 +36,6 @@ export class ConditionalStructureFormBody {
     viewChild<FormDirective<ConditionalStructureModel>>('vestForm');
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
-        
   protected onSubmit(): void {
     this.submitted.emit();
   }

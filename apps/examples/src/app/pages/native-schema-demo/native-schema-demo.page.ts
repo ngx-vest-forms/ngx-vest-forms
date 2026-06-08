@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { NativeSchemaDemoModel } from '../../models/native-schema-demo.model';
 import { Card } from '../../ui/card/card.component';
+import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
-import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { nativeSchemaContent } from './native-schema-demo.content';
 import { NativeSchemaDemoFormBody } from './native-schema-demo.form';

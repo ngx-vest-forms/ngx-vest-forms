@@ -9,9 +9,13 @@ export const accessibleWrapperSuite: NgxVestSuite<AccessibleWrapperModel> =
     });
 
     omitWhen(!model.preferredName, () => {
-      test('preferredName', 'Preferred name must be at least 3 characters', () => {
-        enforce(model.preferredName).longerThanOrEquals(3);
-      });
+      test(
+        'preferredName',
+        'Preferred name must be at least 3 characters',
+        () => {
+          enforce(model.preferredName).longerThanOrEquals(3);
+        }
+      );
     });
 
     test('searchQuery', 'Search query is required', () => {

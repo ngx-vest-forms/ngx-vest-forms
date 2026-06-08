@@ -1,8 +1,4 @@
-import {
-  type AbstractControl,
-  isFormArray,
-  isFormGroup,
-} from '@angular/forms';
+import { type AbstractControl, isFormArray, isFormGroup } from '@angular/forms';
 import { stringifyFieldPath } from './field-path.utils';
 
 type FieldPathSegment = string | number;

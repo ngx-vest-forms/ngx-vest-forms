@@ -1,4 +1,6 @@
-<a href="#main-content" class="sr-only focus:not-sr-only">Skip to main content</a>
+<a href="#main-content" class="sr-only focus:not-sr-only"
+  >Skip to main content</a
+>
 
 <div class="lg:flex lg:min-h-screen">
   <!-- Mobile top bar -->
@@ -62,10 +64,7 @@
       </p>
     </div>
 
-    <nav
-      class="flex-1 overflow-y-auto px-3 py-5"
-      aria-label="Demo navigation"
-    >
+    <nav class="flex-1 overflow-y-auto px-3 py-5" aria-label="Demo navigation">
       @for (group of navGroups; track group.category; let g = $index) {
         <div
           class="mb-6 motion-safe:animate-[fade-in-up_0.4s_ease-out_both]"
@@ -93,7 +92,7 @@
                   class="group flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm transition-colors"
                   [class]="
                     rla.isActive
-                      ? 'bg-primary-50 font-semibold text-primary-800 dark:bg-primary-900/30 dark:text-primary-200'
+                      ? 'bg-primary-50 text-primary-800 dark:bg-primary-900/30 dark:text-primary-200 font-semibold'
                       : 'text-gray-600 hover:bg-gray-100/70 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800/60 dark:hover:text-white'
                   "
                 >

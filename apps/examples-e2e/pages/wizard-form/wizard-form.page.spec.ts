@@ -16,6 +16,8 @@ test.describe('Wizard Form Page', () => {
     await expect(page.locator('ngx-wizard-steps nav')).toBeVisible();
     await expect(sidebar).toBeVisible();
     await expect(sidebar).toContainText(/form value/i);
-    await expect(sidebar.locator('span[aria-label="Pristine"]').first()).toBeVisible();
+    await expect(
+      sidebar.locator('span[aria-label="Pristine"]').first()
+    ).toBeVisible();
   });
 });

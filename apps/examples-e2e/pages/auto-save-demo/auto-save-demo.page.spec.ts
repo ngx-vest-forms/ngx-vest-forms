@@ -20,8 +20,6 @@ test.describe('Auto-Save Demo Page', () => {
     await expect(sidebar).toContainText(/key features/i);
     await expect(sidebar).toContainText(/draft status/i);
     await expect(sidebar).toContainText(/sessionstorage/i);
-    await expect(sidebar).toContainText(
-      /ngx-vest-forms:auto-save-demo:draft/i
-    );
+    await expect(sidebar).toContainText(/ngx-vest-forms:auto-save-demo:draft/i);
   });
 });

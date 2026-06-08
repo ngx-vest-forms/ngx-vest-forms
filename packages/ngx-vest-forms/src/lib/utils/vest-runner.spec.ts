@@ -214,9 +214,13 @@ describe('vest-runner', () => {
     const { destroyRef } = createMockDestroyRef();
     const perRunSnapshot = createSuiteResult({ username: ['Per-run'] });
     const sharedState = createSuiteResult({ username: ['Contaminated'] });
-    const runResult = createSuiteResult({}, {}, {
-      resolvesTo: perRunSnapshot,
-    });
+    const runResult = createSuiteResult(
+      {},
+      {},
+      {
+        resolvesTo: perRunSnapshot,
+      }
+    );
     const suite = createSuiteMock({
       runResult,
       latestResult: sharedState,
@@ -243,9 +247,13 @@ describe('vest-runner', () => {
   it('falls back to suite.get() when the run promise resolves to nothing', async () => {
     const { destroyRef } = createMockDestroyRef();
     const fallback = createSuiteResult({ username: ['Fallback'] });
-    const runResult = createSuiteResult({}, {}, {
-      resolvesTo: undefined,
-    });
+    const runResult = createSuiteResult(
+      {},
+      {},
+      {
+        resolvesTo: undefined,
+      }
+    );
     const suite = createSuiteMock({
       runResult,
       latestResult: fallback,
@@ -272,9 +280,13 @@ describe('vest-runner', () => {
     const latestResult = createSuiteResult({
       username: ['Recovered latest state'],
     });
-    const runResult = createSuiteResult({}, {}, {
-      rejects: new Error('boom'),
-    });
+    const runResult = createSuiteResult(
+      {},
+      {},
+      {
+        rejects: new Error('boom'),
+      }
+    );
     const suite = createSuiteMock({
       runResult,
       latestResult,

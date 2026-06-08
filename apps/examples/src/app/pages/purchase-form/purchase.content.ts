@@ -43,6 +43,9 @@ export const purchaseContent = defineExampleContent({
         ],
       },
     ],
-    nextStep: { label: 'Next: Submission patterns', route: 'submission-patterns' },
+    nextStep: {
+      label: 'Next: Submission patterns',
+      route: 'submission-patterns',
+    },
   },
 });

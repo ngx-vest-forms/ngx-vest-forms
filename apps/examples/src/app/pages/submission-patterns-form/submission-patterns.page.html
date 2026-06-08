@@ -10,8 +10,7 @@
     <div layout-aside class="sidebar-card-stack">
       <ngx-card title="Simulated outcome">
         <p class="mb-3 text-sm text-gray-600 dark:text-gray-300">
-          Pick how the mock server should respond so each path is
-          deterministic.
+          Pick how the mock server should respond so each path is deterministic.
         </p>
         <label class="block">
           <span
@@ -26,13 +25,11 @@
             (change)="onScenarioChange(scenarioSelect.value)"
           >
             @for (option of scenarios; track option.value) {
-              <option [value]="option.value">{{ option.label }}</option>
+            <option [value]="option.value">{{ option.label }}</option>
             }
           </select>
         </label>
-        <ul
-          class="mt-4 space-y-2 text-sm text-gray-600 dark:text-gray-300"
-        >
+        <ul class="mt-4 space-y-2 text-sm text-gray-600 dark:text-gray-300">
           <li>
             (a) Field rules are plain Vest, while this demo intentionally keeps
             error visibility submit-gated.
@@ -48,50 +45,37 @@
 
     <div layout-main>
       @if (showClearSubmitCycle()) {
-        <ngx-alert-panel tone="info" title="Submit cycle active">
-          <p>
-            The form is still in a submitted state, so submit-gated errors stay
-            visible. Clear the submit cycle to return to editing without
-            resetting values, touched state, or dirty state.
-          </p>
-          <button
-            type="button"
-            class="btn btn-secondary mt-3"
-            (click)="clearSubmitCycle()"
-          >
-            Clear submitted state
-          </button>
-        </ngx-alert-panel>
-      }
-
-      @if (state() === 'success') {
-        <ngx-alert-panel tone="success" title="Account created">
-          <p>
-            Your account was created with id
-            <strong>{{ createdId() }}</strong
-            >.
-          </p>
-          <button
-            type="button"
-            class="btn btn-secondary mt-3"
-            (click)="reset()"
-          >
-            Create another
-          </button>
-        </ngx-alert-panel>
-      }
-
-      @if (state() === 'server-error') {
-        <ngx-alert-panel tone="error" title="Couldn't create your account">
-          <p>{{ serverError() }}</p>
-          <button
-            type="button"
-            class="btn btn-primary mt-3"
-            (click)="retry()"
-          >
-            Retry
-          </button>
-        </ngx-alert-panel>
+      <ngx-alert-panel tone="info" title="Submit cycle active">
+        <p>
+          The form is still in a submitted state, so submit-gated errors stay
+          visible. Clear the submit cycle to return to editing without resetting
+          values, touched state, or dirty state.
+        </p>
+        <button
+          type="button"
+          class="btn btn-secondary mt-3"
+          (click)="clearSubmitCycle()"
+        >
+          Clear submitted state
+        </button>
+      </ngx-alert-panel>
+      } @if (state() === 'success') {
+      <ngx-alert-panel tone="success" title="Account created">
+        <p>
+          Your account was created with id
+          <strong>{{ createdId() }}</strong>.
+        </p>
+        <button type="button" class="btn btn-secondary mt-3" (click)="reset()">
+          Create another
+        </button>
+      </ngx-alert-panel>
+      } @if (state() === 'server-error') {
+      <ngx-alert-panel tone="error" title="Couldn't create your account">
+        <p>{{ serverError() }}</p>
+        <button type="button" class="btn btn-primary mt-3" (click)="retry()">
+          Retry
+        </button>
+      </ngx-alert-panel>
       }
 
       <ngx-card

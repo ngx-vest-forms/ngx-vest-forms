@@ -22,12 +22,12 @@
 
     <div layout-main>
       @if (submittedValue(); as submitted) {
-        <ngx-alert-panel tone="success" title="Message sent">
-          <p>
-            Thanks {{ submitted.name }} — we'll reply to
-            <strong>{{ submitted.email }}</strong> shortly.
-          </p>
-        </ngx-alert-panel>
+      <ngx-alert-panel tone="success" title="Message sent">
+        <p>
+          Thanks {{ submitted.name }} — we'll reply to
+          <strong>{{ submitted.email }}</strong> shortly.
+        </p>
+      </ngx-alert-panel>
       }
 
       <ngx-card

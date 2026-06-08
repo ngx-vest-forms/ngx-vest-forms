@@ -22,10 +22,14 @@ export const displayModesDemoSuite: NgxVestSuite<DisplayModesDemoModel> =
     });
 
     // Warning validations
-    test('tokenDefaultWarning', 'Username should be at least 5 characters', () => {
-      warn();
-      enforce(model.tokenDefaultWarning).longerThanOrEquals(5);
-    });
+    test(
+      'tokenDefaultWarning',
+      'Username should be at least 5 characters',
+      () => {
+        warn();
+        enforce(model.tokenDefaultWarning).longerThanOrEquals(5);
+      }
+    );
 
     test('alwaysWarning', 'Username should be at least 5 characters', () => {
       warn();

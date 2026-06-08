@@ -14,8 +14,8 @@ import {
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
-  AccessibleWrapperModel,
   accessibleWrapperContract,
+  AccessibleWrapperModel,
 } from '../../models/accessible-wrapper.model';
 
 @Component({
@@ -38,7 +38,6 @@ export class AccessibleWrapperFormBody {
     viewChild<FormDirective<AccessibleWrapperModel>>('vestForm');
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
-        
   protected onSubmit(): void {
     this.submitted.emit();
   }

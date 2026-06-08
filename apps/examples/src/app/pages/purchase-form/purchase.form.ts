@@ -27,8 +27,8 @@ import {
 } from 'ngx-vest-forms';
 import {
   initialPurchaseFormValue,
-  PurchaseFormModel,
   purchaseFormContract,
+  PurchaseFormModel,
 } from '../../models/purchase-form.model';
 import { AddressComponent } from '../../ui/address/address.component';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';

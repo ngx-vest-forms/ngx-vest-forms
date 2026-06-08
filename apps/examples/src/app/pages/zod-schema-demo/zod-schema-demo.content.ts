@@ -33,6 +33,9 @@ export const zodSchemaContent = defineExampleContent({
         ],
       },
     ],
-    nextStep: { label: 'Next: Native Vest schema', route: 'native-schema-demo' },
+    nextStep: {
+      label: 'Next: Native Vest schema',
+      route: 'native-schema-demo',
+    },
   },
 });

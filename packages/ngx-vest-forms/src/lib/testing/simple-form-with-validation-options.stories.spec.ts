@@ -7,8 +7,8 @@ import { NgxVestForms } from '../exports';
 import { provideFormContract } from '../tokens/form-contract.token';
 import {
   createFormValidationSuite,
-  FormModel,
   formContract,
+  FormModel,
   selectors,
 } from './simple-form';
 

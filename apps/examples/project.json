@@ -85,6 +85,6 @@
       "options": {
         "buildTarget": "examples:build"
       }
-    },
+    }
   }
 }

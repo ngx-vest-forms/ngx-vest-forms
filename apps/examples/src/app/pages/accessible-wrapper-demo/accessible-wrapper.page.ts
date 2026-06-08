@@ -1,16 +1,11 @@
 import {
   ChangeDetectionStrategy,
-  computed,
   Component,
+  computed,
   signal,
   viewChild,
 } from '@angular/core';
-import {
-  createEmptyFormState,
-} from 'ngx-vest-forms';
-import {
-  AccessibleWrapperModel,
-} from '../../models/accessible-wrapper.model';
+import { AccessibleWrapperModel } from '../../models/accessible-wrapper.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
@@ -39,7 +34,9 @@ export class AccessibleWrapperPageComponent {
   protected readonly exampleContent = accessibleWrapperContent;
   protected readonly suite = accessibleWrapperSuite;
   protected readonly formValue = signal<AccessibleWrapperModel>({});
-  protected readonly submittedValue = signal<AccessibleWrapperModel | null>(null);
+  protected readonly submittedValue = signal<AccessibleWrapperModel | null>(
+    null
+  );
 
   private readonly formBody = viewChild(AccessibleWrapperFormBody);
 

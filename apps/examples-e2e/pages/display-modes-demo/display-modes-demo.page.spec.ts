@@ -13,6 +13,8 @@ test.describe('Display Modes Demo Page', () => {
     await expect(sidebar).toBeVisible();
     await expect(sidebar).toContainText(/form value/i);
     await expect(sidebar).toContainText(/form state/i);
-    await expect(sidebar.locator('span[aria-label="Pristine"]').first()).toBeVisible();
+    await expect(
+      sidebar.locator('span[aria-label="Pristine"]').first()
+    ).toBeVisible();
   });
 });

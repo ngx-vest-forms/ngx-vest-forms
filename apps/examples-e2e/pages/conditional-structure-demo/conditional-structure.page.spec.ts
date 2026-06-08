@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('Conditional Structure Demo Page', () => {
-  test('should render the conditional-structure demo shell', async ({ page }) => {
+  test('should render the conditional-structure demo shell', async ({
+    page,
+  }) => {
     await page.goto('/conditional-structure');
 
     await expect(

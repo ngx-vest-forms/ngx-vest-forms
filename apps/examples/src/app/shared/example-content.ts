@@ -17,7 +17,7 @@ export type ExampleLearnSection = {
   readonly title: string;
   /** One concrete takeaway per bullet. */
   readonly points: readonly string[];
-}
+};
 
 /** Optional pointer to the next recommended demo, rendered as a link. */
 export type ExampleNextStep = {
@@ -25,7 +25,7 @@ export type ExampleNextStep = {
   readonly label: string;
   /** Router path of the next demo, e.g. `'async-username'`. */
   readonly route: string;
-}
+};
 
 /**
  * Structured, typed description of what a demo proves and teaches.
@@ -51,7 +51,7 @@ export type ExampleContent = {
     /** Optional link to the next recommended demo. */
     readonly nextStep?: ExampleNextStep;
   };
-}
+};
 
 /**
  * Identity helper that preserves literal types while asserting the shape.

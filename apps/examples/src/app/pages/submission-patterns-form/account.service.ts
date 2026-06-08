@@ -10,7 +10,7 @@ export type CreateAccountOptions = {
    * simulate a server-side failure (`server-error`, `network-error`, …).
    */
   readonly errorScenario?: string;
-}
+};
 
 /**
  * Thin HTTP client for the account-creation endpoint backed by the in-app

@@ -14,16 +14,16 @@
             Deep <code>ngModelGroup</code> nesting:
             <code>company.address</code>.
           </li>
-          <li>Reusable <code>ngx-address</code> &amp; child member sections.</li>
+          <li>
+            Reusable <code>ngx-address</code> &amp; child member sections.
+          </li>
           <li>Repeatable rows in a stable id-keyed record.</li>
           <li>Validation refreshes correctly after add/remove.</li>
           <li><code>ROOT_FORM</code> rule + non-blocking warning.</li>
         </ul>
       </ngx-card>
 
-      <ngx-form-state-card
-        [feedback]="formBody.feedback"
-        />
+      <ngx-form-state-card [feedback]="formBody.feedback" />
     </div>
 
     <div layout-main>
@@ -38,12 +38,12 @@
       />
 
       @if (submittedPayload(); as payload) {
-        <ngx-card
-          title="Submitted payload"
-          subtitle="teamMembers converted back to an array with objectToArray() — the shape you'd POST to a backend."
-        >
-          <ngx-json-preview title="Payload" [value]="payload" />
-        </ngx-card>
+      <ngx-card
+        title="Submitted payload"
+        subtitle="teamMembers converted back to an array with objectToArray() — the shape you'd POST to a backend."
+      >
+        <ngx-json-preview title="Payload" [value]="payload" />
+      </ngx-card>
       }
     </div>
   </ngx-form-page-layout>

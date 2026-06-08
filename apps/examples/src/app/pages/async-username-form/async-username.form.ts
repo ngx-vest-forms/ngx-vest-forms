@@ -37,7 +37,6 @@ export class AsyncUsernameFormBody {
     viewChild<FormDirective<AsyncUsernameModel>>('vestForm');
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
-        
   private readonly usernameErrors = computed(
     () => this.feedback.formState()?.errors['username'] ?? []
   );

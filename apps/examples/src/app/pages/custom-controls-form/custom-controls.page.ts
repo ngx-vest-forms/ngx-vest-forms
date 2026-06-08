@@ -1,16 +1,11 @@
 import {
   ChangeDetectionStrategy,
-  computed,
   Component,
+  computed,
   signal,
   viewChild,
 } from '@angular/core';
-import {
-  createEmptyFormState,
-} from 'ngx-vest-forms';
-import {
-  CustomControlsModel,
-} from '../../models/custom-controls.model';
+import { CustomControlsModel } from '../../models/custom-controls.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';

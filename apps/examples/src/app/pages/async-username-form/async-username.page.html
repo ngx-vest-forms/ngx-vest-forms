@@ -25,12 +25,12 @@
 
     <div layout-main>
       @if (submittedValue(); as submitted) {
-        <ngx-alert-panel tone="success" title="Username reserved">
-          <p>
-            Nice — <strong>{{ submitted.username }}</strong> is available and
-            reserved for {{ submitted.displayName }}.
-          </p>
-        </ngx-alert-panel>
+      <ngx-alert-panel tone="success" title="Username reserved">
+        <p>
+          Nice — <strong>{{ submitted.username }}</strong> is available and
+          reserved for {{ submitted.displayName }}.
+        </p>
+      </ngx-alert-panel>
       }
 
       <ngx-card

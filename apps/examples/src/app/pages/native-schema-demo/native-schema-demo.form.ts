@@ -15,8 +15,8 @@ import {
   NgxVestSuite,
 } from 'ngx-vest-forms';
 import {
-  NativeSchemaDemoModel,
   nativeSchemaDemoContract,
+  NativeSchemaDemoModel,
 } from '../../models/native-schema-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
@@ -48,7 +48,6 @@ export class NativeSchemaDemoFormBody {
     }),
   });
 
-        
   protected onSubmit(): void {
     this.submitted.emit();
   }

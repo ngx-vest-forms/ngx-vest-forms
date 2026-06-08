@@ -69,9 +69,13 @@ export const businessPolicySuite: NgxVestSuite<BusinessPolicyModel> = create(
       }
     );
 
-    test('requestedCreditLimit', 'Requested credit limit must be greater than 0', () => {
-      enforce(Number(model.requestedCreditLimit ?? 0)).greaterThan(0);
-    });
+    test(
+      'requestedCreditLimit',
+      'Requested credit limit must be greater than 0',
+      () => {
+        enforce(Number(model.requestedCreditLimit ?? 0)).greaterThan(0);
+      }
+    );
 
     test(
       'paymentTermsDays',
@@ -100,32 +104,25 @@ export const businessPolicySuite: NgxVestSuite<BusinessPolicyModel> = create(
     });
 
     // ── Advisory warnings (never block submit) ────────────────────────
-    omitWhen(
-      !model.requestedCreditLimit || !model.annualRevenue,
-      () => {
-        test(
-          'requestedCreditLimit',
-          'Requested credit limit is high relative to revenue — expect manual review',
-          () => {
-            warn();
-            enforce(
-              Number(model.requestedCreditLimit ?? 0) >
-                Number(model.annualRevenue ?? 0) * 0.5
-            ).isFalsy();
-          }
-        );
-      }
-    );
-
-    omitWhen(!model.paymentTermsDays, () => {
+    omitWhen(!model.requestedCreditLimit || !model.annualRevenue, () => {
       test(
-        'paymentTermsDays',
-        'Long payment terms may slow onboarding',
+        'requestedCreditLimit',
+        'Requested credit limit is high relative to revenue — expect manual review',
         () => {
           warn();
-          enforce(Number(model.paymentTermsDays ?? 0)).lessThan(60);
+          enforce(
+            Number(model.requestedCreditLimit ?? 0) >
+              Number(model.annualRevenue ?? 0) * 0.5
+          ).isFalsy();
         }
       );
+    });
+
+    omitWhen(!model.paymentTermsDays, () => {
+      test('paymentTermsDays', 'Long payment terms may slow onboarding', () => {
+        warn();
+        enforce(Number(model.paymentTermsDays ?? 0)).lessThan(60);
+      });
     });
 
     omitWhen(model.accountType !== 'personal', () => {

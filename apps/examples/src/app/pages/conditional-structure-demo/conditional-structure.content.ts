@@ -30,6 +30,9 @@ export const conditionalStructureContent = defineExampleContent({
         ],
       },
     ],
-    nextStep: { label: 'Next: Submission patterns', route: 'submission-patterns' },
+    nextStep: {
+      label: 'Next: Submission patterns',
+      route: 'submission-patterns',
+    },
   },
 });
