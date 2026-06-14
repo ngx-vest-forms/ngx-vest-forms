@@ -137,7 +137,7 @@ See the `ControlWrapperComponent` docs for comprehensive accessibility features 
 
 Component docs:
 
-- [`projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md`](../projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md)
+- [`packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md`](../packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md)
 
 For directive-only composition (no UI), see `FormErrorControlDirective`.
 

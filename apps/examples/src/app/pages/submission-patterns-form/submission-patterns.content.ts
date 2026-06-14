@@ -11,6 +11,7 @@ export const submissionPatternsContent = defineExampleContent({
       'Concern (c) — server FAILURE messaging: HTTP errors surface in an assertive error panel with a Retry button',
       'Concern (d) — SUCCESS state: a polite success panel echoes the new account id with a "Create another" reset',
       'A four-state page signal (editing / submitting / server-error / success) that keeps these concerns distinct',
+      'Angular 22 `injectAsync(..., { prefetch: onIdle })` lazy-loads the account client without cluttering the form flow',
     ],
   },
   learn: {
@@ -30,6 +31,7 @@ export const submissionPatternsContent = defineExampleContent({
         points: [
           'The scenario picker forces Normal / Email taken (409) / Server error / Network error paths',
           'Retry re-submits the exact same value; Create another resets cleanly to editing',
+          'The submit-only HTTP client is a good fit for lazy DI because it is only needed after a valid submit',
         ],
       },
     ],

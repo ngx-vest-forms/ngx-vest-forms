@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 
 @Component({
   selector: 'ngx-page-title',
@@ -12,7 +12,6 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       }
     </header>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PageTitle {
   readonly title = input.required<string>();

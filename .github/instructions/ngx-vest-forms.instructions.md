@@ -9,7 +9,7 @@ Use this file as the **always-on guardrail sheet** for ngx-vest-forms.
 Keep detailed examples and feature-specific workflows in the docs and the
 `.agents/skills/ngx-vest-forms/` workflow sub-skills.
 
-> **v3.0** | Angular 21+ | Vest.js 6.x | See `vest.instructions.md` for deeper validation patterns.
+> **v3.0** | Angular 22+ | Vest.js 6.x | See `vest.instructions.md` for deeper validation patterns.
 
 ## Non-negotiable rules
 

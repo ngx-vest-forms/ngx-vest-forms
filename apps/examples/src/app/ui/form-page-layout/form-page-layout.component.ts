@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'ngx-form-page-layout',
@@ -13,7 +13,6 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
       </section>
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class FormPageLayout {}

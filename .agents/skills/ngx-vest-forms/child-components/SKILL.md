@@ -76,7 +76,7 @@ When answering:
 - `../../../../docs/ACCESSIBILITY.md`
 - `../../../../docs/COMPLETE-EXAMPLE.md`
 - `../../../../README.md`
-- `../../../../projects/ngx-vest-forms/src/public-api.ts`
+- `../../../../packages/ngx-vest-forms/src/public-api.ts`
 
 Treat the repo instruction file as the invariant layer. Use this skill for parent/child path coordination, `vestFormsViewProviders`, and nested section design.
 

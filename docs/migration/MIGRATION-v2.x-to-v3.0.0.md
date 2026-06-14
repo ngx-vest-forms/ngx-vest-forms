@@ -150,7 +150,7 @@ Migration takeaway: stop teaching “ignore late async results” as the primary
 
 ### Prefer `memo()` for expensive deterministic blocks
 
-Vest 6.3 exposes top-level `memo()` from `vest/memo`. Use it to wrap expensive validation blocks whose result should be reused until a dependency changes. The runnable purchase-form example in this repo uses this pattern; see `projects/examples/src/app/pages/purchase-form/purchase.validations.ts`.
+Vest 6.3 exposes top-level `memo()` from `vest/memo`. Use it to wrap expensive validation blocks whose result should be reused until a dependency changes. The runnable purchase-form example in this repo uses this pattern; see `apps/examples/src/app/pages/purchase-form/purchase.validations.ts`.
 
 If you are migrating older code, the Vest 5 `test.memo(...)` form is removed — move the test body into `memo(() => { test(...) }, deps)`.
 

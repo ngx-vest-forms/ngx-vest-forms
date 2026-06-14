@@ -1,13 +1,13 @@
 ---
 description: Tailwind CSS v4 usage rules for styling (2025 best practices)
-applyTo: 'projects/examples/**/*.{html,js,jsx,ts,tsx,css,scss,sass,md,mdx}'
+applyTo: 'apps/examples/**/*.{html,js,jsx,ts,tsx,css,scss,sass,md,mdx}'
 ---
 
 ## Project Setup (Tailwind CSS v4.1.17)
 - This project uses **Tailwind CSS v4.1.17** with the new CSS-first configuration approach
 - PostCSS plugin: `@tailwindcss/postcss` (configured in `.postcssrc.json`)
-- Angular 21's built-in PostCSS support processes Tailwind automatically
-- Theme configuration is in CSS `@theme` blocks (see `projects/examples/src/styles.scss`)
+- Angular 22's built-in PostCSS support processes Tailwind automatically
+- Theme configuration is in CSS `@theme` blocks (see `apps/examples/src/styles.scss`)
 - The `tailwind.config.js` file is legacy and no longer used (kept for reference only)
 
 ## General Guidelines

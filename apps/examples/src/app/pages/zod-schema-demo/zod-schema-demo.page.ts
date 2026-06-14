@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ZodSchemaDemoModel } from '../../models/zod-schema-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
@@ -21,7 +21,6 @@ import { zodSchemaDemoSuite } from './zod-schema-demo.validations';
   ],
   templateUrl: './zod-schema-demo.page.html',
   styleUrls: ['./zod-schema-demo.page.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ZodSchemaDemoPageComponent {
   protected readonly formValue = signal<ZodSchemaDemoModel>({});

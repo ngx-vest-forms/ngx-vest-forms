@@ -92,8 +92,8 @@ When answering:
 - `../../../../docs/CUSTOM-CONTROL-WRAPPERS.md`
 - `../../../../docs/ACCESSIBILITY.md`
 - `../../../../docs/CHILD-COMPONENTS.md`
-- `../../../../projects/ngx-vest-forms/src/public-api.ts`
-- `../../../../projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md`
+- `../../../../packages/ngx-vest-forms/src/public-api.ts`
+- `../../../../packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md`
 
 Treat the repo instruction file as the invariant layer. Use this skill for hostDirectives composition, stable ARIA behavior, and custom presentation decisions.
 

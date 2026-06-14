@@ -673,7 +673,7 @@ Bind the composite control directly to that field and map to/from the domain mod
 
 ## Full working example
 
-See the **Composite Adapter Recipe** page in the examples app: `projects/examples/src/app/pages/date-range-adapter/`.
+See the **Composite Adapter Recipe** page in the examples app: `apps/examples/src/app/pages/date-range-adapter/`.
 
 Run `ng serve examples` and navigate to `/date-range-adapter`. The page defaults to **Split Wrappers** (recommended) with a toggle to compare against the **Composite Adapter** approach.
 

@@ -71,7 +71,7 @@ Correct these immediately if they appear:
 - direct property access like `formValue().address.street` instead of `formValue().address?.street`
 - missing a fixed `provideFormContract(...)` or explicit `[formContract]` on complex nested forms where path mistakes are easy
 - `(blur)` handlers that re-trigger validation to fake dependent-field timing or draft auto-save
-- imports from `projects/ngx-vest-forms/src/lib/**` in consumer examples
+- imports from `packages/ngx-vest-forms/src/lib/**` in consumer examples
 
 Do not paper over these mistakes. They break the mental model of the library and usually create subtle bugs instead of quick wins.
 
@@ -108,7 +108,7 @@ Read these files before making nuanced recommendations:
 - `../../../../docs/ACCESSIBILITY.md`
 - `../../../instructions/vest.instructions.md`
 - `../../../../README.md`
-- `../../../../projects/ngx-vest-forms/src/public-api.ts`
+- `../../../../packages/ngx-vest-forms/src/public-api.ts`
 
 Assume the repo-level `ngx-vest-forms.instructions.md` file already enforces the baseline invariants; use this skill for the fuller implementation workflow and examples.
 
@@ -117,4 +117,4 @@ Assume the repo-level `ngx-vest-forms.instructions.md` file already enforces the
 - ngx-vest-forms is a template-driven forms adapter, not a reactive forms abstraction.
 - `validationConfig` controls when dependent fields revalidate; it does not define validation logic.
 - The library's sweet spot is typed template-driven forms with Vest suites, signals, and explicit structure.
-- The current branch targets Angular 21+, RxJS ~7.8, and Vest 6.x. `parseFieldPath` warns in dev mode for malformed segments (`'a..b'`, `'.a'`, `'a.'`); production behavior unchanged.
+- The current branch targets Angular 22+, RxJS ~7.8, and Vest 6.x. `parseFieldPath` warns in dev mode for malformed segments (`'a..b'`, `'.a'`, `'a.'`); production behavior unchanged.
