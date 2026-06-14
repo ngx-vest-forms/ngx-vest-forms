@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   signal,
@@ -27,7 +26,6 @@ import { travelValidationSuite } from './travel.validations';
     TravelFormBody,
   ],
   templateUrl: './travel.page.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TravelPageComponent {
   protected readonly feedback = computed(() => this.formBody()?.feedback);

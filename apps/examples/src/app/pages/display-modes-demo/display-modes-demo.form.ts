@@ -1,6 +1,5 @@
 import {
   afterNextRender,
-  ChangeDetectionStrategy,
   Component,
   input,
   output,
@@ -19,7 +18,6 @@ import { Card } from '../../ui/card/card.component';
   selector: 'ngx-display-modes-demo-form-body',
   imports: [NgxVestForms, Card],
   templateUrl: './display-modes-demo.form.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DisplayModesDemoFormBody {
   readonly formValue = input.required<DisplayModesDemoModel>();

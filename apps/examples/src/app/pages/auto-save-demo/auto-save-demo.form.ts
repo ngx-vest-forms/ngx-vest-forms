@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   input,
   output,
@@ -21,7 +20,6 @@ import { FormSectionComponent } from '../../ui/form-section/form-section.compone
   selector: 'ngx-auto-save-demo-form-body',
   imports: [NgxVestForms, Card, FormSectionComponent],
   templateUrl: './auto-save-demo.form.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AutoSaveDemoFormBody {
   readonly formValue = input.required<AutoSaveDemoModel>();

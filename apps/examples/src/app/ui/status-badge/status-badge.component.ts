@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   input,
@@ -37,7 +36,6 @@ import {
       }
     </span>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StatusBadge {
   readonly valid = input.required<boolean>();

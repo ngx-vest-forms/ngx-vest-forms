@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, signal, viewChild } from '@angular/core';
 import { AccessibleWrapperModel } from '../../models/accessible-wrapper.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
@@ -28,7 +22,6 @@ import { accessibleWrapperSuite } from './accessible-wrapper.validations';
     AccessibleWrapperFormBody,
   ],
   templateUrl: './accessible-wrapper.page.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccessibleWrapperPageComponent {
   protected readonly exampleContent = accessibleWrapperContent;

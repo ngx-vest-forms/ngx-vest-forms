@@ -1,6 +1,5 @@
 import {
   afterNextRender,
-  ChangeDetectionStrategy,
   Component,
   DestroyRef,
   inject,
@@ -44,7 +43,6 @@ export type TravelFormApproach = 'composite-adapter' | 'split-wrappers';
   ],
   templateUrl: './travel.form.html',
   providers: [provideFormContract(travelFormContract)],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TravelFormBody {
   readonly #destroyRef = inject(DestroyRef);

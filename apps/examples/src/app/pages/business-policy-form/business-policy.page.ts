@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   signal,
@@ -41,7 +40,6 @@ import {
     BusinessPolicyFormBody,
   ],
   templateUrl: './business-policy.page.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BusinessPolicyPageComponent {
   protected readonly feedback = computed(() => this.formBody()?.feedback);

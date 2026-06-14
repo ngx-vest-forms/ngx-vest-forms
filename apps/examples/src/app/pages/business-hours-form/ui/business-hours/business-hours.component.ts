@@ -1,6 +1,5 @@
 import { KeyValuePipe } from '@angular/common';
 import {
-  ChangeDetectionStrategy,
   Component,
   input,
   output,
@@ -31,7 +30,6 @@ export type BusinessHoursMap = Record<string, BusinessHourFormModel>;
   imports: [NgxVestForms, KeyValuePipe, BusinessHourComponent],
   templateUrl: './business-hours.component.html',
   styleUrls: ['./business-hours.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [vestFormsViewProviders],
 })
 export class BusinessHoursComponent {

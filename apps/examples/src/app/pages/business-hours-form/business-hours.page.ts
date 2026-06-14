@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   signal,
@@ -32,7 +31,6 @@ import { BusinessHoursMap } from './ui/business-hours/business-hours.component';
   ],
   templateUrl: './business-hours.page.html',
   styleUrls: ['./business-hours.page.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BusinessHoursPageComponent {
   protected readonly feedback = computed(() => this.formBody()?.feedback);

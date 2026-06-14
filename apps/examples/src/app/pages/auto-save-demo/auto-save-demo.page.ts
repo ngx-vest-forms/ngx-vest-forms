@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   inject,
@@ -68,7 +67,6 @@ type AutoSaveRequest = {
   ],
   templateUrl: './auto-save-demo.page.html',
   styleUrls: ['./auto-save-demo.page.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AutoSaveDemoPageComponent {
   protected readonly feedback = computed(() => this.formBody()?.feedback);

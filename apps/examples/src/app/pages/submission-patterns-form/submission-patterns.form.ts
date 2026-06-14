@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   input,
   output,
@@ -29,7 +28,6 @@ import {
       useValue: 'on-submit',
     },
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SubmissionPatternsFormBody {
   readonly formValue = input.required<SubmissionPatternsModel>();

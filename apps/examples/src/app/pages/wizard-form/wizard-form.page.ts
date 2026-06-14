@@ -1,6 +1,5 @@
 import {
   afterNextRender,
-  ChangeDetectionStrategy,
   Component,
   computed,
   inject,
@@ -45,7 +44,6 @@ import {
   ],
   templateUrl: './wizard-form.page.html',
   styleUrl: './wizard-form.page.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WizardFormPageComponent {
   private readonly injector = inject(Injector);

@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   input,
   output,
@@ -22,7 +21,6 @@ import {
   imports: [NgxVestForms],
   templateUrl: './conditional-structure.form.html',
   providers: [provideFormContract(conditionalStructureContract)],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConditionalStructureFormBody {
   readonly formValue = input.required<ConditionalStructureModel>();

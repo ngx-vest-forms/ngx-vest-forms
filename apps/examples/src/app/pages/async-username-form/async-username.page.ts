@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   inject,
@@ -41,7 +40,6 @@ import { UsernameAvailabilityService } from './username-availability.service';
     AsyncUsernameFormBody,
   ],
   templateUrl: './async-username.page.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AsyncUsernamePageComponent {
   protected readonly exampleContent = asyncUsernameContent;

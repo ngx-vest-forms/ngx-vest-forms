@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   input,
@@ -131,7 +130,6 @@ let nextId = 0;
       </div>
     </fieldset>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DateRangeAdapterComponent {
   private readonly uid = nextId++;

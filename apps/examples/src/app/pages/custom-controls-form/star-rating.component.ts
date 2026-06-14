@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   forwardRef,
   signal,
@@ -63,7 +62,6 @@ let nextId = 0;
       multi: true,
     },
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StarRatingComponent implements ControlValueAccessor {
   protected readonly groupId = `ngx-star-rating-${nextId++}`;

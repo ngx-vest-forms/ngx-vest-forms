@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   effect,
   ElementRef,
@@ -31,7 +30,6 @@ import { ThemeSwitcherComponent } from './ui/theme-switcher/theme-switcher.compo
   imports: [RouterLink, RouterLinkActive, RouterOutlet, ThemeSwitcherComponent],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
   protected readonly navGroups = buildNavGroups();

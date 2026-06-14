@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   forwardRef,
   signal,
@@ -62,7 +61,6 @@ let nextId = 0;
       multi: true,
     },
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TagInputComponent implements ControlValueAccessor {
   protected readonly inputId = `ngx-tag-input-${nextId++}`;

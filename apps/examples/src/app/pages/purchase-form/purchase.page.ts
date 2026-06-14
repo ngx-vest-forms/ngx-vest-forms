@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   signal,
@@ -33,7 +32,6 @@ type FetchLukeMode = 'normal' | FetchErrorScenario;
   ],
   templateUrl: './purchase.page.html',
   styleUrls: ['./purchase.page.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PurchasePageComponent {
   protected readonly feedback = computed(() => this.purchaseForm()?.feedback);

@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   input,
   output,
@@ -30,7 +29,6 @@ import { TagInputComponent } from './tag-input.component';
   ],
   templateUrl: './custom-controls.form.html',
   providers: [provideFormContract(customControlsContract)],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CustomControlsFormBody {
   readonly formValue = input.required<CustomControlsModel>();

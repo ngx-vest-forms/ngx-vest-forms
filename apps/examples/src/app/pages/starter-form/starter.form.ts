@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   input,
   output,
@@ -22,7 +21,6 @@ import {
   imports: [NgxVestForms],
   templateUrl: './starter.form.html',
   providers: [provideFormContract(starterFormShape)],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StarterFormBody {
   readonly formValue = input.required<StarterFormModel>();

@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   signal,
@@ -35,7 +34,6 @@ import { conditionalStructureSuite } from './conditional-structure.validations';
     ConditionalStructureFormBody,
   ],
   templateUrl: './conditional-structure.page.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConditionalStructurePageComponent {
   protected readonly exampleContent = conditionalStructureContent;

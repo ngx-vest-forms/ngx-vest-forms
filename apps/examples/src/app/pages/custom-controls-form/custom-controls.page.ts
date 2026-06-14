@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   signal,
@@ -34,7 +33,6 @@ import { customControlsSuite } from './custom-controls.validations';
     CustomControlsFormBody,
   ],
   templateUrl: './custom-controls.page.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CustomControlsPageComponent {
   protected readonly exampleContent = customControlsContent;
