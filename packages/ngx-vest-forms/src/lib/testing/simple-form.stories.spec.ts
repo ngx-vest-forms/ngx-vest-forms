@@ -113,10 +113,7 @@ describe('simple-form stories', () => {
         'false'
       );
       expect(getPreJson(selectors.preFormValue)).toEqual({
-        passwords: {
-          password: null,
-          confirmPassword: null,
-        },
+        passwords: {},
       });
       expect(getPreJson(selectors.preFormErrors)).toEqual({
         firstName: ['First name is required'],
@@ -140,10 +137,7 @@ describe('simple-form stories', () => {
       );
       expect(getPreJson(selectors.preFormValue)).toEqual({
         firstName: 'f',
-        passwords: {
-          password: null,
-          confirmPassword: null,
-        },
+        passwords: {},
       });
       expect(getPreJson(selectors.preFormErrors)).toEqual({
         lastName: ['Last name is required'],
