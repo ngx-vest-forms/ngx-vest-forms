@@ -18,6 +18,6 @@ const PRODUCTS: Product[] = [
 @Service()
 export class ProductService {
   getAll(): Observable<Product[]> {
-    return of(PRODUCTS).pipe(delay(1000));
+    return of([...PRODUCTS]).pipe(delay(1000));
   }
 }

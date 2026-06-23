@@ -230,9 +230,12 @@ export class PurchaseForm {
   });
 
   constructor() {
-    this.productService.getAll().subscribe((products) => {
-      this.products.set(products);
-    });
+    this.productService
+      .getAll()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((products) => {
+        this.products.set(products);
+      });
 
     const firstName = computed(() => this.formValue().firstName);
     const lastName = computed(() => this.formValue().lastName);

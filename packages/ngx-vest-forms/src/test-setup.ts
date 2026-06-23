@@ -16,13 +16,9 @@ if (typeof window !== 'undefined' && typeof window.navigator === 'undefined') {
 
 import '@analogjs/vitest-angular/setup-serializers';
 import '@analogjs/vitest-angular/setup-snapshots';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import '@angular/compiler';
 import * as matchers from '@testing-library/jest-dom/matchers';
 import { expect } from 'vitest';
-
-// Setup Angular test environment for zoneless (Angular 21+)
-setupTestBed();
 
 expect.extend(matchers);
 
@@ -58,21 +54,5 @@ if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
         },
         dispatchEvent: () => false,
       }) as MediaQueryList,
-  });
-}
-
-// JSDOM stubs for navigator
-if (typeof window !== 'undefined' && typeof window.navigator === 'undefined') {
-  Object.defineProperty(window, 'navigator', {
-    writable: true,
-    configurable: true,
-    value: {
-      clipboard: {
-        writeText: () => Promise.resolve(),
-        readText: () => Promise.resolve(''),
-      },
-      userAgent: 'node.js',
-      platform: 'node',
-    },
   });
 }
