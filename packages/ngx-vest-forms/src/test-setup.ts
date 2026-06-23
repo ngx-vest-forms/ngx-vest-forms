@@ -56,3 +56,12 @@ if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
       }) as MediaQueryList,
   });
 }
+
+/**
+ * @deprecated v3: setupTestBed() is no longer needed. The @analogjs/vitest-angular setup
+ * (imported above) now handles Angular TestBed configuration automatically. Remove this call
+ * from your test files. See MIGRATION-v2.x-to-v3.0.0.md for details.
+ */
+export function setupTestBed(): void {
+  // no-op: kept for backward compatibility with v2 test files
+}
