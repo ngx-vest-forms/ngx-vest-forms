@@ -37,6 +37,7 @@ export default defineConfig(({ mode }) => ({
   test: {
     globals: true,
     isolate: true,
+    environment: 'jsdom',
     setupFiles: ['packages/ngx-vest-forms/src/test-setup.ts'],
     reporters: ['default'],
     coverage: {

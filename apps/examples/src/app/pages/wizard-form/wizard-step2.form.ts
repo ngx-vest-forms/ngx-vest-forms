@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   input,
   output,
@@ -24,7 +23,6 @@ import { WizardNavigationComponent } from '../../ui/wizard';
   imports: [NgxVestForms, WizardNavigationComponent],
   templateUrl: './wizard-step2.form.html',
   providers: [provideFormContract(wizardStep2Contract)],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WizardStep2FormComponent {
   readonly data = input.required<WizardStep2Model>();

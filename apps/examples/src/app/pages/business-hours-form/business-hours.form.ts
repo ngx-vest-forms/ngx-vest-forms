@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   input,
   output,
@@ -28,7 +27,6 @@ import {
   imports: [NgxVestForms, BusinessHoursComponent, AlertPanel],
   templateUrl: './business-hours.form.html',
   providers: [provideFormContract(businessHoursFormContract)],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BusinessHoursFormBody {
   readonly formValue = input.required<BusinessHoursFormModel>();

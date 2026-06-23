@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   signal,
@@ -40,7 +39,6 @@ import { complexNestedSuite } from './complex-nested.validations';
     ComplexNestedFormBody,
   ],
   templateUrl: './complex-nested.page.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ComplexNestedPageComponent {
   protected readonly feedback = computed(() => this.formBody()?.feedback);

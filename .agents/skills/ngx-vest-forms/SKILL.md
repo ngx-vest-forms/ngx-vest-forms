@@ -5,7 +5,7 @@ description: Routes general ngx-vest-forms requests to the right workflow. Use t
 
 # ngx-vest-forms router skill
 
-Use this as the broad entry point for ngx-vest-forms questions. Track the current branch baseline: v3.x-era guidance on Angular 21+, RxJS ~7.8, and Vest 6.x.
+Use this as the broad entry point for ngx-vest-forms questions. Track the current branch baseline: v3.x-era guidance on Angular 22+, RxJS ~7.8, and Vest 6.x.
 
 ## Start with the invariant layer
 
@@ -38,9 +38,9 @@ Non-breaking but worth knowing when the user mentions related symptoms:
 
 ## Stay on the public API surface
 
-Unless the task is explicitly about maintaining the library internals, recommend imports from `'ngx-vest-forms'` and verify the symbol exists in `projects/ngx-vest-forms/src/public-api.ts`.
+Unless the task is explicitly about maintaining the library internals, recommend imports from `'ngx-vest-forms'` and verify the symbol exists in `packages/ngx-vest-forms/src/public-api.ts`.
 
-Do not send library consumers to `projects/ngx-vest-forms/src/lib/**` imports. That is an internal maintenance path, not consumer guidance.
+Do not send library consumers to `packages/ngx-vest-forms/src/lib/**` imports. That is an internal maintenance path, not consumer guidance.
 
 ## Available workflow sub-skills
 
@@ -153,7 +153,7 @@ Read `dynamic-form-behavior/SKILL.md` when the user is:
 - `.github/instructions/ngx-vest-forms.instructions.md`
 - `.github/instructions/vest.instructions.md`
 - `docs/`
-- `projects/ngx-vest-forms/src/public-api.ts`
+- `packages/ngx-vest-forms/src/public-api.ts`
 
 ## Goal
 

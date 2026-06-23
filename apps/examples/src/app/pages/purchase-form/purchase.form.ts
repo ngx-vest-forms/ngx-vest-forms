@@ -1,10 +1,10 @@
 import { HttpErrorResponse, httpResource } from '@angular/common/http';
 import {
   afterNextRender,
-  ChangeDetectionStrategy,
   Component,
   computed,
   effect,
+  DestroyRef,
   inject,
   Injector,
   linkedSignal,
@@ -13,7 +13,8 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import {
   clearFields,
   createFormFeedbackSignals,
@@ -25,6 +26,7 @@ import {
   setValueAtPath,
   type ValidationOptions,
 } from 'ngx-vest-forms';
+import { z } from 'zod';
 import {
   initialPurchaseFormValue,
   purchaseFormContract,
@@ -35,15 +37,18 @@ import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
 import { PhoneNumbersComponent } from '../../ui/phonenumbers/phonenumbers.component';
 import { ProductService } from './product.service';
+import type { Product } from './product.type';
 import { createPurchaseValidationSuite } from './purchase.validations';
 import { SwapiService } from './swapi.service';
 
+const lukeApiResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  gender: z.enum(['male', 'female', 'other']),
+});
+
 // Response shape for the examples app's mock people API.
-type LukeApiResponse = {
-  id: string;
-  name: string;
-  gender: 'male' | 'female' | 'other';
-};
+type LukeApiResponse = z.infer<typeof lukeApiResponseSchema>;
 
 type FetchErrorNotice = {
   title: string;
@@ -81,7 +86,6 @@ const FETCH_ERROR_SCENARIOS: Array<Exclude<FetchErrorScenario, 'random'>> = [
   ],
   templateUrl: './purchase.form.html',
   providers: [provideFormContract(purchaseFormContract)],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PurchaseForm {
   protected readonly validationDebouncePresets =
@@ -93,9 +97,10 @@ export class PurchaseForm {
     debounceTime: this.validationDebouncePresets.async,
   };
   private readonly injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly swapiService = inject(SwapiService);
   private readonly productService = inject(ProductService);
-  readonly products = toSignal(this.productService.getAll());
+  readonly products = signal<Product[]>([]);
 
   private readonly vestForm =
     viewChild<FormDirective<PurchaseFormModel>>('vestForm');
@@ -138,24 +143,29 @@ export class PurchaseForm {
     return this.autoFetchLukeRequested() ? { personId: '1' } : undefined;
   });
 
-  private readonly lukeResource = httpResource<LukeApiResponse>(() => {
-    const request = this.requestedPersonId();
+  private readonly lukeResource = httpResource<LukeApiResponse>(
+    () => {
+      const request = this.requestedPersonId();
 
-    if (!request) {
-      return undefined;
+      if (!request) {
+        return undefined;
+      }
+
+      const requestUrl = new URL(
+        `/api/people/${request.personId}`,
+        globalThis.location.origin
+      );
+
+      if (request.errorScenario) {
+        requestUrl.searchParams.set('errorScenario', request.errorScenario);
+      }
+
+      return `${requestUrl.pathname}${requestUrl.search}`;
+    },
+    {
+      parse: lukeApiResponseSchema.parse,
     }
-
-    const requestUrl = new URL(
-      `/api/people/${request.personId}`,
-      globalThis.location.origin
-    );
-
-    if (request.errorScenario) {
-      requestUrl.searchParams.set('errorScenario', request.errorScenario);
-    }
-
-    return `${requestUrl.pathname}${requestUrl.search}`;
-  });
+  );
 
   private readonly lukeData = computed(() => {
     const data = this.lukeResource.hasValue()
@@ -223,6 +233,13 @@ export class PurchaseForm {
   });
 
   constructor() {
+    this.productService
+      .getAll()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((products) => {
+        this.products.set(products);
+      });
+
     const firstName = computed(() => this.formValue().firstName);
     const lastName = computed(() => this.formValue().lastName);
 

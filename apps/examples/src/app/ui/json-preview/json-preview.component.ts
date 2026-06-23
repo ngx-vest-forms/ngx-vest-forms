@@ -1,6 +1,5 @@
 import { JsonPipe } from '@angular/common';
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   input,
@@ -27,7 +26,6 @@ import {
       >{{ isStringValue() ? value() : (value() | json) }}</pre
     >
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class JsonPreviewComponent {
   readonly title = input<string>();

@@ -714,7 +714,7 @@ export type NgxVestSuite<T>;
 
 For working with field paths at runtime, see:
 
-- **[Field Path Utilities](../projects/ngx-vest-forms/src/lib/utils/README.md#field-path-utilities)** - `stringifyFieldPath()`
+- **[Field Path Utilities](../packages/ngx-vest-forms/src/lib/utils/README.md#field-path-utilities)** - `stringifyFieldPath()`
   - Convert array notation to dot notation
   - Useful for dynamic field path manipulation
   - Works with the types defined in this guide

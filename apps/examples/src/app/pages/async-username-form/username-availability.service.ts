@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import { map, Observable } from 'rxjs';
 
 /**
@@ -9,8 +9,10 @@ import { map, Observable } from 'rxjs';
  * of `available === false` to "taken" so the validation suite can simply
  * reject when the username is unavailable. Mirrors `SwapiService` — an
  * injectable HttpClient wrapper returning an `Observable<boolean>`.
+ *
+ * Uses Angular 22's `@Service()` decorator for simplified service registration.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class UsernameAvailabilityService {
   private readonly httpClient = inject(HttpClient);
   private readonly baseUrl = '/api/username-availability';

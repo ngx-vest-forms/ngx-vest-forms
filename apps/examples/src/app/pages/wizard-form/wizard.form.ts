@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   input,
   output,
@@ -27,7 +26,6 @@ import { WizardStep3FormComponent } from './wizard-step3.form';
     WizardStep3FormComponent,
   ],
   templateUrl: './wizard.form.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WizardFormBodyComponent {
   readonly currentStep = input.required<number>();

@@ -315,8 +315,8 @@ If your composite can be decomposed into completely independent labeled fields, 
 ## Repo references to consult when needed
 
 - `../../../../docs/COMPOSITE-ADAPTER-RECIPE.md`
-- `../../../../projects/examples/src/app/pages/date-range-adapter/`
-- `../../../../projects/ngx-vest-forms/src/public-api.ts`
+- `../../../../apps/examples/src/app/pages/date-range-adapter/`
+- `../../../../packages/ngx-vest-forms/src/public-api.ts`
 - `../../../../docs/VALIDATION-CONFIG-BUILDER.md`
 - `../../../../docs/CUSTOM-CONTROL-WRAPPERS.md`
 

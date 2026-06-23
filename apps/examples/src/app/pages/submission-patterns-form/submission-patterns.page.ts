@@ -1,12 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   afterNextRender,
-  ChangeDetectionStrategy,
   Component,
   computed,
   DestroyRef,
   inject,
+  injectAsync,
   Injector,
+  onIdle,
   signal,
   viewChild,
 } from '@angular/core';
@@ -19,7 +20,7 @@ import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.comp
 import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import { PageTitle } from '../../ui/page-title/page-title.component';
-import { AccountService } from './account.service';
+
 import { submissionPatternsContent } from './submission-patterns.content';
 import { SubmissionPatternsFormBody } from './submission-patterns.form';
 import { submissionPatternsSuite } from './submission-patterns.validations';
@@ -53,10 +54,12 @@ type SubmissionState = 'editing' | 'submitting' | 'server-error' | 'success';
     SubmissionPatternsFormBody,
   ],
   templateUrl: './submission-patterns.page.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SubmissionPatternsPageComponent {
-  private readonly accountService = inject(AccountService);
+  private readonly accountService = injectAsync(
+    () => import('./account.service').then((m) => m.AccountService),
+    { prefetch: onIdle }
+  );
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -112,14 +115,14 @@ export class SubmissionPatternsPageComponent {
           return;
         }
 
-        this.callServer();
+        void this.callServer();
       },
       { injector: this.injector }
     );
   }
 
   /** (c)/(d) — the only place the server is contacted. */
-  private callServer(): void {
+  private async callServer(): Promise<void> {
     this.state.set('submitting');
     this.serverError.set(null);
 
@@ -136,7 +139,18 @@ export class SubmissionPatternsPageComponent {
           ? 'network-error'
           : undefined;
 
-    this.accountService
+    let accountService: Awaited<ReturnType<typeof this.accountService>>;
+    try {
+      accountService = await this.accountService();
+    } catch (error: unknown) {
+      this.formBody()?.clearSubmittedState();
+      this.submitCycleActive.set(false);
+      this.state.set('server-error');
+      this.serverError.set(this.toErrorMessage(error));
+      return;
+    }
+
+    accountService
       .createAccount(value, errorScenario ? { errorScenario } : undefined)
       .pipe(
         catchError((error: unknown) => {
@@ -164,7 +178,7 @@ export class SubmissionPatternsPageComponent {
 
   /** Retry re-submits the exact same value through the same path. */
   protected retry(): void {
-    this.callServer();
+    void this.callServer();
   }
 
   /** End the current submit cycle while preserving values and control metadata. */

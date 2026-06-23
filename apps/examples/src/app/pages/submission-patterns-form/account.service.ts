@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { SubmissionPatternsModel } from '../../models/submission-patterns.model';
 
@@ -14,11 +14,10 @@ export type CreateAccountOptions = {
 
 /**
  * Thin HTTP client for the account-creation endpoint backed by the in-app
- * mock interceptor (`POST /api/account`). Mirrors the style of the other
- * example services (swapi / auto-save): a single injected `HttpClient`,
- * no error handling here — the page owns the success/failure state machine.
+ * mock interceptor (`POST /api/account`). Auto-provided via Angular 22's
+ * `@Service()` so the submission demo can lazy-load it with `injectAsync()`.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AccountService {
   private readonly httpClient = inject(HttpClient);
   private readonly accountUrl = '/api/account';

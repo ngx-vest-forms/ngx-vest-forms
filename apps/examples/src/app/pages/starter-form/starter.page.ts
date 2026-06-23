@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   signal,
@@ -35,7 +34,6 @@ import { starterFormSuite } from './starter.validations';
     StarterFormBody,
   ],
   templateUrl: './starter.page.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StarterPageComponent {
   protected readonly exampleContent = starterContent;

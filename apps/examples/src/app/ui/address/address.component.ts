@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   input,
@@ -15,7 +14,6 @@ let nextAddressInstanceId = 0;
   imports: [NgxVestForms],
   templateUrl: './address.component.html',
   styleUrls: ['./address.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [vestFormsViewProviders],
 })
 export class AddressComponent {

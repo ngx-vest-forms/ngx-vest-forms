@@ -132,9 +132,9 @@ When answering the user:
 - `../../../../docs/AUTO-SAVE-ON-BLUR.md`
 - `../../../../docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`
 - `../../../../README.md`
-- `../../../../projects/examples/src/app/pages/auto-save-demo/auto-save-demo.page.ts`
-- `../../../../projects/examples/src/app/pages/auto-save-demo/auto-save-demo.form.ts`
-- `../../../../projects/ngx-vest-forms/src/public-api.ts`
+- `../../../../apps/examples/src/app/pages/auto-save-demo/auto-save-demo.page.ts`
+- `../../../../apps/examples/src/app/pages/auto-save-demo/auto-save-demo.form.ts`
+- `../../../../packages/ngx-vest-forms/src/public-api.ts`
 
 Use the auto-save demo as the canonical repo example for blur-driven persistence and quiet dependent validation.
 

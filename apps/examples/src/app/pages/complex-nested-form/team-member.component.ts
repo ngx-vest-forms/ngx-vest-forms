@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   input,
@@ -19,7 +18,6 @@ import { TeamMemberModel } from '../../models/complex-nested.model';
   selector: 'ngx-team-member',
   imports: [NgxVestForms],
   templateUrl: './team-member.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [vestFormsViewProviders],
 })
 export class TeamMemberComponent {

@@ -33,22 +33,22 @@ description so a reviewer can redirect if needed.
 
 Use the versions in `package.json` and the baseline below as hard compatibility limits for generated code and advice.
 
-- Angular framework packages: `21.2.12`
-- Angular CLI/build tooling: `21.2.10`
-- TypeScript: `~5.9.3`
+- Angular framework packages: `22.0.1`
+- Angular CLI/build tooling: `22.0.1`
+- TypeScript: `~6.0.3`
 - Node.js: `>=22.0.0`
 - RxJS: `~7.8.2`
 - Vest.js: `~6.3.2`
-- Vitest: `^4.1.5`
-- Playwright: `1.59.1`
+- Vitest: `^4.1.8`
+- Playwright: `1.60.0`
 
 You can suggest code that depends on features introduced in versions of Angular, TypeScript, Node.js, RxJS, Vest, Vitest, Playwright, or other dependencies newer than the versions listed here or in `package.json`. But come with a strong justification for why the newer feature is necessary and how it improves on the existing patterns in the repo. Do not suggest newer features just because they exist or are trendy if they do not clearly enhance the code quality, readability, or maintainability of the generated code in this specific repository context.
 
 ## Repo shape
 
-- Library source: `projects/ngx-vest-forms/`
-- Demo/examples app: `projects/examples/`
-- Library public surface: `projects/ngx-vest-forms/src/public-api.ts`
+- Library source: `packages/ngx-vest-forms/`
+- Demo/examples app: `apps/examples/`
+- Library public surface: `packages/ngx-vest-forms/src/public-api.ts`
 - Domain docs: `docs/`
 - Always-on instructions: `.github/instructions/`
 - Local skills: `.agents/skills/`
@@ -58,10 +58,10 @@ You can suggest code that depends on features introduced in versions of Angular,
 When writing examples for developers using the library:
 
 - import from `'ngx-vest-forms'`
-- prefer symbols that exist in `projects/ngx-vest-forms/src/public-api.ts`
-- do not recommend imports from `projects/ngx-vest-forms/src/lib/**` or other internal paths unless the task is explicitly about maintaining the library itself
+- prefer symbols that exist in `packages/ngx-vest-forms/src/public-api.ts`
+- do not recommend imports from `packages/ngx-vest-forms/src/lib/**` or other internal paths unless the task is explicitly about maintaining the library itself
 
-If a new library feature is added, export it in `projects/ngx-vest-forms/src/public-api.ts` and then update the examples, docs, and skills.
+If a new library feature is added, export it in `packages/ngx-vest-forms/src/public-api.ts` and then update the examples, docs, and skills.
 
 ## Working rules
 
@@ -90,15 +90,15 @@ If a new library feature is added, export it in `projects/ngx-vest-forms/src/pub
 
 When changing the library itself:
 
-1. Implement in `projects/ngx-vest-forms/src/lib/`
-2. Export the supported surface in `projects/ngx-vest-forms/src/public-api.ts`
-3. Add or update example usage in `projects/examples/`
+1. Implement in `packages/ngx-vest-forms/src/lib/`
+2. Export the supported surface in `packages/ngx-vest-forms/src/public-api.ts`
+3. Add or update example usage in `apps/examples/`
 4. Add or update tests
 5. Update docs and any affected skill/reference files
 
 ## Style and quality
 
-- Keep code aligned with Angular 21 + signals patterns already used in the repo.
+- Keep code aligned with Angular 22 + signals patterns already used in the repo.
 - Prefer clear, typed examples over clever abstractions.
 - Follow repository naming and file-organization patterns.
 - Keep accessibility and predictable validation UX in mind.

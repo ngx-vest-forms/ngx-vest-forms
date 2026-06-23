@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import { catchError, map, Observable, of } from 'rxjs';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class SwapiService {
   private readonly httpClient = inject(HttpClient);
   private readonly peopleUrl = '/api/people';

@@ -1,6 +1,5 @@
 import { KeyValuePipe } from '@angular/common';
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   input,
@@ -39,7 +38,6 @@ const emptyMember: TeamMemberModel = { fullName: '', email: '', role: '' };
   ],
   templateUrl: './complex-nested.form.html',
   providers: [provideFormContract(complexNestedContract)],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ComplexNestedFormBody {
   readonly formValue = input.required<ComplexNestedModel>();

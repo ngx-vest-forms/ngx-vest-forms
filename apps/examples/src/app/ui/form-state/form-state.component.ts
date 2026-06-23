@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   input,
@@ -154,7 +153,6 @@ type MessageInput = readonly string[] | Record<string, string[]>;
       }
     </ngx-card>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FormStateCardComponent {
   readonly title = input('Form State');

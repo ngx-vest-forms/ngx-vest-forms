@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   input,
@@ -25,7 +24,6 @@ import { FormSectionComponent } from '../../ui/form-section/form-section.compone
   selector: 'ngx-zod-schema-demo-form-body',
   imports: [NgxVestForms, Card, FormSectionComponent],
   templateUrl: './zod-schema-demo.form.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ZodSchemaDemoFormBody {
   readonly formValue = input.required<ZodSchemaDemoModel>();

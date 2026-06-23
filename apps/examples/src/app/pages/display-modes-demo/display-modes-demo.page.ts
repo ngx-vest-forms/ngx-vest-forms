@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import {
   NGX_ERROR_DISPLAY_MODE_TOKEN,
   NGX_WARNING_DISPLAY_MODE_TOKEN,
@@ -35,7 +35,6 @@ import { displayModesDemoSuite } from './display-modes-demo.validations';
       useValue: 'on-touch',
     },
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DisplayModesDemoPageComponent {
   protected readonly exampleContent = displayModesContent;

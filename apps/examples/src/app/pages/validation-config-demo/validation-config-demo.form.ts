@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   input,
   output,
@@ -25,7 +24,6 @@ import { FormSectionComponent } from '../../ui/form-section/form-section.compone
   imports: [NgxVestForms, Card, FormSectionComponent],
   templateUrl: './validation-config-demo.form.html',
   providers: [provideFormContract(validationDemoContract)],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ValidationConfigDemoFormBody {
   readonly formValue = input.required<ValidationDemoModel>();

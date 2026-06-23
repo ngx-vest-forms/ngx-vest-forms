@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { ExampleContent } from '../../shared/example-content';
 import { Card } from '../card/card.component';
@@ -96,7 +96,6 @@ import { Card } from '../card/card.component';
       </ngx-card>
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
 })
 export class ExampleCardsComponent {

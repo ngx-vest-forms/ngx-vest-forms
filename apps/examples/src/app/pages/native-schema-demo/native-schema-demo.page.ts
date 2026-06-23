@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { NativeSchemaDemoModel } from '../../models/native-schema-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
@@ -20,7 +20,6 @@ import { nativeSchemaDemoSuite } from './native-schema-demo.validations';
     NativeSchemaDemoFormBody,
   ],
   templateUrl: './native-schema-demo.page.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NativeSchemaDemoPageComponent {
   protected readonly formValue = signal<NativeSchemaDemoModel>({});

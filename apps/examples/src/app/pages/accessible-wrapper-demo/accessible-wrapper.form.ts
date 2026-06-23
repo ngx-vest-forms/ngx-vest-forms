@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-  output,
-  viewChild,
-} from '@angular/core';
+import { Component, input, output, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
   FormDirective,
@@ -23,7 +17,6 @@ import {
   imports: [NgxVestForms, FormErrorControlDirective],
   templateUrl: './accessible-wrapper.form.html',
   providers: [provideFormContract(accessibleWrapperContract)],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccessibleWrapperFormBody {
   readonly formValue = input.required<AccessibleWrapperModel>();

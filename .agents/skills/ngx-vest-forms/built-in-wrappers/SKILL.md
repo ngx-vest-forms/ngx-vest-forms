@@ -82,7 +82,7 @@ When answering:
 
 ## Repo references to consult when needed
 
-- `../../../../projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md`
+- `../../../../packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md`
 - `../../../../docs/ACCESSIBILITY.md`
 - `../../../../docs/CUSTOM-CONTROL-WRAPPERS.md`
 - `../../../../docs/CHILD-COMPONENTS.md`

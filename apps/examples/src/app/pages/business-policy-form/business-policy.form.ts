@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   input,
   output,
@@ -34,7 +33,6 @@ import { EU_COUNTRIES } from './business-policy.validations';
   imports: [NgxVestForms, Card, FormSectionComponent],
   templateUrl: './business-policy.form.html',
   providers: [provideFormContract(businessPolicyContract)],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BusinessPolicyFormBody {
   readonly formValue = input.required<BusinessPolicyModel>();

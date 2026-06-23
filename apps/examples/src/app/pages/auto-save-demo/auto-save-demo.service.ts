@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { delay, Observable, of, throwError } from 'rxjs';
 import { AutoSaveDemoModel } from '../../models/auto-save-demo.model';
 
@@ -12,9 +12,7 @@ export type StoredAutoSaveDraft = AutoSaveDraftResult & {
   draft: AutoSaveDemoModel;
 };
 
-@Injectable({
-  providedIn: 'root',
-})
+@Service()
 export class AutoSaveDemoService {
   static readonly STORAGE_KEY = 'ngx-vest-forms:auto-save-demo:draft';
 

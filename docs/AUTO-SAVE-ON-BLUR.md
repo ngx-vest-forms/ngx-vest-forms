@@ -263,9 +263,9 @@ needs stricter persistence rules.
 
 Relevant files:
 
-- `projects/examples/src/app/pages/auto-save-demo/auto-save-demo.page.ts`
-- `projects/examples/src/app/pages/auto-save-demo/auto-save-demo.form.ts`
-- `projects/examples/src/app/pages/auto-save-demo/auto-save-demo.service.ts`
+- `apps/examples/src/app/pages/auto-save-demo/auto-save-demo.page.ts`
+- `apps/examples/src/app/pages/auto-save-demo/auto-save-demo.form.ts`
+- `apps/examples/src/app/pages/auto-save-demo/auto-save-demo.service.ts`
 
 ## Accessibility notes
 

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 
 type AlertTone = 'error' | 'warning' | 'info' | 'success';
 
@@ -43,7 +43,6 @@ type AlertTone = 'error' | 'warning' | 'info' | 'success';
       </div>
     </section>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'block',
   },

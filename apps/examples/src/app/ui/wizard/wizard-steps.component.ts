@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   input,
@@ -176,7 +175,6 @@ export type WizardStepConfig = {
       display: block;
     }
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WizardStepsComponent {
   readonly steps = input.required<WizardStepConfig[]>();

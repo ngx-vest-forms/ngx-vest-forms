@@ -1,6 +1,5 @@
 import { KeyValuePipe } from '@angular/common';
 import {
-  ChangeDetectionStrategy,
   Component,
   input,
   output,
@@ -28,7 +27,6 @@ import type { PhoneNumberMap } from '../../models/phonenumber.model';
   imports: [NgxVestForms, KeyValuePipe],
   templateUrl: './phonenumbers.component.html',
   styleUrls: ['./phonenumbers.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [vestFormsViewProviders],
 })
 export class PhoneNumbersComponent {

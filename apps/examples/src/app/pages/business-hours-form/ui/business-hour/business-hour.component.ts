@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { NgxMaskDirective } from 'ngx-mask';
 import { NgxVestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 import { BusinessHourFormModel } from '../../../../models/business-hours-form.model';
@@ -8,7 +8,6 @@ import { BusinessHourFormModel } from '../../../../models/business-hours-form.mo
   imports: [NgxVestForms, NgxMaskDirective],
   templateUrl: './business-hour.component.html',
   styleUrls: ['./business-hour.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   viewProviders: [vestFormsViewProviders],
 })
 export class BusinessHourComponent {

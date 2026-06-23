@@ -1,6 +1,22 @@
+// JSDOM stubs for navigator - must be set up before any other imports that might use it
+if (typeof window !== 'undefined' && typeof window.navigator === 'undefined') {
+  Object.defineProperty(window, 'navigator', {
+    writable: true,
+    configurable: true,
+    value: {
+      clipboard: {
+        writeText: () => Promise.resolve(),
+        readText: () => Promise.resolve(''),
+      },
+      userAgent: 'node.js',
+      platform: 'node',
+    },
+  });
+}
+
+import '@analogjs/vitest-angular/setup-serializers';
 import '@analogjs/vitest-angular/setup-snapshots';
 import '@angular/compiler';
-
 import * as matchers from '@testing-library/jest-dom/matchers';
 import { expect } from 'vitest';
 

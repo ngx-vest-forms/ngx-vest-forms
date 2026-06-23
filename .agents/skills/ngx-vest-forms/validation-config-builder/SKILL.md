@@ -134,7 +134,7 @@ When answering the user:
 - `../../../../docs/AUTO-SAVE-ON-BLUR.md`
 - `../../../../docs/FIELD-PATHS.md`
 - `../../../../README.md`
-- `../../../../projects/ngx-vest-forms/src/public-api.ts`
+- `../../../../packages/ngx-vest-forms/src/public-api.ts`
 
 Treat the repo instruction file as the invariant layer. This skill adds the dependency-graph reasoning and builder-specific patterns.
 

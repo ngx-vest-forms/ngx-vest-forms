@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
   input,
@@ -23,7 +22,6 @@ import {
   imports: [NgxVestForms],
   templateUrl: './async-username.form.html',
   providers: [provideFormContract(asyncUsernameShape)],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AsyncUsernameFormBody {
   readonly formValue = input.required<AsyncUsernameModel>();

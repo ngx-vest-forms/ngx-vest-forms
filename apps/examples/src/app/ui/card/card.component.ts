@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 
 @Component({
   selector: 'ngx-card',
@@ -21,7 +21,6 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       <ng-content></ng-content>
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Card {
   readonly title = input<string>();

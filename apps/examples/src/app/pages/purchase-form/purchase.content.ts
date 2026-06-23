@@ -12,7 +12,7 @@ export const purchaseContent = defineExampleContent({
       'A ROOT_FORM rule ("Brecht is not 30 anymore") proving form-level validation across multiple fields',
       'Non-blocking password-strength warnings via warn() shown alongside blocking errors',
       'Imperative form helpers: clearFields() to wipe sensitive data, setValueAtPath() to prefill the billing address, and focusFirstInvalidControl() on submit',
-      'httpResource-driven "Fetch Luke" data load with selectable failure scenarios (404, 401, 500, network) that clear fetched fields on error',
+      'httpResource-driven "Fetch Luke" data load with Zod-backed response parsing and selectable failure scenarios (404, 401, 500, network) that clear fetched fields on error',
     ],
   },
   learn: {

@@ -103,7 +103,7 @@ When answering:
 - `../../../../docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`
 - `../../../../README.md`
 - `../../../../docs/ACCESSIBILITY.md`
-- `../../../../projects/ngx-vest-forms/src/public-api.ts`
+- `../../../../packages/ngx-vest-forms/src/public-api.ts`
 
 Treat the repo instruction file as the baseline. Use this skill for the field-vs-form ownership decision and form-summary behavior.
 
