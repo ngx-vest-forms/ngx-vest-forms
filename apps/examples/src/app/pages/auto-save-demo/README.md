@@ -33,7 +33,7 @@ events and a Reset that races an in-flight save.
 ## ngx-vest-forms APIs showcased
 
 - `NgxVestForms` directive bundle on the form body.
-- `NgxFieldBlurEvent<T>` — the `(fieldBlurred)` payload exposing `field`,
+- `NgxFieldBlurEvent<T>` — the `(fieldBlur)` payload exposing `field`,
   `formValue`, and `dirty` used to drive blur-based saving.
 - `createValidationConfig<T>()` with `.bidirectional('quantity',
   'quantityJustification')` and `.whenChanged('preferredContactMethod',

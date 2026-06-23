@@ -51,15 +51,19 @@ class UserFormComponent {
 
 Mechanical rename — the public API surface of the two types was identical:
 
-```typescript
+```text
 // Before (v2.x)
 import { NgxTypedVestSuite } from 'ngx-vest-forms';
 
 export const suite: NgxTypedVestSuite<FormModel> = create((model) => {
   test('email', 'Required', () => enforce(model.email).isNotBlank());
 });
+// NOTE: This import no longer exists in v3; shown for migration context only.
 
 // After (v3.x)
+```
+
+```typescript
 import { NgxVestSuite } from 'ngx-vest-forms';
 
 export const suite: NgxVestSuite<FormModel> = create((model) => {

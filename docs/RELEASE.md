@@ -6,18 +6,18 @@ This document describes how to release new versions of ngx-vest-forms. All relea
 
 ### 1. Production Release (Stable)
 
-Production releases are created from the `master`, `release/v1.x`, or `release/v2.x` branches and publish stable versions to npm.
+Production releases are created from `master` and maintenance branches (`release/v1.x`, `release/v2.x`) and publish stable versions to npm.
 
 **How to trigger:**
 
 1. Go to [Actions > Release (Production)](../../actions/workflows/cd.yml)
 2. Click "Run workflow"
 3. Select the branch to release from:
-   - `master` - Latest stable version (v3.x after the Vest 6 migration lands)
+   - `master` - Stable `@latest` channel (currently v2 line until v3 GA merge)
    - `release/v1.x` - Maintenance releases for v1.x
-   - `release/v2.x` - Maintenance releases for v2.x after `master` moves to v3.x
+   - `release/v2.x` - Maintenance releases for v2.x
 
-Use maintenance branches for supported release lines. For example, prefer `release/v2.x` over a fixed branch name like `release/2.0.0`. A future `release/v3.x` branch would only be needed once `master` moves beyond the v3 line.
+Use maintenance branches for supported release lines. For example, prefer `release/v2.x` over a fixed branch name like `release/2.0.0`. `release/v3` is the active v3 development/beta line until GA; a future `release/v3.x` branch is only needed after v3 becomes stable on `master`.
 
 ### Branch lifecycle & the v2 → v3 transition
 

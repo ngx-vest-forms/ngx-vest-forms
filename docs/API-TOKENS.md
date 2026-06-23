@@ -632,6 +632,6 @@ export const appConfig: ApplicationConfig = {
 
 ## See Also
 
-- [Validation Options](../packages/ngx-vest-forms/src/lib/directives/validation-options.ts) - Field-level validation configuration
+- `ValidationOptions` (import from `ngx-vest-forms`) - Field-level validation configuration
 - [Accessibility Guide](./ACCESSIBILITY.md) - Error announcement patterns
 - [Complete Example](./COMPLETE-EXAMPLE.md) - Full form implementation with configuration

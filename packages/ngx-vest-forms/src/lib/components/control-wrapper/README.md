@@ -54,6 +54,13 @@ Accepted values:
 
 This input is provided by the composed `FormErrorDisplayDirective`.
 
+### `ariaRequired`
+
+Explicitly applies `aria-required="true"` to associated descendant controls.
+
+Use this when the wrapped control is always required. For conditional requirements,
+keep the label/help text and validation messages as the primary explanation.
+
 ### `ariaAssociationMode`
 
 Controls how this wrapper applies `aria-describedby` / `aria-invalid` to descendant controls.

@@ -35,7 +35,6 @@ This directory contains all utility types and functions provided by ngx-vest-for
 - [Internal Equality Utilities](#internal-equality-utilities) ⚠️
   - [shallowEqual()](#shallowequal) — `ngx-vest-forms/internal`
   - [fastDeepEqual()](#fastdeepequal) — `ngx-vest-forms/internal`
-- [Internal Shape Validation](#internal-shape-validation) ⚠️ (removed in v3 — legacy fallback only; see [`toFormContract`](#toformcontract))
 - [Standard Schema Adapter](#standard-schema-adapter)
   - [toFormContract()](#toformcontract)
 
@@ -50,6 +49,7 @@ This directory contains all utility types and functions provided by ngx-vest-for
 **Why?** Template-driven forms are inherently deep partial since they're created incrementally by the DOM.
 
 ```typescript
+import { signal } from '@angular/core';
 import { NgxDeepPartial } from 'ngx-vest-forms';
 
 interface UserModel {
@@ -209,7 +209,7 @@ export const suite = create((model: FormModel) => {
 
 ### setValueAtPath()
 
-Sets a value at a nested path using dot notation (creates intermediate objects).
+Sets a value at a nested path using dot and bracket notation (creates intermediate objects/arrays as needed).
 
 ```typescript
 import { setValueAtPath } from 'ngx-vest-forms';
@@ -219,7 +219,7 @@ setValueAtPath(obj, 'user.profile.name', 'John');
 // obj = { user: { profile: { name: 'John' } } }
 
 setValueAtPath(obj, 'addresses[0].street', 'Main St');
-// obj = { addresses: { 0: { street: 'Main St' } } }
+// obj = { user: { profile: { name: 'John' } }, addresses: [{ street: 'Main St' }] }
 ```
 
 **When to use:**

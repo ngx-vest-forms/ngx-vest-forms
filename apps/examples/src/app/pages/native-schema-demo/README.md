@@ -23,7 +23,7 @@ from the suite.
 
 - `provideFormContract(nativeSchemaDemoContract)` — registers the shape contract
   for the form body.
-- `NgxVestForms` — template directives (`scVestForm`, `[ngModel]`, control
+- `NgxVestForms` — template directives (`ngxVestForm`, `[ngModel]`, control
   wrappers) used by the form HTML.
 - `FormDirective<NativeSchemaDemoModel>` — accessed via `viewChild` to read
   `formState()`.

@@ -1,11 +1,11 @@
 # E2E Tests for ngx-vest-forms Examples
 
-Comprehensive end-to-end tests for the three demo forms showcasing ngx-vest-forms functionality and validating fixes from PR #60.
+Comprehensive end-to-end tests for the examples app showcasing ngx-vest-forms behaviors across demos.
 
 ## Test Structure
 
 E2E tests now follow the same page/form naming pattern used in
-`projects/examples/src/app/pages/*`.
+`apps/examples/src/app/pages/*`.
 
 ### Page-aligned files
 
@@ -51,31 +51,34 @@ page-local support files.
 ### Run All Tests
 
 ```bash
-# Run all e2e tests
-npm run ng e2e
+# Run all e2e tests via Nx
+pnpm nx run examples-e2e:e2e
+
+# Or using the workspace script
+pnpm e2e
 
 # Or using Playwright directly
-npx playwright test
+pnpm exec playwright test
 
 # Run specific page-aligned test file
-npx playwright test e2e/pages/purchase-form/purchase.form.spec.ts
+pnpm exec playwright test e2e/pages/purchase-form/purchase.form.spec.ts
 
 # Run tests in headed mode (see browser)
-npx playwright test --headed
+pnpm exec playwright test --headed
 
 # Run tests in debug mode
-npx playwright test --debug
+pnpm exec playwright test --debug
 
 # Run tests in specific browser
-npx playwright test --project=chromium
-npx playwright test --project=firefox
-npx playwright test --project=webkit
+pnpm exec playwright test --project=chromium
+pnpm exec playwright test --project=firefox
+pnpm exec playwright test --project=webkit
 ```
 
 ### View Test Report
 
 ```bash
-npx playwright show-report
+pnpm exec playwright show-report
 ```
 
 ## Test Coverage
@@ -196,13 +199,13 @@ Tests verify WCAG compliance including:
 1. **Run in headed mode:**
 
    ```bash
-   npx playwright test --headed --workers=1
+   pnpm exec playwright test --headed --workers=1
    ```
 
 2. **Use debug mode with Playwright Inspector:**
 
    ```bash
-   npx playwright test --debug
+   pnpm exec playwright test --debug
    ```
 
 3. **Check screenshots and videos:**
@@ -212,7 +215,7 @@ Tests verify WCAG compliance including:
 4. **View trace:**
 
    ```bash
-   npx playwright show-report
+   pnpm exec playwright show-report
    # Click on failed test → View trace
    ```
 
@@ -259,7 +262,7 @@ Tests are configured for CI with:
 Set `CI=true` environment variable to enable CI mode:
 
 ```bash
-CI=true npx playwright test
+CI=true pnpm exec playwright test
 ```
 
 ## Contributing

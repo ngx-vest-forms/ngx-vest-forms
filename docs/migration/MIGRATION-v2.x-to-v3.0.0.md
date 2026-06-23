@@ -20,6 +20,27 @@ v3.0.0 deletes every `@deprecated` runtime helper, const alias, and type alias t
 
 If you only used the recommended `Ngx*` / `NGX_*` names (or the canonical `setValueAtPath` / `structuredClone`), v3 is a no-op for this category.
 
+### Test setup change: `setupTestBed()` is no longer required
+
+With Angular 22 + `@analogjs/vitest-angular`, explicit `setupTestBed()` calls are no longer needed in test bootstraps.
+
+- **v2 pattern** (remove):
+
+```ts
+// test-setup.ts
+import { setupTestBed } from './test-setup';
+setupTestBed();
+```
+
+- **v3 pattern** (recommended):
+
+```ts
+// test-setup.ts
+import './test-setup';
+```
+
+For migration safety, `setupTestBed()` remains exported as a deprecated no-op. Remove calls gradually, but do not add new ones.
+
 ### `[formShape]` → `[formContract]`
 
 The `[formShape]` input on `<form ngxVestForm>` is removed in v3 and replaced by `[formContract]`, which accepts any [Standard Schema v1](https://standardschema.dev) value (Zod v4, Valibot, hand-rolled, …) **or** a legacy `NgxDeepRequired<T>` shape object for back-compat.

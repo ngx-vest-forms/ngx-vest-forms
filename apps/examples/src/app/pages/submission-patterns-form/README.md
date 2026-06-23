@@ -12,7 +12,7 @@ A plain Vest suite (`submission-patterns.validations.ts`): full name
 required, email required + format, password required + min 8 characters
 (with a non-blocking `warn()` nudge under 12), and `acceptTerms` must be
 true. The suite has no Angular dependency and is unit-testable on its own:
-`submissionPatternsSuite({ email: 'x' })`. Errors display on blur via
+`submissionPatternsSuite.runStatic({ email: 'x' })`. Errors display on blur via
 `ngx-control-wrapper`.
 
 ### (b) Submit-time INVALID handling

@@ -389,7 +389,7 @@ export const procedureSuite: NgxVestSuite<ProcedureFormModel> = create(
 ## Best Practices
 
 1. **Use with non-form content switches** - Only needed when switching between form inputs and non-form elements
-2. **Always call `triggerFormValidation()`** - Update validation state after clearing fields
+2. **Call `triggerFormValidation()` only when needed** - Use it when clearing causes control ↔ non-control structure changes
 3. **Match validation logic** - Use `omitWhen` in validation suites for fields that can be cleared
 4. **Prefer utilities over manual** - Use `clearFieldsWhen`, `clearFields`, or `keepFieldsWhen` for cleaner code
 5. **Document clearing logic** - Comment why fields need clearing for future maintainers

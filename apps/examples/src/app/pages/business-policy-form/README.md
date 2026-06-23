@@ -48,7 +48,7 @@ A form carrying only warnings still submits successfully — the page checks
   across two field validators.
 - `warn()` flips a test from blocking to advisory with one call, so guidance
   and hard failures share the same authoring model but are surfaced separately.
-- The suite is plain Vest: `businessPolicySuite(model)` can be asserted in a
+- The suite is plain Vest: `businessPolicySuite.runStatic(model)` can be asserted in a
   unit test without rendering Angular.
 
 ## ngx-vest-forms APIs showcased

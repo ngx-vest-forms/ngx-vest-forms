@@ -7,7 +7,7 @@ A lightweight, type-safe adapter between Angular template-driven forms and [Vest
 
 [![npm version](https://img.shields.io/npm/v/ngx-vest-forms.svg?style=flat-square)](https://www.npmjs.com/package/ngx-vest-forms)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/ngx-vest-forms/ngx-vest-forms/cd.yml?branch=master&style=flat-square&label=Build)](https://github.com/ngx-vest-forms/ngx-vest-forms/actions/workflows/cd.yml)
-[![Angular](<https://img.shields.io/badge/Angular-19+%20(min)%20%E2%80%94%2020%20recommended-dd0031?style=flat-square&logo=angular>)](https://angular.dev)
+[![Angular](<https://img.shields.io/badge/Angular-22.x-dd0031?style=flat-square&logo=angular>)](https://angular.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
@@ -34,10 +34,10 @@ See the full guides under [Documentation](#documentation).
 
 ### Prerequisites
 
-- **Angular**: >=19.0.0 minimum, 20.x recommended (all used APIs stable)
-- **Vest.js**: >=5.4.6 (Validation engine)
-- **TypeScript**: >=5.8.0 (Modern Angular features)
-- **Node.js**: >=20 (Maintenance release)
+- **Angular**: 22.x
+- **Vest.js**: ~6.3.x
+- **TypeScript**: ~6.0.3
+- **Node.js**: >=22.0.0
 
 ### Installation
 
@@ -45,17 +45,11 @@ See the full guides under [Documentation](#documentation).
 npm install ngx-vest-forms
 ```
 
-> **v.2.0.0 NOTE:**
+> **v3 NOTE:**
 >
-> You must call `only()` **unconditionally** in Vest suites.
->
-> ```ts
-> // ✅ Correct
-> only(field); // only(undefined) safely runs all tests
-> ```
->
-> Why: Conditional `only()` breaks Vest's change detection mechanism and causes timing issues with `omitWhen` + `validationConfig` in ngx-vest-forms.
-> See the [Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md#1-unconditional-only-pattern-required-critical).
+> Keep Vest suite callbacks model-only (`create((model) => { ... })`).
+> Run field-focused validation at the call site with `suite.only(field).run(model)`.
+> Do not call `only()` inside the suite callback.
 >
 > Selector prefix: use `ngx-`. The legacy `sc-` prefix was removed in v3. See the [selector migration guide](./docs/SELECTOR-PREFIX-MIGRATION.md) if you are upgrading from v2.x.
 
@@ -85,7 +79,12 @@ const suite: NgxVestSuite<MyFormModel> = create((model) => {
 @Component({
   imports: [NgxVestForms],
   template: `
-    <form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      (formValueChange)="formValue.set($event)"
+    >
       <ngx-control-wrapper>
         <label for="email">Email</label>
         <input id="email" name="email" [ngModel]="formValue().email" />
@@ -132,10 +131,10 @@ That's all you need. The directive automatically creates controls, wires validat
 - **Field blur events** — `fieldBlur` output for blur-driven draft auto-save, analytics, and field-level side effects
 - **Utilities** — Field paths, field clearing, validation config builder
 
-### Compatibility & Safety Notes (v2.x)
+### Compatibility & Safety Notes (v3)
 
-- `ROOT_FORM_CONSTANT` is retained for compatibility but deprecated; prefer `ROOT_FORM`.
-- `set` / `cloneDeep` are retained for compatibility; prefer `setValueAtPath` / `structuredClone` in new code.
+- `ROOT_FORM` is the supported form-level key in v3.
+- `set` and `cloneDeep` are removed in v3; use `setValueAtPath` and `structuredClone`.
 
 ### Error & Warning Display Modes
 
@@ -367,7 +366,7 @@ For the valid-only variant, layer app policy on top of `fieldBlur`, for example:
 
 ```typescript
 protected handleFieldBlur(event: NgxFieldBlurEvent<FormModel>): void {
-  if (!event.formValue || !event.dirty || !event.valid || event.pending) {
+  if (!event.formValue || !event.dirty || !event.valid) {
     return;
   }
 
@@ -401,9 +400,16 @@ test(ROOT_FORM, 'At least one contact method is required', () => {
 
 ```html
 <!-- In template -->
-<form ngxVestForm ngxValidateRootForm [suite]="suite">
-  <!-- Show form-level errors -->
-  <div *ngIf="vestForm.errors?.rootForm">{{ vestForm.errors.rootForm }}</div>
+<form
+  ngxVestForm
+  ngxValidateRootForm
+  [suite]="suite"
+  [formValue]="formValue()"
+  (errorsChange)="errors.set($event)"
+>
+  @if (errors()[ROOT_FORM]) {
+    <div role="alert">{{ errors()[ROOT_FORM][0] }}</div>
+  }
 </form>
 ```
 
@@ -627,13 +633,13 @@ Install the `ngx-vest-forms` skill from the repository root with the `skills` CL
 npx skills add ngx-vest-forms/ngx-vest-forms --skill ngx-vest-forms
 ```
 
-Install the **Vest.js 5.4 guidance** skill from the repository root with the `skills` CLI:
+Install the **Vest.js guidance** skill from the repository root with the `skills` CLI:
 
 ```bash
 npx skills add ngx-vest-forms/ngx-vest-forms --skill vestjs
 ```
 
-See also: **[Vest.js 5.4 Agent Skill Guide](./docs/VESTJS-SKILL.md)**
+See also: **[Vest.js Agent Skill Guide](./docs/VESTJS-SKILL.md)**
 
 ### Comprehensive Instruction Files
 

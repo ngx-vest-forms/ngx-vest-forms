@@ -177,36 +177,14 @@ const grandparentId = this.route.parent?.parent?.snapshot.params['id'];
 const grandparentId = this.route.snapshot.params['id'];
 ```
 
-### 6. Template Improvements
+### 6. Template and control-flow alignment
 
-The examples app demonstrates several Angular v22 template features:
+Examples are aligned with Angular v22 template syntax and keep the repository's
+recommended ngx-vest-forms usage patterns:
 
-#### Spread Syntax in Templates
-```html
-<div [class]="{...baseClasses, 'active': isActive}"></div>
-```
-
-#### Comments in Elements
-```html
-<input
-  [ngModel]="username"
-  <!-- (blur)="checkUsername()" temporarily disabled -->
-  type="text"
-/>
-```
-
-#### Enhanced `@switch` with Multiple Cases
-```html
-@switch (status()) {
-  @case ('pending') @case ('processing') {
-    <p>Processing...</p>
-  }
-  @case ('done') {
-    <p>Complete!</p>
-  }
-  @default never;
-}
-```
+- unidirectional `[ngModel]` bindings
+- `@if`/`@for` control-flow where appropriate
+- stable `name` paths that match model field paths
 
 ## 🔄 Migration Steps for Users
 
@@ -241,23 +219,20 @@ Both the library and examples app have been tested with Angular v22:
 
 ### Library Tests
 ```bash
-pnpm run test:lib
+pnpm nx run ngx-vest-forms:test
 ```
-- ✅ Most tests pass
-- ⚠️ 2 pre-existing test failures (unrelated to Angular v22)
 
 ### Examples App Tests
 ```bash
-pnpm run test:examples
+pnpm nx run examples:test
 ```
-- ✅ All tests pass
 
 ### Build Verification
 ```bash
-pnpm run build
+pnpm nx run-many -t build
 ```
-- ✅ Library builds successfully
-- ✅ Examples app builds successfully
+
+Run these commands in your branch to verify current status.
 
 ## 📚 New Angular v22 Features Demonstrated
 
@@ -269,9 +244,6 @@ The examples app now showcases these Angular v22 features:
 | `injectAsync()` | Submission patterns | Lazy service loading with prefetch |
 | `httpResource()` | Purchase form | Reactive HTTP with Zod validation |
 | OnPush Default | All components | Automatic OnPush change detection |
-| Spread Syntax | Various templates | Object spread in template bindings |
-| Comments in Elements | Various templates | HTML comments inside element tags |
-| Enhanced `@switch` | Various templates | Multiple cases per block |
 
 ## 🔍 Troubleshooting
 

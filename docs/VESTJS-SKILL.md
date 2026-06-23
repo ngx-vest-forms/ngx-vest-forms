@@ -48,6 +48,16 @@ Use `vestjs` for broad or ambiguous requests like:
 
 Once the problem area is clear, the router skill should narrow to the corresponding focused sub-skill.
 
+## Vest 6 `focus()` quick reference
+
+For ngx-vest-forms integrations, keep suite callbacks model-only and perform focused runs at the call site:
+
+```ts
+suite.only(field).run(model);
+```
+
+When a flow needs group-level focus as well, pass a focus target from the call site (`NgxValidationFocus`) rather than introducing callback-field patterns inside `create(...)`.
+
 ## Versioning strategy
 
 The public install name stays:

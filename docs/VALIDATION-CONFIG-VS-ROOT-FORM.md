@@ -16,7 +16,7 @@ ngx-vest-forms provides three complementary features for handling validation in 
 | ----------------------- | --------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------- |
 | **Purpose**             | Re-validation trigger                         | Create form-level validations                       | Manual validation trigger                                     |
 | **What it does**        | When field X changes, re-validate field Y     | Runs ROOT_FORM tests from Vest suite                | Forces validation update when form structure changes          |
-| **Where errors appear** | At **field level** (`errors.fieldName`)       | At **form level** (`errors.rootForm`)               | N/A (triggers existing validations)                           |
+| **Where errors appear** | At **field level** (`errors.fieldName`)       | At **form level** (`errors[ROOT_FORM]`)             | N/A (triggers existing validations)                           |
 | **Use for**             | Field validations that depend on other fields | Form-wide business rules                            | Structure changes without value changes                       |
 | **When to call**        | Automatic (via config)                        | Automatic (on blur/submit)                          | Manual (after structure change)                               |
 | **Directive/Method**    | `FormDirective` (`ngxVestForm`)               | `ValidateRootFormDirective` (`ngxValidateRootForm`) | `FormDirective.triggerFormValidation()` (public method)       |
@@ -175,8 +175,8 @@ test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
   <!-- Fields... -->
 
   <!-- Display form-level error -->
-  @if (errors()['rootForm']) {
-  <div role="alert">{{ errors()['rootForm'][0] }}</div>
+  @if (errors()[ROOT_FORM]) {
+  <div role="alert">{{ errors()[ROOT_FORM][0] }}</div>
   }
 </form>
 ```
@@ -241,8 +241,8 @@ test(ROOT_FORM, 'Addresses cannot be the same', () => {
   - `'live'`: Validates on every value change
 - **Template display**: Show errors at form level (typically at top or bottom)
   ```html
-  @if (errors()['rootForm']) {
-  <div role="alert" class="form-error">{{ errors()['rootForm'][0] }}</div>
+  @if (errors()[ROOT_FORM]) {
+  <div role="alert" class="form-error">{{ errors()[ROOT_FORM][0] }}</div>
   }
   ```
 
@@ -394,9 +394,9 @@ These features complement each other in complex, dynamic forms:
       }
 
       <!-- Form-level errors from ROOT_FORM -->
-      @if (errors()['rootForm']) {
+      @if (errors()[ROOT_FORM]) {
         <div role="alert" class="form-error">
-          {{ errors()['rootForm'][0] }}
+          {{ errors()[ROOT_FORM][0] }}
         </div>
       }
 

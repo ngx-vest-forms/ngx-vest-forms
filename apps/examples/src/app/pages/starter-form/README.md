@@ -18,7 +18,7 @@ features. Every other demo in this app builds on the wiring shown here.
   attributes that drift from the model.
 - A plain Vest suite (`starter.validations.ts`) wired in through the
   `[suite]` input. The suite has no Angular dependency and is unit-testable
-  on its own: `starterFormSuite({ name: '' })`.
+  on its own: `starterFormSuite.runStatic({ name: '' })`.
 - The form value owned by the page as a `signal`, kept in sync through
   `(formValueChange)` — no reactive forms, no `FormGroup`.
 - `ngx-control-wrapper` rendering label + input + error message with the

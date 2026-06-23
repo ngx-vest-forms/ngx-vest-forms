@@ -116,6 +116,18 @@ const validationConfig = createValidationConfig<FormModel>()
   .build();
 ```
 
+## `formContract` diagnostics only appear in development mode
+
+**Meaning:** structural contract diagnostics (`[NGX-001]`, `[NGX-002]`, `[NGX-004]`) are development-only warnings and do not block runtime validity.
+
+**Important behavior:**
+
+- diagnostics run only in `isDevMode()`
+- only synchronous Standard Schema results are consumed by this pass
+- async schema validations are ignored by diagnostics (Vest suite validation still drives runtime validity)
+
+**Fix:** keep contract checks synchronous when you want developer feedback, and keep business validity in the Vest suite.
+
 ## Testing expected warnings
 
 When a test intentionally exercises a warning path, assert it without leaking noisy stderr output:

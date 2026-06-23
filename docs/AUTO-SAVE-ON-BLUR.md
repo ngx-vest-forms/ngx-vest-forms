@@ -144,7 +144,7 @@ Use this when persistence should happen only after the relevant validation has p
 
 ```ts
 protected handleFieldBlur(event: NgxFieldBlurEvent<DraftFormModel>): void {
-  if (!event.formValue || !event.dirty || !event.valid || event.pending) {
+  if (!event.formValue || !event.dirty || !event.valid) {
     return;
   }
 
@@ -165,7 +165,7 @@ instead of relying only on `event.valid`, which refers to the blurred control.
 
 ```ts
 protected handleFieldBlur(event: NgxFieldBlurEvent<DraftFormModel>): void {
-  if (!event.formValue || !event.dirty || event.pending) {
+  if (!event.formValue || !event.dirty) {
     return;
   }
 
