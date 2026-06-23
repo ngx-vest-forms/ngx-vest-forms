@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   effect,
+  DestroyRef,
   inject,
   Injector,
   linkedSignal,
@@ -12,6 +13,7 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import {
   clearFields,
@@ -95,6 +97,7 @@ export class PurchaseForm {
     debounceTime: this.validationDebouncePresets.async,
   };
   private readonly injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly swapiService = inject(SwapiService);
   private readonly productService = inject(ProductService);
   readonly products = signal<Product[]>([]);
