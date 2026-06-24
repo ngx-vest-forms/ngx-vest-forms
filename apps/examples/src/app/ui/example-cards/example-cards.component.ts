@@ -24,7 +24,7 @@ import { Card } from '../card/card.component';
             aria-hidden="true"
             >{{ content().demonstrates.icon }}</span
           >
-          <div>
+          <div class="min-w-0">
             <h2 class="text-base font-semibold text-gray-900 dark:text-white">
               {{ content().demonstrates.title }}
             </h2>
@@ -32,9 +32,9 @@ import { Card } from '../card/card.component';
               class="mt-3 space-y-1.5 text-sm text-gray-600 dark:text-gray-300"
             >
               @for (point of content().demonstrates.points; track point) {
-                <li class="flex gap-2">
+                <li class="flex min-w-0 gap-2">
                   <span
-                    class="text-primary-600 dark:text-primary-400"
+                    class="shrink-0 text-primary-600 dark:text-primary-400"
                     aria-hidden="true"
                     >▸</span
                   >
@@ -69,9 +69,9 @@ import { Card } from '../card/card.component';
                     class="mt-1.5 space-y-1.5 text-sm text-gray-600 dark:text-gray-300"
                   >
                     @for (point of section.points; track point) {
-                      <li class="flex gap-2">
+                      <li class="flex min-w-0 gap-2">
                         <span
-                          class="text-amber-600 dark:text-amber-400"
+                          class="shrink-0 text-amber-600 dark:text-amber-400"
                           aria-hidden="true"
                           >▸</span
                         >
