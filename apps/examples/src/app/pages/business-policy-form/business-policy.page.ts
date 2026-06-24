@@ -7,7 +7,6 @@ import {
 import { createValidationConfig } from 'ngx-vest-forms';
 import { BusinessPolicyModel } from '../../models/business-policy.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
-import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import { IntroItemComponent, IntroSectionComponent } from '../../ui/intro-section';
@@ -35,7 +34,6 @@ import {
     IntroSectionComponent,
     IntroItemComponent,
     AlertPanel,
-    Card,
     ExampleCardsComponent,
     FormStateCardComponent,
     BusinessPolicyFormBody,

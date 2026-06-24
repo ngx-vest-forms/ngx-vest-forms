@@ -3,8 +3,8 @@ import { Component, input } from '@angular/core';
 @Component({
   selector: 'ngx-page-title',
   template: `
-    <header class="mb-6">
-      <h1 class="text-3xl font-bold text-balance text-gray-950 dark:text-gray-50">
+    <header class="mb-5">
+      <h1 class="text-4xl font-bold text-balance text-gray-950 dark:text-gray-50 tracking-tight">
         {{ title() }}
       </h1>
       @if (subtitle()) {
