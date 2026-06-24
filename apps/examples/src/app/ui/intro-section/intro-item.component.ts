@@ -8,10 +8,10 @@ import { Component } from '@angular/core';
       class="flex gap-3 leading-relaxed"
     >
       <span
-        class="text-teal-600 dark:text-teal-400 font-semibold shrink-0 pt-1"
+        class="text-teal-500 dark:text-teal-400 font-bold shrink-0 pt-0.5 text-lg"
         aria-hidden="true"
       >
-        •
+        ▸
       </span>
       <span class="flex-1">
         <ng-content />

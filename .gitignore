@@ -49,6 +49,13 @@ Thumbs.db
 
 /.playwright-mcp
 
+# Impeccable skill directories
+.agents/skills/impeccable/
+.claude/skills/impeccable/
+.github/skills/impeccable/
+.github/hooks/impeccable.json
+.impeccable/
+
 # Playwright
 /test-results/
 /playwright-report/
@@ -72,5 +79,7 @@ Thumbs.db
 /.codex/
 /.opencode/
 /opencode.json
+.agents/skills/impeccable/
+.claude/skills/impeccable/
 
 .nx/migrate-runs

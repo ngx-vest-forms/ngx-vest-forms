@@ -29,7 +29,7 @@ import { Card } from '../card/card.component';
               {{ content().demonstrates.title }}
             </h2>
             <ul
-              class="mt-3 space-y-1.5 text-sm text-gray-600 dark:text-gray-300"
+              class="mt-4 space-y-1.5 text-sm text-gray-600 dark:text-gray-300 ml-[-3.25rem]"
             >
               @for (point of content().demonstrates.points; track point) {
                 <li class="flex min-w-0 gap-2">
@@ -66,7 +66,7 @@ import { Card } from '../card/card.component';
                     {{ section.title }}
                   </h3>
                   <ul
-                    class="mt-1.5 space-y-1.5 text-sm text-gray-600 dark:text-gray-300"
+                    class="mt-2.5 space-y-1.5 text-sm text-gray-600 dark:text-gray-300 ml-[-3.25rem]"
                   >
                     @for (point of section.points; track point) {
                       <li class="flex min-w-0 gap-2">
