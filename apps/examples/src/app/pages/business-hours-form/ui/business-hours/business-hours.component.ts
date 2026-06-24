@@ -31,6 +31,7 @@ export type BusinessHoursMap = Record<string, BusinessHourFormModel>;
   templateUrl: './business-hours.component.html',
   styleUrls: ['./business-hours.component.scss'],
   viewProviders: [vestFormsViewProviders],
+  host: { class: 'block' },
 })
 export class BusinessHoursComponent {
   /**

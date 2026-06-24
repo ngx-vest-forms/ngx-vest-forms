@@ -19,6 +19,7 @@ import { TeamMemberModel } from '../../models/complex-nested.model';
   imports: [NgxVestForms],
   templateUrl: './team-member.component.html',
   viewProviders: [vestFormsViewProviders],
+  host: { class: 'block' },
 })
 export class TeamMemberComponent {
   /** This member's current value (read-only projection of the parent model). */

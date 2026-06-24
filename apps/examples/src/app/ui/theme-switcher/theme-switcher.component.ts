@@ -9,6 +9,7 @@ import {
   imports: [],
   templateUrl: './theme-switcher.component.html',
   styleUrls: ['./theme-switcher.component.scss'],
+  host: { class: 'block' },
 })
 export class ThemeSwitcherComponent {
   protected readonly isDarkMode = signal<boolean>(this.getInitialTheme());

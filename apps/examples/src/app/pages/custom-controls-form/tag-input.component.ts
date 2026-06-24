@@ -61,6 +61,7 @@ let nextId = 0;
       multi: true,
     },
   ],
+  host: { class: 'block' },
 })
 export class TagInputComponent implements ControlValueAccessor {
   protected readonly inputId = `ngx-tag-input-${nextId++}`;
