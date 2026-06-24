@@ -8,8 +8,8 @@ import { createValidationConfig } from 'ngx-vest-forms';
 import { TravelFormModel } from '../../models/travel-form.model';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
-import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
+import { IntroItemComponent, IntroSectionComponent } from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { travelContent } from './travel.content';
 import { TravelFormApproach, TravelFormBody } from './travel.form';
@@ -20,9 +20,10 @@ import { travelValidationSuite } from './travel.validations';
   imports: [
     Card,
     ExampleCardsComponent,
-    FormPageLayout,
     FormStateCardComponent,
     PageTitle,
+    IntroSectionComponent,
+    IntroItemComponent,
     TravelFormBody,
   ],
   templateUrl: './travel.page.html',

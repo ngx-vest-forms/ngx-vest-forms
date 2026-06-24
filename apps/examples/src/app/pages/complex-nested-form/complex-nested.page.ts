@@ -11,9 +11,9 @@ import {
 } from '../../models/complex-nested.model';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
-import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import { JsonPreviewComponent } from '../../ui/json-preview/json-preview.component';
+import { IntroItemComponent, IntroSectionComponent } from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { complexNestedContent } from './complex-nested.content';
 import { ComplexNestedFormBody } from './complex-nested.form';
@@ -31,8 +31,9 @@ import { complexNestedSuite } from './complex-nested.validations';
   selector: 'ngx-complex-nested-page',
   imports: [
     PageTitle,
+    IntroSectionComponent,
+    IntroItemComponent,
     Card,
-    FormPageLayout,
     FormStateCardComponent,
     ExampleCardsComponent,
     JsonPreviewComponent,

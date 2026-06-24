@@ -4,29 +4,23 @@
     subtitle="Keep model state and validation aligned when inputs disappear or turn into static content."
   />
 
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Conditional fields with clearFieldsWhen</strong> — Remove fields from the model when they're no longer relevant; avoids sending stale data to the backend
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">keepFieldsWhen for payload filtering</strong> — Show only the fields that belong to the current branch; payload previews reflect actual backend submission shape
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Validation aligns with structure</strong> — When you switch modes, validation rules change; fields in inactive branches don't block submit
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Three-branch pattern</strong> — shipment (address), digital (email), pickup (static); each with different validation and field presence
+    </ngx-intro-item>
+  </ngx-intro-section>
 
-  <ngx-form-page-layout>
-    <div layout-aside class="sidebar-card-stack">
-      <ngx-card title="What changes when you switch modes">
-        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
-          <li>
-            <code>shipment</code> keeps <code>shippingAddress</code> active.
-          </li>
-          <li>
-            <code>digital</code> swaps that field for
-            <code>deliveryEmail</code>.
-          </li>
-          <li>
-            <code>pickup</code> removes the extra input entirely and leaves only
-            static guidance.
-          </li>
-          <li>
-            The payload preview keeps only the fields relevant to the active
-            branch.
-          </li>
-        </ul>
-      </ngx-card>
-
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div class="space-y-6">
       <ngx-form-state-card [feedback]="feedback()" />
 
       <ngx-card
@@ -37,7 +31,7 @@
       </ngx-card>
     </div>
 
-    <div layout-main>
+    <div>
       @if (submittedPayload(); as payload) {
       <ngx-alert-panel tone="success" title="Delivery plan submitted">
         <p>
@@ -67,7 +61,7 @@
         />
       </ngx-card>
     </div>
-  </ngx-form-page-layout>
+  </div>
 
   <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
 </div>

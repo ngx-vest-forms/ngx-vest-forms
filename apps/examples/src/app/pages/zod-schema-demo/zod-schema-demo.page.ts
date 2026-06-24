@@ -2,8 +2,8 @@ import { Component, signal } from '@angular/core';
 import { ZodSchemaDemoModel } from '../../models/zod-schema-demo.model';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
-import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
+import { IntroItemComponent, IntroSectionComponent } from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { zodSchemaContent } from './zod-schema-demo.content';
 import { ZodSchemaDemoFormBody } from './zod-schema-demo.form';
@@ -14,9 +14,10 @@ import { zodSchemaDemoSuite } from './zod-schema-demo.validations';
   imports: [
     Card,
     ExampleCardsComponent,
-    FormPageLayout,
     FormStateCardComponent,
     PageTitle,
+    IntroSectionComponent,
+    IntroItemComponent,
     ZodSchemaDemoFormBody,
   ],
   templateUrl: './zod-schema-demo.page.html',
