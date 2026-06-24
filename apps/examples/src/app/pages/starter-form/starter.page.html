@@ -4,22 +4,26 @@
     subtitle="The canonical ngx-vest-forms setup — copy this as a trustworthy baseline."
   />
 
+  <!-- Why start here: Full-width intro section -->
+  <section class="py-16 md:py-20 border-b border-gray-200 dark:border-gray-700">
+    <h2 class="text-2xl font-bold mb-8 text-gray-900 dark:text-white">Why start here</h2>
+    <ul class="space-y-4 text-base text-gray-700 dark:text-gray-200 max-w-3xl">
+      <li><strong class="text-gray-900 dark:text-white">One `ngxVestForm`, one Vest suite.</strong> Nothing else—no decorators, no metadata, no ceremony.</li>
+      <li><strong class="text-gray-900 dark:text-white">Public API only.</strong> Every line here is safe to copy into your app.</li>
+      <li><strong class="text-gray-900 dark:text-white">Errors appear on blur;</strong> the message hint is advisory guidance, not a blocker.</li>
+      <li><strong class="text-gray-900 dark:text-white">The form value is a signal</strong> the page owns—single source of truth, reactive by default.</li>
+    </ul>
+  </section>
 
-  <ngx-form-page-layout>
-    <div layout-aside class="sidebar-card-stack">
-      <ngx-card title="Why start here">
-        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
-          <li>One <code>ngxVestForm</code>, one Vest suite — nothing else.</li>
-          <li>Public API only. Safe to copy into your app.</li>
-          <li>Errors appear on blur; the message hint is advisory.</li>
-          <li>The form value is a signal the page owns.</li>
-        </ul>
-      </ngx-card>
-
+  <!-- Form section: Two-column layout -->
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <!-- Left: Form State card -->
+    <div>
       <ngx-form-state-card [feedback]="feedback()" />
     </div>
 
-    <div layout-main>
+    <!-- Right: Contact form card -->
+    <div>
       @if (submittedValue(); as submitted) {
       <ngx-alert-panel tone="success" title="Message sent">
         <p>
@@ -42,7 +46,7 @@
         />
       </ngx-card>
     </div>
-  </ngx-form-page-layout>
+  </div>
 
   <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
 </div>
