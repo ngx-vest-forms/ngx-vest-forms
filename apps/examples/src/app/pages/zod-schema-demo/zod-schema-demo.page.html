@@ -4,46 +4,27 @@
     subtitle="Combine a Zod schema alongside Vest per-field business rules in one example flow."
   />
 
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Zod as external schema</strong> — Keep a Zod schema as a structural contract separate from Vest's field-level business rules
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Per-field Vest rules</strong> — Use enforce callbacks for field-level custom validation; Vest focuses on user-facing messages
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Full vs. focused runs</strong> — suite.run(model) validates everything; suite.only(field).run(model) runs only that field's tests
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Native Vest schemas or Zod</strong> — Choose between enforce.shape() (native to Vest) or keep external Zod schemas separate
+    </ngx-intro-item>
+  </ngx-intro-section>
 
-  <ngx-form-page-layout>
-    <div layout-aside class="sidebar-card-stack">
-      <ngx-card title="How Zod + Vest Works">
-        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
-          <li>
-            <strong>Zod schema:</strong> kept alongside the Vest suite as an
-            external structural contract for the same form model.
-          </li>
-          <li>
-            <strong>Per-field rules:</strong> <code>test()</code> callbacks
-            using <code>enforce</code> handle field-level validation.
-          </li>
-          <li>
-            <strong>Full runs:</strong> <code>suite.run(model)</code> executes
-            the full Vest suite for the form model.
-          </li>
-          <li>
-            <strong>Focused runs:</strong>
-            <code>suite.only(field).run(model)</code> runs only the matching
-            <code>test()</code> callbacks for that field.
-          </li>
-          <li>
-            ngx-vest-forms uses focused runs for per-field validation, while the
-            exported Zod schema remains available for separate structural
-            checks.
-          </li>
-          <li>
-            <strong>Vest 6.3.x note:</strong> native schema-aware
-            <code>create(..., schema)</code> flows are now best served by
-            <code>n4s/enforce</code> schemas; this demo keeps Zod separate on
-            purpose.
-          </li>
-        </ul>
-      </ngx-card>
-
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div>
       <ngx-form-state-card [feedback]="formBody.feedback" />
     </div>
 
-    <div layout-main>
+    <div>
       <ngx-zod-schema-demo-form-body
         #formBody
         [formValue]="formValue()"
@@ -52,7 +33,7 @@
         (submitted)="save()"
       />
     </div>
-  </ngx-form-page-layout>
+  </div>
 
   <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
 </div>

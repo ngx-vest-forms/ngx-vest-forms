@@ -4,31 +4,27 @@
     subtitle="Use directive-based ARIA wiring when the built-in wrapper markup is not the right fit."
   />
 
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Directive-based ARIA wiring</strong> — ngxErrorControl merges validation IDs into aria-describedby dynamically for custom layouts
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Composite controls</strong> — When a field is paired with a button or extra elements, only the input receives validation attributes
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Static hints plus dynamic errors</strong> — Preserve existing aria-describedby hints and let the directive enhance them with error IDs
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Plain markup transparency</strong> — See all ARIA behavior in the template; no hidden wrapper component logic to reason about
+    </ngx-intro-item>
+  </ngx-intro-section>
 
-  <ngx-form-page-layout>
-    <div layout-aside class="sidebar-card-stack">
-      <ngx-card title="What to inspect">
-        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
-          <li>
-            The first field starts with a static hint in
-            <code>aria-describedby</code> and the directive merges its own error
-            ID when needed.
-          </li>
-          <li>
-            The second wrapper contains an input plus a button, so only the
-            input gets manual validation attributes.
-          </li>
-          <li>
-            The adjacent helper button stays free of <code>aria-invalid</code>
-            and validation descriptions.
-          </li>
-        </ul>
-      </ngx-card>
-
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div class="space-y-6">
       <ngx-form-state-card [feedback]="feedback()" />
     </div>
 
-    <div layout-main>
+    <div>
       @if (submittedValue(); as submitted) {
       <ngx-alert-panel tone="success" title="Preferences saved">
         <p>
@@ -52,7 +48,7 @@
         />
       </ngx-card>
     </div>
-  </ngx-form-page-layout>
+  </div>
 
   <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
 </div>

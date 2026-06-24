@@ -17,8 +17,8 @@ import { SubmissionPatternsModel } from '../../models/submission-patterns.model'
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
-import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
+import { IntroItemComponent, IntroSectionComponent } from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 
 import { submissionPatternsContent } from './submission-patterns.content';
@@ -46,9 +46,10 @@ type SubmissionState = 'editing' | 'submitting' | 'server-error' | 'success';
   selector: 'ngx-submission-patterns-page',
   imports: [
     PageTitle,
+    IntroSectionComponent,
+    IntroItemComponent,
     Card,
     AlertPanel,
-    FormPageLayout,
     FormStateCardComponent,
     ExampleCardsComponent,
     SubmissionPatternsFormBody,

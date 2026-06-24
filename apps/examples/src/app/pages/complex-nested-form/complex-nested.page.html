@@ -4,28 +4,36 @@
     subtitle="Nested ngModelGroup sections and dynamic add/remove rows composed from reusable child components."
   />
 
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Deep ngModelGroup nesting</strong> — Organize form state hierarchically; company.address nests address fields inside a company section
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Reusable child components</strong> — ngx-address and member sections appear multiple times; compose validation into each component
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Dynamic repeatable rows</strong> — id-keyed records (maps) stay stable when rows are added or removed; validation refreshes correctly
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">ROOT_FORM rules and warnings</strong> — Cross-cutting validation works across nested sections; warn() tests never block submit
+    </ngx-intro-item>
+  </ngx-intro-section>
 
-  <ngx-form-page-layout>
-    <div layout-aside class="sidebar-card-stack">
-      <ngx-card title="Key features">
-        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
-          <li>
-            Deep <code>ngModelGroup</code> nesting:
-            <code>company.address</code>.
-          </li>
-          <li>
-            Reusable <code>ngx-address</code> &amp; child member sections.
-          </li>
-          <li>Repeatable rows in a stable id-keyed record.</li>
-          <li>Validation refreshes correctly after add/remove.</li>
-          <li><code>ROOT_FORM</code> rule + non-blocking warning.</li>
-        </ul>
-      </ngx-card>
-
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div>
       <ngx-form-state-card [feedback]="formBody.feedback" />
     </div>
 
-    <div layout-main>
+    <div class="space-y-6">
+      <ngx-complex-nested-form-body
+        #formBody
+        [formValue]="formValue()"
+        [suite]="suite"
+        [submittedValue]="submittedValue()"
+        (formValueChange)="onFormValueChange($event)"
+        (submitted)="onSubmit()"
+        (resetRequested)="onReset()"
+      />
       <ngx-complex-nested-form-body
         #formBody
         [formValue]="formValue()"
@@ -45,7 +53,7 @@
       </ngx-card>
       }
     </div>
-  </ngx-form-page-layout>
+  </div>
 
   <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
 </div>

@@ -4,25 +4,31 @@
     subtitle="Validate a username against a mock remote endpoint with calm pending, success, and failure states."
   />
 
+  <!-- Why this matters: Full-width intro section -->
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Async validation gated by sync checks</strong> — expensive network operations only run after cheap local validation passes.
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Request cancellation on new input</strong> — typing again aborts in-flight checks via AbortSignal to reduce server load.
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Pending state separate from errors</strong> — show a calm loading indicator without blocking form submission or clearing valid errors.
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Memo keying prevents redundant checks</strong> — repeated lookups of the same value reuse cached results instead of hammering the server.
+    </ngx-intro-item>
+  </ngx-intro-section>
 
-  <ngx-form-page-layout>
-    <div layout-aside class="sidebar-card-stack">
-      <ngx-card title="How async validation behaves">
-        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
-          <li>Cheap rules run first — the network is only hit when valid.</li>
-          <li>
-            Typing again aborts the in-flight request via an
-            <code>AbortSignal</code>.
-          </li>
-          <li><code>memo</code> avoids re-running the check needlessly.</li>
-          <li>Pending state is separate from submission state.</li>
-        </ul>
-      </ngx-card>
-
+  <!-- Form section: Two-column layout -->
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <!-- Left: Form State card -->
+    <div>
       <ngx-form-state-card [feedback]="feedback()" />
     </div>
 
-    <div layout-main>
+    <!-- Right: Form and success message -->
+    <div class="space-y-6">
       @if (submittedValue(); as submitted) {
       <ngx-alert-panel tone="success" title="Username reserved">
         <p>
@@ -34,7 +40,7 @@
 
       <ngx-card
         title="Choose a username"
-        subtitle="Try “ada”, “admin”, or “taken” to see the availability check fail."
+        subtitle="Try ada, admin, or taken to see the availability check fail."
       >
         <ngx-async-username-form-body
           [formValue]="formValue()"
@@ -45,7 +51,7 @@
         />
       </ngx-card>
     </div>
-  </ngx-form-page-layout>
+  </div>
 
   <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
 </div>

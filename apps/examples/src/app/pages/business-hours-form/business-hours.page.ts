@@ -11,8 +11,8 @@ import {
 } from '../../models/business-hours-form.model';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
-import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
+import { IntroItemComponent, IntroSectionComponent } from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { businessHoursContent } from './business-hours.content';
 import { BusinessHoursFormBody } from './business-hours.form';
@@ -22,10 +22,11 @@ import { BusinessHoursMap } from './ui/business-hours/business-hours.component';
 @Component({
   selector: 'ngx-business-hours-page',
   imports: [
-    Card,
-    FormPageLayout,
-    FormStateCardComponent,
     PageTitle,
+    IntroSectionComponent,
+    IntroItemComponent,
+    Card,
+    FormStateCardComponent,
     BusinessHoursFormBody,
     ExampleCardsComponent,
   ],
