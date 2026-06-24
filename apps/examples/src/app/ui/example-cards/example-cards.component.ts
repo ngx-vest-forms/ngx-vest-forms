@@ -61,7 +61,7 @@ import { Card } from '../card/card.component';
               @for (section of content().learn.sections; track section.title) {
                 <div>
                   <h3
-                    class="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400"
+                    class="text-sm font-semibold text-gray-700 dark:text-gray-300"
                   >
                     {{ section.title }}
                   </h3>
