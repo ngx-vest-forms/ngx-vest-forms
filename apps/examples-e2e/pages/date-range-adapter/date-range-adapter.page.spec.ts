@@ -11,6 +11,10 @@ test.describe('Composite Adapter Recipe Page', () => {
 
   test('should render page layout and key sections', async ({ page }) => {
     const sidebar = getMainContentSidebar(page);
+    const howItWorksCard = page
+      .getByRole('heading', { name: /how it works/i, level: 3 })
+      .locator('..')
+      .locator('..');
 
     await expect(
       page.getByRole('heading', {
@@ -20,7 +24,7 @@ test.describe('Composite Adapter Recipe Page', () => {
     ).toBeVisible();
     await expect(sidebar).toBeVisible();
     await expect(sidebar).toContainText(/form state/i);
-    await expect(sidebar).toContainText(/how it works/i);
+    await expect(howItWorksCard).toContainText(/how it works/i);
   });
 
   test('should render approach toggle with two options', async ({ page }) => {
@@ -93,15 +97,18 @@ test.describe('Composite Adapter Recipe Page', () => {
   test('should update How It Works sidebar on approach switch', async ({
     page,
   }) => {
-    const sidebar = getMainContentSidebar(page);
+    const howItWorksCard = page
+      .getByRole('heading', { name: /how it works/i, level: 3 })
+      .locator('..')
+      .locator('..');
 
     // Default: split wrappers
-    await expect(sidebar).toContainText(/no hidden proxies/i);
-    await expect(sidebar).toContainText(/no manual error aggregation/i);
+    await expect(howItWorksCard).toContainText(/no hidden proxies/i);
+    await expect(howItWorksCard).toContainText(/no manual error aggregation/i);
 
     // Switch to composite adapter
     await page.getByRole('radio', { name: /composite adapter/i }).check();
-    await expect(sidebar).toContainText(/hidden proxy fields/i);
+    await expect(howItWorksCard).toContainText(/hidden proxy fields/i);
   });
 
   test('should render date range fields in both approaches', async ({

@@ -11,7 +11,7 @@ import { Component } from '@angular/core';
         class="text-teal-500 dark:text-teal-400 font-bold shrink-0 pt-0.5 text-lg"
         aria-hidden="true"
       >
-        ▸
+        {{ bullet() }}
       </span>
       <span class="flex-1">
         <ng-content />
@@ -19,4 +19,6 @@ import { Component } from '@angular/core';
     </li>
   `,
 })
-export class IntroItemComponent {}
+export class IntroItemComponent {
+  protected readonly bullet = (): string => '▸';
+}

@@ -175,7 +175,7 @@ export type WizardStepConfig = {
       display: block;
     }
   `,
-  host: { class: 'block' },
+  host: { style: 'display: block;' },
 })
 export class WizardStepsComponent {
   readonly steps = input.required<WizardStepConfig[]>();

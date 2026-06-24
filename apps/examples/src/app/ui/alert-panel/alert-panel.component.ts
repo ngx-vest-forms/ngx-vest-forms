@@ -44,7 +44,7 @@ type AlertTone = 'error' | 'warning' | 'info' | 'success';
     </section>
   `,
   host: {
-    class: 'block',
+    style: 'display: block;',
   },
 })
 export class AlertPanel {

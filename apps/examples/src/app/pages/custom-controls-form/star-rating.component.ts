@@ -62,7 +62,7 @@ let nextId = 0;
       multi: true,
     },
   ],
-  host: { class: 'block' },
+  host: { style: 'display: block;' },
 })
 export class StarRatingComponent implements ControlValueAccessor {
   protected readonly groupId = `ngx-star-rating-${nextId++}`;

@@ -34,15 +34,6 @@
         (submitted)="onSubmit()"
         (resetRequested)="onReset()"
       />
-      <ngx-complex-nested-form-body
-        #formBody
-        [formValue]="formValue()"
-        [suite]="suite"
-        [submittedValue]="submittedValue()"
-        (formValueChange)="onFormValueChange($event)"
-        (submitted)="onSubmit()"
-        (resetRequested)="onReset()"
-      />
 
       @if (submittedPayload(); as payload) {
       <ngx-card

@@ -60,7 +60,7 @@ export default defineConfig({
   webServer: [
     {
       command: `pnpm nx run examples:serve -- --port ${webServerPort}`,
-      url: baseURL,
+      port: Number(webServerPort),
       reuseExistingServer: !process.env['CI'],
       timeout: 120000,
     },

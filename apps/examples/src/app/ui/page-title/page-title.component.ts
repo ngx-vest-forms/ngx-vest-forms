@@ -12,7 +12,7 @@ import { Component, input } from '@angular/core';
       }
     </header>
   `,
-  host: { class: 'block' },
+  host: { style: 'display: block;' },
 })
 export class PageTitle {
   readonly title = input.required<string>();

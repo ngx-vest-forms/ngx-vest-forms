@@ -65,7 +65,7 @@ type FormSectionTone =
       <ng-content></ng-content>
     </section>
   `,
-  host: { class: 'block' },
+  host: { style: 'display: block;' },
 })
 export class FormSectionComponent {
   readonly title = input.required<string>();

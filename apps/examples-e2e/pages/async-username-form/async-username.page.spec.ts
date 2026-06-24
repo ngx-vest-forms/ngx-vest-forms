@@ -1,10 +1,12 @@
 import { expect, test } from '@playwright/test';
+import { getMainContentSidebar } from '../../helpers/form-helpers';
 
 test.describe('Async Username Page', () => {
   test('should render the async validation example layout', async ({
     page,
   }) => {
     await page.goto('/async-username', { waitUntil: 'domcontentloaded' });
+    const sidebar = getMainContentSidebar(page);
 
     await expect(
       page.getByRole('heading', {
@@ -13,12 +15,9 @@ test.describe('Async Username Page', () => {
       })
     ).toBeVisible();
 
-    const contentAside = page
-      .getByRole('complementary')
-      .filter({ hasText: /how async validation behaves/i });
-    await expect(contentAside).toBeVisible();
-    await expect(contentAside).toContainText(/form state/i);
-    await expect(contentAside).toContainText(/form value/i);
+    await expect(sidebar).toBeVisible();
+    await expect(sidebar).toContainText(/form state/i);
+    await expect(sidebar).toContainText(/form value/i);
 
     await expect(
       page.getByRole('textbox', { name: /username/i })

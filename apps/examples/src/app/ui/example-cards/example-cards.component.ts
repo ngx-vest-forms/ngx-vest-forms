@@ -96,7 +96,7 @@ import { Card } from '../card/card.component';
       </ngx-card>
     </div>
   `,
-  host: { class: 'block' },
+  host: { style: 'display: block;' },
 })
 export class ExampleCardsComponent {
   /** The page's typed content metadata, authored in `<demo>.content.ts`. */

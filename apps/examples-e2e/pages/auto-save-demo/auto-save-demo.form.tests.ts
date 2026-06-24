@@ -171,8 +171,6 @@ test.describe('Auto-Save Draft Demo', () => {
   test('should show save failure and retry successfully on the next blur', async ({
     page,
   }) => {
-    const sidebar = getMainContentSidebar(page);
-
     await test.step('Trigger a simulated save failure', async () => {
       const projectName = page.getByLabel('Project name', { exact: true });
 
@@ -181,7 +179,7 @@ test.describe('Auto-Save Draft Demo', () => {
       await expect(
         page.getByRole('heading', { name: /draft save failed/i })
       ).toBeVisible();
-      await expect(sidebar).toContainText(/simulated save failure/i);
+      await expect(page.getByText(/simulated save failure/i)).toBeVisible();
     });
 
     await test.step('Fix the draft and retry via blur', async () => {

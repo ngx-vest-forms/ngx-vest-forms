@@ -62,7 +62,7 @@ let nextId = 0;
       multi: true,
     },
   ],
-  host: { class: 'block' },
+  host: { style: 'display: block;' },
 })
 export class SegmentedControlComponent implements ControlValueAccessor {
   protected readonly groupId = `ngx-segmented-${nextId++}`;

@@ -1,4 +1,4 @@
-import { Component, input, ContentChild, TemplateRef } from '@angular/core';
+import { Component, input } from '@angular/core';
 
 @Component({
   selector: 'ngx-intro-section',

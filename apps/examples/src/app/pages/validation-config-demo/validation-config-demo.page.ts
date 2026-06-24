@@ -6,7 +6,6 @@ import {
 } from '@angular/core';
 import { createValidationConfig } from 'ngx-vest-forms';
 import { ValidationDemoModel } from '../../models/validation-demo.model';
-import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import { IntroItemComponent, IntroSectionComponent } from '../../ui/intro-section';
@@ -17,7 +16,6 @@ import { validationDemoSuite } from './validation-demo.validations';
 
 @Component({
   selector: 'ngx-validation-config-demo-page',
-  standalone: true,
   imports: [
     PageTitle,
     IntroSectionComponent,
@@ -26,6 +24,7 @@ import { validationDemoSuite } from './validation-demo.validations';
     ValidationConfigDemoFormBody,
     ExampleCardsComponent,
   ],
+  standalone: true,
   templateUrl: './validation-config-demo.page.html',
   styleUrls: ['./validation-config-demo.page.scss'],
 })

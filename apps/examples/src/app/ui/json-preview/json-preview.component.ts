@@ -26,7 +26,7 @@ import {
       >{{ isStringValue() ? value() : (value() | json) }}</pre
     >
   `,
-  host: { class: 'block' },
+  host: { style: 'display: block;' },
 })
 export class JsonPreviewComponent {
   readonly title = input<string>();
