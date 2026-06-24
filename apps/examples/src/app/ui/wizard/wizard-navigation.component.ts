@@ -127,6 +127,7 @@ import {
       display: block;
     }
   `,
+  host: { class: 'block' },
 })
 export class WizardNavigationComponent {
   readonly showPrevious = input(true);

@@ -130,6 +130,7 @@ let nextId = 0;
       </div>
     </fieldset>
   `,
+  host: { class: 'block' },
 })
 export class DateRangeAdapterComponent {
   private readonly uid = nextId++;
