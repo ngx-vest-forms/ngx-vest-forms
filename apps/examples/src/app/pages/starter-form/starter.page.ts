@@ -8,7 +8,6 @@ import { StarterFormModel } from '../../models/starter-form.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
-import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { starterContent } from './starter.content';
@@ -28,7 +27,6 @@ import { starterFormSuite } from './starter.validations';
     PageTitle,
     Card,
     AlertPanel,
-    FormPageLayout,
     FormStateCardComponent,
     ExampleCardsComponent,
     StarterFormBody,
