@@ -72,3 +72,5 @@ Thumbs.db
 /.codex/
 /.opencode/
 /opencode.json
+
+.nx/migrate-runs

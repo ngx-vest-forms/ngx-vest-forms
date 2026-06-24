@@ -2,7 +2,28 @@ packages:
   - 'apps/*'
   - 'packages/*'
 
-minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - nx
+  - "@nx/angular@23.0.1"
+  - "@nx/playwright@23.0.1"
+  - "@nx/workspace@23.0.1"
+  - '@nx/devkit@23.0.1'
+  - '@nx/eslint@23.0.1'
+  - '@nx/js@23.0.1'
+  - '@nx/module-federation@23.0.1'
+  - '@nx/nx-darwin-arm64@23.0.1'
+  - '@nx/nx-darwin-x64@23.0.1'
+  - '@nx/nx-freebsd-x64@23.0.1'
+  - '@nx/nx-linux-arm-gnueabihf@23.0.1'
+  - '@nx/nx-linux-arm64-gnu@23.0.1'
+  - '@nx/nx-linux-arm64-musl@23.0.1'
+  - '@nx/nx-linux-x64-gnu@23.0.1'
+  - '@nx/nx-linux-x64-musl@23.0.1'
+  - '@nx/nx-win32-arm64-msvc@23.0.1'
+  - '@nx/nx-win32-x64-msvc@23.0.1'
+  - '@nx/rspack@23.0.1'
+  - '@nx/web@23.0.1'
+  - '@nx/webpack@23.0.1'
 minimumReleaseAgeStrict: true
 minimumReleaseAgeIgnoreMissingTime: false
 trustPolicy: no-downgrade
