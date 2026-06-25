@@ -6,14 +6,14 @@ This document captures the rollout strategy for applying the new `IntroSectionCo
 ## Components Reference
 - **IntroSectionComponent**: Reusable full-width intro section (location: `apps/examples/src/app/ui/intro-section/intro-section.component.ts`)
   - Provides semantic `<section>`, heading, and `<ul>` wrapper
-  - Configurable title input: `[title]="string"`
+  - Configurable title input: `title="string"`
   - Content projection for list items
-  - Responsive padding: `py-12 md:py-14`
+  - Responsive padding: `py-6 md:py-8`
   - Dark mode support
 
 - **IntroItemComponent**: Reusable bullet item (location: `apps/examples/src/app/ui/intro-section/intro-item.component.ts`)
   - Wraps content in semantic `<li>`
-  - Styled bullet mark in teal (teal-600 light / teal-400 dark)
+  - Styled bullet mark in teal (teal-500 light / teal-400 dark)
   - Flex layout with proper vertical alignment
   - Accessibility: aria-hidden on decorative bullet mark
 
@@ -50,7 +50,7 @@ Replace old sidebar pattern (when present):
 
 With new intro section pattern:
 ```html
-<ngx-intro-section title="[Custom Title]">
+<ngx-intro-section title="Custom Title">
   <ngx-intro-item>[Bullet 1 content]</ngx-intro-item>
   <ngx-intro-item>[Bullet 2 content]</ngx-intro-item>
   <ngx-intro-item>[Bullet 3 content]</ngx-intro-item>

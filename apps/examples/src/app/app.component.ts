@@ -68,7 +68,7 @@ export class AppComponent {
       .join('');
   }
 
-  protected showNavTooltip(event: MouseEvent, label: string): void {
+  protected showNavTooltip(event: Event, label: string): void {
     if (!this.sidebarCollapsed() || !this.isDesktop()) return;
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
     this.tooltipX.set(rect.right + 8);

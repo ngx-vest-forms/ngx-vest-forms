@@ -118,6 +118,8 @@
                   "
                   (mouseenter)="showNavTooltip($event, item.label)"
                   (mouseleave)="hideNavTooltip()"
+                    (focus)="showNavTooltip($event, item.label)"
+                    (blur)="hideNavTooltip()"
                 >
                   <span class="flex items-center gap-2">
                     <span
@@ -233,7 +235,6 @@
       class="pointer-events-none fixed z-50 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2.5 py-1 text-xs font-medium text-white shadow-lg dark:bg-gray-700"
       [style.left.px]="tooltipX()"
       [style.top.px]="tooltipY()"
-      role="tooltip"
       aria-hidden="true"
     >
       {{ tooltipLabel() }}

@@ -8,7 +8,7 @@ import { Component, input } from '@angular/core';
         {{ title() }}
       </h1>
       @if (subtitle()) {
-        <p class="mt-2 max-w-[65ch] text-wrap-pretty text-gray-700 dark:text-gray-200">{{ subtitle() }}</p>
+        <p class="mt-2 max-w-[65ch] text-pretty text-gray-700 dark:text-gray-200">{{ subtitle() }}</p>
       }
     </header>
   `,
