@@ -43,7 +43,7 @@ export class AppComponent {
    * localStorage so the preference survives a page reload. Ignored on mobile.
    */
   protected readonly sidebarCollapsed = signal<boolean>(
-    globalThis.localStorage?.getItem('sidebar-collapsed') === 'true'
+    this.readSidebarCollapsedPreference()
   );
 
   /**
@@ -145,6 +145,23 @@ export class AppComponent {
   protected toggleSidebar(): void {
     const next = !this.sidebarCollapsed();
     this.sidebarCollapsed.set(next);
-    globalThis.localStorage?.setItem('sidebar-collapsed', String(next));
+    this.persistSidebarCollapsedPreference(next);
+  }
+
+  private readSidebarCollapsedPreference(): boolean {
+    try {
+      return globalThis.localStorage?.getItem('sidebar-collapsed') === 'true';
+    } catch (error: unknown) {
+      console.warn('Failed to read sidebar collapse preference.', error);
+      return false;
+    }
+  }
+
+  private persistSidebarCollapsedPreference(next: boolean): void {
+    try {
+      globalThis.localStorage?.setItem('sidebar-collapsed', String(next));
+    } catch (error: unknown) {
+      console.warn('Failed to persist sidebar collapse preference.', error);
+    }
   }
 }

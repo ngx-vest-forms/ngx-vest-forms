@@ -17,6 +17,7 @@ import { Component, input } from '@angular/core';
       </ul>
     </section>
   `,
+  host: { class: 'block' },
 })
 export class IntroSectionComponent {
   readonly title = input<string>('Why start here');

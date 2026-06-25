@@ -45,4 +45,4 @@ Emotional goal: developer trust. The interface should signal that the people beh
 
 ## Accessibility & Inclusion
 
-WCAG 2.1 AA baseline. The app is itself a form library demo — every form pattern modeled here should be a correct accessibility reference implementation. Interactive form elements must meet contrast, label association, keyboard navigation, and live-region requirements as a baseline. Reduced-motion variants required for any animation.
+WCAG 2.2 AA baseline. The app is itself a form library demo — every form pattern modeled here should be a correct accessibility reference implementation. Interactive form elements must meet contrast, label association, keyboard navigation, and live-region requirements as a baseline. Reduced-motion variants required for any animation.

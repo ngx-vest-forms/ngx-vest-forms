@@ -4,21 +4,21 @@ import { Component } from '@angular/core';
   selector: 'ngx-intro-item',
   standalone: true,
   template: `
-    <li
-      class="flex gap-3 leading-relaxed"
+    <span
+      class="text-teal-500 dark:text-teal-400 font-bold shrink-0 pt-0.5 text-lg"
+      aria-hidden="true"
     >
-      <span
-        class="text-teal-500 dark:text-teal-400 font-bold shrink-0 pt-0.5 text-lg"
-        aria-hidden="true"
-      >
-        {{ bullet() }}
-      </span>
-      <span class="flex-1">
-        <ng-content />
-      </span>
-    </li>
+      {{ bullet }}
+    </span>
+    <span class="flex-1">
+      <ng-content />
+    </span>
   `,
+  host: {
+    class: 'flex gap-3 leading-relaxed',
+    role: 'listitem',
+  },
 })
 export class IntroItemComponent {
-  protected readonly bullet = (): string => '▸';
+  protected readonly bullet = '▸';
 }

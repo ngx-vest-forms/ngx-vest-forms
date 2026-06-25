@@ -29,17 +29,6 @@ import { UsernameAvailabilityService } from './username-availability.service';
  * so the UI stays calm while the network call is in flight.
  */
 
-/**
- * Async Username Availability — a self-contained demo that validates a
- * username against a mock remote endpoint.
- *
- * It mirrors the canonical starter wiring (page-owned state + focused form
- * markup in `async-username.form.html`) and layers the async validation
- * pattern from the purchase demo on top: cheap synchronous rules gate an
- * `omitWhen`-wrapped, `memo`-keyed async test that aborts in-flight requests
- * when the username changes. Pending and submission state are kept separate
- * so the UI stays calm while the network call is in flight.
- */
 @Component({
   selector: 'ngx-async-username-page',
   imports: [
