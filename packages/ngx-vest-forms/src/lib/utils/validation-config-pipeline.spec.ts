@@ -412,9 +412,9 @@ describe('createValidationConfigPipeline', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 6. Loop-prevention cooldown clears after the configured window
+  // 6. Loop-prevention cooldown defers (never drops) user changes
   // -------------------------------------------------------------------------
-  it('allows re-triggering after the validationInProgressCooldownMs window', async () => {
+  it('defers a trigger change arriving within the cooldown window and replays it after the cooldown expires', async () => {
     const triggerCtrl = new FormControl('');
     const dependentCtrl = new FormControl('');
     const form = new FormGroup({
@@ -447,20 +447,176 @@ describe('createValidationConfigPipeline', () => {
     const countAfterFirst = getCount();
     expect(countAfterFirst).toBeGreaterThanOrEqual(1);
 
-    // Simulate a valueChanges emission within the cooldown window.
-    // The filter should block this.
-    triggerCtrl.updateValueAndValidity({ emitEvent: true });
-    await vi.advanceTimersByTimeAsync(0);
-    expect(getCount()).toBe(countAfterFirst); // no change
-
-    // Advance past cooldown
-    await vi.advanceTimersByTimeAsync(50);
-
-    // Second trigger cycle — should now pass the filter
+    // A user-initiated valueChanges emission within the cooldown window is
+    // NOT processed immediately (loop prevention still gates it) ...
     triggerCtrl.setValue('second');
     await vi.advanceTimersByTimeAsync(0);
+    expect(getCount()).toBe(countAfterFirst); // not processed yet
 
+    // ... but it is deferred, not dropped: once the cooldown expires the
+    // pipeline replays it and revalidates the dependent — no further user
+    // interaction required. (Advance past the cooldown, then flush the
+    // replay's own debounce timer.)
+    await vi.advanceTimersByTimeAsync(50);
+    await vi.advanceTimersByTimeAsync(10);
     expect(getCount()).toBeGreaterThan(countAfterFirst);
+
+    // A later change (outside any cooldown) is processed directly.
+    await vi.advanceTimersByTimeAsync(50);
+    const countAfterReplay = getCount();
+    triggerCtrl.setValue('third');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(getCount()).toBeGreaterThan(countAfterReplay);
+
+    sub.unsubscribe();
+  });
+
+  it('revalidates the dependent with the final trigger value when the trigger is edited twice within the cooldown window (regression: C-B1)', async () => {
+    const triggerCtrl = new FormControl('');
+    // Sync validator records the trigger value seen at each dependent
+    // revalidation so we can assert latest-wins semantics.
+    const seenTriggerValues: unknown[] = [];
+    const dependentCtrl = new FormControl('', () => {
+      seenTriggerValues.push(triggerCtrl.value);
+      return null;
+    });
+    const form = new FormGroup({
+      trigger: triggerCtrl,
+      dependent: dependentCtrl,
+    });
+
+    const { destroyRef } = createMockDestroyRef();
+    const { cdr } = createMockCdr();
+
+    const options: ValidationConfigPipelineOptions = {
+      ...BASE_OPTIONS,
+      configDebounceTime: 0,
+      validationInProgressCooldownMs: 50,
+    };
+
+    const sub = createValidationConfigPipeline(
+      form,
+      { trigger: ['dependent'] } as Record<string, string[]>,
+      options,
+      cdr,
+      destroyRef
+    ).subscribe();
+
+    // First edit: processed immediately, dependent sees 'abc'.
+    triggerCtrl.setValue('abc');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(seenTriggerValues.at(-1)).toBe('abc');
+
+    // Second edit 10ms later — well inside the 50ms cooldown window.
+    await vi.advanceTimersByTimeAsync(10);
+    triggerCtrl.setValue('abcd');
+    await vi.advanceTimersByTimeAsync(0);
+    // Still the stale verdict at this point (cooldown gates the cycle) ...
+    expect(seenTriggerValues.at(-1)).toBe('abc');
+
+    // ... but after the cooldown expires the deferred change replays and the
+    // dependent revalidates against the FINAL trigger value.
+    await vi.advanceTimersByTimeAsync(100);
+    expect(seenTriggerValues.at(-1)).toBe('abcd');
+
+    sub.unsubscribe();
+  });
+
+  it('replays a cycle whose shared dependent was skipped because another trigger still held it in cooldown', async () => {
+    // Shared-dependent config: {'startDate': ['range'], 'endDate': ['range']}
+    const startCtrl = new FormControl('');
+    const endCtrl = new FormControl('');
+    const seenEndValues: unknown[] = [];
+    const rangeCtrl = new FormControl('', () => {
+      seenEndValues.push(endCtrl.value);
+      return null;
+    });
+    const form = new FormGroup({
+      startDate: startCtrl,
+      endDate: endCtrl,
+      range: rangeCtrl,
+    });
+
+    const { destroyRef } = createMockDestroyRef();
+    const { cdr } = createMockCdr();
+
+    const options: ValidationConfigPipelineOptions = {
+      ...BASE_OPTIONS,
+      configDebounceTime: 0,
+      validationInProgressCooldownMs: 50,
+    };
+
+    const sub = createValidationConfigPipeline(
+      form,
+      {
+        startDate: ['range'],
+        endDate: ['range'],
+      } as Record<string, string[]>,
+      options,
+      cdr,
+      destroyRef
+    ).subscribe();
+
+    // startDate cycle runs and puts `range` into cooldown.
+    startCtrl.setValue('2026-01-01');
+    await vi.advanceTimersByTimeAsync(0);
+    const seenCountAfterStart = seenEndValues.length;
+    expect(seenCountAfterStart).toBeGreaterThanOrEqual(1);
+
+    // endDate is edited within the cooldown: its cycle runs but `range` is
+    // still marked, so it is skipped in this cycle...
+    await vi.advanceTimersByTimeAsync(10);
+    endCtrl.setValue('2026-02-01');
+    await vi.advanceTimersByTimeAsync(0);
+
+    // ...and after the cooldown clears, the skipped cycle replays so `range`
+    // is revalidated against the latest endDate value.
+    await vi.advanceTimersByTimeAsync(200);
+    expect(seenEndValues.at(-1)).toBe('2026-02-01');
+
+    sub.unsubscribe();
+  });
+
+  it('does not replay pipeline-induced emissions after the cooldown (no deferred self-triggering)', async () => {
+    const triggerCtrl = new FormControl('');
+    const dependentCtrl = new FormControl('');
+    const form = new FormGroup({
+      trigger: triggerCtrl,
+      dependent: dependentCtrl,
+    });
+
+    const { destroyRef } = createMockDestroyRef();
+    const { cdr } = createMockCdr();
+    const getDependentCount = trackUpdateCount(dependentCtrl);
+    const getTriggerCount = trackUpdateCount(triggerCtrl);
+
+    const options: ValidationConfigPipelineOptions = {
+      ...BASE_OPTIONS,
+      configDebounceTime: 0,
+      validationInProgressCooldownMs: 50,
+    };
+
+    // Bidirectional config: the pipeline's own update of `dependent` emits a
+    // valueChanges on `dependent`, which must be dropped outright — deferring
+    // it would resurrect the infinite loop with a period of one cooldown.
+    const sub = createValidationConfigPipeline(
+      form,
+      {
+        trigger: ['dependent'],
+        dependent: ['trigger'],
+      } as Record<string, string[]>,
+      options,
+      cdr,
+      destroyRef
+    ).subscribe();
+
+    triggerCtrl.setValue('new');
+    // Advance across several cooldown windows — with a deferred self-induced
+    // emission this would keep ping-ponging forever.
+    await vi.advanceTimersByTimeAsync(500);
+
+    expect(getTriggerCount()).toBeLessThan(5);
+    expect(getDependentCount()).toBeLessThan(5);
 
     sub.unsubscribe();
   });
