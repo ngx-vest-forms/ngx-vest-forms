@@ -12,14 +12,14 @@ ngx-vest-forms provides three complementary features for handling validation in 
 
 ## Quick Comparison
 
-| Feature                 | `validationConfig`                            | `ngxValidateRootForm`                                  | `triggerFormValidation()`                                     |
-| ----------------------- | --------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------- |
-| **Purpose**             | Re-validation trigger                         | Create form-level validations                       | Manual validation trigger                                     |
-| **What it does**        | When field X changes, re-validate field Y     | Runs ROOT_FORM tests from Vest suite                | Forces validation update when form structure changes          |
-| **Where errors appear** | At **field level** (`errors.fieldName`)       | At **form level** (`errors[ROOT_FORM]`)             | N/A (triggers existing validations)                           |
-| **Use for**             | Field validations that depend on other fields | Form-wide business rules                            | Structure changes without value changes                       |
-| **When to call**        | Automatic (via config)                        | Automatic (on blur/submit)                          | Manual (after structure change)                               |
-| **Directive/Method**    | `FormDirective` (`ngxVestForm`)               | `ValidateRootFormDirective` (`ngxValidateRootForm`) | `FormDirective.triggerFormValidation()` (public method)       |
+| Feature                 | `validationConfig`                            | `ngxValidateRootForm`                               | `triggerFormValidation()`                                        |
+| ----------------------- | --------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------- |
+| **Purpose**             | Re-validation trigger                         | Create form-level validations                       | Manual validation trigger                                        |
+| **What it does**        | When field X changes, re-validate field Y     | Runs ROOT_FORM tests from Vest suite                | Forces validation update when form structure changes             |
+| **Where errors appear** | At **field level** (`errors.fieldName`)       | At **form level** (`errors[ROOT_FORM]`)             | N/A (triggers existing validations)                              |
+| **Use for**             | Field validations that depend on other fields | Form-wide business rules                            | Structure changes without value changes                          |
+| **When to call**        | Automatic (via config)                        | Automatic (on blur/submit)                          | Manual (after structure change)                                  |
+| **Directive/Method**    | `FormDirective` (`ngxVestForm`)               | `ValidateRootFormDirective` (`ngxValidateRootForm`) | `FormDirective.triggerFormValidation()` (public method)          |
 | **Works with**          | Field-level tests (`test()`)                  | ROOT_FORM tests (`test(ROOT_FORM, ...)`)            | All validations (validationConfig + ngxValidateRootForm + tests) |
 
 ## Understanding validationConfig
@@ -181,6 +181,8 @@ test(ROOT_FORM, 'Brecht is not 30 anymore', () => {
 </form>
 ```
 
+> **Note**: Templates cannot read imported constants directly — expose it on the component class: `protected readonly ROOT_FORM = ROOT_FORM;`
+
 **Flow:**
 
 1. Form value changes or submit button clicked (depending on mode)
@@ -239,7 +241,7 @@ test(ROOT_FORM, 'Addresses cannot be the same', () => {
 - **Validation modes**:
   - `'submit'` (default): Validates only after form submission
   - `'live'`: Validates on every value change
-- **Template display**: Show errors at form level (typically at top or bottom)
+- **Template display**: Show errors at form level (typically at top or bottom); expose the constant on the class first (`protected readonly ROOT_FORM = ROOT_FORM;`)
   ```html
   @if (errors()[ROOT_FORM]) {
   <div role="alert" class="form-error">{{ errors()[ROOT_FORM][0] }}</div>
@@ -363,6 +365,9 @@ These features complement each other in complex, dynamic forms:
   template: `
     <form
       ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      (formValueChange)="formValue.set($event)"
       [validationConfig]="validationConfig()"
       ngxValidateRootForm
       [ngxValidateRootFormMode]="'submit'"
@@ -408,6 +413,8 @@ export class MyFormComponent {
   protected readonly vestFormRef = viewChild.required('vestForm', {
     read: FormDirective,
   });
+  // Expose the constant so the template can read errors()[ROOT_FORM]
+  protected readonly ROOT_FORM = ROOT_FORM;
   protected readonly formValue = signal<MyFormModel>({});
   protected readonly errors = signal<Record<string, string[]>>({});
 
@@ -595,14 +602,14 @@ validationConfig = { password: ['confirmPassword'] };
 | Scenario                                 | Solution                     | Why                                                         |
 | ---------------------------------------- | ---------------------------- | ----------------------------------------------------------- |
 | Password confirmation                    | `validationConfig`           | Field-level validation - error belongs to `confirmPassword` |
-| "Brecht is not 30"                       | `ngxValidateRootForm`           | Form-level rule - doesn't belong to any single field        |
+| "Brecht is not 30"                       | `ngxValidateRootForm`        | Form-level rule - doesn't belong to any single field        |
 | Switching input → paragraph/text         | `triggerFormValidation()`    | Structure change from input to non-input content            |
 | Switching between different inputs       | **Not needed (automatic)**   | Value changes trigger validation automatically              |
 | Quantity ↔ Justification                 | `validationConfig`           | Bidirectional field-level validations                       |
-| At least one contact method              | `ngxValidateRootForm`           | Form-level constraint across multiple fields                |
+| At least one contact method              | `ngxValidateRootForm`        | Form-level constraint across multiple fields                |
 | Clearing fields to non-input content     | `triggerFormValidation()`    | After structure change with field clearing utilities        |
 | Age triggers emergency contact           | `validationConfig`           | Conditional field requirement                               |
-| Addresses must differ                    | `ngxValidateRootForm`           | Form-wide business rule                                     |
+| Addresses must differ                    | `ngxValidateRootForm`        | Form-wide business rule                                     |
 | Dynamic layout (inputs ↔ static content) | `triggerFormValidation()`    | Controls replaced with non-input elements                   |
 | End date after start date                | `validationConfig` (usually) | Field-level validation on `endDate` field                   |
 | Complex dynamic purchase form            | **ALL THREE**                | Field dependencies + form-level rules + structure changes   |

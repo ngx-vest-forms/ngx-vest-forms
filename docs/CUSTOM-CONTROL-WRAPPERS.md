@@ -112,7 +112,10 @@ If you want your custom wrapper to automatically:
 
 ```ts
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { FormErrorControlDirective } from 'ngx-vest-forms';
+import {
+  FormErrorControlDirective,
+  FormErrorDisplayDirective,
+} from 'ngx-vest-forms';
 
 @Component({
   selector: 'ngx-custom-error-control',
@@ -129,8 +132,8 @@ import { FormErrorControlDirective } from 'ngx-vest-forms';
 
       <!-- Keep regions in the DOM so aria-describedby targets always exist -->
       <div [id]="ec.errorId" role="status" aria-live="polite" aria-atomic="true">
-        @if (ec.errorDisplay.shouldShowErrors()) {
-          @for (error of ec.errorDisplay.errors(); track error) {
+        @if (errorDisplay.shouldShowErrors()) {
+          @for (error of errorDisplay.errors(); track error) {
             <div>{{ error }}</div>
           }
         }
@@ -146,6 +149,11 @@ import { FormErrorControlDirective } from 'ngx-vest-forms';
 })
 export class CustomErrorControlComponent {
   protected readonly ec = inject(FormErrorControlDirective, { self: true });
+  // FormErrorControlDirective keeps its own errorDisplay reference protected;
+  // inject the composed FormErrorDisplayDirective directly for template access.
+  protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
+    self: true,
+  });
 }
 ````
 
@@ -165,7 +173,6 @@ wrapper does not stamp `aria-describedby` / `aria-invalid` onto every descendant
 
 `ariaAssociationMode="single-control"` is mainly useful when your wrapper _usually_ contains one control, but
 may sometimes contain additional focusable elements (for example, an input with an adjacent “Clear” button).
-
 
 ## ARIA Association Utilities (Public API)
 
@@ -207,8 +214,8 @@ function mergeAriaDescribedBy(
 
 // Example: Preserve consumer-provided IDs while managing wrapper IDs
 const merged = mergeAriaDescribedBy(
-  'help-text field-error',     // existing value
-  ['field-error'],             // currently active IDs
+  'help-text field-error', // existing value
+  ['field-error'], // currently active IDs
   ['field-error', 'field-warning'] // all IDs owned by wrapper
 );
 // Returns: 'help-text field-error'
@@ -228,9 +235,9 @@ function resolveAssociationTargets(
 // Example
 const controls = [inputElement, textareaElement];
 
-resolveAssociationTargets(controls, 'all-controls');    // Returns: [inputElement, textareaElement]
-resolveAssociationTargets(controls, 'single-control');  // Returns: [] (more than one control)
-resolveAssociationTargets(controls, 'none');            // Returns: []
+resolveAssociationTargets(controls, 'all-controls'); // Returns: [inputElement, textareaElement]
+resolveAssociationTargets(controls, 'single-control'); // Returns: [] (more than one control)
+resolveAssociationTargets(controls, 'none'); // Returns: []
 ```
 
 ### Use Cases

@@ -33,7 +33,7 @@ makes this safe (verified):
 - **`master` is the stable `@latest` channel.** It currently sits at the v2
   line plus infra/chore commits. Merging `release/v3` → `master` and pushing
   makes semantic-release publish a **stable `3.0.0` to `@latest`** (the v3
-  commits carry `BREAKING CHANGE`). That merge therefore *is* the "declare v3
+  commits carry `BREAKING CHANGE`). That merge therefore _is_ the "declare v3
   GA" action — it is **not** done to cut betas.
 - **`master` is already an ancestor of `release/v3`** (zero divergent
   commits), so the eventual merge is effectively a fast-forward whenever it
@@ -57,8 +57,7 @@ The workflow will:
 - Analyze commits using [Conventional Commits](https://www.conventionalcommits.org/)
 - Generate version bump (major/minor/patch) automatically
 - Publish to npm with provenance attestation
-- Create GitHub release with changelog
-- Update CHANGELOG.md
+- Create GitHub release with generated release notes (no CHANGELOG.md file is committed to the repo)
 
 ### 2. Prerelease / Beta Release
 
@@ -106,15 +105,15 @@ Once v3 is stabilised, the final `3.0.0` ships from `master` and a
 
 #### Prerelease Branches
 
-| Branch Pattern | npm Tag | Version Example | Use Case |
-| -------------- | ------- | --------------- | -------- |
-| `release/v3` | beta | 3.0.0-beta.1 | v3 beta line (Vest 6 migration + cleanup + Phase 1/2) |
-| `next` | next | 2.1.0-next.1 | Next major version features |
-| `alpha` | alpha | 2.1.0-alpha.1 | Early alpha testing |
-| `rc` | rc | 2.1.0-rc.1 | Release candidate |
-| `release/v2.x` | release-v2 | 2.5.1 | v2 maintenance releases after v3 becomes current |
-| `feat/*` | feat-{name} | 2.1.0-feat-name.1 | Feature branch testing |
-| `fix/*` | fix-{name} | 2.1.0-fix-name.1 | Fix branch testing |
+| Branch Pattern | npm Tag     | Version Example   | Use Case                                              |
+| -------------- | ----------- | ----------------- | ----------------------------------------------------- |
+| `release/v3`   | beta        | 3.0.0-beta.1      | v3 beta line (Vest 6 migration + cleanup + Phase 1/2) |
+| `next`         | next        | 2.1.0-next.1      | Next major version features                           |
+| `alpha`        | alpha       | 2.1.0-alpha.1     | Early alpha testing                                   |
+| `rc`           | rc          | 2.1.0-rc.1        | Release candidate                                     |
+| `release/v2.x` | release-v2  | 2.5.1             | v2 maintenance releases after v3 becomes current      |
+| `feat/*`       | feat-{name} | 2.1.0-feat-name.1 | Feature branch testing                                |
+| `fix/*`        | fix-{name}  | 2.1.0-fix-name.1  | Fix branch testing                                    |
 
 ## Semantic Versioning
 
@@ -162,7 +161,7 @@ Before releasing:
 
 1. **Validation**: Runs linting, tests, and builds
 2. **Version Calculation**: Analyzes commits since last release
-3. **Changelog**: Generates/updates CHANGELOG.md
+3. **Release notes**: Generates release notes from the commits (published on the GitHub release; no CHANGELOG.md is written)
 4. **Package Update**: Updates version in package.json
 5. **npm Publish**: Publishes to npm with provenance
 6. **Git Tag**: Creates annotated git tag
