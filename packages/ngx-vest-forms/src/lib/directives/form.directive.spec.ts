@@ -2244,6 +2244,55 @@ describe('FormDirective - Submit Accessibility', () => {
       expect(screen.getByLabelText('First name')).toHaveFocus();
     });
   });
+
+  it('should not move focus on submit when focusFirstInvalidOnSubmit is false', async () => {
+    @Component({
+      selector: 'test-submit-no-focus-host',
+      template: `
+        <form
+          ngxVestForm
+          [suite]="suite()"
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          [focusFirstInvalidOnSubmit]="false"
+        >
+          <label for="firstName">First name</label>
+          <input
+            id="firstName"
+            name="firstName"
+            [ngModel]="formValue().firstName"
+          />
+
+          <button type="submit">Submit</button>
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestSubmitNoFocusHost {
+      readonly formValue = signal<{ firstName: string }>({ firstName: '' });
+
+      readonly suite = signal(
+        create((model: { firstName?: string } = {}) => {
+          vestTest('firstName', 'First name is required', () => {
+            enforce(model.firstName).isNotBlank();
+          });
+        })
+      );
+    }
+
+    const { fixture } = await render(TestSubmitNoFocusHost);
+
+    const button = screen.getByRole('button', { name: 'Submit' });
+    await userEvent.click(button);
+
+    // Give the submit pipeline (async validation + the focus microtask) time
+    // to settle before asserting that focus was left alone.
+    await fixture.whenStable();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(screen.getByLabelText('First name')).not.toHaveFocus();
+    expect(button).toHaveFocus();
+  });
 });
 
 describe('FormDirective - FormState Memoization', () => {

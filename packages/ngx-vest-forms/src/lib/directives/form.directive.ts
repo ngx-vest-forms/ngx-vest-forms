@@ -1,4 +1,5 @@
 import {
+  booleanAttribute,
   ChangeDetectorRef,
   computed,
   DestroyRef,
@@ -407,6 +408,19 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly validationFocus = input<NgxValidationFocus | null>(null);
 
   /**
+   * Whether a failed submit automatically scrolls to and focuses the first
+   * invalid control (via {@link focusFirstInvalidControl}).
+   *
+   * Defaults to `true`. Set to `false` when the application manages its own
+   * post-submit focus target — for example a WCAG-style error summary with
+   * `role="alert"` that receives focus on submit — or when multiple forms are
+   * submitted programmatically and viewport jumps are undesirable.
+   */
+  readonly focusFirstInvalidOnSubmit = input(true, {
+    transform: booleanAttribute,
+  });
+
+  /**
    * Emits whenever validation feedback may have changed, even if the aggregate
    * root form status string stays the same.
    */
@@ -577,7 +591,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       )
       .subscribe(() => {
         scheduleMicrotask(() => {
-          if (this.ngForm.form.valid) {
+          if (this.ngForm.form.valid || !this.focusFirstInvalidOnSubmit()) {
             return;
           }
           this.focusFirstInvalidControl();
