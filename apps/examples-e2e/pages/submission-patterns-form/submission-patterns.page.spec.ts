@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test';
+import { getMainContentSidebar } from '../../helpers/form-helpers';
 
 test.describe('Submission Patterns Page', () => {
   test('should render the submission-state demo layout', async ({ page }) => {
     await page.goto('/submission-patterns', { waitUntil: 'domcontentloaded' });
+    const sidebar = getMainContentSidebar(page);
 
     await expect(
       page.getByRole('heading', {
@@ -11,12 +13,11 @@ test.describe('Submission Patterns Page', () => {
       })
     ).toBeVisible();
 
-    const contentAside = page
-      .getByRole('complementary')
-      .filter({ hasText: /simulated outcome/i });
-    await expect(contentAside).toBeVisible();
-    await expect(contentAside).toContainText(/form state/i);
-    await expect(contentAside).toContainText(/form value/i);
+    await expect(
+      page.getByRole('heading', { name: /simulated outcome/i, level: 3 })
+    ).toBeVisible();
+    await expect(sidebar).toContainText(/form state/i);
+    await expect(sidebar).toContainText(/form value/i);
 
     await expect(page.getByLabel(/server response/i)).toBeVisible();
     await expect(

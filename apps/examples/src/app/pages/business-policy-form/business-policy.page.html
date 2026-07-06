@@ -4,31 +4,23 @@
     subtitle="Conditional rules and advisory warnings that stay native to Vest — guidance modelled separately from errors."
   />
 
-  <ngx-example-cards [content]="exampleContent" class="mb-8 block" />
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Conditional rules in Vest</strong> — Use omitWhen and skipWhen to gate rules at runtime; required fields appear only under the right conditions
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Cross-field rules via ROOT_FORM</strong> — Low-revenue businesses cannot request high credit limits; one config map wires the dependency
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Warnings vs. errors</strong> — Errors block submission; warn() tests never do; a form with only warnings submits freely
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Portable suite</strong> — Same Vest suite powers multiple backends and frontends; policy logic stays decoupled from framework concerns
+    </ngx-intro-item>
+  </ngx-intro-section>
 
-  <ngx-form-page-layout>
-    <div layout-aside class="sidebar-card-stack">
-      <ngx-card title="Policy at a glance">
-        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
-          <li>
-            <strong>Errors block submit:</strong> required fields, EU VAT ID,
-            credit-limit floor, allowed payment terms.
-          </li>
-          <li>
-            <strong>Cross-field rule:</strong> low-revenue business cannot
-            request a high credit limit (<code>ROOT_FORM</code>).
-          </li>
-          <li>
-            <strong>Warnings never block:</strong> advisory
-            <code>warn()</code> guidance about manual review.
-          </li>
-          <li>
-            <strong>Conditional VAT ID:</strong> shown only for EU-based
-            business accounts via <code>omitWhen</code> + <code>&#64;if</code>.
-          </li>
-        </ul>
-      </ngx-card>
-
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div>
       <ngx-form-state-card
         [feedback]="formBody.feedback"
         [errors]="formBody.feedback.formState().errors"
@@ -37,7 +29,7 @@
       />
     </div>
 
-    <div layout-main>
+    <div class="space-y-6">
       @if (submittedValue(); as submitted) {
       <ngx-alert-panel tone="success" title="Application submitted">
         <p>
@@ -58,5 +50,7 @@
         (resetRequested)="reset()"
       />
     </div>
-  </ngx-form-page-layout>
+  </div>
+
+  <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
 </div>

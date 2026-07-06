@@ -21,6 +21,7 @@ import { Component, input } from '@angular/core';
       <ng-content></ng-content>
     </div>
   `,
+  host: { style: 'display: block;' },
 })
 export class Card {
   readonly title = input<string>();

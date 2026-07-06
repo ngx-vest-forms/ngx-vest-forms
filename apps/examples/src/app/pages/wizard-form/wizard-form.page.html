@@ -4,10 +4,23 @@
     subtitle="Run three coordinated forms with per-step validation and one final submission flow."
   />
 
-  <ngx-example-cards [content]="exampleContent" class="mb-8 block" />
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Multi-step form orchestration</strong> — Three coordinated forms with independent validation; navigate freely between steps
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Per-step validation</strong> — Each form validates independently; all steps must pass before final submit
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Cross-field rules</strong> — Bidirectional field validation within steps; conditional requirements based on selections
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Persistent state across navigation</strong> — Step data persists when navigating away; no data loss between tabs
+    </ngx-intro-item>
+  </ngx-intro-section>
 
-  <ngx-form-page-layout>
-    <aside layout-aside class="sidebar-card-stack">
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div class="space-y-6">
       <ngx-card title="Wizard State">
         <div class="space-y-3">
           @for (step of stepStatusRows(); track step.id) {
@@ -42,21 +55,9 @@
         [validatedFields]="currentStepValidatedFields()"
         [pending]="currentStepPending()"
       />
+    </div>
 
-      <ngx-card title="Key Features">
-        <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-          <li>Bidirectional validation for confirmation fields.</li>
-          <li>Conditional newsletter frequency requirement.</li>
-          <li>Final submit validates all forms together.</li>
-          <li>
-            Step-level invalid focus helper (custom options on Step 2 submit).
-          </li>
-          <li>Step state persists while navigating.</li>
-        </ul>
-      </ngx-card>
-    </aside>
-
-    <section layout-main>
+    <section>
       @if (submitSuccess()) {
       <ngx-card>
         <div class="text-center">
@@ -125,5 +126,7 @@
       </ngx-card>
       }
     </section>
-  </ngx-form-page-layout>
+  </div>
+
+  <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
 </div>

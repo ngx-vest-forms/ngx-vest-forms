@@ -28,6 +28,7 @@ import type { PhoneNumberMap } from '../../models/phonenumber.model';
   templateUrl: './phonenumbers.component.html',
   styleUrls: ['./phonenumbers.component.scss'],
   viewProviders: [vestFormsViewProviders],
+  host: { style: 'display: block;' },
 })
 export class PhoneNumbersComponent {
   /**

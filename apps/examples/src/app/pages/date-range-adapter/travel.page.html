@@ -4,7 +4,6 @@
     subtitle="Map one composite UI control to multiple form fields with split-field validation."
   />
 
-  <ngx-example-cards [content]="exampleContent" class="mb-8 block" />
 
   <fieldset class="mb-6">
     <legend class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -64,8 +63,23 @@
     </div>
   </fieldset>
 
-  <ngx-form-page-layout>
-    <div layout-aside class="sidebar-card-stack">
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Composite UI to multiple fields</strong> — Map a single date-range picker widget to separate departureDate and returnDate form fields
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Cross-field validation</strong> — Return date must be after departure; bidirectional validationConfig ensures both fields revalidate when either changes
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Split wrappers vs. composite adapter</strong> — Compare two patterns: independent field wrappers or a hidden proxy with error aggregation
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Error aggregation and display modes</strong> — Adapter pattern merges field errors into one display; both patterns respect display mode (on-blur-or-submit)
+    </ngx-intro-item>
+  </ngx-intro-section>
+
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div>
       <ngx-card title="How It Works">
         @if (approach() === 'split-wrappers') {
         <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
@@ -131,7 +145,7 @@
       />
     </div>
 
-    <div layout-main>
+    <div>
       <ngx-travel-form-body
         #formBody
         [approach]="approach()"
@@ -147,5 +161,7 @@
         (resetRequested)="reset()"
       />
     </div>
-  </ngx-form-page-layout>
+  </div>
+
+  <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
 </div>

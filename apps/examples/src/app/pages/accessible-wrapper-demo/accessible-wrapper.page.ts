@@ -3,8 +3,8 @@ import { AccessibleWrapperModel } from '../../models/accessible-wrapper.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
-import { FormPageLayout } from '../../ui/form-page-layout/form-page-layout.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
+import { IntroItemComponent, IntroSectionComponent } from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { accessibleWrapperContent } from './accessible-wrapper.content';
 import { AccessibleWrapperFormBody } from './accessible-wrapper.form';
@@ -14,10 +14,11 @@ import { accessibleWrapperSuite } from './accessible-wrapper.validations';
   selector: 'ngx-accessible-wrapper-page',
   imports: [
     PageTitle,
+    IntroSectionComponent,
+    IntroItemComponent,
     Card,
     AlertPanel,
     ExampleCardsComponent,
-    FormPageLayout,
     FormStateCardComponent,
     AccessibleWrapperFormBody,
   ],

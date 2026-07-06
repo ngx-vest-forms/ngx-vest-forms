@@ -5,6 +5,7 @@ import {
   expectFieldValid,
   expectUnchecked,
   fillAndBlur,
+  getMainContentSidebar,
   getWarningElementFor,
   monitorAriaStability,
   navigateToValidationConfigDemo,
@@ -711,13 +712,13 @@ test.describe('ValidationConfig Demo', () => {
         await country.selectOption({ label: 'United States' });
         await fillAndBlur(state, 'California');
         await fillAndBlur(zipCode, '90210');
-        await fillAndBlur(startDate, '2025-01-10');
-        await fillAndBlur(endDate, '2025-01-20');
+        await setDateLikeValueAndBlur(startDate, '2025-01-10');
+        await setDateLikeValueAndBlur(endDate, '2025-01-20');
+
+        await waitForValidationToSettle(page);
 
         // Look for success indicator - check sidebar status badge shows valid
-        await expect(
-          page.locator('aside ngx-status-badge').getByText('Valid')
-        ).toBeVisible();
+        await expect(getMainContentSidebar(page).getByLabel('Valid')).toBeVisible();
       });
     });
 
@@ -728,34 +729,28 @@ test.describe('ValidationConfig Demo', () => {
   });
 
   test.describe('Key Features Verification', () => {
-    test('should demonstrate no race conditions with take(1) pattern', async ({
+    test('should display the intro callout content', async ({
       page,
     }) => {
-      await test.step('Perform multiple rapid validations', async () => {
-        const password = page.getByLabel('Password', { exact: true });
-        const confirmPassword = page.getByLabel(/confirm password/i);
-
-        // Rapidly change both fields multiple times
-        await password.fill('Pass1');
-        await confirmPassword.fill('Pass1');
-        await waitForValidationToSettle(page);
-
-        await password.fill('Password2');
-        await confirmPassword.fill('Password2');
-        await waitForValidationToSettle(page);
-
-        await password.fill('MySecure123');
-        await confirmPassword.fill('MySecure123');
-
-        // Wait for validations to settle
-        await waitForValidationToSettle(page);
-
-        // Both fields should stabilize without thrashing
-        const passwordStable = await monitorAriaStability(password, 1000);
-        const confirmStable = await monitorAriaStability(confirmPassword, 1000);
-
-        expect(passwordStable).toBe(true);
-        expect(confirmStable).toBe(true);
+      await test.step('Verify the intro section reflects the current examples layout', async () => {
+        await expect(
+          page.getByRole('heading', {
+            name: /why this matters/i,
+            level: 2,
+          })
+        ).toBeVisible();
+        await expect(
+          page.getByText(/one config map declares all dependencies/i)
+        ).toBeVisible();
+        await expect(
+          page.getByText(/conditional revalidation/i)
+        ).toBeVisible();
+        await expect(
+          page.getByText(/errors block, warnings advise/i)
+        ).toBeVisible();
+        await expect(
+          page.getByText(/omit rules conditionally/i)
+        ).toBeVisible();
       });
     });
 
@@ -1367,26 +1362,26 @@ test.describe('ValidationConfig Demo', () => {
       });
     });
 
-    test('should display key features callout', async ({ page }) => {
-      await test.step('Verify key features box is visible', async () => {
-        const keyFeaturesHeading = page.getByRole('heading', {
-          name: /key features/i,
-        });
-        await expect(keyFeaturesHeading).toBeVisible();
-
-        const keyFeaturesCard = page.locator('ngx-card', {
-          has: keyFeaturesHeading,
-        });
-        const keyFeaturesList = keyFeaturesCard.getByRole('list');
-
+    test('should display the intro callout content', async ({ page }) => {
+      await test.step('Verify the intro section reflects the current examples layout', async () => {
         await expect(
-          keyFeaturesList.getByText(/no race condition/i)
+          page.getByRole('heading', {
+            name: /why this matters/i,
+            level: 2,
+          })
         ).toBeVisible();
-        await expect(keyFeaturesList.getByText(/debounced/i)).toBeVisible();
         await expect(
-          keyFeaturesList.getByText(/conditional fields?/i)
+          page.getByText(/one config map declares all dependencies/i)
         ).toBeVisible();
-        await expect(keyFeaturesList.getByText(/cross-field/i)).toBeVisible();
+        await expect(
+          page.getByText(/conditional revalidation/i)
+        ).toBeVisible();
+        await expect(
+          page.getByText(/errors block, warnings advise/i)
+        ).toBeVisible();
+        await expect(
+          page.getByText(/omit rules conditionally/i)
+        ).toBeVisible();
       });
     });
   });

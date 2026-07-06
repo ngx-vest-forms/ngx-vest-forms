@@ -620,16 +620,13 @@ test.describe('Business Hours Form', () => {
     test('should display validation requirements list', async ({ page }) => {
       await test.step('Verify validation requirements are listed', async () => {
         await expect(
-          page.getByText(/at least one business hour must be added/i)
+          page.getByText(/at least one entry is required/i)
         ).toBeVisible();
         await expect(
-          page.getByText(/'from' and 'to' must be valid times/i)
+          page.getByText(/"to" time must be later than the "from" time/i)
         ).toBeVisible();
         await expect(
-          page.getByText(/'to' time must be later than 'from' time/i)
-        ).toBeVisible();
-        await expect(
-          page.getByText(/multiple time ranges cannot overlap/i)
+          page.getByText(/no two ranges may overlap/i)
         ).toBeVisible();
       });
     });

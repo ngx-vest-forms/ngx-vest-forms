@@ -15,6 +15,7 @@ let nextAddressInstanceId = 0;
   templateUrl: './address.component.html',
   styleUrls: ['./address.component.scss'],
   viewProviders: [vestFormsViewProviders],
+  host: { style: 'display: block;' },
 })
 export class AddressComponent {
   private readonly defaultIdPrefix = `ngx-address-${nextAddressInstanceId++}`;

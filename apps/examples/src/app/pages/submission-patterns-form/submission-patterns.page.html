@@ -4,10 +4,23 @@
     subtitle="Submit-time invalid handling, server-error messaging, success state, and retry — modelled distinctly."
   />
 
-  <ngx-example-cards [content]="exampleContent" class="mb-8 block" />
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Submit-gated error visibility</strong> — Show validation errors only on submit attempt; keep the form uncluttered while editing
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Invalid-on-submit handling</strong> — Focus the first invalid field; let users correct errors immediately
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Server-error resilience</strong> — Distinguish client validation errors from server failures; surface server errors in alerts with retry capability
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Success state and next actions</strong> — After successful submit, show the new account ID and offer "Create another" to reset and begin again
+    </ngx-intro-item>
+  </ngx-intro-section>
 
-  <ngx-form-page-layout>
-    <div layout-aside class="sidebar-card-stack">
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div class="space-y-6">
       <ngx-card title="Simulated outcome">
         <p class="mb-3 text-sm text-gray-600 dark:text-gray-300">
           Pick how the mock server should respond so each path is deterministic.
@@ -29,21 +42,12 @@
             }
           </select>
         </label>
-        <ul class="mt-4 space-y-2 text-sm text-gray-600 dark:text-gray-300">
-          <li>
-            (a) Field rules are plain Vest, while this demo intentionally keeps
-            error visibility submit-gated.
-          </li>
-          <li>(b) Submitting invalid focuses the first bad field.</li>
-          <li>(c) Server failures surface in an alert with Retry.</li>
-          <li>(d) Success shows the new account id + Create another.</li>
-        </ul>
       </ngx-card>
 
       <ngx-form-state-card [feedback]="feedback()" />
     </div>
 
-    <div layout-main>
+    <div>
       @if (showClearSubmitCycle()) {
       <ngx-alert-panel tone="info" title="Submit cycle active">
         <p>
@@ -92,5 +96,7 @@
         />
       </ngx-card>
     </div>
-  </ngx-form-page-layout>
+  </div>
+
+  <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
 </div>

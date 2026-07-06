@@ -4,35 +4,27 @@
     subtitle="A non-native control participating in validation, warnings, touched state, and submission."
   />
 
-  <ngx-example-cards [content]="exampleContent" class="mb-8 block" />
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">ControlValueAccessor contract</strong> — Any control implementing CVA is indistinguishable from a native input to ngx-vest-forms and Angular's form system
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Controls participate in validation</strong> — Custom controls work with [ngModel], Vest suites, and form-level state tracking
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Touch-driven error display</strong> — onTouched fires on blur, so error messages appear on blur just like native fields
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Keyboard accessible</strong> — Proper focus management and tab order work automatically; Vest suite remains agnostic to whether a control is custom or native
+    </ngx-intro-item>
+  </ngx-intro-section>
 
-  <ngx-form-page-layout>
-    <div layout-aside class="sidebar-card-stack">
-      <ngx-card title="Why this works">
-        <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
-          <li>
-            Each control is a <code>ControlValueAccessor</code> registered via
-            <code>NG_VALUE_ACCESSOR</code>.
-          </li>
-          <li>
-            <code>[ngModel]</code> binds them — ngx-vest-forms can't tell
-            they're not native inputs.
-          </li>
-          <li>
-            <code>onTouched</code> fires on blur, so errors appear on blur just
-            like native fields.
-          </li>
-          <li>
-            The Vest suite is a plain spec — it never knows the control is
-            custom.
-          </li>
-        </ul>
-      </ngx-card>
-
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div>
       <ngx-form-state-card [feedback]="feedback()" />
     </div>
 
-    <div layout-main>
+    <div class="space-y-6">
       @if (submittedValue(); as submitted) {
       <ngx-alert-panel tone="success" title="Submitted">
         <p>
@@ -56,5 +48,7 @@
         />
       </ngx-card>
     </div>
-  </ngx-form-page-layout>
+  </div>
+
+  <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
 </div>

@@ -153,6 +153,11 @@ type MessageInput = readonly string[] | Record<string, string[]>;
       }
     </ngx-card>
   `,
+  host: {
+    style: 'display: block;',
+    role: 'complementary',
+    'aria-label': 'Form state sidebar',
+  },
 })
 export class FormStateCardComponent {
   readonly title = input('Form State');

@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test';
+import { getMainContentSidebar } from '../../helpers/form-helpers';
 
 test.describe('Business Policy Page', () => {
   test('should render the policy demo layout', async ({ page }) => {
     await page.goto('/business-policy', { waitUntil: 'domcontentloaded' });
+    const sidebar = getMainContentSidebar(page);
 
     await expect(
       page.getByRole('heading', {
@@ -11,12 +13,9 @@ test.describe('Business Policy Page', () => {
       })
     ).toBeVisible();
 
-    const contentAside = page
-      .getByRole('complementary')
-      .filter({ hasText: /policy at a glance/i });
-    await expect(contentAside).toBeVisible();
-    await expect(contentAside).toContainText(/form state/i);
-    await expect(contentAside).toContainText(/form value/i);
+    await expect(sidebar).toBeVisible();
+    await expect(sidebar).toContainText(/form state/i);
+    await expect(sidebar).toContainText(/form value/i);
 
     await expect(
       page.getByRole('combobox', { name: /account type/i })

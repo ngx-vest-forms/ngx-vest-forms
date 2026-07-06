@@ -4,29 +4,27 @@
     subtitle="Compare error and warning visibility timing across display modes."
   />
 
-  <ngx-example-cards [content]="exampleContent" class="mb-8 block" />
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">always mode</strong> — Feedback appears immediately; useful for real-time guidance without waiting for user interaction
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">on-dirty mode</strong> — Feedback appears after the user has changed a field; reduces noise while filling out fresh forms
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">on-touch mode</strong> — Feedback appears after blur; respects the user's natural interaction flow and focus events
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Per-field mode overrides</strong> — Use different modes for different fields; form-level mode is the default that individual fields can override
+    </ngx-intro-item>
+  </ngx-intro-section>
 
-  <ngx-form-page-layout>
-    <div layout-aside class="sidebar-card-stack">
-      <ngx-card title="What this page demonstrates">
-        <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-          <li><strong>always</strong>: feedback appears immediately.</li>
-          <li>
-            <strong>on-dirty</strong>: feedback appears after value changes.
-          </li>
-          <li>
-            <strong>on-submit</strong>: feedback appears after a parent triggers
-            programmatic submission.
-          </li>
-          <li><strong>on-touch</strong>: feedback appears after blur.</li>
-          <li>Same form model with per-field mode overrides.</li>
-        </ul>
-      </ngx-card>
-
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div>
       <ngx-form-state-card [feedback]="formBody.feedback" />
     </div>
 
-    <div layout-main>
+    <div>
       <ngx-display-modes-demo-form-body
         #formBody
         [formValue]="formValue()"
@@ -35,5 +33,7 @@
         (submitted)="save()"
       />
     </div>
-  </ngx-form-page-layout>
+  </div>
+
+  <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
 </div>
