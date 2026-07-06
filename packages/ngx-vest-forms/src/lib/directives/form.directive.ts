@@ -836,6 +836,20 @@ export class FormDirective<T extends Record<string, unknown>> {
    * }
    * ```
    */
+  triggerFormValidation(path?: string): void {
+    if (path) {
+      const control = this.ngForm.form.get(path);
+      if (control) {
+        control.updateValueAndValidity({ emitEvent: true });
+      } else if (isDevMode()) {
+        logWarning(NGX_VEST_FORMS_ERRORS.CONTROL_NOT_FOUND, path);
+      }
+    } else {
+      // Update all form controls validity which will trigger all form events
+      this.ngForm.form.updateValueAndValidity({ emitEvent: true });
+    }
+  }
+
   /**
    * Re-runs validation for every control in the form tree, depth-first.
    *
@@ -860,20 +874,6 @@ export class FormDirective<T extends Record<string, unknown>> {
       control.updateValueAndValidity({ onlySelf: true, emitEvent: true });
     };
     updateTree(this.ngForm.form);
-  }
-
-  triggerFormValidation(path?: string): void {
-    if (path) {
-      const control = this.ngForm.form.get(path);
-      if (control) {
-        control.updateValueAndValidity({ emitEvent: true });
-      } else if (isDevMode()) {
-        logWarning(NGX_VEST_FORMS_ERRORS.CONTROL_NOT_FOUND, path);
-      }
-    } else {
-      // Update all form controls validity which will trigger all form events
-      this.ngForm.form.updateValueAndValidity({ emitEvent: true });
-    }
   }
 
   /**
