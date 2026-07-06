@@ -55,7 +55,11 @@ If you already have a schema, pass it directly and let that remain your structur
 <form ngxVestForm [suite]="suite" [formContract]="myContract"></form>
 
 <!-- v3: explicit conversion from legacy shape to Standard Schema -->
-<form ngxVestForm [suite]="suite" [formContract]="toFormContract(myContract)"></form>
+<form
+  ngxVestForm
+  [suite]="suite"
+  [formContract]="toFormContract(myContract)"
+></form>
 
 <!-- v3: real Standard Schema (preferred when your app already has one) -->
 <form ngxVestForm [suite]="suite" [formContract]="zodSchema"></form>
@@ -131,6 +135,43 @@ export type FormCompatibleDeepRequired<T> = T extends Date
                         ? { [K in keyof T]-?: FormCompatibleDeepRequired<T[K]> }
                         : Required<T>;
 ```
+
+## Upgrade Vest 5 → 6 (required)
+
+v3 raises the `vest` peer dependency from `~5.4.6` to `>=6.0.0`. Every consumer must:
+
+1. **Bump the dependency:**
+
+   ```bash
+   npm install vest@^6.0.0
+   ```
+
+2. **Rewrite every suite to the model-only form.** In v2 the directive ran your suite as `suite(model, field)` and the callback had to call `only(field)` unconditionally. In v3 the directive selects the field at the call site via `suite.only(field).run(model)`, so the callback receives only the model — and must **not** call `only()` itself:
+
+   ```typescript
+   // v2 (Vest 5): two-argument callback + unconditional only(field)
+   import { staticSuite, only, test, enforce } from 'vest';
+
+   const suite: NgxVestSuite<MyFormModel> = staticSuite((model, field?) => {
+     only(field);
+     test('email', 'Email is required', () => {
+       enforce(model.email).isNotBlank();
+     });
+   });
+   ```
+
+   ```typescript
+   // v3 (Vest 6): model-only callback — no field parameter, no only()
+   import { create, test, enforce } from 'vest';
+
+   const suite: NgxVestSuite<MyFormModel> = create((model) => {
+     test('email', 'Email is required', () => {
+       enforce(model.email).isNotBlank();
+     });
+   });
+   ```
+
+   Vest 6 removed `staticSuite(...)`; use `create(...)` and, outside the form directive (server-side validation, scripts), `suite.runStatic(model)` for stateless runs. This rewrite touches every suite in your codebase, but each change is mechanical: drop the `field` parameter, drop the `only(field)` call, and switch `staticSuite` to `create`.
 
 ## What's new in v3 beyond Vest 6
 
@@ -268,14 +309,14 @@ The `errorsChange` output on `FormDirective` still emits `Record<string, string[
 
 Six previously `@internal` symbols have been **removed from the primary `'ngx-vest-forms'` entry point** and are now only reachable from the new `'ngx-vest-forms/internal'` secondary entry point:
 
-| Symbol                    | v2.x import                | v3 import                            |
-| ------------------------- | -------------------------- | ------------------------------------ |
-| `fastDeepEqual`           | `from 'ngx-vest-forms'`    | `from 'ngx-vest-forms/internal'`     |
-| `shallowEqual`            | `from 'ngx-vest-forms'`    | `from 'ngx-vest-forms/internal'`     |
-| `parseFieldPath`          | `from 'ngx-vest-forms'`    | `from 'ngx-vest-forms/internal'`     |
-| `getFormControlField`     | `from 'ngx-vest-forms'`    | `from 'ngx-vest-forms/internal'`     |
-| `getFormGroupField`       | `from 'ngx-vest-forms'`    | `from 'ngx-vest-forms/internal'`     |
-| `mergeValuesAndRawValues` | `from 'ngx-vest-forms'`    | `from 'ngx-vest-forms/internal'`     |
+| Symbol                    | v2.x import             | v3 import                        |
+| ------------------------- | ----------------------- | -------------------------------- |
+| `fastDeepEqual`           | `from 'ngx-vest-forms'` | `from 'ngx-vest-forms/internal'` |
+| `shallowEqual`            | `from 'ngx-vest-forms'` | `from 'ngx-vest-forms/internal'` |
+| `parseFieldPath`          | `from 'ngx-vest-forms'` | `from 'ngx-vest-forms/internal'` |
+| `getFormControlField`     | `from 'ngx-vest-forms'` | `from 'ngx-vest-forms/internal'` |
+| `getFormGroupField`       | `from 'ngx-vest-forms'` | `from 'ngx-vest-forms/internal'` |
+| `mergeValuesAndRawValues` | `from 'ngx-vest-forms'` | `from 'ngx-vest-forms/internal'` |
 
 ```typescript
 // Before (v2.x)

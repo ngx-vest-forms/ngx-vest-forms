@@ -7,7 +7,7 @@ A lightweight, type-safe adapter between Angular template-driven forms and [Vest
 
 [![npm version](https://img.shields.io/npm/v/ngx-vest-forms.svg?style=flat-square)](https://www.npmjs.com/package/ngx-vest-forms)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/ngx-vest-forms/ngx-vest-forms/cd.yml?branch=master&style=flat-square&label=Build)](https://github.com/ngx-vest-forms/ngx-vest-forms/actions/workflows/cd.yml)
-[![Angular](<https://img.shields.io/badge/Angular-22.x-dd0031?style=flat-square&logo=angular>)](https://angular.dev)
+[![Angular](https://img.shields.io/badge/Angular-22.x-dd0031?style=flat-square&logo=angular)](https://angular.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
@@ -34,8 +34,8 @@ See the full guides under [Documentation](#documentation).
 
 ### Prerequisites
 
-- **Angular**: 22.x
-- **Vest.js**: ~6.3.x
+- **Angular**: >=21.0.0 <23.0.0
+- **Vest.js**: >=6.0.0
 - **TypeScript**: ~6.0.3
 - **Node.js**: >=22.0.0
 
@@ -408,7 +408,7 @@ test(ROOT_FORM, 'At least one contact method is required', () => {
   (errorsChange)="errors.set($event)"
 >
   @if (errors()[ROOT_FORM]) {
-    <div role="alert">{{ errors()[ROOT_FORM][0] }}</div>
+  <div role="alert">{{ errors()[ROOT_FORM][0] }}</div>
   }
 </form>
 ```
@@ -475,10 +475,18 @@ const legacyContract: NgxDeepRequired<MyFormModel> = {
   email: '',
   address: { street: '', city: '' },
 };
+
+// Model-only Vest 6 suite (see Quick Start)
+const suite: NgxVestSuite<MyFormModel> = create((model) => {
+  test('email', 'Email is required', () => {
+    enforce(model.email).isNotBlank();
+  });
+});
 ```
 
 ```typescript
 @Component({
+  imports: [NgxVestForms],
   providers: [provideFormContract(legacyContract)],
   template: `
     <form ngxVestForm [suite]="suite">
@@ -494,7 +502,10 @@ const legacyContract: NgxDeepRequired<MyFormModel> = {
     </form>
   `,
 })
-export class MyFormComponent {}
+export class MyFormComponent {
+  protected readonly formValue = signal<MyFormModel>({});
+  protected readonly suite = suite;
+}
 ```
 
 If the contract genuinely varies per usage site, `[formContract]` still works as an explicit override.
