@@ -39,19 +39,7 @@ export class AccessibleWrapperFormBody {
     this.resetRequested.emit();
   }
 
-  protected shouldShowErrors(control: FormErrorControlDirective): boolean {
-    return control['errorDisplay'].shouldShowErrors();
-  }
-
-  protected controlErrors(control: FormErrorControlDirective): string[] {
-    return control['errorDisplay'].errors();
-  }
-
   resetFormState(value: AccessibleWrapperModel): void {
     this.vestForm()?.resetForm(value);
-  }
-
-  focusFirstInvalidControl(): void {
-    this.vestForm()?.focusFirstInvalidControl();
   }
 }
