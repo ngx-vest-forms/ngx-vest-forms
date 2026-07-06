@@ -19,7 +19,7 @@ test.describe('Accessible Wrapper Demo Form', () => {
 
     await page.getByRole('button', { name: /save preferences/i }).click();
 
-    const errorSummary = page.getByRole('alert').filter({
+    const errorSummary = page.getByRole('region', { name: 'Errors' }).filter({
       hasText: /preferred name is required/i,
     });
 

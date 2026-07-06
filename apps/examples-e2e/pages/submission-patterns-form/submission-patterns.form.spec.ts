@@ -20,10 +20,10 @@ test.describe('Submission Patterns Form', () => {
 
     await expect(fullName).toBeFocused();
     await expect(
-      page.getByRole('alert').filter({ hasText: /errors/i })
+      page.getByRole('region', { name: 'Errors' })
     ).toBeVisible();
     await expect(
-      page.getByRole('alert').getByText(/full name is required/i)
+      page.getByRole('region', { name: 'Errors' }).getByText(/full name is required/i)
     ).toBeVisible();
   });
 
@@ -38,7 +38,7 @@ test.describe('Submission Patterns Form', () => {
     const clearSubmittedState = page.getByRole('button', {
       name: /clear submitted state/i,
     });
-    const errorSummary = page.getByRole('alert').filter({
+    const errorSummary = page.getByRole('region', { name: 'Errors' }).filter({
       hasText: /email is required/i,
     });
 

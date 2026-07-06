@@ -381,7 +381,7 @@ export async function typeAndBlur(
  * Get form-level (ROOT_FORM) errors
  */
 export async function getFormLevelErrors(page: Page): Promise<Locator> {
-  return page.locator('[role="alert"]').filter({ hasText: /error/i });
+  return page.getByRole('region', { name: /errors/i });
 }
 
 /**
