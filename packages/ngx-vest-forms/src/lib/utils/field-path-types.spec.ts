@@ -312,8 +312,8 @@ describe('field-path-types', () => {
       type AgeType = FieldPathValue<FormModel, 'user.profile.age'>;
       type StreetType = FieldPathValue<FormModel, 'addresses.street'>;
 
-      // NonNullable stripping means these are the bare leaf types, not
-      // `number | undefined` / `string | undefined`.
+      // `Exclude<..., undefined>` stripping means these are the bare leaf
+      // types, not `number | undefined` / `string | undefined`.
       expectTypeOf<AgeType>().toEqualTypeOf<number>();
       expectTypeOf<StreetType>().toEqualTypeOf<string>();
 
@@ -322,6 +322,32 @@ describe('field-path-types', () => {
       const street: StreetType = 'Main St';
       expect(typeof age).toBe('number');
       expect(typeof street).toBe('string');
+    });
+
+    it('should preserve a domain-level `| null` on leaf types (only `undefined` is stripped)', () => {
+      type TestModel = {
+        middleName: string | null;
+        user: {
+          nickname: string | null;
+        };
+      };
+
+      // `null` is a first-class Angular forms value and must survive.
+      type MiddleNameType = FieldPathValue<TestModel, 'middleName'>;
+      type NicknameType = FieldPathValue<TestModel, 'user.nickname'>;
+
+      expectTypeOf<MiddleNameType>().toEqualTypeOf<string | null>();
+      expectTypeOf<NicknameType>().toEqualTypeOf<string | null>();
+
+      // Partial models still get their `| undefined` stripped, while `| null`
+      // survives on the leaf.
+      type FormModel = NgxDeepPartial<{ middleName: string | null }>;
+      type PartialMiddleNameType = FieldPathValue<FormModel, 'middleName'>;
+      expectTypeOf<PartialMiddleNameType>().toEqualTypeOf<string | null>();
+
+      // Runtime anchor (matches this file's typed-const convention).
+      const middleName: MiddleNameType = null;
+      expect(middleName).toBeNull();
     });
 
     it('should not produce traversal paths for bigint/symbol fields', () => {
