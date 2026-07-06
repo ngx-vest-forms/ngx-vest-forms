@@ -128,9 +128,6 @@ importers:
       angular-eslint:
         specifier: 22.0.0
         version: 22.0.0(@angular/cli@22.0.4(@types/node@25.9.3)(chokidar@4.0.1))(chokidar@4.0.1)(eslint@10.5.0(jiti@2.7.0))(typescript-eslint@8.62.0(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3))(typescript@6.0.3)
-      copyfiles:
-        specifier: ~2.4.1
-        version: 2.4.1
       eslint:
         specifier: ^10.5.0
         version: 10.5.0(jiti@2.7.0)
@@ -4198,10 +4195,6 @@ packages:
     engines: {node: '>= 20.9.0'}
     peerDependencies:
       webpack: ^5.1.0
-
-  copyfiles@2.4.1:
-    resolution: {integrity: sha512-fereAvAvxDrQDOXybk3Qu3dPbOoKoysFMWtkY3mv5BsL8//OSZVL5DCLYqgRfY5cWirgRzlC+WSrxp6Bo3eNZg==}
-    hasBin: true
 
   core-js-compat@3.49.0:
     resolution: {integrity: sha512-VQXt1jr9cBz03b331DFDCCP90b3fanciLkgiOoy8SBHy06gNf+vQ1A3WFLqG7I8TipYIKeYK9wxd0tUrvHcOZA==}
@@ -12292,16 +12285,6 @@ snapshots:
       serialize-javascript: 7.0.6
       tinyglobby: 0.2.17
       webpack: 5.107.2(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)
-
-  copyfiles@2.4.1:
-    dependencies:
-      glob: 7.2.3
-      minimatch: 3.1.5
-      mkdirp: 1.0.4
-      noms: 0.0.0
-      through2: 2.0.5
-      untildify: 4.0.0
-      yargs: 16.2.2
 
   core-js-compat@3.49.0:
     dependencies:
