@@ -113,7 +113,7 @@ When answering the user:
 
 ## References to consult when needed
 
-- `../../../instructions/vest.instructions.md`
+- `../../../../.github/instructions/vest.instructions.md`
 - `https://vestjs.dev/docs/get_started`
 - `https://vestjs.dev/docs/concepts`
 - `https://vestjs.dev/docs/writing_your_suite/schema_validation`

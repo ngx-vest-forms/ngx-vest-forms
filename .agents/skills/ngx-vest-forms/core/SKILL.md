@@ -106,7 +106,7 @@ Read these files before making nuanced recommendations:
 - `../../../../docs/COMPLETE-EXAMPLE.md`
 - `../../../../docs/FIELD-PATHS.md`
 - `../../../../docs/ACCESSIBILITY.md`
-- `../../../instructions/vest.instructions.md`
+- `../../../../.github/instructions/vest.instructions.md`
 - `../../../../README.md`
 - `../../../../packages/ngx-vest-forms/src/public-api.ts`
 

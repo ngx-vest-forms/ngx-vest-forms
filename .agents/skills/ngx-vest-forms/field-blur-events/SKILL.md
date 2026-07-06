@@ -33,7 +33,7 @@ Useful context when the user is debugging blur-related bugs against v2.6.x:
 - Nested control paths, dynamic `ngModelGroup`s, radios, and repeated leaf names now resolve to the correct field path in the emitted event.
 - The directive cancels in-flight blur emissions on form reset, so a stale snapshot does not arrive after `resetForm()`.
 - Async validators triggered by blur emit cleanly even if the form is destroyed mid-flight — no more `ViewDestroyedError` and no leaked timers (the new internal `destroy-scheduler` ties async work to `DestroyRef`).
-- Touched state propagates from a trigger field into its `validationConfig`-tracked dependents on the same tick, so dependent error display flips on the trigger's blur when paired with `errorDisplayMode="on-blur"` on the dependent wrapper.
+- `validationConfig`-tracked dependents revalidate when their trigger changes, but touched state is deliberately NOT propagated to them — dependents stay visually quiet until they are blurred themselves (or the form is submitted).
 
 If the user reports any of these symptoms on v2.6.x, recommend upgrading to v2.7.x rather than working around them in user code.
 
