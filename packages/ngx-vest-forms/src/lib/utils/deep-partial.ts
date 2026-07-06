@@ -13,6 +13,17 @@ type _Primitive =
   | undefined
   | null;
 type _Builtin = _Primitive | Function | Date | Error | RegExp;
+type _IsNever<T> = [T] extends [never] ? true : false;
+// Returns T when T is a tuple type, never for plain arrays.
+// Mirrors the helper in deep-required.ts so both utilities stay symmetric.
+type _IsTuple<T> =
+  T extends ReadonlyArray<infer U>
+    ? U[] extends T
+      ? _IsNever<keyof T & `${number}`> extends true
+        ? never
+        : T
+      : T
+    : never;
 
 /**
  * Makes every property optional recursively, including nested objects.
@@ -50,12 +61,19 @@ export type NgxDeepPartial<T> =
                 ? WeakSet<NgxDeepPartial<U>>
                 : T extends Promise<infer U>
                   ? Promise<NgxDeepPartial<U>>
-                  : // Explicit array handling keeps element types concrete (no `| undefined` on elements).
-                    // ts-essentials' `extends {}` fallback would produce `(T | undefined)[]` instead.
-                    T extends Array<infer U>
-                    ? Array<NgxDeepPartial<U>>
-                    : T extends ReadonlyArray<infer U>
-                      ? ReadonlyArray<NgxDeepPartial<U>>
+                  : // Tuples must be handled before the generic array branches:
+                    // `[A, B] extends Array<infer U>` would widen the tuple to
+                    // `(A | B)[]`, erasing arity and per-position types. The
+                    // homomorphic mapped type with `?` preserves the tuple shape
+                    // as `[A?, B?]` (mirrors NgxDeepRequired's tuple branch).
+                    _IsNever<_IsTuple<T>> extends false
+                    ? { [K in keyof T]?: NgxDeepPartial<T[K]> }
+                    : // Explicit array handling keeps element types concrete (no `| undefined` on elements).
+                      // ts-essentials' `extends {}` fallback would produce `(T | undefined)[]` instead.
+                      T extends Array<infer U>
+                      ? Array<NgxDeepPartial<U>>
+                      : T extends ReadonlyArray<infer U>
+                        ? ReadonlyArray<NgxDeepPartial<U>>
                       : // Index-signature types (e.g. Record<string, V>) are returned as-is.
                         // Applying `?:` to an index signature widens values to `V | undefined`, which
                         // breaks consumers that expect `Record<string, V>` (e.g. dynamic phone-number maps).
