@@ -32,7 +32,20 @@
             [title]="'Remove business hour slot ' + (+item.key + 1)"
             [attr.aria-label]="'Remove business hour slot ' + (+item.key + 1)"
           >
-            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+            <svg
+              class="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path
+                d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14M10 11v6M14 11v6"
+              />
+            </svg>
           </button>
         </div>
       </fieldset>
@@ -74,10 +87,18 @@
         (click)="addBusinessHour(group, valuesGroup)"
         class="business-hours-add-btn"
       >
-        <i
-          class="fa-solid fa-plus business-hours-add-btn-icon"
+        <svg
+          class="business-hours-add-btn-icon h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          stroke-linecap="round"
+          stroke-linejoin="round"
           aria-hidden="true"
-        ></i>
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
         Add
       </button>
     </div>
