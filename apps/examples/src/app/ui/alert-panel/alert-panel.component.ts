@@ -1,6 +1,17 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 
 type AlertTone = 'error' | 'warning' | 'info' | 'success';
+
+/**
+ * Live-region behavior of the panel.
+ *
+ * Matches the library's documented contract (see the control-wrapper
+ * template docs): field-level and informational feedback is `polite`;
+ * `assertive` (`role="alert"`) is reserved for submission-blocking
+ * form-level errors. Use `off` for always-visible inspector panels whose
+ * content duplicates what field wrappers already announce.
+ */
+type AlertLive = 'polite' | 'assertive' | 'off';
 
 @Component({
   selector: 'ngx-alert-panel',
@@ -31,9 +42,9 @@ type AlertTone = 'error' | 'warning' | 'info' | 'success';
       [class.dark:border-green-800]="tone() === 'success'"
       [class.dark:bg-green-900/30]="tone() === 'success'"
       [class.dark:text-green-300]="tone() === 'success'"
-      [attr.role]="tone() === 'error' ? 'alert' : 'status'"
-      [attr.aria-live]="tone() === 'error' ? 'assertive' : 'polite'"
-      aria-atomic="true"
+      [attr.role]="role()"
+      [attr.aria-live]="ariaLive()"
+      [attr.aria-atomic]="live() === 'off' ? null : true"
     >
       @if (title()) {
         <h2 class="mb-2 text-sm font-semibold">{{ title() }}</h2>
@@ -50,4 +61,26 @@ type AlertTone = 'error' | 'warning' | 'info' | 'success';
 export class AlertPanel {
   readonly tone = input<AlertTone>('info');
   readonly title = input<string>();
+
+  /**
+   * Live-region politeness. Defaults to `polite` (`role="status"`).
+   * Set to `assertive` only for genuine submission-blocking alerts, or
+   * `off` to render with no live semantics at all.
+   */
+  readonly live = input<AlertLive>('polite');
+
+  protected readonly role = computed(() => {
+    switch (this.live()) {
+      case 'assertive':
+        return 'alert';
+      case 'polite':
+        return 'status';
+      default:
+        return null;
+    }
+  });
+
+  protected readonly ariaLive = computed(() =>
+    this.live() === 'off' ? null : this.live()
+  );
 }
