@@ -581,15 +581,15 @@ describe('FormDirective - Comprehensive', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    // Both empty → omitWhen skips validation → both valid
-    // Note: justification was touched earlier, so while omitWhen prevents new validation errors,
-    // the field needs to be explicitly revalidated to clear the "touched + invalid" state.
-    // In real usage, this would happen when the user starts typing again.
+    // Both empty → omitWhen skips validation → both valid.
+    // Clearing quantity happened inside the loop-prevention cooldown window,
+    // so the change was DEFERRED and replayed once the cooldown expired
+    // (C-B1): justification is revalidated against the cleared quantity and
+    // its stale "required" error is removed — without any further user
+    // interaction. The touched state is intentionally preserved.
     expect(quantityInput.classList.contains('ng-valid')).toBe(true);
-    // Justification remains invalid because it was touched while invalid.
-    // This is expected behavior - touched fields retain their validation state
-    // until the user interacts with them again.
-    expect(justificationInput.classList.contains('ng-invalid')).toBe(true);
+    expect(justificationInput.classList.contains('ng-valid')).toBe(true);
+    expect(justificationInput.classList.contains('ng-invalid')).toBe(false);
     expect(justificationInput.classList.contains('ng-touched')).toBe(true);
   });
 
@@ -912,10 +912,13 @@ describe('FormDirective - Comprehensive', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    // Justification retains its touched + invalid state from earlier.
-    // omitWhen prevents NEW validation errors, but doesn't clear existing touched state.
-    // This matches the behavior of the first test and is expected.
-    expect(justificationInput.classList.contains('ng-invalid')).toBe(true);
+    // Clearing quantity arrived inside the loop-prevention cooldown window,
+    // so the pipeline defers it and replays the cycle after the cooldown
+    // (C-B1): justification is revalidated against the cleared quantity,
+    // omitWhen now skips the "required" rule, and the stale error is removed.
+    // Touched state is intentionally preserved.
+    expect(justificationInput.classList.contains('ng-invalid')).toBe(false);
+    expect(justificationInput.classList.contains('ng-valid')).toBe(true);
     expect(justificationInput.classList.contains('ng-touched')).toBe(true);
   });
 

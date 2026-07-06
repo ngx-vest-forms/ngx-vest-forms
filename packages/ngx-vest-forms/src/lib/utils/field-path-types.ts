@@ -243,14 +243,17 @@ export { ROOT_FORM };
  * type S2 = FieldPathValue<Model, 'addresses[0].street'>; // string
  * ```
  */
-export type FieldPathValue<T, Path extends string> = NonNullable<
-  FieldPathValueRaw<T, Path>
+export type FieldPathValue<T, Path extends string> = Exclude<
+  FieldPathValueRaw<T, Path>,
+  undefined
 >;
 
 /**
  * Internal resolver for {@link FieldPathValue}. Walks the path and returns the
- * raw leaf type; the public {@link FieldPathValue} strips the partial-model
- * `| undefined` from the leaf via `NonNullable`.
+ * raw leaf type; the public {@link FieldPathValue} strips only the
+ * partial-model `| undefined` from the leaf (via `Exclude<..., undefined>`),
+ * preserving a domain-level `| null` — `null` is a first-class value in
+ * Angular forms and must survive path resolution.
  *
  * @internal
  */
