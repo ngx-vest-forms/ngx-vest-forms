@@ -45,6 +45,14 @@ Use this only for controls that are always required. For conditionally required 
 
 When a form is submitted and invalid, `ngxVestForm` moves keyboard focus to the first invalid, visible field. This improves error recovery for keyboard users and people using assistive technology.
 
+If your application manages its own post-submit focus target — for example a WCAG-style error summary with `role="alert"` that receives focus on submit — disable the built-in behavior so the two don't compete:
+
+```html
+<form ngxVestForm [focusFirstInvalidOnSubmit]="false">...</form>
+```
+
+You can still call `focusFirstInvalidControl()` / `scrollToFirstInvalidControl()` manually from your own submit flow.
+
 Practical guidance:
 
 - keep the most important invalid control visible after submit

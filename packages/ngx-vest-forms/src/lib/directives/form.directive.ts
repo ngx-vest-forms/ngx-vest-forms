@@ -1,4 +1,5 @@
 import {
+  booleanAttribute,
   ChangeDetectorRef,
   computed,
   DestroyRef,
@@ -23,6 +24,8 @@ import {
 import {
   AbstractControl,
   AsyncValidatorFn,
+  FormArray,
+  FormGroup,
   NgForm,
   PristineChangeEvent,
   StatusChangeEvent,
@@ -110,13 +113,16 @@ const PIPELINE_OPTIONS = {
 >;
 
 /**
- * Type for validation configuration that accepts both the typed and untyped versions.
- * This ensures backward compatibility while supporting the new typed API.
+ * Type for the `validationConfig` input: a typed {@link ValidationConfigMap}
+ * (or `null` to disable cross-field revalidation).
+ *
+ * Since 3.0.0 the untyped `Record<string, string[]>` escape hatch is gone, so
+ * typo'd field paths in a `[validationConfig]` binding fail to compile instead
+ * of silently never triggering. For genuinely dynamic path strings (e.g.
+ * runtime array indices such as `'addresses.0.street'`), build the object
+ * separately and cast it to `NgxValidationConfig<T>` explicitly.
  */
-export type NgxValidationConfig<T = unknown> =
-  | Record<string, string[]>
-  | ValidationConfigMap<T>
-  | null;
+export type NgxValidationConfig<T = unknown> = ValidationConfigMap<T> | null;
 
 export type NgxValidationFocus = NgxSuiteFocusSpec;
 
@@ -404,6 +410,19 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly validationFocus = input<NgxValidationFocus | null>(null);
 
   /**
+   * Whether a failed submit automatically scrolls to and focuses the first
+   * invalid control (via {@link focusFirstInvalidControl}).
+   *
+   * Defaults to `true`. Set to `false` when the application manages its own
+   * post-submit focus target — for example a WCAG-style error summary with
+   * `role="alert"` that receives focus on submit — or when multiple forms are
+   * submitted programmatically and viewport jumps are undesirable.
+   */
+  readonly focusFirstInvalidOnSubmit = input(true, {
+    transform: booleanAttribute,
+  });
+
+  /**
    * Emits whenever validation feedback may have changed, even if the aggregate
    * root form status string stays the same.
    */
@@ -574,12 +593,51 @@ export class FormDirective<T extends Record<string, unknown>> {
       )
       .subscribe(() => {
         scheduleMicrotask(() => {
-          if (this.ngForm.form.valid) {
+          if (this.ngForm.form.valid || !this.focusFirstInvalidOnSubmit()) {
             return;
           }
           this.focusFirstInvalidControl();
         }, this.#destroyRef);
       });
+
+    /**
+     * Re-run validation on all registered controls when the `suite` input
+     * reference changes — including a lazily-supplied suite (`null` → suite,
+     * e.g. a lazy import or per-locale suite arriving asynchronously) and
+     * runtime suite swaps (wizard steps, mode switches).
+     *
+     * Without this, fields validated while the suite was absent (or against
+     * the previous suite) keep their stale verdict until the user edits them:
+     * `createAsyncValidator` reads `suite()` per validation run, but nothing
+     * re-triggers those runs. A root `updateValueAndValidity()` alone is not
+     * enough because Angular does not descend into child controls, so every
+     * control in the tree is updated individually (mirroring what
+     * `ValidateRootFormDirective` already does for ROOT_FORM).
+     */
+    // `undefined` sentinel = effect has not run yet (the input itself is
+    // `NgxVestSuite | null`, never `undefined`).
+    let previousSuite: NgxVestSuite<NoInfer<T>> | null | undefined;
+    effect(() => {
+      const suite = this.suite();
+      if (previousSuite === undefined) {
+        // Initial effect run: field validators already see the current
+        // suite when they register, nothing to re-run.
+        previousSuite = suite;
+        return;
+      }
+      if (suite === previousSuite) {
+        return;
+      }
+      previousSuite = suite;
+      untracked(() => {
+        // Defer to the next microtask so Angular has finished wiring up
+        // controls/groups (ngModel/ngModelGroup) for the current render pass.
+        scheduleMicrotask(
+          () => this.#revalidateAllControls(),
+          this.#destroyRef
+        );
+      });
+    });
 
     /**
      * Single bidirectional synchronization effect using linkedSignal.
@@ -702,7 +760,7 @@ export class FormDirective<T extends Record<string, unknown>> {
         switchMap((config) =>
           createValidationConfigPipeline(
             form,
-            config as ValidationConfigMap<T> | null | undefined,
+            config,
             {
               configDebounceTime: this.#configDebounceTime,
               ...PIPELINE_OPTIONS,
@@ -790,6 +848,32 @@ export class FormDirective<T extends Record<string, unknown>> {
       // Update all form controls validity which will trigger all form events
       this.ngForm.form.updateValueAndValidity({ emitEvent: true });
     }
+  }
+
+  /**
+   * Re-runs validation for every control in the form tree, depth-first.
+   *
+   * Angular's `updateValueAndValidity()` on a container only re-runs the
+   * container's own validators and recalculates ancestors — it never descends
+   * into children. When the Vest suite changes, every field-level async
+   * validator must re-run, so each control is updated individually
+   * (`onlySelf: true` avoids redundant ancestor recalculation per child; the
+   * container's own update afterwards aggregates the fresh child statuses).
+   */
+  #revalidateAllControls(): void {
+    const updateTree = (control: AbstractControl): void => {
+      if (control instanceof FormGroup) {
+        for (const child of Object.values(control.controls)) {
+          updateTree(child);
+        }
+      } else if (control instanceof FormArray) {
+        for (const child of control.controls) {
+          updateTree(child);
+        }
+      }
+      control.updateValueAndValidity({ onlySelf: true, emitEvent: true });
+    };
+    updateTree(this.ngForm.form);
   }
 
   /**

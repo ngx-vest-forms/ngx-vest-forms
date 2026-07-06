@@ -287,11 +287,34 @@ import { parseFieldPath } from 'ngx-vest-forms/internal';
 
 The `ngx-vest-forms/internal` entry point carries **no semver guarantees** — it is for advanced use only and may change in any release. `getAllFormErrors` and `NgxFormErrorsByPath` are **not** affected; they remain on the primary `'ngx-vest-forms'` entry along with all other documented public API.
 
+## `validationConfig` is strictly typed (untyped `Record` branch removed)
+
+`NgxValidationConfig<T>` no longer includes the untyped `Record<string, string[]>` union branch. In v2 (and the v3 pre-releases) that branch silently absorbed any string-keyed object, so a typo'd field path compiled fine and simply never triggered. Now the `[validationConfig]` binding is checked against `ValidationConfigMap<T>`: every trigger key and dependent path must be a valid `FieldPath<T>` of your form model.
+
+```typescript
+// ❌ v2-style untyped config: now a compile error if a path doesn't exist
+protected validationConfig = {
+  passwordd: ['confirmPassword'], // typo — no longer compiles when bound
+};
+
+// ✅ Annotate with the model for compile-time checking + autocomplete
+protected validationConfig: NgxValidationConfig<PurchaseFormModel> = {
+  'passwords.password': ['passwords.confirmPassword'],
+};
+
+// ✅ Or use the fluent builder
+protected validationConfig = createValidationConfig<PurchaseFormModel>()
+  .bidirectional('passwords.password', 'passwords.confirmPassword')
+  .build();
+```
+
+For genuinely dynamic path strings that `FieldPath<T>` cannot express (e.g. runtime array indices such as `'addresses.0.street'`), build the object separately and cast it explicitly: `config as NgxValidationConfig<MyModel>`.
+
 ## Known limitations (v3)
 
 These are accepted, documented limitations in the v3 line. Each links to an Architecture Decision Record (ADR) with the full rationale and the conditions under which it will be revisited.
 
-- **`validationConfig` cooldown can drop rapid trigger-field input.** The time-based re-entry guard that prevents bidirectional validation loops can also suppress a genuine, very rapid user edit to a trigger field that lands inside the cooldown window; the dependent field reconciles on the next qualifying change. See [docs/adr/0003-validation-config-cooldown-can-drop-rapid-input.md](../adr/0003-validation-config-cooldown-can-drop-rapid-input.md).
+- **`validationConfig` cooldown defers (does not drop) rapid trigger-field input.** The time-based re-entry guard that prevents bidirectional validation loops briefly holds back a very rapid user edit to a trigger field that lands inside the cooldown window; the edit is replayed automatically once the cooldown expires (latest value wins), so dependent fields always converge without further interaction — at most one cooldown (500 ms) later. See [docs/adr/0003-validation-config-cooldown-can-drop-rapid-input.md](../adr/0003-validation-config-cooldown-can-drop-rapid-input.md) (superseded — describes the historical drop and the current defer/replay design).
 - **`validationConfig` trigger-control recreation is not supported.** If a `validationConfig` trigger control is destroyed and recreated (e.g. behind `@if`), the pipeline stays bound to the original control instance and the recreated control no longer drives dependent-field revalidation. **Workaround:** keep the trigger control mounted and toggle it via `disabled`/hidden styling instead of `@if`-destroying it, or re-create the whole form group so the dependent field and its `validationConfig` are re-wired together. See [docs/adr/0004-validation-config-trigger-control-recreation-unsupported.md](../adr/0004-validation-config-trigger-control-recreation-unsupported.md).
 
 ## v3 selector + token removals

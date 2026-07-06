@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (known limitation, deferred redesign)
+Superseded (2026-07-06) — the drop no longer exists; see "Superseded by" below.
 
 ## Date
 
@@ -33,3 +33,25 @@ The cooldown reliably prevents the bidirectional loop, which is a correctness is
 ## Revisit when
 
 - A token / depth-counter redesign is scheduled that tracks re-entry by an explicit causality token or recursion depth instead of wall-clock time. That design must keep the bidirectional-loop regression suite green while removing the rapid-input drop.
+
+## Superseded by
+
+The 3.0.0 release-audit fix (issue #211, finding C-B1) implemented the
+structural change anticipated above:
+
+- **Self-induced echoes are now identified precisely**: a synchronous
+  `applyingUpdates` re-entrancy flag is set only while the pipeline itself
+  calls `updateValueAndValidity` on dependent controls. Emissions observed in
+  that window are dropped outright — this alone breaks bidirectional loops.
+- **User edits inside the cooldown window are deferred, never dropped**: the
+  change is recorded and the revalidation cycle replays once the cooldown
+  clears (latest-wins). The same applies to a cycle whose shared dependent was
+  skipped because another trigger still held it in cooldown.
+
+The `validationInProgressCooldownMs` window still exists (it gives async
+validators time to settle), but it now only *delays* dependent revalidation by
+at most one cooldown; it no longer loses input. Covered by regression tests in
+`validation-config-pipeline.spec.ts` ("defers a trigger change…",
+"revalidates the dependent with the final trigger value…", "replays a cycle
+whose shared dependent was skipped…", "does not replay pipeline-induced
+emissions…").
