@@ -2295,6 +2295,108 @@ describe('FormDirective - Submit Accessibility', () => {
   });
 });
 
+describe('FormDirective - suite input changes (late/swapped suite)', () => {
+  @Component({
+    selector: 'test-late-suite-host',
+    template: `
+      <form
+        ngxVestForm
+        [suite]="suite()"
+        [formValue]="formValue()"
+        (formValueChange)="formValue.set($event)"
+        #vest="ngxVestForm"
+      >
+        <label for="username">Username</label>
+        <input
+          id="username"
+          name="username"
+          [ngModel]="formValue().username"
+        />
+      </form>
+    `,
+    imports: [NgxVestForms],
+  })
+  class TestLateSuiteHost {
+    readonly formValue = signal<{ username: string }>({ username: '' });
+    readonly suite = signal<NgxVestSuite<{ username?: string }> | null>(null);
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
+  }
+
+  it('should revalidate existing fields when the suite arrives late (null → suite)', async () => {
+    const { fixture } = await render(TestLateSuiteHost);
+    const instance = fixture.componentInstance as TestLateSuiteHost;
+    await fixture.whenStable();
+
+    // While the suite is absent, the field validates as VALID.
+    expect(instance.vestForm().ngForm.form.get('username')?.valid).toBe(true);
+    expect(instance.vestForm().formState().valid).toBe(true);
+
+    // The suite arrives asynchronously (e.g. lazy import / per-locale suite).
+    instance.suite.set(
+      create((model: { username?: string } = {}) => {
+        vestTest('username', 'Username is required', () => {
+          enforce(model.username).isNotBlank();
+        });
+      })
+    );
+    fixture.detectChanges();
+
+    // Without any user interaction, the now-present suite must be applied.
+    await waitFor(() => {
+      expect(instance.vestForm().ngForm.form.get('username')?.invalid).toBe(
+        true
+      );
+    });
+    await waitFor(() => {
+      expect(instance.vestForm().formState().valid).toBe(false);
+    });
+  });
+
+  it('should revalidate existing fields when the suite is swapped at runtime', async () => {
+    const { fixture } = await render(TestLateSuiteHost);
+    const instance = fixture.componentInstance as TestLateSuiteHost;
+
+    // Let the model value sync into the form controls first.
+    instance.formValue.set({ username: 'abc' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Initial suite: 3 characters are enough — field is VALID.
+    instance.suite.set(
+      create((model: { username?: string } = {}) => {
+        vestTest('username', 'Username must be at least 3 characters', () => {
+          enforce(model.username).longerThanOrEquals(3);
+        });
+      })
+    );
+    fixture.detectChanges();
+
+    await waitFor(() => {
+      expect(instance.vestForm().ngForm.form.get('username')?.valid).toBe(
+        true
+      );
+    });
+
+    // Swap to a stricter suite (e.g. wizard step / mode switch): the existing
+    // value no longer passes and must become INVALID without user input.
+    instance.suite.set(
+      create((model: { username?: string } = {}) => {
+        vestTest('username', 'Username must be at least 5 characters', () => {
+          enforce(model.username).longerThanOrEquals(5);
+        });
+      })
+    );
+    fixture.detectChanges();
+
+    await waitFor(() => {
+      expect(instance.vestForm().ngForm.form.get('username')?.invalid).toBe(
+        true
+      );
+    });
+  });
+});
+
 describe('FormDirective - FormState Memoization', () => {
   @Component({
     selector: 'test-memoization-host',

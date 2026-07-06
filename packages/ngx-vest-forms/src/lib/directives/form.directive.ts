@@ -24,6 +24,8 @@ import {
 import {
   AbstractControl,
   AsyncValidatorFn,
+  FormArray,
+  FormGroup,
   NgForm,
   PristineChangeEvent,
   StatusChangeEvent,
@@ -599,6 +601,45 @@ export class FormDirective<T extends Record<string, unknown>> {
       });
 
     /**
+     * Re-run validation on all registered controls when the `suite` input
+     * reference changes — including a lazily-supplied suite (`null` → suite,
+     * e.g. a lazy import or per-locale suite arriving asynchronously) and
+     * runtime suite swaps (wizard steps, mode switches).
+     *
+     * Without this, fields validated while the suite was absent (or against
+     * the previous suite) keep their stale verdict until the user edits them:
+     * `createAsyncValidator` reads `suite()` per validation run, but nothing
+     * re-triggers those runs. A root `updateValueAndValidity()` alone is not
+     * enough because Angular does not descend into child controls, so every
+     * control in the tree is updated individually (mirroring what
+     * `ValidateRootFormDirective` already does for ROOT_FORM).
+     */
+    // `undefined` sentinel = effect has not run yet (the input itself is
+    // `NgxVestSuite | null`, never `undefined`).
+    let previousSuite: NgxVestSuite<NoInfer<T>> | null | undefined;
+    effect(() => {
+      const suite = this.suite();
+      if (previousSuite === undefined) {
+        // Initial effect run: field validators already see the current
+        // suite when they register, nothing to re-run.
+        previousSuite = suite;
+        return;
+      }
+      if (suite === previousSuite) {
+        return;
+      }
+      previousSuite = suite;
+      untracked(() => {
+        // Defer to the next microtask so Angular has finished wiring up
+        // controls/groups (ngModel/ngModelGroup) for the current render pass.
+        scheduleMicrotask(
+          () => this.#revalidateAllControls(),
+          this.#destroyRef
+        );
+      });
+    });
+
+    /**
      * Single bidirectional synchronization effect using linkedSignal.
      * Uses proper deep comparison and change tracking for correct sync direction.
      * Note: formValue is read-only input(), so we emit changes via formValueChange output.
@@ -795,6 +836,32 @@ export class FormDirective<T extends Record<string, unknown>> {
    * }
    * ```
    */
+  /**
+   * Re-runs validation for every control in the form tree, depth-first.
+   *
+   * Angular's `updateValueAndValidity()` on a container only re-runs the
+   * container's own validators and recalculates ancestors — it never descends
+   * into children. When the Vest suite changes, every field-level async
+   * validator must re-run, so each control is updated individually
+   * (`onlySelf: true` avoids redundant ancestor recalculation per child; the
+   * container's own update afterwards aggregates the fresh child statuses).
+   */
+  #revalidateAllControls(): void {
+    const updateTree = (control: AbstractControl): void => {
+      if (control instanceof FormGroup) {
+        for (const child of Object.values(control.controls)) {
+          updateTree(child);
+        }
+      } else if (control instanceof FormArray) {
+        for (const child of control.controls) {
+          updateTree(child);
+        }
+      }
+      control.updateValueAndValidity({ onlySelf: true, emitEvent: true });
+    };
+    updateTree(this.ngForm.form);
+  }
+
   triggerFormValidation(path?: string): void {
     if (path) {
       const control = this.ngForm.form.get(path);
