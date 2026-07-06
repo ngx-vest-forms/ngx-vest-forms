@@ -1,10 +1,13 @@
 import {
   Component,
   computed,
+  DestroyRef,
   inject,
   signal,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { filter, take } from 'rxjs';
 import { AsyncUsernameModel } from '../../models/async-username.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
@@ -44,6 +47,7 @@ import { UsernameAvailabilityService } from './username-availability.service';
   templateUrl: './async-username.page.html',
 })
 export class AsyncUsernamePageComponent {
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly exampleContent = asyncUsernameContent;
 
   /** Suite is built in the component so the async service can be injected. */
@@ -59,13 +63,26 @@ export class AsyncUsernamePageComponent {
 
   protected readonly feedback = computed(() => this.formBody()?.feedback);
 
+  /** Emits whenever async validation is idle (not `PENDING`). */
+  private readonly validationSettled$ = toObservable(
+    computed(() => this.feedback()?.pending() ?? false)
+  ).pipe(filter((pending) => !pending));
+
   protected onSubmit(): void {
-    if (!this.feedback()?.formState()?.valid) {
-      this.submittedValue.set(null);
-      this.formBody()?.focusFirstInvalidControl();
-      return;
-    }
-    this.submittedValue.set(structuredClone(this.formValue()));
+    // The availability check may still be in flight when the user submits.
+    // Mirror the directive's own submit pipeline: wait until async validation
+    // settles, then decide — a PENDING form is not an invalid form, and the
+    // submission must never be dropped silently. Focus handling stays with
+    // the directive (`focusFirstInvalidOnSubmit` defaults to true).
+    this.validationSettled$
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (!this.feedback()?.formState()?.valid) {
+          this.submittedValue.set(null);
+          return;
+        }
+        this.submittedValue.set(structuredClone(this.formValue()));
+      });
   }
 
   protected reset(): void {
