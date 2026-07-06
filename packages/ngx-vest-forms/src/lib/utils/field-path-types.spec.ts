@@ -1,5 +1,6 @@
 import { expectTypeOf } from 'vitest';
 import { ROOT_FORM } from '../constants';
+import type { NgxValidationConfig } from '../directives/form.directive';
 import type { NgxDeepPartial } from './deep-partial';
 import type {
   FieldPath,
@@ -156,6 +157,37 @@ describe('field-path-types', () => {
       expect(config['addresses.billing.street']).toEqual([
         'addresses.billing.city',
       ]);
+    });
+
+    it('should reject mistyped keys on the NgxValidationConfig input type (no untyped fallback)', () => {
+      type FormModel = NgxDeepPartial<{
+        password: string;
+        confirmPassword: string;
+      }>;
+
+      // The typed shape is accepted at the input type.
+      const config: NgxValidationConfig<FormModel> = {
+        password: ['confirmPassword'],
+      };
+      expect(config).toEqual({ password: ['confirmPassword'] });
+
+      // Since 3.0.0 there is no `Record<string, string[]>` union branch that
+      // would absorb typo'd keys, so this fails to compile.
+      const badConfig: NgxValidationConfig<FormModel> = {
+        // @ts-expect-error typo'd trigger key is a compile-time error
+        passwordd: ['confirmPassword'],
+      };
+      expect(badConfig).toBeDefined();
+
+      const badDependent: NgxValidationConfig<FormModel> = {
+        // @ts-expect-error typo'd dependent path is a compile-time error
+        password: ['confirmPasswordd'],
+      };
+      expect(badDependent).toBeDefined();
+
+      // `null` disables cross-field revalidation.
+      const disabled: NgxValidationConfig<FormModel> = null;
+      expect(disabled).toBeNull();
     });
 
     it('should be optional (partial)', () => {

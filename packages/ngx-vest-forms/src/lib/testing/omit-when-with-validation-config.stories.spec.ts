@@ -4,7 +4,11 @@ import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { create, enforce, omitWhen, test } from 'vest';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { NgxDeepPartial, NgxDeepRequired } from '../../public-api';
+import type {
+  NgxDeepPartial,
+  NgxDeepRequired,
+  ValidationConfigMap,
+} from '../../public-api';
 import { FormDirective } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
 
@@ -146,14 +150,15 @@ class OmitWhenValidationConfigComponent {
   protected readonly shape = formShape;
   protected readonly suite = omitWhenValidationSuite;
   protected readonly selectors = selectors;
-  protected readonly validationConfig = {
-    'berekendeAftrekVoorarrest.aantal': [
-      'berekendeAftrekVoorarrest.onderbouwing',
-    ],
-    'berekendeAftrekVoorarrest.onderbouwing': [
-      'berekendeAftrekVoorarrest.aantal',
-    ],
-  };
+  protected readonly validationConfig: ValidationConfigMap<OmitWhenFormModel> =
+    {
+      'berekendeAftrekVoorarrest.aantal': [
+        'berekendeAftrekVoorarrest.onderbouwing',
+      ],
+      'berekendeAftrekVoorarrest.onderbouwing': [
+        'berekendeAftrekVoorarrest.aantal',
+      ],
+    };
 
   protected setFormValue(v: OmitWhenFormModel): void {
     this.formValue.set(v);

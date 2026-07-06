@@ -110,13 +110,16 @@ const PIPELINE_OPTIONS = {
 >;
 
 /**
- * Type for validation configuration that accepts both the typed and untyped versions.
- * This ensures backward compatibility while supporting the new typed API.
+ * Type for the `validationConfig` input: a typed {@link ValidationConfigMap}
+ * (or `null` to disable cross-field revalidation).
+ *
+ * Since 3.0.0 the untyped `Record<string, string[]>` escape hatch is gone, so
+ * typo'd field paths in a `[validationConfig]` binding fail to compile instead
+ * of silently never triggering. For genuinely dynamic path strings (e.g.
+ * runtime array indices such as `'addresses.0.street'`), build the object
+ * separately and cast it to `NgxValidationConfig<T>` explicitly.
  */
-export type NgxValidationConfig<T = unknown> =
-  | Record<string, string[]>
-  | ValidationConfigMap<T>
-  | null;
+export type NgxValidationConfig<T = unknown> = ValidationConfigMap<T> | null;
 
 export type NgxValidationFocus = NgxSuiteFocusSpec;
 
@@ -702,7 +705,7 @@ export class FormDirective<T extends Record<string, unknown>> {
         switchMap((config) =>
           createValidationConfigPipeline(
             form,
-            config as ValidationConfigMap<T> | null | undefined,
+            config,
             {
               configDebounceTime: this.#configDebounceTime,
               ...PIPELINE_OPTIONS,
