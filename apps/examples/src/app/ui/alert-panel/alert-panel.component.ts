@@ -45,6 +45,7 @@ type AlertLive = 'polite' | 'assertive' | 'off';
       [attr.role]="role()"
       [attr.aria-live]="ariaLive()"
       [attr.aria-atomic]="live() === 'off' ? null : true"
+      [attr.aria-label]="title() || null"
     >
       @if (title()) {
         <h2 class="mb-2 text-sm font-semibold">{{ title() }}</h2>
