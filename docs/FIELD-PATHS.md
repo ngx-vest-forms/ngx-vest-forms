@@ -316,16 +316,21 @@ const config: ValidationConfigMap<FormModel> = {
 
 ### Dynamic Configuration
 
-Combine type safety with dynamic logic:
+Combine type safety with dynamic logic. Write the function against a concrete model type — with an unconstrained generic `T`, `FieldPath<T>` cannot resolve any field name and the assignment below would be a compile error:
 
 ```typescript
-function createDynamicConfig<T>(
+type FormModel = {
+  password?: string;
+  confirmPassword?: string;
+};
+
+function createDynamicConfig(
   conditions: Record<string, boolean>
-): ValidationConfigMap<T> {
-  const config: ValidationConfigMap<T> = {};
+): ValidationConfigMap<FormModel> {
+  const config: ValidationConfigMap<FormModel> = {};
 
   if (conditions.validatePassword) {
-    config['password'] = ['confirmPassword']; // Type-safe!
+    config['password'] = ['confirmPassword']; // Type-safe against FormModel
   }
 
   return config;

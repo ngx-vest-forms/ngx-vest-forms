@@ -14,7 +14,7 @@ Ask yourself:
 - Should the suite use native Vest schema validation and type inference? Use `create((data) => { ... }, enforce.shape(...))` before inventing a separate external schema layer.
 - Is the logic only needed once inside a single test? Use `enforce.condition(...)` inline.
 - Is the logic reusable across many fields or suites? Use `enforce.extend(...)`.
-- Are several existing rules usually applied together? Use `compose(...)` from `vest/enforce/compose`.
+- Are several existing rules usually applied together? Use `compose(...)` from `n4s` (`import { compose } from 'n4s';` — the `vest/enforce/compose` subpath does not exist in Vest 6.3).
 
 Do not jump straight to a globally extended custom rule when a one-off `condition(...)` would be clearer.
 
@@ -92,7 +92,7 @@ Start with `references/design-guide.md` when the user is unsure whether to build
 ## References to consult when needed
 
 - `references/design-guide.md`
-- `../../../instructions/vest.instructions.md`
+- `../../../../.github/instructions/vest.instructions.md`
 - `https://vestjs.dev/docs/writing_your_suite/schema_validation`
 - `https://vestjs.dev/docs/enforce/composing_enforce_rules`
 - `https://vestjs.dev/docs/enforce/creating_custom_rules`

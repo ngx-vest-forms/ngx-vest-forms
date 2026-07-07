@@ -71,23 +71,19 @@ Recommendations:
 - Debounce-based test waits: budget at least 2× the production debounce
   for CI tolerance.
 
-### Why `npm run test:lib` runs in three shards
+### Running the library tests
 
-The library test command chains three `vitest run --shard=N/3` invocations
-rather than one. The chromium browser process degrades as iframes
-accumulate across spec files (with `fileParallelism: false` + `isolate: true`
-under `@vitest/browser-playwright`), and on cold caches the last ~4 spec
-files in a single invocation hit `waitFor` timeouts they would otherwise
-clear. Splitting into three sequential invocations gives each batch a fresh
-chromium process, which fixes 24 deterministic failures observed on
-`release/v3` after PR #132/#133. See issue #134 for the full RCA.
+Run the library tests through Nx:
 
-Implications for test authors:
+```bash
+pnpm nx run ngx-vest-forms:test
+```
 
-- Add new specs anywhere — vitest's default file ordering across shards is
-  fine. No need to think about which shard a spec lands in.
-- If a single shard grows uncomfortably large again, reduce shard size
-  (`--shard=N/4` etc.) before reaching for per-test timeout bumps.
+The old `npm run test:lib` three-shard chain (`vitest run --shard=N/3` under
+`@vitest/browser-playwright`) no longer exists — the Nx workspace runs a
+single Vitest invocation in a jsdom environment (see the root
+`vitest.config.ts`), so there is no shard placement to think about when
+adding specs.
 
 ## Quick decision table
 

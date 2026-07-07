@@ -57,15 +57,14 @@ For `ngModelGroup` containers, do not use `ngx-control-wrapper` as a lazy substi
 
 ## Styling note
 
-The built-in control wrapper uses Tailwind utility classes for its default styling.
-If the consumer project does not use Tailwind, explain that the wrapper logic still works but the styling may need replacement or a custom wrapper.
+The built-in control wrapper ships plain, framework-agnostic CSS on BEM-style classes (`ngx-control-wrapper__errors`, `ngx-control-wrapper__warnings`, …). Theme it by overriding the public `--ngx-control-wrapper-*` custom properties (e.g. `--ngx-control-wrapper-error-color`) from the app stylesheet — no Tailwind required or used.
 
 ## Common mistakes to correct
 
 - wrapping an entire `ngModelGroup` with `ngx-control-wrapper`
 - stamping error associations onto every descendant control unintentionally
 - forgetting that warnings may appear after `validationConfig`-triggered validation
-- assuming the default styling is framework-agnostic CSS rather than Tailwind-based classes
+- assuming the default styling is Tailwind-based (it is plain CSS themed via `--ngx-control-wrapper-*` custom properties)
 - using duplicate control IDs in repeated child sections
 - importing wrapper components from internal library paths
 

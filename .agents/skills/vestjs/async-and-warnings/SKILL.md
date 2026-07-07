@@ -32,11 +32,9 @@ Use this skill when the suite needs **remote work, cancellation, pending state, 
 
 Vest cancels stale async tests when the same test reruns before completion.
 
-In `ngx-vest-forms` v3, the internal vest-runner now also forwards an
-`AbortSignal` to suite runs and aborts it when async-validator subscriptions are
-torn down (unsubscribe, destroy, or superseded runs).
+The per-test `AbortSignal` arrives through the test context (`async ({ signal }) => …`). Note that `ngx-vest-forms` does NOT pass a signal into suite runs itself — Vest 6.3's `run()` accepts only the model, and the library handles subscription teardown (unsubscribe, destroy, superseded runs) purely at the RxJS layer.
 
-Use that signal to:
+Use the per-test signal to:
 
 - abort `fetch` requests
 - short-circuit work if `signal.aborted` is already true
@@ -59,18 +57,21 @@ export const profileSuite = create((model: ProfileModel) => {
     enforce(model.userId).isNotBlank();
   });
 
-  skipWhen((res) => res.hasErrors('userId'), () => {
-    memo(() => {
-      test('userId', 'User ID is already taken', async ({ signal }) => {
-        const response = await fetch(
-          `/api/users/${encodeURIComponent(model.userId!)}`,
-          { signal }
-        );
-        const { exists } = await response.json();
-        enforce(exists).isFalsy();
-      });
-    }, [model.userId]);
-  });
+  skipWhen(
+    (res) => res.hasErrors('userId'),
+    () => {
+      memo(() => {
+        test('userId', 'User ID is already taken', async ({ signal }) => {
+          const response = await fetch(
+            `/api/users/${encodeURIComponent(model.userId!)}`,
+            { signal }
+          );
+          const { exists } = await response.json();
+          enforce(exists).isFalsy();
+        });
+      }, [model.userId]);
+    }
+  );
 });
 ```
 
@@ -129,7 +130,7 @@ When answering:
 
 ## References to consult when needed
 
-- `../../../instructions/vest.instructions.md`
+- `../../../../.github/instructions/vest.instructions.md`
 - `https://vestjs.dev/docs/writing_tests/async_tests`
 - `https://vestjs.dev/docs/writing_tests/warn_only_tests`
 - `https://vestjs.dev/docs/writing_your_suite/accessing_the_result`

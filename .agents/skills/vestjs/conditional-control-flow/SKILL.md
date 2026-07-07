@@ -105,7 +105,7 @@ Start with `references/decision-guide.md` when the user is mixing several of the
 ## References to consult when needed
 
 - `references/decision-guide.md`
-- `../../../instructions/vest.instructions.md`
+- `../../../../.github/instructions/vest.instructions.md`
 - `https://vestjs.dev/docs/writing_your_suite/focused_updates`
 - `https://vestjs.dev/docs/writing_your_suite/including_and_excluding/skip_and_only`
 - `https://vestjs.dev/docs/writing_your_suite/including_and_excluding/skipWhen`

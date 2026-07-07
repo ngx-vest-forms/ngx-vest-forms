@@ -677,20 +677,23 @@ createValidationConfig<FormModel>()
 For very large forms, consider extracting configuration builders into separate functions:
 
 ```typescript
-function createAuthConfig<T>() {
-  return createValidationConfig<T>()
+// Write the helpers against the concrete model type: field paths are
+// validated against FormModel at compile time. (An unconstrained generic
+// <T> would make FieldPath<T> unresolvable and reject every field name.)
+function createAuthConfig() {
+  return createValidationConfig<FormModel>()
     .bidirectional('password', 'confirmPassword')
     .whenChanged('password', 'securityScore');
 }
 
-function createAddressConfig<T>() {
-  return createValidationConfig<T>()
+function createAddressConfig() {
+  return createValidationConfig<FormModel>()
     .whenChanged('country', ['state', 'zipCode'])
     .group(['street', 'city', 'zipCode']);
 }
 
-protected readonly validationConfig = createAuthConfig<FormModel>()
-  .merge(createAddressConfig<FormModel>().build())
+protected readonly validationConfig = createAuthConfig()
+  .merge(createAddressConfig().build())
   .build();
 ```
 

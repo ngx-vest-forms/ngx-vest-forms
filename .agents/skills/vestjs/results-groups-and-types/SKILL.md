@@ -116,7 +116,7 @@ When answering:
 
 ## References to consult when needed
 
-- `../../../instructions/vest.instructions.md`
+- `../../../../.github/instructions/vest.instructions.md`
 - `https://vestjs.dev/docs/writing_your_suite/accessing_the_result`
 - `https://vestjs.dev/docs/writing_your_suite/handling_completion`
 - `https://vestjs.dev/docs/writing_your_suite/execution_modes`

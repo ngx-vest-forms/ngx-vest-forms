@@ -160,7 +160,11 @@ type ProcedureFormModel = NgxDeepPartial<{
   selector: 'ngx-procedure-form',
   imports: [NgxVestForms],
   template: `
-    <form ngxVestForm (formValueChange)="formValue.set($event)" #vestForm>
+    <form
+      ngxVestForm
+      (formValueChange)="formValue.set($event)"
+      #vestForm="ngxVestForm"
+    >
       <label>Procedure Type</label>
       <select
         name="procedureType"
@@ -196,7 +200,9 @@ type ProcedureFormModel = NgxDeepPartial<{
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProcedureFormComponent {
-  readonly vestFormRef = viewChild.required<FormDirective>('vestForm');
+  readonly vestFormRef = viewChild.required('vestForm', {
+    read: FormDirective,
+  });
   protected readonly formValue = signal<ProcedureFormModel>({});
 
   protected onProcedureTypeChange(newType: string): void {
@@ -308,9 +314,11 @@ protected onApplicantTypeChange(type: string): void {
 }
 ```
 
-## Working with Nested Objects
+## Top-Level Keys Only
 
-All utilities work with nested object properties:
+The utilities clear **top-level keys only**. The `conditions` parameter is typed as `Partial<Record<keyof T, boolean>>`, so dot-separated paths like `'user.profile'` are not accepted — and the implementation does not traverse into nested objects.
+
+Clearing a top-level key removes the entire subtree it holds:
 
 ```typescript
 const state = {
@@ -321,12 +329,17 @@ const state = {
   temp: { cache: 'data' },
 };
 
-// Clear nested properties
+// ✅ Top-level keys — clears the whole nested object at once
 const cleaned = clearFieldsWhen(state, {
-  'user.profile': !showProfile,
+  user: !showProfile, // clears user (profile AND settings)
   temp: true, // always clear temp data
 });
+
+// ❌ Not supported: nested paths are a type error and would not work
+// clearFieldsWhen(state, { 'user.profile': !showProfile });
 ```
+
+To clear a single nested property while keeping its siblings, update the nested object yourself (e.g. spread `user` and set `profile: undefined`).
 
 ## Combining with `triggerFormValidation()`
 

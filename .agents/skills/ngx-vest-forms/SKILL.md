@@ -33,7 +33,7 @@ Non-breaking but worth knowing when the user mentions related symptoms:
 - **`setValueAtPath` array-safe.** `setValueAtPath(form, 'addresses[0].street', 'x')` no longer overwrites a populated array with `{}`. Bracket notation now chooses container shape from the segment (numeric → array, string → object). Relevant to `composite-adapter` fan-out.
 - **`parseFieldPath` strict mode** logs a dev warning (`ngDevMode`-gated, tree-shakable) for malformed segments like `'a..b'`, `'.a'`, `'a.'`, instead of silently truncating. Production behavior is unchanged for previously valid paths.
 - **`validateShape` removed in v3 (see `formContract`).** The legacy shape-validator is no longer exported. The `[formContract]` input on `FormDirective<T>` accepts any `StandardSchemaV1<T>` (Zod v4, Valibot, hand-rolled, etc.) and still accepts a legacy `NgxDeepRequired<T>` shape via the `toFormContract()` adapter for back-compat. Opaque values (`Date`, `Map`, `Set`, `RegExp`, `File`, `Blob`) short-circuit shape recursion as before.
-- **Touched syncs to dependents.** Blurring a trigger field propagates touched into its `validationConfig`-tracked dependents on the same tick — pair with `errorDisplayMode="on-blur"` on dependent wrappers for calm UX.
+- **Dependents revalidate silently.** When a trigger field changes, its `validationConfig`-tracked dependents are revalidated but touched state is deliberately NOT propagated to them — dependents show errors only after their own interaction (blur) or form submit.
 - **`cloneDeep` was removed in v3.0.0.** Use `structuredClone` in new guidance.
 
 ## Stay on the public API surface
