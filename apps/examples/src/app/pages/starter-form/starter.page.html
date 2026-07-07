@@ -1,0 +1,57 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Starter Contact Form"
+    subtitle="The canonical ngx-vest-forms setup — copy this as a trustworthy baseline."
+  />
+
+  <!-- Why start here: Full-width intro section -->
+  <ngx-intro-section>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">One `ngxVestForm`, one Vest suite.</strong> Nothing else—no decorators, no metadata, no ceremony.
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Public API only.</strong> Every line here is safe to copy into your app.
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Errors appear on blur;</strong> the message hint is advisory guidance, not a blocker.
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">The form value is a signal</strong> the page owns—single source of truth, reactive by default.
+    </ngx-intro-item>
+  </ngx-intro-section>
+
+  <!-- Form section: Two-column layout -->
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <!-- Left: Form State card -->
+    <div>
+      <ngx-form-state-card [feedback]="feedback()" />
+    </div>
+
+    <!-- Right: Contact form card -->
+    <div>
+      @if (submittedValue(); as submitted) {
+      <ngx-alert-panel tone="success" title="Message sent">
+        <p>
+          Thanks {{ submitted.name }} — we'll reply to
+          <strong>{{ submitted.email }}</strong> shortly.
+        </p>
+      </ngx-alert-panel>
+      }
+
+      <ngx-card
+        title="Contact us"
+        subtitle="All fields are required. Try submitting empty to see validation."
+      >
+        <ngx-starter-form-body
+          [formValue]="formValue()"
+          [suite]="suite"
+          (formValueChange)="formValue.set($event)"
+          (submitted)="onSubmit()"
+          (resetRequested)="reset()"
+        />
+      </ngx-card>
+    </div>
+  </div>
+
+  <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
+</div>

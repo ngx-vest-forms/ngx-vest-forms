@@ -1,0 +1,47 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Business Hours Form"
+    subtitle="Validate dynamic time ranges with cross-field and form-level rules."
+  />
+
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Form array validation</strong> — Each entry in the repeating time-range list is validated; at least one entry required
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Cross-field rules per row</strong> — 'To' time must be later than 'From' time; validation runs for each range independently
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Form-level uniqueness</strong> — Multiple time ranges cannot overlap; a ROOT_FORM rule checks the entire list
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Format validation</strong> — All time inputs validated as HH:MM format before cross-field rules run
+    </ngx-intro-item>
+  </ngx-intro-section>
+
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div>
+      <ngx-form-state-card [feedback]="formBody.feedback" />
+    </div>
+
+    <div>
+      <ngx-card
+        title="Business Hours"
+        subtitle="Configure your opening hours for the week."
+      >
+        <ngx-business-hours-form-body
+          #formBody
+          [formValue]="formValue()"
+          [suite]="businessHoursSuite"
+          [validationConfig]="validationConfig"
+          [rootFormError]="rootFormError()"
+          [businessHoursValues]="getBusinessHoursValues()"
+          (formValueChange)="formValue.set($event)"
+          (businessHoursChange)="onBusinessHoursChange($event)"
+        />
+      </ngx-card>
+    </div>
+  </div>
+
+  <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
+</div>

@@ -10,11 +10,11 @@ Injection tokens allow you to configure library behavior at different levels of 
 
 ### `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN`
 
-Controls the debounce timing for validation execution across your application or specific component subtrees.
+Controls the debounce timing for **`validationConfig`-triggered dependent-field revalidation** inside `FormDirective`.
 
 **Type:** `InjectionToken<number>`
 
-**Purpose:** Set the debounce delay (in milliseconds) for validation to reduce excessive validation calls while users type.
+**Purpose:** Set the debounce delay (in milliseconds) between a trigger field changing and its `validationConfig` dependents being revalidated. This is **not** an app-wide typing debounce: it does not change the debounce used for direct field, group, or root-form validation. For per-control validation debounce, use `validationOptions` (see below).
 
 #### Usage
 
@@ -29,7 +29,7 @@ bootstrapApplication(AppComponent, {
   providers: [
     {
       provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
-      useValue: 300, // 300ms debounce for all forms
+      useValue: 300, // 300ms between a trigger change and dependent revalidation
     },
   ],
 });
@@ -40,67 +40,67 @@ bootstrapApplication(AppComponent, {
 ```typescript
 import { Component, signal } from '@angular/core';
 import {
+  createValidationConfig,
   NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
   NgxDeepPartial,
 } from 'ngx-vest-forms';
 
-type SearchFormModel = NgxDeepPartial<{
-  query: string;
-  filters: {
-    category: string;
-  };
+type SignupFormModel = NgxDeepPartial<{
+  password: string;
+  confirmPassword: string;
 }>;
 
 @Component({
-  selector: 'ngx-search-form',
+  selector: 'ngx-signup-form',
   template: `
     <form
       ngxVestForm
       [suite]="validationSuite"
+      [validationConfig]="validationConfig"
       (formValueChange)="formValue.set($event)"
     >
+      <input name="password" type="password" [ngModel]="formValue().password" />
       <input
-        name="query"
-        placeholder="Search..."
-        [ngModel]="formValue().query"
+        name="confirmPassword"
+        type="password"
+        [ngModel]="formValue().confirmPassword"
       />
-      <select name="filters.category" [ngModel]="formValue().filters?.category">
-        <option value="">All</option>
-        <option value="books">Books</option>
-        <option value="electronics">Electronics</option>
-      </select>
     </form>
   `,
   providers: [
     {
       provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
-      useValue: 500, // 500ms debounce only for this search form
+      // Wait 500ms after password edits before revalidating confirmPassword
+      useValue: 500,
     },
   ],
 })
-export class SearchFormComponent {
-  protected readonly formValue = signal<SearchFormModel>({});
-  protected readonly validationSuite = searchValidationSuite;
+export class SignupFormComponent {
+  protected readonly formValue = signal<SignupFormModel>({});
+  protected readonly validationSuite = signupValidationSuite;
+  protected readonly validationConfig =
+    createValidationConfig<SignupFormModel>()
+      .bidirectional('password', 'confirmPassword')
+      .build();
 }
 ```
 
+The token only has an effect on forms that use `[validationConfig]`. Direct validation of the field the user is typing in is unaffected.
+
 #### Default Behavior
 
-If `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN` is not provided:
-
-- Validation executes **immediately** on value changes (no debounce)
-- This is suitable for simple forms but may cause performance issues with complex async validations
+If `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN` is not provided, dependent-field revalidation is debounced by **100ms** (`NGX_VALIDATION_DEBOUNCE_PRESETS.default`). You can also provide one of the named presets — `immediate` (0), `fast` (100), `default` (100), `relaxed` (150), `typing` (300), `async` (500) — instead of a raw number.
 
 #### Best Practices
 
-- **Fast Forms (< 10 fields, no async):** 0-100ms or no debounce
-- **Medium Forms (10-30 fields, some async):** 150-300ms
-- **Complex Forms (> 30 fields, heavy async):** 300-500ms
-- **Search/Filter Forms:** 300-500ms for better UX
+- **Tight feedback loops (e.g. password/confirm):** 0-100ms (`immediate`/`fast`)
+- **Chains with several dependents per trigger:** 150-300ms (`relaxed`/`typing`)
+- **Dependents that run async validations:** 300-500ms (`typing`/`async`)
+- **Tests:** `NGX_VALIDATION_DEBOUNCE_PRESETS.immediate` to avoid timer waits
 
-#### Per-Field Override
+#### Per-Control Validation Debounce (`validationOptions`)
 
-You can override debounce at the field level using `validationOptions`:
+To debounce a control's **own** validation while the user types, use `validationOptions` on the control:
 
 ```typescript
 <input
@@ -110,7 +110,134 @@ You can override debounce at the field level using `validationOptions`:
 />
 ```
 
-This field-level configuration takes precedence over the token value.
+These are two independent pipelines — neither overrides the other. `validationOptions.debounceTime` debounces the control's direct validation; `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN` debounces the `validationConfig`-driven revalidation of dependent fields.
+
+## Form Contract Configuration
+
+### `NGX_FORM_CONTRACT`
+
+Provides a structural contract to `FormDirective` through Angular DI.
+
+**Type:** `InjectionToken<NgxFormContractSource<unknown>>`
+
+**Purpose:** Register a fixed form contract once at the component or subtree level so forms can omit `[formContract]` when the contract does not vary per usage site.
+
+#### When to Use It
+
+- **Prefer `provideFormContract(...)`** when a component always uses the same contract
+- **Prefer `provideFormContractFactory(...)`** when the contract depends on injected services or should be created lazily
+- **Use `[formContract]`** only when the contract genuinely varies per template usage
+
+#### Static Provider
+
+```typescript
+import { Component, signal } from '@angular/core';
+import {
+  NgxDeepPartial,
+  NgxDeepRequired,
+  NgxVestForms,
+  provideFormContract,
+} from 'ngx-vest-forms';
+
+type ProfileFormModel = NgxDeepPartial<{
+  email: string;
+  profile: {
+    firstName: string;
+  };
+}>;
+
+const profileContract: NgxDeepRequired<ProfileFormModel> = {
+  email: '',
+  profile: {
+    firstName: '',
+  },
+};
+
+@Component({
+  selector: 'ngx-profile-form',
+  imports: [NgxVestForms],
+  providers: [provideFormContract(profileContract)],
+  template: `
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      (formValueChange)="formValue.set($event)"
+    >
+      <input name="email" [ngModel]="formValue().email" />
+      <input
+        name="profile.firstName"
+        [ngModel]="formValue().profile?.firstName"
+      />
+    </form>
+  `,
+})
+export class ProfileFormComponent {
+  protected readonly formValue = signal<ProfileFormModel>({});
+  protected readonly suite = profileValidationSuite;
+}
+```
+
+#### Factory Provider
+
+```typescript
+import { Component, inject, signal } from '@angular/core';
+import {
+  NgxVestForms,
+  provideFormContractFactory,
+  type StandardSchemaV1,
+} from 'ngx-vest-forms';
+
+type CheckoutFormModel = {
+  billingAddress?: {
+    postcode?: string;
+  };
+};
+
+declare class CheckoutSchemaService {
+  readonly contract: StandardSchemaV1<CheckoutFormModel>;
+}
+
+@Component({
+  selector: 'ngx-checkout-form',
+  imports: [NgxVestForms],
+  providers: [
+    provideFormContractFactory(
+      () =>
+        inject(CheckoutSchemaService)
+          .contract as StandardSchemaV1<CheckoutFormModel>
+    ),
+  ],
+  template: `
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      (formValueChange)="formValue.set($event)"
+    >
+      <!-- fields -->
+    </form>
+  `,
+})
+export class CheckoutFormComponent {
+  protected readonly formValue = signal<CheckoutFormModel>({});
+  protected readonly suite = checkoutValidationSuite;
+}
+```
+
+#### Interaction with `[formContract]`
+
+- If `[formContract]` is omitted, the directive falls back to `NGX_FORM_CONTRACT`
+- If `[formContract]` is bound, the explicit input wins over the provider
+- If `[formContract]="null"`, the explicit `null` disables the injected fallback
+
+#### Development Behavior
+
+The provider path has the same behavior as `[formContract]`:
+
+- runs structural checks only in development mode
+- logs schema/shape mismatch warnings without affecting form validity
+- supports either a `StandardSchemaV1<T>` contract or a legacy `NgxDeepRequired<T>` shape
 
 ## Error Display Configuration
 
@@ -118,14 +245,14 @@ This field-level configuration takes precedence over the token value.
 
 Controls how validation errors are displayed in the `ngx-control-wrapper` component.
 
-**Type:** `InjectionToken<ScErrorDisplayMode>`
+**Type:** `InjectionToken<NgxErrorDisplayMode>`
 
 **Purpose:** Configure whether errors should be displayed immediately or only after blur/submit.
 
 #### Error Display Modes
 
 ```typescript
-type ScErrorDisplayMode =
+type NgxErrorDisplayMode =
   | 'on-blur'
   | 'on-submit'
   | 'on-blur-or-submit'
@@ -349,17 +476,11 @@ export class SignupFormComponent {
 - You want persistent advisory guidance visible at all times
 - You are running a guided/demo flow where warnings should be explicit
 
-### Legacy Token: `SC_ERROR_DISPLAY_MODE_TOKEN`
+### Error display mode token
 
-**Status:** ⚠️ Deprecated
-
-The `SC_ERROR_DISPLAY_MODE_TOKEN` is an alias for `NGX_ERROR_DISPLAY_MODE_TOKEN` maintained for backward compatibility. It will be removed in v3.0.
+Use `NGX_ERROR_DISPLAY_MODE_TOKEN` to configure the default error display mode. The legacy `SC_ERROR_DISPLAY_MODE_TOKEN` was removed in v3.0.0.
 
 ```typescript
-// ❌ Legacy (works in v2.x but will be removed)
-import { SC_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
-
-// ✅ Recommended
 import { NGX_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
 ```
 
@@ -455,7 +576,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     {
       provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
-      useValue: 200, // Default 200ms debounce for all forms
+      useValue: 200, // Default 200ms dependent-revalidation debounce for all forms
     },
   ],
 };
@@ -469,12 +590,13 @@ import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from 'ngx-vest-forms';
   providers: [
     {
       provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
-      useValue: 500, // 500ms debounce for this complex form only
+      useValue: 500, // 500ms dependent-revalidation debounce for this form only
     },
   ],
 })
 export class ComplexFormComponent {
-  // This component uses 500ms debounce, overriding ngx-wide 200ms
+  // This component's validationConfig dependents revalidate after 500ms,
+  // overriding the app-wide 200ms
 }
 ```
 
@@ -490,7 +612,7 @@ import {
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    // Debounce validation by 250ms globally
+    // Debounce validationConfig dependent revalidation by 250ms globally
     {
       provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
       useValue: 250,
@@ -511,6 +633,6 @@ export const appConfig: ApplicationConfig = {
 
 ## See Also
 
-- [Validation Options](../projects/ngx-vest-forms/src/lib/directives/validation-options.ts) - Field-level validation configuration
+- `ValidationOptions` (import from `ngx-vest-forms`) - Field-level validation configuration
 - [Accessibility Guide](./ACCESSIBILITY.md) - Error announcement patterns
 - [Complete Example](./COMPLETE-EXAMPLE.md) - Full form implementation with configuration

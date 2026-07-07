@@ -41,7 +41,7 @@ export type TravelFormModel = NgxDeepPartial<{
   returnDate: string;
 }>;
 
-export const travelFormShape: NgxDeepRequired<TravelFormModel> = {
+export const travelFormContract: NgxDeepRequired<TravelFormModel> = {
   departureDate: '',
   returnDate: '',
 };
@@ -50,13 +50,12 @@ export const travelFormShape: NgxDeepRequired<TravelFormModel> = {
 ### Validation suite
 
 ```ts
-import { enforce, omitWhen, only, staticSuite, test, warn } from 'vest';
-import { FormFieldName } from 'ngx-vest-forms';
+import { create, enforce, omitWhen, test, warn } from 'vest';
+import { type NgxVestSuite } from 'ngx-vest-forms';
 import { TravelFormModel } from '../../models/travel-form.model';
 
-export const travelValidationSuite = staticSuite(
-  (model: TravelFormModel, field?: FormFieldName<TravelFormModel>) => {
-    only(field);
+export const travelValidationSuite: NgxVestSuite<TravelFormModel> = create(
+  (model: TravelFormModel) => {
 
     test('departureDate', 'Departure date is required', () => {
       enforce(model.departureDate).isNotEmpty();
@@ -76,6 +75,12 @@ export const travelValidationSuite = staticSuite(
     });
   }
 );
+```
+
+When you need field-scoped validation, focus it at the call site:
+
+```ts
+travelValidationSuite.only('returnDate').run(model);
 ```
 
 ### Cross-field revalidation
@@ -668,7 +673,7 @@ Bind the composite control directly to that field and map to/from the domain mod
 
 ## Full working example
 
-See the **Composite Adapter Recipe** page in the examples app: `projects/examples/src/app/pages/date-range-adapter/`.
+See the **Composite Adapter Recipe** page in the examples app: `apps/examples/src/app/pages/date-range-adapter/`.
 
 Run `ng serve examples` and navigate to `/date-range-adapter`. The page defaults to **Split Wrappers** (recommended) with a toggle to compare against the **Composite Adapter** approach.
 

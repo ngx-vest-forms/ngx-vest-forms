@@ -10,8 +10,8 @@ Use this skill to produce the default, idiomatic ngx-vest-forms setup.
 ## Start from these rules
 
 1. Model the form with `NgxDeepPartial<T>` because template-driven forms are built incrementally.
-2. Prefer `NgxTypedVestSuite<T>` plus `FormFieldName<T>` for typed Vest suites.
-3. Always call `only(field)` unconditionally at the top of the suite.
+2. Prefer `NgxVestSuite<T>` for typed Vest suites; reach for `FormFieldName<T>` or `NgxFieldKey<T>` when you need typed field-path hints.
+3. Keep the suite callback model-only. Handle field-focused validation later via `suite.only(field).run(model)`.
 4. Use `[ngModel]` with `(formValueChange)` for unidirectional data flow. Do not default to `[(ngModel)]`.
 5. The `name` attribute must exactly match the bound property path.
 6. Use optional chaining in templates because the model is partial.
@@ -25,8 +25,9 @@ Recommend these imports from `'ngx-vest-forms'` when they fit the example:
 - `NgxVestForms`
 - `NgxDeepPartial`
 - `NgxDeepRequired`
-- `NgxTypedVestSuite`
+- `NgxVestSuite`
 - `FormFieldName`
+- `NgxFieldKey`
 - `NgxFieldBlurEvent`
 - `ROOT_FORM`
 
@@ -34,19 +35,17 @@ Optional advanced exports worth knowing about:
 
 - `NGX_EQUALITY_FN`, `NgxEqualityFn` — swap the comparator the form uses for `formValueChange` `distinctUntilChanged`, two-way sync, and `formState` equality. Default is `fastDeepEqual` with cycle detection. Reach for it for bundle size (`dequal/lite`), tests (reference equality), or domain rules. See `docs/API-TOKENS.md`.
 - `setValueAtPath` — array-safe path writes (v2.7+ no longer overwrites populated arrays via bracket notation).
-- `cloneDeep` — **deprecated**, warns once in dev; use `structuredClone`. Will be removed in v3.
-
-Do not teach consumers to import from internal `src/lib/**` paths. If a symbol is missing from the public API, that is a library-maintenance task, not a consumer workaround.
+  Do not teach consumers to import from internal `src/lib/**` paths. If a symbol is missing from the public API, that is a library-maintenance task, not a consumer workaround.
 
 ## Default implementation pattern
 
 Build answers and code in this order:
 
 1. Define a `NgxDeepPartial<T>` form model.
-2. Define an optional `NgxDeepRequired<T>` shape.
-3. Create a Vest suite with `staticSuite((model, field?) => { only(field); ... })`.
+2. Define an optional structural contract — either an `NgxDeepRequired<T>` shape (legacy, accepted for back-compat), a hand-written `StandardSchemaV1<T>`, or a Zod v4 schema (recommended).
+3. Create a Vest suite with `create((model) => { ... })`.
 4. Expose a signal-based `formValue` in the component.
-5. Bind the form with `ngxVestForm`, `[suite]`, optional `[formShape]`, and `(formValueChange)`.
+5. Bind the form with `ngxVestForm`, `[suite]`, and `(formValueChange)`. Prefer `provideFormContract(...)` in the component when the contract is fixed; use `[formContract]` only for true per-usage overrides.
 6. Bind each control with `[ngModel]` and the exact matching `name`.
 7. Use `ChangeDetectionStrategy.OnPush` unless there is a compelling reason not to.
 
@@ -58,6 +57,7 @@ When generating code or guidance, prefer:
 - typed imports from `ngx-vest-forms`
 - signals for local component state
 - wrappers that keep error display and ARIA straightforward
+- call-site focused validation examples such as `suite.only('email').run(model)` only when the user explicitly needs field-scoped execution
 
 If the user asks for “the right way” or “a proper example”, give a minimal but production-ready component.
 
@@ -66,12 +66,12 @@ If the user asks for “the right way” or “a proper example”, give a minim
 Correct these immediately if they appear:
 
 - `[(ngModel)]` on ngx-vest-forms controls
-- conditional `only(field)` calls
+- two-parameter suite callbacks or `only(field)` inside the suite callback
 - `name` values that do not match the bound path
 - direct property access like `formValue().address.street` instead of `formValue().address?.street`
-- missing `formShape` on complex nested forms where path mistakes are easy
+- missing a fixed `provideFormContract(...)` or explicit `[formContract]` on complex nested forms where path mistakes are easy
 - `(blur)` handlers that re-trigger validation to fake dependent-field timing or draft auto-save
-- imports from `projects/ngx-vest-forms/src/lib/**` in consumer examples
+- imports from `packages/ngx-vest-forms/src/lib/**` in consumer examples
 
 Do not paper over these mistakes. They break the mental model of the library and usually create subtle bugs instead of quick wins.
 
@@ -83,6 +83,22 @@ Do not paper over these mistakes. They break the mental model of the library and
 - If the user is splitting the form into child components, apply the child-components skill guidance.
 - If the user wants custom message UI, apply the custom-wrapper-patterns skill guidance.
 
+## Testing your forms (Vest 6)
+
+When the user writes tests that exercise their Vest suite, route to
+[references/testing-vest-6.md](references/testing-vest-6.md). Quick rules:
+
+- `suite.runStatic(model)` for stateless one-shot tests; no reset needed.
+- For shared `create()` suites, add `beforeEach(() => mySuite.reset())` —
+  Vest 6 suites accumulate state across runs.
+- `staticSuite()` and `promisify()` were removed in Vest 6; use `create()`
+  - `runStatic()` or `await suite.run()`.
+- Browser-mode Vitest CI is ~7× slower than local: `waitFor` / `findByText`
+  windows under 3000ms flake on async-validator assertions.
+
+If tests pass locally but fail in CI, audit shared-suite reset coverage
+first.
+
 ## Repo references to consult when needed
 
 Read these files before making nuanced recommendations:
@@ -90,9 +106,9 @@ Read these files before making nuanced recommendations:
 - `../../../../docs/COMPLETE-EXAMPLE.md`
 - `../../../../docs/FIELD-PATHS.md`
 - `../../../../docs/ACCESSIBILITY.md`
-- `../../../instructions/vest.instructions.md`
+- `../../../../.github/instructions/vest.instructions.md`
 - `../../../../README.md`
-- `../../../../projects/ngx-vest-forms/src/public-api.ts`
+- `../../../../packages/ngx-vest-forms/src/public-api.ts`
 
 Assume the repo-level `ngx-vest-forms.instructions.md` file already enforces the baseline invariants; use this skill for the fuller implementation workflow and examples.
 
@@ -101,4 +117,4 @@ Assume the repo-level `ngx-vest-forms.instructions.md` file already enforces the
 - ngx-vest-forms is a template-driven forms adapter, not a reactive forms abstraction.
 - `validationConfig` controls when dependent fields revalidate; it does not define validation logic.
 - The library's sweet spot is typed template-driven forms with Vest suites, signals, and explicit structure.
-- v2.7.x targets Angular `>=19`, RxJS `>=7.8`, Vest `>=5.4.6`. `parseFieldPath` warns in dev mode for malformed segments (`'a..b'`, `'.a'`, `'a.'`); production behavior unchanged.
+- The current branch targets Angular 22+, RxJS ~7.8, and Vest 6.x. `parseFieldPath` warns in dev mode for malformed segments (`'a..b'`, `'.a'`, `'a.'`); production behavior unchanged.

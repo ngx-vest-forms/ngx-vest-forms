@@ -1,5 +1,7 @@
 # Accessibility Guide
 
+> **Vest 6 Compliant:** This guide documents accessibility patterns for ngx-vest-forms v3.0.0+ with Vest.js 6.x. All examples assume the modern Vest 6 pattern where suite callbacks take only the model and field focus is at the call site.
+
 ngx-vest-forms is built with accessibility in mind, following WCAG 2.2 Level AA guidelines.
 
 ## Quick Reference
@@ -7,8 +9,6 @@ ngx-vest-forms is built with accessibility in mind, following WCAG 2.2 Level AA 
 ### Field-Level Messages (Polite)
 
 The `ngx-control-wrapper` component uses **polite announcements** for inline field errors, warnings, and pending states:
-
-> **Backward Compatibility:** The legacy selector `sc-control-wrapper` still works in v2.x and provides the same accessibility features. See the [Selector Prefix Migration Guide](SELECTOR-PREFIX-MIGRATION.md) for migration details.
 
 - `role="status"` with `aria-live="polite"`
 - Avoids interrupting typing flow
@@ -22,6 +22,42 @@ The wrapper also:
 
 - merges its own `aria-describedby` tokens with any consumer-provided tokens (so existing hint text associations are preserved)
 - toggles `aria-invalid` only when errors are meant to be shown (based on the configured error display mode)
+
+### Required state
+
+Required-ness is **not inferred** from Vest validation rules.
+
+Use one of these patterns for controls that are semantically always required:
+
+- native `required`
+- wrapper-owned `ariaRequired` on `ngx-control-wrapper`
+
+```html
+<ngx-control-wrapper ariaRequired>
+  <label for="email">Email</label>
+  <input id="email" name="email" [ngModel]="formValue().email" />
+</ngx-control-wrapper>
+```
+
+Use this only for controls that are always required. For conditionally required fields, keep the label/help text accurate and let validation messages describe the current state.
+
+### Submit focus recovery
+
+When a form is submitted and invalid, `ngxVestForm` moves keyboard focus to the first invalid, visible field. This improves error recovery for keyboard users and people using assistive technology.
+
+If your application manages its own post-submit focus target — for example a WCAG-style error summary with `role="alert"` that receives focus on submit — disable the built-in behavior so the two don't compete:
+
+```html
+<form ngxVestForm [focusFirstInvalidOnSubmit]="false">...</form>
+```
+
+You can still call `focusFirstInvalidControl()` / `scrollToFirstInvalidControl()` manually from your own submit flow.
+
+Practical guidance:
+
+- keep the most important invalid control visible after submit
+- avoid trapping the first invalid control inside collapsed regions
+- keep labels and error text associated so the focused field has enough context
 
 ### Group containers (NgModelGroup) — avoid stamping descendant controls
 
@@ -109,7 +145,7 @@ See the `ControlWrapperComponent` docs for comprehensive accessibility features 
 
 Component docs:
 
-- [`projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md`](../projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md)
+- [`docs/CUSTOM-CONTROL-WRAPPERS.md`](./CUSTOM-CONTROL-WRAPPERS.md)
 
 For directive-only composition (no UI), see `FormErrorControlDirective`.
 

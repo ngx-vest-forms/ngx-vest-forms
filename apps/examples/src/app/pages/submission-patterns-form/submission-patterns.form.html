@@ -1,0 +1,76 @@
+<!--
+  [focusFirstInvalidOnSubmit]="false" opts out of the directive's built-in
+  invalid-submit focus: this demo owns the whole submit flow, so the page
+  calls focusFirstInvalidControl() itself after updating its own state.
+-->
+<form
+  ngxVestForm
+  #vestForm="ngxVestForm"
+  [suite]="suite()"
+  [formValue]="formValue()"
+  [focusFirstInvalidOnSubmit]="false"
+  (formValueChange)="formValueChange.emit($event)"
+  (ngSubmit)="onSubmit()"
+  class="space-y-6"
+>
+  <ngx-control-wrapper class="form-field">
+    <label for="fullName" class="label-text">Full name</label>
+    <input
+      class="input-field"
+      type="text"
+      id="fullName"
+      name="fullName"
+      [ngModel]="formValue().fullName"
+      placeholder="Ada Lovelace"
+      autocomplete="name"
+    />
+  </ngx-control-wrapper>
+
+  <ngx-control-wrapper class="form-field">
+    <label for="email" class="label-text">Email</label>
+    <input
+      class="input-field"
+      type="email"
+      id="email"
+      name="email"
+      [ngModel]="formValue().email"
+      placeholder="ada@example.com"
+      autocomplete="email"
+      inputmode="email"
+    />
+  </ngx-control-wrapper>
+
+  <ngx-control-wrapper class="form-field">
+    <label for="password" class="label-text">Password</label>
+    <input
+      class="input-field"
+      type="password"
+      id="password"
+      name="password"
+      [ngModel]="formValue().password"
+      placeholder="At least 8 characters"
+      autocomplete="new-password"
+    />
+  </ngx-control-wrapper>
+
+  <ngx-control-wrapper class="form-field">
+    <label class="flex items-center gap-2">
+      <input
+        type="checkbox"
+        id="acceptTerms"
+        name="acceptTerms"
+        [ngModel]="formValue().acceptTerms"
+      />
+      <span class="label-text">I accept the terms of service</span>
+    </label>
+  </ngx-control-wrapper>
+
+  <div class="flex justify-end gap-3 pt-2">
+    <button type="button" class="btn btn-secondary" (click)="onReset()">
+      Reset
+    </button>
+    <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+      @if (submitting()) { Creating account… } @else { Create account }
+    </button>
+  </div>
+</form>

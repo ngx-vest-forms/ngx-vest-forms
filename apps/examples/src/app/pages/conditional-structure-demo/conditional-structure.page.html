@@ -1,0 +1,67 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Conditional Structure & Field Clearing"
+    subtitle="Keep model state and validation aligned when inputs disappear or turn into static content."
+  />
+
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Conditional fields with clearFieldsWhen</strong> — Remove fields from the model when they're no longer relevant; avoids sending stale data to the backend
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">keepFieldsWhen for payload filtering</strong> — Show only the fields that belong to the current branch; payload previews reflect actual backend submission shape
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Validation aligns with structure</strong> — When you switch modes, validation rules change; fields in inactive branches don't block submit
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Three-branch pattern</strong> — shipment (address), digital (email), pickup (static); each with different validation and field presence
+    </ngx-intro-item>
+  </ngx-intro-section>
+
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div class="space-y-6">
+      <ngx-form-state-card [feedback]="feedback()" />
+
+      <ngx-card
+        title="Relevant payload"
+        subtitle="Derived with keepFieldsWhen() so it mirrors what you would actually send to a backend."
+      >
+        <ngx-json-preview title="Payload preview" [value]="payloadPreview()" />
+      </ngx-card>
+    </div>
+
+    <div>
+      @if (submittedPayload(); as payload) {
+      <ngx-alert-panel tone="success" title="Delivery plan submitted">
+        <p>
+          The current branch is valid and the submitted payload has been
+          filtered to match it.
+        </p>
+      </ngx-alert-panel>
+
+      <ngx-card
+        title="Submitted payload"
+        subtitle="This snapshot is captured from the filtered preview, not the raw form object."
+      >
+        <ngx-json-preview title="Submitted payload" [value]="payload" />
+      </ngx-card>
+      }
+
+      <ngx-card
+        title="Delivery setup"
+        subtitle="Switch between a shipping input, a digital-delivery input, and a static pickup branch."
+      >
+        <ngx-conditional-structure-form-body
+          [formValue]="formValue()"
+          [suite]="suite"
+          (formValueChange)="onFormValueChange($event)"
+          (submitted)="onSubmit()"
+          (resetRequested)="reset()"
+        />
+      </ngx-card>
+    </div>
+  </div>
+
+  <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
+</div>

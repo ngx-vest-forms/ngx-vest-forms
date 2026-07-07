@@ -1,0 +1,57 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Auto-Save Draft Demo"
+    subtitle="Persist draft changes on blur while keeping validation and final submission separate."
+  />
+
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Draft auto-save on blur</strong> — Blur a changed field to queue a save automatically; keep user-draft persistence separate from final submission
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Invalid drafts are OK</strong> — Save drafts even when the form is incomplete; validation doesn't block draft persistence
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Calm dependent errors</strong> — Paired fields (quantity/justification) show errors only when their own blur fires, not immediately
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Failure resilience</strong> — Retry logic built in; errors don't crash the save queue, they queue for retry
+    </ngx-intro-item>
+  </ngx-intro-section>
+
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div class="space-y-6">
+      <ngx-card title="Draft status">
+        <ngx-alert-panel [tone]="saveTone()" [title]="saveTitle()">
+          <ul class="list-disc space-y-1 pl-5">
+            @for (message of saveMessages(); track $index) {
+            <li>{{ message }}</li>
+            }
+          </ul>
+        </ngx-alert-panel>
+      </ngx-card>
+
+      <ngx-form-state-card
+        [feedback]="feedback()"
+        [info]="formInfo()"
+        [validationErrorRules]="validationErrorRules"
+        [validationWarningRules]="validationWarningRules"
+      />
+    </div>
+
+    <div>
+      <ngx-auto-save-demo-form-body
+        #formBody
+        [formValue]="formValue()"
+        [suite]="suite"
+        [validationConfig]="validationConfig"
+        (formValueChange)="formValue.set($event)"
+        (fieldBlurred)="handleFieldBlur($event)"
+        (submitted)="save()"
+        (resetRequested)="reset()"
+      />
+    </div>
+  </div>
+
+  <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
+</div>

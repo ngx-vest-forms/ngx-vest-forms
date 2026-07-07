@@ -8,6 +8,7 @@
 
 # Node
 /node_modules
+node_modules/
 npm-debug.log
 yarn-error.log
 
@@ -48,6 +49,13 @@ Thumbs.db
 
 /.playwright-mcp
 
+# Impeccable skill directories
+.agents/skills/impeccable/
+.claude/skills/impeccable/
+.github/skills/impeccable/
+.github/hooks/impeccable.json
+.impeccable/
+
 # Playwright
 /test-results/
 /playwright-report/
@@ -55,3 +63,23 @@ Thumbs.db
 
 # Vitest
 /.vitest-attachments/
+
+# Git worktrees
+/.worktrees/
+
+.nx/polygraph
+.claude/worktrees
+.claude/settings.local.json
+
+
+.nx/cache
+.nx/workspace-data
+
+# Agent/assistant metadata policy: keep only .agents in-repo
+/.codex/
+/.opencode/
+/opencode.json
+.agents/skills/impeccable/
+.claude/skills/impeccable/
+
+.nx/migrate-runs

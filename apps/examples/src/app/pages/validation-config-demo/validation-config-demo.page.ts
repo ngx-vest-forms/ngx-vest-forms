@@ -1,0 +1,103 @@
+import {
+  Component,
+  computed,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { createValidationConfig } from 'ngx-vest-forms';
+import { ValidationDemoModel } from '../../models/validation-demo.model';
+import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
+import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
+import { IntroItemComponent, IntroSectionComponent } from '../../ui/intro-section';
+import { PageTitle } from '../../ui/page-title/page-title.component';
+import { validationConfigDemoContent } from './validation-config-demo.content';
+import { ValidationConfigDemoFormBody } from './validation-config-demo.form';
+import { validationDemoSuite } from './validation-demo.validations';
+
+@Component({
+  selector: 'ngx-validation-config-demo-page',
+  imports: [
+    PageTitle,
+    IntroSectionComponent,
+    IntroItemComponent,
+    FormStateCardComponent,
+    ValidationConfigDemoFormBody,
+    ExampleCardsComponent,
+  ],
+  standalone: true,
+  templateUrl: './validation-config-demo.page.html',
+  styleUrls: ['./validation-config-demo.page.scss'],
+})
+export class ValidationConfigDemoPageComponent {
+  protected readonly feedback = computed(() => this.formBody()?.feedback);
+  private readonly initialFormValue: ValidationDemoModel = {
+    requiresJustification: false,
+  };
+
+  protected readonly formValue = signal<ValidationDemoModel>(
+    this.initialFormValue
+  );
+
+  private readonly formBody = viewChild(ValidationConfigDemoFormBody);
+
+  protected readonly exampleContent = validationConfigDemoContent;
+
+  protected readonly suite = validationDemoSuite;
+
+  protected readonly validationConfig =
+    createValidationConfig<ValidationDemoModel>()
+      .bidirectional('password', 'confirmPassword')
+      .bidirectional('quantity', 'quantityJustification')
+      .whenChanged('requiresJustification', 'justification')
+      .whenChanged('country', ['state', 'zipCode'])
+      .bidirectional('startDate', 'endDate')
+      .build();
+
+  protected readonly formInfo = computed(() =>
+    this.#getMessagesByFields(this.feedback()?.formState()?.errors ?? {}, [
+      'startDate',
+      'endDate',
+    ])
+  );
+
+  protected readonly formErrors = computed(() =>
+    this.#getMessagesExcludingFields(
+      this.feedback()?.formState()?.errors ?? {},
+      ['startDate', 'endDate']
+    )
+  );
+
+  protected save(): void {
+    if (this.feedback()?.formState()?.valid) {
+      // Intentionally no console output or alerts in examples to keep CI and demos quiet
+    }
+  }
+
+  protected reset(): void {
+    this.formBody()?.resetFormState(this.initialFormValue);
+    this.formValue.set(this.initialFormValue);
+  }
+
+  #getMessagesByFields(
+    messagesByField: Record<string, string[]>,
+    fields: readonly string[]
+  ): string[] {
+    return [
+      ...new Set(fields.flatMap((field) => messagesByField[field] ?? [])),
+    ];
+  }
+
+  #getMessagesExcludingFields(
+    messagesByField: Record<string, string[]>,
+    excludedFields: readonly string[]
+  ): string[] {
+    const excluded = new Set(excludedFields);
+    return [
+      ...new Set(
+        Object.entries(messagesByField)
+          .filter(([field]) => !excluded.has(field))
+          .flatMap(([, messages]) => messages)
+      ),
+    ];
+  }
+}

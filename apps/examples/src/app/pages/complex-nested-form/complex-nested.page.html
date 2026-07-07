@@ -1,0 +1,50 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Complex Nested & Repeatable Form"
+    subtitle="Nested ngModelGroup sections and dynamic add/remove rows composed from reusable child components."
+  />
+
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Deep ngModelGroup nesting</strong> — Organize form state hierarchically; company.address nests address fields inside a company section
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Reusable child components</strong> — ngx-address and member sections appear multiple times; compose validation into each component
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Dynamic repeatable rows</strong> — id-keyed records (maps) stay stable when rows are added or removed; validation refreshes correctly
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">ROOT_FORM rules and warnings</strong> — Cross-cutting validation works across nested sections; warn() tests never block submit
+    </ngx-intro-item>
+  </ngx-intro-section>
+
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div>
+      <ngx-form-state-card [feedback]="formBody.feedback" />
+    </div>
+
+    <div class="space-y-6">
+      <ngx-complex-nested-form-body
+        #formBody
+        [formValue]="formValue()"
+        [suite]="suite"
+        [submittedValue]="submittedValue()"
+        (formValueChange)="onFormValueChange($event)"
+        (submitted)="onSubmit()"
+        (resetRequested)="onReset()"
+      />
+
+      @if (submittedPayload(); as payload) {
+      <ngx-card
+        title="Submitted payload"
+        subtitle="teamMembers converted back to an array with objectToArray() — the shape you'd POST to a backend."
+      >
+        <ngx-json-preview title="Payload" [value]="payload" />
+      </ngx-card>
+      }
+    </div>
+  </div>
+
+  <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
+</div>

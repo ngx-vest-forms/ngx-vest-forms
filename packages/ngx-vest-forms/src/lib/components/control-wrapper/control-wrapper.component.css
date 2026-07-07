@@ -1,0 +1,189 @@
+:host {
+  display: block;
+  position: relative;
+
+  /*
+   * Public theming tokens (override these from your app/theme stylesheet):
+   *
+   *   ngx-control-wrapper { --ngx-control-wrapper-error-color: ...; }
+   *   html.dark ngx-control-wrapper { --ngx-control-wrapper-error-color: ...; }
+   *
+   *   --ngx-control-wrapper-feedback-min-height
+   *   --ngx-control-wrapper-message-margin-top
+   *   --ngx-control-wrapper-message-font-size
+   *   --ngx-control-wrapper-message-line-height
+   *   --ngx-control-wrapper-message-gap
+   *   --ngx-control-wrapper-error-color
+   *   --ngx-control-wrapper-warning-color
+   *   --ngx-control-wrapper-pending-color
+   *   --ngx-control-wrapper-pending-top
+   *   --ngx-control-wrapper-pending-right
+   *   --ngx-control-wrapper-pending-gap
+   *   --ngx-control-wrapper-pending-font-size
+   *   --ngx-control-wrapper-pending-line-height
+   *   --ngx-control-wrapper-spinner-size
+   *   --ngx-control-wrapper-spinner-border-width
+   *   --ngx-control-wrapper-spinner-color
+   *   --ngx-control-wrapper-spinner-radius
+   *
+   * Public tokens are intentionally NOT declared on :host. Under Angular's
+   * emulated encapsulation, :host rewrites to an attribute selector with
+   * specificity (0,1,0), which would beat a consumer's element-selector
+   * override `ngx-control-wrapper { ... }` (0,0,1). Defaults are stored in
+   * the private `--_ngx-control-wrapper-*` tokens below and used as
+   * fallbacks at the consumption site, so consumer overrides win cleanly.
+   *
+   * Dark-mode defaults switch automatically via prefers-color-scheme. For
+   * class- or attribute-based dark mode, override the public tokens under
+   * your toggle selector.
+   */
+
+  /* Private defaults — do not override these directly. */
+  --_ngx-control-wrapper-feedback-min-height: 1.25rem; /* By default, reserving enough space for one line of text using --_ngx-control-wrapper-message-line-height */
+  --_ngx-control-wrapper-message-margin-top: 0.25rem;
+  --_ngx-control-wrapper-message-font-size: 0.875rem;
+  --_ngx-control-wrapper-message-line-height: 1.25rem;
+  --_ngx-control-wrapper-message-gap: 0.25rem;
+
+  --_ngx-control-wrapper-error-color: #dc2626;
+  --_ngx-control-wrapper-warning-color: #b45309;
+  --_ngx-control-wrapper-pending-color: #6b7280;
+
+  --_ngx-control-wrapper-pending-top: 0;
+  --_ngx-control-wrapper-pending-right: 0;
+  --_ngx-control-wrapper-pending-gap: 0.25rem;
+  --_ngx-control-wrapper-pending-font-size: 0.75rem;
+  --_ngx-control-wrapper-pending-line-height: 1rem;
+
+  --_ngx-control-wrapper-spinner-size: 0.75rem;
+  --_ngx-control-wrapper-spinner-border-width: 2px;
+  --_ngx-control-wrapper-spinner-color: #9ca3af;
+  --_ngx-control-wrapper-spinner-radius: 9999px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host {
+    --_ngx-control-wrapper-error-color: #f87171;
+    --_ngx-control-wrapper-warning-color: #f59e0b;
+    --_ngx-control-wrapper-pending-color: #9ca3af;
+  }
+}
+
+.ngx-control-wrapper__feedback-container {
+  display: flex;
+  flex-direction: column;
+  min-height: var(
+    --ngx-control-wrapper-feedback-min-height,
+    var(--_ngx-control-wrapper-feedback-min-height)
+  );
+  margin-top: var(
+    --ngx-control-wrapper-message-margin-top,
+    var(--_ngx-control-wrapper-message-margin-top)
+  );
+  gap: var(
+    --ngx-control-wrapper-message-gap,
+    var(--_ngx-control-wrapper-message-gap)
+  );
+}
+
+.ngx-control-wrapper__errors,
+.ngx-control-wrapper__warnings {
+  font-size: var(
+    --ngx-control-wrapper-message-font-size,
+    var(--_ngx-control-wrapper-message-font-size)
+  );
+  line-height: var(
+    --ngx-control-wrapper-message-line-height,
+    var(--_ngx-control-wrapper-message-line-height)
+  );
+}
+
+.ngx-control-wrapper__errors {
+  color: var(
+    --ngx-control-wrapper-error-color,
+    var(--_ngx-control-wrapper-error-color)
+  );
+}
+
+.ngx-control-wrapper__warnings {
+  color: var(
+    --ngx-control-wrapper-warning-color,
+    var(--_ngx-control-wrapper-warning-color)
+  );
+}
+
+.ngx-control-wrapper__messages {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ngx-control-wrapper__messages li + li {
+  margin-top: var(
+    --ngx-control-wrapper-message-gap,
+    var(--_ngx-control-wrapper-message-gap)
+  );
+}
+
+.ngx-control-wrapper__pending {
+  position: absolute;
+  top: var(
+    --ngx-control-wrapper-pending-top,
+    var(--_ngx-control-wrapper-pending-top)
+  );
+  right: var(
+    --ngx-control-wrapper-pending-right,
+    var(--_ngx-control-wrapper-pending-right)
+  );
+  display: inline-flex;
+  align-items: center;
+  gap: var(
+    --ngx-control-wrapper-pending-gap,
+    var(--_ngx-control-wrapper-pending-gap)
+  );
+  font-size: var(
+    --ngx-control-wrapper-pending-font-size,
+    var(--_ngx-control-wrapper-pending-font-size)
+  );
+  line-height: var(
+    --ngx-control-wrapper-pending-line-height,
+    var(--_ngx-control-wrapper-pending-line-height)
+  );
+  color: var(
+    --ngx-control-wrapper-pending-color,
+    var(--_ngx-control-wrapper-pending-color)
+  );
+}
+
+.ngx-control-wrapper__spinner {
+  display: inline-block;
+  width: var(
+    --ngx-control-wrapper-spinner-size,
+    var(--_ngx-control-wrapper-spinner-size)
+  );
+  height: var(
+    --ngx-control-wrapper-spinner-size,
+    var(--_ngx-control-wrapper-spinner-size)
+  );
+  border-radius: var(
+    --ngx-control-wrapper-spinner-radius,
+    var(--_ngx-control-wrapper-spinner-radius)
+  );
+  border: var(
+      --ngx-control-wrapper-spinner-border-width,
+      var(--_ngx-control-wrapper-spinner-border-width)
+    )
+    solid
+    var(
+      --ngx-control-wrapper-spinner-color,
+      var(--_ngx-control-wrapper-spinner-color)
+    );
+  border-top-color: transparent;
+  animation: ngx-control-wrapper-spin 1s linear infinite;
+}
+
+@keyframes ngx-control-wrapper-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

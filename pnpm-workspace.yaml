@@ -1,0 +1,67 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+minimumReleaseAgeExclude:
+  - nx
+  - "@nx/angular@23.0.1"
+  - "@nx/playwright@23.0.1"
+  - "@nx/workspace@23.0.1"
+  - '@nx/devkit@23.0.1'
+  - '@nx/eslint@23.0.1'
+  - '@nx/js@23.0.1'
+  - '@nx/module-federation@23.0.1'
+  - '@nx/nx-darwin-arm64@23.0.1'
+  - '@nx/nx-darwin-x64@23.0.1'
+  - '@nx/nx-freebsd-x64@23.0.1'
+  - '@nx/nx-linux-arm-gnueabihf@23.0.1'
+  - '@nx/nx-linux-arm64-gnu@23.0.1'
+  - '@nx/nx-linux-arm64-musl@23.0.1'
+  - '@nx/nx-linux-x64-gnu@23.0.1'
+  - '@nx/nx-linux-x64-musl@23.0.1'
+  - '@nx/nx-win32-arm64-msvc@23.0.1'
+  - '@nx/nx-win32-x64-msvc@23.0.1'
+  - '@nx/rspack@23.0.1'
+  - '@nx/web@23.0.1'
+  - '@nx/webpack@23.0.1'
+  - '@angular-devkit/architect@0.2200.4'
+  - '@angular-devkit/core@22.0.4'
+  - '@angular-devkit/schematics@22.0.4'
+  - '@angular/build@22.0.4'
+  - '@angular/cli@22.0.4'
+  - '@commitlint/cli@21.1.0'
+  - '@commitlint/config-conventional@21.1.0'
+  - '@commitlint/config-validator@21.1.0'
+  - '@commitlint/ensure@21.1.0'
+  - '@commitlint/format@21.1.0'
+  - '@commitlint/is-ignored@21.1.0'
+  - '@commitlint/lint@21.1.0'
+  - '@commitlint/load@21.1.0'
+  - '@commitlint/parse@21.1.0'
+  - '@commitlint/read@21.1.0'
+  - '@commitlint/resolve-extends@21.1.0'
+  - '@commitlint/rules@21.1.0'
+  - '@commitlint/types@21.1.0'
+  - '@playwright/test@1.61.1'
+  - '@schematics/angular@22.0.4'
+  - playwright-core@1.61.1
+  - playwright-ng-schematics@22.0.1
+  - playwright@1.61.1
+  - vite@8.1.0
+minimumReleaseAge: 24h
+minimumReleaseAgeStrict: true
+minimumReleaseAgeIgnoreMissingTime: false
+trustPolicy: no-downgrade
+overrides:
+  chokidar: 4.0.1
+  detect-port: 1.6.0
+  semver: 7.7.1
+strictDepBuilds: true
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true
+  fsevents: true
+  less: false
+  lmdb: false
+  msgpackr-extract: false
+  nx: true

@@ -84,7 +84,7 @@ Use it proactively when the suite contains:
 
 Without it, ngx-vest-forms may leave stale validation results because Angular will not know which dependent fields to rerun.
 
-## Calm dependents pattern (v2.7+)
+## Calm dependents pattern
 
 When a dependent field becomes logically invalid as soon as its trigger changes, but should stay visually quiet until the dependent's own blur, **do not** add `(blur)` handlers calling `triggerFormValidation()`. Instead pair:
 
@@ -92,7 +92,7 @@ When a dependent field becomes logically invalid as soon as its trigger changes,
 - `[errorDisplayMode]="'on-blur'"` on the dependent's `<ngx-control-wrapper>` — gates the visible message
 - the Vest suite — owns the actual rule
 
-In v2.7.0, blurring the trigger propagates touched into its `validationConfig`-tracked dependents on the same tick, so the dependent's error UI flips on the trigger's blur when its wrapper is in `on-blur` mode. No manual revalidation call needed.
+This calm behavior is the default: `validationConfig` revalidates dependents silently and deliberately does NOT mark them touched, so a dependent's error UI only appears after the dependent itself is blurred (or the form is submitted). No manual revalidation call needed.
 
 ## Interaction with blur-driven persistence
 
@@ -134,7 +134,7 @@ When answering the user:
 - `../../../../docs/AUTO-SAVE-ON-BLUR.md`
 - `../../../../docs/FIELD-PATHS.md`
 - `../../../../README.md`
-- `../../../../projects/ngx-vest-forms/src/public-api.ts`
+- `../../../../packages/ngx-vest-forms/src/public-api.ts`
 
 Treat the repo instruction file as the invariant layer. This skill adds the dependency-graph reasoning and builder-specific patterns.
 

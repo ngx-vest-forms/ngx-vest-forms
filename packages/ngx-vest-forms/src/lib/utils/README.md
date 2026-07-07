@@ -1,0 +1,1030 @@
+# ngx-vest-forms Utility Types and Functions
+
+This directory contains all utility types and functions provided by ngx-vest-forms. These utilities help with type safety, form state management, and common form operations.
+
+## Table of Contents
+
+- [Type Utilities](#type-utilities)
+  - [NgxDeepPartial\<T\>](#ngxdeeppartialt)
+  - [NgxDeepRequired\<T\>](#ngxdeeprequiredt)
+  - [NgxVestSuite\<T\>](#ngxvestsuitet)
+  - [NgxFieldKey\<T\>](#ngxfieldkeyt)
+- [Form Utilities](#form-utilities)
+  - [setValueAtPath()](#setvalueatpath)
+  - [createEmptyFormState()](#createemptyformstate)
+  - [fieldWarningsToRecord()](#fieldwarningstorecord)
+  - [createFormFeedbackSignals()](#createformfeedbacksignals)
+  - [createDebouncedPendingState()](#createdebouncedpendingstate)
+- [Internal Form Utilities](#internal-form-utilities) ⚠️
+  - [getAllFormErrors()](#getallformerrors)
+  - [getFormControlField()](#getformcontrolfield) — `ngx-vest-forms/internal`
+  - [getFormGroupField()](#getformgroupfield) — `ngx-vest-forms/internal`
+  - [mergeValuesAndRawValues()](#mergevaluesandrawvalues) — `ngx-vest-forms/internal`
+- [Array/Object Conversion](#arrayobject-conversion)
+  - [arrayToObject()](#arraytoobject)
+  - [deepArrayToObject()](#deeparraytoobject)
+  - [objectToArray()](#objecttoarray)
+- [Field Path Utilities](#field-path-utilities)
+  - [stringifyFieldPath()](#stringifyfieldpath)
+- [Internal Path Utilities](#internal-path-utilities) ⚠️
+  - [parseFieldPath()](#parsefieldpath) — `ngx-vest-forms/internal`
+- [Field Clearing Utilities](#field-clearing-utilities)
+  - [clearFieldsWhen()](#clearfieldswhen)
+  - [clearFields()](#clearfields)
+  - [keepFieldsWhen()](#keepfieldswhen)
+- [Internal Equality Utilities](#internal-equality-utilities) ⚠️
+  - [shallowEqual()](#shallowequal) — `ngx-vest-forms/internal`
+  - [fastDeepEqual()](#fastdeepequal) — `ngx-vest-forms/internal`
+- [Standard Schema Adapter](#standard-schema-adapter)
+  - [toFormContract()](#toformcontract)
+
+---
+
+## Type Utilities
+
+### NgxDeepPartial\<T\>
+
+**Recommended** - Makes every property and child property partial recursively.
+
+**Why?** Template-driven forms are inherently deep partial since they're created incrementally by the DOM.
+
+```typescript
+import { signal } from '@angular/core';
+import { NgxDeepPartial } from 'ngx-vest-forms';
+
+interface UserModel {
+  name: string;
+  profile: {
+    age: number;
+    isActive: boolean;
+  };
+}
+
+// All properties become optional recursively
+type PartialUser = NgxDeepPartial<UserModel>;
+// Result: {
+//   name?: string;
+//   profile?: {
+//     age?: number;
+//     isActive?: boolean;
+//   };
+// }
+
+// Typical for template-driven forms
+const formValue = signal<NgxDeepPartial<UserModel>>({});
+```
+
+**When to use:**
+
+- ✅ Form model types (forms build incrementally)
+- ✅ Optional configuration objects
+- ✅ Partial updates to existing data
+
+---
+
+### NgxDeepRequired\<T\>
+
+Makes every property required recursively (opposite of `NgxDeepPartial`).
+
+```typescript
+import { NgxDeepRequired, NgxDeepPartial } from 'ngx-vest-forms';
+
+type FormModel = NgxDeepPartial<{
+  name: string;
+  profile: { age: number };
+}>;
+
+// For fallback object contracts
+const formShape: NgxDeepRequired<FormModel> = {
+  name: '',
+  profile: {
+    age: 0,
+  },
+};
+```
+
+**When to use:**
+
+- ✅ Defining fallback object contracts when you do not already have a schema
+- ✅ Ensuring complete data before API submission
+- ✅ Default values or initial state
+
+---
+
+### NgxFormCompatibleDeepRequired\<T\> _(Removed in v3)_
+
+This helper was removed in v3. The `[formContract]` input now accepts any [Standard Schema v1](https://standardschema.dev) value (Zod, Valibot, ArkType, …), so Date coercion (e.g., `Date | ''` for date pickers) belongs in your schema, not a form-shape type.
+
+If you still need the original type as-is, see the copy-paste snippet in **[docs/migration/MIGRATION-v2.x-to-v3.0.0.md](../../../../../docs/migration/MIGRATION-v2.x-to-v3.0.0.md)**.
+
+---
+
+### NgxVestSuite\<T\>
+
+`NgxVestSuite<T>` is the canonical public suite type in v3.x.
+
+**Use for**: suite definitions, component properties, helper function parameters, and public APIs.
+
+```typescript
+import { NgxVestSuite } from 'ngx-vest-forms';
+import { create, test, enforce } from 'vest';
+
+type FormModel = { email: string; password: string };
+
+// ✅ Simple: Using NgxVestSuite (no autocomplete, but works everywhere)
+export const suite: NgxVestSuite<FormModel> = create((model) => {
+  test('email', 'Required', () => enforce(model.email).isNotBlank());
+});
+// Field focus at call site: suite.only('email').run(model)
+
+// Component - works seamlessly
+@Component({...})
+class MyFormComponent {
+  protected readonly suite: NgxVestSuite<FormModel> = suite;
+}
+```
+
+#### Recommended Pattern
+
+Define and consume suites with `NgxVestSuite<T>`:
+
+```typescript
+import { NgxVestSuite } from 'ngx-vest-forms';
+
+export const userSuite: NgxVestSuite<FormModel> = create(
+  (model: FormModel) => {
+    // ✅ IDE autocomplete for test() field names: 'email' | 'password' | typeof ROOT_FORM
+    test('email', 'Required', () => enforce(model.email).isNotBlank());
+  }
+);
+
+@Component({...})
+class MyFormComponent {
+  protected readonly suite: NgxVestSuite<FormModel> = userSuite;
+}
+```
+
+#### Two Usage Options Compared
+
+| Approach                                                | Autocomplete     | Explicit Type    | Flexible             | Recommended             |
+| ------------------------------------------------------- | ---------------- | ---------------- | -------------------- | ----------------------- |
+| **Recommended Pattern** (use `NgxVestSuite` everywhere) | ✅ At definition | ✅ In component  | ✅ Accepts any suite | ✅ **Best**             |
+| **Type Inference** (`const suite = ...`)                | ✅ At definition | ❌ Inferred only | ❌ Too specific      | ⚠️ Works but less clear |
+
+**When to use:**
+
+- ✅ **NgxVestSuite**: Component properties (template compatibility)
+- ✅ **Recommended Pattern**: New code and updated examples
+- ✅ **Simple NgxVestSuite**: Simple forms without autocomplete needs
+
+---
+
+### NgxFieldKey\<T\>
+
+Type-safe field parameter for validation suites (provides autocomplete).
+
+```typescript
+import { NgxFieldKey } from 'ngx-vest-forms';
+import { create } from 'vest';
+
+type FormModel = { email: string; password: string };
+
+// NgxFieldKey provides type-safe field keys: 'email' | 'password'
+// In Vest 6, field focus is at the call site — not in the callback
+// Example: suite.only('email' as NgxFieldKey<FormModel>).run(model)
+export const suite = create((model: FormModel) => {
+  // ... validations
+});
+```
+
+**When to use:**
+
+- ✅ Optional: adds autocomplete hints for field names
+- ✅ Type safety at validation suite level
+- ✅ Better developer experience
+
+---
+
+## Form Utilities
+
+### setValueAtPath()
+
+Sets a value at a nested path using dot and bracket notation (creates intermediate objects/arrays as needed).
+
+```typescript
+import { setValueAtPath } from 'ngx-vest-forms';
+
+const obj = {};
+setValueAtPath(obj, 'user.profile.name', 'John');
+// obj = { user: { profile: { name: 'John' } } }
+
+setValueAtPath(obj, 'addresses[0].street', 'Main St');
+// obj = { user: { profile: { name: 'John' } }, addresses: [{ street: 'Main St' }] }
+```
+
+**When to use:**
+
+- ✅ Dynamic form value updates
+- ✅ Programmatic form population
+- ✅ Handling deeply nested structures
+
+---
+
+### createEmptyFormState()
+
+Creates a safe fallback packaged form state for components that need a stable
+`NgxFormState` before a form directive is available.
+
+```typescript
+import { createEmptyFormState, type NgxFormState } from 'ngx-vest-forms';
+
+type CheckoutFormModel = {
+  email?: string;
+};
+
+const emptyState: NgxFormState<CheckoutFormModel> =
+  createEmptyFormState<CheckoutFormModel>();
+// { valid: true, errors: {}, value: null }
+```
+
+**When to use:**
+
+- ✅ Fallbacks for `viewChild()` form references
+- ✅ Parent/presenter components that render before the form is initialized
+- ✅ Defensive defaults for reusable form UIs
+
+---
+
+### fieldWarningsToRecord()
+
+Converts the directive's `ReadonlyMap<string, readonly string[]>` warning store
+into a plain object keyed by field path.
+
+```typescript
+import { fieldWarningsToRecord } from 'ngx-vest-forms';
+
+const warnings = fieldWarningsToRecord(this.vestForm().fieldWarnings());
+// {
+//   username: ['Consider a longer username'],
+//   'profile.bio': ['This bio is getting long']
+// }
+```
+
+**When to use:**
+
+- ✅ Passing warnings into presentational components
+- ✅ Serializing form feedback for dev panels or demos
+- ✅ Adapting map-based warnings to object-based component APIs
+
+---
+
+### createFormFeedbackSignals()
+
+Creates the most common presenter-facing form feedback signals from a form
+directive (or any compatible adapter object).
+
+You do **not** need this helper to use the library. Deriving signals directly
+from `this.vestForm()` with your own `computed()` expressions is fully valid and
+often clearer when a component only needs one derived value.
+
+```typescript
+import {
+  createFormFeedbackSignals,
+  type FormDirective,
+  type NgxDeepPartial,
+} from 'ngx-vest-forms';
+import { Component, computed, viewChild } from '@angular/core';
+
+type ProfileFormModel = NgxDeepPartial<{
+  email: string;
+  username: string;
+}>;
+
+@Component({
+  // ...
+})
+export class ProfileFormComponent {
+  protected readonly vestForm = viewChild(FormDirective<ProfileFormModel>);
+
+  protected readonly feedback = createFormFeedbackSignals(this.vestForm);
+  protected readonly formState = this.feedback.formState;
+  protected readonly warnings = this.feedback.warnings;
+  protected readonly validatedFields = this.feedback.validatedFields;
+  protected readonly pending = this.feedback.pending;
+}
+```
+
+Why is this a **function** instead of a directive or service?
+
+Because it is only signal composition. You already have a
+`Signal<FormDirective | undefined>` from `viewChild()`, and the helper simply
+returns a stable bundle of derived `computed()` signals without introducing
+extra providers, lifecycle hooks, or directive instances.
+
+**What it returns:**
+
+- `formState` — packaged `NgxFormState<T>` with a safe empty fallback
+- `warnings` — plain object version of `fieldWarnings`
+- `validatedFields` — current validated/touched field paths
+- `pending` — async validation state
+
+**Optional override:**
+
+Use `options.formState` when you need to augment or replace the packaged state,
+for example when combining schema-generated errors with the library's form state.
+
+```typescript
+protected readonly feedback = createFormFeedbackSignals(this.vestForm, {
+  formState: computed(
+    () => this.customFormState() ?? this.vestForm()?.formState()
+  ),
+});
+```
+
+**When to use:**
+
+- ✅ Reducing repeated `computed(() => this.vestForm()?....)` boilerplate
+- ✅ Keeping form-body/container components small
+- ✅ Sharing a consistent feedback contract with presentational components
+
+**When not to use it:**
+
+- ✅ Skip it when you only need one derived signal such as `formState`
+- ✅ Skip it when direct `computed()` expressions are clearer in that file
+
+```typescript
+protected readonly formState = computed(
+  () => this.vestForm()?.formState() ?? createEmptyFormState()
+);
+```
+
+---
+
+### createDebouncedPendingState()
+
+Creates a debounced pending state signal that prevents flashing validation messages during async validations.
+
+```typescript
+import { createDebouncedPendingState } from 'ngx-vest-forms';
+import { Component, inject } from '@angular/core';
+import { FormErrorDisplayDirective } from 'ngx-vest-forms';
+
+@Component({
+  selector: 'ngx-custom-wrapper',
+  hostDirectives: [
+    { directive: FormErrorDisplayDirective, inputs: ['errorDisplayMode'] },
+  ],
+  template: `
+    <ng-content />
+    @if (showPendingMessage()) {
+      <div role="status" aria-live="polite" aria-atomic="true">
+        <span aria-hidden="true">⏳</span>
+        Validating…
+      </div>
+    }
+  `,
+})
+export class CustomWrapperComponent {
+  protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
+    self: true,
+  });
+
+  // Create debounced pending state
+  private readonly pendingState = createDebouncedPendingState(
+    this.errorDisplay.isPending,
+    { showAfter: 200, minimumDisplay: 500 }
+  );
+
+  protected readonly showPendingMessage = this.pendingState.showPendingMessage;
+}
+```
+
+**Options:**
+
+- `showAfter` (default: 200ms) - Delay before showing pending message
+- `minimumDisplay` (default: 500ms) - Minimum time to keep message visible once shown
+
+**Returns:**
+
+- `showPendingMessage` - Signal that is true when pending message should be shown
+- `cleanup()` - Optional cleanup function (effect cleanup handles most cases)
+
+**When to use:**
+
+- ✅ Creating custom control wrappers with async validation feedback
+- ✅ Preventing "Validating..." message from flashing for quick validations
+- ✅ Ensuring pending messages stay visible long enough to be noticed
+- ✅ Improving UX for async form validation
+
+**How it works:**
+
+1. When validation starts, waits `showAfter`ms before showing pending message
+2. If validation completes before `showAfter`, message never appears (prevents flash)
+3. Once shown, keeps message visible for at least `minimumDisplay`ms (prevents flicker)
+
+---
+
+## Internal Form Utilities
+
+> **⚠️ Internal API**: These utilities are marked with `@internal` in their source files and are not part of the primary public API. They are exported for advanced use cases but may change without notice. Consider using alternative approaches or Angular's built-in form APIs instead.
+>
+> **`getFormControlField`, `getFormGroupField`, and `mergeValuesAndRawValues` moved to `ngx-vest-forms/internal` in v3.** They are no longer importable from `'ngx-vest-forms'`; import them from the `'ngx-vest-forms/internal'` secondary entry point, which carries **no semver guarantees**. `getAllFormErrors` stays on the primary `'ngx-vest-forms'` entry.
+
+### getAllFormErrors()
+
+Gets all form errors organized by field path (supports nested fields and arrays).
+
+```typescript
+import { getAllFormErrors } from 'ngx-vest-forms';
+
+const errors = getAllFormErrors(form);
+// {
+//   'email': ['Email is required'],
+//   'addresses.billing.street': ['Street is required'],
+//   'phoneNumbers[0].number': ['Invalid format']
+// }
+```
+
+**When to use:**
+
+- ✅ Displaying all errors on submit
+- ✅ Custom error summaries
+- ✅ Debugging form validation state
+
+---
+
+### getFormControlField()
+
+Gets the dot-notation path of a form control relative to root form.
+
+```typescript
+import { getFormControlField } from 'ngx-vest-forms/internal';
+
+const path = getFormControlField(rootForm, control);
+// 'addresses.billing.street'
+```
+
+**When to use:**
+
+- ✅ Building dynamic validation logic
+- ✅ Custom error display components
+- ✅ Debugging control paths
+
+---
+
+### getFormGroupField()
+
+Gets the dot-notation path of a form group relative to root form.
+
+```typescript
+import { getFormGroupField } from 'ngx-vest-forms/internal';
+
+const path = getFormGroupField(rootForm, group);
+// 'addresses.billing'
+```
+
+**When to use:**
+
+- ✅ Working with nested form groups
+- ✅ Group-level validation
+- ✅ Dynamic form structure
+
+---
+
+### mergeValuesAndRawValues()
+
+Merges enabled and disabled field values (includes disabled fields in result).
+
+```typescript
+import { mergeValuesAndRawValues } from 'ngx-vest-forms/internal';
+
+const allValues = mergeValuesAndRawValues(form);
+// Includes both enabled and disabled field values
+```
+
+**When to use:**
+
+- ✅ Submitting forms with disabled fields
+- ✅ Getting complete form state
+- ✅ Conditional field handling
+
+---
+
+## Array/Object Conversion
+
+Angular template-driven forms struggle with arrays. These utilities convert arrays to objects with numeric keys, enabling `ngModelGroup` to work with dynamic arrays (phone numbers, addresses, etc.).
+
+### arrayToObject()
+
+Converts arrays to objects with numeric keys (shallow conversion).
+
+```typescript
+import { arrayToObject } from 'ngx-vest-forms';
+
+const phoneNumbers = ['123-4567', '987-6543'];
+const phoneObject = arrayToObject(phoneNumbers);
+// { 0: '123-4567', 1: '987-6543' }
+
+// Use in form model
+this.formValue.update((v) => ({
+  ...v,
+  phoneNumbers: arrayToObject(phoneNumbers),
+}));
+```
+
+**When to use:**
+
+- ✅ Converting single-level arrays for forms
+- ✅ Loading backend arrays into form
+- ✅ Simple list structures
+
+---
+
+### deepArrayToObject()
+
+Converts all arrays to objects recursively (deep conversion).
+
+```typescript
+import { deepArrayToObject } from 'ngx-vest-forms';
+
+const addresses = [
+  { street: 'Main St', phones: ['111', '222'] },
+  { street: '2nd Ave', phones: ['333'] },
+];
+
+const converted = deepArrayToObject(addresses);
+// {
+//   0: { street: 'Main St', phones: { 0: '111', 1: '222' } },
+//   1: { street: '2nd Ave', phones: { 0: '333' } }
+// }
+```
+
+**When to use:**
+
+- ✅ Complex nested array structures
+- ✅ Arrays of objects containing arrays
+- ✅ When all arrays need conversion
+
+---
+
+### objectToArray()
+
+Converts specified object properties back to arrays (selective reverse conversion).
+
+```typescript
+function objectToArray(object: object, keys: string[]): unknown;
+```
+
+The return type is `unknown` — callers assert the concrete shape. Behavior is unchanged.
+
+```typescript
+import { objectToArray } from 'ngx-vest-forms';
+
+const formData = {
+  name: 'John',
+  phoneNumbers: { 0: '123-4567', 1: '987-6543' },
+  addresses: {
+    0: { street: 'Main St', phones: { 0: '111', 1: '222' } },
+    1: { street: '2nd Ave', phones: { 0: '333' } },
+  },
+};
+
+// Convert back to arrays for API
+const apiData = objectToArray(formData, [
+  'phoneNumbers',
+  'addresses',
+  'phones',
+]);
+// {
+//   name: 'John',
+//   phoneNumbers: ['123-4567', '987-6543'],
+//   addresses: [
+//     { street: 'Main St', phones: ['111', '222'] },
+//     { street: '2nd Ave', phones: ['333'] }
+//   ]
+// }
+```
+
+**When to use:**
+
+- ✅ Converting form data back to arrays before API submission
+- ✅ Selective array conversion (specify which properties)
+- ✅ Handling cascading nested arrays
+
+---
+
+### Complete Array Conversion Workflow
+
+```typescript
+import { Component, signal, inject, effect } from '@angular/core';
+import { arrayToObject, objectToArray } from 'ngx-vest-forms';
+
+type BackendData = {
+  phoneNumbers: string[];
+  addresses: Array<{ street: string; phones: string[] }>;
+};
+
+type FormModel = {
+  phoneNumbers: { [key: number]: string };
+  addresses: {
+    [key: number]: { street: string; phones: { [key: number]: string } };
+  };
+};
+
+@Component({
+  // ...
+})
+export class MyFormComponent {
+  private readonly api = inject(ApiService);
+  protected readonly formValue = signal<FormModel>({
+    phoneNumbers: {},
+    addresses: {},
+  });
+
+  constructor() {
+    // LOAD: Convert backend arrays → form-compatible objects
+    this.loadData();
+  }
+
+  private async loadData() {
+    const data = await this.api.load();
+    this.formValue.set({
+      phoneNumbers: arrayToObject(data.phoneNumbers),
+      addresses: arrayToObject(
+        data.addresses.map((addr) => ({
+          ...addr,
+          phones: arrayToObject(addr.phones),
+        }))
+      ),
+    });
+  }
+
+  // SUBMIT: Convert form objects → backend arrays
+  protected async save() {
+    const formData = this.formValue();
+    const backendData = objectToArray(formData, [
+      'phoneNumbers',
+      'addresses',
+      'phones',
+    ]);
+    await this.api.save(backendData);
+  }
+
+  // Add item dynamically
+  protected addPhoneNumber(newNumber: string) {
+    this.formValue.update((v) => ({
+      ...v,
+      phoneNumbers: arrayToObject([
+        ...Object.values(v.phoneNumbers),
+        newNumber,
+      ]),
+    }));
+  }
+
+  // Remove item dynamically
+  protected removePhoneNumber(index: number) {
+    this.formValue.update((v) => {
+      const phones = Object.values(v.phoneNumbers).filter(
+        (_, i) => i !== index
+      );
+      return { ...v, phoneNumbers: arrayToObject(phones) };
+    });
+  }
+}
+```
+
+**Template usage with ngModelGroup:**
+
+```html
+<form ngxVestForm [suite]="suite" (formValueChange)="formValue.set($event)">
+  <!-- Use ngModelGroup with numeric keys -->
+  <div
+    *ngFor="let phoneKV of formValue().phoneNumbers | keyvalue: originalOrder"
+  >
+    <div [ngModelGroup]="phoneKV.key">
+      <input name="number" [ngModel]="phoneKV.value" />
+      <button type="button" (click)="removePhoneNumber(+phoneKV.key)">
+        Remove
+      </button>
+    </div>
+  </div>
+
+  <button type="button" (click)="addPhoneNumber('')">Add Phone</button>
+</form>
+```
+
+---
+
+## Field Path Utilities
+
+> **💡 Type Safety**: For compile-time type checking and IDE autocomplete of field paths, see the **[Field Path Types Guide](../../../../docs/FIELD-PATHS.md)** which covers `FieldPath<T>`, `ValidationConfigMap<T>`, and `FormFieldName<T>`.
+
+### stringifyFieldPath()
+
+Converts segments array to path string (public API).
+
+```typescript
+import { stringifyFieldPath } from 'ngx-vest-forms';
+
+const path = stringifyFieldPath(['addresses', 0, 'street']);
+// 'addresses[0].street'
+
+stringifyFieldPath(['form', 'sections', 0, 'fields', 'name']);
+// 'form.sections[0].fields.name'
+```
+
+**When to use:**
+
+- ✅ Converting arrays to path strings
+- ✅ Building dynamic field paths
+- ✅ Error message formatting
+
+---
+
+## Internal Path Utilities
+
+> **⚠️ Internal API**: This utility is marked with `@internal` and is not part of the primary public API. It's exported for advanced use cases but may change without notice.
+>
+> **`parseFieldPath` moved to `ngx-vest-forms/internal` in v3.** It is no longer importable from `'ngx-vest-forms'`; import it from the `'ngx-vest-forms/internal'` secondary entry point, which carries **no semver guarantees**.
+
+### parseFieldPath()
+
+Parses path string into segments array (internal utility).
+
+```typescript
+import { parseFieldPath } from 'ngx-vest-forms/internal';
+
+const segments = parseFieldPath('addresses[0].street');
+// ['addresses', 0, 'street']
+
+parseFieldPath('users[0].contacts[1].email');
+// ['users', 0, 'contacts', 1, 'email']
+```
+
+**When to use:**
+
+- ⚠️ Advanced integration scenarios only
+- ⚠️ May change without notice
+- ✅ Consider using `stringifyFieldPath()` for most use cases
+
+---
+
+## Field Clearing Utilities
+
+Utilities for conditionally clearing form fields based on conditions.
+
+### clearFieldsWhen()
+
+Clears specified fields when conditions are met.
+
+```typescript
+import { clearFieldsWhen } from 'ngx-vest-forms';
+
+this.formValue.update((v) =>
+  clearFieldsWhen(v, {
+    shippingAddress: !needsShipping,
+    emergencyContact: isAdult,
+  })
+);
+```
+
+**When to use:**
+
+- ✅ Conditional field clearing
+- ✅ Multi-step forms
+- ✅ Dynamic form logic
+
+---
+
+### clearFields()
+
+Unconditionally clears specified fields.
+
+```typescript
+import { clearFields } from 'ngx-vest-forms';
+
+this.formValue.update((v) => clearFields(v, ['tempData', 'draft']));
+```
+
+**When to use:**
+
+- ✅ Reset specific fields
+- ✅ Cleanup temporary data
+- ✅ Form section reset
+
+---
+
+### keepFieldsWhen()
+
+Whitelist approach - keeps only fields that meet conditions.
+
+```typescript
+import { keepFieldsWhen } from 'ngx-vest-forms';
+
+this.formValue.update((v) =>
+  keepFieldsWhen(v, {
+    basicInfo: true,
+    shipping: needsShipping,
+    billing: true,
+  })
+);
+```
+
+**When to use:**
+
+- ✅ Whitelist approach to field preservation
+- ✅ Complex conditional logic
+- ✅ Multi-step form navigation
+
+---
+
+## Internal Equality Utilities
+
+> **⚠️ Internal API**: These utilities are marked with `@internal` and are not part of the primary public API. They are exported for advanced use cases but may change without notice. Consider using your own comparison logic or a library like lodash if you need equality checks in your application.
+>
+> **`shallowEqual` and `fastDeepEqual` moved to `ngx-vest-forms/internal` in v3.** They are no longer importable from `'ngx-vest-forms'`; import them from the `'ngx-vest-forms/internal'` secondary entry point, which carries **no semver guarantees**.
+
+### shallowEqual()
+
+Compares two objects shallowly (only first level) - internal utility.
+
+```typescript
+import { shallowEqual } from 'ngx-vest-forms/internal';
+
+const equal = shallowEqual({ a: 1, b: 2 }, { a: 1, b: 2 }); // true
+const notEqual = shallowEqual({ a: 1, b: { c: 3 } }, { a: 1, b: { c: 3 } }); // false (different object references)
+```
+
+**When to use:**
+
+- ⚠️ Advanced performance optimization only
+- ⚠️ Used internally for form change detection
+- ✅ Consider using your own comparison logic instead
+
+---
+
+### fastDeepEqual()
+
+Compares two values deeply (recursive comparison) - internal utility.
+
+- Top-level equality uses `Object.is` semantics (`fastDeepEqual(NaN, NaN)` is `true`, `fastDeepEqual(0, -0)` is `false`).
+- Cyclic arrays and plain objects are compared structurally using visited-pair tracking.
+- `Date` and `RegExp` values compare structurally.
+- `Map`, `Set`, and functions compare by reference only.
+
+```typescript
+import { fastDeepEqual } from 'ngx-vest-forms/internal';
+
+const equal = fastDeepEqual({ a: 1, b: { c: 3 } }, { a: 1, b: { c: 3 } }); // true
+```
+
+**When to use:**
+
+- ⚠️ Advanced performance optimization only
+- ⚠️ Used internally for form value comparison
+- ✅ Consider using your own comparison logic instead
+
+> **Swap the comparator the directive uses:** to override the equality function `FormDirective` uses internally (without forking it), provide the [`NGX_EQUALITY_FN`](../../../../docs/API-TOKENS.md#ngx_equality_fn) injection token. Useful for plugging in `dequal/lite`, `lodash.isEqual`, or a domain-specific comparator.
+
+---
+
+## Standard Schema Adapter
+
+### toFormContract()
+
+Wraps a legacy `NgxDeepRequired<T>` object contract into a [Standard Schema v1](https://standardschema.dev) compatible value, so it can be passed to `FormDirective`'s `[formContract]` input alongside real schemas (Zod v4, Valibot, hand-rolled, etc.).
+
+```typescript
+import {
+  toFormContract,
+  StandardSchemaV1,
+  NgxDeepPartial,
+  NgxDeepRequired,
+} from 'ngx-vest-forms';
+
+type FormModel = NgxDeepPartial<{
+  name: string;
+  profile: { age: number };
+}>;
+
+const formShape: NgxDeepRequired<FormModel> = {
+  name: '',
+  profile: { age: 0 },
+};
+
+// Use directly — `formContract` accepts both shapes and StandardSchemaV1
+// <form ngxVestForm [formContract]="formShape" ...>
+
+// Or convert explicitly to StandardSchemaV1<T>:
+const formContract: StandardSchemaV1<FormModel> = toFormContract(formShape);
+```
+
+**When to use:**
+
+- ✅ You have an existing `NgxDeepRequired<T>` contract from v2 and want explicit conversion
+- ✅ You want a single Standard Schema-typed contract through your whole codebase
+- 💡 New code should prefer authoring a real `StandardSchemaV1<T>` (Zod v4 schemas implement it natively)
+
+> **`validateShape` removed in v3.** The previous internal `validateShape()` utility is no longer exported. Contract diagnostics in dev mode now run through the unified Standard Schema validation path. Unknown-key behavior depends on the supplied schema's strictness, and the directive only consumes synchronous contract results.
+
+---
+
+## Importing Utilities
+
+### Public API (Recommended)
+
+```typescript
+// Type utilities
+import {
+  NgxDeepPartial,
+  NgxDeepRequired,
+  NgxVestSuite,
+  NgxFieldKey,
+} from 'ngx-vest-forms';
+
+// Public form utilities
+import { setValueAtPath } from 'ngx-vest-forms';
+
+// Array/Object conversion
+import {
+  arrayToObject,
+  deepArrayToObject,
+  objectToArray,
+} from 'ngx-vest-forms';
+
+// Field path utilities
+import { stringifyFieldPath } from 'ngx-vest-forms';
+
+// Field clearing
+import { clearFieldsWhen, clearFields, keepFieldsWhen } from 'ngx-vest-forms';
+
+// Form state utilities
+import {
+  createEmptyFormState,
+  createFormFeedbackSignals,
+  fieldWarningsToRecord,
+  NgxFormState,
+  NgxFormFeedbackSource,
+  NgxFormFeedbackSignals,
+} from 'ngx-vest-forms';
+```
+
+### Internal API (Advanced Use Only)
+
+> **⚠️ Warning**: These are marked with `@internal` and may change without notice.
+>
+> **v3:** `getFormControlField`, `getFormGroupField`, `mergeValuesAndRawValues`, `parseFieldPath`, `shallowEqual`, and `fastDeepEqual` moved to the `'ngx-vest-forms/internal'` secondary entry point (no semver guarantees). `getAllFormErrors` and `toFormContract` remain on the primary `'ngx-vest-forms'` entry.
+
+```typescript
+// getAllFormErrors stays on the primary entry
+import { getAllFormErrors } from 'ngx-vest-forms';
+
+// Internal form utilities — moved to the internal entry (no semver guarantees)
+import {
+  getFormControlField,
+  getFormGroupField,
+  mergeValuesAndRawValues,
+} from 'ngx-vest-forms/internal';
+
+// Internal path utilities (consider alternatives)
+import { parseFieldPath } from 'ngx-vest-forms/internal';
+
+// Internal equality utilities (consider lodash or custom logic)
+import { shallowEqual, fastDeepEqual } from 'ngx-vest-forms/internal';
+
+// Standard Schema adapter for legacy shapes (primary entry)
+import { toFormContract, StandardSchemaV1 } from 'ngx-vest-forms';
+```
+
+---
+
+## Naming Convention
+
+All public type utilities use the `Ngx` prefix to prevent naming conflicts and clearly identify library utilities:
+
+- ✅ `NgxDeepPartial<T>`
+- ✅ `NgxDeepRequired<T>`
+- ✅ `NgxVestSuite<T>`
+
+> **Migrating from v2.x?** The unprefixed aliases (`DeepPartial`, `DeepRequired`, `FormCompatibleDeepRequired`, `NgxTypedVestSuite`) and the legacy `set()` / `cloneDeep()` helpers were removed in v3. See [docs/migration/MIGRATION-v2.x-to-v3.0.0.md](../../../../../docs/migration/MIGRATION-v2.x-to-v3.0.0.md).
+
+---
+
+## Related Documentation
+
+- **Main README**: [/README.md](../../../../../README.md)
+- **Instructions**: [/.github/instructions/ngx-vest-forms.instructions.md](../../../../../.github/instructions/ngx-vest-forms.instructions.md)
+- **Vest.js Documentation**: <https://vestjs.dev/>
+- **Angular Forms Guide**: <https://angular.dev/guide/forms/template-driven-forms>
+
+---
+
+## Contributing
+
+When adding new utilities:
+
+1. Add comprehensive tests (`*.spec.ts`)
+2. Export from `public-api.ts`
+3. Document in this README
+4. Update main instructions file
+5. Consider adding `Ngx` prefixed alias for library-specific utilities

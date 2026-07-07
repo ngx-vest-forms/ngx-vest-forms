@@ -1,0 +1,158 @@
+<ngx-card>
+  <form
+    ngxVestForm
+    #vestForm="ngxVestForm"
+    [suite]="suite()"
+    [formValue]="formValue()"
+    [validationConfig]="validationConfig()"
+    (formValueChange)="formValueChange.emit($event)"
+    (ngSubmit)="onSubmit()"
+    class="space-y-8"
+  >
+    <ngx-form-section
+      tone="blue"
+      title="Account"
+      description="Account type and legal identity. The VAT-ID field below appears only for EU-based business accounts."
+    >
+      <div class="space-y-6">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <ngx-control-wrapper class="form-field">
+            <label>
+              <span class="label-text">Account type</span>
+              <select
+                class="input-field"
+                id="accountType"
+                name="accountType"
+                [ngModel]="formValue().accountType"
+              >
+                <option value="">Select account type...</option>
+                <option value="personal">Personal</option>
+                <option value="business">Business</option>
+              </select>
+            </label>
+          </ngx-control-wrapper>
+
+          <ngx-control-wrapper class="form-field">
+            <label>
+              <span class="label-text">Legal name</span>
+              <input
+                class="input-field"
+                type="text"
+                id="legalName"
+                name="legalName"
+                [ngModel]="formValue().legalName"
+                placeholder="e.g. Acme International B.V."
+                autocomplete="organization"
+              />
+            </label>
+          </ngx-control-wrapper>
+        </div>
+
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <ngx-control-wrapper class="form-field">
+            <label>
+              <span class="label-text">Country</span>
+              <select
+                class="input-field"
+                id="country"
+                name="country"
+                [ngModel]="formValue().country"
+              >
+                <option value="">Select country...</option>
+                <option value="GB">United Kingdom (non-EU)</option>
+                <option value="US">United States (non-EU)</option>
+                @for (code of euCountries; track code) {
+                <option [value]="code">{{ code }} (EU)</option>
+                }
+              </select>
+            </label>
+          </ngx-control-wrapper>
+
+          @if ( formValue().accountType === 'business' &&
+          isEuCountry(formValue().country) ) {
+          <ngx-control-wrapper class="form-field animate-fade-in">
+            <label>
+              <span class="label-text">VAT ID</span>
+              <input
+                class="input-field"
+                type="text"
+                id="vatId"
+                name="vatId"
+                [ngModel]="formValue().vatId"
+                placeholder="e.g. NL123456789B01"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </label>
+          </ngx-control-wrapper>
+          }
+        </div>
+      </div>
+    </ngx-form-section>
+
+    <ngx-form-section
+      tone="teal"
+      title="Financials & terms"
+      description="These drive the cross-field policy rule and the advisory warnings. Warnings never block submit — only errors do."
+    >
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">Annual revenue</span>
+            <input
+              class="input-field"
+              type="number"
+              id="annualRevenue"
+              name="annualRevenue"
+              [ngModel]="formValue().annualRevenue"
+              placeholder="e.g. 75000"
+              inputmode="numeric"
+              min="0"
+            />
+          </label>
+        </ngx-control-wrapper>
+
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">Requested credit limit</span>
+            <input
+              class="input-field"
+              type="number"
+              id="requestedCreditLimit"
+              name="requestedCreditLimit"
+              [ngModel]="formValue().requestedCreditLimit"
+              placeholder="e.g. 8000"
+              inputmode="numeric"
+              min="0"
+            />
+          </label>
+        </ngx-control-wrapper>
+
+        <ngx-control-wrapper class="form-field">
+          <label>
+            <span class="label-text">Payment terms (days)</span>
+            <select
+              class="input-field"
+              id="paymentTermsDays"
+              name="paymentTermsDays"
+              [ngModel]="formValue().paymentTermsDays"
+            >
+              <option [ngValue]="undefined">Select payment terms...</option>
+              <option [ngValue]="0">0 (immediate)</option>
+              <option [ngValue]="14">14</option>
+              <option [ngValue]="30">30</option>
+              <option [ngValue]="60">60</option>
+            </select>
+          </label>
+        </ngx-control-wrapper>
+      </div>
+    </ngx-form-section>
+
+    <div class="flex justify-end gap-3 pt-4">
+      <button type="button" class="btn btn-secondary" (click)="onReset()">
+        Reset Form
+      </button>
+      <button type="submit" class="btn btn-primary">Submit Application</button>
+    </div>
+  </form>
+</ngx-card>

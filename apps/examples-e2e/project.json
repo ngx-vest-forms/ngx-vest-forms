@@ -1,0 +1,22 @@
+{
+  "name": "examples-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/examples-e2e",
+  "implicitDependencies": ["examples"],
+  "targets": {
+    "e2e": {
+      "configurations": {
+        "ci": {
+          "reporter": "dot"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@angular-eslint/builder:lint",
+      "options": {
+        "lintFilePatterns": ["apps/examples-e2e/**/*.ts"]
+      }
+    }
+  }
+}

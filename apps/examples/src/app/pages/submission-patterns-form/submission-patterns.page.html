@@ -1,0 +1,107 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Submission Patterns"
+    subtitle="Submit-time invalid handling, server-error messaging, success state, and retry — modelled distinctly."
+  />
+
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Submit-gated error visibility</strong> — Show validation errors only on submit attempt; keep the form uncluttered while editing
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Invalid-on-submit handling</strong> — Focus the first invalid field; let users correct errors immediately
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Server-error resilience</strong> — Distinguish client validation errors from server failures; surface server errors in alerts with retry capability
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Success state and next actions</strong> — After successful submit, show the new account ID and offer "Create another" to reset and begin again
+    </ngx-intro-item>
+  </ngx-intro-section>
+
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div class="space-y-6">
+      <ngx-card title="Simulated outcome">
+        <p class="mb-3 text-sm text-gray-600 dark:text-gray-300">
+          Pick how the mock server should respond so each path is deterministic.
+        </p>
+        <label class="block">
+          <span
+            class="mb-1 block text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400"
+          >
+            Server response
+          </span>
+          <select
+            #scenarioSelect
+            class="input-field"
+            [value]="scenario()"
+            (change)="onScenarioChange(scenarioSelect.value)"
+          >
+            @for (option of scenarios; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </label>
+      </ngx-card>
+
+      <ngx-form-state-card [feedback]="feedback()" />
+    </div>
+
+    <div>
+      @if (showClearSubmitCycle()) {
+      <ngx-alert-panel tone="info" title="Submit cycle active">
+        <p>
+          The form is still in a submitted state, so submit-gated errors stay
+          visible. Clear the submit cycle to return to editing without resetting
+          values, touched state, or dirty state.
+        </p>
+        <button
+          type="button"
+          class="btn btn-secondary mt-3"
+          (click)="clearSubmitCycle()"
+        >
+          Clear submitted state
+        </button>
+      </ngx-alert-panel>
+      } @if (state() === 'success') {
+      <ngx-alert-panel tone="success" title="Account created">
+        <p>
+          Your account was created with id
+          <strong>{{ createdId() }}</strong>.
+        </p>
+        <button type="button" class="btn btn-secondary mt-3" (click)="reset()">
+          Create another
+        </button>
+      </ngx-alert-panel>
+      } @if (state() === 'server-error') {
+      <!-- Genuine submission failure from the server: assertive is appropriate. -->
+      <ngx-alert-panel
+        tone="error"
+        title="Couldn't create your account"
+        live="assertive"
+      >
+        <p>{{ serverError() }}</p>
+        <button type="button" class="btn btn-primary mt-3" (click)="retry()">
+          Retry
+        </button>
+      </ngx-alert-panel>
+      }
+
+      <ngx-card
+        title="Create account"
+        subtitle="All fields are required. This demo uses a form-scoped submit-gated error display default so you can inspect clearSubmittedState() after an invalid submit."
+      >
+        <ngx-submission-patterns-form-body
+          [formValue]="formValue()"
+          [suite]="suite"
+          [submitting]="state() === 'submitting'"
+          (formValueChange)="formValue.set($event)"
+          (submitted)="onSubmit()"
+          (resetRequested)="reset()"
+        />
+      </ngx-card>
+    </div>
+  </div>
+
+  <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
+</div>
