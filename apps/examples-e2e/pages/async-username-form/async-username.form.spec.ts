@@ -26,7 +26,7 @@ test.describe('Async Username Form', () => {
     await expect(page.getByText(/checking availability/i)).toBeVisible();
     await waitForValidationToSettle(page);
     await expect(
-      page.getByRole('alert').getByText(/username is already taken/i)
+      page.getByRole('region', { name: 'Errors' }).getByText(/username is already taken/i)
     ).toBeVisible();
 
     await typeAndBlur(username, 'ada_lovelace', 0);

@@ -74,7 +74,12 @@
         </button>
       </ngx-alert-panel>
       } @if (state() === 'server-error') {
-      <ngx-alert-panel tone="error" title="Couldn't create your account">
+      <!-- Genuine submission failure from the server: assertive is appropriate. -->
+      <ngx-alert-panel
+        tone="error"
+        title="Couldn't create your account"
+        live="assertive"
+      >
         <p>{{ serverError() }}</p>
         <button type="button" class="btn btn-primary mt-3" (click)="retry()">
           Retry

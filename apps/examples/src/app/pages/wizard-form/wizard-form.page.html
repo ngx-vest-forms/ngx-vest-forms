@@ -85,7 +85,10 @@
       />
 
       @if (submitError()) {
-      <ngx-alert-panel tone="error">{{ submitError() }}</ngx-alert-panel>
+      <!-- Genuine submission-blocking failure: assertive role="alert" is appropriate here. -->
+      <ngx-alert-panel tone="error" live="assertive">{{
+        submitError()
+      }}</ngx-alert-panel>
       }
 
       <ngx-card>

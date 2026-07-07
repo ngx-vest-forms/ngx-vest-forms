@@ -93,6 +93,7 @@
             @for (item of group.items; track item.path) {
               <li>
                 <a
+                  data-nav-link
                   routerLinkActive
                   #rla="routerLinkActive"
                   [routerLink]="['/', item.path]"

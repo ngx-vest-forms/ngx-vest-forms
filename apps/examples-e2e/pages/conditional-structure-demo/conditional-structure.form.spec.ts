@@ -67,7 +67,7 @@ test.describe('Conditional Structure Demo Form', () => {
     await page.getByRole('button', { name: /save delivery plan/i }).click();
     await waitForValidationToSettle(page);
 
-    const errorSummary = page.getByRole('alert').filter({
+    const errorSummary = page.getByRole('region', { name: 'Errors' }).filter({
       hasText: /delivery email is required/i,
     });
 
