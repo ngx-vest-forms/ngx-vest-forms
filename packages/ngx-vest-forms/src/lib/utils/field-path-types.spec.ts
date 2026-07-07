@@ -1,5 +1,6 @@
 import { expectTypeOf } from 'vitest';
 import { ROOT_FORM } from '../constants';
+import type { NgxValidationConfig } from '../directives/form.directive';
 import type { NgxDeepPartial } from './deep-partial';
 import type {
   FieldPath,
@@ -158,6 +159,37 @@ describe('field-path-types', () => {
       ]);
     });
 
+    it('should reject mistyped keys on the NgxValidationConfig input type (no untyped fallback)', () => {
+      type FormModel = NgxDeepPartial<{
+        password: string;
+        confirmPassword: string;
+      }>;
+
+      // The typed shape is accepted at the input type.
+      const config: NgxValidationConfig<FormModel> = {
+        password: ['confirmPassword'],
+      };
+      expect(config).toEqual({ password: ['confirmPassword'] });
+
+      // Since 3.0.0 there is no `Record<string, string[]>` union branch that
+      // would absorb typo'd keys, so this fails to compile.
+      const badConfig: NgxValidationConfig<FormModel> = {
+        // @ts-expect-error typo'd trigger key is a compile-time error
+        passwordd: ['confirmPassword'],
+      };
+      expect(badConfig).toBeDefined();
+
+      const badDependent: NgxValidationConfig<FormModel> = {
+        // @ts-expect-error typo'd dependent path is a compile-time error
+        password: ['confirmPasswordd'],
+      };
+      expect(badDependent).toBeDefined();
+
+      // `null` disables cross-field revalidation.
+      const disabled: NgxValidationConfig<FormModel> = null;
+      expect(disabled).toBeNull();
+    });
+
     it('should be optional (partial)', () => {
       type TestModel = {
         field1: string;
@@ -312,8 +344,8 @@ describe('field-path-types', () => {
       type AgeType = FieldPathValue<FormModel, 'user.profile.age'>;
       type StreetType = FieldPathValue<FormModel, 'addresses.street'>;
 
-      // NonNullable stripping means these are the bare leaf types, not
-      // `number | undefined` / `string | undefined`.
+      // `Exclude<..., undefined>` stripping means these are the bare leaf
+      // types, not `number | undefined` / `string | undefined`.
       expectTypeOf<AgeType>().toEqualTypeOf<number>();
       expectTypeOf<StreetType>().toEqualTypeOf<string>();
 
@@ -322,6 +354,32 @@ describe('field-path-types', () => {
       const street: StreetType = 'Main St';
       expect(typeof age).toBe('number');
       expect(typeof street).toBe('string');
+    });
+
+    it('should preserve a domain-level `| null` on leaf types (only `undefined` is stripped)', () => {
+      type TestModel = {
+        middleName: string | null;
+        user: {
+          nickname: string | null;
+        };
+      };
+
+      // `null` is a first-class Angular forms value and must survive.
+      type MiddleNameType = FieldPathValue<TestModel, 'middleName'>;
+      type NicknameType = FieldPathValue<TestModel, 'user.nickname'>;
+
+      expectTypeOf<MiddleNameType>().toEqualTypeOf<string | null>();
+      expectTypeOf<NicknameType>().toEqualTypeOf<string | null>();
+
+      // Partial models still get their `| undefined` stripped, while `| null`
+      // survives on the leaf.
+      type FormModel = NgxDeepPartial<{ middleName: string | null }>;
+      type PartialMiddleNameType = FieldPathValue<FormModel, 'middleName'>;
+      expectTypeOf<PartialMiddleNameType>().toEqualTypeOf<string | null>();
+
+      // Runtime anchor (matches this file's typed-const convention).
+      const middleName: MiddleNameType = null;
+      expect(middleName).toBeNull();
     });
 
     it('should not produce traversal paths for bigint/symbol fields', () => {

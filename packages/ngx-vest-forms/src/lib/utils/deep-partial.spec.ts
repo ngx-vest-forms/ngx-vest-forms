@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import { NgxDeepPartial } from './deep-partial';
 
 describe('NgxDeepPartial', () => {
@@ -210,5 +210,34 @@ describe('NgxDeepPartial', () => {
     expect(step2.generalInfo?.lastName).toBe('Doe');
     expect(step3.addresses?.billing?.street).toBe('123 Main St');
     expect(step3.addresses?.billing?.city).toBeUndefined();
+  });
+
+  it('should preserve tuple arity and per-position element types', () => {
+    type MyType = {
+      range: [number, number];
+      point: readonly [number, string];
+    };
+    type PartialType = NgxDeepPartial<MyType>;
+
+    // A 2-tuple stays a 2-tuple (with optional positions), not `number[]`.
+    expectTypeOf<PartialType['range']>().toEqualTypeOf<
+      [number?, number?] | undefined
+    >();
+    expectTypeOf<PartialType['point']>().toEqualTypeOf<
+      readonly [number?, string?] | undefined
+    >();
+
+    const valid: PartialType = { range: [1, 2] };
+    const partiallyFilled: PartialType = { range: [1] };
+    expect(valid.range).toEqual([1, 2]);
+    expect(partiallyFilled.range).toEqual([1]);
+
+    // @ts-expect-error a 5-element array is not assignable to a 2-tuple
+    const tooLong: PartialType = { range: [1, 2, 3, 4, 5] };
+    expect(tooLong).toBeDefined();
+
+    // @ts-expect-error position types are preserved (string not allowed at index 0)
+    const wrongPosition: PartialType = { point: ['x', 'y'] };
+    expect(wrongPosition).toBeDefined();
   });
 });

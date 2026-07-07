@@ -11,6 +11,7 @@ import {
   race,
   merge as rxMerge,
   startWith,
+  Subject,
   switchMap,
   take,
   tap,
@@ -42,8 +43,10 @@ export type ValidationConfigPipelineOptions = {
 
   /**
    * How long to keep a field marked as "in-progress" after its dependents
-   * have been revalidated.  This window prevents bidirectional validation
-   * configs from triggering infinite loops.
+   * have been revalidated.  This window gives async validators time to
+   * complete while gating pipeline re-entry. User-initiated changes to a
+   * marked field are *deferred* and replayed once the window expires
+   * (latest-wins), so no user input is ever silently dropped.
    */
   validationInProgressCooldownMs: number;
 };
@@ -52,9 +55,9 @@ export type ValidationConfigPipelineOptions = {
  * Creates a teardownable `Observable<void>` that revalidates dependent fields
  * whenever their configured trigger field emits a value change.
  *
- * **Encapsulation guarantee:** the `validationInProgress` loop-prevention `Set`
- * is created fresh inside this function on every call and is never reachable
- * from outside.
+ * **Encapsulation guarantee:** the loop-prevention state (in-progress `Set`,
+ * synchronous update flag, and cooldown notifier) is created fresh inside this
+ * function on every call and is never reachable from outside.
  *
  * When `config` is `null` or `undefined` the returned observable is `EMPTY`.
  *
@@ -80,10 +83,14 @@ export function createValidationConfigPipeline<
     return EMPTY;
   }
 
-  // Fresh Set per pipeline instance so that config changes (driven by the
+  // Fresh state per pipeline instance so that config changes (driven by the
   // outer switchMap in FormDirective) don't share in-progress state across
   // different pipeline instances.
-  const validationInProgress = new Set<string>();
+  const loopPrevention: LoopPreventionState = {
+    validationInProgress: new Set<string>(),
+    applyingUpdates: false,
+    cooldownCleared$: new Subject<void>(),
+  };
 
   const streams = Object.entries(config as Record<string, string[]>).map(
     ([triggerField, dependents]) =>
@@ -91,7 +98,7 @@ export function createValidationConfigPipeline<
         form,
         triggerField,
         dependents ?? [],
-        validationInProgress,
+        loopPrevention,
         options,
         cdr,
         destroyRef
@@ -105,11 +112,30 @@ export function createValidationConfigPipeline<
 // Internal helpers (not exported — internal module detail)
 // ---------------------------------------------------------------------------
 
+/**
+ * Shared per-pipeline loop-prevention state.
+ *
+ * - `validationInProgress`: fields whose revalidation cycle is still inside
+ *   its cooldown window. User-initiated changes to such fields are *deferred*
+ *   (replayed after the cooldown), never dropped.
+ * - `applyingUpdates`: `true` only while the pipeline is synchronously calling
+ *   `updateValueAndValidity` on dependent controls. Emissions observed during
+ *   that window are self-induced and are dropped outright — this is what
+ *   actually breaks bidirectional feedback loops.
+ * - `cooldownCleared$`: notifier fired whenever a cooldown window expires so
+ *   trigger streams with a deferred change can replay it.
+ */
+type LoopPreventionState = {
+  validationInProgress: Set<string>;
+  applyingUpdates: boolean;
+  cooldownCleared$: Subject<void>;
+};
+
 function createTriggerStream(
   form: FormGroup,
   triggerField: string,
   dependents: string[],
-  validationInProgress: Set<string>,
+  loopPrevention: LoopPreventionState,
   options: ValidationConfigPipelineOptions,
   cdr: ChangeDetectorRef,
   destroyRef: DestroyRef
@@ -140,10 +166,51 @@ function createTriggerStream(
       // so pending timers do not fire after the pipeline is gone.
       let cancelCooldown: (() => void) | undefined;
 
-      return control.valueChanges.pipe(
-        // CRITICAL: block emissions while this trigger field is being processed
-        // by another field's validation config (prevents bidirectional loops).
-        filter(() => !validationInProgress.has(triggerField)),
+      // Set when a user-initiated trigger change arrives while this field is
+      // still inside a cooldown window. The change is deferred (latest-wins)
+      // and replayed once the cooldown clears — never silently dropped, which
+      // previously left dependents with a stale verdict.
+      let hasDeferredChange = false;
+
+      const userChanges$ = control.valueChanges.pipe(
+        filter(() => {
+          // CRITICAL: emissions produced by the pipeline's own synchronous
+          // updateValueAndValidity calls are self-induced — drop them outright
+          // (this is what prevents bidirectional configs from looping).
+          if (loopPrevention.applyingUpdates) {
+            return false;
+          }
+          // A user-initiated change during the cooldown window: defer it so
+          // dependents are revalidated with the latest value once the
+          // cooldown expires.
+          if (loopPrevention.validationInProgress.has(triggerField)) {
+            hasDeferredChange = true;
+            return false;
+          }
+          // A directly-processed change supersedes any pending deferral
+          // (dependents will read the latest trigger value anyway).
+          hasDeferredChange = false;
+          return true;
+        })
+      );
+
+      const deferredReplays$ = loopPrevention.cooldownCleared$.pipe(
+        filter(() => {
+          if (
+            !hasDeferredChange ||
+            loopPrevention.validationInProgress.has(triggerField)
+          ) {
+            // Nothing deferred, or another cycle still holds this field in
+            // cooldown — the next cooldownCleared$ notification will retry.
+            return false;
+          }
+          hasDeferredChange = false;
+          return true;
+        }),
+        map(() => control.value)
+      );
+
+      return rxMerge(userChanges$, deferredReplays$).pipe(
         debounceTime(options.configDebounceTime),
         switchMap(() =>
           waitForFormIdle(form, control, options.idleWaitTimeoutMs)
@@ -160,15 +227,22 @@ function createTriggerStream(
           // Cancel the previous cooldown before scheduling a new one so back-to-back
           // trigger firings don't accumulate stale cleanup timers.
           cancelCooldown?.();
-          cancelCooldown = updateDependentFields(
+          const cycle = updateDependentFields(
             form,
             triggerField,
             dependents,
-            validationInProgress,
+            loopPrevention,
             cdr,
             options.validationInProgressCooldownMs,
             destroyRef
           );
+          cancelCooldown = cycle.cancelCooldown;
+          if (cycle.skippedDependents) {
+            // A shared dependent was still cooling down from another trigger's
+            // cycle and could not be revalidated — defer this cycle so it
+            // replays (with the latest values) once the cooldown clears.
+            hasDeferredChange = true;
+          }
         }),
         finalize(() => cancelCooldown?.()),
         map(() => undefined)
@@ -255,26 +329,37 @@ function waitForDependentControls(
  * being processed, then schedules the cooldown timer that clears the
  * in-progress markers.
  *
- * **Loop prevention:** every field involved in this cycle (trigger + dependents)
- * is added to `validationInProgress` before any `updateValueAndValidity` call.
- * The markers are removed after `cooldownMs` so that user-initiated changes can
- * pass the filter again.
+ * **Loop prevention:** `loopPrevention.applyingUpdates` is `true` for the
+ * synchronous duration of the `updateValueAndValidity` calls, so the
+ * self-induced `valueChanges` emissions they produce are dropped by every
+ * trigger stream. Every field involved in this cycle (trigger + dependents)
+ * is additionally added to `validationInProgress` before any
+ * `updateValueAndValidity` call; while marked, *user-initiated* changes to
+ * those fields are deferred (not dropped) and replayed after the cooldown.
  *
  * **Touch state:** deliberately NOT propagated to dependent fields so they do
  * not show errors until the user directly interacts with them.
+ *
+ * @returns `cancelCooldown` for wiring into observable teardown, plus
+ *          `skippedDependents` indicating that at least one dependent was
+ *          still cooling down and could not be revalidated in this cycle.
  */
 function updateDependentFields(
   form: FormGroup,
   triggerField: string,
   dependents: string[],
-  validationInProgress: Set<string>,
+  loopPrevention: LoopPreventionState,
   cdr: ChangeDetectorRef,
   cooldownMs: number,
   destroyRef: DestroyRef
-): () => void {
-  // Mark the trigger field in-progress first so that bidirectional configs
-  // cannot create a loop via the filter in createTriggerStream.
+): { cancelCooldown: () => void; skippedDependents: boolean } {
+  const { validationInProgress } = loopPrevention;
+
+  // Mark the trigger field in-progress first so that user edits arriving
+  // mid-cooldown are classified as deferrable in createTriggerStream.
   validationInProgress.add(triggerField);
+
+  let skippedDependents = false;
 
   for (const depField of dependents) {
     const dependentControl = form.get(depField);
@@ -283,14 +368,21 @@ function updateDependentFields(
     }
 
     // Only revalidate if the dependent is not already being processed.
-    if (!validationInProgress.has(depField)) {
-      // Mark BEFORE updateValueAndValidity so that any synchronous valueChanges
-      // emission from that call is already gated by the in-progress check.
-      validationInProgress.add(depField);
+    if (validationInProgress.has(depField)) {
+      skippedDependents = true;
+      continue;
+    }
 
+    // Mark BEFORE updateValueAndValidity so follow-up user edits within the
+    // cooldown window are deferred rather than processed immediately.
+    validationInProgress.add(depField);
+
+    // Flag the synchronous update window so the valueChanges emission this
+    // call produces on the dependent control is recognized as self-induced
+    // and dropped (not deferred) by the dependent's own trigger stream.
+    loopPrevention.applyingUpdates = true;
+    try {
       // emitEvent:true is required for async validators to run.
-      // The validationInProgress gate prevents the resulting statusChanges /
-      // valueChanges emission from re-entering the pipeline for this field.
       dependentControl.updateValueAndValidity({
         onlySelf: true,
         emitEvent: true,
@@ -299,6 +391,8 @@ function updateDependentFields(
       // Force immediate change detection so OnPush hosts reflect the updated
       // ng-valid/ng-invalid classes without waiting for the next CD cycle.
       cdr.detectChanges();
+    } finally {
+      loopPrevention.applyingUpdates = false;
     }
   }
 
@@ -306,14 +400,19 @@ function updateDependentFields(
   // validators have time to complete and any resulting valueChanges emissions
   // are still gated.  The cancel function is returned so callers can wire it
   // into observable teardown (e.g. finalize) to avoid timer leaks on unsub.
-  return scheduleTimeout(
+  const cancelCooldown = scheduleTimeout(
     () => {
       validationInProgress.delete(triggerField);
       for (const depField of dependents) {
         validationInProgress.delete(depField);
       }
+      // Wake up any trigger stream that deferred a user change while its
+      // field was cooling down (latest-wins replay).
+      loopPrevention.cooldownCleared$.next();
     },
     cooldownMs,
     destroyRef
   );
+
+  return { cancelCooldown, skippedDependents };
 }
