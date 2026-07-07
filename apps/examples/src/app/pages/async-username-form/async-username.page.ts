@@ -13,7 +13,10 @@ import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
-import { IntroItemComponent, IntroSectionComponent } from '../../ui/intro-section';
+import {
+  IntroItemComponent,
+  IntroSectionComponent,
+} from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { asyncUsernameContent } from './async-username.content';
 import { AsyncUsernameFormBody } from './async-username.form';
@@ -68,20 +71,33 @@ export class AsyncUsernamePageComponent {
     computed(() => this.feedback()?.pending() ?? false)
   ).pipe(filter((pending) => !pending));
 
+  /** In-flight guard: one queued submit at a time while validation settles. */
+  private readonly submitting = signal(false);
+
   protected onSubmit(): void {
     // The availability check may still be in flight when the user submits.
     // Mirror the directive's own submit pipeline: wait until async validation
     // settles, then decide — a PENDING form is not an invalid form, and the
-    // submission must never be dropped silently. Focus handling stays with
-    // the directive (`focusFirstInvalidOnSubmit` defaults to true).
+    // submission must never be dropped silently. The `submitting` guard keeps
+    // repeated clicks during the pending window from stacking subscriptions
+    // and double-submitting. Focus handling stays with the directive
+    // (`focusFirstInvalidOnSubmit` defaults to true).
+    if (this.submitting()) {
+      return;
+    }
+    this.submitting.set(true);
     this.validationSettled$
       .pipe(take(1), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        if (!this.feedback()?.formState()?.valid) {
-          this.submittedValue.set(null);
-          return;
+        try {
+          if (!this.feedback()?.formState()?.valid) {
+            this.submittedValue.set(null);
+            return;
+          }
+          this.submittedValue.set(structuredClone(this.formValue()));
+        } finally {
+          this.submitting.set(false);
         }
-        this.submittedValue.set(structuredClone(this.formValue()));
       });
   }
 

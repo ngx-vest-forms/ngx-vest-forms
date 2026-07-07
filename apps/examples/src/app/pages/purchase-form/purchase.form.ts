@@ -2,8 +2,8 @@ import { HttpErrorResponse, httpResource } from '@angular/common/http';
 import {
   Component,
   computed,
-  effect,
   DestroyRef,
+  effect,
   inject,
   linkedSignal,
   output,
@@ -388,21 +388,34 @@ export class PurchaseForm {
     }));
   }
 
+  /** In-flight guard: one queued submit at a time while validation settles. */
+  private readonly submitting = signal(false);
+
   protected onSubmit(): void {
     // The userId availability check (and the submit-mode ROOT_FORM rule) may
     // still be validating when the user hits Submit. Mirror the directive's
     // own submit pipeline: wait until async validation settles, then decide
     // via the public feedback signals — never drop the submission silently.
+    // The `submitting` guard keeps repeated clicks during the pending window
+    // from stacking subscriptions and double-emitting `saveRequested`.
     // Focus handling stays with the directive: `focusFirstInvalidOnSubmit`
     // (default true) already moves focus to the first invalid control.
+    if (this.submitting()) {
+      return;
+    }
+    this.submitting.set(true);
     this.validationSettled$
       .pipe(take(1), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        if (!this.feedback.formState().valid) {
-          return;
-        }
+        try {
+          if (!this.feedback.formState().valid) {
+            return;
+          }
 
-        this.saveRequested.emit(this.formValue());
+          this.saveRequested.emit(this.formValue());
+        } finally {
+          this.submitting.set(false);
+        }
       });
   }
 
