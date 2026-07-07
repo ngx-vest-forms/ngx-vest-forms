@@ -11,7 +11,8 @@ export const purchaseContent = defineExampleContent({
       'Conditional validation with omitWhen: emergency contact under 18, "other" gender detail, justification when quantity exceeds 5, shipping address only when it differs from billing',
       'A ROOT_FORM rule ("Brecht is not 30 anymore") proving form-level validation across multiple fields',
       'Non-blocking password-strength warnings via warn() shown alongside blocking errors',
-      'Imperative form helpers: clearFields() to wipe sensitive data, setValueAtPath() to prefill the billing address, and focusFirstInvalidControl() on submit',
+      'Imperative form helpers: clearFields() to wipe sensitive data and setValueAtPath() to prefill the billing address',
+      'A submit gate built on the public feedback signals: it waits for pending() to settle before deciding, while the directive focuses the first invalid control automatically (focusFirstInvalidOnSubmit)',
       'httpResource-driven "Fetch Luke" data load with Zod-backed response parsing and selectable failure scenarios (404, 401, 500, network) that clear fetched fields on error',
     ],
   },
@@ -39,7 +40,7 @@ export const purchaseContent = defineExampleContent({
         points: [
           'clearFields() to reset nested groups like passwords without rebuilding the model',
           'setValueAtPath() to write deep paths such as addresses.billingAddress.street',
-          'focusFirstInvalidControl() to drive accessible submit-time navigation',
+          'Waiting for pending() from createFormFeedbackSignals to settle before deciding a submit — the directive handles invalid-submit focus for you',
         ],
       },
     ],

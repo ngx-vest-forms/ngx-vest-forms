@@ -38,10 +38,17 @@ type MessageInput = readonly string[] | Record<string, string[]>;
         </div>
       </div>
 
+      <!--
+        Inspector panels are rendered with live="off": they re-filter on
+        every validation pass and duplicate what the field-level wrappers
+        already announce politely. Announcing them (let alone assertively)
+        would interrupt screen-reader users with the full aggregated list
+        after every blur.
+      -->
       @if (hasMessages()) {
         <div class="mb-4 space-y-2">
           @if (resolvedMessages().length > 0) {
-            <ngx-alert-panel tone="success" [title]="resolvedTitle()">
+            <ngx-alert-panel live="off" tone="success" [title]="resolvedTitle()">
               <ul class="list-disc space-y-1 pl-5">
                 @for (message of resolvedMessages(); track message) {
                   <li>{{ message }}</li>
@@ -51,7 +58,7 @@ type MessageInput = readonly string[] | Record<string, string[]>;
           }
 
           @if (uniqueErrors().length > 0) {
-            <ngx-alert-panel tone="error" [title]="errorsTitle()">
+            <ngx-alert-panel live="off" tone="error" [title]="errorsTitle()">
               <ul class="list-disc space-y-1 pl-5">
                 @for (message of uniqueErrors(); track message) {
                   <li>{{ message }}</li>
@@ -61,7 +68,7 @@ type MessageInput = readonly string[] | Record<string, string[]>;
           }
 
           @if (uniqueWarnings().length > 0) {
-            <ngx-alert-panel tone="warning" [title]="warningsTitle()">
+            <ngx-alert-panel live="off" tone="warning" [title]="warningsTitle()">
               <ul class="list-disc space-y-1 pl-5">
                 @for (message of uniqueWarnings(); track message) {
                   <li>{{ message }}</li>
@@ -71,7 +78,7 @@ type MessageInput = readonly string[] | Record<string, string[]>;
           }
 
           @if (uniqueInfo().length > 0) {
-            <ngx-alert-panel tone="info" [title]="infoTitle()">
+            <ngx-alert-panel live="off" tone="info" [title]="infoTitle()">
               <ul class="list-disc space-y-1 pl-5">
                 @for (message of uniqueInfo(); track message) {
                   <li>{{ message }}</li>
@@ -102,7 +109,7 @@ type MessageInput = readonly string[] | Record<string, string[]>;
         <div
           class="mt-4 border-t border-gray-200/80 pt-4 dark:border-gray-700/80"
         >
-          <ngx-alert-panel tone="info" [title]="validationRulesTitle()">
+          <ngx-alert-panel live="off" tone="info" [title]="validationRulesTitle()">
             @if (unusedValidationWarningRules().length > 0) {
               <div class="space-y-3">
                 @if (unusedValidationErrorRules().length > 0) {

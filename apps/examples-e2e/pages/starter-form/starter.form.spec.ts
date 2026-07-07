@@ -13,7 +13,7 @@ test.describe('Starter Form', () => {
     await page.getByRole('button', { name: /send message/i }).click();
     await waitForValidationToSettle(page);
 
-    const errorSummary = page.getByRole('alert').filter({
+    const errorSummary = page.getByRole('region', { name: 'Errors' }).filter({
       hasText: /name is required/i,
     });
 

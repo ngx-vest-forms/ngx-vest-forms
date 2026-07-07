@@ -10,6 +10,7 @@ export const asyncUsernameContent = defineExampleContent({
       'vest/memo keying the async test on the username so it only re-runs when the value changes',
       'Aborting the in-flight request through the Vest-provided AbortSignal when the user keeps typing',
       'Pending state surfaced calmly inline and kept separate from submission state',
+      'Submits that land while the check is in flight wait for validation to settle instead of being dropped',
     ],
   },
   learn: {
@@ -27,6 +28,7 @@ export const asyncUsernameContent = defineExampleContent({
         title: 'Surfacing async UI state',
         points: [
           'Reading pending from createFormFeedbackSignals to show a polite "Checking…" hint',
+          'Waiting for pending() to settle on submit so a mid-flight check never swallows the submission',
           'Deriving a success hint from validated fields plus an empty error list',
           'Keeping the suite a plain Vest spec — the service is injected via a factory',
         ],

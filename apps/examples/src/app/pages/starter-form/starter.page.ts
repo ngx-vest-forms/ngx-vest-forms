@@ -50,8 +50,9 @@ export class StarterPageComponent {
 
   protected onSubmit(): void {
     if (!this.feedback()?.formState()?.valid) {
+      // The directive focuses the first invalid control on submit by default
+      // (`focusFirstInvalidOnSubmit`), so no manual focus handling is needed.
       this.submittedValue.set(null);
-      this.formBody()?.focusFirstInvalidControl();
       return;
     }
     this.submittedValue.set(structuredClone(this.formValue()));

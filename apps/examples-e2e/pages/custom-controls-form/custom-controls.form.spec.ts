@@ -12,13 +12,13 @@ test.describe('Custom Controls Form', () => {
 
     await submitButton.click();
     await expect(
-      page.getByRole('alert').getByText(/pick a rating/i)
+      page.getByRole('region', { name: 'Errors' }).getByText(/pick a rating/i)
     ).toBeVisible();
     await expect(
-      page.getByRole('alert').getByText(/select your experience level/i)
+      page.getByRole('region', { name: 'Errors' }).getByText(/select your experience level/i)
     ).toBeVisible();
     await expect(
-      page.getByRole('alert').getByText(/add at least one tag/i)
+      page.getByRole('region', { name: 'Errors' }).getByText(/add at least one tag/i)
     ).toBeVisible();
 
     await page.getByRole('radio', { name: /5 stars/i }).click();

@@ -1,19 +1,18 @@
 import { HttpErrorResponse, httpResource } from '@angular/common/http';
 import {
-  afterNextRender,
   Component,
   computed,
-  effect,
   DestroyRef,
+  effect,
   inject,
-  Injector,
   linkedSignal,
   output,
   signal,
   untracked,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { filter, take } from 'rxjs';
 
 import {
   clearFields,
@@ -96,7 +95,6 @@ export class PurchaseForm {
   protected readonly userIdValidationOptions: ValidationOptions = {
     debounceTime: this.validationDebouncePresets.async,
   };
-  private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
   private readonly swapiService = inject(SwapiService);
   private readonly productService = inject(ProductService);
@@ -105,6 +103,11 @@ export class PurchaseForm {
   private readonly vestForm =
     viewChild<FormDirective<PurchaseFormModel>>('vestForm');
   readonly feedback = createFormFeedbackSignals(this.vestForm);
+
+  /** Emits whenever async validation is idle (not `PENDING`). */
+  private readonly validationSettled$ = toObservable(
+    this.feedback.pending
+  ).pipe(filter((pending) => !pending));
 
   protected readonly formValue = signal<PurchaseFormModel>(
     initialPurchaseFormValue
@@ -385,27 +388,35 @@ export class PurchaseForm {
     }));
   }
 
+  /** In-flight guard: one queued submit at a time while validation settles. */
+  private readonly submitting = signal(false);
+
   protected onSubmit(): void {
-    const formDirective = this.vestForm();
-    if (!formDirective) {
+    // The userId availability check (and the submit-mode ROOT_FORM rule) may
+    // still be validating when the user hits Submit. Mirror the directive's
+    // own submit pipeline: wait until async validation settles, then decide
+    // via the public feedback signals — never drop the submission silently.
+    // The `submitting` guard keeps repeated clicks during the pending window
+    // from stacking subscriptions and double-emitting `saveRequested`.
+    // Focus handling stays with the directive: `focusFirstInvalidOnSubmit`
+    // (default true) already moves focus to the first invalid control.
+    if (this.submitting()) {
       return;
     }
+    this.submitting.set(true);
+    this.validationSettled$
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        try {
+          if (!this.feedback.formState().valid) {
+            return;
+          }
 
-    afterNextRender(
-      () => {
-        formDirective.focusFirstInvalidControl();
-
-        if (
-          !formDirective.ngForm.form.valid ||
-          formDirective.ngForm.form.pending
-        ) {
-          return;
+          this.saveRequested.emit(this.formValue());
+        } finally {
+          this.submitting.set(false);
         }
-
-        this.saveRequested.emit(this.formValue());
-      },
-      { injector: this.injector }
-    );
+      });
   }
 
   protected onReset(): void {

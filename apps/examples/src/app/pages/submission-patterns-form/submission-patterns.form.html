@@ -1,8 +1,14 @@
+<!--
+  [focusFirstInvalidOnSubmit]="false" opts out of the directive's built-in
+  invalid-submit focus: this demo owns the whole submit flow, so the page
+  calls focusFirstInvalidControl() itself after updating its own state.
+-->
 <form
   ngxVestForm
   #vestForm="ngxVestForm"
   [suite]="suite()"
   [formValue]="formValue()"
+  [focusFirstInvalidOnSubmit]="false"
   (formValueChange)="formValueChange.emit($event)"
   (ngSubmit)="onSubmit()"
   class="space-y-6"

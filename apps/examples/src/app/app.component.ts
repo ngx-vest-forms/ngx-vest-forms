@@ -124,9 +124,13 @@ export class AppComponent {
         return;
       }
       if (open && !this.wasOpen) {
-        this.sidebar()
-          ?.nativeElement.querySelector<HTMLElement>('a[routerLink]')
-          ?.focus();
+        // `[routerLink]` is a property binding, so it leaves no attribute in
+        // the rendered DOM — query the static `data-nav-link` marker instead,
+        // falling back to the drawer itself (it has tabindex="-1").
+        const drawer = this.sidebar()?.nativeElement;
+        const firstNavLink =
+          drawer?.querySelector<HTMLElement>('a[data-nav-link]');
+        (firstNavLink ?? drawer)?.focus();
       } else if (!open && this.wasOpen) {
         this.menuToggle()?.nativeElement.focus();
       }

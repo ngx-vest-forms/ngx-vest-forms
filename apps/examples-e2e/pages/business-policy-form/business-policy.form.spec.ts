@@ -29,10 +29,10 @@ test.describe('Business Policy Form', () => {
 
     await submitButton.click();
     await expect(
-      page.getByRole('alert').filter({ hasText: /errors/i })
+      page.getByRole('region', { name: 'Errors' })
     ).toBeVisible();
     await expect(
-      page.getByRole('alert').getByText(/account type is required/i)
+      page.getByRole('region', { name: 'Errors' }).getByText(/account type is required/i)
     ).toBeVisible();
 
     await accountType.selectOption('business');

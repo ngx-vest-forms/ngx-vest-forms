@@ -60,8 +60,4 @@ export class AsyncUsernameFormBody {
   resetFormState(value: AsyncUsernameModel): void {
     this.vestForm()?.resetForm(value);
   }
-
-  focusFirstInvalidControl(): void {
-    this.vestForm()?.focusFirstInvalidControl();
-  }
 }

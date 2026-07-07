@@ -8,6 +8,7 @@ export const accessibleWrapperContent = defineExampleContent({
       'FormErrorControlDirective gives custom wrappers the same error/warning/pending IDs and ARIA helpers as the built-in wrappers.',
       'ariaAssociationMode="single-control" merges generated error IDs into one existing aria-describedby chain automatically.',
       'ariaAssociationMode="none" lets multi-control wrappers opt out of automatic stamping and wire the relevant input manually.',
+      'ngxErrorControl composes the public FormErrorDisplayDirective, so templates read shouldShowErrors()/errors() through the ngxErrorDisplay export instead of directive internals.',
       'Inline error regions stay in the DOM with stable IDs, so manual aria-describedby wiring remains predictable.',
     ],
   },
@@ -18,6 +19,7 @@ export const accessibleWrapperContent = defineExampleContent({
         title: 'Directive-based wrapper ergonomics',
         points: [
           'Use ngxErrorControl when you need custom markup but still want packaged state and generated region IDs.',
+          'Grab the composed display state with #display="ngxErrorDisplay" — it is the same public API the built-in wrappers use.',
           'Pick ariaAssociationMode based on how many actual form controls live inside the wrapper.',
           'Keep hints in aria-describedby and let the directive merge its own IDs when appropriate.',
         ],

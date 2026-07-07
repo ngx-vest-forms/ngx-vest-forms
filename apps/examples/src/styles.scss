@@ -57,6 +57,43 @@
   }
 }
 
+/*
+ * Bridge the library's theming tokens to the app's class-based dark mode.
+ *
+ * The library wrappers switch their default error/warning colors via
+ * `prefers-color-scheme` only, while this app toggles dark mode with a
+ * `.dark` class on <html>. Without this bridge a user whose OS scheme
+ * differs from the app theme gets error text with ~3:1 contrast. All pairs
+ * below meet WCAG 2.2 AA (>= 4.5:1) on the surfaces they render on:
+ *   light: #dc2626 (red-600)  — 4.83:1 on white, 4.62:1 on gray-50
+ *          #b45309 (amber-700) — 5.02:1 on white, 4.81:1 on gray-50
+ *   dark:  #fca5a5 (red-300)  — 7.73:1 on gray-800, 5.43:1 on gray-700
+ *          #fcd34d (amber-300) — 10.18:1 on gray-800, 7.15:1 on gray-700
+ */
+ngx-control-wrapper,
+[ngxControlWrapper] {
+  --ngx-control-wrapper-error-color: #dc2626;
+  --ngx-control-wrapper-warning-color: #b45309;
+}
+
+ngx-form-group-wrapper,
+[ngxFormGroupWrapper] {
+  --ngx-form-group-wrapper-error-color: #dc2626;
+  --ngx-form-group-wrapper-warning-color: #b45309;
+}
+
+html.dark ngx-control-wrapper,
+html.dark [ngxControlWrapper] {
+  --ngx-control-wrapper-error-color: #fca5a5;
+  --ngx-control-wrapper-warning-color: #fcd34d;
+}
+
+html.dark ngx-form-group-wrapper,
+html.dark [ngxFormGroupWrapper] {
+  --ngx-form-group-wrapper-error-color: #fca5a5;
+  --ngx-form-group-wrapper-warning-color: #fcd34d;
+}
+
 @layer components {
   .page-container {
     margin-left: auto;
@@ -96,7 +133,7 @@
 
     /* Apply error styling when aria-invalid is true */
     &[aria-invalid='true'] {
-      @apply border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500;
+      @apply border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-300 dark:placeholder-red-300;
     }
 
     /* Disabled state styling */
@@ -106,7 +143,7 @@
   }
 
   .input-field-error {
-    @apply border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500;
+    @apply border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-300 dark:placeholder-red-300;
   }
 
   .btn {
@@ -122,7 +159,7 @@
   }
 
   .btn-danger {
-    @apply border border-red-300 bg-white text-red-700 hover:bg-red-50 focus:ring-red-200 dark:border-red-600 dark:bg-gray-800 dark:text-red-500 dark:hover:border-red-500 dark:hover:bg-gray-700 dark:focus:ring-red-900;
+    @apply border border-red-300 bg-white text-red-700 hover:bg-red-50 focus:ring-red-200 dark:border-red-600 dark:bg-gray-800 dark:text-red-300 dark:hover:border-red-500 dark:hover:bg-gray-700 dark:focus:ring-red-900;
   }
 
   .btn-success {
@@ -142,7 +179,7 @@
   }
 
   .error-message {
-    @apply mt-1 text-sm text-red-600 dark:text-red-500;
+    @apply mt-1 text-sm text-red-600 dark:text-red-300;
   }
 
   .form-field,
@@ -339,7 +376,7 @@ fieldset:not(.form-shell) {
 
     &--invalid {
       label span {
-        @apply text-red-600 dark:text-red-500;
+        @apply text-red-600 dark:text-red-300;
       }
 
       select,
@@ -348,12 +385,12 @@ fieldset:not(.form-shell) {
       input[type='password'],
       input[type='date'],
       textarea {
-        @apply border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-500 dark:placeholder-red-500;
+        @apply border-red-500 bg-red-50 text-red-900 placeholder-red-700 focus:border-red-500 focus:ring-red-500 dark:border-red-500 dark:bg-gray-700 dark:text-red-300 dark:placeholder-red-300;
       }
     }
 
     &__errors {
-      @apply mt-1 text-sm text-red-600 dark:text-red-500;
+      @apply mt-1 text-sm text-red-600 dark:text-red-300;
     }
   }
 }

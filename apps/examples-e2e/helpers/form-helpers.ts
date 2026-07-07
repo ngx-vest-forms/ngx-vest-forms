@@ -378,10 +378,16 @@ export async function typeAndBlur(
 }
 
 /**
- * Get form-level (ROOT_FORM) errors
+ * Get the form-state "Errors" inspector panel.
+ *
+ * Locates the named, non-live errors region rendered by the form-state
+ * sidebar (`role="region"`, accessible name "Errors"). Note: this is the
+ * always-visible inspector — NOT a `role="alert"` panel; genuine
+ * user-action failures (e.g. fetch errors) render separate assertive
+ * alerts and need their own locators.
  */
 export async function getFormLevelErrors(page: Page): Promise<Locator> {
-  return page.locator('[role="alert"]').filter({ hasText: /error/i });
+  return page.getByRole('region', { name: /errors/i });
 }
 
 /**

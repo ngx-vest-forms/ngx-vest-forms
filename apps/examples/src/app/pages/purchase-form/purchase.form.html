@@ -67,7 +67,12 @@
     <ngx-form-section title="Personal Information" tone="neutral">
       <div class="form-stack">
         @if (fetchErrorNotice(); as fetchError) {
-        <ngx-alert-panel tone="error" [title]="fetchError.title">
+        <!-- Async fetch failure in response to a user action: assertive is appropriate. -->
+        <ngx-alert-panel
+          tone="error"
+          [title]="fetchError.title"
+          live="assertive"
+        >
           <div class="space-y-1">
             <p>{{ fetchError.message }}</p>
             @if (fetchError.detail) {
