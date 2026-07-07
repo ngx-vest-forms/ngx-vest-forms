@@ -89,8 +89,9 @@ export class ConditionalStructurePageComponent {
 
   protected onSubmit(): void {
     if (!this.feedback()?.formState()?.valid) {
+      // The directive focuses the first invalid control on submit by default
+      // (`focusFirstInvalidOnSubmit`), so no manual focus handling is needed.
       this.submittedPayload.set(null);
-      this.formBody()?.focusFirstInvalidControl();
       return;
     }
 

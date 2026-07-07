@@ -1,9 +1,16 @@
+<!--
+  The wizard page owns focus (it routes to the first invalid STEP before
+  focusing a control, with custom NgxFirstInvalidOptions on this step), so
+  the built-in invalid-submit focus is disabled via
+  [focusFirstInvalidOnSubmit]="false".
+-->
 <form
   #step2Form="ngxVestForm"
   ngxVestForm
   [suite]="suite()"
   [formValue]="data()"
   [validationConfig]="validationConfig()"
+  [focusFirstInvalidOnSubmit]="false"
   (formValueChange)="dataChange.emit($event)"
   (validChange)="validChange.emit($event)"
   (errorsChange)="errorsChange.emit($event)"

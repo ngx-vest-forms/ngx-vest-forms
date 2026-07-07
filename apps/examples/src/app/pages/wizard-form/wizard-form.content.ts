@@ -12,7 +12,7 @@ export const wizardContent = defineExampleContent({
       'Step 2 conditional validation: newsletterFrequency is only required when subscribeNewsletter is on (config rebuilt reactively via computed).',
       'Step 3 optional field: comments is optional() but must pass length validation when provided.',
       'Each step exposes isValid()/validatedFields()/pending() so the parent can drive navigation and focus.',
-      'Invalid-submit focus management, including custom NgxFirstInvalidOptions on Step 2.',
+      'Page-owned invalid-submit focus: each step opts out of the built-in focus via [focusFirstInvalidOnSubmit]="false" because the wizard routes to the first invalid step before focusing, with custom NgxFirstInvalidOptions on Step 2.',
       'Step data and validity persist while navigating back and forth.',
     ],
   },
@@ -40,6 +40,7 @@ export const wizardContent = defineExampleContent({
         points: [
           'Validate the current step on Next, the whole wizard on final submit.',
           'Route to the first invalid step and focus its first invalid control.',
+          'Set [focusFirstInvalidOnSubmit]="false" when the page owns focus — otherwise the directive already focuses the first invalid control on submit.',
           'Pass NgxFirstInvalidOptions to tune scroll/focus behavior per step.',
         ],
       },

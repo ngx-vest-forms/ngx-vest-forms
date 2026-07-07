@@ -36,7 +36,10 @@ type SubmissionState = 'editing' | 'submitting' | 'server-error' | 'success';
  *
  * (a) field validation — the plain Vest suite;
  * (b) submit-time INVALID handling — never calls the server and moves focus
- *     to the first invalid control via `FormDirective.focusFirstInvalidControl()`;
+ *     to the first invalid control via `FormDirective.focusFirstInvalidControl()`.
+ *     The form opts out of the directive's built-in behavior with
+ *     `[focusFirstInvalidOnSubmit]="false"` so this page fully owns the
+ *     submit flow (state updates first, then focus);
  * (c) server FAILURE messaging — an assertive error panel + Retry;
  * (d) SUCCESS state — a polite success panel + "Create another".
  *

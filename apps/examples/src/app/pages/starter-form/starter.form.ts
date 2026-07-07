@@ -45,8 +45,4 @@ export class StarterFormBody {
   resetFormState(value: StarterFormModel): void {
     this.vestForm()?.resetForm(value);
   }
-
-  focusFirstInvalidControl(): void {
-    this.vestForm()?.focusFirstInvalidControl();
-  }
 }

@@ -46,10 +46,6 @@ export class ConditionalStructureFormBody {
     this.vestForm()?.resetForm(value);
   }
 
-  focusFirstInvalidControl(): void {
-    this.vestForm()?.focusFirstInvalidControl();
-  }
-
   triggerValidation(): void {
     this.vestForm()?.triggerFormValidation();
   }

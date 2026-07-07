@@ -53,8 +53,4 @@ export class CustomControlsFormBody {
   resetFormState(value: CustomControlsModel): void {
     this.vestForm()?.resetForm(value);
   }
-
-  focusFirstInvalidControl(): void {
-    this.vestForm()?.focusFirstInvalidControl();
-  }
 }
