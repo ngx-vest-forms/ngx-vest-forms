@@ -59,7 +59,7 @@ In those cases, build a wrapper with `FormErrorDisplayDirective` (or `FormErrorC
 
 ## Basic Custom Wrapper (Recommended Pattern)
 
-````typescript
+```typescript
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormErrorDisplayDirective } from 'ngx-vest-forms';
 
@@ -79,7 +79,12 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
       <ng-content />
 
       @if (errorDisplay.shouldShowErrors()) {
-        <div class="error-message" role="status" aria-live="polite" aria-atomic="true">
+        <div
+          class="error-message"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           @for (error of errorDisplay.errors(); track error) {
             <span>{{ error }}</span>
           }
@@ -87,7 +92,12 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
       }
 
       @if (errorDisplay.isPending()) {
-        <div class="validating" role="status" aria-live="polite" aria-atomic="true">
+        <div
+          class="validating"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           Validating...
         </div>
       }
@@ -100,6 +110,7 @@ export class CustomControlWrapperComponent {
     self: true,
   });
 }
+```
 
 ## When you want automatic ARIA wiring (recommended)
 
@@ -131,7 +142,12 @@ import {
       <ng-content />
 
       <!-- Keep regions in the DOM so aria-describedby targets always exist -->
-      <div [id]="ec.errorId" role="status" aria-live="polite" aria-atomic="true">
+      <div
+        [id]="ec.errorId"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         @if (errorDisplay.shouldShowErrors()) {
           @for (error of errorDisplay.errors(); track error) {
             <div>{{ error }}</div>
@@ -139,7 +155,12 @@ import {
         }
       </div>
 
-      <div [id]="ec.pendingId" role="status" aria-live="polite" aria-atomic="true">
+      <div
+        [id]="ec.pendingId"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         @if (ec.showPendingMessage()) {
           <div>Validating…</div>
         }
@@ -155,7 +176,7 @@ export class CustomErrorControlComponent {
     self: true,
   });
 }
-````
+```
 
 ### Choosing an ARIA association mode
 
