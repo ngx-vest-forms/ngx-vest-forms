@@ -27,7 +27,7 @@ Keep detailed examples and feature-specific workflows in the docs and the
 ## Canonical default pattern
 
 ```typescript
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import {
   NgxDeepPartial,
   NgxVestForms,
@@ -51,7 +51,6 @@ const suite: NgxVestSuite<FormModel> = create((model) => {
 });
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgxVestForms],
   template: `
     <form

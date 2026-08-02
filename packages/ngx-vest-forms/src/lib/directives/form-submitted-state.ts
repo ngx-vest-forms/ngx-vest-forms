@@ -23,10 +23,10 @@ export function setAngularFormSubmittedState(
   ngForm: NgForm,
   submitted: boolean
 ): void {
-  // Angular 21.x's concrete NgForm stores submitted state on
+  // Angular 22.1's concrete NgForm stores submitted state on
   // `submittedReactive`, while AbstractFormDirective-backed implementations
   // expose `_submittedReactive` and may also provide a public setter on
-  // `submitted`. This helper is verified against Angular 21.x in this
+  // `submitted`. This helper is verified against Angular 22.1 in this
   // repository and falls back to the first writable `submitted` setter it can
   // find if a future Angular version changes the concrete field names.
   //

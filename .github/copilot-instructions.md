@@ -36,7 +36,7 @@ Use the versions in `package.json` and the baseline below as hard compatibility 
 - Angular framework packages: `22.0.1`
 - Angular CLI/build tooling: `22.0.1`
 - TypeScript: `~6.0.3`
-- Node.js: `>=22.0.0`
+- Node.js: `^22.22.3 || ^24.15.0 || ^26.0.0`
 - RxJS: `~7.8.2`
 - Vest.js: `~6.3.2`
 - Vitest: `^4.1.8`
