@@ -17,11 +17,22 @@
     "e2e": {
       "cache": true,
       "inputs": ["default", "^production"]
+    },
+    "e2e-ci": {
+      "cache": true,
+      "inputs": ["default", "^production"]
     }
   },
   "defaultBase": "master",
   "namedInputs": {
-    "sharedGlobals": [],
+    "sharedGlobals": [
+      "{workspaceRoot}/package.json",
+      "{workspaceRoot}/pnpm-lock.yaml",
+      "{workspaceRoot}/pnpm-workspace.yaml",
+      "{workspaceRoot}/tsconfig*.json",
+      "{workspaceRoot}/vitest.config.ts",
+      "{workspaceRoot}/eslint.config.mjs"
+    ],
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "production": [
       "default",
