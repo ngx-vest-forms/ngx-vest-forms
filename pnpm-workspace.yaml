@@ -48,7 +48,7 @@ minimumReleaseAgeExclude:
   - playwright-ng-schematics@22.0.1
   - playwright@1.61.1
   - vite@8.1.0
-minimumReleaseAge: 24h
+minimumReleaseAge: 1440 # minutes (24h)
 minimumReleaseAgeStrict: true
 minimumReleaseAgeIgnoreMissingTime: false
 trustPolicy: no-downgrade
