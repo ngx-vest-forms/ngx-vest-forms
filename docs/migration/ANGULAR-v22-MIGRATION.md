@@ -4,26 +4,28 @@ This guide covers the Angular v22 updates for both the **ngx-vest-forms library*
 
 ## 📋 Overview
 
-ngx-vest-forms **v3.x** now supports Angular v22 while maintaining compatibility with Angular v21. The examples application has been fully updated to use Angular v22 best practices and features.
+ngx-vest-forms **v3.x** targets Angular v22. The examples application is aligned with Angular 22.1 best practices and APIs.
 
 ### Compatibility Matrix
 
 | Package | Angular Version | Status |
 |--------|-----------------|--------|
-| `ngx-vest-forms` | >=21.0.0 <23.0.0 | ✅ Supported |
-| Examples App | 22.0.1 | ✅ Required |
+| `ngx-vest-forms` | >=22.0.0 <23.0.0 | ✅ Supported |
+| Examples App | 22.1.x | ✅ Required |
+
+Angular 22 tooling requires Node.js `^22.22.3 || ^24.15.0 || ^26.0.0`.
 
 ## 🔧 Library Changes (ngx-vest-forms)
 
 ### Peer Dependencies Update
 
-The library's `peerDependencies` have been updated to explicitly support Angular v21 and v22:
+The library's `peerDependencies` have been updated to explicitly support Angular v22:
 
 ```json
 {
   "peerDependencies": {
-    "@angular/common": ">=21.0.0 <23.0.0",
-    "@angular/core": ">=21.0.0 <23.0.0",
+    "@angular/common": ">=22.0.0 <23.0.0",
+    "@angular/core": ">=22.0.0 <23.0.0",
     "@standard-schema/spec": ">=1.0.0",
     "rxjs": ">=7.8.0",
     "vest": ">=6.0.0"
@@ -31,15 +33,18 @@ The library's `peerDependencies` have been updated to explicitly support Angular
 }
 ```
 
-**✅ No breaking changes** - Existing applications using Angular v21 can continue to use ngx-vest-forms without any modifications.
+Angular 21 applications must upgrade to Angular 22 before adopting ngx-vest-forms v3.
 
 ### Change Detection Strategy
 
-The library components continue to explicitly specify `ChangeDetectionStrategy.OnPush` to maintain compatibility with Angular v21. In Angular v22, OnPush is the default, but we keep the explicit declaration for backward compatibility.
+Angular 22 uses OnPush change detection by default. Library and example components therefore omit an explicit `changeDetection` option, as recommended by Angular's current best-practices guide.
 
-**Components affected:**
-- `ControlWrapperComponent`
-- `FormGroupWrapperComponent`
+### Angular 22.1 review
+
+- `linkedSignal(..., { set })` was reviewed for form synchronization. It is not used in `FormDirective` because the linked signal is a derived Angular-form snapshot; write-through would blur ownership between the form and consumer model.
+- The injectable-to-service migration is reflected in the examples: root-provided example services use `@Service()`.
+- The new HTTP transfer-cache options are not relevant to the client-only mock API examples.
+- Deprecated JSONP APIs are not used by either project.
 
 ## 🚀 Examples Application Updates
 
@@ -190,12 +195,12 @@ recommended ngx-vest-forms usage patterns:
 
 ### For Library Users (No Changes Required)
 
-If you're using ngx-vest-forms with Angular v21 or v22:
+If you're using ngx-vest-forms with Angular v22:
 
 1. **No code changes needed** - The library is fully backward compatible
 2. **Update dependencies** (optional):
    ```bash
-   pnpm up @angular/*@22.0.1 ngx-vest-forms@latest
+  pnpm up @angular/*@22.1 ngx-vest-forms@latest
    ```
 
 ### For Examples App Contributors
@@ -204,7 +209,7 @@ If you're working on the examples app:
 
 1. **Ensure Angular v22:**
    ```bash
-   pnpm up @angular/*@22.0.1 @angular/cli@22.0.1
+  pnpm up @angular/*@22.1 @angular/cli@22.1
    ```
 
 2. **Use new patterns:**
@@ -276,7 +281,7 @@ import { httpResource } from '@angular/common/http';
 
 ## 🎯 Summary
 
-- **Library**: ✅ Compatible with Angular v21 and v22
+- **Library**: ✅ Compatible with Angular v22
 - **Examples**: ✅ Fully modernized with Angular v22 best practices
 - **Breaking Changes**: ❌ None for library users
 - **New Features**: ✅ All major Angular v22 features demonstrated

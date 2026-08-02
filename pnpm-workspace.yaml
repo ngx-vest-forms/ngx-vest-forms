@@ -4,31 +4,31 @@ packages:
 
 minimumReleaseAgeExclude:
   - nx
-  - "@nx/angular@23.0.1"
-  - "@nx/playwright@23.0.1"
-  - "@nx/workspace@23.0.1"
-  - '@nx/devkit@23.0.1'
-  - '@nx/eslint@23.0.1'
-  - '@nx/js@23.0.1'
-  - '@nx/module-federation@23.0.1'
-  - '@nx/nx-darwin-arm64@23.0.1'
-  - '@nx/nx-darwin-x64@23.0.1'
-  - '@nx/nx-freebsd-x64@23.0.1'
-  - '@nx/nx-linux-arm-gnueabihf@23.0.1'
-  - '@nx/nx-linux-arm64-gnu@23.0.1'
-  - '@nx/nx-linux-arm64-musl@23.0.1'
-  - '@nx/nx-linux-x64-gnu@23.0.1'
-  - '@nx/nx-linux-x64-musl@23.0.1'
-  - '@nx/nx-win32-arm64-msvc@23.0.1'
-  - '@nx/nx-win32-x64-msvc@23.0.1'
-  - '@nx/rspack@23.0.1'
-  - '@nx/web@23.0.1'
-  - '@nx/webpack@23.0.1'
-  - '@angular-devkit/architect@0.2200.4'
-  - '@angular-devkit/core@22.0.4'
-  - '@angular-devkit/schematics@22.0.4'
-  - '@angular/build@22.0.4'
-  - '@angular/cli@22.0.4'
+  - "@nx/angular@23.1.1"
+  - "@nx/playwright@23.1.1"
+  - "@nx/workspace@23.1.1"
+  - '@nx/devkit@23.1.1'
+  - '@nx/eslint@23.1.1'
+  - '@nx/js@23.1.1'
+  - '@nx/module-federation@23.1.1'
+  - '@nx/nx-darwin-arm64@23.1.1'
+  - '@nx/nx-darwin-x64@23.1.1'
+  - '@nx/nx-freebsd-x64@23.1.1'
+  - '@nx/nx-linux-arm-gnueabihf@23.1.1'
+  - '@nx/nx-linux-arm64-gnu@23.1.1'
+  - '@nx/nx-linux-arm64-musl@23.1.1'
+  - '@nx/nx-linux-x64-gnu@23.1.1'
+  - '@nx/nx-linux-x64-musl@23.1.1'
+  - '@nx/nx-win32-arm64-msvc@23.1.1'
+  - '@nx/nx-win32-x64-msvc@23.1.1'
+  - '@nx/rspack@23.1.1'
+  - '@nx/web@23.1.1'
+  - '@nx/webpack@23.1.1'
+  - '@angular-devkit/architect@0.2201.2'
+  - '@angular-devkit/core@22.1.2'
+  - '@angular-devkit/schematics@22.1.2'
+  - '@angular/build@22.1.2'
+  - '@angular/cli@22.1.2'
   - '@commitlint/cli@21.1.0'
   - '@commitlint/config-conventional@21.1.0'
   - '@commitlint/config-validator@21.1.0'
@@ -42,13 +42,15 @@ minimumReleaseAgeExclude:
   - '@commitlint/resolve-extends@21.1.0'
   - '@commitlint/rules@21.1.0'
   - '@commitlint/types@21.1.0'
-  - '@playwright/test@1.61.1'
-  - '@schematics/angular@22.0.4'
-  - playwright-core@1.61.1
-  - playwright-ng-schematics@22.0.1
-  - playwright@1.61.1
-  - vite@8.1.0
-minimumReleaseAge: 24h
+  - '@playwright/test@1.62.1'
+  - '@schematics/angular@22.1.2'
+  - '@typescript/native@7.0.2'
+  - '@typescript/typescript6@6.0.2'
+  - playwright-core@1.62.1
+  - playwright-ng-schematics@22.0.3
+  - playwright@1.62.1
+  - vite@8.2.0
+minimumReleaseAge: 1440 # minutes (24h)
 minimumReleaseAgeStrict: true
 minimumReleaseAgeIgnoreMissingTime: false
 trustPolicy: no-downgrade

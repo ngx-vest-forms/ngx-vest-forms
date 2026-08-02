@@ -5,13 +5,7 @@
       "source": "angular/skills",
       "sourceType": "github",
       "skillPath": "angular-developer/SKILL.md",
-      "computedHash": "e6400c4e948ba8c9d002509e9a482862c189f96938e01655f56a1e9a4533cb19"
-    },
-    "angular-new-app": {
-      "source": "angular/skills",
-      "sourceType": "github",
-      "skillPath": "angular-new-app/SKILL.md",
-      "computedHash": "49bd84ab08bd3498c52f476bed48fbb942dc6dbc0925607e84549adbed34bccf"
+      "computedHash": "ded1e95fb8d75d60901201665c6ab7e348eec3b79a6c53824c4a30a487d99f58"
     }
   }
 }

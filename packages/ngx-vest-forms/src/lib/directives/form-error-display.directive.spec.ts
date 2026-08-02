@@ -14,7 +14,6 @@ import { FormErrorDisplayDirective } from './form-error-display.directive';
 
 @Directive({
   selector: '[ngxDummy]',
-  standalone: true,
 })
 class DummyDirective {
   readonly testInput = input('default');
