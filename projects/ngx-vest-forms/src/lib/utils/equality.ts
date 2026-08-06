@@ -273,11 +273,7 @@ function fastDeepEqualInternal(
       return false;
     }
     if (
-      !fastDeepEqualInternal(
-        (a as Record<string, unknown>)[key],
-        o2[key],
-        seen
-      )
+      !fastDeepEqualInternal((a as Record<string, unknown>)[key], o2[key], seen)
     ) {
       return false;
     }

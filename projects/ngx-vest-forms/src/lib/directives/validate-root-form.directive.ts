@@ -189,7 +189,10 @@ export class ValidateRootFormDirective<T>
         // wiring up controls/groups (ngModel/ngModelGroup) on initial render.
         // The scheduleMicrotask primitive auto-cancels if the directive is
         // destroyed before the microtask fires.
-        scheduleMicrotask(() => ngForm.control.updateValueAndValidity(), this.destroyRef);
+        scheduleMicrotask(
+          () => ngForm.control.updateValueAndValidity(),
+          this.destroyRef
+        );
       }
     });
   }
@@ -216,7 +219,10 @@ export class ValidateRootFormDirective<T>
     // Ensure we run at least one validation pass after the form is ready.
     // This matters for 'live' mode root-form errors that should appear
     // without requiring a user interaction.
-    scheduleMicrotask(() => ngForm.control.updateValueAndValidity(), this.destroyRef);
+    scheduleMicrotask(
+      () => ngForm.control.updateValueAndValidity(),
+      this.destroyRef
+    );
 
     // Subscribe to form submission to set hasSubmitted flag
     ngForm.ngSubmit
@@ -245,9 +251,7 @@ export class ValidateRootFormDirective<T>
     // to `undefined` so the precedence rule is implementable without losing
     // the legacy attribute when the new one is not set.
     const mode =
-      this.ngxValidateRootFormMode() ??
-      this.validateRootFormMode() ??
-      'submit';
+      this.ngxValidateRootFormMode() ?? this.validateRootFormMode() ?? 'submit';
 
     // In 'submit' mode, skip validation until form is submitted
     if (mode === 'submit' && !this.hasSubmitted()) {

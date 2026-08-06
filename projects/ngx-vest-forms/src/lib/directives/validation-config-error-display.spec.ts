@@ -89,11 +89,7 @@ const dependentBlurSuite = staticSuite(
     >
       <ngx-control-wrapper [errorDisplayMode]="'on-blur'">
         <label for="quantity">Quantity</label>
-        <input
-          id="quantity"
-          name="quantity"
-          [ngModel]="formValue().quantity"
-        />
+        <input id="quantity" name="quantity" [ngModel]="formValue().quantity" />
       </ngx-control-wrapper>
 
       <ngx-control-wrapper [errorDisplayMode]="'on-blur'">
@@ -436,18 +432,20 @@ describe('ValidationConfig Error Display', () => {
     await TestBed.inject(ApplicationRef).whenStable();
 
     await expect
-      .poll(
-        () => justificationTextarea.classList.contains('ng-invalid'),
-        { timeout: 2000, interval: 100 }
-      )
+      .poll(() => justificationTextarea.classList.contains('ng-invalid'), {
+        timeout: 2000,
+        interval: 100,
+      })
       .toBe(true);
 
-    const justificationWrapper =
-      justificationTextarea.closest('ngx-control-wrapper');
+    const justificationWrapper = justificationTextarea.closest(
+      'ngx-control-wrapper'
+    );
 
     expect(
-      justificationWrapper?.textContent?.includes('Justification is required') ??
-        false
+      justificationWrapper?.textContent?.includes(
+        'Justification is required'
+      ) ?? false
     ).toBe(false);
     expect(justificationTextarea.classList.contains('ng-untouched')).toBe(true);
 

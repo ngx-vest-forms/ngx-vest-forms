@@ -1,5 +1,10 @@
 /* eslint-disable @angular-eslint/component-selector */
-import { Component, signal, viewChild, type WritableSignal } from '@angular/core';
+import {
+  Component,
+  signal,
+  viewChild,
+  type WritableSignal,
+} from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import { enforce, only, staticSuite, test as vestTest } from 'vest';
 import { describe, expect, it } from 'vitest';
@@ -190,7 +195,9 @@ describe('Issue #106 — state-sync correctness', () => {
       // must stay silent. Awaiting stability twice (once for the value
       // change, once for any reactive cascade) is deterministic and
       // strictly faster than a fixed-duration setTimeout.
-      const host = fixture.componentInstance as { model: WritableSignal<Record<string, unknown>> };
+      const host = fixture.componentInstance as {
+        model: WritableSignal<Record<string, unknown>>;
+      };
       host.model.update((m) => ({ ...m, confirmPassword: 'still-mismatched' }));
       fixture.detectChanges();
       await fixture.whenStable();
@@ -276,7 +283,9 @@ describe('Issue #106 — state-sync correctness', () => {
 
       // Trigger a value change that *would* fire validation if the legacy
       // 'live' mode were honored. ngx says 'submit', so it must stay silent.
-      const host = fixture.componentInstance as { model: WritableSignal<Record<string, unknown>> };
+      const host = fixture.componentInstance as {
+        model: WritableSignal<Record<string, unknown>>;
+      };
       host.model.update((m) => ({ ...m, confirmPassword: 'still-mismatched' }));
       fixture.detectChanges();
       await fixture.whenStable();
