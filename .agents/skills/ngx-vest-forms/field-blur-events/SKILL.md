@@ -24,18 +24,7 @@ Recommend consumer-facing imports from `'ngx-vest-forms'`:
 - `NgxFieldBlurEvent`
 - `createValidationConfig` when dependent fields are involved
 
-Do not send consumers to internal directive or utility paths for blur handling.
-
-## What v2.7.0 fixed in the blur path
-
-Useful context when the user is debugging blur-related bugs against v2.6.x:
-
-- Nested control paths, dynamic `ngModelGroup`s, radios, and repeated leaf names now resolve to the correct field path in the emitted event.
-- The directive cancels in-flight blur emissions on form reset, so a stale snapshot does not arrive after `resetForm()`.
-- Async validators triggered by blur emit cleanly even if the form is destroyed mid-flight — no more `ViewDestroyedError` and no leaked timers (the new internal `destroy-scheduler` ties async work to `DestroyRef`).
-- Touched state propagates from a trigger field into its `validationConfig`-tracked dependents on the same tick, so dependent error display flips on the trigger's blur when paired with `errorDisplayMode="on-blur"` on the dependent wrapper.
-
-If the user reports any of these symptoms on v2.6.x, recommend upgrading to v2.7.x rather than working around them in user code.
+Use the package-root import rule in `../SKILL.md` for blur-related examples.
 
 ## Default recommendation
 
@@ -49,9 +38,12 @@ For draft persistence, prefer the form's `fieldBlur` output:
 
 Treat `event.pending` as metadata unless the product explicitly wants strict valid-only blur commits.
 
-When the user asks for “the right pattern”, “best practice”, or a repo-aligned implementation,
-ground the answer in the repository’s canonical blur-save materials instead of answering only at
-the API level:
+If the form also runs asynchronous Vest tests, keep the blur-save policy
+independent of completion. Consult the `vestjs` `async-and-warnings` workflow
+for `AbortSignal`, stale-request, and pending-state guidance.
+
+When the user asks for “the right pattern” or “best practice”, ground the answer
+in the documented blur-save materials instead of answering only at the API level:
 
 - point to `docs/AUTO-SAVE-ON-BLUR.md`
 - mention the examples app route `/auto-save-demo`
@@ -115,7 +107,6 @@ Correct these patterns when you see them:
 - calling `triggerFormValidation()` from blur handlers for dependent-field timing
 - blocking draft auto-save on `event.pending`
 - describing `fieldBlur` as validation logic rather than as an event for application policy
-- suggesting internal imports for `NgxFieldBlurEvent` or form directive blur support
 
 ## Output style
 
@@ -125,18 +116,17 @@ When answering the user:
 2. show the `fieldBlur` handler and the form binding together
 3. if dependent fields are involved, show the `validationConfig` and wrapper display mode beside the blur handler
 4. keep examples on the public API surface
-5. when the user wants the canonical repo pattern, mention the auto-save guide and `/auto-save-demo` so the answer is anchored to the library’s documented workflow rather than sounding generic
+5. when the user wants a complete pattern, mention the auto-save guide and `/auto-save-demo` so the answer is anchored to a documented workflow
 
-## Repo references to consult when needed
+## Consumer references
 
 - `../../../../docs/AUTO-SAVE-ON-BLUR.md`
 - `../../../../docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`
 - `../../../../README.md`
 - `../../../../projects/examples/src/app/pages/auto-save-demo/auto-save-demo.page.ts`
 - `../../../../projects/examples/src/app/pages/auto-save-demo/auto-save-demo.form.ts`
-- `../../../../projects/ngx-vest-forms/src/public-api.ts`
 
-Use the auto-save demo as the canonical repo example for blur-driven persistence and quiet dependent validation.
+Use the auto-save demo as the complete example for blur-driven persistence and quiet dependent validation.
 
 ## Fast heuristic
 

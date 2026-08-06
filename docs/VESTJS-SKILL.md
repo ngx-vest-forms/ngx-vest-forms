@@ -16,9 +16,7 @@ npx skills add ngx-vest-forms/ngx-vest-forms --skill vestjs
 
 ## What the skill covers
 
-The top-level `vestjs` skill is a **router**. It points the model toward the right focused sub-skill instead of answering every Vest question with one giant catch-all prompt.
-
-It is also the **stable public entry point** for versioning. Right now, that router defaults to the **Vest 5.4 / 5.x** lane used by this repository.
+The top-level `vestjs` skill is a **router**. It points the model toward the right focused sub-skill instead of answering every Vest question with one giant catch-all prompt. It defaults to the **Vest 5.4 / 5.x** lane.
 
 ### Core workflow sub-skills
 
@@ -26,14 +24,14 @@ It is also the **stable public entry point** for versioning. Right now, that rou
 | -------------------------- | ------------------------------------------------------------------------------------------------ |
 | `core`                     | first suites, `create` vs `staticSuite`, `test`, `enforce`, `only`, stateful vs stateless design |
 | `conditional-control-flow` | `skip`, `only`, `include`, `skipWhen`, `omitWhen`, `optional`, linked fields, hidden branches    |
-| `async-and-warnings`       | async tests, `AbortSignal`, stale request avoidance, `warn()`, `.done()`, pending state          |
+| `async-and-warnings`       | async tests, `AbortSignal`, stale request avoidance, `warn()` / `useWarn()`, `.done()`, pending state |
 | `results-groups-and-types` | result access, `group`, `each`, execution modes, typed suites, group-specific result queries     |
 
 ### Advanced workflow sub-skills
 
 | Sub-skill                  | What it covers                                                                               |
 | -------------------------- | -------------------------------------------------------------------------------------------- |
-| `enforce-and-custom-rules` | `enforce.condition`, `enforce.extend`, `compose`, custom rule design, matcher typing         |
+| `enforce-and-custom-rules` | composable validation helpers, `enforce.condition`, `enforce.extend`, `compose`, matcher typing |
 | `server-side-validation`   | request isolation, `staticSuite`, server-oriented execution modes, backend validation output |
 
 ## How it is intended to be used
@@ -48,52 +46,20 @@ Use `vestjs` for broad or ambiguous requests like:
 
 Once the problem area is clear, the router skill should narrow to the corresponding focused sub-skill.
 
-## Versioning strategy
+## Version behavior
 
-The public install name stays:
+The skill assumes Vest 5.4 unless the application specifies another major. State
+that assumption or ask for the target version before applying guidance to a
+different Vest major.
 
-- `vestjs`
+## Integration
 
-Version-specific material is organized internally so the skill can grow without renaming the install target too early.
-
-### Current internal versioned layout
-
-- `.agents/skills/vestjs/references/version-selection.md`
-- `.agents/skills/vestjs/references/5.x/source-map.md`
-- `.agents/skills/vestjs/evals/5.x.json`
-
-This means:
-
-- the **public skill stays stable**
-- the **current default lane is 5.x**
-- a future `6.x` lane can be added without forcing users to switch install names immediately
-
-### When to add a separate 6.x lane
-
-Add internal `6.x` references and evals when Vest 6 support is actually needed.
-
-Only consider separate public skills like `vestjs-5x` and `vestjs-6x` if both majors later become actively maintained and materially divergent in practice.
-
-## Repo alignment
-
-The skill is designed to complement the repository’s existing instruction files and the `ngx-vest-forms` skill package.
+The skill complements the `ngx-vest-forms` skill when an application uses both libraries.
 
 If a question involves both raw Vest behavior and Angular template-driven integration, use the `vestjs` and `ngx-vest-forms` skills together rather than forcing one to explain the other’s domain.
-
-## Main source files
-
-- `.agents/skills/vestjs/SKILL.md`
-- `.agents/skills/vestjs/references/version-selection.md`
-- `.agents/skills/vestjs/references/5.x/source-map.md`
-- `.github/instructions/vest.instructions.md`
-- `.agents/skills/ngx-vest-forms/`
 
 ## Upstream references
 
 - [Vest 5.x docs](https://vestjs.dev/docs/5.x/get_started)
 - [Vest 5.x API reference](https://vestjs.dev/docs/5.x/api_reference)
 - [Vest 5.x TypeScript support](https://vestjs.dev/docs/5.x/typescript_support)
-
-## Manual review reminder
-
-This skill package was written with maintainability in mind, but it should still be reviewed manually and exercised against realistic prompts before relying on it broadly.

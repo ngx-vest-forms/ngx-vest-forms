@@ -95,7 +95,7 @@ Start with `references/decision-guide.md` when the user is mixing several of the
 ## References to consult when needed
 
 - `references/decision-guide.md`
-- `../../../instructions/vest.instructions.md`
+- `../SKILL.md`
 - `https://vestjs.dev/docs/5.x/writing_your_suite/including_and_excluding/skip_and_only`
 - `https://vestjs.dev/docs/5.x/writing_your_suite/including_and_excluding/skipWhen`
 - `https://vestjs.dev/docs/5.x/writing_your_suite/including_and_excluding/omitWhen`

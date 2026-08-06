@@ -68,7 +68,7 @@ When answering the user:
 
 ## References to consult when needed
 
-- `../../../instructions/vest.instructions.md`
+- `../SKILL.md`
 - `https://vestjs.dev/docs/5.x/get_started`
 - `https://vestjs.dev/docs/5.x/concepts`
 - `https://vestjs.dev/docs/5.x/api_reference`

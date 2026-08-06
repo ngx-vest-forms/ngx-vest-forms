@@ -31,7 +31,7 @@ Recommend wrapper usage through the public package surface:
 - `NGX_ERROR_DISPLAY_MODE_TOKEN`
 - `NGX_WARNING_DISPLAY_MODE_TOKEN`
 
-Do not point consumers at component or token imports under `src/lib/**` unless the task is library maintenance.
+Use the package-root import rule in `../SKILL.md` for every consumer example.
 
 ## Display mode guidance
 
@@ -67,7 +67,6 @@ If the consumer project does not use Tailwind, explain that the wrapper logic st
 - forgetting that warnings may appear after `validationConfig`-triggered validation
 - assuming the default styling is framework-agnostic CSS rather than Tailwind-based classes
 - using duplicate control IDs in repeated child sections
-- importing wrapper components from internal library paths
 
 Do not recommend `ngx-control-wrapper` for a group just because it seems to “work.” That usually creates misleading ARIA relationships and brittle message ownership.
 
@@ -80,15 +79,15 @@ When answering:
 - mention accessibility behavior only as needed, but make the guidance precise
 - redirect to the custom-wrapper approach if the user wants custom visuals or custom ARIA plumbing
 
-## Repo references to consult when needed
+## Consumer references
 
-- `../../../../projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md`
 - `../../../../docs/ACCESSIBILITY.md`
 - `../../../../docs/CUSTOM-CONTROL-WRAPPERS.md`
 - `../../../../docs/CHILD-COMPONENTS.md`
 - `../../../../README.md`
 
-Treat the repo instruction file as the baseline wrapper invariant sheet. Use this skill when the user needs wrapper selection, display-mode guidance, or ARIA association advice.
+Use `../SKILL.md` for shared library invariants. This skill owns wrapper
+selection, display-mode guidance, and ARIA association advice.
 
 ## Fast heuristic
 

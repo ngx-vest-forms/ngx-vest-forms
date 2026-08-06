@@ -22,14 +22,14 @@ Recommend these imports from `'ngx-vest-forms'` when building custom wrappers:
 - `FormErrorControlDirective`
 - `createDebouncedPendingState`
 - `DebouncedPendingStateOptions` (input shape)
-- `DebouncedPendingStateOptionsInput` (signal-accessor input shape, v2.7+)
+- `DebouncedPendingStateOptionsInput` (signal-accessor input shape)
 - `DebouncedPendingStateResult`
 - `mergeAriaDescribedBy`
 - `parseAriaIdTokens`
 - `resolveAssociationTargets`
 - `AriaAssociationMode`
 
-Do not tell consumers to import custom-wrapper primitives from internal library files.
+Use the package-root import rule in `../SKILL.md` for every consumer example.
 
 ## Recommended composition pattern
 
@@ -44,7 +44,7 @@ Do not tell consumers to import custom-wrapper primitives from internal library 
 Use `createDebouncedPendingState()` when async validation can flash quickly.
 That keeps "Validating…" from flickering and gives users steadier feedback.
 
-In v2.7.0, `[pendingDebounce]` on `<ngx-form-group-wrapper>` is a **signal-accessor input**, so runtime changes propagate. Type the binding as `DebouncedPendingStateOptionsInput` when consumers want to swap delays from a `signal` or `computed`. Previously the value was read once at construction.
+`[pendingDebounce]` on `<ngx-form-group-wrapper>` accepts a signal-accessor input, so runtime changes propagate. Type the binding as `DebouncedPendingStateOptionsInput` when consumers want to swap delays from a `signal` or `computed`.
 
 ## ARIA behavior to preserve
 
@@ -73,7 +73,6 @@ Use `ariaAssociationMode="none"` or equivalent manual targeting when the region 
 - hand-rolling ARIA merging when `FormErrorControlDirective` already solves it
 - forgetting `self: true` injection for the composed directive
 - showing raw pending state without debounce in a UI that validates frequently
-- importing wrapper directives or ARIA helpers from `src/lib/**`
 
 Do not improvise new ARIA plumbing when the public directives already provide the hard parts. Reinventing this area is how accessible wrappers quietly become inaccessible wrappers.
 
@@ -86,16 +85,15 @@ When answering:
 - include the minimum accessible template structure needed for errors, warnings, and pending state
 - mention ARIA utilities only when the user’s scenario is advanced enough to justify them
 
-## Repo references to consult when needed
+## Consumer references
 
 - `references/patterns.md`
 - `../../../../docs/CUSTOM-CONTROL-WRAPPERS.md`
 - `../../../../docs/ACCESSIBILITY.md`
 - `../../../../docs/CHILD-COMPONENTS.md`
-- `../../../../projects/ngx-vest-forms/src/public-api.ts`
-- `../../../../projects/ngx-vest-forms/src/lib/components/control-wrapper/README.md`
 
-Treat the repo instruction file as the invariant layer. Use this skill for hostDirectives composition, stable ARIA behavior, and custom presentation decisions.
+Use `../SKILL.md` for shared library invariants. This skill owns hostDirectives
+composition, stable ARIA behavior, and custom presentation decisions.
 
 Start with `references/patterns.md` when the user is choosing between `FormErrorDisplayDirective` and `FormErrorControlDirective`, or when the wrapper’s ARIA behavior is the main risk.
 

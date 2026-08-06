@@ -44,7 +44,7 @@ Prefer public API imports from `'ngx-vest-forms'`:
 - `ValidationConfigMap`
 - `FormFieldName`
 
-Do not send consumers to internal builder utilities under `src/lib/**`.
+Use the package-root import rule in `../SKILL.md` for every consumer example.
 
 ## Recommended workflow
 
@@ -84,7 +84,7 @@ Use it proactively when the suite contains:
 
 Without it, ngx-vest-forms may leave stale validation results because Angular will not know which dependent fields to rerun.
 
-## Calm dependents pattern (v2.7+)
+## Calm dependents pattern
 
 When a dependent field becomes logically invalid as soon as its trigger changes, but should stay visually quiet until the dependent's own blur, **do not** add `(blur)` handlers calling `triggerFormValidation()`. Instead pair:
 
@@ -92,7 +92,7 @@ When a dependent field becomes logically invalid as soon as its trigger changes,
 - `[errorDisplayMode]="'on-blur'"` on the dependent's `<ngx-control-wrapper>` — gates the visible message
 - the Vest suite — owns the actual rule
 
-In v2.7.0, blurring the trigger propagates touched into its `validationConfig`-tracked dependents on the same tick, so the dependent's error UI flips on the trigger's blur when its wrapper is in `on-blur` mode. No manual revalidation call needed.
+Blurring the trigger can propagate touched state to its `validationConfig`-tracked dependents, so a dependent wrapper in `on-blur` mode can reveal its error at the same point. No manual revalidation call is needed.
 
 ## Interaction with blur-driven persistence
 
@@ -113,7 +113,6 @@ Do not recommend `(blur)` handlers that call `triggerFormValidation()` to manufa
 - creating very large `group()` graphs when one-way dependencies would be cheaper and clearer
 - using untyped string paths when the model type is available
 - using `triggerFormValidation()` from blur handlers to force dependent-field timing
-- importing builder helpers from internal library paths
 
 Do not describe `validationConfig` as optional polish when stale cross-field errors are part of the bug. In those cases it is the missing wiring, not a nice-to-have.
 
@@ -126,7 +125,7 @@ When answering the user:
 - call out which field owns the error message
 - prefer one compact example over several disconnected fragments
 
-## Repo references to consult when needed
+## Consumer references
 
 - `references/decision-guide.md`
 - `../../../../docs/VALIDATION-CONFIG-BUILDER.md`
@@ -134,9 +133,9 @@ When answering the user:
 - `../../../../docs/AUTO-SAVE-ON-BLUR.md`
 - `../../../../docs/FIELD-PATHS.md`
 - `../../../../README.md`
-- `../../../../projects/ngx-vest-forms/src/public-api.ts`
 
-Treat the repo instruction file as the invariant layer. This skill adds the dependency-graph reasoning and builder-specific patterns.
+Use `../SKILL.md` for shared library invariants. This skill adds dependency-graph
+reasoning and builder-specific patterns.
 
 Start with `references/decision-guide.md` when the user is mixing `validationConfig`, `ROOT_FORM`, and dynamic form behavior in the same question.
 

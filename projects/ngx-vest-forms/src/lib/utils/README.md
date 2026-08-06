@@ -944,7 +944,7 @@ Both versions work identically; the `Ngx`-prefixed versions are recommended for 
 ## Related Documentation
 
 - **Main README**: [/README.md](../../../../../README.md)
-- **Instructions**: [/.github/instructions/ngx-vest-forms.instructions.md](../../../../../.github/instructions/ngx-vest-forms.instructions.md)
+- **ngx-vest-forms skill**: [/.agents/skills/ngx-vest-forms/SKILL.md](../../../../../.agents/skills/ngx-vest-forms/SKILL.md)
 - **Vest.js Documentation**: <https://vestjs.dev/>
 - **Angular Forms Guide**: <https://angular.dev/guide/forms/template-driven-forms>
 
@@ -957,5 +957,5 @@ When adding new utilities:
 1. Add comprehensive tests (`*.spec.ts`)
 2. Export from `public-api.ts`
 3. Document in this README
-4. Update main instructions file
+4. Update affected skill and reference files
 5. Consider adding `Ngx` prefixed alias for library-specific utilities

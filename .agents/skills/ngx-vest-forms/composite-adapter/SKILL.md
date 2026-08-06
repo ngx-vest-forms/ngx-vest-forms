@@ -141,7 +141,7 @@ protected onRangeChange(range: DateRangeValue): void {
 }
 ```
 
-> v2.7.0: `setValueAtPath` is now array-safe. Writes like `setValueAtPath(next, 'addresses[0].street', 'x')` preserve sibling array entries instead of replacing the array with `{}`. Bracket notation chooses container shape from the segment (numeric → array, string → object). Prefer `structuredClone` over the deprecated `cloneDeep` (which warns once in dev and is removed in v3).
+Use `structuredClone` before calling `setValueAtPath()` so adapter updates preserve the form signal's immutable ownership.
 
 ### 5. Per-field error slicing, formSubmitted tracking, and validationConfig
 
@@ -162,7 +162,7 @@ resetFormState(value: TravelFormModel): void {
 }
 ```
 
-Slice errors **per field** — do **not** merge them before passing to the adapter. The adapter aggregates them for the visible summary internally, but needs them separate to gate `aria-invalid` and display independently per input:
+Slice errors **per field** — do **not** merge them before passing to the adapter. This keeps each input's `aria-invalid` and display state independently gated:
 
 ```typescript
 readonly departureErrors = computed(() => {
@@ -282,7 +282,7 @@ If your composite can be decomposed into completely independent labeled fields, 
 - Forgetting to call `resetTouched()` on the adapter during form reset.
 - Using `ngModelGroup` when flat fields with hidden proxies are simpler and keep field paths correct.
 - Making the adapter form-aware (injecting `NgForm`, using `ngModel`) instead of keeping it pure.
-- Registering a third-party widget's internal `ngModel` in the parent form instead of marking it standalone.
+- Registering a third-party widget's local `ngModel` in the parent form instead of marking it standalone.
 - Passing `departureDate` / `returnDate` into a grouped child component when the real paths are `travelDates.departureDate` / `travelDates.returnDate`.
 - Using `field?: string` instead of `FormFieldName<T>` for the Vest suite parameter.
 
@@ -295,11 +295,10 @@ If your composite can be decomposed into completely independent labeled fields, 
 | Error belongs to the whole form, not to specific fields | `ROOT_FORM` + `ngxValidateRootForm` |
 | Fields share a common path prefix | `ngModelGroup` + `<ngx-form-group-wrapper>` |
 
-## Repo references to consult when needed
+## Consumer references
 
 - `../../../../docs/COMPOSITE-ADAPTER-RECIPE.md`
 - `../../../../projects/examples/src/app/pages/date-range-adapter/`
-- `../../../../projects/ngx-vest-forms/src/public-api.ts`
 - `../../../../docs/VALIDATION-CONFIG-BUILDER.md`
 - `../../../../docs/CUSTOM-CONTROL-WRAPPERS.md`
 

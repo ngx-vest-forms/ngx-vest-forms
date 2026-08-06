@@ -16,7 +16,7 @@ Every child component that participates in the parent form tree with `ngModel` o
 If that is missing, the child will not correctly access the parent form context.
 
 Prefer the public API export `vestFormsViewProviders` from `'ngx-vest-forms'`.
-Do not direct consumers to internal provider definitions.
+Use the package-root import rule in `../SKILL.md` for every consumer example.
 
 ## Recommended structure
 
@@ -57,7 +57,6 @@ The same rule repeats at every level:
 - validation tests using local child names instead of full prefixed paths
 - duplicate IDs when two instances of the same child component appear on one screen
 - using wrapper components in a way that blurs field-level and group-level responsibilities
-- importing child-component helpers from internal library paths
 
 Do not suggest ad-hoc provider workarounds when `vestFormsViewProviders` is the supported path. If that export is not enough, the problem is architectural and should be fixed explicitly.
 
@@ -70,15 +69,15 @@ When answering:
 - prefer signal `input()` APIs and `OnPush`
 - include the validation-path strategy if the user is also asking about validation
 
-## Repo references to consult when needed
+## Consumer references
 
 - `../../../../docs/CHILD-COMPONENTS.md`
 - `../../../../docs/ACCESSIBILITY.md`
 - `../../../../docs/COMPLETE-EXAMPLE.md`
 - `../../../../README.md`
-- `../../../../projects/ngx-vest-forms/src/public-api.ts`
 
-Treat the repo instruction file as the invariant layer. Use this skill for parent/child path coordination, `vestFormsViewProviders`, and nested section design.
+Use `../SKILL.md` for shared library invariants. This skill owns parent/child
+path coordination, `vestFormsViewProviders`, and nested section design.
 
 ## Fast heuristic
 

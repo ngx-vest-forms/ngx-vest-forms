@@ -14,8 +14,20 @@ Ask yourself:
 - Is the logic only needed once inside a single test? Use `enforce.condition(...)` inline.
 - Is the logic reusable across many fields or suites? Use `enforce.extend(...)`.
 - Are several existing rules usually applied together? Use `compose(...)` from `vest/enforce/compose`.
+- Are several `test(...)` registrations reused by an entity or path prefix? Extract a composable validation helper.
 
 Do not jump straight to a globally extended custom rule when a one-off `condition(...)` would be clearer.
+
+## Composable validation helpers
+
+Use a small function that accepts the relevant model slice and its field-path
+prefix when the same test registrations recur across forms or repeated groups.
+Keep the helper focused on one domain concept, support an undefined partial
+slice, and register full prefixed test names inside it.
+
+Call `only(field)` once in the outer suite; helpers should compose tests, not
+own the suite's selective-validation policy. Wrap an entire optional branch in
+`omitWhen(...)` at the suite level when its tests should stop affecting validity.
 
 ## Core patterns
 
@@ -82,7 +94,8 @@ Start with `references/design-guide.md` when the user is unsure whether to build
 ## References to consult when needed
 
 - `references/design-guide.md`
-- `../../../instructions/vest.instructions.md`
+- `../SKILL.md`
+- `../../../../docs/COMPOSABLE-VALIDATIONS.md`
 - `https://vestjs.dev/docs/5.x/enforce/composing_enforce_rules`
 - `https://vestjs.dev/docs/5.x/enforce/creating_custom_rules`
 - `https://vestjs.dev/docs/5.x/typescript_support`

@@ -32,11 +32,10 @@ Recommend these imports from `'ngx-vest-forms'` when they fit the example:
 
 Optional advanced exports worth knowing about:
 
-- `NGX_EQUALITY_FN`, `NgxEqualityFn` — swap the comparator the form uses for `formValueChange` `distinctUntilChanged`, two-way sync, and `formState` equality. Default is `fastDeepEqual` with cycle detection. Reach for it for bundle size (`dequal/lite`), tests (reference equality), or domain rules. See `docs/API-TOKENS.md`.
-- `setValueAtPath` — array-safe path writes (v2.7+ no longer overwrites populated arrays via bracket notation).
-- `cloneDeep` — **deprecated**, warns once in dev; use `structuredClone`. Will be removed in v3.
+- `NGX_EQUALITY_FN`, `NgxEqualityFn` — change the comparator used by the form. See `docs/API-TOKENS.md` before recommending it.
+- `setValueAtPath` — write a value at a typed field path. Use the composite-adapter workflow when a UI widget fans out to several fields.
 
-Do not teach consumers to import from internal `src/lib/**` paths. If a symbol is missing from the public API, that is a library-maintenance task, not a consumer workaround.
+Use the package-root import rule in `../SKILL.md` for every consumer example.
 
 ## Default implementation pattern
 
@@ -71,7 +70,6 @@ Correct these immediately if they appear:
 - direct property access like `formValue().address.street` instead of `formValue().address?.street`
 - missing `formShape` on complex nested forms where path mistakes are easy
 - `(blur)` handlers that re-trigger validation to fake dependent-field timing or draft auto-save
-- imports from `projects/ngx-vest-forms/src/lib/**` in consumer examples
 
 Do not paper over these mistakes. They break the mental model of the library and usually create subtle bugs instead of quick wins.
 
@@ -83,22 +81,21 @@ Do not paper over these mistakes. They break the mental model of the library and
 - If the user is splitting the form into child components, apply the child-components skill guidance.
 - If the user wants custom message UI, apply the custom-wrapper-patterns skill guidance.
 
-## Repo references to consult when needed
+## Consumer references
 
 Read these files before making nuanced recommendations:
 
 - `../../../../docs/COMPLETE-EXAMPLE.md`
 - `../../../../docs/FIELD-PATHS.md`
+- `../../../../docs/TYPE-COMPATIBILITY.md`
 - `../../../../docs/ACCESSIBILITY.md`
-- `../../../instructions/vest.instructions.md`
 - `../../../../README.md`
-- `../../../../projects/ngx-vest-forms/src/public-api.ts`
 
-Assume the repo-level `ngx-vest-forms.instructions.md` file already enforces the baseline invariants; use this skill for the fuller implementation workflow and examples.
+Use `../SKILL.md` for the shared library invariants; this workflow owns the
+default implementation pattern and examples.
 
 ## Canonical reminders
 
 - ngx-vest-forms is a template-driven forms adapter, not a reactive forms abstraction.
 - `validationConfig` controls when dependent fields revalidate; it does not define validation logic.
 - The library's sweet spot is typed template-driven forms with Vest suites, signals, and explicit structure.
-- v2.7.x targets Angular `>=19`, RxJS `>=7.8`, Vest `>=5.4.6`. `parseFieldPath` warns in dev mode for malformed segments (`'a..b'`, `'.a'`, `'a.'`); production behavior unchanged.

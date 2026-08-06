@@ -1,6 +1,6 @@
 # Vest.js 5.x source map
 
-This file is the internal source map for the current **Vest 5.4 / 5.x** lane.
+This file maps **Vest 5.4 / 5.x** concepts to their documentation and workflow.
 
 Use it when the router or a sub-skill needs to ground an answer in the correct upstream docs.
 
@@ -42,5 +42,4 @@ Use it when the router or a sub-skill needs to ground an answer in the correct u
 
 ## Notes
 
-- Vest 5.x docs are legacy docs now that 6.x exists, so always keep the `/5.x/` path in version-specific answers.
-- Do not silently substitute latest-version links when the skill is answering in the 5.x lane.
+- Vest 5.x docs are legacy docs now that 6.x exists, so keep the `/5.x/` path in version-specific answers.

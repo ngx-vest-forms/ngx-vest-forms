@@ -35,7 +35,7 @@ Prefer public API imports from `'ngx-vest-forms'`:
 - `keepFieldsWhen`
 - `FormDirective`
 
-If you mention `triggerFormValidation()`, frame it as a capability on the public form directive/API surface instead of sending consumers into internal implementation files.
+Use the package-root import rule in `../SKILL.md` for every consumer example.
 
 ## When to call `triggerFormValidation()`
 
@@ -61,7 +61,6 @@ Do not oversell it as a “show errors” API. It only re-runs validation logic.
 - clearing fields without matching the suite’s conditional `omitWhen(...)` logic
 - assuming `triggerFormValidation()` will also mark fields touched or force visible errors
 - using blur handlers plus `triggerFormValidation()` for draft auto-save or quiet dependent validation timing
-- importing dynamic-form helpers from internal library paths
 
 Do not cargo-cult `triggerFormValidation()` into every conditional form. Most dynamic form bugs come from stale state ownership, not from a missing manual rerun.
 
@@ -74,7 +73,7 @@ When answering:
 - explain why the field-clearing utility is appropriate for that branch
 - mention whether `triggerFormValidation()` is actually necessary instead of cargo-culting it everywhere
 
-## Repo references to consult when needed
+## Consumer references
 
 - `references/decision-guide.md`
 - `../../../../docs/FIELD-CLEARING-UTILITIES.md`
@@ -82,7 +81,8 @@ When answering:
 - `../../../../docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`
 - `../../../../README.md`
 
-Treat the repo instruction file as the invariant layer. Use this skill for dynamic-layout edge cases, state clearing, and deciding when `triggerFormValidation()` is genuinely needed.
+Use `../SKILL.md` for shared library invariants. This skill owns dynamic-layout
+edge cases, state clearing, and deciding when `triggerFormValidation()` is needed.
 
 Start with `references/decision-guide.md` when the user is unsure whether a layout change actually needs field clearing or `triggerFormValidation()`.
 

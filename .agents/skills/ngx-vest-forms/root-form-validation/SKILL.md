@@ -37,7 +37,7 @@ Prefer public API imports from `'ngx-vest-forms'`, especially:
 - `ROOT_FORM`
 - `ValidateRootFormDirective`
 
-For template examples, keep the directive usage aligned with the public selector/API rather than pointing consumers at internal directive files.
+Use the package-root import rule in `../SKILL.md` for template examples.
 
 ## Accessibility expectations
 
@@ -75,7 +75,6 @@ Correct these if they appear:
 - trying to replace `validationConfig` with `ROOT_FORM`
 - showing form-summary errors inline next to one control without a good ownership reason
 - using aggressive live whole-form validation when it will create noisy, distracting announcements
-- importing form-level validation helpers from internal library paths
 
 Do not let `ROOT_FORM` become a dumping ground for hard-to-place errors. That hides ownership problems instead of solving them.
 
@@ -88,14 +87,14 @@ When answering:
 - mention when `'submit'` is safer than `'live'`
 - explicitly say when the user should *not* use `ROOT_FORM`
 
-## Repo references to consult when needed
+## Consumer references
 
 - `../../../../docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`
 - `../../../../README.md`
 - `../../../../docs/ACCESSIBILITY.md`
-- `../../../../projects/ngx-vest-forms/src/public-api.ts`
 
-Treat the repo instruction file as the baseline. Use this skill for the field-vs-form ownership decision and form-summary behavior.
+Use `../SKILL.md` for shared library invariants. This skill owns the field-vs-form
+ownership decision and form-summary behavior.
 
 ## Fast heuristic
 

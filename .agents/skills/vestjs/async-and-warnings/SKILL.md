@@ -1,6 +1,6 @@
 ---
 name: async-and-warnings
-description: Helps developers write safe async and warning-based validations in Vest.js 5.4. Use this whenever the user mentions async tests, server checks, username/email availability, `AbortSignal`, stale requests, `warn()`, non-blocking guidance, `.done()`, pending state, or asks how to keep async validation responsive and correct.
+description: Helps developers write safe async and warning-based validations in Vest.js 5.4. Use this whenever the user mentions async tests, server checks, username/email availability, `AbortSignal`, stale requests, `warn()`, `useWarn()`, non-blocking guidance, `.done()`, pending state, or asks how to keep async validation responsive and correct.
 ---
 
 # Vest.js 5.4 async and warning guidance
@@ -13,7 +13,7 @@ Use this skill when the suite needs **remote work, cancellation, pending state, 
 2. In Vest 5.4, each async test receives an `AbortSignal` via the test context.
 3. Pass that `signal` into async work when supported.
 4. Guard expensive async checks behind prerequisite sync validation.
-5. Call `warn()` synchronously at the top of the test body.
+5. Call `warn()` synchronously at the top of the test body; use `useWarn()` when warning severity is decided after `await`.
 6. Never call `.done()` conditionally.
 
 ## Recommended async pattern
@@ -36,7 +36,7 @@ Use that signal to:
 
 Do not ignore the signal when the underlying API can accept it.
 
-## `warn()` guidance
+## Warning guidance
 
 Use `warn()` when the message is useful but should **not** block validity or submission.
 
@@ -46,7 +46,9 @@ Common examples:
 - soft formatting recommendations
 - advisory checks that are informative rather than mandatory
 
-Important limitation: if the test is async, call `warn()` in the synchronous portion of the test body, ideally first. Calling it after `await` means it may not take effect.
+Call `warn()` in the synchronous portion of an async test, ideally first. If the
+test can decide to warn only after `await`, obtain `useWarn()` before awaiting
+and call its returned setter when the result is known.
 
 ## `.done()` guidance
 
@@ -62,6 +64,7 @@ Keep the `.done(...)` registration unconditional. Put branching logic inside the
 - async tests without `AbortSignal` handling
 - remote validation that runs before basic local validation passes
 - calling `warn()` after `await`
+- omitting `useWarn()` when asynchronous work decides whether a message is a warning
 - treating warnings as blocking errors
 - conditional `.done(...)` registration around async runs
 - custom pending flags when `isPending()` already exists
@@ -76,7 +79,7 @@ When answering:
 
 ## References to consult when needed
 
-- `../../../instructions/vest.instructions.md`
+- `../SKILL.md`
 - `https://vestjs.dev/docs/5.x/writing_tests/async_tests`
 - `https://vestjs.dev/docs/5.x/writing_tests/warn_only_tests`
 - `https://vestjs.dev/docs/5.x/writing_your_suite/accessing_the_result`

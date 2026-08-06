@@ -67,7 +67,7 @@ When answering:
 
 ## References to consult when needed
 
-- `../../../instructions/vest.instructions.md`
+- `../SKILL.md`
 - `https://vestjs.dev/docs/5.x/server_side_validations`
 - `https://vestjs.dev/docs/5.x/writing_your_suite/execution_modes`
 - `https://vestjs.dev/docs/5.x/api_reference`

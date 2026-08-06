@@ -7,7 +7,7 @@
       "expected_output": "Routes to the `core` sub-skill guidance, uses public API imports from 'ngx-vest-forms', models the form with NgxDeepPartial, uses [ngModel] with matching name paths, and includes an unconditional only(field) Vest suite.",
       "files": [],
       "expectations": [
-        "Uses public API imports from 'ngx-vest-forms' and does not recommend internal src/lib paths.",
+        "Uses package-root imports from 'ngx-vest-forms'.",
         "Uses [ngModel] rather than [(ngModel)] and keeps the name attribute aligned with the bound path.",
         "Models the form with NgxDeepPartial and signal-based component state.",
         "Shows an unconditional only(field) call in the Vest suite."
@@ -16,25 +16,25 @@
     {
       "id": 2,
       "prompt": "My confirm password field only revalidates when I type in it, not when the original password changes. I’m using ngx-vest-forms with omitWhen in the suite. Should this be validationConfig or ROOT_FORM? I’d like the answer to use the builder API and any example imports should come from the library’s public package.",
-      "expected_output": "Routes to the `validation-config-builder` sub-skill guidance, explains field ownership vs form ownership, keeps the rule in the Vest suite, uses createValidationConfig from the public API, and avoids suggesting internal imports.",
+      "expected_output": "Routes to the `validation-config-builder` sub-skill guidance, explains field ownership vs form ownership, keeps the rule in the Vest suite, and uses createValidationConfig from the package root.",
       "files": [],
       "expectations": [
         "Explains that this is a field dependency timing problem better suited to validationConfig than ROOT_FORM.",
         "Keeps the validation rule in the Vest suite rather than treating validationConfig as the rule definition.",
         "Uses the createValidationConfig builder API from the public package.",
-        "Avoids internal library imports."
+        "Uses package-root imports from 'ngx-vest-forms'."
       ]
     },
     {
       "id": 3,
       "prompt": "We have our own design-system field shell and don’t want to use ngx-control-wrapper visually, but we still want ngx-vest-forms errors, warnings, aria-describedby merging, and pending-state behavior. Can you show a custom wrapper approach and please avoid private library imports because this is for consumers of the package?",
-      "expected_output": "Routes to the `custom-wrapper-patterns` sub-skill guidance, prefers FormErrorControlDirective or FormErrorDisplayDirective from the public API, preserves ARIA behavior, mentions createDebouncedPendingState when appropriate, and does not use src/lib imports.",
+      "expected_output": "Routes to the `custom-wrapper-patterns` sub-skill guidance, prefers FormErrorControlDirective or FormErrorDisplayDirective from the package root, preserves ARIA behavior, and mentions createDebouncedPendingState when appropriate.",
       "files": [],
       "expectations": [
         "Recommends a custom wrapper approach using public API directives such as FormErrorControlDirective or FormErrorDisplayDirective.",
         "Preserves ARIA behavior such as aria-describedby merging or equivalent accessible message association.",
         "Mentions pending-state handling such as createDebouncedPendingState when it fits the use case.",
-        "Avoids internal src/lib imports."
+        "Uses package-root imports from 'ngx-vest-forms'."
       ]
     },
     {
@@ -59,7 +59,7 @@
         "Keeps draft persistence separate from validation and does not gate draft auto-save on event.pending.",
         "Pairs dependent revalidation with validationConfig and on-blur wrapper display modes for quiet dependent errors.",
         "Avoids using triggerFormValidation from blur handlers to force this UX.",
-        "Anchors the answer to the repo’s canonical blur-save guidance by mentioning docs/AUTO-SAVE-ON-BLUR.md or the /auto-save-demo example."
+        "Anchors the answer to documented blur-save guidance by mentioning docs/AUTO-SAVE-ON-BLUR.md or the /auto-save-demo example."
       ]
     }
   ]

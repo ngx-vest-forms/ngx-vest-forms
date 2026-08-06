@@ -15,18 +15,24 @@
     },
     {
       "id": 3,
-      "prompt": "How do I do async username availability checks in Vest 5.4 without stale requests, and where should warn() and done() go if I also want password strength warnings?",
-      "expected_output": "Routes to async and warnings guidance, uses AbortSignal in async tests, keeps warn() synchronous at the top of the test body, and explains that done() must not be registered conditionally.",
+      "prompt": "My multi-step Vest 5.4 form needs per-step status, repeatable phone-number fields, and typed field names. Which result APIs and suite patterns should I use?",
+      "expected_output": "Routes to results-groups-and-types guidance, uses named groups only when group-specific results are needed, gives each dynamic test a stable key, and uses typed suite helpers or result access where field names must be constrained.",
       "files": []
     },
     {
       "id": 4,
+      "prompt": "How do I do async username availability checks in Vest 5.4 without stale requests? I only know whether to warn after awaiting the server result, and I need a callback when validation finishes.",
+      "expected_output": "Routes to async-and-warnings guidance, uses AbortSignal in async tests, obtains useWarn() before await when warning severity is decided asynchronously, and registers done() unconditionally.",
+      "files": []
+    },
+    {
+      "id": 5,
       "prompt": "We keep repeating the same age and address shape checks across several Vest 5.4 suites. Should I use enforce.condition, enforce.extend, or compose to make this reusable, and how do I type the custom matcher?",
       "expected_output": "Routes to enforce-and-custom-rules guidance, distinguishes one-off condition logic from extend and compose, and includes TypeScript matcher declaration guidance.",
       "files": []
     },
     {
-      "id": 5,
+      "id": 6,
       "prompt": "I'm using Vest 5.4 in a Node API to validate request bodies. Should I keep one shared suite instance, reset it every request, or use staticSuite, and which mode fits fast-fail validation?",
       "expected_output": "Routes to server-side-validation guidance, prefers staticSuite for request isolation, explains reset as a fallback, and recommends execution mode based on fast-fail versus full error needs.",
       "files": []

@@ -91,7 +91,7 @@ When answering:
 
 ## References to consult when needed
 
-- `../../../instructions/vest.instructions.md`
+- `../SKILL.md`
 - `https://vestjs.dev/docs/5.x/writing_your_suite/accessing_the_result`
 - `https://vestjs.dev/docs/5.x/writing_your_suite/execution_modes`
 - `https://vestjs.dev/docs/5.x/writing_tests/advanced_test_features/grouping_tests`

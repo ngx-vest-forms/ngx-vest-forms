@@ -719,7 +719,7 @@ For working with field paths at runtime, see:
 - [Validation Config Builder](./VALIDATION-CONFIG-BUILDER.md) - Fluent API for validation configuration
 - [Validation Config vs Root Form](./VALIDATION-CONFIG-VS-ROOT-FORM.md) - When to use each approach
 - [Vest.js Instructions](../.github/instructions/vest.instructions.md) - Best practices for Vest.js
-- [ngx-vest-forms Instructions](../.github/instructions/ngx-vest-forms.instructions.md) - Complete library guide
+- [ngx-vest-forms skill](../.agents/skills/ngx-vest-forms/SKILL.md) - Library workflows and shared invariants
 - [Migration Guide (v1.x → v2.0.0)](./migration/MIGRATION-v1.x-to-v2.0.0.md) - Upgrading to v2.0.0
 - [Selector Prefix Migration Guide](./SELECTOR-PREFIX-MIGRATION.md)
 
