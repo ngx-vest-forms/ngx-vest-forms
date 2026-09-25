@@ -32,15 +32,14 @@ description so a reviewer can redirect if needed.
 
 ## Version baseline
 
-- Angular framework packages: `21.2.5`
-- Angular CLI/build tooling: `21.2.3`
-- TypeScript: `~6.0.2`
+- Angular framework packages: `21.2.11`
+- Angular CLI/build tooling: `21.2.9`
+- TypeScript: `~5.9.3`
 - Node.js: `>=22.0.0`
 - RxJS: `~7.8.2`
 - Vest.js: `~5.4.6`
-- Vitest: `^4.1.1`
-- Playwright: `1.58.2`
-- Storybook: `10.3.3`
+- Vitest: `^4.1.5`
+- Playwright: `1.59.1`
 
 Do not suggest code that depends on newer language or framework features than these versions support.
 

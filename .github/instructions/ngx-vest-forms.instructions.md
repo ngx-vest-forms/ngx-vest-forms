@@ -1,5 +1,5 @@
 ---
-description: ngx-vest-forms v2.0 - Angular Template-Driven Forms with Vest.js validation
+description: ngx-vest-forms v2.7 - Angular Template-Driven Forms with Vest.js validation
 applyTo: '**/*.ts, **/*.html'
 ---
 
@@ -9,7 +9,7 @@ Use this file as the **always-on guardrail sheet** for ngx-vest-forms.
 Keep detailed examples and feature-specific workflows in the docs and the
 `.agents/skills/ngx-vest-forms/` workflow sub-skills.
 
-> **v2.0** | Angular 21+ | Vest.js 5.x | See `vest.instructions.md` for deeper Vest validation patterns.
+> **v2.7** | Angular >=19 | Vest.js 5.x | See `vest.instructions.md` for deeper Vest validation patterns.
 
 ## Non-negotiable rules
 
