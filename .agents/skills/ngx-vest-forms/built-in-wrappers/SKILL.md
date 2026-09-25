@@ -89,7 +89,3 @@ When answering:
 - `../../../../README.md`
 
 Treat the repo instruction file as the baseline wrapper invariant sheet. Use this skill when the user needs wrapper selection, display-mode guidance, or ARIA association advice.
-
-## Fast heuristic
-
-If the user says “wrapper”, “inline errors”, “group-level errors”, or “which wrapper should I use?”, this skill should trigger.

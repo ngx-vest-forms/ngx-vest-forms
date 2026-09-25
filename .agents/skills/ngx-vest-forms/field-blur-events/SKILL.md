@@ -137,7 +137,3 @@ When answering the user:
 - `../../../../projects/ngx-vest-forms/src/public-api.ts`
 
 Use the auto-save demo as the canonical repo example for blur-driven persistence and quiet dependent validation.
-
-## Fast heuristic
-
-If the user says “save on blur”, “draft auto-save”, “persist on blur”, “fieldBlur”, “blur analytics”, or “save the latest draft when a field loses focus”, this skill should trigger.

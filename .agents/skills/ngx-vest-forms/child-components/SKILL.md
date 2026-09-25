@@ -79,7 +79,3 @@ When answering:
 - `../../../../projects/ngx-vest-forms/src/public-api.ts`
 
 Treat the repo instruction file as the invariant layer. Use this skill for parent/child path coordination, `vestFormsViewProviders`, and nested section design.
-
-## Fast heuristic
-
-If the user says “split this form”, “reusable section”, “child component”, “nested ngModelGroup”, or “why does the child not see the form?”, trigger this skill.
