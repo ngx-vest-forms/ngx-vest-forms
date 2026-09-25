@@ -3,8 +3,8 @@ description: Tailwind CSS v4 usage rules for styling (2025 best practices)
 applyTo: 'projects/examples/**/*.{html,js,jsx,ts,tsx,css,scss,sass,md,mdx}'
 ---
 
-## Project Setup (Tailwind CSS v4.1.17)
-- This project uses **Tailwind CSS v4.1.17** with the new CSS-first configuration approach
+## Project Setup (Tailwind CSS v4)
+- This project uses **Tailwind CSS 4** (exact version in `package.json`) with the new CSS-first configuration approach
 - PostCSS plugin: `@tailwindcss/postcss` (configured in `.postcssrc.json`)
 - Angular 21's built-in PostCSS support processes Tailwind automatically
 - Theme configuration is in CSS `@theme` blocks (see `projects/examples/src/styles.scss`)
@@ -51,7 +51,7 @@ applyTo: 'projects/examples/**/*.{html,js,jsx,ts,tsx,css,scss,sass,md,mdx}'
 
 ## Components (TypeScript/JavaScript)
 - Prefer TypeScript over JavaScript for component files to ensure type safety when applying Tailwind classes
-- **NEVER** use template literals for dynamic class names (e.g., `` `p-${padding}` ``) - Tailwind cannot detect interpolated strings at build time
+- Do not use template literals for dynamic class names (e.g., `` `p-${padding}` ``) - Tailwind cannot detect interpolated strings at build time
 - Instead, use static lookup objects that map keys to complete class strings:
   ```typescript
   // ✅ CORRECT: Static class strings in lookup objects
@@ -75,12 +75,10 @@ applyTo: 'projects/examples/**/*.{html,js,jsx,ts,tsx,css,scss,sass,md,mdx}'
 - All Tailwind class names must appear as complete, static strings somewhere in your source code
 - Use TypeScript union types to constrain valid keys: `padding: 'small' | 'medium' | 'large'`
 - Integrate Tailwind with modern frameworks by applying utilities in component logic
-- Favor functional components over class-based ones in frameworks like React
 
 ## Project-Wide Systems
 - Leverage the Oxide engine's fast build times for performance optimization
 - Avoid manual content configuration unless explicitly required
 - Maintain consistency by using theme variables defined in CSS configuration files
 - Reference theme variables in both utility classes and custom CSS (e.g., `text-[--color-primary]`)
-- Update rules regularly to reflect Tailwind v4's evolving feature set
 - Be aware of deprecated options from v3.x like `text-opacity`

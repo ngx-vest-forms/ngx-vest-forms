@@ -72,12 +72,6 @@ only(field ?? false);      // ✅ Explicit fallback
 only(condition ? 'email' : false); // ✅ Conditional argument, not call
 ```
 
-> **Critical Rule**: `only()`, `skip()`, and `.done()` must **NEVER** be called conditionally. The function call itself must always execute - only the *arguments* can be conditional. Vest relies on consistent function execution to detect changes between runs. Conditional calls break this detection mechanism, causing unpredictable behavior with async tests, subscriptions, and memoization.
->
-> **Vest.js Official Warning**: "skip() and only() should not be called conditionally - i.e. inside of an if statement. Vest relies on the consistent execution of these functions in the suite to detect changes between runs."
->
-> Source: [Vest.js - Skip and Only](https://vestjs.dev/docs/writing_your_suite/including_and_excluding/skip_and_only)
-
 ## TypeScript Support
 
 ```typescript
@@ -307,63 +301,6 @@ export const contactSuite = staticSuite((model, field?: string) => {
 });
 ```
 
-## Common Mistakes
-
-### ❌ Mistake #1: Calling `only()`, `skip()`, or `.done()` Conditionally
-
-```typescript
-// ❌ WRONG - Breaks Vest's change detection!
-if (field) {
-  only(field); // Conditional call breaks consistent execution
-}
-
-// ✅ CORRECT - Always call unconditionally
-only(field); // Safe: only(undefined) runs all tests
-```
-
-> **Vest.js Official Warning**: "skip() and only() should not be called conditionally - i.e. inside of an if statement."
-
-### ❌ Mistake #2: Maintaining Separate Touch State
-
-```typescript
-// ❌ WRONG - Duplicate state management
-const [dirty, setDirty] = useState({});
-const showError = dirty.email && result.hasErrors('email');
-
-// ✅ CORRECT - Use Vest's isTested()
-const showError = result.isTested('email') && result.hasErrors('email');
-```
-
-### ❌ Mistake #3: Not Respecting AbortSignal
-
-```typescript
-// ❌ WRONG - Request not cancelled
-test('username', 'Taken', async () => {
-  await fetch('/check-username');
-});
-
-// ✅ CORRECT - Cancellable
-test('username', 'Taken', async ({ signal }) => {
-  await fetch('/check-username', { signal });
-});
-```
-
-### ❌ Mistake #4: Missing skipWhen for Expensive Checks
-
-```typescript
-// ❌ WRONG - Runs even when email is invalid
-test('email', 'Taken', async () => {
-  await checkEmailAvailability(data.email);
-});
-
-// ✅ CORRECT - Skip until email format is valid
-skipWhen(res => res.hasErrors('email'), () => {
-  test('email', 'Taken', async ({ signal }) => {
-    await checkEmailAvailability(data.email, { signal });
-  });
-});
-```
-
 ## Performance Checklist
 
 - Use `only(field)` in every suite to avoid whole-form re-validation on keystrokes
@@ -397,5 +334,6 @@ export async function validatePayload(payload: unknown) {
 - Dirty checking: https://vestjs.dev/docs/writing_your_suite/dirty_checking#why-istested-is-a-better-alternative
 - Execution modes: https://vestjs.dev/docs/writing_your_suite/execution_modes
 - skipWhen vs omitWhen: https://vestjs.dev/docs/writing_your_suite/including_and_excluding/skipWhen
+- Skip and only: https://vestjs.dev/docs/writing_your_suite/including_and_excluding/skip_and_only
 
 > Generate code with accessibility in mind: tie error text to inputs via `aria-describedby`, keep focus management predictable, and expose warnings without blocking keyboard flows.
