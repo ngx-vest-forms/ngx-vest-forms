@@ -1,6 +1,6 @@
 ---
 name: composite-adapter
-description: "Helps developers build composite adapter components that map one UI widget to multiple flat form model fields in ngx-vest-forms. Use this whenever the user mentions date range pickers, name splitters, address composites, multi-field adapters, hidden proxy fields, fan-out with `setValueAtPath`, error aggregation across fields, or asks how to wire a single control to several `ngModel` paths without `ControlValueAccessor`."
+description: 'Helps developers build composite adapter components that map one UI widget to multiple flat form model fields in ngx-vest-forms. Use this whenever the user mentions date range pickers, name splitters, address composites, multi-field adapters, hidden proxy fields, fan-out with `setValueAtPath`, error aggregation across fields, or asks how to wire a single control to several `ngModel` paths without `ControlValueAccessor`.'
 ---
 
 # ngx-vest-forms composite adapter guidance
@@ -29,14 +29,22 @@ If fields can have independent labels, wrap each in its own `<ngx-control-wrappe
 <div class="grid grid-cols-2 gap-6">
   <ngx-control-wrapper>
     <label for="departureDate">Departure Date</label>
-    <input id="departureDate" type="date" name="departureDate"
-           [ngModel]="formValue().departureDate" />
+    <input
+      id="departureDate"
+      type="date"
+      name="departureDate"
+      [ngModel]="formValue().departureDate"
+    />
   </ngx-control-wrapper>
 
   <ngx-control-wrapper>
     <label for="returnDate">Return Date</label>
-    <input id="returnDate" type="date" name="returnDate"
-           [ngModel]="formValue().returnDate" />
+    <input
+      id="returnDate"
+      type="date"
+      name="returnDate"
+      [ngModel]="formValue().returnDate"
+    />
   </ngx-control-wrapper>
 </div>
 ```
@@ -85,8 +93,9 @@ export const travelValidationSuite = staticSuite(
 
     omitWhen(!model.departureDate || !model.returnDate, () => {
       test('returnDate', 'Return date must be after departure', () => {
-        enforce(new Date(model.returnDate!).getTime())
-          .greaterThan(new Date(model.departureDate!).getTime());
+        enforce(new Date(model.returnDate!).getTime()).greaterThan(
+          new Date(model.departureDate!).getTime()
+        );
       });
     });
   }
@@ -115,7 +124,11 @@ Register each real field path via hidden `<input>` elements so the Angular form 
 
 ```html
 <!-- Hidden proxy fields: register real field paths in the form tree -->
-<input type="hidden" name="departureDate" [ngModel]="formValue().departureDate" />
+<input
+  type="hidden"
+  name="departureDate"
+  [ngModel]="formValue().departureDate"
+/>
 <input type="hidden" name="returnDate" [ngModel]="formValue().returnDate" />
 
 <!-- Adapter component receives per-field errors/warnings -->
@@ -288,12 +301,12 @@ If your composite can be decomposed into completely independent labeled fields, 
 
 ## When to reach for something else
 
-| Situation | Better approach |
-|-----------|----------------|
-| Fields are independent and can have separate labels | Individual `<ngx-control-wrapper>` per field **(Recommended)** |
-| Composite is a reusable design-system primitive | `ControlValueAccessor` |
-| Error belongs to the whole form, not to specific fields | `ROOT_FORM` + `ngxValidateRootForm` |
-| Fields share a common path prefix | `ngModelGroup` + `<ngx-form-group-wrapper>` |
+| Situation                                               | Better approach                                                |
+| ------------------------------------------------------- | -------------------------------------------------------------- |
+| Fields are independent and can have separate labels     | Individual `<ngx-control-wrapper>` per field **(Recommended)** |
+| Composite is a reusable design-system primitive         | `ControlValueAccessor`                                         |
+| Error belongs to the whole form, not to specific fields | `ROOT_FORM` + `ngxValidateRootForm`                            |
+| Fields share a common path prefix                       | `ngModelGroup` + `<ngx-form-group-wrapper>`                    |
 
 ## Repo references to consult when needed
 
@@ -303,6 +316,6 @@ If your composite can be decomposed into completely independent labeled fields, 
 - `../../../../docs/VALIDATION-CONFIG-BUILDER.md`
 - `../../../../docs/CUSTOM-CONTROL-WRAPPERS.md`
 
-## Fast heuristic
+## Default recommendation
 
-If the user says "one control, multiple fields", "date range", "name splitter", "composite adapter", "hidden proxy", or "fan-out", this skill should trigger. Always recommend split wrappers first, then offer the composite adapter if split wrappers are not feasible.
+Recommend split wrappers first. Offer the composite adapter only when split wrappers are not feasible.

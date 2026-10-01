@@ -98,7 +98,3 @@ When answering:
 Treat the repo instruction file as the invariant layer. Use this skill for hostDirectives composition, stable ARIA behavior, and custom presentation decisions.
 
 Start with `references/patterns.md` when the user is choosing between `FormErrorDisplayDirective` and `FormErrorControlDirective`, or when the wrapper’s ARIA behavior is the main risk.
-
-## Fast heuristic
-
-If the user says “custom wrapper”, “design system”, “hostDirectives”, “FormErrorDisplayDirective”, or “I want the same validation behavior with my own UI”, trigger this skill.

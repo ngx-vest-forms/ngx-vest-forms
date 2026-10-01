@@ -86,7 +86,7 @@ When answering:
 - explain why the rule is form-level
 - show both the suite snippet and the template summary snippet
 - mention when `'submit'` is safer than `'live'`
-- explicitly say when the user should *not* use `ROOT_FORM`
+- explicitly say when the user should _not_ use `ROOT_FORM`
 
 ## Repo references to consult when needed
 
@@ -96,7 +96,3 @@ When answering:
 - `../../../../projects/ngx-vest-forms/src/public-api.ts`
 
 Treat the repo instruction file as the baseline. Use this skill for the field-vs-form ownership decision and form-summary behavior.
-
-## Fast heuristic
-
-If the user asks for a message at the top or bottom of the form that reflects several fields together, this skill should probably trigger.

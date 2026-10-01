@@ -86,6 +86,6 @@ Treat the repo instruction file as the invariant layer. Use this skill for dynam
 
 Start with `references/decision-guide.md` when the user is unsure whether a layout change actually needs field clearing or `triggerFormValidation()`.
 
-## Fast heuristic
+## Related skill
 
-If the user says “conditional form”, “hide this field”, “replace this section with text”, “clear hidden values”, or “triggerFormValidation”, this skill should trigger. If they say “save on blur” or “draft auto-save”, route to the field-blur-events skill instead unless a real structure-change problem is also present.
+For save-on-blur or draft auto-save, use the field-blur-events skill unless a real structure-change problem is also present.
