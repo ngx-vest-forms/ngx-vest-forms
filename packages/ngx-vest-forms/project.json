@@ -28,7 +28,7 @@
         "runnerConfig": "vitest.config.ts"
       }
     },
-    "lint": {
+    "lint-templates": {
       "executor": "@angular-eslint/builder:lint",
       "options": {
         "lintFilePatterns": [

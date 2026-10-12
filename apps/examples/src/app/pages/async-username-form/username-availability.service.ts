@@ -24,6 +24,6 @@ export class UsernameAvailabilityService {
         username: string;
         available: boolean;
       }>(`${this.baseUrl}/${encodeURIComponent(name)}`)
-      .pipe(map((res) => res.available === false));
+      .pipe(map((res) => !res.available));
   }
 }

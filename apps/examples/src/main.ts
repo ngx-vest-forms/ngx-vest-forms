@@ -13,7 +13,7 @@ import { AppComponent } from './app/app.component';
 import { mockPeopleApiInterceptor } from './app/services/mock-people-api.interceptor';
 import { toAppRoutes } from './app/shared/routes.metadata';
 
-bootstrapApplication(AppComponent, {
+void bootstrapApplication(AppComponent, {
   providers: [
     provideHttpClient(withInterceptors([mockPeopleApiInterceptor])),
     provideEnvironmentNgxMask({ validation: false }),

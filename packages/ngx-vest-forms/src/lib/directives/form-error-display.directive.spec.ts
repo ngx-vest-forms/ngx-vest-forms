@@ -413,7 +413,7 @@ describe('FormErrorDisplayDirective', () => {
   }
 
   it('should work as a host directive', async () => {
-    TestBed.resetTestingModule()
+    await TestBed.resetTestingModule()
       .configureTestingModule({
         imports: [HostFieldComponent, FormsModule],
       })
