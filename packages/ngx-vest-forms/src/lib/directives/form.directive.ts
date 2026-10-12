@@ -1238,8 +1238,8 @@ export class FormDirective<T extends Record<string, unknown>> {
     this.suite()?.resetField(field);
 
     // Clear warnings for this field
-    this.fieldWarnings.update((map) => {
-      const newMap = new Map(map);
+    this.fieldWarnings.update((warningsMap) => {
+      const newMap = new Map(warningsMap);
       newMap.delete(field);
       return newMap;
     });
@@ -1297,8 +1297,8 @@ export class FormDirective<T extends Record<string, unknown>> {
     this.suite()?.remove(field);
 
     // Clear warnings for this field
-    this.fieldWarnings.update((map) => {
-      const newMap = new Map(map);
+    this.fieldWarnings.update((warningsMap) => {
+      const newMap = new Map(warningsMap);
       newMap.delete(field);
       return newMap;
     });
@@ -1332,7 +1332,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       setValueAtPath(snapshot as object, field, control.value);
 
       const focus: NgxSuiteFocusSpec = {
-        ...(this.validationFocus() ?? {}),
+        ...this.validationFocus(),
         only: field,
       };
 
@@ -1349,8 +1349,8 @@ export class FormDirective<T extends Record<string, unknown>> {
           // Store warnings in the fieldWarnings signal for access by control wrappers.
           // This is necessary because Angular marks a field as invalid when control.errors !== null.
           // By storing warnings separately, fields can remain valid while still displaying warnings.
-          this.fieldWarnings.update((map) => {
-            const newMap = new Map(map);
+          this.fieldWarnings.update((warningsMap) => {
+            const newMap = new Map(warningsMap);
             if (warnings?.length) {
               newMap.set(field, warnings);
             } else {

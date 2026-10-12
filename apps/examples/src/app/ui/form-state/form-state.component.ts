@@ -367,12 +367,14 @@ export class FormStateCardComponent {
    * Convert a `MessageInput` to a field-keyed Record.
    * Flat arrays are stored under a synthetic `_flat` key.
    */
-  #toRecord(input: MessageInput | null): Record<string, string[]> {
-    if (input === null) return {};
-    if (Array.isArray(input)) {
-      return input.length > 0 ? { _flat: [...input] as string[] } : {};
+  #toRecord(messageInput: MessageInput | null): Record<string, string[]> {
+    if (messageInput === null) return {};
+    if (Array.isArray(messageInput)) {
+      return messageInput.length > 0
+        ? { _flat: [...messageInput] as string[] }
+        : {};
     }
-    return input as Record<string, string[]>;
+    return messageInput as Record<string, string[]>;
   }
 
   /**
@@ -501,10 +503,10 @@ export class FormStateCardComponent {
    * Normalise a `MessageInput` into a flat string array.
    * Used for `info` messages which have no resolved-tracking.
    */
-  #normalizeMessages(input: MessageInput | null): readonly string[] {
-    if (input === null) return [];
-    if (Array.isArray(input)) return input;
-    return this.#flattenRecord(input as Record<string, string[]>);
+  #normalizeMessages(messageInput: MessageInput | null): readonly string[] {
+    if (messageInput === null) return [];
+    if (Array.isArray(messageInput)) return messageInput;
+    return this.#flattenRecord(messageInput as Record<string, string[]>);
   }
 
   #toUnique(messages: readonly string[]): string[] {
