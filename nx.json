@@ -10,6 +10,10 @@
       "cache": true,
       "inputs": ["default", "^production"]
     },
+    "test-browser": {
+      "cache": true,
+      "inputs": ["default", "^production"]
+    },
     "lint": {
       "cache": true,
       "inputs": ["...", "^production", "{workspaceRoot}/oxlint.config.ts"]

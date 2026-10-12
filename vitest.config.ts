@@ -3,6 +3,7 @@ import angular from '@analogjs/vite-plugin-angular';
 
 import { resolve } from 'path';
 import { defineConfig } from 'vite';
+import { defaultExclude } from 'vitest/config';
 
 export default defineConfig(({ mode }) => ({
   plugins: [angular()],
@@ -38,6 +39,8 @@ export default defineConfig(({ mode }) => ({
     globals: true,
     isolate: true,
     environment: 'jsdom',
+    // *.browser.spec.ts belongs to `vitest.browser.config.ts` (Browser Mode).
+    exclude: [...defaultExclude, '**/*.browser.spec.ts'],
     setupFiles: ['packages/ngx-vest-forms/src/test-setup.ts'],
     reporters: ['default'],
     coverage: {
