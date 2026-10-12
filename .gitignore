@@ -62,7 +62,7 @@ Thumbs.db
 /playwright/.cache/
 
 # Vitest
-/.vitest-attachments/
+/.vitest/
 
 # Git worktrees
 /.worktrees/
