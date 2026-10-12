@@ -4,7 +4,8 @@
     "angular-developer": {
       "source": "angular/skills",
       "sourceType": "github",
-      "computedHash": "b7764c591c965d85f95f1d4f6d3620b6ab92a1b1fedbcdead7d59e946fc3fd2e"
+      "skillPath": "angular-developer/SKILL.md",
+      "computedHash": "ded1e95fb8d75d60901201665c6ab7e348eec3b79a6c53824c4a30a487d99f58"
     }
   }
 }

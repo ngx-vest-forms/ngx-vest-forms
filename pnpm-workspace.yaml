@@ -1,0 +1,23 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+minimumReleaseAgeExclude:
+minimumReleaseAge: 1440 # minutes (24h)
+minimumReleaseAgeStrict: true
+minimumReleaseAgeIgnoreMissingTime: false
+trustPolicy: no-downgrade
+overrides:
+  '@jridgewell/sourcemap-codec': 1.6.0
+  chokidar: 4.0.1
+  detect-port: 1.6.0
+  semver: 7.7.1
+strictDepBuilds: true
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true
+  fsevents: true
+  less: false
+  lmdb: false
+  msgpackr-extract: false
+  nx: true

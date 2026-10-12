@@ -1,0 +1,243 @@
+import { describe, expect, expectTypeOf, it } from 'vitest';
+import { NgxDeepPartial } from './deep-partial';
+
+describe('NgxDeepPartial', () => {
+  it('should correctly handle nested objects', () => {
+    type MyType = {
+      a: string;
+      b: {
+        c: number;
+        d: boolean;
+      };
+    };
+
+    const partial: NgxDeepPartial<MyType> = {
+      b: {
+        c: 123,
+      },
+    };
+
+    expect(partial).toBeDefined();
+    expect(partial.b).toBeDefined();
+    expect(partial.b?.c).toBe(123);
+  });
+
+  it('should correctly handle arrays', () => {
+    type MyType = {
+      items: string[];
+    };
+
+    const partial: NgxDeepPartial<MyType> = {
+      items: ['one', 'two'],
+    };
+
+    expect(partial).toBeDefined();
+    expect(partial.items).toEqual(['one', 'two']);
+  });
+
+  it('should correctly handle arrays of objects', () => {
+    type MyType = {
+      users: {
+        name: string;
+        email: string;
+      }[];
+    };
+
+    const partial: NgxDeepPartial<MyType> = {
+      users: [
+        {
+          name: 'Alice',
+        },
+      ],
+    };
+
+    expect(partial).toBeDefined();
+    expect(partial.users?.[0]?.name).toBe('Alice');
+    expect(partial.users?.[0]?.email).toBeUndefined();
+  });
+
+  it('should allow all properties to be optional', () => {
+    type MyType = {
+      required: string;
+      nested: {
+        alsoRequired: number;
+      };
+    };
+
+    // All properties are optional with NgxDeepPartial
+    const empty: NgxDeepPartial<MyType> = {};
+    const onlyNested: NgxDeepPartial<MyType> = {
+      nested: {},
+    };
+
+    expect(empty).toBeDefined();
+    expect(onlyNested).toBeDefined();
+    expect(onlyNested.nested).toEqual({});
+  });
+
+  it('should handle deeply nested structures', () => {
+    type MyType = {
+      level1: {
+        level2: {
+          level3: {
+            value: string;
+          };
+        };
+      };
+    };
+
+    const partial: NgxDeepPartial<MyType> = {
+      level1: {
+        level2: {
+          level3: {
+            value: 'deep',
+          },
+        },
+      },
+    };
+
+    expect(partial.level1?.level2?.level3?.value).toBe('deep');
+  });
+
+  it('should handle readonly arrays', () => {
+    type MyType = {
+      readonlyItems: readonly string[];
+    };
+
+    const partial: NgxDeepPartial<MyType> = {
+      readonlyItems: ['one', 'two'],
+    };
+
+    expect(partial.readonlyItems).toEqual(['one', 'two']);
+  });
+
+  it('should preserve primitive types', () => {
+    type MyType = {
+      str: string;
+      num: number;
+      bool: boolean;
+      date: Date;
+    };
+
+    const partial: NgxDeepPartial<MyType> = {
+      str: 'test',
+      num: 42,
+      bool: true,
+      date: new Date('2025-01-01'),
+    };
+
+    expect(partial.str).toBe('test');
+    expect(partial.num).toBe(42);
+    expect(partial.bool).toBe(true);
+    expect(partial.date).toEqual(new Date('2025-01-01'));
+  });
+
+  it('should handle mixed nested structures with arrays and objects', () => {
+    type MyType = {
+      users: {
+        profile: {
+          name: string;
+          contacts: {
+            type: string;
+            value: string;
+          }[];
+        };
+      }[];
+    };
+
+    const partial: NgxDeepPartial<MyType> = {
+      users: [
+        {
+          profile: {
+            contacts: [
+              {
+                type: 'email',
+              },
+            ],
+          },
+        },
+      ],
+    };
+
+    expect(partial.users?.[0]?.profile?.contacts?.[0]?.type).toBe('email');
+    expect(partial.users?.[0]?.profile?.contacts?.[0]?.value).toBeUndefined();
+    expect(partial.users?.[0]?.profile?.name).toBeUndefined();
+  });
+
+  it('should allow partial properties at any nesting level', () => {
+    type FormModel = {
+      generalInfo: {
+        firstName: string;
+        lastName: string;
+      };
+      addresses: {
+        billing: {
+          street: string;
+          city: string;
+        };
+        shipping: {
+          street: string;
+          city: string;
+        };
+      };
+    };
+
+    // This is typical for template-driven forms that build incrementally
+    const step1: NgxDeepPartial<FormModel> = {
+      generalInfo: {
+        firstName: 'John',
+      },
+    };
+
+    const step2: NgxDeepPartial<FormModel> = {
+      ...step1,
+      generalInfo: {
+        ...step1.generalInfo,
+        lastName: 'Doe',
+      },
+    };
+
+    const step3: NgxDeepPartial<FormModel> = {
+      ...step2,
+      addresses: {
+        billing: {
+          street: '123 Main St',
+        },
+      },
+    };
+
+    expect(step1.generalInfo?.firstName).toBe('John');
+    expect(step2.generalInfo?.lastName).toBe('Doe');
+    expect(step3.addresses?.billing?.street).toBe('123 Main St');
+    expect(step3.addresses?.billing?.city).toBeUndefined();
+  });
+
+  it('should preserve tuple arity and per-position element types', () => {
+    type MyType = {
+      range: [number, number];
+      point: readonly [number, string];
+    };
+    type PartialType = NgxDeepPartial<MyType>;
+
+    // A 2-tuple stays a 2-tuple (with optional positions), not `number[]`.
+    expectTypeOf<PartialType['range']>().toEqualTypeOf<
+      [number?, number?] | undefined
+    >();
+    expectTypeOf<PartialType['point']>().toEqualTypeOf<
+      readonly [number?, string?] | undefined
+    >();
+
+    const valid: PartialType = { range: [1, 2] };
+    const partiallyFilled: PartialType = { range: [1] };
+    expect(valid.range).toEqual([1, 2]);
+    expect(partiallyFilled.range).toEqual([1]);
+
+    // @ts-expect-error a 5-element array is not assignable to a 2-tuple
+    const tooLong: PartialType = { range: [1, 2, 3, 4, 5] };
+    expect(tooLong).toBeDefined();
+
+    // @ts-expect-error position types are preserved (string not allowed at index 0)
+    const wrongPosition: PartialType = { point: ['x', 'y'] };
+    expect(wrongPosition).toBeDefined();
+  });
+});

@@ -11,9 +11,55 @@ The **recommended approach** for error display is to use `FormErrorDisplayDirect
 
 If the default `ngx-control-wrapper` doesn't meet your design requirements, you can easily create your own custom wrapper component using this pattern.
 
+## Choose the right level of customization
+
+Before creating a custom wrapper, decide whether you only need visual theming or a different UI structure/behavior.
+
+### Prefer CSS token overrides when
+
+- You want different colors, spacing, typography, or spinner sizing.
+- You want to align built-in wrappers with a design system theme.
+- You want to keep built-in semantics and behavior (error/warning/pending regions, ARIA behavior, debounced pending state).
+
+Both built-in wrappers expose CSS custom properties with sensible defaults:
+
+- `ngx-control-wrapper` tokens (for field-level wrappers)
+- `ngx-form-group-wrapper` tokens (for `NgModelGroup` containers)
+
+Token surface includes colors, spacing, typography, pending layout, and spinner sizing.
+See the full token list in each component's stylesheet (`control-wrapper.component.css`, `form-group-wrapper.component.css`) for complete theming options.
+
+Example:
+
+```css
+/* App/theme stylesheet */
+ngx-control-wrapper {
+  --ngx-control-wrapper-error-color: #b91c1c;
+  --ngx-control-wrapper-warning-color: #92400e;
+  --ngx-control-wrapper-message-margin-top: 0.375rem;
+  --ngx-control-wrapper-spinner-size: 0.875rem;
+}
+
+ngx-form-group-wrapper,
+[ngxFormGroupWrapper] {
+  --ngx-form-group-wrapper-error-color: #b91c1c;
+  --ngx-form-group-wrapper-warning-color: #92400e;
+  --ngx-form-group-wrapper-message-margin-top: 0.375rem;
+}
+```
+
+### Create a custom wrapper when
+
+- You need different markup/layout (tooltip/popover errors, inline icons, custom containers).
+- You need different message ordering or grouping.
+- You need framework-specific UI composition (Material/PrimeNG/etc.) beyond token-level styling.
+- You need custom ARIA wiring behavior not covered by built-ins.
+
+In those cases, build a wrapper with `FormErrorDisplayDirective` (or `FormErrorControlDirective` when you also want automatic ARIA association).
+
 ## Basic Custom Wrapper (Recommended Pattern)
 
-````typescript
+```typescript
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormErrorDisplayDirective } from 'ngx-vest-forms';
 
@@ -33,7 +79,12 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
       <ng-content />
 
       @if (errorDisplay.shouldShowErrors()) {
-        <div class="error-message" role="status" aria-live="polite" aria-atomic="true">
+        <div
+          class="error-message"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           @for (error of errorDisplay.errors(); track error) {
             <span>{{ error }}</span>
           }
@@ -41,7 +92,12 @@ import { FormErrorDisplayDirective } from 'ngx-vest-forms';
       }
 
       @if (errorDisplay.isPending()) {
-        <div class="validating" role="status" aria-live="polite" aria-atomic="true">
+        <div
+          class="validating"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           Validating...
         </div>
       }
@@ -54,6 +110,7 @@ export class CustomControlWrapperComponent {
     self: true,
   });
 }
+```
 
 ## When you want automatic ARIA wiring (recommended)
 
@@ -66,7 +123,10 @@ If you want your custom wrapper to automatically:
 
 ```ts
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { FormErrorControlDirective } from 'ngx-vest-forms';
+import {
+  FormErrorControlDirective,
+  FormErrorDisplayDirective,
+} from 'ngx-vest-forms';
 
 @Component({
   selector: 'ngx-custom-error-control',
@@ -82,15 +142,25 @@ import { FormErrorControlDirective } from 'ngx-vest-forms';
       <ng-content />
 
       <!-- Keep regions in the DOM so aria-describedby targets always exist -->
-      <div [id]="ec.errorId" role="status" aria-live="polite" aria-atomic="true">
-        @if (ec.errorDisplay.shouldShowErrors()) {
-          @for (error of ec.errorDisplay.errors(); track error) {
+      <div
+        [id]="ec.errorId"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        @if (errorDisplay.shouldShowErrors()) {
+          @for (error of errorDisplay.errors(); track error) {
             <div>{{ error }}</div>
           }
         }
       </div>
 
-      <div [id]="ec.pendingId" role="status" aria-live="polite" aria-atomic="true">
+      <div
+        [id]="ec.pendingId"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         @if (ec.showPendingMessage()) {
           <div>Validating…</div>
         }
@@ -100,8 +170,13 @@ import { FormErrorControlDirective } from 'ngx-vest-forms';
 })
 export class CustomErrorControlComponent {
   protected readonly ec = inject(FormErrorControlDirective, { self: true });
+  // FormErrorControlDirective keeps its own errorDisplay reference protected;
+  // inject the composed FormErrorDisplayDirective directly for template access.
+  protected readonly errorDisplay = inject(FormErrorDisplayDirective, {
+    self: true,
+  });
 }
-````
+```
 
 ### Choosing an ARIA association mode
 
@@ -119,7 +194,6 @@ wrapper does not stamp `aria-describedby` / `aria-invalid` onto every descendant
 
 `ariaAssociationMode="single-control"` is mainly useful when your wrapper _usually_ contains one control, but
 may sometimes contain additional focusable elements (for example, an input with an adjacent “Clear” button).
-
 
 ## ARIA Association Utilities (Public API)
 
@@ -161,8 +235,8 @@ function mergeAriaDescribedBy(
 
 // Example: Preserve consumer-provided IDs while managing wrapper IDs
 const merged = mergeAriaDescribedBy(
-  'help-text field-error',     // existing value
-  ['field-error'],             // currently active IDs
+  'help-text field-error', // existing value
+  ['field-error'], // currently active IDs
   ['field-error', 'field-warning'] // all IDs owned by wrapper
 );
 // Returns: 'help-text field-error'
@@ -182,9 +256,9 @@ function resolveAssociationTargets(
 // Example
 const controls = [inputElement, textareaElement];
 
-resolveAssociationTargets(controls, 'all-controls');    // Returns: [inputElement, textareaElement]
-resolveAssociationTargets(controls, 'single-control');  // Returns: [] (more than one control)
-resolveAssociationTargets(controls, 'none');            // Returns: []
+resolveAssociationTargets(controls, 'all-controls'); // Returns: [inputElement, textareaElement]
+resolveAssociationTargets(controls, 'single-control'); // Returns: [] (more than one control)
+resolveAssociationTargets(controls, 'none'); // Returns: []
 ```
 
 ### Use Cases

@@ -1,5 +1,7 @@
 # ValidationConfig Fluent Builder API
 
+> **Vest 6 Recommended:** `validationConfig` works seamlessly with Vest 6's `omitWhen`/`skipWhen`. These patterns ensure dependent fields revalidate when conditions change. This guide assumes Vest 6 (`suite.only(field).run(model)` pattern).
+
 The `ValidationConfigBuilder` provides a type-safe, fluent API for creating validation configuration objects. This builder simplifies the process of defining field dependencies and ensures correctness through compile-time type checking.
 
 > **💡 Critical Insight**: `validationConfig` is **essential** when using Vest.js's `omitWhen`/`skipWhen` for conditional validations. It ensures Angular re-validates dependent fields when conditions change, preventing stale validation states in dynamic forms.
@@ -52,9 +54,7 @@ When using Vest.js's `omitWhen` or `skipWhen` for conditional validations, Angul
 
 ```typescript
 // Vest validation suite with conditional logic
-export const suite = staticSuite((model, field?) => {
-  only(field);
-
+export const suite = create((model) => {
   test('country', 'Required', () => {
     enforce(model.country).isNotBlank();
   });
@@ -677,20 +677,23 @@ createValidationConfig<FormModel>()
 For very large forms, consider extracting configuration builders into separate functions:
 
 ```typescript
-function createAuthConfig<T>() {
-  return createValidationConfig<T>()
+// Write the helpers against the concrete model type: field paths are
+// validated against FormModel at compile time. (An unconstrained generic
+// <T> would make FieldPath<T> unresolvable and reject every field name.)
+function createAuthConfig() {
+  return createValidationConfig<FormModel>()
     .bidirectional('password', 'confirmPassword')
     .whenChanged('password', 'securityScore');
 }
 
-function createAddressConfig<T>() {
-  return createValidationConfig<T>()
+function createAddressConfig() {
+  return createValidationConfig<FormModel>()
     .whenChanged('country', ['state', 'zipCode'])
     .group(['street', 'city', 'zipCode']);
 }
 
-protected readonly validationConfig = createAuthConfig<FormModel>()
-  .merge(createAddressConfig<FormModel>().build())
+protected readonly validationConfig = createAuthConfig()
+  .merge(createAddressConfig().build())
   .build();
 ```
 
@@ -748,11 +751,16 @@ The validation config respects the debounce token configuration:
 
 ```typescript
 // ngx-level debounce configuration
+import {
+  NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
+  NGX_VALIDATION_DEBOUNCE_PRESETS,
+} from 'ngx-vest-forms';
+
 bootstrapApplication(AppComponent, {
   providers: [
     {
       provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
-      useValue: 150, // ms
+      useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.relaxed,
     },
   ],
 });

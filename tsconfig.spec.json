@@ -15,6 +15,6 @@
       "@vitest/browser-playwright"
     ]
   },
-  "files": ["projects/ngx-vest-forms/src/test-setup.ts"],
+  "files": ["packages/ngx-vest-forms/src/test-setup.ts"],
   "include": ["**/*.spec.ts", "**/*.d.ts", "**/*.test.ts", "vitest.config.ts"]
 }

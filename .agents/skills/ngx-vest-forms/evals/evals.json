@@ -4,13 +4,13 @@
     {
       "id": 1,
       "prompt": "I’m adding ngx-vest-forms to a small Angular 21 app and want the most idiomatic first example for a profile form with first name, last name, and email. Please show the component and template using signals, explain whether I should use [ngModel] or [(ngModel)], and keep the imports on the public API only.",
-      "expected_output": "Routes to the `core` sub-skill guidance, uses public API imports from 'ngx-vest-forms', models the form with NgxDeepPartial, uses [ngModel] with matching name paths, and includes an unconditional only(field) Vest suite.",
+      "expected_output": "Routes to the `core` sub-skill guidance, uses public API imports from 'ngx-vest-forms', models the form with NgxDeepPartial, uses [ngModel] with matching name paths, and uses a model-only Vest 6 suite with call-site focus when relevant.",
       "files": [],
       "expectations": [
         "Uses public API imports from 'ngx-vest-forms' and does not recommend internal src/lib paths.",
         "Uses [ngModel] rather than [(ngModel)] and keeps the name attribute aligned with the bound path.",
         "Models the form with NgxDeepPartial and signal-based component state.",
-        "Shows an unconditional only(field) call in the Vest suite."
+        "Shows a model-only Vest 6 suite and avoids putting only(field) inside the suite callback."
       ]
     },
     {

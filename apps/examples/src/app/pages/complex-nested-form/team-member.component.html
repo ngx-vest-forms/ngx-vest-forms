@@ -1,0 +1,41 @@
+<div class="form-grid">
+  <ngx-control-wrapper class="form-field form-grid-full">
+    <label class="label-text" [attr.for]="fieldIds().fullName">Full name</label>
+    <input
+      [id]="fieldIds().fullName"
+      class="input-field"
+      placeholder="Ada Lovelace"
+      type="text"
+      [ngModel]="member()?.fullName"
+      name="fullName"
+      autocomplete="name"
+    />
+  </ngx-control-wrapper>
+
+  <ngx-control-wrapper class="form-field">
+    <label class="label-text" [attr.for]="fieldIds().email">Email</label>
+    <input
+      [id]="fieldIds().email"
+      class="input-field"
+      placeholder="ada@example.com"
+      type="email"
+      [ngModel]="member()?.email"
+      name="email"
+      autocomplete="email"
+      inputmode="email"
+      spellcheck="false"
+    />
+  </ngx-control-wrapper>
+
+  <ngx-control-wrapper class="form-field">
+    <label class="label-text" [attr.for]="fieldIds().role">Role</label>
+    <input
+      [id]="fieldIds().role"
+      class="input-field"
+      placeholder="Engineer"
+      type="text"
+      [ngModel]="member()?.role"
+      name="role"
+    />
+  </ngx-control-wrapper>
+</div>

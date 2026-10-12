@@ -1,0 +1,54 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Accessible Custom Wrapper"
+    subtitle="Use directive-based ARIA wiring when the built-in wrapper markup is not the right fit."
+  />
+
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Directive-based ARIA wiring</strong> — ngxErrorControl merges validation IDs into aria-describedby dynamically for custom layouts
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Composite controls</strong> — When a field is paired with a button or extra elements, only the input receives validation attributes
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Static hints plus dynamic errors</strong> — Preserve existing aria-describedby hints and let the directive enhance them with error IDs
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Plain markup transparency</strong> — See all ARIA behavior in the template; no hidden wrapper component logic to reason about
+    </ngx-intro-item>
+  </ngx-intro-section>
+
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div class="space-y-6">
+      <ngx-form-state-card [feedback]="feedback()" />
+    </div>
+
+    <div>
+      @if (submittedValue(); as submitted) {
+      <ngx-alert-panel tone="success" title="Preferences saved">
+        <p>
+          Saved custom-wrapper preferences for
+          <strong>{{ submitted.preferredName }}</strong>.
+        </p>
+      </ngx-alert-panel>
+      }
+
+      <ngx-card
+        title="Directive-based custom wrappers"
+        subtitle="These fields use ngxErrorControl instead of ngx-control-wrapper so the ARIA behavior is visible in plain markup."
+      >
+        <ngx-accessible-wrapper-form-body
+          [formValue]="formValue()"
+          [suite]="suite"
+          (formValueChange)="formValue.set($event)"
+          (submitted)="onSubmit()"
+          (resetRequested)="reset()"
+          (clearSearchRequested)="clearSearchQuery()"
+        />
+      </ngx-card>
+    </div>
+  </div>
+
+  <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
+</div>

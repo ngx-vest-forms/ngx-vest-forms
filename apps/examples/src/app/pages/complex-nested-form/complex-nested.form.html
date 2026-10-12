@@ -1,0 +1,97 @@
+@if (submittedValue(); as submitted) {
+<ngx-alert-panel tone="success" title="Team registered">
+  <p>
+    Registered
+    <strong>{{ submitted.company?.name }}</strong> with {{
+    ((submitted.teamMembers ?? {}) | keyvalue).length }} team member(s).
+  </p>
+</ngx-alert-panel>
+}
+
+<form
+  ngxVestForm
+  #vestForm="ngxVestForm"
+  (ngSubmit)="onSubmit()"
+  [formValue]="formValue()"
+  ngxValidateRootForm
+  [ngxValidateRootFormMode]="'submit'"
+  [suite]="suite()"
+  (formValueChange)="formValueChange.emit($event)"
+>
+  <div class="form-shell form-stack">
+    <ngx-form-section title="Company" tone="neutral">
+      <ngx-form-group-wrapper class="form-stack" ngModelGroup="company">
+        <ngx-control-wrapper class="form-field form-grid-full">
+          <label class="label-text" for="company-name">Company name</label>
+          <input
+            id="company-name"
+            class="input-field"
+            placeholder="Acme Corp"
+            type="text"
+            [ngModel]="formValue().company?.name"
+            name="name"
+            autocomplete="organization"
+          />
+        </ngx-control-wrapper>
+
+        <div class="form-divider" aria-hidden="true"></div>
+
+        <ngx-form-group-wrapper class="form-field" ngModelGroup="address">
+          <h3 class="section-title">Headquarters address</h3>
+          <ngx-address
+            idPrefix="company-hq"
+            [address]="formValue().company?.address"
+          />
+        </ngx-form-group-wrapper>
+      </ngx-form-group-wrapper>
+    </ngx-form-section>
+
+    <div class="form-divider" aria-hidden="true"></div>
+
+    <ngx-form-section title="Team members" tone="neutral">
+      <div class="form-stack">
+        <ngx-form-group-wrapper class="form-stack" ngModelGroup="teamMembers">
+          @for (entry of memberEntries(); track entry[0]) {
+          <ngx-form-group-wrapper
+            class="form-field rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+            [ngModelGroup]="entry[0]"
+          >
+            <div class="mb-3 flex items-center justify-between gap-2">
+              <h3 class="section-title">Member {{ $index + 1 }}</h3>
+              <button
+                type="button"
+                class="btn-input-action btn-input-action-danger"
+                (click)="removeMember(entry[0])"
+                [attr.aria-label]="'Remove member ' + ($index + 1)"
+              >
+                Remove
+              </button>
+            </div>
+            <ngx-team-member
+              [idPrefix]="memberIdPrefix(entry[0])"
+              [member]="entry[1]"
+            />
+          </ngx-form-group-wrapper>
+          } @empty {
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            No team members yet. Add at least one to register the team.
+          </p>
+          }
+        </ngx-form-group-wrapper>
+
+        <div>
+          <button type="button" class="btn btn-secondary" (click)="addMember()">
+            Add member
+          </button>
+        </div>
+      </div>
+    </ngx-form-section>
+
+    <div class="form-actions">
+      <button type="button" (click)="onReset()" class="btn btn-secondary">
+        Reset
+      </button>
+      <button type="submit" class="btn btn-primary">Register team</button>
+    </div>
+  </div>
+</form>

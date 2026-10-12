@@ -1,6 +1,6 @@
 ---
 name: root-form-validation
-description: Helps developers model form-level validation with `ROOT_FORM` and `ngxValidateRootForm` in ngx-vest-forms. Use this whenever the user mentions form-wide business rules, submission summaries, “at least one field required”, `ROOT_FORM`, `validateRootForm`, `validateRootFormMode`, or is unsure whether a cross-field rule belongs at field level or the whole-form level.
+description: Helps developers model form-level validation with `ROOT_FORM` and `ngxValidateRootForm` in ngx-vest-forms. Use this whenever the user mentions form-wide business rules, submission summaries, “at least one field required”, `ROOT_FORM`, `ngxValidateRootForm`, `ngxValidateRootFormMode`, or is unsure whether a cross-field rule belongs at field level or the whole-form level.
 ---
 
 # ngx-vest-forms root-form validation guidance
@@ -67,6 +67,16 @@ It is normal to combine:
 
 These solve different problems.
 
+## Testing tip
+
+`ROOT_FORM` tests share suite state with field-level tests in the same Vest
+suite. When that suite is shared across multiple test cases (module-level
+`const suite = create(...)`), reset it in a `beforeEach` so a prior test's
+ROOT_FORM result does not bleed into the next. See the "Testing your forms
+(Vest 6)" section in `core/SKILL.md` for the full pattern; `runStatic(model)`
+is the simplest stateless alternative when a test only needs to assert on
+suite output for a given input.
+
 ## Red flags
 
 Correct these if they appear:
@@ -93,7 +103,7 @@ When answering:
 - `../../../../docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`
 - `../../../../README.md`
 - `../../../../docs/ACCESSIBILITY.md`
-- `../../../../projects/ngx-vest-forms/src/public-api.ts`
+- `../../../../packages/ngx-vest-forms/src/public-api.ts`
 
 Treat the repo instruction file as the baseline. Use this skill for the field-vs-form ownership decision and form-summary behavior.
 

@@ -1,0 +1,39 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Display Modes Demo"
+    subtitle="Compare error and warning visibility timing across display modes."
+  />
+
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">always mode</strong> — Feedback appears immediately; useful for real-time guidance without waiting for user interaction
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">on-dirty mode</strong> — Feedback appears after the user has changed a field; reduces noise while filling out fresh forms
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">on-touch mode</strong> — Feedback appears after blur; respects the user's natural interaction flow and focus events
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Per-field mode overrides</strong> — Use different modes for different fields; form-level mode is the default that individual fields can override
+    </ngx-intro-item>
+  </ngx-intro-section>
+
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div>
+      <ngx-form-state-card [feedback]="formBody.feedback" />
+    </div>
+
+    <div>
+      <ngx-display-modes-demo-form-body
+        #formBody
+        [formValue]="formValue()"
+        [suite]="suite"
+        (formValueChange)="formValue.set($event)"
+        (submitted)="save()"
+      />
+    </div>
+  </div>
+
+  <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
+</div>
