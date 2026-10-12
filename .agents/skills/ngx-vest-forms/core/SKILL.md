@@ -47,7 +47,7 @@ Build answers and code in this order:
 4. Expose a signal-based `formValue` in the component.
 5. Bind the form with `ngxVestForm`, `[suite]`, and `(formValueChange)`. Prefer `provideFormContract(...)` in the component when the contract is fixed; use `[formContract]` only for true per-usage overrides.
 6. Bind each control with `[ngModel]` and the exact matching `name`.
-7. Use `ChangeDetectionStrategy.OnPush` unless there is a compelling reason not to.
+7. Rely on Angular 22's default OnPush change detection; do not add an explicit `changeDetection` option.
 
 ## Output expectations
 

@@ -45,7 +45,7 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium
       - name: Lint
-        run: pnpm nx run-many --target=lint
+        run: pnpm nx run-many --target=lint,lint-templates
       - name: Build library
         run: pnpm nx run ngx-vest-forms:build --configuration=production
       - name: Test

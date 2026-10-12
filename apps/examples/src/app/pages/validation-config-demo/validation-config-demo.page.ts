@@ -1,14 +1,12 @@
-import {
-  Component,
-  computed,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, signal, viewChild } from '@angular/core';
 import { createValidationConfig } from 'ngx-vest-forms';
 import { ValidationDemoModel } from '../../models/validation-demo.model';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
-import { IntroItemComponent, IntroSectionComponent } from '../../ui/intro-section';
+import {
+  IntroItemComponent,
+  IntroSectionComponent,
+} from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { validationConfigDemoContent } from './validation-config-demo.content';
 import { ValidationConfigDemoFormBody } from './validation-config-demo.form';
@@ -24,7 +22,6 @@ import { validationDemoSuite } from './validation-demo.validations';
     ValidationConfigDemoFormBody,
     ExampleCardsComponent,
   ],
-  standalone: true,
   templateUrl: './validation-config-demo.page.html',
   styleUrls: ['./validation-config-demo.page.scss'],
 })

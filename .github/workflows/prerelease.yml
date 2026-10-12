@@ -123,7 +123,7 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium
       - name: Lint
-        run: pnpm nx run-many --target=lint
+        run: pnpm nx run-many --target=lint,lint-templates
       - name: Build
         run: pnpm run build:ci
       - name: Test

@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-} from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { FormErrorDisplayDirective } from '../../directives/form-error-display.directive';
 import { createDebouncedPendingState } from '../../utils/pending-state.utils';
 
@@ -24,7 +18,6 @@ let nextUniqueId = 0;
   exportAs: 'ngxFormGroupWrapper',
   templateUrl: './form-group-wrapper.component.html',
   styleUrls: ['./form-group-wrapper.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'ngx-form-group-wrapper',
     '[class.ngx-form-group-wrapper--invalid]':

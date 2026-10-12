@@ -166,7 +166,7 @@ export class PurchaseForm {
       return `${requestUrl.pathname}${requestUrl.search}`;
     },
     {
-      parse: lukeApiResponseSchema.parse,
+      parse: (data) => lukeApiResponseSchema.parse(data),
     }
   );
 

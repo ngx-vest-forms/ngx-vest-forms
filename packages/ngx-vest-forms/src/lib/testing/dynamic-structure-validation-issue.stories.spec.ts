@@ -1,11 +1,5 @@
 import { JsonPipe } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, signal, viewChild } from '@angular/core';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { create, enforce, omitWhen, test } from 'vest';
@@ -46,7 +40,6 @@ const dynamicFormValidationSuite = create((model: DynamicFormModel) => {
 });
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgxVestForms, JsonPipe],
   template: `
     <form
@@ -62,7 +55,7 @@ const dynamicFormValidationSuite = create((model: DynamicFormModel) => {
     >
       <fieldset class="space-y-4">
         <legend class="mb-4 text-lg font-semibold">
-          Dynamic Form Structure Test - Angular 20 Best Practices
+          Dynamic Form Structure Test - Angular 22 Best Practices
         </legend>
 
         <div

@@ -1,7 +1,6 @@
 import {
   AfterContentInit,
   booleanAttribute,
-  ChangeDetectionStrategy,
   Component,
   computed,
   ElementRef,
@@ -144,8 +143,6 @@ let nextUniqueId = 0;
   selector: 'ngx-control-wrapper, [ngxControlWrapper]',
   templateUrl: './control-wrapper.component.html',
   styleUrls: ['./control-wrapper.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-
   host: {
     class: 'ngx-control-wrapper',
     '[class.ngx-control-wrapper--invalid]': 'errorDisplay.shouldShowErrors()',

@@ -2,10 +2,9 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: 'ngx-intro-item',
-  standalone: true,
   template: `
     <span
-      class="text-teal-500 dark:text-teal-400 font-bold shrink-0 pt-0.5 text-lg"
+      class="shrink-0 pt-0.5 text-lg font-bold text-teal-500 dark:text-teal-400"
       aria-hidden="true"
     >
       {{ bullet }}

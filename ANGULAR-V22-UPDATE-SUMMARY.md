@@ -4,10 +4,12 @@ This document provides a comprehensive summary of all Angular v22 updates made t
 
 ## 🎯 Executive Summary
 
-✅ **Library**: Updated to support Angular v21 and v22 while maintaining backward compatibility  
-✅ **Examples App**: Fully modernized with Angular v22 best practices and features  
-✅ **Documentation**: Complete migration guide created  
-✅ **Build & Tests**: All builds passing, examples tests passing  
+✅ **Library**: Updated to target Angular v22
+✅ **Examples App**: Fully modernized with Angular v22 best practices and features
+✅ **Documentation**: Complete migration guide created
+✅ **Build & Tests**: All builds passing, examples tests passing
+
+The workspace Node engine now matches Angular 22's supported ranges: `^22.22.3 || ^24.15.0 || ^26.0.0`.
 
 ## 📦 Library Updates (ngx-vest-forms)
 
@@ -18,26 +20,27 @@ This document provides a comprehensive summary of all Angular v22 updates made t
 ```diff
 - "@angular/common": ">=19.0.0",
 - "@angular/core": ">=19.0.0",
-+ "@angular/common": ">=21.0.0 <23.0.0",
-+ "@angular/core": ">=21.0.0 <23.0.0",
++ "@angular/core": ">=22.0.0 <23.0.0",
++ "@angular/forms": ">=22.0.0 <23.0.0",
++ "vest": ">=6.3.4 <7.0.0",
 ```
 
-**Impact**: 
-- Library now explicitly supports Angular v21 and v22
-- Maintains backward compatibility with existing v21 applications
-- Prevents accidental upgrades to Angular v23+ which might have breaking changes
+**Impact**:
+- Library now explicitly supports Angular v22; Angular 21 apps are no longer supported
+- `@angular/forms` is declared as a peer: the library imports `NgForm`, `NgModel`, `ControlContainer` and friends in its runtime sources
+- The `@angular/common` peer is dropped: the library only uses it in non-shipped test/demo code (`lib/testing/`)
+- Vest floor is `6.3.4`: async fields can stay pending forever on Vest <=6.3.3 (#233)
 
 ### 2. Change Detection Strategy
-**Status**: No changes made (intentional)
+**Status**: ✅ Complete
 
-**Rationale**: 
-- Library components continue to explicitly use `ChangeDetectionStrategy.OnPush`
-- This maintains compatibility with Angular v21 where OnPush is not the default
-- In Angular v22, OnPush is the default, but explicit declaration doesn't cause issues
+**Rationale**:
+- Library components rely on Angular 22's default OnPush strategy
+- Redundant `changeDetection` metadata and imports were removed
 
 **Components affected**:
-- `ControlWrapperComponent` - keeps explicit OnPush
-- `FormGroupWrapperComponent` - keeps explicit OnPush
+- `ControlWrapperComponent`
+- `FormGroupWrapperComponent`
 
 ## 🚀 Examples Application Updates
 
@@ -147,7 +150,7 @@ All components in the examples app now use OnPush change detection by default.
 **Status**: ✅ Implicit (Angular v22 default)
 
 **Impact**:
-- New default `paramsInheritanceStrategy: 'always'` 
+- New default `paramsInheritanceStrategy: 'always'`
 - No more `route.parent?.parent?.snapshot.params` workarounds needed
 - Direct access to inherited parameters
 
@@ -252,7 +255,7 @@ pnpm run build
 1. **Continue using current code** - No breaking changes
 2. **Optional**: Update to Angular v22
    ```bash
-   pnpm up @angular/*@22.0.1
+  pnpm up @angular/*@22.2
    pnpm up ngx-vest-forms@latest
    ```
 
@@ -260,12 +263,12 @@ pnpm run build
 
 1. **Use Angular v22**:
    ```bash
-   pnpm up @angular/*@22.0.1 @angular/cli@22.0.1
+  pnpm up @angular/*@22.2 @angular/cli@22.2
    ```
 
 2. **Follow new patterns**:
    - Use `@Service()` for root-provided services
-   - Use `injectAsync()` for lazy-loaded services  
+   - Use `injectAsync()` for lazy-loaded services
    - Use `httpResource()` for data fetching
    - Remove explicit `OnPush` declarations
 
@@ -289,15 +292,11 @@ pnpm run build
 
 ### Medium-term
 
-1. **Consider removing explicit OnPush** from library components
-   - When Angular v23 is released and v21 support is dropped
-   - Would require major version bump
-
-2. **Add WebMCP examples** (Experimental)
+1. **Add WebMCP examples** (Experimental)
    - When WebMCP becomes stable
    - Could showcase AI integration capabilities
 
-3. **Add `@boundary` examples** (Developer Preview)
+2. **Add `@boundary` examples** (Developer Preview)
    - When available in Angular v22.1+
    - For error boundary patterns
 
@@ -328,8 +327,8 @@ pnpm run build
 Based on the conversation history, the changes have been implemented across multiple commits:
 
 1. **Library Updates**:
-   - Updated peer dependencies to support Angular v21 and v22
-   - Maintained explicit OnPush for backward compatibility
+  - Updated peer dependencies to support Angular v22
+  - Removed explicit OnPush metadata now that it is the v22 default
 
 2. **Examples App Updates**:
    - Converted all services to `@Service()`
@@ -352,11 +351,11 @@ Based on the conversation history, the changes have been implemented across mult
 - [x] Library builds successfully
 - [x] Examples app builds successfully
 - [x] Examples app tests pass
-- [ ] Library tests pass (2 pre-existing failures)
+- [x] Library tests pass
 
 ## 🎉 Conclusion
 
-The ngx-vest-forms repository has been successfully updated to support Angular v22 while maintaining full backward compatibility with Angular v21. The examples application showcases all major Angular v22 features and best practices.
+The ngx-vest-forms repository now targets Angular v22, and the examples application showcases relevant Angular 22 and 22.2 features and best practices.
 
 **Key Achievements**:
 - ✅ Non-breaking library updates
