@@ -44,7 +44,10 @@
       "!{projectRoot}/**/*.test.ts",
       "!{projectRoot}/.eslintrc.json",
       "!{projectRoot}/eslint.config.cjs",
-      "!{projectRoot}/eslint.config.mjs"
+      "!{projectRoot}/eslint.config.mjs",
+      "!{projectRoot}/tsconfig.spec.json",
+      "!{workspaceRoot}/vitest.config.ts",
+      "!{workspaceRoot}/tsconfig.spec.json"
     ]
   },
   "plugins": [
