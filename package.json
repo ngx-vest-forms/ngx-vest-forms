@@ -13,6 +13,7 @@
     "build:app": "nx run examples:build --configuration=production --base-href=/ngx-vest-forms/",
     "build:ci": "pnpm run build:lib && pnpm run build:app",
     "test": "nx run-many --target=test",
+    "test:browser": "nx run ngx-vest-forms:test-browser",
     "test:ci": "nx run-many --target=test",
     "lint": "nx run-many --target=lint,lint-templates",
     "e2e": "nx run examples-e2e:e2e",

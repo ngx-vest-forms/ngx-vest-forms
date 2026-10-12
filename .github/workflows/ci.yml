@@ -50,6 +50,10 @@ jobs:
         run: pnpm nx run ngx-vest-forms:build --configuration=production
       - name: Test
         run: pnpm nx run-many --target=test
+      - name: Browser tests
+        run: pnpm nx run ngx-vest-forms:test-browser
+        env:
+          CI: true
       - name: E2E tests
         run: pnpm nx run examples-e2e:e2e -- --project=chromium
         env:
