@@ -12,6 +12,10 @@
     },
     "lint": {
       "cache": true,
+      "inputs": ["...", "^production", "{workspaceRoot}/oxlint.config.ts"]
+    },
+    "lint-templates": {
+      "cache": true,
       "inputs": ["default"]
     },
     "e2e": {
@@ -44,6 +48,12 @@
     ]
   },
   "plugins": [
+    {
+      "plugin": "@nx/oxlint",
+      "options": {
+        "targetName": "lint"
+      }
+    },
     {
       "plugin": "@nx/playwright/plugin",
       "options": {

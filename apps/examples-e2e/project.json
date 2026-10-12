@@ -12,7 +12,7 @@
         }
       }
     },
-    "lint": {
+    "lint-templates": {
       "executor": "@angular-eslint/builder:lint",
       "options": {
         "lintFilePatterns": ["apps/examples-e2e/**/*.ts"]
