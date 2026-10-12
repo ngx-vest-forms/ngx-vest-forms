@@ -252,7 +252,7 @@ pnpm run build
 1. **Continue using current code** - No breaking changes
 2. **Optional**: Update to Angular v22
    ```bash
-  pnpm up @angular/*@22.1
+  pnpm up @angular/*@22.2
    pnpm up ngx-vest-forms@latest
    ```
 
@@ -260,7 +260,7 @@ pnpm run build
 
 1. **Use Angular v22**:
    ```bash
-  pnpm up @angular/*@22.1 @angular/cli@22.1
+  pnpm up @angular/*@22.2 @angular/cli@22.2
    ```
 
 2. **Follow new patterns**:
@@ -348,11 +348,11 @@ Based on the conversation history, the changes have been implemented across mult
 - [x] Library builds successfully
 - [x] Examples app builds successfully
 - [x] Examples app tests pass
-- [ ] Library tests pass (2 pre-existing failures)
+- [x] Library tests pass
 
 ## 🎉 Conclusion
 
-The ngx-vest-forms repository now targets Angular v22, and the examples application showcases relevant Angular 22 and 22.1 features and best practices.
+The ngx-vest-forms repository now targets Angular v22, and the examples application showcases relevant Angular 22 and 22.2 features and best practices.
 
 **Key Achievements**:
 - ✅ Non-breaking library updates

@@ -4,14 +4,14 @@ This guide covers the Angular v22 updates for both the **ngx-vest-forms library*
 
 ## 📋 Overview
 
-ngx-vest-forms **v3.x** targets Angular v22. The examples application is aligned with Angular 22.1 best practices and APIs.
+ngx-vest-forms **v3.x** targets Angular v22. The examples application is aligned with Angular 22.2 best practices and APIs.
 
 ### Compatibility Matrix
 
 | Package | Angular Version | Status |
 |--------|-----------------|--------|
 | `ngx-vest-forms` | >=22.0.0 <23.0.0 | ✅ Supported |
-| Examples App | 22.1.x | ✅ Required |
+| Examples App | 22.2.x | ✅ Required |
 
 Angular 22 tooling requires Node.js `^22.22.3 || ^24.15.0 || ^26.0.0`.
 
@@ -39,7 +39,7 @@ Angular 21 applications must upgrade to Angular 22 before adopting ngx-vest-form
 
 Angular 22 uses OnPush change detection by default. Library and example components therefore omit an explicit `changeDetection` option, as recommended by Angular's current best-practices guide.
 
-### Angular 22.1 review
+### Angular 22.2 review
 
 - `linkedSignal(..., { set })` was reviewed for form synchronization. It is not used in `FormDirective` because the linked signal is a derived Angular-form snapshot; write-through would blur ownership between the form and consumer model.
 - The injectable-to-service migration is reflected in the examples: root-provided example services use `@Service()`.
@@ -200,7 +200,7 @@ If you're using ngx-vest-forms with Angular v22:
 1. **No code changes needed** - The library is fully backward compatible
 2. **Update dependencies** (optional):
    ```bash
-  pnpm up @angular/*@22.1 ngx-vest-forms@latest
+  pnpm up @angular/*@22.2 ngx-vest-forms@latest
    ```
 
 ### For Examples App Contributors
@@ -209,7 +209,7 @@ If you're working on the examples app:
 
 1. **Ensure Angular v22:**
    ```bash
-  pnpm up @angular/*@22.1 @angular/cli@22.1
+  pnpm up @angular/*@22.2 @angular/cli@22.2
    ```
 
 2. **Use new patterns:**
