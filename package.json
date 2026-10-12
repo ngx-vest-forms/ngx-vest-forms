@@ -31,7 +31,7 @@
     "@angular/router": "22.2.2",
     "rxjs": "~7.8.2",
     "tslib": "~2.8.1",
-    "vest": "~6.3.2",
+    "vest": "~6.3.4",
     "zod": "^4.4.3"
   },
   "devDependencies": {

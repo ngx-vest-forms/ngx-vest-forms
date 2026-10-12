@@ -34,10 +34,10 @@ See the full guides under [Documentation](#documentation).
 
 ### Prerequisites
 
-- **Angular**: >=21.0.0 <23.0.0
-- **Vest.js**: >=6.0.0
+- **Angular**: >=22.0.0 <23.0.0
+- **Vest.js**: >=6.3.4 <7.0.0
 - **TypeScript**: ~6.0.3
-- **Node.js**: >=22.0.0
+- **Node.js**: ^22.22.3 || ^24.15.0 || ^26.0.0
 
 ### Installation
 

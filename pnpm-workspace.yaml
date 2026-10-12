@@ -3,8 +3,7 @@ packages:
   - 'packages/*'
 
 minimumReleaseAgeExclude:
-
-
+minimumReleaseAge: 1440 # minutes (24h)
 minimumReleaseAgeStrict: true
 minimumReleaseAgeIgnoreMissingTime: false
 trustPolicy: no-downgrade

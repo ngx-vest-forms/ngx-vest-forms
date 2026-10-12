@@ -20,13 +20,16 @@ The workspace Node engine now matches Angular 22's supported ranges: `^22.22.3 |
 ```diff
 - "@angular/common": ">=19.0.0",
 - "@angular/core": ">=19.0.0",
-+ "@angular/common": ">=22.0.0 <23.0.0",
 + "@angular/core": ">=22.0.0 <23.0.0",
++ "@angular/forms": ">=22.0.0 <23.0.0",
++ "vest": ">=6.3.4 <7.0.0",
 ```
 
 **Impact**:
-- Library now explicitly supports Angular v22
-- Prevents accidental upgrades to Angular v23+ which might have breaking changes
+- Library now explicitly supports Angular v22; Angular 21 apps are no longer supported
+- `@angular/forms` is declared as a peer: the library imports `NgForm`, `NgModel`, `ControlContainer` and friends in its runtime sources
+- The `@angular/common` peer is dropped: the library only uses it in non-shipped test/demo code (`lib/testing/`)
+- Vest floor is `6.3.4`: async fields can stay pending forever on Vest <=6.3.3 (#233)
 
 ### 2. Change Detection Strategy
 **Status**: ✅ Complete

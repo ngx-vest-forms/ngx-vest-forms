@@ -24,16 +24,16 @@ The library's `peerDependencies` have been updated to explicitly support Angular
 ```json
 {
   "peerDependencies": {
-    "@angular/common": ">=22.0.0 <23.0.0",
     "@angular/core": ">=22.0.0 <23.0.0",
+    "@angular/forms": ">=22.0.0 <23.0.0",
     "@standard-schema/spec": ">=1.0.0",
     "rxjs": ">=7.8.0",
-    "vest": ">=6.0.0"
+    "vest": ">=6.3.4 <7.0.0"
   }
 }
 ```
 
-Angular 21 applications must upgrade to Angular 22 before adopting ngx-vest-forms v3.
+Angular 21 applications must upgrade to Angular 22 before adopting ngx-vest-forms v3. The `@angular/forms` peer is new: the library imports `NgForm`, `NgModel` and friends at runtime. Vest must be `>=6.3.4` — on `<=6.3.3`, a control's async validation can stay pending forever when another field re-runs the shared suite (#233). The `@angular/common` peer is dropped; the library only uses it in non-shipped test code.
 
 ### Change Detection Strategy
 
