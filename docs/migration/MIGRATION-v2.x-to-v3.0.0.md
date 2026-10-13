@@ -14,7 +14,7 @@ v3.0.0 deletes every `@deprecated` runtime helper, const alias, and type alias t
 | `DeepRequired<T>`                           | `NgxDeepRequired<T>`               | Structurally identical; rename the import.                                                                                                                            |
 | `FormCompatibleDeepRequired<T>`             | _(removed)_                        | See "Replacing `NgxFormCompatibleDeepRequired`" below for a copy-paste snippet, or express Date coercion in your schema (e.g., `z.union([z.date(), z.literal('')])`). |
 | `NgxTypedVestSuite<T>`                      | `NgxVestSuite<T>`                  | Structurally identical; rename the type reference.                                                                                                                    |
-| `SC_ERROR_DISPLAY_MODE_DEFAULT` (re-export) | `NGX_ERROR_DISPLAY_MODE_DEFAULT`   | Was an internal re-export; if you imported it, switch to the `NGX_*` name.                                                                                            |
+| `SC_ERROR_DISPLAY_MODE_DEFAULT` (re-export) | _(removed)_                        | No public replacement. To change the default, provide `NGX_ERROR_DISPLAY_MODE_TOKEN`.                                                                                 |
 | `[formShape]` input                         | `[formContract]`                   | See "`[formShape]` → `[formContract]`" below. Raw `NgxDeepRequired<T>` shapes are still accepted; wrap with `toFormContract(shape)` for explicit conversion.          |
 | `NgxFormCompatibleDeepRequired<T>`          | _(removed)_                        | See "Replacing `NgxFormCompatibleDeepRequired`" below.                                                                                                                |
 
@@ -383,8 +383,7 @@ v3.0.0 removes the legacy `sc-` selectors, duplicate directive aliases, duplicat
 ### Renamed symbols
 
 - `ScErrorDisplayMode` → `NgxErrorDisplayMode`
-- `SC_ERROR_DISPLAY_MODE_DEFAULT` → `NGX_ERROR_DISPLAY_MODE_DEFAULT`
-- `SC_WARNING_DISPLAY_MODE_DEFAULT` → `NGX_WARNING_DISPLAY_MODE_DEFAULT`
+- `SC_ERROR_DISPLAY_MODE_DEFAULT` and `SC_WARNING_DISPLAY_MODE_DEFAULT` are removed with no public replacement. To change the defaults, provide `NGX_ERROR_DISPLAY_MODE_TOKEN` / `NGX_WARNING_DISPLAY_MODE_TOKEN`.
 
 ### Keep using
 

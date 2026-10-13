@@ -878,7 +878,7 @@ it('should validate root form after submit', () => {
 ### Browser Integration Tests
 
 Update browser-spec assertions to trigger form submission. These scenarios now
-run with the Vitest browser suite (`npm run test:lib`) instead of Storybook:
+run with the Vitest browser suite (`pnpm run test:browser`) instead of Storybook:
 
 ```typescript
 // Before
@@ -1154,7 +1154,7 @@ A: Yes! All new utilities (field clearing, array conversion, config builder) are
 
 ## Additional Resources
 
-- **[Complete Changelog](../../CHANGELOG.md)** - Full list of changes
+- **[Release notes](https://github.com/ngx-vest-forms/ngx-vest-forms/releases)** - Full list of changes
 - **[PR #60](https://github.com/ngx-vest-forms/ngx-vest-forms/pull/60)** - Detailed PR description
 - **[Field Path Types](../FIELD-PATHS.md)** - Type-safe field references
 - **[Accessibility Guide](../ACCESSIBILITY.md)** - WCAG 2.2 AA compliance
