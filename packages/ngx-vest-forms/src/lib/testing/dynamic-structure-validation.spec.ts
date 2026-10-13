@@ -137,7 +137,7 @@ describe('FormDirective - Dynamic Structure Changes', () => {
 
       // Form should be invalid (fieldA is required but empty)
       await expect
-        .poll(() => Object.keys(component.errors()).length)
+        .poll(() => component.errors()['fieldA']?.length ?? 0)
         .toBeGreaterThan(0);
       await whenStable();
       expect(component.isValid()).toBe(false);
@@ -224,7 +224,7 @@ describe('FormDirective - Dynamic Structure Changes', () => {
         .poll(() => fixture.nativeElement.querySelector('input[name="fieldA"]'))
         .toBeTruthy();
       await expect
-        .poll(() => Object.keys(component.errors()).length)
+        .poll(() => component.errors()['fieldA']?.length ?? 0)
         .toBeGreaterThan(0);
 
       expect(component.isValid()).toBe(false);

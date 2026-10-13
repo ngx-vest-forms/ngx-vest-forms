@@ -729,9 +729,8 @@ describe('FormDirective - Reset Functionality', () => {
     /**
      * When resetForm() is called programmatically — not from a user event
      * handler — no Angular event binding schedules change detection. The
-     * directive must mark the view for check itself so the zoneless scheduler
-     * re-renders the ng-* host classes. This test exercises that path by
-     * dirtying the form, waiting for the app to settle, and then calling
+     * zoneless scheduler must still re-render the ng-* host classes. This test
+     * dirties the form, waits for the app to settle, and then calls
      * resetForm() directly on the directive instance, outside any event
      * handler and without fixture.detectChanges().
      */
@@ -788,8 +787,6 @@ describe('FormDirective - Reset Functionality', () => {
       expect(component.formValue().firstName).toBe('Johnny');
 
       // Programmatically reset — no click, no fixture.detectChanges().
-      // The directive's markForCheck() must schedule CD so the zoneless
-      // scheduler updates the ng-* host classes.
       component.vestFormRef().resetForm();
 
       // Wait for the zoneless scheduler to settle, then assert without
@@ -802,6 +799,56 @@ describe('FormDirective - Reset Functionality', () => {
 
       // The reset is also announced through formValueChange.
       expect(component.formValue()).toEqual({ firstName: null });
+    });
+
+    /**
+     * Same reset, but the host does not bind (formValueChange), so no host
+     * signal write re-renders the view after the reset. The ng-* classes still
+     * update because Angular's NgControlStatus host bindings read the
+     * control's pristine/touched/status signals, which reset() writes.
+     *
+     * Neither test can isolate the directive's own markForCheck() in
+     * resetForm(): on Angular 22 those control signals already schedule
+     * change detection, so removing that call leaves both tests green.
+     */
+    it('should update DOM classes after programmatic resetForm() without a formValueChange binding', async () => {
+      @Component({
+        template: `
+          <form ngxVestForm #vestForm="ngxVestForm" [suite]="suite">
+            <input name="firstName" ngModel data-testid="firstName" />
+          </form>
+        `,
+        imports: [NgxVestForms],
+      })
+      class TestComponent {
+        vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
+
+        suite = create((model: any) => {
+          test('firstName', 'First name is required', () => {
+            enforce(model.firstName).isNotBlank();
+          });
+        });
+      }
+
+      const { fixture } = await render(TestComponent);
+      const component = fixture.componentInstance;
+      const whenStable = () => TestBed.inject(ApplicationRef).whenStable();
+
+      const input = screen.getByTestId('firstName') as HTMLInputElement;
+      const form = fixture.nativeElement.querySelector('form');
+
+      await userEvent.type(input, 'John');
+      await userEvent.tab();
+      await whenStable();
+      expect(form.classList.contains('ng-dirty')).toBe(true);
+      expect(form.classList.contains('ng-touched')).toBe(true);
+
+      component.vestFormRef().resetForm();
+
+      await whenStable();
+      expect(input.value).toBe('');
+      expect(form.classList.contains('ng-pristine')).toBe(true);
+      expect(form.classList.contains('ng-untouched')).toBe(true);
     });
   });
 
