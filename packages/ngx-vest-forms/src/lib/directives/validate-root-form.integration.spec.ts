@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { ApplicationRef, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NgxVestForms, provideFormContract, ROOT_FORM } from 'ngx-vest-forms';
 import { create, enforce, test } from 'vest';
@@ -76,7 +76,7 @@ describe('validateRootForm integration', () => {
 
     const fixture = TestBed.createComponent(PackageConsumerComponent);
     fixture.detectChanges();
-    await fixture.whenStable();
+    await TestBed.inject(ApplicationRef).whenStable();
 
     expect(fixture.nativeElement).toBeTruthy();
   });

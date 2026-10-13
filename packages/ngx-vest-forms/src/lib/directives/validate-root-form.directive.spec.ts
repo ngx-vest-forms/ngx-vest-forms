@@ -1,5 +1,6 @@
 import { JsonPipe } from '@angular/common';
-import { Component, signal, ViewChild } from '@angular/core';
+import { ApplicationRef, Component, signal, ViewChild } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { NgForm } from '@angular/forms';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
@@ -71,6 +72,8 @@ const createMultiRootFormValidationSuite = create(
     });
   }
 );
+
+const whenStable = () => TestBed.inject(ApplicationRef).whenStable();
 
 describe('ValidateRootFormDirective', () => {
   // Vest 6 `create()` returns stateful suites — both module-level suites are
@@ -712,7 +715,7 @@ describe('ValidateRootFormDirective', () => {
       instance.suite.set(
         suiteMock as unknown as NgxVestSuite<Record<string, unknown>>
       );
-      fixture.detectChanges();
+      await whenStable();
 
       const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {
         debounceTime: 500,
@@ -784,7 +787,7 @@ describe('ValidateRootFormDirective', () => {
       instance.suite.set(
         suiteMock as unknown as NgxVestSuite<Record<string, unknown>>
       );
-      fixture.detectChanges();
+      await whenStable();
 
       const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {
         debounceTime: 0,
@@ -837,7 +840,7 @@ describe('ValidateRootFormDirective', () => {
       instance.suite.set(
         suiteMock as unknown as NgxVestSuite<Record<string, unknown>>
       );
-      fixture.detectChanges();
+      await whenStable();
 
       const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {
         debounceTime: 0,
@@ -888,7 +891,7 @@ describe('ValidateRootFormDirective', () => {
       // Explicitly null model — the previous falsy gate returned of(null)
       // here and the cross-field rule never ran.
       instance.model.set(null as unknown as Record<string, unknown>);
-      fixture.detectChanges();
+      await whenStable();
 
       const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {
         debounceTime: 0,

@@ -1,10 +1,12 @@
 /* eslint-disable @angular-eslint/component-selector */
 import {
+  ApplicationRef,
   Component,
   signal,
   viewChild,
   type WritableSignal,
 } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { render, screen, waitFor } from '@testing-library/angular';
 import { create, enforce, test as vestTest } from 'vest';
 import { describe, expect, it } from 'vitest';
@@ -22,6 +24,8 @@ import { FormDirective } from './form.directive';
  * `../utils/pending-state.utils.spec.ts` (the wrapper just forwards the
  * signal to `createDebouncedPendingState`).
  */
+
+const whenStable = () => TestBed.inject(ApplicationRef).whenStable();
 
 describe('Issue #106 — state-sync correctness', () => {
   describe('formState().value resets when all controls are removed', () => {
@@ -58,8 +62,7 @@ describe('Issue #106 — state-sync correctness', () => {
       const { fixture } = await render(HostComponent);
       const host = fixture.componentInstance;
 
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await whenStable();
       // Sanity: form has data while controls are present.
       expect(host.vestForm().formState().value).toEqual({
         firstName: 'Ada',
@@ -69,11 +72,8 @@ describe('Issue #106 — state-sync correctness', () => {
       // Drop all controls dynamically — the bug previously had `formState().value`
       // keep returning the last `linkedSignal` snapshot.
       host.showFields.set(false);
-      fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
 
-      expect(host.vestForm().formState().value).toBeNull();
+      await expect.poll(() => host.vestForm().formState().value).toBeNull();
     });
   });
 
@@ -115,9 +115,7 @@ describe('Issue #106 — state-sync correctness', () => {
       // cycle so NgModel.control is undefined when the directive's first
       // effect run executes. The afterNextRender retry must pick it up.
       host.showInput.set(true);
-      fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
+      await whenStable();
 
       // Required input starts as invalid; the directive must reflect that
       // AND surface the validator error rather than just flipping isInvalid.
@@ -187,17 +185,18 @@ describe('Issue #106 — state-sync correctness', () => {
 
       // Drive the form through a value change. In `live` mode this would
       // fire the suite and surface the mismatch error; in `submit` mode it
-      // must stay silent. Awaiting stability twice (once for the value
-      // change, once for any reactive cascade) is deterministic and
-      // strictly faster than a fixed-duration setTimeout.
+      // must stay silent. Waiting for the new value to reach the input, then
+      // for stability (any reactive cascade), is deterministic and strictly
+      // faster than a fixed-duration setTimeout.
       const host = fixture.componentInstance as {
         model: WritableSignal<Record<string, unknown>>;
       };
       host.model.update((m) => ({ ...m, confirmPassword: 'still-mismatched' }));
-      fixture.detectChanges();
-      await fixture.whenStable();
-      fixture.detectChanges();
-      await fixture.whenStable();
+      const confirmInput = fixture.nativeElement.querySelector(
+        'input[name="confirmPassword"]'
+      ) as HTMLInputElement;
+      await expect.poll(() => confirmInput.value).toBe('still-mismatched');
+      await whenStable();
 
       expect(screen.queryByTestId('root-error')).not.toBeInTheDocument();
     });

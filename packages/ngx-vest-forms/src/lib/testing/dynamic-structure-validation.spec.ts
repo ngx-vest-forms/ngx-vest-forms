@@ -1,8 +1,9 @@
 /**
  * Test suite for dynamic structure validation issue
  */
-import { Component, signal, ViewChild } from '@angular/core';
+import { ApplicationRef, Component, signal, ViewChild } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import userEvent from '@testing-library/user-event';
 import { create, enforce, omitWhen, test } from 'vest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { NgxDeepPartial, ValidationConfigMap } from '../../public-api';
@@ -37,11 +38,7 @@ const dynamicFormValidationSuite = create((model: DynamicFormModel) => {
   // TypeC has no additional validation requirements
 });
 
-const waitForValidation = async (): Promise<void> => {
-  await new Promise(
-    (resolve) => setTimeout(resolve, 150) // Default debounce (100ms) + buffer (50ms)
-  );
-};
+const whenStable = () => TestBed.inject(ApplicationRef).whenStable();
 
 describe('FormDirective - Dynamic Structure Changes', () => {
   beforeEach(() => {
@@ -120,14 +117,14 @@ describe('FormDirective - Dynamic Structure Changes', () => {
       const selectElement = fixture.nativeElement.querySelector(
         '[data-testid="procedure-type"]'
       );
-      selectElement.value = 'typeA';
-      selectElement.dispatchEvent(new Event('change'));
+      await userEvent.selectOptions(selectElement, 'typeA');
 
       component.formValue.update((v) => ({ ...v, procedureType: 'typeA' }));
-      fixture.detectChanges();
-      await fixture.whenStable();
-      TestBed.flushEffects();
-      await waitForValidation();
+      await expect
+        .poll(() =>
+          fixture.nativeElement.querySelector('[data-testid="field-a"]')
+        )
+        .toBeTruthy();
 
       // Trigger validation by focusing on fieldA
       const fieldA = fixture.nativeElement.querySelector(
@@ -136,50 +133,38 @@ describe('FormDirective - Dynamic Structure Changes', () => {
       if (fieldA) {
         fieldA.focus();
         fieldA.blur();
-        fixture.detectChanges();
-        await fixture.whenStable();
-        TestBed.flushEffects();
-        await waitForValidation();
       }
 
       // Form should be invalid (fieldA is required but empty)
-      // NOTE: This test may have timing issues in zoneless mode
-      await fixture.whenStable();
-      TestBed.flushEffects();
-      await waitForValidation();
+      await expect
+        .poll(() => Object.keys(component.errors()).length)
+        .toBeGreaterThan(0);
+      await whenStable();
       expect(component.isValid()).toBe(false);
-      expect(Object.keys(component.errors()).length).toBeGreaterThan(0);
       expect(
         fixture.nativeElement.querySelector('[data-testid="field-a"]')
       ).toBeTruthy();
 
       // Switch to typeC (shows paragraph, no input fields)
-      selectElement.value = 'typeC';
-      selectElement.dispatchEvent(new Event('change'));
+      await userEvent.selectOptions(selectElement, 'typeC');
 
       component.formValue.update((v) => ({ ...v, procedureType: 'typeC' }));
-      fixture.detectChanges();
-      await fixture.whenStable();
-      TestBed.flushEffects();
-      await waitForValidation();
+      await expect
+        .poll(() =>
+          fixture.nativeElement.querySelector('[data-testid="info-text"]')
+        )
+        .toBeTruthy();
 
       // Verify UI structure changed
       expect(
         fixture.nativeElement.querySelector('[data-testid="field-a"]')
       ).toBeFalsy();
-      expect(
-        fixture.nativeElement.querySelector('[data-testid="info-text"]')
-      ).toBeTruthy();
 
       // Force validation refresh now that the structure changed
       component.vestForm.triggerFormValidation();
-      fixture.detectChanges();
-      await fixture.whenStable();
-      TestBed.flushEffects();
-      await waitForValidation();
 
-      expect(component.isValid()).toBe(true);
-      expect(component.errors()).toEqual({});
+      await expect.poll(() => component.isValid()).toBe(true);
+      await expect.poll(() => component.errors()).toEqual({});
     });
   });
 
@@ -232,35 +217,30 @@ describe('FormDirective - Dynamic Structure Changes', () => {
 
       // Reproduce the issue
       const selectElement = fixture.nativeElement.querySelector('select');
-      selectElement.value = 'typeA';
-      selectElement.dispatchEvent(new Event('change'));
+      await userEvent.selectOptions(selectElement, 'typeA');
 
       component.formValue.update((v) => ({ ...v, procedureType: 'typeA' }));
-      fixture.detectChanges();
-      await fixture.whenStable();
-      TestBed.flushEffects();
-      await waitForValidation();
+      await expect
+        .poll(() => fixture.nativeElement.querySelector('input[name="fieldA"]'))
+        .toBeTruthy();
+      await expect
+        .poll(() => Object.keys(component.errors()).length)
+        .toBeGreaterThan(0);
 
       expect(component.isValid()).toBe(false);
 
       // Switch to typeC
-      selectElement.value = 'typeC';
-      selectElement.dispatchEvent(new Event('change'));
+      await userEvent.selectOptions(selectElement, 'typeC');
 
       component.formValue.update((v) => ({ ...v, procedureType: 'typeC' }));
-      fixture.detectChanges();
-      await fixture.whenStable();
-      TestBed.flushEffects();
-      await waitForValidation();
+      await expect
+        .poll(() => fixture.nativeElement.querySelector('input[name="fieldA"]'))
+        .toBeFalsy();
 
       // SOLUTION: Use the new triggerFormValidation method
       component.vestForm.triggerFormValidation();
-      fixture.detectChanges();
-      await fixture.whenStable();
-      TestBed.flushEffects();
-      await waitForValidation();
       // Test should now pass with the new API
-      expect(component.isValid()).toBe(true);
+      await expect.poll(() => component.isValid()).toBe(true);
     });
   });
 });

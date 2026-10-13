@@ -1,5 +1,7 @@
 import { ApplicationRef, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { fireEvent } from '@testing-library/angular';
+import userEvent from '@testing-library/user-event';
 import { create, enforce, omitWhen, test } from 'vest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
@@ -260,17 +262,13 @@ describe('ValidationConfig Error Display', () => {
     expect(reasonTextarea).toBeNull();
 
     // Click checkbox to reveal reason field (this marks checkbox as touched via blur)
-    checkbox.focus();
-    checkbox.click();
-    checkbox.dispatchEvent(new Event('blur')); // Mark as touched
-    fixture.detectChanges();
-    await TestBed.inject(ApplicationRef).whenStable();
+    await userEvent.click(checkbox);
+    await userEvent.tab(); // Mark as touched
 
     // Wait for reason field to be visible
     await expect
       .poll(
         () => {
-          fixture.detectChanges();
           reasonTextarea = fixture.nativeElement.querySelector(
             '#reason'
           ) as HTMLTextAreaElement;
@@ -292,7 +290,6 @@ describe('ValidationConfig Error Display', () => {
         interval: 100,
       })
       .toBe(true);
-    fixture.detectChanges();
     await TestBed.inject(ApplicationRef).whenStable();
 
     // Get error display element (errors are shown in a region with role="status")
@@ -318,17 +315,20 @@ describe('ValidationConfig Error Display', () => {
     expect(reasonTextarea.classList.contains('ng-invalid')).toBe(true);
 
     // Now blur the reason field (user interaction)
-    reasonTextarea.dispatchEvent(new Event('blur'));
-    fixture.detectChanges();
-    await TestBed.inject(ApplicationRef).whenStable();
+    await userEvent.click(reasonTextarea);
+    await userEvent.tab();
 
     // NOW errors should appear because field was blurred by user
-    const errorUlAfterBlur = errorContainer?.querySelector('ul');
-    const errorsAfter = errorUlAfterBlur?.textContent?.trim() || '';
-    expect(errorsAfter).toContain('Reason is required');
+    await expect
+      .poll(
+        () => errorContainer?.querySelector('ul')?.textContent?.trim() || ''
+      )
+      .toContain('Reason is required');
 
     // Verify reason field is now touched
-    expect(reasonTextarea.classList.contains('ng-touched')).toBe(true);
+    await expect
+      .poll(() => visibleReasonTextarea.classList.contains('ng-touched'))
+      .toBe(true);
   });
 
   it('should show errors after form submit even if field was not touched', async () => {
@@ -340,16 +340,13 @@ describe('ValidationConfig Error Display', () => {
     const checkbox = fixture.nativeElement.querySelector(
       '#flag'
     ) as HTMLInputElement;
-    checkbox.click();
-    fixture.detectChanges();
-    await TestBed.inject(ApplicationRef).whenStable();
+    await userEvent.click(checkbox);
 
     // Wait for reason field to be visible
     let reasonTextarea: HTMLTextAreaElement | null = null;
     await expect
       .poll(
         () => {
-          fixture.detectChanges();
           reasonTextarea = fixture.nativeElement.querySelector(
             '#reason'
           ) as HTMLTextAreaElement;
@@ -370,7 +367,6 @@ describe('ValidationConfig Error Display', () => {
         interval: 100,
       })
       .toBe(true);
-    fixture.detectChanges();
     await TestBed.inject(ApplicationRef).whenStable();
     let errorDisplay = visibleReasonTextarea.closest('ngx-control-wrapper');
     let errorContainer = errorDisplay?.querySelector(
@@ -379,11 +375,9 @@ describe('ValidationConfig Error Display', () => {
     let errorUl = errorContainer?.querySelector('ul');
     expect(errorUl?.textContent?.trim() || '').toBe('');
 
-    // Submit form without touching reason field
+    // Submit form without touching reason field (the form has no submit button)
     const form = fixture.nativeElement.querySelector('form') as HTMLFormElement;
-    form.dispatchEvent(new Event('submit'));
-    fixture.detectChanges();
-    await TestBed.inject(ApplicationRef).whenStable();
+    fireEvent.submit(form);
 
     // NOW errors should appear because form was submitted
     await expect
@@ -419,10 +413,7 @@ describe('ValidationConfig Error Display', () => {
       '#justification'
     ) as HTMLTextAreaElement;
 
-    quantityInput.value = '12';
-    quantityInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await TestBed.inject(ApplicationRef).whenStable();
+    await userEvent.type(quantityInput, '12');
 
     await expect
       .poll(() => justificationTextarea.classList.contains('ng-invalid'), {
@@ -442,9 +433,8 @@ describe('ValidationConfig Error Display', () => {
     ).toBe(false);
     expect(justificationTextarea.classList.contains('ng-untouched')).toBe(true);
 
-    justificationTextarea.dispatchEvent(new Event('blur'));
-    fixture.detectChanges();
-    await TestBed.inject(ApplicationRef).whenStable();
+    await userEvent.click(justificationTextarea);
+    await userEvent.tab();
 
     await expect
       .poll(
@@ -475,11 +465,13 @@ describe('ValidationConfig Error Display', () => {
     const zipWrapper = zipCode.closest('ngx-control-wrapper');
 
     // Before country selected: state/zip should not show required errors
-    state.focus();
-    state.dispatchEvent(new Event('blur'));
-    zipCode.focus();
-    zipCode.dispatchEvent(new Event('blur'));
-    fixture.detectChanges();
+    // (click state, tab to zipCode, tab out: blurs both)
+    await userEvent.click(state);
+    await userEvent.tab();
+    await userEvent.tab();
+    await expect
+      .poll(() => zipCode.classList.contains('ng-touched'))
+      .toBe(true);
     await TestBed.inject(ApplicationRef).whenStable();
 
     expect(
@@ -490,17 +482,11 @@ describe('ValidationConfig Error Display', () => {
     ).toBe(false);
 
     // Select country and blur dependent fields -> now they should be required/invalid
-    country.value = 'US';
-    country.dispatchEvent(new Event('change'));
-    fixture.detectChanges();
-    await TestBed.inject(ApplicationRef).whenStable();
+    await userEvent.selectOptions(country, 'US');
 
-    state.focus();
-    state.dispatchEvent(new Event('blur'));
-    zipCode.focus();
-    zipCode.dispatchEvent(new Event('blur'));
-    fixture.detectChanges();
-    await TestBed.inject(ApplicationRef).whenStable();
+    await userEvent.click(state);
+    await userEvent.tab();
+    await userEvent.tab();
 
     await expect
       .poll(
@@ -539,18 +525,11 @@ describe('ValidationConfig Error Display', () => {
     ) as HTMLInputElement;
 
     // Create ordering error first (end before start)
-    startDate.value = '2025-01-20';
-    startDate.dispatchEvent(new Event('input'));
-    startDate.dispatchEvent(new Event('change'));
-    startDate.dispatchEvent(new Event('blur'));
+    await userEvent.type(startDate, '2025-01-20');
+    await userEvent.tab();
 
-    endDate.value = '2025-01-10';
-    endDate.dispatchEvent(new Event('input'));
-    endDate.dispatchEvent(new Event('change'));
-    endDate.dispatchEvent(new Event('blur'));
-
-    fixture.detectChanges();
-    await TestBed.inject(ApplicationRef).whenStable();
+    await userEvent.type(endDate, '2025-01-10');
+    await userEvent.tab();
 
     await expect
       .poll(() => {
@@ -562,14 +541,10 @@ describe('ValidationConfig Error Display', () => {
       })
       .toBe(true);
 
-    // Clear start date: relevant required error should be shown
-    startDate.value = '';
-    startDate.dispatchEvent(new Event('input'));
-    startDate.dispatchEvent(new Event('change'));
-    startDate.dispatchEvent(new Event('blur'));
-    endDate.dispatchEvent(new Event('blur'));
-    fixture.detectChanges();
-    await TestBed.inject(ApplicationRef).whenStable();
+    // Clear start date, then blur both dates: relevant required error should be shown
+    await userEvent.clear(startDate);
+    await userEvent.tab();
+    await userEvent.tab();
 
     await expect
       .poll(() => {

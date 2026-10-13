@@ -1,5 +1,12 @@
 /* eslint-disable @angular-eslint/component-selector */
-import { Component, signal, Type, viewChild, ViewChild } from '@angular/core';
+import {
+  ApplicationRef,
+  Component,
+  signal,
+  Type,
+  viewChild,
+  ViewChild,
+} from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
@@ -23,6 +30,8 @@ async function awaitResult<T>(result: Promise<T> | Observable<T>) {
 }
 
 import { firstValueFrom } from 'rxjs';
+
+const whenStable = () => TestBed.inject(ApplicationRef).whenStable();
 
 function expectElement<T extends Element>(
   value: T | null,
@@ -125,22 +134,21 @@ describe('FormDirective - Async Validator', () => {
     const instance = fixture.componentInstance as TestFormComponent;
 
     // Simulate rapid typing by directly updating the form value
+    // (advancing 0ms flushes the zoneless scheduler's render timer)
     instance.formValue.set({ username: 'a' });
-    fixture.detectChanges();
+    await vi.advanceTimersByTimeAsync(0);
     instance.formValue.set({ username: 'ab' });
-    fixture.detectChanges();
+    await vi.advanceTimersByTimeAsync(0);
     instance.formValue.set({ username: 'abc' });
-    fixture.detectChanges();
+    await vi.advanceTimersByTimeAsync(0);
 
     // Advance time less than debounce window (simulate debounceTime: 150ms)
-    vi.advanceTimersByTime(100);
-    fixture.detectChanges();
+    await vi.advanceTimersByTimeAsync(100);
     // No validation should have run yet
     expect(instance.count()).toBe(0);
 
     // Advance past debounce window
-    vi.advanceTimersByTime(100);
-    fixture.detectChanges();
+    await vi.advanceTimersByTimeAsync(100);
     // Only one validation should have run
     expect(instance.count()).toBe(1);
   });
@@ -803,9 +811,7 @@ describe('FormDirective - Model to Form Synchronization', () => {
     const { fixture } = await render(TestNestedModelSyncHost);
     const instance = fixture.componentInstance;
 
-    // Initial render
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const firstNameInput = fixture.nativeElement.querySelector(
       'input[name="firstName"]'
@@ -827,10 +833,8 @@ describe('FormDirective - Model to Form Synchronization', () => {
     // Programmatic model update with a partial nested object.
     // Regression: previous implementation used setValue on the FormGroup which would throw.
     instance.formValue.set({ user: { firstName: 'Ada' } });
-    fixture.detectChanges();
-    await fixture.whenStable();
 
-    expect(firstNameInput.value).toBe('Ada');
+    await expect.poll(() => firstNameInput.value).toBe('Ada');
     // lastName should remain unchanged.
     expect(lastNameInput.value).toBe('');
   });
@@ -893,8 +897,7 @@ describe('FormDirective - Signals/Outputs', () => {
     }
 
     const { fixture } = await render(TestFieldBlurHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const input = fixture.nativeElement.querySelector(
       '#projectName'
@@ -905,15 +908,14 @@ describe('FormDirective - Signals/Outputs', () => {
       throw new Error('Expected #projectName input to exist');
     }
 
-    input.value = 'Angular course';
-    input.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await userEvent.clear(input);
+    await userEvent.type(input, 'Angular course');
+    await whenStable();
 
-    input.dispatchEvent(new Event('blur'));
-    input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
-    await Promise.resolve();
-    fixture.detectChanges();
+    await userEvent.tab();
+    await expect
+      .poll(() => fixture.componentInstance.blurEvents().length)
+      .toBe(1);
 
     const [blurEvent] = fixture.componentInstance.blurEvents();
     expect(blurEvent).toBeTruthy();
@@ -968,8 +970,7 @@ describe('FormDirective - Signals/Outputs', () => {
     }
 
     const { fixture } = await render(TestFieldBlurDelayedSyncHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const input = fixture.nativeElement.querySelector(
       '#projectName'
@@ -980,13 +981,15 @@ describe('FormDirective - Signals/Outputs', () => {
       throw new Error('Expected #projectName input to exist');
     }
 
-    input.value = 'Recovered draft';
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-
-    input.dispatchEvent(new Event('blur'));
-    input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
-    await Promise.resolve();
-    fixture.detectChanges();
+    // delay: null keeps user-event from yielding a macrotask between actions,
+    // so the host's setTimeout(0) model sync is still pending at blur time.
+    const user = userEvent.setup({ delay: null });
+    await user.clear(input);
+    await user.type(input, 'Recovered draft');
+    await user.tab();
+    await expect
+      .poll(() => fixture.componentInstance.blurEvents().length)
+      .toBe(1);
 
     const [blurEvent] = fixture.componentInstance.blurEvents();
     expect(blurEvent).toBeTruthy();
@@ -1051,8 +1054,7 @@ describe('FormDirective - Signals/Outputs', () => {
     }
 
     const { fixture } = await render(TestFieldBlurCrossFieldSnapshotHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const projectName = fixture.nativeElement.querySelector(
       '#projectName'
@@ -1068,16 +1070,22 @@ describe('FormDirective - Signals/Outputs', () => {
       throw new Error('Expected projectName and notes controls to exist');
     }
 
-    notes.value = 'Add deployment notes for the production team.';
-    notes.dispatchEvent(new Event('input', { bubbles: true }));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await userEvent.clear(notes);
+    await userEvent.type(
+      notes,
+      'Add deployment notes for the production team.'
+    );
+    await whenStable();
 
     projectName.focus();
     projectName.blur();
-    projectName.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
-    await Promise.resolve();
-    fixture.detectChanges();
+    await expect
+      .poll(() =>
+        fixture.componentInstance
+          .blurEvents()
+          .some((event) => event.field === 'projectName')
+      )
+      .toBe(true);
 
     const blurEvent = fixture.componentInstance
       .blurEvents()
@@ -1130,20 +1138,19 @@ describe('FormDirective - Signals/Outputs', () => {
     }
 
     const { fixture } = await render(TestFieldBlurGroupHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const input = fixture.nativeElement.querySelector(
       '#password'
     ) as HTMLInputElement;
-    input.value = 'hunter2';
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await userEvent.clear(input);
+    await userEvent.type(input, 'hunter2');
+    await whenStable();
 
-    input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
-    await Promise.resolve();
-    fixture.detectChanges();
+    await userEvent.tab();
+    await expect
+      .poll(() => fixture.componentInstance.blurEvents().length)
+      .toBe(1);
 
     const [blurEvent] = fixture.componentInstance.blurEvents();
     expect(blurEvent).toBeTruthy();
@@ -1197,18 +1204,17 @@ describe('FormDirective - Signals/Outputs', () => {
     }
 
     const { fixture } = await render(TestFieldBlurRadioHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const unselectedRadio = fixture.nativeElement.querySelector(
       '#male'
     ) as HTMLInputElement;
     // The "male" radio is focused but NOT checked — the bound value remains "female".
-    unselectedRadio.dispatchEvent(
-      new FocusEvent('focusout', { bubbles: true })
-    );
-    await Promise.resolve();
-    fixture.detectChanges();
+    unselectedRadio.focus();
+    unselectedRadio.blur();
+    await expect
+      .poll(() => fixture.componentInstance.blurEvents().length)
+      .toBe(1);
 
     const [blurEvent] = fixture.componentInstance.blurEvents();
     expect(blurEvent).toBeTruthy();
@@ -1252,20 +1258,19 @@ describe('FormDirective - Signals/Outputs', () => {
     }
 
     const { fixture } = await render(TestFieldBlurRepeatedLeafHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const toDay = fixture.nativeElement.querySelector(
       '#to-day'
     ) as HTMLInputElement;
-    toDay.value = '2026-05-10';
-    toDay.dispatchEvent(new Event('input', { bubbles: true }));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await userEvent.clear(toDay);
+    await userEvent.type(toDay, '2026-05-10');
+    await whenStable();
 
-    toDay.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
-    await Promise.resolve();
-    fixture.detectChanges();
+    await userEvent.tab();
+    await expect
+      .poll(() => fixture.componentInstance.blurEvents().length)
+      .toBe(1);
 
     const [blurEvent] = fixture.componentInstance.blurEvents();
     expect(blurEvent).toBeTruthy();
@@ -1322,22 +1327,21 @@ describe('FormDirective - Signals/Outputs', () => {
     }
 
     const { fixture } = await render(TestFieldBlurDynamicGroupHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     // Blur the second slot's `to` input — identical name+structure as slot 0,
     // distinguished only by the dynamic `[ngModelGroup]="'1'"` ancestor.
     const target = fixture.nativeElement.querySelector(
       '#to-1'
     ) as HTMLInputElement;
-    target.value = '17:30';
-    target.dispatchEvent(new Event('input', { bubbles: true }));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await userEvent.clear(target);
+    await userEvent.type(target, '17:30');
+    await whenStable();
 
-    target.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
-    await Promise.resolve();
-    fixture.detectChanges();
+    await userEvent.tab();
+    await expect
+      .poll(() => fixture.componentInstance.blurEvents().length)
+      .toBe(1);
 
     const [blurEvent] = fixture.componentInstance.blurEvents();
     expect(blurEvent).toBeTruthy();
@@ -1460,8 +1464,7 @@ describe('FormDirective - clearSubmittedState', () => {
 
   it('should clear submitted state without resetting touched controls', async () => {
     const { fixture } = await render(TestClearSubmittedStateHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const input = expectElement(
       fixture.nativeElement.querySelector('input'),
@@ -1469,7 +1472,7 @@ describe('FormDirective - clearSubmittedState', () => {
     ) as HTMLInputElement;
     input.focus();
     input.blur();
-    await fixture.whenStable();
+    await whenStable();
 
     await expect
       .poll(
@@ -1483,8 +1486,8 @@ describe('FormDirective - clearSubmittedState', () => {
       fixture.nativeElement.querySelector('button[type="submit"]'),
       'button[type="submit"]'
     ) as HTMLButtonElement;
-    submitButton.click();
-    await fixture.whenStable();
+    await userEvent.click(submitButton);
+    await whenStable();
 
     await expect
       .poll(
@@ -1503,7 +1506,7 @@ describe('FormDirective - clearSubmittedState', () => {
       .toBe('true');
 
     fixture.componentInstance.vestForm().clearSubmittedState();
-    await fixture.whenStable();
+    await whenStable();
 
     await expect
       .poll(
@@ -1626,8 +1629,7 @@ describe('FormDirective - first invalid helpers', () => {
 
   it('focuses and scrolls the first invalid descendant in an invalid wrapper', async () => {
     const { fixture } = await render(TestFirstInvalidHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const target = fixture.nativeElement.querySelector(
       '#wrapper-input'
@@ -1652,8 +1654,7 @@ describe('FormDirective - first invalid helpers', () => {
   it('uses auto scrolling when reduced-motion is preferred and behavior is not provided', async () => {
     const matchMediaSpy = mockMatchMedia(true);
     const { fixture } = await render(TestFirstInvalidHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const target = fixture.nativeElement.querySelector(
       '#wrapper-input'
@@ -1674,8 +1675,7 @@ describe('FormDirective - first invalid helpers', () => {
   it('keeps explicit behavior even when reduced-motion is preferred', async () => {
     const matchMediaSpy = mockMatchMedia(true);
     const { fixture } = await render(TestFirstInvalidHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const target = fixture.nativeElement.querySelector(
       '#wrapper-input'
@@ -1697,8 +1697,7 @@ describe('FormDirective - first invalid helpers', () => {
 
   it('opens ancestor details before scrolling and focusing', async () => {
     const { fixture } = await render(TestDetailsFirstInvalidHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const target = fixture.nativeElement.querySelector(
       '#details-invalid-input'
@@ -1720,8 +1719,7 @@ describe('FormDirective - first invalid helpers', () => {
 
   it('falls back to aria-invalid controls and does not focus when focus is disabled', async () => {
     const { fixture } = await render(TestFirstInvalidHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const target = fixture.nativeElement.querySelector(
       '#aria-invalid-input'
@@ -1744,8 +1742,7 @@ describe('FormDirective - first invalid helpers', () => {
 
   it('scrollToFirstInvalidControl does not move focus', async () => {
     const { fixture } = await render(TestFirstInvalidHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const target = fixture.nativeElement.querySelector(
       '#wrapper-input'
@@ -1763,8 +1760,7 @@ describe('FormDirective - first invalid helpers', () => {
 
   it('returns null when no invalid control is found', async () => {
     const { fixture } = await render(TestNoInvalidHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const resolved = fixture.componentInstance
       .vestForm()
@@ -1774,8 +1770,7 @@ describe('FormDirective - first invalid helpers', () => {
 
   it('returns null without throwing when invalidSelector is not a valid CSS selector', async () => {
     const { fixture } = await render(TestFirstInvalidHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     expect(() =>
       fixture.componentInstance.vestForm().focusFirstInvalidControl({
@@ -1793,8 +1788,7 @@ describe('FormDirective - first invalid helpers', () => {
 
   it('returns first invalid element without throwing when focusSelector is not a valid CSS selector', async () => {
     const { fixture } = await render(TestFirstInvalidHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     expect(() =>
       fixture.componentInstance.vestForm().focusFirstInvalidControl({
@@ -1821,8 +1815,7 @@ describe('FormDirective - first invalid helpers', () => {
 
   it('prefers an invalid descendant over the first focusable control in an invalid group wrapper', async () => {
     const { fixture } = await render(TestGroupInvalidHost);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const invalidTarget = fixture.nativeElement.querySelector(
       '#group-first-invalid'
@@ -1990,7 +1983,7 @@ describe('FormDirective - Form Contracts', () => {
 
     const fixture = TestBed.createComponent(component);
     fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
     return fixture;
   }
 
@@ -2007,8 +2000,7 @@ describe('FormDirective - Form Contracts', () => {
     const { fixture } = await render(TestLegacyShapeContractHost);
     const instance = fixture.componentInstance;
     instance.formValue.set({ foo: 'bar' });
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     expect(consoleWarnSpy).toHaveBeenCalled();
   });
@@ -2018,8 +2010,7 @@ describe('FormDirective - Form Contracts', () => {
     const instance = fixture.componentInstance;
 
     instance.formValue.set({ foo: 'bar' });
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     expect(consoleWarnSpy).toHaveBeenCalled();
   });
@@ -2029,8 +2020,7 @@ describe('FormDirective - Form Contracts', () => {
     const instance = fixture.componentInstance;
 
     instance.formValue.set({ foo: 'bar' });
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     expect(consoleWarnSpy).toHaveBeenCalled();
   });
@@ -2042,8 +2032,7 @@ describe('FormDirective - Form Contracts', () => {
 
     const instance = fixture.componentInstance;
     instance.formValue.set({ providerOnly: 'bar' });
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
     expect(consoleWarnSpy).toHaveBeenCalledWith(
@@ -2058,8 +2047,7 @@ describe('FormDirective - Form Contracts', () => {
 
     const instance = fixture.componentInstance;
     instance.formValue.set({ anotherField: 'bar' });
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     expect(consoleWarnSpy).not.toHaveBeenCalled();
   });
@@ -2070,15 +2058,14 @@ describe('FormDirective - Form Contracts', () => {
     const { fixture } = await render(TestLegacyShapeContractHost);
     const instance = fixture.componentInstance;
     instance.formValue.set({ username: 'ok' });
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
     expect(consoleWarnSpy).not.toHaveBeenCalled();
   });
 
   it('should format nested and root Standard Schema issue paths using Angular field syntax', async () => {
     const { fixture } = await render(TestSchemaIssueContractHost);
     const instance = fixture.componentInstance;
-    await fixture.whenStable();
+    await whenStable();
     consoleWarnSpy.mockClear();
 
     instance.formContract.set(
@@ -2092,8 +2079,7 @@ describe('FormDirective - Form Contracts', () => {
         },
       ])
     );
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     expect(consoleWarnSpy).toHaveBeenCalledTimes(2);
     expect(consoleWarnSpy).toHaveBeenNthCalledWith(
@@ -2116,8 +2102,7 @@ describe('FormDirective - Form Contracts', () => {
     const { fixture } = await render(TestSchemaIssueContractHost);
     const instance = fixture.componentInstance;
     instance.formValue.set({ known: 'ok', unexpected: 'value' });
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
     consoleWarnSpy.mockClear();
 
     instance.formContract.set(
@@ -2128,8 +2113,7 @@ describe('FormDirective - Form Contracts', () => {
         },
       ])
     );
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       expect.stringContaining("'unexpected'")
@@ -2137,8 +2121,7 @@ describe('FormDirective - Form Contracts', () => {
 
     consoleWarnSpy.mockClear();
     instance.formContract.set(createIssueContract());
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     expect(consoleWarnSpy).not.toHaveBeenCalled();
   });
@@ -2146,7 +2129,7 @@ describe('FormDirective - Form Contracts', () => {
   it('should keep runtime validity independent from contract warnings', async () => {
     const { fixture } = await render(TestSchemaIssueContractHost);
     const instance = fixture.componentInstance;
-    await fixture.whenStable();
+    await whenStable();
     consoleWarnSpy.mockClear();
 
     instance.formContract.set(
@@ -2157,8 +2140,7 @@ describe('FormDirective - Form Contracts', () => {
         },
       ])
     );
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     expect(consoleWarnSpy).toHaveBeenCalled();
     expect(instance.vestForm().valid()).toBe(true);
@@ -2167,7 +2149,7 @@ describe('FormDirective - Form Contracts', () => {
   it('should ignore async schema issues in the directive diagnostic pass', async () => {
     const { fixture } = await render(TestSchemaIssueContractHost);
     const instance = fixture.componentInstance;
-    await fixture.whenStable();
+    await whenStable();
     consoleWarnSpy.mockClear();
 
     instance.formContract.set(
@@ -2178,8 +2160,7 @@ describe('FormDirective - Form Contracts', () => {
         },
       ])
     );
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
     await Promise.resolve();
 
     expect(consoleWarnSpy).not.toHaveBeenCalled();
@@ -2312,11 +2293,7 @@ describe('FormDirective - suite input changes (late/swapped suite)', () => {
         #vest="ngxVestForm"
       >
         <label for="username">Username</label>
-        <input
-          id="username"
-          name="username"
-          [ngModel]="formValue().username"
-        />
+        <input id="username" name="username" [ngModel]="formValue().username" />
       </form>
     `,
     imports: [NgxVestForms],
@@ -2331,7 +2308,7 @@ describe('FormDirective - suite input changes (late/swapped suite)', () => {
   it('should revalidate existing fields when the suite arrives late (null → suite)', async () => {
     const { fixture } = await render(TestLateSuiteHost);
     const instance = fixture.componentInstance as TestLateSuiteHost;
-    await fixture.whenStable();
+    await whenStable();
 
     // While the suite is absent, the field validates as VALID.
     expect(instance.vestForm().ngForm.form.get('username')?.valid).toBe(true);
@@ -2345,7 +2322,6 @@ describe('FormDirective - suite input changes (late/swapped suite)', () => {
         });
       })
     );
-    fixture.detectChanges();
 
     // Without any user interaction, the now-present suite must be applied.
     await waitFor(() => {
@@ -2364,8 +2340,7 @@ describe('FormDirective - suite input changes (late/swapped suite)', () => {
 
     // Let the model value sync into the form controls first.
     instance.formValue.set({ username: 'abc' });
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     // Initial suite: 3 characters are enough — field is VALID.
     instance.suite.set(
@@ -2375,12 +2350,9 @@ describe('FormDirective - suite input changes (late/swapped suite)', () => {
         });
       })
     );
-    fixture.detectChanges();
 
     await waitFor(() => {
-      expect(instance.vestForm().ngForm.form.get('username')?.valid).toBe(
-        true
-      );
+      expect(instance.vestForm().ngForm.form.get('username')?.valid).toBe(true);
     });
 
     // Swap to a stricter suite (e.g. wizard step / mode switch): the existing
@@ -2392,7 +2364,6 @@ describe('FormDirective - suite input changes (late/swapped suite)', () => {
         });
       })
     );
-    fixture.detectChanges();
 
     await waitFor(() => {
       expect(instance.vestForm().ngForm.form.get('username')?.invalid).toBe(
@@ -2429,8 +2400,9 @@ describe('FormDirective - FormState Memoization', () => {
   it('should memoize formState when status changes but values/errors/valid remain the same', async () => {
     const { fixture } = await render(TestMemoizationHost);
     const instance = fixture.componentInstance;
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
+    // Let the initial validation pass settle before capturing the baseline.
+    await expect.poll(() => instance.vestForm().formState().valid).toBe(true);
 
     // Get initial formState reference
     const initialState = instance.vestForm().formState();
@@ -2438,8 +2410,7 @@ describe('FormDirective - FormState Memoization', () => {
     // Trigger form status change without changing actual values/errors/valid
     // This simulates Angular's statusChanges emitting even when nothing meaningful changed
     instance.vestForm().ngForm.form.updateValueAndValidity({ emitEvent: true });
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     // FormState should return same reference due to memoization
     const stateAfterUpdate = instance.vestForm().formState();
@@ -2454,8 +2425,7 @@ describe('FormDirective - FormState Memoization', () => {
   it('should use custom equality function with fastDeepEqual for deep comparison', async () => {
     const { fixture } = await render(TestMemoizationHost);
     const instance = fixture.componentInstance;
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const state1 = instance.vestForm().formState();
 
@@ -2471,8 +2441,9 @@ describe('FormDirective - FormState Memoization', () => {
   it('should prevent getAllFormErrors from being called repeatedly for identical states', async () => {
     const { fixture } = await render(TestMemoizationHost);
     const instance = fixture.componentInstance;
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
+    // Let the initial validation pass settle before capturing the baseline.
+    await expect.poll(() => instance.vestForm().formState().valid).toBe(true);
 
     // Get initial state (this calls getAllFormErrors once)
     const state1 = instance.vestForm().formState();
@@ -2482,7 +2453,7 @@ describe('FormDirective - FormState Memoization', () => {
       instance
         .vestForm()
         .ngForm.form.updateValueAndValidity({ emitEvent: true });
-      fixture.detectChanges();
+      await whenStable();
     }
 
     const state2 = instance.vestForm().formState();
@@ -2516,9 +2487,7 @@ describe('FormDirective - FormState Memoization', () => {
 
     const { fixture } = await render(TestFormStateErrorsHost);
     const instance = fixture.componentInstance;
-
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const emailControl = instance.vestForm().ngForm.form.get('email');
     const usernameControl = instance.vestForm().ngForm.form.get('username');
@@ -2528,8 +2497,7 @@ describe('FormDirective - FormState Memoization', () => {
 
     emailControl?.setErrors({ errors: ['Email is required'] });
     usernameControl?.setErrors({ errors: ['Username is required'] });
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const initialErrors = instance.vestForm().formState().errors;
     expect(initialErrors['email']).toContain('Email is required');
@@ -2537,8 +2505,7 @@ describe('FormDirective - FormState Memoization', () => {
     expect(instance.vestForm().formState().valid).toBe(false);
 
     emailControl?.setErrors(null);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const updatedErrors = instance.vestForm().formState().errors;
     expect(updatedErrors['email']).toBeUndefined();
@@ -2592,7 +2559,8 @@ describe('FormDirective - Destroy-aware async scheduling', () => {
 
     // Trigger validation by changing the value
     instance.formValue.set({ username: 'test' });
-    fixture.detectChanges();
+    // Flush the zoneless scheduler's render timer without reaching the debounce
+    await vi.advanceTimersByTimeAsync(0);
 
     // Destroy the component before the debounce timer fires (validation in flight)
     fixture.destroy();
@@ -2643,7 +2611,8 @@ describe('FormDirective - Destroy-aware async scheduling', () => {
 
     // Trigger validation config processing by changing the trigger field value
     instance.formValue.set({ password: 'changed', confirmPassword: '' });
-    fixture.detectChanges();
+    // Flush the zoneless scheduler's render timer without reaching the debounce
+    await vi.advanceTimersByTimeAsync(0);
 
     // Destroy before the VALIDATION_IN_PROGRESS_TIMEOUT_MS fires
     fixture.destroy();
@@ -2717,8 +2686,7 @@ describe('FormDirective - bidirectional sync conflict recovery', () => {
     ) as HTMLInputElement;
 
     instance.formValue.set({ name: 'model-only' });
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     await waitFor(() => {
       expect(input.value).toBe('model-only');
@@ -2739,21 +2707,18 @@ describe('FormDirective - bidirectional sync conflict recovery', () => {
 
     // 1. User edits the input -> form changes (model stays {name:''}).
     await userEvent.type(input, 'user-typed');
-    fixture.detectChanges();
 
     // 2. Simultaneously change the model to a DIFFERENT value before the
     //    sync effect reconciles -> formChanged && modelChanged with unequal
     //    values == the "true conflict" branch.
     instance.formValue.set({ name: 'model-A' });
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     // 3. A LATER, single-sided programmatic formValue update must still take
     //    effect (pre-fix this was permanently dropped because the conflict
     //    branch never advanced the sync baselines).
     instance.formValue.set({ name: 'model-B' });
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     await waitFor(() => {
       expect(input.value).toBe('model-B');
@@ -2773,22 +2738,17 @@ describe('FormDirective - bidirectional sync conflict recovery', () => {
     const input = screen.getByLabelText('name') as HTMLInputElement;
 
     await userEvent.type(input, 'abc');
-    fixture.detectChanges();
     instance.formValue.set({ name: 'conflict-1' });
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     await userEvent.clear(input);
     await userEvent.type(input, 'def');
-    fixture.detectChanges();
     instance.formValue.set({ name: 'conflict-2' });
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     // Final clean programmatic update must still propagate to the DOM.
     instance.formValue.set({ name: 'final' });
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     await waitFor(() => {
       expect(input.value).toBe('final');

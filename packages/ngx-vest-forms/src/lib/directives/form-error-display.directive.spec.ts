@@ -4,10 +4,12 @@ import {
   Directive,
   inject,
   input,
+  signal,
 } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, NgForm } from '@angular/forms';
 import { By } from '@angular/platform-browser';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NgxErrorDisplayMode } from './form-error-display.directive';
 import { FormErrorDisplayDirective } from './form-error-display.directive';
@@ -30,12 +32,12 @@ class DummyDirective {
       <div ngxDummy [testInput]="'test'"></div>
       <input
         ngxErrorDisplay
-        [errorDisplayMode]="mode"
+        [errorDisplayMode]="mode()"
         #display="ngxErrorDisplay"
         name="test"
-        [ngModel]="model"
+        [ngModel]="model()"
         required
-        [ngModelOptions]="ngModelOptions"
+        [ngModelOptions]="ngModelOptions()"
       />
       <span id="should-show-errors">{{ display.shouldShowErrors() }}</span>
       <span id="errors">{{ display.errors()!.join(',') }}</span>
@@ -48,9 +50,9 @@ class DummyDirective {
   `,
 })
 class TestErrorDisplayHostComponent {
-  model = '';
-  mode: NgxErrorDisplayMode = 'on-blur-or-submit';
-  ngModelOptions: any = {};
+  readonly model = signal('');
+  readonly mode = signal<NgxErrorDisplayMode>('on-blur-or-submit');
+  readonly ngModelOptions = signal<any>({});
 }
 
 // Component for testing injected default mode (no [errorDisplayMode] binding)
@@ -109,14 +111,13 @@ describe('FormErrorDisplayDirective', () => {
   });
 
   it('should show errors after blur (touched) in on-blur mode', async () => {
-    host.mode = 'on-blur';
+    host.mode.set('on-blur');
     await TestBed.inject(ApplicationRef).whenStable();
 
     const input: HTMLInputElement =
       fixture.nativeElement.querySelector('input');
-    input.focus();
-    input.blur();
-    input.dispatchEvent(new Event('blur'));
+    await userEvent.click(input);
+    await userEvent.tab();
 
     await TestBed.inject(ApplicationRef).whenStable();
 
@@ -153,14 +154,13 @@ describe('FormErrorDisplayDirective', () => {
   });
 
   it('should show errors only after submit in on-submit mode', async () => {
-    host.mode = 'on-submit';
+    host.mode.set('on-submit');
     await TestBed.inject(ApplicationRef).whenStable();
 
     const input: HTMLInputElement =
       fixture.nativeElement.querySelector('input');
-    input.focus();
-    input.blur();
-    input.dispatchEvent(new Event('blur'));
+    await userEvent.click(input);
+    await userEvent.tab();
 
     await TestBed.inject(ApplicationRef).whenStable();
 
@@ -192,14 +192,13 @@ describe('FormErrorDisplayDirective', () => {
   });
 
   it('should show errors after blur or submit in on-blur-or-submit mode', async () => {
-    host.mode = 'on-blur-or-submit';
+    host.mode.set('on-blur-or-submit');
     await TestBed.inject(ApplicationRef).whenStable();
 
     const input: HTMLInputElement =
       fixture.nativeElement.querySelector('input');
-    input.focus();
-    input.blur();
-    input.dispatchEvent(new Event('blur'));
+    await userEvent.click(input);
+    await userEvent.tab();
 
     await TestBed.inject(ApplicationRef).whenStable();
 
@@ -220,14 +219,19 @@ describe('FormErrorDisplayDirective', () => {
       .toBe('true');
 
     // Reset and test submit
-    host.model = '';
+    host.model.set('');
     await TestBed.inject(ApplicationRef).whenStable();
 
     const submitBtn: HTMLButtonElement =
       fixture.nativeElement.querySelector('#submit-btn');
     submitBtn.click();
 
-    await TestBed.inject(ApplicationRef).whenStable();
+    await expect
+      .poll(
+        () =>
+          fixture.nativeElement.querySelector('#form-submitted')?.textContent
+      )
+      .toBe('true');
 
     await expect
       .poll(
@@ -260,9 +264,8 @@ describe('FormErrorDisplayDirective', () => {
 
     const input: HTMLInputElement =
       customFixture.nativeElement.querySelector('input');
-    input.focus();
-    input.blur();
-    input.dispatchEvent(new Event('blur'));
+    await userEvent.click(input);
+    await userEvent.tab();
 
     await TestBed.inject(ApplicationRef).whenStable();
 
@@ -279,8 +282,8 @@ describe('FormErrorDisplayDirective', () => {
   it('should warn on updateOn submit + on-blur mismatch', async () => {
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const fixture = TestBed.createComponent(TestErrorDisplayHostComponent);
-    fixture.componentInstance.mode = 'on-blur';
-    fixture.componentInstance.ngModelOptions = { updateOn: 'submit' };
+    fixture.componentInstance.mode.set('on-blur');
+    fixture.componentInstance.ngModelOptions.set({ updateOn: 'submit' });
 
     await TestBed.inject(ApplicationRef).whenStable();
 
@@ -305,7 +308,7 @@ describe('FormErrorDisplayDirective', () => {
       fixture.nativeElement.querySelector('#submit-btn');
     submitBtn.click();
 
-    await fixture.whenStable();
+    await TestBed.inject(ApplicationRef).whenStable();
 
     expect(
       fixture.nativeElement.querySelector('#form-submitted').textContent
@@ -313,7 +316,7 @@ describe('FormErrorDisplayDirective', () => {
   });
 
   it('should react to programmatic NgForm.onSubmit() in on-submit mode', async () => {
-    host.mode = 'on-submit';
+    host.mode.set('on-submit');
     await TestBed.inject(ApplicationRef).whenStable();
 
     const ngForm = fixture.debugElement
@@ -344,7 +347,7 @@ describe('FormErrorDisplayDirective', () => {
   });
 
   it('should reset formSubmitted after programmatic submit when form resets', async () => {
-    host.mode = 'on-submit';
+    host.mode.set('on-submit');
     await TestBed.inject(ApplicationRef).whenStable();
 
     const ngForm = fixture.debugElement
@@ -373,7 +376,7 @@ describe('FormErrorDisplayDirective', () => {
   });
 
   it('should unsubscribe from form submit/reset events when the directive is destroyed', async () => {
-    host.mode = 'on-submit';
+    host.mode.set('on-submit');
     await TestBed.inject(ApplicationRef).whenStable();
 
     const ngForm = fixture.debugElement
@@ -419,7 +422,7 @@ describe('FormErrorDisplayDirective', () => {
       })
       .compileComponents();
     const hostFixture = TestBed.createComponent(HostFieldComponent);
-    await fixture.whenStable();
+    await TestBed.inject(ApplicationRef).whenStable();
 
     // Accept both '' and 'required' for initial state due to signal timing
     const hostErrors =
@@ -429,7 +432,7 @@ describe('FormErrorDisplayDirective', () => {
 
   describe('New error display modes', () => {
     it('should show errors immediately in always mode', async () => {
-      host.mode = 'always';
+      host.mode.set('always');
       await TestBed.inject(ApplicationRef).whenStable();
 
       // Errors should show immediately without any interaction
@@ -447,7 +450,7 @@ describe('FormErrorDisplayDirective', () => {
     });
 
     it('should show errors after value changes in on-dirty mode', async () => {
-      host.mode = 'on-dirty';
+      host.mode.set('on-dirty');
       await TestBed.inject(ApplicationRef).whenStable();
 
       // Initially should not show errors
@@ -459,19 +462,13 @@ describe('FormErrorDisplayDirective', () => {
         fixture.nativeElement.querySelector('input');
 
       // Type something to make it dirty
-      // Note: We need to focus first, then change value, then dispatch input event
-      // This mimics real user interaction which marks the control as dirty
-      input.focus();
-      input.value = 'test';
-      input.dispatchEvent(new Event('input'));
-      // NgModel needs time to process the input event
+      await userEvent.type(input, 'test');
       await TestBed.inject(ApplicationRef).whenStable();
 
       // Should show errors after value changes (dirty)
       // Note: The field becomes valid when it has a value, so no error should show yet
       // Clear the input to trigger the required error while keeping it dirty
-      input.value = '';
-      input.dispatchEvent(new Event('input'));
+      await userEvent.clear(input);
 
       await TestBed.inject(ApplicationRef).whenStable();
 
@@ -490,16 +487,15 @@ describe('FormErrorDisplayDirective', () => {
     });
 
     it('should show errors after blur even in on-dirty mode', async () => {
-      host.mode = 'on-dirty';
+      host.mode.set('on-dirty');
       await TestBed.inject(ApplicationRef).whenStable();
 
       const input: HTMLInputElement =
         fixture.nativeElement.querySelector('input');
 
       // Blur without changing value (touched but not dirty)
-      input.focus();
-      input.blur();
-      input.dispatchEvent(new Event('blur'));
+      await userEvent.click(input);
+      await userEvent.tab();
 
       await TestBed.inject(ApplicationRef).whenStable();
 
@@ -518,7 +514,7 @@ describe('FormErrorDisplayDirective', () => {
     });
 
     it('should show errors after submit in on-dirty mode', async () => {
-      host.mode = 'on-dirty';
+      host.mode.set('on-dirty');
       await TestBed.inject(ApplicationRef).whenStable();
 
       // Submit without any interaction

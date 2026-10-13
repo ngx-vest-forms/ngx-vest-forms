@@ -65,7 +65,8 @@
  * as pristine/untouched in a single synchronous operation, avoiding the race entirely.
  */
 
-import { Component, signal, viewChild } from '@angular/core';
+import { ApplicationRef, Component, signal, viewChild } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { create, enforce, test } from 'vest';
@@ -730,10 +731,11 @@ describe('FormDirective - Reset Functionality', () => {
      * handler — no Angular event binding schedules change detection. The
      * directive must mark the view for check itself so the zoneless scheduler
      * re-renders the ng-* host classes. This test exercises that path by
-     * calling resetForm() directly on the directive instance without any
-     * preceding click or fixture.detectChanges().
+     * dirtying the form, waiting for the app to settle, and then calling
+     * resetForm() directly on the directive instance, outside any event
+     * handler and without fixture.detectChanges().
      */
-    it('should update DOM classes after programmatic resetForm() without a preceding user event', async () => {
+    it('should update DOM classes after programmatic resetForm() outside an event handler', async () => {
       @Component({
         template: `
           <form
@@ -768,24 +770,38 @@ describe('FormDirective - Reset Functionality', () => {
 
       const { fixture } = await render(TestComponent);
       const component = fixture.componentInstance;
+      const whenStable = () => TestBed.inject(ApplicationRef).whenStable();
 
       const input = screen.getByTestId('firstName') as HTMLInputElement;
       const form = fixture.nativeElement.querySelector('form');
 
       // Verify initial state
-      await waitFor(() => expect(input.value).toBe('John'));
+      await whenStable();
+      expect(input.value).toBe('John');
+
+      // Make the form dirty and touched so the reset has classes to flip.
+      await userEvent.type(input, 'ny');
+      await userEvent.tab();
+      await whenStable();
+      expect(form.classList.contains('ng-dirty')).toBe(true);
+      expect(form.classList.contains('ng-touched')).toBe(true);
+      expect(component.formValue().firstName).toBe('Johnny');
 
       // Programmatically reset — no click, no fixture.detectChanges().
       // The directive's markForCheck() must schedule CD so the zoneless
       // scheduler updates the ng-* host classes.
       component.vestFormRef().resetForm();
 
-      // DOM updates asynchronously via the zoneless scheduler
-      await waitFor(() => {
-        expect(input.value).toBe('');
-        expect(form.classList.contains('ng-pristine')).toBe(true);
-        expect(form.classList.contains('ng-untouched')).toBe(true);
-      });
+      // Wait for the zoneless scheduler to settle, then assert without
+      // running change detection ourselves (waitFor would run CD on each
+      // attempt and hide a missing markForCheck()).
+      await whenStable();
+      expect(input.value).toBe('');
+      expect(form.classList.contains('ng-pristine')).toBe(true);
+      expect(form.classList.contains('ng-untouched')).toBe(true);
+
+      // The reset is also announced through formValueChange.
+      expect(component.formValue()).toEqual({ firstName: null });
     });
   });
 

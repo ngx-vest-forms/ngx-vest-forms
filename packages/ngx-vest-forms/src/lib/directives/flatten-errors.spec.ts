@@ -1,4 +1,4 @@
-import { Component, viewChild } from '@angular/core';
+import { ApplicationRef, Component, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, NgModel } from '@angular/forms';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -25,6 +25,8 @@ class TestErrorFlatteningComponent {
   readonly state = viewChild<FormControlStateDirective>('state');
 }
 
+const whenStable = () => TestBed.inject(ApplicationRef).whenStable();
+
 describe('FormControlStateDirective - #flattenAngularErrors bug fix', () => {
   let fixture: ComponentFixture<TestErrorFlatteningComponent>;
   let component: TestErrorFlatteningComponent;
@@ -37,7 +39,7 @@ describe('FormControlStateDirective - #flattenAngularErrors bug fix', () => {
     fixture = TestBed.createComponent(TestErrorFlatteningComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
   });
 
   it('should return actual warning messages, not array indices', async () => {
@@ -51,8 +53,7 @@ describe('FormControlStateDirective - #flattenAngularErrors bug fix', () => {
     if (!ngModel) throw new Error('NgModel not found');
 
     ngModel.control.setErrors(mockErrors);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const warningEl = fixture.nativeElement.querySelector('#warning-messages');
     const warningText = warningEl.textContent || '';
@@ -76,8 +77,7 @@ describe('FormControlStateDirective - #flattenAngularErrors bug fix', () => {
     if (!ngModel) throw new Error('NgModel not found');
 
     ngModel.control.setErrors(mockErrors);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const errorEl = fixture.nativeElement.querySelector('#error-messages');
     const errorText = errorEl.textContent || '';
@@ -102,8 +102,7 @@ describe('FormControlStateDirective - #flattenAngularErrors bug fix', () => {
     if (!ngModel) throw new Error('NgModel not found');
 
     ngModel.control.setErrors(mockErrors);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const errorEl = fixture.nativeElement.querySelector('#error-messages');
     const errorText = errorEl.textContent || '';
@@ -128,8 +127,7 @@ describe('FormControlStateDirective - #flattenAngularErrors bug fix', () => {
     if (!ngModel) throw new Error('NgModel not found');
 
     ngModel.control.setErrors(mockErrors);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const errorEl = fixture.nativeElement.querySelector('#error-messages');
     const errorText = errorEl.textContent || '';
@@ -154,8 +152,7 @@ describe('FormControlStateDirective - #flattenAngularErrors bug fix', () => {
     if (!ngModel) throw new Error('NgModel not found');
 
     ngModel.control.setErrors(mockErrors);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const errorEl = fixture.nativeElement.querySelector('#error-messages');
     const errorText = errorEl.textContent || '';
@@ -185,8 +182,7 @@ describe('FormControlStateDirective - #flattenAngularErrors bug fix', () => {
     if (!ngModel) throw new Error('NgModel not found');
 
     ngModel.control.setErrors(mockErrors);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const errorEl = fixture.nativeElement.querySelector('#error-messages');
     const errorText = errorEl.textContent || '';
@@ -210,8 +206,7 @@ describe('FormControlStateDirective - #flattenAngularErrors bug fix', () => {
     if (!ngModel) throw new Error('NgModel not found');
 
     ngModel.control.setErrors(mockErrors);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const errorEl = fixture.nativeElement.querySelector('#error-messages');
     const errorText = errorEl.textContent || '';
