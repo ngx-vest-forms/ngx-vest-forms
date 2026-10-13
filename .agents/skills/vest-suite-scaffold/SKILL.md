@@ -1,6 +1,8 @@
 ---
 name: vest-suite-scaffold
 description: Scaffold a Vest validation suite, its typed model + form contract, and a matching Vitest spec following ngx-vest-forms conventions. Use when adding a new validated form or a new validation suite.
+metadata:
+  internal: true
 ---
 
 # Vest Suite Scaffold

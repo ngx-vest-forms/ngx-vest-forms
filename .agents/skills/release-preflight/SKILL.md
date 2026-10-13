@@ -2,6 +2,8 @@
 name: release-preflight
 description: Run before tagging or merging a release of ngx-vest-forms. Audits conventional commits, builds all targets, diffs the public API, and verifies the publishable dist. User-invoked only.
 disable-model-invocation: true
+metadata:
+  internal: true
 ---
 
 # Release Preflight
