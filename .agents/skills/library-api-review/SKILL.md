@@ -4,6 +4,8 @@ description: Reviews a branch for accidental breaks in the published ngx-vest-fo
 context: fork
 background: false
 allowed-tools: Bash(git diff *) Bash(git log *) Read Grep Glob
+metadata:
+  internal: true
 ---
 
 # Library API review
