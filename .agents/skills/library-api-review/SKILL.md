@@ -18,8 +18,8 @@ The public surface is exactly what `packages/ngx-vest-forms/src/public-api.ts` r
 
 1. Scope the diff with `git diff --stat origin/master...HEAD -- packages/ngx-vest-forms/src`. If `public-api.ts` changed, read its full diff.
 2. Classify every change to the public surface:
-   - **Breaking**: removed or renamed export, changed type signature, narrowed accepted input, widened required input, removed enum or union member, changed runtime behaviour of an exported symbol, tightened generic constraint.
-   - **Additive**: new export, new optional parameter, widened return type.
+   - **Breaking**: removed or renamed export, changed type signature, narrowed accepted input, widened required input, widened return type, removed enum or union member, changed runtime behaviour of an exported symbol, tightened generic constraint.
+   - **Additive**: new export, new optional parameter, narrowed return type.
    - **Internal-only**: changes behind non-exported or `@internal` symbols.
 3. For each Breaking change, check the branch's commit subjects (`git log --format='%s%n%b' origin/master..HEAD`). It is acceptable only when a commit carries a conventional-commit `!` or a `BREAKING CHANGE:` footer; without one, semantic-release ships it as a non-major bump.
 4. Confirm each changed exported symbol has matching spec changes (`*.spec.ts` beside the source, or `public-api-aria.spec.ts`).
