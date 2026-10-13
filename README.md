@@ -17,7 +17,7 @@ A lightweight, type-safe adapter between Angular template-driven forms and [Vest
 
 </div>
 
-> **Version notice:** This README documents **ngx-vest-forms v3** (`npm install ngx-vest-forms`). For v2.x, install `ngx-vest-forms@^2` (Angular >=19.0.0, Vest.js >=5.4.6) and read the [v2.x README](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v2.x/README.md). See [Older versions](#older-versions) for the v2 docs.
+> **Version notice:** This README documents **ngx-vest-forms v3**, developed on `master`. For v2.x, install `ngx-vest-forms@^2` (Angular >=19.0.0, Vest.js >=5.4.6) and read the [v2.x README](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v2.x/README.md). See [Older versions](#older-versions) for the v2 docs.
 
 > **New Maintainer**:
 >
@@ -577,7 +577,6 @@ If the contract genuinely varies per usage site, `[formContract]` still works as
 
 - v1.x → v2.0.0: **[Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md)**
 - v2.x → v3.0.0: **[Selector/Token Removal Guide](./docs/migration/MIGRATION-v2.x-to-v3.0.0.md)**
-- Angular 22 upgrade: **[Angular v22 Migration](./docs/migration/ANGULAR-v22-MIGRATION.md)**
 
 Staying on v2.x? Use the v2 docs listed in [Older versions](#older-versions).
 
