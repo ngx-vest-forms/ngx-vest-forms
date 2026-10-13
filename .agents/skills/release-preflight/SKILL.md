@@ -43,8 +43,7 @@ git diff origin/master...HEAD -- packages/ngx-vest-forms/src/public-api.ts
 ```
 
 Summarize added / removed / changed exports. Cross-check against the commit
-audit in step 2. Consider dispatching the `library-api-reviewer` subagent for
-a full verdict.
+audit in step 2. For a full verdict, run the `library-api-review` skill.
 
 ## 4. Build, lint, test (via Nx — never raw tooling)
 
