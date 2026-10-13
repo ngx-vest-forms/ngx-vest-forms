@@ -4,7 +4,7 @@ applyTo: 'projects/examples/**/*.{html,js,jsx,ts,tsx,css,scss,sass,md,mdx}'
 ---
 
 ## Project Setup (Tailwind CSS v4)
-- This project uses **Tailwind CSS 4** (exact version in `package.json`) with the new CSS-first configuration approach
+- This project uses **Tailwind CSS 4** (declared version range in `package.json`) with the new CSS-first configuration approach
 - PostCSS plugin: `@tailwindcss/postcss` (configured in `.postcssrc.json`)
 - Angular 21's built-in PostCSS support processes Tailwind automatically
 - Theme configuration is in CSS `@theme` blocks (see `projects/examples/src/styles.scss`)
