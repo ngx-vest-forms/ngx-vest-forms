@@ -84,7 +84,7 @@ The repo keeps 5.x source maps and evals for migration work, but current guidanc
 
 ## Repo alignment
 
-The skill is designed to complement the repository’s existing instruction files and the `ngx-vest-forms` skill package.
+The skill states the Vest 6 invariants itself and complements the `ngx-vest-forms` skill.
 
 If a question involves both raw Vest behavior and Angular template-driven integration, use the `vestjs` and `ngx-vest-forms` skills together rather than forcing one to explain the other’s domain.
 
