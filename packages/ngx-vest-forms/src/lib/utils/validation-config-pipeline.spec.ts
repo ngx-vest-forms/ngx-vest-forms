@@ -189,6 +189,44 @@ describe('createValidationConfigPipeline', () => {
   });
 
   // -------------------------------------------------------------------------
+  // 2b. Zoneless CD contract: markForCheck() schedules a render pass after
+  //     dependent revalidation (replaces the old detectChanges() call)
+  // -------------------------------------------------------------------------
+  it('calls markForCheck on the host CDR after revalidating a dependent', async () => {
+    const triggerCtrl = new FormControl('');
+    const dependentCtrl = new FormControl('');
+    const form = new FormGroup({
+      trigger: triggerCtrl,
+      dependent: dependentCtrl,
+    });
+
+    const { destroyRef } = createMockDestroyRef();
+    const { cdr, markForCheckCount } = createMockCdr();
+
+    const sub = createValidationConfigPipeline(
+      form,
+      { trigger: ['dependent'] } as Record<string, string[]>,
+      { ...BASE_OPTIONS, configDebounceTime: 0 },
+      cdr,
+      destroyRef
+    ).subscribe();
+
+    // No revalidation yet → no markForCheck
+    expect(markForCheckCount()).toBe(0);
+
+    // Change the trigger value and advance past debounce
+    triggerCtrl.setValue('new-value');
+    await vi.advanceTimersByTimeAsync(0);
+
+    // After revalidation the host view is marked for check so the zoneless
+    // scheduler re-renders ng-* host classes on the next CD pass — without
+    // forcing a synchronous detectChanges() inside the RxJS pipeline.
+    expect(markForCheckCount()).toBeGreaterThanOrEqual(1);
+
+    sub.unsubscribe();
+  });
+
+  // -------------------------------------------------------------------------
   // 3. PENDING form waits up to idleWaitTimeoutMs then proceeds
   // -------------------------------------------------------------------------
   it('waits up to idleWaitTimeoutMs for PENDING form then revalidates dependent', async () => {
