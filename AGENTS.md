@@ -10,10 +10,9 @@ Shared instructions for every coding agent in this repo (Claude Code, Copilot). 
 
 ## Branches
 
-- `master` is the stable v2 maintenance line: v2 fixes, security patches, and repo-wide governance or tooling (PR templates, Dependabot, agent instructions, CI policy).
-- `release/v3` is active v3 development: all v3 features, refactors, test migrations and v3 dependency upgrades. Merging does not publish; v3 ships only through a manual `workflow_dispatch` of `.github/workflows/prerelease.yml` (`@beta` dist-tag).
-- Other `release/*` branches are maintenance-only for their major.
-- When unsure, target `release/v3` and say so in the PR description.
+- `master` is v3, the current line. Target it by default.
+- `release/v2.x` and `release/v1.x` are maintenance-only for their major: bug fixes and security patches.
+- Merging never publishes. Stable releases go out through a manual `workflow_dispatch` of `.github/workflows/cd.yml`; prereleases through `.github/workflows/prerelease.yml`. Branch-to-channel mapping lives in `.releaserc`.
 
 ## Library changes
 
