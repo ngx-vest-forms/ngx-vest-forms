@@ -658,7 +658,7 @@ This project includes detailed instruction files designed to help developers mas
 
 - **[`.github/instructions/ngx-vest-forms.instructions.md`](.github/instructions/ngx-vest-forms.instructions.md)** - Complete guide for using ngx-vest-forms library
 - **[`.github/instructions/vest.instructions.md`](.github/instructions/vest.instructions.md)** - Comprehensive Vest.js validation patterns and best practices
-- **[`.github/copilot-instructions.md`](.github/copilot-instructions.md)** - Main GitHub Copilot instructions for this workspace
+- **[`AGENTS.md`](AGENTS.md)** - Workspace instructions shared by GitHub Copilot and Claude Code
 
 ## Acknowledgments
 
