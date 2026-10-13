@@ -178,7 +178,7 @@ describe('private Angular API contract: NgForm._directives and CVA _elementRef',
         `readValueAccessorElement (field-path-resolver.ts) reads ` +
           `${accessorName}._elementRef.nativeElement for the "${name}" ` +
           `control, but it no longer points at the host element. ` +
-          `${UPGRADE_BROKE_IT}`
+          UPGRADE_BROKE_IT
       ).toBe(element);
     }
   });
