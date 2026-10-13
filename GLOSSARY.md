@@ -15,7 +15,7 @@ The complete expected structure of a Form Model, used during development to catc
 _Avoid_: form shape, shape
 
 **Field Path**:
-The dotted path from the form root to one value, such as `address.street`. A control's `name` must equal its Field Path.
+The dotted path from the form root to one value, such as `address.street`. A control's Field Path is its enclosing `ngModelGroup` names followed by its own `name`: `name="street"` inside `ngModelGroup="address"` is `address.street`.
 _Avoid_: property path, control name
 
 **Root Form**:
