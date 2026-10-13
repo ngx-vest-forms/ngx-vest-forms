@@ -1189,15 +1189,14 @@ export class FormDirective<T extends Record<string, unknown>> {
     this.#lastSyncedFormValue = null;
     this.#lastSyncedModelValue = null;
 
-    // Force change detection to ensure DOM updates are reflected
-    // Note: This is still needed even with signals because we're modifying NgForm
-    // (reactive forms), not signals. The formValue signal updates happen in the
-    // consumer component. detectChanges() ensures NgForm's reset is reflected in
-    // the DOM before we update validity.
-    this.#cdr.detectChanges();
+    // Mark the view for check so the zoneless scheduler re-renders the
+    // ng-* host classes (ng-pristine, ng-valid, …) after NgForm.resetForm()
+    // mutated template-driven form state outside the signal graph.
+    // NgForm.resetForm() already wrote input values to the DOM synchronously
+    // via value accessors; only the host-class bindings need a CD pass.
+    this.#cdr.markForCheck();
 
     // Trigger validation update to clear any stale errors
-    // Now synchronous since detectChanges() has flushed DOM updates
     this.ngForm.form.updateValueAndValidity({ emitEvent: true });
     this.#blurTick.update((v) => v + 1);
   }
@@ -1361,25 +1360,16 @@ export class FormDirective<T extends Record<string, unknown>> {
 
           const out = extractFieldErrors(result, field);
 
-          // CRITICAL: Ensure DOM validity classes update for OnPush components.
-          //
-          // Angular's template-driven forms update `ng-valid`/`ng-invalid` host classes
-          // during change detection. When async validation completes, there may be no
-          // follow-up change detection pass for OnPush hosts, leaving the DOM in a stale
-          // visual state (even though the control status has updated).
-          //
-          // We schedule a detectChanges() on the next microtask to avoid calling it
-          // synchronously inside Angular's own validation pipeline. The scheduleMicrotask
-          // primitive auto-cancels if the directive is destroyed before it fires.
-          scheduleMicrotask(() => {
-            try {
-              this.#cdr.detectChanges();
-            } catch {
-              // Fallback: mark for check when immediate detectChanges isn't safe.
-              // This keeps behavior resilient in edge cases.
-              this.#cdr.markForCheck();
-            }
-          }, this.#destroyRef);
+          // Ensure DOM validity classes update after async validation sets new
+          // control errors. Angular's template-driven forms update
+          // `ng-valid`/`ng-invalid` host classes during change detection, and
+          // in a zoneless OnPush app no CD pass may be scheduled when the async
+          // validator resolves. markForCheck() is the zoneless-idiomatic way to
+          // request one: it marks the view dirty and notifies the scheduler
+          // without running CD synchronously inside Angular's validation
+          // pipeline (which detectChanges() would do, risking re-entrancy).
+          // Calling it on a destroyed view is a safe no-op.
+          this.#cdr.markForCheck();
 
           return out;
         }),

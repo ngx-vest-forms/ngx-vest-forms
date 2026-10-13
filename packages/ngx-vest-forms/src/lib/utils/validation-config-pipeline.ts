@@ -65,8 +65,9 @@ export type ValidationConfigPipelineOptions = {
  * @param config    Map of trigger-field path → dependent field paths.
  *                  `null`/`undefined` returns `EMPTY`.
  * @param options   Named timing knobs (see {@link ValidationConfigPipelineOptions}).
- * @param cdr       `ChangeDetectorRef` used to force immediate re-renders on
- *                  `OnPush` hosts after dependent controls are updated.
+ * @param cdr       `ChangeDetectorRef` used to mark `OnPush` hosts for check
+ *                  after dependent controls are updated, so the zoneless
+ *                  scheduler re-renders their `ng-*` host classes.
  * @param destroyRef  Used to auto-cancel the in-progress cooldown timer when the
  *                  host directive is destroyed.
  */
@@ -388,9 +389,12 @@ function updateDependentFields(
         emitEvent: true,
       });
 
-      // Force immediate change detection so OnPush hosts reflect the updated
-      // ng-valid/ng-invalid classes without waiting for the next CD cycle.
-      cdr.detectChanges();
+      // Mark the host view for check so the zoneless scheduler re-renders
+      // the updated ng-valid/ng-invalid host classes on the next CD pass.
+      // markForCheck() is preferred over detectChanges() here: it schedules
+      // CD without running it synchronously inside this RxJS pipeline
+      // callback, avoiding re-entrancy with Angular's forms event processing.
+      cdr.markForCheck();
     } finally {
       loopPrevention.applyingUpdates = false;
     }

@@ -44,20 +44,20 @@ function createMockDestroyRef(): {
   };
 }
 
-/** Minimal ChangeDetectorRef mock that records detectChanges calls. */
+/** Minimal ChangeDetectorRef mock that records markForCheck calls. */
 function createMockCdr(): {
   cdr: ChangeDetectorRef;
-  detectChangesCount: () => number;
+  markForCheckCount: () => number;
 } {
   let count = 0;
   return {
     cdr: {
-      detectChanges: () => {
+      detectChanges: () => {},
+      markForCheck: () => {
         count++;
       },
-      markForCheck: () => {},
     } as unknown as ChangeDetectorRef,
-    detectChangesCount: () => count,
+    markForCheckCount: () => count,
   };
 }
 
