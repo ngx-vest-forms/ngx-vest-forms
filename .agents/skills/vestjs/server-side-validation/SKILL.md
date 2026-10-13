@@ -73,7 +73,7 @@ When answering:
 
 ## References to consult when needed
 
-- `../../../../.github/instructions/vest.instructions.md`
+- [`../SKILL.md`](../SKILL.md) for the Vest 6 invariants
 - `https://vestjs.dev/docs/server_side_validations`
 - `https://vestjs.dev/docs/suite_serialization`
 - `https://vestjs.dev/docs/writing_your_suite/execution_modes`

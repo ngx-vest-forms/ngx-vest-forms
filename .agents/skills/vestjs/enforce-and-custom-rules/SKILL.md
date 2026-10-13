@@ -92,7 +92,7 @@ Start with `references/design-guide.md` when the user is unsure whether to build
 ## References to consult when needed
 
 - `references/design-guide.md`
-- `../../../../.github/instructions/vest.instructions.md`
+- [`../SKILL.md`](../SKILL.md) for the Vest 6 invariants
 - `https://vestjs.dev/docs/writing_your_suite/schema_validation`
 - `https://vestjs.dev/docs/enforce/composing_enforce_rules`
 - `https://vestjs.dev/docs/enforce/creating_custom_rules`

@@ -9,13 +9,13 @@ metadata:
 
 # Vest.js router skill
 
-Use this as the broad entry point for **Vest.js guidance in this repository**.
+Use this as the broad entry point for **Vest.js guidance**.
 
 ## Version contract
 
 This skill is a **stable public router**.
 
-In this repository, it currently defaults to the **Vest 6.x** lane.
+It currently defaults to the **Vest 6.x** lane.
 
 - Prefer the current Vest 6 documentation set.
 - Do not reintroduce the Vest 5 callback-field pattern as if it were current guidance.
@@ -33,18 +33,18 @@ This package keeps `vestjs` as the installable public skill name, while version-
 
 If new major-version support is added later, mirror the same structure under a new versioned lane rather than renaming the public skill immediately.
 
-## Start from the invariant layer
+## Vest 6 invariants
 
-Assume the repo instruction file already enforces the baseline Vest rules:
+Every answer and code sample follows these. When the user's code breaks one, correct it before anything else.
 
-- keep suite callbacks model-only unless a newer documented API explicitly requires otherwise
-- handle field focus at the call site via `suite.only(field).run(model)` or `suite.focus(...)`
-- never call `only()` inside the suite callback as if it were the current default pattern
-- use `result.isTested(field)` instead of parallel dirty tracking
-- prefer `skipWhen` / `omitWhen` / `include.when` over ad-hoc branching
-- keep async validations cancellable
-
-Do not restate those basics unless they are directly relevant to the user’s issue.
+1. **Model-only suite.** `create((model) => { ... })`, run as `suite.run(model)`. Vest 5's `(model, field)` callbacks, callable suites (`suite(model, field)`) and `staticSuite(...)` are gone.
+2. **Focused Runs at the call site.** `suite.only(field).run(model)` or `suite.focus(...)`, with `skipGroup` / `onlyGroup` when the target is a named group. Inside the callback, `only()` is a Vest 5 pattern.
+3. **`suite.run()` is stateful.** Call `suite.reset()` on form reset and between tests that share a suite. Use `suite.runStatic(model)` for stateless and server-side runs.
+4. **Read state from the result.** `result.isTested(field)`, `hasErrors`, `getErrors` and `isPending` replace parallel dirty, touched or pending tracking.
+5. **Declarative conditions.** `skipWhen`, `omitWhen`, `include.when` and `optional` replace ad-hoc `if` branches. `omitWhen` makes an inactive branch stop affecting validity.
+6. **Cancellable async tests.** Destructure `signal` from the test context and pass it to the request: `test('email', 'Email is taken', async ({ signal }) => { await check(model.email, { signal }); })`. Vest aborts the previous run's signal when the same test runs again; `run()` takes only the model. Await completion with `await suite.run(model)`, `suite.afterEach()` or `suite.afterField()`; result `.done()` is gone.
+7. **Warnings.** A Warning leaves its field valid. Call `warn()` before the first `await` in the test body; after an `await`, use `useWarn()`.
+8. **Schema suites.** `create((data) => { ... }, enforce.shape(...))` when native schema validation helps. Focused Runs subset the schema automatically.
 
 ## Available workflow sub-skills
 
@@ -130,7 +130,6 @@ Read `server-side-validation/SKILL.md` when the user is:
 
 - `references/version-selection.md`
 - `references/5.x/source-map.md`
-- `.github/instructions/vest.instructions.md`
 - `https://vestjs.dev/docs/get_started`
 - `https://vestjs.dev/docs/api_reference`
 - `https://vestjs.dev/docs/typescript_support`
