@@ -320,6 +320,6 @@ If your composite can be decomposed into completely independent labeled fields, 
 - `../../../../docs/VALIDATION-CONFIG-BUILDER.md`
 - `../../../../docs/CUSTOM-CONTROL-WRAPPERS.md`
 
-## Fast heuristic
+## Default recommendation
 
-If the user says "one control, multiple fields", "date range", "name splitter", "composite adapter", "hidden proxy", or "fan-out", this skill should trigger. Always recommend split wrappers first, then offer the composite adapter if split wrappers are not feasible.
+Recommend split wrappers first. Offer the composite adapter only when split wrappers are not feasible.

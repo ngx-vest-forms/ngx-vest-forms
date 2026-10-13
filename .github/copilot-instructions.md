@@ -33,14 +33,14 @@ description so a reviewer can redirect if needed.
 
 Use the versions in `package.json` and the baseline below as hard compatibility limits for generated code and advice.
 
-- Angular framework packages: `22.0.1`
-- Angular CLI/build tooling: `22.0.1`
-- TypeScript: `~6.0.3`
+- Angular framework packages: `22.2.2`
+- Angular CLI/build tooling: `22.2.2`
+- TypeScript: `~6.0.2`
 - Node.js: `^22.22.3 || ^24.15.0 || ^26.0.0`
 - RxJS: `~7.8.2`
-- Vest.js: `~6.3.2`
-- Vitest: `^4.1.8`
-- Playwright: `1.60.0`
+- Vest.js: `~6.3.4`
+- Vitest: `^5.0.3`
+- Playwright: `1.64.0`
 
 You can suggest code that depends on features introduced in versions of Angular, TypeScript, Node.js, RxJS, Vest, Vitest, Playwright, or other dependencies newer than the versions listed here or in `package.json`. But come with a strong justification for why the newer feature is necessary and how it improves on the existing patterns in the repo. Do not suggest newer features just because they exist or are trendy if they do not clearly enhance the code quality, readability, or maintainability of the generated code in this specific repository context.
 
