@@ -379,7 +379,7 @@ PrimeNG returns a composite `Date[] | undefined` value where:
 - `value?.[0]` is the start date
 - `value?.[1]` is the end date
 
-If your form shape still needs separate flat fields such as
+If your form model still needs separate flat fields such as
 `departureDate` and `returnDate`, keep the PrimeNG widget inside the adapter
 and fan its composite value back out to the real field paths.
 
@@ -511,7 +511,7 @@ export class PrimeDateRangeAdapterComponent {
 ```
 
 This keeps the PrimeNG widget as a single composite UI control while preserving
-flat field paths in the form shape.
+flat field paths in the form model.
 
 ### Reusable child component variant (`JsnDatePicker`)
 
