@@ -40,7 +40,7 @@ jobs:
         run: sfw pnpm audit --audit-level=high
       - name: Secret scan
         run: |
-          matches=$(git ls-files | grep -v -E '^(pnpm-lock\.yaml|.*\.lock)$' | xargs grep -nE 'ghp_[A-Za-z0-9]{36}|gho_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|pk_[A-Za-z0-9]{16,}' 2>/dev/null || true)
+          matches=$(git ls-files | grep -v -E '^(pnpm-lock\.yaml|.*\.lock)$' | xargs grep -nE 'ghp_[A-Za-z0-9]{36}|gho_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|ctx7sk-[A-Za-z0-9_-]+' 2>/dev/null || true)
           if [ -n "$matches" ]; then
             echo "::error::Potential committed secrets detected (rotate first, then remove):"
             echo "$matches"

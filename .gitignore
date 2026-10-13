@@ -84,8 +84,7 @@ Thumbs.db
 
 .nx/migrate-runs
 
-# Secrets — never commit credentials or local tool configs that contain keys
+# Secrets — never commit credentials or tokens
 .env
 .env.*
 !.env.example
-context7.json
