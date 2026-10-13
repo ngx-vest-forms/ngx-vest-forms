@@ -94,7 +94,6 @@ If a question involves both raw Vest behavior and Angular template-driven integr
 - `.agents/skills/vestjs/references/version-selection.md`
 - `.agents/skills/vestjs/references/5.x/source-map.md`
 - `.agents/skills/vestjs/evals/evals.json`
-- `.github/instructions/vest.instructions.md`
 - `.agents/skills/ngx-vest-forms/`
 
 ## Upstream references

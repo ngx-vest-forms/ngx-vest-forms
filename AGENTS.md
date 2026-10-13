@@ -4,7 +4,7 @@ Shared instructions for every coding agent in this repo (Claude Code, Copilot). 
 
 ## Pointers
 
-- Code that uses ngx-vest-forms or Vest: follow `.github/instructions/ngx-vest-forms.instructions.md` and `.github/instructions/vest.instructions.md`. They are the always-on invariants (`[ngModel]` binding, `name` = model path, Vest 6 suite shape).
+- Code that uses ngx-vest-forms or Vest: load the `ngx-vest-forms` and `vestjs` skills first. They hold the invariants (`[ngModel]` binding, `name` = model path, Vest 6 suite shape).
 - Project vocabulary: `GLOSSARY.md`. Past decisions and their reasons: `docs/adr/`.
 - Public surface of the library: exactly what `packages/ngx-vest-forms/src/public-api.ts` exports.
 
