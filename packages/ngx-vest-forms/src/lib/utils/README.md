@@ -717,7 +717,7 @@ export class MyFormComponent {
 
 ## Field Path Utilities
 
-> **💡 Type Safety**: For compile-time type checking and IDE autocomplete of field paths, see the **[Field Path Types Guide](../../../../docs/FIELD-PATHS.md)** which covers `FieldPath<T>`, `ValidationConfigMap<T>`, and `FormFieldName<T>`.
+> **💡 Type Safety**: For compile-time type checking and IDE autocomplete of field paths, see the **[Field Path Types Guide](../../../../../docs/FIELD-PATHS.md)** which covers `FieldPath<T>`, `ValidationConfigMap<T>`, and `FormFieldName<T>`.
 
 ### stringifyFieldPath()
 
@@ -884,7 +884,7 @@ const equal = fastDeepEqual({ a: 1, b: { c: 3 } }, { a: 1, b: { c: 3 } }); // tr
 - ⚠️ Used internally for form value comparison
 - ✅ Consider using your own comparison logic instead
 
-> **Swap the comparator the directive uses:** to override the equality function `FormDirective` uses internally (without forking it), provide the [`NGX_EQUALITY_FN`](../../../../docs/API-TOKENS.md#ngx_equality_fn) injection token. Useful for plugging in `dequal/lite`, `lodash.isEqual`, or a domain-specific comparator.
+> **Swap the comparator the directive uses:** to override the equality function `FormDirective` uses internally (without forking it), provide the [`NGX_EQUALITY_FN`](../../../../../docs/API-TOKENS.md#ngx_equality_fn) injection token. Useful for plugging in `dequal/lite`, `lodash.isEqual`, or a domain-specific comparator.
 
 ---
 
