@@ -116,7 +116,7 @@ When answering:
 
 ## References to consult when needed
 
-- `../../../../.github/instructions/vest.instructions.md`
+- [`../SKILL.md`](../SKILL.md) for the Vest 6 invariants
 - `https://vestjs.dev/docs/writing_your_suite/accessing_the_result`
 - `https://vestjs.dev/docs/writing_your_suite/handling_completion`
 - `https://vestjs.dev/docs/writing_your_suite/execution_modes`
