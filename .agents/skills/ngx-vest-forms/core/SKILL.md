@@ -116,4 +116,4 @@ The invariants live in the router skill, [`../SKILL.md`](../SKILL.md); use this 
 - ngx-vest-forms is a template-driven forms adapter, not a reactive forms abstraction.
 - `validationConfig` controls when dependent fields revalidate; it does not define validation logic.
 - The library's sweet spot is typed template-driven forms with Vest suites, signals, and explicit structure.
-- ngx-vest-forms v3 targets Angular 22+, RxJS ~7.8, and Vest 6.x. `parseFieldPath` warns in dev mode for malformed segments (`'a..b'`, `'.a'`, `'a.'`); production behavior unchanged.
+- ngx-vest-forms v3 targets Angular 22, RxJS 7.8+, and Vest 6.3+. `parseFieldPath` warns in dev mode for malformed segments (`'a..b'`, `'.a'`, `'a.'`); production behavior unchanged.

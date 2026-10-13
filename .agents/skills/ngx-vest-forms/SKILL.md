@@ -5,7 +5,7 @@ description: Routes general ngx-vest-forms requests to the right workflow. Use t
 
 # ngx-vest-forms router skill
 
-Use this as the broad entry point for ngx-vest-forms questions. It covers ngx-vest-forms v3 on Angular 22+, RxJS ~7.8 and Vest 6.x.
+Use this as the broad entry point for ngx-vest-forms questions. It covers ngx-vest-forms v3 on Angular 22, RxJS 7.8+ and Vest 6.3+.
 
 ## Invariants
 
