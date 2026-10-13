@@ -83,3 +83,9 @@ Thumbs.db
 .claude/skills/impeccable/
 
 .nx/migrate-runs
+
+# Secrets — never commit credentials or local tool configs that contain keys
+.env
+.env.*
+!.env.example
+context7.json

@@ -21,3 +21,15 @@
 - The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
 
 <!-- nx configuration end-->
+
+## Secrets and local tooling
+
+- Never commit credentials, API keys, or tokens — including inside local
+  tool configs.
+- `.env`, `.env.*` (except `.env.example`), and `context7.json` are
+  gitignored; keep them that way.
+- To use Context7 locally, create an untracked `context7.json` in the repo
+  root (it is ignored) or use environment variables; `.github/agents/*.agent.md`
+  consume the `context7/*` MCP tools.
+- CI runs a secret scan over all tracked files on every pull request; a hit
+  fails the build.

@@ -33,6 +33,14 @@ jobs:
           mode: firewall
       - name: Install
         run: sfw pnpm install --frozen-lockfile
+      - name: Secret scan
+        run: |
+          matches=$(git ls-files | grep -v -E '^(pnpm-lock\.yaml|.*\.lock)$' | xargs grep -nE 'ghp_[A-Za-z0-9]{36}|gho_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|pk_[A-Za-z0-9]{16,}' 2>/dev/null || true)
+          if [ -n "$matches" ]; then
+            echo "::error::Potential committed secrets detected (rotate first, then remove):"
+            echo "$matches"
+            exit 1
+          fi
       - name: Get Playwright version
         id: playwright-version
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
