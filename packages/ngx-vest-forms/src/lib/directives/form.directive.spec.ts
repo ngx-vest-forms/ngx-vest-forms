@@ -11,8 +11,16 @@ import { TestBed } from '@angular/core/testing';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { isObservable, Observable } from 'rxjs';
-import { create, enforce, test as vestTest, warn } from 'vest';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { create, enforce, skipWhen, test as vestTest, warn } from 'vest';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+  vi,
+} from 'vitest';
 import type { StandardSchemaV1 } from '../../public-api';
 import { FormDirective, NgxFieldBlurEvent } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
@@ -2621,6 +2629,111 @@ describe('FormDirective - Destroy-aware async scheduling', () => {
     expect(() => {
       vi.advanceTimersByTime(1000);
     }).not.toThrow();
+  });
+});
+
+describe('FormDirective - resetField/removeField with a pending async test', () => {
+  const VALIDATION_DEBOUNCE_MS = 1000;
+  const ASYNC_TEST_DELAY_MS = 200;
+
+  @Component({
+    selector: 'test-pending-async-reset-host',
+    imports: [NgxVestForms],
+    template: `
+      <form
+        ngxVestForm
+        [suite]="suite"
+        [formValue]="formValue()"
+        (formValueChange)="formValue.set($event)"
+        #vest="ngxVestForm"
+      >
+        <label for="username">Username</label>
+        <input
+          id="username"
+          name="username"
+          [ngModel]="formValue().username"
+          [validationOptions]="{ debounceTime: 1000 }"
+        />
+      </form>
+    `,
+  })
+  class TestPendingAsyncResetHost {
+    readonly formValue = signal<{ username?: string }>({});
+    readonly checkAvailability = signal(true);
+    readonly suite = create((model: { username?: string } = {}) => {
+      skipWhen(!this.checkAvailability(), () => {
+        vestTest('username', 'Username is already taken', async () => {
+          await new Promise((resolve) =>
+            setTimeout(resolve, ASYNC_TEST_DELAY_MS)
+          );
+          throw new Error(`${model.username} is taken`);
+        });
+      });
+    });
+    readonly vestForm =
+      viewChild.required<FormDirective<Record<string, unknown>>>('vest');
+
+    disableAvailabilityCheck(): void {
+      this.checkAvailability.set(false);
+      this.vestForm().resetField('username');
+    }
+  }
+
+  async function renderWithPendingUsernameTest() {
+    vi.useFakeTimers();
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
+    const { fixture } = await render(TestPendingAsyncResetHost);
+    const instance = fixture.componentInstance;
+
+    await user.type(screen.getByLabelText('Username'), 'taken');
+    // Past the debounce: the suite runs and the async test is now in flight.
+    await vi.advanceTimersByTimeAsync(VALIDATION_DEBOUNCE_MS);
+
+    const control = instance.vestForm().ngForm.form.get('username');
+    if (!control) {
+      throw new Error('Expected the username control to be registered');
+    }
+    expect(control.pending).toBe(true);
+    expect(instance.suite.get().isPending('username')).toBe(true);
+
+    return { instance, control };
+  }
+
+  it('resetField() cancels the pending async test so its late failure does not resurrect the field', async () => {
+    const { instance, control } = await renderWithPendingUsernameTest();
+
+    // Context change: the availability check no longer applies.
+    instance.disableAvailabilityCheck();
+
+    // Let the cancelled async test settle, then let the re-validation that
+    // resetField() triggered run past its debounce.
+    await vi.advanceTimersByTimeAsync(ASYNC_TEST_DELAY_MS);
+    await vi.advanceTimersByTimeAsync(VALIDATION_DEBOUNCE_MS);
+
+    expect(control.pending).toBe(false);
+    expect(control.errors).toBeNull();
+    expect(instance.suite.get().getErrors('username')).toEqual([]);
+    expect(instance.vestForm().formState().errors['username']).toBeUndefined();
+    expect(instance.vestForm().formState().valid).toBe(true);
+  });
+
+  it('removeField() drops the pending async test so its late failure is never reported', async () => {
+    const { instance, control } = await renderWithPendingUsernameTest();
+
+    instance.vestForm().removeField('username');
+
+    // Past the moment the async test would have resolved to a failure.
+    await vi.advanceTimersByTimeAsync(ASYNC_TEST_DELAY_MS);
+
+    expect(control.pending).toBe(false);
+    expect(control.errors).toBeNull();
+    expect(instance.suite.get().getErrors('username')).toEqual([]);
+    expect(instance.vestForm().formState().errors['username']).toBeUndefined();
+    expect(instance.vestForm().formState().valid).toBe(true);
   });
 });
 

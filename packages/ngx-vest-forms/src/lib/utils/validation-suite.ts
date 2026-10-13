@@ -151,9 +151,11 @@ export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
  * returns a promise merged with the result object. `then` is kept *optional*
  * on this structural type only for static assignability with Vest's exported
  * `SuiteResult` (which does not declare `then`); the runner adopts the runtime
- * thenable via `Promise.resolve(...)`. The promise resolves to the per-run
- * snapshot, which the runner awaits to avoid cross-field contamination from
- * shared mutable suite state.
+ * thenable via RxJS `from(...)`. The promise resolves once the run's
+ * async tests settle; since Vest 6.3.4 an older run that is still pending when
+ * a newer run of the same suite starts resolves to the newer run's result.
+ * Per-field verdicts stay correct because Vest keeps each field's state across
+ * runs.
  *
  * This structural interface avoids direct coupling to Vest's internal
  * `SuiteResult<F, G, S>` generics while preserving the methods used by ngx-vest-forms.
@@ -174,21 +176,21 @@ export type NgxSuiteRunResult = {
   /**
    * Vest 6.3 `run()` ALWAYS returns a thenable at runtime (the result is a
    * promise produced by `withResolvers()` merged with the synchronous
-   * selectors via `assign(promise, suiteResult)`). The promise resolves to the
-   * canonical per-run snapshot (captured at run time), which the runner awaits
-   * instead of re-reading shared mutable suite state via `get()`.
+   * selectors via `assign(promise, suiteResult)`). The promise resolves once
+   * the run settles — to the latest run's result when a newer run of the same
+   * suite superseded it (Vest >= 6.3.4). The runner emits that resolved value
+   * and falls back to `get()` only when resolution yields nothing or rejects.
    *
    * NOTE: this stays *optional* purely for static structural assignability:
    * Vest's exported `SuiteResult<F, G, S>` type does not statically declare
    * `then` (it is attached at runtime by `bindSuiteResultMethods`). Marking it
    * required here would break assigning a real `create(...)` suite to
-   * `NgxVestSuite<T>`. The runner therefore wraps the result in
-   * `Promise.resolve(...)`, which transparently adopts the runtime thenable.
+   * `NgxVestSuite<T>`. The runner therefore checks for `then` at runtime and
+   * subscribes to the thenable once via RxJS `from(...)`.
    */
   then?<TResult1 = NgxSuiteRunResult, TResult2 = never>(
     onfulfilled?:
-      | ((value: NgxSuiteRunResult) => TResult1 | PromiseLike<TResult1>)
-      | null,
+      ((value: NgxSuiteRunResult) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
   ): PromiseLike<TResult1 | TResult2>;
 };

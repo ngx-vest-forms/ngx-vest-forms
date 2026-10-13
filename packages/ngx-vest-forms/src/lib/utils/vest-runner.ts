@@ -35,9 +35,10 @@ type FocusRunResult<T> = {
  *
  * Vest 6.3 `run()` takes only the model — `suite.run(model)`. Field/group
  * focus is selected at the call site via `only(...)` / `focus(...)` before
- * `.run(model)`. There is no per-run hooks/signal transport: Vest 6.3 ignores
- * any positional args after the model, so cancellation is handled purely at
- * the RxJS layer (unsubscribe / `takeUntilDestroyed`).
+ * `.run(model)`. Vest forwards any args after the model to the suite callback
+ * unchanged; it has no per-run hooks/signal transport, so the runner passes
+ * only the model and handles cancellation purely at the RxJS layer
+ * (unsubscribe / `takeUntilDestroyed`).
  */
 export type RunnableVestSuite<T> = {
   only(match: string | string[] | null | undefined): {
@@ -55,11 +56,11 @@ export type RunnableVestSuite<T> = {
  * - Even at zero debounce the suite invocation is deferred by one task so
  *   superseded validators can be unsubscribed before the suite runs.
  * - Vest 6.3 `run()` is always thenable (the result is a promise merged with
- *   the synchronous selectors). The promise resolves to the per-run snapshot,
- *   so we emit the *resolved* value rather than re-reading the shared mutable
- *   `suite.get()` state — this prevents cross-field contamination under
- *   concurrent async runs. `suite.get()` is only used as a defensive fallback
- *   if resolution yields nothing or rejects.
+ *   the synchronous selectors). We emit the *resolved* value. Since Vest 6.3.4
+ *   an older pending run resolves to the latest run's result; field verdicts
+ *   stay correct because Vest keeps each field's state across runs.
+ *   `suite.get()` is only used as a defensive fallback if resolution yields
+ *   nothing or rejects.
  * - Subscription is automatically torn down on `destroyRef` so callers do not
  *   need a separate `takeUntilDestroyed`. Tearing down the subscription (via
  *   unsubscribe, the outer `switchMap`, or `destroyRef`) cancels the pending
@@ -163,14 +164,14 @@ function runSuite<T>(
   }
 
   // `from(result)` subscribes to the thenable exactly once and emits the
-  // value it resolves to — the canonical *per-run* snapshot captured at run
-  // time. Crucially this does NOT recursively adopt nested thenables the way
+  // value it resolves to (since Vest 6.3.4, the latest run's result when a
+  // newer run of the same suite superseded this one; field verdicts stay
+  // correct because Vest keeps each field's state across runs). Crucially this
+  // does NOT recursively adopt nested thenables the way
   // `Promise.resolve(result)` does: a Vest result whose resolved value is
   // itself thenable (the promise/selectors merge) would send `Promise.resolve`
-  // into an unbounded adoption loop. Emitting the resolved value (rather than
-  // re-reading the shared mutable `suite.get()`) prevents cross-field
-  // contamination under concurrent async runs; `suite.get()` is only a
-  // defensive fallback when resolution yields nothing or rejects.
+  // into an unbounded adoption loop. `suite.get()` is only a defensive
+  // fallback when resolution yields nothing or rejects.
   return from(result).pipe(
     map((value) => value ?? suite.get()),
     catchError(() => of(suite.get()))

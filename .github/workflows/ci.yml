@@ -78,6 +78,10 @@ jobs:
         run: pnpm exec playwright install-deps chromium
       - name: Lint
         run: pnpm nx run-many --target=lint,lint-templates
+      - name: Typecheck library specs
+        # The unit-test builder compiles specs without full strict checks,
+        # so type errors in *.spec.ts files are caught here.
+        run: pnpm exec tsc --noEmit -p packages/ngx-vest-forms/tsconfig.spec.json
       - name: Build library
         run: pnpm nx run ngx-vest-forms:build --configuration=production
       - name: Test

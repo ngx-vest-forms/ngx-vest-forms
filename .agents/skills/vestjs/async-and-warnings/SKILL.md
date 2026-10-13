@@ -32,7 +32,7 @@ Use this skill when the suite needs **remote work, cancellation, pending state, 
 
 Vest cancels stale async tests when the same test reruns before completion.
 
-The per-test `AbortSignal` arrives through the test context (`async ({ signal }) => …`). Note that `ngx-vest-forms` does NOT pass a signal into suite runs itself — Vest 6.3's `run()` accepts only the model, and the library handles subscription teardown (unsubscribe, destroy, superseded runs) purely at the RxJS layer.
+The per-test `AbortSignal` arrives through the test context (`async ({ signal }) => …`). Note that `ngx-vest-forms` does NOT pass a signal into suite runs itself — Vest 6.3's `run()` has no per-run signal or hooks parameter (any args after the model are just forwarded to the suite callback), so the library calls `run(model)` and handles subscription teardown (unsubscribe, destroy, superseded runs) purely at the RxJS layer.
 
 Use the per-test signal to:
 
