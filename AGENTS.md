@@ -1,3 +1,36 @@
+# ngx-vest-forms
+
+Shared instructions for every coding agent in this repo (Claude Code, Copilot). Skills live in `.agents/skills/`; `.claude/skills` is a symlink to it.
+
+## Pointers
+
+- Code that uses ngx-vest-forms or Vest: follow `.github/instructions/ngx-vest-forms.instructions.md` and `.github/instructions/vest.instructions.md`. They are the always-on invariants (`[ngModel]` binding, `name` = model path, Vest 6 suite shape).
+- Project vocabulary: `GLOSSARY.md`. Past decisions and their reasons: `docs/adr/`.
+- Public surface of the library: exactly what `packages/ngx-vest-forms/src/public-api.ts` exports.
+
+## Branches
+
+- `master` is the stable v2 maintenance line: v2 fixes, security patches, and repo-wide governance or tooling (PR templates, Dependabot, agent instructions, CI policy).
+- `release/v3` is active v3 development: all v3 features, refactors, test migrations and v3 dependency upgrades. Merging does not publish; v3 ships only through a manual `workflow_dispatch` of `.github/workflows/prerelease.yml` (`@beta` dist-tag).
+- Other `release/*` branches are maintenance-only for their major.
+- When unsure, target `release/v3` and say so in the PR description.
+
+## Library changes
+
+1. Implement in `packages/ngx-vest-forms/src/lib/`.
+2. Export the supported surface from `public-api.ts`.
+3. Add or update usage in `apps/examples/`.
+4. Add or update tests.
+5. Update the docs and every skill or reference file that covers the feature.
+
+Consumer-facing examples import from `'ngx-vest-forms'` and use only symbols in `public-api.ts`; `src/lib/**` paths are for library maintenance only.
+
+## Gotchas
+
+- Versions in `package.json` are hard limits. Code that needs a newer Angular, TypeScript, Vest or test-runner feature needs a stated reason in the PR.
+- The examples app mocks the people API in-app (`mockPeopleApiInterceptor`); it runs without a backend.
+- Refresh the Nx agent files with `pnpm nx configure-ai-agents --agents codex`. The `claude` and `copilot` targets recreate `CLAUDE.md`, `.claude/settings.json` and `.github/skills/`, which this repo has removed.
+
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->
 
