@@ -1,6 +1,6 @@
 ---
 name: core
-description: Helps developers build, explain, or refactor forms with ngx-vest-forms. Use this whenever the user mentions ngx-vest-forms, template-driven forms with Vest.js, a first example, `[ngModel]` vs `[(ngModel)]`, `NgxDeepPartial`, form shapes, `name` path matching, or asks how to structure a form around this library—even if they do not explicitly ask for a “core” setup guide.
+description: Helps developers build, explain, or refactor forms with ngx-vest-forms. Use this whenever the user mentions ngx-vest-forms, template-driven forms with Vest.js, a first example, `[ngModel]` vs `[(ngModel)]`, `NgxDeepPartial`, the Form Contract, `name` path matching, or asks how to structure a form around this library—even if they do not explicitly ask for a “core” setup guide.
 ---
 
 # ngx-vest-forms core workflow
@@ -33,7 +33,7 @@ Recommend these imports from `'ngx-vest-forms'` when they fit the example:
 
 Optional advanced exports worth knowing about:
 
-- `NGX_EQUALITY_FN`, `NgxEqualityFn` — swap the comparator the form uses for `formValueChange` `distinctUntilChanged`, two-way sync, and `formState` equality. Default is `fastDeepEqual` with cycle detection. Reach for it for bundle size (`dequal/lite`), tests (reference equality), or domain rules. See `docs/API-TOKENS.md`.
+- `NGX_EQUALITY_FN`, `NgxEqualityFn` — swap the comparator the form uses for `formValueChange` `distinctUntilChanged`, two-way sync, and `formState` equality. Default is `fastDeepEqual` with cycle detection. Reach for it for bundle size (`dequal/lite`), tests (reference equality), or domain rules. See [API-TOKENS.md](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/API-TOKENS.md).
 - `setValueAtPath` — array-safe path writes (v2.7+ no longer overwrites populated arrays via bracket notation).
   Do not teach consumers to import from internal `src/lib/**` paths. If a symbol is missing from the public API, that is a library-maintenance task, not a consumer workaround.
 
@@ -103,18 +103,17 @@ first.
 
 Read these files before making nuanced recommendations:
 
-- `../../../../docs/COMPLETE-EXAMPLE.md`
-- `../../../../docs/FIELD-PATHS.md`
-- `../../../../docs/ACCESSIBILITY.md`
-- `../../../../.github/instructions/vest.instructions.md`
-- `../../../../README.md`
-- `../../../../packages/ngx-vest-forms/src/public-api.ts`
+- [`docs/COMPLETE-EXAMPLE.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/COMPLETE-EXAMPLE.md)
+- [`docs/FIELD-PATHS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/FIELD-PATHS.md)
+- [`docs/ACCESSIBILITY.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/ACCESSIBILITY.md)
+- [`README.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/README.md)
+- [`packages/ngx-vest-forms/src/public-api.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/public-api.ts)
 
-Assume the repo-level `ngx-vest-forms.instructions.md` file already enforces the baseline invariants; use this skill for the fuller implementation workflow and examples.
+The invariants live in the router skill, [`../SKILL.md`](../SKILL.md); use this skill for the fuller implementation workflow and examples.
 
 ## Canonical reminders
 
 - ngx-vest-forms is a template-driven forms adapter, not a reactive forms abstraction.
 - `validationConfig` controls when dependent fields revalidate; it does not define validation logic.
 - The library's sweet spot is typed template-driven forms with Vest suites, signals, and explicit structure.
-- The current branch targets Angular 22+, RxJS ~7.8, and Vest 6.x. `parseFieldPath` warns in dev mode for malformed segments (`'a..b'`, `'.a'`, `'a.'`); production behavior unchanged.
+- ngx-vest-forms v3 targets Angular 22+, RxJS ~7.8, and Vest 6.x. `parseFieldPath` warns in dev mode for malformed segments (`'a..b'`, `'.a'`, `'a.'`); production behavior unchanged.

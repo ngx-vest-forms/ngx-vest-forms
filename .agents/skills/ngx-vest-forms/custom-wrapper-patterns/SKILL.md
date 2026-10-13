@@ -89,12 +89,12 @@ When answering:
 ## Repo references to consult when needed
 
 - `references/patterns.md`
-- `../../../../docs/CUSTOM-CONTROL-WRAPPERS.md`
-- `../../../../docs/ACCESSIBILITY.md`
-- `../../../../docs/CHILD-COMPONENTS.md`
-- `../../../../packages/ngx-vest-forms/src/public-api.ts`
-- `../../../../packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md`
+- [`docs/CUSTOM-CONTROL-WRAPPERS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/CUSTOM-CONTROL-WRAPPERS.md)
+- [`docs/ACCESSIBILITY.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/ACCESSIBILITY.md)
+- [`docs/CHILD-COMPONENTS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/CHILD-COMPONENTS.md)
+- [`packages/ngx-vest-forms/src/public-api.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/public-api.ts)
+- [`packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md)
 
-Treat the repo instruction file as the invariant layer. Use this skill for hostDirectives composition, stable ARIA behavior, and custom presentation decisions.
+The invariants live in the router skill, [`../SKILL.md`](../SKILL.md). Use this skill for hostDirectives composition, stable ARIA behavior, and custom presentation decisions.
 
 Start with `references/patterns.md` when the user is choosing between `FormErrorDisplayDirective` and `FormErrorControlDirective`, or when the wrapper’s ARIA behavior is the main risk.

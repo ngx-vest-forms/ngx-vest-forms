@@ -77,12 +77,12 @@ When answering:
 ## Repo references to consult when needed
 
 - `references/decision-guide.md`
-- `../../../../docs/FIELD-CLEARING-UTILITIES.md`
-- `../../../../docs/STRUCTURE_CHANGE_DETECTION.md`
-- `../../../../docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`
-- `../../../../README.md`
+- [`docs/FIELD-CLEARING-UTILITIES.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/FIELD-CLEARING-UTILITIES.md)
+- [`docs/STRUCTURE_CHANGE_DETECTION.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/STRUCTURE_CHANGE_DETECTION.md)
+- [`docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)
+- [`README.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/README.md)
 
-Treat the repo instruction file as the invariant layer. Use this skill for dynamic-layout edge cases, state clearing, and deciding when `triggerFormValidation()` is genuinely needed.
+The invariants live in the router skill, [`../SKILL.md`](../SKILL.md). Use this skill for dynamic-layout edge cases, state clearing, and deciding when `triggerFormValidation()` is genuinely needed.
 
 Start with `references/decision-guide.md` when the user is unsure whether a layout change actually needs field clearing or `triggerFormValidation()`.
 

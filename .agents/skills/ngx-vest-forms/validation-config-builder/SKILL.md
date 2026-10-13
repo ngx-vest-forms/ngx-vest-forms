@@ -129,14 +129,14 @@ When answering the user:
 ## Repo references to consult when needed
 
 - `references/decision-guide.md`
-- `../../../../docs/VALIDATION-CONFIG-BUILDER.md`
-- `../../../../docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`
-- `../../../../docs/AUTO-SAVE-ON-BLUR.md`
-- `../../../../docs/FIELD-PATHS.md`
-- `../../../../README.md`
-- `../../../../packages/ngx-vest-forms/src/public-api.ts`
+- [`docs/VALIDATION-CONFIG-BUILDER.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/VALIDATION-CONFIG-BUILDER.md)
+- [`docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)
+- [`docs/AUTO-SAVE-ON-BLUR.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/AUTO-SAVE-ON-BLUR.md)
+- [`docs/FIELD-PATHS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/FIELD-PATHS.md)
+- [`README.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/README.md)
+- [`packages/ngx-vest-forms/src/public-api.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/public-api.ts)
 
-Treat the repo instruction file as the invariant layer. This skill adds the dependency-graph reasoning and builder-specific patterns.
+The invariants live in the router skill, [`../SKILL.md`](../SKILL.md). This skill adds the dependency-graph reasoning and builder-specific patterns.
 
 Start with `references/decision-guide.md` when the user is mixing `validationConfig`, `ROOT_FORM`, and dynamic form behavior in the same question.
 

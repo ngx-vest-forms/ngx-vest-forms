@@ -81,10 +81,10 @@ When answering:
 
 ## Repo references to consult when needed
 
-- `../../../../packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md`
-- `../../../../docs/ACCESSIBILITY.md`
-- `../../../../docs/CUSTOM-CONTROL-WRAPPERS.md`
-- `../../../../docs/CHILD-COMPONENTS.md`
-- `../../../../README.md`
+- [`packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md)
+- [`docs/ACCESSIBILITY.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/ACCESSIBILITY.md)
+- [`docs/CUSTOM-CONTROL-WRAPPERS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/CUSTOM-CONTROL-WRAPPERS.md)
+- [`docs/CHILD-COMPONENTS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/CHILD-COMPONENTS.md)
+- [`README.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/README.md)
 
-Treat the repo instruction file as the baseline wrapper invariant sheet. Use this skill when the user needs wrapper selection, display-mode guidance, or ARIA association advice.
+The invariants, including wrapper choice, live in the router skill, [`../SKILL.md`](../SKILL.md). Use this skill when the user needs wrapper selection, display-mode guidance, or ARIA association advice.
