@@ -2285,10 +2285,15 @@ describe('FormDirective - Submit Accessibility', () => {
     const button = screen.getByRole('button', { name: 'Submit' });
     await userEvent.click(button);
 
-    // Give the submit pipeline (async validation + the focus microtask) time
-    // to settle before asserting that focus was left alone.
-    await fixture.whenStable();
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    // Wait for the submit pipeline to complete: markAllAsTouched runs
+    // synchronously on ngSubmit, and the async validator resolves after.
+    // The focus microtask then returns early (focusFirstInvalidOnSubmit=false),
+    // so focus stays on the button.
+    await waitFor(() => {
+      const input = screen.getByLabelText('First name');
+      expect(input).toHaveClass('ng-touched');
+      expect(input).toHaveClass('ng-invalid');
+    });
 
     expect(screen.getByLabelText('First name')).not.toHaveFocus();
     expect(button).toHaveFocus();

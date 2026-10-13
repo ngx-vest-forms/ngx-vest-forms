@@ -4,17 +4,12 @@
  */
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { waitFor } from '@testing-library/angular';
 import { create, enforce, omitWhen, test } from 'vest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NgxDeepPartial } from '../../public-api';
 import { FormDirective } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
-
-// Wait time for tests should be slightly longer than debounce to ensure completion
-// Default debounce is 100ms, so we add 50ms buffer
-// Bumped from 150ms to absorb CI runner slowness (~7x slower than local)
-// without changing the directive's debounce token in production.
-const TEST_DEBOUNCE_WAIT_TIME = 300;
 
 describe('FormDirective - Comprehensive', () => {
   // Reset TestBed before each test to ensure clean state
@@ -549,15 +544,12 @@ describe('FormDirective - Comprehensive', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    // Wait for debounce and validation
-    await new Promise((resolve) =>
-      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-    );
-    fixture.detectChanges();
-    await fixture.whenStable();
-
-    // Quantity is valid (has value), justification is invalid (required but empty)
-    // But error won't show until justification is touched
+    // Wait for debounced validation: justification should become invalid
+    // (required but empty). Quantity stays valid (has value).
+    // Error won't show until justification is touched.
+    await waitFor(() => {
+      expect(justificationInput.classList.contains('ng-invalid')).toBe(true);
+    });
     expect(quantityInput.classList.contains('ng-valid')).toBe(true);
 
     // Touch justification to show error
@@ -574,23 +566,18 @@ describe('FormDirective - Comprehensive', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    // Wait for validation config to trigger and validations to complete
-    await new Promise((resolve) =>
-      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME * 3)
-    );
-    fixture.detectChanges();
-    await fixture.whenStable();
-
     // Both empty → omitWhen skips validation → both valid.
     // Clearing quantity happened inside the loop-prevention cooldown window,
     // so the change was DEFERRED and replayed once the cooldown expired
     // (C-B1): justification is revalidated against the cleared quantity and
     // its stale "required" error is removed — without any further user
     // interaction. The touched state is intentionally preserved.
-    expect(quantityInput.classList.contains('ng-valid')).toBe(true);
-    expect(justificationInput.classList.contains('ng-valid')).toBe(true);
-    expect(justificationInput.classList.contains('ng-invalid')).toBe(false);
-    expect(justificationInput.classList.contains('ng-touched')).toBe(true);
+    await waitFor(() => {
+      expect(quantityInput.classList.contains('ng-valid')).toBe(true);
+      expect(justificationInput.classList.contains('ng-valid')).toBe(true);
+      expect(justificationInput.classList.contains('ng-invalid')).toBe(false);
+      expect(justificationInput.classList.contains('ng-touched')).toBe(true);
+    });
   });
 
   // Additional comprehensive tests for quantity/justification bidirectional validation with touch states
@@ -687,21 +674,17 @@ describe('FormDirective - Comprehensive', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    // Wait for validation to complete FIRST
-    await new Promise((resolve) =>
-      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-    );
-    fixture.detectChanges();
-    await fixture.whenStable();
-
     // NOW blur justification to trigger touch state
     justificationInput.dispatchEvent(new Event('blur'));
     fixture.detectChanges();
     await fixture.whenStable();
 
     // Justification should be invalid and touched (marked by blur)
-    expect(justificationInput.classList.contains('ng-invalid')).toBe(true);
-    expect(justificationInput.classList.contains('ng-touched')).toBe(true);
+    // Wait for debounced validation config to revalidate justification
+    await waitFor(() => {
+      expect(justificationInput.classList.contains('ng-invalid')).toBe(true);
+      expect(justificationInput.classList.contains('ng-touched')).toBe(true);
+    });
   });
 
   it('should show error on quantity when justification is filled but quantity is empty (with blur)', async () => {
@@ -779,21 +762,17 @@ describe('FormDirective - Comprehensive', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    // Wait for validation to complete FIRST
-    await new Promise((resolve) =>
-      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-    );
-    fixture.detectChanges();
-    await fixture.whenStable();
-
     // NOW blur quantity to trigger touch state
     quantityInput.dispatchEvent(new Event('blur'));
     fixture.detectChanges();
     await fixture.whenStable();
 
     // Quantity should be invalid and touched (marked by blur)
-    expect(quantityInput.classList.contains('ng-invalid')).toBe(true);
-    expect(quantityInput.classList.contains('ng-touched')).toBe(true);
+    // Wait for debounced validation config to revalidate quantity
+    await waitFor(() => {
+      expect(quantityInput.classList.contains('ng-invalid')).toBe(true);
+      expect(quantityInput.classList.contains('ng-touched')).toBe(true);
+    });
   });
 
   it('should remove error from justification when quantity is cleared', async () => {
@@ -871,32 +850,21 @@ describe('FormDirective - Comprehensive', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    // Wait for validation to complete FIRST
-    await new Promise((resolve) =>
-      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-    );
-    fixture.detectChanges();
-    await fixture.whenStable();
-
     // NOW blur justification to trigger touch state
     justificationInput.dispatchEvent(new Event('blur'));
     fixture.detectChanges();
     await fixture.whenStable();
 
     // After blur, justification should be invalid and touched
-    expect(justificationInput.classList.contains('ng-invalid')).toBe(true);
-    expect(justificationInput.classList.contains('ng-touched')).toBe(true);
+    // Wait for debounced validation config to revalidate justification
+    await waitFor(() => {
+      expect(justificationInput.classList.contains('ng-invalid')).toBe(true);
+      expect(justificationInput.classList.contains('ng-touched')).toBe(true);
+    });
 
     // Now clear quantity
     quantityInput.value = '';
     quantityInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
-
-    // Wait for validationConfig debounce
-    await new Promise((resolve) =>
-      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-    );
     fixture.detectChanges();
     await fixture.whenStable();
 
@@ -905,21 +873,16 @@ describe('FormDirective - Comprehensive', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    // Wait for async validator to complete on justification
-    await new Promise((resolve) =>
-      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-    );
-    fixture.detectChanges();
-    await fixture.whenStable();
-
     // Clearing quantity arrived inside the loop-prevention cooldown window,
     // so the pipeline defers it and replays the cycle after the cooldown
     // (C-B1): justification is revalidated against the cleared quantity,
     // omitWhen now skips the "required" rule, and the stale error is removed.
     // Touched state is intentionally preserved.
-    expect(justificationInput.classList.contains('ng-invalid')).toBe(false);
-    expect(justificationInput.classList.contains('ng-valid')).toBe(true);
-    expect(justificationInput.classList.contains('ng-touched')).toBe(true);
+    await waitFor(() => {
+      expect(justificationInput.classList.contains('ng-invalid')).toBe(false);
+      expect(justificationInput.classList.contains('ng-valid')).toBe(true);
+      expect(justificationInput.classList.contains('ng-touched')).toBe(true);
+    });
   });
 
   // Test for debounce behavior with rapid successive changes
@@ -1075,14 +1038,10 @@ describe('FormDirective - Comprehensive', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    await new Promise((resolve) =>
-      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-    );
-    fixture.detectChanges();
-    await fixture.whenStable();
-
     // confirmPassword should be invalid (doesn't match)
-    expect(confirmPasswordInput.classList.contains('ng-invalid')).toBe(true);
+    await waitFor(() => {
+      expect(confirmPasswordInput.classList.contains('ng-invalid')).toBe(true);
+    });
 
     // Change password - should trigger confirmPassword revalidation
     passwordInput.value = 'newpassword';
@@ -1090,14 +1049,10 @@ describe('FormDirective - Comprehensive', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    await new Promise((resolve) =>
-      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-    );
-    fixture.detectChanges();
-    await fixture.whenStable();
-
     // confirmPassword should still be invalid (still doesn't match new password)
-    expect(confirmPasswordInput.classList.contains('ng-invalid')).toBe(true);
+    await waitFor(() => {
+      expect(confirmPasswordInput.classList.contains('ng-invalid')).toBe(true);
+    });
 
     // Now match the passwords
     confirmPasswordInput.value = 'newpassword';
@@ -1105,15 +1060,11 @@ describe('FormDirective - Comprehensive', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    await new Promise((resolve) =>
-      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-    );
-    fixture.detectChanges();
-    await fixture.whenStable();
-
     // Both should be valid now
-    expect(passwordInput.classList.contains('ng-valid')).toBe(true);
-    expect(confirmPasswordInput.classList.contains('ng-valid')).toBe(true);
+    await waitFor(() => {
+      expect(passwordInput.classList.contains('ng-valid')).toBe(true);
+      expect(confirmPasswordInput.classList.contains('ng-valid')).toBe(true);
+    });
   });
 
   it('should omit confirmPassword validation when password is empty', async () => {
@@ -1182,16 +1133,12 @@ describe('FormDirective - Comprehensive', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    await new Promise((resolve) =>
-      setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-    );
-    fixture.detectChanges();
-    await fixture.whenStable();
-
     // Password should be invalid (required but empty)
     // confirmPassword should be valid (validation is omitted when password is empty)
-    expect(passwordInput.classList.contains('ng-invalid')).toBe(true);
-    expect(confirmPasswordInput.classList.contains('ng-valid')).toBe(true);
+    await waitFor(() => {
+      expect(passwordInput.classList.contains('ng-invalid')).toBe(true);
+      expect(confirmPasswordInput.classList.contains('ng-valid')).toBe(true);
+    });
   });
 
   // Modern Angular API Tests
@@ -1337,13 +1284,6 @@ describe('FormDirective - Comprehensive', () => {
       fixture.detectChanges();
       await fixture.whenStable();
 
-      // Wait for debounce
-      await new Promise((resolve) =>
-        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-      );
-      fixture.detectChanges();
-      await fixture.whenStable();
-
       // Type in confirm password field (make it different to trigger error)
       confirmPasswordInput.value = 'different';
       confirmPasswordInput.dispatchEvent(new Event('input'));
@@ -1354,13 +1294,6 @@ describe('FormDirective - Comprehensive', () => {
       // Now change password again - confirmPassword should be revalidated
       passwordInput.value = 'newpassword';
       passwordInput.dispatchEvent(new Event('input'));
-      fixture.detectChanges();
-      await fixture.whenStable();
-
-      // Wait for debounce
-      await new Promise((resolve) =>
-        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-      );
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -1380,16 +1313,19 @@ describe('FormDirective - Comprehensive', () => {
         'input[name="confirmPassword"]'
       ) as HTMLInputElement;
 
-      // The control should be marked as invalid and touched
-      expect(confirmPasswordControl.classList.contains('ng-invalid')).toBe(
-        true
-      );
-      expect(confirmPasswordControl.classList.contains('ng-touched')).toBe(
-        true
-      );
+      // Wait for debounced revalidation to apply ng-* classes
+      await waitFor(() => {
+        // The control should be marked as invalid and touched
+        expect(confirmPasswordControl.classList.contains('ng-invalid')).toBe(
+          true
+        );
+        expect(confirmPasswordControl.classList.contains('ng-touched')).toBe(
+          true
+        );
 
-      // Form should be invalid overall
-      expect(formElement.classList.contains('ng-invalid')).toBe(true);
+        // Form should be invalid overall
+        expect(formElement.classList.contains('ng-invalid')).toBe(true);
+      });
     });
 
     // Test for duplicate subscriptions issue
@@ -1434,30 +1370,32 @@ describe('FormDirective - Comprehensive', () => {
       fixture.detectChanges();
       await fixture.whenStable();
 
+      const field1Input = fixture.nativeElement.querySelector(
+        'input[name="field1"]'
+      ) as HTMLInputElement;
+      const field2Input = fixture.nativeElement.querySelector(
+        'input[name="field2"]'
+      ) as HTMLInputElement;
+
       // Wait for initial validators with debounce timers to complete
-      await new Promise((resolve) =>
-        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-      );
-      fixture.detectChanges();
-      await fixture.whenStable();
+      // (field1 is required but empty, so it should be invalid after validation)
+      await waitFor(() => {
+        expect(field1Input.classList.contains('ng-invalid')).toBe(true);
+      });
 
       validationCount = 0;
 
       // Change field1 value - should trigger field2 validation ONCE
-      const field1Input = fixture.nativeElement.querySelector(
-        'input[name="field1"]'
-      ) as HTMLInputElement;
       field1Input.value = 'test';
       field1Input.dispatchEvent(new Event('input'));
       fixture.detectChanges();
       await fixture.whenStable();
 
-      // Wait for debounce
-      await new Promise((resolve) =>
-        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-      );
-      fixture.detectChanges();
-      await fixture.whenStable();
+      // Wait for debounced validation to complete
+      // (field1 should become valid since it now has a value)
+      await waitFor(() => {
+        expect(field1Input.classList.contains('ng-valid')).toBe(true);
+      });
 
       // Should have triggered a bounded number of validations (not duplicates)
       // Counter now increments for all suite runs (field1 change + field2 via config)
@@ -1470,9 +1408,6 @@ describe('FormDirective - Comprehensive', () => {
 
       // Verify that field2 input WAS validated (triggered by field1 change via validationConfig)
       // This proves the validationConfig is working correctly
-      const field2Input = fixture.nativeElement.querySelector(
-        'input[name="field2"]'
-      ) as HTMLInputElement;
       // Field2 is invalid because it's required and empty (validated due to validationConfig)
       expect(field2Input.classList.contains('ng-invalid')).toBe(true);
       // Field2 is still untouched (user never interacted with it directly)
@@ -1540,31 +1475,32 @@ describe('FormDirective - Comprehensive', () => {
       fixture.detectChanges();
       await fixture.whenStable();
 
+      const aantalInput = fixture.nativeElement.querySelector(
+        'input[name="aantal"]'
+      ) as HTMLInputElement;
+      const onderbouwingInput = fixture.nativeElement.querySelector(
+        'textarea[name="onderbouwing"]'
+      ) as HTMLTextAreaElement;
+
       // Wait for initial validation to complete
-      await new Promise((resolve) =>
-        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-      );
-      fixture.detectChanges();
-      await fixture.whenStable();
+      await waitFor(() => {
+        expect(validationCallCount).toBeGreaterThan(0);
+      });
 
       // Reset counter after initialization
       validationCallCount = 0;
 
       // Fill in aantal field
-      const aantalInput = fixture.nativeElement.querySelector(
-        'input[name="aantal"]'
-      ) as HTMLInputElement;
       aantalInput.value = '5';
       aantalInput.dispatchEvent(new Event('input'));
       fixture.detectChanges();
       await fixture.whenStable();
 
-      // Wait for debounce + validation to complete
-      await new Promise((resolve) =>
-        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-      );
-      fixture.detectChanges();
-      await fixture.whenStable();
+      // Wait for debounced validation to complete
+      // (onderbouwing should become invalid since aantal is filled)
+      await waitFor(() => {
+        expect(onderbouwingInput.classList.contains('ng-invalid')).toBe(true);
+      });
 
       const validationCountAfterChange = validationCallCount;
 
@@ -1580,11 +1516,6 @@ describe('FormDirective - Comprehensive', () => {
       // With bidirectional config, we expect some back-and-forth (typically 5-7 validations total)
       // But it should NOT continue after that - the count should remain stable
       expect(validationCountAfterWait).toBe(validationCountAfterChange);
-
-      // Also verify the validation actually worked (onderbouwing should be invalid)
-      const onderbouwingInput = fixture.nativeElement.querySelector(
-        'textarea[name="onderbouwing"]'
-      ) as HTMLTextAreaElement;
 
       // Touch the onderbouwing field to see errors
       onderbouwingInput.dispatchEvent(new Event('blur'));
@@ -1639,10 +1570,14 @@ describe('FormDirective - Comprehensive', () => {
       fixture.detectChanges();
       await fixture.whenStable();
 
-      await new Promise((resolve) =>
-        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-      );
-      fixture.detectChanges();
+      const field1Input = fixture.nativeElement.querySelector(
+        'input[name="field1"]'
+      ) as HTMLInputElement;
+
+      // Wait for initial validation to complete before spying
+      await waitFor(() => {
+        expect(field1Input.classList.contains('ng-invalid')).toBe(true);
+      });
 
       // Spy on form.statusChanges after initialization
       const formDirective = (
@@ -1661,18 +1596,15 @@ describe('FormDirective - Comprehensive', () => {
       }) as any;
 
       // Trigger a change
-      const field1Input = fixture.nativeElement.querySelector(
-        'input[name="field1"]'
-      ) as HTMLInputElement;
       field1Input.value = 'test';
       field1Input.dispatchEvent(new Event('input'));
       fixture.detectChanges();
 
-      await new Promise((resolve) =>
-        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-      );
-      fixture.detectChanges();
-      await fixture.whenStable();
+      // Wait for debounced validation to complete
+      // (field1 should become valid since it now has a value)
+      await waitFor(() => {
+        expect(field1Input.classList.contains('ng-valid')).toBe(true);
+      });
 
       // With take(1), the subscription should be created but then immediately
       // complete, so subsequent status changes shouldn't create new subscriptions
@@ -1683,9 +1615,9 @@ describe('FormDirective - Comprehensive', () => {
       field1Input.dispatchEvent(new Event('input'));
       fixture.detectChanges();
 
-      await new Promise((resolve) =>
-        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-      );
+      // Wait for the debounced validation cycle to settle
+      // (count-based assertion: need to wait for all pending validations)
+      await new Promise((resolve) => setTimeout(resolve, 300));
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -1742,27 +1674,28 @@ describe('FormDirective - Comprehensive', () => {
       fixture.detectChanges();
       await fixture.whenStable();
 
-      await new Promise((resolve) =>
-        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-      );
-      fixture.detectChanges();
+      const field1Input = fixture.nativeElement.querySelector(
+        'input[name="field1"]'
+      ) as HTMLInputElement;
+
+      // Wait for initial validation to complete
+      await waitFor(() => {
+        expect(field1Input.classList.contains('ng-invalid')).toBe(true);
+      });
 
       // Reset counters
       validationCallCount = 0;
 
       // Change field1, which should trigger field2 validation via config
-      const field1Input = fixture.nativeElement.querySelector(
-        'input[name="field1"]'
-      ) as HTMLInputElement;
       field1Input.value = 'test';
       field1Input.dispatchEvent(new Event('input'));
       fixture.detectChanges();
 
-      await new Promise((resolve) =>
-        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME + 200)
-      );
-      fixture.detectChanges();
-      await fixture.whenStable();
+      // Wait for debounced validation to complete
+      // (field1 should become valid since it now has a value)
+      await waitFor(() => {
+        expect(field1Input.classList.contains('ng-valid')).toBe(true);
+      });
 
       // With bidirectional config and validationInProgress protection:
       // - field1 changes → validates field1 (count: 1) → triggers field2 validation (count: 1)
@@ -1820,11 +1753,6 @@ describe('FormDirective - Comprehensive', () => {
       fixture.detectChanges();
       await fixture.whenStable();
 
-      await new Promise((resolve) =>
-        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-      );
-      fixture.detectChanges();
-
       const field1Input = fixture.nativeElement.querySelector(
         'input[name="field1"]'
       ) as HTMLInputElement;
@@ -1832,28 +1760,29 @@ describe('FormDirective - Comprehensive', () => {
         'input[name="field2"]'
       ) as HTMLInputElement;
 
+      // Wait for initial validation to complete (field1 required but empty)
+      await waitFor(() => {
+        expect(field1Input.classList.contains('ng-invalid')).toBe(true);
+      });
+
       // Mark field1 as touched and change its value
       field1Input.dispatchEvent(new Event('blur'));
       field1Input.value = 'test';
       field1Input.dispatchEvent(new Event('input'));
       fixture.detectChanges();
 
-      await new Promise((resolve) =>
-        setTimeout(resolve, TEST_DEBOUNCE_WAIT_TIME)
-      );
-      fixture.detectChanges();
-      await fixture.whenStable();
+      // Wait for debounced validation config to revalidate field2
+      await waitFor(() => {
+        // Verify that field2 is NOT marked as touched (touch propagation removed)
+        expect(field2Input.classList.contains('ng-touched')).toBe(false);
 
-      // Verify that field2 is NOT marked as touched (touch propagation removed)
-      // ✅ NEW BEHAVIOR: field2 stays untouched even though validation ran
-      expect(field2Input.classList.contains('ng-touched')).toBe(false);
+        // Verify validation still ran (field2 should be invalid because it's empty)
+        // This is important: validation runs, but touch is not propagated
+        expect(field2Input.classList.contains('ng-invalid')).toBe(true);
 
-      // Verify validation still ran (field2 should be invalid because it's empty)
-      // This is important: validation runs, but touch is not propagated
-      expect(field2Input.classList.contains('ng-invalid')).toBe(true);
-
-      // Verify field2 is marked as untouched (pristine untouched state)
-      expect(field2Input.classList.contains('ng-untouched')).toBe(true);
+        // Verify field2 is marked as untouched (pristine untouched state)
+        expect(field2Input.classList.contains('ng-untouched')).toBe(true);
+      });
     });
   });
 });
