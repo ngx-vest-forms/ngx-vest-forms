@@ -16,7 +16,6 @@ const REQUIRED_AANTAL_MESSAGE =
   'Aantal is verplicht wanneer onderbouwing is ingevuld';
 const REQUIRED_ONDERBOUWING_MESSAGE =
   'Onderbouwing is verplicht wanneer aantal is ingevuld';
-const VALIDATION_WAIT_MS = 200;
 const selectors = {
   inputAantal: 'input__aantal',
   inputOnderbouwing: 'input__onderbouwing',
@@ -209,21 +208,30 @@ class OmitWhenValidationConfigComponent {
   protected save(): void {}
 }
 
-const waitForValidationCycle = async (): Promise<void> => {
-  await TestBed.inject(ApplicationRef).whenStable();
-  await new Promise((resolve) => setTimeout(resolve, VALIDATION_WAIT_MS));
-  await TestBed.inject(ApplicationRef).whenStable();
-};
+const whenStable = () => TestBed.inject(ApplicationRef).whenStable();
 
 const renderStory = async (): Promise<void> => {
   await render(OmitWhenValidationConfigComponent);
-  await waitForValidationCycle();
+  await whenStable();
 };
 
 const blurField = async (element: HTMLElement): Promise<void> => {
   await userEvent.click(element);
   element.blur();
-  await waitForValidationCycle();
+  await whenStable();
+};
+
+/**
+ * Waits until the control's validation state flips to `ng-valid` or
+ * `ng-invalid`, i.e. until the (debounced) validationConfig revalidation
+ * of that control has actually run.
+ */
+const waitForValidity = async (
+  element: HTMLElement,
+  state: 'ng-valid' | 'ng-invalid'
+): Promise<void> => {
+  await expect.poll(() => element.classList.contains(state)).toBe(true);
+  await whenStable();
 };
 
 describe('omitWhen + validationConfig stories', () => {
@@ -240,11 +248,12 @@ describe('omitWhen + validationConfig stories', () => {
     await renderStory();
 
     const aantalInput = screen.getByTestId(selectors.inputAantal);
+    const onderbouwingInput = screen.getByTestId(selectors.inputOnderbouwing);
     await userEvent.clear(aantalInput);
     await userEvent.type(aantalInput, '1');
-    await waitForValidationCycle();
+    await waitForValidity(onderbouwingInput, 'ng-invalid');
 
-    await blurField(screen.getByTestId(selectors.inputOnderbouwing));
+    await blurField(onderbouwingInput);
 
     await waitFor(
       () => {
@@ -260,11 +269,12 @@ describe('omitWhen + validationConfig stories', () => {
     await renderStory();
 
     const onderbouwingInput = screen.getByTestId(selectors.inputOnderbouwing);
+    const aantalInput = screen.getByTestId(selectors.inputAantal);
     await userEvent.clear(onderbouwingInput);
     await userEvent.type(onderbouwingInput, 'Some explanation text');
-    await waitForValidationCycle();
+    await waitForValidity(aantalInput, 'ng-invalid');
 
-    await blurField(screen.getByTestId(selectors.inputAantal));
+    await blurField(aantalInput);
 
     await waitFor(
       () => {
@@ -280,13 +290,14 @@ describe('omitWhen + validationConfig stories', () => {
     await renderStory();
 
     const aantalInput = screen.getByTestId(selectors.inputAantal);
+    const onderbouwingInput = screen.getByTestId(selectors.inputOnderbouwing);
     await userEvent.clear(aantalInput);
     await userEvent.type(aantalInput, '1');
-    await waitForValidationCycle();
+    await waitForValidity(onderbouwingInput, 'ng-invalid');
 
     await userEvent.click(screen.getByTestId(selectors.btnClearAantal));
-    await waitForValidationCycle();
-    await blurField(screen.getByTestId(selectors.inputOnderbouwing));
+    await waitForValidity(onderbouwingInput, 'ng-valid');
+    await blurField(onderbouwingInput);
 
     await waitFor(
       () => {
@@ -306,14 +317,14 @@ describe('omitWhen + validationConfig stories', () => {
 
     await userEvent.clear(aantalInput);
     await userEvent.type(aantalInput, '1');
-    await waitForValidationCycle();
+    await waitForValidity(onderbouwingInput, 'ng-invalid');
 
     await userEvent.clear(onderbouwingInput);
     await userEvent.type(onderbouwingInput, 'Filled justification');
-    await waitForValidationCycle();
+    await waitForValidity(onderbouwingInput, 'ng-valid');
 
     await userEvent.click(screen.getByTestId(selectors.btnClearAantal));
-    await waitForValidationCycle();
+    await waitForValidity(aantalInput, 'ng-invalid');
     await blurField(aantalInput);
 
     await waitFor(

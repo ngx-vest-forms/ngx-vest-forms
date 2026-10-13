@@ -2,14 +2,54 @@
  * Comprehensive test suite for FormDirective
  * Tests validation config, modern Angular APIs, and directive functionality
  */
-import { Component, signal } from '@angular/core';
+import { ApplicationRef, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { waitFor } from '@testing-library/angular';
+import userEvent from '@testing-library/user-event';
 import { create, enforce, omitWhen, test } from 'vest';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+  vi,
+} from 'vitest';
 import type { NgxDeepPartial } from '../../public-api';
 import { FormDirective } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
+
+const whenStable = () => TestBed.inject(ApplicationRef).whenStable();
+
+/** Replace the field's value the way a user would (clear, then type). */
+const typeInto = async (
+  element: HTMLInputElement | HTMLTextAreaElement,
+  value: string,
+  user: Pick<ReturnType<typeof userEvent.setup>, 'clear' | 'type'> = userEvent
+) => {
+  await user.clear(element);
+  if (value) {
+    await user.type(element, value);
+  }
+};
+
+/**
+ * Replace the field's value with a single input event (select all, then
+ * paste). Used where a test counts suite runs per change, which per-keystroke
+ * typing would multiply.
+ */
+const pasteInto = async (
+  element: HTMLInputElement | HTMLTextAreaElement,
+  value: string,
+  user: Pick<
+    ReturnType<typeof userEvent.setup>,
+    'tripleClick' | 'paste'
+  > = userEvent
+) => {
+  await user.tripleClick(element);
+  await user.paste(value);
+};
 
 describe('FormDirective - Comprehensive', () => {
   // Reset TestBed before each test to ensure clean state
@@ -74,26 +114,21 @@ describe('FormDirective - Comprehensive', () => {
     }).createComponent(TestComponent);
 
     fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     // No errors should occur when controls don't exist
-    expect(() => {
-      fixture.detectChanges();
-    }).not.toThrow();
+    await expect(whenStable()).resolves.toBeUndefined();
 
     // Add controls dynamically
     fixture.componentInstance.showPasswordFields.set(true);
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     // Now validation config should work
     const passwordInput = fixture.nativeElement.querySelector(
       'input[name="password"]'
     );
-    passwordInput.value = 'test123';
-    passwordInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await typeInto(passwordInput, 'test123');
+    await whenStable();
 
     // Confirm password should be revalidated
     expect(fixture.componentInstance.formValue().passwords?.password).toBe(
@@ -149,7 +184,7 @@ describe('FormDirective - Comprehensive', () => {
     }).createComponent(TestComponent);
 
     fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     // Test that no infinite loop occurs by monitoring console errors or timeouts
     let errorOccurred = false;
@@ -166,10 +201,8 @@ describe('FormDirective - Comprehensive', () => {
       const amountInput = fixture.nativeElement.querySelector(
         'input[name="amount"]'
       );
-      amountInput.value = '100';
-      amountInput.dispatchEvent(new Event('input'));
-      fixture.detectChanges();
-      await fixture.whenStable();
+      await typeInto(amountInput, '100');
+      await whenStable();
 
       // Should not have any loop-related errors
       expect(errorOccurred).toBe(false);
@@ -222,27 +255,23 @@ describe('FormDirective - Comprehensive', () => {
     }).createComponent(TestComponent);
 
     fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     // Change config multiple times
     fixture.componentInstance.validationConfig.set({
       email: ['firstName', 'lastName'],
     });
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     fixture.componentInstance.validationConfig.set({ lastName: ['email'] });
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     // Should not have memory leaks or errors
     const emailInput = fixture.nativeElement.querySelector(
       'input[name="email"]'
     );
-    emailInput.value = 'test@example.com';
-    emailInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await typeInto(emailInput, 'test@example.com');
+    await whenStable();
 
     expect(fixture.componentInstance.formValue().email).toBe(
       'test@example.com'
@@ -303,13 +332,11 @@ describe('FormDirective - Comprehensive', () => {
     }).createComponent(TestComponent);
 
     fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const nameInput = fixture.nativeElement.querySelector('input[name="name"]');
-    nameInput.value = 'John Doe';
-    nameInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await typeInto(nameInput, 'John Doe');
+    await whenStable();
 
     // Email validation should have been triggered
     expect(fixture.componentInstance.formValue().user?.name).toBe('John Doe');
@@ -322,17 +349,14 @@ describe('FormDirective - Comprehensive', () => {
     );
 
     // Let validation complete
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await whenStable();
 
     // The email control should be invalid because name is provided but email is empty
     expect(emailInput.checkValidity()).toBe(true); // HTML5 validity (not our custom validation)
 
     // Test that providing email makes the validation pass
-    emailInput.value = 'john@example.com';
-    emailInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await typeInto(emailInput, 'john@example.com');
+    await whenStable();
 
     // Now both fields have values, form should be in a better state
     expect(fixture.componentInstance.formValue().user?.contact?.email).toBe(
@@ -343,10 +367,8 @@ describe('FormDirective - Comprehensive', () => {
     // This should make the email validation pass (since email is no longer required)
     const nameInputEl =
       fixture.nativeElement.querySelector('input[name="name"]');
-    nameInputEl.value = '';
-    nameInputEl.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await typeInto(nameInputEl, '');
+    await whenStable();
 
     expect(fixture.componentInstance.formValue().user?.name).toBe('');
   });
@@ -407,16 +429,14 @@ describe('FormDirective - Comprehensive', () => {
     }).createComponent(TestComponent);
 
     fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     // Change password - this should trigger confirmPassword validation
     const passwordInput = fixture.nativeElement.querySelector(
       'input[name="password"]'
     );
-    passwordInput.value = 'test123';
-    passwordInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await typeInto(passwordInput, 'test123');
+    await whenStable();
 
     // Verify the form state updated in output signal
     expect(fixture.componentInstance.outputFormValue().password).toBe(
@@ -427,16 +447,12 @@ describe('FormDirective - Comprehensive', () => {
     const confirmInput = fixture.nativeElement.querySelector(
       'input[name="confirmPassword"]'
     );
-    confirmInput.value = 'different';
-    confirmInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await typeInto(confirmInput, 'different');
+    await whenStable();
 
     // Change password again - should trigger confirmPassword revalidation
-    passwordInput.value = 'newpassword';
-    passwordInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await typeInto(passwordInput, 'newpassword');
+    await whenStable();
 
     // The validation should work even with separate signals
     expect(fixture.componentInstance.outputFormValue().password).toBe(
@@ -523,7 +539,7 @@ describe('FormDirective - Comprehensive', () => {
     }).createComponent(TestComponent);
 
     fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const quantityInput = fixture.nativeElement.querySelector(
       'input[name="quantity"]'
@@ -539,10 +555,7 @@ describe('FormDirective - Comprehensive', () => {
     expect(justificationInput.classList.contains('ng-valid')).toBe(true);
 
     // Fill quantity → both fields become required, justification becomes invalid
-    quantityInput.value = '123';
-    quantityInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await typeInto(quantityInput, '123');
 
     // Wait for debounced validation: justification should become invalid
     // (required but empty). Quantity stays valid (has value).
@@ -553,18 +566,17 @@ describe('FormDirective - Comprehensive', () => {
     expect(quantityInput.classList.contains('ng-valid')).toBe(true);
 
     // Touch justification to show error
-    justificationInput.dispatchEvent(new Event('blur'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await userEvent.click(justificationInput);
+    await userEvent.tab();
+    await expect
+      .poll(() => justificationInput.classList.contains('ng-touched'))
+      .toBe(true);
 
     expect(justificationInput.classList.contains('ng-invalid')).toBe(true);
     expect(justificationInput.classList.contains('ng-touched')).toBe(true);
 
     // Clear quantity → both should become valid again (omitWhen skips validation)
-    quantityInput.value = '';
-    quantityInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await typeInto(quantityInput, '');
 
     // Both empty → omitWhen skips validation → both valid.
     // Clearing quantity happened inside the loop-prevention cooldown window,
@@ -659,7 +671,7 @@ describe('FormDirective - Comprehensive', () => {
     }).createComponent(TestComponent);
 
     fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const quantityInput = fixture.nativeElement.querySelector(
       'input[name="quantity"]'
@@ -669,15 +681,11 @@ describe('FormDirective - Comprehensive', () => {
     );
 
     // Fill quantity
-    quantityInput.value = '123';
-    quantityInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await typeInto(quantityInput, '123');
 
     // NOW blur justification to trigger touch state
-    justificationInput.dispatchEvent(new Event('blur'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await userEvent.click(justificationInput);
+    await userEvent.tab();
 
     // Justification should be invalid and touched (marked by blur)
     // Wait for debounced validation config to revalidate justification
@@ -747,7 +755,7 @@ describe('FormDirective - Comprehensive', () => {
     }).createComponent(TestComponent);
 
     fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const quantityInput = fixture.nativeElement.querySelector(
       'input[name="quantity"]'
@@ -757,15 +765,11 @@ describe('FormDirective - Comprehensive', () => {
     );
 
     // Fill justification
-    justificationInput.value = 'test';
-    justificationInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await typeInto(justificationInput, 'test');
 
     // NOW blur quantity to trigger touch state
-    quantityInput.dispatchEvent(new Event('blur'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await userEvent.click(quantityInput);
+    await userEvent.tab();
 
     // Quantity should be invalid and touched (marked by blur)
     // Wait for debounced validation config to revalidate quantity
@@ -835,7 +839,7 @@ describe('FormDirective - Comprehensive', () => {
     }).createComponent(TestComponent);
 
     fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const quantityInput = fixture.nativeElement.querySelector(
       'input[name="quantity"]'
@@ -845,15 +849,11 @@ describe('FormDirective - Comprehensive', () => {
     );
 
     // Fill quantity first
-    quantityInput.value = '123';
-    quantityInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await typeInto(quantityInput, '123');
 
     // NOW blur justification to trigger touch state
-    justificationInput.dispatchEvent(new Event('blur'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await userEvent.click(justificationInput);
+    await userEvent.tab();
 
     // After blur, justification should be invalid and touched
     // Wait for debounced validation config to revalidate justification
@@ -863,15 +863,10 @@ describe('FormDirective - Comprehensive', () => {
     });
 
     // Now clear quantity
-    quantityInput.value = '';
-    quantityInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await typeInto(quantityInput, '');
 
     // Trigger blur on quantity to complete the validation cycle
-    quantityInput.dispatchEvent(new Event('blur'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await userEvent.tab();
 
     // Clearing quantity arrived inside the loop-prevention cooldown window,
     // so the pipeline defers it and replays the cycle after the cooldown
@@ -931,7 +926,9 @@ describe('FormDirective - Comprehensive', () => {
     }).createComponent(TestComponent);
 
     fixture.detectChanges();
-    await fixture.whenStable(); // Let initial setup complete
+    await whenStable();
+    // Let initial setup complete: one validation run per control
+    await expect.poll(() => triggerCount).toBeGreaterThanOrEqual(2);
 
     triggerCount = 0; // Reset counter after setup
 
@@ -940,30 +937,15 @@ describe('FormDirective - Comprehensive', () => {
       'input[name="triggerField"]'
     );
 
-    // Fire multiple rapid events within debounce window
-    triggerInput.value = 'value1';
-    triggerInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
+    // Fire multiple rapid changes within debounce window
+    // (one input event per change, so the suite-run count stays comparable)
+    await pasteInto(triggerInput, 'value1');
+    await pasteInto(triggerInput, 'value2');
+    await pasteInto(triggerInput, 'value3');
+    await pasteInto(triggerInput, 'value4');
 
-    await fixture.whenStable(); // 25ms later
-    triggerInput.value = 'value2';
-    triggerInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-
-    await fixture.whenStable(); // 50ms total
-    triggerInput.value = 'value3';
-    triggerInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-
-    await fixture.whenStable(); // 75ms total
-    triggerInput.value = 'value4';
-    triggerInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-
-    // Complete the debounce window and let validation settle
-    await fixture.whenStable(); // Past debounce window
-    fixture.detectChanges();
-    await fixture.whenStable(); // Let form stabilization complete
+    // Let validation settle
+    await whenStable();
 
     // With proper debouncing, we should see only a small number of validations
     // despite multiple rapid input changes (counts all suite runs, not just dependent field)
@@ -1021,7 +1003,7 @@ describe('FormDirective - Comprehensive', () => {
     }).createComponent(TestComponent);
 
     fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const passwordInput = fixture.nativeElement.querySelector(
       'input[name="password"]'
@@ -1031,12 +1013,8 @@ describe('FormDirective - Comprehensive', () => {
     );
 
     // Set password and confirmPassword to different values
-    passwordInput.value = 'password123';
-    passwordInput.dispatchEvent(new Event('input'));
-    confirmPasswordInput.value = 'different';
-    confirmPasswordInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await typeInto(passwordInput, 'password123');
+    await typeInto(confirmPasswordInput, 'different');
 
     // confirmPassword should be invalid (doesn't match)
     await waitFor(() => {
@@ -1044,10 +1022,8 @@ describe('FormDirective - Comprehensive', () => {
     });
 
     // Change password - should trigger confirmPassword revalidation
-    passwordInput.value = 'newpassword';
-    passwordInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await typeInto(passwordInput, 'newpassword');
+    await whenStable();
 
     // confirmPassword should still be invalid (still doesn't match new password)
     await waitFor(() => {
@@ -1055,10 +1031,7 @@ describe('FormDirective - Comprehensive', () => {
     });
 
     // Now match the passwords
-    confirmPasswordInput.value = 'newpassword';
-    confirmPasswordInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await typeInto(confirmPasswordInput, 'newpassword');
 
     // Both should be valid now
     await waitFor(() => {
@@ -1116,7 +1089,7 @@ describe('FormDirective - Comprehensive', () => {
     }).createComponent(TestComponent);
 
     fixture.detectChanges();
-    await fixture.whenStable();
+    await whenStable();
 
     const passwordInput = fixture.nativeElement.querySelector(
       'input[name="password"]'
@@ -1126,12 +1099,9 @@ describe('FormDirective - Comprehensive', () => {
     );
 
     // Leave password empty, set confirmPassword to any value
-    passwordInput.value = '';
-    passwordInput.dispatchEvent(new Event('input'));
-    confirmPasswordInput.value = 'somevalue';
-    confirmPasswordInput.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
+    await typeInto(passwordInput, '');
+    await typeInto(confirmPasswordInput, 'somevalue');
+    await whenStable();
 
     // Password should be invalid (required but empty)
     // confirmPassword should be valid (validation is omitted when password is empty)
@@ -1166,15 +1136,14 @@ describe('FormDirective - Comprehensive', () => {
 
       const fixture = TestBed.createComponent(ModernTestComponent);
       fixture.detectChanges();
-      await fixture.whenStable();
+      await whenStable();
 
       // Test that the form works with modern signal-based inputs
       expect(fixture.componentInstance.formValue()).toEqual({});
 
       // Update the signal and verify reactivity
       fixture.componentInstance.formValue.set({ email: 'test@example.com' });
-      fixture.detectChanges();
-      await fixture.whenStable();
+      await whenStable();
 
       expect(fixture.componentInstance.formValue().email).toBe(
         'test@example.com'
@@ -1207,15 +1176,14 @@ describe('FormDirective - Comprehensive', () => {
       const fixture = TestBed.createComponent(ReactiveTestComponent);
       const component = fixture.componentInstance;
       fixture.detectChanges();
-      await fixture.whenStable();
+      await whenStable();
 
       // Verify initial state
       expect(component.validationConfig()).toEqual({});
 
       // Change validation config reactively using signals
       component.validationConfig.set({ field1: ['field2'] });
-      fixture.detectChanges();
-      await fixture.whenStable();
+      await whenStable();
 
       // Verify the change was applied
       expect(component.validationConfig()).toEqual({ field1: ['field2'] });
@@ -1268,7 +1236,7 @@ describe('FormDirective - Comprehensive', () => {
 
       const fixture = TestBed.createComponent(LifecycleTestComponent);
       fixture.detectChanges();
-      await fixture.whenStable();
+      await whenStable();
 
       // Set password field
       const passwordInput = fixture.nativeElement.querySelector(
@@ -1279,23 +1247,17 @@ describe('FormDirective - Comprehensive', () => {
       ) as HTMLInputElement;
 
       // Type in password field
-      passwordInput.value = 'password123';
-      passwordInput.dispatchEvent(new Event('input'));
-      fixture.detectChanges();
-      await fixture.whenStable();
+      await typeInto(passwordInput, 'password123');
+      await whenStable();
 
       // Type in confirm password field (make it different to trigger error)
-      confirmPasswordInput.value = 'different';
-      confirmPasswordInput.dispatchEvent(new Event('input'));
-      confirmPasswordInput.dispatchEvent(new Event('blur'));
-      fixture.detectChanges();
-      await fixture.whenStable();
+      await typeInto(confirmPasswordInput, 'different');
+      await userEvent.tab();
+      await whenStable();
 
       // Now change password again - confirmPassword should be revalidated
-      passwordInput.value = 'newpassword';
-      passwordInput.dispatchEvent(new Event('input'));
-      fixture.detectChanges();
-      await fixture.whenStable();
+      await typeInto(passwordInput, 'newpassword');
+      await whenStable();
 
       // The confirmPassword field should have been revalidated
       // This tests that validationConfig was properly set up despite being an instance property
@@ -1368,7 +1330,7 @@ describe('FormDirective - Comprehensive', () => {
         DuplicateSubscriptionTestComponent
       );
       fixture.detectChanges();
-      await fixture.whenStable();
+      await whenStable();
 
       const field1Input = fixture.nativeElement.querySelector(
         'input[name="field1"]'
@@ -1386,10 +1348,9 @@ describe('FormDirective - Comprehensive', () => {
       validationCount = 0;
 
       // Change field1 value - should trigger field2 validation ONCE
-      field1Input.value = 'test';
-      field1Input.dispatchEvent(new Event('input'));
-      fixture.detectChanges();
-      await fixture.whenStable();
+      // (a single input event, so the count reflects one change)
+      await pasteInto(field1Input, 'test');
+      await whenStable();
 
       // Wait for debounced validation to complete
       // (field1 should become valid since it now has a value)
@@ -1468,12 +1429,18 @@ describe('FormDirective - Comprehensive', () => {
         });
       }
 
+      // Fake timers: the test asserts that nothing re-triggers over a period
+      vi.useFakeTimers();
+      onTestFinished(() => {
+        vi.useRealTimers();
+      });
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
       const fixture = TestBed.configureTestingModule({
         imports: [RaceConditionTestComponent],
       }).createComponent(RaceConditionTestComponent);
 
       fixture.detectChanges();
-      await fixture.whenStable();
 
       const aantalInput = fixture.nativeElement.querySelector(
         'input[name="aantal"]'
@@ -1483,32 +1450,25 @@ describe('FormDirective - Comprehensive', () => {
       ) as HTMLTextAreaElement;
 
       // Wait for initial validation to complete
-      await waitFor(() => {
-        expect(validationCallCount).toBeGreaterThan(0);
-      });
+      await vi.advanceTimersByTimeAsync(100);
+      expect(validationCallCount).toBeGreaterThan(0);
 
       // Reset counter after initialization
       validationCallCount = 0;
 
       // Fill in aantal field
-      aantalInput.value = '5';
-      aantalInput.dispatchEvent(new Event('input'));
-      fixture.detectChanges();
-      await fixture.whenStable();
+      await typeInto(aantalInput, '5', user);
 
-      // Wait for debounced validation to complete
+      // Run past the validation-config debounce (100ms)
       // (onderbouwing should become invalid since aantal is filled)
-      await waitFor(() => {
-        expect(onderbouwingInput.classList.contains('ng-invalid')).toBe(true);
-      });
+      await vi.advanceTimersByTimeAsync(200);
+      expect(onderbouwingInput.classList.contains('ng-invalid')).toBe(true);
 
       const validationCountAfterChange = validationCallCount;
 
-      // Wait an additional period to see if validation keeps re-triggering
+      // Advance an additional period to see if validation keeps re-triggering
       // If there's a feedback loop, validationCallCount will continue to increase
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      fixture.detectChanges();
-      await fixture.whenStable();
+      await vi.advanceTimersByTimeAsync(500);
 
       const validationCountAfterWait = validationCallCount;
 
@@ -1518,9 +1478,9 @@ describe('FormDirective - Comprehensive', () => {
       expect(validationCountAfterWait).toBe(validationCountAfterChange);
 
       // Touch the onderbouwing field to see errors
-      onderbouwingInput.dispatchEvent(new Event('blur'));
-      fixture.detectChanges();
-      await fixture.whenStable();
+      await user.click(onderbouwingInput);
+      await user.tab();
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(onderbouwingInput.classList.contains('ng-invalid')).toBe(true);
     });
@@ -1563,21 +1523,26 @@ describe('FormDirective - Comprehensive', () => {
         });
       }
 
+      // Fake timers: the count is taken after the debounced cycle has settled
+      vi.useFakeTimers();
+      onTestFinished(() => {
+        vi.useRealTimers();
+      });
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
       const fixture = TestBed.configureTestingModule({
         imports: [TestComponent],
       }).createComponent(TestComponent);
 
       fixture.detectChanges();
-      await fixture.whenStable();
 
       const field1Input = fixture.nativeElement.querySelector(
         'input[name="field1"]'
       ) as HTMLInputElement;
 
       // Wait for initial validation to complete before spying
-      await waitFor(() => {
-        expect(field1Input.classList.contains('ng-invalid')).toBe(true);
-      });
+      await vi.advanceTimersByTimeAsync(100);
+      expect(field1Input.classList.contains('ng-invalid')).toBe(true);
 
       // Spy on form.statusChanges after initialization
       const formDirective = (
@@ -1596,30 +1561,24 @@ describe('FormDirective - Comprehensive', () => {
       }) as any;
 
       // Trigger a change
-      field1Input.value = 'test';
-      field1Input.dispatchEvent(new Event('input'));
-      fixture.detectChanges();
+      // (a single input event, so the count reflects one change)
+      await pasteInto(field1Input, 'test', user);
 
-      // Wait for debounced validation to complete
+      // Run past the validation-config debounce (100ms)
       // (field1 should become valid since it now has a value)
-      await waitFor(() => {
-        expect(field1Input.classList.contains('ng-valid')).toBe(true);
-      });
+      await vi.advanceTimersByTimeAsync(200);
+      expect(field1Input.classList.contains('ng-valid')).toBe(true);
 
       // With take(1), the subscription should be created but then immediately
       // complete, so subsequent status changes shouldn't create new subscriptions
       const initialSubscribeCount = subscribeCallCount;
 
       // Trigger another status change
-      field1Input.value = 'test2';
-      field1Input.dispatchEvent(new Event('input'));
-      fixture.detectChanges();
+      await pasteInto(field1Input, 'test2', user);
 
-      // Wait for the debounced validation cycle to settle
+      // Let the debounced validation cycle settle
       // (count-based assertion: need to wait for all pending validations)
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      fixture.detectChanges();
-      await fixture.whenStable();
+      await vi.advanceTimersByTimeAsync(300);
 
       // The subscribe count should not increase significantly
       // (may increase by 1-2 due to new validation cycle, but not continuously)
@@ -1672,7 +1631,7 @@ describe('FormDirective - Comprehensive', () => {
       }).createComponent(TestComponent);
 
       fixture.detectChanges();
-      await fixture.whenStable();
+      await whenStable();
 
       const field1Input = fixture.nativeElement.querySelector(
         'input[name="field1"]'
@@ -1687,9 +1646,8 @@ describe('FormDirective - Comprehensive', () => {
       validationCallCount = 0;
 
       // Change field1, which should trigger field2 validation via config
-      field1Input.value = 'test';
-      field1Input.dispatchEvent(new Event('input'));
-      fixture.detectChanges();
+      // (a single input event, so the count reflects one change)
+      await pasteInto(field1Input, 'test');
 
       // Wait for debounced validation to complete
       // (field1 should become valid since it now has a value)
@@ -1751,7 +1709,7 @@ describe('FormDirective - Comprehensive', () => {
       }).createComponent(TestComponent);
 
       fixture.detectChanges();
-      await fixture.whenStable();
+      await whenStable();
 
       const field1Input = fixture.nativeElement.querySelector(
         'input[name="field1"]'
@@ -1766,10 +1724,10 @@ describe('FormDirective - Comprehensive', () => {
       });
 
       // Mark field1 as touched and change its value
-      field1Input.dispatchEvent(new Event('blur'));
-      field1Input.value = 'test';
-      field1Input.dispatchEvent(new Event('input'));
-      fixture.detectChanges();
+      // (focus/blur directly: tabbing would move focus into field2)
+      field1Input.focus();
+      field1Input.blur();
+      await typeInto(field1Input, 'test');
 
       // Wait for debounced validation config to revalidate field2
       await waitFor(() => {

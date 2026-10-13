@@ -82,8 +82,7 @@ function createSuiteResult(
   const thenable: NgxSuiteRunResult = { ...selectors } as NgxSuiteRunResult;
   thenable.then = (<TResult1, TResult2>(
     onfulfilled?:
-      | ((value: NgxSuiteRunResult) => TResult1 | PromiseLike<TResult1>)
-      | null,
+      ((value: NgxSuiteRunResult) => TResult1 | PromiseLike<TResult1>) | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
   ): PromiseLike<TResult1 | TResult2> => {
     if (opts.pending) {
@@ -165,9 +164,12 @@ function createFocusSuiteMock(
   };
 }
 
-async function flushMicrotasks(): Promise<void> {
-  // One macrotask flush so `timer(0)` fires, plus microtask flushes for the
-  // subsequent `from(Promise.resolve(...))`/`map(...)` operators.
+async function flushZeroDebounceRun(): Promise<void> {
+  // Not a fixed-duration wait: the runner's `timer(0)` defers the suite run
+  // to the next task, so yield one zero-delay task (queued after that timer,
+  // so it fires second), then two microtask turns for the subsequent
+  // `from(Promise.resolve(...))`/`map(...)` operators. Real timers are kept
+  // because the other tests here await emissions on real timers too.
   await new Promise<void>((resolve) => setTimeout(resolve, 0));
   await Promise.resolve();
   await Promise.resolve();
@@ -193,7 +195,7 @@ describe('vest-runner', () => {
       complete,
     });
 
-    await flushMicrotasks();
+    await flushZeroDebounceRun();
 
     expect(suite.only).toHaveBeenCalledWith('username');
     expect(suite.run).toHaveBeenCalledWith({ username: '' });
@@ -236,7 +238,7 @@ describe('vest-runner', () => {
       destroyRef
     ).subscribe((value) => values.push(value));
 
-    await flushMicrotasks();
+    await flushZeroDebounceRun();
 
     expect(values).toHaveLength(1);
     expect(values[0]?.getErrors('username')).toEqual(['Per-run']);
@@ -269,7 +271,7 @@ describe('vest-runner', () => {
       destroyRef
     ).subscribe((value) => values.push(value));
 
-    await flushMicrotasks();
+    await flushZeroDebounceRun();
 
     expect(suite.get).toHaveBeenCalled();
     expect(values).toEqual([fallback]);
@@ -302,7 +304,7 @@ describe('vest-runner', () => {
       destroyRef
     ).subscribe((value) => values.push(value));
 
-    await flushMicrotasks();
+    await flushZeroDebounceRun();
 
     expect(suite.get).toHaveBeenCalled();
     expect(values).toEqual([latestResult]);
@@ -333,7 +335,7 @@ describe('vest-runner', () => {
 
     subscription.unsubscribe();
     resolvePending(undefined);
-    await flushMicrotasks();
+    await flushZeroDebounceRun();
 
     expect(next).not.toHaveBeenCalled();
     expect(complete).not.toHaveBeenCalled();
@@ -471,7 +473,7 @@ describe('vest-runner', () => {
 
     destroy();
     resolvePending(undefined);
-    await flushMicrotasks();
+    await flushZeroDebounceRun();
 
     expect(next).not.toHaveBeenCalled();
     expect(complete).toHaveBeenCalledOnce();

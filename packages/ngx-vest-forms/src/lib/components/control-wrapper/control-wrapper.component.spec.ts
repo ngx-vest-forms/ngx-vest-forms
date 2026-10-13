@@ -2,7 +2,7 @@ import { Component, signal } from '@angular/core';
 import { fireEvent, render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { create, enforce, test as vestTest, warn } from 'vest';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { NgxVestForms } from '../../exports';
 
 // Test validation suite for the component tests
@@ -764,11 +764,8 @@ describe('ControlWrapperComponent', () => {
 
       // Toggle wrapper input off → wrapper-owned attr should be removed
       fixture.componentInstance.required.set(false);
-      fixture.detectChanges();
 
-      await waitFor(() => {
-        expect(input).not.toHaveAttribute('aria-required');
-      });
+      await expect.poll(() => input.hasAttribute('aria-required')).toBe(false);
     });
 
     it('should remove aria-invalid when field becomes valid', async () => {
@@ -1150,26 +1147,28 @@ describe('ControlWrapperComponent', () => {
 
     it('should prevent flashing validation message for quick async validations using @defer', async () => {
       // Test with fast async validation (50ms) - pending message should NOT appear
+      vi.useFakeTimers();
+      onTestFinished(() => {
+        vi.useRealTimers();
+      });
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
       await render(AsyncTestComponent);
       const emailInput = screen.getByLabelText('Email');
 
-      await userEvent.type(emailInput, 'test@example.com');
-      await userEvent.tab();
+      await user.type(emailInput, 'test@example.com');
+      await user.tab();
 
-      // Wait 400ms (less than defer's 500ms delay)
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      // Advance 400ms (less than the 500ms pending-message delay)
+      await vi.advanceTimersByTimeAsync(400);
 
-      // Pending message should NOT have appeared yet (defer delay prevents it)
+      // Pending message should NOT have appeared yet (delay prevents it)
       expect(screen.queryByText('Validating…')).not.toBeInTheDocument();
 
-      // Wait for validation to complete
-      await waitFor(
-        () => {
-          // Validation completes without showing pending message (desired behavior)
-          expect(screen.queryByText('Validating…')).not.toBeInTheDocument();
-        },
-        { timeout: 200 }
-      );
+      // Advance past the 500ms delay: validation has completed, so the
+      // pending message never shows (desired behavior)
+      await vi.advanceTimersByTimeAsync(200);
+      expect(screen.queryByText('Validating…')).not.toBeInTheDocument();
     });
 
     it('should show validation message for slow async validations after defer delay', async () => {

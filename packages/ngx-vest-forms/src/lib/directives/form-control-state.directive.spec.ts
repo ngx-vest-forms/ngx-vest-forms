@@ -1,11 +1,14 @@
-import { Component, signal, viewChild } from '@angular/core';
+import { ApplicationRef, Component, signal, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, NgForm } from '@angular/forms';
 import { waitFor } from '@testing-library/angular';
+import userEvent from '@testing-library/user-event';
 import { create, enforce, test as vestTest, warn } from 'vest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
 import { FormControlStateDirective } from './form-control-state.directive';
+
+const whenStable = () => TestBed.inject(ApplicationRef).whenStable();
 
 @Component({
   imports: [FormsModule, FormControlStateDirective],
@@ -103,14 +106,13 @@ describe('FormControlStateDirective', () => {
     expect(
       fixture.nativeElement.querySelector('#error-messages').textContent
     ).toBe('required');
-    // Simulate user input by dispatching an input event
+    // Simulate user input
     const input: HTMLInputElement =
       fixture.nativeElement.querySelector('input');
-    input.value = 'hello';
-    input.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await userEvent.type(input, 'hello');
+    await expect
+      .poll(() => fixture.nativeElement.querySelector('#is-valid').textContent)
+      .toBe('true');
     const isValid =
       fixture.nativeElement.querySelector('#is-valid').textContent;
     const hasErrors =
@@ -130,21 +132,17 @@ describe('FormControlStateDirective', () => {
     // Trigger validation by filling the field
     const input: HTMLInputElement =
       fixture.nativeElement.querySelector('input');
-    input.value = 'test';
-    input.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await userEvent.type(input, 'test');
 
     // After validation completes, hasBeenValidated should be true
-    expect(hasBeenValidatedEl.textContent).toBe('true');
+    await expect.poll(() => hasBeenValidatedEl.textContent).toBe('true');
 
     // Clear the field - hasBeenValidated should remain true
-    input.value = '';
-    input.dispatchEvent(new Event('input'));
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await userEvent.clear(input);
+    await expect
+      .poll(() => fixture.nativeElement.querySelector('#is-valid').textContent)
+      .toBe('false');
+    await whenStable();
 
     // Still true even though field is now invalid again
     expect(hasBeenValidatedEl.textContent).toBe('true');
@@ -161,13 +159,11 @@ describe('FormControlStateDirective', () => {
     expect(hasBeenValidatedEl.textContent).toBe('false');
 
     // Blur without filling (triggers validation, field becomes invalid)
-    input.dispatchEvent(new Event('blur'));
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await userEvent.click(input);
+    await userEvent.tab();
 
     // Should be true after validation runs
-    expect(hasBeenValidatedEl.textContent).toBe('true');
+    await expect.poll(() => hasBeenValidatedEl.textContent).toBe('true');
   });
 
   it('should mark the control as touched when blur does not change status', async () => {
@@ -178,28 +174,22 @@ describe('FormControlStateDirective', () => {
     // Required input starts INVALID, so blur will not change status.
     expect(isTouchedEl.textContent).toBe('false');
 
-    input.dispatchEvent(new Event('blur'));
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
+    await userEvent.click(input);
+    await userEvent.tab();
 
-    expect(isTouchedEl.textContent).toBe('true');
+    await expect.poll(() => isTouchedEl.textContent).toBe('true');
   });
 
   it('should surface warning-only messages from fieldWarnings', async () => {
     const warningFixture = TestBed.createComponent(WarningOnlyHostComponent);
     warningFixture.detectChanges();
-    await warningFixture.whenStable();
+    await whenStable();
 
     const input: HTMLInputElement =
       warningFixture.nativeElement.querySelector('input');
 
     // Simulate user input
-    input.value = 'a';
-    input.dispatchEvent(new Event('input'));
-
-    warningFixture.detectChanges();
-    await warningFixture.whenStable();
+    await userEvent.type(input, 'a');
 
     // Wait for debounced async validation to surface the warning message
     await waitFor(() => {
@@ -212,7 +202,7 @@ describe('FormControlStateDirective', () => {
   it('should reset hasBeenValidated to false after form reset', async () => {
     const resetFixture = TestBed.createComponent(ResettableHostComponent);
     resetFixture.detectChanges();
-    await resetFixture.whenStable();
+    await whenStable();
 
     const input: HTMLInputElement =
       resetFixture.nativeElement.querySelector('input');
@@ -224,21 +214,14 @@ describe('FormControlStateDirective', () => {
     expect(hasBeenValidatedEl.textContent).toBe('false');
 
     // Interact so control becomes touched and validated
-    input.value = 'abc';
-    input.dispatchEvent(new Event('input'));
-    input.dispatchEvent(new Event('blur'));
-    resetFixture.detectChanges();
-    await resetFixture.whenStable();
-    resetFixture.detectChanges();
+    await userEvent.type(input, 'abc');
+    await userEvent.tab();
 
-    expect(hasBeenValidatedEl.textContent).toBe('true');
+    await expect.poll(() => hasBeenValidatedEl.textContent).toBe('true');
 
     // Reset should restore pristine interaction state and clear hasBeenValidated
     resetFixture.componentInstance.reset();
-    resetFixture.detectChanges();
-    await resetFixture.whenStable();
-    resetFixture.detectChanges();
 
-    expect(hasBeenValidatedEl.textContent).toBe('false');
+    await expect.poll(() => hasBeenValidatedEl.textContent).toBe('false');
   });
 });

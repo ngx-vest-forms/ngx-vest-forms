@@ -1,5 +1,7 @@
-import { Component, signal } from '@angular/core';
-import { fireEvent, render, screen, waitFor } from '@testing-library/angular';
+import { ApplicationRef, Component, signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { render, screen, waitFor } from '@testing-library/angular';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
 import { type FormModel, formValidationSuite, selectors } from './simple-form';
@@ -93,19 +95,10 @@ describe('simple-form-with-validation-config stories', () => {
   });
 
   it('updates cross-field revalidation when the component swaps validationConfig references', async () => {
-    const { fixture } = await render(ValidationConfigStoryTestComponent);
-    const syncFixture = async () => {
-      fixture.detectChanges();
-      await fixture.whenStable();
-    };
-    const waitForFixture = async (assertion: () => void) => {
-      await waitFor(() => {
-        fixture.detectChanges();
-        assertion();
-      });
-    };
+    await render(ValidationConfigStoryTestComponent);
+    const whenStable = () => TestBed.inject(ApplicationRef).whenStable();
 
-    await syncFixture();
+    await whenStable();
 
     const elements = {
       passwordInput: screen.getByTestId(
@@ -120,24 +113,31 @@ describe('simple-form-with-validation-config stories', () => {
       toggleButton: screen.getByTestId(selectors.btnToggleValidationConfig),
     };
 
-    fireEvent.blur(elements.confirmPasswordInput);
-    await syncFixture();
+    await userEvent.click(elements.confirmPasswordInput);
+    await userEvent.tab();
+    await whenStable();
 
-    fireEvent.click(elements.toggleButton);
-    await syncFixture();
-    fireEvent.input(elements.passwordInput, { target: { value: 'f' } });
+    await userEvent.click(elements.toggleButton);
+    await whenStable();
+    await userEvent.clear(elements.passwordInput);
+    await userEvent.type(elements.passwordInput, 'f');
 
-    await waitForFixture(() => {
-      expect(elements.confirmPasswordWrapper).not.toHaveTextContent(
-        'Confirm password is required'
-      );
-    });
+    // The confirm error is absent before and after, so first wait for the
+    // password validation itself to settle (required -> valid).
+    await expect
+      .poll(() => elements.passwordInput.classList.contains('ng-valid'))
+      .toBe(true);
+    await whenStable();
+    expect(elements.confirmPasswordWrapper).not.toHaveTextContent(
+      'Confirm password is required'
+    );
 
-    fireEvent.click(elements.toggleButton);
-    await syncFixture();
-    fireEvent.input(elements.passwordInput, { target: { value: 'fg' } });
+    await userEvent.click(elements.toggleButton);
+    await whenStable();
+    await userEvent.clear(elements.passwordInput);
+    await userEvent.type(elements.passwordInput, 'fg');
 
-    await waitForFixture(() => {
+    await waitFor(() => {
       expect(elements.confirmPasswordWrapper).toHaveTextContent(
         'Confirm password is required'
       );
