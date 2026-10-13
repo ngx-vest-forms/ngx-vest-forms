@@ -17,6 +17,8 @@ A lightweight, type-safe adapter between Angular template-driven forms and [Vest
 
 </div>
 
+> **Version notice:** This README documents **ngx-vest-forms v3** (`npm install ngx-vest-forms`). For v2.x, install `ngx-vest-forms@^2` (Angular >=19.0.0, Vest.js >=5.4.6) and read the [v2.x README](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v2.x/README.md). See [Older versions](#older-versions) for the v2 docs.
+
 > **New Maintainer**:
 >
 > I'm [the-ult](https://bsky.app/profile/the-ult.bsky.social), now maintaining this project as Brecht Billiet has moved on to other priorities. Huge thanks to Brecht for creating this amazing library and his foundational work on Angular forms!
@@ -560,10 +562,24 @@ If the contract genuinely varies per usage site, `[formContract]` still works as
   - Run locally: `corepack enable && pnpm install && pnpm start`
   - Includes smart components, UI components, and complete validation patterns
 
+### Older versions
+
+- **[v2.x README](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v2.x/README.md)** - Install with `npm install ngx-vest-forms@^2`
+- **[v2.x docs folder](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/release/v2.x/docs)** - All v2 guides. The most used:
+  - **[Complete Example](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v2.x/docs/COMPLETE-EXAMPLE.md)** - Step-by-step walkthrough from basic form to advanced patterns
+  - **[ValidationConfig vs Root-Form](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v2.x/docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)** - Cross-field dependencies and form-level rules
+  - **[Field Path Types](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v2.x/docs/FIELD-PATHS.md)** - Type-safe dot-notation paths for nested properties
+  - **[Custom Control Wrappers](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v2.x/docs/CUSTOM-CONTROL-WRAPPERS.md)** - Build consistent error display patterns
+  - **[API Tokens](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v2.x/docs/API-TOKENS.md)** - Error display modes and other global settings
+- **[v1.x README](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/release/v1.x/README.md)** - Legacy 1.x. Upgrade notes are in [Migration](#migration)
+
 ## Migration
 
 - v1.x → v2.0.0: **[Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md)**
 - v2.x → v3.0.0: **[Selector/Token Removal Guide](./docs/migration/MIGRATION-v2.x-to-v3.0.0.md)**
+- Angular 22 upgrade: **[Angular v22 Migration](./docs/migration/ANGULAR-v22-MIGRATION.md)**
+
+Staying on v2.x? Use the v2 docs listed in [Older versions](#older-versions).
 
 ### `[formShape]` → `[formContract]` (v3)
 
@@ -585,7 +601,7 @@ The `[formShape]` input on `<form ngxVestForm>` is replaced by `[formContract]`,
 
 `@standard-schema/spec` is now declared as a `peerDependency` (`>=1.0.0`). Most consumers don't need to install it directly — bring it in only if you author your own `StandardSchemaV1<T>` literals. The internal `validateShape()` helper has been removed; use `toFormContract()` if you need explicit shape→schema conversion.
 
-Browser support follows Angular 19+ targets (no `structuredClone` polyfill required).
+Browser support follows Angular 22+ targets (no `structuredClone` polyfill required).
 
 ## FAQ
 
