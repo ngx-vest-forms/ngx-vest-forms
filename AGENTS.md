@@ -34,5 +34,6 @@
   tracked.
 - `.env` and `.env.*` (except `.env.example`) are gitignored; keep them
   that way.
-- CI runs a secret scan over all tracked files on every pull request; a hit
-  fails the build.
+- CI runs a secret scan on pull requests to `master`, `release/**`, `next`,
+  `beta`, `alpha`, or `rc`, over tracked files except `pnpm-lock.yaml` and
+  `*.lock`; a hit fails the build.

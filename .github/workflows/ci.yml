@@ -40,15 +40,22 @@ jobs:
         run: sfw pnpm audit --audit-level=high
       - name: Secret scan
         run: |
-          matches=$(git ls-files | grep -v -E '^(pnpm-lock\.yaml|.*\.lock)$' | xargs grep -nE 'ghp_[A-Za-z0-9]{36}|gho_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|ctx7sk-[A-Za-z0-9_-]+' 2>/dev/null || true)
+          set +e
+          matches=$(git grep -lE 'ghp_[A-Za-z0-9]{36}|gho_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9_-]{20,}|ctx7sk-[A-Za-z0-9_-]+|-----BEGIN [A-Z ]*PRIVATE KEY-----' -- . ':!pnpm-lock.yaml' ':!*.lock')
+          rc=$?
+          set -e
+          if [ "$rc" -gt 1 ]; then
+            echo "::error::Secret scan failed to run (git grep exit $rc)"
+            exit "$rc"
+          fi
           if [ -n "$matches" ]; then
-            echo "::error::Potential committed secrets detected (rotate first, then remove):"
+            echo "::error::Potential committed secrets detected in (rotate first, then remove):"
             echo "$matches"
             exit 1
           fi
       - name: Check workflow actions are SHA-pinned
         run: |
-          unpinned=$(grep -nE '^[[:space:]]*uses:.*@' .github/workflows/*.yml | grep -vE '@[0-9a-f]{40}([[:space:]]|#|$)' || true)
+          unpinned=$(grep -nE '^[[:space:]]*uses:.*@' .github/workflows/*.yml .github/workflows/*.yaml 2>/dev/null | grep -vE '@[0-9a-f]{40}([[:space:]]|#|$)' || true)
           if [ -n "$unpinned" ]; then
             echo "::error::Workflow actions must be pinned to a 40-hex commit SHA (see CONTEXT.md: SHA-Pinned Workflow Actions):"
             echo "$unpinned"
