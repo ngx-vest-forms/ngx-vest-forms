@@ -100,9 +100,9 @@ When answering:
 
 ## Repo references to consult when needed
 
-- `../../../../docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`
-- `../../../../README.md`
-- `../../../../docs/ACCESSIBILITY.md`
-- `../../../../packages/ngx-vest-forms/src/public-api.ts`
+- [`docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)
+- [`README.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/README.md)
+- [`docs/ACCESSIBILITY.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/ACCESSIBILITY.md)
+- [`packages/ngx-vest-forms/src/public-api.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/public-api.ts)
 
-Treat the repo instruction file as the baseline. Use this skill for the field-vs-form ownership decision and form-summary behavior.
+The invariants live in the router skill, [`../SKILL.md`](../SKILL.md). Use this skill for the field-vs-form ownership decision and form-summary behavior.

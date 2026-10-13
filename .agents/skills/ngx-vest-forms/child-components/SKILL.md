@@ -72,10 +72,10 @@ When answering:
 
 ## Repo references to consult when needed
 
-- `../../../../docs/CHILD-COMPONENTS.md`
-- `../../../../docs/ACCESSIBILITY.md`
-- `../../../../docs/COMPLETE-EXAMPLE.md`
-- `../../../../README.md`
-- `../../../../packages/ngx-vest-forms/src/public-api.ts`
+- [`docs/CHILD-COMPONENTS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/CHILD-COMPONENTS.md)
+- [`docs/ACCESSIBILITY.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/ACCESSIBILITY.md)
+- [`docs/COMPLETE-EXAMPLE.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/COMPLETE-EXAMPLE.md)
+- [`README.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/README.md)
+- [`packages/ngx-vest-forms/src/public-api.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/public-api.ts)
 
-Treat the repo instruction file as the invariant layer. Use this skill for parent/child path coordination, `vestFormsViewProviders`, and nested section design.
+The invariants live in the router skill, [`../SKILL.md`](../SKILL.md). Use this skill for parent/child path coordination, `vestFormsViewProviders`, and nested section design.

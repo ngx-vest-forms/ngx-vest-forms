@@ -53,7 +53,7 @@ When the user asks for “the right pattern”, “best practice”, or a repo-a
 ground the answer in the repository’s canonical blur-save materials instead of answering only at
 the API level:
 
-- point to `docs/AUTO-SAVE-ON-BLUR.md`
+- point to [AUTO-SAVE-ON-BLUR.md](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/AUTO-SAVE-ON-BLUR.md)
 - mention the examples app route `/auto-save-demo`
 - use the auto-save demo files as the preferred concrete implementation reference
 
@@ -129,11 +129,11 @@ When answering the user:
 
 ## Repo references to consult when needed
 
-- `../../../../docs/AUTO-SAVE-ON-BLUR.md`
-- `../../../../docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`
-- `../../../../README.md`
-- `../../../../apps/examples/src/app/pages/auto-save-demo/auto-save-demo.page.ts`
-- `../../../../apps/examples/src/app/pages/auto-save-demo/auto-save-demo.form.ts`
-- `../../../../packages/ngx-vest-forms/src/public-api.ts`
+- [`docs/AUTO-SAVE-ON-BLUR.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/AUTO-SAVE-ON-BLUR.md)
+- [`docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)
+- [`README.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/README.md)
+- [`apps/examples/src/app/pages/auto-save-demo/auto-save-demo.page.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/apps/examples/src/app/pages/auto-save-demo/auto-save-demo.page.ts)
+- [`apps/examples/src/app/pages/auto-save-demo/auto-save-demo.form.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/apps/examples/src/app/pages/auto-save-demo/auto-save-demo.form.ts)
+- [`packages/ngx-vest-forms/src/public-api.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/public-api.ts)
 
 Use the auto-save demo as the canonical repo example for blur-driven persistence and quiet dependent validation.
