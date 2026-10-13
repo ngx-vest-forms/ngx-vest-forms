@@ -41,6 +41,14 @@ jobs:
             echo "$matches"
             exit 1
           fi
+      - name: Check workflow actions are SHA-pinned
+        run: |
+          unpinned=$(grep -nE '^[[:space:]]*uses:.*@' .github/workflows/*.yml | grep -vE '@[0-9a-f]{40}([[:space:]]|#|$)' || true)
+          if [ -n "$unpinned" ]; then
+            echo "::error::Workflow actions must be pinned to a 40-hex commit SHA (see CONTEXT.md: SHA-Pinned Workflow Actions):"
+            echo "$unpinned"
+            exit 1
+          fi
       - name: Get Playwright version
         id: playwright-version
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
