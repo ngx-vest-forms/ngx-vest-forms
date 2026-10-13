@@ -5,7 +5,7 @@ description: Routes general ngx-vest-forms requests to the right workflow. Use t
 
 # ngx-vest-forms router skill
 
-Use this as the broad entry point for ngx-vest-forms questions. Tracks library v2.7.x (Angular `>=19`, RxJS `>=7.8`, Vest `>=5.4.6`).
+Use this as the broad entry point for ngx-vest-forms questions. Track the current branch baseline: v3.x-era guidance on Angular 22+, RxJS ~7.8, and Vest 6.x.
 
 ## Start with the invariant layer
 
@@ -14,7 +14,7 @@ Assume the repo instruction file already enforces the baseline guardrails:
 - use `[ngModel]`, not `[(ngModel)]`
 - keep `name` aligned with the bound path
 - use optional chaining for partial models
-- call `only(field)` unconditionally
+- handle field-focused validation at the call site via `suite.only(field).run(model)` when needed
 - use `vestFormsViewProviders` in nested child form components
 - use the form's `fieldBlur` output with `NgxFieldBlurEvent<T>` for blur-driven persistence, analytics, and field-level side effects
 - do not gate draft auto-save on `event.pending`
@@ -22,7 +22,7 @@ Assume the repo instruction file already enforces the baseline guardrails:
 
 Do not repeat those basics unless they are directly relevant to the user's issue.
 
-## v2.7.0 deltas to keep in mind
+## Current branch deltas to keep in mind
 
 Non-breaking but worth knowing when the user mentions related symptoms:
 
@@ -32,31 +32,31 @@ Non-breaking but worth knowing when the user mentions related symptoms:
 - **Lifecycle safety.** `form.directive` and `validate-root-form.directive` route async work through an internal `destroy-scheduler` tied to `DestroyRef`. No more `ViewDestroyedError` after destroy-mid-async-validation; async validators emit cleanly even when torn down. Symptom-only — no API change.
 - **`setValueAtPath` array-safe.** `setValueAtPath(form, 'addresses[0].street', 'x')` no longer overwrites a populated array with `{}`. Bracket notation now chooses container shape from the segment (numeric → array, string → object). Relevant to `composite-adapter` fan-out.
 - **`parseFieldPath` strict mode** logs a dev warning (`ngDevMode`-gated, tree-shakable) for malformed segments like `'a..b'`, `'.a'`, `'a.'`, instead of silently truncating. Production behavior is unchanged for previously valid paths.
-- **`validateShape` opaque-value fix.** `Date`, `Map`, `Set`, `RegExp`, `File`, `Blob` short-circuit recursion. Numeric-key detection switched to `^\d+$`, so `'123abc'` now flags as `TYPE_MISMATCH` instead of becoming array index 0.
-- **Touched syncs to dependents.** Blurring a trigger field propagates touched into its `validationConfig`-tracked dependents on the same tick — pair with `errorDisplayMode="on-blur"` on dependent wrappers for calm UX.
-- **`cloneDeep` is deprecated** and warns once in dev. Scheduled for removal in v3. Use `structuredClone`.
+- **`validateShape` removed in v3 (see `formContract`).** The legacy shape-validator is no longer exported. The `[formContract]` input on `FormDirective<T>` accepts any `StandardSchemaV1<T>` (Zod v4, Valibot, hand-rolled, etc.) and still accepts a legacy `NgxDeepRequired<T>` shape via the `toFormContract()` adapter for back-compat. Opaque values (`Date`, `Map`, `Set`, `RegExp`, `File`, `Blob`) short-circuit shape recursion as before.
+- **Dependents revalidate silently.** When a trigger field changes, its `validationConfig`-tracked dependents are revalidated but touched state is deliberately NOT propagated to them — dependents show errors only after their own interaction (blur) or form submit.
+- **`cloneDeep` was removed in v3.0.0.** Use `structuredClone` in new guidance.
 
 ## Stay on the public API surface
 
-Unless the task is explicitly about maintaining the library internals, recommend imports from `'ngx-vest-forms'` and verify the symbol exists in `projects/ngx-vest-forms/src/public-api.ts`.
+Unless the task is explicitly about maintaining the library internals, recommend imports from `'ngx-vest-forms'` and verify the symbol exists in `packages/ngx-vest-forms/src/public-api.ts`.
 
-Do not send library consumers to `projects/ngx-vest-forms/src/lib/**` imports. That is an internal maintenance path, not consumer guidance.
+Do not send library consumers to `packages/ngx-vest-forms/src/lib/**` imports. That is an internal maintenance path, not consumer guidance.
 
 ## Available workflow sub-skills
 
 Use these nested workflow sub-skills when the feature area is clear:
 
-| Sub-skill | Use when | Path |
-|---|---|---|
-| `core` | first examples, form structure, `[ngModel]`, `NgxDeepPartial`, typed suites | `core/SKILL.md` |
-| `validation-config-builder` | dependent field revalidation, `createValidationConfig()`, `whenChanged`, `bidirectional` | `validation-config-builder/SKILL.md` |
-| `field-blur-events` | draft auto-save, blur-driven persistence, analytics, `fieldBlur`, `NgxFieldBlurEvent` | `field-blur-events/SKILL.md` |
-| `root-form-validation` | `ROOT_FORM`, `ngxValidateRootForm`, summary-level business rules | `root-form-validation/SKILL.md` |
-| `built-in-wrappers` | built-in wrapper selection, display modes, `ariaAssociationMode` | `built-in-wrappers/SKILL.md` |
-| `custom-wrapper-patterns` | design-system wrappers, `FormErrorDisplayDirective`, `FormErrorControlDirective` | `custom-wrapper-patterns/SKILL.md` |
-| `child-components` | nested `ngModelGroup`, reusable form sections, `vestFormsViewProviders` | `child-components/SKILL.md` |
-| `composite-adapter` | one UI widget mapping to multiple flat form fields, hidden proxy fields, fan-out, error aggregation | `composite-adapter/SKILL.md` |
-| `dynamic-form-behavior` | clearing hidden values, structure changes, `triggerFormValidation()` | `dynamic-form-behavior/SKILL.md` |
+| Sub-skill                   | Use when                                                                                            | Path                                 |
+| --------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `core`                      | first examples, form structure, `[ngModel]`, `NgxDeepPartial`, typed suites                         | `core/SKILL.md`                      |
+| `validation-config-builder` | dependent field revalidation, `createValidationConfig()`, `whenChanged`, `bidirectional`            | `validation-config-builder/SKILL.md` |
+| `field-blur-events`         | draft auto-save, blur-driven persistence, analytics, `fieldBlur`, `NgxFieldBlurEvent`               | `field-blur-events/SKILL.md`         |
+| `root-form-validation`      | `ROOT_FORM`, `ngxValidateRootForm`, summary-level business rules                                    | `root-form-validation/SKILL.md`      |
+| `built-in-wrappers`         | built-in wrapper selection, display modes, `ariaAssociationMode`                                    | `built-in-wrappers/SKILL.md`         |
+| `custom-wrapper-patterns`   | design-system wrappers, `FormErrorDisplayDirective`, `FormErrorControlDirective`                    | `custom-wrapper-patterns/SKILL.md`   |
+| `child-components`          | nested `ngModelGroup`, reusable form sections, `vestFormsViewProviders`                             | `child-components/SKILL.md`          |
+| `composite-adapter`         | one UI widget mapping to multiple flat form fields, hidden proxy fields, fan-out, error aggregation | `composite-adapter/SKILL.md`         |
+| `dynamic-form-behavior`     | clearing hidden values, structure changes, `triggerFormValidation()`                                | `dynamic-form-behavior/SKILL.md`     |
 
 ## Route to the right workflow
 
@@ -68,6 +68,8 @@ Read `core/SKILL.md` when the user is:
 - asking for a proper example
 - unsure how to structure a component around ngx-vest-forms
 - asking about `NgxDeepPartial`, form shapes, or signal-based form state
+- writing tests for a form/Vest suite, asking about `staticSuite`, `runStatic`,
+  resetting stateful suites between tests, or "tests pass locally but fail in CI"
 
 ### Dependent field revalidation
 
@@ -93,7 +95,7 @@ Read `root-form-validation/SKILL.md` when the user is:
 
 - asking for a message that belongs to the entire form
 - comparing `ROOT_FORM` versus field-level validation
-- working with `ngxValidateRootForm` or `validateRootFormMode`
+- working with `ngxValidateRootForm` or `ngxValidateRootFormMode`
 
 ### Built-in wrappers
 
@@ -151,7 +153,7 @@ Read `dynamic-form-behavior/SKILL.md` when the user is:
 - `.github/instructions/ngx-vest-forms.instructions.md`
 - `.github/instructions/vest.instructions.md`
 - `docs/`
-- `projects/ngx-vest-forms/src/public-api.ts`
+- `packages/ngx-vest-forms/src/public-api.ts`
 
 ## Goal
 

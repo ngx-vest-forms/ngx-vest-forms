@@ -1,0 +1,77 @@
+<!--
+  The wizard page owns focus (it routes to the first invalid STEP before
+  focusing a control), so the built-in invalid-submit focus is disabled via
+  [focusFirstInvalidOnSubmit]="false".
+-->
+<form
+  #step1Form="ngxVestForm"
+  ngxVestForm
+  [suite]="suite()"
+  [formValue]="data()"
+  [validationConfig]="validationConfig()"
+  [focusFirstInvalidOnSubmit]="false"
+  (formValueChange)="dataChange.emit($event)"
+  (validChange)="validChange.emit($event)"
+  (errorsChange)="errorsChange.emit($event)"
+  (ngSubmit)="stepSubmit.emit()"
+>
+  <div class="space-y-6">
+    <ngx-control-wrapper>
+      <label for="email" class="label-text">Email Address</label>
+      <input
+        id="email"
+        type="email"
+        name="email"
+        autocomplete="email"
+        class="input-field"
+        aria-required="true"
+        [ngModel]="data().email"
+      />
+    </ngx-control-wrapper>
+
+    <ngx-control-wrapper>
+      <label for="confirmEmail" class="label-text">Confirm Email</label>
+      <input
+        id="confirmEmail"
+        type="email"
+        name="confirmEmail"
+        autocomplete="email"
+        class="input-field"
+        aria-required="true"
+        [ngModel]="data().confirmEmail"
+      />
+    </ngx-control-wrapper>
+
+    <ngx-control-wrapper>
+      <label for="password" class="label-text">Password</label>
+      <input
+        id="password"
+        type="password"
+        name="password"
+        autocomplete="new-password"
+        class="input-field"
+        aria-required="true"
+        [ngModel]="data().password"
+      />
+    </ngx-control-wrapper>
+
+    <ngx-control-wrapper>
+      <label for="confirmPassword" class="label-text">Confirm Password</label>
+      <input
+        id="confirmPassword"
+        type="password"
+        name="confirmPassword"
+        autocomplete="new-password"
+        class="input-field"
+        aria-required="true"
+        [ngModel]="data().confirmPassword"
+      />
+    </ngx-control-wrapper>
+  </div>
+
+  <ngx-wizard-navigation
+    [showPrevious]="false"
+    [showSaveAndContinue]="true"
+    [showSubmit]="false"
+  />
+</form>

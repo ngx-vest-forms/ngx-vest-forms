@@ -1,0 +1,738 @@
+import { FormArray, FormControl, FormGroup } from '@angular/forms';
+import { describe, expect, it } from 'vitest';
+import { ROOT_FORM } from '../constants';
+import {
+  getAllFormErrors,
+  getFormControlField,
+  getFormGroupField,
+  mergeValuesAndRawValues,
+  setValueAtPath,
+} from './form-utils';
+
+describe('getFormControlField function', () => {
+  it('should return correct field name for FormControl in root FormGroup', () => {
+    const form = new FormGroup({
+      name: new FormControl('John'),
+    });
+    expect(getFormControlField(form, form.controls.name)).toBe('name');
+  });
+
+  it('should return correct field name for FormControl in nested FormGroup', () => {
+    const form = new FormGroup({
+      personal: new FormGroup({
+        name: new FormControl('John'),
+      }),
+    });
+    const personalGroup = form.get('personal');
+    expect(personalGroup).not.toBeNull();
+    if (personalGroup) {
+      const nameControl = personalGroup.get('name');
+      expect(nameControl).not.toBeNull();
+      if (nameControl) {
+        expect(getFormControlField(form, nameControl)).toBe('personal.name');
+      }
+    }
+  });
+
+  it('should return correct field path for controls nested inside FormArray', () => {
+    const form = new FormGroup({
+      users: new FormArray([
+        new FormGroup({
+          name: new FormControl('John'),
+        }),
+      ]),
+    });
+
+    const nameControl = form.get('users.0.name');
+    expect(nameControl).not.toBeNull();
+    if (nameControl) {
+      expect(getFormControlField(form, nameControl)).toBe('users.0.name');
+    }
+  });
+
+  it('should fallback to control.name for detached controls', () => {
+    const form = new FormGroup({
+      name: new FormControl('John'),
+    });
+
+    const detachedControl = new FormControl('detached');
+    (detachedControl as FormControl & { name?: string }).name =
+      'custom.detached';
+
+    expect(getFormControlField(form, detachedControl)).toBe('custom.detached');
+  });
+});
+
+describe('getFormGroupField function', () => {
+  it('should return correct field name for FormGroup in root FormGroup', () => {
+    const form = new FormGroup({
+      personal: new FormGroup({
+        name: new FormControl('John'),
+      }),
+    });
+    expect(getFormGroupField(form, form.controls.personal)).toBe('personal');
+  });
+
+  it('should return correct field name for FormGroup in nested FormGroup', () => {
+    const form = new FormGroup({
+      personal: new FormGroup({
+        contact: new FormGroup({
+          email: new FormControl('john@example.com'),
+        }),
+      }),
+    });
+    const personalGroup = form.get('personal');
+    expect(personalGroup).not.toBeNull();
+    if (personalGroup) {
+      const contactGroup = personalGroup.get('contact');
+      expect(contactGroup).not.toBeNull();
+      if (contactGroup) {
+        expect(getFormGroupField(form, contactGroup)).toBe('personal.contact');
+      }
+    }
+  });
+});
+
+describe('mergeValuesAndRawValues function', () => {
+  describe('basic functionality', () => {
+    it('should merge values and raw values correctly with disabled fields', () => {
+      const form = new FormGroup({
+        name: new FormControl('John'),
+        age: new FormControl(30),
+        address: new FormGroup({
+          city: new FormControl('New York'),
+          zip: new FormControl(12345),
+        }),
+      });
+
+      const nameControl = form.get('name');
+      expect(nameControl).not.toBeNull();
+      if (nameControl) {
+        nameControl.disable(); // Simulate a disabled field
+      }
+
+      const mergedValues = mergeValuesAndRawValues(form);
+      expect(mergedValues).toEqual({
+        name: 'John', // Should include disabled field value
+        age: 30,
+        address: {
+          city: 'New York',
+          zip: 12345,
+        },
+      });
+    });
+
+    it('should handle empty forms', () => {
+      const form = new FormGroup({});
+      const merged = mergeValuesAndRawValues(form);
+      expect(merged).toEqual({});
+    });
+
+    it('should copy raw value when target value is null (regression: disabled control with null public value)', () => {
+      // Repro: a disabled control whose value is `null` was previously
+      // skipped by mergeRecursive because the null-target branch fell
+      // through neither `=== undefined` nor the `isRecord` merge path.
+      const form = new FormGroup({
+        nickname: new FormControl<string | null>(null),
+        profile: new FormGroup({
+          handle: new FormControl<string | null>(null),
+        }),
+      });
+
+      // Disable BEFORE setting raw values, so form.value reports null while
+      // form.getRawValue() reports the underlying value.
+      form.get('nickname')?.disable();
+      form.get('profile.handle')?.disable();
+      form.get('nickname')?.setValue('jdoe', { emitEvent: false });
+      form.get('profile.handle')?.setValue('@jdoe', { emitEvent: false });
+
+      // Pin Angular's behavior: form.value omits disabled controls (so their
+      // entries are absent from `value`, NOT explicitly null), while
+      // getRawValue() includes them. The merge function must therefore copy
+      // raw values whenever the merged target is `null` OR `undefined`. If
+      // Angular ever reports disabled controls as `null` in `value`, this
+      // test still exercises the null branch via getRawValue's structure.
+      const rawValue = form.getRawValue() as {
+        nickname: string | null;
+        profile: { handle: string | null };
+      };
+      expect(rawValue.nickname).toBe('jdoe');
+      expect(rawValue.profile.handle).toBe('@jdoe');
+
+      const merged = mergeValuesAndRawValues<{
+        nickname: string | null;
+        profile: { handle: string | null };
+      }>(form);
+
+      expect(merged.nickname).toBe('jdoe');
+      expect(merged.profile.handle).toBe('@jdoe');
+    });
+
+    it('should handle nested disabled fields', () => {
+      const form = new FormGroup({
+        address: new FormGroup({
+          street: new FormControl('123 Main St'),
+          city: new FormControl('New York'),
+          state: new FormControl('NY'),
+          zip: new FormControl('10001'),
+        }),
+        contact: new FormGroup({
+          email: new FormControl('user@example.com'),
+          phone: new FormControl('555-0123'),
+        }),
+      });
+
+      // Disable some fields
+      form.get('address.state')?.disable();
+      form.get('contact.phone')?.disable();
+
+      const merged = mergeValuesAndRawValues(form);
+      expect(merged).toEqual({
+        address: {
+          street: '123 Main St',
+          city: 'New York',
+          state: 'NY', // Should be included despite being disabled
+          zip: '10001',
+        },
+        contact: {
+          email: 'user@example.com',
+          phone: '555-0123', // Should be included despite being disabled
+        },
+      });
+    });
+  });
+
+  describe('reference isolation (structuredClone behavior)', () => {
+    it('should not share references between original and merged values', () => {
+      const originalObject = {
+        shared: 'value',
+        nested: { prop: 'nested-value' },
+      };
+
+      const form = new FormGroup({
+        data: new FormControl(originalObject),
+        other: new FormGroup({
+          nested: new FormControl({ another: 'prop' }),
+        }),
+      });
+
+      const merged = mergeValuesAndRawValues<any>(form);
+
+      // Modify the merged result
+      if (merged.data && typeof merged.data === 'object') {
+        (merged.data as { shared: string; nested: { prop: string } }).shared =
+          'modified';
+        (
+          merged.data as { shared: string; nested: { prop: string } }
+        ).nested.prop = 'modified-nested';
+      }
+
+      if (merged.other && typeof merged.other === 'object') {
+        const otherObj = merged.other as {
+          nested: { another: string };
+        };
+        otherObj.nested.another = 'modified-other';
+      }
+
+      // Original should remain unchanged
+      expect(originalObject.shared).toBe('value');
+      expect(originalObject.nested.prop).toBe('nested-value');
+      expect(form.value.data?.shared).toBe('value');
+    });
+
+    it('should handle complex nested structures with multiple disabled fields', () => {
+      type UserProfile = {
+        name: string;
+        email: string;
+        age: number;
+        website: string;
+        bio: string;
+        preferences: {
+          newsletter: boolean;
+          notifications: boolean;
+        };
+        address: {
+          street: string;
+          city: string;
+          state: string;
+          zip: string;
+        };
+        settings: {
+          privacy: {
+            public: boolean;
+            searchable: boolean;
+          };
+        };
+      };
+
+      const form = new FormGroup({
+        name: new FormControl('John Doe'),
+        email: new FormControl('john@example.com'),
+        age: new FormControl(25),
+        website: new FormControl('https://johndoe.com'),
+        bio: new FormControl('Software developer'),
+        preferences: new FormGroup({
+          newsletter: new FormControl(true),
+          notifications: new FormControl(false),
+        }),
+        address: new FormGroup({
+          street: new FormControl('123 Main St'),
+          city: new FormControl('Springfield'),
+          state: new FormControl('IL'),
+          zip: new FormControl('62701'),
+        }),
+        settings: new FormGroup({
+          privacy: new FormGroup({
+            public: new FormControl(false),
+            searchable: new FormControl(true),
+          }),
+        }),
+      });
+
+      // Disable several fields
+      form.get('age')?.disable();
+      form.get('bio')?.disable();
+      form.get('preferences.notifications')?.disable();
+      form.get('address.state')?.disable();
+      form.get('settings.privacy.searchable')?.disable();
+
+      const merged = mergeValuesAndRawValues<UserProfile>(form);
+
+      expect(merged).toEqual({
+        name: 'John Doe',
+        email: 'john@example.com',
+        age: 25, // Should be included
+        website: 'https://johndoe.com',
+        bio: 'Software developer', // Should be included
+        preferences: {
+          newsletter: true,
+          notifications: false, // Should be included
+        },
+        address: {
+          street: '123 Main St',
+          city: 'Springfield',
+          state: 'IL', // Should be included
+          zip: '62701',
+        },
+        settings: {
+          privacy: {
+            public: false,
+            searchable: true, // Should be included
+          },
+        },
+      });
+    });
+  });
+});
+
+describe('setValueAtPath function', () => {
+  it('should set a value in an object at the correct path', () => {
+    const object = {};
+    setValueAtPath(object, 'address.city', 'New York');
+    expect(object).toEqual({
+      address: {
+        city: 'New York',
+      },
+    });
+  });
+
+  it('should set a value at root level', () => {
+    const object = {};
+    setValueAtPath(object, 'name', 'John Doe');
+    expect(object).toEqual({
+      name: 'John Doe',
+    });
+  });
+
+  it('should create nested objects for deep paths', () => {
+    const object = {};
+    setValueAtPath(object, 'user.profile.settings.theme', 'dark');
+    expect(object).toEqual({
+      user: {
+        profile: {
+          settings: {
+            theme: 'dark',
+          },
+        },
+      },
+    });
+  });
+
+  it('should overwrite existing values at the path', () => {
+    const object = {
+      address: {
+        city: 'Boston',
+        state: 'MA',
+      },
+    };
+    setValueAtPath(object, 'address.city', 'New York');
+    expect(object).toEqual({
+      address: {
+        city: 'New York',
+        state: 'MA',
+      },
+    });
+  });
+
+  it('should preserve existing nested properties', () => {
+    const object = {
+      user: {
+        name: 'John',
+        email: 'john@example.com',
+      },
+    };
+    setValueAtPath(object, 'user.age', 30);
+    expect(object).toEqual({
+      user: {
+        name: 'John',
+        email: 'john@example.com',
+        age: 30,
+      },
+    });
+  });
+
+  it('should handle setting undefined values', () => {
+    const object = {};
+    setValueAtPath(object, 'address.city', undefined);
+    expect(object).toEqual({
+      address: {
+        city: undefined,
+      },
+    });
+  });
+
+  it('should handle setting null values', () => {
+    const object = {};
+    setValueAtPath(object, 'address.city', null);
+    expect(object).toEqual({
+      address: {
+        city: null,
+      },
+    });
+  });
+
+  it('should handle setting object values', () => {
+    const object = {};
+    const addressValue = { street: '123 Main St', city: 'New York' };
+    setValueAtPath(object, 'address', addressValue);
+    expect(object).toEqual({
+      address: addressValue,
+    });
+  });
+
+  it('should handle setting array values', () => {
+    const object = {};
+    const tags = ['javascript', 'typescript', 'angular'];
+    setValueAtPath(object, 'user.tags', tags);
+    expect(object).toEqual({
+      user: {
+        tags: tags,
+      },
+    });
+  });
+
+  it('should handle paths with single segment', () => {
+    const object = {};
+    setValueAtPath(object, 'email', 'test@example.com');
+    expect(object).toEqual({
+      email: 'test@example.com',
+    });
+  });
+
+  it('should create intermediate objects when they do not exist', () => {
+    const object = {
+      user: {
+        name: 'John',
+      },
+    };
+    setValueAtPath(object, 'user.profile.bio', 'Developer');
+    expect(object).toEqual({
+      user: {
+        name: 'John',
+        profile: {
+          bio: 'Developer',
+        },
+      },
+    });
+  });
+
+  it('should preserve existing arrays when descending bracket notation paths', () => {
+    const object = {
+      addresses: [
+        { street: '123 Main St', city: 'Boston' },
+        { street: '500 Market St', city: 'San Francisco' },
+      ],
+    };
+
+    setValueAtPath(object, 'addresses[0].street', '1 Updated St');
+
+    expect(object).toEqual({
+      addresses: [
+        { street: '1 Updated St', city: 'Boston' },
+        { street: '500 Market St', city: 'San Francisco' },
+      ],
+    });
+    expect(Array.isArray(object.addresses)).toBe(true);
+  });
+
+  it('should choose array or object containers based on the next path segment', () => {
+    const object: Record<string, unknown> = {};
+
+    setValueAtPath(object, 'addresses[0].street', '123 Main St');
+    setValueAtPath(object, 'metadata.version.label', 'v1');
+
+    expect(object).toEqual({
+      addresses: [{ street: '123 Main St' }],
+      metadata: {
+        version: {
+          label: 'v1',
+        },
+      },
+    });
+    expect(Array.isArray(object.addresses)).toBe(true);
+  });
+
+  it('should handle numeric values', () => {
+    const object = {};
+    setValueAtPath(object, 'user.age', 25);
+    expect(object).toEqual({
+      user: {
+        age: 25,
+      },
+    });
+  });
+
+  it('should handle boolean values', () => {
+    const object = {};
+    setValueAtPath(object, 'user.active', true);
+    expect(object).toEqual({
+      user: {
+        active: true,
+      },
+    });
+  });
+
+  it('should handle zero as a value', () => {
+    const object = {};
+    setValueAtPath(object, 'count', 0);
+    expect(object).toEqual({
+      count: 0,
+    });
+  });
+
+  it('should handle empty string as a value', () => {
+    const object = {};
+    setValueAtPath(object, 'user.middleName', '');
+    expect(object).toEqual({
+      user: {
+        middleName: '',
+      },
+    });
+  });
+
+  it('should handle false as a value', () => {
+    const object = {};
+    setValueAtPath(object, 'settings.notifications', false);
+    expect(object).toEqual({
+      settings: {
+        notifications: false,
+      },
+    });
+  });
+
+  it('should replace non-object intermediate values when creating nested path', () => {
+    const object: Record<string, unknown> = {
+      user: 'John Doe',
+    };
+
+    setValueAtPath(object, 'user.profile.age', 30);
+
+    expect(object).toEqual({
+      user: {
+        profile: {
+          age: 30,
+        },
+      },
+    });
+  });
+
+  it('should ignore unsafe prototype pollution segments in dot notation', () => {
+    const object: Record<string, unknown> = {};
+
+    setValueAtPath(object, '__proto__.polluted', 'yes');
+    setValueAtPath(object, 'constructor.prototype.polluted', 'yes');
+
+    expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();
+    expect(object).toEqual({});
+  });
+
+  it('should ignore unsafe prototype pollution segments in bracket notation', () => {
+    const object: Record<string, unknown> = {};
+
+    setValueAtPath(object, '__proto__[0].polluted', 'yes');
+    setValueAtPath(object, 'safe.constructor[0].value', 'yes');
+
+    expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();
+    expect(
+      Object.prototype.hasOwnProperty.call(object['safe'] ?? {}, 'constructor')
+    ).toBe(false);
+  });
+});
+
+describe('getAllFormErrors', () => {
+  it('should return empty errors and warnings when form is undefined', () => {
+    expect(getAllFormErrors(undefined)).toEqual({ errors: {}, warnings: {} });
+  });
+
+  it('should collect root form errors', () => {
+    const form = new FormGroup({});
+    form.setErrors({ errors: ['Root error'] });
+    const result = getAllFormErrors(form);
+    expect(result.errors[ROOT_FORM]).toEqual(['Root error']);
+    expect(result.warnings).toEqual({});
+  });
+
+  it('should collect root form warnings under ROOT_FORM', () => {
+    const form = new FormGroup({});
+    form.setErrors({
+      errors: ['Root error'],
+      warnings: ['Root warning'],
+    });
+    const result = getAllFormErrors(form);
+    expect(result.errors[ROOT_FORM]).toEqual(['Root error']);
+    expect(result.warnings[ROOT_FORM]).toEqual(['Root warning']);
+  });
+
+  it('should collect root form warnings even when no root errors are present', () => {
+    const form = new FormGroup({});
+    form.setErrors({ warnings: ['Root-only warning'] });
+    const result = getAllFormErrors(form);
+    expect(result.errors[ROOT_FORM]).toBeUndefined();
+    expect(result.warnings[ROOT_FORM]).toEqual(['Root-only warning']);
+  });
+
+  it('should collect errors from nested FormGroups', () => {
+    const form = new FormGroup({
+      user: new FormGroup({
+        name: new FormControl('', {
+          validators: () => ({ errors: ['Name error'] }),
+        }),
+      }),
+    });
+    form.get('user.name')?.updateValueAndValidity();
+    const result = getAllFormErrors(form);
+    expect(result.errors['user.name']).toEqual(['Name error']);
+  });
+
+  it('should not collect errors from disabled controls', () => {
+    const control = new FormControl('', {
+      validators: () => ({ errors: ['Error'] }),
+    });
+    const form = new FormGroup({ field: control });
+    control.disable();
+    control.updateValueAndValidity();
+    const result = getAllFormErrors(form);
+    expect(result.errors['field']).toBeUndefined();
+    expect(result.warnings['field']).toBeUndefined();
+  });
+
+  it('should expose warnings as a sibling record keyed by field path', () => {
+    const control = new FormControl('', {
+      validators: () => ({
+        errors: ['Error'],
+        warnings: ['Warning'],
+      }),
+    });
+    const form = new FormGroup({ field: control });
+    control.updateValueAndValidity();
+    const result = getAllFormErrors(form);
+    expect(result.errors['field']).toEqual(['Error']);
+    expect(result.warnings['field']).toEqual(['Warning']);
+    // No leakage of warnings onto the errors array (regression: old API
+    // attached warnings as a non-enumerable property on the errors array).
+    expect(
+      Object.getOwnPropertyDescriptor(result.errors['field'] ?? [], 'warnings')
+    ).toBeUndefined();
+  });
+
+  it('should handle controls with only warnings', () => {
+    const control = new FormControl('', {
+      validators: () => ({ warnings: ['Warning'] }),
+    });
+    const form = new FormGroup({ field: control });
+    control.updateValueAndValidity();
+    const result = getAllFormErrors(form);
+    expect(result.errors['field']).toBeUndefined();
+    expect(result.warnings['field']).toEqual(['Warning']);
+  });
+
+  it('should collect errors from deeply nested structures', () => {
+    const deepControl = new FormControl('', {
+      validators: () => ({ errors: ['Deep error'] }),
+    });
+    const form = new FormGroup({
+      level1: new FormGroup({
+        level2: new FormGroup({
+          level3: deepControl,
+        }),
+      }),
+    });
+    deepControl.updateValueAndValidity();
+    const result = getAllFormErrors(form);
+    expect(result.errors['level1.level2.level3']).toEqual(['Deep error']);
+  });
+
+  it('should collect errors from controls inside FormArray using numeric path segments', () => {
+    const form = new FormGroup({
+      users: new FormArray([
+        new FormGroup({
+          name: new FormControl('', {
+            validators: () => ({ errors: ['Name error'] }),
+          }),
+        }),
+      ]),
+    });
+
+    form.updateValueAndValidity();
+    const result = getAllFormErrors(form);
+
+    expect(result.errors['users[0].name']).toEqual(['Name error']);
+  });
+
+  it('should keep only string values from errors and warnings arrays', () => {
+    const control = new FormControl('', {
+      validators: () => ({
+        errors: ['Valid error', 123, true],
+        warnings: ['Valid warning', { invalid: true }],
+      }),
+    });
+    const form = new FormGroup({ field: control });
+
+    control.updateValueAndValidity();
+    const result = getAllFormErrors(form);
+
+    expect(result.errors['field']).toEqual(['Valid error']);
+    expect(result.warnings['field']).toEqual(['Valid warning']);
+  });
+
+  it('should skip unsafe prototype keys while merging value and rawValue', () => {
+    const fakeForm = {
+      value: {
+        safe: { value: 'ok' },
+      },
+      getRawValue: () => ({
+        safe: { value: 'ok', nested: true },
+        __proto__: { polluted: 'yes' },
+        constructor: { prototype: { hacked: true } },
+      }),
+    } as unknown as FormGroup;
+
+    const merged = mergeValuesAndRawValues<{
+      safe: { value: string; nested?: boolean };
+    }>(fakeForm);
+
+    expect(merged.safe).toEqual({ value: 'ok', nested: true });
+    expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();
+    expect(({} as Record<string, unknown>)['hacked']).toBeUndefined();
+  });
+});

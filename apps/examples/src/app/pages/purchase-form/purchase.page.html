@@ -1,0 +1,121 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Purchase Form"
+    subtitle="Complete a full checkout flow with conditional and cross-field validation."
+  />
+
+  <div class="grid gap-8 xl:grid-cols-[280px_minmax(0,1fr)]">
+    <aside class="sidebar-card-stack">
+      <ngx-card title="Form Features">
+        <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+          <li>Show validation errors on blur/submit</li>
+          <li><strong>NgxDeepPartial</strong> for form model types</li>
+          <li>
+            <strong>Bidirectional validationConfig</strong> (quantity ↔
+            justification)
+          </li>
+          <li><strong>clearFields()</strong> utility</li>
+          <li><strong>setValueAtPath()</strong> utility</li>
+          <li>
+            Automatic submit-time focus of the first invalid control
+            (<strong>focusFirstInvalidOnSubmit</strong>, default on)
+          </li>
+          <li>Conditional logic based on First Name (Brecht/Luke)</li>
+          <li>Async validation (User ID)</li>
+          <li>Cross-field validation (Passwords, Address)</li>
+        </ul>
+
+        <section class="mt-6 space-y-4" aria-labelledby="fetch-luke-title">
+          <div class="space-y-1">
+            <h3
+              id="fetch-luke-title"
+              class="text-sm font-semibold tracking-wide text-gray-900 dark:text-white"
+            >
+              Fetch Luke demo
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-300">
+              Choose whether the demo should load Luke successfully or simulate
+              a realistic request failure.
+            </p>
+          </div>
+
+          <div class="space-y-3">
+            <div class="space-y-2">
+              <label
+                class="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400"
+                for="fetchLukeMode"
+              >
+                Response mode
+              </label>
+              <select
+                id="fetchLukeMode"
+                #fetchLukeModeSelect
+                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-blue-400 dark:focus:ring-blue-400/25"
+                [value]="fetchLukeMode()"
+                (change)="onFetchLukeModeChange(fetchLukeModeSelect.value)"
+              >
+                @for (mode of fetchLukeModes; track mode.value) {
+                <option [value]="mode.value">{{ mode.label }}</option>
+                }
+              </select>
+            </div>
+
+            <button
+              type="button"
+              [class]="fetchLukeButtonClass()"
+              (click)="fetchLuke(fetchLukeMode())"
+            >
+              Fetch Luke
+            </button>
+          </div>
+        </section>
+
+        <div class="mt-6 space-y-3">
+          <button
+            type="button"
+            class="btn btn-secondary w-full"
+            (click)="clearSensitiveData()"
+          >
+            Clear Sensitive Data
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-secondary w-full"
+            (click)="prefillBillingAddress()"
+          >
+            Prefill Billing Address
+          </button>
+        </div>
+      </ngx-card>
+
+      <ngx-form-state-card
+        [feedback]="purchaseForm.feedback"
+        [validationErrorRules]="validationErrorRules"
+        [validationWarningRules]="validationWarningRules"
+      />
+    </aside>
+
+    <section class="space-y-6">
+      @if (rootFormErrors().length > 0) {
+      <!-- Root-form errors after submit are submission-blocking: assertive is appropriate. -->
+      <ngx-alert-panel tone="error" title="Form Errors" live="assertive">
+        <ul class="list-disc space-y-1 pl-5">
+          @for (error of rootFormErrors(); track error) {
+          <li>{{ error }}</li>
+          }
+        </ul>
+      </ngx-alert-panel>
+      }
+
+      <ngx-card
+        title="Purchase Form"
+        subtitle="Please fill in your details below."
+      >
+        <ngx-purchase-form #purchaseForm (saveRequested)="save($event)" />
+      </ngx-card>
+    </section>
+  </div>
+
+  <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
+</div>

@@ -1,0 +1,248 @@
+<a href="#main-content" class="sr-only focus:not-sr-only"
+  >Skip to main content</a
+>
+
+<div class="lg:flex lg:min-h-screen">
+  <!-- Mobile top bar -->
+  <header
+    class="sticky top-0 z-30 flex items-center justify-between border-b border-gray-200/70 bg-white/80 px-4 py-3 backdrop-blur-md lg:hidden dark:border-gray-700/70 dark:bg-gray-900/80"
+  >
+    <button
+      #menuToggle
+      type="button"
+      class="btn btn-secondary !px-3 !py-2"
+      [attr.aria-expanded]="drawerOpen()"
+      aria-controls="app-sidebar"
+      aria-label="Toggle navigation"
+      (click)="toggleDrawer()"
+    >
+      <svg class="size-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M4 6h16M4 12h16M4 18h16"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        />
+      </svg>
+    </button>
+    <span class="font-mono text-sm font-semibold tracking-tight">
+      ngx-vest-forms
+    </span>
+    <ngx-theme-switcher />
+  </header>
+
+  <!-- Backdrop (mobile, when drawer open) -->
+  @if (drawerOpen()) {
+    <button
+      type="button"
+      class="fixed inset-0 z-30 bg-gray-900/40 backdrop-blur-[2px] lg:hidden"
+      aria-label="Close navigation"
+      (click)="closeDrawer()"
+    ></button>
+  }
+
+  <!-- Sidebar -->
+  <aside
+    #sidebar
+    id="app-sidebar"
+    tabindex="-1"
+    class="fixed inset-y-0 left-0 z-40 flex w-72 -translate-x-full flex-col overflow-x-hidden border-r border-gray-200/70 bg-white/95 transition-[width,transform] duration-300 ease-out lg:sticky lg:top-0 lg:z-0 lg:h-screen lg:translate-x-0 lg:bg-white/60 lg:backdrop-blur-xl dark:border-gray-700/70 dark:bg-gray-900/95 lg:dark:bg-gray-900/50"
+    [class.translate-x-0]="drawerOpen()"
+    [class.lg:w-14]="sidebarCollapsed()"
+    [inert]="!isDesktop() && !drawerOpen()"
+    (keydown.escape)="closeDrawer()"
+  >
+    <!-- Header -->
+    @if (isDesktop() && sidebarCollapsed()) {
+      <div
+        class="flex items-center justify-center border-b border-gray-200/70 py-5 dark:border-gray-700/70"
+      >
+        <span
+          class="bg-primary-600 block h-2 w-2 rounded-full"
+          aria-hidden="true"
+        ></span>
+      </div>
+    } @else {
+      <div class="border-b border-gray-200/70 px-6 py-6 dark:border-gray-700/70">
+        <p
+          class="font-mono text-base font-semibold tracking-tight text-gray-950 dark:text-gray-50"
+        >
+          ngx-vest-forms
+        </p>
+        <p
+          class="text-primary-700 dark:text-primary-400 mt-0.5 text-xs font-medium tracking-[0.2em] uppercase"
+        >
+          Examples
+        </p>
+      </div>
+    }
+
+    <nav class="flex-1 overflow-y-auto px-3 py-5" aria-label="Demo navigation">
+      @for (group of navGroups; track group.category; let g = $index) {
+        <div
+          class="mb-6 motion-safe:animate-[fade-in-up_0.4s_ease-out_both]"
+          [style.animation-delay.ms]="g * 60"
+        >
+          <h2
+            class="px-3 pb-2 text-[0.7rem] font-semibold tracking-[0.18em] text-gray-400 uppercase dark:text-gray-500"
+            [class.lg:hidden]="sidebarCollapsed()"
+          >
+            {{ group.category }}
+          </h2>
+          <ul class="space-y-0.5">
+            @for (item of group.items; track item.path) {
+              <li>
+                <a
+                  data-nav-link
+                  routerLinkActive
+                  #rla="routerLinkActive"
+                  [routerLink]="['/', item.path]"
+                  [routerLinkActiveOptions]="{
+                    paths: 'subset',
+                    queryParams: 'ignored',
+                    fragment: 'ignored',
+                    matrixParams: 'ignored',
+                  }"
+                  [attr.aria-current]="rla.isActive ? 'page' : null"
+                  [attr.aria-label]="sidebarCollapsed() ? item.label : null"
+                  class="group flex items-center rounded-lg py-2 text-sm transition-colors"
+                  [class.justify-between]="!sidebarCollapsed() || !isDesktop()"
+                  [class.gap-2]="!sidebarCollapsed() || !isDesktop()"
+                  [class.px-3]="!sidebarCollapsed() || !isDesktop()"
+                  [class.lg:justify-center]="sidebarCollapsed()"
+                  [class.lg:px-2]="sidebarCollapsed()"
+                  [class.lg:gap-4]="sidebarCollapsed()"
+                  [class]="
+                    rla.isActive
+                      ? 'bg-primary-50 text-primary-800 dark:bg-primary-900/30 dark:text-primary-200 font-semibold'
+                      : 'text-gray-600 hover:bg-gray-100/70 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800/60 dark:hover:text-white'
+                  "
+                  (mouseenter)="showNavTooltip($event, item.label)"
+                  (mouseleave)="hideNavTooltip()"
+                    (focus)="showNavTooltip($event, item.label)"
+                    (blur)="hideNavTooltip()"
+                >
+                  <span class="flex items-center gap-2">
+                    <span
+                      class="h-4 w-0.5 shrink-0 rounded-full transition-colors"
+                      [class]="
+                        rla.isActive
+                          ? 'bg-primary-600 dark:bg-primary-400'
+                          : 'bg-transparent group-hover:bg-gray-300 dark:group-hover:bg-gray-600'
+                      "
+                      aria-hidden="true"
+                    ></span>
+                    <span [class.lg:hidden]="sidebarCollapsed()">
+                      {{ item.label }}
+                    </span>
+                  </span>
+                  <!-- Collapsed-rail abbreviation: 2 initials from the label -->
+                  @if (isDesktop() && sidebarCollapsed()) {
+                    <span
+                      class="text-[11px] font-semibold font-mono leading-none tracking-tight"
+                      [class]="
+                        rla.isActive
+                          ? 'text-primary-700 dark:text-primary-300'
+                          : 'text-gray-400 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-gray-200'
+                      "
+                      aria-hidden="true"
+                    >{{ navAbbr(item.label) }}</span
+                    >
+                  }
+                  @if (!sidebarCollapsed() || !isDesktop()) {
+                    @if (item.badge === 'start-here') {
+                      <span
+                        class="bg-primary-600 rounded-full px-1.5 py-0.5 text-[0.6rem] font-semibold tracking-wide text-white uppercase"
+                        >Start</span
+                      >
+                    } @else if (item.badge === 'new') {
+                      <span
+                        class="rounded-full bg-amber-100 px-1.5 py-0.5 text-[0.6rem] font-semibold tracking-wide text-amber-700 uppercase dark:bg-amber-900/40 dark:text-amber-300"
+                        >New</span
+                      >
+                    }
+                  }
+                </a>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </nav>
+
+    <div
+      class="hidden flex-col items-center border-t border-gray-200/70 px-2 py-2 lg:flex dark:border-gray-700/70"
+    >
+      @if (sidebarCollapsed()) {
+        <!-- Collapsed footer: theme toggle + expand button stacked -->
+        <ngx-theme-switcher />
+      }
+      <div
+        class="flex w-full items-center py-1"
+        [class.justify-between]="!sidebarCollapsed()"
+        [class.justify-center]="sidebarCollapsed()"
+        [class.px-2]="!sidebarCollapsed()"
+      >
+        <button
+          type="button"
+          class="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 focus:ring-2 focus:ring-gray-300 focus:outline-hidden dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300 dark:focus:ring-gray-700"
+          [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+          [attr.aria-expanded]="!sidebarCollapsed()"
+          (click)="toggleSidebar()"
+        >
+          @if (!sidebarCollapsed()) {
+            <svg
+              class="size-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          } @else {
+            <svg
+              class="size-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          }
+        </button>
+        @if (!sidebarCollapsed()) {
+          <ngx-theme-switcher />
+        }
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main id="main-content" class="min-w-0 flex-1">
+    <router-outlet />
+  </main>
+
+  <!-- Fixed tooltip for collapsed-rail nav items -->
+  @if (tooltipLabel()) {
+    <div
+      class="pointer-events-none fixed z-50 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2.5 py-1 text-xs font-medium text-white shadow-lg dark:bg-gray-700"
+      [style.left.px]="tooltipX()"
+      [style.top.px]="tooltipY()"
+      aria-hidden="true"
+    >
+      {{ tooltipLabel() }}
+      <!-- Arrow pointing left -->
+      <span
+        class="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900 dark:border-r-gray-700"
+      ></span>
+    </div>
+  }
+</div>

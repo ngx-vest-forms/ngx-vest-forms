@@ -95,7 +95,7 @@ export default defineConfig([
 
   // Example app - more lenient rules (disable selector enforcement)
   {
-    files: ['projects/examples/**/*.ts'],
+    files: ['apps/examples/**/*.ts'],
     extends: [angular.configs.tsRecommended], // Need to extend to override properly
     rules: {
       '@angular-eslint/component-selector': 'off', // Example components don't need ngx prefix
@@ -113,7 +113,7 @@ export default defineConfig([
 
   // HTML templates in examples
   {
-    files: ['projects/examples/**/*.html'],
+    files: ['apps/examples/**/*.html'],
     rules: {
       '@angular-eslint/template/label-has-associated-control': 'warn', // Warn instead of error
     },

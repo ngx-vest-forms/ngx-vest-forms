@@ -1,0 +1,39 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Native Vest Schema Demo"
+    subtitle="Use create(..., enforce.shape(...)) for built-in schema validation alongside field-level business rules."
+  />
+
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Native Vest schemas</strong> — Define type shape directly in the suite via enforce.shape(...); no external schema library needed
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Focused runs stay safe</strong> — Use suite.only(field).run(model) for partial validation; nested structures like address work correctly
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Per-field business rules</strong> — Mix native schema (type layer) with custom test() callbacks (business layer) in the same suite
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Compare with Zod Schema Demo</strong> — Choose between native Vest schemas or external libraries like Zod based on your needs
+    </ngx-intro-item>
+  </ngx-intro-section>
+
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div>
+      <ngx-form-state-card [feedback]="formBody.feedback" />
+    </div>
+
+    <div>
+      <ngx-native-schema-demo-form-body
+        #formBody
+        [formValue]="formValue()"
+        [suite]="suite"
+        (formValueChange)="formValue.set($event)"
+        (submitted)="save()"
+      />
+    </div>
+  </div>
+
+  <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
+</div>

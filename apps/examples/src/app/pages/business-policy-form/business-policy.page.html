@@ -1,0 +1,56 @@
+<div class="page-container">
+  <ngx-page-title
+    title="Vest-First Business Policy"
+    subtitle="Conditional rules and advisory warnings that stay native to Vest — guidance modelled separately from errors."
+  />
+
+  <ngx-intro-section title="Why this matters">
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Conditional rules in Vest</strong> — Use omitWhen and skipWhen to gate rules at runtime; required fields appear only under the right conditions
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Cross-field rules via ROOT_FORM</strong> — Low-revenue businesses cannot request high credit limits; one config map wires the dependency
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Warnings vs. errors</strong> — Errors block submission; warn() tests never do; a form with only warnings submits freely
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">Portable suite</strong> — Same Vest suite powers multiple backends and frontends; policy logic stays decoupled from framework concerns
+    </ngx-intro-item>
+  </ngx-intro-section>
+
+  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+    <div>
+      <ngx-form-state-card
+        [feedback]="formBody.feedback"
+        [errors]="formBody.feedback.formState().errors"
+        [validationErrorRules]="errorRules"
+        [validationWarningRules]="warningRules"
+      />
+    </div>
+
+    <div class="space-y-6">
+      @if (submittedValue(); as submitted) {
+      <ngx-alert-panel tone="success" title="Application submitted">
+        <p>
+          Thanks — the application for
+          <strong>{{ submitted.legalName }}</strong> was accepted. Any advisory
+          warnings above did not block submission.
+        </p>
+      </ngx-alert-panel>
+      }
+
+      <ngx-business-policy-form-body
+        #formBody
+        [formValue]="formValue()"
+        [suite]="suite"
+        [validationConfig]="validationConfig"
+        (formValueChange)="formValue.set($event)"
+        (submitted)="onSubmit()"
+        (resetRequested)="reset()"
+      />
+    </div>
+  </div>
+
+  <ngx-example-cards [content]="exampleContent" class="mt-8 block" />
+</div>

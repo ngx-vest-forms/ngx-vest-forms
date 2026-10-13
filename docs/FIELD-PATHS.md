@@ -1,5 +1,7 @@
 # Field Path Types - Type-Safe Field References
 
+> **Vest 6 Note:** This guide uses the modern Vest 6 pattern where suite callbacks take only the model parameter, and field focus is handled at the call site via `suite.only(field).run(model)`. See [MIGRATION-v2.x-to-v3.0.0.md](./migration/MIGRATION-v2.x-to-v3.0.0.md) for upgrade details.
+
 ## Overview
 
 The field path types feature provides compile-time type safety and IDE autocomplete for field names throughout ngx-vest-forms. This eliminates typos, enables refactoring support, and makes your code more maintainable.
@@ -78,7 +80,7 @@ Type-safe field names for Vest test() calls, combining field paths with the ROOT
 
 ```typescript
 import { FormFieldName, ROOT_FORM } from 'ngx-vest-forms';
-import { staticSuite, test, only, enforce } from 'vest';
+import { create, test, enforce } from 'vest';
 
 type FormModel = {
   email: string;
@@ -87,25 +89,21 @@ type FormModel = {
   };
 };
 
-export const suite = staticSuite(
-  (data: FormModel, field?: FormFieldName<FormModel>) => {
-    only(field);
+export const suite = create((data: FormModel) => {
+  // ✅ Autocomplete suggests: 'email' | 'user' | 'user.name' | typeof ROOT_FORM
+  test('email', 'Required', () => {
+    enforce(data.email).isNotBlank();
+  });
 
-    // ✅ Autocomplete suggests: 'email' | 'user' | 'user.name' | typeof ROOT_FORM
-    test('email', 'Required', () => {
-      enforce(data.email).isNotBlank();
-    });
+  test('user.name', 'Required', () => {
+    enforce(data.user?.name).isNotBlank();
+  });
 
-    test('user.name', 'Required', () => {
-      enforce(data.user?.name).isNotBlank();
-    });
-
-    // Form-level validation
-    test(ROOT_FORM, 'At least one field required', () => {
-      enforce(data.email || data.user?.name).isTruthy();
-    });
-  }
-);
+  // Form-level validation
+  test(ROOT_FORM, 'At least one field required', () => {
+    enforce(data.email || data.user?.name).isTruthy();
+  });
+});
 ```
 
 ### `FieldPathValue<T, Path>`
@@ -125,6 +123,27 @@ type Model = {
 
 // Type: number
 type AgeType = FieldPathValue<Model, 'user.profile.age'>;
+```
+
+`FieldPathValue` also resolves array-traversing paths, in both the flattened `FieldPath` form and the runtime bracket form, and strips the `NgxDeepPartial` `| undefined` from the leaf:
+
+```typescript
+type Model = {
+  addresses: Array<{
+    street: string;
+    city: string;
+  }>;
+};
+
+// Flattened FieldPath form → element property type
+type StreetA = FieldPathValue<Model, 'addresses.street'>; // string
+
+// Runtime bracket form → element property type
+type StreetB = FieldPathValue<Model, 'addresses[0].street'>; // string
+
+// Bracket index on the array itself → element type
+type Address = FieldPathValue<Model, 'addresses[0]'>;
+// { street: string; city: string }
 ```
 
 ### `LeafFieldPath<T>`
@@ -176,11 +195,13 @@ protected validationConfig: ValidationConfigMap<PurchaseFormModel> = {
 
 ### 2. Type-Safe Vest Suites
 
-**Before:**
+**Before (Vest 5 - legacy):**
 
 ```typescript
 import { NgxVestSuite, NgxFieldKey } from 'ngx-vest-forms';
+import { staticSuite, test, enforce, only } from 'vest';
 
+// ⚠️ LEGACY: Vest 5 model with field parameter + only(field)
 export const suite: NgxVestSuite<UserModel> = staticSuite(
   (model: UserModel, field?: NgxFieldKey<UserModel>) => {
     only(field);
@@ -193,16 +214,14 @@ export const suite: NgxVestSuite<UserModel> = staticSuite(
 );
 ```
 
-**After:**
+**After (Vest 6 - recommended):**
 
 ```typescript
-import { NgxVestSuite, NgxTypedVestSuite, FormFieldName } from 'ngx-vest-forms';
+import { NgxVestSuite } from 'ngx-vest-forms';
 
-// ✅ RECOMMENDED: Define with NgxTypedVestSuite for autocomplete
-export const suite: NgxTypedVestSuite<UserModel> = staticSuite(
-  (model: UserModel, field?: FormFieldName<UserModel>) => {
-    only(field);
-
+// ✅ RECOMMENDED: Vest 6 model-only callback with autocomplete
+export const suite: NgxVestSuite<UserModel> = create(
+  (model: UserModel) => {
     // ✅ Autocomplete for field names!
     test('email', 'Required', () => {
       enforce(model.email).isNotBlank();
@@ -210,11 +229,19 @@ export const suite: NgxTypedVestSuite<UserModel> = staticSuite(
   }
 );
 
-// Component - use NgxVestSuite type (no type assertion needed)
+// Component - field focus via suite.only(field).run(model)
 @Component({...})
 class MyFormComponent {
   // ✅ Types are compatible - no type assertion needed
   protected readonly suite: NgxVestSuite<UserModel> = suite;
+
+  validate(fieldName?: keyof UserModel) {
+    // ✅ Field focus at call site, not in callback
+    if (fieldName) {
+      return this.suite.only(fieldName).run(this.model);
+    }
+    return this.suite.run(this.model);
+  }
 }
 ```
 
@@ -243,9 +270,9 @@ protected readonly validationConfig = computed<ValidationConfigMap<FormModel>>((
 
 ## Advanced Usage
 
-### Working with DeepPartial Types
+### Working with NgxDeepPartial Types
 
-The field path types work seamlessly with `DeepPartial` form models:
+The field path types work seamlessly with `NgxDeepPartial` form models:
 
 ```typescript
 import { NgxDeepPartial, ValidationConfigMap } from 'ngx-vest-forms';
@@ -289,16 +316,21 @@ const config: ValidationConfigMap<FormModel> = {
 
 ### Dynamic Configuration
 
-Combine type safety with dynamic logic:
+Combine type safety with dynamic logic. Write the function against a concrete model type — with an unconstrained generic `T`, `FieldPath<T>` cannot resolve any field name and the assignment below would be a compile error:
 
 ```typescript
-function createDynamicConfig<T>(
+type FormModel = {
+  password?: string;
+  confirmPassword?: string;
+};
+
+function createDynamicConfig(
   conditions: Record<string, boolean>
-): ValidationConfigMap<T> {
-  const config: ValidationConfigMap<T> = {};
+): ValidationConfigMap<FormModel> {
+  const config: ValidationConfigMap<FormModel> = {};
 
   if (conditions.validatePassword) {
-    config['password'] = ['confirmPassword']; // Type-safe!
+    config['password'] = ['confirmPassword']; // Type-safe against FormModel
   }
 
   return config;
@@ -325,13 +357,9 @@ function validateAddress(
 }
 
 // Use in main suite with type safety
-export const suite = staticSuite(
-  (data: FormModel, field?: FormFieldName<FormModel>) => {
-    only(field);
-
-    validateAddress(data.addresses?.billing, 'addresses.billing');
-  }
-);
+export const suite = create((data: FormModel) => {
+  validateAddress(data.addresses?.billing, 'addresses.billing');
+});
 ```
 
 ---
@@ -340,11 +368,13 @@ export const suite = staticSuite(
 
 ### Step 1: Update Validation Suites
 
-**Before:**
+**Before (Vest 5 / ngx-vest-forms v2):**
 
 ```typescript
 import { NgxVestSuite, NgxFieldKey } from 'ngx-vest-forms';
+import { staticSuite } from 'vest';
 
+// ⚠️ LEGACY: Vest 5 two-parameter callback + only(field) inside callback
 const suite: NgxVestSuite<Model> = staticSuite(
   (model: Model, field?: NgxFieldKey<Model>) => {
     // ...
@@ -352,16 +382,14 @@ const suite: NgxVestSuite<Model> = staticSuite(
 );
 ```
 
-**After:**
+**After (Vest 6 / ngx-vest-forms v3):**
 
 ```typescript
-import { NgxTypedVestSuite, FormFieldName } from 'ngx-vest-forms';
+import { NgxVestSuite } from 'ngx-vest-forms';
 
-const suite: NgxTypedVestSuite<Model> = staticSuite(
-  (model: Model, field?: FormFieldName<Model>) => {
-    // ...
-  }
-);
+const suite: NgxVestSuite<Model> = create((model: Model) => {
+  // ...
+});
 ```
 
 ### Step 2: Add Types to Validation Configs
@@ -422,18 +450,17 @@ When receiving path strings from dynamic sources (for example server-driven sche
 
 This design keeps defaults safe while preserving backward compatibility for valid field paths.
 
-### ✅ DO: Use NgxTypedVestSuite for TypeScript Code
+### ✅ DO: Use NgxVestSuite for TypeScript Code
 
-When defining validation suites in TypeScript files, use `NgxTypedVestSuite` for better type safety:
+When defining validation suites in TypeScript files, use `NgxVestSuite` in new code. It is the canonical public type in v3.x:
 
 ```typescript
-export const suite: NgxTypedVestSuite<FormModel> = staticSuite(
-  (model: FormModel, field?: FormFieldName<FormModel>) => {
-    only(field);
-    // Full autocomplete for field names
-  }
-);
+export const suite: NgxVestSuite<FormModel> = create((model: FormModel) => {
+  // Full autocomplete for field names
+});
 ```
+
+> **v3 note:** the older `NgxTypedVestSuite<T>` alias was removed in v3.0.0. Use `NgxVestSuite<T>` everywhere.
 
 ### ✅ DO: Type Your Validation Configs
 
@@ -475,18 +502,6 @@ protected config2: ValidationConfigMap<FormModel> = { email: ['password'] }; // 
 // ✅ Good - consistent
 protected config1: ValidationConfigMap<FormModel> = { password: ['confirmPassword'] };
 protected config2: ValidationConfigMap<FormModel> = { email: ['password'] };
-```
-
-### ❌ DON'T: Use NgxVestSuite in Templates
-
-While `NgxVestSuite` still works, prefer `NgxTypedVestSuite` for better type safety:
-
-```typescript
-// ❌ Less type-safe
-suite: NgxVestSuite<FormModel> = staticSuite((model, field?) => { ... });
-
-// ✅ More type-safe
-suite: NgxTypedVestSuite<FormModel> = staticSuite((model, field?: FormFieldName<FormModel>) => { ... });
 ```
 
 ---
@@ -597,12 +612,12 @@ The field path types use complex TypeScript features. For very large models:
 
 ```typescript
 import {
-  NgxTypedVestSuite,
+  NgxVestSuite,
   FormFieldName,
   ValidationConfigMap,
   ROOT_FORM,
 } from 'ngx-vest-forms';
-import { staticSuite, test, only, enforce } from 'vest';
+import { create, test, enforce } from 'vest';
 
 type PurchaseFormModel = NgxDeepPartial<{
   firstName: string;
@@ -625,10 +640,8 @@ type PurchaseFormModel = NgxDeepPartial<{
 }>;
 
 // Type-safe validation suite
-export const purchaseSuite: NgxTypedVestSuite<PurchaseFormModel> = staticSuite(
-  (model: PurchaseFormModel, field?: FormFieldName<PurchaseFormModel>) => {
-    only(field);
-
+export const purchaseSuite: NgxVestSuite<PurchaseFormModel> = create(
+  (model: PurchaseFormModel) => {
     test('firstName', 'Required', () => {
       enforce(model.firstName).isNotBlank();
     });
@@ -694,10 +707,7 @@ export type ValidateFieldPath<T, Path>;
 // Extract only leaf paths
 export type LeafFieldPath<T, Prefix = '', Depth = []>;
 
-// Typed vest suite (recommended for TypeScript)
-export type NgxTypedVestSuite<T>;
-
-// Original vest suite (for template compatibility)
+// Canonical suite type
 export type NgxVestSuite<T>;
 ```
 
@@ -709,7 +719,7 @@ export type NgxVestSuite<T>;
 
 For working with field paths at runtime, see:
 
-- **[Field Path Utilities](../projects/ngx-vest-forms/src/lib/utils/README.md#field-path-utilities)** - `stringifyFieldPath()`
+- **`stringifyFieldPath()` from `ngx-vest-forms`** - Runtime helper for converting path arrays/tokens to canonical dot/bracket notation
   - Convert array notation to dot notation
   - Useful for dynamic field path manipulation
   - Works with the types defined in this guide
@@ -720,6 +730,7 @@ For working with field paths at runtime, see:
 - [Validation Config vs Root Form](./VALIDATION-CONFIG-VS-ROOT-FORM.md) - When to use each approach
 - [Vest.js Instructions](../.github/instructions/vest.instructions.md) - Best practices for Vest.js
 - [ngx-vest-forms Instructions](../.github/instructions/ngx-vest-forms.instructions.md) - Complete library guide
+- [Migration Guide (v2.x → v3.0.0)](./migration/MIGRATION-v2.x-to-v3.0.0.md) - Upgrading to v3.0.0 (Vest 6)
 - [Migration Guide (v1.x → v2.0.0)](./migration/MIGRATION-v1.x-to-v2.0.0.md) - Upgrading to v2.0.0
 - [Selector Prefix Migration Guide](./SELECTOR-PREFIX-MIGRATION.md)
 
@@ -735,6 +746,6 @@ Found an issue or have a suggestion? Please:
 
 ---
 
-**Version:** 1.0.0
-**Last Updated:** November 8, 2025
+**Version:** 3.0.0
+**Last Updated:** March 6, 2026
 **Status:** Stable

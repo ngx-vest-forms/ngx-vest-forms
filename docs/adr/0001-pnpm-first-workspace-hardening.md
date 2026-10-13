@@ -1,0 +1,3 @@
+# pnpm-first workspace hardening
+
+We are migrating this Nx workspace to a **Pnpm-First Workspace** on pnpm 11 while keeping the current CI and release topology intact. The workspace will use a **Corepack-Pinned Package Manager**, a **Versioned Supply-Chain Policy**, a **Reviewed Build Allow-List**, frozen-lockfile installs, a **Dependency Cache Embargo** for package-manager caches, **Soft Package Manager Enforcement**, **Consumer-Neutral Install Docs**, and **SHA-Pinned Workflow Actions** so the package-manager migration improves supply-chain posture without turning into a broader workflow redesign.

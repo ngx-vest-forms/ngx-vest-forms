@@ -65,7 +65,7 @@ export type TravelFormModel = NgxDeepPartial<{
   returnDate: string;
 }>;
 
-export const travelFormShape: NgxDeepRequired<TravelFormModel> = {
+export const travelFormContract: NgxDeepRequired<TravelFormModel> = {
   departureDate: '',
   returnDate: '',
 };
@@ -73,16 +73,14 @@ export const travelFormShape: NgxDeepRequired<TravelFormModel> = {
 
 ### 2. Vest suite with type-safe field names
 
-Use `FormFieldName<T>` for compile-time path safety. Call `only(field)` unconditionally.
+Use `NgxVestSuite<T>` for a typed suite object. If you need typed field-path hints elsewhere, use `FormFieldName<T>` or `NgxFieldKey<T>` — but keep the suite callback model-only.
 
 ```typescript
-import { enforce, omitWhen, only, staticSuite, test } from 'vest';
-import { FormFieldName } from 'ngx-vest-forms';
+import { create, enforce, omitWhen, test } from 'vest';
+import { type NgxVestSuite } from 'ngx-vest-forms';
 
-export const travelValidationSuite = staticSuite(
-  (model: TravelFormModel, field?: FormFieldName<TravelFormModel>) => {
-    only(field);
-
+export const travelValidationSuite: NgxVestSuite<TravelFormModel> = create(
+  (model: TravelFormModel) => {
     test('departureDate', 'Departure date is required', () => {
       enforce(model.departureDate).isNotEmpty();
     });
@@ -100,6 +98,12 @@ export const travelValidationSuite = staticSuite(
     });
   }
 );
+```
+
+When the caller needs field-scoped validation, do it at the call site:
+
+```typescript
+travelValidationSuite.only('returnDate').run(model);
 ```
 
 ### 3. Presentational adapter component with display mode gating
@@ -154,7 +158,7 @@ protected onRangeChange(range: DateRangeValue): void {
 }
 ```
 
-> v2.7.0: `setValueAtPath` is now array-safe. Writes like `setValueAtPath(next, 'addresses[0].street', 'x')` preserve sibling array entries instead of replacing the array with `{}`. Bracket notation chooses container shape from the segment (numeric → array, string → object). Prefer `structuredClone` over the deprecated `cloneDeep` (which warns once in dev and is removed in v3).
+> v2.7.0: `setValueAtPath` is now array-safe. Writes like `setValueAtPath(next, 'addresses[0].street', 'x')` preserve sibling array entries instead of replacing the array with `{}`. Bracket notation chooses container shape from the segment (numeric → array, string → object). Use `structuredClone`; the legacy `cloneDeep` helper was removed in v3.0.0.
 
 ### 5. Per-field error slicing, formSubmitted tracking, and validationConfig
 
@@ -311,8 +315,8 @@ If your composite can be decomposed into completely independent labeled fields, 
 ## Repo references to consult when needed
 
 - `../../../../docs/COMPOSITE-ADAPTER-RECIPE.md`
-- `../../../../projects/examples/src/app/pages/date-range-adapter/`
-- `../../../../projects/ngx-vest-forms/src/public-api.ts`
+- `../../../../apps/examples/src/app/pages/date-range-adapter/`
+- `../../../../packages/ngx-vest-forms/src/public-api.ts`
 - `../../../../docs/VALIDATION-CONFIG-BUILDER.md`
 - `../../../../docs/CUSTOM-CONTROL-WRAPPERS.md`
 

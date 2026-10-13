@@ -1,0 +1,106 @@
+<div ngModelGroup="businessHours" class="business-hours-stack">
+  <!-- Existing Business Hours List -->
+  <fieldset
+    ngxFormGroupWrapper
+    ngModelGroup="values"
+    #valuesGroup="ngModelGroup"
+    #valuesWrapper="ngxFormGroupWrapper"
+    [attr.aria-describedby]="valuesWrapper.describedByIds()"
+    class="business-hours-list-stack"
+  >
+    <legend class="sr-only">Configured business hour slots</legend>
+
+    @for (item of values() | keyvalue; track item.key) {
+      <fieldset
+        ngxFormGroupWrapper
+        [ngModelGroup]="item.key"
+        class="form-shell business-hours-item-card"
+      >
+        <legend class="sr-only">Business hour slot {{ item.key }}</legend>
+
+        <div class="business-hours-item-layout">
+          <ngx-business-hour
+            [businessHour]="values()[item.key]"
+            [idPrefix]="'business-hours-values-' + item.key"
+            class="business-hours-item-main"
+          ></ngx-business-hour>
+
+          <button
+            type="button"
+            (click)="removeBusinessHour(item.key, valuesGroup)"
+            class="business-hours-remove-btn"
+            [title]="'Remove business hour slot ' + (+item.key + 1)"
+            [attr.aria-label]="'Remove business hour slot ' + (+item.key + 1)"
+          >
+            <svg
+              class="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path
+                d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14M10 11v6M14 11v6"
+              />
+            </svg>
+          </button>
+        </div>
+      </fieldset>
+    }
+  </fieldset>
+
+  @if ((values() | keyvalue)?.length) {
+    <div class="business-hours-divider">
+      <div class="business-hours-divider-line" aria-hidden="true">
+        <div class="business-hours-divider-rule"></div>
+      </div>
+      <div class="business-hours-divider-content">
+        <span class="business-hours-divider-label">Add New Time Slot</span>
+      </div>
+    </div>
+  }
+
+  <!-- Add New Business Hour -->
+  <fieldset
+    ngxFormGroupWrapper
+    ngModelGroup="addValue"
+    #group="ngModelGroup"
+    #addValueWrapper="ngxFormGroupWrapper"
+    [attr.aria-describedby]="addValueWrapper.describedByIds()"
+    class="form-shell business-hours-add-card"
+  >
+    <legend class="sr-only">Add new business hour slot</legend>
+
+    <div class="business-hours-item-layout">
+      <ngx-business-hour
+        [businessHour]="addValue()"
+        idPrefix="business-hours-add"
+        class="business-hours-item-main"
+      ></ngx-business-hour>
+
+      <button
+        type="button"
+        [disabled]="isAddButtonDisabled(group)"
+        (click)="addBusinessHour(group, valuesGroup)"
+        class="business-hours-add-btn"
+      >
+        <svg
+          class="business-hours-add-btn-icon h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        Add
+      </button>
+    </div>
+  </fieldset>
+</div>
