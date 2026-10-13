@@ -33,10 +33,10 @@ The Vest suite that holds every validation rule for one Form Model.
 _Avoid_: validator, schema
 
 **Error**:
-A validation message that makes its field, or the Root Form, invalid and blocks submit.
+A validation message that makes its field, or the Root Form, invalid.
 
 **Warning**:
-A validation message that informs without making its field invalid or blocking submit.
+A validation message that informs while leaving its field's validity unchanged.
 _Avoid_: advisory, soft error
 
 **Root-Form Rule**:

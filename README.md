@@ -555,6 +555,7 @@ If the contract genuinely varies per usage site, `[formContract]` still works as
 ### Reference
 
 - **[Utilities README](./packages/ngx-vest-forms/src/lib/utils/README.md)** - Canonical reference for all utility functions
+- **[Suite Type Compatibility](./docs/TYPE-COMPATIBILITY.md)** - Typing suites with `NgxVestSuite<T>`
 
 ### Examples
 

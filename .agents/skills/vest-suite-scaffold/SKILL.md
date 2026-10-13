@@ -19,8 +19,8 @@ and the **field list** if not given.
   from `vest`.
 - Model is `NgxDeepPartial<{...}>`; the form contract is the
   `NgxDeepRequired<TModel>` mirror, exported for `provideFormContract`.
-- Error rules use `test(...)`; Warning rules add `warn()` and never block
-  submit. Conditional rules use `omitWhen(...)`. Root-Form Rules use the
+- Error rules use `test(...)`; Warning rules add `warn()` and never make
+  the form invalid. Conditional rules use `omitWhen(...)`. Root-Form Rules use the
   `ROOT_FORM` constant as the field key; a cross-field rule that belongs to a
   field stays on that field and is wired through `validationConfig`.
 - Warning rules must call `warn()` **before any `await`** — after the test
@@ -76,7 +76,7 @@ export const <camel>Suite: NgxVestSuite<<Pascal>Model> = create(
     // Root-Form Rule example:
     // test(ROOT_FORM, '<message>', () => { enforce(...).isFalsy(); });
 
-    // Warning (never blocks submit):
+    // Warning (never makes the form invalid):
     // test('<field>', '<advice>', () => { warn(); enforce(...).isFalsy(); });
   }
 );
