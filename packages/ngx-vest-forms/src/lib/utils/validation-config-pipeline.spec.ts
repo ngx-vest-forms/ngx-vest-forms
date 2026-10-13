@@ -44,20 +44,20 @@ function createMockDestroyRef(): {
   };
 }
 
-/** Minimal ChangeDetectorRef mock that records detectChanges calls. */
+/** Minimal ChangeDetectorRef mock that records markForCheck calls. */
 function createMockCdr(): {
   cdr: ChangeDetectorRef;
-  detectChangesCount: () => number;
+  markForCheckCount: () => number;
 } {
   let count = 0;
   return {
     cdr: {
-      detectChanges: () => {
+      detectChanges: () => {},
+      markForCheck: () => {
         count++;
       },
-      markForCheck: () => {},
     } as unknown as ChangeDetectorRef,
-    detectChangesCount: () => count,
+    markForCheckCount: () => count,
   };
 }
 
@@ -184,6 +184,44 @@ describe('createValidationConfigPipeline', () => {
     await vi.advanceTimersByTimeAsync(20);
 
     expect(getCount()).toBeGreaterThanOrEqual(1);
+
+    sub.unsubscribe();
+  });
+
+  // -------------------------------------------------------------------------
+  // 2b. Zoneless CD contract: markForCheck() schedules a render pass after
+  //     dependent revalidation (replaces the old detectChanges() call)
+  // -------------------------------------------------------------------------
+  it('calls markForCheck on the host CDR after revalidating a dependent', async () => {
+    const triggerCtrl = new FormControl('');
+    const dependentCtrl = new FormControl('');
+    const form = new FormGroup({
+      trigger: triggerCtrl,
+      dependent: dependentCtrl,
+    });
+
+    const { destroyRef } = createMockDestroyRef();
+    const { cdr, markForCheckCount } = createMockCdr();
+
+    const sub = createValidationConfigPipeline(
+      form,
+      { trigger: ['dependent'] } as Record<string, string[]>,
+      { ...BASE_OPTIONS, configDebounceTime: 0 },
+      cdr,
+      destroyRef
+    ).subscribe();
+
+    // No revalidation yet → no markForCheck
+    expect(markForCheckCount()).toBe(0);
+
+    // Change the trigger value and advance past debounce
+    triggerCtrl.setValue('new-value');
+    await vi.advanceTimersByTimeAsync(0);
+
+    // After revalidation the host view is marked for check so the zoneless
+    // scheduler re-renders ng-* host classes on the next CD pass — without
+    // forcing a synchronous detectChanges() inside the RxJS pipeline.
+    expect(markForCheckCount()).toBeGreaterThanOrEqual(1);
 
     sub.unsubscribe();
   });

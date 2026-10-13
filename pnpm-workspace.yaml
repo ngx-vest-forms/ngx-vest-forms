@@ -7,11 +7,29 @@ minimumReleaseAge: 1440 # minutes (24h)
 minimumReleaseAgeStrict: true
 minimumReleaseAgeIgnoreMissingTime: false
 trustPolicy: no-downgrade
+auditConfig:
+  ignoreGhsas:
+    # GHSA-vfj7-8cjw-p6xm (CVE-2026-93687): braces stack-exhaustion DoS via deeply nested
+    # patterns. Advisory published 2026-09-18, but the fix (braces 3.0.4) is not yet on npm
+    # (latest is 3.0.3). Reachable only through dev-only semantic-release tooling via
+    # micromatch; no shipped code. Remove this ignore once braces >= 3.0.4 is published.
+    # Review date: 2026-11-13.
+    - GHSA-vfj7-8cjw-p6xm
 overrides:
+  '@actions/http-client>undici': 6.28.1
   '@jridgewell/sourcemap-codec': 1.6.0
+  brace-expansion: 5.0.12
   chokidar: 4.0.1
   detect-port: 1.6.0
+  fast-uri: 3.1.8
+  handlebars: 4.7.10
+  js-yaml: 4.3.2
+  'jsdom>undici': 8.11.2
+  probe-image-size: 7.4.0
+  qs: 6.16.0
   semver: 7.7.1
+  source-map-js: 1.2.2
+  undici: 7.29.1
 strictDepBuilds: true
 allowBuilds:
   '@parcel/watcher': true

@@ -21,3 +21,19 @@
 - The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
 
 <!-- nx configuration end-->
+
+## Secrets and local tooling
+
+- Never commit credentials, API keys, or tokens — including inside local
+  tool configs. Context7's secret credential is the `ctx7sk-` API key (MCP
+  server / Public API auth): keep it in your MCP client config or the
+  `CONTEXT7_API_KEY` environment variable, never in this repo.
+- `context7.json` is not a secret. Context7's library-claim flow generates
+  it with a public `pk_` key and asks you to commit it to the default
+  branch (https://context7.com/docs/howto/claiming-libraries) — keep it
+  tracked.
+- `.env` and `.env.*` (except `.env.example`) are gitignored; keep them
+  that way.
+- CI runs a secret scan on pull requests to `master`, `release/**`, `next`,
+  `beta`, `alpha`, or `rc`, over tracked files except `pnpm-lock.yaml` and
+  `*.lock`; a hit fails the build.

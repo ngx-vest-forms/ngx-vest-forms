@@ -140,16 +140,10 @@ describe('FormModelGroupDirective', () => {
     await userEvent.click(streetInput);
     // Type valid street address
     await userEvent.keyboard('123 Main St');
-    // Give form time to update model
-    await new Promise((resolve) => setTimeout(resolve, 100));
     // Tab moves focus to city input
     await userEvent.tab();
-    // Give time for street validation to run
-    await new Promise((resolve) => setTimeout(resolve, 100));
     // Tab again to blur city (triggers validation on empty city)
     await userEvent.tab();
-    // Give time for city validation to run
-    await new Promise((resolve) => setTimeout(resolve, 100));
 
     // Wait for street validation to clear (street is now valid) and city error to appear
     await waitFor(

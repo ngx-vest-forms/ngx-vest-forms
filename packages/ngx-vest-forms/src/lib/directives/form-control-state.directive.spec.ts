@@ -1,6 +1,7 @@
 import { Component, signal, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, NgForm } from '@angular/forms';
+import { waitFor } from '@testing-library/angular';
 import { create, enforce, test as vestTest, warn } from 'vest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NgxVestForms } from '../exports';
@@ -200,13 +201,12 @@ describe('FormControlStateDirective', () => {
     warningFixture.detectChanges();
     await warningFixture.whenStable();
 
-    // Wait for async validation to complete (debounce + processing)
-    await new Promise((resolve) => setTimeout(resolve, 200));
-    warningFixture.detectChanges();
-
-    const warningText =
-      warningFixture.nativeElement.querySelector('#warning-only').textContent;
-    expect(warningText).toContain('Test warning');
+    // Wait for debounced async validation to surface the warning message
+    await waitFor(() => {
+      const warningText =
+        warningFixture.nativeElement.querySelector('#warning-only').textContent;
+      expect(warningText).toContain('Test warning');
+    });
   });
 
   it('should reset hasBeenValidated to false after form reset', async () => {

@@ -83,3 +83,8 @@ Thumbs.db
 .claude/skills/impeccable/
 
 .nx/migrate-runs
+
+# Secrets — never commit credentials or tokens
+.env
+.env.*
+!.env.example

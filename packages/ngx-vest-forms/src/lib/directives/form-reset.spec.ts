@@ -724,6 +724,71 @@ describe('FormDirective - Reset Functionality', () => {
     });
   });
 
+  describe('Programmatic reset (zoneless scheduling)', () => {
+    /**
+     * When resetForm() is called programmatically — not from a user event
+     * handler — no Angular event binding schedules change detection. The
+     * directive must mark the view for check itself so the zoneless scheduler
+     * re-renders the ng-* host classes. This test exercises that path by
+     * calling resetForm() directly on the directive instance without any
+     * preceding click or fixture.detectChanges().
+     */
+    it('should update DOM classes after programmatic resetForm() without a preceding user event', async () => {
+      @Component({
+        template: `
+          <form
+            ngxVestForm
+            #vestForm="ngxVestForm"
+            [formValue]="formValue()"
+            [suite]="suite"
+            (formValueChange)="formValue.set($event)"
+          >
+            <input
+              name="firstName"
+              [ngModel]="formValue().firstName"
+              data-testid="firstName"
+            />
+          </form>
+        `,
+        imports: [NgxVestForms],
+      })
+      class TestComponent {
+        vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
+
+        formValue = signal<NgxDeepPartial<{ firstName?: string }>>({
+          firstName: 'John',
+        });
+
+        suite = create((model: any) => {
+          test('firstName', 'First name is required', () => {
+            enforce(model.firstName).isNotBlank();
+          });
+        });
+      }
+
+      const { fixture } = await render(TestComponent);
+      const component = fixture.componentInstance;
+
+      const input = screen.getByTestId('firstName') as HTMLInputElement;
+      const form = fixture.nativeElement.querySelector('form');
+
+      // Verify initial state
+      await waitFor(() => expect(input.value).toBe('John'));
+
+      // Programmatically reset — no click, no fixture.detectChanges().
+      // The directive's markForCheck() must schedule CD so the zoneless
+      // scheduler updates the ng-* host classes.
+      component.vestFormRef().resetForm();
+
+      // DOM updates asynchronously via the zoneless scheduler
+      await waitFor(() => {
+        expect(input.value).toBe('');
+        expect(form.classList.contains('ng-pristine')).toBe(true);
+        expect(form.classList.contains('ng-untouched')).toBe(true);
+      });
+    });
+  });
+
   describe('Legacy double-set workaround (for documentation)', () => {
     /**
      * This test documents the legacy workaround pattern that was used before
