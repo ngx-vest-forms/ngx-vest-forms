@@ -420,4 +420,4 @@ export const procedureSuite: NgxVestSuite<ProcedureFormModel> = create(
 
 - [Structure Change Detection Guide](./STRUCTURE_CHANGE_DETECTION.md) - Understanding `triggerFormValidation()`
 - [Conditional Validations](../README.md#conditional-validations) - Using `omitWhen` for conditional validation logic
-- [Vest.js Guide](../.github/instructions/vest.instructions.md) - Complete Vest.js patterns
+- [Vest.js skill](../.agents/skills/vestjs/SKILL.md) - Vest.js 6 patterns

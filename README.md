@@ -652,12 +652,8 @@ npx skills add ngx-vest-forms/ngx-vest-forms --skill vestjs
 
 See also: **[Vest.js Agent Skill Guide](./docs/VESTJS-SKILL.md)**
 
-### Comprehensive Instruction Files
+### Agent instructions
 
-This project includes detailed instruction files designed to help developers master ngx-vest-forms and Vest.js patterns:
-
-- **[`.github/instructions/ngx-vest-forms.instructions.md`](.github/instructions/ngx-vest-forms.instructions.md)** - Complete guide for using ngx-vest-forms library
-- **[`.github/instructions/vest.instructions.md`](.github/instructions/vest.instructions.md)** - Comprehensive Vest.js validation patterns and best practices
 - **[`AGENTS.md`](AGENTS.md)** - Workspace instructions shared by GitHub Copilot and Claude Code
 
 ## Acknowledgments

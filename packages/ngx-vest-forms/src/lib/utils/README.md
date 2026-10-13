@@ -1013,7 +1013,7 @@ All public type utilities use the `Ngx` prefix to prevent naming conflicts and c
 ## Related Documentation
 
 - **Main README**: [/README.md](../../../../../README.md)
-- **Instructions**: [/.github/instructions/ngx-vest-forms.instructions.md](../../../../../.github/instructions/ngx-vest-forms.instructions.md)
+- **Agent skill**: [/.agents/skills/ngx-vest-forms/SKILL.md](../../../../../.agents/skills/ngx-vest-forms/SKILL.md)
 - **Vest.js Documentation**: <https://vestjs.dev/>
 - **Angular Forms Guide**: <https://angular.dev/guide/forms/template-driven-forms>
 
