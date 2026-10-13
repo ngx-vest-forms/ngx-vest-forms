@@ -6,7 +6,7 @@ The repository that builds, tests and publishes the `ngx-vest-forms` Angular lib
 
 **Published Package**:
 A package built with Angular package semantics and published to npm for external consumers. `packages/` holds only published packages.
-_Avoid_: internal library, workspace lib
+_Avoid_: publishable library, npm package
 
 **Stable Import Path**:
 The import specifier consumers use (`ngx-vest-forms`). It stays the same through any internal workspace change.
