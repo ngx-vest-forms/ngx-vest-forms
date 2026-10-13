@@ -19,10 +19,11 @@ and the **field list** if not given.
   from `vest`.
 - Model is `NgxDeepPartial<{...}>`; the form contract is the
   `NgxDeepRequired<TModel>` mirror, exported for `provideFormContract`.
-- Blocking rules use `test(...)`; advisory rules add `warn()` and never block
-  submit. Conditional rules use `omitWhen(...)`. Cross-field rules use the
-  `ROOT_FORM` constant as the field key.
-- Advisory rules must call `warn()` **before any `await`** — after the test
+- Error rules use `test(...)`; Warning rules add `warn()` and never block
+  submit. Conditional rules use `omitWhen(...)`. Root-Form Rules use the
+  `ROOT_FORM` constant as the field key; a cross-field rule that belongs to a
+  field stays on that field and is wired through `validationConfig`.
+- Warning rules must call `warn()` **before any `await`** — after the test
   suspends on `await`, `warn()` no longer registers the warning severity. If
   severity must be decided after async work, use `useWarn()` instead.
 - Async-test cancellation is **automatic** in Vest 6 via the per-test `signal`
@@ -72,10 +73,10 @@ export const <camel>Suite: NgxVestSuite<<Pascal>Model> = create(
     // Conditional example:
     // omitWhen(!model.<field>, () => { test(...) });
 
-    // Cross-field example:
+    // Root-Form Rule example:
     // test(ROOT_FORM, '<message>', () => { enforce(...).isFalsy(); });
 
-    // Advisory (never blocks submit):
+    // Warning (never blocks submit):
     // test('<field>', '<advice>', () => { warn(); enforce(...).isFalsy(); });
   }
 );
