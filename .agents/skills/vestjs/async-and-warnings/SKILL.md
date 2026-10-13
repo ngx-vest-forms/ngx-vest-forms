@@ -77,13 +77,13 @@ export const profileSuite = create((model: ProfileModel) => {
 
 ## `warn()` guidance
 
-Use `warn()` when the message is useful but should **not** block validity or submission.
+Use `warn()` when the message is useful but should leave the field valid.
 
 Common examples:
 
 - password strength guidance
 - soft formatting recommendations
-- advisory checks that are informative rather than mandatory
+- checks that inform rather than require
 
 Important limitation: if the test is async, call `warn()` in the synchronous portion of the test body, ideally first. Calling it after `await` means it may not take effect.
 
@@ -126,11 +126,11 @@ When answering:
 
 - show the sync prerequisite test and async test together
 - include the `{ signal }` parameter when relevant
-- explain whether the message is blocking (`error`) or advisory (`warn`)
+- explain whether the message is an Error (the field becomes invalid) or a Warning (`warn()`, the field stays valid)
 
 ## References to consult when needed
 
-- `../../../../.github/instructions/vest.instructions.md`
+- [`../SKILL.md`](../SKILL.md) for the Vest 6 invariants
 - `https://vestjs.dev/docs/writing_tests/async_tests`
 - `https://vestjs.dev/docs/writing_tests/warn_only_tests`
 - `https://vestjs.dev/docs/writing_your_suite/accessing_the_result`

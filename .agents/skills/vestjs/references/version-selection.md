@@ -2,13 +2,13 @@
 
 Use this guide when deciding whether the `vestjs` router should answer with the current **6.x** lane or the historical **5.x** lane.
 
-## Default behavior in this repository
+## Default behavior
 
-Default to **Vest 6.x** guidance in this repository unless there is explicit evidence that the user wants the legacy 5.x API surface.
+Default to **Vest 6.x** guidance unless there is explicit evidence that the user wants the legacy 5.x API surface.
 
 That default is correct when:
 
-- the question is asked inside this repository
+- the project uses ngx-vest-forms v3
 - the repo or package context points at Vest 6
 - the code uses suite-object execution such as `suite.run(...)`, `suite.only(...).run(...)`, or `runStatic(...)`
 
