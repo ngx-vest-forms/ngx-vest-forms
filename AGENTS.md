@@ -30,6 +30,7 @@ Consumer-facing examples import from `'ngx-vest-forms'` and use only symbols in 
 - Versions in `package.json` are hard limits. Code that needs a newer Angular, TypeScript, Vest or test-runner feature needs a stated reason in the PR.
 - The examples app mocks the people API in-app (`mockPeopleApiInterceptor`); it runs without a backend.
 - Refresh the Nx agent files with `pnpm nx configure-ai-agents --agents codex`. The `claude` and `copilot` targets recreate `CLAUDE.md`, `.claude/settings.json` and `.github/skills/`, which this repo has removed.
+- The Nx MCP server and the `ci-monitor-subagent` that `monitor-ci` spawns come from the `nx` Claude Code plugin (`nrwl/nx-ai-agents-config` marketplace). Install it at user level; the repo no longer enables it.
 
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->
