@@ -11,6 +11,7 @@ on:
         options:
           - master
           - release/v1.x
+          - release/v2.x
 
 permissions:
   contents: write  # For creating releases and updating changelog

@@ -7,6 +7,11 @@
       "channel": "release-v1"
     },
     {
+      "name": "release/v2.x",
+      "range": "2.x",
+      "channel": "release-v2"
+    },
+    {
       "name": "next",
       "prerelease": "next"
     },

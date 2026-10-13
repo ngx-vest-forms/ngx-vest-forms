@@ -1,0 +1,66 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    target-branch: release/v2.x
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Europe/Amsterdam
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - v2
+    commit-message:
+      prefix: build(deps)
+      include: scope
+    groups:
+      angular:
+        applies-to: all-dependencies
+        patterns:
+          - '@angular/*'
+          - '@angular-devkit/*'
+          - angular-eslint
+          - ng-packagr
+          - ngx-mask
+          - playwright-ng-schematics
+      testing:
+        applies-to: all-dependencies
+        patterns:
+          - '@vitest/*'
+          - '@playwright/*'
+          - playwright
+          - vitest
+          - jsdom
+          - '@testing-library/*'
+      storybook:
+        applies-to: all-dependencies
+        patterns:
+          - '@storybook/*'
+          - storybook
+          - '@chromatic-com/*'
+      lint-format:
+        applies-to: all-dependencies
+        patterns:
+          - eslint
+          - eslint-*
+          - '@eslint/*'
+          - typescript-eslint
+          - prettier
+          - prettier-*
+      tooling:
+        applies-to: all-dependencies
+        patterns:
+          - typescript
+          - ts-node
+          - husky
+          - '@commitlint/*'
+          - semantic-release
+          - '@semantic-release/*'
+          - concurrently
+          - wait-on
+          - http-server
+          - json-server
+          - copyfiles
