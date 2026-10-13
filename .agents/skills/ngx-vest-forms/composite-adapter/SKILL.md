@@ -314,11 +314,11 @@ If your composite can be decomposed into completely independent labeled fields, 
 
 ## Repo references to consult when needed
 
-- `../../../../docs/COMPOSITE-ADAPTER-RECIPE.md`
-- `../../../../apps/examples/src/app/pages/date-range-adapter/`
-- `../../../../packages/ngx-vest-forms/src/public-api.ts`
-- `../../../../docs/VALIDATION-CONFIG-BUILDER.md`
-- `../../../../docs/CUSTOM-CONTROL-WRAPPERS.md`
+- [`docs/COMPOSITE-ADAPTER-RECIPE.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/COMPOSITE-ADAPTER-RECIPE.md)
+- [`apps/examples/src/app/pages/date-range-adapter`](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/apps/examples/src/app/pages/date-range-adapter)
+- [`packages/ngx-vest-forms/src/public-api.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/public-api.ts)
+- [`docs/VALIDATION-CONFIG-BUILDER.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/VALIDATION-CONFIG-BUILDER.md)
+- [`docs/CUSTOM-CONTROL-WRAPPERS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/CUSTOM-CONTROL-WRAPPERS.md)
 
 ## Default recommendation
 
