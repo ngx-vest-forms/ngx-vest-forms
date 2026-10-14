@@ -1091,15 +1091,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     const domValue = readElementValueForBlur(element);
     const value = domValue !== undefined ? domValue : control.value;
 
-    // Prefer the cached linked-signal snapshot when it exists. Both code
-    // paths produce a deep-cloned snapshot, but reusing the cached value
-    // saves one of the two `structuredClone` passes performed by
-    // `mergeValuesAndRawValues()` on every blur.
-    const cachedSnapshot = this.#formValueSignal();
-    const formValue =
-      cachedSnapshot !== null
-        ? (structuredClone(cachedSnapshot) as T)
-        : mergeValuesAndRawValues<T>(this.ngForm.form);
+    const formValue = mergeValuesAndRawValues<T>(this.ngForm.form);
     setValueAtPath(formValue as object, field, value);
 
     this.fieldBlur.emit({
