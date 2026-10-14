@@ -6,7 +6,7 @@ import { StarterFormModel } from '../../models/starter-form.model';
  * The canonical Vest suite for the starter form.
  *
  * Suites are plain Vest specs — they have no Angular dependency and can be
- * unit-tested in isolation by calling `starterFormSuite(model)` directly.
+ * unit-tested in isolation by calling `starterFormSuite.run(model)` directly.
  */
 export const starterFormSuite: NgxVestSuite<StarterFormModel> = create(
   (model: StarterFormModel) => {

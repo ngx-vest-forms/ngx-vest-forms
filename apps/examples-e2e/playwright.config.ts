@@ -15,7 +15,7 @@ const webServerPort = new URL(baseURL).port || '4400';
  */
 export default defineConfig({
   testDir: '.',
-  testMatch: ['**/pages/**/*.spec.ts'],
+  testMatch: ['**/pages/**/*.spec.ts', 'app/**/*.spec.ts'],
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */

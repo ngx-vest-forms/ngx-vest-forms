@@ -6,20 +6,32 @@
 
   <ngx-intro-section title="Why this matters">
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Conditional rules in Vest</strong> — Use omitWhen and skipWhen to gate rules at runtime; required fields appear only under the right conditions
+      <strong class="text-gray-900 dark:text-white"
+        >Conditional rules in Vest</strong
+      >
+      — Use omitWhen and skipWhen to gate rules at runtime; required fields
+      appear only under the right conditions
     </ngx-intro-item>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Cross-field rules via ROOT_FORM</strong> — Low-revenue businesses cannot request high credit limits; one config map wires the dependency
+      <strong class="text-gray-900 dark:text-white"
+        >Cross-field rules via ROOT_FORM</strong
+      >
+      — Low-revenue businesses cannot request high credit limits; one config map
+      wires the dependency
     </ngx-intro-item>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Warnings vs. errors</strong> — Errors block submission; warn() tests never do; a form with only warnings submits freely
+      <strong class="text-gray-900 dark:text-white">Warnings vs. errors</strong>
+      — Errors block submission; warn() tests never do; a form with only
+      warnings submits freely
     </ngx-intro-item>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Portable suite</strong> — Same Vest suite powers multiple backends and frontends; policy logic stays decoupled from framework concerns
+      <strong class="text-gray-900 dark:text-white">Portable suite</strong> —
+      Same Vest suite powers multiple backends and frontends; policy logic stays
+      decoupled from framework concerns
     </ngx-intro-item>
   </ngx-intro-section>
 
-  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+  <div class="grid grid-cols-1 gap-8 py-12 md:grid-cols-2 md:gap-12 md:py-16">
     <div>
       <ngx-form-state-card
         [feedback]="formBody.feedback"
@@ -37,6 +49,15 @@
           <strong>{{ submitted.legalName }}</strong> was accepted. Any advisory
           warnings above did not block submission.
         </p>
+      </ngx-alert-panel>
+      } @if (rootFormErrors().length > 0) {
+      <!-- Live-mode root-form errors appear while typing, so announce them politely. -->
+      <ngx-alert-panel tone="error" title="Policy violations" live="polite">
+        <ul class="list-disc space-y-1 pl-5">
+          @for (error of rootFormErrors(); track $index) {
+          <li>{{ error }}</li>
+          }
+        </ul>
       </ngx-alert-panel>
       }
 

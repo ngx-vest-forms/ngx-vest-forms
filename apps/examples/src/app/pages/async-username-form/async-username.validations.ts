@@ -13,7 +13,8 @@ const USERNAME_PATTERN = /^[a-z0-9_]+$/;
  * Factory that builds the Async Username Availability suite around an
  * availability service. Mirrors `createPurchaseValidationSuite`: the suite is
  * a plain Vest spec with no Angular dependency, so it can be unit-tested by
- * calling `createAsyncUsernameSuite(fakeService)(model, field)` directly.
+ * calling `createAsyncUsernameSuite(fakeService).run(model)` directly (or
+ * `.only('username').run(model)` to focus one field).
  *
  * Synchronous rules (required / length / pattern) run first and gate the
  * async availability check via `omitWhen`, so the network is only hit once
