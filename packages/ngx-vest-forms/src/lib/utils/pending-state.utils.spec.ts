@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { Injector, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
   createDebouncedPendingState,
@@ -15,6 +15,23 @@ describe('pending-state.utils', () => {
   });
 
   describe('createDebouncedPendingState', () => {
+    it('throws outside an injection context unless an injector is passed', () => {
+      const isPending = signal(false);
+      expect(() => createDebouncedPendingState(isPending)).toThrow(
+        /injection context/
+      );
+
+      const result = createDebouncedPendingState(
+        isPending,
+        { showAfter: 50 },
+        { injector: TestBed.inject(Injector) }
+      );
+      isPending.set(true);
+      TestBed.tick();
+      vi.advanceTimersByTime(50);
+      expect(result.showPendingMessage()).toBe(true);
+    });
+
     it('should create debounced pending state with default options', () => {
       TestBed.runInInjectionContext(() => {
         const isPending = signal(false);

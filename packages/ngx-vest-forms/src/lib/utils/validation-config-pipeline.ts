@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, DestroyRef } from '@angular/core';
+import { ChangeDetectorRef, DestroyRef, isDevMode } from '@angular/core';
 import { AbstractControl, FormGroup } from '@angular/forms';
 import {
   debounceTime,
@@ -17,6 +17,10 @@ import {
   tap,
   timer,
 } from 'rxjs';
+import {
+  logDiagnostic,
+  NGX_VEST_FORMS_DIAGNOSTICS,
+} from '../errors/error-catalog';
 import { scheduleTimeout } from './destroy-scheduler';
 import type { ValidationConfigMap } from './field-path-types';
 
@@ -27,19 +31,19 @@ import type { ValidationConfigMap } from './field-path-types';
  */
 export type ValidationConfigPipelineOptions = {
   /** Debounce applied to trigger-field value changes before the pipeline fires. */
-  configDebounceTime: number;
+  readonly configDebounceTime: number;
 
   /**
    * Maximum time to wait for the form to leave `PENDING` state before
    * proceeding with dependent-field revalidation anyway.
    */
-  idleWaitTimeoutMs: number;
+  readonly idleWaitTimeoutMs: number;
 
   /**
    * Maximum time to wait for all dependent controls to appear in the form
    * (e.g. conditionally rendered via `@if`) before proceeding without them.
    */
-  dependentExistenceTimeoutMs: number;
+  readonly dependentExistenceTimeoutMs: number;
 
   /**
    * How long to keep a field marked as "in-progress" after its dependents
@@ -48,7 +52,7 @@ export type ValidationConfigPipelineOptions = {
    * marked field are *deferred* and replayed once the window expires
    * (latest-wins), so no user input is ever silently dropped.
    */
-  validationInProgressCooldownMs: number;
+  readonly validationInProgressCooldownMs: number;
 };
 
 /**
@@ -127,7 +131,7 @@ export function createValidationConfigPipeline<
  *   trigger streams with a deferred change can replay it.
  */
 type LoopPreventionState = {
-  validationInProgress: Set<string>;
+  readonly validationInProgress: Set<string>;
   applyingUpdates: boolean;
   cooldownCleared$: Subject<void>;
 };
@@ -274,9 +278,9 @@ function waitForFormIdle(
 
   const timeout$ = timer(timeoutMs).pipe(
     tap(() => {
-      if (typeof ngDevMode !== 'undefined' && ngDevMode) {
-        console.warn(
-          '[ngx-vest-forms] validationConfig: timed out waiting for form to leave PENDING state. Continuing dependent validation to avoid stalling.'
+      if (isDevMode()) {
+        logDiagnostic(
+          NGX_VEST_FORMS_DIAGNOSTICS.VALIDATION_CONFIG_IDLE_TIMEOUT
         );
       }
     })
@@ -312,10 +316,11 @@ function waitForDependentControls(
 
   const timeout$ = timer(timeoutMs).pipe(
     tap(() => {
-      if (typeof ngDevMode !== 'undefined' && ngDevMode) {
+      if (isDevMode()) {
         const missing = dependents.filter((f) => !form.get(f));
-        console.warn(
-          `[ngx-vest-forms] validationConfig: timed out waiting for dependent controls: ${missing.join(', ')}. Continuing without them.`
+        logDiagnostic(
+          NGX_VEST_FORMS_DIAGNOSTICS.VALIDATION_CONFIG_DEPENDENTS_TIMEOUT,
+          missing.join(', ')
         );
       }
     }),

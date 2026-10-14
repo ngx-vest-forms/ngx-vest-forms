@@ -61,7 +61,6 @@ const formViewProvider: Provider = {
  * The providers we need in every child component that holds an ngModelGroup
  */
 export const vestFormsViewProviders = [
-  { provide: ControlContainer, useExisting: NgForm },
   formViewProvider, // very important if we want nested components with ngModelGroup
 ];
 

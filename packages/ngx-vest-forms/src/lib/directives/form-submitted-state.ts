@@ -1,5 +1,5 @@
 import { signal, WritableSignal } from '@angular/core';
-import { NgForm } from '@angular/forms';
+import { FormResetEvent, FormSubmittedEvent, NgForm } from '@angular/forms';
 
 const formSubmittedSignals = new WeakMap<NgForm, WritableSignal<boolean>>();
 const formsInSubmitValidation = new WeakSet<NgForm>();
@@ -9,13 +9,33 @@ type AngularSubmittedSignalHost = {
   _submittedReactive?: WritableSignal<boolean>;
 };
 
+/**
+ * The form's submitted state as a signal, shared by every directive on the
+ * form. Created on first use together with one subscription to the form's
+ * submit/reset events (not one per field).
+ *
+ * `NgForm.submitted` itself can't be tracked: its getter reads Angular's
+ * internal signal with `untracked()`. Mapping the events keeps programmatic
+ * `NgForm.onSubmit()` reactive in zoneless apps. The subscription lives as
+ * long as the form's `FormGroup`, the same as the signal.
+ */
 export function getFormSubmittedSignal(
   ngForm: NgForm
 ): WritableSignal<boolean> {
   let submitted = formSubmittedSignals.get(ngForm);
   if (!submitted) {
-    submitted = signal(ngForm.submitted);
-    formSubmittedSignals.set(ngForm, submitted);
+    const state = signal(ngForm.submitted);
+    const form = ngForm.form;
+    form.events.subscribe((event) => {
+      if (event.source !== form) return;
+      if (event instanceof FormSubmittedEvent) {
+        state.set(true);
+      } else if (event instanceof FormResetEvent) {
+        state.set(false);
+      }
+    });
+    formSubmittedSignals.set(ngForm, state);
+    submitted = state;
   }
   return submitted;
 }

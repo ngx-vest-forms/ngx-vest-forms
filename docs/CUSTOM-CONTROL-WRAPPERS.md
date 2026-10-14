@@ -349,6 +349,20 @@ interface DebouncedPendingStateOptions {
 }
 ```
 
+Call it in an injection context (a field initializer or the constructor). To create it later, for example in `ngOnInit`, pass an injector as the third argument:
+
+```typescript
+private readonly injector = inject(Injector);
+
+ngOnInit(): void {
+  this.pendingState = createDebouncedPendingState(
+    this.errorDisplay.isPending,
+    { showAfter: 200 },
+    { injector: this.injector }
+  );
+}
+```
+
 **Returns:**
 
 ```typescript

@@ -401,6 +401,51 @@ describe('FormDirective - Async Validator', () => {
     expect(result).toBeNull();
   });
 
+  it('keeps the fieldWarnings map when a re-run yields the same warnings', async () => {
+    @Component({
+      selector: 'test-stable-warnings-host',
+      template: `<form
+        ngxVestForm
+        [suite]="suite()"
+        #vest="ngxVestForm"
+      ></form>`,
+      imports: [NgxVestForms],
+    })
+    class TestStableWarningsHost {
+      suite = signal(
+        create((model: { password?: string } = {}) => {
+          vestTest('password', 'Password is weak', () => {
+            warn();
+            enforce(model.password ?? '').longerThan(12);
+          });
+        })
+      );
+      readonly vestForm =
+        viewChild.required<FormDirective<Record<string, unknown>>>('vest');
+    }
+    const { fixture } = await render(TestStableWarningsHost);
+    const vestForm = fixture.componentInstance.vestForm();
+    const validator = vestForm.createAsyncValidator('password', {
+      debounceTime: 0,
+    });
+    const run = async (value: string) => {
+      const result = awaitResult(validator({ value } as any));
+      vi.runAllTimers();
+      await Promise.resolve();
+      return result;
+    };
+
+    await run('Short123');
+    const firstMap = vestForm.fieldWarnings();
+    expect(firstMap.get('password')).toEqual(['Password is weak']);
+
+    await run('Short1234');
+    expect(vestForm.fieldWarnings()).toBe(firstMap);
+
+    await run('a-long-enough-password');
+    expect(vestForm.fieldWarnings().has('password')).toBe(false);
+  });
+
   it('should return errors AND warnings when both exist', async () => {
     // When a field has BOTH errors and warnings, we need to return both
     // but only errors should affect validity
