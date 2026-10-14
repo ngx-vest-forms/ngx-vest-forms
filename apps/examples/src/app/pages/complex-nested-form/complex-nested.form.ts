@@ -77,10 +77,7 @@ export class ComplexNestedFormBody {
   protected addMember(): void {
     const current = this.formValue();
     const members = current.teamMembers ?? {};
-    const nextId = Math.max(
-      this.#nextMemberId,
-      ...Object.keys(members).map((key) => Number(key) + 1)
-    );
+    const nextId = this.#nextIdAfter(members);
     this.#nextMemberId = nextId + 1;
     this.formValueChange.emit({
       ...current,
@@ -96,6 +93,9 @@ export class ComplexNestedFormBody {
    */
   protected removeMember(key: string): void {
     const current = this.formValue();
+    // Record the highest id in use before it can disappear, so a later add
+    // never reuses the removed id (the initial rows never went through add).
+    this.#nextMemberId = this.#nextIdAfter(current.teamMembers ?? {});
     const remaining = Object.entries(current.teamMembers ?? {}).filter(
       ([id]) => id !== key
     );
@@ -103,6 +103,14 @@ export class ComplexNestedFormBody {
       ...current,
       teamMembers: Object.fromEntries(remaining),
     });
+  }
+
+  /** The first id not yet handed out and not used by any current row. */
+  #nextIdAfter(members: Record<string, unknown>): number {
+    return Math.max(
+      this.#nextMemberId,
+      ...Object.keys(members).map((key) => Number(key) + 1)
+    );
   }
 
   protected memberIdPrefix(key: string): string {

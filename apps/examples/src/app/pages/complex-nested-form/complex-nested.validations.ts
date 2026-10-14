@@ -1,5 +1,5 @@
 import { NgxVestSuite, ROOT_FORM } from 'ngx-vest-forms';
-import { create, enforce, test, warn } from 'vest';
+import { create, each, enforce, test, warn } from 'vest';
 import { ComplexNestedModel } from '../../models/complex-nested.model';
 import { addressValidations } from '../../shared/validations/address.validations';
 
@@ -8,10 +8,12 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /**
  * Vest suite for the team-registration form.
  *
- * The suite is stateless: it simply reads the current model on each run. Since
- * `teamMembers` is keyed by a stable id (never re-indexed on remove), each
- * member's field paths stay constant, so add/remove refreshes validation
- * correctly and a removed row's tests disappear with its key.
+ * `teamMembers` is keyed by a stable row id (never re-indexed on remove), so
+ * each member's field paths stay constant. The suite keeps state between
+ * runs, and Vest matches tests by call order; removing a middle row changes
+ * that order. `each` plus a unique key per test (built from the row id) lets
+ * Vest match tests by key instead, so a removed row's tests disappear with
+ * it and the other rows keep their results.
  */
 export const complexNestedSuite: NgxVestSuite<ComplexNestedModel> = create(
   (model: ComplexNestedModel) => {
@@ -36,21 +38,41 @@ export const complexNestedSuite: NgxVestSuite<ComplexNestedModel> = create(
 
     addressValidations(model.company?.address, 'company.address');
 
-    for (const [key, member] of memberEntries) {
-      test(`teamMembers.${key}.fullName`, 'Full name is required', () => {
-        enforce(member?.fullName).isNotBlank();
-      });
+    each(memberEntries, ([key, member]) => {
+      test(
+        `teamMembers.${key}.fullName`,
+        'Full name is required',
+        () => {
+          enforce(member?.fullName).isNotBlank();
+        },
+        `${key}.fullName`
+      );
 
-      test(`teamMembers.${key}.email`, 'Email is required', () => {
-        enforce(member?.email).isNotBlank();
-      });
-      test(`teamMembers.${key}.email`, 'Enter a valid email address', () => {
-        enforce(member?.email ?? '').matches(EMAIL_PATTERN);
-      });
+      test(
+        `teamMembers.${key}.email`,
+        'Email is required',
+        () => {
+          enforce(member?.email).isNotBlank();
+        },
+        `${key}.email.required`
+      );
+      test(
+        `teamMembers.${key}.email`,
+        'Enter a valid email address',
+        () => {
+          enforce(member?.email ?? '').matches(EMAIL_PATTERN);
+        },
+        `${key}.email.format`
+      );
 
-      test(`teamMembers.${key}.role`, 'Role is required', () => {
-        enforce(member?.role).isNotBlank();
-      });
-    }
+      test(
+        `teamMembers.${key}.role`,
+        'Role is required',
+        () => {
+          enforce(member?.role).isNotBlank();
+        },
+        `${key}.role`
+      );
+    });
   }
 );
