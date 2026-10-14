@@ -111,10 +111,11 @@ function validateBusinessHourModel(
 }
 
 /**
- * True when no two well-formed ranges overlap. Ranges are compared in start
- * order, so the order the user added them in does not matter. Malformed or
- * inverted ranges are left to the per-field tests and ignored here, so they
- * never surface as a false "overlap" error.
+ * True when no two well-formed ranges overlap; ranges that only touch (one
+ * ends when the next starts) are fine. Ranges are compared in start order,
+ * so the order the user added them in does not matter. Malformed or inverted
+ * ranges are left to the per-field tests and ignored here, so they never
+ * surface as a false "overlap" error.
  */
 function areBusinessHoursValid(
   businessHours?: BusinessHourFormModel[]
@@ -127,7 +128,7 @@ function areBusinessHoursValid(
     )
     .sort((a, b) => a.from - b.from);
 
-  return ranges.every((range, i) => i === 0 || ranges[i - 1]!.to < range.from);
+  return ranges.every((range, i) => i === 0 || ranges[i - 1]!.to <= range.from);
 }
 
 function toMinutes(time?: string): number | null {

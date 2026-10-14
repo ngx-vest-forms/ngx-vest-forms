@@ -1,5 +1,5 @@
 import { ROOT_FORM } from 'ngx-vest-forms';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { BusinessHourFormModel } from '../../models/business-hours-form.model';
 import { businessHoursSuite } from './business-hours.validations';
 
@@ -11,6 +11,11 @@ function run(...hours: BusinessHourFormModel[]) {
 }
 
 describe('Business hours validations', () => {
+  // Vest 6 suites are stateful; reset so each case starts clean.
+  beforeEach(() => {
+    businessHoursSuite.reset();
+  });
+
   it('accepts non-overlapping ranges added in start order', () => {
     const result = run(
       { from: '08:00', to: '10:00' },
@@ -23,6 +28,14 @@ describe('Business hours validations', () => {
     const result = run(
       { from: '12:00', to: '14:00' },
       { from: '08:00', to: '10:00' }
+    );
+    expect(result.getErrors(ROOT_FORM)).not.toContain(OVERLAP);
+  });
+
+  it('accepts ranges that only touch at the boundary', () => {
+    const result = run(
+      { from: '08:00', to: '10:00' },
+      { from: '10:00', to: '12:00' }
     );
     expect(result.getErrors(ROOT_FORM)).not.toContain(OVERLAP);
   });
