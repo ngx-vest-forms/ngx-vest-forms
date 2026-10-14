@@ -17,7 +17,6 @@
  * ```
  */
 
-const UNSAFE_PATH_SEGMENTS = new Set(['__proto__', 'prototype', 'constructor']);
 const LOG_PREFIX = '[ngx-vest-forms] field-path.utils';
 
 /**
@@ -27,7 +26,13 @@ const LOG_PREFIX = '[ngx-vest-forms] field-path.utils';
  * Unsafe segments are blocked to prevent prototype pollution vectors.
  */
 export function isUnsafePathSegment(segment: string | number): boolean {
-  return typeof segment === 'string' && UNSAFE_PATH_SEGMENTS.has(segment);
+  // Plain comparisons (not a Set lookup) so static analysis such as CodeQL
+  // recognises this as a prototype-pollution guard at the call sites.
+  return (
+    segment === '__proto__' ||
+    segment === 'prototype' ||
+    segment === 'constructor'
+  );
 }
 
 /**

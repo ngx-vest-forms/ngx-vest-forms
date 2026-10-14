@@ -36,8 +36,8 @@ references a credential location and must never be a public issue).
 | 001  | Remove committed Context7 credential + secret-scan gate | P1 | S | — | DONE, corrected — PR #247 (`f5f81306` + `4e1ee1aa` + `a1a519e4`): file restored, pk_ is public-by-design; secret scan hardened |
 | 002  | Remediate critical/high dependency advisories + audit gate | P1 | M | — | DONE — PR #247 (`40c6309a` + `a1a519e4`): 0 unfixed advisories; `jsdom>undici` scoped to 8.11.2 |
 | 003  | Pin pullfrog workflow actions to SHAs + pin gate | P1 | S | — | DONE, adapted — PR #247 (`bde620d1` + `d9163803` + `a1a519e4`); workflow removed, not pinned; gate covers `*.yaml` |
-| 004  | Fix FormArray disabled-control merge (`mergeValuesAndRawValues`) | P1 | S | — | TODO — issue #245 |
-| 005  | Fix `formValueChange` dropping disabled-control updates | P1 | S | — | TODO — issue #246 |
+| 004  | Fix FormArray disabled-control merge (`mergeValuesAndRawValues`) | P1 | S | — | DONE — PR #259; the fix also covers PERF-02 |
+| 005  | Fix `formValueChange` dropping disabled-control updates | P1 | S | — | DONE — PR #259 |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
 REJECTED (with one-line rationale — finding fixed independently or approach
@@ -84,7 +84,7 @@ Vetted during the audit; ask for plans for any of these:
   `structuredClone` per event, deep-equal in `formValueChange` + `formState`
   + sync effect, full clone per async-validator run.
 - **PERF-02** (perf, S): `mergeValuesAndRawValues` double-clones where one
-  `structuredClone(getRawValue())` suffices (keep the `isUnsafePathSegment` guard).
+  `structuredClone(getRawValue())` suffices (keep the `isUnsafePathSegment` guard). DONE in PR #259.
 - **PERF-03** (perf, S): `getControlPath` O(N) DFS per validation run;
   O(N²) on `#revalidateAllControls`.
 - **PERF-04/05/06** (perf, S): pipeline teardown on `validationConfig`
