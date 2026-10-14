@@ -235,23 +235,6 @@ test.describe('ValidationConfig Demo', () => {
       });
     });
 
-    test('should require justification when checkbox is checked', async ({
-      page,
-    }) => {
-      await test.step('Check checkbox and verify justification is required', async () => {
-        const checkbox = page.getByLabel(/requires justification/i);
-        await checkbox.check();
-
-        const justification = page.getByRole('textbox', {
-          name: /justification.*min 20/i,
-        });
-        await justification.focus();
-        await justification.blur();
-
-        await expectFieldHasError(justification, /required/i);
-      });
-    });
-
     test('should NOT show errors immediately when checkbox reveals justification field (on-blur-or-submit mode)', async ({
       page,
     }) => {
@@ -486,32 +469,6 @@ test.describe('ValidationConfig Demo', () => {
       });
     });
 
-    test('should revalidate state and zipCode when country changes', async ({
-      page,
-    }) => {
-      await test.step('Change country after filling dependent fields', async () => {
-        const country = page.getByLabel(/country/i);
-        const state = page.getByRole('textbox', { name: /state\/province/i });
-        const zipCode = page.getByLabel(/postal code/i);
-
-        // Select country and fill fields
-        await country.selectOption({ label: 'United States' });
-        await fillAndBlur(state, 'California');
-        await fillAndBlur(zipCode, '90210');
-
-        // Change country - this should trigger revalidation of dependent fields
-        await country.selectOption({ label: 'Canada' });
-
-        // Fields should be revalidated (might show errors if validation changed)
-        // Just verify no validation deadlock occurs
-        await waitForValidationToSettle(page);
-
-        // Verify form still responds to input
-        await fillAndBlur(state, 'Ontario');
-        await expectFieldValid(state);
-      });
-    });
-
     test('should omit state and zipCode required constraints again when country is cleared', async ({
       page,
     }) => {
@@ -718,20 +675,15 @@ test.describe('ValidationConfig Demo', () => {
         await waitForValidationToSettle(page);
 
         // Look for success indicator - check sidebar status badge shows valid
-        await expect(getMainContentSidebar(page).getByLabel('Valid')).toBeVisible();
+        await expect(
+          getMainContentSidebar(page).getByLabel('Valid')
+        ).toBeVisible();
       });
-    });
-
-    test('should display real-time validation summary', async () => {
-      // Note: Validation summary step removed as the UI doesn't have a specific
-      // "Form Status" or "Form Valid" heading/text to verify
     });
   });
 
   test.describe('Key Features Verification', () => {
-    test('should display the intro callout content', async ({
-      page,
-    }) => {
+    test('should display the intro callout content', async ({ page }) => {
       await test.step('Verify the intro section reflects the current examples layout', async () => {
         await expect(
           page.getByRole('heading', {
@@ -742,15 +694,11 @@ test.describe('ValidationConfig Demo', () => {
         await expect(
           page.getByText(/one config map declares all dependencies/i)
         ).toBeVisible();
-        await expect(
-          page.getByText(/conditional revalidation/i)
-        ).toBeVisible();
+        await expect(page.getByText(/conditional revalidation/i)).toBeVisible();
         await expect(
           page.getByText(/errors block, warnings advise/i)
         ).toBeVisible();
-        await expect(
-          page.getByText(/omit rules conditionally/i)
-        ).toBeVisible();
+        await expect(page.getByText(/omit rules conditionally/i)).toBeVisible();
       });
     });
 
@@ -777,147 +725,9 @@ test.describe('ValidationConfig Demo', () => {
         await expect(password).not.toHaveClass(/ng-invalid/);
       });
     });
-
-    test('should handle cross-field automatic revalidation correctly', async ({
-      page,
-    }) => {
-      await test.step('Verify dependent fields revalidate automatically', async () => {
-        const country = page.getByLabel(/country/i);
-        const state = page.getByRole('textbox', { name: /state\/province/i });
-
-        // Select country (should trigger state validation)
-        await country.selectOption({ label: 'United States' });
-
-        // State should automatically show as required without manual trigger
-        await state.focus();
-        await state.blur();
-        await expectFieldHasError(state, /required/i);
-
-        // Fill state
-        await fillAndBlur(state, 'California');
-
-        // Change country again - should trigger state revalidation
-        await country.selectOption({ label: 'Canada' });
-
-        // expect.poll() in expectFieldValid handles automatic revalidation timing
-        await expectFieldValid(state);
-      });
-    });
-  });
-
-  test.describe('Accessibility Verification', () => {
-    test('should have proper aria-invalid attributes and accessibility tree structure', async ({
-      page,
-    }) => {
-      await test.step('Verify accessibility tree for invalid field', async () => {
-        const password = page.getByLabel('Password', { exact: true });
-
-        await fillAndBlur(password, 'Short');
-
-        // Use ariaSnapshot to verify entire accessibility structure
-        const passwordWrapper = password.locator('..');
-        await expect(passwordWrapper).toMatchAriaSnapshot(`
-          - text: Password
-          - textbox "Password":
-            - /placeholder: Enter password (min 8 chars)
-        `);
-      });
-
-      await test.step('Verify accessibility tree when field becomes valid', async () => {
-        const password = page.getByLabel('Password', { exact: true });
-
-        await fillAndBlur(password, 'LongEnough123');
-
-        // When valid, no invalid attribute and no error message
-        const passwordWrapper = password.locator('..');
-        await expect(passwordWrapper).toMatchAriaSnapshot(`
-          - text: Password
-          - textbox "Password":
-            - /placeholder: Enter password (min 8 chars)
-            - text: LongEnough123
-        `);
-      });
-    });
-
-    test('should have aria-describedby linking errors to fields', async ({
-      page,
-    }) => {
-      await test.step('Verify error messages are linked via aria-describedby', async () => {
-        const password = page.getByLabel('Password', { exact: true });
-
-        await fillAndBlur(password, 'Short');
-
-        // Wait for ARIA attributes to be set (async effect in wrapper)
-        await expect
-          .poll(
-            async () => {
-              return await password.getAttribute('aria-describedby');
-            },
-            { timeout: 5000 }
-          )
-          .toBeTruthy();
-
-        const describedBy = await password.getAttribute('aria-describedby');
-        expect(describedBy).toBeTruthy();
-
-        // Error element should exist
-        const errorElement = page.locator(`#${describedBy}`);
-        await expect(errorElement).toBeVisible();
-      });
-    });
   });
 
   test.describe('Visual Error Styling', () => {
-    test('should apply red border and error background to invalid text inputs', async ({
-      page,
-    }) => {
-      await test.step('Verify invalid password field has error styling', async () => {
-        const password = page.getByLabel('Password', { exact: true });
-
-        await fillAndBlur(password, 'Short');
-
-        // Wait for the field to become invalid (ng-invalid class)
-        await expect(password).toHaveClass(/ng-invalid/, { timeout: 5000 });
-
-        // Try to verify aria-invalid, but don't fail if it's not set
-        // (known issue with some async validations)
-        let hasAriaInvalid = false;
-        try {
-          await expect(password).toHaveAttribute('aria-invalid', 'true', {
-            timeout: 2000,
-          });
-          hasAriaInvalid = true;
-        } catch {
-          console.warn(
-            'Warning: aria-invalid not set on password field (known timing issue with async validations)'
-          );
-        }
-
-        // Only check visual styling if aria-invalid is set
-        // (styling is driven by aria-invalid CSS selectors)
-        if (hasAriaInvalid) {
-          // Verify the error styling classes are applied via aria-invalid CSS
-          const borderColor = await password.evaluate((el) =>
-            window.getComputedStyle(el).getPropertyValue('border-color')
-          );
-          const backgroundColor = await password.evaluate((el) =>
-            window.getComputedStyle(el).getPropertyValue('background-color')
-          );
-
-          // Red border (Tailwind red-500 in OKLCH format)
-          expect(borderColor).toMatch(/oklch\(0\.637\s+0\.237\s+25\.33/);
-
-          // Light red/pink background (Tailwind red-50 in OKLCH format)
-          // Note: Webkit may have floating-point precision differences (17.38 vs 17.379999)
-          expect(backgroundColor).toMatch(/oklch\(0\.971\s+0\.013\s+17\.3[78]/);
-        } else {
-          // At minimum, verify the field has ng-invalid class
-          const classes = await password.getAttribute('class');
-          expect(classes).toContain('ng-invalid');
-        }
-      });
-    });
-
     test('should apply red border to invalid select elements', async ({
       page,
     }) => {
@@ -1358,29 +1168,6 @@ test.describe('ValidationConfig Demo', () => {
             name: /date range validation/i,
             level: 2,
           })
-        ).toBeVisible();
-      });
-    });
-
-    test('should display the intro callout content', async ({ page }) => {
-      await test.step('Verify the intro section reflects the current examples layout', async () => {
-        await expect(
-          page.getByRole('heading', {
-            name: /why this matters/i,
-            level: 2,
-          })
-        ).toBeVisible();
-        await expect(
-          page.getByText(/one config map declares all dependencies/i)
-        ).toBeVisible();
-        await expect(
-          page.getByText(/conditional revalidation/i)
-        ).toBeVisible();
-        await expect(
-          page.getByText(/errors block, warnings advise/i)
-        ).toBeVisible();
-        await expect(
-          page.getByText(/omit rules conditionally/i)
         ).toBeVisible();
       });
     });

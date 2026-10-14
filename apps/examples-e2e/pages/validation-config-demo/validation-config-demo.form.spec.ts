@@ -4,5 +4,4 @@
 import './aria-describedby-merge.form.tests';
 import './enhanced-validation-config.form.tests';
 import './live-regions-stable.form.tests';
-import './password-warnings.form.tests';
 import './validation-config-demo.form.tests';

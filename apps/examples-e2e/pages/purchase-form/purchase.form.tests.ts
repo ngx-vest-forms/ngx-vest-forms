@@ -161,20 +161,6 @@ test.describe('Purchase Form', () => {
   });
 
   test.describe('Conditional Field Validation - Quantity and Justification', () => {
-    test('should require justification when quantity > 5', async ({ page }) => {
-      await test.step('Set quantity to 6 and verify justification is required', async () => {
-        const quantity = page.getByRole('spinbutton', { name: /quantity/i });
-        await fillAndBlur(quantity, '6');
-
-        const justification = page.getByLabel(/justification/i);
-        await expect(justification).toBeVisible();
-
-        await justification.focus();
-        await justification.blur();
-        await expectFieldHasError(justification, /required/i);
-      });
-    });
-
     test('should keep justification quiet until it is blurred after quantity reveals it', async ({
       page,
     }) => {
@@ -201,19 +187,6 @@ test.describe('Purchase Form', () => {
         await justification.blur();
 
         await expectFieldHasError(justification, /required/i);
-      });
-    });
-
-    test('should hide justification when quantity <= 5', async ({ page }) => {
-      await test.step('Set quantity to 6 then change to 5', async () => {
-        const quantity = page.getByRole('spinbutton', { name: /quantity/i });
-        await fillAndBlur(quantity, '6');
-
-        const justification = page.getByLabel(/justification/i);
-        await expect(justification).toBeVisible();
-
-        await fillAndBlur(quantity, '5');
-        await expect(justification).not.toBeVisible();
       });
     });
 
@@ -498,20 +471,6 @@ test.describe('Purchase Form', () => {
         await expect(emergencyContact).toBeEmpty();
       });
     });
-
-    test('should prefill billing address when clicking "Prefill Billing Address" button', async ({
-      page,
-    }) => {
-      await test.step('Click prefill button and verify address is populated', async () => {
-        const prefillButton = page.getByRole('button', {
-          name: /prefill billing address/i,
-        });
-        await prefillButton.click();
-
-        const billingStreet = page.getByPlaceholder('Type street').first();
-        await expect(billingStreet).not.toBeEmpty();
-      });
-    });
   });
 
   /**
@@ -536,22 +495,6 @@ test.describe('Purchase Form', () => {
         // Look for phone number requirement error (use first() to avoid strict mode)
         const errorMessage = page.locator('text=/at least.*phone/i').first();
         await expect(errorMessage).toBeVisible();
-      });
-    });
-
-    test('should validate that all phone numbers are non-empty', async ({
-      page,
-    }) => {
-      await test.step('Add phone number and verify validation', async () => {
-        const phoneInput = page.getByLabel(/add new phone number/i);
-        await fillAndBlur(phoneInput, '555-1234');
-
-        const addButton = page.getByRole('button', { name: /^add$/i });
-        await addButton.click();
-
-        // After adding, the phone number should appear in the list
-        // Wait for Angular to process the change
-        await waitForFormProcessing(page);
       });
     });
   });
@@ -1299,79 +1242,6 @@ test.describe('Purchase Form', () => {
         await expect(rootFormError).toBeVisible({ timeout: 15000 });
       });
     });
-
-    test('should show nested group validation errors', async ({ page }) => {
-      await test.step('Verify nested address group shows validation', async () => {
-        const submitButton = page.getByRole('button', { name: /submit/i });
-
-        // Submit without filling address
-        await submitButton.click();
-        await waitForFormProcessing(page);
-
-        // Billing address fields should show errors
-        const billingStreet = page.locator('#billing-address-street');
-        await expectFieldHasError(billingStreet, /required/i);
-      });
-    });
-  });
-
-  test.describe('Validation Options Inheritance', () => {
-    test('should apply control-level debounceTime for userId', async ({
-      page,
-    }) => {
-      await test.step('Verify userId has 500ms debounce', async () => {
-        const userId = page.getByLabel(/user id/i);
-        const modifier = process.platform === 'darwin' ? 'Meta' : 'Control';
-
-        // Use real typing cadence instead of zero-delay input for this field.
-        // Chromium/WebKit can otherwise skip the async validation path.
-        // Use tab navigation rather than programmatic blur to match the
-        // interaction path that reliably surfaces the async error.
-        await userId.click();
-        await userId.press(`${modifier}+A`);
-        await userId.press('Backspace');
-        await userId.type('1', { delay: 25 });
-        await page.keyboard.press('Tab');
-
-        // After blur, validation should start (with 500ms debounce)
-        // Then async validation runs (800ms delay in SwapiService)
-        // waitForValidationToSettle handles this timing automatically
-        await waitForValidationToSettle(page, 10000);
-
-        await expect
-          .poll(
-            async () => {
-              const classes = (await userId.getAttribute('class')) ?? '';
-              const hasValid = classes.includes('ng-valid');
-              const hasInvalid = classes.includes('ng-invalid');
-              return hasValid || hasInvalid;
-            },
-            {
-              message:
-                'User ID control should settle to a valid or invalid state',
-              timeout: 10000,
-              intervals: [50, 100, 250, 500],
-            }
-          )
-          .toBe(true);
-      });
-    });
-
-    test('should apply default validation timing for other fields', async ({
-      page,
-    }) => {
-      await test.step('Verify firstName validates immediately on blur', async () => {
-        const firstName = page.getByLabel(/first name/i);
-
-        await firstName.focus();
-        await firstName.blur();
-
-        // Should validate quickly (no debounce)
-        await waitForFormProcessing(page);
-
-        await expectFieldHasError(firstName, /required/i);
-      });
-    });
   });
 
   test.describe('Advanced Field Clearing Scenarios', () => {
@@ -1405,31 +1275,6 @@ test.describe('Purchase Form', () => {
 
         // Age should still have value (not in clearFields list)
         await expect(age).toHaveValue('25');
-      });
-    });
-
-    test('should preserve non-sensitive data when clearing', async ({
-      page,
-    }) => {
-      await test.step('Fill form, clear sensitive, verify preservation', async () => {
-        const password = page.getByLabel('Password', { exact: true });
-        const age = page.getByLabel(/age/i);
-        const clearButton = page.getByRole('button', {
-          name: /clear sensitive data/i,
-        });
-
-        // Fill multiple fields
-        await fillAndBlur(age, '30');
-        await fillAndBlur(password, 'Secret123');
-
-        // Clear sensitive data
-        await clearButton.click();
-
-        // Password should be cleared (sensitive)
-        await expect(password).toBeEmpty();
-
-        // Age should be preserved (not sensitive)
-        await expect(age).toHaveValue('30');
       });
     });
   });

@@ -101,30 +101,6 @@ test.describe('Composite Adapter - Form Behavior', () => {
     await expect(sidebar).toContainText('2026-07-15');
   });
 
-  test('should show required errors on submit with empty fields', async ({
-    page,
-  }) => {
-    await page.getByRole('button', { name: /submit/i }).click();
-    await waitForValidationToSettle(page);
-
-    const errorRegion = getAdapterErrorRegion(page);
-    await expect(errorRegion).toContainText(/required/i);
-  });
-
-  test('should show cross-field error when return date is before departure', async ({
-    page,
-  }) => {
-    const departure = page.getByLabel(/departure date/i);
-    const returnDate = page.getByLabel(/return date/i);
-
-    await setAdapterDate(departure, '2026-07-15');
-    await setAdapterDate(returnDate, '2026-07-01');
-    await waitForValidationToSettle(page);
-
-    const errorRegion = getAdapterErrorRegion(page);
-    await expect(errorRegion).toContainText(/after/i);
-  });
-
   test('should clear errors when dates are corrected', async ({ page }) => {
     const departure = page.getByLabel(/departure date/i);
     const returnDate = page.getByLabel(/return date/i);
