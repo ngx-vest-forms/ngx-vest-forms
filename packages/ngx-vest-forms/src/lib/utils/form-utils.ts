@@ -169,19 +169,35 @@ function isPlainRecord(value: unknown): value is UnknownRecord {
 /**
  * Copies a raw form value, dropping unsafe prototype-related keys at every
  * level of nested plain objects and arrays. Other values (primitives, Dates,
- * Files, ...) are kept as they are.
+ * Files, ...) are kept as they are. Circular references, which
+ * `structuredClone` preserves, are kept as circular references in the copy.
  */
-function sanitizeRawValue(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map((item) => sanitizeRawValue(item));
-  }
-  if (!isPlainRecord(value)) {
+function sanitizeRawValue(
+  value: unknown,
+  copies = new WeakMap<object, unknown>()
+): unknown {
+  const isArray = Array.isArray(value);
+  if (!isArray && !isPlainRecord(value)) {
     return value;
   }
+  const existing = copies.get(value as object);
+  if (existing !== undefined) {
+    return existing;
+  }
+  if (isArray) {
+    const copy: unknown[] = [];
+    copies.set(value, copy);
+    for (const item of value) {
+      copy.push(sanitizeRawValue(item, copies));
+    }
+    return copy;
+  }
+  const record = value as UnknownRecord;
   const copy: UnknownRecord = {};
-  for (const key of Object.keys(value)) {
+  copies.set(record, copy);
+  for (const key of Object.keys(record)) {
     if (!isUnsafePathSegment(key)) {
-      copy[key] = sanitizeRawValue(value[key]);
+      copy[key] = sanitizeRawValue(record[key], copies);
     }
   }
   return copy;

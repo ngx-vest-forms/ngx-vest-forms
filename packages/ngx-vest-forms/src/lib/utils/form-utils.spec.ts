@@ -292,6 +292,20 @@ describe('mergeValuesAndRawValues function', () => {
       expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();
       expect(({} as Record<string, unknown>)['hacked']).toBeUndefined();
     });
+
+    it('should keep circular references inside raw arrays instead of overflowing the stack', () => {
+      const cyclic: unknown[] = ['a'];
+      cyclic.push(cyclic);
+      const form = new FormGroup({
+        items: new FormControl<unknown[]>(cyclic),
+      });
+
+      const merged = mergeValuesAndRawValues<{ items: unknown[] }>(form);
+
+      expect(merged.items[0]).toBe('a');
+      expect(merged.items[1]).toBe(merged.items);
+      expect(merged.items).not.toBe(cyclic);
+    });
   });
 
   describe('reference isolation (structuredClone behavior)', () => {
