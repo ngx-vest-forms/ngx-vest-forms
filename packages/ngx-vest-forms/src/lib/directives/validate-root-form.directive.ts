@@ -31,7 +31,11 @@ import {
 import { scheduleMicrotask } from '../utils/destroy-scheduler';
 import { copyFormValue } from '../utils/form-utils';
 import type { NgxVestSuite } from '../utils/validation-suite';
-import { extractFieldErrors, runFieldValidation } from '../utils/vest-runner';
+import {
+  extractFieldErrors,
+  reportToErrorHandler,
+  runFieldValidation,
+} from '../utils/vest-runner';
 import { getFormSubmittedSignal } from './form-submitted-state';
 import { ValidationOptions } from './validation-options';
 
@@ -302,7 +306,7 @@ export class ValidateRootFormDirective<T>
         // field-level validators still gate submit), but the original error
         // always goes to Angular's ErrorHandler so it is never silent.
         catchError((err: unknown) => {
-          this.#errorHandler.handleError(err);
+          reportToErrorHandler(this.#errorHandler, err);
           if (isDevMode()) {
             logDiagnostic(
               NGX_VEST_FORMS_DIAGNOSTICS.ROOT_FORM_VALIDATION_ERROR,
