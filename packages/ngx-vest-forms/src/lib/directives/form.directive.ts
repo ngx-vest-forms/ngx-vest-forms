@@ -6,6 +6,7 @@ import {
   Directive,
   effect,
   ElementRef,
+  ErrorHandler,
   inject,
   input,
   InputSignal,
@@ -86,6 +87,7 @@ import {
   extractFieldErrors,
   extractFieldWarnings,
   type NgxSuiteFocusSpec,
+  reportToErrorHandler,
   runFieldValidation,
 } from '../utils/vest-runner';
 import {
@@ -204,6 +206,7 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly ngForm = inject(NgForm, { self: true });
   readonly #destroyRef = inject(DestroyRef);
   readonly #cdr = inject(ChangeDetectorRef);
+  readonly #errorHandler = inject(ErrorHandler);
   readonly #elementRef = inject<ElementRef<HTMLFormElement>>(ElementRef);
   readonly #configDebounceTime = inject(NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN);
   readonly #injectedFormContract = inject(NGX_FORM_CONTRACT, {
@@ -1321,7 +1324,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       const model = mergeValuesAndRawValues<T>(this.ngForm.form);
 
       // Targeted snapshot with candidate value injected at path
-      // mergeValuesAndRawValues already returns a deep clone (via structuredClone),
+      // mergeValuesAndRawValues already returns fresh plain objects and arrays,
       // so we can modify it directly without affecting the form state.
       const snapshot = model;
       setValueAtPath(snapshot as object, field, control.value);
@@ -1371,7 +1374,14 @@ export class FormDirective<T extends Record<string, unknown>> {
         }),
         // `runFieldValidation` already applies `take(1)` and `takeUntilDestroyed`,
         // so no additional terminal operators are needed here.
-        catchError(() => of({ vestInternalError: 'Validation failed' }))
+        // A suite that throws (e.g. reading `model.a.b` while `a` is undefined)
+        // fails closed: the field gets a generic error so the form cannot
+        // submit, and the original error goes to Angular's ErrorHandler so it
+        // is logged with its stack (and reaches a custom handler, if any).
+        catchError((error: unknown) => {
+          reportToErrorHandler(this.#errorHandler, error);
+          return of({ vestInternalError: 'Validation failed' });
+        })
       );
     };
   }

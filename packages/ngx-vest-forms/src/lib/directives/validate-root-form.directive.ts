@@ -4,12 +4,14 @@ import {
   DestroyRef,
   Directive,
   effect,
+  ErrorHandler,
   inject,
   Injector,
   input,
   isDevMode,
   signal,
   untracked,
+  WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -27,8 +29,14 @@ import {
   NGX_VEST_FORMS_DIAGNOSTICS,
 } from '../errors/error-catalog';
 import { scheduleMicrotask } from '../utils/destroy-scheduler';
+import { copyFormValue } from '../utils/form-utils';
 import type { NgxVestSuite } from '../utils/validation-suite';
-import { extractFieldErrors, runFieldValidation } from '../utils/vest-runner';
+import {
+  extractFieldErrors,
+  reportToErrorHandler,
+  runFieldValidation,
+} from '../utils/vest-runner';
+import { getFormSubmittedSignal } from './form-submitted-state';
 import { ValidationOptions } from './validation-options';
 
 /**
@@ -116,9 +124,19 @@ export class ValidateRootFormDirective<T>
 {
   readonly #injector = inject(Injector);
   readonly #destroyRef = inject(DestroyRef);
+  readonly #errorHandler = inject(ErrorHandler);
   readonly #lastControl = signal<NgForm | null>(null);
   validationOptions = input<ValidationOptions>({ debounceTime: 0 });
-  readonly #hasSubmitted = signal(false);
+  /** Bumped on every ngSubmit so the effect revalidates after a submit. */
+  readonly #submitCount = signal(0);
+  /**
+   * The form's shared submitted signal (set once NgForm is resolved). Tracked
+   * by the effect so `clearSubmittedState()` clears stale ROOT_FORM errors
+   * even when the model does not change.
+   */
+  readonly #sharedSubmitted = signal<WritableSignal<boolean> | null>(null);
+  /** Whether the last effect run had root validation active. */
+  #wasActive = false;
 
   readonly formValue = input<T | null>(null);
   readonly suite = input<NgxVestSuite<T> | null>(null);
@@ -137,34 +155,42 @@ export class ValidateRootFormDirective<T>
   );
 
   constructor() {
-    // Trigger validation when hasSubmitted or formValue changes
+    // Revalidate the root form when the model, the suite or the settings
+    // change, or when the form is submitted. Skips the run while root
+    // validation is inactive (directive off, or submit mode before submit),
+    // except for one last run after it turns inactive so stale ROOT_FORM
+    // errors are cleared.
     effect(() => {
-      // Track dependencies
-      this.#hasSubmitted();
+      this.#submitCount();
+      this.#sharedSubmitted()?.();
       this.formValue();
-
-      // Also track inputs that affect whether validation should run.
-      // These can be set after the first validation pass and we want the
-      // root form to re-evaluate once they become available.
       this.suite();
-      this.ngxValidateRootForm();
-      this.ngxValidateRootFormMode();
       this.validationOptions();
+      const enabled = this.ngxValidateRootForm();
+      const mode = this.ngxValidateRootFormMode() ?? 'submit';
 
-      // Trigger revalidation if form exists
-      // Use emitEvent: true so the form directive can update its errors
-      // Use untracked() to avoid making the effect reactive to lastControl changes
+      // untracked(): the effect must not re-run on lastControl changes.
       const ngForm = untracked(() => this.#lastControl());
-      if (ngForm?.control) {
-        // Defer to the next microtask so Angular has a chance to finish
-        // wiring up controls/groups (ngModel/ngModelGroup) on initial render.
-        // The scheduleMicrotask primitive auto-cancels if the directive is
-        // destroyed before the microtask fires.
-        scheduleMicrotask(
-          () => ngForm.control.updateValueAndValidity(),
-          this.#destroyRef
-        );
+      if (!ngForm?.control) {
+        return;
       }
+
+      const active = enabled && (mode === 'live' || ngForm.submitted);
+      const shouldRun = active || this.#wasActive;
+      this.#wasActive = active;
+      if (!shouldRun) {
+        return;
+      }
+
+      // Defer to the next microtask so Angular has a chance to finish
+      // wiring up controls/groups (ngModel/ngModelGroup) on initial render.
+      // The scheduleMicrotask primitive auto-cancels if the directive is
+      // destroyed before the microtask fires.
+      // emitEvent stays true so the form directive can update its errors.
+      scheduleMicrotask(
+        () => ngForm.control.updateValueAndValidity(),
+        this.#destroyRef
+      );
     });
   }
 
@@ -194,11 +220,17 @@ export class ValidateRootFormDirective<T>
       this.#destroyRef
     );
 
-    // Subscribe to form submission to set hasSubmitted flag
+    const sharedSubmitted = getFormSubmittedSignal(ngForm);
+    this.#sharedSubmitted.set(sharedSubmitted);
+
+    // Revalidate on submit. Submitted state itself is read from
+    // `ngForm.submitted`, so a form reset or `clearSubmittedState()` turns
+    // submit-mode root validation off again.
     ngForm.ngSubmit
       .pipe(
         tap(() => {
-          this.#hasSubmitted.set(true);
+          sharedSubmitted.set(true);
+          this.#submitCount.update((count) => count + 1);
         }),
         takeUntilDestroyed(this.#destroyRef)
       )
@@ -221,7 +253,7 @@ export class ValidateRootFormDirective<T>
     const mode = this.ngxValidateRootFormMode() ?? 'submit';
 
     // In 'submit' mode, skip validation until form is submitted
-    if (mode === 'submit' && !this.#hasSubmitted()) {
+    if (mode === 'submit' && !this.#lastControl()?.submitted) {
       return of(null);
     }
 
@@ -258,7 +290,7 @@ export class ValidateRootFormDirective<T>
       // A null/undefined model is normalised to an empty object so cross-field
       // root-form rules still evaluate (they must run precisely when fields
       // are missing — e.g. "at least one contact method required").
-      const mod = structuredClone(this.formValue() ?? ({} as T)) as T;
+      const mod = copyFormValue(this.formValue() ?? {}) as T;
 
       return runFieldValidation(
         suite,
@@ -270,7 +302,11 @@ export class ValidateRootFormDirective<T>
         map((result) => extractFieldErrors(result, field)),
         // `runFieldValidation` already applies `take(1)` and `takeUntilDestroyed`,
         // so no additional terminal operators are needed here.
-        catchError((err) => {
+        // A suite that throws fails open here (the root form stays valid,
+        // field-level validators still gate submit), but the original error
+        // always goes to Angular's ErrorHandler so it is never silent.
+        catchError((err: unknown) => {
+          reportToErrorHandler(this.#errorHandler, err);
           if (isDevMode()) {
             logDiagnostic(
               NGX_VEST_FORMS_DIAGNOSTICS.ROOT_FORM_VALIDATION_ERROR,

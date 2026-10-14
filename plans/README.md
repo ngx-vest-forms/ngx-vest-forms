@@ -82,7 +82,9 @@ Vetted during the audit; ask for plans for any of these:
   pristine branch (form.directive.ts:714-730).
 - **PERF-01** (perf, M): per-keystroke O(form-size) storm — 2×
   `structuredClone` per event, deep-equal in `formValueChange` + `formState`
-  + sync effect, full clone per async-validator run.
+  + sync effect, full clone per async-validator run. PR #261 replaces the
+  `structuredClone` with a plain-object/array copy (other values by
+  reference); the deep-equal and per-run copy remain.
 - **PERF-02** (perf, S): `mergeValuesAndRawValues` double-clones where one
   `structuredClone(getRawValue())` suffices (keep the `isUnsafePathSegment` guard). DONE in PR #259.
 - **PERF-03** (perf, S): `getControlPath` O(N) DFS per validation run;

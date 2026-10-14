@@ -167,23 +167,46 @@ function isPlainRecord(value: unknown): value is UnknownRecord {
 }
 
 /**
- * Deletes unsafe prototype-related own keys (`__proto__`, `prototype`,
- * `constructor`) from plain objects and arrays at every level, in place.
- * Other objects (Dates, Files, Maps, ...) are left alone, and circular
- * references are visited once.
+ * @internal
+ * Copies plain objects and arrays at every level and keeps every other value
+ * (Dates, Files, class instances, Moment/Luxon/Temporal values, functions) by
+ * reference, the same way Angular's own `form.value` holds them.
+ *
+ * Unlike `structuredClone`, this never throws on values that hold functions
+ * and never strips a class instance down to a plain object. Unsafe
+ * prototype-related keys (`__proto__`, `prototype`, `constructor`) are left
+ * out at every level, and circular references map to their copy.
  */
-function stripUnsafeKeys(value: unknown, seen = new WeakSet()): void {
-  if (!(Array.isArray(value) || isPlainRecord(value)) || seen.has(value)) {
-    return;
+export function copyFormValue(
+  value: unknown,
+  seen = new Map<object, unknown>()
+): unknown {
+  const isArray = Array.isArray(value);
+  if (!(isArray || isPlainRecord(value))) {
+    return value;
   }
-  seen.add(value);
+  const existing = seen.get(value);
+  if (existing !== undefined) {
+    return existing;
+  }
+  if (isArray) {
+    const copy: unknown[] = [];
+    seen.set(value, copy);
+    for (const item of value) {
+      copy.push(copyFormValue(item, seen));
+    }
+    return copy;
+  }
+  const copy: UnknownRecord = Object.create(
+    Object.getPrototypeOf(value) as object | null
+  ) as UnknownRecord;
+  seen.set(value, copy);
   for (const [key, child] of Object.entries(value)) {
-    if (isUnsafePathSegment(key)) {
-      Reflect.deleteProperty(value, key);
-    } else {
-      stripUnsafeKeys(child, seen);
+    if (!isUnsafePathSegment(key)) {
+      copy[key] = copyFormValue(child, seen);
     }
   }
+  return copy;
 }
 
 /**
@@ -199,17 +222,18 @@ function stripUnsafeKeys(value: unknown, seen = new WeakSet()): void {
  * `value`, and FormArrays leave them out and shift the remaining items. So the
  * raw value is the whole answer, with every item of a FormArray at its index.
  *
- * The result is a deep clone (`structuredClone`), so callers can mutate it
- * without touching form state.
+ * Plain objects and arrays in the result are fresh copies, so callers can
+ * mutate them without touching form state. Other values (Dates, class
+ * instances, date-library objects) are kept by reference, because
+ * `structuredClone` throws on values that hold functions and strips class
+ * prototypes.
  *
  * Security: Unsafe prototype-related keys (`__proto__`, `prototype`, `constructor`)
  * are removed at every level, including inside arrays.
  * @param form
  */
 export function mergeValuesAndRawValues<T>(form: FormGroup): T {
-  const value: T = structuredClone(form.getRawValue());
-  stripUnsafeKeys(value);
-  return value;
+  return copyFormValue(form.getRawValue()) as T;
 }
 
 function getStringArrayError(

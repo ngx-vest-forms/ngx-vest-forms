@@ -308,7 +308,7 @@ describe('mergeValuesAndRawValues function', () => {
     });
   });
 
-  describe('reference isolation (structuredClone behavior)', () => {
+  describe('reference isolation', () => {
     it('should not share references between original and merged values', () => {
       const originalObject = {
         shared: 'value',
@@ -344,6 +344,44 @@ describe('mergeValuesAndRawValues function', () => {
       expect(originalObject.shared).toBe('value');
       expect(originalObject.nested.prop).toBe('nested-value');
       expect(form.value.data?.shared).toBe('value');
+    });
+
+    it('should keep class instances and function-holding values by reference instead of throwing', () => {
+      class Money {
+        constructor(readonly cents: number) {}
+        format = () => `${this.cents / 100}`;
+      }
+      const amount = new Money(1250);
+      const date = new Date('2026-10-14T00:00:00Z');
+      // Moment-like value: a plain-looking object whose state holds functions.
+      const momentLike = Object.assign(
+        Object.create({ isMoment: () => true }),
+        {
+          _d: date,
+          _locale: { ordinal: (n: number) => `${n}th` },
+        }
+      ) as object;
+      const form = new FormGroup({
+        amount: new FormControl(amount),
+        date: new FormControl(date),
+        momentLike: new FormControl(momentLike),
+        nested: new FormGroup({ callback: new FormControl(() => 'x') }),
+      });
+
+      const merged = mergeValuesAndRawValues<{
+        amount: Money;
+        date: Date;
+        momentLike: object;
+        nested: { callback: () => string };
+      }>(form);
+
+      expect(merged.amount).toBe(amount);
+      expect(merged.amount).toBeInstanceOf(Money);
+      expect(merged.amount.format()).toBe('12.5');
+      expect(merged.date).toBe(date);
+      expect(merged.momentLike).toBe(momentLike);
+      expect(merged.nested.callback()).toBe('x');
+      expect(merged.nested).not.toBe(form.getRawValue().nested);
     });
 
     it('should handle complex nested structures with multiple disabled fields', () => {

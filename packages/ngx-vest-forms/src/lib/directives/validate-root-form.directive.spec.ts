@@ -1,5 +1,11 @@
 import { JsonPipe } from '@angular/common';
-import { ApplicationRef, Component, signal, ViewChild } from '@angular/core';
+import {
+  ApplicationRef,
+  Component,
+  ErrorHandler,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NgForm } from '@angular/forms';
 import { render, screen, waitFor } from '@testing-library/angular';
@@ -470,6 +476,121 @@ describe('ValidateRootFormDirective', () => {
       );
     });
 
+    it('should stop submit-mode root validation after the form is reset', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            ngxValidateRootForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+            (errorsChange)="errors.set($event)"
+          >
+            <input
+              name="password"
+              [ngModel]="model().password"
+              data-testid="password"
+            />
+            <input
+              name="confirmPassword"
+              [ngModel]="model().confirmPassword"
+              data-testid="confirm-password"
+            />
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
+            }
+            <button type="submit" data-testid="submit">Submit</button>
+            <button type="reset" data-testid="reset">Reset</button>
+          </form>
+        `,
+      })
+      class TestComponent {
+        ROOT_FORM = ROOT_FORM;
+        model = signal<Record<string, unknown>>({
+          password: 'password123',
+          confirmPassword: 'mismatch',
+        });
+        errors = signal<Record<string, string[]>>({});
+        suite = createTestValidationSuite;
+      }
+
+      await render(TestComponent);
+      await userEvent.click(screen.getByTestId('submit'));
+      await waitFor(() => {
+        expect(screen.queryByTestId('root-error')).toBeInTheDocument();
+      });
+
+      await userEvent.click(screen.getByTestId('reset'));
+      await waitFor(() => {
+        expect(screen.queryByTestId('root-error')).toBeNull();
+      });
+
+      // Mismatching values after the reset must wait for the next submit.
+      await userEvent.type(screen.getByTestId('password'), 'password123');
+      await userEvent.type(screen.getByTestId('confirm-password'), 'other');
+      await whenStable();
+      expect(screen.queryByTestId('root-error')).toBeNull();
+
+      await userEvent.click(screen.getByTestId('submit'));
+      await waitFor(() => {
+        expect(screen.queryByTestId('root-error')).toBeInTheDocument();
+      });
+    });
+
+    it('should clear submit-mode ROOT_FORM errors on clearSubmittedState()', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            ngxValidateRootForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+            (errorsChange)="errors.set($event)"
+            #vest="ngxVestForm"
+          >
+            <input name="password" [ngModel]="model().password" />
+            <input name="confirmPassword" [ngModel]="model().confirmPassword" />
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
+            }
+            <button type="submit" data-testid="submit">Submit</button>
+            <button
+              type="button"
+              data-testid="clear"
+              (click)="vest.clearSubmittedState()"
+            >
+              Clear
+            </button>
+          </form>
+        `,
+      })
+      class TestComponent {
+        ROOT_FORM = ROOT_FORM;
+        model = signal<Record<string, unknown>>({
+          password: 'password123',
+          confirmPassword: 'mismatch',
+        });
+        errors = signal<Record<string, string[]>>({});
+        suite = createTestValidationSuite;
+      }
+
+      await render(TestComponent);
+      await userEvent.click(screen.getByTestId('submit'));
+      await waitFor(() => {
+        expect(screen.queryByTestId('root-error')).toBeInTheDocument();
+      });
+
+      // No model change: only the submitted state is cleared.
+      await userEvent.click(screen.getByTestId('clear'));
+      await waitFor(() => {
+        expect(screen.queryByTestId('root-error')).toBeNull();
+      });
+    });
+
     it('should revalidate after submit when values change', async () => {
       @Component({
         imports: [NgxVestForms],
@@ -855,6 +976,131 @@ describe('ValidateRootFormDirective', () => {
     // root-form cross-field rules. These rules (e.g. "at least one contact
     // method required") are precisely the ones that must run when the model
     // is empty. The model is normalised to `{}` and the suite still runs.
+    it('reports a throwing suite to ErrorHandler and keeps the root form valid', async () => {
+      const suiteError = new Error('model.address is undefined');
+      const throwingRun = vi.fn(() => {
+        throw suiteError;
+      });
+      const suiteMock = {
+        only: () => ({ run: throwingRun }),
+        run: throwingRun,
+        get: vi.fn(),
+        reset: vi.fn(),
+        resetField: vi.fn(),
+        remove: vi.fn(),
+        subscribe: vi.fn(),
+        dump: vi.fn(),
+        resume: vi.fn(),
+      };
+      const handleError = vi.fn();
+
+      const { fixture } = await render(TestCreateAsyncValidatorHost, {
+        providers: [{ provide: ErrorHandler, useValue: { handleError } }],
+      });
+      const instance = fixture.componentInstance;
+      instance.suite.set(
+        suiteMock as unknown as NgxVestSuite<Record<string, unknown>>
+      );
+      await whenStable();
+      handleError.mockClear();
+
+      const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {
+        debounceTime: 0,
+      });
+      const result = await firstValueFrom(from(validator({} as never)));
+
+      expect(result).toBeNull();
+      expect(handleError).toHaveBeenCalledWith(suiteError);
+    });
+
+    it('still fails open when the ErrorHandler itself throws', async () => {
+      const throwingRun = vi.fn(() => {
+        throw new Error('suite failed');
+      });
+      const suiteMock = {
+        only: () => ({ run: throwingRun }),
+        run: throwingRun,
+        get: vi.fn(),
+        reset: vi.fn(),
+        resetField: vi.fn(),
+        remove: vi.fn(),
+        subscribe: vi.fn(),
+        dump: vi.fn(),
+        resume: vi.fn(),
+      };
+      const handleError = vi.fn(() => {
+        throw new Error('handler rethrows');
+      });
+
+      const { fixture } = await render(TestCreateAsyncValidatorHost, {
+        providers: [{ provide: ErrorHandler, useValue: { handleError } }],
+      });
+      const instance = fixture.componentInstance;
+      instance.suite.set(
+        suiteMock as unknown as NgxVestSuite<Record<string, unknown>>
+      );
+      await whenStable();
+      handleError.mockClear();
+
+      const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {
+        debounceTime: 0,
+      });
+      const result = await firstValueFrom(from(validator({} as never)));
+
+      expect(result).toBeNull();
+      expect(handleError).toHaveBeenCalled();
+    });
+
+    it('passes class instances and function-holding values to the suite without cloning them', async () => {
+      class Money {
+        constructor(readonly cents: number) {}
+        format = () => `${this.cents / 100}`;
+      }
+      const amount = new Money(1250);
+      const okResult = {
+        isPending: () => false,
+        isValid: () => true,
+        hasErrors: () => false,
+        hasWarnings: () => false,
+        isTested: () => true,
+        getErrors: (field?: string) => (field !== undefined ? [] : {}),
+        getWarnings: (field?: string) => (field !== undefined ? [] : {}),
+      };
+      const mockRun = vi.fn().mockReturnValue(okResult);
+      const suiteMock = {
+        only: () => ({ run: mockRun }),
+        run: mockRun,
+        get: () => okResult,
+        reset: vi.fn(),
+        resetField: vi.fn(),
+        remove: vi.fn(),
+        subscribe: vi.fn(),
+        dump: vi.fn(),
+        resume: vi.fn(),
+      };
+
+      const { fixture } = await render(TestCreateAsyncValidatorHost);
+      const instance = fixture.componentInstance;
+      instance.suite.set(
+        suiteMock as unknown as NgxVestSuite<Record<string, unknown>>
+      );
+      instance.model.set({ amount });
+      await whenStable();
+      mockRun.mockClear();
+
+      const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {
+        debounceTime: 0,
+      });
+      const result = await firstValueFrom(from(validator({} as never)));
+
+      expect(result).toBeNull();
+      // Field-level validators share the mock, so read the root validator's
+      // own call: the last one.
+      const runArg = mockRun.mock.calls.at(-1)?.[0] as { amount: Money };
+      expect(runArg.amount).toBe(amount);
+      expect(runArg.amount).toBeInstanceOf(Money);
+    });
+
     it('runs ROOT_FORM rules against an empty model when formValue is null', async () => {
       const errors: Record<string, string[]> = {
         [ROOT_FORM]: ['At least one contact method is required'],
