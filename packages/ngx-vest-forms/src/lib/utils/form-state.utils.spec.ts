@@ -85,7 +85,7 @@ describe('form-state.utils', () => {
         new Map([['password', originalMessages]])
       );
 
-      warnings.password?.push('Needs symbol');
+      warnings['password']?.push('Needs symbol');
 
       expect(originalMessages).toEqual(['Too weak']);
     });

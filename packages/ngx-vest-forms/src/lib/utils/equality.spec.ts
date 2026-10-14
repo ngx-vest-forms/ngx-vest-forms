@@ -274,11 +274,11 @@ describe('Equality Utils', () => {
         let cursor = root;
 
         for (let level = 1; level <= depth; level++) {
-          cursor.child = { level };
-          cursor = cursor.child as Record<string, unknown>;
+          cursor['child'] = { level };
+          cursor = cursor['child'] as Record<string, unknown>;
         }
 
-        cursor.value = leafValue;
+        cursor['value'] = leafValue;
         return root;
       };
 

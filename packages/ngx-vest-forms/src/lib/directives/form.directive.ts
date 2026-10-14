@@ -1206,7 +1206,8 @@ export class FormDirective<T extends Record<string, unknown>> {
    *
    * This clears all accumulated errors and warnings for the given field
    * without affecting other fields. Useful when a field's value is
-   * programmatically reset or cleared.
+   * programmatically reset or cleared. A pending async test for the field is
+   * cancelled, so its late result cannot bring the errors back (Vest >= 6.3.4).
    *
    * **What it does:**
    * 1. Calls Vest 6's `suite.resetField(field)` to clear accumulated validation state
@@ -1257,7 +1258,9 @@ export class FormDirective<T extends Record<string, unknown>> {
    * This permanently removes all validation history for the given field,
    * including errors, warnings, and test results. Unlike `resetField()`,
    * `remove()` is intended for fields that are being destroyed (e.g.,
-   * conditionally hidden via `@if`).
+   * conditionally hidden via `@if`). The field's pending async tests are
+   * dropped with it, so a late result cannot bring the field back
+   * (Vest >= 6.3.4).
    *
    * **What it does:**
    * 1. Calls Vest 6's `suite.remove(field)` to purge all test history for the field

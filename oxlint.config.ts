@@ -125,5 +125,13 @@ export default defineConfig({
         'promise/no-callback-in-promise': 'warn',
       },
     },
+    {
+      // Contract specs pass a failure message as expect()'s second
+      // argument; that message is what tells an upgrader what broke.
+      files: ['**/*.contract.spec.ts'],
+      rules: {
+        'vitest/valid-expect': ['error', { maxArgs: 2 }],
+      },
+    },
   ],
 });

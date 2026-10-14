@@ -31,14 +31,16 @@ and the **field list** if not given.
 - Async-test cancellation is **automatic** in Vest 6 via the per-test `signal`
   payload — no manual abort wiring. Destructure `signal` from the test context
   and forward it into the request. Callers do **not** pass an `AbortSignal` or
-  hooks into `suite.run()`; in Vest 6.3 `run()`/`runStatic()` take only the
-  model. Canonical pattern:
+  hooks into `suite.run()`; in Vest 6.3 `run()`/`runStatic()` have no such
+  parameter (args after the model are forwarded to the suite callback as-is).
+  Canonical pattern:
 
   ```ts
   test('email', 'Email is already taken', async ({ signal }) => {
     await check(model.email, { signal });
   });
   ```
+
 - Spec uses Vitest (`describe/it/expect`) and drives the suite with
   `suite.only('<field>').run(model)` asserting `hasErrors` / `getErrors` /
   `hasWarnings` / `getWarnings`.
