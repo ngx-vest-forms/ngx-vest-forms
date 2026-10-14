@@ -121,7 +121,10 @@ export class ValidateRootFormDirective<T>
   readonly #errorHandler = inject(ErrorHandler);
   readonly #lastControl = signal<NgForm | null>(null);
   validationOptions = input<ValidationOptions>({ debounceTime: 0 });
-  readonly #hasSubmitted = signal(false);
+  /** Bumped on every ngSubmit so the effect revalidates after a submit. */
+  readonly #submitCount = signal(0);
+  /** Whether the last effect run had root validation active. */
+  #wasActive = false;
 
   readonly formValue = input<T | null>(null);
   readonly suite = input<NgxVestSuite<T> | null>(null);
@@ -140,34 +143,41 @@ export class ValidateRootFormDirective<T>
   );
 
   constructor() {
-    // Trigger validation when hasSubmitted or formValue changes
+    // Revalidate the root form when the model, the suite or the settings
+    // change, or when the form is submitted. Skips the run while root
+    // validation is inactive (directive off, or submit mode before submit),
+    // except for one last run after it turns inactive so stale ROOT_FORM
+    // errors are cleared.
     effect(() => {
-      // Track dependencies
-      this.#hasSubmitted();
+      this.#submitCount();
       this.formValue();
-
-      // Also track inputs that affect whether validation should run.
-      // These can be set after the first validation pass and we want the
-      // root form to re-evaluate once they become available.
       this.suite();
-      this.ngxValidateRootForm();
-      this.ngxValidateRootFormMode();
       this.validationOptions();
+      const enabled = this.ngxValidateRootForm();
+      const mode = this.ngxValidateRootFormMode() ?? 'submit';
 
-      // Trigger revalidation if form exists
-      // Use emitEvent: true so the form directive can update its errors
-      // Use untracked() to avoid making the effect reactive to lastControl changes
+      // untracked(): the effect must not re-run on lastControl changes.
       const ngForm = untracked(() => this.#lastControl());
-      if (ngForm?.control) {
-        // Defer to the next microtask so Angular has a chance to finish
-        // wiring up controls/groups (ngModel/ngModelGroup) on initial render.
-        // The scheduleMicrotask primitive auto-cancels if the directive is
-        // destroyed before the microtask fires.
-        scheduleMicrotask(
-          () => ngForm.control.updateValueAndValidity(),
-          this.#destroyRef
-        );
+      if (!ngForm?.control) {
+        return;
       }
+
+      const active = enabled && (mode === 'live' || ngForm.submitted);
+      const shouldRun = active || this.#wasActive;
+      this.#wasActive = active;
+      if (!shouldRun) {
+        return;
+      }
+
+      // Defer to the next microtask so Angular has a chance to finish
+      // wiring up controls/groups (ngModel/ngModelGroup) on initial render.
+      // The scheduleMicrotask primitive auto-cancels if the directive is
+      // destroyed before the microtask fires.
+      // emitEvent stays true so the form directive can update its errors.
+      scheduleMicrotask(
+        () => ngForm.control.updateValueAndValidity(),
+        this.#destroyRef
+      );
     });
   }
 
@@ -197,11 +207,13 @@ export class ValidateRootFormDirective<T>
       this.#destroyRef
     );
 
-    // Subscribe to form submission to set hasSubmitted flag
+    // Revalidate on submit. Submitted state itself is read from
+    // `ngForm.submitted`, so a form reset or `clearSubmittedState()` turns
+    // submit-mode root validation off again.
     ngForm.ngSubmit
       .pipe(
         tap(() => {
-          this.#hasSubmitted.set(true);
+          this.#submitCount.update((count) => count + 1);
         }),
         takeUntilDestroyed(this.#destroyRef)
       )
@@ -224,7 +236,7 @@ export class ValidateRootFormDirective<T>
     const mode = this.ngxValidateRootFormMode() ?? 'submit';
 
     // In 'submit' mode, skip validation until form is submitted
-    if (mode === 'submit' && !this.#hasSubmitted()) {
+    if (mode === 'submit' && !this.#lastControl()?.submitted) {
       return of(null);
     }
 

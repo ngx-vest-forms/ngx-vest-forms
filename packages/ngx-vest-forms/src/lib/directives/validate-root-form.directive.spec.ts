@@ -476,6 +476,69 @@ describe('ValidateRootFormDirective', () => {
       );
     });
 
+    it('should stop submit-mode root validation after the form is reset', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            ngxValidateRootForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+            (errorsChange)="errors.set($event)"
+          >
+            <input
+              name="password"
+              [ngModel]="model().password"
+              data-testid="password"
+            />
+            <input
+              name="confirmPassword"
+              [ngModel]="model().confirmPassword"
+              data-testid="confirm-password"
+            />
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
+            }
+            <button type="submit" data-testid="submit">Submit</button>
+            <button type="reset" data-testid="reset">Reset</button>
+          </form>
+        `,
+      })
+      class TestComponent {
+        ROOT_FORM = ROOT_FORM;
+        model = signal<Record<string, unknown>>({
+          password: 'password123',
+          confirmPassword: 'mismatch',
+        });
+        errors = signal<Record<string, string[]>>({});
+        suite = createTestValidationSuite;
+      }
+
+      await render(TestComponent);
+      await userEvent.click(screen.getByTestId('submit'));
+      await waitFor(() => {
+        expect(screen.queryByTestId('root-error')).toBeInTheDocument();
+      });
+
+      await userEvent.click(screen.getByTestId('reset'));
+      await waitFor(() => {
+        expect(screen.queryByTestId('root-error')).toBeNull();
+      });
+
+      // Mismatching values after the reset must wait for the next submit.
+      await userEvent.type(screen.getByTestId('password'), 'password123');
+      await userEvent.type(screen.getByTestId('confirm-password'), 'other');
+      await whenStable();
+      expect(screen.queryByTestId('root-error')).toBeNull();
+
+      await userEvent.click(screen.getByTestId('submit'));
+      await waitFor(() => {
+        expect(screen.queryByTestId('root-error')).toBeInTheDocument();
+      });
+    });
+
     it('should revalidate after submit when values change', async () => {
       @Component({
         imports: [NgxVestForms],
