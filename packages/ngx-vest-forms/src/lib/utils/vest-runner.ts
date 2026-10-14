@@ -54,7 +54,10 @@ export type RunnableVestSuite<T> = {
  * and emit the resulting suite state exactly once.
  *
  * - Even at zero debounce the suite invocation is deferred by one task so
- *   superseded validators can be unsubscribed before the suite runs.
+ *   superseded validators can be unsubscribed before the suite runs, unless
+ *   `immediate` is set (the submit pass). Then the suite runs right away
+ *   and a result with no async tests still running is emitted synchronously,
+ *   so a synchronous suite never leaves the control PENDING.
  * - Vest 6.3 `run()` is always thenable (the result is a promise merged with
  *   the synchronous selectors). We emit the *resolved* value. Since Vest 6.3.4
  *   an older pending run resolves to the latest run's result; field verdicts
@@ -72,8 +75,16 @@ export function runFieldValidation<T>(
   focus: NgxSuiteFocusSpec,
   model: T,
   options: ValidationOptions,
-  destroyRef: DestroyRef
+  destroyRef: DestroyRef,
+  immediate = false
 ): Observable<NgxSuiteRunResult> {
+  if (immediate) {
+    return defer(() => runSuite(suite, focus, model, true)).pipe(
+      take(1),
+      takeUntilDestroyed(destroyRef)
+    );
+  }
+
   return defer(() => {
     // `timer(0)` (not `of(0)`) so that even at zero debounce the suite
     // invocation is deferred to the next task. That lets superseded validators
@@ -162,7 +173,8 @@ function isThenable(
 function runSuite<T>(
   suite: RunnableVestSuite<T>,
   focus: NgxSuiteFocusSpec,
-  model: T
+  model: T,
+  emitSettledSynchronously = false
 ): Observable<NgxSuiteRunResult> {
   let result: NgxSuiteRunResult;
 
@@ -176,6 +188,13 @@ function runSuite<T>(
 
   // A purely synchronous result (no `then`) is emitted directly.
   if (!isThenable(result)) {
+    return of(result);
+  }
+
+  // Immediate runs read a settled result's sync selectors now instead of
+  // waiting a microtask for the promise. They are read at once, before any
+  // later run can change the suite's state.
+  if (emitSettledSynchronously && !result.isPending()) {
     return of(result);
   }
 

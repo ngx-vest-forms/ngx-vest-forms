@@ -96,6 +96,7 @@ import {
 } from './field-path-resolver';
 import {
   getFormSubmittedSignal,
+  runSubmitValidation,
   setAngularFormSubmittedState,
 } from './form-submitted-state';
 import { ValidationOptions } from './validation-options';
@@ -579,6 +580,15 @@ export class FormDirective<T extends Record<string, unknown>> {
       .subscribe(() => {
         this.ngForm.form.markAllAsTouched();
         this.#blurTick.update((v) => v + 1);
+        // Run form-level validation (submit-mode `ngxValidateRootForm`) now.
+        // This subscription is made in the constructor, so it runs before
+        // the consumer's `(ngSubmit)` handler. That handler then sees the
+        // settled status for synchronous suites, or PENDING while async Vest
+        // tests run, instead of a stale VALID. Root-level only: field
+        // validators already ran on value changes.
+        if (this.ngForm.form.asyncValidator) {
+          runSubmitValidation(this.ngForm);
+        }
       });
 
     this.ngForm.ngSubmit

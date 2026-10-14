@@ -36,7 +36,10 @@ import {
   reportToErrorHandler,
   runFieldValidation,
 } from '../utils/vest-runner';
-import { getFormSubmittedSignal } from './form-submitted-state';
+import {
+  getFormSubmittedSignal,
+  isSubmitValidationPass,
+} from './form-submitted-state';
 import { ValidationOptions } from './validation-options';
 
 /**
@@ -137,6 +140,12 @@ export class ValidateRootFormDirective<T>
   readonly #sharedSubmitted = signal<WritableSignal<boolean> | null>(null);
   /** Whether the last effect run had root validation active. */
   #wasActive = false;
+  /**
+   * The model the submit pass validated, so the effect run that the same
+   * submit triggers can skip an identical second run (which would flash the
+   * form back to PENDING and clear the ROOT_FORM errors meanwhile).
+   */
+  #submitPassModel: { value: T | null } | null = null;
 
   readonly formValue = input<T | null>(null);
   readonly suite = input<NgxVestSuite<T> | null>(null);
@@ -178,7 +187,16 @@ export class ValidateRootFormDirective<T>
       const active = enabled && (mode === 'live' || ngForm.submitted);
       const shouldRun = active || this.#wasActive;
       this.#wasActive = active;
+      const submitPassModel = this.#submitPassModel;
+      this.#submitPassModel = null;
       if (!shouldRun) {
+        return;
+      }
+      if (
+        active &&
+        submitPassModel &&
+        submitPassModel.value === untracked(() => this.formValue())
+      ) {
         return;
       }
 
@@ -259,9 +277,17 @@ export class ValidateRootFormDirective<T>
 
     // Call the validator and return its Observable
     // Angular expects this to complete after emitting once
-    const validationResult = this.createAsyncValidator(
+    // On the submit pass (started by `ngxVestForm` before the consumer's
+    // `(ngSubmit)` handler) the suite runs right away, so the handler sees
+    // the settled status for synchronous rules.
+    const immediate = isSubmitValidationPass(this.#lastControl());
+    if (immediate) {
+      this.#submitPassModel = { value: this.formValue() };
+    }
+    const validationResult = this.#createValidator(
       ROOT_FORM,
-      this.validationOptions()
+      this.validationOptions(),
+      immediate
     )(control) as Observable<ValidationErrors | null>;
 
     return validationResult;
@@ -270,6 +296,14 @@ export class ValidateRootFormDirective<T>
   createAsyncValidator(
     field: typeof ROOT_FORM,
     validationOptions: ValidationOptions
+  ): AsyncValidatorFn {
+    return this.#createValidator(field, validationOptions, false);
+  }
+
+  #createValidator(
+    field: typeof ROOT_FORM,
+    validationOptions: ValidationOptions,
+    immediate: boolean
   ): AsyncValidatorFn {
     if (!this.suite()) {
       return () => of(null);
@@ -297,7 +331,8 @@ export class ValidateRootFormDirective<T>
         { only: field },
         mod,
         validationOptions,
-        this.#destroyRef
+        this.#destroyRef,
+        immediate
       ).pipe(
         map((result) => extractFieldErrors(result, field)),
         // `runFieldValidation` already applies `take(1)` and `takeUntilDestroyed`,

@@ -10,7 +10,7 @@ import { TestBed } from '@angular/core/testing';
 import { NgForm } from '@angular/forms';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { firstValueFrom, from } from 'rxjs';
+import { filter, firstValueFrom, from } from 'rxjs';
 import { create, enforce, test } from 'vest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ROOT_FORM } from '../constants';
@@ -79,6 +79,19 @@ const createMultiRootFormValidationSuite = create(
   }
 );
 
+/**
+ * Same password rule as above, but the ROOT_FORM test is async, so the
+ * submit pass stays PENDING until it settles.
+ */
+const createAsyncRootFormSuite = create(
+  (data: Record<string, unknown> = {}) => {
+    test(ROOT_FORM, 'Passwords must match', async () => {
+      await Promise.resolve();
+      enforce(data['confirmPassword']).equals(data['password']);
+    });
+  }
+);
+
 const whenStable = () => TestBed.inject(ApplicationRef).whenStable();
 
 describe('ValidateRootFormDirective', () => {
@@ -90,10 +103,12 @@ describe('ValidateRootFormDirective', () => {
   beforeEach(() => {
     createTestValidationSuite.reset();
     createMultiRootFormValidationSuite.reset();
+    createAsyncRootFormSuite.reset();
   });
   afterEach(() => {
     createTestValidationSuite.reset();
     createMultiRootFormValidationSuite.reset();
+    createAsyncRootFormSuite.reset();
   });
 
   describe('integration with getAllFormErrors', () => {
@@ -475,6 +490,78 @@ describe('ValidateRootFormDirective', () => {
         { timeout: 5000 }
       );
     });
+
+    it.each([
+      {
+        kind: 'synchronous',
+        suite: createTestValidationSuite,
+        expectedInHandler: 'INVALID',
+      },
+      {
+        kind: 'async',
+        suite: createAsyncRootFormSuite,
+        expectedInHandler: 'PENDING',
+      },
+    ])(
+      'gives the consumer (ngSubmit) handler a current status for a $kind suite',
+      async ({ suite, expectedInHandler }) => {
+        @Component({
+          imports: [NgxVestForms],
+          template: `
+            <form
+              ngxVestForm
+              ngxValidateRootForm
+              [suite]="suite"
+              [formValue]="model()"
+              (formValueChange)="model.set($event)"
+              (ngSubmit)="onSubmit()"
+              #form="ngForm"
+            >
+              <input name="password" [ngModel]="model().password" />
+              <input
+                name="confirmPassword"
+                [ngModel]="model().confirmPassword"
+              />
+              <button type="submit" data-testid="submit">Submit</button>
+            </form>
+          `,
+        })
+        class TestComponent {
+          @ViewChild('form') form!: NgForm;
+          model = signal<Record<string, unknown>>({
+            password: 'password123',
+            confirmPassword: 'mismatch',
+          });
+          suite = suite;
+          statusInHandler: string | null = null;
+          settledStatus: Promise<string> | null = null;
+
+          onSubmit(): void {
+            const control = this.form.control;
+            this.statusInHandler = control.status;
+            this.settledStatus = control.pending
+              ? firstValueFrom(
+                  control.statusChanges.pipe(
+                    filter((status) => status !== 'PENDING')
+                  )
+                )
+              : Promise.resolve(control.status);
+          }
+        }
+
+        const { fixture } = await render(TestComponent);
+        await whenStable();
+
+        await userEvent.click(screen.getByTestId('submit'));
+
+        const component = fixture.componentInstance;
+        expect(component.statusInHandler).toBe(expectedInHandler);
+        await expect(component.settledStatus).resolves.toBe('INVALID');
+        expect(
+          getAllFormErrors(component.form.control).errors[ROOT_FORM]
+        ).toEqual(['Passwords must match']);
+      }
+    );
 
     it('should stop submit-mode root validation after the form is reset', async () => {
       @Component({
