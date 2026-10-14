@@ -33,12 +33,12 @@ type FocusRunResult<T> = {
  * Structural subset of `NgxVestSuite` the runner depends on. Keeps the runner
  * decoupled from method names the call sites do not need (reset, dump, etc.).
  *
- * Vest 6.3 `run()` takes only the model — `suite.run(model)`. Field/group
- * focus is selected at the call site via `only(...)` / `focus(...)` before
- * `.run(model)`. Vest forwards any args after the model to the suite callback
- * unchanged; it has no per-run hooks/signal transport, so the runner passes
- * only the model and handles cancellation purely at the RxJS layer
- * (unsubscribe / `takeUntilDestroyed`).
+ * Vest's `run()` accepts the suite callback's parameter list and forwards
+ * every argument to it. ngx-vest-forms suites take only the model, so this
+ * runner always calls `suite.run(model)`. Field/group focus is selected at
+ * the call site via `only(...)` / `focus(...)` before `.run(model)`. Vest has
+ * no per-run hooks/signal transport, so cancellation is handled purely at the
+ * RxJS layer (unsubscribe / `takeUntilDestroyed`).
  */
 export type RunnableVestSuite<T> = {
   only(match: string | string[] | null | undefined): {
