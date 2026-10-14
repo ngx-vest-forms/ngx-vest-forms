@@ -1273,11 +1273,6 @@ test.describe('Purchase Form', () => {
     test('should display ROOT_FORM validation errors at form level', async ({
       page,
     }) => {
-      test.fixme(
-        true,
-        'This Brecht/Billiet/30 scenario is nondeterministic in E2E because the component intentionally auto-populates age/passwords; ROOT_FORM behavior is covered by unit tests.'
-      );
-
       await test.step('Trigger ROOT_FORM validation and verify display', async () => {
         const firstName = page.getByLabel(/first name/i);
         const lastName = page.getByLabel(/last name/i);
@@ -1287,7 +1282,7 @@ test.describe('Purchase Form', () => {
           .getByText(/brecht is not 30 anymore/i)
           .first();
 
-        // First trigger the demo's Brecht/Billiet autofill effect and let it settle.
+        // First trigger the demo's Brecht/Billiet autofill and let it settle.
         // Then override age to 30 so the ROOT_FORM rule is exercised deterministically,
         // even when this spec runs under heavier parallel browser load.
         await fillAndBlur(firstName, 'Brecht');
