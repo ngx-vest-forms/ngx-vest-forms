@@ -2,6 +2,7 @@ import { signal, WritableSignal } from '@angular/core';
 import { NgForm } from '@angular/forms';
 
 const formSubmittedSignals = new WeakMap<NgForm, WritableSignal<boolean>>();
+const formsInSubmitValidation = new WeakSet<NgForm>();
 
 type AngularSubmittedSignalHost = {
   submittedReactive?: WritableSignal<boolean>;
@@ -57,4 +58,23 @@ export function setAngularFormSubmittedState(
     }
     prototype = Object.getPrototypeOf(prototype);
   }
+}
+
+/**
+ * Re-runs the form's root-level validators as part of a submit. While this
+ * runs, {@link isSubmitValidationPass} returns true for the form, so a
+ * root-form validator can skip its usual one-task deferral and give the
+ * `(ngSubmit)` handler a settled status for synchronous suites.
+ */
+export function runSubmitValidation(ngForm: NgForm): void {
+  formsInSubmitValidation.add(ngForm);
+  try {
+    ngForm.form.updateValueAndValidity();
+  } finally {
+    formsInSubmitValidation.delete(ngForm);
+  }
+}
+
+export function isSubmitValidationPass(ngForm: NgForm | null): boolean {
+  return ngForm !== null && formsInSubmitValidation.has(ngForm);
 }

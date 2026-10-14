@@ -241,6 +241,21 @@ test(ROOT_FORM, 'Addresses cannot be the same', () => {
 - **Validation modes**:
   - `'submit'` (default): Validates only after form submission
   - `'live'`: Validates on every value change
+- **Checking validity in `(ngSubmit)`**: with `ngxVestForm` on the form, submit-mode root validation runs before your `(ngSubmit)` handler. For synchronous `ROOT_FORM` rules the form is already `INVALID` there. If the suite has async `ROOT_FORM` tests the form is `PENDING`, so wait for it to settle:
+  ```typescript
+  save(form: NgForm): void {
+    const control = form.control;
+    if (control.pending) {
+      control.statusChanges
+        .pipe(first((status) => status !== 'PENDING'))
+        .subscribe(() => this.save(form));
+      return;
+    }
+    if (control.invalid) return;
+    // submit the model
+  }
+  ```
+  Without `ngxVestForm`, submit-mode root validation only starts after the handler has run, so the handler cannot rely on `valid` for `ROOT_FORM` rules.
 - **Template display**: Show errors at form level (typically at top or bottom); expose the constant on the class first (`protected readonly ROOT_FORM = ROOT_FORM;`)
   ```html
   @if (errors()[ROOT_FORM]) {
