@@ -28,11 +28,11 @@ test.describe('Business Policy Form', () => {
     });
 
     await submitButton.click();
+    await expect(page.getByRole('region', { name: 'Errors' })).toBeVisible();
     await expect(
-      page.getByRole('region', { name: 'Errors' })
-    ).toBeVisible();
-    await expect(
-      page.getByRole('region', { name: 'Errors' }).getByText(/account type is required/i)
+      page
+        .getByRole('region', { name: 'Errors' })
+        .getByText(/account type is required/i)
     ).toBeVisible();
 
     await accountType.selectOption('business');
@@ -57,5 +57,43 @@ test.describe('Business Policy Form', () => {
       .filter({ hasText: /application submitted/i });
     await expect(successAlert).toBeVisible();
     await expect(successAlert).toContainText(/acme international b\.v\./i);
+  });
+
+  test('should show a ROOT_FORM policy error for a low revenue band and block submit', async ({
+    page,
+  }) => {
+    await page
+      .getByRole('combobox', { name: /account type/i })
+      .selectOption('business');
+    await page.getByRole('combobox', { name: /country/i }).selectOption('US');
+    await fillAndBlur(
+      page.getByLabel('Legal name', { exact: true }),
+      'Small Shop LLC'
+    );
+    await fillAndBlur(
+      page.getByLabel('Annual revenue', { exact: true }),
+      '40000'
+    );
+    await fillAndBlur(
+      page.getByLabel('Requested credit limit', { exact: true }),
+      '20000'
+    );
+    await page
+      .getByRole('combobox', { name: /payment terms \(days\)/i })
+      .selectOption('30');
+    await waitForValidationToSettle(page);
+
+    const policyPanel = page
+      .getByRole('status')
+      .filter({ hasText: /policy violations/i });
+    await expect(policyPanel).toContainText(
+      /credit limit exceeds policy for this revenue band/i
+    );
+
+    await page.getByRole('button', { name: /submit application/i }).click();
+    await expect(policyPanel).toBeVisible();
+    await expect(
+      page.getByRole('status').filter({ hasText: /application submitted/i })
+    ).toHaveCount(0);
   });
 });
