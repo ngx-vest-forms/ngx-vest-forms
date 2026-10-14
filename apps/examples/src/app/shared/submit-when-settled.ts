@@ -28,8 +28,10 @@ export function createSubmitWhenSettled(
   pending: () => boolean
 ): (decide: () => void) => void {
   const destroyRef = inject(DestroyRef);
+  // `toObservable` replays its last value on subscribe, which can be a stale
+  // `false` if validation went PENDING since; re-read the signal to be sure.
   const settled$ = toObservable(computed(pending)).pipe(
-    filter((isPending) => !isPending)
+    filter((isPending) => !isPending && !pending())
   );
   let waiting = false;
 
