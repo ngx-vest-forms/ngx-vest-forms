@@ -22,8 +22,8 @@ Demo**.
   for the form body.
 - `NgxVestForms` — template directives used by the form HTML.
 - `FormDirective<ZodSchemaDemoModel>` — accessed via `viewChild` to read
-  `formState()` and bind `(errorsChange)`.
-- `createFormFeedbackSignals` / `createEmptyFormState` — derive `formState`,
+  `formState()`.
+- `createFormFeedbackSignals` — derives `formState`,
   `warnings`, `validatedFields`, and `pending` for the sidebar state card.
 - `NgxVestSuite<T>` — typed suite contract.
 
@@ -32,8 +32,7 @@ Demo**.
 - `zod-schema-demo.validations.ts` — exported `zodFormSchema` (Zod) plus the
   separate Vest suite `zodSchemaDemoSuite`.
 - `zod-schema-demo.form.ts` / `.form.html` — the form body bound to the suite
-  and contract; tracks errors via the directive's `(errorsChange)` event for
-  more reactive updates.
+  and contract.
 - `zod-schema-demo.page.ts` / `.page.html` — page shell, title, sidebar
   explanation, and form state card.
 - `zod-schema-demo.content.ts` — typed `ExampleContent` rendered by

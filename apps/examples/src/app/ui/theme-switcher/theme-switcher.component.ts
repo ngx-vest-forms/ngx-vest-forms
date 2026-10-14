@@ -1,41 +1,17 @@
-import {
-  Component,
-  effect,
-  signal,
-} from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'ngx-theme-switcher',
-  imports: [],
   templateUrl: './theme-switcher.component.html',
-  styleUrls: ['./theme-switcher.component.scss'],
+  styleUrl: './theme-switcher.component.scss',
   host: { style: 'display: block;' },
 })
 export class ThemeSwitcherComponent {
-  protected readonly isDarkMode = signal<boolean>(this.getInitialTheme());
-
-  constructor() {
-    effect(() => {
-      this.applyTheme(this.isDarkMode());
-    });
-  }
+  readonly #theme = inject(ThemeService);
+  protected readonly isDarkMode = this.#theme.isDark;
 
   protected toggleTheme(): void {
-    this.isDarkMode.set(!this.isDarkMode());
-  }
-
-  private getInitialTheme(): boolean {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      return savedTheme === 'dark';
-    }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  }
-
-  private applyTheme(isDark: boolean): void {
-    const theme = isDark ? 'dark' : 'light';
-    document.documentElement.classList.toggle('dark', isDark);
-    document.body?.classList.toggle('dark', isDark);
-    localStorage.setItem('theme', theme);
+    this.#theme.toggle();
   }
 }

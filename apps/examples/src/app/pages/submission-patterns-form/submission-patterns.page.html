@@ -1,8 +1,5 @@
 <div class="page-container">
-  <ngx-page-title
-    title="Submission Patterns"
-    subtitle="Submit-time invalid handling, server-error messaging, success state, and retry — modelled distinctly."
-  />
+  <ngx-page-title />
 
   <ngx-intro-section title="Why this matters">
     <ngx-intro-item>
@@ -63,7 +60,11 @@
           Clear submitted state
         </button>
       </ngx-alert-panel>
-      } @if (state() === 'success') {
+      }
+
+      @let submissionState = state();
+      @switch (submissionState) {
+      @case ('success') {
       <ngx-alert-panel tone="success" title="Account created">
         <p>
           Your account was created with id
@@ -73,7 +74,8 @@
           Create another
         </button>
       </ngx-alert-panel>
-      } @if (state() === 'server-error') {
+      }
+      @case ('server-error') {
       <!-- Genuine submission failure from the server: assertive is appropriate. -->
       <ngx-alert-panel
         tone="error"
@@ -85,6 +87,10 @@
           Retry
         </button>
       </ngx-alert-panel>
+      }
+      @case ('editing')
+      @case ('submitting') {}
+      @default never;
       }
 
       <ngx-card

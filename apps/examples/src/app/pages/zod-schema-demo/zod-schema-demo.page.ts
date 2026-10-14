@@ -2,7 +2,10 @@ import { Component, signal } from '@angular/core';
 import { ZodSchemaDemoModel } from '../../models/zod-schema-demo.model';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
-import { IntroItemComponent, IntroSectionComponent } from '../../ui/intro-section';
+import {
+  IntroItemComponent,
+  IntroSectionComponent,
+} from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { zodSchemaContent } from './zod-schema-demo.content';
 import { ZodSchemaDemoFormBody } from './zod-schema-demo.form';
@@ -19,7 +22,7 @@ import { zodSchemaDemoSuite } from './zod-schema-demo.validations';
     ZodSchemaDemoFormBody,
   ],
   templateUrl: './zod-schema-demo.page.html',
-  styleUrls: ['./zod-schema-demo.page.scss'],
+  styleUrl: './zod-schema-demo.page.scss',
 })
 export class ZodSchemaDemoPageComponent {
   protected readonly formValue = signal<ZodSchemaDemoModel>({});

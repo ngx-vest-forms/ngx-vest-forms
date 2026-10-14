@@ -34,7 +34,8 @@
     </select>
   </ngx-control-wrapper>
 
-  @if (formValue().deliveryMode === 'shipment') {
+  @switch (formValue().deliveryMode) {
+  @case ('shipment') {
   <ngx-control-wrapper class="form-field">
     <label for="shippingAddress" class="label-text">Shipping address</label>
     <input
@@ -47,7 +48,8 @@
       placeholder="123 Analytical Engine Way"
     />
   </ngx-control-wrapper>
-  } @else if (formValue().deliveryMode === 'digital') {
+  }
+  @case ('digital') {
   <ngx-control-wrapper class="form-field">
     <label for="deliveryEmail" class="label-text">Delivery email</label>
     <input
@@ -61,12 +63,14 @@
       placeholder="ada@example.com"
     />
   </ngx-control-wrapper>
-  } @else {
+  }
+  @default {
   <div
     class="rounded-xl border border-dashed border-sky-300 bg-sky-50/80 px-4 py-3 text-sm text-sky-900 dark:border-sky-700 dark:bg-sky-950/40 dark:text-sky-100"
   >
     No extra delivery field is required for pickup orders.
   </div>
+  }
   }
 
   <div class="flex justify-end gap-3 pt-2">

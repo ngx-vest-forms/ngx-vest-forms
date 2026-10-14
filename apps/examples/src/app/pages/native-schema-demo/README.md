@@ -10,7 +10,9 @@ reaching for an external schema library. The schema is built with Vest's own
 `enforce.isNumber`) and passed directly as the second argument to `create()`:
 
 ```ts
-create((model) => { /* test() rules */ }, nativeVestSchema);
+create((model) => {
+  /* test() rules */
+}, nativeVestSchema);
 ```
 
 The schema keeps the model structurally safe and typed, while field-level
@@ -27,7 +29,7 @@ from the suite.
   wrappers) used by the form HTML.
 - `FormDirective<NativeSchemaDemoModel>` — accessed via `viewChild` to read
   `formState()`.
-- `createFormFeedbackSignals` / `createEmptyFormState` — derive `formState`,
+- `createFormFeedbackSignals` — derives `formState`,
   `warnings`, `validatedFields`, and `pending` for the sidebar state card.
 - `NgxVestSuite<T>` — typed suite contract.
 

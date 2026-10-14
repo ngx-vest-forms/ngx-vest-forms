@@ -1,13 +1,13 @@
 import {
+  afterRenderEffect,
   Component,
-  effect,
+  DestroyRef,
   ElementRef,
   inject,
   signal,
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Title } from '@angular/platform-browser';
 import {
   NavigationEnd,
   Router,
@@ -30,7 +30,7 @@ import { ThemeSwitcherComponent } from './ui/theme-switcher/theme-switcher.compo
   selector: 'ngx-root',
   imports: [RouterLink, RouterLinkActive, RouterOutlet, ThemeSwitcherComponent],
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss'],
+  styleUrl: './app.component.scss',
 })
 export class AppComponent {
   protected readonly navGroups = buildNavGroups();
@@ -88,36 +88,31 @@ export class AppComponent {
   private wasOpen = false;
 
   constructor() {
-    const router = inject(Router);
-    const titleService = inject(Title);
-
-    // Close the mobile drawer and update the document title whenever navigation completes.
-    router.events
-      .pipe(
+    // Close the mobile drawer whenever navigation completes. The tab title
+    // comes from each route's `title` via `ExampleTitleStrategy`.
+    inject(Router)
+      .events.pipe(
         filter((event) => event instanceof NavigationEnd),
         takeUntilDestroyed()
       )
-      .subscribe(() => {
-        this.drawerOpen.set(false);
-        const routeData = router.routerState.snapshot.root.firstChild?.data;
-        const pageTitle = routeData?.['title'] as string | undefined;
-        titleService.setTitle(
-          pageTitle ? `${pageTitle} | ngx-vest-forms` : 'ngx-vest-forms Examples'
-        );
-      });
+      .subscribe(() => this.drawerOpen.set(false));
 
     const media = globalThis.matchMedia?.('(min-width: 1024px)');
     if (media) {
       this.isDesktop.set(media.matches);
-      media.addEventListener('change', (event) =>
-        this.isDesktop.set(event.matches)
+      const onChange = (event: MediaQueryListEvent): void =>
+        this.isDesktop.set(event.matches);
+      media.addEventListener('change', onChange);
+      inject(DestroyRef).onDestroy(() =>
+        media.removeEventListener('change', onChange)
       );
     }
 
     // Mobile drawer focus management: move focus into the drawer on open,
     // return it to the toggle on close. Skipped entirely at desktop where the
-    // sidebar is persistent.
-    effect(() => {
+    // sidebar is persistent. Runs after render, so the drawer's `[inert]`
+    // binding is already updated and focus is not refused.
+    afterRenderEffect(() => {
       const open = this.drawerOpen();
       if (this.isDesktop()) {
         this.wasOpen = open;

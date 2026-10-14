@@ -1,13 +1,5 @@
+import { Component, input, output, viewChild } from '@angular/core';
 import {
-  Component,
-  computed,
-  input,
-  output,
-  signal,
-  viewChild,
-} from '@angular/core';
-import {
-  createEmptyFormState,
   createFormFeedbackSignals,
   FormDirective,
   NgxVestForms,
@@ -37,14 +29,7 @@ export class NativeSchemaDemoFormBody {
     read: FormDirective<NativeSchemaDemoModel>,
   });
 
-  protected readonly currentErrors = signal<Record<string, string[]>>({});
-  readonly feedback = createFormFeedbackSignals(this.vestForm, {
-    formState: computed(() => {
-      const state = this.vestForm()?.formState();
-      if (!state) return createEmptyFormState<NativeSchemaDemoModel>();
-      return { ...state, errors: this.currentErrors() };
-    }),
-  });
+  readonly feedback = createFormFeedbackSignals(this.vestForm);
 
   protected onSubmit(): void {
     this.submitted.emit();

@@ -1,8 +1,4 @@
-import {
-  Component,
-  computed,
-  input,
-} from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 
 import { NgxVestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 import { AddressModel } from '../../models/address.model';
@@ -13,7 +9,6 @@ let nextAddressInstanceId = 0;
   selector: 'ngx-address',
   imports: [NgxVestForms],
   templateUrl: './address.component.html',
-  styleUrls: ['./address.component.scss'],
   viewProviders: [vestFormsViewProviders],
   host: { style: 'display: block;' },
 })

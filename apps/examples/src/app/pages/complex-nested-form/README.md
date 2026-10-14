@@ -23,13 +23,14 @@ piece independently understandable and testable.
   `input()` for the member value and an `idPrefix`. It mirrors
   `ngx-address` exactly.
 - **Repeatable rows.** `teamMembers` is a `Record<string, TeamMemberModel>`
-  with contiguous numeric keys. Add/remove read the values as an array,
-  mutate, then `arrayToObject()` back — the canonical purchase-form pattern.
-  Handlers emit `(formValueChange)` immutably.
-- **Stable, deterministic keys.** Keys are a pure function of the current
-  model, so the stateless Vest suite re-keys to match the rendered
-  `ngModelGroup` names every run: validation refreshes correctly after a
-  structural change and a removed row's tests disappear with it.
+  keyed by a row id. Add puts a new row under a fresh, never-reused numeric
+  id; remove deletes one key and leaves the others alone. Handlers emit
+  `(formValueChange)` immutably.
+- **Stable keys.** A row keeps its id for as long as it exists, so its
+  `ngModelGroup` name, touched state and errors stay with it when an earlier
+  row is removed. The stateless Vest suite reads the current keys every run,
+  so a removed row's tests disappear with it. Ids are numeric strings so the
+  form contract's single `'0'` entry covers every row.
 - **Round-trip on submit.** The page converts `teamMembers` back to a real
   array with `objectToArray(value, ['teamMembers'])` — the JSON shape you'd
   POST to a backend — and shows it in a payload card.
@@ -41,21 +42,21 @@ piece independently understandable and testable.
 ## Public API used
 
 `NgxVestForms`, `vestFormsViewProviders`, `FormDirective`,
-`provideFormContract`, `createFormFeedbackSignals`, `arrayToObject`,
+`provideFormContract`, `createFormFeedbackSignals`,
 `objectToArray`, `NgxVestSuite`, `NgxDeepPartial`, `NgxDeepRequired`,
 `ROOT_FORM`. Vest primitives (`create`, `test`, `enforce`, `warn`) come
 from `vest`.
 
 ## Key files
 
-| File | Responsibility |
-| --- | --- |
-| `complex-nested.page.ts` / `.html` | Page: owns formValue + add/remove + suite |
-| `complex-nested.form.ts` / `.html` | Form body: form tree + repeatable rows |
-| `team-member.component.ts` / `.html` | One member's fields (reusable child) |
-| `complex-nested.validations.ts` | Vest suite (testable in isolation) |
-| `../../models/complex-nested.model.ts` | Model + contract |
-| `complex-nested.content.ts` | "What this demonstrates / learn" cards |
+| File                                   | Responsibility                            |
+| -------------------------------------- | ----------------------------------------- |
+| `complex-nested.page.ts` / `.html`     | Page: owns formValue + add/remove + suite |
+| `complex-nested.form.ts` / `.html`     | Form body: form tree + repeatable rows    |
+| `team-member.component.ts` / `.html`   | One member's fields (reusable child)      |
+| `complex-nested.validations.ts`        | Vest suite (testable in isolation)        |
+| `../../models/complex-nested.model.ts` | Model + contract                          |
+| `complex-nested.content.ts`            | "What this demonstrates / learn" cards    |
 
 ## Behavior
 

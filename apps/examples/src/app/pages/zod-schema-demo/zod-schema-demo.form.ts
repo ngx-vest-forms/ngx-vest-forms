@@ -1,13 +1,5 @@
+import { Component, input, output, viewChild } from '@angular/core';
 import {
-  Component,
-  computed,
-  input,
-  output,
-  signal,
-  viewChild,
-} from '@angular/core';
-import {
-  createEmptyFormState,
   createFormFeedbackSignals,
   FormDirective,
   NgxVestForms,
@@ -37,19 +29,7 @@ export class ZodSchemaDemoFormBody {
     read: FormDirective<ZodSchemaDemoModel>,
   });
 
-  /**
-   * Errors updated via the directive's (errorsChange) event binding.
-   * The event fires on *every* StatusChangeEvent, making it more reactive
-   * than formState.errors when the form's overall status stays the same.
-   */
-  protected readonly currentErrors = signal<Record<string, string[]>>({});
-  readonly feedback = createFormFeedbackSignals(this.vestForm, {
-    formState: computed(() => {
-      const state = this.vestForm()?.formState();
-      if (!state) return createEmptyFormState<ZodSchemaDemoModel>();
-      return { ...state, errors: this.currentErrors() };
-    }),
-  });
+  readonly feedback = createFormFeedbackSignals(this.vestForm);
 
   protected onSubmit(): void {
     this.submitted.emit();

@@ -1,15 +1,11 @@
-import {
-  Component,
-  input,
-  output,
-  viewChild,
-} from '@angular/core';
+import { Component, input, output, viewChild } from '@angular/core';
 import {
   NgxFirstInvalidOptions,
   NgxValidationConfig,
   NgxVestSuite,
 } from 'ngx-vest-forms';
 import {
+  WizardStep,
   WizardStep1Model,
   WizardStep2Model,
   WizardStep3Model,
@@ -28,7 +24,7 @@ import { WizardStep3FormComponent } from './wizard-step3.form';
   templateUrl: './wizard.form.html',
 })
 export class WizardFormBodyComponent {
-  readonly currentStep = input.required<number>();
+  readonly currentStep = input.required<WizardStep>();
 
   readonly isSubmitting = input(false);
 
@@ -61,7 +57,7 @@ export class WizardFormBodyComponent {
   readonly step2ErrorsChange = output<Record<string, string[]>>();
   readonly step3ErrorsChange = output<Record<string, string[]>>();
 
-  readonly goToStep = output<number>();
+  readonly goToStep = output<WizardStep>();
   readonly previousStep = output();
   readonly step1Submit = output();
   readonly step2Submit = output();
@@ -72,7 +68,7 @@ export class WizardFormBodyComponent {
   private readonly step2Form = viewChild(WizardStep2FormComponent);
   private readonly step3Form = viewChild(WizardStep3FormComponent);
 
-  protected emitGoToStep(step: number): void {
+  protected emitGoToStep(step: WizardStep): void {
     this.goToStep.emit(step);
   }
 

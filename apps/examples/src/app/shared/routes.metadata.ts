@@ -36,9 +36,9 @@ export type ExampleRouteMeta = {
   readonly path: string;
   /** Short label shown in the categorized nav. */
   readonly label: string;
-  /** Page `<h1>` rendered via `ngx-page-title`. */
+  /** Route title: the page `<h1>` (via `ngx-page-title`) and the tab title. */
   readonly title: string;
-  /** Page subtitle rendered via `ngx-page-title`. */
+  /** Page subtitle rendered via `ngx-page-title` from the route data. */
   readonly subtitle: string;
   /** Category bucket in the nav. */
   readonly category: ExampleCategory;
@@ -344,7 +344,8 @@ export function toAppRoutes(): Routes {
     ...EXAMPLE_ROUTES.map((route) => ({
       path: route.path,
       loadComponent: route.loadComponent,
-      data: { title: route.title, subtitle: route.subtitle },
+      title: route.title,
+      data: { subtitle: route.subtitle },
     })),
     {
       path: '**',

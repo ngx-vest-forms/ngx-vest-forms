@@ -1,8 +1,4 @@
-import {
-  Component,
-  forwardRef,
-  signal,
-} from '@angular/core';
+import { Component, forwardRef, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 let nextId = 0;
@@ -26,7 +22,9 @@ let nextId = 0;
       class="flex items-center gap-1"
       (focusout)="onBlur()"
     >
+      @let shown = hovered() ?? value() ?? 0;
       @for (star of stars; track star) {
+        @let filled = star <= shown;
         <button
           type="button"
           role="radio"
@@ -38,15 +36,13 @@ let nextId = 0;
           (click)="select(star)"
           (keydown)="onKeydown($event, star)"
           class="focus-visible:ring-primary-500 rounded p-1 text-2xl leading-none transition-colors focus:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
-          [class.text-primary-500]="star <= (hovered() ?? value() ?? 0)"
-          [class.text-gray-300]="star > (hovered() ?? value() ?? 0)"
-          [class.dark:text-gray-600]="star > (hovered() ?? value() ?? 0)"
+          [class.text-primary-500]="filled"
+          [class.text-gray-300]="!filled"
+          [class.dark:text-gray-600]="!filled"
           (mouseenter)="!disabled() && hovered.set(star)"
           (mouseleave)="hovered.set(null)"
         >
-          <span aria-hidden="true">{{
-            star <= (hovered() ?? value() ?? 0) ? '★' : '☆'
-          }}</span>
+          <span aria-hidden="true">{{ filled ? '★' : '☆' }}</span>
         </button>
       }
 

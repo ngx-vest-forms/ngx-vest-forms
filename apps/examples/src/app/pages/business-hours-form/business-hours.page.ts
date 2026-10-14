@@ -1,9 +1,4 @@
-import {
-  Component,
-  computed,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, signal, viewChild } from '@angular/core';
 import { createValidationConfig, ROOT_FORM } from 'ngx-vest-forms';
 import {
   BusinessHoursFormModel,
@@ -12,7 +7,10 @@ import {
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
-import { IntroItemComponent, IntroSectionComponent } from '../../ui/intro-section';
+import {
+  IntroItemComponent,
+  IntroSectionComponent,
+} from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { businessHoursContent } from './business-hours.content';
 import { BusinessHoursFormBody } from './business-hours.form';
@@ -31,7 +29,6 @@ import { BusinessHoursMap } from './ui/business-hours/business-hours.component';
     ExampleCardsComponent,
   ],
   templateUrl: './business-hours.page.html',
-  styleUrls: ['./business-hours.page.scss'],
 })
 export class BusinessHoursPageComponent {
   protected readonly feedback = computed(() => this.formBody()?.feedback);
@@ -54,11 +51,9 @@ export class BusinessHoursPageComponent {
       .bidirectional('businessHours.addValue.from', 'businessHours.addValue.to')
       .build();
 
-  /** Returns business hours values with proper typing for the child component */
-  protected getBusinessHoursValues(): BusinessHoursMap {
-    const values = this.formValue().businessHours?.values;
-    if (!values) return {};
-
+  /** Business hours values with proper typing for the child component */
+  protected readonly businessHoursValues = computed(() => {
+    const values = this.formValue().businessHours?.values ?? {};
     // Filter out any undefined values from the partial form model
     const result: BusinessHoursMap = {};
     for (const [key, value] of Object.entries(values)) {
@@ -67,7 +62,7 @@ export class BusinessHoursPageComponent {
       }
     }
     return result;
-  }
+  });
 
   /**
    * Handles structural changes (add/remove) from BusinessHoursComponent.

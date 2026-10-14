@@ -56,6 +56,9 @@ export const wizardStep3Contract: NgxDeepRequired<WizardStep3Model> = {
   comments: '',
 };
 
+/** The wizard's steps. A union, so `@switch` and `switch` can be exhaustive. */
+export type WizardStep = 1 | 2 | 3;
+
 /**
  * Combined wizard data for final submission
  */

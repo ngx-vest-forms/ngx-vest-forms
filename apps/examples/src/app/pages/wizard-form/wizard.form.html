@@ -1,4 +1,6 @@
-@if (currentStep() === 1) {
+@let step = currentStep();
+@switch (step) {
+@case (1) {
 <ngx-wizard-step1-form
   [data]="step1Data()"
   [suite]="step1Suite()"
@@ -8,7 +10,8 @@
   (errorsChange)="step1ErrorsChange.emit($event)"
   (stepSubmit)="emitStep1Submit()"
 />
-} @if (currentStep() === 2) {
+}
+@case (2) {
 <ngx-wizard-step2-form
   [data]="step2Data()"
   [suite]="step2Suite()"
@@ -19,7 +22,8 @@
   (previous)="emitPreviousStep()"
   (stepSubmit)="emitStep2Submit()"
 />
-} @if (currentStep() === 3) {
+}
+@case (3) {
 <ngx-wizard-step3-form
   [step1Data]="step1Data()"
   [step2Data]="step2Data()"
@@ -34,4 +38,6 @@
   (stepSubmit)="emitStep3Submit()"
   (submitAll)="emitSubmitAll()"
 />
+}
+@default never;
 }

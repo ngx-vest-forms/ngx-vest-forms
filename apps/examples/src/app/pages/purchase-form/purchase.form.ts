@@ -2,7 +2,6 @@ import { HttpErrorResponse, httpResource } from '@angular/common/http';
 import {
   Component,
   computed,
-  DestroyRef,
   effect,
   inject,
   linkedSignal,
@@ -11,8 +10,7 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { filter, take } from 'rxjs';
+import { rxResource } from '@angular/core/rxjs-interop';
 
 import {
   clearFields,
@@ -31,6 +29,7 @@ import {
   purchaseFormContract,
   PurchaseFormModel,
 } from '../../models/purchase-form.model';
+import { createSubmitWhenSettled } from '../../shared/submit-when-settled';
 import { AddressComponent } from '../../ui/address/address.component';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
@@ -56,11 +55,7 @@ type FetchErrorNotice = {
 };
 
 export type FetchErrorScenario =
-  | 'random'
-  | 'not-found'
-  | 'unauthorized'
-  | 'server-error'
-  | 'network-error';
+  'random' | 'not-found' | 'unauthorized' | 'server-error' | 'network-error';
 
 type FetchRequest = {
   personId: string;
@@ -95,19 +90,24 @@ export class PurchaseForm {
   protected readonly userIdValidationOptions: ValidationOptions = {
     debounceTime: this.validationDebouncePresets.async,
   };
-  private readonly destroyRef = inject(DestroyRef);
   private readonly swapiService = inject(SwapiService);
   private readonly productService = inject(ProductService);
-  readonly products = signal<Product[]>([]);
+
+  private readonly productsResource = rxResource({
+    stream: () => this.productService.getAll(),
+  });
+  readonly products = computed<Product[]>(() =>
+    this.productsResource.hasValue() ? this.productsResource.value() : []
+  );
 
   private readonly vestForm =
     viewChild<FormDirective<PurchaseFormModel>>('vestForm');
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
-  /** Emits whenever async validation is idle (not `PENDING`). */
-  private readonly validationSettled$ = toObservable(
-    this.feedback.pending
-  ).pipe(filter((pending) => !pending));
+  /** Waits for the async userId check to settle before deciding. */
+  readonly #submitWhenSettled = createSubmitWhenSettled(() =>
+    this.feedback.pending()
+  );
 
   protected readonly formValue = signal<PurchaseFormModel>(
     initialPurchaseFormValue
@@ -154,16 +154,12 @@ export class PurchaseForm {
         return undefined;
       }
 
-      const requestUrl = new URL(
-        `/api/people/${request.personId}`,
-        globalThis.location.origin
-      );
-
-      if (request.errorScenario) {
-        requestUrl.searchParams.set('errorScenario', request.errorScenario);
-      }
-
-      return `${requestUrl.pathname}${requestUrl.search}`;
+      return {
+        url: `/api/people/${request.personId}`,
+        params: request.errorScenario
+          ? { errorScenario: request.errorScenario }
+          : undefined,
+      };
     },
     {
       parse: (data) => lukeApiResponseSchema.parse(data),
@@ -236,54 +232,6 @@ export class PurchaseForm {
   });
 
   constructor() {
-    this.productService
-      .getAll()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((products) => {
-        this.products.set(products);
-      });
-
-    const firstName = computed(() => this.formValue().firstName);
-    const lastName = computed(() => this.formValue().lastName);
-
-    // Auto-fill when first name is "Brecht".
-    // Reads are tracked (firstName, lastName); writes use untracked to avoid
-    // a circular dependency on formValue which would cause an infinite loop.
-    effect(() => {
-      const fn = firstName();
-      const ln = lastName();
-
-      untracked(() => {
-        if (fn === 'Brecht') {
-          this.updateFormValue((val) => ({ ...val, gender: 'male' }));
-        }
-
-        if (fn === 'Brecht' && ln === 'Billiet') {
-          this.updateFormValue((val) => {
-            let didUpdate = false;
-            const next = { ...val };
-
-            if (next.age === undefined || next.age === null) {
-              next.age = 35;
-              didUpdate = true;
-            }
-
-            const hasPassword = !!next.passwords?.password;
-            const hasConfirmPassword = !!next.passwords?.confirmPassword;
-            if (!hasPassword && !hasConfirmPassword) {
-              next.passwords = {
-                password: 'Test1234',
-                confirmPassword: 'Test12345',
-              };
-              didUpdate = true;
-            }
-
-            return didUpdate ? next : val;
-          });
-        }
-      });
-    });
-
     // Apply fetched Luke data to form.
     // Only tracks lukeData(); writes use untracked to avoid a circular
     // dependency on formValue (which would re-trigger this effect endlessly).
@@ -374,8 +322,43 @@ export class PurchaseForm {
       this.fetchErrorNoticeSignal.set(undefined);
     }
 
-    this.formValue.set(value);
-    this.formValueChange.emit(value);
+    const previous = this.formValue();
+    const nameChanged =
+      value.firstName !== previous.firstName ||
+      value.lastName !== previous.lastName;
+    const next = nameChanged ? this.applyNameAutofill(value) : value;
+
+    this.formValue.set(next);
+    this.formValueChange.emit(next);
+  }
+
+  /**
+   * Demo autofill, run when the user edits a name: "Brecht" sets the gender,
+   * "Brecht Billiet" also fills an empty age and password pair (with a
+   * deliberate confirm mismatch, to show the bidirectional password rule).
+   * It runs in the change handler rather than an `effect()`, so the model is
+   * written once per edit.
+   */
+  private applyNameAutofill(value: PurchaseFormModel): PurchaseFormModel {
+    if (value.firstName !== 'Brecht') {
+      return value;
+    }
+
+    const next: PurchaseFormModel = { ...value, gender: 'male' };
+
+    if (value.lastName === 'Billiet') {
+      if (next.age === undefined || next.age === null) {
+        next.age = 35;
+      }
+      if (!next.passwords?.password && !next.passwords?.confirmPassword) {
+        next.passwords = {
+          password: 'Test1234',
+          confirmPassword: 'Test12345',
+        };
+      }
+    }
+
+    return next;
   }
 
   protected onPhoneNumbersChange(values: Record<string, string>): void {
@@ -388,35 +371,17 @@ export class PurchaseForm {
     }));
   }
 
-  /** In-flight guard: one queued submit at a time while validation settles. */
-  private readonly submitting = signal(false);
-
   protected onSubmit(): void {
-    // The userId availability check (and the submit-mode ROOT_FORM rule) may
-    // still be validating when the user hits Submit. Mirror the directive's
-    // own submit pipeline: wait until async validation settles, then decide
-    // via the public feedback signals — never drop the submission silently.
-    // The `submitting` guard keeps repeated clicks during the pending window
-    // from stacking subscriptions and double-emitting `saveRequested`.
+    // The userId availability check may still be validating when the user
+    // hits Submit. A PENDING form is not an invalid form, so decide only once
+    // async validation has settled; the submission is never dropped silently.
     // Focus handling stays with the directive: `focusFirstInvalidOnSubmit`
     // (default true) already moves focus to the first invalid control.
-    if (this.submitting()) {
-      return;
-    }
-    this.submitting.set(true);
-    this.validationSettled$
-      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        try {
-          if (!this.feedback.formState().valid) {
-            return;
-          }
-
-          this.saveRequested.emit(this.formValue());
-        } finally {
-          this.submitting.set(false);
-        }
-      });
+    this.#submitWhenSettled(() => {
+      if (this.feedback.formState().valid) {
+        this.saveRequested.emit(this.formValue());
+      }
+    });
   }
 
   protected onReset(): void {

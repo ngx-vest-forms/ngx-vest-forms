@@ -1,9 +1,4 @@
-import {
-  Component,
-  computed,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, signal, viewChild } from '@angular/core';
 import { ROOT_FORM } from 'ngx-vest-forms';
 import { PurchaseFormModel } from '../../models/purchase-form.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
@@ -31,7 +26,7 @@ type FetchLukeMode = 'normal' | FetchErrorScenario;
     ExampleCardsComponent,
   ],
   templateUrl: './purchase.page.html',
-  styleUrls: ['./purchase.page.scss'],
+  styleUrl: './purchase.page.scss',
 })
 export class PurchasePageComponent {
   protected readonly feedback = computed(() => this.purchaseForm()?.feedback);

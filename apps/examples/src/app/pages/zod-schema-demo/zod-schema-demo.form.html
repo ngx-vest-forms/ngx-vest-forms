@@ -6,7 +6,6 @@
     [formContract]="formContract"
     [formValue]="formValue()"
     (formValueChange)="formValueChange.emit($event)"
-    (errorsChange)="currentErrors.set($event)"
     (ngSubmit)="onSubmit()"
     class="space-y-8"
   >

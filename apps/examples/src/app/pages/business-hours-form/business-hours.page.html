@@ -1,8 +1,5 @@
 <div class="page-container">
-  <ngx-page-title
-    title="Business Hours Form"
-    subtitle="Validate dynamic time ranges with cross-field and form-level rules."
-  />
+  <ngx-page-title />
 
   <ngx-intro-section title="Why this matters">
     <ngx-intro-item>
@@ -35,7 +32,7 @@
           [suite]="businessHoursSuite"
           [validationConfig]="validationConfig"
           [rootFormError]="rootFormError()"
-          [businessHoursValues]="getBusinessHoursValues()"
+          [businessHoursValues]="businessHoursValues()"
           (formValueChange)="formValue.set($event)"
           (businessHoursChange)="onBusinessHoursChange($event)"
         />
