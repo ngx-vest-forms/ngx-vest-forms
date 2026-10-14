@@ -156,56 +156,59 @@ export function getFormGroupField(
   return getGroupPath(rootForm, control);
 }
 
+function isPlainRecord(value: unknown): value is UnknownRecord {
+  if (!isRecord(value)) {
+    return false;
+  }
+  // Compare against "a root prototype" rather than `Object.prototype`, so
+  // objects from another realm (e.g. a jsdom `structuredClone`) still count.
+  const prototype: unknown = Object.getPrototypeOf(value);
+  return prototype === null || Object.getPrototypeOf(prototype) === null;
+}
+
+/**
+ * Deletes unsafe prototype-related own keys (`__proto__`, `prototype`,
+ * `constructor`) from plain objects and arrays at every level, in place.
+ * Other objects (Dates, Files, Maps, ...) are left alone, and circular
+ * references are visited once.
+ */
+function stripUnsafeKeys(value: unknown, seen = new WeakSet()): void {
+  if (!(Array.isArray(value) || isPlainRecord(value)) || seen.has(value)) {
+    return;
+  }
+  seen.add(value);
+  for (const [key, child] of Object.entries(value)) {
+    if (isUnsafePathSegment(key)) {
+      Reflect.deleteProperty(value, key);
+    } else {
+      stripUnsafeKeys(child, seen);
+    }
+  }
+}
+
 /**
  * @internal
- * Internal utility for merging form values with disabled field values.
+ * Internal utility that returns the form value including disabled controls.
  *
  * **Not intended for external use.** This function is used internally by the library
  * to include disabled field values in form submissions. Use Angular's `getRawValue()`
  * method on your form if you need to access disabled field values.
  *
- * This utility merges the value of the form with the raw value.
- * By doing this we can assure that we don't lose values of disabled form fields
+ * `form.getRawValue()` already holds every control, and for each enabled one
+ * the same value as `form.value`: groups leave out disabled children only from
+ * `value`, and FormArrays leave them out and shift the remaining items. So the
+ * raw value is the whole answer, with every item of a FormArray at its index.
+ *
+ * The result is a deep clone (`structuredClone`), so callers can mutate it
+ * without touching form state.
  *
  * Security: Unsafe prototype-related keys (`__proto__`, `prototype`, `constructor`)
- * are skipped during recursive merge.
+ * are removed at every level, including inside arrays.
  * @param form
  */
 export function mergeValuesAndRawValues<T>(form: FormGroup): T {
-  // Deep clone both values to prevent reference sharing.
-  // This is necessary because:
-  // 1. form.value may contain object references that could be mutated elsewhere
-  // 2. form.getRawValue() also returns references to form control values
-  // 3. Without cloning, mutations to the returned object would affect the original form state
-  // 4. The merge operation itself requires a mutable copy to work with
-  // Performance note: For large forms, this may have performance implications. However,
-  // reference isolation is critical for maintaining form state integrity.
-  const value = structuredClone(form.value);
-  const rawValue = structuredClone(form.getRawValue());
-
-  // Recursive function to merge rawValue into value
-  function mergeRecursive(target: UnknownRecord, source: UnknownRecord): void {
-    for (const key of Object.keys(source)) {
-      if (isUnsafePathSegment(key)) {
-        continue;
-      }
-
-      const sourceValue = source[key];
-      const targetValue = target[key];
-
-      if (targetValue === undefined || targetValue === null) {
-        // Key missing from target (e.g. disabled field) or set to null —
-        // copy source so raw values from disabled controls aren't dropped.
-        target[key] = sourceValue;
-      } else if (isRecord(sourceValue) && isRecord(targetValue)) {
-        // If the value is an object, merge it recursively
-        mergeRecursive(targetValue, sourceValue);
-      }
-      // If the target already has the key with a primitive value, it's left as is to maintain references
-    }
-  }
-
-  mergeRecursive(value as UnknownRecord, rawValue as UnknownRecord);
+  const value: T = structuredClone(form.getRawValue());
+  stripUnsafeKeys(value);
   return value;
 }
 

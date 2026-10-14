@@ -7,14 +7,22 @@ minimumReleaseAge: 1440 # minutes (24h)
 minimumReleaseAgeStrict: true
 minimumReleaseAgeIgnoreMissingTime: false
 trustPolicy: no-downgrade
-auditConfig:
-  ignoreGhsas:
-    # GHSA-vfj7-8cjw-p6xm (CVE-2026-93687): braces stack-exhaustion DoS via deeply nested
-    # patterns. Advisory published 2026-09-18, but the fix (braces 3.0.4) is not yet on npm
-    # (latest is 3.0.3). Reachable only through dev-only semantic-release tooling via
-    # micromatch; no shipped code. Remove this ignore once braces >= 3.0.4 is published.
-    # Review date: 2026-11-13.
+blockExoticSubdeps: true
+audit:
+  level: high
+  # GHSA-vfj7-8cjw-p6xm (CVE-2026-93687): braces stack-exhaustion DoS via deeply nested
+  # patterns. Advisory published 2026-09-18, but the fix (braces 3.0.4) is not yet on npm
+  # (latest is 3.0.3). Reachable only through dev-only semantic-release tooling via
+  # micromatch; no shipped code. Remove this ignore once braces >= 3.0.4 is published.
+  # Review date: 2026-11-13.
+  ignore:
     - GHSA-vfj7-8cjw-p6xm
+  ignorePrune: true
+# Experimental (https://pnpm.io/git-worktrees): one shared content-addressable store
+# for every git worktree on this machine, so each agent worktree's node_modules is
+# only symlinks and installs in seconds. Requires all worktrees/agents to share one
+# trust boundary; not useful in CI (cold store).
+virtualStoreType: global
 overrides:
   '@actions/http-client>undici': 6.28.1
   '@jridgewell/sourcemap-codec': 1.6.0

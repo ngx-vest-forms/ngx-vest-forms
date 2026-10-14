@@ -474,12 +474,13 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly formValueChange = outputFromObservable(
     this.ngForm.form.events.pipe(
       filter((v) => v instanceof ValueChangeEvent),
-      map((v) => (v as ValueChangeEvent<unknown>).value),
+      // Merge before deduplicating: the event's own value leaves out disabled
+      // controls, so a programmatic setValue() on one would look unchanged.
+      map(() => mergeValuesAndRawValues<T>(this.ngForm.form)),
       distinctUntilChanged((prev, curr) => {
         // Use efficient deep equality instead of JSON.stringify for better performance
         return this.#equal(prev, curr);
       }),
-      map(() => mergeValuesAndRawValues<T>(this.ngForm.form)),
       takeUntilDestroyed(this.#destroyRef)
     )
   );
@@ -1090,15 +1091,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     const domValue = readElementValueForBlur(element);
     const value = domValue !== undefined ? domValue : control.value;
 
-    // Prefer the cached linked-signal snapshot when it exists. Both code
-    // paths produce a deep-cloned snapshot, but reusing the cached value
-    // saves one of the two `structuredClone` passes performed by
-    // `mergeValuesAndRawValues()` on every blur.
-    const cachedSnapshot = this.#formValueSignal();
-    const formValue =
-      cachedSnapshot !== null
-        ? (structuredClone(cachedSnapshot) as T)
-        : mergeValuesAndRawValues<T>(this.ngForm.form);
+    const formValue = mergeValuesAndRawValues<T>(this.ngForm.form);
     setValueAtPath(formValue as object, field, value);
 
     this.fieldBlur.emit({
