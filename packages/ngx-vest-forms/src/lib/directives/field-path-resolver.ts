@@ -1,12 +1,9 @@
-import {
-  AbstractControl,
-  ControlValueAccessor,
-  FormArray,
-  FormGroup,
-  NgForm,
-  NgModel,
-} from '@angular/forms';
+import { AbstractControl, FormArray, FormGroup, NgForm } from '@angular/forms';
 import { stringifyFieldPath } from '../utils/field-path.utils';
+import {
+  findRegisteredControl,
+  findRegisteredGroupPath,
+} from './field-element-registry';
 
 type ResolvedFieldPath = {
   path: string;
@@ -21,6 +18,15 @@ function isLeafControl(control: AbstractControl): boolean {
  * @internal
  * Resolves a blurred event target to its dotted form path, Angular control,
  * and resolved host element.
+ *
+ * Strategies, in order:
+ * 1. The nearest `ngModel` host registered by `FormModelDirective` at or
+ *    above the target (covers custom controls whose inner element blurs).
+ * 2. The target's `name` under the nearest registered `ngModelGroup`
+ *    (covers dynamic `[ngModelGroup]` bindings).
+ * 3. DOM heuristics for controls rendered without the ngx-vest-forms
+ *    directives: static `ngModelGroup` attributes, then a walk of the
+ *    form tree for a unique leaf with that name.
  */
 export function resolveFieldFromBlur(
   ngForm: NgForm,
@@ -34,6 +40,24 @@ export function resolveFieldFromBlur(
     return null;
   }
 
+  const formEl = eventTarget.closest('form');
+  if (!(formEl instanceof HTMLFormElement)) {
+    return null;
+  }
+
+  const registered = findRegisteredControl(ngForm, eventTarget, formEl);
+  if (registered && registered.element instanceof HTMLElement) {
+    const { ngModel } = registered;
+    const control = ngModel.control ?? ngForm.form.get(ngModel.path);
+    if (control) {
+      return {
+        field: ngModel.path.join('.'),
+        control,
+        element: registered.element,
+      };
+    }
+  }
+
   const fieldElement = eventTarget.closest('[name]');
   if (!(fieldElement instanceof HTMLElement)) {
     return null;
@@ -44,21 +68,17 @@ export function resolveFieldFromBlur(
     return null;
   }
 
-  const formEl = fieldElement.closest('form');
-  if (!(formEl instanceof HTMLFormElement)) {
-    return null;
-  }
-
-  const directiveMatch = resolveControlPathByNgModelDirective(
-    ngForm,
-    fieldElement
-  );
-  if (directiveMatch) {
-    return {
-      field: directiveMatch.path,
-      control: directiveMatch.control,
-      element: fieldElement,
-    };
+  const groupPath = findRegisteredGroupPath(ngForm, fieldElement, formEl);
+  if (groupPath) {
+    const groupedPath = [...groupPath, name].join('.');
+    const groupedControl = ngForm.form.get(groupedPath);
+    if (groupedControl) {
+      return {
+        field: groupedPath,
+        control: groupedControl,
+        element: fieldElement,
+      };
+    }
   }
 
   const staticGroups = collectNgModelGroupAttributes(fieldElement, formEl);
@@ -229,36 +249,4 @@ function subtreeContainsElement(
     if (candidate.contains(fieldElement)) return true;
   }
   return false;
-}
-
-function resolveControlPathByNgModelDirective(
-  ngForm: NgForm,
-  fieldElement: HTMLElement
-): ResolvedFieldPath | null {
-  const directives = readNgFormDirectives(ngForm);
-  if (!directives) return null;
-
-  for (const directive of directives) {
-    const accessorEl = readValueAccessorElement(directive.valueAccessor);
-    if (accessorEl !== fieldElement) continue;
-    const control = directive.control ?? ngForm.form.get(directive.path);
-    if (!control) return null;
-    return { path: directive.path.join('.'), control };
-  }
-  return null;
-}
-
-function readNgFormDirectives(ngForm: NgForm): Iterable<NgModel> | null {
-  const set = (ngForm as unknown as { _directives?: Set<NgModel> })._directives;
-  return set ?? null;
-}
-
-function readValueAccessorElement(
-  accessor: ControlValueAccessor | null | undefined
-): HTMLElement | null {
-  if (!accessor) return null;
-  const elementRef = (accessor as { _elementRef?: { nativeElement?: unknown } })
-    ._elementRef;
-  const native = elementRef?.nativeElement;
-  return native instanceof HTMLElement ? native : null;
 }
