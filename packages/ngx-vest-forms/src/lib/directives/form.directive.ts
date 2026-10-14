@@ -474,12 +474,13 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly formValueChange = outputFromObservable(
     this.ngForm.form.events.pipe(
       filter((v) => v instanceof ValueChangeEvent),
-      map((v) => (v as ValueChangeEvent<unknown>).value),
+      // Merge before deduplicating: the event's own value leaves out disabled
+      // controls, so a programmatic setValue() on one would look unchanged.
+      map(() => mergeValuesAndRawValues<T>(this.ngForm.form)),
       distinctUntilChanged((prev, curr) => {
         // Use efficient deep equality instead of JSON.stringify for better performance
         return this.#equal(prev, curr);
       }),
-      map(() => mergeValuesAndRawValues<T>(this.ngForm.form)),
       takeUntilDestroyed(this.#destroyRef)
     )
   );

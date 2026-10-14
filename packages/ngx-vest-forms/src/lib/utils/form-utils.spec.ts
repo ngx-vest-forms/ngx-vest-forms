@@ -202,6 +202,98 @@ describe('mergeValuesAndRawValues function', () => {
     });
   });
 
+  describe('disabled controls inside FormArrays', () => {
+    it('should keep a disabled item in the middle of a FormArray at its index', () => {
+      const form = new FormGroup({
+        tags: new FormArray([
+          new FormControl('a'),
+          new FormControl('b'),
+          new FormControl('c'),
+        ]),
+      });
+      form.get('tags.1')?.disable();
+
+      expect(form.value).toEqual({ tags: ['a', 'c'] });
+      expect(mergeValuesAndRawValues(form)).toEqual({
+        tags: ['a', 'b', 'c'],
+      });
+    });
+
+    it('should not shift the remaining items when the first item is disabled', () => {
+      const form = new FormGroup({
+        tags: new FormArray([
+          new FormControl('a'),
+          new FormControl('b'),
+          new FormControl('c'),
+        ]),
+      });
+      form.get('tags.0')?.disable();
+
+      const merged = mergeValuesAndRawValues<{ tags: string[] }>(form);
+      expect(merged.tags).toEqual(['a', 'b', 'c']);
+      expect(merged.tags[1]).toBe('b');
+    });
+
+    it('should keep every item of a fully disabled FormArray', () => {
+      const form = new FormGroup({
+        name: new FormControl('John'),
+        tags: new FormArray([new FormControl('a'), new FormControl('b')]),
+      });
+      form.get('tags')?.disable();
+
+      expect(mergeValuesAndRawValues(form)).toEqual({
+        name: 'John',
+        tags: ['a', 'b'],
+      });
+    });
+
+    it('should keep a disabled child control of a FormGroup inside a FormArray', () => {
+      const form = new FormGroup({
+        addresses: new FormArray([
+          new FormGroup({
+            street: new FormControl('Main St'),
+            city: new FormControl('Springfield'),
+          }),
+          new FormGroup({
+            street: new FormControl('Second St'),
+            city: new FormControl('Shelbyville'),
+          }),
+        ]),
+      });
+      form.get('addresses.0.city')?.disable();
+
+      expect(mergeValuesAndRawValues(form)).toEqual({
+        addresses: [
+          { street: 'Main St', city: 'Springfield' },
+          { street: 'Second St', city: 'Shelbyville' },
+        ],
+      });
+    });
+
+    it('should strip unsafe keys from objects inside raw arrays', () => {
+      // JSON.parse creates real own `__proto__` keys; an object literal
+      // would set the prototype instead.
+      const rawItems = JSON.parse(
+        '[{"name":"a","__proto__":{"polluted":"yes"}},' +
+          '{"name":"b","nested":[{"constructor":{"prototype":{"hacked":true}},"ok":1}]}]'
+      ) as unknown[];
+      const fakeForm = {
+        value: { items: [] },
+        getRawValue: () => ({ items: rawItems }),
+      } as unknown as FormGroup;
+
+      const merged = mergeValuesAndRawValues<{ items: unknown[] }>(fakeForm);
+
+      expect(merged.items).toEqual([
+        { name: 'a' },
+        { name: 'b', nested: [{ ok: 1 }] },
+      ]);
+      expect(Object.keys(merged.items[0] as object)).toEqual(['name']);
+      expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();
+      expect(({} as Record<string, unknown>)['hacked']).toBeUndefined();
+    });
+  });
+
   describe('reference isolation (structuredClone behavior)', () => {
     it('should not share references between original and merged values', () => {
       const originalObject = {

@@ -156,6 +156,37 @@ export function getFormGroupField(
   return getGroupPath(rootForm, control);
 }
 
+function isPlainRecord(value: unknown): value is UnknownRecord {
+  if (!isRecord(value)) {
+    return false;
+  }
+  // Compare against "a root prototype" rather than `Object.prototype`, so
+  // objects from another realm (e.g. a jsdom `structuredClone`) still count.
+  const prototype: unknown = Object.getPrototypeOf(value);
+  return prototype === null || Object.getPrototypeOf(prototype) === null;
+}
+
+/**
+ * Copies a raw form value, dropping unsafe prototype-related keys at every
+ * level of nested plain objects and arrays. Other values (primitives, Dates,
+ * Files, ...) are kept as they are.
+ */
+function sanitizeRawValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeRawValue(item));
+  }
+  if (!isPlainRecord(value)) {
+    return value;
+  }
+  const copy: UnknownRecord = {};
+  for (const key of Object.keys(value)) {
+    if (!isUnsafePathSegment(key)) {
+      copy[key] = sanitizeRawValue(value[key]);
+    }
+  }
+  return copy;
+}
+
 /**
  * @internal
  * Internal utility for merging form values with disabled field values.
@@ -167,8 +198,11 @@ export function getFormGroupField(
  * This utility merges the value of the form with the raw value.
  * By doing this we can assure that we don't lose values of disabled form fields
  *
+ * Arrays (FormArrays) are taken from the raw value as a whole, because
+ * `FormArray.value` leaves out disabled items and shifts the remaining ones.
+ *
  * Security: Unsafe prototype-related keys (`__proto__`, `prototype`, `constructor`)
- * are skipped during recursive merge.
+ * are skipped during recursive merge, including inside arrays.
  * @param form
  */
 export function mergeValuesAndRawValues<T>(form: FormGroup): T {
@@ -193,7 +227,12 @@ export function mergeValuesAndRawValues<T>(form: FormGroup): T {
       const sourceValue = source[key];
       const targetValue = target[key];
 
-      if (targetValue === undefined || targetValue === null) {
+      if (Array.isArray(sourceValue)) {
+        // FormArray.value omits disabled controls and shifts the rest left,
+        // while getRawValue() keeps every control at its index. Enabled items
+        // are identical in both, so the raw array replaces the value array.
+        target[key] = sanitizeRawValue(sourceValue);
+      } else if (targetValue === undefined || targetValue === null) {
         // Key missing from target (e.g. disabled field) or set to null —
         // copy source so raw values from disabled controls aren't dropped.
         target[key] = sourceValue;

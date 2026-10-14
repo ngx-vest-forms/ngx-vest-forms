@@ -2872,3 +2872,72 @@ describe('FormDirective - bidirectional sync conflict recovery', () => {
     consoleWarnSpy.mockRestore();
   });
 });
+
+describe('FormDirective - formValueChange with disabled controls', () => {
+  type Model = { name?: string; nickname?: string };
+
+  @Component({
+    selector: 'test-disabled-value-change-host',
+    imports: [NgxVestForms],
+    template: `
+      <form
+        ngxVestForm
+        #vest="ngxVestForm"
+        [formValue]="formValue()"
+        (formValueChange)="onFormValueChange($event)"
+      >
+        <input name="name" [ngModel]="formValue().name" aria-label="Name" />
+        <input
+          name="nickname"
+          [ngModel]="formValue().nickname"
+          aria-label="Nickname"
+        />
+      </form>
+    `,
+  })
+  class DisabledValueChangeHostComponent {
+    readonly vestForm = viewChild.required<FormDirective<Model>>('vest');
+    readonly formValue = signal<Model>({ name: 'Ann', nickname: 'Annie' });
+    readonly emissions: Model[] = [];
+
+    onFormValueChange(value: Model): void {
+      this.emissions.push(value);
+      this.formValue.set(value);
+    }
+  }
+
+  async function renderHost() {
+    const { fixture } = await render(DisabledValueChangeHostComponent);
+    await whenStable();
+    const instance = fixture.componentInstance;
+    const form = instance.vestForm().ngForm.form;
+    await expect.poll(() => form.get('nickname')).not.toBeNull();
+    return { instance, form };
+  }
+
+  it('emits the new raw value when a disabled control is set programmatically', async () => {
+    const { instance, form } = await renderHost();
+    const nickname = form.get('nickname');
+    nickname?.disable();
+    await whenStable();
+    instance.emissions.length = 0;
+
+    nickname?.setValue('Nan');
+    await whenStable();
+
+    expect(form.value).toEqual({ name: 'Ann' });
+    expect(instance.emissions).toEqual([{ name: 'Ann', nickname: 'Nan' }]);
+  });
+
+  it('emits once when value events repeat the same merged value', async () => {
+    const { instance, form } = await renderHost();
+    instance.emissions.length = 0;
+
+    form.get('name')?.setValue('Bob');
+    form.get('name')?.setValue('Bob');
+    form.updateValueAndValidity();
+    await whenStable();
+
+    expect(instance.emissions).toEqual([{ name: 'Bob', nickname: 'Annie' }]);
+  });
+});
