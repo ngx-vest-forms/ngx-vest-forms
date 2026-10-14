@@ -73,7 +73,18 @@ identity of the per-run errors object.
 
 - A reactive redesign is prototyped that derives control state without
   invalidating on the per-run `control.errors` object identity (e.g. by
-  comparing error *content*, or by sourcing errors from a stable signal), and
+  comparing error _content_, or by sourcing errors from a stable signal), and
   is validated against the end-to-end suite (specifically the
   dynamically-structured forms: complex-nested, conditional-structure) — not
   only the unit suite.
+
+## Update (2026-10-14)
+
+The first half of #216 shipped without touching state derivation: the
+subscribing effect no longer tracks the interaction state, so a blur no
+longer tears down and re-creates the `statusChanges` subscription. A second
+effect re-reads the control snapshot on interaction changes (the refresh the
+re-subscribe used to provide) and attaches the subscription once a late
+`NgModelGroup` `FormGroup` appears. The `afterEveryRender` sync stays: it
+still covers status changes made with `emitEvent: false` (the model-wins
+`patchValue` path), so this ADR's decision for it stands.
