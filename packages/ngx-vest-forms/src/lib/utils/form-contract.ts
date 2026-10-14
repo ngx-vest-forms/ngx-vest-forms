@@ -72,6 +72,10 @@ export function logFormContractIssues(
   }
 }
 
+function isThenable(value: unknown): value is PromiseLike<unknown> {
+  return typeof (value as PromiseLike<unknown> | null)?.then === 'function';
+}
+
 /**
  * Validates a value against the supplied form contract and logs any synchronous
  * Standard Schema issues. Async contract validators are ignored by the
@@ -83,10 +87,11 @@ export function validateFormContract<T>(
 ): void {
   const result = normalizeFormContract(contract)['~standard'].validate(value);
 
-  if (result instanceof Promise) {
+  if (isThenable(result)) {
     // Async contracts are not checked. Settle the promise so a rejection
-    // doesn't surface as an unhandled rejection.
-    result.catch(() => undefined);
+    // doesn't surface as an unhandled rejection. Checked as a thenable, so a
+    // promise from another realm is handled too.
+    Promise.resolve(result).catch(() => undefined);
     return;
   }
 

@@ -136,5 +136,13 @@ describe('first-invalid.utils', () => {
         resolveFirstInvalidElement(form, DEFAULT_INVALID_SELECTOR, true)?.id
       ).toBe('collapsed');
     });
+
+    it('skips a collapsed control that opening its <details> would not reveal', () => {
+      const form = renderForm();
+      form.querySelector<HTMLElement>('#collapsed')?.setAttribute('hidden', '');
+      expect(
+        resolveFirstInvalidElement(form, DEFAULT_INVALID_SELECTOR, true)?.id
+      ).toBe('visible');
+    });
   });
 });

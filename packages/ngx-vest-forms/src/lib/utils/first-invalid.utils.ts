@@ -109,14 +109,19 @@ function isInsideClosedDetails(
   if (element.closest('[aria-hidden="true"]')) {
     return false;
   }
-  let current = element.parentElement;
+  // Opening the <details> only helps when nothing else on the path hides it.
+  let insideClosedDetails = false;
+  let current: HTMLElement | null = element;
   while (current && current !== root) {
+    if (getComputedStyle(current).display === 'none') {
+      return false;
+    }
     if (current instanceof HTMLDetailsElement && !current.open) {
-      return true;
+      insideClosedDetails = true;
     }
     current = current.parentElement;
   }
-  return false;
+  return insideClosedDetails;
 }
 
 export function openCollapsedDetailsAncestors(
