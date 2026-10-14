@@ -4,6 +4,7 @@ import {
   DestroyRef,
   Directive,
   effect,
+  ErrorHandler,
   inject,
   Injector,
   input,
@@ -27,6 +28,7 @@ import {
   NGX_VEST_FORMS_DIAGNOSTICS,
 } from '../errors/error-catalog';
 import { scheduleMicrotask } from '../utils/destroy-scheduler';
+import { copyFormValue } from '../utils/form-utils';
 import type { NgxVestSuite } from '../utils/validation-suite';
 import { extractFieldErrors, runFieldValidation } from '../utils/vest-runner';
 import { ValidationOptions } from './validation-options';
@@ -116,6 +118,7 @@ export class ValidateRootFormDirective<T>
 {
   readonly #injector = inject(Injector);
   readonly #destroyRef = inject(DestroyRef);
+  readonly #errorHandler = inject(ErrorHandler);
   readonly #lastControl = signal<NgForm | null>(null);
   validationOptions = input<ValidationOptions>({ debounceTime: 0 });
   readonly #hasSubmitted = signal(false);
@@ -258,7 +261,7 @@ export class ValidateRootFormDirective<T>
       // A null/undefined model is normalised to an empty object so cross-field
       // root-form rules still evaluate (they must run precisely when fields
       // are missing — e.g. "at least one contact method required").
-      const mod = structuredClone(this.formValue() ?? ({} as T)) as T;
+      const mod = copyFormValue(this.formValue() ?? {}) as T;
 
       return runFieldValidation(
         suite,
@@ -270,7 +273,11 @@ export class ValidateRootFormDirective<T>
         map((result) => extractFieldErrors(result, field)),
         // `runFieldValidation` already applies `take(1)` and `takeUntilDestroyed`,
         // so no additional terminal operators are needed here.
-        catchError((err) => {
+        // A suite that throws fails open here (the root form stays valid,
+        // field-level validators still gate submit), but the original error
+        // always goes to Angular's ErrorHandler so it is never silent.
+        catchError((err: unknown) => {
+          this.#errorHandler.handleError(err);
           if (isDevMode()) {
             logDiagnostic(
               NGX_VEST_FORMS_DIAGNOSTICS.ROOT_FORM_VALIDATION_ERROR,

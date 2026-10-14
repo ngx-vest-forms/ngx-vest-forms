@@ -2,6 +2,7 @@
 import {
   ApplicationRef,
   Component,
+  ErrorHandler,
   signal,
   Type,
   viewChild,
@@ -261,7 +262,11 @@ describe('FormDirective - Async Validator', () => {
   }
 
   it('should return vestInternalError if suite throws', async () => {
-    const { fixture } = await render(TestFormThrowComponent);
+    const handleError = vi.fn();
+    const { fixture } = await render(TestFormThrowComponent, {
+      providers: [{ provide: ErrorHandler, useValue: { handleError } }],
+    });
+    handleError.mockClear();
     const validator = fixture.componentInstance
       .vestForm()
       .createAsyncValidator('username', { debounceTime: 0 });
@@ -273,6 +278,10 @@ describe('FormDirective - Async Validator', () => {
     expect(result).toEqual({
       vestInternalError: 'Validation failed',
     });
+    // The original error is reported, not swallowed.
+    expect(handleError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Vest suite execution error' })
+    );
   });
 
   it('should return null if suite or formValue is not set', async () => {
