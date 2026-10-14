@@ -110,48 +110,30 @@ function validateBusinessHourModel(
   });
 }
 
+/**
+ * True when no two well-formed ranges overlap; ranges that only touch (one
+ * ends when the next starts) are fine. Ranges are compared in start order,
+ * so the order the user added them in does not matter. Malformed or inverted
+ * ranges are left to the per-field tests and ignored here, so they never
+ * surface as a false "overlap" error.
+ */
 function areBusinessHoursValid(
   businessHours?: BusinessHourFormModel[]
 ): boolean {
-  if (!businessHours) {
-    return false;
-  }
-  for (let i = 0; i < businessHours.length - 1; i++) {
-    const currentHour = businessHours[i];
-    const nextHour = businessHours[i + 1];
+  const ranges = (businessHours ?? [])
+    .map((hour) => ({ from: toMinutes(hour?.from), to: toMinutes(hour?.to) }))
+    .filter(
+      (range): range is { from: number; to: number } =>
+        range.from !== null && range.to !== null && range.from < range.to
+    )
+    .sort((a, b) => a.from - b.from);
 
-    if (!currentHour || !nextHour) {
-      return false;
-    }
+  return ranges.every((range, i) => i === 0 || ranges[i - 1]!.to <= range.from);
+}
 
-    if (
-      !isValidTime(currentHour.from) ||
-      !isValidTime(currentHour.to) ||
-      !isValidTime(nextHour.from) ||
-      !isValidTime(nextHour.to)
-    ) {
-      return false;
-    }
-
-    if (!isFromEarlierThanTo(currentHour?.from, currentHour?.to)) {
-      return false;
-    }
-
-    if (!isFromEarlierThanTo(currentHour.to, nextHour.from)) {
-      return false;
-    }
-  }
-
-  const lastHour = businessHours[businessHours.length - 1];
-  if (!lastHour) {
-    return false;
-  }
-
-  return (
-    isValidTime(lastHour.from) &&
-    isValidTime(lastHour.to) &&
-    isFromEarlierThanTo(lastHour.from, lastHour.to)
-  );
+function toMinutes(time?: string): number | null {
+  const parsed = parseTime(time);
+  return parsed ? parsed.hours * 60 + parsed.minutes : null;
 }
 
 function isValidTime(time?: string): boolean {

@@ -387,7 +387,9 @@ test.describe('Business Hours Form', () => {
       });
     });
 
-    test('should invalidate out-of-order time slots', async ({ page }) => {
+    test('should accept non-overlapping time slots added out of order', async ({
+      page,
+    }) => {
       await test.step('Add time slots out of order', async () => {
         const fromTime = getAddFromTime(page);
         const toTime = getAddToTime(page);
@@ -409,7 +411,8 @@ test.describe('Business Hours Form', () => {
         const formValue = await readJsonPanel(page);
         const values = readBusinessHoursValues(formValue);
         await expect(values).toHaveLength(2);
-        await expect(getRootFormError(page)).toBeVisible();
+        // 09:00-12:00 and 13:00-17:00 do not overlap; entry order is irrelevant.
+        await expect(getRootFormError(page)).toHaveCount(0);
       });
     });
 

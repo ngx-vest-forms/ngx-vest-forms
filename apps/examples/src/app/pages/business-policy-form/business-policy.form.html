@@ -1,6 +1,8 @@
 <ngx-card>
   <form
     ngxVestForm
+    ngxValidateRootForm
+    [ngxValidateRootFormMode]="'live'"
     #vestForm="ngxVestForm"
     [suite]="suite()"
     [formValue]="formValue()"

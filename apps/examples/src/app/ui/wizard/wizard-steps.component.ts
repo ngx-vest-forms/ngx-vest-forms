@@ -1,8 +1,4 @@
-import {
-  Component,
-  computed,
-  input,
-} from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 
 export type WizardStepStatus = 'completed' | 'current' | 'upcoming';
 
@@ -67,11 +63,10 @@ export type WizardStepConfig = {
             let i = $index;
             let last = $last
           ) {
+            @let status = getStepStatus(step.id);
             <li
               class="relative min-w-0"
-              [attr.aria-current]="
-                getStepStatus(step.id) === 'current' ? 'step' : null
-              "
+              [attr.aria-current]="status === 'current' ? 'step' : null"
             >
               <div
                 class="group relative flex flex-col"
@@ -82,36 +77,24 @@ export type WizardStepConfig = {
                 <!-- Step circle with screen reader text -->
                 <span
                   class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors duration-300"
-                  [class.bg-blue-600]="getStepStatus(step.id) === 'completed'"
-                  [class.text-white]="getStepStatus(step.id) === 'completed'"
-                  [class.border-2]="getStepStatus(step.id) !== 'completed'"
-                  [class.border-blue-600]="getStepStatus(step.id) === 'current'"
-                  [class.bg-white]="getStepStatus(step.id) === 'current'"
-                  [class.text-blue-600]="getStepStatus(step.id) === 'current'"
-                  [class.border-gray-300]="
-                    getStepStatus(step.id) === 'upcoming'
-                  "
-                  [class.bg-white]="getStepStatus(step.id) === 'upcoming'"
-                  [class.text-gray-500]="getStepStatus(step.id) === 'upcoming'"
+                  [class.bg-blue-600]="status === 'completed'"
+                  [class.text-white]="status === 'completed'"
+                  [class.border-2]="status !== 'completed'"
+                  [class.border-blue-600]="status === 'current'"
+                  [class.text-blue-600]="status === 'current'"
+                  [class.border-gray-300]="status === 'upcoming'"
+                  [class.bg-white]="status !== 'completed'"
+                  [class.text-gray-500]="status === 'upcoming'"
                   [class.dark:bg-gray-800]="
-                    getStepStatus(step.id) === 'current' ||
-                    getStepStatus(step.id) === 'upcoming'
+                    status === 'current' || status === 'upcoming'
                   "
-                  [class.dark:border-blue-500]="
-                    getStepStatus(step.id) === 'current'
-                  "
-                  [class.dark:text-blue-400]="
-                    getStepStatus(step.id) === 'current'
-                  "
-                  [class.dark:border-gray-600]="
-                    getStepStatus(step.id) === 'upcoming'
-                  "
-                  [class.dark:text-gray-400]="
-                    getStepStatus(step.id) === 'upcoming'
-                  "
+                  [class.dark:border-blue-500]="status === 'current'"
+                  [class.dark:text-blue-400]="status === 'current'"
+                  [class.dark:border-gray-600]="status === 'upcoming'"
+                  [class.dark:text-gray-400]="status === 'upcoming'"
                   aria-hidden="true"
                 >
-                  @if (getStepStatus(step.id) === 'completed') {
+                  @if (status === 'completed') {
                     <svg
                       class="h-5 w-5"
                       viewBox="0 0 20 20"
@@ -136,17 +119,13 @@ export type WizardStepConfig = {
                   [class.text-center]="i > 0 && !last"
                   [class.text-right]="last"
                   [class.text-blue-600]="
-                    getStepStatus(step.id) === 'current' ||
-                    getStepStatus(step.id) === 'completed'
+                    status === 'current' || status === 'completed'
                   "
-                  [class.text-gray-500]="getStepStatus(step.id) === 'upcoming'"
+                  [class.text-gray-500]="status === 'upcoming'"
                   [class.dark:text-blue-400]="
-                    getStepStatus(step.id) === 'current' ||
-                    getStepStatus(step.id) === 'completed'
+                    status === 'current' || status === 'completed'
                   "
-                  [class.dark:text-gray-400]="
-                    getStepStatus(step.id) === 'upcoming'
-                  "
+                  [class.dark:text-gray-400]="status === 'upcoming'"
                 >
                   {{ step.title }}
                 </span>
