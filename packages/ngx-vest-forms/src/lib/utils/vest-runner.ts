@@ -1,4 +1,4 @@
-import { DestroyRef } from '@angular/core';
+import { DestroyRef, ErrorHandler } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ValidationErrors } from '@angular/forms';
 import {
@@ -98,6 +98,22 @@ export function runFieldValidation<T>(
       takeUntilDestroyed(destroyRef)
     );
   });
+}
+
+/**
+ * Reports a suite error to Angular's ErrorHandler. A handler that throws
+ * (some rethrow in tests) must not stop the validator's fail-open result,
+ * or Angular would leave the control PENDING.
+ */
+export function reportToErrorHandler(
+  errorHandler: ErrorHandler,
+  error: unknown
+): void {
+  try {
+    errorHandler.handleError(error);
+  } catch {
+    // Already reported as far as the handler allows; keep validating.
+  }
 }
 
 export function extractFieldErrors(

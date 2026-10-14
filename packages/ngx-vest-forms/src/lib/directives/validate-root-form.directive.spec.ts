@@ -1100,6 +1100,44 @@ describe('ValidateRootFormDirective', () => {
       expect(handleError).toHaveBeenCalledWith(suiteError);
     });
 
+    it('still fails open when the ErrorHandler itself throws', async () => {
+      const throwingRun = vi.fn(() => {
+        throw new Error('suite failed');
+      });
+      const suiteMock = {
+        only: () => ({ run: throwingRun }),
+        run: throwingRun,
+        get: vi.fn(),
+        reset: vi.fn(),
+        resetField: vi.fn(),
+        remove: vi.fn(),
+        subscribe: vi.fn(),
+        dump: vi.fn(),
+        resume: vi.fn(),
+      };
+      const handleError = vi.fn(() => {
+        throw new Error('handler rethrows');
+      });
+
+      const { fixture } = await render(TestCreateAsyncValidatorHost, {
+        providers: [{ provide: ErrorHandler, useValue: { handleError } }],
+      });
+      const instance = fixture.componentInstance;
+      instance.suite.set(
+        suiteMock as unknown as NgxVestSuite<Record<string, unknown>>
+      );
+      await whenStable();
+      handleError.mockClear();
+
+      const validator = instance.rootValidator.createAsyncValidator(ROOT_FORM, {
+        debounceTime: 0,
+      });
+      const result = await firstValueFrom(from(validator({} as never)));
+
+      expect(result).toBeNull();
+      expect(handleError).toHaveBeenCalled();
+    });
+
     it('passes class instances and function-holding values to the suite without cloning them', async () => {
       class Money {
         constructor(readonly cents: number) {}

@@ -87,6 +87,7 @@ import {
   extractFieldErrors,
   extractFieldWarnings,
   type NgxSuiteFocusSpec,
+  reportToErrorHandler,
   runFieldValidation,
 } from '../utils/vest-runner';
 import {
@@ -1388,7 +1389,7 @@ export class FormDirective<T extends Record<string, unknown>> {
         // submit, and the original error goes to Angular's ErrorHandler so it
         // is logged with its stack (and reaches a custom handler, if any).
         catchError((error: unknown) => {
-          this.#errorHandler.handleError(error);
+          reportToErrorHandler(this.#errorHandler, error);
           return of({ vestInternalError: 'Validation failed' });
         })
       );
