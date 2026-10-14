@@ -8,8 +8,7 @@ import { toFormContract } from './to-form-contract';
 
 type StandardSchemaIssue = StandardSchemaV1.Issue;
 type StandardSchemaIssuePathSegment =
-  | PropertyKey
-  | StandardSchemaV1.PathSegment;
+  PropertyKey | StandardSchemaV1.PathSegment;
 
 /**
  * Normalizes legacy `NgxDeepRequired<T>` contracts and real Standard Schema
@@ -85,6 +84,9 @@ export function validateFormContract<T>(
   const result = normalizeFormContract(contract)['~standard'].validate(value);
 
   if (result instanceof Promise) {
+    // Async contracts are not checked. Settle the promise so a rejection
+    // doesn't surface as an unhandled rejection.
+    result.catch(() => undefined);
     return;
   }
 

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   DEFAULT_FOCUS_SELECTOR,
   DEFAULT_INVALID_SELECTOR,
+  resolveFirstInvalidElement,
   resolveFirstInvalidScrollBehavior,
 } from './first-invalid.utils';
 
@@ -90,6 +91,50 @@ describe('first-invalid.utils', () => {
       } as MediaQueryList);
 
       expect(resolveFirstInvalidScrollBehavior('smooth')).toBe('smooth');
+    });
+  });
+
+  describe('resolveFirstInvalidElement', () => {
+    afterEach(() => {
+      document.body.innerHTML = '';
+    });
+
+    function renderForm(): HTMLFormElement {
+      const form = document.createElement('form');
+      form.innerHTML = `
+        <details>
+          <summary>Address</summary>
+          <input id="collapsed" class="ng-invalid" />
+        </details>
+        <input id="visible" class="ng-invalid" />
+      `;
+      document.body.append(form);
+      // The DOM test environment does no layout, so give each control the
+      // client rects a browser would: none while a closed <details> hides it.
+      for (const [id, rects] of [
+        ['visible', [new DOMRect(0, 0, 10, 10)]],
+        ['collapsed', []],
+      ] as const) {
+        const element = form.querySelector<HTMLElement>(`#${id}`);
+        if (element) {
+          element.getClientRects = () => rects as unknown as DOMRectList;
+        }
+      }
+      return form;
+    }
+
+    it('skips invalid controls inside a closed <details> by default', () => {
+      const form = renderForm();
+      expect(
+        resolveFirstInvalidElement(form, DEFAULT_INVALID_SELECTOR)?.id
+      ).toBe('visible');
+    });
+
+    it('returns the collapsed control first when collapsed parents may be opened', () => {
+      const form = renderForm();
+      expect(
+        resolveFirstInvalidElement(form, DEFAULT_INVALID_SELECTOR, true)?.id
+      ).toBe('collapsed');
     });
   });
 });
