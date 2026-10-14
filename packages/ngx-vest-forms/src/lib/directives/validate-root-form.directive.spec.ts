@@ -539,6 +539,58 @@ describe('ValidateRootFormDirective', () => {
       });
     });
 
+    it('should clear submit-mode ROOT_FORM errors on clearSubmittedState()', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            ngxValidateRootForm
+            [suite]="suite"
+            [formValue]="model()"
+            (formValueChange)="model.set($event)"
+            (errorsChange)="errors.set($event)"
+            #vest="ngxVestForm"
+          >
+            <input name="password" [ngModel]="model().password" />
+            <input name="confirmPassword" [ngModel]="model().confirmPassword" />
+            @if (errors()[ROOT_FORM]) {
+              <div data-testid="root-error">{{ errors()[ROOT_FORM]![0] }}</div>
+            }
+            <button type="submit" data-testid="submit">Submit</button>
+            <button
+              type="button"
+              data-testid="clear"
+              (click)="vest.clearSubmittedState()"
+            >
+              Clear
+            </button>
+          </form>
+        `,
+      })
+      class TestComponent {
+        ROOT_FORM = ROOT_FORM;
+        model = signal<Record<string, unknown>>({
+          password: 'password123',
+          confirmPassword: 'mismatch',
+        });
+        errors = signal<Record<string, string[]>>({});
+        suite = createTestValidationSuite;
+      }
+
+      await render(TestComponent);
+      await userEvent.click(screen.getByTestId('submit'));
+      await waitFor(() => {
+        expect(screen.queryByTestId('root-error')).toBeInTheDocument();
+      });
+
+      // No model change: only the submitted state is cleared.
+      await userEvent.click(screen.getByTestId('clear'));
+      await waitFor(() => {
+        expect(screen.queryByTestId('root-error')).toBeNull();
+      });
+    });
+
     it('should revalidate after submit when values change', async () => {
       @Component({
         imports: [NgxVestForms],

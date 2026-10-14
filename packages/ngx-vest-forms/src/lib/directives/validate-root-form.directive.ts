@@ -11,6 +11,7 @@ import {
   isDevMode,
   signal,
   untracked,
+  WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -31,6 +32,7 @@ import { scheduleMicrotask } from '../utils/destroy-scheduler';
 import { copyFormValue } from '../utils/form-utils';
 import type { NgxVestSuite } from '../utils/validation-suite';
 import { extractFieldErrors, runFieldValidation } from '../utils/vest-runner';
+import { getFormSubmittedSignal } from './form-submitted-state';
 import { ValidationOptions } from './validation-options';
 
 /**
@@ -123,6 +125,12 @@ export class ValidateRootFormDirective<T>
   validationOptions = input<ValidationOptions>({ debounceTime: 0 });
   /** Bumped on every ngSubmit so the effect revalidates after a submit. */
   readonly #submitCount = signal(0);
+  /**
+   * The form's shared submitted signal (set once NgForm is resolved). Tracked
+   * by the effect so `clearSubmittedState()` clears stale ROOT_FORM errors
+   * even when the model does not change.
+   */
+  readonly #sharedSubmitted = signal<WritableSignal<boolean> | null>(null);
   /** Whether the last effect run had root validation active. */
   #wasActive = false;
 
@@ -150,6 +158,7 @@ export class ValidateRootFormDirective<T>
     // errors are cleared.
     effect(() => {
       this.#submitCount();
+      this.#sharedSubmitted()?.();
       this.formValue();
       this.suite();
       this.validationOptions();
@@ -207,12 +216,16 @@ export class ValidateRootFormDirective<T>
       this.#destroyRef
     );
 
+    const sharedSubmitted = getFormSubmittedSignal(ngForm);
+    this.#sharedSubmitted.set(sharedSubmitted);
+
     // Revalidate on submit. Submitted state itself is read from
     // `ngForm.submitted`, so a form reset or `clearSubmittedState()` turns
     // submit-mode root validation off again.
     ngForm.ngSubmit
       .pipe(
         tap(() => {
+          sharedSubmitted.set(true);
           this.#submitCount.update((count) => count + 1);
         }),
         takeUntilDestroyed(this.#destroyRef)
