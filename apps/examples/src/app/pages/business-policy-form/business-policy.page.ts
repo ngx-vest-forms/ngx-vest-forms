@@ -1,15 +1,13 @@
-import {
-  Component,
-  computed,
-  signal,
-  viewChild,
-} from '@angular/core';
-import { createValidationConfig } from 'ngx-vest-forms';
+import { Component, computed, signal, viewChild } from '@angular/core';
+import { createValidationConfig, ROOT_FORM } from 'ngx-vest-forms';
 import { BusinessPolicyModel } from '../../models/business-policy.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
-import { IntroItemComponent, IntroSectionComponent } from '../../ui/intro-section';
+import {
+  IntroItemComponent,
+  IntroSectionComponent,
+} from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { businessPolicyContent } from './business-policy.content';
 import { BusinessPolicyFormBody } from './business-policy.form';
@@ -42,6 +40,10 @@ import {
 })
 export class BusinessPolicyPageComponent {
   protected readonly feedback = computed(() => this.formBody()?.feedback);
+  /** Cross-field policy errors, attached live by `ngxValidateRootForm`. */
+  protected readonly rootFormErrors = computed(
+    () => this.feedback()?.formState()?.errors[ROOT_FORM] ?? []
+  );
   protected readonly exampleContent = businessPolicyContent;
   protected readonly suite = businessPolicySuite;
   protected readonly errorRules = businessPolicyErrorRulesByField;

@@ -21,23 +21,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - name: Setup
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - name: Install pnpm and Node.js
+        # Reads the pnpm version from package.json's packageManager field and
+        # verifies the binary against npm's signature. install: false — the
+        # install step below runs under the Socket firewall.
+        uses: pnpm/setup@a0881977cd8ea73b1ed212236c99ca10dcc80cf4 # v3.1.1
         with:
-          node-version: '24'
-      - name: Enable Corepack
-        run: corepack enable
+          runtime: node@24
+          install: false
       - name: Set up Socket Firewall
         uses: socketdev/action@ba6de6cc0565af1f42295590380973573297e31f # v1.3.2
         with:
           mode: firewall
       - name: Install
+        # No package-manager caching on pull_request, by design: untrusted jobs
+        # must never write a cache that a trusted job later restores
+        # (ADR-0001, narrowed by ADR-0009).
         run: sfw pnpm install --frozen-lockfile
       - name: Audit dependencies
-        # Fails on any high/critical advisory. The single deferred advisory
-        # (braces, GHSA-vfj7-8cjw-p6xm) is listed in auditConfig.ignoreGhsas
-        # in pnpm-workspace.yaml with a review date; it is reported as ignored.
-        run: sfw pnpm audit --audit-level=high
+        # Fails on any high/critical advisory (audit.level in pnpm-workspace.yaml).
+        # The single deferred advisory (braces, GHSA-vfj7-8cjw-p6xm) is listed in
+        # audit.ignore there with a review date; it is reported as ignored.
+        run: sfw pnpm audit
+      - name: Verify package signatures
+        # Verifies the ECDSA registry signatures of installed packages against the
+        # keys each registry publishes at /-/npm/v1/keys.
+        run: sfw pnpm audit signatures
       - name: Secret scan
         run: |
           set +e

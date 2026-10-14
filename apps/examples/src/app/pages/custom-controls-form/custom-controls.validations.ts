@@ -7,7 +7,7 @@ import { CustomControlsModel } from '../../models/custom-controls.model';
  *
  * The suite is a plain Vest spec with no Angular dependency — the values it
  * validates happen to come from `ControlValueAccessor` controls, but the suite
- * neither knows nor cares. Unit-test it directly: `customControlsSuite(model)`.
+ * neither knows nor cares. Unit-test it directly: `customControlsSuite.run(model)`.
  */
 export const customControlsSuite: NgxVestSuite<CustomControlsModel> = create(
   (model: CustomControlsModel) => {

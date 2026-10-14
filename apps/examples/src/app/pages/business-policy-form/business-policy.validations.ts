@@ -29,7 +29,7 @@ const isEuCountry = (country: string | undefined): boolean =>
  * The Vest suite for the business-policy form.
  *
  * It is a plain Vest spec — no Angular dependency — so it can be unit-tested in
- * isolation by calling `businessPolicySuite(model)` directly. All policy logic
+ * isolation by calling `businessPolicySuite.run(model)` directly. All policy logic
  * lives here:
  *
  * - ERROR tests block submission (required fields, conditional VAT ID,
