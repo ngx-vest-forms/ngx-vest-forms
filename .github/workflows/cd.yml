@@ -24,6 +24,10 @@ jobs:
     concurrency: cd-${{ github.event.inputs.branch }}
     runs-on: ubuntu-latest
     environment: npm-publish  # Required for OIDC Trusted Publisher
+    env:
+      # Replaces the registry-url input of the former actions/setup-node step;
+      # pnpm and semantic-release's npm client both read it.
+      NPM_CONFIG_REGISTRY: https://registry.npmjs.org
     steps:
       - name: Validate branch input
         run: |
@@ -40,13 +44,14 @@ jobs:
           persist-credentials: false
           ref: ${{ github.event.inputs.branch }}
           fetch-depth: 0
-      - name: Setup
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - name: Install pnpm and Node.js
+        # Reads the pnpm version from package.json's packageManager field and
+        # verifies the binary against npm's signature. install: false — the
+        # install step below runs under the Socket firewall.
+        uses: pnpm/setup@a0881977cd8ea73b1ed212236c99ca10dcc80cf4 # v3.1.1
         with:
-          node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
-      - name: Enable Corepack
-        run: corepack enable
+          runtime: node@24
+          install: false
       - name: Set up Socket Firewall
         uses: socketdev/action@ba6de6cc0565af1f42295590380973573297e31f # v1.3.2
         with:
