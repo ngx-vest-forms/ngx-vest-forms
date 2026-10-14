@@ -29,6 +29,7 @@ function registerNgModel(
     path,
     control,
     options: undefined,
+    formDirective: ngForm,
   } as unknown as NgModel);
 }
 
@@ -92,6 +93,30 @@ describe('resolveFieldFromBlur', () => {
     });
   });
 
+  it('skips an inner ngModel that is not part of this form', () => {
+    const control = new FormControl('');
+    const form = document.createElement('form');
+    const host = document.createElement('app-date-picker');
+    const inner = document.createElement('input');
+    host.append(inner);
+    form.append(host);
+    const ngForm = createNgForm(new FormGroup({ startDate: control }));
+    registerNgModel(ngForm, ['startDate'], control, host);
+    // A custom control's own ngModel has no parent container.
+    registerControlElement(ngForm, inner, {
+      path: ['day'],
+      control: new FormControl(''),
+      options: undefined,
+      formDirective: null,
+    } as unknown as NgModel);
+
+    expect(resolveFieldFromBlur(ngForm, inner)).toEqual({
+      field: 'startDate',
+      control,
+      element: host,
+    });
+  });
+
   it('resolves a name under a registered dynamic ngModelGroup', () => {
     const control = new FormControl('');
     const form = document.createElement('form');
@@ -135,6 +160,7 @@ describe('resolveFieldFromBlur', () => {
     const unregister = registerControlElement(ngForm, input, {
       path: ['nickname'],
       control,
+      formDirective: ngForm,
     } as unknown as NgModel);
 
     expect(resolveFieldFromBlur(ngForm, input)?.field).toBe('nickname');

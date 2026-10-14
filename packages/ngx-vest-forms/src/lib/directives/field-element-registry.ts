@@ -67,8 +67,10 @@ function register<D>(
 /**
  * @internal
  * Finds the nearest registered `ngModel` host at or above `start`, stopping
- * at `formElement`. Standalone `ngModel`s are skipped: they are not part of
- * the form tree.
+ * at `formElement`. Skips `ngModel`s that are not part of this form's tree:
+ * standalone ones, and ones with no parent container, such as the internal
+ * `ngModel` of a custom control component (it still finds this form's
+ * `FormDirective` through the element injector and registers here).
  */
 export function findRegisteredControl(
   ngForm: NgForm,
@@ -81,7 +83,11 @@ export function findRegisteredControl(
   let current: Element | null = start;
   while (current && current !== formElement) {
     const ngModel = registry.controls.get(current);
-    if (ngModel && !ngModel.options?.standalone) {
+    if (
+      ngModel &&
+      !ngModel.options?.standalone &&
+      ngModel.formDirective === ngForm
+    ) {
       return { element: current, ngModel };
     }
     current = current.parentElement;
