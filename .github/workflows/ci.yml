@@ -34,6 +34,9 @@ jobs:
         with:
           mode: firewall
       - name: Install
+        # No package-manager caching on pull_request, by design: untrusted jobs
+        # must never write a cache that a trusted job later restores
+        # (ADR-0001, narrowed by ADR-0009).
         run: sfw pnpm install --frozen-lockfile
       - name: Audit dependencies
         # Fails on any high/critical advisory (audit.level in pnpm-workspace.yaml).
