@@ -15,6 +15,7 @@
       id="username"
       name="username"
       [ngModel]="formValue().username"
+      [validationOptions]="usernameValidationOptions"
       placeholder="ada_lovelace"
       autocomplete="off"
       autocapitalize="none"
@@ -22,7 +23,7 @@
     />
 
     <p aria-live="polite" class="mt-1 min-h-[1.25rem] text-sm">
-      @if (feedback.pending()) {
+      @if (showCheckingHint()) {
       <span class="text-blue-600 dark:text-blue-400">
         Checking availability…
       </span>

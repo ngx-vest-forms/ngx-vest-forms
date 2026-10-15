@@ -65,9 +65,7 @@ export const createAsyncUsernameSuite = (
                     .pipe(takeUntil(fromEvent(signal, 'abort')))
                 );
 
-                if (taken) {
-                  return Promise.reject();
-                }
+                enforce(taken).isFalsy();
               }
             );
           }, [username]);

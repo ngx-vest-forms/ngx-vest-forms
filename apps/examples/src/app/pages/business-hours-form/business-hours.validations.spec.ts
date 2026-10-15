@@ -57,6 +57,34 @@ describe('Business hours validations', () => {
     expect(result.getErrors(ROOT_FORM)).toContain(OVERLAP);
   });
 
+  it('accepts a four-digit HHMM time', () => {
+    const result = run({ from: '0900', to: '1000' });
+    expect(result.getErrors('businessHours.values.0.from')).not.toContain(
+      'Should be a valid time'
+    );
+  });
+
+  it('rejects a time that is not four digits', () => {
+    const result = run({ from: '090', to: '1000' });
+    expect(result.getErrors('businessHours.values.0.from')).toContain(
+      'Should be a valid time'
+    );
+  });
+
+  it('rejects an hour of 24 or more in HHMM form', () => {
+    const result = run({ from: '2500', to: '2600' });
+    expect(result.getErrors('businessHours.values.0.from')).toContain(
+      'Should be a valid time'
+    );
+  });
+
+  it('rejects a minute of 60 or more in HHMM form', () => {
+    const result = run({ from: '0965', to: '1000' });
+    expect(result.getErrors('businessHours.values.0.from')).toContain(
+      'Should be a valid time'
+    );
+  });
+
   it('leaves a malformed time to the field test instead of reporting overlap', () => {
     const result = run(
       { from: '08:00', to: '10:00' },

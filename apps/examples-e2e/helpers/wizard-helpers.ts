@@ -53,24 +53,9 @@ async function clickWizardNavigationButton(
 ): Promise<void> {
   await waitForValidationsToSettle(page, 10_000);
 
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const button = page.getByRole('button', { name });
-      await expect(button).toBeEnabled();
-      await button.click({ timeout: 10_000 });
-      break;
-    } catch (error) {
-      if (
-        attempt === 1 ||
-        !(error instanceof Error) ||
-        !error.message.includes('detached')
-      ) {
-        throw error;
-      }
-
-      await waitForValidationsToSettle(page, 10_000);
-    }
-  }
+  // Locator clicks re-resolve the button and wait for it to be enabled, so a
+  // re-rendered button needs no manual retry.
+  await page.getByRole('button', { name }).click({ timeout: 10_000 });
 
   await waitForValidationsToSettle(page, 10_000);
 }
@@ -156,22 +141,22 @@ export async function goToProfileStep(page: Page): Promise<void> {
     name: /progress:\s*step\s+3\s+of\s+3/i,
   });
 
-  for (let attempt = 0; attempt < 3; attempt++) {
-    if (await step2Heading.isVisible().catch(() => false)) {
-      await expectWizardStep(page, 2, step2HeadingName);
-      return;
-    }
+  // The progress nav shows only the current step, so one of these is visible
+  // once the wizard has rendered. Wait for that before choosing the action.
+  await expect(step2Heading.or(step1Nav).or(step3Nav)).toBeVisible();
 
-    if (await step1Nav.isVisible().catch(() => false)) {
-      await clickNext(page);
-      continue;
-    }
-
-    if (await step3Nav.isVisible().catch(() => false)) {
-      await page
-        .getByRole('button', { name: /edit profile details/i })
-        .click({ timeout: 10_000 });
-    }
+  if (await step1Nav.isVisible()) {
+    // Next only advances once step 1 is valid. Wait for that state rather
+    // than clicking into a step that is still validating.
+    await expectValidStep1(page);
+    await clickNext(page);
+  } else if (await step3Nav.isVisible()) {
+    await page
+      .getByRole('button', { name: /edit profile details/i })
+      .click({ timeout: 10_000 });
+  } else {
+    // Step 2 is already showing (the visibility wait above matched its
+    // heading), so there is nothing to navigate.
   }
 
   await expectWizardStep(page, 2, step2HeadingName);

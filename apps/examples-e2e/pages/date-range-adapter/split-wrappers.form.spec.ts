@@ -31,9 +31,20 @@ test.describe('Split Wrappers - Form Behavior', () => {
     await expect(departure).toBeVisible();
     await expect(returnDate).toBeVisible();
 
-    // Each should be inside a control-wrapper
-    const wrappers = page.locator('.ngx-control-wrapper');
-    await expect(wrappers).toHaveCount(2);
+    // Each field has its own control-wrapper that does not also hold the
+    // other field, so one shared wrapper fails these checks.
+    await expect(
+      page
+        .locator('ngx-control-wrapper')
+        .filter({ has: departure })
+        .filter({ hasNot: returnDate })
+    ).toHaveCount(1);
+    await expect(
+      page
+        .locator('ngx-control-wrapper')
+        .filter({ has: returnDate })
+        .filter({ hasNot: departure })
+    ).toHaveCount(1);
   });
 
   test('should update form model when departure date is entered', async ({
@@ -115,24 +126,11 @@ test.describe('Split Wrappers - Form Behavior', () => {
     const departure = page.getByLabel(/departure date/i);
 
     await test.step('Verify departure field has aria-describedby', async () => {
-      const describedBy = await departure.getAttribute('aria-describedby');
-      expect(describedBy).toBeTruthy();
-      expect(describedBy).toContain('error');
+      await expect(departure).toHaveAttribute('aria-describedby', /error/);
     });
 
     await test.step('Verify referenced element contains error text', async () => {
-      const describedBy = await departure.getAttribute('aria-describedby');
-      const ids = describedBy!.split(/\s+/);
-      const errorTexts = await Promise.all(
-        ids.map(async (id) => {
-          const el = page.locator(`#${id}`);
-          return (await el.count()) > 0 ? await el.textContent() : null;
-        })
-      );
-      const foundError = errorTexts.some(
-        (text) => !!text && /required/i.test(text)
-      );
-      expect(foundError).toBe(true);
+      await expect(departure).toHaveAccessibleDescription(/required/i);
     });
   });
 
@@ -164,16 +162,10 @@ test.describe('Split Wrappers - Form Behavior', () => {
     await fillNativeDateInputAndBlur(returnDate, '2026-07-10');
     await waitForValidationToSettle(page);
 
-    // No warning elements should be visible
-    const wrapperWarnings = page.locator(
-      '.ngx-control-wrapper [id*="-warning"]'
+    // The return date's description carries no "at least 3 days" warning
+    await expect(returnDate).not.toHaveAccessibleDescription(
+      /at least 3 days/i
     );
-    const count = await wrapperWarnings.count();
-    for (let i = 0; i < count; i++) {
-      await expect(wrapperWarnings.nth(i)).not.toContainText(
-        /at least 3 days/i
-      );
-    }
   });
 
   test('should bidirectionally revalidate when departure changes after return is set', async ({
@@ -192,6 +184,33 @@ test.describe('Split Wrappers - Form Behavior', () => {
     await fillNativeDateInputAndBlur(departure, '2026-07-15');
     await waitForValidationToSettle(page);
     await expectFieldHasError(returnDate, /after/i);
+  });
+
+  // ADR-0004: the approach toggle destroys the real date inputs (the
+  // validationConfig trigger) and re-creates them. Switching twice remounts
+  // them, so this proves the new inputs still drive the cross-field rule.
+  test('should keep bidirectional date revalidation after the approach toggle re-mounts the inputs (ADR-0004)', async ({
+    page,
+  }) => {
+    const departure = page.getByLabel(/departure date/i);
+    const returnDate = page.getByLabel(/return date/i);
+
+    await page.getByRole('radio', { name: /composite adapter/i }).check();
+    await page.getByRole('radio', { name: /split wrappers/i }).check();
+    await expect(departure).toBeVisible();
+
+    await fillNativeDateInputAndBlur(departure, '2026-07-01');
+    await fillNativeDateInputAndBlur(returnDate, '2026-07-10');
+    await waitForValidationToSettle(page);
+    await expectFieldValid(returnDate);
+
+    await fillNativeDateInputAndBlur(departure, '2026-07-15');
+    await waitForValidationToSettle(page);
+    await expectFieldHasError(returnDate, /after/i);
+
+    await fillNativeDateInputAndBlur(departure, '2026-07-01');
+    await waitForValidationToSettle(page);
+    await expectFieldValid(returnDate);
   });
 
   test('should reset form state when reset button is clicked', async ({

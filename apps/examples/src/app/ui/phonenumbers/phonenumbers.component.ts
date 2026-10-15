@@ -6,6 +6,7 @@ import {
   vestFormsViewProviders,
 } from 'ngx-vest-forms';
 import type { PhoneNumberMap } from '../../models/phonenumber.model';
+import { byNumericKey } from '../../shared/by-numeric-key';
 
 /**
  * Phone numbers component that integrates with ngx-vest-forms parent form.
@@ -36,6 +37,8 @@ export class PhoneNumbersComponent {
    * Value edits flow through ngModel automatically.
    */
   readonly valuesChange = output<PhoneNumberMap>();
+
+  protected readonly byNumericKey = byNumericKey;
 
   /** Local UI state for the "add new" input field - not part of form model */
   readonly newPhoneNumber = signal('');

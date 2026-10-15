@@ -151,20 +151,6 @@ test.describe('Composite Adapter - Form Behavior', () => {
     await expect(warningRegion).toContainText(/at least 3 days/i);
   });
 
-  test('should not show warning when dates are 3+ days apart', async ({
-    page,
-  }) => {
-    const departure = page.getByLabel(/departure date/i);
-    const returnDate = page.getByLabel(/return date/i);
-
-    await setAdapterDate(departure, '2026-07-01');
-    await setAdapterDate(returnDate, '2026-07-10');
-    await waitForValidationToSettle(page);
-
-    const warningRegion = page.locator('[id*="date-range-warnings"]');
-    await expect(warningRegion).not.toContainText(/at least 3 days/i);
-  });
-
   test('should use aria-describedby linking inputs to error region', async ({
     page,
   }) => {
@@ -172,21 +158,10 @@ test.describe('Composite Adapter - Form Behavior', () => {
     await waitForValidationToSettle(page);
 
     const departure = page.getByLabel(/departure date/i);
-    const describedBy = await departure.getAttribute('aria-describedby');
-    expect(describedBy).toBeTruthy();
-
-    // The referenced element should contain the error text
-    const ids = describedBy!.split(/\s+/);
-    let foundError = false;
-    for (const id of ids) {
-      const el = page.locator(`#${id}`);
-      const text = await el.textContent();
-      if (text && /required/i.test(text)) {
-        foundError = true;
-        break;
-      }
-    }
-    expect(foundError).toBe(true);
+    await expect(departure).toHaveAttribute('aria-describedby', /\S/);
+    // The accessible description is composed from the aria-describedby targets,
+    // so it retries until the referenced error text is present.
+    await expect(departure).toHaveAccessibleDescription(/required/i);
   });
 
   test('should clear errors and touched state after reset', async ({

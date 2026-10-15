@@ -28,7 +28,7 @@ import {
  * NOT exported from the public API barrel — strictly an internal helper.
  */
 export type AriaAssociationControllerConfig = {
-  /** Host element whose `input/select/textarea` descendants are targeted. */
+  /** Host element whose form-control descendants are targeted (native controls and ARIA form widgets). */
   readonly host: HTMLElement;
   /** Current association mode (`all-controls` | `single-control` | `none`). */
   readonly mode: Signal<AriaAssociationMode>;
@@ -78,9 +78,28 @@ export function createAriaAssociationController(
 
   let mutationObserver: MutationObserver | null = null;
 
+  /** Controls this controller last wrote ARIA state to. */
+  let stamped = new Set<HTMLElement>();
+
+  const releaseControl = (control: HTMLElement): void => {
+    const describedBy = mergeAriaDescribedBy(
+      control.getAttribute('aria-describedby'),
+      [],
+      config.ownedDescribedByIds
+    );
+    if (describedBy) {
+      control.setAttribute('aria-describedby', describedBy);
+    } else {
+      control.removeAttribute('aria-describedby');
+    }
+    control.removeAttribute('aria-invalid');
+    if (consumerAriaRequired.get(control) === false) {
+      control.removeAttribute('aria-required');
+    }
+  };
+
   const updateFormControls = (): void => {
-    const controls = config.host.querySelectorAll('input, select, textarea');
-    formControls.set(Array.from(controls) as HTMLElement[]);
+    formControls.set(findFormControls(config.host));
   };
 
   const disconnectObserver = (): void => {
@@ -111,9 +130,13 @@ export function createAriaAssociationController(
       mutationObserver = new MutationObserver(() => {
         updateFormControls();
       });
+      // `role` decides whether an element is a target, so a role added or
+      // changed after render must refresh the list too.
       mutationObserver.observe(config.host, {
         childList: true,
         subtree: true,
+        attributes: true,
+        attributeFilter: ['role'],
       });
     }
 
@@ -127,14 +150,24 @@ export function createAriaAssociationController(
     if (!config.contentInitialized()) return;
 
     const mode = config.mode();
+    const targets =
+      mode === 'none' ? [] : resolveAssociationTargets(formControls(), mode);
+
+    // An element can stop being a target while it stays in the DOM (its role
+    // changed, or the mode did). Take back what this controller set on it.
+    for (const control of stamped) {
+      if (!targets.includes(control)) {
+        releaseControl(control);
+      }
+    }
+    stamped = new Set(targets);
+
     if (mode === 'none') return;
 
     const describedBy = config.ariaDescribedBy();
     const activeIds = parseAriaIdTokens(describedBy);
     const shouldShowErrors = config.shouldShowErrors();
     const ariaRequired = config.ariaRequired?.() ?? null;
-
-    const targets = resolveAssociationTargets(formControls(), mode);
 
     for (const control of targets) {
       const nextDescribedBy = mergeAriaDescribedBy(
@@ -156,6 +189,14 @@ export function createAriaAssociationController(
 
       // aria-required is only managed when the consumer opts in.
       if (ariaRequired !== null) {
+        if (!supportsAriaRequired(control)) {
+          // The role may have changed to one without aria-required (for
+          // example spinbutton to slider): take back what this controller set.
+          if (consumerAriaRequired.get(control) === false) {
+            control.removeAttribute('aria-required');
+          }
+          continue;
+        }
         if (!consumerAriaRequired.has(control)) {
           consumerAriaRequired.set(
             control,
@@ -172,4 +213,80 @@ export function createAriaAssociationController(
   });
 
   return { formControls };
+}
+
+/**
+ * ARIA widget roles that accept `aria-invalid` and `aria-errormessage` and
+ * hold a form value (MDN, "Associated roles"). They cover custom controls
+ * built from non-form elements, such as a button-based `role="radiogroup"`
+ * ControlValueAccessor.
+ */
+const ARIA_FORM_WIDGET_ROLES: ReadonlySet<string> = new Set([
+  'checkbox',
+  'combobox',
+  'listbox',
+  'radiogroup',
+  'searchbox',
+  'slider',
+  'spinbutton',
+  'switch',
+  'textbox',
+]);
+
+const NATIVE_CONTROL_SELECTOR = 'input, select, textarea';
+
+/**
+ * The role an element exposes. `role` may list fallbacks
+ * (`role="switch checkbox"`); browsers use the first token they support, and
+ * every role in `ARIA_FORM_WIDGET_ROLES` is supported, so the first token is
+ * the one that counts.
+ */
+function primaryRole(element: Element): string | undefined {
+  return element.getAttribute('role')?.trim().split(/\s+/)[0]?.toLowerCase();
+}
+
+function isAriaFormWidget(element: Element): boolean {
+  const role = primaryRole(element);
+  return role !== undefined && ARIA_FORM_WIDGET_ROLES.has(role);
+}
+
+/**
+ * Finds the controls that carry the wrapper's ARIA state. A control nested
+ * inside an ARIA form widget (for example the inner `<input>` of a
+ * `role="combobox"` element) is skipped: the widget owns its parts and is the
+ * element assistive technology reports. When the host itself is such a widget
+ * (`<div ngxControlWrapper role="radiogroup">` around native radios), the
+ * host is the only target.
+ */
+function findFormControls(host: HTMLElement): HTMLElement[] {
+  if (isAriaFormWidget(host)) {
+    return [host];
+  }
+
+  return Array.from(
+    host.querySelectorAll<HTMLElement>(`${NATIVE_CONTROL_SELECTOR}, [role]`)
+  ).filter(
+    (control) =>
+      (control.matches(NATIVE_CONTROL_SELECTOR) || isAriaFormWidget(control)) &&
+      !isInsideAriaFormWidget(control, host)
+  );
+}
+
+/** Whether an ancestor of `control`, below `host`, is an ARIA form widget. */
+function isInsideAriaFormWidget(control: Element, host: Element): boolean {
+  for (
+    let ancestor = control.parentElement;
+    ancestor && ancestor !== host;
+    ancestor = ancestor.parentElement
+  ) {
+    if (isAriaFormWidget(ancestor)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** `role="slider"` does not support `aria-required` (MDN). */
+function supportsAriaRequired(control: HTMLElement): boolean {
+  return primaryRole(control) !== 'slider';
 }

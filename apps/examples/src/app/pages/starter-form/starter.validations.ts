@@ -1,6 +1,7 @@
 import { type NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test, warn } from 'vest';
 import { StarterFormModel } from '../../models/starter-form.model';
+import { EMAIL_PATTERN } from '../../shared/validations/email.validations';
 
 /**
  * The canonical Vest suite for the starter form.
@@ -20,9 +21,7 @@ export const starterFormSuite: NgxVestSuite<StarterFormModel> = create(
 
     omitWhen(!model.email, () => {
       test('email', 'Enter a valid email address', () => {
-        enforce(model.email ?? '').matches(
-          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
-        );
+        enforce(model.email ?? '').matches(EMAIL_PATTERN);
       });
     });
 

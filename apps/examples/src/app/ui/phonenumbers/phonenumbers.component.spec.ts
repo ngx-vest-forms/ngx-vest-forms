@@ -78,6 +78,22 @@ describe('PhoneNumbersComponent', () => {
     expect(removeButtons.length).toBe(2);
   });
 
+  it('should render phone numbers in numeric key order past ten entries', () => {
+    // keyvalue sorts string keys, which would render '10' before '2'.
+    const phonenumbers = Object.fromEntries(
+      Array.from({ length: 11 }, (_, index) => [String(index), `+${index}`])
+    );
+    component.formValue.set({ phonenumbers });
+    fixture.detectChanges();
+
+    const labels = Array.from(
+      compiled.querySelectorAll('input[aria-label^="Phone number "]')
+    ).map((input) => input.getAttribute('aria-label'));
+    expect(labels).toEqual(
+      Array.from({ length: 11 }, (_, index) => `Phone number ${index + 1}`)
+    );
+  });
+
   it('should emit new values when adding a phone number', () => {
     const valueSpy = vi.fn();
     component.onPhoneNumbersChange = valueSpy;

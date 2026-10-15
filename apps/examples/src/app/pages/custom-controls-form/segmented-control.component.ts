@@ -1,7 +1,9 @@
 import {
   Component,
+  ElementRef,
   forwardRef,
   signal,
+  viewChildren,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
@@ -9,8 +11,6 @@ type Segment = {
   readonly value: string;
   readonly label: string;
 };
-
-let nextId = 0;
 
 /**
  * A segmented single-select control built on {@link ControlValueAccessor}.
@@ -33,8 +33,8 @@ let nextId = 0;
       @for (segment of segments; track segment.value) {
         <button
           type="button"
+          #option
           role="radio"
-          [id]="groupId + '-' + segment.value"
           [attr.aria-checked]="value() === segment.value"
           [attr.tabindex]="rovingIndex(segment.value)"
           [disabled]="disabled()"
@@ -65,7 +65,6 @@ let nextId = 0;
   host: { style: 'display: block;' },
 })
 export class SegmentedControlComponent implements ControlValueAccessor {
-  protected readonly groupId = `ngx-segmented-${nextId++}`;
   protected readonly segments: readonly Segment[] = [
     { value: 'junior', label: 'Junior' },
     { value: 'mid', label: 'Mid' },
@@ -74,6 +73,9 @@ export class SegmentedControlComponent implements ControlValueAccessor {
 
   protected readonly value = signal<string | null>(null);
   protected readonly disabled = signal(false);
+
+  private readonly options =
+    viewChildren<ElementRef<HTMLButtonElement>>('option');
 
   private onChange: (value: string | null) => void = () => undefined;
   private onTouched: () => void = () => undefined;
@@ -120,10 +122,7 @@ export class SegmentedControlComponent implements ControlValueAccessor {
     if (next !== this.value()) {
       this.select(next);
     }
-    // Direct id lookup keeps the demo dependency-free; this app is CSR-only so
-    // `document` access is safe (a viewChildren()-based query would be the
-    // SSR-safe alternative).
-    document.getElementById(`${this.groupId}-${next}`)?.focus();
+    this.options()[nextIndex]?.nativeElement.focus();
   }
 
   // ── ControlValueAccessor ──────────────────────────────────────────

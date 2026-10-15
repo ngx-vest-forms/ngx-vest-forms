@@ -32,9 +32,7 @@ export const createPurchaseValidationSuite = (
                 .pipe(takeUntil(fromEvent(signal, 'abort')))
             );
 
-            if (exists) {
-              return Promise.reject();
-            }
+            enforce(exists).isFalsy();
           });
         }, [model.userId]);
       });
@@ -161,6 +159,8 @@ export const createPurchaseValidationSuite = (
 };
 
 export const purchaseValidationErrorRulesByField: Record<string, string[]> = {
+  [ROOT_FORM]: ['Brecht is not 30 anymore'],
+  userId: ['userId is already taken'],
   firstName: ['First name is required'],
   lastName: ['Last name is required'],
   birthDate: ['Birth date is required'],

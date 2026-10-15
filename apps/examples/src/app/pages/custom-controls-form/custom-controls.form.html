@@ -8,28 +8,34 @@
   class="space-y-6"
 >
   <ngx-control-wrapper class="form-field">
-    <div role="group" aria-label="Rating">
-      <span class="label-text">Rating</span>
-      <ngx-star-rating name="rating" [ngModel]="formValue().rating" />
-    </div>
+    <span class="label-text">Rating</span>
+    <ngx-star-rating name="rating" [ngModel]="formValue().rating" />
   </ngx-control-wrapper>
 
   <ngx-control-wrapper class="form-field">
-    <div role="group" aria-label="Experience level">
-      <span class="label-text">Experience level</span>
-      <ngx-segmented-control
-        name="experience"
-        [ngModel]="formValue().experience"
-      />
-    </div>
+    <span class="label-text">Experience level</span>
+    <ngx-segmented-control
+      name="experience"
+      [ngModel]="formValue().experience"
+      ngxControlState
+      #experienceState="ngxControlState"
+    />
+    <!-- ngxControlState exposes the control's state for UI of your own. -->
+    @if (experienceState.isValidTouched()) {
+      <p class="mt-1 text-sm text-green-700 dark:text-green-400">
+        Experience level selected.
+      </p>
+    }
   </ngx-control-wrapper>
 
-  <ngx-control-wrapper class="form-field">
-    <div role="group" aria-label="Tags">
-      <span class="label-text">Tags</span>
-      <ngx-tag-input name="tags" [ngModel]="formValue().tags" />
-    </div>
-  </ngx-control-wrapper>
+  <!--
+    The attribute form of the wrapper keeps native semantics. The fieldset's
+    legend names the group, and the wrapper still renders errors and warnings.
+  -->
+  <fieldset ngxControlWrapper class="form-shell form-field">
+    <legend class="label-text">Tags</legend>
+    <ngx-tag-input name="tags" [ngModel]="formValue().tags" />
+  </fieldset>
 
   <div class="flex justify-end gap-3 pt-2">
     <button type="button" class="btn btn-secondary" (click)="onReset()">

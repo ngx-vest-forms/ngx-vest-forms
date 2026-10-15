@@ -7,6 +7,7 @@ export const submissionPatternsContent = defineExampleContent({
     points: [
       'Concern (a) — field validation: a plain Vest suite (required, email format, password length, accepted terms) with submit-gated visibility for this demo',
       'Concern (b) — submit-time INVALID handling: an invalid submit never calls the server and moves focus to the first invalid control; the form binds [focusFirstInvalidOnSubmit]="false" to opt out of the built-in focus and run its own submit flow',
+      'Concern (b) also lists the errors that blocked the submit, captured once with getAllFormErrors() so the list does not change while you fix fields',
       'Concern (b.1) — end the submit cycle with clearSubmittedState() so submit-only errors hide without resetting values or Angular control metadata',
       'Concern (c) — server FAILURE messaging: HTTP errors surface in an assertive error panel with a Retry button',
       'Concern (d) — SUCCESS state: a polite success panel echoes the new account id with a "Create another" reset',

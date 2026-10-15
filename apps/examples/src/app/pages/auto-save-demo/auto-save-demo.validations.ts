@@ -1,6 +1,7 @@
 import { type NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test, warn } from 'vest';
 import { AutoSaveDemoModel } from '../../models/auto-save-demo.model';
+import { EMAIL_PATTERN } from '../../shared/validations/email.validations';
 
 export const autoSaveDemoValidationErrorRulesByField: Record<string, string[]> =
   {
@@ -70,9 +71,7 @@ export const autoSaveDemoSuite: NgxVestSuite<AutoSaveDemoModel> = create(
       });
 
       test('email', 'Enter a valid email address', () => {
-        enforce(model.email ?? '').matches(
-          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
-        );
+        enforce(model.email ?? '').matches(EMAIL_PATTERN);
       });
     });
 

@@ -23,6 +23,27 @@ The wrapper also:
 - merges its own `aria-describedby` tokens with any consumer-provided tokens (so existing hint text associations are preserved)
 - toggles `aria-invalid` only when errors are meant to be shown (based on the configured error display mode)
 
+It sets these attributes on native `input`, `select` and `textarea` elements
+and on elements with an ARIA form-widget role: `checkbox`, `combobox`,
+`listbox`, `radiogroup`, `searchbox`, `slider`, `spinbutton`, `switch` and
+`textbox` (the roles MDN lists for `aria-invalid`). A custom control such as a
+button-based star rating therefore needs only the right role on its root:
+
+```html
+<ngx-control-wrapper>
+  <span class="label-text">Rating</span>
+  <!-- renders <div role="radiogroup" aria-label="Rating"> with radio buttons -->
+  <ngx-star-rating name="rating" [ngModel]="formValue().rating" />
+</ngx-control-wrapper>
+```
+
+Controls nested inside such a widget are skipped, because the widget is the
+element assistive technology reports. A fallback role list counts by its first
+token (`role="switch checkbox"` is a `switch`), and a role added after render
+is picked up. `aria-required` is not set on
+`role="slider"`, which does not support it. See
+[ADR-0010](./adr/0010-aria-association-targets-aria-form-widgets.md).
+
 ### Required state
 
 Required-ness is **not inferred** from Vest validation rules.

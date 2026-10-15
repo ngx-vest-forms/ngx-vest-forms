@@ -2,7 +2,9 @@
   type="button"
   (click)="toggleTheme()"
   class="group rounded-lg p-2 transition-colors hover:bg-gray-100 focus:ring-2 focus:ring-gray-300 focus:outline-hidden dark:hover:bg-gray-800 dark:focus:ring-gray-600"
-  aria-label="Toggle theme"
+  [attr.aria-label]="
+    isDarkMode() ? 'Switch to light theme' : 'Switch to dark theme'
+  "
 >
   @if (isDarkMode()) {
     <!-- Sun icon - outlined by default, filled on hover -->

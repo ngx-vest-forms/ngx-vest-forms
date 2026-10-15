@@ -164,7 +164,8 @@ export class ControlWrapperComponent implements AfterContentInit {
    * Controls how this wrapper applies ARIA attributes to descendant controls.
    *
    * - `all-controls` (default, backwards compatible): apply `aria-describedby` / `aria-invalid`
-   *   to all `input/select/textarea` elements inside the wrapper.
+   *   to all `input/select/textarea` elements and ARIA form widgets (such as
+   *   `role="radiogroup"`) inside the wrapper.
    * - `single-control`: apply ARIA attributes only when exactly one control is found.
    *   (Useful for wrappers that sometimes contain helper buttons/controls.)
    * - `none`: do not mutate descendant controls at all (group-safe mode).

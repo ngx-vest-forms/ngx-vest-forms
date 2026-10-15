@@ -19,11 +19,11 @@ test.describe('Submission Patterns Form', () => {
     await waitForValidationToSettle(page);
 
     await expect(fullName).toBeFocused();
+    await expect(page.getByRole('region', { name: 'Errors' })).toBeVisible();
     await expect(
-      page.getByRole('region', { name: 'Errors' })
-    ).toBeVisible();
-    await expect(
-      page.getByRole('region', { name: 'Errors' }).getByText(/full name is required/i)
+      page
+        .getByRole('region', { name: 'Errors' })
+        .getByText(/full name is required/i)
     ).toBeVisible();
   });
 
@@ -101,5 +101,96 @@ test.describe('Submission Patterns Form', () => {
     await expect(email).toHaveValue('');
     await expect(password).toHaveValue('');
     await expect(acceptTerms).not.toBeChecked();
+  });
+
+  test.describe('Blocked submit summary', () => {
+    const summaryTitle = 'Submit was blocked by these errors';
+
+    test('should list every error that blocked the submit', async ({
+      page,
+    }) => {
+      const summary = page
+        .locator('ngx-alert-panel')
+        .filter({ hasText: summaryTitle });
+
+      await page.getByRole('button', { name: /create account/i }).click();
+
+      await expect(summary).toBeVisible();
+      await expect(summary.getByRole('listitem')).toHaveCount(4);
+      await expect(summary).toContainText(/full name is required/i);
+      await expect(summary).toContainText(/email is required/i);
+      await expect(summary).toContainText(/password is required/i);
+      await expect(summary).toContainText(/accept the terms/i);
+    });
+
+    test('should move focus to the field when a summary link is clicked', async ({
+      page,
+    }) => {
+      const summary = page
+        .locator('ngx-alert-panel')
+        .filter({ hasText: summaryTitle });
+
+      await page.getByRole('button', { name: /create account/i }).click();
+      await summary.getByRole('button', { name: /email is required/i }).click();
+
+      await expect(page).toHaveURL(/\/submission-patterns$/);
+      await expect(page.getByLabel('Email', { exact: true })).toBeFocused();
+    });
+
+    test('should keep listing a blocked error after the user fixes its field', async ({
+      page,
+    }) => {
+      const summary = page
+        .locator('ngx-alert-panel')
+        .filter({ hasText: summaryTitle });
+
+      await page.getByRole('button', { name: /create account/i }).click();
+      await expect(summary).toBeVisible();
+
+      await fillAndBlur(page.getByLabel('Full name', { exact: true }), 'Ada');
+      await waitForValidationToSettle(page);
+
+      // The summary is a snapshot of the last blocked submit.
+      await expect(summary).toContainText(/full name is required/i);
+    });
+
+    test('should hide the summary after a valid submit', async ({ page }) => {
+      const summary = page
+        .locator('ngx-alert-panel')
+        .filter({ hasText: summaryTitle });
+
+      await page.getByRole('button', { name: /create account/i }).click();
+      await expect(summary).toBeVisible();
+
+      await fillAndBlur(
+        page.getByLabel('Full name', { exact: true }),
+        'Ada Lovelace'
+      );
+      await fillAndBlur(
+        page.getByLabel('Email', { exact: true }),
+        'ada@example.com'
+      );
+      await fillAndBlur(
+        page.getByLabel('Password', { exact: true }),
+        'correct-horse-battery'
+      );
+      await page.getByLabel(/accept/i).check();
+      await page.getByRole('button', { name: /create account/i }).click();
+
+      await expect(summary).toHaveCount(0);
+    });
+
+    test('should hide the summary when the form is reset', async ({ page }) => {
+      const summary = page
+        .locator('ngx-alert-panel')
+        .filter({ hasText: summaryTitle });
+
+      await page.getByRole('button', { name: /create account/i }).click();
+      await expect(summary).toBeVisible();
+
+      await page.getByRole('button', { name: 'Reset', exact: true }).click();
+
+      await expect(summary).toHaveCount(0);
+    });
   });
 });

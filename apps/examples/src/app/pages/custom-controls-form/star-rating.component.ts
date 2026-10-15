@@ -1,7 +1,11 @@
-import { Component, forwardRef, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  forwardRef,
+  signal,
+  viewChildren,
+} from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-
-let nextId = 0;
 
 /**
  * A non-native star-rating control built on Angular's
@@ -27,8 +31,8 @@ let nextId = 0;
         @let filled = star <= shown;
         <button
           type="button"
+          #option
           role="radio"
-          [id]="groupId + '-' + star"
           [attr.aria-label]="star + (star === 1 ? ' star' : ' stars')"
           [attr.aria-checked]="value() === star"
           [attr.tabindex]="rovingIndex(star)"
@@ -61,12 +65,14 @@ let nextId = 0;
   host: { style: 'display: block;' },
 })
 export class StarRatingComponent implements ControlValueAccessor {
-  protected readonly groupId = `ngx-star-rating-${nextId++}`;
   protected readonly stars = [1, 2, 3, 4, 5] as const;
 
   protected readonly value = signal<number | null>(null);
   protected readonly hovered = signal<number | null>(null);
   protected readonly disabled = signal(false);
+
+  private readonly options =
+    viewChildren<ElementRef<HTMLButtonElement>>('option');
 
   private onChange: (value: number | null) => void = () => undefined;
   private onTouched: () => void = () => undefined;
@@ -113,11 +119,7 @@ export class StarRatingComponent implements ControlValueAccessor {
     if (next !== star) {
       this.select(next);
     }
-    // Direct id lookup keeps the demo dependency-free; this app is CSR-only so
-    // `document` access is safe (a viewChildren()-based query would be the
-    // SSR-safe alternative).
-    const el = document.getElementById(`${this.groupId}-${next}`);
-    el?.focus();
+    this.options()[next - 1]?.nativeElement.focus();
   }
 
   // ── ControlValueAccessor ──────────────────────────────────────────

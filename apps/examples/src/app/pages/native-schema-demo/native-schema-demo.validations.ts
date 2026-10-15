@@ -1,6 +1,7 @@
 import { type NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, test } from 'vest';
 import { NativeSchemaDemoModel } from '../../models/native-schema-demo.model';
+import { EMAIL_PATTERN } from '../../shared/validations/email.validations';
 
 /**
  * Native Vest schema used directly by `create(..., schema)`.
@@ -41,7 +42,7 @@ export const nativeSchemaDemoSuite: NgxVestSuite<NativeSchemaDemoModel> =
     });
 
     test('email', 'Must be a valid email address', () => {
-      enforce(model.email).matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+      enforce(model.email ?? '').matches(EMAIL_PATTERN);
     });
 
     test('age', 'Age is required', () => {

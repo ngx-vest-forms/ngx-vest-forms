@@ -27,32 +27,49 @@ test.describe('Accessible Wrapper Demo Form', () => {
     await expect(errorSummary).toContainText(/search query is required/i);
     await expect(searchQuery).toHaveAttribute('aria-invalid', 'true');
 
-    const preferredDescribedBy =
-      await preferredName.getAttribute('aria-describedby');
-    expect(preferredDescribedBy).toMatch(/preferred-name-hint/);
-    expect(preferredDescribedBy).toMatch(/ngx-error-control-\d+-error/);
+    await expect(preferredName).toHaveAttribute(
+      'aria-describedby',
+      /preferred-name-hint/
+    );
+    await expect(preferredName).toHaveAttribute(
+      'aria-describedby',
+      /ngx-error-control-\d+-error/
+    );
 
-    const searchDescribedBy =
-      await searchQuery.getAttribute('aria-describedby');
-    expect(searchDescribedBy).toMatch(/search-query-hint/);
-    expect(searchDescribedBy).toMatch(/ngx-error-control-\d+-error/);
-    expect(await clearSearch.getAttribute('aria-describedby')).toBeNull();
-    expect(await clearSearch.getAttribute('aria-invalid')).toBeNull();
+    await expect(searchQuery).toHaveAttribute(
+      'aria-describedby',
+      /search-query-hint/
+    );
+    await expect(searchQuery).toHaveAttribute(
+      'aria-describedby',
+      /ngx-error-control-\d+-error/
+    );
+    await expect(clearSearch).not.toHaveAttribute('aria-describedby');
+    await expect(clearSearch).not.toHaveAttribute('aria-invalid');
   });
 
-  test('should keep validation on the input while the helper button stays neutral', async ({
+  test('should keep aria-invalid on the search input while the helper button stays unmarked (ADR-0006)', async ({
     page,
   }) => {
     const preferredName = page.getByRole('textbox', {
       name: /preferred name/i,
     });
     const searchQuery = page.getByRole('searchbox', { name: /search query/i });
+    const clearSearch = page.getByRole('button', {
+      name: /clear search query/i,
+    });
 
     await fillAndBlur(preferredName, 'Ada');
     await fillAndBlur(searchQuery, 'ngx-vest-forms');
-    await page.getByRole('button', { name: /clear search query/i }).click();
+    await clearSearch.click();
 
     await expect(searchQuery).toHaveValue('');
+
+    await page.getByRole('button', { name: /save preferences/i }).click();
+
+    await expect(searchQuery).toHaveAttribute('aria-invalid', 'true');
+    await expect(clearSearch).not.toHaveAttribute('aria-invalid');
+    await expect(clearSearch).not.toHaveAttribute('aria-describedby');
 
     await fillAndBlur(searchQuery, 'ngx-vest-forms');
     await page.getByRole('button', { name: /save preferences/i }).click();

@@ -13,8 +13,4 @@ export class SwapiService {
       catchError(() => of(false))
     );
   }
-
-  searchUserById(id: string): Observable<unknown> {
-    return this.httpClient.get(`${this.peopleUrl}/${id}`);
-  }
 }

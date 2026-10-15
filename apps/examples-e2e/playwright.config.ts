@@ -16,17 +16,21 @@ const webServerPort = new URL(baseURL).port || '4400';
 export default defineConfig({
   testDir: '.',
   testMatch: ['**/pages/**/*.spec.ts', 'app/**/*.spec.ts'],
+  /* Traces, screenshots and videos land in the repo-root test-results/ (gitignored); CI uploads it on failure. */
+  outputDir: '../../test-results',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env['CI'],
-  /* Retry on failure - some tests involve async validations that can be flaky */
-  retries: process.env['CI'] ? 2 : 1,
+  /* No retries locally, so a flaky test shows up instead of passing on a second attempt. CI keeps 2. */
+  retries: process.env['CI'] ? 2 : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env['CI'] ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   /* open: 'never' prevents auto-opening browser after test run */
-  reporter: [['html', { open: 'never' }]],
+  reporter: [
+    ['html', { open: 'never', outputFolder: '../../playwright-report' }],
+  ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */

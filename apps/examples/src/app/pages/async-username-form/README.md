@@ -23,15 +23,21 @@ first, the network last, every stale request cancelled.
 - The async test wrapped in `vest/memo` keyed on `[username]` so it does not
   re-run when other fields change, and aborted via
   `takeUntil(fromEvent(signal, 'abort'))` when the username changes mid-flight.
-- Pending state read from `createFormFeedbackSignals` and surfaced inline
-  with an `aria-live="polite"` "Checking availability…" hint, plus a success
-  hint when the field is validated, error-free, and not pending.
+- A field-level debounce (`[validationOptions]` with
+  `NGX_VALIDATION_DEBOUNCE_PRESETS.async`, 500ms), so the endpoint is called
+  once typing pauses instead of on every keystroke.
+- Pending state read from `createFormFeedbackSignals` and passed through
+  `createDebouncedPendingState`, which drives an `aria-live="polite"`
+  "Checking availability…" hint that does not flash for fast responses.
+  A success hint shows when the field is validated, error-free, and not
+  pending.
 
 ## Public API used
 
 `NgxVestForms`, `FormDirective`, `provideFormContract`,
-`createFormFeedbackSignals`, `NgxVestSuite`, `NgxDeepPartial`,
-`NgxDeepRequired`. Vest comes from `vest` and `vest/memo`.
+`createFormFeedbackSignals`, `createDebouncedPendingState`,
+`NGX_VALIDATION_DEBOUNCE_PRESETS`, `ValidationOptions`, `NgxVestSuite`,
+`NgxDeepPartial`, `NgxDeepRequired`. Vest comes from `vest` and `vest/memo`.
 
 ## Key files
 
@@ -46,7 +52,8 @@ first, the network last, every stale request cancelled.
 ## Behavior
 
 While the remote check runs, `pending()` is true: the control wrapper sets
-`aria-busy` and an inline polite hint reads "Checking availability…". When
+`aria-busy`, and if the check takes longer than 200ms an inline polite hint
+reads "Checking availability…". When
 the username is valid and the check passes, the hint switches to "That
 username is available." A taken name (`admin`, `root`, `support`, `ada`,
 `luke`, `taken`, `test`) yields "Username is already taken". Editing the

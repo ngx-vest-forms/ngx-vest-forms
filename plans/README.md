@@ -38,6 +38,21 @@ references a credential location and must never be a public issue).
 | 003  | Pin pullfrog workflow actions to SHAs + pin gate | P1 | S | — | DONE, adapted — PR #247 (`bde620d1` + `d9163803` + `a1a519e4`); workflow removed, not pinned; gate covers `*.yaml` |
 | 004  | Fix FormArray disabled-control merge (`mergeValuesAndRawValues`) | P1 | S | — | DONE — PR #259; the fix also covers PERF-02 |
 | 005  | Fix `formValueChange` dropping disabled-control updates | P1 | S | — | DONE — PR #259 |
+| 006  | E2E hygiene: assertions that can fail, no hard waits/retries/dead helpers | P1 | M | — | DONE, uncommitted (`examples-e2e-audit`): 40 e2e-ci targets; chromium 210/210; purchase+custom-controls `--repeat-each=3` 138/138; wizard `--repeat-each=5` 95/95 after the step-1 gate fix. Debounce e2e test deleted (plan fallback: `aria-busy` is pending during the debounce window and the mock interceptor makes no network request); unit coverage in `form.directive.spec.ts`. Open: one wizard phone-format failure seen once under repeat, not reproduced. The `if (hasAriaInvalid)` guards were removed in plan 009. |
+| 007  | E2E: cover browser-only library behaviour | P1 | M | 006 | PARTIAL, uncommitted (`examples-e2e-audit`): chromium 222/222 passed, 0 failed. Added: async-username pending state, submit-while-pending, custom-controls aria-invalid/Tags/blur/reset, ADR-0006 negatives (test renamed), complex-nested member errors. Step 3 (overlapping runs) not done: the mock is an in-app HttpInterceptor and debounce drops fast replacements, so overlap is not deterministic in e2e; covered by unit specs. Async-username has 3 tests (plan asks for 4). Step 7 NOT done: `webkit-2370` and `firefox-1555` are not installed, so both skips stay (reason recorded in the skip messages); run `pnpm exec playwright install webkit firefox`, then remove the skips and run `--project=webkit` / `--project=firefox`. Red-proofs: rating `[invalid]` removed, Tags legend renamed, checking-hint `@if` disabled, blocked-summary `@if` disabled, tag `onTouched` disabled. No library defects found. **Reviewer follow-up:** step 7 done. After `playwright install webkit firefox`, the WebKit-skipped purchase confirmPassword test passed 10/10 and the Firefox-skipped VC endDate test 5/5, so both skips were removed. Step 6 found a real layout bug: member Remove buttons used `btn-input-action` (absolutely positioned), so member 2's button covered member 1's. Fixed with `btn btn-danger`; the nested test now removes member 1 and failed before the fix. Status: DONE. Post-review: step 3 added as a deterministic e2e test (replace the value while the taken check is in flight; red-proofed). The wizard flake did not reproduce in `--repeat-each=20` (360/360). |
+| 008  | Examples: fix bugs and misleading code | P1 | M | — | DONE, uncommitted (`examples-e2e-audit`). E1 travel: ADR-0004 test red before fix, fixed by re-creating the form body per approach. E1 purchase: the executor's test was flaky; the reviewer's re-mount test passed 6/6 before any fix, so it stays as a guard. The config is now one-way `whenChanged('quantity','justification')`, added only while quantity > 5 (quantity rules never read justification, a re-created control must not be a trigger, and an always-on rule logs a dev-mode NGX-107 timeout while justification is unmounted); purchase specs 98/98 over 2 repeats. E2 debounce + `createDebouncedPendingState` hint; E3 dead `triggerValidation()` removed and copy corrected (a select change already revalidates); E4 phone numeric order (unit test red→green); E5 storage try/catch; E6 `zodFormSchema`, `searchUserById` removed; E7 `motion-reduce` on drawer, stateful theme-toggle label; also removed the undefined `animate-fade-in` class (no-op). The done-criteria grep for `triggerValidation()` still matches business-hours, where the method is real and called; the grep was too broad. |
+| 009  | Trim duplicate e2e proof; idiomatic examples | P2 | L | 006, 007, 008 | DONE, uncommitted (`examples-e2e-audit`). Part A: 17 duplicate e2e tests deleted, each owner logged at the end of plan 009; CSS colour tests rewritten to `aria-invalid`; wizard and business-hours format rules moved to unit specs (red-proofed); nav test derives links from the page. Part B: B1 kept the two purchase effects (they copy async results into editable state) and replaced the pass-through `computed` with `asReadonly()`; B2 custom controls focus via `viewChildren`; B3 one shared `EMAIL_PATTERN` (`vest/email`'s `isEmail()` does not type-check under this tsconfig); B4 rejected (the guards narrow types); B5 async tests use `enforce(...).isFalsy()`. Follow-ups by the reviewer: one-shot DOM reads converted to web-first assertions; `expectFieldHasError`/`expectFieldValid` now assert `aria-invalid` strictly (no failures); purchase rule map gained the missing `userId` and ROOT_FORM entries. Final: chromium + Firefox + WebKit 618/618, unit 37/37, lint 0 errors, build green. |
+| 010  | Demonstrate and e2e-test unused public features | P2 | M | 008 | DONE, uncommitted (`examples-e2e-audit`). Demoed + e2e-tested: `ngxControlState` (aria-invalid on custom radiogroups), `[ngxControlWrapper]` on a fieldset (custom-controls), `getAllFormErrors`/`NgxFormErrorsByPath` (submission-patterns blocked-submit summary), `createDebouncedPendingState`, `ValidationOptions` + `NGX_VALIDATION_DEBOUNCE_PRESETS` (async-username). Left as docs/unit-only on purpose: type-only exports (`FieldPath`, `FormFieldName`, `NgxFieldKey`…; a typed demo needed a cast), `NGX_EQUALITY_FN`, `toFormContract`, `deepArrayToObject`, `stringifyFieldPath`, ARIA helpers, `provideFormContractFactory`, `validationFocus`, `pendingDebounce` (no async group in any demo), `DEFAULT_*_SELECTOR`. |
+
+Plans 006–010 come from the 2026-10-15 audit of `apps/examples` (Angular 22,
+Vest 6, ngx-vest-forms practice) and `apps/examples-e2e` (Playwright practice,
+feature coverage), stamped at `40e38f77`. Executed in order 006 → 008 → 007
+→ 009 → 010 in one worktree, because 006, 007 and 009 all edit
+`helpers/form-helpers.ts`. Deferred from that audit and not planned: rebuilding
+the poll-based helpers on web-first matchers (L, 200+ call sites), moving the
+16 `NgxDeepRequired` models to schema contracts, ui component renames,
+refactoring the wizard's validity relay, and CI artifact upload and nightly
+cross-browser runs (workflow change; needs SHA-pinned actions).
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
 REJECTED (with one-line rationale — finding fixed independently or approach
@@ -58,6 +73,36 @@ abandoned)
 
 ## Findings not selected for plans (next in line)
 
+From the 2026-10-15 examples/e2e audit, resolved on the same branch after
+code review:
+
+- **LIB-ARIA-01** (a11y): FIXED. The ARIA association controller now targets
+  elements with an ARIA form-widget role (`checkbox`, `combobox`, `listbox`,
+  `radiogroup`, `searchbox`, `slider`, `spinbutton`, `switch`, `textbox`, the
+  MDN role list for `aria-invalid`) as well as native controls. It skips
+  controls nested inside such a widget and does not set `aria-required` on
+  `slider`. Decision in ADR-0010; three unit tests (two red against the old
+  selector); the custom-controls demo dropped its `invalid` workaround.
+- **DOCS-01** (docs): FIXED. The three `.isEmail()` doc snippets now use
+  `matches(...)`. `import 'vest/email'` type-checks with plain `tsc` but not
+  under the Angular compiler (TS4111/TS2722), so the docs no longer depend on
+  it.
+- **ADR-0003-STALE**: REJECTED. ADR-0003 is already marked superseded and
+  describes the current defer/replay design, as does the v3 migration guide.
+- **PHONE-01**: REJECTED. The purchase form's `ngx-form-group-wrapper
+  ngModelGroup="phonenumbers"` already shows the group error, and the suite
+  has no rule on `phonenumbers.values`. `arrayToObject` re-indexes keys on
+  every removal, so index-keyed `each()` tests are stable by construction.
+- **E2E-CI-01** (dx): FIXED. `ci.yml` uploads the Playwright report and traces
+  when a step fails, and `e2e-cross-browser.yml` runs Firefox and WebKit
+  nightly and on demand (actions SHA-pinned; `upload-artifact` v7.0.1, since
+  v7.0.2 is under two weeks old).
+- **E2E-OVERLAP-01** and **WIZARD-FLAKE-01**: see the 007 row.
+- **INVESTIGATE-01** (behaviour, S): during plan 008 an executor reported that
+  an untouched dependent that becomes required through a trigger change is
+  not re-validated on its own blur when kept mounted with `[hidden]`. Not
+  reproduced or proven; needs a focused unit test.
+
 Vetted during the audit; ask for plans for any of these:
 
 - **C-07** (bug, S): `createAsyncValidator`'s `catchError(() => of({ vestInternalError: ... }))`
@@ -70,7 +115,7 @@ Vetted during the audit; ask for plans for any of these:
   diagnostic (pinned by vest-runner.spec.ts:278).
 - **C-08** (bug, S): `aria-association-controller.ts:126-137` early-returns
   on mode `'none'` → stale `aria-invalid`/`aria-describedby` persist after a
-  runtime mode switch.
+  runtime mode switch. FIXED on `claude/examples-e2e-audit` (PR #267): the controller releases the attributes it set when an element stops being a target.
 - **C-04** (bug, S): `focusFirstInvalidControl` runs its visibility filter
   before `openCollapsedDetailsAncestors` (first-invalid.utils.ts:72-93) →
   invalid fields inside collapsed `<details>` are never found/opened.

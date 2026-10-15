@@ -29,8 +29,8 @@ Demo**.
 
 ## Key files
 
-- `zod-schema-demo.validations.ts` — exported `zodFormSchema` (Zod) plus the
-  separate Vest suite `zodSchemaDemoSuite`.
+- `zod-schema-demo.validations.ts` — the Vest suite `zodSchemaDemoSuite`.
+  The Zod contract lives in `models/zod-schema-demo.model.ts`.
 - `zod-schema-demo.form.ts` / `.form.html` — the form body bound to the suite
   and contract.
 - `zod-schema-demo.page.ts` / `.page.html` — page shell, title, sidebar

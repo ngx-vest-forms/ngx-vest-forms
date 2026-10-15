@@ -1,6 +1,7 @@
 import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test } from 'vest';
 import { ConditionalStructureModel } from '../../models/conditional-structure.model';
+import { EMAIL_PATTERN } from '../../shared/validations/email.validations';
 
 export const conditionalStructureSuite: NgxVestSuite<ConditionalStructureModel> =
   create((model: ConditionalStructureModel) => {
@@ -25,9 +26,7 @@ export const conditionalStructureSuite: NgxVestSuite<ConditionalStructureModel> 
 
       omitWhen(!model.deliveryEmail, () => {
         test('deliveryEmail', 'Enter a valid delivery email', () => {
-          enforce(model.deliveryEmail ?? '').matches(
-            /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-          );
+          enforce(model.deliveryEmail ?? '').matches(EMAIL_PATTERN);
         });
       });
     });
