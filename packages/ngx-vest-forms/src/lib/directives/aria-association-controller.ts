@@ -188,7 +188,15 @@ export function createAriaAssociationController(
       }
 
       // aria-required is only managed when the consumer opts in.
-      if (ariaRequired !== null && supportsAriaRequired(control)) {
+      if (ariaRequired !== null) {
+        if (!supportsAriaRequired(control)) {
+          // The role may have changed to one without aria-required (for
+          // example spinbutton to slider): take back what this controller set.
+          if (consumerAriaRequired.get(control) === false) {
+            control.removeAttribute('aria-required');
+          }
+          continue;
+        }
         if (!consumerAriaRequired.has(control)) {
           consumerAriaRequired.set(
             control,

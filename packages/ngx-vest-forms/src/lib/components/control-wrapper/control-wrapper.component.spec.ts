@@ -923,6 +923,51 @@ describe('ControlWrapperComponent', () => {
         });
       });
 
+      it('should remove its aria-required when a role changes to slider, keeping a consumer one', async () => {
+        @Component({
+          imports: [NgxVestForms],
+          template: `
+            <ngx-control-wrapper ariaRequired>
+              <div
+                [attr.role]="role()"
+                aria-label="Volume"
+                aria-valuenow="50"
+                tabindex="0"
+              ></div>
+            </ngx-control-wrapper>
+            <ngx-control-wrapper ariaRequired>
+              <div
+                [attr.role]="role()"
+                aria-label="Balance"
+                aria-valuenow="50"
+                aria-required="true"
+                tabindex="0"
+              ></div>
+            </ngx-control-wrapper>
+          `,
+        })
+        class RoleToSliderComponent {
+          role = signal('spinbutton');
+        }
+
+        const { fixture } = await render(RoleToSliderComponent);
+        const volume = screen.getByLabelText('Volume');
+        await waitFor(() => {
+          expect(volume).toHaveAttribute('aria-required', 'true');
+        });
+
+        fixture.componentInstance.role.set('slider');
+
+        await waitFor(() => {
+          expect(volume).not.toHaveAttribute('aria-required');
+        });
+        // The consumer set this one; the wrapper leaves it alone.
+        expect(screen.getByLabelText('Balance')).toHaveAttribute(
+          'aria-required',
+          'true'
+        );
+      });
+
       it('should use the first token of a fallback role list', async () => {
         @Component({
           imports: [NgxVestForms],
