@@ -1,5 +1,6 @@
 import { Component, computed, input, output, viewChild } from '@angular/core';
 import {
+  createDebouncedPendingState,
   createFormFeedbackSignals,
   FormDirective,
   NGX_PENDING_LABEL,
@@ -42,6 +43,18 @@ export class AsyncUsernameFormBody {
     debounceTime: NGX_VALIDATION_DEBOUNCE_PRESETS.async,
   };
 
+  /**
+   * When the wrapper shows "Checking availability…": only for checks slower
+   * than 200ms, then for at least 500ms so a fast response does not flash it.
+   */
+  protected readonly pendingDebounce = { showAfter: 200, minimumDisplay: 500 };
+
+  /** Mirrors the wrapper's pending message, to keep the success hint apart. */
+  private readonly checkingShown = createDebouncedPendingState(
+    this.feedback.pending,
+    this.pendingDebounce
+  ).showPendingMessage;
+
   private readonly usernameErrors = computed(
     () => this.feedback.formState()?.errors['username'] ?? []
   );
@@ -50,6 +63,7 @@ export class AsyncUsernameFormBody {
     const validated = this.feedback.validatedFields() ?? [];
     return (
       !this.feedback.pending() &&
+      !this.checkingShown() &&
       validated.includes('username') &&
       this.usernameErrors().length === 0 &&
       !!this.formValue().username

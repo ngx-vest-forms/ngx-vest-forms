@@ -29,6 +29,7 @@ export const asyncUsernameContent = defineExampleContent({
         points: [
           'Debouncing the field with validationOptions so the endpoint is called once typing pauses',
           "Renaming the wrapper's pending message with NGX_PENDING_LABEL (the same token translates it app-wide)",
+          'Timing it with [pendingDebounce] and mirroring it with createDebouncedPendingState so the success hint never shows next to it',
           'Waiting for pending() to settle on submit so a mid-flight check never swallows the submission',
           'Deriving a success hint from validated fields plus an empty error list',
           'Keeping the suite a plain Vest spec — the service is injected via a factory',

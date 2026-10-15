@@ -30,12 +30,13 @@ first, the network last, every stale request cancelled.
   component-level `NGX_PENDING_LABEL` provider. The same token, provided in
   the application config, translates the message for every wrapper. A
   success hint shows when the field is validated, error-free, and not
-  pending.
+  pending; `createDebouncedPendingState` with the wrapper's timing keeps it
+  hidden while the wrapper still shows the pending message.
 
 ## Public API used
 
 `NgxVestForms`, `FormDirective`, `provideFormContract`,
-`createFormFeedbackSignals`, `NGX_PENDING_LABEL`,
+`createFormFeedbackSignals`, `createDebouncedPendingState`, `NGX_PENDING_LABEL`,
 `NGX_VALIDATION_DEBOUNCE_PRESETS`, `ValidationOptions`, `NgxVestSuite`,
 `NgxDeepPartial`, `NgxDeepRequired`. Vest comes from `vest` and `vest/memo`.
 
