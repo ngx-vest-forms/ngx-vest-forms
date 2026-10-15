@@ -26,16 +26,16 @@ first, the network last, every stale request cancelled.
 - A field-level debounce (`[validationOptions]` with
   `NGX_VALIDATION_DEBOUNCE_PRESETS.async`, 500ms), so the endpoint is called
   once typing pauses instead of on every keystroke.
-- Pending state read from `createFormFeedbackSignals` and passed through
-  `createDebouncedPendingState`, which drives an `aria-live="polite"`
-  "Checking availability…" hint that does not flash for fast responses.
-  A success hint shows when the field is validated, error-free, and not
+- The wrapper's pending message renamed to "Checking availability…" with a
+  component-level `NGX_PENDING_LABEL` provider. The same token, provided in
+  the application config, translates the message for every wrapper. A
+  success hint shows when the field is validated, error-free, and not
   pending.
 
 ## Public API used
 
 `NgxVestForms`, `FormDirective`, `provideFormContract`,
-`createFormFeedbackSignals`, `createDebouncedPendingState`,
+`createFormFeedbackSignals`, `NGX_PENDING_LABEL`,
 `NGX_VALIDATION_DEBOUNCE_PRESETS`, `ValidationOptions`, `NgxVestSuite`,
 `NgxDeepPartial`, `NgxDeepRequired`. Vest comes from `vest` and `vest/memo`.
 
@@ -52,10 +52,9 @@ first, the network last, every stale request cancelled.
 ## Behavior
 
 While the remote check runs, `pending()` is true: the control wrapper sets
-`aria-busy`, and if the check takes longer than 200ms an inline polite hint
-reads "Checking availability…". When
-the username is valid and the check passes, the hint switches to "That
-username is available." A taken name (`admin`, `root`, `support`, `ada`,
+`aria-busy`, and if the check takes longer than 200ms (`[pendingDebounce]`)
+its pending region reads "Checking availability…". When the username is valid
+and the check passes, a hint reads "That username is available." A taken name (`admin`, `root`, `support`, `ada`,
 `luke`, `taken`, `test`) yields "Username is already taken". Editing the
 username aborts any in-flight request and re-runs validation against the new
 value, so the result always reflects the latest input. Submitting while

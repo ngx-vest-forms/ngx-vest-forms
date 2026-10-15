@@ -44,7 +44,9 @@ Do not tell consumers to import custom-wrapper primitives from internal library 
 Use `createDebouncedPendingState()` when async validation can flash quickly.
 That keeps "Validating…" from flickering and gives users steadier feedback.
 
-In v2.7.0, `[pendingDebounce]` on `<ngx-form-group-wrapper>` is a **signal-accessor input**, so runtime changes propagate. Type the binding as `DebouncedPendingStateOptionsInput` when consumers want to swap delays from a `signal` or `computed`. Previously the value was read once at construction.
+To translate or rename the built-in wrappers' "Validating…" text, provide `NGX_PENDING_LABEL` (a string or a `Signal<string>`) instead of building a custom wrapper. A custom wrapper on `ngxErrorControl` renders the same text with `pendingLabel()`.
+
+`[pendingDebounce]` (on `<ngx-form-group-wrapper>` since v2.7.0, and on `<ngx-control-wrapper>` since v3) is a **signal-accessor input**, so runtime changes propagate. Type the binding as `DebouncedPendingStateOptionsInput` when consumers want to swap delays from a `signal` or `computed`. Previously the value was read once at construction.
 
 ## ARIA behavior to preserve
 

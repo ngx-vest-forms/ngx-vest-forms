@@ -10,11 +10,10 @@ import {
 } from '@angular/core';
 import { createAriaAssociationController } from '../../directives/aria-association-controller';
 import { FormErrorDisplayDirective } from '../../directives/form-error-display.directive';
+import { injectPendingLabel } from '../../tokens/pending-label.token';
 import { AriaAssociationMode } from '../../utils/aria-association.utils';
+import { NgxIdGenerator } from '../../utils/id-generator';
 import { createDebouncedPendingState } from '../../utils/pending-state.utils';
-
-// Counter for unique IDs
-let nextUniqueId = 0;
 
 /**
  * Accessible form control wrapper built with WCAG 2.2 AA considerations.
@@ -116,7 +115,7 @@ let nextUniqueId = 0;
  *   <ngx-control-wrapper>
  *     <input name="username" ngModel />
  *   </ngx-control-wrapper>
- *   /// If async validation is running for >500ms, a spinner and 'Validating…' will be shown.
+ *   /// If async validation is running for >500ms, a spinner and the pending label (`NGX_PENDING_LABEL`, default 'Validating…') will be shown.
  *   /// Once shown, the validation message stays visible for minimum 500ms to prevent flashing.
  *   /// If Vest warnings are present, they will be shown below errors.
  *
@@ -186,7 +185,9 @@ export class ControlWrapperComponent implements AfterContentInit {
   readonly ariaRequired = input(false, { transform: booleanAttribute });
 
   // Generate unique IDs for ARIA associations
-  protected readonly uniqueId = `ngx-control-wrapper-${nextUniqueId++}`;
+  protected readonly uniqueId = inject(NgxIdGenerator).next(
+    'ngx-control-wrapper'
+  );
   protected readonly errorId = `${this.uniqueId}-error`;
   protected readonly warningId = `${this.uniqueId}-warning`;
   protected readonly pendingId = `${this.uniqueId}-pending`;
@@ -195,14 +196,25 @@ export class ControlWrapperComponent implements AfterContentInit {
   private readonly contentInitialized = signal(false);
 
   /**
-   * Debounced pending state to prevent flashing for quick async validations.
-   * Uses createDebouncedPendingState utility with 500ms delay and 500ms minimum display.
+   * Controls when the pending message appears: `showAfter` ms after
+   * validation starts, then for at least `minimumDisplay` ms. Defaults are
+   * conservative to avoid flashing for quick async validations.
    */
+  readonly pendingDebounce = input<{
+    showAfter: number;
+    minimumDisplay: number;
+  }>({
+    showAfter: 500,
+    minimumDisplay: 500,
+  });
+
   private readonly pendingState = createDebouncedPendingState(
     this.errorDisplay.isPending,
-    { showAfter: 500, minimumDisplay: 500 }
+    this.pendingDebounce
   );
   protected readonly showPendingMessage = this.pendingState.showPendingMessage;
+  /** Pending message text from `NGX_PENDING_LABEL`. */
+  protected readonly pendingLabel = injectPendingLabel();
 
   /**
    * Whether to display warnings.

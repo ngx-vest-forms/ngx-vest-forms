@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { create, enforce, test as vestTest, warn } from 'vest';
 import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { NgxVestForms } from '../../exports';
+import { NGX_PENDING_LABEL } from '../../tokens/pending-label.token';
 
 // Test validation suite for the component tests
 type TestModel = {
@@ -174,6 +175,29 @@ class EmptyWrapperComponent {}
 })
 class MultipleControlsComponent {
   model = signal({ firstName: '', lastName: '' });
+}
+
+@Component({
+  imports: [NgxVestForms],
+  template: `
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="model()"
+      (formValueChange)="model.set($event)"
+    >
+      <ngx-control-wrapper
+        [pendingDebounce]="{ showAfter: 100, minimumDisplay: 0 }"
+      >
+        <label for="email">Email</label>
+        <input id="email" name="email" [ngModel]="model().email" />
+      </ngx-control-wrapper>
+    </form>
+  `,
+})
+class FastPendingDebounceComponent {
+  model = signal({ email: '' });
+  suite = slowAsyncSuite;
 }
 
 describe('ControlWrapperComponent', () => {
@@ -489,10 +513,10 @@ describe('ControlWrapperComponent', () => {
 
       // Verify ID format matches pattern
       expect(emailErrorContainer?.id).toMatch(
-        /^ngx-control-wrapper-\d+-error$/
+        /^ngx-control-wrapper-(?:[\w-]+-)?\d+-error$/
       );
       expect(usernameErrorContainer?.id).toMatch(
-        /^ngx-control-wrapper-\d+-error$/
+        /^ngx-control-wrapper-(?:[\w-]+-)?\d+-error$/
       );
 
       // Verify containers are queryable by their IDs
@@ -528,7 +552,9 @@ describe('ControlWrapperComponent', () => {
 
         if (describedBy) {
           // Verify format of aria-describedby value
-          expect(describedBy).toMatch(/^ngx-control-wrapper-\d+-error$/);
+          expect(describedBy).toMatch(
+            /^ngx-control-wrapper-(?:[\w-]+-)?\d+-error$/
+          );
           expect(describedBy).not.toContain(' '); // Single ID, no spaces
 
           // Verify the error element has the matching ID
@@ -593,7 +619,7 @@ describe('ControlWrapperComponent', () => {
         expect(tokens).toContain('email-hint');
 
         const wrapperErrorId = tokens.find((t) =>
-          /^ngx-control-wrapper-\d+-error$/.test(t)
+          /^ngx-control-wrapper-(?:[\w-]+-)?\d+-error$/.test(t)
         );
         expect(wrapperErrorId).toBeTruthy();
         if (wrapperErrorId) {
@@ -1219,7 +1245,9 @@ describe('ControlWrapperComponent', () => {
       expect(errorContainer).toHaveAttribute('aria-live', 'polite');
       expect(errorContainer).toHaveAttribute('aria-atomic', 'true');
       expect(errorContainer).toHaveAttribute('id');
-      expect(errorContainer?.id).toMatch(/^ngx-control-wrapper-\d+-error$/);
+      expect(errorContainer?.id).toMatch(
+        /^ngx-control-wrapper-(?:[\w-]+-)?\d+-error$/
+      );
 
       // Verify the container is accessible by role
       const statuses = screen.getAllByRole('status');
@@ -1289,7 +1317,9 @@ describe('ControlWrapperComponent', () => {
       expect(warningContainer).toHaveAttribute('aria-live', 'polite');
       expect(warningContainer).toHaveAttribute('aria-atomic', 'true');
       expect(warningContainer).toHaveAttribute('id');
-      expect(warningContainer?.id).toMatch(/^ngx-control-wrapper-\d+-warning$/);
+      expect(warningContainer?.id).toMatch(
+        /^ngx-control-wrapper-(?:[\w-]+-)?\d+-warning$/
+      );
 
       // Verify the warning is associated with the input via aria-describedby
       await waitFor(() => {
@@ -1378,7 +1408,7 @@ describe('ControlWrapperComponent', () => {
           expect(pendingContainer).toHaveAttribute('aria-atomic', 'true');
           expect(pendingContainer).toHaveAttribute('id');
           expect(pendingContainer?.id).toMatch(
-            /^ngx-control-wrapper-\d+-pending$/
+            /^ngx-control-wrapper-(?:[\w-]+-)?\d+-pending$/
           );
 
           // Verify pending state is associated with input
@@ -1458,7 +1488,9 @@ describe('ControlWrapperComponent', () => {
         const describedBy = usernameInput.getAttribute('aria-describedby');
         expect(describedBy).toBeTruthy();
         if (describedBy) {
-          expect(describedBy).toMatch(/^ngx-control-wrapper-\d+-error$/);
+          expect(describedBy).toMatch(
+            /^ngx-control-wrapper-(?:[\w-]+-)?\d+-error$/
+          );
 
           // Verify the referenced element exists
           const errorElement = document.getElementById(describedBy);
@@ -1543,6 +1575,23 @@ describe('ControlWrapperComponent', () => {
       });
     });
 
+    it('should honour a [pendingDebounce] shorter than the 500ms default', async () => {
+      vi.useFakeTimers();
+      onTestFinished(() => {
+        vi.useRealTimers();
+      });
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
+      await render(FastPendingDebounceComponent);
+      await user.type(screen.getByLabelText('Email'), 'test@example.com');
+      await user.tab();
+
+      // Past the 100ms showAfter but well before the 500ms default.
+      await vi.advanceTimersByTimeAsync(200);
+
+      expect(screen.getByText('Validating…')).toBeInTheDocument();
+    });
+
     it('should prevent flashing validation message for quick async validations using @defer', async () => {
       // Test with fast async validation (50ms) - pending message should NOT appear
       vi.useFakeTimers();
@@ -1600,6 +1649,23 @@ describe('ControlWrapperComponent', () => {
         },
         { timeout: 3000 }
       );
+    });
+
+    it('should render the NGX_PENDING_LABEL text and follow a signal label', async () => {
+      const label = signal('Checking…');
+      await render(SlowAsyncTestComponent, {
+        providers: [{ provide: NGX_PENDING_LABEL, useValue: label }],
+      });
+      await userEvent.type(screen.getByLabelText('Email'), 'test@example.com');
+      await userEvent.tab();
+
+      expect(
+        await screen.findByText('Checking…', {}, { timeout: 3000 })
+      ).toBeInTheDocument();
+      expect(screen.queryByText('Validating…')).not.toBeInTheDocument();
+
+      label.set('Controleren…');
+      expect(await screen.findByText('Controleren…')).toBeInTheDocument();
     });
 
     it('should update ARIA associations for dynamically added controls via @if', async () => {
@@ -1677,7 +1743,9 @@ describe('ControlWrapperComponent', () => {
         expect(dynamicInput).toHaveAttribute('aria-invalid', 'true');
         expect(dynamicInput).toHaveAttribute('aria-describedby');
         const describedBy = dynamicInput.getAttribute('aria-describedby');
-        expect(describedBy).toMatch(/^ngx-control-wrapper-\d+-error$/);
+        expect(describedBy).toMatch(
+          /^ngx-control-wrapper-(?:[\w-]+-)?\d+-error$/
+        );
       });
 
       // Toggle to hide the field

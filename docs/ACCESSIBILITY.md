@@ -120,6 +120,16 @@ avoid hard-coded IDs like `id="street"`. Prefer an ID prefix derived from the gr
 
 See: [Child Form Components](./CHILD-COMPONENTS.md).
 
+The wrappers' own message-region ids (`ngx-control-wrapper-0-error`, …) are
+numbered per application rather than per JavaScript module, so a server that
+renders many requests does not keep counting up. With full hydration the
+server and the client create the wrappers in the same order and get the same
+ids. If one page hosts several Angular applications, give each a distinct
+`APP_ID` (Angular requires this anyway); the wrappers include a non-default
+`APP_ID` in their ids, so the applications cannot produce the same id. Don't
+hard-code the ids: custom wrappers read them from `ngxErrorControl`'s
+`errorId`/`warningId`/`pendingId`.
+
 ### Custom wrappers
 
 If you build a custom wrapper component, you can use `FormErrorControlDirective` to get:

@@ -1,9 +1,37 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
+import { create, test as vestTest } from 'vest';
 import { describe, expect, it } from 'vitest';
+import { NgxVestForms } from '../../exports';
+import { NGX_PENDING_LABEL } from '../../tokens/pending-label.token';
 import { FormGroupWrapperComponent } from './form-group-wrapper.component';
+
+// The group check never settles, so the group stays pending.
+const pendingGroupSuite = create(() => {
+  vestTest('group', 'Group check', () => new Promise<void>(() => undefined));
+});
+
+@Component({
+  imports: [NgxVestForms],
+  providers: [{ provide: NGX_PENDING_LABEL, useValue: 'Bezig…' }],
+  template: `
+    <form ngxVestForm [suite]="suite" [formValue]="model()">
+      <ngx-form-group-wrapper
+        ngModelGroup="group"
+        [pendingDebounce]="{ showAfter: 0, minimumDisplay: 0 }"
+      >
+        <label for="pending-a">A</label>
+        <input id="pending-a" name="a" [ngModel]="model().group.a" />
+      </ngx-form-group-wrapper>
+    </form>
+  `,
+})
+class PendingGroupHostComponent {
+  readonly model = signal({ group: { a: '' } });
+  readonly suite = pendingGroupSuite;
+}
 
 @Component({
   imports: [FormsModule, FormGroupWrapperComponent],
@@ -93,5 +121,14 @@ describe('FormGroupWrapperComponent', () => {
     expect(inputA).not.toHaveAttribute('aria-describedby');
     expect(inputB).not.toHaveAttribute('aria-invalid');
     expect(inputB).not.toHaveAttribute('aria-describedby');
+  });
+
+  it('renders the NGX_PENDING_LABEL text while the group validates', async () => {
+    pendingGroupSuite.reset();
+    await render(PendingGroupHostComponent);
+    await userEvent.type(screen.getByLabelText('A'), 'x');
+
+    expect(await screen.findByText('Bezig…')).toBeInTheDocument();
+    expect(screen.queryByText('Validating…')).not.toBeInTheDocument();
   });
 });

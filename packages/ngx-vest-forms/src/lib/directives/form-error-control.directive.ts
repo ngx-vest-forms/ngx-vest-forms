@@ -7,12 +7,12 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { injectPendingLabel } from '../tokens/pending-label.token';
 import { AriaAssociationMode } from '../utils/aria-association.utils';
+import { NgxIdGenerator } from '../utils/id-generator';
 import { createDebouncedPendingState } from '../utils/pending-state.utils';
 import { createAriaAssociationController } from './aria-association-controller';
 import { FormErrorDisplayDirective } from './form-error-display.directive';
-
-let nextUniqueId = 0;
 
 /**
  * Wires a control container to its error/warning/pending regions.
@@ -54,7 +54,8 @@ export class FormErrorControlDirective implements AfterContentInit {
    * Unique ID prefix for this instance.
    * Use these IDs to render message regions and to support aria-describedby.
    */
-  protected readonly uniqueId = `ngx-error-control-${nextUniqueId++}`;
+  protected readonly uniqueId =
+    inject(NgxIdGenerator).next('ngx-error-control');
   readonly errorId = `${this.uniqueId}-error`;
   readonly warningId = `${this.uniqueId}-warning`;
   readonly pendingId = `${this.uniqueId}-pending`;
@@ -66,6 +67,13 @@ export class FormErrorControlDirective implements AfterContentInit {
     { showAfter: 500, minimumDisplay: 500 }
   );
   readonly showPendingMessage = this.#pendingState.showPendingMessage;
+
+  /**
+   * Pending message text from `NGX_PENDING_LABEL` (default `'Validating…'`),
+   * so a custom wrapper can render the same translatable label as the
+   * built-in wrappers.
+   */
+  readonly pendingLabel = injectPendingLabel();
 
   /**
    * aria-describedby value representing the *currently relevant* message regions.

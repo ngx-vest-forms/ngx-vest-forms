@@ -1,8 +1,8 @@
 import { Component, computed, input, output, viewChild } from '@angular/core';
 import {
-  createDebouncedPendingState,
   createFormFeedbackSignals,
   FormDirective,
+  NGX_PENDING_LABEL,
   NGX_VALIDATION_DEBOUNCE_PRESETS,
   NgxSubmitSettledEvent,
   NgxVestForms,
@@ -19,7 +19,11 @@ import {
   selector: 'ngx-async-username-form-body',
   imports: [NgxVestForms],
   templateUrl: './async-username.form.html',
-  providers: [provideFormContract(asyncUsernameShape)],
+  providers: [
+    provideFormContract(asyncUsernameShape),
+    // The wrappers' pending message; provide it app-wide to translate it.
+    { provide: NGX_PENDING_LABEL, useValue: 'Checking availability…' },
+  ],
 })
 export class AsyncUsernameFormBody {
   readonly formValue = input.required<AsyncUsernameModel>();
@@ -37,15 +41,6 @@ export class AsyncUsernameFormBody {
   protected readonly usernameValidationOptions: ValidationOptions = {
     debounceTime: NGX_VALIDATION_DEBOUNCE_PRESETS.async,
   };
-
-  /**
-   * Show the hint only for checks slower than 200ms, then keep it up for at
-   * least 500ms, so a fast response does not flash it on and off.
-   */
-  protected readonly showCheckingHint = createDebouncedPendingState(
-    this.feedback.pending,
-    { showAfter: 200, minimumDisplay: 500 }
-  ).showPendingMessage;
 
   private readonly usernameErrors = computed(
     () => this.feedback.formState()?.errors['username'] ?? []

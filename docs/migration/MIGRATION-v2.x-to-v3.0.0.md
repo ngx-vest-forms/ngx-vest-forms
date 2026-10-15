@@ -350,6 +350,12 @@ protected validationConfig = createValidationConfig<PurchaseFormModel>()
 
 For genuinely dynamic path strings that `FieldPath<T>` cannot express (e.g. runtime array indices such as `'addresses.0.street'`), build the object separately and cast it explicitly: `config as NgxValidationConfig<MyModel>`.
 
+## Wrapper ARIA, message ids and the pending label
+
+- **ARIA state on custom widgets.** `<ngx-control-wrapper>` and `ngxErrorControl` (in `all-controls` mode) now set `aria-invalid` and `aria-describedby` on elements with an ARIA form-widget role (`checkbox`, `combobox`, `listbox`, `radiogroup`, `searchbox`, `slider`, `spinbutton`, `switch`, `textbox`), not only on native `input`/`select`/`textarea`. A native control nested inside such a widget is no longer stamped, and `aria-required` is not set on `role="slider"`. Remove any manual `aria-invalid` workaround you added for custom widgets. See [ADR-0010](../adr/0010-aria-association-targets-aria-form-widgets.md).
+- **Message-region ids include a non-default `APP_ID`.** The wrappers number their ids per application instead of per JavaScript module. With Angular's default `APP_ID` (`'ng'`) the ids keep the `ngx-control-wrapper-0-error` shape. If your app sets `APP_ID`, they become `ngx-control-wrapper-<APP_ID>-0-error`; update CSS selectors or tests that match the old shape. Don't hard-code them: in a custom wrapper, read them from `ngxErrorControl`'s (or `<ngx-form-group-wrapper>`'s) `errorId`/`warningId`/`pendingId`, and in tests match the region by role or text.
+- **Translatable pending label.** The built-in wrappers' "Validating…" text comes from the new `NGX_PENDING_LABEL` token (a string or `Signal<string>`). `<ngx-control-wrapper>` also gained the `[pendingDebounce]` input that `<ngx-form-group-wrapper>` already had. See [API-TOKENS.md](../API-TOKENS.md#ngx_pending_label).
+
 ## Known limitations (v3)
 
 These are accepted, documented limitations in the v3 line. Each links to an Architecture Decision Record (ADR) with the full rationale and the conditions under which it will be revisited.
