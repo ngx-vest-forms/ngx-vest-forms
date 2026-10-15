@@ -1,7 +1,7 @@
 <form
   ngxVestForm
   #vestForm="ngxVestForm"
-  (ngSubmit)="onSubmit()"
+  (submitSettled)="onSubmitSettled($event)"
   [formValue]="formValue()"
   ngxValidateRootForm
   [ngxValidateRootFormMode]="'submit'"

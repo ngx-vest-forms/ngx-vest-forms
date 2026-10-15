@@ -40,8 +40,7 @@ Either way, `validationConfig` keeps the two dates cross-validated.
 - `date-range-adapter.component.ts` — the composite adapter: value fan-in,
   manual on-blur-or-submit gating, error/warning aggregation, ARIA regions.
 - `travel.form.ts` / `.form.html` — form body switching approaches; performs
-  fan-out via `setValueAtPath` and defers `triggerFormValidation()` until proxy
-  inputs sync.
+  fan-out via `setValueAtPath` and emits the new model.
 - `travel.page.ts` / `.page.html` — page shell, approach selector, sidebar, and
   form state card.
 - `travel.content.ts` — typed `ExampleContent` rendered by
@@ -50,9 +49,9 @@ Either way, `validationConfig` keeps the two dates cross-validated.
 ## Behavior
 
 The adapter emits `{ departureDate, returnDate }`; the form body clones the
-model, writes both paths with `setValueAtPath`, emits the new model, then waits
-for the hidden proxy `[ngModel]`s to render (`afterNextRender` + a macrotask)
-before calling `triggerFormValidation()`. The Vest suite requires both dates,
-enforces return-after-departure inside `omitWhen`, and adds a non-blocking
-`warn()` suggesting at least three days between dates. Switching approaches
-resets the form and the adapter's touched state.
+model, writes both paths with `setValueAtPath`, and emits the new model.
+`ngxVestForm` writes it into the hidden proxy `[ngModel]`s, and the
+bidirectional `validationConfig` revalidates both dates. The Vest suite
+requires both dates, enforces return-after-departure inside `omitWhen`, and
+adds a non-blocking `warn()` suggesting at least three days between dates.
+Switching approaches resets the form and the adapter's touched state.

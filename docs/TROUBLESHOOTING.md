@@ -9,28 +9,18 @@ ngx-vest-forms logs development-mode diagnostics with `console.warn`. They are s
 **Usually caused by application code, not the library:**
 
 - updating the signal bound to `[formValue]` from a native `(change)` / `(input)` handler on the same control that Angular is already updating
-- transforming `(formValueChange)` synchronously into a different model shape, such as auto-filling derived fields or clearing hidden fields before the emitted form snapshot has been accepted
+- writing the model while `(formValueChange)` is not bound, so the directive cannot tell that your write responds to the user's edit
 - keeping separate input and output signals where `(formValueChange)` updates one signal but `[formValue]` reads another
 
-**Preferred pattern:** keep one owner for form state. First accept the emitted form snapshot unchanged, then apply derived changes in a later turn if needed.
+**Not a conflict:** a model write made in response to `(formValueChange)`, such as auto-filling derived fields or clearing fields a switched section hides. The directive knows you received the form's latest value, so your write wins and no warning is logged. You can do it in the same handler:
 
 ```ts
-protected handleFormChange(value: ProfileFormModel | null): void {
-  const nextValue = value ?? {};
-  const previousMode = this.formValue().mode;
-
-  this.formValue.set(nextValue);
-
-  if (previousMode !== nextValue.mode) {
-    setTimeout(() => {
-      this.formValue.set(
-        clearFieldsWhen(this.formValue(), {
-          businessOnlyField: this.formValue().mode !== 'business',
-        })
-      );
-      this.vestForm().triggerFormValidation();
-    }, 0);
-  }
+protected handleFormChange(value: ProfileFormModel): void {
+  this.formValue.set(
+    clearFieldsWhen(value, {
+      businessOnlyField: value.mode !== 'business',
+    })
+  );
 }
 ```
 

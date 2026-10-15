@@ -461,6 +461,35 @@ submitBoth() {
 
 📖 **[Complete Guide: Structure Change Detection](./docs/STRUCTURE_CHANGE_DETECTION.md)**
 
+### Submitting with async validation
+
+`(ngSubmit)` fires right away, so with async Vest tests (for example a username availability check) the form can still be `PENDING` when your handler runs. Use `(submitSettled)` instead: it emits once per submit, after validation has finished, with the outcome.
+
+```html
+<form
+  ngxVestForm
+  [suite]="suite"
+  [formValue]="formValue()"
+  (formValueChange)="formValue.set($event)"
+  (submitSettled)="onSubmit($event)"
+>
+  <!-- controls -->
+  <button type="submit">Save</button>
+</form>
+```
+
+```typescript
+onSubmit(event: NgxSubmitSettledEvent<MyFormModel>) {
+  if (event.valid) {
+    this.save(event.value);
+  }
+}
+```
+
+`event.errors` holds the blocking errors by field path, as `(errorsChange)` reports them. Focusing the first invalid control on a failed submit still happens automatically.
+
+With a `[validationConfig]`, `(submitSettled)` also revalidates the dependent fields before it decides, so a submit made right after editing a trigger field (for example `password`, just before `confirmPassword` is rechecked) can't pass on a stale result.
+
 ### Form Contract Diagnostics (Development Mode)
 
 In development mode, ngx-vest-forms can lint the live form value against a form contract, catching common mistakes early. New code should prefer reusing an existing Standard Schema (for example Zod or Valibot) via `provideFormContract(schema)`. Legacy `NgxDeepRequired<T>` object contracts still work as a migration-friendly fallback:

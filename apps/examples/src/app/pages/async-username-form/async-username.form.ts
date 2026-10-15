@@ -1,13 +1,8 @@
-import {
-  Component,
-  computed,
-  input,
-  output,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, input, output, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
   FormDirective,
+  NgxSubmitSettledEvent,
   NgxVestForms,
   NgxVestSuite,
   provideFormContract,
@@ -28,7 +23,7 @@ export class AsyncUsernameFormBody {
   readonly suite = input.required<NgxVestSuite<AsyncUsernameModel>>();
 
   readonly formValueChange = output<AsyncUsernameModel>();
-  readonly submitted = output();
+  readonly submitted = output<NgxSubmitSettledEvent<AsyncUsernameModel>>();
   readonly resetRequested = output();
 
   private readonly vestForm =
@@ -49,8 +44,10 @@ export class AsyncUsernameFormBody {
     );
   });
 
-  protected onSubmit(): void {
-    this.submitted.emit();
+  protected onSubmitSettled(
+    event: NgxSubmitSettledEvent<AsyncUsernameModel>
+  ): void {
+    this.submitted.emit(event);
   }
 
   protected onReset(): void {

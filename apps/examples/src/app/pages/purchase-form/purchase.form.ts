@@ -18,6 +18,7 @@ import {
   createValidationConfig,
   FormDirective,
   NGX_VALIDATION_DEBOUNCE_PRESETS,
+  NgxSubmitSettledEvent,
   NgxVestForms,
   provideFormContract,
   setValueAtPath,
@@ -29,7 +30,6 @@ import {
   purchaseFormContract,
   PurchaseFormModel,
 } from '../../models/purchase-form.model';
-import { createSubmitWhenSettled } from '../../shared/submit-when-settled';
 import { AddressComponent } from '../../ui/address/address.component';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { FormSectionComponent } from '../../ui/form-section/form-section.component';
@@ -103,11 +103,6 @@ export class PurchaseForm {
   private readonly vestForm =
     viewChild<FormDirective<PurchaseFormModel>>('vestForm');
   readonly feedback = createFormFeedbackSignals(this.vestForm);
-
-  /** Waits for the async userId check to settle before deciding. */
-  readonly #submitWhenSettled = createSubmitWhenSettled(() =>
-    this.feedback.pending()
-  );
 
   protected readonly formValue = signal<PurchaseFormModel>(
     initialPurchaseFormValue
@@ -371,17 +366,17 @@ export class PurchaseForm {
     }));
   }
 
-  protected onSubmit(): void {
-    // The userId availability check may still be validating when the user
-    // hits Submit. A PENDING form is not an invalid form, so decide only once
-    // async validation has settled; the submission is never dropped silently.
-    // Focus handling stays with the directive: `focusFirstInvalidOnSubmit`
-    // (default true) already moves focus to the first invalid control.
-    this.#submitWhenSettled(() => {
-      if (this.feedback.formState().valid) {
-        this.saveRequested.emit(this.formValue());
-      }
-    });
+  protected onSubmitSettled(
+    event: NgxSubmitSettledEvent<PurchaseFormModel>
+  ): void {
+    // `submitSettled` fires once the async userId check has finished, so a
+    // submit made while it is still validating is decided on its real
+    // outcome. Focus handling stays with the directive:
+    // `focusFirstInvalidOnSubmit` (default true) moves focus to the first
+    // invalid control.
+    if (event.valid) {
+      this.saveRequested.emit(this.formValue());
+    }
   }
 
   protected onReset(): void {

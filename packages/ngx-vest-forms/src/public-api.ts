@@ -116,6 +116,7 @@ export { FormModelDirective } from './lib/directives/form-model.directive';
 export { FormDirective } from './lib/directives/form.directive';
 export type {
   NgxFieldBlurEvent,
+  NgxSubmitSettledEvent,
   NgxValidationConfig,
   NgxValidationFocus,
 } from './lib/directives/form.directive';

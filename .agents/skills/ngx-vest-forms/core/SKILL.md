@@ -16,7 +16,8 @@ Use this skill to produce the default, idiomatic ngx-vest-forms setup.
 5. The `name` attribute must exactly match the bound property path.
 6. Use optional chaining in templates because the model is partial.
 7. Recommend a `NgxDeepRequired<T>` shape when the user is wiring a real form, especially if typos in nested paths are likely.
-8. Default to `<ngx-control-wrapper>` around single controls unless the user explicitly needs a custom or group-level wrapper.
+8. When the suite has async tests, decide the submit in `(submitSettled)`, not `(ngSubmit)`. `ngSubmit` can fire while the form is still PENDING; `submitSettled` emits `{ valid, value, errors }` once validation has finished. It also revalidates `validationConfig` dependents first, so a quick submit after a trigger edit can't pass on a stale dependent.
+9. Default to `<ngx-control-wrapper>` around single controls unless the user explicitly needs a custom or group-level wrapper.
 
 ## Public API symbols to prefer
 
@@ -29,6 +30,7 @@ Recommend these imports from `'ngx-vest-forms'` when they fit the example:
 - `FormFieldName`
 - `NgxFieldKey`
 - `NgxFieldBlurEvent`
+- `NgxSubmitSettledEvent`
 - `ROOT_FORM`
 
 Optional advanced exports worth knowing about:
@@ -68,6 +70,7 @@ Correct these immediately if they appear:
 - `[(ngModel)]` on ngx-vest-forms controls
 - two-parameter suite callbacks or `only(field)` inside the suite callback
 - `name` values that do not match the bound path
+- a submit handler that reads `valid` inside `(ngSubmit)` while async tests may still be pending, or waits for `pending` to clear by hand; use `(submitSettled)`
 - direct property access like `formValue().address.street` instead of `formValue().address?.street`
 - missing a fixed `provideFormContract(...)` or explicit `[formContract]` on complex nested forms where path mistakes are easy
 - `(blur)` handlers that re-trigger validation to fake dependent-field timing or draft auto-save

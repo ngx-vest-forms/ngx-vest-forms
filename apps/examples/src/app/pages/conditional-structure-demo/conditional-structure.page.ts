@@ -1,9 +1,4 @@
-import {
-  Component,
-  computed,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, signal, viewChild } from '@angular/core';
 import { clearFieldsWhen, keepFieldsWhen } from 'ngx-vest-forms';
 import {
   ConditionalStructureModel,
@@ -14,8 +9,11 @@ import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
+import {
+  IntroItemComponent,
+  IntroSectionComponent,
+} from '../../ui/intro-section';
 import { JsonPreviewComponent } from '../../ui/json-preview/json-preview.component';
-import { IntroItemComponent, IntroSectionComponent } from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { conditionalStructureContent } from './conditional-structure.content';
 import { ConditionalStructureFormBody } from './conditional-structure.form';
@@ -69,22 +67,21 @@ export class ConditionalStructurePageComponent {
       deliveryMode: nextDeliveryMode,
     };
 
-    // Accept the ngxVestForm snapshot first. Derived clearing happens in the
-    // next turn so the form and model don't become divergent same-tick writers.
-    this.formValue.set(nextValue);
-
-    if (previousDeliveryMode !== nextDeliveryMode) {
-      this.submittedPayload.set(null);
-      setTimeout(() => {
-        this.formValue.set(
-          clearFieldsWhen(this.formValue(), {
-            shippingAddress: this.formValue().deliveryMode !== 'shipment',
-            deliveryEmail: this.formValue().deliveryMode !== 'digital',
-          })
-        );
-        this.formBody()?.triggerValidation();
-      }, 0);
+    if (previousDeliveryMode === nextDeliveryMode) {
+      this.formValue.set(nextValue);
+      return;
     }
+
+    // Clear the fields the new delivery mode hides. ngxVestForm applies a
+    // model write made in response to formValueChange, so this can happen
+    // in the same tick.
+    this.submittedPayload.set(null);
+    this.formValue.set(
+      clearFieldsWhen(nextValue, {
+        shippingAddress: nextDeliveryMode !== 'shipment',
+        deliveryEmail: nextDeliveryMode !== 'digital',
+      })
+    );
   }
 
   protected onSubmit(): void {

@@ -1,14 +1,4 @@
-import {
-  afterNextRender,
-  Component,
-  DestroyRef,
-  inject,
-  Injector,
-  input,
-  output,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, input, output, signal, viewChild } from '@angular/core';
 import {
   ControlWrapperComponent,
   createFormFeedbackSignals,
@@ -45,10 +35,6 @@ export type TravelFormApproach = 'composite-adapter' | 'split-wrappers';
   providers: [provideFormContract(travelFormContract)],
 })
 export class TravelFormBody {
-  readonly #destroyRef = inject(DestroyRef);
-  readonly #injector = inject(Injector);
-  #validationRefreshTimer?: ReturnType<typeof setTimeout>;
-
   readonly approach = input<TravelFormApproach>('split-wrappers');
   readonly formValue = input.required<TravelFormModel>();
   readonly suite = input.required<NgxVestSuite<TravelFormModel>>();
@@ -70,31 +56,15 @@ export class TravelFormBody {
 
   readonly formSubmitted = signal(false);
 
-  constructor() {
-    this.#destroyRef.onDestroy(() => {
-      clearTimeout(this.#validationRefreshTimer);
-    });
-  }
-
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
   protected onRangeChange(range: DateRangeValue): void {
     const next = structuredClone(this.formValue());
     setValueAtPath(next, 'departureDate', range.departureDate);
     setValueAtPath(next, 'returnDate', range.returnDate);
+    // ngxVestForm writes the new model into the hidden proxy fields and
+    // revalidates both dates (validationConfig), so nothing else is needed.
     this.formValueChange.emit(next);
-
-    // Wait for the hidden proxy `[ngModel]` inputs to render, then schedule one
-    // macrotask so NgModel's deferred sync has completed before we refresh validation.
-    afterNextRender(
-      () => {
-        clearTimeout(this.#validationRefreshTimer);
-        this.#validationRefreshTimer = setTimeout(() => {
-          this.vestForm()?.triggerFormValidation();
-        }, 0);
-      },
-      { injector: this.#injector }
-    );
   }
 
   protected onSubmit(): void {
