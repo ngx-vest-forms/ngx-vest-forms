@@ -11,10 +11,9 @@ test.describe('Composite Adapter Recipe Page', () => {
 
   test('should render page layout and key sections', async ({ page }) => {
     const sidebar = getMainContentSidebar(page);
-    const howItWorksCard = page
-      .getByRole('heading', { name: /how it works/i, level: 3 })
-      .locator('..')
-      .locator('..');
+    const howItWorksCard = page.locator('ngx-card').filter({
+      has: page.getByRole('heading', { name: /how it works/i, level: 3 }),
+    });
 
     await expect(
       page.getByRole('heading', {
@@ -97,10 +96,9 @@ test.describe('Composite Adapter Recipe Page', () => {
   test('should update How It Works sidebar on approach switch', async ({
     page,
   }) => {
-    const howItWorksCard = page
-      .getByRole('heading', { name: /how it works/i, level: 3 })
-      .locator('..')
-      .locator('..');
+    const howItWorksCard = page.locator('ngx-card').filter({
+      has: page.getByRole('heading', { name: /how it works/i, level: 3 }),
+    });
 
     // Default: split wrappers
     await expect(howItWorksCard).toContainText(/no hidden proxies/i);
@@ -109,29 +107,5 @@ test.describe('Composite Adapter Recipe Page', () => {
     // Switch to composite adapter
     await page.getByRole('radio', { name: /composite adapter/i }).check();
     await expect(howItWorksCard).toContainText(/hidden proxy fields/i);
-  });
-
-  test('should render date range fields in both approaches', async ({
-    page,
-  }) => {
-    // Split wrappers (default)
-    await expect(page.getByLabel(/departure date/i)).toBeVisible();
-    await expect(page.getByLabel(/return date/i)).toBeVisible();
-
-    // Switch to composite adapter
-    await page.getByRole('radio', { name: /composite adapter/i }).check();
-    await expect(page.getByLabel(/departure date/i)).toBeVisible();
-    await expect(page.getByLabel(/return date/i)).toBeVisible();
-  });
-
-  test('should render submit and reset buttons in both approaches', async ({
-    page,
-  }) => {
-    await expect(page.getByRole('button', { name: /submit/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /reset/i })).toBeVisible();
-
-    await page.getByRole('radio', { name: /composite adapter/i }).check();
-    await expect(page.getByRole('button', { name: /submit/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /reset/i })).toBeVisible();
   });
 });

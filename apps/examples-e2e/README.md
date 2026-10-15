@@ -1,284 +1,79 @@
-# E2E Tests for ngx-vest-forms Examples
+# E2E tests for the examples app
 
-Comprehensive end-to-end tests for the examples app showcasing ngx-vest-forms behaviors across demos.
+Playwright tests for the demo pages in `apps/examples`. Each demo page has its
+own folder under `pages/`.
 
-## Test Structure
+## Layout
 
-E2E tests now follow the same page/form naming pattern used in
-`apps/examples/src/app/pages/*`.
+```
+pages/<page>/<page>.page.spec.ts       layout, navigation, form-state sidebar
+pages/<page>/<page>.form.spec.ts       form behaviour and validation
+pages/<page>/<topic>.form.spec.ts      extra suites for a page, one file per topic
+app/app.page.spec.ts                   app shell
+helpers/form-helpers.ts                field, validation and navigation helpers
+helpers/wizard-helpers.ts              wizard step helpers
+```
 
-### Page-aligned files
+Naming rule: every test file ends in `*.spec.ts`. Playwright discovers only
+`pages/**/*.spec.ts` and `app/**/*.spec.ts` (see `playwright.config.ts`), so a
+file with any other name never runs.
 
-All active Playwright specs live under `e2e/pages/` and are grouped per page:
+## Running
 
-- **`pages/<page>/<page>.page.spec.ts`** - Layout/navigation/form-state sidebar checks
-- **`pages/<page>/<page>.form.spec.ts`** - Form functionality and validation behavior
-
-Current page groups:
-
-- `pages/app/app.page.spec.ts`
-- `pages/purchase-form/purchase.page.spec.ts`
-- `pages/purchase-form/purchase.form.spec.ts`
-- `pages/business-hours-form/business-hours.page.spec.ts`
-- `pages/business-hours-form/business-hours.form.spec.ts`
-- `pages/validation-config-demo/validation-config-demo.page.spec.ts`
-- `pages/validation-config-demo/validation-config-demo.form.spec.ts`
-- `pages/wizard-form/wizard-form.page.spec.ts`
-- `pages/wizard-form/wizard.form.spec.ts`
-- `pages/display-modes-demo/display-modes-demo.page.spec.ts`
-- `pages/display-modes-demo/display-modes-demo.form.spec.ts`
-
-Legacy root `e2e/*.spec.ts` files for migrated pages have been removed.
-Form coverage now lives fully under `e2e/pages/*/*.form.spec.ts` through
-page-local support files.
-
-### Helper Functions
-
-- **`helpers/form-helpers.ts`** - Reusable utilities for form testing, validation monitoring, and accessibility checks
-
-## Running Tests
-
-### Prerequisites
-
-1. Start the development server:
-
-   ```bash
-   npm start
-   ```
-
-   The app should be running at `http://localhost:4200`
-
-### Run All Tests
+The examples app is started by Playwright's `webServer` on port 4400. Do not
+start it yourself.
 
 ```bash
-# Run all e2e tests via Nx
+# All browsers (chromium, firefox, webkit) via Nx
 pnpm nx run examples-e2e:e2e
 
-# Or using the workspace script
-pnpm e2e
+# One browser
+pnpm nx run examples-e2e:e2e -- --project=chromium
 
-# Or using Playwright directly
-pnpm exec playwright test
+# One file
+pnpm nx run examples-e2e:e2e -- --project=chromium pages/purchase-form/purchase.form.spec.ts
 
-# Run specific page-aligned test file
-pnpm exec playwright test e2e/pages/purchase-form/purchase.form.spec.ts
-
-# Run tests in headed mode (see browser)
-pnpm exec playwright test --headed
-
-# Run tests in debug mode
-pnpm exec playwright test --debug
-
-# Run tests in specific browser
-pnpm exec playwright test --project=chromium
-pnpm exec playwright test --project=firefox
-pnpm exec playwright test --project=webkit
+# Flake check: repeat a file
+pnpm nx run examples-e2e:e2e -- --project=chromium --repeat-each=5 pages/wizard-form/wizard.form.spec.ts
 ```
 
-### View Test Report
+Retries: 0 locally, 2 on CI (`CI=true`). A test that passes only on retry is a
+flake to fix, not a pass.
 
-```bash
-pnpm exec playwright show-report
-```
+Nx caches the e2e target, so re-running with unchanged inputs replays the
+cached result. Pass `--skip-nx-cache` to force a real run.
 
-## Test Coverage
+Per-file targets (`e2e-ci--<spec path>`) are inferred by `@nx/playwright`, one
+for each spec file.
 
-### Purchase Form Tests
+## Writing assertions
 
-**Covered Scenarios:**
+- Use web-first matchers (`toBeVisible`, `toHaveAttribute`,
+  `toHaveAccessibleDescription`, `toBeChecked`, `toBeEnabled`). They retry
+  until the condition holds, so do not add sleeps.
+- Every assertion has to be able to fail. Do not guard an assertion with
+  `if (element exists)`: assert that the element exists first.
+- Use `pressSequentially` for real typing and `fill` only for date or
+  non-text inputs. `type()` is deprecated.
+- Wait for a condition the page exposes (for example `aria-busy`, a visible
+  heading, or the expected error text), not for a fixed time.
 
-- Basic field validation (required fields)
-- Conditional validations (age → emergencyContact, gender → genderOther, quantity → justification)
-- Bidirectional validations (password ↔ confirmPassword, quantity ↔ justification)
-- Async validation (userId via SWAPI)
-- Auto-population effects (Brecht Billiet, Luke Skywalker)
-- Shipping address state preservation
-- Utility functions (clear sensitive data, prefill address, fetch data)
-- ROOT_FORM validation ("Brecht is not 30 anymore")
-- Phone numbers array validation
-- Product selection validation
-- Address validation (nested forms)
+## Helpers
 
-**PR #60 Issues Tested:**
+- `expectFieldHasError(field, text?)` and `expectFieldValid(field)` wait for
+  the Angular state (`ng-invalid`/`ng-valid`) and the error text.
+- `fillAndBlur(field, value)` types a value and blurs the field.
+- `waitForValidationToSettle(page)` waits until no field is busy.
+- `getWarningElementFor(field, pattern)` returns the warning element for a field.
 
-- ✅ ROOT_FORM validation appears correctly
-- ✅ Bidirectional validation without infinite loops
-- ✅ Conditional field rendering with proper validation
-- ✅ Cross-field validation with current values
+## Accessibility
 
-### Business Hours Form Tests
+Tests check `aria-invalid`, `aria-describedby`, and `aria-busy` where the page
+sets them. `expectFieldHasError` and `expectFieldValid` assert `aria-invalid`
+as a hard check; a missing or stale `aria-invalid` fails the test.
 
-**Covered Scenarios:**
+## Debugging
 
-- ROOT_FORM array requirement (≥1 business hour)
-- Time format validation (4 digits, HH < 24, MM < 60)
-- Chronological ordering (to > from)
-- Overlapping time slot detection
-- Add/edit/remove operations
-- Multi-slot cross-validation
-- Form state display
-
-**PR #60 Issues Tested:**
-
-- ✅ ROOT_FORM validation mode (default 'submit')
-- ✅ Array validation with omitWhen patterns
-- ✅ Cross-slot validation logic
-
-### ValidationConfig Demo Tests
-
-**Covered Scenarios:**
-
-- Bidirectional password validation (password ↔ confirmPassword)
-- Conditional justification (@if rendering)
-- Cascade validation (country → state/zipCode)
-- Date range validation (startDate → endDate)
-- Race condition monitoring (aria-busy stability)
-- Debounced validation
-- Cross-field automatic revalidation
-- Accessibility verification (aria-invalid, aria-describedby)
-
-**PR #60 Issues Tested:**
-
-- ✅ **CRITICAL**: No validation race conditions (fixed with `take(1)`)
-- ✅ No aria-busy thrashing (≤4 transitions in 1s)
-- ✅ Validation count ≤3 per input (not 10+)
-- ✅ Works with @if conditional rendering
-- ✅ ValidationConfig fluent builder API
-- ✅ Proper event emission with `emitEvent: false`
-
-## Key Testing Patterns
-
-### Validation Monitoring
-
-```typescript
-// Wait for async validation to complete
-await waitForValidationToComplete(field, 3000);
-
-// Monitor aria-busy stability (no thrashing)
-const isStable = await monitorAriaStability(field, 1000);
-expect(isStable).toBe(true); // ≤4 transitions = stable
-```
-
-### Error Assertions
-
-```typescript
-// Assert field has error
-await expectFieldHasError(field, /required/i);
-
-// Assert field is valid
-await expectFieldValid(field);
-```
-
-### Form Interactions
-
-```typescript
-// Fill and blur to trigger validation
-await fillAndBlur(field, 'value');
-
-// Select radio/dropdown
-await selectRadio(page, 'gender', 'male');
-await selectOption(dropdown, 'United States');
-
-// Check checkbox state
-await expectChecked(checkbox);
-await expectUnchecked(checkbox);
-```
-
-## Accessibility Testing
-
-Tests verify WCAG compliance including:
-
-- `aria-invalid` attributes on invalid fields
-- `aria-describedby` linking errors to fields
-- `aria-busy` during async validation
-- Form structure and semantics
-- Screen reader announcements (implicit via aria attributes)
-
-## Debugging Failed Tests
-
-1. **Run in headed mode:**
-
-   ```bash
-   pnpm exec playwright test --headed --workers=1
-   ```
-
-2. **Use debug mode with Playwright Inspector:**
-
-   ```bash
-   pnpm exec playwright test --debug
-   ```
-
-3. **Check screenshots and videos:**
-
-   Failed tests automatically capture screenshots and videos in `test-results/`
-
-4. **View trace:**
-
-   ```bash
-   pnpm exec playwright show-report
-   # Click on failed test → View trace
-   ```
-
-5. **Increase timeouts if needed:**
-
-   Edit `playwright.config.ts` to increase `timeout` or `actionTimeout`
-
-## Common Issues
-
-### Test Timeouts
-
-If tests timeout waiting for validation:
-
-- Ensure dev server is running at `http://localhost:4200`
-- Check network tab for failed API calls (SWAPI for userId validation)
-- Increase timeouts in `playwright.config.ts` if validations are legitimately slow
-
-### Flaky Tests
-
-If tests pass/fail intermittently:
-
-- Check for proper `await` usage
-- Verify debounce waits are sufficient (default 300ms + buffer)
-- Use `waitForValidationToComplete()` for async validations
-- Check aria-busy monitoring thresholds
-
-### Element Not Found
-
-If tests can't find elements:
-
-- Verify label text matches component HTML
-- Check for dynamic rendering (@if/@for blocks)
-- Use browser inspector to verify actual rendered HTML
-
-## CI/CD Integration
-
-Tests are configured for CI with:
-
-- Retries: 2 attempts on CI (0 locally)
-- Workers: 1 worker on CI (parallel locally)
-- Screenshots/videos on failure only
-- HTML reporter for results
-
-Set `CI=true` environment variable to enable CI mode:
-
-```bash
-CI=true pnpm exec playwright test
-```
-
-## Contributing
-
-When adding new form features:
-
-1. Add corresponding e2e tests to relevant spec file
-2. Update helpers if new patterns emerge
-3. Document any new validation patterns
-4. Ensure tests cover both happy path and edge cases
-5. Verify accessibility attributes are tested
-6. Check for potential race conditions if using validationConfig
-
-## Resources
-
-- [Playwright Documentation](https://playwright.dev)
-- [WCAG 2.2 Guidelines](https://www.w3.org/TR/WCAG22/)
-- [ngx-vest-forms Documentation](../../README.md)
-- [PR #60 - ValidationConfig Fixes](https://github.com/ngx-vest-forms/ngx-vest-forms/pull/60)
+- `pnpm nx run examples-e2e:e2e -- --project=chromium --headed --workers=1`
+- `pnpm exec playwright show-report` opens the HTML report with traces.
+- Failed tests keep a screenshot and a video in `test-results/`.

@@ -122,7 +122,10 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
 
       // Order details
       await page.getByLabel(/product/i).selectOption({ index: 1 });
-      await fillAndBlur(page.getByLabel(/quantity/i), '1');
+      await fillAndBlur(
+        page.getByRole('spinbutton', { name: /quantity/i }),
+        '1'
+      );
 
       // Billing address
       await fillAndBlur(page.getByLabel(/street/i).first(), 'Main St');
@@ -185,22 +188,11 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
     await test.step('Verify warnings are cleared', async () => {
       const password = page.getByLabel('Password', { exact: true });
 
-      // When warnings are cleared, the warning element should either:
-      // 1. Not exist in aria-describedby, or
-      // 2. Contain no warning text
-      // Check that no warning-related describedby references remain with warning content
-      const describedBy = await password.getAttribute('aria-describedby');
-      const ids = describedBy?.split(/\s+/).filter(Boolean) ?? [];
-      const warningId = ids.find((id) => id.includes('-warning'));
-
-      if (warningId) {
-        // If a warning element exists, verify it has no warning content
-        const warningsContainer = password.page().locator(`#${warningId}`);
-        await expect(warningsContainer).not.toContainText(
-          /characters|uppercase|lowercase/i
-        );
-      }
-      // If no warning ID exists, that's also valid - warnings were cleared
+      // A strong password leaves no warning text in the field's description,
+      // whether or not a warning element is still referenced.
+      await expect(password).not.toHaveAccessibleDescription(
+        /characters|uppercase|lowercase/i
+      );
     });
   });
 
@@ -255,20 +247,10 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
     await test.step('Password field starts without warnings', async () => {
       const password = page.getByLabel('Password', { exact: true });
 
-      // On a pristine field, aria-describedby may not include a warning ID
-      // Check that no warning content is visible anywhere
-      const describedBy = await password.getAttribute('aria-describedby');
-      const ids = describedBy?.split(/\s+/).filter(Boolean) ?? [];
-      const warningId = ids.find((id) => id.includes('-warning'));
-
-      if (warningId) {
-        const warningsContainer = password.page().locator(`#${warningId}`);
-        // If a warning element exists, verify it has no warning content
-        await expect(warningsContainer).not.toContainText(
-          /characters|uppercase|lowercase/i
-        );
-      }
-      // If no warning ID exists, that's valid - pristine field has no warnings
+      // A pristine field has no warning text in its description.
+      await expect(password).not.toHaveAccessibleDescription(
+        /characters|uppercase|lowercase/i
+      );
     });
 
     await test.step('Focus and blur without entering text', async () => {
@@ -277,16 +259,9 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
       await password.blur();
 
       // Still no warnings (no value entered)
-      const describedBy = await password.getAttribute('aria-describedby');
-      const ids = describedBy?.split(/\s+/).filter(Boolean) ?? [];
-      const warningId = ids.find((id) => id.includes('-warning'));
-
-      if (warningId) {
-        const warningsContainer = password.page().locator(`#${warningId}`);
-        await expect(warningsContainer).not.toContainText(
-          /characters|uppercase|lowercase/i
-        );
-      }
+      await expect(password).not.toHaveAccessibleDescription(
+        /characters|uppercase|lowercase/i
+      );
     });
   });
 

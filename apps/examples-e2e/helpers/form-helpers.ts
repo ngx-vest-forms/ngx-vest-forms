@@ -72,39 +72,17 @@ export async function waitForValidationToComplete(
 /**
  * Assert that a field has validation errors
  *
- * DESIGN DECISION: Graceful vs Strict ARIA Validation
- *
- * This helper uses GRACEFUL validation by default:
- * - Checks Angular validation state (ng-invalid class) as primary indicator
- * - Attempts to verify ARIA attributes (aria-invalid, aria-describedby) but doesn't fail tests
- * - Logs warnings when ARIA attributes are missing
- *
- * WHY GRACEFUL?
- * - Form validation logic works correctly (Angular marks fields as invalid)
- * - ARIA attribute timing issues are library implementation details, not application bugs
- * - Conditional validations with omitWhen have known timing issues with shouldShowErrors()
- * - Tests focus on user-facing behavior: "Does validation work?" not "Are ARIA attributes perfect?"
- *
- * WHEN TO USE STRICT?
- * - Accessibility-focused test suites
- * - Pre-production WCAG 2.2 AA compliance validation
- * - When ARIA timing bugs are fixed and you want to prevent regressions
- *
- * RECOMMENDATION: For production WCAG 2.2 AA compliance validation or pre-release
- * accessibility audits, run tests with `strict = true` to catch ARIA timing issues
- * that impact real users relying on assistive technologies.
- *
- * Known Issue: Fields with omitWhen conditional validations may have ng-invalid class
- * but not aria-invalid attribute due to shouldShowErrors() race condition.
+ * Checks, in order:
+ * - Angular validation state (ng-invalid class), stable for a short window
+ * - aria-invalid="true" on the field (hard assertion)
+ * - optionally, that an aria-describedby target contains the expected error text
  *
  * @param field - The form field locator
  * @param expectedError - Optional error message to verify
- * @param strict - If true, fail test when aria-invalid is missing (default: false)
  */
 export async function expectFieldHasError(
   field: Locator,
-  expectedError?: string | RegExp,
-  strict = false
+  expectedError?: string | RegExp
 ): Promise<void> {
   const STABILITY_DURATION_MS = 100; // Field must remain invalid for this long
   const ERROR_MESSAGE_TIMEOUT = 3000; // Time to find error message in described-by elements
@@ -150,25 +128,13 @@ export async function expectFieldHasError(
     )
     .toBe(true);
 
-  // Try to wait for aria-invalid
-  try {
-    await expect(field).toHaveAttribute('aria-invalid', 'true', {
-      timeout: 1500,
-    });
-  } catch {
-    const message =
-      'Warning: aria-invalid not set on invalid field (known issue with conditional validations)';
-    if (strict) {
-      throw new Error(message);
-    }
-    console.warn(message);
-  }
+  await expect(field).toHaveAttribute('aria-invalid', 'true', {
+    timeout: 1500,
+  });
 
   if (expectedError) {
     // Poll for the error message to appear in aria-describedby elements
     // This handles timing issues where describedby IDs update after validation
-    let errorFound = false;
-
     await expect
       .poll(
         async () => {
@@ -192,7 +158,6 @@ export async function expectFieldHasError(
                   ? text.includes(expectedError)
                   : expectedError.test(text);
               if (matches) {
-                errorFound = true;
                 return { found: true };
               }
             }
@@ -207,15 +172,6 @@ export async function expectFieldHasError(
         }
       )
       .toMatchObject({ found: true });
-
-    if (!errorFound) {
-      const message =
-        'Warning: aria-describedby did not reference an element containing the expected error message';
-      if (strict) {
-        throw new Error(message);
-      }
-      console.warn(message);
-    }
   }
 }
 
@@ -223,10 +179,7 @@ export async function expectFieldHasError(
  * Assert that a field has no validation errors
  * Uses expect.poll() with stability checking to handle bidirectional validation timing
  */
-export async function expectFieldValid(
-  field: Locator,
-  strict = false
-): Promise<void> {
+export async function expectFieldValid(field: Locator): Promise<void> {
   const STABILITY_DURATION_MS = 100; // Field must remain valid for this long
 
   // Wait for the field to have ng-valid class AND remain stable
@@ -268,23 +221,9 @@ export async function expectFieldValid(
     )
     .toBe(true);
 
-  // Try to ensure aria-invalid is cleared.
-  // Some scenarios (notably conditional validations / rapid revalidation) can
-  // temporarily leave aria-invalid="true" even when Angular marks the control
-  // as ng-valid. That's a real a11y concern, but we don't want unrelated E2E
-  // flows to be flaky because of it.
-  try {
-    await expect(field).not.toHaveAttribute('aria-invalid', 'true', {
-      timeout: 1500,
-    });
-  } catch {
-    const message =
-      'Warning: aria-invalid remained set on ng-valid field (known timing/staleness issue)';
-    if (strict) {
-      throw new Error(message);
-    }
-    console.warn(message);
-  }
+  await expect(field).not.toHaveAttribute('aria-invalid', 'true', {
+    timeout: 1500,
+  });
 }
 
 /**
@@ -371,23 +310,10 @@ export async function typeAndBlur(
   await field.press('Backspace');
 
   if (value.length > 0) {
-    await field.type(value, { delay });
+    await field.pressSequentially(value, { delay });
   }
 
   await field.blur();
-}
-
-/**
- * Get the form-state "Errors" inspector panel.
- *
- * Locates the named, non-live errors region rendered by the form-state
- * sidebar (`role="region"`, accessible name "Errors"). Note: this is the
- * always-visible inspector — NOT a `role="alert"` panel; genuine
- * user-action failures (e.g. fetch errors) render separate assertive
- * alerts and need their own locators.
- */
-export async function getFormLevelErrors(page: Page): Promise<Locator> {
-  return page.getByRole('region', { name: /errors/i });
 }
 
 /**
@@ -463,55 +389,7 @@ export async function getWarningElementFor(
 }
 
 /**
- * Monitor that a field stabilizes quickly (no aria-busy thrashing)
- * Returns true if field stabilizes within maxDuration
- */
-export async function monitorAriaStability(
-  field: Locator,
-  maxDuration = 1000
-): Promise<boolean> {
-  const startTime = Date.now();
-  let lastBusyState = false;
-  let transitions = 0;
-
-  while (Date.now() - startTime < maxDuration) {
-    const isBusy = (await field.getAttribute('aria-busy')) === 'true';
-    if (isBusy !== lastBusyState) {
-      transitions++;
-      lastBusyState = isBusy;
-    }
-    await field.page().waitForTimeout(50);
-  }
-
-  // Should stabilize quickly with minimal transitions (≤4 means at most 2 busy cycles)
-  return transitions <= 4;
-}
-
-/**
- * Check if an element is disabled
- */
-export async function expectDisabled(element: Locator): Promise<void> {
-  await expect(element).toBeDisabled();
-}
-
-/**
- * Check if an element is enabled
- */
-export async function expectEnabled(element: Locator): Promise<void> {
-  await expect(element).toBeEnabled();
-}
-
-/**
- * Wait for a debounced input to trigger validation
- * @deprecated Use waitForValidationToSettle instead for better reliability
- */
-export async function waitForDebounce(duration = 1100): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, duration));
-}
-
-/**
  * Wait for validation to settle by checking that no elements are busy.
- * Replaces waitForTimeout calls with proper expect.poll() assertions.
  * This is more reliable than hard-coded waits.
  *
  * Key improvements over a simple "check once" approach:
@@ -653,62 +531,4 @@ export function captureNgxVestDiagnostics(page: Page): NgxDiagnosticCapture {
       expect(unexpected).toEqual([]);
     },
   };
-}
-
-/**
- * Wait for console errors to be captured (for shape validation tests).
- * Uses a polling approach instead of hard-coded timeout.
- *
- * @param page - The Playwright page
- * @param timeout - Maximum time to wait
- */
-export async function waitForConsoleCheck(
-  page: Page,
-  timeout = 1000
-): Promise<void> {
-  // Allow a brief moment for any async console messages
-  await expect
-    .poll(async () => true, {
-      message: 'Waiting for console messages',
-      timeout,
-      intervals: [100, 200, 300],
-    })
-    .toBe(true);
-}
-
-/**
- * Assert that a checkbox is checked
- */
-export async function expectChecked(checkbox: Locator): Promise<void> {
-  await expect(checkbox).toBeChecked();
-}
-
-/**
- * Assert that a checkbox is not checked
- */
-export async function expectUnchecked(checkbox: Locator): Promise<void> {
-  await expect(checkbox).not.toBeChecked();
-}
-
-/**
- * Select a radio button by value
- * For purchase form, radio buttons are inside individual labels, so we use the label text
- */
-export async function selectRadio(
-  page: Page,
-  name: string,
-  value: string
-): Promise<void> {
-  // Use getByLabel to find the radio by its individual label text
-  await page.getByLabel(value, { exact: true }).check();
-}
-
-/**
- * Select an option from a dropdown
- */
-export async function selectOption(
-  dropdown: Locator,
-  optionText: string | RegExp
-): Promise<void> {
-  await dropdown.selectOption({ label: optionText as string });
 }

@@ -26,7 +26,9 @@ test.describe('Async Username Form', () => {
     await expect(page.getByText(/checking availability/i)).toBeVisible();
     await waitForValidationToSettle(page);
     await expect(
-      page.getByRole('region', { name: 'Errors' }).getByText(/username is already taken/i)
+      page
+        .getByRole('region', { name: 'Errors' })
+        .getByText(/username is already taken/i)
     ).toBeVisible();
 
     await typeAndBlur(username, 'ada_lovelace', 0);
@@ -46,5 +48,90 @@ test.describe('Async Username Form', () => {
     await expect(username).toHaveValue('');
     await expect(displayName).toHaveValue('');
     await expect(successAlert).toHaveCount(0);
+  });
+
+  test('should ignore a taken result that lands after the username was replaced', async ({
+    page,
+  }) => {
+    const username = page.getByLabel('Username', { exact: true });
+
+    await fillAndBlur(
+      page.getByLabel('Display name', { exact: true }),
+      'Ada Lovelace'
+    );
+
+    await typeAndBlur(username, 'taken', 0);
+    // The check for "taken" is in flight: the hint shows after the debounce
+    // and stays until the mock responds.
+    await expect(page.getByText(/checking availability/i)).toBeVisible();
+
+    await typeAndBlur(username, 'ada_lovelace', 0);
+    await waitForValidationToSettle(page);
+
+    // The stale "taken" response must not surface, and only the second
+    // check's result is shown.
+    await expect(page.getByText(/username is already taken/i)).toHaveCount(0);
+    await expect(username).not.toHaveAccessibleDescription(/already taken/i);
+    await expect(page.getByText(/that username is available\./i)).toBeVisible();
+
+    await page.getByRole('button', { name: /reserve username/i }).click();
+
+    const successAlert = page
+      .getByRole('status')
+      .filter({ hasText: /username reserved/i });
+    await expect(successAlert).toContainText(/ada_lovelace/i);
+  });
+
+  test('should mark the username wrapper busy and show the checking hint until the check settles', async ({
+    page,
+  }) => {
+    const username = page.getByLabel('Username', { exact: true });
+    const usernameWrapper = page
+      .locator('ngx-control-wrapper')
+      .filter({ has: username });
+
+    await fillAndBlur(username, 'ada_lovelace');
+
+    await expect(usernameWrapper).toHaveAttribute('aria-busy', 'true');
+    await expect(page.getByText(/checking availability/i)).toBeVisible();
+
+    await expect(usernameWrapper).not.toHaveAttribute('aria-busy', 'true');
+    await expect(page.getByText(/checking availability/i)).toHaveCount(0);
+    await expect(page.getByText(/that username is available\./i)).toBeVisible();
+  });
+
+  test('should hold the submit result until a pending availability check settles', async ({
+    page,
+  }) => {
+    const username = page.getByLabel('Username', { exact: true });
+    const reserveButton = page.getByRole('button', {
+      name: /reserve username/i,
+    });
+    const successAlert = page
+      .getByRole('status')
+      .filter({ hasText: /username reserved/i });
+
+    await fillAndBlur(
+      page.getByLabel('Display name', { exact: true }),
+      'Ada Lovelace'
+    );
+
+    // Submit while the check is still pending: the taken result must win.
+    await username.fill('taken');
+    await reserveButton.click();
+
+    await expect(
+      page
+        .getByRole('region', { name: 'Errors' })
+        .getByText(/username is already taken/i)
+    ).toBeVisible();
+    await expect(successAlert).toHaveCount(0);
+
+    // An available name submitted at once reserves only after the check settles.
+    await username.fill('ada_lovelace');
+    await reserveButton.click();
+
+    await expect(successAlert).toBeVisible();
+    await expect(successAlert).toContainText(/ada_lovelace/i);
   });
 });
