@@ -38,6 +38,7 @@ import {
   NgxSubmitSettledEvent,
 } from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
+import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
 import {
   provideFormContract,
   provideFormContractFactory,
@@ -3375,5 +3376,180 @@ describe('FormDirective - model writes into controls inside embedded views', () 
 
     // The model write is not echoed back through formValueChange.
     expect(host.emitted).toEqual([]);
+  });
+});
+
+describe('FormDirective - formValueChange after a model write', () => {
+  type ModeModel = { mode?: string };
+
+  @Component({
+    selector: 'test-embedded-select-host',
+    imports: [NgxVestForms],
+    template: `
+      <form
+        ngxVestForm
+        [formValue]="formValue()"
+        (formValueChange)="formValue.set($event)"
+      >
+        @if (true) {
+          <select
+            id="mode"
+            name="mode"
+            aria-label="mode"
+            [ngModel]="formValue().mode"
+          >
+            <option value="a">A</option>
+            <option value="b">B</option>
+          </select>
+        }
+      </form>
+    `,
+  })
+  class EmbeddedSelectHostComponent {
+    readonly formValue = signal<ModeModel>({ mode: 'b' });
+  }
+
+  it('emits a user selection that matches the value emitted before the model write', async () => {
+    const { fixture } = await render(EmbeddedSelectHostComponent);
+    const host = fixture.componentInstance;
+    const select = screen.getByLabelText('mode') as HTMLSelectElement;
+
+    await userEvent.selectOptions(select, 'a');
+    await whenStable();
+    expect(host.formValue()).toEqual({ mode: 'a' });
+
+    host.formValue.set({ mode: 'b' });
+    await whenStable();
+    await waitFor(() => expect(select.value).toBe('b'));
+
+    await userEvent.selectOptions(select, 'a');
+    await whenStable();
+    expect(host.formValue()).toEqual({ mode: 'a' });
+  });
+});
+
+describe('FormDirective - partial model input', () => {
+  type NameModel = { firstName?: string; lastName?: string };
+
+  @Component({
+    selector: 'test-partial-model-host',
+    imports: [NgxVestForms],
+    template: `
+      <form ngxVestForm [suite]="suite" [formValue]="formValue()">
+        <input
+          name="firstName"
+          aria-label="firstName"
+          [ngModel]="formValue().firstName"
+        />
+        <input
+          name="lastName"
+          aria-label="lastName"
+          [ngModel]="formValue().lastName"
+        />
+      </form>
+    `,
+  })
+  class PartialModelHostComponent {
+    // The model never holds lastName, so it stays a partial of the form value.
+    readonly formValue = signal<NameModel>({});
+    runs = 0;
+    readonly suite = create((model: NameModel = {}) => {
+      this.runs++;
+      vestTest('firstName', 'First name is required', () => {
+        enforce(model.firstName).isNotBlank();
+      });
+    });
+  }
+
+  it('settles after a model write instead of re-applying it on every validation', async () => {
+    const { fixture } = await render(PartialModelHostComponent);
+    const host = fixture.componentInstance;
+    await whenStable();
+
+    host.formValue.set({ firstName: 'Ada' });
+    await whenStable();
+    await waitFor(() =>
+      expect(
+        (screen.getByLabelText('firstName') as HTMLInputElement).value
+      ).toBe('Ada')
+    );
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    await whenStable();
+    const runsAfterWrite = host.runs;
+
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    await whenStable();
+    expect(host.runs).toBe(runsAfterWrite);
+  });
+});
+
+describe('FormDirective - submitSettled with validationConfig', () => {
+  type PasswordModel = { password?: string; confirmPassword?: string };
+
+  @Component({
+    selector: 'test-submit-settled-config-host',
+    imports: [NgxVestForms],
+    template: `
+      <form
+        ngxVestForm
+        [suite]="suite"
+        [formValue]="formValue()"
+        [validationConfig]="validationConfig"
+        (formValueChange)="formValue.set($event)"
+        (submitSettled)="settled.push($event)"
+      >
+        <label for="password">Password</label>
+        <input
+          id="password"
+          name="password"
+          [ngModel]="formValue().password"
+          [validationOptions]="{ debounceTime: 0 }"
+        />
+        <label for="confirmPassword">Confirm</label>
+        <input
+          id="confirmPassword"
+          name="confirmPassword"
+          [ngModel]="formValue().confirmPassword"
+          [validationOptions]="{ debounceTime: 0 }"
+        />
+        <button type="submit">Submit</button>
+      </form>
+    `,
+  })
+  class SubmitSettledConfigHostComponent {
+    readonly formValue = signal<PasswordModel>({});
+    readonly settled: NgxSubmitSettledEvent<PasswordModel>[] = [];
+    readonly validationConfig = createValidationConfig<PasswordModel>()
+      .whenChanged('password', 'confirmPassword')
+      .build();
+    readonly suite = create((model: PasswordModel = {}) => {
+      vestTest('confirmPassword', 'Passwords must match', () => {
+        enforce(model.confirmPassword).equals(model.password);
+      });
+    });
+  }
+
+  it('revalidates dependent fields before deciding, even inside the config debounce window', async () => {
+    const { fixture } = await render(SubmitSettledConfigHostComponent, {
+      providers: [
+        { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 1000 },
+      ],
+    });
+    const host = fixture.componentInstance;
+    await userEvent.type(screen.getByLabelText('Password'), 'secret');
+    await userEvent.type(screen.getByLabelText('Confirm'), 'secret');
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    await whenStable();
+
+    // Inside the debounce window: the pipeline has not revalidated
+    // confirmPassword yet.
+    await userEvent.type(screen.getByLabelText('Password'), '!');
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    await waitFor(() => expect(host.settled).toHaveLength(1));
+    expect(host.settled[0]?.valid).toBe(false);
+    expect(host.settled[0]?.errors).toEqual({
+      confirmPassword: ['Passwords must match'],
+    });
   });
 });

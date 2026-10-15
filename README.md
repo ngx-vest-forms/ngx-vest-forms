@@ -488,6 +488,8 @@ onSubmit(event: NgxSubmitSettledEvent<MyFormModel>) {
 
 `event.errors` holds the blocking errors by field path, as `(errorsChange)` reports them. Focusing the first invalid control on a failed submit still happens automatically.
 
+With a `[validationConfig]`, `(submitSettled)` also revalidates the dependent fields before it decides, so a submit made right after editing a trigger field (for example `password`, just before `confirmPassword` is rechecked) can't pass on a stale result.
+
 ### Form Contract Diagnostics (Development Mode)
 
 In development mode, ngx-vest-forms can lint the live form value against a form contract, catching common mistakes early. New code should prefer reusing an existing Standard Schema (for example Zod or Valibot) via `provideFormContract(schema)`. Legacy `NgxDeepRequired<T>` object contracts still work as a migration-friendly fallback:
