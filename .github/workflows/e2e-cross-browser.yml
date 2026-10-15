@@ -7,10 +7,9 @@ on:
     - cron: '0 3 * * *'
   workflow_dispatch:
 
-# Same as ci.yml, which runs the same setup steps.
+# Read-only: the setup actions need no OIDC token, and this job publishes nothing.
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   e2e:
