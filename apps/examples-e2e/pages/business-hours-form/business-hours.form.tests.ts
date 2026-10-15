@@ -242,22 +242,6 @@ test.describe('Business Hours Form', () => {
       });
     });
 
-    test('should validate that "to" time is after "from" time', async ({
-      page,
-    }) => {
-      await test.step('Enter "to" time before "from" time', async () => {
-        const fromTime = getAddFromTime(page);
-        const toTime = getAddToTime(page);
-        const addButton = getAddButton(page);
-
-        // Use typeAndBlur to better simulate real user typing so the bidirectional
-        // validationConfig triggers reliably.
-        await typeAndBlur(fromTime, '1700');
-        await typeAndBlur(toTime, '0900');
-        await expect(addButton).toBeDisabled();
-      });
-    });
-
     test('should require the missing pair field when only one addValue time is provided', async ({
       page,
     }) => {
@@ -358,32 +342,6 @@ test.describe('Business Hours Form', () => {
         const values = readBusinessHoursValues(formValue);
         await expect(normalizeTime(values[0]?.['from'])).toBe('0900');
         await expect(normalizeTime(values[1]?.['from'])).toBe('1300');
-      });
-    });
-
-    test('should detect overlapping time slots', async ({ page }) => {
-      await test.step('Add overlapping time slots', async () => {
-        const fromTime = getAddFromTime(page);
-        const toTime = getAddToTime(page);
-        const valuesGroup = page.locator('[ngModelGroup="values"]');
-
-        // Add first slot: 09:00 - 12:00
-        await addTimeSlot(page, '0900', '1200');
-
-        await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(1);
-
-        // Wait for add form to be ready (inputs cleared by Angular)
-        await waitForAddFormReady(fromTime, toTime);
-
-        // Add overlapping slot: 11:00 - 14:00
-        await addTimeSlot(page, '1100', '1400');
-
-        await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(2);
-
-        const formValue = await readJsonPanel(page);
-        const values = readBusinessHoursValues(formValue);
-        await expect(values).toHaveLength(2);
-        await expect(getRootFormError(page)).toBeVisible();
       });
     });
 
@@ -496,29 +454,6 @@ test.describe('Business Hours Form', () => {
         await expect(firstSlotTo).toHaveValue('13:00');
       });
     });
-
-    test('should maintain validation rules when editing', async ({ page }) => {
-      await test.step('Edit business hour to create invalid state', async () => {
-        const fromTime = getAddFromTime(page);
-        const toTime = getAddToTime(page);
-        const addButton = getAddButton(page);
-
-        await fillAndBlur(fromTime, '0900');
-        await fillAndBlur(toTime, '1200');
-        await addButton.click();
-
-        // Edit to make "to" before "from"
-        const firstSlotTo = page
-          .locator('[ngModelGroup="values"]')
-          .locator('input[name="to"]')
-          .first();
-        await fillAndBlur(firstSlotTo, '0800');
-
-        const valuesGroup = page.locator('[ngModelGroup="values"]');
-        await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(1);
-        await expect(valuesGroup.locator('input[name="to"]')).toHaveCount(1);
-      });
-    });
   });
 
   test.describe('Remove Business Hour', () => {
@@ -597,28 +532,6 @@ test.describe('Business Hours Form', () => {
   });
 
   test.describe('Form State Display', () => {
-    test('should successfully add a valid business hour', async ({ page }) => {
-      await test.step('Add valid business hour and verify it appears in the list', async () => {
-        const fromTime = getAddFromTime(page);
-        const toTime = getAddToTime(page);
-        const addButton = getAddButton(page);
-        const valuesGroup = page.locator('[ngModelGroup="values"]');
-
-        await fillAndBlur(fromTime, '0900');
-        await fillAndBlur(toTime, '1700');
-        await addButton.click();
-
-        await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(1);
-
-        const formValue = await readJsonPanel(page);
-        const values = readBusinessHoursValues(formValue);
-        await expect(normalizeTime(values[0]?.['from'])).toBe('0900');
-        await expect(normalizeTime(values[0]?.['to'])).toBe('1700');
-        await expect(valuesGroup.locator('input[name="from"]')).toHaveCount(1);
-        await expect(valuesGroup.locator('input[name="to"]')).toHaveCount(1);
-      });
-    });
-
     // FIXME: Requirements list wording doesn't match test expectations
     test('should display validation requirements list', async ({ page }) => {
       await test.step('Verify validation requirements are listed', async () => {

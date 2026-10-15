@@ -7,7 +7,7 @@ import { BusinessHourFormModel } from '../../../../models/business-hours-form.mo
   selector: 'ngx-business-hour',
   imports: [NgxVestForms, NgxMaskDirective],
   templateUrl: './business-hour.component.html',
-  styleUrls: ['./business-hour.component.scss'],
+  styleUrl: './business-hour.component.scss',
   viewProviders: [vestFormsViewProviders],
   host: { style: 'display: block;' },
 })

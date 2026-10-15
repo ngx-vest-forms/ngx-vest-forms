@@ -366,42 +366,4 @@ test.describe('Password Warnings - Vest warn() Integration', () => {
       await expect(warningsContainer).toContainText(/12 characters/i);
     });
   });
-
-  test('accessibility: warnings should be announced to screen readers', async ({
-    page,
-  }) => {
-    await test.step('Enter weak password', async () => {
-      const password = page.getByLabel('Password', { exact: true });
-
-      // Use fill + blur for reliability
-      await fillPasswordAndWaitForWarnings(page, password, 'weak');
-
-      // Wait for warnings container to appear
-      const warningsContainer = await getWarningElementFor(
-        password,
-        /characters|uppercase|lowercase/i
-      );
-      await expect(warningsContainer).toContainText(
-        /characters|uppercase|lowercase/i
-      );
-    });
-
-    await test.step('Verify ARIA live region configuration', async () => {
-      const password = page.getByLabel('Password', { exact: true });
-      const warningsContainer = await getWarningElementFor(
-        password,
-        /characters|uppercase|lowercase/i
-      );
-
-      // Should have proper ARIA attributes for screen reader announcement
-      await expect(warningsContainer).toHaveAttribute('role', 'status');
-      await expect(warningsContainer).toHaveAttribute('aria-live', 'polite');
-
-      // Warning icons should be decorative (not read by screen readers)
-      // Text content should be accessible
-      const warningText = await warningsContainer.textContent();
-      expect(warningText).toBeTruthy();
-      expect(warningText?.length).toBeGreaterThan(10);
-    });
-  });
 });

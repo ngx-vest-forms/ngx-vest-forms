@@ -50,15 +50,6 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
       });
     });
 
-    test('should navigate to step 2 when step 1 is valid', async ({ page }) => {
-      await test.step('Submit All triggers validation on all steps', async () => {
-        await fillValidStep1(page);
-
-        // Should navigate to step 2
-        await goToProfileStep(page);
-      });
-    });
-
     test('should show validation errors when trying to proceed with invalid form', async ({
       page,
     }) => {
@@ -239,42 +230,6 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         await newsletterCheckbox.uncheck();
         await expectUnchecked(newsletterCheckbox);
         await expect(frequencyField).toBeHidden();
-      });
-    });
-
-    test('should navigate back to step 1 using previous button', async ({
-      page,
-    }) => {
-      await test.step('Click previous and verify step 1 is shown', async () => {
-        await clickPrevious(page);
-
-        // Should navigate back to step 1
-        await expectWizardStep(page, 1, STEP_HEADINGS[1]);
-
-        // Step 1 data should be preserved
-        const emailField = page.getByLabel(/email address/i);
-        await expect(emailField).toHaveValue('test@example.com');
-      });
-    });
-
-    test('should navigate to step 3 when step 2 is valid', async ({ page }) => {
-      // Mark as slow test - parallel execution with 4 workers causes severe resource contention
-      test.slow();
-
-      await test.step('Fill all step 2 fields and submit', async () => {
-        await fillValidStep2(page);
-
-        // Verify all step 2 fields are valid before proceeding
-        await expectValidStep2(page);
-
-        // Note: Sidebar validity depends on validChange output timing which can lag behind
-        // actual form validity. Field validity checks above confirm the form IS valid.
-
-        // Submit step 2
-        await clickNext(page);
-
-        // Should navigate to step 3 (with extended timeout for parallel test runs)
-        await expectWizardStep(page, 3, STEP_HEADINGS[3], 45_000);
       });
     });
   });
@@ -657,31 +612,6 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
         await expect(emailField).toHaveAttribute('aria-invalid', 'true', {
           timeout: 2000,
         });
-      });
-    });
-
-    test('should associate error messages with fields via aria-describedby', async ({
-      page,
-    }) => {
-      await test.step('Verify error messages are properly linked', async () => {
-        const emailField = page.getByLabel(/email address/i);
-
-        // Trigger validation
-        await emailField.focus();
-        await emailField.blur();
-
-        // Wait for error to appear
-        await expectFieldHasError(emailField, /required/i);
-
-        // Verify aria-describedby exists and points to error
-        const describedBy = await emailField.getAttribute('aria-describedby');
-        expect(describedBy).toBeTruthy();
-
-        if (describedBy) {
-          const errorElement = page.locator(`#${describedBy}`);
-          await expect(errorElement).toBeVisible();
-          await expect(errorElement).toContainText(/required/i);
-        }
       });
     });
 

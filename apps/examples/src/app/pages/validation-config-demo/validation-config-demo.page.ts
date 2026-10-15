@@ -23,7 +23,6 @@ import { validationDemoSuite } from './validation-demo.validations';
     ExampleCardsComponent,
   ],
   templateUrl: './validation-config-demo.page.html',
-  styleUrls: ['./validation-config-demo.page.scss'],
 })
 export class ValidationConfigDemoPageComponent {
   protected readonly feedback = computed(() => this.formBody()?.feedback);

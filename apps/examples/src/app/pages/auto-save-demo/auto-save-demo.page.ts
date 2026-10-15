@@ -1,10 +1,4 @@
-import {
-  Component,
-  computed,
-  inject,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { createValidationConfig, NgxFieldBlurEvent } from 'ngx-vest-forms';
 import {
@@ -24,7 +18,10 @@ import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
-import { IntroItemComponent, IntroSectionComponent } from '../../ui/intro-section';
+import {
+  IntroItemComponent,
+  IntroSectionComponent,
+} from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { autoSaveContent } from './auto-save-demo.content';
 import { AutoSaveDemoFormBody } from './auto-save-demo.form';
@@ -67,7 +64,6 @@ type AutoSaveRequest = {
     AutoSaveDemoFormBody,
   ],
   templateUrl: './auto-save-demo.page.html',
-  styleUrls: ['./auto-save-demo.page.scss'],
 })
 export class AutoSaveDemoPageComponent {
   protected readonly feedback = computed(() => this.formBody()?.feedback);

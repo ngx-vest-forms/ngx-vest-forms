@@ -1,12 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import {
-  afterNextRender,
   Component,
   computed,
   DestroyRef,
   inject,
   injectAsync,
-  Injector,
   onIdle,
   signal,
   viewChild,
@@ -18,7 +16,10 @@ import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
-import { IntroItemComponent, IntroSectionComponent } from '../../ui/intro-section';
+import {
+  IntroItemComponent,
+  IntroSectionComponent,
+} from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 
 import { submissionPatternsContent } from './submission-patterns.content';
@@ -64,7 +65,6 @@ export class SubmissionPatternsPageComponent {
     () => import('./account.service').then((m) => m.AccountService),
     { prefetch: onIdle }
   );
-  private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly exampleContent = submissionPatternsContent;
@@ -108,21 +108,16 @@ export class SubmissionPatternsPageComponent {
     this.submitCycleActive.set(true);
 
     // (b) Submit-time INVALID handling: never call the server, surface
-    // errors, and move focus to the first invalid control. Deferred so the
-    // submit-driven validation has flushed before we resolve the target.
-    afterNextRender(
-      () => {
-        if (!this.feedback()?.formState()?.valid) {
-          this.state.set('editing');
-          this.serverError.set(null);
-          this.formBody()?.focusFirstInvalidControl();
-          return;
-        }
+    // errors, and move focus to the first invalid control. ngxVestForm has
+    // already run validation for this submit, so the state is current here.
+    if (!this.feedback()?.formState()?.valid) {
+      this.state.set('editing');
+      this.serverError.set(null);
+      this.formBody()?.focusFirstInvalidControl();
+      return;
+    }
 
-        void this.callServer();
-      },
-      { injector: this.injector }
-    );
+    void this.callServer();
   }
 
   /** (c)/(d) — the only place the server is contacted. */

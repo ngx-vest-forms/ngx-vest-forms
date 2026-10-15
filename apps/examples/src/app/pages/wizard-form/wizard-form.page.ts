@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { createValidationConfig } from 'ngx-vest-forms';
 import {
+  WizardStep,
   WizardStep1Model,
   WizardStep2Model,
   WizardStep3Model,
@@ -17,7 +18,10 @@ import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
-import { IntroItemComponent, IntroSectionComponent } from '../../ui/intro-section';
+import {
+  IntroItemComponent,
+  IntroSectionComponent,
+} from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { StatusBadge } from '../../ui/status-badge/status-badge.component';
 import { WizardStepConfig, WizardStepsComponent } from '../../ui/wizard';
@@ -28,6 +32,8 @@ import {
   wizardStep2Suite,
   wizardStep3Suite,
 } from './wizard.validations';
+
+const WIZARD_STEPS: readonly WizardStep[] = [1, 2, 3];
 
 @Component({
   selector: 'ngx-wizard-form-page',
@@ -49,7 +55,7 @@ import {
 export class WizardFormPageComponent {
   private readonly injector = inject(Injector);
   protected readonly exampleContent = wizardContent;
-  protected readonly currentStep = signal(1);
+  protected readonly currentStep = signal<WizardStep>(1);
 
   protected readonly steps: WizardStepConfig[] = [
     { id: 1, title: 'Account', description: 'Email & Password' },
@@ -101,9 +107,7 @@ export class WizardFormPageComponent {
   );
 
   protected readonly completedSteps = computed(() =>
-    this.steps
-      .filter((step) => this.isStepCompleted(step.id))
-      .map((step) => step.id)
+    WIZARD_STEPS.filter((step) => this.isStepCompleted(step))
   );
 
   protected readonly currentStepData = computed(() => {
@@ -161,44 +165,34 @@ export class WizardFormPageComponent {
   protected readonly submitSuccess = signal(false);
   protected readonly submitError = signal<string | null>(null);
 
-  private getStepValid(step: number): boolean {
+  private getStepValid(step: WizardStep): boolean {
     switch (step) {
       case 1:
         return this.step1Valid();
       case 2:
         return this.step2Valid();
-      case 3:
-        return this.step3Valid();
       default:
-        return false;
+        return this.step3Valid();
     }
   }
 
-  private isStepCompleted(step: number): boolean {
+  private isStepCompleted(step: WizardStep): boolean {
     return step !== this.currentStep() && this.getStepValid(step);
   }
 
-  protected goToStep(step: number): void {
-    if (step >= 1 && step <= 3) {
-      this.currentStep.set(step);
-    }
+  protected goToStep(step: WizardStep): void {
+    this.currentStep.set(step);
   }
 
   protected previousStep(): void {
-    if (this.currentStep() > 1) {
-      this.currentStep.update((s) => s - 1);
-    }
+    this.currentStep.update((step) => (step === 3 ? 2 : 1));
   }
 
   protected nextStep(): void {
-    if (this.currentStep() < 3) {
-      this.currentStep.update((s) => s + 1);
-    }
+    this.currentStep.update((step) => (step === 1 ? 2 : 3));
   }
 
-  protected async onStep1Submit(): Promise<void> {
-    await this.waitForNextRender();
-
+  protected onStep1Submit(): void {
     const step1IsValid =
       this.formBody()?.currentStepIsValid() ?? this.step1Valid();
 
@@ -215,9 +209,7 @@ export class WizardFormPageComponent {
     );
   }
 
-  protected async onStep2Submit(): Promise<void> {
-    await this.waitForNextRender();
-
+  protected onStep2Submit(): void {
     const step2IsValid =
       this.formBody()?.currentStepIsValid() ?? this.step2Valid();
 
@@ -239,9 +231,7 @@ export class WizardFormPageComponent {
     );
   }
 
-  protected async onStep3Submit(): Promise<void> {
-    await this.waitForNextRender();
-
+  protected onStep3Submit(): void {
     const step3IsValid =
       this.formBody()?.currentStepIsValid() ?? this.step3Valid();
 
@@ -264,12 +254,7 @@ export class WizardFormPageComponent {
 
     const currentStep = this.currentStep();
     const currentStepIsValid =
-      this.formBody()?.currentStepIsValid() ??
-      (currentStep === 1
-        ? this.step1Valid()
-        : currentStep === 2
-          ? this.step2Valid()
-          : this.step3Valid());
+      this.formBody()?.currentStepIsValid() ?? this.getStepValid(currentStep);
 
     const step1IsValid =
       currentStep === 1 ? currentStepIsValid : this.step1Valid();

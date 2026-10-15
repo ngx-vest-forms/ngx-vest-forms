@@ -1,9 +1,5 @@
-import { KeyValuePipe } from '@angular/common';
-import {
-  Component,
-  input,
-  output,
-} from '@angular/core';
+import { KeyValue, KeyValuePipe } from '@angular/common';
+import { Component, input, output } from '@angular/core';
 import { NgModelGroup } from '@angular/forms';
 import {
   arrayToObject,
@@ -29,7 +25,7 @@ export type BusinessHoursMap = Record<string, BusinessHourFormModel>;
   selector: 'ngx-business-hours',
   imports: [NgxVestForms, KeyValuePipe, BusinessHourComponent],
   templateUrl: './business-hours.component.html',
-  styleUrls: ['./business-hours.component.scss'],
+  styleUrl: './business-hours.component.scss',
   viewProviders: [vestFormsViewProviders],
   host: { style: 'display: block;' },
 })
@@ -48,6 +44,12 @@ export class BusinessHoursComponent {
    * Value edits flow through ngModel automatically.
    */
   readonly valuesChange = output<BusinessHoursMap>();
+
+  /** `keyvalue` sorts keys as strings; slot `10` belongs after slot `9`. */
+  protected readonly byNumericKey = (
+    a: KeyValue<string, unknown>,
+    b: KeyValue<string, unknown>
+  ): number => Number(a.key) - Number(b.key);
 
   /** Adds the new business hour and emits structural change to parent */
   addBusinessHour(

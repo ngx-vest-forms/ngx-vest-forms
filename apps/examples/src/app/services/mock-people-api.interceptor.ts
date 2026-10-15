@@ -128,7 +128,7 @@ export const mockPeopleApiInterceptor: HttpInterceptorFn = (request, next) => {
   if (request.method === 'GET') {
     const username = getUsername(request.url);
     if (username !== null) {
-      const errorScenario = getErrorScenario(request.url);
+      const errorScenario = getErrorScenario(request.urlWithParams);
       if (errorScenario) {
         return of(null).pipe(
           delay(MOCK_USERNAME_DELAY_MS),
@@ -153,7 +153,7 @@ export const mockPeopleApiInterceptor: HttpInterceptorFn = (request, next) => {
   if (request.method === 'POST') {
     const requestUrl = new URL(request.url, globalThis.location.origin);
     if (requestUrl.pathname === '/api/account') {
-      const errorScenario = getErrorScenario(request.url);
+      const errorScenario = getErrorScenario(request.urlWithParams);
       const body = (request.body ?? {}) as { email?: string };
       // A deterministic "server-side" failure the demo can trigger on demand.
       if (errorScenario) {
@@ -207,7 +207,7 @@ export const mockPeopleApiInterceptor: HttpInterceptorFn = (request, next) => {
     return next(request);
   }
 
-  const errorScenario = getErrorScenario(request.url);
+  const errorScenario = getErrorScenario(request.urlWithParams);
   if (errorScenario) {
     return of(null).pipe(
       delay(MOCK_RESPONSE_DELAY_MS),

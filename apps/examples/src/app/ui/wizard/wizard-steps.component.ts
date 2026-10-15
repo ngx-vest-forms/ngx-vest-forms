@@ -2,6 +2,12 @@ import { Component, computed, input } from '@angular/core';
 
 export type WizardStepStatus = 'completed' | 'current' | 'upcoming';
 
+const STEP_STATUS_LABELS: Record<WizardStepStatus, string> = {
+  completed: 'Completed',
+  current: 'Current step',
+  upcoming: 'Not started',
+};
+
 export type WizardStepConfig = {
   id: number;
   title: string;
@@ -179,13 +185,7 @@ export class WizardStepsComponent {
    * e.g., "Step 1: Account - Completed" or "Step 2: Profile - Current"
    */
   protected getStepAriaLabel(step: WizardStepConfig): string {
-    const status = this.getStepStatus(step.id);
-    const statusText =
-      status === 'completed'
-        ? 'Completed'
-        : status === 'current'
-          ? 'Current step'
-          : 'Not started';
+    const statusText = STEP_STATUS_LABELS[this.getStepStatus(step.id)];
     return `Step ${step.id} of ${this.steps().length}: ${step.title} - ${statusText}`;
   }
 }

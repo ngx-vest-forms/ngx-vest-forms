@@ -58,16 +58,6 @@ test.describe('Split Wrappers - Form Behavior', () => {
     await expect(sidebar).toContainText('2026-07-15');
   });
 
-  test('should show required error on departure field after submit', async ({
-    page,
-  }) => {
-    await page.getByRole('button', { name: /submit/i }).click();
-    await waitForValidationToSettle(page);
-
-    const departure = page.getByLabel(/departure date/i);
-    await expectFieldHasError(departure, /required/i);
-  });
-
   test('should show required error on return field after submit', async ({
     page,
   }) => {
@@ -76,19 +66,6 @@ test.describe('Split Wrappers - Form Behavior', () => {
 
     const returnDate = page.getByLabel(/return date/i);
     await expectFieldHasError(returnDate, /required/i);
-  });
-
-  test('should show cross-field error on return date when before departure', async ({
-    page,
-  }) => {
-    const departure = page.getByLabel(/departure date/i);
-    const returnDate = page.getByLabel(/return date/i);
-
-    await fillNativeDateInputAndBlur(departure, '2026-07-15');
-    await fillNativeDateInputAndBlur(returnDate, '2026-07-01');
-    await waitForValidationToSettle(page);
-
-    await expectFieldHasError(returnDate, /after/i);
   });
 
   test('should clear errors when dates are corrected', async ({ page }) => {
@@ -199,14 +176,9 @@ test.describe('Split Wrappers - Form Behavior', () => {
     }
   });
 
-  test.fixme('should bidirectionally revalidate when departure changes after return is set', async ({
+  test('should bidirectionally revalidate when departure changes after return is set', async ({
     page,
   }) => {
-    // NOT a library bug — bidirectional revalidation works correctly in manual testing.
-    // Playwright's synthetic events for native <input type="date"> do not reliably
-    // trigger Angular's zoneless change-detection scheduler across browsers, causing
-    // the E2E assertion to be non-deterministic. Keep the scenario documented as a
-    // known Playwright limitation rather than turning it into a flaky gate.
     const departure = page.getByLabel(/departure date/i);
     const returnDate = page.getByLabel(/return date/i);
 

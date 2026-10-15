@@ -1,13 +1,6 @@
 import { KeyValuePipe } from '@angular/common';
+import { Component, computed, input, output, viewChild } from '@angular/core';
 import {
-  Component,
-  computed,
-  input,
-  output,
-  viewChild,
-} from '@angular/core';
-import {
-  arrayToObject,
   createFormFeedbackSignals,
   FormDirective,
   NgxVestForms,
@@ -53,9 +46,9 @@ export class ComplexNestedFormBody {
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
   /**
-   * Ordered list of `[key, member]` pairs for the @for loop. Keys are a pure
-   * function of the current model (contiguous numeric), so the stateless Vest
-   * suite re-keys to match the rendered ngModelGroup names on every run.
+   * Ordered list of `[key, member]` pairs for the @for loop. Each key is a
+   * stable row id: it never changes while the row exists, so `track` keeps
+   * the row's DOM, touched state and errors attached to the right member.
    */
   protected readonly memberEntries = computed(() =>
     Object.entries(this.formValue().teamMembers ?? {})
@@ -73,38 +66,51 @@ export class ComplexNestedFormBody {
     this.vestForm()?.resetForm(value);
   }
 
+  /** Next row id to hand out; ids are never reused within this form. */
+  #nextMemberId = 0;
+
   /**
-   * Appends a new member. Mirrors the purchase form's repeatable pattern:
-   * take the current values as an array, mutate, then `arrayToObject` back to
-   * a contiguous numeric-keyed record. Keys stay deterministic for the model
-   * state, so the stateless suite re-keys to match the rendered groups.
+   * Appends a new member under a fresh, never-reused id. Ids are numeric
+   * strings so the form contract's single `'0'` entry still describes every
+   * row.
    */
   protected addMember(): void {
     const current = this.formValue();
-    const members = [
-      ...Object.values(current.teamMembers ?? {}),
-      { ...emptyMember },
-    ];
+    const members = current.teamMembers ?? {};
+    const nextId = this.#nextIdAfter(members);
+    this.#nextMemberId = nextId + 1;
     this.formValueChange.emit({
       ...current,
-      teamMembers: arrayToObject(members),
+      teamMembers: { ...members, [String(nextId)]: { ...emptyMember } },
     });
   }
 
   /**
-   * Removes a member by index, then re-keys the remaining members with
-   * `arrayToObject`. The suite reads current keys on every run, so the
-   * removed row's Vest tests disappear and the rest stay valid.
+   * Removes one member by id. The other rows keep their ids, so their
+   * touched state and errors stay with them instead of shifting to the next
+   * row; the suite reads the current keys on every run, so the removed row's
+   * tests disappear with it.
    */
   protected removeMember(key: string): void {
     const current = this.formValue();
-    const members = Object.values(current.teamMembers ?? {}).filter(
-      (_, index) => index !== Number(key)
+    // Record the highest id in use before it can disappear, so a later add
+    // never reuses the removed id (the initial rows never went through add).
+    this.#nextMemberId = this.#nextIdAfter(current.teamMembers ?? {});
+    const remaining = Object.entries(current.teamMembers ?? {}).filter(
+      ([id]) => id !== key
     );
     this.formValueChange.emit({
       ...current,
-      teamMembers: arrayToObject(members),
+      teamMembers: Object.fromEntries(remaining),
     });
+  }
+
+  /** The first id not yet handed out and not used by any current row. */
+  #nextIdAfter(members: Record<string, unknown>): number {
+    return Math.max(
+      this.#nextMemberId,
+      ...Object.keys(members).map((key) => Number(key) + 1)
+    );
   }
 
   protected memberIdPrefix(key: string): string {

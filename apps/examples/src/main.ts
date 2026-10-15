@@ -1,9 +1,6 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { bootstrapApplication } from '@angular/platform-browser';
-import {
-  provideRouter,
-  withEnabledBlockingInitialNavigation,
-} from '@angular/router';
+import { provideRouter, TitleStrategy } from '@angular/router';
 import { provideEnvironmentNgxMask } from 'ngx-mask';
 import {
   NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN,
@@ -11,13 +8,15 @@ import {
 } from 'ngx-vest-forms';
 import { AppComponent } from './app/app.component';
 import { mockPeopleApiInterceptor } from './app/services/mock-people-api.interceptor';
+import { ExampleTitleStrategy } from './app/shared/example-title.strategy';
 import { toAppRoutes } from './app/shared/routes.metadata';
 
 void bootstrapApplication(AppComponent, {
   providers: [
     provideHttpClient(withInterceptors([mockPeopleApiInterceptor])),
     provideEnvironmentNgxMask({ validation: false }),
-    provideRouter(toAppRoutes(), withEnabledBlockingInitialNavigation()),
+    provideRouter(toAppRoutes()),
+    { provide: TitleStrategy, useExisting: ExampleTitleStrategy },
     // Global configuration for validation config debounce timing.
     // Using the relaxed preset reduces validation frequency during rapid typing.
     {

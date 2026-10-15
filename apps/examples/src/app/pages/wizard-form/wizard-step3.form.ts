@@ -1,10 +1,4 @@
-import {
-  Component,
-  computed,
-  input,
-  output,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, input, output, viewChild } from '@angular/core';
 import {
   FormDirective,
   NgxFirstInvalidOptions,
@@ -13,6 +7,7 @@ import {
   provideFormContract,
 } from 'ngx-vest-forms';
 import {
+  WizardStep,
   WizardStep1Model,
   WizardStep2Model,
   wizardStep3Contract,
@@ -37,7 +32,7 @@ export class WizardStep3FormComponent {
   readonly validChange = output<boolean>();
   readonly errorsChange = output<Record<string, string[]>>();
   readonly previous = output();
-  readonly goToStep = output<number>();
+  readonly goToStep = output<WizardStep>();
   readonly stepSubmit = output();
   readonly submitAll = output();
 
@@ -47,13 +42,13 @@ export class WizardStep3FormComponent {
 
     return [
       {
-        id: 1,
+        id: 1 as const,
         title: 'Account Details',
         fieldLabel: 'Email',
         fieldValue: this.step1Data().email || '-',
       },
       {
-        id: 2,
+        id: 2 as const,
         title: 'Profile Details',
         fieldLabel: 'Name',
         fieldValue: `${firstName} ${lastName}`.trim() || '-',

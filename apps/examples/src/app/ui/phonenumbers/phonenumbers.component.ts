@@ -1,10 +1,5 @@
 import { KeyValuePipe } from '@angular/common';
-import {
-  Component,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import {
   arrayToObject,
   NgxVestForms,
@@ -26,7 +21,6 @@ import type { PhoneNumberMap } from '../../models/phonenumber.model';
   selector: 'ngx-phonenumbers',
   imports: [NgxVestForms, KeyValuePipe],
   templateUrl: './phonenumbers.component.html',
-  styleUrls: ['./phonenumbers.component.scss'],
   viewProviders: [vestFormsViewProviders],
   host: { style: 'display: block;' },
 })
