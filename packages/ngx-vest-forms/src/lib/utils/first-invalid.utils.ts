@@ -76,14 +76,23 @@ function isElementVisible(element: HTMLElement): boolean {
   return element.getClientRects().length > 0;
 }
 
+/**
+ * Returns the first invalid element in document order that is visible, or,
+ * with `includeCollapsed`, hidden only because a closed `<details>` ancestor
+ * collapses it (the caller opens those before focusing).
+ */
 export function resolveFirstInvalidElement(
   root: HTMLFormElement,
-  invalidSelector: string
+  invalidSelector: string,
+  includeCollapsed = false
 ): HTMLElement | null {
   try {
     const candidates = root.querySelectorAll<HTMLElement>(invalidSelector);
     for (const candidate of candidates) {
-      if (isElementVisible(candidate)) {
+      if (
+        isElementVisible(candidate) ||
+        (includeCollapsed && isInsideClosedDetails(root, candidate))
+      ) {
         return candidate;
       }
     }
@@ -91,6 +100,28 @@ export function resolveFirstInvalidElement(
   } catch {
     return null;
   }
+}
+
+function isInsideClosedDetails(
+  root: HTMLFormElement,
+  element: HTMLElement
+): boolean {
+  if (element.closest('[aria-hidden="true"]')) {
+    return false;
+  }
+  // Opening the <details> only helps when nothing else on the path hides it.
+  let insideClosedDetails = false;
+  let current: HTMLElement | null = element;
+  while (current && current !== root) {
+    if (getComputedStyle(current).display === 'none') {
+      return false;
+    }
+    if (current instanceof HTMLDetailsElement && !current.open) {
+      insideClosedDetails = true;
+    }
+    current = current.parentElement;
+  }
+  return insideClosedDetails;
 }
 
 export function openCollapsedDetailsAncestors(

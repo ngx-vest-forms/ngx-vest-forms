@@ -8,8 +8,10 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import {
+  AbstractControl,
   AbstractControlDirective,
   NgModel,
   NgModelGroup,
@@ -136,14 +138,26 @@ export class FormControlStateDirective {
    */
   readonly #lateAttachFor = signal<AbstractControlDirective | null>(null);
 
+  /**
+   * The `AbstractControl` the status subscription is attached to, and a tick
+   * that re-runs the subscribing effect. A container's control (e.g. an
+   * `NgModelGroup`'s `FormGroup`) is registered in a microtask, so it can
+   * still be missing after the late-attach retry; the interaction effect
+   * then bumps the tick once it appears.
+   */
+  #subscribedControl: AbstractControl | null = null;
+  readonly #attachTick = signal(0);
+
   constructor() {
-    // Update control state reactively with proper cleanup
+    // Subscribe to the active control's status. This effect re-runs only when
+    // the active control (or its late-attach retry) changes; it used to track
+    // the interaction state too, which re-subscribed on every blur (#216).
     effect((onCleanup) => {
       const control = this.#activeControl();
-      const interaction = this.#interactionState();
       // Read the late-attach signal to establish a reactive dependency so the
       // effect re-runs once the afterNextRender retry fires.
       const lateAttachFor = this.#lateAttachFor();
+      this.#attachTick();
 
       if (!control) {
         this.#controlStateSignal.set(INITIAL_FORM_CONTROL_STATE);
@@ -175,7 +189,9 @@ export class FormControlStateDirective {
       }
 
       // Listen to control changes
-      const sub = control.control?.statusChanges?.subscribe(() => {
+      const attached = control.control;
+      this.#subscribedControl = attached;
+      const sub = attached.statusChanges.subscribe(() => {
         const {
           status,
           valid,
@@ -222,6 +238,7 @@ export class FormControlStateDirective {
         // Track current status for next iteration
         this.#previousStatus = currentStatus;
 
+        const interaction = untracked(this.#interactionState);
         this.#controlStateSignal.set({
           status: currentStatus,
           isValid: valid ?? false,
@@ -236,26 +253,27 @@ export class FormControlStateDirective {
       });
 
       // Initial update
-      const { status, valid, invalid, pending, disabled, pristine, errors } =
-        control;
-
-      const initialStatus = status as FormControlStatus | null;
-      this.#previousStatus = initialStatus;
-
-      this.#controlStateSignal.set({
-        status: initialStatus,
-        isValid: valid ?? false,
-        isInvalid: invalid ?? false,
-        isPending: pending ?? false,
-        isDisabled: disabled ?? false,
-        isTouched: interaction.isTouched,
-        isDirty: interaction.isDirty,
-        isPristine: pristine ?? true,
-        errors: errors as VestValidationErrors | null,
-      });
+      this.#refreshFromControl(control);
 
       // Proper cleanup using onCleanup callback (Angular 21 best practice)
-      onCleanup(() => sub?.unsubscribe());
+      onCleanup(() => {
+        sub.unsubscribe();
+        this.#subscribedControl = null;
+      });
+    });
+
+    // Re-read the control when the interaction state changes (touch, dirty,
+    // reset). Separate from the effect above so a blur doesn't re-subscribe.
+    effect(() => {
+      this.#interactionState();
+      const control = untracked(this.#activeControl);
+      if (!control?.control) return;
+      if (control.control !== this.#subscribedControl) {
+        // Not subscribed to this control yet: let the effect above attach.
+        this.#attachTick.update((tick) => tick + 1);
+        return;
+      }
+      untracked(() => this.#refreshFromControl(control));
     });
 
     // Robustly sync touched/dirty/pending after every render (Angular 18+ best practice)
@@ -342,6 +360,30 @@ export class FormControlStateDirective {
       },
       { injector: this.#injector }
     );
+  }
+
+  /**
+   * Writes a fresh snapshot of `control` into the state signal and makes its
+   * status the baseline for the next status-change comparison.
+   */
+  #refreshFromControl(control: AbstractControlDirective): void {
+    const { status, valid, invalid, pending, disabled, pristine, errors } =
+      control;
+    const currentStatus = status as FormControlStatus | null;
+    this.#previousStatus = currentStatus;
+
+    const interaction = untracked(this.#interactionState);
+    this.#controlStateSignal.set({
+      status: currentStatus,
+      isValid: valid ?? false,
+      isInvalid: invalid ?? false,
+      isPending: pending ?? false,
+      isDisabled: disabled ?? false,
+      isTouched: interaction.isTouched,
+      isDirty: interaction.isDirty,
+      isPristine: pristine ?? true,
+      errors: errors as VestValidationErrors | null,
+    });
   }
 
   /**

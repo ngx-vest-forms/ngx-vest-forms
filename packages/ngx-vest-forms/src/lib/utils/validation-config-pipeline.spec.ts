@@ -283,7 +283,7 @@ describe('createValidationConfigPipeline', () => {
     expect(getCount()).toBeGreaterThanOrEqual(1);
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       expect.stringContaining(
-        'timed out waiting for form to leave PENDING state'
+        '[NGX-106] [ngx-vest-forms] validationConfig: timed out waiting for the form to leave the PENDING state'
       )
     );
 

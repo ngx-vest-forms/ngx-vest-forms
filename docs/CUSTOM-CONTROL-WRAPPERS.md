@@ -349,6 +349,44 @@ interface DebouncedPendingStateOptions {
 }
 ```
 
+Call it in an injection context (a field initializer or the constructor). To create it later, for example in `ngOnInit`, pass an injector as the third argument:
+
+```typescript
+import { Component, Injector, OnInit, inject } from '@angular/core';
+import {
+  createDebouncedPendingState,
+  DebouncedPendingStateResult,
+  FormErrorDisplayDirective,
+} from 'ngx-vest-forms';
+
+@Component({
+  selector: 'app-late-pending-wrapper',
+  hostDirectives: [FormErrorDisplayDirective],
+  template: `
+    <ng-content />
+    @if (pendingState?.showPendingMessage()) {
+      <span role="status">Validating…</span>
+    }
+  `,
+})
+export class LatePendingWrapperComponent implements OnInit {
+  private readonly injector = inject(Injector);
+  private readonly errorDisplay = inject(FormErrorDisplayDirective, {
+    self: true,
+  });
+
+  protected pendingState?: DebouncedPendingStateResult;
+
+  ngOnInit(): void {
+    this.pendingState = createDebouncedPendingState(
+      this.errorDisplay.isPending,
+      { showAfter: 200 },
+      { injector: this.injector }
+    );
+  }
+}
+```
+
 **Returns:**
 
 ```typescript

@@ -11,7 +11,6 @@ import {
   input,
   InputSignal,
   isDevMode,
-  linkedSignal,
   output,
   signal,
   untracked,
@@ -26,6 +25,7 @@ import {
   AbstractControl,
   AsyncValidatorFn,
   FormArray,
+  FormControlStatus,
   FormGroup,
   NgForm,
   PristineChangeEvent,
@@ -38,6 +38,7 @@ import {
   distinctUntilChanged,
   filter,
   map,
+  Observable,
   of,
   merge as rxMerge,
   scan,
@@ -247,10 +248,10 @@ export class FormDirective<T extends Record<string, unknown>> {
   );
 
   /**
-   * LinkedSignal that computes form values from Angular form state.
-   * This eliminates timing issues with the previous dual-effect pattern.
+   * The merged form value (including disabled controls), recomputed whenever
+   * a value or status event fires.
    */
-  readonly #formValueSignal = linkedSignal(() => {
+  readonly #formValueSignal = computed(() => {
     // Track changes that affect the merged form snapshot.
     this.#formSnapshotTick();
     if (Object.keys(this.ngForm.form.controls).length === 0) {
@@ -436,18 +437,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       map((v) => (v as StatusChangeEvent).status),
       filter((v) => v !== 'PENDING')
     ),
-    this.ngForm.ngSubmit.pipe(
-      switchMap(() => {
-        if (this.ngForm.form.status === 'PENDING') {
-          return this.ngForm.form.statusChanges.pipe(
-            filter((status) => status !== 'PENDING'),
-            take(1)
-          );
-        }
-
-        return of(this.ngForm.form.status);
-      })
-    )
+    this.ngForm.ngSubmit.pipe(switchMap(() => this.#settledStatus()))
   );
 
   /**
@@ -462,6 +452,12 @@ export class FormDirective<T extends Record<string, unknown>> {
     { initialValue: 0 }
   );
 
+  /**
+   * Emits the root form status each time it settles on a non-PENDING value.
+   *
+   * @deprecated Not used by the library and will be removed in v4. Use the
+   * `status`/`pending` signals, or `ngForm.form.statusChanges`.
+   */
   readonly idle$ = this.ngForm.form.events.pipe(
     filter((v) => v instanceof StatusChangeEvent),
     map((v) => (v as StatusChangeEvent).status),
@@ -473,7 +469,7 @@ export class FormDirective<T extends Record<string, unknown>> {
    * Triggered as soon as the form value changes
    * It also contains the disabled values (raw values)
    *
-   * Cleanup is handled automatically by the directive when it's destroyed.
+   * `outputFromObservable` unsubscribes when the directive is destroyed.
    */
   readonly formValueChange = outputFromObservable(
     this.ngForm.form.events.pipe(
@@ -484,8 +480,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       distinctUntilChanged((prev, curr) => {
         // Use efficient deep equality instead of JSON.stringify for better performance
         return this.#equal(prev, curr);
-      }),
-      takeUntilDestroyed(this.#destroyRef)
+      })
     )
   );
 
@@ -496,27 +491,25 @@ export class FormDirective<T extends Record<string, unknown>> {
    * For submit events, waits for async validation (including ROOT_FORM) to complete
    * before emitting errors. This ensures ROOT_FORM errors are included in the output.
    *
-   * Cleanup is handled automatically by the directive when it's destroyed.
+   * `outputFromObservable` unsubscribes when the directive is destroyed.
    */
   readonly errorsChange = outputFromObservable(
     this.#validationFeedback$.pipe(
-      map(() => getAllFormErrors(this.ngForm.form).errors),
-      takeUntilDestroyed(this.#destroyRef)
+      map(() => getAllFormErrors(this.ngForm.form).errors)
     )
   );
 
   /**
    * Triggered as soon as the form becomes dirty
    *
-   * Cleanup is handled automatically by the directive when it's destroyed.
+   * `outputFromObservable` unsubscribes when the directive is destroyed.
    */
   readonly dirtyChange = outputFromObservable(
     this.ngForm.form.events.pipe(
       filter((v) => v instanceof PristineChangeEvent),
       map((v) => !(v as PristineChangeEvent).pristine),
       startWith(this.ngForm.form.dirty),
-      distinctUntilChanged(),
-      takeUntilDestroyed(this.#destroyRef)
+      distinctUntilChanged()
     )
   );
 
@@ -531,14 +524,13 @@ export class FormDirective<T extends Record<string, unknown>> {
   /**
    * Triggered When the form becomes valid but waits until the form is idle
    *
-   * Cleanup is handled automatically by the directive when it's destroyed.
+   * `outputFromObservable` unsubscribes when the directive is destroyed.
    */
   readonly validChange = outputFromObservable(
     this.#statusChanges$.pipe(
       filter((e) => e === 'VALID' || e === 'INVALID'),
       map((v) => v === 'VALID'),
-      distinctUntilChanged(),
-      takeUntilDestroyed(this.#destroyRef)
+      distinctUntilChanged()
     )
   );
 
@@ -593,16 +585,7 @@ export class FormDirective<T extends Record<string, unknown>> {
 
     this.ngForm.ngSubmit
       .pipe(
-        switchMap(() => {
-          if (this.ngForm.form.status === 'PENDING') {
-            return this.ngForm.form.statusChanges.pipe(
-              filter((status) => status !== 'PENDING'),
-              take(1)
-            );
-          }
-
-          return of(this.ngForm.form.status);
-        }),
+        switchMap(() => this.#settledStatus()),
         takeUntilDestroyed(this.#destroyRef)
       )
       .subscribe(() => {
@@ -786,6 +769,21 @@ export class FormDirective<T extends Record<string, unknown>> {
         takeUntilDestroyed(this.#destroyRef)
       )
       .subscribe();
+  }
+
+  /**
+   * The root status once it is no longer PENDING: emits right away when
+   * validation already settled, otherwise on the next settled status.
+   */
+  #settledStatus(): Observable<FormControlStatus> {
+    const form = this.ngForm.form;
+    if (form.status !== 'PENDING') {
+      return of(form.status);
+    }
+    return form.statusChanges.pipe(
+      filter((status) => status !== 'PENDING'),
+      take(1)
+    );
   }
 
   /**
@@ -1007,7 +1005,11 @@ export class FormDirective<T extends Record<string, unknown>> {
     const behavior = resolveFirstInvalidScrollBehavior(options.behavior);
 
     const root: HTMLFormElement = this.#elementRef.nativeElement;
-    const firstInvalid = resolveFirstInvalidElement(root, invalidSelector);
+    const firstInvalid = resolveFirstInvalidElement(
+      root,
+      invalidSelector,
+      openCollapsedParents
+    );
     if (!firstInvalid) {
       return null;
     }
@@ -1061,34 +1063,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     }, this.#destroyRef);
   }
 
-  /**
-   * Whether a consumer is actually subscribed to `fieldBlur`.
-   *
-   * `OutputEmitterRef` keeps `listeners` as `null` until the first
-   * `subscribe()` (template `(fieldBlur)=` binding or `outputToObservable`).
-   * When nobody listens we can skip resolving the field and the
-   * `structuredClone` of the entire form snapshot on every blur. Accessed
-   * defensively so an internal Angular shape change degrades to "emit
-   * anyway" rather than throwing.
-   */
-  #hasFieldBlurSubscriber(): boolean {
-    const listeners = (
-      this.fieldBlur as unknown as { listeners?: unknown[] | null }
-    ).listeners;
-    // If the internal field is absent (API changed), fall back to emitting.
-    if (listeners === undefined) {
-      return true;
-    }
-    return listeners !== null && listeners.length > 0;
-  }
-
   #emitFieldBlurEvent(event: FocusEvent): void {
-    // No consumer is subscribed to `fieldBlur` — skip the field resolution
-    // and the deep `structuredClone` of the form snapshot entirely.
-    if (!this.#hasFieldBlurSubscriber()) {
-      return;
-    }
-
     const resolved = this.#resolveFieldFromFocusEvent(event);
     if (!resolved) {
       return;
@@ -1244,11 +1219,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     this.suite()?.resetField(field);
 
     // Clear warnings for this field
-    this.fieldWarnings.update((warningsMap) => {
-      const newMap = new Map(warningsMap);
-      newMap.delete(field);
-      return newMap;
-    });
+    this.#setFieldWarnings(field, undefined);
 
     // Reset Angular control validation state
     const control = this.ngForm.form.get(field);
@@ -1305,11 +1276,34 @@ export class FormDirective<T extends Record<string, unknown>> {
     this.suite()?.remove(field);
 
     // Clear warnings for this field
-    this.fieldWarnings.update((warningsMap) => {
-      const newMap = new Map(warningsMap);
-      newMap.delete(field);
-      return newMap;
-    });
+    this.#setFieldWarnings(field, undefined);
+  }
+
+  /**
+   * Stores (or clears, for an empty list) one field's warnings. Leaves the
+   * `fieldWarnings` map untouched when the warnings did not change, so
+   * readers are not notified on every validation run.
+   */
+  #setFieldWarnings(
+    field: string,
+    warnings: readonly string[] | undefined
+  ): void {
+    const current = untracked(this.fieldWarnings);
+    const previous = current.get(field);
+    if (!warnings?.length) {
+      if (previous === undefined) return;
+      const next = new Map(current);
+      next.delete(field);
+      this.fieldWarnings.set(next);
+      return;
+    }
+    if (
+      previous?.length === warnings.length &&
+      previous.every((warning, index) => warning === warnings[index])
+    ) {
+      return;
+    }
+    this.fieldWarnings.set(new Map(current).set(field, warnings));
   }
 
   /**
@@ -1322,6 +1316,10 @@ export class FormDirective<T extends Record<string, unknown>> {
    * - maps Vest errors/warnings into Angular `ValidationErrors | null`.
    *
    * Warnings are stored in `fieldWarnings` to keep warnings non-blocking when no errors exist.
+   *
+   * @deprecated Library plumbing for `FormModelDirective` and
+   * `FormModelGroupDirective`, not meant to be called from applications. It
+   * will leave the public API in v4.
    */
   createAsyncValidator(
     field: string,
@@ -1357,15 +1355,7 @@ export class FormDirective<T extends Record<string, unknown>> {
           // Store warnings in the fieldWarnings signal for access by control wrappers.
           // This is necessary because Angular marks a field as invalid when control.errors !== null.
           // By storing warnings separately, fields can remain valid while still displaying warnings.
-          this.fieldWarnings.update((warningsMap) => {
-            const newMap = new Map(warningsMap);
-            if (warnings?.length) {
-              newMap.set(field, warnings);
-            } else {
-              newMap.delete(field);
-            }
-            return newMap;
-          });
+          this.#setFieldWarnings(field, warnings);
 
           const out = extractFieldErrors(result, field);
 

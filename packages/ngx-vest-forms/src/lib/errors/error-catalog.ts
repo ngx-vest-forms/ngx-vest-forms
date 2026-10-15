@@ -68,6 +68,18 @@ export const NGX_VEST_FORMS_DIAGNOSTICS = {
       '[ngx-vest-forms] Potential UX issue: errorDisplayMode is "on-blur" but updateOn is ' +
       '"submit". Errors will only show after form submission, not after blur.',
   },
+  VALIDATION_CONFIG_IDLE_TIMEOUT: {
+    code: 'NGX-106',
+    message: () =>
+      '[ngx-vest-forms] validationConfig: timed out waiting for the form to leave the ' +
+      'PENDING state. Continuing dependent validation to avoid stalling.',
+  },
+  VALIDATION_CONFIG_DEPENDENTS_TIMEOUT: {
+    code: 'NGX-107',
+    message: (missing: string) =>
+      `[ngx-vest-forms] validationConfig: timed out waiting for dependent controls: ${missing}. ` +
+      'Continuing without them.',
+  },
 } as const;
 
 export function logWarning<T extends unknown[]>(

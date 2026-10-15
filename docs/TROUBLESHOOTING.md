@@ -86,12 +86,12 @@ class WrapperOnlyHost {}
 </ngx-control-wrapper>
 ```
 
-## `validationConfig` timeout warnings
+## `NGX-106` / `NGX-107` — `validationConfig` timeout warnings
 
 **Meaning:** the dependent-field pipeline waited for either:
 
-- the form to leave `PENDING`, or
-- dependent controls to appear after a dynamic structure change,
+- the form to leave `PENDING` (`NGX-106`), or
+- dependent controls to appear after a dynamic structure change (`NGX-107`, which lists the missing paths),
 
 then continued after its safety timeout so validation would not stall forever.
 

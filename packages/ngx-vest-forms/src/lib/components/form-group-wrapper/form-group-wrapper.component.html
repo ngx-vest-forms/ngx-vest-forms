@@ -13,7 +13,7 @@
 >
   @if (errorDisplay.shouldShowErrors() && errorDisplay.errors().length > 0) {
     <ul class="ngx-form-group-wrapper__messages">
-      @for (error of errorDisplay.errors(); track error) {
+      @for (error of errorDisplay.errors(); track $index) {
         <li>{{ error }}</li>
       }
     </ul>
@@ -29,7 +29,7 @@
 >
   @if (errorDisplay.shouldShowWarnings()) {
     <ul class="ngx-form-group-wrapper__messages">
-      @for (warn of errorDisplay.warnings(); track warn) {
+      @for (warn of errorDisplay.warnings(); track $index) {
         <li>{{ warn }}</li>
       }
     </ul>

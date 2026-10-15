@@ -8,9 +8,7 @@ import {
   signal,
   Signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormResetEvent, FormSubmittedEvent, NgForm } from '@angular/forms';
-import { filter, map, startWith } from 'rxjs';
+import { NgForm } from '@angular/forms';
 import {
   logDiagnostic,
   NGX_VEST_FORMS_DIAGNOSTICS,
@@ -31,11 +29,7 @@ import { getFormSubmittedSignal } from './form-submitted-state';
  * - 'always': Show errors immediately, even on pristine fields
  */
 export type NgxErrorDisplayMode =
-  | 'on-blur'
-  | 'on-submit'
-  | 'on-blur-or-submit'
-  | 'on-dirty'
-  | 'always';
+  'on-blur' | 'on-submit' | 'on-blur-or-submit' | 'on-dirty' | 'always';
 
 /**
  * Warning display modes for form controls.
@@ -45,10 +39,7 @@ export type NgxErrorDisplayMode =
  * - 'always': Show warnings immediately, even on pristine fields
  */
 export type NgxWarningDisplayMode =
-  | 'on-touch'
-  | 'on-validated-or-touch'
-  | 'on-dirty'
-  | 'always';
+  'on-touch' | 'on-validated-or-touch' | 'on-dirty' | 'always';
 
 export const NGX_ERROR_DISPLAY_MODE_DEFAULT: NgxErrorDisplayMode =
   'on-blur-or-submit';
@@ -107,47 +98,30 @@ export class FormErrorDisplayDirective {
   /**
    * Signal that tracks NgForm.submitted state reactively.
    *
-   * Map form-level submit/reset events directly to boolean state.
+   * Driven by the form's submit/reset events (one subscription per form,
+   * shared by all fields), so programmatic `NgForm.onSubmit()` stays reactive
+   * in zoneless mode.
    *
-   * This keeps programmatic `NgForm.onSubmit()` reactive in zoneless mode and
-   * avoids depending on `NgForm.submitted`, whose getter intentionally reads an
-   * internal signal with `untracked()`.
-   *
-   * Note: when this directive is used outside an `NgForm` (no parent form), no
-   * subscription is wired up and this signal stays `false` for the lifetime of
-   * the directive. Consumers relying on submitted state must host the field
-   * inside an `NgForm` (or `ngxVestForm`).
+   * Note: when this directive is used outside an `NgForm` (no parent form),
+   * this signal stays `false` for the lifetime of the directive. Consumers
+   * relying on submitted state must host the field inside an `NgForm` (or
+   * `ngxVestForm`).
    */
   readonly formSubmitted: Signal<boolean> = this.#formSubmittedState;
 
   constructor() {
-    const ngForm = this.#ngForm;
-    if (ngForm) {
-      ngForm.form.events
-        .pipe(
-          filter(
-            (event) =>
-              event.source === ngForm.form &&
-              (event instanceof FormSubmittedEvent ||
-                event instanceof FormResetEvent)
-          ),
-          map((event) => event instanceof FormSubmittedEvent),
-          startWith(ngForm.submitted),
-          takeUntilDestroyed()
-        )
-        .subscribe((submitted) => {
-          this.#formSubmittedState.set(submitted);
-        });
+    // Warn about problematic combinations of updateOn and errorDisplayMode.
+    // Dev-only: production builds don't create the effect at all.
+    if (isDevMode()) {
+      effect(() => {
+        if (
+          this.updateOn() === 'submit' &&
+          this.errorDisplayMode() === 'on-blur'
+        ) {
+          logDiagnostic(NGX_VEST_FORMS_DIAGNOSTICS.ERROR_DISPLAY_MODE_CONFLICT);
+        }
+      });
     }
-
-    // Warn about problematic combinations of updateOn and errorDisplayMode
-    effect(() => {
-      const mode = this.errorDisplayMode();
-      const updateOn = this.updateOn();
-      if (updateOn === 'submit' && mode === 'on-blur' && isDevMode()) {
-        logDiagnostic(NGX_VEST_FORMS_DIAGNOSTICS.ERROR_DISPLAY_MODE_CONFLICT);
-      }
-    });
   }
 
   /**
