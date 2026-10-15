@@ -1,4 +1,4 @@
-import { effect, isSignal, Signal, signal } from '@angular/core';
+import { effect, Injector, isSignal, Signal, signal } from '@angular/core';
 
 /**
  * Options for configuring debounced pending state behavior.
@@ -25,8 +25,7 @@ export type DebouncedPendingStateOptions = {
  * without recreating the pending-state machine.
  */
 export type DebouncedPendingStateOptionsInput =
-  | DebouncedPendingStateOptions
-  | Signal<DebouncedPendingStateOptions>;
+  DebouncedPendingStateOptions | Signal<DebouncedPendingStateOptions>;
 
 /**
  * Result of createDebouncedPendingState containing the debounced signal
@@ -75,13 +74,19 @@ export type DebouncedPendingStateResult = {
  * }
  * ```
  *
+ * Call it in an injection context (a field initializer or constructor), or
+ * pass `{ injector }` to create it elsewhere, e.g. in `ngOnInit`.
+ *
  * @param isPending - Signal indicating whether async validation is currently pending
  * @param options - Configuration options for debouncing behavior
+ * @param config - `injector` to run the internal effect in when not called
+ *   from an injection context
  * @returns Object containing the debounced showPendingMessage signal and cleanup function
  */
 export function createDebouncedPendingState(
   isPending: Signal<boolean>,
-  options: DebouncedPendingStateOptionsInput = {}
+  options: DebouncedPendingStateOptionsInput = {},
+  config: { injector?: Injector } = {}
 ): DebouncedPendingStateResult {
   // Reading the options inside the effect makes the timings reactive: when
   // a consumer passes an `input()` accessor (a Signal), changes propagate at
@@ -141,12 +146,10 @@ export function createDebouncedPendingState(
         }
       });
     } else {
-      // Validation completed
-      if (pendingTimeout) {
-        // Validation completed before delay - don't show message
-        clearTimeout(pendingTimeout);
-        pendingTimeout = null;
-      } else if (showPendingMessageSignal()) {
+      // Validation completed. A still-running show-delay timer was already
+      // cleared by the previous run's cleanup, so the message only needs
+      // hiding when it is visible.
+      if (showPendingMessageSignal()) {
         // Message was shown - keep it visible for minimum duration
         minimumDisplayTimeout = setTimeout(() => {
           showPendingMessageSignal.set(false);
@@ -161,7 +164,7 @@ export function createDebouncedPendingState(
         });
       }
     }
-  });
+  }, config);
 
   return {
     showPendingMessage: showPendingMessageSignal.asReadonly(),

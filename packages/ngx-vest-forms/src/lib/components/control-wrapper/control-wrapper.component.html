@@ -30,9 +30,9 @@
     aria-live="polite"
     aria-atomic="true"
   >
-    @if (errorDisplay.shouldShowErrors()) {
+    @if (errorDisplay.shouldShowErrors() && errorDisplay.errors().length > 0) {
       <ul class="ngx-control-wrapper__messages">
-        @for (error of errorDisplay.errors(); track error) {
+        @for (error of errorDisplay.errors(); track $index) {
           <li>{{ error }}</li>
         }
       </ul>
@@ -54,7 +54,7 @@
   >
     @if (shouldShowWarnings()) {
       <ul class="ngx-control-wrapper__messages">
-        @for (warn of errorDisplay.warnings(); track warn) {
+        @for (warn of errorDisplay.warnings(); track $index) {
           <li>{{ warn }}</li>
         }
       </ul>

@@ -3,12 +3,14 @@ import {
   ApplicationRef,
   Component,
   ErrorHandler,
+  forwardRef,
   signal,
   Type,
   viewChild,
   ViewChild,
 } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { isObservable, Observable } from 'rxjs';
@@ -399,6 +401,51 @@ describe('FormDirective - Async Validator', () => {
     // Expected: null (field is valid, warnings are informational only)
     // Bug would return: { warnings: ['Password is weak'] } making field ng-invalid
     expect(result).toBeNull();
+  });
+
+  it('keeps the fieldWarnings map when a re-run yields the same warnings', async () => {
+    @Component({
+      selector: 'test-stable-warnings-host',
+      template: `<form
+        ngxVestForm
+        [suite]="suite()"
+        #vest="ngxVestForm"
+      ></form>`,
+      imports: [NgxVestForms],
+    })
+    class TestStableWarningsHost {
+      suite = signal(
+        create((model: { password?: string } = {}) => {
+          vestTest('password', 'Password is weak', () => {
+            warn();
+            enforce(model.password ?? '').longerThan(12);
+          });
+        })
+      );
+      readonly vestForm =
+        viewChild.required<FormDirective<Record<string, unknown>>>('vest');
+    }
+    const { fixture } = await render(TestStableWarningsHost);
+    const vestForm = fixture.componentInstance.vestForm();
+    const validator = vestForm.createAsyncValidator('password', {
+      debounceTime: 0,
+    });
+    const run = async (value: string) => {
+      const result = awaitResult(validator({ value } as any));
+      vi.runAllTimers();
+      await Promise.resolve();
+      return result;
+    };
+
+    await run('Short123');
+    const firstMap = vestForm.fieldWarnings();
+    expect(firstMap.get('password')).toEqual(['Password is weak']);
+
+    await run('Short1234');
+    expect(vestForm.fieldWarnings()).toBe(firstMap);
+
+    await run('a-long-enough-password');
+    expect(vestForm.fieldWarnings().has('password')).toBe(false);
   });
 
   it('should return errors AND warnings when both exist', async () => {
@@ -1176,6 +1223,77 @@ describe('FormDirective - Signals/Outputs', () => {
     expect(blurEvent?.formValue).toEqual({
       passwords: { password: 'hunter2' },
     });
+  });
+
+  it('should report the custom control host, not its internal ngModel', async () => {
+    type Model = { startDate?: string };
+
+    @Component({
+      selector: 'test-inner-model-control',
+      template: `<input id="inner" name="day" [(ngModel)]="day" />`,
+      imports: [NgxVestForms],
+      providers: [
+        {
+          provide: NG_VALUE_ACCESSOR,
+          useExisting: forwardRef(() => TestInnerModelControl),
+          multi: true,
+        },
+      ],
+    })
+    class TestInnerModelControl implements ControlValueAccessor {
+      day = '';
+      writeValue(value: string | null): void {
+        this.day = value ?? '';
+      }
+      registerOnChange(): void {
+        // Not needed for this test.
+      }
+      registerOnTouched(): void {
+        // Not needed for this test.
+      }
+    }
+
+    @Component({
+      selector: 'test-field-blur-inner-model-host',
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+          (fieldBlur)="handleFieldBlur($event)"
+        >
+          <test-inner-model-control
+            name="startDate"
+            [ngModel]="formValue().startDate"
+          />
+        </form>
+      `,
+      imports: [NgxVestForms, TestInnerModelControl],
+    })
+    class TestFieldBlurInnerModelHost {
+      readonly formValue = signal<Model>({ startDate: '2026-10-14' });
+      readonly blurEvents = signal<Array<NgxFieldBlurEvent<Model>>>([]);
+
+      handleFieldBlur(event: NgxFieldBlurEvent<Model>): void {
+        this.blurEvents.update((events) => [...events, event]);
+      }
+    }
+
+    const { fixture } = await render(TestFieldBlurInnerModelHost);
+    await whenStable();
+
+    const inner = fixture.nativeElement.querySelector(
+      '#inner'
+    ) as HTMLInputElement;
+    inner.focus();
+    inner.blur();
+    await expect
+      .poll(() => fixture.componentInstance.blurEvents().length)
+      .toBe(1);
+
+    const [blurEvent] = fixture.componentInstance.blurEvents();
+    expect(blurEvent?.field).toBe('startDate');
+    expect(blurEvent?.value).toBe('2026-10-14');
   });
 
   it('should emit the selected radio group value, not the focused option', async () => {

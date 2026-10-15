@@ -47,6 +47,8 @@ type NgxFieldBlurEvent<T> = {
 };
 ```
 
+`field` is the control's full dotted path, also when the blurred element is inside a custom control (for example the inner `<input>` of a date picker that has `[ngModel]` on its host) or under a dynamic `[ngModelGroup]="expr"` binding. For a custom control, `value` is the control's value; for native inputs it is read from the element.
+
 ### Example
 
 ```ts

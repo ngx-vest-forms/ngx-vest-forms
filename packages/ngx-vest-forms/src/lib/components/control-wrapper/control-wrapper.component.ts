@@ -121,11 +121,10 @@ let nextUniqueId = 0;
  *   /// If Vest warnings are present, they will be shown below errors.
  *
  * Example (global config):
- *   import { provide } from '@angular/core';
  *   import { NGX_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
  *   @Component({
  *     providers: [
- *       provide(NGX_ERROR_DISPLAY_MODE_TOKEN, { useValue: 'on-submit' })
+ *       { provide: NGX_ERROR_DISPLAY_MODE_TOKEN, useValue: 'on-submit' }
  *     ]
  *   })
  *   export class MyComponent {}

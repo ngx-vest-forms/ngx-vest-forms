@@ -13,6 +13,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NgxErrorDisplayMode } from './form-error-display.directive';
 import { FormErrorDisplayDirective } from './form-error-display.directive';
+import { getFormSubmittedSignal } from './form-submitted-state';
 
 @Directive({
   selector: '[ngxDummy]',
@@ -375,10 +376,7 @@ describe('FormErrorDisplayDirective', () => {
       .toBe('false');
   });
 
-  it('should unsubscribe from form submit/reset events when the directive is destroyed', async () => {
-    host.mode.set('on-submit');
-    await TestBed.inject(ApplicationRef).whenStable();
-
+  it('shares one submitted signal per form across fields', async () => {
     const ngForm = fixture.debugElement
       .query(By.directive(NgForm))
       .injector.get(NgForm);
@@ -386,17 +384,14 @@ describe('FormErrorDisplayDirective', () => {
       .query(By.directive(FormErrorDisplayDirective))
       .injector.get(FormErrorDisplayDirective);
 
-    expect(display.formSubmitted()).toBe(false);
-
-    fixture.destroy();
+    expect(display.formSubmitted).toBe(getFormSubmittedSignal(ngForm));
 
     ngForm.onSubmit(new Event('submit'));
     await TestBed.inject(ApplicationRef).whenStable();
-    expect(display.formSubmitted()).toBe(false);
+    expect(display.formSubmitted()).toBe(true);
 
     ngForm.resetForm({ test: '' });
     await TestBed.inject(ApplicationRef).whenStable();
-
     expect(display.formSubmitted()).toBe(false);
   });
 
