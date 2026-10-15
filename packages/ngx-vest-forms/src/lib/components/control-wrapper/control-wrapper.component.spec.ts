@@ -1,4 +1,5 @@
-import { Component, signal } from '@angular/core';
+import { Component, forwardRef, signal } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { fireEvent, render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { create, enforce, test as vestTest, warn } from 'vest';
@@ -635,6 +636,256 @@ describe('ControlWrapperComponent', () => {
       // Verify aria-invalid is set
       await waitFor(() => {
         expect(emailInput).toHaveAttribute('aria-invalid', 'true');
+      });
+    });
+
+    describe('custom controls with an ARIA widget role', () => {
+      @Component({
+        selector: 'ngx-test-rating',
+        template: `
+          <div role="radiogroup" aria-label="Rating" (focusout)="onTouched()">
+            <button
+              type="button"
+              role="radio"
+              aria-checked="false"
+              (click)="onChange(1)"
+            >
+              1
+            </button>
+          </div>
+        `,
+        providers: [
+          {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TestRatingComponent),
+            multi: true,
+          },
+        ],
+      })
+      class TestRatingComponent implements ControlValueAccessor {
+        onChange: (value: number) => void = () => undefined;
+        onTouched: () => void = () => undefined;
+        writeValue(): void {}
+        registerOnChange(fn: (value: number) => void): void {
+          this.onChange = fn;
+        }
+        registerOnTouched(fn: () => void): void {
+          this.onTouched = fn;
+        }
+      }
+
+      const ratingSuite = create((data: { rating?: number }) => {
+        vestTest('rating', 'Pick a rating', () => {
+          enforce(data.rating).isNumber();
+        });
+      });
+
+      beforeEach(() => {
+        ratingSuite.reset();
+      });
+
+      it('should stamp aria-invalid and aria-describedby on a button-based radiogroup', async () => {
+        @Component({
+          imports: [NgxVestForms, TestRatingComponent],
+          template: `
+            <form
+              ngxVestForm
+              [suite]="suite"
+              [formValue]="model()"
+              (formValueChange)="model.set($event)"
+            >
+              <ngx-control-wrapper>
+                <ngx-test-rating name="rating" [ngModel]="model().rating" />
+              </ngx-control-wrapper>
+            </form>
+          `,
+        })
+        class RadiogroupComponent {
+          model = signal<{ rating?: number }>({});
+          suite = ratingSuite;
+        }
+
+        await render(RadiogroupComponent);
+        const radiogroup = screen.getByRole('radiogroup', { name: 'Rating' });
+
+        fireEvent.focusOut(radiogroup);
+        const error = await screen.findByText(
+          'Pick a rating',
+          {},
+          { timeout: 3000 }
+        );
+
+        await waitFor(() => {
+          expect(radiogroup).toHaveAttribute('aria-invalid', 'true');
+          expect(
+            radiogroup.getAttribute('aria-describedby')?.split(/\s+/)
+          ).toContain(error.closest('[id]')?.id);
+        });
+        // The radio buttons belong to the radiogroup; they stay unmarked.
+        expect(screen.getByRole('radio')).not.toHaveAttribute('aria-invalid');
+      });
+
+      it('should skip a native input nested inside an ARIA form widget', async () => {
+        @Component({
+          imports: [NgxVestForms],
+          template: `
+            <form
+              ngxVestForm
+              [suite]="suite"
+              [formValue]="model()"
+              (formValueChange)="model.set($event)"
+            >
+              <ngx-control-wrapper>
+                <div
+                  role="combobox"
+                  aria-label="Email picker"
+                  aria-controls="email-options"
+                  aria-expanded="false"
+                >
+                  <input
+                    aria-label="Email"
+                    name="email"
+                    [ngModel]="model().email"
+                  />
+                </div>
+              </ngx-control-wrapper>
+            </form>
+          `,
+        })
+        class ComboboxComponent {
+          model = signal({ email: '' });
+          suite = testSuite;
+        }
+
+        await render(ComboboxComponent);
+        const input = screen.getByLabelText('Email');
+
+        await userEvent.click(input);
+        await userEvent.tab();
+        await screen.findByText('Email is required', {}, { timeout: 3000 });
+
+        await waitFor(() => {
+          expect(screen.getByRole('combobox')).toHaveAttribute(
+            'aria-invalid',
+            'true'
+          );
+        });
+        expect(input).not.toHaveAttribute('aria-invalid');
+        expect(input).not.toHaveAttribute('aria-describedby');
+      });
+
+      it('should stamp the host when the wrapper itself is the radiogroup around native radios', async () => {
+        const choiceSuite = create((data: { choice?: string }) => {
+          vestTest('choice', 'Pick one', () => {
+            enforce(data.choice).isNotBlank();
+          });
+        });
+
+        @Component({
+          imports: [NgxVestForms],
+          template: `
+            <form
+              ngxVestForm
+              [suite]="suite"
+              [formValue]="model()"
+              (formValueChange)="model.set($event)"
+            >
+              <div ngxControlWrapper role="radiogroup" aria-label="Choice">
+                <input
+                  type="radio"
+                  name="choice"
+                  value="a"
+                  aria-label="A"
+                  [ngModel]="model().choice"
+                />
+                <input
+                  type="radio"
+                  name="choice"
+                  value="b"
+                  aria-label="B"
+                  [ngModel]="model().choice"
+                />
+              </div>
+            </form>
+          `,
+        })
+        class HostRadiogroupComponent {
+          model = signal<{ choice?: string }>({});
+          suite = choiceSuite;
+        }
+
+        await render(HostRadiogroupComponent);
+        const radiogroup = screen.getByRole('radiogroup', { name: 'Choice' });
+
+        fireEvent.submit(radiogroup.closest('form') as HTMLFormElement);
+        await screen.findByText('Pick one', {}, { timeout: 3000 });
+
+        await waitFor(() => {
+          expect(radiogroup).toHaveAttribute('aria-invalid', 'true');
+          expect(radiogroup).toHaveAttribute('aria-describedby');
+        });
+        // radio does not accept aria-invalid; the group carries the state.
+        expect(screen.getByLabelText('A')).not.toHaveAttribute('aria-invalid');
+      });
+
+      it('should stamp a radiogroup inside ngxErrorControl', async () => {
+        @Component({
+          imports: [NgxVestForms, TestRatingComponent],
+          template: `
+            <form
+              ngxVestForm
+              [suite]="suite"
+              [formValue]="model()"
+              (formValueChange)="model.set($event)"
+            >
+              <div ngxErrorControl #ctrl="ngxErrorControl">
+                <ngx-test-rating name="rating" [ngModel]="model().rating" />
+                <div [id]="ctrl.errorId">error region</div>
+              </div>
+            </form>
+          `,
+        })
+        class ErrorControlRadiogroupComponent {
+          model = signal<{ rating?: number }>({});
+          suite = ratingSuite;
+        }
+
+        await render(ErrorControlRadiogroupComponent);
+        const radiogroup = screen.getByRole('radiogroup', { name: 'Rating' });
+
+        fireEvent.focusOut(radiogroup);
+
+        await waitFor(() => {
+          expect(radiogroup).toHaveAttribute('aria-invalid', 'true');
+        });
+      });
+
+      it('should not stamp aria-required on role="slider", which does not support it', async () => {
+        @Component({
+          imports: [NgxVestForms],
+          template: `
+            <ngx-control-wrapper ariaRequired>
+              <div
+                role="slider"
+                aria-label="Volume"
+                aria-valuenow="50"
+                tabindex="0"
+              ></div>
+              <input aria-label="Note" />
+            </ngx-control-wrapper>
+          `,
+        })
+        class SliderComponent {}
+
+        await render(SliderComponent);
+
+        await waitFor(() => {
+          expect(screen.getByLabelText('Note')).toHaveAttribute(
+            'aria-required',
+            'true'
+          );
+        });
+        expect(screen.getByRole('slider')).not.toHaveAttribute('aria-required');
       });
     });
 

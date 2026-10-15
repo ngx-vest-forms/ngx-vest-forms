@@ -28,7 +28,7 @@ import {
  * NOT exported from the public API barrel — strictly an internal helper.
  */
 export type AriaAssociationControllerConfig = {
-  /** Host element whose `input/select/textarea` descendants are targeted. */
+  /** Host element whose form-control descendants are targeted (native controls and ARIA form widgets). */
   readonly host: HTMLElement;
   /** Current association mode (`all-controls` | `single-control` | `none`). */
   readonly mode: Signal<AriaAssociationMode>;
@@ -79,8 +79,7 @@ export function createAriaAssociationController(
   let mutationObserver: MutationObserver | null = null;
 
   const updateFormControls = (): void => {
-    const controls = config.host.querySelectorAll('input, select, textarea');
-    formControls.set(Array.from(controls) as HTMLElement[]);
+    formControls.set(findFormControls(config.host));
   };
 
   const disconnectObserver = (): void => {
@@ -155,7 +154,7 @@ export function createAriaAssociationController(
       }
 
       // aria-required is only managed when the consumer opts in.
-      if (ariaRequired !== null) {
+      if (ariaRequired !== null && supportsAriaRequired(control)) {
         if (!consumerAriaRequired.has(control)) {
           consumerAriaRequired.set(
             control,
@@ -172,4 +171,52 @@ export function createAriaAssociationController(
   });
 
   return { formControls };
+}
+
+/**
+ * ARIA widget roles that accept `aria-invalid` and `aria-errormessage` and
+ * hold a form value (MDN, "Associated roles"). They cover custom controls
+ * built from non-form elements, such as a button-based `role="radiogroup"`
+ * ControlValueAccessor.
+ */
+const ARIA_FORM_WIDGET_SELECTOR = [
+  'checkbox',
+  'combobox',
+  'listbox',
+  'radiogroup',
+  'searchbox',
+  'slider',
+  'spinbutton',
+  'switch',
+  'textbox',
+]
+  .map((role) => `[role="${role}"]`)
+  .join(', ');
+
+const FORM_CONTROL_SELECTOR = `input, select, textarea, ${ARIA_FORM_WIDGET_SELECTOR}`;
+
+/**
+ * Finds the controls that carry the wrapper's ARIA state. A control nested
+ * inside an ARIA form widget (for example the inner `<input>` of a
+ * `role="combobox"` element) is skipped: the widget owns its parts and is the
+ * element assistive technology reports. When the host itself is such a widget
+ * (`<div ngxControlWrapper role="radiogroup">` around native radios), the
+ * host is the only target.
+ */
+function findFormControls(host: HTMLElement): HTMLElement[] {
+  if (host.matches(ARIA_FORM_WIDGET_SELECTOR)) {
+    return [host];
+  }
+
+  return Array.from(
+    host.querySelectorAll<HTMLElement>(FORM_CONTROL_SELECTOR)
+  ).filter((control) => {
+    const owner = control.parentElement?.closest(ARIA_FORM_WIDGET_SELECTOR);
+    return !owner || !host.contains(owner);
+  });
+}
+
+/** `role="slider"` does not support `aria-required` (MDN). */
+function supportsAriaRequired(control: HTMLElement): boolean {
+  return control.getAttribute('role') !== 'slider';
 }

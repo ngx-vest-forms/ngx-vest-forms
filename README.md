@@ -211,7 +211,7 @@ providers: [
 `<ngx-control-wrapper>` can optionally apply `aria-describedby` / `aria-invalid` to **descendant** controls.
 This is controlled by `ariaAssociationMode`:
 
-- `"all-controls"` (default) — stamps all descendant `input/select/textarea`
+- `"all-controls"` (default) — stamps all descendant `input/select/textarea` elements and elements with an ARIA form-widget role (`checkbox`, `combobox`, `listbox`, `radiogroup`, `searchbox`, `slider`, `spinbutton`, `switch`, `textbox`), so a custom control such as a button-based `role="radiogroup"` is covered. Controls inside such a widget are skipped; the widget is the one assistive technology reports.
 - `"single-control"` — stamps only if exactly one control exists (useful for input + extra buttons)
 - `"none"` — never mutates descendant controls (group-safe / manual wiring)
 

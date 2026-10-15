@@ -43,7 +43,8 @@ export class FormErrorControlDirective implements AfterContentInit {
   /**
    * Controls how this directive applies ARIA attributes to descendant controls.
    *
-   * - `all-controls` (default): apply ARIA attributes to all input/select/textarea descendants.
+   * - `all-controls` (default): apply ARIA attributes to all input/select/textarea
+   *   descendants and ARIA form widgets (such as `role="radiogroup"`).
    * - `single-control`: apply ARIA attributes only when exactly one control is found.
    * - `none`: do not mutate descendant controls.
    */

@@ -68,7 +68,7 @@ Controls how this wrapper applies `aria-describedby` / `aria-invalid` to descend
 Accepted values:
 
 - `"all-controls"` (default)
-  - Applies ARIA attributes to **all** descendant `input/select/textarea` elements.
+  - Applies ARIA attributes to **all** descendant `input/select/textarea` elements and to elements with an ARIA form-widget role (for example a custom `role="radiogroup"`). Controls nested inside such a widget are skipped.
   - Useful for _true composite_ controls where the same message applies to every child control.
 
 - `"single-control"`
