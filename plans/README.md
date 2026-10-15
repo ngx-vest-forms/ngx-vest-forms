@@ -106,7 +106,8 @@ code review:
 Vetted during the audit; ask for plans for any of these:
 
 - **C-07** (bug, S): `createAsyncValidator`'s `catchError(() => of({ vestInternalError: ... }))`
-  (form.directive.ts ~1378) discards the original error with zero logging.
+  (form.directive.ts ~1378) discards the original error with zero logging. FIXED (PR #261): the error
+  goes to Angular's `ErrorHandler` before the field fails closed.
 - **C-03** (bug, M): inconsistent numeric path notation — `getAllFormErrors`
   uses brackets (`users[0].name`) while `fieldWarnings`/`fieldBlur.field`/
   `getFormControlField` use dots (`values.0.from`); docs say "dotted field path".
@@ -118,7 +119,9 @@ Vetted during the audit; ask for plans for any of these:
   runtime mode switch. FIXED on `claude/examples-e2e-audit` (PR #267): the controller releases the attributes it set when an element stops being a target.
 - **C-04** (bug, S): `focusFirstInvalidControl` runs its visibility filter
   before `openCollapsedDetailsAncestors` (first-invalid.utils.ts:72-93) →
-  invalid fields inside collapsed `<details>` are never found/opened.
+  invalid fields inside collapsed `<details>` are never found/opened. FIXED (PR #265):
+  `resolveFirstInvalidElement` also accepts a candidate hidden only by a closed
+  `<details>`, and the caller opens it before focusing.
 - **C-02** (bug, M): `formState`/`status` computeds stay stale after
   programmatic model→form sync because `patchValue(..., { emitEvent: false })`
   emits no events and the signal layer is purely event-driven.

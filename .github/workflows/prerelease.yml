@@ -62,10 +62,21 @@ jobs:
           fi
 
       - name: Validate branch input
+        env:
+          BRANCH: ${{ steps.branch.outputs.branch }}
+          DISPATCH_BRANCH: ${{ github.ref_name }}
         run: |
-          BRANCH="${{ steps.branch.outputs.branch }}"
           if [ -z "$BRANCH" ]; then
             echo "Error: No branch specified"
+            exit 1
+          fi
+          # semantic-release reads the branch from GITHUB_REF (the "Use
+          # workflow from" branch), not from this input. If they differ it
+          # releases on the dispatch branch's channel, e.g. a stable version
+          # to @latest when dispatched from master.
+          if [ "$BRANCH" != "$DISPATCH_BRANCH" ]; then
+            echo "Error: dispatched from '$DISPATCH_BRANCH' but releasing '$BRANCH'."
+            echo "Re-run with 'Use workflow from' (gh: --ref) set to '$BRANCH'."
             exit 1
           fi
           echo "Releasing from branch: $BRANCH"
