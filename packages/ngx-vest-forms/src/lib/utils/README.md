@@ -577,6 +577,8 @@ function objectToArray(object: object, keys: string[]): unknown;
 
 The return type is `unknown` — callers assert the concrete shape. Behavior is unchanged.
 
+An empty `{}` under a converted key, or anywhere inside a converted branch, becomes `[]`. A form model can't tell an emptied array from an empty object, so a list whose items were all removed comes back as `[]`.
+
 ```typescript
 import { objectToArray } from 'ngx-vest-forms';
 

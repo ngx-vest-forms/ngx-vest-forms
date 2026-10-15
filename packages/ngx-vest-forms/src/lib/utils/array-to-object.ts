@@ -101,6 +101,10 @@ function recursivelyConvertArrays<T>(object: T): DeepArrayToObject<T> {
  * unwrapped to the bare converted array when the input is a single-entry
  * wrapper whose only key was converted.
  *
+ * An empty `{}` under a converted key, or anywhere inside a converted branch,
+ * becomes `[]`. A form model can't tell an emptied array from an empty object,
+ * so a list whose items were all removed comes back as `[]`.
+ *
  * A sound precise return type is not expressible here: the runtime shape
  * depends on the runtime `keys` values and the single-entry unwrap, neither of
  * which is recoverable in the type system. The return is therefore `unknown`;
