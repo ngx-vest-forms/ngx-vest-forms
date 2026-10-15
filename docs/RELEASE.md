@@ -85,10 +85,22 @@ nothing, because the workflow has no `push` trigger.
    git push origin origin/master:refs/heads/release/v3
    ```
 
-2. Dispatch **Release (Prerelease/Beta)** with `branch_type = stable`,
-   `stable_branch = release/v3` and `dry_run = true`. Check the computed
-   version in the log (`3.0.0-beta.N` on channel `beta`).
-3. Dispatch it again with `dry_run = false`. semantic-release publishes the
+2. Dispatch **Release (Prerelease/Beta)** with **Use workflow from** set to
+   `release/v3`, `branch_type = stable`, `stable_branch = release/v3` and
+   `dry_run = true`. Check the computed version in the log
+   (`3.0.0-beta.N` on channel `beta`). From the command line:
+
+   ```bash
+   gh workflow run prerelease.yml --ref release/v3 \
+     -f branch_type=stable -f stable_branch=release/v3 -f dry_run=true
+   ```
+
+   The **Use workflow from** branch matters: semantic-release picks the
+   channel from the branch the run was dispatched on (`GITHUB_REF`), not from
+   `stable_branch`. Dispatched from `master`, it would compute a stable
+   `3.0.0` for `@latest`. The workflow stops when the two differ.
+
+3. Dispatch it again the same way with `dry_run = false`. semantic-release publishes the
    package on the npm `@beta` dist-tag and creates a GitHub prerelease with the
    generated notes (`.releaserc` →
    `{ "name": "release/v3", "prerelease": "beta", "channel": "beta" }`).
