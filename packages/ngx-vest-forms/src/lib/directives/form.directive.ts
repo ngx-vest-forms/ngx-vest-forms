@@ -45,6 +45,7 @@ import {
   startWith,
   switchMap,
   take,
+  tap,
 } from 'rxjs';
 import {
   logDiagnostic,
@@ -160,6 +161,22 @@ export type NgxFieldBlurEvent<T = unknown> = {
 };
 
 /**
+ * Payload of the `submitSettled` output: the outcome of one submit, read
+ * after every validator (async Vest tests and submit-mode root validation
+ * included) has finished.
+ *
+ * @publicApi
+ */
+export type NgxSubmitSettledEvent<T = unknown> = {
+  /** `true` when the form was VALID once validation settled. */
+  valid: boolean;
+  /** The merged form value (disabled controls included) at that moment. */
+  value: T | null;
+  /** Blocking errors keyed by field path, as `errorsChange` reports them. */
+  errors: Record<string, string[]>;
+};
+
+/**
  * Main form directive for ngx-vest-forms that bridges Angular template-driven forms with Vest.js validation.
  *
  * This directive provides:
@@ -230,6 +247,16 @@ export class FormDirective<T extends Record<string, unknown>> {
 
   #lastSyncedFormValue: T | null = null;
   #lastSyncedModelValue: T | null = null;
+  /**
+   * The last value `formValueChange` handed to the consumer. When the form
+   * still holds exactly this value, the consumer has seen the form's latest
+   * change, so a model write made in response to it is not a conflict.
+   */
+  #lastEmittedFormValue: T | null = null;
+  /** The `formValue` input as the sync effect last read it. */
+  #previousModelInput: T | null = null;
+  /** True while the sync effect writes the model into the form. */
+  #applyingModelValue = false;
 
   // Internal signal tracking changes that can affect the merged form snapshot.
   // ValueChangeEvent keeps the cache fresh for blur-driven consumers like
@@ -254,13 +281,35 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly #formValueSignal = computed(() => {
     // Track changes that affect the merged form snapshot.
     this.#formSnapshotTick();
+    return this.#formValueOrNull();
+  });
+
+  /**
+   * Writes the model into the form controls. Events are emitted so async
+   * validators report their results, `formState` refreshes, and
+   * `validationConfig` revalidates dependent fields, the same as when
+   * NgModel applies the value itself. `formValueChange` skips these events.
+   *
+   * Root `patchValue` (not per-key `setValue`) supports nested objects and
+   * ignores keys without a control, which fits partial form models.
+   */
+  #applyModelValue(modelValue: T): void {
+    this.#applyingModelValue = true;
+    try {
+      this.ngForm.form.patchValue(modelValue);
+    } finally {
+      this.#applyingModelValue = false;
+    }
+  }
+
+  #formValueOrNull(): T | null {
     if (Object.keys(this.ngForm.form.controls).length === 0) {
       // No controls remain (e.g. dynamic group removal): expose `null` so
       // consumers don't see ghost data from a previous form contract.
       return null;
     }
     return mergeValuesAndRawValues<T>(this.ngForm.form);
-  });
+  }
 
   /**
    * Track the Angular form status as a signal for advanced status flags
@@ -474,12 +523,18 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly formValueChange = outputFromObservable(
     this.ngForm.form.events.pipe(
       filter((v) => v instanceof ValueChangeEvent),
+      // A model write applied by the sync effect is not echoed back: the
+      // consumer already holds that value.
+      filter(() => !this.#applyingModelValue),
       // Merge before deduplicating: the event's own value leaves out disabled
       // controls, so a programmatic setValue() on one would look unchanged.
       map(() => mergeValuesAndRawValues<T>(this.ngForm.form)),
       distinctUntilChanged((prev, curr) => {
         // Use efficient deep equality instead of JSON.stringify for better performance
         return this.#equal(prev, curr);
+      }),
+      tap((value) => {
+        this.#lastEmittedFormValue = value;
       })
     )
   );
@@ -531,6 +586,31 @@ export class FormDirective<T extends Record<string, unknown>> {
       filter((e) => e === 'VALID' || e === 'INVALID'),
       map((v) => v === 'VALID'),
       distinctUntilChanged()
+    )
+  );
+
+  /**
+   * Emits once per submit, after validation for that submit has settled.
+   *
+   * Unlike `(ngSubmit)`, which fires while async Vest tests may still be
+   * PENDING, this waits until the form is VALID or INVALID, so the handler
+   * can decide on the real outcome. A new submit while one is still waiting
+   * replaces it, so only the latest submit emits.
+   *
+   * ```html
+   * <form ngxVestForm (submitSettled)="$event.valid && save($event.value)">
+   * ```
+   *
+   * `outputFromObservable` unsubscribes when the directive is destroyed.
+   */
+  readonly submitSettled = outputFromObservable<NgxSubmitSettledEvent<T>>(
+    this.ngForm.ngSubmit.pipe(
+      switchMap(() => this.#settledStatus()),
+      map((status) => ({
+        valid: status === 'VALID',
+        value: this.#formValueOrNull(),
+        errors: getAllFormErrors(this.ngForm.form).errors,
+      }))
     )
   );
 
@@ -644,6 +724,13 @@ export class FormDirective<T extends Record<string, unknown>> {
     effect(() => {
       const formValue = this.#formValueSignal();
       const modelValue = this.formValue();
+      // Whether the consumer passed a new model since the last run. The
+      // `lastSynced` baselines can't tell: the form-wins branch moves them.
+      const modelInputChanged = !this.#equal(
+        modelValue,
+        this.#previousModelInput
+      );
+      this.#previousModelInput = modelValue;
 
       // Skip if either is null
       if (!formValue && !modelValue) return;
@@ -672,11 +759,7 @@ export class FormDirective<T extends Record<string, unknown>> {
         untracked(() => {
           // Update form controls with new model values
           if (modelValue) {
-            // IMPORTANT: Use root patchValue instead of per-key setValue.
-            // - Supports nested objects (ngModelGroup) without throwing when partial objects are provided.
-            // - patchValue ignores missing controls/keys, which is compatible with NgxDeepPartial form models.
-            // - emitEvent:false prevents feedback loops; validation still updates internally.
-            this.ngForm.form.patchValue(modelValue, { emitEvent: false });
+            this.#applyModelValue(modelValue);
           }
           this.#lastSyncedFormValue = modelValue;
           this.#lastSyncedModelValue = modelValue;
@@ -703,9 +786,24 @@ export class FormDirective<T extends Record<string, unknown>> {
           // initial render of forms whose controls are not registered yet.
           untracked(() => {
             if (modelValue) {
-              this.ngForm.form.patchValue(modelValue, { emitEvent: false });
+              this.#applyModelValue(modelValue);
             }
             this.#lastSyncedFormValue = formValue;
+            this.#lastSyncedModelValue = modelValue;
+          });
+        } else if (
+          modelInputChanged &&
+          this.#equal(formValue, this.#lastEmittedFormValue)
+        ) {
+          // The consumer already received this form value through
+          // `formValueChange` and wrote a different model in response, e.g.
+          // clearing fields that a switched section no longer shows. That is
+          // a follow-up write, not a conflict: the model wins.
+          untracked(() => {
+            if (modelValue) {
+              this.#applyModelValue(modelValue);
+            }
+            this.#lastSyncedFormValue = modelValue;
             this.#lastSyncedModelValue = modelValue;
           });
         } else if (this.ngForm.form.pristine) {
@@ -717,7 +815,7 @@ export class FormDirective<T extends Record<string, unknown>> {
           // conflict.
           untracked(() => {
             if (modelValue) {
-              this.ngForm.form.patchValue(modelValue, { emitEvent: false });
+              this.#applyModelValue(modelValue);
             }
             this.#lastSyncedFormValue = modelValue;
             this.#lastSyncedModelValue = modelValue;

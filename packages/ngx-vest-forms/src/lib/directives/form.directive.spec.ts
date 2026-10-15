@@ -14,7 +14,14 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { isObservable, Observable } from 'rxjs';
-import { create, enforce, skipWhen, test as vestTest, warn } from 'vest';
+import {
+  create,
+  enforce,
+  omitWhen,
+  skipWhen,
+  test as vestTest,
+  warn,
+} from 'vest';
 import {
   afterEach,
   beforeEach,
@@ -25,12 +32,17 @@ import {
   vi,
 } from 'vitest';
 import type { StandardSchemaV1 } from '../../public-api';
-import { FormDirective, NgxFieldBlurEvent } from '../directives/form.directive';
+import {
+  FormDirective,
+  NgxFieldBlurEvent,
+  NgxSubmitSettledEvent,
+} from '../directives/form.directive';
 import { NgxVestForms } from '../exports';
 import {
   provideFormContract,
   provideFormContractFactory,
 } from '../tokens/form-contract.token';
+import { createValidationConfig } from '../utils/validation-config-builder';
 import type { NgxVestSuite } from '../utils/validation-suite';
 // Helper to await either a Promise or Observable
 async function awaitResult<T>(result: Promise<T> | Observable<T>) {
@@ -2869,11 +2881,7 @@ describe('FormDirective - bidirectional sync conflict recovery', () => {
     selector: 'sc-conflict-host',
     imports: [NgxVestForms],
     template: `
-      <form
-        ngxVestForm
-        [formValue]="formValue()"
-        (formValueChange)="onFormValueChange($event)"
-      >
+      <form ngxVestForm [formValue]="formValue()">
         <input
           id="name"
           name="name"
@@ -2884,13 +2892,11 @@ describe('FormDirective - bidirectional sync conflict recovery', () => {
     `,
   })
   class ConflictHostComponent {
+    // No (formValueChange) binding: the model stays fixed while the user
+    // edits the input, and the consumer never sees the edit, so a later
+    // programmatic model change diverges from the form (the conflict
+    // scenario).
     readonly formValue = signal<{ name?: string }>({ name: '' });
-    onFormValueChange(value: { name?: string } | null): void {
-      // Intentionally do NOT mirror back into formValue() — this keeps the
-      // model fixed while the user edits the input, so a later programmatic
-      // model change can diverge from the form (the conflict scenario).
-      void value;
-    }
   }
 
   @Component({
@@ -3066,5 +3072,308 @@ describe('FormDirective - formValueChange with disabled controls', () => {
     await whenStable();
 
     expect(instance.emissions).toEqual([{ name: 'Bob', nickname: 'Annie' }]);
+  });
+});
+
+describe('FormDirective - model writes made in response to formValueChange', () => {
+  @Component({
+    selector: 'test-derived-clear-host',
+    imports: [NgxVestForms],
+    template: `
+      <form
+        ngxVestForm
+        [formValue]="formValue()"
+        (formValueChange)="onFormValueChange($event)"
+      >
+        <select
+          id="mode"
+          name="mode"
+          aria-label="mode"
+          [ngModel]="formValue().mode"
+        >
+          <option value="pickup">Pickup</option>
+          <option value="shipment">Shipment</option>
+        </select>
+        <input
+          id="address"
+          name="address"
+          aria-label="address"
+          [ngModel]="formValue().address"
+        />
+      </form>
+    `,
+  })
+  class DerivedClearHostComponent {
+    readonly formValue = signal<{ mode?: string; address?: string }>({
+      mode: 'shipment',
+      address: 'Main Street 1',
+    });
+
+    onFormValueChange(value: { mode?: string; address?: string }): void {
+      this.formValue.set(value);
+      if (value.mode !== 'shipment' && value.address) {
+        // Derived write in the same tick: clear what the new mode hides.
+        this.formValue.set({ ...value, address: '' });
+      }
+    }
+  }
+
+  it('applies the derived model write instead of reporting a sync conflict', async () => {
+    const consoleWarnSpy = vi
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {});
+    onTestFinished(() => consoleWarnSpy.mockRestore());
+    const { fixture } = await render(DerivedClearHostComponent);
+
+    await userEvent.selectOptions(screen.getByLabelText('mode'), 'pickup');
+    await whenStable();
+
+    await waitFor(() => {
+      expect((screen.getByLabelText('address') as HTMLInputElement).value).toBe(
+        ''
+      );
+    });
+    expect(fixture.componentInstance.formValue()).toEqual({
+      mode: 'pickup',
+      address: '',
+    });
+    expect(consoleWarnSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining('[NGX-100]')
+    );
+  });
+});
+
+describe('FormDirective - programmatic model writes', () => {
+  @Component({
+    selector: 'test-listen-only-host',
+    imports: [NgxVestForms],
+    template: `
+      <form
+        ngxVestForm
+        #vest="ngxVestForm"
+        [suite]="suite"
+        [formValue]="formValue()"
+        (formValueChange)="received.push($event)"
+        (validChange)="validity.push($event)"
+      >
+        <input
+          id="nickname"
+          name="nickname"
+          aria-label="nickname"
+          [ngModel]="formValue().nickname"
+        />
+      </form>
+    `,
+  })
+  class ListenOnlyHostComponent {
+    // Listens to formValueChange but never copies the value into the model.
+    readonly formValue = signal<{ nickname?: string }>({});
+    readonly received: { nickname?: string }[] = [];
+    readonly validity: boolean[] = [];
+    readonly suite = create((model: { nickname?: string } = {}) => {
+      vestTest('nickname', 'Nickname is required', () => {
+        enforce(model.nickname).isNotBlank();
+      });
+    });
+    readonly vest =
+      viewChild.required<FormDirective<{ nickname?: string }>>('vest');
+  }
+
+  it('lets a later model write win over a value the consumer already received', async () => {
+    const consoleWarnSpy = vi
+      .spyOn(console, 'warn')
+      .mockImplementation(() => {});
+    onTestFinished(() => consoleWarnSpy.mockRestore());
+    const { fixture } = await render(ListenOnlyHostComponent);
+    const host = fixture.componentInstance;
+    const input = screen.getByLabelText('nickname') as HTMLInputElement;
+
+    await userEvent.type(input, 'typed');
+    // Not copying the value back already warns while typing; only the model
+    // write below is under test.
+    consoleWarnSpy.mockClear();
+    // Same turn as the last keystroke: the consumer has received 'typed'
+    // and now writes a different model.
+    host.formValue.set({ nickname: 'from-model' });
+    await whenStable();
+
+    await waitFor(() => {
+      expect(input.value).toBe('from-model');
+    });
+    expect(host.received).toContainEqual({ nickname: 'typed' });
+    expect(consoleWarnSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining('[NGX-100]')
+    );
+  });
+
+  it('emits form events (validChange) when a model write changes validity', async () => {
+    const { fixture } = await render(ListenOnlyHostComponent);
+    const host = fixture.componentInstance;
+    await whenStable();
+    await waitFor(() => expect(host.vest().formState().valid).toBe(false));
+
+    host.formValue.set({ nickname: 'Ada' });
+    await whenStable();
+
+    await waitFor(() => expect(host.validity.at(-1)).toBe(true));
+  });
+});
+
+describe('FormDirective - submitSettled', () => {
+  const ASYNC_TEST_DELAY_MS = 200;
+
+  @Component({
+    selector: 'test-submit-settled-host',
+    imports: [NgxVestForms],
+    template: `
+      <form
+        ngxVestForm
+        [suite]="suite"
+        [formValue]="formValue()"
+        (formValueChange)="formValue.set($event)"
+        (ngSubmit)="statusAtNgSubmit.push(vest.ngForm.form.status)"
+        (submitSettled)="settled.push($event)"
+        #vest="ngxVestForm"
+      >
+        <label for="username">Username</label>
+        <input
+          id="username"
+          name="username"
+          [ngModel]="formValue().username"
+          [validationOptions]="{ debounceTime: 0 }"
+        />
+        <button type="submit">Submit</button>
+      </form>
+    `,
+  })
+  class SubmitSettledHostComponent {
+    readonly formValue = signal<{ username?: string }>({});
+    readonly statusAtNgSubmit: string[] = [];
+    readonly settled: NgxSubmitSettledEvent<{ username?: string }>[] = [];
+    readonly suite = create((model: { username?: string } = {}) => {
+      vestTest('username', 'Username is required', () => {
+        enforce(model.username).isNotBlank();
+      });
+      vestTest('username', 'Username is already taken', async () => {
+        await new Promise((resolve) =>
+          setTimeout(resolve, ASYNC_TEST_DELAY_MS)
+        );
+        if (model.username === 'taken') {
+          throw new Error('taken');
+        }
+      });
+    });
+  }
+
+  async function submitWith(username: string) {
+    const { fixture } = await render(SubmitSettledHostComponent);
+    const instance = fixture.componentInstance;
+    await userEvent.type(screen.getByLabelText('Username'), username);
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    await waitFor(() => expect(instance.settled).toHaveLength(1));
+    return instance;
+  }
+
+  it('emits once with valid: true after the async test passes', async () => {
+    const instance = await submitWith('free');
+
+    expect(instance.statusAtNgSubmit).toEqual(['PENDING']);
+    expect(instance.settled).toEqual([
+      { valid: true, value: { username: 'free' }, errors: {} },
+    ]);
+  });
+
+  it('emits once with valid: false and the errors after the async test fails', async () => {
+    const instance = await submitWith('taken');
+
+    expect(instance.settled).toEqual([
+      {
+        valid: false,
+        value: { username: 'taken' },
+        errors: { username: ['Username is already taken'] },
+      },
+    ]);
+  });
+});
+
+describe('FormDirective - model writes into controls inside embedded views', () => {
+  type TripModel = { departureDate?: string; returnDate?: string };
+
+  @Component({
+    selector: 'test-embedded-proxy-host',
+    imports: [NgxVestForms],
+    template: `
+      <form
+        ngxVestForm
+        #vest="ngxVestForm"
+        [suite]="suite"
+        [formValue]="formValue()"
+        [validationConfig]="validationConfig"
+        (formValueChange)="emitted.push($event)"
+      >
+        @if (showProxies()) {
+          <input
+            type="hidden"
+            name="departureDate"
+            [ngModel]="formValue().departureDate"
+          />
+          <input
+            type="hidden"
+            name="returnDate"
+            [ngModel]="formValue().returnDate"
+          />
+        }
+      </form>
+    `,
+  })
+  class EmbeddedProxyHostComponent {
+    readonly showProxies = signal(true);
+    readonly formValue = signal<TripModel>({});
+    readonly emitted: TripModel[] = [];
+    readonly validationConfig = createValidationConfig<TripModel>()
+      .bidirectional('departureDate', 'returnDate')
+      .build();
+    readonly suite = create((model: TripModel = {}) => {
+      omitWhen(!model.departureDate || !model.returnDate, () => {
+        vestTest('returnDate', 'Return must be after departure', () => {
+          enforce(model.returnDate! > model.departureDate!).isTruthy();
+        });
+      });
+    });
+    readonly vest = viewChild.required<FormDirective<TripModel>>('vest');
+  }
+
+  it('refreshes formState errors after a model-only update (composite adapter case)', async () => {
+    // The proxies sit in an embedded view, so the sync effect writes their
+    // values before NgModel sees the new input and NgModel skips its own
+    // write. The form must still report the new validation result.
+    const { fixture } = await render(EmbeddedProxyHostComponent);
+    const host = fixture.componentInstance;
+    await whenStable();
+    // Control registration emits on first render; only count what follows.
+    host.emitted.length = 0;
+
+    host.formValue.set({
+      departureDate: '2026-07-15',
+      returnDate: '2026-07-01',
+    });
+    await whenStable();
+    await waitFor(() => {
+      expect(host.vest().formState().errors['returnDate']).toEqual([
+        'Return must be after departure',
+      ]);
+    });
+
+    host.formValue.set({
+      departureDate: '2026-07-15',
+      returnDate: '2026-07-20',
+    });
+    await whenStable();
+    await waitFor(() => {
+      expect(host.vest().formState().errors['returnDate']).toBeUndefined();
+    });
+
+    // The model write is not echoed back through formValueChange.
+    expect(host.emitted).toEqual([]);
   });
 });

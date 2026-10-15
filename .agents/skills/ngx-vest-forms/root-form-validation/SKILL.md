@@ -31,7 +31,7 @@ Poor fits:
    - `'submit'` by default for blocking summary errors
    - `'live'` only when continuous form-level feedback is useful and not noisy
 4. Render the emitted errors in a stable summary region.
-5. If the `(ngSubmit)` handler checks validity: with `ngxVestForm`, submit-mode root validation has already run when the handler fires. Synchronous rules leave the form `INVALID`; async `ROOT_FORM` tests leave it `PENDING`, so wait on `statusChanges` until it is not `PENDING` before reading `valid`.
+5. If the `(ngSubmit)` handler checks validity: with `ngxVestForm`, submit-mode root validation has already run when the handler fires. Synchronous rules leave the form `INVALID`; async `ROOT_FORM` tests leave it `PENDING`, so decide in `(submitSettled)` instead: it emits `{ valid, value, errors }` once validation has finished, with `ROOT_FORM` errors included.
 
 Prefer public API imports from `'ngx-vest-forms'`, especially:
 

@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal, viewChild } from '@angular/core';
+import type { NgxSubmitSettledEvent } from 'ngx-vest-forms';
 import { AsyncUsernameModel } from '../../models/async-username.model';
-import { createSubmitWhenSettled } from '../../shared/submit-when-settled';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
@@ -57,23 +57,15 @@ export class AsyncUsernamePageComponent {
 
   protected readonly feedback = computed(() => this.formBody()?.feedback);
 
-  /** Waits for the availability check to settle before deciding. */
-  readonly #submitWhenSettled = createSubmitWhenSettled(
-    () => this.feedback()?.pending() ?? false
-  );
-
-  protected onSubmit(): void {
-    // The availability check may still be in flight when the user submits.
-    // A PENDING form is not an invalid form, so decide only once validation
-    // has settled; the submission is never dropped silently. Focus handling
-    // stays with the directive (`focusFirstInvalidOnSubmit` defaults to true).
-    this.#submitWhenSettled(() => {
-      if (!this.feedback()?.formState()?.valid) {
-        this.submittedValue.set(null);
-        return;
-      }
-      this.submittedValue.set(structuredClone(this.formValue()));
-    });
+  protected onSubmit(event: NgxSubmitSettledEvent<AsyncUsernameModel>): void {
+    // `submitSettled` fires once the availability check has finished, so a
+    // submit made while it is still running is decided on its real outcome.
+    // Focus handling stays with the directive (`focusFirstInvalidOnSubmit`).
+    if (!event.valid) {
+      this.submittedValue.set(null);
+      return;
+    }
+    this.submittedValue.set(structuredClone(this.formValue()));
   }
 
   protected reset(): void {

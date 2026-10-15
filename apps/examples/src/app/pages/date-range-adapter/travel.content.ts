@@ -22,7 +22,7 @@ export const travelContent = defineExampleContent({
         points: [
           'Why <ngx-control-wrapper> binds to a single NgModel, so a one-widget/many-fields control needs a custom adapter',
           'Fan a composite value out to flat model paths with setValueAtPath and re-emit the model',
-          'Trigger validation after the hidden proxy [ngModel]s sync using afterNextRender + triggerFormValidation',
+          'Let ngxVestForm write the new model into the hidden proxy [ngModel]s; validationConfig revalidates both dates',
         ],
       },
       {
