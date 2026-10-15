@@ -46,7 +46,7 @@
       class="mt-3 text-sm text-red-700 dark:text-red-300"
     >
       @if (preferredDisplay.shouldShowErrors()) { @for (message of
-      preferredDisplay.errors(); track message) {
+      preferredDisplay.errors(); track $index) {
       <p>{{ message }}</p>
       } }
     </div>
@@ -95,7 +95,7 @@
       class="mt-3 text-sm text-red-700 dark:text-red-300"
     >
       @if (searchDisplay.shouldShowErrors()) { @for (message of
-      searchDisplay.errors(); track message) {
+      searchDisplay.errors(); track $index) {
       <p>{{ message }}</p>
       } }
     </div>

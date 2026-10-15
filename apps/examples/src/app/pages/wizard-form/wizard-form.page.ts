@@ -192,9 +192,7 @@ export class WizardFormPageComponent {
     this.currentStep.update((step) => (step === 1 ? 2 : 3));
   }
 
-  protected async onStep1Submit(): Promise<void> {
-    await this.waitForNextRender();
-
+  protected onStep1Submit(): void {
     const step1IsValid =
       this.formBody()?.currentStepIsValid() ?? this.step1Valid();
 
@@ -211,9 +209,7 @@ export class WizardFormPageComponent {
     );
   }
 
-  protected async onStep2Submit(): Promise<void> {
-    await this.waitForNextRender();
-
+  protected onStep2Submit(): void {
     const step2IsValid =
       this.formBody()?.currentStepIsValid() ?? this.step2Valid();
 
@@ -235,9 +231,7 @@ export class WizardFormPageComponent {
     );
   }
 
-  protected async onStep3Submit(): Promise<void> {
-    await this.waitForNextRender();
-
+  protected onStep3Submit(): void {
     const step3IsValid =
       this.formBody()?.currentStepIsValid() ?? this.step3Valid();
 
