@@ -60,12 +60,17 @@ test.describe('Async Username Form', () => {
       'Ada Lovelace'
     );
 
+    // A fake clock makes the overlap deterministic. The field debounces for
+    // 500ms and the mock answers after 600ms, so at 550ms the "taken" check
+    // has started and has not answered yet.
+    await page.clock.install();
     await typeAndBlur(username, 'taken', 0);
-    // The check for "taken" is in flight: the hint shows after the debounce
-    // and stays until the mock responds.
+    await page.clock.runFor(550);
     await expect(page.getByText(/checking availability/i)).toBeVisible();
 
     await typeAndBlur(username, 'ada_lovelace', 0);
+    // Past both the stale response (1150ms) and the second check.
+    await page.clock.runFor(3000);
     await waitForValidationToSettle(page);
 
     // The stale "taken" response must not surface, and only the second

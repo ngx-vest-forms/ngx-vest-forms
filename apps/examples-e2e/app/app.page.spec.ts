@@ -28,6 +28,8 @@ test.describe('App Shell', () => {
     const links = page
       .getByRole('navigation', { name: 'Demo navigation' })
       .getByRole('link');
+    // evaluateAll() does not wait, so let the nav render first.
+    await expect(links.first()).toBeVisible();
     const hrefs = await links.evaluateAll((els) =>
       els.map((el) => el.getAttribute('href') ?? '')
     );

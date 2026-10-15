@@ -887,6 +887,108 @@ describe('ControlWrapperComponent', () => {
         });
         expect(screen.getByRole('slider')).not.toHaveAttribute('aria-required');
       });
+
+      it('should follow a role that is added and removed after render', async () => {
+        @Component({
+          imports: [NgxVestForms],
+          template: `
+            <ngx-control-wrapper ariaRequired>
+              <div
+                [attr.role]="role()"
+                aria-label="Rating"
+                aria-checked="false"
+                tabindex="0"
+              ></div>
+            </ngx-control-wrapper>
+          `,
+        })
+        class DynamicRoleComponent {
+          role = signal<string | null>(null);
+        }
+
+        const { fixture } = await render(DynamicRoleComponent);
+        const widget = screen.getByLabelText('Rating');
+        expect(widget).not.toHaveAttribute('aria-required');
+
+        fixture.componentInstance.role.set('radiogroup');
+        await waitFor(() => {
+          expect(widget).toHaveAttribute('aria-required', 'true');
+        });
+
+        // Without a widget role the element is no longer a target, so the
+        // wrapper takes back the attribute it set.
+        fixture.componentInstance.role.set(null);
+        await waitFor(() => {
+          expect(widget).not.toHaveAttribute('aria-required');
+        });
+      });
+
+      it('should use the first token of a fallback role list', async () => {
+        @Component({
+          imports: [NgxVestForms],
+          template: `
+            <ngx-control-wrapper ariaRequired>
+              <div
+                role="switch checkbox"
+                aria-label="Notify"
+                aria-checked="false"
+                tabindex="0"
+              ></div>
+            </ngx-control-wrapper>
+            <ngx-control-wrapper ariaRequired>
+              <div
+                role="slider spinbutton"
+                aria-label="Volume"
+                aria-valuenow="50"
+                tabindex="0"
+              ></div>
+              <input aria-label="Note" />
+            </ngx-control-wrapper>
+          `,
+        })
+        class FallbackRoleComponent {}
+
+        await render(FallbackRoleComponent);
+
+        await waitFor(() => {
+          expect(screen.getByLabelText('Notify')).toHaveAttribute(
+            'aria-required',
+            'true'
+          );
+          expect(screen.getByLabelText('Note')).toHaveAttribute(
+            'aria-required',
+            'true'
+          );
+        });
+        expect(screen.getByLabelText('Volume')).not.toHaveAttribute(
+          'aria-required'
+        );
+      });
+    });
+
+    it('should take back its ARIA attributes when the mode switches to none at runtime', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <ngx-control-wrapper ariaRequired [ariaAssociationMode]="mode()">
+            <input aria-label="Email" />
+          </ngx-control-wrapper>
+        `,
+      })
+      class ModeSwitchComponent {
+        mode = signal<'all-controls' | 'none'>('all-controls');
+      }
+
+      const { fixture } = await render(ModeSwitchComponent);
+      const input = screen.getByLabelText('Email');
+      await waitFor(() => {
+        expect(input).toHaveAttribute('aria-required', 'true');
+      });
+
+      fixture.componentInstance.mode.set('none');
+      await waitFor(() => {
+        expect(input).not.toHaveAttribute('aria-required');
+      });
     });
 
     it('should apply aria-required when ariaRequired is enabled on the wrapper', async () => {

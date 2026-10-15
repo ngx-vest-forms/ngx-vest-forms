@@ -115,7 +115,7 @@ Vetted during the audit; ask for plans for any of these:
   diagnostic (pinned by vest-runner.spec.ts:278).
 - **C-08** (bug, S): `aria-association-controller.ts:126-137` early-returns
   on mode `'none'` → stale `aria-invalid`/`aria-describedby` persist after a
-  runtime mode switch.
+  runtime mode switch. FIXED on `claude/examples-e2e-audit` (PR #267): the controller releases the attributes it set when an element stops being a target.
 - **C-04** (bug, S): `focusFirstInvalidControl` runs its visibility filter
   before `openCollapsedDetailsAncestors` (first-invalid.utils.ts:72-93) →
   invalid fields inside collapsed `<details>` are never found/opened.

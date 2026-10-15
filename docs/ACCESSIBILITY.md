@@ -38,7 +38,9 @@ button-based star rating therefore needs only the right role on its root:
 ```
 
 Controls nested inside such a widget are skipped, because the widget is the
-element assistive technology reports. `aria-required` is not set on
+element assistive technology reports. A fallback role list counts by its first
+token (`role="switch checkbox"` is a `switch`), and a role added after render
+is picked up. `aria-required` is not set on
 `role="slider"`, which does not support it. See
 [ADR-0010](./adr/0010-aria-association-targets-aria-form-widgets.md).
 

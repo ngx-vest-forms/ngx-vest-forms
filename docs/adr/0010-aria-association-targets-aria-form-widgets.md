@@ -35,6 +35,12 @@ elements and any element with one of those ARIA form-widget roles.
   (for example the inner `<input>` of a `role="combobox"` element), and is the
   element assistive technology reports.
 - `aria-required` is not set on `role="slider"`.
+- An element's role is the first token of its `role` attribute, so a
+  fallback list such as `role="switch checkbox"` counts as `switch`. Browsers
+  use the first role they support, and they support every role in the list.
+- The controller watches `role` changes. When an element stops being a
+  target while it stays in the DOM (its role changed, or the mode switched to
+  `none`), the controller removes the attributes it set on it.
 - When the host itself has one of these roles (`<div ngxControlWrapper
   role="radiogroup">` around native radios), the host is the only target:
   `radio` does not accept `aria-invalid`.
