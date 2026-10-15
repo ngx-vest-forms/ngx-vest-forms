@@ -78,11 +78,11 @@ test('confirmPassword', 'Passwords must match', () => {
 });
 ```
 
-✅ **Bidirectional dependencies** - Quantity ↔ Justification
+✅ **One-way dependencies** - Quantity → Justification (quantity decides whether justification is required; use `bidirectional` only when both rules read each other, such as password and confirm password)
 
 ```typescript
 validationConfig = createValidationConfig<FormModel>()
-  .bidirectional('quantity', 'justification')
+  .whenChanged('quantity', 'justification')
   .build();
 
 // Vest suite (field-level tests with omitWhen)

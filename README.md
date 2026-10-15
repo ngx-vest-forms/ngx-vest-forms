@@ -294,7 +294,7 @@ target field's own blur/display policy allows errors, combine `validationConfig`
 
 ```typescript
 protected readonly validationConfig = createValidationConfig<FormModel>()
-  .bidirectional('quantity', 'justification')
+  .whenChanged('quantity', 'justification')
   .build();
 ```
 

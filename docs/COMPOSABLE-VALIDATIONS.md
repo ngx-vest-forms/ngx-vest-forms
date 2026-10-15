@@ -181,7 +181,7 @@ export function contactValidations(
   });
 
   test(`${field}.email`, 'Email format is invalid', () => {
-    enforce(model?.email).isEmail();
+    enforce(model?.email ?? '').matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
   });
 
   test(`${field}.phone`, 'Phone is required', () => {
@@ -266,7 +266,7 @@ export function emailValidations(
   });
 
   test(field, 'Invalid email format', () => {
-    enforce(email).isEmail();
+    enforce(email ?? '').matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
   });
 
   if (checkAvailability) {

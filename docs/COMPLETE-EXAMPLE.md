@@ -43,7 +43,7 @@ const userValidationSuite: NgxVestSuite<UserFormModel> = create(
     });
 
     test('email', 'Valid email is required', () => {
-      enforce(model.email).isEmail();
+      enforce(model.email ?? '').matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
     });
   }
 );
