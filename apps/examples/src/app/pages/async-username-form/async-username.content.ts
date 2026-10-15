@@ -27,7 +27,8 @@ export const asyncUsernameContent = defineExampleContent({
       {
         title: 'Surfacing async UI state',
         points: [
-          'Reading pending from createFormFeedbackSignals to show a polite "Checking…" hint',
+          'Debouncing the field with validationOptions so the endpoint is called once typing pauses',
+          'Passing pending through createDebouncedPendingState so the "Checking…" hint does not flash',
           'Waiting for pending() to settle on submit so a mid-flight check never swallows the submission',
           'Deriving a success hint from validated fields plus an empty error list',
           'Keeping the suite a plain Vest spec — the service is injected via a factory',

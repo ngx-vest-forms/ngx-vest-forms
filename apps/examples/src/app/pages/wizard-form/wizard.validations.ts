@@ -5,8 +5,7 @@ import {
   WizardStep2Model,
   WizardStep3Model,
 } from '../../models/wizard-form.model';
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { EMAIL_PATTERN } from '../../shared/validations/email.validations';
 
 /**
  * Step 1: Account Setup Validation
@@ -22,7 +21,7 @@ export const wizardStep1Suite: NgxVestSuite<WizardStep1Model> = create(
     });
 
     test('email', 'Please enter a valid email address', () => {
-      enforce(model.email ?? '').matches(EMAIL_REGEX);
+      enforce(model.email ?? '').matches(EMAIL_PATTERN);
     });
 
     // Confirm email (depends on email)

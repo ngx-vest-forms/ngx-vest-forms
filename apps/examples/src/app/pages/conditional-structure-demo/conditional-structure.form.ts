@@ -1,9 +1,4 @@
-import {
-  Component,
-  input,
-  output,
-  viewChild,
-} from '@angular/core';
+import { Component, input, output, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
   FormDirective,
@@ -44,9 +39,5 @@ export class ConditionalStructureFormBody {
 
   resetFormState(value: ConditionalStructureModel): void {
     this.vestForm()?.resetForm(value);
-  }
-
-  triggerValidation(): void {
-    this.vestForm()?.triggerFormValidation();
   }
 }

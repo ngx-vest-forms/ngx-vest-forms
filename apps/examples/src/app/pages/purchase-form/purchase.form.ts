@@ -185,9 +185,8 @@ export class PurchaseForm {
     () => this.lukeResource.status() === 'loading'
   );
 
-  protected readonly fetchErrorNotice = computed(() =>
-    this.fetchErrorNoticeSignal()
-  );
+  protected readonly fetchErrorNotice =
+    this.fetchErrorNoticeSignal.asReadonly();
 
   protected readonly emergencyContactDisabled = computed(
     () => (this.formValue().age || 0) >= 18
@@ -219,14 +218,23 @@ export class PurchaseForm {
       builder.whenChanged('gender', 'genderOther');
     }
 
+    // Add this only while justification is rendered. A missing dependent makes
+    // the pipeline wait and log a dev-mode timeout. One-way on purpose, since
+    // quantity's rules never read justification, and a control re-created by
+    // @if must not be a trigger (ADR-0004).
     if ((this.formValue().quantity || 0) > 5) {
-      builder.bidirectional('quantity', 'justification');
+      builder.whenChanged('quantity', 'justification');
     }
 
     return builder.build();
   });
 
   constructor() {
+    // These two effects copy an async result into state the user can edit,
+    // which a computed cannot do. The first merges fetched data into the form
+    // model. The second keeps the error notice after the failed request is
+    // cleared, which happens as soon as the error is handled.
+
     // Apply fetched Luke data to form.
     // Only tracks lukeData(); writes use untracked to avoid a circular
     // dependency on formValue (which would re-trigger this effect endlessly).

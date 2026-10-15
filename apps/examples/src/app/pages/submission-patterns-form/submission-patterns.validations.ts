@@ -1,6 +1,7 @@
 import { type NgxVestSuite } from 'ngx-vest-forms';
 import { create, enforce, omitWhen, test, warn } from 'vest';
 import { SubmissionPatternsModel } from '../../models/submission-patterns.model';
+import { EMAIL_PATTERN } from '../../shared/validations/email.validations';
 
 /**
  * Plain Vest suite for the account-creation form. It has no Angular
@@ -23,9 +24,7 @@ export const submissionPatternsSuite: NgxVestSuite<SubmissionPatternsModel> =
 
     omitWhen(!model.email, () => {
       test('email', 'Enter a valid email address', () => {
-        enforce(model.email ?? '').matches(
-          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
-        );
+        enforce(model.email ?? '').matches(EMAIL_PATTERN);
       });
     });
 

@@ -62,6 +62,24 @@
       </ngx-alert-panel>
       }
 
+      @if (blockedSubmitErrors().length > 0) {
+      <ngx-alert-panel tone="warning" title="Submit was blocked by these errors">
+        <ul class="list-disc pl-5">
+          @for (item of blockedSubmitErrors(); track item.field + item.message) {
+          <li>
+            <button
+              type="button"
+              class="text-left underline"
+              (click)="focusField(item.field)"
+            >
+              {{ item.message }}
+            </button>
+          </li>
+          }
+        </ul>
+      </ngx-alert-panel>
+      }
+
       @let submissionState = state();
       @switch (submissionState) {
       @case ('success') {

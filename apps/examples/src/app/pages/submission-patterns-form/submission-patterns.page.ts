@@ -78,6 +78,14 @@ export class SubmissionPatternsPageComponent {
   protected readonly serverError = signal<string | null>(null);
   protected readonly createdId = signal<string | null>(null);
   protected readonly submitCycleActive = signal(false);
+  /**
+   * Errors captured when an invalid submit was blocked. It is a snapshot, so
+   * the summary keeps listing what blocked that submit while the user fixes
+   * fields; the inline errors stay live.
+   */
+  protected readonly blockedSubmitErrors = signal<
+    ReadonlyArray<{ field: string; message: string }>
+  >([]);
   protected readonly scenarios: ReadonlyArray<{
     label: string;
     value: Scenario;
@@ -113,10 +121,17 @@ export class SubmissionPatternsPageComponent {
     if (!this.feedback()?.formState()?.valid) {
       this.state.set('editing');
       this.serverError.set(null);
+      const errors = this.formBody()?.errorSnapshot().errors ?? {};
+      this.blockedSubmitErrors.set(
+        Object.entries(errors).flatMap(([field, messages]) =>
+          messages.map((message) => ({ field, message }))
+        )
+      );
       this.formBody()?.focusFirstInvalidControl();
       return;
     }
 
+    this.blockedSubmitErrors.set([]);
     void this.callServer();
   }
 
@@ -175,6 +190,10 @@ export class SubmissionPatternsPageComponent {
       });
   }
 
+  protected focusField(field: string): void {
+    this.formBody()?.focusField(field);
+  }
+
   /** Retry re-submits the exact same value through the same path. */
   protected retry(): void {
     void this.callServer();
@@ -182,6 +201,7 @@ export class SubmissionPatternsPageComponent {
 
   /** End the current submit cycle while preserving values and control metadata. */
   protected clearSubmitCycle(): void {
+    this.blockedSubmitErrors.set([]);
     this.formBody()?.clearSubmittedState();
     this.submitCycleActive.set(false);
   }
@@ -192,6 +212,7 @@ export class SubmissionPatternsPageComponent {
     this.serverError.set(null);
     this.createdId.set(null);
     this.submitCycleActive.set(false);
+    this.blockedSubmitErrors.set([]);
     this.formBody()?.resetFormState({});
     this.formValue.set({});
   }

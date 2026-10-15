@@ -20,9 +20,11 @@ true. The suite has no Angular dependency and is unit-testable on its own:
 `onSubmit()` checks `formState().valid` first. When the form is invalid the
 server is **never contacted**; instead the page stays in `editing` and calls
 `FormDirective.focusFirstInvalidControl()` to scroll to and focus the first
-failing control — the exact mechanism used by the Purchase demo. The call is
-wrapped in `afterNextRender` so submit-driven validation has flushed before
-the first-invalid target is resolved.
+failing control. `ngxVestForm` validates before it emits `ngSubmit`, so the
+state is current when `onSubmit()` runs. The page also stores
+`getAllFormErrors()` output in a "Submit was blocked by these errors" list.
+That list is a copy taken at submit time. It keeps showing what blocked the
+submit while the inline errors update as the user edits.
 
 ### (c) Server FAILURE messaging
 
@@ -52,6 +54,7 @@ error (`?errorScenario=network-error`).
 ## Public API used
 
 `NgxVestForms`, `FormDirective` (`focusFirstInvalidControl`),
+`getAllFormErrors`, `NgxFormErrorsByPath`,
 `provideFormContract`, `createFormFeedbackSignals`, `NgxDeepPartial`,
 `NgxDeepRequired`, `NgxVestSuite`.
 

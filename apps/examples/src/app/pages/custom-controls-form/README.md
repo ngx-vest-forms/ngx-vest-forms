@@ -20,7 +20,15 @@ register through `NG_VALUE_ACCESSOR` and bind with `[ngModel]`.
   - `ngx-segmented-control` — single-select for the `experience` string.
   - `ngx-tag-input` — inline tag editor emitting a `string[]`.
 - Each control bound with plain `[ngModel]` and `name="…"` inside
-  `ngx-control-wrapper`, so errors and warnings render automatically.
+  `ngx-control-wrapper`, so errors and warnings render automatically. The
+  tags control uses the attribute form, `<fieldset ngxControlWrapper>`, so
+  the fieldset's `<legend>` names the group.
+- The wrapper sets `aria-invalid` and `aria-describedby` on the
+  button-based `role="radiogroup"` elements, the same way it does for native
+  inputs. It targets elements with an ARIA form-widget role, so the custom
+  controls need no ARIA wiring of their own.
+- `ngxControlState` on the experience control, used for UI of your own: a
+  confirmation line appears once the control is valid and touched.
 - A plain Vest suite (`custom-controls.validations.ts`): `rating` required and
   between 1 and 5, `experience` required, `tags` ≥ 1 (error) with a
   non-blocking `warn()` advisory when more than 5 tags are added.
@@ -33,8 +41,9 @@ register through `NG_VALUE_ACCESSOR` and bind with `[ngModel]`.
 
 ## Public API used
 
-`NgxVestForms`, `FormDirective`, `provideFormContract`,
-`createFormFeedbackSignals`, `NgxDeepPartial`, `NgxDeepRequired`,
+`NgxVestForms`, `FormDirective`, `FormControlStateDirective`
+(`ngxControlState`), `ControlWrapperComponent` (`[ngxControlWrapper]`),
+`provideFormContract`, `createFormFeedbackSignals`, `NgxDeepPartial`, `NgxDeepRequired`,
 `NgxVestSuite`. The CVA primitives (`ControlValueAccessor`,
 `NG_VALUE_ACCESSOR`) come from `@angular/forms`, as expected for any custom
 control.

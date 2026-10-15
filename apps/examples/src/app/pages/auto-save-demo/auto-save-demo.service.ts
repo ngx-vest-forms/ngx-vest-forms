@@ -19,12 +19,7 @@ export class AutoSaveDemoService {
   #version = 0;
 
   loadDraft(): StoredAutoSaveDraft | null {
-    const storage = this.#storage;
-    if (!storage) {
-      return null;
-    }
-
-    const rawDraft = storage.getItem(AutoSaveDemoService.STORAGE_KEY);
+    const rawDraft = readStorage(AutoSaveDemoService.STORAGE_KEY);
     if (!rawDraft) {
       return null;
     }
@@ -34,13 +29,13 @@ export class AutoSaveDemoService {
       this.#version = Math.max(this.#version, parsed.version ?? 0);
       return parsed;
     } catch {
-      storage.removeItem(AutoSaveDemoService.STORAGE_KEY);
+      writeStorage(AutoSaveDemoService.STORAGE_KEY, null);
       return null;
     }
   }
 
   clearDraft(): void {
-    this.#storage?.removeItem(AutoSaveDemoService.STORAGE_KEY);
+    writeStorage(AutoSaveDemoService.STORAGE_KEY, null);
   }
 
   saveDraft(
@@ -66,10 +61,7 @@ export class AutoSaveDemoService {
       version: this.#version,
     };
 
-    this.#storage?.setItem(
-      AutoSaveDemoService.STORAGE_KEY,
-      JSON.stringify(result)
-    );
+    writeStorage(AutoSaveDemoService.STORAGE_KEY, JSON.stringify(result));
 
     return of(result).pipe(delay(700));
   }
@@ -77,12 +69,24 @@ export class AutoSaveDemoService {
   get storageKey(): string {
     return AutoSaveDemoService.STORAGE_KEY;
   }
+}
 
-  get #storage(): Storage | null {
-    if (typeof sessionStorage === 'undefined') {
-      return null;
+function readStorage(key: string): string | null {
+  try {
+    return globalThis.sessionStorage?.getItem(key) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStorage(key: string, value: string | null): void {
+  try {
+    if (value === null) {
+      globalThis.sessionStorage?.removeItem(key);
+    } else {
+      globalThis.sessionStorage?.setItem(key, value);
     }
-
-    return sessionStorage;
+  } catch {
+    // Storage can be blocked (privacy settings); the demo keeps working without drafts.
   }
 }

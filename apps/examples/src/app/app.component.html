@@ -46,7 +46,7 @@
     #sidebar
     id="app-sidebar"
     tabindex="-1"
-    class="fixed inset-y-0 left-0 z-40 flex w-72 -translate-x-full flex-col overflow-x-hidden border-r border-gray-200/70 bg-white/95 transition-[width,transform] duration-300 ease-out lg:sticky lg:top-0 lg:z-0 lg:h-screen lg:translate-x-0 lg:bg-white/60 lg:backdrop-blur-xl dark:border-gray-700/70 dark:bg-gray-900/95 lg:dark:bg-gray-900/50"
+    class="fixed inset-y-0 left-0 z-40 flex w-72 -translate-x-full flex-col overflow-x-hidden border-r border-gray-200/70 bg-white/95 transition-[width,transform] duration-300 ease-out motion-reduce:transition-none lg:sticky lg:top-0 lg:z-0 lg:h-screen lg:translate-x-0 lg:bg-white/60 lg:backdrop-blur-xl dark:border-gray-700/70 dark:bg-gray-900/95 lg:dark:bg-gray-900/50"
     [class.translate-x-0]="drawerOpen()"
     [class.lg:w-14]="sidebarCollapsed()"
     [inert]="!isDesktop() && !drawerOpen()"

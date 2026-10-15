@@ -28,6 +28,9 @@ export const customControlsContent = defineExampleContent({
         points: [
           'How onTouched → ngx-vest-forms blur tracking drives on-blur error display',
           'Wrapping custom controls in ngx-control-wrapper to render errors and warnings',
+          'The wrapper sets aria-invalid and aria-describedby on a button-based role="radiogroup", the same as on a native input',
+          'Reading control state with ngxControlState to build UI of your own, such as a confirmation once a field is valid',
+          'Using the [ngxControlWrapper] attribute on a fieldset so the legend still names the group',
           'Building keyboard-operable, ARIA-correct widgets that still feel like the rest of the app',
         ],
       },
