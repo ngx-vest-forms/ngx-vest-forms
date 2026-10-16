@@ -1,9 +1,9 @@
 name: Release
 
-# The only workflow that publishes to npm. npm's Trusted Publisher for
-# ngx-vest-forms names this file, so a publish from any other workflow gets no
-# OIDC token and fails with ENONPMTOKEN. Stable and prerelease channels both
-# run here; .releaserc maps each branch to its channel.
+# The only workflow that publishes to npm, through npm Trusted Publishing
+# (OIDC); every published version's provenance names this file. Stable and
+# prerelease channels both run here; .releaserc maps each branch to its
+# channel.
 
 on:
   workflow_dispatch:
@@ -22,9 +22,9 @@ on:
           - alpha         # @alpha prerelease
           - rc            # @rc prerelease
       dry_run:
-        description: 'Dry run: compute and print the next version and channel without publishing, tagging, or creating a release'
+        description: 'Dry run: compute and print the next version and channel without publishing, tagging, or creating a release. Untick to publish.'
         required: false
-        default: false
+        default: true
         type: boolean
 
 permissions:
@@ -40,8 +40,11 @@ jobs:
     environment: npm-publish  # Required for OIDC Trusted Publisher
     env:
       # Replaces the registry-url input of the former actions/setup-node step;
-      # pnpm and semantic-release's npm client both read it.
-      NPM_CONFIG_REGISTRY: https://registry.npmjs.org
+      # pnpm and semantic-release's npm client both read it. Keep the trailing
+      # slash: @semantic-release/npm only attempts the OIDC (Trusted
+      # Publisher) token exchange when this equals "https://registry.npmjs.org/"
+      # exactly, and otherwise fails with ENONPMTOKEN.
+      NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
     steps:
       - name: Validate branch input
         env:

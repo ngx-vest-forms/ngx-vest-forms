@@ -3,9 +3,9 @@
 This document describes how to release new versions of ngx-vest-forms. All releases are **manual only** and require explicit triggering via GitHub Actions.
 
 Every release, stable or prerelease, runs through one workflow:
-[Actions > Release](../../actions/workflows/cd.yml) (`cd.yml`). npm's Trusted
-Publisher for `ngx-vest-forms` names that file, so a publish from any other
-workflow gets no OIDC token and fails with `ENONPMTOKEN`.
+[Actions > Release](../../actions/workflows/cd.yml) (`cd.yml`). It publishes
+through npm Trusted Publishing (OIDC, `npm-publish` environment), and the
+provenance of every published version names this file.
 
 **How to trigger:**
 
@@ -14,13 +14,15 @@ workflow gets no OIDC token and fails with `ENONPMTOKEN`.
    branch in the `branch` input. The workflow stops when the two differ,
    because semantic-release picks the channel from the dispatch branch
    (`GITHUB_REF`), not from the input.
-3. Leave `dry_run` on for a first run to see the computed version and
-   channel in the log, then run again with it off to publish.
+3. `dry_run` is on by default: the run prints the computed version and
+   channel without publishing. Check the log, then run again with `dry_run`
+   unticked to publish.
 
 From the command line:
 
 ```bash
-gh workflow run cd.yml --ref <branch> -f branch=<branch> -f dry_run=true
+gh workflow run cd.yml --ref <branch> -f branch=<branch>                  # dry run
+gh workflow run cd.yml --ref <branch> -f branch=<branch> -f dry_run=false # publish
 ```
 
 ## Release Types
@@ -197,9 +199,12 @@ If semantic-release skips releasing:
 
 If npm publish fails:
 
-- `ENONPMTOKEN No npm token specified`: the run did not come from `cd.yml`, or
-  npm's Trusted Publisher no longer names `cd.yml` and the `npm-publish`
-  environment
+- `ENONPMTOKEN No npm token specified`: semantic-release did not get an OIDC
+  token. Check that `NPM_CONFIG_REGISTRY` in `cd.yml` is exactly
+  `https://registry.npmjs.org/` (with the trailing slash; without it
+  `@semantic-release/npm` skips the OIDC exchange), that the log shows
+  "Verifying OIDC context", and that npm's Trusted Publisher names `cd.yml`
+  and the `npm-publish` environment
 - Check npm permissions in the repository settings
 - Check npm registry status
 
