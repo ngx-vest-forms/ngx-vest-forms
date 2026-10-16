@@ -1,17 +1,7 @@
 import { DestroyRef, ErrorHandler } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ValidationErrors } from '@angular/forms';
-import {
-  Observable,
-  catchError,
-  defer,
-  from,
-  map,
-  of,
-  switchMap,
-  take,
-  timer,
-} from 'rxjs';
+import { Observable, defer, from, map, of, switchMap, take, timer } from 'rxjs';
 import type { ValidationOptions } from '../directives/validation-options';
 import type { NgxSuiteRunResult } from './validation-suite';
 
@@ -63,7 +53,8 @@ export type RunnableVestSuite<T> = {
  *   an older pending run resolves to the latest run's result; field verdicts
  *   stay correct because Vest keeps each field's state across runs.
  *   `suite.get()` is only used as a defensive fallback if resolution yields
- *   nothing or rejects.
+ *   nothing. Vest 6.3 never rejects the run promise; should one reject, the
+ *   error propagates to the caller, which reports it to `ErrorHandler`.
  * - Subscription is automatically torn down on `destroyRef` so callers do not
  *   need a separate `takeUntilDestroyed`. Tearing down the subscription (via
  *   unsubscribe, the outer `switchMap`, or `destroyRef`) cancels the pending
@@ -206,9 +197,9 @@ function runSuite<T>(
   // `Promise.resolve(result)` does: a Vest result whose resolved value is
   // itself thenable (the promise/selectors merge) would send `Promise.resolve`
   // into an unbounded adoption loop. `suite.get()` is only a defensive
-  // fallback when resolution yields nothing or rejects.
-  return from(result).pipe(
-    map((value) => value ?? suite.get()),
-    catchError(() => of(suite.get()))
-  );
+  // fallback when resolution yields nothing. Vest 6.3 only ever resolves the
+  // run promise; if a suite-like object rejects, the error propagates and the
+  // callers report it to `ErrorHandler` and fail closed (field) or open (root
+  // form) instead of passing the suite's latest state off as this run's.
+  return from(result).pipe(map((value) => value ?? suite.get()));
 }

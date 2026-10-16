@@ -933,4 +933,134 @@ describe('FormDirective - Reset Functionality', () => {
       });
     });
   });
+
+  describe('resetForm() without a matching formValue update', () => {
+    @Component({
+      template: `
+        <form
+          ngxVestForm
+          #vestForm="ngxVestForm"
+          [formValue]="formValue()"
+          (formValueChange)="formValue.set($event)"
+        >
+          <input
+            name="firstName"
+            [ngModel]="formValue().firstName"
+            data-testid="firstName"
+          />
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class ResetOnlyComponent {
+      vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
+      formValue = signal<NgxDeepPartial<{ firstName?: string | null }>>({
+        firstName: 'John',
+      });
+    }
+
+    it('keeps the cleared values instead of re-applying the old model', async () => {
+      const { fixture } = await render(ResetOnlyComponent);
+      const component = fixture.componentInstance;
+      const input = screen.getByTestId('firstName') as HTMLInputElement;
+      await waitFor(() => expect(input.value).toBe('John'));
+
+      component.vestFormRef().resetForm();
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      expect(input.value).toBe('');
+      expect(component.formValue().firstName ?? null).toBeNull();
+    });
+
+    it('keeps the values passed to resetForm(value)', async () => {
+      const { fixture } = await render(ResetOnlyComponent);
+      const component = fixture.componentInstance;
+      const input = screen.getByTestId('firstName') as HTMLInputElement;
+      await waitFor(() => expect(input.value).toBe('John'));
+
+      component.vestFormRef().resetForm({ firstName: 'Ada' });
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      expect(input.value).toBe('Ada');
+      expect(component.formValue().firstName).toBe('Ada');
+    });
+  });
+
+  describe('one-way [formValue] binding (no formValueChange echo)', () => {
+    // An async test makes validation emit a later status change, which runs
+    // the sync effect again after the reset or the edit.
+    const asyncSuite = create((model: { firstName?: string | null }) => {
+      test('firstName', 'Checked later', async () => {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        enforce(model.firstName ?? 'ok').isString();
+      });
+    });
+
+    @Component({
+      template: `
+        <form
+          ngxVestForm
+          #vestForm="ngxVestForm"
+          [formValue]="formValue()"
+          [suite]="suite"
+        >
+          <input
+            name="firstName"
+            [ngModel]="formValue().firstName"
+            data-testid="firstName"
+          />
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class OneWayComponent {
+      vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
+      formValue = signal({ firstName: 'John' });
+      suite = asyncSuite;
+    }
+
+    const settle = async () => {
+      await new Promise((resolve) => setTimeout(resolve, 60));
+      await TestBed.inject(ApplicationRef).whenStable();
+    };
+
+    it('keeps the cleared controls after resetForm() and later validation', async () => {
+      asyncSuite.reset();
+      const { fixture } = await render(OneWayComponent);
+      const input = screen.getByTestId('firstName') as HTMLInputElement;
+      await waitFor(() => expect(input.value).toBe('John'));
+
+      fixture.componentInstance.vestFormRef().resetForm();
+      await settle();
+
+      expect(input.value).toBe('');
+    });
+
+    it('keeps a user edit after validation settles', async () => {
+      asyncSuite.reset();
+      await render(OneWayComponent);
+      const input = screen.getByTestId('firstName') as HTMLInputElement;
+      await waitFor(() => expect(input.value).toBe('John'));
+
+      await userEvent.clear(input);
+      await userEvent.type(input, 'Ada');
+      await settle();
+
+      expect(input.value).toBe('Ada');
+    });
+
+    it('still applies a new model the consumer passes in', async () => {
+      asyncSuite.reset();
+      const { fixture } = await render(OneWayComponent);
+      const input = screen.getByTestId('firstName') as HTMLInputElement;
+      await userEvent.clear(input);
+      await userEvent.type(input, 'Ada');
+      await settle();
+
+      fixture.componentInstance.formValue.set({ firstName: 'Grace' });
+      await settle();
+
+      expect(input.value).toBe('Grace');
+    });
+  });
 });
