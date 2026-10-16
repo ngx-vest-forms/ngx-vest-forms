@@ -104,19 +104,19 @@
         </div>
 
         @if (formValue().requiresJustification) {
-        <ngx-control-wrapper class="form-field">
-          <label>
-            <span class="label-text">Justification (min 20 characters)</span>
-            <textarea
-              class="input-field"
-              id="justification"
-              name="justification"
-              [ngModel]="formValue().justification"
-              rows="3"
-              placeholder="Explain why justification is needed..."
-            ></textarea>
-          </label>
-        </ngx-control-wrapper>
+          <ngx-control-wrapper class="form-field">
+            <label>
+              <span class="label-text">Justification (min 20 characters)</span>
+              <textarea
+                class="input-field"
+                id="justification"
+                name="justification"
+                [ngModel]="formValue().justification"
+                rows="3"
+                placeholder="Explain why justification is needed..."
+              ></textarea>
+            </label>
+          </ngx-control-wrapper>
         }
       </div>
     </ngx-form-section>

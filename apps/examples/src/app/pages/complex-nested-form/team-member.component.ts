@@ -1,8 +1,4 @@
-import {
-  Component,
-  computed,
-  input,
-} from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { NgxVestForms, vestFormsViewProviders } from 'ngx-vest-forms';
 import { TeamMemberModel } from '../../models/complex-nested.model';
 

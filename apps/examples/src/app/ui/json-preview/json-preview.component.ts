@@ -1,9 +1,5 @@
 import { JsonPipe } from '@angular/common';
-import {
-  Component,
-  computed,
-  input,
-} from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 
 @Component({
   selector: 'ngx-json-preview',
@@ -23,8 +19,7 @@ import {
       [style.minBlockSize]="'8lh'"
       [style.blockSize]="'min(' + maxLines() + 'lh, max-content)'"
       [style.maxBlockSize]="'max-content'"
-      >{{ isStringValue() ? value() : (value() | json) }}</pre
-    >
+      >{{ isStringValue() ? value() : (value() | json) }}</pre>
   `,
   host: { style: 'display: block;' },
 })

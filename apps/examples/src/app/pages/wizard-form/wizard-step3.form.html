@@ -16,33 +16,35 @@
 >
   <div class="mb-6 space-y-4">
     @for (section of reviewSections(); track section.id) {
-    <section
-      class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
-      [attr.aria-labelledby]="'review-section-title-' + section.id"
-    >
-      <div class="flex items-center justify-between">
-        <h3
-          class="text-sm font-medium text-gray-900 dark:text-white"
-          [id]="'review-section-title-' + section.id"
-        >
-          {{ section.title }}
-        </h3>
-        <button
-          type="button"
-          class="text-xs text-blue-600 hover:underline dark:text-blue-400"
-          [attr.aria-label]="'Edit ' + section.title"
-          (click)="goToStep.emit(section.id)"
-        >
-          Edit
-        </button>
-      </div>
-      <dl class="mt-2 grid grid-cols-2 gap-2 text-sm">
-        <dt class="text-gray-500 dark:text-gray-400">
-          {{ section.fieldLabel }}:
-        </dt>
-        <dd class="text-gray-900 dark:text-white">{{ section.fieldValue }}</dd>
-      </dl>
-    </section>
+      <section
+        class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800"
+        [attr.aria-labelledby]="'review-section-title-' + section.id"
+      >
+        <div class="flex items-center justify-between">
+          <h3
+            class="text-sm font-medium text-gray-900 dark:text-white"
+            [id]="'review-section-title-' + section.id"
+          >
+            {{ section.title }}
+          </h3>
+          <button
+            type="button"
+            class="text-xs text-blue-600 hover:underline dark:text-blue-400"
+            [attr.aria-label]="'Edit ' + section.title"
+            (click)="goToStep.emit(section.id)"
+          >
+            Edit
+          </button>
+        </div>
+        <dl class="mt-2 grid grid-cols-2 gap-2 text-sm">
+          <dt class="text-gray-500 dark:text-gray-400">
+            {{ section.fieldLabel }}:
+          </dt>
+          <dd class="text-gray-900 dark:text-white">
+            {{ section.fieldValue }}
+          </dd>
+        </dl>
+      </section>
     }
   </div>
 

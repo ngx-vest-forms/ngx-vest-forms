@@ -3,33 +3,47 @@
 
   <ngx-intro-section title="Why this matters">
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">ControlValueAccessor contract</strong> — Any control implementing CVA is indistinguishable from a native input to ngx-vest-forms and Angular's form system
+      <strong class="text-gray-900 dark:text-white"
+        >ControlValueAccessor contract</strong
+      >
+      — Any control implementing CVA is indistinguishable from a native input to
+      ngx-vest-forms and Angular's form system
     </ngx-intro-item>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Controls participate in validation</strong> — Custom controls work with [ngModel], Vest suites, and form-level state tracking
+      <strong class="text-gray-900 dark:text-white"
+        >Controls participate in validation</strong
+      >
+      — Custom controls work with [ngModel], Vest suites, and form-level state
+      tracking
     </ngx-intro-item>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Touch-driven error display</strong> — onTouched fires on blur, so error messages appear on blur just like native fields
+      <strong class="text-gray-900 dark:text-white"
+        >Touch-driven error display</strong
+      >
+      — onTouched fires on blur, so error messages appear on blur just like
+      native fields
     </ngx-intro-item>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Keyboard accessible</strong> — Proper focus management and tab order work automatically; Vest suite remains agnostic to whether a control is custom or native
+      <strong class="text-gray-900 dark:text-white">Keyboard accessible</strong>
+      — Proper focus management and tab order work automatically; Vest suite
+      remains agnostic to whether a control is custom or native
     </ngx-intro-item>
   </ngx-intro-section>
 
-  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+  <div class="grid grid-cols-1 gap-8 py-12 md:grid-cols-2 md:gap-12 md:py-16">
     <div>
       <ngx-form-state-card [feedback]="feedback()" />
     </div>
 
     <div class="space-y-6">
       @if (submittedValue(); as submitted) {
-      <ngx-alert-panel tone="success" title="Submitted">
-        <p>
-          Rated <strong>{{ submitted.rating }}/5</strong> as a
-          <strong>{{ submitted.experience }}</strong> developer with {{
-          submitted.tags?.length ?? 0 }} tag(s).
-        </p>
-      </ngx-alert-panel>
+        <ngx-alert-panel tone="success" title="Submitted">
+          <p>
+            Rated <strong>{{ submitted.rating }}/5</strong> as a
+            <strong>{{ submitted.experience }}</strong> developer with
+            {{ submitted.tags?.length ?? 0 }} tag(s).
+          </p>
+        </ngx-alert-panel>
       }
 
       <ngx-card

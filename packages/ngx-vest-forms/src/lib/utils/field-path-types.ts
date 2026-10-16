@@ -7,14 +7,7 @@
  * do not generate junk traversal paths.
  */
 type Primitive =
-  | string
-  | number
-  | boolean
-  | bigint
-  | symbol
-  | Date
-  | null
-  | undefined;
+  string | number | boolean | bigint | symbol | Date | null | undefined;
 
 /**
  * Recursively generates all valid field paths for a type as string literals.
@@ -97,23 +90,23 @@ type FieldPathInternal<
               `${Prefix}${K}`
             : T[K] extends ReadonlyArray<infer U>
               ? // Array property: optionally the container path, plus element paths
-                  | (Leaves extends true ? never : `${Prefix}${K}`)
-                  | (U extends Primitive
-                      ? never
-                      : FieldPathInternal<
-                          U,
-                          Leaves,
-                          `${Prefix}${K}.`,
-                          [...Depth, 1]
-                        >)
+                | (Leaves extends true ? never : `${Prefix}${K}`)
+                | (U extends Primitive
+                    ? never
+                    : FieldPathInternal<
+                        U,
+                        Leaves,
+                        `${Prefix}${K}.`,
+                        [...Depth, 1]
+                      >)
               : // Object property: optionally the container path, plus nested paths
-                  | (Leaves extends true ? never : `${Prefix}${K}`)
-                  | FieldPathInternal<
-                      T[K],
-                      Leaves,
-                      `${Prefix}${K}.`,
-                      [...Depth, 1]
-                    >;
+                | (Leaves extends true ? never : `${Prefix}${K}`)
+                | FieldPathInternal<
+                    T[K],
+                    Leaves,
+                    `${Prefix}${K}.`,
+                    [...Depth, 1]
+                  >;
         }[keyof T & string];
 
 export type FieldPath<

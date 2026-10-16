@@ -6,10 +6,7 @@ import {
 import { delay, mergeMap, of, throwError } from 'rxjs';
 
 type MockErrorScenario =
-  | 'not-found'
-  | 'unauthorized'
-  | 'server-error'
-  | 'network-error';
+  'not-found' | 'unauthorized' | 'server-error' | 'network-error';
 
 type MockPerson = {
   id: string;
