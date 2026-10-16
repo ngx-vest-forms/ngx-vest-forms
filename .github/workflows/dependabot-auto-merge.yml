@@ -2,13 +2,19 @@ name: Dependabot auto-merge
 # Enables auto-merge on every Dependabot PR whose update is semver minor or
 # patch. Required status checks still gate the merge; anything else stays
 # open for a human. Needs "Allow auto-merge" in the repository settings.
-on: pull_request
+#
+# pull_request_target, because a Dependabot-triggered pull_request run gets a
+# read-only GITHUB_TOKEN whatever the job requests. This is safe only while
+# the job checks out and runs no PR code: it reads metadata through the API.
+on: pull_request_target
 
 permissions: {}
 
 jobs:
   auto-merge:
-    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.repository == 'ngx-vest-forms/ngx-vest-forms'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
