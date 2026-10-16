@@ -3553,3 +3553,98 @@ describe('FormDirective - submitSettled with validationConfig', () => {
     });
   });
 });
+
+describe('FormDirective - formState after a programmatic model sync', () => {
+  type ProfileModel = { name?: string };
+
+  const profileSuite = create((model: ProfileModel = {}) => {
+    vestTest('name', 'Name is required', () => {
+      enforce(model.name).isNotBlank();
+    });
+  });
+
+  @Component({
+    selector: 'test-model-sync-direct-host',
+    imports: [NgxVestForms],
+    template: `
+      <form
+        ngxVestForm
+        #vest="ngxVestForm"
+        [suite]="suite"
+        [formValue]="formValue()"
+        (formValueChange)="formValue.set($event)"
+      >
+        <input
+          name="name"
+          [ngModel]="formValue().name"
+          [validationOptions]="{ debounceTime: 0 }"
+        />
+      </form>
+    `,
+  })
+  class DirectControlHostComponent {
+    readonly formValue = signal<ProfileModel>({});
+    readonly suite = profileSuite;
+    readonly vest = viewChild.required<FormDirective<ProfileModel>>('vest');
+  }
+
+  @Component({
+    selector: 'test-model-sync-embedded-host',
+    imports: [NgxVestForms],
+    template: `
+      <form
+        ngxVestForm
+        #vest="ngxVestForm"
+        [suite]="suite"
+        [formValue]="formValue()"
+        (formValueChange)="formValue.set($event)"
+      >
+        @if (true) {
+          <input
+            name="name"
+            [ngModel]="formValue().name"
+            [validationOptions]="{ debounceTime: 0 }"
+          />
+        }
+      </form>
+    `,
+  })
+  class EmbeddedControlHostComponent {
+    readonly formValue = signal<ProfileModel>({});
+    readonly suite = profileSuite;
+    readonly vest = viewChild.required<FormDirective<ProfileModel>>('vest');
+  }
+
+  const layouts = [
+    ['controls directly in the template', DirectControlHostComponent],
+    ['controls inside an embedded view', EmbeddedControlHostComponent],
+  ] as const;
+
+  for (const [layout, hostType] of layouts) {
+    it(`refreshes formState value, status and errors when the parent sets a new model (${layout})`, async () => {
+      profileSuite.reset();
+      const { fixture } = await render<
+        DirectControlHostComponent | EmbeddedControlHostComponent
+      >(hostType);
+      const host = fixture.componentInstance;
+      await whenStable();
+      await waitFor(() => {
+        expect(host.vest().formState().errors['name']).toEqual([
+          'Name is required',
+        ]);
+      });
+      expect(host.vest().status()).toBe('INVALID');
+
+      host.formValue.set({ name: 'Ada' });
+      await whenStable();
+
+      expect(host.vest().formState().value).toEqual({ name: 'Ada' });
+      await waitFor(() => {
+        expect(host.vest().formState().valid).toBe(true);
+      });
+      expect(host.vest().formState().errors).toEqual({});
+      expect(host.vest().status()).toBe('VALID');
+      expect(host.vest().valid()).toBe(true);
+    });
+  }
+});
