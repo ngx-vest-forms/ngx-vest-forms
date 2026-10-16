@@ -71,6 +71,30 @@ Sequence:
 5. **Post-GA:** add a `release/v3.x` maintenance branch to `.releaserc` before
    `master` moves on to v4 (issue #129).
 
+### Soak and exit criteria
+
+**Beta to release candidate.** Publish `3.0.0-rc.1` only when all of these
+hold:
+
+- At least **2 weeks** on `@beta` since the last beta that changed behavior
+  (a `feat` or `fix` commit; docs-only betas don't reset the clock).
+- **No open bugs** labelled `v3` that block users (crash, wrong validation
+  result, data loss, or a broken documented API).
+- The unit and e2e suites pass on the **latest Angular 22.x patch** and the
+  **latest Vest 6.x**.
+- At least **one real application** has migrated from v2 using only
+  [the migration guide](./migration/MIGRATION-v2.x-to-v3.0.0.md), and any gaps
+  it found are folded back into the guide.
+- The pre-RC work is merged: the zoneless test cleanup (#251, #253 to #256),
+  the Vest 6.3.4 runner alignment (#238) and the private Angular API contract
+  tests from #215 (PR #258). The rest of #215 is v3.1 work.
+
+**Release candidate to 3.0.0.** Publish `3.0.0` from `master` after at least
+**1 week** on `@rc` with no `feat` or `fix` commits. A fix during that week
+publishes a new `rc.N` and restarts the week.
+
+Track progress on these in issue #236.
+
 ### Publish a beta or rc
 
 `beta` and `rc` never get commits of their own. Update one by fast-forwarding
