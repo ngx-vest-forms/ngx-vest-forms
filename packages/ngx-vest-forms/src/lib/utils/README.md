@@ -435,7 +435,7 @@ The built-in wrappers already debounce their pending message (`[pendingDebounce]
 
 ### getAllFormErrors()
 
-Gets all form errors organized by field path (supports nested fields and arrays).
+Gets all form errors organized by field path (supports nested fields and arrays). Every key uses dot notation, array indices included (`phoneNumbers.0.number`), matching Vest field names and the paths in `fieldWarnings` and `fieldBlur`.
 
 ```typescript
 import { getAllFormErrors } from 'ngx-vest-forms';
@@ -444,7 +444,7 @@ const errors = getAllFormErrors(form);
 // {
 //   'email': ['Email is required'],
 //   'addresses.billing.street': ['Street is required'],
-//   'phoneNumbers[0].number': ['Invalid format']
+//   'phoneNumbers.0.number': ['Invalid format']
 // }
 ```
 

@@ -239,8 +239,10 @@ export { ROOT_FORM };
  *
  * /// Flattened form (as produced by FieldPath):
  * type S1 = FieldPathValue<Model, 'addresses.street'>; // string
- * /// Bracket form (as produced at runtime):
- * type S2 = FieldPathValue<Model, 'addresses[0].street'>; // string
+ * /// Indexed dot form (as produced at runtime, e.g. by getAllFormErrors):
+ * type S2 = FieldPathValue<Model, 'addresses.0.street'>; // string
+ * /// Bracket form (also accepted):
+ * type S3 = FieldPathValue<Model, 'addresses[0].street'>; // string
  * ```
  */
 export type FieldPathValue<T, Path extends string> = Exclude<
@@ -282,9 +284,12 @@ type FieldPathValueRaw<T, Path extends string> =
               : never
             : K extends keyof NT
               ? FieldPathValueRaw<NonNullable<NT[K]>, Rest>
-              : // Array-traversing flattened path: `arrayKey.rest`.
-                NT extends ReadonlyArray<infer U>
-                ? FieldPathValueRaw<U, Path>
+              : NT extends ReadonlyArray<infer U>
+                ? // Numeric dot segment: `0.rest` → array element.
+                  K extends `${number}`
+                  ? FieldPathValueRaw<U, Rest>
+                  : // Array-traversing flattened path: `arrayKey.rest`.
+                    FieldPathValueRaw<U, Path>
                 : never
           : // No dot left: a bare `key[0]` head segment.
             Path extends `${infer Base}[${number}]`
@@ -293,9 +298,12 @@ type FieldPathValueRaw<T, Path extends string> =
                 ? U
                 : never
               : never
-            : // Final flattened array hop (e.g. `street` against `Address[]`).
-              NT extends ReadonlyArray<infer U>
-              ? FieldPathValueRaw<U, Path>
+            : NT extends ReadonlyArray<infer U>
+              ? // Trailing numeric dot segment: `0` → array element.
+                Path extends `${number}`
+                ? U
+                : // Final flattened array hop (e.g. `street` against `Address[]`).
+                  FieldPathValueRaw<U, Path>
               : never
     : never;
 

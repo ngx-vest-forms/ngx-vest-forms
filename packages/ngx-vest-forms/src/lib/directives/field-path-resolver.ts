@@ -1,5 +1,4 @@
 import { AbstractControl, FormArray, FormGroup, NgForm } from '@angular/forms';
-import { stringifyFieldPath } from '../utils/field-path.utils';
 import {
   findRegisteredControl,
   findRegisteredGroupPath,
@@ -234,7 +233,7 @@ function resolveControlPathByDomAncestors(
 
   const result = descend({ control: root, path: [] });
   if (!result) return null;
-  return { path: stringifyFieldPath(result.path), control: result.control };
+  return { path: result.path.join('.'), control: result.control };
 }
 
 function subtreeContainsElement(

@@ -89,14 +89,16 @@ test.describe('Complex Nested Form', () => {
     await expect(memberFullName).toHaveCount(2);
     await expect(memberFullName.nth(1)).toHaveAttribute('aria-invalid', 'true');
     await expect(memberEmail.nth(1)).toHaveAttribute('aria-invalid', 'true');
-    await expect(page.getByText(/email is required/i)).toHaveCount(2);
+    // Count the inline messages only; the form-state sidebar lists them too.
+    const form = page.locator('form');
+    await expect(form.getByText(/email is required/i)).toHaveCount(2);
 
     // Member 1's Remove button must stay clickable while both cards show
     // errors (it used to sit under member 2's absolutely positioned button).
     await page.getByRole('button', { name: /remove member 1/i }).click();
 
     await expect(memberFullName).toHaveCount(1);
-    await expect(page.getByText(/email is required/i)).toHaveCount(1);
+    await expect(form.getByText(/email is required/i)).toHaveCount(1);
 
     // The removed member's errors must not block a later valid submit.
     await fillAndBlur(memberFullName.first(), 'Ada Lovelace');

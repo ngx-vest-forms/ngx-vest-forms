@@ -1,4 +1,5 @@
 import {
+  FormArray,
   FormControl,
   FormGroup,
   NgForm,
@@ -229,6 +230,26 @@ describe('resolveFieldFromBlur', () => {
 
     expect(resolveFieldFromBlur(ngForm, input)).toEqual({
       field: 'passwords.password',
+      control,
+      element: input,
+    });
+  });
+
+  it('writes a FormArray index as a dot segment in the fallback path', () => {
+    const control = new FormControl('Ada');
+    const form = document.createElement('form');
+    const input = document.createElement('input');
+    input.name = 'name';
+    form.append(input);
+
+    const ngForm = createNgForm(
+      new FormGroup({
+        users: new FormArray([new FormGroup({ name: control })]),
+      })
+    );
+
+    expect(resolveFieldFromBlur(ngForm, input)).toEqual({
+      field: 'users.0.name',
       control,
       element: input,
     });

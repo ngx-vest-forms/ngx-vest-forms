@@ -125,7 +125,7 @@ type Model = {
 type AgeType = FieldPathValue<Model, 'user.profile.age'>;
 ```
 
-`FieldPathValue` also resolves array-traversing paths, in both the flattened `FieldPath` form and the runtime bracket form, and strips the `NgxDeepPartial` `| undefined` from the leaf:
+`FieldPathValue` also resolves array-traversing paths, in the flattened `FieldPath` form, the indexed dot form the library reports at runtime, and the bracket form. It strips the `NgxDeepPartial` `| undefined` from the leaf:
 
 ```typescript
 type Model = {
@@ -138,11 +138,14 @@ type Model = {
 // Flattened FieldPath form → element property type
 type StreetA = FieldPathValue<Model, 'addresses.street'>; // string
 
-// Runtime bracket form → element property type
-type StreetB = FieldPathValue<Model, 'addresses[0].street'>; // string
+// Indexed dot form (what the library reports at runtime) → element property type
+type StreetB = FieldPathValue<Model, 'addresses.0.street'>; // string
 
-// Bracket index on the array itself → element type
-type Address = FieldPathValue<Model, 'addresses[0]'>;
+// Bracket form → element property type
+type StreetC = FieldPathValue<Model, 'addresses[0].street'>; // string
+
+// Index on the array itself → element type
+type Address = FieldPathValue<Model, 'addresses.0'>;
 // { street: string; city: string }
 ```
 
@@ -583,10 +586,10 @@ function isValidFieldPath<T>(model: T, path: string): path is FieldPath<T> {
 
 ### Issue: Array Index Paths Not Working
 
-**Expected:** Array indices in paths like `'items[0].name'`
-**Actual:** Field paths generate `'items.name'` (without index)
+**Expected:** Array indices in paths like `'items.0.name'`
+**Actual:** `FieldPath` generates `'items.name'` (without index)
 
-**Explanation:** This is by design. Field paths represent the structure, not specific indices. Use the generated paths with array validation functions.
+**Explanation:** This is by design. Field paths represent the structure, not specific indices. Use the generated paths with array validation functions. `FieldPathValue` still accepts an indexed path such as `'items.0.name'`.
 
 ---
 
@@ -717,10 +720,12 @@ export type NgxVestSuite<T>;
 
 ### Runtime Utilities
 
+Every path the library reports at runtime (`formState().errors`, `getAllFormErrors`, `fieldWarnings`, `fieldBlur.field`, validated fields) uses dot notation, array indices included: `users.0.name`. That is also the name to give the Vest test. `stringifyFieldPath()` is the exception: it turns Standard Schema path arrays into the bracket form (`users[0].name`).
+
 For working with field paths at runtime, see:
 
-- **`stringifyFieldPath()` from `ngx-vest-forms`** - Runtime helper for converting path arrays/tokens to canonical dot/bracket notation
-  - Convert array notation to dot notation
+- **`stringifyFieldPath()` from `ngx-vest-forms`** - Runtime helper that turns Standard Schema path arrays into bracket notation (`['users', 0, 'name']` → `users[0].name`)
+  - Use it to display or log a schema issue's path; to match a library-reported path, join the segments with `.` instead
   - Useful for dynamic field path manipulation
   - Works with the types defined in this guide
 

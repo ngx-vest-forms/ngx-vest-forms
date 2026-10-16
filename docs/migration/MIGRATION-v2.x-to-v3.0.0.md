@@ -304,6 +304,19 @@ const fieldWarnings = all.warnings['user.name']; // string[] | undefined
 
 The `errorsChange` output on `FormDirective` still emits `Record<string, string[]>` (the `errors` slice of the new shape), so templates consuming `(errorsChange)="errors.set($event)"` and reading `errors()['field']` continue to work unchanged. For warnings inside templates, prefer the existing `fieldWarnings()` signal on the directive — it is per-field, reactive, and the recommended path for warning display.
 
+### Array indices are dot segments
+
+`getAllFormErrors`, `formState().errors` and `errorsChange` key array entries in dot notation, like every other path the library reports (`fieldWarnings`, `fieldBlur.field`, the validated-field list) and like the Vest field names a suite uses with `each()`:
+
+```typescript
+// v2 and early v3: errors['phonenumbers.values[0]'], errors['users[0].name']
+// v3:              errors['phonenumbers.values.0'], errors['users.0.name']
+```
+
+The same holds for the paths of `FormArray` entries in the touched and validated field lists, which were bracketed before (`contacts[0]` is now `contacts.0`).
+
+If you look up errors or touched state for array items by a bracketed key, switch to the dotted key. Keys without array indices are unchanged.
+
 ## Internal helpers moved to `ngx-vest-forms/internal`
 
 Six previously `@internal` symbols have been **removed from the primary `'ngx-vest-forms'` entry point** and are now only reachable from the new `'ngx-vest-forms/internal'` secondary entry point:
