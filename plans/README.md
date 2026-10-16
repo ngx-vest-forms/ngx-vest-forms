@@ -143,7 +143,11 @@ Vetted during the audit; ask for plans for any of these:
   `structuredClone` per event, deep-equal in `formValueChange` + `formState`
   + sync effect, full clone per async-validator run. PR #261 replaces the
   `structuredClone` with a plain-object/array copy (other values by
-  reference); the deep-equal and per-run copy remain.
+  reference); the deep-equal and per-run copy remain. FIXED: one shared
+  snapshot per value event and a per-cycle equality memo; one keystroke in a
+  200-field form went from 2 copies / 7 deep compares to 1 / 2 (no suite) and
+  5 / 9 to 4 / 4 (with a suite; 2 of the 4 copies are the async validators'
+  own, kept because the suite gets a model with the candidate value written in).
 - **PERF-02** (perf, S): `mergeValuesAndRawValues` double-clones where one
   `structuredClone(getRawValue())` suffices (keep the `isUnsafePathSegment` guard). DONE in PR #259.
 - **PERF-03** (perf, S): `getControlPath` O(N) DFS per validation run;
