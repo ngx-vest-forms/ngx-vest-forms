@@ -1049,6 +1049,47 @@ describe('FormDirective - Reset Functionality', () => {
       expect(input.value).toBe('Ada');
     });
 
+    @Component({
+      template: `
+        <form ngxVestForm #vestForm="ngxVestForm" [formValue]="formValue()">
+          <input
+            name="firstName"
+            [ngModel]="formValue().firstName"
+            data-testid="firstName"
+          />
+          @if (showLastName()) {
+            <input
+              name="lastName"
+              [ngModel]="formValue().lastName"
+              data-testid="lastName"
+            />
+          }
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class OneWayRemovalComponent {
+      vestFormRef = viewChild.required<FormDirective<any>>('vestForm');
+      formValue = signal({ firstName: 'John', lastName: 'Doe' });
+      showLastName = signal(true);
+    }
+
+    it('keeps the cleared controls when a control is removed after resetForm()', async () => {
+      const { fixture } = await render(OneWayRemovalComponent);
+      const input = screen.getByTestId('firstName') as HTMLInputElement;
+      await waitFor(() => expect(input.value).toBe('John'));
+
+      fixture.componentInstance.vestFormRef().resetForm();
+      await settle();
+      expect(input.value).toBe('');
+
+      fixture.componentInstance.showLastName.set(false);
+      await settle();
+
+      expect(screen.queryByTestId('lastName')).toBeNull();
+      expect(input.value).toBe('');
+    });
+
     it('still applies a new model the consumer passes in', async () => {
       asyncSuite.reset();
       const { fixture } = await render(OneWayComponent);

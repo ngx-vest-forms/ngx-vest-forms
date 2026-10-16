@@ -831,8 +831,18 @@ export class FormDirective<T extends Record<string, unknown>> {
           // a stale form snapshot can be observed in the same turn as the new
           // model input. Let the model win instead of reporting a user-edit
           // conflict.
+          //
+          // Unless the consumer passed no new model: then the model baseline
+          // differs only because a one-way `[formValue]` binding never echoed
+          // a form-wins sync (e.g. after `resetForm()`), and the form changed
+          // structurally (a control was removed). Keep the form.
           untracked(() => {
-            this.#applyModelValue(modelValue);
+            if (modelInputChanged) {
+              this.#applyModelValue(modelValue);
+            } else {
+              this.#lastSyncedFormValue = formValue;
+              this.#lastSyncedModelValue = formValue;
+            }
           });
         } else {
           // Both sides hold distinct, non-null live values - this is a true
