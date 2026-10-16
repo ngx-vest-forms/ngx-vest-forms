@@ -1,21 +1,37 @@
 # Release Process
 
-This document describes how to release new versions of ngx-vest-forms. All releases are now **manual only** and require explicit triggering via GitHub Actions.
+This document describes how to release new versions of ngx-vest-forms. All releases are **manual only** and require explicit triggering via GitHub Actions.
+
+Every release, stable or prerelease, runs through one workflow:
+[Actions > Release](../../actions/workflows/cd.yml) (`cd.yml`). npm's Trusted
+Publisher for `ngx-vest-forms` names that file, so a publish from any other
+workflow gets no OIDC token and fails with `ENONPMTOKEN`.
+
+**How to trigger:**
+
+1. Go to [Actions > Release](../../actions/workflows/cd.yml) and click "Run workflow".
+2. Set **Use workflow from** to the branch you release, and pick the same
+   branch in the `branch` input. The workflow stops when the two differ,
+   because semantic-release picks the channel from the dispatch branch
+   (`GITHUB_REF`), not from the input.
+3. Leave `dry_run` on for a first run to see the computed version and
+   channel in the log, then run again with it off to publish.
+
+From the command line:
+
+```bash
+gh workflow run cd.yml --ref <branch> -f branch=<branch> -f dry_run=true
+```
 
 ## Release Types
 
 ### 1. Production Release (Stable)
 
-Production releases are created from `master` and maintenance branches (`release/v1.x`, `release/v2.x`) and publish stable versions to npm.
+Stable versions come from `master` and the maintenance branches:
 
-**How to trigger:**
-
-1. Go to [Actions > Release (Production)](../../actions/workflows/cd.yml)
-2. Click "Run workflow"
-3. Select the branch to release from:
-   - `master` - Stable `@latest` channel. `master` now carries v3, so a run here publishes **`3.0.0` to `@latest`**. Only do this when you declare v3 GA (see below).
-   - `release/v1.x` - Maintenance releases for v1.x
-   - `release/v2.x` - Maintenance releases for v2.x
+- `master` - Stable `@latest` channel. `master` now carries v3, so a run here publishes **`3.0.0` to `@latest`**. Only do this when you declare v3 GA (see below).
+- `release/v1.x` - Maintenance releases for v1.x
+- `release/v2.x` - Maintenance releases for v2.x
 
 ### Branch lifecycle & the v2 → v3 transition
 
@@ -31,7 +47,7 @@ branch the `@beta` channel publishes from.
   `master` publishes stable `3.0.0` to `@latest`. Running it _is_ declaring v3
   GA, so don't run it to get a beta.
 - **`release/v3` is the beta channel.** To publish a beta, fast-forward it to
-  `master` and dispatch the prerelease workflow on it (next section).
+  `master` and dispatch the Release workflow on it (next section).
 
 Sequence:
 
@@ -54,15 +70,9 @@ The workflow will:
 
 ### 2. Prerelease / Beta Release
 
-Prereleases are used for testing new features before stable release. They can be created from various branches.
-
-**How to trigger:**
-
-1. Go to [Actions > Release (Prerelease/Beta)](../../actions/workflows/prerelease.yml)
-2. Click "Run workflow"
-3. Choose branch type:
-   - **Stable**: Select from predefined branches (next, alpha, rc, release/v1.x, release/v2.x, release/v3)
-   - **Custom**: Enter a custom branch name (e.g., `feat/awesome-feature`, `fix/critical-bug`)
+Prereleases are used for testing new features before stable release. Dispatch
+the same Release workflow on `release/v3`, `next`, `alpha` or `rc`; `.releaserc`
+makes those branches prerelease channels.
 
 The workflow will:
 
@@ -85,19 +95,17 @@ nothing, because the workflow has no `push` trigger.
    git push origin origin/master:refs/heads/release/v3
    ```
 
-2. Dispatch **Release (Prerelease/Beta)** with **Use workflow from** set to
-   `release/v3`, `branch_type = stable`, `stable_branch = release/v3` and
-   `dry_run = true`. Check the computed version in the log
-   (`3.0.0-beta.N` on channel `beta`). From the command line:
+2. Dispatch **Release** with **Use workflow from** set to `release/v3`,
+   `branch = release/v3` and `dry_run = true`. Check the computed version in
+   the log (`3.0.0-beta.N` on channel `beta`). From the command line:
 
    ```bash
-   gh workflow run prerelease.yml --ref release/v3 \
-     -f branch_type=stable -f stable_branch=release/v3 -f dry_run=true
+   gh workflow run cd.yml --ref release/v3 -f branch=release/v3 -f dry_run=true
    ```
 
    The **Use workflow from** branch matters: semantic-release picks the
    channel from the branch the run was dispatched on (`GITHUB_REF`), not from
-   `stable_branch`. Dispatched from `master`, it would compute a stable
+   the `branch` input. Dispatched from `master`, it would compute a stable
    `3.0.0` for `@latest`. The workflow stops when the two differ.
 
 3. Dispatch it again the same way with `dry_run = false`. semantic-release publishes the
@@ -111,15 +119,17 @@ resolves to the latest one.
 
 #### Prerelease Branches
 
-| Branch Pattern | npm Tag     | Version Example   | Use Case                                          |
-| -------------- | ----------- | ----------------- | ------------------------------------------------- |
-| `release/v3`   | beta        | 3.0.0-beta.1      | v3 beta line, fast-forwarded to `master` per beta |
-| `next`         | next        | 2.1.0-next.1      | Next major version features                       |
-| `alpha`        | alpha       | 2.1.0-alpha.1     | Early alpha testing                               |
-| `rc`           | rc          | 2.1.0-rc.1        | Release candidate                                 |
-| `release/v2.x` | release-v2  | 2.5.1             | v2 maintenance releases after v3 becomes current  |
-| `feat/*`       | feat-{name} | 2.1.0-feat-name.1 | Feature branch testing                            |
-| `fix/*`        | fix-{name}  | 2.1.0-fix-name.1  | Fix branch testing                                |
+| Branch Pattern | npm Tag    | Version Example | Use Case                                          |
+| -------------- | ---------- | --------------- | ------------------------------------------------- |
+| `release/v3`   | beta       | 3.0.0-beta.1    | v3 beta line, fast-forwarded to `master` per beta |
+| `next`         | next       | 2.1.0-next.1    | Next major version features                       |
+| `alpha`        | alpha      | 2.1.0-alpha.1   | Early alpha testing                               |
+| `rc`           | rc         | 2.1.0-rc.1      | Release candidate                                 |
+| `release/v2.x` | release-v2 | 2.5.1           | v2 maintenance releases after v3 becomes current  |
+
+`.releaserc` also defines `feat/*` and `fix/*` prerelease channels, but the
+Release workflow offers only the branches above. Add a branch to its `branch`
+options to publish from it.
 
 ## Semantic Versioning
 
@@ -187,8 +197,10 @@ If semantic-release skips releasing:
 
 If npm publish fails:
 
+- `ENONPMTOKEN No npm token specified`: the run did not come from `cd.yml`, or
+  npm's Trusted Publisher no longer names `cd.yml` and the `npm-publish`
+  environment
 - Check npm permissions in the repository settings
-- Verify OIDC Trusted Publisher is configured
 - Check npm registry status
 
 ### Wrong version generated

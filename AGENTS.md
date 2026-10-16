@@ -12,7 +12,7 @@ Shared instructions for every coding agent in this repo (Claude Code, Copilot). 
 
 - `master` is v3, the current line. Target it by default.
 - `release/v2.x` and `release/v1.x` are maintenance-only for their major: bug fixes and security patches.
-- Merging never publishes. Stable releases go out through a manual `workflow_dispatch` of `.github/workflows/cd.yml`; prereleases through `.github/workflows/prerelease.yml`. Branch-to-channel mapping lives in `.releaserc`.
+- Merging never publishes. Every release, stable or prerelease, goes out through a manual `workflow_dispatch` of `.github/workflows/cd.yml`, dispatched with `--ref` set to the branch being released; npm's Trusted Publisher trusts only that file. Branch-to-channel mapping lives in `.releaserc`.
 
 ## Library changes
 
