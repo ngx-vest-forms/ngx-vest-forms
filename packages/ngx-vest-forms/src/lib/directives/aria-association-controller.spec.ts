@@ -11,14 +11,16 @@ import type { AriaAssociationMode } from '../utils/aria-association.utils';
 import { createAriaAssociationController } from './aria-association-controller';
 
 @Component({
-  selector: 'test-aria-host',
+  selector: 'ngx-test-aria-host',
   template: `
     <input id="first" aria-describedby="consumer-hint" />
     @if (showSecond()) {
       <select id="second" aria-required="true"></select>
     }
-    <div id="combo" role="combobox"><input id="inner" /></div>
-    <div id="slider" role="slider"></div>
+    <div id="combo" role="combobox" aria-controls="plain" aria-expanded="false">
+      <input id="inner" />
+    </div>
+    <div id="slider" role="slider" aria-valuenow="0"></div>
     <div id="plain"><span>not a control</span></div>
   `,
 })
