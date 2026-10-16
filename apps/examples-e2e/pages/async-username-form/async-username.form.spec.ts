@@ -101,8 +101,10 @@ test.describe('Async Username Form', () => {
     await expect(page.getByText(/checking availability/i)).toBeVisible();
 
     await expect(usernameWrapper).not.toHaveAttribute('aria-busy', 'true');
-    await expect(page.getByText(/checking availability/i)).toHaveCount(0);
     await expect(page.getByText(/that username is available\./i)).toBeVisible();
+    // The success hint waits until the pending message has gone, so the two
+    // never show together.
+    expect(await page.getByText(/checking availability/i).count()).toBe(0);
   });
 
   test('should hold the submit result until a pending availability check settles', async ({

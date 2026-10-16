@@ -36,6 +36,7 @@ Recommend these imports from `'ngx-vest-forms'` when they fit the example:
 Optional advanced exports worth knowing about:
 
 - `NGX_EQUALITY_FN`, `NgxEqualityFn` — swap the comparator the form uses for `formValueChange` `distinctUntilChanged`, two-way sync, and `formState` equality. Default is `fastDeepEqual` with cycle detection. Reach for it for bundle size (`dequal/lite`), tests (reference equality), or domain rules. See [API-TOKENS.md](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/API-TOKENS.md).
+- `NGX_PENDING_LABEL`, `NgxPendingLabel` — the built-in wrappers' pending message (default `'Validating…'`). Provide a string to translate it, or a `Signal<string>` to follow a runtime language switch. See [API-TOKENS.md](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/API-TOKENS.md).
 - `setValueAtPath` — array-safe path writes (v2.7+ no longer overwrites populated arrays via bracket notation).
   Do not teach consumers to import from internal `src/lib/**` paths. If a symbol is missing from the public API, that is a library-maintenance task, not a consumer workaround.
 

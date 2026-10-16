@@ -3,6 +3,7 @@ import {
   createDebouncedPendingState,
   createFormFeedbackSignals,
   FormDirective,
+  NGX_PENDING_LABEL,
   NGX_VALIDATION_DEBOUNCE_PRESETS,
   NgxSubmitSettledEvent,
   NgxVestForms,
@@ -19,7 +20,11 @@ import {
   selector: 'ngx-async-username-form-body',
   imports: [NgxVestForms],
   templateUrl: './async-username.form.html',
-  providers: [provideFormContract(asyncUsernameShape)],
+  providers: [
+    provideFormContract(asyncUsernameShape),
+    // The wrappers' pending message; provide it app-wide to translate it.
+    { provide: NGX_PENDING_LABEL, useValue: 'Checking availability…' },
+  ],
 })
 export class AsyncUsernameFormBody {
   readonly formValue = input.required<AsyncUsernameModel>();
@@ -39,12 +44,15 @@ export class AsyncUsernameFormBody {
   };
 
   /**
-   * Show the hint only for checks slower than 200ms, then keep it up for at
-   * least 500ms, so a fast response does not flash it on and off.
+   * When the wrapper shows "Checking availability…": only for checks slower
+   * than 200ms, then for at least 500ms so a fast response does not flash it.
    */
-  protected readonly showCheckingHint = createDebouncedPendingState(
+  protected readonly pendingDebounce = { showAfter: 200, minimumDisplay: 500 };
+
+  /** Mirrors the wrapper's pending message, to keep the success hint apart. */
+  private readonly checkingShown = createDebouncedPendingState(
     this.feedback.pending,
-    { showAfter: 200, minimumDisplay: 500 }
+    this.pendingDebounce
   ).showPendingMessage;
 
   private readonly usernameErrors = computed(
@@ -55,6 +63,7 @@ export class AsyncUsernameFormBody {
     const validated = this.feedback.validatedFields() ?? [];
     return (
       !this.feedback.pending() &&
+      !this.checkingShown() &&
       validated.includes('username') &&
       this.usernameErrors().length === 0 &&
       !!this.formValue().username

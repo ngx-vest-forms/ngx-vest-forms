@@ -1,8 +1,8 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { FormErrorDisplayDirective } from '../../directives/form-error-display.directive';
+import { injectPendingLabel } from '../../tokens/pending-label.token';
+import { NgxIdGenerator } from '../../utils/id-generator';
 import { createDebouncedPendingState } from '../../utils/pending-state.utils';
-
-let nextUniqueId = 0;
 
 /**
  * Group-safe wrapper for `NgModelGroup` containers.
@@ -48,7 +48,9 @@ export class FormGroupWrapperComponent {
     minimumDisplay: 500,
   });
 
-  protected readonly uniqueId = `ngx-form-group-wrapper-${nextUniqueId++}`;
+  protected readonly uniqueId = inject(NgxIdGenerator).next(
+    'ngx-form-group-wrapper'
+  );
   readonly errorId = `${this.uniqueId}-error`;
   readonly warningId = `${this.uniqueId}-warning`;
   readonly pendingId = `${this.uniqueId}-pending`;
@@ -58,6 +60,8 @@ export class FormGroupWrapperComponent {
     this.pendingDebounce
   );
   protected readonly showPendingMessage = this.pendingState.showPendingMessage;
+  /** Pending message text from `NGX_PENDING_LABEL`. */
+  protected readonly pendingLabel = injectPendingLabel();
 
   /**
    * Helpful if consumers want to wire aria-describedby manually (e.g. fieldset/legend pattern).

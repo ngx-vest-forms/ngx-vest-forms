@@ -413,6 +413,9 @@ export class CustomWrapperComponent {
 
 - ✅ Creating custom control wrappers with async validation feedback
 - ✅ Preventing "Validating..." message from flashing for quick validations
+
+The built-in wrappers already debounce their pending message (`[pendingDebounce]`) and take its text from the `NGX_PENDING_LABEL` token; a custom wrapper on `ngxErrorControl` can read that text from `pendingLabel()` instead of hard-coding "Validating…".
+
 - ✅ Ensuring pending messages stay visible long enough to be noticed
 - ✅ Improving UX for async form validation
 

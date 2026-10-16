@@ -96,6 +96,8 @@ export type {
   NgxFormContract,
   NgxFormContractSource,
 } from './lib/tokens/form-contract.token';
+export { NGX_PENDING_LABEL } from './lib/tokens/pending-label.token';
+export type { NgxPendingLabel } from './lib/tokens/pending-label.token';
 export { NGX_VALIDATION_DEBOUNCE_PRESETS } from './lib/tokens/validation-debounce-presets';
 export type { NgxValidationDebouncePreset } from './lib/tokens/validation-debounce-presets';
 

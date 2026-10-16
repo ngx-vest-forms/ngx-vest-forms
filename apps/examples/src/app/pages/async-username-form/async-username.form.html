@@ -7,7 +7,10 @@
   (submitSettled)="onSubmitSettled($event)"
   class="space-y-6"
 >
-  <ngx-control-wrapper class="form-field">
+  <ngx-control-wrapper
+    class="form-field"
+    [pendingDebounce]="pendingDebounce"
+  >
     <label for="username" class="label-text">Username</label>
     <input
       class="input-field"
@@ -23,11 +26,7 @@
     />
 
     <p aria-live="polite" class="mt-1 min-h-[1.25rem] text-sm">
-      @if (showCheckingHint()) {
-      <span class="text-blue-600 dark:text-blue-400">
-        Checking availability…
-      </span>
-      } @else if (usernameResolved()) {
+      @if (usernameResolved()) {
       <span class="text-green-600 dark:text-green-400">
         That username is available.
       </span>

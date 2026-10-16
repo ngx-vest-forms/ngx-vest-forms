@@ -52,6 +52,7 @@ Read `core/SKILL.md` when the user is:
 - unsure how to structure a component around ngx-vest-forms
 - asking about `NgxDeepPartial`, the Form Contract, or signal-based form state
 - swapping the equality function with `NGX_EQUALITY_FN`
+- translating or renaming the wrappers' "Validating…" text with `NGX_PENDING_LABEL`
 - writing tests for a form/Vest suite, asking about `staticSuite`, `runStatic`,
   resetting stateful suites between tests, or "tests pass locally but fail in CI"
 

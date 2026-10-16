@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { NGX_PENDING_LABEL } from '../tokens/pending-label.token';
 import { FormErrorControlDirective } from './form-error-control.directive';
 
 @Component({
@@ -44,6 +45,20 @@ class TestHostComponent {
   model = '';
   ariaMode: 'all-controls' | 'single-control' | 'none' = 'all-controls';
 }
+
+@Component({
+  imports: [FormsModule, FormErrorControlDirective],
+  providers: [{ provide: NGX_PENDING_LABEL, useValue: 'Bezig…' }],
+  template: `
+    <form>
+      <div ngxErrorControl #ec="ngxErrorControl">
+        <input name="x" ngModel aria-label="X" />
+        <p data-testid="custom-pending">{{ ec.pendingLabel() }}</p>
+      </div>
+    </form>
+  `,
+})
+class PendingLabelHostComponent {}
 
 @Component({
   imports: [FormsModule, FormErrorControlDirective],
@@ -176,7 +191,7 @@ describe('FormErrorControlDirective', () => {
     await userEvent.tab();
 
     const errorId = screen.getByTestId('error-region').getAttribute('id');
-    expect(errorId).toMatch(/^ngx-error-control-\d+-error$/);
+    expect(errorId).toMatch(/^ngx-error-control-(?:[\w-]+-)?\d+-error$/);
 
     await waitFor(() => {
       expect(input.getAttribute('aria-describedby')).toBe(`hint ${errorId}`);
@@ -212,7 +227,7 @@ describe('FormErrorControlDirective', () => {
     await userEvent.tab();
 
     const errorId = screen.getByTestId('error-region').getAttribute('id');
-    expect(errorId).toMatch(/^ngx-error-control-\d+-error$/);
+    expect(errorId).toMatch(/^ngx-error-control-(?:[\w-]+-)?\d+-error$/);
 
     await waitFor(() => {
       expect(input.getAttribute('aria-describedby')).toBe(`hint ${errorId}`);
@@ -301,7 +316,9 @@ describe('FormErrorControlDirective', () => {
       const describedBy = input.getAttribute('aria-describedby') ?? '';
       const ownedErrorToken = describedBy
         .split(/\s+/)
-        .find((token) => /^ngx-error-control-\d+-error$/.test(token));
+        .find((token) =>
+          /^ngx-error-control-(?:[\w-]+-)?\d+-error$/.test(token)
+        );
 
       expect(ownedErrorToken).toBeTruthy();
       if (!ownedErrorToken) {
@@ -330,7 +347,9 @@ describe('FormErrorControlDirective', () => {
       const describedBy = input.getAttribute('aria-describedby') ?? '';
       const newErrorToken = describedBy
         .split(/\s+/)
-        .find((token) => /^ngx-error-control-\d+-error$/.test(token));
+        .find((token) =>
+          /^ngx-error-control-(?:[\w-]+-)?\d+-error$/.test(token)
+        );
 
       expect(newErrorToken).toBeTruthy();
       if (!newErrorToken) {
@@ -340,5 +359,11 @@ describe('FormErrorControlDirective', () => {
       expect(document.getElementById(newErrorToken)).toBeInTheDocument();
       expect(document.getElementById(oldErrorId)).toBeNull();
     });
+  });
+
+  it('exposes the NGX_PENDING_LABEL text for custom wrappers', async () => {
+    await render(PendingLabelHostComponent);
+
+    expect(screen.getByTestId('custom-pending')).toHaveTextContent('Bezig…');
   });
 });

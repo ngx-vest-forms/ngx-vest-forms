@@ -484,6 +484,50 @@ Use `NGX_ERROR_DISPLAY_MODE_TOKEN` to configure the default error display mode. 
 import { NGX_ERROR_DISPLAY_MODE_TOKEN } from 'ngx-vest-forms';
 ```
 
+## Wrapper Text
+
+### `NGX_PENDING_LABEL`
+
+Sets the pending message that `<ngx-control-wrapper>` and `<ngx-form-group-wrapper>` show while async validation runs.
+
+**Type:** `InjectionToken<NgxPendingLabel>` where `NgxPendingLabel = string | Signal<string>`
+
+**Default:** `'Validating…'`
+
+Provide a string to translate or rename the message. Provide a `Signal<string>` when the language can change at runtime; the wrappers re-render when it changes. Custom wrappers built on `FormErrorControlDirective` can render the same text from its `pendingLabel()` signal.
+
+#### Usage
+
+**Translate with `$localize`:**
+
+```typescript
+import { ApplicationConfig } from '@angular/core';
+import { NGX_PENDING_LABEL } from 'ngx-vest-forms';
+
+export const appConfig: ApplicationConfig = {
+  providers: [{ provide: NGX_PENDING_LABEL, useValue: $localize`Validating…` }],
+};
+```
+
+**Follow a runtime language switch:**
+
+```typescript
+import { computed, inject } from '@angular/core';
+import { NGX_PENDING_LABEL } from 'ngx-vest-forms';
+
+providers: [
+  {
+    provide: NGX_PENDING_LABEL,
+    useFactory: () => {
+      const i18n = inject(TranslationService); // your translation service
+      return computed(() => i18n.translate('form.validating'));
+    },
+  },
+];
+```
+
+**Rename it for one form:** provide the token on the component whose template holds the wrappers, as the async-username example does with `'Checking availability…'`.
+
 ## Equality Configuration
 
 ### `NGX_EQUALITY_FN`
