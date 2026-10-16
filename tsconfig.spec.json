@@ -11,7 +11,7 @@
     "types": [
       "vitest/globals",
       "node",
-      "@testing-library/jest-dom",
+      "@testing-library/jest-dom/vitest",
       "@vitest/browser-playwright"
     ]
   },

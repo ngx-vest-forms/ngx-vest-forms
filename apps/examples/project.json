@@ -54,7 +54,9 @@
       "executor": "@angular/build:unit-test",
       "options": {
         "tsConfig": "tsconfig.spec.json",
-        "runnerConfig": "vitest.config.ts"
+        "runnerConfig": "vitest.config.ts",
+        "coverageInclude": ["apps/examples/src/app/**/*.ts"],
+        "coverageExclude": ["apps/examples/src/app/**/*.spec.ts"]
       }
     },
     "lint-templates": {

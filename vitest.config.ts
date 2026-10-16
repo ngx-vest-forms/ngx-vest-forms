@@ -43,20 +43,15 @@ export default defineConfig(({ mode }) => ({
     exclude: [...defaultExclude, '**/*.browser.spec.ts'],
     setupFiles: ['packages/ngx-vest-forms/src/test-setup.ts'],
     reporters: ['default'],
+    // Shared by every project's `test` target. Each project sets its own
+    // `coverageInclude`, `coverageExclude` and (for the library)
+    // `coverageThresholds` in its project.json: the unit-test builder
+    // concatenates `include` with this block, so a shared include list would
+    // pull the examples app into the library's numbers.
     coverage: {
       provider: 'v8',
       reporter: ['html', 'lcov', 'text-summary'],
-      include: [
-        'packages/ngx-vest-forms/src/lib/**/*.ts',
-        'apps/examples/src/app/**/*.ts',
-      ],
-      exclude: [
-        'packages/ngx-vest-forms/src/lib/**/*.spec.ts',
-        'packages/ngx-vest-forms/src/lib/testing/**',
-        'apps/examples/src/app/**/*.spec.ts',
-        '**/node_modules/**',
-        '**/dist/**',
-      ],
+      exclude: ['**/node_modules/**', '**/dist/**'],
     },
     // Sequence hooks to match Jest behavior
     sequence: {

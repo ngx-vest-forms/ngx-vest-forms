@@ -97,8 +97,12 @@ jobs:
         run: pnpm exec tsc --noEmit -p packages/ngx-vest-forms/tsconfig.spec.json
       - name: Build library
         run: pnpm nx run ngx-vest-forms:build --configuration=production
-      - name: Test
-        run: pnpm nx run-many --target=test
+      - name: Test library with coverage
+        # Fails when coverage drops below coverageThresholds in
+        # packages/ngx-vest-forms/project.json.
+        run: pnpm nx run ngx-vest-forms:test --coverage
+      - name: Test other projects
+        run: pnpm nx run-many --target=test --exclude=ngx-vest-forms
       - name: Browser tests
         run: pnpm nx run ngx-vest-forms:test-browser
       - name: E2E tests

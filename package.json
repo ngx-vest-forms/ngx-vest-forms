@@ -64,6 +64,7 @@
     "@typescript/native": "npm:typescript@^7.0.2",
     "@vitest/browser": "^5.0.3",
     "@vitest/browser-playwright": "^5.0.3",
+    "@vitest/coverage-v8": "5.0.3",
     "@vitest/eslint-plugin": "~1.6.27",
     "angular-eslint": "22.5.0",
     "eslint": "^10.12.0",
