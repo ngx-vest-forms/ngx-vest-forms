@@ -826,7 +826,7 @@ describe('getAllFormErrors', () => {
     expect(result.errors['level1.level2.level3']).toEqual(['Deep error']);
   });
 
-  it('should collect errors from controls inside FormArray using numeric path segments', () => {
+  it('should key FormArray entries in dot notation, indices included', () => {
     const form = new FormGroup({
       users: new FormArray([
         new FormGroup({
@@ -840,7 +840,28 @@ describe('getAllFormErrors', () => {
     form.updateValueAndValidity();
     const result = getAllFormErrors(form);
 
-    expect(result.errors['users[0].name']).toEqual(['Name error']);
+    expect(result.errors['users.0.name']).toEqual(['Name error']);
+  });
+
+  it('should key numeric group keys (template-driven arrays) in dot notation', () => {
+    // arrayToObject turns arrays into groups keyed '0', '1', … in templates.
+    const form = new FormGroup({
+      phonenumbers: new FormGroup({
+        values: new FormGroup({
+          '0': new FormControl('', {
+            validators: () => ({ errors: ['Invalid number'] }),
+          }),
+        }),
+      }),
+    });
+
+    form.updateValueAndValidity();
+    const result = getAllFormErrors(form);
+
+    // Same key a Vest test named `phonenumbers.values.0` reports under.
+    expect(result.errors).toEqual({
+      'phonenumbers.values.0': ['Invalid number'],
+    });
   });
 
   it('should keep only string values from errors and warnings arrays', () => {

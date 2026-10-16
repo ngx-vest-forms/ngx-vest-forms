@@ -309,7 +309,7 @@ describe('field-path-types', () => {
       expect(typeof street).toBe('string');
     });
 
-    it('should resolve array-traversing paths in bracket form (runtime form)', () => {
+    it('should resolve array-traversing paths in bracket form', () => {
       type TestModel = {
         addresses: Array<{ street: string }>;
         tags: string[];
@@ -329,6 +329,29 @@ describe('field-path-types', () => {
       const tag: TagType = 't';
       expect(typeof street).toBe('string');
       expect(typeof tag).toBe('string');
+    });
+
+    it('should resolve array-traversing paths with numeric dot segments (runtime form)', () => {
+      type TestModel = {
+        addresses: Array<{ street: string }>;
+        tags: string[];
+        matrix: number[][];
+      };
+
+      type StreetType = FieldPathValue<TestModel, 'addresses.0.street'>;
+      type ElementType = FieldPathValue<TestModel, 'addresses.0'>;
+      type TagType = FieldPathValue<TestModel, 'tags.3'>;
+      type CellType = FieldPathValue<TestModel, 'matrix.1.2'>;
+
+      expectTypeOf<StreetType>().toEqualTypeOf<string>();
+      expectTypeOf<ElementType>().toEqualTypeOf<{ street: string }>();
+      expectTypeOf<TagType>().toEqualTypeOf<string>();
+      expectTypeOf<CellType>().toEqualTypeOf<number>();
+
+      const street: StreetType = 'Main St';
+      const cell: CellType = 1;
+      expect(typeof street).toBe('string');
+      expect(typeof cell).toBe('number');
     });
 
     it('should strip the partial `| undefined` consistently for nested paths', () => {

@@ -111,7 +111,7 @@ Vetted during the audit; ask for plans for any of these:
   goes to Angular's `ErrorHandler` before the field fails closed.
 - **C-03** (bug, M): inconsistent numeric path notation — `getAllFormErrors`
   uses brackets (`users[0].name`) while `fieldWarnings`/`fieldBlur.field`/
-  `getFormControlField` use dots (`values.0.from`); docs say "dotted field path".
+  `getFormControlField` use dots (`values.0.from`); docs say "dotted field path". FIXED: every reported path, array indices included, uses dots.
 - **C-05** (bug, S): `vest-runner.ts:175-176` `catchError(() => of(suite.get()))`
   — async suite rejection fails open to shared mutable suite state, no
   diagnostic (pinned by vest-runner.spec.ts:278). FIXED defensively: Vest 6.3 never rejects the run

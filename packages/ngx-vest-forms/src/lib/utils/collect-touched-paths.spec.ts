@@ -33,7 +33,7 @@ describe('collectTouchedPaths', () => {
     expect(collectTouchedPaths(form, false)).toEqual(['profile.email']);
   });
 
-  it('returns bracket notation paths for touched array leaves', () => {
+  it('returns dot notation paths, indices included, for touched array leaves', () => {
     const form = new FormGroup({
       contacts: new FormArray([
         new FormControl('555-0100'),
@@ -48,8 +48,8 @@ describe('collectTouchedPaths', () => {
     (contacts.at(1) as AbstractControl).get('label')?.markAsTouched();
 
     expect(collectTouchedPaths(form, false)).toEqual([
-      'contacts[0]',
-      'contacts[1].label',
+      'contacts.0',
+      'contacts.1.label',
     ]);
   });
 
@@ -65,7 +65,7 @@ describe('collectTouchedPaths', () => {
     expect(collectTouchedPaths(form, true)).toEqual([
       'firstName',
       'profile.email',
-      'contacts[0]',
+      'contacts.0',
     ]);
   });
 

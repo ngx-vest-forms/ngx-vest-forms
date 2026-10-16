@@ -7,11 +7,7 @@ import {
   ValidationErrors,
 } from '@angular/forms';
 import { ROOT_FORM } from '../constants';
-import {
-  isUnsafePathSegment,
-  parseFieldPath,
-  stringifyFieldPath,
-} from './field-path.utils';
+import { isUnsafePathSegment, parseFieldPath } from './field-path.utils';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -350,38 +346,20 @@ export function getAllFormErrors(form?: AbstractControl): NgxFormErrorsByPath {
     }
   }
 
-  function collect(
-    control: AbstractControl,
-    pathParts: Array<string | number>
-  ): void {
-    const pathString = stringifyFieldPath(pathParts);
-
-    // Skip processing the root form control directly in NgxFormDirective
-    if (pathParts.length === 0 && control === form) {
-      // Instead, iterate its children if it's a group/array
-      if (isFormGroup(control) || isFormArray(control)) {
-        for (const [key, childControl] of getChildEntries(control)) {
-          const numericKey = Number(key);
-          const nextPath = [
-            // ...pathParts, // pathParts is empty here
-            Number.isNaN(numericKey) ? key : numericKey,
-          ];
-          collect(childControl, nextPath);
-        }
-      }
-      return; // Stop processing for the root form itself at this level
+  // Dot notation for every segment, array indices included (`users.0.name`),
+  // matching Vest field names and the other paths the directive reports
+  // (`fieldWarnings`, `fieldBlur`, validated fields).
+  function collectChildren(container: AbstractControl, prefix: string): void {
+    if (!isFormGroup(container) && !isFormArray(container)) {
+      return;
     }
-
-    if (isFormGroup(control) || isFormArray(control)) {
-      for (const [key, childControl] of getChildEntries(control)) {
-        const numericKey = Number(key);
-        const nextPath = [
-          ...pathParts,
-          Number.isNaN(numericKey) ? key : numericKey,
-        ];
-        collect(childControl, nextPath);
-      }
+    for (const [key, childControl] of getChildEntries(container)) {
+      collect(childControl, prefix ? `${prefix}.${key}` : key);
     }
+  }
+
+  function collect(control: AbstractControl, path: string): void {
+    collectChildren(control, path);
 
     if (control.enabled) {
       const fieldErrors = getStringArrayError(
@@ -389,19 +367,20 @@ export function getAllFormErrors(form?: AbstractControl): NgxFormErrorsByPath {
         ERROR_MESSAGES_KEY
       );
       if (fieldErrors) {
-        errors[pathString] = fieldErrors;
+        errors[path] = fieldErrors;
       }
       const fieldWarnings = getStringArrayError(
         control.errors,
         WARNING_MESSAGES_KEY
       );
       if (fieldWarnings) {
-        warnings[pathString] = fieldWarnings;
+        warnings[path] = fieldWarnings;
       }
     }
   }
 
-  collect(form, []);
+  // The root's own errors were collected above under ROOT_FORM.
+  collectChildren(form, '');
 
   return { errors, warnings };
 }

@@ -2,8 +2,11 @@
  * Utilities for working with field paths in dot/bracket notation and Standard Schema path arrays.
  *
  * These utilities help convert between:
- * - **Dot/bracket notation**: `'addresses[0].street'` (used in Angular forms and Vest)
+ * - **Dot/bracket notation**: `'addresses[0].street'` (for display and logging)
  * - **Standard Schema paths**: `['addresses', 0, 'street']` (used in schema validation)
+ *
+ * The paths the library reports at runtime (form errors, touched and validated
+ * fields) use dots for array indices instead: `'addresses.0.street'`.
  *
  * @example
  * ```typescript

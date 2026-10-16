@@ -4,7 +4,7 @@
  *
  * **Why use this?**
  * - Provides IDE autocomplete for known model properties
- * - Still accepts arbitrary strings for nested paths like `'addresses[0].street'`
+ * - Still accepts arbitrary strings for nested paths like `'addresses.0.street'`
  * - Useful for cyclic dependencies and dynamic field names
  *
  * **How it works:**
@@ -26,7 +26,7 @@
  * type UserField = NgxFieldKey<User>;
  *
  * /// IDE suggests 'name', 'email', 'age'
- * /// but also accepts 'addresses[0].street'
+ * /// but also accepts 'addresses.0.street'
  * const field: UserField = 'email'; // ✅ autocomplete
  * const nested: UserField = 'profile.settings.theme'; // ✅ also valid
  * ```
@@ -54,7 +54,7 @@ export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
  * ```
  *
  * **Type parameters explained:**
- * - First `string`: Field names (property paths like 'email' or 'addresses[0].street')
+ * - First `string`: Field names (property paths like 'email' or 'addresses.0.street')
  * - Second `string`: Group names (for organizing tests, e.g., 'step1', 'step2')
  * - Third parameter: The validation function signature with bivariance trick
  *
