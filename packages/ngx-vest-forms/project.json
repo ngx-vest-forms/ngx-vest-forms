@@ -25,8 +25,20 @@
       "executor": "@angular/build:unit-test",
       "options": {
         "tsConfig": "tsconfig.spec.json",
-        "runnerConfig": "vitest.config.ts"
-      }
+        "runnerConfig": "vitest.config.ts",
+        "coverageInclude": ["packages/ngx-vest-forms/src/lib/**/*.ts"],
+        "coverageExclude": [
+          "packages/ngx-vest-forms/src/lib/**/*.spec.ts",
+          "packages/ngx-vest-forms/src/lib/testing/**"
+        ],
+        "coverageThresholds": {
+          "statements": 92,
+          "branches": 85,
+          "functions": 92,
+          "lines": 92
+        }
+      },
+      "outputs": ["{workspaceRoot}/coverage/{projectName}"]
     },
     "test-browser": {
       "executor": "nx:run-commands",

@@ -166,10 +166,12 @@ Vetted during the audit; ask for plans for any of these:
   `error-catalog.ts` (NGX-101..104 never asserted), `tokens/form-contract.token.ts`,
   `utils/form-contract.ts`. FIXED: each file now has its own spec.
 - **TEST-02** (tests, S): vitest coverage block has no `thresholds`; CI has
-  no coverage step; `coverage/` is a stale pre-Nx artifact. Still open:
-  adding `@vitest/coverage-v8` re-keys vitest in the lockfile and the
-  jest-dom matcher types stop resolving in every spec, so it needs its own
-  investigation. (TEST-03 — fixed
+  no coverage step; `coverage/` is a stale pre-Nx artifact. FIXED: library
+  coverage scoped to `src/lib` with thresholds (92/85/92/92) in its
+  project.json and enforced by CI's `ngx-vest-forms:test --coverage`; root
+  `tsconfig.spec.json` now loads `@testing-library/jest-dom/vitest`, since
+  the global virtual store links `@vitest/browser` to a second vitest copy
+  once `@vitest/coverage-v8` is installed. (TEST-03 — fixed
   `setTimeout` sleeps in `lib/testing/validation-config.spec.ts` — was
   resolved by commit `3233b8c2`, which replaced the sleeps with `waitFor()`
   polling.)
