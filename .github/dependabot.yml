@@ -1,0 +1,60 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    # pnpm rejects versions younger than minimumReleaseAge (1440 minutes) in
+    # pnpm-workspace.yaml. Two days leaves a margin, so a Dependabot lockfile
+    # never fails the frozen install.
+    cooldown:
+      default-days: 2
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+    commit-message:
+      prefix: build(deps)
+      prefix-development: chore(deps-dev)
+    # A dependency joins the first group that matches, so the lockstep
+    # families come first. Every group takes only minor and patch updates:
+    # a major update gets its own PR, which dependabot-auto-merge.yml leaves
+    # for a human.
+    groups:
+      angular:
+        patterns:
+          - '@angular/*'
+          - '@angular-devkit/*'
+          - '@angular-eslint/*'
+          - '@schematics/angular'
+          - 'ng-packagr'
+        update-types: [minor, patch]
+      nx:
+        patterns:
+          - '@nx/*'
+          - 'nx'
+        update-types: [minor, patch]
+      dev-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
+      production-dependencies:
+        dependency-type: production
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 2
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: ci(deps)
+    groups:
+      github-actions:
+        patterns:
+          - '*'
+        update-types: [minor, patch]

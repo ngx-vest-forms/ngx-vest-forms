@@ -14,3 +14,7 @@ We are migrating this Nx workspace to a **Pnpm-First Workspace** on pnpm 11 whil
 - **SHA-Pinned Workflow Actions**: GitHub Actions are referenced by commit SHA, not by mutable version tag.
 - **Zero-Exception Cooldown Policy**: the release-age and trust policy starts with no exceptions and adds one only when a concrete blocker appears.
 - **Narrow Trust Exception**: a trust-policy exclusion scoped to one package version, added after a real install blocker is confirmed.
+
+## Amendments
+
+- 2026-10-16: the **Dependency Cache Embargo** is retired. [ADR-0011](0011-trusted-ref-pnpm-store-cache.md) replaces it with pnpm's trusted-ref cache pattern.
