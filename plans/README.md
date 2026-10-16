@@ -128,7 +128,10 @@ Vetted during the audit; ask for plans for any of these:
   `<details>`, and the caller opens it before focusing.
 - **C-02** (bug, M): `formState`/`status` computeds stay stale after
   programmatic model→form sync because `patchValue(..., { emitEvent: false })`
-  emits no events and the signal layer is purely event-driven.
+  emits no events and the signal layer is purely event-driven. FIXED (6daf61c, PR #272):
+  the sync effect's `patchValue` now emits events (`formValueChange` skips them), so
+  `formState`/`status` refresh after a model write; regression tests cover controls
+  in the template and in an embedded view.
 - **C-09** (bug, S): standalone `resetForm()` (without paired
   `formValue.set()`) re-applies old model values via the sync effect's
   pristine branch (form.directive.ts:714-730). FIXED: with a one-way `[formValue]` (no
