@@ -179,7 +179,7 @@ export type NgxSuiteRunResult = {
    * selectors via `assign(promise, suiteResult)`). The promise resolves once
    * the run settles — to the latest run's result when a newer run of the same
    * suite superseded it (Vest >= 6.3.4). The runner emits that resolved value
-   * and falls back to `get()` only when resolution yields nothing or rejects.
+   * and falls back to `get()` only when resolution yields nothing.
    *
    * NOTE: this stays *optional* purely for static structural assignability:
    * Vest's exported `SuiteResult<F, G, S>` type does not statically declare

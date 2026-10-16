@@ -100,8 +100,9 @@ code review:
 - **E2E-OVERLAP-01** and **WIZARD-FLAKE-01**: see the 007 row.
 - **INVESTIGATE-01** (behaviour, S): during plan 008 an executor reported that
   an untouched dependent that becomes required through a trigger change is
-  not re-validated on its own blur when kept mounted with `[hidden]`. Not
-  reproduced or proven; needs a focused unit test.
+  not re-validated on its own blur when kept mounted with `[hidden]`. NOT
+  REPRODUCED: a unit test in `testing/validation-config.spec.ts` shows the
+  error after the blur; it stays as a guard.
 
 Vetted during the audit; ask for plans for any of these:
 
@@ -113,7 +114,10 @@ Vetted during the audit; ask for plans for any of these:
   `getFormControlField` use dots (`values.0.from`); docs say "dotted field path".
 - **C-05** (bug, S): `vest-runner.ts:175-176` `catchError(() => of(suite.get()))`
   — async suite rejection fails open to shared mutable suite state, no
-  diagnostic (pinned by vest-runner.spec.ts:278).
+  diagnostic (pinned by vest-runner.spec.ts:278). FIXED defensively: Vest 6.3 never rejects the run
+  promise, but a rejection now propagates to the caller, which reports it to
+  `ErrorHandler` (field fails closed, root form open) instead of emitting
+  `suite.get()`.
 - **C-08** (bug, S): `aria-association-controller.ts:126-137` early-returns
   on mode `'none'` → stale `aria-invalid`/`aria-describedby` persist after a
   runtime mode switch. FIXED on `claude/examples-e2e-audit` (PR #267): the controller releases the attributes it set when an element stops being a target.
@@ -127,7 +131,11 @@ Vetted during the audit; ask for plans for any of these:
   emits no events and the signal layer is purely event-driven.
 - **C-09** (bug, S): standalone `resetForm()` (without paired
   `formValue.set()`) re-applies old model values via the sync effect's
-  pristine branch (form.directive.ts:714-730).
+  pristine branch (form.directive.ts:714-730). FIXED: with a one-way `[formValue]` (no
+  `formValueChange` echo) the sync effect no longer treats the unchanged input as
+  a model change, so neither a reset nor a user edit is overwritten by the old
+  model on the next status change; `resetForm()` also seeds the model baseline
+  from the current input.
 - **PERF-01** (perf, M): per-keystroke O(form-size) storm — 2×
   `structuredClone` per event, deep-equal in `formValueChange` + `formState`
   + sync effect, full clone per async-validator run. PR #261 replaces the
@@ -176,7 +184,8 @@ Vetted during the audit; ask for plans for any of these:
   `pullfrog.yml` removed (commit `bde620d1`); the mutable-tag finding is
   covered by the SHA-pin gate (commit `d9163803`).
 - **SEC-06** (security, S): ci.yml top-level `permissions:` includes
-  `id-token: write` with no OIDC consumer (nx.json `analytics: false`).
+  `id-token: write` with no OIDC consumer (nx.json `analytics: false`). FIXED:
+  removed.
 
 ## Findings considered and rejected
 

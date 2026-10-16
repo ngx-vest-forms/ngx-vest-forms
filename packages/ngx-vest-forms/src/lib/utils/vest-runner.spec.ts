@@ -277,7 +277,7 @@ describe('vest-runner', () => {
     expect(values).toEqual([fallback]);
   });
 
-  it('emits the latest suite state when the run promise rejects', async () => {
+  it('propagates a rejected run instead of emitting the latest suite state', async () => {
     const { destroyRef } = createMockDestroyRef();
     const latestResult = createSuiteResult({
       username: ['Recovered latest state'],
@@ -295,6 +295,7 @@ describe('vest-runner', () => {
     });
 
     const values: NgxSuiteRunResult[] = [];
+    const errors: unknown[] = [];
 
     runFieldValidation(
       suite,
@@ -302,12 +303,19 @@ describe('vest-runner', () => {
       { username: 'ada' },
       { debounceTime: 0 },
       destroyRef
-    ).subscribe((value) => values.push(value));
+    ).subscribe({
+      next: (value) => values.push(value),
+      error: (error: unknown) => errors.push(error),
+    });
 
     await flushZeroDebounceRun();
 
-    expect(suite.get).toHaveBeenCalled();
-    expect(values).toEqual([latestResult]);
+    // The callers turn the error into a reported failure (field validators
+    // fail closed, the root validator fails open); the suite's latest state
+    // could be another run's result and must not be passed off as this one.
+    expect(values).toEqual([]);
+    expect(errors).toEqual([new Error('boom')]);
+    expect(suite.get).not.toHaveBeenCalled();
   });
 
   it('stops emission when the upstream subscription is torn down', async () => {

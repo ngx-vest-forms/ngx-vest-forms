@@ -773,6 +773,18 @@ export class FormDirective<T extends Record<string, unknown>> {
           this.#lastSyncedModelValue = formValue;
         });
       } else if (modelChanged && !formChanged) {
+        if (!modelInputChanged) {
+          // The consumer passed no new model; only the baseline moved. The
+          // form-wins branch records the form value as the model baseline,
+          // expecting the consumer to echo `formValueChange` back. With a
+          // one-way `[formValue]` binding that echo never comes, and treating
+          // the stale input as a model change would write it over the
+          // user's edits (or a reset) on the next status change.
+          untracked(() => {
+            this.#lastSyncedModelValue = modelValue;
+          });
+          return;
+        }
         // Model was modified programmatically -> model wins
         // Use untracked() to avoid infinite loops - we're updating tracking state here
         untracked(() => {
@@ -819,8 +831,18 @@ export class FormDirective<T extends Record<string, unknown>> {
           // a stale form snapshot can be observed in the same turn as the new
           // model input. Let the model win instead of reporting a user-edit
           // conflict.
+          //
+          // Unless the consumer passed no new model: then the model baseline
+          // differs only because a one-way `[formValue]` binding never echoed
+          // a form-wins sync (e.g. after `resetForm()`), and the form changed
+          // structurally (a control was removed). Keep the form.
           untracked(() => {
-            this.#applyModelValue(modelValue);
+            if (modelInputChanged) {
+              this.#applyModelValue(modelValue);
+            } else {
+              this.#lastSyncedFormValue = formValue;
+              this.#lastSyncedModelValue = formValue;
+            }
           });
         } else {
           // Both sides hold distinct, non-null live values - this is a true
@@ -1250,7 +1272,8 @@ export class FormDirective<T extends Record<string, unknown>> {
    *
    * This method properly resets the form by:
    * 1. Resetting Angular's underlying NgForm with the provided value
-   * 2. Clearing the bidirectional sync tracking state
+   * 2. Resetting the bidirectional sync tracking, so the reset values stay
+   *    unless the consumer passes a new `formValue` (see below)
    * 3. Forcing a form validity update to clear any stale validation errors
    *
    * **Why this method exists:**
@@ -1260,7 +1283,7 @@ export class FormDirective<T extends Record<string, unknown>> {
    * sync logic, requiring workarounds like calling `formValue.set({})` twice with
    * a setTimeout. This method provides a proper solution by:
    * - Calling Angular's `NgForm.resetForm()` which properly clears all controls
-   * - Clearing the internal sync tracking state to avoid stale comparisons
+   * - Resetting the internal sync tracking to avoid stale comparisons
    * - Triggering a form validity update to ensure validation state is current
    *
    * **Usage:**
@@ -1290,6 +1313,12 @@ export class FormDirective<T extends Record<string, unknown>> {
    * }
    * ```
    *
+   * **Without a new `formValue`:** `resetForm()` and `resetForm(value)` keep
+   * the reset values even if the `[formValue]` input still holds the old model
+   * (for example with a one-way binding). With `(formValueChange)` bound, the
+   * reset values are emitted so the model follows. To reset to the current
+   * model, pass it: `resetForm(this.formValue())`.
+   *
    * @param value - Optional new value to reset the form to. If not provided,
    *                resets to empty/default values.
    *
@@ -1309,10 +1338,15 @@ export class FormDirective<T extends Record<string, unknown>> {
     // Clear any stored warnings to avoid stale messages after reset
     this.fieldWarnings.set(new Map());
 
-    // Clear the bidirectional sync tracking state so the next formValue change
-    // is treated as a model change (not a conflict with stale form values)
+    // Reset the bidirectional sync tracking. The form baseline is cleared so
+    // the reset values count as a form change. The model baseline is the
+    // model input as it is now: if the consumer does not also pass a new
+    // `formValue`, the sync effect sees only the form change and keeps the
+    // reset values instead of writing the old model back. If the consumer
+    // does pass a new model (`formValue.set(...)` next to `resetForm()`), the
+    // next run sees a model change and that model wins.
     this.#lastSyncedFormValue = null;
-    this.#lastSyncedModelValue = null;
+    this.#lastSyncedModelValue = untracked(this.formValue);
 
     // Mark the view for check so the zoneless scheduler re-renders the
     // ng-* host classes (ng-pristine, ng-valid, …) after NgForm.resetForm()

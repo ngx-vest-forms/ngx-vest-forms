@@ -695,6 +695,87 @@ describe('FormDirective - Comprehensive', () => {
     });
   });
 
+  // INVESTIGATE-01 (plans/README.md): a dependent that is kept mounted with
+  // [hidden], and becomes required through a trigger change while untouched,
+  // must show its error once the user blurs it.
+  it('should show the error of a [hidden]-mounted dependent on its own blur after a trigger made it required', async () => {
+    @Component({
+      template: `
+        <form
+          ngxVestForm
+          [formValue]="formValue()"
+          [suite]="suite"
+          [validationConfig]="validationConfig"
+          (formValueChange)="formValue.set($event)"
+        >
+          <ngx-control-wrapper>
+            <label for="quantity">Quantity</label>
+            <input
+              id="quantity"
+              name="quantity"
+              type="number"
+              [ngModel]="formValue().quantity"
+            />
+          </ngx-control-wrapper>
+          <ngx-control-wrapper [hidden]="(formValue().quantity ?? 0) <= 5">
+            <label for="justification">Justification</label>
+            <input
+              id="justification"
+              name="justification"
+              type="text"
+              [ngModel]="formValue().justification"
+            />
+          </ngx-control-wrapper>
+        </form>
+      `,
+      imports: [NgxVestForms],
+    })
+    class TestComponent {
+      formValue = signal<
+        NgxDeepPartial<{ quantity: number | null; justification: string }>
+      >({ quantity: null, justification: '' });
+      validationConfig = { quantity: ['justification'] };
+      suite = create((model: any) => {
+        omitWhen((model.quantity ?? 0) <= 5, () => {
+          test('justification', 'Justification is required', () => {
+            enforce(model.justification).isNotBlank();
+          });
+        });
+      });
+    }
+
+    const fixture = TestBed.configureTestingModule({
+      imports: [TestComponent],
+    }).createComponent(TestComponent);
+    fixture.detectChanges();
+    await whenStable();
+
+    const quantityInput: HTMLInputElement =
+      fixture.nativeElement.querySelector('#quantity');
+    const justificationInput: HTMLInputElement =
+      fixture.nativeElement.querySelector('#justification');
+
+    await typeInto(quantityInput, '10');
+    await waitFor(() => {
+      expect(justificationInput.closest('[hidden]')).toBeNull();
+      expect(justificationInput.classList.contains('ng-invalid')).toBe(true);
+    });
+    // Untouched, so the error is not displayed yet.
+    expect(fixture.nativeElement.textContent).not.toContain(
+      'Justification is required'
+    );
+
+    await userEvent.click(justificationInput);
+    await userEvent.tab();
+
+    await waitFor(() => {
+      expect(fixture.nativeElement.textContent).toContain(
+        'Justification is required'
+      );
+      expect(justificationInput).toHaveAttribute('aria-invalid', 'true');
+    });
+  });
+
   it('should show error on quantity when justification is filled but quantity is empty (with blur)', async () => {
     @Component({
       template: `
