@@ -89,6 +89,9 @@ jobs:
       - name: Install Playwright system deps (cache hit)
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium
+      - name: Check formatting
+        # Covers {apps,packages}/**/*.{ts,js,json,css,scss,html}; fix with `pnpm format`.
+        run: pnpm prettier:check
       - name: Lint
         run: pnpm nx run-many --target=lint,lint-templates
       - name: Typecheck library specs
