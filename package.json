@@ -50,7 +50,7 @@
     "@nx/oxlint": "23.3.0",
     "@nx/playwright": "23.3.0",
     "@nx/workspace": "23.3.0",
-    "@playwright/test": "1.64.0",
+    "@playwright/test": "1.64.1",
     "@schematics/angular": "22.2.2",
     "@semantic-release/git": "~11.0.1",
     "@standard-schema/spec": "^1.1.0",
