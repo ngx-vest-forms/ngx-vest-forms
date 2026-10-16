@@ -8,8 +8,8 @@ metadata:
 
 # Release Preflight
 
-This repo publishes `ngx-vest-forms` via **semantic-release** on push to a
-release branch. The version bump and changelog are derived entirely from
+This repo publishes `ngx-vest-forms` via **semantic-release**, from a manual
+dispatch of `cd.yml` on a release branch (see `docs/RELEASE.md`). The version bump and changelog are derived entirely from
 conventional commit messages, and whatever is built is what consumers get.
 This skill is the manual gate that semantic-release does not provide.
 
@@ -24,8 +24,8 @@ git status --porcelain
 git log --format='%s' origin/master..HEAD
 ```
 
-Confirm the branch is a release branch (`master`, `release/**`, `next`,
-`beta`, `alpha`, `rc`) and the tree is clean.
+Confirm the branch is a release branch (`master`, `release/v1.x`,
+`release/v2.x`, `beta`, `rc`) and the tree is clean.
 
 ## 2. Conventional-commit audit
 

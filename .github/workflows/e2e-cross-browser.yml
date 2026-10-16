@@ -14,16 +14,18 @@ permissions:
 jobs:
   e2e:
     runs-on: ubuntu-latest
-    env:
-      CI: true
+    timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Install pnpm and Node.js
         uses: pnpm/setup@a0881977cd8ea73b1ed212236c99ca10dcc80cf4 # v3.1.1
         with:
-          runtime: node@24
+          node-version-file: .node-version
           install: false
+          cache: true
       - name: Set up Socket Firewall
         uses: socketdev/action@ba6de6cc0565af1f42295590380973573297e31f # v1.3.2
         with:
@@ -36,7 +38,7 @@ jobs:
         run: pnpm nx run examples-e2e:e2e -- --project=firefox --project=webkit
       - name: Upload Playwright report
         if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-report-cross-browser
           path: |

@@ -1,103 +1,53 @@
 name: Release
 
 # The only workflow that publishes to npm, through npm Trusted Publishing
-# (OIDC); every published version's provenance names this file. Stable and
-# prerelease channels both run here; .releaserc maps each branch to its
-# channel.
+# (OIDC); every published version's provenance names this file. Dispatch it
+# on the branch to release (--ref). .releaserc maps each branch to its
+# channel: master to @latest, release/v1.x and release/v2.x to their
+# maintenance tags, beta and rc to prereleases.
+#
+# Two jobs, split on purpose:
+#   - verify:  runs the lint, test and build tooling with a read-only token
+#              and no OIDC token, and uploads the built package.
+#   - release: holds the OIDC token and write access. It installs without
+#              lifecycle scripts, runs only semantic-release on the
+#              downloaded package, and waits for approval on the
+#              npm-publish environment. Do not add build or test steps here.
 
 on:
   workflow_dispatch:
     inputs:
-      branch:
-        description: 'Branch to release from. Must match "Use workflow from".'
-        required: true
-        default: 'master'
-        type: choice
-        options:
-          - master        # @latest
-          - release/v1.x  # release-v1
-          - release/v2.x  # release-v2
-          - release/v3    # @beta prerelease
-          - next          # @next prerelease
-          - alpha         # @alpha prerelease
-          - rc            # @rc prerelease
       dry_run:
         description: 'Dry run: compute and print the next version and channel without publishing, tagging, or creating a release. Untick to publish.'
         required: false
         default: true
         type: boolean
 
-permissions:
-  contents: write  # For creating releases and updating changelog
-  issues: write    # For commenting on issues
-  pull-requests: write  # For commenting on PRs
-  id-token: write  # For provenance
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
-  cd:
-    concurrency: cd-${{ github.event.inputs.branch }}
+  verify:
+    name: Verify and build
     runs-on: ubuntu-latest
-    environment: npm-publish  # Required for OIDC Trusted Publisher
-    env:
-      # Replaces the registry-url input of the former actions/setup-node step;
-      # pnpm and semantic-release's npm client both read it. Keep the trailing
-      # slash: @semantic-release/npm only attempts the OIDC (Trusted
-      # Publisher) token exchange when this equals "https://registry.npmjs.org/"
-      # exactly, and otherwise fails with ENONPMTOKEN.
-      NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
+    timeout-minutes: 45
+    permissions:
+      contents: read
     steps:
-      - name: Validate branch input
-        env:
-          BRANCH: ${{ github.event.inputs.branch }}
-          DISPATCH_BRANCH: ${{ github.ref_name }}
-        run: |
-          if [ -z "$BRANCH" ]; then
-            echo "Error: No branch specified"
-            exit 1
-          fi
-          # semantic-release reads the branch from GITHUB_REF (the "Use
-          # workflow from" branch), not from this input. If they differ it
-          # releases on the dispatch branch's channel, e.g. a stable version
-          # to @latest when dispatched from master.
-          if [ "$BRANCH" != "$DISPATCH_BRANCH" ]; then
-            echo "Error: dispatched from '$DISPATCH_BRANCH' but releasing '$BRANCH'."
-            echo "Re-run with 'Use workflow from' (gh: --ref) set to '$BRANCH'."
-            exit 1
-          fi
-          echo "Releasing from branch: $BRANCH"
-
       - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          ref: ${{ github.event.inputs.branch }}
-          fetch-depth: 0
       - name: Install pnpm and Node.js
-        # Reads the pnpm version from package.json's packageManager field and
-        # verifies the binary against npm's signature. install: false — the
-        # install step below runs under the Socket firewall.
+        # install: false — the install step below runs under the Socket firewall.
         uses: pnpm/setup@a0881977cd8ea73b1ed212236c99ca10dcc80cf4 # v3.1.1
         with:
-          runtime: node@24
+          node-version-file: .node-version
           install: false
-      - name: Resolve pnpm store and metadata cache paths
-        id: pnpm-paths
-        run: |
-          echo "store-path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
-          echo "metadata-cache-path=$(pnpm cache path)" >> "$GITHUB_OUTPUT"
-      - name: Cache pnpm store and metadata cache
-        # Trusted events only (ADR-0001, narrowed by ADR-0009): a pull_request
-        # job must never write a package-manager cache that a trusted job later
-        # restores. The store is content-addressed and integrity-checked; the
-        # metadata cache holds the lockfile verification log.
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: |
-            ${{ steps.pnpm-paths.outputs.store-path }}
-            ${{ steps.pnpm-paths.outputs.metadata-cache-path }}
-          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: pnpm-store-${{ runner.os }}-
+          cache: true
       - name: Set up Socket Firewall
         uses: socketdev/action@ba6de6cc0565af1f42295590380973573297e31f # v1.3.2
         with:
@@ -109,7 +59,7 @@ jobs:
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browsers
         id: playwright-cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
@@ -127,19 +77,69 @@ jobs:
         run: pnpm nx run-many --target=test
       - name: E2E tests
         run: pnpm nx run examples-e2e:e2e -- --project=chromium
-        env:
-          CI: true
+      - name: Upload package
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: package
+          path: dist/ngx-vest-forms
+          include-hidden-files: true # the package's .npmignore
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Publish
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: npm-publish # Needs a maintainer's approval; npm's Trusted Publisher names it
+    permissions:
+      contents: write       # Tag and GitHub release
+      issues: write         # semantic-release's "released in" comments
+      pull-requests: write  # semantic-release's "released in" comments
+      id-token: write       # npm Trusted Publishing and provenance
+    env:
+      # Keep the trailing slash: @semantic-release/npm only attempts the OIDC
+      # (Trusted Publisher) token exchange when this equals
+      # "https://registry.npmjs.org/" exactly, and otherwise fails with
+      # ENONPMTOKEN.
+      NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Install pnpm and Node.js
+        uses: pnpm/setup@a0881977cd8ea73b1ed212236c99ca10dcc80cf4 # v3.1.1
+        with:
+          node-version-file: .node-version
+          install: false
+          cache: true
+          save-cache: false
+      - name: Set up Socket Firewall
+        uses: socketdev/action@ba6de6cc0565af1f42295590380973573297e31f # v1.3.2
+        with:
+          mode: firewall
+      - name: Install semantic-release
+        # --ignore-scripts: no dependency lifecycle script runs in this job.
+        run: sfw pnpm install --frozen-lockfile --ignore-scripts
+      - name: Download package
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: package
+          path: dist/ngx-vest-forms
+      - name: List package contents
+        # semantic-release --dry-run skips publish, so this is the dry run's
+        # view of what would ship.
+        run: npm pack ./dist/ngx-vest-forms --dry-run --ignore-scripts
       - name: Publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true  # Enable provenance attestation with OIDC
-          RELEASE_BRANCH: ${{ github.event.inputs.branch }}
-          DRY_RUN: ${{ github.event.inputs.dry_run }}
+          NPM_CONFIG_PROVENANCE: true
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
           if [ "$DRY_RUN" = "true" ]; then
-            echo "DRY RUN: computing next version and channel for branch '$RELEASE_BRANCH' (no publish)"
             pnpm exec semantic-release --dry-run
           else
-            echo "Publishing release from branch: $RELEASE_BRANCH"
             pnpm exec semantic-release
           fi

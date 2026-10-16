@@ -1,137 +1,93 @@
 # Release Process
 
-This document describes how to release new versions of ngx-vest-forms. All releases are **manual only** and require explicit triggering via GitHub Actions.
-
 Every release, stable or prerelease, runs through one workflow:
-[Actions > Release](../../actions/workflows/cd.yml) (`cd.yml`). It publishes
-through npm Trusted Publishing (OIDC, `npm-publish` environment), and the
-provenance of every published version names this file.
+[Actions > Release](../../actions/workflows/cd.yml) (`cd.yml`). Merging or
+pushing never publishes. The workflow publishes through npm Trusted Publishing
+(OIDC), and the provenance of every published version names this file.
+
+The workflow has two jobs:
+
+- **Verify and build** lints, tests and builds with a read-only token, then
+  uploads the built package.
+- **Publish** waits for a maintainer to approve the `npm-publish` environment.
+  It then runs semantic-release on the uploaded package. This job alone holds
+  the OIDC token and write access.
 
 **How to trigger:**
 
-1. Go to [Actions > Release](../../actions/workflows/cd.yml) and click "Run workflow".
-2. Set **Use workflow from** to the branch you release, and pick the same
-   branch in the `branch` input. The workflow stops when the two differ,
-   because semantic-release picks the channel from the dispatch branch
-   (`GITHUB_REF`), not from the input.
-3. `dry_run` is on by default: the run prints the computed version and
-   channel without publishing. Check the log, then run again with `dry_run`
-   unticked to publish.
+1. Go to [Actions > Release](../../actions/workflows/cd.yml), click "Run
+   workflow" and set **Use workflow from** to the branch you release.
+   semantic-release picks the channel from that branch.
+2. `dry_run` is on by default: the run prints the computed version and
+   channel and lists the package contents, without publishing. Dry runs also
+   wait for approval, because semantic-release checks the npm OIDC exchange
+   even in a dry run.
+3. Check the log, then run again with `dry_run` unticked to publish.
 
 From the command line:
 
 ```bash
-gh workflow run cd.yml --ref <branch> -f branch=<branch>                  # dry run
-gh workflow run cd.yml --ref <branch> -f branch=<branch> -f dry_run=false # publish
+gh workflow run cd.yml --ref <branch>                  # dry run
+gh workflow run cd.yml --ref <branch> -f dry_run=false # publish
 ```
 
-## Release Types
+## Branches and channels
 
-### 1. Production Release (Stable)
+| Branch         | npm dist-tag | Version example | Use                                      |
+| -------------- | ------------ | --------------- | ---------------------------------------- |
+| `master`       | `latest`     | 3.0.0           | v3, the current line                     |
+| `beta`         | `beta`       | 3.0.0-beta.1    | v3 prereleases, fast-forwarded to master |
+| `rc`           | `rc`         | 3.0.0-rc.1      | v3 release candidates, same rule         |
+| `release/v2.x` | `release-v2` | 2.7.1           | v2 maintenance                           |
+| `release/v1.x` | `release-v1` | 1.2.1           | v1 maintenance                           |
 
-Stable versions come from `master` and the maintenance branches:
+`.releaserc` holds this mapping. The `npm-publish` environment only accepts
+these branches.
 
-- `master` - Stable `@latest` channel. `master` now carries v3, so a run here publishes **`3.0.0` to `@latest`**. Only do this when you declare v3 GA (see below).
-- `release/v1.x` - Maintenance releases for v1.x
-- `release/v2.x` - Maintenance releases for v2.x
+A dispatch runs the `cd.yml` of the branch it targets. `release/v1.x` and
+`release/v2.x` still carry the older workflow. It requires the branch as an
+input and has no dry run, so a dispatch publishes once you approve it:
 
-### Branch lifecycle & the v2 → v3 transition
+```bash
+gh workflow run cd.yml --ref release/v2.x -f branch=release/v2.x
+```
 
-The v3 work was merged into `master` (PR #186), and new v3 work targets
-`master` directly. `release/v3` no longer gets its own commits: it is only the
-branch the `@beta` channel publishes from.
+### v3 on master
 
-- **`release/v2.x` holds the v2 line.** It contains every v2 tag through
-  `v2.7.0`. A `fix:` commit there cuts a `2.7.x` patch on the `release-v2`
-  dist-tag with no effect on v3.
-- **`master` is v3 and is the `@latest` channel.** It has unreleased
-  `BREAKING CHANGE` commits since `v2.7.0`, so a Release (Production) run on
-  `master` publishes stable `3.0.0` to `@latest`. Running it _is_ declaring v3
-  GA, so don't run it to get a beta.
-- **`release/v3` is the beta channel.** To publish a beta, fast-forward it to
-  `master` and dispatch the Release workflow on it (next section).
+`master` carries v3. It has unreleased `BREAKING CHANGE` commits since
+`v2.7.0`, so a publish run on `master` releases **`3.0.0` to `@latest`**.
+Running it _is_ declaring v3 GA, so don't run it to get a beta.
 
 Sequence:
 
-1. **Beta phase:** fast-forward `release/v3` to `master` and publish
+1. **Beta phase:** fast-forward `beta` to `master` and publish
    `3.0.0-beta.N` on `@beta`. Repeat for each new beta.
-2. **v2 maintenance (in parallel):** cut `2.7.x` from `release/v2.x` as
-   needed.
-3. **v3 GA:** once the beta has soaked (issue #236), run Release
-   (Production) on `master`; semantic-release publishes `3.0.0` on `@latest`.
-4. **Post-GA:** replace the `release/v3` prerelease entry in `.releaserc`
-   with a `release/v3.x` maintenance channel (issue #129).
+2. **Release candidate:** fast-forward `rc` to `master` and publish
+   `3.0.0-rc.N` on `@rc`.
+3. **v2 maintenance (in parallel):** a `fix:` commit on `release/v2.x` cuts a
+   `2.7.x` patch on `release-v2`.
+4. **v3 GA:** once the prereleases have soaked (issue #236), publish from
+   `master`; semantic-release releases `3.0.0` on `@latest`.
+5. **Post-GA:** add a `release/v3.x` maintenance branch to `.releaserc` before
+   `master` moves on to v4 (issue #129).
 
-The workflow will:
+### Publish a beta or rc
 
-- Run all tests, lints, and builds
-- Analyze commits using [Conventional Commits](https://www.conventionalcommits.org/)
-- Generate version bump (major/minor/patch) automatically
-- Publish to npm with provenance attestation
-- Create GitHub release with generated release notes (no CHANGELOG.md file is committed to the repo)
+`beta` and `rc` never get commits of their own. Update one by fast-forwarding
+it to `master` with a direct push as an admin. A PR would add a merge commit and
+make the branch diverge from `master`.
 
-### 2. Prerelease / Beta Release
+```bash
+git fetch origin master beta
+git merge-base --is-ancestor origin/beta origin/master  # must succeed
+git push origin origin/master:refs/heads/beta
+gh workflow run cd.yml --ref beta                       # dry run, then -f dry_run=false
+```
 
-Prereleases are used for testing new features before stable release. Dispatch
-the same Release workflow on `release/v3`, `next`, `alpha` or `rc`; `.releaserc`
-makes those branches prerelease channels.
-
-The workflow will:
-
-- Run all tests, lints, and builds
-- Publish as a prerelease version (e.g., `2.1.0-beta.1`)
-- Add appropriate dist-tag in npm
-- Create GitHub prerelease
-
-#### v3 beta line (`release/v3`)
-
-Publishing is manual only. Merging or pushing to `release/v3` publishes
-nothing, because the workflow has no `push` trigger.
-
-1. Fast-forward `release/v3` to `master` (it must never have commits of its
-   own):
-
-   ```bash
-   git fetch origin master release/v3
-   git merge-base --is-ancestor origin/release/v3 origin/master  # must succeed
-   git push origin origin/master:refs/heads/release/v3
-   ```
-
-2. Dispatch **Release** with **Use workflow from** set to `release/v3`,
-   `branch = release/v3` and `dry_run = true`. Check the computed version in
-   the log (`3.0.0-beta.N` on channel `beta`). From the command line:
-
-   ```bash
-   gh workflow run cd.yml --ref release/v3 -f branch=release/v3 -f dry_run=true
-   ```
-
-   The **Use workflow from** branch matters: semantic-release picks the
-   channel from the branch the run was dispatched on (`GITHUB_REF`), not from
-   the `branch` input. Dispatched from `master`, it would compute a stable
-   `3.0.0` for `@latest`. The workflow stops when the two differ.
-
-3. Dispatch it again the same way with `dry_run = false`. semantic-release publishes the
-   package on the npm `@beta` dist-tag and creates a GitHub prerelease with the
-   generated notes (`.releaserc` →
-   `{ "name": "release/v3", "prerelease": "beta", "channel": "beta" }`).
-
-semantic-release numbers prereleases from 1, so the first v3 beta is
-`3.0.0-beta.1`, then `beta.2`, and so on. `npm install ngx-vest-forms@beta`
-resolves to the latest one.
-
-#### Prerelease Branches
-
-| Branch Pattern | npm Tag    | Version Example | Use Case                                          |
-| -------------- | ---------- | --------------- | ------------------------------------------------- |
-| `release/v3`   | beta       | 3.0.0-beta.1    | v3 beta line, fast-forwarded to `master` per beta |
-| `next`         | next       | 2.1.0-next.1    | Next major version features                       |
-| `alpha`        | alpha      | 2.1.0-alpha.1   | Early alpha testing                               |
-| `rc`           | rc         | 2.1.0-rc.1      | Release candidate                                 |
-| `release/v2.x` | release-v2 | 2.5.1           | v2 maintenance releases after v3 becomes current  |
-
-`.releaserc` also defines `feat/*` and `fix/*` prerelease channels, but the
-Release workflow offers only the branches above. Add a branch to its `branch`
-options to publish from it.
+Use `rc` in place of `beta` for a release candidate. If `rc` does not exist yet,
+the push creates it. semantic-release numbers prereleases from 1, so the first
+v3 beta is `3.0.0-beta.1`. `npm install ngx-vest-forms@beta` resolves to the
+latest one.
 
 ## Semantic Versioning
 

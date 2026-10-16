@@ -12,33 +12,12 @@
       "channel": "release-v2"
     },
     {
-      "name": "release/v3",
-      "prerelease": "beta",
-      "channel": "beta"
-    },
-    {
-      "name": "next",
-      "prerelease": "next"
+      "name": "beta",
+      "prerelease": true
     },
     {
       "name": "rc",
-      "prerelease": "rc"
-    },
-    {
-      "name": "alpha",
-      "prerelease": "alpha"
-    },
-    {
-      "name": "feat/*",
-      "prerelease": "feat-${((typeof name === 'string' && name.replace(/^feat\\//, '').replace(/[^a-zA-Z0-9-_]/g, '')) ? name.replace(/^feat\\//, '').replace(/[^a-zA-Z0-9-_]/g, '') : 'branch') || 'branch'}"
-    },
-    {
-      "name": "fix/*",
-      "prerelease": "fix-${((typeof name === 'string' && name.replace(/^fix\\//, '').replace(/[^a-zA-Z0-9-_]/g, '')) ? name.replace(/^fix\\//, '').replace(/[^a-zA-Z0-9-_]/g, '') : 'branch') || 'branch'}"
-    },
-    {
-      "name": "copilot/*",
-      "prerelease": "copilot-${((typeof name === 'string' && name.replace(/^copilot\\//, '').replace(/[^a-zA-Z0-9-_]/g, '')) ? name.replace(/^copilot\\//, '').replace(/[^a-zA-Z0-9-_]/g, '') : 'branch') || 'branch'}"
+      "prerelease": true
     }
   ],
   "plugins": [

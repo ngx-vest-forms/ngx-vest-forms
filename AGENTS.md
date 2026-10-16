@@ -12,7 +12,9 @@ Shared instructions for every coding agent in this repo (Claude Code, Copilot). 
 
 - `master` is v3, the current line. Target it by default.
 - `release/v2.x` and `release/v1.x` are maintenance-only for their major: bug fixes and security patches.
-- Merging never publishes. Every release, stable or prerelease, goes out through a manual `workflow_dispatch` of `.github/workflows/cd.yml`, dispatched with `--ref` set to the branch being released. It publishes through npm Trusted Publishing; keep its `NPM_CONFIG_REGISTRY` at `https://registry.npmjs.org/` with the trailing slash, or the OIDC exchange is skipped. Branch-to-channel mapping lives in `.releaserc`.
+- `beta` and `rc` are prerelease branches. They only ever fast-forward to `master` and never get commits of their own.
+- Merging never publishes. Every release, stable or prerelease, goes out through a manual `workflow_dispatch` of `.github/workflows/cd.yml`, dispatched with `--ref` set to the branch being released, and waits for approval on the `npm-publish` environment. It publishes through npm Trusted Publishing; keep its `NPM_CONFIG_REGISTRY` at `https://registry.npmjs.org/` with the trailing slash, or the OIDC exchange is skipped. Branch-to-channel mapping lives in `.releaserc`; `docs/RELEASE.md` has the steps.
+- Dependabot PRs with no semver-major update merge automatically once the required checks pass (`dependabot-auto-merge.yml`).
 
 ## Library changes
 
@@ -68,6 +70,6 @@ Consumer-facing examples import from `'ngx-vest-forms'` and use only symbols in 
   tracked.
 - `.env` and `.env.*` (except `.env.example`) are gitignored; keep them
   that way.
-- CI runs a secret scan on pull requests to `master`, `release/**`, `next`,
-  `beta`, `alpha`, or `rc`, over tracked files except `pnpm-lock.yaml` and
-  `*.lock`; a hit fails the build.
+- CI runs a secret scan on pull requests and pushes to `master`,
+  `release/**`, `beta` and `rc`, over tracked files except `pnpm-lock.yaml`
+  and `*.lock`; a hit fails the build.

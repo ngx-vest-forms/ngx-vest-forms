@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (amends [ADR-0001](0001-pnpm-first-workspace-hardening.md))
+Superseded by [ADR-0011](0011-trusted-ref-pnpm-store-cache.md) (amended [ADR-0001](0001-pnpm-first-workspace-hardening.md))
 
 ## Date
 
