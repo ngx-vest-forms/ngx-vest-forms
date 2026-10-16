@@ -1,17 +1,31 @@
-name: Release (Production)
+name: Release
+
+# The only workflow that publishes to npm, through npm Trusted Publishing
+# (OIDC); every published version's provenance names this file. Stable and
+# prerelease channels both run here; .releaserc maps each branch to its
+# channel.
 
 on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch to release from'
+        description: 'Branch to release from. Must match "Use workflow from".'
         required: true
         default: 'master'
         type: choice
         options:
-          - master
-          - release/v1.x
-          - release/v2.x
+          - master        # @latest
+          - release/v1.x  # release-v1
+          - release/v2.x  # release-v2
+          - release/v3    # @beta prerelease
+          - next          # @next prerelease
+          - alpha         # @alpha prerelease
+          - rc            # @rc prerelease
+      dry_run:
+        description: 'Dry run: compute and print the next version and channel without publishing, tagging, or creating a release. Untick to publish.'
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: write  # For creating releases and updating changelog
@@ -26,14 +40,28 @@ jobs:
     environment: npm-publish  # Required for OIDC Trusted Publisher
     env:
       # Replaces the registry-url input of the former actions/setup-node step;
-      # pnpm and semantic-release's npm client both read it.
-      NPM_CONFIG_REGISTRY: https://registry.npmjs.org
+      # pnpm and semantic-release's npm client both read it. Keep the trailing
+      # slash: @semantic-release/npm only attempts the OIDC (Trusted
+      # Publisher) token exchange when this equals "https://registry.npmjs.org/"
+      # exactly, and otherwise fails with ENONPMTOKEN.
+      NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
     steps:
       - name: Validate branch input
+        env:
+          BRANCH: ${{ github.event.inputs.branch }}
+          DISPATCH_BRANCH: ${{ github.ref_name }}
         run: |
-          BRANCH="${{ github.event.inputs.branch }}"
           if [ -z "$BRANCH" ]; then
             echo "Error: No branch specified"
+            exit 1
+          fi
+          # semantic-release reads the branch from GITHUB_REF (the "Use
+          # workflow from" branch), not from this input. If they differ it
+          # releases on the dispatch branch's channel, e.g. a stable version
+          # to @latest when dispatched from master.
+          if [ "$BRANCH" != "$DISPATCH_BRANCH" ]; then
+            echo "Error: dispatched from '$DISPATCH_BRANCH' but releasing '$BRANCH'."
+            echo "Re-run with 'Use workflow from' (gh: --ref) set to '$BRANCH'."
             exit 1
           fi
           echo "Releasing from branch: $BRANCH"
@@ -105,6 +133,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true  # Enable provenance attestation with OIDC
+          RELEASE_BRANCH: ${{ github.event.inputs.branch }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
         run: |
-          echo "Publishing release from branch: ${{ github.event.inputs.branch }}"
-          pnpm exec semantic-release
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "DRY RUN: computing next version and channel for branch '$RELEASE_BRANCH' (no publish)"
+            pnpm exec semantic-release --dry-run
+          else
+            echo "Publishing release from branch: $RELEASE_BRANCH"
+            pnpm exec semantic-release
+          fi
