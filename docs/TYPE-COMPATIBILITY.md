@@ -78,6 +78,7 @@ A repo-wide find-and-replace from `NgxTypedVestSuite` to `NgxVestSuite` is safe.
 `NgxVestSuite<T>` exposes the Vest 6 contract used by the library:
 
 - `only(match).run(model)` for focused validation
+- `focus({ only, skip, onlyGroup, skipGroup }).run(model)` for field and group focus. It is optional on the type, so hand-written suite fakes need not implement it; every Vest 6.3 suite has it.
 - `run(model)` for full validation
 - `get()`, `reset()`, `resetField(field)`, and `remove(field)`
 

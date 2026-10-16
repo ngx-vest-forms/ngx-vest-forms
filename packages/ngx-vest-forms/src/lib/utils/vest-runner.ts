@@ -36,7 +36,7 @@ export type RunnableVestSuite<T> = {
   };
   run(model: T): NgxSuiteRunResult;
   get(): NgxSuiteRunResult;
-  focus?: (focus: NgxSuiteFocusSpec) => FocusRunResult<T>;
+  focus?(focus: NgxSuiteFocusSpec): FocusRunResult<T>;
 };
 
 /**
