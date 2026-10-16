@@ -23,7 +23,7 @@
                 name="productId"
               >
                 @for (product of products(); track product.id) {
-                <option [value]="product.id">{{ product.name }}</option>
+                  <option [value]="product.id">{{ product.name }}</option>
                 }
               </select>
             </label>
@@ -44,20 +44,20 @@
         </div>
 
         @if (showJustification()) {
-        <ngx-control-wrapper class="form-field form-grid-full">
-          <label>
-            <span class="label-text"
-              >Justification (required when quantity > 5)</span
-            >
-            <textarea
-              class="input-field"
-              rows="3"
-              placeholder="Please justify your large order"
-              [ngModel]="formValue().justification"
-              name="justification"
-            ></textarea>
-          </label>
-        </ngx-control-wrapper>
+          <ngx-control-wrapper class="form-field form-grid-full">
+            <label>
+              <span class="label-text"
+                >Justification (required when quantity > 5)</span
+              >
+              <textarea
+                class="input-field"
+                rows="3"
+                placeholder="Please justify your large order"
+                [ngModel]="formValue().justification"
+                name="justification"
+              ></textarea>
+            </label>
+          </ngx-control-wrapper>
         }
       </div>
     </ngx-form-section>
@@ -67,19 +67,19 @@
     <ngx-form-section title="Personal Information" tone="neutral">
       <div class="form-stack">
         @if (fetchErrorNotice(); as fetchError) {
-        <!-- Async fetch failure in response to a user action: assertive is appropriate. -->
-        <ngx-alert-panel
-          tone="error"
-          [title]="fetchError.title"
-          live="assertive"
-        >
-          <div class="space-y-1">
-            <p>{{ fetchError.message }}</p>
-            @if (fetchError.detail) {
-            <p class="text-xs opacity-80">{{ fetchError.detail }}</p>
-            }
-          </div>
-        </ngx-alert-panel>
+          <!-- Async fetch failure in response to a user action: assertive is appropriate. -->
+          <ngx-alert-panel
+            tone="error"
+            [title]="fetchError.title"
+            live="assertive"
+          >
+            <div class="space-y-1">
+              <p>{{ fetchError.message }}</p>
+              @if (fetchError.detail) {
+                <p class="text-xs opacity-80">{{ fetchError.detail }}</p>
+              }
+            </div>
+          </ngx-alert-panel>
         }
 
         <div class="form-grid">
@@ -230,18 +230,18 @@
           </fieldset>
 
           @if (showGenderOther()) {
-          <ngx-control-wrapper class="form-field form-grid-full">
-            <label>
-              <span class="label-text">Specify gender</span>
-              <input
-                class="input-field"
-                placeholder="Specify gender"
-                type="text"
-                [ngModel]="formValue().genderOther"
-                name="genderOther"
-              />
-            </label>
-          </ngx-control-wrapper>
+            <ngx-control-wrapper class="form-field form-grid-full">
+              <label>
+                <span class="label-text">Specify gender</span>
+                <input
+                  class="input-field"
+                  placeholder="Specify gender"
+                  type="text"
+                  [ngModel]="formValue().genderOther"
+                  name="genderOther"
+                />
+              </label>
+            </ngx-control-wrapper>
           }
         </div>
       </div>
@@ -267,8 +267,9 @@
               type="checkbox"
               class="inline-checkbox"
               [ngModel]="
-              formValue().addresses?.shippingAddressDifferentFromBillingAddress
-            "
+                formValue().addresses
+                  ?.shippingAddressDifferentFromBillingAddress
+              "
               name="shippingAddressDifferentFromBillingAddress"
             />
             <label for="shipping-checkbox" class="inline-checkbox-label">
@@ -277,16 +278,16 @@
           </ngx-control-wrapper>
 
           @if (showShippingAddress()) {
-          <ngx-form-group-wrapper
-            class="form-field"
-            ngModelGroup="shippingAddress"
-          >
-            <h3 class="section-title">Shipping Address</h3>
-            <ngx-address
-              idPrefix="shipping-address"
-              [address]="currentShippingAddress()"
-            />
-          </ngx-form-group-wrapper>
+            <ngx-form-group-wrapper
+              class="form-field"
+              ngModelGroup="shippingAddress"
+            >
+              <h3 class="section-title">Shipping Address</h3>
+              <ngx-address
+                idPrefix="shipping-address"
+                [address]="currentShippingAddress()"
+              />
+            </ngx-form-group-wrapper>
           }
         </ngx-form-group-wrapper>
       </div>

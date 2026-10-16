@@ -1,8 +1,4 @@
-import {
-  Component,
-  computed,
-  input,
-} from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 
 @Component({
   selector: 'ngx-status-badge',

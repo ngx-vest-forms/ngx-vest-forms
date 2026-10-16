@@ -1,4 +1,9 @@
-import { FormArray, FormControl, FormGroup } from '@angular/forms';
+import {
+  AbstractControl,
+  FormArray,
+  FormControl,
+  FormGroup,
+} from '@angular/forms';
 import { describe, expect, it } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import {
@@ -48,6 +53,17 @@ describe('getFormControlField function', () => {
     if (nameControl) {
       expect(getFormControlField(form, nameControl)).toBe('users.0.name');
     }
+  });
+
+  it('should not resolve a removed control through its stale parent', () => {
+    const nameControl = new FormControl('John');
+    const personal = new FormGroup<Record<string, AbstractControl>>({
+      name: nameControl,
+    });
+    const form = new FormGroup({ personal });
+    personal.removeControl('name');
+
+    expect(getFormControlField(form, nameControl)).not.toBe('personal.name');
   });
 
   it('should fallback to control.name for detached controls', () => {

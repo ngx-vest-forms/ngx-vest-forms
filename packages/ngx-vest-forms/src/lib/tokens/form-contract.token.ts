@@ -20,9 +20,7 @@ export type NgxFormContract<T> = StandardSchemaV1<T> | NgxDeepRequired<T>;
  * temporarily disable shape checking), or `null` to opt out entirely.
  */
 export type NgxFormContractSource<T> =
-  | NgxFormContract<T>
-  | Signal<NgxFormContract<T> | null>
-  | null;
+  NgxFormContract<T> | Signal<NgxFormContract<T> | null> | null;
 
 /**
  * Injection token used to provide a {@link NgxFormContractSource} at any

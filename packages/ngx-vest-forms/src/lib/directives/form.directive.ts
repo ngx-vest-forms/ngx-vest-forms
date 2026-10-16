@@ -63,6 +63,7 @@ import {
 import { collectTouchedPaths } from '../utils/collect-touched-paths';
 import type { NgxDeepRequired } from '../utils/deep-required';
 import { scheduleMicrotask } from '../utils/destroy-scheduler';
+import { fastDeepEqual } from '../utils/equality';
 import type { ValidationConfigMap } from '../utils/field-path-types';
 import {
   DEFAULT_FOCUS_SELECTOR,
@@ -957,11 +958,13 @@ export class FormDirective<T extends Record<string, unknown>> {
 
     // Compose the validation-config pipeline.  Switching on every config change
     // automatically tears down the previous pipeline instance (and its fresh
-    // validationInProgress Set) before creating the new one.
+    // validationInProgress Set) before creating the new one. A new config
+    // object with the same entries (e.g. from a `computed` that rebuilds it)
+    // keeps the running pipeline.
     const form = this.ngForm.form;
     toObservable(this.validationConfig)
       .pipe(
-        distinctUntilChanged(),
+        distinctUntilChanged((a, b) => fastDeepEqual(a, b)),
         switchMap((config) =>
           createValidationConfigPipeline(
             form,

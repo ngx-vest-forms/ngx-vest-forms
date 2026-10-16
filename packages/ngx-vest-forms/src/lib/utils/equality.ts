@@ -12,7 +12,20 @@ export function isPrimitive(
   );
 }
 
-type VisitedPairs = WeakMap<object, WeakSet<object>>;
+/**
+ * Object pairs already being compared in one `fastDeepEqual` call. Most
+ * objects meet a single counterpart, so `first` stores it directly; `more`
+ * holds a Set only for an object compared with several counterparts (shared
+ * references in a DAG). Plain Maps suffice: the structure lives for one call.
+ */
+type VisitedPairs = {
+  first: Map<object, object>;
+  more?: Map<object, Set<object>>;
+};
+
+function hasPair(seen: VisitedPairs, a: object, b: object): boolean {
+  return seen.first.get(a) === b || seen.more?.get(a)?.has(b) === true;
+}
 
 /**
  * Records that we've started comparing the pair (a, b). Re-entering the same
@@ -21,10 +34,17 @@ type VisitedPairs = WeakMap<object, WeakSet<object>>;
  * would already have short-circuited before we reach the second visit.
  */
 function rememberPair(seen: VisitedPairs, a: object, b: object): void {
-  let targets = seen.get(a);
+  const first = seen.first.get(a);
+  if (first === undefined) {
+    seen.first.set(a, b);
+    return;
+  }
+  // Called only for a pair hasPair() did not find, so `first` is not `b`.
+  seen.more ??= new Map<object, Set<object>>();
+  let targets = seen.more.get(a);
   if (!targets) {
-    targets = new WeakSet<object>();
-    seen.set(a, targets);
+    targets = new Set<object>();
+    seen.more.set(a, targets);
   }
   targets.add(b);
 }
@@ -138,7 +158,7 @@ export function shallowEqual(obj1: unknown, obj2: unknown): boolean {
  *   even if their source code is identical)
  *
  * **Safety Features:**
- * - **Circular reference handling**: Tracks visited object pairs with `WeakMap<object, WeakSet<object>>`
+ * - **Circular reference handling**: Tracks visited object pairs in a per-call `Map`
  * - **Type coercion prevention**: Strict type checking before comparison
  * - **Null safety**: Proper handling of null and undefined values
  *
@@ -150,7 +170,7 @@ export function shallowEqual(obj1: unknown, obj2: unknown): boolean {
  * ///
  * /// Memory usage:
  * /// JSON.stringify:    Creates temporary strings (high GC pressure)
- * /// fastDeepEqual:     One small WeakMap of visited object pairs is allocated lazily on
+ * /// fastDeepEqual:     One small Map of visited object pairs is allocated lazily on
  * ///                    first nested-container descent; primitive-only comparisons allocate nothing.
  * ```
  *
@@ -243,10 +263,10 @@ function fastDeepEqualInternal(
   // Allocates lazily on first nested-object descent.
   const a = obj1 as object;
   const b = obj2 as object;
-  if (seen?.get(a)?.has(b)) {
+  if (seen && hasPair(seen, a, b)) {
     return true;
   }
-  seen ??= new WeakMap<object, WeakSet<object>>();
+  seen ??= { first: new Map<object, object>() };
   rememberPair(seen, a, b);
 
   if (Array.isArray(obj1)) {

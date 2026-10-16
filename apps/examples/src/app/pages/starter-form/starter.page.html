@@ -4,21 +4,31 @@
   <!-- Why start here: Full-width intro section -->
   <ngx-intro-section>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">One `ngxVestForm`, one Vest suite.</strong> Nothing else—no decorators, no metadata, no ceremony.
+      <strong class="text-gray-900 dark:text-white"
+        >One `ngxVestForm`, one Vest suite.</strong
+      >
+      Nothing else—no decorators, no metadata, no ceremony.
     </ngx-intro-item>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Public API only.</strong> Every line here is safe to copy into your app.
+      <strong class="text-gray-900 dark:text-white">Public API only.</strong>
+      Every line here is safe to copy into your app.
     </ngx-intro-item>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Errors appear on blur;</strong> the message hint is advisory guidance, not a blocker.
+      <strong class="text-gray-900 dark:text-white"
+        >Errors appear on blur;</strong
+      >
+      the message hint is advisory guidance, not a blocker.
     </ngx-intro-item>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">The form value is a signal</strong> the page owns—single source of truth, reactive by default.
+      <strong class="text-gray-900 dark:text-white"
+        >The form value is a signal</strong
+      >
+      the page owns—single source of truth, reactive by default.
     </ngx-intro-item>
   </ngx-intro-section>
 
   <!-- Form section: Two-column layout -->
-  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+  <div class="grid grid-cols-1 gap-8 py-12 md:grid-cols-2 md:gap-12 md:py-16">
     <!-- Left: Form State card -->
     <div>
       <ngx-form-state-card [feedback]="feedback()" />
@@ -27,12 +37,12 @@
     <!-- Right: Contact form card -->
     <div>
       @if (submittedValue(); as submitted) {
-      <ngx-alert-panel tone="success" title="Message sent">
-        <p>
-          Thanks {{ submitted.name }} — we'll reply to
-          <strong>{{ submitted.email }}</strong> shortly.
-        </p>
-      </ngx-alert-panel>
+        <ngx-alert-panel tone="success" title="Message sent">
+          <p>
+            Thanks {{ submitted.name }} — we'll reply to
+            <strong>{{ submitted.email }}</strong> shortly.
+          </p>
+        </ngx-alert-panel>
       }
 
       <ngx-card

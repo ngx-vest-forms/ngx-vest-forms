@@ -102,12 +102,10 @@ import {
       </fieldset>
       <pre data-testid="pre__form-value">
         {{ vm.formValue | json }}
-      </pre
-      >
+      </pre>
       <pre data-testid="pre__form-errors">
         {{ vm.errors | json }}
-      </pre
-      >
+      </pre>
       <pre data-testid="pre__form-valid">{{ vm.formValid }}</pre>
       <pre data-testid="pre__form-dirty">{{ vm.formDirty }}</pre>
     </form>

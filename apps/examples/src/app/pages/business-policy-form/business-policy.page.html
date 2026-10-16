@@ -40,22 +40,23 @@
 
     <div class="space-y-6">
       @if (submittedValue(); as submitted) {
-      <ngx-alert-panel tone="success" title="Application submitted">
-        <p>
-          Thanks — the application for
-          <strong>{{ submitted.legalName }}</strong> was accepted. Any advisory
-          warnings above did not block submission.
-        </p>
-      </ngx-alert-panel>
-      } @if (rootFormErrors().length > 0) {
-      <!-- Live-mode root-form errors appear while typing, so announce them politely. -->
-      <ngx-alert-panel tone="error" title="Policy violations" live="polite">
-        <ul class="list-disc space-y-1 pl-5">
-          @for (error of rootFormErrors(); track $index) {
-          <li>{{ error }}</li>
-          }
-        </ul>
-      </ngx-alert-panel>
+        <ngx-alert-panel tone="success" title="Application submitted">
+          <p>
+            Thanks — the application for
+            <strong>{{ submitted.legalName }}</strong> was accepted. Any
+            advisory warnings above did not block submission.
+          </p>
+        </ngx-alert-panel>
+      }
+      @if (rootFormErrors().length > 0) {
+        <!-- Live-mode root-form errors appear while typing, so announce them politely. -->
+        <ngx-alert-panel tone="error" title="Policy violations" live="polite">
+          <ul class="list-disc space-y-1 pl-5">
+            @for (error of rootFormErrors(); track $index) {
+              <li>{{ error }}</li>
+            }
+          </ul>
+        </ngx-alert-panel>
       }
 
       <ngx-business-policy-form-body

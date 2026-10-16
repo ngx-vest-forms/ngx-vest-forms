@@ -1,8 +1,4 @@
-import {
-  Component,
-  computed,
-  input,
-} from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import {
   createEmptyFormState,
   NgxFormFeedbackSignals,
@@ -48,7 +44,11 @@ type MessageInput = readonly string[] | Record<string, string[]>;
       @if (hasMessages()) {
         <div class="mb-4 space-y-2">
           @if (resolvedMessages().length > 0) {
-            <ngx-alert-panel live="off" tone="success" [title]="resolvedTitle()">
+            <ngx-alert-panel
+              live="off"
+              tone="success"
+              [title]="resolvedTitle()"
+            >
               <ul class="list-disc space-y-1 pl-5">
                 @for (message of resolvedMessages(); track message) {
                   <li>{{ message }}</li>
@@ -68,7 +68,11 @@ type MessageInput = readonly string[] | Record<string, string[]>;
           }
 
           @if (uniqueWarnings().length > 0) {
-            <ngx-alert-panel live="off" tone="warning" [title]="warningsTitle()">
+            <ngx-alert-panel
+              live="off"
+              tone="warning"
+              [title]="warningsTitle()"
+            >
               <ul class="list-disc space-y-1 pl-5">
                 @for (message of uniqueWarnings(); track message) {
                   <li>{{ message }}</li>
@@ -109,7 +113,11 @@ type MessageInput = readonly string[] | Record<string, string[]>;
         <div
           class="mt-4 border-t border-gray-200/80 pt-4 dark:border-gray-700/80"
         >
-          <ngx-alert-panel live="off" tone="info" [title]="validationRulesTitle()">
+          <ngx-alert-panel
+            live="off"
+            tone="info"
+            [title]="validationRulesTitle()"
+          >
             @if (unusedValidationWarningRules().length > 0) {
               <div class="space-y-3">
                 @if (unusedValidationErrorRules().length > 0) {
