@@ -1,6 +1,7 @@
 import {
   AfterViewInit,
   booleanAttribute,
+  computed,
   DestroyRef,
   Directive,
   effect,
@@ -29,6 +30,7 @@ import {
   NGX_VEST_FORMS_DIAGNOSTICS,
 } from '../errors/error-catalog';
 import { scheduleMicrotask } from '../utils/destroy-scheduler';
+import { fastDeepEqual } from '../utils/equality';
 import { copyFormValue } from '../utils/form-utils';
 import type { NgxVestSuite } from '../utils/validation-suite';
 import {
@@ -130,6 +132,14 @@ export class ValidateRootFormDirective<T>
   readonly #errorHandler = inject(ErrorHandler);
   readonly #lastControl = signal<NgForm | null>(null);
   validationOptions = input<ValidationOptions>({ debounceTime: 0 });
+  /**
+   * `validationOptions` compared by value, so a new options object with the
+   * same settings (e.g. from a method call in the template) does not
+   * revalidate the root form.
+   */
+  readonly #validationOptionsValue = computed(() => this.validationOptions(), {
+    equal: fastDeepEqual,
+  });
   /** Bumped on every ngSubmit so the effect revalidates after a submit. */
   readonly #submitCount = signal(0);
   /**
@@ -174,7 +184,7 @@ export class ValidateRootFormDirective<T>
       this.#sharedSubmitted()?.();
       this.formValue();
       this.suite();
-      this.validationOptions();
+      this.#validationOptionsValue();
       const enabled = this.ngxValidateRootForm();
       const mode = this.ngxValidateRootFormMode() ?? 'submit';
 

@@ -53,11 +53,46 @@ function getChildEntries(
   return Object.entries(container.controls);
 }
 
+/**
+ * The path of `control` below `root`, built by walking up its parent chain:
+ * O(depth × siblings) instead of a search of the whole tree. Returns null
+ * when the chain does not reach `root` or a parent no longer lists the
+ * control, so the caller can fall back to a full search.
+ */
+function getPathFromParents(
+  root: FormGroup,
+  control: AbstractControl
+): string | null {
+  const segments: string[] = [];
+  let current: AbstractControl = control;
+  while (current !== root) {
+    const parent: FormContainer | null = current.parent;
+    if (!parent) {
+      return null;
+    }
+    const entry = getChildEntries(parent).find(
+      ([, child]) => child === current
+    );
+    if (!entry) {
+      return null;
+    }
+    segments.unshift(entry[0]);
+    current = parent;
+  }
+  return segments.length > 0 ? segments.join('.') : null;
+}
+
 function getControlPath(
   formGroup: FormGroup,
   control: AbstractControl
 ): string {
-  // First attempt: depth-first traversal from provided root
+  // Fast path: the control's own parent chain.
+  const fromParents = getPathFromParents(formGroup, control);
+  if (fromParents !== null) {
+    return fromParents;
+  }
+
+  // Depth-first traversal from provided root
   for (const [key, child] of getChildEntries(formGroup)) {
     if (child === control) {
       return key;

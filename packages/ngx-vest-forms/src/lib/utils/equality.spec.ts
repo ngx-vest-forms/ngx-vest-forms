@@ -230,6 +230,28 @@ describe('Equality Utils', () => {
       expect(fastDeepEqual(a, b)).toBe(false);
     });
 
+    it('should compare one shared object against several distinct counterparts', () => {
+      const shared = { v: 1 };
+      const a = { x: shared, y: shared, z: shared };
+
+      expect(fastDeepEqual(a, { x: { v: 1 }, y: { v: 1 }, z: { v: 1 } })).toBe(
+        true
+      );
+      expect(fastDeepEqual(a, { x: { v: 1 }, y: { v: 2 }, z: { v: 1 } })).toBe(
+        false
+      );
+    });
+
+    it('should short-circuit a repeated pair whose object has several counterparts', () => {
+      const shared = { v: 1 };
+      const first = { v: 1 };
+      const second = { v: 1 };
+
+      expect(
+        fastDeepEqual([shared, shared, shared], [first, second, second])
+      ).toBe(true);
+    });
+
     it('should compare mixed cyclic structures (object containing self-referential array)', () => {
       const a: any = { name: 'root', items: [1, 2] as any[] };
       a.items.push(a.items);

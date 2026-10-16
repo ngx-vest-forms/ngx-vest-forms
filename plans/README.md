@@ -151,20 +151,37 @@ Vetted during the audit; ask for plans for any of these:
 - **PERF-02** (perf, S): `mergeValuesAndRawValues` double-clones where one
   `structuredClone(getRawValue())` suffices (keep the `isUnsafePathSegment` guard). DONE in PR #259.
 - **PERF-03** (perf, S): `getControlPath` O(N) DFS per validation run;
-  O(N²) on `#revalidateAllControls`.
+  O(N²) on `#revalidateAllControls`. FIXED: the path is built from the
+  control's parent chain first (O(depth × siblings)); the DFS remains as the
+  fallback when a parent no longer lists the control.
 - **PERF-04/05/06** (perf, S): pipeline teardown on `validationConfig`
   reference churn (default `===` comparator); validate-root-form effect
   re-fires on input identity churn; `fastDeepEqual` allocates WeakMap/WeakSet
-  per object node (equality.ts:249-250).
+  per object node (equality.ts:249-250). FIXED: the config pipeline is kept
+  when a new config object has the same entries (`fastDeepEqual`), so a
+  pending dependent revalidation survives a `computed` config that rebuilds on
+  every model change; `ngxValidateRootForm` compares `validationOptions` by
+  value (the `formValue` and `suite` inputs stay identity-tracked: a new model
+  must revalidate, and deep-comparing it would add O(form) work per change);
+  `fastDeepEqual` records visited pairs in one per-call `Map`, with a `Set`
+  only for an object compared against several counterparts.
 - **DEBT-01/02** (tech-debt, S): dead public `idle$` on FormDirective
   (form.directive.ts:461-467, zero consumers); duplicated "wait for
   non-PENDING after submit" switchMap blocks (form.directive.ts:435-446 and
-  :580-592).
+  :580-592). DEBT-02 FIXED (`6daf61c`): both blocks use `#settledStatus()`.
+  DEBT-01 NOT DONE: `idle$` is a public member of the exported
+  `FormDirective`, so removing it is a breaking change; `20c4f8c` marked it
+  `@deprecated` for removal in v4.
 - **DEBT-03** (tech-debt, L): FormDirective god file (1382 lines) owns
   sync+validation+focus/blur+reset+outputs.
 - **FRAG-01** (tech-debt, S): `form-submitted-state.ts` writes Angular
   internal signals `submittedReactive`/`_submittedReactive` with a
-  prototype-setter fallback — fragile, zero direct tests.
+  prototype-setter fallback — fragile, zero direct tests. NOT DONE: Angular
+  has no public API to clear `submitted` without resetting the form, so the
+  write stays for `clearSubmittedState()`. The tests are no longer missing:
+  `form-submitted-state.spec.ts` (TEST-01) and
+  `private-angular-api.contract.spec.ts`, which fails on an Angular upgrade
+  that renames the internal signal.
 - **TEST-01** (tests, S-M): zero direct specs for `async-validator-bridge.ts`,
   `form-submitted-state.ts`, `aria-association-controller.ts`,
   `error-catalog.ts` (NGX-101..104 never asserted), `tokens/form-contract.token.ts`,
@@ -184,13 +201,20 @@ Vetted during the audit; ask for plans for any of these:
   pre-existing TS4111 errors).
 - **DX-02** (dx, S): prettier configured but not in CI; `.husky/` has only
   `commit-msg`; `eslint-config-prettier` + `eslint-plugin-prettier`
-  installed but unreferenced in all eslint configs.
+  installed but unreferenced in all eslint configs. FIXED: CI runs
+  `pnpm prettier:check` (`{apps,packages}/**/*.{ts,js,json,css,scss,html}`)
+  before lint. The 66 files that failed it were formatted in a separate
+  commit, and `.prettierrc` now parses `*.html` with the `angular` parser
+  (the `html` parser flattened `@if`/`@switch` blocks). Not done: a husky
+  pre-commit hook, and removing the unused eslint-prettier packages (lint is
+  oxlint now; a dependency change).
 - **DEP-01** (deps, S): `@typescript/native` (tsgo) installed but consumed
   by nothing; `typescript` aliased to `npm:@typescript/typescript6@^6.0.2`.
 - **DEP-02** (deps, S): root `package.json` has `"private": false`, name
   collides with the published lib, zod + Angular in root `dependencies`.
 - **DOC-01** (docs, S): `docs/prd/PRD-nx-migration.md:3` still
-  "Status: Draft (2026-05-14)" though shipped.
+  "Status: Draft (2026-05-14)" though shipped. FIXED: `b114ab3` removed the
+  finished PRD.
 - **SEC-04** (security, M): pullfrog agent gets 9 provider keys, operates on
   public repo content, no egress firewall. **RESOLVED by PR #247** —
   `pullfrog.yml` removed (commit `bde620d1`); the mutable-tag finding is
