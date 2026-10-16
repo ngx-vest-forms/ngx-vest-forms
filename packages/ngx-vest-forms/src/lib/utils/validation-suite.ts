@@ -196,7 +196,30 @@ export type NgxSuiteRunResult = {
 };
 
 export type NgxVestSuite<T = unknown> = {
+  /**
+   * Runs only the given field(s). The `null | undefined` in the parameter is
+   * not an invitation to pass them: it mirrors Vest's own `only()` parameter
+   * so a suite created with a schema, whose `only()` accepts just its own
+   * field names, stays assignable to `NgxVestSuite` through method
+   * bivariance. The same holds for `focus()`'s `only` and `skip`.
+   */
   only(match: string | string[] | null | undefined): {
+    run(model: T): NgxSuiteRunResult;
+  };
+  /**
+   * Runs a subset of the suite. `suite.only(field)` is shorthand for
+   * `suite.focus({ only: field })`; `focus` also takes `skip`, `onlyGroup`
+   * and `skipGroup`. Every Vest 6.3 suite has it; it is optional here so a
+   * hand-written suite fake does not need it.
+   *
+   * @see {@link https://vestjs.dev/docs/writing_your_suite/including_and_excluding/skip_and_only}
+   */
+  focus?(config: {
+    only?: string | string[] | null;
+    skip?: string | string[] | null;
+    onlyGroup?: string | readonly string[];
+    skipGroup?: string | readonly string[];
+  }): {
     run(model: T): NgxSuiteRunResult;
   };
   run(model: T): NgxSuiteRunResult;

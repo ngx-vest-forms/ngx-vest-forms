@@ -11,7 +11,7 @@ Use this skill to produce the default, idiomatic ngx-vest-forms setup.
 
 1. Model the form with `NgxDeepPartial<T>` because template-driven forms are built incrementally.
 2. Prefer `NgxVestSuite<T>` for typed Vest suites; reach for `FormFieldName<T>` or `NgxFieldKey<T>` when you need typed field-path hints.
-3. Keep the suite callback model-only. Handle field-focused validation later via `suite.only(field).run(model)`.
+3. Keep the suite callback model-only. Handle field-focused validation later via `suite.only(field).run(model)`, or `suite.focus({ onlyGroup })` for groups.
 4. Use `[ngModel]` with `(formValueChange)` for unidirectional data flow. Do not default to `[(ngModel)]`.
 5. The `name` attribute must exactly match the bound property path.
 6. Use optional chaining in templates because the model is partial.

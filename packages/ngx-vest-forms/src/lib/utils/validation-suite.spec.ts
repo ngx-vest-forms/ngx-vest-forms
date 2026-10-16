@@ -1,4 +1,4 @@
-import { create } from 'vest';
+import { create, enforce, group, test } from 'vest';
 import { describe, expect, it } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import type { FormFieldName } from './field-path-types';
@@ -45,5 +45,59 @@ describe('validation-suite types', () => {
     });
 
     expect(typeof suite.run).toBe('function');
+  });
+
+  it('should keep schema-typed Vest 6 suites assignable to NgxVestSuite', () => {
+    // A schema narrows `only()`/`focus()` to the schema's own field names;
+    // NgxVestSuite's nullable `only` parameter keeps this assignable.
+    const schema = enforce.shape({
+      firstName: enforce.optional(enforce.isString()),
+    });
+    const suite: NgxVestSuite<TestModel> = create((model) => {
+      test('firstName', 'First name is required', () => {
+        enforce(model.firstName).isNotBlank();
+      });
+    }, schema);
+
+    expect(suite.only('firstName').run({}).hasErrors('firstName')).toBe(true);
+  });
+
+  it('should expose focus() on NgxVestSuite', () => {
+    const suite: NgxVestSuite<TestModel> = create((model: TestModel = {}) => {
+      test('firstName', 'First name is required', () => {
+        enforce(model.firstName).isNotBlank();
+      });
+      group('contact', () => {
+        test('contact.email', 'Email is required', () => {
+          enforce(model.contact?.email).isNotBlank();
+        });
+      });
+    });
+
+    if (!suite.focus) {
+      throw new Error('Vest 6.3 suites have focus()');
+    }
+    const skipGroups: readonly string[] = ['contact'];
+    const result = suite.focus({ skipGroup: skipGroups }).run({});
+
+    expect(result.hasErrors('firstName')).toBe(true);
+    expect(result.isTested('contact.email')).toBe(false);
+  });
+
+  it('should keep field- and group-typed Vest 6 suites assignable to NgxVestSuite', () => {
+    // `SuiteConfig` narrows only()/focus() to the declared field and group
+    // names; they must still fit NgxVestSuite's string-typed methods.
+    const suite: NgxVestSuite<TestModel> = create<{
+      fields: 'firstName' | 'contact.email';
+      groups: 'contact';
+    }>((model: TestModel = {}) => {
+      test('firstName', 'First name is required', () => {
+        enforce(model.firstName).isNotBlank();
+      });
+    });
+
+    expect(
+      suite.focus?.({ onlyGroup: 'contact' }).run({}).isTested('firstName')
+    ).toBe(false);
   });
 });
