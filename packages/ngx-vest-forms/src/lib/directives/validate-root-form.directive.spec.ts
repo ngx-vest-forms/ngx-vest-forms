@@ -865,6 +865,50 @@ describe('ValidateRootFormDirective', () => {
     });
   });
 
+  describe('input identity', () => {
+    it('does not revalidate for a new validationOptions object with the same values', async () => {
+      @Component({
+        imports: [NgxVestForms],
+        template: `
+          <form
+            ngxVestForm
+            ngxValidateRootForm
+            [ngxValidateRootFormMode]="'live'"
+            [suite]="suite"
+            [formValue]="model"
+            [validationOptions]="options()"
+          >
+            <input name="password" [ngModel]="model.password" />
+          </form>
+        `,
+      })
+      class TestComponent {
+        @ViewChild(NgForm) ngForm!: NgForm;
+        model = { password: 'password123' };
+        options = signal({ debounceTime: 0 });
+        suite = createTestValidationSuite;
+      }
+
+      const { fixture } = await render(TestComponent);
+      await whenStable();
+      await Promise.resolve();
+      const spy = vi.spyOn(
+        fixture.componentInstance.ngForm.control,
+        'updateValueAndValidity'
+      );
+
+      fixture.componentInstance.options.set({ debounceTime: 0 });
+      await whenStable();
+      await Promise.resolve();
+      expect(spy).not.toHaveBeenCalled();
+
+      fixture.componentInstance.options.set({ debounceTime: 5 });
+      await whenStable();
+      await Promise.resolve();
+      expect(spy).toHaveBeenCalled();
+    });
+  });
+
   describe('debouncing', () => {
     it('should respect debounceTime in validation options', async () => {
       @Component({

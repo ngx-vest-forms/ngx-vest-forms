@@ -52,7 +52,7 @@
                 (change)="onFetchLukeModeChange(fetchLukeModeSelect.value)"
               >
                 @for (mode of fetchLukeModes; track mode.value) {
-                <option [value]="mode.value">{{ mode.label }}</option>
+                  <option [value]="mode.value">{{ mode.label }}</option>
                 }
               </select>
             </div>
@@ -95,14 +95,14 @@
 
     <section class="space-y-6">
       @if (rootFormErrors().length > 0) {
-      <!-- Root-form errors after submit are submission-blocking: assertive is appropriate. -->
-      <ngx-alert-panel tone="error" title="Form Errors" live="assertive">
-        <ul class="list-disc space-y-1 pl-5">
-          @for (error of rootFormErrors(); track $index) {
-          <li>{{ error }}</li>
-          }
-        </ul>
-      </ngx-alert-panel>
+        <!-- Root-form errors after submit are submission-blocking: assertive is appropriate. -->
+        <ngx-alert-panel tone="error" title="Form Errors" live="assertive">
+          <ul class="list-disc space-y-1 pl-5">
+            @for (error of rootFormErrors(); track $index) {
+              <li>{{ error }}</li>
+            }
+          </ul>
+        </ngx-alert-panel>
       }
 
       <ngx-card

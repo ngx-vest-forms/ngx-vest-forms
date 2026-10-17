@@ -108,8 +108,7 @@ import {
       </fieldset>
       <pre data-testId="pre__form-errors">
         {{ vm.errors | json }}
-      </pre
-      >
+      </pre>
     </form>
   `,
 })

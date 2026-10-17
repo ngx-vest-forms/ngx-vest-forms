@@ -1,8 +1,4 @@
-import {
-  Component,
-  input,
-  output,
-} from '@angular/core';
+import { Component, input, output } from '@angular/core';
 
 /**
  * Wizard navigation component

@@ -1,15 +1,13 @@
-import {
-  Component,
-  computed,
-  signal,
-  viewChild,
-} from '@angular/core';
+import { Component, computed, signal, viewChild } from '@angular/core';
 import { createValidationConfig } from 'ngx-vest-forms';
 import { TravelFormModel } from '../../models/travel-form.model';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
-import { IntroItemComponent, IntroSectionComponent } from '../../ui/intro-section';
+import {
+  IntroItemComponent,
+  IntroSectionComponent,
+} from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 import { travelContent } from './travel.content';
 import { TravelFormApproach, TravelFormBody } from './travel.form';

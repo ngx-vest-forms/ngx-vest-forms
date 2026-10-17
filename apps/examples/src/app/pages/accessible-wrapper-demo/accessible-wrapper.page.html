@@ -3,32 +3,47 @@
 
   <ngx-intro-section title="Why this matters">
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Directive-based ARIA wiring</strong> — ngxErrorControl merges validation IDs into aria-describedby dynamically for custom layouts
+      <strong class="text-gray-900 dark:text-white"
+        >Directive-based ARIA wiring</strong
+      >
+      — ngxErrorControl merges validation IDs into aria-describedby dynamically
+      for custom layouts
     </ngx-intro-item>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Composite controls</strong> — When a field is paired with a button or extra elements, only the input receives validation attributes
+      <strong class="text-gray-900 dark:text-white">Composite controls</strong>
+      — When a field is paired with a button or extra elements, only the input
+      receives validation attributes
     </ngx-intro-item>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Static hints plus dynamic errors</strong> — Preserve existing aria-describedby hints and let the directive enhance them with error IDs
+      <strong class="text-gray-900 dark:text-white"
+        >Static hints plus dynamic errors</strong
+      >
+      — Preserve existing aria-describedby hints and let the directive enhance
+      them with error IDs
     </ngx-intro-item>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Plain markup transparency</strong> — See all ARIA behavior in the template; no hidden wrapper component logic to reason about
+      <strong class="text-gray-900 dark:text-white"
+        >Plain markup transparency</strong
+      >
+      — See all ARIA behavior in the template; no hidden wrapper component logic
+      to reason about
     </ngx-intro-item>
   </ngx-intro-section>
 
-  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+  <div class="grid grid-cols-1 gap-8 py-12 md:grid-cols-2 md:gap-12 md:py-16">
     <div class="space-y-6">
       <ngx-form-state-card [feedback]="feedback()" />
     </div>
 
     <div>
       @if (submittedValue(); as submitted) {
-      <ngx-alert-panel tone="success" title="Preferences saved">
-        <p>
-          Saved custom-wrapper preferences for
-          <strong>{{ submitted.preferredName }}</strong>.
-        </p>
-      </ngx-alert-panel>
+        <ngx-alert-panel tone="success" title="Preferences saved">
+          <p>
+            Saved custom-wrapper preferences for
+            <strong>{{ submitted.preferredName }}</strong
+            >.
+          </p>
+        </ngx-alert-panel>
       }
 
       <ngx-card
