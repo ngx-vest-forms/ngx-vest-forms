@@ -93,25 +93,25 @@
       </div>
 
       @if (data().subscribeNewsletter) {
-      <div class="mt-4">
-        <ngx-control-wrapper>
-          <label for="newsletterFrequency" class="label-text"
-            >Newsletter Frequency</label
-          >
-          <select
-            id="newsletterFrequency"
-            name="newsletterFrequency"
-            class="input-field"
-            aria-required="true"
-            [ngModel]="data().newsletterFrequency"
-          >
-            <option value="">Select frequency...</option>
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-          </select>
-        </ngx-control-wrapper>
-      </div>
+        <div class="mt-4">
+          <ngx-control-wrapper>
+            <label for="newsletterFrequency" class="label-text"
+              >Newsletter Frequency</label
+            >
+            <select
+              id="newsletterFrequency"
+              name="newsletterFrequency"
+              class="input-field"
+              aria-required="true"
+              [ngModel]="data().newsletterFrequency"
+            >
+              <option value="">Select frequency...</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </ngx-control-wrapper>
+        </div>
       }
     </div>
   </div>

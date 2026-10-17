@@ -1,8 +1,4 @@
-import {
-  Component,
-  forwardRef,
-  signal,
-} from '@angular/core';
+import { Component, forwardRef, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 let nextId = 0;

@@ -63,7 +63,9 @@
         ></span>
       </div>
     } @else {
-      <div class="border-b border-gray-200/70 px-6 py-6 dark:border-gray-700/70">
+      <div
+        class="border-b border-gray-200/70 px-6 py-6 dark:border-gray-700/70"
+      >
         <p
           class="font-mono text-base font-semibold tracking-tight text-gray-950 dark:text-gray-50"
         >
@@ -119,8 +121,8 @@
                   "
                   (mouseenter)="showNavTooltip($event, item.label)"
                   (mouseleave)="hideNavTooltip()"
-                    (focus)="showNavTooltip($event, item.label)"
-                    (blur)="hideNavTooltip()"
+                  (focus)="showNavTooltip($event, item.label)"
+                  (blur)="hideNavTooltip()"
                 >
                   <span class="flex items-center gap-2">
                     <span
@@ -139,14 +141,14 @@
                   <!-- Collapsed-rail abbreviation: 2 initials from the label -->
                   @if (isDesktop() && sidebarCollapsed()) {
                     <span
-                      class="text-[11px] font-semibold font-mono leading-none tracking-tight"
+                      class="font-mono text-[11px] leading-none font-semibold tracking-tight"
                       [class]="
                         rla.isActive
                           ? 'text-primary-700 dark:text-primary-300'
                           : 'text-gray-400 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-gray-200'
                       "
                       aria-hidden="true"
-                    >{{ navAbbr(item.label) }}</span
+                      >{{ navAbbr(item.label) }}</span
                     >
                   }
                   @if (!sidebarCollapsed() || !isDesktop()) {
@@ -186,7 +188,9 @@
         <button
           type="button"
           class="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 focus:ring-2 focus:ring-gray-300 focus:outline-hidden dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300 dark:focus:ring-gray-700"
-          [attr.aria-label]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+          [attr.aria-label]="
+            sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'
+          "
           [attr.aria-expanded]="!sidebarCollapsed()"
           (click)="toggleSidebar()"
         >
@@ -233,7 +237,7 @@
   <!-- Fixed tooltip for collapsed-rail nav items -->
   @if (tooltipLabel()) {
     <div
-      class="pointer-events-none fixed z-50 -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2.5 py-1 text-xs font-medium text-white shadow-lg dark:bg-gray-700"
+      class="pointer-events-none fixed z-50 -translate-y-1/2 rounded-md bg-gray-900 px-2.5 py-1 text-xs font-medium whitespace-nowrap text-white shadow-lg dark:bg-gray-700"
       [style.left.px]="tooltipX()"
       [style.top.px]="tooltipY()"
       aria-hidden="true"
@@ -241,7 +245,7 @@
       {{ tooltipLabel() }}
       <!-- Arrow pointing left -->
       <span
-        class="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900 dark:border-r-gray-700"
+        class="absolute top-1/2 right-full -translate-y-1/2 border-4 border-transparent border-r-gray-900 dark:border-r-gray-700"
       ></span>
     </div>
   }

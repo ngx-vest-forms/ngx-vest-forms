@@ -4,21 +4,37 @@
   <!-- Why this matters: Full-width intro section -->
   <ngx-intro-section title="Why this matters">
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Async validation gated by sync checks</strong> — expensive network operations only run after cheap local validation passes.
+      <strong class="text-gray-900 dark:text-white"
+        >Async validation gated by sync checks</strong
+      >
+      — expensive network operations only run after cheap local validation
+      passes.
     </ngx-intro-item>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Request cancellation on new input</strong> — typing again aborts in-flight checks via AbortSignal to reduce server load.
+      <strong class="text-gray-900 dark:text-white"
+        >Request cancellation on new input</strong
+      >
+      — typing again aborts in-flight checks via AbortSignal to reduce server
+      load.
     </ngx-intro-item>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Pending state separate from errors</strong> — show a calm loading indicator without blocking form submission or clearing valid errors.
+      <strong class="text-gray-900 dark:text-white"
+        >Pending state separate from errors</strong
+      >
+      — show a calm loading indicator without blocking form submission or
+      clearing valid errors.
     </ngx-intro-item>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Memo keying prevents redundant checks</strong> — repeated lookups of the same value reuse cached results instead of hammering the server.
+      <strong class="text-gray-900 dark:text-white"
+        >Memo keying prevents redundant checks</strong
+      >
+      — repeated lookups of the same value reuse cached results instead of
+      hammering the server.
     </ngx-intro-item>
   </ngx-intro-section>
 
   <!-- Form section: Two-column layout -->
-  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+  <div class="grid grid-cols-1 gap-8 py-12 md:grid-cols-2 md:gap-12 md:py-16">
     <!-- Left: Form State card -->
     <div>
       <ngx-form-state-card [feedback]="feedback()" />
@@ -27,12 +43,12 @@
     <!-- Right: Form and success message -->
     <div class="space-y-6">
       @if (submittedValue(); as submitted) {
-      <ngx-alert-panel tone="success" title="Username reserved">
-        <p>
-          Nice — <strong>{{ submitted.username }}</strong> is available and
-          reserved for {{ submitted.displayName }}.
-        </p>
-      </ngx-alert-panel>
+        <ngx-alert-panel tone="success" title="Username reserved">
+          <p>
+            Nice — <strong>{{ submitted.username }}</strong> is available and
+            reserved for {{ submitted.displayName }}.
+          </p>
+        </ngx-alert-panel>
       }
 
       <ngx-card

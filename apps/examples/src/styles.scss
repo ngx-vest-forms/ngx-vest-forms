@@ -287,7 +287,7 @@ html.dark [ngxFormGroupWrapper] {
   }
 
   .business-hours-remove-btn {
-    @apply mt-7 inline-flex items-center justify-center rounded-md p-2.5 text-gray-600 hover:bg-red-50 hover:text-red-800 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-hidden dark:text-gray-400 dark:hover:bg-red-900/20 dark:hover:text-red-300 min-h-10 min-w-10;
+    @apply mt-7 inline-flex min-h-10 min-w-10 items-center justify-center rounded-md p-2.5 text-gray-600 hover:bg-red-50 hover:text-red-800 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-hidden dark:text-gray-400 dark:hover:bg-red-900/20 dark:hover:text-red-300;
   }
 
   .business-hours-divider {

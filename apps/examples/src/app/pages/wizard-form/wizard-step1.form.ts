@@ -1,9 +1,4 @@
-import {
-  Component,
-  input,
-  output,
-  viewChild,
-} from '@angular/core';
+import { Component, input, output, viewChild } from '@angular/core';
 import {
   FormDirective,
   NgxFirstInvalidOptions,

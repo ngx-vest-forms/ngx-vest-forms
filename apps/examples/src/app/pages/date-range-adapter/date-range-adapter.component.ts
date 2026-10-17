@@ -1,10 +1,4 @@
-import {
-  Component,
-  computed,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 
 /**
  * Composite value for the date range adapter.

@@ -3,20 +3,33 @@
 
   <ngx-intro-section title="Why this matters">
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Form array validation</strong> — Each entry in the repeating time-range list is validated; at least one entry required
+      <strong class="text-gray-900 dark:text-white"
+        >Form array validation</strong
+      >
+      — Each entry in the repeating time-range list is validated; at least one
+      entry required
     </ngx-intro-item>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Cross-field rules per row</strong> — 'To' time must be later than 'From' time; validation runs for each range independently
+      <strong class="text-gray-900 dark:text-white"
+        >Cross-field rules per row</strong
+      >
+      — 'To' time must be later than 'From' time; validation runs for each range
+      independently
     </ngx-intro-item>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Form-level uniqueness</strong> — Multiple time ranges cannot overlap; a ROOT_FORM rule checks the entire list
+      <strong class="text-gray-900 dark:text-white"
+        >Form-level uniqueness</strong
+      >
+      — Multiple time ranges cannot overlap; a ROOT_FORM rule checks the entire
+      list
     </ngx-intro-item>
     <ngx-intro-item>
-      <strong class="text-gray-900 dark:text-white">Format validation</strong> — All time inputs validated as HH:MM format before cross-field rules run
+      <strong class="text-gray-900 dark:text-white">Format validation</strong> —
+      All time inputs validated as HH:MM format before cross-field rules run
     </ngx-intro-item>
   </ngx-intro-section>
 
-  <div class="py-12 md:py-16 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+  <div class="grid grid-cols-1 gap-8 py-12 md:grid-cols-2 md:gap-12 md:py-16">
     <div>
       <ngx-form-state-card [feedback]="formBody.feedback" />
     </div>

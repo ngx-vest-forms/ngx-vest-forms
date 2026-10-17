@@ -3648,3 +3648,72 @@ describe('FormDirective - formState after a programmatic model sync', () => {
     });
   }
 });
+
+describe('FormDirective - validationConfig identity', () => {
+  type PasswordModel = { password?: string; confirmPassword?: string };
+
+  @Component({
+    selector: 'test-validation-config-identity-host',
+    imports: [NgxVestForms],
+    template: `
+      <form
+        ngxVestForm
+        #vest="ngxVestForm"
+        [suite]="suite"
+        [formValue]="formValue()"
+        [validationConfig]="validationConfig()"
+        (formValueChange)="formValue.set($event)"
+      >
+        <label for="password">Password</label>
+        <input
+          id="password"
+          name="password"
+          [ngModel]="formValue().password"
+          [validationOptions]="{ debounceTime: 0 }"
+        />
+        <label for="confirmPassword">Confirm</label>
+        <input
+          id="confirmPassword"
+          name="confirmPassword"
+          [ngModel]="formValue().confirmPassword"
+          [validationOptions]="{ debounceTime: 0 }"
+        />
+      </form>
+    `,
+  })
+  class ValidationConfigIdentityHostComponent {
+    readonly formValue = signal<PasswordModel>({});
+    readonly validationConfig = signal<Record<string, string[]>>({
+      password: ['confirmPassword'],
+    });
+    readonly suite = create((model: PasswordModel = {}) => {
+      vestTest('confirmPassword', 'Passwords must match', () => {
+        enforce(model.confirmPassword).equals(model.password);
+      });
+    });
+    readonly vest = viewChild.required<FormDirective<PasswordModel>>('vest');
+  }
+
+  it('keeps a pending dependent revalidation when an equal config object arrives', async () => {
+    const { fixture } = await render(ValidationConfigIdentityHostComponent, {
+      providers: [
+        { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 100 },
+      ],
+    });
+    const host = fixture.componentInstance;
+    await userEvent.type(screen.getByLabelText('Password'), 'secret');
+    await userEvent.type(screen.getByLabelText('Confirm'), 'secret');
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    await whenStable();
+    const confirm = host.vest().ngForm.form.get('confirmPassword');
+    expect(confirm?.valid).toBe(true);
+
+    // Inside the config debounce window, the consumer passes a new config
+    // object with the same entries.
+    await userEvent.type(screen.getByLabelText('Password'), '!');
+    host.validationConfig.set({ password: ['confirmPassword'] });
+    await whenStable();
+
+    await waitFor(() => expect(confirm?.invalid).toBe(true));
+  });
+});

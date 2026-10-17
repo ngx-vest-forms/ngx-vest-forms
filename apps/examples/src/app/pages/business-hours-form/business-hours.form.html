@@ -9,9 +9,9 @@
   (formValueChange)="formValueChange.emit($event)"
 >
   @if (rootFormError()) {
-  <ngx-alert-panel tone="error" title="Validation Error">
-    {{ rootFormError() }}
-  </ngx-alert-panel>
+    <ngx-alert-panel tone="error" title="Validation Error">
+      {{ rootFormError() }}
+    </ngx-alert-panel>
   }
 
   <fieldset class="space-y-6">
