@@ -369,6 +369,13 @@ For genuinely dynamic path strings that `FieldPath<T>` cannot express (e.g. runt
 - **Message-region ids include a non-default `APP_ID`.** The wrappers number their ids per application instead of per JavaScript module. With Angular's default `APP_ID` (`'ng'`) the ids keep the `ngx-control-wrapper-0-error` shape. If your app sets `APP_ID`, they become `ngx-control-wrapper-<APP_ID>-0-error`; update CSS selectors or tests that match the old shape. Don't hard-code them: in a custom wrapper, read them from `ngxErrorControl`'s (or `<ngx-form-group-wrapper>`'s) `errorId`/`warningId`/`pendingId`, and in tests match the region by role or text.
 - **Translatable pending label.** The built-in wrappers' "Validating…" text comes from the new `NGX_PENDING_LABEL` token (a string or `Signal<string>`). `<ngx-control-wrapper>` also gained the `[pendingDebounce]` input that `<ngx-form-group-wrapper>` already had. See [API-TOKENS.md](../API-TOKENS.md#ngx_pending_label).
 
+## Model writes emit form events
+
+v2 wrote `[formValue]` into the form with `patchValue(value, { emitEvent: false })`. v3 writes with a plain `patchValue(value)`, so the form's own events fire for every model write.
+
+- **Subscribers to the form's events now fire on model writes.** `ngForm.form.valueChanges`, `statusChanges` and `events` emit when you set `[formValue]`, not only when the user types. If such a subscriber writes back to the model or starts a request, check that it still behaves, for example by comparing against the last value it handled. `formValueChange` is unchanged: it still does not echo a model write back to you.
+- **A model write made in response to `formValueChange` now wins.** For example, clearing fields that a switched section hides used to be dropped with an `NGX-100` warning. It is now applied when the `[formValue]` input changed and the form still holds the value it last emitted. Real conflicts still warn.
+
 ## Known limitations (v3)
 
 These are accepted, documented limitations in the v3 line. Each links to an Architecture Decision Record (ADR) with the full rationale and the conditions under which it will be revisited.
