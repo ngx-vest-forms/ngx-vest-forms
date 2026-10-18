@@ -3,7 +3,7 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "I’m adding ngx-vest-forms to a small Angular 21 app and want the most idiomatic first example for a profile form with first name, last name, and email. Please show the component and template using signals, explain whether I should use [ngModel] or [(ngModel)], and keep the imports on the public API only.",
+      "prompt": "I’m adding ngx-vest-forms to a small Angular 22 app and want the most idiomatic first example for a profile form with first name, last name, and email. Please show the component and template using signals, explain whether I should use [ngModel] or [(ngModel)], and keep the imports on the public API only.",
       "expected_output": "Routes to the `core` sub-skill guidance, uses public API imports from 'ngx-vest-forms', models the form with NgxDeepPartial, uses [ngModel] with matching name paths, and uses a model-only Vest 6 suite with call-site focus when relevant.",
       "files": [],
       "expectations": [
@@ -60,6 +60,42 @@
         "Pairs dependent revalidation with validationConfig and on-blur wrapper display modes for quiet dependent errors.",
         "Avoids using triggerFormValidation from blur handlers to force this UX.",
         "Anchors the answer to the repo’s canonical blur-save guidance by mentioning docs/AUTO-SAVE-ON-BLUR.md or the /auto-save-demo example."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Our package.json has \"ngx-vest-forms\": \"^2.7.0\" and \"vest\": \"^5.4.6\", and we're on Angular 20. Can you add an email + password signup form with a confirm-password check?",
+      "expected_output": "Pins the installed version first, recognises v2, and either writes v2-compatible code (Vest 5 suite, v2 APIs) or clearly states the v3 requirements; it offers the migration workflow instead of silently emitting v3-only APIs.",
+      "files": [],
+      "expectations": [
+        "States that the project is on ngx-vest-forms v2 and that v3 guidance would not compile there.",
+        "Does not use v3-only APIs such as submitSettled, provideFormContract or [formContract] as if they existed in v2.",
+        "Mentions that upgrading to v3 needs Angular 22 and Vest 6, and offers the migration path.",
+        "Still wires the confirm-password dependency with validationConfig."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "We just bumped to ngx-vest-forms@beta and vest 6. This file no longer compiles:\n\nimport { staticSuite, only, test, enforce } from 'vest';\nimport { DeepPartial, NgxTypedVestSuite, ROOT_FORM_CONSTANT } from 'ngx-vest-forms';\n\ntype Model = DeepPartial<{ email: string; phone: string }>;\nexport const suite: NgxTypedVestSuite<Model> = staticSuite((model, field) => {\n  only(field);\n  test(ROOT_FORM_CONSTANT, 'Email or phone', () => enforce(model.email || model.phone).isTruthy());\n});\n\nand the template uses <form scVestForm validateRootForm [formShape]=\"shape\">. Please migrate it and tell me what else to check in the rest of the app.",
+      "expected_output": "Follows the migration sub-skill: rewrites the suite to create((model) => ...) without only(field), renames DeepPartial/NgxTypedVestSuite/ROOT_FORM_CONSTANT, rewrites the selectors and [formShape], and gives a repo-wide inventory step plus behavior changes to review.",
+      "files": [],
+      "expectations": [
+        "Rewrites the suite as create((model) => { ... }) with a model-only callback and no only(field).",
+        "Renames DeepPartial to NgxDeepPartial, NgxTypedVestSuite to NgxVestSuite and ROOT_FORM_CONSTANT to ROOT_FORM.",
+        "Rewrites scVestForm to ngxVestForm, validateRootForm to ngxValidateRootForm and [formShape] to [formContract] (or provideFormContract).",
+        "Gives a way to find the remaining v2 usages across the app, such as a grep inventory, and names at least one behavior change to review (getAllFormErrors shape, dotted array keys, model writes emitting form events)."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "How do I let users add and remove any number of phone numbers in an ngx-vest-forms form, each validated as non-empty, and send them to the API as a string array?",
+      "expected_output": "Routes to the form-arrays sub-skill: model keyed by index via arrayToObject, @for with keyvalue and a numeric comparator inside an ngModelGroup, Vest each() with dotted Field Paths, removeField for removed rows, objectToArray before saving.",
+      "files": [],
+      "expectations": [
+        "Stores the list in the form model as an index-keyed object via arrayToObject rather than binding ngModel to a raw array.",
+        "Names each control and each Vest test with the dotted Field Path of the item (for example phonenumbers.values.0).",
+        "Validates the items with Vest each().",
+        "Converts back with objectToArray before sending to the API."
       ]
     }
   ]

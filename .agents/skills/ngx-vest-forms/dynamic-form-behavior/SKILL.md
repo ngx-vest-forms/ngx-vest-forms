@@ -1,91 +1,52 @@
 ---
 name: dynamic-form-behavior
-description: Helps developers handle dynamic ngx-vest-forms layouts with `clearFieldsWhen`, `clearFields`, `keepFieldsWhen`, and `triggerFormValidation()`. Use this whenever the user conditionally shows or hides form sections, swaps inputs for static content, clears hidden values, sees stale validation after structure changes, or mentions dynamic forms, field clearing, or `triggerFormValidation`.
+description: Runtime structure changes in ngx-vest-forms forms: clearing hidden values with `clearFieldsWhen`/`clearFields`/`keepFieldsWhen`, dropping stale Vest results with `removeField`, and when `triggerFormValidation()` is needed. Read it when sections show and hide, inputs swap for static content, or errors stay after the layout changed.
 ---
 
-# ngx-vest-forms dynamic form guidance
+# ngx-vest-forms dynamic forms
 
-Use this skill when the form structure changes at runtime.
+Most dynamic-form bugs are stale state ownership: the model still holds values for controls that are gone, or the suite still holds their results. The invariants live in the router, [`../SKILL.md`](../SKILL.md).
 
-## Most important distinction
+## First name what changed
 
-You usually need manual help only when the UI switches between:
+| Change                                                    | What it needs                                                                                         |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| one input swapped for another input                       | nothing extra; the new control's value change reruns validation                                       |
+| an input replaced by static content, or a section removed | clear the values, remove the fields from the suite, rerun validation                                  |
+| a field became required because another field changed     | `validationConfig` → [`../validation-config-builder/SKILL.md`](../validation-config-builder/SKILL.md) |
+| the rule is about the whole form                          | `ROOT_FORM` → [`../root-form-validation/SKILL.md`](../root-form-validation/SKILL.md)                  |
 
-- a real form control (`input`, `select`, `textarea`)
-- and non-form content (`p`, `div`, static explanatory content)
+## Handle a removed section
 
-That is the danger zone for stale component state and stale validity.
+Do these together, in one handler; the change is handled when the model, the suite and the template agree on which fields exist:
 
-You usually do **not** need `triggerFormValidation()` just because one input swapped to another input and Angular already emitted normal control/value changes.
+1. **Model:** clear what no longer applies and write the result back to the `formValue` signal; a write made from a `(formValueChange)` handler is applied, not dropped. The field-clearing helpers work on top-level keys of the model:
+   - `clearFieldsWhen(value, { shippingAddress: !useShipping })` clears each key whose condition is `true`;
+   - `clearFields(value, ['fieldA', 'fieldB'])` clears unconditionally;
+   - `keepFieldsWhen(value, { fieldA: isTypeA, type: true })` keeps only the keys whose condition is `true`.
+2. **Suite:** call `removeField(path)` on the `FormDirective` for each path that is gone for good, so Vest forgets its results; `resetField(path)` instead when the field stays and only its validation history should restart.
+3. **Rules:** mirror the template condition in the suite with `omitWhen(condition, () => { … })`, so hidden fields have no tests.
+4. **Rerun:** call `triggerFormValidation()` (optionally with a path) when no remaining control will emit a change, which is the input-to-static-content case. It reruns validation only; it does not mark controls touched or reveal errors.
 
-## Recommended workflow
+```ts
+protected onDeliveryChange(method: 'ship' | 'pickup'): void {
+  this.formValue.update((value) =>
+    clearFieldsWhen({ ...value, method }, { shippingAddress: method === 'pickup' })
+  );
+  if (method === 'pickup') {
+    this.vestForm().removeField('shippingAddress');
+  }
+  this.vestForm().triggerFormValidation();
+}
+```
 
-1. Update the component state first.
-2. Clear now-irrelevant fields with:
-   - `clearFieldsWhen()` for conditional clearing
-   - `clearFields()` for unconditional cleanup
-   - `keepFieldsWhen()` for whitelist-style preservation
-3. If the structure changed in a way Angular will not naturally revalidate, call `triggerFormValidation()` on the `FormDirective`.
-4. Keep the Vest suite aligned with the UI by using `omitWhen(...)` or similar conditional validation patterns.
+`triggerFormValidation()` belongs to structure changes. Ordinary input-to-input edits already revalidate, dependent timing belongs to `validationConfig`, and blur-driven saving belongs to [`../field-blur-events/SKILL.md`](../field-blur-events/SKILL.md).
 
-Prefer public API imports from `'ngx-vest-forms'`:
+## Known limit
 
-- `clearFieldsWhen`
-- `clearFields`
-- `keepFieldsWhen`
-- `FormDirective`
+A `validationConfig` trigger control that is destroyed and recreated behind `@if` stops driving its dependents. Keep trigger controls mounted (hide or disable them) when they have dependents.
 
-If you mention `triggerFormValidation()`, frame it as a capability on the public form directive/API surface instead of sending consumers into internal implementation files.
+## References
 
-## When to call `triggerFormValidation()`
-
-Call it when:
-
-- a control disappears and is replaced by non-input content
-- a section is cleared and no remaining control change will naturally rerun validation
-- a dynamic mode change invalidates the current layout without a normal value-change path
-
-Do not oversell it as a “show errors” API. It only re-runs validation logic. It does not mark controls touched.
-
-## Interactions with other features
-
-- If a field depends on another field’s value, use `validationConfig` as well.
-- If the user wants blur-driven draft persistence or analytics, use `fieldBlur` and `NgxFieldBlurEvent` instead of treating `triggerFormValidation()` as a blur workflow API.
-- If the rule belongs to the whole form, use `ROOT_FORM`.
-- Dynamic forms commonly need all three concepts in different places: field clearing, revalidation timing, and form-level rules.
-
-## Common mistakes to fix
-
-- keeping stale values in the signal model after the UI removed the corresponding controls
-- calling `triggerFormValidation()` for ordinary field changes that Angular already handles
-- clearing fields without matching the suite’s conditional `omitWhen(...)` logic
-- assuming `triggerFormValidation()` will also mark fields touched or force visible errors
-- using blur handlers plus `triggerFormValidation()` for draft auto-save or quiet dependent validation timing
-- importing dynamic-form helpers from internal library paths
-
-Do not cargo-cult `triggerFormValidation()` into every conditional form. Most dynamic form bugs come from stale state ownership, not from a missing manual rerun.
-
-## Output style
-
-When answering:
-
-- describe the structural change first
-- show the state update and the validation update together
-- explain why the field-clearing utility is appropriate for that branch
-- mention whether `triggerFormValidation()` is actually necessary instead of cargo-culting it everywhere
-
-## Repo references to consult when needed
-
-- `references/decision-guide.md`
-- [`docs/FIELD-CLEARING-UTILITIES.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/FIELD-CLEARING-UTILITIES.md)
-- [`docs/STRUCTURE_CHANGE_DETECTION.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/STRUCTURE_CHANGE_DETECTION.md)
-- [`docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)
-- [`README.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/README.md)
-
-The invariants live in the router skill, [`../SKILL.md`](../SKILL.md). Use this skill for dynamic-layout edge cases, state clearing, and deciding when `triggerFormValidation()` is genuinely needed.
-
-Start with `references/decision-guide.md` when the user is unsure whether a layout change actually needs field clearing or `triggerFormValidation()`.
-
-## Related skill
-
-For save-on-blur or draft auto-save, use the field-blur-events skill unless a real structure-change problem is also present.
+- [`FIELD-CLEARING-UTILITIES.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/FIELD-CLEARING-UTILITIES.md)
+- [`STRUCTURE_CHANGE_DETECTION.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/STRUCTURE_CHANGE_DETECTION.md)

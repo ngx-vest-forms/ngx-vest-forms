@@ -1,81 +1,83 @@
 ---
 name: child-components
-description: Helps developers split ngx-vest-forms forms into child components without breaking the parent form tree. Use this whenever the user mentions reusable form sections, child form components, nested `ngModelGroup`, multi-step forms, nested form controls, `vestFormsViewProviders`, or hits errors where a child component cannot see the parent form or validation context.
+description: Splitting an ngx-vest-forms form into child components with `vestFormsViewProviders`, nested `ngModelGroup`s and prefixed validation helpers. Read it for reusable form sections, multi-step forms, or a child whose controls never reach the parent's `formValue`.
 ---
 
-# ngx-vest-forms child component guidance
+# ngx-vest-forms child components
 
-Use this skill when a form is being decomposed into reusable pieces.
+The invariants live in the router, [`../SKILL.md`](../SKILL.md).
 
-## Non-negotiable rule
+## The rule
 
-Every child component that participates in the parent form tree with `ngModel` or `ngModelGroup` must include:
+Every component that renders `ngModel` or `ngModelGroup` for a parent `<form ngxVestForm>` declares `viewProviders: [vestFormsViewProviders]`, at every nesting level. Without it Angular's `ngModel` cannot see the parent form across the component boundary, so the child's controls silently stay out of the form value and validation. Only the top-level component holds the `<form>`.
 
-- `viewProviders: [vestFormsViewProviders]`
+## Build a section
 
-If that is missing, the child will not correctly access the parent form context.
+1. Pass the model slice in with a signal `input()`, and the group's path segment when the section is reusable.
+2. Put `[ngModelGroup]="groupName()"` on an `<ngx-form-group-wrapper>`; the group name joined with the parents' names must equal the Field Path in the parent model.
+3. Wrap each control in `<ngx-control-wrapper>` with `name` relative to the group.
+4. Derive `id`s from the group name, so two instances on one page stay unique.
+5. Validate with a helper that takes the slice and the full path prefix, so test names match the Field Paths.
 
-Prefer the public API export `vestFormsViewProviders` from `'ngx-vest-forms'`.
-Do not direct consumers to internal provider definitions.
+```ts
+import { Component, input } from '@angular/core';
+import {
+  NgxVestForms,
+  vestFormsViewProviders,
+  type NgxDeepPartial,
+} from 'ngx-vest-forms';
 
-## Recommended structure
+@Component({
+  selector: 'app-address-section',
+  imports: [NgxVestForms],
+  viewProviders: [vestFormsViewProviders],
+  template: `
+    <ngx-form-group-wrapper [ngModelGroup]="groupName()">
+      <ngx-control-wrapper>
+        <label [for]="groupName() + '-street'">Street</label>
+        <input
+          [id]="groupName() + '-street'"
+          name="street"
+          [ngModel]="address()?.street"
+        />
+      </ngx-control-wrapper>
+    </ngx-form-group-wrapper>
+  `,
+})
+export class AddressSectionComponent {
+  readonly groupName = input.required<string>();
+  readonly address = input<NgxDeepPartial<Address>>();
+}
+```
 
-1. Keep the parent form on the top-level `<form ngxVestForm ...>`.
-2. Pass the relevant model slice into each child via signal inputs.
-3. Pass a `groupName` or equivalent input when the child owns an `ngModelGroup`.
-4. Make sure the `groupName` matches the property path in the parent form model.
-5. Prefer `<ngx-form-group-wrapper [ngModelGroup]="groupName()">` when the child represents a grouped section.
-6. Use `<ngx-control-wrapper>` inside the group for individual controls.
+```html
+<!-- parent, inside <form ngxVestForm> -->
+<app-address-section groupName="billing" [address]="formValue().billing" />
+<app-address-section groupName="shipping" [address]="formValue().shipping" />
+```
 
-## Validation guidance
+```ts
+// suite
+export function addressValidations(
+  address: NgxDeepPartial<Address> | undefined,
+  prefix: string
+): void {
+  test(`${prefix}.street`, 'Street is required', () => {
+    enforce(address?.street).isNotBlank();
+  });
+}
 
-The validation suite still needs full field paths.
-For reusable sections, prefer composable validation helpers that accept both:
+export const checkoutSuite: NgxVestSuite<Checkout> = create((model) => {
+  addressValidations(model.billing, 'billing');
+  addressValidations(model.shipping, 'shipping');
+});
+```
 
-- the relevant model slice
-- the path prefix
+Value edits inside the child reach the parent through the form's `(formValueChange)`; structural changes the child makes (adding a row) go out through an `output()` the parent applies to its signal.
 
-That keeps field names aligned with the child section’s `ngModelGroup`.
+For a section nested deeper, pass the full dotted prefix to the validation helper (`'order.billing'`) while each component's `ngModelGroup` carries only its own segment.
 
-## ID guidance
+## References
 
-When the same child component can render more than once, derive control IDs from the group or path prefix.
-Do not hard-code IDs like `street` or `email` in repeated sections.
-
-## Nested children
-
-The same rule repeats at every level:
-
-- parent child component: `vestFormsViewProviders`
-- grandchild component: `vestFormsViewProviders`
-- any component contributing controls/groups: `vestFormsViewProviders`
-
-## Common mistakes to correct
-
-- missing `vestFormsViewProviders`
-- child `groupName` not matching the parent model path
-- validation tests using local child names instead of full prefixed paths
-- duplicate IDs when two instances of the same child component appear on one screen
-- using wrapper components in a way that blurs field-level and group-level responsibilities
-- importing child-component helpers from internal library paths
-
-Do not suggest ad-hoc provider workarounds when `vestFormsViewProviders` is the supported path. If that export is not enough, the problem is architectural and should be fixed explicitly.
-
-## Output style
-
-When answering:
-
-- show both parent and child snippets when possible
-- explain the parent-path to child-group relationship explicitly
-- prefer signal `input()` APIs and `OnPush`
-- include the validation-path strategy if the user is also asking about validation
-
-## Repo references to consult when needed
-
-- [`docs/CHILD-COMPONENTS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/CHILD-COMPONENTS.md)
-- [`docs/ACCESSIBILITY.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/ACCESSIBILITY.md)
-- [`docs/COMPLETE-EXAMPLE.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/COMPLETE-EXAMPLE.md)
-- [`README.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/README.md)
-- [`packages/ngx-vest-forms/src/public-api.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/public-api.ts)
-
-The invariants live in the router skill, [`../SKILL.md`](../SKILL.md). Use this skill for parent/child path coordination, `vestFormsViewProviders`, and nested section design.
+- [`CHILD-COMPONENTS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/CHILD-COMPONENTS.md)
+- [`COMPOSABLE-VALIDATIONS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/COMPOSABLE-VALIDATIONS.md)

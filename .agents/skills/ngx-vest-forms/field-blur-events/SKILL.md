@@ -1,139 +1,65 @@
 ---
 name: field-blur-events
-description: Helps developers use `fieldBlur` and `NgxFieldBlurEvent` correctly in ngx-vest-forms. Use this whenever the user mentions draft auto-save, blur-save, field-level persistence, draft recovery, analytics on blur, blur-driven side effects, or asks how to save on blur without mixing persistence policy into validation timing.
+description: Blur-driven app work in ngx-vest-forms through the form's `fieldBlur` output and `NgxFieldBlurEvent`: draft auto-save, field-level persistence, analytics. Read it when something should happen when a field loses focus.
 ---
 
-# ngx-vest-forms field blur workflow
+# ngx-vest-forms field blur events
 
-Use this skill when the task is about **application-level work that should happen when a named control blurs**.
+`(fieldBlur)` on `<form ngxVestForm>` emits once per named control blur. It is an event for application policy (saving, analytics); validation timing stays with the suite, `validationConfig` and the wrapper display modes. The invariants live in the router, [`../SKILL.md`](../SKILL.md).
 
-## First principle
+The payload, `NgxFieldBlurEvent<Model>`, carries `field` (the dotted Field Path), `value`, `formValue`, `dirty`, `touched`, `valid` (that field only) and `pending`.
 
-Keep **validation** and **persistence/side effects** separate.
+## Pick the policy first
 
-- Validation answers whether the current form state is valid.
-- Blur-driven persistence answers whether the app should save or act on the current draft now.
+Name the policy in the answer before the code.
 
-Do not treat draft auto-save as a disguised submit button.
-
-## Public API to prefer
-
-Recommend consumer-facing imports from `'ngx-vest-forms'`:
-
-- `NgxVestForms`
-- `NgxFieldBlurEvent`
-- `createValidationConfig` when dependent fields are involved
-
-Do not send consumers to internal directive or utility paths for blur handling.
-
-## What v2.7.0 fixed in the blur path
-
-Useful context when the user is debugging blur-related bugs against v2.6.x:
-
-- Nested control paths, dynamic `ngModelGroup`s, radios, and repeated leaf names now resolve to the correct field path in the emitted event.
-- The directive cancels in-flight blur emissions on form reset, so a stale snapshot does not arrive after `resetForm()`.
-- Async validators triggered by blur emit cleanly even if the form is destroyed mid-flight — no more `ViewDestroyedError` and no leaked timers (the new internal `destroy-scheduler` ties async work to `DestroyRef`).
-- `validationConfig`-tracked dependents revalidate when their trigger changes, but touched state is deliberately NOT propagated to them — dependents stay visually quiet until they are blurred themselves (or the form is submitted).
-
-If the user reports any of these symptoms on v2.6.x, recommend upgrading to v2.7.x rather than working around them in user code.
-
-## Default recommendation
-
-For draft persistence, prefer the form's `fieldBlur` output:
-
-1. listen to `(fieldBlur)` on the form
-2. require `event.formValue`
-3. require `event.dirty`
-4. optionally dedupe against the last saved or queued draft snapshot
-5. save the draft independently of validation completion
-
-Treat `event.pending` as metadata unless the product explicitly wants strict valid-only blur commits.
-
-When the user asks for “the right pattern”, “best practice”, or a repo-aligned implementation,
-ground the answer in the repository’s canonical blur-save materials instead of answering only at
-the API level:
-
-- point to [AUTO-SAVE-ON-BLUR.md](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/AUTO-SAVE-ON-BLUR.md)
-- mention the examples app route `/auto-save-demo`
-- use the auto-save demo files as the preferred concrete implementation reference
-
-## Recommended blur-save policies
-
-### Draft policy: save incomplete drafts on blur
-
-This is the default for recovery-oriented UX, long forms, and multi-step flows.
+**Draft save** is the default for long forms, multi-step flows and recovery UX: save whatever the user has, valid or not. Treat `pending` as metadata, since gating on it can drop the latest draft while an async test runs.
 
 ```ts
-protected handleFieldBlur(event: NgxFieldBlurEvent<FormModel>): void {
+protected onFieldBlur(event: NgxFieldBlurEvent<PurchaseForm>): void {
   if (!event.formValue || !event.dirty) {
     return;
   }
-
-  this.saveDraft(event.formValue);
+  this.drafts.save(event.formValue); // dedupe against the last saved snapshot if saves are costly
 }
 ```
 
-Use this when the saved value is explicitly a draft.
-
-### Strict policy: save only acceptable state
-
-This fits field-level commits or side effects that should only run when validation has passed.
+**Valid-only commit** fits side effects that must only see accepted values, such as a per-field PATCH:
 
 ```ts
-protected handleFieldBlur(event: NgxFieldBlurEvent<FormModel>): void {
+protected onFieldBlur(event: NgxFieldBlurEvent<PurchaseForm>): void {
   if (!event.formValue || !event.dirty || !event.valid || event.pending) {
     return;
   }
-
-  this.saveDraft(event.formValue);
+  this.api.patchField(event.field, event.value);
 }
 ```
 
-If the product means “whole form valid”, check the form state rather than assuming `event.valid` represents the whole form.
+`event.valid` describes the blurred field. When the policy means "the whole form is valid", read the directive's `valid()` or `formState().valid` instead.
 
-## Interaction with dependent validation
+```html
+<form
+  ngxVestForm
+  [suite]="suite"
+  [formValue]="formValue()"
+  (formValueChange)="formValue.set($event)"
+  (fieldBlur)="onFieldBlur($event)"
+></form>
+```
 
-If field A makes field B required, the calm UX is usually:
+## Dependent fields stay quiet
 
-1. field B becomes logically invalid immediately
-2. the draft can still be saved on blur
-3. field B stays visually quiet until its own blur or submit policy allows messages
+When field A makes field B required, the calm UX is: B is invalid at once, the draft still saves on blur, and B shows its message only after its own blur or a submit. That needs three pieces side by side:
 
-That usually means combining:
+- `validationConfig` with `.whenChanged('quantity', 'quantityJustification')` for the timing ([`../validation-config-builder/SKILL.md`](../validation-config-builder/SKILL.md));
+- `[errorDisplayMode]="'on-blur'"` on B's `<ngx-control-wrapper>` for the visibility;
+- `(fieldBlur)` for the save.
 
-- `validationConfig` for dependency timing
-- wrapper display modes such as `errorDisplayMode="on-blur"`
-- `fieldBlur` for persistence or analytics
+Native `(blur)` listeners on each control and blur handlers that call `triggerFormValidation()` are the patterns to replace: they couple persistence to validation reruns and restart async tests.
 
-Do not recommend `(blur)` handlers that call `triggerFormValidation()` to force this behavior. That couples persistence policy to validation reruns and often causes noisy async behavior.
+## References
 
-## What to avoid
+The canonical implementation is the examples app's `/auto-save-demo`; point users at it when they ask for "the right pattern".
 
-Correct these patterns when you see them:
-
-- listening to native `(blur)` on every control to orchestrate library validation
-- calling `triggerFormValidation()` from blur handlers for dependent-field timing
-- blocking draft auto-save on `event.pending`
-- describing `fieldBlur` as validation logic rather than as an event for application policy
-- suggesting internal imports for `NgxFieldBlurEvent` or form directive blur support
-
-## Output style
-
-When answering the user:
-
-1. name the blur policy first: draft-save vs valid-only commit
-2. show the `fieldBlur` handler and the form binding together
-3. if dependent fields are involved, show the `validationConfig` and wrapper display mode beside the blur handler
-4. keep examples on the public API surface
-5. when the user wants the canonical repo pattern, mention the auto-save guide and `/auto-save-demo` so the answer is anchored to the library’s documented workflow rather than sounding generic
-
-## Repo references to consult when needed
-
-- [`docs/AUTO-SAVE-ON-BLUR.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/AUTO-SAVE-ON-BLUR.md)
-- [`docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)
-- [`README.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/README.md)
-- [`apps/examples/src/app/pages/auto-save-demo/auto-save-demo.page.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/apps/examples/src/app/pages/auto-save-demo/auto-save-demo.page.ts)
-- [`apps/examples/src/app/pages/auto-save-demo/auto-save-demo.form.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/apps/examples/src/app/pages/auto-save-demo/auto-save-demo.form.ts)
-- [`packages/ngx-vest-forms/src/public-api.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/public-api.ts)
-
-Use the auto-save demo as the canonical repo example for blur-driven persistence and quiet dependent validation.
+- [`AUTO-SAVE-ON-BLUR.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/AUTO-SAVE-ON-BLUR.md)
+- [`auto-save-demo` source](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/apps/examples/src/app/pages/auto-save-demo)

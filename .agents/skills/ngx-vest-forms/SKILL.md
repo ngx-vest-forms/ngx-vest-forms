@@ -1,144 +1,69 @@
 ---
 name: ngx-vest-forms
-description: Routes general ngx-vest-forms requests to the right workflow. Use this whenever the user broadly asks about ngx-vest-forms, wants help with the library but the feature area is not obvious yet, asks for best practices, migration help, blur-driven draft auto-save, `fieldBlur`, swapping the equality function with `NGX_EQUALITY_FN`, or says things like "how should I build this with ngx-vest-forms?" even when they do not mention `validationConfig`, wrappers, child components, root-form validation, or field-level persistence explicitly.
+description: Builds, reviews, debugs and migrates Angular template-driven forms that use ngx-vest-forms and Vest. Use whenever code imports from 'ngx-vest-forms' or uses `ngxVestForm`, `<ngx-control-wrapper>` or `vestFormsViewProviders`; for dependent-field revalidation, `ROOT_FORM`, blur auto-save, custom error wrappers, child form sections, form arrays, dynamic fields, form tests, or upgrading from v2.
+license: MIT
+metadata:
+  author: ngx-vest-forms
 ---
 
-# ngx-vest-forms router skill
+# ngx-vest-forms
 
-Use this as the broad entry point for ngx-vest-forms questions. It covers ngx-vest-forms v3 on Angular 22, RxJS 7.8+ and Vest 6.3+.
+ngx-vest-forms v3 binds Angular template-driven forms to a Vest 6 suite. It targets Angular 22, RxJS 7.8+ and Vest 6.3+.
 
-## Invariants
+## 1. Pin the installed version
+
+The guidance in this skill is for v3. Before writing code, read the `version` field of `node_modules/ngx-vest-forms/package.json` (the nearest `node_modules` in a monorepo). When dependencies are not installed yet, use the `ngx-vest-forms` range in the project's `package.json` instead: `^2`/`~2` means the `2.x` row, `^3` or a `3.x` beta means the `3.x` row. The step is done when you know which branch applies. Inside the ngx-vest-forms repository itself the library is the workspace source, always the current v3; follow its `AGENTS.md`.
+
+| Installed            | Branch                                                                                                                                                                                                                                                                                                                                                                            |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `3.x` (incl. betas)  | Continue with this skill.                                                                                                                                                                                                                                                                                                                                                         |
+| `2.x`                | Answer from the v2 docs: the installed `node_modules/ngx-vest-forms/README.md` and [`release/v2.x/docs`](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/release/v2.x/docs). v2 suites are Vest 5 `staticSuite((model, field) => { only(field); ... })` and v2 still has `[formShape]`. Say that the code targets v2, and offer [`migration/SKILL.md`](migration/SKILL.md). |
+| not a dependency     | v3 needs Angular 22. Until 3.0.0 is stable it ships on the npm `beta` tag: `npm install ngx-vest-forms@beta vest@^6.3.4`. A plain `npm install ngx-vest-forms` installs v2.                                                                                                                                                                                                       |
+| user asks to upgrade | [`migration/SKILL.md`](migration/SKILL.md).                                                                                                                                                                                                                                                                                                                                       |
+
+## 2. Use the installed public API
+
+Import only from `'ngx-vest-forms'`. The authority for which symbols and inputs exist is the installed package's type declarations: the `.d.ts` file named by the `types` (or `typings`) field of `node_modules/ngx-vest-forms/package.json`. It matches the user's version, works offline, and carries the JSDoc. When the package is not installed, use [`public-api.ts` on `master`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/public-api.ts).
+
+A symbol missing from those declarations is a library gap: say so and suggest an issue on [ngx-vest-forms/ngx-vest-forms](https://github.com/ngx-vest-forms/ngx-vest-forms/issues). `ngx-vest-forms/internal` exists for edge cases and carries no semver guarantees; reach for it only when the user accepts that.
+
+## 3. Hold the invariants
 
 Every answer and code sample follows these. When the user's code breaks one, correct it before anything else.
 
 | Rule                 | Write                                                                                                                                                       | Instead of                                      |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| Binding              | `[ngModel]="formValue().email"` on the control, `(formValueChange)="formValue.set($event)"` on the form                                                     | `[(ngModel)]`                                   |
+| Binding              | `[ngModel]="formValue().email"` on the control, `[formValue]="formValue()"` plus `(formValueChange)="formValue.set($event)"` on the form                    | `[(ngModel)]`                                   |
 | Field Path           | `name` joined with the enclosing `ngModelGroup` names equals the Field Path: `ngModelGroup="address"` + `name="street"` binds `formValue().address?.street` | a `name` that drifts from the bound path        |
 | Optional chaining    | `formValue().address?.street`, because the Form Model is `NgxDeepPartial<T>`                                                                                | `formValue().address.street`                    |
 | Suite                | Vest 6 `create((model) => { ... })` with a model-only callback, typed as `NgxVestSuite<T>`                                                                  | `(model, field)` callbacks, `staticSuite`       |
-| Focused Run          | `suite.only(field).run(model)` at the call site                                                                                                             | `only(field)` inside the suite callback         |
+| Focused Run          | `suite.only(field).run(model)` at the call site; the form directive already does this per field                                                             | `only(field)` inside the suite callback         |
 | Child Form Component | `viewProviders: [vestFormsViewProviders]`                                                                                                                   | no `viewProviders`                              |
 | Wrapper              | `<ngx-control-wrapper>` around one control; `<ngx-form-group-wrapper ngModelGroup="...">` around a group                                                    | a control wrapper around a whole `ngModelGroup` |
+| Async submit         | decide the submit in `(submitSettled)`, which emits `{ valid, value, errors }` after async tests finish                                                     | reading `valid` inside `(ngSubmit)`             |
 
-## Stay on the public API surface
+## 4. Route to the workflow
 
-Recommend imports from `'ngx-vest-forms'` only, and check that the package exports the symbol (see [`public-api.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/public-api.ts)). Paths under `packages/ngx-vest-forms/src/lib/**` are for maintaining the library itself.
+Read the sub-skill whose triggers match; combine several when the question spans them.
 
-## Available workflow sub-skills
+| Sub-skill                                                         | Triggers                                                                                                                                                               |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`core`](core/SKILL.md)                                           | first form, component structure, `NgxDeepPartial`, form contracts and schemas, typed suites, form state, submit, reset, global tokens, testing forms and suites        |
+| [`validation-config-builder`](validation-config-builder/SKILL.md) | one field does not revalidate when another changes, confirm password, date ranges, `omitWhen`/`skipWhen` across fields, `validationConfig`, `createValidationConfig()` |
+| [`field-blur-events`](field-blur-events/SKILL.md)                 | draft auto-save, save on blur, analytics or side effects on blur, `fieldBlur`, `NgxFieldBlurEvent`                                                                     |
+| [`root-form-validation`](root-form-validation/SKILL.md)           | an error owned by the whole form, "at least one of", form summaries, `ROOT_FORM`, `ngxValidateRootForm`                                                                |
+| [`built-in-wrappers`](built-in-wrappers/SKILL.md)                 | which wrapper to use, inline errors and warnings, `errorDisplayMode`, `warningDisplayMode`, `ariaAssociationMode`, wrapper styling                                     |
+| [`custom-wrapper-patterns`](custom-wrapper-patterns/SKILL.md)     | design-system or Material/PrimeNG field shells, `ngxErrorControl`, `ngxErrorDisplay`, custom ARIA or pending UI                                                        |
+| [`child-components`](child-components/SKILL.md)                   | splitting a form into sections, nested `ngModelGroup`, a child's controls missing from `formValue`                                                                     |
+| [`form-arrays`](form-arrays/SKILL.md)                             | lists of phone numbers, addresses or line items, add/remove rows, `arrayToObject`, `objectToArray`, Vest `each()`                                                      |
+| [`composite-adapter`](composite-adapter/SKILL.md)                 | one widget writing several fields: date range pickers, name splitters, hidden proxy fields                                                                             |
+| [`dynamic-form-behavior`](dynamic-form-behavior/SKILL.md)         | showing and hiding fields, stale values or errors after the layout changes, `clearFieldsWhen`, `triggerFormValidation()`                                               |
+| [`migration`](migration/SKILL.md)                                 | upgrading from v2, Vest 5 to 6, `sc-` selectors, `[formShape]`, removed exports, compile errors after the upgrade                                                      |
 
-Use these nested workflow sub-skills when the feature area is clear:
+Draft auto-save with quiet dependent errors combines `field-blur-events`, `validation-config-builder` and `built-in-wrappers`.
 
-| Sub-skill                   | Use when                                                                                            | Path                                 |
-| --------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| `core`                      | first examples, form structure, `[ngModel]`, `NgxDeepPartial`, typed suites                         | `core/SKILL.md`                      |
-| `validation-config-builder` | dependent field revalidation, `createValidationConfig()`, `whenChanged`, `bidirectional`            | `validation-config-builder/SKILL.md` |
-| `field-blur-events`         | draft auto-save, blur-driven persistence, analytics, `fieldBlur`, `NgxFieldBlurEvent`               | `field-blur-events/SKILL.md`         |
-| `root-form-validation`      | `ROOT_FORM`, `ngxValidateRootForm`, summary-level business rules                                    | `root-form-validation/SKILL.md`      |
-| `built-in-wrappers`         | built-in wrapper selection, display modes, `ariaAssociationMode`                                    | `built-in-wrappers/SKILL.md`         |
-| `custom-wrapper-patterns`   | design-system wrappers, `FormErrorDisplayDirective`, `FormErrorControlDirective`                    | `custom-wrapper-patterns/SKILL.md`   |
-| `child-components`          | nested `ngModelGroup`, reusable form sections, `vestFormsViewProviders`                             | `child-components/SKILL.md`          |
-| `composite-adapter`         | one UI widget mapping to multiple flat form fields, hidden proxy fields, fan-out, error aggregation | `composite-adapter/SKILL.md`         |
-| `dynamic-form-behavior`     | clearing hidden values, structure changes, `triggerFormValidation()`                                | `dynamic-form-behavior/SKILL.md`     |
+Questions about Vest itself (enforce rules, `group`, `warn`, async test design, server-side runs) belong to the `vestjs` skill; when it is not installed, suggest `npx skills add ngx-vest-forms/ngx-vest-forms --skill vestjs`. Generic Angular questions belong to the Angular skill.
 
-## Route to the right workflow
+## Docs
 
-### Core form setup
-
-Read `core/SKILL.md` when the user is:
-
-- starting a form from scratch
-- asking for a proper example
-- unsure how to structure a component around ngx-vest-forms
-- asking about `NgxDeepPartial`, the Form Contract, or signal-based form state
-- swapping the equality function with `NGX_EQUALITY_FN`
-- translating or renaming the wrappers' "Validating…" text with `NGX_PENDING_LABEL`
-- writing tests for a form/Vest suite, asking about `staticSuite`, `runStatic`,
-  resetting stateful suites between tests, or "tests pass locally but fail in CI"
-
-### Dependent field revalidation
-
-Read `validation-config-builder/SKILL.md` when the user is:
-
-- asking why one field does not revalidate when another changes
-- dealing with confirm-password, date ranges, country/state, or `omitWhen`
-- mentioning `validationConfig`, `createValidationConfig()`, `whenChanged`, `bidirectional`, or `group`
-
-### Field blur events and draft persistence
-
-Read `field-blur-events/SKILL.md` when the user is:
-
-- asking for draft auto-save, blur-save, or recovery-oriented persistence
-- mentioning `fieldBlur` or `NgxFieldBlurEvent`
-- wiring analytics or side effects to a field blur event
-- trying to save on blur without turning validation into a persistence gate
-- asking how to keep dependent fields logically invalid but visually quiet until their own blur
-
-### Form-level rules
-
-Read `root-form-validation/SKILL.md` when the user is:
-
-- asking for a message that belongs to the entire form
-- comparing `ROOT_FORM` versus field-level validation
-- working with `ngxValidateRootForm` or `ngxValidateRootFormMode`
-
-### Built-in wrappers
-
-Read `built-in-wrappers/SKILL.md` when the user is:
-
-- asking which wrapper to use
-- working with `ngx-control-wrapper` or `ngx-form-group-wrapper`
-- asking about error or warning display modes
-
-### Custom wrappers
-
-Read `custom-wrapper-patterns/SKILL.md` when the user is:
-
-- building a design-system wrapper
-- using `FormErrorDisplayDirective` or `FormErrorControlDirective`
-- asking about `hostDirectives`, ARIA wiring, or custom pending/error UI
-
-### Child components
-
-Read `child-components/SKILL.md` when the user is:
-
-- splitting a large form into reusable sections
-- working with nested `ngModelGroup`
-- debugging missing `vestFormsViewProviders`
-
-### Composite adapters
-
-Read `composite-adapter/SKILL.md` when the user is:
-
-- mapping one UI widget to multiple flat form model fields
-- asking about date range pickers, name splitters, or multi-field composites
-- using hidden proxy fields with `setValueAtPath` fan-out
-- aggregating errors from multiple fields into a single UI region
-- asking why `<ngx-control-wrapper>` does not work for their composite control
-
-### Dynamic structure changes
-
-Read `dynamic-form-behavior/SKILL.md` when the user is:
-
-- showing/hiding controls dynamically
-- replacing inputs with static content
-- clearing hidden values
-- asking when `triggerFormValidation()` is necessary
-
-## Routing heuristics
-
-- If the user mentions several of these at once, combine the relevant sub-skills instead of forcing a single lens.
-- Draft auto-save with quiet dependent errors usually combines `field-blur-events`, `validation-config-builder`, and `built-in-wrappers`.
-- If the issue is specifically about Vest semantics, also load the `vestjs` skill if it is installed (`npx skills add ngx-vest-forms/ngx-vest-forms --skill vestjs`).
-- For migration from v2, read [MIGRATION-v2.x-to-v3.0.0.md](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/migration/MIGRATION-v2.x-to-v3.0.0.md) first: it covers removed APIs such as `validateShape` (now `toFormContract()`) and `cloneDeep` (now `structuredClone`).
-- If the issue is generic Angular rather than library-specific, prefer the Angular skill instead of overfitting ngx-vest-forms guidance.
-
-## References
-
-- [README](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/README.md)
-- [docs/](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/docs)
-- [`public-api.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/public-api.ts)
-
-## Goal
-
-Use this skill to quickly identify the correct ngx-vest-forms workflow, then route into the matching nested sub-skill instead of giving a generic library overview.
+The installed `node_modules/ngx-vest-forms/README.md` is the offline overview for the user's version. The guides live in [`docs/`](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/docs) and the runnable examples in [`apps/examples`](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/apps/examples) on GitHub; each sub-skill names the guide it relies on. Dev-mode warnings tagged `NGX-xxx` are explained in [`TROUBLESHOOTING.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/TROUBLESHOOTING.md).

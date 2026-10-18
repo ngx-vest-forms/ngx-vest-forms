@@ -1,90 +1,65 @@
 ---
 name: built-in-wrappers
-description: Helps developers choose and use `ngx-control-wrapper` and `ngx-form-group-wrapper` correctly in ngx-vest-forms. Use this whenever the user mentions wrapper components, inline errors, warning display, `errorDisplayMode`, `warningDisplayMode`, `ariaAssociationMode`, group wrappers, selector migration, or wants accessible field/group validation UI without building a custom wrapper from scratch.
+description: Choosing and configuring `<ngx-control-wrapper>` and `<ngx-form-group-wrapper>` in ngx-vest-forms: error and warning display modes, pending state, `ariaAssociationMode`, `ariaRequired`, theming. Read it for inline error UI that does not need a custom wrapper.
 ---
 
-# ngx-vest-forms wrapper guidance
+# ngx-vest-forms built-in wrappers
 
-Use this skill for the built-in wrapper components.
+Both wrappers ship in `NgxVestForms`. The invariants live in the router, [`../SKILL.md`](../SKILL.md).
 
-## Primary choice
+## Pick the wrapper
 
-- Use `<ngx-control-wrapper>` for a **single control** plus its label/help/error UI.
-- Use `<ngx-form-group-wrapper>` for an `ngModelGroup` container or any multi-control region.
+| Wraps                                         | Use                                                                                                |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| one control with its label and help text      | `<ngx-control-wrapper>` (element form; `[ngxControlWrapper]` as an attribute)                      |
+| an `ngModelGroup` or any multi-control region | `<ngx-form-group-wrapper ngModelGroup="address">`, with a control wrapper per child                |
+| one widget writing several fields             | neither; see [`../composite-adapter/SKILL.md`](../composite-adapter/SKILL.md)                      |
+| a design-system field shell                   | a custom wrapper; see [`../custom-wrapper-patterns/SKILL.md`](../custom-wrapper-patterns/SKILL.md) |
 
-That distinction matters for ARIA behavior and predictable validation UI.
+A control wrapper around a whole group stamps one error onto every descendant input and misleads screen readers; the group wrapper is the group-safe choice. Control `id`s must be unique, so repeated sections derive them from their path prefix.
 
-## Default recommendations
+## Display modes
 
-1. Prefer the element form `<ngx-control-wrapper>...</ngx-control-wrapper>` for field wrappers.
-2. Put `ngModelGroup` directly on `<ngx-form-group-wrapper>` when grouping related controls.
-3. Keep one wrapper per field unless the user has a real composite-control scenario.
-4. Ensure control `id` values are unique, especially when a child component is rendered multiple times.
+Set per wrapper with `[errorDisplayMode]` / `[warningDisplayMode]`, or app-wide with `NGX_ERROR_DISPLAY_MODE_TOKEN` / `NGX_WARNING_DISPLAY_MODE_TOKEN`.
 
-## Public API symbols to prefer
+| Error mode                      | Shows errors                                           |
+| ------------------------------- | ------------------------------------------------------ |
+| `'on-blur-or-submit'` (default) | after blur or submit; the right default for most forms |
+| `'on-blur'`                     | after blur; quiet dependents                           |
+| `'on-submit'`                   | after submit only                                      |
+| `'on-dirty'`                    | as soon as the value changes                           |
+| `'always'`                      | immediately, even when pristine; use deliberately      |
 
-Recommend wrapper usage through the public package surface:
+| Warning mode                        | Shows warnings                  |
+| ----------------------------------- | ------------------------------- |
+| `'on-validated-or-touch'` (default) | after a validation run or touch |
+| `'on-touch'`                        | after blur                      |
+| `'on-dirty'`                        | as soon as the value changes    |
+| `'always'`                          | immediately                     |
 
-- `NgxVestForms` for the standalone imports bundle
-- `ControlWrapperComponent`
-- `FormGroupWrapperComponent`
-- `NGX_ERROR_DISPLAY_MODE_TOKEN`
-- `NGX_WARNING_DISPLAY_MODE_TOKEN`
+Warnings (Vest `warn()`) never make a control invalid, and they can appear on an untouched field after `validationConfig` revalidates it. `'on-blur'` with `[ngModelOptions]="{ updateOn: 'submit' }"` shows no blur-time errors and raises `NGX-105`; pair `updateOn: 'submit'` with `'on-submit'`.
 
-Do not point consumers at component or token imports under `src/lib/**` unless the task is library maintenance.
+## Pending, ARIA and required
 
-## Display mode guidance
+- `[pendingDebounce]="{ showAfter: 500, minimumDisplay: 500 }"` (the defaults) keeps "Validating…" from flashing; a binding that changes at runtime takes effect. The text comes from `NGX_PENDING_LABEL`.
+- `ariaAssociationMode` on `<ngx-control-wrapper>`: `'all-controls'` (default) stamps `aria-describedby`/`aria-invalid` on every descendant input and every element with a form-widget role (`combobox`, `radiogroup`, `slider`, `switch`, …); `'single-control'` stamps only when exactly one control is inside (input plus extra buttons); `'none'` leaves ARIA to you. Raise it only when the wrapper content is non-standard.
+- `ariaRequired` sets `aria-required="true"`. It is opt-in because Vest rules are often conditional.
 
-Use error display modes intentionally:
+## Theming
 
-- `'on-blur-or-submit'` is the best default for most forms.
-- `'on-blur'` is useful for conservative feedback.
-- `'on-submit'` fits forms that should stay quiet until submission.
-- `'on-dirty'` is more aggressive and suits immediate feedback UX.
-- `'always'` is niche and should be used deliberately.
+The wrappers ship plain CSS on BEM-style classes, themed through custom properties such as `--ngx-control-wrapper-error-color`, `--ngx-control-wrapper-warning-color`, `--ngx-control-wrapper-pending-color` and `--ngx-form-group-wrapper-error-color`, set from the app stylesheet. Overriding the properties comes before building a custom wrapper.
 
-Warnings are separate from errors and do not make a control invalid.
+```html
+<ngx-form-group-wrapper ngModelGroup="address">
+  <ngx-control-wrapper [errorDisplayMode]="'on-blur'">
+    <label for="street">Street</label>
+    <input id="street" name="street" [ngModel]="formValue().address?.street" />
+  </ngx-control-wrapper>
+</ngx-form-group-wrapper>
+```
 
-## ARIA association guidance
+## References
 
-Only talk about `ariaAssociationMode` when the wrapper is doing something non-standard.
-
-- `all-controls`: for true composite controls where every descendant shares the same message
-- `single-control`: when the wrapper usually targets one control but may contain extra focusable UI
-- `none`: for group containers or custom/manual ARIA management
-
-For `ngModelGroup` containers, do not use `ngx-control-wrapper` as a lazy substitute unless you also make the ARIA behavior safe. Prefer `ngx-form-group-wrapper` instead.
-
-## Styling note
-
-The built-in control wrapper ships plain, framework-agnostic CSS on BEM-style classes (`ngx-control-wrapper__errors`, `ngx-control-wrapper__warnings`, …). Theme it by overriding the public `--ngx-control-wrapper-*` custom properties (e.g. `--ngx-control-wrapper-error-color`) from the app stylesheet — no Tailwind required or used.
-
-## Common mistakes to correct
-
-- wrapping an entire `ngModelGroup` with `ngx-control-wrapper`
-- stamping error associations onto every descendant control unintentionally
-- forgetting that warnings may appear after `validationConfig`-triggered validation
-- assuming the default styling is Tailwind-based (it is plain CSS themed via `--ngx-control-wrapper-*` custom properties)
-- using duplicate control IDs in repeated child sections
-- importing wrapper components from internal library paths
-
-Do not recommend `ngx-control-wrapper` for a group just because it seems to “work.” That usually creates misleading ARIA relationships and brittle message ownership.
-
-## Output style
-
-When answering:
-
-- recommend the correct wrapper first
-- show a small template snippet with the preferred structure
-- mention accessibility behavior only as needed, but make the guidance precise
-- redirect to the custom-wrapper approach if the user wants custom visuals or custom ARIA plumbing
-
-## Repo references to consult when needed
-
-- [`packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md)
-- [`docs/ACCESSIBILITY.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/ACCESSIBILITY.md)
-- [`docs/CUSTOM-CONTROL-WRAPPERS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/CUSTOM-CONTROL-WRAPPERS.md)
-- [`docs/CHILD-COMPONENTS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/CHILD-COMPONENTS.md)
-- [`README.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/README.md)
-
-The invariants, including wrapper choice, live in the router skill, [`../SKILL.md`](../SKILL.md). Use this skill when the user needs wrapper selection, display-mode guidance, or ARIA association advice.
+- [`ControlWrapperComponent` README](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md) (full property list under "Styling and theming")
+- [`ACCESSIBILITY.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/ACCESSIBILITY.md)
+- [`API-TOKENS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/API-TOKENS.md)

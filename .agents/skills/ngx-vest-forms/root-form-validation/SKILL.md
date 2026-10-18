@@ -1,109 +1,65 @@
 ---
 name: root-form-validation
-description: Helps developers model form-level validation with `ROOT_FORM` and `ngxValidateRootForm` in ngx-vest-forms. Use this whenever the user mentions form-wide business rules, submission summaries, “at least one field required”, `ROOT_FORM`, `ngxValidateRootForm`, `ngxValidateRootFormMode`, or is unsure whether a cross-field rule belongs at field level or the whole-form level.
+description: Form-level rules in ngx-vest-forms with `ROOT_FORM`, `ngxValidateRootForm` and `ngxValidateRootFormMode`. Read it for errors no single field owns ("at least one contact method", form summaries) or when unsure whether a cross-field rule is field-level or form-level.
 ---
 
-# ngx-vest-forms root-form validation guidance
+# ngx-vest-forms root-form validation
 
-Use this skill when the error belongs to the **entire form**, not a single field.
+The invariants live in the router, [`../SKILL.md`](../SKILL.md).
 
-## Decision rule
+## Decide ownership
 
-Use `ROOT_FORM` only when no one field should “own” the error.
+Use `ROOT_FORM` only when no single field should show the error.
 
-Good fits:
+| Form-owned → `ROOT_FORM`                    | Field-owned → field test plus `validationConfig`       |
+| ------------------------------------------- | ------------------------------------------------------ |
+| at least one contact method is required     | confirm password mismatch (owned by `confirmPassword`) |
+| billing and shipping addresses must differ  | end date before start date (owned by `endDate`)        |
+| a business rule summarised above the submit | a field required because another field has a value     |
 
-- at least one contact method is required
-- two address blocks must differ
-- whole-form business rules that should show in a summary
+Say explicitly when the user's rule is field-owned and route it to [`../validation-config-builder/SKILL.md`](../validation-config-builder/SKILL.md). A `ROOT_FORM` used for hard-to-place field errors hides an ownership problem.
 
-Poor fits:
+## Wire it
 
-- password confirmation errors that really belong to `confirmPassword`
-- end-date errors that belong on `endDate`
-- field dependencies that should be handled with `validationConfig`
+1. In the suite: `test(ROOT_FORM, 'message', () => { ... })`, with `ROOT_FORM` imported from `'ngx-vest-forms'`.
+2. On the form: `ngxValidateRootForm`, and choose `[ngxValidateRootFormMode]` deliberately: `'submit'` (the default choice for blocking summaries) or `'live'` (continuous feedback, only where it will not be noisy).
+3. Render the message in one stable summary region. Blocking summaries use `role="alert"` (assertive); inline field errors stay polite.
+4. Submit handling: submit-mode root validation has already run when `(ngSubmit)` fires, so a synchronous `ROOT_FORM` failure already makes the form `INVALID` there. With async `ROOT_FORM` tests decide in `(submitSettled)`, whose `errors` include `ROOT_FORM`. `clearSubmittedState()` clears submit-mode `ROOT_FORM` errors.
 
-## Canonical setup
+```ts
+import { ROOT_FORM, type NgxVestSuite } from 'ngx-vest-forms';
+import { create, enforce, test } from 'vest';
 
-1. Add `test(ROOT_FORM, 'message', () => { ... })` to the Vest suite.
-2. Add `ngxValidateRootForm` to the form.
-3. Pick `[ngxValidateRootFormMode]` or equivalent mode intentionally:
-   - `'submit'` by default for blocking summary errors
-   - `'live'` only when continuous form-level feedback is useful and not noisy
-4. Render the emitted errors in a stable summary region.
-5. If the `(ngSubmit)` handler checks validity: with `ngxVestForm`, submit-mode root validation has already run when the handler fires. Synchronous rules leave the form `INVALID`; async `ROOT_FORM` tests leave it `PENDING`, so decide in `(submitSettled)` instead: it emits `{ valid, value, errors }` once validation has finished, with `ROOT_FORM` errors included.
+export const contactSuite: NgxVestSuite<Contact> = create((model) => {
+  test(ROOT_FORM, 'Give an email address or a phone number', () => {
+    enforce(!!model.email || !!model.phone).isTruthy();
+  });
+});
+```
 
-Prefer public API imports from `'ngx-vest-forms'`, especially:
+```html
+<form
+  ngxVestForm
+  ngxValidateRootForm
+  [ngxValidateRootFormMode]="'submit'"
+  [suite]="suite"
+  [formValue]="formValue()"
+  (formValueChange)="formValue.set($event)"
+  (errorsChange)="errors.set($event)"
+  (submitSettled)="save($event)"
+>
+  @if (errors()[ROOT_FORM]; as rootErrors) {
+  <div role="alert" aria-atomic="true">{{ rootErrors[0] }}</div>
+  }
+  <!-- controls -->
+</form>
+```
 
-- `ROOT_FORM`
-- `ValidateRootFormDirective`
+Expose `ROOT_FORM` to the template as a component field (`protected readonly ROOT_FORM = ROOT_FORM;`).
 
-For template examples, keep the directive usage aligned with the public selector/API rather than pointing consumers at internal directive files.
+`ROOT_FORM` tests share the suite's state with field tests, so test files reset shared suites the same way ([`../core/references/testing-vest-6.md`](../core/references/testing-vest-6.md)).
 
-## Accessibility expectations
+## References
 
-For blocking form-level errors, prefer an assertive summary region such as:
-
-- `role="alert"`
-- `aria-live="assertive"`
-- `aria-atomic="true"`
-
-Keep the summary region predictable and easy to locate in the form.
-
-## Recommended workflow
-
-1. Decide whether the rule is field-owned or form-owned.
-2. If form-owned, write it against `ROOT_FORM`.
-3. Keep the rule in the Vest suite; do not move it into component glue code.
-4. Wire the form directive and display summary errors in the template.
-5. If some fields also need field-level revalidation, combine this skill with validation-config guidance rather than overloading `ROOT_FORM`.
-
-## Common combinations
-
-It is normal to combine:
-
-- field-level tests + `validationConfig`
-- form-level tests + `ROOT_FORM`
-- structure-change handling + `triggerFormValidation()`
-
-These solve different problems.
-
-## Testing tip
-
-`ROOT_FORM` tests share suite state with field-level tests in the same Vest
-suite. When that suite is shared across multiple test cases (module-level
-`const suite = create(...)`), reset it in a `beforeEach` so a prior test's
-ROOT_FORM result does not bleed into the next. See the "Testing your forms
-(Vest 6)" section in `core/SKILL.md` for the full pattern; `runStatic(model)`
-is the simplest stateless alternative when a test only needs to assert on
-suite output for a given input.
-
-## Red flags
-
-Correct these if they appear:
-
-- using `ROOT_FORM` for what should be a field-level inline error
-- trying to replace `validationConfig` with `ROOT_FORM`
-- showing form-summary errors inline next to one control without a good ownership reason
-- using aggressive live whole-form validation when it will create noisy, distracting announcements
-- importing form-level validation helpers from internal library paths
-
-Do not let `ROOT_FORM` become a dumping ground for hard-to-place errors. That hides ownership problems instead of solving them.
-
-## Output style
-
-When answering:
-
-- explain why the rule is form-level
-- show both the suite snippet and the template summary snippet
-- mention when `'submit'` is safer than `'live'`
-- explicitly say when the user should _not_ use `ROOT_FORM`
-
-## Repo references to consult when needed
-
-- [`docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)
-- [`README.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/README.md)
-- [`docs/ACCESSIBILITY.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/ACCESSIBILITY.md)
-- [`packages/ngx-vest-forms/src/public-api.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/public-api.ts)
-
-The invariants live in the router skill, [`../SKILL.md`](../SKILL.md). Use this skill for the field-vs-form ownership decision and form-summary behavior.
+- [`VALIDATION-CONFIG-VS-ROOT-FORM.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)
+- [`ACCESSIBILITY.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/ACCESSIBILITY.md)
