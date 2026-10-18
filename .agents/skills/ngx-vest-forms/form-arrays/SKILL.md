@@ -20,7 +20,7 @@ Template-driven forms address controls by name, so a list lives in the Form Mode
    ```
 
 3. **Add or remove:** build the new list from `Object.values(current)`, push or filter, and write `arrayToObject(next)` back through the model signal (or an output the parent applies). Re-keying keeps indices contiguous. The input for a new row that is not yet part of the model binds with `[ngModelOptions]="{ standalone: true }"`.
-4. **Clean up removed rows:** call `removeField('phones.values.3')` on the `FormDirective` for each path that disappeared, so Vest drops its stale results.
+4. **Clean up removed rows:** re-keying shifts every row after the removed one, so call `removeField()` on the `FormDirective` for each old path from the removed index to the old last index (removing row 3 of 6: `phones.values.3` through `phones.values.5`), then `triggerFormValidation()` so the remaining rows are validated under their new paths.
 5. **Validate:** iterate the same values in the suite with `each()` and name each test with the item's Field Path:
 
    ```ts

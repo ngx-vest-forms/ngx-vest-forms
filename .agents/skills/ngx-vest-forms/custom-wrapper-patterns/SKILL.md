@@ -47,7 +47,7 @@ import {
       aria-atomic="true"
     >
       @if (display.shouldShowErrors()) {
-        @for (error of display.errors(); track error) {
+        @for (error of display.errors(); track $index) {
           <p>{{ error }}</p>
         }
       }
@@ -59,7 +59,7 @@ import {
       aria-live="polite"
     >
       @if (display.shouldShowWarnings()) {
-        @for (warning of display.warnings(); track warning) {
+        @for (warning of display.warnings(); track $index) {
           <p>{{ warning }}</p>
         }
       }
