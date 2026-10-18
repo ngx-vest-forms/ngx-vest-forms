@@ -609,7 +609,7 @@ If the contract genuinely varies per usage site, `[formContract]` still works as
 ## Migration
 
 - v1.x → v2.0.0: **[Migration Guide](./docs/migration/MIGRATION-v1.x-to-v2.0.0.md)**
-- v2.x → v3.0.0: **[Selector/Token Removal Guide](./docs/migration/MIGRATION-v2.x-to-v3.0.0.md)**
+- v2.x → v3.0.0: **[Migration Guide](./docs/migration/MIGRATION-v2.x-to-v3.0.0.md)**
 
 Staying on v2.x? Use the v2 docs listed in [Older versions](#older-versions).
 
@@ -691,6 +691,8 @@ Install the `ngx-vest-forms` skill from the repository root with the `skills` CL
 ```bash
 npx skills add ngx-vest-forms/ngx-vest-forms --skill ngx-vest-forms
 ```
+
+The skill reads the ngx-vest-forms version installed in your project before it writes code, answers v2 projects from the v2 docs, and includes a step-by-step v2 → v3 migration workflow.
 
 Install the **Vest.js guidance** skill from the repository root with the `skills` CLI:
 

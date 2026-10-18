@@ -1,6 +1,6 @@
 ---
 name: composite-adapter
-description: 'Helps developers build composite adapter components that map one UI widget to multiple flat form model fields in ngx-vest-forms. Use this whenever the user mentions date range pickers, name splitters, address composites, multi-field adapters, hidden proxy fields, fan-out with `setValueAtPath`, error aggregation across fields, or asks how to wire a single control to several `ngModel` paths without `ControlValueAccessor`.'
+description: One UI widget writing several flat ngx-vest-forms fields through hidden proxy inputs, `setValueAtPath` fan-out and per-field error slicing. Read it for date range pickers (including PrimeNG range mode), name splitters, or a widget that cannot sit in one `<ngx-control-wrapper>`.
 ---
 
 # ngx-vest-forms composite adapter guidance
@@ -73,8 +73,6 @@ export const travelFormContract: NgxDeepRequired<TravelFormModel> = {
 
 ### 2. Vest suite with type-safe field names
 
-Use `NgxVestSuite<T>` for a typed suite object. If you need typed field-path hints elsewhere, use `FormFieldName<T>` or `NgxFieldKey<T>` — but keep the suite callback model-only.
-
 ```typescript
 import { create, enforce, omitWhen, test } from 'vest';
 import { type NgxVestSuite } from 'ngx-vest-forms';
@@ -98,12 +96,6 @@ export const travelValidationSuite: NgxVestSuite<TravelFormModel> = create(
     });
   }
 );
-```
-
-When the caller needs field-scoped validation, do it at the call site:
-
-```typescript
-travelValidationSuite.only('returnDate').run(model);
 ```
 
 ### 3. Presentational adapter component with display mode gating
@@ -158,7 +150,7 @@ protected onRangeChange(range: DateRangeValue): void {
 }
 ```
 
-> v2.7.0: `setValueAtPath` is now array-safe. Writes like `setValueAtPath(next, 'addresses[0].street', 'x')` preserve sibling array entries instead of replacing the array with `{}`. Bracket notation chooses container shape from the segment (numeric → array, string → object). Use `structuredClone`; the legacy `cloneDeep` helper was removed in v3.0.0.
+`setValueAtPath` keeps sibling array entries when it writes through an index, and bracket notation picks the container from the segment (numeric → array, string → object).
 
 ### 5. Per-field error slicing, formSubmitted tracking, and validationConfig
 
@@ -179,7 +171,7 @@ resetFormState(value: TravelFormModel): void {
 }
 ```
 
-Slice errors **per field** — do **not** merge them before passing to the adapter. The adapter aggregates them for the visible summary internally, but needs them separate to gate `aria-invalid` and display independently per input:
+Slice errors **per field** — do **not** merge them before passing to the adapter. The adapter aggregates them for the visible summary internally, but needs them separate to gate `aria-invalid` and display independently per input. `formState` and `warnings` below come from `createFormFeedbackSignals(this.vestForm)`, where `vestForm = viewChild(FormDirective<TravelFormModel>)`:
 
 ```typescript
 readonly departureErrors = computed(() => {
@@ -290,7 +282,6 @@ If your composite can be decomposed into completely independent labeled fields, 
 
 - Passing `formState().errors` directly to the adapter without display-mode gating — errors appear on page load.
 - Pre-merging errors into a single list before passing to the adapter — this loses per-field granularity and causes a valid field to be marked `aria-invalid` when only its sibling has errors.
-- Using `[(ngModel)]` instead of `[ngModel]` on the proxy inputs.
 - Forgetting hidden proxy fields entirely — the adapter inputs are not in the Angular form tree.
 - Using positional tuples instead of named value types.
 - Rendering errors manually AND wrapping in `<ngx-control-wrapper>` — causes duplication.
@@ -301,7 +292,6 @@ If your composite can be decomposed into completely independent labeled fields, 
 - Making the adapter form-aware (injecting `NgForm`, using `ngModel`) instead of keeping it pure.
 - Registering a third-party widget's internal `ngModel` in the parent form instead of marking it standalone.
 - Passing `departureDate` / `returnDate` into a grouped child component when the real paths are `travelDates.departureDate` / `travelDates.returnDate`.
-- Using `field?: string` instead of `FormFieldName<T>` for the Vest suite parameter.
 
 ## When to reach for something else
 
@@ -316,7 +306,6 @@ If your composite can be decomposed into completely independent labeled fields, 
 
 - [`docs/COMPOSITE-ADAPTER-RECIPE.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/COMPOSITE-ADAPTER-RECIPE.md)
 - [`apps/examples/src/app/pages/date-range-adapter`](https://github.com/ngx-vest-forms/ngx-vest-forms/tree/master/apps/examples/src/app/pages/date-range-adapter)
-- [`packages/ngx-vest-forms/src/public-api.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/public-api.ts)
 - [`docs/VALIDATION-CONFIG-BUILDER.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/VALIDATION-CONFIG-BUILDER.md)
 - [`docs/CUSTOM-CONTROL-WRAPPERS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/CUSTOM-CONTROL-WRAPPERS.md)
 

@@ -4,41 +4,20 @@
 
 v3.0.0 deletes every `@deprecated` runtime helper, const alias, and type alias that v2.x kept around for backward compatibility. Consumers who migrated to the recommended `Ngx`-prefixed names need no changes; consumers still on the deprecated forms get a compile error pointing at the replacement.
 
-| Removed                                     | Replacement                        | Migration tip                                                                                                                                                         |
-| ------------------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cloneDeep(value)`                          | `structuredClone(value)`           | Native browser/Node API; no import needed.                                                                                                                            |
-| `set(obj, path, value)`                     | `setValueAtPath(obj, path, value)` | Already exported from `ngx-vest-forms`; identical signature.                                                                                                          |
-| `vestForms` (const array)                   | `NgxVestForms`                     | `import { NgxVestForms } from 'ngx-vest-forms';` — same array, renamed.                                                                                               |
-| `ROOT_FORM_CONSTANT`                        | `ROOT_FORM`                        | Single canonical export from `ngx-vest-forms`.                                                                                                                        |
-| `DeepPartial<T>`                            | `NgxDeepPartial<T>`                | Structurally identical; rename the import.                                                                                                                            |
-| `DeepRequired<T>`                           | `NgxDeepRequired<T>`               | Structurally identical; rename the import.                                                                                                                            |
-| `FormCompatibleDeepRequired<T>`             | _(removed)_                        | See "Replacing `NgxFormCompatibleDeepRequired`" below for a copy-paste snippet, or express Date coercion in your schema (e.g., `z.union([z.date(), z.literal('')])`). |
-| `NgxTypedVestSuite<T>`                      | `NgxVestSuite<T>`                  | Structurally identical; rename the type reference.                                                                                                                    |
-| `[formShape]` input                         | `[formContract]`                   | See "`[formShape]` → `[formContract]`" below. Raw `NgxDeepRequired<T>` shapes are still accepted; wrap with `toFormContract(shape)` for explicit conversion.          |
-| `NgxFormCompatibleDeepRequired<T>`          | _(removed)_                        | See "Replacing `NgxFormCompatibleDeepRequired`" below.                                                                                                                |
+| Removed                            | Replacement                        | Migration tip                                                                                                                                                         |
+| ---------------------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cloneDeep(value)`                 | `structuredClone(value)`           | Native browser/Node API; no import needed.                                                                                                                            |
+| `set(obj, path, value)`            | `setValueAtPath(obj, path, value)` | Already exported from `ngx-vest-forms`; identical signature.                                                                                                          |
+| `vestForms` (const array)          | `NgxVestForms`                     | `import { NgxVestForms } from 'ngx-vest-forms';` — same array, renamed.                                                                                               |
+| `ROOT_FORM_CONSTANT`               | `ROOT_FORM`                        | Single canonical export from `ngx-vest-forms`.                                                                                                                        |
+| `DeepPartial<T>`                   | `NgxDeepPartial<T>`                | Structurally identical; rename the import.                                                                                                                            |
+| `DeepRequired<T>`                  | `NgxDeepRequired<T>`               | Structurally identical; rename the import.                                                                                                                            |
+| `FormCompatibleDeepRequired<T>`    | _(removed)_                        | See "Replacing `NgxFormCompatibleDeepRequired`" below for a copy-paste snippet, or express Date coercion in your schema (e.g., `z.union([z.date(), z.literal('')])`). |
+| `NgxTypedVestSuite<T>`             | `NgxVestSuite<T>`                  | Structurally identical; rename the type reference.                                                                                                                    |
+| `[formShape]` input                | `[formContract]`                   | See "`[formShape]` → `[formContract]`" below. Raw `NgxDeepRequired<T>` shapes are still accepted; wrap with `toFormContract(shape)` for explicit conversion.          |
+| `NgxFormCompatibleDeepRequired<T>` | _(removed)_                        | See "Replacing `NgxFormCompatibleDeepRequired`" below.                                                                                                                |
 
 If you only used the recommended `Ngx*` / `NGX_*` names (or the canonical `setValueAtPath` / `structuredClone`), v3 is a no-op for this category.
-
-### Test setup change: `setupTestBed()` is no longer required
-
-With Angular 22 + `@analogjs/vitest-angular`, explicit `setupTestBed()` calls are no longer needed in test bootstraps.
-
-- **v2 pattern** (remove):
-
-```ts
-// test-setup.ts
-import { setupTestBed } from './test-setup';
-setupTestBed();
-```
-
-- **v3 pattern** (recommended):
-
-```ts
-// test-setup.ts
-import './test-setup';
-```
-
-For migration safety, `setupTestBed()` remains exported as a deprecated no-op. Remove calls gradually, but do not add new ones.
 
 ### `[formShape]` → `[formContract]`
 
@@ -81,13 +60,7 @@ Unknown-key warnings now depend on the strictness of the supplied Standard Schem
 // Adapted from ts-essentials DeepRequired (MIT License).
 // https://github.com/ts-essentials/ts-essentials
 type _Primitive =
-  | string
-  | number
-  | boolean
-  | bigint
-  | symbol
-  | undefined
-  | null;
+  string | number | boolean | bigint | symbol | undefined | null;
 type _Builtin = _Primitive | Function | Date | Error | RegExp;
 type _IsNever<T> = [T] extends [never] ? true : false;
 type _IsTuple<T extends ReadonlyArray<any>> = number extends T['length']

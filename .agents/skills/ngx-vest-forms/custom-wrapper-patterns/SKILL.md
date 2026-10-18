@@ -1,102 +1,103 @@
 ---
 name: custom-wrapper-patterns
-description: Helps developers build custom ngx-vest-forms wrappers with `FormErrorDisplayDirective`, `FormErrorControlDirective`, ARIA utilities, and debounced pending UI. Use this whenever the user wants a custom control wrapper, design-system integration, Material/Prime/custom styling, hostDirectives-based error components, manual `aria-describedby` behavior, stable error IDs, or wants to replace the built-in wrapper UI while keeping ngx-vest-forms behavior.
+description: Custom field wrappers for ngx-vest-forms built on `FormErrorControlDirective` (`ngxErrorControl`) or `FormErrorDisplayDirective` (`ngxErrorDisplay`) through `hostDirectives`: design-system shells, Material or PrimeNG styling, custom pending UI, ARIA helpers. Read it when the built-in wrapper's markup does not fit.
 ---
 
-# ngx-vest-forms custom wrapper guidance
+# ngx-vest-forms custom wrappers
 
-Use this skill when the built-in wrapper is not enough and the user needs custom presentation.
+First check whether the built-in wrapper's CSS custom properties or `NGX_PENDING_LABEL` already cover the need ([`../built-in-wrappers/SKILL.md`](../built-in-wrappers/SKILL.md)). The invariants live in the router, [`../SKILL.md`](../SKILL.md).
 
-## Choose the right primitive
+## Pick the primitive
 
-- Use `FormErrorDisplayDirective` when the user wants control-state signals and will handle the rest of the UI themselves.
-- Use `FormErrorControlDirective` when they also want automatic ARIA wiring, stable region IDs, and managed `aria-describedby` / `aria-invalid` behavior.
+| Directive                                       | Gives you                                                                                                                                                                             | Use for                                     |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `FormErrorControlDirective` (`ngxErrorControl`) | everything below, plus stable `errorId`/`warningId`/`pendingId`, managed `aria-describedby`/`aria-invalid`, debounced `showPendingMessage()`, `pendingLabel()`, `ariaAssociationMode` | production wrappers; the default choice     |
+| `FormErrorDisplayDirective` (`ngxErrorDisplay`) | `errors()`, `warnings()`, `shouldShowErrors()`, `shouldShowWarnings()`, `isPending()`, touched/dirty/valid state, `formSubmitted`, display-mode inputs                                | wrappers that do all ARIA wiring themselves |
 
-If in doubt, prefer `FormErrorControlDirective` for production custom wrappers because it reduces accessibility footguns.
+## Build it
 
-## Public API symbols to prefer
+1. A component with `<ng-content />`, so the directive's `contentChild(NgModel)` finds the projected control.
+2. Compose the directive with `hostDirectives`, forwarding the inputs consumers need.
+3. Inject it with `inject(FormErrorControlDirective, { self: true })`. Its display state lives on the composed `FormErrorDisplayDirective`; inject that too, also with `{ self: true }`.
+4. Keep the message regions in the DOM at all times, with the directive's ids, so `aria-describedby` targets always exist; toggle their content instead.
+5. Field messages are polite (`role="status"`, `aria-live="polite"`). `role="alert"` is for blocking form-level summaries only.
 
-Recommend these imports from `'ngx-vest-forms'` when building custom wrappers:
+```ts
+import { Component, inject } from '@angular/core';
+import {
+  FormErrorControlDirective,
+  FormErrorDisplayDirective,
+} from 'ngx-vest-forms';
 
-- `FormErrorDisplayDirective`
-- `FormErrorControlDirective`
-- `createDebouncedPendingState`
-- `DebouncedPendingStateOptions` (input shape)
-- `DebouncedPendingStateOptionsInput` (signal-accessor input shape, v2.7+)
-- `DebouncedPendingStateResult`
-- `mergeAriaDescribedBy`
-- `parseAriaIdTokens`
-- `resolveAssociationTargets`
-- `AriaAssociationMode`
+@Component({
+  selector: 'ds-field',
+  hostDirectives: [
+    {
+      directive: FormErrorControlDirective,
+      inputs: ['ariaAssociationMode'],
+    },
+  ],
+  template: `
+    <ng-content />
+    <div
+      [id]="ec.errorId"
+      class="ds-field__error"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      @if (display.shouldShowErrors()) {
+        @for (error of display.errors(); track error) {
+          <p>{{ error }}</p>
+        }
+      }
+    </div>
+    <div
+      [id]="ec.warningId"
+      class="ds-field__warning"
+      role="status"
+      aria-live="polite"
+    >
+      @if (display.shouldShowWarnings()) {
+        @for (warning of display.warnings(); track warning) {
+          <p>{{ warning }}</p>
+        }
+      }
+    </div>
+    <div [id]="ec.pendingId" role="status" aria-live="polite">
+      @if (ec.showPendingMessage()) {
+        {{ ec.pendingLabel() }}
+      }
+    </div>
+  `,
+})
+export class DsFieldComponent {
+  protected readonly ec = inject(FormErrorControlDirective, { self: true });
+  protected readonly display = inject(FormErrorDisplayDirective, {
+    self: true,
+  });
+}
+```
 
-Do not tell consumers to import custom-wrapper primitives from internal library files.
+`hostDirectives` can forward only the listed directive's own inputs, and `errorDisplayMode`/`warningDisplayMode` belong to the `FormErrorDisplayDirective` that `FormErrorControlDirective` composes. A wrapper on `FormErrorControlDirective` therefore takes its display modes from `NGX_ERROR_DISPLAY_MODE_TOKEN` / `NGX_WARNING_DISPLAY_MODE_TOKEN`, provided app-wide or in the wrapper's own `providers`. A wrapper that needs a per-instance mode input composes `FormErrorDisplayDirective` directly with `inputs: ['errorDisplayMode', 'warningDisplayMode']` and wires ARIA itself.
 
-## Recommended composition pattern
+Read ids from the directive rather than hard-coding them; they include a non-default `APP_ID`.
 
-1. Create a wrapper component with content projection.
-2. Apply the directive through `hostDirectives`.
-3. Inject the directive with `inject(..., { self: true })`.
-4. Render stable message regions in the template.
-5. Keep inline errors and warnings polite; reserve assertive alerts for true form-level blocking errors.
+## Multi-control containers
 
-## Pending state guidance
+A custom wrapper around a group or several inputs sets `ariaAssociationMode="none"` and wires ARIA explicitly, or uses `<ngx-form-group-wrapper>`. A widget that writes several fields is a composite adapter instead ([`../composite-adapter/SKILL.md`](../composite-adapter/SKILL.md)).
 
-Use `createDebouncedPendingState()` when async validation can flash quickly.
-That keeps "Validating…" from flickering and gives users steadier feedback.
+## Advanced helpers
 
-To translate or rename the built-in wrappers' "Validating…" text, provide `NGX_PENDING_LABEL` (a string or a `Signal<string>`) instead of building a custom wrapper. A custom wrapper on `ngxErrorControl` renders the same text with `pendingLabel()`.
+For wrappers that manage ARIA by hand, the public helpers preserve consumer-provided ids:
 
-`[pendingDebounce]` (on `<ngx-form-group-wrapper>` since v2.7.0, and on `<ngx-control-wrapper>` since v3) is a **signal-accessor input**, so runtime changes propagate. Type the binding as `DebouncedPendingStateOptionsInput` when consumers want to swap delays from a `signal` or `computed`. Previously the value was read once at construction.
+- `parseAriaIdTokens(value)` splits an `aria-describedby` string;
+- `mergeAriaDescribedBy(existing, activeIds, ownedIds)` swaps the wrapper's own ids (`ownedIds`) for the currently active ones and keeps every id the consumer set;
+- `resolveAssociationTargets(controls, mode)` picks, from a list of control elements, the ones a mode would stamp.
 
-## ARIA behavior to preserve
+`createDebouncedPendingState(isPending, options)` gives a standalone debounced `showPendingMessage` signal for wrappers built on `FormErrorDisplayDirective`. `options` may be a signal (for example an `input()`), so delays can change at runtime; its type is `DebouncedPendingStateOptionsInput`.
 
-When building custom wrappers, preserve these invariants:
+## References
 
-- do not clobber consumer-provided `aria-describedby`
-- keep IDs stable and predictable
-- set `aria-invalid` only when errors are actually meant to be shown
-- avoid stamping control-level ARIA onto whole groups of descendants unless that is explicitly correct
-
-Use these public utilities when you need fine-grained control:
-
-- `parseAriaIdTokens`
-- `mergeAriaDescribedBy`
-- `resolveAssociationTargets`
-
-## Multi-control caution
-
-If the custom wrapper surrounds a group or composite container, do not blindly behave like a single-control wrapper.
-Use `ariaAssociationMode="none"` or equivalent manual targeting when the region contains multiple inputs.
-
-## Common mistakes to fix
-
-- using `role="alert"` for every inline field error
-- removing message regions from the DOM in a way that breaks `aria-describedby` stability
-- hand-rolling ARIA merging when `FormErrorControlDirective` already solves it
-- forgetting `self: true` injection for the composed directive
-- showing raw pending state without debounce in a UI that validates frequently
-- importing wrapper directives or ARIA helpers from `src/lib/**`
-
-Do not improvise new ARIA plumbing when the public directives already provide the hard parts. Reinventing this area is how accessible wrappers quietly become inaccessible wrappers.
-
-## Output style
-
-When answering:
-
-- give a hostDirectives-based wrapper component unless the user requests another pattern
-- explain which directive you chose and why
-- include the minimum accessible template structure needed for errors, warnings, and pending state
-- mention ARIA utilities only when the user’s scenario is advanced enough to justify them
-
-## Repo references to consult when needed
-
-- `references/patterns.md`
-- [`docs/CUSTOM-CONTROL-WRAPPERS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/CUSTOM-CONTROL-WRAPPERS.md)
-- [`docs/ACCESSIBILITY.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/ACCESSIBILITY.md)
-- [`docs/CHILD-COMPONENTS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/CHILD-COMPONENTS.md)
-- [`packages/ngx-vest-forms/src/public-api.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/public-api.ts)
-- [`packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/lib/components/control-wrapper/README.md)
-
-The invariants live in the router skill, [`../SKILL.md`](../SKILL.md). Use this skill for hostDirectives composition, stable ARIA behavior, and custom presentation decisions.
-
-Start with `references/patterns.md` when the user is choosing between `FormErrorDisplayDirective` and `FormErrorControlDirective`, or when the wrapper’s ARIA behavior is the main risk.
+- [`CUSTOM-CONTROL-WRAPPERS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/CUSTOM-CONTROL-WRAPPERS.md)
+- [`ACCESSIBILITY.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/ACCESSIBILITY.md)

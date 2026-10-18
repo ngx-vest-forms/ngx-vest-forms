@@ -1,123 +1,168 @@
 ---
 name: core
-description: Helps developers build, explain, or refactor forms with ngx-vest-forms. Use this whenever the user mentions ngx-vest-forms, template-driven forms with Vest.js, a first example, `[ngModel]` vs `[(ngModel)]`, `NgxDeepPartial`, the Form Contract, `name` path matching, or asks how to structure a form around this library—even if they do not explicitly ask for a “core” setup guide.
+description: Default setup for an ngx-vest-forms v3 form, plus form state, submit, reset, global tokens and testing. Read it for a first form, a "proper example", component structure, form contracts, or tests that exercise a form or suite.
 ---
 
 # ngx-vest-forms core workflow
 
-Use this skill to produce the default, idiomatic ngx-vest-forms setup.
+The invariants live in the router, [`../SKILL.md`](../SKILL.md). This file is the default implementation they add up to.
 
-## Start from these rules
+## Build a form
 
-1. Model the form with `NgxDeepPartial<T>` because template-driven forms are built incrementally.
-2. Prefer `NgxVestSuite<T>` for typed Vest suites; reach for `FormFieldName<T>` or `NgxFieldKey<T>` when you need typed field-path hints.
-3. Keep the suite callback model-only. Handle field-focused validation later via `suite.only(field).run(model)`, or `suite.focus({ onlyGroup })` for groups.
-4. Use `[ngModel]` with `(formValueChange)` for unidirectional data flow. Do not default to `[(ngModel)]`.
-5. The `name` attribute must exactly match the bound property path.
-6. Use optional chaining in templates because the model is partial.
-7. Recommend a `NgxDeepRequired<T>` shape when the user is wiring a real form, especially if typos in nested paths are likely.
-8. When the suite has async tests, decide the submit in `(submitSettled)`, not `(ngSubmit)`. `ngSubmit` can fire while the form is still PENDING; `submitSettled` emits `{ valid, value, errors }` once validation has finished. It also revalidates `validationConfig` dependents first, so a quick submit after a trigger edit can't pass on a stale dependent.
-9. Default to `<ngx-control-wrapper>` around single controls unless the user explicitly needs a custom or group-level wrapper.
+Build in this order; the form is done when every step is present:
 
-## Public API symbols to prefer
+1. A Form Model type wrapped in `NgxDeepPartial<T>`, because template-driven forms build the value incrementally.
+2. A Vest suite: `create((model) => { ... })`, typed `NgxVestSuite<Model>`, one `test(fieldPath, message, fn)` per rule, field names equal to the Field Paths.
+3. Optionally, a Form Contract for dev-mode path diagnostics. Reuse a Standard Schema the app already has (Zod v4, Valibot, ArkType); otherwise write an `NgxDeepRequired<Model>` shape. Provide it once with `provideFormContract(contract)` in the component's `providers`; bind `[formContract]` only when it differs per usage.
+4. A `formValue` signal in the component.
+5. `<form ngxVestForm [suite] [formValue] (formValueChange)>`, plus `(submitSettled)` when the form submits.
+6. One `[ngModel]` + `name` per control, each inside `<ngx-control-wrapper>` with a `<label for>` and a matching `id`.
+7. `imports: [NgxVestForms]`. Angular 22 defaults to OnPush, so leave `changeDetection` unset.
 
-Recommend these imports from `'ngx-vest-forms'` when they fit the example:
+```ts
+import { Component, signal } from '@angular/core';
+import {
+  NgxVestForms,
+  provideFormContract,
+  type NgxDeepPartial,
+  type NgxDeepRequired,
+  type NgxSubmitSettledEvent,
+  type NgxVestSuite,
+} from 'ngx-vest-forms';
+import { create, enforce, test } from 'vest';
 
-- `NgxVestForms`
-- `NgxDeepPartial`
-- `NgxDeepRequired`
-- `NgxVestSuite`
-- `FormFieldName`
-- `NgxFieldKey`
-- `NgxFieldBlurEvent`
-- `NgxSubmitSettledEvent`
-- `ROOT_FORM`
+type Profile = NgxDeepPartial<{
+  firstName: string;
+  email: string;
+  address: { street: string; city: string };
+}>;
 
-Optional advanced exports worth knowing about:
+const profileContract: NgxDeepRequired<Profile> = {
+  firstName: '',
+  email: '',
+  address: { street: '', city: '' },
+};
 
-- `NGX_EQUALITY_FN`, `NgxEqualityFn` — swap the comparator the form uses for `formValueChange` `distinctUntilChanged`, two-way sync, and `formState` equality. Default is `fastDeepEqual` with cycle detection. Reach for it for bundle size (`dequal/lite`), tests (reference equality), or domain rules. See [API-TOKENS.md](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/API-TOKENS.md).
-- `NGX_PENDING_LABEL`, `NgxPendingLabel` — the built-in wrappers' pending message (default `'Validating…'`). Provide a string to translate it, or a `Signal<string>` to follow a runtime language switch. See [API-TOKENS.md](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/API-TOKENS.md).
-- `setValueAtPath` — array-safe path writes (v2.7+ no longer overwrites populated arrays via bracket notation).
-  Do not teach consumers to import from internal `src/lib/**` paths. If a symbol is missing from the public API, that is a library-maintenance task, not a consumer workaround.
+export const profileSuite: NgxVestSuite<Profile> = create((model) => {
+  test('firstName', 'First name is required', () => {
+    enforce(model.firstName).isNotBlank();
+  });
+  test('email', 'Enter a valid email', () => {
+    enforce(model.email).matches(/^[^@\s]+@[^@\s]+$/);
+  });
+  test('address.city', 'City is required', () => {
+    enforce(model.address?.city).isNotBlank();
+  });
+});
 
-## Default implementation pattern
+@Component({
+  selector: 'app-profile-form',
+  imports: [NgxVestForms],
+  providers: [provideFormContract(profileContract)],
+  template: `
+    <form
+      ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
+      (formValueChange)="formValue.set($event)"
+      (submitSettled)="save($event)"
+    >
+      <ngx-control-wrapper>
+        <label for="firstName">First name</label>
+        <input
+          id="firstName"
+          name="firstName"
+          [ngModel]="formValue().firstName"
+        />
+      </ngx-control-wrapper>
 
-Build answers and code in this order:
+      <ngx-control-wrapper>
+        <label for="email">Email</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          [ngModel]="formValue().email"
+        />
+      </ngx-control-wrapper>
 
-1. Define a `NgxDeepPartial<T>` form model.
-2. Define an optional structural contract — either an `NgxDeepRequired<T>` shape (legacy, accepted for back-compat), a hand-written `StandardSchemaV1<T>`, or a Zod v4 schema (recommended).
-3. Create a Vest suite with `create((model) => { ... })`.
-4. Expose a signal-based `formValue` in the component.
-5. Bind the form with `ngxVestForm`, `[suite]`, and `(formValueChange)`. Prefer `provideFormContract(...)` in the component when the contract is fixed; use `[formContract]` only for true per-usage overrides.
-6. Bind each control with `[ngModel]` and the exact matching `name`.
-7. Rely on Angular 22's default OnPush change detection; do not add an explicit `changeDetection` option.
+      <ngx-form-group-wrapper ngModelGroup="address">
+        <ngx-control-wrapper>
+          <label for="street">Street</label>
+          <input
+            id="street"
+            name="street"
+            [ngModel]="formValue().address?.street"
+          />
+        </ngx-control-wrapper>
+        <ngx-control-wrapper>
+          <label for="city">City</label>
+          <input id="city" name="city" [ngModel]="formValue().address?.city" />
+        </ngx-control-wrapper>
+      </ngx-form-group-wrapper>
 
-## Output expectations
+      <button type="submit">Save</button>
+    </form>
+  `,
+})
+export class ProfileFormComponent {
+  protected readonly suite = profileSuite;
+  protected readonly formValue = signal<Profile>({});
 
-When generating code or guidance, prefer:
+  protected save(event: NgxSubmitSettledEvent<Profile>): void {
+    if (event.valid) {
+      // persist event.value
+    }
+  }
+}
+```
 
-- a complete runnable example over isolated fragments
-- typed imports from `ngx-vest-forms`
-- signals for local component state
-- wrappers that keep error display and ARIA straightforward
-- call-site focused validation examples such as `suite.only('email').run(model)` only when the user explicitly needs field-scoped execution
+Field-scoped runs happen at the call site, `suite.only('email').run(model)`, and only when code outside the form needs them; the directive already runs each field this way.
 
-If the user asks for “the right way” or “a proper example”, give a minimal but production-ready component.
+## Form state, submit and reset
 
-## Red flags to catch
+Get the directive with `#vestForm="ngxVestForm"` plus `viewChild.required('vestForm', { read: FormDirective })`, or `viewChild(FormDirective<Model>)`.
 
-Correct these immediately if they appear:
+| Need                                                  | Use                                                                                                                           |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| decide a submit, with async tests                     | `(submitSettled)`; it also revalidates `validationConfig` dependents first                                                    |
+| errors by field path                                  | `(errorsChange)`, or `formState().errors`                                                                                     |
+| errors, warnings and pending as ready signals         | `createFormFeedbackSignals(vestForm)` → `formState`, `warnings`, `validatedFields`, `pending`                                 |
+| errors and warnings of an arbitrary `AbstractControl` | `getAllFormErrors(control)` → `{ errors, warnings }`                                                                          |
+| `valid`, `pending`, dirty state                       | directive signals `valid()`, `pending()`, `status()`; outputs `(validChange)`, `(dirtyChange)`                                |
+| start over                                            | set the signal, then `resetForm(value)`                                                                                       |
+| reset one field's validation                          | `resetField(path)`; for a field that is gone for good, `removeField(path)`                                                    |
+| end a submit cycle but keep values and touched state  | `clearSubmittedState()` ([guide](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/CLEAR-SUBMITTED-STATE.md)) |
+| one button submitting several forms                   | `markAllAsTouched()` on each                                                                                                  |
+| own focus handling after a failed submit              | `[focusFirstInvalidOnSubmit]="false"`                                                                                         |
+| wizard steps that validate a subset                   | `[validationFocus]="{ onlyGroup: 'step1' }"` with Vest `group()`s in the suite                                                |
 
-- `[(ngModel)]` on ngx-vest-forms controls
-- two-parameter suite callbacks or `only(field)` inside the suite callback
-- `name` values that do not match the bound path
-- a submit handler that reads `valid` inside `(ngSubmit)` while async tests may still be pending, or waits for `pending` to clear by hand; use `(submitSettled)`
-- direct property access like `formValue().address.street` instead of `formValue().address?.street`
-- missing a fixed `provideFormContract(...)` or explicit `[formContract]` on complex nested forms where path mistakes are easy
-- `(blur)` handlers that re-trigger validation to fake dependent-field timing or draft auto-save
-- imports from `packages/ngx-vest-forms/src/lib/**` in consumer examples
+Errors, warnings and touched paths key array items with dot segments: `users.0.name`.
 
-Do not paper over these mistakes. They break the mental model of the library and usually create subtle bugs instead of quick wins.
+## App-wide tokens
 
-## Good defaults
+| Token                                  | Sets                                                                                                                        |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `NGX_ERROR_DISPLAY_MODE_TOKEN`         | default `errorDisplayMode` (`'on-blur-or-submit'`)                                                                          |
+| `NGX_WARNING_DISPLAY_MODE_TOKEN`       | default `warningDisplayMode` (`'on-validated-or-touch'`)                                                                    |
+| `NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN` | `validationConfig` debounce; `NGX_VALIDATION_DEBOUNCE_PRESETS.immediate` (0) suits tests                                    |
+| `NGX_PENDING_LABEL`                    | the wrappers' "Validating…" text, as a string or a `Signal<string>` for runtime language switches                           |
+| `NGX_EQUALITY_FN`                      | the comparator behind `formValueChange` dedupe and model sync (default deep equal); swap for bundle size or domain equality |
+| `NGX_FORM_CONTRACT`                    | the contract, via `provideFormContract(...)` or `provideFormContractFactory(...)`                                           |
 
-- Prefer `ROOT_FORM` only for true form-level business rules, not as a shortcut for field errors.
-- If fields depend on each other, move to the validation-config skill logic rather than cramming everything into the base example.
-- If the user wants blur-driven persistence, analytics, or field-level side effects, move to the field-blur-events skill instead of inventing custom `(blur)` validation flows.
-- If the user is splitting the form into child components, apply the child-components skill guidance.
-- If the user wants custom message UI, apply the custom-wrapper-patterns skill guidance.
+Per-control debounce is `[validationOptions]="{ debounceTime: 300 }"` on the `ngModel`. Details: [`API-TOKENS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/API-TOKENS.md).
 
-## Testing your forms (Vest 6)
+## Split the suite
 
-When the user writes tests that exercise their Vest suite, route to
-[references/testing-vest-6.md](references/testing-vest-6.md). Quick rules:
+Large suites stay readable as plain functions that take a model slice and a path prefix and call `test()` with full Field Paths: `addressValidations(model.billing, 'billing')`. See [`COMPOSABLE-VALIDATIONS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/COMPOSABLE-VALIDATIONS.md).
 
-- `suite.runStatic(model)` for stateless one-shot tests; no reset needed.
-- For shared `create()` suites, add `beforeEach(() => mySuite.reset())` —
-  Vest 6 suites accumulate state across runs.
-- `staticSuite()` and `promisify()` were removed in Vest 6; use `create()`
-  - `runStatic()` or `await suite.run()`.
-- Browser-mode Vitest CI is ~7× slower than local: `waitFor` / `findByText`
-  windows under 3000ms flake on async-validator assertions.
+## Tests
 
-If tests pass locally but fail in CI, audit shared-suite reset coverage
-first.
+For any test that runs a suite or renders a form, read [`references/testing-vest-6.md`](references/testing-vest-6.md). The short version: `suite.runStatic(model)` for pure suite tests, and `beforeEach(() => suite.reset())` for every `create()` suite shared across tests.
 
-## Repo references to consult when needed
+## Where to look next
 
-Read these files before making nuanced recommendations:
-
-- [`docs/COMPLETE-EXAMPLE.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/COMPLETE-EXAMPLE.md)
-- [`docs/FIELD-PATHS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/FIELD-PATHS.md)
-- [`docs/ACCESSIBILITY.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/ACCESSIBILITY.md)
-- [`README.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/README.md)
-- [`packages/ngx-vest-forms/src/public-api.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/public-api.ts)
-
-The invariants live in the router skill, [`../SKILL.md`](../SKILL.md); use this skill for the fuller implementation workflow and examples.
-
-## Canonical reminders
-
-- ngx-vest-forms is a template-driven forms adapter, not a reactive forms abstraction.
-- `validationConfig` controls when dependent fields revalidate; it does not define validation logic.
-- The library's sweet spot is typed template-driven forms with Vest suites, signals, and explicit structure.
-- ngx-vest-forms v3 targets Angular 22, RxJS 7.8+, and Vest 6.3+. `parseFieldPath` warns in dev mode for malformed segments (`'a..b'`, `'.a'`, `'a.'`); production behavior unchanged.
+- Dependent fields → [`../validation-config-builder/SKILL.md`](../validation-config-builder/SKILL.md)
+- Form-level rules → [`../root-form-validation/SKILL.md`](../root-form-validation/SKILL.md)
+- Path typing (`FieldPath<T>`, `FormFieldName<T>`, `ValidationConfigMap<T>`) → [`FIELD-PATHS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/FIELD-PATHS.md)
+- A longer worked example → [`COMPLETE-EXAMPLE.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/COMPLETE-EXAMPLE.md)

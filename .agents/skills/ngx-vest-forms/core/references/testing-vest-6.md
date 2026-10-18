@@ -1,95 +1,53 @@
-# Testing ngx-vest-forms — Vest 6 patterns
+# Testing ngx-vest-forms forms and Vest 6 suites
 
-When the user writes tests that exercise their Vest suite, point them at the
-Vest 6 surface — earlier patterns are wrong on this branch.
+## Pick the run
 
-## Vest 6 API surface
+| Situation                                      | Pattern                                                                  |
+| ---------------------------------------------- | ------------------------------------------------------------------------ |
+| pure suite test (input → result)               | `suite.runStatic(model)`; every call is independent, no reset needed     |
+| async tests inside the suite                   | `await suite.run(model)`                                                 |
+| component test rendering a form with the suite | the shared `create()` suite plus `beforeEach(() => suite.reset())`       |
+| tests pass locally, fail in CI                 | audit reset coverage of shared suites first, then the wait windows below |
 
-- **One-shot stateless run:** `suite.runStatic(model)`. Returns a result and
-  discards state immediately; ideal for unit-testing a suite as a pure
-  function or for server-side request handlers.
-- **Awaited async run:** `await suite.run(model)`. Replaces v5's
-  `promisify(suite)`.
-- **Removed in v6:** `staticSuite()` (the standalone helper) and `promisify()`.
-  If consumer code or tests still import either, advise replacing with
-  `create()` + `runStatic()` or `await suite.run()`. (Source: Vest upgrade
-  guide, fetched via Context7 2026-05-08.)
+Vest 6 removed `staticSuite()` and `promisify()`; their replacements are `create()` + `runStatic()` and `await suite.run()`.
 
-## Reset stateful suites between tests
+## Reset shared suites
 
-`create()` returns a stateful suite. Validation results persist between runs
-unless `.reset()` is called. In a test file, every suite that is **shared
-across tests** must be reset — module-level `const mySuite = create(...)`,
-suites declared at the top of a `describe()` block, and module-level test
-components whose `suite` field references either of the above.
-
-Recommended pattern:
+`create()` returns a stateful suite: results accumulate across runs until `.reset()`. Reset every suite a test file shares between tests, which covers a module-level `const suite = create(...)`, a suite declared at the top of a `describe()`, and test host components whose `suite` field points at either.
 
 ```ts
 import { beforeEach, describe, it } from 'vitest';
-import { create } from 'vest';
+import { profileSuite } from './profile.suite';
 
-const mySuite = create((model) => {
-  /* ... */
-});
-
-describe('MyForm', () => {
-  // Vest 6 suites are stateful — reset before each test or stale results
-  // from a prior run leak into the next.
+describe('ProfileFormComponent', () => {
   beforeEach(() => {
-    mySuite.reset();
+    profileSuite.reset();
   });
 
-  it('...', () => {
-    /* test uses mySuite */
+  it('shows the email error after blur', async () => {
+    // ...
   });
 });
 ```
 
-If tests pass locally but fail in CI with assertions against validation
-messages or `ng-invalid` classes seeing the _previous_ test's value, suite
-state leakage is one common cause. Reset hooks are the right hygiene per
-Vest 6 docs and should always be in place for shared suites.
+The symptom of a missing reset is an assertion seeing the previous test's message or `ng-invalid` class. `ROOT_FORM` results live in the same suite state, so they leak the same way.
 
-Stateless alternative: when a test only asserts on suite output for a given
-input, use `suite.runStatic(model)` and skip the reset entirely — every
-`runStatic` call is independent.
+## Timing
 
-## CI timing for Vitest browser mode
+- Provide `{ provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: NGX_VALIDATION_DEBOUNCE_PRESETS.immediate }` so `validationConfig` dependents revalidate without a debounce wait.
+- Wait for async validators with the testing library's `waitFor` / `findBy*` and a window of 3000–5000 ms; CI runners, browser-mode Vitest in particular, run several times slower than a laptop.
+- Give tests that wait on several validation cycles a per-test timeout, for example `it('…', async () => { … }, 20_000)`.
+- Budget at least twice the production debounce for debounce-based waits.
 
-Browser-mode Vitest under the Playwright provider on GitHub Actions Ubuntu
-runs roughly 3-7× slower than a developer laptop. Hard-coded `waitFor` /
-`findByText` windows under 3000ms for assertions that follow async validator
-resolution will flake.
+## Expected dev-mode warnings
 
-Recommendations:
+When a test deliberately triggers an `NGX-xxx` warning, spy on `console.warn` so stderr stays clean and assert the code:
 
-- `waitFor` / `findByText` for assertions after async validation: 3000-5000ms.
-- Per-test timeouts for tests that wait on multiple validation cycles:
-  bump to 20000ms via the third `it()` argument:
-  `it('...', async () => { ... }, 20000);`.
-- Debounce-based test waits: budget at least 2× the production debounce
-  for CI tolerance.
-
-### Running the library tests
-
-Run the library tests through Nx:
-
-```bash
-pnpm nx run ngx-vest-forms:test
+```ts
+const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+// exercise the warning path
+expect(warn).toHaveBeenCalledWith(expect.stringContaining('[NGX-100]'));
+warn.mockRestore();
 ```
 
-The old `npm run test:lib` three-shard chain (`vitest run --shard=N/3` under
-`@vitest/browser-playwright`) no longer exists — the Nx workspace runs a
-single Vitest invocation in a jsdom environment (see the root
-`vitest.config.ts`), so there is no shard placement to think about when
-adding specs.
-
-## Quick decision table
-
-| Situation                              | Pattern                                                       |
-| -------------------------------------- | ------------------------------------------------------------- |
-| Pure suite unit test (input → result)  | `suite.runStatic(model)` — no reset needed                    |
-| Browser-mode test of a form component  | `create()` suite + `beforeEach(() => suite.reset())`          |
-| Async tests inside the suite           | `await suite.run(model)` — never re-introduce `promisify`     |
-| Tests that pass locally but fail in CI | Audit shared suite reset coverage first; bump timeouts second |
+Assert wrapper messages by role or text rather than by generated ids: the ids include a non-default `APP_ID` and are numbered per application.

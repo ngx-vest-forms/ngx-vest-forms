@@ -134,7 +134,10 @@ import {
   hostDirectives: [
     {
       directive: FormErrorControlDirective,
-      inputs: ['errorDisplayMode', 'ariaAssociationMode'],
+      // Only FormErrorControlDirective's own inputs can be forwarded here.
+      // Display modes come from NGX_ERROR_DISPLAY_MODE_TOKEN /
+      // NGX_WARNING_DISPLAY_MODE_TOKEN (app-wide or in this component's providers).
+      inputs: ['ariaAssociationMode'],
     },
   ],
   template: `

@@ -1,145 +1,80 @@
 ---
 name: validation-config-builder
-description: Helps developers use `validationConfig`, `ValidationConfigMap`, and `createValidationConfig()` correctly in ngx-vest-forms. Use this whenever the user mentions dependent fields, confirm-password validation, `omitWhen`, `skipWhen`, stale cross-field validation, the fluent builder API, `whenChanged`, `bidirectional`, `group`, or asks why one field is not revalidating when another changes.
+description: Dependent-field revalidation in ngx-vest-forms with `validationConfig` and `createValidationConfig()`. Read it when one field should revalidate after another changes: confirm password, date ranges, country/state, `omitWhen`/`skipWhen` conditions across fields.
 ---
 
-# ngx-vest-forms validationConfig builder guidance
+# ngx-vest-forms validationConfig
 
-Use this skill when the problem is about **field-level dependency timing**.
+`validationConfig` tells the form **when** to rerun a dependent field's tests. The rule itself stays in the Vest suite. The invariants live in the router, [`../SKILL.md`](../SKILL.md).
 
-## First decide what kind of problem it is
+## Decide the tool
 
-Ask yourself:
+| The error…                                          | Use                                                                                  |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| belongs to one field but depends on another's value | `validationConfig`                                                                   |
+| belongs to the whole form, no single owner          | `ROOT_FORM` → [`../root-form-validation/SKILL.md`](../root-form-validation/SKILL.md) |
+| goes stale because controls appeared or disappeared | [`../dynamic-form-behavior/SKILL.md`](../dynamic-form-behavior/SKILL.md)             |
 
-- Is the validation rule owned by a specific field? Use `validationConfig`.
-- Is the error truly about the whole form? Use `ROOT_FORM` instead.
-- Is the issue caused by structure changes with controls appearing/disappearing? Use `triggerFormValidation()` and field-clearing guidance instead.
+[`references/decision-guide.md`](references/decision-guide.md) has diagnostic questions for questions that mix the three.
 
-Do not treat these as interchangeable.
+When stale cross-field errors are the bug, a missing `validationConfig` is the missing wiring, not optional polish. Any suite with `omitWhen`, `skipWhen` or `optional` keyed on another field, or a test comparing two fields, needs one.
 
-## Core rule
+## Write it
 
-`validationConfig` only tells Angular **when to revalidate dependent fields**.
-It does **not** define the validation rules themselves.
+1. Keep the rule in the suite with `test(...)`, `omitWhen(...)`, `skipWhen(...)` or `optional(...)`, on the field that should show the message.
+2. List which field's change must rerun which dependent.
+3. Encode that with the typed builder, so a wrong path fails to compile:
 
-The validation logic still lives in the Vest suite.
+   | Builder call                                    | For                                                                   |
+   | ----------------------------------------------- | --------------------------------------------------------------------- |
+   | `.whenChanged('country', 'state')`              | one-way; the second argument also takes an array                      |
+   | `.bidirectional('password', 'confirmPassword')` | pairs that check each other: matching fields, start/end dates         |
+   | `.group(['a', 'b', 'c'])`                       | small clusters where every field affects every other (N×(N−1) reruns) |
+   | `.merge(otherConfig)`                           | combining reusable fragments                                          |
+   | `.build()`                                      | the `ValidationConfigMap<T>` to bind                                  |
 
-## Preferred API
+4. When the graph depends on UI state, wrap the builder in `computed(() => …)`.
+5. Bind it: `<form ngxVestForm … [validationConfig]="validationConfig">`.
 
-Prefer the fluent builder over raw objects:
+```ts
+import { createValidationConfig, type NgxVestSuite } from 'ngx-vest-forms';
+import { create, enforce, omitWhen, test } from 'vest';
 
-- `createValidationConfig<T>()`
-- `.whenChanged(trigger, dependent)`
-- `.bidirectional(a, b)`
-- `.group([...fields])`
-- `.merge(otherConfig)`
-- `.build()`
+export const signupSuite: NgxVestSuite<Signup> = create((model) => {
+  test('password', 'Password is required', () => {
+    enforce(model.password).isNotBlank();
+  });
+  omitWhen(!model.password, () => {
+    test('confirmPassword', 'Passwords do not match', () => {
+      enforce(model.confirmPassword).equals(model.password);
+    });
+  });
+});
 
-Use raw `ValidationConfigMap<T>` objects only when that is genuinely clearer.
+// in the component
+protected readonly validationConfig = createValidationConfig<Signup>()
+  .bidirectional('password', 'confirmPassword')
+  .build();
+```
 
-Prefer public API imports from `'ngx-vest-forms'`:
+A raw object works too when it is clearer; annotate it as `NgxValidationConfig<Model>` so the paths are checked. Runtime paths `FieldPath<T>` cannot express (`'addresses.0.street'`) need an explicit cast of the built object.
 
-- `createValidationConfig`
-- `ValidationConfigBuilder`
-- `ValidationConfigMap`
-- `FormFieldName`
+## Calm dependents
 
-Do not send consumers to internal builder utilities under `src/lib/**`.
+Dependents revalidate silently: `validationConfig` does not mark them touched, so with the default `'on-blur-or-submit'` mode their error appears only after their own blur or a submit. Setting `[errorDisplayMode]="'on-blur'"` on the dependent's `<ngx-control-wrapper>` makes that choice explicit at the field. That pairing (config for timing, wrapper for visibility, suite for the rule) replaces `(blur)` handlers that call `triggerFormValidation()`. For blur-driven saving on top, add [`../field-blur-events/SKILL.md`](../field-blur-events/SKILL.md).
 
-## Recommended workflow
+## Known limits
 
-1. Keep the rule in the Vest suite with `test(...)`, `omitWhen(...)`, `skipWhen(...)`, or `optional(...)`.
-2. Identify which field changes should force another field to revalidate.
-3. Encode those dependencies with the builder.
-4. Use typed paths so broken field names fail at compile time.
-5. If the config depends on runtime state, wrap the builder in `computed(() => ...)`.
+- The trigger control must stay mounted. A trigger destroyed and recreated behind `@if` stops driving its dependents; hide it with `[hidden]` or disable it instead.
+- Rapid edits to a trigger inside the 500 ms loop-prevention cooldown are deferred and replayed, not dropped.
+- `NGX-106` means the dependent pipeline gave up waiting for a `PENDING` form (an async test that never settles); `NGX-107` means a dependent path never appeared (hidden or misspelled). A duplicate-builder warning means the same edge was added twice. See [`TROUBLESHOOTING.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/TROUBLESHOOTING.md).
 
-## Canonical patterns
+## When answering
 
-### Mutual dependency
+Explain the dependency graph in a sentence, then show the Vest test and the config together, and name the field that owns the message.
 
-Use `.bidirectional('password', 'confirmPassword')` for matching fields, ranges, and start/end pairs.
+## References
 
-### One-way dependency
-
-Use `.whenChanged('country', 'state')` when one field controls another field’s requirement.
-
-### Multi-field clusters
-
-Use `.group([...])` only when the whole set truly needs N×(N-1) revalidation. For large sets, prefer targeted `whenChanged()` calls.
-
-### Conditional config
-
-Use `.merge()` or `computed()` when the dependency graph changes with the UI.
-
-## Situations where validationConfig is especially important
-
-Use it proactively when the suite contains:
-
-- `omitWhen(...)`
-- `skipWhen(...)`
-- `optional(...)`
-- field comparisons like password confirmation
-- conditional requirements such as country/state or age/emergencyContact
-
-Without it, ngx-vest-forms may leave stale validation results because Angular will not know which dependent fields to rerun.
-
-## Calm dependents pattern
-
-When a dependent field becomes logically invalid as soon as its trigger changes, but should stay visually quiet until the dependent's own blur, **do not** add `(blur)` handlers calling `triggerFormValidation()`. Instead pair:
-
-- `validationConfig` (or the builder) — wires the dependency graph
-- `[errorDisplayMode]="'on-blur'"` on the dependent's `<ngx-control-wrapper>` — gates the visible message
-- the Vest suite — owns the actual rule
-
-This calm behavior is the default: `validationConfig` revalidates dependents silently and deliberately does NOT mark them touched, so a dependent's error UI only appears after the dependent itself is blurred (or the form is submitted). No manual revalidation call needed.
-
-## Interaction with blur-driven persistence
-
-If the user also wants draft auto-save or analytics on blur:
-
-1. keep the dependency graph in `validationConfig`
-2. keep the validation rule in the Vest suite
-3. use wrapper display modes such as `errorDisplayMode="on-blur"` to keep untouched dependents visually calm
-4. use the form's `fieldBlur` output for persistence or other side effects
-
-Do not recommend `(blur)` handlers that call `triggerFormValidation()` to manufacture this UX. That mixes validation timing with application policy and usually makes async behavior harder to reason about.
-
-## Pitfalls to fix immediately
-
-- using `validationConfig` as if it defined validation rules
-- solving a form-level rule with `validationConfig` instead of `ROOT_FORM`
-- forgetting dependencies when `omitWhen` or `skipWhen` hides/shows a rule
-- creating very large `group()` graphs when one-way dependencies would be cheaper and clearer
-- using untyped string paths when the model type is available
-- using `triggerFormValidation()` from blur handlers to force dependent-field timing
-- importing builder helpers from internal library paths
-
-Do not describe `validationConfig` as optional polish when stale cross-field errors are part of the bug. In those cases it is the missing wiring, not a nice-to-have.
-
-## Output style
-
-When answering the user:
-
-- explain the dependency graph in plain language first
-- show the Vest test and the builder config together
-- call out which field owns the error message
-- prefer one compact example over several disconnected fragments
-
-## Repo references to consult when needed
-
-- `references/decision-guide.md`
-- [`docs/VALIDATION-CONFIG-BUILDER.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/VALIDATION-CONFIG-BUILDER.md)
-- [`docs/VALIDATION-CONFIG-VS-ROOT-FORM.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)
-- [`docs/AUTO-SAVE-ON-BLUR.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/AUTO-SAVE-ON-BLUR.md)
-- [`docs/FIELD-PATHS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/FIELD-PATHS.md)
-- [`README.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/README.md)
-- [`packages/ngx-vest-forms/src/public-api.ts`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/packages/ngx-vest-forms/src/public-api.ts)
-
-The invariants live in the router skill, [`../SKILL.md`](../SKILL.md). This skill adds the dependency-graph reasoning and builder-specific patterns.
-
-Start with `references/decision-guide.md` when the user is mixing `validationConfig`, `ROOT_FORM`, and dynamic form behavior in the same question.
-
-## Useful reminder
-
-If the user says “when field A changes, field B should revalidate”, this skill should usually trigger.
+- [`VALIDATION-CONFIG-BUILDER.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/VALIDATION-CONFIG-BUILDER.md)
+- [`VALIDATION-CONFIG-VS-ROOT-FORM.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/VALIDATION-CONFIG-VS-ROOT-FORM.md)
+- [`FIELD-PATHS.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/FIELD-PATHS.md)
