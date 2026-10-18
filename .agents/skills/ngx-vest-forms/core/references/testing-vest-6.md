@@ -11,6 +11,14 @@
 
 Vest 6 removed `staticSuite()` and `promisify()`; their replacements are `create()` + `runStatic()` and `await suite.run()`.
 
+`runStatic` exists on the type `create()` infers, not on `NgxVestSuite<T>`. A suite annotated `const suite: NgxVestSuite<T> = create(…)` fails to compile at `suite.runStatic(…)`; declare a suite that pure tests run with `satisfies` instead, which keeps the inferred type and still checks the library contract:
+
+```ts
+export const profileSuite = create((model: NgxDeepPartial<Profile>) => {
+  // tests
+}) satisfies NgxVestSuite<Profile>;
+```
+
 ## Reset shared suites
 
 `create()` returns a stateful suite: results accumulate across runs until `.reset()`. Reset every suite a test file shares between tests, which covers a module-level `const suite = create(...)`, a suite declared at the top of a `describe()`, and test host components whose `suite` field points at either.

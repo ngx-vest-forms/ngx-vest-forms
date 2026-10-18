@@ -70,16 +70,20 @@ Each change is mechanical. A suite is done when its callback takes only the mode
 // v2 (Vest 5)
 const suite: NgxVestSuite<Model> = staticSuite((model, field?) => {
   only(field);
-  test('email', 'Email is required', () => enforce(model.email).isNotBlank());
+  test('email', 'Email is required', () => {
+    enforce(model.email).isNotBlank();
+  });
 });
 
 // v3 (Vest 6)
 const suite: NgxVestSuite<Model> = create((model) => {
-  test('email', 'Email is required', () => enforce(model.email).isNotBlank());
+  test('email', 'Email is required', () => {
+    enforce(model.email).isNotBlank();
+  });
 });
 ```
 
-- `staticSuite(...)` → `create(...)`; outside the form (server code, scripts) run it with `suite.runStatic(model)`.
+- `staticSuite(...)` → `create(...)`; outside the form (server code, scripts) run it with `suite.runStatic(model)`. `runStatic` is on the suite's inferred type, not on `NgxVestSuite<T>`, so a suite run that way is declared `create((model: NgxDeepPartial<Model>) => { … }) satisfies NgxVestSuite<Model>` instead of with a type annotation.
 - Drop the `field` parameter and the `only(field)` call. Code outside the form that ran one field calls `suite.only(field).run(model)`.
 - `promisify(suite)(model)` → `await suite.run(model)`.
 - `test.memo(name, msg, fn, deps)` → `memo(() => { test(name, msg, fn); }, deps)` with `import { memo } from 'vest/memo'`.
