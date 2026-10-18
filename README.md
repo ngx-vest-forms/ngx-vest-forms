@@ -6,6 +6,7 @@
 A lightweight, type-safe adapter between Angular template-driven forms and [Vest.js](https://vestjs.dev) validation. Build complex forms with unidirectional data flow, sophisticated async validations, and minimal boilerplate.
 
 [![npm version](https://img.shields.io/npm/v/ngx-vest-forms.svg?style=flat-square)](https://www.npmjs.com/package/ngx-vest-forms)
+[![npm beta](https://img.shields.io/npm/v/ngx-vest-forms/beta.svg?style=flat-square&label=beta&color=orange)](https://github.com/ngx-vest-forms/ngx-vest-forms/releases)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/ngx-vest-forms/ngx-vest-forms/ci.yml?branch=master&style=flat-square&label=Build)](https://github.com/ngx-vest-forms/ngx-vest-forms/actions/workflows/ci.yml)
 [![Angular](https://img.shields.io/badge/Angular-22.x-dd0031?style=flat-square&logo=angular)](https://angular.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
@@ -44,8 +45,10 @@ See the full guides under [Documentation](#documentation).
 ### Installation
 
 ```bash
-npm install ngx-vest-forms
+npm install ngx-vest-forms@beta
 ```
+
+v3 is in prerelease on the npm `beta` tag; a plain `npm install ngx-vest-forms` still installs v2 until 3.0.0 is released. See the [releases](https://github.com/ngx-vest-forms/ngx-vest-forms/releases) for what changed.
 
 > **v3 NOTE:**
 >
