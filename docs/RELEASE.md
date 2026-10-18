@@ -185,6 +185,12 @@ If npm publish fails:
   `@semantic-release/npm` skips the OIDC exchange), that the log shows
   "Verifying OIDC context", and that npm's Trusted Publisher names `cd.yml`
   and the `npm-publish` environment
+- `ENEEDAUTH` from `npm publish` after "OIDC token exchange with the npm
+  registry succeeded": the plugin's exchange only verifies the setup; `npm
+  publish` repeats the exchange itself and needs npm 11.5.1 or later. Check
+  the "Check npm version" step: it must show the root `npm` devDependency, not
+  the npm bundled with Node. A dry run does not catch this, because it skips
+  `npm publish`
 - Check npm permissions in the repository settings
 - Check npm registry status
 

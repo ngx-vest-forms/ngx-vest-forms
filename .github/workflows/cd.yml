@@ -128,6 +128,12 @@ jobs:
         with:
           name: package
           path: dist/ngx-vest-forms
+      - name: Check npm version
+        # npm itself does the trusted-publishing token exchange at publish
+        # time and needs 11.5.1 or later. @semantic-release/npm runs the npm
+        # in node_modules/.bin (the root `npm` devDependency), not its own
+        # copy, which pnpm does not link to the root.
+        run: pnpm exec npm --version
       - name: List package contents
         # semantic-release --dry-run skips publish, so this is the dry run's
         # view of what would ship.
