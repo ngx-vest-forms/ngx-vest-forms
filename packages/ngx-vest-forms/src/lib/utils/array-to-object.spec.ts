@@ -425,6 +425,21 @@ describe('objectToArray', () => {
       items: ['first', 'second', 'third'],
     });
   });
+
+  it('should leave out an own __proto__ key so it cannot set the prototype', () => {
+    const model = JSON.parse(
+      '{"name":"x","nested":{"__proto__":{"isAdmin":true}},"__proto__":{"isAdmin":true}}'
+    ) as object;
+
+    const result = objectToArray(model, []) as Record<string, unknown>;
+
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
+    expect(result['isAdmin']).toBeUndefined();
+    expect(Object.keys(result)).toEqual(['name', 'nested']);
+    const nested = result['nested'] as Record<string, unknown>;
+    expect(Object.getPrototypeOf(nested)).toBe(Object.prototype);
+    expect(nested['isAdmin']).toBeUndefined();
+  });
 });
 
 describe('selective array/object conversion', () => {
