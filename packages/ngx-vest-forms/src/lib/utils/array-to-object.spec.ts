@@ -426,20 +426,26 @@ describe('objectToArray', () => {
     });
   });
 
-  it('should leave out an own __proto__ key so it cannot set the prototype', () => {
-    const model = JSON.parse(
-      '{"name":"x","nested":{"__proto__":{"isAdmin":true}},"__proto__":{"isAdmin":true}}'
-    ) as object;
+  it.each(['__proto__', 'prototype', 'constructor'])(
+    'should leave out an own %s key at every level',
+    (unsafeKey) => {
+      const payload = `{"${unsafeKey}":{"isAdmin":true}}`;
+      const model = JSON.parse(
+        `{"name":"x","nested":${payload},"${unsafeKey}":{"isAdmin":true},"list":{"0":${payload}}}`
+      ) as object;
 
-    const result = objectToArray(model, []) as Record<string, unknown>;
+      const result = objectToArray(model, ['list']) as Record<string, unknown>;
+      const nested = result['nested'] as Record<string, unknown>;
+      const item = (result['list'] as Record<string, unknown>[])[0];
 
-    expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
-    expect(result['isAdmin']).toBeUndefined();
-    expect(Object.keys(result)).toEqual(['name', 'nested']);
-    const nested = result['nested'] as Record<string, unknown>;
-    expect(Object.getPrototypeOf(nested)).toBe(Object.prototype);
-    expect(nested['isAdmin']).toBeUndefined();
-  });
+      for (const value of [result, nested, item]) {
+        expect(Object.getPrototypeOf(value)).toBe(Object.prototype);
+        expect(Object.hasOwn(value as object, unsafeKey)).toBe(false);
+        expect((value as Record<string, unknown>)['isAdmin']).toBeUndefined();
+      }
+      expect(Object.keys(result)).toEqual(['name', 'nested', 'list']);
+    }
+  );
 });
 
 describe('selective array/object conversion', () => {
