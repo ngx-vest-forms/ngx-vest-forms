@@ -24,6 +24,7 @@ jobs:
     timeout-minutes: 5
     permissions:
       contents: read
+      pull-requests: read # fetch-metadata lists the PR's commits
     steps:
       - name: Create app token
         id: app-token
