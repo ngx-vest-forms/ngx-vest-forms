@@ -3,6 +3,11 @@ name: Dependabot auto-merge
 # patch. Required status checks still gate the merge; anything else stays
 # open for a human. Needs "Allow auto-merge" in the repository settings.
 #
+# A GitHub App installed on this repo enables auto-merge, because the
+# ruleset on master refuses GITHUB_TOKEN ("not authorized for this protected
+# branch"). Its merge also starts push CI, which a GITHUB_TOKEN merge would
+# not. Secrets: AUTOMERGE_APP_CLIENT_ID, AUTOMERGE_APP_PRIVATE_KEY.
+#
 # pull_request_target, because a Dependabot-triggered pull_request run gets a
 # read-only GITHUB_TOKEN whatever the job requests. This is safe only while
 # the job checks out and runs no PR code: it reads metadata through the API.
@@ -18,9 +23,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
     steps:
+      - name: Create app token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.AUTOMERGE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AUTOMERGE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
       - name: Fetch Dependabot metadata
         id: meta
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
@@ -32,5 +44,5 @@ jobs:
           steps.meta.outputs.update-type == 'version-update:semver-patch'
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: gh pr merge --auto --squash "$PR_URL"
