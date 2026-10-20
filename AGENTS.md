@@ -14,7 +14,7 @@ Shared instructions for every coding agent in this repo (Claude Code, Copilot). 
 - `release/v2.x` and `release/v1.x` are maintenance-only for their major: bug fixes and security patches.
 - `beta` and `rc` are prerelease branches. They only ever fast-forward to `master` and never get commits of their own.
 - Merging never publishes. Every release, stable or prerelease, goes out through a manual `workflow_dispatch` of `.github/workflows/cd.yml`, dispatched with `--ref` set to the branch being released, and waits for approval on the `npm-publish` environment. It publishes through npm Trusted Publishing; keep its `NPM_CONFIG_REGISTRY` at `https://registry.npmjs.org/` with the trailing slash, or the OIDC exchange is skipped. Branch-to-channel mapping lives in `.releaserc`; `docs/RELEASE.md` has the steps.
-- Dependabot PRs with no semver-major update merge automatically once the required checks pass (`dependabot-auto-merge.yml`).
+- Dependabot npm PRs with no semver-major update merge automatically once the required checks pass (`dependabot-auto-merge.yml`). GitHub Actions updates always wait for a human, because some of those actions run in the publishing job.
 
 ## Library changes
 

@@ -578,7 +578,9 @@ Converts specified object properties back to arrays (selective reverse conversio
 function objectToArray(object: object, keys: string[]): unknown;
 ```
 
-The return type is `unknown` — callers assert the concrete shape. Behavior is unchanged.
+The return type is `unknown` — callers assert the concrete shape.
+
+Keys named `__proto__`, `prototype` or `constructor` are left out at every level, the same as in the form value the library emits, so they can't change the result's prototype.
 
 An empty `{}` under a converted key, or anywhere inside a converted branch, becomes `[]`. A form model can't tell an emptied array from an empty object, so a list whose items were all removed comes back as `[]`.
 
