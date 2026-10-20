@@ -30,6 +30,7 @@ overrides:
   chokidar: 4.0.1
   detect-port: 1.6.0
   fast-uri: 3.1.8
+  follow-redirects: 1.16.1
   handlebars: 4.7.10
   js-yaml: 4.3.2
   'jsdom>undici': 8.11.2
