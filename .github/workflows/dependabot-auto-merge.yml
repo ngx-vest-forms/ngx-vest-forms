@@ -1,6 +1,6 @@
 name: Dependabot auto-merge
-# Enables auto-merge on every Dependabot PR whose update is semver minor or
-# patch. Required status checks still gate the merge; anything else stays
+# Enables auto-merge on every Dependabot npm PR whose update is semver minor
+# or patch. Required status checks still gate the merge; anything else stays
 # open for a human. Needs "Allow auto-merge" in the repository settings.
 #
 # A GitHub App installed on this repo enables auto-merge, because the
@@ -40,9 +40,12 @@ jobs:
       - name: Enable auto-merge
         # For a grouped PR, update-type is the largest update in the group.
         # An allow-list, so an empty or unknown update-type stays manual.
+        # GitHub Actions updates always stay manual: several of these actions
+        # run in cd.yml's release job, which holds the npm OIDC token.
         if: >-
-          steps.meta.outputs.update-type == 'version-update:semver-minor' ||
-          steps.meta.outputs.update-type == 'version-update:semver-patch'
+          steps.meta.outputs.package-ecosystem == 'npm_and_yarn' &&
+          (steps.meta.outputs.update-type == 'version-update:semver-minor' ||
+          steps.meta.outputs.update-type == 'version-update:semver-patch')
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ steps.app-token.outputs.token }}

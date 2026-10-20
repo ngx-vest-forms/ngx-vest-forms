@@ -60,7 +60,7 @@ jobs:
       - name: Secret scan
         run: |
           set +e
-          matches=$(git grep -lE 'ghp_[A-Za-z0-9]{36}|gho_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9_-]{20,}|ctx7sk-[A-Za-z0-9_-]+|-----BEGIN [A-Z ]*PRIVATE KEY-----' -- . ':!pnpm-lock.yaml' ':!*.lock')
+          matches=$(git grep -lE 'gh[pousr]_[A-Za-z0-9]{36}|npm_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9_-]{20,}|ctx7sk-[A-Za-z0-9_-]+|-----BEGIN [A-Z ]*PRIVATE KEY-----' -- . ':!pnpm-lock.yaml' ':!*.lock')
           rc=$?
           set -e
           if [ "$rc" -gt 1 ]; then

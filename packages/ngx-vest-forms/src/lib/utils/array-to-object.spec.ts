@@ -425,6 +425,27 @@ describe('objectToArray', () => {
       items: ['first', 'second', 'third'],
     });
   });
+
+  it.each(['__proto__', 'prototype', 'constructor'])(
+    'should leave out an own %s key at every level',
+    (unsafeKey) => {
+      const payload = `{"${unsafeKey}":{"isAdmin":true}}`;
+      const model = JSON.parse(
+        `{"name":"x","nested":${payload},"${unsafeKey}":{"isAdmin":true},"list":{"0":${payload}}}`
+      ) as object;
+
+      const result = objectToArray(model, ['list']) as Record<string, unknown>;
+      const nested = result['nested'] as Record<string, unknown>;
+      const item = (result['list'] as Record<string, unknown>[])[0];
+
+      for (const value of [result, nested, item]) {
+        expect(Object.getPrototypeOf(value)).toBe(Object.prototype);
+        expect(Object.hasOwn(value as object, unsafeKey)).toBe(false);
+        expect((value as Record<string, unknown>)['isAdmin']).toBeUndefined();
+      }
+      expect(Object.keys(result)).toEqual(['name', 'nested', 'list']);
+    }
+  );
 });
 
 describe('selective array/object conversion', () => {

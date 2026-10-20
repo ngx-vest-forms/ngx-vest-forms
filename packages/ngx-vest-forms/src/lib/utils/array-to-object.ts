@@ -1,3 +1,5 @@
+import { isUnsafePathSegment } from './field-path.utils';
+
 /**
  * Recursively maps array element types to records keyed by numeric index.
  *
@@ -111,6 +113,9 @@ function recursivelyConvertArrays<T>(object: T): DeepArrayToObject<T> {
  * callers that know the concrete result shape should assert it
  * (e.g. `objectToArray(model, ['list']) as { list: string[] }`).
  *
+ * Security: Unsafe prototype-related keys (`__proto__`, `prototype`,
+ * `constructor`) are left out at every level.
+ *
  * @typeParam K - The literal keys whose numeric-keyed sub-objects become arrays.
  * @param object - The (object-shaped) form model being converted.
  * @param keys - The keys whose numeric-keyed sub-objects become arrays.
@@ -205,10 +210,14 @@ function objectToArrayInternal(
         : processedContents;
     }
 
-    // For regular objects, process recursively
+    // For regular objects, process recursively. Unsafe keys (an own
+    // `__proto__` from JSON.parse) are left out, so they can't set the
+    // result's prototype.
     const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(object)) {
-      result[key] = objectToArrayInternal(value, keys, key, parentCascade);
+      if (!isUnsafePathSegment(key)) {
+        result[key] = objectToArrayInternal(value, keys, key, parentCascade);
+      }
     }
     return result;
   }
