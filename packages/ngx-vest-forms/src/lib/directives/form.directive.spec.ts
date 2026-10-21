@@ -3717,3 +3717,84 @@ describe('FormDirective - validationConfig identity', () => {
     await waitFor(() => expect(confirm?.invalid).toBe(true));
   });
 });
+
+describe('FormDirective - validationConfig with a re-created trigger', () => {
+  type PasswordModel = { password?: string; confirmPassword?: string };
+
+  @Component({
+    selector: 'test-recreated-trigger-host',
+    imports: [NgxVestForms],
+    template: `
+      <form
+        ngxVestForm
+        #vest="ngxVestForm"
+        [suite]="suite"
+        [formValue]="formValue()"
+        [validationConfig]="validationConfig"
+        (formValueChange)="formValue.set($event)"
+      >
+        @if (showPassword()) {
+          <label for="password">Password</label>
+          <input
+            id="password"
+            name="password"
+            [ngModel]="formValue().password"
+            [validationOptions]="{ debounceTime: 0 }"
+          />
+        }
+        <label for="confirmPassword">Confirm</label>
+        <input
+          id="confirmPassword"
+          name="confirmPassword"
+          [ngModel]="formValue().confirmPassword"
+          [validationOptions]="{ debounceTime: 0 }"
+        />
+      </form>
+    `,
+  })
+  class RecreatedTriggerHostComponent {
+    readonly formValue = signal<PasswordModel>({});
+    readonly showPassword = signal(true);
+    readonly vestForm =
+      viewChild.required<FormDirective<PasswordModel>>('vest');
+    readonly validationConfig = createValidationConfig<PasswordModel>()
+      .whenChanged('password', 'confirmPassword')
+      .build();
+    readonly suite = create((model: PasswordModel = {}) => {
+      vestTest('confirmPassword', 'Passwords must match', () => {
+        enforce(model.confirmPassword ?? '').equals(model.password ?? '');
+      });
+    });
+  }
+
+  it('revalidates the dependent after the trigger is hidden and shown again', async () => {
+    const { fixture } = await render(RecreatedTriggerHostComponent, {
+      providers: [
+        { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 0 },
+      ],
+    });
+    const host = fixture.componentInstance;
+    await userEvent.type(screen.getByLabelText('Password'), 'secret');
+    await userEvent.type(screen.getByLabelText('Confirm'), 'secret');
+    await waitFor(() =>
+      expect(
+        host.vestForm().formState().errors['confirmPassword']
+      ).toBeUndefined()
+    );
+
+    // `@if` destroys the password control and renders a new instance.
+    host.showPassword.set(false);
+    await whenStable();
+    host.showPassword.set(true);
+    await whenStable();
+
+    // Only the trigger changes: without the config following the new
+    // instance, confirmPassword keeps its stale "matches" verdict.
+    await userEvent.type(screen.getByLabelText('Password'), 'changed');
+    await waitFor(() =>
+      expect(host.vestForm().formState().errors['confirmPassword']).toEqual([
+        'Passwords must match',
+      ])
+    );
+  });
+});

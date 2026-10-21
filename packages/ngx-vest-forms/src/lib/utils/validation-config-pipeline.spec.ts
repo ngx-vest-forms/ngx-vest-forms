@@ -7,7 +7,7 @@
  * logic itself.
  */
 import { ChangeDetectorRef, DestroyRef } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { type AbstractControl, FormControl, FormGroup } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -386,12 +386,45 @@ describe('createValidationConfigPipeline', () => {
     sub.unsubscribe();
   });
 
-  // NOTE: trigger-control recreation (an `@if`-toggled trigger destroyed and
-  // recreated as a new AbstractControl instance) is a documented KNOWN
-  // LIMITATION — the pipeline stays bound to the first instance by design
-  // (the `take(1)` that prevents a statusChanges feedback loop). See the
-  // deferred ADR. No test asserts rebind because the behaviour is
-  // intentionally not supported in this release.
+  // -------------------------------------------------------------------------
+  // 4b. Trigger control re-created (an `@if` toggled off and on again)
+  // -------------------------------------------------------------------------
+  it('follows a trigger control that is removed and re-created', async () => {
+    const dependentCtrl = new FormControl('');
+    const form = new FormGroup<{ [key: string]: AbstractControl }>({
+      trigger: new FormControl(''),
+      dependent: dependentCtrl,
+    });
+
+    const { destroyRef } = createMockDestroyRef();
+    const { cdr } = createMockCdr();
+    const getCount = trackUpdateCount(dependentCtrl);
+
+    const sub = createValidationConfigPipeline(
+      form,
+      { trigger: ['dependent'] } as Record<string, string[]>,
+      BASE_OPTIONS,
+      cdr,
+      destroyRef
+    ).subscribe();
+
+    // `@if` destroys the trigger's NgModel, then renders a new one: Angular
+    // registers a brand-new control instance under the same name.
+    form.removeControl('trigger');
+    const recreated = new FormControl('');
+    form.addControl('trigger', recreated);
+    await vi.advanceTimersByTimeAsync(0);
+    const before = getCount();
+
+    recreated.setValue('after re-creation');
+    await vi.advanceTimersByTimeAsync(0);
+
+    // Editing the new instance must still revalidate the dependent, or a
+    // confirm-password style rule keeps a stale verdict.
+    expect(getCount()).toBeGreaterThan(before);
+
+    sub.unsubscribe();
+  });
 
   // -------------------------------------------------------------------------
   // 5. Circular config (A → B and B → A) does not loop indefinitely

@@ -61,5 +61,5 @@ the reference for "how do all of these pieces fit together in a real form".
   password mismatch easy to observe.
 - `validationConfig` is a `computed`. It adds gender → genderOther and
   quantity → justification only while those fields are rendered.
-  quantity → justification is one-way, because justification sits behind an
-  `@if` and a re-created control must not be a trigger (ADR-0004).
+  quantity → justification is one-way, because quantity's rules never read
+  justification.

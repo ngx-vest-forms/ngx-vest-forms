@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (known limitation, deferred)
+Superseded (2026-10-21): re-created trigger controls are followed; see "Superseded by" below.
 
 ## Date
 
@@ -35,3 +35,14 @@ The `take(1)` binding is proven to prevent the feedback loop, a correctness issu
 ## Revisit when
 
 - A `statusChanges`-identity rebind (or an alternative trigger-instance tracking mechanism) can be implemented that keeps the feedback-loop regression suite green. Until then, the documented workaround is the supported path.
+
+## Superseded by
+
+The `take(1)` binding was replaced by one that follows the control registered under the trigger's path:
+
+- The pipeline listens to the root form's `events` and maps each one to `form.get(triggerField)`.
+- `distinctUntilChanged()` on that control instance switches the inner stream only when the instance really changes, as when `@if` renders a new NgModel under the same name.
+- Revalidating dependents emits form events, but those never change which control the path resolves to. So they never resubscribe the inner stream, and the feedback loop this ADR guarded against cannot form.
+- The cooldown timer and the deferred-change flag live per trigger field, not per control instance. A rebind that cancelled the cooldown would leave the fields marked in progress for good, so every edit to the new control would be deferred and never replayed. The directive test "revalidates the dependent after the trigger is hidden and shown again" covers this.
+
+The bidirectional-loop and cooldown tests in `validation-config-pipeline.spec.ts` stay green. A new test there covers a removed and re-added trigger, and the split-wrappers e2e covers the date-range page's approach toggle, which re-creates both date inputs. That page no longer re-creates the whole form body to work around this.

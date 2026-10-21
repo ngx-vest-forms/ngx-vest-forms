@@ -158,27 +158,20 @@
     </div>
 
     <div>
-      <!--
-        ADR-0004: validationConfig cannot follow a trigger control that is
-        re-created. Switching approach therefore re-creates the whole form
-        body, so the config re-wires to the new date inputs.
-      -->
-      @for (activeApproach of [approach()]; track activeApproach) {
-        <ngx-travel-form-body
-          #formBody
-          [approach]="activeApproach"
-          [formValue]="formValue()"
-          [suite]="suite"
-          [validationConfig]="validationConfig"
-          [departureErrors]="departureErrors()"
-          [returnErrors]="returnErrors()"
-          [departureWarnings]="departureWarnings()"
-          [returnWarnings]="returnWarnings()"
-          (formValueChange)="formValue.set($event)"
-          (submitted)="save()"
-          (resetRequested)="reset()"
-        />
-      }
+      <ngx-travel-form-body
+        #formBody
+        [approach]="approach()"
+        [formValue]="formValue()"
+        [suite]="suite"
+        [validationConfig]="validationConfig"
+        [departureErrors]="departureErrors()"
+        [returnErrors]="returnErrors()"
+        [departureWarnings]="departureWarnings()"
+        [returnWarnings]="returnWarnings()"
+        (formValueChange)="formValue.set($event)"
+        (submitted)="save($event)"
+        (resetRequested)="reset()"
+      />
     </div>
   </div>
 

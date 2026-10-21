@@ -2,6 +2,7 @@ import { ChangeDetectorRef, DestroyRef, isDevMode } from '@angular/core';
 import { AbstractControl, FormGroup } from '@angular/forms';
 import {
   debounceTime,
+  distinctUntilChanged,
   EMPTY,
   filter,
   finalize,
@@ -145,38 +146,39 @@ function createTriggerStream(
   cdr: ChangeDetectorRef,
   destroyRef: DestroyRef
 ): Observable<void> {
-  // Wait for the trigger control to exist, then stop listening.
-  // take(1) is CRITICAL: without it the pipeline would re-subscribe on every
-  // statusChanges emission, creating a feedback loop where validation triggers
-  // re-trigger the pipeline.
+  // Follow whichever control is registered under `triggerField`. `@if` can
+  // destroy the trigger's NgModel and render a new one, which registers a new
+  // AbstractControl under the same name; the inner stream below rebinds to it.
   //
-  // KNOWN LIMITATION (deferred — see docs/adr): if an `@if`-toggled trigger
-  // control is destroyed and recreated as a brand-new AbstractControl
-  // instance, the pipeline stays bound to the first instance and the
-  // recreated trigger's changes no longer revalidate its dependents. A
-  // statusChanges-identity rebind was prototyped but could not be made
-  // reliable without risking the feedback-loop regression this `take(1)`
-  // prevents, so the safe known-good behaviour is retained.
-  const triggerControl$ = form.statusChanges.pipe(
-    startWith(form.status),
+  // `distinctUntilChanged` on the instance is what keeps this loop-free: the
+  // dependents this stream revalidates emit form events too, but they never
+  // change which control `form.get(triggerField)` returns, so they never
+  // resubscribe the inner stream.
+  const triggerControl$ = form.events.pipe(
+    startWith(null),
     map(() => form.get(triggerField)),
     filter((c): c is AbstractControl => c !== null),
-    take(1)
+    distinctUntilChanged()
   );
+
+  // Both live per trigger field, not per control instance, so rebinding to a
+  // re-created control keeps them. Cancelling the cooldown on a rebind would
+  // leave its in-progress markers set for good, and every later edit would
+  // be deferred with no replay.
+  //
+  // Holds the cancel function of the most-recently-scheduled cooldown timer.
+  // Cancelled when the stream tears down (config switch or unsubscribe) so
+  // pending timers do not fire after the pipeline is gone.
+  let cancelCooldown: (() => void) | undefined;
+
+  // Set when a user-initiated trigger change arrives while this field is
+  // still inside a cooldown window. The change is deferred (latest-wins)
+  // and replayed once the cooldown clears — never silently dropped, which
+  // previously left dependents with a stale verdict.
+  let hasDeferredChange = false;
 
   return triggerControl$.pipe(
     switchMap((control) => {
-      // Holds the cancel function of the most-recently-scheduled cooldown timer.
-      // Cancelled when the inner observable tears down (config switch or unsubscribe)
-      // so pending timers do not fire after the pipeline is gone.
-      let cancelCooldown: (() => void) | undefined;
-
-      // Set when a user-initiated trigger change arrives while this field is
-      // still inside a cooldown window. The change is deferred (latest-wins)
-      // and replayed once the cooldown clears — never silently dropped, which
-      // previously left dependents with a stale verdict.
-      let hasDeferredChange = false;
-
       const userChanges$ = control.valueChanges.pipe(
         filter(() => {
           // CRITICAL: emissions produced by the pipeline's own synchronous
@@ -249,10 +251,10 @@ function createTriggerStream(
             hasDeferredChange = true;
           }
         }),
-        finalize(() => cancelCooldown?.()),
         map(() => undefined)
       );
-    })
+    }),
+    finalize(() => cancelCooldown?.())
   ) as Observable<void>;
 }
 

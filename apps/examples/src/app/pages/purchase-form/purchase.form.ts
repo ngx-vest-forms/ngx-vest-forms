@@ -220,8 +220,7 @@ export class PurchaseForm {
 
     // Add this only while justification is rendered. A missing dependent makes
     // the pipeline wait and log a dev-mode timeout. One-way on purpose, since
-    // quantity's rules never read justification, and a control re-created by
-    // @if must not be a trigger (ADR-0004).
+    // quantity's rules never read justification.
     if ((this.formValue().quantity || 0) > 5) {
       builder.whenChanged('quantity', 'justification');
     }
