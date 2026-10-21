@@ -426,6 +426,40 @@ describe('createValidationConfigPipeline', () => {
     sub.unsubscribe();
   });
 
+  it('ignores a removed trigger control', async () => {
+    const triggerCtrl = new FormControl('');
+    const dependentCtrl = new FormControl('');
+    const form = new FormGroup<{ [key: string]: AbstractControl }>({
+      trigger: triggerCtrl,
+      dependent: dependentCtrl,
+    });
+
+    const { destroyRef } = createMockDestroyRef();
+    const { cdr } = createMockCdr();
+    const getCount = trackUpdateCount(dependentCtrl);
+
+    const sub = createValidationConfigPipeline(
+      form,
+      { trigger: ['dependent'] } as Record<string, string[]>,
+      BASE_OPTIONS,
+      cdr,
+      destroyRef
+    ).subscribe();
+
+    form.removeControl('trigger');
+    await vi.advanceTimersByTimeAsync(0);
+    const before = getCount();
+
+    // A detached control is no longer the trigger; a late write to it must
+    // not revalidate the dependent.
+    triggerCtrl.setValue('late write');
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(getCount()).toBe(before);
+
+    sub.unsubscribe();
+  });
+
   // -------------------------------------------------------------------------
   // 5. Circular config (A → B and B → A) does not loop indefinitely
   // -------------------------------------------------------------------------

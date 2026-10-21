@@ -154,10 +154,11 @@ function createTriggerStream(
   // dependents this stream revalidates emit form events too, but they never
   // change which control `form.get(triggerField)` returns, so they never
   // resubscribe the inner stream.
+  // `null` while no control is registered under the path: the inner stream
+  // switches to EMPTY, so a detached control can no longer drive dependents.
   const triggerControl$ = form.events.pipe(
     startWith(null),
     map(() => form.get(triggerField)),
-    filter((c): c is AbstractControl => c !== null),
     distinctUntilChanged()
   );
 
@@ -179,6 +180,9 @@ function createTriggerStream(
 
   return triggerControl$.pipe(
     switchMap((control) => {
+      if (!control) {
+        return EMPTY;
+      }
       const userChanges$ = control.valueChanges.pipe(
         filter(() => {
           // CRITICAL: emissions produced by the pipeline's own synchronous
