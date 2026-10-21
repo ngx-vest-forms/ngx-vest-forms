@@ -570,6 +570,24 @@ export class FormDirective<T extends Record<string, unknown>> {
   });
 
   /**
+   * The root status once a submit has settled, one emission per submit. A
+   * new submit while one is still waiting replaces it.
+   *
+   * It starts one microtask after `ngSubmit`, so every synchronous
+   * `(ngSubmit)` handler has run first, then revalidates the
+   * `validationConfig` dependents. Shared and subscribed in the constructor,
+   * so that runs once per submit whether or not `submitSettled` is bound.
+   */
+  readonly #submitOutcome$ = this.ngForm.ngSubmit.pipe(
+    observeOn(asapScheduler),
+    switchMap(() => {
+      this.#revalidateConfigDependents();
+      return this.#settledStatus();
+    }),
+    share()
+  );
+
+  /**
    * Emits whenever validation feedback may have changed, even if the aggregate
    * root form status string stays the same.
    */
@@ -579,7 +597,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       map((v) => v.status),
       filter((v) => v !== 'PENDING')
     ),
-    this.ngForm.ngSubmit.pipe(switchMap(() => this.#settledStatus()))
+    this.#submitOutcome$
   );
 
   /**
@@ -646,8 +664,9 @@ export class FormDirective<T extends Record<string, unknown>> {
    * Emits an object with all the errors of the form
    * every time a form control or form groups changes its status to valid or invalid
    *
-   * For submit events, waits for async validation (including ROOT_FORM) to complete
-   * before emitting errors. This ensures ROOT_FORM errors are included in the output.
+   * Each submit also emits once after the config dependents have revalidated
+   * and async validation (including ROOT_FORM) has settled, so that emission
+   * includes ROOT_FORM and dependent-field errors.
    *
    * `outputFromObservable` unsubscribes when the directive is destroyed.
    */
@@ -690,24 +709,6 @@ export class FormDirective<T extends Record<string, unknown>> {
       map((v) => v === 'VALID'),
       distinctUntilChanged()
     )
-  );
-
-  /**
-   * The root status once a submit has settled, one emission per submit. A
-   * new submit while one is still waiting replaces it.
-   *
-   * It starts one microtask after `ngSubmit`, so every synchronous
-   * `(ngSubmit)` handler has run first, then revalidates the
-   * `validationConfig` dependents. Shared and subscribed in the constructor,
-   * so that runs once per submit whether or not `submitSettled` is bound.
-   */
-  readonly #submitOutcome$ = this.ngForm.ngSubmit.pipe(
-    observeOn(asapScheduler),
-    switchMap(() => {
-      this.#revalidateConfigDependents();
-      return this.#settledStatus();
-    }),
-    share()
   );
 
   /**

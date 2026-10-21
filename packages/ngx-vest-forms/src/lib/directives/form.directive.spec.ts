@@ -3729,6 +3729,36 @@ describe('FormDirective - submit revalidation of validationConfig dependents', (
       { timeout: 500 }
     );
   });
+
+  it('emits errorsChange for a submit only after the dependents revalidate', async () => {
+    // A consumer rendering an error summary from errorsChange must not get
+    // a snapshot that still misses the dependent's error.
+    const { fixture } = await render(NoSettledListenerHostComponent, {
+      providers: [
+        { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 1000 },
+      ],
+    });
+    const host = fixture.componentInstance;
+    await userEvent.type(screen.getByLabelText('Password'), 'secret');
+    await userEvent.type(screen.getByLabelText('Confirm'), 'secret');
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    await whenStable();
+    await userEvent.type(screen.getByLabelText('Password'), '!');
+    await whenStable();
+
+    const emitted: Record<string, string[]>[] = [];
+    const subscription = host
+      .vest()
+      .errorsChange.subscribe((errors) => emitted.push(errors));
+    onTestFinished(() => subscription.unsubscribe());
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    await waitFor(
+      () => expect(emitted.at(-1)?.['confirmPassword']).toBeTruthy(),
+      { timeout: 500 }
+    );
+    expect(emitted.filter((errors) => !errors['confirmPassword'])).toEqual([]);
+  });
 });
 
 describe('FormDirective - formState after a programmatic model sync', () => {

@@ -491,7 +491,7 @@ onSubmit(event: NgxSubmitSettledEvent<MyFormModel>) {
 
 `event.errors` holds the blocking errors by field path, as `(errorsChange)` reports them. Focusing the first invalid control on a failed submit still happens automatically.
 
-With a `[validationConfig]`, every submit revalidates the dependent fields once your `(ngSubmit)` handlers have run, and `(submitSettled)` waits for that before it decides. A submit made right after editing a trigger field (for example `password`, just before `confirmPassword` is rechecked) can't pass on a stale result.
+With a `[validationConfig]`, every submit revalidates the dependent fields once your `(ngSubmit)` handlers have run, and both `(submitSettled)` and the `(errorsChange)` emission for that submit wait for it. A submit made right after editing a trigger field (for example `password`, just before `confirmPassword` is rechecked) can't pass on a stale result.
 
 ### Form Contract Diagnostics (Development Mode)
 
