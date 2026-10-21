@@ -124,9 +124,10 @@ export class FormControlStateDirective {
 
   /**
    * Holds the `#activeControl` instance for which the most recent
-   * `afterNextRender` late-attach retry has fired. Reading this signal inside
-   * the effect creates a reactive dependency so the effect re-evaluates once
-   * the retry completes.
+   * `afterNextRender` late-attach retry has fired. Only an NgModelGroup takes
+   * that retry: NgModel's control is never null here. Reading this signal
+   * inside the effect creates a reactive dependency so the effect re-evaluates
+   * once the retry completes.
    *
    * It also acts as the retry latch: once set to a given control instance, any
    * further effect runs for that same instance skip re-scheduling. When
@@ -164,10 +165,12 @@ export class FormControlStateDirective {
         return;
       }
 
-      // NgModel attaches its `FormControl` during its own ngOnInit, which can
-      // run after this effect's first execution in some host orderings. If
-      // `control.control` isn't there yet, schedule one `afterNextRender`
-      // retry so we re-evaluate once Angular finishes wiring directives.
+      // Only an NgModelGroup can reach this path: its `control` is a getter
+      // over the parent form, and NgForm registers that FormGroup in a
+      // microtask after ngOnInit. NgModel's `control` is a field initializer
+      // and is never null. If `control.control` isn't there yet, schedule one
+      // `afterNextRender` retry so we re-evaluate once Angular finishes wiring
+      // directives.
       //
       // The `lateAttachFor !== control` guard is the latch: once the retry
       // has fired and set the signal to `control`, subsequent runs for that
@@ -178,9 +181,16 @@ export class FormControlStateDirective {
         if (lateAttachFor !== control) {
           afterNextRender(
             () => {
-              if (this.#activeControl() === control) {
-                this.#lateAttachFor.set(control);
-              }
+              // The render hook can run before that registration microtask.
+              // NgForm queued it during ngOnInit, before this hook, so a
+              // microtask queued here runs after it. Latching any earlier
+              // would fire the effect while `control.control` is still null,
+              // and no retry would follow.
+              queueMicrotask(() => {
+                if (this.#activeControl() === control) {
+                  this.#lateAttachFor.set(control);
+                }
+              });
             },
             { injector: this.#injector }
           );

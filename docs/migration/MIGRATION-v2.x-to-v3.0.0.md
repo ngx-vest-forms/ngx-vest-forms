@@ -349,6 +349,10 @@ v2 wrote `[formValue]` into the form with `patchValue(value, { emitEvent: false 
 - **Subscribers to the form's events now fire on model writes.** `ngForm.form.valueChanges`, `statusChanges` and `events` emit when you set `[formValue]`, not only when the user types. If such a subscriber writes back to the model or starts a request, check that it still behaves, for example by comparing against the last value it handled. `formValueChange` is unchanged: it still does not echo a model write back to you.
 - **A model write made in response to `formValueChange` now wins.** For example, clearing fields that a switched section hides used to be dropped with an `NGX-100` warning. It is now applied when the `[formValue]` input changed and the form still holds the value it last emitted. Real conflicts still warn.
 
+## `objectToArray` converts only what you list
+
+v2's `objectToArray` also turned an unlisted numeric-keyed object into an array whenever its items were objects, so `objectToArray({ notes: { 0: { tag: 'a' } } }, [])` returned `{ notes: [{ tag: 'a' }] }`. v3 leaves `notes` an object. A numeric-keyed object still becomes an array when its key is listed, when it sits inside a converted branch, or when it contains a converted key. If your save code relied on the old behaviour, add the missing keys to the `keys` argument.
+
 ## Known limitations (v3)
 
 These are accepted, documented limitations in the v3 line. Each links to an Architecture Decision Record (ADR) with the full rationale and the conditions under which it will be revisited.

@@ -6,7 +6,7 @@
  * TestBed component fixture, keeping them fast and focused on the pipeline
  * logic itself.
  */
-import { ChangeDetectorRef, DestroyRef } from '@angular/core';
+import { ChangeDetectorRef, DestroyRef, ErrorHandler } from '@angular/core';
 import { type AbstractControl, FormControl, FormGroup } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -723,6 +723,70 @@ describe('createValidationConfigPipeline', () => {
     expect(getTriggerCount()).toBeLessThan(5);
     expect(getDependentCount()).toBeLessThan(5);
 
+    sub.unsubscribe();
+  });
+
+  // -------------------------------------------------------------------------
+  // 6b. A throwing dependent validator must not stop the pipeline
+  // -------------------------------------------------------------------------
+  it('reports a throwing dependent validator and keeps the pipeline running', async () => {
+    const triggerCtrl = new FormControl('');
+    let shouldThrow = false;
+    const flakyCtrl = new FormControl('', () => {
+      if (shouldThrow) {
+        shouldThrow = false;
+        throw new Error('validator blew up');
+      }
+      return null;
+    });
+    const otherCtrl = new FormControl('');
+    const form = new FormGroup({
+      trigger: triggerCtrl,
+      flaky: flakyCtrl,
+      other: otherCtrl,
+    });
+
+    const { destroyRef } = createMockDestroyRef();
+    const { cdr } = createMockCdr();
+    const getOtherCount = trackUpdateCount(otherCtrl);
+    const errorHandler = { handleError: vi.fn() } as unknown as ErrorHandler;
+    const onPipelineError = vi.fn();
+
+    // A validator that throws must not error the trigger stream: the form
+    // subscribes without an error handler, so an error there would stop
+    // validationConfig for the whole form for good. The error goes to the
+    // ErrorHandler instead, so the app can still log it.
+    const sub = createValidationConfigPipeline(
+      form,
+      { trigger: ['flaky', 'other'] } as Record<string, string[]>,
+      {
+        ...BASE_OPTIONS,
+        configDebounceTime: 0,
+        validationInProgressCooldownMs: 50,
+      },
+      cdr,
+      destroyRef,
+      errorHandler
+    ).subscribe({ error: onPipelineError });
+
+    shouldThrow = true;
+    triggerCtrl.setValue('first');
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(onPipelineError).not.toHaveBeenCalled();
+    expect(errorHandler.handleError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'validator blew up' })
+    );
+    // The dependent after the throwing one is still revalidated in this cycle.
+    expect(getOtherCount()).toBeGreaterThanOrEqual(1);
+
+    // Once the cooldown has cleared, the next edit is processed directly.
+    // Stale in-progress markers would defer it forever.
+    await vi.advanceTimersByTimeAsync(100);
+    const before = getOtherCount();
+    triggerCtrl.setValue('second');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(getOtherCount()).toBeGreaterThan(before);
     sub.unsubscribe();
   });
 

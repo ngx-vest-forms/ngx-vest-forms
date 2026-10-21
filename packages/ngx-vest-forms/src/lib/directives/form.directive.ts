@@ -1004,7 +1004,8 @@ export class FormDirective<T extends Record<string, unknown>> {
               ...PIPELINE_OPTIONS,
             },
             this.#cdr,
-            this.#destroyRef
+            this.#destroyRef,
+            this.#errorHandler
           )
         ),
         takeUntilDestroyed(this.#destroyRef)

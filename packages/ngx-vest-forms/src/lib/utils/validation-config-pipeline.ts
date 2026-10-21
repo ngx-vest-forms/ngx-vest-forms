@@ -1,7 +1,13 @@
-import { ChangeDetectorRef, DestroyRef, isDevMode } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  DestroyRef,
+  ErrorHandler,
+  isDevMode,
+} from '@angular/core';
 import { AbstractControl, FormGroup } from '@angular/forms';
 import {
   debounceTime,
+  defer,
   distinctUntilChanged,
   EMPTY,
   filter,
@@ -24,6 +30,7 @@ import {
 } from '../errors/error-catalog';
 import { scheduleTimeout } from './destroy-scheduler';
 import type { ValidationConfigMap } from './field-path-types';
+import { reportToErrorHandler } from './vest-runner';
 
 /**
  * Options controlling the timing behaviour of the validation-config pipeline.
@@ -61,8 +68,8 @@ export type ValidationConfigPipelineOptions = {
  * whenever their configured trigger field emits a value change.
  *
  * **Encapsulation guarantee:** the loop-prevention state (in-progress `Set`,
- * synchronous update flag, and cooldown notifier) is created fresh inside this
- * function on every call and is never reachable from outside.
+ * synchronous update flag, and cooldown notifier) is created fresh on every
+ * subscription and is never reachable from outside.
  *
  * When `config` is `null` or `undefined` the returned observable is `EMPTY`.
  *
@@ -75,6 +82,8 @@ export type ValidationConfigPipelineOptions = {
  *                  scheduler re-renders their `ng-*` host classes.
  * @param destroyRef  Used to auto-cancel the in-progress cooldown timer when the
  *                  host directive is destroyed.
+ * @param errorHandler Receives errors thrown by dependent validators. Defaults to
+ *                  a plain `ErrorHandler`, so the error is logged rather than dropped.
  */
 export function createValidationConfigPipeline<
   T extends Record<string, unknown>,
@@ -83,35 +92,40 @@ export function createValidationConfigPipeline<
   config: ValidationConfigMap<T> | null | undefined,
   options: ValidationConfigPipelineOptions,
   cdr: ChangeDetectorRef,
-  destroyRef: DestroyRef
+  destroyRef: DestroyRef,
+  errorHandler: ErrorHandler = new ErrorHandler()
 ): Observable<void> {
   if (!config) {
     return EMPTY;
   }
 
-  // Fresh state per pipeline instance so that config changes (driven by the
-  // outer switchMap in FormDirective) don't share in-progress state across
-  // different pipeline instances.
-  const loopPrevention: LoopPreventionState = {
-    validationInProgress: new Set<string>(),
-    applyingUpdates: false,
-    cooldownCleared$: new Subject<void>(),
-  };
+  // Fresh state per subscription, so a re-subscribed pipeline does not share
+  // in-progress state with an earlier run.
+  return defer(() => {
+    const loopPrevention: LoopPreventionState = {
+      validationInProgress: new Set<string>(),
+      applyingUpdates: false,
+      cooldownCleared$: new Subject<void>(),
+    };
 
-  const streams = Object.entries(config as Record<string, string[]>).map(
-    ([triggerField, dependents]) =>
-      createTriggerStream(
-        form,
-        triggerField,
-        dependents ?? [],
-        loopPrevention,
-        options,
-        cdr,
-        destroyRef
-      )
-  );
+    const streams = Object.entries(config as Record<string, string[]>).map(
+      ([triggerField, dependents]) =>
+        createTriggerStream(
+          form,
+          triggerField,
+          dependents ?? [],
+          loopPrevention,
+          options,
+          cdr,
+          destroyRef,
+          errorHandler
+        )
+    );
 
-  return streams.length > 0 ? (rxMerge(...streams) as Observable<void>) : EMPTY;
+    return streams.length > 0
+      ? (rxMerge(...streams) as Observable<void>)
+      : EMPTY;
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -144,7 +158,8 @@ function createTriggerStream(
   loopPrevention: LoopPreventionState,
   options: ValidationConfigPipelineOptions,
   cdr: ChangeDetectorRef,
-  destroyRef: DestroyRef
+  destroyRef: DestroyRef,
+  errorHandler: ErrorHandler
 ): Observable<void> {
   // Follow whichever control is registered under `triggerField`. `@if` can
   // destroy the trigger's NgModel and render a new one, which registers a new
@@ -184,39 +199,31 @@ function createTriggerStream(
         return EMPTY;
       }
       const userChanges$ = control.valueChanges.pipe(
-        filter(() => {
-          // CRITICAL: emissions produced by the pipeline's own synchronous
-          // updateValueAndValidity calls are self-induced — drop them outright
-          // (this is what prevents bidirectional configs from looping).
-          if (loopPrevention.applyingUpdates) {
-            return false;
-          }
-          // A user-initiated change during the cooldown window: defer it so
-          // dependents are revalidated with the latest value once the
-          // cooldown expires.
-          if (loopPrevention.validationInProgress.has(triggerField)) {
-            hasDeferredChange = true;
-            return false;
-          }
-          // A directly-processed change supersedes any pending deferral
-          // (dependents will read the latest trigger value anyway).
-          hasDeferredChange = false;
-          return true;
-        })
+        // CRITICAL: emissions produced by the pipeline's own synchronous
+        // updateValueAndValidity calls are self-induced — drop them outright
+        // (this is what prevents bidirectional configs from looping).
+        filter(() => !loopPrevention.applyingUpdates),
+        // A user-initiated change during the cooldown window is deferred so
+        // dependents are revalidated with the latest value once the cooldown
+        // expires. Any other change is processed directly and supersedes a
+        // pending deferral (dependents read the latest trigger value anyway).
+        map(() => loopPrevention.validationInProgress.has(triggerField)),
+        tap((inCooldown) => {
+          hasDeferredChange = inCooldown;
+        }),
+        filter((inCooldown) => !inCooldown)
       );
 
       const deferredReplays$ = loopPrevention.cooldownCleared$.pipe(
-        filter(() => {
-          if (
-            !hasDeferredChange ||
-            loopPrevention.validationInProgress.has(triggerField)
-          ) {
-            // Nothing deferred, or another cycle still holds this field in
-            // cooldown — the next cooldownCleared$ notification will retry.
-            return false;
-          }
+        // Nothing deferred, or another cycle still holds this field in
+        // cooldown — the next cooldownCleared$ notification will retry.
+        filter(
+          () =>
+            hasDeferredChange &&
+            !loopPrevention.validationInProgress.has(triggerField)
+        ),
+        tap(() => {
           hasDeferredChange = false;
-          return true;
         }),
         map(() => control.value)
       );
@@ -245,7 +252,8 @@ function createTriggerStream(
             loopPrevention,
             cdr,
             options.validationInProgressCooldownMs,
-            destroyRef
+            destroyRef,
+            errorHandler
           );
           cancelCooldown = cycle.cancelCooldown;
           if (cycle.skippedDependents) {
@@ -363,7 +371,8 @@ function updateDependentFields(
   loopPrevention: LoopPreventionState,
   cdr: ChangeDetectorRef,
   cooldownMs: number,
-  destroyRef: DestroyRef
+  destroyRef: DestroyRef,
+  errorHandler: ErrorHandler
 ): { cancelCooldown: () => void; skippedDependents: boolean } {
   const { validationInProgress } = loopPrevention;
 
@@ -406,6 +415,11 @@ function updateDependentFields(
       // CD without running it synchronously inside this RxJS pipeline
       // callback, avoiding re-entrancy with Angular's forms event processing.
       cdr.markForCheck();
+    } catch (error) {
+      // A throwing validator must not abort the cycle: an exception escaping
+      // here would skip the cooldown below and error the trigger stream, which
+      // stops validationConfig for the whole form. Report it and move on.
+      reportToErrorHandler(errorHandler, error);
     } finally {
       loopPrevention.applyingUpdates = false;
     }
