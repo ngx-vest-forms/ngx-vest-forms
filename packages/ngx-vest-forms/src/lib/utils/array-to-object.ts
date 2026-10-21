@@ -97,9 +97,10 @@ function recursivelyConvertArrays<T>(object: T): DeepArrayToObject<T> {
 /**
  * Public API: Convert selected numeric-keyed object properties back to arrays.
  *
- * Conversion is *explicit by key* (only `keys` are converted) and cascades
- * inside converted branches, so nested numeric-keyed objects representing
- * arrays become real arrays recursively. As a convenience the result is
+ * Conversion is *explicit by key*. A numeric-keyed object becomes an array
+ * when its key is listed in `keys`, when it sits inside a converted branch, or
+ * when it contains a converted key (it held that list as an array item). Any
+ * other numeric-keyed object stays an object. As a convenience the result is
  * unwrapped to the bare converted array when the input is a single-entry
  * wrapper whose only key was converted.
  *
@@ -168,7 +169,10 @@ export function objectToArray<const K extends readonly string[]>(
 type ConvertedValue = { value: unknown; converted: boolean };
 
 /**
- * Internal recursive worker with cascade flag: once a targeted key is converted, all nested numeric objects become arrays even if their keys were not explicitly listed.
+ * Internal recursive worker. Conversion cascades down: once a listed key is
+ * converted, every numeric-keyed object inside it becomes an array too. It
+ * also runs up: a numeric-keyed object whose contents were converted becomes
+ * an array, since it held them as array items.
  */
 function objectToArrayInternal(
   object: unknown,

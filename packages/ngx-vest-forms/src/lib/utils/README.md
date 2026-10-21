@@ -582,6 +582,8 @@ The return type is `unknown` — callers assert the concrete shape.
 
 Keys named `__proto__`, `prototype` or `constructor` are left out at every level, the same as in the form value the library emits, so they can't change the result's prototype.
 
+Only listed keys convert, plus everything inside them. One exception: a numeric-keyed object that contains a converted key also becomes an array, because it held that list as an array item. `objectToArray({ rows: { 0: { tags: { 0: 'x' } } } }, ['tags'])` returns `{ rows: [{ tags: ['x'] }] }`. Any other unlisted numeric-keyed object stays an object.
+
 An empty `{}` under a converted key, or anywhere inside a converted branch, becomes `[]`. A form model can't tell an emptied array from an empty object, so a list whose items were all removed comes back as `[]`.
 
 ```typescript

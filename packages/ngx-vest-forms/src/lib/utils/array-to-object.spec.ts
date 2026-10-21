@@ -411,6 +411,17 @@ describe('objectToArray', () => {
     });
   });
 
+  it('should convert an unlisted numeric-keyed ancestor of a converted key', () => {
+    // A numeric-keyed object that holds a converted list was an array in the
+    // model too (rows of an ngModelGroup list), so listing the leaf key is
+    // enough to get the whole path back as arrays.
+    const model = { rows: { 0: { tags: { 0: 'x' } } } };
+
+    expect(objectToArray(model, ['tags'])).toEqual({
+      rows: [{ tags: ['x'] }],
+    });
+  });
+
   it('should not convert an unlisted numeric-keyed object with object items when no keys are given', () => {
     // With no keys nothing may convert. Object items under a numeric key used
     // to count as "changed" and turned the object into an array anyway.
