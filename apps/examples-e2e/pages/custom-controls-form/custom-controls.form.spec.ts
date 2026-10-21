@@ -47,6 +47,17 @@ test.describe('Custom Controls Form', () => {
     await expect(successAlert).toContainText(/1 tag/i);
   });
 
+  test('should move focus into the rating on the first invalid submit', async ({
+    page,
+  }) => {
+    // The rating has no native input, so the directive can only find it once
+    // the wrapper has rendered its invalid state. Keyboard users must not be
+    // left on the submit button after the very first attempt.
+    await page.getByRole('button', { name: /submit/i }).click();
+
+    await expect(page.getByRole('radio', { name: /1 star/i })).toBeFocused();
+  });
+
   test('should mark both radiogroups aria-invalid after an invalid submit and clear them once a value is chosen', async ({
     page,
   }) => {
