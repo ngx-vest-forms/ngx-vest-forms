@@ -19,8 +19,8 @@ import {
  * stamp `aria-describedby` / `aria-invalid` (and optionally `aria-required`)
  * onto descendant form controls.
  *
- * This consolidates the previously-duplicated ~80 lines of MutationObserver +
- * ARIA-association logic shared by `ControlWrapperComponent` and
+ * Runs the MutationObserver and ARIA-association logic shared by
+ * `ControlWrapperComponent` and
  * `FormErrorControlDirective`. The DOM reads and writes are performed inside
  * `afterRenderEffect` so they run in the render phase (zoneless-safe) instead
  * of a plain `effect()`.

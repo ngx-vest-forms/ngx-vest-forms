@@ -397,6 +397,39 @@ describe('objectToArray', () => {
     ]);
   });
 
+  it('should leave an unlisted numeric-keyed sibling as an object', () => {
+    // Only `addresses` is listed. `extras` must stay an object: converting it
+    // would silently reshape a payload the backend expects as keyed objects.
+    const model = {
+      addresses: { 0: { city: 'A' } },
+      extras: { 0: { note: 'x' } },
+    };
+
+    expect(objectToArray(model, ['addresses'])).toEqual({
+      addresses: [{ city: 'A' }],
+      extras: { 0: { note: 'x' } },
+    });
+  });
+
+  it('should convert an unlisted numeric-keyed ancestor of a converted key', () => {
+    // A numeric-keyed object that holds a converted list was an array in the
+    // model too (rows of an ngModelGroup list), so listing the leaf key is
+    // enough to get the whole path back as arrays.
+    const model = { rows: { 0: { tags: { 0: 'x' } } } };
+
+    expect(objectToArray(model, ['tags'])).toEqual({
+      rows: [{ tags: ['x'] }],
+    });
+  });
+
+  it('should not convert an unlisted numeric-keyed object with object items when no keys are given', () => {
+    // With no keys nothing may convert. Object items under a numeric key used
+    // to count as "changed" and turned the object into an array anyway.
+    const model = { notes: { 0: { tag: 'a' } } };
+
+    expect(objectToArray(model, [])).toEqual({ notes: { 0: { tag: 'a' } } });
+  });
+
   it('should handle empty conversion keys array', () => {
     const model = {
       phones: { 0: '123', 1: '456' },

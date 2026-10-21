@@ -3554,6 +3554,213 @@ describe('FormDirective - submitSettled with validationConfig', () => {
   });
 });
 
+describe('FormDirective - submit revalidation of validationConfig dependents', () => {
+  type PasswordModel = { password?: string; confirmPassword?: string };
+
+  const passwordSuite = create((model: PasswordModel = {}) => {
+    vestTest('confirmPassword', 'Passwords must match', () => {
+      enforce(model.confirmPassword).equals(model.password);
+    });
+  });
+  const passwordConfig = createValidationConfig<PasswordModel>()
+    .whenChanged('password', 'confirmPassword')
+    .build();
+
+  // `(submitSettled)` is bound before `(ngSubmit)`, so its listener is
+  // registered first.
+  @Component({
+    selector: 'test-submit-revalidation-host',
+    imports: [NgxVestForms],
+    template: `
+      <form
+        ngxVestForm
+        #vest="ngxVestForm"
+        [suite]="suite"
+        [formValue]="formValue()"
+        [validationConfig]="validationConfig"
+        (formValueChange)="formValue.set($event)"
+        (submitSettled)="settled.push($event)"
+        (ngSubmit)="statusInNgSubmit = vest.ngForm.form.status"
+      >
+        <label for="password">Password</label>
+        <input
+          id="password"
+          name="password"
+          [ngModel]="formValue().password"
+          [validationOptions]="{ debounceTime: 0 }"
+        />
+        <label for="confirmPassword">Confirm</label>
+        <input
+          id="confirmPassword"
+          name="confirmPassword"
+          [ngModel]="formValue().confirmPassword"
+          [validationOptions]="{ debounceTime: 0 }"
+        />
+        <button type="submit">Submit</button>
+      </form>
+    `,
+  })
+  class SubmitRevalidationHostComponent {
+    readonly formValue = signal<PasswordModel>({});
+    readonly settled: NgxSubmitSettledEvent<PasswordModel>[] = [];
+    statusInNgSubmit: string | null = null;
+    readonly validationConfig = passwordConfig;
+    readonly suite = passwordSuite;
+    readonly vest = viewChild.required<FormDirective<PasswordModel>>('vest');
+  }
+
+  @Component({
+    selector: 'test-submit-revalidation-no-settled-host',
+    imports: [NgxVestForms],
+    template: `
+      <form
+        ngxVestForm
+        #vest="ngxVestForm"
+        [suite]="suite"
+        [formValue]="formValue()"
+        [validationConfig]="validationConfig"
+        (formValueChange)="formValue.set($event)"
+      >
+        <label for="password">Password</label>
+        <input
+          id="password"
+          name="password"
+          [ngModel]="formValue().password"
+          [validationOptions]="{ debounceTime: 0 }"
+        />
+        <label for="confirmPassword">Confirm</label>
+        <input
+          id="confirmPassword"
+          name="confirmPassword"
+          [ngModel]="formValue().confirmPassword"
+          [validationOptions]="{ debounceTime: 0 }"
+        />
+        <button type="submit">Submit</button>
+      </form>
+    `,
+  })
+  class NoSettledListenerHostComponent {
+    readonly formValue = signal<PasswordModel>({});
+    readonly validationConfig = passwordConfig;
+    readonly suite = passwordSuite;
+    readonly vest = viewChild.required<FormDirective<PasswordModel>>('vest');
+  }
+
+  beforeEach(() => {
+    passwordSuite.reset();
+  });
+
+  async function fillMatchingPasswords(): Promise<void> {
+    await userEvent.type(screen.getByLabelText('Password'), 'secret');
+    await userEvent.type(screen.getByLabelText('Confirm'), 'secret');
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    await whenStable();
+  }
+
+  it('leaves the status alone for (ngSubmit) handlers, whatever the binding order', async () => {
+    // Handlers that read the status synchronously must see the verdict the
+    // user submitted, not a PENDING caused by the library's revalidation.
+    const { fixture } = await render(SubmitRevalidationHostComponent, {
+      providers: [
+        { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 0 },
+      ],
+    });
+    const host = fixture.componentInstance;
+    await fillMatchingPasswords();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(host.statusInNgSubmit).toBe('VALID');
+    await waitFor(() => expect(host.settled).toHaveLength(1));
+    expect(host.settled[0]?.valid).toBe(true);
+  });
+
+  it('revalidates each dependent once per submit, however many submitSettled listeners there are', async () => {
+    // Each revalidation emits status events and restarts the dependent's
+    // async validator; the listener count must not multiply that work.
+    const { fixture } = await render(SubmitRevalidationHostComponent, {
+      providers: [
+        { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 0 },
+      ],
+    });
+    const host = fixture.componentInstance;
+    await fillMatchingPasswords();
+    const extraListeners = [
+      host.vest().submitSettled.subscribe(() => undefined),
+      host.vest().submitSettled.subscribe(() => undefined),
+    ];
+    onTestFinished(() => {
+      for (const listener of extraListeners) listener.unsubscribe();
+    });
+    const confirmPassword = host.vest().ngForm.form.get('confirmPassword');
+    if (!confirmPassword) throw new Error('confirmPassword not registered');
+    const revalidate = vi.spyOn(confirmPassword, 'updateValueAndValidity');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    await waitFor(() => expect(host.settled).toHaveLength(1));
+
+    expect(revalidate).toHaveBeenCalledTimes(1);
+  });
+
+  it('revalidates the dependents on submit without a submitSettled listener', async () => {
+    // Submit focus and `errorsChange` rely on the fresh dependent verdict,
+    // so it must not depend on whether the consumer binds submitSettled.
+    const { fixture } = await render(NoSettledListenerHostComponent, {
+      providers: [
+        { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 1000 },
+      ],
+    });
+    const host = fixture.componentInstance;
+    await userEvent.type(screen.getByLabelText('Password'), 'secret');
+    await userEvent.type(screen.getByLabelText('Confirm'), 'secret');
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    await whenStable();
+
+    // Inside the debounce window: the pipeline has not revalidated
+    // confirmPassword yet.
+    await userEvent.type(screen.getByLabelText('Password'), '!');
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    await waitFor(
+      () =>
+        expect(
+          host.vest().ngForm.form.get('confirmPassword')?.errors
+        ).toBeTruthy(),
+      { timeout: 500 }
+    );
+  });
+
+  it('emits errorsChange for a submit only after the dependents revalidate', async () => {
+    // A consumer rendering an error summary from errorsChange must not get
+    // a snapshot that still misses the dependent's error.
+    const { fixture } = await render(NoSettledListenerHostComponent, {
+      providers: [
+        { provide: NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN, useValue: 1000 },
+      ],
+    });
+    const host = fixture.componentInstance;
+    await userEvent.type(screen.getByLabelText('Password'), 'secret');
+    await userEvent.type(screen.getByLabelText('Confirm'), 'secret');
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    await whenStable();
+    await userEvent.type(screen.getByLabelText('Password'), '!');
+    await whenStable();
+
+    const emitted: Record<string, string[]>[] = [];
+    const subscription = host
+      .vest()
+      .errorsChange.subscribe((errors) => emitted.push(errors));
+    onTestFinished(() => subscription.unsubscribe());
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    await waitFor(
+      () => expect(emitted.at(-1)?.['confirmPassword']).toBeTruthy(),
+      { timeout: 500 }
+    );
+    expect(emitted.filter((errors) => !errors['confirmPassword'])).toEqual([]);
+  });
+});
+
 describe('FormDirective - formState after a programmatic model sync', () => {
   type ProfileModel = { name?: string };
 

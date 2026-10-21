@@ -97,9 +97,10 @@ function recursivelyConvertArrays<T>(object: T): DeepArrayToObject<T> {
 /**
  * Public API: Convert selected numeric-keyed object properties back to arrays.
  *
- * Conversion is *explicit by key* (only `keys` are converted) and cascades
- * inside converted branches, so nested numeric-keyed objects representing
- * arrays become real arrays recursively. As a convenience the result is
+ * Conversion is *explicit by key*. A numeric-keyed object becomes an array
+ * when its key is listed in `keys`, when it sits inside a converted branch, or
+ * when it contains a converted key (it held that list as an array item). Any
+ * other numeric-keyed object stays an object. As a convenience the result is
  * unwrapped to the bare converted array when the input is a single-entry
  * wrapper whose only key was converted.
  *
@@ -136,7 +137,7 @@ export function objectToArray<const K extends readonly string[]>(
   object: object,
   keys: K
 ): unknown {
-  const processed = objectToArrayInternal(object, keys);
+  const { value: processed } = objectToArrayInternal(object, keys);
   if (processed && typeof processed === 'object' && !Array.isArray(processed)) {
     const entries: Array<[string, unknown]> = Object.entries(
       processed as Record<string, unknown>
@@ -150,9 +151,7 @@ export function objectToArray<const K extends readonly string[]>(
       if (
         keys.includes(k) &&
         Array.isArray(v) &&
-        (v as unknown[]).every(
-          (element) => typeof element === 'object' && element !== null
-        )
+        v.every((element) => typeof element === 'object' && element !== null)
       ) {
         return v;
       }
@@ -162,19 +161,32 @@ export function objectToArray<const K extends readonly string[]>(
 }
 
 /**
- * Internal recursive worker with cascade flag: once a targeted key is converted, all nested numeric objects become arrays even if their keys were not explicitly listed.
+ * Result of one step of {@link objectToArrayInternal}: the converted value, and
+ * whether an object was turned into an array anywhere inside it.
+ */
+type ConvertedValue = { value: unknown; converted: boolean };
+
+/**
+ * Internal recursive worker. Conversion cascades down: once a listed key is
+ * converted, every numeric-keyed object inside it becomes an array too. It
+ * also runs up: a numeric-keyed object whose contents were converted becomes
+ * an array, since it held them as array items.
  */
 function objectToArrayInternal(
   object: unknown,
   keys: readonly string[],
   currentKey?: string,
   parentCascade = false
-): unknown {
+): ConvertedValue {
   if (Array.isArray(object)) {
     // Recursively process each item in the array
-    return object.map((item) =>
+    const items = object.map((item) =>
       objectToArrayInternal(item, keys, undefined, parentCascade)
     );
+    return {
+      value: items.map((item) => item.value),
+      converted: items.some((item) => item.converted),
+    };
   }
 
   if (object && typeof object === 'object') {
@@ -187,14 +199,9 @@ function objectToArrayInternal(
       const childCascade = parentCascade || explicit;
 
       for (const [key, value] of Object.entries(object)) {
-        const processedValue = objectToArrayInternal(
-          value,
-          keys,
-          key,
-          childCascade
-        );
-        processedContents[key] = processedValue;
-        if (processedValue !== value) {
+        const processed = objectToArrayInternal(value, keys, key, childCascade);
+        processedContents[key] = processed.value;
+        if (processed.converted) {
           hasChanges = true;
         }
       }
@@ -203,26 +210,37 @@ function objectToArrayInternal(
       // Yes, if: explicitly targeted, parent was converted, or children changed.
       const shouldConvert = explicit || parentCascade || hasChanges;
 
-      return shouldConvert
-        ? Object.keys(processedContents)
-            .sort((a, b) => Number(a) - Number(b))
-            .map((k) => processedContents[k])
-        : processedContents;
+      return {
+        value: shouldConvert
+          ? Object.keys(processedContents)
+              .sort((a, b) => Number(a) - Number(b))
+              .map((k) => processedContents[k])
+          : processedContents,
+        converted: shouldConvert,
+      };
     }
 
     // For regular objects, process recursively. Unsafe keys (an own
     // `__proto__` from JSON.parse) are left out, so they can't set the
     // result's prototype.
     const result: Record<string, unknown> = {};
+    let converted = false;
     for (const [key, value] of Object.entries(object)) {
       if (!isUnsafePathSegment(key)) {
-        result[key] = objectToArrayInternal(value, keys, key, parentCascade);
+        const processed = objectToArrayInternal(
+          value,
+          keys,
+          key,
+          parentCascade
+        );
+        result[key] = processed.value;
+        converted = converted || processed.converted;
       }
     }
-    return result;
+    return { value: result, converted };
   }
 
-  return object;
+  return { value: object, converted: false };
 }
 
 /**

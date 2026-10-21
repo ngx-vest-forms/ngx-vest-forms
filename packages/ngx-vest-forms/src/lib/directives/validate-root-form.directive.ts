@@ -23,7 +23,7 @@ import {
   NgForm,
   ValidationErrors,
 } from '@angular/forms';
-import { catchError, map, Observable, of, tap } from 'rxjs';
+import { catchError, map, Observable, of } from 'rxjs';
 import { ROOT_FORM } from '../constants';
 import {
   logDiagnostic,
@@ -254,15 +254,10 @@ export class ValidateRootFormDirective<T>
     // Revalidate on submit. Submitted state itself is read from
     // `ngForm.submitted`, so a form reset or `clearSubmittedState()` turns
     // submit-mode root validation off again.
-    ngForm.ngSubmit
-      .pipe(
-        tap(() => {
-          sharedSubmitted.set(true);
-          this.#submitCount.update((count) => count + 1);
-        }),
-        takeUntilDestroyed(this.#destroyRef)
-      )
-      .subscribe();
+    ngForm.ngSubmit.pipe(takeUntilDestroyed(this.#destroyRef)).subscribe(() => {
+      sharedSubmitted.set(true);
+      this.#submitCount.update((count) => count + 1);
+    });
   }
 
   validate(control: AbstractControl): Observable<ValidationErrors | null> {
@@ -298,7 +293,7 @@ export class ValidateRootFormDirective<T>
       ROOT_FORM,
       this.validationOptions(),
       immediate
-    )(control) as Observable<ValidationErrors | null>;
+    )(control);
 
     return validationResult;
   }
@@ -314,7 +309,7 @@ export class ValidateRootFormDirective<T>
     field: typeof ROOT_FORM,
     validationOptions: ValidationOptions,
     immediate: boolean
-  ): AsyncValidatorFn {
+  ): (control: AbstractControl) => Observable<ValidationErrors | null> {
     if (!this.suite()) {
       return () => of(null);
     }

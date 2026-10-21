@@ -64,7 +64,7 @@ function validateFormValueAgainstShape(
       continue;
     }
 
-    // For array items (numeric keys > 0), compare against the first item in shape
+    // For array items (numeric keys), compare against the first item in shape
     // since we only define one example item in the shape for arrays
     const isNumericKey = NUMERIC_PATH_SEGMENT.test(key);
     // Array shapes provide one example item at index 0, so every numeric key maps to '0'.
