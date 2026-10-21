@@ -1,10 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import {
+  afterNextRender,
   Component,
   computed,
   DestroyRef,
   inject,
   injectAsync,
+  Injector,
   onIdle,
   signal,
   viewChild,
@@ -67,6 +69,7 @@ export class SubmissionPatternsPageComponent {
     { prefetch: onIdle }
   );
   private readonly destroyRef = inject(DestroyRef);
+  private readonly injector = inject(Injector);
 
   protected readonly exampleContent = submissionPatternsContent;
   protected readonly suite = submissionPatternsSuite;
@@ -133,7 +136,11 @@ export class SubmissionPatternsPageComponent {
           messages.map((message) => ({ field, message }))
         )
       );
-      this.formBody()?.focusFirstInvalidControl();
+      // Focus after the render that shows the errors, the same timing the
+      // directive's own focusFirstInvalidOnSubmit uses.
+      afterNextRender(() => this.formBody()?.focusFirstInvalidControl(), {
+        injector: this.injector,
+      });
       return;
     }
 

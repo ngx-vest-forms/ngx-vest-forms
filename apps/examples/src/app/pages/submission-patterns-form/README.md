@@ -17,11 +17,12 @@ true. The suite has no Angular dependency and is unit-testable on its own:
 
 ### (b) Submit-time INVALID handling
 
-`onSubmit()` checks `formState().valid` first. When the form is invalid the
+`onSubmit()` runs from `(submitSettled)`, which fires once validation for the
+submit has finished, and checks `event.valid`. When the form is invalid the
 server is **never contacted**; instead the page stays in `editing` and calls
-`FormDirective.focusFirstInvalidControl()` to scroll to and focus the first
-failing control. `ngxVestForm` validates before it emits `ngSubmit`, so the
-state is current when `onSubmit()` runs. The page also stores
+`FormDirective.focusFirstInvalidControl()` after the next render to scroll to
+and focus the first failing control. A submit that arrives while a request is
+in flight is ignored. The page also stores
 `getAllFormErrors()` output in a "Submit was blocked by these errors" list.
 That list is a copy taken at submit time. It keeps showing what blocked the
 submit while the inline errors update as the user edits.
@@ -60,10 +61,10 @@ error (`?errorScenario=network-error`).
 
 ## Key files
 
-| File | Responsibility |
-| --- | --- |
-| `submission-patterns.page.ts` / `.html` | Page + four-state machine |
-| `account.service.ts` | `POST /api/account` HTTP client |
-| `submission-patterns.validations.ts` | Vest suite (testable in isolation) |
-| `../../models/submission-patterns.model.ts` | Model + contract |
-| `submission-patterns.content.ts` | "What this demonstrates / learn" cards |
+| File                                        | Responsibility                         |
+| ------------------------------------------- | -------------------------------------- |
+| `submission-patterns.page.ts` / `.html`     | Page + four-state machine              |
+| `account.service.ts`                        | `POST /api/account` HTTP client        |
+| `submission-patterns.validations.ts`        | Vest suite (testable in isolation)     |
+| `../../models/submission-patterns.model.ts` | Model + contract                       |
+| `submission-patterns.content.ts`            | "What this demonstrates / learn" cards |
