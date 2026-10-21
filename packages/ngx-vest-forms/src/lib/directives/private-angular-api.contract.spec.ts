@@ -6,8 +6,10 @@
  * Contract tests for the private Angular APIs ngx-vest-forms probes.
  *
  * The library reads or writes a few Angular internals that are not part of
- * Angular's public API. Each one has a fallback, so an Angular upgrade that
- * removes or renames one of them degrades silently instead of throwing. These
+ * Angular's public API. If an Angular upgrade removes or renames one, the
+ * library skips that read or write instead of throwing: a missing
+ * `submittedReactive` leaves `NgForm.submitted` unset, while the library's
+ * own submitted signal still updates. These
  * tests exercise the REAL Angular objects and fail loudly, naming the library
  * function that depends on the field, so the upgrade PR has to deal with it.
  *

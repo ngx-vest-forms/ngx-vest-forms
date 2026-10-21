@@ -387,7 +387,7 @@ export class FormControlStateDirective {
   }
 
   /**
-   * Main control state computed signal (merges robust touched/dirty)
+   * Read-only view of the control state (merges robust touched/dirty)
    */
   readonly controlState = this.#controlStateSignal.asReadonly();
 
