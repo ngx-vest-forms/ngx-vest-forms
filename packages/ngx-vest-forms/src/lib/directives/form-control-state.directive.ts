@@ -182,8 +182,10 @@ export class FormControlStateDirective {
           afterNextRender(
             () => {
               // The render hook can run before that registration microtask.
-              // Re-check after it: latching now would fire the effect while
-              // `control.control` is still null, and no retry would follow.
+              // NgForm queued it during ngOnInit, before this hook, so a
+              // microtask queued here runs after it. Latching any earlier
+              // would fire the effect while `control.control` is still null,
+              // and no retry would follow.
               queueMicrotask(() => {
                 if (this.#activeControl() === control) {
                   this.#lateAttachFor.set(control);
