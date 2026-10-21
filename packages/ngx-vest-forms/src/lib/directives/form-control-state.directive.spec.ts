@@ -78,6 +78,19 @@ class ResettableHostComponent {
   }
 }
 
+@Component({
+  imports: [FormsModule, FormControlStateDirective],
+  template: `
+    <form>
+      <fieldset ngModelGroup="address" ngxControlState #state="ngxControlState">
+        <input name="city" [ngModel]="'Paris'" required />
+        <span id="group-is-valid">{{ state.isValid() }}</span>
+      </fieldset>
+    </form>
+  `,
+})
+class NgModelGroupHostComponent {}
+
 describe('FormControlStateDirective', () => {
   let fixture: ComponentFixture<TestHostComponent>;
 
@@ -87,6 +100,7 @@ describe('FormControlStateDirective', () => {
         TestHostComponent,
         WarningOnlyHostComponent,
         ResettableHostComponent,
+        NgModelGroupHostComponent,
         FormsModule,
         FormControlStateDirective,
       ],
@@ -223,5 +237,18 @@ describe('FormControlStateDirective', () => {
     resetFixture.componentInstance.reset();
 
     await expect.poll(() => hasBeenValidatedEl.textContent).toBe('false');
+  });
+
+  it('reflects an NgModelGroup that is valid on load without any user interaction', async () => {
+    // A group's FormGroup is registered in a microtask after the directive
+    // first runs, so the first attach can see no control yet. The status must
+    // still be right on load: otherwise a form whose groups are valid when it
+    // renders keeps showing them as invalid until the user touches a field.
+    const groupFixture = TestBed.createComponent(NgModelGroupHostComponent);
+    groupFixture.detectChanges();
+
+    const isValidEl =
+      groupFixture.nativeElement.querySelector('#group-is-valid');
+    await expect.poll(() => isValidEl.textContent).toBe('true');
   });
 });
