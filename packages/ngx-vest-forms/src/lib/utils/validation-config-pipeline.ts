@@ -1,4 +1,9 @@
-import { ChangeDetectorRef, DestroyRef, isDevMode } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  DestroyRef,
+  ErrorHandler,
+  isDevMode,
+} from '@angular/core';
 import { AbstractControl, FormGroup } from '@angular/forms';
 import {
   debounceTime,
@@ -24,6 +29,7 @@ import {
 } from '../errors/error-catalog';
 import { scheduleTimeout } from './destroy-scheduler';
 import type { ValidationConfigMap } from './field-path-types';
+import { reportToErrorHandler } from './vest-runner';
 
 /**
  * Options controlling the timing behaviour of the validation-config pipeline.
@@ -75,6 +81,8 @@ export type ValidationConfigPipelineOptions = {
  *                  scheduler re-renders their `ng-*` host classes.
  * @param destroyRef  Used to auto-cancel the in-progress cooldown timer when the
  *                  host directive is destroyed.
+ * @param errorHandler Receives errors thrown by dependent validators. Defaults to
+ *                  a plain `ErrorHandler`, so the error is logged rather than dropped.
  */
 export function createValidationConfigPipeline<
   T extends Record<string, unknown>,
@@ -83,7 +91,8 @@ export function createValidationConfigPipeline<
   config: ValidationConfigMap<T> | null | undefined,
   options: ValidationConfigPipelineOptions,
   cdr: ChangeDetectorRef,
-  destroyRef: DestroyRef
+  destroyRef: DestroyRef,
+  errorHandler: ErrorHandler = new ErrorHandler()
 ): Observable<void> {
   if (!config) {
     return EMPTY;
@@ -107,7 +116,8 @@ export function createValidationConfigPipeline<
         loopPrevention,
         options,
         cdr,
-        destroyRef
+        destroyRef,
+        errorHandler
       )
   );
 
@@ -144,7 +154,8 @@ function createTriggerStream(
   loopPrevention: LoopPreventionState,
   options: ValidationConfigPipelineOptions,
   cdr: ChangeDetectorRef,
-  destroyRef: DestroyRef
+  destroyRef: DestroyRef,
+  errorHandler: ErrorHandler
 ): Observable<void> {
   // Follow whichever control is registered under `triggerField`. `@if` can
   // destroy the trigger's NgModel and render a new one, which registers a new
@@ -245,7 +256,8 @@ function createTriggerStream(
             loopPrevention,
             cdr,
             options.validationInProgressCooldownMs,
-            destroyRef
+            destroyRef,
+            errorHandler
           );
           cancelCooldown = cycle.cancelCooldown;
           if (cycle.skippedDependents) {
@@ -363,7 +375,8 @@ function updateDependentFields(
   loopPrevention: LoopPreventionState,
   cdr: ChangeDetectorRef,
   cooldownMs: number,
-  destroyRef: DestroyRef
+  destroyRef: DestroyRef,
+  errorHandler: ErrorHandler
 ): { cancelCooldown: () => void; skippedDependents: boolean } {
   const { validationInProgress } = loopPrevention;
 
@@ -406,6 +419,11 @@ function updateDependentFields(
       // CD without running it synchronously inside this RxJS pipeline
       // callback, avoiding re-entrancy with Angular's forms event processing.
       cdr.markForCheck();
+    } catch (error) {
+      // A throwing validator must not abort the cycle: an exception escaping
+      // here would skip the cooldown below and error the trigger stream, which
+      // stops validationConfig for the whole form. Report it and move on.
+      reportToErrorHandler(errorHandler, error);
     } finally {
       loopPrevention.applyingUpdates = false;
     }
