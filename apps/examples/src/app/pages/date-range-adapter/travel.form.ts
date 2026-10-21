@@ -3,6 +3,7 @@ import {
   ControlWrapperComponent,
   createFormFeedbackSignals,
   FormDirective,
+  type NgxSubmitSettledEvent,
   NgxValidationConfig,
   NgxVestForms,
   NgxVestSuite,
@@ -42,7 +43,7 @@ export class TravelFormBody {
     input.required<NgxValidationConfig<TravelFormModel>>();
 
   readonly formValueChange = output<TravelFormModel>();
-  readonly submitted = output();
+  readonly submitted = output<NgxSubmitSettledEvent<TravelFormModel>>();
   readonly resetRequested = output();
 
   readonly departureErrors = input<string[]>([]);
@@ -67,9 +68,11 @@ export class TravelFormBody {
     this.formValueChange.emit(next);
   }
 
-  protected onSubmit(): void {
+  protected onSubmitSettled(
+    event: NgxSubmitSettledEvent<TravelFormModel>
+  ): void {
     this.formSubmitted.set(true);
-    this.submitted.emit();
+    this.submitted.emit(event);
   }
 
   protected onReset(): void {

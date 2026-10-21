@@ -1,5 +1,8 @@
 import { Component, computed, signal, viewChild } from '@angular/core';
-import { createValidationConfig } from 'ngx-vest-forms';
+import {
+  createValidationConfig,
+  type NgxSubmitSettledEvent,
+} from 'ngx-vest-forms';
 import { TravelFormModel } from '../../models/travel-form.model';
 import { Card } from '../../ui/card/card.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
@@ -71,8 +74,8 @@ export class TravelPageComponent {
     return warnings['returnDate'] ?? [];
   });
 
-  protected save(): void {
-    if (this.feedback()?.formState()?.valid) {
+  protected save(event: NgxSubmitSettledEvent<TravelFormModel>): void {
+    if (event.valid) {
       // Intentionally quiet in examples
     }
   }

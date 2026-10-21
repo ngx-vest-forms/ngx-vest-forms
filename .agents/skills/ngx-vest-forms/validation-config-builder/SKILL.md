@@ -65,7 +65,7 @@ Dependents revalidate silently: `validationConfig` does not mark them touched, s
 
 ## Known limits
 
-- The trigger control must stay mounted. A trigger destroyed and recreated behind `@if` stops driving its dependents; hide it with `[hidden]` or disable it instead.
+- A trigger destroyed and recreated behind `@if` keeps driving its dependents: the pipeline follows whichever control is registered under the trigger's path.
 - Rapid edits to a trigger inside the 500 ms loop-prevention cooldown are deferred and replayed, not dropped.
 - `NGX-106` means the dependent pipeline gave up waiting for a `PENDING` form (an async test that never settles); `NGX-107` means a dependent path never appeared (hidden or misspelled). A duplicate-builder warning means the same edge was added twice. See [`TROUBLESHOOTING.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/TROUBLESHOOTING.md).
 

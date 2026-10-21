@@ -2,6 +2,7 @@ import { Component, input, output, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
   FormDirective,
+  type NgxSubmitSettledEvent,
   NgxValidationConfig,
   NgxVestForms,
   NgxVestSuite,
@@ -36,7 +37,7 @@ export class BusinessPolicyFormBody {
     input.required<NgxValidationConfig<BusinessPolicyModel>>();
 
   readonly formValueChange = output<BusinessPolicyModel>();
-  readonly submitted = output();
+  readonly submitted = output<NgxSubmitSettledEvent<BusinessPolicyModel>>();
   readonly resetRequested = output();
 
   /** EU country options that trigger the conditional VAT-ID rule. */
@@ -53,8 +54,10 @@ export class BusinessPolicyFormBody {
     );
   }
 
-  protected onSubmit(): void {
-    this.submitted.emit();
+  protected onSubmitSettled(
+    event: NgxSubmitSettledEvent<BusinessPolicyModel>
+  ): void {
+    this.submitted.emit(event);
   }
 
   protected onReset(): void {

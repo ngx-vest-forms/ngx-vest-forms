@@ -42,10 +42,6 @@ protected onDeliveryChange(method: 'ship' | 'pickup'): void {
 
 `triggerFormValidation()` belongs to structure changes. Ordinary input-to-input edits already revalidate, dependent timing belongs to `validationConfig`, and blur-driven saving belongs to [`../field-blur-events/SKILL.md`](../field-blur-events/SKILL.md).
 
-## Known limit
-
-A `validationConfig` trigger control that is destroyed and recreated behind `@if` stops driving its dependents. Keep trigger controls mounted (hide or disable them) when they have dependents.
-
 ## References
 
 - [`FIELD-CLEARING-UTILITIES.md`](https://github.com/ngx-vest-forms/ngx-vest-forms/blob/master/docs/FIELD-CLEARING-UTILITIES.md)

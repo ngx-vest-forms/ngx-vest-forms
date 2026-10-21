@@ -58,7 +58,7 @@
         [validationConfig]="validationConfig"
         (formValueChange)="formValue.set($event)"
         (fieldBlurred)="handleFieldBlur($event)"
-        (submitted)="save()"
+        (submitted)="save($event)"
         (resetRequested)="reset()"
       />
     </div>

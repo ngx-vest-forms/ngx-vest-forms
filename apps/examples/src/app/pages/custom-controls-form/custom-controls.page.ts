@@ -1,4 +1,5 @@
 import { Component, computed, signal, viewChild } from '@angular/core';
+import type { NgxSubmitSettledEvent } from 'ngx-vest-forms';
 import { CustomControlsModel } from '../../models/custom-controls.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
@@ -45,8 +46,8 @@ export class CustomControlsPageComponent {
 
   protected readonly feedback = computed(() => this.formBody()?.feedback);
 
-  protected onSubmit(): void {
-    if (!this.feedback()?.formState()?.valid) {
+  protected onSubmit(event: NgxSubmitSettledEvent<CustomControlsModel>): void {
+    if (!event.valid) {
       // The directive focuses the first invalid control on submit by default
       // (`focusFirstInvalidOnSubmit`), so no manual focus handling is needed.
       this.submittedValue.set(null);

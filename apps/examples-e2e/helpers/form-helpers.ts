@@ -532,3 +532,62 @@ export function captureNgxVestDiagnostics(page: Page): NgxDiagnosticCapture {
     },
   };
 }
+
+/**
+ * Field values for {@link fillAndSubmitInOneTick}, keyed by control `name`.
+ * A boolean sets a checkbox; a string sets an input or textarea, or picks the
+ * `<select>` option whose text contains it.
+ */
+export type OneTickFieldValues = Record<string, string | boolean>;
+
+/**
+ * Sets every field and clicks submit inside one `page.evaluate`, so no task
+ * boundary separates the last edit from the submit. Playwright's `fill()` and
+ * `click()` add enough delay to hide submit handlers that read validity before
+ * validation has caught up; an autofill followed by Enter does not.
+ */
+export async function fillAndSubmitInOneTick(
+  page: Page,
+  values: OneTickFieldValues,
+  submitLabel: RegExp
+): Promise<void> {
+  await page.evaluate(
+    ({ values, source, flags }) => {
+      for (const [name, value] of Object.entries(values)) {
+        const field = document.querySelector<
+          HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+        >(`form [name="${name}"]`);
+        if (!field) {
+          throw new Error(`No field named "${name}"`);
+        }
+        if (field instanceof HTMLSelectElement) {
+          const index = [...field.options].findIndex((option) =>
+            option.text.includes(String(value))
+          );
+          if (index < 0) {
+            throw new Error(`No option "${value}" in "${name}"`);
+          }
+          field.selectedIndex = index;
+          field.dispatchEvent(new Event('change', { bubbles: true }));
+        } else if (typeof value === 'boolean') {
+          (field as HTMLInputElement).checked = value;
+          field.dispatchEvent(new Event('change', { bubbles: true }));
+        } else {
+          field.value = value;
+          field.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }
+      const pattern = new RegExp(source, flags);
+      const submit = [
+        ...document.querySelectorAll<HTMLButtonElement>(
+          'form button[type="submit"]'
+        ),
+      ].find((button) => pattern.test(button.textContent ?? ''));
+      if (!submit) {
+        throw new Error(`No submit button matching ${pattern}`);
+      }
+      submit.click();
+    },
+    { values, source: submitLabel.source, flags: submitLabel.flags }
+  );
+}

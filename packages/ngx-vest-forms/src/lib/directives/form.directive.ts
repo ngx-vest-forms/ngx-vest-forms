@@ -1,4 +1,5 @@
 import {
+  afterNextRender,
   booleanAttribute,
   ChangeDetectorRef,
   computed,
@@ -8,6 +9,7 @@ import {
   ElementRef,
   ErrorHandler,
   inject,
+  Injector,
   input,
   InputSignal,
   isDevMode,
@@ -37,6 +39,7 @@ import {
   catchError,
   distinctUntilChanged,
   filter,
+  from,
   map,
   Observable,
   of,
@@ -226,6 +229,7 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly ngForm = inject(NgForm, { self: true });
   readonly #destroyRef = inject(DestroyRef);
   readonly #cdr = inject(ChangeDetectorRef);
+  readonly #injector = inject(Injector);
   readonly #errorHandler = inject(ErrorHandler);
   readonly #elementRef = inject<ElementRef<HTMLFormElement>>(ElementRef);
   readonly #configDebounceTime = inject(NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN);
@@ -553,6 +557,10 @@ export class FormDirective<T extends Record<string, unknown>> {
    * Whether a failed submit automatically scrolls to and focuses the first
    * invalid control (via {@link focusFirstInvalidControl}).
    *
+   * Focus moves after async validation settles and the next render, so a
+   * custom control found only through its wrapper's invalid class is focused
+   * on the first submit too.
+   *
    * Defaults to `true`. Set to `false` when the application manages its own
    * post-submit focus target — for example a WCAG-style error summary with
    * `role="alert"` that receives focus on submit — or when multiple forms are
@@ -768,16 +776,31 @@ export class FormDirective<T extends Record<string, unknown>> {
 
     this.ngForm.ngSubmit
       .pipe(
-        switchMap(() => this.#settledStatus()),
+        // Read the status one microtask later, after every synchronous submit
+        // handler. `submitSettled` revalidates config dependents there, which
+        // turns the form PENDING; deciding before that would focus while those
+        // fields are pending and match neither `ng-invalid` nor the wrapper.
+        switchMap(() =>
+          from(Promise.resolve()).pipe(switchMap(() => this.#settledStatus()))
+        ),
         takeUntilDestroyed(this.#destroyRef)
       )
       .subscribe(() => {
-        scheduleMicrotask(() => {
-          if (this.ngForm.form.valid || !this.focusFirstInvalidOnSubmit()) {
-            return;
-          }
-          this.focusFirstInvalidControl();
-        }, this.#destroyRef);
+        if (this.ngForm.form.valid || !this.focusFirstInvalidOnSubmit()) {
+          return;
+        }
+        // Wait for the render that follows the submit: wrapper `--invalid`
+        // classes and `aria-invalid` only appear then, and for a custom
+        // control they are the only way to find the failing field.
+        this.#cdr.markForCheck();
+        afterNextRender(
+          () => {
+            if (!this.ngForm.form.valid) {
+              this.focusFirstInvalidControl();
+            }
+          },
+          { injector: this.#injector }
+        );
       });
 
     /**

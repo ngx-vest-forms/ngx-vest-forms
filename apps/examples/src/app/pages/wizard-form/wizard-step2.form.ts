@@ -29,7 +29,7 @@ export class WizardStep2FormComponent {
   readonly validChange = output<boolean>();
   readonly errorsChange = output<Record<string, string[]>>();
   readonly previous = output();
-  readonly stepSubmit = output();
+  readonly stepSubmit = output<boolean>();
 
   private readonly form =
     viewChild<FormDirective<WizardStep2Model>>('step2Form');

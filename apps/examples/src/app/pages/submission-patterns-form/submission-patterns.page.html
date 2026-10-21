@@ -150,7 +150,7 @@
           [suite]="suite"
           [submitting]="state() === 'submitting'"
           (formValueChange)="formValue.set($event)"
-          (submitted)="onSubmit()"
+          (submitted)="onSubmit($event)"
           (resetRequested)="reset()"
         />
       </ngx-card>

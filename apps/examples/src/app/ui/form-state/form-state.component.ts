@@ -50,7 +50,7 @@ type MessageInput = readonly string[] | Record<string, string[]>;
               [title]="resolvedTitle()"
             >
               <ul class="list-disc space-y-1 pl-5">
-                @for (message of resolvedMessages(); track message) {
+                @for (message of resolvedMessages(); track $index) {
                   <li>{{ message }}</li>
                 }
               </ul>
@@ -60,7 +60,7 @@ type MessageInput = readonly string[] | Record<string, string[]>;
           @if (uniqueErrors().length > 0) {
             <ngx-alert-panel live="off" tone="error" [title]="errorsTitle()">
               <ul class="list-disc space-y-1 pl-5">
-                @for (message of uniqueErrors(); track message) {
+                @for (message of uniqueErrors(); track $index) {
                   <li>{{ message }}</li>
                 }
               </ul>
@@ -74,7 +74,7 @@ type MessageInput = readonly string[] | Record<string, string[]>;
               [title]="warningsTitle()"
             >
               <ul class="list-disc space-y-1 pl-5">
-                @for (message of uniqueWarnings(); track message) {
+                @for (message of uniqueWarnings(); track $index) {
                   <li>{{ message }}</li>
                 }
               </ul>
@@ -84,7 +84,7 @@ type MessageInput = readonly string[] | Record<string, string[]>;
           @if (uniqueInfo().length > 0) {
             <ngx-alert-panel live="off" tone="info" [title]="infoTitle()">
               <ul class="list-disc space-y-1 pl-5">
-                @for (message of uniqueInfo(); track message) {
+                @for (message of uniqueInfo(); track $index) {
                   <li>{{ message }}</li>
                 }
               </ul>
@@ -130,7 +130,7 @@ type MessageInput = readonly string[] | Record<string, string[]>;
                     <ul class="mt-1 list-disc space-y-1 pl-5">
                       @for (
                         message of unusedValidationErrorRules();
-                        track message
+                        track $index
                       ) {
                         <li>{{ message }}</li>
                       }
@@ -149,7 +149,7 @@ type MessageInput = readonly string[] | Record<string, string[]>;
                   <ul class="mt-1 list-disc space-y-1 pl-5">
                     @for (
                       message of unusedValidationWarningRules();
-                      track message
+                      track $index
                     ) {
                       <li>{{ message }}</li>
                     }
@@ -158,7 +158,7 @@ type MessageInput = readonly string[] | Record<string, string[]>;
               </div>
             } @else {
               <ul class="list-disc space-y-1 pl-5">
-                @for (message of unusedValidationErrorRules(); track message) {
+                @for (message of unusedValidationErrorRules(); track $index) {
                   <li>{{ message }}</li>
                 }
               </ul>

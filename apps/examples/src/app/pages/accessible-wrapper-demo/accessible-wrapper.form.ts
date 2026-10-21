@@ -3,6 +3,7 @@ import {
   createFormFeedbackSignals,
   FormDirective,
   FormErrorControlDirective,
+  type NgxSubmitSettledEvent,
   NgxVestForms,
   NgxVestSuite,
   provideFormContract,
@@ -23,7 +24,7 @@ export class AccessibleWrapperFormBody {
   readonly suite = input.required<NgxVestSuite<AccessibleWrapperModel>>();
 
   readonly formValueChange = output<AccessibleWrapperModel>();
-  readonly submitted = output();
+  readonly submitted = output<NgxSubmitSettledEvent<AccessibleWrapperModel>>();
   readonly resetRequested = output();
   readonly clearSearchRequested = output();
 
@@ -31,8 +32,10 @@ export class AccessibleWrapperFormBody {
     viewChild<FormDirective<AccessibleWrapperModel>>('vestForm');
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
-  protected onSubmit(): void {
-    this.submitted.emit();
+  protected onSubmitSettled(
+    event: NgxSubmitSettledEvent<AccessibleWrapperModel>
+  ): void {
+    this.submitted.emit(event);
   }
 
   protected onReset(): void {

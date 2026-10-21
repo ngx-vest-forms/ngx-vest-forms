@@ -5,6 +5,7 @@ import {
   getAllFormErrors,
   NGX_ERROR_DISPLAY_MODE_TOKEN,
   NgxFormErrorsByPath,
+  type NgxSubmitSettledEvent,
   NgxVestForms,
   NgxVestSuite,
   provideFormContract,
@@ -32,7 +33,7 @@ export class SubmissionPatternsFormBody {
   readonly submitting = input(false);
 
   readonly formValueChange = output<SubmissionPatternsModel>();
-  readonly submitted = output();
+  readonly submitted = output<NgxSubmitSettledEvent<SubmissionPatternsModel>>();
   readonly resetRequested = output();
 
   private readonly vestForm =
@@ -41,8 +42,10 @@ export class SubmissionPatternsFormBody {
   private readonly formElement =
     viewChild<ElementRef<HTMLFormElement>>('formElement');
 
-  protected onSubmit(): void {
-    this.submitted.emit();
+  protected onSubmitSettled(
+    event: NgxSubmitSettledEvent<SubmissionPatternsModel>
+  ): void {
+    this.submitted.emit(event);
   }
 
   protected onReset(): void {

@@ -192,11 +192,8 @@ export class WizardFormPageComponent {
     this.currentStep.update((step) => (step === 1 ? 2 : 3));
   }
 
-  protected onStep1Submit(): void {
-    const step1IsValid =
-      this.formBody()?.currentStepIsValid() ?? this.step1Valid();
-
-    if (step1IsValid) {
+  protected onStep1Submit(valid: boolean): void {
+    if (valid) {
       this.nextStep();
       return;
     }
@@ -209,11 +206,8 @@ export class WizardFormPageComponent {
     );
   }
 
-  protected onStep2Submit(): void {
-    const step2IsValid =
-      this.formBody()?.currentStepIsValid() ?? this.step2Valid();
-
-    if (step2IsValid) {
+  protected onStep2Submit(valid: boolean): void {
+    if (valid) {
       this.nextStep();
       return;
     }
@@ -231,11 +225,8 @@ export class WizardFormPageComponent {
     );
   }
 
-  protected onStep3Submit(): void {
-    const step3IsValid =
-      this.formBody()?.currentStepIsValid() ?? this.step3Valid();
-
-    if (step3IsValid) {
+  protected onStep3Submit(valid: boolean): void {
+    if (valid) {
       return;
     }
 

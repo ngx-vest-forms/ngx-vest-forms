@@ -1,10 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import {
+  afterNextRender,
   Component,
   computed,
   DestroyRef,
   inject,
   injectAsync,
+  Injector,
   onIdle,
   signal,
   viewChild,
@@ -22,6 +24,7 @@ import {
 } from '../../ui/intro-section';
 import { PageTitle } from '../../ui/page-title/page-title.component';
 
+import type { NgxSubmitSettledEvent } from 'ngx-vest-forms';
 import { submissionPatternsContent } from './submission-patterns.content';
 import { SubmissionPatternsFormBody } from './submission-patterns.form';
 import { submissionPatternsSuite } from './submission-patterns.validations';
@@ -66,6 +69,7 @@ export class SubmissionPatternsPageComponent {
     { prefetch: onIdle }
   );
   private readonly destroyRef = inject(DestroyRef);
+  private readonly injector = inject(Injector);
 
   protected readonly exampleContent = submissionPatternsContent;
   protected readonly suite = submissionPatternsSuite;
@@ -108,17 +112,22 @@ export class SubmissionPatternsPageComponent {
     this.scenario.set(this.isScenario(value) ? value : 'normal');
   }
 
-  protected onSubmit(): void {
-    if (!this.formBody()) {
+  protected onSubmit(
+    event: NgxSubmitSettledEvent<SubmissionPatternsModel>
+  ): void {
+    // A request is already in flight; the disabled button may not have
+    // rendered yet when a second submit lands.
+    if (!this.formBody() || this.state() === 'submitting') {
       return;
     }
 
     this.submitCycleActive.set(true);
 
     // (b) Submit-time INVALID handling: never call the server, surface
-    // errors, and move focus to the first invalid control. ngxVestForm has
-    // already run validation for this submit, so the state is current here.
-    if (!this.feedback()?.formState()?.valid) {
+    // errors, and move focus to the first invalid control. `submitSettled`
+    // fires once validation for this submit has finished, so `event` holds
+    // the real outcome.
+    if (!event.valid) {
       this.state.set('editing');
       this.serverError.set(null);
       const errors = this.formBody()?.errorSnapshot().errors ?? {};
@@ -127,7 +136,11 @@ export class SubmissionPatternsPageComponent {
           messages.map((message) => ({ field, message }))
         )
       );
-      this.formBody()?.focusFirstInvalidControl();
+      // Focus after the render that shows the errors, the same timing the
+      // directive's own focusFirstInvalidOnSubmit uses.
+      afterNextRender(() => this.formBody()?.focusFirstInvalidControl(), {
+        injector: this.injector,
+      });
       return;
     }
 
