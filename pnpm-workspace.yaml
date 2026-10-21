@@ -25,6 +25,7 @@ audit:
 virtualStoreType: global
 overrides:
   '@actions/http-client>undici': 6.28.1
+  '@angular/build>vite': 8.3.4
   '@jridgewell/sourcemap-codec': 1.6.0
   brace-expansion: 5.0.12
   chokidar: 4.0.1
