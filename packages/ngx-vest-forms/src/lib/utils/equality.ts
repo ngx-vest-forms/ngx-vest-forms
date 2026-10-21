@@ -185,14 +185,13 @@ export function shallowEqual(obj1: unknown, obj2: unknown): boolean {
  * }
  * ```
  *
- * @param obj1 - First object to compare
- * @param obj2 - Second object to compare
- *
  * Cyclic arrays and plain objects are compared structurally by tracking visited object
  * pairs. Distinct cyclic graphs with the same structure compare equal. `Date` and
  * `RegExp` values compare structurally. `Map` and `Set` values compare by reference
  * only, so distinct instances are considered different even if their contents match.
  *
+ * @param obj1 - First object to compare
+ * @param obj2 - Second object to compare
  * @returns true if objects are deeply equal by value
  */
 export function fastDeepEqual(obj1: unknown, obj2: unknown): boolean {

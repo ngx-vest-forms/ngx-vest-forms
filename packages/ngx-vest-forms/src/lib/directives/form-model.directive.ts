@@ -48,11 +48,10 @@ export class FormModelDirective implements AsyncValidator, OnInit {
    * Injected optionally so that using ngModel outside of an ngxVestForm
    * does not crash the application. In that case, validation becomes a no-op.
    */
-  private readonly formDirective: FormDirective<
-    Record<string, unknown>
-  > | null = inject(FormDirective, {
-    optional: true,
-  });
+  readonly #formDirective: FormDirective<Record<string, unknown>> | null =
+    inject(FormDirective, {
+      optional: true,
+    });
 
   readonly #injector = inject(Injector);
   readonly #elementRef = inject<ElementRef<Element>>(ElementRef);
@@ -67,7 +66,7 @@ export class FormModelDirective implements AsyncValidator, OnInit {
       self: true,
       optional: true,
     });
-    const ngForm = this.formDirective?.ngForm;
+    const ngForm = this.#formDirective?.ngForm;
     if (ngModel && ngForm) {
       this.#destroyRef.onDestroy(
         registerControlElement(ngForm, this.#elementRef.nativeElement, ngModel)
@@ -83,12 +82,9 @@ export class FormModelDirective implements AsyncValidator, OnInit {
   validate(control: AbstractControl): Observable<ValidationErrors | null> {
     return runAsyncValidationBridge(
       control,
-      this.formDirective,
-      (currentControl) => {
-        const context = this.formDirective;
-        if (!context) return '';
-        return getFormControlField(context.ngForm.control, currentControl);
-      },
+      this.#formDirective,
+      (currentControl, context) =>
+        getFormControlField(context.ngForm.control, currentControl),
       this.validationOptions(),
       'FormModelDirective'
     );

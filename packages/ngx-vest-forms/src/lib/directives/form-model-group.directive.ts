@@ -42,9 +42,8 @@ export class FormModelGroupDirective implements AsyncValidator, OnInit {
    * Defaults to no debounce (`{ debounceTime: 0 }`).
    */
   validationOptions = input<ValidationOptions>({ debounceTime: 0 });
-  private readonly formDirective: FormDirective<
-    Record<string, unknown>
-  > | null = inject(FormDirective, { optional: true });
+  readonly #formDirective: FormDirective<Record<string, unknown>> | null =
+    inject(FormDirective, { optional: true });
 
   readonly #injector = inject(Injector);
   readonly #elementRef = inject<ElementRef<Element>>(ElementRef);
@@ -59,7 +58,7 @@ export class FormModelGroupDirective implements AsyncValidator, OnInit {
       self: true,
       optional: true,
     });
-    const ngForm = this.formDirective?.ngForm;
+    const ngForm = this.#formDirective?.ngForm;
     if (group && ngForm) {
       this.#destroyRef.onDestroy(
         registerGroupElement(ngForm, this.#elementRef.nativeElement, group)
@@ -75,12 +74,9 @@ export class FormModelGroupDirective implements AsyncValidator, OnInit {
   validate(control: AbstractControl): Observable<ValidationErrors | null> {
     return runAsyncValidationBridge(
       control,
-      this.formDirective,
-      (currentControl) => {
-        const context = this.formDirective;
-        if (!context) return '';
-        return getFormGroupField(context.ngForm.control, currentControl);
-      },
+      this.#formDirective,
+      (currentControl, context) =>
+        getFormGroupField(context.ngForm.control, currentControl),
       this.validationOptions(),
       'FormModelGroupDirective'
     );

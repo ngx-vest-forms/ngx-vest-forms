@@ -387,9 +387,9 @@ export class FormControlStateDirective {
   }
 
   /**
-   * Main control state computed signal (merges robust touched/dirty)
+   * Read-only view of the control state (merges robust touched/dirty)
    */
-  readonly controlState = computed(() => this.#controlStateSignal());
+  readonly controlState = this.#controlStateSignal.asReadonly();
 
   /**
    * Recursively flattens Angular error objects into an array of error messages.

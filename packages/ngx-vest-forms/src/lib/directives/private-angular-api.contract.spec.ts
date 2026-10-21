@@ -6,13 +6,15 @@
  * Contract tests for the private Angular APIs ngx-vest-forms probes.
  *
  * The library reads or writes a few Angular internals that are not part of
- * Angular's public API. Each one has a fallback, so an Angular upgrade that
- * removes or renames one of them degrades silently instead of throwing. These
+ * Angular's public API. If an Angular upgrade removes or renames one, the
+ * library skips that read or write instead of throwing: a missing
+ * `submittedReactive` leaves `NgForm.submitted` unset, while the library's
+ * own submitted signal still updates. These
  * tests exercise the REAL Angular objects and fail loudly, naming the library
  * function that depends on the field, so the upgrade PR has to deal with it.
  *
  * Probed internals (keep in sync with the library code):
- * - `NgForm.submittedReactive` / `NgForm._submittedReactive`
+ * - `NgForm.submittedReactive`
  *   → `setAngularFormSubmittedState` (form-submitted-state.ts)
  *
  * Retired: `NgForm._directives` and `ControlValueAccessor._elementRef` were
@@ -76,10 +78,10 @@ async function renderNgForm(): Promise<NgForm> {
 }
 
 describe('private Angular API contract: NgForm submitted signal', () => {
-  // Same lookup order as setAngularFormSubmittedState.
-  const candidates = ['submittedReactive', '_submittedReactive'] as const;
+  // The field setAngularFormSubmittedState writes.
+  const candidates = ['submittedReactive'] as const;
 
-  it('exposes submittedReactive or _submittedReactive as a writable signal', async () => {
+  it('exposes submittedReactive as a writable signal', async () => {
     const ngForm = await renderNgForm();
     const host = ngForm as unknown as Record<string, unknown>;
 
@@ -87,8 +89,8 @@ describe('private Angular API contract: NgForm submitted signal', () => {
     expect(
       found,
       `setAngularFormSubmittedState (form-submitted-state.ts) writes ` +
-        `NgForm.${candidates.join(' ?? NgForm.')}, but a real NgForm has ` +
-        `neither. ${UPGRADE_BROKE_IT} clearSubmittedState() can no longer ` +
+        `NgForm.${candidates[0]}, but a real NgForm does not have it. ` +
+        `${UPGRADE_BROKE_IT} clearSubmittedState() can no longer ` +
         `reset Angular's native submitted flag.`
     ).toBeDefined();
 
@@ -159,7 +161,7 @@ describe('private Angular API behaviour through the public surface', () => {
     expect(
       vestForm.ngForm.submitted,
       `clearSubmittedState() relies on setAngularFormSubmittedState writing ` +
-        `NgForm.submittedReactive / _submittedReactive. Angular's native ` +
+        `NgForm.submittedReactive. Angular's native ` +
         `submitted flag stayed true. ${UPGRADE_BROKE_IT}`
     ).toBe(false);
   });

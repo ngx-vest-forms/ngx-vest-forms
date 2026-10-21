@@ -36,7 +36,8 @@
  * ```
  *
  * **Performance Note:**
- * Uses `Object.entries()` for efficient field clearing without mutation.
+ * Uses `Object.keys()` over the conditions and returns a new state, so only
+ * the listed fields are processed and the input is never mutated.
  * Only processes fields that need to be cleared, preserving other field values.
  *
  * @template T - The form model type, must extend Record<string, unknown>
