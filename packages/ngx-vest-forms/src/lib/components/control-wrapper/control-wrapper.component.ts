@@ -82,7 +82,6 @@ import { createDebouncedPendingState } from '../../utils/pending-state.utils';
  * For **form-level blocking errors** (e.g., submission failed), implement a separate
  * error summary component with `role="alert"` and `aria-live="assertive"`.
  *
- * @see {@link FormErrorDisplayDirective} for custom wrapper implementation
  *
  *   Form-Level Blocking Errors:
  *   - For post-submit validation errors that block submission, implement a separate
@@ -134,6 +133,7 @@ import { createDebouncedPendingState } from '../../utils/pending-state.utils';
  *   - Do not manually display errors for individual fields; rely on this wrapper.
  *   - Validate with tools like Accessibility Insights and real screen reader testing.
  *
+ * @see {@link FormErrorDisplayDirective} for custom wrapper implementation
  * @see https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA19 - ARIA19: Using ARIA role=alert
  * @see https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA22 - ARIA22: Using role=status
  */

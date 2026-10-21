@@ -39,9 +39,8 @@ function isRecord(value: unknown): value is UnknownRecord {
 }
 
 /**
- * Recursively calculates the path of a form control
- * @param formGroup
- * @param control
+ * Returns the `[key, child]` pairs of a form group or form array. Array keys
+ * are the index as a string.
  */
 function getChildEntries(
   container: FormContainer
@@ -131,7 +130,9 @@ function getControlPath(
 }
 
 /**
- * Recursively calculates the path of a form group
+ * Returns the dotted key path from `formGroup` down to `control`, or `''` when
+ * `control` is not below `formGroup`. It descends only through nested
+ * FormGroups, not FormArrays.
  * @param formGroup
  * @param control
  */
@@ -329,9 +330,8 @@ export function setValueAtPath(
 
     const next = current[key];
     if (!Array.isArray(next) && !isRecord(next)) {
-      const shouldCreateArray =
-        typeof nextSegment === 'number' ||
-        (typeof nextSegment === 'string' && /^\d+$/.test(nextSegment));
+      // parseFieldPath already turns numeric parts into numbers.
+      const shouldCreateArray = typeof nextSegment === 'number';
       current[key] = shouldCreateArray ? [] : {};
     }
     current = current[key] as UnknownRecord;

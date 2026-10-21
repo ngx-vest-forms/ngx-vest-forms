@@ -39,8 +39,9 @@ export type DebouncedPendingStateResult = {
   showPendingMessage: Signal<boolean>;
 
   /**
-   * Optional cleanup function to cancel any pending timeouts.
-   * Call this in ngOnDestroy if needed (though the effect cleanup handles most cases).
+   * Cancels any pending timeouts. The internal effect already clears them
+   * when its injector is destroyed, so calling this is only needed to stop
+   * them earlier.
    */
   cleanup: () => void;
 };
@@ -91,14 +92,13 @@ export function createDebouncedPendingState(
   // Reading the options inside the effect makes the timings reactive: when
   // a consumer passes an `input()` accessor (a Signal), changes propagate at
   // runtime rather than getting captured once at construction.
-  const optionsSignal: Signal<DebouncedPendingStateOptions> | null = isSignal(
-    options
-  )
-    ? (options as Signal<DebouncedPendingStateOptions>)
-    : null;
-  const staticOptions: DebouncedPendingStateOptions = optionsSignal
-    ? {}
-    : (options as DebouncedPendingStateOptions);
+  let optionsSignal: Signal<DebouncedPendingStateOptions> | null = null;
+  let staticOptions: DebouncedPendingStateOptions = {};
+  if (isSignal(options)) {
+    optionsSignal = options;
+  } else {
+    staticOptions = options;
+  }
 
   // Create writable signal for debounced state
   const showPendingMessageSignal = signal(false);
