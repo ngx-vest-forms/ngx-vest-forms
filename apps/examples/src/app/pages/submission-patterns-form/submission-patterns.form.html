@@ -11,7 +11,7 @@
   [formValue]="formValue()"
   [focusFirstInvalidOnSubmit]="false"
   (formValueChange)="formValueChange.emit($event)"
-  (ngSubmit)="onSubmit()"
+  (submitSettled)="onSubmitSettled($event)"
   class="space-y-6"
 >
   <ngx-control-wrapper class="form-field">

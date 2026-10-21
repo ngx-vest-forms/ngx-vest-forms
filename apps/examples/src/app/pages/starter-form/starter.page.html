@@ -53,7 +53,7 @@
           [formValue]="formValue()"
           [suite]="suite"
           (formValueChange)="formValue.set($event)"
-          (submitted)="onSubmit()"
+          (submitted)="onSubmit($event)"
           (resetRequested)="reset()"
         />
       </ngx-card>

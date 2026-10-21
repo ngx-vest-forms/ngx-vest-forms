@@ -1,4 +1,5 @@
 import { Component, computed, signal, viewChild } from '@angular/core';
+import type { NgxSubmitSettledEvent } from 'ngx-vest-forms';
 import { AccessibleWrapperModel } from '../../models/accessible-wrapper.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { Card } from '../../ui/card/card.component';
@@ -47,8 +48,10 @@ export class AccessibleWrapperPageComponent {
     this.submittedValue.set(null);
   }
 
-  protected onSubmit(): void {
-    if (!this.feedback()?.formState()?.valid) {
+  protected onSubmit(
+    event: NgxSubmitSettledEvent<AccessibleWrapperModel>
+  ): void {
+    if (!event.valid) {
       // The directive focuses the first invalid control on submit by default
       // (`focusFirstInvalidOnSubmit`), so no manual focus handling is needed.
       this.submittedValue.set(null);

@@ -1,5 +1,5 @@
-import { Component, computed, signal, viewChild } from '@angular/core';
-import { objectToArray } from 'ngx-vest-forms';
+import { Component, signal, viewChild } from '@angular/core';
+import { type NgxSubmitSettledEvent, objectToArray } from 'ngx-vest-forms';
 import {
   ComplexNestedModel,
   initialComplexNestedValue,
@@ -40,7 +40,6 @@ import { complexNestedSuite } from './complex-nested.validations';
   templateUrl: './complex-nested.page.html',
 })
 export class ComplexNestedPageComponent {
-  protected readonly feedback = computed(() => this.formBody()?.feedback);
   protected readonly exampleContent = complexNestedContent;
   protected readonly suite = complexNestedSuite;
 
@@ -63,8 +62,8 @@ export class ComplexNestedPageComponent {
     this.formValue.set(value);
   }
 
-  protected onSubmit(): void {
-    if (!this.feedback()?.formState()?.valid) {
+  protected onSubmit(event: NgxSubmitSettledEvent<ComplexNestedModel>): void {
+    if (!event.valid) {
       this.submittedValue.set(null);
       this.submittedPayload.set(null);
       return;

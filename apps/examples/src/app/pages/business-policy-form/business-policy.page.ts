@@ -1,5 +1,9 @@
 import { Component, computed, signal, viewChild } from '@angular/core';
-import { createValidationConfig, ROOT_FORM } from 'ngx-vest-forms';
+import {
+  createValidationConfig,
+  type NgxSubmitSettledEvent,
+  ROOT_FORM,
+} from 'ngx-vest-forms';
 import { BusinessPolicyModel } from '../../models/business-policy.model';
 import { AlertPanel } from '../../ui/alert-panel/alert-panel.component';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
@@ -67,9 +71,9 @@ export class BusinessPolicyPageComponent {
       .bidirectional('annualRevenue', 'requestedCreditLimit')
       .build();
 
-  protected onSubmit(): void {
+  protected onSubmit(event: NgxSubmitSettledEvent<BusinessPolicyModel>): void {
     // Warnings are advisory and never block submit — only errors gate it.
-    if (!this.feedback()?.formState()?.valid) {
+    if (!event.valid) {
       this.submittedValue.set(null);
       return;
     }

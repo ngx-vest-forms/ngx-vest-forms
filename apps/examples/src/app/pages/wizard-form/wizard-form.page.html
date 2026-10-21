@@ -129,9 +129,9 @@
             (step3ErrorsChange)="step3Errors.set($event)"
             (goToStep)="goToStep($event)"
             (previousStep)="previousStep()"
-            (step1Submit)="onStep1Submit()"
-            (step2Submit)="onStep2Submit()"
-            (step3Submit)="onStep3Submit()"
+            (step1Submit)="onStep1Submit($event)"
+            (step2Submit)="onStep2Submit($event)"
+            (step3Submit)="onStep3Submit($event)"
             (submitAll)="submitAll()"
           />
         </ngx-card>

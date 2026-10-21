@@ -65,7 +65,7 @@
         [suite]="suite"
         [validationConfig]="validationConfig"
         (formValueChange)="formValue.set($event)"
-        (submitted)="onSubmit()"
+        (submitted)="onSubmit($event)"
         (resetRequested)="reset()"
       />
     </div>

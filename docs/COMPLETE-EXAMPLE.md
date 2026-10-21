@@ -61,7 +61,7 @@ const userValidationSuite: NgxVestSuite<UserFormModel> = create(
       [suite]="suite"
       [formValue]="formValue()"
       (formValueChange)="formValue.set($event)"
-      (ngSubmit)="save()"
+      (submitSettled)="$event.valid && save()"
     >
       <!-- Each field wrapped for error display -->
       <ngx-control-wrapper>

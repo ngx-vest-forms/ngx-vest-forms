@@ -8,7 +8,7 @@
     [formValue]="formValue()"
     [validationConfig]="validationConfig()"
     (formValueChange)="formValueChange.emit($event)"
-    (ngSubmit)="onSubmit()"
+    (submitSettled)="onSubmitSettled($event)"
     class="space-y-8"
   >
     <ngx-form-section

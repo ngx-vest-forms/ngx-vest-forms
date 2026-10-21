@@ -1,5 +1,8 @@
 import { Component, computed, signal, viewChild } from '@angular/core';
-import { createValidationConfig } from 'ngx-vest-forms';
+import {
+  createValidationConfig,
+  type NgxSubmitSettledEvent,
+} from 'ngx-vest-forms';
 import { ValidationDemoModel } from '../../models/validation-demo.model';
 import { ExampleCardsComponent } from '../../ui/example-cards/example-cards.component';
 import { FormStateCardComponent } from '../../ui/form-state/form-state.component';
@@ -63,8 +66,8 @@ export class ValidationConfigDemoPageComponent {
     )
   );
 
-  protected save(): void {
-    if (this.feedback()?.formState()?.valid) {
+  protected save(event: NgxSubmitSettledEvent<ValidationDemoModel>): void {
+    if (event.valid) {
       // Intentionally no console output or alerts in examples to keep CI and demos quiet
     }
   }

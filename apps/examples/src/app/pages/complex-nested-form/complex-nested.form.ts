@@ -3,6 +3,7 @@ import { Component, computed, input, output, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
   FormDirective,
+  type NgxSubmitSettledEvent,
   NgxVestForms,
   NgxVestSuite,
   provideFormContract,
@@ -38,7 +39,7 @@ export class ComplexNestedFormBody {
   readonly submittedValue = input<ComplexNestedModel | null>(null);
 
   readonly formValueChange = output<ComplexNestedModel>();
-  readonly submitted = output();
+  readonly submitted = output<NgxSubmitSettledEvent<ComplexNestedModel>>();
   readonly resetRequested = output();
 
   private readonly vestForm =
@@ -54,8 +55,10 @@ export class ComplexNestedFormBody {
     Object.entries(this.formValue().teamMembers ?? {})
   );
 
-  protected onSubmit(): void {
-    this.submitted.emit();
+  protected onSubmitSettled(
+    event: NgxSubmitSettledEvent<ComplexNestedModel>
+  ): void {
+    this.submitted.emit(event);
   }
 
   protected onReset(): void {

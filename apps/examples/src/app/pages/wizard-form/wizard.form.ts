@@ -59,9 +59,9 @@ export class WizardFormBodyComponent {
 
   readonly goToStep = output<WizardStep>();
   readonly previousStep = output();
-  readonly step1Submit = output();
-  readonly step2Submit = output();
-  readonly step3Submit = output();
+  readonly step1Submit = output<boolean>();
+  readonly step2Submit = output<boolean>();
+  readonly step3Submit = output<boolean>();
   readonly submitAll = output();
 
   private readonly step1Form = viewChild(WizardStep1FormComponent);
@@ -76,16 +76,16 @@ export class WizardFormBodyComponent {
     this.previousStep.emit();
   }
 
-  protected emitStep1Submit(): void {
-    this.step1Submit.emit();
+  protected emitStep1Submit(valid: boolean): void {
+    this.step1Submit.emit(valid);
   }
 
-  protected emitStep2Submit(): void {
-    this.step2Submit.emit();
+  protected emitStep2Submit(valid: boolean): void {
+    this.step2Submit.emit(valid);
   }
 
-  protected emitStep3Submit(): void {
-    this.step3Submit.emit();
+  protected emitStep3Submit(valid: boolean): void {
+    this.step3Submit.emit(valid);
   }
 
   protected emitSubmitAll(): void {

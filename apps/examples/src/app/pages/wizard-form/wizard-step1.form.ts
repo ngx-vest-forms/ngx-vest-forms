@@ -28,7 +28,7 @@ export class WizardStep1FormComponent {
   readonly dataChange = output<WizardStep1Model>();
   readonly validChange = output<boolean>();
   readonly errorsChange = output<Record<string, string[]>>();
-  readonly stepSubmit = output();
+  readonly stepSubmit = output<boolean>();
 
   private readonly form =
     viewChild<FormDirective<WizardStep1Model>>('step1Form');

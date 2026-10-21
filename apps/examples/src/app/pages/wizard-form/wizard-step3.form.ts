@@ -33,7 +33,7 @@ export class WizardStep3FormComponent {
   readonly errorsChange = output<Record<string, string[]>>();
   readonly previous = output();
   readonly goToStep = output<WizardStep>();
-  readonly stepSubmit = output();
+  readonly stepSubmit = output<boolean>();
   readonly submitAll = output();
 
   protected readonly reviewSections = computed(() => {

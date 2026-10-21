@@ -2,6 +2,7 @@ import { Component, input, output, viewChild } from '@angular/core';
 import {
   createFormFeedbackSignals,
   FormDirective,
+  type NgxSubmitSettledEvent,
   NgxValidationConfig,
   NgxVestForms,
   NgxVestSuite,
@@ -27,15 +28,17 @@ export class ValidationConfigDemoFormBody {
     input.required<NgxValidationConfig<ValidationDemoModel>>();
 
   readonly formValueChange = output<ValidationDemoModel>();
-  readonly submitted = output();
+  readonly submitted = output<NgxSubmitSettledEvent<ValidationDemoModel>>();
   readonly resetRequested = output();
 
   private readonly vestForm =
     viewChild<FormDirective<ValidationDemoModel>>('vestForm');
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
-  protected onSubmit(): void {
-    this.submitted.emit();
+  protected onSubmitSettled(
+    event: NgxSubmitSettledEvent<ValidationDemoModel>
+  ): void {
+    this.submitted.emit(event);
   }
 
   protected onReset(): void {

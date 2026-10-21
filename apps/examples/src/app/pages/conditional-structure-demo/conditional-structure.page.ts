@@ -1,5 +1,9 @@
 import { Component, computed, signal, viewChild } from '@angular/core';
-import { clearFieldsWhen, keepFieldsWhen } from 'ngx-vest-forms';
+import {
+  clearFieldsWhen,
+  keepFieldsWhen,
+  type NgxSubmitSettledEvent,
+} from 'ngx-vest-forms';
 import {
   ConditionalStructureModel,
   DeliveryMode,
@@ -84,8 +88,10 @@ export class ConditionalStructurePageComponent {
     );
   }
 
-  protected onSubmit(): void {
-    if (!this.feedback()?.formState()?.valid) {
+  protected onSubmit(
+    event: NgxSubmitSettledEvent<ConditionalStructureModel>
+  ): void {
+    if (!event.valid) {
       // The directive focuses the first invalid control on submit by default
       // (`focusFirstInvalidOnSubmit`), so no manual focus handling is needed.
       this.submittedPayload.set(null);

@@ -1,6 +1,10 @@
 import { Component, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { createValidationConfig, NgxFieldBlurEvent } from 'ngx-vest-forms';
+import {
+  createValidationConfig,
+  NgxFieldBlurEvent,
+  type NgxSubmitSettledEvent,
+} from 'ngx-vest-forms';
 import {
   catchError,
   concatMap,
@@ -242,8 +246,8 @@ export class AutoSaveDemoPageComponent {
     });
   }
 
-  protected save(): void {
-    if (!this.feedback()?.formState().valid) {
+  protected save(event: NgxSubmitSettledEvent<AutoSaveDemoModel>): void {
+    if (!event.valid) {
       return;
     }
 

@@ -3,6 +3,7 @@ import {
   createFormFeedbackSignals,
   FormDirective,
   NgxFieldBlurEvent,
+  type NgxSubmitSettledEvent,
   NgxValidationConfig,
   NgxVestForms,
   NgxVestSuite,
@@ -23,7 +24,7 @@ export class AutoSaveDemoFormBody {
     input.required<NgxValidationConfig<AutoSaveDemoModel>>();
 
   readonly formValueChange = output<AutoSaveDemoModel>();
-  readonly submitted = output();
+  readonly submitted = output<NgxSubmitSettledEvent<AutoSaveDemoModel>>();
   readonly resetRequested = output();
   readonly fieldBlurred = output<NgxFieldBlurEvent<AutoSaveDemoModel>>();
 
@@ -32,8 +33,10 @@ export class AutoSaveDemoFormBody {
 
   readonly feedback = createFormFeedbackSignals(this.vestForm);
 
-  protected onSubmit(): void {
-    this.submitted.emit();
+  protected onSubmitSettled(
+    event: NgxSubmitSettledEvent<AutoSaveDemoModel>
+  ): void {
+    this.submitted.emit(event);
   }
 
   protected onReset(): void {
