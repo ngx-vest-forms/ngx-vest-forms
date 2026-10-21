@@ -136,7 +136,7 @@ export function objectToArray<const K extends readonly string[]>(
   object: object,
   keys: K
 ): unknown {
-  const processed = objectToArrayInternal(object, keys);
+  const { value: processed } = objectToArrayInternal(object, keys);
   if (processed && typeof processed === 'object' && !Array.isArray(processed)) {
     const entries: Array<[string, unknown]> = Object.entries(
       processed as Record<string, unknown>
@@ -162,6 +162,12 @@ export function objectToArray<const K extends readonly string[]>(
 }
 
 /**
+ * Result of one step of {@link objectToArrayInternal}: the converted value, and
+ * whether an object was turned into an array anywhere inside it.
+ */
+type ConvertedValue = { value: unknown; converted: boolean };
+
+/**
  * Internal recursive worker with cascade flag: once a targeted key is converted, all nested numeric objects become arrays even if their keys were not explicitly listed.
  */
 function objectToArrayInternal(
@@ -169,12 +175,16 @@ function objectToArrayInternal(
   keys: readonly string[],
   currentKey?: string,
   parentCascade = false
-): unknown {
+): ConvertedValue {
   if (Array.isArray(object)) {
     // Recursively process each item in the array
-    return object.map((item) =>
+    const items = object.map((item) =>
       objectToArrayInternal(item, keys, undefined, parentCascade)
     );
+    return {
+      value: items.map((item) => item.value),
+      converted: items.some((item) => item.converted),
+    };
   }
 
   if (object && typeof object === 'object') {
@@ -187,14 +197,9 @@ function objectToArrayInternal(
       const childCascade = parentCascade || explicit;
 
       for (const [key, value] of Object.entries(object)) {
-        const processedValue = objectToArrayInternal(
-          value,
-          keys,
-          key,
-          childCascade
-        );
-        processedContents[key] = processedValue;
-        if (processedValue !== value) {
+        const processed = objectToArrayInternal(value, keys, key, childCascade);
+        processedContents[key] = processed.value;
+        if (processed.converted) {
           hasChanges = true;
         }
       }
@@ -203,26 +208,37 @@ function objectToArrayInternal(
       // Yes, if: explicitly targeted, parent was converted, or children changed.
       const shouldConvert = explicit || parentCascade || hasChanges;
 
-      return shouldConvert
-        ? Object.keys(processedContents)
-            .sort((a, b) => Number(a) - Number(b))
-            .map((k) => processedContents[k])
-        : processedContents;
+      return {
+        value: shouldConvert
+          ? Object.keys(processedContents)
+              .sort((a, b) => Number(a) - Number(b))
+              .map((k) => processedContents[k])
+          : processedContents,
+        converted: shouldConvert,
+      };
     }
 
     // For regular objects, process recursively. Unsafe keys (an own
     // `__proto__` from JSON.parse) are left out, so they can't set the
     // result's prototype.
     const result: Record<string, unknown> = {};
+    let converted = false;
     for (const [key, value] of Object.entries(object)) {
       if (!isUnsafePathSegment(key)) {
-        result[key] = objectToArrayInternal(value, keys, key, parentCascade);
+        const processed = objectToArrayInternal(
+          value,
+          keys,
+          key,
+          parentCascade
+        );
+        result[key] = processed.value;
+        converted = converted || processed.converted;
       }
     }
-    return result;
+    return { value: result, converted };
   }
 
-  return object;
+  return { value: object, converted: false };
 }
 
 /**
