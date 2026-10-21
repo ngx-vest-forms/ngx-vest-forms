@@ -36,15 +36,17 @@ import {
 } from '@angular/forms';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 import {
+  asapScheduler,
   catchError,
   distinctUntilChanged,
   filter,
-  from,
   map,
   Observable,
+  observeOn,
   of,
   merge as rxMerge,
   scan,
+  share,
   startWith,
   switchMap,
   take,
@@ -415,7 +417,7 @@ export class FormDirective<T extends Record<string, unknown>> {
    *
    * @publicApi
    */
-  readonly status = computed(() => this.#statusSignal());
+  readonly status = this.#statusSignal;
   readonly pending = computed(() => this.status() === 'PENDING');
   readonly valid = computed(() => this.status() === 'VALID');
   readonly invalid = computed(() => this.status() === 'INVALID');
@@ -487,7 +489,6 @@ export class FormDirective<T extends Record<string, unknown>> {
   /**
    * The value of the form, this is needed for the validation part.
    * Using input() here because two-way binding is provided via formValueChange output.
-   * In the minimal core directive (form-core.directive.ts), this would be model() instead.
    */
   readonly formValue = input<T | null>(null);
 
@@ -539,8 +540,6 @@ export class FormDirective<T extends Record<string, unknown>> {
    * ```
    *
    * This will trigger the updateValueAndValidity on passwords.confirmPassword every time the passwords.password gets a new value
-   *
-   * @param v
    */
   readonly validationConfig: InputSignal<NgxValidationConfig<T>> =
     input<NgxValidationConfig<T>>(null);
@@ -577,7 +576,7 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly #validationFeedback$ = rxMerge(
     this.ngForm.form.events.pipe(
       filter((v) => v instanceof StatusChangeEvent),
-      map((v) => (v as StatusChangeEvent).status),
+      map((v) => v.status),
       filter((v) => v !== 'PENDING')
     ),
     this.ngForm.ngSubmit.pipe(switchMap(() => this.#settledStatus()))
@@ -603,7 +602,7 @@ export class FormDirective<T extends Record<string, unknown>> {
    */
   readonly idle$ = this.ngForm.form.events.pipe(
     filter((v) => v instanceof StatusChangeEvent),
-    map((v) => (v as StatusChangeEvent).status),
+    map((v) => v.status),
     filter((v) => v !== 'PENDING'),
     distinctUntilChanged()
   );
@@ -666,7 +665,7 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly dirtyChange = outputFromObservable(
     this.ngForm.form.events.pipe(
       filter((v) => v instanceof PristineChangeEvent),
-      map((v) => !(v as PristineChangeEvent).pristine),
+      map((v) => !v.pristine),
       startWith(this.ngForm.form.dirty),
       distinctUntilChanged()
     )
@@ -694,6 +693,24 @@ export class FormDirective<T extends Record<string, unknown>> {
   );
 
   /**
+   * The root status once a submit has settled, one emission per submit. A
+   * new submit while one is still waiting replaces it.
+   *
+   * It starts one microtask after `ngSubmit`, so every synchronous
+   * `(ngSubmit)` handler has run first, then revalidates the
+   * `validationConfig` dependents. Shared and subscribed in the constructor,
+   * so that runs once per submit whether or not `submitSettled` is bound.
+   */
+  readonly #submitOutcome$ = this.ngForm.ngSubmit.pipe(
+    observeOn(asapScheduler),
+    switchMap(() => {
+      this.#revalidateConfigDependents();
+      return this.#settledStatus();
+    }),
+    share()
+  );
+
+  /**
    * Emits once per submit, after validation for that submit has settled.
    *
    * Unlike `(ngSubmit)`, which fires while async Vest tests may still be
@@ -712,11 +729,7 @@ export class FormDirective<T extends Record<string, unknown>> {
    * `outputFromObservable` unsubscribes when the directive is destroyed.
    */
   readonly submitSettled = outputFromObservable<NgxSubmitSettledEvent<T>>(
-    this.ngForm.ngSubmit.pipe(
-      switchMap(() => {
-        this.#revalidateConfigDependents();
-        return this.#settledStatus();
-      }),
+    this.#submitOutcome$.pipe(
       map((status) => ({
         valid: status === 'VALID',
         value: this.#formValueOrNull(),
@@ -774,17 +787,10 @@ export class FormDirective<T extends Record<string, unknown>> {
         }
       });
 
-    this.ngForm.ngSubmit
-      .pipe(
-        // Read the status one microtask later, after every synchronous submit
-        // handler. `submitSettled` revalidates config dependents there, which
-        // turns the form PENDING; deciding before that would focus while those
-        // fields are pending and match neither `ng-invalid` nor the wrapper.
-        switchMap(() =>
-          from(Promise.resolve()).pipe(switchMap(() => this.#settledStatus()))
-        ),
-        takeUntilDestroyed(this.#destroyRef)
-      )
+    // Focus only once the submit has settled, dependents included: a field
+    // that is still pending matches neither `ng-invalid` nor the wrapper.
+    this.#submitOutcome$
+      .pipe(takeUntilDestroyed(this.#destroyRef))
       .subscribe(() => {
         if (this.ngForm.form.valid || !this.focusFirstInvalidOnSubmit()) {
           return;
@@ -843,7 +849,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     });
 
     /**
-     * Single bidirectional synchronization effect using linkedSignal.
+     * Single bidirectional synchronization effect.
      * Uses proper deep comparison and change tracking for correct sync direction.
      * Note: formValue is read-only input(), so we emit changes via formValueChange output.
      */
@@ -1010,12 +1016,13 @@ export class FormDirective<T extends Record<string, unknown>> {
    * their ancestors, deepest first, so the root status includes a dependent
    * that is still PENDING.
    *
-   * Runs for `submitSettled`. The config pipeline debounces trigger changes
-   * and revalidates dependents with `onlySelf`, so a submit right after a
-   * trigger edit could otherwise settle on a dependent's stale verdict, such
-   * as a confirm-password field that still matches the old password. Plain
-   * `(ngSubmit)` is left alone: its handlers read the status synchronously,
-   * and a revalidation would turn it PENDING under them.
+   * Runs on every submit, from `#submitOutcome$`. The config pipeline
+   * debounces trigger changes and revalidates dependents with `onlySelf`, so
+   * a submit right after a trigger edit could otherwise settle on a
+   * dependent's stale verdict, such as a confirm-password field that still
+   * matches the old password. It runs after the `(ngSubmit)` handlers: they
+   * read the status synchronously, and a revalidation would turn it PENDING
+   * under them.
    */
   #revalidateConfigDependents(): void {
     const config = this.validationConfig() as Record<
@@ -1342,7 +1349,7 @@ export class FormDirective<T extends Record<string, unknown>> {
   }
 
   #emitFieldBlurEvent(event: FocusEvent): void {
-    const resolved = this.#resolveFieldFromFocusEvent(event);
+    const resolved = resolveFieldFromBlur(this.ngForm, event.target);
     if (!resolved) {
       return;
     }
@@ -1369,14 +1376,6 @@ export class FormDirective<T extends Record<string, unknown>> {
       valid: control.valid,
       pending: control.pending,
     });
-  }
-
-  #resolveFieldFromFocusEvent(event: FocusEvent): {
-    field: string;
-    control: AbstractControl;
-    element: HTMLElement;
-  } | null {
-    return resolveFieldFromBlur(this.ngForm, event.target);
   }
 
   /**
@@ -1625,12 +1624,10 @@ export class FormDirective<T extends Record<string, unknown>> {
       // change or a control registered since; the candidate value is written
       // into the copy below; and the suite is consumer code that may mutate
       // the model it is given.
-      const model = mergeValuesAndRawValues<T>(this.ngForm.form);
-
       // Targeted snapshot with candidate value injected at path
       // mergeValuesAndRawValues already returns fresh plain objects and arrays,
       // so we can modify it directly without affecting the form state.
-      const snapshot = model;
+      const snapshot = mergeValuesAndRawValues<T>(this.ngForm.form);
       setValueAtPath(snapshot as object, field, control.value);
 
       const focus: NgxSuiteFocusSpec = {
