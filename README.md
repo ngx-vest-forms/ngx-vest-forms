@@ -710,6 +710,10 @@ See also: **[Vest.js Agent Skill Guide](./docs/VESTJS-SKILL.md)**
 
 🙏 **Special thanks to [Brecht Billiet](https://twitter.com/brechtbilliet)** for creating the original version of this library and his pioneering work on Angular forms. His vision and expertise laid the foundation for what ngx-vest-forms has become today.
 
+### Maintainers
+
+**[Arjen (@the-ult)](https://github.com/the-ult)** - Lead maintainer since 2025
+
 ### Core Contributors & Inspirations
 
 **[Evyatar Alush](https://twitter.com/evyataral)** - Creator of [Vest.js](https://vestjs.dev/)
