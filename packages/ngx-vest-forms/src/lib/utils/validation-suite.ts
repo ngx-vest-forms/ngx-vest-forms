@@ -36,114 +36,6 @@
 export type NgxFieldKey<T> = Extract<keyof T, string> | (string & {});
 
 /**
- * Represents a Vest validation suite for use with ngx-vest-forms.
- *
- * @description
- * This type wraps Vest 6's `Suite` with the specific generic parameters
- * required for form validation in this library.
- *
- * **Why use this type?**
- * - Simplifies the API by hiding complex generic parameters
- * - Ensures type safety for model parameter
- * - Provides better template compatibility (no `$any()` casts needed)
- * - Makes suite signatures consistent across the codebase
- *
- * **What it wraps:**
- * ```typescript
- * Suite<string, string, (model: T) => void>
- * ```
- *
- * **Type parameters explained:**
- * - First `string`: Field names (property paths like 'email' or 'addresses.0.street')
- * - Second `string`: Group names (for organizing tests, e.g., 'step1', 'step2')
- * - Third parameter: The validation function signature with bivariance trick
- *
- * **Vest 6 field focus:**
- * Field-specific validation is handled externally via `suite.only(field).run(model)`.
- * The suite callback only receives the model — no `field` parameter needed.
- * This is the Vest 6 recommended pattern for cleaner separation of concerns.
- *
- * **Bivariance for template compatibility:**
- * The callback type uses a bivariant method parameter trick to make
- * `NgxVestSuite<SpecificModel>` assignable to `NgxVestSuite<unknown>` in
- * Angular templates without requiring `$any()` casts. This preserves template
- * ergonomics while keeping implementation sites strictly typed.
- *
- * **Safety:**
- * The bivariant callback is only used for the suite's parameter type. The return
- * type remains fully typed. The model parameter remains strictly typed.
- *
- * @template T The model type that the validation suite operates on (default: unknown)
- *
- * @example
- * ```typescript
- * import { NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
- * import { create, test, enforce } from 'vest';
- *
- * type UserModel = NgxDeepPartial<{
- *   name: string;
- *   email: string;
- *   age: number;
- * }>;
- *
- * /// Vest 6: suite callback only receives the model.
- * /// Field focus is handled via suite.only(field).run(model) at the call site.
- * export const userValidation: NgxVestSuite<UserModel> = create((model: UserModel) => {
- *   test('name', 'Name is required', () => {
- *     enforce(model.name).isNotBlank();
- *   });
- *
- *   test('email', 'Valid email is required', () => {
- *     enforce(model.email).isNotBlank().isEmail();
- *   });
- *
- *   test('age', 'Must be 18 or older', () => {
- *     enforce(model.age).greaterThanOrEquals(18);
- *   });
- * });
- *
- * /// Use in component
- * @Component({...})
- * class UserFormComponent {
- *   protected readonly suite = userValidation;
- *   protected readonly formValue = signal<UserModel>({});
- * }
- * ```
- *
- * **Type design notes:**
- * - Default generic is `unknown` (safer than `any`) for opt-in typing
- * - Uses bivariant method parameter trick for better template assignability
- * - Return type is fully typed (void) to catch errors at call sites
- *
- * @see {@link https://vestjs.dev/docs/writing_your_suite | Vest Documentation}
- * @see {@link NgxFieldKey} For typed field name hints with arbitrary string support
- */
-
-// Bivariant function type trick for better assignment compatibility in TypeScript
-// Allows NgxVestSuite<SpecificModel> to be assignable to NgxVestSuite<unknown>
-// without leaking $any() casts into consumer templates.
-//
-// This is safe because:
-// - The model parameter (T) remains fully typed for type safety
-// - Runtime behavior is identical (string is string, regardless of literal type)
-// - Allows strongly typed suites to be used where NgxVestSuite is expected
-
-/**
- * Minimal structural type that any Vest suite (with or without a Standard
- * Schema provider like Zod, Valibot, or n4s enforce.shape) satisfies.
- *
- * Uses a structural interface rather than a direct alias for Vest's
- * {@code Suite<F, G, CB, S>} to avoid type incompatibilities caused by
- * the schema generic parameter ({@code S}) flowing through Vest's
- * conditional {@code SuiteResult} and {@code run} parameter types.
- *
- * Method syntax in this type provides bivariant parameter checking under
- * {@code strictFunctionTypes}, so {@code NgxVestSuite<SpecificModel>}
- * remains assignable to {@code NgxVestSuite<unknown>} in Angular templates
- * without requiring {@code $any()} casts.
- */
-
-/**
  * Structural type for the result returned by Vest 6's `suite.run()`.
  *
  * Vest 6.3's SuiteResult exposes sync selectors (`isPending`, `getErrors`,
@@ -195,6 +87,42 @@ export type NgxSuiteRunResult = {
   ): PromiseLike<TResult1 | TResult2>;
 };
 
+/**
+ * The suite shape ngx-vest-forms calls: the Vest 6 suite methods it uses
+ * (`only`, `focus`, `run`, `get`, `reset`, ...).
+ *
+ * This is a structural type rather than an alias of Vest's `Suite`, because
+ * Vest's schema generic leaks into its `SuiteResult` and `run` types. Any
+ * `create(...)` suite satisfies it, including one built on a Standard Schema
+ * provider such as Zod, Valibot or `enforce.shape`.
+ *
+ * Methods use method syntax, so their parameters are checked bivariantly under
+ * `strictFunctionTypes`. `NgxVestSuite<SpecificModel>` is therefore assignable
+ * to `NgxVestSuite<unknown>` in Angular templates without `$any()` casts.
+ * Return types stay fully typed.
+ *
+ * @template T The model type the suite runs against (default: unknown)
+ *
+ * @example
+ * ```typescript
+ * import { NgxDeepPartial, NgxVestSuite } from 'ngx-vest-forms';
+ * import { create, test, enforce } from 'vest';
+ *
+ * type UserModel = NgxDeepPartial<{ name: string; email: string }>;
+ *
+ * // The suite callback only receives the model. Field focus is applied at the
+ * // call site with `suite.only(field).run(model)`.
+ * export const userValidation: NgxVestSuite<UserModel> = create(
+ *   (model: UserModel) => {
+ *     test('name', 'Name is required', () => {
+ *       enforce(model.name).isNotBlank();
+ *     });
+ *   }
+ * );
+ * ```
+ *
+ * @see {@link https://vestjs.dev/docs/writing_your_suite | Vest Documentation}
+ */
 export type NgxVestSuite<T = unknown> = {
   /**
    * Runs only the given field(s). The `null | undefined` in the parameter is

@@ -5,10 +5,13 @@ import {
   logDiagnostic,
   NGX_VEST_FORMS_DIAGNOSTICS,
 } from '../errors/error-catalog';
-import { FormDirective } from './form.directive';
+import type { FormDirective } from './form.directive';
 import { ValidationOptions } from './validation-options';
 
-type FieldResolver = (control: AbstractControl) => string;
+type FieldResolver = (
+  control: AbstractControl,
+  context: FormDirective<Record<string, unknown>>
+) => string;
 
 type ValidationResult =
   | Observable<ValidationErrors | null>
@@ -45,7 +48,7 @@ export function runAsyncValidationBridge(
     return of(null);
   }
 
-  const field = resolveField(control);
+  const field = resolveField(control, context);
   if (!field) {
     // Standalone helper inputs (for example search/add rows inside form-aware child
     // components) intentionally do not participate in the parent form tree.

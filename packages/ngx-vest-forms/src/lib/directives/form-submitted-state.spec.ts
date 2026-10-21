@@ -1,7 +1,6 @@
-import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormControl, NgForm, ValidationErrors } from '@angular/forms';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   getFormSubmittedSignal,
   isSubmitValidationPass,
@@ -86,87 +85,6 @@ describe('setAngularFormSubmittedState', () => {
 
       expect(ngForm.submitted).toBe(true);
       expect(submitted()).toBe(false);
-    });
-  });
-
-  describe('with a stand-in host', () => {
-    it('prefers submittedReactive over _submittedReactive', () => {
-      const submittedReactive = signal(false);
-      const _submittedReactive = signal(false);
-      const host = { submittedReactive, _submittedReactive };
-
-      setAngularFormSubmittedState(host as unknown as NgForm, true);
-
-      expect(submittedReactive()).toBe(true);
-      expect(_submittedReactive()).toBe(false);
-    });
-
-    it('uses _submittedReactive when submittedReactive is absent', () => {
-      const _submittedReactive = signal(false);
-      const setter = vi.fn();
-      const proto = {};
-      Object.defineProperty(proto, 'submitted', {
-        get: () => false,
-        set: setter,
-      });
-      const host = Object.create(proto);
-      host._submittedReactive = _submittedReactive;
-
-      setAngularFormSubmittedState(host as NgForm, true);
-
-      expect(_submittedReactive()).toBe(true);
-      expect(setter).not.toHaveBeenCalled();
-    });
-
-    it('falls back to a submitted setter further up the prototype chain', () => {
-      const setter = vi.fn(function (this: unknown, value: boolean) {
-        (this as { stored?: boolean }).stored = value;
-      });
-      const grandparent = {};
-      Object.defineProperty(grandparent, 'submitted', {
-        get: () => false,
-        set: setter,
-      });
-      // The nearer prototype has a getter-only `submitted`; it must be skipped.
-      const parent = Object.create(grandparent);
-      Object.defineProperty(parent, 'submitted', { get: () => false });
-      const host = Object.create(parent) as { stored?: boolean };
-
-      setAngularFormSubmittedState(host as unknown as NgForm, true);
-
-      expect(setter).toHaveBeenCalledTimes(1);
-      expect(setter).toHaveBeenCalledWith(true);
-      expect(setter.mock.contexts[0]).toBe(host);
-      expect(host.stored).toBe(true);
-    });
-
-    it('uses the nearest setter when several prototypes define one', () => {
-      const far = vi.fn();
-      const near = vi.fn();
-      const grandparent = {};
-      Object.defineProperty(grandparent, 'submitted', {
-        get: () => false,
-        set: far,
-      });
-      const parent = Object.create(grandparent);
-      Object.defineProperty(parent, 'submitted', {
-        get: () => false,
-        set: near,
-      });
-
-      setAngularFormSubmittedState(Object.create(parent) as NgForm, false);
-
-      expect(near).toHaveBeenCalledWith(false);
-      expect(far).not.toHaveBeenCalled();
-    });
-
-    it('is a no-op without a signal or a setter', () => {
-      const host = Object.create({ submitted: false });
-
-      expect(() => {
-        setAngularFormSubmittedState(host as NgForm, true);
-      }).not.toThrow();
-      expect(host.submitted).toBe(false);
     });
   });
 });

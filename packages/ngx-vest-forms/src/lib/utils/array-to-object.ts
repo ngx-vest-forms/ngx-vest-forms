@@ -151,9 +151,7 @@ export function objectToArray<const K extends readonly string[]>(
       if (
         keys.includes(k) &&
         Array.isArray(v) &&
-        (v as unknown[]).every(
-          (element) => typeof element === 'object' && element !== null
-        )
+        v.every((element) => typeof element === 'object' && element !== null)
       ) {
         return v;
       }

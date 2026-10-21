@@ -170,18 +170,19 @@ describe('runAsyncValidationBridge', () => {
       const validator = vi.fn(() => of(null));
       const createAsyncValidator = vi.fn(() => validator);
       const resolveField = vi.fn(() => 'address.street');
+      const context = { createAsyncValidator } as unknown as Context;
 
       await firstValueFrom(
         runAsyncValidationBridge(
           control,
-          { createAsyncValidator } as unknown as Context,
+          context,
           resolveField,
           options,
           'FormModelDirective'
         )
       );
 
-      expect(resolveField).toHaveBeenCalledWith(control);
+      expect(resolveField).toHaveBeenCalledWith(control, context);
       expect(createAsyncValidator).toHaveBeenCalledWith(
         'address.street',
         options

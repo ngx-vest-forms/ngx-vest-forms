@@ -84,7 +84,7 @@ export function runFieldValidation<T>(
     const debounce = options.debounceTime ?? 0;
 
     return timer(debounce).pipe(
-      switchMap(() => defer(() => runSuite(suite, focus, model))),
+      switchMap(() => runSuite(suite, focus, model)),
       take(1),
       takeUntilDestroyed(destroyRef)
     );
