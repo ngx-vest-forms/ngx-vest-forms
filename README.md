@@ -40,7 +40,7 @@ See the full guides under [Documentation](#documentation).
 - **Angular**: >=22.0.0 <23.0.0
 - **Vest.js**: >=6.3.4 <7.0.0
 - **TypeScript**: ~6.0.3
-- **Node.js**: ^22.22.3 || ^24.15.0 || ^26.0.0
+- **Node.js**: ^22.23.4 || ^24.22.1 || ^26.12.1
 
 ### Installation
 

@@ -9,7 +9,7 @@ Work through the steps in order, in the user's project. The migration is done wh
 
 ## 1. Meet the requirements
 
-v3 requires Angular `>=22 <23` (core and forms), Vest `>=6.3.4 <7`, TypeScript `~6.0` and Node `^22.22.3 || ^24.15.0 || ^26`. If the app is on an older Angular, finish the Angular upgrade first; it is a separate migration. Then install:
+v3 requires Angular `>=22 <23` (core and forms), Vest `>=6.3.4 <7`, TypeScript `~6.0` and Node `^22.23.4 || ^24.22.1 || ^26.12.1`. If the app is on an older Angular, finish the Angular upgrade first; it is a separate migration. Then install:
 
 ```bash
 npm install ngx-vest-forms@beta vest@^6.3.4   # use ngx-vest-forms@^3 once 3.0.0 is stable
