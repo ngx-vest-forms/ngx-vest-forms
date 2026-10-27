@@ -32,7 +32,7 @@ Consumer-facing examples import from `'ngx-vest-forms'` and use only symbols in 
 - The examples app mocks the people API in-app (`mockPeopleApiInterceptor`); it runs without a backend.
 - Refresh the Nx agent files with `pnpm nx configure-ai-agents --agents codex`. The `claude` and `copilot` targets recreate `CLAUDE.md`, `.claude/settings.json` and `.github/skills/`, which this repo has removed.
 - `npx skills add ngx-vest-forms/ngx-vest-forms` offers only `ngx-vest-forms` and `vestjs`. Every other skill in `.agents/skills/` sets `metadata.internal: true`, which hides it from that list; add it to new maintainer skills, and add it back after refreshing a vendored skill.
-- The Nx MCP server and the `ci-monitor-subagent` that `monitor-ci` spawns come from the `nx` Claude Code plugin (`nrwl/nx-ai-agents-config` marketplace). Install it at user level; the repo no longer enables it.
+- The Nx MCP server and the `ci-monitor-subagent` that `monitor-ci` spawns come from the `nx` Claude Code plugin (`nrwl/nx-ai-agents-config` marketplace). The repo doesn't enable it; enable `nx@nx-claude-plugins` in your `.claude/settings.local.json`.
 
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->
