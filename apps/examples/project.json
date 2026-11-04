@@ -85,6 +85,25 @@
         "signal": true
       }
     },
+    "serve-static": {
+      "executor": "nx:run-commands",
+      "continuous": true,
+      "options": {
+        "commands": [
+          {
+            "command": "nx run examples:build:development",
+            "forwardAllArgs": false
+          },
+          {
+            "command": "vite preview --outDir dist/examples/browser --port {args.port} --strictPort",
+            "forwardAllArgs": false
+          }
+        ],
+        "parallel": false,
+        "args": "--port=4400",
+        "cwd": "{workspaceRoot}"
+      }
+    },
     "extract-i18n": {
       "executor": "@angular/build:extract-i18n",
       "options": {
