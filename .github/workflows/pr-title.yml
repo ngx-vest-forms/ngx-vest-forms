@@ -10,16 +10,21 @@ on:
       - 'release/**'
       - beta
       - rc
+  # The merge queue needs every required check to report. The title was
+  # checked on the PR, so the job skips here, and a skipped job passes.
+  merge_group:
+    types: [checks_requested]
 
 permissions:
   contents: read
 
 concurrency:
-  group: pr-title-${{ github.event.pull_request.number }}
+  group: pr-title-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   pr-title:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
