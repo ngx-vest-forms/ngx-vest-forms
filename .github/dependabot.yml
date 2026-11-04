@@ -16,6 +16,11 @@ updates:
     commit-message:
       prefix: build(deps)
       prefix-development: chore(deps-dev)
+    # @types/node must follow the Node version that CI and releases run
+    # (.node-version), not the newest Node. Move it by hand with .node-version.
+    ignore:
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
     # A dependency joins the first group that matches, so the lockstep
     # families come first. Every group takes only minor and patch updates:
     # a major update gets its own PR, which dependabot-auto-merge.yml leaves
@@ -48,9 +53,9 @@ updates:
       day: monday
     cooldown:
       default-days: 2
+    # Dependabot warns on a label that does not exist in the repository.
     labels:
       - dependencies
-      - github-actions
     commit-message:
       prefix: ci(deps)
     groups:
