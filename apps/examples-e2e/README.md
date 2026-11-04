@@ -51,8 +51,10 @@ flake to fix, not a pass.
 Nx caches the e2e target, so re-running with unchanged inputs replays the
 cached result. Pass `--skip-nx-cache` to force a real run.
 
-Per-file targets (`e2e-ci--<spec path>`) are inferred by `@nx/playwright`, one
-for each spec file.
+The Nx Atomizer (one `e2e-ci--<spec path>` target per spec file) is off:
+`ciTargetName` is `""` in the `@nx/playwright` plugin options in `nx.json`.
+Nx runs those targets only with Nx Cloud, which this workspace does not use.
+To turn it on, connect Nx Cloud and set `ciTargetName` to `e2e-ci`.
 
 ## Writing assertions
 
