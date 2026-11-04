@@ -29,7 +29,7 @@ Do not start it yourself.
 Outside CI, Playwright reuses a server that already listens on port 4400, so
 stop it after you change the app. Otherwise the tests run against the old build.
 
-CI runs 2 workers (`ubuntu-latest` has 4 vCPUs). Tests must not share state.
+CI runs 3 workers (`ubuntu-latest` has 4 vCPUs). Tests must not share state.
 
 ```bash
 # All browsers (chromium, firefox, webkit) via Nx

@@ -24,8 +24,8 @@ export default defineConfig({
   forbidOnly: !!process.env['CI'],
   /* No retries locally, so a flaky test shows up instead of passing on a second attempt. CI keeps 2. */
   retries: process.env['CI'] ? 2 : 0,
-  /* GitHub's ubuntu-latest runners have 4 vCPUs; 2 workers leave room for the server and the browser. */
-  workers: process.env['CI'] ? 2 : undefined,
+  /* GitHub's ubuntu-latest runners have 4 vCPUs. The tests mostly wait on debounced validation, so 3 workers leave one vCPU for the server. */
+  workers: process.env['CI'] ? 3 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   /* open: 'never' prevents auto-opening browser after test run */
   reporter: [
