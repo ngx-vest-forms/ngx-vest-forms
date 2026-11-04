@@ -12,6 +12,8 @@
   "targets": {
     "build": {
       "executor": "@angular/build:application",
+      "defaultConfiguration": "production",
+      "outputs": ["{options.outputPath.base}"],
       "options": {
         "outputPath": {
           "base": "dist/examples"
@@ -46,9 +48,7 @@
           "sourceMap": true,
           "namedChunks": true
         }
-      },
-      "defaultConfiguration": "production",
-      "outputs": ["{options.outputPath.base}"]
+      }
     },
     "test": {
       "executor": "@angular/build:unit-test",
@@ -61,17 +61,18 @@
     },
     "lint-templates": {
       "executor": "@angular-eslint/builder:lint",
+      "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": [
           "apps/examples/**/*.ts",
           "apps/examples/**/*.html"
         ],
         "eslintConfig": "apps/examples/eslint.config.mjs"
-      },
-      "outputs": ["{options.outputFile}"]
+      }
     },
     "serve": {
       "executor": "@angular/build:dev-server",
+      "defaultConfiguration": "development",
       "configurations": {
         "production": {
           "buildTarget": "examples:build:production"
@@ -80,7 +81,28 @@
           "buildTarget": "examples:build:development"
         }
       },
-      "defaultConfiguration": "development"
+      "readyWhen": {
+        "signal": true
+      }
+    },
+    "serve-static": {
+      "executor": "nx:run-commands",
+      "continuous": true,
+      "options": {
+        "commands": [
+          {
+            "command": "nx run examples:build:development",
+            "forwardAllArgs": false
+          },
+          {
+            "command": "vite preview --outDir dist/examples/browser --port {args.port} --strictPort",
+            "forwardAllArgs": false
+          }
+        ],
+        "parallel": false,
+        "args": "--port=4400",
+        "cwd": "{workspaceRoot}"
+      }
     },
     "extract-i18n": {
       "executor": "@angular/build:extract-i18n",

@@ -5,7 +5,13 @@ type _IsAny<T> = 0 extends 1 & T ? true : false;
 type _IsUnknown<T> =
   _IsAny<T> extends true ? false : unknown extends T ? true : false;
 type _Primitive =
-  string | number | boolean | bigint | symbol | undefined | null;
+  | string
+  | number
+  | boolean
+  | bigint
+  | symbol
+  | undefined
+  | null;
 type _Builtin = _Primitive | Function | Date | Error | RegExp;
 type _IsNever<T> = [T] extends [never] ? true : false;
 // Returns T when T is a tuple type, never for plain arrays.

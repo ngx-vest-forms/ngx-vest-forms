@@ -30,5 +30,6 @@ export class PageTitle {
   readonly #route = inject(ActivatedRoute).snapshot;
   protected readonly title = this.#route.title ?? '';
   protected readonly subtitle = this.#route.data['subtitle'] as
-    string | undefined;
+    | string
+    | undefined;
 }

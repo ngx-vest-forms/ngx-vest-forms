@@ -82,7 +82,8 @@ function createSuiteResult(
   const thenable: NgxSuiteRunResult = { ...selectors } as NgxSuiteRunResult;
   thenable.then = (<TResult1, TResult2>(
     onfulfilled?:
-      ((value: NgxSuiteRunResult) => TResult1 | PromiseLike<TResult1>) | null,
+      | ((value: NgxSuiteRunResult) => TResult1 | PromiseLike<TResult1>)
+      | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
   ): PromiseLike<TResult1 | TResult2> => {
     if (opts.pending) {

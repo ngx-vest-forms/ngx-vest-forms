@@ -25,7 +25,7 @@ export default defineConfig({
     suspicious: 'error',
     pedantic: 'warn',
     perf: 'warn',
-    // `style` intentionally off — prettier owns formatting concerns.
+    // `style` intentionally off — oxfmt owns formatting concerns.
     // `restriction` intentionally off — opt into individual restriction
     // rules below instead of enabling the category wholesale.
   },

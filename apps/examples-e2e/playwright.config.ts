@@ -24,8 +24,8 @@ export default defineConfig({
   forbidOnly: !!process.env['CI'],
   /* No retries locally, so a flaky test shows up instead of passing on a second attempt. CI keeps 2. */
   retries: process.env['CI'] ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env['CI'] ? 1 : undefined,
+  /* GitHub's ubuntu-latest runners have 4 vCPUs. The tests mostly wait on debounced validation, so 3 workers leave one vCPU for the server. */
+  workers: process.env['CI'] ? 3 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   /* open: 'never' prevents auto-opening browser after test run */
   reporter: [
@@ -60,13 +60,23 @@ export default defineConfig({
     timeout: 10000,
   },
 
-  /* Start the examples app before running tests */
+  /*
+   * Serve a static development build: no dev-server compile at start-up, and
+   * isDevMode() stays on, so the ngx-vest-forms diagnostics still log.
+   * @nx/playwright infers a dependency only from a bare `nx run project:target`,
+   * so the port is appended only when it is not the default.
+   */
   webServer: [
     {
-      command: `pnpm nx run examples:serve -- --port ${webServerPort}`,
+      command:
+        webServerPort === '4400'
+          ? 'pnpm nx run examples:serve-static'
+          : `pnpm nx run examples:serve-static --port=${webServerPort}`,
       port: Number(webServerPort),
       reuseExistingServer: !process.env['CI'],
       timeout: 120000,
+      /* SIGTERM lets Nx stop `vite preview`; the default SIGKILL leaves it listening. */
+      gracefulShutdown: { signal: 'SIGTERM', timeout: 5000 },
     },
   ],
 

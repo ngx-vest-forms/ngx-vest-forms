@@ -25,10 +25,6 @@
     "e2e": {
       "cache": true,
       "inputs": ["default", "^production"]
-    },
-    "e2e-ci": {
-      "cache": true,
-      "inputs": ["default", "^production"]
     }
   },
   "defaultBase": "master",
@@ -65,7 +61,7 @@
       "plugin": "@nx/playwright/plugin",
       "options": {
         "targetName": "e2e",
-        "ciTargetName": "e2e-ci"
+        "ciTargetName": ""
       }
     }
   ],

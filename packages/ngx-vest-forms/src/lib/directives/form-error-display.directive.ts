@@ -29,7 +29,11 @@ import { getFormSubmittedSignal } from './form-submitted-state';
  * - 'always': Show errors immediately, even on pristine fields
  */
 export type NgxErrorDisplayMode =
-  'on-blur' | 'on-submit' | 'on-blur-or-submit' | 'on-dirty' | 'always';
+  | 'on-blur'
+  | 'on-submit'
+  | 'on-blur-or-submit'
+  | 'on-dirty'
+  | 'always';
 
 /**
  * Warning display modes for form controls.
@@ -39,7 +43,10 @@ export type NgxErrorDisplayMode =
  * - 'always': Show warnings immediately, even on pristine fields
  */
 export type NgxWarningDisplayMode =
-  'on-touch' | 'on-validated-or-touch' | 'on-dirty' | 'always';
+  | 'on-touch'
+  | 'on-validated-or-touch'
+  | 'on-dirty'
+  | 'always';
 
 export const NGX_ERROR_DISPLAY_MODE_DEFAULT: NgxErrorDisplayMode =
   'on-blur-or-submit';

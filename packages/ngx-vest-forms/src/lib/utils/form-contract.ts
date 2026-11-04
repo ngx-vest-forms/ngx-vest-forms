@@ -8,7 +8,8 @@ import { toFormContract } from './to-form-contract';
 
 type StandardSchemaIssue = StandardSchemaV1.Issue;
 type StandardSchemaIssuePathSegment =
-  PropertyKey | StandardSchemaV1.PathSegment;
+  | PropertyKey
+  | StandardSchemaV1.PathSegment;
 
 /**
  * Normalizes legacy `NgxDeepRequired<T>` contracts and real Standard Schema

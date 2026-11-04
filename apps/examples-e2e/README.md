@@ -20,8 +20,16 @@ file with any other name never runs.
 
 ## Running
 
-The examples app is started by Playwright's `webServer` on port 4400. Do not
-start it yourself.
+Playwright's `webServer` runs `nx run examples:serve-static` on port 4400. That
+target builds the app with the `development` configuration and serves the
+output with `vite preview`. A static build starts faster than the dev server,
+and `isDevMode()` stays on, so the ngx-vest-forms diagnostics still log.
+Do not start it yourself.
+
+Outside CI, Playwright reuses a server that already listens on port 4400, so
+stop it after you change the app. Otherwise the tests run against the old build.
+
+CI runs 3 workers (`ubuntu-latest` has 4 vCPUs). Tests must not share state.
 
 ```bash
 # All browsers (chromium, firefox, webkit) via Nx
@@ -43,8 +51,10 @@ flake to fix, not a pass.
 Nx caches the e2e target, so re-running with unchanged inputs replays the
 cached result. Pass `--skip-nx-cache` to force a real run.
 
-Per-file targets (`e2e-ci--<spec path>`) are inferred by `@nx/playwright`, one
-for each spec file.
+The Nx Atomizer (one `e2e-ci--<spec path>` target per spec file) is off:
+`ciTargetName` is `""` in the `@nx/playwright` plugin options in `nx.json`.
+Nx runs those targets only with Nx Cloud, which this workspace does not use.
+To turn it on, connect Nx Cloud and set `ciTargetName` to `e2e-ci`.
 
 ## Writing assertions
 
