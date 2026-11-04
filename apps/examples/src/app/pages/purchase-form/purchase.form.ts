@@ -55,7 +55,11 @@ type FetchErrorNotice = {
 };
 
 export type FetchErrorScenario =
-  'random' | 'not-found' | 'unauthorized' | 'server-error' | 'network-error';
+  | 'random'
+  | 'not-found'
+  | 'unauthorized'
+  | 'server-error'
+  | 'network-error';
 
 type FetchRequest = {
   personId: string;

@@ -2,6 +2,7 @@
   "recommendations": [
     "angular.ng-template",
     "nrwl.angular-console",
-    "dbaeumer.vscode-eslint"
+    "dbaeumer.vscode-eslint",
+    "oxc.oxc-vscode"
   ]
 }

@@ -82,7 +82,8 @@ export type NgxSuiteRunResult = {
    */
   then?<TResult1 = NgxSuiteRunResult, TResult2 = never>(
     onfulfilled?:
-      ((value: NgxSuiteRunResult) => TResult1 | PromiseLike<TResult1>) | null,
+      | ((value: NgxSuiteRunResult) => TResult1 | PromiseLike<TResult1>)
+      | null,
     onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
   ): PromiseLike<TResult1 | TResult2>;
 };

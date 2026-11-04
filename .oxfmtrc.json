@@ -1,0 +1,28 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "singleQuote": true,
+  "trailingComma": "es5",
+  "printWidth": 80,
+  "tabWidth": 2,
+  "semi": true,
+  "sortPackageJson": false,
+  "sortTailwindcss": {},
+  "associations": [
+    {
+      "files": ["*.html"],
+      "language": "angular-html"
+    }
+  ],
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    ".angular",
+    ".github",
+    ".husky",
+    ".vscode"
+  ],
+  "sortImports": {
+    "partitionByNewline": true,
+    "newlinesBetween": false
+  }
+}

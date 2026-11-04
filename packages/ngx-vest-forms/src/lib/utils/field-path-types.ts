@@ -7,7 +7,14 @@
  * do not generate junk traversal paths.
  */
 type Primitive =
-  string | number | boolean | bigint | symbol | Date | null | undefined;
+  | string
+  | number
+  | boolean
+  | bigint
+  | symbol
+  | Date
+  | null
+  | undefined;
 
 /**
  * Recursively generates all valid field paths for a type as string literals.

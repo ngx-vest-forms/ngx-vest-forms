@@ -1,7 +1,12 @@
 import { Component, input } from '@angular/core';
 
 type FormSectionTone =
-  'blue' | 'teal' | 'green' | 'purple' | 'orange' | 'neutral';
+  | 'blue'
+  | 'teal'
+  | 'green'
+  | 'purple'
+  | 'orange'
+  | 'neutral';
 
 @Component({
   selector: 'ngx-form-section',

@@ -11,7 +11,8 @@ type Model = { name: string };
 
 function schemaReturning(
   result:
-    StandardSchemaV1.Result<Model> | Promise<StandardSchemaV1.Result<Model>>
+    | StandardSchemaV1.Result<Model>
+    | Promise<StandardSchemaV1.Result<Model>>
 ): StandardSchemaV1<Model> {
   return {
     '~standard': { version: 1, vendor: 'test', validate: () => result },

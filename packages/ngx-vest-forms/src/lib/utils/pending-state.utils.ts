@@ -25,7 +25,8 @@ export type DebouncedPendingStateOptions = {
  * without recreating the pending-state machine.
  */
 export type DebouncedPendingStateOptionsInput =
-  DebouncedPendingStateOptions | Signal<DebouncedPendingStateOptions>;
+  | DebouncedPendingStateOptions
+  | Signal<DebouncedPendingStateOptions>;
 
 /**
  * Result of createDebouncedPendingState containing the debounced signal
