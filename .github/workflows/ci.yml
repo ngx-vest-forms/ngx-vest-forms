@@ -14,6 +14,10 @@ on:
       - 'release/**'
       - beta
       - rc
+  # A merge queue runs the required checks on the queued merge result, so a
+  # PR needs no up-to-date branch first (ADR-0012).
+  merge_group:
+    types: [checks_requested]
 
 permissions:
   contents: read
