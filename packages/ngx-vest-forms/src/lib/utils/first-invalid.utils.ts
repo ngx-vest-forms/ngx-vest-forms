@@ -6,8 +6,10 @@
  * `querySelectorAll()` / `matches()` as CSS selectors. Always use the
  * exported `DEFAULT_INVALID_SELECTOR` / `DEFAULT_FOCUS_SELECTOR` constants or
  * your own static strings — never build them from user-controlled input.
- * A malformed selector is caught (returns `null`), but a selector assembled
- * from untrusted data is still the caller's responsibility.
+ * A malformed `invalidSelector` makes the call return `null`; a malformed
+ * `focusSelector` is caught and the call still returns the matched invalid
+ * element without moving focus. A selector assembled from untrusted data is
+ * still the caller's responsibility.
  */
 export type NgxFirstInvalidOptions = {
   /** Scroll animation behavior (default: `'smooth'`, or `'auto'` when reduced motion is preferred). */
