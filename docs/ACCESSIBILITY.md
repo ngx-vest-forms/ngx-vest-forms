@@ -82,7 +82,7 @@ Practical guidance:
 
 #### Security: custom selectors
 
-`focusFirstInvalidControl({ invalidSelector, focusSelector })` passes those strings to `querySelectorAll()` / `matches()`. Always use the exported `DEFAULT_INVALID_SELECTOR` / `DEFAULT_FOCUS_SELECTOR` constants or your own static selector strings — never build a selector from user-controlled input. A malformed selector is handled safely (the call returns `null`), but a selector assembled from untrusted data is the caller's responsibility. See [SECURITY.md](../SECURITY.md) for the reporting policy.
+`focusFirstInvalidControl({ invalidSelector, focusSelector })` passes those strings to `querySelectorAll()` / `matches()`. Always use the exported `DEFAULT_INVALID_SELECTOR` / `DEFAULT_FOCUS_SELECTOR` constants or your own static selector strings — never build a selector from user-controlled input. A malformed `invalidSelector` fails safe (the call returns `null`); a malformed `focusSelector` is also caught, but the call still returns and scrolls to the matched invalid element, just without moving focus. Either way, a selector assembled from untrusted data is the caller's responsibility. See [SECURITY.md](../SECURITY.md) for the reporting policy.
 
 ### Group containers (NgModelGroup) — avoid stamping descendant controls
 
