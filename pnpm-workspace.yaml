@@ -12,9 +12,9 @@ audit:
   level: high
   # GHSA-vfj7-8cjw-p6xm (CVE-2026-93687): braces stack-exhaustion DoS via deeply nested
   # patterns. Advisory published 2026-09-18, but the fix (braces 3.0.4) is not yet on npm
-  # (latest is 3.0.3). Reachable only through dev-only semantic-release tooling via
-  # micromatch; no shipped code. Remove this ignore once braces >= 3.0.4 is published.
-  # Review date: 2026-11-13.
+  # (re-checked 2026-11-05: latest is still 3.0.3). Reachable only through dev-only
+  # semantic-release tooling via micromatch; no shipped code. Remove this ignore once
+  # braces >= 3.0.4 is published. Review date: 2026-11-13.
   ignore:
     - GHSA-vfj7-8cjw-p6xm
   ignorePrune: true
@@ -30,11 +30,12 @@ overrides:
   brace-expansion: 5.0.12
   chokidar: 4.0.1
   detect-port: 1.6.0
-  fast-uri: 3.1.8
+  fast-uri: 3.1.9
   follow-redirects: 1.16.2
   handlebars: 4.7.10
   js-yaml: 4.3.2
   'jsdom>undici': 8.12.2
+  minimatch: 11.0.4
   probe-image-size: 7.4.0
   qs: 6.16.0
   semver: 7.7.1
