@@ -33,7 +33,9 @@ on the affected maintenance line ahead of the next scheduled release.
 ## Scope
 
 `ngx-vest-forms` is a client-side Angular form-validation library. It runs in
-the browser, makes no network requests, stores no data, and holds no secrets.
+the browser, makes no network requests, does not persist or transmit form
+data, and holds no secrets. (The Form Model lives in browser memory while the
+form is in use; nothing is written to storage or sent anywhere.)
 The realistic vulnerability classes for this package are:
 
 - **Cross-site scripting (XSS)** — if any user-controlled value can reach an
