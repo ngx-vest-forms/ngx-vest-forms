@@ -49,7 +49,8 @@ The realistic vulnerability classes for this package are:
   [Field Paths — Security](./docs/FIELD-PATHS.md#security-dynamic-path-inputs).
 - **Dependency / supply-chain issues** — a vulnerable transitive dependency
   that is reachable from the published bundle. CI runs `pnpm audit` and
-  `pnpm audit signatures` on every pull request, and `pnpm-workspace.yaml`
+  `pnpm audit signatures` on every pull request to the maintained branches
+  (`master`, `release/**`, `beta`, `rc`), and `pnpm-workspace.yaml`
   enforces a 24-hour `minimumReleaseAge`, `no-downgrade` trust policy, and a
   strict install-script allowlist.
 
