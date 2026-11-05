@@ -80,6 +80,10 @@ Practical guidance:
 - avoid trapping the first invalid control inside collapsed regions
 - keep labels and error text associated so the focused field has enough context
 
+#### Security: custom selectors
+
+`focusFirstInvalidControl({ invalidSelector, focusSelector })` passes those strings to `querySelectorAll()` / `matches()`. Always use the exported `DEFAULT_INVALID_SELECTOR` / `DEFAULT_FOCUS_SELECTOR` constants or your own static selector strings — never build a selector from user-controlled input. A malformed selector is handled safely (the call returns `null`), but a selector assembled from untrusted data is the caller's responsibility. See [SECURITY.md](../SECURITY.md) for the reporting policy.
+
 ### Group containers (NgModelGroup) — avoid stamping descendant controls
 
 When applying a wrapper to an `NgModelGroup` container (i.e. a region that contains multiple inputs), do **not** automatically set `aria-describedby`/`aria-invalid` on all descendant controls.
