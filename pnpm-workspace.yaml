@@ -10,13 +10,6 @@ trustPolicy: no-downgrade
 blockExoticSubdeps: true
 audit:
   level: high
-  # GHSA-vfj7-8cjw-p6xm (CVE-2026-93687): braces stack-exhaustion DoS via deeply nested
-  # patterns. Advisory published 2026-09-18, but the fix (braces 3.0.4) is not yet on npm
-  # (re-checked 2026-11-05: latest is still 3.0.3). Reachable only through dev-only
-  # semantic-release tooling via micromatch; no shipped code. Remove this ignore once
-  # braces >= 3.0.4 is published. Review date: 2026-11-13.
-  ignore:
-    - GHSA-vfj7-8cjw-p6xm
   ignorePrune: true
 # Experimental (https://pnpm.io/git-worktrees): one shared content-addressable store
 # for every git worktree on this machine, so each agent worktree's node_modules is
