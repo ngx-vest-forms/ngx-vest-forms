@@ -72,7 +72,38 @@ export class FormModelDirective implements AsyncValidator, OnInit {
       this.#destroyRef.onDestroy(
         registerControlElement(ngForm, this.#elementRef.nativeElement, ngModel)
       );
+      this.#scheduleValidatorAttachment(ngModel);
     }
+  }
+
+  /**
+   * Makes sure `NgModel`'s composed validators (which include this
+   * directive) are attached to its `FormControl`.
+   *
+   * Angular attaches them in `setUpControlValueAccessor()` for native inputs
+   * and ControlValueAccessor hosts. When `[ngModel]` sits on a Signal Forms
+   * custom control (`FormValueControl` / `FormCheckboxControl` from
+   * `@angular/forms/signals`), Angular 22.2 takes `setupCustomControl()`
+   * instead, which never calls `setUpValidators()`: the validators are
+   * collected but never attached, so Vest would never run for the field.
+   *
+   * The check runs after Angular's own setup, which `NgForm` performs in a
+   * microtask queued from `NgModel.ngOnChanges()`. Two microtask hops make
+   * sure ours runs after it regardless of the order in which the two
+   * directives' hooks run on the element. It compares by the exact function
+   * references Angular itself would attach (`NgModel.validator` /
+   * `NgModel.asyncValidator`), so it is a no-op for ControlValueAccessor
+   * controls and if a future Angular version attaches them upstream, and
+   * Angular's own `cleanUpControl()` can still remove them by identity.
+   */
+  #scheduleValidatorAttachment(ngModel: NgModel): void {
+    queueMicrotask(() => {
+      queueMicrotask(() => {
+        if (!this.#destroyRef.destroyed) {
+          attachMissingValidators(ngModel);
+        }
+      });
+    });
   }
 
   /**
@@ -89,5 +120,30 @@ export class FormModelDirective implements AsyncValidator, OnInit {
       this.validationOptions(),
       'FormModelDirective'
     );
+  }
+}
+
+/**
+ * Attaches `NgModel`'s composed sync and async validators to its control
+ * when Angular has not done so.
+ */
+function attachMissingValidators(ngModel: NgModel): void {
+  const control = ngModel.control;
+  const validator = ngModel.validator;
+  const asyncValidator = ngModel.asyncValidator;
+  let attached = false;
+
+  if (validator && !control.hasValidator(validator)) {
+    control.addValidators(validator);
+    attached = true;
+  }
+  if (asyncValidator && !control.hasAsyncValidator(asyncValidator)) {
+    control.addAsyncValidators(asyncValidator);
+    attached = true;
+  }
+  if (attached) {
+    // Same revalidation Angular runs after its own setup, so the first Vest
+    // run sees the control registered at its field path.
+    control.updateValueAndValidity({ emitEvent: false });
   }
 }

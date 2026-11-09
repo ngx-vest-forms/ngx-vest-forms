@@ -603,6 +603,21 @@ Once created, use your custom wrapper just like the built-in `ngx-control-wrappe
 })
 ```
 
+## Signal Forms controls inside a wrapper
+
+The control you put inside a wrapper does not have to be a native input or a `ControlValueAccessor`. A component that implements the Signal Forms control interfaces from `@angular/forms/signals` (`FormValueControl` with a `value` model, or `FormCheckboxControl` with a `checked` model, plus an optional `touch` output and `disabled` input) works with plain `[ngModel]`:
+
+```html
+<ngx-control-wrapper>
+  <label for="seats">Seats</label>
+  <app-seat-stepper inputId="seats" name="seats" [ngModel]="formValue().seats" />
+</ngx-control-wrapper>
+```
+
+Vest validation runs for that field with no extra directive. In Angular 22.2, `NgModel` binds such a control through its custom-control path, which does not attach the validators collected from `NG_VALIDATORS` / `NG_ASYNC_VALIDATORS` to the `FormControl`. ngx-vest-forms detects that after Angular's setup and attaches `NgModel`'s own composed validators (the same function references Angular attaches for a `ControlValueAccessor`), so the field gets Vest errors and validators like `required` on the same element work as well. When Angular has already attached them, as for native inputs and `ControlValueAccessor` hosts, or in a future Angular version that wires them itself, nothing is added.
+
+ARIA wiring applies to the native element or ARIA form widget (such as `role="switch"`) inside the control, as described in [When you want automatic ARIA wiring](#when-you-want-automatic-aria-wiring-recommended).
+
 ## Best Practices
 
 1. **Use `hostDirectives`** - Always apply `FormErrorDisplayDirective` as a host directive for automatic state management
