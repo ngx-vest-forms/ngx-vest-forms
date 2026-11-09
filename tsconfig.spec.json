@@ -6,7 +6,6 @@
     "target": "ES2022",
     "module": "ES2022",
     "moduleResolution": "bundler",
-    "isolatedModules": true,
     "noPropertyAccessFromIndexSignature": false,
     "types": [
       "vitest/globals",
