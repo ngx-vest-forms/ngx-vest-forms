@@ -192,6 +192,11 @@ export class WizardFormPageComponent {
   private showStep(step: WizardStep): void {
     if (step === this.currentStep()) return;
     this.currentStep.set(step);
+    this.focusStepHeading();
+  }
+
+  /** Focuses the current step's heading after the next render. */
+  private focusStepHeading(): void {
     afterNextRender(() => this.stepHeading()?.nativeElement.focus(), {
       injector: this.injector,
     });
@@ -336,5 +341,8 @@ export class WizardFormPageComponent {
     this.currentStep.set(1);
     this.submitSuccess.set(false);
     this.submitError.set(null);
+    // The pressed "Start New Registration" button leaves with the success
+    // card: focus the step 1 heading once the form is back.
+    this.focusStepHeading();
   }
 }

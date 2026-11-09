@@ -454,6 +454,17 @@ test.describe('Wizard Form - Multi-Form Validation', () => {
           timeout: 3000,
         }); // Wait for API simulation
       });
+
+      await test.step('Start a new registration', async () => {
+        await page
+          .getByRole('button', { name: /start new registration/i })
+          .click();
+
+        // The pressed button is gone; focus lands on the step 1 heading.
+        await expect(
+          page.getByRole('heading', { name: STEP_HEADINGS[1], level: 2 })
+        ).toBeFocused();
+      });
     });
 
     test('CRITICAL: markAllAsTouched shows errors on all untouched fields', async ({
