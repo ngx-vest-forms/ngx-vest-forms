@@ -22,11 +22,12 @@ import { FormDirective } from './form.directive';
 import { ValidationOptions } from './validation-options';
 
 /**
- * Hooks into `ngModel`/`ngxModel` and runs async field-level validation
+ * Hooks into `ngModel` and runs async field-level validation
  * through the parent `FormDirective` Vest suite bridge.
  */
 @Directive({
-  selector: '[ngModel],[ngxModel]',
+  // eslint-disable-next-line @angular-eslint/directive-selector -- attaches to Angular's own ngModel, so it shares that selector
+  selector: '[ngModel]',
 
   providers: [
     {

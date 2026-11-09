@@ -1,8 +1,12 @@
 import { create, enforce, group, test } from 'vest';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import { ROOT_FORM } from '../constants';
 import type { FormFieldName } from './field-path-types';
 import type { NgxFieldKey, NgxVestSuite } from './validation-suite';
+
+const noop = () => {
+  // Fake suite: nothing to unsubscribe.
+};
 
 describe('validation-suite types', () => {
   interface TestModel {
@@ -99,5 +103,87 @@ describe('validation-suite types', () => {
     expect(
       suite.focus?.({ onlyGroup: 'contact' }).run({}).isTested('firstName')
     ).toBe(false);
+  });
+
+  it('should not leak any through subscribe, dump and resume', () => {
+    type IsAny<T> = 0 extends 1 & T ? true : false;
+    type Suite = NgxVestSuite<TestModel>;
+    const subscribeArgsAreAny: IsAny<Parameters<Suite['subscribe']>[number]> =
+      false;
+    const subscribeReturnIsAny: IsAny<ReturnType<Suite['subscribe']>> = false;
+    const dumpIsAny: IsAny<ReturnType<Suite['dump']>> = false;
+    const resumeArgIsAny: IsAny<Parameters<Suite['resume']>[0]> = false;
+
+    expect([
+      subscribeArgsAreAny,
+      subscribeReturnIsAny,
+      dumpIsAny,
+      resumeArgIsAny,
+    ]).toEqual([false, false, false, false]);
+  });
+
+  it('should keep subscribe, dump and resume of real Vest 6 suites assignable', () => {
+    // Required model parameter (no default) and a schema with a required
+    // field: both must still fit NgxVestSuite<T> with the `unknown` methods.
+    const plain: NgxVestSuite<TestModel> = create((model: TestModel) => {
+      test('firstName', 'First name is required', () => {
+        enforce(model.firstName).isNotBlank();
+      });
+    });
+    const schemaTyped: NgxVestSuite<{ firstName: string }> = create(
+      (model) => {
+        test('firstName', 'First name is required', () => {
+          enforce(model.firstName).isNotBlank();
+        });
+      },
+      enforce.shape({ firstName: enforce.isString() })
+    );
+
+    plain.run({});
+    const state = plain.dump();
+    plain.reset();
+    plain.resume(state);
+    const unsubscribe = schemaTyped.subscribe(() => {
+      // No-op listener: only the call shape is under test.
+    });
+
+    expect(plain.get().hasErrors('firstName')).toBe(true);
+    expect(typeof unsubscribe).toBe('function');
+  });
+
+  it('should return a callable unsubscribe function from subscribe', () => {
+    const suite: NgxVestSuite<TestModel> = create((model: TestModel) => {
+      test('firstName', 'First name is required', () => {
+        enforce(model.firstName).isNotBlank();
+      });
+    });
+    let calls = 0;
+
+    const off = suite.subscribe(() => {
+      calls++;
+    });
+    suite.run({});
+    const callsWhileSubscribed = calls;
+    off();
+    suite.run({});
+
+    const offEvent = suite.subscribe('SUITE_RUN_STARTED', () => {
+      // No-op: only the event overload's call shape is under test.
+    });
+    offEvent();
+
+    expectTypeOf(off).toEqualTypeOf<() => void>();
+    expect(callsWhileSubscribed).toBeGreaterThan(0);
+    expect(calls).toBe(callsWhileSubscribed);
+  });
+
+  it('should accept a hand-written fake whose subscribe returns an unsubscribe', () => {
+    const fake: Pick<NgxVestSuite, 'subscribe' | 'dump' | 'resume'> = {
+      subscribe: () => noop,
+      dump: () => ({}),
+      resume: noop,
+    };
+
+    expect(typeof fake.subscribe(noop)).toBe('function');
   });
 });

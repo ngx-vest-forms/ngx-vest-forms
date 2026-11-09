@@ -4,7 +4,7 @@ describe('Field Clearing Utilities', () => {
   describe('clearFieldsWhen', () => {
     interface TestFormModel {
       procedureType: string;
-      fieldA?: string;
+      fieldA?: string | undefined;
       fieldB?: string;
       fieldC?: number;
       nestedData?: {
@@ -387,7 +387,7 @@ describe('Field Clearing Utilities', () => {
   describe('keepFieldsWhen', () => {
     interface TestFormModel {
       procedureType: string;
-      fieldA?: string;
+      fieldA?: string | undefined;
       fieldB?: string;
       fieldC?: number;
       nestedData?: {

@@ -17,13 +17,96 @@ type Primitive =
   | undefined;
 
 /**
+ * @internal
+ * Single shared generator for {@link FieldPath} and {@link LeafFieldPath}.
+ *
+ * `Leaves` toggles whether intermediate (object/array) container paths are
+ * emitted. Both public types derive from this so their traversal logic can
+ * never drift apart.
+ *
+ * @template T - The model type to extract field paths from
+ * @template Leaves - When `true`, only primitive-leaf paths are emitted
+ * @template Prefix - Internal recursion prefix (do not use directly)
+ * @template Depth - Internal depth counter to prevent infinite recursion
+ */
+type FieldPathInternal<
+  T,
+  Leaves extends boolean,
+  Prefix extends string = '',
+  Depth extends readonly number[] = [],
+> = Depth['length'] extends 10
+  ? never // Max depth reached, prevent infinite recursion
+  : T extends Primitive
+    ? never // Don't traverse primitives
+    : T extends ReadonlyArray<infer U>
+      ? // Arrays reached through an optional (`| undefined`) property, or a
+        // top-level array model, land here.
+        ArrayElementPaths<U, Leaves, Prefix, [...Depth, 1]>
+      : {
+          [K in keyof T & string]: T[K] extends Primitive
+            ? // Primitive property: just the field name (always a leaf)
+              `${Prefix}${K}`
+            : T[K] extends ReadonlyArray<infer U>
+              ? // Array property: optionally the container path, plus element paths
+                | (Leaves extends true ? never : `${Prefix}${K}`)
+                | ArrayElementPaths<U, Leaves, `${Prefix}${K}.`, [...Depth, 1]>
+              : // Object property: optionally the container path, plus nested paths
+                | (Leaves extends true ? never : `${Prefix}${K}`)
+                | FieldPathInternal<
+                    T[K],
+                    Leaves,
+                    `${Prefix}${K}.`,
+                    [...Depth, 1]
+                  >;
+        }[keyof T & string];
+
+/**
+ * @internal
+ * Paths below an array whose element type is `U`. `Prefix` is the array's own
+ * path plus a trailing dot (or `''` for a top-level array).
+ *
+ * Every element path carries a `${number}` index segment
+ * (`addresses.${number}.street`), the form the runtime uses: template-driven
+ * forms register array items as `ngModelGroup`s keyed by index, so control
+ * names, `getAllFormErrors` keys and `validationConfig` lookups
+ * (`form.get(path)`) all see `addresses.0.street`. A flattened path without
+ * the index (`addresses.street`) never resolves to a control, so it is not
+ * emitted. One form per level keeps recursive models (`children: Tree[]`)
+ * linear in the depth limit.
+ *
+ * - The element itself (`addresses.${number}`) is a container path, and also
+ *   a leaf when `U` includes a primitive (`string[]`,
+ *   `Array<string | { x: number }>`).
+ * - `any` and `unknown` elements accept any sub-path below the index, since
+ *   nothing is known about their shape.
+ */
+type ArrayElementPaths<
+  U,
+  Leaves extends boolean,
+  Prefix extends string,
+  Depth extends readonly number[],
+> = 0 extends 1 & U
+  ? `${Prefix}${number}` | `${Prefix}${number}.${string}`
+  : unknown extends U
+    ? `${Prefix}${number}` | `${Prefix}${number}.${string}`
+    :
+        | ([Extract<NonNullable<U>, Primitive>] extends [never]
+            ? Leaves extends true
+              ? never
+              : `${Prefix}${number}`
+            : `${Prefix}${number}`)
+        | FieldPathInternal<U, Leaves, `${Prefix}${number}.`, Depth>;
+
+/**
  * Recursively generates all valid field paths for a type as string literals.
  * This provides full IDE autocomplete and compile-time validation for field names.
  *
  * **Key Features:**
  * - Supports nested objects with dot notation (e.g., 'user.address.city')
  * - Works with optional properties from NgxDeepPartial types
- * - Handles arrays and readonly arrays
+ * - Handles arrays and readonly arrays with an index segment, the form the
+ *   runtime uses (`'addresses.0.street'`, typed as
+ *   `` `addresses.${number}.street` ``)
  * - Stops recursion at primitive types
  * - Maximum depth of 10 levels to prevent infinite recursion
  *
@@ -34,8 +117,6 @@ type Primitive =
  * - Self-documenting code through type inference
  *
  * @template T - The model type to extract field paths from
- * @template Prefix - Internal recursion prefix (do not use directly)
- * @template Depth - Internal depth counter to prevent infinite recursion
  *
  * @example
  * ```typescript
@@ -66,61 +147,7 @@ type Primitive =
  * /// Result: 'user' | 'user.email' | 'user.phone'
  * ```
  */
-/**
- * @internal
- * Single shared generator for {@link FieldPath} and {@link LeafFieldPath}.
- *
- * `Leaves` toggles whether intermediate (object/array) container paths are
- * emitted. Both public types derive from this so their traversal logic can
- * never drift apart.
- *
- * @template T - The model type to extract field paths from
- * @template Leaves - When `true`, only primitive-leaf paths are emitted
- * @template Prefix - Internal recursion prefix (do not use directly)
- * @template Depth - Internal depth counter to prevent infinite recursion
- */
-type FieldPathInternal<
-  T,
-  Leaves extends boolean,
-  Prefix extends string = '',
-  Depth extends readonly number[] = [],
-> = Depth['length'] extends 10
-  ? never // Max depth reached, prevent infinite recursion
-  : T extends Primitive
-    ? never // Don't traverse primitives
-    : T extends ReadonlyArray<infer U>
-      ? // For arrays, generate paths for the element type
-        FieldPathInternal<U, Leaves, Prefix, [...Depth, 1]>
-      : {
-          [K in keyof T & string]: T[K] extends Primitive
-            ? // Primitive property: just the field name (always a leaf)
-              `${Prefix}${K}`
-            : T[K] extends ReadonlyArray<infer U>
-              ? // Array property: optionally the container path, plus element paths
-                | (Leaves extends true ? never : `${Prefix}${K}`)
-                | (U extends Primitive
-                    ? never
-                    : FieldPathInternal<
-                        U,
-                        Leaves,
-                        `${Prefix}${K}.`,
-                        [...Depth, 1]
-                      >)
-              : // Object property: optionally the container path, plus nested paths
-                | (Leaves extends true ? never : `${Prefix}${K}`)
-                | FieldPathInternal<
-                    T[K],
-                    Leaves,
-                    `${Prefix}${K}.`,
-                    [...Depth, 1]
-                  >;
-        }[keyof T & string];
-
-export type FieldPath<
-  T,
-  Prefix extends string = '',
-  Depth extends readonly number[] = [],
-> = FieldPathInternal<T, false, Prefix, Depth>;
+export type FieldPath<T> = FieldPathInternal<T, false>;
 
 /**
  * Type-safe validation configuration map.
@@ -233,16 +260,16 @@ export { ROOT_FORM };
  * /// Result: number
  * ```
  *
- * @example Array paths (consistent with {@link FieldPath})
+ * @example Array paths
  * ```typescript
  * type Model = { addresses: { street: string }[] };
  *
- * /// Flattened form (as produced by FieldPath):
- * type S1 = FieldPathValue<Model, 'addresses.street'>; // string
- * /// Indexed dot form (as produced at runtime, e.g. by getAllFormErrors):
- * type S2 = FieldPathValue<Model, 'addresses.0.street'>; // string
+ * /// Indexed dot form (as produced by FieldPath and at runtime):
+ * type S1 = FieldPathValue<Model, 'addresses.0.street'>; // string
  * /// Bracket form (also accepted):
- * type S3 = FieldPathValue<Model, 'addresses[0].street'>; // string
+ * type S2 = FieldPathValue<Model, 'addresses[0].street'>; // string
+ * /// Index-free form (also accepted; not a FieldPath):
+ * type S3 = FieldPathValue<Model, 'addresses.street'>; // string
  * ```
  */
 export type FieldPathValue<T, Path extends string> = Exclude<
@@ -347,8 +374,4 @@ export type ValidateFieldPath<T, Path extends string> =
  * /// Note: 'user' and 'user.profile' are excluded (not leaves)
  * ```
  */
-export type LeafFieldPath<
-  T,
-  Prefix extends string = '',
-  Depth extends readonly number[] = [],
-> = FieldPathInternal<T, true, Prefix, Depth>;
+export type LeafFieldPath<T> = FieldPathInternal<T, true>;

@@ -47,7 +47,36 @@ type UserPaths = FieldPath<UserModel>;
 - ✅ Refactoring support
 - ✅ Supports nested objects up to 10 levels deep
 - ✅ Works with optional properties
-- ✅ Handles arrays
+- ✅ Handles arrays, addressed by index (`addresses.0.street`)
+
+#### Array paths
+
+Every path below an array carries a `${number}` index segment (`addresses.0.street`). That is the form the runtime uses: template-driven forms register array items as `ngModelGroup`s keyed by index, so control names, `getAllFormErrors` keys, `validationConfig` lookups and the Vest field names a suite uses inside `each()` all look like `addresses.0.street`. An index-free path such as `addresses.street` never matches a control, so it is not a `FieldPath`. The element itself (`addresses.0`) is a path too. When the element type includes a primitive (`string[]`, `Array<string | { x: number }>`), `tags.0` is also a leaf. Elements typed `any` or `unknown` accept any sub-path below the index.
+
+```typescript
+type Model = {
+  addresses: Array<{ street: string }>;
+  tags: string[];
+};
+
+// 'addresses' | `addresses.${number}` | `addresses.${number}.street`
+// | 'tags' | `tags.${number}`
+type Paths = FieldPath<Model>;
+
+const ok: Paths = 'addresses.0.street'; // ✅
+const flat: Paths = 'addresses.street'; // ❌ no index, never matches a control
+const typo: Paths = 'addresses.0.stret'; // ❌ compile error
+const bracket: Paths = 'addresses[0].street'; // ❌ use the dot form
+
+declare const i: number;
+const inline: Paths = `addresses.${i}.street`; // ✅ inline
+const key = `addresses.${i}.street` as const;
+const stored: Paths = key; // ✅ with `as const`
+const widened = `addresses.${i}.street`; // type: string
+const rejected: Paths = widened; // ❌ widened to string
+```
+
+`${number}` accepts anything TypeScript reads as a number, so `'addresses.-1.street'` or `'addresses.1.5.street'` also type-check; the type checks the shape of the path, not whether the index exists. Nested arrays get an index segment per level (`orders.0.lines.3.sku`).
 
 ### `ValidationConfigMap<T>`
 
@@ -125,7 +154,7 @@ type Model = {
 type AgeType = FieldPathValue<Model, 'user.profile.age'>;
 ```
 
-`FieldPathValue` also resolves array-traversing paths, in the flattened `FieldPath` form, the indexed dot form the library reports at runtime, and the bracket form. It strips the `NgxDeepPartial` `| undefined` from the leaf:
+`FieldPathValue` also resolves array-traversing paths: the indexed dot form that `FieldPath` produces and the runtime reports, the bracket form, and an index-free form. It strips the `NgxDeepPartial` `| undefined` from the leaf:
 
 ```typescript
 type Model = {
@@ -135,11 +164,11 @@ type Model = {
   }>;
 };
 
-// Flattened FieldPath form → element property type
-type StreetA = FieldPathValue<Model, 'addresses.street'>; // string
+// Indexed dot form (FieldPath and the runtime) → element property type
+type StreetA = FieldPathValue<Model, 'addresses.0.street'>; // string
 
-// Indexed dot form (what the library reports at runtime) → element property type
-type StreetB = FieldPathValue<Model, 'addresses.0.street'>; // string
+// Index-free form (accepted here, but not a FieldPath) → element property type
+type StreetB = FieldPathValue<Model, 'addresses.street'>; // string
 
 // Bracket form → element property type
 type StreetC = FieldPathValue<Model, 'addresses[0].street'>; // string
@@ -296,7 +325,7 @@ const config: ValidationConfigMap<FormModel> = {
 
 ### Nested Array Support
 
-Field paths work with arrays, generating paths for array element properties:
+Field paths work with arrays. Element properties are addressed by index, as at runtime:
 
 ```typescript
 type FormModel = {
@@ -306,13 +335,12 @@ type FormModel = {
   }>;
 };
 
-// Generated paths include array element properties
-// Type: 'addresses' | 'addresses.street' | 'addresses.city'
+// Type: 'addresses' | `addresses.${number}` | `addresses.${number}.street` | `addresses.${number}.city`
 type Paths = FieldPath<FormModel>;
 
 // Use in validation
 const config: ValidationConfigMap<FormModel> = {
-  'addresses.street': ['addresses.city'],
+  'addresses.0.street': ['addresses.0.city'],
 };
 ```
 
@@ -586,9 +614,9 @@ function isValidFieldPath<T>(model: T, path: string): path is FieldPath<T> {
 ### Issue: Array Index Paths Not Working
 
 **Expected:** Array indices in paths like `'items.0.name'`
-**Actual:** `FieldPath` generates `'items.name'` (without index)
+**Actual:** a compile error on an indexed path
 
-**Explanation:** This is by design. Field paths represent the structure, not specific indices. Use the generated paths with array validation functions. `FieldPathValue` still accepts an indexed path such as `'items.0.name'`.
+**Explanation:** Since 3.0.0, `FieldPath` addresses array items by index (`'items.0.name'`); see [Array paths](#array-paths). If an indexed path is still rejected, check that it uses dots, not brackets (`'items[0].name'` is not a `FieldPath`), that every array level has its index, and that the property below the index exists on the element type. A path built at runtime (`` `items.${i}.name` `` with `i: number`) type-checks when written inline or stored with `as const`; a plain `const key = ...` widens to `string`.
 
 ---
 
@@ -692,7 +720,7 @@ class PurchaseForm {
 
 ```typescript
 // Core field path type
-export type FieldPath<T, Prefix = '', Depth = []>;
+export type FieldPath<T>;
 
 // Validation configuration map
 export type ValidationConfigMap<T>;
@@ -707,7 +735,7 @@ export type FieldPathValue<T, Path>;
 export type ValidateFieldPath<T, Path>;
 
 // Extract only leaf paths
-export type LeafFieldPath<T, Prefix = '', Depth = []>;
+export type LeafFieldPath<T>;
 
 // Canonical suite type
 export type NgxVestSuite<T>;

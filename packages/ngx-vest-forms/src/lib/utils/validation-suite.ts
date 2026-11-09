@@ -144,10 +144,10 @@ export type NgxVestSuite<T = unknown> = {
    * @see {@link https://vestjs.dev/docs/writing_your_suite/including_and_excluding/skip_and_only}
    */
   focus?(config: {
-    only?: string | string[] | null;
-    skip?: string | string[] | null;
-    onlyGroup?: string | readonly string[];
-    skipGroup?: string | readonly string[];
+    only?: string | string[] | null | undefined;
+    skip?: string | string[] | null | undefined;
+    onlyGroup?: string | readonly string[] | undefined;
+    skipGroup?: string | readonly string[] | undefined;
   }): {
     run(model: T): NgxSuiteRunResult;
   };
@@ -156,10 +156,23 @@ export type NgxVestSuite<T = unknown> = {
   reset(): void;
   resetField(field: string): void;
   remove(field: string): void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  subscribe: (...args: any[]) => any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  dump(): any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  resume(state: any): void;
+  /**
+   * Vest's event subscription; returns the function that unsubscribes.
+   * ngx-vest-forms never calls it. It mirrors Vest 6.3's two overloads
+   * (`subscribe(cb)` for every event, `subscribe(event, cb)` for one) with
+   * the event name and payload widened to `string` / `unknown`, so Vest's
+   * own `subscribe` stays assignable through method bivariance.
+   *
+   * @example
+   * ```typescript
+   * const unsubscribe = suite.subscribe(() => render(suite.get()));
+   * unsubscribe();
+   * ```
+   */
+  subscribe(callback: () => void): () => void;
+  subscribe(event: string, callback: (payload: unknown) => void): () => void;
+  /** Serialises the suite state (Vest `dump()`). Not called by ngx-vest-forms. */
+  dump(): unknown;
+  /** Restores a state produced by `dump()` (Vest `resume()`). Not called by ngx-vest-forms. */
+  resume(state: unknown): void;
 };
