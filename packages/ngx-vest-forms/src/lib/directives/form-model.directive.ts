@@ -1,6 +1,7 @@
 import {
   DestroyRef,
   Directive,
+  DoCheck,
   ElementRef,
   inject,
   Injector,
@@ -11,15 +12,28 @@ import {
   AbstractControl,
   AsyncValidator,
   NG_ASYNC_VALIDATORS,
+  NgForm,
   NgModel,
   ValidationErrors,
 } from '@angular/forms';
 import { Observable } from 'rxjs';
+import { scheduleMicrotask } from '../utils/destroy-scheduler';
 import { getFormControlField } from '../utils/form-utils';
 import { runAsyncValidationBridge } from './async-validator-bridge';
 import { registerControlElement } from './field-element-registry';
 import { FormDirective } from './form.directive';
+import {
+  attachMissingValidators,
+  isControlSetUp,
+  usesCustomControlPath,
+} from './signal-control-validators';
 import { ValidationOptions } from './validation-options';
+
+/**
+ * How many microtasks to wait for `NgForm` to register a Signal Forms custom
+ * control before giving up. Registration normally lands within two.
+ */
+const MAX_SETUP_WAIT_MICROTASKS = 5;
 
 /**
  * Hooks into `ngModel` and runs async field-level validation
@@ -37,7 +51,7 @@ import { ValidationOptions } from './validation-options';
     },
   ],
 })
-export class FormModelDirective implements AsyncValidator, OnInit {
+export class FormModelDirective implements AsyncValidator, OnInit, DoCheck {
   /**
    * Per-control async validation options.
    *
@@ -57,6 +71,9 @@ export class FormModelDirective implements AsyncValidator, OnInit {
   readonly #injector = inject(Injector);
   readonly #elementRef = inject<ElementRef<Element>>(ElementRef);
   readonly #destroyRef = inject(DestroyRef);
+  /** Set only when `NgModel` binds a Signal Forms custom control. */
+  #customControl: { ngModel: NgModel; ngForm: NgForm; name: string } | null =
+    null;
 
   ngOnInit(): void {
     // Register the host element so blur handling can map it back to this
@@ -72,38 +89,30 @@ export class FormModelDirective implements AsyncValidator, OnInit {
       this.#destroyRef.onDestroy(
         registerControlElement(ngForm, this.#elementRef.nativeElement, ngModel)
       );
-      this.#scheduleValidatorAttachment(ngModel);
+      if (
+        usesCustomControlPath(
+          ngModel,
+          this.#injector,
+          this.#elementRef.nativeElement
+        )
+      ) {
+        this.#customControl = { ngModel, ngForm, name: ngModel.name };
+        this.#scheduleValidatorAttachment();
+      }
     }
   }
 
   /**
-   * Makes sure `NgModel`'s composed validators (which include this
-   * directive) are attached to its `FormControl`.
-   *
-   * Angular attaches them in `setUpControlValueAccessor()` for native inputs
-   * and ControlValueAccessor hosts. When `[ngModel]` sits on a Signal Forms
-   * custom control (`FormValueControl` / `FormCheckboxControl` from
-   * `@angular/forms/signals`), Angular 22.2 takes `setupCustomControl()`
-   * instead, which never calls `setUpValidators()`: the validators are
-   * collected but never attached, so Vest would never run for the field.
-   *
-   * The check runs after Angular's own setup, which `NgForm` performs in a
-   * microtask queued from `NgModel.ngOnChanges()`. Two microtask hops make
-   * sure ours runs after it regardless of the order in which the two
-   * directives' hooks run on the element. It compares by the exact function
-   * references Angular itself would attach (`NgModel.validator` /
-   * `NgModel.asyncValidator`), so it is a no-op for ControlValueAccessor
-   * controls and if a future Angular version attaches them upstream, and
-   * Angular's own `cleanUpControl()` can still remove them by identity.
+   * Angular sets a control up again (and may point `NgModel` at another,
+   * already registered `FormControl`) when its `name` changes, so check
+   * again then. Only Signal Forms custom-control hosts get past the guard.
    */
-  #scheduleValidatorAttachment(ngModel: NgModel): void {
-    queueMicrotask(() => {
-      queueMicrotask(() => {
-        if (!this.#destroyRef.destroyed) {
-          attachMissingValidators(ngModel);
-        }
-      });
-    });
+  ngDoCheck(): void {
+    const customControl = this.#customControl;
+    if (customControl && customControl.ngModel.name !== customControl.name) {
+      customControl.name = customControl.ngModel.name;
+      this.#scheduleValidatorAttachment();
+    }
   }
 
   /**
@@ -121,29 +130,33 @@ export class FormModelDirective implements AsyncValidator, OnInit {
       'FormModelDirective'
     );
   }
-}
 
-/**
- * Attaches `NgModel`'s composed sync and async validators to its control
- * when Angular has not done so.
- */
-function attachMissingValidators(ngModel: NgModel): void {
-  const control = ngModel.control;
-  const validator = ngModel.validator;
-  const asyncValidator = ngModel.asyncValidator;
-  let attached = false;
-
-  if (validator && !control.hasValidator(validator)) {
-    control.addValidators(validator);
-    attached = true;
-  }
-  if (asyncValidator && !control.hasAsyncValidator(asyncValidator)) {
-    control.addAsyncValidators(asyncValidator);
-    attached = true;
-  }
-  if (attached) {
-    // Same revalidation Angular runs after its own setup, so the first Vest
-    // run sees the control registered at its field path.
-    control.updateValueAndValidity({ emitEvent: false });
+  /**
+   * Attaches `NgModel`'s validators (which include this directive) on a
+   * Signal Forms custom-control host, where Angular 22.2 does not; see
+   * `signal-control-validators.ts`.
+   *
+   * It must run after Angular's own setup, which `NgForm` performs in a
+   * microtask queued from `NgModel.ngOnChanges()` (and the order of the two
+   * directives' hooks on the element is not fixed). Rather than counting
+   * hops, it waits until the control is reachable at its path, which `NgForm`
+   * makes true in the same step as the setup, and gives up after a few
+   * microtasks if the control never registers.
+   */
+  #scheduleValidatorAttachment(attempt = 0): void {
+    const customControl = this.#customControl;
+    // Never register on an already destroyed DestroyRef. A callback that
+    // runs means the ref was not destroyed, so rescheduling from it is safe.
+    if (!customControl || this.#destroyRef.destroyed) {
+      return;
+    }
+    scheduleMicrotask(() => {
+      const { ngModel, ngForm } = customControl;
+      if (isControlSetUp(ngModel, ngForm)) {
+        attachMissingValidators(ngModel, this.#injector);
+      } else if (attempt < MAX_SETUP_WAIT_MICROTASKS) {
+        this.#scheduleValidatorAttachment(attempt + 1);
+      }
+    }, this.#destroyRef);
   }
 }
