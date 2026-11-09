@@ -108,6 +108,7 @@ import {
   setAngularFormSubmittedState,
 } from './form-submitted-state';
 import { ValidationOptions } from './validation-options';
+import { notifyValidationReset } from './validation-reset';
 
 /**
  * Timing options passed to the validation-config pipeline.
@@ -1516,6 +1517,9 @@ export class FormDirective<T extends Record<string, unknown>> {
     // Reset Angular control validation state
     const control = this.ngForm.form.get(field);
     if (control) {
+      // Error display holds the last settled messages while a field
+      // re-validates; a reset field must not keep showing them.
+      notifyValidationReset(control);
       control.updateValueAndValidity({ emitEvent: true });
       this.#blurTick.update((v) => v + 1);
     }

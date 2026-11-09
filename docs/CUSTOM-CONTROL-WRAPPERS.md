@@ -468,13 +468,13 @@ The directive exposes these computed signals for building custom UIs:
 ```typescript
 // Error display control
 shouldShowErrors(); // boolean - Whether to show errors based on mode and state
-errors(); // string[] - Filtered errors (empty during pending)
-warnings(); // string[] - Filtered warnings (empty during pending)
+errors(); // string[] - Errors to render (last settled ones while re-validating)
+warnings(); // string[] - Warnings to render (last settled ones while re-validating)
 isPending(); // boolean - Whether async validation is running
 
 // Raw state signals (from FormControlStateDirective)
-errorMessages(); // string[] - All error messages
-warningMessages(); // string[] - All warning messages
+errorMessages(); // string[] - Current error messages (empty while pending)
+warningMessages(); // string[] - Current warning messages (see note below)
 controlState(); // FormControlState - Complete control state
 isTouched(); // boolean - Whether control has been touched
 isDirty(); // boolean - Whether control value has changed
@@ -635,7 +635,7 @@ ARIA wiring applies to the native element or ARIA form widget (such as `role="sw
 
 1. **Use `hostDirectives`** - Always apply `FormErrorDisplayDirective` as a host directive for automatic state management
 2. **Respect accessibility** - Use proper ARIA attributes: `role="status"` with `aria-live="polite"` for field-level messages (reserve `role="alert"` for a form-level error summary), plus `aria-busy` while validating
-3. **Filter during pending** - The directive's `errors()` and `warnings()` signals automatically filter during validation
+3. **Render the display signals, not the raw ones** - While a field re-validates, `errors()`, `warnings()`, `shouldShowErrors()` and `shouldShowWarnings()` keep the last settled result, so messages and `aria-invalid` don't flicker and the live region doesn't re-announce. They change when the new result settles, and clear at once on `reset()`/`resetForm()`/`resetField()`. `errorMessages()` and `warningMessages()` are the raw state and don't hold anything: `errorMessages()` is empty while pending, and `warningMessages()` keeps listing a field's last warnings from `FormDirective.fieldWarnings` (inside `ngxVestForm`) until the next result replaces them
 4. **Leverage computed signals** - All exposed signals are computed, so they update automatically
 5. **Style based on state** - Use host bindings to apply CSS classes based on error display state
 

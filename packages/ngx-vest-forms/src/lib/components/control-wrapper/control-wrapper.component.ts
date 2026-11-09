@@ -11,7 +11,12 @@ import {
 import { createAriaAssociationController } from '../../directives/aria-association-controller';
 import { FormErrorDisplayDirective } from '../../directives/form-error-display.directive';
 import { injectPendingLabel } from '../../tokens/pending-label.token';
-import { AriaAssociationMode } from '../../utils/aria-association.utils';
+import {
+  AriaAssociationMode,
+  buildMessageDescribedBy,
+  MessageRegionIds,
+  messageRegionIdList,
+} from '../../utils/aria-association.utils';
 import { NgxIdGenerator } from '../../utils/id-generator';
 import { createDebouncedPendingState } from '../../utils/pending-state.utils';
 
@@ -191,6 +196,11 @@ export class ControlWrapperComponent implements AfterContentInit {
   protected readonly errorId = `${this.uniqueId}-error`;
   protected readonly warningId = `${this.uniqueId}-warning`;
   protected readonly pendingId = `${this.uniqueId}-pending`;
+  private readonly regionIds: MessageRegionIds = {
+    errorId: this.errorId,
+    warningId: this.warningId,
+    pendingId: this.pendingId,
+  };
 
   // Signals when content is initialized so effects can safely touch the DOM.
   private readonly contentInitialized = signal(false);
@@ -228,19 +238,13 @@ export class ControlWrapperComponent implements AfterContentInit {
   /**
    * Computed signal that builds aria-describedby string based on visible regions
    */
-  protected readonly ariaDescribedBy = computed(() => {
-    const ids: string[] = [];
-    if (this.errorDisplay.shouldShowErrors()) {
-      ids.push(this.errorId);
-    }
-    if (this.shouldShowWarnings()) {
-      ids.push(this.warningId);
-    }
-    if (this.showPendingMessage()) {
-      ids.push(this.pendingId);
-    }
-    return ids.length > 0 ? ids.join(' ') : null;
-  });
+  protected readonly ariaDescribedBy = computed(() =>
+    buildMessageDescribedBy(this.regionIds, {
+      errors: this.errorDisplay.shouldShowErrors(),
+      warnings: this.shouldShowWarnings(),
+      pending: this.showPendingMessage(),
+    })
+  );
 
   /**
    * IDs managed by this wrapper when composing aria-describedby.
@@ -249,11 +253,9 @@ export class ControlWrapperComponent implements AfterContentInit {
    * append the currently-relevant wrapper IDs. This prevents clobbering app-provided
    * hint/help text associations.
    */
-  private readonly wrapperOwnedDescribedByIds = [
-    this.errorId,
-    this.warningId,
-    this.pendingId,
-  ];
+  private readonly wrapperOwnedDescribedByIds = messageRegionIdList(
+    this.regionIds
+  );
 
   /**
    * Shared MutationObserver + ARIA-association controller. DOM reads/writes
