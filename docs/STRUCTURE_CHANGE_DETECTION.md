@@ -1,6 +1,6 @@
 # Advanced Form Structure Change Detection
 
-> **Note**: This guide provides advanced techniques and alternatives for handling form structure changes. For basic usage, see the [README.md](../README.md#handling-form-structure-changes) section on "Handling Form Structure Changes".
+> **Note**: This guide provides advanced techniques and alternatives for handling form structure changes. For basic usage, see the [README.md](../README.md#dynamic-form-structure) section on "Dynamic Form Structure".
 
 This document explains advanced techniques for handling form validation updates when form structure changes dynamically in ngx-vest-forms.
 
@@ -50,8 +50,10 @@ Why? Because switching between inputs means control values change, which trigger
 ### API
 
 ```typescript
-public triggerFormValidation(): void
+triggerFormValidation(path?: string): void
 ```
+
+Without `path` it calls `updateValueAndValidity()` on the root form: root-level validators re-run and the form's aggregated status is recalculated from its current controls, which is what a structure change needs. It does not re-run each field's own validators. Pass a control path (for example `'address.street'`) to re-run that control's validators; its ancestors, up to the root form, then recalculate their own validity and status. An unknown path logs a development-mode warning and does nothing.
 
 **CRITICAL: This method does NOT mark fields as touched or show errors.**
 

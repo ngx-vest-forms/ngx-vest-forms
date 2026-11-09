@@ -199,7 +199,7 @@ Add a one-way dependency: when the trigger field changes, revalidate dependent f
 ```typescript
 whenChanged<K extends FieldPath<T>>(
   trigger: K,
-  revalidate: FieldPath<T> | FieldPath<T>[]
+  revalidate: FieldPath<T> | ReadonlyArray<FieldPath<T>>
 ): this
 ```
 
@@ -298,7 +298,7 @@ Create a validation group where all fields revalidate each other.
 **Signature:**
 
 ```typescript
-group<K extends FieldPath<T>>(fields: K[]): this
+group<K extends FieldPath<T>>(fields: readonly K[]): this
 ```
 
 **Examples:**

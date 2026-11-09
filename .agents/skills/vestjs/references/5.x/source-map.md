@@ -1,6 +1,6 @@
 # Vest.js 5.x source map
 
-This file is the internal source map for the current **Vest 5.4 / 5.x** lane.
+This file is the internal source map for the historical **Vest 5.4 / 5.x** lane. Vest 6 is the current line; see `../version-selection.md` for when to route here.
 
 Use it when the router or a sub-skill needs to ground an answer in the correct upstream docs.
 

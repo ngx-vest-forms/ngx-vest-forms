@@ -78,9 +78,9 @@ const updatedState = clearFieldsWhen(currentFormValue, {
 **Type signature:**
 
 ```typescript
-function clearFieldsWhen<T extends Record<string, any>>(
-  state: T,
-  conditions: Record<keyof T, boolean>
+function clearFieldsWhen<T extends Record<string, unknown>>(
+  currentState: T,
+  conditions: Readonly<Partial<Record<keyof T, boolean>>>
 ): T;
 ```
 
@@ -102,9 +102,9 @@ const cleanedState = clearFields(currentFormValue, [
 **Type signature:**
 
 ```typescript
-function clearFields<T extends Record<string, any>>(
-  state: T,
-  fields: (keyof T)[]
+function clearFields<T extends Record<string, unknown>>(
+  currentState: T,
+  fieldsToClear: ReadonlyArray<keyof T>
 ): T;
 ```
 
@@ -126,10 +126,10 @@ const filteredState = keepFieldsWhen(currentFormValue, {
 **Type signature:**
 
 ```typescript
-function keepFieldsWhen<T extends Record<string, any>>(
-  state: T,
-  conditions: Record<keyof T, boolean>
-): T;
+function keepFieldsWhen<T extends Record<string, unknown>>(
+  currentState: T,
+  conditions: Readonly<Partial<Record<keyof T, boolean>>>
+): Partial<T>;
 ```
 
 ## Complete Example
@@ -149,8 +149,11 @@ import {
   clearFieldsWhen,
   FormDirective,
 } from 'ngx-vest-forms';
+import { procedureSuite } from './procedure.suite'; // your Vest suite
 
-type ProcedureFormModel = NgxDeepPartial<{
+// In a real app, move this type to procedure.model.ts so the suite file can
+// import it without a circular import.
+export type ProcedureFormModel = NgxDeepPartial<{
   procedureType: 'typeA' | 'typeB' | 'typeC';
   fieldA?: string;
   fieldB?: string;
@@ -162,6 +165,8 @@ type ProcedureFormModel = NgxDeepPartial<{
   template: `
     <form
       ngxVestForm
+      [suite]="suite"
+      [formValue]="formValue()"
       (formValueChange)="formValue.set($event)"
       #vestForm="ngxVestForm"
     >
@@ -203,6 +208,7 @@ export class ProcedureFormComponent {
   readonly vestFormRef = viewChild.required('vestForm', {
     read: FormDirective,
   });
+  protected readonly suite = procedureSuite;
   protected readonly formValue = signal<ProcedureFormModel>({});
 
   protected onProcedureTypeChange(newType: string): void {
@@ -372,7 +378,9 @@ protected onStructureChange(newValue: string): void {
 Use `omitWhen` in your validation suite to skip validation for cleared fields:
 
 ```typescript
+import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, test, enforce, omitWhen } from 'vest';
+import type { ProcedureFormModel } from './procedure.model';
 
 export const procedureSuite: NgxVestSuite<ProcedureFormModel> = create(
   (model) => {
@@ -419,5 +427,5 @@ export const procedureSuite: NgxVestSuite<ProcedureFormModel> = create(
 ## Related Topics
 
 - [Structure Change Detection Guide](./STRUCTURE_CHANGE_DETECTION.md) - Understanding `triggerFormValidation()`
-- [Conditional Validations](../README.md#conditional-validations) - Using `omitWhen` for conditional validation logic
+- [Conditional Validations](../README.md#validation-config) - Re-validating dependents with `omitWhen`/`skipWhen` conditional logic
 - [Vest.js skill](../.agents/skills/vestjs/SKILL.md) - Vest.js 6 patterns

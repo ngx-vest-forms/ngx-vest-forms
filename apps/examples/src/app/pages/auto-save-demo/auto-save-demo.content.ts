@@ -5,7 +5,7 @@ export const autoSaveContent = defineExampleContent({
     icon: '💾',
     title: 'What this demonstrates',
     points: [
-      'Drafts auto-save when a changed field blurs, driven by the (fieldBlurred) NgxFieldBlurEvent payload (field, formValue, dirty).',
+      'Drafts auto-save when a changed field blurs, driven by the fieldBlur output of the library and its NgxFieldBlurEvent payload (field, value, formValue, dirty, touched, valid, pending); the demo form re-exposes it as (fieldBlurred).',
       'Draft persistence is decoupled from final validation: a draft can save even while the form is invalid.',
       'A serialized draft key dedupes saves so an unchanged blur or an already-queued draft is not re-sent.',
       'A generation counter dropped stale in-flight saves on Reset so a clear cannot be overwritten by a queued save.',

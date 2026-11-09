@@ -50,13 +50,12 @@ export const travelFormContract: NgxDeepRequired<TravelFormModel> = {
 ### Validation suite
 
 ```ts
-import { create, enforce, omitWhen, test, warn } from 'vest';
 import { type NgxVestSuite } from 'ngx-vest-forms';
+import { create, enforce, omitWhen, test, warn } from 'vest';
 import { TravelFormModel } from '../../models/travel-form.model';
 
 export const travelValidationSuite: NgxVestSuite<TravelFormModel> = create(
   (model: TravelFormModel) => {
-
     test('departureDate', 'Departure date is required', () => {
       enforce(model.departureDate).isNotEmpty();
     });
@@ -95,6 +94,8 @@ protected readonly validationConfig =
 ```
 
 ### Template
+
+> `ngx-form-section` is a layout component local to the examples app, not a library export. Use any container (or none) in your own app.
 
 ```html
 <ngx-form-section title="Date Range">
@@ -207,7 +208,12 @@ export type DateRangeValue = {
       </label>
 
       <!-- Visible shared summary — aggregates displayed errors from both fields -->
-      <div [id]="visibleErrorRegionId" role="status" aria-live="polite" aria-atomic="true">
+      <div
+        [id]="visibleErrorRegionId"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         @for (error of visibleErrors(); track error) {
           <p>{{ error }}</p>
         }
@@ -215,10 +221,14 @@ export type DateRangeValue = {
 
       <!-- sr-only per-field error regions wired via aria-describedby -->
       <div [id]="departureErrorRegionId" class="sr-only">
-        @for (error of departureDisplayErrors(); track error) { <p>{{ error }}</p> }
+        @for (error of departureDisplayErrors(); track error) {
+          <p>{{ error }}</p>
+        }
       </div>
       <div [id]="returnErrorRegionId" class="sr-only">
-        @for (error of returnDisplayErrors(); track error) { <p>{{ error }}</p> }
+        @for (error of returnDisplayErrors(); track error) {
+          <p>{{ error }}</p>
+        }
       </div>
     </fieldset>
   `,
@@ -235,34 +245,46 @@ export class DateRangeAdapterComponent {
   private readonly returnTouched = signal(false);
 
   protected readonly shouldShowDepartureErrors = computed(
-    () => (this.departureTouched() || this.formSubmitted()) && this.departureErrors().length > 0
+    () =>
+      (this.departureTouched() || this.formSubmitted()) &&
+      this.departureErrors().length > 0
   );
 
   protected readonly shouldShowReturnErrors = computed(
-    () => (this.returnTouched() || this.formSubmitted()) && this.returnErrors().length > 0
+    () =>
+      (this.returnTouched() || this.formSubmitted()) &&
+      this.returnErrors().length > 0
   );
 
   protected readonly departureDisplayErrors = computed(() =>
-    Array.from(new Set(this.shouldShowDepartureErrors() ? this.departureErrors() : []))
+    Array.from(
+      new Set(this.shouldShowDepartureErrors() ? this.departureErrors() : [])
+    )
   );
 
   protected readonly returnDisplayErrors = computed(() =>
-    Array.from(new Set(this.shouldShowReturnErrors() ? this.returnErrors() : []))
+    Array.from(
+      new Set(this.shouldShowReturnErrors() ? this.returnErrors() : [])
+    )
   );
 
   protected readonly visibleErrors = computed(() =>
-    Array.from(new Set([...this.departureDisplayErrors(), ...this.returnDisplayErrors()]))
+    Array.from(
+      new Set([...this.departureDisplayErrors(), ...this.returnDisplayErrors()])
+    )
   );
 
   protected readonly departureAriaDescribedBy = computed(() => {
     const ids: string[] = [];
-    if (this.departureDisplayErrors().length > 0) ids.push(this.departureErrorRegionId);
+    if (this.departureDisplayErrors().length > 0)
+      ids.push(this.departureErrorRegionId);
     return ids.length > 0 ? ids.join(' ') : null;
   });
 
   protected readonly returnAriaDescribedBy = computed(() => {
     const ids: string[] = [];
-    if (this.returnDisplayErrors().length > 0) ids.push(this.returnErrorRegionId);
+    if (this.returnDisplayErrors().length > 0)
+      ids.push(this.returnErrorRegionId);
     return ids.length > 0 ? ids.join(' ') : null;
   });
 
@@ -675,7 +697,7 @@ Bind the composite control directly to that field and map to/from the domain mod
 
 See the **Composite Adapter Recipe** page in the examples app: `apps/examples/src/app/pages/date-range-adapter/`.
 
-Run `ng serve examples` and navigate to `/date-range-adapter`. The page defaults to **Split Wrappers** (recommended) with a toggle to compare against the **Composite Adapter** approach.
+Run `pnpm nx serve examples` and navigate to `/date-range-adapter`. The page defaults to **Split Wrappers** (recommended) with a toggle to compare against the **Composite Adapter** approach.
 
 ## Accessibility checklist
 
