@@ -53,7 +53,7 @@ Why? Because switching between inputs means control values change, which trigger
 triggerFormValidation(path?: string): void
 ```
 
-Without `path` it calls `updateValueAndValidity()` on the root form: root-level validators re-run and the form's aggregated status is recalculated from its current controls, which is what a structure change needs. It does not re-run each field's own validators. Pass a control path (for example `'address.street'`) to re-validate only that control; an unknown path logs a development-mode warning and does nothing.
+Without `path` it calls `updateValueAndValidity()` on the root form: root-level validators re-run and the form's aggregated status is recalculated from its current controls, which is what a structure change needs. It does not re-run each field's own validators. Pass a control path (for example `'address.street'`) to re-run that control's validators; its ancestors, up to the root form, then recalculate their own validity and status. An unknown path logs a development-mode warning and does nothing.
 
 **CRITICAL: This method does NOT mark fields as touched or show errors.**
 
