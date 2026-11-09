@@ -112,6 +112,7 @@ import {
   runSubmitValidation,
   setAngularFormSubmittedState,
 } from './form-submitted-state';
+import { FormValueSnapshot } from './form-value-snapshot';
 import { ValidationOptions } from './validation-options';
 import { notifyValidationReset } from './validation-reset';
 
@@ -199,36 +200,12 @@ export class FormDirective<T extends Record<string, unknown>> {
   readonly #equal = inject(NGX_EQUALITY_FN);
 
   /**
-   * The last two pairs `#isEqual` compared, with their results. One value
-   * event makes `formValueChange`, `formState` and the sync effect compare
-   * the same two form snapshots (previous and current); this lets the first
-   * comparison answer the others. Cleared on every value event, so a result
-   * never outlives the change cycle that computed it.
+   * The merged form value as a signal, and the memoized `#equal` that
+   * compares snapshots and models. Created here, before any other
+   * subscription to `ngForm.form.events`, so its tick is current when the
+   * `formValueChange` pipeline reads the snapshot.
    */
-  #equalMemo: Array<{ a: unknown; b: unknown; equal: boolean }> = [];
-
-  /**
-   * `#equal` with two shortcuts: identical references are equal without a
-   * call, and a pair compared earlier in this change cycle (in either order)
-   * reuses that result. Form snapshots are never mutated after they are
-   * created, so a result stays true for the cycle.
-   */
-  #isEqual(a: unknown, b: unknown): boolean {
-    if (Object.is(a, b)) {
-      return true;
-    }
-    for (const entry of this.#equalMemo) {
-      if (
-        (entry.a === a && entry.b === b) ||
-        (entry.a === b && entry.b === a)
-      ) {
-        return entry.equal;
-      }
-    }
-    const equal = this.#equal(a, b);
-    this.#equalMemo = [{ a, b, equal }, ...this.#equalMemo.slice(0, 1)];
-    return equal;
-  }
+  readonly #snapshot = new FormValueSnapshot<T>(this.ngForm.form, this.#equal);
 
   /**
    * Public signal storing field warnings keyed by field path.
@@ -250,76 +227,6 @@ export class FormDirective<T extends Record<string, unknown>> {
   #previousModelInput: T | null = null;
   /** True while the sync effect writes the model into the form. */
   #applyingModelValue = false;
-
-  /**
-   * The root form's last `ValueChangeEvent`, with the root `value` object at
-   * that moment, until the next root event arrives.
-   */
-  #lastValueEvent: { source: unknown; rootValue: unknown } | null = null;
-
-  /**
-   * Whether a root form event can change the merged snapshot. Every value
-   * event and every status event can, except the status event Angular emits
-   * right after a value event in the same `updateValueAndValidity` call:
-   * nothing runs between the two but the value event's own subscribers. The
-   * root `value` object must also be the one the value event saw, because
-   * Angular replaces it on any change (even one made with `emitEvent: false`).
-   * The snapshot read for the value event (by `formValueChange`) then stays
-   * current for the status event instead of being copied a second time.
-   */
-  #changesFormSnapshot(event: unknown): boolean {
-    const lastValueEvent = this.#lastValueEvent;
-    this.#lastValueEvent = null;
-    if (event instanceof ValueChangeEvent) {
-      this.#lastValueEvent = {
-        source: event.source,
-        rootValue: this.ngForm.form.value,
-      };
-      return true;
-    }
-    if (event instanceof StatusChangeEvent) {
-      return !(
-        lastValueEvent &&
-        lastValueEvent.source === event.source &&
-        lastValueEvent.rootValue === this.ngForm.form.value
-      );
-    }
-    return false;
-  }
-
-  // Internal signal tracking changes that can affect the merged form snapshot.
-  // ValueChangeEvent keeps the cache fresh for blur-driven consumers like
-  // draft auto-save, even when a value update doesn't change form validity.
-  //
-  // This subscription is made in the constructor, before any consumer binds
-  // `formValueChange`, so the tick (and the cleared `#isEqual` memo) is
-  // already current when the `formValueChange` pipeline reads the snapshot.
-  readonly #formSnapshotTick = toSignal(
-    this.ngForm.form.events.pipe(
-      tap((event) => {
-        if (event instanceof ValueChangeEvent) {
-          this.#equalMemo = [];
-        }
-      }),
-      filter((event) => this.#changesFormSnapshot(event)),
-      scan((count) => count + 1, 0),
-      startWith(0)
-    ),
-    { initialValue: 0 }
-  );
-
-  /**
-   * The merged form value (including disabled controls), recomputed whenever
-   * a value or status event fires. `formValueChange`, `formState` and the
-   * sync effect all read this one snapshot, so each value event copies the
-   * form value once, and their comparisons of the same two snapshots share
-   * one `#isEqual` result.
-   */
-  readonly #formValueSignal = computed(() => {
-    // Track changes that affect the merged form snapshot.
-    this.#formSnapshotTick();
-    return this.#formValueOrNull();
-  });
 
   /**
    * Writes the model into the form controls. Events are emitted so async
@@ -344,17 +251,8 @@ export class FormDirective<T extends Record<string, unknown>> {
         this.#applyingModelValue = false;
       }
     }
-    this.#lastSyncedFormValue = this.#formValueOrNull();
+    this.#lastSyncedFormValue = this.#snapshot.read();
     this.#lastSyncedModelValue = modelValue;
-  }
-
-  #formValueOrNull(): T | null {
-    if (Object.keys(this.ngForm.form.controls).length === 0) {
-      // No controls remain (e.g. dynamic group removal): expose `null` so
-      // consumers don't see ghost data from a previous form contract.
-      return null;
-    }
-    return mergeValuesAndRawValues<T>(this.ngForm.form);
   }
 
   /**
@@ -421,7 +319,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       return {
         valid: this.ngForm.form.valid,
         errors: getAllFormErrors(this.ngForm.form).errors,
-        value: this.#formValueSignal(),
+        value: this.#snapshot.value(),
       };
     },
     {
@@ -434,7 +332,7 @@ export class FormDirective<T extends Record<string, unknown>> {
         return (
           a.valid === b.valid &&
           this.#equal(a.errors, b.errors) &&
-          this.#isEqual(a.value, b.value)
+          this.#snapshot.isEqual(a.value, b.value)
         );
       },
     }
@@ -591,18 +489,18 @@ export class FormDirective<T extends Record<string, unknown>> {
       // Merge before deduplicating: the event's own value leaves out disabled
       // controls, so a programmatic setValue() on one would look unchanged.
       // The merged snapshot is the one `formState` and the sync effect read;
-      // `#formSnapshotTick` has already counted this event. `untracked` keeps
+      // the snapshot tick has already counted this event. `untracked` keeps
       // a consumer effect that writes the form from tracking the snapshot.
       map(() => ({
         value:
-          untracked(() => this.#formValueSignal()) ??
+          untracked(() => this.#snapshot.value()) ??
           mergeValuesAndRawValues<T>(this.ngForm.form),
         fromModel: this.#applyingModelValue,
       })),
       // Model writes pass through deduplication so they move its baseline:
       // after a write of B, the user picking the earlier A again is a change.
       distinctUntilChanged((prev, curr) =>
-        this.#isEqual(prev.value, curr.value)
+        this.#snapshot.isEqual(prev.value, curr.value)
       ),
       // A model write applied by the sync effect is not echoed back: the
       // consumer already holds that value.
@@ -687,7 +585,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     this.#submitOutcome$.pipe(
       map((status) => ({
         valid: status === 'VALID',
-        value: this.#formValueOrNull(),
+        value: this.#snapshot.read(),
         errors: getAllFormErrors(this.ngForm.form).errors,
       }))
     )
@@ -809,11 +707,11 @@ export class FormDirective<T extends Record<string, unknown>> {
      * Note: formValue is read-only input(), so we emit changes via formValueChange output.
      */
     effect(() => {
-      const formValue = this.#formValueSignal();
+      const formValue = this.#snapshot.value();
       const modelValue = this.formValue();
       // Whether the consumer passed a new model since the last run. The
       // `lastSynced` baselines can't tell: the form-wins branch moves them.
-      const modelInputChanged = !this.#isEqual(
+      const modelInputChanged = !this.#snapshot.isEqual(
         modelValue,
         this.#previousModelInput
       );
@@ -823,8 +721,11 @@ export class FormDirective<T extends Record<string, unknown>> {
       if (!formValue && !modelValue) return;
 
       // Compute change flags first
-      const formChanged = !this.#isEqual(formValue, this.#lastSyncedFormValue);
-      const modelChanged = !this.#isEqual(
+      const formChanged = !this.#snapshot.isEqual(
+        formValue,
+        this.#lastSyncedFormValue
+      );
+      const modelChanged = !this.#snapshot.isEqual(
         modelValue,
         this.#lastSyncedModelValue
       );
@@ -864,7 +765,7 @@ export class FormDirective<T extends Record<string, unknown>> {
       } else if (formChanged && modelChanged) {
         // Both form and model changed simultaneously
         // Check if they changed to the same value (synchronized change) or different values (conflict)
-        const valuesEqual = this.#isEqual(formValue, modelValue);
+        const valuesEqual = this.#snapshot.isEqual(formValue, modelValue);
 
         if (valuesEqual) {
           // Both changed to the same value - this is a synchronized change, not a conflict
@@ -886,7 +787,7 @@ export class FormDirective<T extends Record<string, unknown>> {
           });
         } else if (
           modelInputChanged &&
-          this.#isEqual(formValue, this.#lastEmittedFormValue)
+          this.#snapshot.isEqual(formValue, this.#lastEmittedFormValue)
         ) {
           // The consumer already received this form value through
           // `formValueChange` and wrote a different model in response, e.g.
@@ -1577,7 +1478,7 @@ export class FormDirective<T extends Record<string, unknown>> {
     if (!suite) return () => of(null);
 
     return (control: AbstractControl) => {
-      // A copy of its own, not the shared `#formValueSignal` snapshot: the
+      // A copy of its own, not the shared `#snapshot` value: the
       // validator runs inside the control's `updateValueAndValidity`, before
       // the root form's value event, so that snapshot can still miss this
       // change or a control registered since; the candidate value is written
