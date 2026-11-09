@@ -4,7 +4,7 @@ export type AutoSaveDemoModel = NgxDeepPartial<{
   projectName: string;
   quantity: string;
   quantityJustification: string;
-  preferredContactMethod: 'email' | 'phone';
+  preferredContactMethod: 'email' | 'in-app';
   email: string;
   notes: string;
 }>;

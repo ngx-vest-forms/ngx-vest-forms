@@ -395,6 +395,17 @@ fieldset:not(.form-shell) {
   }
 }
 
+/*
+ * Conditional-field reveal: `animate.enter="reveal-enter"` on a field that an
+ * @if adds. Angular removes the class when the animation ends; with reduced
+ * motion there is no animation, so the field appears at once.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal-enter {
+    animation: fade-in-up 0.25s ease-out both;
+  }
+}
+
 /* Shell nav reveal — staggered per category group via inline animation-delay. */
 @keyframes fade-in-up {
   from {
