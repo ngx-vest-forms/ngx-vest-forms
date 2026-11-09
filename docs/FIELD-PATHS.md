@@ -266,13 +266,12 @@ export const suite: NgxVestSuite<UserModel> = create(
 class MyFormComponent {
   // ✅ Types are compatible - no type assertion needed
   protected readonly suite: NgxVestSuite<UserModel> = suite;
-
-  validate(fieldName?: keyof UserModel) {
+  validate(model: UserModel, fieldName?: keyof UserModel) {
     // ✅ Field focus at call site, not in callback
     if (fieldName) {
-      return this.suite.only(fieldName).run(this.model);
+      return this.suite.only(fieldName).run(model);
     }
-    return this.suite.run(this.model);
+    return this.suite.run(model);
   }
 }
 ```

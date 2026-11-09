@@ -4,8 +4,8 @@
   <ngx-intro-section title="Why this matters">
     <ngx-intro-item>
       <strong class="text-gray-900 dark:text-white">always mode</strong> —
-      Feedback appears immediately; useful for real-time guidance without
-      waiting for user interaction
+      Errors or warnings appear immediately; useful for real-time guidance
+      without waiting for user interaction
     </ngx-intro-item>
     <ngx-intro-item>
       <strong class="text-gray-900 dark:text-white">on-dirty mode</strong> —
@@ -14,8 +14,12 @@
     </ngx-intro-item>
     <ngx-intro-item>
       <strong class="text-gray-900 dark:text-white">on-touch mode</strong> —
-      Feedback appears after blur; respects the user's natural interaction flow
-      and focus events
+      Warnings only: they appear after blur or after submit, respecting the
+      user's natural interaction flow
+    </ngx-intro-item>
+    <ngx-intro-item>
+      <strong class="text-gray-900 dark:text-white">on-submit mode</strong> —
+      Errors only: they appear after the form is submitted
     </ngx-intro-item>
     <ngx-intro-item>
       <strong class="text-gray-900 dark:text-white"
