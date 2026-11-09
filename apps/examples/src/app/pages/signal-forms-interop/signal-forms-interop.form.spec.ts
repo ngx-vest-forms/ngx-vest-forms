@@ -1,0 +1,193 @@
+import { Component, signal, viewChild } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NgModel } from '@angular/forms';
+import { By } from '@angular/platform-browser';
+import type { NgxSubmitSettledEvent } from 'ngx-vest-forms';
+import { vi } from 'vitest';
+import { SignalFormsInteropModel } from '../../models/signal-forms-interop.model';
+import { ConsentSwitchComponent } from './consent-switch.component';
+import { SeatStepperComponent } from './seat-stepper.component';
+import { SignalFormsInteropFormBody } from './signal-forms-interop.form';
+import { signalFormsInteropSuite } from './signal-forms-interop.validations';
+
+@Component({
+  imports: [SignalFormsInteropFormBody],
+  template: `
+    <ngx-signal-forms-interop-form-body
+      [formValue]="formValue()"
+      [suite]="suite"
+      (formValueChange)="formValue.set($event)"
+      (submitted)="submitted.set($event)"
+    />
+  `,
+})
+class HostComponent {
+  readonly suite = signalFormsInteropSuite;
+  readonly formValue = signal<SignalFormsInteropModel>({});
+  readonly submitted =
+    signal<NgxSubmitSettledEvent<SignalFormsInteropModel> | null>(null);
+  readonly body = viewChild.required(SignalFormsInteropFormBody);
+}
+
+describe('Signal Forms controls with ngModel in ngxVestForm', () => {
+  let fixture: ComponentFixture<HostComponent>;
+  let host: HostComponent;
+  let root: HTMLElement;
+
+  const settle = async (): Promise<void> => {
+    await fixture.whenStable();
+    fixture.detectChanges();
+    await fixture.whenStable();
+  };
+
+  /** Re-renders until the assertion passes (Vest runs and settles async). */
+  const eventually = (assertion: () => void): Promise<void> =>
+    vi.waitFor(async () => {
+      await settle();
+      assertion();
+    });
+
+  const seatsInput = (): HTMLInputElement =>
+    root.querySelector<HTMLInputElement>('input#seats')!;
+  const termsSwitch = (): HTMLButtonElement =>
+    root.querySelector<HTMLButtonElement>('button#acceptTerms')!;
+  const ngModelOf = (component: unknown): NgModel =>
+    fixture.debugElement
+      .query(By.directive(component as never))
+      .injector.get(NgModel);
+  const describedText = (element: HTMLElement): string =>
+    (element.getAttribute('aria-describedby') ?? '')
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((id) => root.querySelector(`#${CSS.escape(id)}`)?.textContent ?? '')
+      .join(' ');
+
+  const submit = async (): Promise<void> => {
+    root
+      .querySelector('form')!
+      .dispatchEvent(new Event('submit', { cancelable: true }));
+    await settle();
+  };
+
+  beforeEach(async () => {
+    signalFormsInteropSuite.reset();
+    await TestBed.configureTestingModule({
+      imports: [HostComponent],
+    }).compileComponents();
+    fixture = TestBed.createComponent(HostComponent);
+    host = fixture.componentInstance;
+    root = fixture.nativeElement;
+    fixture.detectChanges();
+    await settle();
+  });
+
+  it('uses the Signal Forms interop path, not a ControlValueAccessor', () => {
+    expect(ngModelOf(SeatStepperComponent).valueAccessor).toBeNull();
+    expect(ngModelOf(ConsentSwitchComponent).valueAccessor).toBeNull();
+  });
+
+  it('writes the control value into the form model', async () => {
+    const input = seatsInput();
+    input.value = '3';
+    input.dispatchEvent(new Event('input'));
+    termsSwitch().click();
+    await settle();
+
+    expect(host.formValue()).toEqual(
+      expect.objectContaining({ seats: 3, acceptTerms: true })
+    );
+  });
+
+  it('writes the model into the control (model-to-view)', async () => {
+    host.formValue.set({ seats: 5, acceptTerms: true });
+    await settle();
+
+    expect(seatsInput().value).toBe('5');
+    expect(termsSwitch().getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('runs Vest and shows errors with ARIA on the inner input and the switch after submit', async () => {
+    await submit();
+
+    expect(host.submitted()?.valid).toBe(false);
+    expect(seatsInput().getAttribute('aria-invalid')).toBe('true');
+    expect(describedText(seatsInput())).toContain(
+      'Choose how many seats you need'
+    );
+    // The hint id passed into the control survives the wrapper's merge.
+    expect(seatsInput().getAttribute('aria-describedby')).toContain(
+      'seats-hint'
+    );
+    expect(termsSwitch().getAttribute('aria-invalid')).toBe('true');
+    expect(describedText(termsSwitch())).toContain(
+      'Accept the booking terms to continue'
+    );
+  });
+
+  it('validates the range rule from the suite', async () => {
+    const input = seatsInput();
+    input.value = '12';
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    await settle();
+
+    expect(ngModelOf(SeatStepperComponent).control.touched).toBe(true);
+    await eventually(() =>
+      expect(describedText(seatsInput())).toContain(
+        'Book between 1 and 8 seats'
+      )
+    );
+  });
+
+  it('marks the field touched on blur through the touch output and shows its error', async () => {
+    const control = ngModelOf(ConsentSwitchComponent).control;
+    expect(control.touched).toBe(false);
+    expect(termsSwitch().hasAttribute('aria-invalid')).toBe(false);
+
+    termsSwitch().focus();
+    termsSwitch().dispatchEvent(new FocusEvent('blur'));
+    termsSwitch().dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    await settle();
+
+    expect(control.touched).toBe(true);
+    expect(termsSwitch().getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('propagates the disabled state from the control into the component', async () => {
+    const control = ngModelOf(SeatStepperComponent).control;
+
+    control.disable();
+    await settle();
+    expect(seatsInput().disabled).toBe(true);
+
+    control.enable();
+    await settle();
+    expect(seatsInput().disabled).toBe(false);
+  });
+
+  it('disables the stepper through [disabled] on ngModel and drops it from validation', async () => {
+    root.querySelector<HTMLInputElement>('#lockSeats')!.click();
+    await settle();
+
+    expect(ngModelOf(SeatStepperComponent).control.disabled).toBe(true);
+    expect(seatsInput().disabled).toBe(true);
+
+    termsSwitch().click();
+    await submit();
+
+    await eventually(() => expect(host.submitted()?.valid).toBe(true));
+  });
+
+  it('submits valid once both controls have valid values', async () => {
+    const input = seatsInput();
+    input.value = '2';
+    input.dispatchEvent(new Event('input'));
+    termsSwitch().click();
+    await submit();
+
+    await eventually(() => expect(host.submitted()?.valid).toBe(true));
+    expect(host.submitted()?.value).toEqual(
+      expect.objectContaining({ seats: 2, acceptTerms: true })
+    );
+  });
+});
