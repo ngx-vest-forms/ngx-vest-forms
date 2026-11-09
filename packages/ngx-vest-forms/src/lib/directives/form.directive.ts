@@ -20,14 +20,10 @@ import {
 import {
   outputFromObservable,
   takeUntilDestroyed,
-  toObservable,
   toSignal,
 } from '@angular/core/rxjs-interop';
 import {
-  AbstractControl,
   AsyncValidatorFn,
-  FormArray,
-  FormGroup,
   NgForm,
   PristineChangeEvent,
   StatusChangeEvent,
@@ -41,7 +37,6 @@ import {
   merge as rxMerge,
   scan,
   startWith,
-  switchMap,
 } from 'rxjs';
 import { logWarning, NGX_VEST_FORMS_ERRORS } from '../errors/error-catalog';
 import { NGX_VALIDATION_CONFIG_DEBOUNCE_TOKEN } from '../tokens/debounce.token';
@@ -54,7 +49,6 @@ import {
 import { collectTouchedPaths } from '../utils/collect-touched-paths';
 import type { NgxDeepRequired } from '../utils/deep-required';
 import { scheduleMicrotask } from '../utils/destroy-scheduler';
-import { fastDeepEqual } from '../utils/equality';
 import {
   DEFAULT_FOCUS_SELECTOR,
   DEFAULT_INVALID_SELECTOR,
@@ -71,10 +65,6 @@ import {
   mergeValuesAndRawValues,
   setValueAtPath,
 } from '../utils/form-utils';
-import {
-  createValidationConfigPipeline,
-  type ValidationConfigPipelineOptions,
-} from '../utils/validation-config-pipeline';
 import type { NgxVestSuite } from '../utils/validation-suite';
 import {
   readElementValueForBlur,
@@ -95,23 +85,13 @@ import {
 import { formValueChanges } from './form-value-changes';
 import { FormValueSnapshot } from './form-value-snapshot';
 import { ModelFormSync } from './model-form-sync';
+import {
+  connectValidationConfig,
+  revalidateOnSuiteChange,
+} from './revalidation-triggers';
 import { submitOutcomes } from './submit-pipeline';
 import { ValidationOptions } from './validation-options';
 import { notifyValidationReset } from './validation-reset';
-
-/**
- * Timing options passed to the validation-config pipeline.
- * These are the concrete values for the named knobs defined in
- * {@link ValidationConfigPipelineOptions}.
- */
-const PIPELINE_OPTIONS = {
-  idleWaitTimeoutMs: 2000,
-  dependentExistenceTimeoutMs: 2000,
-  validationInProgressCooldownMs: 500,
-} as const satisfies Omit<
-  ValidationConfigPipelineOptions,
-  'configDebounceTime'
->;
 
 export type {
   NgxFieldBlurEvent,
@@ -581,44 +561,9 @@ export class FormDirective<T extends Record<string, unknown>> {
         );
       });
 
-    /**
-     * Re-run validation on all registered controls when the `suite` input
-     * reference changes — including a lazily-supplied suite (`null` → suite,
-     * e.g. a lazy import or per-locale suite arriving asynchronously) and
-     * runtime suite swaps (wizard steps, mode switches).
-     *
-     * Without this, fields validated while the suite was absent (or against
-     * the previous suite) keep their stale verdict until the user edits them:
-     * `createAsyncValidator` reads `suite()` per validation run, but nothing
-     * re-triggers those runs. A root `updateValueAndValidity()` alone is not
-     * enough because Angular does not descend into child controls, so every
-     * control in the tree is updated individually (mirroring what
-     * `ValidateRootFormDirective` already does for ROOT_FORM).
-     */
-    // `undefined` sentinel = effect has not run yet (the input itself is
-    // `NgxVestSuite | null`, never `undefined`).
-    let previousSuite: NgxVestSuite<NoInfer<T>> | null | undefined;
-    effect(() => {
-      const suite = this.suite();
-      if (previousSuite === undefined) {
-        // Initial effect run: field validators already see the current
-        // suite when they register, nothing to re-run.
-        previousSuite = suite;
-        return;
-      }
-      if (suite === previousSuite) {
-        return;
-      }
-      previousSuite = suite;
-      untracked(() => {
-        // Defer to the next microtask so Angular has finished wiring up
-        // controls/groups (ngModel/ngModelGroup) for the current render pass.
-        scheduleMicrotask(
-          () => this.#revalidateAllControls(),
-          this.#destroyRef
-        );
-      });
-    });
+    // Re-run every control's validators when the `suite` input changes
+    // (a lazily supplied suite or a runtime swap); see the helper for why.
+    revalidateOnSuiteChange(this.suite, this.ngForm.form, this.#destroyRef);
 
     /**
      * Single bidirectional synchronization effect.
@@ -629,31 +574,14 @@ export class FormDirective<T extends Record<string, unknown>> {
       this.#modelSync.sync(this.#snapshot.value(), this.formValue());
     });
 
-    // Compose the validation-config pipeline.  Switching on every config change
-    // automatically tears down the previous pipeline instance (and its fresh
-    // validationInProgress Set) before creating the new one. A new config
-    // object with the same entries (e.g. from a `computed` that rebuilds it)
-    // keeps the running pipeline.
-    const form = this.ngForm.form;
-    toObservable(this.validationConfig)
-      .pipe(
-        distinctUntilChanged((a, b) => fastDeepEqual(a, b)),
-        switchMap((config) =>
-          createValidationConfigPipeline(
-            form,
-            config,
-            {
-              configDebounceTime: this.#configDebounceTime,
-              ...PIPELINE_OPTIONS,
-            },
-            this.#cdr,
-            this.#destroyRef,
-            this.#errorHandler
-          )
-        ),
-        takeUntilDestroyed(this.#destroyRef)
-      )
-      .subscribe();
+    // Compose the validation-config pipeline, switched on every config
+    // change.
+    connectValidationConfig(this.ngForm.form, this.validationConfig, {
+      configDebounceTime: this.#configDebounceTime,
+      cdr: this.#cdr,
+      destroyRef: this.#destroyRef,
+      errorHandler: this.#errorHandler,
+    });
   }
 
   /**
@@ -730,32 +658,6 @@ export class FormDirective<T extends Record<string, unknown>> {
       // Update all form controls validity which will trigger all form events
       this.ngForm.form.updateValueAndValidity({ emitEvent: true });
     }
-  }
-
-  /**
-   * Re-runs validation for every control in the form tree, depth-first.
-   *
-   * Angular's `updateValueAndValidity()` on a container only re-runs the
-   * container's own validators and recalculates ancestors — it never descends
-   * into children. When the Vest suite changes, every field-level async
-   * validator must re-run, so each control is updated individually
-   * (`onlySelf: true` avoids redundant ancestor recalculation per child; the
-   * container's own update afterwards aggregates the fresh child statuses).
-   */
-  #revalidateAllControls(): void {
-    const updateTree = (control: AbstractControl): void => {
-      if (control instanceof FormGroup) {
-        for (const child of Object.values(control.controls)) {
-          updateTree(child);
-        }
-      } else if (control instanceof FormArray) {
-        for (const child of control.controls) {
-          updateTree(child);
-        }
-      }
-      control.updateValueAndValidity({ onlySelf: true, emitEvent: true });
-    };
-    updateTree(this.ngForm.form);
   }
 
   /**
