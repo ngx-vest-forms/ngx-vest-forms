@@ -151,7 +151,9 @@ import {
 } from 'ngx-vest-forms';
 import { procedureSuite } from './procedure.suite'; // your Vest suite
 
-type ProcedureFormModel = NgxDeepPartial<{
+// In a real app, move this type to procedure.model.ts so the suite file can
+// import it without a circular import.
+export type ProcedureFormModel = NgxDeepPartial<{
   procedureType: 'typeA' | 'typeB' | 'typeC';
   fieldA?: string;
   fieldB?: string;
@@ -376,7 +378,9 @@ protected onStructureChange(newValue: string): void {
 Use `omitWhen` in your validation suite to skip validation for cleared fields:
 
 ```typescript
+import type { NgxVestSuite } from 'ngx-vest-forms';
 import { create, test, enforce, omitWhen } from 'vest';
+import type { ProcedureFormModel } from './procedure.model';
 
 export const procedureSuite: NgxVestSuite<ProcedureFormModel> = create(
   (model) => {

@@ -279,7 +279,7 @@ bootstrapApplication(AppComponent, {
   providers: [
     {
       provide: NGX_ERROR_DISPLAY_MODE_TOKEN,
-      useValue: 'on-blur', // Show errors only on blur
+      useValue: 'on-blur', // Show errors after blur (or after submit)
     },
   ],
 });
@@ -348,11 +348,11 @@ export class LoginFormComponent {
 - Standard forms with typical validation needs
 - Users benefit from feedback without excessive interruption
 
-**Use `on-blur` when:**
+**About `on-blur`:**
 
-- You want to avoid showing errors until user leaves the field
-- Form has many interdependent fields
-- Users need to complete a field before seeing validation
+- It currently behaves the same as `on-blur-or-submit`: errors show once the field is touched or the form is submitted
+- It does not hide errors after a submit; use `on-submit` if errors should wait for submission
+- Prefer `on-blur-or-submit` in new code so the name matches the behaviour
 
 **Use `on-submit` when:**
 

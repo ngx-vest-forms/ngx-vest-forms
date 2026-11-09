@@ -265,7 +265,7 @@ protected onPickerValueChange(value: Date[] | undefined): void {
 
 ## Why `<ngx-control-wrapper>` cannot work for composites
 
-`ControlWrapperComponent` applies `FormControlStateDirective` as a host directive, and that directive uses `contentChild(NgModel)` to discover a single child `NgModel` directive. A composite adapter maps to **multiple** flat fields, so there is no single `NgModel` for the wrapper to bind. The hidden proxy fields are real `NgModel` inputs but they live alongside the adapter, not inside a single wrapper.
+`ControlWrapperComponent` applies `FormErrorDisplayDirective` as a host directive, which in turn composes `FormControlStateDirective`; that directive uses `contentChild(NgModel)` to discover a single child `NgModel` directive. A composite adapter maps to **multiple** flat fields, so there is no single `NgModel` for the wrapper to bind. The hidden proxy fields are real `NgModel` inputs but they live alongside the adapter, not inside a single wrapper.
 
 If your composite can be decomposed into completely independent labeled fields, prefer individual `<ngx-control-wrapper>` wrappers instead — you get ARIA wiring, display modes, pending states, and warnings for free.
 

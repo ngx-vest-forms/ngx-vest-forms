@@ -166,15 +166,18 @@ If your policy is “save only when the whole form is valid”, check the form s
 instead of relying only on `event.valid`, which refers to the blurred control.
 
 ```ts
-// Reference the form directive, e.g. <form ngxVestForm #vestForm="ngxVestForm">
-protected readonly vestForm = viewChild(FormDirective<DraftFormModel>);
+// Template: <form ngxVestForm #vestForm="ngxVestForm" ...>
+// Imports: viewChild from '@angular/core', FormDirective from 'ngx-vest-forms'
+protected readonly vestForm = viewChild.required('vestForm', {
+  read: FormDirective,
+});
 
 protected handleFieldBlur(event: NgxFieldBlurEvent<DraftFormModel>): void {
   if (!event.formValue || !event.dirty) {
     return;
   }
 
-  if (!this.vestForm()?.formState().valid) {
+  if (!this.vestForm().formState().valid) {
     return;
   }
 
